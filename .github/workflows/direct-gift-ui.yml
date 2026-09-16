@@ -1,0 +1,40 @@
+name: direct-gift-ui
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch room gift UI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('frontend/index.html')
+          s=p.read_text()
+          old="<button onclick=\"showToast('Hediye menüsü bir sonraki adımda gerçek API’ye bağlanacak 🎁')\">🎁 Hediye gönder</button>"
+          if old in s:
+              s=s.replace(old,'<button onclick="openRoomGiftMenu()">🎁 Hediye gönder</button>',1)
+          if 'id="roomGiftModal"' not in s:
+              marker='<div id="toast" class="toast"></div>'
+              modal='<div id="roomGiftModal" class="modal"><div class="modalbox"><button class="close" onclick="closeModal(\'roomGiftModal\')">×</button><div id="roomGiftDetail"></div></div></div>'
+              if marker not in s: raise SystemExit('toast marker missing')
+              s=s.replace(marker,modal+marker,1)
+          js='''\n<script>\nasync function openRoomGiftMenu(){\n const id=window.activeRoomId||document.getElementById('roomModal')?.dataset?.roomId;\n if(!id){showToast('Önce bir oda aç');return;}\n const base=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\\/$/,'');\n const token=localStorage.getItem('erischat.accessToken.v1')||'';\n try{\n  const r=await fetch(base+'/v1/rooms/'+encodeURIComponent(id)+'/gift-catalog',{headers:token?{Authorization:'Bearer '+token}:{}});\n  const catalog=await r.json(); if(!r.ok)throw new Error(catalog.detail||'Hediye listesi alınamadı');\n  const box=document.getElementById('roomGiftDetail');\n  box.innerHTML='<h2>🎁 Hediye Gönder</h2><p class="muted">Sunucu fiyatları ve ödeme oranını belirler. Tek gönderimde en fazla 99 adet.</p><select id="roomGiftTarget" style="width:100%;padding:11px;margin:7px 0;background:#17111e;color:#fff;border:1px solid #ffffff18;border-radius:12px"><option value="self">Kendim</option><option value="mic">Mikrofon</option></select><select id="roomGiftKey" style="width:100%;padding:11px;margin:7px 0;background:#17111e;color:#fff;border:1px solid #ffffff18;border-radius:12px">'+catalog.map(g=>'<option value="'+String(g.gift_key).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+g.gift_key+' • '+Number(g.unit_price).toLocaleString('tr-TR')+' Lidya'+(g.animation?' ✨':'')+'</option>').join('')+'</select><input id="roomGiftQty" type="number" min="1" max="99" value="1" style="width:100%;padding:11px;margin:7px 0;background:#17111e;color:#fff;border:1px solid #ffffff18;border-radius:12px"><button class="action" onclick="sendRoomGift()">Gönder 🎁</button>';
+  document.getElementById('roomGiftModal').classList.add('show');
+ }catch(e){showToast(e.message||'Hediye listesi alınamadı');}
+}\nasync function sendRoomGift(){\n const id=window.activeRoomId; if(!id)return; const base=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\\/$/,''); const token=localStorage.getItem('erischat.accessToken.v1')||''; const qty=Math.max(1,Math.min(99,Number(document.getElementById('roomGiftQty').value)||1)); const target=document.getElementById('roomGiftTarget').value; const room=window.activeRoom||{}; const seats=(room.seats||[]).filter(x=>x.user_id); const uid=JSON.parse(localStorage.getItem('erischat.remoteUser.v1')||'{}').id||''; const targets=target==='self'?[uid]:seats.filter(x=>x.user_id!==uid).map(x=>x.user_id); if(!targets.length){showToast('Mikrofonda kullanıcı yok');return;} try{for(const recipient_id of [...new Set(targets)]){const r=await fetch(base+'/v1/rooms/'+encodeURIComponent(id)+'/gifts',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},token?{Authorization:'Bearer '+token}:{}),body:JSON.stringify({recipient_id,gift_key:document.getElementById('roomGiftKey').value,quantity:qty})}); const b=await r.json().catch(()=>({})); if(!r.ok)throw new Error(b.detail||'Hediye gönderilemedi');} closeModal('roomGiftModal');showToast('Hediye gönderildi 🎁'); }catch(e){showToast(e.message||'Hediye gönderilemedi');}\n}\n</script>\n'''
+          if 'async function openRoomGiftMenu()' not in s:
+              marker='</body>'
+              s=s.replace(marker,js+marker,1)
+          p.write_text(s)
+          PY
+          python3 -m py_compile backend/app/main.py backend/app/room_routes.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/index.html
+          git commit -m 'feat: connect room gift menu directly' || true
+          git push
