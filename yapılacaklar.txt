@@ -80,7 +80,8 @@ ODA SİSTEMİ
 - [ ] Hediye gönderme: herkese, kendine veya seçili kişiye.
 - [ ] 30 Lidya altı hediyelerin sohbet bildirimi; 30+ hediyelerin görsel animasyon sistemi.
 - [ ] Tek gönderimde maksimum 99 adet ve tekrar gönderim desteği.
-- [ ] Hediye alıcısına uygulanacak kazanç oranlarını şeffaf ve sabit kurallarla tanımla; gizli/sonuç manipülasyonu uygulanmayacak.
+- [x] Hediye alıcı kazanç oranı server-side sabit ve şeffaf kurala bağlandı (%70); istemci oran seçemiyor.
+- [ ] Server-side hediye katalog/fiyat doğrulaması.
 - [x] Oda müziğinde mikrofondaki kullanıcı kontrolü, haftalık ödeme ve kullanıcıya özel liste backend'de tamamlandı; gerçek telefon dosyası yükleme/medya depolama ayrıca yapılacak.
 - [ ] Oda sahibi/moderatör için atılan kullanıcı listesi; listeden kaldırılana kadar yeniden giriş engeli ve "Bu odadan atıldınız." mesajı.
 - [x] Mikrofon koltuğuna katılma/ayrılma ve kilitle/aç, sustur/aç backend kontrolleri mevcut.
@@ -92,6 +93,8 @@ ODA SİSTEMİ
 - [x] Frontend sabit/demo oda listesi gerçek GET /v1/rooms verisine bağlandı.
 - [x] Gerçek oda giriş ekranı frontend'e bağlandı; oda modalı ve koltuk API akışı eklendi.
 - [x] Oda ekranı WebSocket sohbet entegrasyonu ve backend oda mesaj modeli eklendi; gerçek ortam smoke testi bekliyor.
+- [ ] Oda hediye eventlerini WebSocket ile canlı yayınla.
+- [ ] Hediye menüsünü frontend oda ekranına bağla.
 - [ ] Gerçek oda oluşturma UI akışını tamamla.
 
 VIP 1-12
@@ -168,9 +171,11 @@ YÖNETİM / MODERASYON
 EKONOMİ / GÜVENLİK
 - [ ] Lidya cüzdan/ledger modelini merkezi ve atomik hale getir.
 - [ ] Hediye, VIP, oda seviyesi, aile, müzik ve oyun işlemlerini ledger üzerinden geçirmek.
-- [ ] Negatif bakiye/race condition/çift harcama önleme.
+- [x] Hediye gönderiminde sender/recipient bakiye satırları transaction sırasında kilitleniyor ve çift harcama riski azaltılıyor.
+- [ ] Negatif bakiye/çift harcama önleme için tüm ekonomi işlemlerini merkezi ledger'a taşı.
 - [ ] VIP ödüllerinin tek seferlik idempotent verilmesi.
 - [ ] Oyun sonuçları ve ödemelerinde audit trail.
+- [x] Hediye alıcı oranının gizli/oynanabilir istemci parametresi olması kaldırıldı; oran server-side şeffaf sabit kurala bağlandı.
 - [ ] Gizli oran/sonuç manipülasyonu kullanılmaması; ekonomik kurallar dokümante edilmeli.
 
 10. 2026-09-17 — FRONTEND ODA API KONTROLÜ
@@ -222,3 +227,13 @@ Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya
 - [ ] Oda WebSocket kopma/yeniden bağlanma davranışı testi.
 - [ ] Oda hediye API'sini gerçek UI menüsüne bağla.
 - [ ] Gerçek oda oluşturma UI akışını tamamla.
+
+15. 2026-09-17 — HEDİYE EKONOMİSİ GÜVENLİK KONTROL NOKTASI
+- [x] `GiftSend.recipient_percent` istemci parametresi kaldırıldı.
+- [x] Server-side sabit `%70` alıcı payı tanımlandı ve API yanıtında açıkça döndürülüyor.
+- [x] PostgreSQL transaction için sender ve recipient `User` satırlarında `FOR UPDATE` kilidi kullanılıyor.
+- [x] Bakiye kontrolü, gönderici düşümü, alıcı kredisi ve `RoomGiftEvent` kaydı tek transaction akışında tutuluyor.
+- [ ] Hediye fiyatlarını server-side catalog ile doğrula; istemcinin fiyat belirlemesini kaldır.
+- [ ] Hediye eventlerini `/ws/rooms/{room_id}` üzerinden canlı yayınla.
+- [ ] Hediye menüsünü gerçek oda UI'sına bağla.
+- [ ] Railway deploy ve gerçek hediye smoke testi.
