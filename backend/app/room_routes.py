@@ -335,6 +335,35 @@ def register_room_auth(current_user_dependency):
             "animation": total >= 30,
         }
 
+    @router.get("/{room_id}/gift-catalog")
+    def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        return [{"gift_key": key, "unit_price": price, "animation": price >= 30} for key, price in GIFT_CATALOG.items()]
+
+    @router.get("/{room_id}/gift-events")
+    def gift_events(room_id: str, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        limit = max(1, min(limit, 100))
+        rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit)))
+        rows.reverse()
+        return [{
+            "id": row.id,
+            "sender_id": row.sender_id,
+            "recipient_id": row.recipient_id,
+            "gift_key": row.gift_key,
+            "unit_price": row.unit_price,
+            "quantity": row.quantity,
+            "total_price": row.total_price,
+            "recipient_percent": row.recipient_percent,
+            "recipient_amount": row.recipient_amount,
+            "created_at": row.created_at,
+            "animation": row.total_price >= 30,
+        } for row in rows]
+
     @router.get("/{room_id}/gift-leaderboard")
     def gift_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
