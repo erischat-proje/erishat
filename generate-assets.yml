@@ -1,0 +1,41 @@
+name: Generate ErisChat PNG assets
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate all PNG assets
+        run: python3 gerekenler/generate_assets.py
+
+      - name: Verify 104 PNG files
+        run: |
+          test "$(find gerekenler/avatarlar -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 40
+          test "$(find gerekenler/cerceveler -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 40
+          test "$(find gerekenler/vip/avatarlar -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 12
+          test "$(find gerekenler/vip/cerceveler -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 12
+          echo '104 PNG doğrulandı.'
+
+      - name: Commit generated PNGs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A gerekenler/avatarlar gerekenler/cerceveler gerekenler/vip
+          if git diff --cached --quiet; then
+            echo 'PNG değişikliği yok.'
+          else
+            git commit -m 'ErisChat: generate 104 PNG assets'
+            git push origin HEAD:main
+          fi
