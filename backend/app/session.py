@@ -22,6 +22,8 @@ def hash_token(token: str) -> str:
 
 
 def create_session(db: Session, user: User, days: int = 30) -> str:
+    if days < 1 or days > 365:
+        raise ValueError("Session süresi 1-365 gün arasında olmalı")
     raw_token = secrets.token_urlsafe(48)
     db.add(
         UserSession(
@@ -34,14 +36,26 @@ def create_session(db: Session, user: User, days: int = 30) -> str:
     return raw_token
 
 
-def get_user_from_token(db: Session, token: str) -> User | None:
+def get_user_from_token(db: Session, token: str | None) -> User | None:
+    if not token or len(token) > 512:
+        return None
     row = db.scalar(select(UserSession).where(UserSession.token_hash == hash_token(token)))
-    if not row or row.expires_at <= datetime.now(timezone.utc):
+    if not row:
+        return None
+    now = datetime.now(timezone.utc)
+    expires_at = row.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at <= now:
+        db.delete(row)
+        db.commit()
         return None
     return db.get(User, row.user_id)
 
 
-def revoke_session(db: Session, token: str) -> bool:
+def revoke_session(db: Session, token: str | None) -> bool:
+    if not token:
+        return False
     result = db.execute(delete(UserSession).where(UserSession.token_hash == hash_token(token)))
     db.commit()
     return bool(result.rowcount)
