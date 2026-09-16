@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -21,6 +22,7 @@ from .schemas import (
     ConversationOut,
     MessageCreate,
     MessageOut,
+    NicknameChange,
     SessionOut,
     UserCreate,
     UserOut,
@@ -30,7 +32,7 @@ from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
 logger = logging.getLogger("erischat.api")
-app = FastAPI(title="ErisChat API", version="0.7.0")
+app = FastAPI(title="ErisChat API", version="0.8.0")
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
 app.add_middleware(
@@ -42,10 +44,18 @@ app.add_middleware(
 )
 
 
+def ensure_user_settings_columns() -> None:
+    """Add the two profile-settings columns to existing PostgreSQL installs."""
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
+
+
 @app.on_event("startup")
 def startup() -> None:
     try:
         Base.metadata.create_all(bind=engine)
+        ensure_user_settings_columns()
         with Session(engine) as db:
             cleanup_expired_sessions(db)
     except OperationalError:
@@ -82,12 +92,12 @@ def ensure_demo_user(db: Session) -> User:
     user = repo.get("demo")
     if user:
         return user
-    return repo.create(User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊"))
+    return repo.create(User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", lidya=10_000_000))
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": "0.7.0"}
+    return {"status": "ok", "service": "erischat-api", "version": "0.8.0"}
 
 
 @app.get("/v1/users/{user_id}", response_model=UserOut)
@@ -127,6 +137,44 @@ def update_me(
         user.nickname = payload.nickname
     if payload.avatar is not None:
         user.avatar = payload.avatar
+    if payload.notifications_enabled is not None:
+        user.notifications_enabled = payload.notifications_enabled
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.post("/v1/me/nickname", response_model=UserOut)
+def change_nickname(
+    payload: NicknameChange,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> User:
+    new_name = payload.nickname.strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="İsim boş olamaz")
+    if new_name == user.nickname:
+        return user
+    if user.lidya < 300:
+        raise HTTPException(status_code=400, detail="İsim değiştirmek için 300 Lidya gerekli")
+    user.nickname = new_name
+    user.lidya -= 300
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.patch("/v1/me/notifications", response_model=UserOut)
+def update_notifications(
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> User:
+    if payload.notifications_enabled is None:
+        raise HTTPException(status_code=400, detail="notifications_enabled gerekli")
+    user.notifications_enabled = payload.notifications_enabled
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -254,22 +302,22 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         await manager.connect(user.id, websocket)
-        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.7.0", "user_id": user.id})
+        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.8.0", "user_id": user.id})
         while True:
             data = await websocket.receive_json()
             if not isinstance(data, dict):
                 await websocket.send_json({"type": "error", "detail": "Mesaj gövdesi nesne olmalı"})
                 continue
             conversation_id = str(data.get("conversation_id", "")).strip()
-            text = str(data.get("text", "")).strip()
-            if not conversation_id or not text or len(text) > 2000:
+            text_value = str(data.get("text", "")).strip()
+            if not conversation_id or not text_value or len(text_value) > 2000:
                 await websocket.send_json({"type": "error", "detail": "conversation_id ve 1-2000 karakterlik text gerekli"})
                 continue
             conversation_repo = ConversationRepository(db)
             if not conversation_repo.get(conversation_id) or not conversation_repo.is_member(conversation_id, user.id):
                 await websocket.send_json({"type": "error", "detail": "Konuşmaya erişim yok"})
                 continue
-            message = MessageService(MessageRepository(db)).create(conversation_id, user.id, text)
+            message = MessageService(MessageRepository(db)).create(conversation_id, user.id, text_value)
             event = {"type": "message", "conversation_id": conversation_id, "sender_id": user.id, "text": message.text, "message_id": message.id, "created_at": message.created_at.isoformat()}
             for member_id in conversation_repo.members(conversation_id):
                 await manager.send_user(member_id, event)
@@ -287,7 +335,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         db.close()
 
 
-# The backend service also hosts the canonical web UI so there is one public origin.
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
