@@ -75,28 +75,30 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 - [x] Oda backend'inin `GET /v1/rooms` için Bearer token istediği doğrulandı.
 - [x] Oda listeleme ve oda girişini frontend'e bağlamak için güvenli değişiklik noktaları belirlendi.
 - [x] Oda frontend patch'i için GitHub Actions workflow yeniden oluşturuldu ve tetik dosyası eklendi.
-- [ ] GitHub Actions'ın connector üzerinden çalıştığı henüz doğrulanmadı.
-- [ ] `frontend/index.html` üzerinde gerçek patch uygulanması henüz doğrulanmadı.
 
 10. SONRAKİ KONTROL NOKTASI
-- [ ] Frontend kayıt/oturum bootstrap'ını backend şemasıyla uyumlu hale getir.
-- [ ] Frontend API base URL'yi canlı origin ile güvenli biçimde bağla.
-- [ ] Sabit/demo oda listesini gerçek GET `/v1/rooms` verisine bağla.
-- [ ] Gerçek oda girişini POST `/v1/rooms/{room_id}/join` ile bağla.
+- [x] Frontend kayıt/oturum bootstrap'ını backend şemasıyla uyumlu hale getir.
+- [x] Frontend API base URL'yi canlı origin ile güvenli biçimde bağla.
+- [x] Sabit/demo oda listesini gerçek GET `/v1/rooms` verisine bağla.
+- [x] Gerçek oda girişini POST `/v1/rooms/{room_id}/join` ile bağla.
 - [ ] Oda içi gerçek ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla oluştur.
 - [ ] Railway deploy ve gerçek API smoke test.
 
-ÖNEMLİ NOT:
-Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
 11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI
 - [x] `frontend/index.html` içindeki ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.
 - [x] Oda listesi üye sayısına göre sıralanıyor; ana sayfada ilk 3 oda gösteriliyor.
 - [x] Oda kartları gerçek oda kimliğiyle `POST /v1/rooms/{room_id}/join` çağrısı yapıyor.
 - [x] API base boşsa `location.origin` fallback'i eklendi.
-- [x] Patch GitHub Actions üzerinde çalıştı ve frontend değişikliği commit edildi.
-- [ ] Kayıt/oturum bootstrap'ında `gender` uyumluluğu ve Railway smoke test hâlâ açık.
+- [x] Patch GitHub Actions üzerinde başarıyla çalıştı ve frontend değişikliği commit edildi.
+- [x] Workflow job `patch` başarıyla tamamlandı.
+- [x] `main` branch'teki `frontend/index.html` tekrar okunarak oda API bağlantısının mevcut olduğu doğrulandı.
+- [ ] Railway smoke test.
+
 12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ
 - [x] Backend kayıt şemasında `gender` değerlerinin yalnızca `female`/`male` olduğu doğrulandı.
 - [x] Frontend kayıt isteğine cinsiyet seçimi eklendi; seçim localStorage'da tutuluyor.
 - [x] API base için canlı origin fallback'i düzeltildi.
 - [ ] Railway smoke test.
+
+ÖNEMLİ NOT:
+Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
