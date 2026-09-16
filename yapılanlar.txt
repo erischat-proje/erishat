@@ -102,3 +102,9 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 
 ÖNEMLİ NOT:
 Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
+13. 2026-09-17 — ACTIONS VE RAILWAY KONTROLÜ
+- [x] GitHub Actions `patch` job başarıyla tamamlandı.
+- [x] `frontend/index.html` ana/Keşfet oda listelerinin gerçek `/v1/rooms` verisine bağlı olduğu tekrar doğrulandı.
+- [x] Railway production `erischat` servisi son deployment durumunda SUCCESS.
+- [x] Railway `/ready` healthcheck logunda 200 OK görüldü.
+- [ ] Gerçek yetkili `/v1/rooms` smoke testi ve frontend canlı URL testi.

@@ -89,7 +89,7 @@ ODA SİSTEMİ
 - [ ] Oda harcama/level ilerlemesinin tüm ilgili Lidya işlemlerini eksiksiz ve atomik takip etmesi.
 - [x] 2026-09-17: GET /v1/rooms gerçek oda listeleme endpoint'i eklendi.
 - [x] 2026-09-17: Müzik eklemede 10 parça sınırı ödeme işleminden önce kontrol edilecek şekilde düzeltildi.
-- [ ] Frontend sabit/demo oda listesini gerçek GET /v1/rooms verisine bağla.
+- [x] Frontend sabit/demo oda listesi gerçek GET /v1/rooms verisine bağlandı.
 - [ ] Gerçek oda oluşturma ve oda giriş ekranını frontend'e bağla.
 
 VIP 1-12
@@ -178,7 +178,7 @@ EKONOMİ / GÜVENLİK
 - [x] Frontend API base URL boş kaldığında canlı origin'e otomatik bağlanmadığı tespit edildi.
 - [x] Gerçek oda listesi ve oda girişinin bağlanacağı güvenli değişiklik noktaları belirlendi.
 - [x] Geçici patch workflow denemesi yapıldı ve repository temiz bırakıldı; frontend'e uygulanmış sahte/yarım değişiklik bırakılmadı.
-- [ ] Frontend gerçek GET `/v1/rooms` bağlantısı.
+- [x] Frontend gerçek GET `/v1/rooms` bağlantısı.
 - [ ] Frontend gerçek oda giriş akışı.
 
 DOKÜMANTASYON / TAKİP KURALI
@@ -205,3 +205,8 @@ Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya
 - [x] Frontend kayıt bootstrap'ına cinsiyet seçimi ekleniyor.
 - [x] API base canlı origin fallback'i düzeltiliyor.
 - [ ] Railway smoke test.
+13. 2026-09-17 — CANLI ORTAM KONTROLÜ
+- [x] GitHub Actions frontend patch job'u SUCCESS.
+- [x] Railway production `erischat` deployment SUCCESS.
+- [x] Railway `/ready` healthcheck 200 OK.
+- [ ] Yetkili `/v1/rooms` smoke testi ve canlı frontend uçtan uca testi.
