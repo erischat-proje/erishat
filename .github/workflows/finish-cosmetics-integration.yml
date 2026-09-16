@@ -1,0 +1,42 @@
+name: Finish ErisChat cosmetics integration
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - backend/app/main.py
+      - backend/app/cosmetic_routes.py
+      - backend/app/schemas.py
+      - backend/app/models.py
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply idempotent integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/main.py')
+          s = p.read_text(encoding='utf-8')
+          if 'from .cosmetic_routes import router as cosmetic_router' not in s:
+              marker = 'from .config import settings\n'
+              s = s.replace(marker, marker + 'from .cosmetic_routes import router as cosmetic_router\n')
+          if 'app.include_router(cosmetic_router)' not in s:
+              marker = 'app = FastAPI(title="ErisChat API", version="0.8.0")\n'
+              s = s.replace(marker, marker + 'app.include_router(cosmetic_router)\n')
+          s = s.replace('create_anonymous_user(db, payload.nickname, payload.avatar)', 'create_anonymous_user(db, payload.nickname, payload.avatar, payload.gender)')
+          if 'ADD COLUMN IF NOT EXISTS gender' not in s:
+              marker = 'conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))'
+              replacement = marker + '\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT \'unspecified\'"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))'
+              s = s.replace(marker, replacement)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/main.py
+          git diff --cached --quiet || git commit -m 'Integrate cosmetics routes and gender registration'
+          git push
