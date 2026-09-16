@@ -1,0 +1,46 @@
+name: Load cosmetics frontend integration
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'frontend/erischat-main.html'
+      - 'frontend/cosmetics.js'
+      - '.github/workflows/load-cosmetics-frontend.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure cosmetics script is loaded
+        shell: bash
+        run: |
+          set -euo pipefail
+          file='frontend/erischat-main.html'
+          marker='<script src="./cosmetics.js"></script>'
+          if ! grep -Fq "$marker" "$file"; then
+            python3 - <<'PY'
+from pathlib import Path
+p = Path('frontend/erischat-main.html')
+s = p.read_text(encoding='utf-8')
+marker = '<script src="./cosmetics.js"></script>'
+if marker not in s:
+    pos = s.lower().rfind('</body>')
+    if pos >= 0:
+        s = s[:pos] + marker + '\n' + s[pos:]
+    else:
+        s += '\n' + marker + '\n'
+    p.write_text(s, encoding='utf-8')
+PY
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$file"
+            git diff --cached --quiet || git commit -m 'ci: load cosmetics script in frontend'
+            git push
+          else
+            echo 'Cosmetics script already loaded.'
+          fi
