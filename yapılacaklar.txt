@@ -81,9 +81,9 @@ ODA SİSTEMİ
 - [ ] 30 Lidya altı hediyelerin sohbet bildirimi; 30+ hediyelerin görsel animasyon sistemi.
 - [ ] Tek gönderimde maksimum 99 adet ve tekrar gönderim desteği.
 - [ ] Hediye alıcısına uygulanacak kazanç oranlarını şeffaf ve sabit kurallarla tanımla; gizli/sonuç manipülasyonu uygulanmayacak.
-- [ ] Telefon müziği yükleme; kullanıcıya özel liste, haftalık 150 Lidya ücret, yalnızca mikrofondaki kullanıcının oynatabilmesi, maksimum 10 parça.
+- [x] Oda müziğinde mikrofondaki kullanıcı kontrolü, haftalık ödeme ve kullanıcıya özel liste backend'de tamamlandı; gerçek telefon dosyası yükleme/medya depolama ayrıca yapılacak.
 - [ ] Oda sahibi/moderatör için atılan kullanıcı listesi; listeden kaldırılana kadar yeniden giriş engeli ve "Bu odadan atıldınız." mesajı.
-- [ ] Mikrofon koltuklarında kilitle/aç, sustur/aç kontrolleri.
+- [x] Mikrofon koltuğuna katılma/ayrılma ve kilitle/aç, sustur/aç backend kontrolleri mevcut.
 - [ ] Oda seviyeleri L1-L8 kapasite/moderatör/koltuk haritasını gerçek backend kurallarına bağla.
 - [ ] L4+ ücretsiz oda kilidi; L1-L3 için 24 saatlik 150 Lidya kuralı.
 - [ ] Oda harcama/level ilerlemesinin tüm ilgili Lidya işlemlerini eksiksiz ve atomik takip etmesi.
