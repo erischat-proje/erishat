@@ -137,8 +137,10 @@ Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzer
 - [x] Bakiye kontrolü, Lidya düşümü, alıcı kredisi ve `RoomGiftEvent` kaydı aynı transaction içinde tutuluyor.
 - [x] API yanıtına uygulanan `recipient_percent` açıkça eklendi; ekonomi kuralı gizli değil.
 - [x] Maksimum 99 adet ve 30 Lidya animasyon eşiği korunuyor.
-- [x] Değişiklik `main` branch'e `b0175427bb999575aedae28e20f3a263aeeb836f` commit'iyle işlendi.
-- [ ] Server-side gerçek gift catalog/fiyat doğrulaması.
+- [x] Server-side `GIFT_CATALOG` ile 45 hediye fiyatı doğrulanıyor; istemci `unit_price` gönderemiyor.
+- [x] Geçersiz `gift_key` reddediliyor ve gerçek fiyat server catalog'dan hesaplanıyor.
+- [x] `backend/app/main.py` içindeki yinelenen `RoomChatMessage` importu kaldırıldı.
+- [x] `backend/app/main.py` güncellemesi `6f5a883515c618d91a74cd671d3f2459f2f57b0a` commit'iyle `main` branch'e işlendi.
 - [ ] Hediye eventlerinin oda WebSocket kanalında canlı yayınlanması.
 - [ ] Hediye menüsünün frontend oda ekranına bağlanması.
 - [ ] Railway deploy + gerçek gift smoke testi.
