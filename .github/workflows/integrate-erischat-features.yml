@@ -1,0 +1,45 @@
+name: Integrate ErisChat features
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/app/main.py'
+      - 'backend/app/auth.py'
+      - 'backend/app/models.py'
+      - 'backend/app/schemas.py'
+      - 'backend/app/cosmetic_routes.py'
+      - '.github/workflows/integrate-erischat-features.yml'
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch backend integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/main.py')
+          s = p.read_text(encoding='utf-8')
+          if 'from .cosmetic_routes import router as cosmetic_router' not in s:
+              s = s.replace('from .auth import create_anonymous_user\n', 'from .auth import create_anonymous_user\nfrom .cosmetic_routes import router as cosmetic_router\n')
+          if 'app.include_router(cosmetic_router)' not in s:
+              marker = 'app = FastAPI(title="ErisChat API", version="0.8.0")\n'
+              s = s.replace(marker, marker + 'app.include_router(cosmetic_router)\n')
+          s = s.replace('create_anonymous_user(db, payload.nickname, payload.avatar)', 'create_anonymous_user(db, payload.nickname, payload.avatar, payload.gender)')
+          s = s.replace('ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT \'unspecified\'"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))')
+          s = s.replace('User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", lidya=10_000_000)', 'User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000)')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Validate Python syntax
+        run: python -m compileall -q backend/app
+      - name: Commit integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/main.py
+          git diff --cached --quiet || git commit -m 'Connect gender registration and cosmetics routes'
+          git push
