@@ -1,0 +1,107 @@
+name: Apply Gift UI
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch gift UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('frontend/index.html')
+          s = p.read_text(encoding='utf-8')
+          old = "<div class=\"roomgiftbar\"><button onclick=\"showToast('Hediye menüsü bir sonraki adımda gerçek API’ye bağlanacak 🎁')\">🎁 Hediye gönder</button><button onclick=\"refreshRoom()\">↻ Yenile</button></div>"
+          new = "<div class=\"roomgiftbar\"><button onclick=\"openRoomGift()\">🎁 Hediye gönder</button><button onclick=\"refreshRoom()\">↻ Yenile</button></div>"
+          if old not in s:
+              raise SystemExit('gift bar anchor not found')
+          s = s.replace(old, new, 1)
+          modal = '''<div id="roomGiftModal" class="modal"><div class="modalbox"><button class="close" onclick="closeModal('roomGiftModal')">×</button><h2>🎁 Hediye gönder</h2><div id="roomGiftTarget" class="muted">Alıcı: Kendim</div><div id="roomGiftTargets" class="subgrid" style="margin-top:10px"><button class="roomaction" onclick="selectGiftTarget('self')">👤 Kendim</button><button class="roomaction" onclick="selectGiftTarget('mic')">🎙️ Mikrofondakiler</button></div><div id="roomGiftPeople" class="list" style="margin-top:10px"></div><div id="roomGiftGrid" class="gifts"></div><div style="display:flex;gap:8px;margin-top:10px;align-items:center"><span class="muted">Adet</span><input id="roomGiftQty" type="number" min="1" max="99" value="1" style="width:90px;background:#ffffff08;border:1px solid #ffffff12;color:#fff;border-radius:12px;padding:10px"></div><button class="action" onclick="sendRoomGift()">Hediyeyi gönder</button></div></div>'''
+          anchor = '<div id="toast" class="toast"></div>'
+          if 'id="roomGiftModal"' not in s:
+              if anchor not in s:
+                  raise SystemExit('toast anchor not found')
+              s = s.replace(anchor, modal + anchor, 1)
+          js_anchor = "let activeRoomId=null;"
+          js = r'''let roomGiftCatalog=[];
+let roomGiftTargetMode='self';
+let roomGiftTargetId=null;
+let roomGiftKey=null;
+async function openRoomGift(){
+  if(!activeRoomId||!activeRoom){showToast('Önce bir odaya gir');return;}
+  try{
+    roomGiftCatalog=await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/gift-catalog');
+    roomGiftTargetMode='self'; roomGiftTargetId=getCurrentUserId(); roomGiftKey=null;
+    renderRoomGiftTargets(); renderRoomGiftGrid();
+    document.getElementById('roomGiftModal').classList.add('show');
+  }catch(e){showToast(e.message||'Hediyeler yüklenemedi')}
+}
+function selectGiftTarget(mode,id){roomGiftTargetMode=mode;roomGiftTargetId=id||null;renderRoomGiftTargets()}
+function renderRoomGiftTargets(){
+  const label=roomGiftTargetMode==='mic'?'Mikrofondaki herkes':roomGiftTargetMode==='self'?'Kendim':'Seçilen kişi';
+  document.getElementById('roomGiftTarget').textContent='Alıcı: '+label;
+  const box=document.getElementById('roomGiftPeople');
+  box.innerHTML='';
+  if(roomGiftTargetMode==='person')return;
+  (activeRoom?.seats||[]).filter(s=>s.user_id).forEach(s=>{
+    const b=document.createElement('button');b.className='item';b.innerHTML='🎙️ Koltuk '+s.seat_number+' • '+s.user_id;
+    b.onclick=()=>selectGiftTarget('person',s.user_id);box.appendChild(b);
+  });
+}
+function renderRoomGiftGrid(){
+  const box=document.getElementById('roomGiftGrid');box.innerHTML='';
+  roomGiftCatalog.forEach(g=>{const b=document.createElement('button');b.className='gift';b.innerHTML='<span>'+giftEmoji(g.gift_key)+'</span>'+g.gift_key+'<br><small>'+Number(g.unit_price).toLocaleString('tr-TR')+' Lidya</small>';b.onclick=()=>{roomGiftKey=g.gift_key;document.querySelectorAll('#roomGiftGrid .gift').forEach(x=>x.style.outline='none');b.style.outline='2px solid #ff68b5'};box.appendChild(b)})
+}
+function giftEmoji(k){const m={'Zeytin Dalı':'🫒','Kil Toprak Çanak':'🏺','Pazaryeri Üzümü':'🍇','Parşömen Rulosu':'📜','Kilden Mühür':'🔶','Tunç Broş':'🪙','Baharat Kesesi':'🧺','Antik Çömlek':'🏺','Meşale Kıvılcımı':'🔥','Zeytin Taç':'👑','Mavi Boncuk / Nazarlık':'🧿','Lidya Mühür Yüzüğü':'💍','Poyraz Rüzgarı':'🍃','Altın Zeytin Dalı':'🌿','Sardes Sütunu':'🏛️','Kraliyet Tahtı':'🪑','Kraliyet Asası':'🔱','Anadolu Kaplanı':'🐅','Sardes Sarayı':'🏰','Efsanevi Lidyum Aslanı':'🦁','Kroisos’un Altın Tahtı':'👑'};return m[k]||'🎁'}
+async function sendRoomGift(){
+  if(!roomGiftKey){showToast('Önce hediye seç');return}
+  const qty=Math.max(1,Math.min(99,Number(document.getElementById('roomGiftQty').value)||1));
+  let ids=[];
+  if(roomGiftTargetMode==='self')ids=[getCurrentUserId()];
+  else if(roomGiftTargetMode==='person')ids=[roomGiftTargetId];
+  else ids=(activeRoom?.seats||[]).filter(s=>s.user_id).map(s=>s.user_id);
+  ids=[...new Set(ids)].filter(Boolean);
+  if(!ids.length){showToast('Gönderilecek alıcı yok');return}
+  if(roomGiftTargetMode==='mic' && ids.length>1)showToast('Mikrofondaki herkese gönderiliyor…');
+  try{
+    for(const id of ids){
+      const result=await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/gifts',{method:'POST',body:JSON.stringify({recipient_id:id,gift_key:roomGiftKey,quantity:qty})});
+      if(result.animation)showToast('✨ '+roomGiftKey+' animasyonu!');
+    }
+    closeModal('roomGiftModal');await refreshRoom();showToast('Hediye gönderildi 🎁');
+  }catch(e){showToast(e.message||'Hediye gönderilemedi')}
+}
+'''
+          if 'async function openRoomGift()' not in s:
+              if js_anchor not in s:
+                  raise SystemExit('JS anchor not found')
+              s = s.replace(js_anchor, js + js_anchor, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Validate frontend
+        run: python - <<'PY'
+          from pathlib import Path
+          s=Path('frontend/index.html').read_text(encoding='utf-8')
+          for x in ['openRoomGift','sendRoomGift','roomGiftModal','/gift-catalog']:
+              assert x in s, x
+          print('gift UI patch valid')
+          PY
+
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/index.html
+          if git diff --cached --quiet; then echo 'No changes needed.'; else git commit -m 'feat(room): connect gift menu to real API'; git push; fi
