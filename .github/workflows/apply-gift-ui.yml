@@ -55,7 +55,7 @@ function renderRoomGiftTargets(){
   box.innerHTML='';
   if(roomGiftTargetMode==='person')return;
   (activeRoom?.seats||[]).filter(s=>s.user_id).forEach(s=>{
-    const b=document.createElement('button');b.className='item';b.innerHTML='🎙️ Koltuk '+s.seat_number+' • '+s.user_id;
+    const b=document.createElement('button');b.className='item';b.textContent='🎙️ Koltuk '+s.seat_number+' • '+s.user_id;
     b.onclick=()=>selectGiftTarget('person',s.user_id);box.appendChild(b);
   });
 }
@@ -105,3 +105,5 @@ async function sendRoomGift(){
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add frontend/index.html
           if git diff --cached --quiet; then echo 'No changes needed.'; else git commit -m 'feat(room): connect gift menu to real API'; git push; fi
+
+# retrigger marker: 2026-09-17 gift-ui execution
