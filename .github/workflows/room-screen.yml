@@ -1,0 +1,73 @@
+name: build-real-room-screen
+on:
+  push:
+    paths:
+      - 'room-screen.trigger'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add real room screen
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('frontend/index.html')
+          s=p.read_text(encoding='utf-8')
+          css=''' .roommodal{display:none;position:fixed;inset:0;background:#020107f2;z-index:90;align-items:stretch}.roommodal.show{display:flex}.roombox{width:min(480px,100%);margin:auto;height:100%;background:#0b0811;overflow:auto}.roomtop{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:14px;background:#0b0811eF;border-bottom:1px solid #ffffff12}.roomtop h2{margin:0;font-size:17px;flex:1}.roombody{padding:14px 14px 110px}.roomstats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.roomstat{background:#100b18;border:1px solid #ffffff10;border-radius:14px;padding:10px;text-align:center}.roomstat b{display:block;font-size:14px}.roomseats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.seat{min-height:72px;border:1px solid #ffffff10;background:#100b18;color:#fff;border-radius:15px;padding:8px;font-size:9px;text-align:center}.seat.locked{opacity:.45}.seat.occupied{border-color:#ff4da850}.seat .seaticon{font-size:22px;display:block;margin-bottom:4px}.roomactions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.roomaction{border:1px solid #ffffff10;background:#ffffff08;color:#fff;border-radius:13px;padding:11px}.roomchat{margin-top:14px;background:#100b18;border:1px solid #ffffff10;border-radius:18px;padding:12px}.roomchatlog{min-height:100px;max-height:180px;overflow:auto;display:grid;gap:7px}.roomchatmsg{font-size:10px;color:#bdb1c4}.roomgiftbar{display:flex;gap:8px;margin-top:10px}.roomgiftbar button{flex:1;border:0;border-radius:12px;background:#ff4da8;color:#fff;padding:11px}.roomempty{padding:25px;text-align:center;color:#8f8498;font-size:11px}'''
+          if '.roommodal{' not in s:
+              s=s.replace('</style>',css+'</style>',1)
+          html='''<div id="roomModal" class="roommodal"><div class="roombox"><div class="roomtop"><button class="back" onclick="closeRoom()">←</button><h2 id="roomTitle">Oda</h2><button class="close" onclick="closeRoom()">×</button></div><div class="roombody"><div class="roomstats"><div class="roomstat"><span class="muted">Seviye</span><b id="roomLevel">1</b></div><div class="roomstat"><span class="muted">Kişi</span><b id="roomMembers">0/35</b></div><div class="roomstat"><span class="muted">Lidya</span><b id="roomSpend">0</b></div></div><div class="section-title"><h3>Mikrofonlar</h3><span id="roomChatState" class="muted">Sohbet açık</span></div><div id="roomSeats" class="roomseats"></div><div class="roomactions"><button class="roomaction" onclick="joinMySeat()">🎙️ Koltuğa geç</button><button class="roomaction" onclick="leaveMySeat()">🚪 Koltuktan kalk</button></div><div class="roomchat"><div class="section-title"><h3>Oda sohbeti</h3></div><div id="roomChatLog" class="roomchatlog"><div class="roomempty">Henüz mesaj yok.</div></div><div class="compose"><input id="roomChatInput" placeholder="Odaya mesaj yaz…" onkeydown="if(event.key==='Enter')sendRoomMessage()"><button class="send" onclick="sendRoomMessage()">➤</button></div></div><div class="roomgiftbar"><button onclick="showToast('Hediye menüsü bir sonraki adımda gerçek API’ye bağlanacak 🎁')">🎁 Hediye gönder</button><button onclick="refreshRoom()">↻ Yenile</button></div></div></div></div>'''
+          if 'id="roomModal"' not in s:
+              s=s.replace('<div id="toast" class="toast"></div>',html+'<div id="toast" class="toast"></div>',1)
+          js='''
+          let activeRoomId=null;
+          let activeRoom=null;
+          async function openRoom(roomId){
+            try{
+              activeRoomId=roomId;
+              const r=await request('/v1/rooms/'+encodeURIComponent(roomId));
+              activeRoom=r;
+              renderRoom(r);
+              document.getElementById('roomModal').classList.add('show');
+            }catch(e){showToast(e.message||'Oda açılamadı');}
+          }
+          function closeRoom(){activeRoomId=null;activeRoom=null;document.getElementById('roomModal').classList.remove('show')}
+          function renderRoom(r){
+            document.getElementById('roomTitle').textContent=r.name||'Oda';
+            document.getElementById('roomLevel').textContent='L'+(r.level||1);
+            document.getElementById('roomMembers').textContent=(r.member_count||0)+'/'+(r.capacity||0);
+            document.getElementById('roomSpend').textContent=(r.spent_lidya||0).toLocaleString('tr-TR');
+            document.getElementById('roomChatState').textContent=r.chat_enabled?'Sohbet açık':'Sohbet kapalı';
+            const box=document.getElementById('roomSeats');
+            box.innerHTML='';
+            (r.seats||[]).forEach(seat=>{
+              const b=document.createElement('button');b.className='seat '+(seat.locked?'locked ':'')+(seat.user_id?'occupied':'');
+              b.onclick=()=>{if(!seat.locked&&!seat.user_id)joinSeat(seat.seat_number);else if(seat.user_id===getCurrentUserId())joinSeat(seat.seat_number);else showToast(seat.locked?'Bu koltuk kilitli':'Bu koltuk dolu')};
+              b.innerHTML='<span class="seaticon">'+(seat.locked?'🔒':seat.user_id?'🎙️':'🎤')+'</span>Koltuk '+seat.seat_number+(seat.user_id?'\nDolu':'');box.appendChild(b)
+            });
+          }
+          async function refreshRoom(){if(activeRoomId)await openRoom(activeRoomId)}
+          async function joinSeat(n){try{await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/seats/'+n+'/join',{method:'POST'});await refreshRoom();showToast('Koltuk alındı 🎙️')}catch(e){showToast(e.message||'Koltuk alınamadı')}}
+          async function joinMySeat(){if(!activeRoom){return}const n=(activeRoom.seats||[]).find(x=>!x.locked&&!x.user_id)?.seat_number;if(!n){showToast('Boş koltuk yok');return}await joinSeat(n)}
+          async function leaveMySeat(){try{await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/seats/leave',{method:'DELETE'});await refreshRoom();showToast('Koltuktan kalktın')}catch(e){showToast(e.message||'İşlem başarısız')}}
+          function getCurrentUserId(){try{const u=JSON.parse(localStorage.getItem('erischat.user')||'null');return u?.id||u?.user_id||''}catch(_){return ''}}
+          function sendRoomMessage(){const input=document.getElementById('roomChatInput');const text=input.value.trim();if(!text)return;const log=document.getElementById('roomChatLog');if(log.querySelector('.roomempty'))log.innerHTML='';const d=document.createElement('div');d.className='roomchatmsg';d.textContent='Sen: '+text;log.appendChild(d);input.value='';log.scrollTop=log.scrollHeight;showToast('Mesaj yerel olarak eklendi; WebSocket oda kanalı sonraki adımda bağlanacak.')}
+          '''
+          if 'async function openRoom(roomId)' not in s:
+              s=s.replace('</script>',js+'</script>',1)
+          # Redirect existing room-card joins to the real room screen when the room id is available.
+          import re
+          s=re.sub(r"async function joinRoom\([^\{]*\{", "async function joinRoom(roomId){\n try{await request('/v1/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST'});await openRoom(roomId);showToast('Odaya katıldın');return;}catch(e){showToast(e.message||'Odaya girilemedi');return;}\n }\n async function legacyJoinRoom(){", s, count=1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('frontend/index.html','utf8');const scripts=[...s.matchAll(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]);scripts.forEach((x,i)=>new vm.Script(x,{filename:'inline-'+i+'.js'}));console.log('inline-js-ok',scripts.length)"
+      - name: Commit room screen
+        run: |
+          git config user.name 'ErisChat Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/index.html
+          git diff --cached --quiet || git commit -m 'feat: add real room screen'
+          git push
