@@ -16,25 +16,30 @@ concurrency:
 
 jobs:
   deploy:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Prepare frontend
+        shell: bash
         run: |
+          set -euo pipefail
+          rm -rf _site
           mkdir -p _site
           cp -R frontend/. _site/
           if [ -f _site/erischat-main.html ]; then
             cp _site/erischat-main.html _site/index.html
           fi
           touch _site/.nojekyll
+          test -f _site/index.html
+          echo "Prepared Pages site:"
+          find _site -maxdepth 2 -type f | sort | head -100
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
