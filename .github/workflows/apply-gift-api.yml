@@ -1,0 +1,48 @@
+name: Apply Gift API
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add gift catalog and events API
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/room_routes.py')
+          s = p.read_text(encoding='utf-8')
+          if 'def gift_catalog(' not in s:
+              anchor = '    @router.get("/{room_id}/gift-leaderboard")\n'
+              block = '''    @router.get("/{room_id}/gift-catalog")\n    def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room = get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id):\n            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        return [{"gift_key": key, "unit_price": price, "animation": price >= 30} for key, price in GIFT_CATALOG.items()]\n\n    @router.get("/{room_id}/gift-events")\n    def gift_events(room_id: str, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room = get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id):\n            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        limit = max(1, min(limit, 100))\n        rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit)))\n        rows.reverse()\n        return [{\n            "id": row.id,\n            "sender_id": row.sender_id,\n            "recipient_id": row.recipient_id,\n            "gift_key": row.gift_key,\n            "unit_price": row.unit_price,\n            "quantity": row.quantity,\n            "total_price": row.total_price,\n            "recipient_percent": row.recipient_percent,\n            "recipient_amount": row.recipient_amount,\n            "created_at": row.created_at,\n            "animation": row.total_price >= 30,\n        } for row in rows]\n\n'''
+              if anchor not in s:
+                  raise SystemExit('gift leaderboard anchor not found')
+              s = s.replace(anchor, block + anchor, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Validate backend
+        run: python -m compileall -q backend/app
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/room_routes.py
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+          else
+            git commit -m 'feat(room): add gift catalog and gift events API'
+            git push
+          fi
