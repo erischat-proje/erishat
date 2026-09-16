@@ -90,7 +90,8 @@ ODA SİSTEMİ
 - [x] 2026-09-17: GET /v1/rooms gerçek oda listeleme endpoint'i eklendi.
 - [x] 2026-09-17: Müzik eklemede 10 parça sınırı ödeme işleminden önce kontrol edilecek şekilde düzeltildi.
 - [x] Frontend sabit/demo oda listesi gerçek GET /v1/rooms verisine bağlandı.
-- [ ] Gerçek oda oluşturma ve oda giriş ekranını frontend'e bağla.
+- [x] Gerçek oda giriş ekranı frontend'e bağlandı; oda modalı ve koltuk API akışı eklendi.
+- [ ] Gerçek oda oluşturma UI akışını tamamla.
 
 VIP 1-12
 - [ ] VIP 1: rozet + özel avatar/çerçeve.
@@ -154,6 +155,7 @@ CANLI ODA / SES
 - [ ] Mikrofon koltukları için gerçek medya yetkileri.
 - [ ] Koltuk kilidi/susturma kurallarını medya katmanına bağla.
 - [ ] Oda içi gerçek zamanlı event kanalı oluştur.
+- [ ] Oda ekranındaki sohbeti gerçek WebSocket oda kanalına bağla.
 - [ ] Oda hediye, giriş, atılma, moderasyon ve oyun eventlerini gerçek zamanlı yayınla.
 
 YÖNETİM / MODERASYON

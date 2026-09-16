@@ -108,3 +108,13 @@ Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzer
 - [x] Railway production `erischat` servisi son deployment durumunda SUCCESS.
 - [x] Railway `/ready` healthcheck logunda 200 OK görüldü.
 - [ ] Gerçek yetkili `/v1/rooms` smoke testi ve frontend canlı URL testi.
+
+
+13. 2026-09-17 — GERÇEK ODA EKRANI
+- [x] GitHub Actions `build-real-room-screen` workflow başarıyla tamamlandı.
+- [x] `frontend/index.html` içine gerçek oda ekranı modalı eklendi; oda adı, seviye, kişi sayısı, harcama, mikrofon koltukları ve sohbet alanı mevcut.
+- [x] Gerçek oda detayını `GET /v1/rooms/{room_id}` ile yükleme bağlantısı eklendi.
+- [x] Koltuğa geçme/kalkma akışı gerçek oda seat API endpointlerine bağlandı.
+- [x] Önceki JavaScript sözdizimi hatası düzeltildi ve Actions Node syntax kontrolü başarıyla geçti.
+- [ ] Oda içi sohbet henüz WebSocket kanalına bağlı değil; şu an yerel UI gösterimi.
+- [ ] Hediye butonu henüz gerçek hediye API menüsüne bağlı değil.
