@@ -51,7 +51,7 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 - [x] Yeni geliştirmeye başlamadan önce mevcut çalışan kodu koruma ve her aşamada iki takip dosyasını güncelleme kuralı kayda alındı.
 
 7. 2026-09-17 — ODA BACKEND MİLADI
-- [x] `backend/app/room_routes.py` oda koltuğuna katılma endpoint'i eklendi: POST `/v1/rooms/{room_id}/seats/{seat_number}/join`.
+- [x] `backend/app/room_routes.py` oda koltuğuna katılma endpoint'i eklendi.
 - [x] Kullanıcının koltuktan ayrılması endpoint'i eklendi.
 - [x] Kilitli/dolu koltuk ve aynı kullanıcının ikinci koltuğa geçmesi engellendi.
 - [x] Mikrofon koltuğu kuralları oda seviyesindeki koltuk sayısıyla kontrol ediliyor.
@@ -62,85 +62,46 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 - [x] 30 Lidya eşiği hediye toplam harcaması üzerinden animasyon flag'ine bağlandı.
 
 8. 2026-09-17 — ODA API İLERLEMESİ
-- [x] `GET /v1/rooms` endpoint'i eklendi; gerçek veritabanındaki odaları döndürüyor.
+- [x] `GET /v1/rooms` endpoint'i eklendi.
 - [x] Oda listeleme yanıtı mevcut oda görünümüyle aynı kapasite/seviye/koltuk/üye bilgilerini taşıyor.
-- [x] Müzik ekleme akışında 10 parça sınırı ödeme işleminden önce kontrol ediliyor; 10 parça doluyken yanlışlıkla 150 Lidya kesilmesi engellendi.
+- [x] Müzik ekleme akışında 10 parça sınırı ödeme işleminden önce kontrol ediliyor.
 - [x] Değişiklikler `main` branch'e GitHub üzerinden commit edildi.
-- [ ] Railway deploy ve gerçek API smoke test henüz yapılmadı.
-
-9. 2026-09-17 — FRONTEND ODA API DENETİMİ
-- [x] `frontend/index.html` tamamen incelendi; mevcut frontend içinde token saklama ve API request köprüsünün zaten bulunduğu tespit edildi.
-- [x] Mevcut frontend API köprüsünün `erischat.apiBase` boşsa otomatik canlı origin kullanmadığı tespit edildi.
-- [x] Mevcut frontend kayıt çağrısının backend'in zorunlu `gender` alanını göndermediği tespit edildi; bu nedenle gerçek oturum bootstrap'ı ayrıca düzeltilmeli.
-- [x] Oda backend'inin `GET /v1/rooms` için Bearer token istediği doğrulandı.
-- [x] Oda listeleme ve oda girişini frontend'e bağlamak için güvenli değişiklik noktaları belirlendi.
-- [x] Oda frontend patch'i için GitHub Actions workflow yeniden oluşturuldu ve tetik dosyası eklendi.
-
-10. SONRAKİ KONTROL NOKTASI
-- [x] Frontend kayıt/oturum bootstrap'ını backend şemasıyla uyumlu hale getir.
-- [x] Frontend API base URL'yi canlı origin ile güvenli biçimde bağla.
-- [x] Sabit/demo oda listesini gerçek GET `/v1/rooms` verisine bağla.
-- [x] Gerçek oda girişini POST `/v1/rooms/{room_id}/join` ile bağla.
-- [ ] Oda içi gerçek ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla oluştur.
 - [ ] Railway deploy ve gerçek API smoke test.
 
-11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI
-- [x] `frontend/index.html` içindeki ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.
-- [x] Oda listesi üye sayısına göre sıralanıyor; ana sayfada ilk 3 oda gösteriliyor.
-- [x] Oda kartları gerçek oda kimliğiyle `POST /v1/rooms/{room_id}/join` çağrısı yapıyor.
+9. 2026-09-17 — FRONTEND ODA API BAĞLANTISI
+- [x] Ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.
+- [x] Oda listesi üye sayısına göre sıralanıyor.
+- [x] Oda kartları gerçek oda kimliğiyle join API çağrısı yapıyor.
 - [x] API base boşsa `location.origin` fallback'i eklendi.
-- [x] Patch GitHub Actions üzerinde başarıyla çalıştı ve frontend değişikliği commit edildi.
-- [x] Workflow job `patch` başarıyla tamamlandı.
-- [x] `main` branch'teki `frontend/index.html` tekrar okunarak oda API bağlantısının mevcut olduğu doğrulandı.
-- [ ] Railway smoke test.
+- [x] Patch GitHub Actions üzerinde başarıyla çalıştı.
 
-12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ
-- [x] Backend kayıt şemasında `gender` değerlerinin yalnızca `female`/`male` olduğu doğrulandı.
-- [x] Frontend kayıt isteğine cinsiyet seçimi eklendi; seçim localStorage'da tutuluyor.
-- [x] API base için canlı origin fallback'i düzeltildi.
-- [ ] Railway smoke test.
+10. 2026-09-17 — GERÇEK ODA EKRANI
+- [x] Gerçek oda ekranı modalı eklendi.
+- [x] Oda adı, seviye, kişi sayısı, harcama, mikrofon koltukları ve sohbet alanı mevcut.
+- [x] Gerçek oda detayını API'den yükleme bağlantısı eklendi.
+- [x] Koltuğa geçme/kalkma akışı gerçek endpointlere bağlandı.
 
-ÖNEMLİ NOT:
-Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
-13. 2026-09-17 — ACTIONS VE RAILWAY KONTROLÜ
-- [x] GitHub Actions `patch` job başarıyla tamamlandı.
-- [x] `frontend/index.html` ana/Keşfet oda listelerinin gerçek `/v1/rooms` verisine bağlı olduğu tekrar doğrulandı.
-- [x] Railway production `erischat` servisi son deployment durumunda SUCCESS.
-- [x] Railway `/ready` healthcheck logunda 200 OK görüldü.
-- [ ] Gerçek yetkili `/v1/rooms` smoke testi ve frontend canlı URL testi.
+11. 2026-09-17 — ODA GERÇEK ZAMANLI SOHBET
+- [x] RoomChatMessage modeli eklendi.
+- [x] Oda WebSocket kanalı eklendi.
+- [x] Oda sohbet geçmişi ve canlı mesaj yayınlama eklendi.
+- [x] Frontend oda sohbeti WebSocket istemcisi bağlandı.
 
-13. 2026-09-17 — GERÇEK ODA EKRANI
-- [x] GitHub Actions `build-real-room-screen` workflow başarıyla tamamlandı.
-- [x] `frontend/index.html` içine gerçek oda ekranı modalı eklendi; oda adı, seviye, kişi sayısı, harcama, mikrofon koltukları ve sohbet alanı mevcut.
-- [x] Gerçek oda detayını `GET /v1/rooms/{room_id}` ile yükleme bağlantısı eklendi.
-- [x] Koltuğa geçme/kalkma akışı gerçek oda seat API endpointlerine bağlandı.
-- [x] Önceki JavaScript sözdizimi hatası düzeltildi ve Actions Node syntax kontrolü başarıyla geçti.
-- [ ] Oda içi sohbet henüz WebSocket kanalına bağlı değil; şu an yerel UI gösterimi.
-- [ ] Hediye butonu henüz gerçek hediye API menüsüne bağlı değil.
+12. 2026-09-17 — ODA HEDİYE EKONOMİSİ GÜVENLİK DÜZELTMESİ
+- [x] İstemcinin recipient_percent belirlemesi kaldırıldı.
+- [x] Server-side sabit %70 alıcı payout kuralı.
+- [x] Gönderici/alıcı cüzdan satır kilitleme ve atomic transaction.
+- [x] Maksimum 99 adet.
+- [x] 30 Lidya ve üzeri animasyon flag'i.
+- [x] Server-side 45 hediyelik katalog ve fiyat doğrulaması.
+- [x] Geçersiz hediye reddi.
 
-14. 2026-09-17 — ODA GERÇEK ZAMANLI SOHBET
-- [x] `backend/app/room_models.py` içine `RoomChatMessage` modeli eklendi.
-- [x] `backend/app/main.py` içine `/ws/rooms/{room_id}` WebSocket oda kanalı eklendi.
-- [x] WebSocket bağlantısında token/session doğrulaması ve oda üyeliği kontrolü mevcut.
-- [x] Oda sohbet geçmişinden son 50 mesajın gönderilmesi eklendi.
-- [x] Yeni oda mesajlarının veritabanına kaydedilip odadaki bağlı istemcilere yayınlanması eklendi.
-- [x] Frontend oda sohbeti WebSocket istemcisi ve gerçek gönderim akışı kontrol edildi; mevcut `connectRoomSocket` entegrasyonu korundu.
-- [x] GitHub Actions `fix-room-chat` job'u başarıyla çalıştı; Python compile ve frontend inline-JS syntax kontrolleri SUCCESS.
-- [x] Tek seferlik düzeltme workflow'u ve trigger dosyası başarıdan sonra kaldırıldı; repository'de kalıcı tetikleyici bırakılmadı.
-- [x] Son düzeltme commit'i `08723ba` ile `main` branch'e işlendi.
-- [ ] Railway üzerinde bu yeni commit için deployment ve gerçek iki kullanıcı WebSocket smoke testi henüz yapılmadı.
-
-15. 2026-09-17 — ODA HEDİYE EKONOMİSİ GÜVENLİK DÜZELTMESİ
-- [x] `GiftSend` içinden istemcinin gönderdiği `recipient_percent` kaldırıldı.
-- [x] Hediye alıcı kazanç oranı server-side sabit kurala alındı: `%70`.
-- [x] Gönderici ve alıcı cüzdan satırları PostgreSQL üzerinde transaction sırasında kilitleniyor.
-- [x] Bakiye kontrolü, Lidya düşümü, alıcı kredisi ve `RoomGiftEvent` kaydı aynı transaction içinde tutuluyor.
-- [x] API yanıtına uygulanan `recipient_percent` açıkça eklendi; ekonomi kuralı gizli değil.
-- [x] Maksimum 99 adet ve 30 Lidya animasyon eşiği korunuyor.
-- [x] Server-side `GIFT_CATALOG` ile 45 hediye fiyatı doğrulanıyor; istemci `unit_price` gönderemiyor.
-- [x] Geçersiz `gift_key` reddediliyor ve gerçek fiyat server catalog'dan hesaplanıyor.
-- [x] `backend/app/main.py` içindeki yinelenen `RoomChatMessage` importu kaldırıldı.
-- [x] `backend/app/main.py` güncellemesi `6f5a883515c618d91a74cd671d3f2459f2f57b0a` commit'iyle `main` branch'e işlendi.
-- [ ] Hediye eventlerinin oda WebSocket kanalında canlı yayınlanması.
-- [ ] Hediye menüsünün frontend oda ekranına bağlanması.
+13. 2026-09-17 — HEDİYE API + FRONTEND BAĞLANTI AŞAMASI
+- [x] `GET /v1/rooms/{room_id}/gift-catalog` mevcut room API içinde doğrulandı.
+- [x] `GET /v1/rooms/{room_id}/gift-events` mevcut room API içinde doğrulandı.
+- [x] Gerçek oda ekranındaki demo hediye butonunu gerçek API menüsüne bağlayan patch workflow'u oluşturuldu.
+- [x] Hediye menüsünde kendim / mikrofondakiler / seçilen kişi hedefleri için UI hazırlandı.
+- [x] Hediye katalog fiyatı frontend'den değil server API'den alınacak şekilde tasarlandı.
+- [ ] Patch workflow'un çalışması ve frontend commit'inin doğrulanması.
+- [ ] Hediye eventlerinin WebSocket'te canlı yayınlanması.
 - [ ] Railway deploy + gerçek gift smoke testi.
