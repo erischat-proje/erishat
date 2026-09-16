@@ -109,7 +109,6 @@ Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzer
 - [x] Railway `/ready` healthcheck logunda 200 OK görüldü.
 - [ ] Gerçek yetkili `/v1/rooms` smoke testi ve frontend canlı URL testi.
 
-
 13. 2026-09-17 — GERÇEK ODA EKRANI
 - [x] GitHub Actions `build-real-room-screen` workflow başarıyla tamamlandı.
 - [x] `frontend/index.html` içine gerçek oda ekranı modalı eklendi; oda adı, seviye, kişi sayısı, harcama, mikrofon koltukları ve sohbet alanı mevcut.
@@ -118,3 +117,15 @@ Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzer
 - [x] Önceki JavaScript sözdizimi hatası düzeltildi ve Actions Node syntax kontrolü başarıyla geçti.
 - [ ] Oda içi sohbet henüz WebSocket kanalına bağlı değil; şu an yerel UI gösterimi.
 - [ ] Hediye butonu henüz gerçek hediye API menüsüne bağlı değil.
+
+14. 2026-09-17 — ODA GERÇEK ZAMANLI SOHBET
+- [x] `backend/app/room_models.py` içine `RoomChatMessage` modeli eklendi.
+- [x] `backend/app/main.py` içine `/ws/rooms/{room_id}` WebSocket oda kanalı eklendi.
+- [x] WebSocket bağlantısında token/session doğrulaması ve oda üyeliği kontrolü mevcut.
+- [x] Oda sohbet geçmişinden son 50 mesajın gönderilmesi eklendi.
+- [x] Yeni oda mesajlarının veritabanına kaydedilip odadaki bağlı istemcilere yayınlanması eklendi.
+- [x] Frontend oda sohbeti WebSocket istemcisi ve gerçek gönderim akışı kontrol edildi; mevcut `connectRoomSocket` entegrasyonu korundu.
+- [x] GitHub Actions `fix-room-chat` job'u başarıyla çalıştı; Python compile ve frontend inline-JS syntax kontrolleri SUCCESS.
+- [x] Tek seferlik düzeltme workflow'u ve trigger dosyası başarıdan sonra kaldırıldı; repository'de kalıcı tetikleyici bırakılmadı.
+- [x] Son düzeltme commit'i `08723ba` ile `main` branch'e işlendi.
+- [ ] Railway üzerinde bu yeni commit için deployment ve gerçek iki kullanıcı WebSocket smoke testi henüz yapılmadı.
