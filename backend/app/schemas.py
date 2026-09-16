@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -9,15 +9,41 @@ class UserCreate(BaseModel):
     gender: Literal["female", "male"]
     avatar: str = Field(default="👤", min_length=1, max_length=16)
 
+    @field_validator("nickname")
+    @classmethod
+    def validate_nickname(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("nickname boş olamaz")
+        return value
+
 
 class UserUpdate(BaseModel):
     nickname: str | None = Field(default=None, min_length=1, max_length=32)
     avatar: str | None = Field(default=None, min_length=1, max_length=16)
     notifications_enabled: bool | None = None
 
+    @field_validator("nickname")
+    @classmethod
+    def validate_optional_nickname(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("İsim boş olamaz")
+        return value
+
 
 class NicknameChange(BaseModel):
     nickname: str = Field(min_length=1, max_length=32)
+
+    @field_validator("nickname")
+    @classmethod
+    def validate_nickname(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("İsim boş olamaz")
+        return value
 
 
 class UserOut(BaseModel):
@@ -78,6 +104,14 @@ class ConversationOut(BaseModel):
 
 class MessageCreate(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Mesaj boş olamaz")
+        return value
 
 
 class MessageOut(BaseModel):
