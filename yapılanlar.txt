@@ -95,3 +95,8 @@ Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzer
 - [x] API base boşsa `location.origin` fallback'i eklendi.
 - [x] Patch GitHub Actions üzerinde çalıştı ve frontend değişikliği commit edildi.
 - [ ] Kayıt/oturum bootstrap'ında `gender` uyumluluğu ve Railway smoke test hâlâ açık.
+12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ
+- [x] Backend kayıt şemasında `gender` değerlerinin yalnızca `female`/`male` olduğu doğrulandı.
+- [x] Frontend kayıt isteğine cinsiyet seçimi eklendi; seçim localStorage'da tutuluyor.
+- [x] API base için canlı origin fallback'i düzeltildi.
+- [ ] Railway smoke test.

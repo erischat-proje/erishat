@@ -47,7 +47,7 @@
 })();
 </script><script>
 (function(){
-  const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace(/\/$/,'');
+  const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\/$/,'');
   const TOKEN_KEY='erischat.accessToken.v1';
   const USER_KEY='erischat.remoteUser.v1';
   const state={token:localStorage.getItem(TOKEN_KEY)||'',user:null,conversationId:null,ws:null};
@@ -65,7 +65,7 @@
   async function ensureUser(){
     if(state.token){try{state.user=await request('/v1/me');persist();return state.user}catch(e){state.token='';localStorage.removeItem(TOKEN_KEY)}}
     const profile=window.ErisChatProfile&&window.ErisChatProfile.get?window.ErisChatProfile.get():{};
-    const result=await request('/v1/users',{method:'POST',body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})});
+    let gender=localStorage.getItem('erischat.gender')||'';if(gender!=='female'&&gender!=='male'){const answer=window.prompt('ErisChat kayıt için cinsiyet seçin: kadın veya erkek','');gender=(answer||'').trim().toLowerCase();if(gender!=='female'&&gender!=='male'){showToast('Kayıt için kadın veya erkek seçmelisin.');throw new Error('Geçerli cinsiyet seçilmedi')}localStorage.setItem('erischat.gender',gender)}const result=await request('/v1/users',{method:'POST',body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤',gender})});
     state.token=result.access_token;state.user=result.user;localStorage.setItem(TOKEN_KEY,state.token);persist();return state.user;
   }
   function persist(){if(state.user)localStorage.setItem(USER_KEY,JSON.stringify(state.user))}

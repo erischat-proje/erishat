@@ -200,3 +200,8 @@ Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya
 - [ ] Kayıt/oturum bootstrap'ındaki `gender` uyumsuzluğunu düzelt.
 - [ ] Gerçek oda içi ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla bağla.
 - [ ] Railway deploy ve gerçek API smoke test.
+12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ
+- [x] `UserCreate.gender` için geçerli değerler doğrulandı: `female` / `male`.
+- [x] Frontend kayıt bootstrap'ına cinsiyet seçimi ekleniyor.
+- [x] API base canlı origin fallback'i düzeltiliyor.
+- [ ] Railway smoke test.
