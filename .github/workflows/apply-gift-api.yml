@@ -16,34 +16,61 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add gift catalog and events API
-        shell: bash
+      - name: Ensure gift API
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('backend/app/room_routes.py')
-          s = p.read_text(encoding='utf-8')
+          p=Path('backend/app/room_routes.py')
+          s=p.read_text(encoding='utf-8')
           if 'def gift_catalog(' not in s:
-              anchor = '    @router.get("/{room_id}/gift-leaderboard")\n'
-              block = '''    @router.get("/{room_id}/gift-catalog")\n    def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room = get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id):\n            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        return [{"gift_key": key, "unit_price": price, "animation": price >= 30} for key, price in GIFT_CATALOG.items()]\n\n    @router.get("/{room_id}/gift-events")\n    def gift_events(room_id: str, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room = get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id):\n            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        limit = max(1, min(limit, 100))\n        rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit)))\n        rows.reverse()\n        return [{\n            "id": row.id,\n            "sender_id": row.sender_id,\n            "recipient_id": row.recipient_id,\n            "gift_key": row.gift_key,\n            "unit_price": row.unit_price,\n            "quantity": row.quantity,\n            "total_price": row.total_price,\n            "recipient_percent": row.recipient_percent,\n            "recipient_amount": row.recipient_amount,\n            "created_at": row.created_at,\n            "animation": row.total_price >= 30,\n        } for row in rows]\n\n'''
-              if anchor not in s:
-                  raise SystemExit('gift leaderboard anchor not found')
-              s = s.replace(anchor, block + anchor, 1)
-              p.write_text(s, encoding='utf-8')
+              anchor='    @router.get("/{room_id}/gift-leaderboard")\n'
+              block='''    @router.get("/{room_id}/gift-catalog")\n    def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room=get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        return [{"gift_key":k,"unit_price":v,"animation":v>=30} for k,v in GIFT_CATALOG.items()]\n\n    @router.get("/{room_id}/gift-events")\n    def gift_events(room_id: str, limit: int=50, db: Session=Depends(get_db), user: User=Depends(current_user_dependency)):\n        room=get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        limit=max(1,min(limit,100))\n        rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id==room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit)))\n        rows.reverse()\n        return [{"id":r.id,"sender_id":r.sender_id,"recipient_id":r.recipient_id,"gift_key":r.gift_key,"unit_price":r.unit_price,"quantity":r.quantity,"total_price":r.total_price,"recipient_percent":r.recipient_percent,"recipient_amount":r.recipient_amount,"created_at":r.created_at,"animation":r.total_price>=30} for r in rows]\n\n'''
+              if anchor not in s: raise SystemExit('gift leaderboard anchor not found')
+              p.write_text(s.replace(anchor,block+anchor,1),encoding='utf-8')
           PY
 
-      - name: Validate backend
-        run: python -m compileall -q backend/app
+      - name: Apply real gift UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('frontend/index.html')
+          s=p.read_text(encoding='utf-8')
+          old=re.search(r'<div class="roomgiftbar">.*?</div>',s)
+          if old and 'openRoomGift()' not in old.group(0):
+              s=s[:old.start()]+'<div class="roomgiftbar"><button onclick="openRoomGift()">🎁 Hediye gönder</button><button onclick="refreshRoom()">↻ Yenile</button></div>'+s[old.end():]
+          modal='''<div id="roomGiftModal" class="modal"><div class="modalbox"><button class="close" onclick="closeModal('roomGiftModal')">×</button><h2>🎁 Hediye gönder</h2><div id="roomGiftTarget" class="muted">Alıcı: Kendim</div><div class="subgrid"><button class="roomaction" onclick="selectGiftTarget('self')">👤 Kendim</button><button class="roomaction" onclick="selectGiftTarget('mic')">🎙️ Mikrofondakiler</button></div><div id="roomGiftPeople" class="list"></div><div id="roomGiftGrid" class="gifts"></div><div style="display:flex;gap:8px;align-items:center;margin-top:10px"><span class="muted">Adet</span><input id="roomGiftQty" type="number" min="1" max="99" value="1" style="width:90px;background:#ffffff08;border:1px solid #ffffff12;color:#fff;border-radius:12px;padding:10px"></div><button class="action" onclick="sendRoomGift()">Hediyeyi gönder</button></div></div>'''
+          if 'id="roomGiftModal"' not in s:
+              anchor='<div id="toast" class="toast"></div>'
+              if anchor not in s: raise SystemExit('toast anchor not found')
+              s=s.replace(anchor,modal+anchor,1)
+          js=r'''let roomGiftCatalog=[];let roomGiftTargetMode='self';let roomGiftTargetId=null;let roomGiftKey=null;
+async function openRoomGift(){if(!activeRoomId||!activeRoom){showToast('Önce bir odaya gir');return}try{roomGiftCatalog=await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/gift-catalog');roomGiftTargetMode='self';roomGiftTargetId=getCurrentUserId();roomGiftKey=null;renderRoomGiftTargets();renderRoomGiftGrid();document.getElementById('roomGiftModal').classList.add('show')}catch(e){showToast(e.message||'Hediyeler yüklenemedi')}}
+function selectGiftTarget(mode,id){roomGiftTargetMode=mode;roomGiftTargetId=id||null;renderRoomGiftTargets()}
+function renderRoomGiftTargets(){const label=roomGiftTargetMode==='mic'?'Mikrofondaki herkes':roomGiftTargetMode==='self'?'Kendim':'Seçilen kişi';document.getElementById('roomGiftTarget').textContent='Alıcı: '+label;const box=document.getElementById('roomGiftPeople');box.innerHTML='';if(roomGiftTargetMode==='person')return;(activeRoom?.seats||[]).filter(x=>x.user_id).forEach(x=>{const b=document.createElement('button');b.className='item';b.textContent='🎙️ Koltuk '+x.seat_number+' • '+x.user_id;b.onclick=()=>selectGiftTarget('person',x.user_id);box.appendChild(b)})}
+function renderRoomGiftGrid(){const box=document.getElementById('roomGiftGrid');box.innerHTML='';roomGiftCatalog.forEach(g=>{const b=document.createElement('button');b.className='gift';b.innerHTML='<span>🎁</span>'+g.gift_key+'<br><small>'+Number(g.unit_price).toLocaleString('tr-TR')+' Lidya</small>';b.onclick=()=>{roomGiftKey=g.gift_key;document.querySelectorAll('#roomGiftGrid .gift').forEach(x=>x.style.outline='none');b.style.outline='2px solid #ff68b5'};box.appendChild(b)})}
+async function sendRoomGift(){if(!roomGiftKey){showToast('Önce hediye seç');return}const qty=Math.max(1,Math.min(99,Number(document.getElementById('roomGiftQty').value)||1));let ids=roomGiftTargetMode==='self'?[getCurrentUserId()]:roomGiftTargetMode==='person'?[roomGiftTargetId]:(activeRoom?.seats||[]).filter(x=>x.user_id).map(x=>x.user_id);ids=[...new Set(ids)].filter(Boolean);if(!ids.length){showToast('Gönderilecek alıcı yok');return}try{for(const id of ids)await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/gifts',{method:'POST',body:JSON.stringify({recipient_id:id,gift_key:roomGiftKey,quantity:qty})});closeModal('roomGiftModal');await refreshRoom();showToast('Hediye gönderildi 🎁')}catch(e){showToast(e.message||'Hediye gönderilemedi')}}
+'''
+          if 'async function openRoomGift()' not in s:
+              anchor='let activeRoomId=null;'
+              if anchor not in s: raise SystemExit('room JS anchor not found')
+              s=s.replace(anchor,js+anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate
+        run: |
+          python -m compileall -q backend/app
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('frontend/index.html').read_text(encoding='utf-8')
+          for x in ('openRoomGift','sendRoomGift','roomGiftModal','/gift-catalog'): assert x in s,x
+          print('gift API + UI valid')
+          PY
 
       - name: Commit changes
-        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add backend/app/room_routes.py
-          if git diff --cached --quiet; then
-            echo 'No changes needed.'
-          else
-            git commit -m 'feat(room): add gift catalog and gift events API'
-            git push
-          fi
+          git add backend/app/room_routes.py frontend/index.html
+          if git diff --cached --quiet; then echo 'No changes needed.'; else git commit -m 'feat(room): connect gift menu to real API'; git push; fi
