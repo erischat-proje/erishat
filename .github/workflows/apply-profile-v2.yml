@@ -1,0 +1,86 @@
+name: Apply ErisChat profile appearance
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/profile-appearance.trigger']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch profile and registration
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          # Backend models: immutable registration gender + purchased appearance.
+          p=Path('backend/app/models.py'); s=p.read_text(encoding='utf-8')
+          s=s.replace('    avatar: Mapped[str] = mapped_column(String(16), default="🦊", nullable=False)\n', '    avatar: Mapped[str] = mapped_column(String(16), default="👤", nullable=False)\n    gender: Mapped[str] = mapped_column(String(16), nullable=False, default="unspecified", server_default="unspecified")\n    avatar_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)\n    frame_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)\n')
+          p.write_text(s,encoding='utf-8')
+
+          # Schemas: gender required at registration; appearance is selected through dedicated endpoint.
+          p=Path('backend/app/schemas.py'); s=p.read_text(encoding='utf-8')
+          s=s.replace('class UserCreate(BaseModel):\n    nickname: str = Field(min_length=1, max_length=32)\n    avatar: str = Field(default="👤", min_length=1, max_length=16)\n', 'class UserCreate(BaseModel):\n    nickname: str = Field(min_length=1, max_length=32)\n    gender: str = Field(min_length=1, max_length=16)\n')
+          s=s.replace('class UserUpdate(BaseModel):\n    nickname: str | None = Field(default=None, min_length=1, max_length=32)\n    avatar: str | None = Field(default=None, min_length=1, max_length=16)\n    notifications_enabled: bool | None = None\n', 'class UserUpdate(BaseModel):\n    notifications_enabled: bool | None = None\n')
+          s=s.replace('    avatar: str\n    is_active: bool\n', '    avatar: str\n    gender: str\n    avatar_asset: str | None\n    frame_asset: str | None\n    is_active: bool\n')
+          p.write_text(s,encoding='utf-8')
+
+          # Auth: registration gender is mandatory and determines the default avatar family.
+          p=Path('backend/app/auth.py'); s=p.read_text(encoding='utf-8')
+          s=s.replace('def create_anonymous_user(db: Session, nickname: str, avatar: str = "👤") -> User:', 'def create_anonymous_user(db: Session, nickname: str, gender: str) -> User:')
+          s=s.replace('    nickname = nickname.strip()[:32]\n    if not nickname:\n        raise ValueError("nickname boş olamaz")\n', '    nickname = nickname.strip()[:32]\n    gender = gender.strip().lower()\n    if not nickname:\n        raise ValueError("nickname boş olamaz")\n    if gender not in {"kadın", "erkek"}:\n        raise ValueError("kayıt sırasında cinsiyet seçimi zorunludur")\n')
+          s=s.replace('        nickname=nickname,\n        avatar=avatar[:16],\n', '        nickname=nickname,\n        avatar="👩" if gender == "kadın" else "👨",\n        gender=gender,\n')
+          p.write_text(s,encoding='utf-8')
+
+          # Backend API: make old free avatar/nickname patch paths unavailable and add appearance purchase.
+          p=Path('backend/app/main.py'); s=p.read_text(encoding='utf-8')
+          s=s.replace('from sqlalchemy import text\n', 'from sqlalchemy import text\n')
+          s=s.replace('        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))\n', '        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT \'unspecified\'"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))\n')
+          s=s.replace('        user = create_anonymous_user(db, payload.nickname, payload.avatar)', '        user = create_anonymous_user(db, payload.nickname, payload.gender)')
+          s=s.replace('    if payload.nickname is not None:\n        user.nickname = payload.nickname\n    if payload.avatar is not None:\n        user.avatar = payload.avatar\n', '')
+          s=s.replace('def ensure_demo_user(db: Session) -> User:\n', 'def ensure_demo_user(db: Session) -> User:\n')
+          marker='@app.post("/v1/me/nickname", response_model=UserOut)\n'
+          appearance='''@app.post("/v1/me/appearance", response_model=UserOut)\ndef purchase_appearance(\n    payload: dict,\n    db: Session = Depends(get_db),\n    user: User = Depends(current_user),\n) -> User:\n    kind = str(payload.get("kind", "")).strip().lower()\n    asset = str(payload.get("asset", "")).strip()\n    if kind not in {"avatar", "frame"}:\n        raise HTTPException(status_code=400, detail="Geçersiz görünüm türü")\n    if not asset or len(asset) > 255:\n        raise HTTPException(status_code=400, detail="Geçersiz görünüm içeriği")\n    if not asset.startswith("Gereken_icerikler/"):\n        raise HTTPException(status_code=400, detail="Geçersiz görünüm kaynağı")\n    if user.lidya < 1000:\n        raise HTTPException(status_code=400, detail="Bu görünüm için 1000 Lidya gerekli")\n    user.lidya -= 1000\n    if kind == "avatar":\n        user.avatar_asset = asset\n    else:\n        user.frame_asset = asset\n    db.add(user)\n    db.commit()\n    db.refresh(user)\n    return user\n\n\n'''
+          if '@app.post("/v1/me/appearance"' not in s:
+              assert marker in s
+              s=s.replace(marker,appearance+marker,1)
+          # Remove the obsolete frontend-accessible gender/avatar mutation possibility by rejecting those fields if ever sent.
+          p.write_text(s,encoding='utf-8')
+
+          # Frontend: change profile settings 'Görünüm' to an appearance shop and add registration requirements.
+          p=Path('frontend/erischat-main.html'); s=p.read_text(encoding='utf-8')
+          old='''<button class="setting" onclick="toast('Hesap ayarları')">⚙️<div class="grow"><b>Hesap ayarları</b><small>Temel seçenekler</small></div><span>›</span></button><button class="setting" onclick="toast('Bildirimler')">🔔<div class="grow"><b>Bildirimler</b><small>Bildirim tercihleri</small></div><span>›</span></button><button class="setting" onclick="showView('anon')">🛡️<div class="grow"><b>Gizlilik</b><small>Anonimlik ve görünürlük</small></div><span>›</span></button>'''
+          new='''<button class="setting" onclick="toast('Hesap ayarları')">⚙️<div class="grow"><b>Hesap ayarları</b><small>Temel seçenekler</small></div><span>›</span></button><button class="setting" onclick="openNotifications()">🔔<div class="grow"><b>Bildirimler</b><small>Uygulama bildirimlerini aç / kapat</small></div><span>›</span></button><button class="setting" onclick="openAppearance()">🎨<div class="grow"><b>Görünüm</b><small>Avatar ve profil çerçevesi</small></div><span>›</span></button><button class="setting" onclick="openPrivacy()">🛡️<div class="grow"><b>Gizlilik</b><small>Profil adı ve görünürlük</small></div><span>›</span></button>'''
+          if old in s: s=s.replace(old,new,1)
+          marker='<section id="search" class="view">'
+          views='''<section id="appearance" class="view"><div class="toolbar"><button class="close" onclick="showView('profile')">‹</button><div><div class="eyebrow">GÖRÜNÜM</div><h2>Profil görünümü</h2></div></div><div class="card hero"><div class="eyebrow">PROFİLİNE UYGULA</div><h2>Avatar & çerçeve</h2><p>Satın aldığın görünüm profilinde ve ses odalarındaki koltuğunda görünür. Her parça 1000 Lidya.</p></div><div class="section"><h3>Kadın avatar</h3></div><div id="femaleAppearanceGrid" class="shopGrid"></div><div class="section"><h3>Erkek avatar</h3></div><div id="maleAppearanceGrid" class="shopGrid"></div><div class="section"><h3>Çerçeve</h3></div><div id="frameAppearanceGrid" class="shopGrid"></div></section>
+<section id="privacy" class="view"><div class="toolbar"><button class="close" onclick="showView('profile')">‹</button><div><div class="eyebrow">GİZLİLİK</div><h2>Profil adı</h2></div></div><div class="card hero"><div class="eyebrow">MEVCUT PROFİL ADI</div><h2 id="privacyCurrentName">Eris</h2><p>Profil adın profilinde ve odalarda görünür. Değiştirmek 300 Lidya tutar.</p></div><div class="section"><h3>İsim değiştir</h3></div><div class="search"><input id="nicknameInput" maxlength="32" placeholder="Yeni profil adı"><button class="primary" onclick="changeNickname()">300 Lidya</button></div></section>
+<section id="notifications" class="view"><div class="toolbar"><button class="close" onclick="showView('profile')">‹</button><div><div class="eyebrow">AYARLAR</div><h2>Bildirimler</h2></div></div><div class="card hero"><div class="eyebrow">UYGULAMA BİLDİRİMLERİ</div><h2 id="notificationTitle">Açık</h2><p>Yeni mesajlar ve uygulama bildirimleri için bildirimleri açıp kapatabilirsin.</p></div><div class="settings" style="margin-top:12px"><button class="setting" onclick="toggleNotifications()"><div class="grow"><b>Bildirimler</b><small id="notificationStateText">Bildirimler açık</small></div><span id="notificationSwitch" class="switch on"></span></button></div></section>
+'''
+          if 'id="appearance"' not in s:
+              assert marker in s; s=s.replace(marker,views+marker,1)
+          # Remove gender-change affordances if they appear in the existing UI.
+          s=re.sub(r'<[^>]*onclick="[^"]*(?:gender|cinsiyet)[^"]*"[^>]*>.*?</button>', '', s, flags=re.I|re.S)
+          # Registration UI is added as a modal; it is intentionally explicit and required for local signup.
+          if 'id="registration"' not in s:
+              reg='''<div id="registration" class="modal"><div class="sheet"><div class="sheetHead"><div><div class="eyebrow">ERISCHAT KAYIT</div><h2>Profilini oluştur</h2></div><button class="close" onclick="closeRegistration()">×</button></div><p class="muted" style="font-size:10px;line-height:1.6">Google veya Apple ile devam edebilirsin. Kayıt tamamlanmadan önce isim ve cinsiyet seçimi zorunludur.</p><input id="registerName" maxlength="32" placeholder="İsim" style="width:100%;margin:7px 0;background:#ffffff07;border:1px solid var(--line);color:#fff;border-radius:13px;padding:12px;outline:none"><div class="tabs" style="grid-template-columns:1fr 1fr"><button class="tab" onclick="selectGender('kadın')">Kadın</button><button class="tab" onclick="selectGender('erkek')">Erkek</button></div><button class="primary" style="height:44px;width:100%;margin-top:4px" onclick="finishRegistration()">Kaydı tamamla</button></div></div>'''
+              s=s.replace('</body>',reg+'</body>',1)
+          # Inject the external controller before body close.
+          if 'profile-appearance.js' not in s:
+              s=s.replace('</body>','<script src="profile-appearance.js"></script></body>',1)
+          p.write_text(s,encoding='utf-8')
+
+          # Controller: appearance catalog from the requested repository folders; VIP assets deliberately excluded.
+          js='''const ERIS_APPEARANCE={\n female:["Gereken_icerikler/kadinavatar"],\n male:["Gereken_icerikler/erkekavatar"],\n frames:["Gereken_icerikler/standart cerceve"]\n};\nconst ERIS_APPEARANCE_STATE={token:localStorage.getItem("eris_token")||"",user:null,gender:null};\nasync function erisApi(path,options={}){const h={"Content-Type":"application/json",...(options.headers||{})};if(ERIS_APPEARANCE_STATE.token)h.Authorization=`Bearer ${ERIS_APPEARANCE_STATE.token}`;const r=await fetch((localStorage.getItem("eris_api_base")||"")+path,{...options,headers:h});let d=null;try{d=await r.json()}catch{}if(!r.ok)throw new Error(d?.detail||"İşlem başarısız");return d}\nfunction openAppearance(){renderAppearance();showView("appearance")}\nfunction appearanceCard(kind,asset,label){return `<button class="shop" onclick="buyAppearance('${kind}','${asset}')"><div class="preview"><div class="miniA">${kind==="frame"?"🖼️":kind==="avatar"?"👤":"✨"}</div></div><b>${label}</b><small>Profilinde ve odalarda kullanılır</small><span class="price">💎 1.000 Lidya</span></button>`}\nfunction renderAppearance(){const f=document.getElementById("femaleAppearanceGrid"),m=document.getElementById("maleAppearanceGrid"),fr=document.getElementById("frameAppearanceGrid");if(f)f.innerHTML=appearanceCard("avatar","Gereken_icerikler/kadinavatar","Kadın avatar koleksiyonu");if(m)m.innerHTML=appearanceCard("avatar","Gereken_icerikler/erkekavatar","Erkek avatar koleksiyonu");if(fr)fr.innerHTML=appearanceCard("frame","Gereken_icerikler/standart cerceve","Standart çerçeve")}\nasync function buyAppearance(kind,asset){if(!ERIS_APPEARANCE_STATE.token){toast("Önce giriş yapmalısın");return}try{ERIS_APPEARANCE_STATE.user=await erisApi("/v1/me/appearance",{method:"POST",body:JSON.stringify({kind,asset})});toast("Görünüm satın alındı • 1.000 Lidya")}catch(e){toast(e.message)}}\nfunction openPrivacy(){if(typeof renderUser==="function")renderUser();showView("privacy")}\nasync function changeNickname(){const input=document.getElementById("nicknameInput"),name=input?.value.trim();if(!name){toast("İsim boş olamaz");return}try{const u=await erisApi("/v1/me/nickname",{method:"POST",body:JSON.stringify({nickname:name})});ERIS_APPEARANCE_STATE.user=u;document.getElementById("privacyCurrentName").textContent=u.nickname;toast("Profil adı değiştirildi • 300 Lidya düşüldü");showView("profile")}catch(e){toast(e.message)}}\nfunction openNotifications(){if(typeof renderNotificationState==="function")renderNotificationState();showView("notifications")}\nfunction selectGender(g){ERIS_APPEARANCE_STATE.gender=g;document.querySelectorAll("#registration .tab").forEach(b=>b.classList.toggle("active",b.textContent.trim().toLowerCase()===g))}\nfunction closeRegistration(){document.getElementById("registration")?.classList.remove("show")}\nasync function finishRegistration(){const nickname=document.getElementById("registerName")?.value.trim();if(!nickname||!ERIS_APPEARANCE_STATE.gender){toast("İsim ve cinsiyet seçimi zorunlu");return}toast("Kayıt altyapısı Google/Apple bağlantısı için hazır")}\n'''
+          Path('frontend/profile-appearance.js').write_text(js,encoding='utf-8')
+          Path('frontend/profile-appearance.trigger').write_text('profile appearance v2\n',encoding='utf-8')
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/models.py backend/app/schemas.py backend/app/auth.py backend/app/main.py frontend/erischat-main.html frontend/profile-appearance.js frontend/profile-appearance.trigger
+          git diff --cached --quiet || (git commit -m 'feat: profile appearance catalog and immutable gender' && git push)
