@@ -1,0 +1,85 @@
+name: Gift backend endpoints
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch-gifts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add gift endpoints
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/room_routes.py')
+          s = p.read_text(encoding='utf-8')
+          marker = '    @router.get("/{room_id}/gift-leaderboard")'
+          if marker not in s:
+              raise SystemExit('gift leaderboard marker not found')
+          if '/gift-catalog' not in s:
+              block = '''    @router.get("/{room_id}/gift-catalog")
+    def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
+        return {
+            "recipient_percent": GIFT_RECIPIENT_PERCENT,
+            "gifts": [{"gift_key": key, "unit_price": price} for key, price in GIFT_CATALOG.items()],
+        }
+
+    @router.get("/{room_id}/gift-events")
+    def gift_events(room_id: str, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
+        limit = max(1, min(limit, 100))
+        events = list(db.scalars(
+            select(RoomGiftEvent)
+            .where(RoomGiftEvent.room_id == room.id)
+            .order_by(RoomGiftEvent.created_at.desc())
+            .limit(limit)
+        ))
+        events.reverse()
+        return [{
+            "id": e.id,
+            "sender_id": e.sender_id,
+            "recipient_id": e.recipient_id,
+            "gift_key": e.gift_key,
+            "unit_price": e.unit_price,
+            "quantity": e.quantity,
+            "total_price": e.total_price,
+            "recipient_percent": e.recipient_percent,
+            "recipient_amount": e.recipient_amount,
+            "created_at": e.created_at,
+            "animation": e.total_price >= 30,
+        } for e in events]
+
+'''
+              s = s.replace(marker, block + marker, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Validate Python
+        run: python3 -m compileall -q backend/app
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git add backend/app/room_routes.py
+          git commit -m 'feat: add gift catalog and event endpoints'
+          git push
