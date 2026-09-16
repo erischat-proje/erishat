@@ -68,14 +68,22 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 - [x] Değişiklikler `main` branch'e GitHub üzerinden commit edildi.
 - [ ] Railway deploy ve gerçek API smoke test henüz yapılmadı.
 
-9. 2026-09-17 — SONRAKİ KONTROL NOKTASI
-- [ ] Frontend'in gerçek oda API'sine bağlanması.
-- [ ] Gerçek oda oluşturma ve oda giriş ekranı.
-- [ ] Oda event/WebSocket yayını.
-- [ ] Oda hediye animasyonu ve canlı hediye sıralaması.
-- [ ] VIP yetkilerinin oda moderasyonuna bağlanması.
-- [ ] Lidya ledger/race-condition güvenliği.
-- [ ] Railway deploy + gerçek API smoke test.
+9. 2026-09-17 — FRONTEND ODA API DENETİMİ
+- [x] `frontend/index.html` tamamen incelendi; mevcut frontend içinde token saklama ve API request köprüsünün zaten bulunduğu tespit edildi.
+- [x] Mevcut frontend API köprüsünün `erischat.apiBase` boşsa otomatik canlı origin kullanmadığı tespit edildi.
+- [x] Mevcut frontend kayıt çağrısının backend'in zorunlu `gender` alanını göndermediği tespit edildi; bu nedenle gerçek oturum bootstrap'ı ayrıca düzeltilmeli.
+- [x] Oda backend'inin `GET /v1/rooms` için Bearer token istediği doğrulandı.
+- [x] Oda listeleme ve oda girişini frontend'e bağlamak için güvenli değişiklik noktaları belirlendi.
+- [x] Geçici otomatik patch workflow denemesi yapıldı ve değişiklik uygulanmadan temizlendi; `frontend/index.html` bu denemede değiştirilmedi.
+- [ ] Frontend gerçek oda API bağlantısı henüz tamamlanmadı.
+
+10. 2026-09-17 — SONRAKİ KONTROL NOKTASI
+- [ ] Frontend kayıt/oturum bootstrap'ını backend şemasıyla uyumlu hale getir.
+- [ ] Frontend API base URL'yi canlı origin ile güvenli biçimde bağla.
+- [ ] Sabit/demo oda listesini gerçek GET `/v1/rooms` verisine bağla.
+- [ ] Gerçek oda girişini POST `/v1/rooms/{room_id}/join` ile bağla.
+- [ ] Oda içi gerçek ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla oluştur.
+- [ ] Railway deploy ve gerçek API smoke test.
 
 ÖNEMLİ NOT:
 Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
