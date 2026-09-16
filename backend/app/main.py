@@ -10,7 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 from .auth import create_anonymous_user
 from .config import settings
 from .db import Base, engine, get_db
-from .models import User
+from .models import Conversation, User
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .schemas import (
     ConversationCreate,
@@ -237,7 +237,9 @@ class ConnectionManager:
             except Exception:
                 self.disconnect(user_id, socket)
 
+
 manager = ConnectionManager()
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
