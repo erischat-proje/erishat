@@ -87,6 +87,10 @@ ODA SİSTEMİ
 - [ ] Oda seviyeleri L1-L8 kapasite/moderatör/koltuk haritasını gerçek backend kurallarına bağla.
 - [ ] L4+ ücretsiz oda kilidi; L1-L3 için 24 saatlik 150 Lidya kuralı.
 - [ ] Oda harcama/level ilerlemesinin tüm ilgili Lidya işlemlerini eksiksiz ve atomik takip etmesi.
+- [x] 2026-09-17: GET /v1/rooms gerçek oda listeleme endpoint'i eklendi.
+- [x] 2026-09-17: Müzik eklemede 10 parça sınırı ödeme işleminden önce kontrol edilecek şekilde düzeltildi.
+- [ ] Frontend sabit/demo oda listesini gerçek GET /v1/rooms verisine bağla.
+- [ ] Gerçek oda oluşturma ve oda giriş ekranını frontend'e bağla.
 
 VIP 1-12
 - [ ] VIP 1: rozet + özel avatar/çerçeve.
