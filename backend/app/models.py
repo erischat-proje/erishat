@@ -9,11 +9,25 @@ class User(Base):
     public_id: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
     nickname: Mapped[str] = mapped_column(String(32), nullable=False)
     avatar: Mapped[str] = mapped_column(String(16), default="🦊", nullable=False)
+    gender: Mapped[str] = mapped_column(String(16), default="unspecified", server_default="unspecified", nullable=False)
+    avatar_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    frame_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     lidya: Mapped[int] = mapped_column(Integer, default=10_000_000, server_default="10000000", nullable=False)
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    cosmetics: Mapped[list["UserCosmetic"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+class UserCosmetic(Base):
+    __tablename__ = "user_cosmetics"
+    __table_args__ = (UniqueConstraint("user_id", "cosmetic_type", "asset_key", name="uq_user_cosmetic"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    cosmetic_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    asset_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    purchased_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    user: Mapped[User] = relationship(back_populates="cosmetics")
 
 class Conversation(Base):
     __tablename__ = "conversations"
