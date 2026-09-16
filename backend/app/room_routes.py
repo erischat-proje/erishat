@@ -29,6 +29,27 @@ LEVELS = {
 # The client must never be able to choose or increase this percentage.
 GIFT_RECIPIENT_PERCENT = 70
 
+GIFT_CATALOG = {
+    "Zeytin Dalı": 1, "Kil Toprak Çanak": 2, "Pazaryeri Üzümü": 3,
+    "Parşömen Rulosu": 4, "Kilden Mühür": 5, "Tunç Broş": 6,
+    "Baharat Kesesi": 7, "Antik Çömlek": 8, "Karakalem Sardes Çizimi": 9,
+    "Meşale Kıvılcımı": 10, "Gümüş Broş": 12, "Zeytinyağı Şişesi": 13,
+    "Antik Tarak": 14, "Seramik Kase": 15, "Tunç Para (Sikke)": 18,
+    "Antik Arp": 20, "Zeytin Taç": 30, "Mavi Boncuk / Nazarlık": 40,
+    "Kraliyet Şarabı": 50, "Lidya Mühür Yüzüğü": 60, "Poyraz Rüzgarı": 70,
+    "Gümüş Sikke Kesesi": 90, "Altın Zeytin Dalı": 100, "Sardes Sütunu": 120,
+    "Altın Broş": 150, "Güneş Kursu": 180, "Sardes Altın Feneri": 200,
+    "Kral Alyattes’in Kılıcı": 250, "Paktalos Nehri Altını": 350,
+    "Antik Savaş Arabası": 500, "Kroisos’un Altın Sikkesi": 750,
+    "Kraliyet Asası": 1000, "Anadolu Kaplanı": 1250,
+    "Efes Artemis Tapınağı Sütunu": 1500, "Kraliyet Tahtı": 2000,
+    "Altın Nehir Yağmuru": 3000, "Eris & Lidya Anıtı": 4500,
+    "Kroisos’un Hazinesi": 6000, "Lidya Savaş Gemisi (Trirem)": 8000,
+    "Antik Güneş Tanrısı Heykeli": 10000, "Altın Kanatlı Griffin": 12500,
+    "Sardes Sarayı": 15000, "Efsanevi Lidyum Aslanı": 17500,
+    "Dünyanın İlk Parası Anıtı": 19000, "Kroisos’un Altın Tahtı": 20000,
+}
+
 
 class RoomCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)
@@ -49,7 +70,6 @@ class BanUpdate(BaseModel):
 class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64)
     gift_key: str = Field(min_length=1, max_length=64)
-    unit_price: int = Field(ge=1, le=10_000_000)
     quantity: int = Field(ge=1, le=99)
 
 
@@ -283,7 +303,10 @@ def register_room_auth(current_user_dependency):
         if not sender: raise HTTPException(status_code=404, detail="Gönderen bulunamadı")
         if not recipient: raise HTTPException(status_code=404, detail="Alıcı bulunamadı")
 
-        total = payload.unit_price * payload.quantity
+        unit_price = GIFT_CATALOG.get(payload.gift_key)
+        if unit_price is None:
+            raise HTTPException(status_code=400, detail="Geçersiz hediye")
+        total = unit_price * payload.quantity
         if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
         recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100
@@ -294,7 +317,7 @@ def register_room_auth(current_user_dependency):
             sender_id=sender.id,
             recipient_id=recipient.id,
             gift_key=payload.gift_key,
-            unit_price=payload.unit_price,
+            unit_price=unit_price,
             quantity=payload.quantity,
             total_price=total,
             recipient_percent=GIFT_RECIPIENT_PERCENT,
@@ -305,6 +328,7 @@ def register_room_auth(current_user_dependency):
         return {
             "gift_key": payload.gift_key,
             "quantity": payload.quantity,
+            "unit_price": unit_price,
             "total_price": total,
             "recipient_percent": GIFT_RECIPIENT_PERCENT,
             "recipient_amount": recipient_amount,
