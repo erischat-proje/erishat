@@ -171,6 +171,16 @@ EKONOMİ / GÜVENLİK
 - [ ] Oyun sonuçları ve ödemelerinde audit trail.
 - [ ] Gizli oran/sonuç manipülasyonu kullanılmaması; ekonomik kurallar dokümante edilmeli.
 
+10. 2026-09-17 — FRONTEND ODA API KONTROLÜ
+- [x] `frontend/index.html` incelendi; mevcut token/API köprüsünün bulunduğu doğrulandı.
+- [x] `GET /v1/rooms` backend endpoint'inin Bearer token istediği doğrulandı.
+- [x] Frontend kayıt çağrısının mevcut backend kayıt şemasıyla uyumlu olmadığı (gender alanı eksik) tespit edildi.
+- [x] Frontend API base URL boş kaldığında canlı origin'e otomatik bağlanmadığı tespit edildi.
+- [x] Gerçek oda listesi ve oda girişinin bağlanacağı güvenli değişiklik noktaları belirlendi.
+- [x] Geçici patch workflow denemesi yapıldı ve repository temiz bırakıldı; frontend'e uygulanmış sahte/yarım değişiklik bırakılmadı.
+- [ ] Frontend gerçek GET `/v1/rooms` bağlantısı.
+- [ ] Frontend gerçek oda giriş akışı.
+
 DOKÜMANTASYON / TAKİP KURALI
 - [ ] Her kod değişikliğinden sonra ilgili maddeyi güncelle.
 - [ ] Tamamlanan işler yapılanlar.txt'ye tarih + dosya + kısa sonuç ile yazılacak.
