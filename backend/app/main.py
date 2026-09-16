@@ -343,3 +343,5 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+
+# Deployment marker: this file must be rebuilt from the current main branch.
