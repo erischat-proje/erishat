@@ -11,6 +11,11 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     nickname: str | None = Field(default=None, min_length=1, max_length=32)
     avatar: str | None = Field(default=None, min_length=1, max_length=16)
+    notifications_enabled: bool | None = None
+
+
+class NicknameChange(BaseModel):
+    nickname: str = Field(min_length=1, max_length=32)
 
 
 class UserOut(BaseModel):
@@ -21,6 +26,8 @@ class UserOut(BaseModel):
     nickname: str
     avatar: str
     is_active: bool
+    lidya: int
+    notifications_enabled: bool
     created_at: datetime
 
 
