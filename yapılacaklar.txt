@@ -91,6 +91,7 @@ ODA SİSTEMİ
 - [x] 2026-09-17: Müzik eklemede 10 parça sınırı ödeme işleminden önce kontrol edilecek şekilde düzeltildi.
 - [x] Frontend sabit/demo oda listesi gerçek GET /v1/rooms verisine bağlandı.
 - [x] Gerçek oda giriş ekranı frontend'e bağlandı; oda modalı ve koltuk API akışı eklendi.
+- [x] Oda ekranı WebSocket sohbet entegrasyonu ve backend oda mesaj modeli eklendi; gerçek ortam smoke testi bekliyor.
 - [ ] Gerçek oda oluşturma UI akışını tamamla.
 
 VIP 1-12
@@ -154,8 +155,7 @@ CANLI ODA / SES
 - [ ] WebRTC veya seçilecek ses altyapısını tasarla.
 - [ ] Mikrofon koltukları için gerçek medya yetkileri.
 - [ ] Koltuk kilidi/susturma kurallarını medya katmanına bağla.
-- [ ] Oda içi gerçek zamanlı event kanalı oluştur.
-- [ ] Oda ekranındaki sohbeti gerçek WebSocket oda kanalına bağla.
+- [x] Oda içi gerçek zamanlı sohbet kanalı `/ws/rooms/{room_id}` ve mesaj modeli eklendi; Railway/two-user smoke testi bekliyor.
 - [ ] Oda hediye, giriş, atılma, moderasyon ve oyun eventlerini gerçek zamanlı yayınla.
 
 YÖNETİM / MODERASYON
@@ -212,3 +212,13 @@ Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya
 - [x] Railway production `erischat` deployment SUCCESS.
 - [x] Railway `/ready` healthcheck 200 OK.
 - [ ] Yetkili `/v1/rooms` smoke testi ve canlı frontend uçtan uca testi.
+
+14. 2026-09-17 — GERÇEK ODA SOHBETİ KONTROL NOKTASI
+- [x] RoomChatMessage modeli ve `/ws/rooms/{room_id}` backend kanalı main branch'e işlendi.
+- [x] GitHub Actions `fix-room-chat` job'u SUCCESS; `py_compile` ve frontend inline JavaScript syntax kontrolü SUCCESS.
+- [x] Tek seferlik fix workflow/trigger temizlendi; kalıcı repo tetikleyicisi bırakılmadı.
+- [ ] Railway production'a `08723ba` ve sonraki dokümantasyon commitlerinin deploy edilmesi.
+- [ ] İki gerçek kullanıcıyla aynı odada mesaj gönderme/alma smoke testi.
+- [ ] Oda WebSocket kopma/yeniden bağlanma davranışı testi.
+- [ ] Oda hediye API'sini gerçek UI menüsüne bağla.
+- [ ] Gerçek oda oluşturma UI akışını tamamla.
