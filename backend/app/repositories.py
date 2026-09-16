@@ -39,38 +39,28 @@ class ConversationRepository:
         return list(self.db.scalars(stmt))
 
     def find_direct(self, user_ids: list[str]) -> Conversation | None:
-        """Find an existing DM whose complete member set equals user_ids."""
         if len(user_ids) != 2 or len(set(user_ids)) != 2:
             return None
-
         stmt = (
             select(Conversation.id)
-            .join(
-                ConversationMember,
-                ConversationMember.conversation_id == Conversation.id,
-            )
-            .where(
-                Conversation.type == "dm",
-                ConversationMember.user_id.in_(user_ids),
-            )
+            .join(ConversationMember, ConversationMember.conversation_id == Conversation.id)
+            .where(Conversation.type == "dm", ConversationMember.user_id.in_(user_ids))
             .group_by(Conversation.id)
             .having(func.count(func.distinct(ConversationMember.user_id)) == len(user_ids))
         )
-
         for conversation_id in self.db.scalars(stmt):
             if set(self.members(conversation_id)) == set(user_ids):
                 return self.get(conversation_id)
         return None
 
-    def list_for_user(self, user_id: str) -> list[Conversation]:
+    def list_for_user(self, user_id: str, limit: int = 50, offset: int = 0) -> list[Conversation]:
         stmt = (
             select(Conversation)
-            .join(
-                ConversationMember,
-                ConversationMember.conversation_id == Conversation.id,
-            )
+            .join(ConversationMember, ConversationMember.conversation_id == Conversation.id)
             .where(ConversationMember.user_id == user_id)
             .order_by(Conversation.created_at.desc())
+            .offset(offset)
+            .limit(limit)
         )
         return list(self.db.scalars(stmt).unique())
 
@@ -78,12 +68,7 @@ class ConversationRepository:
         conversation = Conversation(id=conversation_id)
         self.db.add(conversation)
         for user_id in user_ids:
-            self.db.add(
-                ConversationMember(
-                    conversation_id=conversation_id,
-                    user_id=user_id,
-                )
-            )
+            self.db.add(ConversationMember(conversation_id=conversation_id, user_id=user_id))
         self.db.commit()
         self.db.refresh(conversation)
         return conversation
@@ -93,13 +78,15 @@ class MessageRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list(self, conversation_id: str) -> list[Message]:
+    def list(self, conversation_id: str, limit: int = 100, offset: int = 0) -> list[Message]:
         stmt = (
             select(Message)
             .where(Message.conversation_id == conversation_id)
-            .order_by(Message.created_at.asc())
+            .order_by(Message.created_at.desc(), Message.id.desc())
+            .offset(offset)
+            .limit(limit)
         )
-        return list(self.db.scalars(stmt))
+        return list(reversed(list(self.db.scalars(stmt))))
 
     def create(self, message: Message) -> Message:
         self.db.add(message)
