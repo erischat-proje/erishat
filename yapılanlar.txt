@@ -1,6 +1,6 @@
 ERISCHAT – YAPILANLAR
 
-Bu dosya, v11 paketine kadar yapılan düzenlemelerin özetidir.
+Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolojik olarak takip eder.
 
 1. Frontend ve giriş yapısı
 - v54 arayüzü ana giriş yapısına taşındı.
@@ -37,10 +37,21 @@ Bu dosya, v11 paketine kadar yapılan düzenlemelerin özetidir.
 - WebSocket yeniden bağlanma ve bağlantı kesme fonksiyonları eklendi.
 - Mesaj geçmişini API'den yükleme altyapısı eklendi.
 
-5. Kontroller
+5. Önceki kontroller
 - Backend Python derleme kontrolleri yapıldı.
 - Frontend JavaScript sözdizimi kontrolleri yapıldı.
 - ZIP arşiv bütünlük kontrolleri yapıldı.
 
+6. 2026-09-17 — YENİ ÜRÜN GEREKSİNİMLERİ İÇİN AUDIT CHECKPOINT
+- [x] Kullanıcının gönderdiği oda, VIP 1-12, profil/fan, keşfet/rastgele, oyun ve aile gereksinimleri proje backlog'una işlendi.
+- [x] `yapılacaklar.txt` yeni ürün gereksinimleri ve takip kurallarıyla güncellendi.
+- [x] Mevcut oda altyapısında Room, RoomMember, RoomModerator, RoomBan, RoomSeat, RoomGiftEvent ve RoomMusic modellerinin bulunduğu tespit edildi.
+- [x] Oda seviye haritasının mevcut backend'de büyük ölçüde bulunduğu tespit edildi.
+- [x] VIP gizlilik, VIP durumu, konum, keşif tercihi, rapor, aile, oyun ve fan için mevcut model temelleri tespit edildi.
+- [x] Yeni geliştirmeye başlamadan önce mevcut çalışan kodu koruma ve her aşamada iki takip dosyasını güncelleme kuralı kayda alındı.
+- [ ] Tüm repo dosyalarının ayrıntılı kod/bağlantı audit'i tamamlanacak.
+- [ ] Eksik ürün akışları mevcut mimariye göre tamamlanacak.
+- [ ] Her tamamlanan geliştirme ayrıca bu dosyaya tarih, dosya ve test sonucu ile işlenecek.
+
 ÖNEMLİ NOT:
-Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmış değildir. Bu nedenle sistem henüz tamamen üretime hazır kabul edilmemelidir.
+Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
