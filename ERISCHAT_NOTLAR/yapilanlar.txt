@@ -20,7 +20,14 @@ BAŞLANGIÇ DENETİMİ
 
 İLK TEKNİK TESPİTLER
 - [x] Frontend ana dosyasında halen mock/demo davranışları bulunduğu görüldü; gerçek API entegrasyonu tamamlanmış kabul edilmeyecek.
-- [x] WebSocket backend mevcut olsa da frontend'in gerçek WebSocket bağlantısı kullandığı henüz doğrulanmadı.
+- [x] WebSocket backend mevcut olsa da frontend'in gerçek WebSocket bağlantısı kullandığı doğrulanmadı.
 - [x] Demo kullanıcı endpoint'i bulundu; production akışında demo verisinin ayrıştırılması gerekecek.
 - [x] Backend'de startup sırasında Base.metadata.create_all kullanımı mevcut; migration stratejisi ayrıca ele alınacak.
 - [x] Repository'de __pycache__ içerikleri bulunduğu görüldü; kaynak deposundan temizlenmesi planlandı.
+
+GELİŞTİRME TURU 1
+- [x] ConversationRepository.find_direct() yeniden düzenlendi; DM aramasındaki hatalı/karmaşık alt sorgu kaldırıldı.
+- [x] DM araması iki kullanıcı üyeliğini sayısal olarak doğrulayacak şekilde sadeleştirildi ve sonuç kümesinin tam üyelik kontrolü korundu.
+- [x] Değişiklik GitHub main branch'e commit edildi.
+- [x] Backend/frontend bağlantısında frontend'in hâlâ mock olduğu yeniden doğrulandı; gerçek bağlantı sonraki turda yapılacak.
+- [x] Container ortamında dış internet erişiminin kapalı olduğu görüldü; yerel GitHub indirme testi bu nedenle yapılamadı. Kod doğrulaması Railway/GitHub tarafındaki sonraki build ile yapılacak.
