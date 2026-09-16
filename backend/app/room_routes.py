@@ -25,8 +25,6 @@ LEVELS = {
     8: {"capacity": 105, "moderators": 12, "seats": 16, "required_spend": 1_560_000},
 }
 
-# Gift economy rule: payout is fixed and server-controlled.
-# The client must never be able to choose or increase this percentage.
 GIFT_RECIPIENT_PERCENT = 70
 
 GIFT_CATALOG = {
@@ -54,24 +52,19 @@ GIFT_CATALOG = {
 class RoomCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)
 
-
 class RoomChatUpdate(BaseModel):
     enabled: bool
-
 
 class ModeratorUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
 
-
 class BanUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
-
 
 class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64)
     gift_key: str = Field(min_length=1, max_length=64)
     quantity: int = Field(ge=1, le=99)
-
 
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128)
@@ -172,10 +165,7 @@ def register_room_auth(current_user_dependency):
     @router.get("")
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc())))
-        result = []
-        for room in rooms:
-            result.append(room_view(db, room))
-        return result
+        return [room_view(db, room) for room in rooms]
 
     @router.get("/{room_id}")
     def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -196,8 +186,7 @@ def register_room_auth(current_user_dependency):
     def leave_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if room.owner_id == user.id: raise HTTPException(status_code=400, detail="Oda sahibi odadan ayrılamaz; odayı kapatmalıdır")
-        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)); db.commit()
-        return {"left": True}
+        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)); db.commit(); return {"left": True}
 
     @router.post("/{room_id}/seats/{seat_number}/join")
     def join_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -236,16 +225,12 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id); require_owner(db, room, user); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == moderator_id)); db.commit(); return {"removed": True}
 
     @router.post("/{room_id}/bans")
-    def ban_user(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    def add_ban(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         if payload.user_id == room.owner_id: raise HTTPException(status_code=400, detail="Oda sahibi atılamaz")
-        if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)): db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id))
-        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.commit(); return {"banned": True}
-
-    @router.get("/{room_id}/bans")
-    def list_bans(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_staff(db, room, user); return [{"user_id": b.user_id, "banned_by": b.banned_by, "created_at": b.created_at} for b in db.scalars(select(RoomBan).where(RoomBan.room_id == room.id).order_by(RoomBan.created_at.desc()))]
+        if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)):
+            db.add(RoomBan(room_id=room.id, user_id=payload.user_id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.commit()
+        return {"banned": True}
 
     @router.delete("/{room_id}/bans/{banned_user_id}")
     def remove_ban(room_id: str, banned_user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -291,78 +276,73 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id); require_owner(db, room, user); room.locked = False; room.lock_expires_at = None; db.commit(); return {"locked": False}
 
     @router.post("/{room_id}/gifts")
-    def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    async def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
         if not is_member(db, room.id, payload.recipient_id): raise HTTPException(status_code=404, detail="Hediye alıcısı odada değil")
 
-        # Lock both wallets for the transaction. This prevents concurrent requests
-        # from spending the same Lidya balance twice on PostgreSQL.
         sender = db.scalar(select(User).where(User.id == user.id).with_for_update())
         recipient = db.scalar(select(User).where(User.id == payload.recipient_id).with_for_update())
         if not sender: raise HTTPException(status_code=404, detail="Gönderen bulunamadı")
         if not recipient: raise HTTPException(status_code=404, detail="Alıcı bulunamadı")
 
         unit_price = GIFT_CATALOG.get(payload.gift_key)
-        if unit_price is None:
-            raise HTTPException(status_code=400, detail="Geçersiz hediye")
+        if unit_price is None: raise HTTPException(status_code=400, detail="Geçersiz hediye")
         total = unit_price * payload.quantity
         if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
         recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100
         sender.lidya -= total
         recipient.lidya += recipient_amount
-        db.add(RoomGiftEvent(
-            room_id=room.id,
-            sender_id=sender.id,
-            recipient_id=recipient.id,
-            gift_key=payload.gift_key,
-            unit_price=unit_price,
-            quantity=payload.quantity,
-            total_price=total,
-            recipient_percent=GIFT_RECIPIENT_PERCENT,
+        event = RoomGiftEvent(
+            room_id=room.id, sender_id=sender.id, recipient_id=recipient.id,
+            gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity,
+            total_price=total, recipient_percent=GIFT_RECIPIENT_PERCENT,
             recipient_amount=recipient_amount,
-        ))
+        )
+        db.add(event)
         db.commit()
+        db.refresh(event)
         refresh_level(db, room)
+
+        # The room websocket lives in main.py. Importing here avoids a module-level
+        # circular import while keeping the gift transaction synchronous/atomic.
+        from .main import _broadcast_room_chat
+        await _broadcast_room_chat(room.id, {
+            "type": "room_gift",
+            "id": event.id,
+            "room_id": room.id,
+            "sender_id": sender.id,
+            "recipient_id": recipient.id,
+            "gift_key": event.gift_key,
+            "quantity": event.quantity,
+            "total_price": event.total_price,
+            "recipient_amount": event.recipient_amount,
+            "animation": event.total_price >= 30,
+            "created_at": event.created_at.isoformat() if event.created_at else None,
+        })
+
         return {
-            "gift_key": payload.gift_key,
-            "quantity": payload.quantity,
-            "unit_price": unit_price,
-            "total_price": total,
-            "recipient_percent": GIFT_RECIPIENT_PERCENT,
-            "recipient_amount": recipient_amount,
+            "gift_key": payload.gift_key, "quantity": payload.quantity,
+            "unit_price": unit_price, "total_price": total,
+            "recipient_percent": GIFT_RECIPIENT_PERCENT, "recipient_amount": recipient_amount,
             "animation": total >= 30,
         }
 
     @router.get("/{room_id}/gift-catalog")
     def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if not is_member(db, room.id, user.id):
-            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         return [{"gift_key": key, "unit_price": price, "animation": price >= 30} for key, price in GIFT_CATALOG.items()]
 
     @router.get("/{room_id}/gift-events")
     def gift_events(room_id: str, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if not is_member(db, room.id, user.id):
-            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         limit = max(1, min(limit, 100))
         rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit)))
         rows.reverse()
-        return [{
-            "id": row.id,
-            "sender_id": row.sender_id,
-            "recipient_id": row.recipient_id,
-            "gift_key": row.gift_key,
-            "unit_price": row.unit_price,
-            "quantity": row.quantity,
-            "total_price": row.total_price,
-            "recipient_percent": row.recipient_percent,
-            "recipient_amount": row.recipient_amount,
-            "created_at": row.created_at,
-            "animation": row.total_price >= 30,
-        } for row in rows]
+        return [{"id": row.id, "sender_id": row.sender_id, "recipient_id": row.recipient_id, "gift_key": row.gift_key, "unit_price": row.unit_price, "quantity": row.quantity, "total_price": row.total_price, "recipient_percent": row.recipient_percent, "recipient_amount": row.recipient_amount, "created_at": row.created_at, "animation": row.total_price >= 30} for row in rows]
 
     @router.get("/{room_id}/gift-leaderboard")
     def gift_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
