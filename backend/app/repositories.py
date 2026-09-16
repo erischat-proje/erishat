@@ -1,4 +1,4 @@
-from sqlalchemy import distinct, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .models import Conversation, ConversationMember, Message, User
@@ -39,7 +39,7 @@ class ConversationRepository:
         return list(self.db.scalars(stmt))
 
     def find_direct(self, user_ids: list[str]) -> Conversation | None:
-        """Find an existing 1-to-1 conversation containing exactly these users."""
+        """Find an existing DM whose complete member set equals user_ids."""
         if len(user_ids) != 2 or len(set(user_ids)) != 2:
             return None
 
@@ -54,14 +54,7 @@ class ConversationRepository:
                 ConversationMember.user_id.in_(user_ids),
             )
             .group_by(Conversation.id)
-            .having(
-                select(ConversationMember.user_id)
-                .where(ConversationMember.conversation_id == Conversation.id)
-                .where(ConversationMember.user_id.in_(user_ids))
-                .correlate(Conversation)
-                .scalar_subquery()
-                .is_not(None)
-            )
+            .having(func.count(func.distinct(ConversationMember.user_id)) == len(user_ids))
         )
 
         for conversation_id in self.db.scalars(stmt):
