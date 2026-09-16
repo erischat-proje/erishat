@@ -1,0 +1,102 @@
+name: patch-room-frontend
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-room-frontend.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch frontend
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('frontend/index.html')
+          s = p.read_text(encoding='utf-8')
+          old_api = "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace(/\\\\/$/,'');"
+          new_api = "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\\\\/$/,'');"
+          if old_api not in s:
+              raise SystemExit('API base marker not found')
+          s = s.replace(old_api, new_api, 1)
+          old_reg = "body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})"
+          new_reg = "body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤',gender:localStorage.getItem('erischat.gender')||'unspecified'})"
+          if old_reg not in s:
+              raise SystemExit('registration marker not found')
+          s = s.replace(old_reg, new_reg, 1)
+          s = s.replace('<div class="rooms"><button class="room" onclick="openChat(\'Rana’nın Odası\',\'R\')"><div class="pic">R</div><div class="roommain"><b>Rana\'nın Odası</b><small>Bugün mod yüksek ✨</small></div></button><button class="room" onclick="openChat(\'DJ Luna\',\'L\')"><div class="pic">L</div><div class="roommain"><b>DJ Luna</b><small>Müzik + sohbet gecesi</small></div></button><button class="room" onclick="openChat(\'Nora\',\'N\')"><div class="pic">N</div><div class="roommain"><b>Nora</b><small>Gece ekibi burada 🌙</small></div></button></div>', '<div class="rooms" id="homeRooms"><div class="empty">Gerçek odalar yükleniyor…</div></div>', 1)
+          s = s.replace('<div id="exploreRooms" class="list"><button class="item" onclick="openChat(\'Popüler Sohbet\',\'P\')">🔥 Popüler Sohbet<br><span class="muted">128 kişi aktif</span></button><button class="item" onclick="openChat(\'Gece Ekibi\',\'G\')">🌙 Gece Ekibi<br><span class="muted">64 kişi aktif</span></button><button class="item" onclick="openChat(\'Müzik Odası\',\'M\')">🎵 Müzik Odası<br><span class="muted">91 kişi aktif</span></button></div>', '<div id="exploreRooms" class="list"><div class="empty">Gerçek odalar yükleniyor…</div></div>', 1)
+          marker = '</body>'
+          addon = r'''<script>
+          (function(){
+            'use strict';
+            const state={rooms:[]};
+            async function loadRooms(){
+              const api=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\/$/,'');
+              const token=localStorage.getItem('erischat.accessToken.v1')||'';
+              const headers=token?{Authorization:'Bearer '+token}:{};
+              const home=document.getElementById('homeRooms');
+              const explore=document.getElementById('exploreRooms');
+              if(!home||!explore)return;
+              try{
+                const res=await fetch(api+'/v1/rooms',{headers});
+                if(!res.ok)throw new Error('Oda listesi alınamadı');
+                const rooms=await res.json();
+                state.rooms=Array.isArray(rooms)?rooms.sort((a,b)=>(b.member_count||0)-(a.member_count||0)):[];
+                renderRooms(home,'home');
+                renderRooms(explore,'explore');
+              }catch(err){
+                const msg=token?'Odalar yüklenemedi.':'Oturum hazırlanıyor…';
+                home.innerHTML='<div class="empty">'+msg+'</div>';
+                explore.innerHTML='<div class="empty">'+msg+'</div>';
+                setTimeout(loadRooms,1500);
+              }
+            }
+            function renderRooms(target,mode){
+              target.innerHTML='';
+              if(!state.rooms.length){target.innerHTML='<div class="empty">Henüz oluşturulmuş oda yok.</div>';return;}
+              const list=mode==='home'?state.rooms.slice(0,3):state.rooms;
+              list.forEach(room=>{
+                const b=document.createElement('button');
+                b.className=mode==='home'?'room':'item';
+                const letter=(room.name||'E').trim().charAt(0).toUpperCase()||'E';
+                const locked=room.locked?' 🔒':'';
+                b.innerHTML='<div class="pic">'+letter+'</div><div class="roommain"><b>'+escapeHtml(room.name||'İsimsiz Oda')+locked+'</b><small>'+Number(room.member_count||0)+' kişi • Seviye '+Number(room.level||1)+'</small></div>';
+                b.onclick=()=>joinRoom(room);
+                target.appendChild(b);
+              });
+            }
+            function escapeHtml(v){return String(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
+            async function joinRoom(room){
+              const api=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\/$/,'');
+              const token=localStorage.getItem('erischat.accessToken.v1')||'';
+              if(!token){showToast('Oturum hazırlanıyor…');return;}
+              try{
+                const res=await fetch(api+'/v1/rooms/'+encodeURIComponent(room.id)+'/join',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});
+                const body=await res.json().catch(()=>({}));
+                if(!res.ok)throw new Error(body.detail||'Odaya girilemedi');
+                openChat(room.name,(room.name||'E').charAt(0).toUpperCase());
+                showToast('Odaya katıldın ✓');
+              }catch(err){showToast(err.message||'Odaya girilemedi');}
+            }
+            const oldOpenSearch=window.openSearch;
+            window.ErisChatRooms={reload:loadRooms,get:()=>state.rooms.slice()};
+            window.addEventListener('load',()=>setTimeout(loadRooms,250));
+            setTimeout(loadRooms,800);
+          })();
+          </script>'''
+          if marker not in s:
+              raise SystemExit('body marker not found')
+          s=s.replace(marker,addon+marker,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node -e "const fs=require('fs'),vm=require('vm'); const s=fs.readFileSync('frontend/index.html','utf8'); const scripts=[...s.matchAll(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]); scripts.forEach((x,i)=>new vm.Script(x,{filename:'inline-'+i+'.js'})); console.log('inline-js-ok',scripts.length)"
+      - name: Commit patch
+        run: |
+          git config user.name 'ErisChat Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/index.html
+          git diff --cached --quiet || git commit -m 'feat: connect frontend room list to real API'
+          git push
