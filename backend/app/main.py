@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -33,7 +33,7 @@ from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
 logger = logging.getLogger("erischat.api")
-app = FastAPI(title="ErisChat API", version="0.8.0")
+app = FastAPI(title="ErisChat API", version="0.9.0")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
@@ -47,13 +47,10 @@ app.add_middleware(
 
 
 def ensure_user_settings_columns() -> None:
-    """Add the two profile-settings columns to existing PostgreSQL installs."""
+    """Backward-compatible schema repair for existing PostgreSQL installations."""
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
@@ -61,25 +58,20 @@ def ensure_user_settings_columns() -> None:
 
 @app.on_event("startup")
 def startup() -> None:
+    logger.info("ErisChat API startup: environment=%s", settings.environment)
     try:
         Base.metadata.create_all(bind=engine)
         ensure_user_settings_columns()
         with Session(engine) as db:
             cleanup_expired_sessions(db)
-    except OperationalError:
-        logger.exception("Veritabanı başlatılamadı")
+        logger.info("ErisChat API startup complete")
+    except Exception:
+        logger.exception("ErisChat API startup failed")
         raise
 
 
-def current_user(
-    db: Session = Depends(get_db),
-    authorization: str | None = Header(default=None),
-) -> User:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Bearer token gerekli")
-    token = authorization.split(" ", 1)[1].strip()
-    if not token:
-        raise HTTPException(status_code=401, detail="Bearer token gerekli")
+def current_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None)) -> User:
+    token = bearer_token(authorization)
     user = get_user_from_token(db, token)
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
@@ -105,7 +97,18 @@ def ensure_demo_user(db: Session) -> User:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": "0.8.0"}
+    return {"status": "ok", "service": "erischat-api", "version": "0.9.0"}
+
+
+@app.get("/ready")
+def ready() -> dict[str, str]:
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "service": "erischat-api", "version": "0.9.0"}
+    except OperationalError as exc:
+        logger.warning("Readiness DB check failed: %s", exc)
+        raise HTTPException(status_code=503, detail="database not ready") from exc
 
 
 @app.get("/v1/users/{user_id}", response_model=UserOut)
@@ -136,11 +139,7 @@ def me(user: User = Depends(current_user)) -> User:
 
 
 @app.patch("/v1/me", response_model=UserOut)
-def update_me(
-    payload: UserUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> User:
+def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
     if payload.nickname is not None:
         user.nickname = payload.nickname
     if payload.avatar is not None:
@@ -154,11 +153,7 @@ def update_me(
 
 
 @app.post("/v1/me/nickname", response_model=UserOut)
-def change_nickname(
-    payload: NicknameChange,
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> User:
+def change_nickname(payload: NicknameChange, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
     new_name = payload.nickname.strip()
     if not new_name:
         raise HTTPException(status_code=400, detail="İsim boş olamaz")
@@ -175,11 +170,7 @@ def change_nickname(
 
 
 @app.patch("/v1/me/notifications", response_model=UserOut)
-def update_notifications(
-    payload: UserUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> User:
+def update_notifications(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
     if payload.notifications_enabled is None:
         raise HTTPException(status_code=400, detail="notifications_enabled gerekli")
     user.notifications_enabled = payload.notifications_enabled
@@ -190,47 +181,36 @@ def update_notifications(
 
 
 @app.post("/v1/logout")
-def logout(
-    authorization: str | None = Header(default=None),
-    db: Session = Depends(get_db),
-) -> dict[str, bool]:
-    token = bearer_token(authorization)
-    return {"revoked": revoke_session(db, token)}
+def logout(authorization: str | None = Header(default=None), db: Session = Depends(get_db)) -> dict[str, bool]:
+    return {"revoked": revoke_session(db, bearer_token(authorization))}
 
 
 @app.post("/v1/conversations", response_model=ConversationOut, status_code=201)
-def create_conversation(
-    payload: ConversationCreate,
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> ConversationOut:
+def create_conversation(payload: ConversationCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> ConversationOut:
     if payload.participant_id == user.id:
         raise HTTPException(status_code=400, detail="Kendinizle konuşma oluşturamazsınız")
     participant = UserRepository(db).get(payload.participant_id)
     if not participant or not participant.is_active:
         raise HTTPException(status_code=404, detail="Katılımcı bulunamadı")
-    conversation_repo = ConversationRepository(db)
-    existing = conversation_repo.find_direct([user.id, participant.id])
+    repo = ConversationRepository(db)
+    existing = repo.find_direct([user.id, participant.id])
     if existing:
         return existing
-    conversation_id = f"dm_{uuid4().hex}"
-    return conversation_repo.create_direct(conversation_id, [user.id, participant.id])
+    return repo.create_direct(f"dm_{uuid4().hex}", [user.id, participant.id])
 
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
 def list_conversations(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ) -> list[ConversationOut]:
-    return ConversationRepository(db).list_for_user(user.id)
+    return ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
 
 
 @app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
-def get_conversation(
-    conversation_id: str,
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> ConversationOut:
+def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)) -> ConversationOut:
     repo = ConversationRepository(db)
     conversation = repo.get(conversation_id)
     if not conversation:
@@ -241,16 +221,11 @@ def get_conversation(
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
-def create_message(
-    conversation_id: str,
-    payload: MessageCreate,
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> object:
-    conversation_repo = ConversationRepository(db)
-    if not conversation_repo.get(conversation_id):
+def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> object:
+    repo = ConversationRepository(db)
+    if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
-    if not conversation_repo.is_member(conversation_id, user.id):
+    if not repo.is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
     return MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
 
@@ -258,15 +233,17 @@ def create_message(
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
 def list_messages(
     conversation_id: str,
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ) -> list[object]:
-    conversation_repo = ConversationRepository(db)
-    if not conversation_repo.get(conversation_id):
+    repo = ConversationRepository(db)
+    if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
-    if not conversation_repo.is_member(conversation_id, user.id):
+    if not repo.is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
-    return MessageService(MessageRepository(db)).list(conversation_id)
+    return MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
 
 
 class ConnectionManager:
@@ -310,7 +287,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         await manager.connect(user.id, websocket)
-        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.8.0", "user_id": user.id})
+        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.9.0", "user_id": user.id})
         while True:
             data = await websocket.receive_json()
             if not isinstance(data, dict):
@@ -321,13 +298,13 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             if not conversation_id or not text_value or len(text_value) > 2000:
                 await websocket.send_json({"type": "error", "detail": "conversation_id ve 1-2000 karakterlik text gerekli"})
                 continue
-            conversation_repo = ConversationRepository(db)
-            if not conversation_repo.get(conversation_id) or not conversation_repo.is_member(conversation_id, user.id):
+            repo = ConversationRepository(db)
+            if not repo.get(conversation_id) or not repo.is_member(conversation_id, user.id):
                 await websocket.send_json({"type": "error", "detail": "Konuşmaya erişim yok"})
                 continue
             message = MessageService(MessageRepository(db)).create(conversation_id, user.id, text_value)
             event = {"type": "message", "conversation_id": conversation_id, "sender_id": user.id, "text": message.text, "message_id": message.id, "created_at": message.created_at.isoformat()}
-            for member_id in conversation_repo.members(conversation_id):
+            for member_id in repo.members(conversation_id):
                 await manager.send_user(member_id, event)
     except WebSocketDisconnect:
         pass
@@ -346,5 +323,3 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
-
-# Deployment marker: this file must be rebuilt from the current main branch.
