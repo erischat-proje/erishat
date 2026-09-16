@@ -10,5 +10,5 @@ class MessageService:
         message = Message(conversation_id=conversation_id, sender_id=sender_id, text=text.strip())
         return self.repo.create(message)
 
-    def list(self, conversation_id: str) -> list[Message]:
-        return self.repo.list(conversation_id)
+    def list(self, conversation_id: str, limit: int = 100, offset: int = 0) -> list[Message]:
+        return self.repo.list(conversation_id, limit=limit, offset=offset)
