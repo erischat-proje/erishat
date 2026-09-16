@@ -166,7 +166,7 @@ def create_conversation(
 def list_conversations(
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
-) -> list[Conversation]:
+) -> list[ConversationOut]:
     return ConversationRepository(db).list_for_user(user.id)
 
 
