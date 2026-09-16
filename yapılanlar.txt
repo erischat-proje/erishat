@@ -49,9 +49,25 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 - [x] Oda seviye haritasının mevcut backend'de büyük ölçüde bulunduğu tespit edildi.
 - [x] VIP gizlilik, VIP durumu, konum, keşif tercihi, rapor, aile, oyun ve fan için mevcut model temelleri tespit edildi.
 - [x] Yeni geliştirmeye başlamadan önce mevcut çalışan kodu koruma ve her aşamada iki takip dosyasını güncelleme kuralı kayda alındı.
-- [ ] Tüm repo dosyalarının ayrıntılı kod/bağlantı audit'i tamamlanacak.
-- [ ] Eksik ürün akışları mevcut mimariye göre tamamlanacak.
-- [ ] Her tamamlanan geliştirme ayrıca bu dosyaya tarih, dosya ve test sonucu ile işlenecek.
+
+7. 2026-09-17 — ODA BACKEND MİLADI
+- [x] `backend/app/room_routes.py` oda koltuğuna katılma endpoint'i eklendi: POST `/v1/rooms/{room_id}/seats/{seat_number}/join`.
+- [x] Kullanıcının koltuktan ayrılması endpoint'i eklendi.
+- [x] Kilitli/dolu koltuk ve aynı kullanıcının ikinci koltuğa geçmesi engellendi.
+- [x] Mikrofon koltuğu kuralları oda seviyesindeki koltuk sayısıyla kontrol ediliyor.
+- [x] Müzik ekleme yalnızca odada ve mikrofonda bulunan kullanıcıya bağlandı.
+- [x] Haftalık 150 Lidya ödeme mantığı aynı kullanıcı için aktif ödeme süresince tekrar ücret kesmeyecek şekilde düzenlendi.
+- [x] Kullanıcının oda müzik listesi yalnızca kendi yüklediği parçaları döndürüyor.
+- [x] Müzik oynatma endpoint'i yalnızca mikrofondaki kullanıcıya açıldı.
+- [x] 30 Lidya eşiği hediye toplam harcaması üzerinden animasyon flag'ine bağlandı.
+
+8. 2026-09-17 — SONRAKİ KONTROL NOKTASI
+- [ ] Oda event/WebSocket yayını.
+- [ ] Frontend'in gerçek oda API'sine bağlanması.
+- [ ] Oda hediye animasyonu ve canlı hediye sıralaması.
+- [ ] VIP yetkilerinin oda moderasyonuna bağlanması.
+- [ ] Lidya ledger/race-condition güvenliği.
+- [ ] Railway deploy + gerçek API smoke test.
 
 ÖNEMLİ NOT:
 Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
