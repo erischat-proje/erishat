@@ -1,0 +1,26 @@
+ERISCHAT — YAPILANLAR
+Tarih: 2026-09-16
+
+BAŞLANGIÇ DENETİMİ
+- [x] GitHub repository ve main branch erişimi doğrulandı.
+- [x] Mevcut README ve son durum notları incelendi.
+- [x] Backend klasörü ve FastAPI uygulama yapısı tespit edildi.
+- [x] Frontend klasörü ve aktif ana HTML dosyası tespit edildi.
+- [x] FastAPI tarafında sağlık endpoint'i (/health) mevcut.
+- [x] Anonim kullanıcı oluşturma ve session/token altyapısı mevcut.
+- [x] /v1/me ve profil güncelleme endpoint'leri mevcut.
+- [x] Konuşma oluşturma/listeleme/getirme endpoint'leri mevcut.
+- [x] Mesaj oluşturma/listeleme endpoint'leri mevcut.
+- [x] /ws WebSocket endpoint'i ve kullanıcı bağlantı yöneticisi mevcut.
+- [x] PostgreSQL/SQLAlchemy tabanlı model/repository yapısı mevcut.
+- [x] CORS yapılandırması mevcut.
+- [x] Frontend'de keşfet, mesajlar, profil, mağaza, VIP ve anonimlik ekranlarının UI prototipi mevcut.
+- [x] Son durum notunda v52/v53 iframe yaklaşımının sorunlu olduğu tespit edilmiş; v35'in doğrudan temel alınması kararı mevcut.
+- [x] Railway production servisi doğrulandı; mevcut durumda aktif deployment bulunmuyor.
+
+İLK TEKNİK TESPİTLER
+- [x] Frontend ana dosyasında halen mock/demo davranışları bulunduğu görüldü; gerçek API entegrasyonu tamamlanmış kabul edilmeyecek.
+- [x] WebSocket backend mevcut olsa da frontend'in gerçek WebSocket bağlantısı kullandığı henüz doğrulanmadı.
+- [x] Demo kullanıcı endpoint'i bulundu; production akışında demo verisinin ayrıştırılması gerekecek.
+- [x] Backend'de startup sırasında Base.metadata.create_all kullanımı mevcut; migration stratejisi ayrıca ele alınacak.
+- [x] Repository'de __pycache__ içerikleri bulunduğu görüldü; kaynak deposundan temizlenmesi planlandı.
