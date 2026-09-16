@@ -13,6 +13,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
 from .auth import create_anonymous_user
+from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .db import Base, engine, get_db
 from .models import Conversation, User
@@ -33,6 +34,7 @@ from .session import cleanup_expired_sessions, create_session, get_user_from_tok
 
 logger = logging.getLogger("erischat.api")
 app = FastAPI(title="ErisChat API", version="0.8.0")
+app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
 app.add_middleware(
@@ -49,6 +51,9 @@ def ensure_user_settings_columns() -> None:
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
 
 
 @app.on_event("startup")
@@ -92,7 +97,7 @@ def ensure_demo_user(db: Session) -> User:
     user = repo.get("demo")
     if user:
         return user
-    return repo.create(User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", lidya=10_000_000))
+    return repo.create(User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
 
 
 @app.get("/health")
@@ -111,7 +116,7 @@ def get_user(user_id: str, db: Session = Depends(get_db)) -> User:
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> SessionOut:
     try:
-        user = create_anonymous_user(db, payload.nickname, payload.avatar)
+        user = create_anonymous_user(db, payload.nickname, payload.avatar, payload.gender)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return SessionOut(access_token=create_session(db, user), user=user)
