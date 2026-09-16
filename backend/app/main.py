@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-import logging
 from pathlib import Path
 from uuid import uuid4
+import logging
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import text
@@ -18,17 +17,7 @@ from .config import settings
 from .db import Base, engine, get_db
 from .models import Conversation, User
 from .repositories import ConversationRepository, MessageRepository, UserRepository
-from .schemas import (
-    ConversationCreate,
-    ConversationOut,
-    MessageCreate,
-    MessageOut,
-    NicknameChange,
-    SessionOut,
-    UserCreate,
-    UserOut,
-    UserUpdate,
-)
+from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
@@ -37,23 +26,13 @@ app = FastAPI(title="ErisChat API", version="0.9.0")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins or ["*"],
-    allow_credentials=bool(origins and "*" not in origins),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"])
 
 
 def ensure_user_settings_columns() -> None:
-    """Backward-compatible schema repair for existing PostgreSQL installations."""
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
@@ -73,14 +52,6 @@ def startup() -> None:
         raise
 
 
-def current_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None)) -> User:
-    token = bearer_token(authorization)
-    user = get_user_from_token(db, token)
-    if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
-    return user
-
-
 def bearer_token(authorization: str | None) -> str:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Bearer token gerekli")
@@ -88,6 +59,13 @@ def bearer_token(authorization: str | None) -> str:
     if not token:
         raise HTTPException(status_code=401, detail="Bearer token gerekli")
     return token
+
+
+def current_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None)) -> User:
+    user = get_user_from_token(db, bearer_token(authorization))
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
+    return user
 
 
 def ensure_demo_user(db: Session) -> User:
@@ -214,12 +192,7 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
-def list_conversations(
-    limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> list[ConversationOut]:
+def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
     return ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
 
 
@@ -235,7 +208,7 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
-def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> object:
+def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
@@ -248,13 +221,7 @@ def create_message(conversation_id: str, payload: MessageCreate, db: Session = D
 
 
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
-def list_messages(
-    conversation_id: str,
-    limit: int = Query(default=100, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> list[object]:
+def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
