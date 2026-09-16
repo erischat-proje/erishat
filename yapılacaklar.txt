@@ -70,5 +70,111 @@ ERISCHAT – YAPILACAKLAR
 - Mesaj düzenleme/silme.
 - Daha gelişmiş profil stüdyosu.
 
+9. 2026-09-17 — YENİ ÜRÜN GEREKSİNİMLERİ / ANA BACKLOG
+
+ODA SİSTEMİ
+- [ ] Her kullanıcının kendi odasını oluşturabilmesi.
+- [ ] Oda sahibi + moderatör yetki modeli.
+- [ ] Oda içi hediye sıralamasının oda bazlı ve canlı güncellenmesi.
+- [ ] Alt sohbet sistemi ve sahibi tarafından aç/kapat kontrolü.
+- [ ] Hediye gönderme: herkese, kendine veya seçili kişiye.
+- [ ] 30 Lidya altı hediyelerin sohbet bildirimi; 30+ hediyelerin görsel animasyon sistemi.
+- [ ] Tek gönderimde maksimum 99 adet ve tekrar gönderim desteği.
+- [ ] Hediye alıcısına uygulanacak kazanç oranlarını şeffaf ve sabit kurallarla tanımla; gizli/sonuç manipülasyonu uygulanmayacak.
+- [ ] Telefon müziği yükleme; kullanıcıya özel liste, haftalık 150 Lidya ücret, yalnızca mikrofondaki kullanıcının oynatabilmesi, maksimum 10 parça.
+- [ ] Oda sahibi/moderatör için atılan kullanıcı listesi; listeden kaldırılana kadar yeniden giriş engeli ve "Bu odadan atıldınız." mesajı.
+- [ ] Mikrofon koltuklarında kilitle/aç, sustur/aç kontrolleri.
+- [ ] Oda seviyeleri L1-L8 kapasite/moderatör/koltuk haritasını gerçek backend kurallarına bağla.
+- [ ] L4+ ücretsiz oda kilidi; L1-L3 için 24 saatlik 150 Lidya kuralı.
+- [ ] Oda harcama/level ilerlemesinin tüm ilgili Lidya işlemlerini eksiksiz ve atomik takip etmesi.
+
+VIP 1-12
+- [ ] VIP 1: rozet + özel avatar/çerçeve.
+- [ ] VIP 2: kademeli VIP rozeti.
+- [ ] VIP 3: 20 neon isim rengi.
+- [ ] VIP 4: oda giriş sistem mesajı.
+- [ ] VIP 5: oda giriş görsel/animasyon efekti.
+- [ ] VIP 6: oda açılış duyurusu + oda ayarından kapatma.
+- [ ] VIP 7: 5.000 Lidya ödülü + indirimli 10.000 Lidya cinsiyet değişimi.
+- [ ] VIP 8: oda kilidi maliyet/koşul indirimi.
+- [ ] VIP 9: normal moderatörler tarafından atılamama; yalnızca oda sahibi.
+- [ ] VIP 10: Şövalye rozeti + 1 ücretsiz oda duvar kâğıdı.
+- [ ] VIP 11: ücretsiz kilitli oda açma.
+- [ ] VIP 12: Saygın Şövalye + taç + en üst ayrıcalık seviyesi.
+- [ ] VIP anonimlik menüsü: VIP görünürlüğü ve seçili VIP özelliklerini gizleme.
+- [ ] VIP yetkilerini frontend gösterimiyle backend authorization katmanında aynı kurallara bağla.
+
+AVATAR / ÇERÇEVE / VARLIKLAR
+- [ ] Avatar ve çerçeveyi ayrı asset katmanları olarak kullan.
+- [ ] Standart 40 avatar + 40 çerçeve asset sistemini doğrula.
+- [ ] VIP 1-12 için ayrı avatar + çerçeve çiftlerini doğrula.
+- [ ] Çerçeve merkezini transparan tut.
+- [ ] Mevcut vip_cerceve referanslarının görsel dilini koru; rastgele/uyumsuz tasarım üretme.
+- [ ] Asset yükleme/servis/önbellek yollarını tek sisteme bağla.
+
+PROFİL / HAYRAN / HEDİYE
+- [ ] Profil destek sistemi.
+- [ ] Şikâyet/rapor menüsü ve moderasyon akışı.
+- [ ] Profilde en fazla 30 bağışçı fan sıralaması.
+- [ ] Bağışlanan toplam Lidya miktarı görünümü.
+- [ ] Hangi hediyeden kaç adet gönderildiği görünümü.
+- [ ] 16 seviyeli fan sistemi; eşikleri harcama ekonomisine göre dengeli ve belgelenmiş belirle.
+
+KEŞFET / RASTGELE / YAKIN
+- [ ] Keşfet odalarını doluluk sırasıyla gerçek veriden getir.
+- [ ] Aktif odaları kaydırılabilir listede göster.
+- [ ] Rastgele sohbet eşleştirme.
+- [ ] Rastgele açık oda eşleştirme.
+- [ ] Kadın/erkek/herkes filtresi.
+- [ ] Konum paylaşan kullanıcılar için 20 km altı yakın öneriler.
+- [ ] Yakın önerilerde kesin konumu göstermeme; yalnızca şehir gösterme.
+- [ ] 30 km altı rastgele eşleşme havuzu ve özel sohbet başlatma.
+- [ ] Konum verisi erişim/izin/gizlilik kontrolleri.
+
+ODA OYUNLARI
+- [ ] Çark oyunu: 9 seçenek, tur yaşam döngüsü, bahis, sonuç ve ödeme altyapısı.
+- [ ] Bardak oyunu: 4 bardak, tek top, karıştırma/tur süresi, bahis ve ödeme altyapısı.
+- [ ] Sonuç üretiminde güvenli ve denetlenebilir rastgelelik kullan.
+- [ ] Olasılık ve ödeme oranlarını kullanıcıya açık kurallarla tanımla; gizli şekilde kullanıcıya göre sonuç değiştirme yapılmayacak.
+- [ ] Bahis/ödeme kayıtlarını atomik ve denetlenebilir tut.
+
+AİLE SİSTEMİ
+- [ ] Aile oluşturma ücretini 10.000 Lidya olarak uygula.
+- [ ] Aile L1-L12 kapasite ve harcama eşiklerini uygula.
+- [ ] Aile seviyesi yükseltme harcamasını atomik kayıtla tut.
+- [ ] Aile üyelik, yönetim ve yetki akışlarını tamamla.
+- [ ] Aile ilerleme oranlarını gerektiğinde dengeli şekilde ayarlanabilir config yapısına taşı.
+
+CANLI ODA / SES
+- [ ] WebRTC veya seçilecek ses altyapısını tasarla.
+- [ ] Mikrofon koltukları için gerçek medya yetkileri.
+- [ ] Koltuk kilidi/susturma kurallarını medya katmanına bağla.
+- [ ] Oda içi gerçek zamanlı event kanalı oluştur.
+- [ ] Oda hediye, giriş, atılma, moderasyon ve oyun eventlerini gerçek zamanlı yayınla.
+
+YÖNETİM / MODERASYON
+- [ ] Admin paneli altyapısı.
+- [ ] Oda moderasyon logları.
+- [ ] Rapor inceleme ve işlem geçmişi.
+- [ ] Kullanıcı/oda/hediye/ekonomi işlemleri için audit log.
+- [ ] Rate limit ve abuse korumaları.
+
+EKONOMİ / GÜVENLİK
+- [ ] Lidya cüzdan/ledger modelini merkezi ve atomik hale getir.
+- [ ] Hediye, VIP, oda seviyesi, aile, müzik ve oyun işlemlerini ledger üzerinden geçirmek.
+- [ ] Negatif bakiye/race condition/çift harcama önleme.
+- [ ] VIP ödüllerinin tek seferlik idempotent verilmesi.
+- [ ] Oyun sonuçları ve ödemelerinde audit trail.
+- [ ] Gizli oran/sonuç manipülasyonu kullanılmaması; ekonomik kurallar dokümante edilmeli.
+
+DOKÜMANTASYON / TAKİP KURALI
+- [ ] Her kod değişikliğinden sonra ilgili maddeyi güncelle.
+- [ ] Tamamlanan işler yapılanlar.txt'ye tarih + dosya + kısa sonuç ile yazılacak.
+- [ ] Yarım kalan iş yapılacaklar.txt'de açık kalacak.
+- [ ] Her yeni sohbet için son durum bu iki dosyadan okunabilecek.
+- [ ] Büyük aşamalarda ERISCHAT_NOTLAR/son_durum_YYYYMMDD.txt oluştur/güncelle.
+- [ ] Kod yazmadan önce ilgili mevcut dosya okunacak; çalışan özellik silinmeyecek.
+- [ ] Her aşamada syntax/test/deploy sonucu kayda geçirilecek.
+
 KURAL:
 Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya karşılaştırması, sözdizimi testi ve mümkünse gerçek API testi yapılacak.
