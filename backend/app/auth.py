@@ -6,10 +6,17 @@ from .models import User
 from .repositories import UserRepository
 
 
-def create_anonymous_user(db: Session, nickname: str, avatar: str = "👤") -> User:
+def create_anonymous_user(
+    db: Session,
+    nickname: str,
+    avatar: str = "👤",
+    gender: str = "",
+) -> User:
     nickname = nickname.strip()[:32]
     if not nickname:
         raise ValueError("nickname boş olamaz")
+    if gender not in {"female", "male"}:
+        raise ValueError("Kayıt sırasında kadın veya erkek seçilmelidir")
 
     while True:
         public_id = f"@eris_{uuid4().int % 100000:05d}"
@@ -22,5 +29,6 @@ def create_anonymous_user(db: Session, nickname: str, avatar: str = "👤") -> U
         public_id=public_id,
         nickname=nickname,
         avatar=avatar[:16],
+        gender=gender,
     )
     return UserRepository(db).create(user)
