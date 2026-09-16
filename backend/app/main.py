@@ -22,7 +22,7 @@ from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
 logger = logging.getLogger("erischat.api")
-app = FastAPI(title="ErisChat API", version="0.9.0")
+app = FastAPI(title="ErisChat API", version="0.9.1")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
@@ -36,26 +36,16 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
 
 
 @app.on_event("startup")
 def startup() -> None:
     logger.info("ErisChat API startup: environment=%s", settings.environment)
-    try:
-        Base.metadata.create_all(bind=engine)
-        ensure_user_settings_columns()
-        with Session(engine) as db:
-            cleanup_expired_sessions(db)
-        logger.info("ErisChat API startup complete")
-    except Exception:
-        logger.exception("ErisChat API startup failed")
-        raise
+    Base.metadata.create_all(bind=engine)
+    ensure_user_settings_columns()
+    with Session(engine) as db:
+        cleanup_expired_sessions(db)
+    logger.info("ErisChat API startup complete")
 
 
 def bearer_token(authorization: str | None) -> str:
@@ -84,7 +74,7 @@ def ensure_demo_user(db: Session) -> User:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": "0.9.0"}
+    return {"status": "ok", "service": "erischat-api", "version": app.version}
 
 
 @app.get("/ready")
@@ -92,7 +82,7 @@ def ready() -> dict[str, str]:
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return {"status": "ready", "service": "erischat-api", "version": "0.9.0"}
+        return {"status": "ready", "service": "erischat-api", "version": app.version}
     except OperationalError as exc:
         logger.warning("Readiness DB check failed: %s", exc)
         raise HTTPException(status_code=503, detail="database not ready") from exc
@@ -109,7 +99,7 @@ def get_user(user_id: str, db: Session = Depends(get_db)) -> User:
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> SessionOut:
     try:
-        user = create_anonymous_user(db, payload.nickname, payload.avatar, payload.gender)
+        user = create_anonymous_user(db, payload.nickname.strip(), payload.avatar, payload.gender)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return SessionOut(access_token=create_session(db, user), user=user)
@@ -136,7 +126,6 @@ def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = D
         user.avatar = payload.avatar
     if payload.notifications_enabled is not None:
         user.notifications_enabled = payload.notifications_enabled
-    db.add(user)
     db.commit()
     db.refresh(user)
     return user
@@ -153,7 +142,6 @@ def change_nickname(payload: NicknameChange, db: Session = Depends(get_db), user
         raise HTTPException(status_code=400, detail="İsim değiştirmek için 300 Lidya gerekli")
     user.nickname = new_name
     user.lidya -= 300
-    db.add(user)
     db.commit()
     db.refresh(user)
     return user
@@ -164,7 +152,6 @@ def update_notifications(payload: UserUpdate, db: Session = Depends(get_db), use
     if payload.notifications_enabled is None:
         raise HTTPException(status_code=400, detail="notifications_enabled gerekli")
     user.notifications_enabled = payload.notifications_enabled
-    db.add(user)
     db.commit()
     db.refresh(user)
     return user
@@ -232,7 +219,7 @@ def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
     if not repo.is_member(conversation_id, user.id):
-        raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+        raise HTTPException(status_code=403, detail="Bu konuşmaya erişim yok")
     return MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
 
 
@@ -264,14 +251,15 @@ manager = ConnectionManager()
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str | None = None) -> None:
+async def websocket_endpoint(websocket: WebSocket) -> None:
+    token = websocket.query_params.get("token")
     if not token:
-        await websocket.close(code=1008)
+        await websocket.close(code=1008, reason="token gerekli")
         return
     with Session(engine) as db:
         user = get_user_from_token(db, token)
         if not user or not user.is_active:
-            await websocket.close(code=1008)
+            await websocket.close(code=1008, reason="geçersiz oturum")
             return
         user_id = user.id
     await manager.connect(user_id, websocket)
@@ -291,5 +279,5 @@ async def websocket_endpoint(websocket: WebSocket, token: str | None = None) -> 
 
 
 frontend_path = Path(__file__).resolve().parents[2] / "frontend"
-if frontend_path.exists():
+if frontend_path.is_dir():
     app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
