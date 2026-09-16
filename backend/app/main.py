@@ -17,7 +17,7 @@ from .config import settings
 from .db import Base, engine, get_db
 from .models import Conversation, User
 from .repositories import ConversationRepository, MessageRepository, UserRepository
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomChatMessage, RoomChatMessage
+from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomChatMessage
 from .room_routes import register_room_auth, router as room_router
 from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus
 from .platform_routes import register_platform_auth, router as platform_router
@@ -39,9 +39,6 @@ def ensure_user_settings_columns() -> None:
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
