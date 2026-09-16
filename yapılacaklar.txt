@@ -192,3 +192,11 @@ DOKÜMANTASYON / TAKİP KURALI
 
 KURAL:
 Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya karşılaştırması, sözdizimi testi ve mümkünse gerçek API testi yapılacak.
+11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI
+- [x] Frontend ana sayfa oda listesi gerçek `GET /v1/rooms` verisine bağlandı.
+- [x] Keşfet oda listesi gerçek API verisine bağlandı.
+- [x] Oda kartından gerçek `POST /v1/rooms/{room_id}/join` çağrısı bağlandı.
+- [x] API base için `location.origin` fallback'i eklendi.
+- [ ] Kayıt/oturum bootstrap'ındaki `gender` uyumsuzluğunu düzelt.
+- [ ] Gerçek oda içi ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla bağla.
+- [ ] Railway deploy ve gerçek API smoke test.

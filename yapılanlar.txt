@@ -88,3 +88,10 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 
 ÖNEMLİ NOT:
 Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmadıkça sistem tamamen üretime hazır kabul edilmeyecektir.
+11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI
+- [x] `frontend/index.html` içindeki ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.
+- [x] Oda listesi üye sayısına göre sıralanıyor; ana sayfada ilk 3 oda gösteriliyor.
+- [x] Oda kartları gerçek oda kimliğiyle `POST /v1/rooms/{room_id}/join` çağrısı yapıyor.
+- [x] API base boşsa `location.origin` fallback'i eklendi.
+- [x] Patch GitHub Actions üzerinde çalıştı ve frontend değişikliği commit edildi.
+- [ ] Kayıt/oturum bootstrap'ında `gender` uyumluluğu ve Railway smoke test hâlâ açık.
