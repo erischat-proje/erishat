@@ -17,7 +17,7 @@ from .config import settings
 from .db import Base, engine, get_db
 from .models import Conversation, User
 from .repositories import ConversationRepository, MessageRepository, UserRepository
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
+from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage
 from .room_routes import register_room_auth, router as room_router
 from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus
 from .platform_routes import register_platform_auth, router as platform_router
@@ -298,3 +298,90 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 frontend_path = Path(__file__).resolve().parents[2] / "frontend"
 if frontend_path.is_dir():
     app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+
+
+room_chat_connections: dict[str, set[WebSocket]] = {}
+
+async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
+    connections = room_chat_connections.get(room_id, set())
+    dead = []
+    for ws in list(connections):
+        try:
+            await ws.send_json(payload)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        connections.discard(ws)
+
+
+@app.websocket("/ws/rooms/{room_id}")
+async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008, reason="token gerekli")
+        return
+
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        if not user or not user.is_active:
+            await websocket.close(code=1008, reason="geçersiz oturum")
+            return
+        room = db.get(Room, room_id)
+        member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+        if not room or not member:
+            await websocket.close(code=1008, reason="oda üyeliği gerekli")
+            return
+        if not room.chat_enabled:
+            await websocket.close(code=1008, reason="oda sohbeti kapalı")
+            return
+        history = (db.query(RoomChatMessage)
+                   .filter(RoomChatMessage.room_id == room_id)
+                   .order_by(RoomChatMessage.id.desc())
+                   .limit(50).all())
+        history.reverse()
+        history_payload = [{
+            "type": "room_chat", "id": m.id, "room_id": room_id,
+            "user_id": m.user_id, "text": m.text,
+            "created_at": m.created_at.isoformat() if m.created_at else None
+        } for m in history]
+
+    await websocket.accept()
+    room_chat_connections.setdefault(room_id, set()).add(websocket)
+    try:
+        await websocket.send_json({"type": "room_history", "messages": history_payload})
+        while True:
+            data = await websocket.receive_json()
+            if not isinstance(data, dict):
+                continue
+            if data.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
+                continue
+            if data.get("type") != "room_chat":
+                continue
+            text_value = str(data.get("text") or "").strip()
+            if not text_value or len(text_value) > 500:
+                continue
+            with Session(engine) as db:
+                room = db.get(Room, room_id)
+                member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+                if not room or not member or not room.chat_enabled:
+                    continue
+                msg = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
+                db.add(msg)
+                db.commit()
+                db.refresh(msg)
+                payload = {
+                    "type": "room_chat", "id": msg.id, "room_id": room_id,
+                    "user_id": user.id, "nickname": user.nickname,
+                    "avatar": user.avatar, "text": msg.text,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None
+                }
+            await _broadcast_room_chat(room_id, payload)
+    except WebSocketDisconnect:
+        room_chat_connections.get(room_id, set()).discard(websocket)
+    except Exception:
+        room_chat_connections.get(room_id, set()).discard(websocket)
+        try:
+            await websocket.close(code=1011)
+        except Exception:
+            pass
