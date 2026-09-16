@@ -42,10 +42,6 @@ class BanUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
 
 
-class SeatUpdate(BaseModel):
-    seat_number: int = Field(ge=1, le=16)
-
-
 class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64)
     gift_key: str = Field(min_length=1, max_length=64)
@@ -120,18 +116,11 @@ def room_view(db: Session, room: Room) -> dict:
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
     seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id).order_by(RoomSeat.seat_number)))
     return {
-        "id": room.id,
-        "name": room.name,
-        "owner_id": room.owner_id,
-        "level": room.level,
-        "capacity": LEVELS[room.level]["capacity"],
-        "max_moderators": LEVELS[room.level]["moderators"],
-        "seat_count": LEVELS[room.level]["seats"],
-        "chat_enabled": room.chat_enabled,
+        "id": room.id, "name": room.name, "owner_id": room.owner_id, "level": room.level,
+        "capacity": LEVELS[room.level]["capacity"], "max_moderators": LEVELS[room.level]["moderators"],
+        "seat_count": LEVELS[room.level]["seats"], "chat_enabled": room.chat_enabled,
         "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))),
-        "lock_expires_at": room.lock_expires_at,
-        "member_count": members,
-        "spent_lidya": int(spend),
+        "lock_expires_at": room.lock_expires_at, "member_count": members, "spent_lidya": int(spend),
         "moderators": moderators,
         "seats": [{"seat_number": s.seat_number, "user_id": s.user_id, "locked": s.locked, "muted": s.muted} for s in seats],
     }
@@ -154,13 +143,16 @@ def register_room_auth(current_user_dependency):
         if not name:
             raise HTTPException(status_code=400, detail="Oda adı boş olamaz")
         room = Room(id="room_" + uuid4().hex, owner_id=user.id, name=name)
-        db.add(room)
-        db.flush()
-        db.add(RoomMember(room_id=room.id, user_id=user.id))
-        ensure_seats(db, room)
-        db.commit()
-        db.refresh(room)
+        db.add(room); db.flush(); db.add(RoomMember(room_id=room.id, user_id=user.id)); ensure_seats(db, room); db.commit(); db.refresh(room)
         return room_view(db, room)
+
+    @router.get("")
+    def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc())))
+        result = []
+        for room in rooms:
+            result.append(room_view(db, room))
+        return result
 
     @router.get("/{room_id}")
     def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -169,164 +161,111 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/join")
     def join_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)):
-            raise HTTPException(status_code=403, detail="Bu odadan atıldınız")
-        if room.locked and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id:
-            raise HTTPException(status_code=403, detail="Oda kilitli")
+        if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odadan atıldınız")
+        if room.locked and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id: raise HTTPException(status_code=403, detail="Oda kilitli")
         if not is_member(db, room.id, user.id):
             count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
-            if count >= LEVELS[room.level]["capacity"]:
-                raise HTTPException(status_code=409, detail="Oda dolu")
-            db.add(RoomMember(room_id=room.id, user_id=user.id))
-            db.commit()
+            if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
+            db.add(RoomMember(room_id=room.id, user_id=user.id)); db.commit()
         return room_view(db, room)
 
     @router.post("/{room_id}/leave")
     def leave_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if room.owner_id == user.id:
-            raise HTTPException(status_code=400, detail="Oda sahibi odadan ayrılamaz; odayı kapatmalıdır")
-        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id))
-        db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
-        db.commit()
+        if room.owner_id == user.id: raise HTTPException(status_code=400, detail="Oda sahibi odadan ayrılamaz; odayı kapatmalıdır")
+        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)); db.commit()
         return {"left": True}
 
     @router.post("/{room_id}/seats/{seat_number}/join")
     def join_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if not is_member(db, room.id, user.id):
-            raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
-        if seat_number > LEVELS[room.level]["seats"]:
-            raise HTTPException(status_code=400, detail="Bu seviyede bu koltuk yok")
+        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
+        if seat_number > LEVELS[room.level]["seats"]: raise HTTPException(status_code=400, detail="Bu seviyede bu koltuk yok")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
-        if not seat:
-            raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
-        if seat.locked:
-            raise HTTPException(status_code=409, detail="Bu koltuk kilitli")
+        if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
+        if seat.locked: raise HTTPException(status_code=409, detail="Bu koltuk kilitli")
         occupied = db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
-        if occupied and occupied != seat.id:
-            raise HTTPException(status_code=409, detail="Zaten başka bir koltuktasınız")
-        if seat.user_id and seat.user_id != user.id:
-            raise HTTPException(status_code=409, detail="Bu koltuk dolu")
-        seat.user_id = user.id
-        db.commit()
-        return {"seat_number": seat_number, "user_id": user.id}
+        if occupied and occupied != seat.id: raise HTTPException(status_code=409, detail="Zaten başka bir koltuktasınız")
+        if seat.user_id and seat.user_id != user.id: raise HTTPException(status_code=409, detail="Bu koltuk dolu")
+        seat.user_id = user.id; db.commit(); return {"seat_number": seat_number, "user_id": user.id}
 
     @router.delete("/{room_id}/seats/leave")
     def leave_seat(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        db.execute(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
-        db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None}, synchronize_session=False)
-        db.commit()
-        return {"left_seat": True}
+        db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None}, synchronize_session=False); db.commit(); return {"left_seat": True}
 
     @router.patch("/{room_id}/chat")
     def set_chat(room_id: str, payload: RoomChatUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        require_staff(db, room, user)
-        room.chat_enabled = payload.enabled
-        db.commit()
-        return {"chat_enabled": room.chat_enabled}
+        room = get_room_or_404(db, room_id); require_staff(db, room, user); room.chat_enabled = payload.enabled; db.commit(); return {"chat_enabled": room.chat_enabled}
 
     @router.post("/{room_id}/moderators")
     def add_moderator(room_id: str, payload: ModeratorUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        require_owner(db, room, user)
-        if payload.user_id == room.owner_id:
-            raise HTTPException(status_code=400, detail="Oda sahibi moderatör olarak eklenemez")
-        if not db.get(User, payload.user_id):
-            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        room = get_room_or_404(db, room_id); require_owner(db, room, user)
+        if payload.user_id == room.owner_id: raise HTTPException(status_code=400, detail="Oda sahibi moderatör olarak eklenemez")
+        if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         current = db.scalar(select(func.count(RoomModerator.id)).where(RoomModerator.room_id == room.id)) or 0
-        if current >= LEVELS[room.level]["moderators"]:
-            raise HTTPException(status_code=409, detail="Bu oda seviyesindeki moderatör sınırına ulaşıldı")
-        if not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)):
-            db.add(RoomModerator(room_id=room.id, user_id=payload.user_id))
-            db.commit()
+        if current >= LEVELS[room.level]["moderators"]: raise HTTPException(status_code=409, detail="Bu oda seviyesindeki moderatör sınırına ulaşıldı")
+        if not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)): db.add(RoomModerator(room_id=room.id, user_id=payload.user_id)); db.commit()
         return room_view(db, room)
 
     @router.delete("/{room_id}/moderators/{moderator_id}")
     def remove_moderator(room_id: str, moderator_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        require_owner(db, room, user)
-        db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == moderator_id))
-        db.commit()
-        return {"removed": True}
+        room = get_room_or_404(db, room_id); require_owner(db, room, user); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == moderator_id)); db.commit(); return {"removed": True}
 
     @router.post("/{room_id}/bans")
     def ban_user(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        require_staff(db, room, user)
-        if payload.user_id == room.owner_id:
-            raise HTTPException(status_code=400, detail="Oda sahibi atılamaz")
-        if not db.get(User, payload.user_id):
-            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)):
-            db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id))
-        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id))
-        db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id))
-        db.commit()
-        return {"banned": True}
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
+        if payload.user_id == room.owner_id: raise HTTPException(status_code=400, detail="Oda sahibi atılamaz")
+        if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)): db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id))
+        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.commit(); return {"banned": True}
 
     @router.get("/{room_id}/bans")
     def list_bans(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        require_staff(db, room, user)
-        return [{"user_id": b.user_id, "banned_by": b.banned_by, "created_at": b.created_at} for b in db.scalars(select(RoomBan).where(RoomBan.room_id == room.id).order_by(RoomBan.created_at.desc()))]
+        room = get_room_or_404(db, room_id); require_staff(db, room, user); return [{"user_id": b.user_id, "banned_by": b.banned_by, "created_at": b.created_at} for b in db.scalars(select(RoomBan).where(RoomBan.room_id == room.id).order_by(RoomBan.created_at.desc()))]
 
     @router.delete("/{room_id}/bans/{banned_user_id}")
     def remove_ban(room_id: str, banned_user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        require_staff(db, room, user)
-        db.execute(delete(RoomBan).where(RoomBan.room_id == room.id, RoomBan.user_id == banned_user_id))
-        db.commit()
-        return {"removed": True}
+        room = get_room_or_404(db, room_id); require_staff(db, room, user); db.execute(delete(RoomBan).where(RoomBan.room_id == room.id, RoomBan.user_id == banned_user_id)); db.commit(); return {"removed": True}
 
     @router.post("/{room_id}/seats/{seat_number}/lock")
     def lock_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
-        if seat_number > LEVELS[room.level]["seats"]:
-            raise HTTPException(status_code=400, detail="Geçersiz koltuk")
+        if seat_number > LEVELS[room.level]["seats"]: raise HTTPException(status_code=400, detail="Geçersiz koltuk")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         seat.locked = True; seat.user_id = None; db.commit(); return {"locked": True}
 
     @router.delete("/{room_id}/seats/{seat_number}/lock")
     def unlock_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_staff(db, room, user)
-        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
+        room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         seat.locked = False; db.commit(); return {"locked": False}
 
     @router.post("/{room_id}/seats/{seat_number}/mute")
     def mute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_staff(db, room, user)
-        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
+        room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         seat.muted = True; db.commit(); return {"muted": True}
 
     @router.delete("/{room_id}/seats/{seat_number}/mute")
     def unmute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_staff(db, room, user)
-        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
+        room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         seat.muted = False; db.commit(); return {"muted": False}
 
     @router.post("/{room_id}/lock")
     def lock_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_owner(db, room, user)
-        now = datetime.now(timezone.utc)
-        if room.level >= 4:
-            room.locked = True; room.lock_expires_at = None
+        room = get_room_or_404(db, room_id); require_owner(db, room, user); now = datetime.now(timezone.utc)
+        if room.level >= 4: room.locked = True; room.lock_expires_at = None
         else:
             if user.lidya < 150: raise HTTPException(status_code=400, detail="Odayı kilitlemek için 150 Lidya gerekli")
-            user.lidya -= 150
-            room.locked = True; room.lock_expires_at = now + timedelta(hours=24)
+            user.lidya -= 150; room.locked = True; room.lock_expires_at = now + timedelta(hours=24)
         db.commit(); return {"locked": True, "lock_expires_at": room.lock_expires_at}
 
     @router.delete("/{room_id}/lock")
     def unlock_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_owner(db, room, user)
-        room.locked = False; room.lock_expires_at = None; db.commit(); return {"locked": False}
+        room = get_room_or_404(db, room_id); require_owner(db, room, user); room.locked = False; room.lock_expires_at = None; db.commit(); return {"locked": False}
 
     @router.post("/{room_id}/gifts")
     def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -338,8 +277,7 @@ def register_room_auth(current_user_dependency):
         recipient = db.get(User, payload.recipient_id)
         if not recipient: raise HTTPException(status_code=404, detail="Alıcı bulunamadı")
         recipient_amount = total * payload.recipient_percent // 100
-        user.lidya -= total
-        recipient.lidya += recipient_amount
+        user.lidya -= total; recipient.lidya += recipient_amount
         db.add(RoomGiftEvent(room_id=room.id, sender_id=user.id, recipient_id=recipient.id, gift_key=payload.gift_key, unit_price=payload.unit_price, quantity=payload.quantity, total_price=total, recipient_percent=payload.recipient_percent, recipient_amount=recipient_amount))
         db.commit(); refresh_level(db, room)
         return {"gift_key": payload.gift_key, "quantity": payload.quantity, "total_price": total, "recipient_amount": recipient_amount, "animation": total >= 30}
@@ -357,16 +295,15 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
         if not seat: raise HTTPException(status_code=403, detail="Müzik eklemek için mikrofonda olmalısınız")
+        current = db.scalar(select(func.count(RoomMusic.id)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id)) or 0
+        if current >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
         now = datetime.now(timezone.utc)
         active_payment = db.scalar(select(RoomMusic.id).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id, RoomMusic.paid_until > now))
         if not active_payment:
             if user.lidya < 150: raise HTTPException(status_code=400, detail="Haftalık müzik ücreti 150 Lidya")
-            user.lidya -= 150
-            paid_until = now + timedelta(days=7)
+            user.lidya -= 150; paid_until = now + timedelta(days=7)
         else:
             paid_until = db.scalar(select(RoomMusic.paid_until).where(RoomMusic.id == active_payment)) or now
-        current = db.scalar(select(func.count(RoomMusic.id)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id)) or 0
-        if current >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
         slot = (db.scalar(select(func.max(RoomMusic.slot)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id)) or 0) + 1
         music = RoomMusic(room_id=room.id, user_id=user.id, slot=slot, title=payload.title.strip(), source_url=payload.source_url, paid_until=paid_until)
         db.add(music); db.commit(); db.refresh(music)
@@ -388,8 +325,7 @@ def register_room_auth(current_user_dependency):
     def play_music(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)):
-            raise HTTPException(status_code=403, detail="Müzik oynatmak için mikrofonda olmalısınız")
+        if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)): raise HTTPException(status_code=403, detail="Müzik oynatmak için mikrofonda olmalısınız")
         music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id, RoomMusic.user_id == user.id))
         if not music: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
         if music.paid_until <= datetime.now(timezone.utc): raise HTTPException(status_code=402, detail="Müzik süresi dolmuş")
