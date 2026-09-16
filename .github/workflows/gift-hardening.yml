@@ -1,0 +1,41 @@
+name: gift-hardening
+on:
+  push:
+    paths:
+      - gift-catalog-fix.trigger
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Harden gift backend and room imports
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/main.py')
+          s = p.read_text()
+          s = s.replace('RoomMusic, RoomSeat, RoomChatMessage, RoomChatMessage', 'RoomMusic, RoomSeat, RoomChatMessage')
+          p.write_text(s)
+
+          p = Path('backend/app/room_routes.py')
+          s = p.read_text()
+          marker = '    @router.post("/{room_id}/gifts")\n'
+          endpoint = '''    @router.get("/{room_id}/gift-catalog")\n    def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room = get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id):\n            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        return [{"gift_key": key, "unit_price": price} for key, price in GIFT_CATALOG.items()]\n\n'''
+          if 'def gift_catalog(' not in s:
+              if marker not in s:
+                  raise SystemExit('gift endpoint insertion marker not found')
+              s = s.replace(marker, endpoint + marker, 1)
+          p.write_text(s)
+          PY
+          python3 -m py_compile backend/app/main.py backend/app/room_routes.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/main.py backend/app/room_routes.py
+          git commit -m 'fix: harden gift catalog backend' || true
+          git push
+      - name: Cleanup one-time workflow and trigger
+        if: success()
+        run: |
+          git rm -f .github/workflows/gift-hardening.yml gift-catalog-fix.trigger || true
+          git commit -m 'chore: remove one-time gift hardening workflow' || true
+          git push || true
