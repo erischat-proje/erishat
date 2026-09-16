@@ -64,7 +64,7 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 8. 2026-09-17 — ODA API İLERLEMESİ
 - [x] `GET /v1/rooms` endpoint'i eklendi; gerçek veritabanındaki odaları döndürüyor.
 - [x] Oda listeleme yanıtı mevcut oda görünümüyle aynı kapasite/seviye/koltuk/üye bilgilerini taşıyor.
-- [x] Müzik ekleme akışında 10 parça sınırı ödeme alınmadan önce kontrol ediliyor; 10 parça doluyken yanlışlıkla 150 Lidya kesilmesi engellendi.
+- [x] Müzik ekleme akışında 10 parça sınırı ödeme işleminden önce kontrol ediliyor; 10 parça doluyken yanlışlıkla 150 Lidya kesilmesi engellendi.
 - [x] Değişiklikler `main` branch'e GitHub üzerinden commit edildi.
 - [ ] Railway deploy ve gerçek API smoke test henüz yapılmadı.
 
@@ -74,10 +74,11 @@ Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolo
 - [x] Mevcut frontend kayıt çağrısının backend'in zorunlu `gender` alanını göndermediği tespit edildi; bu nedenle gerçek oturum bootstrap'ı ayrıca düzeltilmeli.
 - [x] Oda backend'inin `GET /v1/rooms` için Bearer token istediği doğrulandı.
 - [x] Oda listeleme ve oda girişini frontend'e bağlamak için güvenli değişiklik noktaları belirlendi.
-- [x] Geçici otomatik patch workflow denemesi yapıldı ve değişiklik uygulanmadan temizlendi; `frontend/index.html` bu denemede değiştirilmedi.
-- [ ] Frontend gerçek oda API bağlantısı henüz tamamlanmadı.
+- [x] Oda frontend patch'i için GitHub Actions workflow yeniden oluşturuldu ve tetik dosyası eklendi.
+- [ ] GitHub Actions'ın connector üzerinden çalıştığı henüz doğrulanmadı.
+- [ ] `frontend/index.html` üzerinde gerçek patch uygulanması henüz doğrulanmadı.
 
-10. 2026-09-17 — SONRAKİ KONTROL NOKTASI
+10. SONRAKİ KONTROL NOKTASI
 - [ ] Frontend kayıt/oturum bootstrap'ını backend şemasıyla uyumlu hale getir.
 - [ ] Frontend API base URL'yi canlı origin ile güvenli biçimde bağla.
 - [ ] Sabit/demo oda listesini gerçek GET `/v1/rooms` verisine bağla.
