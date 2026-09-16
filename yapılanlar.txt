@@ -1,0 +1,46 @@
+ERISCHAT – YAPILANLAR
+
+Bu dosya, v11 paketine kadar yapılan düzenlemelerin özetidir.
+
+1. Frontend ve giriş yapısı
+- v54 arayüzü ana giriş yapısına taşındı.
+- Eski iframe tabanlı v35/v54 yükleme yapısı kaldırıldı.
+- frontend/index.html güncel ana arayüzle eşitlendi.
+- Modal pencerelerin dış alana tıklayınca kapanması sağlandı.
+- Escape tuşuyla modal/sohbet pencerelerini kapatma desteği eklendi.
+- Tarayıcı uyumluluğu için CSS.escape yedeği eklendi.
+
+2. Profil ve kullanıcı bilgileri
+- Nickname ve avatar güncelleme altyapısı eklendi.
+- Profil bilgilerinin tarayıcıda korunması için kalıcı kayıt desteği hazırlandı.
+- API üzerinden profil güncelleme endpoint'i eklendi.
+- Oturum kapatırken token, kullanıcı bilgisi ve WebSocket temizleme mantığı eklendi.
+
+3. Backend ve API
+- UserUpdate şeması eklendi.
+- PATCH /v1/me endpoint'i eklendi.
+- GET /v1/conversations endpoint'i eklendi.
+- Konuşma oluşturma fonksiyonu eklendi.
+- Aynı iki kullanıcı arasında tekrar eden özel konuşmaların önlenmesi için kontrol eklendi.
+- Conversation ve ConversationMember ilişkileri düzenlendi.
+- ConversationOut yanıt modelinin serileştirme uyumu geliştirildi.
+- CORS yapılandırmasındaki hatalı wildcard/credentials kombinasyonu düzeltildi.
+- API köprüsüne request, health, listConversations, createConversation, updateProfile ve logout fonksiyonları eklendi.
+
+4. Mesajlaşma altyapısı
+- WebSocket üzerinden gelen mesajların veritabanına kaydedilmesi için altyapı eklendi.
+- Mesaj gövdesi doğrulaması eklendi.
+- Mesaj uzunluğu kontrolü eklendi.
+- Konuşma üyeliği kontrolü eklendi.
+- Mesajların konuşma üyelerine yayınlanması sağlandı.
+- HTTP ve WebSocket üzerinden aynı mesajın iki kez görünmesini önlemek için kimlik kontrolü eklendi.
+- WebSocket yeniden bağlanma ve bağlantı kesme fonksiyonları eklendi.
+- Mesaj geçmişini API'den yükleme altyapısı eklendi.
+
+5. Kontroller
+- Backend Python derleme kontrolleri yapıldı.
+- Frontend JavaScript sözdizimi kontrolleri yapıldı.
+- ZIP arşiv bütünlük kontrolleri yapıldı.
+
+ÖNEMLİ NOT:
+Bu maddelerin bir kısmı altyapı seviyesinde hazırlanmıştır. Railway üzerinde gerçek kullanıcı, gerçek veritabanı ve gerçek WebSocket ile uçtan uca test tamamlanmış değildir. Bu nedenle sistem henüz tamamen üretime hazır kabul edilmemelidir.

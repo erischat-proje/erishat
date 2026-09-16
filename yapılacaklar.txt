@@ -1,0 +1,74 @@
+ERISCHAT – YAPILACAKLAR
+
+Öncelik: Yeni özellik eklemekten önce mevcut sistemi gerçek ortamda uçtan uca çalışır hâle getirmek.
+
+1. Canlı ortam bağlantısı
+- Gerçek Railway/backend API adresini kesin olarak tanımla.
+- Frontend API base URL yapılandırmasını canlı adresle eşleştir.
+- CORS ayarlarını gerçek frontend domainiyle doğrula.
+- HTTPS ve WebSocket için wss:// kullanımını kontrol et.
+- Railway loglarını incele ve başlangıç hatalarını temizle.
+
+2. Gerçek kullanıcı akışı
+- Kayıt endpoint'ini ve frontend kayıt ekranını bağla.
+- Giriş endpoint'ini ve token saklama akışını bağla.
+- Sayfa yenilendiğinde oturumun doğru şekilde geri yüklenmesini test et.
+- Geçersiz/süresi dolmuş token durumunu ele al.
+- Çıkış işleminde tüm yerel kullanıcı verilerini temizle.
+
+3. Gerçek konuşma sistemi
+- Örnek/sahte odaları kaldır veya yalnızca API başarısız olduğunda göster.
+- GET /v1/conversations sonucunu Mesajlar listesindeki gerçek veriye bağla.
+- Gerçek kullanıcı arama ve konuşma başlatma akışını ekle.
+- createConversation endpoint'ini arayüzdeki yeni sohbet butonuna bağla.
+- Konuşma seçildiğinde gerçek conversation_id kullan.
+- Konuşma üyelerini ve karşı tarafın profilini doğru göster.
+
+4. Mesaj geçmişi ve canlı mesajlaşma
+- Konuşma açıldığında geçmiş mesajları gerçek API'den yükle.
+- Mesaj gönderimini gerçek POST/endpoint ile bağla.
+- WebSocket bağlantısını seçili conversation_id ile aç.
+- Gelen mesajları doğru konuşmaya yerleştir.
+- HTTP yanıtı ile WebSocket olayının aynı mesajı iki kez göstermediğini test et.
+- Bağlantı kopunca yeniden bağlanma ve kullanıcı bildirimi ekle.
+- Okundu bilgisi, yazıyor göstergesi ve çevrimiçi durumunu mevcut modele göre bağla.
+
+5. Veritabanı ve güvenlik
+- SQLAlchemy modelleri ile mevcut veritabanı tablolarını karşılaştır.
+- Gerekli migration dosyalarını oluştur veya güvenli şema güncellemesi yap.
+- Kullanıcıların yalnızca üye oldukları konuşmaları okuyabildiğini test et.
+- Başkasının profilini veya konuşmasını değiştirme açıklarını kontrol et.
+- Mesaj uzunluğu, boş mesaj, kötü amaçlı içerik ve rate limit kontrollerini güçlendir.
+- Secret/token bilgilerini frontend içine gömmeme kontrolü yap.
+
+6. Frontend kalite kontrolü
+- Mobil ekranlarda 320px genişlik kontrolü yap.
+- Avatar, çerçeve, nickname ve profil modalı davranışlarını test et.
+- Yükleniyor, hata, boş liste ve çevrimdışı durumlarını ayrı göster.
+- Konsoldaki tüm JavaScript hatalarını temizle.
+- Kırık buton, callback ve event bağlantılarını tarayıcıda test et.
+
+7. Test planı
+- Backend compile testi.
+- API health testi.
+- Kayıt/giriş testi.
+- Profil güncelleme testi.
+- Konuşma oluşturma ve listeleme testi.
+- Mesaj geçmişi testi.
+- İki farklı kullanıcıyla canlı WebSocket mesaj testi.
+- Yeniden bağlanma testi.
+- ZIP bütünlük testi.
+- Railway deploy sonrası gerçek URL üzerinden son test.
+
+8. Sonraki geliştirmeler
+- Bildirim sistemi.
+- Okundu bilgisi.
+- Yazıyor göstergesi.
+- Kullanıcı arama.
+- Engelleme/raporlama.
+- Dosya ve görsel gönderimi.
+- Mesaj düzenleme/silme.
+- Daha gelişmiş profil stüdyosu.
+
+KURAL:
+Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya karşılaştırması, sözdizimi testi ve mümkünse gerçek API testi yapılacak.
