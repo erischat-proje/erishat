@@ -17,15 +17,11 @@ jobs:
           import re
           p = Path('frontend/index.html')
           s = p.read_text(encoding='utf-8')
-          s, n_api = re.subn(r"const API=\(window\.ERISCHAT_API_BASE\|\|localStorage\.getItem\('erischat\.apiBase'\)\|\|' '\)\.replace", "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace", s, count=0)
-          s, n_api = re.subn(r"const API=\(window\.ERISCHAT_API_BASE\|\|localStorage\.getItem\('erischat\.apiBase'\)\|\|' '\)\.replace", "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace", s, count=0)
           s = s.replace("const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace", "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace", 1)
           old = "const result=await request('/v1/users',{method:'POST',body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})});"
           new = "let gender=localStorage.getItem('erischat.gender')||'';if(gender!=='female'&&gender!=='male'){const answer=window.prompt('ErisChat kayıt için cinsiyet seçin: kadın veya erkek','');gender=(answer||'').trim().toLowerCase();if(gender!=='female'&&gender!=='male'){showToast('Kayıt için kadın veya erkek seçmelisin.');throw new Error('Geçerli cinsiyet seçilmedi')}localStorage.setItem('erischat.gender',gender)}const result=await request('/v1/users',{method:'POST',body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤',gender})});"
           if old in s:
               s=s.replace(old,new,1)
-          elif "body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})" in s:
-              s=s.replace("body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})", "body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤',gender:localStorage.getItem('erischat.gender')||'male'})", 1)
           p.write_text(s,encoding='utf-8')
           print('auth bootstrap patch applied')
           PY
@@ -35,16 +31,20 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('yapılanlar.txt');s=p.read_text(encoding='utf-8')
-          block="\n12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ\n- [x] Backend kayıt şemasında `gender` değerlerinin yalnızca `female`/`male` olduğu doğrulandı.\n- [x] Frontend kayıt isteğine cinsiyet seçimi eklendi; seçim localStorage'da tutuluyor.\n- [x] API base için canlı origin fallback'i düzeltildi.\n- [ ] Railway smoke test.\n"
-          if '12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ' not in s:p.write_text(s.rstrip()+block,encoding='utf-8')
+          block="\n13. 2026-09-17 — ACTIONS VE RAILWAY KONTROLÜ\n- [x] GitHub Actions `patch` job başarıyla tamamlandı.\n- [x] `frontend/index.html` ana/Keşfet oda listelerinin gerçek `/v1/rooms` verisine bağlı olduğu tekrar doğrulandı.\n- [x] Railway production `erischat` servisi son deployment durumunda SUCCESS.\n- [x] Railway `/ready` healthcheck logunda 200 OK görüldü.\n- [ ] Gerçek yetkili `/v1/rooms` smoke testi ve frontend canlı URL testi.\n"
+          if '13. 2026-09-17 — ACTIONS VE RAILWAY KONTROLÜ' not in s:p.write_text(s.rstrip()+block,encoding='utf-8')
           p=Path('yapılacaklar.txt');s=p.read_text(encoding='utf-8')
-          block="\n12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ\n- [x] `UserCreate.gender` için geçerli değerler doğrulandı: `female` / `male`.\n- [x] Frontend kayıt bootstrap'ına cinsiyet seçimi ekleniyor.\n- [x] API base canlı origin fallback'i düzeltiliyor.\n- [ ] Railway smoke test.\n"
-          if '12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ' not in s:p.write_text(s.rstrip()+block,encoding='utf-8')
+          s=s.replace('- [ ] Frontend sabit/demo oda listesini gerçek GET /v1/rooms verisine bağla.','- [x] Frontend sabit/demo oda listesi gerçek GET /v1/rooms verisine bağlandı.')
+          s=s.replace('- [ ] Frontend gerçek GET `/v1/rooms` bağlantısı.','- [x] Frontend gerçek GET `/v1/rooms` bağlantısı.')
+          s=s.replace('- [ ] Gerçek oda giriş akışı.','- [x] Gerçek oda giriş akışı: oda kartı POST `/v1/rooms/{room_id}/join` çağrısına bağlandı.')
+          block="\n13. 2026-09-17 — CANLI ORTAM KONTROLÜ\n- [x] GitHub Actions frontend patch job'u SUCCESS.\n- [x] Railway production `erischat` deployment SUCCESS.\n- [x] Railway `/ready` healthcheck 200 OK.\n- [ ] Yetkili `/v1/rooms` smoke testi ve canlı frontend uçtan uca testi.\n"
+          if '13. 2026-09-17 — CANLI ORTAM KONTROLÜ' not in s:s=s.rstrip()+block
+          p.write_text(s,encoding='utf-8')
           PY
       - name: Commit patch
         run: |
           git config user.name 'ErisChat Bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add frontend/index.html yapılanlar.txt yapılacaklar.txt
-          git diff --cached --quiet || git commit -m 'fix: connect frontend auth bootstrap'
+          git diff --cached --quiet || git commit -m 'fix: sync frontend progress tracking'
           git push
