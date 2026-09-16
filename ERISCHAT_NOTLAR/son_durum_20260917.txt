@@ -1,6 +1,10 @@
 2026-09-17
 - frontend/erischat-main.html doğrulandı: gerçek oda listesi, oda giriş/koltuk ve hediye katalog/gönderim UI kodu mevcut.
 - Hediye backend ekonomisi server kontrollü: sabit katalog, %70 alıcı payı, maksimum 99 adet.
-- Canlı hediye olayları sonraki entegrasyon adımı.
-- frontend/gift-live.js oluşturuldu; mevcut oda WebSocket URL'sine bağlanıp room_gift olayını dinleyecek yardımcı istemci eklendi.
+- Backend oda WebSocket endpointi doğrulandı: /ws/rooms/{room_id}?token=...
+- send_gift artık başarılı işlemden sonra room_gift olayını aynı oda WebSocket bağlantılarına yayınlıyor.
+- room_gift payload: event id, oda, gönderen/alıcı, hediye, adet, toplam Lidya, alıcı tutarı, animasyon ve zaman.
+- frontend/gift-live.js gerçek WebSocket endpointine düzeltildi ve oda katılım POST'unu otomatik yakalayarak bağlantıyı açıyor.
+- frontend/erischat-main.html için apply-gift-ui workflow'una gift-live.js yükleme adımı eklendi.
 - Railway deploy yapılmadı.
+- Gerçek iki kullanıcı smoke testi henüz yapılmadı.
