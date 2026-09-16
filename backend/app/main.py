@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import logging
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
 from .auth import create_anonymous_user
 from .config import settings
@@ -28,7 +30,7 @@ from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
 logger = logging.getLogger("erischat.api")
-app = FastAPI(title="ErisChat API", version="0.6.0")
+app = FastAPI(title="ErisChat API", version="0.7.0")
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
 app.add_middleware(
@@ -85,7 +87,7 @@ def ensure_demo_user(db: Session) -> User:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": "0.6.0"}
+    return {"status": "ok", "service": "erischat-api", "version": "0.7.0"}
 
 
 @app.get("/v1/users/{user_id}", response_model=UserOut)
@@ -148,20 +150,15 @@ def create_conversation(
 ) -> ConversationOut:
     if payload.participant_id == user.id:
         raise HTTPException(status_code=400, detail="Kendinizle konuşma oluşturamazsınız")
-
     participant = UserRepository(db).get(payload.participant_id)
     if not participant or not participant.is_active:
         raise HTTPException(status_code=404, detail="Katılımcı bulunamadı")
-
     conversation_repo = ConversationRepository(db)
     existing = conversation_repo.find_direct([user.id, participant.id])
     if existing:
         return existing
     conversation_id = f"dm_{uuid4().hex}"
-    return conversation_repo.create_direct(
-        conversation_id,
-        [user.id, participant.id],
-    )
+    return conversation_repo.create_direct(conversation_id, [user.id, participant.id])
 
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
@@ -257,7 +254,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         await manager.connect(user.id, websocket)
-        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.6.0", "user_id": user.id})
+        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.7.0", "user_id": user.id})
         while True:
             data = await websocket.receive_json()
             if not isinstance(data, dict):
@@ -288,3 +285,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         if user:
             manager.disconnect(user.id, websocket)
         db.close()
+
+
+# The backend service also hosts the canonical web UI so there is one public origin.
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
+if FRONTEND_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
