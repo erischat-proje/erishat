@@ -14,6 +14,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('frontend/index.html')
           s=p.read_text(encoding='utf-8')
           css=''' .roommodal{display:none;position:fixed;inset:0;background:#020107f2;z-index:90;align-items:stretch}.roommodal.show{display:flex}.roombox{width:min(480px,100%);margin:auto;height:100%;background:#0b0811;overflow:auto}.roomtop{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:14px;background:#0b0811eF;border-bottom:1px solid #ffffff12}.roomtop h2{margin:0;font-size:17px;flex:1}.roombody{padding:14px 14px 110px}.roomstats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.roomstat{background:#100b18;border:1px solid #ffffff10;border-radius:14px;padding:10px;text-align:center}.roomstat b{display:block;font-size:14px}.roomseats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.seat{min-height:72px;border:1px solid #ffffff10;background:#100b18;color:#fff;border-radius:15px;padding:8px;font-size:9px;text-align:center}.seat.locked{opacity:.45}.seat.occupied{border-color:#ff4da850}.seat .seaticon{font-size:22px;display:block;margin-bottom:4px}.roomactions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.roomaction{border:1px solid #ffffff10;background:#ffffff08;color:#fff;border-radius:13px;padding:11px}.roomchat{margin-top:14px;background:#100b18;border:1px solid #ffffff10;border-radius:18px;padding:12px}.roomchatlog{min-height:100px;max-height:180px;overflow:auto;display:grid;gap:7px}.roomchatmsg{font-size:10px;color:#bdb1c4}.roomgiftbar{display:flex;gap:8px;margin-top:10px}.roomgiftbar button{flex:1;border:0;border-radius:12px;background:#ff4da8;color:#fff;padding:11px}.roomempty{padding:25px;text-align:center;color:#8f8498;font-size:11px}'''
@@ -46,7 +47,8 @@ jobs:
             (r.seats||[]).forEach(seat=>{
               const b=document.createElement('button');b.className='seat '+(seat.locked?'locked ':'')+(seat.user_id?'occupied':'');
               b.onclick=()=>{if(!seat.locked&&!seat.user_id)joinSeat(seat.seat_number);else if(seat.user_id===getCurrentUserId())joinSeat(seat.seat_number);else showToast(seat.locked?'Bu koltuk kilitli':'Bu koltuk dolu')};
-              b.innerHTML='<span class="seaticon">'+(seat.locked?'🔒':seat.user_id?'🎙️':'🎤')+'</span>Koltuk '+seat.seat_number+(seat.user_id?'\nDolu':'');box.appendChild(b)
+              b.innerHTML='<span class="seaticon">'+(seat.locked?'🔒':seat.user_id?'🎙️':'🎤')+'</span>Koltuk '+seat.seat_number+(seat.user_id?'<br>Dolu':'');
+              box.appendChild(b);
             });
           }
           async function refreshRoom(){if(activeRoomId)await openRoom(activeRoomId)}
@@ -58,8 +60,6 @@ jobs:
           '''
           if 'async function openRoom(roomId)' not in s:
               s=s.replace('</script>',js+'</script>',1)
-          # Redirect existing room-card joins to the real room screen when the room id is available.
-          import re
           s=re.sub(r"async function joinRoom\([^\{]*\{", "async function joinRoom(roomId){\n try{await request('/v1/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST'});await openRoom(roomId);showToast('Odaya katıldın');return;}catch(e){showToast(e.message||'Odaya girilemedi');return;}\n }\n async function legacyJoinRoom(){", s, count=1)
           p.write_text(s,encoding='utf-8')
           PY
