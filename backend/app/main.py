@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import text
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
@@ -141,7 +141,10 @@ def me(user: User = Depends(current_user)) -> User:
 @app.patch("/v1/me", response_model=UserOut)
 def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
     if payload.nickname is not None:
-        user.nickname = payload.nickname
+        nickname = payload.nickname.strip()
+        if not nickname:
+            raise HTTPException(status_code=400, detail="İsim boş olamaz")
+        user.nickname = nickname
     if payload.avatar is not None:
         user.avatar = payload.avatar
     if payload.notifications_enabled is not None:
@@ -196,7 +199,15 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
     existing = repo.find_direct([user.id, participant.id])
     if existing:
         return existing
-    return repo.create_direct(f"dm_{uuid4().hex}", [user.id, participant.id])
+    conversation_id = "dm_" + "_".join(sorted((user.id, participant.id)))
+    try:
+        return repo.create_direct(conversation_id, [user.id, participant.id])
+    except IntegrityError:
+        db.rollback()
+        existing = repo.get(conversation_id) or repo.find_direct([user.id, participant.id])
+        if existing:
+            return existing
+        raise HTTPException(status_code=409, detail="Konuşma oluşturulurken çakışma oluştu")
 
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
@@ -227,7 +238,10 @@ def create_message(conversation_id: str, payload: MessageCreate, db: Session = D
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
     if not repo.is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
-    return MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
+    try:
+        return MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
@@ -263,63 +277,43 @@ class ConnectionManager:
             self.connections.pop(user_id, None)
 
     async def send_user(self, user_id: str, payload: dict) -> None:
-        for socket in list(self.connections.get(user_id, ())):
+        for websocket in list(self.connections.get(user_id, set())):
             try:
-                await socket.send_json(payload)
+                await websocket.send_json(payload)
             except Exception:
-                self.disconnect(user_id, socket)
+                self.disconnect(user_id, websocket)
 
 
 manager = ConnectionManager()
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket) -> None:
-    token = websocket.query_params.get("token")
+async def websocket_endpoint(websocket: WebSocket, token: str | None = None) -> None:
     if not token:
-        await websocket.close(code=1008, reason="token gerekli")
+        await websocket.close(code=1008)
         return
-    db = Session(engine)
-    user = None
-    try:
+    with Session(engine) as db:
         user = get_user_from_token(db, token)
         if not user or not user.is_active:
-            await websocket.close(code=1008, reason="geçersiz oturum")
+            await websocket.close(code=1008)
             return
-        await manager.connect(user.id, websocket)
-        await websocket.send_json({"type": "connected", "service": "erischat-api", "version": "0.9.0", "user_id": user.id})
+        user_id = user.id
+    await manager.connect(user_id, websocket)
+    try:
         while True:
             data = await websocket.receive_json()
-            if not isinstance(data, dict):
-                await websocket.send_json({"type": "error", "detail": "Mesaj gövdesi nesne olmalı"})
-                continue
-            conversation_id = str(data.get("conversation_id", "")).strip()
-            text_value = str(data.get("text", "")).strip()
-            if not conversation_id or not text_value or len(text_value) > 2000:
-                await websocket.send_json({"type": "error", "detail": "conversation_id ve 1-2000 karakterlik text gerekli"})
-                continue
-            repo = ConversationRepository(db)
-            if not repo.get(conversation_id) or not repo.is_member(conversation_id, user.id):
-                await websocket.send_json({"type": "error", "detail": "Konuşmaya erişim yok"})
-                continue
-            message = MessageService(MessageRepository(db)).create(conversation_id, user.id, text_value)
-            event = {"type": "message", "conversation_id": conversation_id, "sender_id": user.id, "text": message.text, "message_id": message.id, "created_at": message.created_at.isoformat()}
-            for member_id in repo.members(conversation_id):
-                await manager.send_user(member_id, event)
+            if isinstance(data, dict) and data.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:
-        pass
+        manager.disconnect(user_id, websocket)
     except Exception:
-        logger.exception("WebSocket hatası")
+        manager.disconnect(user_id, websocket)
         try:
             await websocket.close(code=1011)
         except Exception:
             pass
-    finally:
-        if user:
-            manager.disconnect(user.id, websocket)
-        db.close()
 
 
-FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
-if FRONTEND_DIR.is_dir():
-    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+frontend_path = Path(__file__).resolve().parents[2] / "frontend"
+if frontend_path.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
