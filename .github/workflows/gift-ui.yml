@@ -1,0 +1,97 @@
+name: gift-ui
+on:
+  push:
+    paths:
+      - gift-ui.trigger
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Connect real room gift UI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('backend/app/room_routes.py')
+          s = p.read_text()
+          marker = '    @router.get("/{room_id}/gift-leaderboard")\n'
+          endpoint = '''    @router.get("/{room_id}/gift-events")\n    def gift_events(room_id: str, limit: int = 20, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):\n        room = get_room_or_404(db, room_id)\n        if not is_member(db, room.id, user.id):\n            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")\n        limit = max(1, min(limit, 50))\n        rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.id.desc()).limit(limit)))\n        rows.reverse()\n        return [{\n            "id": e.id, "sender_id": e.sender_id, "recipient_id": e.recipient_id,\n            "gift_key": e.gift_key, "unit_price": e.unit_price, "quantity": e.quantity,\n            "total_price": e.total_price, "recipient_amount": e.recipient_amount,\n            "created_at": e.created_at.isoformat() if e.created_at else None,\n        } for e in rows]\n\n'''
+          if 'def gift_events(' not in s:
+              if marker not in s:
+                  raise SystemExit('gift leaderboard marker not found')
+              s = s.replace(marker, endpoint + marker, 1)
+          p.write_text(s)
+
+          p = Path('frontend/index.html')
+          s = p.read_text()
+          old_button = '<button onclick="showToast(\'Hediye menüsü bir sonraki adımda gerçek API’ye bağlanacak 🎁\')">🎁 Hediye gönder</button>'
+          new_button = '<button onclick="openRoomGiftMenu()">🎁 Hediye gönder</button>'
+          if old_button in s:
+              s = s.replace(old_button, new_button, 1)
+
+          modal = '''<div id="roomGiftModal" class="modal"><div class="modalbox"><button class="close" onclick="closeModal('roomGiftModal')">×</button><div id="roomGiftDetail"></div></div></div>'''
+          if 'id="roomGiftModal"' not in s:
+              s = s.replace('<div id="toast" class="toast"></div>', modal + '<div id="toast" class="toast"></div>', 1)
+
+          insert_marker = '</script><script>'
+          js = r'''\nasync function openRoomGiftMenu(){
+  if(!activeRoomId){return;}
+  const occupied=(activeRoom?.seats||[]).filter(x=>x.user_id);
+  const uid=getCurrentUserId();
+  const detail=document.getElementById('roomGiftDetail');
+  detail.innerHTML='<h2>🎁 Hediye gönder</h2><p class="muted">Fiyatlar sunucu tarafından doğrulanır. Tek gönderimde en fazla 99 adet.</p><label class="muted">Alıcı</label><select id="roomGiftRecipient" style="width:100%;margin:7px 0 12px;padding:11px;border-radius:12px;background:#17111e;color:#fff;border:1px solid #ffffff18"><option value="self">Kendim</option>'+occupied.filter(x=>x.user_id!==uid).map(x=>'<option value="'+x.user_id+'">Mikrofon • '+x.user_id+'</option>').join('')+'<option value="all_mic">Mikrofondaki herkese</option></select><label class="muted">Hediye</label><select id="roomGiftKey" style="width:100%;margin:7px 0 12px;padding:11px;border-radius:12px;background:#17111e;color:#fff;border:1px solid #ffffff18">'+gifts.map(g=>'<option value="'+g[0].replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+g[1]+' '+g[0]+' • '+g[2].toLocaleString('tr-TR')+'</option>').join('')+'</select><label class="muted">Adet</label><input id="roomGiftQty" type="number" min="1" max="99" value="1" style="width:100%;margin:7px 0 12px;padding:11px;border-radius:12px;background:#17111e;color:#fff;border:1px solid #ffffff18"><button class="action" onclick="sendRoomGift()">Gönder 🎁</button>';
+  document.getElementById('roomGiftModal').classList.add('show');
+}
+async function sendRoomGift(){
+  const recipient=document.getElementById('roomGiftRecipient').value;
+  const gift_key=document.getElementById('roomGiftKey').value;
+  const quantity=Math.max(1,Math.min(99,Number(document.getElementById('roomGiftQty').value)||1));
+  const targets=recipient==='self'?[getCurrentUserId()]:recipient==='all_mic'?[...(activeRoom?.seats||[]).filter(x=>x.user_id).map(x=>x.user_id)]:[recipient];
+  if(!targets.length){showToast('Mikrofonda alıcı yok');return;}
+  try{
+    let sent=0;
+    for(const target of [...new Set(targets)]){
+      const r=await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/gifts',{method:'POST',body:JSON.stringify({recipient_id:target,gift_key,quantity})});
+      sent+=Number(r.quantity||quantity);
+    }
+    closeModal('roomGiftModal'); await refreshRoom(); await refreshRoomGifts(); showToast(sent+' hediye gönderildi 🎁');
+  }catch(e){showToast(e.message||'Hediye gönderilemedi');}
+}
+async function refreshRoomGifts(){
+  if(!activeRoomId)return;
+  try{
+    const rows=await request('/v1/rooms/'+encodeURIComponent(activeRoomId)+'/gift-events?limit=20');
+    const el=document.getElementById('roomGiftFeed');
+    if(!el)return;
+    el.innerHTML=rows.length?rows.map(x=>'<div class="roomchatmsg">🎁 '+(x.sender_id||'Kullanıcı')+' → '+(x.recipient_id||'Kullanıcı')+' • '+x.gift_key+' ×'+x.quantity+' • '+Number(x.total_price||0).toLocaleString('tr-TR')+' Lidya</div>').join(''):'<div class="roomempty">Henüz hediye gönderilmedi.</div>';
+  }catch(_){ }
+}
+'''
+          if 'async function openRoomGiftMenu()' not in s:
+              s = s.replace(insert_marker, js + insert_marker, 1)
+
+          feed = '<div class="roomgiftbar"><button onclick="openRoomGiftMenu()">🎁 Hediye gönder</button><button onclick="refreshRoom()">↻ Yenile</button></div>'
+          if 'id="roomGiftFeed"' not in s:
+              replacement = feed + '<div class="roomchat"><div class="section-title"><h3>Hediye akışı</h3></div><div id="roomGiftFeed" class="roomchatlog"><div class="roomempty">Henüz hediye gönderilmedi.</div></div></div>'
+              s = s.replace(feed, replacement, 1)
+
+          s = s.replace('connectRoomSocket();\n  }catch', 'connectRoomSocket();\n    refreshRoomGifts();\n    clearInterval(window.__roomGiftPoll);\n    window.__roomGiftPoll=setInterval(refreshRoomGifts,2000);\n  }catch', 1)
+          s = s.replace('function closeRoom(){activeRoomId=null;activeRoom=null;document.getElementById(\'roomModal\').classList.remove(\'show\')}', 'function closeRoom(){activeRoomId=null;activeRoom=null;clearInterval(window.__roomGiftPoll);document.getElementById(\'roomModal\').classList.remove(\'show\')}', 1)
+          p.write_text(s)
+          PY
+          python3 -m py_compile backend/app/main.py backend/app/room_routes.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/room_routes.py frontend/index.html
+          git commit -m 'feat: connect real room gift UI' || true
+          git push
+      - name: Cleanup one-time workflow and trigger
+        if: success()
+        run: |
+          git rm -f .github/workflows/gift-ui.yml gift-ui.trigger || true
+          git commit -m 'chore: remove one-time gift UI workflow' || true
+          git push || true
