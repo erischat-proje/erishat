@@ -36,10 +36,7 @@ def list_cosmetics(kind: str | None = None, gender: str | None = None):
 
 
 @router.get("/me/cosmetics")
-def owned_cosmetics(
-    user=Depends(current_cosmetic_user),
-    db: Session = Depends(get_db),
-):
+def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     rows = db.execute(
         text("SELECT cosmetic_type, asset_key FROM user_cosmetics WHERE user_id=:uid ORDER BY id"),
         {"uid": user.id},
@@ -48,15 +45,20 @@ def owned_cosmetics(
 
 
 @router.post("/me/cosmetics/purchase")
-def purchase_cosmetic(
-    payload: CosmeticPurchase,
-    user=Depends(current_cosmetic_user),
-    db: Session = Depends(get_db),
-):
+def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
     if not find_asset(key, kind):
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
+
+    # Lock the balance row before checking ownership/balance so concurrent purchases
+    # cannot spend the same Lidya twice or race the unique cosmetic constraint.
+    locked_user = db.execute(
+        text("SELECT lidya FROM users WHERE id=:uid FOR UPDATE"),
+        {"uid": user.id},
+    ).first()
+    if not locked_user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
     exists = db.execute(
         text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type=:kind AND asset_key=:key"),
@@ -64,20 +66,10 @@ def purchase_cosmetic(
     ).first()
     if exists:
         raise HTTPException(status_code=409, detail="Bu görünüm zaten satın alınmış")
-
-    locked_user = db.execute(
-        text("SELECT lidya FROM users WHERE id=:uid FOR UPDATE"),
-        {"uid": user.id},
-    ).first()
-    if not locked_user:
-        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     if int(locked_user[0]) < PRICE:
         raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
-    db.execute(
-        text("UPDATE users SET lidya=lidya-:price WHERE id=:uid"),
-        {"price": PRICE, "uid": user.id},
-    )
+    db.execute(text("UPDATE users SET lidya=lidya-:price WHERE id=:uid"), {"price": PRICE, "uid": user.id})
     db.execute(
         text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,:kind,:key)"),
         {"uid": user.id, "kind": kind, "key": key},
@@ -87,11 +79,7 @@ def purchase_cosmetic(
 
 
 @router.post("/me/cosmetics/apply")
-def apply_cosmetic(
-    payload: CosmeticApply,
-    user=Depends(current_cosmetic_user),
-    db: Session = Depends(get_db),
-):
+def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
     if not find_asset(key, kind):
@@ -108,9 +96,6 @@ def apply_cosmetic(
     if not column:
         raise HTTPException(status_code=400, detail="Geçersiz görünüm türü")
 
-    db.execute(
-        text(f"UPDATE users SET {column}=:key WHERE id=:uid"),
-        {"key": key, "uid": user.id},
-    )
+    db.execute(text(f"UPDATE users SET {column}=:key WHERE id=:uid"), {"key": key, "uid": user.id})
     db.commit()
     return {"ok": True, "cosmetic_type": kind, "asset_key": key}
