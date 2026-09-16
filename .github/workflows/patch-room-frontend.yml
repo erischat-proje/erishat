@@ -34,10 +34,24 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
           node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('frontend/index.html','utf8');const scripts=[...s.matchAll(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]);scripts.forEach((x,i)=>new vm.Script(x,{filename:'inline-'+i+'.js'}));console.log('inline-js-ok',scripts.length)"
+      - name: Update progress files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          entries = {
+            'yapılanlar.txt': "\n11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI\n- [x] `frontend/index.html` içindeki ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.\n- [x] Oda listesi üye sayısına göre sıralanıyor; ana sayfada ilk 3 oda gösteriliyor.\n- [x] Oda kartları gerçek oda kimliğiyle `POST /v1/rooms/{room_id}/join` çağrısı yapıyor.\n- [x] API base boşsa `location.origin` fallback'i eklendi.\n- [x] Patch GitHub Actions üzerinde çalıştı ve frontend değişikliği commit edildi.\n- [ ] Kayıt/oturum bootstrap'ında `gender` uyumluluğu ve Railway smoke test hâlâ açık.\n",
+            'yapılacaklar.txt': "\n11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI\n- [x] Frontend ana sayfa oda listesi gerçek `GET /v1/rooms` verisine bağlandı.\n- [x] Keşfet oda listesi gerçek API verisine bağlandı.\n- [x] Oda kartından gerçek `POST /v1/rooms/{room_id}/join` çağrısı bağlandı.\n- [x] API base için `location.origin` fallback'i eklendi.\n- [ ] Kayıt/oturum bootstrap'ındaki `gender` uyumsuzluğunu düzelt.\n- [ ] Gerçek oda içi ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla bağla.\n- [ ] Railway deploy ve gerçek API smoke test.\n"
+          }
+          for name, block in entries.items():
+              p=Path(name); s=p.read_text(encoding='utf-8')
+              marker=block.splitlines()[1]
+              if marker not in s:
+                  p.write_text(s.rstrip()+block,encoding='utf-8')
+          PY
       - name: Commit patch
         run: |
           git config user.name 'ErisChat Bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add frontend/index.html
-          git diff --cached --quiet || git commit -m 'feat: connect frontend room list to real API'
+          git add frontend/index.html yapılanlar.txt yapılacaklar.txt
+          git diff --cached --quiet || git commit -m 'feat: connect frontend rooms and update progress'
           git push
