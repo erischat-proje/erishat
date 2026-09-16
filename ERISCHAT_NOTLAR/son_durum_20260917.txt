@@ -1,0 +1,6 @@
+2026-09-17
+- frontend/erischat-main.html doğrulandı: gerçek oda listesi, oda giriş/koltuk ve hediye katalog/gönderim UI kodu mevcut.
+- Hediye backend ekonomisi server kontrollü: sabit katalog, %70 alıcı payı, maksimum 99 adet.
+- Canlı hediye olayları sonraki entegrasyon adımı.
+- frontend/gift-live.js oluşturuldu; mevcut oda WebSocket URL'sine bağlanıp room_gift olayını dinleyecek yardımcı istemci eklendi.
+- Railway deploy yapılmadı.
