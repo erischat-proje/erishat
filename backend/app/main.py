@@ -19,12 +19,14 @@ from .models import Conversation, User
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
 from .room_routes import register_room_auth, router as room_router
+from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus
+from .platform_routes import register_platform_auth, router as platform_router
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
 logger = logging.getLogger("erischat.api")
-app = FastAPI(title="ErisChat API", version="0.9.1")
+app = FastAPI(title="ErisChat API", version="1.0.0")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
@@ -69,9 +71,10 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
     return user
 
 
-# Room routes need the same bearer-token dependency as the rest of the API.
 register_room_auth(current_user)
+register_platform_auth(current_user)
 app.include_router(room_router)
+app.include_router(platform_router)
 
 
 def ensure_demo_user(db: Session) -> User:
