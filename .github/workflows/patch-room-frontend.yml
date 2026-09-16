@@ -10,48 +10,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch frontend room API
+      - name: Patch frontend auth bootstrap
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('frontend/index.html')
           s = p.read_text(encoding='utf-8')
-          old_api = "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace(/\\\\/$/,'');"
-          new_api = "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\\\\/$/,'');"
-          if old_api in s:
-              s = s.replace(old_api, new_api, 1)
-          old_home = "<div class=\"rooms\"><button class=\"room\" onclick=\"openChat('Rana’nın Odası','R')\"><div class=\"pic\">R</div><div class=\"roommain\"><b>Rana'nın Odası</b><small>Bugün mod yüksek ✨</small></div></button><button class=\"room\" onclick=\"openChat('DJ Luna','L')\"><div class=\"pic\">L</div><div class=\"roommain\"><b>DJ Luna</b><small>Müzik + sohbet gecesi</small></div></button><button class=\"room\" onclick=\"openChat('Nora','N')\"><div class=\"pic\">N</div><div class=\"roommain\"><b>Nora</b><small>Gece ekibi burada 🌙</small></div></button></div>"
-          new_home = "<div class=\"rooms\" id=\"homeRooms\"><div class=\"empty\">Gerçek odalar yükleniyor…</div></div>"
-          if old_home in s:
-              s = s.replace(old_home, new_home, 1)
-          old_explore = "<div id=\"exploreRooms\" class=\"list\"><button class=\"item\" onclick=\"openChat('Popüler Sohbet','P')\">🔥 Popüler Sohbet<br><span class=\"muted\">128 kişi aktif</span></button><button class=\"item\" onclick=\"openChat('Gece Ekibi','G')\">🌙 Gece Ekibi<br><span class=\"muted\">64 kişi aktif</span></button><button class=\"item\" onclick=\"openChat('Müzik Odası','M')\">🎵 Müzik Odası<br><span class=\"muted\">91 kişi aktif</span></button></div>"
-          new_explore = "<div id=\"exploreRooms\" class=\"list\"><div class=\"empty\">Gerçek odalar yükleniyor…</div></div>"
-          if old_explore in s:
-              s = s.replace(old_explore, new_explore, 1)
-          addon = '''<script>(function(){'use strict';const state={rooms:[]};async function loadRooms(){const api=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\\/$/,'');const token=localStorage.getItem('erischat.accessToken.v1')||'';const headers=token?{Authorization:'Bearer '+token}:{};const home=document.getElementById('homeRooms'),explore=document.getElementById('exploreRooms');if(!home||!explore)return;try{const res=await fetch(api+'/v1/rooms',{headers});if(!res.ok)throw new Error('Oda listesi alınamadı');const rooms=await res.json();state.rooms=Array.isArray(rooms)?rooms.sort((a,b)=>(b.member_count||0)-(a.member_count||0)):[];render(home,'home');render(explore,'explore')}catch(e){const msg=token?'Odalar yüklenemedi.':'Oturum hazırlanıyor…';home.innerHTML='<div class=\"empty\">'+msg+'</div>';explore.innerHTML='<div class=\"empty\">'+msg+'</div>'}}function render(target,mode){target.innerHTML='';if(!state.rooms.length){target.innerHTML='<div class=\"empty\">Henüz oluşturulmuş oda yok.</div>';return}const list=mode==='home'?state.rooms.slice(0,3):state.rooms;list.forEach(room=>{const b=document.createElement('button');b.className=mode==='home'?'room':'item';const letter=(room.name||'E').trim().charAt(0).toUpperCase()||'E';const locked=room.locked?' 🔒':'';b.innerHTML='<div class=\"pic\">'+letter+'</div><div class=\"roommain\"><b>'+escapeHtml(room.name||'İsimsiz Oda')+locked+'</b><small>'+Number(room.member_count||0)+' kişi • Seviye '+Number(room.level||1)+'</small></div>';b.onclick=()=>joinRoom(room);target.appendChild(b)})}function escapeHtml(v){return String(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}async function joinRoom(room){const api=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace(/\\/$/,'');const token=localStorage.getItem('erischat.accessToken.v1')||'';if(!token){showToast('Oturum hazırlanıyor…');return}try{const res=await fetch(api+'/v1/rooms/'+encodeURIComponent(room.id)+'/join',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const body=await res.json().catch(()=>({}));if(!res.ok)throw new Error(body.detail||'Odaya girilemedi');openChat(room.name,(room.name||'E').charAt(0).toUpperCase());showToast('Odaya katıldın ✓')}catch(e){showToast(e.message||'Odaya girilemedi')}}window.ErisChatRooms={reload:loadRooms,get:()=>state.rooms.slice()};window.addEventListener('load',()=>setTimeout(loadRooms,250));setTimeout(loadRooms,800)})();</script>'''
-          if 'window.ErisChatRooms={reload:' not in s:
-              s=s.replace('</body>', addon+'</body>', 1)
+          s, n_api = re.subn(r"const API=\(window\.ERISCHAT_API_BASE\|\|localStorage\.getItem\('erischat\.apiBase'\)\|\|' '\)\.replace", "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace", s, count=0)
+          s, n_api = re.subn(r"const API=\(window\.ERISCHAT_API_BASE\|\|localStorage\.getItem\('erischat\.apiBase'\)\|\|' '\)\.replace", "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace", s, count=0)
+          s = s.replace("const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace", "const API=(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||location.origin).replace", 1)
+          old = "const result=await request('/v1/users',{method:'POST',body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})});"
+          new = "let gender=localStorage.getItem('erischat.gender')||'';if(gender!=='female'&&gender!=='male'){const answer=window.prompt('ErisChat kayıt için cinsiyet seçin: kadın veya erkek','');gender=(answer||'').trim().toLowerCase();if(gender!=='female'&&gender!=='male'){showToast('Kayıt için kadın veya erkek seçmelisin.');throw new Error('Geçerli cinsiyet seçilmedi')}localStorage.setItem('erischat.gender',gender)}const result=await request('/v1/users',{method:'POST',body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤',gender})});"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif "body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})" in s:
+              s=s.replace("body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤'})", "body:JSON.stringify({nickname:profile.nickname||'Eris',avatar:profile.avatar||'👤',gender:localStorage.getItem('erischat.gender')||'male'})", 1)
           p.write_text(s,encoding='utf-8')
+          print('auth bootstrap patch applied')
           PY
           node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('frontend/index.html','utf8');const scripts=[...s.matchAll(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]);scripts.forEach((x,i)=>new vm.Script(x,{filename:'inline-'+i+'.js'}));console.log('inline-js-ok',scripts.length)"
       - name: Update progress files
         run: |
           python - <<'PY'
           from pathlib import Path
-          entries = {
-            'yapılanlar.txt': "\n11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI\n- [x] `frontend/index.html` içindeki ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.\n- [x] Oda listesi üye sayısına göre sıralanıyor; ana sayfada ilk 3 oda gösteriliyor.\n- [x] Oda kartları gerçek oda kimliğiyle `POST /v1/rooms/{room_id}/join` çağrısı yapıyor.\n- [x] API base boşsa `location.origin` fallback'i eklendi.\n- [x] Patch GitHub Actions üzerinde çalıştı ve frontend değişikliği commit edildi.\n- [ ] Kayıt/oturum bootstrap'ında `gender` uyumluluğu ve Railway smoke test hâlâ açık.\n",
-            'yapılacaklar.txt': "\n11. 2026-09-17 — FRONTEND ODA API BAĞLANTISI\n- [x] Frontend ana sayfa oda listesi gerçek `GET /v1/rooms` verisine bağlandı.\n- [x] Keşfet oda listesi gerçek API verisine bağlandı.\n- [x] Oda kartından gerçek `POST /v1/rooms/{room_id}/join` çağrısı bağlandı.\n- [x] API base için `location.origin` fallback'i eklendi.\n- [ ] Kayıt/oturum bootstrap'ındaki `gender` uyumsuzluğunu düzelt.\n- [ ] Gerçek oda içi ekranı koltuk/üyeler/ayarlar/hediye alanlarıyla bağla.\n- [ ] Railway deploy ve gerçek API smoke test.\n"
-          }
-          for name, block in entries.items():
-              p=Path(name); s=p.read_text(encoding='utf-8')
-              marker=block.splitlines()[1]
-              if marker not in s:
-                  p.write_text(s.rstrip()+block,encoding='utf-8')
+          p=Path('yapılanlar.txt');s=p.read_text(encoding='utf-8')
+          block="\n12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ\n- [x] Backend kayıt şemasında `gender` değerlerinin yalnızca `female`/`male` olduğu doğrulandı.\n- [x] Frontend kayıt isteğine cinsiyet seçimi eklendi; seçim localStorage'da tutuluyor.\n- [x] API base için canlı origin fallback'i düzeltildi.\n- [ ] Railway smoke test.\n"
+          if '12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ' not in s:p.write_text(s.rstrip()+block,encoding='utf-8')
+          p=Path('yapılacaklar.txt');s=p.read_text(encoding='utf-8')
+          block="\n12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ\n- [x] `UserCreate.gender` için geçerli değerler doğrulandı: `female` / `male`.\n- [x] Frontend kayıt bootstrap'ına cinsiyet seçimi ekleniyor.\n- [x] API base canlı origin fallback'i düzeltiliyor.\n- [ ] Railway smoke test.\n"
+          if '12. 2026-09-17 — FRONTEND KAYIT BOOTSTRAP KONTROLÜ' not in s:p.write_text(s.rstrip()+block,encoding='utf-8')
           PY
       - name: Commit patch
         run: |
           git config user.name 'ErisChat Bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add frontend/index.html yapılanlar.txt yapılacaklar.txt
-          git diff --cached --quiet || git commit -m 'feat: connect frontend rooms and update progress'
+          git diff --cached --quiet || git commit -m 'fix: connect frontend auth bootstrap'
           git push
