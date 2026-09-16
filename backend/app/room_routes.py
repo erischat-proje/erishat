@@ -25,6 +25,10 @@ LEVELS = {
     8: {"capacity": 105, "moderators": 12, "seats": 16, "required_spend": 1_560_000},
 }
 
+# Gift economy rule: payout is fixed and server-controlled.
+# The client must never be able to choose or increase this percentage.
+GIFT_RECIPIENT_PERCENT = 70
+
 
 class RoomCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)
@@ -47,7 +51,6 @@ class GiftSend(BaseModel):
     gift_key: str = Field(min_length=1, max_length=64)
     unit_price: int = Field(ge=1, le=10_000_000)
     quantity: int = Field(ge=1, le=99)
-    recipient_percent: int = Field(ge=0, le=100)
 
 
 class MusicCreate(BaseModel):
@@ -272,15 +275,41 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
         if not is_member(db, room.id, payload.recipient_id): raise HTTPException(status_code=404, detail="Hediye alıcısı odada değil")
-        total = payload.unit_price * payload.quantity
-        if user.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        recipient = db.get(User, payload.recipient_id)
+
+        # Lock both wallets for the transaction. This prevents concurrent requests
+        # from spending the same Lidya balance twice on PostgreSQL.
+        sender = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        recipient = db.scalar(select(User).where(User.id == payload.recipient_id).with_for_update())
+        if not sender: raise HTTPException(status_code=404, detail="Gönderen bulunamadı")
         if not recipient: raise HTTPException(status_code=404, detail="Alıcı bulunamadı")
-        recipient_amount = total * payload.recipient_percent // 100
-        user.lidya -= total; recipient.lidya += recipient_amount
-        db.add(RoomGiftEvent(room_id=room.id, sender_id=user.id, recipient_id=recipient.id, gift_key=payload.gift_key, unit_price=payload.unit_price, quantity=payload.quantity, total_price=total, recipient_percent=payload.recipient_percent, recipient_amount=recipient_amount))
-        db.commit(); refresh_level(db, room)
-        return {"gift_key": payload.gift_key, "quantity": payload.quantity, "total_price": total, "recipient_amount": recipient_amount, "animation": total >= 30}
+
+        total = payload.unit_price * payload.quantity
+        if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
+
+        recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100
+        sender.lidya -= total
+        recipient.lidya += recipient_amount
+        db.add(RoomGiftEvent(
+            room_id=room.id,
+            sender_id=sender.id,
+            recipient_id=recipient.id,
+            gift_key=payload.gift_key,
+            unit_price=payload.unit_price,
+            quantity=payload.quantity,
+            total_price=total,
+            recipient_percent=GIFT_RECIPIENT_PERCENT,
+            recipient_amount=recipient_amount,
+        ))
+        db.commit()
+        refresh_level(db, room)
+        return {
+            "gift_key": payload.gift_key,
+            "quantity": payload.quantity,
+            "total_price": total,
+            "recipient_percent": GIFT_RECIPIENT_PERCENT,
+            "recipient_amount": recipient_amount,
+            "animation": total >= 30,
+        }
 
     @router.get("/{room_id}/gift-leaderboard")
     def gift_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -297,36 +326,33 @@ def register_room_auth(current_user_dependency):
         if not seat: raise HTTPException(status_code=403, detail="Müzik eklemek için mikrofonda olmalısınız")
         current = db.scalar(select(func.count(RoomMusic.id)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id)) or 0
         if current >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
-        now = datetime.now(timezone.utc)
-        active_payment = db.scalar(select(RoomMusic.id).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id, RoomMusic.paid_until > now))
-        if not active_payment:
-            if user.lidya < 150: raise HTTPException(status_code=400, detail="Haftalık müzik ücreti 150 Lidya")
-            user.lidya -= 150; paid_until = now + timedelta(days=7)
-        else:
-            paid_until = db.scalar(select(RoomMusic.paid_until).where(RoomMusic.id == active_payment)) or now
-        slot = (db.scalar(select(func.max(RoomMusic.slot)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id)) or 0) + 1
-        music = RoomMusic(room_id=room.id, user_id=user.id, slot=slot, title=payload.title.strip(), source_url=payload.source_url, paid_until=paid_until)
+        if user.lidya < 150: raise HTTPException(status_code=400, detail="Müzik eklemek için 150 Lidya gerekli")
+        user.lidya -= 150
+        music = RoomMusic(room_id=room.id, user_id=user.id, slot=int(current) + 1, title=payload.title.strip(), source_url=payload.source_url.strip(), paid_until=datetime.now(timezone.utc) + timedelta(days=7))
         db.add(music); db.commit(); db.refresh(music)
         return {"id": music.id, "slot": music.slot, "title": music.title, "source_url": music.source_url, "paid_until": music.paid_until}
 
     @router.delete("/{room_id}/music/{music_id}")
-    def remove_music(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room_id, RoomMusic.user_id == user.id))
+    def delete_music(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
         if not music: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
-        db.delete(music); db.commit(); return {"removed": True}
+        if music.user_id != user.id and room.owner_id != user.id: raise HTTPException(status_code=403, detail="Bu müziği silemezsiniz")
+        db.delete(music); db.commit(); return {"deleted": True}
 
     @router.get("/{room_id}/music")
     def list_music(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        return [{"id": m.id, "user_id": m.user_id, "slot": m.slot, "title": m.title, "source_url": m.source_url, "paid_until": m.paid_until} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id).order_by(RoomMusic.slot))]
+        return [{"id": m.id, "user_id": m.user_id, "slot": m.slot, "title": m.title, "source_url": m.source_url, "paid_until": m.paid_until} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
 
     @router.post("/{room_id}/music/{music_id}/play")
     def play_music(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)): raise HTTPException(status_code=403, detail="Müzik oynatmak için mikrofonda olmalısınız")
-        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id, RoomMusic.user_id == user.id))
+        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
+        if not seat: raise HTTPException(status_code=403, detail="Müzik çalmak için mikrofonda olmalısınız")
+        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
         if not music: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
         if music.paid_until <= datetime.now(timezone.utc): raise HTTPException(status_code=402, detail="Müzik süresi dolmuş")
         return {"playing": True, "music_id": music.id, "title": music.title, "source_url": music.source_url}
