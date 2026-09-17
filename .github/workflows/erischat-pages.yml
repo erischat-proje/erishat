@@ -41,6 +41,7 @@ jobs:
               'room-gift-ui-live.js', 'dm-live.js', 'auth-live.js',
               'profile-live.js', 'cosmetics.js', 'profile-ui-live.js',
               'session-ui-live.js', 'dm-create-live.js', 'feature-hub-live.js',
+              'shop-live.js',
           ]
           for name in scripts:
               tag = f'<script src="./{name}"></script>'
