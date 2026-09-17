@@ -4,14 +4,14 @@ Tarih: 2026-09-17
 BASELINE / TAM SİSTEME HAZIRLIK
 
 GERÇEK RUNNER
-- [x] Quality v4 güncel doğrulama: run 35265208929 / job 105350554959 SUCCESS.
+- [x] Quality v4 güncel doğrulama: run 35266995579 / job 105356518821 SUCCESS.
 - [x] Static syntax + required-file kontrolleri.
 - [x] 139 cosmetic asset integrity.
 - [x] Cosmetic asset URL smoke.
 - [x] Anonymous session smoke.
 - [x] Live room smoke.
 - [x] Live ban smoke; eac244e6 gender/create-response düzeltmesi sonrası SUCCESS.
-- [x] Live DM smoke.
+- [x] Live DM smoke; bd7d8a1 DM auth-ready reload düzeltmesi sonrası SUCCESS.
 - [x] Live cosmetic smoke.
 - [x] Güncel main HEAD üzerindeki room WebSocket history/membership/ban zincirinin smoke doğrulaması.
 
@@ -43,7 +43,7 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Geçici Pages/CI trigger kalıntıları temizlendi.
 - [x] yapilanlar.txt güncel Quality kanıtıyla senkronize edildi.
 - [x] son_durum_20260917.txt güncel Quality kanıtıyla senkronize edildi.
-- [ ] Yeni docs checkpoint push sonrası Quality run SUCCESS doğrulaması.
+- [x] Yeni docs checkpoint push sonrası Quality run SUCCESS doğrulaması: 35266995579 / 105356518821.
 
 BASELINE ÇIKIŞ KRİTERİ
 1. Pages environment admission çözülür.
