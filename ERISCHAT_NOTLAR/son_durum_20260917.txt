@@ -2,24 +2,16 @@
 
 ## Son checkpoint
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Kozmetik API route ile canlı smoke harness payloadları karşılaştırıldı; `cosmetic_type` + `asset_key` sözleşmesi uyumlu.
-- `scripts/cosmetic_live_smoke.py` katalog GET çağrısı gereksiz token bağımlılığından ayrıştırılmış durumda.
-- `scripts/dm_live_smoke.py` ve `scripts/room_ban_live_smoke.py` opt-in local smoke harness olarak eklendi; gerçek E2E çalıştırmaları henüz yapılmadı.
-- `backend/app/main.py` startup user-settings migration satırları main'de hâlâ duplicate; cleanup tamamlandı olarak işaretlenmeyecek. Ayrıca `register_platform_auth` importunda duplicate ifade mevcut ve sonraki güvenli cleanup'ta düzeltilecek.
+- `backend/app/main.py` startup user-settings migration duplicate satırları güvenli şekilde temizlendi.
+- Aynı dosyadaki `register_platform_auth` duplicate import ifadesi de temizlendi.
+- `scripts/check_backend_quality.py` duplicate migration kontrolünün artık hata üretmemesi bekleniyor; GitHub Actions bu commit için henüz workflow sonucu döndürmedi, bu yüzden CI PASS olarak işaretlenmedi.
+- `scripts/dm_live_smoke.py` ve `scripts/room_ban_live_smoke.py` opt-in local smoke harness olarak mevcut; gerçek E2E çalıştırmaları henüz yapılmadı.
 - Bu değişiklikler production deploy etmez ve Railway'e dokunmaz.
 - Önceki Pages run `35208712803` failure durumunda; GitHub job API ayrıntılı step/log vermediği için kök neden tahmin edilmeyecek.
 
 ## Kozmetik hedefleri ve gerçek envanter
 - Checker hedefleri: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
-- Gerçek klasör envanteri:
-  - `Gereken_icerikler/kadınavatar`: 34
-  - `Gereken_icerikler/erkekavatar`: 36
-  - Standart avatar toplamı: 70
-  - `Gereken_icerikler/standartcerceve`: 30
-  - `Gereken_icerikler/vipkadınavatar`: 12
-  - `Gereken_icerikler/viperkekavatar`: 12
-  - VIP avatar toplamı: 24
-  - `Gereken_icerikler/vipcerceve`: 12
+- Gerçek klasör envanteri: kadınavatar 34, erkekavatar 36, standart avatar toplam 70; standartcerceve 30; vipkadınavatar 12, viperkekavatar 12, VIP avatar toplam 24; vipcerceve 12.
 - Sonuç: standart avatar 70/40, standart frame 30/40, VIP avatar 24/12, VIP frame 12/12.
 - Asset fazlalıkları/eksikleri için rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
 - Hedeflerin cinsiyet dağılımı repo tasarımından kesinleşmeden checker semantiği değiştirilmeyecek.
