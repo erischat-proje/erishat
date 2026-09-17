@@ -23,6 +23,7 @@
 - `backend/app/cosmetics.py` gerçek bu klasörlerden otomatik katalog üretiyor ve asset key'leri root-relative path olarak tutuyor. Dolayısıyla klasörlerdeki geçerli assetlerin tamamı uygulamanın aktif kozmetik kaynağıdır.
 - `scripts/check_cosmetic_assets.py` artık sabit hedeflerle karşılaştırma yapmıyor. Tüm aktif klasörleri listeliyor, gerçek toplamları raporluyor, eksik katalog klasörlerini ve duplicate asset key'lerini yakalıyor.
 - Rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
+- Repo ağacı tekrar doğrulandı: `Gereken_icerikler/standartcerceve` gerçek klasör adı olarak mevcut; `cosmetics.py` bu adı doğru kullanıyor. VIP klasörleri de gerçek ağaçta mevcut.
 
 ## GitHub Pages
 - Pages workflow hazırlama zinciri incelendi: checkout → configure-pages → frontend hazırlama → JS enjeksiyonu → asset kontrolleri → artifact upload → deploy-pages.
@@ -56,10 +57,13 @@
 ## CI checkpoint
 - `Integrate ErisChat features` run `35218672931`: success; job `105193189310` içindeki patch, Python syntax, commit adımları tamamlandı.
 - Cosmetic inventory checker yeni tam-envarter mantığına geçirildi ve commitlendi: `60c77f225ca3815cc85c1f0de3c54bd62687716f`.
-- Bu değişiklik sonrası quality workflow'un yeni sonucu henüz doğrulanmadı.
+- Quality workflow'a kontrollü local live E2E job eklendi: commit `6c90d33e0117dd76d40a536b27c5f5d1456da0bb`.
+- `main` şu anda doğrudan `6c90d33e0117dd76d40a536b27c5f5d1456da0bb` üzerinde; quality workflow `push`, `pull_request` ve `workflow_dispatch` ile etkin.
+- Yeni `live-e2e` job'ının gerçek PASS sonucu henüz doğrulanmış değil. Job detay/log API erişimi bulunamadığı için fail sebebi uydurulmayacak.
+- Son incelemede smoke kayıt payload'ları backend'in mevcut `female/male` gender sözleşmesiyle uyumlu; kozmetik katalog klasörleri de repo ağacında mevcut.
 
 ## Yeni sohbet için devam mesajı
-`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Kozmetiklerde sabit 40/40/12/12 hedefi yok; Gereken_icerikler altındaki tüm geçerli standart/VIP avatar ve çerçeveler aktif katalogdur. Inventory checker buna göre güncellendi. Şimdi yeni quality run sonucunu kontrol et ve ardından kontrollü/local E2E'ye geç. Canlı E2E olmadan PASS deme.`
+`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Kozmetiklerde sabit 40/40/12/12 hedefi yok; Gereken_icerikler altındaki tüm geçerli standart/VIP avatar ve çerçeveler aktif katalogdur. Inventory checker buna göre güncellendi. Quality workflow'a local live E2E jobu eklendi; yeni jobın gerçek sonucunu doğrula, sonra kontrollü/local E2E'yi çalıştır ve gerçek hatayı kod üzerinden düzelt. Canlı E2E olmadan PASS deme.`
 
 ## Kural
 - Canlı/local E2E yapılmadan özellik tamamlandı sayılmayacak.
