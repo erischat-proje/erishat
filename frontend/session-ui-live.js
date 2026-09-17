@@ -16,7 +16,7 @@
       const state = detailEvent?.detail?.state;
       const user = detailEvent?.detail?.user || window.ErisAuth?.user;
       if (state === 'error') { title.textContent = 'Oturum kullanılamıyor'; detail.textContent = 'Anonim oturum oluşturulamadı.'; dot.style.background = '#ff6b81'; return; }
-      if (state === 'logged_out') { title.textContent = 'Oturum kapalı'; detail.textContent = 'Yeni anonim oturum bekleniyor.'; dot.style.background = '#e4b85d'; return; }
+      if (state === 'logged_out') { title.textContent = 'Oturum kapalı'; detail.textContent = 'Token temizlendi. Yeni oturum gerektiğinde oluşturulacak.'; dot.style.background = '#e4b85d'; return; }
       if (state === 'ready' || user) {
         title.textContent = 'Anonim oturum aktif';
         detail.textContent = user?.nickname ? `${user.nickname} • oturum güvenli` : 'Oturum token ile aktif';
@@ -24,7 +24,8 @@
         return;
       }
       if (state === 'open') { title.textContent = 'Canlı bağlantı aktif'; detail.textContent = 'Gerçek zamanlı bağlantı açık.'; dot.style.background = '#54dfaa'; return; }
-      if (state === 'closed' || state === 'error') { title.textContent = 'Canlı bağlantı yeniden deneniyor'; detail.textContent = 'Oturum korunuyor, bağlantı tekrar kurulacak.'; dot.style.background = '#e4b85d'; }
+      if (state === 'closed') { title.textContent = 'Canlı bağlantı yeniden deneniyor'; detail.textContent = 'Oturum korunuyor, bağlantı tekrar kurulacak.'; dot.style.background = '#e4b85d'; return; }
+      if (state === 'error') { title.textContent = 'Canlı bağlantı hatası'; detail.textContent = 'Bağlantı tekrar kurulacak.'; dot.style.background = '#ff6b81'; }
     };
     window.addEventListener('erischat:auth', render);
     window.addEventListener('erischat:ws', render);
