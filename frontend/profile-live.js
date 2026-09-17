@@ -42,11 +42,11 @@
 
   window.ErisProfile = { refresh, update, setNotifications, render };
 
-  document.addEventListener('erischat:auth', event => {
+  window.addEventListener('erischat:auth', event => {
     if (event.detail?.state === 'ready') render(event.detail.user);
   });
 
-  document.addEventListener('DOMContentLoaded', () => {
-    refresh().catch(error => console.warn('[ErisChat] profile refresh unavailable', error));
-  }, { once: true });
+  const boot = () => refresh().catch(error => console.warn('[ErisChat] profile refresh unavailable', error));
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
 })();
