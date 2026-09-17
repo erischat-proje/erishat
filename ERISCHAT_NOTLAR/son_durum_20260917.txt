@@ -2,10 +2,12 @@
 
 ## Son checkpoint
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- `backend/app/main.py` startup user-settings migration duplicate satırları güvenli şekilde temizlendi.
-- Aynı dosyadaki `register_platform_auth` duplicate import ifadesi de temizlendi.
-- `scripts/check_backend_quality.py` duplicate migration kontrolünün artık hata üretmemesi bekleniyor; GitHub Actions bu commit için henüz workflow sonucu döndürmedi, bu yüzden CI PASS olarak işaretlenmedi.
+- Kozmetik API route ile canlı smoke harness payloadları karşılaştırıldı; `cosmetic_type` + `asset_key` sözleşmesi uyumlu.
+- `scripts/cosmetic_live_smoke.py` katalog GET çağrısı gereksiz token bağımlılığından ayrıştırılmış durumda.
 - `scripts/dm_live_smoke.py` ve `scripts/room_ban_live_smoke.py` opt-in local smoke harness olarak mevcut; gerçek E2E çalıştırmaları henüz yapılmadı.
+- `backend/app/main.py` startup user-settings migration duplicate satırları temizlendi ve `register_platform_auth` duplicate importu temiz durumda.
+- Kök neden bulundu: `.github/workflows/integrate-erischat-features.yml` migration satırlarını her çalışmada tekrar ekleyerek `main.py`yi geri bozuyordu. Workflow idempotent olacak şekilde düzeltildi; run `35218672931` başarıyla tamamlandı.
+- Güncel bot commitinden sonra `main.py` tekrar kontrol edildi; migration alanları tekil durumda.
 - Bu değişiklikler production deploy etmez ve Railway'e dokunmaz.
 - Önceki Pages run `35208712803` failure durumunda; GitHub job API ayrıntılı step/log vermediği için kök neden tahmin edilmeyecek.
 
@@ -32,6 +34,11 @@
 - `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin akışını kapsıyor.
 - `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history akışını kapsıyor.
 - Hiçbiri çalıştırılmış ve başarılı olarak işaretlenmedi.
+
+## CI checkpoint
+- `Integrate ErisChat features` run `35218672931`: success.
+- Yeni main commitinden sonra `ErisChat quality checks` tetiklenmesi bekleniyor; sonuç alınmadan PASS işaretlenmeyecek.
+- `cosmetic-inventory` gerçek envanter hedefleriyle ayrıca takip edilecek.
 
 ## Kural
 - Canlı E2E yapılmadan özellik tamamlandı sayılmayacak.
