@@ -37,9 +37,10 @@
       list.innerHTML = '';
       bans.forEach(item => {
         const userId = item.user_id || item.id;
+        const displayName = item.display_name || item.nickname || item.public_id || userId;
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #fff1;background:#ffffff05;border-radius:15px;';
-        row.innerHTML = `<div style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#ff4fa318">🚫</div><div style="flex:1;min-width:0"><b style="font-size:10px">${esc(item.nickname || item.public_id || userId)}</b><small style="display:block;color:#938a9f;font-size:8px;margin-top:3px">${esc(userId)}</small></div><button data-user="${esc(userId)}" style="border:1px solid #ff4fa355;background:#ff4fa312;color:#ff78ba;border-radius:10px;padding:8px 10px;font-size:9px">Yasağı kaldır</button>`;
+        row.innerHTML = `<div style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#ff4fa318">🚫</div><div style="flex:1;min-width:0"><b style="font-size:10px">${esc(displayName)}</b><small style="display:block;color:#938a9f;font-size:8px;margin-top:3px">${esc(userId)}</small></div><button data-user="${esc(userId)}" style="border:1px solid #ff4fa355;background:#ff4fa312;color:#ff78ba;border-radius:10px;padding:8px 10px;font-size:9px">Yasağı kaldır</button>`;
         row.querySelector('button').onclick = async () => {
           const button = row.querySelector('button');
           button.disabled = true;
