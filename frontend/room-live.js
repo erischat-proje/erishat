@@ -13,8 +13,9 @@
     } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>el.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Odalar şu anda yüklenemedi.</div>'); }
   }
   function loadProductLayers() {
-    const files=['./full-demo-live.js','./demo-controls-live.js','./demo-complete-live.js'];
-    files.forEach((src,index)=>{const marker=['data-eris-full-demo','data-eris-demo-controls','data-eris-demo-complete'][index];if(document.querySelector(`script[${marker}]`))return;const s=document.createElement('script');s.src=src;s.setAttribute(marker,'1');s.async=false;s.onerror=()=>console.warn(`[ErisChat] ${src} unavailable`);document.body.appendChild(s);});
+    const files=['./full-demo-live.js','./demo-controls-live.js','./demo-complete-live.js','./demo-extras-live.js'];
+    const markers=['data-eris-full-demo','data-eris-demo-controls','data-eris-demo-complete','data-eris-demo-extras'];
+    files.forEach((src,index)=>{const marker=markers[index];if(document.querySelector(`script[${marker}]`))return;const s=document.createElement('script');s.src=src;s.setAttribute(marker,'1');s.async=false;s.onerror=()=>console.warn(`[ErisChat] ${src} unavailable`);document.body.appendChild(s);});
   }
   window.ErisChatRoomList={load:loadRooms};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{loadRooms();loadProductLayers();},{once:true}); else { loadRooms(); loadProductLayers(); }
