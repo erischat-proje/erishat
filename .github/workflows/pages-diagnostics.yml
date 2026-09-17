@@ -52,6 +52,7 @@ jobs:
               out.environment = {
                 name: r.data.name,
                 protection_rules: (r.data.protection_rules || []).map(x => x.type),
+                deployment_branch_policy: r.data.deployment_branch_policy || null,
               };
             } catch (e) {
               out.environment_error = { status: e.status, message: e.message };
