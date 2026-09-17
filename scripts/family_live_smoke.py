@@ -98,7 +98,7 @@ def main() -> None:
     donation = 40_000
     status, donated = request("POST", f"/families/{family_id}/donate", {"amount": donation}, token)
     expect(status, 200, "family donation", donated)
-    if donated.get("family_id") != family_id or donated.get("balance") != donation or donated.get("level") != 2:
+    if donated.get("id") != family_id or donated.get("balance") != donation or donated.get("level") != 2:
         raise AssertionError(f"family donation mismatch: {donated}")
 
     status, detail_after = request("GET", f"/families/{family_id}", token=token)
