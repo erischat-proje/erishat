@@ -20,6 +20,7 @@ BACKEND / FRONTEND TEMELİ
 - [x] room-live.js API fallback düzeltildi: ERIS_API öncelikli, ERISCHAT_API geriye dönük uyumlu.
 - [x] Quality workflow'a Python compileall + frontend JS node --check + gerekli kaynak kontrolleri eklendi.
 - [x] Eski self-modifying/patch/duplicate Pages workflow'larının gerekli olmayanları temizlendi.
+- [x] Session revoke sonrası açık WebSocket'lerde yeni mesaj işlenmeden önce token/session yeniden doğrulaması eklendi; geçersizleşen session için 1008 ile bağlantı kapatılıyor.
 
 GERÇEK RUNNER DOĞRULAMASI
 - [x] Runner Recovery #74: run 35256506469 tamamlandı.
@@ -35,7 +36,7 @@ GERÇEK RUNNER DOĞRULAMASI
 - [x] DM conversation → send → history gerçek runner'da geçti.
 - [x] Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da geçti.
 - [x] Quality v4 run 35258712132 / job 105328734923 SUCCESS; static checks ve beş smoke adımı gerçek runner'da geçti.
-- [ ] Cleanup/checkpoint push'ları sonrası oluşan yeni Quality koşusu ayrıca doğrulanacak.
+- [x] Security değişikliği sonrası Quality v4 run 35260089459 / job 105333339551 SUCCESS; static checks, API başlatma ve beş temel smoke adımı tekrar geçti.
 
 PAGES / RAILWAY
 - [x] Aktif Pages workflow: .github/workflows/erischat-pages.yml.
@@ -51,9 +52,11 @@ KOZMETİK
 - [x] Dinamik Gereken_icerikler katalog modeli mevcut.
 - [x] Son doğrulanmış aktif katalog 139 asset.
 - [x] Cosmetic purchase/apply gerçek runner'da SUCCESS.
+- [ ] 139 asset URL/path eşleşmesinin tamamı frontend tarafında ayrıca doğrulanacak.
 - [ ] Canlı frontend asset render/şeffaflık doğrulaması ayrıca yapılacak.
 
 BASELINE SONUCU
 - Quality v4 temel runner koşusu SUCCESS.
 - Backend/live temel E2E zincirinin beş smoke testi gerçek runner'da başarıyla geçti.
-- Sistem henüz "tam çalışan" olarak işaretlenmiyor; Pages admission/deploy, canlı HTTP/API ve kalan güvenlik/frontend kontrolleri tamamlanmalı.
+- Session revoke WebSocket güvenlik kontrolü kodlandı ve yeni Quality v4 runner'ında SUCCESS doğrulandı.
+- Sistem henüz "tam çalışan" olarak işaretlenmiyor; Pages admission/deploy, canlı HTTP/API ve kalan frontend/asset kontrolleri tamamlanmalı.
