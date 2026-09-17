@@ -6,6 +6,7 @@ from .db import get_db
 from .cosmetics import catalog, find_asset, PRICE, VIP_PRICE
 from .schemas import CosmeticApply, CosmeticPurchase
 from .session import get_user_from_token
+from .platform_models import VipStatus
 
 router = APIRouter(prefix="/v1", tags=["cosmetics"])
 
@@ -25,6 +26,11 @@ def current_cosmetic_user(
     return user
 
 
+def vip_level(db: Session, user_id: str) -> int:
+    row = db.get(VipStatus, user_id)
+    return int(row.level) if row else 0
+
+
 @router.get("/cosmetics")
 def list_cosmetics(kind: str | None = None, gender: str | None = None):
     items = catalog()
@@ -41,7 +47,7 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
         text("SELECT cosmetic_type, asset_key FROM user_cosmetics WHERE user_id=:uid ORDER BY id"),
         {"uid": user.id},
     ).mappings().all()
-    return {"items": [dict(row) for row in rows]}
+    return {"items": [dict(row) for row in rows], "vip_level": vip_level(db, user.id)}
 
 
 @router.post("/me/cosmetics/purchase")
@@ -51,7 +57,9 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     asset = find_asset(key, kind)
     if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
-    price = int(asset.get("price") or (VIP_PRICE if asset.get("vip") else PRICE))
+    if asset.get("vip"):
+        raise HTTPException(status_code=403, detail=f"Bu VIP görünüm mağazadan satın alınamaz; VIP {asset.get('vip_level', 1)} seviyesinde açılır")
+    price = int(asset.get("price") or PRICE)
 
     # Lock the balance row before checking ownership/balance so concurrent purchases
     # cannot spend the same Lidya twice or race the unique cosmetic constraint.
@@ -77,7 +85,7 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
         {"uid": user.id, "kind": kind, "key": key},
     )
     db.commit()
-    return {"ok": True, "spent": price, "asset_key": key, "cosmetic_type": kind, "vip": bool(asset.get("vip"))}
+    return {"ok": True, "spent": price, "asset_key": key, "cosmetic_type": kind, "vip": False}
 
 
 @router.post("/me/cosmetics/apply")
@@ -88,12 +96,18 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
     if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
 
-    owned = db.execute(
-        text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type=:kind AND asset_key=:key"),
-        {"uid": user.id, "kind": kind, "key": key},
-    ).first()
-    if not owned:
-        raise HTTPException(status_code=403, detail="Önce bu görünümü satın almalısınız")
+    if asset.get("vip"):
+        required = int(asset.get("vip_level") or 1)
+        current = vip_level(db, user.id)
+        if current < required:
+            raise HTTPException(status_code=403, detail=f"VIP {required} seviyesi gerekli")
+    else:
+        owned = db.execute(
+            text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type=:kind AND asset_key=:key"),
+            {"uid": user.id, "kind": kind, "key": key},
+        ).first()
+        if not owned:
+            raise HTTPException(status_code=403, detail="Önce bu görünümü satın almalısınız")
 
     column = "avatar_asset" if kind == "avatar" else "frame_asset" if kind == "frame" else None
     if not column:
@@ -101,4 +115,4 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
 
     db.execute(text(f"UPDATE users SET {column}=:key WHERE id=:uid"), {"key": key, "uid": user.id})
     db.commit()
-    return {"ok": True, "cosmetic_type": kind, "asset_key": key, "vip": bool(asset.get("vip"))}
+    return {"ok": True, "cosmetic_type": kind, "asset_key": key, "vip": bool(asset.get("vip")), "vip_level": asset.get("vip_level")}
