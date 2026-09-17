@@ -1,0 +1,13 @@
+name: ErisChat workflow parser probe
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parser probe
+        run: echo "ERISCHAT_WORKFLOW_PARSER_OK"
