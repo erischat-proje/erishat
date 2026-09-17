@@ -22,6 +22,7 @@ Tarih: 2026-09-18
 - [x] Oyunlar müşteri vitrini olarak iki sistem alanını gösteriyor; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna bırakıldı.
 - [x] Onboarding demo: anonim giriş, nickname, cinsiyet, avatar, ilgi alanları, gizlilik ve başlangıç akışı görünür.
 - [x] Quality workflow static syntax/required-file listesine demo-complete-live.js ve demo-extras-live.js eklendi.
+- [x] Quality workflow'a müşteri demo yüzey bütünlüğü statik kontrolü eklendi.
 - [ ] Yeni Quality workflow run sonucu GitHub Actions üzerinden SUCCESS olarak doğrulanacak.
 - [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
 
@@ -37,6 +38,7 @@ GERÇEK RUNNER
 - [x] Live cosmetic smoke.
 - [x] Room WebSocket history/membership/ban zinciri önceki doğrulanmış HEAD'de geçti.
 - [x] Quality workflow demo-extras-live.js ve demo-complete-live.js için static syntax/required-file kontrolü içeriyor.
+- [x] Customer demo surface integrity scripti eklendi ve Quality jobına bağlandı.
 - [ ] Yeni product shell HEAD için Quality runner SUCCESS sonucu.
 - [ ] demo-extras-live.js için gerçek runner syntax/required-file SUCCESS sonucu.
 
@@ -73,6 +75,7 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Customer product shell checkpoint'i işlendi.
 - [x] Remaining customer demo surfaces checkpoint'i işlendi.
 - [x] Quality workflow demo katmanı static kontrol checkpoint'i işlendi.
+- [x] Demo surface integrity quality gate checkpoint'i işlendi.
 - [ ] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
 - [x] Son durum dosyası yeni HEAD'e göre senkronize edilecek aşamaya getirildi.
 
