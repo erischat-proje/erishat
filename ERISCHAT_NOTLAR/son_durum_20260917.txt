@@ -2,56 +2,49 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Son ürün shell commit: `bff4fbdab5e02879d1eaf3b372404857f084a75c`.
-- Son checkpoint docs commit: `5786ffe37fe850be6bd3dfda1434ab237dc40139`.
-- Faz: MÜŞTERİYE GÖSTERİLEBİLİR ÜRÜN TEMELİ.
-- Amaç: önce uygulamanın bütün ürün yüzeyini tek bir müşteri vitrini olarak ortaya çıkarmak; sonra her modülün gerçek akışını derinleştirerek geliştirmek.
+- Müşteri demo fazı: ürün yüzeyi mümkün olduğunca tek vitrinde toplandı.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
 ## Müşteri ürün vitrini
-`frontend/full-demo-live.js` artık ana arayüzden açılan tek bir Product Shell sunuyor.
-
-Görünen sistemler:
-- Odalar: oda açma, canlı oda listesi, oda detayları, katılma/ayrılma, koltuklar, sohbet aç/kapat, duyuru görünümü.
-- Mağaza: 139 kozmetik katalog, standart/VIP filtreleri, standart satın alma, sahip olunan/VIP görünüm uygulama.
-- VIP: VIP 1 → 12 ve aktif/kilitli seviyeler.
-- Aile: aile oluşturma, seviye, kapasite, bakiye, bağış ve aile sohbeti yüzeyi.
-- Oyunlar: Roulette + 4 Kupa için müşteri vitrini; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna ayrıldı.
-- Keşif: yakındaki kullanıcılar, rastgele sohbet ve rastgele oda.
-- Sosyal: profil, fan seviyesi ve profil hediyeleri.
+`frontend/full-demo-live.js` + `frontend/demo-controls-live.js` ile görünen ana sistemler:
+- Odalar: oda açma, liste, detay, katıl/ayrıl, koltuk, chat kontrolü, duyuru görünümü.
+- Oda araçları: moderatör, ban, hediye kataloğu/gönderimi için demo kontrol yüzeyi.
+- Mağaza: 139 kozmetik katalog, standart/VIP filtreleri, satın alma/uygulama yüzeyi.
+- VIP: VIP 1 → 12.
+- Aile: oluşturma, seviye, kapasite, bakiye, bağış, sohbet durumu.
+- Oyunlar: Roulette ve 4 Kupa için gerçek endpoint'e bağlı demo kontrolleri.
+- Keşif: yakın, rastgele sohbet, rastgele oda + keşif tercihleri.
+- Sosyal: profil, fan seviyesi, profil hediyeleri.
+- Profil: `/me`, VIP ve profil düzenleme.
+- DM: konuşma, yeni DM ve mesaj gönderme.
 - Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü.
 - Şikayet: kullanıcı / oda / mesaj hedefleri.
-- Profil: `/me` + VIP bilgisi.
-- DM: konuşma listesi, DM başlatma ve mesaj gönderme yüzeyi.
-- Ürün: müşteriye bütün modüllerin kısa ürün haritası.
+- Ürün: bütün sistemlerin müşteri haritası.
 
-## Önemli doğrulama durumu
-- `bff4fbd...` product shell commitinden sonra `fetch_commit_workflow_runs` kontrolünde henüz workflow sonucu dönmedi.
-- Bu nedenle yeni shell için Quality PASS/TAMAM iddiası yapılmıyor.
-- Önceki doğrulanmış Quality v4 kanıtı ayrı olarak korunuyor: run `35266995579` / job `105356518821` SUCCESS.
+## Yeni commitler
+- `17792cc0f75bfb0cf7c7cd9086bdbfeaad743bfc` — demo control layer.
+- `e9cc99434d3737c905f2efc7ec25b46a6c205141` — product shell + demo control layer loader.
+- `a08db80912d42f9e0583b9f93874d48bafb172a2` — Quality workflow'da demo-controls syntax/required-file kontrolü.
+- `2378520130b07cfc5e9c888beacb4173f5f96417` — müşteri demo eksik kayıt dosyası.
 
-## Önceki doğrulanmış temel sistemler
-- 139 cosmetic asset integrity + URL smoke.
-- Anonymous session smoke.
-- Live room smoke.
-- Live ban smoke.
-- Live DM smoke.
-- Live cosmetic smoke.
-- Room WebSocket history/membership/ban zinciri.
-- Session revoke / WebSocket güvenlik zinciri.
+## Doğrulama
+- Yeni HEAD için GitHub workflow sonucu kontrol edildi; henüz sonuç dönmedi.
+- Bu nedenle yeni katmanlar için PASS/TAMAM iddiası yok.
+- Önceki doğrulanmış Quality v4: run `35266995579` / job `105356518821` SUCCESS.
 
-## Sonraki geliştirme sırası
-1. Yeni Product Shell Quality runner sonucunu kontrol et; hata varsa düzelt.
-2. Oda detayını gerçek oda ekranı, canlı chat, gift, mikrofon/seat ve moderasyon akışlarıyla derinleştir.
-3. 139 kozmetiğin gerçek browser renderını doğrula.
-4. Profil + avatar/frame uygulama görünümünü gerçek browserda doğrula.
-5. DM ve aile sohbetini gerçek browserda doğrula.
-6. Pages environment admission + canlı zinciri kullanıcı `deploy` dediğinde ele al.
-
-## Pages kök nedeni
-- `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
-- Bu kod kalite problemi değil, GitHub environment ayarıdır.
-- Pages canlı HTTP/index ve Pages→Railway zinciri henüz doğrulanmadı.
+## Müşteri demo eksikleri — gerçek geliştirme backlog'u
+Ayrıntılı kayıt: `ERISCHAT_NOTLAR/musteri_demo_eksikleri_20260917.txt`
+- Gerçek ses/WebRTC/mikrofon transportu.
+- Browser uçtan uca doğrulama.
+- Oda canlı chat/gift/seat/moderasyon zincirinin browser doğrulaması.
+- Oda müzik oynatma/kuyruk ve announcement yönetimi.
+- Aile üye davet/çıkarma/yönetim ve gerçek aile chat mesajları.
+- Oyun round/bakiye/payout yaşam döngüsünün sağlamlaştırılması.
+- Avatar + frame gerçek görsel renderı ve 139 asset browser testi.
+- VIP harcama → seviye → kilit açma yaşam döngüsü.
+- Fan/follow, bildirim, engelleme ve admin/moderasyon paneli.
+- Oda kapatma/gelişmiş ayarlar.
+- Pages canlı zinciri ve gerçek origin CORS.
 
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
