@@ -30,16 +30,19 @@ BACKEND
 FRONTEND
 - [x] Ana tek sayfa frontend mevcut.
 - [x] platform.js Railway API default adresini kullanıyor.
-- [x] gift-live.js room WebSocket'e bağlanıyor ve room_gift eventini render ediyor.
+- [x] gift-live.js room WebSocket'e bağlanıyor.
+- [x] room_history eventi UI chat alanına aktarılıyor.
+- [x] room_chat eventi UI chat alanına aktarılıyor.
+- [x] Oda mesaj gönderimi gerçek WebSocket room_chat payload'ına bağlandı.
 - [x] Oda listesi temel olarak gerçek /v1/rooms API'sine bağlı.
 - [x] Profil/VIP/mağaza/anonimlik temel UI'ları mevcut.
 
 TESPİT EDİLEN EKSİKLER
 - [ ] Mesajlar ekranında hardcoded/demo konuşma kayıtları var.
 - [ ] Gerçek DM history/send UI tamamlanmamış.
-- [ ] Oda mesaj gönderme fonksiyonu hâlen toast gösteriyor; backend WS mevcut olmasına rağmen UI gerçek gönderim yapmıyor.
 - [ ] Anonymous/session/profile UI akışları tam bağlanmamış.
 - [ ] WS reconnect/presence/genel event UI eksik.
+- [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
 
 PAGES / RAILWAY
 - [x] pages.yml workflow mevcut.
@@ -61,14 +64,15 @@ SON GELİŞTİRMELER
 - [x] Master yapılacaklar listesi gerçek kod denetimine göre yenilendi.
 - [x] Yapılanlar listesi gerçek durumla senkronlandı.
 - [x] __pycache__ temizliği gerçekleştirildi.
+- [x] Oda WebSocket chat history + gerçek gönderim UI entegrasyonu yapıldı.
 
 GÜVENLİK / DEPLOY
 - Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
 - Büyük frontend dosyası kısmi içerikle overwrite edilmeyecek.
-- Canlı test yapılmadan bir özellik tamamlandı olarak işaretlenmeyecek.
+- Canlı test yapılmadan bir özellik E2E tamamlandı olarak işaretlenmeyecek.
 
 SONRAKİ AKTİF İŞ
-1. Hardcoded/demo mesaj UI'larını gerçek conversation API'larına bağla.
-2. Room WebSocket chat UI'ını gerçek gönderim/history ile bağla.
-3. Anonymous/session/profile akışlarını tamamla.
+1. Oda WebSocket canlı E2E testini doğrula.
+2. Hardcoded/demo DM ekranını gerçek conversation API'larına bağla.
+3. Anonymous/session/profile UI akışlarını tamamla.
 4. Pages/Railway canlı doğrulamalarına geç.
