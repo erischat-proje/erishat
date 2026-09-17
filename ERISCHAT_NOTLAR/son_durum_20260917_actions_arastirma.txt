@@ -1,0 +1,28 @@
+ERISCHAT — ACTIONS ARAŞTIRMA CHECKPOINT
+Tarih: 2026-09-17
+
+DEVAM EDİLEN NOKTA
+- Main branch güncel commit: 4a6cb94acbf412bc0f018a8a77766697d409f4f4.
+- pages.yml run 35166215838 (run #161) failure oldu.
+- Bu run'ın deploy job'ı 105027784327 failure ile tamamlandı fakat step listesi BOŞ; artifact de oluşmadı.
+- Failed job yeniden çalıştırılmayı denedi; aynı run üzerinden tekrar job oluşmadı.
+- Bu nedenle sorun pages.yml içindeki frontend hazırlama komutlarında değil; workflow step'leri başlamadan önce oluşuyor.
+- Aynı main commit'teki başka Actions workflow'larında da aynı çok hızlı failure paterni görülüyor (ör. apply-profile-settings run 35196633163). Bu bulgu, sorunun yalnızca Pages workflow'una özgü olmadığını gösteriyor.
+- GitHub Status şu anda Actions ve Pages'i operational gösteriyor; dolayısıyla genel GitHub kesintisi olarak işaretlenmiş değil.
+
+ÖNEMLİ
+- Railway deploy yapılmadı.
+- Büyük frontend HTML dosyası kısmi içerikle update edilmedi.
+- Oda/hediye backend ve WebSocket değişiklikleri korunuyor.
+
+SONRAKİ ADIM
+1. Repository Actions/Environment/Pages yapılandırmasının neden job'ları step'e geçirmediğini çöz.
+2. Mümkünse Pages workflow'unu yeniden çalıştır ve gerçek step logu/artifact üretimini doğrula.
+3. Pages çalışınca canlı frontend → Railway API/WS bağlantısını test et.
+4. Sonra gerçek iki kullanıcı room/gift smoke testine geç.
+
+KORUNACAK GÜVENLİ BİLGİ
+- Railway backend: erischat-production.up.railway.app
+- WebSocket: /ws/rooms/{room_id}?token=...
+- gh-pages senkron checkpoint: a0f2595181458b967f7e79c6e5aacfc2b04fee83
+- Railway production deploy kullanıcı açıkça deploy demeden yapılmayacak.
