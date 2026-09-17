@@ -53,3 +53,72 @@ jobs:
         uses: actions/checkout@v4
       - name: Cosmetic inventory
         run: python scripts/check_cosmetic_assets.py
+
+  live-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: erischat
+          POSTGRES_USER: erischat
+          POSTGRES_PASSWORD: erischat
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U erischat -d erischat"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://erischat:erischat@127.0.0.1:5432/erischat
+      ERISCHAT_SMOKE_BASE_URL: http://127.0.0.1:8000
+      ERISCHAT_SMOKE_TIMEOUT: "10"
+      NO_PROXY: 127.0.0.1,localhost
+      no_proxy: 127.0.0.1,localhost
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend and smoke dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements.txt websocket-client
+      - name: Start local API
+        working-directory: backend
+        run: |
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/erischat-api.log 2>&1 &
+          echo $! > /tmp/erischat-api.pid
+      - name: Wait for API readiness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/ready; then
+              echo
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'API did not become ready.'
+          cat /tmp/erischat-api.log
+          exit 1
+      - name: Room live smoke
+        run: python scripts/room_live_smoke.py
+      - name: Room ban live smoke
+        run: python scripts/room_ban_live_smoke.py
+      - name: DM live smoke
+        run: python scripts/dm_live_smoke.py
+      - name: Cosmetic live smoke
+        run: python scripts/cosmetic_live_smoke.py
+      - name: Dump API log on failure
+        if: failure()
+        run: cat /tmp/erischat-api.log
+      - name: Stop local API
+        if: always()
+        run: |
+          if [ -f /tmp/erischat-api.pid ]; then
+            kill "$(cat /tmp/erischat-api.pid)" || true
+          fi
