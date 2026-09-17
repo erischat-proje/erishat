@@ -65,3 +65,9 @@
 - Playwright Chromium smoke gerçek browser ortamında çalıştı.
 - Doğrulanan etkileşimler: Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesinin browser renderı, Mesaj → Rana'nın Odası → mesaj gönderme.
 - Bu kanıt tüm ürün yüzeylerinin tam browser E2E doğrulaması değildir; room modal/join/seat/gift/moderation, 139 kozmetik renderı, anonymous/me backend akışı ve aile/profile tam backend zinciri ayrıca doğrulanacak.
+
+## Browser + cosmetics render kanıtı
+- Quality run `35281783827` / job `105405134485` SUCCESS.
+- Chromium browser render smoke 139/139 kozmetik asset'i decode etti.
+- PNG frame alpha sonucu 16/44 şeffaf, 28/44 opak; bu nedenle render doğrulaması tamam, tüm frame şeffaflığı ise ayrıca incelenecek.
+- Sıradaki browser zinciri: oda join → koltuk → chat → gift → moderasyon.
