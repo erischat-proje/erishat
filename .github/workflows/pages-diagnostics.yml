@@ -1,0 +1,79 @@
+name: ErisChat Pages diagnostics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/pages-diagnostics.yml'
+      - 'ERISCHAT_NOTLAR/**'
+
+permissions:
+  contents: read
+  actions: read
+  pages: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect repository Pages state
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const out = {};
+            try {
+              const r = await github.rest.repos.get({ owner, repo });
+              out.repo = {
+                default_branch: r.data.default_branch,
+                pages_enabled_feature: Boolean(r.data.has_pages),
+                visibility: r.data.visibility,
+              };
+            } catch (e) {
+              out.repo_error = String(e);
+            }
+            try {
+              const r = await github.rest.repos.getPages({ owner, repo });
+              out.pages = {
+                status: r.data.status,
+                build_type: r.data.build_type,
+                cname: r.data.cname || null,
+                html_url: r.data.html_url || null,
+              };
+            } catch (e) {
+              out.pages_error = {
+                status: e.status,
+                message: e.message,
+              };
+            }
+            try {
+              const r = await github.rest.repos.getEnvironment({ owner, repo, environment_name: 'github-pages' });
+              out.environment = {
+                name: r.data.name,
+                protection_rules: (r.data.protection_rules || []).map(x => x.type),
+              };
+            } catch (e) {
+              out.environment_error = {
+                status: e.status,
+                message: e.message,
+              };
+            }
+            core.info(JSON.stringify(out, null, 2));
+            if (out.pages_error && out.pages_error.status !== 404) {
+              core.setFailed(`Pages API diagnostic failed: ${out.pages_error.message}`);
+            }
+
+      - name: Validate Pages workflow shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .github/workflows/pages.yml
+          grep -q 'uses: actions/configure-pages@v5' .github/workflows/pages.yml
+          grep -q 'uses: actions/upload-pages-artifact@v4' .github/workflows/pages.yml
+          grep -q 'uses: actions/deploy-pages@v4' .github/workflows/pages.yml
+          grep -q 'pages: write' .github/workflows/pages.yml
+          grep -q 'id-token: write' .github/workflows/pages.yml
+          echo 'Pages workflow shape OK'
