@@ -67,4 +67,4 @@ DOKÜMANTASYON
 - [x] Family runtime smoke checkpoint'i işlendi.
 - [x] Family member/chat message smoke checkpoint'i işlendi.
 - [x] yapilacaklar.txt family runtime kanıtına göre senkronize edildi.
-- [x] Quality run 35279194558 / job 105396950920 SUCCESS; family production integration + live family smoke dahil tüm quality adımları geçti.
+- [x] Quality run 35279859803 / job 105399048309 SUCCESS; family production integration ve live family smoke dahil tüm quality adımları geçti.
