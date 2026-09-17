@@ -33,7 +33,8 @@ GERÇEK RUNNER DOĞRULAMASI
 - [x] Ban → 403 rejoin → unban → yeniden join gerçek runner'da geçti.
 - [x] DM conversation → send → history gerçek runner'da geçti.
 - [x] Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da geçti.
-- [ ] runner-recovery probe job başarısız; bu probe uygulama E2E job'u değildir ve baseline PASS kriterine dahil edilmiyor.
+- [x] Quality v4 run 35258712132 / job 105328734923 SUCCESS; static checks ve beş smoke adımı gerçek runner'da geçti.
+- [ ] Yeni checkpoint dokümantasyon push'u sonrası oluşan Quality koşusu ayrıca doğrulanacak.
 
 PAGES / RAILWAY
 - [x] Aktif Pages workflow: .github/workflows/erischat-pages.yml.
@@ -52,5 +53,6 @@ KOZMETİK
 - [ ] Canlı frontend asset render/şeffaflık doğrulaması ayrıca yapılacak.
 
 BASELINE SONUCU
+- Quality v4 temel runner koşusu SUCCESS.
 - Backend/live temel E2E zincirinin beş smoke testi gerçek runner'da başarıyla geçti.
-- Sistem henüz "tam çalışan" olarak işaretlenmiyor; Quality v4, Pages admission/deploy, canlı HTTP/API ve kalan güvenlik/frontend kontrolleri tamamlanmalı.
+- Sistem henüz "tam çalışan" olarak işaretlenmiyor; Pages admission/deploy, canlı HTTP/API ve kalan güvenlik/frontend kontrolleri tamamlanmalı.
