@@ -1,0 +1,22 @@
+name: ErisChat runner recovery
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Runner probe
+        run: |
+          echo "runner-online"
+          python --version
+          test -f .github/workflows/apply-gift-ui.yml
+          echo "workflow-files-present"
