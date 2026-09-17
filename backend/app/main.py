@@ -263,11 +263,20 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+def websocket_session_active(token: str) -> bool:
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        return bool(user and user.is_active)
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     token = websocket.query_params.get("token")
     if not token:
         await websocket.close(code=1008, reason="token gerekli")
+        return
+    if not websocket_session_active(token):
+        await websocket.close(code=1008, reason="geçersiz oturum")
         return
     with Session(engine) as db:
         user = get_user_from_token(db, token)
@@ -279,6 +288,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     try:
         while True:
             data = await websocket.receive_json()
+            if not websocket_session_active(token):
+                manager.disconnect(user_id, websocket)
+                await websocket.close(code=1008, reason="oturum sona erdi")
+                return
             if isinstance(data, dict) and data.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:
@@ -334,6 +347,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         await websocket.send_json({"type":"room_history","messages":history_payload})
         while True:
             data = await websocket.receive_json()
+            if not websocket_session_active(token):
+                room_chat_connections.get(room_id, set()).discard(websocket)
+                await websocket.close(code=1008, reason="oturum sona erdi")
+                return
             if not isinstance(data, dict):
                 continue
             if data.get("type") == "ping":
