@@ -22,16 +22,47 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
+
           p = Path('backend/app/main.py')
           s = p.read_text(encoding='utf-8')
+
           if 'from .cosmetic_routes import router as cosmetic_router' not in s:
-              s = s.replace('from .auth import create_anonymous_user\n', 'from .auth import create_anonymous_user\nfrom .cosmetic_routes import router as cosmetic_router\n')
+              s = s.replace(
+                  'from .auth import create_anonymous_user\n',
+                  'from .auth import create_anonymous_user\nfrom .cosmetic_routes import router as cosmetic_router\n',
+              )
           if 'app.include_router(cosmetic_router)' not in s:
               marker = 'app = FastAPI(title="ErisChat API", version="0.8.0")\n'
               s = s.replace(marker, marker + 'app.include_router(cosmetic_router)\n')
-          s = s.replace('create_anonymous_user(db, payload.nickname, payload.avatar)', 'create_anonymous_user(db, payload.nickname, payload.avatar, payload.gender)')
-          s = s.replace('ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))', 'ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT \'unspecified\'"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))\n        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))')
-          s = s.replace('User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", lidya=10_000_000)', 'User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000)')
+
+          s = s.replace(
+              'create_anonymous_user(db, payload.nickname, payload.avatar)',
+              'create_anonymous_user(db, payload.nickname, payload.avatar, payload.gender)',
+          )
+
+          migration_lines = [
+              '        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT \'unspecified\'"))',
+              '        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))',
+              '        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))',
+          ]
+          for line in migration_lines:
+              s = s.replace(line + '\n', '')
+              s = s.replace(line, '')
+          notification = '        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))'
+          if notification in s:
+              s = s.replace(notification, notification + '\n' + '\n'.join(migration_lines), 1)
+
+          s = s.replace(
+              'from .platform_routes import register_platform_auth, register_platform_auth, router as platform_router',
+              'from .platform_routes import register_platform_auth, router as platform_router',
+          )
+          s = re.sub(r'(?m)^from \.platform_routes import register_platform_auth, register_platform_auth, router as platform_router\s*$', 'from .platform_routes import register_platform_auth, router as platform_router', s)
+          s = s.replace(
+              'User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", lidya=10_000_000)',
+              'User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000)',
+          )
+
           p.write_text(s, encoding='utf-8')
           PY
       - name: Validate Python syntax
@@ -41,5 +72,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add backend/app/main.py
-          git diff --cached --quiet || git commit -m 'Connect gender registration and cosmetics routes'
+          git diff --cached --quiet || git commit -m 'chore: make backend integration patch idempotent'
           git push
