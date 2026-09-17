@@ -1,15 +1,19 @@
-# ErisChat Son Durum — 2026-09-17
+# ErisChat Son Durum — 2026-09-18
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
+- Güncel HEAD: `e8ff11d99b1297463f4b9a29b6a5d9a7d2b0ef0b`.
 - Müşteri demo fazı: ürün yüzeyi tek vitrinde toplanıyor ve eksik görünen ürün alanları demo+ katmanıyla tamamlanıyor.
 - VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi mevcut.
 - Oyunlar için oynanabilir demo vitrini mevcut; gerçek ekonomi ayrı backend işi.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-## Bu turda eklenen demo+
-- `frontend/demo-extras-live.js` oluşturuldu.
-- `frontend/room-live.js` demo+ katmanını otomatik yüklüyor.
+## Bu turda yapılan gerçek GitHub değişiklikleri
+- `b701a037ed169d1361f331613ad58c72972f66ee` — Quality workflow static syntax/required-file listesine `demo-complete-live.js` ve `demo-extras-live.js` eklendi.
+- `e8ff11d99b1297463f4b9a29b6a5d9a7d2b0ef0b` — bu checkpoint ve güncel HEAD bilgisi TXT'lere senkronize edildi.
+
+## Demo+ durumu
+- `frontend/demo-extras-live.js` mevcut ve `frontend/room-live.js` tarafından otomatik yükleniyor.
 - Oda koltuk/mikrofon/ses durumları ve oda sahibi ayarları müşteri ekranında görünür.
 - Müzik: şimdi çalan, kuyruk, oynat/durdur, ekle/sil ve DJ kilidi yüzeyi görünür.
 - Duyuru: yayınla/düzenle/kaldır/sabitle yüzeyi; backend yazma endpointi yoksa açıkça demo olarak işaretleniyor.
@@ -18,6 +22,7 @@
 - Profil: avatar + çerçeve birleşik try-on, favori/hediye/takip aksiyonları.
 - Güvenlik: bildirim, engelleme ve admin/moderasyon ürün yüzeyi; doğrulanmamış backend endpointleri sahte canlılık olarak sunulmuyor.
 - Onboarding: anonim giriş → nickname → cinsiyet → avatar → ilgi alanları → gizlilik → başlangıç akışı.
+- `frontend/demo-complete-live.js` VIP 1–12, cinsiyet ödülleri, kozmetik önizleme ve oyun demo yüzeylerini taşıyor.
 
 ## Backend gerçeklik notu
 - Mevcut backend doğrulamasında aile için oluşturma, seviye, bağış ve aile chat-enabled endpointleri mevcut.
@@ -27,18 +32,15 @@
 - Gerçek WebRTC/ses transportu henüz doğrulanmadı.
 - Bildirim/engelleme/admin paneli için doğrulanmış production endpointleri henüz yok.
 
-## Son commitler
-- `cd14aad37180984705336d19decb458b71207610` — remaining customer demo surfaces katmanı.
-- `05e9e3afad48976d2696a219172e44d8e806a674` — demo+ katmanını room-live zincirine bağladı.
-- `52bbf51b3a7bd9175e1575061570b89108589cf9` — yapılacaklar checkpoint güncellemesi.
-- Sonraki bu TXT checkpoint commiti: güncel HEAD'e göre ayrıca işlenecek.
-
-## Doğrulama
-- Bu yeni demo+ commitleri için henüz Quality workflow sonucu alınmadı.
+## Quality doğrulama
+- Quality workflow dosyası artık `demo-complete-live.js` ve `demo-extras-live.js` için hem `test -s` hem `node --check` çalıştıracak şekilde güncellendi.
+- Bu yeni HEAD için Quality workflow SUCCESS sonucu henüz GitHub Actions kanıtıyla doğrulanmış değil.
+- Yeni HEAD sonrasında Pages workflow run `35274385858` başarısız oldu; bu Pages deploy zinciridir ve Quality SUCCESS kanıtı değildir.
 - Önceki doğrulanmış Quality: run `35268797342` / job `105362578713` SUCCESS.
-- Bu nedenle yeni katmanlar için PASS/TAMAM iddiası yok.
+- Bu nedenle yeni demo katmanları için PASS/TAMAM veya "tam çalışan" iddiası yok.
 
 ## Gerçek geliştirme backlog'u
+- Quality runner'ın yeni HEAD'de gerçek SUCCESS kanıtı.
 - Browser uçtan uca doğrulama.
 - Oda canlı chat/gift/seat/moderasyon zincirinin browser doğrulaması.
 - Gerçek WebRTC/mikrofon transportu.
