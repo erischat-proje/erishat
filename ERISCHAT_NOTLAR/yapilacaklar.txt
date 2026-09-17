@@ -23,9 +23,11 @@ MEVCUT DURUM
 - Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
 - Pages run #258 (`35208712803`) iki attempt'te de yaklaşık 1 saniyede job-level failure verdi; her iki job kaydında `steps: []`. Bu nedenle kök neden hâlâ kanıtlanmadı.
 - `.github/workflows/pages-diagnostics.yml` eklendi. Production/Pages deploy yapmıyor; repository Pages API, `github-pages` environment ve workflow shape bilgisini topluyor.
-- Diagnostics run sonucu henüz API'de görünmedi.
+- Diagnostics run sonucu doğrulanmış PASS/FAIL olarak henüz yazılmadı.
 - `main.py` duplicate migration/import problemi ve integration workflow tekrar-ekleme problemi düzeltildi.
-- `scripts/room_live_smoke.py`, `scripts/room_ban_live_smoke.py`, `scripts/dm_live_smoke.py`, `scripts/cosmetic_live_smoke.py` hazır; hiçbiri çalıştırılmadan başarılı kabul edilmeyecek.
+- Dört live smoke harness'ındaki eski `/auth/anonymous` kaydı bulundu ve güncel `/v1/users` + `nickname/avatar/gender` sözleşmesine geçirildi.
+- `.github/workflows/quality.yml` smoke harness syntax + stale endpoint contract guard + localhost safety kontrolleriyle genişletildi.
+- Bu smoke harness değişiklikleri gerçek E2E PASS değildir; çalıştırma bekliyor.
 
 KOZMETİK ENVANTER
 - Hedef: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
@@ -50,6 +52,7 @@ TAMAMLANANLAR
 - DM live smoke harness.
 - Room ban live smoke harness.
 - Room live smoke harness gift contract fix (`unit_price`).
+- Live smoke auth contract alignment (`/v1/users`) — gerçek E2E henüz PASS değil.
 - Main.py duplicate migration/import cleanup.
 - Integration workflow idempotency fix.
 - Railway web port/config hazırlığı; deploy edilmedi.
@@ -62,4 +65,4 @@ DOĞRULAMA KURALI
 - Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
 
 YENİ SOHBET BAŞLANGIÇ MESAJI
-Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Son checkpointten itibaren aktif sırayı takip et, gerçekten kod/config geliştir, doğrula ve notları güncelle.
+Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Smoke harness auth contract düzeltildi; quality sonucunu takip et ve ardından kontrollü/local E2E'ye geç. Gerçek E2E olmadan PASS deme.
