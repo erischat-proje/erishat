@@ -12,6 +12,9 @@ permissions:
   actions: read
   pages: read
 
+env:
+  TARGET_BRANCH: main
+
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
@@ -25,7 +28,7 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const out = {};
+            const out = { workflow_ref: context.ref, target_branch: process.env.TARGET_BRANCH };
             try {
               const r = await github.rest.repos.get({ owner, repo });
               out.repo = {
@@ -49,10 +52,13 @@ jobs:
             }
             try {
               const r = await github.rest.repos.getEnvironment({ owner, repo, environment_name: 'github-pages' });
+              const policy = r.data.deployment_branch_policy || null;
               out.environment = {
                 name: r.data.name,
-                protection_rules: (r.data.protection_rules || []).map(x => x.type),
-                deployment_branch_policy: r.data.deployment_branch_policy || null,
+                protection_rules: (r.data.protection_rules || []).map(x => ({ type: x.type, id: x.id, wait_timer: x.wait_timer || null })),
+                deployment_branch_policy: policy,
+                policy_allows_protected_branches: policy ? policy.protected_branches : null,
+                policy_allows_custom_branch_policies: policy ? policy.custom_branch_policies : null,
               };
             } catch (e) {
               out.environment_error = { status: e.status, message: e.message };
@@ -96,3 +102,17 @@ jobs:
             test -s "frontend/$script"
           done
           echo 'Frontend artifact source checks OK'
+
+  environment-probe:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Prove github-pages environment reaches a runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "environment probe reached runner"
+          echo "ref=${GITHUB_REF}"
+          echo "sha=${GITHUB_SHA}"
+          echo "environment=${GITHUB_ENVIRONMENT:-github-pages}"
