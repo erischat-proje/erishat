@@ -91,7 +91,7 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Demo surface integrity quality gate checkpoint'i işlendi.
 - [x] Family runtime smoke checkpoint'i işlendi.
 - [x] Family member/chat message smoke checkpoint'i işlendi.
-- [x] Quality run 35279194558 / job 105396950920 SUCCESS; family production integration ve live family smoke dahil tüm quality adımları geçti.
+- [x] Quality run 35279859803 / job 105399048309 SUCCESS; family production integration ve live family smoke dahil tüm quality adımları geçti.
 
 SONRAKİ GELİŞTİRME SIRASI
 1. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
