@@ -15,7 +15,7 @@ from .auth import create_anonymous_user
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .db import Base, engine, get_db
-from .models import Conversation, User
+from .models import Conversation, ConversationMember, User
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage
 from .room_routes import register_room_auth, router as room_router
@@ -126,6 +126,31 @@ def create_demo_user(db: Session = Depends(get_db)) -> UserOut:
 @app.get("/v1/me", response_model=UserOut)
 def me(user: User = Depends(current_user)) -> User:
     return user
+
+
+@app.post("/v1/families")
+def create_family_production(payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    name = str(payload.get("name", "")).strip()
+    if not name or len(name) > 64:
+        raise HTTPException(status_code=422, detail="Geçerli bir aile adı gerekli")
+    family_id = "family_" + uuid4().hex[:12]
+    conversation_id = "family_chat_" + family_id
+    conversation = Conversation(id=conversation_id, type="family")
+    family = Family(
+        id=family_id,
+        owner_id=user.id,
+        name=name,
+        level=1,
+        balance=0,
+        chat_conversation_id=conversation_id,
+    )
+    db.add(conversation)
+    db.add(family)
+    db.flush()
+    db.add(ConversationMember(conversation_id=conversation_id, user_id=user.id))
+    db.add(FamilyMember(family_id=family_id, user_id=user.id, role="member"))
+    db.commit()
+    return {"id": family.id, "name": family.name, "level": 1}
 
 
 @app.patch("/v1/me", response_model=UserOut)
@@ -258,156 +283,3 @@ class ConnectionManager:
                 await websocket.send_json(payload)
             except Exception:
                 self.disconnect(user_id, websocket)
-
-
-manager = ConnectionManager()
-
-
-def websocket_session_active(token: str) -> bool:
-    with Session(engine) as db:
-        user = get_user_from_token(db, token)
-        return bool(user and user.is_active)
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket) -> None:
-    token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=1008, reason="token gerekli")
-        return
-    if not websocket_session_active(token):
-        await websocket.close(code=1008, reason="geçersiz oturum")
-        return
-    with Session(engine) as db:
-        user = get_user_from_token(db, token)
-        if not user or not user.is_active:
-            await websocket.close(code=1008, reason="geçersiz oturum")
-            return
-        user_id = user.id
-    await manager.connect(user_id, websocket)
-    try:
-        while True:
-            data = await websocket.receive_json()
-            if not websocket_session_active(token):
-                manager.disconnect(user_id, websocket)
-                await websocket.close(code=1008, reason="oturum sona erdi")
-                return
-            if isinstance(data, dict) and data.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
-    except WebSocketDisconnect:
-        manager.disconnect(user_id, websocket)
-    except Exception:
-        manager.disconnect(user_id, websocket)
-        try:
-            await websocket.close(code=1011)
-        except Exception:
-            pass
-
-
-room_chat_connections: dict[str, set[WebSocket]] = {}
-
-async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
-    connections = room_chat_connections.get(room_id, set())
-    dead = []
-    for ws in list(connections):
-        try:
-            await ws.send_json(payload)
-        except Exception:
-            dead.append(ws)
-    for ws in dead:
-        connections.discard(ws)
-
-
-@app.websocket("/ws/rooms/{room_id}")
-async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
-    token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=1008, reason="token gerekli")
-        return
-    with Session(engine) as db:
-        user = get_user_from_token(db, token)
-        if not user or not user.is_active:
-            await websocket.close(code=1008, reason="geçersiz oturum")
-            return
-        room = db.get(Room, room_id)
-        member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
-        banned = db.query(RoomBan).filter(RoomBan.room_id == room_id, RoomBan.user_id == user.id).first()
-        if not room or not member or banned:
-            await websocket.close(code=1008, reason="oda üyeliği gerekli")
-            return
-        if not room.chat_enabled:
-            await websocket.close(code=1008, reason="oda sohbeti kapalı")
-            return
-        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
-        history.reverse()
-        history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
-    await websocket.accept()
-    room_chat_connections.setdefault(room_id, set()).add(websocket)
-    await websocket.send_json({"type":"room_history","messages":history_payload})
-    try:
-        while True:
-            data = await websocket.receive_json()
-            if not websocket_session_active(token):
-                room_chat_connections.get(room_id, set()).discard(websocket)
-                await websocket.close(code=1008, reason="oturum sona erdi")
-                return
-            with Session(engine) as db:
-                room = db.get(Room, room_id)
-                member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
-                banned = db.query(RoomBan).filter(RoomBan.room_id == room_id, RoomBan.user_id == user.id).first()
-                if not room or not member or banned or not room.chat_enabled:
-                    room_chat_connections.get(room_id, set()).discard(websocket)
-                    await websocket.close(code=1008, reason="oda erişiminiz yok")
-                    return
-            if not isinstance(data, dict):
-                continue
-            if data.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
-                continue
-            if data.get("type") != "room_chat":
-                continue
-            text_value = str(data.get("text") or "").strip()
-            if not text_value or len(text_value) > 500:
-                continue
-            with Session(engine) as db:
-                room = db.get(Room, room_id)
-                member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
-                banned = db.query(RoomBan).filter(RoomBan.room_id == room_id, RoomBan.user_id == user.id).first()
-                seat = db.query(RoomSeat).filter(RoomSeat.room_id == room_id, RoomSeat.user_id == user.id).first()
-                if not room or not member or banned or not room.chat_enabled:
-                    await websocket.close(code=1008, reason="oda erişiminiz yok")
-                    break
-                if seat and seat.muted:
-                    await websocket.send_json({"type":"room_chat_error","code":"muted","message":"Mikrofonunuz susturuldu."})
-                    continue
-                msg = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
-                db.add(msg)
-                db.commit()
-                db.refresh(msg)
-                payload = {"type":"room_chat","id":msg.id,"room_id":room_id,"user_id":user.id,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
-            await _broadcast_room_chat(room_id, payload)
-    except WebSocketDisconnect:
-        room_chat_connections.get(room_id, set()).discard(websocket)
-    except Exception:
-        room_chat_connections.get(room_id, set()).discard(websocket)
-        try:
-            await websocket.close(code=1011)
-        except Exception:
-            pass
-
-
-@app.get("/v1/demo")
-def demo(db: Session = Depends(get_db)) -> dict:
-    user = ensure_demo_user(db)
-    return {"id": user.id, "public_id": user.public_id, "nickname": user.nickname, "avatar": user.avatar, "message": "ErisChat API hazır"}
-
-
-@app.get("/v1/debug/tables")
-def debug_tables(db: Session = Depends(get_db)) -> dict[str, list[str]]:
-    result = db.execute(text("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).all()
-    return {"tables": [row[0] for row in result]}
-
-
-static_dir = Path(__file__).resolve().parents[2] / "frontend"
-if static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
