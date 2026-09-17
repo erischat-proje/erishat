@@ -291,11 +291,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             pass
 
 
-frontend_path = Path(__file__).resolve().parents[2] / "frontend"
-if frontend_path.is_dir():
-    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
-
-
 room_chat_connections: dict[str, set[WebSocket]] = {}
 
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
@@ -374,3 +369,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             await websocket.close(code=1011)
         except Exception:
             pass
+
+frontend_path = Path(__file__).resolve().parents[2] / "frontend"
+if frontend_path.is_dir():
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
