@@ -37,7 +37,7 @@
       setNotificationState(user.notifications_enabled !== false);
       if (balance && user.lidya != null) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
       if (name && user.nickname) name.textContent = user.nickname;
-      if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance(user.avatar_asset || user.avatar, user.frame_asset || '');
+      if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
     };
     const refresh = async () => {
       try {
@@ -86,7 +86,7 @@
     });
     window.addEventListener('erischat:auth', event => { if (event.detail?.user) render(event.detail.user); else if (event.detail?.state === 'logged_out') status.textContent = 'Oturum kapatıldı.'; else refresh(); });
     window.addEventListener('erischat:profile', event => render(event.detail));
-    window.addEventListener('erischat:cosmetics', refresh);
+    window.addEventListener('erischat:cosmetics-updated', () => render(window.ErisAuth?.user));
     refresh();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
