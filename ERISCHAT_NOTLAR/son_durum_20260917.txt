@@ -2,77 +2,56 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Güncel doğrulanmış kod HEAD: `eac244e6d901a6b269991dabdede9cef11afc423`.
-- Son checkpoint doküman commitleri: `0273e6b606a35d042c4a0bfbc3fae7795b145dbb` ve `75be918e89b1bc3e4a79e2f81094ea0a1fdcb7e6`.
-- Faz: BASELINE / TAM ÇALIŞAN SİSTEME HAZIRLIK.
-- Öncelik: mevcut kodu ve canlı temel akışları tamamlamak; yeni ürün özelliklerine baseline çıkışından sonra geçmek.
+- Son ürün shell commit: `bff4fbdab5e02879d1eaf3b372404857f084a75c`.
+- Son checkpoint docs commit: `5786ffe37fe850be6bd3dfda1434ab237dc40139`.
+- Faz: MÜŞTERİYE GÖSTERİLEBİLİR ÜRÜN TEMELİ.
+- Amaç: önce uygulamanın bütün ürün yüzeyini tek bir müşteri vitrini olarak ortaya çıkarmak; sonra her modülün gerçek akışını derinleştirerek geliştirmek.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-## Güncel main HEAD değişikliği
-- Commit `eac244e6d901a6b269991dabdede9cef11afc423`: `fix: use valid genders in room ban smoke`.
-- `scripts/room_ban_live_smoke.py` artık kullanıcı oluştururken API'nin kabul ettiği `male` değerini kullanıyor ve kullanıcı oluşturma HTTP/response yapısını ayrıca doğruluyor.
-- Bu düzeltme sonrası Quality v4 güncel HEAD üzerinde tam SUCCESS verdi.
+## Müşteri ürün vitrini
+`frontend/full-demo-live.js` artık ana arayüzden açılan tek bir Product Shell sunuyor.
 
-## Quality v4 — güncel doğrulanmış çalışma
-- Quality v4 run `35265208929`, job `105350554959`: **SUCCESS**.
-- Güncel HEAD: `eac244e6d901a6b269991dabdede9cef11afc423`.
-- Static syntax + required-file checks: SUCCESS.
-- 139 cosmetic asset integrity: SUCCESS.
-- Cosmetic asset URL smoke: SUCCESS.
-- Local API startup + /ready: SUCCESS.
-- Anonymous session smoke: SUCCESS.
-- Live room smoke: SUCCESS.
-- **Live ban smoke: SUCCESS.**
-- Live DM smoke: SUCCESS.
-- Live cosmetic smoke: SUCCESS.
-- Container cleanup: SUCCESS.
-- Böylece güncel HEAD üzerindeki Room WebSocket history/ban/membership zinciri ve beş temel live smoke tekrar gerçek runner'da doğrulandı.
+Görünen sistemler:
+- Odalar: oda açma, canlı oda listesi, oda detayları, katılma/ayrılma, koltuklar, sohbet aç/kapat, duyuru görünümü.
+- Mağaza: 139 kozmetik katalog, standart/VIP filtreleri, standart satın alma, sahip olunan/VIP görünüm uygulama.
+- VIP: VIP 1 → 12 ve aktif/kilitli seviyeler.
+- Aile: aile oluşturma, seviye, kapasite, bakiye, bağış ve aile sohbeti yüzeyi.
+- Oyunlar: Roulette + 4 Kupa için müşteri vitrini; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna ayrıldı.
+- Keşif: yakındaki kullanıcılar, rastgele sohbet ve rastgele oda.
+- Sosyal: profil, fan seviyesi ve profil hediyeleri.
+- Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü.
+- Şikayet: kullanıcı / oda / mesaj hedefleri.
+- Profil: `/me` + VIP bilgisi.
+- DM: konuşma listesi, DM başlatma ve mesaj gönderme yüzeyi.
+- Ürün: müşteriye bütün modüllerin kısa ürün haritası.
 
-## WebSocket session revoke güvenliği
-- Commit `2400850295c51ae5baaec12d94fd049d186c23ca`.
-- `/ws` ve `/ws/rooms/{room_id}` bağlantılarında gelen her yeni mesajdan önce token/session yeniden doğrulanıyor.
-- Session revoke/expiry sonrası geçersiz session ile mesaj işlenmiyor; bağlantı `1008` ile kapatılıyor.
-- Not: Bu uygulama mesaj/aktivite geldiğinde yeniden doğrulama yapıyor; idle bağlantıyı arka planda anında kapatan ayrı heartbeat/revocation watcher henüz eklenmedi.
+## Önemli doğrulama durumu
+- `bff4fbd...` product shell commitinden sonra `fetch_commit_workflow_runs` kontrolünde henüz workflow sonucu dönmedi.
+- Bu nedenle yeni shell için Quality PASS/TAMAM iddiası yapılmıyor.
+- Önceki doğrulanmış Quality v4 kanıtı ayrı olarak korunuyor: run `35266995579` / job `105356518821` SUCCESS.
 
-## Room membership / ban WebSocket zinciri
-- Commit `7f4d5f57d6debddd9b5aef776eb1103752a5d358`: room WebSocket'te her gelen mesaj öncesi üyelik/ban/chat_enabled yeniden kontrolü.
-- Commit `cde80814ca42f6a4994adfb50de4979e6e6fb07c`: ban sonrası açık WebSocket'in yeniden doğrulanmasını kapsayan smoke testi.
-- Commit `69b3961d1cbce3ca643e0dda239cbca17df547ea`: temiz WebSocket close sonucunu testte kabul etme.
-- Commit `0dc7c84d89bb39a84731c8dd35e4821d5b56afe0`: ban sonrası close scheduling gecikmesini tolere eden test döngüsü.
-- Commit `e90c6f077901f457ef7ce81ae1c1af3bbc5b7033`: smoke API base normalization.
-- Commit `eac244e6d901a6b269991dabdede9cef11afc423`: smoke kullanıcı gender düzeltmesi.
-- Bu zincir güncel HEAD'de Quality v4 run `35265208929` ile SUCCESS olarak doğrulandı.
+## Önceki doğrulanmış temel sistemler
+- 139 cosmetic asset integrity + URL smoke.
+- Anonymous session smoke.
+- Live room smoke.
+- Live ban smoke.
+- Live DM smoke.
+- Live cosmetic smoke.
+- Room WebSocket history/membership/ban zinciri.
+- Session revoke / WebSocket güvenlik zinciri.
 
-## Son frontend düzeltmeleri
-- Commit `a23bce6f01814d3049a55dc6fb4c9c1a90928d03`: DM konuşma listesindeki `ConversationOut.members` → karşı kullanıcı profilini çözme düzeltmesi.
-- Commit `e26682ce224093dc039a2ea74a16521d99b50f63`: DM mesaj balonlarının `MessageOut.sender_id` üzerinden kendi mesajını doğru hizalaması.
-- Commit `1f9bdf6605684f798be60c7b2854a1feba281c60`: session ve WebSocket hata durumlarının frontend'de ayrıştırılması.
-- Commit `aa3bbc8ff495116d94a7734cb27e80921a94e5a2`: room chat toast çağrılarının güvenli hale getirilmesi.
-- Bu değişikliklerin statik/smoke uyumluluğu güncel Quality runner'da geçti; gerçek tarayıcı/frontend etkileşim doğrulaması ise halen ayrı baseline maddesi.
-
-## Temizlik checkpoint'i
-- Belirgin geçici Pages/CI trigger dosyaları main'den temizlendi: PAGES_FORCE* ailesi, eski PAGES_TRIGGER, room/gift/progress/root trigger kalıntıları ve `.ci` canlı trigger dosyaları.
-- Checkpoint listeleri güncel runner kanıtı ile senkronize edildi.
+## Sonraki geliştirme sırası
+1. Yeni Product Shell Quality runner sonucunu kontrol et; hata varsa düzelt.
+2. Oda detayını gerçek oda ekranı, canlı chat, gift, mikrofon/seat ve moderasyon akışlarıyla derinleştir.
+3. 139 kozmetiğin gerçek browser renderını doğrula.
+4. Profil + avatar/frame uygulama görünümünü gerçek browserda doğrula.
+5. DM ve aile sohbetini gerçek browserda doğrula.
+6. Pages environment admission + canlı zinciri kullanıcı `deploy` dediğinde ele al.
 
 ## Pages kök nedeni
 - `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
-- Diagnostics run `35259030698`, job `105329800478`: **FAILURE**; runner `main` için environment admission engelini açıkça raporladı.
-- Bu GitHub environment ayarıdır; kod kalite runner'ından bağımsızdır.
-- Pages URL mevcut GitHub state'te `https://semihvarolymk-png.github.io/erischat/` olarak raporlandı, ancak canlı HTTP 200/index doğrulaması henüz yapılmadı.
-- [ ] GitHub Settings → Environments → `github-pages` deployment branch policy içinde `main` izinli hale getirilecek.
-- [ ] Sonrasında Pages deploy tekrar gerçek runner'da doğrulanacak.
-- [ ] Canlı Pages HTTP 200/index doğrulaması yapılacak.
-- [ ] Canlı Pages → Railway API zinciri doğrulanacak.
-
-## Kalan baseline sırası
-1. `github-pages` environment admission engelini çöz.
-2. Pages deploy SUCCESS doğrula.
-3. Canlı Pages HTTP + frontend → Railway API doğrula.
-4. CORS'u gerçek Pages origin görüldükten sonra daralt.
-5. Frontend anonymous/me, room, DM, profile, gift ve cosmetic render zincirlerini gerçek akışta doğrula.
-6. 139 asset URL/path ve gerçek render kontrollerini tamamla.
-7. Artık gereksiz eski Pages probe/diagnostic workflow'larını gözden geçir.
-8. Baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
+- Bu kod kalite problemi değil, GitHub environment ayarıdır.
+- Pages canlı HTTP/index ve Pages→Railway zinciri henüz doğrulanmadı.
 
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
