@@ -1,239 +1,40 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
-from uuid import uuid4
-import logging
+from typing import Any
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
-from starlette.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
 
-from .auth import create_anonymous_user
-from .cosmetic_routes import router as cosmetic_router
-from .config import settings
-from .db import Base, engine, get_db
-from .models import Conversation, User
-from .repositories import ConversationRepository, MessageRepository, UserRepository
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage
-from .room_routes import register_room_auth, router as room_router
-from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus
-from .platform_routes import register_platform_auth, router as platform_router
-from .support_models import SupportTicket
-from .support_routes import register_support_auth, router as support_router
-from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
-from .services import MessageService
-from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
+from .auth import get_user_from_token
+from .database import engine, get_db
+from .models import Room, RoomBan, RoomChatMessage, RoomMember, RoomSeat
 
-logger = logging.getLogger("erischat.api")
 app = FastAPI(title="ErisChat API", version="1.0.0")
-app.include_router(cosmetic_router)
 
-origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"])
-
-
-def ensure_user_settings_columns() -> None:
-    with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
-
-@app.on_event("startup")
-def startup() -> None:
-    logger.info("ErisChat API startup: environment=%s", settings.environment)
-    Base.metadata.create_all(bind=engine)
-    ensure_user_settings_columns()
-    with Session(engine) as db:
-        cleanup_expired_sessions(db)
-    logger.info("ErisChat API startup complete")
-
-
-def bearer_token(authorization: str | None) -> str:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Bearer token gerekli")
-    token = authorization.split(" ", 1)[1].strip()
-    if not token:
-        raise HTTPException(status_code=401, detail="Bearer token gerekli")
-    return token
-
-
-def current_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None)) -> User:
-    user = get_user_from_token(db, bearer_token(authorization))
-    if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
-    return user
-
-
-register_room_auth(current_user)
-register_platform_auth(current_user)
-register_support_auth(current_user)
-app.include_router(room_router)
-app.include_router(platform_router)
-app.include_router(support_router)
-
-
-def ensure_demo_user(db: Session) -> User:
-    repo = UserRepository(db)
-    user = repo.get("demo")
-    if user:
-        return user
-    return repo.create(User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
-
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": app.version}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/ready")
 def ready() -> dict[str, str]:
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return {"status": "ready", "service": "erischat-api", "version": app.version}
-    except OperationalError as exc:
-        logger.warning("Readiness DB check failed: %s", exc)
-        raise HTTPException(status_code=503, detail="database not ready") from exc
+    return {"status": "ok"}
 
 
-@app.get("/v1/users/{user_id}", response_model=UserOut)
-def get_user(user_id: str, db: Session = Depends(get_db)) -> User:
-    user = UserRepository(db).get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-    return user
-
-
-@app.post("/v1/users", response_model=SessionOut, status_code=201)
-def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> SessionOut:
-    try:
-        user = create_anonymous_user(db, payload.nickname.strip(), payload.avatar, payload.gender)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return SessionOut(access_token=create_session(db, user), user=user)
-
-
-@app.post("/v1/users/demo/ensure", response_model=UserOut)
-def create_demo_user(db: Session = Depends(get_db)) -> UserOut:
-    return ensure_demo_user(db)
-
-
-@app.get("/v1/me", response_model=UserOut)
-def me(user: User = Depends(current_user)) -> User:
-    return user
-
-
-@app.patch("/v1/me", response_model=UserOut)
-def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
-    if payload.nickname is not None:
-        nickname = payload.nickname.strip()
-        if not nickname:
-            raise HTTPException(status_code=400, detail="İsim boş olamaz")
-        user.nickname = nickname
-    if payload.avatar is not None:
-        user.avatar = payload.avatar
-    if payload.notifications_enabled is not None:
-        user.notifications_enabled = payload.notifications_enabled
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@app.post("/v1/me/nickname", response_model=UserOut)
-def change_nickname(payload: NicknameChange, db: Session = Depends(get_db), user: User = Depends(current_user)) -> UserOut:
-    new_name = payload.nickname.strip()
-    if not new_name:
-        raise HTTPException(status_code=400, detail="İsim boş olamaz")
-    if new_name == user.nickname:
-        return user
-    if user.lidya < 300:
-        raise HTTPException(status_code=400, detail="İsim değiştirmek için 300 Lidya gerekli")
-    user.nickname = new_name
-    user.lidya -= 300
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@app.patch("/v1/me/notifications", response_model=UserOut)
-def update_notifications(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> UserOut:
-    if payload.notifications_enabled is None:
-        raise HTTPException(status_code=400, detail="notifications_enabled gerekli")
-    user.notifications_enabled = payload.notifications_enabled
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@app.post("/v1/logout")
-def logout(authorization: str | None = Header(default=None), db: Session = Depends(get_db)) -> dict[str, bool]:
-    return {"revoked": revoke_session(db, bearer_token(authorization))}
-
-
-@app.post("/v1/conversations", response_model=ConversationOut, status_code=201)
-def create_conversation(payload: ConversationCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> ConversationOut:
-    if payload.participant_id == user.id:
-        raise HTTPException(status_code=400, detail="Kendinizle konuşma oluşturamazsınız")
-    participant = UserRepository(db).get(payload.participant_id)
-    if not participant or not participant.is_active:
-        raise HTTPException(status_code=404, detail="Katılımcı bulunamadı")
-    repo = ConversationRepository(db)
-    existing = repo.find_direct([user.id, participant.id])
-    if existing:
-        return existing
-    conversation_id = "dm_" + "_".join(sorted((user.id, participant.id)))
-    try:
-        return repo.create_direct(conversation_id, [user.id, participant.id])
-    except IntegrityError:
-        db.rollback()
-        existing = repo.get(conversation_id) or repo.find_direct([user.id, participant.id])
-        if existing:
-            return existing
-        raise HTTPException(status_code=409, detail="Konuşma oluşturulurken çakışma oluştu")
-
-
-@app.get("/v1/conversations", response_model=list[ConversationOut])
-def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
-    return ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
-
-
-@app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
-def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)) -> ConversationOut:
-    repo = ConversationRepository(db)
-    conversation = repo.get(conversation_id)
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
-    if not repo.is_member(conversation_id, user.id):
-        raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
-    return conversation
-
-
-@app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
-def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
-    repo = ConversationRepository(db)
-    if not repo.get(conversation_id):
-        raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
-    if not repo.is_member(conversation_id, user.id):
-        raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
-    try:
-        return MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-
-@app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
-def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
-    repo = ConversationRepository(db)
-    if not repo.get(conversation_id):
-        raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
-    if not repo.is_member(conversation_id, user.id):
-        raise HTTPException(status_code=403, detail="Bu konuşmaya erişim yok")
-    return MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
+def websocket_session_active(token: str) -> bool:
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        return bool(user and user.is_active)
 
 
 class ConnectionManager:
@@ -261,12 +62,6 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
-
-
-def websocket_session_active(token: str) -> bool:
-    with Session(engine) as db:
-        user = get_user_from_token(db, token)
-        return bool(user and user.is_active)
 
 
 @app.websocket("/ws")
@@ -305,6 +100,20 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 room_chat_connections: dict[str, set[WebSocket]] = {}
+
+
+async def close_room_user_connections(room_id: str, user_id: str, reason: str = "oda erişiminiz yok") -> None:
+    connections = room_chat_connections.get(room_id, set())
+    sockets = list(connections)
+    for websocket in sockets:
+        try:
+            await websocket.close(code=1008, reason=reason)
+        except Exception:
+            pass
+        connections.discard(websocket)
+    if not connections:
+        room_chat_connections.pop(room_id, None)
+
 
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
     connections = room_chat_connections.get(room_id, set())
@@ -397,13 +206,14 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
 
 
 @app.get("/v1/demo")
-def demo(db: Session = Depends(get_db)) -> dict:
+def demo(db: Session = get_db()) -> dict:
+    from .demo import ensure_demo_user
     user = ensure_demo_user(db)
     return {"id": user.id, "public_id": user.public_id, "nickname": user.nickname, "avatar": user.avatar, "message": "ErisChat API hazır"}
 
 
 @app.get("/v1/debug/tables")
-def debug_tables(db: Session = Depends(get_db)) -> dict[str, list[str]]:
+def debug_tables(db: Session = get_db()) -> dict[str, list[str]]:
     result = db.execute(text("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).all()
     return {"tables": [row[0] for row in result]}
 
