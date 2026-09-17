@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   backend-quality:
@@ -16,50 +16,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Normalize duplicate user migrations
-        shell: python
-        run: |
-          from pathlib import Path
-          import re
-
-          path = Path("backend/app/main.py")
-          text = path.read_text(encoding="utf-8")
-          marker = "def ensure_user_settings_columns() -> None:\n"
-          start = text.index(marker)
-          end = text.index("\n\n@app.on_event(\"startup\")", start)
-          block = text[start:end]
-          lines = block.splitlines()
-          seen = set()
-          normalized = []
-          pattern = re.compile(r'^\s*conn\.execute\(text\("ALTER TABLE users ADD COLUMN IF NOT EXISTS ([a-z_]+) ')
-          for line in lines:
-              match = pattern.match(line)
-              if match:
-                  column = match.group(1)
-                  if column in seen:
-                      continue
-                  seen.add(column)
-              normalized.append(line)
-          new_block = "\n".join(normalized)
-          if new_block != block:
-              path.write_text(text[:start] + new_block + text[end:], encoding="utf-8")
-
-      - name: Commit normalization if needed
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- backend/app/main.py; then
-            echo "No migration normalization needed"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/app/main.py
-          git commit -m "fix: remove duplicate user migrations"
-          git push
-
       - name: Backend quality
         run: python scripts/check_backend_quality.py
 
