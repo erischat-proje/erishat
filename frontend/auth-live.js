@@ -18,11 +18,16 @@
     const suffix = Math.random().toString(36).slice(2, 7);
     const session = await request('/users', { method: 'POST', body: JSON.stringify({ nickname: `Anonim_${suffix}`, gender: 'male', avatar: '👤' }) });
     setToken(session.access_token);
-    return session.user;
+    const user = session.user;
+    window.ErisAuth.user = user;
+    return user;
   }
   async function ensureSession() {
     if (getToken()) {
-      try { return await request('/me'); }
+      try {
+        const user = await request('/me');
+        window.ErisAuth.user = user;
+        return user; }
       catch (error) { if (!String(error.message).includes('401')) throw error; clearToken(); }
     }
     return registerAnonymous();
