@@ -23,12 +23,13 @@ Tarih: 2026-09-18
 - [x] Onboarding demo: anonim giriş, nickname, cinsiyet, avatar, ilgi alanları, gizlilik ve başlangıç akışı görünür.
 - [x] Quality workflow static syntax/required-file listesine demo-complete-live.js ve demo-extras-live.js eklendi.
 - [x] Quality workflow'a müşteri demo yüzey bütünlüğü statik kontrolü eklendi.
-- [ ] Yeni Quality workflow run sonucu GitHub Actions üzerinden SUCCESS olarak doğrulanacak.
+- [x] Yeni Quality workflow run 35274783487 GitHub Actions üzerinden SUCCESS olarak doğrulandı; customer demo surface integrity dahil ilgili quality adımları geçti.
 - [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
 
 GERÇEK RUNNER
 - [x] Önceki doğrulanmış Quality v4: run 35266995579 / job 105356518821 SUCCESS.
 - [x] Önceki doğrulanmış Quality: run 35268797342 / job 105362578713 SUCCESS.
+- [x] Yeni Quality: run 35274783487 / job 105382617021 SUCCESS.
 - [x] 139 cosmetic asset integrity.
 - [x] Cosmetic asset URL smoke.
 - [x] Anonymous session smoke.
@@ -36,11 +37,11 @@ GERÇEK RUNNER
 - [x] Live ban smoke.
 - [x] Live DM smoke.
 - [x] Live cosmetic smoke.
-- [x] Room WebSocket history/membership/ban zinciri önceki doğrulanmış HEAD'de geçti.
+- [x] Runner recovery: run 35275185782 / live-e2e job 105383969301 SUCCESS.
 - [x] Quality workflow demo-extras-live.js ve demo-complete-live.js için static syntax/required-file kontrolü içeriyor.
 - [x] Customer demo surface integrity scripti eklendi ve Quality jobına bağlandı.
-- [ ] Yeni product shell HEAD için Quality runner SUCCESS sonucu.
-- [ ] demo-extras-live.js için gerçek runner syntax/required-file SUCCESS sonucu.
+- [x] Product shell HEAD için Quality runner SUCCESS sonucu doğrulandı.
+- [x] demo-extras-live.js için Quality static/required-file SUCCESS sonucu doğrulandı.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
@@ -76,15 +77,15 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Remaining customer demo surfaces checkpoint'i işlendi.
 - [x] Quality workflow demo katmanı static kontrol checkpoint'i işlendi.
 - [x] Demo surface integrity quality gate checkpoint'i işlendi.
-- [ ] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
+- [x] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
 - [x] Son durum dosyası yeni HEAD'e göre senkronize edilecek aşamaya getirildi.
 
 SONRAKİ GELİŞTİRME SIRASI
-1. Yeni Quality runner sonucunu gerçek GitHub Actions kanıtıyla doğrula; hata varsa direkt düzelt.
-2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
-3. 139 kozmetiğin gerçek browser renderını doğrula.
-4. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
-5. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
+1. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
+2. 139 kozmetiğin gerçek browser renderını doğrula.
+3. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
+4. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
+5. Aile backend entegrasyonunu güvenli şekilde doğrula ve gerekiyorsa main.py router kaydını tamamla.
 6. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
 
 KURAL
