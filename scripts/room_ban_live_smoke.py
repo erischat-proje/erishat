@@ -30,8 +30,10 @@ def request(method: str, path: str, token: str | None = None, payload=None):
         return exc.code, data
 
 
-def register() -> tuple[str, str]:
-    status, data = request("POST", "/auth/anonymous", payload={})
+def register(label: str) -> tuple[str, str]:
+    status, data = request("POST", "/users", payload={
+        "nickname": f"Ban Smoke {label}", "avatar": "👤", "gender": "male"
+    })
     if status >= 300:
         raise RuntimeError(f"anonymous auth failed: HTTP {status} {data}")
     token = data.get("access_token") or data.get("token")
@@ -47,8 +49,8 @@ def main() -> int:
     if not (BASE.startswith("http://127.0.0.1") or BASE.startswith("http://localhost")):
         print("WARNING: non-local target supplied; this is an explicit live smoke run.")
 
-    owner_token, owner_id = register()
-    target_token, target_id = register()
+    owner_token, owner_id = register("owner")
+    target_token, target_id = register("target")
 
     status, room = request("POST", "/rooms", owner_token, {"name": "Ban Smoke Room"})
     if status >= 300:
