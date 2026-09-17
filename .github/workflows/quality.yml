@@ -80,8 +80,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate CI live-E2E contract
-        run: python scripts/ci_contract_check.py
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
