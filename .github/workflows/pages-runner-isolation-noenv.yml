@@ -1,0 +1,25 @@
+name: ErisChat Pages runner isolation noenv
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pages-runner-isolation-noenv.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner reached
+        run: echo "ERISCHAT_PAGES_NOENV_RUNNER_REACHED"
+      - name: Pages permission context
+        run: |
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
