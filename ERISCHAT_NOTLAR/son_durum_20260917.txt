@@ -23,8 +23,10 @@ BU TURDA YAPILAN
 - Smoke scripti production'a kendiliğinden bağlanmıyor; varsayılan hedef localhost ve uzak hedef ancak ERISCHAT_SMOKE_BASE_URL açıkça verilirse kullanılıyor.
 - Smoke scripti gift sonrası gönderen bakiyesi, alıcı %70 payı ve RoomGiftEvent kaydını kontrol ediyor; websocket-client mevcutsa iki istemcili room_chat broadcast kontrolünü de çalıştırıyor.
 - Cosmetic quality workflow artık yalnızca tanı koymuyor; scripts/check_cosmetic_assets.py ile 40 standart avatar + 40 standart frame + 12 VIP avatar + 12 VIP frame hedeflerini exact-count olarak CI kapısı yapıyor.
+- Cosmetic purchase/apply için opt-in smoke harness eklendi: scripts/cosmetic_live_smoke.py. Anonymous kullanıcı oluşturup katalogdan avatar/frame seçiyor; yeterli bakiye varsa purchase → ownership → apply zincirini doğruluyor.
 
 SON COMMITLER
+- Cosmetic smoke harness: 577d195085d03f889211207a14a2a591b27f43a8
 - Exact cosmetic inventory CI gate: 5db3fe322baa7ed75943cdc870c5641b419de5dd
 - Room live smoke harness: 78de1295688a1caff34b66281f05394e4f0c6e7c
 - Pages gift UI integration: fb5a73be062495f73c2da597ed2a360ba2984bc3
@@ -34,35 +36,7 @@ SON COMMITLER
 - Room actions helper + Pages integration: 22c5e9e235d316422bff4bfff03feb5e63d0e654
 - Gift REST bridge: 683afe64749a6f812fc5069c1dced211de472369
 - Ban list + Pages integration: 6ac27e083895c506218477fadd5c37401cdbd3a4
-- Secure room ban listing/moderator revoke: 80d393cd7cd773b9a43df03506f04db9688f0737
-- Active moderator membership hardening: 88d2c987b08cf3eaf6ecb0dfd2bc1b659e0e060a
-- Room security regression checker: 4c58aade0784add14ebf5a23556e33fc67d5a741
-- Quality workflow room security integration: 02d4d1ec078510b22f87e9c9c218c5eaee330c43
-
-BACKEND DURUMU
-- /v1/me ve DM conversation/message endpointleri mevcut.
-- /ws/rooms/{room_id} room history, ping/pong ve room_chat kabul ediyor.
-- room_chat DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
-- Room banları oda bazlı ve WebSocket katmanında da kontrol ediliyor.
-- GET /v1/rooms/{room_id}/bans yalnızca oda staff'ına açık.
-- Ban, ilgili odadaki üyelik/koltuk/moderatör rolünü temizliyor.
-- Unban yalnızca ilgili oda ban kaydını kaldırıyor; başka odalar etkilenmiyor.
-- Gift room_gift event altyapısı mevcut.
-- Gift gönderiminde gönderen bakiyesi düşürülüyor, alıcıya %70 aktarılıyor ve RoomGiftEvent kaydı oluşturuluyor.
-- Cosmetic catalog/purchase/apply API mevcut ve repository asset klasörleriyle hizalı.
-- Startup user migration ifadeleri tekilleştirilmiş durumda.
-
-FRONTEND DURUMU
-- Oda listesi gerçek /v1/rooms API'sine bağlı.
-- Oda chat UI gerçek room WebSocket akışına bağlı.
-- Oda REST işlemleri frontend/room-actions.js helper'ında toplandı; ban listesi ve gift REST işlemleri dahil.
-- Oda ban yönetimi için frontend GET/UI katmanı hazırlandı; canlı backend E2E henüz yapılmadı.
-- Canlı oda hediye paneli hazır; gerçek iki kullanıcı/gift bakiye smoke E2E henüz yapılmadı.
-- DM listesi/history/send gerçek API helper'larına bağlı.
-- DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
-- Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
-- Cosmetics entegrasyonu gerçek token/API akışına bağlandı; standard/VIP katalog ayrımı ve asset URL çözümlemesi eklendi.
-- Pages workflow platform/room/gift/room-actions/room-ban/room-gift-ui/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
+- Secure room ban listing/moderator revoke: 80d393cd7cd773b9a43cf... 
 
 HENÜZ DOĞRULANMAYANLAR
 1. Room security regression workflow adımının gerçek GitHub Actions sonucu.
@@ -83,13 +57,13 @@ NOT
 - Büyük frontend HTML dosyası kısmi içerikle overwrite edilmeyecek.
 - Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
 - Room ban semantiği global değildir; ban yalnızca ilgili room_id için geçerlidir.
-- Yeni regression checker eklendi ancak GitHub Actions sonucu henüz doğrulanmadı.
 - Cosmetic exact-count checker CI'ya bağlandı; gerçek mevcut asset sayıları ayrıca doğrulanmalı.
+- Smoke harness'lar eklendi ama gerçek çalışan backend üzerinde henüz çalıştırılmadı.
 - Yapılan her önemli değişiklik commitlenip bu dosyadaki yapılanlar/yapılacaklar listesi güncellenecek.
 
 SONRAKİ AKTİF ADIM
-- Kontrollü/local backend üzerinde scripts/room_live_smoke.py çalıştırılabilirliğini doğrula; gerekirse test bağımlılıklarını ekle.
+- Kontrollü/local backend üzerinde room_live_smoke.py ve cosmetic_live_smoke.py çalıştırılabilirliğini doğrula; gerekirse test bağımlılıklarını ekle.
 - Exact cosmetic inventory CI sonucunu doğrula ve gerçek asset sayılarını çıkar.
 - Ardından Pages failure'ını yapılandırma/job ayrımıyla incele.
 - Sonrasında görsel katalog ↔ backend eşleşmesini ve asset kalitesini tamamla.
-- Ardından purchase/apply ve anonymous/session/profile/logout canlı E2E akışlarına geç.
+- Ardından anonymous/session/profile/logout canlı E2E akışlarına geç.
