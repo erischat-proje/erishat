@@ -10,6 +10,27 @@
     return [];
   }
 
+  function avatarValue(value, fallback = '') {
+    if (!value) return fallback;
+    if (typeof value === 'string') return value;
+    return value.url || value.src || value.avatar_url || value.asset_url || value.path || fallback;
+  }
+
+  function renderAvatar(el, value, fallback) {
+    if (!el) return;
+    const avatar = avatarValue(value, fallback);
+    el.textContent = '';
+    el.style.backgroundImage = '';
+    if (/^(https?:|data:|\/|\.\.?\/)/.test(avatar)) {
+      el.style.backgroundImage = `url(${avatar})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.setAttribute('aria-label', fallback || 'Avatar');
+    } else {
+      el.textContent = avatar || fallback || '👤';
+    }
+  }
+
   function showListError(list) {
     if (list) list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Konuşmalar yüklenemedi.</div>';
   }
@@ -26,17 +47,17 @@
         return;
       }
       items.forEach(c => {
-        const other = c.participants?.find?.(p => String(p.id) !== String(c.current_user_id)) || c.participant || {};
+        const other = c.participants?.find?.(p => String(p.id) !== String(c.current_user_id)) || c.participant || c.other_user || {};
         const id = c.id || c.conversation_id;
         if (!id) return;
         const name = other.nickname || other.name || c.name || 'Anonim kullanıcı';
-        const avatar = other.avatar || name.slice(0, 1).toUpperCase();
+        const avatar = avatarValue(other.avatar_asset || other.avatar_url || other.avatar, name.slice(0, 1).toUpperCase());
         const b = document.createElement('button');
         b.className = 'item';
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small>Gerçek konuşma</small></div>';
-        b.querySelector('.ava').textContent = avatar;
+        renderAvatar(b.querySelector('.ava'), avatar, name.slice(0, 1).toUpperCase());
         b.querySelector('b').textContent = name;
-        b.onclick = () => openRealChat(id, name);
+        b.onclick = () => openRealChat(id, name, avatar);
         list.appendChild(b);
       });
     } catch (e) {
@@ -75,12 +96,12 @@
     const id = conversation?.id || conversation?.conversation_id || conversation?.conversation?.id;
     if (id) {
       await loadConversations();
-      openRealChat(id, participantName);
+      openRealChat(id, participantName, avatarValue(conversation?.participant?.avatar_asset || conversation?.participant?.avatar));
     }
     return conversation;
   }
 
-  async function openRealChat(id, name) {
+  async function openRealChat(id, name, avatar = '') {
     const chat = $('chat');
     const body = chat?.querySelector('.chatBody');
     if (!chat || !body || !api()?.messages) return;
@@ -88,6 +109,7 @@
     chat.classList.add('show');
     const title = chat.querySelector('.chatHead b');
     if (title) title.textContent = name;
+    renderAvatar(chat.querySelector('.chatHead .ava'), avatar, name?.slice(0, 1)?.toUpperCase());
     body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Mesajlar yükleniyor…</div>';
     try {
       const payload = await api().messages(id);
