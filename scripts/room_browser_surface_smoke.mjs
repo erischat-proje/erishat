@@ -33,7 +33,7 @@ try{
   await page.waitForSelector('#chatBody .bubble.me');
   await page.locator('#chat .close').click();
   await page.locator('#erisDemoBtn').click({force:true});
-  await page.locator('[data-ed="rooms"]').click();
+  await page.locator('[data-ed="rooms"]').click({force:true});
   await page.waitForSelector('#ed-rooms #edRooms .ed-row');
   await page.locator('#ed-rooms .ed-row button',{hasText:'İncele'}).click();
   await page.waitForSelector('#edRoomDetail');
