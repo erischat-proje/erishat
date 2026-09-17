@@ -5,7 +5,6 @@
   window.__ERIS_DEMO_CONTROLS__ = true;
   const api = (path, options = {}) => window.ErisPlatform?.api(path, options) ?? Promise.reject(new Error('Platform hazır değil'));
   const esc = v => String(v ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
-  const wait = ms => new Promise(r => setTimeout(r, ms));
   const panel = () => document.querySelector('#ed-games')?.parentElement;
   const addCss = () => { if (document.getElementById('edExtraCss')) return; const s=document.createElement('style'); s.id='edExtraCss'; s.textContent='.ed-extra{margin-top:9px;padding:11px;border:1px solid #ffffff10;border-radius:14px;background:#0e0b14}.ed-extra h3{font-size:11px;margin:0 0 8px}.ed-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ed-mini button{border:1px solid #ffffff12;background:#ffffff06;color:#fff;border-radius:9px;padding:8px 4px;font-size:8px}.ed-extra input,.ed-extra select{width:100%;box-sizing:border-box;background:#ffffff08;border:1px solid #ffffff12;color:#fff;border-radius:9px;padding:8px;margin:3px 0;font-size:9px}.ed-extra .out{margin-top:7px;color:#bdb5c4;font-size:9px;line-height:1.5}.ed-game{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ed-game button{min-height:55px;border:1px solid #ffffff12;background:#15111d;color:#fff;border-radius:12px;font-size:10px}.ed-game button:hover{border-color:#8a5cff66}.ed-green{color:#78e0a2}.ed-red{color:#ff829b}'; document.head.appendChild(s); };
   const mkBtn=(text,fn)=>{const b=document.createElement('button');b.textContent=text;b.onclick=fn;return b;};
@@ -18,21 +17,6 @@
     const roulette=box.querySelector('#edRoulette');['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].forEach(k=>roulette.append(mkBtn(k,async()=>{const out=box.querySelector('#edRouletteOut');try{const r=await api('/game/bet',{method:'POST',body:JSON.stringify({choice:k,amount:Number(amount.value)||1})});out.innerHTML=`Sonuç: <b>${esc(r.result)}</b> • ödeme: <b>${r.payout}</b> Lidya`;}catch(e){out.textContent=e.message}})));
     const cups=box.querySelector('#edCups');['cup_1','cup_2','cup_3','cup_4'].forEach(k=>cups.append(mkBtn(k.replace('_',' ').toUpperCase(),async()=>{try{const r=await api('/game/cups',{method:'POST',body:JSON.stringify({choice:k,amount:Number(box.querySelector('#edCupAmount').value)||1})});box.querySelector('#edCupOut').innerHTML=`Seçim: <b>${r.choice}</b> • gelen: <b>${r.result}</b> • ödeme: <b>${r.payout}</b> Lidya`;}catch(e){box.querySelector('#edCupOut').textContent=e.message}})));
   }
-  async function enhanceRoom(){
-    const old=document.querySelector('#edRoomDetail'); if(!old) return;
-    const sheet=old.closest('.ed-sheet'); if(!sheet || sheet.querySelector('.ed-room-extra')) return;
-    const heading=sheet.querySelector('h2'); if(!heading) return;
-    const name=heading.textContent.trim();
-    const idMatch=sheet.querySelector('#edRoomActions')?.dataset?.roomId;
-    if(!idMatch) return;
-    const id=idMatch;
-    const box=document.createElement('div');box.className='ed-extra ed-room-extra';box.innerHTML='<h3>🛠️ Oda araçları</h3><input id="edModUser" placeholder="Moderatör kullanıcı ID"><div class="ed-mini" id="edModBtns"></div><input id="edBanUser" placeholder="Ban kullanıcı ID"><div class="ed-mini" id="edBanBtns"></div><input id="edGiftUser" placeholder="Hediye alıcı ID"><select id="edGiftKey"></select><input id="edGiftQty" type="number" min="1" value="1"><button id="edGiftSend" class="ed-btn">🎁 Hediye gönder</button><div class="out" id="edRoomOut"></div>';
-    sheet.appendChild(box);
-    const mod=box.querySelector('#edModBtns');mod.append(mkBtn('Mod ekle',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/moderators`,{method:'POST',body:JSON.stringify({user_id:box.querySelector('#edModUser').value.trim()})});box.querySelector('#edRoomOut').textContent='Moderatör eklendi.'}catch(e){box.querySelector('#edRoomOut').textContent=e.message}}));mod.append(mkBtn('Mod kaldır',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/moderators/${encodeURIComponent(box.querySelector('#edModUser').value.trim())}`,{method:'DELETE'});box.querySelector('#edRoomOut').textContent='Moderatör kaldırıldı.'}catch(e){box.querySelector('#edRoomOut').textContent=e.message}}));
-    const bans=box.querySelector('#edBanBtns');bans.append(mkBtn('Banla',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/bans`,{method:'POST',body:JSON.stringify({user_id:box.querySelector('#edBanUser').value.trim()})});box.querySelector('#edRoomOut').textContent='Kullanıcı banlandı.'}catch(e){box.querySelector('#edRoomOut').textContent=e.message}}));bans.append(mkBtn('Ban kaldır',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/bans/${encodeURIComponent(box.querySelector('#edBanUser').value.trim())}`,{method:'DELETE'});box.querySelector('#edRoomOut').textContent='Ban kaldırıldı.'}catch(e){box.querySelector('#edRoomOut').textContent=e.message}}));
-    try{const r=await api(`/rooms/${encodeURIComponent(id)}/gift-catalog`);box.querySelector('#edGiftKey').innerHTML=(r||[]).map(x=>`<option value="${esc(x.gift_key)}">${esc(x.gift_key)} • ${x.unit_price}</option>`).join('');}catch(e){}
-    box.querySelector('#edGiftSend').onclick=async()=>{try{const r=await api(`/rooms/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({recipient_id:box.querySelector('#edGiftUser').value.trim(),gift_key:box.querySelector('#edGiftKey').value,quantity:Number(box.querySelector('#edGiftQty').value)||1})});box.querySelector('#edRoomOut').innerHTML=`🎁 ${esc(r.gift_key)} gönderildi • ${r.total_price} Lidya`;}catch(e){box.querySelector('#edRoomOut').textContent=e.message}};
-  }
   async function discover(){
     const p=document.querySelector('#ed-discover');if(!p||p.querySelector('.ed-discovery-extra'))return;
     const box=document.createElement('div');box.className='ed-extra ed-discovery-extra';box.innerHTML='<h3>⚙️ Keşif tercihleri</h3><select id="edGender"><option value="any">Herkes</option><option value="female">Kadın</option><option value="male">Erkek</option></select><label style="display:flex;gap:6px;align-items:center;font-size:9px"><input id="edRandomEnabled" type="checkbox" checked> Rastgele eşleşmeye izin ver</label><button id="edSaveDiscovery" class="ed-btn">Kaydet</button><div class="out" id="edDiscOut"></div>';
@@ -41,7 +25,15 @@
   async function profile(){
     const p=document.querySelector('#ed-profile');if(!p||p.querySelector('.ed-profile-extra'))return;const box=document.createElement('div');box.className='ed-extra ed-profile-extra';box.innerHTML='<h3>✏️ Profil düzenleme</h3><input id="edNick" placeholder="Yeni kullanıcı adı"><input id="edAvatar" placeholder="Avatar emoji"><button id="edProfileSave" class="ed-btn">Profili kaydet</button><div class="out" id="edProfileOut"></div>';p.appendChild(box);box.querySelector('#edProfileSave').onclick=async()=>{try{const r=await api('/me',{method:'PATCH',body:JSON.stringify({nickname:box.querySelector('#edNick').value.trim()||undefined,avatar:box.querySelector('#edAvatar').value.trim()||undefined})});box.querySelector('#edProfileOut').textContent=`Profil güncellendi: ${r.nickname}`;}catch(e){box.querySelector('#edProfileOut').textContent=e.message}};
   }
-  function hook(){addCss();const observer=new MutationObserver(()=>{games();discover();profile();const root=document.querySelector('#erisDemo');if(root?.classList.contains('ed-show')){const a=document.querySelector('#edRoomActions');if(a&&!a.dataset.roomId){const text=document.querySelector('#edRoomDetail')?.closest('.ed-sheet')?.querySelector('h2')?.textContent||'';const rows=[...document.querySelectorAll('#edRooms .ed-row')];const match=rows.find(x=>x.textContent.includes(text));if(match){}}}});observer.observe(document.body,{childList:true,subtree:true});}
+  function hook(){addCss();const observer=new MutationObserver(()=>{games();discover();profile();});observer.observe(document.body,{childList:true,subtree:true});}
   hook();
-  window.ErisChatDemoControls={enhanceRoom};
+  window.ErisChatDemoControls={games,discover,profile};
+})();
+
+(() => {
+  const load = () => {
+    if (document.querySelector('script[data-eris-demo-complete]')) return;
+    const s=document.createElement('script');s.src='./demo-complete-live.js';s.async=false;s.setAttribute('data-eris-demo-complete','1');s.onerror=()=>console.warn('[ErisChat] complete demo layer unavailable');document.body.appendChild(s);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
 })();
