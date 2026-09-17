@@ -23,9 +23,8 @@ def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, g
     directory = root / folder
     if not directory.exists():
         return
-    for path in sorted(directory.rglob("*")):
-        if not path.is_file():
-            continue
+    paths = [path for path in sorted(directory.rglob("*")) if path.is_file()]
+    for index, path in enumerate(paths, start=1):
         key = path.relative_to(root).as_posix()
         result.append({
             "type": kind,
@@ -34,6 +33,8 @@ def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, g
             "price": VIP_PRICE if vip else PRICE,
             "vip": vip,
             "tier": "vip" if vip else "standard",
+            # Each VIP asset set contains 12 entries; one entry unlocks per VIP level.
+            "vip_level": index if vip else None,
         })
 
 
@@ -46,7 +47,7 @@ def catalog() -> list[dict[str, Any]]:
     _collect(result, root, "erkekavatar", "avatar", "male", False)
     _collect(result, root, "standartcerceve", "frame", None, False)
 
-    # VIP catalog: keep VIP assets explicitly separated from standard assets.
+    # VIP catalog: these are unlock rewards, not normal Lidya purchases.
     _collect(result, root, "vipkadınavatar", "avatar", "female", True)
     _collect(result, root, "viperkekavatar", "avatar", "male", True)
     _collect(result, root, "vipcerceve", "frame", None, True)
