@@ -39,14 +39,18 @@ def request(method: str, path: str, token: str | None = None, payload=None):
         return exc.code, data
 
 
-def register():
-    status, data = request("POST", "/auth/anonymous", payload={})
+def register(label: str):
+    status, data = request("POST", "/users", payload={
+        "nickname": f"Smoke {label}", "avatar": "👤", "gender": "male"
+    })
     if status >= 300:
         raise RuntimeError(f"anonymous auth failed: HTTP {status} {data}")
     token = data.get("access_token") or data.get("token")
-    if not token:
-        raise RuntimeError(f"anonymous auth response has no token: {data}")
-    return token, data
+    user = data.get("user") or {}
+    user_id = data.get("user_id") or user.get("id") or data.get("id")
+    if not token or not user_id:
+        raise RuntimeError(f"anonymous auth response missing token/user id: {data}")
+    return token, {**data, "user_id": user_id}
 
 
 def main() -> int:
@@ -56,8 +60,8 @@ def main() -> int:
     else:
         print("WARNING: non-local target supplied; this is an explicit live smoke run.")
 
-    token_a, user_a = register()
-    token_b, user_b = register()
+    token_a, user_a = register("A")
+    token_b, user_b = register("B")
     uid_a = user_a.get("user_id") or user_a.get("id")
     uid_b = user_b.get("user_id") or user_b.get("id")
     print(f"two sessions created: {uid_a}, {uid_b}")
