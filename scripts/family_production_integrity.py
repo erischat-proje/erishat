@@ -31,7 +31,6 @@ for marker in required_main:
 
 required_family = [
     '@router.get("/families/{family_id}")',
-    '@router.post("/families")',
     '@router.get("/families/{family_id}/members")',
     '@router.post("/families/{family_id}/members")',
     '@router.patch("/families/{family_id}/members/{member_user_id}")',
