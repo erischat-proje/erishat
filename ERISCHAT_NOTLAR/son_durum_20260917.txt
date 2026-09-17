@@ -12,21 +12,21 @@ BU TURDA YAPILAN
 - Atılan kullanıcı listesi yalnızca ilgili oda için döndürülüyor ve yalnızca oda sahibi/aktif moderatör erişebiliyor.
 - Ban sırasında kullanıcı oda üyeliğinden ve koltuktan çıkarılıyor.
 - Ban sırasında aynı odadaki moderatör rolü de kaldırılıyor; unban moderatörlüğü otomatik geri vermiyor.
-- Banlı kullanıcı yeniden aynı odaya girmeye çalıştığında backend engellemeye devam ediyor.
-- Aktif moderatör kontrolü artık moderatör kaydının yanında o odada aktif üyelik de gerektiriyor.
+- Banlı kullanıcı yeniden aynı odaya girmeye çalıştığında backend engelleniyor.
+- Aktif moderatör kontrolü moderatör kaydının yanında o odada aktif üyelik gerektiriyor.
 - Banlı kullanıcı aynı odada yeniden moderatör olarak atanamıyor.
 - Room security regression checker eklendi: scripts/check_room_security.py.
 - Quality workflow'a room security regression adımı eklendi.
-- backend/app/main.py startup migration bölümündeki tekrarlanan gender/avatar_asset/frame_asset ALTER ifadeleri kaldırıldı; her kolon için tek migration ifadesi kaldı.
-- Yeni frontend/room-gift-ui-live.js eklendi: canlı oda WebSocket açıldığında hediye düğmesi/paneli görünür hale geliyor.
-- Hediye paneli gerçek /me, oda detayları, gift catalog ve sendGift API akışlarını kullanıyor.
-- Aktif oda sahibi/koltuktaki kullanıcılar alıcı seçimine dahil ediliyor; mevcut kullanıcı alıcı listesinden çıkarılıyor.
-- Hediye gönderiminden sonra bakiye yeniden /v1/me üzerinden okunuyor.
-- Pages workflow'a room-gift-ui-live.js asset doğrulaması ve script enjeksiyonu eklendi.
+- backend/app/main.py startup migration bölümündeki tekrarlanan gender/avatar_asset/frame_asset ALTER ifadeleri kaldırıldı.
+- Canlı oda hediye UI katmanı ve Pages entegrasyonu tamamlandı; gerçek API/catalog/bakiye akışlarını kullanıyor.
+- İki kullanıcı + oda chat + gift + bakiye/%70 + WebSocket akışlarını kontrollü hedefte test etmek için scripts/room_live_smoke.py eklendi.
+- Smoke scripti production'a kendiliğinden bağlanmıyor; varsayılan hedef localhost ve uzak hedef ancak ERISCHAT_SMOKE_BASE_URL açıkça verilirse kullanılıyor.
+- Smoke scripti gift sonrası gönderen bakiyesi, alıcı %70 payı ve RoomGiftEvent kaydını kontrol ediyor; websocket-client mevcutsa iki istemcili room_chat broadcast kontrolünü de çalıştırıyor.
 
 SON COMMITLER
-- Live room gift UI: 1184b65a26c59c2b6a8bb48c7dd89e20dd8976b3
+- Room live smoke harness: 78de1295688a1caff34b66281f05394e4f0c6e7c
 - Pages gift UI integration: fb5a73be062495f73c2da597ed2a360ba2984bc3
+- Live room gift UI: 1184b65a26c59c2b6a8bb48c7dd89e20dd8976b3
 - Startup migration duplicate cleanup: 21a5ffaf3682764e16fc16ed66745900d1a08f5b
 - Room ban/member/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
 - Room actions helper + Pages integration: 22c5e9e235d316422bff4bfff03feb5e63d0e654
@@ -48,7 +48,7 @@ BACKEND DURUMU
 - Gift room_gift event altyapısı mevcut.
 - Gift gönderiminde gönderen bakiyesi düşürülüyor, alıcıya %70 aktarılıyor ve RoomGiftEvent kaydı oluşturuluyor.
 - Cosmetic catalog/purchase/apply API mevcut ve repository asset klasörleriyle hizalı.
-- Startup user migration ifadeleri artık tekilleştirilmiş durumda.
+- Startup user migration ifadeleri tekilleştirilmiş durumda.
 
 FRONTEND DURUMU
 - Oda listesi gerçek /v1/rooms API'sine bağlı.
@@ -85,7 +85,7 @@ NOT
 - Yapılan her önemli değişiklik commitlenip bu dosyadaki yapılanlar/yapılacaklar listesi güncellenecek.
 
 SONRAKİ AKTİF ADIM
-- Gerçek gift/room_gift + bakiye/%70 smoke ve iki istemcili room WebSocket E2E hazırlığını tamamla ve mümkün olan yerel/statik doğrulamaları çalıştır.
+- Kontrollü/local backend üzerinde scripts/room_live_smoke.py çalıştırılabilirliğini doğrula; gerekirse test bağımlılıklarını ekle.
 - Ardından Pages failure'ını yapılandırma/job ayrımıyla incele.
 - Sonrasında gerçek avatar/frame/VIP asset sayımını ve görsel katalog ↔ backend eşleşmesini tamamla.
 - Ardından purchase/apply ve anonymous/session/profile/logout canlı E2E akışlarına geç.
