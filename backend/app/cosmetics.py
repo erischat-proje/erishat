@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 PRICE = 1000
+VIP_PRICE = 5000
 COSMETIC_TYPES = {"avatar", "frame"}
 
 
@@ -18,26 +19,43 @@ def _safe_key(value: str) -> str:
     return value
 
 
+def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, gender: str | None, vip: bool) -> None:
+    directory = root / folder
+    if not directory.exists():
+        return
+    for path in sorted(directory.rglob("*")):
+        if not path.is_file():
+            continue
+        key = path.relative_to(root).as_posix()
+        result.append({
+            "type": kind,
+            "gender": gender,
+            "asset_key": key,
+            "price": VIP_PRICE if vip else PRICE,
+            "vip": vip,
+            "tier": "vip" if vip else "standard",
+        })
+
+
 def catalog() -> list[dict[str, Any]]:
     root = _asset_root()
-    groups = {
-        "female": ("kadınavatar", "avatar"),
-        "male": ("erkekavatar", "avatar"),
-        "frame": ("standart çerçeve", "frame"),
-    }
     result: list[dict[str, Any]] = []
-    for group, (folder, kind) in groups.items():
-        directory = root / folder
-        if not directory.exists():
-            continue
-        for path in sorted(directory.rglob("*")):
-            if not path.is_file() or path.name.startswith("VIP") or "vip" in path.name.lower():
-                continue
-            key = path.relative_to(root).as_posix()
-            result.append({"type": kind, "gender": None if kind == "frame" else group, "asset_key": key, "price": PRICE, "vip": False})
+
+    # Standard catalog: the repository uses these exact folder names.
+    _collect(result, root, "kadınavatar", "avatar", "female", False)
+    _collect(result, root, "erkekavatar", "avatar", "male", False)
+    _collect(result, root, "standartcerceve", "frame", None, False)
+
+    # VIP catalog: keep VIP assets explicitly separated from standard assets.
+    _collect(result, root, "vipkadınavatar", "avatar", "female", True)
+    _collect(result, root, "viperkekavatar", "avatar", "male", True)
+    _collect(result, root, "vipcerceve", "frame", None, True)
+
     return result
 
 
 def find_asset(asset_key: str, cosmetic_type: str) -> dict[str, Any] | None:
     key = _safe_key(asset_key)
+    if cosmetic_type not in COSMETIC_TYPES:
+        return None
     return next((item for item in catalog() if item["asset_key"] == key and item["type"] == cosmetic_type), None)
