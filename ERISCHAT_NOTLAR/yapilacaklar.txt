@@ -29,7 +29,7 @@ Tarih: 2026-09-18
 GERÇEK RUNNER
 - [x] Önceki doğrulanmış Quality v4: run 35266995579 / job 105356518821 SUCCESS.
 - [x] Önceki doğrulanmış Quality: run 35268797342 / job 105362578713 SUCCESS.
-- [x] Yeni Quality: run 35274783487 / job 105382617021 SUCCESS.
+- [x] Quality: run 35274783487 / job 105382617021 SUCCESS.
 - [x] 139 cosmetic asset integrity.
 - [x] Cosmetic asset URL smoke.
 - [x] Anonymous session smoke.
@@ -42,6 +42,8 @@ GERÇEK RUNNER
 - [x] Customer demo surface integrity scripti eklendi ve Quality jobına bağlandı.
 - [x] Product shell HEAD için Quality runner SUCCESS sonucu doğrulandı.
 - [x] demo-extras-live.js için Quality static/required-file SUCCESS sonucu doğrulandı.
+- [x] Family runtime smoke: run 35277688638 / quality job 105392132238 SUCCESS.
+- [x] Family create/detail/donation/chat canlı smoke zinciri gerçek runner'da PASS verdi.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
@@ -63,6 +65,15 @@ FRONTEND
 - [ ] Gerçek tarayıcıda profile/cosmetic render.
 - [ ] Customer shell içindeki tüm backend akışlarının gerçek browser doğrulaması.
 
+AİLE BACKEND
+- [x] Family create production route gerçek runner'da doğrulandı.
+- [x] Family detail production route gerçek runner'da doğrulandı.
+- [x] Family donation + level/capacity yükseltmesi gerçek runner'da doğrulandı.
+- [x] Family chat GET gerçek runner'da doğrulandı.
+- [ ] Family member list/invite/role/remove endpointlerinin canlı smoke doğrulaması.
+- [ ] Family chat message POST endpointinin canlı smoke doğrulaması.
+- [ ] Duplicate family router kayıtlarının sadeleştirilmesi; mevcut çalışan route zinciri bozulmadan yapılacak.
+
 PAGES / CANLI ZİNCİR
 - [x] Pages workflow ve environment admission kök nedeni tespit edildi.
 - [ ] github-pages environment custom deployment branch policy içinde main'e izin verilmesi.
@@ -77,17 +88,20 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Remaining customer demo surfaces checkpoint'i işlendi.
 - [x] Quality workflow demo katmanı static kontrol checkpoint'i işlendi.
 - [x] Demo surface integrity quality gate checkpoint'i işlendi.
-- [x] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
-- [x] Son durum dosyası yeni HEAD'e göre senkronize edilecek aşamaya getirildi.
+- [x] Family runtime smoke checkpoint'i işlendi.
+- [ ] Bu docs push'unun tetiklediği Quality run SUCCESS doğrulaması.
 
 SONRAKİ GELİŞTİRME SIRASI
-1. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
-2. 139 kozmetiğin gerçek browser renderını doğrula.
-3. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
-4. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
-5. Aile backend entegrasyonunu güvenli şekilde doğrula ve gerekiyorsa main.py router kaydını tamamla.
-6. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
+1. Family member list/invite/role/remove + family chat message canlı smoke zincirini tamamla.
+2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
+3. 139 kozmetiğin gerçek browser renderını doğrula.
+4. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
+5. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
+6. Gerçek WebRTC/mikrofon transportu ve gerçek müzik playback/queue backendine geç.
+7. VIP harcama → seviye → kilit açma yaşam döngüsünü tamamla.
+8. Fan/follow, bildirim, engelleme ve admin/moderasyon backendlerini tamamla.
+9. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
 
 KURAL
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
-- Railway deploy yalnızca kullanıcı açıkça deploy dediğinde yapılacak.
+- Railway deploy yalnızca kullanıcı açıkça "deploy" dediğinde YAPILMAYACAK.
