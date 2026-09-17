@@ -50,7 +50,7 @@ def main() -> int:
     print(f"ErisChat cosmetic smoke target: {API}")
     token = register()
 
-    status, catalog = request("GET", "/cosmetics", token)
+    status, catalog = request("GET", "/cosmetics")
     if status >= 300:
         raise RuntimeError(f"catalog failed: HTTP {status} {catalog}")
     items = catalog.get("items") if isinstance(catalog, dict) else catalog
