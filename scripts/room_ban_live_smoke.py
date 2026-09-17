@@ -63,9 +63,42 @@ def main() -> int:
     if status >= 300:
         raise RuntimeError(f"target join failed: HTTP {status}")
 
+    ws_target = None
+    try:
+        import websocket  # type: ignore
+        ws_base = BASE.replace("https://", "wss://").replace("http://", "ws://")
+        ws_target = websocket.create_connection(
+            f"{ws_base}/ws/rooms/{room_id}?token={target_token}",
+            timeout=TIMEOUT,
+            http_proxy_host=None,
+            http_proxy_port=None,
+            http_no_proxy=["127.0.0.1", "localhost"],
+        )
+        history = json.loads(ws_target.recv())
+        if history.get("type") != "room_history":
+            raise AssertionError(f"unexpected room websocket history: {history}")
+        print("target room WebSocket connected before ban")
+    except ImportError:
+        print("WebSocket ban regression not run: websocket-client unavailable.")
+
     status, _ = request("POST", f"/rooms/{room_id}/bans", owner_token, {"user_id": target_id})
     if status >= 300:
         raise RuntimeError(f"ban failed: HTTP {status}")
+
+    if ws_target is not None:
+        try:
+            ws_target.send(json.dumps({"type": "ping"}))
+            ws_target.recv()
+            raise AssertionError("banned room WebSocket remained usable after membership revoke")
+        except AssertionError:
+            raise
+        except Exception as exc:
+            print(f"room WebSocket ban revalidation OK: {exc}")
+        finally:
+            try:
+                ws_target.close()
+            except Exception:
+                pass
 
     status, bans = request("GET", f"/rooms/{room_id}/bans", owner_token)
     if status >= 300:
