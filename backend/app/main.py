@@ -42,9 +42,6 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
 
 
 @app.on_event("startup")
@@ -366,11 +363,11 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
                 if not room or not member or not room.chat_enabled:
                     continue
-                message = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
-                db.add(message)
+                msg = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
+                db.add(msg)
                 db.commit()
-                db.refresh(message)
-                payload = {"type": "room_chat", "id": message.id, "room_id": room_id, "user_id": user.id, "text": message.text, "created_at": message.created_at.isoformat() if message.created_at else None}
+                db.refresh(msg)
+                payload = {"type": "room_chat", "id": msg.id, "room_id": room_id, "user_id": user.id, "text": msg.text, "created_at": msg.created_at.isoformat() if msg.created_at else None}
             await _broadcast_room_chat(room_id, payload)
     except WebSocketDisconnect:
         room_chat_connections.get(room_id, set()).discard(websocket)
