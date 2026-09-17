@@ -13,6 +13,7 @@ BACKEND
 - [x] FastAPI ana uygulaması mevcut.
 - [x] /health ve /ready endpointleri mevcut.
 - [x] Anonymous user + session/token altyapısı mevcut.
+- [x] Anonymous registration gender alanı frontend'de nötr unspecified olarak düzeltildi.
 - [x] /v1/me ve temel profil endpointleri mevcut.
 - [x] DM conversation/message endpointleri mevcut.
 - [x] Genel /ws mevcut.
@@ -29,8 +30,9 @@ BACKEND
 - [x] VIP kozmetik fiyatı katalog metadata'sından satın alma sırasında uygulanıyor.
 - [x] Purchase response VIP bilgisini döndürüyor.
 - [x] Apply response VIP bilgisini döndürüyor.
-- [x] Duplicate startup ALTER ifadeleri temizlendi.
+- [x] Startup user settings ALTER ifadelerindeki duplicate gender/avatar/frame satırları temizlendi.
 - [x] Mevcut backend/app/__pycache__ .pyc artefaktları silindi.
+- [x] Backend main.py'deki genel WS ve room WS route'ları korunarak migration cleanup checkpoint'i yeniden doğrulandı.
 
 FRONTEND
 - [x] Ana tek sayfa frontend mevcut.
@@ -58,11 +60,12 @@ FRONTEND
 - [x] Live profile controls eklendi: gerçek /v1/me verisiyle nickname, Lidya ve bildirim durumu senkronizasyonu.
 - [x] Profil nickname güncelleme UI'sı /v1/me PATCH'e bağlandı.
 - [x] Profil bildirim aç/kapat UI'sı /v1/me PATCH'e bağlandı.
+- [x] Profil oturum kapatma kontrolü eklendi; revoke sonrası yeni anonim session oluşturuluyor.
 - [x] Pages workflow cosmetics.js asset kontrolü ve script enjeksiyonuna dahil edildi.
 - [x] Pages workflow profile-ui-live.js script/asset kontrolüne dahil edildi.
 
 TESPİT EDİLEN EKSİKLER
-- [ ] Anonymous/session/profile UI akışları tam bağlanmış sayılmıyor; session/anonymous durum göstergesi ve logout UI'sı eksik.
+- [ ] Session/anonymous durum göstergesi görsel olarak ayrı bir UI bileşeni olarak tamamlanmadı.
 - [ ] WS reconnect/presence/genel event UI eksik.
 - [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
 - [ ] DM tarafında yeni conversation oluşturma UI'sı henüz tamamlanmadı.
@@ -98,6 +101,9 @@ SON GELİŞTİRMELER
 - [x] Cosmetics backend katalogu gerçek asset klasörleri + VIP metadata ile düzeltildi.
 - [x] Cosmetics frontend repository-relative asset URL çözümleme ve katalog helper'ları eklendi.
 - [x] Live profile controls ayrı JS katmanı olarak eklendi; ana erischat-main.html toplu şekilde overwrite edilmedi.
+- [x] Anonymous session gender payload nötrleştirildi.
+- [x] Logout sonrası yeni anonim session oluşturma UI akışı eklendi.
+- [x] main.py startup migration duplicate satırları temizlendi ve WS route'ları korunarak dosya geri doğrulandı.
 
 GÜVENLİK / DEPLOY
 - Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
@@ -106,7 +112,7 @@ GÜVENLİK / DEPLOY
 
 SONRAKİ AKTİF İŞ
 1. Oda WebSocket canlı E2E testini doğrula.
-2. Anonymous/session/profile session göstergesi + logout UI'sını tamamla.
+2. Session/anonymous durum göstergesini tamamla ve DM conversation oluşturma UI'sına geç.
 3. Pages failure kök nedenini izole et ve workflow'u doğrula.
 4. Pages/Railway canlı doğrulamalarına geç.
 5. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
