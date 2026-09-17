@@ -28,7 +28,7 @@ try {
     await page.locator('.nav button', { hasText: label }).click();
   }
   await page.waitForSelector('#explore.view.show');
-  await page.locator('#realRooms .room').first().click();
+
   await page.locator('.nav button', { hasText: 'Mesaj' }).click();
   await page.locator('button', { hasText: 'Rana’nın Odası' }).click();
   await page.waitForSelector('#chat.show');
