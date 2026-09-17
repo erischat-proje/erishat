@@ -62,6 +62,32 @@ def main() -> int:
         raise RuntimeError(f"room create response has no id: {room}")
     print(f"room created: {room_id}")
 
+    # Regression coverage for room discovery pagination: offset must be applied
+    # after the server ranks/filter rooms, not twice at the database query level.
+    discovery_ids = [room_id]
+    for index in (2, 3):
+        status, extra_room = request("POST", "/rooms", token_a, {"name": f"Smoke Discovery {index}"})
+        if status >= 300:
+            raise RuntimeError(f"discovery room create failed: HTTP {status} {extra_room}")
+        extra_id = extra_room.get("id") or extra_room.get("room_id")
+        if not extra_id:
+            raise RuntimeError(f"discovery room response has no id: {extra_room}")
+        discovery_ids.append(extra_id)
+
+    status, first_page = request("GET", "/discover/rooms?limit=1&offset=0", token_a)
+    status_offset, second_page = request("GET", "/discover/rooms?limit=1&offset=1", token_a)
+    if status >= 300 or status_offset >= 300:
+        raise RuntimeError(f"room discovery pagination failed: HTTP {status}/{status_offset} {first_page}/{second_page}")
+    if not isinstance(first_page, list) or not isinstance(second_page, list):
+        raise AssertionError(f"room discovery response is not a list: {first_page} / {second_page}")
+    if not first_page or not second_page:
+        raise AssertionError(f"room discovery pagination returned an empty page: {first_page} / {second_page}")
+    first_id = first_page[0].get("room_id")
+    second_id = second_page[0].get("room_id")
+    if first_id == second_id:
+        raise AssertionError(f"room discovery offset regression: offset=0 and offset=1 returned {first_id}")
+    print(f"room discovery pagination OK: offset 0={first_id}, offset 1={second_id}")
+
     for token in (token_a, token_b):
         status, data = request("POST", f"/rooms/{room_id}/join", token, {})
         if status >= 300:
