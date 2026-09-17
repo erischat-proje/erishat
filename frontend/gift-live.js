@@ -8,6 +8,8 @@
   };
   let socket = null;
   let currentRoomId = null;
+  let reconnectTimer = null;
+  let reconnectAttempt = 0;
 
   function roomBox(){ return document.getElementById('realRoomChat'); }
   function appendRow(text, kind){
@@ -39,15 +41,30 @@
     }
   }
 
+  function scheduleReconnect(roomId){
+    if(!roomId || reconnectTimer) return;
+    const delay=Math.min(15000,1000*Math.pow(2,reconnectAttempt++));
+    reconnectTimer=setTimeout(()=>{
+      reconnectTimer=null;
+      if(currentRoomId===String(roomId) && token()) connectRoomGiftSocket(roomId);
+    },delay);
+  }
+
   function connectRoomGiftSocket(roomId){
     if(!roomId) return null;
+    if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
     if(socket){try{socket.close();}catch(_){} socket=null;}
     currentRoomId=String(roomId);
     const t=token();
     if(!t) return null;
     const url=wsBase()+'/ws/rooms/'+encodeURIComponent(currentRoomId)+'?token='+encodeURIComponent(t);
+    const activeRoom=currentRoomId;
     socket=new WebSocket(url);
-    socket.onopen=()=>{try{socket.send(JSON.stringify({type:'ping'}));}catch(_){} };
+    socket.onopen=()=>{
+      reconnectAttempt=0;
+      try{socket.send(JSON.stringify({type:'ping'}));}catch(_){}
+      window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'open'}}));
+    };
     socket.onmessage=ev=>{
       try{
         const data=JSON.parse(ev.data);
@@ -56,11 +73,23 @@
         else if(data && data.type==='room_gift') renderGiftEvent(data);
       }catch(_){}
     };
-    socket.onclose=()=>{if(currentRoomId===String(roomId)) socket=null;};
+    socket.onerror=()=>window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'error'}}));
+    socket.onclose=()=>{
+      if(currentRoomId!==activeRoom) return;
+      socket=null;
+      window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'closed'}}));
+      if(token()) scheduleReconnect(activeRoom);
+    };
     return socket;
   }
 
   window.connectRoomGiftSocket=connectRoomGiftSocket;
+  window.disconnectRoomGiftSocket=function(){
+    currentRoomId=null;
+    reconnectAttempt=0;
+    if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
+    if(socket){try{socket.close();}catch(_){} socket=null;}
+  };
   window.sendRoomChatMessage=function(text){
     const value=String(text||'').trim();
     if(!value) return false;
@@ -71,7 +100,6 @@
   };
   window.addEventListener('erischat:room-gift',()=>{});
 
-  // Route relative ErisChat API calls to Railway even when served from GitHub Pages.
   const originalFetch=window.fetch;
   window.fetch=async function(input,init){
     const target=typeof input==='string'&&input.startsWith('/v1/')?API+input:input;
@@ -85,8 +113,6 @@
     return response;
   };
 
-  // The canonical page currently defines a placeholder sendRealRoomMessage before
-  // this script loads. Replace only that handler; keep the existing DOM intact.
   window.sendRealRoomMessage=function(){
     const input=document.getElementById('realRoomMsg');
     const value=input&&input.value||'';
