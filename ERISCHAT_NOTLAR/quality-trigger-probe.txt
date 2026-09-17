@@ -1,1 +1,1 @@
-CI trigger checkpoint: minimal registered quality probe is being used to isolate GitHub Actions workflow registration before restoring live E2E.
+CI trigger checkpoint: registered Apply Gift UI workflow now carries a quality runner probe.
