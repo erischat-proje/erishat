@@ -54,7 +54,7 @@ def main() -> None:
     if me.get("id") != user_id:
         raise AssertionError(f"profile id mismatch: {me}")
 
-    status, public = request("GET", f"/users/{user_id}")
+    status, public = request("GET", f"/users/{user_id}", token=token)
     expect(status, 200, "public profile read", public)
     if public.get("id") != user_id:
         raise AssertionError(f"public profile mismatch: {public}")
