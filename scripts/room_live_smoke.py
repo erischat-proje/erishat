@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Live smoke harness for ErisChat room chat/gift flows.
-
-This script is intentionally opt-in: it never runs against production unless
-ERISCHAT_SMOKE_BASE_URL is explicitly supplied. It creates two anonymous
-sessions, creates/joins a room, enables chat, exercises the REST gift path,
-and reports the expected invariants. WebSocket assertions use the optional
-websocket-client package when available.
-"""
+"""Live smoke harness for ErisChat room chat/gift flows."""
 from __future__ import annotations
 
 import json
@@ -55,11 +48,6 @@ def register(label: str):
 
 def main() -> int:
     print(f"ErisChat room smoke target: {API}")
-    if BASE.startswith("http://127.0.0.1") or BASE.startswith("http://localhost"):
-        print("Target is local; production is not touched.")
-    else:
-        print("WARNING: non-local target supplied; this is an explicit live smoke run.")
-
     token_a, user_a = register("A")
     token_b, user_b = register("B")
     uid_a = user_a.get("user_id") or user_a.get("id")
@@ -135,8 +123,10 @@ def main() -> int:
     ws_base = BASE.replace("https://", "wss://").replace("http://", "ws://")
     url_a = f"{ws_base}/ws/rooms/{room_id}?token={token_a}"
     url_b = f"{ws_base}/ws/rooms/{room_id}?token={token_b}"
-    ws_a = websocket.create_connection(url_a, timeout=TIMEOUT)
-    ws_b = websocket.create_connection(url_b, timeout=TIMEOUT)
+    # Explicitly disable websocket-client's environment proxy for local E2E.
+    ws_options = {"http_proxy_host": None, "http_proxy_port": None, "http_no_proxy": ["127.0.0.1", "localhost"]}
+    ws_a = websocket.create_connection(url_a, timeout=TIMEOUT, **ws_options)
+    ws_b = websocket.create_connection(url_b, timeout=TIMEOUT, **ws_options)
     try:
         history_a = json.loads(ws_a.recv())
         history_b = json.loads(ws_b.recv())
