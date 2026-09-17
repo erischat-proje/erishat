@@ -19,8 +19,12 @@
 - Hedeflerin cinsiyet dağılımı repo tasarımından kesinleşmeden checker semantiği değiştirilmeyecek.
 
 ## GitHub Pages
-- Pages workflow hazırlama adımlarının çalıştığı, failure'ın deploy aşamasında görüldüğü önceki incelemede kaydedildi.
-- Ayrıntılı GitHub job logu yeterli olmadığı için Pages kök nedeni tahmin edilmeyecek.
+- Pages workflow hazırlama zinciri incelendi: checkout → configure-pages → frontend hazırlama → JS enjeksiyonu → asset kontrolleri → artifact upload → deploy-pages.
+- Run #258 (`35208712803`) iki ayrı attempt'te de yaklaşık 1 saniyede failure oldu ve her iki job kaydında `steps: []` görüldü. Bu, workflow adımlarına girmeden job seviyesinde sonlandığını gösteriyor; kök neden hâlâ kesinleştirilmedi.
+- Pages job log/step API'si boş döndüğü için kök neden tahmin edilmeyecek.
+- Tanı koymak için non-deploy `pages-diagnostics.yml` workflow'u eklendi. Bu workflow Pages API durumu, `github-pages` environment durumu ve mevcut Pages workflow şekli hakkında veri topluyor; Railway/Pages production deploy yapmıyor.
+- Diagnostics workflow dosyası GitHub'a commitlendi: `7b8a53c4819cd4ce21d7068f8fad3a6d58639bed`.
+- Diagnostics run sonucu henüz API'de görünmedi; bu nedenle henüz PASS/FAIL sonucu yazılmadı.
 - Pages canlı doğrulaması henüz yapılmadı.
 
 ## Test / E2E sırası
@@ -53,4 +57,4 @@
 
 ## Kural
 - Canlı E2E yapılmadan özellik tamamlandı sayılmayacak.
-- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
+- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılmayacak.
