@@ -2,43 +2,54 @@
 
 ## Son checkpoint
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Kozmetik API route ile canlı smoke harness payloadları karşılaştırıldı; `cosmetic_type` + `asset_key` sözleşmesi uyumlu.
-- `scripts/cosmetic_live_smoke.py` katalog GET çağrısı gereksiz token bağımlılığından ayrıştırılmış durumda.
-- `scripts/dm_live_smoke.py` ve `scripts/room_ban_live_smoke.py` opt-in local smoke harness olarak mevcut; gerçek E2E çalıştırmaları henüz yapılmadı.
-- `backend/app/main.py` startup user-settings migration duplicate satırları temizlendi ve `register_platform_auth` duplicate importu temiz durumda.
-- Kök neden bulundu: `.github/workflows/integrate-erischat-features.yml` migration satırlarını her çalışmada tekrar ekleyerek `main.py`yi geri bozuyordu. Workflow idempotent olacak şekilde düzeltildi; run `35218672931` başarıyla tamamlandı.
-- Güncel bot commitinden sonra `main.py` tekrar kontrol edildi; migration alanları tekil durumda.
-- Bu değişiklikler production deploy etmez ve Railway'e dokunmaz.
-- Önceki Pages run `35208712803` failure durumunda; GitHub job API ayrıntılı step/log vermediği için kök neden tahmin edilmeyecek.
+- Bu checkpoint yeni sohbete doğrudan devam edebilmek için güncellendi.
+- Railway `erischat-web-fixed` tarafında repo + servis config hizalaması yapıldı: Dockerfile path=`Dockerfile`, healthcheck=`/`, `PORT=80`; deploy yapılmadı.
+- Caddyfile repo tarafında `:80` portuna sabit; Dockerfile `EXPOSE 80` kullanıyor. Canlı 502'nin bu yeni config ile düzelip düzelmediği deploy edilmeden doğrulanamaz.
+- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
+- `.github/workflows/integrate-erischat-features.yml` migration tekrar-ekleme problemi düzeltildi; `main.py` duplicate migration/import durumu tekrar kontrol edildi.
+- `scripts/cosmetic_live_smoke.py`, `scripts/dm_live_smoke.py`, `scripts/room_ban_live_smoke.py`, `scripts/room_live_smoke.py` mevcut; gerçek canlı/local E2E sonuçları henüz başarı olarak işaretlenmedi.
+- `scripts/room_live_smoke.py` gift sözleşmesinde `unit_price` kullanıyor ve gift event/recipient kontrollerini içeriyor.
 
 ## Kozmetik hedefleri ve gerçek envanter
 - Checker hedefleri: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
 - Gerçek klasör envanteri: kadınavatar 34, erkekavatar 36, standart avatar toplam 70; standartcerceve 30; vipkadınavatar 12, viperkekavatar 12, VIP avatar toplam 24; vipcerceve 12.
 - Sonuç: standart avatar 70/40, standart frame 30/40, VIP avatar 24/12, VIP frame 12/12.
-- Asset fazlalıkları/eksikleri için rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
+- `backend/app/cosmetics.py` gerçek `Gereken_icerikler` klasörlerinden katalog üretiyor; asset key'ler root-relative path olarak tutuluyor.
+- Eksik/fazla assetler için rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
 - Hedeflerin cinsiyet dağılımı repo tasarımından kesinleşmeden checker semantiği değiştirilmeyecek.
 
-## Test sırası
-1. Kontrollü/local room live smoke.
-2. Ban → liste → unban → yeniden katılım E2E.
-3. İki istemcili room chat WebSocket E2E.
-4. Gift gönderimi + bakiye + %70 alıcı payı + room_gift E2E.
-5. Cosmetic purchase → ownership → apply E2E.
-6. Anonymous/session/profile/logout E2E.
-7. Pages failure analizi ve canlı URL doğrulaması.
-8. Railway health/ready/API/DB/WS doğrulaması; deploy yok.
-9. V35/V53 tek sayfa cleanup.
+## GitHub Pages
+- Pages workflow hazırlama adımlarının çalıştığı, failure'ın deploy aşamasında görüldüğü önceki incelemede kaydedildi.
+- Ayrıntılı GitHub job logu yeterli olmadığı için Pages kök nedeni tahmin edilmeyecek.
+- Pages canlı doğrulaması henüz yapılmadı.
+
+## Test / E2E sırası
+1. Railway deploy sonrası 502 canlı doğrulaması.
+2. Kontrollü/local room live smoke.
+3. Ban → liste → unban → yeniden katılım E2E.
+4. İki istemcili room chat WebSocket E2E.
+5. Gift gönderimi + bakiye + %70 alıcı payı + room_gift E2E.
+6. Cosmetic purchase → ownership → apply E2E.
+7. DM conversation create/list/send/history E2E.
+8. Anonymous/session/profile/logout E2E.
+9. Pages canlı HTTP + Pages→Railway API doğrulaması.
+10. Backend security + quality hardening.
+11. V35/V53 legacy cleanup.
 
 ## Harness checkpoint
-- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat akışını kapsıyor.
-- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin akışını kapsıyor.
-- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history akışını kapsıyor.
-- Hiçbiri çalıştırılmış ve başarılı olarak işaretlenmedi.
+- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat.
+- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin.
+- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history.
+- `scripts/cosmetic_live_smoke.py`: catalog → balance → purchase → ownership → apply.
+- Harnessların varlığı doğrulandı; çalıştırılmadan PASS yazılmayacak.
 
 ## CI checkpoint
-- `Integrate ErisChat features` run `35218672931`: success.
-- Yeni main commitinden sonra `ErisChat quality checks` tetiklenmesi bekleniyor; sonuç alınmadan PASS işaretlenmeyecek.
-- `cosmetic-inventory` gerçek envanter hedefleriyle ayrıca takip edilecek.
+- `Integrate ErisChat features` run `35218672931`: success olarak önceki checkpointte doğrulandı.
+- `ErisChat quality checks` içinde backend-quality daha önce başarılı; cosmetic-inventory gerçek asset hedef uyuşmazlığı nedeniyle takipte.
+- CI sonucu alınmadan tüm quality pipeline PASS kabul edilmeyecek.
+
+## Yeni sohbet için devam mesajı
+`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Son checkpointten itibaren aktif sırayı takip et, her adımda gerçekten değişiklik yapıp doğrula, notları güncelle.`
 
 ## Kural
 - Canlı E2E yapılmadan özellik tamamlandı sayılmayacak.
