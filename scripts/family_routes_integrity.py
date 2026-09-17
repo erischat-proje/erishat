@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI
 
-from backend.app.family_routes import register_family_auth, router as family_router
-from backend.app.platform_models import FamilyMember
+BACKEND_ROOT = Path(__file__).resolve().parents[1] / "backend"
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+from app.family_routes import register_family_auth, router as family_router
+from app.platform_models import FamilyMember
 
 
 EXPECTED = {
