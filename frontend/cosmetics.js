@@ -45,22 +45,35 @@
     return result;
   }
 
+  const assetValue = (value, fallback = '') => {
+    if (!value) return fallback;
+    if (typeof value === 'string') return value;
+    return value.url || value.src || value.asset_url || value.path || value.asset_key || fallback;
+  };
+
   function applyAppearance(root = document) {
     const user = state.user;
     if (!user) return;
+    const avatar = assetValue(user.avatar_asset, '');
+    const frame = assetValue(user.frame_asset, '');
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {
-      if (user.avatar_asset) {
-        el.style.backgroundImage = `url(${user.avatar_asset})`;
+      if (!avatar) return;
+      if (/^(https?:|data:|\/|\.\.?\/)/.test(avatar)) {
+        el.style.backgroundImage = `url(${avatar})`;
         el.style.backgroundSize = 'cover';
         el.style.backgroundPosition = 'center';
         el.textContent = '';
       }
     });
     root.querySelectorAll('[data-user-frame], .profile .frameImg, .user-frame').forEach(el => {
-      if (user.frame_asset) {
-        el.src = user.frame_asset;
-        el.style.display = '';
+      if (!frame || !/^(https?:|data:|\/|\.\.?\/)/.test(frame)) return;
+      if (el.tagName === 'IMG') el.src = frame;
+      else {
+        el.style.backgroundImage = `url(${frame})`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'center';
       }
+      el.style.display = '';
     });
   }
 
@@ -68,6 +81,7 @@
   window.addEventListener('erischat:auth', event => {
     if (event.detail?.state === 'ready') load();
   });
+  window.addEventListener('erischat:profile', () => load());
   window.addEventListener('erischat:cosmetics-updated', () => applyAppearance());
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load, {once:true});
   else load();
