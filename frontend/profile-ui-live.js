@@ -1,10 +1,8 @@
 (() => {
   'use strict';
-
   const boot = () => {
     const profile = document.querySelector('.profile');
     if (!profile || profile.querySelector('[data-erischat-profile-controls]')) return;
-
     const name = profile.querySelector('.name h2');
     const balance = profile.querySelector('.balance, .profile .balance');
     const controls = document.createElement('div');
@@ -20,90 +18,76 @@
         <span><b style="display:block;font-size:10px">Bildirimler</b><small data-profile-notification-label style="color:#938a9f;font-size:8px">Yükleniyor…</small></span>
         <span data-profile-switch class="switch"></span>
       </button>
+      <button data-profile-logout type="button" style="border:1px solid #ff4f6d44;background:#ff4f6d0d;color:#ff9aaa;border-radius:12px;padding:10px;font-size:10px;font-weight:800">Oturumu kapat</button>
       <div data-profile-status style="font-size:8px;color:#938a9f;min-height:11px"></div>
     `;
     profile.appendChild(controls);
-
     const nicknameInput = controls.querySelector('[data-profile-nickname]');
     const saveButton = controls.querySelector('[data-profile-save]');
     const notificationButton = controls.querySelector('[data-profile-notifications]');
+    const logoutButton = controls.querySelector('[data-profile-logout]');
     const switchEl = controls.querySelector('[data-profile-switch]');
     const label = controls.querySelector('[data-profile-notification-label]');
     const status = controls.querySelector('[data-profile-status]');
-
-    const toastSafe = (message) => {
-      if (typeof window.toast === 'function') window.toast(message);
-      else status.textContent = message;
-    };
-
-    const setNotificationState = (enabled) => {
-      switchEl.classList.toggle('on', !!enabled);
-      label.textContent = enabled ? 'Açık' : 'Kapalı';
-    };
-
-    const render = (user) => {
+    const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : (status.textContent = message);
+    const setNotificationState = enabled => { switchEl.classList.toggle('on', !!enabled); label.textContent = enabled ? 'Açık' : 'Kapalı'; };
+    const render = user => {
       if (!user) return;
       if (nicknameInput && user.nickname) nicknameInput.value = user.nickname;
       setNotificationState(user.notifications_enabled !== false);
       if (balance && user.lidya != null) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
       if (name && user.nickname) name.textContent = user.nickname;
-      if (window.ErisChatCosmetics && typeof window.ErisChatCosmetics.applyAppearance === 'function') {
-        window.ErisChatCosmetics.applyAppearance(user.avatar_asset || user.avatar, user.frame_asset || '');
-      }
+      if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance(user.avatar_asset || user.avatar, user.frame_asset || '');
     };
-
     const refresh = async () => {
       try {
-        if (!window.ErisAuth || typeof window.ErisAuth.getMe !== 'function') return;
+        if (!window.ErisAuth?.getMe) return;
         const user = await window.ErisAuth.getMe();
         render(user);
         status.textContent = 'Profil gerçek hesap verisiyle senkronize.';
-      } catch (error) {
-        status.textContent = 'Profil verisi alınamadı.';
-      }
+      } catch (_) { status.textContent = 'Profil verisi alınamadı.'; }
     };
-
     saveButton.addEventListener('click', async () => {
       const nickname = (nicknameInput.value || '').trim();
       if (!nickname) return toastSafe('Takma ad boş olamaz.');
       saveButton.disabled = true;
       try {
-        if (!window.ErisAuth || typeof window.ErisAuth.updateMe !== 'function') throw new Error('auth hazır değil');
         const user = await window.ErisAuth.updateMe({ nickname });
         render(user);
         window.dispatchEvent(new CustomEvent('erischat:profile', { detail: user }));
         toastSafe('Profil güncellendi ✓');
-      } catch (error) {
-        toastSafe(error.message || 'Profil güncellenemedi.');
-      } finally {
-        saveButton.disabled = false;
-      }
+      } catch (error) { toastSafe(error.message || 'Profil güncellenemedi.'); }
+      finally { saveButton.disabled = false; }
     });
-
     notificationButton.addEventListener('click', async () => {
       const enabled = !switchEl.classList.contains('on');
       notificationButton.disabled = true;
       try {
-        if (!window.ErisAuth || typeof window.ErisAuth.updateMe !== 'function') throw new Error('auth hazır değil');
         const user = await window.ErisAuth.updateMe({ notifications_enabled: enabled });
         render(user);
         toastSafe(enabled ? 'Bildirimler açıldı 🔔' : 'Bildirimler kapatıldı');
-      } catch (error) {
-        toastSafe(error.message || 'Bildirim ayarı güncellenemedi.');
-      } finally {
-        notificationButton.disabled = false;
-      }
+      } catch (error) { toastSafe(error.message || 'Bildirim ayarı güncellenemedi.'); }
+      finally { notificationButton.disabled = false; }
     });
-
-    window.addEventListener('erischat:auth', (event) => {
-      if (event.detail && event.detail.user) render(event.detail.user);
-      else refresh();
+    logoutButton.addEventListener('click', async () => {
+      logoutButton.disabled = true;
+      try {
+        await window.ErisAuth.logout();
+        nicknameInput.value = '';
+        status.textContent = 'Oturum kapatıldı. Yeni anonim oturum hazırlanıyor…';
+        const user = await window.ErisAuth.ensureSession();
+        window.ErisAuth.user = user;
+        render(user);
+        window.ErisAuth.connectGeneralWs();
+        window.dispatchEvent(new CustomEvent('erischat:auth', { detail: { state: 'ready', user } }));
+        toastSafe('Yeni anonim oturum açıldı ✓');
+      } catch (error) { toastSafe(error.message || 'Oturum kapatılamadı.'); }
+      finally { logoutButton.disabled = false; }
     });
-    window.addEventListener('erischat:profile', (event) => render(event.detail));
-    window.addEventListener('erischat:cosmetics', () => refresh());
+    window.addEventListener('erischat:auth', event => { if (event.detail?.user) render(event.detail.user); else if (event.detail?.state === 'logged_out') status.textContent = 'Oturum kapatıldı.'; else refresh(); });
+    window.addEventListener('erischat:profile', event => render(event.detail));
+    window.addEventListener('erischat:cosmetics', refresh);
     refresh();
   };
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
-  else boot();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 })();
