@@ -21,6 +21,31 @@ jobs:
       - name: Room security regression
         run: python scripts/check_room_security.py
 
+  smoke-harness-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Compile smoke harnesses
+        run: |
+          python -m py_compile \
+            scripts/room_live_smoke.py \
+            scripts/room_ban_live_smoke.py \
+            scripts/dm_live_smoke.py \
+            scripts/cosmetic_live_smoke.py
+      - name: Reject stale anonymous auth endpoint
+        run: |
+          if grep -R -n '"/auth/anonymous"' scripts/*_live_smoke.py; then
+            echo 'Smoke harnesses must use the current /v1/users registration contract.'
+            exit 1
+          fi
+      - name: Verify local smoke safety defaults
+        run: |
+          grep -F 'http://127.0.0.1:8000' scripts/room_live_smoke.py
+          grep -F 'http://127.0.0.1:8000' scripts/room_ban_live_smoke.py
+          grep -F 'http://127.0.0.1:8000' scripts/dm_live_smoke.py
+          grep -F 'http://127.0.0.1:8000' scripts/cosmetic_live_smoke.py
+
   cosmetic-inventory:
     runs-on: ubuntu-latest
     steps:
