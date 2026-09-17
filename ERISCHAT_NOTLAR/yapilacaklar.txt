@@ -2,7 +2,7 @@ ERISCHAT MASTER TODO
 
 AKTİF SIRA
 1) Railway web 502: repo + servis config hizalı; canlı doğrulama için kullanıcı açıkça deploy dediğinde deployment sonrası test yapılacak. Deploy yok.
-2) GitHub Pages deploy workflow failure kök nedenini kanıtla; tahmin etme.
+2) GitHub Pages deploy workflow failure kök nedenini kanıtla; tahmin etme. Yeni `pages-diagnostics.yml` eklendi; Pages API/environment verisi bekleniyor.
 3) Kontrollü/local room live smoke.
 4) Ban → liste → unban → yeniden katılım E2E.
 5) İki istemcili room WebSocket chat E2E.
@@ -21,7 +21,9 @@ MEVCUT DURUM
 - Repo Caddyfile `:80`, Dockerfile `EXPOSE 80` kullanıyor.
 - Railway mevcut deployment loglarında 502/connection refused görülmüştü; yeni config ile canlı doğrulama deploy gerektiriyor.
 - Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
-- Pages failure deploy aşamasında görülüyor; ayrıntılı job logu yeterli değil. Kök neden tahmin edilmeyecek.
+- Pages run #258 (`35208712803`) iki attempt'te de yaklaşık 1 saniyede job-level failure verdi; her iki job kaydında `steps: []`. Bu nedenle kök neden hâlâ kanıtlanmadı.
+- `.github/workflows/pages-diagnostics.yml` eklendi. Production/Pages deploy yapmıyor; repository Pages API, `github-pages` environment ve workflow shape bilgisini topluyor.
+- Diagnostics run sonucu henüz API'de görünmedi.
 - `main.py` duplicate migration/import problemi ve integration workflow tekrar-ekleme problemi düzeltildi.
 - `scripts/room_live_smoke.py`, `scripts/room_ban_live_smoke.py`, `scripts/dm_live_smoke.py`, `scripts/cosmetic_live_smoke.py` hazır; hiçbiri çalıştırılmadan başarılı kabul edilmeyecek.
 
@@ -51,11 +53,13 @@ TAMAMLANANLAR
 - Main.py duplicate migration/import cleanup.
 - Integration workflow idempotency fix.
 - Railway web port/config hazırlığı; deploy edilmedi.
+- Pages failure için non-deploy diagnostics workflow'u eklendi.
 
 DOĞRULAMA KURALI
 - Canlı/local E2E çalıştırılmadan özellik PASS/TAMAM kabul edilmeyecek.
 - CI'nin yalnızca başarılı görünen tek job'una bakıp tüm pipeline PASS denmeyecek.
 - Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
+- Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
 
 YENİ SOHBET BAŞLANGIÇ MESAJI
 Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Son checkpointten itibaren aktif sırayı takip et, gerçekten kod/config geliştir, doğrula ve notları güncelle.
