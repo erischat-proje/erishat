@@ -53,19 +53,26 @@
   function connectRoomGiftSocket(roomId){
     if(!roomId) return null;
     if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
-    if(socket){try{socket.close();}catch(_){} socket=null;}
+    if(socket){
+      const oldSocket=socket;
+      socket=null;
+      try{oldSocket.close();}catch(_){}
+    }
     currentRoomId=String(roomId);
     const t=token();
     if(!t) return null;
     const url=wsBase()+'/ws/rooms/'+encodeURIComponent(currentRoomId)+'?token='+encodeURIComponent(t);
     const activeRoom=currentRoomId;
-    socket=new WebSocket(url);
-    socket.onopen=()=>{
+    const ws=new WebSocket(url);
+    socket=ws;
+    ws.onopen=()=>{
+      if(socket!==ws || currentRoomId!==activeRoom) return;
       reconnectAttempt=0;
-      try{socket.send(JSON.stringify({type:'ping'}));}catch(_){}
+      try{ws.send(JSON.stringify({type:'ping'}));}catch(_){}
       window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'open'}}));
     };
-    socket.onmessage=ev=>{
+    ws.onmessage=ev=>{
+      if(socket!==ws || currentRoomId!==activeRoom) return;
       try{
         const data=JSON.parse(ev.data);
         if(data && data.type==='room_history') renderHistory(data);
@@ -73,14 +80,17 @@
         else if(data && data.type==='room_gift') renderGiftEvent(data);
       }catch(_){}
     };
-    socket.onerror=()=>window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'error'}}));
-    socket.onclose=()=>{
-      if(currentRoomId!==activeRoom) return;
+    ws.onerror=()=>{
+      if(socket!==ws || currentRoomId!==activeRoom) return;
+      window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'error'}}));
+    };
+    ws.onclose=()=>{
+      if(socket!==ws || currentRoomId!==activeRoom) return;
       socket=null;
       window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'closed'}}));
       if(token()) scheduleReconnect(activeRoom);
     };
-    return socket;
+    return ws;
   }
 
   window.connectRoomGiftSocket=connectRoomGiftSocket;
@@ -88,7 +98,7 @@
     currentRoomId=null;
     reconnectAttempt=0;
     if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
-    if(socket){try{socket.close();}catch(_){} socket=null;}
+    if(socket){const ws=socket;socket=null;try{ws.close();}catch(_){} }
   };
   window.sendRoomChatMessage=function(text){
     const value=String(text||'').trim();
