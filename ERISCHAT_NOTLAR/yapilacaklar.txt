@@ -116,3 +116,9 @@ BROWSER DOĞRULAMA CHECKPOINT
 - [ ] Room modal + join/seat/chat/gift/moderation tam browser akışı.
 - [ ] 139 kozmetik gerçek browser render/şeffaflık kontrolü.
 - [ ] DM + aile sohbeti + profil/try-on tam browser backend zinciri.
+
+BROWSER/COSMETICS CHECKPOINT
+- [x] 139 kozmetik asset gerçek Chromium browser render testinden geçti: Quality run 35281783827 / job 105405134485 SUCCESS.
+- [x] Browser render: 139/139 asset decode edildi.
+- [ ] PNG frame alpha sonucu 16/44 şeffaf örnek verdi; 28/44 PNG frame tamamen opak görünüyor. Bu nedenle render PASS olsa da tüm frame'lerin şeffaf tasarım standardı henüz tamamlanmış kabul edilmiyor.
+- [ ] Oda join/seat/chat/gift/moderation tam browser E2E.
