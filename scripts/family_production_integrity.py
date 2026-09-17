@@ -16,10 +16,13 @@ required_main = [
     "from .platform_routes import register_platform_auth, router as platform_router",
     "register_platform_auth(current_user)",
     "app.include_router(platform_router)",
+    '@app.post("/v1/families")',
+    "def create_family_production(",
+    "chat_conversation_id=conversation_id",
 ]
 for marker in required_main:
     if marker not in main:
-        raise SystemExit(f"Missing production platform registration marker: {marker}")
+        raise SystemExit(f"Missing production family runtime marker: {marker}")
 
 required_family = [
     '@router.get("/families/{family_id}")',
@@ -35,4 +38,4 @@ for marker in ["class FamilyCreate", "class FamilyDonationCreate", "FamilyMember
     if marker not in platform:
         raise SystemExit(f"Missing family backend marker: {marker}")
 
-print("FAMILY_PRODUCTION_INTEGRITY_PASS platform_router_registered=1 family_routes=4")
+print("FAMILY_PRODUCTION_INTEGRITY_PASS platform_router_registered=1 family_runtime_create=1 family_routes=4")
