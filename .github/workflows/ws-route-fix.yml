@@ -23,13 +23,9 @@ jobs:
           mount = '''\n\nfrontend_path = Path(__file__).resolve().parents[2] / "frontend"\nif frontend_path.is_dir():\n    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")\n'''
           if mount not in s:
               raise SystemExit('frontend mount block not found')
-          ws_marker = '\n\n@app.websocket("/ws/rooms/{room_id}")'
           mount_index = s.index(mount)
-          ws_index = s.index(ws_marker)
-          if mount_index < ws_index:
-              s = s[:mount_index] + s[mount_index + len(mount):]
-              ws_index = s.index(ws_marker)
-              s = s[:ws_index] + mount + s[ws_index:]
+          s = s[:mount_index] + s[mount_index + len(mount):]
+          s = s.rstrip() + mount
           p.write_text(s, encoding='utf-8')
           PY
       - name: Validate
@@ -38,7 +34,10 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('backend/app/main.py').read_text(encoding='utf-8')
-          assert s.index('@app.websocket("/ws/rooms/{room_id}")') < s.index('app.mount("/", StaticFiles')
+          ws=s.index('@app.websocket("/ws/rooms/{room_id}")')
+          mount=s.index('app.mount("/", StaticFiles')
+          assert ws < mount
+          assert s[mount:].find('@app.websocket') == -1
           print('websocket route precedes frontend mount')
           PY
       - name: Commit
