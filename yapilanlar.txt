@@ -1,0 +1,16 @@
+ERISCHAT — YAPILANLAR CHECKPOINT
+2026-09-17 gece
+
+- GitHub main güvenli checkpoint: aef369bf05d1a6b6af36ce40cd2f9bb41678d339.
+- Yanlışlıkla kısaltılan frontend commit'i geri alındı; frontend bozulmuş bırakılmadı.
+- Railway backend domaini doğrulandı: erischat-production.up.railway.app.
+- Room/gift backend'i server kontrollü fiyat, %70 alıcı payı, 1-99 quantity ve room_gift WebSocket broadcast ile hazır.
+- /ws/rooms/{room_id}?token=... endpoint'i mevcut.
+- gift-live.js canlı room_gift dinliyor ve oda join sonrası socket açıyor.
+- gh-pages branch a0f2595181458b967f7e79c6e5aacfc2b04fee83 canlı frontend senkronuna alındı.
+- gh-pages index canlı erischat-main.html'e yönlendiriyor.
+- Eski load-cosmetics-frontend.yml workflow'u kaldırıldı.
+- Eski gift-ui-v2 workflow/trigger temizlendi.
+- ERISCHAT_NOTLAR/yapilanlar.txt, yapilacaklar.txt ve son_durum_20260917_gece.txt güncellendi.
+- Railway deploy yapılmadı.
+- Gerçek iki kullanıcı smoke testi henüz yapılmadı.
