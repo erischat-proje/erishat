@@ -2,52 +2,53 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Müşteri demo fazı: ürün yüzeyi mümkün olduğunca tek vitrinde toplandı.
-- VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi müşteri demosuna eklendi.
-- Oyunlar için oynanabilir demo vitrini eklendi; gerçek ekonomi ayrı backend işi olarak işaretli.
+- Müşteri demo fazı: ürün yüzeyi tek vitrinde toplanıyor ve eksik görünen ürün alanları demo+ katmanıyla tamamlanıyor.
+- VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi mevcut.
+- Oyunlar için oynanabilir demo vitrini mevcut; gerçek ekonomi ayrı backend işi.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-## Müşteri ürün vitrini
-- Odalar: oda açma, liste, detay, katıl/ayrıl, koltuk, chat kontrolü, duyuru görünümü.
-- Oda araçları: moderatör, ban, hediye kataloğu/gönderimi için demo kontrol yüzeyi.
-- Mağaza: 139 kozmetik katalog, standart/VIP filtreleri, satın alma/uygulama yüzeyi.
-- VIP: VIP 1 → 12; her seviye için ayrı ayrı sistem ayrıcalıkları görünür.
-- VIP cinsiyet ödülleri: erkek VIP 1–12 avatarları, kadın VIP 1–12 avatarları ve VIP 1–12 çerçeveleri görünür.
-- Aile: oluşturma, seviye, kapasite, bakiye, bağış, sohbet durumu.
-- Oyunlar: Roulette ve 4 Kupa müşteri demo simülasyonu + mevcut endpoint kontrolleri.
-- Keşif: yakın, rastgele sohbet, rastgele oda + keşif tercihleri.
-- Sosyal: profil, fan seviyesi, profil hediyeleri.
-- Profil: `/me`, VIP ve profil düzenleme.
-- DM: konuşma, yeni DM ve mesaj gönderme.
-- Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü.
-- Şikayet: kullanıcı / oda / mesaj hedefleri.
-- Ürün: bütün sistemlerin müşteri haritası.
-- Müşteri demo kontrol listesi: demo ile gerçek üretim backlog'u ayrıştırılıyor.
+## Bu turda eklenen demo+
+- `frontend/demo-extras-live.js` oluşturuldu.
+- `frontend/room-live.js` demo+ katmanını otomatik yüklüyor.
+- Oda koltuk/mikrofon/ses durumları ve oda sahibi ayarları müşteri ekranında görünür.
+- Müzik: şimdi çalan, kuyruk, oynat/durdur, ekle/sil ve DJ kilidi yüzeyi görünür.
+- Duyuru: yayınla/düzenle/kaldır/sabitle yüzeyi; backend yazma endpointi yoksa açıkça demo olarak işaretleniyor.
+- Aile: üye listesi, davet/çıkarma/rol, aile sohbeti ve bağış yüzeyi görünür.
+- Mağaza: API kataloğundan görsel grid, arama ve avatar/çerçeve/VIP/standart filtreleri.
+- Profil: avatar + çerçeve birleşik try-on, favori/hediye/takip aksiyonları.
+- Güvenlik: bildirim, engelleme ve admin/moderasyon ürün yüzeyi; doğrulanmamış backend endpointleri sahte canlılık olarak sunulmuyor.
+- Onboarding: anonim giriş → nickname → cinsiyet → avatar → ilgi alanları → gizlilik → başlangıç akışı.
 
-## Bu turdaki commitler
-- `147cc33914e23dfab01cd9ed426a35bac4171046` — VIP ödül matrisi + cinsiyet bazlı avatarlar + oyun demo katmanı.
-- `a436153acd103f240ecc561cd059864b593a88f3` — complete demo layer loader.
-- `695d5a5bc2841e04ea20363a8aa133013bab614b` — demo-controls üzerinden complete demo katmanını zincire bağladı.
-- `84109cf63dd098c041f07883216eefe3d49de42d` — müşteri demo eksik kayıt/checkpoint güncellendi.
+## Backend gerçeklik notu
+- Mevcut backend doğrulamasında aile için oluşturma, seviye, bağış ve aile chat-enabled endpointleri mevcut.
+- Aile üye davet/çıkarma/rol endpointleri doğrulanmadı; bu nedenle demo+ butonları açıkça demo yüzeyidir.
+- Oda duyuru endpointi mevcut olarak GET son duyuruyu sağlıyor; yazma endpointi doğrulanmadı.
+- Roulette ve 4 Kupa `/game/bet` ve `/game/cups` ile gerçek endpointlere bağlı; bunlar demo vitrini ile gösteriliyor, gerçek cüzdan/payout yaşam döngüsü tamamlanmış kabul edilmiyor.
+- Gerçek WebRTC/ses transportu henüz doğrulanmadı.
+- Bildirim/engelleme/admin paneli için doğrulanmış production endpointleri henüz yok.
+
+## Son commitler
+- `cd14aad37180984705336d19decb458b71207610` — remaining customer demo surfaces katmanı.
+- `05e9e3afad48976d2696a219172e44d8e806a674` — demo+ katmanını room-live zincirine bağladı.
+- `52bbf51b3a7bd9175e1575061570b89108589cf9` — yapılacaklar checkpoint güncellemesi.
+- Sonraki bu TXT checkpoint commiti: güncel HEAD'e göre ayrıca işlenecek.
 
 ## Doğrulama
-- `a436153acd103f240ecc561cd059864b593a88f3` için GitHub workflow sorgusu yapıldı; henüz workflow sonucu dönmedi.
-- Bu nedenle yeni katmanlar için PASS/TAMAM iddiası yok.
+- Bu yeni demo+ commitleri için henüz Quality workflow sonucu alınmadı.
 - Önceki doğrulanmış Quality: run `35268797342` / job `105362578713` SUCCESS.
-- Static Quality workflow zaten `demo-controls-live.js` için syntax/required-file kontrolü yapıyor; complete katmanı bu dosya üzerinden yükleniyor.
+- Bu nedenle yeni katmanlar için PASS/TAMAM iddiası yok.
 
 ## Gerçek geliştirme backlog'u
-Ayrıntılı kayıt: `ERISCHAT_NOTLAR/musteri_demo_eksikleri_20260917.txt`
-- Gerçek ses/WebRTC/mikrofon transportu.
 - Browser uçtan uca doğrulama.
 - Oda canlı chat/gift/seat/moderasyon zincirinin browser doğrulaması.
-- Oda müzik oynatma/kuyruk ve announcement yönetimi.
-- Aile üye davet/çıkarma/yönetim ve gerçek aile chat mesajları.
-- Oyun round/bakiye/payout yaşam döngüsünün sağlamlaştırılması.
-- Avatar + frame gerçek görsel renderı ve 139 asset browser testi.
+- Gerçek WebRTC/mikrofon transportu.
+- Müzik gerçek playback/stream/kuyruk backendi.
+- Announcement create/update/delete backend yaşam döngüsü.
+- Aile üye davet/çıkarma/rol yönetimi ve gerçek aile chat mesajları.
+- Oyun round/bakiye/payout yaşam döngüsü.
 - VIP harcama → seviye → kilit açma yaşam döngüsü.
-- Fan/follow, bildirim, engelleme ve admin/moderasyon paneli.
-- Oda kapatma/gelişmiş ayarlar.
+- Fan/follow, bildirim, engelleme ve admin/moderasyon backendleri.
+- Avatar + frame gerçek görsel browser doğrulaması.
 - Pages canlı zinciri ve gerçek origin CORS.
 
 ## Kural
