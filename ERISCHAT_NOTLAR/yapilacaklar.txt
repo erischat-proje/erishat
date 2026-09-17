@@ -13,7 +13,9 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 - github-pages environment gerçek runner/API çıktısında `branch_policy`, `protected_branches=false`, `custom_branch_policies=true` olarak doğrulandı.
 - Bağımsız environment-probe job'ı gerçek runner'da `failure` + `steps: []` ile runner'a ulaşamadı; aynı workflow'daki environment'sız diagnostics job'ı SUCCESS oldu. Gate'in environment admission katmanında olduğu izole edildi.
 - Environment kaldırılarak yapılan önceki izolasyonda runner çalıştı fakat deploy-pages "Missing environment" ile durdu. Yani deploy için github-pages environment zorunlu.
-- `pages-diagnostics.yml` custom branch policy girdilerini bir sonraki gerçek run'da raporlayacak şekilde güncellendi.
+- Gerçek diagnostics API çıktısında `github-pages` custom deployment branch policy listesinde yalnızca `gh-pages` bulunuyor; `main` izinli değil.
+- `pages-diagnostics.yml` artık `target_branch_allowed=false` olduğunda açık hata ile fail ediyor; policy engeli sessiz SUCCESS olarak raporlanmayacak.
+- Bu guard commit'i: `08b455c30b0452ee523df166fb499666b3870dd7`.
 - Son Pages workflow temizliğinde Pages workflow'unun injection listesinde gift-live.js tekrar eklenmeyecek şekilde düzenlendi; frontend kaynak dosyası ayrıca mevcut.
 - Pages PASS/TAMAM denmeyecek; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 - Pages başarıyla deploy olduktan sonra canlı frontend HTTP ve frontend -> Railway API bağlantısı gerçek ortamda doğrulanmalı.
@@ -35,5 +37,5 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 SON DURUM
 - Son güvenilir kalite kanıtı: gerçek runner'da 5 smoke test başarılı.
 - Pages diagnostics gerçek Pages state'i okuyabiliyor.
-- Pages environment gate gerçek runner'da izole edildi; custom branch policy'nin hangi branch'leri kapsadığı henüz bir sonraki diagnostics logundan alınacak.
-- Sıradaki kritik iş: custom branch policy girdilerini gerçek logdan al, environment ayarını GitHub tarafında düzelt, sonra gerçek Pages deploy ve canlı HTTP doğrulaması yap.
+- Pages environment gate gerçek runner'da izole edildi ve custom policy'nin gerçek girdisi alındı: yalnızca `gh-pages`.
+- Sıradaki kritik iş: GitHub `github-pages` environment custom deployment branch policy'sine `main` eklemek veya policy'yi `main`i kapsayacak şekilde GitHub Settings'ten değiştirmek; ardından gerçek Pages deploy + canlı HTTP + Pages→Railway API doğrulaması.
