@@ -2,87 +2,55 @@ ERISCHAT — YAPILANLAR / GÜNCEL
 Tarih: 2026-09-17 — BASELINE / TAM SİSTEME HAZIRLIK
 
 AMAÇ
-- Önce mevcut kodu tamamlanmış bir temel sistem seviyesine getirmek.
-- Geliştirme özelliklerini, temel sistem gerçek runner'da stabil hale geldikten sonra sürdürmek.
+- Önce mevcut kodu tamamlanmış temel sistem seviyesine getirmek.
+- Ürün geliştirmesine ancak temel sistem gerçek runner ve canlı ortamda doğrulandıktan sonra geçmek.
 - Railway production deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
 
 REPO / DENETİM
-- [x] Doğru GitHub repository: semihvarolymk-png/erischat.
+- [x] Doğru repo: semihvarolymk-png/erischat.
 - [x] main branch erişimi.
-- [x] ERISCHAT_NOTLAR checkpoint'leri okundu.
-- [x] Recursive repository tree kontrol edildi.
-- [x] Backend, frontend, asset ve Actions yapıları kontrol edildi.
-- [x] Gerçek kod ile yapılacaklar listesi karşılaştırıldı.
-- [x] TODO/FIXME/NotImplemented/pass için repository kod araması yapıldı; eşleşme bulunmadı.
+- [x] ERISCHAT_NOTLAR checkpoint'leri okundu ve güncellendi.
+- [x] Backend, frontend, asset ve Actions yapıları denetlendi.
+- [x] TODO/FIXME/NotImplemented/pass taraması yapıldı; açık eşleşme bulunmadı.
 
-BACKEND TEMEL SİSTEM
-- [x] FastAPI ana uygulaması mevcut.
-- [x] /health ve /ready endpointleri mevcut.
-- [x] Anonymous user + session/token altyapısı mevcut.
-- [x] /v1/me ve temel profil endpointleri mevcut.
-- [x] DM conversation/message endpointleri mevcut.
-- [x] Genel /ws mevcut.
-- [x] /ws/rooms/{room_id} oda sohbet WebSocket'i mevcut.
-- [x] Room create/join/leave/seat/moderator/ban/chat akışları mevcut.
-- [x] Room L1-L8 kuralları mevcut.
-- [x] Server kontrollü gift catalog mevcut.
-- [x] Gift quantity 1-99 mevcut.
-- [x] Recipient %70 payı mevcut.
-- [x] Room gift WebSocket event altyapısı mevcut.
-- [x] Cosmetic catalog/purchase/apply API mevcut.
-- [x] Cosmetic katalog gerçek repository klasörlerine göre standardize edildi.
-- [x] Cosmetic tier/VIP metadata ve fiyatlandırma mevcut.
-- [x] main.py startup migration satırları tekrar kontrol edildi; güncel dosyada duplicate ALTER satırları bulunmuyor.
-- [x] Backend main.py'deki genel WS ve room WS route'ları korunuyor.
+BACKEND / FRONTEND TEMELİ
+- [x] FastAPI health/ready, anonymous session, profile, DM, room, room WS, gift ve cosmetics akışları mevcut.
+- [x] Ana frontend ve canlı API/WS scriptleri mevcut.
+- [x] room-live.js API fallback düzeltildi: ERIS_API öncelikli, ERISCHAT_API geriye dönük uyumlu.
+- [x] Quality workflow'a Python compileall + frontend JS node --check + gerekli kaynak kontrolleri eklendi.
+- [x] Eski self-modifying/patch/duplicate Pages workflow'larının gerekli olmayanları temizlendi.
 
-FRONTEND TEMEL SİSTEM
-- [x] Ana tek sayfa frontend mevcut.
-- [x] platform.js Railway API default adresini kullanıyor.
-- [x] auth-live.js gerçek anonymous session oluşturuyor.
-- [x] gift-live.js room WebSocket'e bağlanıyor.
-- [x] room_history ve room_chat UI akışları mevcut.
-- [x] Oda mesaj gönderimi gerçek WebSocket room_chat payload'ına bağlı.
-- [x] Room WebSocket reconnect + exponential backoff mevcut.
-- [x] Oda listesi gerçek /v1/rooms API'sine bağlı.
-- [x] Profil/VIP/mağaza/anonimlik temel UI'ları mevcut.
-- [x] Session/anonymous durum göstergesi mevcut.
-- [x] DM conversation list/history/send gerçek API'ya bağlı.
-- [x] DM demo fallback temizliği mevcut.
-- [x] DM avatar asset normalizasyonu mevcut.
-- [x] cosmetics.js gerçek catalog/purchase/apply akışına bağlı.
-- [x] Avatar/frame URL normalizasyonu mevcut.
-- [x] Live profile controls mevcut.
-- [x] Gerçek DM conversation oluşturma paneli mevcut.
-- [x] Demo keşfet/mesaj kartlarını temizleyen demo-cleanup.js mevcut.
-- [x] room-live.js API konfigürasyonu düzeltildi: ERIS_API öncelikli, ERISCHAT_API geriye dönük uyumlu fallback olarak destekleniyor. Commit: cf1c98e66c6358e139e6fa2db979c126b72aa184.
-
-CI / KALİTE
-- [x] Gerçek runner E2E zinciri daha önce doğrulandı: anonymous session, room, ban, DM ve cosmetic smoke testleri başarılı.
-- [x] Quality workflow gerçek runner'da daha önce başarılı tamamlandı.
-- [x] Quality workflow artık Python compileall + frontend JavaScript node --check + zorunlu frontend kaynak kontrollerini de çalıştırıyor.
-- [x] Quality workflow v4 commit'i: 01996cb7d50022d0e1de9e997b2b61982e2fd58a.
-- [ ] Bu yeni v4 kalite workflow'unun yeni commit üzerindeki runner sonucu henüz doğrulanmadı.
+GERÇEK RUNNER DOĞRULAMASI
+- [x] Runner Recovery #74: run 35256506469 tamamlandı.
+- [x] live-e2e job 105321368901 SUCCESS.
+- [x] API kurulumu ve /ready bekleme SUCCESS.
+- [x] Anonymous session smoke SUCCESS.
+- [x] Live room smoke SUCCESS.
+- [x] Live ban smoke SUCCESS.
+- [x] Live DM smoke SUCCESS.
+- [x] Live cosmetic smoke SUCCESS.
+- [x] Room iki istemcili WebSocket history/chat broadcast akışı gerçek runner'da geçti.
+- [x] Ban → 403 rejoin → unban → yeniden join gerçek runner'da geçti.
+- [x] DM conversation → send → history gerçek runner'da geçti.
+- [x] Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da geçti.
+- [ ] runner-recovery probe job başarısız; bu probe uygulama E2E job'u değildir ve baseline PASS kriterine dahil edilmiyor.
 
 PAGES / RAILWAY
 - [x] Aktif Pages workflow: .github/workflows/erischat-pages.yml.
-- [x] Eski duplicate pages.yml kaldırılmış durumda.
-- [x] pages-diagnostics.yml aktif workflow'u ve github-pages environment policy'sini kontrol ediyor.
-- [x] Gerçek Pages state: enabled=true, public, status=built bilgileri daha önce runner/API üzerinden doğrulandı.
-- [x] github-pages environment custom policy'sinde yalnızca gh-pages olduğu gerçek API/runner çıktısıyla doğrulandı.
-- [x] main branch Pages admission problemi guard ile görünür hale getirildi.
-- [ ] github-pages environment policy'ye main eklenmediği için gerçek Pages deploy henüz başarılı değil.
-- [ ] Canlı Pages HTTP doğrulaması yapılmadı.
-- [ ] Canlı Pages → Railway API doğrulaması yapılmadı.
-- [ ] Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
+- [x] Son main push'ta Pages run 35256506397 gerçek environment admission aşamasında failure verdi; deploy job steps'e girmedi.
+- [x] Pages kök nedeni daha önce gerçek API/runner ile doğrulandı: github-pages custom branch policy yalnızca gh-pages; main izinli değil.
+- [ ] github-pages environment policy'ye main eklenmedi.
+- [ ] Başarılı Pages deploy doğrulanmadı.
+- [ ] Canlı Pages HTTP doğrulanmadı.
+- [ ] Pages → Railway API canlı zinciri doğrulanmadı.
+- [ ] Railway production deploy yapılmadı ve yapılmayacak; kullanıcı açıkça deploy demeli.
 
 KOZMETİK
-- [x] Gerçek Gereken_icerikler klasörlerinden dinamik katalog modeli mevcut.
-- [x] Son doğrulanmış aktif katalog: 139 asset.
-- [x] 40/40/12/12 sabit hedefi zorunlu envanter kuralı değil.
-- [ ] Görsel kalite/şeffaflık ve canlı satın alma/apply E2E'si yeniden baseline zincirinde doğrulanacak.
+- [x] Dinamik Gereken_icerikler katalog modeli mevcut.
+- [x] Son doğrulanmış aktif katalog 139 asset.
+- [x] Cosmetic purchase/apply gerçek runner'da SUCCESS.
+- [ ] Canlı frontend asset render/şeffaflık doğrulaması ayrıca yapılacak.
 
 BASELINE SONUCU
-- Kod tabanında bilinen açık TODO/FIXME/NotImplemented eşleşmesi bulunmadı.
-- Temel backend + frontend + CI altyapısı mevcut.
-- Şu an geliştirme özelliklerinden önce yapılması gereken iş: yeni commitin gerçek runner kalite sonucunu almak, Pages environment admission engelini çözmek ve canlı HTTP/API zincirini doğrulamak.
-- Gerçek runner ve canlı ortam kanıtı olmadan sistem "tam çalışıyor" olarak işaretlenmeyecek.
+- Backend/live temel E2E zincirinin beş smoke testi gerçek runner'da başarıyla geçti.
+- Sistem henüz "tam çalışan" olarak işaretlenmiyor; Quality v4, Pages admission/deploy, canlı HTTP/API ve kalan güvenlik/frontend kontrolleri tamamlanmalı.
