@@ -30,7 +30,7 @@ try {
   await page.waitForSelector('#explore.view.show');
 
   await page.locator('.nav button', { hasText: 'Mesaj' }).click();
-  await page.locator('button', { hasText: 'Rana’nın Odası' }).click();
+  await page.locator('button', { hasText: "Rana'nın Odası" }).click();
   await page.waitForSelector('#chat.show');
   await page.locator('#chatInput').fill('browser smoke');
   await page.locator('#chatInput').press('Enter');
