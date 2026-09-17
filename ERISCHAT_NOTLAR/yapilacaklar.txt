@@ -1,60 +1,61 @@
 ERISCHAT MASTER TODO
 
 AKTİF SIRA
-1) Railway web 502 kök nedenini repo + servis config tarafında düzelt ve yeni deployment olmadan değişikliği doğrula; canlı doğrulama deploy sonrası yapılacak.
-2) GitHub Pages deploy workflow: run #258 başarısız; deploy adımı incelenecek ve kök neden doğrulanacak.
-3) Room WebSocket canlı/E2E doğrulaması.
-4) Ban → liste → unban → yeniden katılım canlı E2E; harness hazır.
-5) DM conversation creation canlı akışı; harness hazır.
-6) Pages canlı HTTP + Pages→Railway API doğrulaması.
-7) Avatar/frame/VIP asset envanteri ve E2E eşleşmesi.
-8) Backend security + quality hardening.
-9) TXT checkpoint senkronizasyonu.
+1) Railway web 502: repo + servis config hizalı; canlı doğrulama için kullanıcı açıkça deploy dediğinde deployment sonrası test yapılacak. Deploy yok.
+2) GitHub Pages deploy workflow failure kök nedenini kanıtla; tahmin etme.
+3) Kontrollü/local room live smoke.
+4) Ban → liste → unban → yeniden katılım E2E.
+5) İki istemcili room WebSocket chat E2E.
+6) Gift gönderimi + bakiye + %70 alıcı payı + room_gift E2E.
+7) Cosmetic purchase → ownership → apply E2E.
+8) DM conversation create/list/send/history E2E.
+9) Anonymous/session/profile/logout E2E.
+10) Pages canlı HTTP + Pages→Railway API doğrulaması.
+11) Backend security + quality hardening.
+12) V35/V53 legacy cleanup.
+13) TXT checkpoint senkronizasyonu.
+
+MEVCUT DURUM
+- Repo: `semihvarolymk-png/erischat`, branch `main`.
+- Railway web fixed servisinde Dockerfile path=`Dockerfile`, healthcheck=`/`, PORT=80 config'i staged durumda; deploy yapılmadı.
+- Repo Caddyfile `:80`, Dockerfile `EXPOSE 80` kullanıyor.
+- Railway mevcut deployment loglarında 502/connection refused görülmüştü; yeni config ile canlı doğrulama deploy gerektiriyor.
+- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
+- Pages failure deploy aşamasında görülüyor; ayrıntılı job logu yeterli değil. Kök neden tahmin edilmeyecek.
+- `main.py` duplicate migration/import problemi ve integration workflow tekrar-ekleme problemi düzeltildi.
+- `scripts/room_live_smoke.py`, `scripts/room_ban_live_smoke.py`, `scripts/dm_live_smoke.py`, `scripts/cosmetic_live_smoke.py` hazır; hiçbiri çalıştırılmadan başarılı kabul edilmeyecek.
+
+KOZMETİK ENVANTER
+- Hedef: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
+- Gerçek: kadınavatar 34 + erkekavatar 36 = 70 standart avatar; standartcerceve 30; vipkadınavatar 12 + viperkekavatar 12 = 24 VIP avatar; vipcerceve 12.
+- Cosmetic inventory CI bu hedef uyuşmazlığı nedeniyle takipte.
+- `backend/app/cosmetics.py` gerçek `Gereken_icerikler` klasörlerinden katalog üretiyor.
+- Rastgele silme/rename/sahte asset üretimi yok.
 
 TAMAMLANANLAR
-- Apply Gift UI workflow güncel run #128 (35207573181) başarıyla tamamlandı.
-- Session/anonymous durum UI eklendi.
+- Session/anonymous durum UI.
 - Room list gerçek API.
 - Anonymous session/token altyapısı.
-- Profile live UI ve profil ayarları.
+- Profile live UI + profil ayarları.
 - DM list/history/send/create altyapısı.
-- General WS reconnect/ping-pong altyapısı.
+- General WS reconnect/ping-pong.
 - Room WS + room chat/gift event altyapısı.
 - Cosmetics catalog/purchase/apply altyapısı.
-- Demo cleanup katmanı.
-- Cosmetic asset inventory checker eklendi: scripts/check_cosmetic_assets.py.
-- Backend quality checker eklendi: scripts/check_backend_quality.py (duplicate migration, session-token ve CORS kalite kontrolleri).
-- GitHub Actions quality workflow eklendi: .github/workflows/quality.yml.
-- Opt-in DM canlı smoke harness eklendi: scripts/dm_live_smoke.py. Local varsayılan; iki anonymous session, conversation create/list, DM send ve recipient history doğrulamalarını kapsıyor.
-- Opt-in room ban smoke harness eklendi: scripts/room_ban_live_smoke.py. Local varsayılan; ban → liste → yasaklı kullanıcının yeniden girişinin reddi → unban → yeniden giriş akışını kapsıyor.
-- backend/app/main.py duplicate user migration/import cleanup tamamlandı; quality workflow run #49 backend-quality başarılı ve room security regression başarılı.
-- scripts/room_live_smoke.py gift catalog sözleşmesine göre düzeltildi: API'nin döndürdüğü unit_price artık doğru okunuyor; gift event içinde doğru alıcı/hediye de kontrol ediliyor.
-- Railway production projesi ve servis durumu kontrol edildi: backend erischat SUCCESS, PostgreSQL SUCCESS, eski erischat-web FAILED, erischat-web-fixed SUCCESS. Bu kontrol deploy işlemi yapmadan gerçekleştirildi.
-- Railway erischat-web-fixed build logunda Caddy'nin çalıştığı doğrulandı; mevcut deployment HTTP loglarında / istekleri 502 connection refused olarak kaldı.
-- Caddyfile Railway web container için açıkça :80 portuna sabitlendi; Dockerfile EXPOSE 80 ile repo tarafındaki port sözleşmesi deterministik. Caddyfile mevcut main üzerinde doğrulandı.
-- Railway erischat-web-fixed production servis config'inde Dockerfile path=\"Dockerfile\", healthcheck path=\"/\" ve PORT=80 servis değişkeni deploy tetiklemeden staged/config olarak ayarlandı. Canlı 502 henüz bu config ile yeniden doğrulanmadı.
+- Demo cleanup.
+- Cosmetic asset inventory checker.
+- Backend quality checker.
+- GitHub Actions quality workflow.
+- DM live smoke harness.
+- Room ban live smoke harness.
+- Room live smoke harness gift contract fix (`unit_price`).
+- Main.py duplicate migration/import cleanup.
+- Integration workflow idempotency fix.
+- Railway web port/config hazırlığı; deploy edilmedi.
 
-PENDING
-- Railway web 502 canlı doğrulaması: servis config ve PORT=80 ayarı hazır; yeni deployment henüz yapılmadı. Kullanıcı açıkça deploy istemediği için deploy yapılmadı.
-- GitHub Pages deploy failure kök nedeni.
-- Room two-client canlı E2E; harness mevcut.
-- Ban/list/unban/rejoin canlı E2E; harness mevcut, gerçek çalıştırma bekliyor.
-- DM create canlı E2E; harness hazır, gerçek ortam çalıştırması bekliyor.
-- Pages canlı doğrulama.
-- Railway canlı health/ready/API/DB/WS doğrulaması; servis deployment durumları kontrol edildi ancak canlı endpoint E2E tamamlanmadı. Deploy yok.
-- 40 normal avatar + 40 normal frame + 12 VIP frame + 12 VIP avatar asset hedeflerinin envanter/kalite kontrolü. Güncel quality run cosmetic-inventory bu hedef uyuşmazlığı nedeniyle başarısız.
-- Cosmetic purchase/apply E2E.
-- Backend security/quality hardening: quality workflow temel kontrolleri başarılı; kalan güvenlik/kalite taraması ve canlı doğrulamalar bekliyor.
-- V35/V53 legacy cleanup.
+DOĞRULAMA KURALI
+- Canlı/local E2E çalıştırılmadan özellik PASS/TAMAM kabul edilmeyecek.
+- CI'nin yalnızca başarılı görünen tek job'una bakıp tüm pipeline PASS denmeyecek.
+- Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-SON GELİŞTİRMELER
-- Railway web port fix repo commit: 64cbe6a947a48e72e37d0a436d647495d04a162b
-- Railway service config staging: Dockerfile + healthcheck / + PORT=80; deploy edilmedi.
-- Integration workflow fix/checkpoint commit: 5159cdc995e599fbbe4be85e9451a674834188ff
-- scripts/room_live_smoke.py gift contract fix commit: 07fcbb9a579717e5322ef19aa30ffbec6e90502c
-- scripts/check_backend_quality.py commit: fdb9e45a1e65c6ae2fb0e1f58390da30798ce4ab
-- .github/workflows/quality.yml commit: f3b5ea4597716e0035b1af6c128f9260de572eb8
-- scripts/dm_live_smoke.py commit: a59be8caf4de9778e7684dc86292e8cd2011d837
-- scripts/room_ban_live_smoke.py commit: 9967158fb61e1b3b2fa969afee4b54d96b221b02
-
-NOT: Doğrulanmayan testler başarılı olarak işaretlenmeyecek. Railway deploy kullanıcı açıkça istemeden yapılmayacak.
+YENİ SOHBET BAŞLANGIÇ MESAJI
+Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Son checkpointten itibaren aktif sırayı takip et, gerçekten kod/config geliştir, doğrula ve notları güncelle.
