@@ -3,11 +3,12 @@ ERISCHAT MASTER TODO
 AKTİF SIRA
 1) GitHub Pages deploy workflow: run #258 başarısız; deploy adımı incelenecek ve kök neden doğrulanacak.
 2) Room WebSocket canlı/E2E doğrulaması.
-3) DM conversation creation canlı akışı.
-4) Pages canlı HTTP + Pages→Railway API doğrulaması.
-5) Avatar/frame/VIP asset envanteri ve E2E eşleşmesi.
-6) Backend security + quality hardening.
-7) TXT checkpoint senkronizasyonu.
+3) Ban → liste → unban → yeniden katılım canlı E2E; harness hazır.
+4) DM conversation creation canlı akışı; harness hazır.
+5) Pages canlı HTTP + Pages→Railway API doğrulaması.
+6) Avatar/frame/VIP asset envanteri ve E2E eşleşmesi.
+7) Backend security + quality hardening.
+8) TXT checkpoint senkronizasyonu.
 
 TAMAMLANANLAR
 - Apply Gift UI workflow güncel run #128 (35207573181) başarıyla tamamlandı.
@@ -24,10 +25,12 @@ TAMAMLANANLAR
 - Backend quality checker eklendi: scripts/check_backend_quality.py (duplicate migration, session-token ve CORS kalite kontrolleri).
 - GitHub Actions quality workflow eklendi: .github/workflows/quality.yml.
 - Opt-in DM canlı smoke harness eklendi: scripts/dm_live_smoke.py. Local varsayılan; iki anonymous session, conversation create/list, DM send ve recipient history doğrulamalarını kapsıyor.
+- Opt-in room ban smoke harness eklendi: scripts/room_ban_live_smoke.py. Local varsayılan; ban → liste → yasaklı kullanıcının yeniden girişinin reddi → unban → yeniden giriş akışını kapsıyor.
 
 PENDING
 - GitHub Pages deploy failure kök nedeni.
-- Room two-client canlı E2E.
+- Room two-client canlı E2E; harness mevcut.
+- Ban/list/unban/rejoin canlı E2E; harness mevcut, gerçek çalıştırma bekliyor.
 - DM create canlı E2E; harness hazır, gerçek ortam çalıştırması bekliyor.
 - Pages canlı doğrulama.
 - Railway canlı doğrulama (deploy yok; kullanıcı açıkça deploy demedikçe deploy yapılmayacak).
@@ -36,9 +39,10 @@ PENDING
 - Backend security/quality: quality checker main.py içindeki duplicate user migration tanımlarını yakalayacak şekilde kırmızı sinyal üretmeli; henüz düzeltilmiş olarak işaretlenmeyecek.
 - V35/V53 legacy cleanup.
 
-SON GELİŞTİRME
+SON GELİŞTİRMELER
 - scripts/check_backend_quality.py commit: fdb9e45a1e65c6ae2fb0e1f58390da30798ce4ab
 - .github/workflows/quality.yml commit: f3b5ea4597716e0035b1af6c128f9260de572eb8
 - scripts/dm_live_smoke.py commit: a59be8caf4de9778e7684dc86292e8cd2011d837
+- scripts/room_ban_live_smoke.py commit: 9967158fb61e1b3b2fa969afee4b54d96b221b02
 
 NOT: Doğrulanmayan testler başarılı olarak işaretlenmeyecek.
