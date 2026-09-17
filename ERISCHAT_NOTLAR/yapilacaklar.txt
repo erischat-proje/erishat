@@ -1,115 +1,35 @@
-ERISCHAT — YAPILACAKLAR / GÜNCEL MASTER LİSTE
-Tarih: 2026-09-17 — canlı geliştirme denetimi
+ERISCHAT MASTER TODO
 
-TAMAMLANAN DENETİM
-- [x] Doğru repo: semihvarolymk-png/erischat
-- [x] main branch erişimi
-- [x] ERISCHAT_NOTLAR checkpoint'leri
-- [x] Recursive repo ağacı
-- [x] Backend/frontend/workflow/asset yapısı
-- [x] main.py duplicate ALTER TABLE temizliği
-- [x] backend/app/__pycache__ içindeki mevcut .pyc artefaktlarının temizliği
+AKTİF SIRA
+1) GitHub Pages deploy workflow: run #250 başarısız; deploy adımı incelenecek ve düzeltilecek.
+2) Room WebSocket canlı/E2E doğrulaması.
+3) DM conversation creation canlı akışı.
+4) Pages canlı HTTP + Pages→Railway API doğrulaması.
+5) Avatar/frame/VIP asset envanteri ve E2E eşleşmesi.
+6) Backend security + quality hardening.
+7) TXT checkpoint senkronizasyonu.
 
-ÖNCELİK 1 — PAGES / CANLI FRONTEND
-- [x] Apply Gift UI workflow failure kök nedeni logdan izole edildi: eski validation'daki artık mevcut olmayan /gift-catalog ve /gifts string beklentileri kaldırıldı
-- [x] Güncel commit üzerinde Apply Gift UI workflow validation başarılı
-- [ ] pages.yml success doğrulaması
-- [ ] Canlı Pages HTTP doğrulaması
-- [ ] Pages → Railway API canlı test
-- [ ] Room WebSocket canlı test
+TAMAMLANANLAR
+- Apply Gift UI workflow güncel run #126 (35207342594) başarıyla tamamlandı.
+- Session/anonymous durum UI eklendi.
+- Room list gerçek API.
+- Anonymous session/token altyapısı.
+- Profile live UI ve profil ayarları.
+- DM list/history/send/create altyapısı.
+- General WS reconnect/ping-pong altyapısı.
+- Room WS + room chat/gift event altyapısı.
+- Cosmetics catalog/purchase/apply altyapısı.
+- Demo cleanup katmanı.
 
-ÖNCELİK 2 — FRONTEND GERÇEK AKIŞ
-- [x] erischat-main.html içindeki bilinen statik/demo mesaj ve keşfet kişi/etkinlik kartlarını ayrı demo-cleanup.js ile izole et
-- [x] Oda listesi temel olarak /v1/rooms'a bağlı
-- [x] Anonymous user oluşturma + token/session istemci akışı kodlandı (auth-live.js)
-- [x] Anonymous registration gender payload nötr unspecified olarak düzeltildi
-- [x] /v1/me profil yükleme/güncelleme UI için canlı kontroller eklendi (profile-ui-live.js); canlı E2E doğrulaması bekliyor
-- [x] Profil nickname + bildirim güncelleme UI'sı /v1/me PATCH'e bağlı
-- [x] Profil logout/revoke akışı mevcut; canlı E2E doğrulaması bekliyor
-- [x] Session/anonymous durum göstergesi session-ui-live.js bileşeni olarak eklendi ve Pages workflow'una bağlandı
-- [x] Gerçek DM conversation list/create UI kod entegrasyonu
-- [x] Gerçek DM history/send UI kod entegrasyonu
-- [x] Genel /ws istemcisi + reconnect + ping/pong kodlandı (canlı doğrulama bekliyor)
-- [ ] Logout/token expiry UI canlı doğrulaması
-- [x] Oda WebSocket chat UI gerçek gönderim/history akışına bağlandı; canlı E2E test bekliyor
+PENDING
+- GitHub Pages deploy failure kök nedeni.
+- Room two-client canlı E2E.
+- DM create canlı E2E.
+- Pages canlı doğrulama.
+- Railway canlı doğrulama (deploy yok; kullanıcı açıkça deploy demedikçe deploy yapılmayacak).
+- 40 normal avatar + 40 normal frame + 12 VIP frame + 12 VIP avatar asset hedeflerinin envanter/kalite kontrolü.
+- Cosmetic purchase/apply E2E.
+- Backend security/quality.
+- V35/V53 legacy cleanup.
 
-ÖNCELİK 3 — ODA / HEDİYE
-- [ ] Gerçek kullanıcı A/B smoke test
-- [ ] Oda chat iki istemci testi
-- [ ] Gift iki istemci testi
-- [ ] room_gift iki istemci event testi
-- [ ] Sender bakiye DB doğrulaması
-- [ ] Recipient %70 DB doğrulaması
-- [ ] quantity 1/99 sınır testi
-- [ ] Yetersiz bakiye testi
-- [ ] 30+ Lidya animation testi
-- [ ] Room level/spend testi
-
-ÖNCELİK 4 — TEK SAYFA / V35
-- [ ] v53 iframe/overlay kalıntılarını tarayıp kaldır
-- [ ] v35 DOM tabanını kanonik frontend olarak sabitle
-- [ ] Alt navigasyon çakışmalarını temizle
-- [ ] Premium profil ana DOM entegrasyonu
-- [ ] Eski prototipleri arşivle
-- [ ] Kanonik frontend sürümünü belgeleyip sabitle
-
-ÖNCELİK 5 — AVATAR / FRAME / VIP
-- [ ] Gereken_icerikler tam asset envanteri
-- [ ] Standart avatar adet/tür doğrulaması
-- [ ] Standart frame envanteri
-- [ ] VIP 1–12 avatar + frame gerçek assetleri
-- [ ] Frame merkez transparanlık doğrulaması
-- [ ] Backend catalog ↔ frontend catalog birebir eşleşme
-- [ ] Satın alma/seçme/uygulama E2E testi
-
-ÖNCELİK 6 — BACKEND SAĞLAMLAŞTIRMA
-- [x] Duplicate startup ALTER temizliği
-- [x] Mevcut backend/app __pycache__ .pyc temizliği
-- [ ] Endpoint/model/schema/repository tam uyum testi
-- [ ] DB relation/constraint testleri
-- [ ] Session/token expiry/revoke testleri
-- [ ] Production CORS'u gerçek originlere sınırla
-- [ ] Demo endpointini production'dan ayır/feature flag
-- [ ] Migration yaklaşımını tekilleştir
-- [ ] Rate limiting / abuse kontrolleri
-- [ ] Gift transaction locking sırasını concurrency açısından test et
-
-ÖNCELİK 7 — RAILWAY
-- [ ] Build/start config doğrulaması
-- [ ] /health canlı test
-- [ ] /ready canlı DB test
-- [ ] Environment/config doğrulaması
-- [ ] PostgreSQL canlı doğrulaması
-- [ ] Redis gereksinimi varsa doğrulama
-- [ ] Kullanıcı açıkça "deploy" dediğinde production deploy
-- [ ] Deploy sonrası log/build/runtime kontrolü
-- [ ] Frontend → API → DB → WS E2E
-
-ÖNCELİK 8 — ÜRÜN
-- [ ] Keşfet gerçek kullanıcı/oda verisi
-- [ ] Presence
-- [ ] Sesli oda/WebRTC
-- [ ] Moderasyon/raporlama/engelleme UI + API
-- [ ] Lidya/hediye/VIP eksik UI
-- [ ] Admin paneli
-- [ ] Bildirim/realtime event sistemi
-
-KALİTE KONTROL
-- [ ] Python compile/syntax
-- [ ] API smoke test
-- [ ] Frontend JS syntax
-- [ ] WS ping/history/chat/gift testleri
-- [ ] DB schema/relationship/constraint
-- [ ] Railway build/runtime/health
-- [ ] GitHub Pages deployment
-- [ ] Mobil Chrome/Termux temiz cache
-- [ ] Her tamamlanan madde yapilanlar.txt'ye aktarılacak
-
-AKTİF ÇALIŞMA SIRASI
-1. Room WebSocket canlı E2E testini doğrula.
-2. DM conversation creation canlı akışını doğrula.
-3. pages.yml success doğrulamasını yap.
-4. Pages/Railway canlı doğrulamalarına geç.
-5. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
-6. Backend security + kalite testlerini bitir.
-7. Tüm TXT checkpoint'lerini sonuçlarla senkronla.
+NOT: Doğrulanmayan testler başarılı olarak işaretlenmeyecek.
