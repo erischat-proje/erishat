@@ -7,32 +7,28 @@ DOĞRULANAN REPO
 - Repo erişimi ve yazma yetkisi doğrulandı.
 
 BU TURDA YAPILAN
-- frontend/profile-live.js auth event dinleyicisi document yerine window'a düzeltildi.
-- profile-live.js DOMContentLoaded zamanlaması daha güvenli boot akışına alındı.
-- frontend/dm-live.js gönderim handler'ı aktif chatBody'yi gönderim anında bulacak şekilde sağlamlaştırıldı.
-- DM tarafına gerçek backend conversation oluşturma için ErisChatDM.create(participantId, participantName) helper'ı eklendi.
-- frontend/cosmetics.js Railway API + mevcut ErisChat token anahtarlarıyla hizalandı.
-- Cosmetics catalog/owned/me yükleme, satın alma, uygulama ve avatar/frame görünüm uygulama akışı gerçek API yollarına bağlandı.
-- Pages workflow'a cosmetics.js eklendi ve asset doğrulaması genişletildi.
-- Pages workflow run #210 failure olarak doğrulandı; deploy job step/log verisi GitHub connector tarafından sunulmadı.
-- Önceki retry de aynı step'siz failure davranışını gösterdi; kök neden henüz kesinleştirilmedi.
+- backend/app/cosmetics.py gerçek repository asset klasörlerine göre düzeltildi.
+- Standard katalog klasörleri kadınavatar, erkekavatar ve standartcerceve olarak hizalandı.
+- VIP katalog klasörleri vipkadınavatar, viperkekavatar ve vipcerceve olarak ayrı toplandı.
+- Cosmetic catalog kayıtlarına vip ve tier metadata eklendi.
+- VIP kozmetik fiyatı katalog metadata'sından purchase sırasında hesaplanıyor.
+- Cosmetic purchase/apply cevaplarına vip alanı eklendi.
+- frontend/cosmetics.js repository-relative asset_key değerlerini frontend asset URL'lerine çözümleyecek şekilde güçlendirildi.
+- frontend/cosmetics.js standard/VIP filtreleme ve owned kontrol helper'ları eklendi.
+- Yapılanlar ve checkpoint notları güncellendi.
 
 SON COMMITLER
-- Pages cosmetics entegrasyonu: 3c0e9d96cc6cbba4b3dc9dfbbf83f586f6c72dff
-- Cosmetics API/token fix: ca0251045a12902025968b0c501699903ec9776e
-- Profile event fix: 505757fb2bb2650119f0c3aff94595113590943e
-- DM sender/create hardening: dbb42a357a0765ac7407d41223b8d8f1fd1bfd08
-- Önceki DM canlı UI: b5bc1be261881769e5c66bcaf1068d48e6ce83b1
-- Gift UI CI düzeltmesi: 910f4d986c21dbe10deb786202c8a576367c21c6
-- Önceki room chat UI: 19183c483107622f30830832d727252301e76009
-- Önceki backend cleanup: 086ff10016da07f17e526772286ca855389662ce
+- Cosmetics catalog + VIP metadata: ba2d7f91cc0f0aef990559ef496ec381ffdd596e
+- Cosmetics purchase pricing: bbdaaffa79a37a70ec36be1fdce08c33e152fa6e
+- Cosmetics frontend asset resolution: 35f54753fa885f7e3d8f51d0c75dc34fbcd5eeac
+- Yapılanlar checkpoint sync: 38e24a33e1f6b811351a7abd90adf1f002695e32
 
 BACKEND DURUMU
 - /v1/me ve DM conversation/message endpointleri mevcut.
 - /ws/rooms/{room_id} room history, ping/pong ve room_chat kabul ediyor.
 - room_chat DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
 - Gift room_gift event altyapısı mevcut.
-- Cosmetic catalog/purchase/apply API mevcut.
+- Cosmetic catalog/purchase/apply API mevcut ve repository asset klasörleriyle hizalı.
 - Startup user migration ifadeleri tekilleştirilmiş durumda.
 
 FRONTEND DURUMU
@@ -41,7 +37,7 @@ FRONTEND DURUMU
 - DM listesi/history/send gerçek API helper'larına bağlı.
 - DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
 - Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
-- Cosmetics entegrasyonu gerçek token/API akışına bağlandı ve Pages workflow'a dahil edildi.
+- Cosmetics entegrasyonu gerçek token/API akışına bağlandı; standard/VIP katalog ayrımı ve asset URL çözümlemesi eklendi.
 - Pages workflow platform/room/gift/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
 
 HENÜZ DOĞRULANMAYANLAR
@@ -52,8 +48,9 @@ HENÜZ DOĞRULANMAYANLAR
 5. Pages workflow başarı ve canlı Pages URL doğrulaması.
 6. Railway /health, /ready ve API/DB/WS canlı doğrulaması.
 7. V35/v53 tek sayfa temizliği.
-8. Avatar/frame/VIP 1-12 gerçek asset entegrasyonu ve catalog ↔ asset birebir eşleşmesi.
-9. Backend security/DB/migration/rate-limit hardening.
+8. Avatar/frame/VIP asset sayıları, görsel kalite/şeffaflık ve 1-12 birebir eşleşme doğrulaması.
+9. Avatar/frame/VIP purchase/apply canlı E2E doğrulaması.
+10. Backend security/DB/migration/rate-limit hardening.
 
 NOT
 - Railway production deploy yapılmadı; kullanıcı açıkça "deploy" demeden yapılmayacak.
@@ -61,6 +58,6 @@ NOT
 - Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
 
 SONRAKİ AKTİF ADIM
-- Pages failure'ını daha fazla rastgele retry etmek yerine GitHub Pages yapılandırmasını izole et.
-- Ardından room WebSocket ve API canlı E2E doğrulamasına devam et.
-- Sonrasında gerçek avatar/frame/VIP asset katalog entegrasyonunu tamamla.
+- Oda WebSocket canlı E2E ve API canlı doğrulamasına devam et.
+- Pages failure'ını rastgele retry etmek yerine yapılandırma/job ayrıştırmasıyla incele.
+- Sonrasında gerçek avatar/frame/VIP asset sayımını ve görsel katalog ↔ backend eşleşmesini tamamla.
