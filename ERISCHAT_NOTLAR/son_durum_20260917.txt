@@ -15,18 +15,18 @@
 - DM conversation → send → history SUCCESS.
 - Cosmetic catalog → balance → purchase → ownership → apply SUCCESS.
 
-## Quality v4 — yeni bulgu
-- Current main quality run `35257192246`, job `105323627925`: **FAILURE**.
-- Runner checkout SHA: `ccbbe17d169ecd22db4520a42b9b0f38bfcbd6cc`.
-- Python compileall geçti.
-- Frontend static check adımında `frontend/room-gift-ui-live.js:11` üzerinde `SyntaxError: Invalid or unexpected token` tespit edildi.
-- Kök neden: CSS `style.textContent` stringinin kapanışından önce gerçek satır sonu bulunması.
-- Düzeltme main'e işlendi: commit `840ca57a992218dd2fab261464dd9d3638aca439`.
-- Düzeltme sonrası **gerçek Quality v4 runner sonucu henüz oluşmuş/doğrulanmış değil**; PASS iddiası yapılmayacak.
+## Quality v4 — doğrulanmış
+- Quality v4 run `35258712132`, job `105328734923`: **SUCCESS**.
+- Run head SHA: `75fd20f525553602819e50e1c9cca9d2eba263ae`.
+- Static syntax + required-file checks SUCCESS.
+- Local API startup + /ready SUCCESS.
+- Anonymous session, room, ban, DM ve cosmetic smoke SUCCESS.
+- Önceki `frontend/room-gift-ui-live.js:11` syntax failure düzeltmesi gerçek runner'da doğrulandı.
+- Checkpoint dokümantasyon commitleri Quality workflow'u yeniden tetikledi; bunların sonucu ayrıca takip edilecek.
 
 ## Pages kök nedeni
 - `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
-- Diagnostics run `35257192257`, job `105327578309`: FAILURE; runner policy engelini tekrar doğruladı.
+- Diagnostics run `35257192257`, job `105327578309`: FAILURE; runner policy engelini gerçek runner'da doğruladı.
 - Pages deploy run `35257192305`, job `105327600558`: FAILURE; runner adımlarına girmeden environment admission aşamasında durdu.
 - [ ] GitHub Settings → Environments → `github-pages` deployment branch policy içinde `main` izinli hale getirilecek.
 - [ ] Sonrasında Pages deploy tekrar gerçek runner'da doğrulanacak.
@@ -34,7 +34,7 @@
 - [ ] Canlı Pages → Railway API zinciri doğrulanacak.
 
 ## Sıradaki işlem sırası
-1. `840ca57...` düzeltmesi sonrası Quality v4 gerçek runner sonucunu doğrula.
+1. Checkpoint push'ları sonrası Quality koşusunu doğrula.
 2. Pages environment `main` admission engelini çöz.
 3. Pages deploy SUCCESS doğrula.
 4. Canlı Pages HTTP + frontend → Railway API doğrula.
