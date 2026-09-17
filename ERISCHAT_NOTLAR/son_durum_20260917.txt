@@ -29,6 +29,11 @@
 - Session revoke/expiry sonrası geçersiz session ile mesaj işlenmiyor; bağlantı `1008` ile kapatılıyor.
 - Not: Bu uygulama mesaj/aktivite geldiğinde yeniden doğrulama yapıyor; idle bağlantıyı arka planda anında kapatan ayrı heartbeat/revocation watcher henüz eklenmedi.
 
+## Son frontend düzeltmeleri — runner doğrulaması bekliyor
+- Commit `a23bce6f01814d3049a55dc6fb4c9c1a90928d03`: DM konuşma listesindeki `ConversationOut.members` → karşı kullanıcı profilini çözme düzeltmesi.
+- Commit `e26682ce224093dc039a2ea74a16521d99b50f63`: DM mesaj balonlarının `MessageOut.sender_id` üzerinden kendi mesajını doğru hizalaması.
+- Bu iki değişiklik için henüz yeni Quality/live-e2e SUCCESS kanıtı checkpoint'e PASS olarak yazılmadı.
+
 ## Temizlik checkpoint'i
 - Belirgin geçici Pages/CI trigger dosyaları main'den temizlendi: PAGES_FORCE* ailesi, eski PAGES_TRIGGER, room/gift/progress/root trigger kalıntıları ve `.ci` canlı trigger dosyaları.
 - Cleanup sonrası checkpoint notları senkronize edildi.
