@@ -107,3 +107,12 @@ SONRAKİ GELİŞTİRME SIRASI
 KURAL
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
 - Railway deploy yalnızca kullanıcı açıkça "deploy" dediğinde YAPILMAYACAK.
+
+BROWSER DOĞRULAMA CHECKPOINT
+- [x] Playwright Chromium browser smoke eklendi.
+- [x] Quality run 35280867500 / job 105402227348 SUCCESS.
+- [x] Browser smoke: Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesi renderı ve Mesaj → Rana'nın Odası → mesaj gönderme etkileşimi doğrulandı.
+- [ ] Anonymous/me gerçek backend browser akışı.
+- [ ] Room modal + join/seat/chat/gift/moderation tam browser akışı.
+- [ ] 139 kozmetik gerçek browser render/şeffaflık kontrolü.
+- [ ] DM + aile sohbeti + profil/try-on tam browser backend zinciri.
