@@ -1,47 +1,79 @@
 ERISCHAT — SON DURUM
-Tarih: 2026-09-17 12:00 TRT
+Tarih: 2026-09-17 — TAM DENETİM SONRASI
 
 DOĞRULANAN REPO
 - GitHub: semihvarolymk-png/erischat
 - Ana branch: main
-- Repo erişimi ve admin/push yetkisi doğrulandı.
-- Bu kontrol yanlış repo yerine erişilebilir gerçek ErisChat reposunda yapıldı.
+- Repo erişimi ve yazma yetkisi doğrulandı.
+- Recursive repository tree tarandı.
 
-NOTLAR KONTROLÜ
-- ERISCHAT_NOTLAR/son_durum_20260916.txt okundu.
-- ERISCHAT_NOTLAR/son_durum_20260917.txt okundu.
-- ERISCHAT_NOTLAR/son_durum_20260917_actions_arastirma.txt okundu.
-- ERISCHAT_NOTLAR/son_durum_20260917_gece.txt okundu.
-- ERISCHAT_NOTLAR/yapilacaklar.txt okundu.
-- ERISCHAT_NOTLAR/yapilanlar.txt okundu.
+OKUNAN NOTLAR
+- son_durum_20260916.txt
+- son_durum_20260917.txt
+- son_durum_20260917_actions_arastirma.txt
+- son_durum_20260917_gece.txt
+- yapilacaklar.txt
+- yapilanlar.txt
 
-MEVCUT KOD KONTROLÜ
-- frontend/erischat-main.html mevcut ve tam ana frontend olarak duruyor; gerçek oda listesi, profil/VIP/mağaza/anonimlik ekranları ve alt navigasyon aynı sayfada mevcut.
-- frontend/platform.js doğrulandı; varsayılan API https://erischat-production.up.railway.app/v1 ve token fallback'leri mevcut.
-- .github/workflows/pages.yml doğrulandı; Pages workflow'u github-pages environment kullanıyor, frontend'i _site içine hazırlıyor ve index.html üretiyor.
-- ERISCHAT_NOTLAR önceki teşhisindeki v53 iframe yaklaşımı final olarak kabul edilmiyor.
-- Room/gift sistemiyle ilgili önceki checkpointlerde belirtilen server kontrollü katalog, %70 alıcı payı, 1-99 quantity, room_gift WebSocket ve gift-live.js entegrasyonu mevcut olarak kayıtlı.
+GERÇEK KOD DENETİMİ
+- Frontend: frontend/erischat-main.html mevcut; tek sayfa uygulama tabanı ve profil/VIP/mağaza/anonimlik ekranları mevcut.
+- Frontend API: frontend/platform.js Railway /v1 API'ye yönleniyor.
+- Room gift canlı katmanı: frontend/gift-live.js /ws/rooms/{room_id} bağlantısını ve room_gift eventini dinliyor.
+- Backend: backend/app/main.py, room_routes.py, platform_routes.py, cosmetic_routes.py ve ilgili model/repository/schema dosyaları mevcut.
+- /health ve /ready mevcut.
+- Anonymous registration/session/token mevcut.
+- DM conversation/message API mevcut.
+- Genel /ws ve oda /ws/rooms/{room_id} mevcut.
+- Room CRUD/join/seat/moderator/ban/chat kodu mevcut.
+- Server kontrollü gift catalog, 1-99 quantity, %70 recipient payı ve room_gift event mevcut.
+- Cosmetic catalog/purchase/apply API mevcut.
+
+DENETİMDE BULUNAN TEKNİK TEMİZLİK
+- backend/app/main.py içinde gender/avatar_asset/frame_asset ALTER TABLE ifadeleri iki kez bulunuyordu.
+- Yinelenen ifadeler kaldırıldı.
+- Commit: 88307a01f10b3887c37f9d1e7acff29978b12171.
+- Bu değişiklik production deploy edilmedi.
 
 GITHUB ACTIONS / PAGES
-- Run #164 / ID 35196963608 incelendi.
-- Job ID 105122355411 mevcut fakat job steps null; run failure ile sonuçlanmış.
-- Workflow dosyası şu an environment: github-pages içeriyor.
-- Önceki başarılı hazırlık/artifact aşaması notlarda kayıtlı; mevcut engel Pages deployment/environment tarafında.
-- Bu connector üzerinden environment approval verme yetkisi bulunmadığından kod tarafında sahte bir başarı oluşturulmadı.
+- pages.yml doğru Pages artifact/deploy akışını içeriyor.
+- Önceki testlerde checkout/setup/frontend hazırlama/artifact adımları çalışmıştı.
+- Environment: github-pages mevcut.
+- Son doğrulanan run #164 failure durumundaydı; canlı Pages deployment henüz başarıyla doğrulanmadı.
+- Bu nedenle Pages konusu tamamlandı işaretlenmedi.
 
-GÜVENLİK / DEPLOY
-- Railway production deploy yapılmadı ve kullanıcı açıkça deploy demeden yapılmayacak.
-- Büyük frontend HTML dosyası kısmi içerikle overwrite edilmeyecek.
-- Main güvenli checkpoint kaydı korunuyor: aef369bf05d1a6b6af36ce40cd2f9bb41678d339.
+HENÜZ YAPILMAYANLAR
+1. Pages failure nedeninin güncel run üzerinden kesinleştirilmesi ve canlı yayın doğrulaması.
+2. Frontend'deki demo/mock alanlarının tek tek kaldırılması veya açıkça ayrılması.
+3. Anonymous login/session/token/logout UI akışının canlı test edilmesi.
+4. Gerçek oda + iki kullanıcı + oda sohbeti smoke testi.
+5. Gerçek gift + room_gift + DB bakiye/%70 dağıtım smoke testi.
+6. Genel DM WebSocket/presence/reconnect UI entegrasyonu.
+7. V35/v53 mimari temizliği ve eski nav çakışmasının giderilmesi.
+8. Avatar/frame asset envanteri ve VIP 1-12 gerçek asset entegrasyonu.
+9. CORS, rate limit, abuse, migration ve DB constraint hardening.
+10. __pycache__ temizliği.
+11. Railway health/ready/build/runtime canlı doğrulaması.
+12. WebRTC, moderasyon, admin paneli ve bildirimlerin tamamlanması.
 
-SONRAKİ GERÇEK İŞ SIRASI
-1. GitHub Pages environment/approval engelini GitHub tarafında çöz ve yeni Pages run'ı doğrula.
-2. Pages canlı frontend URL'sini doğrula.
-3. Frontend → Railway API bağlantısını doğrula.
-4. WebSocket bağlantısını doğrula.
-5. Gerçek iki kullanıcı room/gift smoke testini yap.
-6. Sonuçlara göre yapilacaklar/yapilanlar dosyalarını tekrar senkronize et.
-7. Ardından tek sayfa/VIP-avatar-frame kalan ürün işlerine geç.
+ÇALIŞMA SIRASI
+- Önce Pages/Actions doğrulaması.
+- Sonra frontend ↔ API endpoint eşleşmeleri.
+- Sonra gerçek anonim kullanıcı + oda + sohbet + gift testleri.
+- Sonra tek sayfa/V35 temizliği.
+- Sonra avatar/frame/VIP asset entegrasyonu.
+- Sonra backend güvenlik/kalite.
+- Sonra ürün özellikleri.
 
-NOT
-- Bu dosya mevcut gerçek repo ve kod kontrolüne göre güncellendi. Önceki yanlış repo varsayımı geçersizdir.
+GÜVENLİK
+- Büyük frontend HTML dosyası kısmi içerikle update edilmeyecek.
+- Railway production deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
+- Test edilmemiş iş tamamlandı olarak işaretlenmeyecek.
+
+GÜNCEL DOKÜMANTASYON COMMITLERİ
+- Master durum: 6bb856e...
+- Migration temizliği: 88307a0...
+- Yapılacaklar: ec529b6...
+- Yapılanlar: 45397dc...
+
+SONRAKİ İŞ
+- Artık listeler senkronize. Bir sonraki geliştirme doğrudan açık maddelerden yapılacak; tekrar genel kontrol döngüsüne dönülmeyecek.
