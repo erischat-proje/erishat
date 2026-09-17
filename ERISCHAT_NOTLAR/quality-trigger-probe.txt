@@ -1,2 +1,3 @@
-Temporary harmless commit used to verify the known-good quality probe can trigger after being restored.
-Probe iteration: 4
+Temporary harmless commit used to verify the fresh-path ErisChat quality workflow triggers after registration.
+Probe iteration: 5
+Stale .github/workflows/quality.yml removed; active workflow is .github/workflows/erischat-quality.yml.
