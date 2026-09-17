@@ -1,79 +1,46 @@
 ERISCHAT — SON DURUM
-Tarih: 2026-09-17 — TAM DENETİM SONRASI
+Tarih: 2026-09-17 — canlı geliştirme checkpoint
 
 DOĞRULANAN REPO
 - GitHub: semihvarolymk-png/erischat
 - Ana branch: main
 - Repo erişimi ve yazma yetkisi doğrulandı.
-- Recursive repository tree tarandı.
 
-OKUNAN NOTLAR
-- son_durum_20260916.txt
-- son_durum_20260917.txt
-- son_durum_20260917_actions_arastirma.txt
-- son_durum_20260917_gece.txt
-- yapilacaklar.txt
-- yapilanlar.txt
+BU TURDA YAPILAN
+- frontend/gift-live.js güncellendi.
+- Oda WebSocket artık room_history olayını UI chat alanına aktarıyor.
+- room_chat olayları gerçek zamanlı olarak UI'ya render ediliyor.
+- Oda mesaj gönderme fonksiyonu gerçek WebSocket room_chat payload'ı gönderiyor.
+- Mevcut DOM korunarak placeholder toast handler'ı gerçek gönderim handler'ı ile değiştirildi.
+- Gift/room_gift akışı korunarak chat ile aynı room WebSocket üzerinde çalışıyor.
+- Commit: 19183c483107622f30830832d727252301e76009.
 
-GERÇEK KOD DENETİMİ
-- Frontend: frontend/erischat-main.html mevcut; tek sayfa uygulama tabanı ve profil/VIP/mağaza/anonimlik ekranları mevcut.
-- Frontend API: frontend/platform.js Railway /v1 API'ye yönleniyor.
-- Room gift canlı katmanı: frontend/gift-live.js /ws/rooms/{room_id} bağlantısını ve room_gift eventini dinliyor.
-- Backend: backend/app/main.py, room_routes.py, platform_routes.py, cosmetic_routes.py ve ilgili model/repository/schema dosyaları mevcut.
-- /health ve /ready mevcut.
-- Anonymous registration/session/token mevcut.
-- DM conversation/message API mevcut.
-- Genel /ws ve oda /ws/rooms/{room_id} mevcut.
-- Room CRUD/join/seat/moderator/ban/chat kodu mevcut.
-- Server kontrollü gift catalog, 1-99 quantity, %70 recipient payı ve room_gift event mevcut.
-- Cosmetic catalog/purchase/apply API mevcut.
+BACKEND DURUMU
+- /ws/rooms/{room_id} backend endpointi room history, ping/pong ve room_chat kabul ediyor.
+- room_chat mesajları DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
+- Gift endpointi room_gift eventini aynı broadcast katmanına gönderiyor.
 
-DENETİMDE BULUNAN TEKNİK TEMİZLİK
-- backend/app/main.py içinde gender/avatar_asset/frame_asset ALTER TABLE ifadeleri iki kez bulunuyordu.
-- Yinelenen ifadeler kaldırıldı.
-- Commit: 88307a01f10b3887c37f9d1e7acff29978b12171.
-- Bu değişiklik production deploy edilmedi.
-
-GITHUB ACTIONS / PAGES
-- pages.yml doğru Pages artifact/deploy akışını içeriyor.
-- Önceki testlerde checkout/setup/frontend hazırlama/artifact adımları çalışmıştı.
-- Environment: github-pages mevcut.
-- Son doğrulanan run #164 failure durumundaydı; canlı Pages deployment henüz başarıyla doğrulanmadı.
-- Bu nedenle Pages konusu tamamlandı işaretlenmedi.
+DOKÜMANTASYON
+- yapilacaklar.txt güncellendi.
+- yapilanlar.txt güncellendi.
+- Oda chat UI maddesi artık kod tarafında tamam, canlı iki istemci E2E testi bekliyor.
 
 HENÜZ YAPILMAYANLAR
-1. Pages failure nedeninin güncel run üzerinden kesinleştirilmesi ve canlı yayın doğrulaması.
-2. Frontend'deki demo/mock alanlarının tek tek kaldırılması veya açıkça ayrılması.
-3. Anonymous login/session/token/logout UI akışının canlı test edilmesi.
-4. Gerçek oda + iki kullanıcı + oda sohbeti smoke testi.
-5. Gerçek gift + room_gift + DB bakiye/%70 dağıtım smoke testi.
-6. Genel DM WebSocket/presence/reconnect UI entegrasyonu.
-7. V35/v53 mimari temizliği ve eski nav çakışmasının giderilmesi.
-8. Avatar/frame asset envanteri ve VIP 1-12 gerçek asset entegrasyonu.
-9. CORS, rate limit, abuse, migration ve DB constraint hardening.
-10. __pycache__ temizliği.
-11. Railway health/ready/build/runtime canlı doğrulaması.
-12. WebRTC, moderasyon, admin paneli ve bildirimlerin tamamlanması.
+1. Oda chat iki istemci canlı E2E testi.
+2. Gerçek gift/room_gift ve DB bakiye/%70 smoke testi.
+3. Hardcoded/demo DM ekranlarının gerçek conversation API'larına bağlanması.
+4. Anonymous/session/profile/logout UI akışları.
+5. Genel WS reconnect/presence/event UI.
+6. Pages failure kök nedeni ve canlı Pages doğrulaması.
+7. Railway /health, /ready ve API/DB/WS canlı doğrulaması.
+8. V35/v53 tek sayfa temizliği.
+9. Avatar/frame/VIP 1-12 gerçek asset entegrasyonu.
+10. Backend security/DB/migration/rate-limit hardening.
 
-ÇALIŞMA SIRASI
-- Önce Pages/Actions doğrulaması.
-- Sonra frontend ↔ API endpoint eşleşmeleri.
-- Sonra gerçek anonim kullanıcı + oda + sohbet + gift testleri.
-- Sonra tek sayfa/V35 temizliği.
-- Sonra avatar/frame/VIP asset entegrasyonu.
-- Sonra backend güvenlik/kalite.
-- Sonra ürün özellikleri.
+NOT
+- Railway production deploy yapılmadı; kullanıcı açıkça "deploy" demeden yapılmayacak.
+- Büyük frontend HTML dosyası kısmi içerikle overwrite edilmeyecek.
+- Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
 
-GÜVENLİK
-- Büyük frontend HTML dosyası kısmi içerikle update edilmeyecek.
-- Railway production deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
-- Test edilmemiş iş tamamlandı olarak işaretlenmeyecek.
-
-GÜNCEL DOKÜMANTASYON COMMITLERİ
-- Master durum: 6bb856e...
-- Migration temizliği: 88307a0...
-- Yapılacaklar: ec529b6...
-- Yapılanlar: 45397dc...
-
-SONRAKİ İŞ
-- Artık listeler senkronize. Bir sonraki geliştirme doğrudan açık maddelerden yapılacak; tekrar genel kontrol döngüsüne dönülmeyecek.
+SONRAKİ AKTİF ADIM
+- Oda WebSocket canlı E2E testini mümkün olan araçlarla doğrula; ardından gerçek DM UI entegrasyonuna geç.
