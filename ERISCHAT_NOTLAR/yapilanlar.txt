@@ -80,3 +80,7 @@ BROWSER/COSMETICS CHECKPOINT
 - [x] Quality run 35281783827 / job 105405134485 SUCCESS.
 - [x] 139/139 asset browser tarafından decode/render edildi.
 - [ ] PNG frame alpha: 16/44 şeffaf, 28/44 opak; opak frame'ler tasarım açısından ayrıca incelenecek.
+
+Room control checkpoint
+- [x] Live room smoke genişletildi: join seat, moderator add/remove, seat mute/unmute, seat lock/unlock, room lock/unlock.
+- [x] Quality run 35282680644 / job 105407977869 SUCCESS.
