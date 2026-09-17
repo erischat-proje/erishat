@@ -15,13 +15,14 @@
 - `.github/workflows/quality.yml` içine smoke harness Python syntax kontrolü, eski `/auth/anonymous` endpoint'ini reddeden contract guard ve localhost güvenlik varsayılanlarını doğrulayan kontrol eklendi.
 - Bu değişiklikler gerçek canlı E2E PASS anlamına gelmiyor; harness'lar hâlâ çalıştırılmayı bekliyor.
 
-## Kozmetik hedefleri ve gerçek envanter
-- Checker hedefleri: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
-- Gerçek klasör envanteri: kadınavatar 34, erkekavatar 36, standart avatar toplam 70; standartcerceve 30; vipkadınavatar 12, viperkekavatar 12, VIP avatar toplam 24; vipcerceve 12.
-- Sonuç: standart avatar 70/40, standart frame 30/40, VIP avatar 24/12, VIP frame 12/12.
-- `backend/app/cosmetics.py` gerçek `Gereken_icerikler` klasörlerinden katalog üretiyor; asset key'ler root-relative path olarak tutuluyor.
-- Eksik/fazla assetler için rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
-- Hedeflerin cinsiyet dağılımı repo tasarımından kesinleşmeden checker semantiği değiştirilmeyecek.
+## Kozmetik tam aktif envanter modeli
+- Önceden kullanılan 40 standart avatar / 40 standart frame / 12 VIP avatar / 12 VIP frame sayıları artık sabit hedef değildir; bunlar eski referans değerleriydi.
+- Yeni kural: `Gereken_icerikler` içindeki altı katalog klasöründe bulunan tüm geçerli assetler aktif katalogda yer alır.
+- Aktif katalog klasörleri: `kadınavatar`, `erkekavatar`, `standartcerceve`, `vipkadınavatar`, `viperkekavatar`, `vipcerceve`.
+- Son CI envanteri: kadınavatar 34, erkekavatar 37, standart avatar toplam 71; standartcerceve 32; vipkadınavatar 12, viperkekavatar 12, VIP avatar toplam 24; vipcerceve 12.
+- `backend/app/cosmetics.py` gerçek bu klasörlerden otomatik katalog üretiyor ve asset key'leri root-relative path olarak tutuyor. Dolayısıyla klasörlerdeki geçerli assetlerin tamamı uygulamanın aktif kozmetik kaynağıdır.
+- `scripts/check_cosmetic_assets.py` artık sabit hedeflerle karşılaştırma yapmıyor. Tüm aktif klasörleri listeliyor, gerçek toplamları raporluyor, eksik katalog klasörlerini ve duplicate asset key'lerini yakalıyor.
+- Rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
 
 ## GitHub Pages
 - Pages workflow hazırlama zinciri incelendi: checkout → configure-pages → frontend hazırlama → JS enjeksiyonu → asset kontrolleri → artifact upload → deploy-pages.
@@ -54,11 +55,11 @@
 
 ## CI checkpoint
 - `Integrate ErisChat features` run `35218672931`: success; job `105193189310` içindeki patch, Python syntax, commit adımları tamamlandı.
-- Yeni quality commit'i `f1a12e0dfe593591e49edf9dd3cfae7d1f8db3f7`; commit status sorgusunda henüz `pending` ve status listesi boştu, bu nedenle yeni quality sonucu PASS/FAIL olarak yazılmadı.
-- `ErisChat quality checks` içinde backend-quality daha önce başarılı; cosmetic-inventory gerçek asset hedef uyuşmazlığı nedeniyle takipte.
+- Cosmetic inventory checker yeni tam-envarter mantığına geçirildi ve commitlendi: `60c77f225ca3815cc85c1f0de3c54bd62687716f`.
+- Bu değişiklik sonrası quality workflow'un yeni sonucu henüz doğrulanmadı.
 
 ## Yeni sohbet için devam mesajı
-`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Smoke harness contract düzeltmeleri yapıldı; şimdi quality sonucunu ve ardından kontrollü/local E2E'yi takip et. Canlı E2E olmadan PASS deme.`
+`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Kozmetiklerde sabit 40/40/12/12 hedefi yok; Gereken_icerikler altındaki tüm geçerli standart/VIP avatar ve çerçeveler aktif katalogdur. Inventory checker buna göre güncellendi. Şimdi yeni quality run sonucunu kontrol et ve ardından kontrollü/local E2E'ye geç. Canlı E2E olmadan PASS deme.`
 
 ## Kural
 - Canlı/local E2E yapılmadan özellik tamamlandı sayılmayacak.
