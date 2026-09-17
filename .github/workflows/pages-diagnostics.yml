@@ -88,6 +88,10 @@ jobs:
         run: |
           set -euo pipefail
           test -s frontend/erischat-main.html
-          grep -q 'platform.js' frontend/erischat-main.html
-          grep -q 'auth-live.js' frontend/erischat-main.html
-          echo 'Frontend source checks OK'
+          for script in \
+            platform.js demo-cleanup.js room-live.js gift-live.js room-actions.js \
+            room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js \
+            cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js; do
+            test -s "frontend/$script"
+          done
+          echo 'Frontend artifact source checks OK'
