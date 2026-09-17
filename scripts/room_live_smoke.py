@@ -48,6 +48,17 @@ def register(label: str):
 
 def main() -> int:
     print(f"ErisChat room smoke target: {API}")
+
+    # Room discovery/listing must not accidentally become public when auth
+    # dependencies are registered dynamically at application startup.
+    status, unauth_rooms = request("GET", "/rooms")
+    if status != 401:
+        raise AssertionError(f"unauthenticated room list expected HTTP 401, got {status}: {unauth_rooms}")
+    status, unauth_discovery = request("GET", "/discover/rooms?limit=1&offset=0")
+    if status != 401:
+        raise AssertionError(f"unauthenticated room discovery expected HTTP 401, got {status}: {unauth_discovery}")
+    print("room auth guard OK: /rooms and /discover/rooms require authentication")
+
     token_a, user_a = register("A")
     token_b, user_b = register("B")
     uid_a = user_a.get("user_id") or user_a.get("id")
