@@ -15,13 +15,19 @@ BU TURDA YAPILAN
 - Cosmetic purchase/apply cevaplarına vip alanı eklendi.
 - frontend/cosmetics.js repository-relative asset_key değerlerini frontend asset URL'lerine çözümleyecek şekilde güçlendirildi.
 - frontend/cosmetics.js standard/VIP filtreleme ve owned kontrol helper'ları eklendi.
-- Yapılanlar ve checkpoint notları güncellendi.
+- Room ban WebSocket erişim ve mesaj akışında tekrar kontrol ediliyor; ban oda-bazlı kalıyor.
+- Room ban sırasında üyelik ve koltuk kaydı temizleniyor; RoomBan kaydı room_id + user_id ile benzersiz.
+- frontend/room-actions.js eklendi; oda oluşturma/katılma/ayrılma, koltuk, chat, moderatör, ban/unban, oda/koltuk kilidi, mute, gift ve müzik REST işlemleri tek helper altında toplandı.
+- GitHub Pages hazırlama workflow'una room-actions.js eklendi ve artifact kontrolüne dahil edildi.
 
 SON COMMITLER
 - Cosmetics catalog + VIP metadata: ba2d7f91cc0f0aef990559ef496ec381ffdd596e
 - Cosmetics purchase pricing: bbdaaffa79a37a70ec36be1fdce08c33e152fa6e
 - Cosmetics frontend asset resolution: 35f54753fa885f7e3d8f51d0c75dc34fbcd5eeac
-- Yapılanlar checkpoint sync: 38e24a33e1f6b811351a7abd90adf1f002695e32
+- Room ban hardening: 7efe03a51838499de0afcae3113c3297b26ca3f6
+- Room routes ban/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
+- Room REST action helpers: d3f0b2617e151a581cd73868f14c220424a96de6
+- Pages workflow room-actions integration: 22c5e9e235d316422bff4bfff03feb5e63d0e654
 
 BACKEND DURUMU
 - /v1/me ve DM conversation/message endpointleri mevcut.
@@ -29,16 +35,17 @@ BACKEND DURUMU
 - room_chat DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
 - Gift room_gift event altyapısı mevcut.
 - Cosmetic catalog/purchase/apply API mevcut ve repository asset klasörleriyle hizalı.
+- RoomBan room_id + user_id bazlı; farklı odalardaki erişimi etkilemiyor.
 - Startup user migration ifadeleri tekilleştirilmiş durumda.
 
 FRONTEND DURUMU
 - Oda listesi gerçek /v1/rooms API'sine bağlı.
 - Oda chat UI gerçek room WebSocket akışına bağlı.
+- Room REST action helper'ları hazır ve Pages artifact hazırlamasına dahil edildi.
 - DM listesi/history/send gerçek API helper'larına bağlı.
 - DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
 - Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
 - Cosmetics entegrasyonu gerçek token/API akışına bağlandı; standard/VIP katalog ayrımı ve asset URL çözümlemesi eklendi.
-- Pages workflow platform/room/gift/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
 
 HENÜZ DOĞRULANMAYANLAR
 1. Oda chat iki istemci canlı E2E testi.
@@ -56,8 +63,11 @@ NOT
 - Railway production deploy yapılmadı; kullanıcı açıkça "deploy" demeden yapılmayacak.
 - Büyük frontend HTML dosyası kısmi içerikle overwrite edilmeyecek.
 - Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
+- Pages workflow'a yeni room-actions helper'ı eklendi ancak workflow sonucu henüz doğrulanmadı.
 
 SONRAKİ AKTİF ADIM
-- Oda WebSocket canlı E2E ve API canlı doğrulamasına devam et.
-- Pages failure'ını rastgele retry etmek yerine yapılandırma/job ayrıştırmasıyla incele.
+- Oda WebSocket iki istemci canlı E2E ve API canlı doğrulamasına devam et.
+- Ban listesi için yönetim görünümü/API ihtiyacını tamamla; oda-bazlı ban semantiğini koru.
+- Gift gönderme ve %70 bakiye akışını gerçek DB smoke testiyle doğrula.
+- Pages failure'ını yapılandırma/job ayrıştırmasıyla incele.
 - Sonrasında gerçek avatar/frame/VIP asset sayımını ve görsel katalog ↔ backend eşleşmesini tamamla.
