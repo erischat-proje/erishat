@@ -14,9 +14,18 @@
     if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
     return data;
   };
-  const state = {catalog: [], owned: [], user: null};
+  const state = {catalog: [], owned: [], user: null, prices: {standard: 1000, vip: 5000}};
   const list = value => Array.isArray(value) ? value : value?.items || value?.cosmetics || value?.data || [];
   const emit = () => window.dispatchEvent(new CustomEvent('erischat:cosmetics-updated', {detail: state}));
+
+  // Asset keys are repository-relative. This keeps them working on GitHub Pages
+  // and any other static frontend host without coupling the API to that host.
+  const assetUrl = key => {
+    if (!key) return '';
+    if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
+    const clean = String(key).replace(/^\.\//, '');
+    return new URL(encodeURI(`./${clean}`), document.baseURI).href;
+  };
 
   async function load() {
     try {
@@ -24,6 +33,10 @@
       state.catalog = list(catalog);
       state.owned = list(owned);
       state.user = user;
+      state.prices = {
+        standard: Number(catalog?.price) || 1000,
+        vip: Number(catalog?.vip_price) || 5000,
+      };
       emit();
       applyAppearance();
       return state;
@@ -54,30 +67,35 @@
   function applyAppearance(root = document) {
     const user = state.user;
     if (!user) return;
-    const avatar = assetValue(user.avatar_asset, '');
-    const frame = assetValue(user.frame_asset, '');
+    const avatarKey = assetValue(user.avatar_asset, '');
+    const frameKey = assetValue(user.frame_asset, '');
+    const avatar = assetUrl(avatarKey);
+    const frame = assetUrl(frameKey);
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {
       if (!avatar) return;
-      if (/^(https?:|data:|\/|\.\.?\/)/.test(avatar)) {
-        el.style.backgroundImage = `url(${avatar})`;
-        el.style.backgroundSize = 'cover';
-        el.style.backgroundPosition = 'center';
-        el.textContent = '';
-      }
+      el.style.backgroundImage = `url("${avatar}")`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.textContent = '';
     });
     root.querySelectorAll('[data-user-frame], .profile .frameImg, .user-frame').forEach(el => {
-      if (!frame || !/^(https?:|data:|\/|\.\.?\/)/.test(frame)) return;
+      if (!frame) return;
       if (el.tagName === 'IMG') el.src = frame;
       else {
-        el.style.backgroundImage = `url(${frame})`;
+        el.style.backgroundImage = `url("${frame}")`;
         el.style.backgroundSize = 'cover';
         el.style.backgroundPosition = 'center';
+        el.style.backgroundRepeat = 'no-repeat';
       }
       el.style.display = '';
     });
   }
 
-  window.ErisChatCosmetics = {load, purchase, apply, state, applyAppearance};
+  const get = (type, vip = null) => state.catalog.filter(item => item.type === type && (vip === null || Boolean(item.vip) === vip));
+  const owned = (type, key) => state.owned.some(item => item.cosmetic_type === type && item.asset_key === key);
+
+  window.ErisChatCosmetics = {load, purchase, apply, state, get, owned, assetUrl, applyAppearance};
   window.addEventListener('erischat:auth', event => {
     if (event.detail?.state === 'ready') load();
   });
