@@ -1,2 +1,2 @@
-Temporary harmless commit used to verify the registered ErisChat CI quality workflow triggers on a normal main push after workflow registration.
-Probe iteration: 2
+Temporary harmless commit used to verify the fresh-path ErisChat quality workflow triggers after registration.
+Probe iteration: 3
