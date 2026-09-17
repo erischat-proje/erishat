@@ -1,5 +1,6 @@
 name: ErisChat quality checks v2
 
+# live-e2e retrigger marker: 2026-09-17 websocket-route-fix validation-4
 on:
   push:
     branches: [main]
