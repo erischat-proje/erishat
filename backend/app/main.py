@@ -119,7 +119,7 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> Session
 
 
 @app.post("/v1/users/demo/ensure", response_model=UserOut)
-def create_demo_user(db: Session = Depends(get_db)) -> User:
+def create_demo_user(db: Session = Depends(get_db)) -> UserOut:
     return ensure_demo_user(db)
 
 
@@ -351,7 +351,11 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             with Session(engine) as db:
                 room = db.get(Room, room_id)
                 member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+                seat = db.query(RoomSeat).filter(RoomSeat.room_id == room_id, RoomSeat.user_id == user.id).first()
                 if not room or not member or not room.chat_enabled:
+                    continue
+                if seat and seat.muted:
+                    await websocket.send_json({"type":"room_chat_error","code":"muted","message":"Mikrofonunuz susturuldu."})
                     continue
                 msg = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
                 db.add(msg)
