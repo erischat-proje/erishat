@@ -11,6 +11,14 @@ permissions:
   contents: read
 
 jobs:
+  ci-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate CI live-E2E contract
+        run: python scripts/ci_contract_check.py
+
   backend-quality:
     runs-on: ubuntu-latest
     steps:
