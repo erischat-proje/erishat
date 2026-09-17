@@ -142,8 +142,10 @@
       body.innerHTML = '';
       if (!messages.length) body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Henüz mesaj yok.</div>';
       messages.forEach(m => {
+        const senderId = m.sender_id ?? m.user_id;
+        const mine = typeof m.is_mine === 'boolean' ? m.is_mine : String(senderId) === String(currentUserId);
         const row = document.createElement('div');
-        row.className = 'bubble' + (m.is_mine ? ' me' : '');
+        row.className = 'bubble' + (mine ? ' me' : '');
         row.textContent = esc(m.text ?? m.message ?? '');
         body.appendChild(row);
       });
