@@ -63,6 +63,17 @@ jobs:
             } catch (e) {
               out.environment_error = { status: e.status, message: e.message };
             }
+            try {
+              const r = await github.request('GET /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies', {
+                owner,
+                repo,
+                environment_name: 'github-pages',
+                per_page: 100,
+              });
+              out.custom_branch_policies = r.data;
+            } catch (e) {
+              out.custom_branch_policies_error = { status: e.status, message: e.message };
+            }
             core.info(JSON.stringify(out, null, 2));
             if (out.pages_error && out.pages_error.status !== 404) {
               core.setFailed(`Pages API diagnostic failed: ${out.pages_error.message}`);
@@ -102,17 +113,3 @@ jobs:
             test -s "frontend/$script"
           done
           echo 'Frontend artifact source checks OK'
-
-  environment-probe:
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    steps:
-      - name: Prove github-pages environment reaches a runner
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "environment probe reached runner"
-          echo "ref=${GITHUB_REF}"
-          echo "sha=${GITHUB_SHA}"
-          echo "environment=${GITHUB_ENVIRONMENT:-github-pages}"
