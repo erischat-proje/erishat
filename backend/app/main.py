@@ -343,6 +343,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept()
     room_chat_connections.setdefault(room_id, set()).add(websocket)
+    await websocket.send_json({"type":"room_history","messages":history_payload})
     try:
         while True:
             data = await websocket.receive_json()
@@ -394,6 +395,19 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         except Exception:
             pass
 
-frontend_path = Path(__file__).resolve().parents[2] / "frontend"
-if frontend_path.is_dir():
-    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+
+@app.get("/v1/demo")
+def demo(db: Session = Depends(get_db)) -> dict:
+    user = ensure_demo_user(db)
+    return {"id": user.id, "public_id": user.public_id, "nickname": user.nickname, "avatar": user.avatar, "message": "ErisChat API hazır"}
+
+
+@app.get("/v1/debug/tables")
+def debug_tables(db: Session = Depends(get_db)) -> dict[str, list[str]]:
+    result = db.execute(text("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).all()
+    return {"tables": [row[0] for row in result]}
+
+
+static_dir = Path(__file__).resolve().parents[2] / "frontend"
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
