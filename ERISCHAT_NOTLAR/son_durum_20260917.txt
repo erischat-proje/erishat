@@ -3,16 +3,18 @@
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
 - Müşteri demo fazı: ürün yüzeyi mümkün olduğunca tek vitrinde toplandı.
+- VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi müşteri demosuna eklendi.
+- Oyunlar için oynanabilir demo vitrini eklendi; gerçek ekonomi ayrı backend işi olarak işaretli.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
 ## Müşteri ürün vitrini
-`frontend/full-demo-live.js` + `frontend/demo-controls-live.js` ile görünen ana sistemler:
 - Odalar: oda açma, liste, detay, katıl/ayrıl, koltuk, chat kontrolü, duyuru görünümü.
 - Oda araçları: moderatör, ban, hediye kataloğu/gönderimi için demo kontrol yüzeyi.
 - Mağaza: 139 kozmetik katalog, standart/VIP filtreleri, satın alma/uygulama yüzeyi.
-- VIP: VIP 1 → 12.
+- VIP: VIP 1 → 12; her seviye için ayrı ayrı sistem ayrıcalıkları görünür.
+- VIP cinsiyet ödülleri: erkek VIP 1–12 avatarları, kadın VIP 1–12 avatarları ve VIP 1–12 çerçeveleri görünür.
 - Aile: oluşturma, seviye, kapasite, bakiye, bağış, sohbet durumu.
-- Oyunlar: Roulette ve 4 Kupa için gerçek endpoint'e bağlı demo kontrolleri.
+- Oyunlar: Roulette ve 4 Kupa müşteri demo simülasyonu + mevcut endpoint kontrolleri.
 - Keşif: yakın, rastgele sohbet, rastgele oda + keşif tercihleri.
 - Sosyal: profil, fan seviyesi, profil hediyeleri.
 - Profil: `/me`, VIP ve profil düzenleme.
@@ -20,19 +22,21 @@
 - Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü.
 - Şikayet: kullanıcı / oda / mesaj hedefleri.
 - Ürün: bütün sistemlerin müşteri haritası.
+- Müşteri demo kontrol listesi: demo ile gerçek üretim backlog'u ayrıştırılıyor.
 
-## Yeni commitler
-- `17792cc0f75bfb0cf7c7cd9086bdbfeaad743bfc` — demo control layer.
-- `e9cc99434d3737c905f2efc7ec25b46a6c205141` — product shell + demo control layer loader.
-- `a08db80912d42f9e0583b9f93874d48bafb172a2` — Quality workflow'da demo-controls syntax/required-file kontrolü.
-- `2378520130b07cfc5e9c888beacb4173f5f96417` — müşteri demo eksik kayıt dosyası.
+## Bu turdaki commitler
+- `147cc33914e23dfab01cd9ed426a35bac4171046` — VIP ödül matrisi + cinsiyet bazlı avatarlar + oyun demo katmanı.
+- `a436153acd103f240ecc561cd059864b593a88f3` — complete demo layer loader.
+- `695d5a5bc2841e04ea20363a8aa133013bab614b` — demo-controls üzerinden complete demo katmanını zincire bağladı.
+- `84109cf63dd098c041f07883216eefe3d49de42d` — müşteri demo eksik kayıt/checkpoint güncellendi.
 
 ## Doğrulama
-- Yeni HEAD için GitHub workflow sonucu kontrol edildi; henüz sonuç dönmedi.
+- `a436153acd103f240ecc561cd059864b593a88f3` için GitHub workflow sorgusu yapıldı; henüz workflow sonucu dönmedi.
 - Bu nedenle yeni katmanlar için PASS/TAMAM iddiası yok.
-- Önceki doğrulanmış Quality v4: run `35266995579` / job `105356518821` SUCCESS.
+- Önceki doğrulanmış Quality: run `35268797342` / job `105362578713` SUCCESS.
+- Static Quality workflow zaten `demo-controls-live.js` için syntax/required-file kontrolü yapıyor; complete katmanı bu dosya üzerinden yükleniyor.
 
-## Müşteri demo eksikleri — gerçek geliştirme backlog'u
+## Gerçek geliştirme backlog'u
 Ayrıntılı kayıt: `ERISCHAT_NOTLAR/musteri_demo_eksikleri_20260917.txt`
 - Gerçek ses/WebRTC/mikrofon transportu.
 - Browser uçtan uca doğrulama.
