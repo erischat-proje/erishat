@@ -9,11 +9,10 @@
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
 ## Son gerçek GitHub kanıtı
-- Quality run `35278981991` / quality job `105396283536` SUCCESS.
-- Bu run head'i `a450ee309219170c459e98a6018fd4de6bfd56b4`.
+- Quality run `35279859803` / quality job `105399048309` SUCCESS. Head: `6ac17ddedf3fd8719ff98430dab6a5a840cf8748`.
 - Quality job içinde static checks, customer demo surface integrity, family route integrity, family production integration integrity, cosmetics integrity, cosmetics URL smoke ve local API startup SUCCESS.
 - Anonymous session smoke SUCCESS.
-- Live family smoke SUCCESS; üye listesi, davet, rol değiştirme, çıkarma ve chat message POST zinciri aynı smoke içinde geçti.
+- Live family smoke SUCCESS; üye listesi, davet, rol değiştirme, bağış/level-capacity, çıkarma ve chat message POST zinciri geçti.
 - Live room, live ban, live DM ve live cosmetic smoke SUCCESS.
 - Pages deploy/diagnostics başarısızlıkları Quality kanıtı değildir; Pages environment policy ayrı konudur.
 
@@ -23,7 +22,7 @@
 - `backend/app/family_routes.py` içindeki member list/invite/role/remove ve chat message route zinciri runtime'da erişilebilir hale getirildi ve Quality canlı smoke ile doğrulandı.
 - Family route bootstrap mevcut platform router kayıt zincirine bağlandı; mevcut create/detail/donate/chat üretim akışları korunarak unique member/chat-message endpointleri runtime'a eklendi.
 - Önceki 500 persistence ve 405 create problemleri güncel Quality runner'da tekrarlanmadı.
-- Kalan aile işi: duplicate family router kayıtlarını sadeleştirmek; bunu mevcut çalışan zinciri bozmadan yapmak.
+- Duplicate family router kayıtları sadeleştirildi; canonical family router kullanılıyor ve Quality canlı smoke bunu doğruladı.
 
 ## Demo+ durumu
 - `frontend/demo-extras-live.js` mevcut ve `frontend/room-live.js` tarafından otomatik yükleniyor.
@@ -47,11 +46,11 @@
 - Bildirim/engelleme/admin paneli için doğrulanmış production endpointleri henüz yok.
 
 ## Sonraki gerçek geliştirme sırası
-1. Duplicate family router kayıtlarını sadeleştir; çalışan canlı route zincirini bozmadan ilerle.
-2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et.
-3. 139 kozmetiğin gerçek browser render/şeffaflık kontrolü.
-4. Oda canlı chat/gift/seat/moderasyon browser doğrulaması.
-5. DM + aile sohbeti + profil/try-on browser doğrulaması.
+1. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et.
+2. 139 kozmetiğin gerçek browser render/şeffaflık kontrolü.
+3. Oda canlı chat/gift/seat/moderasyon browser doğrulaması.
+4. DM + aile sohbeti + profil/try-on browser doğrulaması.
+5. Gerçek WebRTC/mikrofon transportu ve gerçek müzik playback/queue backendi.
 6. Gerçek WebRTC/mikrofon transportu ve gerçek müzik playback/queue backendi.
 7. VIP harcama → seviye → kilit açma yaşam döngüsü.
 8. Fan/follow, bildirim, engelleme ve admin/moderasyon backendleri.
