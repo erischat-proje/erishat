@@ -122,3 +122,5 @@ jobs:
           if [ -f /tmp/erischat-api.pid ]; then
             kill "$(cat /tmp/erischat-api.pid)" || true
           fi
+
+# Registered workflow trigger checkpoint.
