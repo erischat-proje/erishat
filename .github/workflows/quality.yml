@@ -11,14 +11,6 @@ permissions:
   contents: read
 
 jobs:
-  ci-contract:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Validate CI live-E2E contract
-        run: python scripts/ci_contract_check.py
-
   backend-quality:
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +35,7 @@ jobs:
             scripts/cosmetic_live_smoke.py
       - name: Reject stale anonymous auth endpoint
         run: |
-          if grep -R -n '"/auth/anonymous"' scripts/*_live_smoke.py; then
+          if grep -R -n '\"/auth/anonymous\"' scripts/*_live_smoke.py; then
             echo 'Smoke harnesses must use the current /v1/users registration contract.'
             exit 1
           fi
@@ -88,6 +80,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate CI live-E2E contract
+        run: python scripts/ci_contract_check.py
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
