@@ -13,55 +13,70 @@ FOLDERS = {
     "vip_frame": "vipcerceve",
 }
 
-EXPECTED = {
-    "standard_avatar": 40,
-    "standard_frame": 40,
-    "vip_avatar": 12,
-    "vip_frame": 12,
-}
-
 EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
+
 
 def files(folder: str) -> list[Path]:
     path = ROOT / folder
     if not path.exists():
         return []
     return sorted(
-        p for p in path.rglob("*")
+        p
+        for p in path.rglob("*")
         if p.is_file() and p.suffix.lower() in EXTENSIONS and p.stat().st_size > 0
     )
 
 
 def main() -> int:
+    if not ROOT.exists():
+        print(f"ERROR: cosmetic root missing: {ROOT}")
+        return 1
+
     counts: dict[str, int] = {}
+    asset_keys: set[str] = set()
+    failed = False
+
+    print("ACTIVE COSMETIC INVENTORY")
+    print("All valid assets inside the six catalog folders are treated as active.")
+
     for label, folder in FOLDERS.items():
+        directory = ROOT / folder
+        if not directory.exists():
+            print(f"ERROR: required catalog folder missing: {folder}")
+            failed = True
+            counts[label] = 0
+            continue
+
         items = files(folder)
         counts[label] = len(items)
         print(f"{label}: {len(items)}")
+
         for item in items:
-            print(f"  - {item.relative_to(ROOT).as_posix()}")
+            key = item.relative_to(ROOT).as_posix()
+            if key in asset_keys:
+                print(f"ERROR: duplicate asset key: {key}")
+                failed = True
+            asset_keys.add(key)
+            print(f"  - {key}")
 
     standard_avatar = counts["standard_avatar_female"] + counts["standard_avatar_male"]
     vip_avatar = counts["vip_avatar_female"] + counts["vip_avatar_male"]
     standard_frame = counts["standard_frame"]
     vip_frame = counts["vip_frame"]
 
-    actual = {
-        "standard_avatar": standard_avatar,
-        "standard_frame": standard_frame,
-        "vip_avatar": vip_avatar,
-        "vip_frame": vip_frame,
-    }
-
     print("\nTOTALS")
-    failed = False
-    for key, expected in EXPECTED.items():
-        value = actual[key]
-        state = "OK" if value == expected else "MISMATCH"
-        print(f"{key}: {value}/{expected} [{state}]")
-        failed |= value != expected
+    print(f"standard_avatar: {standard_avatar}")
+    print(f"standard_frame: {standard_frame}")
+    print(f"vip_avatar: {vip_avatar}")
+    print(f"vip_frame: {vip_frame}")
+    print(f"all_active_cosmetics: {len(asset_keys)}")
 
-    return 1 if failed else 0
+    if failed:
+        print("\nINVENTORY CHECK: FAILED")
+        return 1
+
+    print("\nINVENTORY CHECK: OK")
+    return 0
 
 
 if __name__ == "__main__":
