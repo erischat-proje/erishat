@@ -1,14 +1,15 @@
 ERISCHAT MASTER TODO
 
 AKTİF SIRA
-1) GitHub Pages deploy workflow: run #258 başarısız; deploy adımı incelenecek ve kök neden doğrulanacak.
-2) Room WebSocket canlı/E2E doğrulaması.
-3) Ban → liste → unban → yeniden katılım canlı E2E; harness hazır.
-4) DM conversation creation canlı akışı; harness hazır.
-5) Pages canlı HTTP + Pages→Railway API doğrulaması.
-6) Avatar/frame/VIP asset envanteri ve E2E eşleşmesi.
-7) Backend security + quality hardening.
-8) TXT checkpoint senkronizasyonu.
+1) Railway web 502 kök nedenini repo tarafında düzelt ve yeni deployment olmadan değişikliği doğrula; canlı doğrulama deploy sonrası yapılacak.
+2) GitHub Pages deploy workflow: run #258 başarısız; deploy adımı incelenecek ve kök neden doğrulanacak.
+3) Room WebSocket canlı/E2E doğrulaması.
+4) Ban → liste → unban → yeniden katılım canlı E2E; harness hazır.
+5) DM conversation creation canlı akışı; harness hazır.
+6) Pages canlı HTTP + Pages→Railway API doğrulaması.
+7) Avatar/frame/VIP asset envanteri ve E2E eşleşmesi.
+8) Backend security + quality hardening.
+9) TXT checkpoint senkronizasyonu.
 
 TAMAMLANANLAR
 - Apply Gift UI workflow güncel run #128 (35207573181) başarıyla tamamlandı.
@@ -29,8 +30,11 @@ TAMAMLANANLAR
 - backend/app/main.py duplicate user migration/import cleanup tamamlandı; quality workflow run #49 backend-quality başarılı ve room security regression başarılı.
 - scripts/room_live_smoke.py gift catalog sözleşmesine göre düzeltildi: API'nin döndürdüğü unit_price artık doğru okunuyor; gift event içinde doğru alıcı/hediye de kontrol ediliyor.
 - Railway production projesi ve servis durumu kontrol edildi: backend erischat SUCCESS, PostgreSQL SUCCESS, eski erischat-web FAILED, erischat-web-fixed SUCCESS. Bu kontrol deploy işlemi yapmadan gerçekleştirildi.
+- Railway erischat-web-fixed build logunda Dockerfile'ın gerçekten kullanıldığı ve Caddy'nin çalıştığı doğrulandı; HTTP loglarında / istekleri 502 connection refused olarak kaldı.
+- Caddyfile Railway web container için açıkça :80 portuna sabitlendi; Dockerfile da EXPOSE 80 olduğu için repo tarafındaki port sözleşmesi artık deterministik. Commit: 64cbe6a947a48e72e37d0a436d647495d04a162b
 
 PENDING
+- Railway web 502 canlı doğrulaması: yeni commit henüz deploy edilmedi; kullanıcı açıkça deploy istemediği için deploy yapılmadı.
 - GitHub Pages deploy failure kök nedeni.
 - Room two-client canlı E2E; harness mevcut.
 - Ban/list/unban/rejoin canlı E2E; harness mevcut, gerçek çalıştırma bekliyor.
@@ -43,12 +47,12 @@ PENDING
 - V35/V53 legacy cleanup.
 
 SON GELİŞTİRMELER
-- main.py duplicate cleanup commit: 8afe035332cf89a0ef7f141c258b064bea0f926f
+- Railway web port fix: 64cbe6a947a48e72e37d0a436d647495d04a162b
 - Integration workflow fix/checkpoint commit: 5159cdc995e599fbbe4be85e9451a674834188ff
 - scripts/room_live_smoke.py gift contract fix commit: 07fcbb9a579717e5322ef19aa30ffbec6e90502c
 - scripts/check_backend_quality.py commit: fdb9e45a1e65c6ae2fb0e1f58390da30798ce4ab
 - .github/workflows/quality.yml commit: f3b5ea4597716e0035b1af6c128f9260de572eb8
 - scripts/dm_live_smoke.py commit: a59be8caf4de9778e7684dc86292e8cd2011d837
-- scripts/room_ban_live_smoke.py commit: 9967158fb61e1b3b2fa969afee4b54d96b221b02
+- scripts/room_ban_live_smoke.py commit: 9967158fb61e1b3b2fa969af0aaf5e7f0d2e6c4c
 
-NOT: Doğrulanmayan testler başarılı olarak işaretlenmeyecek.
+NOT: Doğrulanmayan testler başarılı olarak işaretlenmeyecek. Railway deploy kullanıcı açıkça istemeden yapılmayacak.
