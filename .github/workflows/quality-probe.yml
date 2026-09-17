@@ -1,0 +1,21 @@
+name: ErisChat quality workflow probe
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify quality workflow registration
+        run: |
+          test -f .github/workflows/erischat-quality.yml
+          grep -F 'live-e2e:' .github/workflows/erischat-quality.yml
+          echo 'fresh quality workflow is present'
