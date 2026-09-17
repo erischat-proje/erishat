@@ -23,7 +23,7 @@ TAMAMLANAN DENETİM
 - [ ] Anonymous user oluşturma + token/session UI akışı
 - [ ] /v1/me profil yükleme/güncelleme UI
 - [ ] Gerçek conversation list/create UI
-- [ ] Gerçek DM history/send UI
+- [x] Gerçek DM history/send UI kod entegrasyonu
 - [ ] Genel /ws event UI
 - [ ] WS reconnect + ping/pong UI
 - [ ] Logout/token expiry UI
