@@ -114,7 +114,8 @@ jobs:
         run: python scripts/cosmetic_live_smoke.py
       - name: API log on failure
         if: failure()
-        run: cat erischat-api.log
+        run: |
+          if test -f erischat-api.log; then cat erischat-api.log; else echo 'API log not created before API startup step.'; fi
 
 # Cosmetic URL encoding regression coverage added after the repository asset audit.
 # Runtime family-create validation follows the restored main application route.
