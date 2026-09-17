@@ -6,6 +6,7 @@
     const api = (window.ERISCHAT_API_BASE || API).replace(/\/$/, '');
     return api.replace(/\/v1\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
   };
+  const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : console.warn('[ErisChat room]', message);
   let socket = null;
   let currentRoomId = null;
   let reconnectTimer = null;
@@ -103,8 +104,8 @@
   window.sendRoomChatMessage=function(text){
     const value=String(text||'').trim();
     if(!value) return false;
-    if(!socket || socket.readyState!==WebSocket.OPEN){toast('Oda bağlantısı hazır değil.');return false;}
-    if(value.length>500){toast('Mesaj en fazla 500 karakter olabilir.');return false;}
+    if(!socket || socket.readyState!==WebSocket.OPEN){toastSafe('Oda bağlantısı hazır değil.');return false;}
+    if(value.length>500){toastSafe('Mesaj en fazla 500 karakter olabilir.');return false;}
     socket.send(JSON.stringify({type:'room_chat',text:value}));
     return true;
   };
