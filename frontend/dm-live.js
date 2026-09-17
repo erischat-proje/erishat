@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '');
   let activeConversationId = null;
+  let currentUserId = null;
 
   function asList(value, keys) {
     if (Array.isArray(value)) return value;
@@ -31,6 +32,18 @@
     }
   }
 
+  async function resolveParticipant(conversation) {
+    const members = asList(conversation?.members, ['members']);
+    const other = members.find(member => String(member?.user_id) !== String(currentUserId));
+    if (!other?.user_id) return {};
+    try {
+      return await api().api(`/users/${encodeURIComponent(other.user_id)}`);
+    } catch (error) {
+      console.warn('[ErisChat] participant profile unavailable', error);
+      return { id: other.user_id, nickname: 'Anonim kullanıcı' };
+    }
+  }
+
   function showListError(list) {
     if (list) list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Konuşmalar yüklenemedi.</div>';
   }
@@ -39,6 +52,14 @@
     const list = document.querySelector('#messages .list');
     if (!list || !api()?.conversations) return;
     try {
+      if (!currentUserId && api().getMe) {
+        try {
+          const me = await api().getMe();
+          currentUserId = me?.id || null;
+        } catch (error) {
+          console.warn('[ErisChat] current user unavailable', error);
+        }
+      }
       const payload = await api().conversations();
       const items = asList(payload, ['conversations', 'items', 'data']);
       list.innerHTML = '';
@@ -46,8 +67,9 @@
         list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Henüz konuşma yok.</div>';
         return;
       }
-      items.forEach(c => {
-        const other = c.participants?.find?.(p => String(p.id) !== String(c.current_user_id)) || c.participant || c.other_user || {};
+      const participants = await Promise.all(items.map(resolveParticipant));
+      items.forEach((c, index) => {
+        const other = participants[index] || {};
         const id = c.id || c.conversation_id;
         if (!id) return;
         const name = other.nickname || other.name || c.name || 'Anonim kullanıcı';
@@ -96,7 +118,10 @@
     const id = conversation?.id || conversation?.conversation_id || conversation?.conversation?.id;
     if (id) {
       await loadConversations();
-      openRealChat(id, participantName, avatarValue(conversation?.participant?.avatar_asset || conversation?.participant?.avatar));
+      const participant = await resolveParticipant(conversation);
+      const name = participant.nickname || participant.name || participantName;
+      const avatar = avatarValue(participant.avatar_asset || participant.avatar_url || participant.avatar, name.slice(0, 1).toUpperCase());
+      openRealChat(id, name, avatar);
     }
     return conversation;
   }
