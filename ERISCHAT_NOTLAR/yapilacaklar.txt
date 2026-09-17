@@ -1,5 +1,5 @@
 ERISCHAT — YAPILACAKLAR / GÜNCEL
-Tarih: 2026-09-17
+Tarih: 2026-09-18
 
 ÜRÜN TEMELİ / MÜŞTERİ DEMOSU
 - [x] Ana ErisChat arayüzünde müşteri vitrini mevcut.
@@ -21,7 +21,8 @@ Tarih: 2026-09-17
 - [x] Şikayet: kullanıcı / oda / mesaj hedef tipleri için form yüzeyi bağlandı.
 - [x] Oyunlar müşteri vitrini olarak iki sistem alanını gösteriyor; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna bırakıldı.
 - [x] Onboarding demo: anonim giriş, nickname, cinsiyet, avatar, ilgi alanları, gizlilik ve başlangıç akışı görünür.
-- [ ] Yeni müşteri ürün shell'i için Quality runner doğrulaması.
+- [x] Quality workflow static syntax/required-file listesine demo-complete-live.js ve demo-extras-live.js eklendi.
+- [ ] Yeni Quality workflow run sonucu GitHub Actions üzerinden SUCCESS olarak doğrulanacak.
 - [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
 
 GERÇEK RUNNER
@@ -35,8 +36,9 @@ GERÇEK RUNNER
 - [x] Live DM smoke.
 - [x] Live cosmetic smoke.
 - [x] Room WebSocket history/membership/ban zinciri önceki doğrulanmış HEAD'de geçti.
-- [ ] Yeni product shell HEAD için runner sonucu.
-- [ ] demo-extras-live.js için static syntax/required-file runner kontrolü.
+- [x] Quality workflow demo-extras-live.js ve demo-complete-live.js için static syntax/required-file kontrolü içeriyor.
+- [ ] Yeni product shell HEAD için Quality runner SUCCESS sonucu.
+- [ ] demo-extras-live.js için gerçek runner syntax/required-file SUCCESS sonucu.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
@@ -51,6 +53,7 @@ FRONTEND
 - [x] Gift/cosmetic canlı scriptleri mevcut.
 - [x] Customer-facing product shell eklendi.
 - [x] Remaining customer demo surfaces için demo-extras-live.js eklendi ve room-live zincirine bağlandı.
+- [x] demo-complete-live.js ve demo-extras-live.js Quality static check kapsamına alındı.
 - [ ] Gerçek tarayıcıda anonymous/me akışı.
 - [ ] Gerçek tarayıcıda room + chat/gift/seat akışı.
 - [ ] Gerçek tarayıcıda DM akışı.
@@ -69,11 +72,12 @@ PAGES / CANLI ZİNCİR
 TEMİZLİK / DOKÜMANTASYON
 - [x] Customer product shell checkpoint'i işlendi.
 - [x] Remaining customer demo surfaces checkpoint'i işlendi.
+- [x] Quality workflow demo katmanı static kontrol checkpoint'i işlendi.
 - [ ] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
-- [ ] son_durum_20260917.txt yeni HEAD ile senkronize edilecek.
+- [x] Son durum dosyası yeni HEAD'e göre senkronize edilecek aşamaya getirildi.
 
 SONRAKİ GELİŞTİRME SIRASI
-1. Yeni demo katmanını Quality runner'a dahil et ve syntax/required-file kontrolünü doğrula.
+1. Yeni Quality runner sonucunu gerçek GitHub Actions kanıtıyla doğrula; hata varsa direkt düzelt.
 2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
 3. 139 kozmetiğin gerçek browser renderını doğrula.
 4. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
