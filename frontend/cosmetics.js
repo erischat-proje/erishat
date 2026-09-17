@@ -18,12 +18,14 @@
   const list = value => Array.isArray(value) ? value : value?.items || value?.cosmetics || value?.data || [];
   const emit = () => window.dispatchEvent(new CustomEvent('erischat:cosmetics-updated', {detail: state}));
 
-  // Asset keys are repository-relative. This keeps them working on GitHub Pages
-  // and any other static frontend host without coupling the API to that host.
+  // Backend asset_key values are relative to Gereken_icerikler. Resolve them
+  // from the repository root so GitHub Pages serves /erischat/Gereken_icerikler/...
+  // while absolute URLs and already-prefixed paths remain untouched.
   const assetUrl = key => {
     if (!key) return '';
     if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
-    const clean = String(key).replace(/^\.\//, '');
+    let clean = String(key).replace(/^\.\//, '');
+    if (!clean.startsWith('Gereken_icerikler/')) clean = `Gereken_icerikler/${clean}`;
     return new URL(encodeURI(`./${clean}`), document.baseURI).href;
   };
 
