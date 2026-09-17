@@ -1,41 +1,72 @@
 ERISCHAT — GÜNCEL YAPILACAKLAR
+Tarih: 2026-09-17 — BASELINE / TAM ÇALIŞAN SİSTEM FAZI
 
-1. CI / kalite
-- Gerçek runner E2E zinciri doğrulandı: anonymous session, room, ban, DM ve cosmetic smoke testleri geçti.
-- Quality workflow gerçek runner'da başarıyla tamamlandı.
-- Railway deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
+HEDEF
+Önce mevcut sistemi temel akışları eksiksiz ve gerçek ortamda doğrulanmış şekilde ayağa kaldır. Yeni ürün özelliklerine ancak bu faz tamamlandıktan sonra geç.
 
-2. GitHub Pages
-- Aktif hedef workflow: .github/workflows/erischat-pages.yml
-- Eski .github/workflows/pages.yml kaldırıldı; duplicate Pages deployment workflow'u artık tutulmuyor.
-- pages-diagnostics.yml aktif Pages workflow'unu doğrulayacak şekilde hizalı.
-- Gerçek Pages state tanısında Pages aktif/built, public ve github-pages environment mevcut olarak doğrulandı.
-- github-pages environment gerçek runner/API çıktısında `branch_policy`, `protected_branches=false`, `custom_branch_policies=true` olarak doğrulandı.
-- Bağımsız environment-probe job'ı gerçek runner'da `failure` + `steps: []` ile runner'a ulaşamadı; aynı workflow'daki environment'sız diagnostics job'ı SUCCESS oldu. Gate'in environment admission katmanında olduğu izole edildi.
-- Environment kaldırılarak yapılan önceki izolasyonda runner çalıştı fakat deploy-pages "Missing environment" ile durdu. Yani deploy için github-pages environment zorunlu.
-- Gerçek diagnostics API çıktısında `github-pages` custom deployment branch policy listesinde yalnızca `gh-pages` bulunuyor; `main` izinli değil.
-- `pages-diagnostics.yml` artık `target_branch_allowed=false` olduğunda açık hata ile fail ediyor; policy engeli sessiz SUCCESS olarak raporlanmayacak.
-- Bu guard commit'i: `08b455c30b0452ee523df166fb499666b3870dd7`.
-- Son Pages workflow temizliğinde Pages workflow'unun injection listesinde gift-live.js tekrar eklenmeyecek şekilde düzenlendi; frontend kaynak dosyası ayrıca mevcut.
-- Pages PASS/TAMAM denmeyecek; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
-- Pages başarıyla deploy olduktan sonra canlı frontend HTTP ve frontend -> Railway API bağlantısı gerçek ortamda doğrulanmalı.
+1. ÖNCELİK: KOD + CI BASELINE
+- [x] Backend ana uygulaması, auth/session, room, DM, gift, cosmetic ve WebSocket temel akışları mevcut.
+- [x] Frontend ana sayfa ve canlı API bağları mevcut.
+- [x] Repository TODO/FIXME/NotImplemented/pass taraması yapıldı; eşleşme bulunmadı.
+- [x] main.py startup migration duplicate satırları güncel kaynakta tekrar kontrol edildi; duplicate ALTER yok.
+- [x] room-live.js API config fallback tutarsızlığı düzeltildi.
+- [x] Quality workflow v4'e Python compileall + frontend JS node --check + gerekli frontend dosya kontrolleri eklendi.
+- [ ] Yeni kalite workflow v4 gerçek runner sonucunu doğrula.
+- [ ] Yeni commit üzerinde 5 smoke testin tamamını tekrar doğrula.
+- [ ] Başarısız olan her smoke/test için kodu düzelt ve tekrar gerçek runner'da doğrula.
 
-3. Backend / güvenlik
-- Backend kalite kontrolleri ve room security regression korunacak.
-- CORS wildcard yalnızca kontrollü şekilde ele alınacak; frontend gerçek Pages origin doğrulanmadan kırıcı değişiklik yapılmayacak.
-- Oda, DM, anonim oturum, kozmetik ve WebSocket akışları için mevcut gerçek smoke testleri korunacak.
+2. BACKEND / GÜVENLİK BASELINE
+- [ ] Anonymous session: register → /me → logout → token sonrası 401 tekrar doğrula.
+- [ ] Room: create/join/leave/seat/moderator/ban/chat gerçek runner'da tekrar doğrula.
+- [ ] Room WebSocket: iki istemci history + chat broadcast + reconnect davranışını doğrula.
+- [ ] Ban: ban → 403 rejoin → unban → yeniden join doğrula.
+- [ ] DM: conversation create/list → message send → history doğrula.
+- [ ] Cosmetic: catalog → balance → purchase → ownership → apply doğrula.
+- [ ] Gift: sender düşüşü, recipient %70 payı ve event zincirini doğrula.
+- [ ] Session revoke sonrası WebSocket erişim davranışını güvenlik açısından incele.
+- [ ] CORS ayarını gerçek frontend origin doğrulanmadan kırma; canlı Pages origin doğrulanınca kontrollü daralt.
 
-4. Kozmetik
-- Aktif katalog gerçek Gereken_icerikler klasörlerindeki geçerli assetlerden oluşur.
-- Son doğrulanan aktif kozmetik sayısı: 139.
-- Eski 40/40/12/12 hedefi zorunlu envanter kuralı değildir.
+3. FRONTEND BASELINE
+- [ ] Ana HTML'nin gerekli tüm canlı scriptleri doğru sırada yüklediğini gerçek runner/static check ile doğrula.
+- [ ] Login/anonymous session UI → gerçek /v1/me akışı doğrula.
+- [ ] Room list → room open → WebSocket history/chat doğrula.
+- [ ] DM list → conversation create → history → send doğrula.
+- [ ] Profile → nickname/notification/session işlemlerini doğrula.
+- [ ] Cosmetics → catalog/purchase/apply ve gerçek asset render doğrula.
+- [ ] Gift UI → server catalog → gönderim → canlı event doğrula.
+- [ ] Hardcoded/demo UI kalıntılarını yalnızca gerçek veri akışını bozmadan temizle.
 
-5. Legacy temizliği
-- Kullanılmayan eski workflow/probe dosyaları temizlenecek.
-- Not dosyaları her gerçek doğrulama sonrasında senkron tutulacak.
+4. PAGES / RAILWAY CANLI ZİNCİR
+- [ ] github-pages environment custom deployment branch policy'ye `main` ekle veya policy'yi main'i kapsayacak şekilde değiştir.
+- [ ] Pages diagnostics guard'ın gerçek runner'da policy durumunu raporladığını doğrula.
+- [ ] Gerçek Pages deploy job'unun runner'a girdiğini doğrula.
+- [ ] Pages artifact oluşumunu doğrula.
+- [ ] Canlı Pages HTTP 200 + index içeriğini doğrula.
+- [ ] Canlı frontend'in Railway API'ya erişimini doğrula.
+- [ ] Railway production deploy yalnızca kullanıcı açıkça "deploy" dediğinde yapılacak.
 
-SON DURUM
-- Son güvenilir kalite kanıtı: gerçek runner'da 5 smoke test başarılı.
-- Pages diagnostics gerçek Pages state'i okuyabiliyor.
-- Pages environment gate gerçek runner'da izole edildi ve custom policy'nin gerçek girdisi alındı: yalnızca `gh-pages`.
-- Sıradaki kritik iş: GitHub `github-pages` environment custom deployment branch policy'sine `main` eklemek veya policy'yi `main`i kapsayacak şekilde GitHub Settings'ten değiştirmek; ardından gerçek Pages deploy + canlı HTTP + Pages→Railway API doğrulaması.
+5. KOZMETİK BASELINE
+- [ ] Gerçek Gereken_icerikler katalog sayıları ve dosya yollarını doğrula.
+- [ ] 139 aktif asset modelinin backend/frontend eşleşmesini doğrula.
+- [ ] Standart avatar/frame ve VIP avatar/frame satın alma/apply gerçek E2E doğrula.
+- [ ] Asset URL/şeffaflık/render hatası varsa düzelt.
+
+6. TEMİZLİK
+- [ ] Sadece teşhis/izolasyon amacıyla kullanılan eski Pages probe workflow'larını gözden geçir; artık gerekli olmayanları kaldır.
+- [ ] Geçici trigger TXT dosyalarını gözden geçir.
+- [ ] Checkpoint TXT'leri her gerçek doğrulama sonrası güncel tut.
+
+7. BASELINE ÇIKIŞ KRİTERİ
+Aşağıdakilerin tamamı gerçek kanıt olmadan "tam çalışan sistem" denmeyecek:
+- [ ] Quality v4 SUCCESS.
+- [ ] 5 backend/live smoke SUCCESS.
+- [ ] Pages gerçek deploy SUCCESS.
+- [ ] Canlı Pages HTTP SUCCESS.
+- [ ] Frontend → Railway API SUCCESS.
+- [ ] Room WebSocket iki istemci SUCCESS.
+- [ ] DM SUCCESS.
+- [ ] Cosmetic purchase/apply SUCCESS.
+- [ ] Gift event + ekonomi invariantları SUCCESS.
+
+BASELINE TAMAMLANDIKTAN SONRA
+- Ürün geliştirme fazına geçilecek: gelişmiş sosyal özellikler, sesli/WebRTC odalar, moderasyon/raporlama/engelleme UI, admin paneli, gelişmiş keşif/family/fan sistemleri ve diğer planlanan özellikler.
