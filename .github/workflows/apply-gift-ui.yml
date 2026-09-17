@@ -17,6 +17,22 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v4
+      - name: Patch room websocket route order
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/main.py')
+          s = p.read_text(encoding='utf-8')
+          mount = '''\n\nfrontend_path = Path(__file__).resolve().parents[2] / "frontend"\nif frontend_path.is_dir():\n    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")\n'''
+          if mount not in s:
+              raise SystemExit('frontend mount block not found')
+          s = s.replace(mount, '\n', 1)
+          marker = '\n\nroom_chat_connections: dict[str, set[WebSocket]] = {}'
+          if marker not in s:
+              raise SystemExit('room websocket marker not found')
+          s = s.replace(marker, mount + marker, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
       - name: Patch served frontend
         run: |
           python - <<'PY'
@@ -49,14 +65,16 @@ jobs:
           for x in ['realRooms','openRoomGift','gift-live.js']:
               assert x in s,x
           assert 'joinAndOpen' not in s
-          print('served frontend gift UI valid')
+          backend=Path('backend/app/main.py').read_text(encoding='utf-8')
+          assert backend.index('@app.websocket("/ws/rooms/{room_id}")') < backend.index('app.mount("/", StaticFiles')
+          print('served frontend and websocket route order valid')
           PY
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add frontend/erischat-main.html
-          if git diff --cached --quiet; then echo 'No changes needed.'; else git commit -m 'feat(room): connect served frontend to live gift events'; git push; fi
+          git add backend/app/main.py frontend/erischat-main.html
+          if git diff --cached --quiet; then echo 'No changes needed.'; else git commit -m 'fix(ws): register room websocket before frontend mount'; git push; fi
 
   quality-runner-probe:
     runs-on: ubuntu-latest
