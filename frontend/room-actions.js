@@ -17,6 +17,7 @@
     setChat: (roomId, enabled) => api(`/rooms/${id(roomId)}/chat`, { method: 'PATCH', body: JSON.stringify({ enabled: !!enabled }) }),
     addModerator: (roomId, userId) => api(`/rooms/${id(roomId)}/moderators`, body({ user_id: userId })),
     removeModerator: (roomId, userId) => api(`/rooms/${id(roomId)}/moderators/${id(userId)}`, { method: 'DELETE' }),
+    bans: roomId => api(`/rooms/${id(roomId)}/bans`),
     ban: (roomId, userId) => api(`/rooms/${id(roomId)}/bans`, body({ user_id: userId })),
     unban: (roomId, userId) => api(`/rooms/${id(roomId)}/bans/${id(userId)}`, { method: 'DELETE' }),
     lockSeat: (roomId, seatNumber) => api(`/rooms/${id(roomId)}/seats/${Number(seatNumber)}/lock`, body({})),
