@@ -74,3 +74,9 @@ BROWSER SMOKE CHECKPOINT
 - [x] Quality v4 run 35280867500 / job 105402227348 SUCCESS.
 - [x] Browser smoke adımı SUCCESS; Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesi renderı ve Mesaj → Rana'nın Odası → mesaj gönderme doğrulandı.
 - [ ] Tüm ürün sekmelerinin, 139 kozmetiğin ve oda/gift/seat/moderasyon zincirinin tam browser E2E doğrulaması.
+
+BROWSER/COSMETICS CHECKPOINT
+- [x] Commit 5c6387801424fe53e33ca6b01c03aa6dd3e37fab: tüm 139 kozmetik asset için Chromium render smoke eklendi.
+- [x] Quality run 35281783827 / job 105405134485 SUCCESS.
+- [x] 139/139 asset browser tarafından decode/render edildi.
+- [ ] PNG frame alpha: 16/44 şeffaf, 28/44 opak; opak frame'ler tasarım açısından ayrıca incelenecek.
