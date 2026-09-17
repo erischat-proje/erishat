@@ -20,7 +20,9 @@ TAMAMLANANLAR
 - Room WS + room chat/gift event altyapısı.
 - Cosmetics catalog/purchase/apply altyapısı.
 - Demo cleanup katmanı.
-- Cosmetic asset inventory checker eklendi: scripts/check_cosmetics.py (commit 642847f66dc6da9081622b8f2d36b137a621647e).
+- Cosmetic asset inventory checker eklendi: scripts/check_cosmetics.py.
+- Backend quality checker eklendi: scripts/check_backend_quality.py (duplicate migration, session-token ve CORS kalite kontrolleri).
+- GitHub Actions quality workflow eklendi: .github/workflows/quality.yml.
 
 PENDING
 - GitHub Pages deploy failure kök nedeni.
@@ -30,7 +32,11 @@ PENDING
 - Railway canlı doğrulama (deploy yok; kullanıcı açıkça deploy demedikçe deploy yapılmayacak).
 - 40 normal avatar + 40 normal frame + 12 VIP frame + 12 VIP avatar asset hedeflerinin envanter/kalite kontrolü.
 - Cosmetic purchase/apply E2E.
-- Backend security/quality.
+- Backend security/quality: quality checker şu an main.py içindeki duplicate user migration tanımlarını yakalayacak şekilde kırmızı sinyal üretmeli; henüz düzeltilmiş olarak işaretlenmeyecek.
 - V35/V53 legacy cleanup.
+
+SON GELİŞTİRME
+- scripts/check_backend_quality.py commit: fdb9e45a1e65c6ae2fb0e1f58390da30798ce4ab
+- .github/workflows/quality.yml commit: f3b5ea4597716e0035b1af6c128f9260de572eb8
 
 NOT: Doğrulanmayan testler başarılı olarak işaretlenmeyecek.
