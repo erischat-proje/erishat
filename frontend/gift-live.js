@@ -1,9 +1,10 @@
 /* ErisChat live room gift events. */
 (function(){
-  const token = () => localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
+  const API = window.ERIS_API || 'https://erischat-production.up.railway.app/v1';
+  const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   const wsBase = () => {
-    const api = (window.ERISCHAT_API_BASE || localStorage.getItem('erischat.apiBase') || location.origin).replace(/\/$/, '');
-    return api.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+    const api = (window.ERISCHAT_API_BASE || API).replace(/\/$/, '');
+    return api.replace(/\/v1\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
   };
   let socket = null;
   let currentRoomId = null;
