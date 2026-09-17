@@ -46,6 +46,8 @@ FRONTEND
 - [x] DM send gerçek API'ya bağlandı.
 - [x] DM ekranında demo fallback kaldırıldı; boş/hata durumları ayrıştırıldı.
 - [x] DM API response listeleri için conversations/items/data normalizasyonu eklendi.
+- [x] DM avatar_asset/avatar_url/avatar nesneleri gerçek görsel URL'si olarak render ediliyor.
+- [x] DM sohbet başlığındaki avatar da gerçek asset ile render edilebiliyor.
 - [x] cosmetics.js gerçek /cosmetics + /me/cosmetics + /me akışına bağlandı.
 - [x] cosmetics.js satın alma + uygulama endpointleri bağlandı.
 - [x] Avatar/frame asset değerleri URL/asset nesnesi olarak normalize edildi.
@@ -60,7 +62,6 @@ TESPİT EDİLEN EKSİKLER
 - [ ] WS reconnect/presence/genel event UI eksik.
 - [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
 - [ ] DM tarafında yeni conversation oluşturma UI'sı henüz tamamlanmadı.
-- [ ] DM avatar URL'lerinin gerçek görsel olarak render edilmesi ayrıca ele alınacak.
 - [ ] Avatar/frame/VIP katalogunun gerçek asset sayıları ve görsel kalite/şeffaflık kontrolü tamamlanmadı.
 - [ ] Avatar/frame/VIP satın alma + apply E2E'si canlı ortamda yapılmadı.
 
@@ -87,6 +88,7 @@ SON GELİŞTİRMELER
 - [x] __pycache__ temizliği gerçekleştirildi.
 - [x] Oda WebSocket chat history + gerçek gönderim UI entegrasyonu yapıldı.
 - [x] Gerçek DM conversation/history/send UI entegrasyonu yapıldı.
+- [x] DM gerçek avatar asset rendering hardening yapıldı.
 - [x] Pages workflow validation tarafındaki obsolete joinAndOpen kontrolü temizlendi.
 - [x] Cosmetics canlı API entegrasyonu ve asset rendering hardening yapıldı.
 - [x] Cosmetics backend katalogu gerçek asset klasörleri + VIP metadata ile düzeltildi.
