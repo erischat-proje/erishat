@@ -37,8 +37,10 @@ def request(method: str, path: str, token: str | None = None, payload=None):
         return exc.code, data
 
 
-def register() -> tuple[str, dict]:
-    status, data = request("POST", "/auth/anonymous", payload={})
+def register(label: str) -> tuple[str, dict]:
+    status, data = request("POST", "/users", payload={
+        "nickname": f"DM Smoke {label}", "avatar": "👤", "gender": "male"
+    })
     if status >= 300:
         raise RuntimeError(f"anonymous auth failed: HTTP {status} {data}")
     token = data.get("access_token") or data.get("token")
@@ -56,8 +58,8 @@ def main() -> int:
     else:
         print("WARNING: non-local target supplied; this is an explicit live smoke run.")
 
-    token_a, user_a = register()
-    token_b, user_b = register()
+    token_a, user_a = register("A")
+    token_b, user_b = register("B")
     uid_a = user_a["user_id"]
     uid_b = user_b["user_id"]
     print(f"two sessions created: {uid_a}, {uid_b}")
@@ -97,9 +99,9 @@ def main() -> int:
         raise AssertionError(f"sent message missing from recipient history: {messages}")
     print("DM send/history invariant OK")
 
-    status, forbidden = request("GET", f"/messages/{conversation_id}", token_b)
+    status, reread = request("GET", f"/messages/{conversation_id}", token_b)
     if status >= 300:
-        raise RuntimeError(f"recipient re-read unexpectedly failed: HTTP {status} {forbidden}")
+        raise RuntimeError(f"recipient re-read failed: HTTP {status} {reread}")
 
     print("DM REST smoke completed.")
     return 0
