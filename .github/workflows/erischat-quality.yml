@@ -73,6 +73,8 @@ jobs:
         run: node scripts/frontend_browser_smoke.mjs
       - name: Cosmetics browser render
         run: node scripts/cosmetics_browser_render.mjs
+      - name: Room browser surface smoke
+        run: node scripts/room_browser_surface_smoke.mjs
       - name: Family route integrity
         run: python scripts/family_routes_integrity.py
       - name: Family production integration integrity
