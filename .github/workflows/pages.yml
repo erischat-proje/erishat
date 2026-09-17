@@ -49,6 +49,7 @@ jobs:
               'gift-live.js',
               'dm-live.js',
               'auth-live.js',
+              'profile-live.js',
           ]
           for name in scripts:
               tag = f'<script src="./{name}"></script>'
@@ -58,7 +59,7 @@ jobs:
           PY
           touch _site/.nojekyll
           test -s _site/index.html
-          for asset in platform.js room-live.js gift-live.js dm-live.js auth-live.js; do
+          for asset in platform.js room-live.js gift-live.js dm-live.js auth-live.js profile-live.js; do
             test -s "_site/$asset"
           done
           echo "Prepared Pages site:"
