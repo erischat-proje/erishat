@@ -59,6 +59,8 @@ jobs:
             node --check "frontend/$script"
           done
           echo 'Python/JavaScript syntax and frontend source checks OK'
+      - name: Cosmetics asset integrity
+        run: python scripts/cosmetics_asset_integrity.py
       - name: Start local API
         working-directory: backend
         run: |
