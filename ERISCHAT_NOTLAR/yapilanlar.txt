@@ -68,3 +68,9 @@ DOKÜMANTASYON
 - [x] Family member/chat message smoke checkpoint'i işlendi.
 - [x] yapilacaklar.txt family runtime kanıtına göre senkronize edildi.
 - [x] Quality run 35279859803 / job 105399048309 SUCCESS; family production integration ve live family smoke dahil tüm quality adımları geçti.
+
+BROWSER SMOKE CHECKPOINT
+- [x] Commit c61894244a6091b46c195c968d8c498935966cc1: Playwright tabanlı frontend browser smoke eklendi.
+- [x] Quality v4 run 35280867500 / job 105402227348 SUCCESS.
+- [x] Browser smoke adımı SUCCESS; Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesi renderı ve Mesaj → Rana'nın Odası → mesaj gönderme doğrulandı.
+- [ ] Tüm ürün sekmelerinin, 139 kozmetiğin ve oda/gift/seat/moderasyon zincirinin tam browser E2E doğrulaması.
