@@ -1,7 +1,7 @@
 ERISCHAT MASTER TODO
 
 AKTİF SIRA
-1) GitHub Pages deploy workflow: run #250 başarısız; deploy adımı incelenecek ve düzeltilecek.
+1) GitHub Pages deploy workflow: run #258 başarısız; deploy adımı incelenecek ve kök neden doğrulanacak.
 2) Room WebSocket canlı/E2E doğrulaması.
 3) DM conversation creation canlı akışı.
 4) Pages canlı HTTP + Pages→Railway API doğrulaması.
@@ -10,7 +10,7 @@ AKTİF SIRA
 7) TXT checkpoint senkronizasyonu.
 
 TAMAMLANANLAR
-- Apply Gift UI workflow güncel run #126 (35207342594) başarıyla tamamlandı.
+- Apply Gift UI workflow güncel run #128 (35207573181) başarıyla tamamlandı.
 - Session/anonymous durum UI eklendi.
 - Room list gerçek API.
 - Anonymous session/token altyapısı.
@@ -20,6 +20,7 @@ TAMAMLANANLAR
 - Room WS + room chat/gift event altyapısı.
 - Cosmetics catalog/purchase/apply altyapısı.
 - Demo cleanup katmanı.
+- Cosmetic asset inventory checker eklendi: scripts/check_cosmetics.py (commit 642847f66dc6da9081622b8f2d36b137a621647e).
 
 PENDING
 - GitHub Pages deploy failure kök nedeni.
