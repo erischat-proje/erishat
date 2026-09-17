@@ -21,6 +21,9 @@ BACKEND / FRONTEND TEMELİ
 - [x] Quality workflow'a Python compileall + frontend JS node --check + gerekli kaynak kontrolleri eklendi.
 - [x] Eski self-modifying/patch/duplicate Pages workflow'larının gerekli olmayanları temizlendi.
 - [x] Session revoke sonrası açık WebSocket'lerde yeni mesaj işlenmeden önce token/session yeniden doğrulaması eklendi; geçersizleşen session için 1008 ile bağlantı kapatılıyor.
+- [x] Room WebSocket'te her gelen mesaj öncesi room üyeliği/ban/chat_enabled yeniden doğrulaması eklendi; üyelik kaldırılırsa veya ban oluşursa 1008 ile kapatma uygulanıyor.
+- [x] Room WebSocket history handshake'i bağlantı kabulünden hemen sonra açıkça gönderilecek şekilde düzenlendi.
+- [ ] Yukarıdaki son room WebSocket handshake + membership security değişiklikleri için güncel main HEAD üzerinde yeni runner SUCCESS kanıtı henüz alınmadı.
 
 GERÇEK RUNNER DOĞRULAMASI
 - [x] Runner Recovery #74: run 35256506469 tamamlandı.
@@ -31,12 +34,13 @@ GERÇEK RUNNER DOĞRULAMASI
 - [x] Live ban smoke SUCCESS.
 - [x] Live DM smoke SUCCESS.
 - [x] Live cosmetic smoke SUCCESS.
-- [x] Room iki istemcili WebSocket history/chat broadcast akışı gerçek runner'da geçti.
-- [x] Ban → 403 rejoin → unban → yeniden join gerçek runner'da geçti.
+- [x] Room iki istemcili WebSocket history/chat broadcast akışı gerçek runner'da geçti (önceki doğrulanmış baseline).
+- [x] Ban → 403 rejoin → unban → yeniden join gerçek runner'da geçti (önceki doğrulanmış baseline).
 - [x] DM conversation → send → history gerçek runner'da geçti.
 - [x] Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da geçti.
 - [x] Quality v4 run 35258712132 / job 105328734923 SUCCESS; static checks ve beş smoke adımı gerçek runner'da geçti.
 - [x] Security değişikliği sonrası Quality v4 run 35260089459 / job 105333339551 SUCCESS; static checks, API başlatma ve beş temel smoke adımı tekrar geçti.
+- [ ] Quality/Runner Recovery'nin güncel main HEAD üzerindeki yeni koşusu bekleniyor; eski cde80814/e775c83d koşuları güncel HEAD kanıtı olarak kullanılmayacak.
 
 PAGES / RAILWAY
 - [x] Aktif Pages workflow: .github/workflows/erischat-pages.yml.
@@ -57,6 +61,7 @@ KOZMETİK
 
 BASELINE SONUCU
 - Quality v4 temel runner koşusu SUCCESS.
-- Backend/live temel E2E zincirinin beş smoke testi gerçek runner'da başarıyla geçti.
-- Session revoke WebSocket güvenlik kontrolü kodlandı ve yeni Quality v4 runner'ında SUCCESS doğrulandı.
+- Backend/live temel E2E zincirinin beş smoke testi önceki baseline'da gerçek runner'da başarıyla geçti.
+- Session revoke WebSocket güvenlik kontrolü kodlandı ve Quality v4 runner'ında SUCCESS doğrulandı.
+- Son room WebSocket handshake/membership güvenlik değişiklikleri henüz güncel HEAD runner'ında PASS olarak işaretlenmedi.
 - Sistem henüz "tam çalışan" olarak işaretlenmiyor; Pages admission/deploy, canlı HTTP/API ve kalan frontend/asset kontrolleri tamamlanmalı.
