@@ -1,5 +1,5 @@
 ERISCHAT — YAPILANLAR / GÜNCEL
-Tarih: 2026-09-18 — FAMILY RUNTIME CHECKPOINT
+Tarih: 2026-09-18 — FAMILY ROUTER CLEANUP CHECKPOINT
 
 AMAÇ
 - Önce mevcut kodu tamamlanmış temel sistem seviyesine getirmek.
@@ -41,7 +41,7 @@ AİLE RUNTIME
 - [x] Live family smoke adımı SUCCESS; 405 ve önceki persistence problemi artık runner zincirinde tekrarlanmadı.
 - [x] Family member list/invite/role/remove canlı smoke: Quality run 35278981991 / job 105396283536 SUCCESS.
 - [x] Family chat message POST canlı smoke: Quality run 35278981991 / job 105396283536 SUCCESS.
-- [ ] Family route duplicate/sadeleştirme temizliği.
+- [x] Family route duplicate/sadeleştirme temizliği: canonical family_router 9 endpoint ile ayrıştırıldı; platform router üzerindeki 4 duplicate family route kaldırıldı.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
@@ -67,4 +67,4 @@ DOKÜMANTASYON
 - [x] Family runtime smoke checkpoint'i işlendi.
 - [x] Family member/chat message smoke checkpoint'i işlendi.
 - [x] yapilacaklar.txt family runtime kanıtına göre senkronize edildi.
-- [ ] Bu docs push'unun tetiklediği Quality run SUCCESS doğrulaması.
+- [x] Quality run 35279194558 / job 105396950920 SUCCESS; family production integration + live family smoke dahil tüm quality adımları geçti.
