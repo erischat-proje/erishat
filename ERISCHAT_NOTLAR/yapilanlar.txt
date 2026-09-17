@@ -24,6 +24,11 @@ BACKEND
 - [x] Recipient %70 payı mevcut.
 - [x] Room gift WebSocket event altyapısı mevcut.
 - [x] Cosmetic catalog/purchase/apply API mevcut.
+- [x] Cosmetic catalog gerçek repository klasörlerine göre standardize edildi: kadınavatar, erkekavatar, standartcerceve, vipkadınavatar, viperkekavatar, vipcerceve.
+- [x] Cosmetic katalog kayıtlarına standard/vip tier ve vip metadata eklendi.
+- [x] VIP kozmetik fiyatı katalog metadata'sından satın alma sırasında uygulanıyor.
+- [x] Purchase response VIP bilgisini döndürüyor.
+- [x] Apply response VIP bilgisini döndürüyor.
 - [x] Duplicate startup ALTER ifadeleri temizlendi.
 - [x] Mevcut backend/app/__pycache__ .pyc artefaktları silindi.
 
@@ -44,6 +49,9 @@ FRONTEND
 - [x] cosmetics.js gerçek /cosmetics + /me/cosmetics + /me akışına bağlandı.
 - [x] cosmetics.js satın alma + uygulama endpointleri bağlandı.
 - [x] Avatar/frame asset değerleri URL/asset nesnesi olarak normalize edildi.
+- [x] Repository-relative avatar/frame asset anahtarları frontend asset URL'lerine dönüştürülüyor.
+- [x] cosmetics.js standard/VIP kataloglarını ayırmak için get(type, vip) helper'ı sunuyor.
+- [x] cosmetics.js satın alınmış görünüm kontrolü için owned(type, key) helper'ı sunuyor.
 - [x] Avatar/frame görünümü auth/profile/cosmetics eventleriyle yenileniyor.
 - [x] Pages workflow cosmetics.js asset kontrolü ve script enjeksiyonuna dahil edildi.
 
@@ -53,7 +61,8 @@ TESPİT EDİLEN EKSİKLER
 - [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
 - [ ] DM tarafında yeni conversation oluşturma UI'sı henüz tamamlanmadı.
 - [ ] DM avatar URL'lerinin gerçek görsel olarak render edilmesi ayrıca ele alınacak.
-- [ ] Avatar/frame/VIP katalogunun gerçek assetlerle birebir eşleşmesi ve satın alma E2E'si yapılmadı.
+- [ ] Avatar/frame/VIP katalogunun gerçek asset sayıları ve görsel kalite/şeffaflık kontrolü tamamlanmadı.
+- [ ] Avatar/frame/VIP satın alma + apply E2E'si canlı ortamda yapılmadı.
 
 PAGES / RAILWAY
 - [x] pages.yml workflow mevcut.
@@ -80,6 +89,8 @@ SON GELİŞTİRMELER
 - [x] Gerçek DM conversation/history/send UI entegrasyonu yapıldı.
 - [x] Pages workflow validation tarafındaki obsolete joinAndOpen kontrolü temizlendi.
 - [x] Cosmetics canlı API entegrasyonu ve asset rendering hardening yapıldı.
+- [x] Cosmetics backend katalogu gerçek asset klasörleri + VIP metadata ile düzeltildi.
+- [x] Cosmetics frontend repository-relative asset URL çözümleme ve katalog helper'ları eklendi.
 
 GÜVENLİK / DEPLOY
 - Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
