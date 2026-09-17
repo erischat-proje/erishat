@@ -2,28 +2,28 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Güncel faz: temel backend runner doğrulaması + aile runtime entegrasyonu tamamlanıyor; ardından browser doğrulama.
+- Güncel faz: aile runtime entegrasyonu canlı smoke ile doğrulandı; sıradaki ana faz browser doğrulaması ve route sadeleştirmesi.
 - Müşteri demo fazı: ürün yüzeyi tek vitrinde toplanıyor ve eksik görünen ürün alanları demo+ katmanıyla tamamlanıyor.
 - VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi mevcut.
 - Oyunlar için oynanabilir demo vitrini mevcut; gerçek ekonomi ayrı backend işi.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
 ## Son gerçek GitHub kanıtı
-- Quality run `35277688638` / quality job `105392132238` SUCCESS.
-- Bu run head'i `08632ffbfa47825129cce8b9e0247f237daaaf2d`.
+- Quality run `35278981991` / quality job `105396283536` SUCCESS.
+- Bu run head'i `a450ee309219170c459e98a6018fd4de6bfd56b4`.
 - Quality job içinde static checks, customer demo surface integrity, family route integrity, family production integration integrity, cosmetics integrity, cosmetics URL smoke ve local API startup SUCCESS.
-- Live family smoke SUCCESS.
+- Anonymous session smoke SUCCESS.
+- Live family smoke SUCCESS; üye listesi, davet, rol değiştirme, çıkarma ve chat message POST zinciri aynı smoke içinde geçti.
 - Live room, live ban, live DM ve live cosmetic smoke SUCCESS.
-- `probe` ve `live-e2e` recovery zinciri de aynı head üzerinde SUCCESS.
 - Pages deploy/diagnostics başarısızlıkları Quality kanıtı değildir; Pages environment policy ayrı konudur.
 
 ## Aile runtime durumu
-- `backend/app/main.py` içinde üretim `/v1/families` create route mevcut ve canlı smoke tarafından doğrulandı.
+- `backend/app/main.py` içindeki üretim `/v1/families` create route canlı smoke tarafından doğrulandı.
 - Family create → detail → donation → level/capacity → chat GET zinciri gerçek runner'da doğrulandı.
-- Önceki 500 persistence hatası owner_id/chat_conversation_id değerleri ile düzeltilmiş durumda.
-- Önceki 405 Family create hatası artık güncel Quality runner'da tekrarlanmadı.
-- `backend/app/family_routes.py` içinde daha geniş member list/invite/role/remove ve chat message endpointleri tanımlı; bunların canlı route kayıt zinciri ayrıca doğrulanacak.
-- Bu nedenle member yönetimi ve chat message POST henüz PASS kabul edilmiyor.
+- `backend/app/family_routes.py` içindeki member list/invite/role/remove ve chat message route zinciri runtime'da erişilebilir hale getirildi ve Quality canlı smoke ile doğrulandı.
+- Family route bootstrap mevcut platform router kayıt zincirine bağlandı; mevcut create/detail/donate/chat üretim akışları korunarak unique member/chat-message endpointleri runtime'a eklendi.
+- Önceki 500 persistence ve 405 create problemleri güncel Quality runner'da tekrarlanmadı.
+- Kalan aile işi: duplicate family router kayıtlarını sadeleştirmek; bunu mevcut çalışan zinciri bozmadan yapmak.
 
 ## Demo+ durumu
 - `frontend/demo-extras-live.js` mevcut ve `frontend/room-live.js` tarafından otomatik yükleniyor.
@@ -40,14 +40,14 @@
 ## Backend gerçeklik notu
 - Room/ban/DM/cosmetic smoke zincirleri gerçek runner'da doğrulandı.
 - Family create/detail/donation/chat GET gerçek runner'da doğrulandı.
-- Family member list/invite/role/remove ve chat message POST henüz canlı smoke ile doğrulanmadı.
+- Family member list/invite/role/remove ve chat message POST gerçek runner'da doğrulandı.
 - Oda duyuru endpointi mevcut olarak GET son duyuruyu sağlıyor; yazma endpointi doğrulanmadı.
 - Roulette ve 4 Kupa `/game/bet` ve `/game/cups` ile gerçek endpointlere bağlı; gerçek cüzdan/payout yaşam döngüsü tamamlanmış kabul edilmiyor.
 - Gerçek WebRTC/ses transportu henüz doğrulanmadı.
 - Bildirim/engelleme/admin paneli için doğrulanmış production endpointleri henüz yok.
 
 ## Sonraki gerçek geliştirme sırası
-1. Family member list/invite/role/remove + family chat message canlı smoke.
+1. Duplicate family router kayıtlarını sadeleştir; çalışan canlı route zincirini bozmadan ilerle.
 2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et.
 3. 139 kozmetiğin gerçek browser render/şeffaflık kontrolü.
 4. Oda canlı chat/gift/seat/moderasyon browser doğrulaması.
