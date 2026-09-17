@@ -16,7 +16,7 @@ async function main(){
   if(!owner?.id) throw new Error('anonymous browser session missing user');
   await page.locator('.nav button',{hasText:'Profil'}).click();
   await page.waitForFunction(()=>document.querySelector('#profile')?.classList.contains('show'));
-  await page.waitForFunction(id=>document.querySelector('.profile .name h2')?.textContent===id.nickname,id=>owner);
+  await page.waitForFunction(expected => document.querySelector('.profile .name h2')?.textContent === expected.nickname, owner);
   const member=await page.evaluate(async api=>{
     const suffix=Math.random().toString(36).slice(2,8);
     const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'Browser_'+suffix,avatar:'🐺',gender:'male'})});
