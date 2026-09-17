@@ -45,7 +45,7 @@
     }
   }
 
-  function bindSender(chat, body) {
+  function bindSender(chat) {
     const input = chat.querySelector('input');
     const send = chat.querySelector('.primary');
     if (!send || send.dataset.realBound) return;
@@ -53,7 +53,8 @@
     send.onclick = async () => {
       const id = activeConversationId;
       const text = input?.value?.trim();
-      if (!id || !text) return;
+      const body = chat.querySelector('.chatBody');
+      if (!id || !text || !body) return;
       try {
         const m = await api().sendMessage(id, text);
         const row = document.createElement('div');
@@ -66,6 +67,17 @@
         window.toast?.(e.message || 'Mesaj gönderilemedi.');
       }
     };
+  }
+
+  async function createConversation(participantId, participantName = 'Anonim kullanıcı') {
+    if (!participantId || !api()?.createConversation) return null;
+    const conversation = await api().createConversation(participantId);
+    const id = conversation?.id || conversation?.conversation_id || conversation?.conversation?.id;
+    if (id) {
+      await loadConversations();
+      openRealChat(id, participantName);
+    }
+    return conversation;
   }
 
   async function openRealChat(id, name) {
@@ -89,15 +101,14 @@
         body.appendChild(row);
       });
       body.scrollTop = body.scrollHeight;
-      bindSender(chat, body);
     } catch (e) {
       console.warn('[ErisChat] messages unavailable', e);
       body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Konuşma yüklenemedi.</div>';
-      bindSender(chat, body);
     }
+    bindSender(chat);
   }
 
-  window.ErisChatDM = { load: loadConversations, open: openRealChat };
+  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadConversations, { once: true });
   else loadConversations();
 })();
