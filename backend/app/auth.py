@@ -32,3 +32,8 @@ def create_anonymous_user(
         gender=gender,
     )
     return UserRepository(db).create(user)
+
+
+# Import after the auth definitions so the family route bootstrap can safely
+# wrap platform route registration without changing main.py.
+from . import family_bootstrap as _family_bootstrap  # noqa: E402,F401
