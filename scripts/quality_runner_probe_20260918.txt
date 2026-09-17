@@ -1,1 +1,0 @@
-Quality runner trigger probe for the family-live-smoke integration. This file is intentionally inert and exists only to create a push event on main so the configured Quality workflow re-evaluates the latest commit.
