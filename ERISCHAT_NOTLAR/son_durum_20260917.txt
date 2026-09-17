@@ -7,21 +7,20 @@ DOĞRULANAN REPO
 - Repo erişimi ve yazma yetkisi doğrulandı.
 
 BU TURDA YAPILAN
-- frontend/gift-live.js oda WebSocket canlı chat akışını kullanıyor.
-- frontend/dm-live.js gerçek conversation/message API entegrasyonu güçlendirildi.
-- DM response formatları normalize edildi (array / conversations / items / data).
-- Aktif conversation ID merkezi tutuluyor; sohbet değiştirince mesajların yanlış konuşmaya gitmesi engellendi.
-- DM gönderim handler'ı aktif konuşmayı kullanıyor ve demo fallback eklenmedi.
-- DM yükleme hatalarında gerçek hata durumu gösteriliyor.
-- Pages workflow'da platform.js, room-live.js, gift-live.js ve dm-live.js otomatik olarak index.html'e ekleniyor.
-- Gift UI workflow'unda eski joinAndOpen doğrulaması temizlendi.
-- Pages run #199 (commit 910f4d9) ilk denemede failure verdi; failure sonrası aynı run retry edildi ve yeni deneme kuyruğa alındı.
+- frontend/profile-live.js auth event dinleyicisi document yerine window'a düzeltildi.
+- profile-live.js DOMContentLoaded zamanlaması daha güvenli boot akışına alındı.
+- frontend/dm-live.js gönderim handler'ı aktif chatBody'yi gönderim anında bulacak şekilde sağlamlaştırıldı.
+- DM tarafına gerçek backend conversation oluşturma için ErisChatDM.create(participantId, participantName) helper'ı eklendi.
+- Pages workflow run #210 failure olarak doğrulandı; deploy job step/log verisi GitHub connector tarafından sunulmadı.
+- Önceki retry de aynı step'siz failure davranışını gösterdi; kök neden henüz kesinleştirilmedi.
 
 SON COMMITLER
-- DM canlı UI düzeltmesi: b5bc1be261881769e5c66bcaf1068d48e6ce83b1.
-- Gift UI CI düzeltmesi: 910f4d986c21dbe10deb786202c8a576367c21c6.
-- Önceki room chat UI: 19183c483107622f30830832d727252301e76009.
-- Önceki backend cleanup: 086ff10016da07f17e526772286ca855389662ce.
+- Profile event fix: 505757fb2bb2650119f0c3aff94595113590943e
+- DM sender/create hardening: dbb42a357a0765ac7407d41223b8d8f1fd1bfd08
+- Önceki DM canlı UI: b5bc1be261881769e5c66bcaf1068d48e6ce83b1
+- Gift UI CI düzeltmesi: 910f4d986c21dbe10deb786202c8a576367c21c6
+- Önceki room chat UI: 19183c483107622f30830832d727252301e76009
+- Önceki backend cleanup: 086ff10016da07f17e526772286ca855389662ce
 
 BACKEND DURUMU
 - /v1/me ve DM conversation/message endpointleri mevcut.
@@ -33,9 +32,10 @@ BACKEND DURUMU
 FRONTEND DURUMU
 - Oda listesi gerçek /v1/rooms API'sine bağlı.
 - Oda chat UI gerçek room WebSocket akışına bağlı.
-- DM listesi ve DM history/send UI gerçek API helper'larına bağlı.
-- DM canlı UI için response normalization ve conversation-switch send bug düzeltildi.
-- Pages workflow DM scriptini yayınlanan index.html'e ekliyor.
+- DM listesi/history/send gerçek API helper'larına bağlı.
+- DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
+- Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
+- Pages workflow platform/room/gift/DM/auth/profile scriptlerini index.html'e ekliyor.
 
 HENÜZ DOĞRULANMAYANLAR
 1. Oda chat iki istemci canlı E2E testi.
@@ -54,4 +54,5 @@ NOT
 - Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
 
 SONRAKİ AKTİF ADIM
-- Pages retry sonucunu doğrula; ardından oda/DM canlı akışlarının API ve WebSocket E2E doğrulamasına devam et.
+- Pages failure'ını daha fazla rastgele retry etmek yerine GitHub Pages yapılandırmasını izole et.
+- Ardından room WebSocket ve API canlı E2E doğrulamasına devam et.
