@@ -18,6 +18,9 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Inspect repository Pages state
         uses: actions/github-script@v7
         with:
