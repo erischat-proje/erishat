@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from .db import get_db
-from .cosmetics import catalog, find_asset, PRICE
+from .cosmetics import catalog, find_asset, PRICE, VIP_PRICE
 from .schemas import CosmeticApply, CosmeticPurchase
 from .session import get_user_from_token
 
@@ -32,7 +32,7 @@ def list_cosmetics(kind: str | None = None, gender: str | None = None):
         items = [item for item in items if item["type"] == kind]
     if gender:
         items = [item for item in items if item["gender"] in (None, gender)]
-    return {"items": items, "price": PRICE}
+    return {"items": items, "price": PRICE, "vip_price": VIP_PRICE}
 
 
 @router.get("/me/cosmetics")
@@ -48,8 +48,10 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
 def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
-    if not find_asset(key, kind):
+    asset = find_asset(key, kind)
+    if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
+    price = int(asset.get("price") or (VIP_PRICE if asset.get("vip") else PRICE))
 
     # Lock the balance row before checking ownership/balance so concurrent purchases
     # cannot spend the same Lidya twice or race the unique cosmetic constraint.
@@ -66,23 +68,24 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     ).first()
     if exists:
         raise HTTPException(status_code=409, detail="Bu görünüm zaten satın alınmış")
-    if int(locked_user[0]) < PRICE:
+    if int(locked_user[0]) < price:
         raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
-    db.execute(text("UPDATE users SET lidya=lidya-:price WHERE id=:uid"), {"price": PRICE, "uid": user.id})
+    db.execute(text("UPDATE users SET lidya=lidya-:price WHERE id=:uid"), {"price": price, "uid": user.id})
     db.execute(
         text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,:kind,:key)"),
         {"uid": user.id, "kind": kind, "key": key},
     )
     db.commit()
-    return {"ok": True, "spent": PRICE, "asset_key": key, "cosmetic_type": kind}
+    return {"ok": True, "spent": price, "asset_key": key, "cosmetic_type": kind, "vip": bool(asset.get("vip"))}
 
 
 @router.post("/me/cosmetics/apply")
 def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
-    if not find_asset(key, kind):
+    asset = find_asset(key, kind)
+    if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
 
     owned = db.execute(
@@ -98,4 +101,4 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
 
     db.execute(text(f"UPDATE users SET {column}=:key WHERE id=:uid"), {"key": key, "uid": user.id})
     db.commit()
-    return {"ok": True, "cosmetic_type": kind, "asset_key": key}
+    return {"ok": True, "cosmetic_type": kind, "asset_key": key, "vip": bool(asset.get("vip"))}
