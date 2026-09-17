@@ -35,11 +35,12 @@ MEVCUT DURUM
 - `backend/app/models.py` içinde `UserCosmetic` modeli ve `(user_id, cosmetic_type, asset_key)` unique constraint mevcut; startup `Base.metadata.create_all()` bunu oluşturacak şekilde model metadata'ya dahil.
 - Bu smoke harness değişiklikleri gerçek E2E PASS değildir; çalıştırma bekliyor.
 
-KOZMETİK ENVANTER
-- Hedef: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
-- Gerçek: kadınavatar 34 + erkekavatar 36 = 70 standart avatar; standartcerceve 30; vipkadınavatar 12 + viperkekavatar 12 = 24 VIP avatar; vipcerceve 12.
-- Cosmetic inventory CI bu hedef uyuşmazlığı nedeniyle takipte.
-- `backend/app/cosmetics.py` gerçek `Gereken_icerikler` klasörlerinden katalog üretiyor.
+KOZMETİK TAM AKTİF ENVANTER
+- Sabit hedef sayılar artık geçerli kabul edilmiyor. `Gereken_icerikler` altındaki altı katalog klasöründe bulunan geçerli assetlerin tamamı aktif kozmetik envanteridir.
+- Kategoriler: `kadınavatar`, `erkekavatar`, `standartcerceve`, `vipkadınavatar`, `viperkekavatar`, `vipcerceve`.
+- Son CI envanteri: kadınavatar 34 + erkekavatar 37 = 71 standart avatar; standartcerceve 32; vipkadınavatar 12 + viperkekavatar 12 = 24 VIP avatar; vipcerceve 12.
+- `backend/app/cosmetics.py` aynı klasörlerden otomatik katalog üretiyor; bu nedenle klasörlerdeki geçerli assetler uygulamanın aktif katalog kaynağıdır.
+- `scripts/check_cosmetic_assets.py` hedef 40/40/12/12 karşılaştırmasından çıkarıldı; artık tüm aktif klasörleri listeler, toplamları raporlar, eksik katalog klasörünü ve duplicate asset key'leri yakalar ve gerçek envanteri doğrular.
 - Rastgele silme/rename/sahte asset üretimi yok.
 
 TAMAMLANANLAR
@@ -64,6 +65,7 @@ TAMAMLANANLAR
 - Railway web port/config hazırlığı; deploy edilmedi.
 - Pages failure için non-deploy diagnostics workflow'u eklendi.
 - Room/DM/cosmetic smoke kontratlarının backend route ve response yapılarıyla statik audit'i.
+- Cosmetic inventory checker hedef-sayı mantığından tam aktif envanter mantığına geçirildi.
 
 DOĞRULAMA KURALI
 - Canlı/local E2E çalıştırılmadan özellik PASS/TAMAM kabul edilmeyecek.
@@ -72,4 +74,4 @@ DOĞRULAMA KURALI
 - Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
 
 YENİ SOHBET BAŞLANGIÇ MESAJI
-Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Smoke harness auth contract düzeltildi; room/DM/cosmetic backend kontrat audit'i yapıldı. Şimdi quality sonucunu takip et ve ardından kontrollü/local E2E'ye geç. Gerçek E2E olmadan PASS deme.
+Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Cosmetic envanterinde sabit 40/40/12/12 hedefi yok; Gereken_icerikler içindeki tüm geçerli avatar ve çerçeveler aktif olacak. Inventory checker artık tüm aktif envanteri doğruluyor. Şimdi quality sonucunu takip et ve ardından kontrollü/local E2E'ye geç. Gerçek E2E olmadan PASS deme.
