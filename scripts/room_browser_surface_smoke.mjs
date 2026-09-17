@@ -41,7 +41,7 @@ try{
   await page.getByRole('button',{name:'🎙️ Mikrofon'}).click();
   await page.getByRole('button',{name:'🎁 Hediye'}).waitFor();
   await page.getByRole('button',{name:'🛡️ Moderatör'}).waitFor();
-  await page.getByRole('button',{name:'💬 Sohbeti kapat'}).waitFor();
+  await page.getByRole('button',{name:'🔇 Sohbeti kapat'}).waitFor();
   const roomControlButtons=await page.locator('#edRoomActions button').count();
   if(roomControlButtons<5) throw new Error('live room control buttons missing');
   const hasVip=await page.locator('#erisDemoCompleteVip').count();
