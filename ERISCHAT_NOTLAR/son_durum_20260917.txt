@@ -2,13 +2,18 @@
 
 ## Son checkpoint
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Bu checkpoint yeni sohbete doğrudan devam edebilmek için güncellendi.
 - Railway `erischat-web-fixed` tarafında repo + servis config hizalaması yapıldı: Dockerfile path=`Dockerfile`, healthcheck=`/`, `PORT=80`; deploy yapılmadı.
 - Caddyfile repo tarafında `:80` portuna sabit; Dockerfile `EXPOSE 80` kullanıyor. Canlı 502'nin bu yeni config ile düzelip düzelmediği deploy edilmeden doğrulanamaz.
 - Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
 - `.github/workflows/integrate-erischat-features.yml` migration tekrar-ekleme problemi düzeltildi; `main.py` duplicate migration/import durumu tekrar kontrol edildi.
-- `scripts/cosmetic_live_smoke.py`, `scripts/dm_live_smoke.py`, `scripts/room_ban_live_smoke.py`, `scripts/room_live_smoke.py` mevcut; gerçek canlı/local E2E sonuçları henüz başarı olarak işaretlenmedi.
-- `scripts/room_live_smoke.py` gift sözleşmesinde `unit_price` kullanıyor ve gift event/recipient kontrollerini içeriyor.
+
+## Yeni teknik bulgu ve düzeltmeler
+- Dört live smoke harness'ında (`room_live_smoke.py`, `room_ban_live_smoke.py`, `dm_live_smoke.py`, `cosmetic_live_smoke.py`) eski `/auth/anonymous` endpoint çağrısı bulundu.
+- Mevcut backend kayıt sözleşmesi `/v1/users` ve `nickname/avatar/gender` payload'ı olduğu için dört harness güncel sözleşmeye hizalandı.
+- Room ve ban smoke harness'ları artık iki gerçek anonim session oluşturmayı mevcut `/v1/users` endpoint'i üzerinden deniyor.
+- DM ve cosmetic smoke harness'ları da aynı kayıt sözleşmesine geçirildi.
+- `.github/workflows/quality.yml` içine smoke harness Python syntax kontrolü, eski `/auth/anonymous` endpoint'ini reddeden contract guard ve localhost güvenlik varsayılanlarını doğrulayan kontrol eklendi.
+- Bu değişiklikler gerçek canlı E2E PASS anlamına gelmiyor; harness'lar hâlâ çalıştırılmayı bekliyor.
 
 ## Kozmetik hedefleri ve gerçek envanter
 - Checker hedefleri: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
@@ -24,14 +29,14 @@
 - Pages job log/step API'si boş döndüğü için kök neden tahmin edilmeyecek.
 - Tanı koymak için non-deploy `pages-diagnostics.yml` workflow'u eklendi. Bu workflow Pages API durumu, `github-pages` environment durumu ve mevcut Pages workflow şekli hakkında veri topluyor; Railway/Pages production deploy yapmıyor.
 - Diagnostics workflow dosyası GitHub'a commitlendi: `7b8a53c4819cd4ce21d7068f8fad3a6d58639bed`.
-- Diagnostics run sonucu henüz API'de görünmedi; bu nedenle henüz PASS/FAIL sonucu yazılmadı.
+- Diagnostics run sonucu henüz doğrulanmış PASS/FAIL olarak not edilmedi.
 - Pages canlı doğrulaması henüz yapılmadı.
 
 ## Test / E2E sırası
-1. Railway deploy sonrası 502 canlı doğrulaması.
+1. Railway deploy sonrası 502 canlı doğrulaması — kullanıcı `deploy` demeden çalıştırılmayacak.
 2. Kontrollü/local room live smoke.
 3. Ban → liste → unban → yeniden katılım E2E.
-4. İki istemcili room chat WebSocket E2E.
+4. İki istemcili room WebSocket chat E2E.
 5. Gift gönderimi + bakiye + %70 alıcı payı + room_gift E2E.
 6. Cosmetic purchase → ownership → apply E2E.
 7. DM conversation create/list/send/history E2E.
@@ -41,20 +46,21 @@
 11. V35/V53 legacy cleanup.
 
 ## Harness checkpoint
-- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat.
-- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin.
-- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history.
-- `scripts/cosmetic_live_smoke.py`: catalog → balance → purchase → ownership → apply.
-- Harnessların varlığı doğrulandı; çalıştırılmadan PASS yazılmayacak.
+- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat; auth contract güncel.
+- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin; auth contract güncel.
+- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history; auth contract güncel.
+- `scripts/cosmetic_live_smoke.py`: catalog → balance → purchase → ownership → apply; auth contract güncel.
+- Harnessların varlığı ve kod sözleşmesi kontrol edildi; çalıştırılmadan PASS yazılmayacak.
 
 ## CI checkpoint
-- `Integrate ErisChat features` run `35218672931`: success olarak önceki checkpointte doğrulandı.
+- `Integrate ErisChat features` run `35218672931`: success; job `105193189310` içindeki patch, Python syntax, commit adımları tamamlandı.
+- Yeni quality commit'i `f1a12e0dfe593591e49edf9dd3cfae7d1f8db3f7`; commit status sorgusunda henüz `pending` ve status listesi boştu, bu nedenle yeni quality sonucu PASS/FAIL olarak yazılmadı.
 - `ErisChat quality checks` içinde backend-quality daha önce başarılı; cosmetic-inventory gerçek asset hedef uyuşmazlığı nedeniyle takipte.
-- CI sonucu alınmadan tüm quality pipeline PASS kabul edilmeyecek.
 
 ## Yeni sohbet için devam mesajı
-`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Son checkpointten itibaren aktif sırayı takip et, her adımda gerçekten değişiklik yapıp doğrula, notları güncelle.`
+`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Smoke harness contract düzeltmeleri yapıldı; şimdi quality sonucunu ve ardından kontrollü/local E2E'yi takip et. Canlı E2E olmadan PASS deme.`
 
 ## Kural
-- Canlı E2E yapılmadan özellik tamamlandı sayılmayacak.
-- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılmayacak.
+- Canlı/local E2E yapılmadan özellik tamamlandı sayılmayacak.
+- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
+- Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
