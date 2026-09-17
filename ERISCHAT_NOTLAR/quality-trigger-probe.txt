@@ -1,3 +1,1 @@
-Temporary harmless commit used to verify the fresh-path ErisChat quality workflow triggers after registration.
-Probe iteration: 5
-Stale .github/workflows/quality.yml removed; active workflow is .github/workflows/erischat-quality.yml.
+CI trigger cleanup checkpoint: stale quality workflow paths are being removed; pages-diagnostics is the registered quality/E2E host under verification.
