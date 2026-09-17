@@ -1,10 +1,47 @@
-2026-09-17
-- frontend/erischat-main.html doğrulandı: gerçek oda listesi, oda giriş/koltuk ve hediye katalog/gönderim UI kodu mevcut.
-- Hediye backend ekonomisi server kontrollü: sabit katalog, %70 alıcı payı, maksimum 99 adet.
-- Backend oda WebSocket endpointi doğrulandı: /ws/rooms/{room_id}?token=...
-- send_gift artık başarılı işlemden sonra room_gift olayını aynı oda WebSocket bağlantılarına yayınlıyor.
-- room_gift payload: event id, oda, gönderen/alıcı, hediye, adet, toplam Lidya, alıcı tutarı, animasyon ve zaman.
-- frontend/gift-live.js gerçek WebSocket endpointine düzeltildi ve oda katılım POST'unu otomatik yakalayarak bağlantıyı açıyor.
-- frontend/erischat-main.html için apply-gift-ui workflow'una gift-live.js yükleme adımı eklendi.
-- Railway deploy yapılmadı.
-- Gerçek iki kullanıcı smoke testi henüz yapılmadı.
+ERISCHAT — SON DURUM
+Tarih: 2026-09-17 12:00 TRT
+
+DOĞRULANAN REPO
+- GitHub: semihvarolymk-png/erischat
+- Ana branch: main
+- Repo erişimi ve admin/push yetkisi doğrulandı.
+- Bu kontrol yanlış repo yerine erişilebilir gerçek ErisChat reposunda yapıldı.
+
+NOTLAR KONTROLÜ
+- ERISCHAT_NOTLAR/son_durum_20260916.txt okundu.
+- ERISCHAT_NOTLAR/son_durum_20260917.txt okundu.
+- ERISCHAT_NOTLAR/son_durum_20260917_actions_arastirma.txt okundu.
+- ERISCHAT_NOTLAR/son_durum_20260917_gece.txt okundu.
+- ERISCHAT_NOTLAR/yapilacaklar.txt okundu.
+- ERISCHAT_NOTLAR/yapilanlar.txt okundu.
+
+MEVCUT KOD KONTROLÜ
+- frontend/erischat-main.html mevcut ve tam ana frontend olarak duruyor; gerçek oda listesi, profil/VIP/mağaza/anonimlik ekranları ve alt navigasyon aynı sayfada mevcut.
+- frontend/platform.js doğrulandı; varsayılan API https://erischat-production.up.railway.app/v1 ve token fallback'leri mevcut.
+- .github/workflows/pages.yml doğrulandı; Pages workflow'u github-pages environment kullanıyor, frontend'i _site içine hazırlıyor ve index.html üretiyor.
+- ERISCHAT_NOTLAR önceki teşhisindeki v53 iframe yaklaşımı final olarak kabul edilmiyor.
+- Room/gift sistemiyle ilgili önceki checkpointlerde belirtilen server kontrollü katalog, %70 alıcı payı, 1-99 quantity, room_gift WebSocket ve gift-live.js entegrasyonu mevcut olarak kayıtlı.
+
+GITHUB ACTIONS / PAGES
+- Run #164 / ID 35196963608 incelendi.
+- Job ID 105122355411 mevcut fakat job steps null; run failure ile sonuçlanmış.
+- Workflow dosyası şu an environment: github-pages içeriyor.
+- Önceki başarılı hazırlık/artifact aşaması notlarda kayıtlı; mevcut engel Pages deployment/environment tarafında.
+- Bu connector üzerinden environment approval verme yetkisi bulunmadığından kod tarafında sahte bir başarı oluşturulmadı.
+
+GÜVENLİK / DEPLOY
+- Railway production deploy yapılmadı ve kullanıcı açıkça deploy demeden yapılmayacak.
+- Büyük frontend HTML dosyası kısmi içerikle overwrite edilmeyecek.
+- Main güvenli checkpoint kaydı korunuyor: aef369bf05d1a6b6af36ce40cd2f9bb41678d339.
+
+SONRAKİ GERÇEK İŞ SIRASI
+1. GitHub Pages environment/approval engelini GitHub tarafında çöz ve yeni Pages run'ı doğrula.
+2. Pages canlı frontend URL'sini doğrula.
+3. Frontend → Railway API bağlantısını doğrula.
+4. WebSocket bağlantısını doğrula.
+5. Gerçek iki kullanıcı room/gift smoke testini yap.
+6. Sonuçlara göre yapilacaklar/yapilanlar dosyalarını tekrar senkronize et.
+7. Ardından tek sayfa/VIP-avatar-frame kalan ürün işlerine geç.
+
+NOT
+- Bu dosya mevcut gerçek repo ve kod kontrolüne göre güncellendi. Önceki yanlış repo varsayımı geçersizdir.
