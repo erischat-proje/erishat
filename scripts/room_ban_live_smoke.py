@@ -32,11 +32,14 @@ def request(method: str, path: str, token: str, payload: dict | None = None):
 def main() -> int:
     base = os.environ.get("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
     print(f"ErisChat room ban smoke target: {api_base()}")
-    _, owner = request("POST", "/users", "", {"nickname": "BanOwner", "avatar": "👑", "gender": "unspecified"})
-    _, target = request("POST", "/users", "", {"nickname": "BanTarget", "avatar": "🦊", "gender": "unspecified"})
+    owner_status, owner = request("POST", "/users", "", {"nickname": "BanOwner", "avatar": "👑", "gender": "male"})
+    target_status, target = request("POST", "/users", "", {"nickname": "BanTarget", "avatar": "🦊", "gender": "male"})
+    if owner_status >= 300 or not isinstance(owner, dict):
+        raise RuntimeError(f"owner create failed: HTTP {owner_status} {owner}")
+    if target_status >= 300 or not isinstance(target, dict):
+        raise RuntimeError(f"target create failed: HTTP {target_status} {target}")
     owner_token = owner["access_token"]
     target_token = target["access_token"]
-    owner_id = owner["user"]["id"]
     target_id = target["user"]["id"]
 
     status, room = request("POST", "/rooms", owner_token, {"name": "Ban Smoke", "level": 1})
