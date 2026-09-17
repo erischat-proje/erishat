@@ -31,6 +31,7 @@ try{
   await page.locator('#chatInput').fill('room e2e smoke');
   await page.locator('#chatInput').press('Enter');
   await page.waitForSelector('#chatBody .bubble.me');
+  await page.locator('#chat .close').click();
   await page.locator('#erisDemoBtn').click();
   await page.locator('[data-ed="rooms"]').click();
   await page.waitForSelector('#ed-rooms #edRooms .ed-row');
