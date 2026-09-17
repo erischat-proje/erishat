@@ -21,7 +21,11 @@ TAMAMLANAN DENETİM
 - [ ] erischat-main.html içindeki hardcoded/demo mesaj ekranlarını kaldır
 - [x] Oda listesi temel olarak /v1/rooms'a bağlı
 - [x] Anonymous user oluşturma + token/session istemci akışı kodlandı (auth-live.js)
+- [x] Anonymous registration gender payload nötr unspecified olarak düzeltildi
 - [x] /v1/me profil yükleme/güncelleme UI için canlı kontroller eklendi (profile-ui-live.js); canlı E2E doğrulaması bekliyor
+- [x] Profil nickname + bildirim güncelleme UI'sı /v1/me PATCH'e bağlı
+- [x] Profil logout sonrası yeni anonim session oluşturma akışı eklendi; canlı E2E doğrulaması bekliyor
+- [ ] Session/anonymous durum göstergesini ayrı UI bileşeni olarak tamamla
 - [ ] Gerçek conversation list/create UI
 - [x] Gerçek DM history/send UI kod entegrasyonu
 - [x] Genel /ws istemcisi + reconnect + ping/pong kodlandı (canlı doğrulama bekliyor)
