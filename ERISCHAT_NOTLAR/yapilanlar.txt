@@ -36,20 +36,26 @@ FRONTEND
 - [x] Oda mesaj gönderimi gerçek WebSocket room_chat payload'ına bağlandı.
 - [x] Oda listesi temel olarak gerçek /v1/rooms API'sine bağlı.
 - [x] Profil/VIP/mağaza/anonimlik temel UI'ları mevcut.
+- [x] DM conversation listesi gerçek API'ya bağlandı.
+- [x] DM history gerçek API'dan yükleniyor.
+- [x] DM send gerçek API'ya bağlandı.
+- [x] DM ekranında demo fallback kaldırıldı; boş/hata durumları ayrıştırıldı.
+- [x] DM API response listeleri için conversations/items/data normalizasyonu eklendi.
 
 TESPİT EDİLEN EKSİKLER
-- [ ] Mesajlar ekranında hardcoded/demo konuşma kayıtları var.
-- [ ] Gerçek DM history/send UI tamamlanmamış.
 - [ ] Anonymous/session/profile UI akışları tam bağlanmamış.
 - [ ] WS reconnect/presence/genel event UI eksik.
 - [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
+- [ ] DM tarafında yeni conversation oluşturma UI'sı henüz tamamlanmadı.
+- [ ] DM avatar URL'lerinin gerçek görsel olarak render edilmesi ayrıca ele alınacak.
 
 PAGES / RAILWAY
 - [x] pages.yml workflow mevcut.
 - [x] _site hazırlama + index.html üretimi mevcut.
 - [x] upload-pages-artifact@v4 ve deploy-pages@v4 mevcut.
 - [x] github-pages environment tanımlı.
-- [x] Railway production domain checkpointte kayıtlı.
+- [x] Pages workflow run #199 attempt 2 incelendi; deploy job failure durumunda.
+- [ ] Pages failure için kullanılabilir GitHub job logu mevcut değil; kök neden henüz kesinleştirilmedi.
 - [ ] Canlı Pages success doğrulanmadı.
 - [ ] Canlı Railway /health /ready/API/DB/WS E2E doğrulanmadı.
 
@@ -65,6 +71,8 @@ SON GELİŞTİRMELER
 - [x] Yapılanlar listesi gerçek durumla senkronlandı.
 - [x] __pycache__ temizliği gerçekleştirildi.
 - [x] Oda WebSocket chat history + gerçek gönderim UI entegrasyonu yapıldı.
+- [x] Gerçek DM conversation/history/send UI entegrasyonu yapıldı.
+- [x] Pages workflow validation tarafındaki obsolete joinAndOpen kontrolü temizlendi.
 
 GÜVENLİK / DEPLOY
 - Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
@@ -73,6 +81,7 @@ GÜVENLİK / DEPLOY
 
 SONRAKİ AKTİF İŞ
 1. Oda WebSocket canlı E2E testini doğrula.
-2. Hardcoded/demo DM ekranını gerçek conversation API'larına bağla.
-3. Anonymous/session/profile UI akışlarını tamamla.
+2. Anonymous/session/profile UI akışlarını tamamla.
+3. Pages failure kök nedenini izole et ve workflow'u doğrula.
 4. Pages/Railway canlı doğrulamalarına geç.
+5. Avatar/frame/VIP gerçek asset entegrasyonuna devam et.
