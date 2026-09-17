@@ -7,8 +7,13 @@ import urllib.error
 import urllib.request
 
 
+def api_base() -> str:
+    base = os.environ.get("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+    return base if base.endswith("/v1") else base + "/v1"
+
+
 def request(method: str, path: str, token: str, payload: dict | None = None):
-    url = os.environ.get("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000/v1") + path
+    url = api_base() + path
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(url, data=data, method=method, headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
     try:
@@ -25,8 +30,8 @@ def request(method: str, path: str, token: str, payload: dict | None = None):
 
 
 def main() -> int:
-    base = os.environ.get("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000/v1")
-    print(f"ErisChat room ban smoke target: {base}")
+    base = os.environ.get("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+    print(f"ErisChat room ban smoke target: {api_base()}")
     _, owner = request("POST", "/users", "", {"nickname": "BanOwner", "avatar": "👑", "gender": "unspecified"})
     _, target = request("POST", "/users", "", {"nickname": "BanTarget", "avatar": "🦊", "gender": "unspecified"})
     owner_token = owner["access_token"]
