@@ -48,11 +48,13 @@
 
   window.connectRoomGiftSocket = connectRoomGiftSocket;
 
-  // The current room UI joins through fetch(). Capture that successful join
-  // request so no second room-state implementation is needed in the page.
+  // Route relative ErisChat API calls to Railway even when the frontend is
+  // served from GitHub Pages. Capture the successful room join as well so
+  // the live gift WebSocket is opened without a second room-state flow.
   const originalFetch = window.fetch;
   window.fetch = async function(input, init){
-    const response = await originalFetch.apply(this, arguments);
+    const target = typeof input === 'string' && input.startsWith('/v1/') ? API + input : input;
+    const response = await originalFetch.call(this, target, init);
     try{
       const url = typeof input === 'string' ? input : input && input.url || '';
       const method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
