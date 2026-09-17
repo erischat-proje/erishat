@@ -11,7 +11,7 @@ try{
   await page.route('**/v1/**',async route=>{
     const u=new URL(route.request().url());
     let body={};
-    if(u.pathname==='/v1/rooms') body={rooms:[{id:'room-e2e',name:'E2E Oda',member_count:2,owner_name:'Smoke'}]};
+    if(u.pathname==='/v1/rooms') body=[{id:'room-e2e',name:'E2E Oda',member_count:2,owner_name:'Smoke',capacity:35,level:1,chat_enabled:true}];
     else if(u.pathname==='/v1/rooms/room-e2e') body={id:'room-e2e',name:'E2E Oda',owner_id:'smoke-user',level:1,capacity:35,seat_count:8,max_moderators:2,chat_enabled:true,member_count:2,moderators:[],seats:[{seat_number:1,user_id:'other-user',locked:false,muted:false},{seat_number:2,user_id:null,locked:false,muted:false}]};
     else if(u.pathname.includes('/gift-catalog')) body=[{gift_key:'Zeytin Dalı',unit_price:1,animation:false}];
     else if(u.pathname.includes('/gifts')) body={gift_key:'Zeytin Dalı',quantity:1,total_price:1};
