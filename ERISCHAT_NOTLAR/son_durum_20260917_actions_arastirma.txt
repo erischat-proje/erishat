@@ -1,28 +1,39 @@
 ERISCHAT — ACTIONS ARAŞTIRMA CHECKPOINT
 Tarih: 2026-09-17
 
-DEVAM EDİLEN NOKTA
-- Main branch güncel commit: 4a6cb94acbf412bc0f018a8a77766697d409f4f4.
-- pages.yml run 35166215838 (run #161) failure oldu.
-- Bu run'ın deploy job'ı 105027784327 failure ile tamamlandı fakat step listesi BOŞ; artifact de oluşmadı.
-- Failed job yeniden çalıştırılmayı denedi; aynı run üzerinden tekrar job oluşmadı.
-- Bu nedenle sorun pages.yml içindeki frontend hazırlama komutlarında değil; workflow step'leri başlamadan önce oluşuyor.
-- Aynı main commit'teki başka Actions workflow'larında da aynı çok hızlı failure paterni görülüyor (ör. apply-profile-settings run 35196633163). Bu bulgu, sorunun yalnızca Pages workflow'una özgü olmadığını gösteriyor.
-- GitHub Status şu anda Actions ve Pages'i operational gösteriyor; dolayısıyla genel GitHub kesintisi olarak işaretlenmiş değil.
+SON BULGULAR
+- pages.yml önce environment olmadan test edildi.
+- Bu testte job normal runner'a girdi; Checkout, Setup Pages, frontend hazırlama ve artifact upload adımlarının TAMAMI başarıyla çalıştı.
+- Artifact başarıyla üretildi: github-pages.zip, 134497 byte, artifact ID 10486785643.
+- Deploy adımı bu kez açık hata verdi: "Missing environment. Ensure your workflow's deployment job has an environment.".
+- Bunun üzerine pages.yml içine gerekli `environment: name: github-pages` tekrar kondu.
+- Yeni run 35196963608 (run #164) bu kez `waiting` durumuna geçti; job ID 105122355411.
+- Bu, artık frontend/build/artifact tarafının çalıştığını ve kalan problemin github-pages environment üzerindeki koruma/approval beklemesi olduğunu gösteriyor.
+- GitHub dokümantasyonuna göre environment koruma kuralları job'un başlamasını bekletebilir; deploy-pages da deployment job'ında environment bekliyor. Bu nedenle environment tarafı çözülmeden Pages deploy tamamlanmayacak.
 
-ÖNEMLİ
-- Railway deploy yapılmadı.
-- Büyük frontend HTML dosyası kısmi içerikle update edilmedi.
-- Oda/hediye backend ve WebSocket değişiklikleri korunuyor.
+PAGES WORKFLOW SON HALİ
+- pages.yml `environment: github-pages` içeriyor.
+- upload-pages-artifact@v4 kullanılıyor.
+- frontend klasörü `_site` içine alınıyor ve erischat-main.html -> index.html yapılıyor.
+- .nojekyll oluşturuluyor.
 
-SONRAKİ ADIM
-1. Repository Actions/Environment/Pages yapılandırmasının neden job'ları step'e geçirmediğini çöz.
-2. Mümkünse Pages workflow'unu yeniden çalıştır ve gerçek step logu/artifact üretimini doğrula.
-3. Pages çalışınca canlı frontend → Railway API/WS bağlantısını test et.
-4. Sonra gerçek iki kullanıcı room/gift smoke testine geç.
+FRONTEND BAĞLANTISI
+- `frontend/platform.js` güncellendi.
+- API varsayılanı artık `https://erischat-production.up.railway.app/v1`.
+- Token okuma eski ve yeni token anahtarlarını destekliyor.
+- Bu değişiklik commit: b926801b9995c3cbcc1fa1abc42f5f3d22960957.
+- Railway production deploy yapılmadı.
+
+KALANLAR
+1. github-pages environment beklemesini çöz / gerekiyorsa GitHub arayüzünden deployment approval ver.
+2. Pages run'ın success + deployment URL üretmesini doğrula.
+3. Canlı frontend'i açıp Railway API bağlantısını doğrula.
+4. WebSocket bağlantısını doğrula.
+5. Gerçek iki kullanıcı room/gift smoke testine geç.
 
 KORUNACAK GÜVENLİ BİLGİ
 - Railway backend: erischat-production.up.railway.app
 - WebSocket: /ws/rooms/{room_id}?token=...
 - gh-pages senkron checkpoint: a0f2595181458b967f7e79c6e5aacfc2b04fee83
+- Büyük frontend HTML dosyası kısmi içerikle update edilmedi.
 - Railway production deploy kullanıcı açıkça deploy demeden yapılmayacak.
