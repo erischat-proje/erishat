@@ -22,7 +22,9 @@
     const form = panel.querySelector('[data-dm-create-form]');
     const idInput = panel.querySelector('[data-dm-participant-id]');
     const nameInput = panel.querySelector('[data-dm-participant-name]');
+    const submitButton = panel.querySelector('[data-dm-create-submit]');
     const status = panel.querySelector('[data-dm-create-status]');
+    let submitting = false;
 
     panel.querySelector('[data-dm-new]').addEventListener('click', () => {
       form.hidden = false;
@@ -34,11 +36,16 @@
       idInput.value = '';
       nameInput.value = '';
       status.textContent = '';
+      submitting = false;
+      submitButton.disabled = false;
     });
-    panel.querySelector('[data-dm-create-submit]').addEventListener('click', async () => {
+
+    const submit = async () => {
+      if (submitting) return;
       const participantId = idInput.value.trim();
       if (!participantId) {
         status.textContent = 'Kullanıcı ID gerekli.';
+        idInput.focus();
         return;
       }
       const create = window.ErisChatDM && window.ErisChatDM.create;
@@ -46,6 +53,8 @@
         status.textContent = 'DM sistemi henüz hazır değil.';
         return;
       }
+      submitting = true;
+      submitButton.disabled = true;
       status.textContent = 'Konuşma oluşturuluyor...';
       try {
         await create(participantId, nameInput.value.trim() || 'Anonim kullanıcı');
@@ -55,8 +64,19 @@
         nameInput.value = '';
       } catch (error) {
         status.textContent = error && error.message ? error.message : 'Konuşma oluşturulamadı.';
+      } finally {
+        submitting = false;
+        submitButton.disabled = false;
       }
-    });
+    };
+
+    submitButton.addEventListener('click', submit);
+    [idInput, nameInput].forEach(input => input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submit();
+      }
+    }));
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, { once: true });
