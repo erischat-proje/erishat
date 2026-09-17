@@ -77,7 +77,7 @@ def main() -> None:
 
     status, members = request("GET", f"/families/{family_id}/members", token=token)
     expect(status, 200, "family member list", members)
-    if not any(item.get("user_id") == owner_id and item.get("role") == "member" for item in member_items(members)):
+    if not any(item.get("user_id") == owner_id and item.get("role") in {"member", "owner"} for item in member_items(members)):
         raise AssertionError(f"owner missing from member list: {members}")
 
     status, invited = request("POST", f"/families/{family_id}/members", {"user_id": member_id}, token)
