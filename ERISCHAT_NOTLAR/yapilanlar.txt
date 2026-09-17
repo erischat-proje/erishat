@@ -12,6 +12,7 @@ REPO / DENETİM
 - [x] ERISCHAT_NOTLAR checkpoint'leri okundu ve güncellendi.
 - [x] Backend, frontend, asset ve Actions yapıları denetlendi.
 - [x] TODO/FIXME/NotImplemented/pass taraması yapıldı; açık eşleşme bulunmadı.
+- [x] Geçici Pages/CI trigger dosyalarının belirgin kalıntıları temizlendi.
 
 BACKEND / FRONTEND TEMELİ
 - [x] FastAPI health/ready, anonymous session, profile, DM, room, room WS, gift ve cosmetics akışları mevcut.
@@ -34,12 +35,12 @@ GERÇEK RUNNER DOĞRULAMASI
 - [x] DM conversation → send → history gerçek runner'da geçti.
 - [x] Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da geçti.
 - [x] Quality v4 run 35258712132 / job 105328734923 SUCCESS; static checks ve beş smoke adımı gerçek runner'da geçti.
-- [ ] Yeni checkpoint dokümantasyon push'u sonrası oluşan Quality koşusu ayrıca doğrulanacak.
+- [ ] Cleanup/checkpoint push'ları sonrası oluşan yeni Quality koşusu ayrıca doğrulanacak.
 
 PAGES / RAILWAY
 - [x] Aktif Pages workflow: .github/workflows/erischat-pages.yml.
-- [x] Son main push'ta Pages run 35256506397 gerçek environment admission aşamasında failure verdi; deploy job steps'e girmedi.
-- [x] Pages kök nedeni daha önce gerçek API/runner ile doğrulandı: github-pages custom branch policy yalnızca gh-pages; main izinli değil.
+- [x] Pages kök nedeni gerçek runner ile doğrulandı: github-pages custom branch policy yalnızca gh-pages; main izinli değil.
+- [x] Diagnostics guard main engelini gerçek runner'da raporluyor.
 - [ ] github-pages environment policy'ye main eklenmedi.
 - [ ] Başarılı Pages deploy doğrulanmadı.
 - [ ] Canlı Pages HTTP doğrulanmadı.
