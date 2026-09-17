@@ -1,1 +1,1 @@
-CI trigger cleanup checkpoint: stale quality workflow paths are being removed; pages-diagnostics is the registered quality/E2E host under verification.
+CI trigger cleanup checkpoint: registered quality workflow now contains the full backend, smoke, cosmetic and live E2E suite.
