@@ -1,109 +1,112 @@
 ERISCHAT — YAPILACAKLAR / GÜNCEL MASTER LİSTE
-Tarih: 2026-09-17 — repo + kod denetimi sonrası
+Tarih: 2026-09-17 — canlı geliştirme denetimi
 
-DURUM KURALI
-- [x] Doğru repo doğrulandı: semihvarolymk-png/erischat
-- [x] Ana branch: main
-- [x] ERISCHAT_NOTLAR klasörü ve mevcut checkpoint'ler kontrol edildi.
-- [x] Repo ağacı recursive olarak tarandı.
-- [x] Frontend, backend, workflow ve asset yapısının mevcut olduğu doğrulandı.
-- [x] Büyük frontend dosyası kısmi içerikle overwrite edilmeme kuralı korunuyor.
+TAMAMLANAN DENETİM
+- [x] Doğru repo: semihvarolymk-png/erischat
+- [x] main branch erişimi
+- [x] ERISCHAT_NOTLAR checkpoint'leri
+- [x] Recursive repo ağacı
+- [x] Backend/frontend/workflow/asset yapısı
+- [x] main.py duplicate ALTER TABLE temizliği
+- [x] backend/app/__pycache__ içindeki mevcut .pyc artefaktlarının temizliği
 
-ÖNCELİK 1 — GITHUB PAGES / CANLI FRONTEND
-- [ ] Son Pages Actions run'ının neden failure olduğunu kesinleştir.
-- [ ] pages.yml job'unun success ile tamamlandığını doğrula.
-- [ ] GitHub Pages canlı URL'sini gerçek HTTP içerikle doğrula.
-- [ ] Pages frontend → Railway API bağlantısını canlı test et.
-- [ ] wss://erischat-production.up.railway.app/ws/rooms/{room_id} bağlantısını canlı test et.
+ÖNCELİK 1 — PAGES / CANLI FRONTEND
+- [ ] Pages failure kök nedenini kesinleştir
+- [ ] pages.yml success doğrulaması
+- [ ] Canlı Pages HTTP doğrulaması
+- [ ] Pages → Railway API canlı test
+- [ ] Room WebSocket canlı test
 
-ÖNCELİK 2 — FRONTEND GERÇEK VERİ AKIŞI
-- [ ] erischat-main.html içindeki demo/mock ekranlarını tek tek tespit et.
-- [ ] Canlı oda listesini gerçek /v1/rooms verisine bağla.
-- [ ] Gerçek anonim kullanıcı oluşturma + token/session akışını UI'ya bağla.
-- [ ] /v1/me profil yükleme/güncelleme UI bağlantısını tamamla.
-- [ ] Gerçek konuşma listesi/oluşturma akışını bağla.
-- [ ] Gerçek DM geçmişi ve mesaj gönderimini bağla.
-- [ ] Genel /ws eventlerini UI'ya bağla.
-- [ ] WS kopma/yeniden bağlanma ve ping/pong durumlarını UI'da yönet.
-- [ ] Logout/token expiry davranışını kullanıcı akışında tamamla.
+ÖNCELİK 2 — FRONTEND GERÇEK AKIŞ
+- [ ] erischat-main.html içindeki hardcoded/demo mesaj ekranlarını kaldır
+- [x] Oda listesi temel olarak /v1/rooms'a bağlı
+- [ ] Anonymous user oluşturma + token/session UI akışı
+- [ ] /v1/me profil yükleme/güncelleme UI
+- [ ] Gerçek conversation list/create UI
+- [ ] Gerçek DM history/send UI
+- [ ] Genel /ws event UI
+- [ ] WS reconnect + ping/pong UI
+- [ ] Logout/token expiry UI
+- [ ] Oda WebSocket chat UI: backend endpoint var, frontend gönderim fonksiyonu hâlen toast gösteriyor
 
-ÖNCELİK 3 — ODA / HEDİYE CANLI TESTİ
-- [ ] Gerçek kullanıcı A ile oda oluştur.
-- [ ] Gerçek kullanıcı B ile aynı odaya katıl.
-- [ ] Oda sohbeti mesajını iki istemcide doğrula.
-- [ ] Hediye gönderimini iki istemcide doğrula.
-- [ ] room_gift eventini iki istemcide doğrula.
-- [ ] Sender bakiye düşümünü DB'de doğrula.
-- [ ] Recipient %70 aktarımını DB'de doğrula.
-- [ ] quantity 1 ve 99 sınırlarını doğrula.
-- [ ] Yetersiz bakiye davranışını doğrula.
-- [ ] 30+ Lidya animation eventini doğrula.
-- [ ] Oda seviyesi/spend güncellemesini doğrula.
+ÖNCELİK 3 — ODA / HEDİYE
+- [ ] Gerçek kullanıcı A/B smoke test
+- [ ] Oda chat iki istemci testi
+- [ ] Gift iki istemci testi
+- [ ] room_gift iki istemci event testi
+- [ ] Sender bakiye DB doğrulaması
+- [ ] Recipient %70 DB doğrulaması
+- [ ] quantity 1/99 sınır testi
+- [ ] Yetersiz bakiye testi
+- [ ] 30+ Lidya animation testi
+- [ ] Room level/spend testi
 
-ÖNCELİK 4 — TEK SAYFA FRONTEND / V35-V53
-- [ ] v53 iframe/overlay yaklaşımını finalden tamamen çıkar.
-- [ ] v35 tabanındaki DOM mantığını tek kanonik sayfada sürdür.
-- [ ] Eski/yeni alt navigasyon çakışmasını kaldır.
-- [ ] Premium profil ekranını ana DOM'a entegre et.
-- [ ] Eski prototip dosyalarının hangilerinin arşivleneceğini belirle.
-- [ ] Tek kanonik frontend sürümünü belgeleyip sabitle.
+ÖNCELİK 4 — TEK SAYFA / V35
+- [ ] v53 iframe/overlay kalıntılarını tarayıp kaldır
+- [ ] v35 DOM tabanını kanonik frontend olarak sabitle
+- [ ] Alt navigasyon çakışmalarını temizle
+- [ ] Premium profil ana DOM entegrasyonu
+- [ ] Eski prototipleri arşivle
+- [ ] Kanonik frontend sürümünü belgeleyip sabitle
 
 ÖNCELİK 5 — AVATAR / FRAME / VIP
-- [ ] Mevcut Gereken_icerikler assetlerini envanterle.
-- [ ] Standart avatar sayısını ve türlerini doğrula.
-- [ ] Standart frame assetlerini doğrula.
-- [ ] VIP 1–12 avatar + frame çiftlerini gerçek PNG/SVG asset olarak tamamla.
-- [ ] Frame merkezinin transparan olduğunu teknik olarak doğrula.
-- [ ] Avatar/frame API kataloğu ile frontend katalogunu birebir eşleştir.
-- [ ] Profilde seçme/satın alma/uygulama akışını uçtan uca test et.
+- [ ] Gereken_icerikler tam asset envanteri
+- [ ] Standart avatar adet/tür doğrulaması
+- [ ] Standart frame envanteri
+- [ ] VIP 1–12 avatar + frame gerçek assetleri
+- [ ] Frame merkez transparanlık doğrulaması
+- [ ] Backend catalog ↔ frontend catalog birebir eşleşme
+- [ ] Satın alma/seçme/uygulama E2E testi
 
 ÖNCELİK 6 — BACKEND SAĞLAMLAŞTIRMA
-- [x] main.py içindeki yinelenen user ALTER TABLE ifadeleri temizlendi.
-- [ ] backend/app altındaki __pycache__ derlenmiş dosyaları temizle.
-- [ ] Endpoint/model/schema/repository uyumunu tam test et.
-- [ ] SQLAlchemy ilişkileri ve DB constraint'lerini test et.
-- [ ] Session/token expiry ve revoke testlerini tamamla.
-- [ ] Production CORS'u gerçek frontend originleriyle sınırlandır.
-- [ ] Demo kullanıcı/endpoint davranışını production'dan ayır veya kontrollü feature flag yap.
-- [ ] Migration yaklaşımını tekilleştir; startup ALTER yaklaşımının yerine uygun migration akışını değerlendir.
-- [ ] Input validation, rate limiting ve abuse kontrollerini tamamla.
+- [x] Duplicate startup ALTER temizliği
+- [x] Mevcut backend/app __pycache__ .pyc temizliği
+- [ ] Endpoint/model/schema/repository tam uyum testi
+- [ ] DB relation/constraint testleri
+- [ ] Session/token expiry/revoke testleri
+- [ ] Production CORS'u gerçek originlere sınırla
+- [ ] Demo endpointini production'dan ayır/feature flag
+- [ ] Migration yaklaşımını tekilleştir
+- [ ] Rate limiting / abuse kontrolleri
+- [ ] Gift transaction locking sırasını concurrency açısından test et
 
-ÖNCELİK 7 — RAILWAY / DEPLOYMENT
-- [ ] Railway build/start config doğrula.
-- [ ] /health canlı HTTP doğrula.
-- [ ] /ready canlı DB doğrula.
-- [ ] Environment variables/config doğrula.
-- [ ] PostgreSQL bağlantısını canlı doğrula.
-- [ ] Redis gereksinimi varsa bağlantıyı doğrula.
-- [ ] Kullanıcı açıkça "deploy" dediğinde production deploy yap.
-- [ ] Deploy sonrası build/runtime/HTTP loglarını kontrol et.
-- [ ] Frontend → API → DB → WS uçtan uca test et.
+ÖNCELİK 7 — RAILWAY
+- [ ] Build/start config doğrulaması
+- [ ] /health canlı test
+- [ ] /ready canlı DB test
+- [ ] Environment/config doğrulaması
+- [ ] PostgreSQL canlı doğrulaması
+- [ ] Redis gereksinimi varsa doğrulama
+- [ ] Kullanıcı açıkça "deploy" dediğinde production deploy
+- [ ] Deploy sonrası log/build/runtime kontrolü
+- [ ] Frontend → API → DB → WS E2E
 
 ÖNCELİK 8 — ÜRÜN
-- [ ] Keşfet ekranını gerçek kullanıcı/oda verisine bağla.
-- [ ] Canlı kullanıcı/oda presence modelini tamamla.
-- [ ] Sesli oda/WebRTC altyapısını kur ve test et.
-- [ ] Moderasyon/raporlama/engelleme UI + API entegrasyonunu tamamla.
-- [ ] Lidya/hediye/VIP işlemlerinin eksik UI akışlarını tamamla.
-- [ ] Admin paneli.
-- [ ] Bildirim ve gerçek zamanlı event sistemi.
+- [ ] Keşfet gerçek kullanıcı/oda verisi
+- [ ] Presence
+- [ ] Sesli oda/WebRTC
+- [ ] Moderasyon/raporlama/engelleme UI + API
+- [ ] Lidya/hediye/VIP eksik UI
+- [ ] Admin paneli
+- [ ] Bildirim/realtime event sistemi
 
 KALİTE KONTROL
-- [ ] Python compile/syntax.
-- [ ] API endpoint smoke testleri.
-- [ ] Frontend JavaScript syntax.
-- [ ] WebSocket ping/history/chat/gift testleri.
-- [ ] DB schema/relationship/constraint testleri.
-- [ ] Railway build/runtime/healthcheck.
-- [ ] GitHub Pages deployment.
-- [ ] Mobil Chrome/Termux temiz cache testi.
-- [ ] Her tamamlanan madde yapilanlar.txt'ye işlenecek.
+- [ ] Python compile/syntax
+- [ ] API smoke test
+- [ ] Frontend JS syntax
+- [ ] WS ping/history/chat/gift testleri
+- [ ] DB schema/relationship/constraint
+- [ ] Railway build/runtime/health
+- [ ] GitHub Pages deployment
+- [ ] Mobil Chrome/Termux temiz cache
+- [ ] Her tamamlanan madde yapilanlar.txt'ye aktarılacak
 
-SONRAKİ ÇALIŞMA SIRASI
-1. Pages failure'ın güncel nedenini çöz/doğrula.
-2. Backend ve frontend endpoint eşleşmesini tamamla.
-3. Gerçek anonim kullanıcı + oda + sohbet + hediye smoke testine geç.
-4. Tek sayfa/V35 mimarisini temizle.
-5. Avatar/frame/VIP asset entegrasyonunu tamamla.
-6. Backend güvenlik ve kalite kontrolünü bitir.
-7. Sonuçları tüm checkpoint TXT'lerine senkron yaz.
+AKTİF ÇALIŞMA SIRASI
+1. Frontend gerçek veri akışındaki hardcoded alanları temizle.
+2. Room WebSocket chat UI'ını bağla.
+3. Anonymous/session/profile/DM UI akışlarını tamamla.
+4. Pages/Railway canlı doğrulamalarını yap.
+5. Gerçek iki istemci room/gift smoke testine geç.
+6. V35 tek sayfa ve avatar/frame/VIP entegrasyonunu tamamla.
+7. Backend security + kalite testlerini bitir.
+8. Tüm TXT checkpoint'lerini sonuçlarla senkronla.
