@@ -1,72 +1,28 @@
-ERISCHAT — SON DURUM
-Tarih: 2026-09-17 — canlı geliştirme checkpoint
+# ErisChat Son Durum — 2026-09-17
 
-DOĞRULANAN REPO
-- GitHub: semihvarolymk-png/erischat
-- Ana branch: main
-- Repo erişimi ve yazma yetkisi doğrulandı.
+## Son checkpoint
+- Repo: `semihvarolymk-png/erischat`, branch: `main`.
+- Kozmetik API route ile canlı smoke harness payloadları karşılaştırıldı; `cosmetic_type` + `asset_key` sözleşmesi uyumlu.
+- `scripts/cosmetic_live_smoke.py` içinde katalog GET çağrısı gereksiz token bağımlılığından ayrıştırıldı; yeni commit: `6c7cf3038157907e004da762c9db98c865e006a7`.
+- Bu değişiklik production deploy etmez ve Railway'e dokunmaz.
+- Önceki Pages run `35208712803` hâlâ `failure`; GitHub job API step/log ayrıntısı döndürmedi. Kök neden tahmin edilmeyecek.
 
-BU TURDA YAPILAN
-- Oda REST helper'ına GET ban listesi eklendi: ErisRoom.bans(roomId).
-- Backend'e oda bazlı GET /v1/rooms/{room_id}/bans endpointi eklendi.
-- Atılan kullanıcı listesi yalnızca ilgili oda için döndürülüyor ve yalnızca oda sahibi/aktif moderatör erişebiliyor.
-- Ban sırasında kullanıcı oda üyeliğinden ve koltuktan çıkarılıyor.
-- Ban sırasında aynı odadaki moderatör rolü de kaldırılıyor; unban moderatörlüğü otomatik geri vermiyor.
-- Banlı kullanıcı yeniden aynı odaya girmeye çalıştığında backend engelleniyor.
-- Aktif moderatör kontrolü moderatör kaydının yanında o odada aktif üyelik gerektiriyor.
-- Banlı kullanıcı aynı odada yeniden moderatör olarak atanamıyor.
-- Room security regression checker eklendi: scripts/check_room_security.py.
-- Quality workflow'a room security regression adımı eklendi.
-- backend/app/main.py startup migration bölümündeki tekrarlanan gender/avatar_asset/frame_asset ALTER ifadeleri kaldırıldı.
-- Canlı oda hediye UI katmanı ve Pages entegrasyonu tamamlandı; gerçek API/catalog/bakiye akışlarını kullanıyor.
-- İki kullanıcı + oda chat + gift + bakiye/%70 + WebSocket akışlarını kontrollü hedefte test etmek için scripts/room_live_smoke.py eklendi.
-- Smoke scripti production'a kendiliğinden bağlanmıyor; varsayılan hedef localhost ve uzak hedef ancak ERISCHAT_SMOKE_BASE_URL açıkça verilirse kullanılıyor.
-- Smoke scripti gift sonrası gönderen bakiyesi, alıcı %70 payı ve RoomGiftEvent kaydını kontrol ediyor; websocket-client mevcutsa iki istemcili room_chat broadcast kontrolünü de çalıştırıyor.
-- Cosmetic quality workflow artık yalnızca tanı koymuyor; scripts/check_cosmetic_assets.py ile 40 standart avatar + 40 standart frame + 12 VIP avatar + 12 VIP frame hedeflerini exact-count olarak CI kapısı yapıyor.
-- Cosmetic purchase/apply için opt-in smoke harness eklendi: scripts/cosmetic_live_smoke.py. Anonymous kullanıcı oluşturup katalogdan avatar/frame seçiyor; yeterli bakiye varsa purchase → ownership → apply zincirini doğruluyor.
-- Son commit için GitHub combined status sorgulandı; `054a63fef308005af901f3cae6d205aa3f3e64e5` üzerinde status kaydı dönmedi. Bu nedenle CI başarılı/başarısız olarak işaretlenmedi.
-- Pages workflow dosyası tekrar incelendi: checkout → configure-pages → frontend kopyalama → index oluşturma → canlı JS enjeksiyonu → asset non-empty kontrolü → upload-pages-artifact → deploy-pages zinciri mevcut.
-- Önceki Pages run #258 (`35208712803`) failure olarak doğrulandı; deploy job failure durumunda, fakat GitHub API bu job için adım/log detaylarını şu anda döndürmüyor. Bu nedenle kök neden kesinleştirilmedi.
-- Aynı eski dönemdeki Apply Gift UI run `35207573181` tüm job adımlarıyla success olarak doğrulandı; bu, GitHub Actions altyapısının en azından o workflow için çalıştığını gösteriyor.
-- Standart frame klasörü GitHub API üzerinden incelendi; dosyalar mevcut ve sıfır boyutlu görünmüyor. Ancak adlandırmalarda `#U00fc.png`, `#U011f.png`, `#U0131.png` gibi kaçışlanmış isimler bulunuyor; bunlar görsel katalog kalitesi incelemesine bırakıldı.
+## Kozmetik hedefleri
+- Checker hedefleri: 40 standart avatar, 40 standart frame, 12 VIP avatar, 12 VIP frame.
+- Klasörler: `kadınavatar`, `erkekavatar`, `standartcerceve`, `vipkadınavatar`, `viperkekavatar`, `vipcerceve`.
+- Sıradaki işlem: altı klasörün gerçek dosya envanterini ayrı ayrı çıkarıp hedeflerle doğrulamak; eksik/fazla asset konusunda silme veya rastgele değiştirme yapılmayacak.
 
-SON COMMITLER
-- Pages findings checkpoint: 25b16db5565c75ead1eeda9b9796e935fe0ceda5
-- Cosmetic smoke harness: 577d195085d03f889211207a14a2a591b27f43a8
-- Exact cosmetic inventory CI gate: 5db3fe322baa7ed75943cdc870c5641b419de5dd
-- Room live smoke harness: 78de1295688a1caff34b66281f05394e4f0c6e7c
-- Pages gift UI integration: fb5a73be062495f73c2da597ed2a360ba2984bc3
-- Live room gift UI: 1184b65a26c59c2b6a8bb48c7dd89e20dd8976b3
-- Startup migration duplicate cleanup: 21a5ffaf3682764e16fc16ed66745900d1a08f5b3
-- Room ban/member/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
+## Test sırası
+1. Kontrollü/local room live smoke.
+2. Ban → liste → unban → yeniden katılım E2E.
+3. İki istemcili room chat WebSocket E2E.
+4. Gift gönderimi + bakiye + %70 alıcı payı + room_gift E2E.
+5. Cosmetic purchase → ownership → apply E2E.
+6. Anonymous/session/profile/logout E2E.
+7. Pages failure analizi ve canlı URL doğrulaması.
+8. Railway health/ready/API/DB/WS doğrulaması; deploy yok.
+9. V35/V53 tek sayfa cleanup.
 
-HENÜZ DOĞRULANMAYANLAR
-1. Room security regression workflow adımının gerçek GitHub Actions sonucu.
-2. Oda banı → GET liste → unban → aynı odaya tekrar giriş canlı E2E.
-3. Oda chat iki istemci canlı E2E testi.
-4. Gerçek gift/room_gift ve DB bakiye/%70 smoke testi.
-5. Anonymous/session/profile/logout UI tam akışı.
-6. Genel WS reconnect/presence/event UI.
-7. Pages workflow başarı ve canlı Pages URL doğrulaması.
-8. Railway /health, /ready ve API/DB/WS canlı doğrulaması.
-9. V35/v53 tek sayfa temizliği.
-10. Avatar/frame/VIP asset sayıları, görsel kalite/şeffaflık ve 1-12 birebir eşleşme doğrulaması.
-11. Avatar/frame/VIP purchase/apply canlı E2E doğrulaması.
-12. Backend security/DB/migration/rate-limit hardening.
-
-NOT
-- Railway production deploy yapılmadı; kullanıcı açıkça "deploy" demeden yapılmayacak.
-- Büyük frontend HTML dosyası kısmi içerikle overwrite edilmeyecek.
-- Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
-- Room ban semantiği global değildir; ban yalnızca ilgili room_id için geçerlidir.
-- Cosmetic exact-count checker CI'ya bağlandı; gerçek mevcut asset sayıları ayrıca doğrulanmalı.
-- Smoke harness'lar eklendi ama gerçek çalışan backend üzerinde henüz çalıştırılmadı.
-- Pages failure kök nedeni loglar erişilebilir olmadan tahmin edilmeyecek.
-- Yapılan her önemli değişiklik commitlenip bu dosyadaki yapılanlar/yapılacaklar listesi güncellenecek.
-
-SONRAKİ AKTİF ADIM
-- Kontrollü/local backend üzerinde room_live_smoke.py ve cosmetic_live_smoke.py çalıştırılabilirliğini doğrula; gerekirse test bağımlılıklarını ekle.
-- Exact cosmetic inventory CI sonucunu doğrula ve gerçek asset sayılarını çıkar.
-- Pages failure için yeni kod değişikliği yapmadan önce mevcut workflow'un hangi aşamada kaldığını mümkün olan GitHub Actions verileriyle ayır.
-- Sonrasında görsel katalog ↔ backend eşleşmesini ve asset kalitesini tamamla.
-- Ardından anonymous/session/profile/logout canlı E2E akışlarına geç.
+## Kural
+- Canlı E2E yapılmadan özellik tamamlandı sayılmayacak.
+- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
