@@ -71,6 +71,8 @@ jobs:
         run: python scripts/frontend_surface_integrity.py
       - name: Frontend browser smoke
         run: node scripts/frontend_browser_smoke.mjs
+      - name: Cosmetics browser render
+        run: node scripts/cosmetics_browser_render.mjs
       - name: Family route integrity
         run: python scripts/family_routes_integrity.py
       - name: Family production integration integrity
