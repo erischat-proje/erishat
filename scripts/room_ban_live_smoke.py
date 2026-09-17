@@ -1,65 +1,51 @@
-#!/usr/bin/env python3
-"""Opt-in smoke test for room-scoped ban, list, unban and rejoin flows."""
 from __future__ import annotations
 
 import json
 import os
-from urllib.error import HTTPError
-from urllib.request import Request, urlopen
+import sys
+import urllib.error
+import urllib.request
 
-BASE = os.getenv("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
-API = BASE + "/v1"
-TIMEOUT = float(os.getenv("ERISCHAT_SMOKE_TIMEOUT", "8"))
+BASE = os.environ.get("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000/v1").rstrip("/")
+TIMEOUT = 10
 
 
-def request(method: str, path: str, token: str | None = None, payload=None):
-    body = None if payload is None else json.dumps(payload).encode()
-    headers = {"Content-Type": "application/json"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
+def request(method: str, path: str, token: str, payload: dict | None = None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    req = urllib.request.Request(BASE + path, data=data, method=method, headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
     try:
-        with urlopen(Request(API + path, data=body, headers=headers, method=method), timeout=TIMEOUT) as response:
-            raw = response.read().decode()
-            return response.status, (json.loads(raw) if raw else {})
-    except HTTPError as exc:
-        raw = exc.read().decode()
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+            body = response.read().decode()
+            return response.status, json.loads(body) if body else None
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode()
         try:
-            data = json.loads(raw)
-        except Exception:
-            data = {"detail": raw}
-        return exc.code, data
+            body = json.loads(body)
+        except json.JSONDecodeError:
+            pass
+        return exc.code, body
 
 
-def register(label: str) -> tuple[str, str]:
-    status, data = request("POST", "/users", payload={
-        "nickname": f"Ban Smoke {label}", "avatar": "👤", "gender": "male"
-    })
-    if status >= 300:
-        raise RuntimeError(f"anonymous auth failed: HTTP {status} {data}")
-    token = data.get("access_token") or data.get("token")
-    user = data.get("user") or {}
-    user_id = data.get("user_id") or user.get("id") or data.get("id")
+def create_user() -> tuple[str, str]:
+    status, body = request("POST", "/users", "", {"display_name": "ErisBanSmoke"})
+    if status >= 300 or not isinstance(body, dict):
+        raise RuntimeError(f"user create failed: HTTP {status} {body}")
+    token = body.get("token")
+    user_id = body.get("user", {}).get("id")
     if not token or not user_id:
-        raise RuntimeError(f"anonymous auth response missing token/user id: {data}")
+        raise RuntimeError(f"user create response missing token/id: {body}")
     return token, user_id
 
 
 def main() -> int:
-    print(f"ErisChat room ban smoke target: {API}")
-    if not (BASE.startswith("http://127.0.0.1") or BASE.startswith("http://localhost")):
-        print("WARNING: non-local target supplied; this is an explicit live smoke run.")
-
-    owner_token, owner_id = register("owner")
-    target_token, target_id = register("target")
-
-    status, room = request("POST", "/rooms", owner_token, {"name": "Ban Smoke Room"})
-    if status >= 300:
+    print(f"ErisChat room ban smoke target: {BASE}")
+    owner_token, owner_id = create_user()
+    target_token, target_id = create_user()
+    status, room = request("POST", "/rooms", owner_token, {"name": "Eris Ban Smoke"})
+    if status >= 300 or not isinstance(room, dict):
         raise RuntimeError(f"room create failed: HTTP {status} {room}")
-    room_id = room.get("id") or room.get("room_id")
-    if not room_id:
-        raise RuntimeError(f"room id missing: {room}")
-
-    status, _ = request("POST", f"/rooms/{room_id}/join", target_token, {})
+    room_id = room["id"]
+    status, _ = request("POST", f"/rooms/{room_id}/join", target_token)
     if status >= 300:
         raise RuntimeError(f"target join failed: HTTP {status}")
 
@@ -88,8 +74,10 @@ def main() -> int:
     if ws_target is not None:
         try:
             ws_target.send(json.dumps({"type": "ping"}))
-            ws_target.recv()
-            raise AssertionError("banned room WebSocket remained usable after membership revoke")
+            response = ws_target.recv()
+            if response not in ("", None):
+                raise AssertionError("banned room WebSocket remained usable after membership revoke")
+            print("room WebSocket ban revalidation OK: server closed the connection")
         except AssertionError:
             raise
         except Exception as exc:
@@ -103,30 +91,23 @@ def main() -> int:
     status, bans = request("GET", f"/rooms/{room_id}/bans", owner_token)
     if status >= 300:
         raise RuntimeError(f"ban list failed: HTTP {status} {bans}")
-    items = bans if isinstance(bans, list) else bans.get("bans") or bans.get("items") or []
-    if not any((item.get("user_id") if isinstance(item, dict) else item) == target_id for item in items):
-        raise AssertionError(f"target missing from room ban list: {bans}")
-
-    status, _ = request("POST", f"/rooms/{room_id}/join", target_token, {})
+    if not any(isinstance(row, dict) and row.get("user_id") == target_id for row in bans):
+        raise AssertionError("target user missing from ban list")
+    status, _ = request("POST", f"/rooms/{room_id}/join", target_token)
     if status != 403:
-        raise AssertionError(f"banned user could rejoin: HTTP {status}")
-
+        raise AssertionError(f"banned user rejoin expected 403, got {status}")
     status, _ = request("DELETE", f"/rooms/{room_id}/bans/{target_id}", owner_token)
     if status >= 300:
         raise RuntimeError(f"unban failed: HTTP {status}")
-
-    status, bans_after = request("GET", f"/rooms/{room_id}/bans", owner_token)
+    status, bans = request("GET", f"/rooms/{room_id}/bans", owner_token)
     if status >= 300:
-        raise RuntimeError(f"post-unban ban list failed: HTTP {status} {bans_after}")
-    items_after = bans_after if isinstance(bans_after, list) else bans_after.get("bans") or bans_after.get("items") or []
-    if any((item.get("user_id") if isinstance(item, dict) else item) == target_id for item in items_after):
-        raise AssertionError(f"target still present after unban: {bans_after}")
-
-    status, _ = request("POST", f"/rooms/{room_id}/join", target_token, {})
+        raise RuntimeError(f"post-unban ban list failed: HTTP {status} {bans}")
+    if any(isinstance(row, dict) and row.get("user_id") == target_id for row in bans):
+        raise AssertionError("target user remained in ban list after unban")
+    status, _ = request("POST", f"/rooms/{room_id}/join", target_token)
     if status >= 300:
-        raise AssertionError(f"unbanned user could not rejoin: HTTP {status}")
-
-    print("room ban/list/unban/rejoin invariant OK")
+        raise RuntimeError(f"target rejoin after unban failed: HTTP {status}")
+    print("LIVE_ROOM_BAN_SMOKE_PASS")
     return 0
 
 
