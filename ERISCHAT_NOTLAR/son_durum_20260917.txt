@@ -8,22 +8,25 @@ DOĞRULANAN REPO
 
 BU TURDA YAPILAN
 - frontend/gift-live.js güncellendi.
-- Oda WebSocket artık room_history olayını UI chat alanına aktarıyor.
-- room_chat olayları gerçek zamanlı olarak UI'ya render ediliyor.
+- Oda WebSocket room_history olayını UI chat alanına aktarıyor.
+- room_chat olayları gerçek zamanlı UI'ya render ediliyor.
 - Oda mesaj gönderme fonksiyonu gerçek WebSocket room_chat payload'ı gönderiyor.
-- Mevcut DOM korunarak placeholder toast handler'ı gerçek gönderim handler'ı ile değiştirildi.
-- Gift/room_gift akışı korunarak chat ile aynı room WebSocket üzerinde çalışıyor.
-- Commit: 19183c483107622f30830832d727252301e76009.
+- Mevcut DOM korunarak placeholder toast handler gerçek gönderim handler'ı ile değiştirildi.
+- Gift/room_gift akışı aynı room WebSocket üzerinde korunuyor.
+- backend/app/main.py içindeki yinelenen gender/avatar_asset/frame_asset startup ALTER ifadeleri tekrar temizlendi.
+- Son backend cleanup commit: 086ff10016da07f17e526772286ca855389662ce.
+- Room chat UI commit: 19183c483107622f30830832d727252301e76009.
 
 BACKEND DURUMU
-- /ws/rooms/{room_id} backend endpointi room history, ping/pong ve room_chat kabul ediyor.
-- room_chat mesajları DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
+- /ws/rooms/{room_id} room history, ping/pong ve room_chat kabul ediyor.
+- room_chat DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
 - Gift endpointi room_gift eventini aynı broadcast katmanına gönderiyor.
+- Startup user migration ifadeleri artık tekilleştirilmiş durumda.
 
 DOKÜMANTASYON
 - yapilacaklar.txt güncellendi.
 - yapilanlar.txt güncellendi.
-- Oda chat UI maddesi artık kod tarafında tamam, canlı iki istemci E2E testi bekliyor.
+- Oda chat UI kod maddesi tamam; canlı iki istemci E2E testi hâlâ bekliyor.
 
 HENÜZ YAPILMAYANLAR
 1. Oda chat iki istemci canlı E2E testi.
