@@ -35,6 +35,14 @@ def expect(status: int, expected: int, label: str, data) -> None:
         raise AssertionError(f"{label}: expected {expected}, got {status}: {data}")
 
 
+def member_items(data) -> list[dict]:
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict) and isinstance(data.get("members"), list):
+        return data["members"]
+    raise AssertionError(f"family member list response shape mismatch: {data}")
+
+
 def main() -> None:
     suffix = str(time.time_ns())[-8:]
     nickname = f"FamilySmoke_{suffix}"
@@ -71,7 +79,8 @@ def main() -> None:
 
     status, members = request("GET", f"/families/{family_id}/members", token=token)
     expect(status, 200, "family member list", members)
-    if not any(item.get("user_id") == owner_id and item.get("role") == "member" for item in members.get("members", [])):
+    initial_members = member_items(members)
+    if not any(item.get("user_id") == owner_id and item.get("role") == "member" for item in initial_members):
         raise AssertionError(f"owner missing from member list: {members}")
 
     status, invited = request("POST", f"/families/{family_id}/members", {"user_id": member_id}, token)
@@ -86,7 +95,8 @@ def main() -> None:
 
     status, members_after_role = request("GET", f"/families/{family_id}/members", token=token)
     expect(status, 200, "family member list after role", members_after_role)
-    if not any(item.get("user_id") == member_id and item.get("role") == "admin" for item in members_after_role.get("members", [])):
+    role_members = member_items(members_after_role)
+    if not any(item.get("user_id") == member_id and item.get("role") == "admin" for item in role_members):
         raise AssertionError(f"promoted member missing from list: {members_after_role}")
 
     donation = 40_000
@@ -118,7 +128,8 @@ def main() -> None:
 
     status, members_final = request("GET", f"/families/{family_id}/members", token=token)
     expect(status, 200, "family member list final", members_final)
-    if any(item.get("user_id") == member_id for item in members_final.get("members", [])):
+    final_members = member_items(members_final)
+    if any(item.get("user_id") == member_id for item in final_members):
         raise AssertionError(f"removed member still present: {members_final}")
 
     print("FAMILY_LIVE_SMOKE_PASS")
