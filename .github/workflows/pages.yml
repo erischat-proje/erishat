@@ -52,6 +52,7 @@ jobs:
               'room-live.js',
               'gift-live.js',
               'room-actions.js',
+              'room-ban-live.js',
               'dm-live.js',
               'auth-live.js',
               'profile-live.js',
@@ -68,7 +69,7 @@ jobs:
           PY
           touch _site/.nojekyll
           test -s _site/index.html
-          for asset in platform.js demo-cleanup.js room-live.js gift-live.js room-actions.js dm-live.js auth-live.js profile-live.js cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js; do
+          for asset in platform.js demo-cleanup.js room-live.js gift-live.js room-actions.js room-ban-live.js dm-live.js auth-live.js profile-live.js cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js; do
             test -s "_site/$asset"
           done
           echo "Prepared Pages site:"
