@@ -15,7 +15,12 @@
     const render = detailEvent => {
       const state = detailEvent?.detail?.state;
       const user = detailEvent?.detail?.user || window.ErisAuth?.user;
-      if (state === 'error') { title.textContent = 'Oturum kullanılamıyor'; detail.textContent = 'Anonim oturum oluşturulamadı.'; dot.style.background = '#ff6b81'; return; }
+      if (state === 'error') {
+        title.textContent = detailEvent.type === 'erischat:ws' ? 'Canlı bağlantı hatası' : 'Oturum kullanılamıyor';
+        detail.textContent = detailEvent.type === 'erischat:ws' ? 'Bağlantı tekrar kurulacak.' : 'Anonim oturum oluşturulamadı.';
+        dot.style.background = '#ff6b81';
+        return;
+      }
       if (state === 'logged_out') { title.textContent = 'Oturum kapalı'; detail.textContent = 'Token temizlendi. Yeni oturum gerektiğinde oluşturulacak.'; dot.style.background = '#e4b85d'; return; }
       if (state === 'ready' || user) {
         title.textContent = 'Anonim oturum aktif';
@@ -25,11 +30,10 @@
       }
       if (state === 'open') { title.textContent = 'Canlı bağlantı aktif'; detail.textContent = 'Gerçek zamanlı bağlantı açık.'; dot.style.background = '#54dfaa'; return; }
       if (state === 'closed') { title.textContent = 'Canlı bağlantı yeniden deneniyor'; detail.textContent = 'Oturum korunuyor, bağlantı tekrar kurulacak.'; dot.style.background = '#e4b85d'; return; }
-      if (state === 'error') { title.textContent = 'Canlı bağlantı hatası'; detail.textContent = 'Bağlantı tekrar kurulacak.'; dot.style.background = '#ff6b81'; }
     };
     window.addEventListener('erischat:auth', render);
     window.addEventListener('erischat:ws', render);
-    render({ detail: { state: window.ErisAuth?.user ? 'ready' : 'pending', user: window.ErisAuth?.user } });
+    render({ type: 'erischat:auth', detail: { state: window.ErisAuth?.user ? 'ready' : 'pending', user: window.ErisAuth?.user } });
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 })();
