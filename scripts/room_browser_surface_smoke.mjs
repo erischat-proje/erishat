@@ -34,7 +34,7 @@ try{
   await page.locator('#chat .close').click();
   await page.locator('#erisDemoBtn').click({force:true});
   await page.locator('#erisDemo .ed-tab[data-ed="rooms"]').evaluate(el => el.click());
-  await page.waitForSelector('#ed-rooms #edRooms .ed-row');
+  await page.waitForFunction(() => { const p=document.querySelector('#erisDemo'); const row=p?.querySelector('#ed-rooms #edRooms .ed-row'); return !!p && p.classList.contains('ed-show') && !!row; });
   await page.locator('#ed-rooms .ed-row button',{hasText:'İncele'}).click();
   await page.waitForSelector('#edRoomDetail');
   await page.getByRole('button',{name:'Katıl'}).waitFor();
