@@ -22,7 +22,9 @@ jobs:
         run: |
           echo "runner-online"
           python --version
-          test -f .github/workflows/apply-gift-ui.yml
+          test -f .github/workflows/erischat-quality.yml
+          test -f scripts/cosmetic_live_smoke.py
+          test -f scripts/cosmetics_asset_integrity.py
           echo "workflow-files-present"
 
   live-e2e:
