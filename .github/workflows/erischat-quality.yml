@@ -102,6 +102,9 @@ jobs:
                   time.sleep(1)
           print(open("erischat-api.log", encoding="utf-8", errors="replace").read())
           raise SystemExit("API did not become ready")
+      - name: Frontend backend browser smoke
+        run: node scripts/frontend_backend_browser_smoke.mjs
+
       - name: Anonymous session smoke
         run: python scripts/anonymous_session_live_smoke.py
       - name: Live family smoke
