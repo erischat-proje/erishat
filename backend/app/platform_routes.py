@@ -237,25 +237,6 @@ def register_platform_auth(current_user_dependency):
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.target_user_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
         return [{"gift":r.gift_key,"amount":r.amount,"from_user_id":r.from_user_id,"created_at":r.created_at} for r in rows]
-    @router.get("/families/{family_id}")
-    def family(family_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        row=require_family_member(db,family_id,user.id); level=family_level(row.balance); return {"id":row.id,"name":row.name,"balance":row.balance,"level":level,"capacity":FAMILY_LEVELS[level]["capacity"]}
-    @router.post("/families")
-    def create_family(payload:FamilyCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        family_id="family_"+uuid4().hex[:12]
-        conversation_id="family_chat_"+family_id
-        conversation=Conversation(id=conversation_id,type="family")
-        row=Family(id=family_id,owner_id=user.id,name=payload.name.strip(),balance=0,level=1,chat_conversation_id=conversation_id)
-        db.add(conversation); db.add(row); db.flush()
-        db.add_all([ConversationMember(conversation_id=conversation_id,user_id=user.id),FamilyMember(family_id=family_id,user_id=user.id,role="member")])
-        db.commit()
-        return {"id":row.id,"name":row.name,"level":1}
-    @router.post("/families/{family_id}/donate")
-    def donate_family(family_id:str,payload:FamilyDonationCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        family=require_family_member(db,family_id,user.id); family.balance+=payload.amount; db.add(FamilyDonation(family_id=family.id,user_id=user.id,amount=payload.amount)); db.commit(); return {"family_id":family.id,"balance":family.balance,"level":family_level(family.balance)}
-    @router.get("/families/{family_id}/chat")
-    def family_chat(family_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_family_member(db,family_id,user.id); return {"family_id":family_id,"enabled":True}
     @router.post("/game/bet")
     def game_bet(payload:GameBetCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if payload.choice not in {"rose","heart","star","diamond","crown","gift","fire","gem","jackpot"}: raise HTTPException(status_code=400,detail="Geçersiz seçim")
