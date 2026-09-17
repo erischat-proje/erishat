@@ -11,8 +11,8 @@ HEDEF
 - [x] Quality workflow v4'e compileall + node --check + kaynak kontrolleri eklendi.
 - [x] Runner Recovery #74 live-e2e gerçek runner'da SUCCESS.
 - [x] 5 temel smoke: anonymous, room, ban, DM, cosmetic SUCCESS.
-- [ ] Yeni quality v4 workflow run sonucunu ayrıca doğrula.
-- [ ] Başarısız yeni kalite/test adımı varsa düzelt ve yeniden doğrula.
+- [x] Quality v4 run 35258712132 / job 105328734923 gerçek runner'da SUCCESS.
+- [x] Önceki room-gift-ui-live.js syntax failure düzeltildi ve yeni Quality v4 koşusunda geçti.
 
 2. BACKEND / GÜVENLİK BASELINE
 - [x] Anonymous register → /me → logout → token sonrası 401 smoke ile doğrulandı.
@@ -37,7 +37,7 @@ HEDEF
 
 4. PAGES / RAILWAY CANLI ZİNCİR
 - [ ] github-pages environment custom deployment branch policy'ye main ekle veya main'i kapsayacak şekilde değiştir.
-- [ ] Pages diagnostics guard'ın main engelini gerçek runner'da raporladığını doğrula.
+- [x] Pages diagnostics guard'ın main engelini gerçek runner'da raporladığı doğrulandı.
 - [ ] Gerçek Pages deploy job'unun runner'a girdiğini doğrula.
 - [ ] Pages artifact oluşumunu doğrula.
 - [ ] Canlı Pages HTTP 200 + index içeriğini doğrula.
@@ -53,12 +53,12 @@ HEDEF
 6. TEMİZLİK / CHECKPOINT
 - [ ] Artık gereksiz eski Pages probe/diagnostic workflow'larını gözden geçir.
 - [ ] Geçici trigger TXT dosyalarını gözden geçir.
-- [x] yapilanlar.txt güncellendi.
-- [x] yapilacaklar.txt güncellenecek checkpoint'e alındı.
-- [x] son_durum_20260917.txt bu runner sonucu ile senkronize edilecek.
+- [ ] yapilanlar.txt yeni Quality v4 sonucuyla senkronize edilecek.
+- [x] yapilacaklar.txt checkpoint'e alındı.
+- [ ] son_durum_20260917.txt yeni Quality v4 sonucu ile senkronize edilecek.
 
 7. BASELINE ÇIKIŞ KRİTERİ
-- [ ] Quality v4 SUCCESS.
+- [x] Quality v4 SUCCESS.
 - [x] 5 backend/live smoke SUCCESS.
 - [ ] Pages gerçek deploy SUCCESS.
 - [ ] Canlı Pages HTTP SUCCESS.
