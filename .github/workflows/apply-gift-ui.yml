@@ -44,7 +44,7 @@ jobs:
           s=Path('frontend/erischat-main.html').read_text(encoding='utf-8')
           for x in ['realRooms','openRoomGift','gift-live.js']:
               assert x in s,x
-          assert 'joinAndOpen' not in s, 'obsolete joinAndOpen reference remains'
+          assert 'joinAndOpen' not in s
           print('served frontend gift UI valid')
           PY
       - name: Commit
@@ -58,5 +58,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Runner probe
-        run: python --version
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements.txt websocket-client
+      - name: Start PostgreSQL
+        run: |
+          docker run -d --name erischat-postgres -e POSTGRES_DB=erischat -e POSTGRES_USER=erischat -e POSTGRES_PASSWORD=erischat -p 5432:5432 postgres:16
+          for attempt in $(seq 1 30); do docker exec erischat-postgres pg_isready -U erischat -d erischat && break; sleep 2; done
+      - name: Static quality
+        run: |
+          python scripts/check_backend_quality.py
+          python scripts/check_room_security.py
+          python scripts/check_cosmetic_assets.py
+          python -m py_compile scripts/room_live_smoke.py scripts/room_ban_live_smoke.py scripts/dm_live_smoke.py scripts/cosmetic_live_smoke.py
+      - name: Start API
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://erischat:erischat@127.0.0.1:5432/erischat
+        run: |
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/erischat-api.log 2>&1 &
+          echo $! > /tmp/erischat-api.pid
+      - name: Wait for API
+        run: |
+          for attempt in $(seq 1 30); do curl --fail --silent http://127.0.0.1:8000/ready && exit 0 || true; sleep 2; done
+          cat /tmp/erischat-api.log
+          exit 1
+      - name: Live room smoke
+        run: python scripts/room_live_smoke.py
+      - name: Live ban smoke
+        run: python scripts/room_ban_live_smoke.py
+      - name: Live DM smoke
+        run: python scripts/dm_live_smoke.py
+      - name: Live cosmetic smoke
+        run: python scripts/cosmetic_live_smoke.py
