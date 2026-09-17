@@ -256,7 +256,9 @@ def register_platform_auth(current_user_dependency):
     @router.get("/discover/rooms")
     def discover_rooms(limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         rows = []
-        rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc()).offset(offset).limit(300)))
+        # Fetch a bounded candidate window from the database, then apply pagination
+        # after filtering empty rooms and sorting by the actual room ranking.
+        rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc()).limit(300)))
         for room in rooms:
             members = int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0)
             if members <= 0:
@@ -303,152 +305,146 @@ def register_platform_auth(current_user_dependency):
         conversation_id = "dm_" + "_".join(sorted((user.id, target.id)))
         conversation = db.get(Conversation, conversation_id)
         if not conversation:
-            conversation = Conversation(id=conversation_id, type="dm")
-            db.add(conversation); db.flush()
+            conversation = Conversation(id=conversation_id)
+            db.add(conversation)
+            db.flush()
             db.add_all([ConversationMember(conversation_id=conversation_id, user_id=user.id), ConversationMember(conversation_id=conversation_id, user_id=target.id)])
             db.commit()
-        return {"matched_user_id": target.id, "conversation_id": conversation_id, "city": db.get(UserLocation, target.id).city, "distance_km": round(d, 1)}
+        return {"conversation_id": conversation.id, "user_id": target.id, "nickname": target.nickname, "distance_km": round(d, 1)}
 
     @router.post("/discover/random-room")
     def random_room(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        rooms = []
-        for room in db.scalars(select(Room)):
-            count = int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0)
-            if count < 1:
-                continue
-            rooms.append(room)
-        if not rooms:
-            raise HTTPException(status_code=404, detail="Aktif oda bulunamadı")
-        room = random.choice(rooms)
-        if not db.scalar(select(RoomMember.id).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)):
-            db.add(RoomMember(room_id=room.id, user_id=user.id)); db.commit()
-        return {"room_id": room.id, "name": room.name}
+        rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc()).limit(300)))
+        candidates = []
+        for room in rooms:
+            members = int(db.scalar(select(RoomMember.id).where(RoomMember.room_id == room.id).limit(1)) is not None)
+            if members and not room.locked:
+                candidates.append(room)
+        if not candidates:
+            raise HTTPException(status_code=404, detail="Uygun oda bulunamadı")
+        room = random.choice(candidates)
+        return {"room_id": room.id, "name": room.name, "member_count": int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0)}
 
-    @router.get("/users/{user_id}/fans")
-    def fans(user_id: str, db: Session = Depends(get_db), viewer: User = Depends(current_user_dependency)):
+    @router.get("/conversations")
+    def conversations(limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        ids = list(db.scalars(select(ConversationMember.conversation_id).where(ConversationMember.user_id == user.id).order_by(ConversationMember.conversation_id).offset(offset).limit(limit)))
+        if not ids:
+            return []
+        return [db.get(Conversation, conversation_id) for conversation_id in ids]
+
+    @router.get("/conversations/{conversation_id}")
+    def conversation(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        conversation = db.get(Conversation, conversation_id)
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
+        member = db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id))
+        if not member:
+            raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+        return {"id": conversation.id, "members": [{"user_id": m.user_id} for m in conversation.members]}
+
+    @router.post("/conversations")
+    def create_conversation(payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        participant_id = str(payload.get("participant_id") or "")
+        if not participant_id or participant_id == user.id:
+            raise HTTPException(status_code=400, detail="Geçerli katılımcı gerekli")
+        target = db.get(User, participant_id)
+        if not target:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        conversation_id = "dm_" + "_".join(sorted((user.id, target.id)))
+        conversation = db.get(Conversation, conversation_id)
+        if not conversation:
+            conversation = Conversation(id=conversation_id)
+            db.add(conversation)
+            db.flush()
+            db.add_all([ConversationMember(conversation_id=conversation_id, user_id=user.id), ConversationMember(conversation_id=conversation_id, user_id=target.id)])
+            db.commit()
+        return {"id": conversation.id, "members": [{"user_id": m.user_id} for m in conversation.members]}
+
+    @router.get("/messages/{conversation_id}")
+    def messages(conversation_id: str, limit: int = Query(100, ge=1, le=200), offset: int = Query(0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        member = db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id))
+        if not member:
+            raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+        return list(db.scalars(select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
+
+    @router.post("/messages/{conversation_id}")
+    def send_message(conversation_id: str, payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        member = db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id))
+        if not member:
+            raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+        text = str(payload.get("text") or "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Mesaj boş olamaz")
+        message = Message(conversation_id=conversation_id, sender_id=user.id, text=text)
+        db.add(message); db.commit(); db.refresh(message)
+        return message
+
+    @router.get("/users/{user_id}")
+    def public_user(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target = db.get(User, user_id)
         if not target:
             raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        rows = list(db.execute(select(RoomGiftEvent.sender_id, func.sum(RoomGiftEvent.total_price).label("amount")).where(RoomGiftEvent.recipient_id == user_id).group_by(RoomGiftEvent.sender_id).order_by(func.sum(RoomGiftEvent.total_price).desc()).limit(30)).all())
-        result = []
-        for sender_id, amount in rows:
-            sender = db.get(User, sender_id)
-            if not sender: continue
-            level = fan_level(int(amount))
-            fp = db.get(FanProfile, sender_id)
-            if not fp:
-                fp = FanProfile(user_id=sender_id, fan_level=level); db.add(fp)
-            elif fp.fan_level != level:
-                fp.fan_level = level
-            gift_rows = db.execute(select(RoomGiftEvent.gift_key, func.sum(RoomGiftEvent.quantity).label("quantity"), func.sum(RoomGiftEvent.total_price).label("spent")).where(RoomGiftEvent.sender_id == sender_id, RoomGiftEvent.recipient_id == user_id).group_by(RoomGiftEvent.gift_key).order_by(func.sum(RoomGiftEvent.total_price).desc())).all()
-            result.append({"user_id": sender.id, "nickname": sender.nickname, "avatar": sender.avatar, "fan_level": level, "lidya": int(amount), "gifts": [{"gift_key": g, "quantity": int(q), "lidya": int(s)} for g, q, s in gift_rows]})
-        db.commit()
-        return {"items": result}
+        return {"id": target.id, "public_id": target.public_id, "nickname": target.nickname, "avatar": target.avatar, "gender": target.gender, "avatar_asset": getattr(target, "avatar_asset", None), "frame_asset": getattr(target, "frame_asset", None)}
 
-    @router.post("/families", status_code=201)
-    def create_family(payload: FamilyCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        if db.scalar(select(Family.id).where(Family.owner_id == user.id)):
-            raise HTTPException(status_code=409, detail="Zaten bir aileniz var")
-        locked = db.execute(select(User.lidya).where(User.id == user.id).with_for_update()).scalar_one()
-        if locked < 10_000:
-            raise HTTPException(status_code=400, detail="Aile açmak için 10.000 Lidya gerekli")
-        conversation_id = "family_" + uuid4().hex
-        db.add(Conversation(id=conversation_id, type="family")); db.flush()
-        family = Family(id="family_" + uuid4().hex, owner_id=user.id, name=payload.name.strip(), level=1, balance=0, chat_conversation_id=conversation_id)
-        db.add(family); db.add(FamilyMember(family_id=family.id, user_id=user.id)); db.add(ConversationMember(conversation_id=conversation_id, user_id=user.id))
-        db.execute(select(User).where(User.id == user.id).with_for_update())
-        user.lidya -= 10_000
-        db.commit(); db.refresh(family)
-        return {"id": family.id, "name": family.name, "level": 1, "capacity": 30, "chat_conversation_id": conversation_id}
+    @router.get("/users/{user_id}/fans")
+    def fans(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(FanProfile, user_id)
+        if not row:
+            return {"user_id": user_id, "total": 0, "level": 1}
+        return {"user_id": user_id, "total": row.total, "level": fan_level(row.total)}
+
+    @router.get("/users/{user_id}/profile-gifts")
+    def profile_gifts(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.target_user_id == user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
+        return [{"gift": r.gift_key, "amount": r.amount, "from_user_id": r.from_user_id, "created_at": r.created_at} for r in rows]
 
     @router.get("/families/{family_id}")
-    def get_family(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        family = require_family_member(db, family_id, user.id)
-        family.level = family_level(family.balance)
-        count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family.id)) or 0)
-        db.commit()
-        return {"id": family.id, "name": family.name, "owner_id": family.owner_id, "level": family.level, "capacity": FAMILY_LEVELS[family.level]["capacity"], "balance": family.balance, "member_count": count, "chat_conversation_id": family.chat_conversation_id}
+    def family(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = require_family_member(db, family_id, user.id)
+        level = family_level(row.balance)
+        return {"id": row.id, "name": row.name, "balance": row.balance, "level": level, "capacity": FAMILY_LEVELS[level]["capacity"]}
+
+    @router.post("/families")
+    def create_family(payload: FamilyCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        family_id = "family_" + uuid4().hex[:12]
+        row = Family(id=family_id, name=payload.name.strip(), balance=0)
+        db.add(row); db.flush()
+        db.add(FamilyMember(family_id=family_id, user_id=user.id)); db.commit()
+        return {"id": row.id, "name": row.name, "level": 1}
 
     @router.post("/families/{family_id}/donate")
     def donate_family(family_id: str, payload: FamilyDonationCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         family = require_family_member(db, family_id, user.id)
-        locked = db.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
-        if locked.lidya < payload.amount:
-            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        locked.lidya -= payload.amount
         family.balance += payload.amount
-        family.level = family_level(family.balance)
         db.add(FamilyDonation(family_id=family.id, user_id=user.id, amount=payload.amount)); db.commit()
-        return {"family_balance": family.balance, "level": family.level, "capacity": FAMILY_LEVELS[family.level]["capacity"], "donated": payload.amount}
-
-    @router.post("/families/{family_id}/members")
-    def add_family_member(family_id: str, payload: FamilyMemberUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        family = require_family_member(db, family_id, user.id)
-        if family.owner_id != user.id:
-            raise HTTPException(status_code=403, detail="Sadece aile sahibi üye ekleyebilir")
-        target = db.get(User, payload.user_id)
-        if not target or not target.is_active: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family.id)) or 0)
-        if count >= FAMILY_LEVELS[family.level]["capacity"]: raise HTTPException(status_code=409, detail="Aile kapasitesi dolu")
-        if not db.scalar(select(FamilyMember.id).where(FamilyMember.family_id == family.id, FamilyMember.user_id == target.id)):
-            db.add(FamilyMember(family_id=family.id, user_id=target.id)); db.add(ConversationMember(conversation_id=family.chat_conversation_id, user_id=target.id)); db.commit()
-        return {"joined": True, "family_id": family.id}
+        return {"family_id": family.id, "balance": family.balance, "level": family_level(family.balance)}
 
     @router.get("/families/{family_id}/chat")
     def family_chat(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        family = require_family_member(db, family_id, user.id)
-        return {"conversation_id": family.chat_conversation_id, "type": "family"}
+        require_family_member(db, family_id, user.id)
+        return {"family_id": family_id, "enabled": True}
 
-    @router.post("/rooms/{room_id}/games/{game_type}", status_code=201)
-    def start_game(room_id: str, game_type: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        if game_type not in {"roulette", "cups"}: raise HTTPException(status_code=400, detail="Geçersiz oyun")
-        if not db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id)):
-            raise HTTPException(status_code=403, detail="Önce odaya katılın")
-        now = datetime.now(timezone.utc)
-        active = db.scalar(select(GameRound).where(GameRound.room_id == room_id, GameRound.game_type == game_type, GameRound.status == "open", GameRound.ends_at > now))
-        if active: return {"round_id": active.id, "game_type": active.game_type, "ends_at": active.ends_at}
-        round_row = GameRound(id="game_" + uuid4().hex, room_id=room_id, game_type=game_type, ends_at=now + timedelta(seconds=90))
-        db.add(round_row); db.commit()
-        return {"round_id": round_row.id, "game_type": game_type, "ends_at": round_row.ends_at, "house_edge_disclosed": True}
+    @router.post("/game/bet")
+    def game_bet(payload: GameBetCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if payload.choice not in {"rose", "heart", "star", "diamond", "crown", "gift", "fire", "gem", "jackpot"}:
+            raise HTTPException(status_code=400, detail="Geçersiz seçim")
+        result = random.choices(ROULETTE, weights=[item["weight"] for item in ROULETTE], k=1)[0]
+        payout = int(payload.amount * result["multiplier"])
+        row = GameBet(user_id=user.id, choice=payload.choice, amount=payload.amount, result=result["key"], payout=payout)
+        db.add(row); db.commit(); db.refresh(row)
+        return {"id": row.id, "choice": row.choice, "result": row.result, "payout": row.payout}
 
-    @router.post("/games/{round_id}/bet")
-    def place_game_bet(round_id: str, payload: GameBetCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        round_row = db.get(GameRound, round_id)
-        if not round_row or round_row.status != "open": raise HTTPException(status_code=404, detail="Tur bulunamadı")
-        if round_row.ends_at <= datetime.now(timezone.utc): raise HTTPException(status_code=400, detail="Bahis süresi doldu")
-        if not db.scalar(select(RoomMember.id).where(RoomMember.room_id == round_row.room_id, RoomMember.user_id == user.id)): raise HTTPException(status_code=403, detail="Odaya üye değilsiniz")
-        if round_row.game_type == "cups" and payload.choice not in CUPS: raise HTTPException(status_code=400, detail="Geçersiz bardak")
-        if round_row.game_type == "roulette" and payload.choice not in {x["key"] for x in ROULETTE}: raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
-        locked = db.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
-        if locked.lidya < payload.amount: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        locked.lidya -= payload.amount
-        db.add(GameBet(round_id=round_row.id, user_id=user.id, choice=payload.choice, amount=payload.amount)); db.commit()
-        return {"accepted": True, "amount": payload.amount, "round_id": round_row.id}
+    @router.post("/game/cups")
+    def game_cups(payload: GameBetCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if payload.choice not in CUPS:
+            raise HTTPException(status_code=400, detail="Geçersiz kupa")
+        result = random.choice(sorted(CUPS))
+        payout = payload.amount * 3 if result == payload.choice else 0
+        row = GameBet(user_id=user.id, choice=payload.choice, amount=payload.amount, result=result, payout=payout)
+        db.add(row); db.commit(); db.refresh(row)
+        return {"id": row.id, "choice": row.choice, "result": row.result, "payout": row.payout}
 
-    @router.post("/games/{round_id}/settle")
-    def settle_game(round_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        round_row = db.get(GameRound, round_id)
-        if not round_row: raise HTTPException(status_code=404, detail="Tur bulunamadı")
-        if round_row.status == "settled": return {"settled": True, "result": round_row.result_key}
-        if round_row.ends_at > datetime.now(timezone.utc): raise HTTPException(status_code=400, detail="Tur henüz bitmedi")
-        if round_row.game_type == "roulette":
-            result = random.choices([x["key"] for x in ROULETTE], weights=[x["weight"] for x in ROULETTE], k=1)[0]
-            multiplier = {x["key"]: x["multiplier"] for x in ROULETTE}[result]
-        else:
-            result = random.choice(sorted(CUPS)); multiplier = 3.5
-        round_row.result_key = result; round_row.status = "settled"
-        bets = list(db.scalars(select(GameBet).where(GameBet.round_id == round_row.id)))
-        for bet in bets:
-            payout = int(bet.amount * multiplier) if bet.choice == result else 0
-            bet.payout = payout
-            if payout:
-                recipient = db.execute(select(User).where(User.id == bet.user_id).with_for_update()).scalar_one()
-                recipient.lidya += payout
-        db.commit()
-        return {"settled": True, "result": result, "multiplier": multiplier, "house_edge_disclosed": True}
-
-    @router.get("/users/{user_id}/profile-gifts")
-    def profile_gifts(user_id: str, db: Session = Depends(get_db), viewer: User = Depends(current_user_dependency)):
-        if not db.get(User, user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        received = db.execute(select(RoomGiftEvent.gift_key, func.sum(RoomGiftEvent.quantity).label("quantity"), func.sum(RoomGiftEvent.total_price).label("lidya")).where(RoomGiftEvent.recipient_id == user_id).group_by(RoomGiftEvent.gift_key).order_by(func.sum(RoomGiftEvent.total_price).desc())).all()
-        return {"top_gifts": [{"gift_key": g, "quantity": int(q), "lidya": int(a)} for g, q, a in received]}
+    @router.get("/rooms/{room_id}/announcement")
+    def room_announcement(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.scalar(select(RoomAnnouncement).where(RoomAnnouncement.room_id == room_id).order_by(RoomAnnouncement.created_at.desc()))
+        return {"room_id": room_id, "message": row.message if row else ""}
