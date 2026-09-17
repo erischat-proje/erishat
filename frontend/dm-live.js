@@ -36,7 +36,7 @@
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small>Gerçek konuşma</small></div>';
         b.querySelector('.ava').textContent = avatar;
         b.querySelector('b').textContent = name;
-        b.onclick = () => openRealChat(id, name, avatar);
+        b.onclick = () => openRealChat(id, name);
         list.appendChild(b);
       });
     } catch (e) {
@@ -68,7 +68,7 @@
     };
   }
 
-  async function openRealChat(id, name, avatar) {
+  async function openRealChat(id, name) {
     const chat = $('chat');
     const body = chat?.querySelector('.chatBody');
     if (!chat || !body || !api()?.messages) return;
@@ -81,9 +81,7 @@
       const payload = await api().messages(id);
       const messages = asList(payload, ['messages', 'items', 'data']);
       body.innerHTML = '';
-      if (!messages.length) {
-        body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Henüz mesaj yok.</div>';
-      }
+      if (!messages.length) body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Henüz mesaj yok.</div>';
       messages.forEach(m => {
         const row = document.createElement('div');
         row.className = 'bubble' + (m.is_mine ? ' me' : '');
