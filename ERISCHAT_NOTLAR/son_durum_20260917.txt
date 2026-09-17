@@ -30,11 +30,11 @@
 - `.github/workflows/runner-recovery.yml` aynı beşli zinciri içeriyor ve gerçek runner üzerinde SUCCESS doğrulaması mevcut.
 - `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; yeni `quality` job'ı gerçek job olarak üretildi. Run `35234028161` için `fetch_workflow_run_jobs` gerçek `quality` job'ını döndürüyor; önceki `jobs: []` davranışı bu workflow sürümünde artık tekrarlanmadı.
 - Eski karmaşık quality workflow'unda `jobs: []` görülmesi için artık rastgele kod değişikliği yapılmıyor; önce sade çalışan taban doğrulandı.
-- Eski `pages.yml` yerine bağımsız, sade `.github/workflows/erischat-pages.yml` oluşturuldu. Bu workflow yalnızca Pages build/upload/deploy yapıyor; uygulama E2E quality ayrı workflow'da yürütülüyor.
-- Geçici CI probe dosyaları temizlendi; `quality-probe.yml` kaldırıldı.
-- Yeni Pages workflow'un ilk gerçek run/job sonucu henüz kanıtlanmadı; bu nedenle Pages PASS/TAMAM denmiyor.
+- Eski `pages.yml` kaldırıldı. Aktif Pages deployment workflow'u `.github/workflows/erischat-pages.yml` ve tek başına build/upload/deploy yapıyor.
+- `pages-diagnostics.yml` artık silinmiş `pages.yml` dosyasını aramıyor; aktif `erischat-pages.yml` için configure/upload/deploy, permissions ve `github-pages` environment kontrolleri yapıyor; duplicate legacy Pages workflow'unun yokluğunu da doğruluyor.
+- Geçici CI probe dosyaları temizlendi.
+- Yeni Pages workflow'un gerçek run/job sonucu henüz kanıtlanmadı; bu nedenle Pages PASS/TAMAM denmiyor.
 - Pages workflow'un bilinen eski failure örneği run `35225410720`: `deploy` job failure ve `steps: []`. Bu eski koşunun head'i `d2c08d13...`; güncel sade Pages workflow'dan önceydi.
-- `pages-diagnostics.yml` production deploy yapmaz; Pages API/environment ve workflow shape verisini toplamak için kullanılır.
 
 ## Güncel sıra
 1. Yeni sade Pages workflow'un gerçek job/run sonucunu doğrula.
