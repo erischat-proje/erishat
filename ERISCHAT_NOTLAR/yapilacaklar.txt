@@ -10,9 +10,11 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 - Eski .github/workflows/pages.yml kaldırıldı; duplicate Pages deployment workflow'u artık tutulmuyor.
 - pages-diagnostics.yml aktif Pages workflow'unu doğrulayacak şekilde hizalı.
 - Gerçek Pages state tanısında Pages aktif/built, public ve github-pages environment mevcut olarak doğrulandı.
-- github-pages environment üzerinde branch_policy protection rule bulunduğu gerçek runner logunda görüldü.
-- Environment'lı Pages deploy job'ları daha önce steps: [] ile runner'a ulaşmadan fail oldu; environment kaldırılınca runner çalıştı fakat deploy-pages "Missing environment" ile durdu. Bu nedenle environment/branch policy zinciri hâlâ kritik izolasyon konusu.
-- Son Pages workflow temizliğinde Pages workflow'unun kendi injection listesinde gift-live.js tekrar eklenmeyecek şekilde düzenlendi; aktif HTML'deki mevcut script ayrıca doğrulanmalı.
+- github-pages environment gerçek runner/API çıktısında `branch_policy`, `protected_branches=false`, `custom_branch_policies=true` olarak doğrulandı.
+- Bağımsız environment-probe job'ı gerçek runner'da `failure` + `steps: []` ile runner'a ulaşamadı; aynı workflow'daki environment'sız diagnostics job'ı SUCCESS oldu. Gate'in environment admission katmanında olduğu izole edildi.
+- Environment kaldırılarak yapılan önceki izolasyonda runner çalıştı fakat deploy-pages "Missing environment" ile durdu. Yani deploy için github-pages environment zorunlu.
+- `pages-diagnostics.yml` custom branch policy girdilerini bir sonraki gerçek run'da raporlayacak şekilde güncellendi.
+- Son Pages workflow temizliğinde Pages workflow'unun injection listesinde gift-live.js tekrar eklenmeyecek şekilde düzenlendi; frontend kaynak dosyası ayrıca mevcut.
 - Pages PASS/TAMAM denmeyecek; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 - Pages başarıyla deploy olduktan sonra canlı frontend HTTP ve frontend -> Railway API bağlantısı gerçek ortamda doğrulanmalı.
 
@@ -33,5 +35,5 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 SON DURUM
 - Son güvenilir kalite kanıtı: gerçek runner'da 5 smoke test başarılı.
 - Pages diagnostics gerçek Pages state'i okuyabiliyor.
-- Pages environment branch policy konusu kanıtlandı fakat deploy kök nedeni henüz kesinleştirilmedi.
-- Sıradaki kritik iş: Pages environment/branch policy izolasyonunu tamamla, sonra gerçek Pages deploy ve canlı HTTP doğrulaması yap.
+- Pages environment gate gerçek runner'da izole edildi; custom branch policy'nin hangi branch'leri kapsadığı henüz bir sonraki diagnostics logundan alınacak.
+- Sıradaki kritik iş: custom branch policy girdilerini gerçek logdan al, environment ayarını GitHub tarafında düzelt, sonra gerçek Pages deploy ve canlı HTTP doğrulaması yap.
