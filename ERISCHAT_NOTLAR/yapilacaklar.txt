@@ -44,6 +44,7 @@ GERÇEK RUNNER
 - [x] demo-extras-live.js için Quality static/required-file SUCCESS sonucu doğrulandı.
 - [x] Family runtime smoke: run 35277688638 / quality job 105392132238 SUCCESS.
 - [x] Family create/detail/donation/chat canlı smoke zinciri gerçek runner'da PASS verdi.
+- [x] Family member list/invite/role/remove + chat message canlı smoke: run 35278981991 / quality job 105396283536 SUCCESS.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
@@ -70,8 +71,8 @@ AİLE BACKEND
 - [x] Family detail production route gerçek runner'da doğrulandı.
 - [x] Family donation + level/capacity yükseltmesi gerçek runner'da doğrulandı.
 - [x] Family chat GET gerçek runner'da doğrulandı.
-- [ ] Family member list/invite/role/remove endpointlerinin canlı smoke doğrulaması.
-- [ ] Family chat message POST endpointinin canlı smoke doğrulaması.
+- [x] Family member list/invite/role/remove endpointleri gerçek runner'da canlı smoke ile doğrulandı.
+- [x] Family chat message POST endpointi gerçek runner'da canlı smoke ile doğrulandı.
 - [ ] Duplicate family router kayıtlarının sadeleştirilmesi; mevcut çalışan route zinciri bozulmadan yapılacak.
 
 PAGES / CANLI ZİNCİR
@@ -89,10 +90,11 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Quality workflow demo katmanı static kontrol checkpoint'i işlendi.
 - [x] Demo surface integrity quality gate checkpoint'i işlendi.
 - [x] Family runtime smoke checkpoint'i işlendi.
+- [x] Family member/chat message smoke checkpoint'i işlendi.
 - [ ] Bu docs push'unun tetiklediği Quality run SUCCESS doğrulaması.
 
 SONRAKİ GELİŞTİRME SIRASI
-1. Family member list/invite/role/remove + family chat message canlı smoke zincirini tamamla.
+1. Duplicate family router kayıtlarını sadeleştir; çalışan canlı route zincirini bozmadan ilerle.
 2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
 3. 139 kozmetiğin gerçek browser renderını doğrula.
 4. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
