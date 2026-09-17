@@ -73,7 +73,7 @@ AİLE BACKEND
 - [x] Family chat GET gerçek runner'da doğrulandı.
 - [x] Family member list/invite/role/remove endpointleri gerçek runner'da canlı smoke ile doğrulandı.
 - [x] Family chat message POST endpointi gerçek runner'da canlı smoke ile doğrulandı.
-- [ ] Duplicate family router kayıtlarının sadeleştirilmesi; mevcut çalışan route zinciri bozulmadan yapılacak.
+- [x] Duplicate family router kayıtları sadeleştirildi; canonical family_router artık family CRUD/member/chat endpointlerini taşıyor.
 
 PAGES / CANLI ZİNCİR
 - [x] Pages workflow ve environment admission kök nedeni tespit edildi.
@@ -91,18 +91,18 @@ TEMİZLİK / DOKÜMANTASYON
 - [x] Demo surface integrity quality gate checkpoint'i işlendi.
 - [x] Family runtime smoke checkpoint'i işlendi.
 - [x] Family member/chat message smoke checkpoint'i işlendi.
-- [ ] Bu docs push'unun tetiklediği Quality run SUCCESS doğrulaması.
+- [x] Quality run 35279194558 / job 105396950920 SUCCESS; family production integration ve live family smoke dahil tüm quality adımları geçti.
 
 SONRAKİ GELİŞTİRME SIRASI
-1. Duplicate family router kayıtlarını sadeleştir; çalışan canlı route zincirini bozmadan ilerle.
-2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
-3. 139 kozmetiğin gerçek browser renderını doğrula.
-4. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
-5. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
-6. Gerçek WebRTC/mikrofon transportu ve gerçek müzik playback/queue backendine geç.
-7. VIP harcama → seviye → kilit açma yaşam döngüsünü tamamla.
-8. Fan/follow, bildirim, engelleme ve admin/moderasyon backendlerini tamamla.
-9. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
+1. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
+2. 139 kozmetiğin gerçek browser renderını doğrula.
+3. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
+4. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
+5. Gerçek WebRTC/mikrofon transportu ve gerçek müzik playback/queue backendine geç.
+6. VIP harcama → seviye → kilit açma yaşam döngüsünü tamamla.
+7. Fan/follow, bildirim, engelleme ve admin/moderasyon backendlerini tamamla.
+8. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
+
 
 KURAL
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
