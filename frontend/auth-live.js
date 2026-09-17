@@ -16,7 +16,7 @@
   }
   async function registerAnonymous() {
     const suffix = Math.random().toString(36).slice(2, 7);
-    const session = await request('/users', { method: 'POST', body: JSON.stringify({ nickname: `Anonim_${suffix}`, gender: 'unspecified', avatar: '👤' }) });
+    const session = await request('/users', { method: 'POST', body: JSON.stringify({ nickname: `Anonim_${suffix}`, gender: 'male', avatar: '👤' }) });
     setToken(session.access_token);
     return session.user;
   }
