@@ -11,40 +11,39 @@
 - Son doğrulanmış envanter: 34 kadın avatar + 37 erkek avatar = 71 standart avatar; 32 standart frame; 12 kadın VIP avatar + 12 erkek VIP avatar = 24 VIP avatar; 12 VIP frame; toplam 139 aktif asset.
 - `backend/app/cosmetics.py` gerçek klasörlerden katalog üretir. Inventory checker da gerçek klasör envanterini doğrular.
 
-## Live E2E / WebSocket bulgusu
-- Gerçek GitHub Actions runner çalıştığı yeni minimal recovery workflow ile doğrulandı: run `35227284860`, job `105221988844`, probe adımları SUCCESS.
-- Önceki gerçek live E2E koşusunda PostgreSQL, static quality, API readiness ve REST room/gift akışı geçti; ilk başarısız nokta iki istemcili room WebSocket handshake oldu. Bu yüzden ban/DM/cosmetic adımları o koşuda çalışmadı.
-- Sonraki push'larda mevcut eski quality/apply workflow'larının bazı run kayıtları `failure` + `jobs: []` şeklinde oluştu. Bunlar runner çalışmıyor kanıtı değildir; ayrı recovery runner job'ı gerçek runner üzerinde SUCCESS olduğundan runner erişimi doğrulanmıştır. Eski workflow run'larının neden job üretmediği ayrıca araştırılacak; tahmin edilmeyecek.
-- WebSocket smoke harness'ında local E2E için `websocket-client` environment proxy'sini açıkça bypass edecek düzeltme yapıldı: commit `8f065859587a47a575f92be87b509819b376557e`.
-- Düzeltme henüz gerçek live E2E'de PASS olarak doğrulanmadı.
+## Gerçek live E2E checkpoint
+- GitHub-hosted runner üzerinde gerçek E2E başarıyla doğrulandı: run `35232358149`.
+- `live-e2e` job `105239447055` SUCCESS; probe job `105239447316` SUCCESS.
+- Aynı gerçek koşuda şu beş adımın tamamı SUCCESS oldu: Anonymous session, Room, Room ban, DM, Cosmetic.
+- Anonymous smoke; register → `/me` → public profile → profile patch → notification patch → logout → token sonrası 401 zincirini doğruluyor.
+- Room smoke; iki session, room create/join, gift/balance ve iki istemcili room WebSocket chat akışını doğruluyor.
+- Ban smoke; ban → liste → 403 rejoin → unban → yeniden join akışını doğruluyor.
+- DM smoke; conversation create/list, message send ve history akışını doğruluyor.
+- Cosmetic smoke; catalog → balance → purchase → ownership → apply akışını doğruluyor.
 
-## Güncel E2E sırası
-1. `room_live_smoke.py` WebSocket proxy bypass düzeltmesini gerçek runner üzerinde doğrula.
-2. Room ban → liste → unban → yeniden katılım E2E.
-3. İki istemcili room WebSocket chat E2E.
-4. Gift gönderimi + bakiye + %70 alıcı payı + room_gift event E2E.
-5. Cosmetic purchase → ownership → apply E2E.
-6. DM conversation create/list/send/history E2E.
-7. Anonymous/session/profile/logout E2E.
-8. Pages canlı HTTP + Pages→Railway API doğrulaması.
-9. Backend security + quality hardening.
-10. V35/V53 legacy cleanup.
+## WebSocket / frontend düzeltmeleri
+- Room WebSocket route interception problemi için frontend static mount sırası düzeltildi; route-fix workflow gerçek runner'da SUCCESS oldu.
+- Room smoke harness'ında local `websocket-client` proxy bypass düzeltmesi commit `8f065859587a47a575f92be87b509819b376557e` ile yapıldı ve yukarıdaki gerçek E2E koşusunda doğrulandı.
+- `frontend/auth-live.js` anonymous kayıt artık backend sözleşmesine uygun `gender: 'male'` gönderiyor; güncel blob SHA `d582fcc8cec9a0072cdfa2d259948d42a193b0e3`.
 
-## Harness checkpoint
-- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat; auth `/v1/users`; local websocket proxy bypass düzeltmesi commitlendi.
-- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin.
-- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history.
-- `scripts/cosmetic_live_smoke.py`: catalog → balance → purchase → ownership → apply.
-- Harnessların kod sözleşmesi kontrol edildi; çalıştırılmadan PASS yazılmayacak.
+## CI / Pages checkpoint
+- `.github/workflows/erischat-quality.yml` artık beşli live E2E zincirini içeriyor: anonymous, room, ban, DM, cosmetic.
+- `.github/workflows/runner-recovery.yml` aynı beşli zinciri içeriyor ve gerçek runner üzerinde SUCCESS doğrulaması mevcut.
+- `.github/workflows/pages.yml` de beşli E2E zincirini içeriyor ve `deploy` job'ını `backend-quality`, `smoke-harness-quality`, `cosmetic-inventory` ve `live-e2e` job'larına `needs` ile bağlıyor.
+- Pages workflow'un bilinen eski failure örneği run `35225410720`: `deploy` job failure ve `steps: []`. Bu eski koşunun head'i `d2c08d13...`; güncel `57e3ce31...` Pages gate değişikliklerinden önceydi.
+- Güncel Pages/quality workflow'larında job üretimi ayrıca doğrulanacak; `jobs: []` görülen kayıtlar için kök neden log/API kanıtı olmadan tahmin yapılmayacak.
+- `pages-diagnostics.yml` production deploy yapmaz; Pages API/environment ve workflow shape verisini toplamak için kullanılır.
 
-## CI checkpoint
-- Quality workflow'a local live E2E jobu daha önce eklendi; gerçek E2E PASS sonucu henüz doğrulanmış değil.
-- `runner-recovery.yml` ile gerçek GitHub-hosted runner doğrulaması yapıldı.
-- Bazı eski workflow run'larının `jobs: []` ile failure görünmesi ayrı CI registration/job-generation problemi olarak takip ediliyor.
-- Railway deploy yok.
+## Güncel sıra
+1. Güncel Pages ve quality workflow run'larının gerçek job durumlarını doğrula.
+2. Pages job-generation/deploy failure kök nedenini log/API kanıtıyla belirle.
+3. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
+4. Backend security + quality hardening.
+5. V35/V53 legacy cleanup.
+6. TXT checkpoint senkronizasyonunu koru.
 
 ## Kural
-- Canlı/local E2E yapılmadan özellik tamamlandı sayılmayacak.
+- Canlı/local E2E çalıştırılmadan özellik tamamlandı sayılmayacak.
+- Gerçek E2E PASS kanıtı olmadan PASS/TAMAM denmeyecek.
 - Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
 - Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
-- E2E PASS kanıtı olmadan PASS/TAMAM denmeyecek.
