@@ -1,5 +1,5 @@
 ERISCHAT — YAPILANLAR / GÜNCEL
-Tarih: 2026-09-17 — BASELINE / TAM SİSTEME HAZIRLIK
+Tarih: 2026-09-18 — FAMILY RUNTIME CHECKPOINT
 
 AMAÇ
 - Önce mevcut kodu tamamlanmış temel sistem seviyesine getirmek.
@@ -8,7 +8,7 @@ AMAÇ
 
 GÜNCEL RUNNER KANITI
 - [x] Quality v4 run 35265208929 / job 105350554959 SUCCESS.
-- [x] Güncel kod HEAD eac244e6d901a6b269991dabdede9cef11afc423 üzerinde çalıştı.
+- [x] Güncel önceki HEAD eac244e6d901a6b269991dabdede9cef11afc423 üzerinde temel zincir çalıştı.
 - [x] Static syntax ve required-file checks.
 - [x] 139 cosmetic asset integrity.
 - [x] Cosmetic asset URL smoke.
@@ -31,6 +31,18 @@ WEBSOCKET GÜVENLİĞİ
 - [x] Room WS mesaj öncesi üyelik/ban/chat_enabled kontrolü yapıyor.
 - [x] Güncel Quality runner room/ban zincirini tekrar geçti.
 
+AİLE RUNTIME
+- [x] Family production create route gerçek runner'da doğrulandı.
+- [x] Family detail route gerçek runner'da doğrulandı.
+- [x] Family donation route gerçek runner'da doğrulandı.
+- [x] 40000 Lidya donation sonrası level 2 ve capacity 40 gerçek runner'da doğrulandı.
+- [x] Family chat GET gerçek runner'da doğrulandı.
+- [x] Quality run 35277688638 / job 105392132238 SUCCESS.
+- [x] Live family smoke adımı SUCCESS; 405 ve önceki persistence problemi artık runner zincirinde tekrarlanmadı.
+- [ ] Family member list/invite/role/remove canlı smoke.
+- [ ] Family chat message POST canlı smoke.
+- [ ] Family route duplicate/sadeleştirme temizliği.
+
 KOZMETİK
 - [x] Aktif katalog 139 asset.
 - [x] Asset integrity runner kontrolü.
@@ -52,7 +64,6 @@ PAGES / CANLI
 - [ ] Railway production deploy — kullanıcı açıkça deploy demeden yapılmayacak.
 
 DOKÜMANTASYON
-- [x] son_durum_20260917.txt güncel Quality #153 kanıtıyla senkronize edildi.
-- [x] yapilacaklar.txt güncel baseline checklist ile senkronize edildi.
-- [x] yapilanlar.txt bu checkpoint ile güncellendi.
+- [x] Family runtime smoke checkpoint'i işlendi.
+- [x] yapilacaklar.txt family runtime kanıtına göre senkronize edildi.
 - [ ] Bu docs push'unun tetiklediği Quality run SUCCESS doğrulaması.
