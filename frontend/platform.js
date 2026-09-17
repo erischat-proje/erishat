@@ -26,12 +26,8 @@
     messages: (id,limit=100,offset=0) => request(`/messages/${encodeURIComponent(id)}?limit=${limit}&offset=${offset}`),
     sendMessage: (id,text) => request(`/messages/${encodeURIComponent(id)}`,{method:'POST',body:JSON.stringify({text})}),
     report: payload => request('/reports',{method:'POST',body:JSON.stringify(payload)}),
-    createFamily: name => request('/families',{method:'POST',body:JSON.stringify({name})}), family:id=>request(`/families/${encodeURIComponent(id)}`),
-    donateFamily:(id,amount)=>request(`/families/${encodeURIComponent(id)}/donate`,{method:'POST',body:JSON.stringify({amount})}),
+    createFamily: name => request('/families',{method:'POST',body:JSON.stringify({name})}), family:id=>request(`/families/${encodeURIComponent(id)}`), donateFamily:(id,amount)=>request(`/families/${encodeURIComponent(id)}/donate`,{method:'POST',body:JSON.stringify({amount})}),
     familyChat:id=>request(`/families/${encodeURIComponent(id)}/chat`), fans:userId=>request(`/users/${encodeURIComponent(userId)}/fans`),
-    profileGifts:userId=>request(`/users/${encodeURIComponent(userId)}/profile-gifts`),
-    startGame:(roomId,type)=>request(`/rooms/${encodeURIComponent(roomId)}/games/${encodeURIComponent(type)}`,{method:'POST'}),
-    bet:(roundId,choice,amount)=>request(`/games/${encodeURIComponent(roundId)}/bet`,{method:'POST',body:JSON.stringify({choice,amount})}),
-    settleGame:roundId=>request(`/games/${encodeURIComponent(roundId)}/settle`,{method:'POST'})
+    profileGifts:userId=>request(`/users/${encodeURIComponent(userId)}/profile-gifts`)
   };
 })();
