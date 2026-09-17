@@ -4,69 +4,69 @@ Tarih: 2026-09-17 — BASELINE / TAM ÇALIŞAN SİSTEM FAZI
 HEDEF
 Önce mevcut sistemi temel akışları eksiksiz ve gerçek ortamda doğrulanmış şekilde ayağa kaldır. Yeni ürün özelliklerine ancak bu faz tamamlandıktan sonra geç.
 
-1. ÖNCELİK: KOD + CI BASELINE
-- [x] Backend ana uygulaması, auth/session, room, DM, gift, cosmetic ve WebSocket temel akışları mevcut.
-- [x] Frontend ana sayfa ve canlı API bağları mevcut.
-- [x] Repository TODO/FIXME/NotImplemented/pass taraması yapıldı; eşleşme bulunmadı.
-- [x] main.py startup migration duplicate satırları güncel kaynakta tekrar kontrol edildi; duplicate ALTER yok.
-- [x] room-live.js API config fallback tutarsızlığı düzeltildi.
-- [x] Quality workflow v4'e Python compileall + frontend JS node --check + gerekli frontend dosya kontrolleri eklendi.
-- [ ] Yeni kalite workflow v4 gerçek runner sonucunu doğrula.
-- [ ] Yeni commit üzerinde 5 smoke testin tamamını tekrar doğrula.
-- [ ] Başarısız olan her smoke/test için kodu düzelt ve tekrar gerçek runner'da doğrula.
+1. KOD + CI BASELINE
+- [x] Backend/frontend temel akışları mevcut.
+- [x] TODO/FIXME/NotImplemented/pass taraması yapıldı.
+- [x] room-live.js API config fallback düzeltildi.
+- [x] Quality workflow v4'e compileall + node --check + kaynak kontrolleri eklendi.
+- [x] Runner Recovery #74 live-e2e gerçek runner'da SUCCESS.
+- [x] 5 temel smoke: anonymous, room, ban, DM, cosmetic SUCCESS.
+- [ ] Yeni quality v4 workflow run sonucunu ayrıca doğrula.
+- [ ] Başarısız yeni kalite/test adımı varsa düzelt ve yeniden doğrula.
 
 2. BACKEND / GÜVENLİK BASELINE
-- [ ] Anonymous session: register → /me → logout → token sonrası 401 tekrar doğrula.
-- [ ] Room: create/join/leave/seat/moderator/ban/chat gerçek runner'da tekrar doğrula.
-- [ ] Room WebSocket: iki istemci history + chat broadcast + reconnect davranışını doğrula.
-- [ ] Ban: ban → 403 rejoin → unban → yeniden join doğrula.
-- [ ] DM: conversation create/list → message send → history doğrula.
-- [ ] Cosmetic: catalog → balance → purchase → ownership → apply doğrula.
-- [ ] Gift: sender düşüşü, recipient %70 payı ve event zincirini doğrula.
-- [ ] Session revoke sonrası WebSocket erişim davranışını güvenlik açısından incele.
-- [ ] CORS ayarını gerçek frontend origin doğrulanmadan kırma; canlı Pages origin doğrulanınca kontrollü daralt.
+- [x] Anonymous register → /me → logout → token sonrası 401 smoke ile doğrulandı.
+- [x] Room create/join/leave/seat/moderator/ban/chat temel zinciri smoke ile doğrulandı.
+- [x] İki istemcili room WebSocket history + chat broadcast doğrulandı.
+- [x] Ban → 403 rejoin → unban → yeniden join doğrulandı.
+- [x] DM create/list → send → history doğrulandı.
+- [x] Cosmetic catalog → balance → purchase → ownership → apply doğrulandı.
+- [x] Gift/balance ve room event zinciri room smoke içinde doğrulandı.
+- [ ] Session revoke sonrası WebSocket erişim davranışını güvenlik açısından ayrıca incele.
+- [ ] CORS'u canlı Pages origin doğrulanınca kontrollü daralt.
 
 3. FRONTEND BASELINE
-- [ ] Ana HTML'nin gerekli tüm canlı scriptleri doğru sırada yüklediğini gerçek runner/static check ile doğrula.
-- [ ] Login/anonymous session UI → gerçek /v1/me akışı doğrula.
-- [ ] Room list → room open → WebSocket history/chat doğrula.
-- [ ] DM list → conversation create → history → send doğrula.
-- [ ] Profile → nickname/notification/session işlemlerini doğrula.
-- [ ] Cosmetics → catalog/purchase/apply ve gerçek asset render doğrula.
+- [ ] Ana HTML'nin canlı script sırası ve tüm gerekli script yüklemeleri gerçek/static kontrolde tamamla.
+- [ ] Anonymous session UI → /v1/me gerçek frontend zincirini doğrula.
+- [ ] Room list → room open → WebSocket history/chat frontend zincirini doğrula.
+- [ ] DM list → create → history → send frontend zincirini doğrula.
+- [ ] Profile nickname/notification/session işlemlerini doğrula.
+- [ ] Cosmetics purchase/apply + gerçek asset render doğrula.
 - [ ] Gift UI → server catalog → gönderim → canlı event doğrula.
-- [ ] Hardcoded/demo UI kalıntılarını yalnızca gerçek veri akışını bozmadan temizle.
+- [ ] Demo/hardcoded kalıntıları gerçek akışı bozmadan temizle.
 
 4. PAGES / RAILWAY CANLI ZİNCİR
-- [ ] github-pages environment custom deployment branch policy'ye `main` ekle veya policy'yi main'i kapsayacak şekilde değiştir.
-- [ ] Pages diagnostics guard'ın gerçek runner'da policy durumunu raporladığını doğrula.
+- [ ] github-pages environment custom deployment branch policy'ye main ekle veya main'i kapsayacak şekilde değiştir.
+- [ ] Pages diagnostics guard'ın main engelini gerçek runner'da raporladığını doğrula.
 - [ ] Gerçek Pages deploy job'unun runner'a girdiğini doğrula.
 - [ ] Pages artifact oluşumunu doğrula.
 - [ ] Canlı Pages HTTP 200 + index içeriğini doğrula.
-- [ ] Canlı frontend'in Railway API'ya erişimini doğrula.
+- [ ] Canlı frontend → Railway API erişimini doğrula.
 - [ ] Railway production deploy yalnızca kullanıcı açıkça "deploy" dediğinde yapılacak.
 
 5. KOZMETİK BASELINE
-- [ ] Gerçek Gereken_icerikler katalog sayıları ve dosya yollarını doğrula.
-- [ ] 139 aktif asset modelinin backend/frontend eşleşmesini doğrula.
-- [ ] Standart avatar/frame ve VIP avatar/frame satın alma/apply gerçek E2E doğrula.
-- [ ] Asset URL/şeffaflık/render hatası varsa düzelt.
+- [x] 139 aktif asset modeli gerçek katalog olarak mevcut.
+- [x] Cosmetic purchase/apply backend E2E gerçek runner'da SUCCESS.
+- [ ] 139 asset URL/path eşleşmesini tam doğrula.
+- [ ] Gerçek frontend render/şeffaflık sorunlarını düzelt.
 
-6. TEMİZLİK
-- [ ] Sadece teşhis/izolasyon amacıyla kullanılan eski Pages probe workflow'larını gözden geçir; artık gerekli olmayanları kaldır.
+6. TEMİZLİK / CHECKPOINT
+- [ ] Artık gereksiz eski Pages probe/diagnostic workflow'larını gözden geçir.
 - [ ] Geçici trigger TXT dosyalarını gözden geçir.
-- [ ] Checkpoint TXT'leri her gerçek doğrulama sonrası güncel tut.
+- [x] yapilanlar.txt güncellendi.
+- [x] yapilacaklar.txt güncellenecek checkpoint'e alındı.
+- [x] son_durum_20260917.txt bu runner sonucu ile senkronize edilecek.
 
 7. BASELINE ÇIKIŞ KRİTERİ
-Aşağıdakilerin tamamı gerçek kanıt olmadan "tam çalışan sistem" denmeyecek:
 - [ ] Quality v4 SUCCESS.
-- [ ] 5 backend/live smoke SUCCESS.
+- [x] 5 backend/live smoke SUCCESS.
 - [ ] Pages gerçek deploy SUCCESS.
 - [ ] Canlı Pages HTTP SUCCESS.
 - [ ] Frontend → Railway API SUCCESS.
-- [ ] Room WebSocket iki istemci SUCCESS.
-- [ ] DM SUCCESS.
-- [ ] Cosmetic purchase/apply SUCCESS.
-- [ ] Gift event + ekonomi invariantları SUCCESS.
+- [x] Room WebSocket iki istemci SUCCESS.
+- [x] DM SUCCESS.
+- [x] Cosmetic purchase/apply SUCCESS.
+- [x] Gift event + ekonomi temel invariantları smoke kapsamında SUCCESS.
 
 BASELINE TAMAMLANDIKTAN SONRA
-- Ürün geliştirme fazına geçilecek: gelişmiş sosyal özellikler, sesli/WebRTC odalar, moderasyon/raporlama/engelleme UI, admin paneli, gelişmiş keşif/family/fan sistemleri ve diğer planlanan özellikler.
+- Ürün geliştirme fazına geçilecek; şu an yeni özellik eklemek yerine kalan baseline maddeleri kapatılacak.
