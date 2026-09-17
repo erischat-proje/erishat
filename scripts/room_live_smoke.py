@@ -108,6 +108,37 @@ def main() -> int:
     if status >= 300:
         raise RuntimeError(f"chat enable failed: HTTP {status} {data}")
     print("two members joined and room chat enabled")
+    status, seat_join = request("POST", f"/rooms/{room_id}/seats/1/join", token_b, {})
+    if status >= 300 or seat_join.get("seat_number") != 1:
+        raise RuntimeError(f"seat join failed: HTTP {status} {seat_join}")
+    print("seat join OK: user B on seat 1")
+
+    status, promoted = request("POST", f"/rooms/{room_id}/moderators", token_a, {"user_id": uid_b})
+    if status >= 300 or uid_b not in promoted.get("moderators", []):
+        raise RuntimeError(f"moderator add failed: HTTP {status} {promoted}")
+    status, muted = request("POST", f"/rooms/{room_id}/seats/1/mute", token_a, {})
+    if status >= 300 or not muted.get("muted"):
+        raise RuntimeError(f"seat mute failed: HTTP {status} {muted}")
+    status, unmuted = request("DELETE", f"/rooms/{room_id}/seats/1/mute", token_a)
+    if status >= 300 or unmuted.get("muted"):
+        raise RuntimeError(f"seat unmute failed: HTTP {status} {unmuted}")
+    status, locked_seat = request("POST", f"/rooms/{room_id}/seats/2/lock", token_a, {})
+    if status >= 300 or not locked_seat.get("locked"):
+        raise RuntimeError(f"seat lock failed: HTTP {status} {locked_seat}")
+    status, unlocked_seat = request("DELETE", f"/rooms/{room_id}/seats/2/lock", token_a)
+    if status >= 300 or unlocked_seat.get("locked"):
+        raise RuntimeError(f"seat unlock failed: HTTP {status} {unlocked_seat}")
+    status, locked_room = request("POST", f"/rooms/{room_id}/lock", token_a, {})
+    if status >= 300 or not locked_room.get("locked"):
+        raise RuntimeError(f"room lock failed: HTTP {status} {locked_room}")
+    status, unlocked_room = request("DELETE", f"/rooms/{room_id}/lock", token_a)
+    if status >= 300 or unlocked_room.get("locked"):
+        raise RuntimeError(f"room unlock failed: HTTP {status} {unlocked_room}")
+    status, removed_mod = request("DELETE", f"/rooms/{room_id}/moderators/{uid_b}", token_a)
+    if status >= 300 or not removed_mod.get("removed"):
+        raise RuntimeError(f"moderator remove failed: HTTP {status} {removed_mod}")
+    print("room controls OK: moderator + seat mute/unmute + seat lock/unlock + room lock/unlock")
+
 
     status, catalog = request("GET", f"/rooms/{room_id}/gift-catalog", token_a)
     if status >= 300 or not isinstance(catalog, list) or not catalog:
