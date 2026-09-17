@@ -1,0 +1,61 @@
+ERISCHAT — MÜŞTERİ DEMO EKSİKLERİ
+Tarih: 2026-09-17
+Amaç: Müşteriye temel ürünün tamamını göstermek; müşterinin geri bildiriminden sonra gerçek geliştirme önceliği çıkarmak.
+
+GÖSTERİLEBİLEN ÜRÜN YÜZEYİ
+[x] Odalar
+[x] Oda oluşturma / liste / detay / katıl / ayrıl
+[x] Koltuklar
+[x] Sohbet aç-kapat
+[x] Oda moderatör ve ban araçlarının demo kontrol yüzeyi
+[x] Oda hediye kataloğu/gönderim yüzeyi
+[x] Mağaza — 139 kozmetik
+[x] Standart/VIP kozmetik ayrımı
+[x] VIP 1–12
+[x] Aile
+[x] Keşif
+[x] Sosyal profil / fan / profil hediyesi
+[x] Profil düzenleme
+[x] DM / konuşma / mesaj
+[x] Gizlilik
+[x] Kullanıcı/oda/mesaj şikayetleri
+[x] Roulette demo yüzeyi
+[x] 4 Kupa demo yüzeyi
+[x] Ürün merkezi / müşteri vitrini
+[x] Keşif tercihleri
+
+MÜŞTERİYE GÖSTERİMDE BİLİNÇLİ OLARAK 'GELİŞTİRİLECEK' OLANLAR
+[ ] Gerçek ses altyapısı: mikrofon, WebRTC/voice transport, mute/unmute'nin gerçek ses kanalına bağlanması.
+[ ] Gerçek browser doğrulaması: tüm sekmelerde aç/kapat/form/API/asset akışlarının uçtan uca testi.
+[ ] Oda canlı chat + hediye + koltuk + moderasyonun gerçek browser zinciri.
+[ ] Oda müzik kuyruğu / kaynak oynatma / moderasyon arayüzünün tamamlanması.
+[ ] Oda announcement oluşturma/düzenleme UI'sı.
+[ ] Aile gerçek üye davet/çıkarma/yönetim akışları; mevcut backend yüzeyinde temel create/donate/chat durumu var.
+[ ] Aile sohbetinin gerçek mesajlaşma ekranı.
+[ ] Oyun ekonomisinin gerçek round/bakiye/payout yaşam döngüsü ve browser animasyonları. Mevcut oyun endpointleri ürün yüzeyinde var ancak round yaşam döngüsü ayrıca sağlamlaştırılmalı.
+[ ] Profilde gerçek avatar + çerçeve görselinin birlikte render edilmesi.
+[ ] Kozmetik 139 asset'in gerçek browser render testi.
+[ ] VIP ilerleme/harcama → seviye yükseltme → kilit açma yaşam döngüsünün uçtan uca tamamlanması.
+[ ] Fan/takip sistemi için gerçek follow/unfollow akışlarının tamamlanması.
+[ ] Bildirim merkezi / uygulama içi bildirimler.
+[ ] Engelleme ve kullanıcı güvenlik aksiyonlarının müşteri arayüzüne bağlanması.
+[ ] Admin/moderasyon paneli: rapor kuyruğu, inceleme, karar, audit.
+[ ] Oda sahibi için oda kapatma/silme ve gelişmiş ayarlar.
+[ ] Gerçek browser auth/me ve anonim onboarding testi.
+[ ] Pages canlı HTTP/index ve Pages → Railway canlı zinciri.
+[ ] CORS'un gerçek Pages origin'e göre daraltılması.
+
+DOĞRULAMA
+- Önceki Quality v4 run 35266995579 / job 105356518821 SUCCESS.
+- Yeni customer shell/control layer commitlerinden sonra runner sonucu henüz GitHub connector üzerinden dönmedi.
+- Bu yüzden yeni katmanlar için PASS/TAMAM iddiası yapılmıyor.
+- Railway production deploy kullanıcı açıkça 'deploy' demeden yapılmayacak.
+
+MÜŞTERİ GERİ BİLDİRİMİ İÇİN SORULAR
+1. İlk sürümde hangi modüller vazgeçilmez?
+2. Oda deneyiminde hangi özellikler öncelikli?
+3. VIP seviyelerinde hangi ayrıcalıklar görünür olmalı?
+4. Aile sistemi ne kadar derin olmalı?
+5. Oyunlar gerçek ekonomide ilk sürümde olacak mı?
+6. Mağazada 139 kozmetik yeterli mi, kategori/arama/favori isteniyor mu?
+7. Anonimlik ve gizlilikte ek beklenti var mı?
