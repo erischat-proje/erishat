@@ -1,7 +1,7 @@
 (() => {
-  const API = window.ERIS_API || `${location.origin}/v1`;
+  const API = window.ERIS_API || 'https://erischat-production.up.railway.app/v1';
   const tokenKey = 'erischat_access_token';
-  const token = () => localStorage.getItem(tokenKey) || '';
+  const token = () => localStorage.getItem(tokenKey) || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   async function request(path, options = {}) {
     const headers = new Headers(options.headers || {});
     headers.set('Content-Type', 'application/json');
