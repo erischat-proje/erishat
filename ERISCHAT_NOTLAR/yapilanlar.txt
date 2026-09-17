@@ -30,9 +30,9 @@ BACKEND
 - [x] VIP kozmetik fiyatı katalog metadata'sından satın alma sırasında uygulanıyor.
 - [x] Purchase response VIP bilgisini döndürüyor.
 - [x] Apply response VIP bilgisini döndürüyor.
-- [x] Startup user settings ALTER ifadelerindeki duplicate gender/avatar/frame satırları temizlendi.
+- [ ] main.py startup user settings ALTER ifadelerinde duplicate gender/avatar/frame satırları hâlâ yeniden görülüyor; cleanup tekrar uygulanacak.
 - [x] Mevcut backend/app/__pycache__ .pyc artefaktları silindi.
-- [x] Backend main.py'deki genel WS ve room WS route'ları korunarak migration cleanup checkpoint'i yeniden doğrulandı.
+- [x] Backend main.py'deki genel WS ve room WS route'ları korunuyor.
 
 FRONTEND
 - [x] Ana tek sayfa frontend mevcut.
@@ -41,8 +41,11 @@ FRONTEND
 - [x] room_history eventi UI chat alanına aktarılıyor.
 - [x] room_chat eventi UI chat alanına aktarılıyor.
 - [x] Oda mesaj gönderimi gerçek WebSocket room_chat payload'ına bağlandı.
+- [x] Room WebSocket reconnect + exponential backoff eklendi.
+- [x] Room WebSocket stale/önceki socket callback'lerinin yeni bağlantıyı bozması guard edildi.
 - [x] Oda listesi temel olarak gerçek /v1/rooms API'sine bağlı.
 - [x] Profil/VIP/mağaza/anonimlik temel UI'ları mevcut.
+- [x] Session/anonymous durum göstergesi session-ui-live.js bileşeni olarak eklendi.
 - [x] DM conversation listesi gerçek API'ya bağlandı.
 - [x] DM history gerçek API'dan yükleniyor.
 - [x] DM send gerçek API'ya bağlandı.
@@ -69,7 +72,7 @@ FRONTEND
 - [x] Pages workflow demo-cleanup.js script/asset kontrolüne dahil edildi.
 
 TESPİT EDİLEN EKSİKLER
-- [ ] Session/anonymous durum göstergesi görsel olarak ayrı bir UI bileşeni olarak tamamlanmadı.
+- [x] Session/anonymous durum göstergesi görsel bileşen olarak eklendi; canlı Pages doğrulaması bekliyor.
 - [ ] WS reconnect/presence/genel event UI eksik.
 - [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
 - [ ] DM conversation oluşturma UI'sı canlı E2E doğrulaması bekliyor.
@@ -98,7 +101,7 @@ GÜVENLİK / DEPLOY
 - Canlı test yapılmadan bir özellik E2E tamamlandı olarak işaretlenmeyecek.
 
 SONRAKİ AKTİF İŞ
-1. Session/anonymous durum göstergesini tamamla.
+1. main.py duplicate migration satırlarını güvenli biçimde tekilleştir.
 2. Oda WebSocket canlı E2E testini doğrula.
 3. DM conversation creation canlı akışını doğrula.
 4. Pages failure kök nedenini izole et ve workflow'u doğrula.
