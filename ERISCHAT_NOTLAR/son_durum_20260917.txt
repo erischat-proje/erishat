@@ -6,7 +6,7 @@
 - Öncelik: mevcut kodu ve canlı temel akışları tamamlamak; yeni ürün özelliklerine baseline çıkışından sonra geçmek.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-## Son gerçek runner kanıtı
+## Son doğrulanmış temel runner kanıtı
 - Runner Recovery #74: run `35256506469`.
 - `live-e2e` job `105321368901`: **SUCCESS**.
 - Anonymous session, room, ban, DM ve cosmetic smoke gerçek runner'da SUCCESS.
@@ -17,29 +17,34 @@
 
 ## Quality v4 — doğrulanmış
 - Quality v4 run `35258712132`, job `105328734923`: **SUCCESS**.
-- Run head SHA: `75fd20f525553602819e50e1c9cca9d2eba263ae`.
 - Static syntax + required-file checks SUCCESS.
 - Local API startup + /ready SUCCESS.
 - Anonymous session, room, ban, DM ve cosmetic smoke SUCCESS.
 - Önceki `frontend/room-gift-ui-live.js:11` syntax failure düzeltmesi gerçek runner'da doğrulandı.
-- Checkpoint dokümantasyon commitleri Quality workflow'u yeniden tetikledi; bunların sonucu ayrıca takip edilecek.
+
+## Temizlik checkpoint'i
+- Belirgin geçici Pages/CI trigger dosyaları main'den temizlendi: PAGES_FORCE* ailesi, eski PAGES_TRIGGER, room/gift/progress/root trigger kalıntıları ve `.ci` canlı trigger dosyaları.
+- Cleanup sonrası checkpoint notları senkronize edildi.
+- Yeni cleanup commitlerinden sonra Quality sonucu henüz ayrıca doğrulanmadı.
 
 ## Pages kök nedeni
 - `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
-- Diagnostics run `35257192257`, job `105327578309`: FAILURE; runner policy engelini gerçek runner'da doğruladı.
-- Pages deploy run `35257192305`, job `105327600558`: FAILURE; runner adımlarına girmeden environment admission aşamasında durdu.
+- Diagnostics run `35259030698`, job `105329800478`: **FAILURE**; runner `main` için environment admission engelini açıkça raporladı.
+- Pages URL mevcut GitHub state'te `https://semihvarolymk-png.github.io/erischat/` olarak raporlandı, ancak canlı HTTP 200/index doğrulaması henüz yapılmadı.
 - [ ] GitHub Settings → Environments → `github-pages` deployment branch policy içinde `main` izinli hale getirilecek.
 - [ ] Sonrasında Pages deploy tekrar gerçek runner'da doğrulanacak.
 - [ ] Canlı Pages HTTP 200/index doğrulaması yapılacak.
 - [ ] Canlı Pages → Railway API zinciri doğrulanacak.
 
-## Sıradaki işlem sırası
-1. Checkpoint push'ları sonrası Quality koşusunu doğrula.
-2. Pages environment `main` admission engelini çöz.
-3. Pages deploy SUCCESS doğrula.
-4. Canlı Pages HTTP + frontend → Railway API doğrula.
-5. Kalan frontend/security/cosmetic render kontrollerini kapat.
-6. Tüm baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
+## Kalan baseline sırası
+1. `github-pages` environment admission engelini çöz.
+2. Pages deploy SUCCESS doğrula.
+3. Canlı Pages HTTP + frontend → Railway API doğrula.
+4. Session revoke sonrası WebSocket davranışını güvenlik açısından doğrula/düzelt.
+5. CORS'u gerçek Pages origin görüldükten sonra daralt.
+6. Frontend anonymous/me, room, DM, profile, gift ve cosmetic render zincirlerini gerçek akışta doğrula.
+7. 139 asset URL/path ve render kontrollerini tamamla.
+8. Baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
 
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
