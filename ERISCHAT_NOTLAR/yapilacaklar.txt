@@ -7,7 +7,8 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 
 2. GitHub Pages
 - Aktif hedef workflow: .github/workflows/erischat-pages.yml
-- Eski .github/workflows/pages.yml ayrıca mevcutsa kaldırılmalı; iki Pages workflow'unun aynı deployment alanını tetiklemesi engellenmeli.
+- Eski .github/workflows/pages.yml kaldırıldı; duplicate Pages deployment workflow'u artık tutulmuyor.
+- pages-diagnostics.yml mevcut aktif Pages workflow'unu doğrulayacak şekilde düzeltildi; eski silinmiş pages.yml referansı kaldırıldı.
 - Yeni Pages workflow için gerçek job sonucu ayrıca doğrulanmalı.
 - Jobs/steps boş gelirse workflow seviyesindeki problemi izole et; tahminle PASS verme.
 - Pages başarıyla deploy olduktan sonra canlı frontend HTTP ve frontend -> Railway API bağlantısı gerçek ortamda doğrulanmalı.
@@ -28,4 +29,5 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 
 SON DURUM
 - Son güvenilir kalite kanıtı: gerçek runner'da 5 smoke test başarılı.
-- Pages tarafındaki sonraki iş: duplicate workflow'u kaldır, ardından yeni tek Pages workflow'un gerçek run/job sonucunu doğrula.
+- Pages diagnostics workflow aktif deployment dosyasıyla hizalandı.
+- Sıradaki kritik doğrulama: yeni sade Pages workflow'un gerçek run/job sonucu.
