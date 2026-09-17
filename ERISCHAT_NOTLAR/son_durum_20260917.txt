@@ -24,19 +24,17 @@ BU TURDA YAPILAN
 - Smoke scripti gift sonrası gönderen bakiyesi, alıcı %70 payı ve RoomGiftEvent kaydını kontrol ediyor; websocket-client mevcutsa iki istemcili room_chat broadcast kontrolünü de çalıştırıyor.
 - Cosmetic quality workflow artık yalnızca tanı koymuyor; scripts/check_cosmetic_assets.py ile 40 standart avatar + 40 standart frame + 12 VIP avatar + 12 VIP frame hedeflerini exact-count olarak CI kapısı yapıyor.
 - Cosmetic purchase/apply için opt-in smoke harness eklendi: scripts/cosmetic_live_smoke.py. Anonymous kullanıcı oluşturup katalogdan avatar/frame seçiyor; yeterli bakiye varsa purchase → ownership → apply zincirini doğruluyor.
+- Son commit için GitHub combined status sorgulandı; `054a63fef308005af901f3cae6d205aa3f3e64e5` üzerinde status kaydı dönmedi. Bu nedenle CI başarılı/başarısız olarak işaretlenmedi.
 
 SON COMMITLER
+- CI status checkpoint: 054a63fef308005af901f3cae6d205aa3f3e64e5
 - Cosmetic smoke harness: 577d195085d03f889211207a14a2a591b27f43a8
 - Exact cosmetic inventory CI gate: 5db3fe322baa7ed75943cdc870c5641b419de5dd
 - Room live smoke harness: 78de1295688a1caff34b66281f05394e4f0c6e7c
 - Pages gift UI integration: fb5a73be062495f73c2da597ed2a360ba2984bc3
 - Live room gift UI: 1184b65a26c59c2b6a8bb48c7dd89e20dd8976b3
 - Startup migration duplicate cleanup: 21a5ffaf3682764e16fc16ed66745900d1a08f5b
-- Room ban/member/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
-- Room actions helper + Pages integration: 22c5e9e235d316422bff4bfff03feb5e63d0e654
-- Gift REST bridge: 683afe64749a6f812fc5069c1dced211de472369
-- Ban list + Pages integration: 6ac27e083895c506218477fadd5c37401cdbd3a4
-- Secure room ban listing/moderator revoke: 80d393cd7cd773b9a43cf... 
+- Room ban/member/seat hardening: 6342a195be4fd6c9c9cf159cbeeac298013e9e6c
 
 HENÜZ DOĞRULANMAYANLAR
 1. Room security regression workflow adımının gerçek GitHub Actions sonucu.
