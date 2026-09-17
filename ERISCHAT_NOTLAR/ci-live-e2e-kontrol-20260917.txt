@@ -9,7 +9,12 @@ Durum:
 - Pages workflow mevcut blob içeriğinde configure-pages@v5, upload-pages-artifact@v4, deploy-pages@v4 ve pages/id-token write mevcut.
 - Checkout düzeltmesi 01927be2a136704cb8ae7018eacfae039f29ec5a commitinde mevcut.
 - 01927be2 commit'i için connector commit-workflow-runs sonucu 0 döndü; yeni diagnostics run'ı henüz doğrulanamadı.
+- Quality workflow aa702500ddf78820624f567b38ab51302f7cf31e commitinde bilinen çalışan şekle geri alındı; quality.yml şu anda push/main, pull_request/main ve workflow_dispatch tetikleyicilerini ve live-e2e job'ını içeriyor.
+- Geçici CI tetikleme PR #2 (ci-quality-retrigger-20260917) hazır incelemeye alındı; head 635c87a59055561f7e7ad7a23973a69f82311119.
+- PR #2 ready-for-review yapıldıktan sonra da commit-workflow-runs sonucu 0 ve repository pull_request event sorgusu total_count=0 döndü. Bu nedenle PR tarafında hiçbir workflow'un schedule edilmediği doğrulandı; sorun smoke kodundan ziyade Actions tetikleme/registration katmanında araştırılıyor.
 
-Kural:
+Sonraki kontrol:
+- Main'e yapılacak bir sonraki zararsız commit ile quality push tetikleyicisi yeniden gözlenecek.
+- Yeni run oluşursa önce job listesi, sonra live-e2e adımları ve gerçek sonuçları kontrol edilecek.
 - Gerçek workflow/job sonucu görülmeden live-e2e veya Pages için PASS/TAMAM denmeyecek.
 - Railway deploy yapılmayacak; kullanıcı açıkça deploy demedikçe sadece kod/CI düzeyinde ilerlenir.
