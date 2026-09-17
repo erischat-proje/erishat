@@ -2,9 +2,16 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
+- Güncel main HEAD: `e90c6f077901f457ef7ce81ae1c1af3bbc5b7033`.
 - Faz: BASELINE / TAM ÇALIŞAN SİSTEME HAZIRLIK.
 - Öncelik: mevcut kodu ve canlı temel akışları tamamlamak; yeni ürün özelliklerine baseline çıkışından sonra geçmek.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
+
+## Güncel main HEAD değişikliği
+- Commit `e90c6f077901f457ef7ce81ae1c1af3bbc5b7033`: `test: normalize room ban smoke API base`.
+- `scripts/room_ban_live_smoke.py` artık `ERISCHAT_SMOKE_BASE_URL` değerini root veya `/v1` verilmiş olsa da doğru API tabanına normalize ediyor.
+- Böylece smoke harness'ın `/v1/v1/...` veya `/users` yerine yanlış root path kullanması engelleniyor.
+- Bu değişiklik henüz güncel main HEAD üzerinde gerçek Quality/Runner PASS kanıtıyla işaretlenmedi.
 
 ## Son doğrulanmış temel runner kanıtı
 - Runner Recovery #74: run `35256506469`.
@@ -15,13 +22,14 @@
 - DM conversation → send → history SUCCESS.
 - Cosmetic catalog → balance → purchase → ownership → apply SUCCESS.
 
-## Quality v4 — en güncel doğrulama
+## Quality v4 — son doğrulanmış çalışma
 - Quality v4 run `35260089459`, job `105333339551`: **SUCCESS**.
 - Head commit: `2400850295c51ae5baaec12d94fd049d186c23ca`.
 - Static syntax + required-file checks SUCCESS.
 - Local API startup + /ready SUCCESS.
 - Anonymous session, room, ban, DM ve cosmetic smoke SUCCESS.
-- Session-revoke WebSocket güvenlik değişikliği sonrası tüm mevcut Quality v4 smoke zinciri tekrar SUCCESS.
+- Session-revoke WebSocket güvenlik değişikliği sonrası mevcut Quality v4 smoke zinciri gerçek runner'da SUCCESS.
+- Güncel `e90c6f0` HEAD için henüz yeni Quality PASS kanıtı yok; combined commit status şu anda boş.
 
 ## WebSocket session revoke güvenliği
 - Commit `2400850295c51ae5baaec12d94fd049d186c23ca`.
@@ -29,19 +37,29 @@
 - Session revoke/expiry sonrası geçersiz session ile mesaj işlenmiyor; bağlantı `1008` ile kapatılıyor.
 - Not: Bu uygulama mesaj/aktivite geldiğinde yeniden doğrulama yapıyor; idle bağlantıyı arka planda anında kapatan ayrı heartbeat/revocation watcher henüz eklenmedi.
 
+## Room membership / ban WebSocket zinciri
+- Commit `7f4d5f57d6debddd9b5aef776eb1103752a5d358`: room WebSocket'te her gelen mesaj öncesi üyelik/ban/chat_enabled yeniden kontrolü.
+- Commit `cde80814ca42f6a4994adfb50de4979e6e6fb07c`: ban sonrası açık WebSocket'in yeniden doğrulanmasını kapsayan smoke testi.
+- Commit `69b3961d1cbce3ca643e0dda239cbca17df547ea`: temiz WebSocket close sonucunu testte kabul etme.
+- Commit `0dc7c84d89bb39a84731c8dd35e4821d5b56afe0`: ban sonrası close scheduling gecikmesini tolere eden test döngüsü.
+- Güncel `e90c6f0`: smoke API base normalization.
+- Bu zincir güncel main HEAD üzerinde gerçek runner'da tekrar doğrulanana kadar PASS/TAMAM olarak işaretlenmiyor.
+
 ## Son frontend düzeltmeleri — runner doğrulaması bekliyor
 - Commit `a23bce6f01814d3049a55dc6fb4c9c1a90928d03`: DM konuşma listesindeki `ConversationOut.members` → karşı kullanıcı profilini çözme düzeltmesi.
 - Commit `e26682ce224093dc039a2ea74a16521d99b50f63`: DM mesaj balonlarının `MessageOut.sender_id` üzerinden kendi mesajını doğru hizalaması.
-- Bu iki değişiklik için henüz yeni Quality/live-e2e SUCCESS kanıtı checkpoint'e PASS olarak yazılmadı.
+- Commit `1f9bdf6605684f798be60c7b2854a1feba281c60`: session ve WebSocket hata durumlarının frontend'de ayrıştırılması.
+- Commit `aa3bbc8ff495116d94a7734cb27e80921a94e5a2`: room chat toast çağrılarının güvenli hale getirilmesi.
+- Bu değişiklikler için güncel main HEAD üzerinde yeni Quality/live-e2e SUCCESS kanıtı checkpoint'e PASS olarak yazılmadı.
 
 ## Temizlik checkpoint'i
 - Belirgin geçici Pages/CI trigger dosyaları main'den temizlendi: PAGES_FORCE* ailesi, eski PAGES_TRIGGER, room/gift/progress/root trigger kalıntıları ve `.ci` canlı trigger dosyaları.
 - Cleanup sonrası checkpoint notları senkronize edildi.
-- Security değişikliği sonrası Quality v4 sonucu ayrıca gerçek runner'da SUCCESS doğrulandı.
 
 ## Pages kök nedeni
 - `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
 - Diagnostics run `35259030698`, job `105329800478`: **FAILURE**; runner `main` için environment admission engelini açıkça raporladı.
+- Güncel main push'ta Pages diagnostics/deploy yine bu environment admission engeli nedeniyle başarısız oldu; bu bir GitHub environment ayarıdır, kod PASS/FAIL kanıtı değildir.
 - Pages URL mevcut GitHub state'te `https://semihvarolymk-png.github.io/erischat/` olarak raporlandı, ancak canlı HTTP 200/index doğrulaması henüz yapılmadı.
 - [ ] GitHub Settings → Environments → `github-pages` deployment branch policy içinde `main` izinli hale getirilecek.
 - [ ] Sonrasında Pages deploy tekrar gerçek runner'da doğrulanacak.
@@ -49,13 +67,14 @@
 - [ ] Canlı Pages → Railway API zinciri doğrulanacak.
 
 ## Kalan baseline sırası
-1. `github-pages` environment admission engelini çöz.
-2. Pages deploy SUCCESS doğrula.
-3. Canlı Pages HTTP + frontend → Railway API doğrula.
-4. CORS'u gerçek Pages origin görüldükten sonra daralt.
-5. Frontend anonymous/me, room, DM, profile, gift ve cosmetic render zincirlerini gerçek akışta doğrula.
-6. 139 asset URL/path ve render kontrollerini tamamla.
-7. Baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
+1. Güncel main HEAD Quality/Runner doğrulamasını al.
+2. `github-pages` environment admission engelini çöz.
+3. Pages deploy SUCCESS doğrula.
+4. Canlı Pages HTTP + frontend → Railway API doğrula.
+5. CORS'u gerçek Pages origin görüldükten sonra daralt.
+6. Frontend anonymous/me, room, DM, profile, gift ve cosmetic render zincirlerini gerçek akışta doğrula.
+7. 139 asset URL/path ve render kontrollerini tamamla.
+8. Baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
 
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
