@@ -37,7 +37,9 @@ def request(method: str, path: str, token: str | None = None, payload=None):
 
 
 def register():
-    status, data = request("POST", "/auth/anonymous", payload={})
+    status, data = request("POST", "/users", payload={
+        "nickname": "Cosmetic Smoke", "avatar": "👤", "gender": "male"
+    })
     if status >= 300:
         raise RuntimeError(f"anonymous auth failed: HTTP {status} {data}")
     token = data.get("access_token") or data.get("token")
