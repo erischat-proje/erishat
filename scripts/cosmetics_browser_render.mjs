@@ -26,7 +26,7 @@ try {
     const rows=[];
     for(const path of paths){
       const img=new Image();
-      img.src='/' + path;
+      img.src='/' + path.split('/').map(encodeURIComponent).join('/');
       try { await img.decode(); } catch (_) {}
       const ok=img.complete && img.naturalWidth>0 && img.naturalHeight>0;
       let transparent=null;
