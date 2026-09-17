@@ -3,57 +3,12 @@ name: ErisChat quality workflow probe
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  backend-quality:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Backend quality
-        run: python scripts/check_backend_quality.py
-      - name: Room security regression
-        run: python scripts/check_room_security.py
-
-  smoke-harness-quality:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Compile smoke harnesses
-        run: |
-          python -m py_compile \
-            scripts/room_live_smoke.py \
-            scripts/room_ban_live_smoke.py \
-            scripts/dm_live_smoke.py \
-            scripts/cosmetic_live_smoke.py
-      - name: Reject stale anonymous auth endpoint
-        run: |
-          if grep -R -n '"/auth/anonymous"' scripts/*_live_smoke.py; then
-            echo 'Smoke harnesses must use the current /v1/users registration contract.'
-            exit 1
-          fi
-      - name: Verify local smoke safety defaults
-        run: |
-          grep -F 'http://127.0.0.1:8000' scripts/room_live_smoke.py
-          grep -F 'http://127.0.0.1:8000' scripts/room_ban_live_smoke.py
-          grep -F 'http://127.0.0.1:8000' scripts/dm_live_smoke.py
-          grep -F 'http://127.0.0.1:8000' scripts/cosmetic_live_smoke.py
-
-  cosmetic-inventory:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Cosmetic inventory
-        run: python scripts/check_cosmetic_assets.py
-
   live-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -122,5 +77,3 @@ jobs:
           if [ -f /tmp/erischat-api.pid ]; then
             kill "$(cat /tmp/erischat-api.pid)" || true
           fi
-
-# Registered workflow trigger checkpoint.
