@@ -2,17 +2,28 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Son dokümantasyon checkpoint HEAD: `f7c90cd0d1f16576412ac152f9090c353b33a276`.
+- Güncel faz: temel backend runner doğrulaması + aile runtime entegrasyonu tamamlanıyor; ardından browser doğrulama.
 - Müşteri demo fazı: ürün yüzeyi tek vitrinde toplanıyor ve eksik görünen ürün alanları demo+ katmanıyla tamamlanıyor.
 - VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi mevcut.
 - Oyunlar için oynanabilir demo vitrini mevcut; gerçek ekonomi ayrı backend işi.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-## Bu turda doğrulanan gerçek GitHub kanıtları
-- Quality run `35274783487` / job `105382617021` SUCCESS.
-- Quality job içinde `Customer demo surface integrity`, cosmetics integrity, cosmetics URL smoke, anonymous session, live room, live ban, live DM ve live cosmetic adımları SUCCESS.
-- Runner recovery run `35275185782`; `live-e2e` job `105383969301` SUCCESS. Anonymous session, live room, live ban, live DM ve live cosmetic smoke adımları SUCCESS.
-- `yapilacaklar.txt` bu doğrulamalara göre güncellendi.
+## Son gerçek GitHub kanıtı
+- Quality run `35277688638` / quality job `105392132238` SUCCESS.
+- Bu run head'i `08632ffbfa47825129cce8b9e0247f237daaaf2d`.
+- Quality job içinde static checks, customer demo surface integrity, family route integrity, family production integration integrity, cosmetics integrity, cosmetics URL smoke ve local API startup SUCCESS.
+- Live family smoke SUCCESS.
+- Live room, live ban, live DM ve live cosmetic smoke SUCCESS.
+- `probe` ve `live-e2e` recovery zinciri de aynı head üzerinde SUCCESS.
+- Pages deploy/diagnostics başarısızlıkları Quality kanıtı değildir; Pages environment policy ayrı konudur.
+
+## Aile runtime durumu
+- `backend/app/main.py` içinde üretim `/v1/families` create route mevcut ve canlı smoke tarafından doğrulandı.
+- Family create → detail → donation → level/capacity → chat GET zinciri gerçek runner'da doğrulandı.
+- Önceki 500 persistence hatası owner_id/chat_conversation_id değerleri ile düzeltilmiş durumda.
+- Önceki 405 Family create hatası artık güncel Quality runner'da tekrarlanmadı.
+- `backend/app/family_routes.py` içinde daha geniş member list/invite/role/remove ve chat message endpointleri tanımlı; bunların canlı route kayıt zinciri ayrıca doğrulanacak.
+- Bu nedenle member yönetimi ve chat message POST henüz PASS kabul edilmiyor.
 
 ## Demo+ durumu
 - `frontend/demo-extras-live.js` mevcut ve `frontend/room-live.js` tarafından otomatik yükleniyor.
@@ -27,32 +38,24 @@
 - `frontend/demo-complete-live.js` VIP 1–12, cinsiyet ödülleri, kozmetik önizleme ve oyun demo yüzeylerini taşıyor.
 
 ## Backend gerçeklik notu
-- `backend/app/family_routes.py` içinde aile oluşturma, detay, üye listeleme, davet, rol değiştirme, üye çıkarma, bağış ve aile sohbeti GET/POST endpointleri tanımlı.
-- Aile endpoint modülünün `main.py` router kayıt zincirine bağlandığı henüz doğrulanmadı; bu nedenle bu backend yüzeyi henüz production/live endpoint olarak PASS kabul edilmiyor.
-- Aile modeli role alanını destekliyor; owner/admin/member ayrımı kodda uygulanıyor.
+- Room/ban/DM/cosmetic smoke zincirleri gerçek runner'da doğrulandı.
+- Family create/detail/donation/chat GET gerçek runner'da doğrulandı.
+- Family member list/invite/role/remove ve chat message POST henüz canlı smoke ile doğrulanmadı.
 - Oda duyuru endpointi mevcut olarak GET son duyuruyu sağlıyor; yazma endpointi doğrulanmadı.
 - Roulette ve 4 Kupa `/game/bet` ve `/game/cups` ile gerçek endpointlere bağlı; gerçek cüzdan/payout yaşam döngüsü tamamlanmış kabul edilmiyor.
 - Gerçek WebRTC/ses transportu henüz doğrulanmadı.
 - Bildirim/engelleme/admin paneli için doğrulanmış production endpointleri henüz yok.
 
-## Quality doğrulama
-- Quality workflow müşteri demo surface integrity kontrolünü çalıştırıyor.
-- Yeni Quality run `35274783487` SUCCESS olarak doğrulandı.
-- Runner recovery run `35275185782` SUCCESS olarak doğrulandı.
-- Pages workflow run `35274385858` başarısız oldu; bu Pages deploy zinciridir ve Quality SUCCESS kanıtı değildir.
-
-## Gerçek geliştirme backlog'u
-- Browser uçtan uca doğrulama.
-- Oda canlı chat/gift/seat/moderasyon zincirinin browser doğrulaması.
-- Gerçek WebRTC/mikrofon transportu.
-- Müzik gerçek playback/stream/kuyruk backendi.
-- Announcement create/update/delete backend yaşam döngüsü.
-- Aile router kayıt zincirinin güvenli entegrasyonu ve runner smoke testi.
-- Oyun round/bakiye/payout yaşam döngüsü.
-- VIP harcama → seviye → kilit açma yaşam döngüsü.
-- Fan/follow, bildirim, engelleme ve admin/moderasyon backendleri.
-- Avatar + frame gerçek görsel browser doğrulaması.
-- Pages canlı zinciri ve gerçek origin CORS.
+## Sonraki gerçek geliştirme sırası
+1. Family member list/invite/role/remove + family chat message canlı smoke.
+2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et.
+3. 139 kozmetiğin gerçek browser render/şeffaflık kontrolü.
+4. Oda canlı chat/gift/seat/moderasyon browser doğrulaması.
+5. DM + aile sohbeti + profil/try-on browser doğrulaması.
+6. Gerçek WebRTC/mikrofon transportu ve gerçek müzik playback/queue backendi.
+7. VIP harcama → seviye → kilit açma yaşam döngüsü.
+8. Fan/follow, bildirim, engelleme ve admin/moderasyon backendleri.
+9. Pages canlı zinciri yalnızca gerekli environment/deploy adımları açıkça istenirse ele alınacak.
 
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
