@@ -11,10 +11,15 @@ BU TURDA YAPILAN
 - profile-live.js DOMContentLoaded zamanlaması daha güvenli boot akışına alındı.
 - frontend/dm-live.js gönderim handler'ı aktif chatBody'yi gönderim anında bulacak şekilde sağlamlaştırıldı.
 - DM tarafına gerçek backend conversation oluşturma için ErisChatDM.create(participantId, participantName) helper'ı eklendi.
+- frontend/cosmetics.js Railway API + mevcut ErisChat token anahtarlarıyla hizalandı.
+- Cosmetics catalog/owned/me yükleme, satın alma, uygulama ve avatar/frame görünüm uygulama akışı gerçek API yollarına bağlandı.
+- Pages workflow'a cosmetics.js eklendi ve asset doğrulaması genişletildi.
 - Pages workflow run #210 failure olarak doğrulandı; deploy job step/log verisi GitHub connector tarafından sunulmadı.
 - Önceki retry de aynı step'siz failure davranışını gösterdi; kök neden henüz kesinleştirilmedi.
 
 SON COMMITLER
+- Pages cosmetics entegrasyonu: 3c0e9d96cc6cbba4b3dc9dfbbf83f586f6c72dff
+- Cosmetics API/token fix: ca0251045a12902025968b0c501699903ec9776e
 - Profile event fix: 505757fb2bb2650119f0c3aff94595113590943e
 - DM sender/create hardening: dbb42a357a0765ac7407d41223b8d8f1fd1bfd08
 - Önceki DM canlı UI: b5bc1be261881769e5c66bcaf1068d48e6ce83b1
@@ -27,6 +32,7 @@ BACKEND DURUMU
 - /ws/rooms/{room_id} room history, ping/pong ve room_chat kabul ediyor.
 - room_chat DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
 - Gift room_gift event altyapısı mevcut.
+- Cosmetic catalog/purchase/apply API mevcut.
 - Startup user migration ifadeleri tekilleştirilmiş durumda.
 
 FRONTEND DURUMU
@@ -35,7 +41,8 @@ FRONTEND DURUMU
 - DM listesi/history/send gerçek API helper'larına bağlı.
 - DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
 - Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
-- Pages workflow platform/room/gift/DM/auth/profile scriptlerini index.html'e ekliyor.
+- Cosmetics entegrasyonu gerçek token/API akışına bağlandı ve Pages workflow'a dahil edildi.
+- Pages workflow platform/room/gift/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
 
 HENÜZ DOĞRULANMAYANLAR
 1. Oda chat iki istemci canlı E2E testi.
@@ -45,7 +52,7 @@ HENÜZ DOĞRULANMAYANLAR
 5. Pages workflow başarı ve canlı Pages URL doğrulaması.
 6. Railway /health, /ready ve API/DB/WS canlı doğrulaması.
 7. V35/v53 tek sayfa temizliği.
-8. Avatar/frame/VIP 1-12 gerçek asset entegrasyonu.
+8. Avatar/frame/VIP 1-12 gerçek asset entegrasyonu ve catalog ↔ asset birebir eşleşmesi.
 9. Backend security/DB/migration/rate-limit hardening.
 
 NOT
@@ -56,3 +63,4 @@ NOT
 SONRAKİ AKTİF ADIM
 - Pages failure'ını daha fazla rastgele retry etmek yerine GitHub Pages yapılandırmasını izole et.
 - Ardından room WebSocket ve API canlı E2E doğrulamasına devam et.
+- Sonrasında gerçek avatar/frame/VIP asset katalog entegrasyonunu tamamla.
