@@ -9,40 +9,32 @@
 ## Son gerçek runner kanıtı
 - Runner Recovery #74: run `35256506469`.
 - `live-e2e` job `105321368901`: **SUCCESS**.
-- Setup, Python, bağımlılık kurulumu, local API ve `/ready`: SUCCESS.
-- Anonymous session smoke: SUCCESS.
-- Room smoke: SUCCESS.
-- Room ban smoke: SUCCESS.
-- DM smoke: SUCCESS.
-- Cosmetic smoke: SUCCESS.
-- İki istemcili room WebSocket history/chat broadcast gerçek runner'da SUCCESS.
-- Ban → 403 rejoin → unban → yeniden join gerçek runner'da SUCCESS.
-- DM conversation → send → history gerçek runner'da SUCCESS.
-- Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da SUCCESS.
-- Runner Recovery `probe` job `105321368404` failure verdi; bu uygulama E2E job'u değildir ve probe adımındaki runner teşhis kontrolüdür.
+- Anonymous session, room, ban, DM ve cosmetic smoke gerçek runner'da SUCCESS.
+- İki istemcili room WebSocket history/chat broadcast SUCCESS.
+- Ban → 403 rejoin → unban → yeniden join SUCCESS.
+- DM conversation → send → history SUCCESS.
+- Cosmetic catalog → balance → purchase → ownership → apply SUCCESS.
 
-## CI
-- Quality workflow v4'e Python compileall + frontend JavaScript `node --check` + zorunlu frontend kaynak kontrolleri eklendi.
-- [ ] Quality v4'ün güncel main commitindeki gerçek runner sonucu ayrıca doğrulanacak.
+## Quality v4 — yeni bulgu
+- Current main quality run `35257192246`, job `105323627925`: **FAILURE**.
+- Runner checkout SHA: `ccbbe17d169ecd22db4520a42b9b0f38bfcbd6cc`.
+- Python compileall geçti.
+- Frontend static check adımında `frontend/room-gift-ui-live.js:11` üzerinde `SyntaxError: Invalid or unexpected token` tespit edildi.
+- Kök neden: CSS `style.textContent` stringinin kapanışından önce gerçek satır sonu bulunması.
+- Düzeltme main'e işlendi: commit `840ca57a992218dd2fab261464dd9d3638aca439`.
+- Düzeltme sonrası **gerçek Quality v4 runner sonucu henüz oluşmuş/doğrulanmış değil**; PASS iddiası yapılmayacak.
 
 ## Pages kök nedeni
-- Son Pages run `35256506397` failure.
-- Deploy job `105321366191` runner step'lerine girmeden environment admission aşamasında durdu; job steps yok.
-- Daha önce gerçek diagnostics API çıktısıyla `github-pages` environment custom deployment branch policy'sinin yalnızca `gh-pages` olduğu doğrulandı; `main` izinli değil.
-- Pages diagnostics guard bu policy engelini görünür hale getiriyor.
+- `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
+- Diagnostics run `35257192257`, job `105327578309`: FAILURE; runner policy engelini tekrar doğruladı.
+- Pages deploy run `35257192305`, job `105327600558`: FAILURE; runner adımlarına girmeden environment admission aşamasında durdu.
 - [ ] GitHub Settings → Environments → `github-pages` deployment branch policy içinde `main` izinli hale getirilecek.
 - [ ] Sonrasında Pages deploy tekrar gerçek runner'da doğrulanacak.
 - [ ] Canlı Pages HTTP 200/index doğrulaması yapılacak.
 - [ ] Canlı Pages → Railway API zinciri doğrulanacak.
 
-## Kod / cleanup checkpoint
-- `room-live.js` API fallback düzeltmesi mevcut.
-- Eski self-modifying/patch ve duplicate Pages workflow'larının gerekli olmayanları temizlendi.
-- `yapilanlar.txt` ve `yapilacaklar.txt` yeni runner kanıtıyla güncellendi.
-- Yeni özellik geliştirmesi şimdilik durduruldu; kalan baseline maddeleri kapatılacak.
-
 ## Sıradaki işlem sırası
-1. Quality v4 gerçek runner sonucunu doğrula.
+1. `840ca57...` düzeltmesi sonrası Quality v4 gerçek runner sonucunu doğrula.
 2. Pages environment `main` admission engelini çöz.
 3. Pages deploy SUCCESS doğrula.
 4. Canlı Pages HTTP + frontend → Railway API doğrula.
