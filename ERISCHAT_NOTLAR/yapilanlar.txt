@@ -1,5 +1,10 @@
 ERISCHAT — YAPILANLAR / GÜNCEL
-Tarih: 2026-09-17 — canlı geliştirme denetimi
+Tarih: 2026-09-17 — BASELINE / TAM SİSTEME HAZIRLIK
+
+AMAÇ
+- Önce mevcut kodu tamamlanmış bir temel sistem seviyesine getirmek.
+- Geliştirme özelliklerini, temel sistem gerçek runner'da stabil hale geldikten sonra sürdürmek.
+- Railway production deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
 
 REPO / DENETİM
 - [x] Doğru GitHub repository: semihvarolymk-png/erischat.
@@ -8,12 +13,12 @@ REPO / DENETİM
 - [x] Recursive repository tree kontrol edildi.
 - [x] Backend, frontend, asset ve Actions yapıları kontrol edildi.
 - [x] Gerçek kod ile yapılacaklar listesi karşılaştırıldı.
+- [x] TODO/FIXME/NotImplemented/pass için repository kod araması yapıldı; eşleşme bulunmadı.
 
-BACKEND
+BACKEND TEMEL SİSTEM
 - [x] FastAPI ana uygulaması mevcut.
 - [x] /health ve /ready endpointleri mevcut.
 - [x] Anonymous user + session/token altyapısı mevcut.
-- [x] Anonymous registration gender alanı frontend'de nötr unspecified olarak düzeltildi.
 - [x] /v1/me ve temel profil endpointleri mevcut.
 - [x] DM conversation/message endpointleri mevcut.
 - [x] Genel /ws mevcut.
@@ -25,85 +30,59 @@ BACKEND
 - [x] Recipient %70 payı mevcut.
 - [x] Room gift WebSocket event altyapısı mevcut.
 - [x] Cosmetic catalog/purchase/apply API mevcut.
-- [x] Cosmetic catalog gerçek repository klasörlerine göre standardize edildi: kadınavatar, erkekavatar, standartcerceve, vipkadınavatar, viperkekavatar, vipcerceve.
-- [x] Cosmetic katalog kayıtlarına standard/vip tier ve vip metadata eklendi.
-- [x] VIP kozmetik fiyatı katalog metadata'sından satın alma sırasında uygulanıyor.
-- [x] Purchase response VIP bilgisini döndürüyor.
-- [x] Apply response VIP bilgisini döndürüyor.
-- [ ] main.py startup user settings ALTER ifadelerinde duplicate gender/avatar/frame satırları hâlâ yeniden görülüyor; cleanup tekrar uygulanacak.
-- [x] Mevcut backend/app/__pycache__ .pyc artefaktları silindi.
+- [x] Cosmetic katalog gerçek repository klasörlerine göre standardize edildi.
+- [x] Cosmetic tier/VIP metadata ve fiyatlandırma mevcut.
+- [x] main.py startup migration satırları tekrar kontrol edildi; güncel dosyada duplicate ALTER satırları bulunmuyor.
 - [x] Backend main.py'deki genel WS ve room WS route'ları korunuyor.
 
-FRONTEND
+FRONTEND TEMEL SİSTEM
 - [x] Ana tek sayfa frontend mevcut.
 - [x] platform.js Railway API default adresini kullanıyor.
+- [x] auth-live.js gerçek anonymous session oluşturuyor.
 - [x] gift-live.js room WebSocket'e bağlanıyor.
-- [x] room_history eventi UI chat alanına aktarılıyor.
-- [x] room_chat eventi UI chat alanına aktarılıyor.
-- [x] Oda mesaj gönderimi gerçek WebSocket room_chat payload'ına bağlandı.
-- [x] Room WebSocket reconnect + exponential backoff eklendi.
-- [x] Room WebSocket stale/önceki socket callback'lerinin yeni bağlantıyı bozması guard edildi.
-- [x] Oda listesi temel olarak gerçek /v1/rooms API'sine bağlı.
+- [x] room_history ve room_chat UI akışları mevcut.
+- [x] Oda mesaj gönderimi gerçek WebSocket room_chat payload'ına bağlı.
+- [x] Room WebSocket reconnect + exponential backoff mevcut.
+- [x] Oda listesi gerçek /v1/rooms API'sine bağlı.
 - [x] Profil/VIP/mağaza/anonimlik temel UI'ları mevcut.
-- [x] Session/anonymous durum göstergesi session-ui-live.js bileşeni olarak eklendi.
-- [x] DM conversation listesi gerçek API'ya bağlandı.
-- [x] DM history gerçek API'dan yükleniyor.
-- [x] DM send gerçek API'ya bağlandı.
-- [x] DM ekranında demo fallback kaldırıldı; boş/hata durumları ayrıştırıldı.
-- [x] DM API response listeleri için conversations/items/data normalizasyonu eklendi.
-- [x] DM avatar_asset/avatar_url/avatar nesneleri gerçek görsel URL'si olarak render ediliyor.
-- [x] DM sohbet başlığındaki avatar da gerçek asset ile render edilebiliyor.
-- [x] cosmetics.js gerçek /cosmetics + /me/cosmetics + /me akışına bağlandı.
-- [x] cosmetics.js satın alma + uygulama endpointleri bağlandı.
-- [x] Avatar/frame asset değerleri URL/asset nesnesi olarak normalize edildi.
-- [x] Repository-relative avatar/frame asset anahtarları frontend asset URL'lerine dönüştürülüyor.
-- [x] cosmetics.js standard/VIP kataloglarını ayırmak için get(type, vip) helper'ı sunuyor.
-- [x] cosmetics.js satın alınmış görünüm kontrolü için owned(type, key) helper'ı sunuyor.
-- [x] Avatar/frame görünümü auth/profile/cosmetics eventleriyle yenileniyor.
-- [x] Live profile controls eklendi: gerçek /v1/me verisiyle nickname, Lidya ve bildirim durumu senkronizasyonu.
-- [x] Profil nickname güncelleme UI'sı /v1/me PATCH'e bağlandı.
-- [x] Profil bildirim aç/kapat UI'sı /v1/me PATCH'e bağlandı.
-- [x] Profil oturum kapatma kontrolü eklendi; revoke sonrası yeni anonim session oluşturuluyor.
-- [x] Gerçek DM conversation oluşturma paneli eklendi; participant ID ile /v1/conversations akışını çağırıyor.
-- [x] Pages workflow dm-create-live.js script/asset kontrolüne dahil edildi.
-- [x] Pages workflow cosmetics.js asset kontrolü ve script enjeksiyonuna dahil edildi.
-- [x] Pages workflow profile-ui-live.js script/asset kontrolüne dahil edildi.
-- [x] Bilinen statik/demo mesaj ve keşfet kişi/etkinlik kartlarını canlı koddan ayrı demo-cleanup.js ile izole ettim.
-- [x] Pages workflow demo-cleanup.js script/asset kontrolüne dahil edildi.
+- [x] Session/anonymous durum göstergesi mevcut.
+- [x] DM conversation list/history/send gerçek API'ya bağlı.
+- [x] DM demo fallback temizliği mevcut.
+- [x] DM avatar asset normalizasyonu mevcut.
+- [x] cosmetics.js gerçek catalog/purchase/apply akışına bağlı.
+- [x] Avatar/frame URL normalizasyonu mevcut.
+- [x] Live profile controls mevcut.
+- [x] Gerçek DM conversation oluşturma paneli mevcut.
+- [x] Demo keşfet/mesaj kartlarını temizleyen demo-cleanup.js mevcut.
+- [x] room-live.js API konfigürasyonu düzeltildi: ERIS_API öncelikli, ERISCHAT_API geriye dönük uyumlu fallback olarak destekleniyor. Commit: cf1c98e66c6358e139e6fa2db979c126b72aa184.
 
-TESPİT EDİLEN EKSİKLER
-- [x] Session/anonymous durum göstergesi görsel bileşen olarak eklendi; canlı Pages doğrulaması bekliyor.
-- [ ] WS reconnect/presence/genel event UI eksik.
-- [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
-- [ ] DM conversation oluşturma UI'sı canlı E2E doğrulaması bekliyor.
-- [ ] Avatar/frame/VIP katalogunun gerçek asset sayıları ve görsel kalite/şeffaflık kontrolü tamamlanmadı.
-- [ ] Avatar/frame/VIP satın alma + apply E2E'si canlı ortamda yapılmadı.
+CI / KALİTE
+- [x] Gerçek runner E2E zinciri daha önce doğrulandı: anonymous session, room, ban, DM ve cosmetic smoke testleri başarılı.
+- [x] Quality workflow gerçek runner'da daha önce başarılı tamamlandı.
+- [x] Quality workflow artık Python compileall + frontend JavaScript node --check + zorunlu frontend kaynak kontrollerini de çalıştırıyor.
+- [x] Quality workflow v4 commit'i: 01996cb7d50022d0e1de9e997b2b61982e2fd58a.
+- [ ] Bu yeni v4 kalite workflow'unun yeni commit üzerindeki runner sonucu henüz doğrulanmadı.
 
 PAGES / RAILWAY
-- [x] pages.yml workflow mevcut.
-- [x] _site hazırlama + index.html üretimi mevcut.
-- [x] upload-pages-artifact@v4 ve deploy-pages@v4 mevcut.
-- [x] github-pages environment tanımlı.
-- [ ] Pages failure için kullanılabilir GitHub job logu mevcut değil; kök neden henüz kesinleştirilmedi.
-- [ ] Canlı Pages success doğrulanmadı.
-- [ ] Canlı Railway /health /ready/API/DB/WS E2E doğrulanmadı.
+- [x] Aktif Pages workflow: .github/workflows/erischat-pages.yml.
+- [x] Eski duplicate pages.yml kaldırılmış durumda.
+- [x] pages-diagnostics.yml aktif workflow'u ve github-pages environment policy'sini kontrol ediyor.
+- [x] Gerçek Pages state: enabled=true, public, status=built bilgileri daha önce runner/API üzerinden doğrulandı.
+- [x] github-pages environment custom policy'sinde yalnızca gh-pages olduğu gerçek API/runner çıktısıyla doğrulandı.
+- [x] main branch Pages admission problemi guard ile görünür hale getirildi.
+- [ ] github-pages environment policy'ye main eklenmediği için gerçek Pages deploy henüz başarılı değil.
+- [ ] Canlı Pages HTTP doğrulaması yapılmadı.
+- [ ] Canlı Pages → Railway API doğrulaması yapılmadı.
+- [ ] Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
 
-ÜRÜN / ASSET
-- [ ] Avatar/frame/VIP 1-12 gerçek asset entegrasyonu tamamlanmadı.
-- [ ] Gerçek iki kullanıcı room/gift smoke testi yapılmadı.
-- [ ] WebRTC/sesli oda tamamlanmadı.
-- [ ] Moderasyon/raporlama/engelleme tam UI entegrasyonu tamamlanmadı.
-- [ ] Admin paneli tamamlanmadı.
+KOZMETİK
+- [x] Gerçek Gereken_icerikler klasörlerinden dinamik katalog modeli mevcut.
+- [x] Son doğrulanmış aktif katalog: 139 asset.
+- [x] 40/40/12/12 sabit hedefi zorunlu envanter kuralı değil.
+- [ ] Görsel kalite/şeffaflık ve canlı satın alma/apply E2E'si yeniden baseline zincirinde doğrulanacak.
 
-GÜVENLİK / DEPLOY
-- Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
-- Büyük frontend dosyası kısmi içerikle overwrite edilmeyecek.
-- Canlı test yapılmadan bir özellik E2E tamamlandı olarak işaretlenmeyecek.
-
-SONRAKİ AKTİF İŞ
-1. main.py duplicate migration satırlarını güvenli biçimde tekilleştir.
-2. Oda WebSocket canlı E2E testini doğrula.
-3. DM conversation creation canlı akışını doğrula.
-4. Pages failure kök nedenini izole et ve workflow'u doğrula.
-5. Pages/Railway canlı doğrulamalarına geç.
-6. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
+BASELINE SONUCU
+- Kod tabanında bilinen açık TODO/FIXME/NotImplemented eşleşmesi bulunmadı.
+- Temel backend + frontend + CI altyapısı mevcut.
+- Şu an geliştirme özelliklerinden önce yapılması gereken iş: yeni commitin gerçek runner kalite sonucunu almak, Pages environment admission engelini çözmek ve canlı HTTP/API zincirini doğrulamak.
+- Gerçek runner ve canlı ortam kanıtı olmadan sistem "tam çalışıyor" olarak işaretlenmeyecek.
