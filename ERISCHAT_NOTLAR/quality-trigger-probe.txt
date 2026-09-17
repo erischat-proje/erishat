@@ -1,1 +1,1 @@
-CI trigger cleanup checkpoint: registered quality workflow now contains the full backend, smoke, cosmetic and live E2E suite.
+CI trigger checkpoint: minimal registered quality probe is being used to isolate GitHub Actions workflow registration before restoring live E2E.
