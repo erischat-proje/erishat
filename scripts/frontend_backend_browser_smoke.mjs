@@ -11,7 +11,7 @@ async function main(){
   await page.addInitScript(api=>{window.ERIS_API=api;},API);
   await page.goto(pageUrl,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.ErisAuth?.getToken);
-  await page.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000}).catch(async()=>{ throw new Error('anonymous auth timeout; token='+await page.evaluate(()=>localStorage.getItem('erischat_access_token')?'present':'missing')); });
+  await page.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000}).catch(async()=>{ throw new Error('anonymous auth timeout; token='+await page.evaluate(()=>localStorage.getItem('erischat_access_token')?'present':'missing')+' auth='+await page.evaluate(()=>JSON.stringify({keys:Object.keys(window.ErisAuth||{}),user:window.ErisAuth?.user||null}))); });
   const owner=await page.evaluate(()=>window.ErisAuth.user);
   if(!owner?.id) throw new Error('anonymous browser session missing user');
   await page.locator('.nav button',{hasText:'Profil'}).click();
