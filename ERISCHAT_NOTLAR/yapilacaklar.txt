@@ -122,3 +122,9 @@ BROWSER/COSMETICS CHECKPOINT
 - [x] Browser render: 139/139 asset decode edildi.
 - [ ] PNG frame alpha sonucu 16/44 şeffaf örnek verdi; 28/44 PNG frame tamamen opak görünüyor. Bu nedenle render PASS olsa da tüm frame'lerin şeffaf tasarım standardı henüz tamamlanmış kabul edilmiyor.
 - [ ] Oda join/seat/chat/gift/moderation tam browser E2E.
+
+Room control checkpoint
+- [x] Backend live smoke: oda join + koltuk + moderator + mute/unmute + seat lock/unlock + room lock/unlock.
+- [x] Quality 35282680644 / job 105407977869 SUCCESS.
+- [ ] Browser tarafında bu kontrollerin gerçek UI → API zinciri.
+- [ ] Gerçek WebRTC mikrofon transportu.
