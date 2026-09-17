@@ -87,6 +87,10 @@ jobs:
         working-directory: backend
         run: |
           nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../erischat-api.log 2>&1 &
+      - name: Start frontend server
+        working-directory: frontend
+        run: |
+          nohup python -m http.server 4175 --bind 127.0.0.1 > ../erischat-frontend.log 2>&1 &
       - name: Wait for API
         run: |
           python - <<'PY'
