@@ -28,7 +28,8 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const out = { workflow_ref: context.ref, target_branch: process.env.TARGET_BRANCH };
+            const targetBranch = process.env.TARGET_BRANCH;
+            const out = { workflow_ref: context.ref, target_branch: targetBranch };
             try {
               const r = await github.rest.repos.get({ owner, repo });
               out.repo = {
@@ -71,6 +72,11 @@ jobs:
                 per_page: 100,
               });
               out.custom_branch_policies = r.data;
+              const policies = r.data.branch_policies || [];
+              out.target_branch_allowed = policies.some(x => x.type === 'branch' && x.name === targetBranch);
+              out.policy_remediation = out.target_branch_allowed
+                ? `Environment branch policy explicitly allows ${targetBranch}.`
+                : `Environment branch policy does not allow ${targetBranch}. Current allowed branch entries: ${policies.map(x => x.name).join(', ') || '(none)'}. Add ${targetBranch} to the github-pages environment custom deployment branch policy or otherwise change that environment policy in GitHub settings before expecting deploy-pages to run.`;
             } catch (e) {
               out.custom_branch_policies_error = { status: e.status, message: e.message };
             }
