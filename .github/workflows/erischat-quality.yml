@@ -61,6 +61,8 @@ jobs:
           echo 'Python/JavaScript syntax and frontend source checks OK'
       - name: Cosmetics asset integrity
         run: python scripts/cosmetics_asset_integrity.py
+      - name: Cosmetics asset URL smoke
+        run: node scripts/cosmetics_asset_url_smoke.mjs
       - name: Start local API
         working-directory: backend
         run: |
@@ -94,4 +96,4 @@ jobs:
         if: failure()
         run: cat erischat-api.log
 
-# Asset path fix verification push: keep the quality workflow on main-triggered CI.
+# Cosmetic URL encoding regression coverage added after the repository asset audit.
