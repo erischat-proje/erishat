@@ -77,8 +77,8 @@ def require_owner(db: Session, room: Room, user: User) -> None:
 
 def require_staff(db: Session, room: Room, user: User) -> None:
     if room.owner_id == user.id: return
-    if not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == user.id)):
-        raise HTTPException(status_code=403, detail="Oda sahibi veya moderatör olmalısınız")
+    if not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == user.id, RoomMember.room_id == room.id, RoomMember.user_id == user.id)):
+        raise HTTPException(status_code=403, detail="Oda sahibi veya aktif moderatör olmalısınız")
 
 def is_member(db: Session, room_id: str, user_id: str) -> bool:
     return bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id)))
@@ -168,6 +168,7 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id); require_owner(db, room, user)
         if payload.user_id == room.owner_id: raise HTTPException(status_code=400, detail="Oda sahibi moderatör olarak eklenemez")
         if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)): raise HTTPException(status_code=409, detail="Atılmış kullanıcı moderatör olamaz")
         current = db.scalar(select(func.count(RoomModerator.id)).where(RoomModerator.room_id == room.id)) or 0
         if current >= LEVELS[room.level]["moderators"]: raise HTTPException(status_code=409, detail="Bu oda seviyesindeki moderatör sınırına ulaşıldı")
         if not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)): db.add(RoomModerator(room_id=room.id, user_id=payload.user_id)); db.commit()
@@ -181,9 +182,24 @@ def register_room_auth(current_user_dependency):
     def add_ban(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         if payload.user_id == room.owner_id: raise HTTPException(status_code=400, detail="Oda sahibi atılamaz")
+        if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)):
-            db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.commit()
+            db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id))
+            db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id))
+            db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id))
+            db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id))
+            db.commit()
         return {"banned": True}
+
+    @router.get("/{room_id}/bans")
+    def list_bans(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
+        rows = list(db.scalars(select(RoomBan).where(RoomBan.room_id == room.id).order_by(RoomBan.id.desc())))
+        result = []
+        for ban in rows:
+            banned_user = db.get(User, ban.user_id)
+            result.append({"user_id": ban.user_id, "display_name": getattr(banned_user, "display_name", None) or getattr(banned_user, "username", None) or ban.user_id, "banned_by": ban.banned_by})
+        return result
 
     @router.delete("/{room_id}/bans/{banned_user_id}")
     def remove_ban(room_id: str, banned_user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
