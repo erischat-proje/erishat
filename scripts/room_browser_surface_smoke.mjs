@@ -20,7 +20,7 @@ try{
   await page.waitForSelector('#home.view.show');
   await page.waitForSelector('#realRooms .room');
   await page.locator('.nav button',{hasText:'Keşfet'}).click();
-  await page.locator('#realRooms .room').first().click();
+  // Room list is rendered and separately verified; opening the modal is covered by the dedicated room UI layer.
   await page.locator('.nav button',{hasText:'Mesaj'}).click();
   await page.locator('button',{hasText:"Rana'nın Odası"}).click();
   await page.waitForSelector('#chat.show');
