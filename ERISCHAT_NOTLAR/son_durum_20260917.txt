@@ -2,15 +2,16 @@
 
 ## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Güncel HEAD: `e8ff11d99b1297463f4b9a29b6a5d9a7d2b0ef0b`.
+- Güncel HEAD: `59340506cd6d7b45d5c70c9d89da7c07a11f6136`.
 - Müşteri demo fazı: ürün yüzeyi tek vitrinde toplanıyor ve eksik görünen ürün alanları demo+ katmanıyla tamamlanıyor.
 - VIP seviye/ödül matrisi ve cinsiyet bazlı VIP avatar gösterimi mevcut.
 - Oyunlar için oynanabilir demo vitrini mevcut; gerçek ekonomi ayrı backend işi.
 - Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
 ## Bu turda yapılan gerçek GitHub değişiklikleri
-- `b701a037ed169d1361f331613ad58c72972f66ee` — Quality workflow static syntax/required-file listesine `demo-complete-live.js` ve `demo-extras-live.js` eklendi.
-- `e8ff11d99b1297463f4b9a29b6a5d9a7d2b0ef0b` — bu checkpoint ve güncel HEAD bilgisi TXT'lere senkronize edildi.
+- `bdf51e65dd413a9d200e717c9f523cbe8ab6fe84` — `scripts/demo_surface_integrity.py` eklendi; müşteri demo yüzeylerinin gerekli dosya/işlev/marker bütünlüğünü statik olarak denetliyor.
+- `107b662c4e35ac5e1f6f940ab4b750c8a09bf388` — Quality workflow'a `Customer demo surface integrity` adımı eklendi.
+- `59340506cd6d7b45d5c70c9d89da7c07a11f6136` — yapilacaklar ve son durum kayıtları yeni checkpoint'e senkronize edildi.
 
 ## Demo+ durumu
 - `frontend/demo-extras-live.js` mevcut ve `frontend/room-live.js` tarafından otomatik yükleniyor.
@@ -23,6 +24,7 @@
 - Güvenlik: bildirim, engelleme ve admin/moderasyon ürün yüzeyi; doğrulanmamış backend endpointleri sahte canlılık olarak sunulmuyor.
 - Onboarding: anonim giriş → nickname → cinsiyet → avatar → ilgi alanları → gizlilik → başlangıç akışı.
 - `frontend/demo-complete-live.js` VIP 1–12, cinsiyet ödülleri, kozmetik önizleme ve oyun demo yüzeylerini taşıyor.
+- Yeni `demo_surface_integrity.py`, bu müşteri vitrini katmanlarının statik bütünlüğünü Quality içinde ayrıca kontrol ediyor.
 
 ## Backend gerçeklik notu
 - Mevcut backend doğrulamasında aile için oluşturma, seviye, bağış ve aile chat-enabled endpointleri mevcut.
@@ -33,10 +35,10 @@
 - Bildirim/engelleme/admin paneli için doğrulanmış production endpointleri henüz yok.
 
 ## Quality doğrulama
-- Quality workflow dosyası artık `demo-complete-live.js` ve `demo-extras-live.js` için hem `test -s` hem `node --check` çalıştıracak şekilde güncellendi.
-- Bu yeni HEAD için Quality workflow SUCCESS sonucu henüz GitHub Actions kanıtıyla doğrulanmış değil.
-- Yeni HEAD sonrasında Pages workflow run `35274385858` başarısız oldu; bu Pages deploy zinciridir ve Quality SUCCESS kanıtı değildir.
+- Quality workflow artık frontend syntax/required-file kontrollerine ek olarak müşteri demo surface integrity kontrolünü de çalıştırıyor.
+- Yeni HEAD için Quality workflow SUCCESS sonucu henüz GitHub Actions kanıtıyla doğrulanmış değil.
 - Önceki doğrulanmış Quality: run `35268797342` / job `105362578713` SUCCESS.
+- Pages workflow run `35274385858` başarısız oldu; bu Pages deploy zinciridir ve Quality SUCCESS kanıtı değildir.
 - Bu nedenle yeni demo katmanları için PASS/TAMAM veya "tam çalışan" iddiası yok.
 
 ## Gerçek geliştirme backlog'u
