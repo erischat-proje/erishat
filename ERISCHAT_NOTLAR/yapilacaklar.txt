@@ -11,7 +11,7 @@ TAMAMLANAN DENETİM
 - [x] backend/app/__pycache__ içindeki mevcut .pyc artefaktlarının temizliği
 
 ÖNCELİK 1 — PAGES / CANLI FRONTEND
-- [ ] Pages failure kök nedenini kesinleştir
+- [x] Apply Gift UI workflow failure kök nedeni logdan izole edildi: eski validation'daki artık mevcut olmayan /gift-catalog ve /gifts string beklentileri kaldırıldı
 - [ ] pages.yml success doğrulaması
 - [ ] Canlı Pages HTTP doğrulaması
 - [ ] Pages → Railway API canlı test
@@ -25,7 +25,7 @@ TAMAMLANAN DENETİM
 - [x] /v1/me profil yükleme/güncelleme UI için canlı kontroller eklendi (profile-ui-live.js); canlı E2E doğrulaması bekliyor
 - [x] Profil nickname + bildirim güncelleme UI'sı /v1/me PATCH'e bağlı
 - [x] Profil logout sonrası yeni anonim session oluşturma akışı eklendi; canlı E2E doğrulaması bekliyor
-- [ ] Session/anonymous durum göstergesini ayrı UI bileşeni olarak tamamla
+- [x] Session/anonymous durum göstergesi ayrı session-ui-live.js bileşeni olarak eklendi ve Pages workflow'una bağlandı
 - [x] Gerçek DM conversation list/create UI kod entegrasyonu
 - [x] Gerçek DM history/send UI kod entegrasyonu
 - [x] Genel /ws istemcisi + reconnect + ping/pong kodlandı (canlı doğrulama bekliyor)
@@ -105,11 +105,10 @@ KALİTE KONTROL
 - [ ] Her tamamlanan madde yapilanlar.txt'ye aktarılacak
 
 AKTİF ÇALIŞMA SIRASI
-1. Session/anonymous durum göstergesini tamamla.
-2. Room WebSocket canlı E2E testini yap.
-3. DM conversation creation canlı akışını doğrula.
-4. Pages failure kök nedenini izole et ve workflow'u doğrula.
-5. Pages/Railway canlı doğrulamalarına geç.
-6. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
-7. Backend security + kalite testlerini bitir.
-8. Tüm TXT checkpoint'lerini sonuçlarla senkronla.
+1. Room WebSocket canlı E2E testini doğrula.
+2. DM conversation creation canlı akışını doğrula.
+3. Pages workflow success doğrulamasını yap.
+4. Pages/Railway canlı doğrulamalarına geç.
+5. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
+6. Backend security + kalite testlerini bitir.
+7. Tüm TXT checkpoint'lerini sonuçlarla senkronla.
