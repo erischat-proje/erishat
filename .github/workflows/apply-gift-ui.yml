@@ -103,3 +103,5 @@ jobs:
       - name: Dump API log on failure
         if: failure()
         run: cat /tmp/erischat-api.log
+
+# retrigger marker 2026-09-17 websocket-fix validation
