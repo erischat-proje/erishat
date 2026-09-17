@@ -147,4 +147,4 @@ jobs:
         if: failure()
         run: cat /tmp/erischat-api.log
 
-# retrigger marker 2026-09-17 websocket-fix validation-2
+# retrigger marker 2026-09-17 websocket-fix validation-3
