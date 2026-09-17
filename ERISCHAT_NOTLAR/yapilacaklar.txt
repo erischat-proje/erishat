@@ -8,9 +8,12 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 2. GitHub Pages
 - Aktif hedef workflow: .github/workflows/erischat-pages.yml
 - Eski .github/workflows/pages.yml kaldırıldı; duplicate Pages deployment workflow'u artık tutulmuyor.
-- pages-diagnostics.yml mevcut aktif Pages workflow'unu doğrulayacak şekilde düzeltildi; eski silinmiş pages.yml referansı kaldırıldı.
-- Yeni Pages workflow için gerçek job sonucu ayrıca doğrulanmalı.
-- Jobs/steps boş gelirse workflow seviyesindeki problemi izole et; tahminle PASS verme.
+- pages-diagnostics.yml aktif Pages workflow'unu doğrulayacak şekilde hizalı.
+- Gerçek Pages state tanısında Pages aktif/built, public ve github-pages environment mevcut olarak doğrulandı.
+- github-pages environment üzerinde branch_policy protection rule bulunduğu gerçek runner logunda görüldü.
+- Environment'lı Pages deploy job'ları daha önce steps: [] ile runner'a ulaşmadan fail oldu; environment kaldırılınca runner çalıştı fakat deploy-pages "Missing environment" ile durdu. Bu nedenle environment/branch policy zinciri hâlâ kritik izolasyon konusu.
+- Son Pages workflow temizliğinde Pages workflow'unun kendi injection listesinde gift-live.js tekrar eklenmeyecek şekilde düzenlendi; aktif HTML'deki mevcut script ayrıca doğrulanmalı.
+- Pages PASS/TAMAM denmeyecek; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 - Pages başarıyla deploy olduktan sonra canlı frontend HTTP ve frontend -> Railway API bağlantısı gerçek ortamda doğrulanmalı.
 
 3. Backend / güvenlik
@@ -29,5 +32,6 @@ ERISCHAT — GÜNCEL YAPILACAKLAR
 
 SON DURUM
 - Son güvenilir kalite kanıtı: gerçek runner'da 5 smoke test başarılı.
-- Pages diagnostics workflow aktif deployment dosyasıyla hizalandı.
-- Sıradaki kritik doğrulama: yeni sade Pages workflow'un gerçek run/job sonucu.
+- Pages diagnostics gerçek Pages state'i okuyabiliyor.
+- Pages environment branch policy konusu kanıtlandı fakat deploy kök nedeni henüz kesinleştirilmedi.
+- Sıradaki kritik iş: Pages environment/branch policy izolasyonunu tamamla, sonra gerçek Pages deploy ve canlı HTTP doğrulaması yap.
