@@ -28,17 +28,18 @@
 
 ## CI / Pages checkpoint
 - `.github/workflows/runner-recovery.yml` aynı beşli zinciri içeriyor ve gerçek runner üzerinde SUCCESS doğrulaması mevcut.
-- `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; yeni `quality` job'ı gerçek job olarak üretildi. Run `35234028161` için `fetch_workflow_run_jobs` gerçek `quality` job'ını döndürüyor; önceki `jobs: []` davranışı bu workflow sürümünde artık tekrarlanmadı.
+- `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; yeni `quality` job'ı gerçek job olarak üretildi. Run `35234028161` için gerçek `quality` job başarıyla doğrulandı.
 - Eski karmaşık quality workflow'unda `jobs: []` görülmesi için artık rastgele kod değişikliği yapılmıyor; önce sade çalışan taban doğrulandı.
 - Eski `pages.yml` kaldırıldı. Aktif Pages deployment workflow'u `.github/workflows/erischat-pages.yml` ve tek başına build/upload/deploy yapıyor.
-- `pages-diagnostics.yml` artık silinmiş `pages.yml` dosyasını aramıyor; aktif `erischat-pages.yml` için configure/upload/deploy, permissions ve `github-pages` environment kontrolleri yapıyor; duplicate legacy Pages workflow'unun yokluğunu da doğruluyor.
-- Geçici CI probe dosyaları temizlendi.
-- Yeni Pages workflow'un gerçek run/job sonucu henüz kanıtlanmadı; bu nedenle Pages PASS/TAMAM denmiyor.
-- Pages workflow'un bilinen eski failure örneği run `35225410720`: `deploy` job failure ve `steps: []`. Bu eski koşunun head'i `d2c08d13...`; güncel sade Pages workflow'dan önceydi.
+- Pages workflow temizliğinde `gift-live.js` Pages injection listesinde duplicate olmaması için çıkarıldı; mevcut HTML script durumu ayrıca doğrulanacak.
+- `pages-diagnostics.yml` aktif `erischat-pages.yml` için configure/upload/deploy, permissions ve `github-pages` environment kontrollerini yapıyor.
+- Gerçek Pages diagnostics runner logunda Pages: enabled, public, status `built`; `github-pages` environment mevcut ve `branch_policy` protection rule içeriyor.
+- Environment'lı Pages deploy job'ları daha önce `steps: []` ile runner'a ulaşmadan fail oldu; environment kaldırılınca runner çalıştı fakat `actions/deploy-pages@v4` "Missing environment" ile durdu. Bu nedenle environment/branch policy zinciri hâlâ kritik izolasyon konusu.
+- Pages PASS/TAMAM denmiyor; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 
 ## Güncel sıra
-1. Yeni sade Pages workflow'un gerçek job/run sonucunu doğrula.
-2. Başarısızsa Pages workflow özelliklerini tek tek izole et; log/API kanıtı olmadan kök neden tahmin etme.
+1. Pages environment/branch policy izolasyonunu gerçek runner sonuçlarıyla tamamla.
+2. Yeni sade Pages workflow'un gerçek başarılı deploy job/run sonucunu doğrula.
 3. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 4. Backend security + quality hardening.
 5. V35/V53 legacy cleanup.
