@@ -63,6 +63,8 @@ jobs:
           echo 'Python/JavaScript syntax and frontend source checks OK'
       - name: Customer demo surface integrity
         run: python scripts/demo_surface_integrity.py
+      - name: Frontend surface integrity
+        run: python scripts/frontend_surface_integrity.py
       - name: Family route integrity
         run: python scripts/family_routes_integrity.py
       - name: Family production integration integrity
