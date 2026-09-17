@@ -30,7 +30,7 @@ try{
   const hasVip=await page.locator('#erisDemoCompleteVip').count();
   if(!hasVip) throw new Error('VIP demo control missing');
   await page.locator('#erisDemoCompleteVip').click();
-  await page.waitForSelector('text=VIP 1 → VIP 12');
+  await page.locator('h2', { hasText: 'VIP seviyeleri ve cinsiyet ödülleri' }).waitFor({state:'visible', timeout:10000});
   if(errors.length) throw new Error('page errors: '+errors.join(' | '));
   console.log('ROOM_BROWSER_SURFACE_PASS room_list=1 chat=1 vip_modal=1');
   await browser.close();
