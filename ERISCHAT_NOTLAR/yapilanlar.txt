@@ -39,8 +39,8 @@ AİLE RUNTIME
 - [x] Family chat GET gerçek runner'da doğrulandı.
 - [x] Quality run 35277688638 / job 105392132238 SUCCESS.
 - [x] Live family smoke adımı SUCCESS; 405 ve önceki persistence problemi artık runner zincirinde tekrarlanmadı.
-- [ ] Family member list/invite/role/remove canlı smoke.
-- [ ] Family chat message POST canlı smoke.
+- [x] Family member list/invite/role/remove canlı smoke: Quality run 35278981991 / job 105396283536 SUCCESS.
+- [x] Family chat message POST canlı smoke: Quality run 35278981991 / job 105396283536 SUCCESS.
 - [ ] Family route duplicate/sadeleştirme temizliği.
 
 KOZMETİK
@@ -65,5 +65,6 @@ PAGES / CANLI
 
 DOKÜMANTASYON
 - [x] Family runtime smoke checkpoint'i işlendi.
+- [x] Family member/chat message smoke checkpoint'i işlendi.
 - [x] yapilacaklar.txt family runtime kanıtına göre senkronize edildi.
 - [ ] Bu docs push'unun tetiklediği Quality run SUCCESS doğrulaması.
