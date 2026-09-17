@@ -13,6 +13,7 @@ HEDEF
 - [x] 5 temel smoke: anonymous, room, ban, DM, cosmetic SUCCESS.
 - [x] Quality v4 run 35258712132 / job 105328734923 gerçek runner'da SUCCESS.
 - [x] Önceki room-gift-ui-live.js syntax failure düzeltildi ve yeni Quality v4 koşusunda geçti.
+- [x] Quality v4 run 35260089459 / job 105333339551 güvenlik değişikliği sonrası gerçek runner'da SUCCESS.
 
 2. BACKEND / GÜVENLİK BASELINE
 - [x] Anonymous register → /me → logout → token sonrası 401 smoke ile doğrulandı.
@@ -22,7 +23,7 @@ HEDEF
 - [x] DM create/list → send → history doğrulandı.
 - [x] Cosmetic catalog → balance → purchase → ownership → apply doğrulandı.
 - [x] Gift/balance ve room event zinciri room smoke içinde doğrulandı.
-- [ ] Session revoke sonrası WebSocket erişim davranışını güvenlik açısından ayrıca incele.
+- [x] Session revoke sonrası WebSocket mesaj alma noktasında session yeniden doğrulaması eklendi ve Quality v4 runner SUCCESS ile doğrulandı.
 - [ ] CORS'u canlı Pages origin doğrulanınca kontrollü daralt.
 
 3. FRONTEND BASELINE
@@ -53,9 +54,9 @@ HEDEF
 6. TEMİZLİK / CHECKPOINT
 - [x] Eski/geçici Pages/CI trigger dosyalarının belirgin kalıntıları temizlendi.
 - [ ] Artık gereksiz eski Pages probe/diagnostic workflow'larını gözden geçir.
-- [ ] yapilanlar.txt yeni Quality v4 + cleanup sonucu ile senkronize edilecek.
+- [ ] yapilanlar.txt yeni Quality v4 + security sonucu ile senkronize edilecek.
 - [x] yapilacaklar.txt checkpoint'e alındı.
-- [ ] son_durum_20260917.txt yeni cleanup sonucu ile senkronize edilecek.
+- [ ] son_durum_20260917.txt yeni security sonucu ile senkronize edilecek.
 
 7. BASELINE ÇIKIŞ KRİTERİ
 - [x] Quality v4 SUCCESS.
