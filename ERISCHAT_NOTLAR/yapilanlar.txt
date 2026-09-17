@@ -65,6 +65,8 @@ FRONTEND
 - [x] Pages workflow dm-create-live.js script/asset kontrolüne dahil edildi.
 - [x] Pages workflow cosmetics.js asset kontrolü ve script enjeksiyonuna dahil edildi.
 - [x] Pages workflow profile-ui-live.js script/asset kontrolüne dahil edildi.
+- [x] Bilinen statik/demo mesaj ve keşfet kişi/etkinlik kartlarını canlı koddan ayrı demo-cleanup.js ile izole ettim.
+- [x] Pages workflow demo-cleanup.js script/asset kontrolüne dahil edildi.
 
 TESPİT EDİLEN EKSİKLER
 - [ ] Session/anonymous durum göstergesi görsel olarak ayrı bir UI bileşeni olarak tamamlanmadı.
