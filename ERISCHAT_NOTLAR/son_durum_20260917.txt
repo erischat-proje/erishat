@@ -15,17 +15,24 @@
 - DM conversation → send → history SUCCESS.
 - Cosmetic catalog → balance → purchase → ownership → apply SUCCESS.
 
-## Quality v4 — doğrulanmış
-- Quality v4 run `35258712132`, job `105328734923`: **SUCCESS**.
+## Quality v4 — en güncel doğrulama
+- Quality v4 run `35260089459`, job `105333339551`: **SUCCESS**.
+- Head commit: `2400850295c51ae5baaec12d94fd049d186c23ca`.
 - Static syntax + required-file checks SUCCESS.
 - Local API startup + /ready SUCCESS.
 - Anonymous session, room, ban, DM ve cosmetic smoke SUCCESS.
-- Önceki `frontend/room-gift-ui-live.js:11` syntax failure düzeltmesi gerçek runner'da doğrulandı.
+- Session-revoke WebSocket güvenlik değişikliği sonrası tüm mevcut Quality v4 smoke zinciri tekrar SUCCESS.
+
+## WebSocket session revoke güvenliği
+- Commit `2400850295c51ae5baaec12d94fd049d186c23ca`.
+- `/ws` ve `/ws/rooms/{room_id}` bağlantılarında gelen her yeni mesajdan önce token/session yeniden doğrulanıyor.
+- Session revoke/expiry sonrası geçersiz session ile mesaj işlenmiyor; bağlantı `1008` ile kapatılıyor.
+- Not: Bu uygulama mesaj/aktivite geldiğinde yeniden doğrulama yapıyor; idle bağlantıyı arka planda anında kapatan ayrı heartbeat/revocation watcher henüz eklenmedi.
 
 ## Temizlik checkpoint'i
 - Belirgin geçici Pages/CI trigger dosyaları main'den temizlendi: PAGES_FORCE* ailesi, eski PAGES_TRIGGER, room/gift/progress/root trigger kalıntıları ve `.ci` canlı trigger dosyaları.
 - Cleanup sonrası checkpoint notları senkronize edildi.
-- Yeni cleanup commitlerinden sonra Quality sonucu henüz ayrıca doğrulanmadı.
+- Security değişikliği sonrası Quality v4 sonucu ayrıca gerçek runner'da SUCCESS doğrulandı.
 
 ## Pages kök nedeni
 - `github-pages` environment custom deployment branch policy yalnızca `gh-pages` kabul ediyor; `main` izinli değil.
@@ -40,11 +47,10 @@
 1. `github-pages` environment admission engelini çöz.
 2. Pages deploy SUCCESS doğrula.
 3. Canlı Pages HTTP + frontend → Railway API doğrula.
-4. Session revoke sonrası WebSocket davranışını güvenlik açısından doğrula/düzelt.
-5. CORS'u gerçek Pages origin görüldükten sonra daralt.
-6. Frontend anonymous/me, room, DM, profile, gift ve cosmetic render zincirlerini gerçek akışta doğrula.
-7. 139 asset URL/path ve render kontrollerini tamamla.
-8. Baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
+4. CORS'u gerçek Pages origin görüldükten sonra daralt.
+5. Frontend anonymous/me, room, DM, profile, gift ve cosmetic render zincirlerini gerçek akışta doğrula.
+6. 139 asset URL/path ve render kontrollerini tamamla.
+7. Baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
 
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
