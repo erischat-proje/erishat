@@ -26,7 +26,8 @@
     if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
     let clean = String(key).replace(/^\.\//, '');
     if (!clean.startsWith('Gereken_icerikler/')) clean = `Gereken_icerikler/${clean}`;
-    return new URL(encodeURI(`./${clean}`), document.baseURI).href;
+    const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
+    return new URL(`./${encodedPath}`, document.baseURI).href;
   };
 
   async function load() {
