@@ -84,7 +84,7 @@ def main() -> None:
         raise AssertionError(f"owner missing from member list: {members}")
 
     status, invited = request("POST", f"/families/{family_id}/members", {"user_id": member_id}, token)
-    expect(status, 200, "family member invite", invited)
+    expect(status, 201, "family member invite", invited)
     if invited.get("user_id") != member_id or invited.get("role") != "member":
         raise AssertionError(f"family member invite mismatch: {invited}")
 
