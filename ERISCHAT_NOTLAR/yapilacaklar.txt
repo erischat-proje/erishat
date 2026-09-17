@@ -51,11 +51,11 @@ HEDEF
 - [ ] Gerçek frontend render/şeffaflık sorunlarını düzelt.
 
 6. TEMİZLİK / CHECKPOINT
+- [x] Eski/geçici Pages/CI trigger dosyalarının belirgin kalıntıları temizlendi.
 - [ ] Artık gereksiz eski Pages probe/diagnostic workflow'larını gözden geçir.
-- [ ] Geçici trigger TXT dosyalarını gözden geçir.
-- [ ] yapilanlar.txt yeni Quality v4 sonucuyla senkronize edilecek.
+- [ ] yapilanlar.txt yeni Quality v4 + cleanup sonucu ile senkronize edilecek.
 - [x] yapilacaklar.txt checkpoint'e alındı.
-- [ ] son_durum_20260917.txt yeni Quality v4 sonucu ile senkronize edilecek.
+- [ ] son_durum_20260917.txt yeni cleanup sonucu ile senkronize edilecek.
 
 7. BASELINE ÇIKIŞ KRİTERİ
 - [x] Quality v4 SUCCESS.
