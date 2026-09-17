@@ -19,27 +19,22 @@ jobs:
           from pathlib import Path
           p=Path('frontend/erischat-main.html')
           s=p.read_text(encoding='utf-8')
-
           start='<div class="rooms"><button class="room" onclick="openChat(\'Rana’nın Odası\',\'R\')">'
           if start in s and 'id="realRooms"' not in s:
               a=s.index(start)
               b=s.index('</div><div class="section"><h3>Hızlı erişim</h3>',a)+6
               real='''<div class="rooms" id="realRooms"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Gerçek odalar yükleniyor…</div></div>'''
               s=s[:a]+real+s[b:]
-
           old='<div id="rooms" class="list"><button class="item" onclick="openChat(\'Popüler Sohbet\',\'P\')"><div class="ava">🔥</div><div class="grow"><b>Popüler Sohbet</b><small>128 kişi aktif</small></div><span class="live">CANLI</span></button><button class="item" onclick="openChat(\'Gece Ekibi\',\'G\')"><div class="ava">🌙</div><div class="grow"><b>Gece Ekibi</b><small>64 kişi aktif</small></div></button></div>'
           if old in s:
               s=s.replace(old,'<div id="rooms" class="list"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Gerçek odalar yükleniyor…</div></div>',1)
-
           if 'id="realRoomModal"' not in s:
               anchor='<div id="toast" class="toast"></div>'
               modal='''<div id="realRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b id="realRoomTitle">Oda</b><small id="realRoomMeta" class="muted" style="display:block;margin-top:4px">Gerçek oda</small></div><button class="close" onclick="closeRealRoom()">×</button></div><div id="realRoomSeats" class="list"></div><div style="margin-top:10px"><button class="primary" style="height:42px;width:100%" onclick="openRoomGift()">🎁 Hediye gönder</button></div><div class="card" style="margin-top:10px;padding:12px"><div id="realRoomChat" style="min-height:80px;max-height:180px;overflow:auto;font-size:10px;color:#aaa1b1"></div><div class="compose" style="padding:10px 0 0;border:0"><input id="realRoomMsg" placeholder="Odaya mesaj yaz…"><button class="primary" onclick="sendRealRoomMessage()">➤</button></div></div></div></div>'''
               if anchor not in s: raise SystemExit('toast anchor missing')
               s=s.replace(anchor,modal+anchor,1)
-
           if '<script src="gift-live.js"></script>' not in s:
               s=s.replace('</body>','<script src="gift-live.js"></script>\n</body>',1)
-
           p.write_text(s,encoding='utf-8')
           PY
       - name: Validate
@@ -58,3 +53,10 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add frontend/erischat-main.html
           if git diff --cached --quiet; then echo 'No changes needed.'; else git commit -m 'feat(room): connect served frontend to live gift events'; git push; fi
+
+  quality-runner-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner probe
+        run: python --version
