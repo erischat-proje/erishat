@@ -1,60 +1,54 @@
 # ErisChat Son Durum — 2026-09-17
 
-## Son checkpoint
+## Çalışma fazı
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
-- Railway `erischat-web-fixed` tarafında repo + servis config hizalaması yapıldı: Dockerfile path=`Dockerfile`, healthcheck=`/`, `PORT=80`; deploy yapılmadı.
-- Caddyfile repo tarafında `:80` portuna sabit; Dockerfile `EXPOSE 80` kullanıyor. Canlı 502'nin yeni config ile düzelip düzelmediği deploy edilmeden doğrulanamaz.
-- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
+- Faz: BASELINE / TAM ÇALIŞAN SİSTEME HAZIRLIK.
+- Öncelik: mevcut kodu ve canlı temel akışları tamamlamak; yeni ürün özelliklerine baseline çıkışından sonra geçmek.
+- Railway production deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 
-## Kozmetik tam aktif envanter modeli
-- Sabit 40/40/12/12 hedefleri artık geçerli değil; `Gereken_icerikler` altındaki altı katalog klasöründe bulunan tüm geçerli assetler aktiftir.
-- Son doğrulanmış envanter: 34 kadın avatar + 37 erkek avatar = 71 standart avatar; 32 standart frame; 12 kadın VIP avatar + 12 erkek VIP avatar = 24 VIP avatar; 12 VIP frame; toplam 139 aktif asset.
-- `backend/app/cosmetics.py` gerçek klasörlerden katalog üretir. Inventory checker da gerçek klasör envanterini doğrular.
+## Son gerçek runner kanıtı
+- Runner Recovery #74: run `35256506469`.
+- `live-e2e` job `105321368901`: **SUCCESS**.
+- Setup, Python, bağımlılık kurulumu, local API ve `/ready`: SUCCESS.
+- Anonymous session smoke: SUCCESS.
+- Room smoke: SUCCESS.
+- Room ban smoke: SUCCESS.
+- DM smoke: SUCCESS.
+- Cosmetic smoke: SUCCESS.
+- İki istemcili room WebSocket history/chat broadcast gerçek runner'da SUCCESS.
+- Ban → 403 rejoin → unban → yeniden join gerçek runner'da SUCCESS.
+- DM conversation → send → history gerçek runner'da SUCCESS.
+- Cosmetic catalog → balance → purchase → ownership → apply gerçek runner'da SUCCESS.
+- Runner Recovery `probe` job `105321368404` failure verdi; bu uygulama E2E job'u değildir ve probe adımındaki runner teşhis kontrolüdür.
 
-## Gerçek live E2E checkpoint
-- GitHub-hosted runner üzerinde gerçek E2E başarıyla doğrulandı: run `35232358149`.
-- `live-e2e` job `105239447055` SUCCESS; probe job `105239447316` SUCCESS.
-- Aynı gerçek koşuda şu beş adımın tamamı SUCCESS oldu: Anonymous session, Room, Room ban, DM, Cosmetic.
-- Anonymous smoke; register → `/me` → public profile → profile patch → notification patch → logout → token sonrası 401 zincirini doğruluyor.
-- Room smoke; iki session, room create/join, gift/balance ve iki istemcili room WebSocket chat akışını doğruluyor.
-- Ban smoke; ban → liste → 403 rejoin → unban → yeniden join akışını doğruluyor.
-- DM smoke; conversation create/list, message send ve history akışını doğruluyor.
-- Cosmetic smoke; catalog → balance → purchase → ownership → apply akışını doğruluyor.
+## CI
+- Quality workflow v4'e Python compileall + frontend JavaScript `node --check` + zorunlu frontend kaynak kontrolleri eklendi.
+- [ ] Quality v4'ün güncel main commitindeki gerçek runner sonucu ayrıca doğrulanacak.
 
-## WebSocket / frontend düzeltmeleri
-- Room WebSocket route interception problemi için frontend static mount sırası düzeltildi; route-fix workflow gerçek runner'da SUCCESS oldu.
-- Room smoke harness'ında local `websocket-client` proxy bypass düzeltmesi commit `8f065859587a47a575f92be87b509819b376557e` ile yapıldı ve yukarıdaki gerçek E2E koşusunda doğrulandı.
-- `frontend/auth-live.js` anonymous kayıt artık backend sözleşmesine uygun `gender: 'male'` gönderiyor; güncel blob SHA `d582fcc8cec9a0072cdfa2d259948d42a193b0e3`.
+## Pages kök nedeni
+- Son Pages run `35256506397` failure.
+- Deploy job `105321366191` runner step'lerine girmeden environment admission aşamasında durdu; job steps yok.
+- Daha önce gerçek diagnostics API çıktısıyla `github-pages` environment custom deployment branch policy'sinin yalnızca `gh-pages` olduğu doğrulandı; `main` izinli değil.
+- Pages diagnostics guard bu policy engelini görünür hale getiriyor.
+- [ ] GitHub Settings → Environments → `github-pages` deployment branch policy içinde `main` izinli hale getirilecek.
+- [ ] Sonrasında Pages deploy tekrar gerçek runner'da doğrulanacak.
+- [ ] Canlı Pages HTTP 200/index doğrulaması yapılacak.
+- [ ] Canlı Pages → Railway API zinciri doğrulanacak.
 
-## CI / Pages checkpoint
-- `.github/workflows/runner-recovery.yml` aynı beşli zinciri içeriyor ve gerçek runner üzerinde SUCCESS doğrulaması mevcut.
-- `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; run `35234028161` için gerçek `quality` job başarıyla doğrulandı.
-- Eski karmaşık quality workflow'unda `jobs: []` görülmesi için artık rastgele kod değişikliği yapılmıyor; önce sade çalışan taban doğrulandı.
-- Eski `pages.yml` kaldırıldı. Aktif Pages deployment workflow'u `.github/workflows/erischat-pages.yml` ve tek başına build/upload/deploy yapıyor.
-- Pages workflow temizliğinde `gift-live.js` Pages injection listesinde duplicate olmaması için çıkarıldı; frontend kaynakta `gift-live.js` ayrı dosya olarak bulunuyor ve injection listesinde tekrar eklenmiyor.
-- `pages-diagnostics.yml` aktif `erischat-pages.yml` için configure/upload/deploy, permissions ve `github-pages` environment kontrollerini yapıyor.
-- Gerçek Pages diagnostics runner logu: Pages enabled=`true`, repo public, Pages status=`built`, URL=`https://semihvarolymk-png.github.io/erischat/`.
-- Aynı gerçek diagnostics logunda `github-pages` environment protection rule tipi `branch_policy`; deployment policy `protected_branches=false`, `custom_branch_policies=true` olarak kanıtlandı.
-- Kritik izolasyon: `github-pages` environment'a bağlanan bağımsız `environment-probe` job'ı gerçek runner'da `failure` + `steps: []` ile runner step'lerine hiç ulaşmadı. Aynı workflow'daki environment'sız `diagnostics` job'ı gerçek runner'da SUCCESS oldu. Bu, gate'in Pages action/build içinden değil environment admission katmanından önce olduğunu doğrudan kanıtlıyor.
-- Yeni committe environment-probe kalıcı workflow'dan çıkarıldı; probe yalnızca izolasyon kanıtı üretmek için kullanıldı.
-- Environment kaldırılarak yapılan önceki izolasyonda runner çalışmış, fakat `actions/deploy-pages@v4` "Missing environment" ile durduğu da önceki gerçek kanıt olarak korunuyor. Dolayısıyla deploy için `github-pages` environment zorunlu, fakat mevcut environment branch-policy gate'i `main` job'unu runner'a almıyor.
-- **Kesin kök neden doğrulandı:** gerçek diagnostics run `35244809919` içinde GitHub API `/environments/github-pages/deployment-branch-policies` cevabı `total_count=1` ve tek custom branch policy `name="gh-pages"`, `type="branch"`, `id=60159219` olarak döndü. `main` bu policy içinde yok. Bu nedenle `main` üzerinden çalışan Pages deploy job'ının `github-pages` environment admission aşamasında runner'a alınmaması mevcut loglarla açıklanıyor.
-- `pages-diagnostics.yml` branch policy girdisini ve `main` için `target_branch_allowed` sonucunu loglayacak şekilde önceki committe güncellenmişti.
-- **Yeni CI guard:** commit `08b455c30b0452ee523df166fb499666b3870dd7` ile Pages diagnostics, `target_branch_allowed=false` olduğunda artık workflow'u açık hata mesajıyla başarısız ediyor. Böylece politika engeli sessiz bir SUCCESS olarak raporlanmayacak; gerçek runner kanıtı doğrudan kırmızı guard ile görünür olacak.
-- Bu guard, GitHub environment ayarını değiştirmiyor; yalnızca mevcut dışsal policy engelini güvenilir şekilde yakalıyor.
-- Pages PASS/TAMAM denmiyor; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
+## Kod / cleanup checkpoint
+- `room-live.js` API fallback düzeltmesi mevcut.
+- Eski self-modifying/patch ve duplicate Pages workflow'larının gerekli olmayanları temizlendi.
+- `yapilanlar.txt` ve `yapilacaklar.txt` yeni runner kanıtıyla güncellendi.
+- Yeni özellik geliştirmesi şimdilik durduruldu; kalan baseline maddeleri kapatılacak.
 
-## Güncel sıra
-1. Yeni diagnostics run'da guard'ın `main` engelini gerçek runner'da açıkça raporladığını doğrula.
-2. GitHub `github-pages` environment custom deployment branch policy'sine `main` eklenmesi (veya policy'nin `main`i kapsayacak şekilde GitHub settings üzerinden değiştirilmesi). Mevcut GitHub connector environment yönetim yazma endpointini sunmuyor; repo workflow dosyasından policy tahmin edilerek değiştirilmemeli.
-3. Environment gate çözüldüğünde yeni sade Pages workflow'un gerçek başarılı deploy job/run sonucunu doğrula.
-4. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
-5. Backend security + quality hardening.
-6. V35/V53 legacy cleanup.
-7. TXT checkpoint senkronizasyonunu koru.
+## Sıradaki işlem sırası
+1. Quality v4 gerçek runner sonucunu doğrula.
+2. Pages environment `main` admission engelini çöz.
+3. Pages deploy SUCCESS doğrula.
+4. Canlı Pages HTTP + frontend → Railway API doğrula.
+5. Kalan frontend/security/cosmetic render kontrollerini kapat.
+6. Tüm baseline çıkış kriterleri tamamlanınca ürün geliştirmesine dön.
 
 ## Kural
-- Canlı/local E2E çalıştırılmadan özellik tamamlandı sayılmayacak.
-- Gerçek E2E PASS kanıtı olmadan PASS/TAMAM denmeyecek.
-- Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
-- Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
+- Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
+- Railway deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
