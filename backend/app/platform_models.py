@@ -41,7 +41,7 @@ class DiscoveryPreference(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     gender_filter: Mapped[str] = mapped_column(String(16), default="any", server_default="any", nullable=False)
     random_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now(), nullable=False)
 
 
 class Report(Base):
@@ -74,6 +74,7 @@ class FamilyMember(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     family_id: Mapped[str] = mapped_column(ForeignKey("families.id", ondelete="CASCADE"), index=True, nullable=False)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    role: Mapped[str] = mapped_column(String(16), default="member", server_default="member", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -108,7 +109,7 @@ class GameRound(Base):
 class GameBet(Base):
     __tablename__ = "game_bets"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    round_id: Mapped[str] = mapped_column(ForeignKey("game_rounds.id", ondelete="CASCADE"), index=True, nullable=False)
+    round_id: Mapped[str] = mapped_column(ForeignKey("game_rounds.id", ondelete="CASCADE"), index=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     choice: Mapped[str] = mapped_column(String(32), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
