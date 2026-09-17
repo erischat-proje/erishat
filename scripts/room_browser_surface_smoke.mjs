@@ -32,10 +32,10 @@ try{
   await page.locator('#chatInput').press('Enter');
   await page.waitForSelector('#chatBody .bubble.me');
   await page.locator('#chat .close').click();
-  await page.locator('#erisDemoBtn').click({force:true});
+  await page.locator('#erisDemoBtn').evaluateAll(els => { const el=els.find(x => { const r=x.getBoundingClientRect(); return r.width>0 && r.height>0; }) || els[0]; el?.click(); });
   await page.locator('#erisDemo .ed-tab[data-ed="rooms"]').evaluate(el => el.click());
-  await page.waitForFunction(() => { const p=document.querySelector('#erisDemo'); const row=p?.querySelector('#ed-rooms #edRooms .ed-row'); return !!p && p.classList.contains('ed-show') && !!row; });
-  await page.locator('#ed-rooms .ed-row button',{hasText:'İncele'}).click();
+  await page.waitForFunction(() => { const root=[...document.querySelectorAll('#erisDemo')].find(x => x.classList.contains('ed-show')); const panel=root?.querySelector('#ed-rooms.ed-panel.active'); const row=panel?.querySelector('#edRooms .ed-row'); return !!root && !!panel && !!row; });
+  await page.locator('#erisDemo #ed-rooms.ed-panel.active #edRooms .ed-row button',{hasText:'İncele'}).click();
   await page.waitForSelector('#edRoomDetail');
   await page.getByRole('button',{name:'Katıl'}).waitFor();
   await page.getByRole('button',{name:'🎙️ Mikrofon'}).click();
