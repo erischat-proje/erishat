@@ -36,6 +36,23 @@ jobs:
           if [ -f _site/erischat-main.html ]; then
             cp _site/erischat-main.html _site/index.html
           fi
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('_site/index.html')
+          text = p.read_text(encoding='utf-8')
+          marker = '</body>'
+          scripts = [
+              'platform.js',
+              'room-live.js',
+              'gift-live.js',
+              'dm-live.js',
+          ]
+          for name in scripts:
+              tag = f'<script src="./{name}"></script>'
+              if tag not in text:
+                  text = text.replace(marker, tag + marker)
+          p.write_text(text, encoding='utf-8')
+          PY
           touch _site/.nojekyll
           test -f _site/index.html
           echo "Prepared Pages site:"
