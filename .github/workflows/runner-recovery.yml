@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  DATABASE_URL: postgresql+psycopg://erischat:erischat@127.0.0.1:5432/erischat
+  ERISCHAT_SMOKE_BASE_URL: http://127.0.0.1:8000
+
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -20,3 +24,62 @@ jobs:
           python --version
           test -f .github/workflows/apply-gift-ui.yml
           echo "workflow-files-present"
+
+  live-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: erischat
+          POSTGRES_USER: erischat
+          POSTGRES_PASSWORD: erischat
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U erischat -d erischat"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install backend and smoke dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements.txt
+          python -m pip install websocket-client
+      - name: Start local API
+        working-directory: backend
+        run: |
+          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../erischat-api.log 2>&1 &
+      - name: Wait for API
+        run: |
+          python - <<'PY'
+          import time, urllib.request
+          url = "http://127.0.0.1:8000/ready"
+          for _ in range(60):
+              try:
+                  with urllib.request.urlopen(url, timeout=2) as response:
+                      if response.status == 200:
+                          print("API ready")
+                          raise SystemExit(0)
+              except Exception:
+                  time.sleep(1)
+          print(open("erischat-api.log", encoding="utf-8", errors="replace").read())
+          raise SystemExit("API did not become ready")
+      - name: Live room smoke
+        run: python scripts/room_live_smoke.py
+      - name: Live ban smoke
+        run: python scripts/room_ban_live_smoke.py
+      - name: Live DM smoke
+        run: python scripts/dm_live_smoke.py
+      - name: Live cosmetic smoke
+        run: python scripts/cosmetic_live_smoke.py
+      - name: API log on failure
+        if: failure()
+        run: cat erischat-api.log
