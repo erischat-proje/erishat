@@ -59,6 +59,17 @@ def main() -> int:
     if not isinstance(items, list) or not items:
         raise RuntimeError("cosmetic catalog is empty")
 
+    counts = {
+        "avatar": sum(1 for x in items if x.get("type") == "avatar" and not x.get("vip")),
+        "frame": sum(1 for x in items if x.get("type") == "frame" and not x.get("vip")),
+        "vip_avatar": sum(1 for x in items if x.get("type") == "avatar" and x.get("vip")),
+        "vip_frame": sum(1 for x in items if x.get("type") == "frame" and x.get("vip")),
+    }
+    expected = {"avatar": 71, "frame": 44, "vip_avatar": 24, "vip_frame": 12}
+    if counts != expected or len(items) != 151:
+        raise RuntimeError(f"catalog inventory mismatch: counts={counts}, total={len(items)}, expected={expected}, total=151")
+    print(f"catalog inventory OK: {len(items)} items; {counts}")
+
     avatar = next((x for x in items if x.get("type") == "avatar" and not x.get("vip")), None)
     frame = next((x for x in items if x.get("type") == "frame" and not x.get("vip")), None)
     vip_asset = next((x for x in items if x.get("vip") and x.get("vip_level") == 1), None)
