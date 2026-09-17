@@ -4,6 +4,7 @@
   const esc = value => String(value ?? '');
   let activeConversationId = null;
   let currentUserId = null;
+  let loadedForUserId = null;
 
   function asList(value, keys) {
     if (Array.isArray(value)) return value;
@@ -60,9 +61,11 @@
           console.warn('[ErisChat] current user unavailable', error);
         }
       }
+      if (!currentUserId) return;
       const payload = await api().conversations();
       const items = asList(payload, ['conversations', 'items', 'data']);
       list.innerHTML = '';
+      loadedForUserId = currentUserId;
       if (!items.length) {
         list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Henüz konuşma yok.</div>';
         return;
@@ -158,6 +161,17 @@
   }
 
   window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation };
+
+  window.addEventListener('erischat:auth', event => {
+    if (event?.detail?.state === 'ready') {
+      currentUserId = event.detail.user?.id || currentUserId;
+      if (currentUserId !== loadedForUserId) loadConversations();
+    } else if (event?.detail?.state === 'logged_out') {
+      currentUserId = null;
+      loadedForUserId = null;
+    }
+  });
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadConversations, { once: true });
   else loadConversations();
 })();
