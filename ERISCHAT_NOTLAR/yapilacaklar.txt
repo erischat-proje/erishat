@@ -27,6 +27,12 @@ MEVCUT DURUM
 - `main.py` duplicate migration/import problemi ve integration workflow tekrar-ekleme problemi düzeltildi.
 - Dört live smoke harness'ındaki eski `/auth/anonymous` kaydı bulundu ve güncel `/v1/users` + `nickname/avatar/gender` sözleşmesine geçirildi.
 - `.github/workflows/quality.yml` smoke harness syntax + stale endpoint contract guard + localhost safety kontrolleriyle genişletildi.
+- Smoke contract auditinde gerçek room router dosyasının `backend/app/room_routes.py` olduğu doğrulandı; `main.py` içinde `register_room_auth(current_user)` ile auth dependency bağlanıyor.
+- Room smoke kontratı backend ile hizalı: `POST /v1/rooms`, join, chat enable, gift catalog/send/events ve room WebSocket `/ws/rooms/{room_id}` sözleşmeleri mevcut.
+- Ban smoke kontratı backend ile hizalı: ban `POST /v1/rooms/{room_id}/bans`, liste `GET`, unban `DELETE`, ardından yeniden join.
+- DM smoke kontratı backend ile hizalı: `/v1/conversations`, `/v1/messages/{conversation_id}` ve üyelik kontrolleri mevcut.
+- Cosmetic smoke kontratı backend ile hizalı: `/v1/cosmetics` artık `items` alanı taşıyan obje döndürüyor; smoke harness bunu doğru şekilde açıyor. Ownership/apply cevapları da beklenen alanlarla uyumlu.
+- `backend/app/models.py` içinde `UserCosmetic` modeli ve `(user_id, cosmetic_type, asset_key)` unique constraint mevcut; startup `Base.metadata.create_all()` bunu oluşturacak şekilde model metadata'ya dahil.
 - Bu smoke harness değişiklikleri gerçek E2E PASS değildir; çalıştırma bekliyor.
 
 KOZMETİK ENVANTER
@@ -57,6 +63,7 @@ TAMAMLANANLAR
 - Integration workflow idempotency fix.
 - Railway web port/config hazırlığı; deploy edilmedi.
 - Pages failure için non-deploy diagnostics workflow'u eklendi.
+- Room/DM/cosmetic smoke kontratlarının backend route ve response yapılarıyla statik audit'i.
 
 DOĞRULAMA KURALI
 - Canlı/local E2E çalıştırılmadan özellik PASS/TAMAM kabul edilmeyecek.
@@ -65,4 +72,4 @@ DOĞRULAMA KURALI
 - Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
 
 YENİ SOHBET BAŞLANGIÇ MESAJI
-Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Smoke harness auth contract düzeltildi; quality sonucunu takip et ve ardından kontrollü/local E2E'ye geç. Gerçek E2E olmadan PASS deme.
+Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA. Smoke harness auth contract düzeltildi; room/DM/cosmetic backend kontrat audit'i yapıldı. Şimdi quality sonucunu takip et ve ardından kontrollü/local E2E'ye geç. Gerçek E2E olmadan PASS deme.
