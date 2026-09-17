@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import time
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -86,13 +85,13 @@ def main() -> int:
         raise RuntimeError(f"gift catalog failed: HTTP {status} {catalog}")
     gift = catalog[0]
     gift_key = gift.get("gift_key") or gift.get("key")
-    price = int(gift.get("price") or 0)
+    price = int(gift.get("unit_price") or gift.get("price") or 0)
     if not gift_key or price <= 0:
         raise RuntimeError(f"invalid gift catalog item: {gift}")
 
-    status, before_a = request("GET", "/me", token_a)
+    status_a, before_a = request("GET", "/me", token_a)
     status_b, before_b = request("GET", "/me", token_b)
-    if status >= 300 or status_b >= 300:
+    if status_a >= 300 or status_b >= 300:
         raise RuntimeError(f"profile read failed: {before_a} / {before_b}")
     balance_a = int(before_a.get("lidya") or before_a.get("balance") or 0)
     balance_b = int(before_b.get("lidya") or before_b.get("balance") or 0)
@@ -104,9 +103,9 @@ def main() -> int:
         })
         if status >= 300:
             raise RuntimeError(f"gift send failed: HTTP {status} {sent}")
-        status, after_a = request("GET", "/me", token_a)
+        status_a, after_a = request("GET", "/me", token_a)
         status_b, after_b = request("GET", "/me", token_b)
-        if status >= 300 or status_b >= 300:
+        if status_a >= 300 or status_b >= 300:
             raise RuntimeError("profile read after gift failed")
         after_balance_a = int(after_a.get("lidya") or after_a.get("balance") or 0)
         after_balance_b = int(after_b.get("lidya") or after_b.get("balance") or 0)
@@ -118,6 +117,8 @@ def main() -> int:
         status, events = request("GET", f"/rooms/{room_id}/gift-events?limit=10", token_a)
         if status >= 300 or not events:
             raise AssertionError(f"gift event missing: HTTP {status} {events}")
+        if not any(isinstance(event, dict) and event.get("gift_key") == gift_key and event.get("recipient_id") == uid_b for event in events):
+            raise AssertionError(f"expected gift event not found: {events}")
         print(f"gift invariant OK: sender -{price}, recipient +{expected_recipient}, room_gift event present")
 
     print("REST room smoke completed.")
