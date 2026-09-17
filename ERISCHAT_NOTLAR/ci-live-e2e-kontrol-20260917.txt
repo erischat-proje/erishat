@@ -1,0 +1,15 @@
+ErisChat CI canlı E2E kontrol notu
+Tarih: 2026-09-17
+
+Durum:
+- Quality run 35222686101 içinde backend-quality, smoke-harness-quality ve cosmetic-inventory başarılı.
+- Bu run içinde live-e2e job'ı yok; dolayısıyla canlı E2E'nin çalıştığı doğrulanmış değil.
+- Live E2E job'ı 6c90d33e0117dd76d40a536b27c5f5d1456da0bb commit'inde quality.yml'e eklenmiş durumda.
+- Pages diagnostics run 35223091996 eski workflow içeriğiyle başarısız oldu. Logda repository Pages API kontrolü başarılı, failure Validate Pages workflow shape adımında.
+- Pages workflow mevcut blob içeriğinde configure-pages@v5, upload-pages-artifact@v4, deploy-pages@v4 ve pages/id-token write mevcut.
+- Checkout düzeltmesi 01927be2a136704cb8ae7018eacfae039f29ec5a commitinde mevcut.
+- 01927be2 commit'i için connector commit-workflow-runs sonucu 0 döndü; yeni diagnostics run'ı henüz doğrulanamadı.
+
+Kural:
+- Gerçek workflow/job sonucu görülmeden live-e2e veya Pages için PASS/TAMAM denmeyecek.
+- Railway deploy yapılmayacak; kullanıcı açıkça deploy demedikçe sadece kod/CI düzeyinde ilerlenir.
