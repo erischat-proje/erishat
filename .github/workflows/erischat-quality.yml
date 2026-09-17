@@ -1,6 +1,6 @@
 name: ErisChat quality checks v2
 
-# live-e2e retrigger marker: 2026-09-17 websocket-route-fix validation-4
+# live-e2e retrigger marker: 2026-09-17 anonymous-session-gate-1
 on:
   push:
     branches: [main]
@@ -30,6 +30,7 @@ jobs:
       - name: Compile smoke harnesses
         run: |
           python -m py_compile \
+            scripts/anonymous_session_live_smoke.py \
             scripts/room_live_smoke.py \
             scripts/room_ban_live_smoke.py \
             scripts/dm_live_smoke.py \
@@ -42,6 +43,7 @@ jobs:
           fi
       - name: Verify local smoke safety defaults
         run: |
+          grep -F 'http://127.0.0.1:8000' scripts/anonymous_session_live_smoke.py
           grep -F 'http://127.0.0.1:8000' scripts/room_live_smoke.py
           grep -F 'http://127.0.0.1:8000' scripts/room_ban_live_smoke.py
           grep -F 'http://127.0.0.1:8000' scripts/dm_live_smoke.py
@@ -106,6 +108,8 @@ jobs:
           echo 'API did not become ready.'
           cat /tmp/erischat-api.log
           exit 1
+      - name: Anonymous session smoke
+        run: python scripts/anonymous_session_live_smoke.py
       - name: Room live smoke
         run: python scripts/room_live_smoke.py
       - name: Room ban live smoke
