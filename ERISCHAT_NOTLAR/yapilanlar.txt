@@ -61,6 +61,8 @@ FRONTEND
 - [x] Profil nickname güncelleme UI'sı /v1/me PATCH'e bağlandı.
 - [x] Profil bildirim aç/kapat UI'sı /v1/me PATCH'e bağlandı.
 - [x] Profil oturum kapatma kontrolü eklendi; revoke sonrası yeni anonim session oluşturuluyor.
+- [x] Gerçek DM conversation oluşturma paneli eklendi; participant ID ile /v1/conversations akışını çağırıyor.
+- [x] Pages workflow dm-create-live.js script/asset kontrolüne dahil edildi.
 - [x] Pages workflow cosmetics.js asset kontrolü ve script enjeksiyonuna dahil edildi.
 - [x] Pages workflow profile-ui-live.js script/asset kontrolüne dahil edildi.
 
@@ -68,7 +70,7 @@ TESPİT EDİLEN EKSİKLER
 - [ ] Session/anonymous durum göstergesi görsel olarak ayrı bir UI bileşeni olarak tamamlanmadı.
 - [ ] WS reconnect/presence/genel event UI eksik.
 - [ ] Room chat canlı iki istemci E2E testi henüz yapılmadı.
-- [ ] DM tarafında yeni conversation oluşturma UI'sı henüz tamamlanmadı.
+- [ ] DM conversation oluşturma UI'sı canlı E2E doğrulaması bekliyor.
 - [ ] Avatar/frame/VIP katalogunun gerçek asset sayıları ve görsel kalite/şeffaflık kontrolü tamamlanmadı.
 - [ ] Avatar/frame/VIP satın alma + apply E2E'si canlı ortamda yapılmadı.
 
@@ -77,7 +79,6 @@ PAGES / RAILWAY
 - [x] _site hazırlama + index.html üretimi mevcut.
 - [x] upload-pages-artifact@v4 ve deploy-pages@v4 mevcut.
 - [x] github-pages environment tanımlı.
-- [x] Pages workflow run #199 attempt 2 incelendi; deploy job failure durumunda.
 - [ ] Pages failure için kullanılabilir GitHub job logu mevcut değil; kök neden henüz kesinleştirilmedi.
 - [ ] Canlı Pages success doğrulanmadı.
 - [ ] Canlı Railway /health /ready/API/DB/WS E2E doğrulanmadı.
@@ -89,30 +90,15 @@ PAGES / RAILWAY
 - [ ] Moderasyon/raporlama/engelleme tam UI entegrasyonu tamamlanmadı.
 - [ ] Admin paneli tamamlanmadı.
 
-SON GELİŞTİRMELER
-- [x] Master yapılacaklar listesi gerçek kod denetimine göre yenilendi.
-- [x] Yapılanlar listesi gerçek durumla senkronlandı.
-- [x] __pycache__ temizliği gerçekleştirildi.
-- [x] Oda WebSocket chat history + gerçek gönderim UI entegrasyonu yapıldı.
-- [x] Gerçek DM conversation/history/send UI entegrasyonu yapıldı.
-- [x] DM gerçek avatar asset rendering hardening yapıldı.
-- [x] Pages workflow validation tarafındaki obsolete joinAndOpen kontrolü temizlendi.
-- [x] Cosmetics canlı API entegrasyonu ve asset rendering hardening yapıldı.
-- [x] Cosmetics backend katalogu gerçek asset klasörleri + VIP metadata ile düzeltildi.
-- [x] Cosmetics frontend repository-relative asset URL çözümleme ve katalog helper'ları eklendi.
-- [x] Live profile controls ayrı JS katmanı olarak eklendi; ana erischat-main.html toplu şekilde overwrite edilmedi.
-- [x] Anonymous session gender payload nötrleştirildi.
-- [x] Logout sonrası yeni anonim session oluşturma UI akışı eklendi.
-- [x] main.py startup migration duplicate satırları temizlendi ve WS route'ları korunarak dosya geri doğrulandı.
-
 GÜVENLİK / DEPLOY
 - Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
 - Büyük frontend dosyası kısmi içerikle overwrite edilmeyecek.
 - Canlı test yapılmadan bir özellik E2E tamamlandı olarak işaretlenmeyecek.
 
 SONRAKİ AKTİF İŞ
-1. Oda WebSocket canlı E2E testini doğrula.
-2. Session/anonymous durum göstergesini tamamla ve DM conversation oluşturma UI'sına geç.
-3. Pages failure kök nedenini izole et ve workflow'u doğrula.
-4. Pages/Railway canlı doğrulamalarına geç.
-5. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
+1. Session/anonymous durum göstergesini tamamla.
+2. Oda WebSocket canlı E2E testini doğrula.
+3. DM conversation creation canlı akışını doğrula.
+4. Pages failure kök nedenini izole et ve workflow'u doğrula.
+5. Pages/Railway canlı doğrulamalarına geç.
+6. Avatar/frame/VIP gerçek asset katalog eşleşmesini ve E2E'sini tamamla.
