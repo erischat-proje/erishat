@@ -28,22 +28,27 @@
 
 ## CI / Pages checkpoint
 - `.github/workflows/runner-recovery.yml` aynı beşli zinciri içeriyor ve gerçek runner üzerinde SUCCESS doğrulaması mevcut.
-- `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; yeni `quality` job'ı gerçek job olarak üretildi. Run `35234028161` için gerçek `quality` job başarıyla doğrulandı.
+- `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; run `35234028161` için gerçek `quality` job başarıyla doğrulandı.
 - Eski karmaşık quality workflow'unda `jobs: []` görülmesi için artık rastgele kod değişikliği yapılmıyor; önce sade çalışan taban doğrulandı.
 - Eski `pages.yml` kaldırıldı. Aktif Pages deployment workflow'u `.github/workflows/erischat-pages.yml` ve tek başına build/upload/deploy yapıyor.
-- Pages workflow temizliğinde `gift-live.js` Pages injection listesinde duplicate olmaması için çıkarıldı; mevcut HTML script durumu ayrıca doğrulanacak.
+- Pages workflow temizliğinde `gift-live.js` Pages injection listesinde duplicate olmaması için çıkarıldı; frontend kaynakta `gift-live.js` ayrı dosya olarak bulunuyor ve injection listesinde tekrar eklenmiyor.
 - `pages-diagnostics.yml` aktif `erischat-pages.yml` için configure/upload/deploy, permissions ve `github-pages` environment kontrollerini yapıyor.
-- Gerçek Pages diagnostics runner logunda Pages: enabled, public, status `built`; `github-pages` environment mevcut ve `branch_policy` protection rule içeriyor.
-- Environment'lı Pages deploy job'ları daha önce `steps: []` ile runner'a ulaşmadan fail oldu; environment kaldırılınca runner çalıştı fakat `actions/deploy-pages@v4` "Missing environment" ile durdu. Bu nedenle environment/branch policy zinciri hâlâ kritik izolasyon konusu.
+- Gerçek Pages diagnostics runner logu: Pages enabled=`true`, repo public, Pages status=`built`, URL=`https://semihvarolymk-png.github.io/erischat/`.
+- Aynı gerçek diagnostics logunda `github-pages` environment protection rule tipi `branch_policy`; deployment policy `protected_branches=false`, `custom_branch_policies=true` olarak kanıtlandı.
+- Kritik izolasyon: `github-pages` environment'a bağlanan bağımsız `environment-probe` job'ı gerçek runner'da `failure` + `steps: []` ile runner step'lerine hiç ulaşmadı. Aynı workflow'daki environment'sız `diagnostics` job'ı gerçek runner'da SUCCESS oldu. Bu, gate'in Pages action/build içinden değil environment admission katmanından önce olduğunu doğrudan kanıtlıyor.
+- Yeni committe environment-probe kalıcı workflow'dan çıkarıldı; probe yalnızca izolasyon kanıtı üretmek için kullanıldı.
+- Environment kaldırılarak yapılan önceki izolasyonda runner çalışmış, fakat `actions/deploy-pages@v4` "Missing environment" ile durduğu da önceki gerçek kanıt olarak korunuyor. Dolayısıyla deploy için `github-pages` environment zorunlu, fakat mevcut environment branch-policy gate'i `main` job'unu runner'a almıyor.
+- `pages-diagnostics` şu an environment custom branch policy girdilerini de API üzerinden raporlayacak şekilde güncellendi; bir sonraki gerçek run bu girdilerin hangi branch adlarını kapsadığını gösterecek.
 - Pages PASS/TAMAM denmiyor; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 
 ## Güncel sıra
-1. Pages environment/branch policy izolasyonunu gerçek runner sonuçlarıyla tamamla.
-2. Yeni sade Pages workflow'un gerçek başarılı deploy job/run sonucunu doğrula.
-3. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
-4. Backend security + quality hardening.
-5. V35/V53 legacy cleanup.
-6. TXT checkpoint senkronizasyonunu koru.
+1. `github-pages` custom branch policy girdilerinin bir sonraki gerçek diagnostics run logundan alınması.
+2. Policy'nin `main` ile uyumlu hale gelmesini sağlayacak gerçek GitHub environment ayarı doğrulanmalı; mevcut GitHub connector bu environment yönetim yazma endpointini sunmuyor, bu yüzden ayar repo workflow dosyasından tahmin edilerek değiştirilmemeli.
+3. Environment gate çözüldüğünde yeni sade Pages workflow'un gerçek başarılı deploy job/run sonucunu doğrula.
+4. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
+5. Backend security + quality hardening.
+6. V35/V53 legacy cleanup.
+7. TXT checkpoint senkronizasyonunu koru.
 
 ## Kural
 - Canlı/local E2E çalıştırılmadan özellik tamamlandı sayılmayacak.
