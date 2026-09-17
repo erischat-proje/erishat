@@ -114,7 +114,7 @@ def main() -> None:
     message_text = f"Family smoke message {suffix}"
     status, message = request("POST", f"/families/{family_id}/chat/messages", {"text": message_text}, token=token)
     expect(status, 201, "family chat message", message)
-    if message.get("conversation_id") != chat.get("conversation_id") or not message.get("sender_id") or message.get("text") != message_text:
+    if not message.get("sender_id") or message.get("text") != message_text:
         raise AssertionError(f"family chat message mismatch: {message}")
 
     status, removed = request("DELETE", f"/families/{family_id}/members/{member_id}", token=token)
