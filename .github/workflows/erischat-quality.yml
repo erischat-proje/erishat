@@ -92,6 +92,8 @@ jobs:
           raise SystemExit("API did not become ready")
       - name: Anonymous session smoke
         run: python scripts/anonymous_session_live_smoke.py
+      - name: Live family smoke
+        run: python scripts/family_live_smoke.py
       - name: Live room smoke
         run: python scripts/room_live_smoke.py
       - name: Live ban smoke
