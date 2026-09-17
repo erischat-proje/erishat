@@ -18,8 +18,16 @@ BU TURDA YAPILAN
 - Room security regression checker eklendi: scripts/check_room_security.py.
 - Quality workflow'a room security regression adımı eklendi.
 - backend/app/main.py startup migration bölümündeki tekrarlanan gender/avatar_asset/frame_asset ALTER ifadeleri kaldırıldı; her kolon için tek migration ifadesi kaldı.
+- Yeni frontend/room-gift-ui-live.js eklendi: canlı oda WebSocket açıldığında hediye düğmesi/paneli görünür hale geliyor.
+- Hediye paneli gerçek /me, oda detayları, gift catalog ve sendGift API akışlarını kullanıyor.
+- Aktif oda sahibi/koltuktaki kullanıcılar alıcı seçimine dahil ediliyor; mevcut kullanıcı alıcı listesinden çıkarılıyor.
+- Hediye gönderiminden sonra bakiye yeniden /v1/me üzerinden okunuyor.
+- Pages workflow'a room-gift-ui-live.js asset doğrulaması ve script enjeksiyonu eklendi.
 
 SON COMMITLER
+- Live room gift UI: 1184b65a26c59c2b6a8bb48c7dd89e20dd8976b3
+- Pages gift UI integration: fb5a73be062495f73c2da597ed2a360ba2984bc3
+- Startup migration duplicate cleanup: 21a5ffaf3682764e16fc16ed66745900d1a08f5b
 - Room ban/member/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
 - Room actions helper + Pages integration: 22c5e9e235d316422bff4bfff03feb5e63d0e654
 - Gift REST bridge: 683afe64749a6f812fc5069c1dced211de472369
@@ -28,7 +36,6 @@ SON COMMITLER
 - Active moderator membership hardening: 88d2c987b08cf3eaf6ecb0dfd2bc1b659e0e060a
 - Room security regression checker: 4c58aade0784add14ebf5a23556e33fc67d5a741
 - Quality workflow room security integration: 02d4d1ec078510b22f87e9c9c218c5eaee330c43
-- Startup migration duplicate cleanup: 21a5ffaf3682764e16fc16ed66745900d1a08f5b
 
 BACKEND DURUMU
 - /v1/me ve DM conversation/message endpointleri mevcut.
@@ -46,13 +53,14 @@ BACKEND DURUMU
 FRONTEND DURUMU
 - Oda listesi gerçek /v1/rooms API'sine bağlı.
 - Oda chat UI gerçek room WebSocket akışına bağlı.
-- Oda REST işlemleri frontend/room-actions.js helper'ında toplandı; ban listesi de dahil.
+- Oda REST işlemleri frontend/room-actions.js helper'ında toplandı; ban listesi ve gift REST işlemleri dahil.
 - Oda ban yönetimi için frontend GET/UI katmanı hazırlandı; canlı backend E2E henüz yapılmadı.
+- Canlı oda hediye paneli hazır; gerçek iki kullanıcı/gift bakiye smoke E2E henüz yapılmadı.
 - DM listesi/history/send gerçek API helper'larına bağlı.
 - DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
 - Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
 - Cosmetics entegrasyonu gerçek token/API akışına bağlandı; standard/VIP katalog ayrımı ve asset URL çözümlemesi eklendi.
-- Pages workflow platform/room/gift/room-actions/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
+- Pages workflow platform/room/gift/room-actions/room-ban/room-gift-ui/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
 
 HENÜZ DOĞRULANMAYANLAR
 1. Room security regression workflow adımının gerçek GitHub Actions sonucu.
@@ -77,7 +85,7 @@ NOT
 - Yapılan her önemli değişiklik commitlenip bu dosyadaki yapılanlar/yapılacaklar listesi güncellenecek.
 
 SONRAKİ AKTİF ADIM
-- Gerçek gift/room_gift + bakiye/%70 smoke ve iki istemcili room WebSocket E2E hazırlığını tamamla.
+- Gerçek gift/room_gift + bakiye/%70 smoke ve iki istemcili room WebSocket E2E hazırlığını tamamla ve mümkün olan yerel/statik doğrulamaları çalıştır.
 - Ardından Pages failure'ını yapılandırma/job ayrımıyla incele.
 - Sonrasında gerçek avatar/frame/VIP asset sayımını ve görsel katalog ↔ backend eşleşmesini tamamla.
 - Ardından purchase/apply ve anonymous/session/profile/logout canlı E2E akışlarına geç.
