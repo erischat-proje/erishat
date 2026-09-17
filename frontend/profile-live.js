@@ -8,15 +8,18 @@
     if (name) name.textContent = user.nickname || 'Anonim';
     const face = $('.profile .face');
     if (face) {
-      const avatar = user.avatar || '👤';
-      face.textContent = avatar;
-      face.style.display = 'grid';
-      face.style.placeItems = 'center';
-      face.style.fontSize = '54px';
+      const hasCosmeticAvatar = Boolean(user.avatar_asset || user.avatar?.url || user.avatar?.src || user.avatar?.asset_url || user.avatar?.path || user.avatar?.asset_key);
+      if (!hasCosmeticAvatar) {
+        face.textContent = user.avatar || '👤';
+        face.style.display = 'grid';
+        face.style.placeItems = 'center';
+        face.style.fontSize = '54px';
+      }
     }
     const balance = $('.balance');
     if (balance && Number.isFinite(Number(user.lidya))) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
     document.querySelectorAll('[data-erischat-nickname]').forEach(el => { el.textContent = user.nickname || 'Anonim'; });
+    if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
   }
 
   async function refresh() {
