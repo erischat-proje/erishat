@@ -39,11 +39,13 @@
 - Yeni committe environment-probe kalıcı workflow'dan çıkarıldı; probe yalnızca izolasyon kanıtı üretmek için kullanıldı.
 - Environment kaldırılarak yapılan önceki izolasyonda runner çalışmış, fakat `actions/deploy-pages@v4` "Missing environment" ile durduğu da önceki gerçek kanıt olarak korunuyor. Dolayısıyla deploy için `github-pages` environment zorunlu, fakat mevcut environment branch-policy gate'i `main` job'unu runner'a almıyor.
 - **Kesin kök neden doğrulandı:** gerçek diagnostics run `35244809919` içinde GitHub API `/environments/github-pages/deployment-branch-policies` cevabı `total_count=1` ve tek custom branch policy `name="gh-pages"`, `type="branch"`, `id=60159219` olarak döndü. `main` bu policy içinde yok. Bu nedenle `main` üzerinden çalışan Pages deploy job'ının `github-pages` environment admission aşamasında runner'a alınmaması mevcut loglarla açıklanıyor.
-- `pages-diagnostics.yml` bu branch policy girdisini ve `main` için `target_branch_allowed` sonucunu açıkça loglayacak şekilde commit `abfa69173c0051f4265fdb056e1440f0a3a72465` ile güncellendi.
+- `pages-diagnostics.yml` branch policy girdisini ve `main` için `target_branch_allowed` sonucunu loglayacak şekilde önceki committe güncellenmişti.
+- **Yeni CI guard:** commit `08b455c30b0452ee523df166fb499666b3870dd7` ile Pages diagnostics, `target_branch_allowed=false` olduğunda artık workflow'u açık hata mesajıyla başarısız ediyor. Böylece politika engeli sessiz bir SUCCESS olarak raporlanmayacak; gerçek runner kanıtı doğrudan kırmızı guard ile görünür olacak.
+- Bu guard, GitHub environment ayarını değiştirmiyor; yalnızca mevcut dışsal policy engelini güvenilir şekilde yakalıyor.
 - Pages PASS/TAMAM denmiyor; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 
 ## Güncel sıra
-1. Yeni diagnostics run'da `target_branch_allowed=false` bilgisinin tekrar gerçek runner loguyla doğrulanması.
+1. Yeni diagnostics run'da guard'ın `main` engelini gerçek runner'da açıkça raporladığını doğrula.
 2. GitHub `github-pages` environment custom deployment branch policy'sine `main` eklenmesi (veya policy'nin `main`i kapsayacak şekilde GitHub settings üzerinden değiştirilmesi). Mevcut GitHub connector environment yönetim yazma endpointini sunmuyor; repo workflow dosyasından policy tahmin edilerek değiştirilmemeli.
 3. Environment gate çözüldüğünde yeni sade Pages workflow'un gerçek başarılı deploy job/run sonucunu doğrula.
 4. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
