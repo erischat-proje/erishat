@@ -71,3 +71,8 @@
 - Chromium browser render smoke 139/139 kozmetik asset'i decode etti.
 - PNG frame alpha sonucu 16/44 şeffaf, 28/44 opak; bu nedenle render doğrulaması tamam, tüm frame şeffaflığı ise ayrıca incelenecek.
 - Sıradaki browser zinciri: oda join → koltuk → chat → gift → moderasyon.
+
+## Room control live smoke
+- Quality `35282680644` / job `105407977869` SUCCESS.
+- Live room smoke artık oda join, koltuk, moderator, seat mute/unmute, seat lock/unlock ve room lock/unlock akışlarını da doğruluyor.
+- Browser UI bu backend kontrollerine ayrıca bağlanacak; gerçek WebRTC transportu henüz tamamlanmış değil.
