@@ -7,36 +7,32 @@ DOĞRULANAN REPO
 - Repo erişimi ve yazma yetkisi doğrulandı.
 
 BU TURDA YAPILAN
-- backend/app/cosmetics.py gerçek repository asset klasörlerine göre düzeltildi.
-- Standard katalog klasörleri kadınavatar, erkekavatar ve standartcerceve olarak hizalandı.
-- VIP katalog klasörleri vipkadınavatar, viperkekavatar ve vipcerceve olarak ayrı toplandı.
-- Cosmetic catalog kayıtlarına vip ve tier metadata eklendi.
-- VIP kozmetik fiyatı katalog metadata'sından purchase sırasında hesaplanıyor.
-- Cosmetic purchase/apply cevaplarına vip alanı eklendi.
-- frontend/cosmetics.js repository-relative asset_key değerlerini frontend asset URL'lerine çözümleyecek şekilde güçlendirildi.
-- frontend/cosmetics.js standard/VIP filtreleme ve owned kontrol helper'ları eklendi.
-- Oda WebSocket erişiminde room-ban kontrolü bağlantıda ve room_chat sırasında korunuyor.
-- Oda banı room_id + user_id bazlıdır; başka odalara erişimi etkilemez.
-- Ban sırasında oda üyeliği ve koltuk kaydı temizleniyor; unban yalnızca ilgili oda banını kaldırıyor.
-- frontend/room-actions.js eklendi; oda REST işlemleri tek helper katmanında toplandı.
-- room-actions.js; oda listesi/oluşturma/katılım, koltuk, chat, moderatör, ban/unban, oda/koltuk kilidi, mute, gift, leaderboard ve müzik işlemlerini kapsıyor.
-- GitHub Pages workflow'una room-actions.js dahil edildi ve artifact doğrulamasına eklendi.
+- Oda REST helper'ına GET ban listesi eklendi: ErisRoom.bans(roomId).
+- Backend'e oda bazlı GET /v1/rooms/{room_id}/bans endpointi eklendi.
+- Atılan kullanıcı listesi yalnızca ilgili oda için döndürülüyor ve yalnızca oda sahibi/aktif moderatör erişebiliyor.
+- Ban sırasında kullanıcı oda üyeliğinden ve koltuktan çıkarılıyor.
+- Ban sırasında aynı odadaki moderatör rolü de kaldırılıyor; unban moderatörlüğü otomatik geri vermiyor.
+- Banlı kullanıcı yeniden aynı odaya girmeye çalıştığında backend engellemeye devam ediyor.
+- Aktif moderatör kontrolü artık moderatör kaydının yanında o odada aktif üyelik de gerektiriyor.
+- Banlı kullanıcı aynı odada yeniden moderatör olarak atanamıyor.
+- Önceki frontend ban yönetim ekranı GET endpointine bağlanabilecek durumda.
 
 SON COMMITLER
-- Cosmetics catalog + VIP metadata: ba2d7f91cc0f0aef990559ef496ec381ffdd596e
-- Cosmetics purchase pricing: bbdaaffa79a37a70ec36be1fdce08c33e152fa6e
-- Cosmetics frontend asset resolution: 35f54753fa885f7e3d8f51d0c75dc34fbcd5eeac
-- Yapılanlar checkpoint sync: 38e24a33e1f6b811351a7abd90adf1f002695e32
-- Room WebSocket ban hardening: 7efe03a51838499de0afcae3113c3297b26ca3f6
 - Room ban/member/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
 - Room actions helper + Pages integration: 22c5e9e235d316422bff4bfff03feb5e63d0e654
-- Checkpoint note sync: 8a381597aec3047e2fd4be76ae4a21bee5d6eda0
+- Gift REST bridge: 683afe64749a6f812fc5069c1dced211de472369
+- Ban list + Pages integration: 6ac27e083895c506218477fadd5c37401cdbd3a4
+- Secure room ban listing/moderator revoke: 80d393cd7cd773b9a43df03506f04db9688f0737
+- Active moderator membership hardening: 88d2c987b08cf3eaf6ecb0dfd2bc1b659e0e060a
 
 BACKEND DURUMU
 - /v1/me ve DM conversation/message endpointleri mevcut.
 - /ws/rooms/{room_id} room history, ping/pong ve room_chat kabul ediyor.
 - room_chat DB'ye kaydedilip aynı odadaki websocket istemcilerine broadcast ediliyor.
 - Room banları oda bazlı ve WebSocket katmanında da kontrol ediliyor.
+- GET /v1/rooms/{room_id}/bans yalnızca oda staff'ına açık.
+- Ban, ilgili odadaki üyelik/koltuk/moderatör rolünü temizliyor.
+- Unban yalnızca ilgili oda ban kaydını kaldırıyor; başka odalar etkilenmiyor.
 - Gift room_gift event altyapısı mevcut.
 - Gift gönderiminde gönderen bakiyesi düşürülüyor, alıcıya %70 aktarılıyor ve RoomGiftEvent kaydı oluşturuluyor.
 - Cosmetic catalog/purchase/apply API mevcut ve repository asset klasörleriyle hizalı.
@@ -45,7 +41,8 @@ BACKEND DURUMU
 FRONTEND DURUMU
 - Oda listesi gerçek /v1/rooms API'sine bağlı.
 - Oda chat UI gerçek room WebSocket akışına bağlı.
-- Oda REST işlemleri frontend/room-actions.js helper'ına bağlanabilecek durumda.
+- Oda REST işlemleri frontend/room-actions.js helper'ında toplandı; ban listesi de dahil.
+- Oda ban yönetimi için frontend GET/UI katmanı hazırlandı; canlı backend E2E henüz yapılmadı.
 - DM listesi/history/send gerçek API helper'larına bağlı.
 - DM conversation creation için frontend helper hazır; mevcut ana UI'ya kullanıcı hedefleme düğmesi henüz bağlanmadı.
 - Profil renderer canlı kullanıcı verisini daha güvenilir auth event akışıyla işliyor.
@@ -53,17 +50,17 @@ FRONTEND DURUMU
 - Pages workflow platform/room/gift/room-actions/DM/auth/profile/cosmetics scriptlerini index.html'e ekliyor.
 
 HENÜZ DOĞRULANMAYANLAR
-1. Oda chat iki istemci canlı E2E testi.
-2. Gerçek gift/room_gift ve DB bakiye/%70 smoke testi.
-3. Anonymous/session/profile/logout UI tam akışı.
-4. Genel WS reconnect/presence/event UI.
-5. Pages workflow başarı ve canlı Pages URL doğrulaması.
-6. Railway /health, /ready ve API/DB/WS canlı doğrulaması.
-7. V35/v53 tek sayfa temizliği.
-8. Avatar/frame/VIP asset sayıları, görsel kalite/şeffaflık ve 1-12 birebir eşleşme doğrulaması.
-9. Avatar/frame/VIP purchase/apply canlı E2E doğrulaması.
-10. Backend security/DB/migration/rate-limit hardening.
-11. Oda ban listesinin GET tabanlı yönetim ekranı ve canlı UI E2E'si.
+1. Oda banı → GET liste → unban → aynı odaya tekrar giriş canlı E2E.
+2. Oda chat iki istemci canlı E2E testi.
+3. Gerçek gift/room_gift ve DB bakiye/%70 smoke testi.
+4. Anonymous/session/profile/logout UI tam akışı.
+5. Genel WS reconnect/presence/event UI.
+6. Pages workflow başarı ve canlı Pages URL doğrulaması.
+7. Railway /health, /ready ve API/DB/WS canlı doğrulaması.
+8. V35/v53 tek sayfa temizliği.
+9. Avatar/frame/VIP asset sayıları, görsel kalite/şeffaflık ve 1-12 birebir eşleşme doğrulaması.
+10. Avatar/frame/VIP purchase/apply canlı E2E doğrulaması.
+11. Backend security/DB/migration/rate-limit hardening.
 
 NOT
 - Railway production deploy yapılmadı; kullanıcı açıkça "deploy" demeden yapılmayacak.
@@ -72,7 +69,7 @@ NOT
 - Room ban semantiği global değildir; ban yalnızca ilgili room_id için geçerlidir.
 
 SONRAKİ AKTİF ADIM
-- Oda ban listesinin yönetilebilir GET/UI akışını tamamla.
-- Ardından gerçek gift/room_gift + bakiye/%70 smoke ve iki istemcili room WebSocket E2E hazırlığını tamamla.
-- Pages failure'ını rastgele retry etmek yerine yapılandırma/job ayrımıyla incele.
+- Gerçek gift/room_gift + bakiye/%70 smoke ve iki istemcili room WebSocket E2E hazırlığını tamamla.
+- Ardından Pages failure'ını yapılandırma/job ayrımıyla incele.
 - Sonrasında gerçek avatar/frame/VIP asset sayımını ve görsel katalog ↔ backend eşleşmesini tamamla.
+- Ardından purchase/apply ve anonymous/session/profile/logout canlı E2E akışlarına geç.
