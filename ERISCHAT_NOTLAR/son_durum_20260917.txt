@@ -59,3 +59,9 @@
 ## Kural
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
 - Railway deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
+
+## Browser smoke kanıtı
+- Quality run `35280867500` / quality job `105402227348` SUCCESS.
+- Playwright Chromium smoke gerçek browser ortamında çalıştı.
+- Doğrulanan etkileşimler: Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesinin browser renderı, Mesaj → Rana'nın Odası → mesaj gönderme.
+- Bu kanıt tüm ürün yüzeylerinin tam browser E2E doğrulaması değildir; room modal/join/seat/gift/moderation, 139 kozmetik renderı, anonymous/me backend akışı ve aile/profile tam backend zinciri ayrıca doğrulanacak.
