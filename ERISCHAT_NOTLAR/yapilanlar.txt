@@ -1,70 +1,74 @@
 ERISCHAT — YAPILANLAR / GÜNCEL
-Tarih: 2026-09-17 — repo + kod denetimi sonrası
+Tarih: 2026-09-17 — canlı geliştirme denetimi
 
 REPO / DENETİM
-- [x] Doğru GitHub repository doğrulandı: semihvarolymk-png/erischat.
-- [x] main branch erişimi doğrulandı.
-- [x] ERISCHAT_NOTLAR klasörü kontrol edildi.
-- [x] 2026-09-16 ve 2026-09-17 checkpoint dosyaları okundu.
-- [x] Recursive repository tree taraması yapıldı.
-- [x] Backend, frontend, asset ve GitHub Actions yapıları bulundu.
+- [x] Doğru GitHub repository: semihvarolymk-png/erischat.
+- [x] main branch erişimi.
+- [x] ERISCHAT_NOTLAR checkpoint'leri okundu.
+- [x] Recursive repository tree kontrol edildi.
+- [x] Backend, frontend, asset ve Actions yapıları kontrol edildi.
+- [x] Gerçek kod ile yapılacaklar listesi karşılaştırıldı.
 
 BACKEND
 - [x] FastAPI ana uygulaması mevcut.
 - [x] /health ve /ready endpointleri mevcut.
 - [x] Anonymous user + session/token altyapısı mevcut.
-- [x] /v1/me ve temel profil güncelleme endpointleri mevcut.
+- [x] /v1/me ve temel profil endpointleri mevcut.
 - [x] DM conversation/message endpointleri mevcut.
-- [x] Genel /ws endpointi mevcut.
+- [x] Genel /ws mevcut.
 - [x] /ws/rooms/{room_id} oda sohbet WebSocket'i mevcut.
-- [x] Oda oluşturma/join/leave/seat/moderator/ban/chat akışlarının backend kodu mevcut.
-- [x] Room level L1-L8 kuralları mevcut.
+- [x] Room create/join/leave/seat/moderator/ban/chat akışları mevcut.
+- [x] Room L1-L8 kuralları mevcut.
 - [x] Server kontrollü gift catalog mevcut.
 - [x] Gift quantity 1-99 mevcut.
-- [x] Server tarafında %70 recipient payı mevcut.
+- [x] Recipient %70 payı mevcut.
 - [x] Room gift WebSocket event altyapısı mevcut.
 - [x] Cosmetic catalog/purchase/apply API mevcut.
-- [x] main.py içindeki yinelenen user ALTER TABLE migration ifadeleri temizlendi.
+- [x] Duplicate startup ALTER ifadeleri temizlendi.
+- [x] Mevcut backend/app/__pycache__ .pyc artefaktları silindi.
 
 FRONTEND
-- [x] frontend/erischat-main.html ana tek sayfa frontend mevcut.
-- [x] frontend/platform.js Railway API default adresine bağlı.
-- [x] frontend/gift-live.js room gift WebSocket entegrasyonu mevcut.
-- [x] Profil/VIP/mağaza/anonimlik ekranlarının temel UI'sı mevcut.
-- [x] Canlı oda yükleme için gerçek API entegrasyonunun temel noktaları mevcut; kalan UI akışları ayrıca test edilecek.
+- [x] Ana tek sayfa frontend mevcut.
+- [x] platform.js Railway API default adresini kullanıyor.
+- [x] gift-live.js room WebSocket'e bağlanıyor ve room_gift eventini render ediyor.
+- [x] Oda listesi temel olarak gerçek /v1/rooms API'sine bağlı.
+- [x] Profil/VIP/mağaza/anonimlik temel UI'ları mevcut.
 
-GITHUB PAGES
+TESPİT EDİLEN EKSİKLER
+- [ ] Mesajlar ekranında hardcoded/demo konuşma kayıtları var.
+- [ ] Gerçek DM history/send UI tamamlanmamış.
+- [ ] Oda mesaj gönderme fonksiyonu hâlen toast gösteriyor; backend WS mevcut olmasına rağmen UI gerçek gönderim yapmıyor.
+- [ ] Anonymous/session/profile UI akışları tam bağlanmamış.
+- [ ] WS reconnect/presence/genel event UI eksik.
+
+PAGES / RAILWAY
 - [x] pages.yml workflow mevcut.
-- [x] Frontend -> _site hazırlama ve index.html üretimi mevcut.
-- [x] upload-pages-artifact@v4 mevcut.
-- [x] deploy-pages@v4 mevcut.
-- [x] github-pages environment workflow'a eklenmiş.
-- [x] Eski sorunlu workflow'ların temizliği checkpointlerde tamamlandı.
-- [x] gh-pages senkron checkpoint mevcut.
-- [ ] Canlı Pages deployment success henüz doğrulanmadı.
+- [x] _site hazırlama + index.html üretimi mevcut.
+- [x] upload-pages-artifact@v4 ve deploy-pages@v4 mevcut.
+- [x] github-pages environment tanımlı.
+- [x] Railway production domain checkpointte kayıtlı.
+- [ ] Canlı Pages success doğrulanmadı.
+- [ ] Canlı Railway /health /ready/API/DB/WS E2E doğrulanmadı.
 
-RAILWAY
-- [x] Backend production domaini doğrulandı: erischat-production.up.railway.app.
-- [x] Railway project/service checkpoint bilgileri mevcut.
-- [ ] Bu oturumda production deploy yapılmadı.
-- [ ] Canlı health/ready/API/DB/WS uçtan uca doğrulaması henüz tamamlanmadı.
+ÜRÜN / ASSET
+- [ ] Avatar/frame/VIP 1-12 gerçek asset entegrasyonu tamamlanmadı.
+- [ ] Gerçek iki kullanıcı room/gift smoke testi yapılmadı.
+- [ ] WebRTC/sesli oda tamamlanmadı.
+- [ ] Moderasyon/raporlama/engelleme tam UI entegrasyonu tamamlanmadı.
+- [ ] Admin paneli tamamlanmadı.
 
-HENÜZ TAMAMLANMAYAN ANA GRUPLAR
-- [ ] Pages deployment ve canlı frontend doğrulaması.
-- [ ] Gerçek anonim kullanıcı UI akışı.
-- [ ] Gerçek oda + iki kullanıcı smoke testi.
-- [ ] Gerçek DM/mesaj UI entegrasyonu.
-- [ ] WS reconnect/presence/event UI entegrasyonu.
-- [ ] Gerçek room/gift iki istemci testi.
-- [ ] Avatar/frame/VIP 1-12 gerçek asset entegrasyonu.
-- [ ] Backend security/rate-limit/CORS/migration hardening.
-- [ ] __pycache__ temizliği.
-- [ ] WebRTC/sesli oda.
-- [ ] Moderasyon/engelleme UI tam entegrasyonu.
-- [ ] Admin paneli.
+SON GELİŞTİRMELER
+- [x] Master yapılacaklar listesi gerçek kod denetimine göre yenilendi.
+- [x] Yapılanlar listesi gerçek durumla senkronlandı.
+- [x] __pycache__ temizliği gerçekleştirildi.
 
-GÜVENLİ CHECKPOINT
-- Main güvenli temel: aef369bf05d1a6b6af36ce40cd2f9bb41678d339.
-- Güncel audit dokümantasyon commitleri: 6bb856e30bd6c493f5d70c7166e68135f682472b ve ec529b6f172e42ed7639601dad6ce68bfaa34e9b.
-- Büyük frontend dosyası kısmi içerikle ezilmeyecek.
-- Railway production deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
+GÜVENLİK / DEPLOY
+- Railway production deploy yapılmadı; kullanıcı açıkça deploy demeden yapılmayacak.
+- Büyük frontend dosyası kısmi içerikle overwrite edilmeyecek.
+- Canlı test yapılmadan bir özellik tamamlandı olarak işaretlenmeyecek.
+
+SONRAKİ AKTİF İŞ
+1. Hardcoded/demo mesaj UI'larını gerçek conversation API'larına bağla.
+2. Room WebSocket chat UI'ını gerçek gönderim/history ile bağla.
+3. Anonymous/session/profile akışlarını tamamla.
+4. Pages/Railway canlı doğrulamalarına geç.
