@@ -3,69 +3,48 @@
 ## Son checkpoint
 - Repo: `semihvarolymk-png/erischat`, branch: `main`.
 - Railway `erischat-web-fixed` tarafında repo + servis config hizalaması yapıldı: Dockerfile path=`Dockerfile`, healthcheck=`/`, `PORT=80`; deploy yapılmadı.
-- Caddyfile repo tarafında `:80` portuna sabit; Dockerfile `EXPOSE 80` kullanıyor. Canlı 502'nin bu yeni config ile düzelip düzelmediği deploy edilmeden doğrulanamaz.
+- Caddyfile repo tarafında `:80` portuna sabit; Dockerfile `EXPOSE 80` kullanıyor. Canlı 502'nin yeni config ile düzelip düzelmediği deploy edilmeden doğrulanamaz.
 - Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
-- `.github/workflows/integrate-erischat-features.yml` migration tekrar-ekleme problemi düzeltildi; `main.py` duplicate migration/import durumu tekrar kontrol edildi.
-
-## Yeni teknik bulgu ve düzeltmeler
-- Dört live smoke harness'ında (`room_live_smoke.py`, `room_ban_live_smoke.py`, `dm_live_smoke.py`, `cosmetic_live_smoke.py`) eski `/auth/anonymous` endpoint çağrısı bulundu.
-- Mevcut backend kayıt sözleşmesi `/v1/users` ve `nickname/avatar/gender` payload'ı olduğu için dört harness güncel sözleşmeye hizalandı.
-- Room ve ban smoke harness'ları artık iki gerçek anonim session oluşturmayı mevcut `/v1/users` endpoint'i üzerinden deniyor.
-- DM ve cosmetic smoke harness'ları da aynı kayıt sözleşmesine geçirildi.
-- `.github/workflows/quality.yml` içine smoke harness Python syntax kontrolü, eski `/auth/anonymous` endpoint'ini reddeden contract guard ve localhost güvenlik varsayılanlarını doğrulayan kontrol eklendi.
-- Bu değişiklikler gerçek canlı E2E PASS anlamına gelmiyor; harness'lar hâlâ çalıştırılmayı bekliyor.
 
 ## Kozmetik tam aktif envanter modeli
-- Önceden kullanılan 40 standart avatar / 40 standart frame / 12 VIP avatar / 12 VIP frame sayıları artık sabit hedef değildir; bunlar eski referans değerleriydi.
-- Yeni kural: `Gereken_icerikler` içindeki altı katalog klasöründe bulunan tüm geçerli assetler aktif katalogda yer alır.
-- Aktif katalog klasörleri: `kadınavatar`, `erkekavatar`, `standartcerceve`, `vipkadınavatar`, `viperkekavatar`, `vipcerceve`.
-- Son CI envanteri: kadınavatar 34, erkekavatar 37, standart avatar toplam 71; standartcerceve 32; vipkadınavatar 12, viperkekavatar 12, VIP avatar toplam 24; vipcerceve 12.
-- `backend/app/cosmetics.py` gerçek bu klasörlerden otomatik katalog üretiyor ve asset key'leri root-relative path olarak tutuyor. Dolayısıyla klasörlerdeki geçerli assetlerin tamamı uygulamanın aktif kozmetik kaynağıdır.
-- `scripts/check_cosmetic_assets.py` artık sabit hedeflerle karşılaştırma yapmıyor. Tüm aktif klasörleri listeliyor, gerçek toplamları raporluyor, eksik katalog klasörlerini ve duplicate asset key'lerini yakalıyor.
-- Rastgele silme, yeniden adlandırma veya sahte asset üretimi yapılmayacak.
-- Repo ağacı tekrar doğrulandı: `Gereken_icerikler/standartcerceve` gerçek klasör adı olarak mevcut; `cosmetics.py` bu adı doğru kullanıyor. VIP klasörleri de gerçek ağaçta mevcut.
+- Sabit 40/40/12/12 hedefleri artık geçerli değil; `Gereken_icerikler` altındaki altı katalog klasöründe bulunan tüm geçerli assetler aktiftir.
+- Son doğrulanmış envanter: 34 kadın avatar + 37 erkek avatar = 71 standart avatar; 32 standart frame; 12 kadın VIP avatar + 12 erkek VIP avatar = 24 VIP avatar; 12 VIP frame; toplam 139 aktif asset.
+- `backend/app/cosmetics.py` gerçek klasörlerden katalog üretir. Inventory checker da gerçek klasör envanterini doğrular.
 
-## GitHub Pages
-- Pages workflow hazırlama zinciri incelendi: checkout → configure-pages → frontend hazırlama → JS enjeksiyonu → asset kontrolleri → artifact upload → deploy-pages.
-- Run #258 (`35208712803`) iki ayrı attempt'te de yaklaşık 1 saniyede failure oldu ve her iki job kaydında `steps: []` görüldü. Bu, workflow adımlarına girmeden job seviyesinde sonlandığını gösteriyor; kök neden hâlâ kesinleştirilmedi.
-- Pages job log/step API'si boş döndüğü için kök neden tahmin edilmeyecek.
-- Tanı koymak için non-deploy `pages-diagnostics.yml` workflow'u eklendi. Bu workflow Pages API durumu, `github-pages` environment durumu ve mevcut Pages workflow şekli hakkında veri topluyor; Railway/Pages production deploy yapmıyor.
-- Diagnostics workflow dosyası GitHub'a commitlendi: `7b8a53c4819cd4ce21d7068f8fad3a6d58639bed`.
-- Diagnostics run sonucu henüz doğrulanmış PASS/FAIL olarak not edilmedi.
-- Pages canlı doğrulaması henüz yapılmadı.
+## Live E2E / WebSocket bulgusu
+- Gerçek GitHub Actions runner çalıştığı yeni minimal recovery workflow ile doğrulandı: run `35227284860`, job `105221988844`, probe adımları SUCCESS.
+- Önceki gerçek live E2E koşusunda PostgreSQL, static quality, API readiness ve REST room/gift akışı geçti; ilk başarısız nokta iki istemcili room WebSocket handshake oldu. Bu yüzden ban/DM/cosmetic adımları o koşuda çalışmadı.
+- Sonraki push'larda mevcut eski quality/apply workflow'larının bazı run kayıtları `failure` + `jobs: []` şeklinde oluştu. Bunlar runner çalışmıyor kanıtı değildir; ayrı recovery runner job'ı gerçek runner üzerinde SUCCESS olduğundan runner erişimi doğrulanmıştır. Eski workflow run'larının neden job üretmediği ayrıca araştırılacak; tahmin edilmeyecek.
+- WebSocket smoke harness'ında local E2E için `websocket-client` environment proxy'sini açıkça bypass edecek düzeltme yapıldı: commit `8f065859587a47a575f92be87b509819b376557e`.
+- Düzeltme henüz gerçek live E2E'de PASS olarak doğrulanmadı.
 
-## Test / E2E sırası
-1. Railway deploy sonrası 502 canlı doğrulaması — kullanıcı `deploy` demeden çalıştırılmayacak.
-2. Kontrollü/local room live smoke.
-3. Ban → liste → unban → yeniden katılım E2E.
-4. İki istemcili room WebSocket chat E2E.
-5. Gift gönderimi + bakiye + %70 alıcı payı + room_gift E2E.
-6. Cosmetic purchase → ownership → apply E2E.
-7. DM conversation create/list/send/history E2E.
-8. Anonymous/session/profile/logout E2E.
-9. Pages canlı HTTP + Pages→Railway API doğrulaması.
-10. Backend security + quality hardening.
-11. V35/V53 legacy cleanup.
+## Güncel E2E sırası
+1. `room_live_smoke.py` WebSocket proxy bypass düzeltmesini gerçek runner üzerinde doğrula.
+2. Room ban → liste → unban → yeniden katılım E2E.
+3. İki istemcili room WebSocket chat E2E.
+4. Gift gönderimi + bakiye + %70 alıcı payı + room_gift event E2E.
+5. Cosmetic purchase → ownership → apply E2E.
+6. DM conversation create/list/send/history E2E.
+7. Anonymous/session/profile/logout E2E.
+8. Pages canlı HTTP + Pages→Railway API doğrulaması.
+9. Backend security + quality hardening.
+10. V35/V53 legacy cleanup.
 
 ## Harness checkpoint
-- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat; auth contract güncel.
-- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin; auth contract güncel.
-- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history; auth contract güncel.
-- `scripts/cosmetic_live_smoke.py`: catalog → balance → purchase → ownership → apply; auth contract güncel.
-- Harnessların varlığı ve kod sözleşmesi kontrol edildi; çalıştırılmadan PASS yazılmayacak.
+- `scripts/room_live_smoke.py`: iki session + room + gift/balance + iki istemcili room WS chat; auth `/v1/users`; local websocket proxy bypass düzeltmesi commitlendi.
+- `scripts/room_ban_live_smoke.py`: ban → liste → 403 rejoin → unban → rejoin.
+- `scripts/dm_live_smoke.py`: iki session + conversation create/list + message send/history.
+- `scripts/cosmetic_live_smoke.py`: catalog → balance → purchase → ownership → apply.
+- Harnessların kod sözleşmesi kontrol edildi; çalıştırılmadan PASS yazılmayacak.
 
 ## CI checkpoint
-- `Integrate ErisChat features` run `35218672931`: success; job `105193189310` içindeki patch, Python syntax, commit adımları tamamlandı.
-- Cosmetic inventory checker yeni tam-envarter mantığına geçirildi ve commitlendi: `60c77f225ca3815cc85c1f0de3c54bd62687716f`.
-- Quality workflow'a kontrollü local live E2E job eklendi: commit `6c90d33e0117dd76d40a536b27c5f5d1456da0bb`.
-- `main` şu anda doğrudan `6c90d33e0117dd76d40a536b27c5f5d1456da0bb` üzerinde; quality workflow `push`, `pull_request` ve `workflow_dispatch` ile etkin.
-- Yeni `live-e2e` job'ının gerçek PASS sonucu henüz doğrulanmış değil. Job detay/log API erişimi bulunamadığı için fail sebebi uydurulmayacak.
-- Son incelemede smoke kayıt payload'ları backend'in mevcut `female/male` gender sözleşmesiyle uyumlu; kozmetik katalog klasörleri de repo ağacında mevcut.
-
-## Yeni sohbet için devam mesajı
-`Kanka ErisChat'e kaldığımız yerden DEVAM ET, DURMA. Önce ERISCHAT_NOTLAR/son_durum_20260917.txt ve ERISCHAT_NOTLAR/yapilacaklar.txt dosyalarını oku. Repo: semihvarolymk-png/erischat, branch: main. Railway deploy YAPMA; sadece kod/config geliştirmesi ve doğrulama yap. Kozmetiklerde sabit 40/40/12/12 hedefi yok; Gereken_icerikler altındaki tüm geçerli standart/VIP avatar ve çerçeveler aktif katalogdur. Inventory checker buna göre güncellendi. Quality workflow'a local live E2E jobu eklendi; yeni jobın gerçek sonucunu doğrula, sonra kontrollü/local E2E'yi çalıştır ve gerçek hatayı kod üzerinden düzelt. Canlı E2E olmadan PASS deme.`
+- Quality workflow'a local live E2E jobu daha önce eklendi; gerçek E2E PASS sonucu henüz doğrulanmış değil.
+- `runner-recovery.yml` ile gerçek GitHub-hosted runner doğrulaması yapıldı.
+- Bazı eski workflow run'larının `jobs: []` ile failure görünmesi ayrı CI registration/job-generation problemi olarak takip ediliyor.
+- Railway deploy yok.
 
 ## Kural
 - Canlı/local E2E yapılmadan özellik tamamlandı sayılmayacak.
 - Railway production deploy yalnızca kullanıcı açıkça `deploy` dediğinde yapılacak.
 - Pages kök nedeni log/API kanıtı olmadan tahmin edilmeyecek.
+- E2E PASS kanıtı olmadan PASS/TAMAM denmeyecek.
