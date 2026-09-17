@@ -38,12 +38,13 @@
 - Kritik izolasyon: `github-pages` environment'a bağlanan bağımsız `environment-probe` job'ı gerçek runner'da `failure` + `steps: []` ile runner step'lerine hiç ulaşmadı. Aynı workflow'daki environment'sız `diagnostics` job'ı gerçek runner'da SUCCESS oldu. Bu, gate'in Pages action/build içinden değil environment admission katmanından önce olduğunu doğrudan kanıtlıyor.
 - Yeni committe environment-probe kalıcı workflow'dan çıkarıldı; probe yalnızca izolasyon kanıtı üretmek için kullanıldı.
 - Environment kaldırılarak yapılan önceki izolasyonda runner çalışmış, fakat `actions/deploy-pages@v4` "Missing environment" ile durduğu da önceki gerçek kanıt olarak korunuyor. Dolayısıyla deploy için `github-pages` environment zorunlu, fakat mevcut environment branch-policy gate'i `main` job'unu runner'a almıyor.
-- `pages-diagnostics` şu an environment custom branch policy girdilerini de API üzerinden raporlayacak şekilde güncellendi; bir sonraki gerçek run bu girdilerin hangi branch adlarını kapsadığını gösterecek.
+- **Kesin kök neden doğrulandı:** gerçek diagnostics run `35244809919` içinde GitHub API `/environments/github-pages/deployment-branch-policies` cevabı `total_count=1` ve tek custom branch policy `name="gh-pages"`, `type="branch"`, `id=60159219` olarak döndü. `main` bu policy içinde yok. Bu nedenle `main` üzerinden çalışan Pages deploy job'ının `github-pages` environment admission aşamasında runner'a alınmaması mevcut loglarla açıklanıyor.
+- `pages-diagnostics.yml` bu branch policy girdisini ve `main` için `target_branch_allowed` sonucunu açıkça loglayacak şekilde commit `abfa69173c0051f4265fdb056e1440f0a3a72465` ile güncellendi.
 - Pages PASS/TAMAM denmiyor; gerçek başarılı deploy ve canlı HTTP doğrulaması şart.
 
 ## Güncel sıra
-1. `github-pages` custom branch policy girdilerinin bir sonraki gerçek diagnostics run logundan alınması.
-2. Policy'nin `main` ile uyumlu hale gelmesini sağlayacak gerçek GitHub environment ayarı doğrulanmalı; mevcut GitHub connector bu environment yönetim yazma endpointini sunmuyor, bu yüzden ayar repo workflow dosyasından tahmin edilerek değiştirilmemeli.
+1. Yeni diagnostics run'da `target_branch_allowed=false` bilgisinin tekrar gerçek runner loguyla doğrulanması.
+2. GitHub `github-pages` environment custom deployment branch policy'sine `main` eklenmesi (veya policy'nin `main`i kapsayacak şekilde GitHub settings üzerinden değiştirilmesi). Mevcut GitHub connector environment yönetim yazma endpointini sunmuyor; repo workflow dosyasından policy tahmin edilerek değiştirilmemeli.
 3. Environment gate çözüldüğünde yeni sade Pages workflow'un gerçek başarılı deploy job/run sonucunu doğrula.
 4. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 5. Backend security + quality hardening.
