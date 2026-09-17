@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Backend quality
         run: python scripts/check_backend_quality.py
+      - name: Room security regression
+        run: python scripts/check_room_security.py
 
   cosmetic-inventory:
     runs-on: ubuntu-latest
