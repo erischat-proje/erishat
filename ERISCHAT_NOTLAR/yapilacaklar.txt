@@ -5,21 +5,28 @@ Tarih: 2026-09-17
 - [x] Ana ErisChat arayüzünde müşteri vitrini mevcut.
 - [x] Ürün merkezi tek ekranda Odalar / Mağaza / VIP / Aile / Oyunlar / Keşif / Sosyal / Gizlilik / Şikayet / Profil / DM / Ürün başlıklarını gösteriyor.
 - [x] Oda ürün yüzeyinde oda açma, canlı oda listesi, oda detayları, katılma/ayrılma, koltuklar, sohbet aç/kapat ve duyuru görünümü bağlandı.
-- [x] Mağaza ürün yüzeyinde 139 kozmetik kataloglanıyor; standart/VIP filtreleri ve uygulama/satın alma akışları bağlandı.
+- [x] Oda demo+ katmanında 12 koltuk, mikrofon/ses durumları ve oda sahibi ayarları görünür.
+- [x] Oda demo+ katmanında müzik çalma/kuyruk/moderasyon yüzeyi görünür.
+- [x] Oda demo+ katmanında duyuru yönetim yüzeyi görünür; mevcut backend yalnızca GET ise bu durum açıkça belirtilir.
+- [x] Mağaza demo+ katmanında API kataloğu görsel grid, arama ve avatar/çerçeve/VIP/standart filtreleriyle gösterilir.
 - [x] VIP 1–12 görünümü müşteri vitrini olarak gösteriliyor.
+- [x] VIP ilerleme/ödül ekranı mevcut seviye ve kilitli/açık ödülleri gösteriyor.
 - [x] Aile oluşturma, seviye/kapasite/bakiye, bağış ve aile sohbeti yüzeyi gösteriliyor.
+- [x] Aile demo+ katmanında üye listesi, davet/çıkarma/rol aksiyonlarının müşteri yüzeyi gösteriliyor; doğrulanmış endpoint yoksa demo olduğu yazıyor.
 - [x] Keşif: yakındaki kullanıcı / rastgele sohbet / rastgele oda yüzeyleri bağlandı.
 - [x] Sosyal profil: kullanıcı, fan seviyesi ve profil hediyeleri yüzeyi bağlandı.
+- [x] Profil demo+ katmanında avatar + çerçeve birleşik try-on ve sosyal aksiyonlar görünür.
 - [x] Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü kontrolleri bağlandı.
+- [x] Güvenlik demo+ katmanında bildirim merkezi, engelleme ve admin/moderasyon ürün yüzeyi gösteriliyor; doğrulanmış production endpoint yoksa açıkça işaretleniyor.
 - [x] Şikayet: kullanıcı / oda / mesaj hedef tipleri için form yüzeyi bağlandı.
-- [x] Profil ve DM yüzeyleri gerçek API akışlarına bağlandı.
 - [x] Oyunlar müşteri vitrini olarak iki sistem alanını gösteriyor; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna bırakıldı.
+- [x] Onboarding demo: anonim giriş, nickname, cinsiyet, avatar, ilgi alanları, gizlilik ve başlangıç akışı görünür.
 - [ ] Yeni müşteri ürün shell'i için Quality runner doğrulaması.
 - [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
 
 GERÇEK RUNNER
 - [x] Önceki doğrulanmış Quality v4: run 35266995579 / job 105356518821 SUCCESS.
-- [x] Static syntax + required-file kontrolleri önceki doğrulanmış HEAD'de geçti.
+- [x] Önceki doğrulanmış Quality: run 35268797342 / job 105362578713 SUCCESS.
 - [x] 139 cosmetic asset integrity.
 - [x] Cosmetic asset URL smoke.
 - [x] Anonymous session smoke.
@@ -29,10 +36,12 @@ GERÇEK RUNNER
 - [x] Live cosmetic smoke.
 - [x] Room WebSocket history/membership/ban zinciri önceki doğrulanmış HEAD'de geçti.
 - [ ] Yeni product shell HEAD için runner sonucu.
+- [ ] demo-extras-live.js için static syntax/required-file runner kontrolü.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
 - [x] Asset URL/path smoke kontrolü gerçek runner'da geçti.
+- [x] Demo+ görsel katalog, arama, filtre ve avatar/çerçeve önizleme yüzeyi eklendi.
 - [ ] Tarayıcıda gerçek asset render/şeffaflık doğrulaması.
 
 FRONTEND
@@ -41,8 +50,9 @@ FRONTEND
 - [x] DM canlı scriptleri mevcut.
 - [x] Gift/cosmetic canlı scriptleri mevcut.
 - [x] Customer-facing product shell eklendi.
+- [x] Remaining customer demo surfaces için demo-extras-live.js eklendi ve room-live zincirine bağlandı.
 - [ ] Gerçek tarayıcıda anonymous/me akışı.
-- [ ] Gerçek tarayıcıda room + chat/gift akışı.
+- [ ] Gerçek tarayıcıda room + chat/gift/seat akışı.
 - [ ] Gerçek tarayıcıda DM akışı.
 - [ ] Gerçek tarayıcıda profile/cosmetic render.
 - [ ] Customer shell içindeki tüm backend akışlarının gerçek browser doğrulaması.
@@ -58,15 +68,16 @@ PAGES / CANLI ZİNCİR
 
 TEMİZLİK / DOKÜMANTASYON
 - [x] Customer product shell checkpoint'i işlendi.
+- [x] Remaining customer demo surfaces checkpoint'i işlendi.
 - [ ] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
 - [ ] son_durum_20260917.txt yeni HEAD ile senkronize edilecek.
 
 SONRAKİ GELİŞTİRME SIRASI
-1. Product shell Quality runner sonucunu doğrula ve hataları düzelt.
-2. Oda detayını gerçek oda ekranı/chat/gift/mikrofon akışına bağla.
+1. Yeni demo katmanını Quality runner'a dahil et ve syntax/required-file kontrolünü doğrula.
+2. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
 3. 139 kozmetiğin gerçek browser renderını doğrula.
-4. Profil + avatar/frame uygulama görünümünü gerçek browserda doğrula.
-5. DM ve aile sohbetini gerçek browserda doğrula.
+4. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
+5. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
 6. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
 
 KURAL
