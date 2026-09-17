@@ -17,6 +17,7 @@ BU TURDA YAPILAN
 - Banlı kullanıcı aynı odada yeniden moderatör olarak atanamıyor.
 - Room security regression checker eklendi: scripts/check_room_security.py.
 - Quality workflow'a room security regression adımı eklendi.
+- backend/app/main.py startup migration bölümündeki tekrarlanan gender/avatar_asset/frame_asset ALTER ifadeleri kaldırıldı; her kolon için tek migration ifadesi kaldı.
 
 SON COMMITLER
 - Room ban/member/seat hardening: 6342a195be4fd49069cf159cbeeac298013e9e6c
@@ -27,6 +28,7 @@ SON COMMITLER
 - Active moderator membership hardening: 88d2c987b08cf3eaf6ecb0dfd2bc1b659e0e060a
 - Room security regression checker: 4c58aade0784add14ebf5a23556e33fc67d5a741
 - Quality workflow room security integration: 02d4d1ec078510b22f87e9c9c218c5eaee330c43
+- Startup migration duplicate cleanup: 21a5ffaf3682764e16fc16ed66745900d1a08f5b
 
 BACKEND DURUMU
 - /v1/me ve DM conversation/message endpointleri mevcut.
@@ -39,7 +41,7 @@ BACKEND DURUMU
 - Gift room_gift event altyapısı mevcut.
 - Gift gönderiminde gönderen bakiyesi düşürülüyor, alıcıya %70 aktarılıyor ve RoomGiftEvent kaydı oluşturuluyor.
 - Cosmetic catalog/purchase/apply API mevcut ve repository asset klasörleriyle hizalı.
-- Startup user migration ifadeleri tekilleştirilmiş durumda.
+- Startup user migration ifadeleri artık tekilleştirilmiş durumda.
 
 FRONTEND DURUMU
 - Oda listesi gerçek /v1/rooms API'sine bağlı.
@@ -72,6 +74,7 @@ NOT
 - Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
 - Room ban semantiği global değildir; ban yalnızca ilgili room_id için geçerlidir.
 - Yeni regression checker eklendi ancak GitHub Actions sonucu henüz doğrulanmadı.
+- Yapılan her önemli değişiklik commitlenip bu dosyadaki yapılanlar/yapılacaklar listesi güncellenecek.
 
 SONRAKİ AKTİF ADIM
 - Gerçek gift/room_gift + bakiye/%70 smoke ve iki istemcili room WebSocket E2E hazırlığını tamamla.
