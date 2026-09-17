@@ -59,10 +59,11 @@ def main() -> int:
     if not isinstance(items, list) or not items:
         raise RuntimeError("cosmetic catalog is empty")
 
-    avatar = next((x for x in items if x.get("type") == "avatar"), None)
-    frame = next((x for x in items if x.get("type") == "frame"), None)
-    if not avatar or not frame:
-        raise RuntimeError("catalog must contain both avatar and frame")
+    avatar = next((x for x in items if x.get("type") == "avatar" and not x.get("vip")), None)
+    frame = next((x for x in items if x.get("type") == "frame" and not x.get("vip")), None)
+    vip_asset = next((x for x in items if x.get("vip") and x.get("vip_level") == 1), None)
+    if not avatar or not frame or not vip_asset:
+        raise RuntimeError("catalog must contain standard avatar, standard frame, and VIP level 1 asset")
 
     status, me = request("GET", "/me", token)
     if status >= 300:
@@ -103,6 +104,19 @@ def main() -> int:
 
     exercise(avatar)
     exercise(frame)
+
+    vip_key = vip_asset.get("asset_key")
+    vip_status, vip_purchase = request("POST", "/me/cosmetics/purchase", token, {
+        "cosmetic_type": vip_asset.get("type"), "asset_key": vip_key,
+    })
+    if vip_status != 403:
+        raise AssertionError(f"VIP purchase must be blocked at VIP 0: HTTP {vip_status} {vip_purchase}")
+    vip_status, vip_apply = request("POST", "/me/cosmetics/apply", token, {
+        "cosmetic_type": vip_asset.get("type"), "asset_key": vip_key,
+    })
+    if vip_status != 403:
+        raise AssertionError(f"VIP apply must be blocked at VIP 0: HTTP {vip_status} {vip_apply}")
+    print(f"VIP level gate OK: {vip_key} requires VIP {vip_asset.get('vip_level')}")
     return 0
 
 
