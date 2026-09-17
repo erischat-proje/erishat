@@ -1,50 +1,59 @@
 """ErisChat application package bootstrap hooks."""
 
-from sqlalchemy import event
+from fastapi import Depends
+from fastapi.routing import APIRoute
 from sqlalchemy.orm import Session
 
+from .db import get_db
 from .models import Conversation, ConversationMember
-from .platform_models import Family
+from .platform_models import Family, FamilyMember
 
 
-@event.listens_for(Session, "before_flush")
-def _complete_family_creation(session: Session, flush_context, instances) -> None:
-    """Backfill required family ownership/chat records for legacy creation routes.
+def _patch_family_create_route() -> None:
+    """Replace the legacy family creator with the schema-complete version."""
+    from . import platform_routes as platform
 
-    The existing platform route creates a Family first and flushes it before
-    adding its FamilyMember. Family requires owner_id and chat_conversation_id,
-    so populate both before SQLAlchemy emits the INSERT.
-    """
-    for family in tuple(session.new):
-        if not isinstance(family, Family):
-            continue
-        if family.owner_id and family.chat_conversation_id:
-            continue
-        members = [
-            obj for obj in session.new
-            if isinstance(obj, object)
-            and isinstance(obj, ConversationMember)
-            and obj.user_id
-        ]
-        owner_id = family.owner_id
-        if not owner_id:
-            for member in members:
-                owner_id = member.user_id
-                if owner_id:
-                    break
-        if not owner_id:
-            continue
-        family.owner_id = owner_id
-        family.level = family.level or 1
-        conversation_id = family.chat_conversation_id or f"family_chat_{family.id}"
-        family.chat_conversation_id = conversation_id
-        conversation = session.get(Conversation, conversation_id)
-        if conversation is None:
-            session.add(Conversation(id=conversation_id, type="family"))
-        if not any(
-            isinstance(obj, ConversationMember)
-            and obj.conversation_id == conversation_id
-            and obj.user_id == owner_id
-            for obj in session.new
+    original = platform.register_platform_auth
+
+    def register_with_fixed_family_create(current_user_dependency):
+        original(current_user_dependency)
+
+        for route in list(platform.router.routes):
+            if isinstance(route, APIRoute) and route.path == "/v1/families" and "POST" in route.methods:
+                platform.router.routes.remove(route)
+
+        def create_family_fixed(
+            payload: platform.FamilyCreate,
+            db: Session = Depends(get_db),
+            user=Depends(current_user_dependency),
         ):
-            session.add(ConversationMember(conversation_id=conversation_id, user_id=owner_id))
+            family_id = "family_" + platform.uuid4().hex[:12]
+            conversation_id = "family_chat_" + family_id
+            conversation = Conversation(id=conversation_id, type="family")
+            row = Family(
+                id=family_id,
+                owner_id=user.id,
+                name=payload.name.strip(),
+                level=1,
+                balance=0,
+                chat_conversation_id=conversation_id,
+            )
+            db.add(conversation)
+            db.add(row)
+            db.flush()
+            db.add(ConversationMember(conversation_id=conversation_id, user_id=user.id))
+            db.add(FamilyMember(family_id=family_id, user_id=user.id, role="member"))
+            db.commit()
+            return {"id": row.id, "name": row.name, "level": 1}
+
+        platform.router.add_api_route(
+            "/v1/families",
+            create_family_fixed,
+            methods=["POST"],
+            tags=["platform"],
+        )
+
+    platform.register_platform_auth = register_with_fixed_family_create
+
+
+_patch_family_create_route()
