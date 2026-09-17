@@ -27,16 +27,18 @@
 - `frontend/auth-live.js` anonymous kayıt artık backend sözleşmesine uygun `gender: 'male'` gönderiyor; güncel blob SHA `d582fcc8cec9a0072cdfa2d259948d42a193b0e3`.
 
 ## CI / Pages checkpoint
-- `.github/workflows/erischat-quality.yml` artık beşli live E2E zincirini içeriyor: anonymous, room, ban, DM, cosmetic.
 - `.github/workflows/runner-recovery.yml` aynı beşli zinciri içeriyor ve gerçek runner üzerinde SUCCESS doğrulaması mevcut.
-- `.github/workflows/pages.yml` de beşli E2E zincirini içeriyor ve `deploy` job'ını `backend-quality`, `smoke-harness-quality`, `cosmetic-inventory` ve `live-e2e` job'larına `needs` ile bağlıyor.
-- Pages workflow'un bilinen eski failure örneği run `35225410720`: `deploy` job failure ve `steps: []`. Bu eski koşunun head'i `d2c08d13...`; güncel `57e3ce31...` Pages gate değişikliklerinden önceydi.
-- Güncel Pages/quality workflow'larında job üretimi ayrıca doğrulanacak; `jobs: []` görülen kayıtlar için kök neden log/API kanıtı olmadan tahmin yapılmayacak.
+- `erischat-quality.yml` sadeleştirilerek runner-recovery ile doğrulanmış çalışma modeline hizalandı; yeni `quality` job'ı gerçek job olarak üretildi. Run `35234028161` için `fetch_workflow_run_jobs` gerçek `quality` job'ını döndürüyor; önceki `jobs: []` davranışı bu workflow sürümünde artık tekrarlanmadı.
+- Eski karmaşık quality workflow'unda `jobs: []` görülmesi için artık rastgele kod değişikliği yapılmıyor; önce sade çalışan taban doğrulandı.
+- Eski `pages.yml` yerine bağımsız, sade `.github/workflows/erischat-pages.yml` oluşturuldu. Bu workflow yalnızca Pages build/upload/deploy yapıyor; uygulama E2E quality ayrı workflow'da yürütülüyor.
+- Geçici CI probe dosyaları temizlendi; `quality-probe.yml` kaldırıldı.
+- Yeni Pages workflow'un ilk gerçek run/job sonucu henüz kanıtlanmadı; bu nedenle Pages PASS/TAMAM denmiyor.
+- Pages workflow'un bilinen eski failure örneği run `35225410720`: `deploy` job failure ve `steps: []`. Bu eski koşunun head'i `d2c08d13...`; güncel sade Pages workflow'dan önceydi.
 - `pages-diagnostics.yml` production deploy yapmaz; Pages API/environment ve workflow shape verisini toplamak için kullanılır.
 
 ## Güncel sıra
-1. Güncel Pages ve quality workflow run'larının gerçek job durumlarını doğrula.
-2. Pages job-generation/deploy failure kök nedenini log/API kanıtıyla belirle.
+1. Yeni sade Pages workflow'un gerçek job/run sonucunu doğrula.
+2. Başarısızsa Pages workflow özelliklerini tek tek izole et; log/API kanıtı olmadan kök neden tahmin etme.
 3. Pages canlı HTTP + Pages→Railway API doğrulaması; Railway deploy kullanıcı açıkça `deploy` demeden yapılmayacak.
 4. Backend security + quality hardening.
 5. V35/V53 legacy cleanup.
