@@ -16,6 +16,9 @@ try{
     else if(u.pathname.includes('/gift-catalog')) body=[{gift_key:'Zeytin Dalı',unit_price:1,animation:false}];
     else if(u.pathname.includes('/gifts')) body={gift_key:'Zeytin Dalı',quantity:1,total_price:1};
 
+    else if(u.pathname==='/v1/conversations') body=[{id:'conv-smoke',members:[{user_id:'other-user'}]}];
+    else if(u.pathname==='/v1/users/other-user') body={id:'other-user',nickname:'Rana',avatar:'R'};
+    else if(u.pathname==='/v1/conversations/conv-smoke/messages') body=[];
     else if(u.pathname==='/v1/me') body={id:'smoke-user',nickname:'Smoke',gender:'male',avatar:'🦊'};
     else if(u.pathname==='/v1/me/vip') body={level:3};
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
