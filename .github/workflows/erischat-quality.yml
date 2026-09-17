@@ -1,4 +1,4 @@
-name: ErisChat quality checks v3
+name: ErisChat quality checks v4
 
 on:
   push:
@@ -36,11 +36,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install backend and smoke dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r backend/requirements.txt
           python -m pip install websocket-client
+      - name: Static syntax and required-file checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q backend/app scripts
+          test -s frontend/erischat-main.html
+          for script in \
+            platform.js demo-cleanup.js room-live.js gift-live.js room-actions.js \
+            room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js \
+            cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js; do
+            test -s "frontend/$script"
+            node --check "frontend/$script"
+          done
+          echo 'Python/JavaScript syntax and frontend source checks OK'
       - name: Start local API
         working-directory: backend
         run: |
