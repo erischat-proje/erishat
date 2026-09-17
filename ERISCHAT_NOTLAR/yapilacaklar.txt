@@ -1,19 +1,34 @@
 ERISCHAT — YAPILACAKLAR / GÜNCEL
 Tarih: 2026-09-17
 
-BASELINE / TAM SİSTEME HAZIRLIK
+ÜRÜN TEMELİ / MÜŞTERİ DEMOSU
+- [x] Ana ErisChat arayüzünde müşteri vitrini mevcut.
+- [x] Ürün merkezi tek ekranda Odalar / Mağaza / VIP / Aile / Oyunlar / Keşif / Sosyal / Gizlilik / Şikayet / Profil / DM / Ürün başlıklarını gösteriyor.
+- [x] Oda ürün yüzeyinde oda açma, canlı oda listesi, oda detayları, katılma/ayrılma, koltuklar, sohbet aç/kapat ve duyuru görünümü bağlandı.
+- [x] Mağaza ürün yüzeyinde 139 kozmetik kataloglanıyor; standart/VIP filtreleri ve uygulama/satın alma akışları bağlandı.
+- [x] VIP 1–12 görünümü müşteri vitrini olarak gösteriliyor.
+- [x] Aile oluşturma, seviye/kapasite/bakiye, bağış ve aile sohbeti yüzeyi gösteriliyor.
+- [x] Keşif: yakındaki kullanıcı / rastgele sohbet / rastgele oda yüzeyleri bağlandı.
+- [x] Sosyal profil: kullanıcı, fan seviyesi ve profil hediyeleri yüzeyi bağlandı.
+- [x] Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü kontrolleri bağlandı.
+- [x] Şikayet: kullanıcı / oda / mesaj hedef tipleri için form yüzeyi bağlandı.
+- [x] Profil ve DM yüzeyleri gerçek API akışlarına bağlandı.
+- [x] Oyunlar müşteri vitrini olarak iki sistem alanını gösteriyor; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna bırakıldı.
+- [ ] Yeni müşteri ürün shell'i için Quality runner doğrulaması.
+- [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
 
 GERÇEK RUNNER
-- [x] Quality v4 güncel doğrulama: run 35266995579 / job 105356518821 SUCCESS.
-- [x] Static syntax + required-file kontrolleri.
+- [x] Önceki doğrulanmış Quality v4: run 35266995579 / job 105356518821 SUCCESS.
+- [x] Static syntax + required-file kontrolleri önceki doğrulanmış HEAD'de geçti.
 - [x] 139 cosmetic asset integrity.
 - [x] Cosmetic asset URL smoke.
 - [x] Anonymous session smoke.
 - [x] Live room smoke.
-- [x] Live ban smoke; eac244e6 gender/create-response düzeltmesi sonrası SUCCESS.
-- [x] Live DM smoke; bd7d8a1 DM auth-ready reload düzeltmesi sonrası SUCCESS.
+- [x] Live ban smoke.
+- [x] Live DM smoke.
 - [x] Live cosmetic smoke.
-- [x] Güncel main HEAD üzerindeki room WebSocket history/membership/ban zincirinin smoke doğrulaması.
+- [x] Room WebSocket history/membership/ban zinciri önceki doğrulanmış HEAD'de geçti.
+- [ ] Yeni product shell HEAD için runner sonucu.
 
 KOZMETİK
 - [x] Aktif katalog 139 asset.
@@ -25,10 +40,12 @@ FRONTEND
 - [x] Room canlı scripti mevcut.
 - [x] DM canlı scriptleri mevcut.
 - [x] Gift/cosmetic canlı scriptleri mevcut.
+- [x] Customer-facing product shell eklendi.
 - [ ] Gerçek tarayıcıda anonymous/me akışı.
 - [ ] Gerçek tarayıcıda room + chat/gift akışı.
 - [ ] Gerçek tarayıcıda DM akışı.
 - [ ] Gerçek tarayıcıda profile/cosmetic render.
+- [ ] Customer shell içindeki tüm backend akışlarının gerçek browser doğrulaması.
 
 PAGES / CANLI ZİNCİR
 - [x] Pages workflow ve environment admission kök nedeni tespit edildi.
@@ -40,20 +57,17 @@ PAGES / CANLI ZİNCİR
 - [ ] Railway production deploy — kullanıcı açıkça "deploy" demeden YAPILMAYACAK.
 
 TEMİZLİK / DOKÜMANTASYON
-- [x] Geçici Pages/CI trigger kalıntıları temizlendi.
-- [x] yapilanlar.txt güncel Quality kanıtıyla senkronize edildi.
-- [x] son_durum_20260917.txt güncel Quality kanıtıyla senkronize edildi.
-- [x] Yeni docs checkpoint push sonrası Quality run SUCCESS doğrulaması: 35266995579 / 105356518821.
+- [x] Customer product shell checkpoint'i işlendi.
+- [ ] Bu checkpoint sonrası Quality runner SUCCESS doğrulaması.
+- [ ] son_durum_20260917.txt yeni HEAD ile senkronize edilecek.
 
-BASELINE ÇIKIŞ KRİTERİ
-1. Pages environment admission çözülür.
-2. Pages deploy gerçek runner'da SUCCESS olur.
-3. Canlı Pages HTTP/index doğrulanır.
-4. Frontend → Railway API zinciri doğrulanır.
-5. CORS daraltılır ve tekrar runner'da doğrulanır.
-6. Gerçek browser/frontend akışları doğrulanır.
-7. 139 asset render kontrolü tamamlanır.
-8. Sonuçlar checkpoint TXT'lere işlenir.
+SONRAKİ GELİŞTİRME SIRASI
+1. Product shell Quality runner sonucunu doğrula ve hataları düzelt.
+2. Oda detayını gerçek oda ekranı/chat/gift/mikrofon akışına bağla.
+3. 139 kozmetiğin gerçek browser renderını doğrula.
+4. Profil + avatar/frame uygulama görünümünü gerçek browserda doğrula.
+5. DM ve aile sohbetini gerçek browserda doğrula.
+6. Pages canlı zincirini kullanıcı açıkça deploy dediğinde ele al.
 
 KURAL
 - Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
