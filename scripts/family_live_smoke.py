@@ -65,7 +65,7 @@ def main() -> None:
 
     family_name = f"Smoke Family {suffix}"
     status, created = request("POST", "/families", {"name": family_name}, token)
-    expect(status, 200, "family create", created)
+    expect(status, 201, "family create", created)
     family_id = created.get("id")
     if not family_id or created.get("name") != family_name or created.get("level") != 1:
         raise AssertionError(f"family create mismatch: {created}")
