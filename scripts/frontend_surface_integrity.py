@@ -21,7 +21,7 @@ dupes = sorted({x for x in scripts if scripts.count(x) > 1})
 if dupes:
     raise SystemExit("FRONTEND_SURFACE_FAIL duplicate_scripts=" + ",".join(dupes))
 
-for asset in {"platform.js","gift-live.js","room-live.js"}:
+for asset in {"./platform.js","./gift-live.js","./room-live.js"}:
     if asset not in scripts:
         raise SystemExit(f"FRONTEND_SURFACE_FAIL missing_script={asset}")
 
