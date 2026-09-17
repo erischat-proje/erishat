@@ -20,13 +20,12 @@ TAMAMLANAN DENETİM
 ÖNCELİK 2 — FRONTEND GERÇEK AKIŞ
 - [ ] erischat-main.html içindeki hardcoded/demo mesaj ekranlarını kaldır
 - [x] Oda listesi temel olarak /v1/rooms'a bağlı
-- [ ] Anonymous user oluşturma + token/session UI akışı
+- [x] Anonymous user oluşturma + token/session istemci akışı kodlandı (auth-live.js)
 - [ ] /v1/me profil yükleme/güncelleme UI
 - [ ] Gerçek conversation list/create UI
 - [x] Gerçek DM history/send UI kod entegrasyonu
-- [ ] Genel /ws event UI
-- [ ] WS reconnect + ping/pong UI
-- [ ] Logout/token expiry UI
+- [x] Genel /ws istemcisi + reconnect + ping/pong kodlandı (canlı doğrulama bekliyor)
+- [ ] Logout/token expiry UI canlı doğrulaması
 - [x] Oda WebSocket chat UI gerçek gönderim/history akışına bağlandı; canlı E2E test bekliyor
 
 ÖNCELİK 3 — ODA / HEDİYE
