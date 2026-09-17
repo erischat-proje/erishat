@@ -1,0 +1,17 @@
+ERISCHAT — YARIN DEVAM CHECKPOINT
+2026-09-17 gece
+
+1. GitHub Actions / Pages job'suz failure nedenini çöz.
+2. GitHub Pages canlı yayını doğrula.
+3. Frontend'i doğrulanmış Railway API adresine güvenli şekilde bağla.
+4. WebSocket bağlantısını doğrula: wss://erischat-production.up.railway.app/ws/rooms/{room_id}.
+5. İki kullanıcıyla oda + hediye + room_gift canlı smoke testi yap.
+6. Oda sohbeti WebSocket gerçek gönder/al testini yap.
+7. Frontend mock/demo akışlarını gerçek API'ye geçir.
+8. Sonrasında VIP/avatar/frame ve diğer ürün özelliklerine geç.
+
+KURAL:
+- Kullanıcı tekrar 'devam' dediğinde bu dosyalar ve ERISCHAT_NOTLAR/son_durum_20260917_gece.txt okunup tam bu noktadan başlanacak.
+- Projenin tekrar anlatılması istenmeyecek.
+- Railway deploy kullanıcı açıkça 'deploy' demeden yapılmayacak.
+- Büyük frontend dosyası kısmi içerikle asla overwrite edilmeyecek.
