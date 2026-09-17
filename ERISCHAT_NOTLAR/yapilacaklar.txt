@@ -1,77 +1,60 @@
-ERISCHAT — GÜNCEL YAPILACAKLAR
-Tarih: 2026-09-17 — BASELINE / TAM ÇALIŞAN SİSTEM FAZI
+ERISCHAT — YAPILACAKLAR / GÜNCEL
+Tarih: 2026-09-17
 
-HEDEF
-Önce mevcut sistemi temel akışları eksiksiz ve gerçek ortamda doğrulanmış şekilde ayağa kaldır. Yeni ürün özelliklerine ancak bu faz tamamlandıktan sonra geç.
+BASELINE / TAM SİSTEME HAZIRLIK
 
-1. KOD + CI BASELINE
-- [x] Backend/frontend temel akışlar mevcut.
-- [x] TODO/FIXME/NotImplemented/pass taraması yapıldı.
-- [x] room-live.js API config fallback düzeltildi.
-- [x] Quality workflow v4'e compileall + node --check + kaynak kontrolleri eklendi.
-- [x] Runner Recovery #74 live-e2e gerçek runner'da SUCCESS.
-- [x] 5 temel smoke: anonymous, room, ban, DM, cosmetic önceki baseline'da SUCCESS.
-- [x] Quality v4 run 35258712132 / job 105328734923 gerçek runner'da SUCCESS.
-- [x] Önceki room-gift-ui-live.js syntax failure düzeltildi ve yeni Quality v4 koşusunda geçti.
-- [x] Quality v4 run 35260089459 / job 105333339551 güvenlik değişikliği sonrası gerçek runner'da SUCCESS.
-- [x] Room WebSocket history handshake kodu güncellendi.
-- [x] Güncel main HEAD eac244e6 üzerinde yeni Room WebSocket + ban/membership güvenlik zinciri Quality v4 run 35265208929 / job 105350554959 ile gerçek runner'da SUCCESS.
+GERÇEK RUNNER
+- [x] Quality v4 güncel doğrulama: run 35265208929 / job 105350554959 SUCCESS.
+- [x] Static syntax + required-file kontrolleri.
+- [x] 139 cosmetic asset integrity.
+- [x] Cosmetic asset URL smoke.
+- [x] Anonymous session smoke.
+- [x] Live room smoke.
+- [x] Live ban smoke; eac244e6 gender/create-response düzeltmesi sonrası SUCCESS.
+- [x] Live DM smoke.
+- [x] Live cosmetic smoke.
+- [x] Güncel main HEAD üzerindeki room WebSocket history/membership/ban zincirinin smoke doğrulaması.
 
-2. BACKEND / GÜVENLİK BASELINE
-- [x] Anonymous register → /me → logout → token sonrası 401 smoke ile doğrulandı.
-- [x] Room create/join/leave/seat/moderator/ban/chat temel zinciri smoke ile doğrulandı.
-- [x] İki istemcili room WebSocket history + chat broadcast güncel Quality runner'da SUCCESS.
-- [x] Ban → 403 rejoin → unban → yeniden join güncel Quality runner'da SUCCESS.
-- [x] DM create/list → send → history doğrulandı.
-- [x] Cosmetic catalog → balance → purchase → ownership → apply doğrulandı.
-- [x] Gift/balance ve room event zinciri room smoke içinde doğrulandı.
-- [x] Session revoke sonrası WebSocket mesaj alma noktasında session yeniden doğrulaması eklendi ve Quality v4 runner SUCCESS ile doğrulandı.
-- [x] Room WebSocket'te her gelen mesaj öncesi room üyeliği/ban/chat_enabled yeniden kontrol ediliyor ve güncel Quality runner'da doğrulandı.
-- [ ] CORS'u canlı Pages origin doğrulanınca kontrollü daralt.
+KOZMETİK
+- [x] Aktif katalog 139 asset.
+- [x] Asset URL/path smoke kontrolü gerçek runner'da geçti.
+- [ ] Tarayıcıda gerçek asset render/şeffaflık doğrulaması.
 
-3. FRONTEND BASELINE
-- [ ] Ana HTML'nin canlı script sırası ve tüm gerekli script yüklemeleri gerçek/static kontrolde tamamla.
-- [ ] Anonymous session UI → /v1/me gerçek frontend zincirini doğrula.
-- [ ] Room list → room open → WebSocket history/chat frontend zincirini doğrula.
-- [ ] DM list → create → history → send frontend zincirini doğrula.
-- [ ] Profile nickname/notification/session işlemlerini doğrula.
-- [ ] Cosmetics purchase/apply + gerçek asset render doğrula.
-- [ ] Gift UI → server catalog → gönderim → canlı event doğrula.
-- [ ] Demo/hardcoded kalıntıları gerçek akışı bozmadan temizle.
+FRONTEND
+- [x] Auth/session canlı scriptleri mevcut.
+- [x] Room canlı scripti mevcut.
+- [x] DM canlı scriptleri mevcut.
+- [x] Gift/cosmetic canlı scriptleri mevcut.
+- [ ] Gerçek tarayıcıda anonymous/me akışı.
+- [ ] Gerçek tarayıcıda room + chat/gift akışı.
+- [ ] Gerçek tarayıcıda DM akışı.
+- [ ] Gerçek tarayıcıda profile/cosmetic render.
 
-4. PAGES / RAILWAY CANLI ZİNCİR
-- [ ] github-pages environment custom deployment branch policy'ye main ekle veya main'i kapsayacak şekilde değiştir.
-- [x] Pages diagnostics guard'ın main engelini gerçek runner'da raporladığı doğrulandı.
-- [ ] Gerçek Pages deploy job'unun runner'a girdiğini doğrula.
-- [ ] Pages artifact oluşumunu doğrula.
-- [ ] Canlı Pages HTTP 200 + index içeriğini doğrula.
-- [ ] Canlı frontend → Railway API erişimini doğrula.
-- [ ] Railway production deploy yalnızca kullanıcı açıkça "deploy" dediğinde yapılacak.
+PAGES / CANLI ZİNCİR
+- [x] Pages workflow ve environment admission kök nedeni tespit edildi.
+- [ ] github-pages environment custom deployment branch policy içinde main'e izin verilmesi.
+- [ ] Pages deploy SUCCESS.
+- [ ] Canlı Pages HTTP 200/index doğrulaması.
+- [ ] Pages → Railway API canlı zinciri.
+- [ ] CORS'un gerçek Pages origin'e göre daraltılması.
+- [ ] Railway production deploy — kullanıcı açıkça "deploy" demeden YAPILMAYACAK.
 
-5. KOZMETİK BASELINE
-- [x] 139 aktif asset modeli gerçek katalog olarak mevcut.
-- [x] Cosmetic purchase/apply backend E2E gerçek runner'da SUCCESS.
-- [x] 139 asset URL/path smoke eşleşmesi Quality v4'te SUCCESS.
-- [ ] Gerçek frontend render/şeffaflık sorunlarını düzelt/doğrula.
+TEMİZLİK / DOKÜMANTASYON
+- [x] Geçici Pages/CI trigger kalıntıları temizlendi.
+- [x] yapilanlar.txt güncel Quality kanıtıyla senkronize edildi.
+- [x] son_durum_20260917.txt güncel Quality kanıtıyla senkronize edildi.
+- [ ] Yeni docs checkpoint push sonrası Quality run SUCCESS doğrulaması.
 
-6. TEMİZLİK / CHECKPOINT
-- [x] Eski/geçici Pages/CI trigger dosyalarının belirgin kalıntıları temizlendi.
-- [ ] Artık gereksiz eski Pages probe/diagnostic workflow'larını gözden geçir.
-- [x] yapilanlar.txt güncel room WebSocket/security checkpoint ile senkronize edildi.
-- [x] yapilacaklar.txt güncel Quality v4 checkpoint'e alındı.
-- [x] son_durum_20260917.txt güncel main HEAD ve Quality v4 sonucu ile senkronize edilecek.
+BASELINE ÇIKIŞ KRİTERİ
+1. Pages environment admission çözülür.
+2. Pages deploy gerçek runner'da SUCCESS olur.
+3. Canlı Pages HTTP/index doğrulanır.
+4. Frontend → Railway API zinciri doğrulanır.
+5. CORS daraltılır ve tekrar runner'da doğrulanır.
+6. Gerçek browser/frontend akışları doğrulanır.
+7. 139 asset render kontrolü tamamlanır.
+8. Sonuçlar checkpoint TXT'lere işlenir.
 
-7. BASELINE ÇIKIŞ KRİTERİ
-- [x] Önceki Quality v4 SUCCESS.
-- [x] Önceki 5 backend/live smoke SUCCESS.
-- [x] Güncel main HEAD eac244e6 Quality v4 SUCCESS.
-- [ ] Pages gerçek deploy SUCCESS.
-- [ ] Canlı Pages HTTP SUCCESS.
-- [ ] Frontend → Railway API SUCCESS.
-- [x] Güncel main HEAD Room WebSocket iki istemci + ban/membership zinciri Quality SUCCESS.
-- [x] Önceki DM SUCCESS.
-- [x] Önceki Cosmetic purchase/apply SUCCESS.
-- [x] Önceki Gift event + ekonomi temel invariantları smoke kapsamında SUCCESS.
-
-BASELINE TAMAMLANDIKTAN SONRA
-- Ürün geliştirme fazına geçilecek; şu an yeni özellik eklemek yerine kalan baseline maddeleri kapatılacak.
+KURAL
+- Gerçek runner/canlı kanıt olmadan PASS/TAMAM veya "tam çalışan" denmeyecek.
+- Railway deploy yalnızca kullanıcı açıkça deploy dediğinde yapılacak.
