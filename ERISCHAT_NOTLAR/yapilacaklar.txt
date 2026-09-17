@@ -1,7 +1,7 @@
 ERISCHAT MASTER TODO
 
 AKTİF SIRA
-1) Railway web 502 kök nedenini repo tarafında düzelt ve yeni deployment olmadan değişikliği doğrula; canlı doğrulama deploy sonrası yapılacak.
+1) Railway web 502 kök nedenini repo + servis config tarafında düzelt ve yeni deployment olmadan değişikliği doğrula; canlı doğrulama deploy sonrası yapılacak.
 2) GitHub Pages deploy workflow: run #258 başarısız; deploy adımı incelenecek ve kök neden doğrulanacak.
 3) Room WebSocket canlı/E2E doğrulaması.
 4) Ban → liste → unban → yeniden katılım canlı E2E; harness hazır.
@@ -30,24 +30,26 @@ TAMAMLANANLAR
 - backend/app/main.py duplicate user migration/import cleanup tamamlandı; quality workflow run #49 backend-quality başarılı ve room security regression başarılı.
 - scripts/room_live_smoke.py gift catalog sözleşmesine göre düzeltildi: API'nin döndürdüğü unit_price artık doğru okunuyor; gift event içinde doğru alıcı/hediye de kontrol ediliyor.
 - Railway production projesi ve servis durumu kontrol edildi: backend erischat SUCCESS, PostgreSQL SUCCESS, eski erischat-web FAILED, erischat-web-fixed SUCCESS. Bu kontrol deploy işlemi yapmadan gerçekleştirildi.
-- Railway erischat-web-fixed build logunda Dockerfile'ın gerçekten kullanıldığı ve Caddy'nin çalıştığı doğrulandı; HTTP loglarında / istekleri 502 connection refused olarak kaldı.
-- Caddyfile Railway web container için açıkça :80 portuna sabitlendi; Dockerfile da EXPOSE 80 olduğu için repo tarafındaki port sözleşmesi artık deterministik. Commit: 64cbe6a947a48e72e37d0a436d647495d04a162b
+- Railway erischat-web-fixed build logunda Caddy'nin çalıştığı doğrulandı; mevcut deployment HTTP loglarında / istekleri 502 connection refused olarak kaldı.
+- Caddyfile Railway web container için açıkça :80 portuna sabitlendi; Dockerfile EXPOSE 80 ile repo tarafındaki port sözleşmesi deterministik. Caddyfile mevcut main üzerinde doğrulandı.
+- Railway erischat-web-fixed production servis config'inde Dockerfile path=\"Dockerfile\", healthcheck path=\"/\" ve PORT=80 servis değişkeni deploy tetiklemeden staged/config olarak ayarlandı. Canlı 502 henüz bu config ile yeniden doğrulanmadı.
 
 PENDING
-- Railway web 502 canlı doğrulaması: yeni commit henüz deploy edilmedi; kullanıcı açıkça deploy istemediği için deploy yapılmadı.
+- Railway web 502 canlı doğrulaması: servis config ve PORT=80 ayarı hazır; yeni deployment henüz yapılmadı. Kullanıcı açıkça deploy istemediği için deploy yapılmadı.
 - GitHub Pages deploy failure kök nedeni.
 - Room two-client canlı E2E; harness mevcut.
 - Ban/list/unban/rejoin canlı E2E; harness mevcut, gerçek çalıştırma bekliyor.
 - DM create canlı E2E; harness hazır, gerçek ortam çalıştırması bekliyor.
 - Pages canlı doğrulama.
 - Railway canlı health/ready/API/DB/WS doğrulaması; servis deployment durumları kontrol edildi ancak canlı endpoint E2E tamamlanmadı. Deploy yok.
-- 40 normal avatar + 40 normal frame + 12 VIP frame + 12 VIP avatar asset hedeflerinin envanter/kalite kontrolü. Güncel quality run #49 cosmetic-inventory bu hedef uyuşmazlığı nedeniyle başarısız.
+- 40 normal avatar + 40 normal frame + 12 VIP frame + 12 VIP avatar asset hedeflerinin envanter/kalite kontrolü. Güncel quality run cosmetic-inventory bu hedef uyuşmazlığı nedeniyle başarısız.
 - Cosmetic purchase/apply E2E.
 - Backend security/quality hardening: quality workflow temel kontrolleri başarılı; kalan güvenlik/kalite taraması ve canlı doğrulamalar bekliyor.
 - V35/V53 legacy cleanup.
 
 SON GELİŞTİRMELER
-- Railway web port fix: 64cbe6a947a48e72e37d0a436d647495d04a162b
+- Railway web port fix repo commit: 64cbe6a947a48e72e37d0a436d647495d04a162b
+- Railway service config staging: Dockerfile + healthcheck / + PORT=80; deploy edilmedi.
 - Integration workflow fix/checkpoint commit: 5159cdc995e599fbbe4be85e9451a674834188ff
 - scripts/room_live_smoke.py gift contract fix commit: 07fcbb9a579717e5322ef19aa30ffbec6e90502c
 - scripts/check_backend_quality.py commit: fdb9e45a1e65c6ae2fb0e1f58390da30798ce4ab
