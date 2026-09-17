@@ -1,0 +1,28 @@
+name: ErisChat quality checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Backend quality
+        run: python scripts/check_backend_quality.py
+
+  cosmetic-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cosmetic inventory
+        run: python scripts/check_cosmetics.py
