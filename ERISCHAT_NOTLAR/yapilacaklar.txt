@@ -27,7 +27,7 @@ TAMAMLANAN DENETİM
 - [ ] Genel /ws event UI
 - [ ] WS reconnect + ping/pong UI
 - [ ] Logout/token expiry UI
-- [ ] Oda WebSocket chat UI: backend endpoint var, frontend gönderim fonksiyonu hâlen toast gösteriyor
+- [x] Oda WebSocket chat UI gerçek gönderim/history akışına bağlandı; canlı E2E test bekliyor
 
 ÖNCELİK 3 — ODA / HEDİYE
 - [ ] Gerçek kullanıcı A/B smoke test
@@ -103,7 +103,7 @@ KALİTE KONTROL
 
 AKTİF ÇALIŞMA SIRASI
 1. Frontend gerçek veri akışındaki hardcoded alanları temizle.
-2. Room WebSocket chat UI'ını bağla.
+2. Room WebSocket canlı E2E testini yap.
 3. Anonymous/session/profile/DM UI akışlarını tamamla.
 4. Pages/Railway canlı doğrulamalarını yap.
 5. Gerçek iki istemci room/gift smoke testine geç.
