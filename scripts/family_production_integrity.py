@@ -57,4 +57,4 @@ for marker in ["class FamilyCreate", "class FamilyDonationCreate", "FamilyMember
     if marker not in family:
         raise SystemExit(f"Missing family backend marker: {marker}")
 
-print("FAMILY_PRODUCTION_INTEGRITY_PASS canonical_family_router=1 duplicate_platform_routes=0 family_routes=9")
+print("FAMILY_PRODUCTION_INTEGRITY_PASS canonical_family_router=1 duplicate_platform_routes=0 family_routes=8+production_create")
