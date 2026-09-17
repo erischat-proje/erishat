@@ -22,8 +22,10 @@ BU TURDA YAPILAN
 - İki kullanıcı + oda chat + gift + bakiye/%70 + WebSocket akışlarını kontrollü hedefte test etmek için scripts/room_live_smoke.py eklendi.
 - Smoke scripti production'a kendiliğinden bağlanmıyor; varsayılan hedef localhost ve uzak hedef ancak ERISCHAT_SMOKE_BASE_URL açıkça verilirse kullanılıyor.
 - Smoke scripti gift sonrası gönderen bakiyesi, alıcı %70 payı ve RoomGiftEvent kaydını kontrol ediyor; websocket-client mevcutsa iki istemcili room_chat broadcast kontrolünü de çalıştırıyor.
+- Cosmetic quality workflow artık yalnızca tanı koymuyor; scripts/check_cosmetic_assets.py ile 40 standart avatar + 40 standart frame + 12 VIP avatar + 12 VIP frame hedeflerini exact-count olarak CI kapısı yapıyor.
 
 SON COMMITLER
+- Exact cosmetic inventory CI gate: 5db3fe322baa7ed75943cdc870c5641b419de5dd
 - Room live smoke harness: 78de1295688a1caff34b66281f05394e4f0c6e7c
 - Pages gift UI integration: fb5a73be062495f73c2da597ed2a360ba2984bc3
 - Live room gift UI: 1184b65a26c59c2b6a8bb48c7dd89e20dd8976b3
@@ -82,10 +84,12 @@ NOT
 - Canlı E2E test yapılmadan özellik tamamlandı olarak işaretlenmeyecek.
 - Room ban semantiği global değildir; ban yalnızca ilgili room_id için geçerlidir.
 - Yeni regression checker eklendi ancak GitHub Actions sonucu henüz doğrulanmadı.
+- Cosmetic exact-count checker CI'ya bağlandı; gerçek mevcut asset sayıları ayrıca doğrulanmalı.
 - Yapılan her önemli değişiklik commitlenip bu dosyadaki yapılanlar/yapılacaklar listesi güncellenecek.
 
 SONRAKİ AKTİF ADIM
 - Kontrollü/local backend üzerinde scripts/room_live_smoke.py çalıştırılabilirliğini doğrula; gerekirse test bağımlılıklarını ekle.
+- Exact cosmetic inventory CI sonucunu doğrula ve gerçek asset sayılarını çıkar.
 - Ardından Pages failure'ını yapılandırma/job ayrımıyla incele.
-- Sonrasında gerçek avatar/frame/VIP asset sayımını ve görsel katalog ↔ backend eşleşmesini tamamla.
+- Sonrasında görsel katalog ↔ backend eşleşmesini ve asset kalitesini tamamla.
 - Ardından purchase/apply ve anonymous/session/profile/logout canlı E2E akışlarına geç.
