@@ -93,3 +93,5 @@ jobs:
       - name: API log on failure
         if: failure()
         run: cat erischat-api.log
+
+# Asset path fix verification push: keep the quality workflow on main-triggered CI.
