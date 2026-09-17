@@ -47,8 +47,9 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('frontend/erischat-main.html').read_text(encoding='utf-8')
-          for x in ['realRooms','joinAndOpen','openRoomGift','/gift-catalog','/gifts','gift-live.js']:
+          for x in ['realRooms','openRoomGift','/gift-catalog','/gifts','gift-live.js']:
               assert x in s,x
+          assert 'joinAndOpen' not in s, 'obsolete joinAndOpen reference remains'
           print('served frontend gift UI valid')
           PY
       - name: Commit
