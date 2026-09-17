@@ -108,6 +108,17 @@
     socket.send(JSON.stringify({type:'room_chat',text:value}));
     return true;
   };
+
+  // REST gift bridge: catalog, send, history and leaderboard are now exposed
+  // separately from the WebSocket event stream so the UI can use real data.
+  function roomApi(){ return window.ErisRoom || null; }
+  window.ErisRoomGift = {
+    catalog: roomId => roomApi() ? roomApi().giftCatalog(roomId) : Promise.reject(new Error('ErisRoom hazır değil')),
+    send: (roomId, recipientId, giftKey, quantity=1) => roomApi() ? roomApi().sendGift(roomId, recipientId, giftKey, quantity) : Promise.reject(new Error('ErisRoom hazır değil')),
+    events: (roomId, limit=50) => roomApi() ? roomApi().giftEvents(roomId, limit) : Promise.reject(new Error('ErisRoom hazır değil')),
+    leaderboard: roomId => roomApi() ? roomApi().leaderboard(roomId) : Promise.reject(new Error('ErisRoom hazır değil'))
+  };
+
   window.addEventListener('erischat:room-gift',()=>{});
 
   const originalFetch=window.fetch;
