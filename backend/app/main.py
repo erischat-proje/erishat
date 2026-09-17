@@ -42,9 +42,6 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
 
 
 @app.on_event("startup")
@@ -123,7 +120,7 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> Session
 
 
 @app.post("/v1/users/demo/ensure", response_model=UserOut)
-def create_demo_user(db: Session = Depends(get_db)) -> UserOut:
+def create_demo_user(db: Session = Depends(get_db)) -> User:
     return ensure_demo_user(db)
 
 
@@ -228,3 +225,155 @@ def create_message(conversation_id: str, payload: MessageCreate, db: Session = D
         return MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
+def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
+    repo = ConversationRepository(db)
+    if not repo.get(conversation_id):
+        raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
+    if not repo.is_member(conversation_id, user.id):
+        raise HTTPException(status_code=403, detail="Bu konuşmaya erişim yok")
+    return MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
+
+
+class ConnectionManager:
+    def __init__(self) -> None:
+        self.connections: dict[str, set[WebSocket]] = {}
+
+    async def connect(self, user_id: str, websocket: WebSocket) -> None:
+        await websocket.accept()
+        self.connections.setdefault(user_id, set()).add(websocket)
+
+    def disconnect(self, user_id: str, websocket: WebSocket) -> None:
+        sockets = self.connections.get(user_id)
+        if not sockets:
+            return
+        sockets.discard(websocket)
+        if not sockets:
+            self.connections.pop(user_id, None)
+
+    async def send_user(self, user_id: str, payload: dict) -> None:
+        for websocket in list(self.connections.get(user_id, set())):
+            try:
+                await websocket.send_json(payload)
+            except Exception:
+                self.disconnect(user_id, websocket)
+
+
+manager = ConnectionManager()
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket) -> None:
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008, reason="token gerekli")
+        return
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        if not user or not user.is_active:
+            await websocket.close(code=1008, reason="geçersiz oturum")
+            return
+        user_id = user.id
+    await manager.connect(user_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if isinstance(data, dict) and data.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        manager.disconnect(user_id, websocket)
+    except Exception:
+        manager.disconnect(user_id, websocket)
+        try:
+            await websocket.close(code=1011)
+        except Exception:
+            pass
+
+
+frontend_path = Path(__file__).resolve().parents[2] / "frontend"
+if frontend_path.is_dir():
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+
+
+room_chat_connections: dict[str, set[WebSocket]] = {}
+
+async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
+    connections = room_chat_connections.get(room_id, set())
+    dead = []
+    for ws in list(connections):
+        try:
+            await ws.send_json(payload)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        connections.discard(ws)
+
+
+@app.websocket("/ws/rooms/{room_id}")
+async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008, reason="token gerekli")
+        return
+
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        if not user or not user.is_active:
+            await websocket.close(code=1008, reason="geçersiz oturum")
+            return
+        room = db.get(Room, room_id)
+        member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+        if not room or not member:
+            await websocket.close(code=1008, reason="oda üyeliği gerekli")
+            return
+        if not room.chat_enabled:
+            await websocket.close(code=1008, reason="oda sohbeti kapalı")
+            return
+        history = (db.query(RoomChatMessage)
+                   .filter(RoomChatMessage.room_id == room_id)
+                   .order_by(RoomChatMessage.id.desc())
+                   .limit(50).all())
+        history.reverse()
+        history_payload = [{
+            "type": "room_chat", "id": m.id, "room_id": room_id,
+            "user_id": m.user_id, "text": m.text,
+            "created_at": m.created_at.isoformat() if m.created_at else None
+        } for m in history]
+
+    await websocket.accept()
+    room_chat_connections.setdefault(room_id, set()).add(websocket)
+    try:
+        await websocket.send_json({"type": "room_history", "messages": history_payload})
+        while True:
+            data = await websocket.receive_json()
+            if not isinstance(data, dict):
+                continue
+            if data.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
+                continue
+            if data.get("type") != "room_chat":
+                continue
+            text_value = str(data.get("text") or "").strip()
+            if not text_value or len(text_value) > 500:
+                continue
+            with Session(engine) as db:
+                room = db.get(Room, room_id)
+                member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+                if not room or not member or not room.chat_enabled:
+                    continue
+                message = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
+                db.add(message)
+                db.commit()
+                db.refresh(message)
+                payload = {"type": "room_chat", "id": message.id, "room_id": room_id, "user_id": user.id, "text": message.text, "created_at": message.created_at.isoformat() if message.created_at else None}
+            await _broadcast_room_chat(room_id, payload)
+    except WebSocketDisconnect:
+        room_chat_connections.get(room_id, set()).discard(websocket)
+    except Exception:
+        room_chat_connections.get(room_id, set()).discard(websocket)
+        try:
+            await websocket.close(code=1011)
+        except Exception:
+            pass
