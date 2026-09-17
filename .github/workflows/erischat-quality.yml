@@ -108,3 +108,4 @@ jobs:
 
 # Cosmetic URL encoding regression coverage added after the repository asset audit.
 # Runtime family-create validation follows the restored main application route.
+# Family smoke is intentionally executed before room/DM/cosmetic live gates.
