@@ -344,17 +344,24 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
     await websocket.accept()
     room_chat_connections.setdefault(room_id, set()).add(websocket)
     try:
-        await websocket.send_json({"type":"room_history","messages":history_payload})
         while True:
             data = await websocket.receive_json()
             if not websocket_session_active(token):
                 room_chat_connections.get(room_id, set()).discard(websocket)
                 await websocket.close(code=1008, reason="oturum sona erdi")
                 return
+            with Session(engine) as db:
+                room = db.get(Room, room_id)
+                member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+                banned = db.query(RoomBan).filter(RoomBan.room_id == room_id, RoomBan.user_id == user.id).first()
+                if not room or not member or banned or not room.chat_enabled:
+                    room_chat_connections.get(room_id, set()).discard(websocket)
+                    await websocket.close(code=1008, reason="oda erişiminiz yok")
+                    return
             if not isinstance(data, dict):
                 continue
             if data.get("type") == "ping":
-                await websocket.send_json({"type":"pong"})
+                await websocket.send_json({"type": "pong"})
                 continue
             if data.get("type") != "room_chat":
                 continue
