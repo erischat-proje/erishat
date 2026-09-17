@@ -27,4 +27,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Cosmetic inventory
-        run: python scripts/check_cosmetics.py
+        run: python scripts/check_cosmetic_assets.py
