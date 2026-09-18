@@ -113,3 +113,8 @@ Room control checkpoint
 - [x] Commit 333db6fddcb33a474da63055b3ff7a10ab76f3a5: Profil paneline gerçek kozmetik try-on/apply kartları eklendi.
 - [x] Commit 648a7bda72a2b0394353b64f0c4541f8ab6cbb29: VIP kozmetiklerde satın alma yerine doğrudan apply akışı düzeltildi.
 - [ ] Quality run 35386247069, 0c6eccfa commitinde follow akışında UserFollow import eksikliği nedeniyle frontend backend browser smoke adımında 500 verdi; sonraki commitler bu kök nedeni düzeltti ve yeni Quality sonucu bekleniyor.
+
+
+2026-09-18 — BİLDİRİM TETİKLEYİCİLERİ
+- [x] Commit b371d0c8b259ac3bf06e70279356cb9921c6a52e1: aileye üye davet/ekleme işleminde hedef kullanıcıya family_invite bildirimi eklendi.
+- [x] Oda hediye gönderimi d58f140 ile gift bildirimi oluşturuyor ve gerçek profil hediye kayıtlarıyla birlikte tutuluyor.
