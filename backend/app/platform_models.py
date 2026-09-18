@@ -153,14 +153,6 @@ class Notification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class UserBlock(Base):
-    __tablename__ = "user_blocks"
-    __table_args__ = (UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),)
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    blocker_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    blocked_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
 class Notification(Base):
     __tablename__ = "notifications"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
