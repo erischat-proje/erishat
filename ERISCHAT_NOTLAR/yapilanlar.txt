@@ -142,3 +142,8 @@ Room control checkpoint
 2026-09-18 — SOCIAL/REPORT UI EXTENSION
 - [x] Commit e31fd934717c4b1af3d2bfe48b1f0797d06d963c: sosyal panel follow/unfollow + block/unblock UI, notification mark-read UI ve report history UI genişletildi.
 - [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — SOCIAL/REPORT/NOTIFICATION UI E2E EXTENSION
+- [x] Commit 0bc43435092e5b0118868495ed5357e58f566042: sosyal ters aksiyonları, bildirim mark-read UI ve report form/history browser smoke'a eklendi.
+- [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
