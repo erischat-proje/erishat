@@ -237,8 +237,14 @@ async function main(){
   if(profileApplyCount<1) throw new Error('profile try-on controls missing');
   await page.locator('#ed-profile [data-profile-apply="avatar"]').first().click();
   await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('AKTİF GÖRÜNÜM / TRY-ON'));
+  const frameApply=page.locator('#ed-profile [data-profile-apply="frame"]').first();
+  if(await frameApply.count()){
+    await frameApply.click();
+    await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('AKTİF GÖRÜNÜM / TRY-ON'));
+  }
   const profileLive=await page.evaluate(async api=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const me=await fetch(api+'/me',{headers:h}).then(r=>r.json()); const vip=await fetch(api+'/me/vip',{headers:h}).then(r=>r.json()); return {avatar:me.avatar_asset,frame:me.frame_asset,vip};},API);
   if(!profileLive.avatar) throw new Error('profile avatar was not applied through UI: '+JSON.stringify(profileLive));
+  if(await frameApply.count() && !profileLive.frame) throw new Error('profile frame was not applied through UI: '+JSON.stringify(profileLive));
   const privacyUi=await page.evaluate(async api=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'}; const save=await fetch(api+'/me/privacy',{method:'PATCH',headers:h,body:JSON.stringify({hide_location:true,hide_vip_badge:false})}); const read=await fetch(api+'/me/privacy',{headers:h}).then(r=>r.json()); return {save:save.status,read};},API);
   if(privacyUi.save!==200||privacyUi.read?.hide_location!==true) throw new Error('privacy UI backend roundtrip failed: '+JSON.stringify(privacyUi));
   await page.locator('#edClose').click();
