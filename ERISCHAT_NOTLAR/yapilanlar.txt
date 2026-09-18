@@ -171,3 +171,8 @@ Room control checkpoint
 - [x] Commit `bc27af2fe81312e468cf3b24f8d5d8e3f1eb1396`: WebRTC initiator deterministik hale getirildi ve ICE server config'i `window.ERIS_WEBRTC_ICE_SERVERS` üzerinden alınabilir yapıldı.
 - [x] Commit `074115adb877d02ddcd6c0c7fd9ae00f90ce39f7`: browser smoke WebRTC peer setup/cleanup ve ICE config assertionları eklendi.
 - [ ] Bu iki commit için yeni Quality PASS kanıtı henüz yok.
+
+2026-09-18 — WEBRTC ICE/LEAVE HARDENING
+- [x] Commit `572632acb0ca69c8c15859987c894312269f5a89`: erken ICE candidate queue + remote-description sonrası flush eklendi.
+- [x] Mikrofon kapanışında peer'lere `leave` signaling gönderimi eklendi.
+- [ ] Bu commit için yeni Quality PASS kanıtı henüz yok.
