@@ -48,6 +48,17 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(10)"))
+        rows = conn.execute(text("SELECT id, public_id FROM rooms")).fetchall()
+        import uuid as _uuid
+        used = {str(x[1]) for x in rows if x[1]}
+        for rid, pid in rows:
+            if not pid:
+                while True:
+                    candidate = f"{_uuid.uuid4().int % 10_000_000_000:010d}"
+                    if candidate not in used: break
+                conn.execute(text("UPDATE rooms SET public_id=:pid WHERE id=:rid"), {"pid": candidate, "rid": rid})
+                used.add(candidate)
 
 def normalize_public_ids(db: Session) -> None:\n    import re\n    rows = db.scalars(select(User)).all()\n    seen = set()\n    for user in rows:\n        if re.fullmatch(r"\\d{10}", str(user.public_id or "")) and user.public_id not in seen:\n            seen.add(user.public_id)\n            continue\n        while True:\n            candidate = f"{uuid4().int % 10_000_000_000:010d}"\n            if candidate not in seen and not db.scalar(select(User.id).where(User.public_id == candidate)):\n                break\n        user.public_id = candidate\n        seen.add(candidate)\n    db.commit()\n\n\ndef bootstrap_initial_developer_admins(db: Session) -> None:
     ids = [x.strip() for x in settings.initial_da_ids.split(",") if x.strip()]
