@@ -17,6 +17,8 @@ from .models import User
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
 from .platform_models import Notification
 from .admin_models import AdminRole, RoomAdminBan, UserBan
+from .system_data import RoomIdRegistry
+from .system_logs import record
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
 
@@ -67,6 +69,13 @@ def refresh_level(db: Session, room: Room) -> int:
         db.commit()
     return new_level
 
+def generate_room_public_id(db: Session) -> str:
+    while True:
+        candidate = f"{uuid4().int % 1_000_000_000_000:012d}"
+        if not db.scalar(select(Room.id).where(Room.public_id == candidate)) and not db.scalar(select(RoomIdRegistry.room_id).where(RoomIdRegistry.public_id == candidate)):
+            return candidate
+
+
 def get_room_or_404(db: Session, room_id: str) -> Room:
     room = db.get(Room, room_id) or db.scalar(select(Room).where(Room.public_id == room_id))
     if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
@@ -112,7 +121,13 @@ def register_room_auth(current_user_dependency):
         name = payload.name.strip()
         if not name: raise HTTPException(status_code=400, detail="Oda adı boş olamaz")
         if len(name) > 16: raise HTTPException(status_code=422, detail="Oda adı en fazla 16 karakter olabilir")
-        room = Room(id="room_" + uuid4().hex, public_id=f"{uuid4().int % 10_000_000_000:010d}", owner_id=user.id, name=name); db.add(room); db.flush(); db.add(RoomMember(room_id=room.id, user_id=user.id)); ensure_seats(db, room); db.commit(); db.refresh(room); return room_view(db, room)
+        room = Room(id="room_" + uuid4().hex, public_id=generate_room_public_id(db), owner_id=user.id, name=name)
+        db.add(room); db.flush()
+        db.add(RoomIdRegistry(room_id=room.id, public_id=room.public_id))
+        db.add(RoomMember(room_id=room.id, user_id=user.id))
+        ensure_seats(db, room); db.commit(); db.refresh(room)
+        record("room_id", "room_public_id_created", room_id=room.id, public_id=room.public_id, owner_id=user.id, owner_nickname=user.nickname)
+        return room_view(db, room)
     @router.get("")
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
     @router.get("/{room_id}")
@@ -123,7 +138,7 @@ def register_room_auth(current_user_dependency):
         if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odadan atıldınız")
         admin = db.get(AdminRole, user.id)
         admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
-        active_admin_ban = db.scalar(select(RoomAdminBan).where(RoomAdminBan.room_id == room_id, RoomAdminBan.active.is_(True), (RoomAdminBan.expires_at.is_(None)) | (RoomAdminBan.expires_at > datetime.now(timezone.utc))))
+        active_admin_ban = db.scalar(select(RoomAdminBan).where(RoomAdminBan.room_id == room.id, RoomAdminBan.active.is_(True), (RoomAdminBan.expires_at.is_(None)) | (RoomAdminBan.expires_at > datetime.now(timezone.utc))))
         if active_admin_ban and not admin_mode: raise HTTPException(status_code=403, detail="Oda yönetim tarafından yasaklandı")
         active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))
         if active_user_ban and not admin_mode: raise HTTPException(status_code=403, detail="Hesabınız yasaklı")
