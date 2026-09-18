@@ -121,3 +121,9 @@
 2026-09-18 — RUNNER DURUMU
 - Son gift UI read-back commiti `80ead31ae374d3a1adf1c0799dc494da38e18dae` için commit workflow lookup sonuç döndürmedi; bu nedenle bu commit için CI PASS kanıtı yok.
 - [ ] Yeni Quality runner sonucu bekleniyor.
+
+
+2026-09-18 — MICROPHONE CHECKPOINT
+- [x] Oda mikrofon düğmesi artık yalnızca görsel flag değiştirmiyor; gerçek browser audio stream'i açıp kapatıyor.
+- [ ] Peer-to-peer WebRTC transport/signaling ve remote audio propagation sonraki aşama.
+- [ ] Yeni Quality runner sonucu bekleniyor.
