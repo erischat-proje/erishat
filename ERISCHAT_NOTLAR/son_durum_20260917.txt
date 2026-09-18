@@ -282,3 +282,11 @@
 - [x] Oyun analytics/stats endpointleri SA/UA/DA ile sınırlandı; oyuncular analiz verisini API üzerinden göremiyor.
 - [x] Commit 845be2d8e22187a673b9dd8761b30de947615fea: oyuncu oyun ekranından Detaylı Analiz aksiyonu kaldırıldı.
 - [ ] Fresh Quality/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+2026-09-19 — OYUN MOTOR/UI V3
+- [x] Commit 7272a3d8a2a53cbbe6d5351c9fb8c4fcb6ec14fd: Blackjack el hesaplama/As mantığı düzeltildi; doğal blackjack ve dealer blackjack ayrıştırıldı.
+- [x] At Yarışı ve Şans Çarkı seçimleri backend'de doğrulanıyor ve seçim isabeti kaydediliyor.
+- [x] Commit c776a2fc08b40394ab27e6616e2d96bd70ceb2ac: oyuncu oyun ekranına oyun tipine göre seçim kontrolleri eklendi; sonuç ekranında seçim sonucu, Crash çarpanı, Blackjack toplamları ve yarış sırası gösteriliyor.
+- [x] Oyuncu analiz ekranı açılmadan oyunların oynanabilirliği artırıldı; yönetim analizleri oyuncuya açılmadı.
+- [ ] Fresh Quality/browser E2E sonucu bekleniyor; PASS ilan edilmeyecek.
