@@ -228,6 +228,53 @@ def register_platform_auth(current_user_dependency):
         target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         return {"id":target.id,"public_id":target.public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
+    @router.post("/users/{user_id}/follow", status_code=201)
+    def follow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi takip edemezsiniz")
+        if not db.get(User,user_id): raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        if db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==user_id)):
+            return {"following":True,"created":False}
+        row=UserFollow(follower_id=user.id,following_id=user_id); db.add(row)
+        db.add(Notification(user_id=user_id,kind="follow",title="Yeni takipçi",body=user.nickname+" sizi takip etti.")); db.commit()
+        return {"following":True,"created":True}
+    @router.delete("/users/{user_id}/follow")
+    def unfollow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        row=db.scalar(select(UserFollow).where(UserFollow.follower_id==user.id,UserFollow.following_id==user_id))
+        if row: db.delete(row); db.commit()
+        return {"following":False}
+    @router.get("/users/{user_id}/followers")
+    def followers(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        rows=list(db.scalars(select(UserFollow).where(UserFollow.following_id==user_id).order_by(UserFollow.created_at.desc()).limit(200)))
+        return [{"user_id":r.follower_id,"created_at":r.created_at} for r in rows]
+    @router.get("/users/{user_id}/following")
+    def following(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        rows=list(db.scalars(select(UserFollow).where(UserFollow.follower_id==user_id).order_by(UserFollow.created_at.desc()).limit(200)))
+        return [{"user_id":r.following_id,"created_at":r.created_at} for r in rows]
+    @router.post("/users/{user_id}/block")
+    def block_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi engelleyemezsiniz")
+        if not db.get(User,user_id): raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        if not db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==user.id,UserBlock.blocked_id==user_id)):
+            db.add(UserBlock(blocker_id=user.id,blocked_id=user_id)); db.commit()
+        return {"blocked":True}
+    @router.delete("/users/{user_id}/block")
+    def unblock_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        row=db.scalar(select(UserBlock).where(UserBlock.blocker_id==user.id,UserBlock.blocked_id==user_id))
+        if row: db.delete(row); db.commit()
+        return {"blocked":False}
+    @router.get("/me/blocks")
+    def my_blocks(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        rows=list(db.scalars(select(UserBlock).where(UserBlock.blocker_id==user.id).order_by(UserBlock.created_at.desc())))
+        return [{"user_id":r.blocked_id,"created_at":r.created_at} for r in rows]
+    @router.get("/me/notifications")
+    def notifications(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        rows=list(db.scalars(select(Notification).where(Notification.user_id==user.id).order_by(Notification.created_at.desc()).limit(limit)))
+        return [{"id":r.id,"kind":r.kind,"title":r.title,"body":r.body,"read":r.read,"created_at":r.created_at} for r in rows]
+    @router.post("/me/notifications/{notification_id}/read")
+    def mark_notification_read(notification_id:int,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        row=db.get(Notification,notification_id)
+        if not row or row.user_id!=user.id: raise HTTPException(status_code=404,detail="Bildirim bulunamadı")
+        row.read=True; db.commit(); return {"read":True}
     @router.get("/users/{user_id}/fans")
     def fans(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         row=db.get(FanProfile,user_id)
