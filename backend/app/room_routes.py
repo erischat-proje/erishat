@@ -23,6 +23,7 @@ class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=64)
 class RoomChatUpdate(BaseModel): enabled: bool
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class BanUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
+class RoomInvite(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64); gift_key: str = Field(min_length=1, max_length=64); quantity: int = Field(ge=1, le=99)
 class MusicCreate(BaseModel):
@@ -99,6 +100,18 @@ def register_room_auth(current_user_dependency):
             if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
             db.add(RoomMember(room_id=room.id, user_id=user.id)); db.commit()
         return room_view(db, room)
+    @router.post("/{room_id}/invite", status_code=201)
+    def invite_to_room(room_id: str, payload: RoomInvite, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_staff(db, room, user)
+        target = db.get(User, payload.user_id)
+        if not target: raise HTTPException(status_code=404, detail="Davet edilecek kullanıcı bulunamadı")
+        if target.id == user.id: raise HTTPException(status_code=400, detail="Kendinize davet gönderemezsiniz")
+        if is_member(db, room.id, target.id): raise HTTPException(status_code=409, detail="Kullanıcı zaten odada")
+        db.add(Notification(user_id=target.id, kind="room_invite", title="Oda daveti", body=f"{room.name} odasına davet edildiniz."))
+        db.commit()
+        return {"invited": True, "room_id": room.id, "user_id": target.id}
+
     @router.post("/{room_id}/leave")
     def leave_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
