@@ -220,3 +220,10 @@
 - [x] Admin oda banı/unban artık 12 haneli public oda ID'sini kabul ediyor.
 - [x] Quality workflow'a ID/yetki smoke gate eklendi.
 - [ ] Bu son commitler için fresh Quality PASS henüz bekleniyor.
+
+2026-09-19 — EKSİKLER ÖNCE / OPTİMİZASYON SONRA
+- Çalışma stratejisi kesinleştirildi: önce tüm eksik özellikler, butonlar, ekranlar, backend bağlantıları, yetki kontrolleri ve browser/E2E testleri tamamlanacak.
+- Bu aşamada optimizasyon/refactor/ölçekleme ikinci fazdır; eksik özellik kalmadan başlanmayacak.
+- 2026-09-18 Quality run 35395892690, commit bc9e745e üzerinde static syntax adımında başarısız oldu.
+- Hata kökü cosmetic_routes.py ve platform_routes.py içindeki literal \\n dizileriydi; kaynaklar düzeltildi.
+- Yeni Quality kanıtı bekleniyor; PASS ilan edilmeyecek.
