@@ -335,6 +335,15 @@ async function main(){
     await page.waitForTimeout(250);
     if(!giftDialogText.includes('Hediye gönderildi')) throw new Error('room gift UI did not complete: '+giftDialogText);
   }
+  const giftUiReadback=await page.evaluate(async ({api,targetId,roomId,memberToken})=>{
+    const h={Authorization:'Bearer '+memberToken};
+    const notifications=await fetch(api+'/me/notifications',{headers:h}).then(r=>r.json());
+    const profile=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/profile-gifts',{headers:h}).then(r=>r.json());
+    const events=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/gift-events',{headers:h}).then(r=>r.json()).catch(()=>[]);
+    return {notifications,profile,events};
+  },{api:API,targetId:member.user.id,roomId:room.data.id,memberToken:member.access_token});
+  if(!giftUiReadback.notifications.some(x=>x.kind==='gift')) throw new Error('gift UI notification read-back missing: '+JSON.stringify(giftUiReadback.notifications));
+  if(!giftUiReadback.profile.some(x=>x.gift==='rose')) throw new Error('gift UI profile-gifts read-back missing: '+JSON.stringify(giftUiReadback.profile));
   const roomUiState=await page.evaluate(async ({api,id})=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const r=await fetch(api+'/rooms/'+encodeURIComponent(id),{headers:h}); return {status:r.status,data:await r.json()};},{api:API,id:room.data.id});
   if(roomUiState.status!==200||!Array.isArray(roomUiState.data?.seats)) throw new Error('room UI state read-back failed: '+JSON.stringify(roomUiState));
   await page.locator('#edClose').click();
