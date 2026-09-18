@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
-from .platform_models import Family, FamilyDonation, FamilyMember
+from .platform_models import Family, FamilyDonation, FamilyMember, Notification
 
 router = APIRouter(prefix="/v1", tags=["families"])
 
@@ -101,7 +101,7 @@ def register_family_auth(current_user_dependency):
         level = family_level(family.balance); count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family_id)) or 0)
         if count >= FAMILY_LEVELS[level]["capacity"]: raise HTTPException(status_code=409, detail="Aile kapasitesi dolu")
         row = FamilyMember(family_id=family_id, user_id=target.id, role=payload.role or "member")
-        db.add(row); db.add(ConversationMember(conversation_id=family.chat_conversation_id, user_id=target.id)); db.commit()
+        db.add(row); db.add(ConversationMember(conversation_id=family.chat_conversation_id, user_id=target.id)); db.add(Notification(user_id=target.id, kind="family_invite", title="Aile daveti", body=f"{family.name} ailesine davet edildiniz.")); db.commit()
         return {"family_id": family_id, "user_id": target.id, "role": row.role, "added": True}
 
     @router.patch("/families/{family_id}/members/{member_user_id}")
