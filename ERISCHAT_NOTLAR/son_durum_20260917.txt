@@ -85,3 +85,13 @@
 - Aynı Quality run içinde live family, room, ban, DM ve cosmetic smoke adımlarının tamamı SUCCESS.
 - Böylece önceki browser checkpoint'lerinden kalan anonymous/me ve gerçek DM backend browser maddeleri doğrulanmış oldu.
 - Kalan ana browser işi: oda tam UI→API kontrolleri, aile UI etkileşimleri, profil/try-on gerçek uygulama akışı ve tüm müşteri sekmelerinin uçtan uca doğrulanması.
+
+
+## 2026-09-18 Geçiş checkpoint
+- Son devam çalışmasında DM browser smoke genişletildi: conversation oluşturma + detail GET + mesaj POST + mesaj geçmişinde gönderilen mesajın read-back doğrulaması.
+- Commit: `039bf915f6c61e27be29c84a5251b3ba42b7a242`.
+- Konum browser smoke da genişletildi: `/me/location` PUT + GET read-back ve Ankara şehir doğrulaması.
+- Commit: `765c192bcfd42a728975b0054fc8025cd92ce42c`.
+- Yapılanlar notu son olarak `7e9dcd4a11d8115f4ae0dc7a8e07bc325fc6c9b8` commit'i ile güncellendi.
+- Bu iki son değişiklik için henüz yeni Quality PASS kanıtı bu sohbet checkpoint'inde alınmadı; PASS iddiası yapılmamalı.
+- Kullanıcı yeni sohbete geçerken bu checkpoint esas alınmalı.
