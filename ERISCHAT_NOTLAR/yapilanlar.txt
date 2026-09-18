@@ -120,3 +120,4 @@ Room control checkpoint
 - [x] Oda hediye gönderimi d58f140 ile gift bildirimi oluşturuyor ve gerçek profil hediye kayıtlarıyla birlikte tutuluyor.
 
 - [x] Commit e40acb9a96af90803c320e76c3480ea3cfb9be34: /me/vip artık badge, title, neon_enabled ve sunum rengi metadata'sı döndürüyor.\n- [x] Commit 8dddaaeaff48da2d16eee9ecc1c52d443529d7: VIP merkezi bu badge/neon/title bilgilerini gerçek API'den gösteriyor.\n- [x] Commit 01593847976b16f758f5725b2e017f03d7abc22f: backend browser smoke VIP metadata sözleşmesini doğruluyor.\n
+- [x] Commit 5be2a412b67c0ce4e04eb093ade51c8e43ecbab9: Oda sahibi/moderatör için gerçek oda daveti endpoint'i eklendi; hedef kullanıcıya `room_invite` bildirimi oluşturuluyor.\n- [x] Commit a36aa595c4f0cb5389e1847c4c1ea652e45544b2: Browser backend smoke oda daveti + hedef kullanıcı bildirimini doğruluyor.\n
