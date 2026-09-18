@@ -187,3 +187,9 @@ Room control checkpoint
 - [x] c10cd8fdea5c334ae5b8b6109eb4aaedf1f41fe5: browser smoke artık authenticated RTC signaling offer/ICE/leave mesajlarını gönderip karşı tarafta okuma/tüketim akışını doğruluyor.
 - [x] Self-target güvenlik kontrolü de smoke kapsamına alındı.
 - [ ] Yeni Quality PASS henüz alınmadı.
+
+
+2026-09-18 — RTC SIGNALING SECURITY SMOKE
+- [x] Commit `fc6a60fce28ff6c0e5c0b32aa188b695f203d5c6`: `scripts/rtc_signaling_security_smoke.mjs` eklendi.
+- [x] Senaryo; non-member GET/POST için 403, member → non-member target için 404, geçersiz signal type için 422 ve geçerli offer için 200 + queued=true kontrollerini kapsıyor.
+- [ ] Quality runner entegrasyonu/gerçek PASS henüz doğrulanmadı.
