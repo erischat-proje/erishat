@@ -283,3 +283,19 @@ Room control checkpoint
 
 - [x] Oda adı limiti 16 karaktere çekildi; oda public ID'si 10 haneli olarak üretilecek/mevcut odalar migrate edilecek ve oda ekranında adın hemen altında gösterilecek.
 - [x] UA'lara ban yetkileri eklendi: hesap banı, cihaz banı, chat banı, oda banı ve bunların kaldırılması; UA'lara DA'nın ID/Lidya/VIP/yetki gibi diğer araçları açılmadı.
+
+
+2026-09-18 — SİSTEM VERİ AYRIŞTIRMA / ID GÜVENLİĞİ
+- [x] Kullanıcı public ID standardı kesin olarak 10 haneli sayısal ID olarak sabitlendi.
+- [x] Oda public ID standardı kesin olarak 12 haneli sayısal ID olarak değiştirildi; 10 haneli kullanıcı ID'leri ile format düzeyinde dahi çakışamaz.
+- [x] Kullanıcı ID'leri için ayrı `system_user_ids` registry tablosu eklendi.
+- [x] Oda ID'leri için ayrı `system_room_ids` registry tablosu eklendi.
+- [x] Lidya için yüksek hacimli `BIGINT` bakiye + ayrı `system_lidya_ledger` işlem DB tablosu eklendi.
+- [x] Lidya bakiye değişiklikleri otomatik ledger kaydına bağlandı.
+- [x] `sistemönemliveriler/` altında işlem türlerine özel TXT kayıtları oluşturuldu.
+- [x] Yönetim işlemlerinin audit kaydı artık ilgili özel TXT dosyasına da yazılıyor.
+- [x] Destek ticket oluşturma ve admin destek görüntüleme kayıtları ayrı TXT'lere bağlandı.
+- [x] Normal kullanıcı için yönetim menüsü hâlâ yalnızca /v1/admin/me yetkisi başarılı olursa oluşturuluyor; yetkisiz kullanıcıya UI butonu eklenmiyor.
+- [x] Oda adının oluşturma ve yeniden adlandırma limitleri 16 karakter.
+- [ ] Yeni Quality runner PASS sonucu bekleniyor.
+- [ ] Gerçek production multi-instance/Lidya yük testi ve admin browser E2E ayrıca doğrulanacak.
