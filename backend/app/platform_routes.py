@@ -17,6 +17,7 @@ from .platform_models import (
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
 from .room_models import Room, RoomGiftEvent, RoomMember
+from .admin_models import AdminRole
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -239,7 +240,7 @@ def register_platform_auth(current_user_dependency):
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        return {"id":target.id,"public_id":target.public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
+        admin = db.get(AdminRole, target.id)\n        visible_public_id = None if admin and admin.role in {"SA", "UA", "DA"} else target.public_id\n        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
     @router.post("/users/{user_id}/follow", status_code=201)
     def follow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi takip edemezsiniz")
