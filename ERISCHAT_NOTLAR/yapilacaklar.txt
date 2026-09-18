@@ -239,3 +239,9 @@ Room control checkpoint
 2026-09-18 — RTC SIGNALING SECURITY SMOKE
 - [x] `scripts/rtc_signaling_security_smoke.mjs` eklendi: oda dışı GET/POST erişimi 403, oda üyesinin oda dışı hedefe sinyal göndermesi 404, geçersiz signal type 422 ve geçerli offer 200 beklentileri tanımlandı.
 - [ ] Bu yeni güvenlik smoke senaryosunun GitHub Actions Quality runner'ında çalıştırılması ve yeni PASS kanıtı alınması bekleniyor.
+
+
+2026-09-18 — WEBRTC ICE CONFIG BOOTSTRAP
+- [x] Authenticated `GET /v1/rooms/{room_id}/rtc-config` eklendi; `ERIS_WEBRTC_ICE_SERVERS_JSON` env değişkeninden JSON liste okuyor.
+- [x] Frontend oda WebRTC başlangıcında backend ICE config'i yükleyip `RTCPeerConnection` içine aktarıyor.
+- [ ] Gerçek STUN/TURN değerlerinin deployment ortamına güvenli biçimde tanımlanması ve iki tarayıcı gerçek ses E2E testi bekliyor.
