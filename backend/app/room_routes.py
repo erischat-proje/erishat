@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from collections import defaultdict, deque
+import time
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -28,6 +30,23 @@ class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64); gift_key: str = Field(min_length=1, max_length=64); quantity: int = Field(ge=1, le=99)
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128); source_url: str = Field(min_length=1, max_length=2000)
+class RTCSignal(BaseModel):
+    target_id: str = Field(min_length=1, max_length=64)
+    type: str = Field(pattern=r"^(offer|answer|ice-candidate|leave)$")
+    payload: dict = Field(default_factory=dict)
+
+_RTC_SIGNAL_TTL = 60.0
+_RTC_SIGNAL_LIMIT = 100
+_rtc_signals: dict[str, deque] = defaultdict(deque)
+
+def _prune_rtc_signals(room_id: str) -> deque:
+    queue = _rtc_signals[room_id]
+    cutoff = time.monotonic() - _RTC_SIGNAL_TTL
+    while queue and queue[0]["ts"] < cutoff:
+        queue.popleft()
+    while len(queue) > _RTC_SIGNAL_LIMIT:
+        queue.popleft()
+    return queue
 
 def level_for_spend(spend: int) -> int:
     current = 1
@@ -205,6 +224,32 @@ def register_room_auth(current_user_dependency):
     @router.delete("/{room_id}/lock")
     def unlock_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user); room.locked = False; room.lock_expires_at = None; db.commit(); return {"locked": False}
+    @router.post("/{room_id}/rtc-signals")
+    def send_rtc_signal(room_id: str, payload: RTCSignal, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        if payload.target_id == user.id:
+            raise HTTPException(status_code=400, detail="Sinyal hedefi gönderen kullanıcı olamaz")
+        if not is_member(db, room.id, payload.target_id):
+            raise HTTPException(status_code=404, detail="Sinyal hedefi odada değil")
+        queue = _prune_rtc_signals(room.id)
+        queue.append({"id": uuid4().hex, "ts": time.monotonic(), "sender_id": user.id, "target_id": payload.target_id, "type": payload.type, "payload": payload.payload})
+        return {"queued": True}
+
+    @router.get("/{room_id}/rtc-signals")
+    def receive_rtc_signals(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        queue = _prune_rtc_signals(room.id)
+        messages = [x for x in queue if x["target_id"] == user.id]
+        if messages:
+            ids = {x["id"] for x in messages}
+            queue_copy = [x for x in queue if x["id"] not in ids]
+            queue.clear()
+            queue.extend(queue_copy)
+        return [{"id":x["id"], "sender_id":x["sender_id"], "type":x["type"], "payload":x["payload"]} for x in messages]
     @router.post("/{room_id}/gifts")
     async def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
