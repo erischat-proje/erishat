@@ -46,17 +46,20 @@
     const box=p.querySelector('#edRooms');try{const rows=await api('/rooms');const list=Array.isArray(rows)?rows:(rows.items||[]);box.innerHTML='';if(!list.length){box.innerHTML=note('Henüz aktif oda yok. İlk odanı sen açabilirsin.');return}list.forEach(r=>{const id=r.id||r.room_id,row=document.createElement('div');row.className='ed-row';row.innerHTML=`<div><b>🎙️ ${esc(r.name||r.title||id)}</b><small>${r.member_count??0}/${r.capacity??35} kişi • Oda Lv.${r.level??1} • ${r.chat_enabled===false?'Sohbet kapalı':'Sohbet açık'}</small></div>`;row.append(btn('İncele',()=>roomDetail(id,r.name||r.title||'Oda'),true));box.append(row)})}catch(e){box.innerHTML=note(`Odalar şu anda yüklenemedi: ${e.message}`)}}
 
   async function startRoomWebRTC(box, roomId, roomState){
+    if(!Array.isArray(window.ERIS_WEBRTC_ICE_SERVERS)) window.ERIS_WEBRTC_ICE_SERVERS=[];
     if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) return;
     const token=localStorage.getItem('erischat_access_token');
     if(!token || !box.__micStream) return;
     box.__rtcPeers ||= new Map();
     box.__rtcPoll ||= null;
-    const peers=(roomState.seats||[]).map(s=>s.user_id).filter(Boolean).filter(uid=>uid!==roomState.owner_id);
+    const selfId=window.ErisAuth?.user?.id||'';
+    const peers=(roomState.seats||[]).map(s=>s.user_id).filter(Boolean).filter(uid=>uid!==selfId && uid!==roomState.owner_id);
     const targets=[...new Set(peers)].slice(0,8);
     const signal=async(target,type,payload)=>api('/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',body:JSON.stringify({target_id:target,type,payload})});
     const ensure=async(target,initiator)=>{
       if(box.__rtcPeers.has(target)) return box.__rtcPeers.get(target);
-      const pc=new RTCPeerConnection({iceServers:[]});
+      const iceServers=Array.isArray(window.ERIS_WEBRTC_ICE_SERVERS)?window.ERIS_WEBRTC_ICE_SERVERS:[];
+      const pc=new RTCPeerConnection({iceServers});
       box.__rtcPeers.set(target,pc);
       box.__rtcPeersMeta ||= new Map(); box.__rtcPeersMeta.set(target,{pending:[]});
       box.__micStream.getTracks().forEach(track=>pc.addTrack(track,box.__micStream));
@@ -76,7 +79,10 @@
       }
       return pc;
     };
-    for(const target of targets) await ensure(target,true).catch(()=>{});
+    for(const target of targets){
+      const initiator=!selfId || String(selfId)<String(target);
+      if(initiator) await ensure(target,true).catch(()=>{});
+    }
     if(!box.__rtcPoll){
       box.__rtcPoll=setInterval(async()=>{
         try{
