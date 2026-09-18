@@ -3,6 +3,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from .models import User
+from .system_data import UserIdRegistry
 from .repositories import UserRepository
 
 
@@ -21,7 +22,8 @@ def create_anonymous_user(
     while True:
         public_id = f"{uuid4().int % 10_000_000_000:010d}"
         existing = db.query(User).filter(User.public_id == public_id).first()
-        if not existing:
+        registry = db.query(UserIdRegistry).filter(UserIdRegistry.public_id == public_id).first()
+        if not existing and not registry:
             break
 
     user = User(
@@ -31,7 +33,10 @@ def create_anonymous_user(
         avatar=avatar[:16],
         gender=gender,
     )
-    return UserRepository(db).create(user)
+    created = UserRepository(db).create(user)
+    db.add(UserIdRegistry(user_id=created.id, public_id=created.public_id))
+    db.commit()
+    return created
 
 
 # Import after the auth definitions so the family route bootstrap can safely
