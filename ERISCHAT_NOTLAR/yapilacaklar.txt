@@ -149,3 +149,8 @@ Room control checkpoint
 2026-09-18 — BROWSER E2E EXTENSION
 - [x] frontend_backend_browser_smoke.mjs içine gerçek browser → privacy PATCH → GET round-trip kontrolü eklendi (hide_location=true).
 - [ ] Yeni Quality runner sonucu henüz bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-18 — REAL ROOM UI E2E EXTENSION
+- [x] Gerçek browser smoke içine oda modalında Katıl, Mikrofon UI, boş koltuğa oturma, sohbet aç/kapat ve backend read-back kontrolleri eklendi.
+- [ ] Hediye/moderatör UI aksiyonları için yeni Quality sonucu bekleniyor; mevcut testte backend gift/moderator zinciri zaten ayrı doğrulanıyor.
