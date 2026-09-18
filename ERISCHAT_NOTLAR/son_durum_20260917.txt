@@ -95,3 +95,9 @@
 - Yapılanlar notu son olarak `7e9dcd4a11d8115f4ae0dc7a8e07bc325fc6c9b8` commit'i ile güncellendi.
 - Bu iki son değişiklik için henüz yeni Quality PASS kanıtı bu sohbet checkpoint'inde alınmadı; PASS iddiası yapılmamalı.
 - Kullanıcı yeni sohbete geçerken bu checkpoint esas alınmalı.
+
+
+## 2026-09-18 Devam — browser smoke düzeltmesi
+- scripts/frontend_backend_browser_smoke.mjs içinde room oluşturma bloğu, roomInvite/gift/room-control kullanımlarından önce tanımlanacak şekilde düzeltildi.
+- VIP public lookup için window.__memberId test state'i member id ile açıkça ayarlanıyor.
+- Bu değişiklik sonrası yeni Quality PASS kanıtı henüz alınmadı; PASS/TAMAM iddiası yapılmıyor.
