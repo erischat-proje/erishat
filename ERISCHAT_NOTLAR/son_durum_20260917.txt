@@ -141,3 +141,9 @@
 - `074115adb877d02ddcd6c0c7fd9ae00f90ce39f7` ile browser smoke, gerçek UI mikrofon akışında RTCPeerConnection stub üzerinden peer oluşturma, audio track ekleme, offer/local description, ICE config ve cleanup davranışlarını kontrol edecek şekilde genişletildi.
 - Bu smoke gerçek iki cihaz/tarayıcı arasında ses taşıdığını kanıtlamaz; gerçek ağ E2E ve üretim STUN/TURN konfigürasyonu ayrıca doğrulanmalıdır.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS/TAMAM ilan edilmeyecek.
+
+2026-09-18 — WEBRTC HARDENING CHECKPOINT
+- `572632acb0ca69c8c15859987c894312269f5a89` ile WebRTC signaling yarış koşulu güçlendirildi: remote description'dan önce gelen ICE adayları artık düşürülmüyor, bekletilip description sonrasında `addIceCandidate()` ile uygulanıyor.
+- Mikrofon kapatılırken uzak peer'lere leave sinyali gönderiliyor; ardından peer/audio kaynakları temizleniyor.
+- MDN'nin WebRTC akışında da ICE adaylarının remote description ile doğru sırada işlenmesi gerektiği belirtiliyor. citeturn0search0turn0search10
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS/TAMAM ilan edilmeyecek.
