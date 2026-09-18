@@ -223,3 +223,8 @@ Room control checkpoint
 - [x] Mikrofon kapatılırken aktif peer'lere `leave` signaling mesajı gönderiliyor ve lokal peer/audio kaynakları temizleniyor.
 - [ ] Gerçek iki tarayıcı E2E ve üretim STUN/TURN konfigürasyonu hâlâ açık.
 - [ ] Yeni Quality runner sonucu bekleniyor.
+
+2026-09-18 — WEBRTC PEER CLEANUP HARDENING
+- [x] Commit 25d984b2933c27ac10b86d43c6d4850985999490: failed/disconnected/leave durumlarında peer metadata ve uzak audio elementleri temizleniyor.
+- [x] Mikrofon kapanışında RTC metadata map'i de temizleniyor; yeniden açma sonrası eski peer state'i taşınmıyor.
+- [ ] Yeni Quality runner sonucu henüz doğrulanmadı.
