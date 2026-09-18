@@ -220,7 +220,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         before=target.lidya; target.lidya=max(0,target.lidya-payload.amount)
         audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=user_id)
@@ -258,26 +258,26 @@ def register_admin_auth(current_user_dependency):
 
     @router.delete("/users/{user_id}/chat-ban")
     def unchat_ban(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA"); rows=db.scalars(select(ChatBan).where(ChatBan.user_id==user_id,ChatBan.active.is_(True))).all()
+        require_role(db,user,"UA"); rows=db.scalars(select(ChatBan).where(ChatBan.user_id==user_id,ChatBan.active.is_(True))).all()
         for x in rows:x.active=False
         audit(db,user,"chat_unban",target_user_id=user_id);db.commit();return {"unbanned":True}
 
     @router.post("/rooms/{room_id}/ban")
     def room_ban(room_id:str,payload:BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA"); room=db.get(Room,room_id)
+        require_role(db,user,"UA"); room=db.get(Room,room_id)
         if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
         row=RoomAdminBan(room_id=room_id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason);db.add(row)
         audit(db,user,"room_ban",{"days":payload.days,"reason":payload.reason},target_room_id=room_id);db.commit();return {"banned":True,"expires_at":row.expires_at}
 
     @router.delete("/rooms/{room_id}/ban")
     def room_unban(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");rows=db.scalars(select(RoomAdminBan).where(RoomAdminBan.room_id==room_id,RoomAdminBan.active.is_(True))).all()
+        require_role(db,user,"UA");rows=db.scalars(select(RoomAdminBan).where(RoomAdminBan.room_id==room_id,RoomAdminBan.active.is_(True))).all()
         for x in rows:x.active=False
         audit(db,user,"room_unban",target_room_id=room_id);db.commit();return {"unbanned":True}
 
     @router.post("/users/{user_id}/vip")
     def vip_update(user_id:str,payload:VipUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");target=db.get(User,user_id)
+        require_role(db,user,"UA");target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         vip=db.get(VipStatus,user_id)
         if not vip: vip=VipStatus(user_id=user_id,level=payload.level,total_spent=0);db.add(vip)
