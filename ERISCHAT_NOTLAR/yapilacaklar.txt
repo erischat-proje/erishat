@@ -256,3 +256,11 @@ Room control checkpoint
 - [x] `rtc_signaling_security_smoke.mjs` artık oda dışı kullanıcının `/rtc-config` erişimini 403 ile reddedildiğini kontrol ediyor.
 - [x] Oda üyesinin `/rtc-config` çağrısının 200 + `ice_servers` array döndürdüğü doğrulanıyor.
 - [ ] Bu yeni güvenlik smoke değişikliğinin Quality runner PASS kanıtı bekleniyor.
+
+
+2026-09-18 — VIP SPENDING PROGRESSION
+- [x] VIPStatus'a `total_spent` alanı eklendi ve startup migration ile mevcut DB'lere açılıyor.
+- [x] Standart kozmetik satın alımı artık harcamayı VIP toplamına işliyor ve seviyeyi 1–12 eşiklerine göre güncelliyor.
+- [x] `/me/vip` artık toplam harcama ve sonraki seviye eşiğini döndürüyor.
+- [x] Browser smoke satın alma sonrası VIP harcama read-back kontrolü yapıyor.
+- [ ] Yeni Quality runner PASS kanıtı bekleniyor.
