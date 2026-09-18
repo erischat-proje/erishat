@@ -231,3 +231,20 @@ Room control checkpoint
 
 - [x] Oda adı limiti 16 karaktere çekildi; oda public ID'si 10 haneli olarak üretilecek/mevcut odalar migrate edilecek ve oda ekranında adın hemen altında gösterilecek.
 - [x] UA'lara ban yetkileri eklendi: hesap banı, cihaz banı, chat banı, oda banı ve bunların kaldırılması; UA'lara DA'nın ID/Lidya/VIP/yetki gibi diğer araçları açılmadı.
+
+
+2026-09-18 — SİSTEM VERİ AYRIŞTIRMA / ID GÜVENLİĞİ
+- [x] Kullanıcı public ID 10 hane; oda public ID 12 hane olacak şekilde ayrıştırıldı.
+- [x] Oda public ID üretimi dedicated registry kontrolüyle çakışma güvenli hale getirildi.
+- [x] Mevcut oda public ID migration'ı 12 haneli standarda geçirildi.
+- [x] UserIdRegistry, RoomIdRegistry ve LidyaLedger modelleri eklendi.
+- [x] users.lidya BIGINT'e yükseltildi; yüksek miktarlı Lidya için Integer sınırı kaldırıldı.
+- [x] Lidya değişiklikleri otomatik `system_lidya_ledger` tablosuna ve `sistemönemliveriler/lidya_islemleri.txt` kaydına alınıyor.
+- [x] `sistemönemliveriler` klasöründe admin, destek, rapor, uygulama eksiği, ban, oda banı, chat banı, ghost, admin yetki, ID sorgu, Lidya, VIP, oda, kullanıcı ID, oda ID ve sistem işlem TXT'leri oluşturuldu.
+- [x] Admin audit helper ilgili işlem türüne göre özel TXT kaydını otomatik üretiyor.
+- [x] Admin destek ticket görüntüleme işlemi admin adı/id + hedef kullanıcı adı/id + ticket/mesaj sayısı ile ayrı kayda alınıyor.
+- [x] UA'nın Lidya değiştirme yetkisi kaldırıldı; Lidya araçları DA-only kaldı.
+- [x] Oda admin ban endpointleri 12 haneli public room ID ile çalışacak şekilde düzeltildi.
+- [x] Oda adı değiştirme endpointi 16 karakter sınırıyla eklendi.
+- [x] ID/admin smoke quality gate eklendi: 10 hane kullanıcı, 12 hane oda, 16/17 karakter oda adı, normal kullanıcı admin erişim reddi, SA/UA/DA yetki sınırları ve DA Lidya kontrolü.
+- [ ] Yeni Quality runner PASS henüz doğrulanmadı.
