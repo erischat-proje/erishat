@@ -228,3 +228,9 @@ Room control checkpoint
 - [x] Commit 25d984b2933c27ac10b86d43c6d4850985999490: failed/disconnected/leave durumlarında peer metadata ve uzak audio elementleri temizleniyor.
 - [x] Mikrofon kapanışında RTC metadata map'i de temizleniyor; yeniden açma sonrası eski peer state'i taşınmıyor.
 - [ ] Yeni Quality runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — RTC SIGNALING SMOKE COVERAGE
+- [x] Commit c10cd8fdea5c334ae5b8b6109eb4aaedf1f41fe5: authenticated room RTC signaling offer/ICE/leave queue akışı browser smoke içine eklendi.
+- [x] Mesajların hedef kullanıcıya teslim edilmesi, ikinci okumada tüketilmiş olması ve self-target reddi doğrulanıyor.
+- [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
