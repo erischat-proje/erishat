@@ -138,6 +138,8 @@ async function main(){
     return {status:r.status,data:await r.json()};
   },{api:API,familyId:family.id,userId:member.user.id});
   if(memberAdd.status!==200&&memberAdd.status!==201) throw new Error('family member add failed: '+JSON.stringify(memberAdd));
+  const familyInviteNotifications=await page.evaluate(async token=>fetch(API+'/me/notifications',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),member.access_token);
+  if(!familyInviteNotifications.some(x=>x.kind==='family_invite')) throw new Error('family invite notification missing: '+JSON.stringify(familyInviteNotifications));
   const room=await page.evaluate(async api=>{
     const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
     const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'Browser UI Room'})});
