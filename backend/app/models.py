@@ -17,6 +17,8 @@ class User(Base):
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    last_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    device_info: Mapped[str | None] = mapped_column(String(512), nullable=True)
     cosmetics: Mapped[list["UserCosmetic"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 class UserCosmetic(Base):
