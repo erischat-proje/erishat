@@ -127,3 +127,10 @@
 - [x] Oda mikrofon düğmesi artık yalnızca görsel flag değiştirmiyor; gerçek browser audio stream'i açıp kapatıyor.
 - [ ] Peer-to-peer WebRTC transport/signaling ve remote audio propagation sonraki aşama.
 - [ ] Yeni Quality runner sonucu bekleniyor.
+
+
+2026-09-18 — WEBRTC SIGNALING TEMELİ
+- [x] Oda üyeleri için kimlik doğrulamalı RTC signaling relay eklendi: POST/GET /v1/rooms/{room_id}/rtc-signals.
+- [x] Offer / answer / ICE candidate / leave mesaj tipleri doğrulanıyor; hedef kullanıcının aynı odada olması zorunlu.
+- [x] Sinyaller 60 saniye TTL ve oda başına 100 mesaj sınırıyla geçici bellekte tutuluyor; bu katman henüz çoklu instance/kalıcı signaling altyapısı değil.
+- [ ] Frontend RTCPeerConnection + offer/answer/ICE akışı bu relay'e bağlanacak.
