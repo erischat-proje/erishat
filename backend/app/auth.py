@@ -19,7 +19,7 @@ def create_anonymous_user(
         raise ValueError("Kayıt sırasında kadın veya erkek seçilmelidir")
 
     while True:
-        public_id = f"@eris_{uuid4().int % 100000:05d}"
+        public_id = f"{uuid4().int % 10_000_000_000:010d}"
         existing = db.query(User).filter(User.public_id == public_id).first()
         if not existing:
             break
