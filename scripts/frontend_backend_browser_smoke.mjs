@@ -119,6 +119,25 @@ async function main(){
   },{api:API,roomId:room.data.id,targetId:member.user.id});
   if(![200,201,204].includes(giftFlow.joinOwner)||![200,201,204].includes(giftFlow.joinMember)) throw new Error('gift flow room join failed: '+JSON.stringify(giftFlow));
   if(giftFlow.gift!==200||!giftFlow.giftData?.gift_key) throw new Error('gift send failed: '+JSON.stringify(giftFlow));
+  const roomControls=await page.evaluate(async ({api,roomId,targetId})=>{
+    const ownerToken=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
+    const join=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken}});
+    const seat=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/seats/1/join',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken}});
+    const mute=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/seats/1/mute',{method:'POST',headers:h});
+    const unmute=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/seats/1/mute',{method:'DELETE',headers:h});
+    const lockSeat=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/seats/2/lock',{method:'POST',headers:h});
+    const unlockSeat=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/seats/2/lock',{method:'DELETE',headers:h});
+    const mod=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/moderators',{method:'POST',headers:h,body:JSON.stringify({user_id:targetId})});
+    const mods=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/moderators',{headers:h}).then(r=>r.json());
+    const music=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music',{method:'POST',headers:{...h},body:JSON.stringify({title:'Smoke Track',source_url:'https://example.com/smoke.mp3'})});
+    const musicData=await music.json();
+    const musicList=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music',{headers:h}).then(r=>r.json());
+    const delMusic=musicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicData.id,{method:'DELETE',headers:h}):null;
+    return {join:join.status,seat:seat.status,mute:mute.status,unmute:unmute.status,lockSeat:lockSeat.status,unlockSeat:unlockSeat.status,mod:mod.status,mods,music:music.status,musicData,musicList,delMusic:delMusic?.status};
+  },{api:API,roomId:room.data.id,targetId:member.user.id});
+  if(![200,201,204].includes(roomControls.join)||!roomControls.seat||roomControls.mute!==200||roomControls.unmute!==200||roomControls.lockSeat!==200||roomControls.unlockSeat!==200) throw new Error('room seat controls failed: '+JSON.stringify(roomControls));
+  if(![200,201].includes(roomControls.mod)||!roomControls.mods.some(x=>x.user_id===member.user.id)) throw new Error('room moderator flow failed: '+JSON.stringify(roomControls));
+  if(roomControls.music!==200||!roomControls.musicData?.id||!Array.isArray(roomControls.musicList)||roomControls.delMusic!==200) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
   if(!giftFlow.notifications.some(x=>x.kind==='gift')) throw new Error('gift notification missing: '+JSON.stringify(giftFlow.notifications));
   if(!giftFlow.profile.some(x=>x.gift==='rose')) throw new Error('profile gift history missing: '+JSON.stringify(giftFlow.profile));
   if(!giftFlow.events.some(x=>x.gift_key==='rose')) throw new Error('gift event history missing: '+JSON.stringify(giftFlow.events));
