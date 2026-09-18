@@ -28,6 +28,7 @@ GIFT_CATALOG = {"Zeytin Dalı": 1, "Kil Toprak Çanak": 2, "Pazaryeri Üzümü":
 
 class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class RoomChatUpdate(BaseModel): enabled: bool
+class RoomNameUpdate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class BanUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class RoomInvite(BaseModel): user_id: str = Field(min_length=1, max_length=64)
@@ -132,6 +133,18 @@ def register_room_auth(current_user_dependency):
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
     @router.get("/{room_id}")
     def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return room_view(db, get_room_or_404(db, room_id))
+    @router.patch("/{room_id}/name")
+    def rename_room(room_id: str, payload: RoomNameUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_owner(db, room, user)
+        name = payload.name.strip()
+        if not name or len(name) > 16:
+            raise HTTPException(status_code=422, detail="Oda adı 1-16 karakter olmalıdır")
+        old_name = room.name
+        room.name = name
+        db.commit()
+        record("room", "room_name_changed", room_id=room.id, public_id=room.public_id, actor_id=user.id, old_name=old_name, new_name=name)
+        return room_view(db, room)
     @router.post("/{room_id}/join")
     def join_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
