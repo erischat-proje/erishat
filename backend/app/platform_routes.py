@@ -379,6 +379,10 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
         if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
+        if game_type == "horse_race" and choice and choice not in {f"horse_{i}" for i in range(1, 8)}:
+            raise HTTPException(status_code=400, detail="Geçersiz at seçimi")
+        if game_type == "wheel" and choice and choice not in {x[0] for x in GAME_PROFILES["wheel"]["results"]}:
+            raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
         result = _weighted_result(game_type)
         data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v2"}
         if game_type == "roulette":
@@ -390,11 +394,18 @@ def register_platform_auth(current_user_dependency):
             ranks = list(range(2, 11)) + [10, 10, 10, 11]
             player = [random.choice(ranks), random.choice(ranks)]
             dealer = [random.choice(ranks), random.choice(ranks)]
-            ps, ds = sum(player), sum(dealer)
-            if ps > 21 and 11 in player: ps -= 10
-            if ds > 21 and 11 in dealer: ds -= 10
-            result = "blackjack" if ps == 21 else "win" if ps > ds and ps <= 21 else "loss" if ps <= 21 and (ds > ps or ds <= 21) else "push"
-            data.update({"player_hand": player, "dealer_hand": dealer, "player_total": ps, "dealer_total": ds, "rules": "single-hand demo"})
+            def hand_total(hand):
+                total = sum(hand); aces = hand.count(11)
+                while total > 21 and aces: total -= 10; aces -= 1
+                return total
+            ps, ds = hand_total(player), hand_total(dealer)
+            natural = len(player) == 2 and ps == 21; dealer_natural = len(dealer) == 2 and ds == 21
+            if natural and not dealer_natural: result = "blackjack"
+            elif ps > 21: result = "loss"
+            elif ds > 21 or ps > ds: result = "win"
+            elif ps == ds: result = "push"
+            else: result = "loss"
+            data.update({"player_hand": player, "dealer_hand": dealer, "player_total": ps, "dealer_total": ds, "natural_blackjack": natural, "dealer_natural": dealer_natural, "rules": "single-hand demo; standard ace scoring"})
         elif game_type == "crash":
             ranges = {"x1_00_1_49": (1.0,1.49), "x1_50_1_99": (1.5,1.99), "x2_00_4_99": (2.0,4.99), "x5_00_9_99": (5.0,9.99), "x10_plus": (10.0,25.0)}
             lo, hi = ranges[result]; data["multiplier"] = round(random.uniform(lo, hi), 2)
@@ -404,12 +415,14 @@ def register_platform_auth(current_user_dependency):
             data["finish_order"] = [result] + rest
             data["positions"] = {horse: index + 1 for index, horse in enumerate(data["finish_order"])}
             data["podium"] = data["finish_order"][:3]
+            data["choice_hit"] = bool(choice and choice == result)
+            data["choice_position"] = data["positions"].get(choice) if choice else None
         elif game_type == "vault":
             vault_items = {"common": "coin_pack", "rare": "crystal", "epic": "phoenix_badge", "legendary": "royal_chest", "mythic": "mythic_crown"}
             data.update({"reward_class": result, "reward_item": vault_items[result]})
         elif game_type == "wheel":
             segments = [x[0] for x in GAME_PROFILES["wheel"]["results"]]
-            data.update({"segment": result, "segment_index": segments.index(result) + 1})
+            data.update({"segment": result, "segment_index": segments.index(result) + 1, "choice_hit": bool(choice and choice == result)})
         return _save_game_play(db, user, game_type, choice, result, data)
 
     def _require_game_analytics_admin(db: Session, user: User):
