@@ -250,3 +250,9 @@ Room control checkpoint
 2026-09-18 — RTC ICE CONFIG SMOKE
 - [x] Browser backend smoke, authenticated `/rooms/{room_id}/rtc-config` endpointinin 200 ve `ice_servers` array döndürdüğünü kontrol ediyor.
 - [ ] Yeni smoke değişikliğinin Quality runner PASS kanıtı bekleniyor.
+
+
+2026-09-18 — RTC CONFIG SECURITY SMOKE
+- [x] `rtc_signaling_security_smoke.mjs` artık oda dışı kullanıcının `/rtc-config` erişimini 403 ile reddedildiğini kontrol ediyor.
+- [x] Oda üyesinin `/rtc-config` çağrısının 200 + `ice_servers` array döndürdüğü doğrulanıyor.
+- [ ] Bu yeni güvenlik smoke değişikliğinin Quality runner PASS kanıtı bekleniyor.
