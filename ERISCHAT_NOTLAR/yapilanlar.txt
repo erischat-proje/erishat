@@ -105,3 +105,11 @@ Room control checkpoint
 - [x] Commit 862494292808de71ed6decccac1eacc0aa4ae304 ile yinelenen/bozuk ikinci model bloğu kaldırıldı.
 - [x] Yapılacaklar listesine bildirim read/unread, rapor geçmişi, engelleme/gizlilik ve profile try-on/VIP görünüm browser doğrulama eksikleri eklendi.
 - [ ] 8624942 sonrası yeni Quality run sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — SOSYAL/GIFT/PROFİL EKSİKLERİ
+- [x] Commit 22eb488ec5e4565a0983e87eb232a0bac784bce0: platform_routes sosyal modelleri (Notification/UserFollow/UserBlock) gerçek importlara bağlandı; profil hediyesi sorgusu RoomGiftEvent.recipient_id/sender_id/total_price alanlarıyla düzeltildi.
+- [x] Commit d58f140453befdc6d5202f47220aa36af3720b4f: oda hediyesi gönderiminde alıcıya gerçek Notification(kind=gift) oluşturuluyor.
+- [x] Commit 333db6fddcb33a474da63055b3ff7a10ab76f3a5: Profil paneline gerçek kozmetik try-on/apply kartları eklendi.
+- [x] Commit 648a7bda72a2b0394353b64f0c4541f8ab6cbb29: VIP kozmetiklerde satın alma yerine doğrudan apply akışı düzeltildi.
+- [ ] Quality run 35386247069, 0c6eccfa commitinde follow akışında UserFollow import eksikliği nedeniyle frontend backend browser smoke adımında 500 verdi; sonraki commitler bu kök nedeni düzeltti ve yeni Quality sonucu bekleniyor.
