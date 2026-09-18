@@ -60,9 +60,9 @@ FRONTEND
 - [x] Customer-facing product shell eklendi.
 - [x] Remaining customer demo surfaces için demo-extras-live.js eklendi ve room-live zincirine bağlandı.
 - [x] demo-complete-live.js ve demo-extras-live.js Quality static check kapsamına alındı.
-- [ ] Gerçek tarayıcıda anonymous/me akışı.
+- [x] Gerçek tarayıcıda anonymous/me akışı — Quality 35381313253 adım 21.
 - [ ] Gerçek tarayıcıda room + chat/gift/seat akışı.
-- [ ] Gerçek tarayıcıda DM akışı.
+- [x] Gerçek tarayıcıda DM akışı — gerçek conversation oluşturma ve mesaj gönderimi Quality 35381313253 adım 21.
 - [ ] Gerçek tarayıcıda profile/cosmetic render.
 - [ ] Customer shell içindeki tüm backend akışlarının gerçek browser doğrulaması.
 
@@ -114,8 +114,9 @@ BROWSER DOĞRULAMA CHECKPOINT
 - [x] Browser smoke: Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesi renderı ve Mesaj → Rana'nın Odası → mesaj gönderme etkileşimi doğrulandı.
 - [ ] Anonymous/me gerçek backend browser akışı.
 - [ ] Room modal + join/seat/chat/gift/moderation tam browser akışı.
-- [ ] 139 kozmetik gerçek browser render/şeffaflık kontrolü.
-- [ ] DM + aile sohbeti + profil/try-on tam browser backend zinciri.
+- [x] 139 kozmetik gerçek browser render/şeffaflık kontrolü — Quality 35281783827, 139/139 decode/render.
+- [ ] 139 kozmetik frame tasarımında opak/şeffaf standardının görsel incelemesi.
+- [ ] DM + aile sohbeti + profil/try-on tam browser backend zinciri — DM ve aile backend browser smoke doğrulandı; aile UI + try-on kaldı.
 
 BROWSER/COSMETICS CHECKPOINT
 - [x] 139 kozmetik asset gerçek Chromium browser render testinden geçti: Quality run 35281783827 / job 105405134485 SUCCESS.
