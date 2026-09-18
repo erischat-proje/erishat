@@ -50,6 +50,31 @@ async function main(){
     return {create:cr.status,id,detail,donation,chat};
   },API);
   if(family.create!==201||!family.id||family.detail?.id!==family.id||Number(family.donation?.balance)!==40000||Number(family.donation?.level)!==2) throw new Error('family browser backend chain failed: '+JSON.stringify(family));
+  await page.evaluate(id => localStorage.setItem('eris_family_id', id), family.id);
+  const memberAdd=await page.evaluate(async ({api,familyId,userId})=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id,userId:member.user.id});
+  if(memberAdd.status!==200&&memberAdd.status!==201) throw new Error('family member add failed: '+JSON.stringify(memberAdd));
+  const room=await page.evaluate(async api=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'Browser UI Room'})});
+    return {status:r.status,data:await r.json()};
+  },API);
+  if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+  await page.locator('#erisDemoBtn').click();
+  await page.locator('[data-ed="family"]').click();
+  await page.waitForFunction(() => document.querySelector('#ed-family')?.textContent.includes('Browser Smoke Ailesi'));
+  await page.locator('#ed-family button',{hasText:'Üyeleri yönet'}).click();
+  await page.waitForFunction(() => document.querySelector('#ed-family')?.textContent.includes('Browser_'));
+  await page.locator('[data-ed="rooms"]').click();
+  await page.waitForFunction(() => document.querySelector('#ed-rooms')?.textContent.includes('Browser UI Room'));
+  await page.locator('#ed-rooms button',{hasText:'İncele'}).first().click();
+  await page.waitForFunction(() => document.querySelector('#edRoomDetail')?.textContent.includes('KOLTUKLAR'));
+  const roomJoinText=await page.locator('#edRoomActions').textContent();
+  if(!roomJoinText.includes('Katıl')||!roomJoinText.includes('Mikrofon')) throw new Error('room UI controls missing');
+  await page.locator('#edClose').click();
   await page.locator('#erisDemoCompleteVip').click();
   await page.waitForSelector('text=VIP seviyeleri ve cinsiyet ödülleri');
   const vipRows=await page.locator('text=/VIP 1/').count();
