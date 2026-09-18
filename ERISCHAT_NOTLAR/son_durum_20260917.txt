@@ -134,3 +134,10 @@
 - [x] Offer / answer / ICE candidate / leave mesaj tipleri doğrulanıyor; hedef kullanıcının aynı odada olması zorunlu.
 - [x] Sinyaller 60 saniye TTL ve oda başına 100 mesaj sınırıyla geçici bellekte tutuluyor; bu katman henüz çoklu instance/kalıcı signaling altyapısı değil.
 - [ ] Frontend RTCPeerConnection + offer/answer/ICE akışı bu relay'e bağlanacak.
+
+
+2026-09-18 — WEBRTC SMOKE CHECKPOINT
+- `bc27af2fe81312e468cf3b24f8d5d8e3f1eb1396` ile room WebRTC tarafında deterministik initiator seçimi ve yapılandırılabilir ICE server listesi eklendi.
+- `074115adb877d02ddcd6c0c7fd9ae00f90ce39f7` ile browser smoke, gerçek UI mikrofon akışında RTCPeerConnection stub üzerinden peer oluşturma, audio track ekleme, offer/local description, ICE config ve cleanup davranışlarını kontrol edecek şekilde genişletildi.
+- Bu smoke gerçek iki cihaz/tarayıcı arasında ses taşıdığını kanıtlamaz; gerçek ağ E2E ve üretim STUN/TURN konfigürasyonu ayrıca doğrulanmalıdır.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS/TAMAM ilan edilmeyecek.
