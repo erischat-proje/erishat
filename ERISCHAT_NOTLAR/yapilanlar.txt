@@ -226,3 +226,5 @@ Room control checkpoint
 - [x] room_routes.py: aktif SA/UA/DA Ghost Mode kullanıcıları kilitli odalara girebiliyor ve public room view'da gizleniyor; yönetim oda banı enforcement eklendi.
 - [x] frontend/admin-live.js + index entegrasyonu: yalnızca yetkili hesapların görebildiği Yönetim butonu ve rol bazlı yönetim paneli eklendi.
 - [ ] Yeni Quality runner sonucu henüz alınmadı; PASS ilan edilmiyor.
+
+- [x] Normal kullanıcı public ID üretimi ve mevcut kayıtların migration'ı 10 haneli sayısal ID standardına alındı; SA/UA/DA profillerinde public_id gizleniyor.
