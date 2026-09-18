@@ -20,6 +20,7 @@ class VipStatus(Base):
     __tablename__ = "vip_status"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     level: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    total_spent: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     neon_color: Mapped[str | None] = mapped_column(String(16), nullable=True)
     entry_effect: Mapped[str | None] = mapped_column(String(64), nullable=True)
     wallpaper_claimed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
