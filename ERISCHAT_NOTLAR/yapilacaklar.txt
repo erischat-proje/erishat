@@ -177,3 +177,10 @@ Room control checkpoint
 - [x] Bildirim merkezindeki okunmamış bildirimler için gerçek /me/notifications/{id}/read POST UI aksiyonu eklendi ve read-back liste yenileniyor.
 - [x] Şikayet paneline gerçek /me/reports geçmişi görünümü eklendi.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-18 — SOCIAL/REPORT/NOTIFICATION UI E2E EXTENSION
+- [x] Browser smoke artık gerçek Sosyal panelinden takip → takipten çık → engelle → engeli kaldır UI zincirini çalıştırıyor.
+- [x] Browser smoke bildirim merkezindeki okunmamış kayıtta gerçek Okundu işaretle UI aksiyonunu ve liste yenilenmesini kontrol ediyor; bildirim yoksa test deterministik olarak bu alt adımı atlıyor.
+- [x] Browser smoke Şikayet panelinden gerçek form gönderimi + şikayet geçmişinde read-back kontrolü yapıyor.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
