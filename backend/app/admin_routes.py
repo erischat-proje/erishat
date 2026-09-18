@@ -140,6 +140,7 @@ def register_admin_auth(current_user_dependency):
     def tickets(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db, user, "SA")
         rows = db.scalars(select(SupportTicket).order_by(SupportTicket.created_at.desc())).all()
+        record("support", "support_ticket_list_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
         return [{"id": x.id, "user_id": x.user_id, "category": x.category, "subject": x.subject, "message": x.message,
                  "status": x.status, "created_at": x.created_at} for x in rows]
 
@@ -323,6 +324,7 @@ def register_admin_auth(current_user_dependency):
     def roles(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA")
         rows=db.scalars(select(AdminRole).order_by(AdminRole.created_at)).all()
+        record("role", "admin_roles_list_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
         return [{"user_id":r.user_id,"role":r.role,"ghost_mode":r.ghost_mode,"created_at":r.created_at} for r in rows]
 
     @router.put("/roles")
