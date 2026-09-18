@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text, func, event
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
+from .models import User
+from .system_logs import record
 
 
 class UserIdRegistry(Base):
@@ -32,3 +35,38 @@ class LidyaLedger(Base):
     reference_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     details: Mapped[str] = mapped_column(Text, default="", server_default="", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+@event.listens_for(Session, "after_flush")
+def _capture_lidya_changes(session: Session, flush_context) -> None:
+    for user in list(session.new) + list(session.dirty):
+        if not isinstance(user, User):
+            continue
+        history = None
+        if user in session.dirty:
+            from sqlalchemy import inspect
+            history = inspect(user).attrs.lidya.history
+            if not history.has_changes():
+                continue
+            old = int(history.deleted[0]) if history.deleted else int(user.lidya)
+            delta = int(user.lidya) - old
+            operation = str(session.info.get("lidya_operation", "balance_change"))
+        else:
+            delta = int(user.lidya)
+            operation = "initial_balance"
+        if delta == 0 and operation != "initial_balance":
+            continue
+        entry = LidyaLedger(
+            user_id=user.id,
+            delta=delta,
+            balance_after=int(user.lidya),
+            operation=operation,
+            actor_id=session.info.get("lidya_actor_id"),
+            reference_id=session.info.get("lidya_reference_id"),
+            details=str(session.info.get("lidya_details", "")),
+        )
+        session.add(entry)
+        record("lidya", operation, user_id=user.id, delta=delta, balance_after=int(user.lidya),
+               actor_id=session.info.get("lidya_actor_id"),
+               reference_id=session.info.get("lidya_reference_id"),
+               details=session.info.get("lidya_details", ""))
