@@ -57,6 +57,33 @@ async function main(){
   if(social.fans?.total < 1 || social.fans?.level < 1) throw new Error('fan profile flow failed: '+JSON.stringify(social));
   if(social.block!==200||!social.blocks.some(x=>x.user_id===member.user.id)||social.unblock!==200) throw new Error('block flow failed: '+JSON.stringify(social));
   if(social.privacy!==200||social.privacyBack?.hide_vip_badge!==true) throw new Error('privacy update failed: '+JSON.stringify(social));
+  const notificationRead=await page.evaluate(async api=>{
+    const token=localStorage.getItem('erischat_access_token');
+    const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const list=await fetch(api+'/me/notifications',{headers:h}).then(r=>r.json());
+    const n=(list.items||[]).find(x=>x.kind==='follow') || (list.items||[])[0];
+    if(!n) return {listStatus:200,readStatus:204,readback:null,skipped:true};
+    const rr=await fetch(api+'/me/notifications/'+encodeURIComponent(n.id)+'/read',{method:'POST',headers:h});
+    const back=await fetch(api+'/me/notifications',{headers:h}).then(r=>r.json());
+    const found=(back.items||[]).find(x=>x.id===n.id);
+    return {listStatus:200,readStatus:rr.status,readback:found?.read,skipped:false};
+  },API);
+  if(notificationRead.readStatus!==200&&notificationRead.readStatus!==204) throw new Error('notification read failed: '+JSON.stringify(notificationRead));
+  if(!notificationRead.skipped && notificationRead.readback!==true) throw new Error('notification readback failed: '+JSON.stringify(notificationRead));
+  const reportFlow=await page.evaluate(async ({api,targetId})=>{
+    const token=localStorage.getItem('erischat_access_token');
+    const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const r=await fetch(api+'/reports',{method:'POST',headers:h,body:JSON.stringify({target_user_id:targetId,reason:'browser smoke report'})});
+    return {status:r.status,data:await r.json()};
+  },{api:API,targetId:member.user.id});
+  if(reportFlow.status!==201) throw new Error('report flow failed: '+JSON.stringify(reportFlow));
+  const reportList=await page.evaluate(async api=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')};
+    const r=await fetch(api+'/me/reports',{headers:h});
+    return {status:r.status,data:await r.json()};
+  },API);
+  if(reportList.status!==200) throw new Error('report history endpoint failed: '+JSON.stringify(reportList));
+
   const cosmeticSurface=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
