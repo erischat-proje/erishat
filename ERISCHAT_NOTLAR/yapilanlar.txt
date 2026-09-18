@@ -322,3 +322,18 @@ Room control checkpoint
 - [x] Commit c776a2fc08b40394ab27e6616e2d96bd70ceb2ac: oyuncu oyun ekranına oyun tipine göre seçim kontrolleri eklendi; sonuç ekranında seçim sonucu, Crash çarpanı, Blackjack toplamları ve yarış sırası gösteriliyor.
 - [x] Oyuncu analiz ekranı açılmadan oyunların oynanabilirliği artırıldı; yönetim analizleri oyuncuya açılmadı.
 - [ ] Fresh Quality/browser E2E sonucu bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-19 — OYUN MOTORU V3 GELİŞTİRME
+- [x] 7 ücretsiz/free-play oyunun sonuçlarına v3 animasyon/reveal metadata katmanı eklendi; para, Lidya, bahis veya cash-out bağlanmadı.
+- [x] Rulet: spin adımları + final slot metadata.
+- [x] 4 Kupa: shuffle/reveal metadata.
+- [x] Blackjack: deal/reveal metadata korunarak sonuç yüzeyi zenginleştirildi.
+- [x] Crash: süre + crash_at metadata.
+- [x] At Yarışı: yarış adımları + finish order metadata.
+- [x] Kasa: rarity/open animation metadata.
+- [x] Şans Çarkı: dönüş sayısı + final segment metadata.
+- [x] Frontend oyun sonucu ekranı animation metadata'yı gösteriyor.
+- [x] Frontend oyun kartındaki artık mevcut olmayan analytics handler referansı kaldırıldı.
+- [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+- Commitler: c466e00f681ec785de518a701332f76d94e74b7f, 4a4e0eca7a45c7080f6f024c557ea9fbb893f9e5.
