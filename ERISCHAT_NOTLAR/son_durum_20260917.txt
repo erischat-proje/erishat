@@ -165,3 +165,9 @@
 - Commit `fc6a60fce28ff6c0e5c0b32aa188b695f203d5c6` ile `scripts/rtc_signaling_security_smoke.mjs` eklendi.
 - Kapsam: oda üyesi olmayan kullanıcının RTC GET/POST erişimi 403; oda üyesinin oda dışı hedefe sinyal göndermesi 404; geçersiz signal type 422; geçerli offer 200/queued=true.
 - Bu senaryo henüz Quality runner'da çalıştırılmadı; PASS ilan edilmiyor.
+
+
+## 2026-09-18 — WEBRTC ICE CONFIG BOOTSTRAP
+- `f47a17384b0964245d1f47237dc120c2f4e5387b` ile auth kontrollü `rtc-config` endpoint'i eklendi.
+- `e83e8cc5bec0e9b7a2708dcd3d3efe4330e63fe9` ile frontend bu config'i WebRTC başlangıcında yüklüyor.
+- Gerçek STUN/TURN ortam değerleri ve iki tarayıcı gerçek ses E2E hâlâ açık; deploy yapılmadı ve PASS iddiası yok.
