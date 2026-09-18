@@ -108,6 +108,7 @@ async function main(){
   if(cosmeticSurface.candidate && cosmeticSurface.purchaseStatus!==200) throw new Error('cosmetic purchase failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.applyStatus!==200) throw new Error('cosmetic apply failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.avatarAsset!==cosmeticSurface.candidate) throw new Error('profile avatar asset was not applied: '+JSON.stringify(cosmeticSurface));
+  await page.evaluate(id => { window.__memberId = id; }, member.user.id);
   const vipPrivacy=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const mine=await fetch(api+'/me/vip',{headers:h}).then(r=>r.json());
@@ -118,6 +119,13 @@ async function main(){
   },API);
   if(vipPrivacy.mine?.level===undefined||vipPrivacy.hide!==200||vipPrivacy.privacy?.hide_vip_badge!==true||vipPrivacy.privacy?.hide_vip_neon!==true||vipPrivacy.privacy?.hide_vip_entry!==true||vipPrivacy.privacy?.hide_vip_title!==true) throw new Error('VIP privacy surface failed: '+JSON.stringify(vipPrivacy));
   if(roomInvite.status!==201||!roomInvite.data?.invited||!roomInvite.memberNotifications.some(x=>x.kind==='room_invite')) throw new Error('room invite notification flow failed: '+JSON.stringify(roomInvite));
+  const room=await page.evaluate(async api=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'Browser UI Room'})});
+    return {status:r.status,data:await r.json()};
+  },API);
+  if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+
   const giftFlow=await page.evaluate(async ({api,roomId,targetId})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
@@ -189,12 +197,6 @@ async function main(){
   if(reportFlow.status!==201||!reportFlow.data?.id||!reportFlow.history.some(x=>x.id===reportFlow.data.id||x.reason==='browser smoke report')) throw new Error('report history flow failed: '+JSON.stringify(reportFlow));
   const familyInviteNotifications=await page.evaluate(async token=>fetch(API+'/me/notifications',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),member.access_token);
   if(!familyInviteNotifications.some(x=>x.kind==='family_invite')) throw new Error('family invite notification missing: '+JSON.stringify(familyInviteNotifications));
-  const room=await page.evaluate(async api=>{
-    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
-    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'Browser UI Room'})});
-    return {status:r.status,data:await r.json()};
-  },API);
-  if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
   const dmAccessFlow=await page.evaluate(async ({api,targetId})=>{
     const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const create=await fetch(api+'/conversations',{method:'POST',headers:h,body:JSON.stringify({participant_id:targetId})}); const conv=await create.json();
