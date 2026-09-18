@@ -338,3 +338,12 @@ Room control checkpoint
 - [x] Oyun motorlarında yatırım/bahis/payout bulunmuyor; bu tur yalnızca oyun kuralları ve RNG sonuç katmanı geliştirildi.
 - [ ] Gerçek browser/E2E runner kanıtı henüz alınmadı.
 - [ ] Oyun UI butonlarının yeni 7 endpoint ile uçtan uca bağlanması bekliyor.
+
+
+2026-09-19 — OYUN ERİŞİMİ + İSTATİSTİK YÜZEYİ
+- [x] Ana menüden 🎮 Oyunlar giriş noktası eklendi.
+- [x] Oda tarafına 🎮 Oyunlar giriş noktası eklendi.
+- [x] Oyunlar genel/oda ortak (Rulet, 4 Kupa, At Yarışı, Şans Çarkı) ve özel/kişisel (Blackjack, Crash, Kasa Açma) olarak etiketlendi.
+- [x] Her oyun için kendi sonuç geçmişinden istatistik görüntüleme yüzeyi eklendi.
+- [ ] Oda ortak oyunlarının gerçek oda round/state senkronizasyonu ve browser E2E henüz tamamlanmadı.
+- [ ] Fresh Quality sonucu henüz alınmadı.
