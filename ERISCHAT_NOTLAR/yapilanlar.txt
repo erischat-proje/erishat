@@ -199,3 +199,9 @@ Room control checkpoint
 - [x] `f47a17384b0964245d1f47237dc120c2f4e5387b`: authenticated env-backed RTC ICE config endpoint.
 - [x] `e83e8cc5bec0e9b7a2708dcd3d3efe4330e63fe9`: frontend artık oda başlarken `/rtc-config` üzerinden ICE server listesini alıyor.
 - [x] Yapılandırma yoksa boş liste korunuyor; gerçek STUN/TURN endpoint/credential değeri repo içine gömülmedi.
+
+
+2026-09-18 — RTC ICE CONFIG SMOKE
+- [x] `f9b2c890` ile RTC smoke akışına ICE config endpoint çağrısı eklendi.
+- [x] `3da3e067` ile smoke, auth'lu room RTC config response'unu 200 + array olarak doğruluyor.
+- [ ] Runner PASS henüz doğrulanmadı.
