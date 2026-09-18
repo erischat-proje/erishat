@@ -229,7 +229,7 @@ Room control checkpoint
 
 - [x] Normal kullanıcı public ID üretimi ve mevcut kayıtların migration'ı 10 haneli sayısal ID standardına alındı; SA/UA/DA profillerinde public_id gizleniyor.
 
-- [x] Oda adı limiti 16 karaktere çekildi; oda public ID'si 10 haneli olarak üretilecek/mevcut odalar migrate edilecek ve oda ekranında adın hemen altında gösterilecek.
+- [x] Oda adı limiti 16 karaktere çekildi; oda public ID'si 12 haneli olarak üretilecek/mevcut odalar migrate edilecek ve oda ekranında adın hemen altında gösterilecek.
 - [x] UA'lara ban yetkileri eklendi: hesap banı, cihaz banı, chat banı, oda banı ve bunların kaldırılması; UA'lara DA'nın ID/Lidya/VIP/yetki gibi diğer araçları açılmadı.
 
 
