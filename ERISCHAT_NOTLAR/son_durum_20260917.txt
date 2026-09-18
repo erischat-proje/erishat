@@ -193,3 +193,5 @@
 - Initial Developer Admin için initial_da_ids environment ayarı eklendi.
 - Bu checkpoint için henüz yeni Quality runner PASS kanıtı yok; deploy yapılmadı.
 - Sonraki adım: admin browser E2E + role/security smoke + destek yaşam döngüsü smoke + gerçek ban enforcement.
+
+- [x] Normal kullanıcı public ID üretimi ve mevcut kayıtların migration'ı 10 haneli sayısal ID standardına alındı; SA/UA/DA profillerinde public_id gizleniyor.
