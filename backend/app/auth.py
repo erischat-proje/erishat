@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from .models import User
 from .system_data import UserIdRegistry
+from .system_logs import record
 from .repositories import UserRepository
 
 
@@ -35,6 +36,7 @@ def create_anonymous_user(
     )
     created = UserRepository(db).create(user)
     db.add(UserIdRegistry(user_id=created.id, public_id=created.public_id))
+    record("user_id", "user_public_id_created", user_id=created.id, public_id=created.public_id, nickname=created.nickname)
     db.commit()
     return created
 
