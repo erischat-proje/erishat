@@ -126,3 +126,4 @@ Room control checkpoint
 - [x] Commit 92d1a206486ff0320f597d2975e05d0d1d616d2b: Browser backend smoke hediye gönderimini, `gift` bildirimini, profil hediye geçmişini ve oda hediye event geçmişini doğruluyor.\n
 - [x] Commit 464213c8680cc22a9ac255114341e10d48e4a0ae: Browser backend smoke oda koltuk mute/unmute + lock/unlock, moderatör ekleme/listeleme ve müzik ekleme/listeleme/silme zincirlerini kapsıyor.\n
 - [x] Commit 78a0e10107dcfc63412f7761ea5b367ac9dd854d: `/me/reports` ile kullanıcının kendi şikayet geçmişi endpointi eklendi.\n- [x] Commit ca261fc946626d36b06995783b49df12931f94db: Browser backend smoke report oluşturma + şikayet geçmişinde doğrulama yapıyor.\n
+- [x] Commit 9a7d1c95a19d8c77ba617855443fa1f4fd62366c: Browser backend smoke artık canlı Profil → TRY-ON avatar uygulamasını ve `/me` avatar_asset + `/me/vip` metadata dönüşünü doğruluyor.\n
