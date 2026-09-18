@@ -52,6 +52,7 @@
 
   async function startRoomWebRTC(box, roomId, roomState){
     if(!Array.isArray(window.ERIS_WEBRTC_ICE_SERVERS)) window.ERIS_WEBRTC_ICE_SERVERS=[];
+    try{const cfg=await api("/rooms/"+encodeURIComponent(roomId)+"/rtc-config");if(Array.isArray(cfg?.ice_servers)) window.ERIS_WEBRTC_ICE_SERVERS=cfg.ice_servers;}catch{}
     if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) return;
     const token=localStorage.getItem('erischat_access_token');
     if(!token || !box.__micStream) return;
