@@ -162,3 +162,7 @@ Room control checkpoint
 2026-09-18 — ROOM GIFT UI E2E EXTENSION
 - [x] Room browser smoke'a gerçek 🎁 Hediye butonu tıklaması, gift catalog → recipient seat → POST gift → dialog sonucu kontrolü eklendi.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
+
+2026-09-18 — PROFILE FRAME APPLY E2E EXTENSION
+- [x] Profile browser smoke avatar uygulamasına ek olarak gerçek Çerçeve uygula tıklaması ve /me frame_asset read-back kontrolü eklendi.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
