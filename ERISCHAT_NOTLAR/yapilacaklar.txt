@@ -25,6 +25,7 @@ Tarih: 2026-09-18
 - [x] Quality workflow'a müşteri demo yüzey bütünlüğü statik kontrolü eklendi.
 - [x] Yeni Quality workflow run 35274783487 GitHub Actions üzerinden SUCCESS olarak doğrulandı; customer demo surface integrity dahil ilgili quality adımları geçti.
 - [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
+- [x] Sosyal fan sayısı/fan seviyesi gerçek UserFollow kayıtlarından hesaplanıyor; browser smoke ile doğrulama eklendi.
 
 GERÇEK RUNNER
 - [x] Önceki doğrulanmış Quality v4: run 35266995579 / job 105356518821 SUCCESS.
@@ -63,8 +64,10 @@ FRONTEND
 - [x] Gerçek tarayıcıda anonymous/me akışı — Quality 35381313253 adım 21.
 - [ ] Gerçek tarayıcıda room + chat/gift/seat akışı.
 - [x] Gerçek tarayıcıda DM akışı — gerçek conversation oluşturma ve mesaj gönderimi Quality 35381313253 adım 21.
+- [x] Profil paneli gerçek avatar_asset/frame_asset, VIP ve fan/profil hediyesi özetini gösteriyor.
 - [ ] Gerçek tarayıcıda profile/cosmetic render.
 - [ ] Customer shell içindeki tüm backend akışlarının gerçek browser doğrulaması.
+- [ ] Profilde gerçek try-on/apply etkileşiminin browser E2E doğrulaması.
 
 AİLE BACKEND
 - [x] Family create production route gerçek runner'da doğrulandı.
@@ -95,6 +98,7 @@ TEMİZLİK / DOKÜMANTASYON
 
 SONRAKİ GELİŞTİRME SIRASI
 1. Gerçek tarayıcıda müşteri demosunu baştan sona kontrol et; kırılan yüzeyleri düzelt.
+   - Sosyal/fan backend ve profil canlı görünüm güncellemelerini doğrula.
 2. 139 kozmetiğin gerçek browser renderını doğrula.
 3. Oda canlı chat/gift/seat/moderasyon zincirini browserda doğrula.
 4. DM + aile sohbeti + profil/try-on zincirini browserda doğrula.
