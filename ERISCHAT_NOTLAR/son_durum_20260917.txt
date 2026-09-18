@@ -171,3 +171,8 @@
 - `f47a17384b0964245d1f47237dc120c2f4e5387b` ile auth kontrollü `rtc-config` endpoint'i eklendi.
 - `e83e8cc5bec0e9b7a2708dcd3d3efe4330e63fe9` ile frontend bu config'i WebRTC başlangıcında yüklüyor.
 - Gerçek STUN/TURN ortam değerleri ve iki tarayıcı gerçek ses E2E hâlâ açık; deploy yapılmadı ve PASS iddiası yok.
+
+
+## 2026-09-18 — RTC ICE CONFIG SMOKE
+- `3da3e067198e0f341ee46936870ad134e77acb23` ile browser smoke, room üyeliği sonrası `/rtc-config` endpointini doğruluyor.
+- Yeni runner PASS henüz alınmadı.
