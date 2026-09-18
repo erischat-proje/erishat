@@ -38,6 +38,28 @@ async function main(){
   await page.waitForSelector('#chatBody .bubble.me');
   const dmVisible=await page.locator('#chatBody .bubble.me').count();
   if(dmVisible<1) throw new Error('DM bubble did not render');
+  const cosmeticSurface=await page.evaluate(async api=>{
+    const token=localStorage.getItem('erischat_access_token');
+    const h={Authorization:'Bearer '+token};
+    const all=await fetch(api+'/cosmetics',{headers:h}).then(r=>r.json());
+    const avatars=await fetch(api+'/cosmetics?kind=avatar',{headers:h}).then(r=>r.json());
+    const frames=await fetch(api+'/cosmetics?kind=frame',{headers:h}).then(r=>r.json());
+    return {all:(all.items||[]).length,avatars:(avatars.items||[]).length,frames:(frames.items||[]).length};
+  },API);
+  if(cosmeticSurface.all!==139||cosmeticSurface.avatars<1||cosmeticSurface.frames<1) throw new Error('cosmetic catalog/filter surface failed: '+JSON.stringify(cosmeticSurface));
+  await page.locator('#erisDemoBtn').click();
+  await page.locator('[data-ed="shop"]').click();
+  await page.waitForFunction(() => document.querySelector('#ed-shop')?.textContent.includes('139 görünüm'));
+  await page.locator('[data-ed="avatar"]').count().catch(()=>{});
+  const shopCards=await page.locator('#edShop .ed-card').count();
+  if(shopCards<1) throw new Error('shop catalog cards did not render');
+  await page.locator('#ed-shop [data-filter="avatar"]').click();
+  const avatarCards=await page.locator('#edShop .ed-card').count();
+  if(avatarCards<1||avatarCards>cosmeticSurface.all) throw new Error('shop avatar filter failed');
+  await page.locator('#ed-shop [data-filter="frame"]').click();
+  const frameCards=await page.locator('#edShop .ed-card').count();
+  if(frameCards<1||frameCards>cosmeticSurface.all) throw new Error('shop frame filter failed');
+  await page.locator('#edClose').click();
   const family=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
