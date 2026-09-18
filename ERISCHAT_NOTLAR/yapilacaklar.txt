@@ -158,3 +158,7 @@ Room control checkpoint
 2026-09-18 — ROOM MODERATOR UI E2E EXTENSION
 - [x] Room browser smoke'a gerçek Moderatör butonu + prompt üzerinden üye seçimi + oda UI read-back kontrolü eklendi.
 - [ ] Gift UI tıklaması için güvenli ayrı browser senaryosu bekliyor; mevcut backend gift zinciri doğrulanmış durumda.
+
+2026-09-18 — ROOM GIFT UI E2E EXTENSION
+- [x] Room browser smoke'a gerçek 🎁 Hediye butonu tıklaması, gift catalog → recipient seat → POST gift → dialog sonucu kontrolü eklendi.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
