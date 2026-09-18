@@ -1,3 +1,23 @@
+
+(function(){
+  function api(){ return window.ERIS_API || '/v1'; }
+  async function authFetch(path, options={}){
+    const token=localStorage.getItem('erischat_access_token');
+    const headers=Object.assign({'Content-Type':'application/json'}, options.headers||{}, token?{Authorization:'Bearer '+token}:{});
+    return fetch(api()+path,Object.assign({},options,{headers}));
+  }
+  window.ErisSocial={
+    async follow(userId){ return authFetch('/users/'+encodeURIComponent(userId)+'/follow',{method:'POST'}); },
+    async unfollow(userId){ return authFetch('/users/'+encodeURIComponent(userId)+'/follow',{method:'DELETE'}); },
+    async followers(userId){ return authFetch('/users/'+encodeURIComponent(userId)+'/followers'); },
+    async following(userId){ return authFetch('/users/'+encodeURIComponent(userId)+'/following'); },
+    async block(userId){ return authFetch('/users/'+encodeURIComponent(userId)+'/block',{method:'POST'}); },
+    async unblock(userId){ return authFetch('/users/'+encodeURIComponent(userId)+'/block',{method:'DELETE'}); },
+    async blocks(){ return authFetch('/me/blocks'); },
+    async report(payload){ return authFetch('/reports',{method:'POST',body:JSON.stringify(payload)}); },
+    async privacy(payload){ return authFetch('/me/privacy',{method:'PATCH',body:JSON.stringify(payload)}); }
+  };
+})();
 /* ErisChat customer-facing product shell: show the complete product surface first, then deepen each system. */
 (() => {
   'use strict';
