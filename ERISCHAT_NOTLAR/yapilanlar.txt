@@ -281,3 +281,14 @@ Room control checkpoint
 - [x] Her oyun için kendi sonuç geçmişinden istatistik görüntüleme yüzeyi eklendi.
 - [ ] Oda ortak oyunlarının gerçek oda round/state senkronizasyonu ve browser E2E henüz tamamlanmadı.
 - [ ] Fresh Quality sonucu henüz alınmadı.
+
+
+2026-09-19 — OYUN ERİŞİM / KAPSAM / İSTATİSTİK
+- [x] Genel/Oda oyunları: Rulet, 4 Kupa, At Yarışı, Şans Çarkı.
+- [x] Özel/Kişisel oyunlar: Blackjack, Crash, Kasa Açma.
+- [x] Ana ürün merkezi içinde 🎮 Oyunlar sekmesi 7 oyunu ve kapsamlarını gösteriyor.
+- [x] Oda detayına 🎮 Oyunlar butonu eklendi; oda oyunları room_id ile açılıyor.
+- [x] Her oyun için sonuç örneklemi, sonuç adedi ve yüzdesel oranları döndüren istatistik endpointi eklendi.
+- [x] Oyun sonuçları GamePlay geçmişinde tutuluyor.
+- [ ] Yeni UI/runner browser E2E sonucu henüz alınmadı.
+- [ ] Gerçek oda katılımı sonrası 7 oyunun browser uçtan uca doğrulaması bekliyor.
