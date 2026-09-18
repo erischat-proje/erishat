@@ -245,16 +245,18 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/lidya/add")
     def add_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "DA"); target=db.get(User,user_id)
+        require_role(db, user, "DA"); target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        db.info.update(lidya_operation="admin_lidya_add", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
         before=target.lidya; target.lidya += payload.amount
         audit(db,user,"lidya_add",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=user_id)
         db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=db.get(User,user_id)
+        require_role(db,user,"DA"); target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        db.info.update(lidya_operation="admin_lidya_remove", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
         before=target.lidya; target.lidya=max(0,target.lidya-payload.amount)
         audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=user_id)
         db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
