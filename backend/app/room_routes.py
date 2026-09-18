@@ -68,7 +68,7 @@ def refresh_level(db: Session, room: Room) -> int:
     return new_level
 
 def get_room_or_404(db: Session, room_id: str) -> Room:
-    room = db.get(Room, room_id)
+    room = db.get(Room, room_id) or db.scalar(select(Room).where(Room.public_id == room_id))
     if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
     refresh_level(db, room); return room
 
@@ -97,7 +97,7 @@ def room_view(db: Session, room: Room) -> dict:
     members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
     seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id).order_by(RoomSeat.seat_number)))
-    return {"id": room.id, "name": room.name, "owner_id": room.owner_id, "level": room.level, "capacity": LEVELS[room.level]["capacity"], "max_moderators": LEVELS[room.level]["moderators"], "seat_count": LEVELS[room.level]["seats"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "lock_expires_at": room.lock_expires_at, "member_count": members, "spent_lidya": int(spend), "moderators": moderators, "seats": [{"seat_number": s.seat_number, "user_id": s.user_id, "locked": s.locked, "muted": s.muted} for s in seats]}
+    return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "level": room.level, "capacity": LEVELS[room.level]["capacity"], "max_moderators": LEVELS[room.level]["moderators"], "seat_count": LEVELS[room.level]["seats"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "lock_expires_at": room.lock_expires_at, "member_count": members, "spent_lidya": int(spend), "moderators": moderators, "seats": [{"seat_number": s.seat_number, "user_id": s.user_id, "locked": s.locked, "muted": s.muted} for s in seats]}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -111,7 +111,8 @@ def register_room_auth(current_user_dependency):
     def create_room(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         name = payload.name.strip()
         if not name: raise HTTPException(status_code=400, detail="Oda adı boş olamaz")
-        room = Room(id="room_" + uuid4().hex, owner_id=user.id, name=name); db.add(room); db.flush(); db.add(RoomMember(room_id=room.id, user_id=user.id)); ensure_seats(db, room); db.commit(); db.refresh(room); return room_view(db, room)
+        if len(name) > 16: raise HTTPException(status_code=422, detail="Oda adı en fazla 16 karakter olabilir")
+        room = Room(id="room_" + uuid4().hex, public_id=f"{uuid4().int % 10_000_000_000:010d}", owner_id=user.id, name=name); db.add(room); db.flush(); db.add(RoomMember(room_id=room.id, user_id=user.id)); ensure_seats(db, room); db.commit(); db.refresh(room); return room_view(db, room)
     @router.get("")
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
     @router.get("/{room_id}")
