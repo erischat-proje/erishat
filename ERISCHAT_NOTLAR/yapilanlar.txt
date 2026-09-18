@@ -176,3 +176,8 @@ Room control checkpoint
 - [x] Commit `572632acb0ca69c8c15859987c894312269f5a89`: erken ICE candidate queue + remote-description sonrası flush eklendi.
 - [x] Mikrofon kapanışında peer'lere `leave` signaling gönderimi eklendi.
 - [ ] Bu commit için yeni Quality PASS kanıtı henüz yok.
+
+2026-09-18 — WEBRTC PEER CLEANUP HARDENING
+- [x] Commit 25d984b2933c27ac10b86d43c6d4850985999490: failed/disconnected peer durumunda RTC metadata ve uzak audio DOM kaynağı temizleniyor.
+- [x] Mikrofon kapanışında __rtcPeersMeta de temizleniyor; yeniden açılışta stale peer state kalmıyor.
+- [ ] Bu commit sonrası yeni Quality PASS kanıtı henüz yok.
