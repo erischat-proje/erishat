@@ -25,6 +25,9 @@ Tarih: 2026-09-18
 - [x] Quality workflow'a müşteri demo yüzey bütünlüğü statik kontrolü eklendi.
 - [x] Yeni Quality workflow run 35274783487 GitHub Actions üzerinden SUCCESS olarak doğrulandı; customer demo surface integrity dahil ilgili quality adımları geçti.
 - [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
+- [ ] Bildirim merkezinde read/unread davranışının browser E2E doğrulaması.
+- [ ] Rapor oluşturma ve rapor geçmişinin browser E2E doğrulaması.
+- [ ] Engelleme/unblock ve gizlilik ayarlarının browser E2E doğrulaması.
 - [x] Sosyal fan sayısı/fan seviyesi gerçek UserFollow kayıtlarından hesaplanıyor; browser smoke ile doğrulama eklendi.
 
 GERÇEK RUNNER
@@ -133,3 +136,5 @@ Room control checkpoint
 - [x] Quality 35282680644 / job 105407977869 SUCCESS.
 - [ ] Browser tarafında bu kontrollerin gerçek UI → API zinciri.
 - [ ] Gerçek WebRTC mikrofon transportu.
+
+- [ ] Profile try-on/apply ve VIP badge/neon/title görünümünün gerçek backend browser zinciri.
