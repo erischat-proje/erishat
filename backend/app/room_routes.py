@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
+from .platform_models import Notification
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
 
@@ -201,7 +202,7 @@ def register_room_auth(current_user_dependency):
         if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
         recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100; sender.lidya -= total; recipient.lidya += recipient_amount
         event = RoomGiftEvent(room_id=room.id, sender_id=sender.id, recipient_id=recipient.id, gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity, total_price=total, recipient_percent=GIFT_RECIPIENT_PERCENT, recipient_amount=recipient_amount)
-        db.add(event); db.commit(); db.refresh(event); refresh_level(db, room)
+        db.add(event); db.add(Notification(user_id=recipient.id, kind="gift", title="Yeni hediye", body=f"{sender.nickname} size {payload.gift_key} gönderdi.")); db.commit(); db.refresh(event); refresh_level(db, room)
         from .main import _broadcast_room_chat
         await _broadcast_room_chat(room.id, {"type":"room_gift","id":event.id,"room_id":room.id,"sender_id":sender.id,"recipient_id":recipient.id,"gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,"recipient_amount":event.recipient_amount,"animation":event.total_price >= 30,"created_at":event.created_at.isoformat() if event.created_at else None})
         return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,"total_price":total,"recipient_percent":GIFT_RECIPIENT_PERCENT,"recipient_amount":recipient_amount,"animation":total >= 30}
