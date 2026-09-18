@@ -118,6 +118,17 @@ class GameBet(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class GamePlay(Base):
+    __tablename__ = "game_plays"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    game_type: Mapped[str] = mapped_column(String(24), index=True, nullable=False)
+    choice: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    result_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_data: Mapped[str] = mapped_column(Text, default="{}", server_default="{}", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class FanProfile(Base):
     __tablename__ = "fan_profiles"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
