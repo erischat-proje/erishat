@@ -106,3 +106,8 @@
 2026-09-18 — DEVAM CHECKPOINT
 - [x] Commit e31fd934717c4b1af3d2bfe48b1f0797d06d963c ile sosyal takip/engel ters aksiyonları, bildirim okundu işaretleme ve şikayet geçmişi UI yüzeyleri genişletildi.
 - [ ] Yeni Quality runner sonucu bekleniyor; doğrulama yapılmadan PASS ilan edilmeyecek.
+
+
+2026-09-18 — DEVAM CHECKPOINT
+- [x] Commit 0bc43435092e5b0118868495ed5357e58f566042 ile sosyal/report/notification UI browser smoke kapsamı genişletildi.
+- [ ] Yeni Quality runner sonucu bekleniyor.
