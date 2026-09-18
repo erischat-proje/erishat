@@ -273,6 +273,14 @@ async function main(){
     await moderatorButton.click();
     await page.waitForFunction(id=>document.querySelector('#edRoomTools')?.textContent.includes(id),String(member.user.id));
   }
+  const giftButton=page.getByRole('button',{name:'🎁 Hediye',exact:true});
+  if(await giftButton.count()){
+    let giftDialogText='';
+    page.once('dialog',async dialog=>{giftDialogText=dialog.message();await dialog.accept();});
+    await giftButton.click();
+    await page.waitForTimeout(250);
+    if(!giftDialogText.includes('Hediye gönderildi')) throw new Error('room gift UI did not complete: '+giftDialogText);
+  }
   const roomUiState=await page.evaluate(async ({api,id})=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const r=await fetch(api+'/rooms/'+encodeURIComponent(id),{headers:h}); return {status:r.status,data:await r.json()};},{api:API,id:room.data.id});
   if(roomUiState.status!==200||!Array.isArray(roomUiState.data?.seats)) throw new Error('room UI state read-back failed: '+JSON.stringify(roomUiState));
   await page.locator('#edClose').click();
