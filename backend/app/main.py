@@ -90,13 +90,13 @@ def sync_system_registries(db: Session) -> None:
     for user in users:
         row = existing_users.get(user.id)
         if row:
-            row.public_id = user.public_id
+            user.public_id = row.public_id
         else:
             db.add(UserIdRegistry(user_id=user.id, public_id=user.public_id))
     for room in rooms:
         row = existing_rooms.get(room.id)
         if row:
-            row.public_id = room.public_id
+            room.public_id = row.public_id
         else:
             db.add(RoomIdRegistry(room_id=room.id, public_id=room.public_id))
     db.commit()
