@@ -49,6 +49,14 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
 
+def bootstrap_initial_developer_admins(db: Session) -> None:
+    ids = [x.strip() for x in settings.initial_da_ids.split(",") if x.strip()]
+    for user_id in ids:
+        if db.get(User, user_id) and not db.get(AdminRole, user_id):
+            db.add(AdminRole(user_id=user_id, role="DA"))
+    db.commit()
+
+
 @app.on_event("startup")
 def startup() -> None:
     logger.info("ErisChat API startup: environment=%s", settings.environment)
@@ -56,6 +64,7 @@ def startup() -> None:
     ensure_user_settings_columns()
     with Session(engine) as db:
         cleanup_expired_sessions(db)
+        bootstrap_initial_developer_admins(db)
     logger.info("ErisChat API startup complete")
 
 
