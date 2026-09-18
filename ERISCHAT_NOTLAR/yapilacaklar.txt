@@ -245,3 +245,8 @@ Room control checkpoint
 - [x] Authenticated `GET /v1/rooms/{room_id}/rtc-config` eklendi; `ERIS_WEBRTC_ICE_SERVERS_JSON` env değişkeninden JSON liste okuyor.
 - [x] Frontend oda WebRTC başlangıcında backend ICE config'i yükleyip `RTCPeerConnection` içine aktarıyor.
 - [ ] Gerçek STUN/TURN değerlerinin deployment ortamına güvenli biçimde tanımlanması ve iki tarayıcı gerçek ses E2E testi bekliyor.
+
+
+2026-09-18 — RTC ICE CONFIG SMOKE
+- [x] Browser backend smoke, authenticated `/rooms/{room_id}/rtc-config` endpointinin 200 ve `ice_servers` array döndürdüğünü kontrol ediyor.
+- [ ] Yeni smoke değişikliğinin Quality runner PASS kanıtı bekleniyor.
