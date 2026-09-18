@@ -217,3 +217,9 @@ Room control checkpoint
 - [x] Browser smoke WebRTC peer oluşturma, addTrack, offer/localDescription, ICE config aktarımı ve mikrofon kapanışında peer cleanup kontrollerini kapsıyor.
 - [ ] Gerçek iki tarayıcı ses E2E ve üretim STUN/TURN değerleri hâlâ doğrulanacak.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
+
+2026-09-18 — WEBRTC ICE/LEAVE HARDENING
+- [x] Erken gelen ICE candidate'ları remote description kurulana kadar peer başına kuyrukta tutuluyor; description sonrası sırayla uygulanıyor.
+- [x] Mikrofon kapatılırken aktif peer'lere `leave` signaling mesajı gönderiliyor ve lokal peer/audio kaynakları temizleniyor.
+- [ ] Gerçek iki tarayıcı E2E ve üretim STUN/TURN konfigürasyonu hâlâ açık.
+- [ ] Yeni Quality runner sonucu bekleniyor.
