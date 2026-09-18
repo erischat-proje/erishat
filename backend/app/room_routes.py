@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+import json
+import os
 from collections import defaultdict, deque
 import time
 
@@ -224,6 +226,22 @@ def register_room_auth(current_user_dependency):
     @router.delete("/{room_id}/lock")
     def unlock_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user); room.locked = False; room.lock_expires_at = None; db.commit(); return {"locked": False}
+    @router.get("/{room_id}/rtc-config")
+    def rtc_config(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        raw = os.getenv("ERIS_WEBRTC_ICE_SERVERS_JSON", "").strip()
+        if not raw:
+            return {"ice_servers": []}
+        try:
+            value = json.loads(raw)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
+        if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
+            raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
+        return {"ice_servers": value}
+
     @router.post("/{room_id}/rtc-signals")
     def send_rtc_signal(room_id: str, payload: RTCSignal, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
