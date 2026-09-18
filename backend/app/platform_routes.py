@@ -20,6 +20,7 @@ from .platform_models import (
 from .room_models import Room, RoomGiftEvent, RoomMember
 from .admin_models import AdminRole
 from .system_logs import record
+from .system_data import LidyaGemLedger
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -127,6 +128,47 @@ def register_platform_auth(current_user_dependency):
         p=privacy_row(db,user.id)
         for key,value in payload.model_dump(exclude_none=True).items(): setattr(p,key,value)
         db.commit(); return {k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}
+    @router.get("/me/wallet")
+    def my_wallet(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return {"lidya": int(user.lidya or 0), "lidya_gem": int(getattr(user, "lidya_gem", 0) or 0), "exchange_rate": {"lidya_to_gem": 1, "gem_to_lidya": 1}}
+
+    @router.post("/me/wallet/exchange")
+    def exchange_wallet(payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        payload = payload or {}
+        direction = str(payload.get("direction") or "").strip().lower()
+        try:
+            amount = int(payload.get("amount"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail="Geçerli bir miktar gerekli")
+        if direction not in {"lidya_to_gem", "gem_to_lidya"}:
+            raise HTTPException(status_code=422, detail="direction lidya_to_gem veya gem_to_lidya olmalı")
+        if amount < 1 or amount > 1_000_000_000_000:
+            raise HTTPException(status_code=422, detail="Miktar 1 ile 1.000.000.000.000 arasında olmalı")
+        locked = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if not locked:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        if direction == "lidya_to_gem":
+            if int(locked.lidya or 0) < amount:
+                raise HTTPException(status_code=400, detail="Yetersiz Lidya")
+            locked.lidya -= amount
+            locked.lidya_gem = int(locked.lidya_gem or 0) + amount
+        else:
+            if int(locked.lidya_gem or 0) < amount:
+                raise HTTPException(status_code=400, detail="Yetersiz Lidya Gem")
+            locked.lidya_gem -= amount
+            locked.lidya += amount
+        reference_id = str(uuid4())
+        db.info["lidya_operation"] = "currency_exchange"
+        db.info["lidya_actor_id"] = locked.id
+        db.info["lidya_reference_id"] = reference_id
+        db.info["lidya_details"] = json.dumps({"direction": direction, "amount": amount, "rate": "1:1"}, ensure_ascii=False, separators=(",", ":"))
+        db.add(LidyaGemLedger(user_id=locked.id, delta=amount if direction == "lidya_to_gem" else -amount,
+                              balance_after=int(locked.lidya_gem), operation="currency_exchange",
+                              reference_id=reference_id, details=json.dumps({"direction": direction, "rate": "1:1"}, ensure_ascii=False, separators=(",", ":"))))
+        db.commit()
+        db.refresh(locked)
+        return {"success": True, "direction": direction, "amount": amount, "rate": 1, "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem), "reference_id": reference_id}
+
     @router.get("/me/vip")
     def my_vip(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")
