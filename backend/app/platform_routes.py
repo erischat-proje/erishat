@@ -306,14 +306,31 @@ def register_platform_auth(current_user_dependency):
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
         return [{"gift":r.gift_key,"amount":r.total_price,"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
+    def _play_game(db: Session, user: User, choice: str, amount: int, result_key: str, payout: int, game_type: str):
+        locked = db.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
+        if locked.lidya < amount:
+            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
+        round_row = GameRound(id="round_"+uuid4().hex, room_id=None, game_type=game_type, status="settled", ends_at=datetime.now(timezone.utc), result_key=result_key)
+        db.add(round_row); db.flush()
+        locked.lidya -= amount
+        locked.lidya += payout
+        row = GameBet(round_id=round_row.id, user_id=locked.id, choice=choice, amount=amount, payout=payout)
+        db.add(row); db.commit(); db.refresh(row)
+        record("system", "game_settled", user_id=locked.id, game_type=game_type, amount=amount, result=result_key, payout=payout)
+        return {"id":row.id,"choice":choice,"result":result_key,"payout":payout,"spent":amount,"net":payout-amount}
+
     @router.post("/game/bet")
     def game_bet(payload:GameBetCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        if payload.choice not in {"rose","heart","star","diamond","crown","gift","fire","gem","jackpot"}: raise HTTPException(status_code=400,detail="Geçersiz seçim")
-        result=random.choices(ROULETTE,weights=[item["weight"] for item in ROULETTE],k=1)[0]; payout=int(payload.amount*result["multiplier"]); row=GameBet(user_id=user.id,choice=payload.choice,amount=payload.amount,result=result["key"],payout=payout); db.add(row); db.commit(); db.refresh(row); return {"id":row.id,"choice":row.choice,"result":row.result,"payout":row.payout}
+        if payload.choice not in {x["key"] for x in ROULETTE}: raise HTTPException(status_code=400,detail="Geçersiz seçim")
+        result=random.choices(ROULETTE,weights=[item["weight"] for item in ROULETTE],k=1)[0]
+        return _play_game(db,user,payload.choice,payload.amount,result["key"],int(payload.amount*result["multiplier"]),"roulette")
+
     @router.post("/game/cups")
     def game_cups(payload:GameBetCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if payload.choice not in CUPS: raise HTTPException(status_code=400,detail="Geçersiz kupa")
-        result=random.choice(sorted(CUPS)); payout=payload.amount*3 if result==payload.choice else 0; row=GameBet(user_id=user.id,choice=payload.choice,amount=payload.amount,result=result,payout=payout); db.add(row); db.commit(); db.refresh(row); return {"id":row.id,"choice":row.choice,"result":row.result,"payout":row.payout}
+        result=random.choice(sorted(CUPS)); payout=payload.amount*3 if result==payload.choice else 0
+        return _play_game(db,user,payload.choice,payload.amount,result,payout,"cups")
+
     @router.get("/rooms/{room_id}/announcement")
     def room_announcement(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         row=db.scalar(select(RoomAnnouncement).where(RoomAnnouncement.room_id==room_id).order_by(RoomAnnouncement.created_at.desc())); return {"room_id":room_id,"message":row.message if row else ""}
