@@ -264,3 +264,17 @@ Room control checkpoint
 - [x] `/me/vip` artık toplam harcama ve sonraki seviye eşiğini döndürüyor.
 - [x] Browser smoke satın alma sonrası VIP harcama read-back kontrolü yapıyor.
 - [ ] Yeni Quality runner PASS kanıtı bekleniyor.
+
+
+2026-09-18 — YÖNETİM SİSTEMİ BAŞLANGIÇ
+- [x] SA / UA / DA hiyerarşisi için merkezi AdminRole modeli eklendi; DA > UA > SA yetki mirası backend require_role ile uygulanıyor.
+- [x] Yönetim API temeli eklendi: yönetici kimliği, Ghost Mode, destek talepleri, şikayetler, uygulama eksikleri, ID sorgu, Lidya, ban/unban, oda banı, chat banı, VIP ve admin rol yönetimi.
+- [x] AdminAuditLog ile yönetim işlemleri kalıcı audit kaydına bağlandı.
+- [x] Destek mesajı/atama kayıtları eklendi; destek açılışında destek.txt notu tutuluyor.
+- [x] uygulama eksikleri application_gaps tablosu + uygulamaeksikleri.txt kaydıyla eklendi.
+- [x] Yönetim menüsü yalnızca /v1/admin/me erişimi olan hesaplarda frontend'e ekleniyor.
+- [x] Ghost Mode aktif SA/UA/DA kullanıcıları oda public view'ında üye/koltuk/moderatör listelerinden gizleniyor ve kilitli odalara yönetim girişi yapabiliyor.
+- [x] DA için initial_da_ids environment bootstrap desteği eklendi.
+- [ ] Gerçek runner PASS ve admin browser E2E doğrulaması bekleniyor.
+- [ ] Kullanıcı tarafı 10 haneli public ID standardının mevcut @eris_XXXXX formatından yeni standarda geçirilmesi açık.
+- [ ] Gerçek cihaz/IP ban enforcement ve tüm yönetim aksiyonlarının browser E2E doğrulaması açık.
