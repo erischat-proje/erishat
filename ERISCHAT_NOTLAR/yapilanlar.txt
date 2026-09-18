@@ -337,3 +337,16 @@ Room control checkpoint
 - [x] Frontend oyun kartındaki artık mevcut olmayan analytics handler referansı kaldırıldı.
 - [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
 - Commitler: c466e00f681ec785de518a701332f76d94e74b7f, 4a4e0eca7a45c7080f6f024c557ea9fbb893f9e5.
+
+
+2026-09-19 — LİDYA GEM + OYUN GELİŞTİRME CHECKPOINT
+- [x] User modeline BIGINT Lidya Gem bakiyesi eklendi; mevcut Lidya korunuyor.
+- [x] 1 Lidya = 1 Lidya Gem ve 1 Lidya Gem = 1 Lidya çift yönlü takas endpointi eklendi.
+- [x] Takas için yetersiz bakiye, miktar sınırı ve kullanıcı satırı kilitleme kontrolleri eklendi.
+- [x] Lidya Gem işlemleri ayrı sistem ledger'ında tutuluyor; Lidya tarafı mevcut LidyaLedger ile audit ediliyor.
+- [x] /me/wallet bakiye + 1:1 oranını döndürüyor.
+- [x] Profil demo ekranına Lidya/Lidya Gem bakiyesi ve iki yönlü takas butonları eklendi.
+- [x] /me UserOut şemasında lidya_gem görünür hale getirildi.
+- [x] Oyun motoru v3 animasyon/reveal metadata katmanı önceki checkpoint'te tamamlandı; ücretsiz/free-play sınırı korunuyor.
+- [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı.
+- [ ] Blackjack çok adımlı hit/stand oturumu ve gerçek round lifecycle sonraki oyun motoru derinleştirme kalemi.
