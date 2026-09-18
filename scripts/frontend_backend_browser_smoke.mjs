@@ -36,6 +36,8 @@ async function main(){
   await page.locator('#chatInput').fill('browser backend dm smoke');
   await page.locator('#chatInput').press('Enter');
   await page.waitForSelector('#chatBody .bubble.me');
+  const dmVisible=await page.locator('#chatBody .bubble.me').count();
+  if(dmVisible<1) throw new Error('DM bubble did not render');
   const family=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
