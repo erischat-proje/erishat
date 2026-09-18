@@ -198,3 +198,17 @@
 
 - [x] Oda adı limiti 16 karaktere çekildi; oda public ID'si 10 haneli olarak üretilecek/mevcut odalar migrate edilecek ve oda ekranında adın hemen altında gösterilecek.
 - [x] UA'lara ban yetkileri eklendi: hesap banı, cihaz banı, chat banı, oda banı ve bunların kaldırılması; UA'lara DA'nın ID/Lidya/VIP/yetki gibi diğer araçları açılmadı.
+
+
+## 2026-09-18 — SİSTEM VERİ AYRIŞTIRMA / ID GÜVENLİĞİ CHECKPOINT
+- Kullanıcı public ID artık 10 haneli sayısal; oda public ID artık 12 haneli sayısal. Böylece ID formatları birbirinden ayrıldığı için kullanıcı ID ↔ oda ID çakışması mümkün değil.
+- `system_user_ids` ve `system_room_ids` dedicated registry tabloları eklendi.
+- `system_lidya_ledger` BIGINT tabanlı ayrı Lidya işlem tablosu eklendi; users.lidya da BIGINT'e taşındı.
+- `sistemönemliveriler/` altında işlem türlerine özel TXT kayıtları oluşturuldu ve admin audit işlemleri ilgili dosyalara bağlandı.
+- Destek ticket oluşturma ve admin destek görüntüleme işlemleri ayrı TXT kayıtlarına bağlandı.
+- Oda public ID ile admin oda banı kullanılabilir hale getirildi.
+- Oda adı oluşturma + yeniden adlandırma 16 karakter sınırında.
+- Normal kullanıcıda yönetim butonu oluşturulmuyor; frontend yönetim paneli yalnızca /v1/admin/me yetkili cevabı sonrası DOM'a ekleniyor.
+- Quality workflow'a `system_identity_admin_smoke.py` quality gate eklendi.
+- Bu yeni değişiklikler için henüz fresh Quality PASS kanıtı yok; PASS/TAMAM ilan edilmiyor.
+- Railway deploy yapılmadı.
