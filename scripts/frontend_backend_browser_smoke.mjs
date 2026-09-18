@@ -195,6 +195,15 @@ async function main(){
     return {status:r.status,data:await r.json()};
   },API);
   if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+  const dmAccessFlow=await page.evaluate(async ({api,targetId})=>{
+    const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const create=await fetch(api+'/conversations',{method:'POST',headers:h,body:JSON.stringify({participant_id:targetId})}); const conv=await create.json();
+    const detail=await fetch(api+'/conversations/'+encodeURIComponent(conv.id),{headers:h});
+    const send=await fetch(api+'/messages/'+encodeURIComponent(conv.id),{method:'POST',headers:h,body:JSON.stringify({text:'dm access smoke'})}); const msg=await send.json();
+    const list=await fetch(api+'/messages/'+encodeURIComponent(conv.id),{headers:h}).then(r=>r.json());
+    return {create:create.status,detail:detail.status,send:send.status,listStatus:200,list,conversation:conv,message:msg};
+  },{api:API,targetId:member.user.id});
+  if(dmAccessFlow.create!==200||dmAccessFlow.detail!==200||dmAccessFlow.send!==200||!dmAccessFlow.list.some(x=>x.id===dmAccessFlow.message.id)) throw new Error('DM access/history flow failed: '+JSON.stringify(dmAccessFlow));
   const locationFlow=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const before=await fetch(api+'/me/location',{headers:h});
