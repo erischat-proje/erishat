@@ -64,6 +64,7 @@ def ensure_system_data_columns() -> None:
 def normalize_public_ids(db: Session) -> None:
     import re
     rows = db.scalars(select(User)).all()
+    registry_ids = {row.public_id for row in db.scalars(select(UserIdRegistry)).all()}
     seen = set()
     for user in rows:
         current = str(user.public_id or "")
@@ -72,7 +73,7 @@ def normalize_public_ids(db: Session) -> None:
             continue
         while True:
             candidate = f"{uuid4().int % 10_000_000_000:010d}"
-            if candidate not in seen and not db.scalar(select(User.id).where(User.public_id == candidate)):
+            if candidate not in seen and candidate not in registry_ids and not db.scalar(select(User.id).where(User.public_id == candidate)):
                 break
         user.public_id = candidate
         seen.add(candidate)
