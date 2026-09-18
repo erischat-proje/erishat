@@ -24,7 +24,7 @@ LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 8, "required_spend": 0},
 GIFT_RECIPIENT_PERCENT = 70
 GIFT_CATALOG = {"Zeytin Dalı": 1, "Kil Toprak Çanak": 2, "Pazaryeri Üzümü": 3, "Parşömen Rulosu": 4, "Kilden Mühür": 5, "Tunç Broş": 6, "Baharat Kesesi": 7, "Antik Çömlek": 8, "Karakalem Sardes Çizimi": 9, "Meşale Kıvılcımı": 10, "Gümüş Broş": 12, "Zeytinyağı Şişesi": 13, "Antik Tarak": 14, "Seramik Kase": 15, "Tunç Para (Sikke)": 18, "Antik Arp": 20, "Zeytin Taç": 30, "Mavi Boncuk / Nazarlık": 40, "Kraliyet Şarabı": 50, "Lidya Mühür Yüzüğü": 60, "Poyraz Rüzgarı": 70, "Gümüş Sikke Kesesi": 90, "Altın Zeytin Dalı": 100, "Sardes Sütunu": 120, "Altın Broş": 150, "Güneş Kursu": 180, "Sardes Altın Feneri": 200, "Kral Alyattes’in Kılıcı": 250, "Paktalos Nehri Altını": 350, "Antik Savaş Arabası": 500, "Kroisos’un Altın Sikkesi": 750, "Kraliyet Asası": 1000, "Anadolu Kaplanı": 1250, "Efes Artemis Tapınağı Sütunu": 1500, "Kraliyet Tahtı": 2000, "Altın Nehir Yağmuru": 3000, "Eris & Lidya Anıtı": 4500, "Kroisos’un Hazinesi": 6000, "Lidya Savaş Gemisi (Trirem)": 8000, "Antik Güneş Tanrısı Heykeli": 10000, "Altın Kanatlı Griffin": 12500, "Sardes Sarayı": 15000, "Efsanevi Lidyum Aslanı": 17500, "Dünyanın İlk Parası Anıtı": 19000, "Kroisos’un Altın Tahtı": 20000}
 
-class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=64)
+class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class RoomChatUpdate(BaseModel): enabled: bool
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class BanUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
