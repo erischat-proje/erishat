@@ -373,3 +373,10 @@ Room control checkpoint
 GÜVENLİK/KAPSAM NOTU
 - Oyunlar ücretsiz/free-play olarak tutuluyor; yatırım, bahis veya parasal payout sistemi eklenmeyecek.
 
+
+2026-09-19 — OYUN MERKEZİ ANALİTİK UI
+- [x] Oyun kartlarına Detaylı Analiz bağlandı.
+- [x] Teorik/gerçekleşen oran, sapma, örneklem, streak ve seçim isabeti UI'da gösteriliyor.
+- [x] Crash çarpan ve At Yarışı podyum analizleri UI'a bağlandı.
+- [x] Oyun geçmişi butonu ve son oyun kayıtları eklendi.
+- [ ] Browser E2E ile tüm 7 oyun + analytics/history doğrulanacak.
