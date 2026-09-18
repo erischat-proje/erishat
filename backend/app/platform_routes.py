@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import random
 from datetime import datetime, timedelta, timezone
@@ -13,7 +14,7 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
-    DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet,
+    DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
 from .room_models import Room, RoomGiftEvent, RoomMember
@@ -306,30 +307,72 @@ def register_platform_auth(current_user_dependency):
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
         return [{"gift":r.gift_key,"amount":r.total_price,"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
-    def _play_game(db: Session, user: User, choice: str, amount: int, result_key: str, payout: int, game_type: str):
-        locked = db.execute(select(User).where(User.id == user.id).with_for_update()).scalar_one()
-        if locked.lidya < amount:
-            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        round_row = GameRound(id="round_"+uuid4().hex, room_id=None, game_type=game_type, status="settled", ends_at=datetime.now(timezone.utc), result_key=result_key)
-        db.add(round_row); db.flush()
-        locked.lidya -= amount
-        locked.lidya += payout
-        row = GameBet(round_id=round_row.id, user_id=locked.id, choice=choice, amount=amount, payout=payout)
+    GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
+    GAME_PROFILES = {
+        "roulette": {
+            "results": [("rose", 45), ("heart", 20), ("star", 12), ("diamond", 8), ("crown", 6), ("gift", 4), ("fire", 3), ("gem", 1.5), ("jackpot", 0.5)],
+            "description": "Ağırlıklı RNG ile tek sonuçlu rulet demosu.",
+        },
+        "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
+        "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
+        "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Rastgele crash çarpanı sınıfı; yatırım veya cash-out yoktur."},
+        "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı RNG ile seçilir; parasal payout yoktur."},
+        "wheel": {"results": [("small", 40), ("medium", 30), ("large", 20), ("special", 8), ("grand", 2)], "description": "Ağırlıklı şans çarkı sonucu."},
+    }
+
+    def _weighted_result(game_type: str):
+        items = GAME_PROFILES[game_type]["results"]
+        keys = [x[0] for x in items]; weights = [x[1] for x in items]
+        return random.choices(keys, weights=weights, k=1)[0]
+
+    def _save_game_play(db: Session, user: User, game_type: str, choice: str | None, result_key: str, result_data: dict):
+        row = GamePlay(user_id=user.id, game_type=game_type, choice=choice, result_key=result_key, result_data=json.dumps(result_data, ensure_ascii=False, separators=(",", ":")))
         db.add(row); db.commit(); db.refresh(row)
-        record("system", "game_settled", user_id=locked.id, game_type=game_type, amount=amount, result=result_key, payout=payout)
-        return {"id":row.id,"choice":choice,"result":result_key,"payout":payout,"spent":amount,"net":payout-amount}
+        record("system", "game_played", user_id=user.id, game_type=game_type, choice=choice, result=result_key)
+        return {"id": row.id, "game": game_type, "choice": choice, "result": result_key, "data": result_data, "created_at": row.created_at}
 
-    @router.post("/game/bet")
-    def game_bet(payload:GameBetCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        if payload.choice not in {x["key"] for x in ROULETTE}: raise HTTPException(status_code=400,detail="Geçersiz seçim")
-        result=random.choices(ROULETTE,weights=[item["weight"] for item in ROULETTE],k=1)[0]
-        return _play_game(db,user,payload.choice,payload.amount,result["key"],int(payload.amount*result["multiplier"]),"roulette")
+    @router.get("/games")
+    def game_catalog(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return [{"key": key, "description": value["description"], "weighted": True, "investment_required": False} for key, value in GAME_PROFILES.items()]
 
-    @router.post("/game/cups")
-    def game_cups(payload:GameBetCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        if payload.choice not in CUPS: raise HTTPException(status_code=400,detail="Geçersiz kupa")
-        result=random.choice(sorted(CUPS)); payout=payload.amount*3 if result==payload.choice else 0
-        return _play_game(db,user,payload.choice,payload.amount,result,payout,"cups")
+    @router.post("/games/{game_type}/play")
+    def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        game_type = game_type.strip().lower()
+        if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
+        payload = payload or {}
+        choice = str(payload.get("choice") or "").strip() or None
+        if game_type == "cups" and choice not in CUPS:
+            raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
+        if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
+            raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
+        result = _weighted_result(game_type)
+        data = {"free_play": True, "investment_required": False}
+        if game_type == "blackjack":
+            ranks = list(range(2, 11)) + [10, 10, 10, 11]
+            player = [random.choice(ranks), random.choice(ranks)]
+            dealer = [random.choice(ranks), random.choice(ranks)]
+            ps, ds = sum(player), sum(dealer)
+            if ps > 21 and 11 in player: ps -= 10
+            if ds > 21 and 11 in dealer: ds -= 10
+            result = "blackjack" if ps == 21 else "win" if ps > ds and ps <= 21 else "loss" if ps <= 21 and (ds > ps or ds <= 21) else "push"
+            data.update({"player_hand": player, "dealer_hand": dealer, "player_total": ps, "dealer_total": ds, "rules": "single-hand demo"})
+        elif game_type == "crash":
+            ranges = {"x1_00_1_49": (1.0,1.49), "x1_50_1_99": (1.5,1.99), "x2_00_4_99": (2.0,4.99), "x5_00_9_99": (5.0,9.99), "x10_plus": (10.0,25.0)}
+            lo, hi = ranges[result]; data["multiplier"] = round(random.uniform(lo, hi), 2)
+        elif game_type == "horse_race":
+            data["finish_order"] = [result] + [x for x in [f"horse_{i}" for i in range(1,8)] if x != result]
+            random.shuffle(data["finish_order"][1:])
+        elif game_type == "vault":
+            data["reward_class"] = result
+        elif game_type == "wheel":
+            data["segment"] = result
+        return _save_game_play(db, user, game_type, choice, result, data)
+
+    @router.get("/games/{game_type}/history")
+    def game_history(game_type: str, limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
+        rows = list(db.scalars(select(GamePlay).where(GamePlay.user_id == user.id, GamePlay.game_type == game_type).order_by(GamePlay.created_at.desc()).limit(limit)))
+        return [{"id": r.id, "choice": r.choice, "result": r.result_key, "data": json.loads(r.result_data), "created_at": r.created_at} for r in rows]
 
     @router.get("/rooms/{room_id}/announcement")
     def room_announcement(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
