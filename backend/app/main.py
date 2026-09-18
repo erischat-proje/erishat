@@ -43,6 +43,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credent
 def ensure_system_data_columns() -> None:
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE users ALTER COLUMN lidya TYPE BIGINT"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya_gem BIGINT NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
