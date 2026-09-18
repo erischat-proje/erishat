@@ -14,7 +14,7 @@ from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet,
-    GameRound, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus,
+    GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
 from .room_models import Room, RoomGiftEvent, RoomMember
 
@@ -281,8 +281,8 @@ def register_platform_auth(current_user_dependency):
         return {"user_id":user_id,"total":total,"level":fan_level(total)}
     @router.get("/users/{user_id}/profile-gifts")
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.target_user_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
-        return [{"gift":r.gift_key,"amount":r.amount,"from_user_id":r.from_user_id,"created_at":r.created_at} for r in rows]
+        rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
+        return [{"gift":r.gift_key,"amount":r.total_price,"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
     @router.post("/game/bet")
     def game_bet(payload:GameBetCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if payload.choice not in {"rose","heart","star","diamond","crown","gift","fire","gem","jackpot"}: raise HTTPException(status_code=400,detail="Geçersiz seçim")
