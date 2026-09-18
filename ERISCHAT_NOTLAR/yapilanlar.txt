@@ -216,3 +216,13 @@ Room control checkpoint
 - [x] VIP harcama sayaç + seviye ilerleme backend zinciri eklendi.
 - [x] Kozmetik satın alma smoke'u toplam harcama read-back kontrol ediyor (`86f6e595`).
 - [ ] Runner PASS henüz doğrulanmadı.
+
+
+2026-09-18 — YÖNETİM SİSTEMİ TEMELİ
+- [x] admin_models.py: SA/UA/DA AdminRole, Ghost Mode, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan ve ApplicationGap modelleri eklendi.
+- [x] admin_routes.py: role inheritance (DA > UA > SA), Ghost Mode, destek kabul/red/mesaj/kapanış, şikayet, uygulama eksiği, DA ID sorgu, Lidya, ban/unban, oda banı, chat banı, VIP ve rol yönetimi API'leri eklendi.
+- [x] main.py: admin router kaydı, son IP/device bilgisi takibi ve initial DA bootstrap eklendi.
+- [x] support_routes.py: destek talepleri pending başlatılıyor ve destek.txt'ye kullanıcı kimliğiyle not düşülüyor.
+- [x] room_routes.py: aktif SA/UA/DA Ghost Mode kullanıcıları kilitli odalara girebiliyor ve public room view'da gizleniyor; yönetim oda banı enforcement eklendi.
+- [x] frontend/admin-live.js + index entegrasyonu: yalnızca yetkili hesapların görebildiği Yönetim butonu ve rol bazlı yönetim paneli eklendi.
+- [ ] Yeni Quality runner sonucu henüz alınmadı; PASS ilan edilmiyor.
