@@ -193,3 +193,9 @@ Room control checkpoint
 - [x] Commit `fc6a60fce28ff6c0e5c0b32aa188b695f203d5c6`: `scripts/rtc_signaling_security_smoke.mjs` eklendi.
 - [x] Senaryo; non-member GET/POST için 403, member → non-member target için 404, geçersiz signal type için 422 ve geçerli offer için 200 + queued=true kontrollerini kapsıyor.
 - [ ] Quality runner entegrasyonu/gerçek PASS henüz doğrulanmadı.
+
+
+2026-09-18 — WEBRTC ICE CONFIG BOOTSTRAP
+- [x] `f47a17384b0964245d1f47237dc120c2f4e5387b`: authenticated env-backed RTC ICE config endpoint.
+- [x] `e83e8cc5bec0e9b7a2708dcd3d3efe4330e63fe9`: frontend artık oda başlarken `/rtc-config` üzerinden ICE server listesini alıyor.
+- [x] Yapılandırma yoksa boş liste korunuyor; gerçek STUN/TURN endpoint/credential değeri repo içine gömülmedi.
