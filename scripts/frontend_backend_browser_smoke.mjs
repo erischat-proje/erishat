@@ -195,6 +195,14 @@ async function main(){
     return {status:r.status,data:await r.json()};
   },API);
   if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+  const locationFlow=await page.evaluate(async api=>{
+    const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const before=await fetch(api+'/me/location',{headers:h});
+    const save=await fetch(api+'/me/location',{method:'PUT',headers:h,body:JSON.stringify({latitude:39.925,longitude:32.836,city:'Ankara'})});
+    const after=await fetch(api+'/me/location',{headers:h}).then(r=>r.json());
+    return {before:before.status,save:save.status,after};
+  },API);
+  if(locationFlow.save!==200||locationFlow.after?.city!=='Ankara') throw new Error('location flow failed: '+JSON.stringify(locationFlow));
   const discovery=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const pref=await fetch(api+'/me/discovery',{headers:h}).then(r=>r.json());
