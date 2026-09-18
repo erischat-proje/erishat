@@ -304,3 +304,13 @@ Room control checkpoint
 - [x] Commit 9375826: oyun merkezinde analytics ve history endpointleri gerçek UI'a bağlandı.
 - [x] 7 oyunun analiz ekranı genişletildi.
 - [ ] Browser E2E sonucu bekleniyor.
+
+
+2026-09-19 — OYUN MOTORLARI V2
+- [x] Commit 0c7cf3383403f6ef15c5bc726245abfca376fe51: 7 free-play oyunda round_id + engine_version ve oyun-tipine özel sonuç metadata'sı güçlendirildi.
+- [x] Oda oyunlarında room_id artık gerçek oda ve kullanıcı üyeliğiyle doğrulanıyor.
+- [x] Rulet winning_slot/choice_hit, 4 Kupa winning_cup/choice_hit, At Yarışı positions/podium, Kasa reward_item, Çark segment_index metadata'sı eklendi.
+- [x] Oyun geçmişi bozuk JSON durumuna karşı dayanıklı hale getirildi.
+- [x] Oyun analytics/stats endpointleri SA/UA/DA ile sınırlandı; oyuncular analiz verisini API üzerinden göremiyor.
+- [x] Commit 845be2d8e22187a673b9dd8761b30de947615fea: oyuncu oyun ekranından Detaylı Analiz aksiyonu kaldırıldı.
+- [ ] Fresh Quality/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
