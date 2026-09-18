@@ -308,6 +308,8 @@ def register_platform_auth(current_user_dependency):
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
         return [{"gift":r.gift_key,"amount":r.total_price,"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
     GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
+    ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel"}
+    PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
     GAME_PROFILES = {
         "roulette": {
             "results": [("rose", 45), ("heart", 20), ("star", 12), ("diamond", 8), ("crown", 6), ("gift", 4), ("fire", 3), ("gem", 1.5), ("jackpot", 0.5)],
@@ -334,20 +336,43 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games")
     def game_catalog(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        return [{"key": key, "description": value["description"], "weighted": True, "investment_required": False} for key, value in GAME_PROFILES.items()]
+        return [{"key": key, "description": value["description"], "weighted": True, "investment_required": False,
+                 "scope": "room" if key in ROOM_GAME_TYPES else "private"} for key, value in GAME_PROFILES.items()]
+
+    @router.get("/games/{game_type}/stats")
+    def game_stats(game_type: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        game_type = game_type.strip().lower()
+        if game_type not in GAME_TYPES:
+            raise HTTPException(status_code=404, detail="Oyun bulunamadı")
+        rows = list(db.scalars(select(GamePlay).where(GamePlay.game_type == game_type).order_by(GamePlay.created_at.desc()).limit(1000)))
+        counts = {}
+        for row in rows:
+            counts[row.result_key] = counts.get(row.result_key, 0) + 1
+        total = len(rows)
+        return {"game": game_type, "scope": "room" if game_type in ROOM_GAME_TYPES else "private",
+                "sample_size": total,
+                "results": [{"key": k, "count": v, "rate": round(v / total * 100, 3) if total else 0} for k, v in sorted(counts.items())]}
+
+
 
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
         if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
         payload = payload or {}
+        room_id = str(payload.get("room_id") or "").strip() or None
+        if room_id and game_type in PRIVATE_GAME_TYPES:
+            raise HTTPException(status_code=400, detail="Bu oyun özel/kişisel modda çalışır")
+        if game_type in ROOM_GAME_TYPES and not room_id:
+            raise HTTPException(status_code=400, detail="Bu oyun oda içinden başlatılmalıdır")
+
         choice = str(payload.get("choice") or "").strip() or None
         if game_type == "cups" and choice not in CUPS:
             raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
         if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
         result = _weighted_result(game_type)
-        data = {"free_play": True, "investment_required": False}
+        data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id}
         if game_type == "blackjack":
             ranks = list(range(2, 11)) + [10, 10, 10, 11]
             player = [random.choice(ranks), random.choice(ranks)]
