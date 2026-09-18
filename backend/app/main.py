@@ -4,7 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 import logging
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
@@ -23,7 +23,9 @@ from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, G
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
+from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap
 from .support_routes import register_support_auth, router as support_router
+from .admin_routes import register_admin_auth, router as admin_router
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
@@ -44,6 +46,8 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
 
 @app.on_event("startup")
 def startup() -> None:
@@ -74,11 +78,11 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
 register_room_auth(current_user)
 register_platform_auth(current_user)
 register_family_auth(current_user)
-register_support_auth(current_user)
+register_support_auth(current_user)\nregister_admin_auth(current_user)
 app.include_router(room_router)
 app.include_router(platform_router)
 app.include_router(family_router)
-app.include_router(support_router)
+app.include_router(support_router)\napp.include_router(admin_router)
 
 
 def ensure_demo_user(db: Session) -> User:
