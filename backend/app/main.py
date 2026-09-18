@@ -142,11 +142,13 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
 register_room_auth(current_user)
 register_platform_auth(current_user)
 register_family_auth(current_user)
-register_support_auth(current_user)\nregister_admin_auth(current_user)
+register_support_auth(current_user)
+register_admin_auth(current_user)
 app.include_router(room_router)
 app.include_router(platform_router)
 app.include_router(family_router)
-app.include_router(support_router)\napp.include_router(admin_router)
+app.include_router(support_router)
+app.include_router(admin_router)
 
 
 def ensure_demo_user(db: Session) -> User:
