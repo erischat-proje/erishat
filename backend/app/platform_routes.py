@@ -118,7 +118,7 @@ def register_platform_auth(current_user_dependency):
         db.commit(); return {k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}
     @router.get("/me/vip")
     def my_vip(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        v=vip_row(db,user.id); db.commit(); return {"level":v.level,"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":v.neon_color,"entry_effect":v.entry_effect}
+        v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")\n        badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""\n        neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)\n        return {"level":v.level,"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3}
     @router.get("/users/{user_id}/vip")
     def public_vip(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target=db.get(User,user_id)
