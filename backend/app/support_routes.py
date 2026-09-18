@@ -5,6 +5,13 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .support_models import SupportTicket
+from .admin_models import AdminRole, AdminAuditLog
+from pathlib import Path
+from datetime import datetime, timezone
+import json
+
+NOTES_DIR = Path(__file__).resolve().parents[2] / "ERISCHAT_NOTLAR"
+SUPPORT_LOG = NOTES_DIR / "destek.txt"
 
 router = APIRouter(prefix="/v1/support", tags=["support"])
 
