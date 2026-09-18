@@ -307,3 +307,23 @@ Room control checkpoint
 - [x] Admin oda banı/unban artık 12 haneli public oda ID'sini kabul ediyor.
 - [x] Quality workflow'a ID/yetki smoke gate eklendi.
 - [ ] Bu son commitler için fresh Quality PASS henüz bekleniyor.
+
+2026-09-19 — UYGULAMA SIRASI: ÖNCE TÜM EKSİKLER
+- [x] Eksiklerin önce tamamlanması, optimizasyonun en sona bırakılması çalışma kuralı olarak belirlendi.
+- [x] Son Quality failure kökü: cosmetic_routes.py + platform_routes.py literal \\n kaynak satırları tespit edildi.
+- [x] İki kaynak dosyası düzeltildi.
+- [ ] Yeni Quality runner PASS.
+- [ ] Kalan tüm müşteri yüzeylerinin gerçek browser E2E tamamlanması.
+- [ ] Admin SA/UA/DA tam browser E2E + enforcement.
+- [ ] Gerçek WebRTC iki tarayıcı ses E2E + STUN/TURN.
+- [ ] Music gerçek playback/queue/senkron backend + UI.
+- [ ] Announcement gerçek CRUD/pin/moderasyon backend + UI.
+- [ ] Notification/follow/block/report/privacy tüm uçtan uca zincirleri.
+- [ ] VIP/Lidya atomicity, concurrency, idempotency ve ödül/uygulama zinciri.
+- [ ] Family tüm kalan UI/izin/edge-case zincirleri.
+- [ ] Games gerçek ekonomi/ödeme/geçmiş/disconnect/anti-double-spend.
+- [ ] ID registry migration/concurrency/integrity recovery testleri.
+- [ ] Sistem logları bütünlük/correlation/admin görüntüleme/retention katmanı.
+- [ ] Load/stress/security regression testleri.
+- [ ] Tüm özellikler tamamlandıktan sonra sistem optimizasyonu + servis bağlantıları + production hazırlığı.
+- [ ] Railway deploy yalnızca açık deploy talimatıyla.
