@@ -105,7 +105,7 @@ class TicketMessage(BaseModel):
 
 
 class AmountUpdate(BaseModel):
-    amount: int = Field(gt=0, le=2_000_000_000)
+    amount: int = Field(gt=0, le=9_000_000_000_000_000_000)
 
 
 class BanRequest(BaseModel):
@@ -235,9 +235,9 @@ def register_admin_auth(current_user_dependency):
     @router.get("/users/{user_id}")
     def user_lookup(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db, user, "DA")
-        target = db.get(User, user_id)
+        target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        loc = db.get(UserLocation, user_id)
+        loc = db.get(UserLocation, target.id)
         record("id_lookup", "admin_user_lookup", admin_id=user.id, admin_nickname=user.nickname, target_user_id=target.id, target_public_id=target.public_id)
         return {"id": target.id, "public_id": target.public_id, "nickname": target.nickname, "lidya": target.lidya,
                 "location": None if not loc else {"city": loc.city, "latitude": loc.latitude, "longitude": loc.longitude},
