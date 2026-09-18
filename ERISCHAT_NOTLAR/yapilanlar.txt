@@ -118,3 +118,5 @@ Room control checkpoint
 2026-09-18 — BİLDİRİM TETİKLEYİCİLERİ
 - [x] Commit b371d0c8b259ac3bf06e70279356cb9921c6a52e1: aileye üye davet/ekleme işleminde hedef kullanıcıya family_invite bildirimi eklendi.
 - [x] Oda hediye gönderimi d58f140 ile gift bildirimi oluşturuyor ve gerçek profil hediye kayıtlarıyla birlikte tutuluyor.
+
+- [x] Commit e40acb9a96af90803c320e76c3480ea3cfb9be34: /me/vip artık badge, title, neon_enabled ve sunum rengi metadata'sı döndürüyor.\n- [x] Commit 8dddaaeaff48da2d16eee9ecc1c52d443529d7: VIP merkezi bu badge/neon/title bilgilerini gerçek API'den gösteriyor.\n- [x] Commit 01593847976b16f758f5725b2e017f03d7abc22f: backend browser smoke VIP metadata sözleşmesini doğruluyor.\n
