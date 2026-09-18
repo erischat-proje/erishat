@@ -128,7 +128,10 @@ def register_platform_auth(current_user_dependency):
         db.commit(); return {k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}
     @router.get("/me/vip")
     def my_vip(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")\n        badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""\n        neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)\n        return {"level":v.level,"total_spent":int(v.total_spent or 0),"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3}
+        v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")
+        badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""
+        neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)
+        return {"level":v.level,"total_spent":int(v.total_spent or 0),"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3}
     @router.get("/users/{user_id}/vip")
     def public_vip(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target=db.get(User,user_id)
@@ -245,7 +248,9 @@ def register_platform_auth(current_user_dependency):
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        admin = db.get(AdminRole, target.id)\n        visible_public_id = None if admin and admin.role in {"SA", "UA", "DA"} else target.public_id\n        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
+        admin = db.get(AdminRole, target.id)
+        visible_public_id = None if admin and admin.role in {"SA", "UA", "DA"} else target.public_id
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
     @router.post("/users/{user_id}/follow", status_code=201)
     def follow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi takip edemezsiniz")
