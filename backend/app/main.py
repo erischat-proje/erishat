@@ -26,6 +26,7 @@ from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
+from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
@@ -38,29 +39,62 @@ origins = [item.strip() for item in settings.cors_origins.split(",") if item.str
 app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"])
 
 
-def ensure_user_settings_columns() -> None:
+def ensure_system_data_columns() -> None:
     with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya INTEGER NOT NULL DEFAULT 10000000"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(16) NOT NULL DEFAULT 'unspecified'"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS frame_asset VARCHAR(255)"))
-        conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
+        conn.execute(text("ALTER TABLE users ALTER COLUMN lidya TYPE BIGINT"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
-        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(10)"))
+        conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
+        conn.execute(text("ALTER TABLE rooms ALTER COLUMN public_id TYPE VARCHAR(12)"))
         rows = conn.execute(text("SELECT id, public_id FROM rooms")).fetchall()
         import uuid as _uuid
-        used = {str(x[1]) for x in rows if x[1]}
+        import re as _re
+        used = {str(x[1]) for x in rows if _re.fullmatch(r"\d{12}", str(x[1] or ""))}
         for rid, pid in rows:
-            if not pid:
+            if not _re.fullmatch(r"\d{12}", str(pid or "")) or str(pid) in {str(x[1]) for x in rows if x[0] != rid and x[1]}:
                 while True:
-                    candidate = f"{_uuid.uuid4().int % 10_000_000_000:010d}"
-                    if candidate not in used: break
+                    candidate = f"{_uuid.uuid4().int % 1_000_000_000_000:012d}"
+                    if candidate not in used:
+                        break
                 conn.execute(text("UPDATE rooms SET public_id=:pid WHERE id=:rid"), {"pid": candidate, "rid": rid})
                 used.add(candidate)
 
-def normalize_public_ids(db: Session) -> None:\n    import re\n    rows = db.scalars(select(User)).all()\n    seen = set()\n    for user in rows:\n        if re.fullmatch(r"\\d{10}", str(user.public_id or "")) and user.public_id not in seen:\n            seen.add(user.public_id)\n            continue\n        while True:\n            candidate = f"{uuid4().int % 10_000_000_000:010d}"\n            if candidate not in seen and not db.scalar(select(User.id).where(User.public_id == candidate)):\n                break\n        user.public_id = candidate\n        seen.add(candidate)\n    db.commit()\n\n\ndef bootstrap_initial_developer_admins(db: Session) -> None:
+
+def normalize_public_ids(db: Session) -> None:
+    import re
+    rows = db.scalars(select(User)).all()
+    seen = set()
+    for user in rows:
+        current = str(user.public_id or "")
+        if re.fullmatch(r"\d{10}", current) and current not in seen:
+            seen.add(current)
+            continue
+        while True:
+            candidate = f"{uuid4().int % 10_000_000_000:010d}"
+            if candidate not in seen and not db.scalar(select(User.id).where(User.public_id == candidate)):
+                break
+        user.public_id = candidate
+        seen.add(candidate)
+    db.commit()
+
+
+def sync_system_registries(db: Session) -> None:
+    normalize_public_ids(db)
+    users = db.scalars(select(User)).all()
+    rooms = db.scalars(select(Room)).all()
+    existing_users = {row.user_id for row in db.scalars(select(UserIdRegistry)).all()}
+    existing_rooms = {row.room_id for row in db.scalars(select(RoomIdRegistry)).all()}
+    for user in users:
+        if user.id not in existing_users:
+            db.add(UserIdRegistry(user_id=user.id, public_id=user.public_id))
+    for room in rooms:
+        if room.id not in existing_rooms:
+            db.add(RoomIdRegistry(room_id=room.id, public_id=room.public_id))
+    db.commit()
+
+
+def bootstrap_initial_developer_admins(db: Session) -> None:
     ids = [x.strip() for x in settings.initial_da_ids.split(",") if x.strip()]
     for user_id in ids:
         if db.get(User, user_id) and not db.get(AdminRole, user_id):
@@ -72,9 +106,10 @@ def normalize_public_ids(db: Session) -> None:\n    import re\n    rows = db.sca
 def startup() -> None:
     logger.info("ErisChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
-    ensure_user_settings_columns()
+    ensure_system_data_columns()
     with Session(engine) as db:
         cleanup_expired_sessions(db)
+        sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
     logger.info("ErisChat API startup complete")
 
@@ -110,7 +145,10 @@ def ensure_demo_user(db: Session) -> User:
     user = repo.get("demo")
     if user:
         return user
-    return repo.create(User(id="demo", public_id="@eris_48291", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
+    created = repo.create(User(id="demo", public_id="0000000001", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
+    db.add(UserIdRegistry(user_id=created.id, public_id=created.public_id))
+    db.commit()
+    return created
 
 
 @app.get("/health")
