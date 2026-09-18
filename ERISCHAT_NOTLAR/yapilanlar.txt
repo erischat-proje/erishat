@@ -299,3 +299,8 @@ Room control checkpoint
 - [x] Tüm oyunlar için toplu analytics overview endpointi eklendi.
 - [ ] Yeni Quality runner sonucu bekleniyor.
 
+
+2026-09-19 — OYUN MERKEZİ ANALİTİK UI
+- [x] Commit 9375826: oyun merkezinde analytics ve history endpointleri gerçek UI'a bağlandı.
+- [x] 7 oyunun analiz ekranı genişletildi.
+- [ ] Browser E2E sonucu bekleniyor.
