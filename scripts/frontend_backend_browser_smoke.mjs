@@ -143,6 +143,8 @@ async function main(){
   if(rtcSignalSmoke.receivedStatus!==200||rtcSignalSmoke.messages.length!==3||!rtcSignalSmoke.messages.some(x=>x.type==='offer')||!rtcSignalSmoke.messages.some(x=>x.type==='ice-candidate')||!rtcSignalSmoke.messages.some(x=>x.type==='leave')) throw new Error('RTC signaling receive queue failed: '+JSON.stringify(rtcSignalSmoke));
   if(rtcSignalSmoke.second.length!==0) throw new Error('RTC signaling messages were not consumed: '+JSON.stringify(rtcSignalSmoke.second));
   if(rtcSignalSmoke.selfTarget!==400) throw new Error('RTC self-target validation failed: '+JSON.stringify(rtcSignalSmoke));
+  const rtcConfig=await page.evaluate(async ({api,roomId})=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-config',{headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});return {status:r.status,data:await r.json()};},{api:API,roomId:room.data.id});
+  if(rtcConfig.status!==200||!Array.isArray(rtcConfig.data?.ice_servers)) throw new Error('RTC ICE config endpoint failed: '+JSON.stringify(rtcConfig));
 
   const giftFlow=await page.evaluate(async ({api,roomId,targetId})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
