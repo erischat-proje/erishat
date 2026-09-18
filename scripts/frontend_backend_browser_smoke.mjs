@@ -253,6 +253,22 @@ async function main(){
   await page.waitForFunction(() => document.querySelector('#edRoomDetail')?.textContent.includes('KOLTUKLAR'));
   const roomJoinText=await page.locator('#edRoomActions').textContent();
   if(!roomJoinText.includes('Katıl')||!roomJoinText.includes('Mikrofon')) throw new Error('room UI controls missing');
+  await page.getByRole('button',{name:'Katıl',exact:true}).click();
+  await page.waitForSelector('#edRoomActions');
+  await page.getByRole('button',{name:'🎙️ Mikrofon',exact:true}).click();
+  const emptySeat=page.locator('#edSeats button').filter({hasText:'▫️'}).first();
+  if(await emptySeat.count()) await emptySeat.click();
+  await page.waitForSelector('#edRoomTools #edStaff');
+  const chatButton=page.locator('#edStaff button').filter({hasText:/Sohbeti kapat|Sohbeti aç/}).first();
+  if(await chatButton.count()) {
+    const beforeChat=await chatButton.textContent();
+    await chatButton.click();
+    await page.waitForSelector('#edRoomTools #edStaff');
+    const afterChat=await page.locator('#edStaff button').filter({hasText:/Sohbeti kapat|Sohbeti aç/}).first().textContent();
+    if(beforeChat===afterChat) throw new Error('room chat UI toggle did not change');
+  }
+  const roomUiState=await page.evaluate(async ({api,id})=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const r=await fetch(api+'/rooms/'+encodeURIComponent(id),{headers:h}); return {status:r.status,data:await r.json()};},{api:API,id:room.data.id});
+  if(roomUiState.status!==200||!Array.isArray(roomUiState.data?.seats)) throw new Error('room UI state read-back failed: '+JSON.stringify(roomUiState));
   await page.locator('#edClose').click();
   await page.locator('#erisDemoCompleteVip').click();
   await page.waitForSelector('text=VIP seviyeleri ve cinsiyet ödülleri');
