@@ -38,7 +38,11 @@ def level_for_spend(spend: int) -> int:
 def refresh_level(db: Session, room: Room) -> int:
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
     new_level = level_for_spend(int(spend))
-    if room.level != new_level: room.level = new_level; db.commit()
+    if room.level != new_level:
+        previous = room.level
+        room.level = new_level
+        db.add(Notification(user_id=room.owner_id, kind="room_level", title="Oda seviyesi yükseldi", body=f"{room.name} odası seviye {new_level} oldu."))
+        db.commit()
     return new_level
 
 def get_room_or_404(db: Session, room_id: str) -> Room:
