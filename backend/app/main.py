@@ -49,7 +49,7 @@ def ensure_user_settings_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
 
-def bootstrap_initial_developer_admins(db: Session) -> None:
+def normalize_public_ids(db: Session) -> None:\n    import re\n    rows = db.scalars(select(User)).all()\n    seen = set()\n    for user in rows:\n        if re.fullmatch(r"\\d{10}", str(user.public_id or "")) and user.public_id not in seen:\n            seen.add(user.public_id)\n            continue\n        while True:\n            candidate = f"{uuid4().int % 10_000_000_000:010d}"\n            if candidate not in seen and not db.scalar(select(User.id).where(User.public_id == candidate)):\n                break\n        user.public_id = candidate\n        seen.add(candidate)\n    db.commit()\n\n\ndef bootstrap_initial_developer_admins(db: Session) -> None:
     ids = [x.strip() for x in settings.initial_da_ids.split(",") if x.strip()]
     for user_id in ids:
         if db.get(User, user_id) and not db.get(AdminRole, user_id):
