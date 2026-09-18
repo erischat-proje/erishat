@@ -76,3 +76,12 @@
 - Quality `35282680644` / job `105407977869` SUCCESS.
 - Live room smoke artık oda join, koltuk, moderator, seat mute/unmute, seat lock/unlock ve room lock/unlock akışlarını da doğruluyor.
 - Browser UI bu backend kontrollerine ayrıca bağlanacak; gerçek WebRTC transportu henüz tamamlanmış değil.
+
+
+## 2026-09-18 Güncel Quality checkpoint
+- Quality run `35381313253` / quality job `105717875500` SUCCESS.
+- Aynı run içinde Frontend backend browser smoke SUCCESS: anonymous + profile + gerçek DM + family create/detail/donation/chat zinciri doğrulandı.
+- Room browser surface smoke SUCCESS; canlı DM renderer ile uyumlu test commit'i `98dce70a11cdad94242a1f87868507c57bb7f808`.
+- Aynı Quality run içinde live family, room, ban, DM ve cosmetic smoke adımlarının tamamı SUCCESS.
+- Böylece önceki browser checkpoint'lerinden kalan anonymous/me ve gerçek DM backend browser maddeleri doğrulanmış oldu.
+- Kalan ana browser işi: oda tam UI→API kontrolleri, aile UI etkileşimleri, profil/try-on gerçek uygulama akışı ve tüm müşteri sekmelerinin uçtan uca doğrulanması.
