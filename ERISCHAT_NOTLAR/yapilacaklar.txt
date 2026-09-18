@@ -278,3 +278,5 @@ Room control checkpoint
 - [ ] Gerçek runner PASS ve admin browser E2E doğrulaması bekleniyor.
 - [ ] Kullanıcı tarafı 10 haneli public ID standardının mevcut @eris_XXXXX formatından yeni standarda geçirilmesi açık.
 - [ ] Gerçek cihaz/IP ban enforcement ve tüm yönetim aksiyonlarının browser E2E doğrulaması açık.
+
+- [x] Normal kullanıcı public ID üretimi ve mevcut kayıtların migration'ı 10 haneli sayısal ID standardına alındı; SA/UA/DA profillerinde public_id gizleniyor.
