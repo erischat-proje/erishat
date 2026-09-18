@@ -83,13 +83,19 @@ def sync_system_registries(db: Session) -> None:
     normalize_public_ids(db)
     users = db.scalars(select(User)).all()
     rooms = db.scalars(select(Room)).all()
-    existing_users = {row.user_id for row in db.scalars(select(UserIdRegistry)).all()}
-    existing_rooms = {row.room_id for row in db.scalars(select(RoomIdRegistry)).all()}
+    existing_users = {row.user_id: row for row in db.scalars(select(UserIdRegistry)).all()}
+    existing_rooms = {row.room_id: row for row in db.scalars(select(RoomIdRegistry)).all()}
     for user in users:
-        if user.id not in existing_users:
+        row = existing_users.get(user.id)
+        if row:
+            row.public_id = user.public_id
+        else:
             db.add(UserIdRegistry(user_id=user.id, public_id=user.public_id))
     for room in rooms:
-        if room.id not in existing_rooms:
+        row = existing_rooms.get(room.id)
+        if row:
+            row.public_id = room.public_id
+        else:
             db.add(RoomIdRegistry(room_id=room.id, public_id=room.public_id))
     db.commit()
 
@@ -145,7 +151,10 @@ def ensure_demo_user(db: Session) -> User:
     user = repo.get("demo")
     if user:
         return user
-    created = repo.create(User(id="demo", public_id="0000000001", nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
+    public_id = "0000000001"
+    while db.scalar(select(User.id).where(User.public_id == public_id)) or db.scalar(select(UserIdRegistry.user_id).where(UserIdRegistry.public_id == public_id)):
+        public_id = f"{uuid4().int % 10_000_000_000:010d}"
+    created = repo.create(User(id="demo", public_id=public_id, nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
     db.add(UserIdRegistry(user_id=created.id, public_id=created.public_id))
     db.commit()
     return created
