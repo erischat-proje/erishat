@@ -196,3 +196,8 @@ Room control checkpoint
 - [x] Mikrofon kapatıldığında stream track'leri stop edilir.
 - [ ] Gerçek WebRTC peer transport/signaling hâlâ açık.
 - [ ] Yeni Quality runner sonucu bekleniyor.
+
+
+2026-09-18 — MICROPHONE SMOKE FIX
+- [x] Browser smoke mikrofon açık/kapalı state assertion'ı gerçek #edRoomDetail container dataset'i üzerinden düzeltilmiştir.
+- [ ] Yeni Quality runner sonucu bekleniyor.
