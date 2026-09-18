@@ -154,3 +154,7 @@ Room control checkpoint
 2026-09-18 — REAL ROOM UI E2E EXTENSION
 - [x] Gerçek browser smoke içine oda modalında Katıl, Mikrofon UI, boş koltuğa oturma, sohbet aç/kapat ve backend read-back kontrolleri eklendi.
 - [ ] Hediye/moderatör UI aksiyonları için yeni Quality sonucu bekleniyor; mevcut testte backend gift/moderator zinciri zaten ayrı doğrulanıyor.
+
+2026-09-18 — ROOM MODERATOR UI E2E EXTENSION
+- [x] Room browser smoke'a gerçek Moderatör butonu + prompt üzerinden üye seçimi + oda UI read-back kontrolü eklendi.
+- [ ] Gift UI tıklaması için güvenli ayrı browser senaryosu bekliyor; mevcut backend gift zinciri doğrulanmış durumda.
