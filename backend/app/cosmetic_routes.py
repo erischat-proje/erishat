@@ -26,7 +26,7 @@ def current_cosmetic_user(
     return user
 
 
-def vip_level(db: Session, user_id: str) -> int:
+VIP_SPEND_THRESHOLDS = {1: 1_000, 2: 5_000, 3: 15_000, 4: 30_000, 5: 60_000, 6: 120_000, 7: 250_000, 8: 500_000, 9: 1_000_000, 10: 2_000_000, 11: 5_000_000, 12: 10_000_000}\n\ndef vip_level(db: Session, user_id: str) -> int:
     row = db.get(VipStatus, user_id)
     return int(row.level) if row else 0
 
@@ -84,8 +84,15 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
         text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,:kind,:key)"),
         {"uid": user.id, "kind": kind, "key": key},
     )
+    vip = db.get(VipStatus, user.id)
+    if not vip:
+        vip = VipStatus(user_id=user.id, level=0, total_spent=0)
+        db.add(vip)
+        db.flush()
+    vip.total_spent = int(vip.total_spent or 0) + price
+    vip.level = max([lvl for lvl, required in VIP_SPEND_THRESHOLDS.items() if vip.total_spent >= required] or [0])
     db.commit()
-    return {"ok": True, "spent": price, "asset_key": key, "cosmetic_type": kind, "vip": False}
+    return {"ok": True, "spent": price, "total_spent": vip.total_spent, "level": vip.level, "asset_key": key, "cosmetic_type": kind, "vip": False}
 
 
 @router.post("/me/cosmetics/apply")
