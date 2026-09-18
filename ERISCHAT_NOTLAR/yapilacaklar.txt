@@ -358,3 +358,18 @@ Room control checkpoint
 - [x] Oyun sonuçları GamePlay geçmişinde tutuluyor.
 - [ ] Yeni UI/runner browser E2E sonucu henüz alınmadı.
 - [ ] Gerçek oda katılımı sonrası 7 oyunun browser uçtan uca doğrulaması bekliyor.
+
+2026-09-19 — OYUN ANALİTİK SİSTEMİ
+- [x] Tüm 7 ücretsiz oyun için teorik oran ↔ gerçekleşen oran karşılaştırması endpointi eklendi.
+- [x] Sonuç sayıları, gerçekleşen yüzde, yüzde puan sapması ve örneklem büyüklüğü hesaplanıyor.
+- [x] Son sonuçtan itibaren aynı sonuç serisinin uzunluğu (streak) analiz ediliyor.
+- [x] Seçim yapılan oyunlarda seçim-isabet oranı ayrıca hesaplanıyor.
+- [x] Crash için gözlenen çarpan min/max/ortalama analizi eklendi.
+- [x] At Yarışı için ilk 3/podyum görülme sayıları eklendi.
+- [x] 7 oyunun tamamını tek özet endpointinde karşılaştıran overview analizi eklendi.
+- [ ] Bu yeni analytics endpointlerinin Quality/browser runner doğrulaması bekleniyor.
+- [ ] Oyun ekranlarında analytics verisinin görsel panellere bağlanması bekleniyor.
+
+GÜVENLİK/KAPSAM NOTU
+- Oyunlar ücretsiz/free-play olarak tutuluyor; yatırım, bahis veya parasal payout sistemi eklenmeyecek.
+
