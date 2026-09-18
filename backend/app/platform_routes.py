@@ -384,12 +384,12 @@ def register_platform_auth(current_user_dependency):
         if game_type == "wheel" and choice and choice not in {x[0] for x in GAME_PROFILES["wheel"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
         result = _weighted_result(game_type)
-        data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v2"}
+        data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v3", "animation": {"duration_ms": 1800, "reveal_ms": 1200}}
         if game_type == "roulette":
             wheel = [x[0] for x in GAME_PROFILES["roulette"]["results"]]
-            data.update({"wheel_order": wheel, "winning_slot": wheel.index(result) + 1, "choice_hit": bool(choice and choice == result)})
+            data.update({"wheel_order": wheel, "winning_slot": wheel.index(result) + 1, "choice_hit": bool(choice and choice == result), "animation": {"type": "roulette_spin", "steps": 18, "final_slot": wheel.index(result) + 1}})
         elif game_type == "cups":
-            data.update({"winning_cup": result, "choice_hit": bool(choice and choice == result)})
+            data.update({"winning_cup": result, "choice_hit": bool(choice and choice == result), "animation": {"type": "cups_shuffle", "steps": 8, "reveal": result}})
         if game_type == "blackjack":
             ranks = list(range(2, 11)) + [10, 10, 10, 11]
             player = [random.choice(ranks), random.choice(ranks)]
@@ -405,24 +405,24 @@ def register_platform_auth(current_user_dependency):
             elif ds > 21 or ps > ds: result = "win"
             elif ps == ds: result = "push"
             else: result = "loss"
-            data.update({"player_hand": player, "dealer_hand": dealer, "player_total": ps, "dealer_total": ds, "natural_blackjack": natural, "dealer_natural": dealer_natural, "rules": "single-hand demo; standard ace scoring"})
+            data.update({"player_hand": player, "dealer_hand": dealer, "player_total": ps, "dealer_total": ds, "natural_blackjack": natural, "dealer_natural": dealer_natural, "rules": "single-hand demo; standard ace scoring", "animation": {"type": "blackjack_deal", "steps": 4, "reveal": "dealer_second_card_last"}})
         elif game_type == "crash":
             ranges = {"x1_00_1_49": (1.0,1.49), "x1_50_1_99": (1.5,1.99), "x2_00_4_99": (2.0,4.99), "x5_00_9_99": (5.0,9.99), "x10_plus": (10.0,25.0)}
-            lo, hi = ranges[result]; data["multiplier"] = round(random.uniform(lo, hi), 2)
+            lo, hi = ranges[result]; data["multiplier"] = round(random.uniform(lo, hi), 2); data["animation"] = {"type": "crash_curve", "duration_ms": random.randint(2200, 5200), "crash_at": data["multiplier"]}
         elif game_type == "horse_race":
             rest = [x for x in [f"horse_{i}" for i in range(1,8)] if x != result]
             random.shuffle(rest)
             data["finish_order"] = [result] + rest
             data["positions"] = {horse: index + 1 for index, horse in enumerate(data["finish_order"])}
-            data["podium"] = data["finish_order"][:3]
+            data["podium"] = data["finish_order"][:3]; data["animation"] = {"type": "horse_race", "steps": 24, "finish_order": data["finish_order"]}
             data["choice_hit"] = bool(choice and choice == result)
             data["choice_position"] = data["positions"].get(choice) if choice else None
         elif game_type == "vault":
             vault_items = {"common": "coin_pack", "rare": "crystal", "epic": "phoenix_badge", "legendary": "royal_chest", "mythic": "mythic_crown"}
-            data.update({"reward_class": result, "reward_item": vault_items[result]})
+            data.update({"reward_class": result, "reward_item": vault_items[result], "animation": {"type": "vault_open", "rarity": result, "shake_ms": 650}})
         elif game_type == "wheel":
             segments = [x[0] for x in GAME_PROFILES["wheel"]["results"]]
-            data.update({"segment": result, "segment_index": segments.index(result) + 1, "choice_hit": bool(choice and choice == result)})
+            data.update({"segment": result, "segment_index": segments.index(result) + 1, "choice_hit": bool(choice and choice == result), "animation": {"type": "wheel_spin", "turns": 6, "final_segment": segments.index(result) + 1}})
         return _save_game_play(db, user, game_type, choice, result, data)
 
     def _require_game_analytics_admin(db: Session, user: User):
