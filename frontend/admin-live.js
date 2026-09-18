@@ -20,6 +20,7 @@ async function action(a,me,p){try{
 }catch(e){showToast?.(e.message||'Yönetim işlemi başarısız')}}
 function showData(p,title,data){const b=p.querySelector('#eaBody');b.innerHTML='<h3>'+title+'</h3><pre class="eris-admin-card" style="white-space:pre-wrap">'+escapeHtml(JSON.stringify(data,null,2))+'</pre><button id="eaBack">← Yönetim</button>';b.querySelector('#eaBack').onclick=()=>{p.remove();location.reload()}}
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function boot(){try{const me=await req('/v1/admin/me');addStyles();const btn=document.createElement('button');btn.className='eris-admin-btn';btn.textContent='🛡️ Yönetim';btn.onclick=()=>openPanel(me);document.body.appendChild(btn)}catch(_){}}
+window.ErisAdmin={clear:function(){document.querySelectorAll('.eris-admin-btn,.eris-admin-panel').forEach(el=>el.remove())}};
+async function boot(){try{window.ErisAdmin.clear();const me=await req('/v1/admin/me');addStyles();const btn=document.createElement('button');btn.className='eris-admin-btn';btn.textContent='🛡️ Yönetim';btn.onclick=()=>openPanel(me);document.body.appendChild(btn)}catch(_){}}
 window.addEventListener('load',()=>setTimeout(boot,600));
 })();
