@@ -189,3 +189,10 @@ Room control checkpoint
 2026-09-18 — GIFT UI → NOTIFICATION → PROFILE-GIFTS E2E EXTENSION
 - [x] Gerçek oda 🎁 Hediye UI tıklamasından sonra alıcı tokenıyla /me/notifications, /profile-gifts ve room gift-events read-back kontrolü eklendi.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-18 — REAL MICROPHONE STREAM LIFECYCLE
+- [x] Room Mikrofon UI artık navigator.mediaDevices.getUserMedia({audio:true,video:false}) ile gerçek mikrofon stream'i ister.
+- [x] Mikrofon kapatıldığında stream track'leri stop edilir.
+- [ ] Gerçek WebRTC peer transport/signaling hâlâ açık.
+- [ ] Yeni Quality runner sonucu bekleniyor.
