@@ -16,6 +16,7 @@ from .db import get_db
 from .models import User
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
 from .platform_models import Notification
+from .admin_models import AdminRole, RoomAdminBan, UserBan
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
 
