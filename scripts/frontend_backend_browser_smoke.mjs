@@ -25,6 +25,7 @@ async function main(){
     return r.json();
   },API);
   if(!member?.user?.id||!member?.access_token) throw new Error('second browser user registration failed');
+  await page.evaluate(token=>{window.__memberToken=token},member.access_token);
   const dm=await page.evaluate(async ({api,id})=>{
     const r=await fetch(api+'/conversations',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+localStorage.getItem('erischat_access_token')},body:JSON.stringify({participant_id:id})});
     return {status:r.status,data:await r.json()};
@@ -104,6 +105,7 @@ async function main(){
   if(cosmeticSurface.candidate && cosmeticSurface.purchaseStatus!==200) throw new Error('cosmetic purchase failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.applyStatus!==200) throw new Error('cosmetic apply failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.avatarAsset!==cosmeticSurface.candidate) throw new Error('profile avatar asset was not applied: '+JSON.stringify(cosmeticSurface));
+  if(roomInvite.status!==201||!roomInvite.data?.invited||!roomInvite.memberNotifications.some(x=>x.kind==='room_invite')) throw new Error('room invite notification flow failed: '+JSON.stringify(roomInvite));
   await page.locator('#erisDemoBtn').click();
   await page.locator('[data-ed="shop"]').click();
   await page.waitForFunction(() => document.querySelector('#ed-shop')?.textContent.includes('139 görünüm'));
@@ -142,6 +144,12 @@ async function main(){
     return {status:r.status,data:await r.json()};
   },API);
   if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+  const roomInvite=await page.evaluate(async ({api,roomId,targetId})=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/invite',{method:'POST',headers:h,body:JSON.stringify({user_id:targetId})});
+    const n=await fetch(api+'/me/notifications',{headers:{Authorization:'Bearer '+window.__memberToken}}).catch(()=>null);
+    return {status:r.status,data:await r.json(),memberNotifications:n?await n.json():[]};
+  },{api:API,roomId:room.data.id,targetId:member.user.id});
   await page.locator('#erisDemoBtn').click();
   await page.locator('[data-ed="family"]').click();
   await page.waitForFunction(() => document.querySelector('#ed-family')?.textContent.includes('Browser Smoke Ailesi'));
