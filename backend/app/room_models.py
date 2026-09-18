@@ -8,6 +8,7 @@ from .db import Base
 class Room(Base):
     __tablename__ = "rooms"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    public_id: Mapped[str] = mapped_column(String(10), unique=True, index=True, nullable=False)
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(64), nullable=False)
     level: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
