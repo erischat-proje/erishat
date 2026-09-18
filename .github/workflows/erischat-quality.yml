@@ -109,6 +109,9 @@ jobs:
       - name: Frontend backend browser smoke
         run: node scripts/frontend_backend_browser_smoke.mjs
 
+      - name: System identity and admin smoke
+        working-directory: backend
+        run: python ../scripts/system_identity_admin_smoke.py
       - name: Anonymous session smoke
         run: python scripts/anonymous_session_live_smoke.py
       - name: Live family smoke
