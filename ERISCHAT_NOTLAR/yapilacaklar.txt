@@ -184,3 +184,8 @@ Room control checkpoint
 - [x] Browser smoke bildirim merkezindeki okunmamış kayıtta gerçek Okundu işaretle UI aksiyonunu ve liste yenilenmesini kontrol ediyor; bildirim yoksa test deterministik olarak bu alt adımı atlıyor.
 - [x] Browser smoke Şikayet panelinden gerçek form gönderimi + şikayet geçmişinde read-back kontrolü yapıyor.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-18 — GIFT UI → NOTIFICATION → PROFILE-GIFTS E2E EXTENSION
+- [x] Gerçek oda 🎁 Hediye UI tıklamasından sonra alıcı tokenıyla /me/notifications, /profile-gifts ve room gift-events read-back kontrolü eklendi.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
