@@ -209,3 +209,11 @@ Room control checkpoint
 - [x] Uzak audio track'i geldiğinde autoplay audio elementine bağlanıyor.
 - [x] Mikrofon kapanırken polling, peer connection ve uzak audio elementleri temizleniyor.
 - [ ] Gerçek iki tarayıcı E2E ses bağlantısı ve TURN/STUN üretim ayarları henüz doğrulanmadı.
+
+
+2026-09-18 — WEBRTC DETERMINISTIC INITIATOR + SMOKE
+- [x] Room WebRTC initiator artık kullanıcı ID sırasına göre deterministik seçiliyor; iki tarafın aynı anda offer üretmesi riski azaltıldı.
+- [x] RTCPeerConnection ICE sunucu listesi artık `window.ERIS_WEBRTC_ICE_SERVERS` üzerinden yapılandırılabilir; varsayılan boş liste korunuyor.
+- [x] Browser smoke WebRTC peer oluşturma, addTrack, offer/localDescription, ICE config aktarımı ve mikrofon kapanışında peer cleanup kontrollerini kapsıyor.
+- [ ] Gerçek iki tarayıcı ses E2E ve üretim STUN/TURN değerleri hâlâ doğrulanacak.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
