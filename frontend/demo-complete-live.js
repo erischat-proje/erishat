@@ -53,38 +53,27 @@
     const m=modal('VIP seviyeleri ve cinsiyet ödülleri','');m.querySelector('div div').append(body);
   }
 
-  async function gamesDemo() {
+  async function gamesDemo(scope='main', roomId=null) {
+    const catalog=await api('/games').then(r=>r.json()).catch(()=>[]);
     const body=document.createElement('div');
-    body.innerHTML=`<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 ErisChat Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Oyunlara ana menüden veya oda içinden erişebilirsin. Oda oyunları genel (oda ortak) ve özel (tek oyuncu) olarak ayrılır. Sonuçlar sunucu RNG'si ile üretilir; yatırım/payout yoktur.</small></div><div id="gameCatalog" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>`;
-    const grid=body.querySelector('#gameCatalog');
-    try {
-      const rows=await api('/games');
-      const games=Array.isArray(rows)?rows:[];
-      games.forEach(g=>{
-        const type=g.key, roomCommon=['roulette','cups','horse_race','wheel'].includes(type);
-        const names={roulette:'🎰 Rulet',cups:'🥤 4 Kupa',horse_race:'🐎 At Yarışı',blackjack:'🃏 Blackjack',crash:'🚀 Crash',vault:'🎁 Kasa Açma',wheel:'🎡 Şans Çarkı'};
-        const cardEl=document.createElement('div');
-        cardEl.style.cssText='background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px';
-        cardEl.innerHTML=`<b>${names[type]||type}</b><small style="display:block;color:#938a9f;margin:5px 0">${esc(g.description)}<br>Mod: ${roomCommon?'🌐 Genel/Oda':'👤 Özel/Kişisel'}</small><div data-stats style="font-size:8px;color:#cfc6d8">İstatistik yükleniyor…</div><div data-actions style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px"></div>`;
-        const actions=cardEl.querySelector('[data-actions]');
-        actions.append(btn('🎲 Oyna',async()=>{
-          try{const x=await api('/games/'+encodeURIComponent(type)+'/play',{method:'POST',body:JSON.stringify({})});cardEl.querySelector('[data-stats]').innerHTML=`Sonuç: <b>${esc(x.result)}</b> • ${esc(JSON.stringify(x.data))}`; }catch(e){cardEl.querySelector('[data-stats]').textContent='Oyun sonucu alınamadı: '+e.message;}
-        }));
-        actions.append(btn('📊 İstatistik',async()=>{
-          try{const h=await api('/games/'+encodeURIComponent(type)+'/history?limit=20');const list=Array.isArray(h)?h:[];const counts={};list.forEach(x=>counts[x.result]=(counts[x.result]||0)+1);cardEl.querySelector('[data-stats]').innerHTML='Son 20: '+Object.entries(counts).map(([k,v])=>esc(k)+': '+v).join(' • ')||'Henüz sonuç yok';}catch(e){cardEl.querySelector('[data-stats]').textContent='İstatistik alınamadı.';}
-        },true));
-        grid.append(cardEl);
+    body.innerHTML=`<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">${scope==='room'?'Oda oyunları: Rulet, 4 Kupa, At Yarışı ve Şans Çarkı.':'Genel ve özel oyunlar ayrı kategorilerde.'}</small></div><div id="gameScope" style="display:flex;gap:6px;margin-bottom:9px"></div><div id="gameGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>`;
+    const scopeBox=body.querySelector('#gameScope'),grid=body.querySelector('#gameGrid');
+    function render(kind){
+      scopeBox.innerHTML='';
+      [['🌐 Genel/Oda','room'],['👤 Özel/Kişisel','private']].forEach(([label,key])=>{const b=btn(label,()=>render(key));b.style.opacity=key===kind?'.65':'1';scopeBox.append(b)});
+      grid.innerHTML='';
+      catalog.filter(g=>g.scope===kind).forEach(g=>{
+        const el=document.createElement('div');el.style.cssText='background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px';
+        el.innerHTML=`<b>${esc(g.key)}</b><small style="display:block;color:#938a9f;margin:5px 0 8px">${esc(g.description)}</small><button data-play style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800">Şimdi Oyna</button><button data-stats style="margin-left:5px;border:1px solid #ffffff12;border-radius:10px;background:#ffffff08;color:#fff;padding:9px 10px;font-size:9px">İstatistik</button><div data-out></div>`;
+        el.querySelector('[data-play]').onclick=async()=>{if(kind==='room'&&!roomId){el.querySelector('[data-out]').innerHTML='<small style="color:#ff9bbd">Önce bir odaya gir.</small>';return;}const res=await api('/games/'+encodeURIComponent(g.key)+'/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(kind==='room'?{room_id:roomId}:{})}).catch(()=>null);const d=res?await res.json().catch(()=>({})):{};el.querySelector('[data-out]').innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🎲 Sonuç: <b>${esc(d.result||d.detail||'Sonuç alınamadı')}</b></div>`};
+        el.querySelector('[data-stats]').onclick=async()=>{const res=await api('/games/'+encodeURIComponent(g.key)+'/stats').catch(()=>null);const d=res?await res.json().catch(()=>({})):{};const lines=(d.results||[]).map(x=>`${esc(x.key)}: ${x.rate}% (${x.count})`).join('<br>');el.querySelector('[data-out]').innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>📊 Oranlar</b><br><small>${lines||'Henüz veri yok.'}</small><br><small>Örneklem: ${d.sample_size||0}</small></div>`};
+        grid.append(el);
       });
-    } catch(e) { grid.innerHTML='<div style="grid-column:1/-1">'+card('Oyun kataloğu şu anda yüklenemedi: '+esc(e.message))+'</div>'; }
-    modal('🎮 Oyunlar','').querySelector('div div').append(body);
+    }
+    render(scope);
+    const m=modal(scope==='room'?'Oda Oyunları':'Oyunlar','');m.querySelector('div div').append(body);
   }
-
-  function mountGameEntryPoints(){
-    if(document.getElementById('erisGameEntry')) return;
-    const b=btn('🎮 Oyunlar',()=>gamesDemo()); b.id='erisGameEntry'; b.style.cssText+=';position:fixed;left:14px;bottom:18px;z-index:290;font-size:10px';
-    document.body.append(b);
-  }
-
+  window.ErisChatGames={open:(scope='main',roomId=null)=>gamesDemo(scope,roomId)};
   function checklistDemo() {
     const items=[['VIP 1–12 ödül matrisi','Tamamlandı'],['Erkek/kadın VIP avatarları','12 + 12 gösterim'],['VIP çerçeveleri','12 seviye'],['VIP sistem ayrıcalıkları','12 seviye'],['139 kozmetik vitrini','Mağaza ekranında'],['Odalar / koltuk / moderasyon','Ürün yüzeyinde'],['Aile / keşif / sosyal / DM','Ürün yüzeyinde'],['Güvenlik / gizlilik / şikayet','Ürün yüzeyinde'],['Oyun ekranları','Demo simülasyonu'],['Gerçek ses/WebRTC','Geliştirme kalemi'],['Browser E2E','Doğrulama kalemi'],['Pages → Railway canlı zincir','Deploy/ortam kalemi']];
     modal('Müşteri demo kontrol listesi',items.map(x=>card(`<b>${x[0]}</b><small style="display:block;color:#938a9f;margin-top:4px">${x[1]}</small>`)).join('<div style="height:6px"></div>'));
@@ -93,7 +82,7 @@
   function mountButtons(){
     if(document.getElementById('erisDemoCompleteVip'))return;
     const wrap=document.createElement('div');wrap.style.cssText='position:fixed;right:14px;bottom:196px;z-index:290;display:flex;flex-direction:column;gap:6px;align-items:flex-end';
-    [['erisDemoCompleteVip','✨ VIP + Ödüller',vipDemo],['erisDemoCompleteGames','🎮 Oyun Demo',gamesDemo],['erisDemoCompleteCheck','☑ Demo Kontrol',checklistDemo]].forEach(([id,text,fn])=>{const b=btn(text,fn);b.id=id;b.style.fontSize='8px';wrap.append(b)});document.body.append(wrap);
+    [['erisDemoCompleteVip','✨ VIP + Ödüller',vipDemo],['erisDemoCompleteGames','🎮 Oyunlar',()=>gamesDemo('main',null)],['erisDemoCompleteCheck','☑ Demo Kontrol',checklistDemo]].forEach(([id,text,fn])=>{const b=btn(text,fn);b.id=id;b.style.fontSize='8px';wrap.append(b)});document.body.append(wrap);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mountButtons();mountGameEntryPoints()},{once:true});else {mountButtons();mountGameEntryPoints();}
 })();
