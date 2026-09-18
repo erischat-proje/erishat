@@ -218,6 +218,7 @@ def register_admin_auth(current_user_dependency):
     def reports(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db, user, "UA")
         rows = db.scalars(select(Report).order_by(Report.created_at.desc())).all()
+        record("report", "admin_reports_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
         return [{"id": r.id, "reporter_id": r.reporter_id, "target_user_id": r.target_user_id, "room_id": r.room_id, "message_id": r.message_id,
                  "category": r.category, "reason": r.reason, "status": r.status, "created_at": r.created_at} for r in rows]
 
@@ -236,6 +237,7 @@ def register_admin_auth(current_user_dependency):
         target = db.get(User, user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         loc = db.get(UserLocation, user_id)
+        record("id_lookup", "admin_user_lookup", admin_id=user.id, admin_nickname=user.nickname, target_user_id=target.id, target_public_id=target.public_id)
         return {"id": target.id, "public_id": target.public_id, "nickname": target.nickname, "lidya": target.lidya,
                 "location": None if not loc else {"city": loc.city, "latitude": loc.latitude, "longitude": loc.longitude},
                 "ip": getattr(target, "last_ip", None), "device": getattr(target, "device_info", None), "created_at": target.created_at}
