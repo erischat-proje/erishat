@@ -20,6 +20,8 @@ from .room_models import Room, RoomGiftEvent, RoomMember
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
+VIP_SPEND_THRESHOLDS = {1: 1_000, 2: 5_000, 3: 15_000, 4: 30_000, 5: 60_000, 6: 120_000, 7: 250_000, 8: 500_000, 9: 1_000_000, 10: 2_000_000, 11: 5_000_000, 12: 10_000_000}
+
 VIP_PERKS = {
     1: ["vip_badge", "custom_avatar", "custom_frame"],
     2: ["vip_badge_2"],
@@ -70,9 +72,15 @@ class FamilyMemberUpdate(BaseModel):
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
 
+def vip_level_from_spend(total_spent: int) -> int:
+    level = 0
+    for candidate, required in VIP_SPEND_THRESHOLDS.items():
+        if total_spent >= required: level = candidate
+    return level
+
 def vip_row(db: Session, user_id: str) -> VipStatus:
     row = db.get(VipStatus, user_id)
-    if not row: row = VipStatus(user_id=user_id, level=0); db.add(row); db.flush()
+    if not row: row = VipStatus(user_id=user_id, level=0, total_spent=0); db.add(row); db.flush()
     return row
 def privacy_row(db: Session, user_id: str) -> UserPrivacy:
     row = db.get(UserPrivacy, user_id)
@@ -118,7 +126,7 @@ def register_platform_auth(current_user_dependency):
         db.commit(); return {k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}
     @router.get("/me/vip")
     def my_vip(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")\n        badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""\n        neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)\n        return {"level":v.level,"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3}
+        v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")\n        badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""\n        neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)\n        return {"level":v.level,"total_spent":int(v.total_spent or 0),"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3}
     @router.get("/users/{user_id}/vip")
     def public_vip(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target=db.get(User,user_id)
