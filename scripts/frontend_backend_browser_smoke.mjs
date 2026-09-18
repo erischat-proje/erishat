@@ -190,6 +190,16 @@ async function main(){
     return {status:r.status,data:await r.json(),memberNotifications:n?await n.json():[]};
   },{api:API,roomId:room.data.id,targetId:member.user.id});
   await page.locator('#erisDemoBtn').click();
+  await page.locator('[data-ed="profile"]').click();
+  await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('AKTİF GÖRÜNÜM / TRY-ON'));
+  const profileApplyCount=await page.locator('#ed-profile [data-profile-apply]').count();
+  if(profileApplyCount<1) throw new Error('profile try-on controls missing');
+  await page.locator('#ed-profile [data-profile-apply="avatar"]').first().click();
+  await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('AKTİF GÖRÜNÜM / TRY-ON'));
+  const profileLive=await page.evaluate(async api=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const me=await fetch(api+'/me',{headers:h}).then(r=>r.json()); const vip=await fetch(api+'/me/vip',{headers:h}).then(r=>r.json()); return {avatar:me.avatar_asset,frame:me.frame_asset,vip};},API);
+  if(!profileLive.avatar) throw new Error('profile avatar was not applied through UI: '+JSON.stringify(profileLive));
+  await page.locator('#edClose').click();
+  await page.locator('#erisDemoBtn').click();
   await page.locator('[data-ed="family"]').click();
   await page.waitForFunction(() => document.querySelector('#ed-family')?.textContent.includes('Browser Smoke Ailesi'));
   await page.locator('#ed-family button',{hasText:'Üyeleri yönet'}).click();
