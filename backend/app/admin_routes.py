@@ -228,7 +228,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/ban")
     def ban_user(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         ban=UserBan(user_id=user_id,ban_type="account",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
         db.add(ban); audit(db,user,"user_ban",{"days":payload.days,"reason":payload.reason},target_user_id=user_id); db.commit()
@@ -236,7 +236,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/device-ban")
     def device_ban(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         ban=UserBan(user_id=user_id,ban_type="device",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
         db.add(ban); audit(db,user,"device_ban",{"days":payload.days,"reason":payload.reason},target_user_id=user_id); db.commit()
@@ -244,14 +244,14 @@ def register_admin_auth(current_user_dependency):
 
     @router.delete("/users/{user_id}/ban")
     def unban_user(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA")
+        require_role(db,user,"UA")
         rows=db.scalars(select(UserBan).where(UserBan.user_id==user_id,UserBan.active.is_(True))).all()
         for x in rows: x.active=False
         audit(db,user,"user_unban",target_user_id=user_id); db.commit(); return {"unbanned":True,"count":len(rows)}
 
     @router.post("/users/{user_id}/chat-ban")
     def chat_ban(user_id: str,payload: BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         row=ChatBan(user_id=user_id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason); db.add(row)
         audit(db,user,"chat_ban",{"days":payload.days,"reason":payload.reason},target_user_id=user_id); db.commit(); return {"banned":True,"expires_at":row.expires_at}
@@ -277,7 +277,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/vip")
     def vip_update(user_id:str,payload:VipUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA");target=db.get(User,user_id)
+        require_role(db,user,"DA");target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         vip=db.get(VipStatus,user_id)
         if not vip: vip=VipStatus(user_id=user_id,level=payload.level,total_spent=0);db.add(vip)
