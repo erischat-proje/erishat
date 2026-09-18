@@ -176,3 +176,8 @@
 ## 2026-09-18 — RTC ICE CONFIG SMOKE
 - `3da3e067198e0f341ee46936870ad134e77acb23` ile browser smoke, room üyeliği sonrası `/rtc-config` endpointini doğruluyor.
 - Yeni runner PASS henüz alınmadı.
+
+
+## 2026-09-18 — RTC CONFIG SECURITY SMOKE
+- `4d89487821` ile RTC security smoke, non-member `/rtc-config` erişimini 403 ve member erişimini 200 + `ice_servers` olarak doğruluyor.
+- Yeni runner PASS kanıtı henüz alınmadı.
