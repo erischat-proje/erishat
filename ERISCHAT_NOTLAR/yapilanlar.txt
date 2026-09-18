@@ -152,3 +152,9 @@ Room control checkpoint
 2026-09-18 — GIFT UI E2E EXTENSION
 - [x] Commit 80ead31ae374d3a1adf1c0799dc494da38e18dae: gift UI sonrası alıcı notification/profile-gifts read-back eklendi.
 - [ ] Runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — MICROPHONE UI
+- [x] Commit 6084415a894c6a0f2edaac0511be899bccdd6a6f: gerçek mikrofon stream lifecycle eklendi.
+- [x] Commit f06257ad47749e3b43586bb6d8209f264f506ea3: browser smoke mikrofon request/stop lifecycle kontrolü eklendi.
+- [ ] Gerçek WebRTC transport/signaling tamamlanmadı.
