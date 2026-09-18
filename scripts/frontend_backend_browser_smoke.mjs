@@ -38,6 +38,23 @@ async function main(){
   await page.waitForSelector('#chatBody .bubble.me');
   const dmVisible=await page.locator('#chatBody .bubble.me').count();
   if(dmVisible<1) throw new Error('DM bubble did not render');
+  const social=await page.evaluate(async ({api,targetId})=>{
+    const token=localStorage.getItem('erischat_access_token');
+    const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const follow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'POST',headers:h});
+    const followers=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/followers',{headers:h}).then(r=>r.json());
+    const notifications=await fetch(api+'/me/notifications',{headers:h}).then(r=>r.json());
+    const block=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/block',{method:'POST',headers:h});
+    const blocks=await fetch(api+'/me/blocks',{headers:h}).then(r=>r.json());
+    const unblock=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/block',{method:'DELETE',headers:h});
+    const privacy=await fetch(api+'/me/privacy',{method:'PATCH',headers:h,body:JSON.stringify({hide_vip_badge:true})});
+    const privacyBack=await fetch(api+'/me/privacy',{headers:h}).then(r=>r.json());
+    return {follow:follow.status,followers,notifications,block:block.status,blocks,unblock:unblock.status,privacy:privacy.status,privacyBack};
+  },{api:API,targetId:member.user.id});
+  if(social.follow!==201||!social.followers.some(x=>x.user_id===owner.id)) throw new Error('follow flow failed: '+JSON.stringify(social));
+  if(!social.notifications.some(x=>x.kind==='follow')) throw new Error('follow notification missing: '+JSON.stringify(social));
+  if(social.block!==200||!social.blocks.some(x=>x.user_id===member.user.id)||social.unblock!==200) throw new Error('block flow failed: '+JSON.stringify(social));
+  if(social.privacy!==200||social.privacyBack?.hide_vip_badge!==true) throw new Error('privacy update failed: '+JSON.stringify(social));
   const cosmeticSurface=await page.evaluate(async api=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
