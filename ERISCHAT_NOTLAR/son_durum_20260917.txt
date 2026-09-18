@@ -227,3 +227,4 @@
 - 2026-09-18 Quality run 35395892690, commit bc9e745e üzerinde static syntax adımında başarısız oldu.
 - Hata kökü cosmetic_routes.py ve platform_routes.py içindeki literal \\n dizileriydi; kaynaklar düzeltildi.
 - Yeni Quality kanıtı bekleniyor; PASS ilan edilmeyecek.
+2026-09-19 — Oyun temel ekonomi akışı uygulandı; gerçek para hareketi ve round kaydı var. Browser/E2E ve concurrency doğrulaması hâlâ açık.
