@@ -6,6 +6,7 @@ from .db import get_db
 from .models import User
 from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog
+from .system_logs import record
 from pathlib import Path
 from datetime import datetime, timezone
 import json
@@ -29,6 +30,11 @@ def register_support_auth(current_user_dependency):
         db.add(ticket)
         db.commit()
         db.refresh(ticket)
+        SUPPORT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with SUPPORT_LOG.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{datetime.now(timezone.utc).isoformat()}] ticket={ticket.id} user={user.nickname}({user.id}) status={ticket.status} category={ticket.category} subject={ticket.subject}\n")
+        record("support", "support_ticket_created", ticket_id=ticket.id, user_id=user.id, user_nickname=user.nickname,
+               category=ticket.category, subject=ticket.subject, status=ticket.status)
         return {"id": ticket.id, "status": ticket.status, "created_at": ticket.created_at}
 
     @router.get("/tickets")
