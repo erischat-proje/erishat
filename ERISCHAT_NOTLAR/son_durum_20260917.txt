@@ -147,3 +147,9 @@
 - Mikrofon kapatılırken uzak peer'lere leave sinyali gönderiliyor; ardından peer/audio kaynakları temizleniyor.
 - MDN'nin WebRTC akışında da ICE adaylarının remote description ile doğru sırada işlenmesi gerektiği belirtiliyor. citeturn0search0turn0search10
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS/TAMAM ilan edilmeyecek.
+
+## 2026-09-18 — WEBRTC PEER CLEANUP HARDENING
+- Commit: 25d984b2933c27ac10b86d43c6d4850985999490.
+- Failed/disconnected/leave peer kapanışında RTC metadata ve uzak audio elementleri temizleniyor.
+- Mikrofon kapanışında RTC metadata map'i de temizleniyor; yeniden açılışta eski peer state taşınmıyor.
+- Yeni Quality runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
