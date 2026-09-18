@@ -84,3 +84,9 @@ BROWSER/COSMETICS CHECKPOINT
 Room control checkpoint
 - [x] Live room smoke genişletildi: join seat, moderator add/remove, seat mute/unmute, seat lock/unlock, room lock/unlock.
 - [x] Quality run 35282680644 / job 105407977869 SUCCESS.
+
+
+2026-09-18 — BROWSER E2E İLERLEME
+- [x] Frontend → gerçek backend browser smoke: anonymous session + profile render + gerçek DM oluşturma/gönderme + aile create/detail/donation/chat doğrulandı; Quality run 35381313253 / job 105717875500 adım 21 SUCCESS.
+- [x] Room browser surface smoke, canlı DM renderer ile uyumlu hale getirildi; commit 98dce70a11cdad94242a1f87868507c57bb7f808.
+- [ ] Aynı Quality run'ın live room/ban/DM/cosmetic son smoke adımları henüz tamamlanmadı.
