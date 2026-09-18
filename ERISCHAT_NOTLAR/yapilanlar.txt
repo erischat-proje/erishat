@@ -210,3 +210,9 @@ Room control checkpoint
 2026-09-18 — RTC CONFIG SECURITY SMOKE
 - [x] `4d89487821` ile RTC güvenlik smoke'una oda dışı `/rtc-config` 403 ve oda üyesi `/rtc-config` 200 + `ice_servers` kontrolleri eklendi.
 - [ ] Yeni runner PASS henüz doğrulanmadı.
+
+
+2026-09-18 — VIP SPENDING PROGRESSION
+- [x] VIP harcama sayaç + seviye ilerleme backend zinciri eklendi.
+- [x] Kozmetik satın alma smoke'u toplam harcama read-back kontrol ediyor (`86f6e595`).
+- [ ] Runner PASS henüz doğrulanmadı.
