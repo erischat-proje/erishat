@@ -341,6 +341,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games/{game_type}/stats")
     def game_stats(game_type: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_game_analytics_admin(db, user)
         game_type = game_type.strip().lower()
         if game_type not in GAME_TYPES:
             raise HTTPException(status_code=404, detail="Oyun bulunamadı")
@@ -365,6 +366,13 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=400, detail="Bu oyun özel/kişisel modda çalışır")
         if game_type in ROOM_GAME_TYPES and not room_id:
             raise HTTPException(status_code=400, detail="Bu oyun oda içinden başlatılmalıdır")
+        if room_id:
+            room = db.get(Room, room_id)
+            if not room:
+                raise HTTPException(status_code=404, detail="Oda bulunamadı")
+            member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
+            if not member:
+                raise HTTPException(status_code=403, detail="Bu oyunu oynayabilmek için odaya katılmanız gerekir")
 
         choice = str(payload.get("choice") or "").strip() or None
         if game_type == "cups" and choice not in CUPS:
@@ -372,7 +380,12 @@ def register_platform_auth(current_user_dependency):
         if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
         result = _weighted_result(game_type)
-        data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id}
+        data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v2"}
+        if game_type == "roulette":
+            wheel = [x[0] for x in GAME_PROFILES["roulette"]["results"]]
+            data.update({"wheel_order": wheel, "winning_slot": wheel.index(result) + 1, "choice_hit": bool(choice and choice == result)})
+        elif game_type == "cups":
+            data.update({"winning_cup": result, "choice_hit": bool(choice and choice == result)})
         if game_type == "blackjack":
             ranks = list(range(2, 11)) + [10, 10, 10, 11]
             player = [random.choice(ranks), random.choice(ranks)]
@@ -389,14 +402,25 @@ def register_platform_auth(current_user_dependency):
             rest = [x for x in [f"horse_{i}" for i in range(1,8)] if x != result]
             random.shuffle(rest)
             data["finish_order"] = [result] + rest
+            data["positions"] = {horse: index + 1 for index, horse in enumerate(data["finish_order"])}
+            data["podium"] = data["finish_order"][:3]
         elif game_type == "vault":
-            data["reward_class"] = result
+            vault_items = {"common": "coin_pack", "rare": "crystal", "epic": "phoenix_badge", "legendary": "royal_chest", "mythic": "mythic_crown"}
+            data.update({"reward_class": result, "reward_item": vault_items[result]})
         elif game_type == "wheel":
-            data["segment"] = result
+            segments = [x[0] for x in GAME_PROFILES["wheel"]["results"]]
+            data.update({"segment": result, "segment_index": segments.index(result) + 1})
         return _save_game_play(db, user, game_type, choice, result, data)
+
+    def _require_game_analytics_admin(db: Session, user: User):
+        admin = db.get(AdminRole, user.id)
+        if not admin or admin.role not in {"SA", "UA", "DA"}:
+            raise HTTPException(status_code=403, detail="Oyun analizleri yalnızca yönetim tarafından görüntülenebilir")
+        return admin
 
     @router.get("/games/{game_type}/analytics")
     def game_analytics(game_type: str, limit: int = Query(1000, ge=10, le=5000), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_game_analytics_admin(db, user)
         """Free-play analytics: theoretical profile vs observed results, recent trend and per-user choice accuracy."""
         game_type = game_type.strip().lower()
         if game_type not in GAME_TYPES:
@@ -468,6 +492,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games/analytics/overview")
     def games_analytics_overview(limit: int = Query(1000, ge=10, le=5000), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_game_analytics_admin(db, user)
         rows = list(db.scalars(select(GamePlay).order_by(GamePlay.created_at.desc()).limit(limit * len(GAME_TYPES))))
         by_game = {key: [] for key in GAME_TYPES}
         for row in rows:
@@ -489,7 +514,14 @@ def register_platform_auth(current_user_dependency):
     def game_history(game_type: str, limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
         rows = list(db.scalars(select(GamePlay).where(GamePlay.user_id == user.id, GamePlay.game_type == game_type).order_by(GamePlay.created_at.desc()).limit(limit)))
-        return [{"id": r.id, "choice": r.choice, "result": r.result_key, "data": json.loads(r.result_data), "created_at": r.created_at} for r in rows]
+        history = []
+        for r in rows:
+            try:
+                data = json.loads(r.result_data)
+            except (TypeError, json.JSONDecodeError):
+                data = {}
+            history.append({"id": r.id, "choice": r.choice, "result": r.result_key, "data": data, "created_at": r.created_at})
+        return history
 
     @router.get("/rooms/{room_id}/announcement")
     def room_announcement(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
