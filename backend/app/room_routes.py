@@ -120,7 +120,13 @@ def register_room_auth(current_user_dependency):
     def join_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odadan atıldınız")
-        admin = db.get(AdminRole, user.id)\n        admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})\n        active_admin_ban = db.scalar(select(RoomAdminBan).where(RoomAdminBan.room_id == room_id, RoomAdminBan.active.is_(True), (RoomAdminBan.expires_at.is_(None)) | (RoomAdminBan.expires_at > datetime.now(timezone.utc))))\n        if active_admin_ban and not admin_mode: raise HTTPException(status_code=403, detail="Oda yönetim tarafından yasaklandı")\n        active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))\n        if active_user_ban and not admin_mode: raise HTTPException(status_code=403, detail="Hesabınız yasaklı")\n        if room.locked and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id and not admin_mode: raise HTTPException(status_code=403, detail="Oda kilitli")
+        admin = db.get(AdminRole, user.id)
+        admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
+        active_admin_ban = db.scalar(select(RoomAdminBan).where(RoomAdminBan.room_id == room_id, RoomAdminBan.active.is_(True), (RoomAdminBan.expires_at.is_(None)) | (RoomAdminBan.expires_at > datetime.now(timezone.utc))))
+        if active_admin_ban and not admin_mode: raise HTTPException(status_code=403, detail="Oda yönetim tarafından yasaklandı")
+        active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))
+        if active_user_ban and not admin_mode: raise HTTPException(status_code=403, detail="Hesabınız yasaklı")
+        if room.locked and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id and not admin_mode: raise HTTPException(status_code=403, detail="Oda kilitli")
         if not is_member(db, room.id, user.id):
             count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
             if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
