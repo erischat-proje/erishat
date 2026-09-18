@@ -292,3 +292,10 @@ Room control checkpoint
 - [x] Oyun sonuçları GamePlay geçmişinde tutuluyor.
 - [ ] Yeni UI/runner browser E2E sonucu henüz alınmadı.
 - [ ] Gerçek oda katılımı sonrası 7 oyunun browser uçtan uca doğrulaması bekliyor.
+
+2026-09-19 — OYUN ANALİTİK SİSTEMİ
+- [x] Commit 04085e0: 7 ücretsiz oyunun teorik/gerçekleşen oran, örneklem, sapma, streak ve seçim-isabet analizi eklendi.
+- [x] Crash çarpan istatistikleri ve At Yarışı podyum istatistikleri eklendi.
+- [x] Tüm oyunlar için toplu analytics overview endpointi eklendi.
+- [ ] Yeni Quality runner sonucu bekleniyor.
+
