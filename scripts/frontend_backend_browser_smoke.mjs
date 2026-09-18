@@ -311,7 +311,7 @@ async function main(){
   await page.waitForSelector('#edRoomActions');
   await page.evaluate(() => { window.__micSmoke={requested:0,stopped:0}; const md=navigator.mediaDevices; if(!md)return; md.__originalGetUserMedia=md.getUserMedia.bind(md); md.getUserMedia=async constraints=>{window.__micSmoke.requested++; return {getTracks:()=>[{stop:()=>window.__micSmoke.stopped++}]};}; });
   await page.getByRole('button',{name:'🎙️ Mikrofon',exact:true}).click();
-  const micOn=await page.evaluate(()=>({state:document.querySelector('#edRoomDetail')?.querySelector('#edRoomActions')?.textContent||'',requested:window.__micSmoke?.requested||0,flag:document.querySelector('#edRoomDetail')?.querySelector('#edRoomActions')?.parentElement?.dataset?.mic}));
+  const micOn=await page.evaluate(()=>({state:document.querySelector('#edRoomDetail')?.querySelector('#edRoomActions')?.textContent||'',requested:window.__micSmoke?.requested||0,flag:document.querySelector('#edRoomDetail')?.dataset?.mic}));
   if((micOn.requested||0)!==1) throw new Error('real microphone permission flow was not requested');
   await page.getByRole('button',{name:'🎙️ Mikrofon',exact:true}).click();
   const micOff=await page.evaluate(()=>({stopped:window.__micSmoke?.stopped||0,flag:document.querySelector('#edRoomDetail')?.querySelector('#edRoomActions')?.parentElement?.dataset?.mic}));
