@@ -13,6 +13,7 @@ from .models import User
 from .platform_models import Report, VipStatus, UserLocation
 from .room_models import Room
 from .support_models import SupportTicket
+from .system_logs import record
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
     UserBan, ChatBan, RoomAdminBan, ApplicationGap,
@@ -38,11 +39,35 @@ def require_role(db: Session, user: User, minimum: str) -> AdminRole:
 
 def audit(db: Session, admin: User, action: str, details: dict | None = None, target_user_id: str | None = None,
           target_room_id: str | None = None, target_id: str | None = None) -> None:
+    payload = details or {}
     db.add(AdminAuditLog(
         admin_id=admin.id, action=action, target_user_id=target_user_id,
         target_room_id=target_room_id, target_id=target_id,
-        details=json.dumps(details or {}, ensure_ascii=False),
+        details=json.dumps(payload, ensure_ascii=False),
     ))
+    if action.startswith("support_"):
+        kind = "support"
+    elif action in {"ghost_mode"}:
+        kind = "ghost"
+    elif action in {"user_ban", "device_ban", "user_unban"}:
+        kind = "ban"
+    elif action in {"chat_ban", "chat_unban"}:
+        kind = "chat_ban"
+    elif action in {"room_ban", "room_unban"}:
+        kind = "room_ban"
+    elif action.startswith("lidya_"):
+        kind = "lidya"
+    elif action.startswith("vip_"):
+        kind = "vip"
+    elif action.startswith("role_"):
+        kind = "role"
+    elif action == "application_gap":
+        kind = "application_gap"
+    else:
+        kind = "system"
+    record(kind, action, admin_id=admin.id, admin_nickname=admin.nickname,
+           target_user_id=target_user_id, target_room_id=target_room_id,
+           target_id=target_id, details=payload)
 
 
 def append_note(path: Path, text: str) -> None:
@@ -100,7 +125,8 @@ def register_admin_auth(current_user_dependency):
     @router.get("/me")
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
-        return {"id": user.id, "public_id": None if row else user.public_id, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode}
+        record("admin_login", "admin_menu_access", admin_id=user.id, admin_nickname=user.nickname, role=row.role)
+        return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode}
 
     @router.patch("/ghost-mode")
     def ghost_mode(payload: GhostUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -125,6 +151,10 @@ def register_admin_auth(current_user_dependency):
             raise HTTPException(status_code=404, detail="Destek talebi bulunamadı")
         messages = db.scalars(select(SupportMessage).where(SupportMessage.ticket_id == ticket_id).order_by(SupportMessage.created_at)).all()
         assignment = db.get(SupportAssignment, ticket_id)
+        target_user = db.get(User, ticket.user_id)
+        record("support_view", "support_ticket_view", admin_id=user.id, admin_nickname=user.nickname,
+               target_user_id=ticket.user_id, target_nickname=getattr(target_user, "nickname", None),
+               ticket_id=ticket_id, message_count=len(messages))
         return {"id": ticket.id, "user_id": ticket.user_id, "category": ticket.category, "subject": ticket.subject,
                 "message": ticket.message, "status": ticket.status, "created_at": ticket.created_at,
                 "assignment": None if not assignment else {"admin_id": assignment.admin_id, "decision": assignment.decision, "note": assignment.decision_note, "decided_at": assignment.decided_at},
@@ -220,7 +250,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=db.get(User,user_id)
+        require_role(db,user,"DA"); target=db.get(User,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         before=target.lidya; target.lidya=max(0,target.lidya-payload.amount)
         audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=user_id)
