@@ -296,16 +296,18 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/rooms/{room_id}/ban")
     def room_ban(room_id:str,payload:BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); room=db.get(Room,room_id)
+        require_role(db,user,"UA"); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
         if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
-        row=RoomAdminBan(room_id=room_id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason);db.add(row)
-        audit(db,user,"room_ban",{"days":payload.days,"reason":payload.reason},target_room_id=room_id);db.commit();return {"banned":True,"expires_at":row.expires_at}
+        row=RoomAdminBan(room_id=room.id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason);db.add(row)
+        audit(db,user,"room_ban",{"days":payload.days,"reason":payload.reason},target_room_id=room.id,target_id=room.public_id);db.commit();return {"banned":True,"expires_at":row.expires_at,"room_id":room.id,"public_id":room.public_id}
 
     @router.delete("/rooms/{room_id}/ban")
     def room_unban(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA");rows=db.scalars(select(RoomAdminBan).where(RoomAdminBan.room_id==room_id,RoomAdminBan.active.is_(True))).all()
+        require_role(db,user,"UA"); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
+        if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
+        rows=db.scalars(select(RoomAdminBan).where(RoomAdminBan.room_id==room.id,RoomAdminBan.active.is_(True))).all()
         for x in rows:x.active=False
-        audit(db,user,"room_unban",target_room_id=room_id);db.commit();return {"unbanned":True}
+        audit(db,user,"room_unban",target_room_id=room.id,target_id=room.public_id);db.commit();return {"unbanned":True}
 
     @router.post("/users/{user_id}/vip")
     def vip_update(user_id:str,payload:VipUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
