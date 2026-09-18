@@ -137,4 +137,4 @@ Room control checkpoint
 - [ ] Browser tarafında bu kontrollerin gerçek UI → API zinciri.
 - [ ] Gerçek WebRTC mikrofon transportu.
 
-- [ ] Profile try-on/apply ve VIP badge/neon/title görünümünün gerçek backend browser zinciri.
+- [ ] Profile try-on/apply ve VIP badge/neon/title görünümünün gerçek backend browser zinciri.\n- [ ] Gift → notification → profile-gifts gerçek browser zinciri.\n- [ ] Follow/follower/following + notification read/unread gerçek browser zinciri yeni import düzeltmesi sonrası tekrar doğrulanacak.\n- [ ] Family invite / room invite / VIP-level / system notification tetikleyicileri.
