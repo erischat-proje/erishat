@@ -45,9 +45,65 @@
     p.querySelector('#edRoomCreate').append(btn('＋ Kendi odamı aç',async()=>{const name=p.querySelector('#edRoomName').value.trim();if(!name)return alert('Oda adı yaz.');try{await api('/rooms',{method:'POST',body:JSON.stringify({name})});await rooms(p)}catch(e){alert(e.message)}}));
     const box=p.querySelector('#edRooms');try{const rows=await api('/rooms');const list=Array.isArray(rows)?rows:(rows.items||[]);box.innerHTML='';if(!list.length){box.innerHTML=note('Henüz aktif oda yok. İlk odanı sen açabilirsin.');return}list.forEach(r=>{const id=r.id||r.room_id,row=document.createElement('div');row.className='ed-row';row.innerHTML=`<div><b>🎙️ ${esc(r.name||r.title||id)}</b><small>${r.member_count??0}/${r.capacity??35} kişi • Oda Lv.${r.level??1} • ${r.chat_enabled===false?'Sohbet kapalı':'Sohbet açık'}</small></div>`;row.append(btn('İncele',()=>roomDetail(id,r.name||r.title||'Oda'),true));box.append(row)})}catch(e){box.innerHTML=note(`Odalar şu anda yüklenemedi: ${e.message}`)}}
 
+  async function startRoomWebRTC(box, roomId, roomState){
+    if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) return;
+    const token=localStorage.getItem('erischat_access_token');
+    if(!token || !box.__micStream) return;
+    box.__rtcPeers ||= new Map();
+    box.__rtcPoll ||= null;
+    const peers=(roomState.seats||[]).map(s=>s.user_id).filter(Boolean).filter(uid=>uid!==roomState.owner_id);
+    const targets=[...new Set(peers)].slice(0,8);
+    const signal=async(target,type,payload)=>api('/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',body:JSON.stringify({target_id:target,type,payload})});
+    const ensure=async(target,initiator)=>{
+      if(box.__rtcPeers.has(target)) return box.__rtcPeers.get(target);
+      const pc=new RTCPeerConnection({iceServers:[]});
+      box.__rtcPeers.set(target,pc);
+      box.__rtcPeersMeta ||= new Map(); box.__rtcPeersMeta.set(target,{pending:[]});
+      box.__micStream.getTracks().forEach(track=>pc.addTrack(track,box.__micStream));
+      pc.onicecandidate=e=>{if(e.candidate) signal(target,'ice-candidate',e.candidate.toJSON()).catch(()=>{});};
+      pc.ontrack=e=>{
+        const stream=e.streams?.[0]; if(!stream) return;
+        box.__rtcAudio ||= {};
+        let audio=box.__rtcAudio[target];
+        if(!audio){audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.dataset.rtcPeer=target;audio.style.display='none';document.body.append(audio);box.__rtcAudio[target]=audio;}
+        audio.srcObject=stream;
+      };
+      pc.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(pc.connectionState)){try{pc.close()}catch{}box.__rtcPeers.delete(target);}};
+      if(initiator){
+        const offer=await pc.createOffer({offerToReceiveAudio:true});
+        await pc.setLocalDescription(offer);
+        await signal(target,'offer',{type:pc.localDescription.type,sdp:pc.localDescription.sdp});
+      }
+      return pc;
+    };
+    for(const target of targets) await ensure(target,true).catch(()=>{});
+    if(!box.__rtcPoll){
+      box.__rtcPoll=setInterval(async()=>{
+        try{
+          const messages=await api('/rooms/'+encodeURIComponent(roomId)+'/rtc-signals');
+          for(const msg of messages){
+            const pc=await ensure(msg.sender_id,false);
+            if(msg.type==='offer'){
+              await pc.setRemoteDescription(msg.payload);
+              const answer=await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              await signal(msg.sender_id,'answer',{type:pc.localDescription.type,sdp:pc.localDescription.sdp});
+            }else if(msg.type==='answer'){
+              await pc.setRemoteDescription(msg.payload);
+            }else if(msg.type==='ice-candidate'){
+              try{await pc.addIceCandidate(msg.payload)}catch{}
+            }else if(msg.type==='leave'){
+              try{pc.close()}catch{};box.__rtcPeers.delete(msg.sender_id);
+            }
+          }
+        }catch{}
+      },1000);
+    }
+  }
+
   async function roomDetail(id,name){
     const modal=document.createElement('div');modal.className='ed-show';modal.style.cssText='display:flex;position:fixed;inset:0;z-index:350;background:#020107e8;align-items:flex-end';modal.innerHTML=`<div class="ed-sheet"><div class="ed-head"><div><div class="ed-k">ODA</div><h2>${esc(name)}</h2></div><button class="ed-close">×</button></div><div id="edRoomDetail">${note('Oda bilgileri yükleniyor…')}</div></div>`;document.body.append(modal);modal.querySelector('.ed-close').onclick=()=>modal.remove();
-    const box=modal.querySelector('#edRoomDetail');try{const r=await api(`/rooms/${encodeURIComponent(id)}`);box.innerHTML=`<div class="ed-grid"><div class="ed-card"><b>👥 Üyeler</b><small>${r.member_count}/${r.capacity}</small></div><div class="ed-card"><b>⭐ Seviye</b><small>Oda Lv.${r.level} • ${r.seat_count} koltuk</small></div><div class="ed-card"><b>🛡️ Moderasyon</b><small>${(r.moderators||[]).length}/${r.max_moderators} moderatör</small></div><div class="ed-card"><b>💬 Sohbet</b><small>${r.chat_enabled===false?'Kapalı':'Açık'}</small></div></div><div class="ed-actions" id="edRoomActions"></div><div class="ed-k" style="margin:12px 0 7px">KOLTUKLAR</div><div class="ed-seats" id="edSeats"></div><div id="edRoomTools" style="margin-top:10px"></div>`;const a=box.querySelector('#edRoomActions');a.append(btn('Katıl',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/join`,{method:'POST'});await roomDetail(id,name)}catch(e){alert(e.message)}},true));a.append(btn('Ayrıl',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/leave`,{method:'POST'});await roomDetail(id,name)}catch(e){alert(e.message)}},true));a.append(btn('Duyuru',async()=>{try{const x=await api(`/rooms/${encodeURIComponent(id)}/announcement`);alert(x.message||'Bu odada henüz duyuru yok.')}catch(e){alert(e.message)}},true));a.append(btn('🎙️ Mikrofon',async()=>{const on=box.dataset.mic==='1';if(on){try{box.__micStream?.getTracks().forEach(t=>t.stop());}catch{}box.__micStream=null;box.dataset.mic='0';toast?.('Mikrofon kapalı');return;}if(!navigator.mediaDevices?.getUserMedia){toast?.('Bu tarayıcı mikrofon erişimini desteklemiyor.');return;}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});box.__micStream=stream;box.dataset.mic='1';toast?.('Mikrofon açık');}catch(e){box.dataset.mic='0';toast?.(e?.name==='NotAllowedError'?'Mikrofon izni verilmedi.':'Mikrofon açılamadı.');}},true));a.append(btn('🎁 Hediye',async()=>{try{const catalog=await api(`/rooms/${encodeURIComponent(id)}/gift-catalog`);const gift=catalog?.[0];if(!gift)return alert('Hediye kataloğu boş.');const recipient=(r.seats||[]).find(s=>s.user_id)?.user_id;if(!recipient)return alert('Odada hediye alıcısı yok.');await api(`/rooms/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({recipient_id:recipient,gift_key:gift.gift_key,quantity:1})});alert(`Hediye gönderildi: ${gift.gift_key}`)}catch(e){alert(e.message)}},true));const seats=box.querySelector('#edSeats');(r.seats||[]).forEach(s=>{const b=document.createElement('button');b.className='ed-seat';b.textContent=s.user_id?`🎤 ${s.seat_number}`:`▫️ ${s.seat_number}`;b.onclick=async()=>{try{if(s.user_id)await api(`/rooms/${encodeURIComponent(id)}/seats/leave`,{method:'DELETE'});else await api(`/rooms/${encodeURIComponent(id)}/seats/${s.seat_number}/join`,{method:'POST'});await roomDetail(id,name)}catch(e){alert(e.message)}};seats.append(b)});const tools=box.querySelector('#edRoomTools');tools.innerHTML=`<div class="ed-card"><b>Oda yönetimi</b><small>Chat aç/kapat ve moderasyon akışları ürün yüzeyinde.</small><div class="ed-actions" id="edStaff"></div></div>`;tools.querySelector('#edStaff').append(btn(r.chat_enabled===false?'💬 Sohbeti aç':'🔇 Sohbeti kapat',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/chat`,{method:'PATCH',body:JSON.stringify({enabled:r.chat_enabled===false})});await roomDetail(id,name)}catch(e){alert(e.message)}},true));tools.querySelector('#edStaff').append(btn('🛡️ Moderatör',async()=>{const userId=prompt('Moderatör kullanıcı ID');if(!userId)return;try{await api(`/rooms/${encodeURIComponent(id)}/moderators`,{method:'POST',body:JSON.stringify({user_id:userId})});await roomDetail(id,name)}catch(e){alert(e.message)}},true));}catch(e){box.innerHTML=note(`Oda açılamadı: ${e.message}`)}}
+    const box=modal.querySelector('#edRoomDetail');try{const r=await api(`/rooms/${encodeURIComponent(id)}`);box.innerHTML=`<div class="ed-grid"><div class="ed-card"><b>👥 Üyeler</b><small>${r.member_count}/${r.capacity}</small></div><div class="ed-card"><b>⭐ Seviye</b><small>Oda Lv.${r.level} • ${r.seat_count} koltuk</small></div><div class="ed-card"><b>🛡️ Moderasyon</b><small>${(r.moderators||[]).length}/${r.max_moderators} moderatör</small></div><div class="ed-card"><b>💬 Sohbet</b><small>${r.chat_enabled===false?'Kapalı':'Açık'}</small></div></div><div class="ed-actions" id="edRoomActions"></div><div class="ed-k" style="margin:12px 0 7px">KOLTUKLAR</div><div class="ed-seats" id="edSeats"></div><div id="edRoomTools" style="margin-top:10px"></div>`;const a=box.querySelector('#edRoomActions');a.append(btn('Katıl',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/join`,{method:'POST'});await roomDetail(id,name)}catch(e){alert(e.message)}},true));a.append(btn('Ayrıl',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/leave`,{method:'POST'});await roomDetail(id,name)}catch(e){alert(e.message)}},true));a.append(btn('Duyuru',async()=>{try{const x=await api(`/rooms/${encodeURIComponent(id)}/announcement`);alert(x.message||'Bu odada henüz duyuru yok.')}catch(e){alert(e.message)}},true));a.append(btn('🎙️ Mikrofon',async()=>{const on=box.dataset.mic==='1';if(on){try{box.__micStream?.getTracks().forEach(t=>t.stop());}catch{}box.__micStream=null;box.dataset.mic='0';if(box.__rtcPoll){clearInterval(box.__rtcPoll);box.__rtcPoll=null;}box.__rtcPeers?.forEach(pc=>{try{pc.close()}catch{}});box.__rtcPeers?.clear();Object.values(box.__rtcAudio||{}).forEach(a=>{try{a.srcObject=null;a.remove()}catch{}});box.__rtcAudio={};toast?.('Mikrofon kapalı');return;}if(!navigator.mediaDevices?.getUserMedia){toast?.('Bu tarayıcı mikrofon erişimini desteklemiyor.');return;}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});box.__micStream=stream;box.dataset.mic='1';await startRoomWebRTC(box,id,r);toast?.('Mikrofon açık');}catch(e){box.dataset.mic='0';toast?.(e?.name==='NotAllowedError'?'Mikrofon izni verilmedi.':'Mikrofon açılamadı.');}},true));a.append(btn('🎁 Hediye',async()=>{try{const catalog=await api(`/rooms/${encodeURIComponent(id)}/gift-catalog`);const gift=catalog?.[0];if(!gift)return alert('Hediye kataloğu boş.');const recipient=(r.seats||[]).find(s=>s.user_id)?.user_id;if(!recipient)return alert('Odada hediye alıcısı yok.');await api(`/rooms/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({recipient_id:recipient,gift_key:gift.gift_key,quantity:1})});alert(`Hediye gönderildi: ${gift.gift_key}`)}catch(e){alert(e.message)}},true));const seats=box.querySelector('#edSeats');(r.seats||[]).forEach(s=>{const b=document.createElement('button');b.className='ed-seat';b.textContent=s.user_id?`🎤 ${s.seat_number}`:`▫️ ${s.seat_number}`;b.onclick=async()=>{try{if(s.user_id)await api(`/rooms/${encodeURIComponent(id)}/seats/leave`,{method:'DELETE'});else await api(`/rooms/${encodeURIComponent(id)}/seats/${s.seat_number}/join`,{method:'POST'});await roomDetail(id,name)}catch(e){alert(e.message)}};seats.append(b)});const tools=box.querySelector('#edRoomTools');tools.innerHTML=`<div class="ed-card"><b>Oda yönetimi</b><small>Chat aç/kapat ve moderasyon akışları ürün yüzeyinde.</small><div class="ed-actions" id="edStaff"></div></div>`;tools.querySelector('#edStaff').append(btn(r.chat_enabled===false?'💬 Sohbeti aç':'🔇 Sohbeti kapat',async()=>{try{await api(`/rooms/${encodeURIComponent(id)}/chat`,{method:'PATCH',body:JSON.stringify({enabled:r.chat_enabled===false})});await roomDetail(id,name)}catch(e){alert(e.message)}},true));tools.querySelector('#edStaff').append(btn('🛡️ Moderatör',async()=>{const userId=prompt('Moderatör kullanıcı ID');if(!userId)return;try{await api(`/rooms/${encodeURIComponent(id)}/moderators`,{method:'POST',body:JSON.stringify({user_id:userId})});await roomDetail(id,name)}catch(e){alert(e.message)}},true));}catch(e){box.innerHTML=note(`Oda açılamadı: ${e.message}`)}}
 
   async function shop(p){
     p.innerHTML=`<div class="ed-hero"><strong>💎 Kozmetik mağazası</strong><small>139 görünüm: 71 standart avatar, 32 standart çerçeve, 24 VIP avatar, 12 VIP çerçeve. VIP görünümler seviye ile açılır.</small></div><div class="ed-actions"><button class="ed-btn alt" data-filter="all">Tümü</button><button class="ed-btn alt" data-filter="avatar">Avatar</button><button class="ed-btn alt" data-filter="frame">Çerçeve</button><button class="ed-btn alt" data-filter="vip">VIP</button></div><div id="edShop" class="ed-grid" style="margin-top:8px">${note('Katalog yükleniyor…')}</div>`;
