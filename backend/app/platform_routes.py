@@ -315,6 +315,7 @@ def register_platform_auth(current_user_dependency):
         },
         "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
         "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
+        "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Tek elli blackjack demosu; deste ve sonuç RNG ile üretilir."},
         "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Rastgele crash çarpanı sınıfı; yatırım veya cash-out yoktur."},
         "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı RNG ile seçilir; parasal payout yoktur."},
         "wheel": {"results": [("small", 40), ("medium", 30), ("large", 20), ("special", 8), ("grand", 2)], "description": "Ağırlıklı şans çarkı sonucu."},
@@ -360,8 +361,9 @@ def register_platform_auth(current_user_dependency):
             ranges = {"x1_00_1_49": (1.0,1.49), "x1_50_1_99": (1.5,1.99), "x2_00_4_99": (2.0,4.99), "x5_00_9_99": (5.0,9.99), "x10_plus": (10.0,25.0)}
             lo, hi = ranges[result]; data["multiplier"] = round(random.uniform(lo, hi), 2)
         elif game_type == "horse_race":
-            data["finish_order"] = [result] + [x for x in [f"horse_{i}" for i in range(1,8)] if x != result]
-            random.shuffle(data["finish_order"][1:])
+            rest = [x for x in [f"horse_{i}" for i in range(1,8)] if x != result]
+            random.shuffle(rest)
+            data["finish_order"] = [result] + rest
         elif game_type == "vault":
             data["reward_class"] = result
         elif game_type == "wheel":
