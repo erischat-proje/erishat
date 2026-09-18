@@ -182,3 +182,14 @@
 - `4d89487821` ile RTC security smoke, non-member `/rtc-config` erişimini 403 ve member erişimini 200 + `ice_servers` olarak doğruluyor.
 - Yeni runner PASS kanıtı henüz alınmadı.
 \n\n## 2026-09-18 — VIP SPENDING PROGRESSION\n- `685dc84e` model + `4dcc7398` migration + `1d6631e2` VIP metadata + `10a3e76c` purchase progression + `86f6e595` smoke read-back eklendi.\n- Yeni runner PASS kanıtı henüz alınmadı.\n
+
+## 2026-09-18 — YÖNETİM SİSTEMİ İLK CHECKPOINT
+- ErisChat'e üç kademeli yönetim sistemi başlatıldı: SA temel yönetim, UA = SA + uygulama şikayet/eksik yetkileri, DA = SA + UA + teknik/hesap/ekonomi/yetki yönetimi.
+- Yönetim API ve kalıcı audit altyapısı eklendi.
+- Destek talepleri pending → accepted/rejected → closed yaşam döngüsüne hazırlandı; admin konuşmaları SupportMessage/SupportAssignment ile tutuluyor ve destek.txt kaydı başlıyor.
+- Ghost Mode ve yönetim oda erişimi backend'e işlendi; ghost adminler room public view'ında gizleniyor.
+- DA ID sorgu, Lidya, ban/unban, oda banı, chat banı, VIP ve SA/UA/DA rol yönetimi endpointleri eklendi.
+- Frontend'de yetkili hesaplara özel Yönetim menüsü eklendi.
+- Initial Developer Admin için initial_da_ids environment ayarı eklendi.
+- Bu checkpoint için henüz yeni Quality runner PASS kanıtı yok; deploy yapılmadı.
+- Sonraki adım: admin browser E2E + role/security smoke + destek yaşam döngüsü smoke + gerçek ban enforcement.
