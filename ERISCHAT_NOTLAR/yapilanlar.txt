@@ -256,3 +256,9 @@ Room control checkpoint
 - [x] Admin oda banı/unban artık 12 haneli public oda ID'sini kabul ediyor.
 - [x] Quality workflow'a ID/yetki smoke gate eklendi.
 - [ ] Bu son commitler için fresh Quality PASS henüz bekleniyor.
+
+2026-09-19 — EKSİKLERİ TAMAMLAMA TURU BAŞLANGICI
+- Öncelik sırası netleştirildi: önce tüm eksik özellikler/arayüzler/backend bağlantıları/e2e testleri eklenecek; sistem optimizasyonu ve nihai entegrasyon bundan sonra yapılacak.
+- main üzerindeki Quality failure kökü tespit edildi: backend/app/cosmetic_routes.py ve backend/app/platform_routes.py içinde literal \\n karakterleri Python kaynak koduna girmişti.
+- İki dosyadaki literal \\n dizileri gerçek satır sonlarına çevrildi.
+- Sonraki adım: yeni runner kanıtı alıp kalan eksik ürün yüzeylerini sırayla eklemek; optimizasyon aşamasına henüz geçilmemesi.
