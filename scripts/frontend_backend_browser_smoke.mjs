@@ -50,6 +50,16 @@ async function main(){
     return {create:cr.status,id,detail,donation,chat};
   },API);
   if(family.create!==201||!family.id||family.detail?.id!==family.id||Number(family.donation?.balance)!==40000||Number(family.donation?.level)!==2) throw new Error('family browser backend chain failed: '+JSON.stringify(family));
+  await page.evaluate(id => localStorage.setItem('eris_family_id', id), family.id);
+  await page.locator('#erisDemoBtn').click();
+  await page.locator('[data-ed="family"]').click();
+  await page.waitForFunction(id => document.querySelector('#ed-family')?.textContent.includes(id), family.detail?.name || '');
+  await page.locator('[data-ed="profile"]').click();
+  await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('Profil'), {timeout:10000});
+  await page.locator('[data-ed="shop"]').click();
+  await page.waitForFunction(() => document.querySelector('#ed-shop')?.textContent.includes('Kozmetik mağazası'), {timeout:10000});
+  await page.locator('#edClose').click();
+
   if(errors.length) throw new Error('page errors: '+errors.join(' | '));
   await browser.close();
   console.log('FRONTEND_BACKEND_BROWSER_SMOKE_PASS anonymous=1 profile=1 dm=1 family=1');
