@@ -90,3 +90,11 @@ Room control checkpoint
 - [x] Frontend → gerçek backend browser smoke: anonymous session + profile render + gerçek DM oluşturma/gönderme + aile create/detail/donation/chat doğrulandı; Quality run 35381313253 / job 105717875500 adım 21 SUCCESS.
 - [x] Room browser surface smoke, canlı DM renderer ile uyumlu hale getirildi; commit 98dce70a11cdad94242a1f87868507c57bb7f808.
 - [ ] Aynı Quality run'ın live room/ban/DM/cosmetic son smoke adımları henüz tamamlanmadı.
+
+
+2026-09-18 — FAN + PROFİL GERÇEKLİK GÜNCELLEMESİ
+- [x] Commit 9c55925dbfb650f0fb041b15fc5296990d365a68: /users/{user_id}/fans artık UserFollow kayıtlarından gerçek takipçi sayısını hesaplıyor; hatalı FanProfile.total bağımlılığı kaldırıldı.
+- [x] Commit 6381e47959bcce894c5bad0a482559b27dc3ed9f: frontend backend browser smoke fan endpointini ve fan seviyesi doğrulamasını ekledi.
+- [x] Commit 0e1d5d017bc4987375b164370b72eb36acc8c059: Profil müşteri paneli gerçek avatar_asset/frame_asset, VIP, fan seviyesi ve profil hediyesi özetini göstermeye başladı.
+- [x] Commit 3c794b6111e26c56d613aa8242b60235c3109f85: yapılacaklar checkpointi güncellendi.
+- [ ] Commit 6381e479 sonrası Quality run 35382739544 henüz tamamlanmadı; PASS sonucu beklenmeden doğrulanmış kabul edilmeyecek.
