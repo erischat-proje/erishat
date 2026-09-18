@@ -257,3 +257,12 @@
 - [x] Oyun sonuçları GamePlay geçmişinde tutuluyor.
 - [ ] Yeni UI/runner browser E2E sonucu henüz alınmadı.
 - [ ] Gerçek oda katılımı sonrası 7 oyunun browser uçtan uca doğrulaması bekliyor.
+
+2026-09-19 — OYUN ANALİTİK CHECKPOINT
+- Commit: 04085e0fded54cf6242c9685a9222e588098fbe6
+- 7 ücretsiz oyunun mevcut RNG profillerini gerçek GamePlay kayıtlarıyla karşılaştıran kapsamlı analytics katmanı eklendi.
+- Analytics: teorik oran, gerçekleşen oran, count, deviation_pp, sample_size, son sonuç streak, seçim isabeti; Crash multiplier min/max/average; At Yarışı podium counts.
+- Toplu `/games/analytics/overview` özeti eklendi.
+- Yatırım/bahis/parasal payout sistemi yok; oyunlar free-play olarak korunuyor.
+- Quality/browser runner doğrulaması henüz alınmadı; PASS ilan edilmeyecek.
+
