@@ -151,6 +151,10 @@ def register_platform_auth(current_user_dependency):
     def create_report(payload: ReportCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         if not any((payload.target_user_id,payload.room_id,payload.message_id)): raise HTTPException(status_code=400,detail="Şikayet hedefi gerekli")
         report=Report(reporter_id=user.id,**payload.model_dump()); db.add(report); db.commit(); db.refresh(report); return {"id":report.id,"status":report.status}
+    @router.get("/me/reports")
+    def my_reports(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        rows=list(db.scalars(select(Report).where(Report.reporter_id==user.id).order_by(Report.created_at.desc()).limit(limit)))
+        return [{"id":r.id,"target_user_id":r.target_user_id,"room_id":r.room_id,"message_id":r.message_id,"category":r.category,"reason":r.reason,"status":r.status,"created_at":r.created_at} for r in rows]
     @router.get("/discover/rooms")
     def discover_rooms(limit:int=Query(50,ge=1,le=100),offset:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=[]; rooms=list(db.scalars(select(Room).order_by(Room.created_at.desc()).limit(300)))
