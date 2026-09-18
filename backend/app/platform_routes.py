@@ -277,9 +277,8 @@ def register_platform_auth(current_user_dependency):
         row.read=True; db.commit(); return {"read":True}
     @router.get("/users/{user_id}/fans")
     def fans(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        row=db.get(FanProfile,user_id)
-        if not row: return {"user_id":user_id,"total":0,"level":1}
-        return {"user_id":user_id,"total":row.total,"level":fan_level(row.total)}
+        total=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id==user_id)) or 0)
+        return {"user_id":user_id,"total":total,"level":fan_level(total)}
     @router.get("/users/{user_id}/profile-gifts")
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.target_user_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
