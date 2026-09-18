@@ -327,3 +327,5 @@ Room control checkpoint
 - [ ] Load/stress/security regression testleri.
 - [ ] Tüm özellikler tamamlandıktan sonra sistem optimizasyonu + servis bağlantıları + production hazırlığı.
 - [ ] Railway deploy yalnızca açık deploy talimatıyla.
+- [x] Oyun endpointleri gerçek Lidya debit/payout, round kaydı ve audit zincirine geçirildi; migration eklendi.
+- [ ] Oyun browser/E2E + concurrency/anti-double-spend runner kanıtı.
