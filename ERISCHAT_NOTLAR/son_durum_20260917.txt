@@ -228,3 +228,12 @@
 - Hata kökü cosmetic_routes.py ve platform_routes.py içindeki literal \\n dizileriydi; kaynaklar düzeltildi.
 - Yeni Quality kanıtı bekleniyor; PASS ilan edilmeyecek.
 2026-09-19 — Oyun temel ekonomi akışı uygulandı; gerçek para hareketi ve round kaydı var. Browser/E2E ve concurrency doğrulaması hâlâ açık.
+
+
+2026-09-19 — 7 OYUN RNG MOTORLARI
+- [x] Rulet, 4 Kupa, At Yarışı, Blackjack, Crash, Kasa Açma ve Şans Çarkı için ayrı ücretsiz/RNG oynanış endpointleri eklendi.
+- [x] Oyun kataloğu ve oyun geçmişi endpointleri eklendi.
+- [x] Oyun sonuçları kullanıcı bazlı GamePlay geçmişine kaydediliyor ve sistem loguna yazılıyor.
+- [x] Oyun motorlarında yatırım/bahis/payout bulunmuyor; bu tur yalnızca oyun kuralları ve RNG sonuç katmanı geliştirildi.
+- [ ] Gerçek browser/E2E runner kanıtı henüz alınmadı.
+- [ ] Oyun UI butonlarının yeni 7 endpoint ile uçtan uca bağlanması bekliyor.
