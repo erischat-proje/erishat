@@ -262,3 +262,4 @@ Room control checkpoint
 - main üzerindeki Quality failure kökü tespit edildi: backend/app/cosmetic_routes.py ve backend/app/platform_routes.py içinde literal \\n karakterleri Python kaynak koduna girmişti.
 - İki dosyadaki literal \\n dizileri gerçek satır sonlarına çevrildi.
 - Sonraki adım: yeni runner kanıtı alıp kalan eksik ürün yüzeylerini sırayla eklemek; optimizasyon aşamasına henüz geçilmemesi.
+2026-09-19 — Oyun katmanında eksik temel ekonomi akışı eklendi: Lidya kilitleme, bahis düşümü, payout, GameRound kaydı ve audit log. Standalone round için room_id migration eklendi. E2E/runner kanıtı henüz PASS değildir.
