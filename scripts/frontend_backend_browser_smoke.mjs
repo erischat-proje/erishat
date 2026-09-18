@@ -137,7 +137,7 @@ async function main(){
     const messages=await received.json();
     const second=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{headers:ownerHeaders}).then(r=>r.json());
     const selfTarget=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:ownerHeaders,body:JSON.stringify({target_id:ownerId,type:'offer',payload:{probe:'self'}})});
-    return {offer:offer.status,ice:ice.status,leave:leave.status,receivedStatus:received.status,messages,second,selfTarget:selfTarget.status};
+    const nonMemberGet=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{headers:{Authorization:'Bearer '+memberToken}}); return {offer:offer.status,ice:ice.status,leave:leave.status,receivedStatus:received.status,messages,second,selfTarget:selfTarget.status,nonMemberGet:nonMemberGet.status};
   },{api:API,roomId:room.data.id,ownerId:owner.id,memberToken:member.access_token});
   if(rtcSignalSmoke.offer!==200||rtcSignalSmoke.ice!==200||rtcSignalSmoke.leave!==200) throw new Error('RTC signaling send flow failed: '+JSON.stringify(rtcSignalSmoke));
   if(rtcSignalSmoke.receivedStatus!==200||rtcSignalSmoke.messages.length!==3||!rtcSignalSmoke.messages.some(x=>x.type==='offer')||!rtcSignalSmoke.messages.some(x=>x.type==='ice-candidate')||!rtcSignalSmoke.messages.some(x=>x.type==='leave')) throw new Error('RTC signaling receive queue failed: '+JSON.stringify(rtcSignalSmoke));
