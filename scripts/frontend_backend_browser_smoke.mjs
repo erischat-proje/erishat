@@ -108,6 +108,15 @@ async function main(){
   if(cosmeticSurface.candidate && cosmeticSurface.purchaseStatus!==200) throw new Error('cosmetic purchase failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.applyStatus!==200) throw new Error('cosmetic apply failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.avatarAsset!==cosmeticSurface.candidate) throw new Error('profile avatar asset was not applied: '+JSON.stringify(cosmeticSurface));
+  const vipPrivacy=await page.evaluate(async api=>{
+    const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const mine=await fetch(api+'/me/vip',{headers:h}).then(r=>r.json());
+    const publicBefore=await fetch(api+'/users/'+encodeURIComponent(window.__memberId||'')+'/vip',{headers:h});
+    const hide=await fetch(api+'/me/privacy',{method:'PATCH',headers:h,body:JSON.stringify({hide_vip_badge:true,hide_vip_neon:true,hide_vip_entry:true,hide_vip_title:true})});
+    const privacy=await fetch(api+'/me/privacy',{headers:h}).then(r=>r.json());
+    return {mine,publicStatus:publicBefore.status,hide:hide.status,privacy};
+  },API);
+  if(vipPrivacy.mine?.level===undefined||vipPrivacy.hide!==200||vipPrivacy.privacy?.hide_vip_badge!==true||vipPrivacy.privacy?.hide_vip_neon!==true||vipPrivacy.privacy?.hide_vip_entry!==true||vipPrivacy.privacy?.hide_vip_title!==true) throw new Error('VIP privacy surface failed: '+JSON.stringify(vipPrivacy));
   if(roomInvite.status!==201||!roomInvite.data?.invited||!roomInvite.memberNotifications.some(x=>x.kind==='room_invite')) throw new Error('room invite notification flow failed: '+JSON.stringify(roomInvite));
   const giftFlow=await page.evaluate(async ({api,roomId,targetId})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
