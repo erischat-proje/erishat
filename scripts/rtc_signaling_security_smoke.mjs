@@ -35,6 +35,9 @@ async function main(){
   },API);
   if(room.status!==201||!room.data?.id) throw new Error('room creation failed: '+JSON.stringify(room));
 
+  const rtcConfigBase=API+'/rooms/'+encodeURIComponent(room.data.id)+'/rtc-config';
+  const outsiderConfig=await page.evaluate(async ({url,token})=>{const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});return {status:r.status,body:await r.json().catch(()=>null)};},{url:rtcConfigBase,token:outsider.data.access_token});
+  if(outsiderConfig.status!==403) throw new Error('non-member RTC config access was not rejected: '+JSON.stringify(outsiderConfig));
   const base=API+'/rooms/'+encodeURIComponent(room.data.id)+'/rtc-signals';
   const outsiderHeaders={Authorization:'Bearer '+outsider.data.access_token,'Content-Type':'application/json'};
   const memberHeaders={Authorization:'Bearer '+member.data.access_token,'Content-Type':'application/json'};
@@ -69,6 +72,9 @@ async function main(){
     return {status:post.status,body:await post.json().catch(()=>null)};
   },{base,headers:memberHeaders,ownerId:owner.id});
   if(valid.status!==200||valid.body?.queued!==true) throw new Error('valid RTC signal was rejected: '+JSON.stringify(valid));
+
+  const memberConfig=await page.evaluate(async ({url,token})=>{const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});return {status:r.status,body:await r.json().catch(()=>null)};},{url:rtcConfigBase,token:member.data.access_token});
+  if(memberConfig.status!==200||!Array.isArray(memberConfig.body?.ice_servers)) throw new Error('member RTC config response invalid: '+JSON.stringify(memberConfig));
 
   console.log('RTC_SIGNALING_SECURITY_SMOKE_PASS nonmember=403 target=404 invalid-type=422 valid=200');
   await browser.close();
