@@ -158,3 +158,10 @@ Room control checkpoint
 - [x] Commit 6084415a894c6a0f2edaac0511be899bccdd6a6f: gerçek mikrofon stream lifecycle eklendi.
 - [x] Commit f06257ad47749e3b43586bb6d8209f264f506ea3: browser smoke mikrofon request/stop lifecycle kontrolü eklendi.
 - [ ] Gerçek WebRTC transport/signaling tamamlanmadı.
+
+
+2026-09-18 — WEBRTC SIGNALING TEMELİ
+- [x] Oda üyeleri için kimlik doğrulamalı RTC signaling relay eklendi: POST/GET /v1/rooms/{room_id}/rtc-signals.
+- [x] Offer / answer / ICE candidate / leave mesaj tipleri doğrulanıyor; hedef kullanıcının aynı odada olması zorunlu.
+- [x] Sinyaller 60 saniye TTL ve oda başına 100 mesaj sınırıyla geçici bellekte tutuluyor; bu katman henüz çoklu instance/kalıcı signaling altyapısı değil.
+- [ ] Frontend RTCPeerConnection + offer/answer/ICE akışı bu relay'e bağlanacak.
