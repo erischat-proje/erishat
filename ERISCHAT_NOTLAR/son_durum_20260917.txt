@@ -266,3 +266,9 @@
 - Yatırım/bahis/parasal payout sistemi yok; oyunlar free-play olarak korunuyor.
 - Quality/browser runner doğrulaması henüz alınmadı; PASS ilan edilmeyecek.
 
+
+2026-09-19 — OYUN UI ANALİTİK CHECKPOINT
+- Commit 9375826be5541049f9c02735220fe66684461ee0
+- Oyun merkezinde Oyna + Detaylı Analiz + Geçmiş akışı bağlandı.
+- Analytics: teorik/gerçekleşen oran, sapma, sample, streak, seçim isabeti; Crash ve At Yarışı özel metrikleri.
+- Browser E2E henüz doğrulanmadı; PASS ilan edilmiyor.
