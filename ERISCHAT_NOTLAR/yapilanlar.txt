@@ -205,3 +205,8 @@ Room control checkpoint
 - [x] `f9b2c890` ile RTC smoke akışına ICE config endpoint çağrısı eklendi.
 - [x] `3da3e067` ile smoke, auth'lu room RTC config response'unu 200 + array olarak doğruluyor.
 - [ ] Runner PASS henüz doğrulanmadı.
+
+
+2026-09-18 — RTC CONFIG SECURITY SMOKE
+- [x] `4d89487821` ile RTC güvenlik smoke'una oda dışı `/rtc-config` 403 ve oda üyesi `/rtc-config` 200 + `ice_servers` kontrolleri eklendi.
+- [ ] Yeni runner PASS henüz doğrulanmadı.
