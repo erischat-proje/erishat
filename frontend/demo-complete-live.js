@@ -53,15 +53,36 @@
     const m=modal('VIP seviyeleri ve cinsiyet ödülleri','');m.querySelector('div div').append(body);
   }
 
-  function gamesDemo() {
+  async function gamesDemo() {
     const body=document.createElement('div');
-    body.innerHTML=`<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Bu müşteri demosunda oyunların ekranı, seçimleri, sonuçları ve ödül tablosu çalışır. Bu katman demo simülasyonudur; gerçek Lidya ekonomisi backend turunda bağlanacaktır.</small></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div id="roulette"></div><div id="cups"></div></div>`;
-    const r=body.querySelector('#roulette');r.innerHTML=card('<b>🎰 Roulette</b><div style="font-size:8px;color:#938a9f;margin:6px 0">Görsel sonuç + çarpan</div><select id="rouletteChoice" style="width:100%;padding:8px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"><option>rose</option><option>heart</option><option>star</option><option>diamond</option><option>crown</option><option>gift</option><option>fire</option><option>gem</option><option>jackpot</option></select><input id="rouletteAmount" type="number" value="1000" min="1" style="width:100%;box-sizing:border-box;margin:6px 0;padding:8px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"><div id="rouletteOut"></div>');
-    const multipliers={rose:0,heart:1.1,star:1.3,diamond:1.6,crown:2,gift:2.5,fire:3,gem:4,jackpot:6};
-    const spin=btn('Çevir',()=>{const c=body.querySelector('#rouletteChoice').value,a=Number(body.querySelector('#rouletteAmount').value)||1,m=multipliers[c];body.querySelector('#rouletteOut').innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🎰 <b>${c.toUpperCase()}</b><br><small>Çarpan ×${m} • Demo ödülü ${Math.floor(a*m).toLocaleString('tr-TR')} Lidya</small></div>`});r.append(spin);
-    const c=body.querySelector('#cups');c.innerHTML=card('<b>🥤 4 Kupa</b><div style="font-size:8px;color:#938a9f;margin:6px 0">Bir kupa seç</div><div id="cupBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div><div id="cupOut"></div>');
-    const cupOut=c.querySelector('#cupOut'),cupBtns=c.querySelector('#cupBtns');['1','2','3','4'].forEach(n=>cupBtns.append(btn('Kupa '+n,()=>{const win=Math.floor(Math.random()*4)+1;cupOut.innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🥤 Seçim: ${n} • Sonuç: Kupa ${win}<br><small>${n===String(win)?'🎉 Demo ödülü kazandın!':'Bu tur ödül çıkmadı.'}</small></div>`})));
-    modal('Oyunlar','').querySelector('div div').append(body);
+    body.innerHTML=`<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 ErisChat Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Oyunlara ana menüden veya oda içinden erişebilirsin. Oda oyunları genel (oda ortak) ve özel (tek oyuncu) olarak ayrılır. Sonuçlar sunucu RNG'si ile üretilir; yatırım/payout yoktur.</small></div><div id="gameCatalog" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>`;
+    const grid=body.querySelector('#gameCatalog');
+    try {
+      const rows=await api('/games');
+      const games=Array.isArray(rows)?rows:[];
+      games.forEach(g=>{
+        const type=g.key, roomCommon=['roulette','cups','horse_race','wheel'].includes(type);
+        const names={roulette:'🎰 Rulet',cups:'🥤 4 Kupa',horse_race:'🐎 At Yarışı',blackjack:'🃏 Blackjack',crash:'🚀 Crash',vault:'🎁 Kasa Açma',wheel:'🎡 Şans Çarkı'};
+        const cardEl=document.createElement('div');
+        cardEl.style.cssText='background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px';
+        cardEl.innerHTML=`<b>${names[type]||type}</b><small style="display:block;color:#938a9f;margin:5px 0">${esc(g.description)}<br>Mod: ${roomCommon?'🌐 Genel/Oda':'👤 Özel/Kişisel'}</small><div data-stats style="font-size:8px;color:#cfc6d8">İstatistik yükleniyor…</div><div data-actions style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px"></div>`;
+        const actions=cardEl.querySelector('[data-actions]');
+        actions.append(btn('🎲 Oyna',async()=>{
+          try{const x=await api('/games/'+encodeURIComponent(type)+'/play',{method:'POST',body:JSON.stringify({})});cardEl.querySelector('[data-stats]').innerHTML=`Sonuç: <b>${esc(x.result)}</b> • ${esc(JSON.stringify(x.data))}`; }catch(e){cardEl.querySelector('[data-stats]').textContent='Oyun sonucu alınamadı: '+e.message;}
+        }));
+        actions.append(btn('📊 İstatistik',async()=>{
+          try{const h=await api('/games/'+encodeURIComponent(type)+'/history?limit=20');const list=Array.isArray(h)?h:[];const counts={};list.forEach(x=>counts[x.result]=(counts[x.result]||0)+1);cardEl.querySelector('[data-stats]').innerHTML='Son 20: '+Object.entries(counts).map(([k,v])=>esc(k)+': '+v).join(' • ')||'Henüz sonuç yok';}catch(e){cardEl.querySelector('[data-stats]').textContent='İstatistik alınamadı.';}
+        },true));
+        grid.append(cardEl);
+      });
+    } catch(e) { grid.innerHTML='<div style="grid-column:1/-1">'+card('Oyun kataloğu şu anda yüklenemedi: '+esc(e.message))+'</div>'; }
+    modal('🎮 Oyunlar','').querySelector('div div').append(body);
+  }
+
+  function mountGameEntryPoints(){
+    if(document.getElementById('erisGameEntry')) return;
+    const b=btn('🎮 Oyunlar',()=>gamesDemo()); b.id='erisGameEntry'; b.style.cssText+=';position:fixed;left:14px;bottom:18px;z-index:290;font-size:10px';
+    document.body.append(b);
   }
 
   function checklistDemo() {
@@ -74,5 +95,5 @@
     const wrap=document.createElement('div');wrap.style.cssText='position:fixed;right:14px;bottom:196px;z-index:290;display:flex;flex-direction:column;gap:6px;align-items:flex-end';
     [['erisDemoCompleteVip','✨ VIP + Ödüller',vipDemo],['erisDemoCompleteGames','🎮 Oyun Demo',gamesDemo],['erisDemoCompleteCheck','☑ Demo Kontrol',checklistDemo]].forEach(([id,text,fn])=>{const b=btn(text,fn);b.id=id;b.style.fontSize='8px';wrap.append(b)});document.body.append(wrap);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountButtons,{once:true});else mountButtons();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mountButtons();mountGameEntryPoints()},{once:true});else {mountButtons();mountGameEntryPoints();}
 })();
