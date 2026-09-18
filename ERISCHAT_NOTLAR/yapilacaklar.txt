@@ -170,3 +170,10 @@ Room control checkpoint
 2026-09-18 — SOCIAL FOLLOW/BLOCK E2E EXTENSION
 - [x] Browser smoke'a takip → followers/following read-back → takipten çık ve engelle → block listesi → engeli kaldır zinciri eklendi.
 - [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-18 — SOCIAL/REPORT UI EXTENSION
+- [x] Sosyal paneline gerçek Takipten çık ve Engeli kaldır aksiyonları eklendi; işlemler HTTP sonucu kontrol edilerek bildirim yenilemesi yapıyor.
+- [x] Bildirim merkezindeki okunmamış bildirimler için gerçek /me/notifications/{id}/read POST UI aksiyonu eklendi ve read-back liste yenileniyor.
+- [x] Şikayet paneline gerçek /me/reports geçmişi görünümü eklendi.
+- [ ] Yeni Quality runner sonucu bekleniyor; PASS ilan edilmeyecek.
