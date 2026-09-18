@@ -128,3 +128,4 @@ Room control checkpoint
 - [x] Commit 78a0e10107dcfc63412f7761ea5b367ac9dd854d: `/me/reports` ile kullanıcının kendi şikayet geçmişi endpointi eklendi.\n- [x] Commit ca261fc946626d36b06995783b49df12931f94db: Browser backend smoke report oluşturma + şikayet geçmişinde doğrulama yapıyor.\n
 - [x] Commit 9a7d1c95a19d8c77ba617855443fa1f4fd62366c: Browser backend smoke artık canlı Profil → TRY-ON avatar uygulamasını ve `/me` avatar_asset + `/me/vip` metadata dönüşünü doğruluyor.\n
 - [x] Commit 16d7cb10a2902747d8fd44072503ee9f26843114: Browser social smoke `following` + `unfollow` doğrulamasını ekledi; bildirim read/unread ve report history assertionları API'nin gerçek array dönüşüne göre sağlamlaştırıldı.\n
+- [x] Commit bcf3da9ed2e0a0d89eb8cd06a33f0dda2a53bf6a: Browser backend smoke VIP metadata (`/me/vip`) ve VIP badge/neon/entry/title gizlilik ayarlarının gerçek API akışını kapsıyor.\n
