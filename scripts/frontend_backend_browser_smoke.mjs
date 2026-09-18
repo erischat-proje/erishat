@@ -50,16 +50,14 @@ async function main(){
     return {create:cr.status,id,detail,donation,chat};
   },API);
   if(family.create!==201||!family.id||family.detail?.id!==family.id||Number(family.donation?.balance)!==40000||Number(family.donation?.level)!==2) throw new Error('family browser backend chain failed: '+JSON.stringify(family));
-  await page.evaluate(id => localStorage.setItem('eris_family_id', id), family.id);
-  await page.locator('#erisDemoBtn').click();
-  await page.locator('[data-ed="family"]').click();
-  await page.waitForFunction(id => document.querySelector('#ed-family')?.textContent.includes(id), family.detail?.name || '');
-  await page.locator('[data-ed="profile"]').click();
-  await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('Profil'), {timeout:10000});
-  await page.locator('[data-ed="shop"]').click();
-  await page.waitForFunction(() => document.querySelector('#ed-shop')?.textContent.includes('Kozmetik mağazası'), {timeout:10000});
-  await page.locator('#edClose').click();
-
+  await page.locator('#erisDemoCompleteVip').click();
+  await page.waitForSelector('text=VIP seviyeleri ve cinsiyet ödülleri');
+  const vipRows=await page.locator('text=/VIP 1/').count();
+  if(vipRows<1) throw new Error('VIP reward matrix did not render');
+  await page.locator('[data-close]').last().click();
+  await page.locator('#erisDemoCompleteCheck').click();
+  await page.waitForSelector('text=Müşteri demo kontrol listesi');
+  await page.locator('[data-close]').last().click();
   if(errors.length) throw new Error('page errors: '+errors.join(' | '));
   await browser.close();
   console.log('FRONTEND_BACKEND_BROWSER_SMOKE_PASS anonymous=1 profile=1 dm=1 family=1');
