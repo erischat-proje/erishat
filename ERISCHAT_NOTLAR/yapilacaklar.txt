@@ -138,3 +138,9 @@ Room control checkpoint
 - [ ] Gerçek WebRTC mikrofon transportu.
 
 - [ ] Profile try-on/apply ve VIP badge/neon/title görünümünün gerçek backend browser zinciri.\n- [ ] Gift → notification → profile-gifts gerçek browser zinciri.\n- [ ] Follow/follower/following + notification read/unread gerçek browser zinciri yeni import düzeltmesi sonrası tekrar doğrulanacak.\n- [ ] Family invite / room invite / VIP-level / system notification tetikleyicileri.
+
+
+2026-09-18 — DEVAM CHECKPOINT
+- [x] frontend_backend_browser_smoke.mjs gerçek room bağımlılıklarının tanımlanma sırası düzeltildi.
+- [x] VIP public lookup test hedefi deterministik hale getirildi.
+- [ ] Yeni Quality PASS kanıtı bekleniyor.
