@@ -195,6 +195,16 @@ async function main(){
     return {status:r.status,data:await r.json()};
   },API);
   if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+  const discovery=await page.evaluate(async api=>{
+    const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const pref=await fetch(api+'/me/discovery',{headers:h}).then(r=>r.json());
+    const update=await fetch(api+'/me/discovery',{method:'PATCH',headers:h,body:JSON.stringify({gender_filter:'any',random_enabled:true})});
+    const nearby=await fetch(api+'/discover/nearby',{headers:h});
+    const rooms=await fetch(api+'/discover/rooms?limit=20',{headers:h});
+    const randomRoom=await fetch(api+'/discover/random-room',{method:'POST',headers:h});
+    return {pref,update:update.status,nearby:nearby.status,nearbyData:await nearby.json(),rooms:rooms.status,roomsData:await rooms.json(),randomRoom:randomRoom.status,randomRoomData:await randomRoom.json()};
+  },API);
+  if(discovery.update!==200||discovery.nearby!==200||discovery.rooms!==200||!Array.isArray(discovery.nearbyData)||!Array.isArray(discovery.roomsData)||![200,404].includes(discovery.randomRoom)) throw new Error('discovery surface failed: '+JSON.stringify(discovery));
   const roomInvite=await page.evaluate(async ({api,roomId,targetId})=>{
     const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
     const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/invite',{method:'POST',headers:h,body:JSON.stringify({user_id:targetId})});
