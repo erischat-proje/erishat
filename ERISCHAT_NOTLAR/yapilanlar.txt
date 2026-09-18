@@ -131,3 +131,4 @@ Room control checkpoint
 - [x] Commit bcf3da9ed2e0a0d89eb8cd06a33f0dda2a53bf6a: Browser backend smoke VIP metadata (`/me/vip`) ve VIP badge/neon/entry/title gizlilik ayarlarının gerçek API akışını kapsıyor.\n
 - [x] Commit 8eee5666b743d85b5ec33875e22780e18f538559: Browser backend smoke keşfetme tercihleri, nearby kullanıcılar, keşfedilebilir odalar ve random-room akışlarını doğruluyor.\n
 - [x] Commit 765c192bcfd42a728975b0054fc8025cd92ce42c: Browser backend smoke kullanıcı konumunu kaydetme ve `/me/location` read-back akışını doğruluyor.\n
+- [x] Commit 039bf915f6c61e27be29c84a5251b3ba42b7a242: Browser backend smoke DM conversation create/detail, mesaj gönderme ve mesaj geçmişinde read-back doğrulamasını sertleştirdi.\n
