@@ -27,6 +27,7 @@ from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssig
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
+from .system_logs import ensure_log_files
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
@@ -113,6 +114,7 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 def startup() -> None:
     logger.info("ErisChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
+    ensure_log_files()
     ensure_system_data_columns()
     with Session(engine) as db:
         cleanup_expired_sessions(db)
