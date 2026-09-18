@@ -97,15 +97,16 @@ async function main(){
     const avatars=await fetch(api+'/cosmetics?kind=avatar',{headers:h}).then(r=>r.json());
     const frames=await fetch(api+'/cosmetics?kind=frame',{headers:h}).then(r=>r.json());
     const candidate=(avatars.items||[]).find(x=>!x.vip);
-    let purchase=null,apply=null,me=null;
+    let purchase=null,apply=null,me=null,vipAfter=null;
     if(candidate){
       purchase=await fetch(api+'/me/cosmetics/purchase',{method:'POST',headers:h,body:JSON.stringify({cosmetic_type:'avatar',asset_key:candidate.asset_key})});
-      if(purchase.status===201||purchase.status===200) apply=await fetch(api+'/me/cosmetics/apply',{method:'POST',headers:h,body:JSON.stringify({cosmetic_type:'avatar',asset_key:candidate.asset_key})});
+      if(purchase.status===201||purchase.status===200) { vipAfter=await fetch(api+'/me/vip',{headers:h}).then(r=>r.json()); apply=await fetch(api+'/me/cosmetics/apply',{method:'POST',headers:h,body:JSON.stringify({cosmetic_type:'avatar',asset_key:candidate.asset_key})});
       me=await fetch(api+'/me',{headers:h}).then(r=>r.json());
     }
-    return {all:(all.items||[]).length,avatars:(avatars.items||[]).length,frames:(frames.items||[]).length,candidate:candidate?.asset_key,purchaseStatus:purchase?.status,applyStatus:apply?.status,avatarAsset:me?.avatar_asset};
+    return {all:(all.items||[]).length,avatars:(avatars.items||[]).length,frames:(frames.items||[]).length,candidate:candidate?.asset_key,purchaseStatus:purchase?.status,purchaseData:purchase?await purchase.clone().json().catch(()=>null):null,vipAfter,applyStatus:apply?.status,avatarAsset:me?.avatar_asset};
   },API);  if(cosmeticSurface.all!==139||cosmeticSurface.avatars<1||cosmeticSurface.frames<1) throw new Error('cosmetic catalog/filter surface failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.purchaseStatus!==200) throw new Error('cosmetic purchase failed: '+JSON.stringify(cosmeticSurface));
+  if(cosmeticSurface.candidate && (Number(cosmeticSurface.purchaseData?.total_spent||0)<Number(cosmeticSurface.purchaseData?.spent||0)||Number(cosmeticSurface.vipAfter?.total_spent||0)<Number(cosmeticSurface.purchaseData?.spent||0))) throw new Error('VIP spending progression was not recorded: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.applyStatus!==200) throw new Error('cosmetic apply failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.avatarAsset!==cosmeticSurface.candidate) throw new Error('profile avatar asset was not applied: '+JSON.stringify(cosmeticSurface));
   await page.evaluate(id => { window.__memberId = id; }, member.user.id);
