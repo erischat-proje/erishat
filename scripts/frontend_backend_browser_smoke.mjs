@@ -267,6 +267,12 @@ async function main(){
     const afterChat=await page.locator('#edStaff button').filter({hasText:/Sohbeti kapat|Sohbeti aç/}).first().textContent();
     if(beforeChat===afterChat) throw new Error('room chat UI toggle did not change');
   }
+  const moderatorButton=page.locator('#edStaff button').filter({hasText:'Moderatör'}).first();
+  if(await moderatorButton.count()){
+    page.once('dialog',async dialog=>{await dialog.accept(String(member.user.id));});
+    await moderatorButton.click();
+    await page.waitForFunction(id=>document.querySelector('#edRoomTools')?.textContent.includes(id),String(member.user.id));
+  }
   const roomUiState=await page.evaluate(async ({api,id})=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const r=await fetch(api+'/rooms/'+encodeURIComponent(id),{headers:h}); return {status:r.status,data:await r.json()};},{api:API,id:room.data.id});
   if(roomUiState.status!==200||!Array.isArray(roomUiState.data?.seats)) throw new Error('room UI state read-back failed: '+JSON.stringify(roomUiState));
   await page.locator('#edClose').click();
