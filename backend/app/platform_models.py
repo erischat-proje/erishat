@@ -153,14 +153,6 @@ class Notification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class UserFollow(Base):
-    __tablename__ = "user_follows"
-    __table_args__ = (UniqueConstraint("follower_id", "following_id", name="uq_user_follow"),)
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    follower_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    following_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
 class UserBlock(Base):
     __tablename__ = "user_blocks"
     __table_args__ = (UniqueConstraint("blocker_id", "blocked_id", name="uq_user_block"),)
