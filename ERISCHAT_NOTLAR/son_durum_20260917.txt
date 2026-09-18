@@ -212,3 +212,11 @@
 - Quality workflow'a `system_identity_admin_smoke.py` quality gate eklendi.
 - Bu yeni değişiklikler için henüz fresh Quality PASS kanıtı yok; PASS/TAMAM ilan edilmiyor.
 - Railway deploy yapılmadı.
+
+2026-09-18 — SİSTEM KAYITLARI HARDENING
+- [x] Kullanıcı public ID üretiminde tarihsel ID registry tekrar kullanımını engelleyen kontrol eklendi.
+- [x] Oda public ID üretimi ayrı oda registry ile çakışma kontrolü yapıyor.
+- [x] Startup'ta sistem TXT dosyaları otomatik oluşturuluyor.
+- [x] Admin oda banı/unban artık 12 haneli public oda ID'sini kabul ediyor.
+- [x] Quality workflow'a ID/yetki smoke gate eklendi.
+- [ ] Bu son commitler için fresh Quality PASS henüz bekleniyor.
