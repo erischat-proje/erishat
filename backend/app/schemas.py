@@ -57,6 +57,7 @@ class UserOut(BaseModel):
     frame_asset: str | None = None
     is_active: bool
     lidya: int
+    lidya_gem: int = 0
     notifications_enabled: bool
     created_at: datetime
 
