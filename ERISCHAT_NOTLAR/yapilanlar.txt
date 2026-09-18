@@ -132,3 +132,8 @@ Room control checkpoint
 - [x] Commit 8eee5666b743d85b5ec33875e22780e18f538559: Browser backend smoke keşfetme tercihleri, nearby kullanıcılar, keşfedilebilir odalar ve random-room akışlarını doğruluyor.\n
 - [x] Commit 765c192bcfd42a728975b0054fc8025cd92ce42c: Browser backend smoke kullanıcı konumunu kaydetme ve `/me/location` read-back akışını doğruluyor.\n
 - [x] Commit 039bf915f6c61e27be29c84a5251b3ba42b7a242: Browser backend smoke DM conversation create/detail, mesaj gönderme ve mesaj geçmişinde read-back doğrulamasını sertleştirdi.\n
+
+2026-09-18 — BROWSER SMOKE ORDER FIX
+- [x] Commit düzeltmesi: frontend_backend_browser_smoke.mjs içinde oda oluşturma bloğu roomInvite/gift/room-control akışlarından önce tanımlanacak şekilde sıralandı; önceki checkpointte görünen room TDZ riskini kaldırdı.
+- [x] VIP public lookup hedefi için member user id test state'ine açıkça yazıldı.
+- [ ] Bu değişiklik sonrası yeni Quality runner sonucu henüz doğrulanmadı; PASS iddiası yok.
