@@ -234,3 +234,8 @@ Room control checkpoint
 - [x] Commit c10cd8fdea5c334ae5b8b6109eb4aaedf1f41fe5: authenticated room RTC signaling offer/ICE/leave queue akışı browser smoke içine eklendi.
 - [x] Mesajların hedef kullanıcıya teslim edilmesi, ikinci okumada tüketilmiş olması ve self-target reddi doğrulanıyor.
 - [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — RTC SIGNALING SECURITY SMOKE
+- [x] `scripts/rtc_signaling_security_smoke.mjs` eklendi: oda dışı GET/POST erişimi 403, oda üyesinin oda dışı hedefe sinyal göndermesi 404, geçersiz signal type 422 ve geçerli offer 200 beklentileri tanımlandı.
+- [ ] Bu yeni güvenlik smoke senaryosunun GitHub Actions Quality runner'ında çalıştırılması ve yeni PASS kanıtı alınması bekleniyor.
