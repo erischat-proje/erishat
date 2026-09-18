@@ -153,3 +153,9 @@
 - Failed/disconnected/leave peer kapanışında RTC metadata ve uzak audio elementleri temizleniyor.
 - Mikrofon kapanışında RTC metadata map'i de temizleniyor; yeniden açılışta eski peer state taşınmıyor.
 - Yeni Quality runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+## 2026-09-18 — RTC SIGNALING SMOKE COVERAGE
+- Commit: c10cd8fdea5c334ae5b8b6109eb4aaedf1f41fe5.
+- Browser smoke authenticated RTC offer/ICE/leave queue teslim-tüketim akışını ve self-target reddini kapsıyor.
+- Yeni Quality runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
