@@ -96,11 +96,6 @@ class GapCreate(BaseModel):
     message: str = Field(min_length=3, max_length=4000)
 
 
-@router.get("/me")
-def admin_me(db: Session = Depends(get_db), user: User = Depends(lambda: None)):
-    raise HTTPException(status_code=500, detail="auth dependency not configured")
-
-
 def register_admin_auth(current_user_dependency):
     @router.get("/me")
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
