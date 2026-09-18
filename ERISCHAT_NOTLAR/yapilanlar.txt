@@ -137,3 +137,8 @@ Room control checkpoint
 - [x] Commit düzeltmesi: frontend_backend_browser_smoke.mjs içinde oda oluşturma bloğu roomInvite/gift/room-control akışlarından önce tanımlanacak şekilde sıralandı; önceki checkpointte görünen room TDZ riskini kaldırdı.
 - [x] VIP public lookup hedefi için member user id test state'ine açıkça yazıldı.
 - [ ] Bu değişiklik sonrası yeni Quality runner sonucu henüz doğrulanmadı; PASS iddiası yok.
+
+
+2026-09-18 — SOCIAL/REPORT UI EXTENSION
+- [x] Commit e31fd934717c4b1af3d2bfe48b1f0797d06d963c: sosyal panel follow/unfollow + block/unblock UI, notification mark-read UI ve report history UI genişletildi.
+- [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
