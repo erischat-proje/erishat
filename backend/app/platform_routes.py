@@ -395,6 +395,96 @@ def register_platform_auth(current_user_dependency):
             data["segment"] = result
         return _save_game_play(db, user, game_type, choice, result, data)
 
+    @router.get("/games/{game_type}/analytics")
+    def game_analytics(game_type: str, limit: int = Query(1000, ge=10, le=5000), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        """Free-play analytics: theoretical profile vs observed results, recent trend and per-user choice accuracy."""
+        game_type = game_type.strip().lower()
+        if game_type not in GAME_TYPES:
+            raise HTTPException(status_code=404, detail="Oyun bulunamadı")
+        profile = GAME_PROFILES[game_type]
+        rows = list(db.scalars(select(GamePlay).where(GamePlay.game_type == game_type).order_by(GamePlay.created_at.desc()).limit(limit)))
+        total = len(rows)
+        expected = {key: float(weight) for key, weight in profile["results"]}
+        counts = {key: 0 for key in expected}
+        for row in rows:
+            counts[row.result_key] = counts.get(row.result_key, 0) + 1
+        observed = []
+        for key, weight in profile["results"]:
+            count = counts.get(key, 0)
+            rate = (count / total * 100) if total else 0.0
+            deviation = rate - float(weight)
+            observed.append({"key": key, "expected_rate": round(float(weight), 3), "count": count,
+                             "observed_rate": round(rate, 3), "deviation_pp": round(deviation, 3)})
+        streak_key = rows[0].result_key if rows else None
+        streak = 0
+        for row in rows:
+            if row.result_key != streak_key:
+                break
+            streak += 1
+        choice_count = 0
+        choice_hits = 0
+        for row in rows:
+            if row.choice:
+                choice_count += 1
+                choice_hits += int(row.choice == row.result_key)
+        extra = {}
+        if game_type == "crash":
+            multipliers = []
+            for row in rows:
+                try:
+                    value = float(json.loads(row.result_data).get("multiplier"))
+                    multipliers.append(value)
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    pass
+            if multipliers:
+                extra = {"multiplier_count": len(multipliers), "multiplier_min": min(multipliers),
+                         "multiplier_max": max(multipliers), "multiplier_average": round(sum(multipliers) / len(multipliers), 3)}
+        if game_type == "horse_race":
+            podium = {key: 0 for key in expected}
+            for row in rows:
+                try:
+                    order = json.loads(row.result_data).get("finish_order") or []
+                    for key in order[:3]:
+                        if key in podium:
+                            podium[key] += 1
+                except (TypeError, json.JSONDecodeError):
+                    pass
+            extra["podium_counts"] = podium
+        return {
+            "game": game_type,
+            "scope": "room" if game_type in ROOM_GAME_TYPES else "private",
+            "free_play": True,
+            "investment_required": False,
+            "sample_size": total,
+            "sample_limit": limit,
+            "theoretical_results": [{"key": key, "rate": round(float(weight), 3)} for key, weight in profile["results"]],
+            "observed_results": observed,
+            "recent_streak": {"result": streak_key, "length": streak},
+            "choice_accuracy": {"attempts": choice_count, "hits": choice_hits,
+                               "rate": round(choice_hits / choice_count * 100, 3) if choice_count else 0},
+            "extra": extra,
+            "note": "Gözlenen oranlar örneklem verisidir; teorik oranlardan sapma normaldir ve sonuç garantisi değildir."
+        }
+
+    @router.get("/games/analytics/overview")
+    def games_analytics_overview(limit: int = Query(1000, ge=10, le=5000), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        rows = list(db.scalars(select(GamePlay).order_by(GamePlay.created_at.desc()).limit(limit * len(GAME_TYPES))))
+        by_game = {key: [] for key in GAME_TYPES}
+        for row in rows:
+            if row.game_type in by_game and len(by_game[row.game_type]) < limit:
+                by_game[row.game_type].append(row)
+        result = []
+        for game_type, game_rows in by_game.items():
+            total = len(game_rows)
+            counts = {}
+            for row in game_rows:
+                counts[row.result_key] = counts.get(row.result_key, 0) + 1
+            top = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:3]
+            result.append({"game": game_type, "scope": "room" if game_type in ROOM_GAME_TYPES else "private",
+                           "sample_size": total,
+                           "top_results": [{"key": key, "count": count, "rate": round(count / total * 100, 3) if total else 0} for key, count in top]})
+        return {"free_play": True, "investment_required": False, "games": result}
+
     @router.get("/games/{game_type}/history")
     def game_history(game_type: str, limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
