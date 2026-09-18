@@ -12,14 +12,14 @@ from .system_logs import record
 
 class UserIdRegistry(Base):
     __tablename__ = "system_user_ids"
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(primary_key=True)
     public_id: Mapped[str] = mapped_column(String(10), unique=True, index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class RoomIdRegistry(Base):
     __tablename__ = "system_room_ids"
-    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
+    room_id: Mapped[str] = mapped_column(primary_key=True)
     public_id: Mapped[str] = mapped_column(String(12), unique=True, index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
