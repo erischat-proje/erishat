@@ -224,6 +224,18 @@ async function main(){
     return {pref,update:update.status,nearby:nearby.status,nearbyData:await nearby.json(),rooms:rooms.status,roomsData:await rooms.json(),randomRoom:randomRoom.status,randomRoomData:await randomRoom.json()};
   },API);
   if(discovery.update!==200||discovery.nearby!==200||discovery.rooms!==200||!Array.isArray(discovery.nearbyData)||!Array.isArray(discovery.roomsData)||![200,404].includes(discovery.randomRoom)) throw new Error('discovery surface failed: '+JSON.stringify(discovery));
+  const socialFlow=await page.evaluate(async ({api,targetId})=>{
+    const token=localStorage.getItem('erischat_access_token'); const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+    const follow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'POST',headers:h});
+    const following=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/following',{headers:h});
+    const followers=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/followers',{headers:h});
+    const unfollow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'DELETE',headers:h});
+    const block=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/block',{method:'POST',headers:h});
+    const blocks=await fetch(api+'/me/blocks',{headers:h});
+    const unblock=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/block',{method:'DELETE',headers:h});
+    return {follow:follow.status,following:following.status,followers:followers.status,unfollow:unfollow.status,block:block.status,blocks:blocks.status,blocksData:await blocks.json(),unblock:unblock.status};
+  },{api:API,targetId:member.user.id});
+  if(![200,201].includes(socialFlow.follow)||socialFlow.following!==200||socialFlow.followers!==200||![200,204].includes(socialFlow.unfollow)||![200,201].includes(socialFlow.block)||socialFlow.blocks!==200||![200,204].includes(socialFlow.unblock)) throw new Error('social follow/block browser chain failed: '+JSON.stringify(socialFlow));
   const roomInvite=await page.evaluate(async ({api,roomId,targetId})=>{
     const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
     const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/invite',{method:'POST',headers:h,body:JSON.stringify({user_id:targetId})});
