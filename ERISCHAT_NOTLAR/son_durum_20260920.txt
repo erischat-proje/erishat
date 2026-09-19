@@ -73,3 +73,5 @@ NOT
 - `06714ef1c0ed95c42e5581fbd6768b58de71a675`: müşteri demosuna etkileşimli oda hediye vitrini eklendi; alıcı + hediye seçimi ve demo gönderim akışı mevcut, gerçek ödeme iddiası yok.
 - `e5a50553d90ade089d9f804d68b6dea69968a179`: demo oda içindeki Hediye butonu artık boş toast yerine merkezi interaktif hediye demo yüzeyini açıyor.
 - Sonraki odak: ana müşteri demosundaki kalan yalnızca-bilgi/boş CTA'ları aynı şekilde gerçek veya açıkça demo test yüzeylerine bağlamak.
+
+- `cab01e13e75a28875236416204b89a8353b8b913`: ana oda demo yüzeyindeki Müzik ve Duyuru butonları boş toast yerine gerçek merkezi demo panellerine bağlandı; müzik backend kuyruğunu, duyuru backend yönetimini kullanıyor.
