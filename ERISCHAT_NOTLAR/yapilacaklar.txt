@@ -665,3 +665,14 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Demo aile paneli davet gönderme ve gelen davetleri kabul/reddet UI'sına bağlandı.
 - [ ] Fresh Quality/CI PASS henüz doğrulanmadı.
 - [ ] Gerçek 2-browser WebRTC + TURN/mobile doğrulaması hâlâ açık.
+
+
+[2026-09-19] AİLE INVITE / OWNER LIFECYCLE
+- [x] Aile daveti artık kullanıcıyı anında üye yapmak yerine FamilyInvitation üzerinden pending lifecycle başlatıyor.
+- [x] Davet listeleme, kabul, reddetme ve 7 günlük expiry akışı backend'e eklendi.
+- [x] Davet kabulünde FamilyMember + ConversationMember birlikte oluşturuluyor; kapasite kontrolü korunuyor.
+- [x] Aile sahipliği devri endpointi eklendi; mevcut owner member, hedef kullanıcı owner oluyor.
+- [x] Demo aile yüzeyinde davetler, kabul/reddet ve sahiplik devri aksiyonları bağlandı.
+- [x] Eski POST leave endpointi kaldırıldı; demo DELETE leave endpointine hizalandı.
+- [ ] Browser smoke ile gerçek davet kabul/reddet + ownership transfer E2E henüz doğrulanmadı.
+- [ ] Fresh Quality/CI PASS henüz doğrulanmadı; PASS varsayılmıyor.
