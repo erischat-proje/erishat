@@ -403,3 +403,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Duyuru demo ekranı gerçek GET/POST/PATCH/DELETE `/rooms/{room_id}/announcements` endpointlerine bağlandı.
 - [x] Listeleme, seçme, düzenleme, sabitleme, aç/kapat ve silme aksiyonları UI üzerinden gerçek API'ye gönderiliyor.
 - [ ] Gerçek yetkili kullanıcı browser E2E ve fresh Quality PASS hâlâ bekleniyor.
+
+2026-09-19 — ODA SOHBETİ BACKEND
+- [x] Oda üyesi için gerçek chat geçmişi GET endpointi eklendi.
+- [x] Oda chat mesajı POST endpointi eklendi; üyelik, chat_enabled ve RoomBan kontrolü var.
+- [x] Mesajlar room_id/user_id/text/created_at ile kalıcı RoomChatMessage tablosuna yazılıyor ve oda sistem loguna kaydediliyor.
+- [ ] Chat mute/moderasyon UI, realtime/WebSocket ve browser E2E henüz tamamlanmadı.
