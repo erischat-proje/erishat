@@ -1,0 +1,5 @@
+ERISCHAT OYUN MOTORU — HORSE RACE
+Kaynak kod: horse_race.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: free-play, 7 at, finish order, podium ve yarış animasyonu.
+Para/Lidya/Gem bahis bağlantısı yoktur.
