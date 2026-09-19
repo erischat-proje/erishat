@@ -14,5 +14,5 @@
   }
   window.ErisChatRoomList={load:loadRooms};
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{loadRooms();loadProductLayers();mountRoomGames();addRoomGamesButton();},{once:true}); else { loadRooms(); loadProductLayers(); mountRoomGames(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadRooms,{once:true}); else loadRooms();
 })();
