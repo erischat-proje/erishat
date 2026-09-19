@@ -112,6 +112,8 @@ jobs:
         run: node scripts/frontend_backend_browser_smoke.mjs
       - name: RTC signaling security smoke
         run: node scripts/rtc_signaling_security_smoke.mjs
+      - name: Real two-browser WebRTC smoke
+        run: node scripts/rtc_two_browser_smoke.mjs
 
       - name: System identity and admin smoke
         working-directory: backend
