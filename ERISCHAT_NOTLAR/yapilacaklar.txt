@@ -409,3 +409,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Oda chat mesajı POST endpointi eklendi; üyelik, chat_enabled ve RoomBan kontrolü var.
 - [x] Mesajlar room_id/user_id/text/created_at ile kalıcı RoomChatMessage tablosuna yazılıyor ve oda sistem loguna kaydediliyor.
 - [ ] Chat mute/moderasyon UI, realtime/WebSocket ve browser E2E henüz tamamlanmadı.
+
+2026-09-19 — ODA KOLTUK BACKEND
+- [x] 12 koltuklu oda için authenticated koltuk listeleme eklendi.
+- [x] Kullanıcı koltuk alma/bırakma akışı eklendi; üyelik, doluluk, kilit ve çift koltuk kontrolü var.
+- [ ] Moderator kilitleme/susturma UI, gerçek WebRTC signaling/transport ve browser E2E açık.
