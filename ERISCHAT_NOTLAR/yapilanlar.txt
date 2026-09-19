@@ -685,3 +685,5 @@ Room control checkpoint
 - [x] Log detay alanı `playback_action` olarak ayrıştırıldı; davranış ve endpoint sözleşmesi değişmedi.
 - [x] Fix commit: `ad001f8829c8e557d7e84d3decb45237d20d7a49`.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+[2026-09-19 devam 16] QUALITY #35439042739 — ROOM MODERATOR LIST ROUTE FIX
