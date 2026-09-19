@@ -41,14 +41,14 @@ async function main(){
   await page.waitForSelector('#chatBody .bubble.me');
   const dmVisible=await page.locator('#chatBody .bubble.me').count();
   if(dmVisible<1) throw new Error('DM bubble did not render');
-  const social=await page.evaluate(async ({api,targetId,memberToken})=>{
+  const social=await page.evaluate(async ({api,targetId,memberToken,ownerId})=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const follow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'POST',headers:h});
     const followers=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/followers',{headers:h}).then(r=>r.json());
     const fans=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/fans',{headers:h}).then(r=>r.json());
     const notifications=await fetch(api+'/me/notifications',{headers:{Authorization:'Bearer '+memberToken}}).then(r=>r.json());
-    const following=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/following',{headers:h}).then(r=>r.json());
+    const following=await fetch(api+'/users/'+encodeURIComponent(ownerId)+'/following',{headers:h}).then(r=>r.json());
     const block=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/block',{method:'POST',headers:h});
     const blocks=await fetch(api+'/me/blocks',{headers:h}).then(r=>r.json());
     const unblock=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/block',{method:'DELETE',headers:h});
@@ -56,7 +56,7 @@ async function main(){
     const privacyBack=await fetch(api+'/me/privacy',{headers:h}).then(r=>r.json());
     const unfollow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'DELETE',headers:h});
     return {follow:follow.status,followers,following,fans,notifications,unfollow:unfollow.status,block:block.status,blocks,unblock:unblock.status,privacy:privacy.status,privacyBack};
-  },{api:API,targetId:member.user.id,memberToken:member.access_token});
+  },{api:API,targetId:member.user.id,memberToken:member.access_token,ownerId:owner.id});
   if(social.follow!==201||!social.followers.some(x=>x.user_id===owner.id)) throw new Error('follow flow failed: '+JSON.stringify(social));
   if(!social.notifications.some(x=>x.kind==='follow')) throw new Error('follow notification missing: '+JSON.stringify(social));
   if(social.fans?.total < 1 || social.fans?.level < 1) throw new Error('fan profile flow failed: '+JSON.stringify(social));
