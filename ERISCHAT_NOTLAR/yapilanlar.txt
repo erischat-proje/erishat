@@ -538,3 +538,11 @@ Room control checkpoint
 - [x] Commit d94f5a68da4be8d214ddc3f7280efdc979900e1d ile geçerli `name/on/permissions/env/jobs/quality` yapısı geri yüklendi.
 - [x] VIP lifecycle static gate ve `VIP spend lifecycle browser smoke` adımı workflow'a korunarak eklendi.
 - [ ] Bu düzeltme sonrası yeni Quality run conclusion henüz doğrulanmadı; gerçek job/step sonucu görülmeden PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam — PROFILE VIP REGEX FIX]
+- [x] Quality #1283 gerçek job ile çalıştı ve Step 8 static syntax gate'te durdu.
+- [x] Gerçek logda frontend/profile-ui-live.js içindeki `replace(/\\\\/$/, '')` ifadesinin Node tarafından `Invalid regular expression flags` verdiği doğrulandı.
+- [x] Hatalı regex `replace(/\\/$/, '')` olarak düzeltildi.
+- [x] Commit cdb0c03d5923e22cd27a429cc679436d7564856d.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı.
