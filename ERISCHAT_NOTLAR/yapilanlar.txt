@@ -610,3 +610,10 @@ Room control checkpoint
 - [x] Browser smoke düzeltmesi: follow/block/privacy owner token ile; follow notification ve notification-read akışı member token ile doğrulanacak şekilde ayrıştırıldı.
 - [x] Fix commit: `a05c9c6055238e653decde72045df73508ca486d`.
 - [ ] Bu düzeltme sonrası fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19] QUALITY #895 — FOLLOWING ACTOR ENDPOINT FIX
+- [x] Quality #895 logunda follow 201 ve followers/fans doğru olduğu halde `following` assertion'ının yanlış kullanıcı endpointini (`targetId`/takip edilen kullanıcı) sorguladığı tespit edildi.
+- [x] Smoke test artık owner'ın `/users/{ownerId}/following` endpointini kontrol ediyor; böylece owner -> member follow ilişkisi doğru aktörden doğrulanıyor.
+- [x] Fix commit: `f670b602c97709f2188d2a9d9c49c55afada3315`.
+- [ ] Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
