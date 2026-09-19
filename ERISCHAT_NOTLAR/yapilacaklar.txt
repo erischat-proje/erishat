@@ -731,3 +731,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] GET moderator listing route eklendi.
 - [x] Fix commit: `3c5f1c1f2b2a0d4e9e9d5d7e8f7a5b6c4d3e2f1a`.
 - [ ] Yeni Fresh Quality sonucu doğrulanacak.
+
+
+[2026-09-19 devam 17] MUSIC PLAYBACK HTTP ROOT FIX
+- [x] Quality #967 gerçek failure'ı doğrulandı: `playData.position_seconds` beklenen 3 yerine 0 geldi.
+- [x] Canonical room router'a HTTP music playback endpointi eklendi; `action` dış sözleşmesi `playback_action` iç model alanına ayrıştırıldı.
+- [x] `play` ve `seek` işlemleri istenen position değerini koruyor; pause/stop state güncellemesi eklendi.
+- [x] Fix commit: `9e88bf569d37e29c1a40ac8a9aec9d6ea75e52dc`.
+- [ ] Yeni Quality/CI run sonucu doğrulanacak; PASS ilan edilmeyecek.
