@@ -17,7 +17,7 @@ from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
-from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic
+from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomChatMessage, RoomBan
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
@@ -84,6 +84,8 @@ class AnnouncementUpdate(BaseModel):
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128)
     source_url: str = Field(min_length=8, max_length=2000)
+class RoomChatCreate(BaseModel):
+    text: str = Field(min_length=1, max_length=1000)
 class MusicPlayback(BaseModel):
     action: str = Field(pattern="^(play|pause|stop|seek)$")
     position_seconds: int | None = Field(default=None, ge=0, le=86400)
@@ -229,6 +231,34 @@ def register_platform_auth(current_user_dependency):
             "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem),
             "reference_id": reference_id,
         }
+
+    @router.get("/rooms/{room_id}/chat")
+    def room_chat_list(room_id: str, before_id: int | None = Query(default=None, ge=1), limit: int = Query(default=50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = db.get(Room, room_id)
+        if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
+        if not member: raise HTTPException(status_code=403, detail="Odaya üye değilsiniz")
+        q = select(RoomChatMessage).where(RoomChatMessage.room_id == room_id)
+        if before_id is not None: q = q.where(RoomChatMessage.id < before_id)
+        rows = db.scalars(q.order_by(RoomChatMessage.id.desc()).limit(limit)).all()
+        rows.reverse()
+        return [{"id": x.id, "room_id": x.room_id, "user_id": x.user_id, "text": x.text, "created_at": x.created_at} for x in rows]
+
+    @router.post("/rooms/{room_id}/chat")
+    def room_chat_send(room_id: str, payload: RoomChatCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = db.get(Room, room_id)
+        if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
+        if not member: raise HTTPException(status_code=403, detail="Odaya üye değilsiniz")
+        if not room.chat_enabled: raise HTTPException(status_code=403, detail="Oda sohbeti kapalı")
+        ban = db.scalar(select(RoomBan.id).where(RoomBan.room_id == room_id, RoomBan.user_id == user.id))
+        if ban: raise HTTPException(status_code=403, detail="Bu odada yasaklısınız")
+        row = RoomChatMessage(room_id=room_id, user_id=user.id, text=payload.text.strip())
+        db.add(row); db.flush()
+        record(db, "room_chat_message_created", actor_id=user.id, target_id=room_id, details={"message_id": row.id})
+        db.commit()
+        db.refresh(row)
+        return {"id": row.id, "room_id": row.room_id, "user_id": row.user_id, "text": row.text, "created_at": row.created_at}
 
     @router.get("/me/vip")
     def my_vip(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
