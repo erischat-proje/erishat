@@ -683,3 +683,9 @@ Room control checkpoint
 [2026-09-19 — ODA JOIN AKIŞI]
 - [x] Oda kartında openRoom() sonrası tekrar ErisRoom.join() çağıran duplicate join kaldırıldı; oda katılımı artık tek noktadan yönetiliyor.
 - Commit: db5715fe5763f61ff2fd535078b84900d8b9414c.
+
+
+[2026-09-19 — ODA HEDİYE PANELİ KRİTİK DÜZELTME]
+- [x] Floating hediye FAB kaldırıldıktan sonra panel initializer'ın hâlâ FAB elementini arayıp erken dönmesi bulundu.
+- [x] Kontrol artık doğrudan `#erischatGiftPanel` üzerinden yapılıyor; oda içindeki 🎁 butonu paneli gerçekten oluşturup açabilecek.
+- Commit: 5f5b74ccb0d60ea4755c09a056583143afff4365.
