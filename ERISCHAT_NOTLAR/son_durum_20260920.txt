@@ -117,3 +117,5 @@ NOT
 - `cb3fb39ee3a98ecdd2d8d141aee3bb76df3105f4`: Aile üye listesi artık backend hatasını gerçek 'liste boş' durumundan ayırıyor; yenileme de hata durumunu görünür tutuyor.
 
 - `6a2fac8992675b04adf827acdcaf394360b51865`: Keşif sonuç kartlarına mevcut kimlik alanları varsa doğrudan `Sohbet` veya `Odayı aç` aksiyonu eklendi; sonuçlar artık yalnızca görüntülenmekle kalmıyor.
+
+- `62d50e24be8a14464413234cb5a3d4ad0d04314d`: Şikayet gönderme paneline kalıcı durum geri bildirimi eklendi; doğrulama ve backend hataları artık yalnızca toast yerine panel içinde gösteriliyor, gönderim sırasında buton kilitleniyor.
