@@ -692,3 +692,9 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 7] RTC smoke artık /rtc-config endpointini gerçek owner tokenıyla çağırıp dönen ice_servers listesini RTCPeerConnection'a doğrudan geçiriyor; böylece yapılandırılmış TURN/STUN ayarları smoke tarafından kullanılabilir. Commit 5e67394. Gerçek TURN dış ağ doğrulaması için gerçek TURN credential/deployment hâlâ gerekli.
 
 [2026-09-19 devam 8] Fresh Quality #893 (78927b3) öncesi #? run incelemesinde Family production integrity adımının eski main.py production family route/markerlarını beklediği görüldü. Mevcut mimaride aile route'ları canonical family_router altında; main.py yalnızca register_family_auth + include_router(family_router) ile bağlı ve platform_router'da aile route'u yok. Integrity testi bu gerçek mimariye hizalandı; invitation list, ownership transfer ve DELETE leave route'ları da canonical kontrol listesine eklendi. Fix commit 78927b3. Yeni Quality sonucu ayrıca doğrulanacak.
+
+[2026-09-19 devam 10] FAMILY INVITATION LIST ROUTE
+- [x] Family production integrity failure kökü doğrulandı: `GET /families/invitations` route'u gerçekten eksikti.
+- [x] Canonical `GET /v1/families/invitations` route'u eklendi; pending davet inbox'ı ve expiry temizliği sağlandı.
+- [x] Commit: `b0640cbda36e3218777c6d3a4a1568ae4efb0af5`.
+- [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
