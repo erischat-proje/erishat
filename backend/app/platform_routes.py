@@ -550,7 +550,13 @@ def register_platform_auth(current_user_dependency):
             })
         else:
             data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v4", "animation": {"duration_ms": 1800, "reveal_ms": 1200}}
-            result, data = engine.play(choice, GAME_PROFILES[game_type], data)
+            try:
+                result, data = engine.play(choice, GAME_PROFILES[game_type], data)
+            except (KeyError, TypeError, ValueError) as exc:
+                raise HTTPException(status_code=422, detail=f"Oyun motoru sonucu oluşturamadı: {exc}")
+            if not result or not isinstance(data, dict):
+                raise HTTPException(status_code=500, detail="Oyun motoru geçersiz sonuç üretti")
+            data.setdefault("result", result)
         round_id = data["round_id"]
         now = datetime.now(timezone.utc)
         db.add(GameRound(
