@@ -11,8 +11,19 @@ try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   const consoleErrors = [];
+  await page.addInitScript(() => {
+    window.addEventListener('error', e => {
+      window.__erisWindowErrors = window.__erisWindowErrors || [];
+      window.__erisWindowErrors.push({
+        message: e.message,
+        source: e.filename || '',
+        line: e.lineno || 0,
+        column: e.colno || 0
+      });
+    });
+  });
   page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
-  page.on('pageerror', e => errors.push(`${e.message} @ ${e.stack || 'no-stack'}`));
+  page.on('pageerror', e => errors.push({ message: e.message, stack: e.stack || '' }));
 
   await page.route('**/v1/**', async route => {
     const url = new URL(route.request().url());
@@ -38,7 +49,15 @@ try {
   await page.locator('#chatInput').press('Enter');
   await page.waitForSelector('#chatBody .bubble.me');
 
-  if (errors.length || consoleErrors.length) throw new Error('browser errors: ' + [...errors, ...consoleErrors].join(' | '));
+  const sourceErrors = await page.evaluate(() => window.__erisWindowErrors || []);
+  if (errors.length || consoleErrors.length || sourceErrors.length) {
+    const details = [
+      ...errors.map(e => `pageerror: ${e.message}${e.stack ? `\n${e.stack}` : ''}`),
+      ...consoleErrors.map(e => `console: ${e}`),
+      ...sourceErrors.map(e => `windowerror: ${e.message} @ ${e.source}:${e.line}:${e.column}`)
+    ];
+    throw new Error('browser errors: ' + details.join(' | '));
+  }
   console.log('FRONTEND_BROWSER_SMOKE_PASS navigation=shop,profile,explore room_list=1 chat_send=1');
   await browser.close();
 } finally {
