@@ -148,11 +148,19 @@
     modal('⚙️ Oda sahibi ayarları',settings.map(x=>card(`<div style="display:flex;justify-content:space-between"><b>${x[0]}</b><span style="font-size:8px">${esc(x[1])}</span></div>`)).join('<div style="height:6px"></div>'));
   }
 
-  function mount(){
-    if(document.getElementById('erisDemoExtras'))return;
-    const wrap=document.createElement('div');wrap.id='erisDemoExtras';wrap.style.cssText='position:fixed;right:14px;bottom:72px;z-index:289;display:flex;flex-direction:column;gap:5px;align-items:flex-end;max-width:170px';
-    const groups=[['🎙️ Ses/Koltuk',seatsDemo],['💬 Oda Sohbeti',roomChatDemo],['🎵 Müzik',musicDemo],['📢 Duyuru',announcementDemo],['👑 Aile',familyDemo],['🛍️ 139 Mağaza',storeDemo],['👤 Profil Try-on',profileDemo],['🛡️ Güvenlik/Mod',safetyDemo],['🚀 Onboarding',onboardingDemo],['⚙️ Oda Ayarları',roomSettingsDemo]];
-    groups.forEach(([t,fn])=>{const b=button(t,fn);b.style.fontSize='8px';wrap.append(b)});document.body.append(wrap);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+  // Eski floating demo araç çubuğu kaldırıldı.
+  // Sistemler artık tek bir merkezi arayüzden açılacak.
+  window.ErisDemoExtras = Object.freeze({
+    seats: seatsDemo,
+    roomChat: roomChatDemo,
+    music: musicDemo,
+    announcement: announcementDemo,
+    family: familyDemo,
+    store: storeDemo,
+    profile: profileDemo,
+    safety: safetyDemo,
+    onboarding: onboardingDemo,
+    roomSettings: roomSettingsDemo
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{}, {once:true});
 })();
