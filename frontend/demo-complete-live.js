@@ -67,25 +67,26 @@
 
   async function gamesDemo(scope='main', roomId=null) {
     const games = [
-      ['quiz','🧠 Hızlı Quiz','Kısa bilgi soruları; puan ve seri takibi.'],
-      ['memory','🧩 Hafıza','Kart eşleştirme; en kısa sürede tamamlamaya çalış.'],
-      ['word','🔤 Kelime Oyunu','Harflerden kelime oluştur ve skorunu yükselt.'],
-      ['reflex','⚡ Refleks','Ekrandaki hedefe zamanında dokun; tepki süreni ölç.']
+      ['roulette','🎰 Rulet','Oda oyunu • demo arayüzü'],
+      ['cups','🥤 4 Kupa','Oda oyunu • demo arayüzü'],
+      ['horse_race','🐎 At Yarışı','Oda oyunu • demo arayüzü'],
+      ['blackjack','🃏 Blackjack','Kişisel oyun • demo arayüzü'],
+      ['crash','🚀 Crash','Kişisel oyun • demo arayüzü'],
+      ['vault','🎁 Kasa Açma','Kişisel oyun • demo arayüzü'],
+      ['wheel','🎡 Şans Çarkı','Kişisel oyun • demo arayüzü']
     ];
     const body=document.createElement('div');
-    body.innerHTML='<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Ücretsiz, güvenli mini oyunlar • puan ve kişisel skor takibi.</small></div><div id="gameGrid" style="display:grid;grid-template-columns:1fr;gap:8px"></div>';
+    body.innerHTML='<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">7 oyun • oda ve kişisel oyun ekranları.</small></div><div id="gameGrid" style="display:grid;grid-template-columns:1fr;gap:8px"></div>';
     const grid=body.querySelector('#gameGrid');
     games.forEach(([key,title,desc])=>{
       const el=document.createElement('div');el.style.cssText='background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px';
-      el.innerHTML='<b>'+esc(title)+'</b><small style="display:block;color:#938a9f;margin:5px 0 8px">'+esc(desc)+'</small><div style="display:flex;gap:5px;flex-wrap:wrap"><button data-play style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800">▶ Başlat</button><button data-history style="border:1px solid #ffffff12;border-radius:10px;background:#ffffff08;color:#fff;padding:9px 10px;font-size:9px">🏆 Skorum</button></div><div data-out></div>';
+      el.innerHTML='<b>'+esc(title)+'</b><small style="display:block;color:#938a9f;margin:5px 0 8px">'+esc(desc)+'</small><div style="display:flex;gap:5px;flex-wrap:wrap"><button data-play style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800">▶ Oyna</button><button data-history style="border:1px solid #ffffff12;border-radius:10px;background:#ffffff08;color:#fff;padding:9px 10px;font-size:9px">🕘 Geçmiş</button></div><div data-out></div>';
       const out=el.querySelector('[data-out]');
       el.querySelector('[data-play]').onclick=()=>{
-        const prompts={quiz:'Soru: Türkiye’nin başkenti hangisidir?\nA) Ankara   B) İzmir   C) Bursa',memory:'Kartları eşleştir: 🍎  🍋  🍎  🍋',word:'Harfler: E • R • İ • S • C • H • A • T',reflex:'Hazır… 3 • 2 • 1 • ŞİMDİ!'};
-        const answers={quiz:'Doğru cevap: A) Ankara',memory:'Eşleşmeler bulundu! Süre: 4.2 sn',word:'Kelime bulundu: ERİSCHAT',reflex:'Tepki süresi: 0.38 sn'};
-        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12;white-space:pre-line"><b>'+esc(prompts[key])+'</b><br>'+esc(answers[key])+'<br><small>Demo skoru kaydedildi.</small></div>';
+        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12"><b>'+esc(title)+' açıldı.</b><br><small>Oyun arayüzü ve seçim alanı hazır. '+esc(scope==='room'?'Oda içi':'Kişisel')+' demo modu.</small></div>';
       };
       el.querySelector('[data-history]').onclick=()=>{
-        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🏆 Kişisel skor</b><small style="display:block;margin-top:4px">Bugün: 3 oyun • En iyi seri: 5 • Son skor: 920</small></div>';
+        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🕘 Oyun geçmişi</b><small style="display:block;margin-top:4px">Bu oyuna ait geçmiş burada görüntülenir.</small></div>';
       };
       grid.append(el);
     });
