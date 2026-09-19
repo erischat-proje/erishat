@@ -300,14 +300,44 @@ async function main(){
   },API);
   if(family.create!==201||!family.id||family.detail?.id!==family.id||Number(family.donation?.balance)!==40000||Number(family.donation?.level)!==2) throw new Error('family browser backend chain failed: '+JSON.stringify(family));
   await page.evaluate(id => localStorage.setItem('eris_family_id', id), family.id);
-  const memberAdd=await page.evaluate(async ({api,familyId,userId})=>{
-    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+  const familyInvite=await page.evaluate(async ({api,familyId,userId})=>{
+    const token=localStorage.getItem('erischat_access_token');
+    const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
     return {status:r.status,data:await r.json()};
   },{api:API,familyId:family.id,userId:member.user.id});
-  if(memberAdd.status!==200&&memberAdd.status!==201) throw new Error('family member add failed: '+JSON.stringify(memberAdd));
-  const familyReportFlow=await page.evaluate(async ({api,targetId})=>{ const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'}; const create=await fetch(api+'/reports',{method:'POST',headers:h,body:JSON.stringify({target_user_id:targetId,category:'spam',reason:'browser smoke report'})}); const data=await create.json(); const history=await fetch(api+'/me/reports',{headers:h}).then(r=>r.json()); return {status:create.status,data,history}; },{api:API,targetId:member.user.id});
-  if(familyReportFlow.status!==201||!familyReportFlow.data?.id||!familyReportFlow.history.some(x=>x.id===familyReportFlow.data.id||x.reason==='browser smoke report')) throw new Error('report history flow failed: '+JSON.stringify(familyReportFlow));
+  if(familyInvite.status!==201||!familyInvite.data?.id||familyInvite.data.status!=='pending') throw new Error('family invitation create failed: '+JSON.stringify(familyInvite));
+  const memberInvites=await page.evaluate(async ({api,token})=>fetch(api+'/families/invitations',{headers:{Authorization:'Bearer '+token}}).then(async r=>({status:r.status,data:await r.json()})),{api:API,token:member.access_token});
+  if(memberInvites.status!==200||!memberInvites.data.some(x=>x.id===familyInvite.data.id&&x.status==='pending')) throw new Error('family invitation inbox failed: '+JSON.stringify(memberInvites));
+  const accepted=await page.evaluate(async ({api,token,id})=>{const r=await fetch(api+'/families/invitations/'+encodeURIComponent(id)+'/accept',{method:'POST',headers:{Authorization:'Bearer '+token}});return {status:r.status,data:await r.json()};},{api:API,token:member.access_token,id:familyInvite.data.id});
+  if(accepted.status!==200||accepted.data?.accepted!==true) throw new Error('family invitation accept failed: '+JSON.stringify(accepted));
+  const membersAfterAccept=await page.evaluate(async ({api,token,familyId})=>fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),{api:API,token:member.access_token,familyId:family.id});
+  if(!membersAfterAccept.some(x=>x.user_id===member.user.id)) throw new Error('accepted family member missing: '+JSON.stringify(membersAfterAccept));
+  const transfer=await page.evaluate(async ({api,familyId,userId})=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/transfer-ownership',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id,userId:member.user.id});
+  if(transfer.status!==200||transfer.data?.owner_id!==member.user.id) throw new Error('family ownership transfer failed: '+JSON.stringify(transfer));
+  const ownerLeave=await page.evaluate(async ({api,familyId})=>{
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/leave',{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id});
+  if(ownerLeave.status!==200||ownerLeave.data?.left!==true) throw new Error('former owner leave after transfer failed: '+JSON.stringify(ownerLeave));
+  const rejectUser=await page.evaluate(async api=>{
+    const suffix=Math.random().toString(36).slice(2,8);
+    const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'Reject_'+suffix,avatar:'🐻',gender:'male'})});
+    return r.json();
+  },API);
+  if(!rejectUser?.user?.id||!rejectUser?.access_token) throw new Error('family reject user registration failed');
+  const rejectInvite=await page.evaluate(async ({api,familyId,userId})=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id,userId:rejectUser.user.id});
+  if(rejectInvite.status!==201||!rejectInvite.data?.id) throw new Error('family reject invitation create failed: '+JSON.stringify(rejectInvite));
+  const rejected=await page.evaluate(async ({api,token,id})=>{const r=await fetch(api+'/families/invitations/'+encodeURIComponent(id)+'/reject',{method:'POST',headers:{Authorization:'Bearer '+token}});return {status:r.status,data:await r.json()};},{api:API,token:rejectUser.access_token,id:rejectInvite.data.id});
+  if(rejected.status!==200||rejected.data?.rejected!==true) throw new Error('family invitation reject failed: '+JSON.stringify(rejected));
   const familyInviteNotifications=await page.evaluate(async token=>fetch(API+'/me/notifications',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),member.access_token);
   if(!familyInviteNotifications.some(x=>x.kind==='family_invite')) throw new Error('family invite notification missing: '+JSON.stringify(familyInviteNotifications));
   const dmAccessFlow=await page.evaluate(async ({api,targetId})=>{
