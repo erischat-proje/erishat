@@ -133,19 +133,33 @@
   }
 
   function safetyDemo(){
-    const cards=[['🔔 Bildirim merkezi','Okunmamış DM, hediye, aile, VIP ve oda olayları tek listede.','Demo bildirim akışı'],['🚫 Engelleme','Kullanıcıyı engelle / kaldır ve DM görünürlüğünü yönet.','Backend endpointi sonraki tur'],['🛡️ Güvenlik','Oturum, gizlilik, şikayet ve moderasyon kontrolleri.','Mevcut API + demo yönetim yüzeyi'],['🧰 Admin / Mod','Rapor kuyruğu, kullanıcı/oda işlemleri, ban ve denetim.','Yönetim UI demo yüzeyi']];
-    const m=modal('🛡️ Bildirim • Güvenlik • Moderasyon',cards.map(x=>card(`<b>${x[0]}</b><small style="display:block;color:#d5cddd;margin-top:4px">${x[1]}</small><span style="display:block;font-size:7px;color:#938a9f;margin-top:5px">${x[2]}</span>`)).join('<div style="height:7px"></div>'));
-    m.querySelector('#demoExtraBody').insertAdjacentHTML('beforeend','<div style="margin-top:9px">'+card('<b>⚠️ Not</b><small style="display:block;color:#938a9f;margin-top:4px">Bildirim, engelleme ve admin yönetimi için henüz doğrulanmış production endpointi yok; bu yüzden burada sahte canlılık iddiası yapılmıyor.</small>')+'</div>');
+    const m=modal('🛡️ Bildirim • Güvenlik • Moderasyon',`<div style="display:grid;gap:8px">
+      <div id="safeNotice">${card('<b>🔔 Bildirim merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Okunmamış DM, hediye, aile, VIP ve oda olaylarını demo olarak test et.</small>')}</div>
+      <div id="safeBlock">${card('<b>🚫 Engelleme</b><small style="display:block;color:#938a9f;margin-top:4px">Kullanıcı engelleme durumunu demo içinde aç/kapat.</small>')}</div>
+      <div id="safePrivacy">${card('<b>🔒 Gizlilik</b><small style="display:block;color:#938a9f;margin-top:4px">VIP, rozet ve konum görünürlüğünü kontrol et.</small>')}</div>
+      <div id="safeAdmin">${card('<b>🧰 Moderasyon</b><small style="display:block;color:#938a9f;margin-top:4px">Rapor inceleme ve işlem durumlarını demo olarak gör.</small>')}</div>
+    </div>`);
+    const notice=m.querySelector('#safeNotice'); notice.append(button('🔔 3 bildirimi okundu yap',()=>{notice.innerHTML=card('<b>✓ Bildirim merkezi</b><small style="display:block;color:#61e6af;margin-top:4px">Tüm demo bildirimleri okundu.</small>');}));
+    const block=m.querySelector('#safeBlock'); let blocked=false; block.append(button('🚫 Engelle',()=>{blocked=!blocked;block.querySelector('button').textContent=blocked?'↩ Engeli kaldır':'🚫 Engelle';block.querySelector('small').textContent=blocked?'Demo kullanıcı engellendi.':'Kullanıcı engelli değil.';}));
+    const privacy=m.querySelector('#safePrivacy'); let hidden=false; privacy.append(button('👁 VIP görünürlüğünü değiştir',()=>{hidden=!hidden;privacy.querySelector('small').textContent=hidden?'VIP görünürlüğü gizli (demo).':'VIP görünürlüğü açık (demo).';}));
+    const admin=m.querySelector('#safeAdmin'); admin.append(button('🛡 Örnek raporu incele',()=>{admin.querySelector('small').textContent='Rapor #DEMO-001 incelendi • işlem bekliyor.';}));
   }
 
   function onboardingDemo(){
-    const steps=[['1','👋 Hoş geldin','Anonim giriş / oturum'],['2','✏️ Takma ad','Kullanıcı adı seç'],['3','♂♀ Cinsiyet','Profil tercihi'],['4','🖼 Avatar','139 kozmetik içinden başlangıç görünümü'],['5','🎯 İlgi alanları','Keşif kişiselleştirme'],['6','🔒 Gizlilik','VIP / rozet / konum görünürlüğü'],['7','🚀 Başla','Odalar + keşif + DM']];
-    const m=modal('🚀 İlk kullanım / onboarding',`<div id="onboard" style="display:grid;gap:7px">${steps.map((x,i)=>card(`<div style="display:flex;gap:8px;align-items:center"><b style="font-size:15px">${x[0]}</b><div><b>${x[1]}</b><small style="display:block;color:#938a9f;margin-top:2px">${x[2]}</small></div><span style="margin-left:auto;font-size:8px">${i===0?'AKTİF':'BEKLEMEDE'}</span></div>`)).join('')}</div><div style="display:flex;gap:6px;margin-top:9px" id="onboardBtns"></div>`); ['← Geri','İleri →','Tamamla ✓'].forEach(t=>m.querySelector('#onboardBtns').append(button(t,()=>window.toast?.(`${t} demo adımı`))));
+    const steps=[['👋 Hoş geldin','Anonim giriş / oturum'],['✏️ Takma ad','Kullanıcı adı seç'],['♂♀ Cinsiyet','Profil tercihi'],['🖼 Avatar','Başlangıç görünümü'],['🎯 İlgi alanları','Keşif kişiselleştirme'],['🔒 Gizlilik','Görünürlük tercihleri'],['🚀 Başla','Odalar + keşif + DM']];
+    let index=0;
+    const m=modal('🚀 İlk kullanım / onboarding','<div id="onboard"></div><div style="display:flex;gap:6px;margin-top:9px" id="onboardBtns"></div>');
+    const draw=()=>{m.querySelector('#onboard').innerHTML=card('<div style="display:flex;align-items:center;gap:10px"><b style="font-size:20px">'+(index+1)+'</b><div><b>'+esc(steps[index][0])+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+esc(steps[index][1])+'</small></div></div><div style="height:5px;background:#ffffff0a;border-radius:5px;margin-top:10px"><div style="height:5px;width:'+(((index+1)/steps.length)*100)+'%;border-radius:5px;background:linear-gradient(90deg,#754cff,#ff4fa3)"></div></div><small style="display:block;color:#938a9f;margin-top:7px">'+(index+1)+' / '+steps.length+'</small>');};
+    const bs=m.querySelector('#onboardBtns');
+    bs.append(button('← Geri',()=>{index=Math.max(0,index-1);draw();}),button('İleri →',()=>{if(index<steps.length-1){index++;draw();}else window.toast?.('Onboarding demo tamamlandı ✓');}),button('Tamamla ✓',()=>window.toast?.('Onboarding demo tamamlandı ✓')));
+    draw();
   }
 
   function roomSettingsDemo(){
-    const settings=[['🔒 Odayı kilitle',true],['👥 Maksimum kişi','50'],['💬 Sohbet','Açık'],['🎁 Hediyeler','Açık'],['🎵 Müzik','Açık'],['🛡 Moderatörler','3'],['📢 Duyuru','Açık'],['🚪 Odayı kapat','İşlem']];
-    modal('⚙️ Oda sahibi ayarları',settings.map(x=>card(`<div style="display:flex;justify-content:space-between"><b>${x[0]}</b><span style="font-size:8px">${esc(x[1])}</span></div>`)).join('<div style="height:6px"></div>'));
+    const settings=[['🔒 Odayı kilitle',true],['💬 Sohbet',true],['🎁 Hediyeler',true],['🎵 Müzik',true],['📢 Duyuru',true]];
+    const m=modal('⚙️ Oda sahibi ayarları','<div id="roomSettings"></div><div style="margin-top:9px">'+card('<small style="color:#938a9f">Değişiklikler bu müşteri demo oturumunda gösterilir; backend oda ayarını değiştirdiği iddia edilmez.</small>')+'</div>');
+    const draw=()=>{m.querySelector('#roomSettings').innerHTML=settings.map((s,i)=>card('<label style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>'+s[0]+'</b><input type="checkbox" '+(s[1]?'checked':'')+' data-setting="'+i+'"></label>')).join('<div style="height:6px"></div>');m.querySelectorAll('[data-setting]').forEach(x=>x.onchange=()=>{settings[Number(x.dataset.setting)][1]=x.checked;window.toast?.('Demo ayarı güncellendi ✓');});};
+    draw();
   }
 
   // Eski floating demo araç çubuğu kaldırıldı.
