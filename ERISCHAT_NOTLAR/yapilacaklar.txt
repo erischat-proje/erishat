@@ -1036,3 +1036,9 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam — Quality root cause]
 - Quality #1159 fail nedeni bulundu: cosmetics_browser_render.mjs eski 139 asset beklentisinde kalmış; gerçek tarama 171 asset buldu (147 avatar/frame + 24 wallpaper).
 - Test beklentisi 171'e güncellendi; yeni Quality sonucu bekleniyor.
+
+
+[2026-09-19 devam — SVG frame browser QA]
+- [x] cosmetics_browser_render SVG frame decode/alpha kontrolünü kapsayacak şekilde genişletildi.
+- [x] Browser render testi standart çerçeve koleksiyonunun tam 40 dosya olduğunu ayrıca assert ediyor.
+- [ ] Quality #1162 sonrası yeni sonuç bekleniyor; PASS varsayılmayacak.
