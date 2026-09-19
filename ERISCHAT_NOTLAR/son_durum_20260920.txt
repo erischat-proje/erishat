@@ -131,3 +131,5 @@ NOT
 - `48a8b478054e6d6bf9fa7d2158d678290d7a819b`: Feature Hub VIP merkezi gerçek `/me/vip` verisiyle toplam harcama, sonraki VIP eşiği ve seviye içi ilerleme çubuğunu göstermeye başladı; eşikler VIP 1–12 sistemiyle hizalandı.
 
 - `f05e8605ea62e83f4c2239fbb5dcd56a44056445`: Aile demo fonksiyonunda `await` kullanılmasına rağmen fonksiyonun `async` olmaması düzeltildi; aile/üye/sohbet yükleme akışı artık JavaScript sözdizimi hatasına takılmadan başlatılabilir.
+
+- `4e5e9c8b921e57590bd5c67e00f93fb742543fdc`: `demo-extras-live.js` içindeki backend `await` kullanan üst seviye demo yükleyicileri (`seatsDemo`, `roomChatDemo`, `musicDemo`, `announcementDemo`, `familyDemo`, `storeDemo`, `profileDemo`) `async` olarak işaretlendi; böylece demo sistemleri açılırken sözdizimi kaynaklı çalışma hatası riski giderildi.
