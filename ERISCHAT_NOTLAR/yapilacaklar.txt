@@ -1081,5 +1081,7 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `frontend/demo.html` ile tek girişli müşteri demo kabuğu oluşturuldu.
 - [x] VIP 1–12, Oyunlar, Demo Kontrol ve Ana Uygulama hızlı girişleri eklendi.
 - [x] Main frontend script-tag hatası düzeltildi.
-- [ ] Fresh Quality sonucu kontrol edilecek.
+- [x] Quality #1216'da demo surface integrity, frontend browser smoke ve cosmetics browser render geçti.
+- [ ] Quality #1216'da ilk gerçek failure cosmetics asset integrity idi; 32 yerine 40 standart frame sözleşmesi fixlendi.
+- [ ] Fix commit b8202cd8668a02af87d48aaae95709d2a5f15200 sonrası Fresh Quality sonucu doğrulanacak.
 - [ ] Pages canlı zinciri hâlâ ayrı ortam/deploy konusu; kullanıcı açıkça deploy demeden Railway deploy yapılmayacak.
