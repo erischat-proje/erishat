@@ -27,7 +27,18 @@ def can_double(state):
 
 def can_split(state):
     hand = state.get("player_hand") or []
-    return state.get("phase") == "player" and len(hand) == 2 and hand[0][:-1] == hand[1][:-1]
+    return state.get("phase") == "player" and len(hand) == 2 and hand[0][:-1] == hand[1][:-1] and not state.get("split")
+
+def available_actions(state):
+    if state.get("phase") != "player":
+        return []
+    hand = state.get("player_hand") or []
+    actions = ["hit", "stand"]
+    if len(hand) == 2 and state.get("deck"):
+        actions.append("double")
+        if can_split(state):
+            actions.append("split")
+    return actions
 
 def action(state, action):
     deck=list(state.get("deck") or [])
