@@ -468,7 +468,15 @@ async function main(){
   if(!giftUiReadback.profile.some(x=>x.gift==='rose')) throw new Error('gift UI profile-gifts read-back missing: '+JSON.stringify(giftUiReadback.profile));
   const roomUiState=await page.evaluate(async ({api,id})=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const r=await fetch(api+'/rooms/'+encodeURIComponent(id),{headers:h}); return {status:r.status,data:await r.json()};},{api:API,id:room.data.id});
   if(roomUiState.status!==200||!Array.isArray(roomUiState.data?.seats)) throw new Error('room UI state read-back failed: '+JSON.stringify(roomUiState));
+  await page.evaluate(id=>{window.ERIS_DEMO_ROOM_ID=id},room.data.id);
   await page.locator('#edClose').click();
+  await page.locator('#erisDemoExtras button').filter({hasText:'💬 Oda Sohbeti'}).click();
+  await page.waitForSelector('#chatInput');
+  await page.waitForFunction(()=>document.querySelector('#chatState')?.textContent.includes('Canlı'),null,{timeout:5000}).catch(()=>{});
+  await page.locator('#chatInput').fill('browser room chat UI smoke');
+  await page.locator('#chatSend').click();
+  await page.waitForFunction(text=>Array.from(document.querySelectorAll('#chatList small')).some(x=>x.textContent===text),'browser room chat UI smoke',{timeout:5000});
+  await page.locator('#demoExtraBody').locator('..').locator('[data-close]').click();
   await page.locator('#erisDemoCompleteVip').click();
   await page.waitForSelector('text=VIP seviyeleri ve cinsiyet ödülleri');
   const vipRows=await page.locator('text=/VIP 1/').count();
