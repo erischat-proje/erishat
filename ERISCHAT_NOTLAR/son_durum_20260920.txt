@@ -97,3 +97,5 @@ NOT
 - `31624a02b60c57120aa8cb205f51f7de5fac5ef1`: Tüm Sistemler > Profil yüzeyi güçlendirildi; Hayran/Profil hediyesi endpoint'lerinden biri çalışmazsa artık tüm profil paneli boş/hata durumuna düşmüyor, ilgili sayaç bağımsız olarak `Kullanılamıyor` gösteriyor.
 
 - `61ac3c19b670c74407b4a8dc9aca904ed623125a`: Mağaza demo yüzeyi güçlendirildi; `/cosmetics` başarısız olursa yüklenmiş `ErisChatCosmetics.state.catalog` önbelleği kullanılıyor, o da boşsa boş ekran yerine açık katalog durumu gösteriliyor. Ayrıca Çerçeve filtresindeki operatör önceliği hatası düzeltildi.
+
+- `8ae35d57e3f10db7f98a51c399d8e3b6259f3e5a`: Onboarding demo artık sadece ilerleme ekranı değil; takma ad, cinsiyet, avatar seçimi, ilgi alanları ve profil görünürlüğü adımlarında gerçek demo oturum state'i tutuluyor ve Geri/İleri/Tamamla akışı çalışıyor.
