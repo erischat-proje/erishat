@@ -129,12 +129,16 @@ async function main(){
     const resolvedOwnerId=String(ownerReady.user_id||ownerId), resolvedMemberId=String(memberReady.user_id||memberId);
     if(resolvedOwnerId!==String(ownerId)||resolvedMemberId!==String(memberId)) throw new Error('rtc identity mismatch');
 
+    const rtcConfigResponse=await fetch('http://127.0.0.1:8000/v1/rooms/'+encodeURIComponent(roomId)+'/rtc-config',{headers:{Authorization:'Bearer '+ownerToken}});
+    if(!rtcConfigResponse.ok) throw new Error('rtc-config request failed: '+rtcConfigResponse.status);
+    const rtcConfig=await rtcConfigResponse.json();
+    if(!Array.isArray(rtcConfig.ice_servers)) throw new Error('rtc-config missing ice_servers');
     const pcs=new Map();
     const audioCtx=new AudioContext();
     const source=audioCtx.createOscillator();
     const dest=audioCtx.createMediaStreamDestination();
     source.connect(dest); source.start();
-    const make=(label)=>{const pc=new RTCPeerConnection({iceServers:[]});pc.__label=label;pc.__connected=new Promise(resolve=>pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected')resolve(true)});return pc};
+    const make=(label)=>{const pc=new RTCPeerConnection({iceServers:rtcConfig.ice_servers});pc.__label=label;pc.__connected=new Promise(resolve=>pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected')resolve(true)});return pc};
     const offerPc=make('offer'), answerPc=make('answer');
     pcs.set('offer',offerPc); pcs.set('answer',answerPc);
     const candidateQueues={owner:[],member:[]};
@@ -161,7 +165,7 @@ async function main(){
     member.ws.send(JSON.stringify({type:'rtc_leave',to_user_id:resolvedOwnerId,payload:null}));
     const receivedLeave=await wait('leave',owner.messages,m=>m?.type==='rtc_leave'&&m.from_user_id===resolvedMemberId);
     offerPc.close(); answerPc.close(); source.stop(); audioCtx.close(); owner.ws.close(); member.ws.close();
-    return {receivedOffer,receivedAnswer,receivedLeave,connectionStates,realPeerConnection:true};
+    return {receivedOffer,receivedAnswer,receivedLeave,connectionStates,realPeerConnection:true,iceServerCount:rtcConfig.ice_servers.length};
   },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token,ownerId:String(await page.evaluate(async api=>{const r=await fetch(api+'/me');const d=await r.json();return d.id;},API)),memberId:String(member.user.id)});
   if(!rtcSignalingRealtime.realPeerConnection||rtcSignalingRealtime.connectionStates.some(x=>x!=='connected')||!rtcSignalingRealtime.receivedOffer||!rtcSignalingRealtime.receivedAnswer||!rtcSignalingRealtime.receivedLeave) throw new Error('RTC real browser flow failed: '+JSON.stringify(rtcSignalingRealtime));
 
