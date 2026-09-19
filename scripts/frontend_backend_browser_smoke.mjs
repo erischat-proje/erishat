@@ -134,7 +134,7 @@ async function main(){
     const receivedLeave=await wait(owner.messages,m=>m?.type==='rtc_leave'&&m.from_user_id===memberId);
     owner.ws.close(); member.ws.close();
     return {receivedOffer,receivedAnswer,receivedIce,receivedLeave};
-  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token,ownerId:await page.evaluate(()=>localStorage.getItem('erischat_user_id')),memberId:member.user.id});
+  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token,ownerId:await page.evaluate(async api=>{const r=await fetch(api+'/me');const d=await r.json();return d.id;},API),memberId:member.user.id});
   if(!rtcSignalingRealtime.receivedOffer||!rtcSignalingRealtime.receivedAnswer||!rtcSignalingRealtime.receivedIce||!rtcSignalingRealtime.receivedLeave) throw new Error('RTC signaling browser flow failed: '+JSON.stringify(rtcSignalingRealtime));
 
   const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
