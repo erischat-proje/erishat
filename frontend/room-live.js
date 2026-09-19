@@ -164,14 +164,23 @@
       await window.ErisRoom?.join?.(id);const room=await window.ErisRoom?.get?.(id);if(!room)throw new Error('Oda bilgisi alınamadı');
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const seatCount=Math.min(16,Math.max(8,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
-      document.getElementById('erisLiveMeta').textContent='Seviye '+Number(room.level||1)+' • '+Number(room.member_count||0)+' kişi • '+(room.locked?'🔒 Kilitli':'🟢 Açık')+' • '+seatCount+' koltuk';
+      document.getElementById('erisLiveMeta').textContent='ID: '+String(room.id||id);
+      document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+String(room.id||id);
+      const levelButton=document.getElementById('erisRoomLevel');
+      if(levelButton){levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';}
       renderRoomSeats(id,room.name||name,room.seats,seatCount);attachRoomChat(id);window.connectRoomGiftSocket?.(id);
+      window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       if(id.startsWith('demo-room-')){
         const demo=window.ErisDemoRoomConfig?.[id]||{name:name||'Demo Oda',level:1,seat_count:8,member_count:1,owner:'ErisChat'};
         const seatCount=Math.min(16,Math.max(8,Number(demo.seat_count)||8));
-        document.getElementById('erisLiveTitle').textContent=demo.name||name||'Demo Oda';
-        document.getElementById('erisLiveMeta').textContent='Demo oda • Seviye '+Number(demo.level||1)+' • '+seatCount+' koltuk • '+Number(demo.member_count||0)+' kişi';
+        const demoSavedName=localStorage.getItem('eris_demo_room_name_'+id)||demo.name||name||'Demo Oda';
+        document.getElementById('erisLiveTitle').textContent=demoSavedName;
+        document.getElementById('erisLiveMeta').textContent='ID: '+id;
+        document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+id;
+        const levelButton=document.getElementById('erisRoomLevel');
+        if(levelButton){levelButton.innerHTML='<b>Seviye '+Number(demo.level||1)+'</b><small>'+seatCount+' koltuk</small>';}
+        window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room:{...demo,id,name:demoSavedName}}}));
         const seats=Array.from({length:seatCount},(_,i)=>({seat_number:i+1,user_id:i===0?'demo-owner':null,nickname:i===0?(demo.owner||'Oda Sahibi'):''}));
         renderRoomSeats(id,demo.name||name,seats,seatCount);
         const list=document.getElementById('erisLiveChat');
