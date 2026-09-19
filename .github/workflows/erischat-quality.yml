@@ -56,7 +56,7 @@ jobs:
           python -m compileall -q backend/app scripts
           test -s frontend/erischat-main.html
           for script in \
-            platform.js demo-cleanup.js admin-live.js room-live.js gift-live.js room-actions.js \
+            platform.js demo-cleanup.js admin-live.js room-live.js admin_browser_smoke.mjs gift-live.js room-actions.js \
             room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js \
             cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js \
             feature-hub-live.js shop-live.js wallpaper-live.js full-demo-live.js demo-controls-live.js \
@@ -118,6 +118,8 @@ jobs:
       - name: System identity and admin smoke
         working-directory: backend
         run: python ../scripts/system_identity_admin_smoke.py
+      - name: Admin browser UI and enforcement smoke
+        run: node scripts/admin_browser_smoke.mjs
       - name: Anonymous session smoke
         run: python scripts/anonymous_session_live_smoke.py
       - name: Live family smoke
@@ -132,6 +134,9 @@ jobs:
         run: python scripts/cosmetic_live_smoke.py
       - name: Live wallpaper smoke
         run: python scripts/wallpaper_live_smoke.py
+      - name: Cleanup admin browser fixture
+        if: always()
+        run: rm -f .smoke-admin.json
       - name: API log on failure
         if: failure()
         run: |
