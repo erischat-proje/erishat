@@ -76,7 +76,7 @@
   }
 
   function ensureUi() {
-    if (!document.body || document.getElementById('erischatGiftFab')) return;
+    if (!document.body || document.getElementById('erischatGiftPanel')) return;
     injectStyles();
     const panel = document.createElement('section');
     panel.id = 'erischatGiftPanel';
