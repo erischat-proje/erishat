@@ -50,3 +50,8 @@ Tarih: 2026-09-18
 [2026-09-19 devam — VIP QUALITY STATIC GATE]
 - VIP lifecycle browser smoke scripti quality workflow'un static syntax/required-file gate'ine de eklendi; bundan sonra dosya eksikliği/syntax hatası lifecycle çalışmadan önce yakalanacak.
 - Quality #1264 (run 35457300569) tam SUCCESS; VIP lifecycle smoke adımı da workflow içinde çalıştırıldı.
+
+[2026-09-19 devam — PROFİL VIP DURUM PANELİ]
+- frontend/profile-ui-live.js artık gerçek /me/vip verisini okuyup profil içinde VIP seviye, unvan/badge, sonraki seviye ilerlemesi ve açılmış özelliklerden kısa özet gösteriyor.
+- UI hesaplanan VIP eşikleri backend kaynağındaki 1.000 / 5.000 / 15.000 / 30.000 / 60.000 / 120.000 / 250.000 / 500.000 / 1.000.000 / 2.000.000 / 5.000.000 / 10.000.000 dizisiyle hizalandı; satın alma davranışı eklenmedi, panel yalnızca mevcut hesabın durumunu gösteriyor.
+- Commit: 9211a8f02ea1ad7d5968babf8248738f7c8793e4
