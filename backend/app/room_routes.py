@@ -557,6 +557,13 @@ def register_room_auth(current_user_dependency):
         total = unit_price * payload.quantity
         if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
         recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100; sender.lidya -= total; recipient.lidya += recipient_amount
+        vip = db.get(VipStatus, sender.id)
+        if not vip:
+            vip = VipStatus(user_id=sender.id, level=0, total_spent=0)
+            db.add(vip)
+            db.flush()
+        vip.total_spent = int(vip.total_spent or 0) + total
+        vip.level = vip_level_from_spend(vip.total_spent)
         event = RoomGiftEvent(room_id=room.id, sender_id=sender.id, recipient_id=recipient.id, gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity, total_price=total, recipient_percent=GIFT_RECIPIENT_PERCENT, recipient_amount=recipient_amount)
         presentation = gift_presentation(total)
         db.add(event); db.add(Notification(user_id=recipient.id, kind="gift", title="Yeni hediye", body=f"{sender.nickname} size {payload.gift_key} gönderdi.")); db.commit(); db.refresh(event); refresh_level(db, room)
