@@ -467,3 +467,12 @@ Room control checkpoint
 - [x] scripts/frontend_backend_browser_smoke.mjs aile rol sınırlarını browser backend zincirinde doğrulayacak şekilde genişletildi: normal üye rol değiştirmeye çalışınca 403, owner admin rolü verebilir ve geri alabilir, owner aileden ayrılmaya çalışınca 400.
 - [x] Aynı browser smoke'a iki gerçek WebSocket istemcisiyle oda chat history + canlı room_chat yayınını doğrulayan browser E2E eklendi.
 - [ ] Bu değişikliklerin Quality runner sonucu henüz alınmadı; PASS ilan edilmiyor.
+
+
+2026-09-19 — MÜZİK PLAYBACK/SENKRONİZASYON GELİŞTİRMESİ
+- [x] Oda müzik backend'ine play/pause/stop/seek playback state endpointi eklendi.
+- [x] Müzik listesi playback state ve position_seconds bilgisini döndürüyor.
+- [x] Oda WebSocket üzerinden music_sync olayları realtime yayınlanıyor.
+- [x] Demo müzik yüzeyi realtime music_sync dinliyor; playback/seek/pause durumunu diğer istemciden uyguluyor.
+- [x] Browser smoke müzik için play/pause/position akışını doğrulayacak şekilde genişletildi.
+- [ ] Gerçek CI/Quality PASS henüz alınmadı; test sonucu PASS ilan edilmiyor.
