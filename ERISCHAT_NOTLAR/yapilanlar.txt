@@ -602,3 +602,11 @@ Room control checkpoint
 - [x] Kök neden: announcement flow'un main fonksiyonunun dışında kalması / main kapanışından sonra ikinci kez eklenmesi.
 - [x] Commit `586803fd277bc1cd693935389bdba504207e0e5b` ile announcement flow tek main akışı içinde bırakıldı ve dosya kapanışı düzeltildi.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19] QUALITY #893 — FOLLOW NOTIFICATION SMOKE FIX
+- [x] Quality #893 browser smoke ilk gerçek runtime failure'ında follow işlemi başarılı olmasına rağmen bildirim assertion'ı yanlış aktörün `/me/notifications` listesini okuyordu.
+- [x] Backend follow endpointinin bildirimi takip edilen hedef kullanıcıya yazdığı doğrulandı.
+- [x] Browser smoke düzeltmesi: follow/block/privacy owner token ile; follow notification ve notification-read akışı member token ile doğrulanacak şekilde ayrıştırıldı.
+- [x] Fix commit: `a05c9c6055238e653decde72045df73508ca486d`.
+- [ ] Bu düzeltme sonrası fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
