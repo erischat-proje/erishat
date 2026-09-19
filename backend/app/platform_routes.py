@@ -75,6 +75,10 @@ class FamilyMemberUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
+class WalletExchange(BaseModel):
+    direction: str = Field(pattern="^(lidya_to_gem|gem_to_lidya)$")
+    amount: int = Field(ge=1, le=1_000_000_000_000)
+    idempotency_key: str = Field(min_length=8, max_length=128)
 
 def vip_level_from_spend(total_spent: int) -> int:
     level = 0
@@ -133,41 +137,80 @@ def register_platform_auth(current_user_dependency):
         return {"lidya": int(user.lidya or 0), "lidya_gem": int(getattr(user, "lidya_gem", 0) or 0), "exchange_rate": {"lidya_to_gem": 1, "gem_to_lidya": 1}}
 
     @router.post("/me/wallet/exchange")
-    def exchange_wallet(payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        payload = payload or {}
-        direction = str(payload.get("direction") or "").strip().lower()
-        try:
-            amount = int(payload.get("amount"))
-        except (TypeError, ValueError):
-            raise HTTPException(status_code=422, detail="Geçerli bir miktar gerekli")
-        if direction not in {"lidya_to_gem", "gem_to_lidya"}:
-            raise HTTPException(status_code=422, detail="direction lidya_to_gem veya gem_to_lidya olmalı")
-        if amount < 1 or amount > 1_000_000_000_000:
-            raise HTTPException(status_code=422, detail="Miktar 1 ile 1.000.000.000.000 arasında olmalı")
+    def exchange_wallet(payload: WalletExchange, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        existing = db.scalar(select(LidyaGemLedger).where(
+            LidyaGemLedger.user_id == user.id,
+            LidyaGemLedger.idempotency_key == payload.idempotency_key,
+        ))
+        if existing:
+            locked = db.get(User, user.id)
+            return {
+                "success": True, "replayed": True, "direction": json.loads(existing.details).get("direction"),
+                "amount": abs(int(existing.delta)), "rate": 1,
+                "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem),
+                "reference_id": existing.reference_id,
+            }
+
         locked = db.scalar(select(User).where(User.id == user.id).with_for_update())
         if not locked:
             raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        amount = int(payload.amount)
+        direction = payload.direction
+        before_lidya = int(locked.lidya or 0)
+        before_gem = int(locked.lidya_gem or 0)
         if direction == "lidya_to_gem":
-            if int(locked.lidya or 0) < amount:
+            if before_lidya < amount:
                 raise HTTPException(status_code=400, detail="Yetersiz Lidya")
-            locked.lidya -= amount
-            locked.lidya_gem = int(locked.lidya_gem or 0) + amount
+            locked.lidya = before_lidya - amount
+            locked.lidya_gem = before_gem + amount
         else:
-            if int(locked.lidya_gem or 0) < amount:
+            if before_gem < amount:
                 raise HTTPException(status_code=400, detail="Yetersiz Lidya Gem")
-            locked.lidya_gem -= amount
-            locked.lidya += amount
+            locked.lidya_gem = before_gem - amount
+            locked.lidya = before_lidya + amount
+
         reference_id = str(uuid4())
+        details = json.dumps(
+            {"direction": direction, "amount": amount, "rate": "1:1"},
+            ensure_ascii=False, separators=(",", ":")
+        )
         db.info["lidya_operation"] = "currency_exchange"
         db.info["lidya_actor_id"] = locked.id
         db.info["lidya_reference_id"] = reference_id
-        db.info["lidya_details"] = json.dumps({"direction": direction, "amount": amount, "rate": "1:1"}, ensure_ascii=False, separators=(",", ":"))
-        db.add(LidyaGemLedger(user_id=locked.id, delta=amount if direction == "lidya_to_gem" else -amount,
-                              balance_after=int(locked.lidya_gem), operation="currency_exchange",
-                              reference_id=reference_id, details=json.dumps({"direction": direction, "rate": "1:1"}, ensure_ascii=False, separators=(",", ":"))))
-        db.commit()
+        db.info["lidya_details"] = details
+        db.add(LidyaGemLedger(
+            user_id=locked.id,
+            delta=amount if direction == "lidya_to_gem" else -amount,
+            balance_after=int(locked.lidya_gem),
+            operation="currency_exchange",
+            reference_id=reference_id,
+            idempotency_key=payload.idempotency_key,
+            details=details,
+        ))
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            replay = db.scalar(select(LidyaGemLedger).where(
+                LidyaGemLedger.user_id == user.id,
+                LidyaGemLedger.idempotency_key == payload.idempotency_key,
+            ))
+            if replay:
+                current = db.get(User, user.id)
+                data = json.loads(replay.details)
+                return {
+                    "success": True, "replayed": True, "direction": data["direction"],
+                    "amount": abs(int(replay.delta)), "rate": 1,
+                    "lidya": int(current.lidya), "lidya_gem": int(current.lidya_gem),
+                    "reference_id": replay.reference_id,
+                }
+            raise
         db.refresh(locked)
-        return {"success": True, "direction": direction, "amount": amount, "rate": 1, "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem), "reference_id": reference_id}
+        return {
+            "success": True, "replayed": False, "direction": direction, "amount": amount, "rate": 1,
+            "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem),
+            "reference_id": reference_id,
+        }
 
     @router.get("/me/vip")
     def my_vip(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
