@@ -644,3 +644,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `scripts/frontend_backend_browser_smoke.mjs` içinde main kapanışından sonra kalan duplicate/bağımsız `announcementFlow` bloğu kaldırıldı; announcement lifecycle kontrolü main içindeki mevcut akışta korunuyor.
 - [x] Fix commit: `586803fd277bc1cd693935389bdba504207e0e5b`.
 - [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
+
+
+[2026-09-19] QUALITY #893 — FOLLOW NOTIFICATION ACTOR FIX
+- [x] Follow notification smoke'ta yanlış kullanıcı tokenı kullanılması düzeltildi; bildirim hedef kullanıcı/member hesabından okunup mark-read ediliyor.
+- [x] Commit: `a05c9c6055238e653decde72045df73508ca486d`.
+- [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
