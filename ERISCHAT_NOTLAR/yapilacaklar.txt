@@ -67,3 +67,9 @@ Tarih: 2026-09-18
 - [x] Commit 2a0bf923c40f3c0f1431b85a508dba8147edb606 için live-e2e 105936497380 SUCCESS.
 - [x] Aynı commit için probe 105936497479 SUCCESS ve diagnostics 105936497235 SUCCESS.
 - [ ] Pages deploy 105936497278 github-pages environment admission aşamasında FAILURE; Settings tarafındaki environment policy düzeltilmeden canlı URL doğrulanmayacak.
+
+
+[2026-09-19 devam — VIP PROGRESS ASSERTION]
+- [x] VIP lifecycle smoke, backend current_level_spent alanını VIP 0/1/2/3 noktalarında test ediyor.
+- [x] Commit c7419619fe237c9fbb1e23995f71c5650b564353.
+- [ ] Bu commit sonrası yeni Quality sonucu bekleniyor; gerçek conclusion success olmadan PASS ilan edilmeyecek.
