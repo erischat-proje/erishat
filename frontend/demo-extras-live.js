@@ -11,7 +11,7 @@
   const button = (text, fn) => { const b=document.createElement('button'); b.textContent=text; b.style.cssText='border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800'; b.onclick=fn; return b; };
   const modal = (title, body) => { const el=document.createElement('div'); el.style.cssText='position:fixed;inset:0;z-index:520;background:#020107ed;display:flex;align-items:flex-end;justify-content:center'; el.innerHTML=`<div style="width:min(620px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">ERISCHAT • CUSTOMER DEMO+</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div id="demoExtraBody">${body}</div></div>`; document.body.append(el); el.querySelector('[data-close]').onclick=()=>el.remove(); return el; };
 
-  async async function seatsDemo(){
+  async function seatsDemo(){
     let roomId='', seats=[], socket=null, stream=null, peers=new Map(), pendingIce=new Map(), me='', rtcConfig={iceServers:[]};
     try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; const meData=await api('/me'); me=meData?.id||''; if(roomId){ seats=await api('/rooms/'+encodeURIComponent(roomId)+'/seats'); rtcConfig=await api('/rooms/'+encodeURIComponent(roomId)+'/rtc-config'); } else loadError='Kullanılabilir oda bulunamadı.'; } catch(e){loadError=e?.message||'Oda/RTC servisine erişilemedi.';}
     const m=modal('🎙️ Oda koltukları + gerçek ses',`<div style="padding:11px;border-radius:14px;background:#8a5cff10;border:1px solid #ffffff10;margin-bottom:9px"><b>12 koltuk</b><small id="rtcStatus" style="display:block;color:#938a9f;margin-top:4px">${esc(loadError|| (roomId?'Oda bağlı':'Oda bulunamadı'))} • Mikrofon kapalı</small></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px" id="rtcControls"></div><div id="seatGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px"></div><div id="remoteAudio"></div>`);
@@ -31,7 +31,7 @@
     m.querySelector('[data-close]').addEventListener('click',()=>{try{peers.forEach((pc,uid)=>{try{socket?.send(JSON.stringify({type:'rtc_leave',to_user_id:uid}) )}catch(e){}});}catch(e){} stream?.getTracks().forEach(t=>t.stop()); peers.forEach(pc=>pc.close()); peers.clear(); pendingIce.clear(); if(socket){socket.close();socket=null;}});
   }
 
-  async async function roomChatDemo(){
+  async function roomChatDemo(){
     let roomId='',socket=null,me='',loadError='';
     try{
       const preferred=String(window.ERIS_DEMO_ROOM_ID||'').trim();
@@ -50,7 +50,7 @@
     connect();
   }
 
-  async async function musicDemo(){
+  async function musicDemo(){
     let roomId='', queue=[], loadError='';
     try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; if(roomId){ const r=await api('/rooms/'+encodeURIComponent(roomId)+'/music'); queue=Array.isArray(r)?r:(r?.music||r?.items||[]); } else loadError='Kullanılabilir oda bulunamadı.'; } catch(e){loadError=e?.message||'Müzik servisine erişilemedi.';}
     const state={current:null,audio:null,socket:null};
@@ -69,7 +69,7 @@
     q.querySelectorAll('[data-play-item]').forEach(btn=>btn.onclick=()=>play(Number(btn.dataset.playItem)));
   }
 
-  async async function announcementDemo(){
+  async function announcementDemo(){
     let roomId='',loadError=''; try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; if(!roomId)loadError='Kullanılabilir oda bulunamadı.'; } catch(e){loadError=e?.message||'Duyuru servisine erişilemedi.';}
     const m=modal('📢 Duyuru yönetimi',`<div style="display:grid;gap:8px"><div id="annState">${card('<small style="color:#938a9f">'+esc(loadError|| (roomId?'Oda bağlı':'Oda bulunamadı'))+'</small>')}</div><input id="annText" placeholder="Oda duyurusu..." style="padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:10px"><div id="annOut"></div><div id="annBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>`);
     const out=m.querySelector('#annOut'),bs=m.querySelector('#annBtns'),input=m.querySelector('#annText'); let selected=null;
@@ -89,7 +89,7 @@
     await render();
   }
 
-  async async async function familyDemo(){
+  async function familyDemo(){
     let data=null,members=[],familyLoadError='',membersLoadError='';
     try{const families=await api('/families');const rows=Array.isArray(families)?families:(families?.families||[]);data=rows[0]||null;if(data){try{members=await api('/families/'+encodeURIComponent(data.id)+'/members');}catch(e){membersLoadError=e?.message||'Üye servisine erişilemedi.';}}}
     catch(e){familyLoadError=e?.message||'Aile servisine erişilemedi.';}
@@ -117,7 +117,7 @@
     await loadChat();
   }
 
-  async async function storeDemo(){
+  async function storeDemo(){
     let items=[]; try{const x=await api('/cosmetics');items=Array.isArray(x)?x:(x.items||x.cosmetics||x.data||[]);}catch(e){const cached=window.ErisChatCosmetics?.state?.catalog;items=Array.isArray(cached)?cached:[];}
     const m=modal('🛍️ 139 kozmetik • tam vitrin',`<div class="card" style="padding:10px;margin-bottom:8px"><b>Canlı mağaza</b><small style="display:block;color:#938a9f;margin-top:4px">Satın alma, sahiplik ve uygulama işlemleri için gerçek mağaza yüzünü açabilirsin.</small><button id="openLiveShop" style="margin-top:7px;padding:9px;border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800">🛍️ Canlı mağazayı aç</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><input id="cosSearch" placeholder="Ara: avatar, çerçeve, VIP..." style="flex:1;min-width:160px;padding:9px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"><select id="cosFilter" style="padding:9px;background:#17131f;color:#fff;border:1px solid #ffffff14;border-radius:9px"><option value="all">Tümü</option><option value="avatar">Avatar</option><option value="frame">Çerçeve</option><option value="vip">VIP</option><option value="standard">Standart</option></select></div><div id="cosCount" style="font-size:8px;color:#938a9f;margin-bottom:7px">Katalog yükleniyor...</div><div id="cosGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px"></div>`);
     const search=m.querySelector('#cosSearch'),filter=m.querySelector('#cosFilter'),grid=m.querySelector('#cosGrid'),count=m.querySelector('#cosCount'); m.querySelector('#openLiveShop')?.addEventListener('click',()=>{m.remove();window.showView?.('shop');});
@@ -125,7 +125,7 @@
     const draw=()=>{const q=search.value.toLowerCase().trim(),f=filter.value;const rows=items.filter(x=>{const key=String(x.key||x.id||x.name||'').toLowerCase(),type=String(x.type||x.category||key).toLowerCase(),vip=key.includes('vip')||type.includes('vip');return (!q||key.includes(q))&&(f==='all'||(f==='avatar'&&type.includes('avatar'))||(f==='frame'&&(type.includes('cerceve')||type.includes('frame')))||(f==='vip'&&vip)||(f==='standard'&&!vip));});count.textContent=`${rows.length} sonuç • hedef katalog 139`;grid.innerHTML=rows.map(x=>{const key=String(x.key||x.id||x.name||'');const src=asset(key);return `<div style="background:#12101a;border:1px solid #ffffff12;border-radius:12px;padding:6px;overflow:hidden"><div style="height:76px;background:#09070d;border-radius:9px;display:grid;place-items:center"><img src="${esc(src)}" loading="lazy" style="max-width:100%;max-height:72px;object-fit:contain"></div><small style="display:block;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||key)}</small><span style="font-size:7px;color:#938a9f">${esc(x.type||x.category||'kozmetik')}</span></div>`}).join('');}; search.oninput=draw;filter.onchange=draw;draw();
   }
 
-  async async function profileDemo(){
+  async function profileDemo(){
     let me={},wallet={lidya:0,lidya_gem:0},profileError='',walletError='';const [meResult,walletResult]=await Promise.allSettled([api('/me'),api('/me/wallet')]);if(meResult.status==='fulfilled')me=meResult.value||{};else profileError=meResult.reason?.message||'Profil servisi kullanılamıyor';if(walletResult.status==='fulfilled')wallet=walletResult.value||{};else walletError=walletResult.reason?.message||'Cüzdan servisi kullanılamıyor';
     const avatar=me.avatar_asset||me.avatar||'erkekavatar/avatar1.png', frame=me.frame_asset||'standartcerceve/cerceve1.png';
     const m=modal('👤 Profil + Lidya / Lidya Gem',`${profileError?'<div class="card" style="padding:10px;border:1px solid #ff6b6b33"><b>⚠️ Profil servisi</b><small style="display:block;color:#ff9a9a;margin-top:4px">'+esc(profileError)+'</small></div>':''}${walletError?'<div class="card" style="padding:10px;border:1px solid #ff6b6b33;margin-top:7px"><b>⚠️ Cüzdan servisi</b><small style="display:block;color:#ff9a9a;margin-top:4px">'+esc(walletError)+'</small></div>':''}<div style="display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center"><div style="height:150px;border-radius:18px;background:#0a0810;border:1px solid #ffffff12;display:grid;place-items:center;position:relative;overflow:hidden"><img src="${esc(asset(avatar))}" style="width:100px;height:100px;object-fit:contain"><img src="${esc(asset(frame))}" style="position:absolute;width:128px;height:128px;object-fit:contain"></div><div>${card(`<b>${esc(me.nickname||'ErisChat kullanıcısı')}</b><small style="display:block;color:#938a9f;margin-top:4px">${esc(me.gender||'Belirtilmemiş')} • VIP profil • Fan seviyesi • Profil hediyeleri</small>`)}<div style="margin-top:8px">${card(`<div style="display:flex;justify-content:space-between"><b>💰 Lidya</b><b id="walletLidya">${Number(wallet.lidya||0).toLocaleString('tr-TR')}</b></div><div style="display:flex;justify-content:space-between;margin-top:5px"><b>💎 Lidya Gem</b><b id="walletGem">${Number(wallet.lidya_gem||0).toLocaleString('tr-TR')}</b></div><small style="display:block;color:#938a9f;margin-top:6px">1 Lidya = 1 Lidya Gem • 1 Lidya Gem = 1 Lidya</small><div id="walletBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>`)}</div><div id="profileBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div></div></div>`);
