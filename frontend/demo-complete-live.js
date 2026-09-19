@@ -7,6 +7,8 @@
   const api = (path, options = {}) => window.ErisPlatform?.api(path, options) ?? Promise.reject(new Error('Platform hazır değil'));
   const esc = v => String(v ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const asset = key => window.ErisChatCosmetics?.assetUrl ? window.ErisChatCosmetics.assetUrl(key) : `Gereken_icerikler/${String(key || '').replace(/^\//,'')}`;
+  const vipThresholds = [0,1000,5000,15000,30000,60000,120000,250000,500000,1000000,2000000,5000000,10000000];
+  const formatLidya = n => n>=1000000 ? (n/1000000)+'M' : n>=1000 ? (n/1000)+'K' : String(n);
   const perks = {
     1:['VIP rozeti','VIP avatar erişimi','VIP çerçeve erişimi'],
     2:['VIP 2 rozeti'],
@@ -57,7 +59,7 @@
       for(let n=1;n<=12;n++){
         const unlocked=n<=level, avatarKey=`${g==='female'?'vipkadınavatar':'viperkekavatar'}/vip${n}.png`, frameKey=`vipcerceve/vip${n}.png`;
         const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:68px 1fr;gap:8px;margin-bottom:8px;align-items:stretch';
-        row.innerHTML=`<div style="background:#09070d;border:1px solid #ffffff12;border-radius:12px;display:grid;place-items:center;overflow:hidden"><img src="${esc(asset(avatarKey))}" style="width:62px;height:62px;object-fit:contain;${unlocked?'':'filter:grayscale(1);opacity:.5'}"></div><div style="background:#12101a;border:1px solid #ffffff12;border-radius:12px;padding:9px"><b>${unlocked?'✨':'🔒'} VIP ${n} • ${labels[n-1]}</b><small style="display:block;color:#938a9f;margin:4px 0">${unlocked?'Açık':'VIP '+n+' gerekli'} • ${g==='female'?'Kadın':'Erkek'} avatar: vip${n}.png • Çerçeve: vip${n}.png</small><div style="font-size:8px;color:#d5cddd">${perks[n].map(esc).join(' • ')}</div><div style="margin-top:6px"><img src="${esc(asset(frameKey))}" style="height:30px;max-width:100%;object-fit:contain;${unlocked?'':'filter:grayscale(1);opacity:.4'}"></div></div>`;
+        row.innerHTML=`<div style="background:#09070d;border:1px solid #ffffff12;border-radius:12px;display:grid;place-items:center;overflow:hidden"><img src="${esc(asset(avatarKey))}" style="width:62px;height:62px;object-fit:contain;${unlocked?'':'filter:grayscale(1);opacity:.5'}"></div><div style="background:#12101a;border:1px solid #ffffff12;border-radius:12px;padding:9px"><b>${unlocked?'✨':'🔒'} VIP ${n} • ${labels[n-1]}</b><small style="display:block;color:#938a9f;margin:4px 0">${unlocked?'Açık':'VIP '+n+' gerekli'} • Toplam harcama eşiği: ${formatLidya(vipThresholds[n])} Lidya • ${g==='female'?'Kadın':'Erkek'} avatar: vip${n}.png • Çerçeve: vip${n}.png</small><div style="font-size:8px;color:#d5cddd">${perks[n].map(esc).join(' • ')}</div><div style="margin-top:6px"><img src="${esc(asset(frameKey))}" style="height:30px;max-width:100%;object-fit:contain;${unlocked?'':'filter:grayscale(1);opacity:.4'}"></div></div>`;
         table.append(row);
       }
     };
