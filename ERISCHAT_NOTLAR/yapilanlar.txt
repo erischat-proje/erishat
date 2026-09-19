@@ -444,3 +444,9 @@ Room control checkpoint
 - [x] Müzik ekleme/oynatma akışındaki yanlış .ok/.json() kullanımı temizlendi.
 - [x] Duyuru listeleme akışı parsed response ile hizalandı.
 - [x] WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması tamamlandı.
+
+2026-09-19 — HANDOFF CHECKPOINT
+- WebRTC: early ICE candidate queue + signaling OPEN guard added; real 2-browser/TURN/mobile E2E remains open.
+- Live demo API response handling hardened for wallet exchange, music and announcements.
+- Family: authenticated family list endpoint added; family demo connected to family list, members, donation and chat APIs.
+- No fresh CI/Quality PASS has been claimed after these changes.
