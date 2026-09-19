@@ -1156,3 +1156,11 @@ Room control checkpoint
 - Gerçek dosya konumu scripts/admin_browser_smoke.mjs olduğu için gate düzeltildi: frontend script listesi korunurken admin smoke ayrı test edilir ve node --check scripts/admin_browser_smoke.mjs ile doğrulanır.
 - Fix commit: ba698399e58adc43d7451102d28311dfb7defc03
 - Bu değişiklikten sonra yeni Quality runner sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam — ADMIN BROWSER SMOKE RELOAD RACE FIX]
+- `scripts/admin_browser_smoke.mjs` içindeki ID Sorgu sonrası `#eaBack` + `location.reload()` akışının hemen ardından aynı sayfada Yönetici Yetkileri butonuna basma yarışı giderildi.
+- Smoke artık ID Sorgu kontrolünden sonra ilk sayfayı kapatıp yeni Chromium sayfasında DA oturumunu yeniden kurarak Yönetici Yetkileri ve backend enforcement kontrolünü sürdürüyor.
+- Ayrıca ikinci sayfadaki role-header beklemesi doğru `rolesPage` nesnesine bağlandı.
+- Fix commit: `0a416fdfd8f2e4e66444af0fb37ec42eb7e3bef9`.
+- Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
