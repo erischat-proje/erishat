@@ -72,9 +72,9 @@ def main() -> int:
 
     avatar = next((x for x in items if x.get("type") == "avatar" and not x.get("vip")), None)
     frame = next((x for x in items if x.get("type") == "frame" and not x.get("vip")), None)
-    vip_asset = next((x for x in items if x.get("vip") and x.get("vip_level") == 1), None)
-    if not avatar or not frame or not vip_asset:
-        raise RuntimeError("catalog must contain standard avatar, standard frame, and VIP level 1 asset")
+    vip_assets = [x for x in items if x.get("vip") and x.get("vip_level")]
+    if not avatar or not frame or not vip_assets:
+        raise RuntimeError("catalog must contain standard avatar, standard frame, and VIP assets")
 
     status, me = request("GET", "/me", token)
     if status >= 300:
@@ -116,18 +116,26 @@ def main() -> int:
     exercise(avatar)
     exercise(frame)
 
-    vip_key = vip_asset.get("asset_key")
+    status, owned_after = request("GET", "/me/cosmetics", token)
+    if status >= 300:
+        raise RuntimeError(f"owned cosmetics after purchases failed: HTTP {status} {owned_after}")
+    current_vip = int(owned_after.get("vip_level") or 0)
+    blocked_vip = next((x for x in sorted(vip_assets, key=lambda x: int(x.get("vip_level") or 0))
+                        if int(x.get("vip_level") or 0) > current_vip), None)
+    if not blocked_vip:
+        raise AssertionError(f"smoke user unexpectedly reached maximum VIP level: {current_vip}")
+    vip_key = blocked_vip.get("asset_key")
     vip_status, vip_purchase = request("POST", "/me/cosmetics/purchase", token, {
-        "cosmetic_type": vip_asset.get("type"), "asset_key": vip_key,
+        "cosmetic_type": blocked_vip.get("type"), "asset_key": vip_key,
     })
     if vip_status != 403:
-        raise AssertionError(f"VIP purchase must be blocked at VIP 0: HTTP {vip_status} {vip_purchase}")
+        raise AssertionError(f"VIP purchase must be blocked below required level: current={current_vip}, required={blocked_vip.get('vip_level')}, HTTP {vip_status} {vip_purchase}")
     vip_status, vip_apply = request("POST", "/me/cosmetics/apply", token, {
-        "cosmetic_type": vip_asset.get("type"), "asset_key": vip_key,
+        "cosmetic_type": blocked_vip.get("type"), "asset_key": vip_key,
     })
     if vip_status != 403:
-        raise AssertionError(f"VIP apply must be blocked at VIP 0: HTTP {vip_status} {vip_apply}")
-    print(f"VIP level gate OK: {vip_key} requires VIP {vip_asset.get('vip_level')}")
+        raise AssertionError(f"VIP apply must be blocked below required level: current={current_vip}, required={blocked_vip.get('vip_level')}, HTTP {vip_status} {vip_apply}")
+    print(f"VIP level gate OK: current VIP {current_vip}, blocked asset {vip_key} requires VIP {blocked_vip.get('vip_level')}")
     return 0
 
 
