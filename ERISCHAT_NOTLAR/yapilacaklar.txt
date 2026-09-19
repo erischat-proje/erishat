@@ -1141,3 +1141,13 @@ GÜVENLİK/KAPSAM NOTU
 - Admin browser smoke reload-race fix `0a416fdfd8f2e4e66444af0fb37ec42eb7e3bef9` sonrası Quality workflow'un yeni push sonucu doğrulanacak.
 - `fetch_commit_workflow_runs` yalnız PR tetiklemeli sonuçları döndürdüğü için push çalışmasının durumunu bu araçtan doğrulamak mümkün olmadı.
 - Quality sonucu görülmeden PASS kabul edilmeyecek.
+
+
+[2026-09-19 devam — ADMIN SMOKE KÖK NEDEN: FRONTEND SCRIPT EKSİĞİ]
+- Quality #1256 gerçek hata logu incelendi: `scripts/admin_browser_smoke.mjs` 10 saniye boyunca `.eris-admin-btn` bulamadı.
+- `frontend/admin-live.js` mevcut olmasına rağmen `frontend/erischat-main.html` içinde hiç yüklenmiyordu; bu nedenle DA token doğru olsa bile admin butonu DOM'a eklenmiyordu.
+- Düzeltme: `erischat-main.html` script zincirine `./admin-live.js` eklendi.
+- Commit: `1e9caa187405890baac96304e13da27da2f16e00`.
+- Quality PASS henüz doğrulanmadı; bu commit sonrası yeni Quality sonucunun gerçek logdan kontrol edilmesi gerekiyor.
+
+Sonraki doğrulama: yeni Quality çalışmasında `Admin browser UI and enforcement smoke` adımının PASS olması; ardından kalan canlı demo/Pages doğrulamasına dönülmesi.
