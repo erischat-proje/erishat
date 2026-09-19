@@ -10,6 +10,8 @@ try {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
+  const consoleErrors = [];
+  page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
   page.on('pageerror', e => errors.push(`${e.message} @ ${e.stack || 'no-stack'}`));
 
   await page.route('**/v1/**', async route => {
@@ -36,7 +38,7 @@ try {
   await page.locator('#chatInput').press('Enter');
   await page.waitForSelector('#chatBody .bubble.me');
 
-  if (errors.length) throw new Error('browser page errors: ' + errors.join(' | '));
+  if (errors.length || consoleErrors.length) throw new Error('browser errors: ' + [...errors, ...consoleErrors].join(' | '));
   console.log('FRONTEND_BROWSER_SMOKE_PASS navigation=shop,profile,explore room_list=1 chat_send=1');
   await browser.close();
 } finally {
