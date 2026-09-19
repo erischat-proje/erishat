@@ -925,3 +925,16 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] 139 frame alpha/görsel standardı açık.
 - [ ] VIP lifecycle, fan/admin eksikleri ve Pages canlı zinciri açık.
 - [ ] Gerçek müzik kaynağı/uzun süreli playback ve queue derinleştirmesi ayrı açık olarak korunuyor.
+
+[2026-09-19 devam 46] GÜNCEL FRONTEND/PAGES DURUMU
+- [x] main HEAD 204f05038512ae5e64d5f40f630cf4e02d53119c.
+- [x] Quality #1060 / run 35448549649 SUCCESS.
+- [x] Pages #1013 / run 35448549587 aynı HEAD'de FAILURE.
+- [x] Pages workflow'un gerçek giriş kaynağı frontend/erischat-main.html olarak doğrulandı.
+- [x] Pages job 105911606823 daha checkout/configure-pages adımlarına geçmeden environment admission aşamasında başarısız; mevcut kök neden github-pages environment custom deployment branch policy içinde main izni olmaması.
+- [ ] Environment policy'de main'e izin verilmesi; bu repo kodundan değil GitHub environment ayarından çözülmesi gereken blokaj.
+- [ ] Pages deploy SUCCESS, canlı HTTP/index ve Pages→Railway API zinciri.
+- [ ] Gerçek WebRTC iki tarayıcı + TURN/mobile transport kanıtı.
+- [ ] 139 frame alpha/visual standard incelemesi.
+- [ ] VIP lifecycle, fan/admin kalanları ve gerçek müzik source/long playback/queue depth.
+- [ ] Railway production deploy — kullanıcı açıkça "deploy" demeden yapılmayacak.
