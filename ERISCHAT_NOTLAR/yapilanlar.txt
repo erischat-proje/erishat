@@ -1096,3 +1096,11 @@ Room control checkpoint
 - [x] `scripts/frontend_backend_browser_smoke.mjs` katalog beklentisi 139 → 147 güncellendi.
 - [x] Fix commit: ab2d7546795d02db690d0028629cfa24d6dc9ff5.
 - [ ] Bu fix sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 61] QUALITY #1222 — VIP10 WALLPAPER CLAIM KÖK DÜZELTMESİ
+- [x] Quality #1222 ilk gerçek failure: `Live wallpaper smoke`.
+- [x] Önceki smoke, `POST /v1/me/vip/claims/wallpaper` endpointinin VIP10 altında 403 döndürmesini doğruluyordu; backend'de endpoint yoktu.
+- [x] VIP10 claim endpointi eklendi; VIP10 altında 403, VIP10+ için `vip_wallpaper_10` sahipliği ve `wallpaper_claimed` durumu işleniyor.
+- [x] Fix commit: d8e47746dedd5ae80e846b64edcc00b7c86a5a18.
+- [ ] Fresh Quality sonucu henüz doğrulanmadı.
