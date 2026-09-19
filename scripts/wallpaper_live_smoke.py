@@ -49,16 +49,16 @@ for i,x in enumerate(sorted(vip,key=lambda x:int(x.get("vip_level") or 0)),1):
 s,me=req("GET","/me/wallpaper",token)
 if s>=300: raise RuntimeError(f"initial wallpaper failed: {s} {me}")
 item=normal[0]
-s,buy=req("POST","/me/wallpaper/purchase",token,{"key":item["key"]})
+s,buy=req("POST","/me/wallpaper/purchase",token,{"asset_key":item["key"]})
 if s>=300: raise RuntimeError(f"wallpaper purchase failed: {s} {buy}")
 s,apply=req("POST","/me/wallpaper/apply",token,{"key":item["key"]})
 if s>=300: raise RuntimeError(f"wallpaper apply failed: {s} {apply}")
 s,after=req("GET","/me/wallpaper",token)
-if s>=300 or after.get("key")!=item["key"]:
+if s>=300 or after.get("asset_key")!=item["key"]:
     raise AssertionError(f"wallpaper persistence failed: {s} {after}")
 
 blocked=next(x for x in sorted(vip,key=lambda x:int(x.get("vip_level") or 0)) if int(x.get("vip_level") or 0)>0)
-s,detail=req("POST","/me/wallpaper/apply",token,{"key":blocked["key"]})
+s,detail=req("POST","/me/wallpaper/apply",token,{"asset_key":blocked["key"]})
 if s!=403: raise AssertionError(f"VIP wallpaper gate expected 403, got {s} {detail}")
 
 claim_key=next(x["key"] for x in vip if int(x.get("vip_level") or 0)==10)
