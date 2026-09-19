@@ -22,6 +22,11 @@ def start(data):
     data.update({"result":result,"player_hand":player,"dealer_hand":dealer,"player_total":pt,"dealer_total":dt,"natural_blackjack":natural,"dealer_natural":dealer_natural,"rules":"free-play multi-step blackjack; hit/stand; standard ace scoring","animation":{"type":"blackjack_deal","steps":4,"reveal":"dealer_second_card_last"},"hands":[{"cards":player,"done":result!="pending","result":result}],"active_hand":0,"state":{"phase":"finished" if result!="pending" else "player","deck":deck,"player_hand":player,"dealer_hand":dealer,"player_total":pt,"dealer_total":dt if result!="pending" else hand_total(dealer[:1]),"result":result,"natural_blackjack":natural,"dealer_natural":dealer_natural}})
     return result,data
 
+def play(choice, profile, data):
+    """Registry-compatible adapter; blackjack rounds are initialized through start()."""
+    del choice, profile
+    return start(data)
+
 def can_double(state):
     return state.get("phase") == "player" and len(state.get("player_hand") or []) == 2 and bool(state.get("deck"))
 
