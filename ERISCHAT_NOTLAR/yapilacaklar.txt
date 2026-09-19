@@ -138,3 +138,9 @@ Tarih: 2026-09-18
 [2026-09-19 devam — ANA YÜZEY ERİŞİM KONTROLÜ]
 - [x] Ana HTML üzerinde Oda Aç/createRoom, oda açılışı/openRoom, Tüm sistemler, mağaza, profil, anonimlik ve gerçek oda modalı giriş noktaları mevcut olarak doğrulandı.
 - [ ] GitHub Pages canlı HTTP/görsel doğrulaması: web erişim katmanı canlı URL'yi açamadığı için gerçek tarayıcı doğrulaması ayrıca bekliyor.
+
+
+[2026-09-19 devam — SON BLOKLAMA TEMİZLİĞİ]
+- [x] wallpaper-live.js içinde kalan son blocking alert satın alma hatasında bulundu ve uygulama toast akışına çevrildi.
+- Commit: 02d8aac4febcf89bb476826c2a8b36854c239db4.
+- [ ] Pages yeni deploy + canlı HTTP/görsel doğrulama.
