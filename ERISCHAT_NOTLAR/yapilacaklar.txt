@@ -393,3 +393,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Oyun motoru v3 animasyon/reveal metadata katmanı önceki checkpoint'te tamamlandı; ücretsiz/free-play sınırı korunuyor.
 - [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı.
 - [ ] Blackjack çok adımlı hit/stand oturumu ve gerçek round lifecycle sonraki oyun motoru derinleştirme kalemi.
+
+2026-09-19 — OYUN UI HARDENING
+- [x] Blackjack split elleri artık oyuncu ekranında aktif el + toplam + sonuç bilgisiyle görselleştiriliyor.
+- [x] Blackjack action endpoint hataları UI'da sessizce yutulmak yerine kullanıcıya gösteriliyor.
+- [ ] Fresh Quality/browser E2E sonucu hâlâ bekleniyor.
