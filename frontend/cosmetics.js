@@ -76,7 +76,7 @@
     const avatar = assetUrl(avatarKey);
     const frame = assetUrl(frameKey);
     const wallpaper = assetUrl(wallpaperKey);
-    if (wallpaper) document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); else document.documentElement.style.removeProperty('--eris-wallpaper');
+    if (wallpaper) { document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); document.body.style.backgroundImage = `linear-gradient(#05030aa8,#05030ad9), url("${wallpaper}")`; document.body.style.backgroundSize = 'cover'; document.body.style.backgroundAttachment = 'fixed'; } else { document.documentElement.style.removeProperty('--eris-wallpaper'); document.body.style.backgroundImage = ''; }
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {
       if (!avatar) return;
       el.style.backgroundImage = `url("${avatar}")`;
