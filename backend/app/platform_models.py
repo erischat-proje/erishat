@@ -81,7 +81,6 @@ class FamilyMember(Base):
 
 class FamilyInvitation(Base):
     __tablename__ = "family_invitations"
-    __table_args__ = (UniqueConstraint("family_id", "user_id", "status", name="uq_family_invitation_state"),)
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     family_id: Mapped[str] = mapped_column(ForeignKey("families.id", ondelete="CASCADE"), index=True, nullable=False)
     inviter_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
