@@ -428,3 +428,8 @@ Room control checkpoint
 - [x] `/rooms/{room_id}/rtc-config` üyelik/ban kontrolüyle ICE yapılandırması döndürüyor.
 - [x] Frontend peer connection artık oda RTC config'ini kullanıyor.
 - [ ] TURN ve gerçek 2-browser/mobile E2E henüz doğrulanmadı.
+
+2026-09-19 — RTC ICE CONFIG
+- [x] Oda üyeliği/ban kontrolü olan RTC ICE config endpointi eklendi.
+- [x] Frontend `RTCPeerConnection` artık backend tarafından verilen ICE server listesini kullanıyor.
+- [ ] Gerçek TURN yapılandırması ve iki tarayıcı canlı ses E2E henüz doğrulanmadı.
