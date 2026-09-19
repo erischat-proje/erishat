@@ -383,3 +383,4 @@ Room control checkpoint
 - 2026-09-19: Blackjack split state için UI-safe display_state eklendi; aktif el ve ayrı split elleri frontend'e aktarılıyor, deste bilgisi dışarı açılmıyor.
 - 2026-09-19: Tüm 6 non-Blackjack oyun motoru (Roulette, 4 Cups, Horse Race, Crash, Vault, Wheel) harden edildi: profil doğrulama, normalize sonuç/state alanları, seçim kaydı ve zengin animasyon metadata. Oyunlar free-play; Lidya/Gem bahis/payout bağlantısı yok.
 - 2026-09-19: Oyun registry'sine fail-fast bütünlük kontrolü eklendi; oda/özel oyun listesi ile kayıtlı motorlar eşleşmezse veya bir motor play() sunmazsa sistem import aşamasında hata veriyor.
+- 2026-09-19: Oyun API katmanı sadeleştirildi: eski inline/ulaşılamayan oyun fallback kodu kaldırıldı; motor çıktıları result/data tipi ve hata davranışı açısından sınırda doğrulanıyor.
