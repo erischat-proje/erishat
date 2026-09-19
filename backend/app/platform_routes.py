@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import random
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -241,7 +242,13 @@ def register_platform_auth(current_user_dependency):
         member=db.scalar(select(RoomMember.id).where(RoomMember.room_id==room_id,RoomMember.user_id==user.id))
         ban=db.scalar(select(RoomBan.id).where(RoomBan.room_id==room_id,RoomBan.user_id==user.id))
         if not member or ban: raise HTTPException(status_code=403,detail="Odaya erişiminiz yok")
-        return {"ice_servers":[{"urls":["stun:stun.l.google.com:19302"]}],"ice_transport_policy":"all"}
+        ice_servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
+        turn_url = os.getenv("ERISCHAT_TURN_URL", "").strip()
+        turn_user = os.getenv("ERISCHAT_TURN_USERNAME", "").strip()
+        turn_password = os.getenv("ERISCHAT_TURN_PASSWORD", "").strip()
+        if turn_url and turn_user and turn_password:
+            ice_servers.append({"urls": [turn_url], "username": turn_user, "credential": turn_password})
+        return {"ice_servers": ice_servers, "ice_transport_policy": "all"}
 
     @router.get("/rooms/{room_id}/seats")
     def room_seats(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
