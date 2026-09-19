@@ -582,3 +582,9 @@ Room control checkpoint
 - [x] Commit `36bc24f374986a9ee782914c9d4861bd5c3c896c`.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
 
+2026-09-19 — QUALITY #882 FRONTEND BROWSER SMOKE DÜZELTMESİ
+- [x] Static syntax, demo surface integrity ve frontend surface integrity geçti; browser smoke `mountGameEntryPoints is not defined` runtime hatasında kaldı.
+- [x] Kök neden `frontend/demo-complete-live.js` içindeki artık tanımlı olmayan `mountGameEntryPoints()` çağrısıydı; mevcut `mountButtons()` akışı korunarak stale çağrı kaldırıldı.
+- [x] Commit `4f9db700528bfbe2542bb9437ad9099d11713e2f`.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
