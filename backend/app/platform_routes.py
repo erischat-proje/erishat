@@ -17,7 +17,7 @@ from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
-from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator
+from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
@@ -81,6 +81,12 @@ class AnnouncementUpdate(BaseModel):
     message: str | None = Field(default=None, min_length=1, max_length=500)
     enabled: bool | None = None
     pinned: bool | None = None
+class MusicCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=128)
+    source_url: str = Field(min_length=8, max_length=2000)
+class MusicPlayback(BaseModel):
+    action: str = Field(pattern="^(play|pause|stop|seek)$")
+    position_seconds: int | None = Field(default=None, ge=0, le=86400)
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
 class BlackjackAction(BaseModel):
@@ -458,6 +464,54 @@ def register_platform_auth(current_user_dependency):
         db.delete(row); db.commit()
         record("system", "room_announcement_deleted", user_id=user.id, room_id=room_id, announcement_id=announcement_id)
         return {"deleted": True, "id": announcement_id}
+
+    def _require_music_manager(db: Session, room_id: str, user_id: str) -> Room:
+        room = db.get(Room, room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        if room.owner_id != user_id and not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room_id, RoomModerator.user_id == user_id)):
+            raise HTTPException(status_code=403, detail="Müzik yönetme yetkiniz yok")
+        return room
+
+    def _music_view(row: RoomMusic) -> dict:
+        return {"id": row.id, "slot": row.slot, "title": row.title, "source_url": row.source_url, "position_seconds": int(row.position_seconds or 0), "is_playing": bool(row.is_playing), "started_at": row.started_at, "updated_at": row.updated_at}
+
+    @router.get("/rooms/{room_id}/music")
+    def music_queue(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = db.get(Room, room_id)
+        if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        if not db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odaya erişiminiz yok")
+        return [_music_view(row) for row in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room_id).order_by(RoomMusic.slot, RoomMusic.id))]
+
+    @router.post("/rooms/{room_id}/music")
+    def music_add(room_id: str, payload: MusicCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_music_manager(db, room_id, user.id)
+        slot = int(db.scalar(select(func.max(RoomMusic.slot)).where(RoomMusic.room_id == room_id)) or 0) + 1
+        row = RoomMusic(room_id=room_id, user_id=user.id, slot=slot, title=payload.title.strip(), source_url=payload.source_url.strip(), paid_until=datetime.now(timezone.utc))
+        db.add(row); db.commit(); db.refresh(row); record("system", "room_music_added", user_id=user.id, room_id=room_id, music_id=row.id)
+        return _music_view(row)
+
+    @router.post("/rooms/{room_id}/music/{music_id}/playback")
+    def music_playback(room_id: str, music_id: int, payload: MusicPlayback, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_music_manager(db, room_id, user.id)
+        row = db.get(RoomMusic, music_id)
+        if not row or row.room_id != room_id: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
+        if payload.action == "play":
+            db.query(RoomMusic).filter(RoomMusic.room_id == room_id, RoomMusic.id != row.id).update({"is_playing": False}, synchronize_session=False); row.is_playing=True; row.started_at=datetime.now(timezone.utc)
+        elif payload.action == "pause": row.is_playing=False
+        elif payload.action == "stop": row.is_playing=False; row.position_seconds=0; row.started_at=None
+        else:
+            if payload.position_seconds is None: raise HTTPException(status_code=422, detail="position_seconds gerekli")
+            row.position_seconds=payload.position_seconds
+        row.updated_at=datetime.now(timezone.utc); db.commit(); db.refresh(row)
+        record("system", "room_music_playback", user_id=user.id, room_id=room_id, music_id=row.id, action=payload.action, position_seconds=row.position_seconds)
+        return _music_view(row)
+
+    @router.delete("/rooms/{room_id}/music/{music_id}")
+    def music_delete(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_music_manager(db, room_id, user.id); row=db.get(RoomMusic,music_id)
+        if not row or row.room_id != room_id: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
+        db.delete(row); db.commit(); record("system","room_music_deleted",user_id=user.id,room_id=room_id,music_id=music_id); return {"deleted":True,"id":music_id}
 
     GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
     ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel"}
