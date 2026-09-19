@@ -499,3 +499,12 @@ GÜVENLİK/KAPSAM NOTU
 - Live demo API response handling hardened for wallet exchange, music and announcements.
 - Family: authenticated family list endpoint added; family demo connected to family list, members, donation and chat APIs.
 - No fresh CI/Quality PASS has been claimed after these changes.
+
+2026-09-19 — YENİ SOHBET DEVİR NOTU
+- Açık: aile demo gerçek browser E2E ve yetki sınırları.
+- Açık: oda chat gerçek browser E2E/realtime.
+- Açık: WebRTC 2 tarayıcı + TURN + mobil ağ E2E.
+- Açık: müzik browser E2E, seek ve çoklu istemci senkronizasyonu.
+- Açık: duyuru browser E2E ve owner/moderator yetkileri.
+- Açık: güncel değişikliklerden sonra yeni Quality/CI PASS.
+- Açık: profil/VIP/social/admin/support kapsamlarının browser E2E doğrulaması.
