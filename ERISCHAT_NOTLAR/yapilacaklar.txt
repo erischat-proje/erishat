@@ -708,3 +708,8 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 12] REPORT BROWSER SMOKE CONTRACT
 - [x] Report browser smoke payload'ı backend `ReportCreate.category` zorunluluğuna hizalandı.
 - [ ] Yeni Fresh Quality run sonucu doğrulanacak.
+
+
+[2026-09-19 devam 13] RTC REST SMOKE AYRIŞTIRMA
+- [x] Duplicate/stale REST rtc-signals browser smoke kaldırıldı; ayrı security smoke kapsamı korunuyor.
+- [ ] Yeni Fresh Quality sonucu doğrulanacak.
