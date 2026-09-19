@@ -688,3 +688,5 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 5] Gerçek RTCPeerConnection smoke'ında ICE adaylarının iki uçta gerçekten RTCPeerConnection'a uygulanması ve remoteDescription öncesi adayların kuyruklanması eklendi. Commit 3b66e60. Fresh workflow sonucu hâlâ doğrulanmadı.
 
 [2026-09-19 devam 6] WebRTC TURN yapılandırması için Settings'e rtc_turn_url / rtc_turn_username / rtc_turn_credential alanları eklendi; /rooms/{room_id}/rtc-config bu ayarları mevcut STUN ile birlikte sunabilecek durumda. Commit d9c3d4c. Gerçek TURN sunucusu/credential ile ağ E2E henüz doğrulanmadı.
+
+[2026-09-19 devam 7] RTC smoke artık /rtc-config endpointini gerçek owner tokenıyla çağırıp dönen ice_servers listesini RTCPeerConnection'a doğrudan geçiriyor; böylece yapılandırılmış TURN/STUN ayarları smoke tarafından kullanılabilir. Commit 5e67394. Gerçek TURN dış ağ doğrulaması için gerçek TURN credential/deployment hâlâ gerekli.
