@@ -17,7 +17,7 @@ from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
-from .room_models import Room, RoomGiftEvent, RoomMember
+from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
@@ -75,6 +75,12 @@ class FamilyDonationCreate(BaseModel):
     amount: int = Field(ge=1, le=10_000_000)
 class FamilyMemberUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
+class AnnouncementCreate(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+class AnnouncementUpdate(BaseModel):
+    message: str | None = Field(default=None, min_length=1, max_length=500)
+    enabled: bool | None = None
+    pinned: bool | None = None
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
 class BlackjackAction(BaseModel):
@@ -398,6 +404,61 @@ def register_platform_auth(current_user_dependency):
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
         return [{"gift":r.gift_key,"amount":r.total_price,"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
+    def _require_room_announcement_manager(db: Session, room_id: str, user_id: str) -> Room:
+        room = db.get(Room, room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        if room.owner_id != user_id:
+            moderator = db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room_id, RoomModerator.user_id == user_id))
+            if not moderator:
+                raise HTTPException(status_code=403, detail="Duyuru yönetme yetkiniz yok")
+        return room
+
+    @router.get("/rooms/{room_id}/announcements")
+    def list_announcements(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = db.get(Room, room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
+        if not member:
+            raise HTTPException(status_code=403, detail="Bu odaya erişiminiz yok")
+        rows = list(db.scalars(select(RoomAnnouncement).where(RoomAnnouncement.room_id == room_id, RoomAnnouncement.enabled == True).order_by(RoomAnnouncement.pinned.desc(), RoomAnnouncement.created_at.desc()).limit(50)))
+        return [{"id": r.id, "message": r.message, "enabled": r.enabled, "pinned": r.pinned, "created_at": r.created_at} for r in rows]
+
+    @router.post("/rooms/{room_id}/announcements")
+    def create_announcement(room_id: str, payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_room_announcement_manager(db, room_id, user.id)
+        row = RoomAnnouncement(room_id=room_id, message=payload.message.strip(), enabled=True, pinned=False)
+        db.add(row); db.commit(); db.refresh(row)
+        record("system", "room_announcement_created", user_id=user.id, room_id=room_id, announcement_id=row.id)
+        return {"id": row.id, "message": row.message, "enabled": row.enabled, "pinned": row.pinned, "created_at": row.created_at}
+
+    @router.patch("/rooms/{room_id}/announcements/{announcement_id}")
+    def update_announcement(room_id: str, announcement_id: int, payload: AnnouncementUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_room_announcement_manager(db, room_id, user.id)
+        row = db.get(RoomAnnouncement, announcement_id)
+        if not row or row.room_id != room_id:
+            raise HTTPException(status_code=404, detail="Duyuru bulunamadı")
+        data = payload.model_dump(exclude_none=True)
+        if "message" in data: row.message = data["message"].strip()
+        for key in ("enabled", "pinned"):
+            if key in data: setattr(row, key, data[key])
+        if row.pinned:
+            db.query(RoomAnnouncement).filter(RoomAnnouncement.room_id == room_id, RoomAnnouncement.id != row.id).update({"pinned": False}, synchronize_session=False)
+        db.commit(); db.refresh(row)
+        record("system", "room_announcement_updated", user_id=user.id, room_id=room_id, announcement_id=row.id)
+        return {"id": row.id, "message": row.message, "enabled": row.enabled, "pinned": row.pinned, "created_at": row.created_at}
+
+    @router.delete("/rooms/{room_id}/announcements/{announcement_id}")
+    def delete_announcement(room_id: str, announcement_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        _require_room_announcement_manager(db, room_id, user.id)
+        row = db.get(RoomAnnouncement, announcement_id)
+        if not row or row.room_id != room_id:
+            raise HTTPException(status_code=404, detail="Duyuru bulunamadı")
+        db.delete(row); db.commit()
+        record("system", "room_announcement_deleted", user_id=user.id, room_id=room_id, announcement_id=announcement_id)
+        return {"deleted": True, "id": announcement_id}
+
     GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
     ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel"}
     PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
