@@ -160,7 +160,11 @@
     bindSender(chat);
   }
 
-  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation };
+  async function sendMessage(id, text) {
+    if (!id || !text?.trim() || !api()?.sendMessage) throw new Error('Geçerli konuşma gerekli.');
+    return api().sendMessage(id, text.trim());
+  }
+  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, send: sendMessage, activeId: () => activeConversationId };
 
   window.addEventListener('erischat:auth', event => {
     if (event?.detail?.state === 'ready') {
