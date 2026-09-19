@@ -782,3 +782,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `frontend/index.html` 200 hediyelik kataloğa hizalandı ve tıklanabilir yüksek seviye oda duyuru bannerı eklendi.
 - [x] Backend gift-catalog ve gift-events response'ları seviye/animasyon metadata'sı döndürüyor.
 - [ ] Bu değişikliklerden sonra yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 23] QUALITY #989 — STALE DEMO SMOKE ROOT FIX
+- [x] Quality #989 ilk gerçek failure: `Frontend backend browser smoke` adımında, backend/gift akışı başarıyla geçtikten sonra smoke scripti `#erisDemoBtn` öğesine tıklarken 30 saniye timeout verdi.
+- [x] Kök neden ürün backend'i değil, browser smoke'un güncel `frontend/erischat-main.html` yüzeyiyle uyumsuz eski demo UI seçicileri kullanmasıydı; güncel sayfada `#erisDemoBtn`, `data-ed="shop"` vb. demo katmanı bulunmuyor.
+- [x] Stale demo bölümünün yerine mevcut frontend'in gerçek navigation/profile/shop yüzeyini doğrulayan kısa current-UI smoke eklendi.
+- [x] Fix commit: `7b15ceb6c93fcd50a73a826c6e0a7c9ba07f0035`.
+- [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
