@@ -777,3 +777,11 @@ Room control checkpoint
 - [x] Smoke Discovery {index} test oda adı Smoke Disc {index} olacak şekilde düzeltildi.
 - [x] Fix commit: a2c1ac2b5a15ff83184c10f53ed5e6b0e0f7c2b0.
 - [ ] Fresh Quality #999 sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 27] QUALITY #999 — ADMIN SMOKE BACKEND IMPORT KÖK DÜZELTMESİ
+- [x] Quality run `35440744528` ilk gerçek failure: `System identity and admin smoke` adımında `ModuleNotFoundError: No module named 'app'`.
+- [x] Kök neden `scripts/system_identity_admin_smoke.py` içinden backend package importunun `backend/` path ayarlanmadan yapılmasıydı.
+- [x] Canonical `backend/` dizini `sys.path` içine eklenerek import ortamdan bağımsız hale getirildi.
+- [x] Fix commit: `a91360187e357307410ea3a0ed2667a86b513dfe`.
+- [ ] Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
