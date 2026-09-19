@@ -720,3 +720,10 @@ Room control checkpoint
 - [x] Kök neden doğrudan import eksikliği olarak düzeltildi: `from datetime import datetime, timezone` eklendi.
 - [x] Fix commit: `7d430362d7d93e9abe9903bc2459c5daa0c5b0fa`.
 - [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam 20] QUALITY #976 GIFT HISTORY SMOKE ROOT FIX
+- [x] İlk gerçek failure `profile gift history missing` olarak doğrulandı; API gerçek geçmişte `Zeytin Dalı` döndürürken browser smoke eski `rose` anahtarını arıyordu.
+- [x] Kök neden stale test assertion olarak düzeltildi; profil hediye geçmişi assertion'ı canonical `Zeytin Dalı` anahtarına hizalandı.
+- [x] Fix commit: `a42eb9e7aae5d721dc5fb589d81d037cd8581eef`.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
