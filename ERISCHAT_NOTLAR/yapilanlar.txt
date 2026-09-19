@@ -801,3 +801,11 @@ Room control checkpoint
 - [x] Smoke artık davet response'undaki invitation id'yi alıp davet edilen kullanıcının tokenıyla POST /families/invitations/{invitation_id}/accept çağrısını yapıyor; ardından owner tokenıyla role=admin PATCH'ine geçiyor.
 - [x] Fix commit: 23e6899a7771592b4c51e9b752a89cc0ca24d108.
 - [ ] Bu fix sonrası Fresh Quality runner sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 30] QUALITY #1010 — ROOM WEBSOCKET STARTUP FRAME DRAIN KÖK DÜZELTMESİ
+- [x] Quality run 35441104351: frontend/browser, cosmetics, room surface, family integrity/production, admin, anonymous ve Live family smoke geçti; Live room smoke WebSocket assertionında durdu.
+- [x] Kök neden room WebSocket bağlantısı açılırken rtc_ready frame'lerinin room_chat broadcast'inden önce gelebilmesi; smoke testi ise ilk iki recv() sonucunun doğrudan room_chat olacağını varsayıyordu.
+- [x] scripts/room_live_smoke.py artık iki istemcide startup realtime frame'lerini beklenen room_chat gelene kadar tüketiyor; ürün WebSocket protokolü değiştirilmedi.
+- [x] Fix commit: 5cd1b49d6588a7742fec1f63b729bf4fcf2dfe88.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
