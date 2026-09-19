@@ -264,14 +264,18 @@ async function main(){
     const musicData=await music.json();
     const play=musicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicData.id+'/playback',{method:'POST',headers:h,body:JSON.stringify({action:'play',position_seconds:3})}):null;
     const playData=play?await play.json():null;
-    const pause=musicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicData.id+'/playback',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken,'Content-Type':'application/json'},body:JSON.stringify({action:'pause'})}):null;
+    const secondMusic=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken,'Content-Type':'application/json'},body:JSON.stringify({title:'Smoke Track 2',source_url:'https://example.com/smoke-2.mp3'})});
+    const secondMusicData=await secondMusic.json();
+    const secondPlay=secondMusicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+secondMusicData.id+'/playback',{method:'POST',headers:h,body:JSON.stringify({action:'play',position_seconds:1})}):null;
     const musicList=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music',{headers:h}).then(r=>r.json());
+    const firstState=musicList.find(x=>x.id===musicData?.id),secondState=musicList.find(x=>x.id===secondMusicData?.id);
+    const pause=secondMusicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+secondMusicData.id+'/playback',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken,'Content-Type':'application/json'},body:JSON.stringify({action:'pause'})}):null;
     const delMusic=null;
-    return {join:join.status,seat:seat.status,mute:mute.status,unmute:unmute.status,lockSeat:lockSeat.status,unlockSeat:unlockSeat.status,mod:mod.status,mods,music:music.status,musicData,play:play?.status,playData,pause:pause?.status,musicList,delMusic:delMusic?.status};
+    return {join:join.status,seat:seat.status,mute:mute.status,unmute:unmute.status,lockSeat:lockSeat.status,unlockSeat:unlockSeat.status,mod:mod.status,mods,music:music.status,musicData,play:play?.status,playData,secondMusic:secondMusic.status,secondMusicData,secondPlay:secondPlay?.status,firstState,secondState,pause:pause?.status,musicList,delMusic:delMusic?.status};
   },{api:API,roomId:room.data.id,targetId:member.user.id});
   if(![200,201,204].includes(roomControls.join)||!roomControls.seat||roomControls.mute!==200||roomControls.unmute!==200||roomControls.lockSeat!==200||roomControls.unlockSeat!==200) throw new Error('room seat controls failed: '+JSON.stringify(roomControls));
   if(![200,201].includes(roomControls.mod)||!roomControls.mods.some(x=>x.user_id===member.user.id)) throw new Error('room moderator flow failed: '+JSON.stringify(roomControls));
-  if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
+  if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.secondMusic!==200||!roomControls.secondMusicData?.id||roomControls.secondPlay!==200||roomControls.firstState?.is_playing||!roomControls.secondState?.is_playing||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
   const musicUi=await page.evaluate(async ({roomId,musicId})=>{
     window.ErisCurrentRoomId=roomId;
     if(!window.ErisChatMusic?.open) throw new Error('ErisChatMusic.open missing');
