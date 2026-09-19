@@ -644,3 +644,10 @@ Room control checkpoint
 - [x] ErisChatDM aktif konuşma ID'sini ve gerçek sendMessage wrapper'ını dışarı açıyor.
 - [x] Böylece Mesaj ekranı ile açılan gerçek konuşma ve ana chat gönderim alanı aynı backend konuşmasına yazabiliyor.
 - Commitler: 093b7b74feb019ef1c0003d851f3324dbad398fe, d12bb589b939a79394dd487a30f8105729292bbf.
+
+
+[2026-09-19 — ODA HEDİYE UI TEMİZLİĞİ]
+- [x] Oda hediye sistemi artık sağ altta bağımsız floating 🎁 buton üretmiyor.
+- [x] Hediye paneli oda modalındaki mevcut “🎁 Hediye” kontrolünden açılıyor.
+- [x] Gerçek oda ID'si üzerinden katalog/alıcılar/bakiye ve gönderim akışı korunuyor.
+- Commit: 2ce71e30eac4e13a6292b500271058430c36cfc4.
