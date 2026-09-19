@@ -467,3 +467,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Aile demo ekranındaki sahte üye/donation/chat butonları gerçek aile API'lerine bağlandı.
 - [x] Aile oluşturma, üye ekleme, üye listeleme, Lidya bağışı ve aile sohbeti canlı akışa bağlandı.
 - [ ] Aile davet kabul/reddet, sahiplik devri/ayrılma ve eşzamanlı bağış E2E doğrulaması açık.
+
+2026-09-19 — FAMILY LIVE DEMO
+- [x] Authenticated GET /families endpoint eklendi; kullanıcının bağlı aileleri listeleniyor.
+- [x] Aile demo ekranı sahte üye/bağış/sohbet butonlarından gerçek API akışına geçirildi.
+- [x] Aile oluşturma, üye listeleme/ekleme, bağış ve aile chat geçmişi/mesaj gönderimi bağlandı.
+- [ ] Aile rol değiştirme/üye çıkarma ve davet kabul lifecycle E2E açık.
