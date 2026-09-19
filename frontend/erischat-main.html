@@ -147,12 +147,37 @@
   ];
   const renderDemoRooms=()=>{
     const targets=[document.getElementById('realRooms'),document.getElementById('rooms')].filter(Boolean);
-    targets.forEach(el=>{if(el.dataset.demoRendered==='1')return;el.innerHTML='';demoRooms.forEach(r=>{const b=document.createElement('button');b.className='room card';b.innerHTML='<div class="ava">'+r.icon+'<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>';b.querySelector('b').textContent=r.name;b.querySelector('small').textContent=r.count+' kişi • '+r.owner;b.onclick=()=>openDemoRoom(r);el.appendChild(b)});el.dataset.demoRendered='1';});
+    targets.forEach(el=>{
+      if(el.dataset.demoRendered==='1')return;
+      const hasRealContent=el.querySelector('.room') && !/yükleniyor/i.test(el.textContent||'');
+      if(hasRealContent)return;
+      el.innerHTML='';
+      demoRooms.forEach(r=>{
+        const b=document.createElement('button');b.className='room card';
+        b.innerHTML='<div class="ava">'+r.icon+'<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">DEMO CANLI</span>';
+        b.querySelector('b').textContent=r.name;
+        b.querySelector('small').textContent=r.count+' kişi • '+r.owner;
+        b.onclick=()=>openDemoRoom(r);
+        el.appendChild(b);
+      });
+      el.dataset.demoRendered='1';
+    });
   };
   window.openDemoRoom=r=>{
     document.getElementById('demoRoomTitle').textContent=r.name;
     const seats=document.getElementById('demoRoomSeats'); seats.innerHTML='';
-    for(let i=1;i<=12;i++){const b=document.createElement('button');b.innerHTML='🎙️<strong>Koltuk '+i+'</strong><span>'+(i<=Math.min(r.count,12)?(i===1?r.owner:'Misafir '+i):'Boş')+'</span>';b.dataset.seat=i;b.onclick=()=>{b.querySelector('span').textContent='Sen';toast('Koltuk '+i+' alındı ✓')};seats.appendChild(b)}
+    let selectedSeat=null;
+    for(let i=1;i<=12;i++){
+      const occupied=i<=Math.min(r.count,12);
+      const b=document.createElement('button'); b.type='button'; b.dataset.seat=i;
+      b.innerHTML='🎙️<strong>Koltuk '+i+'</strong><span>'+(occupied?(i===1?r.owner:'Misafir '+i):'Boş')+'</span>';
+      if(occupied){b.disabled=true;b.style.opacity='.58';}
+      else b.onclick=()=>{
+        if(selectedSeat){const prev=seats.querySelector('[data-seat="'+selectedSeat+'"]');if(prev){prev.disabled=false;prev.style.opacity='';prev.querySelector('span').textContent='Boş';}}
+        selectedSeat=i;b.disabled=true;b.style.opacity='1';b.querySelector('span').textContent='Sen';toast('Koltuk '+i+' alındı ✓');
+      };
+      seats.appendChild(b);
+    }
     document.getElementById('demoRoomChat').innerHTML='<div class="bubble"><b>'+r.owner+'</b><br>Hoş geldiniz 👋</div><div class="bubble"><b>Misafir</b><br>Bugün ne dinliyoruz? 🎵</div>';
     document.getElementById('demoRoomModal').classList.add('show');
   };
