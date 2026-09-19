@@ -144,3 +144,18 @@ Tarih: 2026-09-18
 - [x] wallpaper-live.js içinde kalan son blocking alert satın alma hatasında bulundu ve uygulama toast akışına çevrildi.
 - Commit: 02d8aac4febcf89bb476826c2a8b36854c239db4.
 - [ ] Pages yeni deploy + canlı HTTP/görsel doğrulama.
+
+
+[2026-09-19 — FIRMA DEMOSU / WEB ARAYÜZ SON DURUM]
+- [x] Firma demosu için hedeflenen web arayüz kapsamı ana ürün yüzeyleri üzerinden toparlandı: ana ekran, Odalar, Oda Aç, gerçek oda modalı, Mesaj/DM, Keşfet, Mağaza, VIP 1–12, Profil, Gizlilik ve Tüm Sistemler erişimleri mevcut.
+- [x] Rahatsız edici sağ-alt floating sistem/hediye/müzik tetikleyicileri kaldırıldı; bu özellikler bağlamsal modal/panel veya ana arayüz girişlerinden açılıyor.
+- [x] Ana HTML'deki sahte mesajlar, sabit VIP değerleri ve etkinlik placeholder'ları temizlendi; gerçek veri yoksa boş durum gösterilecek şekilde düzenlendi.
+- [x] Oda oluşturma akışı gerçek /rooms backend çağrısına bağlandı; room-actions.js ana girişe yüklendi.
+- [x] Mağaza 139 kozmetik katalog ve demo cüzdan ile test edilebilir hale getirildi; demo cüzdan 500.000.000 sanal Lidya ve yalnızca bu tarayıcıdaki test kredisi.
+- [x] Demo sürecinde gerçek backend satın alma/apply varsa öncelikli; backend başarısızlığında kullanılan demo fallback'i gerçek ödeme olarak sunulmuyor.
+- [x] VIP 1–12 demo önizleme/kilit yüzeyi mevcut; gerçek backend VIP seviyesi değiştirilmeden test edilebilirlik korunuyor.
+- [x] Blocking alert/popup temizliği son turda wallpaper satın alma hatası dahil tamamlandı; toast akışı kullanılıyor.
+- [x] Responsive masaüstü düzeni düzeltildi; telefon genişliğine sıkışan ana demo görünümü giderildi.
+- [ ] GitHub Pages yeni deploy sonucu ve canlı HTTP/görsel doğrulaması hâlâ açık; bu doğrulama yapılmadan “canlı demo PASS” ilan edilmeyecek.
+- [ ] Firma demosu için gerçek tarayıcıda son uçtan uca görsel/etkileşim kontrolü yapılacak.
+- [ ] 139 kozmetiğin manuel görsel/alpha incelemesi ve üretim TURN/mobil ses transportu ayrı doğrulama olarak açık.
