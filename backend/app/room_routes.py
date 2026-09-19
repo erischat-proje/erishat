@@ -191,6 +191,12 @@ def register_room_auth(current_user_dependency):
     @router.patch("/{room_id}/chat")
     def set_chat(room_id: str, payload: RoomChatUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); room.chat_enabled = payload.enabled; db.commit(); return {"chat_enabled": room.chat_enabled}
+    @router.get("/{room_id}/moderators")
+    def list_moderators(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
+        return [{"user_id": user_id} for user_id in db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id).order_by(RoomModerator.user_id))]
     @router.post("/{room_id}/moderators")
     def add_moderator(room_id: str, payload: ModeratorUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user)
