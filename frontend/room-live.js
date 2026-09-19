@@ -86,6 +86,9 @@
     if(url){wall.style.setProperty('--eris-room-wallpaper','url("'+url.replace(/"/g,'%22')+'")');wall.classList.add('has-wallpaper');}
     else{wall.style.removeProperty('--eris-room-wallpaper');wall.classList.remove('has-wallpaper');}
   }
+  window.addEventListener('erischat:cosmetics-updated',()=>{
+    if(document.getElementById('erisRoomSurface')?.classList.contains('show')) applyRoomWallpaper();
+  });
   function renderRoomSeats(roomId,name,list,forcedCount){
     const box=document.getElementById('erisLiveSeats');if(!box)return;
     const count=Math.min(16,Math.max(8,Number(forcedCount)||seatCountForRoom(null,list)));
