@@ -31,3 +31,7 @@ Registry integrity
 - registry.py validates that every declared room/private game is registered.
 - Every registered engine must expose play(choice, profile, data).
 - This fails fast during import instead of silently exposing a broken game catalog.
+
+Frontend playback contract
+- Engines may expose animation.frames, animation.curve, animation.checkpoints or animation.phases.
+- The demo consumes these playback-safe values without receiving hidden game internals.
