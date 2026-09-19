@@ -24,7 +24,7 @@
         const b=document.createElement('button');b.style.cssText='width:100%;border:0;border-radius:9px;padding:7px;margin-top:6px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-size:8px;font-weight:900';
         if(!unlocked){b.textContent='🔒 Kilitli';b.disabled=true}
         else if(own.has(item.key)||item.tier==='vip'){b.textContent='✓ Uygula';b.onclick=async()=>{try{await api('/me/wallpaper/apply',{method:'POST',body:JSON.stringify({asset_key:item.key})});await window.ErisChatCosmetics?.load?.();window.toast?.('Duvar kağıdı uygulandı ✓')}catch(e){window.toast?.(e.message||'İşlem başarısız.')}}}
-        else {b.textContent='Satın al • '+Number(item.price).toLocaleString('tr-TR');b.onclick=async()=>{try{await api('/me/wallpaper/purchase',{method:'POST',body:JSON.stringify({asset_key:item.key})});await render();window.toast?.('Duvar kağıdı satın alındı ✓')}catch(e){alert(e.message)}}}
+        else {b.textContent='Satın al • '+Number(item.price).toLocaleString('tr-TR');b.onclick=async()=>{try{await api('/me/wallpaper/purchase',{method:'POST',body:JSON.stringify({asset_key:item.key})});await render();window.toast?.('Duvar kağıdı satın alındı ✓')}catch(e){window.toast?.(e.message||'İşlem başarısız.')}}}
         card.appendChild(b);grid.appendChild(card);
       });
     }catch(e){grid.innerHTML='<div style="font-size:9px;color:#938a9f">'+esc(e.message)+'</div>'}
