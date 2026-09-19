@@ -31,6 +31,22 @@
     m.querySelector('[data-close]').addEventListener('click',()=>{try{peers.forEach((pc,uid)=>{try{socket?.send(JSON.stringify({type:'rtc_leave',to_user_id:uid}) )}catch(e){}});}catch(e){} stream?.getTracks().forEach(t=>t.stop()); peers.forEach(pc=>pc.close()); peers.clear(); if(socket){socket.close();socket=null;}});
   }
 
+  async function roomChatDemo(){
+    let roomId='',socket=null,me='';
+    try{
+      const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]);
+      roomId=arr[0]?.id||arr[0]?.room_id||''; const md=await api('/me'); me=md?.id||'';
+    }catch(e){}
+    const m=modal('💬 Oda sohbeti + gerçek zamanlı',`<div style="display:flex;gap:7px;margin-bottom:8px"><span style="padding:8px 10px;border-radius:10px;background:#8a5cff18">${esc(roomId?'Oda bağlı':'Oda bulunamadı')}</span><span id="chatState" style="padding:8px 10px;border-radius:10px;background:#ffffff08">Bağlanıyor…</span></div><div id="chatList" style="height:300px;overflow:auto;background:#08070c;border:1px solid #ffffff12;border-radius:12px;padding:8px"></div><div style="display:flex;gap:6px;margin-top:8px"><input id="chatInput" maxlength="500" placeholder="Mesaj yaz…" style="flex:1;padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"><button id="chatSend" style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 12px;font-weight:800">Gönder</button></div>`);
+    const list=m.querySelector('#chatList'),state=m.querySelector('#chatState'),input=m.querySelector('#chatInput');
+    const add=d=>{const el=document.createElement('div');el.style.cssText='padding:7px 8px;border-bottom:1px solid #ffffff0a;font-size:10px';el.innerHTML='<b>'+esc(d.user_id===me?'Sen':d.user_id||'Kullanıcı')+'</b><small style="display:block;color:#938a9f;margin-top:2px">'+esc(d.text||'')+'</small>';list.append(el);list.scrollTop=list.scrollHeight;};
+    const connect=()=>{if(!roomId||socket||!window.ErisPlatform?.getAccessToken)return;const token=window.ErisPlatform.getAccessToken();if(!token){state.textContent='🔐 Token yok';return;}socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token)));socket.onopen=()=>state.textContent='🟢 Canlı';socket.onclose=()=>{socket=null;state.textContent='⚪ Kapalı'};socket.onerror=()=>state.textContent='❌ Bağlantı hatası';socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')state.textContent='🔇 '+(d.message||'Sohbet engellendi')}catch(e){}};};
+    m.querySelector('#chatSend').onclick=()=>{const text=input.value.trim();if(!text||!socket||socket.readyState!==1)return;if(text.length>500)return;socket.send(JSON.stringify({type:'room_chat',text}));input.value='';};
+    input.addEventListener('keydown',e=>{if(e.key==='Enter')m.querySelector('#chatSend').click()});
+    m.querySelector('[data-close]').addEventListener('click',()=>{socket?.close();socket=null});
+    connect();
+  }
+
   async function musicDemo(){
     let roomId=''; let queue=[];
     try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; if(roomId){ const r=await api('/rooms/'+encodeURIComponent(roomId)+'/music'); queue=Array.isArray(r)?r:(r?.music||r?.items||[]); } } catch(e){}
@@ -110,7 +126,7 @@
   function mount(){
     if(document.getElementById('erisDemoExtras'))return;
     const wrap=document.createElement('div');wrap.id='erisDemoExtras';wrap.style.cssText='position:fixed;right:14px;bottom:72px;z-index:289;display:flex;flex-direction:column;gap:5px;align-items:flex-end;max-width:170px';
-    const groups=[['🎙️ Ses/Koltuk',seatsDemo],['🎵 Müzik',musicDemo],['📢 Duyuru',announcementDemo],['👑 Aile',familyDemo],['🛍️ 139 Mağaza',storeDemo],['👤 Profil Try-on',profileDemo],['🛡️ Güvenlik/Mod',safetyDemo],['🚀 Onboarding',onboardingDemo],['⚙️ Oda Ayarları',roomSettingsDemo]];
+    const groups=[['🎙️ Ses/Koltuk',seatsDemo],['💬 Oda Sohbeti',roomChatDemo],['🎵 Müzik',musicDemo],['📢 Duyuru',announcementDemo],['👑 Aile',familyDemo],['🛍️ 139 Mağaza',storeDemo],['👤 Profil Try-on',profileDemo],['🛡️ Güvenlik/Mod',safetyDemo],['🚀 Onboarding',onboardingDemo],['⚙️ Oda Ayarları',roomSettingsDemo]];
     groups.forEach(([t,fn])=>{const b=button(t,fn);b.style.fontSize='8px';wrap.append(b)});document.body.append(wrap);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
