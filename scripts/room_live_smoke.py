@@ -199,7 +199,20 @@ def main() -> int:
             raise AssertionError(f"VIP spend did not advance: before={vip_before} after={vip_after} price={high_price}")
         if int(vip_after.get("level") or 0) < 1:
             raise AssertionError(f"VIP level did not unlock after threshold spend: {vip_after}")
-        print(f"VIP spend lifecycle OK: +{high_price}, total_spent={vip_after.get('total_spent')}, level={vip_after.get('level')}")
+        perks = set(vip_after.get("perks") or [])
+        required_perks = {"vip_badge", "custom_avatar", "custom_frame"}
+        if not required_perks.issubset(perks):
+            raise AssertionError(f"VIP level 1 perks incomplete: expected={sorted(required_perks)} actual={sorted(perks)}")
+        if vip_after.get("title") != "VIP Üye":
+            raise AssertionError(f"VIP level 1 title contract failed: {vip_after}")
+        if vip_after.get("neon_enabled") is not False:
+            raise AssertionError(f"VIP level 1 neon contract failed: {vip_after}")
+        status, public_vip = request("GET", f"/users/{uid_a}/vip", token_b)
+        if status >= 300:
+            raise RuntimeError(f"public VIP read failed: HTTP {status} {public_vip}")
+        if int(public_vip.get("level") or 0) < 1 or "vip_badge" not in set(public_vip.get("perks") or []):
+            raise AssertionError(f"public VIP unlock contract failed: {public_vip}")
+        print(f"VIP spend/unlock lifecycle OK: +{high_price}, total_spent={vip_after.get('total_spent')}, level={vip_after.get('level')}")
         print(f"gift invariant OK: sender -{price}, recipient +{expected_recipient}, room_gift event present")
 
     print("REST room smoke completed.")
