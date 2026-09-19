@@ -274,18 +274,23 @@ async function main(){
   if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
   const musicUi=await page.evaluate(async ({roomId,musicId})=>{
     window.ErisCurrentRoomId=roomId;
-    if(window.ErisChatMusic?.open) window.ErisChatMusic.open();
-    await new Promise(r=>setTimeout(r,150));
-    const row=document.querySelector('#erisMusicList [data-play="'+musicId+'"]');
-    if(!row) return {panel:false,audio:false,src:''};
+    if(!window.ErisChatMusic?.open) throw new Error('ErisChatMusic.open missing');
+    window.ErisChatMusic.open();
+    await new Promise(r=>setTimeout(r,50));
+    const started=Date.now();
+    let row=null;
+    while(Date.now()-started<3000){
+      row=document.querySelector('#erisMusicList [data-play="'+musicId+'"]');
+      if(row) break;
+      await new Promise(r=>setTimeout(r,50));
+    }
+    if(!row) return {panel:false,audio:false,src:'',musicId:'',row:false};
     row.click();
-    await new Promise(r=>setTimeout(r,200));
+    await new Promise(r=>setTimeout(r,250));
     const a=document.querySelector('audio');
-    const result={panel:!!document.querySelector('#erisMusicPanel[style*="display"]'),audio:!!a,src:a?.src||'',musicId:a?.dataset?.musicId||''};
-    row.click();
-    return result;
+    return {panel:getComputedStyle(document.querySelector('#erisMusicPanel')).display==='flex',audio:!!a,src:a?.src||'',musicId:a?.dataset?.musicId||'',row:true};
   },{roomId:room.data.id,musicId:roomControls.musicData.id});
-  if(!musicUi.audio||musicUi.musicId!==String(roomControls.musicData.id)||!musicUi.src.includes('example.com/smoke.mp3')) throw new Error('room music HTMLAudio playback binding failed: '+JSON.stringify(musicUi));
+  if(!musicUi.row||!musicUi.panel||!musicUi.audio||musicUi.musicId!==String(roomControls.musicData.id)||!musicUi.src.includes('example.com/smoke.mp3')) throw new Error('room music HTMLAudio playback binding failed: '+JSON.stringify(musicUi));
   const musicRealtime=await page.evaluate(async ({roomId,musicId,ownerToken,memberToken})=>{
     const url=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);
     const open=token=>new Promise((resolve,reject)=>{const ws=new WebSocket(url(token));const messages=[];const t=setTimeout(()=>reject(new Error('music websocket open timeout')),5000);ws.onopen=()=>{clearTimeout(t);resolve({ws,messages});};ws.onerror=()=>{clearTimeout(t);reject(new Error('music websocket error'));};ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};});
