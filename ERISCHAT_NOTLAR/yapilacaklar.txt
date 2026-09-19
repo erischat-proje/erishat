@@ -739,3 +739,12 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `play` ve `seek` işlemleri istenen position değerini koruyor; pause/stop state güncellemesi eklendi.
 - [x] Fix commit: `9e88bf569d37e29c1a40ac8a9aec9d6ea75e52dc`.
 - [ ] Yeni Quality/CI run sonucu doğrulanacak; PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam 18] MUSIC REALTIME SYNC ROOT FIX
+- [x] Quality #968 ilk gerçek failure: Frontend backend browser smoke içinde music sync timeout.
+- [x] HTTP music playback 200 dönmesine rağmen WebSocket music_sync yayınlanmıyordu.
+- [x] Kök neden: WebSocket ortak erişim kontrolü room.chat_enabled kapalı olduğunda music/RTC dahil tüm realtime mesajlarını bağlantıdan düşürüyordu.
+- [x] backend/app/main.py düzeltildi: ortak kontrol artık chat durumuna bağlı değil; yalnızca room_chat mesajı chat kapalıysa reddediliyor.
+- [x] Fix commit: 7180ac5997271083562ce50739dd38da7649a9b5.
+- [ ] Yeni Fresh Quality run sonucu doğrulanacak; PASS ilan edilmeyecek.
