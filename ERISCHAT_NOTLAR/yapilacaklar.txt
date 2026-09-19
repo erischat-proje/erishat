@@ -166,3 +166,10 @@ Tarih: 2026-09-18
 - [x] Değişiklik main branch'e commitlendi: 7fe96343ca3157b667d7552ab5edbe045ef55c8b.
 - [ ] Bu commit için yeni Quality workflow sonucu henüz doğrulanmadı; PASS ilan edilmiyor.
 - [ ] GitHub Pages deploy/live URL ve gerçek tarayıcı son E2E doğrulaması hâlâ açık.
+
+
+[2026-09-19 — DEMO INTEGRITY CHECK DÜZELTME]
+- Quality #1381, commit 339b7ef üzerinde Customer demo surface integrity adımında başarısız oldu: room-live.js içindeki loader dinamik dosya adlarıyla yazıldığı için statik kontrol './demo-complete-live.js' literalini bulamadı.
+- room-live.js loader literal yollarla düzeltildi.
+- Düzeltme commit: d94e3503c303eab33dc241a0e484abae54dc9cf2
+- Yeni Quality sonucunun tamamlanması bekleniyor; henüz PASS ilan edilmedi.
