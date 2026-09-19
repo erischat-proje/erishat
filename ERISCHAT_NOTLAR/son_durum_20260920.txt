@@ -87,3 +87,5 @@ NOT
 - `86fac42bc38e1212476ab1314a710fa4079f662e`: Tüm Sistemler → Güvenlik/Şikayet formuna gönderim öncesi doğrulama eklendi; kategori + neden ve en az bir hedef alanı zorunlu, başarılı gönderimde ilgili alanlar temizleniyor.
 
 - `6357e3070abd9893a55c59c82512ccefc3c769e3`: Keşfet sistemi artık Yakındakiler / Rastgele sohbet / Rastgele oda sonuçlarını yalnızca toast olarak değil, merkezi panel içinde görünür kartlarla gösteriyor; farklı API response şekilleri normalize ediliyor.
+
+- `cbc84216fee5307043d4a7eaf7369a3e88e9241a`: Profil VIP ilerleme çubuğundaki eski düşük eşikler kaldırıldı; VIP 1–12 ilerlemesi proje için tanımlanan toplam harcama eşikleriyle hizalandı: 1K / 5K / 15K / 30K / 60K / 120K / 250K / 500K / 1M / 2M / 5M / 10M.
