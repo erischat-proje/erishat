@@ -897,3 +897,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] frontend/room-music-ui.js içine canonical ErisPlatform.api tabanlı music API adapter'ları eklendi ve window.ErisRoom müzik fonksiyonları garanti altına alındı.
 - [x] Commit: d7f911160281a03d0624001d95e962c1adf77fa2.
 - [ ] Bu düzeltmenin yeni Quality run'ında tam PASS olarak doğrulanması bekleniyor.
+
+
+[2026-09-19 devam 39] MÜZİK UI TEŞHİS CHECKPOINT
+- [x] Music UI API hardening commit d7f9111 sonrası kalan runtime hatasının kaynağını yakalamak için console error capture eklendi.
+- [x] Commit 831bea45e3f8f0615fb6e4e68299cb74a2e4d5fb.
+- [ ] Bu commit sonrası Quality run sonucu bekleniyor; PASS varsayılmıyor.
+- [ ] Sonraki adım: yeni Quality run tamamlandığında ilk gerçek failure/console source okunacak ve kök neden düzeltilecek.
+- [ ] Müzik UI zinciri PASS olmadan gerçek playback/queue tamamlandı kabul edilmeyecek.
