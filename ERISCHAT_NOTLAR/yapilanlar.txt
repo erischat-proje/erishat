@@ -665,3 +665,9 @@ Room control checkpoint
 - [x] Mağaza satın alma/uygulama akışındaki blocking browser alert pencereleri kaldırıldı; mevcut toast sistemi kullanılıyor.
 - [x] Kozmetik fiyatı için hatalı katalog-genel fiyat fallback'i kaldırıldı; ürün fiyatı yoksa güvenli varsayılan kullanılıyor.
 - Commit: 6fb1e6c4a5d276c1fdc42d39fc23a5264761e727.
+
+
+[2026-09-19 — PROFİL/DM TEMİZLİĞİ]
+- [x] Profil panelindeki gerçek hesap, bildirim, VIP ve kozmetik senkronizasyonu korunarak kontrol edildi.
+- [x] Ana DM penceresindeki sahte “Merhaba 👋” placeholder mesajı kaldırıldı; konuşma gövdesi artık gerçek DM akışından dolduruluyor.
+- Commit: 5e790f19be475ce728b1bab19e11e6339c8dac36.
