@@ -179,6 +179,27 @@ def main() -> int:
             raise AssertionError(f"gift event missing: HTTP {status} {events}")
         if not any(isinstance(event, dict) and event.get("gift_key") == gift_key and event.get("recipient_id") == uid_b for event in events):
             raise AssertionError(f"expected gift event not found: {events}")
+        status, vip_before = request("GET", "/me/vip", token_a)
+        if status >= 300:
+            raise RuntimeError(f"VIP read before spend failed: HTTP {status} {vip_before}")
+        high_value = max(catalog, key=lambda item: int(item.get("unit_price") or item.get("price") or 0))
+        high_key = high_value.get("gift_key") or high_value.get("key")
+        high_price = int(high_value.get("unit_price") or high_value.get("price") or 0)
+        if high_price < 1000:
+            raise AssertionError(f"gift catalog has no VIP-threshold item: {high_value}")
+        status, vip_gift = request("POST", f"/rooms/{room_id}/gifts", token_a, {
+            "recipient_id": uid_b, "gift_key": high_key, "quantity": 1,
+        })
+        if status >= 300:
+            raise RuntimeError(f"high-value gift failed: HTTP {status} {vip_gift}")
+        status, vip_after = request("GET", "/me/vip", token_a)
+        if status >= 300:
+            raise RuntimeError(f"VIP read after spend failed: HTTP {status} {vip_after}")
+        if int(vip_after.get("total_spent") or 0) < int(vip_before.get("total_spent") or 0) + high_price:
+            raise AssertionError(f"VIP spend did not advance: before={vip_before} after={vip_after} price={high_price}")
+        if int(vip_after.get("level") or 0) < 1:
+            raise AssertionError(f"VIP level did not unlock after threshold spend: {vip_after}")
+        print(f"VIP spend lifecycle OK: +{high_price}, total_spent={vip_after.get('total_spent')}, level={vip_after.get('level')}")
         print(f"gift invariant OK: sender -{price}, recipient +{expected_recipient}, room_gift event present")
 
     print("REST room smoke completed.")
