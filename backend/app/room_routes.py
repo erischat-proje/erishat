@@ -5,6 +5,7 @@ from uuid import uuid4
 import json
 import os
 from collections import defaultdict, deque
+from typing import Literal
 import time
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -241,6 +242,10 @@ class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64); gift_key: str = Field(min_length=1, max_length=64); quantity: int = Field(ge=1, le=99)
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128); source_url: str = Field(min_length=1, max_length=2000)
+class RTCSignal(BaseModel):
+    target_id: str = Field(min_length=1, max_length=64)
+    type: Literal["offer", "answer", "ice-candidate", "leave"]
+    payload: dict = Field(default_factory=dict)
 _RTC_SIGNAL_TTL = 60.0
 _RTC_SIGNAL_LIMIT = 100
 _rtc_signals: dict[str, deque] = defaultdict(deque)
