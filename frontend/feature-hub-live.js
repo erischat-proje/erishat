@@ -21,10 +21,10 @@
         <div class="eh-head"><div><div class="eh-kicker">ERISCHAT LIVE SYSTEMS</div><h2>Tüm sistemleri gör</h2></div><button class="eh-close" id="ehClose">×</button></div>
         <div class="eh-tabs">
           <button class="eh-tab active" data-tab="rooms">Odalar</button><button class="eh-tab" data-tab="shop">Mağaza</button><button class="eh-tab" data-tab="vip">VIP</button><button class="eh-tab" data-tab="family">Aile</button>
-          <button class="eh-tab" data-tab="discover">Keşif</button><button class="eh-tab" data-tab="profile">Profil</button><button class="eh-tab" data-tab="privacy">Gizlilik</button><button class="eh-tab" data-tab="report">Şikayet</button>
+          <button class="eh-tab" data-tab="discover">Keşif</button><button class="eh-tab" data-tab="profile">Profil</button><button class="eh-tab" data-tab="privacy">Gizlilik</button><button class="eh-tab" data-tab="report">Şikayet</button><button class="eh-tab" data-tab="tools">Araçlar</button>
         </div>
         <div id="eh-rooms" class="eh-panel active"></div><div id="eh-shop" class="eh-panel"></div><div id="eh-vip" class="eh-panel"></div><div id="eh-family" class="eh-panel"></div>
-        <div id="eh-discover" class="eh-panel"></div><div id="eh-profile" class="eh-panel"></div><div id="eh-privacy" class="eh-panel"></div><div id="eh-report" class="eh-panel"></div>
+        <div id="eh-discover" class="eh-panel"></div><div id="eh-profile" class="eh-panel"></div><div id="eh-privacy" class="eh-panel"></div><div id="eh-report" class="eh-panel"></div><div id="eh-tools" class="eh-panel"></div>
       </div></div>`);
     const hub=document.getElementById('erisHub');
     window.openErisHub=()=>{hub.classList.add('show');loadTab('rooms');};
@@ -37,7 +37,7 @@
     document.querySelectorAll('.eh-panel').forEach(x=>x.classList.toggle('active',x.id===`eh-${tab}`));
     const panel=document.getElementById(`eh-${tab}`); if(!panel) return;
     if(tab==='rooms') return rooms(panel); if(tab==='shop') return shop(panel); if(tab==='vip') return vip(panel); if(tab==='family') return family(panel);
-    if(tab==='discover') return discover(panel); if(tab==='profile') return profile(panel); if(tab==='privacy') return privacy(panel); if(tab==='report') return report(panel);
+    if(tab==='discover') return discover(panel); if(tab==='profile') return profile(panel); if(tab==='privacy') return privacy(panel); if(tab==='report') return report(panel); if(tab==='tools') return tools(panel);
   }
   const btn=(label,fn,alt=false)=>{const b=document.createElement('button');b.className=`eh-btn${alt?' alt':''}`;b.textContent=label;b.onclick=fn;return b;};
   async function rooms(panel){
@@ -57,6 +57,29 @@
   async function discover(panel){panel.innerHTML='<div class="eh-note">Konum/discovery izinleri backend tercihleriyle çalışır. Konum izni verilmeden yakın kullanıcılar listelenmez.</div><div class="eh-grid" id="ehDisc"></div>';const g=panel.querySelector('#ehDisc');g.append(btn('Yakındakiler',async()=>{try{const x=await api('/discover/nearby');window.toast?.(x.length ? x.map(u=>`${u.nickname} • ${u.distance_km} km`).join('\n') : 'Yakında kullanıcı yok.')}catch(e){window.toast?.(e.message)}}));g.append(btn('Rastgele sohbet',async()=>{try{const x=await api('/discover/random-chat',{method:'POST'});window.toast?.(`Eşleşme: ${x.user_id||x.conversation_id||'oluşturuldu'}`)}catch(e){window.toast?.(e.message)}}));g.append(btn('Rastgele oda',async()=>{try{const x=await api('/discover/random-room',{method:'POST'});window.toast?.(`Oda: ${x.room_id||x.id||'bulundu'}`)}catch(e){window.toast?.(e.message)}}));}
   async function profile(panel){try{const me=await api('/me');panel.innerHTML=`<div class="eh-card"><b>${esc(me.nickname||me.display_name||me.id)}</b><small>Lidya: ${me.lidya??0} • Cinsiyet: ${esc(me.gender||'-')}</small></div><div class="eh-grid" style="margin-top:8px"><div class="eh-card"><b>Avatar</b><small>${esc(me.avatar_asset||'varsayılan')}</small></div><div class="eh-card"><b>Çerçeve</b><small>${esc(me.frame_asset||'varsayılan')}</small></div></div>`;const id=me.id;const [fans,gifts]=await Promise.all([api(`/users/${encodeURIComponent(id)}/fans`),api(`/users/${encodeURIComponent(id)}/profile-gifts`)]);panel.insertAdjacentHTML('beforeend',`<div class="eh-kicker">Sosyal profil</div><div class="eh-grid"><div class="eh-card"><b>Hayran</b><small>${Array.isArray(fans)?fans.length:(fans.total??0)}</small></div><div class="eh-card"><b>Profil hediyesi</b><small>${Array.isArray(gifts)?gifts.length:(gifts.total??0)}</small></div></div>`);}catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message)}</div>`;}}
   async function privacy(panel){try{const p=await api('/me/privacy');panel.innerHTML='<div class="eh-note">Profilde VIP, rozet, neon, giriş ve konum görünürlüğünü yönet.</div>';Object.entries(p).forEach(([key,val])=>{const row=document.createElement('label');row.className='eh-row';row.innerHTML=`<span>${esc(key)}</span><input type="checkbox" ${val?'checked':''}></label>`;row.querySelector('input').onchange=async e=>{try{await api('/me/privacy',{method:'PATCH',body:JSON.stringify({[key]:e.target.checked})});}catch(err){e.target.checked=!e.target.checked;(window.toast?.(err.message), null)}};panel.append(row);});}catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message)}</div>`;}}
+  function tools(panel){
+    const systems=[
+      ['🎙️ Ses / Koltuk','Oda koltukları ve ses yüzeyi','seats'],
+      ['💬 Oda Sohbeti','Gerçek oda sohbet yüzeyi','roomChat'],
+      ['🎵 Müzik','Oda müzik kuyruğu ve oynatma','music'],
+      ['📢 Duyuru','Oda duyuru yönetimi','announcement'],
+      ['👑 Aile','Aile yönetimi ve sohbet','family'],
+      ['🛍️ Mağaza','139 kozmetik vitrini','store'],
+      ['👤 Profil Try-on','Avatar ve çerçeve deneme','profile'],
+      ['🛡️ Güvenlik / Mod','Bildirim, engelleme ve moderasyon','safety'],
+      ['🚀 Onboarding','İlk kullanım akışı','onboarding'],
+      ['⚙️ Oda Ayarları','Oda sahibi ayarları','roomSettings']
+    ];
+    panel.innerHTML='<div class="eh-note">Tüm yardımcı sistemler burada. Artık ekranın üzerinde sürekli duran popup/buton yığını yok.</div><div class="eh-grid" id="ehToolsGrid"></div>';
+    const grid=panel.querySelector('#ehToolsGrid');
+    systems.forEach(([title,desc,key])=>{
+      const card=document.createElement('div');card.className='eh-card';
+      card.innerHTML='<b>'+esc(title)+'</b><small>'+esc(desc)+'</small>';
+      const fn=window.ErisDemoExtras?.[key];
+      card.append(btn(fn?'Aç':'Hazırlanıyor',fn||(()=>window.toast?.('Bu sistem henüz bağlanmadı.')),!fn));
+      grid.append(card);
+    });
+  }
   function report(panel){panel.innerHTML='<div class="eh-note">Kullanıcı, oda veya mesaj için şikayet oluştur. En az bir hedef alanı ve neden gerekli.</div><input id="ehTarget" class="eh-input" placeholder="Hedef kullanıcı ID (opsiyonel)"><input id="ehRoom" class="eh-input" placeholder="Oda ID (opsiyonel)"><input id="ehMsg" class="eh-input" type="number" placeholder="Mesaj ID (opsiyonel)"><input id="ehCat" class="eh-input" placeholder="Kategori"><textarea id="ehReason" class="eh-input" rows="4" placeholder="Şikayet nedeni"></textarea><div id="ehReportBtn"></div>';panel.querySelector('#ehReportBtn').append(btn('Şikayet gönder',async()=>{try{const payload={target_user_id:panel.querySelector('#ehTarget').value.trim()||null,room_id:panel.querySelector('#ehRoom').value.trim()||null,message_id:Number(panel.querySelector('#ehMsg').value)||null,category:panel.querySelector('#ehCat').value.trim(),reason:panel.querySelector('#ehReason').value.trim()};await api('/reports',{method:'POST',body:JSON.stringify(payload)});window.toast?.('Şikayet kaydedildi ✓');}catch(e){window.toast?.(e.message)}}));}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
