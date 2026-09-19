@@ -702,3 +702,9 @@ Room control checkpoint
 - [x] VIP görünürlüğü, VIP rozeti, VIP neon efekti ve konum gizleme seçenekleri `GET/PATCH /me/privacy` ile gerçek backend ayarlarına bağlandı.
 - [x] Kaydetme sonrası toast ve hata durumunda eski değere dönme eklendi.
 - Commit: 27d47156adc9c3061bb52781d23e95b763fe158a.
+
+
+[2026-09-19 — PROFİL SAHTE VERİ TEMİZLİĞİ]
+- [x] Profilde sabit 128 takipçi / 42 takip değerleri artık backend alanları varsa gerçek sayılarla güncelleniyor.
+- [x] VIP ilerleme çubuğu gerçek `/me/vip` total_spent verisine göre hesaplanıyor; VIP 12'de MAX gösteriliyor.
+- Commit: 6d249364ef990e7e80f9e869810030def95cab65.
