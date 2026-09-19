@@ -425,6 +425,20 @@ async def _broadcast_room_event(room_id: str, payload: dict) -> None:
         except Exception: dead.append(ws)
     for ws in dead: connections.discard(ws)
 
+async def _broadcast_global_gift_announcement(payload: dict) -> None:
+    """Yüksek seviye hediyeyi, açık olan tüm oda websocket'lerine duyurur."""
+    dead = []
+    for connections in list(room_chat_connections.values()):
+        for ws in list(connections):
+            try:
+                await ws.send_json({"type": "gift_announcement", **payload})
+            except Exception:
+                dead.append(ws)
+    for ws in dead:
+        for connections in room_chat_connections.values():
+            connections.discard(ws)
+
+
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
     connections = room_chat_connections.get(room_id, set())
     dead = []
