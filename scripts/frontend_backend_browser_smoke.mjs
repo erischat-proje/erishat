@@ -325,24 +325,24 @@ async function main(){
     return r.json();
   },API);
   if(!roleUser?.user?.id||!roleUser?.access_token) throw new Error('family role/remove user registration failed');
-  const roleInvite=await page.evaluate(async ({api,familyId,userId})=>{
+  const roleInvite=await page.evaluate(async ({api,token,familyId,userId})=>{
     const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
     return {status:r.status,data:await r.json()};
-  },{api:API,familyId:family.id,userId:roleUser.user.id});
+  },{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
   if(roleInvite.status!==201||!roleInvite.data?.id) throw new Error('family role/remove invitation create failed: '+JSON.stringify(roleInvite));
   const roleAccepted=await page.evaluate(async ({api,token,id})=>{
     const r=await fetch(api+'/families/invitations/'+encodeURIComponent(id)+'/accept',{method:'POST',headers:{Authorization:'Bearer '+token}});
     return {status:r.status,data:await r.json()};
   },{api:API,token:roleUser.access_token,id:roleInvite.data.id});
   if(roleAccepted.status!==200||roleAccepted.data?.accepted!==true) throw new Error('family role/remove invitation accept failed: '+JSON.stringify(roleAccepted));
-  const roleChanged=await page.evaluate(async ({api,familyId,userId})=>{
+  const roleChanged=await page.evaluate(async ({api,token,familyId,userId})=>{
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'PATCH',headers:h,body:JSON.stringify({user_id:userId,role:'admin'})});
     return {status:r.status,data:await r.json()};
   },{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
   if(roleChanged.status!==200||roleChanged.data?.role!=='admin') throw new Error('family member role promotion failed: '+JSON.stringify(roleChanged));
-  const removed=await page.evaluate(async ({api,familyId,userId})=>{
+  const removed=await page.evaluate(async ({api,token,familyId,userId})=>{
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'DELETE',headers:{Authorization:'Bearer '+token}});
     return {status:r.status,data:await r.json()};
   },{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
