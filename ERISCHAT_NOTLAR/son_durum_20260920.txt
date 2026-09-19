@@ -52,3 +52,5 @@ NOT
 - Oyunlar demo/katalog yüzeyidir; bahis, gerçek para veya kumar işlemi eklenmedi.
 - Floating müşteri demo kontrolleri kaldırıldı; sistemler merkezi Feature Hub üzerinden erişilebilir.
 - Sonraki odak: ana müşteri demo yüzeylerini tek tek açıp boş/ölü CTA bırakmamak ve Pages canlı kontrolünü ayrıca doğrulamak.
+
+- 2026-09-20 devam: ana üst menüdeki sistem ikonunun gereksiz profil sekmesine yönlenmesi kaldırıldı; ikon artık doğrudan Tüm Sistemler / Feature Hub'ı açıyor. Commit: 306baaaa5ea012e55155345f868302c7a6f9d81a.
