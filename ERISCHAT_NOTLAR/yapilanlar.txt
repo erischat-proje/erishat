@@ -926,3 +926,13 @@ Room control checkpoint
 - [x] Quality #1055 / run 35444799142 SUCCESS: music UI HTMLAudio DOM binding ve smoke panel lifecycle düzeltmeleri doğrulandı.
 - [x] Quality #1056 / run 35444802893 SUCCESS: güncel docs HEAD üzerinde aynı kalite zinciri tekrar SUCCESS verdi.
 - [x] Müzik UI → API → queue → playback → HTMLAudio binding → realtime sync zinciri mevcut Quality kanıtında geçti.
+
+[2026-09-19 devam 46] GÜNCEL GITHUB/PAGES KANITI
+- [x] main HEAD 204f05038512ae5e64d5f40f630cf4e02d53119c.
+- [x] Quality run 35448549649 (#1060) SUCCESS; frontend browser smoke, cosmetics render, room surface, family, backend browser smoke, admin/system identity ve live smoke adımlarının tamamı SUCCESS.
+- [x] Pages run 35448549587 (#1013) aynı HEAD üzerinde tekrar FAILURE verdi.
+- [x] Pages workflow gerçek giriş noktası olarak frontend/erischat-main.html dosyasını _site/index.html'e kopyalıyor ve gerekli canlı scriptleri ekliyor.
+- [x] Pages failure için mevcut notlardaki kök neden doğrulandı: github-pages environment admission/custom deployment branch policy main'i kabul etmiyor. Job 105911606823 daha step başlamadan FAILURE ile kapanmış.
+- [ ] github-pages environment policy içinde main'e izin verilmesi.
+- [ ] Pages deploy SUCCESS + canlı HTTP/index + Pages→Railway API kanıtı.
+- [ ] Railway production deploy kullanıcı açıkça deploy demeden yapılmayacak.
