@@ -532,3 +532,6 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Duyurunun aktif liste görünümü, düzenleme, pin, disable ve delete lifecycle'ı tek browser akışında kapsandı.
 - [ ] Gerçek moderator kullanıcıyla create/update/delete browser E2E ayrıca doğrulanacak.
 - [ ] Fresh Quality/CI PASS henüz doğrulanmadı.
+
+
+[2026-09-19] Kalan doğrulama: Browser smoke oda oluşturma sırası düzeltildi. Announcement/roomInvite artık mevcut oda üzerinden çalışmalı. Fresh Quality/CI PASS ve gerçek iki tarayıcı WebRTC/mobil ağ doğrulaması hâlâ açık; PASS varsayılmıyor.
