@@ -13,10 +13,9 @@ AKIŞ
 7. Sonuç win/push/loss olarak tamamlanır.
 8. Round state GameRound.state_data içinde saklanır.
 
-İLERİ KURALLAR İÇİN HAZIRLIK
-- can_double(): yalnızca ilk iki kartta double koşulunu kontrol eder.
-- can_split(): aynı rank iki kart için split uygunluğunu kontrol eder.
-- Bu yardımcılar henüz ayrı action endpointi olarak aktif değildir.
+İLERİ KURALLAR
+- can_double(): yalnızca ilk iki kartta double koşulunu kontrol eder ve `double` action aktiftir.
+- can_split(): aynı rank iki kart için split uygunluğunu kontrol eder; split action henüz aktif değildir.
 
 GÜVENLİK
 - Free-play.
