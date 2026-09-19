@@ -122,3 +122,70 @@
   new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
   window.ErisRoomCompleteV3={openMenu,openName,openLevels};
 })();
+/* Room UI v4 — compact header, owner controls and demo settings. */
+(() => {
+  const q=s=>document.getElementById(s), root=()=>document.getElementById('erisRoomSurface');
+  const rid=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
+  function style(){
+    if(q('eris-room-v4-css'))return;
+    const x=document.createElement('style');x.id='eris-room-v4-css';
+    x.textContent=[
+      '#erisRoomSurface .eris-room-top{height:64px!important;min-height:64px!important;padding:7px 8px!important;gap:5px!important;box-sizing:border-box!important;overflow:hidden!important}',
+      '#erisRoomSurface .eris-room-top .room-action.back{display:none!important}',
+      '#erisRoomSurface .eris-room-title{flex:1 1 auto!important;max-width:calc(50% - 10px)!important;min-width:0!important;overflow:hidden!important}',
+      '#erisRoomSurface .eris-room-title b{display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:13px!important}',
+      '#erisRoomSurface .eris-room-title small{display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:7px!important}',
+      '#erisRoomSurface #erisRoomLevel{position:static!important;transform:none!important;flex:0 0 78px!important;width:78px!important;min-width:78px!important;height:42px!important;padding:2px 5px!important;box-sizing:border-box!important}',
+      '#erisRoomSurface .room-v4-topbtn{width:34px!important;height:34px!important;min-width:34px!important;flex:0 0 34px!important;border-radius:10px!important;font-size:13px!important;padding:0!important}',
+      '#erisRoomSurface #erisRoomMoreTop{margin-left:auto!important}',
+      '#erisRoomSurface .eris-room-tools{right:8px!important;bottom:202px!important}',
+      '#erisRoomSurface .eris-room-tools #erisRoomMic{display:grid!important;place-items:center!important}',
+      '#erisRoomSurface .eris-room-tools #erisRoomMic:after{content:"🎙️"!important;font-size:17px!important}',
+      '#erisRoomSurface .eris-room-tools button:not(#erisRoomMic){display:none!important}',
+      '#erisRoomSurface .room-v3-panel{top:70px!important;bottom:204px!important}',
+      '#erisRoomSurface .room-v4-panel{display:none;position:absolute;left:50%;top:70px;bottom:204px;transform:translateX(-50%);width:min(430px,calc(100% - 16px));z-index:180;overflow:auto;border:1px solid rgba(255,255,255,.15);border-radius:18px;background:rgba(8,4,18,.96);backdrop-filter:blur(24px);padding:10px;box-sizing:border-box}',
+      '#erisRoomSurface .room-v4-panel.show{display:block}',
+      '#erisRoomSurface .v4-title{font-size:13px;font-weight:900;margin:2px 2px 10px;display:flex;justify-content:space-between;align-items:center}',
+      '#erisRoomSurface .v4-card{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.05);border-radius:13px;padding:10px;margin-bottom:7px}',
+      '#erisRoomSurface .v4-row{display:flex;align-items:center;gap:7px;justify-content:space-between}.v4-row b{font-size:10px}.v4-row small{font-size:7px;color:#aaa0b2}',
+      '#erisRoomSurface .v4-btn{height:38px;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(255,255,255,.07);color:#fff;font-size:9px;padding:0 10px}.v4-btn.primary{background:linear-gradient(135deg,#754cff,#ff4fa3);border:0}',
+      '#erisRoomSurface .v4-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}',
+      '#erisRoomSurface .v4-input{width:100%;height:40px;box-sizing:border-box;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;padding:0 10px}',
+      '@media(max-width:520px){#erisRoomSurface .eris-room-top{padding:6px!important}.eris-room-title{max-width:calc(50% - 4px)!important}#erisRoomSurface #erisRoomLevel{flex-basis:72px!important;width:72px!important;min-width:72px!important}.room-v4-topbtn{width:32px!important;min-width:32px!important;flex-basis:32px!important}}'
+    ].join('');
+    document.head.appendChild(x);
+  }
+  function panel(){let p=root()?.querySelector('.room-v4-panel');if(p)return p;p=document.createElement('div');p.className='room-v4-panel';root().appendChild(p);return p}
+  function top(){
+    const s=root(),h=s?.querySelector('.eris-room-top');if(!h)return;
+    h.querySelector('.room-action.back')?.remove();
+    h.querySelector('#erisRoomMoreTop')?.remove();h.querySelector('#erisRoomLeaveTop')?.remove();
+    const oldLevel=h.querySelector('#erisRoomLevel');if(oldLevel)oldLevel.remove();
+    const lv=document.createElement('button');lv.id='erisRoomLevel';lv.className='room-v4-topbtn';lv.innerHTML='<b>Seviye 10</b><small>16 koltuk</small>';lv.onclick=demoSettings;h.appendChild(lv);
+    const more=document.createElement('button');more.id='erisRoomMoreTop';more.className='room-v4-topbtn';more.textContent='⋯';more.title='Oda menüsü';more.onclick=menu;h.appendChild(more);
+    const leave=document.createElement('button');leave.id='erisRoomLeaveTop';leave.className='room-v4-topbtn';leave.textContent='↪';leave.title='Odadan çık';leave.onclick=()=>window.closeRealRoom?.();h.appendChild(leave);
+    h.querySelectorAll('#erisRoomGift,#erisRoomMusic').forEach(x=>x.style.display='none');
+  }
+  function menu(){const p=panel();p.innerHTML='<div class="v4-title">Oda menüsü <button class="v4-btn" onclick="this.closest(\'.room-v4-panel\').classList.remove(\'show\')">Kapat</button></div><div class="v4-grid">'+
+    '<button class="v4-btn" onclick="window.ErisRoomCompleteV3?.openMenu?.(\'info\')">ℹ️ Oda bilgisi</button>'+
+    '<button class="v4-btn" onclick="window.ErisRoomCompleteV3?.openMenu?.(\'users\')">👥 Kullanıcılar</button>'+
+    '<button class="v4-btn" onclick="window.ErisRoomCompleteV3?.openMenu?.(\'gifts\')">🎁 Hediyeler</button>'+
+    '<button class="v4-btn" onclick="window.ErisRoomCompleteV3?.openMenu?.(\'music\')">🎵 Müzik</button>'+
+    '<button class="v4-btn" onclick="window.ErisRoomCompleteV3?.openMenu?.(\'settings\')">⚙️ Oda ayarları</button>'+
+    '<button class="v4-btn" onclick="roomV4Theme()">🎨 Oda teması</button>'+
+    '</div><div class="v4-card"><b style="font-size:10px">👑 Oda yönetimi</b><small style="display:block;color:#aaa0b2;font-size:8px;margin-top:4px">Seviye, koltuk kapasitesi, tema ve oda adı bu oda içindeki menülerden yönetilir.</small></div>';
+    p.classList.add('show')
+  }
+  window.roomV4Theme=()=>{const p=panel();p.innerHTML='<div class="v4-title">🎨 Oda teması</div><div class="v4-card"><div class="v4-row"><b>Gece Neon</b><button class="v4-btn primary">Aktif</button></div></div><div class="v4-card"><div class="v4-row"><b>Mor Kozmik</b><button class="v4-btn">Uygula</button></div></div><div class="v4-card"><div class="v4-row"><b>Altın VIP</b><button class="v4-btn">Uygula</button></div></div><div class="v4-card"><small style="color:#aaa0b2;font-size:8px">Tema seçildiğinde mevcut kullanıcı duvar kâğıdı ve oda renkleriyle uyumlu şekilde uygulanır.</small></div>';p.classList.add('show')};
+  function demoSettings(){
+    const p=panel();p.innerHTML='<div class="v4-title">👑 Örnek oda yönetimi</div>'+
+      '<div class="v4-card"><div class="v4-row"><b>Seviye 10</b><small>MAKSİMUM</small></div><div style="font-size:8px;color:#aaa0b2;margin-top:5px">Mevcut ilerleme: 100%</div></div>'+
+      '<div class="v4-card"><div class="v4-row"><b>🪑 Koltuk kapasitesi</b><small>16 / 16</small></div><div class="v4-grid" style="margin-top:7px"><button class="v4-btn">8 koltuk</button><button class="v4-btn">12 koltuk</button><button class="v4-btn primary">16 koltuk</button><button class="v4-btn">Otomatik</button></div></div>'+
+      '<div class="v4-card"><div class="v4-row"><b>🔒 Oda durumu</b><small>Açık</small></div><button class="v4-btn" style="margin-top:7px;width:100%">Odayı kilitle</button></div>'+
+      '<div class="v4-card"><b style="font-size:10px">🏆 Seviye kazanımları</b><small style="display:block;color:#aaa0b2;font-size:8px;margin-top:5px">Seviye 5 → 12 koltuk • Seviye 7 → 16 koltuk • Seviye 10 → özel VIP oda ayrıcalıkları</small></div>';
+    p.classList.add('show')
+  }
+  function bind(){if(!root())return;style();top();gift();}
+  function gift(){const s=root(),c=s?.querySelector('.eris-room-compose');if(!c||c.querySelector('#erisRoomGiftInline'))return;const b=document.createElement('button');b.id='erisRoomGiftInline';b.className='room-v3-gift';b.textContent='🎁';b.title='Hediye gönder';b.onclick=()=>window.ErisRoomCompleteV3?.openMenu?.('gifts');c.insertBefore(b,c.querySelector('#erisLiveSend')||null)}
+  const b=()=>bind();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',b,{once:true});else b();new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+})();
