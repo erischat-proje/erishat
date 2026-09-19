@@ -492,3 +492,6 @@ Room control checkpoint
 
 
 [2026-09-19] Browser E2E: Music playback smoke genişletildi; member tarafından oluşturulan müzik için iki WebSocket açılarak `music_sync` seek olayı member → owner realtime olarak doğrulanıyor. Müzik cleanup sync doğrulamasından sonra yapılıyor.
+
+
+[2026-09-19] Düzeltme: Browser smoke'a eklenen realtime oda/müzik bloklarında yanlışlıkla literal `\\n` karakterleri oluşmuştu; tamamı gerçek satır sonlarına çevrildi. Güncel dosyada literal `\\n` kalmadığı kontrol edildi.
