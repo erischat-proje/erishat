@@ -561,3 +561,10 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19] ODA SOHBETİ UI E2E HARDENING
 - [x] Gerçek Oda Sohbeti demo UI'sı için belirli oda hedefleme ve browser mesaj gönderim/read-back smoke kapsamı eklendi.
 - [ ] Fresh Quality runner sonucu bekleniyor.
+
+
+[2026-09-19] CI / PAGES AYRIMI
+- [x] Latest Actions runs inspected: Quality job is still running; Pages diagnostics failure is isolated to its Pages-state inspection step, not to the ErisChat browser smoke yet.
+- [x] Pages workflow source verified: configure-pages/upload-pages-artifact/deploy-pages and github-pages environment are present.
+- [ ] GitHub repository/environment Pages policy must be verified from the completed diagnostic output before changing workflow logic; no speculative Pages change made.
+- [ ] Quality final result still pending.
