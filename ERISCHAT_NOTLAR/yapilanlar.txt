@@ -586,3 +586,12 @@ Room control checkpoint
 - [x] GitHub Pages hazırlama adımında kullanıcıyı sağ altta rahatsız eden feature-hub-live.js yüzen butonu kaldırıldı; sistemler ayrı ayrı ana navigasyon üzerinden kullanılacak.
 - [x] Commitler: 7dc82fa30cf6f5f0a69008a5e2764f53dbab01bf, 9de62f8f9ac1784a07d6b545a23c052523cdd0f7.
 - [ ] Yeni Pages deploy sonrası görsel doğrulama.
+
+
+[2026-09-19 — MÜŞTERİ DEMO ANA ARAYÜZ TAMAMLAMA TURU]
+- [x] Ana sayfaya gerçek Oda Aç akışı eklendi ve mevcut `/rooms` backend çağrısına bağlandı.
+- [x] Demo cüzdanı 500.000.000 sanal Lidya olarak tanımlandı; yalnızca demo arayüzünde kullanılabilir ve gerçek ödeme/para değildir.
+- [x] Mağaza canlı katalog katmanı daha önce bağlandı; avatar/çerçeve/VIP katalog görünümü korunuyor.
+- [x] Oda ekranındaki yüzen oyun/demo butonları kaldırıldı; ana arayüzde rahatsız edici sabit popup kalabalığı azaltıldı.
+- [x] Commitler: 77fc687a830ce619c6220cdf4329c3c874141378, 6c5dd4e10dcb3f906f05167ad4f1f77445f2195c.
+- [ ] Pages deploy + son görsel smoke kontrolü.
