@@ -1007,3 +1007,15 @@ GÜVENLİK/KAPSAM NOTU
 - [x] VIP spending → level → title/neon unlock contract artık gerçek Quality gate'te doğrulanıyor.
 - [x] Level 1/3+/5+/10+/12 için contract mantığı smoke'a eklendi.
 - [ ] Higher-level VIP claim/effect UI E2E kapsamı açık.
+
+2026-09-19 — WALLPAPER CHECKPOINT
+- [x] 12 normal wallpaper tasarımı repo'ya eklendi.
+- [x] 12 VIP wallpaper tasarımı repo'ya eklendi.
+- [x] Wallpaper seçimi için kalıcı `users.wallpaper_asset` alanı.
+- [x] Normal wallpaper satın alma + apply API.
+- [x] VIP wallpaper seviye kilidi + apply API.
+- [x] Wallpaper UI ana uygulamaya bağlandı.
+- [ ] Wallpaper browser E2E.
+- [ ] Wallpaper asset URL/decode smoke.
+- [ ] VIP 10 özel wallpaper claim'ini gerçek wallpaper sahipliğiyle bağlama.
+- [ ] Wallpaper tasarımlarının manuel görsel kalite kontrolü.
