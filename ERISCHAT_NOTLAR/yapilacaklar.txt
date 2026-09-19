@@ -187,3 +187,11 @@ Tarih: 2026-09-18
 - Kök hata: browser runtime `Invalid regular expression flags`; mevcut smoke testi bu hatanın kaynak dosya/satır bilgisini yeterince göstermiyordu.
 - Commit aebc312f85f91ecfac2fec19bcaed79d5aa0919d ile smoke'a window error source/line/column yakalama eklendi; sonraki Quality koşusu gerçek kaynak konumunu gösterecek.
 - Yeni Quality sonucu bekleniyor; PASS ilan edilmiyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE REGEX DÜZELTME]
+- Quality run 35465115452 (#1390): static syntax, demo surface integrity ve frontend surface integrity geçti; frontend browser smoke `Invalid regular expression flags` nedeniyle kaldı.
+- Kaynak kesinleşti: frontend/erischat-main.html satır 54 içindeki API URL trim regex'i geçersizdi (`/\\/$/`).
+- Gerçek regex `/\/$/` olarak düzeltildi.
+- Commit: afff857d3764159b4d47a92dc38b71c901a6a6f1 — fix: repair invalid api regex in demo page.
+- Yeni Quality koşusu bekleniyor; PASS ilan edilmiyor.
