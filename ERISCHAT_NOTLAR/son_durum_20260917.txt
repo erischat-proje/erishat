@@ -321,3 +321,4 @@
 - [x] Oda roundlarında erişim kontrolü mevcut RoomMember üyeliğiyle korunuyor.
 - [x] Startup bootstrap game_rounds.state_data kolonunu mevcut DB'lere ekliyor.
 - [ ] Blackjack hit/stand gibi çok adımlı state mutation endpointleri henüz yapılmadı.
+- 2026-09-19: Blackjack natural 21 / dealer natural / double-natural push başlangıç çözümlemeleri eklendi; bust ve final state geçişleri sağlamlaştırıldı. Free-play olarak kaldı.
