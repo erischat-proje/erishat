@@ -531,3 +531,9 @@ Room control checkpoint
 
 
 [2026-09-19] Quality run 855'in ikinci gerçek syntax kökü: frontend/demo-complete-live.js içinde oyun [data-play] async handler'ı show() sonrasında kapanmadan [data-history] handler'ına geçiyordu; dosya sonundaki IIFE kapanışında Unexpected token ')' oluştu. Eksik `};` eklendi. Commit: 80f40e1422aeaab48e8efdcad5c0dba7bf38252d. Yeni Quality koşusu tetiklendi; PASS henüz doğrulanmadı.
+
+
+[2026-09-19] QUALITY STATIC CHECK — MÜZİK DEMO SYNTAX
+- [x] Quality run 35434572031 / job 105874954096 içinde `frontend/demo-extras-live.js` satır 56'da `URL'sini` apostrofu tek tırnaklı JS stringini bozduğu için oluşan `Unexpected identifier 'sini'` kökü tespit edildi.
+- [x] `URL\'sini` olarak düzeltilerek demo müzik yüzeyinin JavaScript syntax problemi giderildi. Commit: f76c43b89100febcaa4223706d3c8246717016d3.
+- [ ] Bu commit sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
