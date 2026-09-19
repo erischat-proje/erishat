@@ -76,7 +76,26 @@
       catch(e){window.toast?.(e.message||'Rastgele oda bulunamadı.');}
     }));
   }
-  async function profile(panel){try{const me=await api('/me');panel.innerHTML=`<div class="eh-card"><b>${esc(me.nickname||me.display_name||me.id)}</b><small>Lidya: ${me.lidya??0} • Cinsiyet: ${esc(me.gender||'-')}</small></div><div class="eh-grid" style="margin-top:8px"><div class="eh-card"><b>Avatar</b><small>${esc(me.avatar_asset||'varsayılan')}</small></div><div class="eh-card"><b>Çerçeve</b><small>${esc(me.frame_asset||'varsayılan')}</small></div></div>`;const id=me.id;const [fans,gifts]=await Promise.all([api(`/users/${encodeURIComponent(id)}/fans`),api(`/users/${encodeURIComponent(id)}/profile-gifts`)]);panel.insertAdjacentHTML('beforeend',`<div class="eh-kicker">Sosyal profil</div><div class="eh-grid"><div class="eh-card"><b>Hayran</b><small>${Array.isArray(fans)?fans.length:(fans.total??0)}</small></div><div class="eh-card"><b>Profil hediyesi</b><small>${Array.isArray(gifts)?gifts.length:(gifts.total??0)}</small></div></div>`);}catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message)}</div>`;}}
+  async function profile(panel){
+    try{
+      const me=await api('/me');
+      panel.innerHTML=`<div class="eh-card"><b>${esc(me.nickname||me.display_name||me.id)}</b><small>Lidya: ${me.lidya??0} • Cinsiyet: ${esc(me.gender||'-')}</small></div><div class="eh-grid" style="margin-top:8px"><div class="eh-card"><b>Avatar</b><small>${esc(me.avatar_asset||'varsayılan')}</small></div><div class="eh-card"><b>Çerçeve</b><small>${esc(me.frame_asset||'varsayılan')}</small></div></div><div id="ehSocial" class="eh-note" style="margin-top:8px">Sosyal istatistikler yükleniyor…</div>`;
+      const id=me.id, social=panel.querySelector('#ehSocial');
+      const loadCount=async(path)=>{
+        try{
+          const data=await api(path);
+          return Array.isArray(data)?data.length:Number(data?.total??data?.count??0);
+        }catch(e){return null;}
+      };
+      const [fans,gifts]=await Promise.all([
+        loadCount(`/users/${encodeURIComponent(id)}/fans`),
+        loadCount(`/users/${encodeURIComponent(id)}/profile-gifts`)
+      ]);
+      const fanText=fans===null?'Kullanılamıyor':String(fans);
+      const giftText=gifts===null?'Kullanılamıyor':String(gifts);
+      social.outerHTML=`<div class="eh-kicker">Sosyal profil</div><div class="eh-grid"><div class="eh-card"><b>Hayran</b><small>${fanText}</small></div><div class="eh-card"><b>Profil hediyesi</b><small>${giftText}</small></div></div>`;
+    }catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message||'Profil yüklenemedi.')}</div>`;}
+  }
   async function privacy(panel){
     try{
       const p=await api('/me/privacy');
