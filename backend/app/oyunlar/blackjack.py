@@ -25,6 +25,7 @@ def start(data):
 def action(state, action):
     deck=list(state.get("deck") or []); player=list(state.get("player_hand") or []); dealer=list(state.get("dealer_hand") or [])
     if state.get("phase")!="player": raise ValueError("Oyuncu aksiyonu beklenmiyor")
+    if action not in {"hit", "stand"}: raise ValueError("Geçersiz blackjack aksiyonu")
     if action=="hit":
         if not deck: raise ValueError("Deste tükendi")
         player.append(deck.pop()); total=hand_total(player)
