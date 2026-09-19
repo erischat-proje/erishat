@@ -65,15 +65,15 @@
     };
     g.append(btn('Yakındakiler',async()=>{
       try{const x=await api('/discover/nearby');render('Yakındaki kullanıcılar',x,'Yakında kullanıcı yok.');}
-      catch(e){window.toast?.(e.message||'Yakındakiler alınamadı.');}
+      catch(e){render('Yakındaki kullanıcılar',[], 'Yakındakiler şu anda kullanılamıyor: '+(e.message||'servis hatası'));}
     }));
     g.append(btn('Rastgele sohbet',async()=>{
       try{const x=await api('/discover/random-chat',{method:'POST'});render('Rastgele sohbet',x?.users||[x],'Eşleşme bulunamadı.');}
-      catch(e){window.toast?.(e.message||'Rastgele sohbet başlatılamadı.');}
+      catch(e){render('Rastgele sohbet',[], 'Rastgele sohbet şu anda kullanılamıyor: '+(e.message||'servis hatası'));}
     }));
     g.append(btn('Rastgele oda',async()=>{
       try{const x=await api('/discover/random-room',{method:'POST'});render('Rastgele oda',x?.rooms||[x],'Uygun oda bulunamadı.');}
-      catch(e){window.toast?.(e.message||'Rastgele oda bulunamadı.');}
+      catch(e){render('Rastgele oda',[], 'Rastgele oda şu anda kullanılamıyor: '+(e.message||'servis hatası'));}
     }));
   }
   async function profile(panel){
