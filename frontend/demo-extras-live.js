@@ -132,6 +132,15 @@
     ['✨ Avatarı uygula','🖼 Çerçeveyi uygula','⭐ Favoriye ekle','🎁 Hediye vitrini','➕ Takip et'].forEach(t=>m.querySelector('#profileBtns').append(button(t,()=>window.toast?.(`${t} demo yüzeyi`))));
   }
 
+  function roomGiftDemo(){
+    const gifts=[['🌹 Gül','1.000'],['💎 Elmas','5.000'],['👑 Taç','25.000'],['🚀 Roket','100.000'],['🌌 Galaksi','500.000']];
+    const m=modal('🎁 Oda hediyeleri — müşteri demosu','<div class="card" style="padding:12px"><b>Demo hediye vitrini</b><small style="display:block;color:#938a9f;margin-top:4px">Bu panel gerçek ödeme yapmaz. Hediye animasyonu ve alıcı seçimi arayüzünü test eder.</small></div><div style="display:flex;gap:7px;overflow:auto;margin:9px 0" id="giftRecipients"><button data-rec="Oda sahibi">👑 Oda sahibi</button><button data-rec="Koltuk 2">👤 Koltuk 2</button><button data-rec="Koltuk 3">👤 Koltuk 3</button></div><div id="giftGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px"></div><div id="giftStatus" class="card" style="padding:10px;margin-top:9px;color:#938a9f">Önce bir alıcı ve hediye seç.</div>');
+    let recipient='',gift=null; const grid=m.querySelector('#giftGrid'),status=m.querySelector('#giftStatus');
+    grid.innerHTML=gifts.map(g=>'<button data-gift="'+esc(g[0])+'" style="padding:12px;border:1px solid #ffffff14;border-radius:13px;background:#ffffff06;color:#fff;text-align:left"><b>'+g[0]+'</b><small style="display:block;color:#e4b85d;margin-top:4px">💎 '+g[1]+'</small></button>').join('');
+    m.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>{recipient=b.dataset.rec;m.querySelectorAll('[data-rec]').forEach(x=>x.style.outline='');b.style.outline='2px solid #ff4fa3';status.textContent=gift?recipient+' → '+gift+' hazır.':'Alıcı seçildi. Şimdi bir hediye seç.';});
+    grid.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{gift=b.dataset.gift;grid.querySelectorAll('[data-gift]').forEach(x=>x.style.outline='');b.style.outline='2px solid #8a5cff';status.innerHTML=recipient?'<b>✓ '+esc(recipient)+' → '+esc(gift)+'</b><small style="display:block;color:#938a9f;margin-top:4px">Demo gönderim hazır.</small><button id="demoGiftSend" style="margin-top:7px;padding:9px;border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800">🎁 Gönder</button>':'Bir alıcı seçtikten sonra demo gönderim hazır olacak.';m.querySelector('#demoGiftSend')?.addEventListener('click',()=>{status.innerHTML='<b>✨ Hediye gönderildi</b><small style="display:block;color:#61e6af;margin-top:4px">'+esc(recipient)+' için '+esc(gift)+' demo animasyonu tetiklendi.</small>';window.toast?.('🎁 Demo hediyesi gönderildi ✓');});});
+  }
+
   function safetyDemo(){
     const m=modal('🛡️ Bildirim • Güvenlik • Moderasyon',`<div style="display:grid;gap:8px">
       <div id="safeNotice">${card('<b>🔔 Bildirim merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Okunmamış DM, hediye, aile, VIP ve oda olaylarını demo olarak test et.</small>')}</div>
@@ -174,7 +183,8 @@
     profile: profileDemo,
     safety: safetyDemo,
     onboarding: onboardingDemo,
-    roomSettings: roomSettingsDemo
+    roomSettings: roomSettingsDemo,
+    roomGift: roomGiftDemo
   });
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{}, {once:true});
 })();
