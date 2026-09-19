@@ -979,3 +979,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Offer/answer, ICE gathering ve connected state doğrulaması Quality workflow'a bağlandı.
 - [ ] Fresh Quality PASS sonucu bekleniyor.
 - [ ] Gerçek cihaz/mobil ağ ve production TURN credential kanıtı yine ayrı dış altyapı testi olarak açık.
+[2026-09-19 devam 51] GERÇEK 2-BROWSER WEBRTC QUALITY PASS
+- [x] Quality run 35449857886 / quality job 105915016056 SUCCESS.
+- [x] main HEAD 9ad395e563876084659365b881228da283ea7cfa üzerinde Real two-browser WebRTC smoke gerçek Quality gate içinde PASS verdi.
+- [x] İki Chromium context, ayrı kullanıcı oturumları, fake microphone MediaStream, offer/answer, ICE gathering ve connectionState=connected doğrulandı.
+- [x] Önceki owner session 401 kök nedeni düzeltildi; smoke artık CI içinde özel owner session oluşturuyor.
+- [ ] Gerçek cihaz/gerçek mobil ağ ses transportu ve production TURN credential provisioning hâlâ dış altyapı kanıtı gerektiriyor.
