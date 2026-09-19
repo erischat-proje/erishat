@@ -42,11 +42,12 @@ await page.waitForFunction(() => document.querySelector('.eris-admin-panel h3')?
 const bodyText = await page.locator('.eris-admin-panel').textContent();
 if (!bodyText.includes('ID Sorgu')) throw new Error('DA lookup action did not open');
 await page.locator('#eaBack').click();
-await page.waitForTimeout(100);
+await page.waitForLoadState('domcontentloaded').catch(()=>{});
+await page.locator('.eris-admin-btn').waitFor({state:'visible', timeout:10000});
 await page.locator('.eris-admin-btn').click();
 
 await page.locator('.eris-admin-panel button[data-a="roles"]').click();
-await rolesPage.waitForFunction(() => document.querySelector('.eris-admin-panel h3')?.textContent?.includes('Yönetici Yetkileri'), null, {timeout:5000}).catch(()=>{});
+await page.waitForFunction(() => document.querySelector('.eris-admin-panel h3')?.textContent?.includes('Yönetici Yetkileri'), null, {timeout:5000});
 const rolesText = await page.locator('.eris-admin-panel').textContent();
 if (!rolesText.includes('SA') || !rolesText.includes('UA') || !rolesText.includes('DA')) throw new Error('role matrix missing from DA admin UI');
 
