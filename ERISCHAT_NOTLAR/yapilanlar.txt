@@ -957,3 +957,12 @@ Room control checkpoint
 - [x] Frontend backend browser smoke ile anonymous/admin, family, room, ban, DM ve cosmetic canlı smoke adımları SUCCESS.
 - [x] Yeni scripts/cosmetics_frame_alpha_audit.py Quality içinde çalıştı ve PASS verdi; alpha sonucu artık runner tarafından tanısal olarak raporlanıyor, görsel tasarım uygunluğu otomatik PASS kabul edilmiyor.
 - [ ] Pages canlı zinciri, gerçek WebRTC/TURN iki cihaz kanıtı, gerçek müzik kaynağı/uzun playback ve VIP lifecycle sonraki açık işler olarak korunuyor.
+
+
+[2026-09-19 devam 49] QUALITY #1074 — RTC SIGNALING SECURITY PASS
+- [x] Quality run 35449464248 / job 105913984278 SUCCESS ile tamamlandı.
+- [x] RTC signaling security smoke gerçek runner'da PASS: non-member GET/POST 403, member → non-member target 404, invalid signal type 422, valid offer 200 + queued=true.
+- [x] RTC config security de aynı smoke içinde PASS: oda dışı kullanıcı 403, oda üyesi 200 + ice_servers array.
+- [x] Önceki RTC payload contract fix'i d3d511e59e59fd8643ce6e1b4d9737fbc5d9ee2f ile doğrulandı.
+- [x] Bu checkpoint ile RTC signaling security smoke Quality kapısına bağlanmış ve gerçek PASS kanıtı alınmış oldu.
+- [ ] Gerçek iki tarayıcı/iki cihaz WebRTC ses E2E, üretim STUN/TURN credential provisioning ve mobil/gerçek ağ transport kanıtı hâlâ açık.
