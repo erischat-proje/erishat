@@ -456,3 +456,8 @@ Room control checkpoint
 - [x] Aile demo ekranı gerçek aile/üye/bağış/sohbet API'lerine bağlandı.
 - [x] Aile oluşturma, üye ekleme, bağış ve aile mesajı gönderme canlı akışa bağlandı.
 - [x] WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması önceki checkpoint'te tamamlandı.
+
+2026-09-19 — YENİ SOHBET DEVİR NOTU
+- Aile demo canlı API'lere bağlandı: aile listesi, oluşturma, üye ekleme, bağış ve aile sohbeti.
+- WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması eklendi.
+- Canlı demo API response kullanımındaki yanlış .ok/.json() akışları temizlendi.
