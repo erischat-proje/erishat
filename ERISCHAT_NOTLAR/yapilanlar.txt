@@ -689,3 +689,9 @@ Room control checkpoint
 - [x] Floating hediye FAB kaldırıldıktan sonra panel initializer'ın hâlâ FAB elementini arayıp erken dönmesi bulundu.
 - [x] Kontrol artık doğrudan `#erischatGiftPanel` üzerinden yapılıyor; oda içindeki 🎁 butonu paneli gerçekten oluşturup açabilecek.
 - Commit: 5f5b74ccb0d60ea4755c09a056583143afff4365.
+
+
+[2026-09-19 — DUVAR KAĞIDI MAĞAZA TEMİZLİĞİ]
+- [x] Wallpaper renderer'da aynı `/me/cosmetics` endpointine iki kez istek atılması kaldırıldı; mevcut Promise sonucu kullanılıyor.
+- [x] Wallpaper satın alma/uygulama sırasında blocking alert yerine uygulamanın toast UI'ı kullanılıyor.
+- Commit: f7ae31a21b93e3916ef99fadf7dc6f061a79688c.
