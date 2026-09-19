@@ -878,3 +878,12 @@ Room control checkpoint
 - [x] Yeni browser console kaynak teşhisi için commit 831bea45e3f8f0615fb6e4e68299cb74a2e4d5fb ile frontend smoke'a console error capture eklendi.
 - [ ] 831bea4 sonrası yeni Quality run sonucu henüz doğrulanmadı; PASS varsayılmayacak.
 - [ ] Yeni run başarısız olursa ilk gerçek console/runtime kaynağından devam edilecek; spekülatif değişiklik yapılmayacak.
+
+[2026-09-19 devam 40] QUALITY #1045 — MÜZİK UI GERÇEK REGEX KÖK DÜZELTMESİ
+- [x] Quality run #1045 / run 35444413695, HEAD 6e530cdf1095a425d09f6d88a62474ae662e0c3c üzerinde ilk gerçek failure Frontend browser smoke adımında doğrulandı.
+- [x] Hata kaynağı console/pageerror capture ile doğrudan görüldü: `Invalid regular expression flags @ no-stack`.
+- [x] Kök neden frontend/room-music-ui.js içindeki fallback API satırında slash regex'inin yanlış escape edilmesiyle `/\\\\/$/` biçiminde geçersiz JavaScript regex literal'ı oluşmasıydı.
+- [x] Düzeltme canonical fallback ifadesini `/\\/$/` olacak şekilde düzeltti.
+- [x] Fix commit: b3cd489095d6d78a5d621281d9f03b0a6696c8de.
+- [ ] Fix sonrası yeni Quality run henüz doğrulanmadı; PASS varsayılmayacak.
+- [ ] PASS alınana kadar müzik UI → HTMLAudio → playback/queue zinciri tamamlandı kabul edilmeyecek.
