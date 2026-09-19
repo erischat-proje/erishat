@@ -703,3 +703,12 @@ Room control checkpoint
 - [x] `POST /{room_id}/music/{music_id}/playback` canonical `backend/app/room_routes.py` içine eklendi; play/seek istenen `position_seconds` değerini koruyor, pause/stop state'i doğru güncelliyor.
 - [x] Fix commit: `9e88bf569d37e29c1a40ac8a9aec9d6ea75e52dc`.
 - [ ] Bu fix sonrası yeni Quality run sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 18] QUALITY #968 — MUSIC REALTIME SYNC ROOT FIX
+- [x] Quality #968 ilk gerçek failure'ı Frontend backend browser smoke adımında verdi; önceki 20 adım başarıyla geçti.
+- [x] Gerçek failure: Playwright music sync timeout; HTTP music playback endpointleri 200 dönmesine rağmen WebSocket music_sync mesajı diğer bağlı istemciye ulaşmadı.
+- [x] Kök neden: WebSocket mesaj döngüsünün ortak erişim kontrolü room.chat_enabled == false olduğunda music/RTC dahil tüm realtime mesajları bağlantıyı kapatarak engelliyordu. Chat kapalı olması müzik/RTC realtime kontrolünün yaşam döngüsünü kesmemeli.
+- [x] backend/app/main.py WebSocket ortak kontrolü chat durumundan ayrıştırıldı; üyelik/ban kontrolü bağlantı erişimi için korunuyor, yalnızca room_chat mesajı chat kapalıysa reddediliyor.
+- [x] Fix commit: 7180ac5997271083562ce50739dd38da7649a9b5.
+- [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
