@@ -447,3 +447,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Duyuru demo API response kullanımı düzeltildi.
 - [x] Duyuru Aç/Kapat artık mevcut enabled durumunu tersine çeviriyor; yalnızca true göndermiyor.
 - [ ] Yeni Quality/browser runner kanıtı bekleniyor; bu değişiklikler henüz PASS olarak işaretlenmeyecek.
+
+2026-09-19 — ODA CHAT DEMO
+- [x] Demo extras'a gerçek authenticated room WebSocket chat yüzeyi eklendi.
+- [x] Oda chat geçmişi WebSocket `room_history` ile gösteriliyor.
+- [x] Yeni mesajlar `room_chat` üzerinden canlı ekrana düşüyor.
+- [x] Chat hata/mute mesajları görünür hale getirildi.
+- [x] Modal kapanışında WebSocket temizleniyor.
+- [ ] İki tarayıcı gerçek chat E2E ve fresh Quality runner sonucu henüz doğrulanmadı.
