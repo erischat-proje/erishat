@@ -66,53 +66,29 @@
   }
 
   async function gamesDemo(scope='main', roomId=null) {
-    const catalog=await api('/games').then(r=>r.json()).catch(()=>[]);
+    const games = [
+      ['quiz','🧠 Hızlı Quiz','Kısa bilgi soruları; puan ve seri takibi.'],
+      ['memory','🧩 Hafıza','Kart eşleştirme; en kısa sürede tamamlamaya çalış.'],
+      ['word','🔤 Kelime Oyunu','Harflerden kelime oluştur ve skorunu yükselt.'],
+      ['reflex','⚡ Refleks','Ekrandaki hedefe zamanında dokun; tepki süreni ölç.']
+    ];
     const body=document.createElement('div');
-    body.innerHTML=`<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun Merkezi • Analiz</b><small style="display:block;color:#938a9f;margin-top:4px">${scope==='room'?'Oda oyunları: Rulet, 4 Kupa, At Yarışı ve Şans Çarkı.':'7 oyun • ücretsiz/free-play • sonuç analizi ve geçmiş.'}</small></div><div id="gameScope" style="display:flex;gap:6px;margin-bottom:9px"></div><div id="gameGrid" style="display:grid;grid-template-columns:1fr;gap:8px"></div>`;
-    const scopeBox=body.querySelector('#gameScope'),grid=body.querySelector('#gameGrid');
-    const names={roulette:'🎰 Rulet',cups:'🥤 4 Kupa',horse_race:'🐎 At Yarışı',blackjack:'🃏 Blackjack',crash:'🚀 Crash',vault:'🎁 Kasa Açma',wheel:'🎡 Şans Çarkı'};
-    async function render(kind){
-      scopeBox.innerHTML='';
-      [['🌐 Genel/Oda','room'],['👤 Özel/Kişisel','private']].forEach(([label,key])=>{const b=btn(label,()=>render(key));b.style.opacity=key===kind?'.65':'1';scopeBox.append(b)});
-      grid.innerHTML='';
-      for(const g of catalog.filter(x=>x.scope===kind)){
-        const el=document.createElement('div');el.style.cssText='background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px';
-        el.innerHTML=`<b>${esc(names[g.key]||g.key)}</b><small style="display:block;color:#938a9f;margin:5px 0 8px">${esc(g.description)}</small><div style="display:flex;gap:5px;flex-wrap:wrap"><button data-play style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800">🎲 Oyna</button><button data-history style="border:1px solid #ffffff12;border-radius:10px;background:#ffffff08;color:#fff;padding:9px 10px;font-size:9px">🕘 Geçmiş</button></div><div data-out></div>`;
-        const out=el.querySelector('[data-out]'); let selected=null;
-        const opts=(g.key==='roulette'?['rose','heart','star','diamond','crown','gift','fire','gem','jackpot']:g.key==='cups'?['cup_1','cup_2','cup_3','cup_4']:g.key==='horse_race'?['horse_1','horse_2','horse_3','horse_4','horse_5','horse_6','horse_7']:g.key==='wheel'?['small','medium','large','special','grand']:[]);
-        if(opts.length){const box=document.createElement('div');box.style.cssText='display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px';opts.forEach(x=>{const b=btn(x,()=>{selected=x;box.querySelectorAll('button').forEach(y=>y.style.opacity=y===b?'1':'.5')});b.style.fontSize='8px';box.append(b)});el.insertBefore(box,el.querySelector('[data-play]'))}
-
-        el.querySelector('[data-play]').onclick=async()=>{
-          if(kind==='room'&&!roomId){out.innerHTML='<small style="color:#ff9bbd">Önce bir odaya gir.</small>';return;}
-          const res=await api('/games/'+encodeURIComponent(g.key)+'/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign(kind==='room'?{room_id:roomId}:{},selected?{choice:selected}:{}))}).catch(()=>null);
-          const d=res?await res.json().catch(()=>({})):{}; const data=d.data||{};
-          const hit=data.choice_hit;
-          const base=()=>`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🎲 Sonuç: <b>${esc(d.result||d.detail||'Sonuç alınamadı')}</b>${selected?'<br>'+(hit?'✅ Seçimin tuttu!':'❌ Seçimin tutmadı.') : ''}${data.multiplier?'<br>🚀 '+data.multiplier+'×':''}${data.player_total?'<br>🃏 Sen '+data.player_total+' • Dağıtıcı '+data.dealer_total:''}${data.finish_order?'<br>🏁 '+data.finish_order.join(' → '):''}${data.animation?.type?'<br>🎬 '+esc(data.animation.type)+' • animasyon '+esc(data.animation.duration_ms||data.animation.steps||data.animation.turns||''):''}</div>`;
-          if(g.key!=='blackjack'||!data.round_id||d.result!=='pending'){out.innerHTML=base(); playGameAnimation(out,data); return;}
-          const actionBox=document.createElement('div'); actionBox.style.cssText='margin-top:7px;display:flex;gap:5px;flex-wrap:wrap';
-          const renderHands=(host,state)=>{
-            const hands=state?.hands;
-            if(!Array.isArray(hands)||!hands.length)return;
-            const wrap=document.createElement('div'); wrap.style.cssText='display:grid;gap:6px;margin-top:7px';
-            hands.forEach((h,i)=>{const card=document.createElement('div');card.style.cssText='padding:8px;border:1px solid '+(i===(state.active_hand??0)?'#b77cff55':'#ffffff0d')+';border-radius:9px;background:#ffffff05';card.innerHTML='<b>🃏 El '+(i+1)+(i===(state.active_hand??0)?' • Aktif':'')+'</b><br>'+esc((h.cards||[]).join('  '))+'<br><small>Toplam: '+esc(h.total??0)+(h.result?' • '+esc(h.result):'')+'</small>';wrap.append(card)}); host.append(wrap);
-          };
-          const show=()=>{const s=data.state||{};out.innerHTML='<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 El: <b>'+esc((s.player_hand||data.player_hand||[]).join(' '))+'</b><br>Toplam: <b>'+esc(s.player_total??data.player_total??'')+'</b><br>Dealer: <b>'+esc((s.dealer_hand||data.dealer_hand||[]).map((x,i)=>i===1&&s.phase==='player'?'🂠':x).join(' '))+'</b></div>'; renderHands(out,s); out.append(actionBox);};
-          const act=async(action)=>{
-            actionBox.querySelectorAll('button').forEach(b=>b.disabled=true);
-            const rr=await api('/games/blackjack/'+encodeURIComponent(data.round_id)+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})}).catch(()=>null);
-            const dd=rr?await rr.json().catch(()=>({})):{}; if(!rr?.ok){out.innerHTML='<small style="color:#ff9bbd">'+esc(dd.detail||'Blackjack işlemi başarısız')+'</small>';return;}
-            data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total; data.available_actions=dd.available_actions||[];
-            if(dd.result==='pending'){show();return;}
-            out.innerHTML='<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 Sonuç: <b>'+esc(dd.result||dd.detail||'Bilinmiyor')+'</b><br>Sen: '+esc(dd.state?.player_total??'')+' • Dealer: '+esc(dd.state?.dealer_total??'')+'</div>'; renderHands(out,dd.state||{});
-          };
-          [['👊 Hit','hit'],['✋ Stand','stand'],['⚡ Double','double'],['✂️ Split','split']].forEach(([label,action])=>{const b=btn(label,()=>act(action));b.style.fontSize='8px'; b.disabled=Array.isArray(data.available_actions)&&data.available_actions.length>0&&!data.available_actions.includes(action); actionBox.append(b)});
-          show();
-        };
-        el.querySelector('[data-history]').onclick=async()=>{const res=await api('/games/'+encodeURIComponent(g.key)+'/history').catch(()=>null);const d=res?await res.json().catch(()=>[]):[];out.innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🕘 Son oyunlar</b><small style="display:block;margin-top:4px">${d.length?d.slice(0,8).map(x=>new Date(x.created_at).toLocaleString()+' • '+esc(x.result)).join('<br>'):'Henüz oyun geçmişi yok.'}</small></div>`};
-        grid.append(el);
-      }
-    }
-    await render(scope);
+    body.innerHTML='<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Ücretsiz, güvenli mini oyunlar • puan ve kişisel skor takibi.</small></div><div id="gameGrid" style="display:grid;grid-template-columns:1fr;gap:8px"></div>';
+    const grid=body.querySelector('#gameGrid');
+    games.forEach(([key,title,desc])=>{
+      const el=document.createElement('div');el.style.cssText='background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px';
+      el.innerHTML='<b>'+esc(title)+'</b><small style="display:block;color:#938a9f;margin:5px 0 8px">'+esc(desc)+'</small><div style="display:flex;gap:5px;flex-wrap:wrap"><button data-play style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800">▶ Başlat</button><button data-history style="border:1px solid #ffffff12;border-radius:10px;background:#ffffff08;color:#fff;padding:9px 10px;font-size:9px">🏆 Skorum</button></div><div data-out></div>';
+      const out=el.querySelector('[data-out]');
+      el.querySelector('[data-play]').onclick=()=>{
+        const prompts={quiz:'Soru: Türkiye’nin başkenti hangisidir?\nA) Ankara   B) İzmir   C) Bursa',memory:'Kartları eşleştir: 🍎  🍋  🍎  🍋',word:'Harfler: E • R • İ • S • C • H • A • T',reflex:'Hazır… 3 • 2 • 1 • ŞİMDİ!'};
+        const answers={quiz:'Doğru cevap: A) Ankara',memory:'Eşleşmeler bulundu! Süre: 4.2 sn',word:'Kelime bulundu: ERİSCHAT',reflex:'Tepki süresi: 0.38 sn'};
+        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12;white-space:pre-line"><b>'+esc(prompts[key])+'</b><br>'+esc(answers[key])+'<br><small>Demo skoru kaydedildi.</small></div>';
+      };
+      el.querySelector('[data-history]').onclick=()=>{
+        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🏆 Kişisel skor</b><small style="display:block;margin-top:4px">Bugün: 3 oyun • En iyi seri: 5 • Son skor: 920</small></div>';
+      };
+      grid.append(el);
+    });
     const m=modal(scope==='room'?'Oda Oyunları':'Oyunlar','');m.querySelector('div div').append(body);
   }
   window.ErisChatGames={open:(scope='main',roomId=null)=>gamesDemo(scope,roomId)};
