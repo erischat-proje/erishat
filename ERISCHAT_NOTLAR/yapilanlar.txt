@@ -1042,3 +1042,11 @@ Room control checkpoint
 - [x] #1165 Cosmetics browser render hatası incelendi: 40 assert'i standart + VIP çerçeveleri birlikte sayıp 52 buluyordu.
 - [x] Kök neden test kapsamı hatası; standart çerçeve assert'i artık yalnızca `standartcerceve/` altında tam 40 dosyayı kontrol ediyor.
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam — Quality #1169 kök neden ve düzeltme]
+- [x] Quality #1169 ilk gerçek hata `Cosmetics browser render` adımında oluştu; önceki 40 standard frame assert'inin filtre mantığı klasördeki dosya adlarının tamamını kapsamıyordu.
+- [x] Repo ağacında `standartcerceve/` altında tam 40 PNG/SVG doğrulandı.
+- [x] `cosmetics_browser_render.mjs` frame keşfi artık dosya adında `cerceve` aranmasına değil, standard/VIP frame klasörlerine göre yapılıyor; standard frame assert'i 40 dosyayı doğru kapsamda sayıyor.
+- [x] Düzeltme commit: c38b9bf5daee642fcf4e3de7b93e26edfc1072db.
+- [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
