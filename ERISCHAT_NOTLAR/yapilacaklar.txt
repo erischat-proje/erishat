@@ -516,3 +516,12 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Oda chat için iki gerçek browser WebSocket istemcisiyle history ve realtime mesaj yayını smoke'a eklendi.
 - [ ] Yeni commitler sonrası Quality/CI PASS henüz doğrulanmadı.
 - [ ] Aile gerçek davet kabul/reddet lifecycle'ı hâlâ açık.
+
+
+2026-09-19 — MÜZİK E2E İLERLETME
+- [x] Play/pause/stop/seek için backend playback API eklendi.
+- [x] WebSocket realtime music_sync yayını eklendi.
+- [x] Demo istemcisinde çoklu istemci playback state senkronizasyon temeli eklendi.
+- [x] Browser smoke play/pause ve seek position backend kontrolünü kapsıyor.
+- [ ] Gerçek iki tarayıcı müzik UI E2E ve fresh Quality PASS henüz doğrulanmadı.
+- [ ] Müzik kaynağının gerçek tarayıcıda oynatılabilirliği CORS/format nedeniyle ayrıca doğrulanmalı.
