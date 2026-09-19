@@ -75,6 +75,10 @@ class FamilyMemberUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
+class BlackjackAction(BaseModel):
+    action: str = Field(pattern="^(hit|stand)$")
+
+
 class WalletExchange(BaseModel):
     direction: str = Field(pattern="^(lidya_to_gem|gem_to_lidya)$")
     amount: int = Field(ge=1, le=1_000_000_000_000)
@@ -441,6 +445,16 @@ def register_platform_auth(current_user_dependency):
 
 
 
+    def _load_game_round_for_user(round_id: str, db: Session, user: User) -> GameRound:
+        row = db.get(GameRound, round_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Oyun turu bulunamadı")
+        if row.room_id:
+            member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == row.room_id, RoomMember.user_id == user.id))
+            if not member:
+                raise HTTPException(status_code=403, detail="Bu oyun turuna erişiminiz yok")
+        return row
+
     @router.get("/games/rounds/{round_id}")
     def game_round_state(round_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = db.get(GameRound, round_id)
@@ -459,6 +473,66 @@ def register_platform_auth(current_user_dependency):
             "status": row.status, "started_at": row.started_at, "ends_at": row.ends_at,
             "result": row.result_key, "state": state,
         }
+
+    @router.post("/games/blackjack/{round_id}/action")
+    def blackjack_action(
+        round_id: str,
+        payload: BlackjackAction,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = _load_game_round_for_user(round_id, db, user)
+        if row.game_type != "blackjack":
+            raise HTTPException(status_code=400, detail="Bu round blackjack değil")
+        if row.status != "open":
+            raise HTTPException(status_code=409, detail="Bu blackjack roundu kapalı")
+        try:
+            state = json.loads(row.state_data or "{}")
+        except (TypeError, json.JSONDecodeError):
+            raise HTTPException(status_code=409, detail="Round state bozuk")
+        if state.get("phase") != "player":
+            raise HTTPException(status_code=409, detail="Oyuncu aksiyonu beklenmiyor")
+        deck = state.get("deck") or []
+        player = list(state.get("player_hand") or [])
+        dealer = list(state.get("dealer_hand") or [])
+        if payload.action == "hit":
+            if not deck:
+                raise HTTPException(status_code=409, detail="Deste tükendi")
+            player.append(deck.pop())
+            state["deck"] = deck
+            state["player_hand"] = player
+            state["player_total"] = _blackjack_hand_total(player)
+            if state["player_total"] >= 21:
+                payload_action = "stand"
+            else:
+                payload_action = "hit"
+            if payload_action == "hit":
+                row.state_data = json.dumps(state, ensure_ascii=False, separators=(",", ":"))
+                db.commit()
+                return {"round_id": row.id, "status": row.status, "state": state}
+        total = _blackjack_hand_total(player)
+        while _blackjack_hand_total(dealer) < 17 and deck:
+            dealer.append(deck.pop())
+        dealer_total = _blackjack_hand_total(dealer)
+        if total > 21:
+            result = "loss"
+        elif dealer_total > 21 or total > dealer_total:
+            result = "win"
+        elif total == dealer_total:
+            result = "push"
+        else:
+            result = "loss"
+        state.update({
+            "phase": "finished", "deck": deck, "player_hand": player,
+            "dealer_hand": dealer, "player_total": total,
+            "dealer_total": dealer_total, "result": result,
+        })
+        row.state_data = json.dumps(state, ensure_ascii=False, separators=(",", ":"))
+        row.status = "finished"
+        row.result_key = result
+        row.ends_at = datetime.now(timezone.utc)
+        db.commit()
+        return {"round_id": row.id, "status": row.status, "result": result, "state": state}
 
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
