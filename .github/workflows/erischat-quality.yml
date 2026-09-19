@@ -113,6 +113,8 @@ jobs:
         run: node scripts/rtc_two_browser_smoke.mjs
       - name: System identity and admin smoke
         working-directory: backend
+        env:
+          ERISCHAT_ADMIN_SMOKE_FIXTURE: ../.smoke-admin.json
         run: python ../scripts/system_identity_admin_smoke.py
       - name: Admin browser UI and enforcement smoke
         run: node scripts/admin_browser_smoke.mjs
