@@ -830,3 +830,12 @@ Room control checkpoint
 - [x] Quality 35441312241 / job 105892458515 SUCCESS; frontend backend browser, room browser, family, admin, anonymous, live room/family/DM/cosmetic zincirleri geçti.
 - [x] Eski doğrulama bekleyen browser E2E maddeleri mevcut runner kanıtıyla hizalandı.
 - [x] Kalan teknik sıra netleştirildi: gerçek 2-browser WebRTC + TURN/mobile transport, 139 frame alpha görsel standardı, gerçek müzik playback/queue, VIP lifecycle derinleştirmesi, fan/admin eksikleri ve Pages canlı zinciri.
+
+
+[2026-09-19 devam 33] QUALITY #1015 SONUCU İLE BROWSER ZİNCİRİ CHECKPOINT
+- [x] Quality run 35441312241 / job 105892458515 SUCCESS olarak tamamlandı; 28/28 ana kalite adımı geçti.
+- [x] Frontend browser smoke, frontend-backend browser smoke, room browser surface, 139 kozmetik render/integrity/URL ve tüm Live smoke katmanları aynı run içinde geçti.
+- [x] RTC browser smoke içinde gerçek RTCPeerConnection teklif/cevap, ICE adayları, bağlantı durumu ve rtc_leave akışı mevcut; Quality #1015 bunu PASS olarak doğruladı.
+- [ ] Gerçek TURN credential provisioning ve gerçek iki cihaz/mobil ağ E2E'si dış altyapı kanıtı gerektiriyor; kaynak kodda STUN varsayılanı + opsiyonel TURN env desteği mevcut.
+- [ ] 139 frame için görsel alpha standardı ayrıca tasarım incelemesi gerektiriyor; render PASS tek başına tasarım standardı PASS sayılmayacak.
+- [ ] Gerçek müzik kaynağı/playback ve Pages canlı zinciri ayrı sonraki aşamalar olarak korunuyor.
