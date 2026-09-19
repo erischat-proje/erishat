@@ -3,7 +3,12 @@
   style.id = 'eris-room-reference-ui';
   style.textContent = `
     /* Reference-room skin: transparent UI over the existing wallpaper. */
-    #erisRoomSurface { background: transparent !important; }
+    #erisRoomSurface {
+      background:transparent !important;
+      --room-accent:var(--pink,#ff4fa3);
+      --room-secondary:var(--violet,#8a5cff);
+      --room-gold:var(--gold,#e4b85d);
+    }
     #erisRoomSurface .eris-room-wall {
       background-position:center !important;
       background-size:cover !important;
@@ -47,17 +52,45 @@
     #erisRoomSurface .eris-room-core small { font-size:7px;opacity:.55; }
 
     #erisRoomSurface .eris-seat {
-      width:74px;height:74px;border:0 !important;border-radius:50%;
+      width:96px;height:96px;border:0 !important;border-radius:50%;
       background:transparent !important;box-shadow:none !important;
-      backdrop-filter:none;padding:0;z-index:10;
+      backdrop-filter:none;padding:0;z-index:10;overflow:visible;
     }
-    #erisRoomSurface .eris-seat > div { display:flex;flex-direction:column;align-items:center; }
+    #erisRoomSurface .eris-seat > .seat-pod {
+      position:relative;width:100%;height:100%;
+      display:flex;flex-direction:column;align-items:center;
+    }
+    #erisRoomSurface .eris-seat > .seat-pod:before {
+      content:"";position:absolute;left:7%;right:7%;top:12%;bottom:9%;
+      border-radius:48% 48% 43% 43%;
+      background:
+        radial-gradient(circle at 50% 28%,rgba(255,255,255,.12),transparent 25%),
+        linear-gradient(145deg,rgba(112,72,180,.78),rgba(16,8,31,.92) 58%,rgba(4,3,14,.96));
+      border:1px solid rgba(173,132,255,.48);
+      box-shadow:inset 0 0 22px rgba(255,255,255,.08),0 12px 24px rgba(0,0,0,.48);
+      z-index:-1;
+    }
+    #erisRoomSurface .eris-seat > .seat-pod:after {
+      content:"";position:absolute;left:12%;right:12%;bottom:4%;height:23%;
+      border-radius:50%;background:radial-gradient(ellipse,rgba(110,70,220,.42),transparent 72%);
+      filter:blur(3px);z-index:-1;
+    }
     #erisRoomSurface .eris-seat .seat-ava {
-      width:54px;height:54px;border-radius:50%;
-      border:3px solid rgba(255,255,255,.78);
+      position:relative;width:60px;height:60px;margin-top:5px;border-radius:50%;
+      border:3px solid rgba(255,255,255,.82);
       background:linear-gradient(145deg,#7e56df,#e85b9c);
-      box-shadow:0 5px 17px rgba(0,0,0,.48);
-      font-size:18px;
+      box-shadow:0 5px 17px rgba(0,0,0,.55),0 0 18px rgba(138,92,255,.22);
+      font-size:18px;z-index:2;
+    }
+    #erisRoomSurface .eris-seat .seat-frame {
+      position:absolute;top:2px;width:66px;height:66px;border-radius:50%;
+      background:center/cover no-repeat;pointer-events:none;z-index:3;
+    }
+    #erisRoomSurface .eris-seat .seat-mic {
+      position:absolute;right:14px;top:49px;width:22px;height:22px;
+      display:grid;place-items:center;border-radius:50%;
+      background:rgba(9,6,20,.88);border:1px solid rgba(255,255,255,.28);
+      font-size:11px;z-index:4;
     }
     #erisRoomSurface .eris-seat b {
       margin-top:5px;padding:3px 7px;border-radius:8px;
@@ -69,15 +102,20 @@
       background:rgba(9,5,19,.38);font-size:7px;
     }
     #erisRoomSurface .eris-seat.empty .seat-ava {
-      width:50px;height:50px;border:2px dashed rgba(255,255,255,.64);
+      width:54px;height:54px;border:2px dashed rgba(255,255,255,.64);
       background:rgba(20,10,37,.36);font-size:23px;color:#fff;
     }
+    #erisRoomSurface .eris-seat.empty > .seat-pod:before {
+      background:linear-gradient(145deg,rgba(72,46,120,.50),rgba(10,6,22,.78));
+      border-color:rgba(255,255,255,.25);
+    }
+    #erisRoomSurface .eris-seat.locked > .seat-pod:before { opacity:.45; }
     #erisRoomSurface .eris-seat.empty b {
       background:rgba(10,5,20,.42);font-size:8px;
     }
     #erisRoomSurface .eris-seat.me .seat-ava {
-      border-color:#ff8ac8;
-      box-shadow:0 0 0 4px rgba(255,110,184,.17),0 6px 20px #0008;
+      border-color:var(--room-accent);
+      box-shadow:0 0 0 4px color-mix(in srgb,var(--room-accent) 20%,transparent),0 6px 20px #0008;
     }
 
     /* Eight-seat reference layout: two upper, two inner upper, two inner lower, two lower. */
@@ -153,12 +191,29 @@
     #erisRoomSurface .eris-room-tools #erisRoomMic { font-size:0; }
     #erisRoomSurface .eris-room-tools #erisRoomMic:after { content:"🎙️";font-size:15px; }
 
+    #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .eris-seat { width:78px;height:78px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .eris-seat { width:68px;height:68px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .seat-ava { width:50px;height:50px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .seat-ava { width:44px;height:44px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .seat-frame { width:56px;height:56px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .seat-frame { width:50px;height:50px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .seat-mic { right:10px;top:40px; }
+    #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .seat-mic { right:8px;top:34px; }
+
     @media(max-width:520px){
       #erisRoomSurface .eris-room-top { height:80px;min-height:80px; }
       #erisRoomSurface .eris-room-stage { top:88px;bottom:224px; }
-      #erisRoomSurface .eris-seat { width:68px;height:68px; }
-      #erisRoomSurface .eris-seat .seat-ava { width:50px;height:50px; }
-      #erisRoomSurface .eris-seat.empty .seat-ava { width:47px;height:47px; }
+      #erisRoomSurface .eris-seat { width:80px;height:80px; }
+      #erisRoomSurface .eris-seat .seat-ava { width:52px;height:52px; }
+      #erisRoomSurface .eris-seat .seat-frame { width:58px;height:58px; }
+      #erisRoomSurface .eris-seat .seat-mic { right:10px;top:43px;width:20px;height:20px;font-size:10px; }
+      #erisRoomSurface .eris-seat.empty .seat-ava { width:48px;height:48px; }
+      #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .eris-seat { width:64px;height:64px; }
+      #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .eris-seat { width:56px;height:56px; }
+      #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .seat-ava { width:43px;height:43px; }
+      #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .seat-ava { width:38px;height:38px; }
+      #erisRoomSurface #erisLiveSeats[data-seat-count="12"] .seat-frame { width:48px;height:48px; }
+      #erisRoomSurface #erisLiveSeats[data-seat-count="16"] .seat-frame { width:44px;height:44px; }
       #erisRoomSurface .eris-room-chat { height:224px; }
       #erisRoomSurface .eris-room-tools { bottom:229px; }
     }
@@ -169,24 +224,38 @@
   `;
   document.head.appendChild(style);
 
-  function arrange(surface) {
-    const box = surface.querySelector('#erisLiveSeats');
-    if (!box) return;
-    const seats = [...box.querySelectorAll('.eris-seat')];
-    const count = Number(box.dataset.seatCount || seats.length || 8);
-    if (count !== 8) return;
-    // Positions intentionally follow the uploaded reference composition.
-    const slots = [
-      [16,24],[38,17],[62,17],[84,24],
-      [16,72],[38,80],[62,80],[84,72]
+  function seatSlots(count) {
+    if (count === 8) return [
+      [17,25],[39,18],[61,18],[83,25],
+      [17,71],[39,80],[61,80],[83,71]
     ];
-    seats.forEach((el,i) => {
-      if (!slots[i]) return;
-      el.style.left=slots[i][0]+'%';
-      el.style.top=slots[i][1]+'%';
-    });
+    const slots=[];
+    const centerY=50;
+    const radiusX=count===12?40:43;
+    const radiusY=count===12?42:44;
+    for(let i=0;i<count;i++){
+      const angle=(-90+(360/count)*i)*Math.PI/180;
+      slots.push([
+        50+Math.cos(angle)*radiusX,
+        centerY+Math.sin(angle)*radiusY
+      ]);
+    }
+    return slots;
   }
 
+  function arrange(surface) {
+    const box=surface.querySelector('#erisLiveSeats');
+    if(!box)return;
+    const seats=[...box.querySelectorAll('.eris-seat')];
+    const count=Number(box.dataset.seatCount||seats.length||8);
+    const slots=seatSlots(count);
+    seats.forEach((el,i)=>{
+      const slot=slots[i];
+      if(!slot)return;
+      el.style.left=slot[0].toFixed(2)+'%';
+      el.style.top=slot[1].toFixed(2)+'%';
+    });
+  }
   function decorate(surface) {
     if (!surface || surface.dataset.referenceUi === '1') return;
     surface.dataset.referenceUi='1';
