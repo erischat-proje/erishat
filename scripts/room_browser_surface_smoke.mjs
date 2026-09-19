@@ -32,7 +32,7 @@ try{
   await page.locator('.nav button',{hasText:'Mesaj'}).click();
   await page.evaluate(() => window.ErisChatDM?.load());
   await page.waitForFunction(() => [...document.querySelectorAll('#messages .list .item')].some(el => el.textContent.includes('Rana')), {timeout:10000});
-  await page.locator('#messages .list .item',{hasText:'Rana'}).click();
+  await page.locator('#messages .list .item',{hasText:'Rana'}).first().click();
   await page.waitForSelector('#chat.show');
   await page.locator('#chatInput').fill('room e2e smoke');
   await page.locator('#chatInput').press('Enter');
