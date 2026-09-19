@@ -190,7 +190,7 @@ async function main(){
   const reportFlow=await page.evaluate(async ({api,targetId})=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
-    const r=await fetch(api+'/reports',{method:'POST',headers:h,body:JSON.stringify({target_user_id:targetId,reason:'browser smoke report'})});
+    const r=await fetch(api+'/reports',{method:'POST',headers:h,body:JSON.stringify({target_user_id:targetId,category:'safety',reason:'browser smoke report'})});
     return {status:r.status,data:await r.json()};
   },{api:API,targetId:member.user.id});
   if(reportFlow.status!==201) throw new Error('report flow failed: '+JSON.stringify(reportFlow));
