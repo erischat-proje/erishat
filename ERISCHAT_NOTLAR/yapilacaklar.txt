@@ -547,3 +547,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] Kritik smoke düzeltmesi: duplicate `reportFlow` const syntax problemi giderildi. Fresh CI/Quality PASS henüz doğrulanmadı.
+
+
+[2026-09-19] Yeni açık: gerçek medya düzeyi WebRTC bağlantısı ve gerçek cihaz/cellular/TURN testi henüz doğrulanmadı. Signaling browser E2E kodlandı; fresh CI PASS bekleniyor.
