@@ -130,6 +130,8 @@ jobs:
         run: python scripts/dm_live_smoke.py
       - name: Live cosmetic smoke
         run: python scripts/cosmetic_live_smoke.py
+      - name: Live wallpaper smoke
+        run: python scripts/wallpaper_live_smoke.py
       - name: API log on failure
         if: failure()
         run: |
