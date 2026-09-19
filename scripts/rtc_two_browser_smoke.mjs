@@ -45,8 +45,7 @@ async function main(){
 
   const result=await p1.evaluate(async ({api,roomId,memberId})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
-    const memberToken=window.__rtcMemberToken;
-    const headers=t=>({Authorization:'Bearer '+t,'Content-Type':'application/json'});
+        const headers=t=>({Authorization:'Bearer '+t,'Content-Type':'application/json'});
     const cfg=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-config',{headers:headers(ownerToken)});
     const config=await cfg.json();
     if(!cfg.ok||!Array.isArray(config.ice_servers)) throw new Error('rtc config failed: '+cfg.status);
@@ -55,12 +54,13 @@ async function main(){
     stream.getTracks().forEach(t=>pc.addTrack(t,stream));
     const offer=await pc.createOffer({offerToReceiveAudio:true});
     await pc.setLocalDescription(offer);
+    window.__rtcLastPc=pc;
+    await new Promise(resolve=>{if(pc.iceGatheringState==='complete')return resolve();const t=setTimeout(resolve,5000);pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);resolve()}})});
     const send=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:headers(ownerToken),body:JSON.stringify({target_id:memberId,type:'offer',payload:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})});
     if(!send.ok) throw new Error('offer send failed: '+send.status);
     return {iceServers:config.ice_servers.length,offerSent:true};
   },{api:API,roomId:room.data.id,memberId:member.user.id});
-  await p2.evaluate(token=>window.__rtcMemberToken=token,member.token);
-  const memberResult=await p2.evaluate(async ({api,roomId,ownerId})=>{
+    const memberResult=await p2.evaluate(async ({api,roomId,ownerId})=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const started=Date.now(); let offer=null;
@@ -81,6 +81,7 @@ async function main(){
     stream.getTracks().forEach(t=>pc.addTrack(t,stream));
     const answer=await pc.createAnswer();
     await pc.setLocalDescription(answer);
+    await new Promise(resolve=>{if(pc.iceGatheringState==='complete')return resolve();const t=setTimeout(resolve,5000);pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);resolve()}})});
     const sent=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:h,body:JSON.stringify({target_id:ownerId,type:'answer',payload:{type:pc.localDescription.type,sdp:pc.localDescription.sdp}})});
     if(!sent.ok) throw new Error('answer send failed: '+sent.status);
     return {answerSent:true,remoteTrackInitially:remoteTrack};
