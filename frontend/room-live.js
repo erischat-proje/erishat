@@ -89,11 +89,46 @@
   function renderRoomSeats(roomId,name,list,forcedCount){
     const box=document.getElementById('erisLiveSeats');if(!box)return;
     const count=Math.min(16,Math.max(8,Number(forcedCount)||seatCountForRoom(null,list)));
-    const seats=(Array.isArray(list)?list:[]).slice(0,count);while(seats.length<count)seats.push({seat_number:seats.length+1,user_id:null,locked:false});
+    const seats=(Array.isArray(list)?list:[]).slice(0,count);
+    while(seats.length<count)seats.push({seat_number:seats.length+1,user_id:null,locked:false});
     box.innerHTML='';box.dataset.seatCount=String(count);
-    seats.forEach((seat,i)=>{const num=seat.seat_number??i+1,occupied=!!seat.user_id,locked=!!seat.locked,isMe=occupied&&String(seat.user_id)===String(window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');const b=document.createElement('button');b.type='button';const pos=seatLayout(count,i);b.style.left=pos.left;b.style.top=pos.top;b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');b.setAttribute('aria-label',occupied?(seat.nickname||seat.user_name||'Konuşmacı'):'Koltuk '+num);b.innerHTML='<div><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><b></b><small></small></div>';b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+num;b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';if(!occupied&&!locked)b.onclick=async()=>{try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}};box.appendChild(b);});
+    seats.forEach((seat,i)=>{
+      const num=seat.seat_number??i+1;
+      const occupied=!!seat.user_id;
+      const locked=!!seat.locked;
+      const currentId=window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'';
+      const isMe=occupied&&String(seat.user_id)===String(currentId);
+      const avatarRaw=seat.avatar_url||seat.avatar||seat.profile_image||seat.photo_url||seat.user_avatar||'';
+      const frameRaw=seat.frame_url||seat.frame||seat.profile_frame||seat.user_frame||'';
+      const avatarUrl=avatarRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(avatarRaw):avatarRaw;
+      const frameUrl=frameRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(frameRaw):frameRaw;
+      const b=document.createElement('button');b.type='button';
+      const pos=seatLayout(count,i);
+      b.style.left=pos.left;b.style.top=pos.top;
+      b.dataset.seatNumber=String(num);
+      b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
+      b.setAttribute('aria-label',occupied?(seat.nickname||seat.user_name||'Konuşmacı'):'Koltuk '+num);
+      b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span><b></b><small></small></div>';
+      if(avatarUrl){
+        const ava=b.querySelector('.seat-ava');
+        ava.textContent='';
+        ava.classList.add('avatar');
+        ava.style.backgroundImage='url("'+String(avatarUrl).replace(/"/g,'%22')+'")';
+      }
+      if(frameUrl){
+        const frame=b.querySelector('.seat-frame');
+        frame.style.backgroundImage='url("'+String(frameUrl).replace(/"/g,'%22')+'")';
+        frame.classList.add('has-frame');
+      }
+      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+num;
+      b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
+      if(!occupied&&!locked)b.onclick=async()=>{
+        try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}
+        catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}
+      };
+      box.appendChild(b);
+    });
   }
-
   function attachRoomChat(roomId){
     const list=document.getElementById('erisLiveChat'),state=document.getElementById('erisLiveMeta'),input=document.getElementById('erisLiveInput'),send=document.getElementById('erisLiveSend');
     if(!list||!window.ErisPlatform?.getRealtimeUrl)return;
