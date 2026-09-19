@@ -1,7 +1,20 @@
 import random
 
+
 def play(choice, profile, data):
-    segments=[x[0] for x in profile["results"]]
-    result=random.choices(segments,weights=[x[1] for x in profile["results"]],k=1)[0]
-    data.update({"segment":result,"segment_index":segments.index(result)+1,"choice_hit":bool(choice and choice==result),"animation":{"type":"wheel_spin","turns":6,"final_segment":segments.index(result)+1}})
-    return result,data
+    entries = profile.get("results") or []
+    segments = [x[0] for x in entries]
+    if not segments:
+        raise ValueError("wheel profile has no results")
+    result = random.choices(segments, weights=[x[1] for x in entries], k=1)[0]
+    index = segments.index(result) + 1
+    data.update({
+        "segments": segments,
+        "segment": result,
+        "segment_index": index,
+        "choice": choice,
+        "choice_hit": bool(choice and choice == result),
+        "animation": {"type": "wheel_spin", "turns": 6, "duration_ms": 4200, "final_segment": index},
+    })
+    data["result"] = result
+    return result, data
