@@ -1,0 +1,5 @@
+ERISCHAT OYUN MOTORU — ROULETTE
+Kaynak kod: roulette.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: free-play, RNG sonucu, wheel slotu, seçim isabeti ve animasyon metası.
+Para/Lidya/Gem bahis bağlantısı yoktur.
