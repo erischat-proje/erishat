@@ -42,7 +42,7 @@ async function main(){
   const dmVisible=await page.locator('#chatBody .bubble.me').count();
   if(dmVisible<1) throw new Error('DM bubble did not render');
   const social=await page.evaluate(async ({api,targetId,memberToken})=>{
-    const token=memberToken;
+    const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const follow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'POST',headers:h});
     const followers=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/followers',{headers:h}).then(r=>r.json());
@@ -56,7 +56,7 @@ async function main(){
     const privacyBack=await fetch(api+'/me/privacy',{headers:h}).then(r=>r.json());
     const unfollow=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/follow',{method:'DELETE',headers:h});
     return {follow:follow.status,followers,following,fans,notifications,unfollow:unfollow.status,block:block.status,blocks,unblock:unblock.status,privacy:privacy.status,privacyBack};
-  },{api:API,targetId:member.user.id});
+  },{api:API,targetId:member.user.id,memberToken:member.access_token});
   if(social.follow!==201||!social.followers.some(x=>x.user_id===owner.id)) throw new Error('follow flow failed: '+JSON.stringify(social));
   if(!social.notifications.some(x=>x.kind==='follow')) throw new Error('follow notification missing: '+JSON.stringify(social));
   if(social.fans?.total < 1 || social.fans?.level < 1) throw new Error('fan profile flow failed: '+JSON.stringify(social));
@@ -64,7 +64,7 @@ async function main(){
   if(social.block!==200||!social.blocks.some(x=>x.user_id===member.user.id)||social.unblock!==200) throw new Error('block flow failed: '+JSON.stringify(social));
   if(social.privacy!==200||social.privacyBack?.hide_vip_badge!==true) throw new Error('privacy update failed: '+JSON.stringify(social));
   const notificationRead=await page.evaluate(async ({api,memberToken})=>{
-    const token=localStorage.getItem('erischat_access_token');
+    const token=memberToken;
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const list=await fetch(api+'/me/notifications',{headers:h}).then(r=>r.json());
     const n=(list||[]).find(x=>x.kind==='follow') || (list||[])[0];
