@@ -27,8 +27,9 @@
     style.textContent=\`
       #erisRoomSurface{position:fixed;inset:0;z-index:900;background:#05040a;color:#fff;display:none;overflow:hidden;font-family:Inter,system-ui,sans-serif}
       #erisRoomSurface.show{display:block}
-      .eris-room-wall{position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,rgba(255,80,170,.20),transparent 28%),radial-gradient(circle at 12% 12%,rgba(120,80,255,.28),transparent 30%),radial-gradient(circle at 90% 20%,rgba(40,170,255,.16),transparent 26%),linear-gradient(145deg,#100a1c 0%,#090813 48%,#150b19 100%)}
-      .eris-room-wall:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:42px 42px;opacity:.35}
+      .eris-room-wall{position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,rgba(255,80,170,.16),transparent 30%),linear-gradient(145deg,#100a1c,#090813 48%,#150b19);background-position:center;background-size:cover;overflow:hidden}
+      .eris-room-wall.has-wallpaper{background-image:var(--eris-room-wallpaper),linear-gradient(180deg,rgba(5,4,12,.18),rgba(5,4,12,.58))}
+      .eris-room-wall:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,3,10,.12),rgba(4,3,10,.18) 45%,rgba(4,3,10,.72) 100%);pointer-events:none}
       .eris-room-top{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(#05040acc,transparent);z-index:4}
       .eris-room-top button{border:1px solid #ffffff18;background:#08070baa;color:#fff;border-radius:12px;width:40px;height:40px}
       .eris-room-title{flex:1;min-width:0}.eris-room-title b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eris-room-title small{display:block;color:#c0b7c7;font-size:9px;margin-top:3px}
@@ -58,11 +59,31 @@
     return s;
   }
 
-  function renderRoomSeats(roomId,name,list){
-    const box=document.getElementById('erisLiveSeats'); if(!box)return;
-    const seats=(Array.isArray(list)?list:[]).slice(0,8); while(seats.length<8)seats.push({seat_number:seats.length+1,user_id:null,locked:false});
-    box.innerHTML='';
-    seats.forEach((seat,i)=>{const n=seat.seat_number??i+1,occupied=!!seat.user_id,locked=!!seat.locked,isMe=occupied&&String(seat.user_id)===String(window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');const b=document.createElement('button');b.type='button';b.className='eris-seat seat'+(i+1)+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');b.innerHTML='<div><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><b></b><small></small></div>';b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+n;b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';if(!occupied&&!locked)b.onclick=async()=>{try{await window.ErisRoom.joinSeat(roomId,n);await openRoom(roomId,name)}catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}};box.appendChild(b);});
+  function seatLayout(count,index){
+    const centerY=count<=8?46:48, radiusX=count<=8?36:39, radiusY=count<=8?34:37;
+    const angle=(-90+(360/count)*index)*Math.PI/180;
+    return {left:(50+Math.cos(angle)*radiusX).toFixed(2)+'%',top:(centerY+Math.sin(angle)*radiusY).toFixed(2)+'%'};
+  }
+  function seatCountForRoom(room,list){
+    const fromList=Array.isArray(list)?list.length:0;
+    if(fromList)return Math.min(16,Math.max(8,fromList));
+    const level=Number(room?.level||1);
+    return level>=7?16:(level>=5?12:8);
+  }
+  function applyRoomWallpaper(){
+    const wall=document.querySelector('#erisRoomSurface .eris-room-wall');if(!wall)return;
+    const key=window.ErisChatCosmetics?.state?.user?.wallpaper_asset;
+    const raw=typeof key==='string'?key:(key?.url||key?.src||key?.asset_url||key?.path||key?.asset_key||'');
+    const url=raw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(raw):raw;
+    if(url){wall.style.setProperty('--eris-room-wallpaper','url("'+url.replace(/"/g,'%22')+'")');wall.classList.add('has-wallpaper');}
+    else{wall.style.removeProperty('--eris-room-wallpaper');wall.classList.remove('has-wallpaper');}
+  }
+  function renderRoomSeats(roomId,name,list,forcedCount){
+    const box=document.getElementById('erisLiveSeats');if(!box)return;
+    const count=Math.min(16,Math.max(8,Number(forcedCount)||seatCountForRoom(null,list)));
+    const seats=(Array.isArray(list)?list:[]).slice(0,count);while(seats.length<count)seats.push({seat_number:seats.length+1,user_id:null,locked:false});
+    box.innerHTML='';box.dataset.seatCount=String(count);
+    seats.forEach((seat,i)=>{const num=seat.seat_number??i+1,occupied=!!seat.user_id,locked=!!seat.locked,isMe=occupied&&String(seat.user_id)===String(window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');const b=document.createElement('button');b.type='button';const pos=seatLayout(count,i);b.style.left=pos.left;b.style.top=pos.top;b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');b.setAttribute('aria-label',occupied?(seat.nickname||seat.user_name||'Konuşmacı'):'Koltuk '+num);b.innerHTML='<div><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><b></b><small></small></div>';b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+num;b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';if(!occupied&&!locked)b.onclick=async()=>{try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}};box.appendChild(b);});
   }
 
   function attachRoomChat(roomId){
@@ -83,16 +104,17 @@
   async function openRoom(roomId,name){
     const id=String(roomId||'');if(!id)return;
     window.ErisCurrentRoomId=id;window.currentRoomId=id;
-    const surface=ensureRoomSurface();surface.classList.add('show');
+    const surface=ensureRoomSurface();surface.classList.add('show');applyRoomWallpaper();
     document.getElementById('erisLiveTitle').textContent=name||'Oda';document.getElementById('erisLiveMeta').textContent='Gerçek oda • bağlanıyor…';
     document.getElementById('erisLiveSeats').innerHTML='<div style="padding:30px;text-align:center;color:#aaa">8 koltuk hazırlanıyor…</div>';
     try{
       await window.ErisRoom?.join?.(id);const room=await window.ErisRoom?.get?.(id);if(!room)throw new Error('Oda bilgisi alınamadı');
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
-      document.getElementById('erisLiveMeta').textContent=Number(room.member_count||0)+' kişi • '+(room.locked?'🔒 Kilitli':'🟢 Açık')+' • 8 koltuk';
-      renderRoomSeats(id,room.name||name,room.seats);attachRoomChat(id);window.connectRoomGiftSocket?.(id);
+      const seatCount=seatCountForRoom(room,room.seats);applyRoomWallpaper();
+      document.getElementById('erisLiveMeta').textContent='Seviye '+Number(room.level||1)+' • '+Number(room.member_count||0)+' kişi • '+(room.locked?'🔒 Kilitli':'🟢 Açık')+' • '+seatCount+' koltuk';
+      renderRoomSeats(id,room.name||name,room.seats,seatCount);attachRoomChat(id);window.connectRoomGiftSocket?.(id);
     }catch(e){
-      if(id.startsWith('demo-room-')){document.getElementById('erisLiveMeta').textContent='Demo oda • 8 koltuk • sohbet görünümü';renderRoomSeats(id,name,Array.from({length:8},(_,i)=>({seat_number:i+1,user_id:i===0?'demo-owner':null,nickname:i===0?'Oda Sahibi':''})));const list=document.getElementById('erisLiveChat');list.innerHTML='<div class="eris-chat-msg"><b>Oda Sahibi</b><span>Hoş geldiniz 👋</span></div><div class="eris-chat-msg"><b>Rana</b><span>Oda hazır, koltuklardan birine oturabilirsiniz.</span></div>';return;}
+      if(id.startsWith('demo-room-')){document.getElementById('erisLiveMeta').textContent='Demo oda • Seviye 1 • 8 koltuk • sohbet görünümü';renderRoomSeats(id,name,Array.from({length:8},(_,i)=>({seat_number:i+1,user_id:i===0?'demo-owner':null,nickname:i===0?'Oda Sahibi':''})));const list=document.getElementById('erisLiveChat');list.innerHTML='<div class="eris-chat-msg"><b>Oda Sahibi</b><span>Hoş geldiniz 👋</span></div><div class="eris-chat-msg"><b>Rana</b><span>Oda hazır, koltuklardan birine oturabilirsiniz.</span></div>';return;}
       surface.classList.remove('show');window.toast?.(e.message||'Odaya bağlanılamadı.');
     }
   }
@@ -106,6 +128,7 @@
     window.ErisCurrentRoomId=null; window.currentRoomId=null;
   }
   window.openLiveRoomChat=()=>{const id=window.ErisCurrentRoomId||window.currentRoomId;if(!id){window.toast?.('Önce bir oda aç.');return}window.ERIS_DEMO_ROOM_ID=String(id);if(window.ErisDemoExtras?.roomChat){window.ErisDemoExtras.roomChat();}else{window.toast?.('Canlı sohbet arayüzü yükleniyor…');setTimeout(()=>window.ErisDemoExtras?.roomChat?.(),250);}};
+  window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
 
