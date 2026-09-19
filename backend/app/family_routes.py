@@ -128,6 +128,22 @@ def register_family_auth(current_user_dependency):
         if chat_member: db.delete(chat_member)
         db.commit(); return {"family_id": family_id, "user_id": member_user_id, "removed": True}
 
+    @router.delete("/families/{family_id}/leave")
+    def leave_family(family_id: str, db: Session = Depends(get_db), user: User = auth()):
+        family = get_family(db, family_id)
+        member = membership(db, family_id, user.id)
+        if family.owner_id == user.id:
+            raise HTTPException(status_code=400, detail="Aile sahibi ayrılmadan önce sahipliği devretmelidir")
+        db.delete(member)
+        chat_member = db.scalar(select(ConversationMember).where(
+            ConversationMember.conversation_id == family.chat_conversation_id,
+            ConversationMember.user_id == user.id,
+        ))
+        if chat_member:
+            db.delete(chat_member)
+        db.commit()
+        return {"family_id": family_id, "user_id": user.id, "left": True}
+
     @router.post("/families/{family_id}/donate")
     def donate_family(family_id: str, payload: FamilyDonationCreate, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
