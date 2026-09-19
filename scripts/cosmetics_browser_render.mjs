@@ -46,7 +46,7 @@ try {
     return rows;
   },assets);
   const failed=result.filter(x=>!x.ok);
-  const frames=result.filter(x=>/cerceve/i.test(x.path) && /\.(png|svg)$/i.test(x.path));
+  const frames=result.filter(x=>x.path.includes('/standartcerceve/') || x.path.includes('/vipcerceve/'));
   const opaqueFrames=frames.filter(x=>x.ok && x.transparent===false);
   const standardFrames=frames.filter(x=>x.path.includes('/standartcerceve/'));
   if (standardFrames.length !== 40) throw new Error(`expected 40 standard frame assets, found ${standardFrames.length}`);
