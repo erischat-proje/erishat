@@ -1030,3 +1030,9 @@ Room control checkpoint
 - Standart çerçeve koleksiyonu 32'den 40'a tamamlandı: cerceve_17.svg ... cerceve_24.svg.
 - Cosmetic live smoke beklenen toplam katalog sayısı 139'dan 147'ye güncellendi.
 - Yeni assetler şeffaf SVG premium çerçeve varyasyonları olarak eklendi.
+
+
+[2026-09-19 devam — SVG frame browser QA]
+- [x] cosmetics_browser_render SVG frame decode/alpha kontrolünü kapsayacak şekilde genişletildi.
+- [x] Browser render testi standart çerçeve koleksiyonunun tam 40 dosya olduğunu ayrıca assert ediyor.
+- [ ] Quality #1162 sonrası yeni sonuç bekleniyor; PASS varsayılmayacak.
