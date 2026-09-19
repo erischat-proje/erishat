@@ -1,0 +1,37 @@
+ERISCHAT — SON DURUM
+Tarih: 2026-09-20
+
+ANA BRANCH
+- main HEAD: 833b4dc0a42a09df4ff9477d250f85668f97353b
+- Son değişiklik: GitHub Pages deploy concurrency kontrolü eklendi.
+
+QUALITY
+- Quality #1403 / run 35471571319: SUCCESS.
+- Job 105973348709: SUCCESS.
+- 35 ana kalite/test adımı SUCCESS.
+- Hata durumunda çalışan API log adımı doğal olarak SKIPPED.
+- Frontend/browser smoke, customer demo surface integrity, cosmetics, room, family, VIP lifecycle, admin, anonymous session, live family/room/ban/DM/cosmetic/wallpaper ve real two-browser WebRTC smoke zincirleri bu run'da geçti.
+- VIP 0→1→2→3 spend/current_level_spent/unlock/apply yaşam döngüsü doğrulandı.
+- Real two-browser WebRTC signaling/peer smoke geçti.
+
+GITHUB PAGES
+- Pages run #1356 / run 35471571235: SUCCESS.
+- Pages deploy, önceki concurrency problemi sonrasında başarıyla tamamlandı.
+- Workflow'a erischat-pages concurrency grubu ve cancel-in-progress=true eklendi.
+- Canlı URL: https://semihvarolymk-png.github.io/erischat/
+- Bu çalışma ortamındaki web erişim katmanı canlı URL içeriğini açamadığı için gerçek HTTP/görsel PASS ilan edilmiyor. Normal tarayıcıdan açılarak son görsel/etkileşim kontrolü yapılmalı.
+
+KALAN GERÇEK DOĞRULAMALAR
+- [ ] GitHub Pages canlı URL'nin normal tarayıcıdan görsel/etkileşim kontrolü.
+- [ ] 139 kozmetiğin manuel görsel/alpha standardı incelemesi.
+- [ ] Üretim STUN/TURN ve mobil ses transportunun gerçek cihaz/tarayıcılarla doğrulanması.
+
+DEMO KAPSAMI
+- Ana ekran, Odalar/Oda Aç, gerçek oda modalı, DM/Mesaj, Keşfet, Mağaza, VIP 1–12, Profil, Gizlilik, Aile, Oyunlar, Şikayet, Bildirim/Engelleme/Admin ve Tüm Sistemler yüzeyleri mevcut.
+- Mağaza 139 kozmetik ve 500.000.000 sanal demo Lidya ile test edilebilir; bu kredi gerçek ödeme/bakiye değildir.
+- VIP 1–12 demo önizlemesi gerçek backend VIP seviyesini değiştirmeden test edilebilir.
+- Blocking alert/popup akışları toast'a temizlendi; floating sistem/hediye/müzik tetikleyicileri kaldırıldı.
+- Masaüstü responsive düzen düzeltildi.
+
+NOT
+- Railway deploy yapılmayacak; kullanıcı açıkça istemedikçe GitHub Pages/demo akışı kullanılacak.
