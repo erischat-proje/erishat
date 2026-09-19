@@ -493,3 +493,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Owner'ın yanlışlıkla aileden ayrılmasını engelleyen leave endpoint'i eklendi.
 - [x] Normal üye için aileden ayrılma demo aksiyonu eklendi.
 - [ ] Owner transferi ve gerçek davet kabul/reddet yaşam döngüsü ayrıca doğrulanacak.
+
+2026-09-19 — HANDOFF CHECKPOINT
+- WebRTC: early ICE candidate queue + signaling OPEN guard added; real 2-browser/TURN/mobile E2E remains open.
+- Live demo API response handling hardened for wallet exchange, music and announcements.
+- Family: authenticated family list endpoint added; family demo connected to family list, members, donation and chat APIs.
+- No fresh CI/Quality PASS has been claimed after these changes.
