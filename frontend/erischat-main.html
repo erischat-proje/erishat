@@ -56,10 +56,13 @@
 <section id="vip" class="view"><div class="eyebrow">VIP MERKEZİ</div><h1 class="title">VIP 1 → VIP 12</h1><div id="vipLiveMount" class="vipList"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">VIP merkezi yükleniyor…</div></div></section>
 <section id="anon" class="view"><div class="eyebrow">GİZLİLİK</div><h1 class="title">Anonimlik.</h1><div class="settings"><button class="setting" data-privacy-key="hide_vip" type="button"><div class="ava">🕶️</div><div class="grow"><b>VIP görünürlüğünü gizle</b><small>Profilindeki VIP bilgisini diğer kullanıcılardan gizle</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_vip_badge" type="button"><div class="ava">👑</div><div class="grow"><b>VIP rozeti</b><small>VIP rozetinin görünürlüğünü kontrol et</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_vip_neon" type="button"><div class="ava">✨</div><div class="grow"><b>VIP neon efekti</b><small>VIP profil efektini gizle</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_location" type="button"><div class="ava">📍</div><div class="grow"><b>Konum</b><small>Konum bilgisinin görünürlüğünü kontrol et</small></div><span class="switch"></span></button></div><div id="privacyStatus" class="muted" style="margin-top:10px;font-size:9px"></div></section>
 <section id="games" class="view"><div class="eyebrow">OYUN MERKEZİ</div><h1 class="title">Oyna.</h1><div class="quick">
-<button onclick="openSafeGame('quiz')">🧠<strong>Hızlı Quiz</strong><span>Bilgi yarışması</span></button>
-<button onclick="openSafeGame('memory')">🧩<strong>Hafıza</strong><span>Eşleştirme</span></button>
-<button onclick="openSafeGame('word')">🔤<strong>Kelime Oyunu</strong><span>Kelimeyi tamamla</span></button>
-<button onclick="openSafeGame('reaction')">⚡<strong>Refleks</strong><span>Hızlı dokun</span></button>
+<button onclick="openGameDemo()">🎰<strong>Rulet</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🥤<strong>4 Kupa</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🐎<strong>At Yarışı</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🃏<strong>Blackjack</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🚀<strong>Crash</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🎁<strong>Kasa Açma</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🎡<strong>Şans Çarkı</strong><span>Demo arayüzü</span></button>
 </div><div id="gameScreen" class="card" style="margin-top:12px;padding:18px;text-align:center"><b>Bir oyun seç.</b><p class="muted" style="font-size:9px">Oyunlar burada doğrudan çalışır; oda açılır penceresine bağlı değildir.</p></div></section>
 <section id="systems" class="view"><div class="eyebrow">ERISCHAT SİSTEMLERİ</div><h1 class="title">Her şey burada.</h1><div class="quick">
 <button onclick="showView('shop')">🛍️<strong>Mağaza</strong><span>139 görünüm + hediyeler</span></button>
@@ -69,7 +72,7 @@
 <button onclick="showView('anon')">🕶️<strong>Gizlilik</strong><span>Anonimlik ayarları</span></button>
 <button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),0)">🛡️<strong>Güvenlik</strong><span>Şikayet • engelle</span></button>
 <button onclick="showView('profile')">👤<strong>Profil</strong><span>Avatar • frame • sosyal</span></button>
-<button onclick="openGameDemo()">🎮<strong>Oyunlar</strong><span>4 oyun merkezi</span></button>
+<button onclick="openGameDemo()">🎮<strong>Oyunlar</strong><span>7 oyun merkezi</span></button>
 </div></section>
 <section id="search" class="view"><div class="eyebrow">ARAMA</div><h1 class="title">Keşfet.</h1><div class="search"><input id="searchInput" placeholder="Oda veya kullanıcı ara"><button class="primary" onclick="window.ErisSearch?.run?.()">Ara</button></div></section>
 </section><nav class="nav"><button class="active" onclick="showView('home',this)"><b>⌂</b>Ana sayfa</button><button onclick="showView('messages',this);window.ErisChatDM?.load?.()"><b>☏</b>Mesaj</button><button onclick="showView('explore',this);window.ErisChatRoomList?.load?.()"><b>◈</b>Keşfet</button><button onclick="showView('games',this)"><b>🎮</b>Oyun</button><button onclick="showView('profile',this);window.ErisProfile?.refresh?.()"><b>♙</b>Profil</button></nav></main>
