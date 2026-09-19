@@ -378,3 +378,4 @@ Room control checkpoint
 - [x] Oyun TXT belgeleri klasör içi kaynak/harita olarak eklendi.
 - 2026-09-19: Oyunlar klasöründeki Blackjack motoru ileri kurallar için genişletildi; double/split uygunluk yardımcıları ve teknik dokümantasyon eklendi. Henüz action olarak aktive edilmedi.
 - 2026-09-19: Blackjack double action aktif edildi; ilk iki kartta tek kart cekip otomatik dealer cozumlemesi yapiliyor. API action semasi hit/stand/double olarak guncellendi.
+- 2026-09-19: Blackjack demo UI'sına gerçek round action kontrolleri eklendi: Hit / Stand / Double / Split. Pending round için round_id üzerinden action endpointi kullanılıyor ve state ekranda yenileniyor.
