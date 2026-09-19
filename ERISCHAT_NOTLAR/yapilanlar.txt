@@ -1126,3 +1126,11 @@ Room control checkpoint
 - [x] Quality #1232 başarıyla PASS oldu.
 - [x] Wallpaper smoke artık katalog, purchase, apply, persistence, VIP gate ve VIP10 claim gate akışlarını doğruluyor.
 - [x] Son kök düzeltme commit'i: 9892d328e020675ae40ecff792db6ced4f2b4785.
+
+
+[2026-09-19 devam — PAGES KÖK NEDEN KESİNLEŞTİRME]
+- [x] .github/workflows/erischat-pages.yml yeniden incelendi; configure-pages@v5 + upload-pages-artifact@v4 + deploy-pages@v4 ve pages/id-token izinleri mevcut.
+- [x] Pages deploy job'u checkout/configure-pages aşamasına gelmeden github-pages environment admission aşamasında failure veriyor; bu nedenle kaynak kod/build artifact kök nedeni değil.
+- [x] GitHub dokümantasyonu custom Pages workflow için repository Settings → Pages → Source = GitHub Actions seçilmesini ve deploy job'unda github-pages environment kullanılmasını doğruluyor.
+- [ ] Mevcut GitHub bağlantısında environment deployment branch policy/Pages Source ayarını değiştirecek yönetim aracı bulunmuyor; bu ayar çözülmeden canlı deploy doğrulanmayacak.
+- [ ] Pages SUCCESS sonrası canlı HTTP/index ve Pages → Railway API zinciri doğrulanacak.
