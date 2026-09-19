@@ -73,3 +73,10 @@ Tarih: 2026-09-18
 - [x] VIP lifecycle smoke, backend current_level_spent alanını VIP 0/1/2/3 noktalarında test ediyor.
 - [x] Commit c7419619fe237c9fbb1e23995f71c5650b564353.
 - [ ] Bu commit sonrası yeni Quality sonucu bekleniyor; gerçek conclusion success olmadan PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam — QUALITY WORKFLOW TANIMI DÜZELTİLDİ]
+- [x] Quality #1279–#1282 failure'larının uygulama testinden değil, workflow dosyasının bozulmuş üst yapısından kaynaklandığı doğrulandı; ilgili runlarda `jobs=[]` idi.
+- [x] Commit d94f5a68da4be8d214ddc3f7280efdc979900e1d ile `.github/workflows/erischat-quality.yml` geçerli workflow tanımıyla restore edildi.
+- [x] `workflow_dispatch`, main push trigger, Postgres service, static/browser/live smoke zinciri, admin smoke ve VIP lifecycle smoke yeniden aynı workflow altında.
+- [ ] Yeni Quality run job/step sonucu doğrulanacak.
