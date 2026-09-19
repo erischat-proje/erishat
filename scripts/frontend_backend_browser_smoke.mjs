@@ -302,6 +302,8 @@ async function main(){
   if(musicRealtime?.type!=='music_sync'||Number(musicRealtime.position_seconds)!==17) throw new Error('music realtime sync browser flow failed: '+JSON.stringify(musicRealtime));
   const musicCleanup=await page.evaluate(async ({api,roomId,musicId})=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicId,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});return r.status;},{api:API,roomId:room.data.id,musicId:roomControls.musicData.id});
   if(musicCleanup!==200) throw new Error('music cleanup failed: '+musicCleanup);
+  await page.locator('#musicClose').click();
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('#erisMusicPanel')).display==='none');
   if(!giftFlow.notifications.some(x=>x.kind==='gift')) throw new Error('gift notification missing: '+JSON.stringify(giftFlow.notifications));
   if(!giftFlow.profile.some(x=>x.gift==='Zeytin Dalı')) throw new Error('profile gift history missing: '+JSON.stringify(giftFlow.profile));
   if(!giftFlow.events.some(x=>x.gift_key==='Zeytin Dalı')) throw new Error('gift event history missing: '+JSON.stringify(giftFlow.events));
