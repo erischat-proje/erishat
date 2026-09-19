@@ -1,0 +1,5 @@
+ERISCHAT OYUN MOTORU — 4 CUPS
+Kaynak kod: cups.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: free-play, 4 kupa sonucu, seçim isabeti ve shuffle animasyonu.
+Para/Lidya/Gem bahis bağlantısı yoktur.
