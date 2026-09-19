@@ -43,4 +43,7 @@ if s>=300 or after.get("asset_key")!=item["asset_key"]: raise AssertionError(f"w
 blocked=next(x for x in sorted(vip,key=lambda x:int(x.get("vip_level") or 0)) if int(x.get("vip_level") or 0)>0)
 s,detail=req("POST","/me/wallpaper/apply",token,{"asset_key":blocked["asset_key"]})
 if s!=403: raise AssertionError(f"VIP wallpaper gate expected 403, got {s} {detail}")
-print("Wallpaper smoke OK: 12 normal + 12 VIP catalog, purchase/apply persistence, VIP gate.")
+# Claim endpoint contract: below VIP 10 must be rejected.
+s,claim=req("POST","/me/vip/claims/wallpaper",token)
+if s!=403: raise AssertionError(f"wallpaper claim below VIP 10 expected 403, got {s} {claim}")
+print("Wallpaper smoke OK: 12 normal + 12 VIP catalog, purchase/apply persistence, VIP gate, claim gate.")
