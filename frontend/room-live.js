@@ -42,7 +42,6 @@
       [data-seat-count="16"] .eris-seat .seat-ava{width:26px;height:26px;font-size:12px}
       .eris-seat .seat-ava{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:16px;margin:auto}.eris-seat.empty .seat-ava{background:#ffffff0d;color:#aaa0ad}
       .eris-seat b{display:block;font-size:9px;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eris-seat small{display:block;color:#a69cad;font-size:7px;margin-top:2px}
-      .seat1{left:50%;top:18%}.seat2{left:25%;top:31%}.seat3{left:75%;top:31%}.seat4{left:14%;top:55%}.seat5{left:86%;top:55%}.seat6{left:29%;top:76%}.seat7{left:71%;top:76%}.seat8{left:50%;top:91%}
       .eris-room-chat{position:absolute;left:0;right:0;bottom:0;height:205px;background:linear-gradient(180deg,rgba(5,4,10,0) 0%,rgba(5,4,10,.58) 20%,rgba(5,4,10,.82) 100%);backdrop-filter:blur(7px);z-index:5;display:flex;flex-direction:column}
       .eris-chat-list{flex:1;overflow:auto;padding:30px 14px 7px;display:flex;flex-direction:column;gap:6px}
       .eris-chat-msg{max-width:82%;padding:7px 10px;border-radius:12px;background:#17121eaa;border:1px solid #ffffff0b;font-size:10px}.eris-chat-msg.me{align-self:flex-end;background:linear-gradient(135deg,#754cffcc,#ff4fa3cc)}.eris-chat-msg b{font-size:8px;color:#d5cbdc}.eris-chat-msg span{display:block;margin-top:2px}
@@ -70,7 +69,9 @@
   }
   function seatCountForRoom(room,list){
     const fromList=Array.isArray(list)?list.length:0;
-    if(fromList)return Math.min(16,Math.max(8,fromList));
+    if(fromList>=16)return 16;
+    if(fromList>=12)return 12;
+    if(fromList>=8)return 8;
     const level=Number(room?.level||1);
     return level>=7?16:(level>=5?12:8);
   }
