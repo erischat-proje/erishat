@@ -58,29 +58,22 @@
  const box=document.getElementById('search');
  if(!q){toast('Bir arama yaz.');return}
  const api=()=>((window.ERIS_API||window.ERISCHAT_API||'https://erischat-production.up.railway.app/v1').replace(/\/$/,''));
- box.innerHTML='<div class="eyebrow">ARAMA</div><h1 class="title">Sonuçlar</h1><div class="list" id="searchResults"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Aranıyor…</div></div>';
+ box.innerHTML='<div class="eyebrow">ARAMA</div><h1 class="title">Sonuçlar</h1><div class="list" id="searchResults"><div class="card" style="padding:16px;text-align:center;color:#938a9f">Aranıyor…</div></div>';
  const out=document.getElementById('searchResults');
- const headers=()=>{const t=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';return t?{Authorization:'Bearer '+t}:{}};
+ const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';
+ const headers=token?{Authorization:'Bearer '+token}:{};
  try{
    const [rooms,people]=await Promise.all([
-     fetch(api()+'/discover/rooms?limit=50',{headers:headers()}).then(r=>r.ok?r.json():[]),
-     fetch(api()+'/discover/nearby?limit=50',{headers:headers()}).then(r=>r.ok?r.json():[])
+     fetch(api()+'/discover/rooms?limit=50',{headers}).then(r=>r.ok?r.json():[]),
+     fetch(api()+'/discover/nearby?limit=50',{headers}).then(r=>r.ok?r.json():[])
    ]);
-   const matches=[...(Array.isArray(rooms)?rooms:[]).filter(x=>String(x.name||'').toLowerCase().includes(q)).map(x=>({type:'Oda',title:x.name,sub:(x.member_count||0)+' kişi • seviye '+(x.level||1),run:()=>{window.ErisCurrentRoomId=x.room_id;window.currentRoomId=x.room_id;window.openRoom?.(x.room_id,x.name)}})),
-   ...(Array.isArray(people)?people:[]).filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.ErisChatDM?.create?.(x.user_id,x.nickname)}))];
-   out.innerHTML='';
-   if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Eşleşme bulunamadı.</div>';return}
-   matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div><span class="live"></span>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
- }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d;font-size:10px">Arama şu anda kullanılamıyor.</div>'}
-}};if(tok())h.Authorization='Bearer '+tok();
-      const r=await fetch(API()+'/search?q='+encodeURIComponent(q),{headers:h}); if(!r.ok)throw new Error('Arama servisi kullanılamıyor');
-      const d=await r.json();const rows=Array.isArray(d)?d:(d.items||d.results||d.users||d.rooms||[]);
-      old.innerHTML=rows.length?'':'<div class="card" style="padding:14px;text-align:center;color:#938a9f">Sonuç bulunamadı.</div>';
-      rows.forEach(x=>{const b=document.createElement('button');b.className='item';b.innerHTML='<div class="ava round">🔎</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=x.nickname||x.name||x.title||'Sonuç';b.querySelector('small').textContent=x.type||x.room_id?'Oda':'Kullanıcı';old.appendChild(b)});
-    }catch(e){old.innerHTML='<div class="card" style="padding:14px;text-align:center;color:#ff9aaa">'+e.message+'</div>'}
-  }};
-})();
-</script><script src="./auth-live.js"></script><script src="./platform.js"></script><script src="./admin-live.js"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js"></script><script src="./dm-live.js"></script><script src="./gift-live.js"></script><script src="./room-live.js"></script><script src="./room-actions.js"></script><script src="./room-music-ui.js"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./feature-hub-live.js"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js"></script>
+   const roomRows=(Array.isArray(rooms)?rooms:[]).filter(x=>String(x.name||'').toLowerCase().includes(q)).map(x=>({type:'Oda',title:x.name,sub:(x.member_count||0)+' kişi • seviye '+(x.level||1),run:()=>window.openRoom?.(x.room_id||x.id,x.name)}));
+   const userRows=(Array.isArray(people)?people:[]).filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.ErisChatDM?.create?.(x.user_id,x.nickname)}));
+   const matches=[...roomRows,...userRows]; out.innerHTML='';
+   if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
+   matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
+ }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d">Arama şu anda kullanılamıyor.</div>'}
+}};</script><script src="./auth-live.js"></script><script src="./platform.js"></script><script src="./admin-live.js"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js"></script><script src="./dm-live.js"></script><script src="./gift-live.js"></script><script src="./room-live.js"></script><script src="./room-actions.js"></script><script src="./room-music-ui.js"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./feature-hub-live.js"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js"></script>
 <script>
 (function(){
  const DEMO_KEY='erischat_demo_wallet_v1', START=500000000;
