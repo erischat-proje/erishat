@@ -631,3 +631,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Commit `4f9db700528bfbe2542bb9437ad9099d11713e2f`.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
 
+
+
+[2026-09-19] QUALITY #885 — GÜNCEL KALAN
+- [x] Frontend backend browser smoke içindeki kozmetik `if(candidate)` kapanış syntax hatası düzeltildi; commit `b571a8f8e3611b2d326089d6f298bc35771bbc9e`.
+- [ ] Bu düzeltme sonrası yeni Quality/CI sonucu doğrulanacak.
+- [ ] Quality browser smoke ilerledikten sonra ilk gerçek runtime/API failure kökünden devam edilecek; spekülatif değişiklik yapılmayacak.
+- [ ] Gerçek 2-browser WebRTC + TURN/mobile ağ doğrulaması hâlâ açık.
