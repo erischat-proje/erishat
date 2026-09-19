@@ -98,8 +98,9 @@
       const locked=!!seat.locked;
       const currentId=window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'';
       const isMe=occupied&&String(seat.user_id)===String(currentId);
-      const avatarRaw=seat.avatar_url||seat.avatar||seat.profile_image||seat.photo_url||seat.user_avatar||'';
-      const frameRaw=seat.frame_url||seat.frame||seat.profile_frame||seat.user_frame||'';
+      const user=seat.user||seat.profile||{};
+      const avatarRaw=seat.avatar_url||seat.avatar||seat.profile_image||seat.photo_url||seat.user_avatar||user.avatar_url||user.avatar||user.profile_image||(isMe?window.ErisChatCosmetics?.state?.user?.avatar_asset:'')||'';
+      const frameRaw=seat.frame_url||seat.frame||seat.profile_frame||seat.user_frame||user.frame_url||user.frame||(isMe?window.ErisChatCosmetics?.state?.user?.frame_asset:'')||'';
       const avatarUrl=avatarRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(avatarRaw):avatarRaw;
       const frameUrl=frameRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(frameRaw):frameRaw;
       const b=document.createElement('button');b.type='button';
