@@ -70,7 +70,25 @@
         const opts=(g.key==='roulette'?['rose','heart','star','diamond','crown','gift','fire','gem','jackpot']:g.key==='cups'?['cup_1','cup_2','cup_3','cup_4']:g.key==='horse_race'?['horse_1','horse_2','horse_3','horse_4','horse_5','horse_6','horse_7']:g.key==='wheel'?['small','medium','large','special','grand']:[]);
         if(opts.length){const box=document.createElement('div');box.style.cssText='display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px';opts.forEach(x=>{const b=btn(x,()=>{selected=x;box.querySelectorAll('button').forEach(y=>y.style.opacity=y===b?'1':'.5')});b.style.fontSize='8px';box.append(b)});el.insertBefore(box,el.querySelector('[data-play]'))}
 
-        el.querySelector('[data-play]').onclick=async()=>{if(kind==='room'&&!roomId){out.innerHTML='<small style="color:#ff9bbd">Önce bir odaya gir.</small>';return;}const res=await api('/games/'+encodeURIComponent(g.key)+'/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign(kind==='room'?{room_id:roomId}:{},selected?{choice:selected}:{}))}).catch(()=>null);const d=res?await res.json().catch(()=>({})):{};const hit=d.data?.choice_hit;out.innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🎲 Sonuç: <b>${esc(d.result||d.detail||'Sonuç alınamadı')}</b>${selected?'<br>'+(hit?'✅ Seçimin tuttu!':'❌ Seçimin tutmadı.') : ''}${d.data?.multiplier?'<br>🚀 '+d.data.multiplier+'×':''}${d.data?.player_total?'<br>🃏 Sen '+d.data.player_total+' • Dağıtıcı '+d.data.dealer_total:''}${d.data?.finish_order?'<br>🏁 '+d.data.finish_order.join(' → '):''}${d.data?.animation?.type?'<br>🎬 '+esc(d.data.animation.type)+' • animasyon '+esc(d.data.animation.duration_ms||d.data.animation.steps||d.data.animation.turns||'') : ''}</div>`};
+        el.querySelector('[data-play]').onclick=async()=>{
+          if(kind==='room'&&!roomId){out.innerHTML='<small style="color:#ff9bbd">Önce bir odaya gir.</small>';return;}
+          const res=await api('/games/'+encodeURIComponent(g.key)+'/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign(kind==='room'?{room_id:roomId}:{},selected?{choice:selected}:{}))}).catch(()=>null);
+          const d=res?await res.json().catch(()=>({})):{}; const data=d.data||{};
+          const hit=data.choice_hit;
+          const base=()=>`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🎲 Sonuç: <b>${esc(d.result||d.detail||'Sonuç alınamadı')}</b>${selected?'<br>'+(hit?'✅ Seçimin tuttu!':'❌ Seçimin tutmadı.') : ''}${data.multiplier?'<br>🚀 '+data.multiplier+'×':''}${data.player_total?'<br>🃏 Sen '+data.player_total+' • Dağıtıcı '+data.dealer_total:''}${data.finish_order?'<br>🏁 '+data.finish_order.join(' → '):''}${data.animation?.type?'<br>🎬 '+esc(data.animation.type)+' • animasyon '+esc(data.animation.duration_ms||data.animation.steps||data.animation.turns||''):''}</div>`;
+          if(g.key!=='blackjack'||!data.round_id||d.result!=='pending'){out.innerHTML=base();return;}
+          const actionBox=document.createElement('div'); actionBox.style.cssText='margin-top:7px;display:flex;gap:5px;flex-wrap:wrap';
+          const show=()=>{const s=data.state||{};out.innerHTML=`<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 El: <b>${esc((s.player_hand||data.player_hand||[]).join(' '))}</b><br>Toplam: <b>${esc(s.player_total??data.player_total??'')}</b><br>Dealer: <b>${esc((s.dealer_hand||data.dealer_hand||[]).map((x,i)=>i===1&&s.phase==='player'?'🂠':x).join(' '))}</b></div>`; out.append(actionBox);};
+          const act=async(action)=>{
+            actionBox.querySelectorAll('button').forEach(b=>b.disabled=true);
+            const rr=await api('/games/blackjack/'+encodeURIComponent(data.round_id)+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})}).catch(()=>null);
+            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total;
+            if(dd.result==='pending'){show();return;}
+            out.innerHTML=`<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 Sonuç: <b>${esc(dd.result||dd.detail||'Bilinmiyor')}</b><br>Sen: ${esc(dd.state?.player_total??'')} • Dealer: ${esc(dd.state?.dealer_total??'')}</div>`;
+          };
+          [['👊 Hit','hit'],['✋ Stand','stand'],['⚡ Double','double'],['✂️ Split','split']].forEach(([label,action])=>{const b=btn(label,()=>act(action));b.style.fontSize='8px';actionBox.append(b)});
+          show();
+        };
         el.querySelector('[data-history]').onclick=async()=>{const res=await api('/games/'+encodeURIComponent(g.key)+'/history').catch(()=>null);const d=res?await res.json().catch(()=>[]):[];out.innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🕘 Son oyunlar</b><small style="display:block;margin-top:4px">${d.length?d.slice(0,8).map(x=>new Date(x.created_at).toLocaleString()+' • '+esc(x.result)).join('<br>'):'Henüz oyun geçmişi yok.'}</small></div>`};
         grid.append(el);
       }
