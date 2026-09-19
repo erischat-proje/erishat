@@ -15,7 +15,7 @@ REQUIRED_EXTRAS_MARKERS = {
     "seats": ("seatsDemo", "12 koltuk", "🎤 Mikrofon açık"),
     "music": ("musicDemo", "Oda müzik merkezi", "Gerçek kuyruk"),
     "announcement": ("announcementDemo", "Duyuru yönetimi", "📌 Sabitle"),
-    "family": ("familyDemo", "Aile yönetimi + aile sohbeti", "Rol değiştir"),
+    "family": ("familyDemo", "Aile yönetimi + aile sohbeti", "➕ Üye ekle"),
     "store": ("storeDemo", "139 kozmetik", "cosFilter"),
     "profile": ("profileDemo", "Profil + avatar/çerçeve try-on", "Avatarı uygula"),
     "safety": ("safetyDemo", "Bildirim • Güvenlik • Moderasyon", "Engelleme"),
