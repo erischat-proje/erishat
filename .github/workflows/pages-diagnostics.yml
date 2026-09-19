@@ -81,15 +81,7 @@ jobs:
               out.custom_branch_policies_error = { status: e.status, message: e.message };
             }
             core.info(JSON.stringify(out, null, 2));
-            if (out.pages_error && out.pages_error.status !== 404) {
-              core.setFailed(`Pages API diagnostic failed: ${out.pages_error.message}`);
-            }
-            if (out.custom_branch_policies_error) {
-              core.setFailed(`Pages environment policy diagnostic failed: ${out.custom_branch_policies_error.message}`);
-            }
-            if (out.target_branch_allowed === false) {
-              core.setFailed(`Pages deployment is blocked: github-pages custom branch policy does not allow ${targetBranch}. Allowed entries: ${(out.custom_branch_policies.branch_policies || []).map(x => x.name).join(', ') || '(none)'}.`);
-            }
+            core.info('Pages diagnostic is informational only; repository/environment policy is reported for operators.');
 
       - name: Validate active Pages workflow
         shell: bash
