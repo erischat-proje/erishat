@@ -7,6 +7,8 @@
           done
           test -s scripts/admin_browser_smoke.mjs
           node --check scripts/admin_browser_smoke.mjs
+          test -s scripts/vip_lifecycle_browser_smoke.mjs
+          node --check scripts/vip_lifecycle_browser_smoke.mjs
           echo 'Python/JavaScript syntax and frontend source checks OK'
       - name: Customer demo surface integrity
         run: python scripts/demo_surface_integrity.py
