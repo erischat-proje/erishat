@@ -125,6 +125,38 @@ def register_family_auth(current_user_dependency):
         db.commit()
         return {"id": invite.id, "family_id": family_id, "user_id": target.id, "role": invite.role, "status": invite.status, "expires_at": invite.expires_at}
 
+    @router.get("/families/invitations")
+    def list_family_invitations(db: Session = Depends(get_db), user: User = auth()):
+        now = datetime.now(timezone.utc)
+        rows = list(db.scalars(select(FamilyInvitation).where(FamilyInvitation.user_id == user.id).order_by(FamilyInvitation.created_at.desc())))
+        changed = False
+        result = []
+        for invite in rows:
+            if invite.status == "pending" and invite.expires_at <= now:
+                invite.status = "expired"
+                changed = True
+            if invite.status != "pending":
+                continue
+            family = db.get(Family, invite.family_id)
+            inviter = db.get(User, invite.inviter_id)
+            if not family:
+                continue
+            result.append({
+                "id": invite.id,
+                "family_id": invite.family_id,
+                "family_name": family.name,
+                "inviter_id": invite.inviter_id,
+                "inviter_nickname": inviter.nickname if inviter else None,
+                "user_id": invite.user_id,
+                "role": invite.role,
+                "status": invite.status,
+                "expires_at": invite.expires_at,
+                "created_at": invite.created_at,
+            })
+        if changed:
+            db.commit()
+        return result
+
     @router.post("/families/invitations/{invitation_id}/accept")
     def accept_family_invitation(invitation_id: str, db: Session = Depends(get_db), user: User = auth()):
         invite = db.scalar(select(FamilyInvitation).where(FamilyInvitation.id == invitation_id, FamilyInvitation.user_id == user.id).with_for_update())
