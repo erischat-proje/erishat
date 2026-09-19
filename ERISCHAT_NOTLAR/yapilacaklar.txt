@@ -1032,3 +1032,7 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam]
 - Standart çerçeve 40 hedefi tamamlandı; sonraki adım Quality sonucunu doğrulamak ve SVG asset integrity/visual QA geçirmek.
 - Wallpaper E2E smoke workflow'a bağlı; VIP wallpaper claim gate de smoke kapsamına alındı.
+
+[2026-09-19 devam — Quality root cause]
+- Quality #1159 fail nedeni bulundu: cosmetics_browser_render.mjs eski 139 asset beklentisinde kalmış; gerçek tarama 171 asset buldu (147 avatar/frame + 24 wallpaper).
+- Test beklentisi 171'e güncellendi; yeni Quality sonucu bekleniyor.
