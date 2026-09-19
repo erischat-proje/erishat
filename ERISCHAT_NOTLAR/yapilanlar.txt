@@ -350,3 +350,12 @@ Room control checkpoint
 - [x] Oyun motoru v3 animasyon/reveal metadata katmanı önceki checkpoint'te tamamlandı; ücretsiz/free-play sınırı korunuyor.
 - [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı.
 - [ ] Blackjack çok adımlı hit/stand oturumu ve gerçek round lifecycle sonraki oyun motoru derinleştirme kalemi.
+
+2026-09-19 — LIDYA ↔ LIDYA GEM EXCHANGE HARDENING
+- [x] Profil wallet endpointi 1:1 Lidya ↔ Lidya Gem dönüşümünü destekliyor.
+- [x] Wallet exchange isteğine idempotency_key zorunlu hale getirildi; aynı anahtarın tekrar gönderimi yeniden bakiye düşürmeden replay sonucu döndürüyor.
+- [x] PostgreSQL startup bootstrap'ına wallet ledger idempotency kolonu + partial unique index eklendi.
+- [x] Dönüşüm User satırı row-level lock ile korunuyor; yetersiz bakiye ve negatif bakiye engelleniyor.
+- [x] Exchange işlemi Lidya/Lidya Gem ledger/audit kaydı ve reference_id ile izlenebilir.
+- [x] Profil demo UI artık her dönüşümde idempotency anahtarı gönderiyor.
+- [ ] Yeni Quality runner/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
