@@ -35,3 +35,13 @@ DEMO KAPSAMI
 
 NOT
 - Railway deploy yapılmayacak; kullanıcı açıkça istemedikçe GitHub Pages/demo akışı kullanılacak.
+
+
+## 2026-09-20 — müşteri demo doluluk/fonksiyon düzeltmeleri
+- Kullanıcı geri bildirimi doğrulandı: önceki yüzeylerde sistemler vardı ancak ana ekranda görünür/test edilebilir değildi; oda açma CTA'sı da createRoomModal bulunmadığı için çalışmıyordu.
+- main.html: gerçek oda yok/backend erişilemiyor durumunda 6 adet açıkça DEMO olarak işaretlenen örnek oda; oda oluşturma modalı; demo oda içinde 12 koltuk, mesajlaşma, hediye/müzik/oyun/duyuru girişleri; oyun merkezi (zar, taş-kağıt-makas, mini quiz, şans kutusu) eklendi.
+- room-live.js: backend oda listesi başarısızsa demo oda listesi; demo oda ID'lerinde 12 koltuklu yerel oda yüzeyi ve koltuk alma fallback'i eklendi.
+- shop-live.js: backend katalog erişilemezse 40 normal avatar + 40 normal çerçeve + 12 VIP avatar + 12 VIP çerçeve + 35 hediye olmak üzere 139 demo katalog öğesi gösterilecek; satın alma yalnızca demo cüzdanından yapılacak ve demo olduğu belirtiliyor.
+- Son HEAD: 20d65cc76dcaeeb75794490416992fbe0a16edd5.
+- Quality #1410 ve Pages #1363 bu HEAD için çalışmaya başladı; final sonuç henüz bekleniyor.
+- Pages canlı görsel doğrulaması bu oturumda hâlâ bağımsız olarak doğrulanmış değil.
