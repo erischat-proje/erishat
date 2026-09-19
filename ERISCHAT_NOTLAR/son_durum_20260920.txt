@@ -45,3 +45,10 @@ NOT
 - Son HEAD: 20d65cc76dcaeeb75794490416992fbe0a16edd5.
 - Quality #1410 ve Pages #1363 bu HEAD için çalışmaya başladı; final sonuç henüz bekleniyor.
 - Pages canlı görsel doğrulaması bu oturumda hâlâ bağımsız olarak doğrulanmış değil.
+
+## 2026-09-20 — güncel devam noktası
+- Güncel main HEAD: 94729b0360c671d0d452c9392a0ccf31c5c99df9.
+- 7 oyunluk müşteri demo kataloğu ana yüzeye taşındı: Rulet, 4 Kupa, At Yarışı, Blackjack, Crash, Kasa Açma, Şans Çarkı.
+- Oyunlar demo/katalog yüzeyidir; bahis, gerçek para veya kumar işlemi eklenmedi.
+- Floating müşteri demo kontrolleri kaldırıldı; sistemler merkezi Feature Hub üzerinden erişilebilir.
+- Sonraki odak: ana müşteri demo yüzeylerini tek tek açıp boş/ölü CTA bırakmamak ve Pages canlı kontrolünü ayrıca doğrulamak.
