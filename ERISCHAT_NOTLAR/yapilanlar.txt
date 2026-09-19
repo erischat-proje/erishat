@@ -367,3 +367,12 @@ Room control checkpoint
 - [ ] Blackjack çok adımlı hit/stand oturumu ve diğer oyunların canlı round lifecycle derinleştirmesi sonraki adım.
 - [ ] Yeni Quality runner/browser sonucu henüz doğrulanmadı.
 - 2026-09-19: Blackjack free-play çok adımlı round state başlatıldı; gerçek 52 kartlık deste, hit/stand action endpointi, dealer çözümleme ve kalıcı state eklendi. Para/Lidya/Gem ile bağlantı kurulmadı.
+
+2026-09-19 — OYUNLAR MODÜLER MİMARİ
+- [x] backend/app/oyunlar klasörü oluşturuldu.
+- [x] 7 oyunun her biri ayrı Python motoruna ayrıldı: roulette, cups, horse_race, blackjack, crash, vault, wheel.
+- [x] Her oyun için aynı klasörde ayrı TXT teknik belge oluşturuldu.
+- [x] registry.py tüm oyun motorlarını tek katalogdan ana sisteme bağlıyor.
+- [x] platform_routes.py oyun motorlarını registry üzerinden çağırıyor; auth/oda yetkisi ve persistence ana sistemde kalıyor.
+- [x] Blackjack start/hit/stand akışı yeni modüler motor üzerinden çalışacak şekilde bağlandı.
+- [x] Oyun TXT belgeleri klasör içi kaynak/harita olarak eklendi.
