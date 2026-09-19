@@ -1000,3 +1000,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Gift spending artık VipStatus.total_spent değerine işleniyor ve vip_level_from_spend ile level yeniden hesaplanıyor.
 - [x] Room live smoke yüksek değerli hediye sonrası /me/vip total_spent artışını ve level >= 1 açılmasını doğruluyor.
 - [ ] VIP lifecycle'ın kalan unlock/claim/effect zinciri açık.
+
+
+[2026-09-19 devam 54] VIP UNLOCK QUALITY PASS
+- [x] Quality #1096 / run 35450515580 SUCCESS.
+- [x] VIP spending → level → title/neon unlock contract artık gerçek Quality gate'te doğrulanıyor.
+- [x] Level 1/3+/5+/10+/12 için contract mantığı smoke'a eklendi.
+- [ ] Higher-level VIP claim/effect UI E2E kapsamı açık.
