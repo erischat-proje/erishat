@@ -337,15 +337,15 @@ async function main(){
   },{api:API,token:roleUser.access_token,id:roleInvite.data.id});
   if(roleAccepted.status!==200||roleAccepted.data?.accepted!==true) throw new Error('family role/remove invitation accept failed: '+JSON.stringify(roleAccepted));
   const roleChanged=await page.evaluate(async ({api,familyId,userId})=>{
-    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'PATCH',headers:h,body:JSON.stringify({user_id:userId,role:'admin'})});
     return {status:r.status,data:await r.json()};
-  },{api:API,familyId:family.id,userId:roleUser.user.id});
+  },{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
   if(roleChanged.status!==200||roleChanged.data?.role!=='admin') throw new Error('family member role promotion failed: '+JSON.stringify(roleChanged));
   const removed=await page.evaluate(async ({api,familyId,userId})=>{
-    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'DELETE',headers:{Authorization:'Bearer '+token}});
     return {status:r.status,data:await r.json()};
-  },{api:API,familyId:family.id,userId:roleUser.user.id});
+  },{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
   if(removed.status!==200||removed.data?.removed!==true) throw new Error('family member removal failed: '+JSON.stringify(removed));
   const removedMembers=await page.evaluate(async ({api,token,familyId,userId})=>fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(rows=>rows.some(x=>x.user_id===userId)),{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
   if(removedMembers) throw new Error('removed family member still listed');
