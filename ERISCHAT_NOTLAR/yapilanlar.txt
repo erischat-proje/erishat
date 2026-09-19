@@ -483,3 +483,6 @@ Room control checkpoint
 - [x] Normal member'ın duyuru oluşturma yetkisinin 403 ile sınırlandığı doğrulanıyor.
 - [x] Member'ın aktif duyuruyu listeleyebildiği browser akışında doğrulanıyor.
 - [ ] Bu yeni smoke değişikliklerinin Quality sonucu henüz alınmadı.
+
+
+[2026-09-19] Browser smoke düzenleme: `scripts/frontend_backend_browser_smoke.mjs` içinde oda oluşturma adımı announcement/roomInvite akışlarından önceye taşındı; daha aşağıdaki yinelenen `const room` tanımı kaldırıldı. Böylece oda değişkeninin TDZ/sıra hatası temizlendi. CI henüz yeniden doğrulanmadı.
