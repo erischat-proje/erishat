@@ -754,3 +754,11 @@ Room control checkpoint
 - [x] Stale demo bölümünün yerine mevcut frontend'in gerçek navigation/profile/shop yüzeyini doğrulayan kısa current-UI smoke eklendi.
 - [x] Fix commit: `7b15ceb6c93fcd50a73a826c6e0a7c9ba07f0035`.
 - [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 24] QUALITY #990 — DM OVERLAY SMOKE ROOT FIX
+- [x] Quality #990 ilk gerçek failure: `Frontend backend browser smoke` adımı sonunda `locator.click: Timeout 30000ms exceeded` ile kaldı.
+- [x] Kök neden: smoke, DM gönderimini başarıyla yaptıktan sonra `#chat` modal/overlay'ını kapatmadan alttaki sabit navigasyondaki `Mağaza` butonuna tıklamaya çalışıyordu; overlay tıklamayı engelliyordu.
+- [x] Ürün akışında hata tespit edilmedi; smoke testi DM doğrulamasından sonra mevcut `closeChat()` fonksiyonunu çağırıp `#chat.show` kalkana kadar bekleyecek şekilde düzeltildi.
+- [x] Fix commit: `e161ec932fc9696e2149ccdda424cda50cd904ed`.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
