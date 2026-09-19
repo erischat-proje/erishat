@@ -1088,3 +1088,11 @@ Room control checkpoint
 - [x] `scripts/cosmetics_asset_integrity.py` standart çerçeveyi 40, toplam aktif kozmetik katalogunu 147, frame toplamını 52 ve standard tier toplamını 111 olarak güncellendi.
 - [x] Fix commit: b8202cd8668a02af87d48aaae95709d2a5f15200.
 - [ ] Bu fix sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 60] QUALITY #1219 — BROWSER KOZMETİK COUNT KÖK DÜZELTMESİ
+- [x] Quality run 35454122972 / job 105926293630 ilk gerçek failure'ı frontend_backend_browser_smoke içinde verdi.
+- [x] Önceki 40 standart frame eklemesinden sonra `/v1/cosmetics` gerçek katalogu 147 aktif avatar/frame döndürürken smoke hâlâ 139 bekliyordu.
+- [x] `scripts/frontend_backend_browser_smoke.mjs` katalog beklentisi 139 → 147 güncellendi.
+- [x] Fix commit: ab2d7546795d02db690d0028629cfa24d6dc9ff5.
+- [ ] Bu fix sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
