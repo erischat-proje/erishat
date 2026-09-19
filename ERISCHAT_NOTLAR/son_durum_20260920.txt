@@ -101,3 +101,5 @@ NOT
 - `8ae35d57e3f10db7f98a51c399d8e3b6259f3e5a`: Onboarding demo artık sadece ilerleme ekranı değil; takma ad, cinsiyet, avatar seçimi, ilgi alanları ve profil görünürlüğü adımlarında gerçek demo oturum state'i tutuluyor ve Geri/İleri/Tamamla akışı çalışıyor.
 
 - `e7dd7181d6452f2f7fd222a308369419f9d3855e`: Güvenlik/Moderasyon demo yüzeyi state tabanlı hale getirildi; bildirim okundu, engelle/engel kaldır, VIP görünürlüğü ve örnek rapor inceleme durumları aynı panelde anlık güncelleniyor.
+
+- `b8398698ec008a10c3b8283d90d3511451ba26a6`: Aile demo backend durumları ayrıştırıldı; aile servisi erişilemezken 'aile yok' gösterilmiyor, tekrar dene aksiyonu geliyor. Aile sohbetinde API hatası artık 'henüz mesaj yok' gibi yanlış görünmüyor.
