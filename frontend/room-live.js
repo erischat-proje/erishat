@@ -15,8 +15,14 @@
   window.ErisChatRoomList={load:loadRooms};
   window.addEventListener('erischat:demo-rooms-fallback',()=>{
     const data=[
-      ['demo-room-1','Gece Muhabbeti',8,'Rana','🌙'],['demo-room-2','Müzik Köşesi',12,'Eris','🎵'],['demo-room-3','Yeni Tanışmalar',5,'Lavin','💜'],['demo-room-4','Oyun Salonu',9,'Noir','🎮'],['demo-room-5','VIP Lounge',11,'NØXIA','👑'],['demo-room-6','Gece Yayını',7,'Mira','✨']
+      ['demo-room-1','Gece Muhabbeti',8,'Rana','🌙',1],
+      ['demo-room-2','Müzik Köşesi',12,'Eris','🎵',5],
+      ['demo-room-3','Yeni Tanışmalar',5,'Lavin','💜',1],
+      ['demo-room-4','Oyun Salonu',9,'Noir','🎮',5],
+      ['demo-room-5','VIP Lounge',11,'NØXIA','👑',7],
+      ['demo-room-6','Gece Yayını',7,'Mira','✨',7]
     ];
+    window.ErisDemoRoomConfig=Object.fromEntries(data.map(r=>[r[0],{id:r[0],name:r[1],member_count:r[2],owner:r[3],level:r[5],seat_count:r[5]>=7?16:r[5]>=5?12:8}]));
     document.querySelectorAll('#realRooms,#rooms').forEach(el=>{el.innerHTML='';data.forEach(r=>{const b=document.createElement('button');b.className='room card';b.innerHTML='<div class="ava">'+r[4]+'<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">DEMO CANLI</span>';b.querySelector('b').textContent=r[1];b.querySelector('small').textContent=r[2]+' kişi • '+r[3];b.onclick=()=>openRoom(r[0],r[1]);el.appendChild(b)});});
   });
 
@@ -161,7 +167,17 @@
       document.getElementById('erisLiveMeta').textContent='Seviye '+Number(room.level||1)+' • '+Number(room.member_count||0)+' kişi • '+(room.locked?'🔒 Kilitli':'🟢 Açık')+' • '+seatCount+' koltuk';
       renderRoomSeats(id,room.name||name,room.seats,seatCount);attachRoomChat(id);window.connectRoomGiftSocket?.(id);
     }catch(e){
-      if(id.startsWith('demo-room-')){document.getElementById('erisLiveMeta').textContent='Demo oda • Seviye 1 • 8 koltuk • sohbet görünümü';renderRoomSeats(id,name,Array.from({length:8},(_,i)=>({seat_number:i+1,user_id:i===0?'demo-owner':null,nickname:i===0?'Oda Sahibi':''})));const list=document.getElementById('erisLiveChat');list.innerHTML='<div class="eris-chat-msg"><b>Oda Sahibi</b><span>Hoş geldiniz 👋</span></div><div class="eris-chat-msg"><b>Rana</b><span>Oda hazır, koltuklardan birine oturabilirsiniz.</span></div>';return;}
+      if(id.startsWith('demo-room-')){
+        const demo=window.ErisDemoRoomConfig?.[id]||{name:name||'Demo Oda',level:1,seat_count:8,member_count:1,owner:'ErisChat'};
+        const seatCount=Math.min(16,Math.max(8,Number(demo.seat_count)||8));
+        document.getElementById('erisLiveTitle').textContent=demo.name||name||'Demo Oda';
+        document.getElementById('erisLiveMeta').textContent='Demo oda • Seviye '+Number(demo.level||1)+' • '+seatCount+' koltuk • '+Number(demo.member_count||0)+' kişi';
+        const seats=Array.from({length:seatCount},(_,i)=>({seat_number:i+1,user_id:i===0?'demo-owner':null,nickname:i===0?(demo.owner||'Oda Sahibi'):''}));
+        renderRoomSeats(id,demo.name||name,seats,seatCount);
+        const list=document.getElementById('erisLiveChat');
+        list.innerHTML='<div class="eris-chat-msg"><b>'+(demo.owner||'Oda Sahibi')+'</b><span>Hoş geldiniz 👋</span></div><div class="eris-chat-msg"><b>ErisChat</b><span>'+seatCount+' koltuklu demo oda hazır.</span></div>';
+        return;
+      }
       surface.classList.remove('show');window.toast?.(e.message||'Odaya bağlanılamadı.');
     }
   }
@@ -174,7 +190,14 @@
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null;
   }
-  window.openLiveRoomChat=()=>{const id=window.ErisCurrentRoomId||window.currentRoomId;if(!id){window.toast?.('Önce bir oda aç.');return}window.ERIS_DEMO_ROOM_ID=String(id);if(window.ErisDemoExtras?.roomChat){window.ErisDemoExtras.roomChat();}else{window.toast?.('Canlı sohbet arayüzü yükleniyor…');setTimeout(()=>window.ErisDemoExtras?.roomChat?.(),250);}};
+  window.openLiveRoomChat=()=>{
+    const surface=document.getElementById('erisRoomSurface');
+    const id=window.ErisCurrentRoomId||window.currentRoomId;
+    if(!id||!surface?.classList.contains('show')){window.toast?.('Önce bir oda aç.');return}
+    const chatTab=surface.querySelector('.erc-chat-tabs [data-chat="chat"]');
+    chatTab?.click();
+    surface.querySelector('.eris-room-chat')?.scrollIntoView?.({block:'nearest'});
+  };
   window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
