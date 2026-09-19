@@ -408,3 +408,8 @@ Room control checkpoint
 - [x] `/rooms/{room_id}/seats` GET/POST/DELETE akışları eklendi.
 - [x] Koltuk doluluk/kilit ve kullanıcı başına tek koltuk enforcement eklendi.
 - [ ] Gerçek mikrofon/WebRTC transportu, moderator seat controls ve browser E2E henüz tamamlanmadı.
+
+2026-09-19 — KOLTUK MODERASYONU
+- [x] `/rooms/{room_id}/seats/{seat_number}` PATCH ile owner/moderator koltuk `locked`/`muted` kontrolü eklendi.
+- [x] Yetki kontrolü ve `room_seat_moderated` audit kaydı eklendi.
+- [ ] Gerçek WebRTC signaling/transport ve browser E2E henüz tamamlanmadı.
