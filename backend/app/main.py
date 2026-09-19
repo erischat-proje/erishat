@@ -434,6 +434,14 @@ def room_rtc_config(room_id: str, db: Session = Depends(get_db), user: User = De
 room_chat_connections: dict[str, set[WebSocket]] = {}
 room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 
+async def _broadcast_room_event(room_id: str, payload: dict) -> None:
+    connections = room_chat_connections.get(room_id, set())
+    dead = []
+    for ws in list(connections):
+        try: await ws.send_json(payload)
+        except Exception: dead.append(ws)
+    for ws in dead: connections.discard(ws)
+
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
     connections = room_chat_connections.get(room_id, set())
     dead = []
@@ -504,6 +512,35 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                         except Exception:
                             room_chat_connections.get(room_id, set()).discard(peer_ws)
                             room_rtc_users.get(room_id, {}).pop(peer_ws, None)
+                continue
+            if data.get("type") == "music_sync":
+                music_id = data.get("music_id")
+                action = data.get("action")
+                position = max(0, min(86400, int(data.get("position_seconds") or 0)))
+                if not isinstance(music_id, int) or action not in {"play","pause","stop","seek"}:
+                    continue
+                with Session(engine) as db:
+                    room = db.get(Room, room_id)
+                    member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+                    if not room or not member:
+                        continue
+                    music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == room_id).first()
+                    if not music or (music.user_id != user.id and room.owner_id != user.id):
+                        continue
+                    now = datetime.now(timezone.utc)
+                    if action == "seek":
+                        music.position_seconds = position
+                        if music.is_playing: music.started_at = now
+                    elif action == "play":
+                        music.is_playing = True; music.started_at = now
+                    elif action == "pause":
+                        if music.is_playing and music.started_at: music.position_seconds += max(0, int((now-music.started_at).total_seconds()))
+                        music.is_playing = False; music.started_at = None
+                    else:
+                        music.is_playing = False; music.position_seconds = 0; music.started_at = None
+                    db.commit()
+                    payload = {"type":"music_sync","music_id":music.id,"action":action,"position_seconds":music.position_seconds,"is_playing":music.is_playing,"started_at":music.started_at.isoformat() if music.started_at else None,"from_user_id":user.id}
+                await _broadcast_room_event(room_id, payload)
                 continue
             if data.get("type") != "room_chat":
                 continue
