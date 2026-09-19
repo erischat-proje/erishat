@@ -89,7 +89,7 @@
     await render();
   }
 
-  async function familyDemo(){
+  async async function familyDemo(){
     let data=null,members=[],familyLoadError='',membersLoadError='';
     try{const families=await api('/families');const rows=Array.isArray(families)?families:(families?.families||[]);data=rows[0]||null;if(data){try{members=await api('/families/'+encodeURIComponent(data.id)+'/members');}catch(e){membersLoadError=e?.message||'Üye servisine erişilemedi.';}}}
     catch(e){familyLoadError=e?.message||'Aile servisine erişilemedi.';}
