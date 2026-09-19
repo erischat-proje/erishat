@@ -579,3 +579,10 @@ Room control checkpoint
 - [x] Mobil görünüm korunarak taşma davranışı temizlendi.
 - [x] Commit: c5d9214c41111956e22bfa3b32e486995efab4fd.
 - [ ] Yeni Pages deploy sonrası canlı görsel kontrol yapılacak.
+
+
+[2026-09-19 — DEMO MAĞAZA / FLOATING POPUP TEMİZLİĞİ]
+- [x] Ana HTML'de gerçek canlı mağaza modülü shop-live.js yüklendi; mevcut sahte iki kartlık mağaza görünümü artık canlı katalog render'ı ile değiştirilecek.
+- [x] GitHub Pages hazırlama adımında kullanıcıyı sağ altta rahatsız eden feature-hub-live.js yüzen butonu kaldırıldı; sistemler ayrı ayrı ana navigasyon üzerinden kullanılacak.
+- [x] Commitler: 7dc82fa30cf6f5f0a69008a5e2764f53dbab01bf, 9de62f8f9ac1784a07d6b545a23c052523cdd0f7.
+- [ ] Yeni Pages deploy sonrası görsel doğrulama.
