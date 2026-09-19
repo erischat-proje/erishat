@@ -414,3 +414,7 @@ GÜVENLİK/KAPSAM NOTU
 - [x] 12 koltuklu oda için authenticated koltuk listeleme eklendi.
 - [x] Kullanıcı koltuk alma/bırakma akışı eklendi; üyelik, doluluk, kilit ve çift koltuk kontrolü var.
 - [ ] Moderator kilitleme/susturma UI, gerçek WebRTC signaling/transport ve browser E2E açık.
+
+2026-09-19 — KOLTUK MODERASYONU
+- [x] Oda sahibi/moderatör için koltuk kilitleme ve mikrofon susturma endpoint'i eklendi; işlem audit kaydı bırakıyor.
+- [ ] Gerçek WebRTC signaling/transport ve browser E2E açık.
