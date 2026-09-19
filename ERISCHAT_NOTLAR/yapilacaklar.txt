@@ -508,3 +508,11 @@ GÜVENLİK/KAPSAM NOTU
 - Açık: duyuru browser E2E ve owner/moderator yetkileri.
 - Açık: güncel değişikliklerden sonra yeni Quality/CI PASS.
 - Açık: profil/VIP/social/admin/support kapsamlarının browser E2E doğrulaması.
+
+
+2026-09-19 — BROWSER E2E TEST GENİŞLETME
+- [x] Aile browser E2E kapsamına owner/member rol yetki sınırları eklendi.
+- [x] Aile owner'ın leave işlemi 400 sınırıyla doğrulanacak şekilde smoke'a eklendi.
+- [x] Oda chat için iki gerçek browser WebSocket istemcisiyle history ve realtime mesaj yayını smoke'a eklendi.
+- [ ] Yeni commitler sonrası Quality/CI PASS henüz doğrulanmadı.
+- [ ] Aile gerçek davet kabul/reddet lifecycle'ı hâlâ açık.
