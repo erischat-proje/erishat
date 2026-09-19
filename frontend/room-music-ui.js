@@ -17,9 +17,9 @@
   const rid=()=>roomId||window.ErisCurrentRoomId||window.currentRoomId||new URLSearchParams(location.search).get('room_id')||new URLSearchParams(location.search).get('room');
   function ensureAudio(x){
     if(!audio||audio.dataset.musicId!==String(x.id)||audio.src!==x.source_url){
-      audio?.pause(); audio=new Audio(x.source_url); audio.dataset.musicId=String(x.id);
+      audio?.pause(); audio?.remove(); audio=new Audio(x.source_url); audio.dataset.musicId=String(x.id); audio.controls=false; audio.style.display='none'; document.body.appendChild(audio);
       audio.preload='auto'; audio.volume=.85;
-      audio.addEventListener('ended',async()=>{const id=rid();await window.ErisRoom.musicPlayback(id,x.id,'stop').catch(()=>null);audio=null;load()});
+      audio.addEventListener('ended',async()=>{const id=rid();await window.ErisRoom.musicPlayback(id,x.id,'stop').catch(()=>null);audio?.remove();audio=null;load()});
     }
     return audio;
   }
@@ -35,10 +35,10 @@
     const box=document.getElementById('erisMusicList');if(!box)return;
     box.innerHTML=rows.length?rows.map(x=>'<div style="display:flex;align-items:center;gap:7px;padding:8px;border:1px solid #fff1;border-radius:10px;margin:5px 0"><div style="flex:1"><b>'+esc(x.title)+'</b><small style="display:block;color:#938a9f;font-size:8px">'+(x.is_playing?'▶ oynuyor':'⏸ durdu')+' • '+Math.floor(Number(x.position_seconds||0))+' sn</small></div><button data-play="'+x.id+'">'+(x.is_playing?'⏸':'▶')+'</button><button data-del="'+x.id+'">🗑️</button></div>').join(''):'<small style="color:#938a9f">Kuyruk boş.</small>';
     const active=rows.find(x=>x.is_playing);
-    if(active)reconcile(active);else if(audio){audio.pause();audio=null}
+    if(active)reconcile(active);else if(audio){audio.pause();audio.remove();audio=null}
     rows.forEach(x=>{
       box.querySelector('[data-play="'+x.id+'"]')?.addEventListener('click',()=>playback(x));
-      box.querySelector('[data-del="'+x.id+'"]')?.addEventListener('click',async()=>{await window.ErisRoom.deleteMusic(id,x.id);if(audio?.dataset.musicId===String(x.id)){audio.pause();audio=null}load()});
+      box.querySelector('[data-del="'+x.id+'"]')?.addEventListener('click',async()=>{await window.ErisRoom.deleteMusic(id,x.id);if(audio?.dataset.musicId===String(x.id)){audio.pause();audio.remove();audio=null}load()});
     });
   }
   async function playback(x){
