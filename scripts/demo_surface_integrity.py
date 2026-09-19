@@ -12,7 +12,7 @@ REQUIRED_FILES = {
 }
 
 REQUIRED_EXTRAS_MARKERS = {
-    "seats": ("seatsDemo", "12 koltuklu oda", "🎤 Açık"),
+    "seats": ("seatsDemo", "12 koltuk", "🎤 Mikrofon açık"),
     "music": ("musicDemo", "Oda müzik merkezi", "DJ kilidi"),
     "announcement": ("announcementDemo", "Duyuru yönetimi", "📣 Sabitle"),
     "family": ("familyDemo", "Aile yönetimi + aile sohbeti", "Rol değiştir"),
