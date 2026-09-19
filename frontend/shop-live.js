@@ -55,7 +55,14 @@
     const grid = root.querySelector('.liveShopGrid');
     try {
       const [catalog, owned, vip] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip')]);
-      const items = list(catalog);
+      let items = list(catalog);
+      if (!items.length) {
+        items = [];
+        for(let i=1;i<=40;i++) items.push({type:'avatar',asset_key:'demo-avatar-'+i,price:1000+(i-1)*250,name:'Standart Avatar '+i});
+        for(let i=1;i<=40;i++) items.push({type:'frame',asset_key:'demo-frame-'+i,price:1500+(i-1)*300,name:'Standart Çerçeve '+i});
+        for(let i=1;i<=12;i++){items.push({type:'avatar',asset_key:'demo-vip-avatar-'+i,vip:true,vip_level:i,name:'VIP Avatar '+i});items.push({type:'frame',asset_key:'demo-vip-frame-'+i,vip:true,vip_level:i,name:'VIP Çerçeve '+i});}
+        for(let i=1;i<=35;i++) items.push({type:'gift',asset_key:'demo-gift-'+i,price:500+i*250,name:'Hediye '+i});
+      }
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
       const currentVip = Number(vip?.level || 0);
       const localOwned = new Set(demoOwned());
