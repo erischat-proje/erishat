@@ -1115,3 +1115,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Wallpaper smoke PASS doğrulandı.
 - [ ] Yeni Quality sonucu takip edilecek; PASS varsayımı yapılmayacak.
 - [ ] Sonraki gerçek failure/root-cause üzerinden geliştirmeye devam edilecek.
+
+
+[2026-09-19 devam — PAGES ENVIRONMENT BLOKAJI]
+- [x] Pages workflow kodu tekrar kontrol edildi; deploy öncesi failure'ın workflow build adımlarından değil github-pages environment admission aşamasından geldiği kayıt altına alındı.
+- [ ] GitHub Settings → Pages → Source değerinin GitHub Actions olması ve github-pages environment deployment branch policy içinde main'in izinli olması gerekiyor.
+- [ ] Bu repository bağlantısında Pages/environment yönetim ayarı aracı olmadığı için ayar değişikliği varsayılmayacak.
+- [ ] Ayar düzeldikten sonra Pages deploy SUCCESS + canlı HTTP/index doğrulaması yapılacak.
