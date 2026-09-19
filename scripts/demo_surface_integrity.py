@@ -24,7 +24,7 @@ REQUIRED_EXTRAS_MARKERS = {
 
 REQUIRED_COMPLETE_MARKERS = {
     "vip": ("vipDemo", "VIP 1 → VIP 12", "Erkek ödülleri", "Kadın ödülleri"),
-    "games": ("gamesDemo", "Oyun merkezi", "Roulette", "4 Kupa"),
+    "games": ("gamesDemo", "Oyun Merkezi", "Rulet", "4 Kupa"),
     "checklist": ("checklistDemo", "Müşteri demo kontrol listesi", "139 kozmetik vitrini"),
 }
 
