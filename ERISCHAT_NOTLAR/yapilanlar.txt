@@ -501,3 +501,6 @@ Room control checkpoint
 
 
 [2026-09-19] RTC signaling browser E2E eklendi: aynı oda içinde owner/member iki WebSocket ile gerçek `rtc_offer` → `rtc_answer` → `rtc_ice` → `rtc_leave` yönlendirmeleri smoke kapsamına alındı. Owner kimliği `/me` üzerinden alınıyor. Bu test gerçek mikrofon/WebRTC medya bağlantısını değil, signaling zincirini doğrular.
+
+
+[2026-09-19] RTC smoke sağlamlaştırma: owner/member user ID değerleri signaling payload'larına gönderilmeden önce String'e normalize edildi.
