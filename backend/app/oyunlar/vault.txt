@@ -1,0 +1,5 @@
+ERISCHAT OYUN MOTORU — VAULT
+Kaynak kod: vault.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: free-play rarity sınıfları, ödül öğesi ve açılış animasyonu.
+Para/Lidya/Gem bahis bağlantısı yoktur.
