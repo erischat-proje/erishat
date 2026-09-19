@@ -119,11 +119,11 @@ BROWSER DOĞRULAMA CHECKPOINT
 - [x] Playwright Chromium browser smoke eklendi.
 - [x] Quality run 35280867500 / job 105402227348 SUCCESS.
 - [x] Browser smoke: Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesi renderı ve Mesaj → Rana'nın Odası → mesaj gönderme etkileşimi doğrulandı.
-- [ ] Anonymous/me gerçek backend browser akışı.
-- [ ] Room modal + join/seat/chat/gift/moderation tam browser akışı.
+- [x] Anonymous/me gerçek backend browser akışı — Quality 35441312241 frontend backend browser smoke SUCCESS.
+- [x] Room modal + join/seat/chat/gift/moderation browser akışı — Quality 35441312241 SUCCESS.
 - [x] 139 kozmetik gerçek browser render/şeffaflık kontrolü — Quality 35281783827, 139/139 decode/render.
 - [ ] 139 kozmetik frame tasarımında opak/şeffaf standardının görsel incelemesi.
-- [ ] DM + aile sohbeti + profil/try-on tam browser backend zinciri — DM ve aile backend browser smoke doğrulandı; aile UI + try-on kaldı.
+- [x] DM + aile sohbeti + profil/try-on backend browser zinciri — Quality 35441312241 SUCCESS; profil/try-on akışı smoke içinde doğrulandı.
 
 BROWSER/COSMETICS CHECKPOINT
 - [x] 139 kozmetik asset gerçek Chromium browser render testinden geçti: Quality run 35281783827 / job 105405134485 SUCCESS.
@@ -263,7 +263,7 @@ Room control checkpoint
 - [x] Standart kozmetik satın alımı artık harcamayı VIP toplamına işliyor ve seviyeyi 1–12 eşiklerine göre güncelliyor.
 - [x] `/me/vip` artık toplam harcama ve sonraki seviye eşiğini döndürüyor.
 - [x] Browser smoke satın alma sonrası VIP harcama read-back kontrolü yapıyor.
-- [ ] Yeni Quality runner PASS kanıtı bekleniyor.
+- [x] Yeni Quality runner PASS kanıtı doğrulandı — Quality 35441312241 SUCCESS.
 
 
 2026-09-18 — YÖNETİM SİSTEMİ BAŞLANGIÇ
@@ -605,7 +605,7 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Static syntax geçti; Customer demo surface integrity `announcement` yüzeyinde eski `📣 Sabitle` marker'ı nedeniyle kaldı.
 - [x] Canonical `announcementDemo` UI'daki gerçek marker `📌 Sabitle` olarak düzeltildi.
 - [x] Commit `6a36a4bf63f62e17335cebcebb8beb7ae014e548`.
-- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+- [x] Fresh Quality sonucu doğrulandı — Quality 35441312241 SUCCESS.
 
 [2026-09-19] QUALITY #871 — FAMILY INTEGRITY MARKER DÜZELTMESİ
 - [x] Static syntax geçti; Customer demo surface integrity `family` yüzeyinde eski `Rol değiştir` marker'ı nedeniyle kaldı.
@@ -858,3 +858,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Tüm ana adımlar başarıyla geçti: static, frontend/browser, cosmetics render/integrity/URL, room, family, admin, anonymous, Live family, Live room, Live ban, Live DM ve Live cosmetic smoke.
 - [x] Live cosmetic smoke, spend-based VIP yükselmesi sonrası mevcut VIP seviyesinin üstündeki asset gate'ini doğru şekilde doğruladı.
 - [x] 77dfbdd5a18f010b002d06f4aafc7c1e62a58794 fix'i doğrulanmış durumda.
+
+
+[2026-09-19 devam 33] QUALITY #1015 SONRASI CHECKPOINT TEMİZLİĞİ
+- [x] Quality 35441312241 / job 105892458515 SUCCESS; frontend backend browser, room browser, family, admin, anonymous, live room/family/DM/cosmetic zincirleri geçti.
+- [x] Eski “Fresh Quality bekleniyor” ve doğrulanmamış browser E2E maddeleri mevcut runner kanıtına göre güncellendi.
+- [ ] Kalan ana teknik sıra: gerçek 2-browser WebRTC + TURN/mobile transport kanıtı, 139 frame alpha görsel standardı, gerçek müzik playback/queue, VIP lifecycle derinleştirmesi, fan/admin eksikleri ve Pages canlı zinciri.
