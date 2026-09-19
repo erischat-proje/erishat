@@ -852,3 +852,8 @@ Room control checkpoint
 - [x] Quality run 35442350192 / job 105895236839 SUCCESS; 28 ana kalite adımının tamamı geçti.
 - [x] Room Browser Surface smoke, yeni 📢 Duyurular yüzeyini de çalıştırarak geçti.
 - [x] Announcement UI + canonical GET/POST/DELETE CRUD bağlantısı Quality içinde doğrulandı.
+
+[2026-09-19 devam 36] MÜZİK KUYRUK LİDYA ATOMİKLİĞİ SIKIŞTIRILDI
+- [x] backend/app/room_routes.py müzik ekleme akışında aynı kullanıcının paralel isteklerinde kullanıcı satırı row-lock ile korunuyor; slot sayımı ve 150 Lidya düşümü aynı transaction içinde yapılıyor.
+- [x] RoomMusic mevcut (room_id,user_id,slot) unique constraint'i IntegrityError ile yakalanıp kontrollü 409'a çevriliyor; böylece eşzamanlı çift ekleme sessiz veri bozulmasına dönüşmüyor.
+- [ ] Fresh Quality sonucu bu commit sonrası henüz doğrulanmadı; PASS varsayılmayacak.
