@@ -528,3 +528,6 @@ Room control checkpoint
 
 
 [2026-09-19] Quality run 35434355473 / job 105874397708 gerçek hata kökü: frontend/full-demo-live.js içindeki report(p) fonksiyonu await kullandığı halde async değildi. Node --check bu nedenle 'await is only valid in async functions' ile Static syntax adımında durdu. Fonksiyon async yapıldı ve 8f3140119fa24d64167a5274fa43b9751c098f8c commit'i oluşturuldu. Yeni Quality koşusu bekleniyor; PASS henüz doğrulanmadı.
+
+
+[2026-09-19] Quality run 855'in ikinci gerçek syntax kökü: frontend/demo-complete-live.js içinde oyun [data-play] async handler'ı show() sonrasında kapanmadan [data-history] handler'ına geçiyordu; dosya sonundaki IIFE kapanışında Unexpected token ')' oluştu. Eksik `};` eklendi. Commit: 80f40e1422aeaab48e8efdcad5c0dba7bf38252d. Yeni Quality koşusu tetiklendi; PASS henüz doğrulanmadı.
