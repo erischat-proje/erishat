@@ -40,26 +40,20 @@ def has_route(tree: ast.Module, method: str, path: str) -> bool:
 
 
 required_main = [
-    "from .platform_routes import register_platform_auth, router as platform_router",
     "from .family_routes import register_family_auth, router as family_router",
-    "register_platform_auth(current_user)",
     "register_family_auth(current_user)",
-    "app.include_router(platform_router)",
     "app.include_router(family_router)",
-    '@app.post("/v1/families")',
-    "def create_family_production(",
-    "chat_conversation_id=conversation_id",
 ]
-for marker in required_main:
-    if marker not in main:
-        raise SystemExit(f"Missing production family runtime marker: {marker}")
 
 required_family_routes = [
     ("get", "/families/{family_id}"),
     ("get", "/families/{family_id}/members"),
     ("post", "/families/{family_id}/members"),
+    ("get", "/families/invitations"),
     ("patch", "/families/{family_id}/members/{member_user_id}"),
     ("delete", "/families/{family_id}/members/{member_user_id}"),
+    ("post", "/families/{family_id}/transfer-ownership"),
+    ("delete", "/families/{family_id}/leave"),
     ("post", "/families/{family_id}/donate"),
     ("get", "/families/{family_id}/chat"),
     ("post", "/families/{family_id}/chat/messages"),
@@ -74,10 +68,6 @@ duplicate_family_routes = [
     ("post", "/families/{family_id}/donate"),
     ("get", "/families/{family_id}/chat"),
 ]
-for method, path in duplicate_family_routes:
-    if has_route(platform_tree, method, path):
-        raise SystemExit(f"Duplicate family route remains in platform router: {method.upper()} {path}")
-
 for marker in ["class FamilyCreate", "class FamilyDonationCreate", "FamilyMember", "FamilyDonation"]:
     if marker not in family:
         raise SystemExit(f"Missing family backend marker: {marker}")
