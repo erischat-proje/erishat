@@ -1058,3 +1058,11 @@ Room control checkpoint
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
 
 [2026-09-19 devam 55] QUALITY #1186 ROOT CAUSE — Cosmetics browser render, 8 VIP wallpaper SVG'sinde malformed stroke-opacity attribute bulundu; ilgili 8 dosyanın stroke-opacity/stroke-width XML attribute ayrımı düzeltildi. Yeni Quality sonucu bekleniyor.
+
+
+[2026-09-19 devam 56] YÜKLENEN WALLPAPER KOLEKSİYONU ENTEGRASYONU
+- [x] Kullanıcının yüklediği `Gereken_icerikler/duvarkagidi/normal/1.png`–`19.png` koleksiyonu katalogda 19 normal wallpaper olarak bağlandı.
+- [x] Kullanıcının yüklediği `Gereken_icerikler/duvarkagidi/vip/vip1.png`–`vip12.png` koleksiyonu VIP 1–12 olarak bağlandı.
+- [x] `backend/app/wallpapers.py` eski SVG isimlerinden yeni PNG asset yollarına geçirildi.
+- [x] Wallpaper smoke 12+12 eski beklentiden 19 normal + 12 VIP ve gerçek PNG yollarını doğrulayacak şekilde güncellendi.
+- [ ] Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
