@@ -1091,3 +1091,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Frontend-backend browser smoke içindeki eski 139 kozmetik katalog beklentisi 147'ye güncellendi.
 - [x] Fix commit `ab2d7546795d02db690d0028629cfa24d6dc9ff5`.
 - [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 61] QUALITY #1222 KÖK DÜZELTME
+- [x] Live wallpaper smoke failure için eksik `/me/vip/claims/wallpaper` endpointi eklendi.
+- [x] Fix commit `d8e47746dedd5ae80e846b64edcc00b7c86a5a18`.
+- [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
