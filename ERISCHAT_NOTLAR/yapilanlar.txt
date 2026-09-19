@@ -936,3 +936,10 @@ Room control checkpoint
 - [ ] github-pages environment policy içinde main'e izin verilmesi.
 - [ ] Pages deploy SUCCESS + canlı HTTP/index + Pages→Railway API kanıtı.
 - [ ] Railway production deploy kullanıcı açıkça deploy demeden yapılmayacak.
+
+
+[2026-09-19 devam 47] COSMETICS CATALOG CONTRACT HARDENING
+- [x] scripts/cosmetics_asset_integrity.py artık 6 kozmetik klasörünün tek tek beklenen dosya sayılarını da doğruluyor.
+- [x] Aktif katalog sözleşmesi 139 toplam asset, 95 avatar, 44 frame, 103 standard ve 36 VIP olarak kilitlendi; klasör bazında 34/37/32/12/12/12 sayıları korunuyor.
+- [x] Fix commit: 434da7a22395fce19736c85b8cfbe5d074601a07.
+- [ ] Bu değişikliğin yeni Quality sonucunda PASS olarak doğrulanması bekleniyor.
