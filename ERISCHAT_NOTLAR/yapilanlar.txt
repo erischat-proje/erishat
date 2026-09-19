@@ -513,3 +513,9 @@ Room control checkpoint
 - [x] demo-extras-live.js oda sohbeti artık smoke tarafından oluşturulan belirli oda ID'sini ERIS_DEMO_ROOM_ID üzerinden kullanabiliyor; rastgele ilk odaya bağlanma riski azaltıldı.
 - [x] frontend_backend_browser_smoke.mjs gerçek Oda Sohbeti demo UI'sını açıp mesaj gönderimini ve mesajın UI'a realtime düşmesini doğrulayacak şekilde genişletildi.
 - [ ] Bu değişiklik sonrası fresh Quality runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+[2026-09-19] QUALITY STATIC CHECK DÜZELTMESİ
+- [x] Fresh Quality run 850 gerçek failure noktası logdan tespit edildi: `frontend/platform.js` içindeki `replace(/\\/v1$/, '')` ifadesi Node 20 syntax check'te `Invalid regular expression flags` veriyordu.
+- [x] Regex, URL pathindeki `/v1` son ekini doğru biçimde eşleyecek `/\/v1$/` formuna düzeltildi.
+- [ ] Yeni SHA için Fresh Quality sonucu bekleniyor.
