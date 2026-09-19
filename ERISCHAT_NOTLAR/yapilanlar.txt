@@ -887,3 +887,11 @@ Room control checkpoint
 - [x] Fix commit: b3cd489095d6d78a5d621281d9f03b0a6696c8de.
 - [ ] Fix sonrası yeni Quality run henüz doğrulanmadı; PASS varsayılmayacak.
 - [ ] PASS alınana kadar müzik UI → HTMLAudio → playback/queue zinciri tamamlandı kabul edilmeyecek.
+
+
+[2026-09-19 devam 40] QUALITY #1045 MÜZİK UI KÖK DÜZELTMESİ
+- [x] Quality #1045 / run 35444413695 ilk gerçek failure frontend browser smoke içinde doğrulandı.
+- [x] Console/pageerror kaynağı doğrudan "Invalid regular expression flags" olarak görüldü.
+- [x] Kök neden frontend/room-music-ui.js içindeki fallback URL temizleme regexinin hatalı escape edilmesiydi.
+- [x] Fix commit: b3cd489095d6d78a5d621281d9f03b0a6696c8de.
+- [ ] Fix sonrası yeni Quality sonucu bekleniyor; PASS varsayılmıyor.
