@@ -686,3 +686,5 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 4] RTC browser smoke artık yalnızca offer/answer/ICE/leave mesajlarını değil, gerçek Chromium RTCPeerConnection oluşturup iki uçta SDP exchange sonrası connectionState=connected durumunu da doğrulamayı hedefliyor. Commit 7d33395. TURN/mobile gerçek ağ E2E ayrıca açık; fresh workflow sonucu henüz doğrulanmadı.
 
 [2026-09-19 devam 5] Gerçek RTCPeerConnection smoke'ında ICE adaylarının iki uçta gerçekten RTCPeerConnection'a uygulanması ve remoteDescription öncesi adayların kuyruklanması eklendi. Commit 3b66e60. Fresh workflow sonucu hâlâ doğrulanmadı.
+
+[2026-09-19 devam 6] WebRTC TURN yapılandırması için Settings'e rtc_turn_url / rtc_turn_username / rtc_turn_credential alanları eklendi; /rooms/{room_id}/rtc-config bu ayarları mevcut STUN ile birlikte sunabilecek durumda. Commit d9c3d4c. Gerçek TURN sunucusu/credential ile ağ E2E henüz doğrulanmadı.
