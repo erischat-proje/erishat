@@ -3,7 +3,7 @@
   let audio=null,timer=null,roomId=null;
   const musicApi=async(path,options={})=>{
     if(window.ErisPlatform?.api)return window.ErisPlatform.api(path,options);
-    const api=(window.ERIS_API||'/v1').replace(/\\/$/,'');
+    const api=(window.ERIS_API||'/v1').replace(/\/$/,'');
     const token=localStorage.getItem('erischat_access_token')||'';
     const headers=Object.assign({'Content-Type':'application/json'},options.headers||{},token?{Authorization:'Bearer '+token}:{});
     const r=await fetch(api+path,Object.assign({},options,{headers}));
