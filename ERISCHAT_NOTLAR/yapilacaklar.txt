@@ -525,3 +525,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Browser smoke play/pause ve seek position backend kontrolünü kapsıyor.
 - [ ] Gerçek iki tarayıcı müzik UI E2E ve fresh Quality PASS henüz doğrulanmadı.
 - [ ] Müzik kaynağının gerçek tarayıcıda oynatılabilirliği CORS/format nedeniyle ayrıca doğrulanmalı.
+
+
+2026-09-19 — DUYURU E2E İLERLETME
+- [x] Owner/moderator yetki modelinin browser smoke karşılığına owner create/update/pin/disable/delete ve member 403 kontrolü eklendi.
+- [x] Duyurunun aktif liste görünümü, düzenleme, pin, disable ve delete lifecycle'ı tek browser akışında kapsandı.
+- [ ] Gerçek moderator kullanıcıyla create/update/delete browser E2E ayrıca doğrulanacak.
+- [ ] Fresh Quality/CI PASS henüz doğrulanmadı.
