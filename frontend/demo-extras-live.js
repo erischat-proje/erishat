@@ -164,10 +164,25 @@
   function onboardingDemo(){
     const steps=[['👋 Hoş geldin','Anonim giriş / oturum'],['✏️ Takma ad','Kullanıcı adı seç'],['♂♀ Cinsiyet','Profil tercihi'],['🖼 Avatar','Başlangıç görünümü'],['🎯 İlgi alanları','Keşif kişiselleştirme'],['🔒 Gizlilik','Görünürlük tercihleri'],['🚀 Başla','Odalar + keşif + DM']];
     let index=0;
+    const state={nickname:'Eris Kullanıcısı',gender:'Belirtmek istemiyorum',avatar:'varsayılan',interests:['Müzik'],privacy:true};
     const m=modal('🚀 İlk kullanım / onboarding','<div id="onboard"></div><div style="display:flex;gap:6px;margin-top:9px" id="onboardBtns"></div>');
-    const draw=()=>{m.querySelector('#onboard').innerHTML=card('<div style="display:flex;align-items:center;gap:10px"><b style="font-size:20px">'+(index+1)+'</b><div><b>'+esc(steps[index][0])+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+esc(steps[index][1])+'</small></div></div><div style="height:5px;background:#ffffff0a;border-radius:5px;margin-top:10px"><div style="height:5px;width:'+(((index+1)/steps.length)*100)+'%;border-radius:5px;background:linear-gradient(90deg,#754cff,#ff4fa3)"></div></div><small style="display:block;color:#938a9f;margin-top:7px">'+(index+1)+' / '+steps.length+'</small>');};
-    const bs=m.querySelector('#onboardBtns');
-    bs.append(button('← Geri',()=>{index=Math.max(0,index-1);draw();}),button('İleri →',()=>{if(index<steps.length-1){index++;draw();}else window.toast?.('Onboarding demo tamamlandı ✓');}),button('Tamamla ✓',()=>window.toast?.('Onboarding demo tamamlandı ✓')));
+    const draw=()=>{
+      const controls=[
+        '<div style="margin-top:10px"><input id="obNick" maxlength="32" value="'+esc(state.nickname)+'" placeholder="Takma ad" style="width:100%;box-sizing:border-box;padding:9px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"></div>',
+        '<div style="margin-top:10px"><select id="obGender" style="width:100%;padding:9px;background:#17131f;color:#fff;border:1px solid #ffffff14;border-radius:9px"><option>Belirtmek istemiyorum</option><option>Erkek</option><option>Kadın</option></select></div>',
+        '<div style="display:flex;gap:7px;margin-top:10px"><button data-ob-avatar="avatar1">Avatar 1</button><button data-ob-avatar="avatar2">Avatar 2</button><button data-ob-avatar="avatar3">Avatar 3</button></div>',
+        '<div style="margin-top:10px"><input id="obInterests" value="'+esc(state.interests.join(', '))+'" placeholder="Müzik, sohbet, oyun..." style="width:100%;box-sizing:border-box;padding:9px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"></div>',
+        '<label style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b>Profil görünürlüğü</b><input id="obPrivacy" type="checkbox" '+(state.privacy?'checked':'')+'></label>'
+      ];
+      const extra=index===1?controls[0]:index===2?controls[1]:index===3?controls[2]:index===4?controls[3]:index===5?controls[4]:'';
+      m.querySelector('#onboard').innerHTML=card('<div style="display:flex;align-items:center;gap:10px"><b style="font-size:20px">'+(index+1)+'</b><div><b>'+esc(steps[index][0])+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+esc(steps[index][1])+'</small></div></div><div style="height:5px;background:#ffffff0a;border-radius:5px;margin-top:10px"><div style="height:5px;width:'+(((index+1)/steps.length)*100)+'%;border-radius:5px;background:linear-gradient(90deg,#754cff,#ff4fa3)"></div></div><small style="display:block;color:#938a9f;margin-top:7px">'+(index+1)+' / '+steps.length+'</small>'+extra);
+      if(index===2)m.querySelector('#obGender').value=state.gender;
+      if(index===3)m.querySelectorAll('[data-ob-avatar]').forEach(b=>b.onclick=()=>{state.avatar=b.dataset.obAvatar;window.toast?.('Avatar seçildi: '+state.avatar);});
+      const save=()=>{if(index===1)state.nickname=m.querySelector('#obNick')?.value.trim()||state.nickname;if(index===2)state.gender=m.querySelector('#obGender')?.value||state.gender;if(index===4){const v=m.querySelector('#obInterests')?.value||'';state.interests=v.split(',').map(x=>x.trim()).filter(Boolean).slice(0,8);}if(index===5)state.privacy=!!m.querySelector('#obPrivacy')?.checked;};
+      m.querySelector('#onboardBtns').innerHTML='';
+      const bs=m.querySelector('#onboardBtns');
+      bs.append(button('← Geri',()=>{save();index=Math.max(0,index-1);draw();}),button(index<steps.length-1?'İleri →':'Tamamla ✓',()=>{save();if(index<steps.length-1){index++;draw();}else{m.remove();window.toast?.('Onboarding demo tamamlandı ✓');}}));
+    };
     draw();
   }
 
