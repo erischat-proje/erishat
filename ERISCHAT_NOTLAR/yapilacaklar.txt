@@ -972,3 +972,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] RTC config: non-member → 403, member → 200 + ice_servers array doğrulandı.
 - [ ] Gerçek 2-browser/2-device ses transportu, üretim TURN credential provisioning ve mobil/gerçek ağ kanıtı açık.
 - [ ] Sonraki ana sıra: gerçek WebRTC transport kanıtı; ardından frame görsel standardı, gerçek music source/long playback/queue depth, VIP lifecycle/fan-admin eksikleri ve Pages canlı zinciri.
+
+
+[2026-09-19 devam 50] GERÇEK 2-BROWSER WEBRTC KANITI — RUNNER BEKLİYOR
+- [x] İki ayrı Chromium context + fake microphone MediaStream ile gerçek RTCPeerConnection transport smoke eklendi.
+- [x] Offer/answer, ICE gathering ve connected state doğrulaması Quality workflow'a bağlandı.
+- [ ] Fresh Quality PASS sonucu bekleniyor.
+- [ ] Gerçek cihaz/mobil ağ ve production TURN credential kanıtı yine ayrı dış altyapı testi olarak açık.
