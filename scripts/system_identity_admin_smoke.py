@@ -76,4 +76,9 @@ assert api(t5, "GET", f"/v1/admin/users/{u1['id']}").status_code == 200
 assert api(t5, "POST", f"/v1/admin/users/{u1['id']}/lidya/add", json={"amount": 100}).status_code == 200
 assert api(t4, "POST", f"/v1/admin/users/{u1['id']}/lidya/add", json={"amount": 100}).status_code == 403
 
+fixture = {
+    "da_token": t5,
+    "target_user_id": u1["id"],
+}
+Path(os.getenv("ERISCHAT_ADMIN_SMOKE_FIXTURE", ".smoke-admin.json")).write_text(__import__("json").dumps(fixture), encoding="utf-8")
 print("system identity/admin smoke: PASS")
