@@ -617,3 +617,14 @@ Room control checkpoint
 - [x] Smoke test artık owner'ın `/users/{ownerId}/following` endpointini kontrol ediyor; böylece owner -> member follow ilişkisi doğru aktörden doğrulanıyor.
 - [x] Fix commit: `f670b602c97709f2188d2a9d9c49c55afada3315`.
 - [ ] Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19] FAMILY INVITATION / OWNERSHIP LIFECYCLE
+- [x] FamilyMember POST artık kullanıcıyı doğrudan aileye eklemek yerine 7 gün süreli gerçek FamilyInvitation kaydı oluşturuyor ve hedef kullanıcıya family_invite bildirimi bırakıyor.
+- [x] GET /families/invitations, accept/reject endpointleri eklendi; kabulde FamilyMember + aile sohbeti üyeliği oluşturuluyor.
+- [x] POST /families/{family_id}/transfer-ownership ile yalnızca mevcut owner sahipliği aile üyesine devredebiliyor; eski owner member rolüne dönüyor.
+- [x] Duplicate leave_family tanımı temizlendi.
+- [x] main.py içindeki duplicate /v1/families production route kaldırıldı; canonical family_router tek kaynak haline getirildi.
+- [x] Browser smoke aile davet oluşturma → inbox → kabul → ownership transfer → eski owner leave ve ayrı reject lifecycle'larını kapsıyor.
+- [x] Demo aile panelinde gerçek davet gönderme ve davet inbox kabul/reddet UI akışları eklendi.
+- [ ] Fresh Quality/CI sonucu henüz doğrulanmadı; PASS varsayılmıyor.
