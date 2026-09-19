@@ -77,7 +77,7 @@ class FamilyMemberUpdate(BaseModel):
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
 class BlackjackAction(BaseModel):
-    action: str = Field(pattern="^(hit|stand)$")
+    action: str = Field(pattern="^(hit|stand|double)$")
 
 
 class WalletExchange(BaseModel):
