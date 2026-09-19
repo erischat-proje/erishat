@@ -46,7 +46,7 @@ def action(state, action):
         raise ValueError("Geçersiz blackjack aksiyonu")
 
     if action == "split":
-        if len(hands) != 1 or not can_split(state):
+        if len(hands) != 1 or active != 0 or not can_split(state):
             raise ValueError("Split bu aşamada kullanılamaz")
         if len(deck) < 2:
             raise ValueError("Split için deste yetersiz")
@@ -59,7 +59,10 @@ def action(state, action):
         return "pending", state
 
     if action == "double":
-        if len(hands) != 1 or not can_double(state):
+        if not (len(player) == 2 and deck):
+            raise ValueError("Double bu aşamada kullanılamaz")
+        if len(hands) == 1 and not can_double(state):
+            raise ValueError("Double bu aşamada kullanılamaz")
             raise ValueError("Double bu aşamada kullanılamaz")
         if not deck:
             raise ValueError("Deste tükendi")
