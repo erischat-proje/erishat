@@ -14,5 +14,46 @@
   }
   window.ErisChatRoomList={load:loadRooms};
 
+  async function openRoom(roomId, name){
+    const id=String(roomId||''); if(!id) return;
+    window.ErisCurrentRoomId=id; window.currentRoomId=id;
+    const modal=document.getElementById('realRoomModal');
+    document.getElementById('realRoomTitle')?.replaceChildren(document.createTextNode(name||'Oda'));
+    const meta=document.getElementById('realRoomMeta'), seats=document.getElementById('realRoomSeats');
+    if(meta) meta.textContent='Gerçek oda • yükleniyor…';
+    if(seats) seats.innerHTML='<div class="card" style="padding:14px;text-align:center;color:#938a9f">Koltuklar yükleniyor…</div>';
+    modal?.classList.add('show');
+    try{
+      await window.ErisRoom?.join?.(id);
+      const room=await window.ErisRoom?.get?.(id);
+      const list=Array.isArray(room?.seats)?room.seats:[];
+      if(meta) meta.textContent=`${Number(room?.member_count||room?.members_count||0)} kişi • gerçek oda`;
+      if(seats){
+        seats.innerHTML='';
+        list.forEach(seat=>{
+          const n=seat.seat_number??seat.number??'';
+          const occupied=!!seat.user_id, locked=!!(seat.locked||seat.is_locked);
+          const b=document.createElement('button'); b.type='button'; b.className='item card';
+          b.innerHTML='<div class="ava">'+(occupied?'👤':'🎙️')+'</div><div class="grow"><b></b><small></small></div>';
+          b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||'Dolu'):`Koltuk ${n}`;
+          b.querySelector('small').textContent=locked?'Kilitli':(occupied?'Dolu':'Boş');
+          if(!occupied&&!locked) b.onclick=async()=>{try{await window.ErisRoom.joinSeat(id,n);await openRoom(id,name)}catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}};
+          seats.appendChild(b);
+        });
+        if(!list.length) seats.innerHTML='<div class="card" style="padding:14px;text-align:center;color:#938a9f">Koltuk bilgisi yok.</div>';
+      }
+      window.connectRoomGiftSocket?.(id);
+    }catch(e){if(meta) meta.textContent='Oda açılamadı';window.toast?.(e.message||'Odaya bağlanılamadı.');}
+  }
+  function closeRealRoom(){
+    const id=window.ErisCurrentRoomId||window.currentRoomId;
+    document.getElementById('realRoomModal')?.classList.remove('show');
+    if(id) window.ErisRoom?.leave?.(id).catch(()=>{});
+    window.disconnectRoomGiftSocket?.();
+    window.ErisCurrentRoomId=null; window.currentRoomId=null;
+  }
+  window.openRoom=openRoom;
+  window.closeRealRoom=closeRealRoom;
+
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadRooms,{once:true}); else loadRooms();
 })();
