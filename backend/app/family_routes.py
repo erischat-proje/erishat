@@ -90,6 +90,22 @@ def register_family_auth(current_user_dependency):
         if chat_member: db.delete(chat_member)
         db.commit(); return {"family_id": family_id, "left": True}
 
+    @router.get("/families/invitations")
+    def list_family_invitations(db: Session = Depends(get_db), user: User = auth()):
+        now = datetime.now(timezone.utc)
+        rows = list(db.scalars(select(FamilyInvitation).where(FamilyInvitation.user_id == user.id).order_by(FamilyInvitation.created_at.desc())))
+        changed = False
+        result = []
+        for row in rows:
+            if row.status == "pending" and row.expires_at <= now:
+                row.status = "expired"; changed = True
+            family = db.get(Family, row.family_id)
+            if family:
+                result.append({"id": row.id, "family_id": row.family_id, "family_name": family.name, "inviter_id": row.inviter_id, "role": row.role, "status": row.status, "expires_at": row.expires_at})
+        if changed:
+            db.commit()
+        return result
+
     @router.get("/families/{family_id}")
     def get_family_details(family_id: str, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id); return family_payload(db, family)
@@ -134,22 +150,6 @@ def register_family_auth(current_user_dependency):
         db.add(Notification(user_id=target.id, kind="family_invite", title="Aile daveti", body=f"{family.name} ailesine davet edildiniz. Davet: {invite.id}"))
         db.commit()
         return {"id": invite.id, "family_id": family_id, "user_id": target.id, "role": invite.role, "status": invite.status, "expires_at": invite.expires_at}
-
-    @router.get("/families/invitations")
-    def list_family_invitations(db: Session = Depends(get_db), user: User = auth()):
-        now = datetime.now(timezone.utc)
-        rows = list(db.scalars(select(FamilyInvitation).where(FamilyInvitation.user_id == user.id).order_by(FamilyInvitation.created_at.desc())))
-        changed = False
-        result = []
-        for row in rows:
-            if row.status == "pending" and row.expires_at <= now:
-                row.status = "expired"; changed = True
-            family = db.get(Family, row.family_id)
-            if family:
-                result.append({"id": row.id, "family_id": row.family_id, "family_name": family.name, "inviter_id": row.inviter_id, "role": row.role, "status": row.status, "expires_at": row.expires_at})
-        if changed:
-            db.commit()
-        return result
 
     @router.post("/families/invitations/{invitation_id}/accept")
     def accept_family_invitation(invitation_id: str, db: Session = Depends(get_db), user: User = auth()):
