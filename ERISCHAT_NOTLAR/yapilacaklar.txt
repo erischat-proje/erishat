@@ -541,3 +541,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] Kalan doğrulama: Music `music_sync` iki-WebSocket browser E2E eklendi. Fresh CI/Quality PASS hâlâ bekleniyor; TURN/cellular-network gerçek saha testi ayrıca açık.
+
+
+[2026-09-19] Son düzeltme: Browser smoke syntax kaynaklı literal `\\n` problemi temizlendi. Yeni CI koşuları mevcut SHA için queued; henüz PASS sonucu yok.
