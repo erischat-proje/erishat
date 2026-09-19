@@ -82,7 +82,7 @@
           const act=async(action)=>{
             actionBox.querySelectorAll('button').forEach(b=>b.disabled=true);
             const rr=await api('/games/blackjack/'+encodeURIComponent(data.round_id)+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})}).catch(()=>null);
-            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total; data.available_actions=dd.available_actions||[];
+            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total; data.available_actions=dd.available_actions||[]; if(Array.isArray(dd.state?.hands)){data.blackjack_hands=dd.state.hands; data.blackjack_active_hand=dd.state.active_hand||0;}
             if(dd.result==='pending'){show();return;}
             out.innerHTML=`<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 Sonuç: <b>${esc(dd.result||dd.detail||'Bilinmiyor')}</b><br>Sen: ${esc(dd.state?.player_total??'')} • Dealer: ${esc(dd.state?.dealer_total??'')}</div>`;
           };
