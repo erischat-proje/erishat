@@ -173,3 +173,10 @@ Tarih: 2026-09-18
 - room-live.js loader literal yollarla düzeltildi.
 - Düzeltme commit: d94e3503c303eab33dc241a0e484abae54dc9cf2
 - Yeni Quality sonucunun tamamlanması bekleniyor; henüz PASS ilan edilmedi.
+
+[2026-09-19 — FRONTEND BROWSER SMOKE DÜZELTME]
+- Quality #1384 (run 35464874367) Customer demo surface integrity ve Frontend surface integrity adımlarını geçti; Frontend browser smoke adımında hata verdi.
+- Kök neden: smoke testi gerçek arayüzde bulunmayan sabit "Rana'nın Odası" butonunu arıyordu; 30 sn locator timeout ile durdu.
+- Test, ürün arayüzüne ait gerçek bir konuşma adı varsaymak yerine mevcut DM API yüzeyini deterministik olarak açacak şekilde düzeltildi.
+- Commit: 466cc55e423c372f2996d2acd47a2b2307f17ea6 — fix: make frontend browser smoke deterministic.
+- Yeni Quality sonucu henüz doğrulanmadı; PASS iddiası yapılmıyor.
