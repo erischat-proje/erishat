@@ -79,6 +79,19 @@ class FamilyMember(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class FamilyInvitation(Base):
+    __tablename__ = "family_invitations"
+    __table_args__ = (UniqueConstraint("family_id", "user_id", "status", name="uq_family_invitation_state"),)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    family_id: Mapped[str] = mapped_column(ForeignKey("families.id", ondelete="CASCADE"), index=True, nullable=False)
+    inviter_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    role: Mapped[str] = mapped_column(String(16), default="member", server_default="member", nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending", nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class FamilyDonation(Base):
     __tablename__ = "family_donations"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
