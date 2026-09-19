@@ -403,3 +403,8 @@ Room control checkpoint
 - [x] Üyelik + oda sohbeti açık/kapalı + oda banı enforcement uygulandı.
 - [x] Mesaj kalıcılığı ve oda audit kaydı bağlandı.
 - [ ] Realtime, chat mute/moderasyon UI ve browser E2E sonraki eksikler.
+
+2026-09-19 — ODA KOLTUK BACKEND
+- [x] `/rooms/{room_id}/seats` GET/POST/DELETE akışları eklendi.
+- [x] Koltuk doluluk/kilit ve kullanıcı başına tek koltuk enforcement eklendi.
+- [ ] Gerçek mikrofon/WebRTC transportu, moderator seat controls ve browser E2E henüz tamamlanmadı.
