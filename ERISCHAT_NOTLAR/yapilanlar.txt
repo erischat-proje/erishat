@@ -762,3 +762,11 @@ Room control checkpoint
 - [x] Ürün akışında hata tespit edilmedi; smoke testi DM doğrulamasından sonra mevcut `closeChat()` fonksiyonunu çağırıp `#chat.show` kalkana kadar bekleyecek şekilde düzeltildi.
 - [x] Fix commit: `e161ec932fc9696e2149ccdda424cda50cd904ed`.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 25] QUALITY #990 — ADMIN SMOKE REQUESTS BAĞIMLILIK KÖK DÜZELTMESİ
+- [x] Quality run `35440540256` ilk gerçek failure: `System identity and admin smoke` adımında `ModuleNotFoundError: No module named 'requests'`.
+- [x] Kök neden: `scripts/system_identity_admin_smoke.py` doğrudan `requests` kullanıyor ancak `backend/requirements.txt` içinde paket tanımlı değildi; Quality workflow yalnızca bu requirements dosyasını kuruyor.
+- [x] `requests==2.32.4` canonical backend requirements'a eklendi.
+- [x] Fix commit: `c9a7b5d15e2f6f41d0d7a5dfb1ef5d5e25b6bdee`.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
