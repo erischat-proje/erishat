@@ -1036,3 +1036,9 @@ Room control checkpoint
 - [x] cosmetics_browser_render SVG frame decode/alpha kontrolünü kapsayacak şekilde genişletildi.
 - [x] Browser render testi standart çerçeve koleksiyonunun tam 40 dosya olduğunu ayrıca assert ediyor.
 - [ ] Quality #1162 sonrası yeni sonuç bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam — Quality #1165 kök neden]
+- [x] #1165 Cosmetics browser render hatası incelendi: 40 assert'i standart + VIP çerçeveleri birlikte sayıp 52 buluyordu.
+- [x] Kök neden test kapsamı hatası; standart çerçeve assert'i artık yalnızca `standartcerceve/` altında tam 40 dosyayı kontrol ediyor.
+- [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
