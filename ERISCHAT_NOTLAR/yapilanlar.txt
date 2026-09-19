@@ -376,3 +376,4 @@ Room control checkpoint
 - [x] platform_routes.py oyun motorlarını registry üzerinden çağırıyor; auth/oda yetkisi ve persistence ana sistemde kalıyor.
 - [x] Blackjack start/hit/stand akışı yeni modüler motor üzerinden çalışacak şekilde bağlandı.
 - [x] Oyun TXT belgeleri klasör içi kaynak/harita olarak eklendi.
+- 2026-09-19: Oyunlar klasöründeki Blackjack motoru ileri kurallar için genişletildi; double/split uygunluk yardımcıları ve teknik dokümantasyon eklendi. Henüz action olarak aktive edilmedi.
