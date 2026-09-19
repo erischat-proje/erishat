@@ -202,3 +202,11 @@ Tarih: 2026-09-18
 - Kaynak: frontend/erischat-main.html içindeki ErisSearch IIFE kapanışı eksikti; `}};` sonrasında `})();` bulunmuyordu.
 - Düzeltildi ve main'e commit edildi: 63a4956e605fb85ac3cf068a808e9b5bfd60e623 (`fix: close search script IIFE`).
 - Yeni Quality sonucu bekleniyor; PASS ilan edilmedi.
+
+
+[2026-09-19 — ROOM BROWSER SMOKE SEÇİCİ DÜZELTME]
+- Quality #1396 (run 35465350263) statik, demo, frontend, browser smoke ve cosmetics browser render adımlarını geçti.
+- Room browser surface smoke, Rana metnini iki eşleşmede bulduğu için Playwright strict-mode hatasıyla durdu.
+- Gerçek uygulama kodu değil, smoke testindeki belirsiz locator düzeltildi: ilk eşleşme deterministik olarak seçiliyor.
+- Commit: c18d7d3fd49e554c0d480e45c225884575fce2c9
+- Yeni Quality sonucu bekleniyor; PASS iddiası yapılmıyor.
