@@ -620,3 +620,12 @@ Room control checkpoint
 - [x] Global floating müzik butonu kaldırıldı; müzik paneli oda bağlamında kullanılacak.
 - [ ] Pages canlı HTTP + gerçek tarayıcı görsel doğrulaması.
 - [ ] Ana ekranın kalan statik mesaj/arama/etkinlik yüzeylerinin gerçek backend renderer'larıyla tamamlanması.
+
+
+[2026-09-19 — DEMO CANLI AKIŞ BAĞLANTILARI DEVAM]
+- [x] Ana navigasyon canlı Mesaj/Keşfet/Mağaza/Profil renderer çağrılarına bağlandı.
+- [x] Oda listesinden seçim gerçek /rooms/{id}/join akışını tetikleyecek şekilde güçlendirildi.
+- [x] Oda modalına oda içi Müzik paneli düğmesi eklendi; global floating müzik düğmesi kullanılmıyor.
+- [x] Arama ekranındaki sahte “Arama hazır” bildirimi kaldırıldı ve gerçek /search?q=... renderer'ı eklendi.
+- [x] Commitler: 7cbbe80e40a3a51542b44916b4f0a54b243a9da0, 78d7786b03530b448e1f7676650003fdb5a0abec, 089795522290aeaf8e2376cd759748e2b5df8e80.
+- [ ] Pages canlı HTTP/görsel doğrulaması ve firma demosu son smoke kontrolü.
