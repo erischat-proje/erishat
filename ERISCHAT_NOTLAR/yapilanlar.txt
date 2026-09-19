@@ -659,3 +659,9 @@ Room control checkpoint
 - [x] Boş koltuğa tıklayınca gerçek `joinSeat` çağrısı yapılıyor.
 - [x] Oda açılışında gerçek room WebSocket bağlantısı başlatılıyor; kapanışta leave + socket disconnect yapılıyor.
 - Commitler: f587fae758091ab8bcbfcf810a0cf5dd6e81e222, b13ba43f3c9251e2339c2f59d29fbac8483e41ca.
+
+
+[2026-09-19 — MAĞAZA POLİSH]
+- [x] Mağaza satın alma/uygulama akışındaki blocking browser alert pencereleri kaldırıldı; mevcut toast sistemi kullanılıyor.
+- [x] Kozmetik fiyatı için hatalı katalog-genel fiyat fallback'i kaldırıldı; ürün fiyatı yoksa güvenli varsayılan kullanılıyor.
+- Commit: 6fb1e6c4a5d276c1fdc42d39fc23a5264761e727.
