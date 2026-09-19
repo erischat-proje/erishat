@@ -461,3 +461,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Signaling WebSocket OPEN olmadan offer gönderilmesi engellendi.
 - [x] Demo kapanışında ICE kuyruğu temizleniyor.
 - [ ] Gerçek iki tarayıcı ses E2E ve TURN/mobile doğrulaması açık.
+
+2026-09-19 — FAMILY LIVE SURFACE
+- [x] Kimliği doğrulanmış /families listeleme endpointi eklendi.
+- [x] Aile demo ekranındaki sahte üye/donation/chat butonları gerçek aile API'lerine bağlandı.
+- [x] Aile oluşturma, üye ekleme, üye listeleme, Lidya bağışı ve aile sohbeti canlı akışa bağlandı.
+- [ ] Aile davet kabul/reddet, sahiplik devri/ayrılma ve eşzamanlı bağış E2E doğrulaması açık.
