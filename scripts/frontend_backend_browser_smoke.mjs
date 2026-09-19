@@ -272,6 +272,20 @@ async function main(){
   if(![200,201,204].includes(roomControls.join)||!roomControls.seat||roomControls.mute!==200||roomControls.unmute!==200||roomControls.lockSeat!==200||roomControls.unlockSeat!==200) throw new Error('room seat controls failed: '+JSON.stringify(roomControls));
   if(![200,201].includes(roomControls.mod)||!roomControls.mods.some(x=>x.user_id===member.user.id)) throw new Error('room moderator flow failed: '+JSON.stringify(roomControls));
   if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
+  const musicUi=await page.evaluate(async ({roomId,musicId})=>{
+    window.ErisCurrentRoomId=roomId;
+    if(window.ErisChatMusic?.open) window.ErisChatMusic.open();
+    await new Promise(r=>setTimeout(r,150));
+    const row=document.querySelector('#erisMusicList [data-play="'+musicId+'"]');
+    if(!row) return {panel:false,audio:false,src:''};
+    row.click();
+    await new Promise(r=>setTimeout(r,200));
+    const a=document.querySelector('audio');
+    const result={panel:!!document.querySelector('#erisMusicPanel[style*="display"]'),audio:!!a,src:a?.src||'',musicId:a?.dataset?.musicId||''};
+    row.click();
+    return result;
+  },{roomId:room.data.id,musicId:roomControls.musicData.id});
+  if(!musicUi.audio||musicUi.musicId!==String(roomControls.musicData.id)||!musicUi.src.includes('example.com/smoke.mp3')) throw new Error('room music HTMLAudio playback binding failed: '+JSON.stringify(musicUi));
   const musicRealtime=await page.evaluate(async ({roomId,musicId,ownerToken,memberToken})=>{
     const url=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);
     const open=token=>new Promise((resolve,reject)=>{const ws=new WebSocket(url(token));const messages=[];const t=setTimeout(()=>reject(new Error('music websocket open timeout')),5000);ws.onopen=()=>{clearTimeout(t);resolve({ws,messages});};ws.onerror=()=>{clearTimeout(t);reject(new Error('music websocket error'));};ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};});
