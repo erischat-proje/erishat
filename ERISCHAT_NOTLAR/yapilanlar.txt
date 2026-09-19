@@ -495,3 +495,6 @@ Room control checkpoint
 
 
 [2026-09-19] Düzeltme: Browser smoke'a eklenen realtime oda/müzik bloklarında yanlışlıkla literal `\\n` karakterleri oluşmuştu; tamamı gerçek satır sonlarına çevrildi. Güncel dosyada literal `\\n` kalmadığı kontrol edildi.
+
+
+[2026-09-19] Browser smoke syntax kontrolü: aynı scope içinde iki kez tanımlanan `reportFlow` değişkeni bulundu ve ikinci akış `familyReportFlow` olarak ayrıldı. Güncel dosyada duplicate `const` ve literal `\\n` kontrolü temiz.
