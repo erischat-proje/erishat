@@ -703,3 +703,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Quality #35438348943 gerçek RTC smoke failure kökü düzeltildi: owner kimliği artık auth'suz /me çağrısından değil, mevcut authenticated browser session'daki `owner.id` değerinden alınıyor.
 - [x] Commit: `1a9a5de5ea42ab03ddf4082cdf0433f69efad359`.
 - [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 12] REPORT BROWSER SMOKE CONTRACT
+- [x] Report browser smoke payload'ı backend `ReportCreate.category` zorunluluğuna hizalandı.
+- [ ] Yeni Fresh Quality run sonucu doğrulanacak.
