@@ -1066,3 +1066,9 @@ Room control checkpoint
 - [x] `backend/app/wallpapers.py` eski SVG isimlerinden yeni PNG asset yollarına geçirildi.
 - [x] Wallpaper smoke 12+12 eski beklentiden 19 normal + 12 VIP ve gerçek PNG yollarını doğrulayacak şekilde güncellendi.
 - [ ] Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 57] QUALITY ASSET COUNT FIX
+- Cosmetics browser render testi, yeni yüklenen assetler nedeniyle 171 sabit sayısından 178'e güncellendi.
+- Commit: 48697a06da5f1d58c4e2da40fe7d7c991d1f70f5
+- Yeni Quality sonucu henüz doğrulanmadı; PASS iddiası yapılmayacak.
