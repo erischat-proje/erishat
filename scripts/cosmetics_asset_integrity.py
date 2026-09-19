@@ -12,6 +12,17 @@ EXPECTED_FOLDERS = {
     "viperkekavatar": ("avatar", "male", True),
     "vipcerceve": ("frame", None, True),
 }
+# Keep the active 139-asset catalog structurally stable. These counts are the
+# repository's current production asset contract; a visual redesign can change
+# the files, but it must intentionally update this contract at the same time.
+EXPECTED_FOLDER_COUNTS = {
+    "kadınavatar": 34,
+    "erkekavatar": 37,
+    "standartcerceve": 32,
+    "vipkadınavatar": 12,
+    "viperkekavatar": 12,
+    "vipcerceve": 12,
+}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"}
 
 
@@ -25,6 +36,11 @@ def main() -> None:
         kind, gender, vip = metadata
         files = sorted(path for path in directory.rglob("*") if path.is_file())
         assert files, f"empty cosmetic folder: {folder}"
+        expected_count = EXPECTED_FOLDER_COUNTS[folder]
+        assert len(files) == expected_count, (
+            f"unexpected {folder} asset count: {len(files)} "
+            f"(expected {expected_count})"
+        )
         for path in files:
             assert path.suffix.lower() in IMAGE_EXTENSIONS, f"unsupported asset type: {path.relative_to(ROOT)}"
             key = path.relative_to(ASSET_ROOT).as_posix()
@@ -39,6 +55,9 @@ def main() -> None:
     for _, kind, _, vip in entries:
         by_type[kind] += 1
         by_tier[vip] += 1
+
+    assert by_type == {"avatar": 95, "frame": 44}, f"unexpected type totals: {by_type}"
+    assert by_tier == {False: 103, True: 36}, f"unexpected tier totals: {by_tier}"
 
     print(
         "Cosmetics assets OK: "
