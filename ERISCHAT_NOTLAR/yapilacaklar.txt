@@ -87,3 +87,14 @@ Tarih: 2026-09-18
 - [x] Gerçek job 105938602122 SUCCESS; VIP profil paneli DOM assertion ve mevcut browser/live quality zinciri geçti.
 - [ ] Pages deploy hâlâ ayrı github-pages environment admission problemi nedeniyle doğrulanmadı; deploy/live URL işi bu checkpointten ayrı tutuluyor.
 - [ ] Sonraki geliştirme: ürün yüzeylerinde kalan manuel görsel inceleme ve gerçek iki-tarayıcı WebRTC ses taşıması; ardından gift→notification, follow/notification ve diğer eksik zincirlerin gerçek browser kanıtları.
+
+
+[2026-09-19 devam — QUALITY #1291 TAM PASS]
+- [x] Quality #1291 / run 35458827069, job 105938863059 SUCCESS.
+- [x] 36 ana kalite adımının tamamı başarıyla geçti; yalnızca hata durumunda çalışan API log adımı SKIPPED.
+- [x] Frontend backend browser smoke; bildirim read/unread, rapor oluşturma/geçmiş, block/unblock/privacy, gift→notification→profile-gifts, follow/unfollow, room chat, room controls ve aile zincirleri PASS kapsamında.
+- [x] VIP spend lifecycle browser smoke PASS: VIP 0→1→2→3, current_level_spent ve VIP kozmetik unlock/apply zinciri doğrulandı.
+- [x] Real two-browser WebRTC smoke PASS; gerçek iki tarayıcı signaling/peer bağlantı smoke zinciri geçti.
+- [x] Admin browser UI/enforcement, live family/room/ban/DM/cosmetic/wallpaper smoke adımları PASS.
+- [ ] Gerçek üretim TURN/mobil ses transportu ve manuel 139 kozmetik görsel/alpha incelemesi açık kalıyor.
+- [ ] Pages deploy/live URL doğrulaması ayrı github-pages environment policy sorunu nedeniyle açık; kullanıcı açıkça deploy demeden Railway deploy yapılmayacak.
