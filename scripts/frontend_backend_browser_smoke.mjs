@@ -319,6 +319,37 @@ async function main(){
     return {status:r.status,data:await r.json()};
   },{api:API,familyId:family.id,userId:member.user.id});
   if(transfer.status!==200||transfer.data?.owner_id!==member.user.id) throw new Error('family ownership transfer failed: '+JSON.stringify(transfer));
+  const roleUser=await page.evaluate(async api=>{
+    const suffix=Math.random().toString(36).slice(2,8);
+    const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'Role_'+suffix,avatar:'🦊',gender:'male'})});
+    return r.json();
+  },API);
+  if(!roleUser?.user?.id||!roleUser?.access_token) throw new Error('family role/remove user registration failed');
+  const roleInvite=await page.evaluate(async ({api,familyId,userId})=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id,userId:roleUser.user.id});
+  if(roleInvite.status!==201||!roleInvite.data?.id) throw new Error('family role/remove invitation create failed: '+JSON.stringify(roleInvite));
+  const roleAccepted=await page.evaluate(async ({api,token,id})=>{
+    const r=await fetch(api+'/families/invitations/'+encodeURIComponent(id)+'/accept',{method:'POST',headers:{Authorization:'Bearer '+token}});
+    return {status:r.status,data:await r.json()};
+  },{api:API,token:roleUser.access_token,id:roleInvite.data.id});
+  if(roleAccepted.status!==200||roleAccepted.data?.accepted!==true) throw new Error('family role/remove invitation accept failed: '+JSON.stringify(roleAccepted));
+  const roleChanged=await page.evaluate(async ({api,familyId,userId})=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'PATCH',headers:h,body:JSON.stringify({user_id:userId,role:'admin'})});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id,userId:roleUser.user.id});
+  if(roleChanged.status!==200||roleChanged.data?.role!=='admin') throw new Error('family member role promotion failed: '+JSON.stringify(roleChanged));
+  const removed=await page.evaluate(async ({api,familyId,userId})=>{
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members/'+encodeURIComponent(userId),{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});
+    return {status:r.status,data:await r.json()};
+  },{api:API,familyId:family.id,userId:roleUser.user.id});
+  if(removed.status!==200||removed.data?.removed!==true) throw new Error('family member removal failed: '+JSON.stringify(removed));
+  const removedMembers=await page.evaluate(async ({api,token,familyId,userId})=>fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(rows=>rows.some(x=>x.user_id===userId)),{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
+  if(removedMembers) throw new Error('removed family member still listed');
+
   const ownerLeave=await page.evaluate(async ({api,familyId})=>{
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/leave',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});
     return {status:r.status,data:await r.json()};
