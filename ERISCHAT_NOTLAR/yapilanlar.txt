@@ -787,3 +787,11 @@ Room control checkpoint
 - Gerçek uygulama kodu değil, smoke testindeki belirsiz locator düzeltildi: ilk eşleşme deterministik olarak seçiliyor.
 - Commit: c18d7d3fd49e554c0d480e45c225884575fce2c9
 - Yeni Quality sonucu bekleniyor; PASS iddiası yapılmıyor.
+
+
+[2026-09-19 — ROOM DEMO SHELL YÜKLEME DÜZELTME]
+- Quality #1397: statik, demo, frontend, browser smoke ve cosmetics render geçti; Room browser surface smoke, #erisDemo içindeki Odalar sekmesini bulamadığı için timeout oldu.
+- Kök neden: room-live.js demo-complete + demo-extras katmanlarını yüklüyor ancak ürün merkezi/#erisDemo'yu oluşturan full-demo-live.js yüklenmiyordu.
+- room-live.js artık ./full-demo-live.js ile birlikte demo katmanlarını aynı room entrypoint üzerinden yüklüyor.
+- Commit: fd30ebd474cfd81e536fdff57a50d35da431a583
+- Yeni Quality bekleniyor; PASS iddiası yapılmıyor.
