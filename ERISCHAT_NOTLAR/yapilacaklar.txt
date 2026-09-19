@@ -455,3 +455,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Chat hata/mute mesajları görünür hale getirildi.
 - [x] Modal kapanışında WebSocket temizleniyor.
 - [ ] İki tarayıcı gerçek chat E2E ve fresh Quality runner sonucu henüz doğrulanmadı.
+
+2026-09-19 — WEBRTC ICE HARDENING
+- [x] Erken gelen ICE candidate'ları remoteDescription kurulana kadar kuyruklama eklendi.
+- [x] Signaling WebSocket OPEN olmadan offer gönderilmesi engellendi.
+- [x] Demo kapanışında ICE kuyruğu temizleniyor.
+- [ ] Gerçek iki tarayıcı ses E2E ve TURN/mobile doğrulaması açık.
