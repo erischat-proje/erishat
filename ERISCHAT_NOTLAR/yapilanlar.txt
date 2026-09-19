@@ -912,3 +912,11 @@ Room control checkpoint
 - [x] Audio elementi artık görünmez olarak document.body'ye mount ediliyor ve yaşam döngüsünde remove ediliyor.
 - [x] Fix commit: 594bbaf2867a301d67c4b047113de9546ac738ae.
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 43] QUALITY #1053 MÜZİK PANELİ SMOKE ROOT DÜZELTMESİ
+- [x] Quality #1053 / run 35444699051 ilk gerçek failure müzik doğrulaması sonrası Mağaza navigasyonunda overlay pointer interception olarak doğrulandı.
+- [x] Ürün API/playback zinciri bu noktada 200 dönmüş ve müzik paneli açılmıştı; sorun smoke'un açık müzik panelini kapatmadan sabit navigasyona tıklamasıydı.
+- [x] Smoke, müzik cleanup sonrasında mevcut musicClose kontrolünü kullanarak paneli kapatıp kapanmasını bekleyecek şekilde düzeltildi.
+- [x] Fix commit: c5400f70c15fdc59e1eb592134b105b4a7f9b1fc.
+- [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
