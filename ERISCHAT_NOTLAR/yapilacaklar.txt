@@ -550,3 +550,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] Yeni açık: gerçek medya düzeyi WebRTC bağlantısı ve gerçek cihaz/cellular/TURN testi henüz doğrulanmadı. Signaling browser E2E kodlandı; fresh CI PASS bekleniyor.
+
+
+[2026-09-19] RTC signaling E2E için kimlik tipi normalizasyonu eklendi; güncel CI sonucu henüz PASS değil.
