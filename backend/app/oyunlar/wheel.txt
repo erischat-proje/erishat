@@ -1,0 +1,5 @@
+ERISCHAT OYUN MOTORU — WHEEL
+Kaynak kod: wheel.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: free-play segment sonucu, seçim isabeti ve dönüş animasyonu.
+Para/Lidya/Gem bahis bağlantısı yoktur.
