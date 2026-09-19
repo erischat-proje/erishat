@@ -201,7 +201,21 @@ def main() -> int:
         assert history_a.get("type") == "room_history"
         assert history_b.get("type") == "room_history"
         ws_a.send(json.dumps({"type": "room_chat", "text": "smoke-chat"}))
-        received = [json.loads(ws_b.recv()), json.loads(ws_a.recv())]
+        # Room sockets can emit startup RTC readiness frames before the chat
+        # broadcast. Drain each client until the expected room_chat arrives.
+        received = []
+        deadline = __import__("time").monotonic() + TIMEOUT
+        while __import__("time").monotonic() < deadline and len(received) < 12:
+            for ws in (ws_b, ws_a):
+                ws.settimeout(max(0.1, deadline - __import__("time").monotonic()))
+                try:
+                    received.append(json.loads(ws.recv()))
+                except Exception:
+                    continue
+                if any(item.get("type") == "room_chat" and item.get("text") == "smoke-chat" for item in received):
+                    break
+            if any(item.get("type") == "room_chat" and item.get("text") == "smoke-chat" for item in received):
+                break
         if not any(item.get("type") == "room_chat" and item.get("text") == "smoke-chat" for item in received):
             raise AssertionError(f"room chat broadcast missing: {received}")
         print("two-client room WebSocket chat broadcast OK")
