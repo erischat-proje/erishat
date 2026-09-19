@@ -1075,3 +1075,11 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 57] QUALITY ASSET COUNT FIX
 - Cosmetics browser render'daki eski 171 asset beklentisi 178'e güncellendi.
 - Yeni Quality çalıştırmasıyla doğrulanacak.
+
+
+[2026-09-19 devam 58] MÜŞTERİ DEMO V1 GİRİŞ NOKTASI
+- [x] `frontend/demo.html` ile tek girişli müşteri demo kabuğu oluşturuldu.
+- [x] VIP 1–12, Oyunlar, Demo Kontrol ve Ana Uygulama hızlı girişleri eklendi.
+- [x] Main frontend script-tag hatası düzeltildi.
+- [ ] Fresh Quality sonucu kontrol edilecek.
+- [ ] Pages canlı zinciri hâlâ ayrı ortam/deploy konusu; kullanıcı açıkça deploy demeden Railway deploy yapılmayacak.
