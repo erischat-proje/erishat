@@ -885,3 +885,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] scripts/room_browser_surface_smoke.mjs canonical announcements endpointini mock'layıp Duyurular butonunu browser yüzeyinde tetikliyor.
 - [x] Kod commitleri: 830409dc3dd3629bf00a9f527655b16cf7076535 ve 75385b35088b173632987c4dfdbc3ccfb5f67c78.
 - [x] Quality run 35442350192 / job 105895236839 SUCCESS ile tamamlandı; 28 ana kalite adımının tamamı geçti, Room Browser Surface smoke duyuru yüzeyi dahil doğrulandı.
+
+[2026-09-19 devam 37] QUALITY 35442508009 — MÜZİK KUYRUK ATOMİKLİĞİ DOĞRULANDI
+- [x] Quality run 35442508009 / run #1032 / HEAD 6e444cb3eba514fecb2dfa02deeb3bbb086dc14b SUCCESS ile tamamlandı.
+- [x] 28 ana kalite adımının tamamı geçti; müzik kuyruk Lidya row-lock + unique-slot IntegrityError hardening sonrası regression oluşmadı.
+- [ ] Sonraki ana teknik sıra: gerçek müzik kaynağı/playback derinleştirmesi, gerçek 2-browser WebRTC + TURN/mobile transport kanıtı, 139 frame alpha görsel standardı ve Pages canlı zinciri.
