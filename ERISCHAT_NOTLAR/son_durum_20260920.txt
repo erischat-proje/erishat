@@ -95,3 +95,5 @@ NOT
 - `6cc71e93ed36c4cde880f980e946c766fe94af77`: VIP müşteri demo tablosuna gerçek VIP 1–12 toplam harcama eşikleri eklendi: 1K → 5K → 15K → 30K → 60K → 120K → 250K → 500K → 1M → 2M → 5M → 10M Lidya.
 
 - `31624a02b60c57120aa8cb205f51f7de5fac5ef1`: Tüm Sistemler > Profil yüzeyi güçlendirildi; Hayran/Profil hediyesi endpoint'lerinden biri çalışmazsa artık tüm profil paneli boş/hata durumuna düşmüyor, ilgili sayaç bağımsız olarak `Kullanılamıyor` gösteriyor.
+
+- `61ac3c19b670c74407b4a8dc9aca904ed623125a`: Mağaza demo yüzeyi güçlendirildi; `/cosmetics` başarısız olursa yüklenmiş `ErisChatCosmetics.state.catalog` önbelleği kullanılıyor, o da boşsa boş ekran yerine açık katalog durumu gösteriliyor. Ayrıca Çerçeve filtresindeki operatör önceliği hatası düzeltildi.
