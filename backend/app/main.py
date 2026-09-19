@@ -46,6 +46,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya_gem BIGINT NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
+        conn.execute(text("ALTER TABLE system_lidya_gem_ledger ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)"))
+        conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_system_lidya_gem_ledger_idempotency ON system_lidya_gem_ledger (idempotency_key) WHERE idempotency_key IS NOT NULL"))
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
         conn.execute(text("ALTER TABLE rooms ALTER COLUMN public_id TYPE VARCHAR(12)"))
