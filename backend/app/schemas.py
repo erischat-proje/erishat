@@ -55,6 +55,7 @@ class UserOut(BaseModel):
     gender: str
     avatar_asset: str | None = None
     frame_asset: str | None = None
+    wallpaper_asset: str | None = None
     is_active: bool
     lidya: int
     lidya_gem: int = 0
