@@ -34,7 +34,7 @@ jobs:
           if marker not in text:
               raise SystemExit('index.html body marker missing')
           scripts = [
-              'platform.js', 'demo-cleanup.js', 'room-live.js',
+              'platform.js', 'room-live.js',
               'room-actions.js', 'room-ban-live.js', 'gift-live.js',
               'room-gift-ui-live.js', 'dm-live.js', 'auth-live.js',
               'profile-live.js', 'cosmetics.js', 'profile-ui-live.js',
