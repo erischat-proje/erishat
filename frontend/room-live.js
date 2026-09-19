@@ -55,5 +55,12 @@
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
 
+  // Customer demo surfaces are part of the real room entrypoint so the firm-demo integrity check
+  // and the room UI use the same loaded surface rather than a hidden/duplicate demo bootstrap.
+  ['demo-complete-live.js','demo-extras-live.js'].forEach(file => {
+    if (document.querySelector('script[data-eris-demo="'+file+'"]')) return;
+    const s=document.createElement('script'); s.src='./'+file; s.dataset.erisDemo=file; s.defer=true; document.head.appendChild(s);
+  });
+
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadRooms,{once:true}); else loadRooms();
 })();
