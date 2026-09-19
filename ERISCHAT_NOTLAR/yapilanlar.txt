@@ -392,3 +392,8 @@ Room control checkpoint
 - [x] Blackjack split elleri frontend'de ayrı el kartlarıyla gösteriliyor; aktif el vurgulanıyor.
 - [x] Blackjack action API hataları için görünür hata yüzeyi eklendi.
 - [ ] Fresh Quality/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+2026-09-19 — DUYURU UI ENTEGRASYONU
+- [x] `announcementDemo()` gerçek duyuru CRUD API'sine bağlandı; listeleme ve yönetim aksiyonları artık backend üzerinden çalışıyor.
+- [x] Duyuru seçimi, düzenleme, sabitleme, silme ve enabled güncelleme akışları eklendi.
+- [ ] Browser E2E / fresh Quality PASS henüz doğrulanmadı.
