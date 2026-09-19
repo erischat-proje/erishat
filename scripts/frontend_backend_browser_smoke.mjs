@@ -118,6 +118,25 @@ async function main(){
   },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token});
   if(roomChatRealtime.ownerHistoryCount<0||roomChatRealtime.memberHistoryCount<0||roomChatRealtime.received?.text!=='browser realtime room chat smoke'||roomChatRealtime.echoed?.text!=='browser realtime room chat smoke') throw new Error('room realtime chat browser flow failed: '+JSON.stringify(roomChatRealtime));
 
+  const rtcSignalingRealtime=await page.evaluate(async ({roomId,ownerToken,memberToken,ownerId,memberId})=>{
+    const wsUrl=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);
+    const open=token=>new Promise((resolve,reject)=>{const ws=new WebSocket(wsUrl(token));const messages=[];const timer=setTimeout(()=>{try{ws.close()}catch{}reject(new Error('rtc websocket open timeout'))},5000);ws.onopen=()=>{clearTimeout(timer);resolve({ws,messages})};ws.onerror=()=>{clearTimeout(timer);reject(new Error('rtc websocket error'))};ws.onmessage=e=>{try{messages.push(JSON.parse(e.data))}catch{}}});
+    const owner=await open(ownerToken), member=await open(memberToken);
+    const wait=(arr,pred,timeout=5000)=>new Promise((resolve,reject)=>{const started=Date.now();const tick=()=>{const hit=arr.find(pred);if(hit)return resolve(hit);if(Date.now()-started>timeout)return reject(new Error('rtc signaling message timeout'));setTimeout(tick,25)};tick()});
+    await wait(owner.messages,m=>m?.type==='room_history'); await wait(member.messages,m=>m?.type==='room_history');
+    member.ws.send(JSON.stringify({type:'rtc_offer',to_user_id:ownerId,payload:{type:'offer',sdp:'browser-smoke-offer'}}));
+    const receivedOffer=await wait(owner.messages,m=>m?.type==='rtc_offer'&&m.from_user_id===memberId&&m.payload?.sdp==='browser-smoke-offer');
+    owner.ws.send(JSON.stringify({type:'rtc_answer',to_user_id:memberId,payload:{type:'answer',sdp:'browser-smoke-answer'}}));
+    const receivedAnswer=await wait(member.messages,m=>m?.type==='rtc_answer'&&m.from_user_id===ownerId&&m.payload?.sdp==='browser-smoke-answer');
+    member.ws.send(JSON.stringify({type:'rtc_ice',to_user_id:ownerId,payload:{candidate:'browser-smoke-ice'}}));
+    const receivedIce=await wait(owner.messages,m=>m?.type==='rtc_ice'&&m.from_user_id===memberId&&m.payload?.candidate==='browser-smoke-ice');
+    member.ws.send(JSON.stringify({type:'rtc_leave',to_user_id:ownerId,payload:null}));
+    const receivedLeave=await wait(owner.messages,m=>m?.type==='rtc_leave'&&m.from_user_id===memberId);
+    owner.ws.close(); member.ws.close();
+    return {receivedOffer,receivedAnswer,receivedIce,receivedLeave};
+  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token,ownerId:await page.evaluate(()=>localStorage.getItem('erischat_user_id')),memberId:member.user.id});
+  if(!rtcSignalingRealtime.receivedOffer||!rtcSignalingRealtime.receivedAnswer||!rtcSignalingRealtime.receivedIce||!rtcSignalingRealtime.receivedLeave) throw new Error('RTC signaling browser flow failed: '+JSON.stringify(rtcSignalingRealtime));
+
   const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
     const oh={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
