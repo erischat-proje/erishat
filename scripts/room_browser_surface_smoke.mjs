@@ -46,9 +46,8 @@ try{
   await page.getByRole('button',{name:'Katıl'}).waitFor();
   await page.getByRole('button',{name:'🎙️ Mikrofon'}).click();
   await page.getByRole('button',{name:'🎁 Hediye'}).waitFor();
-  await page.getByRole('button',{name:'📢 Duyurular'}).click();
-  await page.waitForTimeout(150);
   page.once('dialog',d=>d.dismiss());
+  await page.getByRole('button',{name:'📢 Duyurular'}).click();
   await page.getByRole('button',{name:'🛡️ Moderatör'}).waitFor();
   await page.getByRole('button',{name:'🔇 Sohbeti kapat'}).waitFor();
   const roomControlButtons=await page.locator('#edRoomActions button').count();
