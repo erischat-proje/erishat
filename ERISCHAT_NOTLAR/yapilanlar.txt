@@ -506,3 +506,6 @@ Room control checkpoint
 
 
 [2026-09-19] Browser smoke syntax kontrolü: aynı scope içinde iki kez tanımlanan `reportFlow` değişkeni bulundu ve ikinci akış `familyReportFlow` olarak ayrıldı. Güncel dosyada duplicate `const` ve literal `\\n` kontrolü temiz.
+[2026-09-19 devam — VIP QUALITY STATIC GATE]
+- VIP lifecycle browser smoke scripti quality workflow'un static syntax/required-file gate'ine de eklendi; bundan sonra dosya eksikliği/syntax hatası lifecycle çalışmadan önce yakalanacak.
+- Quality #1264 (run 35457300569) tam SUCCESS; VIP lifecycle smoke adımı da workflow içinde çalıştırıldı.
