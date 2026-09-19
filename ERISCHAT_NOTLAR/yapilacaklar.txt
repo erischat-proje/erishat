@@ -797,3 +797,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `scripts/frontend_backend_browser_smoke.mjs` içine DM doğrulamasından sonra `window.closeChat()` çağrısı ve overlay kapanış beklemesi eklendi.
 - [x] Fix commit: `e161ec932fc9696e2149ccdda424cda50cd904ed`.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 25] QUALITY #990 — ADMIN SMOKE REQUESTS BAĞIMLILIK KÖK DÜZELTMESİ
+- [x] İlk gerçek failure `System identity and admin smoke` adımında `ModuleNotFoundError: No module named 'requests'` olarak doğrulandı.
+- [x] Kök neden: admin smoke scripti `requests` kullanıyor, fakat Quality workflow `backend/requirements.txt` kurulumundan sonra scripti çalıştırıyor ve requirements'ta `requests` yoktu.
+- [x] `backend/requirements.txt` içine `requests==2.32.4` eklendi; fix commit `c9a7b5d15e2f6f41d0d7a5dfb1ef5d5e25b6bdee`.
+- [ ] Yeni Quality/CI sonucu doğrulanacak; PASS varsayılmıyor.
