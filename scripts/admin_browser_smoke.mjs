@@ -14,6 +14,10 @@ const browser = await chromium.launch({headless:true});
 const page = await browser.newPage({viewport:{width:390,height:844}});
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
+page.on('dialog', async dialog => {
+  if (dialog.type() === 'prompt' && dialog.message().includes('Kullanıcı ID')) return dialog.accept(String(fixture.target_user_id));
+  return dialog.dismiss();
+});
 await page.addInitScript(({api, token}) => {
   window.ERIS_API = api;
   window.ERISCHAT_API_BASE = api.replace(/\/v1$/, '');
