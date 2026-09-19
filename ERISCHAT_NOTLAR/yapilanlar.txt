@@ -1056,3 +1056,5 @@ Room control checkpoint
 - [x] #1172 Cosmetics browser render ilk gerçek hatası bulundu: 20 wallpaper SVG asset browser `Image.decode()` ile yüklenemiyordu.
 - [x] Normal wallpaper SVG'lerinde malformed `stroke-opacity` attribute değerleri düzeltildi; 12 normal wallpaper dosyası yeniden kaydedildi.
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+[2026-09-19 devam 55] QUALITY #1186 ROOT CAUSE — Cosmetics browser render, 8 VIP wallpaper SVG'sinde malformed stroke-opacity attribute bulundu; ilgili 8 dosyanın stroke-opacity/stroke-width XML attribute ayrımı düzeltildi. Yeni Quality sonucu bekleniyor.
