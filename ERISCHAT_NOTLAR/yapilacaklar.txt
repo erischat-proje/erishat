@@ -418,3 +418,7 @@ GÜVENLİK/KAPSAM NOTU
 2026-09-19 — KOLTUK MODERASYONU
 - [x] Oda sahibi/moderatör için koltuk kilitleme ve mikrofon susturma endpoint'i eklendi; işlem audit kaydı bırakıyor.
 - [ ] Gerçek WebRTC signaling/transport ve browser E2E açık.
+
+2026-09-19 — WEBRTC SİGNALING
+- [x] Authenticated room WebSocket üzerinden rtc_offer / rtc_answer / rtc_ice / rtc_leave hedef kullanıcıya aktarımı eklendi.
+- [ ] Tarayıcı RTCPeerConnection + getUserMedia entegrasyonu, STUN/TURN, gerçek 2-browser audio E2E ve çoklu instance açık.
