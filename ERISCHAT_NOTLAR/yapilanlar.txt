@@ -366,3 +366,4 @@ Room control checkpoint
 - [x] GamePlay geçmişi ile GameRound round_id aynı işlem sonucuna bağlandı.
 - [ ] Blackjack çok adımlı hit/stand oturumu ve diğer oyunların canlı round lifecycle derinleştirmesi sonraki adım.
 - [ ] Yeni Quality runner/browser sonucu henüz doğrulanmadı.
+- 2026-09-19: Blackjack free-play çok adımlı round state başlatıldı; gerçek 52 kartlık deste, hit/stand action endpointi, dealer çözümleme ve kalıcı state eklendi. Para/Lidya/Gem ile bağlantı kurulmadı.
