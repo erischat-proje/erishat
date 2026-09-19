@@ -938,3 +938,9 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] 139 frame alpha/visual standard incelemesi.
 - [ ] VIP lifecycle, fan/admin kalanları ve gerçek müzik source/long playback/queue depth.
 - [ ] Railway production deploy — kullanıcı açıkça "deploy" demeden yapılmayacak.
+
+
+[2026-09-19 devam 47] COSMETICS CATALOG HARDENING
+- [x] Asset integrity kontrolü artık yalnızca toplam 139 sayısını değil, her kozmetik klasörünün beklenen dosya sayısını ve 95 avatar / 44 frame / 103 standard / 36 VIP toplamlarını da koruyor.
+- [ ] PNG frame alpha/şeffaflık görsel standardı hâlâ ayrı tasarım incelemesi olarak açık; bu değişiklik dosya sayısı/sınıf sözleşmesini güvenceye alıyor, görsel kaliteyi kapatmıyor.
+- [ ] Yeni Quality sonucu bekleniyor.
