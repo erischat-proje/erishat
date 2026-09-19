@@ -712,3 +712,11 @@ Room control checkpoint
 - [x] backend/app/main.py WebSocket ortak kontrolü chat durumundan ayrıştırıldı; üyelik/ban kontrolü bağlantı erişimi için korunuyor, yalnızca room_chat mesajı chat kapalıysa reddediliyor.
 - [x] Fix commit: 7180ac5997271083562ce50739dd38da7649a9b5.
 - [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 19] QUALITY #971 MUSIC REALTIME ROOT FIX
+- [x] Quality #971 ilk gerçek failure doğrulandı: Frontend backend browser smoke `music sync timeout` ile kaldı.
+- [x] WebSocket music_sync handler'ı `datetime.now(timezone.utc)` kullanıyordu ancak canonical `backend/app/main.py` içinde datetime/timezone importları eksikti; exception handler bağlantıyı sessizce kapattığı için owner istemcisine sync ulaşmadı.
+- [x] Kök neden doğrudan import eksikliği olarak düzeltildi: `from datetime import datetime, timezone` eklendi.
+- [x] Fix commit: `7d430362d7d93e9abe9903bc2459c5daa0c5b0fa`.
+- [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
