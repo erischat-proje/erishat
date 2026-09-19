@@ -56,7 +56,7 @@ jobs:
           python -m compileall -q backend/app scripts
           test -s frontend/erischat-main.html
           for script in \
-            platform.js demo-cleanup.js room-live.js gift-live.js room-actions.js \
+            platform.js demo-cleanup.js admin-live.js room-live.js gift-live.js room-actions.js \
             room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js \
             cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js \
             feature-hub-live.js shop-live.js wallpaper-live.js full-demo-live.js demo-controls-live.js \
