@@ -82,11 +82,11 @@
           const act=async(action)=>{
             actionBox.querySelectorAll('button').forEach(b=>b.disabled=true);
             const rr=await api('/games/blackjack/'+encodeURIComponent(data.round_id)+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})}).catch(()=>null);
-            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total;
+            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total; data.available_actions=dd.available_actions||[];
             if(dd.result==='pending'){show();return;}
             out.innerHTML=`<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 Sonuç: <b>${esc(dd.result||dd.detail||'Bilinmiyor')}</b><br>Sen: ${esc(dd.state?.player_total??'')} • Dealer: ${esc(dd.state?.dealer_total??'')}</div>`;
           };
-          [['👊 Hit','hit'],['✋ Stand','stand'],['⚡ Double','double'],['✂️ Split','split']].forEach(([label,action])=>{const b=btn(label,()=>act(action));b.style.fontSize='8px';actionBox.append(b)});
+          [['👊 Hit','hit'],['✋ Stand','stand'],['⚡ Double','double'],['✂️ Split','split']].forEach(([label,action])=>{const b=btn(label,()=>act(action));b.style.fontSize='8px'; b.disabled=Array.isArray(data.available_actions)&&data.available_actions.length>0&&!data.available_actions.includes(action); actionBox.append(b)});
           show();
         };
         el.querySelector('[data-history]').onclick=async()=>{const res=await api('/games/'+encodeURIComponent(g.key)+'/history').catch(()=>null);const d=res?await res.json().catch(()=>[]):[];out.innerHTML=`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🕘 Son oyunlar</b><small style="display:block;margin-top:4px">${d.length?d.slice(0,8).map(x=>new Date(x.created_at).toLocaleString()+' • '+esc(x.result)).join('<br>'):'Henüz oyun geçmişi yok.'}</small></div>`};
