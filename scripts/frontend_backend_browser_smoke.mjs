@@ -19,6 +19,9 @@ async function main(){
   await page.locator('.nav button',{hasText:'Profil'}).click();
   await page.waitForFunction(()=>document.querySelector('#profile')?.classList.contains('show'));
   await page.waitForFunction(expected => document.querySelector('.profile .name h2')?.textContent === expected.nickname, owner);
+  await page.waitForSelector('[data-erischat-vip-panel]');
+  const vipPanel=await page.evaluate(()=>({title:document.querySelector('[data-vip-title]')?.textContent||'',progress:document.querySelector('[data-vip-progress]')?.textContent||'',badge:document.querySelector('[data-vip-badge]')?.textContent||'',bar:document.querySelector('[data-vip-bar]')?.style.width||''}));
+  if(!vipPanel.title||!vipPanel.progress||!vipPanel.bar) throw new Error('Profile VIP panel did not render: '+JSON.stringify(vipPanel));
   const member=await page.evaluate(async api=>{
     const suffix=Math.random().toString(36).slice(2,8);
     const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'Browser_'+suffix,avatar:'🐺',gender:'male'})});
