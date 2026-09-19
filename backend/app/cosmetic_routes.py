@@ -7,6 +7,7 @@ from .cosmetics import catalog, find_asset, PRICE, VIP_PRICE
 from .schemas import CosmeticApply, CosmeticPurchase
 from .session import get_user_from_token
 from .platform_models import VipStatus
+from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1", tags=["cosmetics"])
 
@@ -125,3 +126,54 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
     db.execute(text(f"UPDATE users SET {column}=:key WHERE id=:uid"), {"key": key, "uid": user.id})
     db.commit()
     return {"ok": True, "cosmetic_type": kind, "asset_key": key, "vip": bool(asset.get("vip")), "vip_level": asset.get("vip_level")}
+
+
+@router.get("/wallpapers")
+def list_wallpapers():
+    return {"items": wallpaper_catalog()}
+
+
+@router.get("/me/wallpaper")
+def current_wallpaper(user=Depends(current_cosmetic_user)):
+    return {"asset_key": user.wallpaper_asset}
+
+
+@router.post("/me/wallpaper/purchase")
+def purchase_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    key = str(payload.get("asset_key") or "").strip()
+    item = find_wallpaper(key)
+    if not item:
+        raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+    if item["tier"] == "vip":
+        raise HTTPException(status_code=403, detail=f"Bu duvar kağıdı VIP {item['vip_level']} seviyesinde açılır")
+    price = int(item["price"])
+    locked = db.execute(text("SELECT lidya FROM users WHERE id=:uid FOR UPDATE"), {"uid": user.id}).first()
+    if not locked or int(locked[0]) < price:
+        raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
+    owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid": user.id, "key": key}).first()
+    if owned:
+        raise HTTPException(status_code=409, detail="Bu duvar kağıdı zaten satın alınmış")
+    db.execute(text("UPDATE users SET lidya=lidya-:price WHERE id=:uid"), {"price": price, "uid": user.id})
+    db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,'wallpaper',:key)"), {"uid": user.id, "key": key})
+    db.commit()
+    return {"ok": True, "asset_key": key, "spent": price}
+
+
+@router.post("/me/wallpaper/apply")
+def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    key = str(payload.get("asset_key") or "").strip()
+    item = find_wallpaper(key)
+    if not item:
+        raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+    if item["tier"] == "vip":
+        current = vip_level(db, user.id)
+        required = int(item["vip_level"])
+        if current < required:
+            raise HTTPException(status_code=403, detail=f"VIP {required} seviyesi gerekli")
+    else:
+        owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid": user.id, "key": key}).first()
+        if not owned:
+            raise HTTPException(status_code=403, detail="Önce bu duvar kağıdını satın almalısınız")
+    db.execute(text("UPDATE users SET wallpaper_asset=:key WHERE id=:uid"), {"key": key, "uid": user.id})
+    db.commit()
+    return {"ok": True, "asset_key": key, "tier": item["tier"], "vip_level": item["vip_level"]}
