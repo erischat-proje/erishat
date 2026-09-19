@@ -55,15 +55,12 @@ jobs:
           set -euo pipefail
           python -m compileall -q backend/app scripts
           test -s frontend/erischat-main.html
-          for script in \
-            platform.js demo-cleanup.js admin-live.js room-live.js admin_browser_smoke.mjs gift-live.js room-actions.js \
-            room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js \
-            cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js \
-            feature-hub-live.js shop-live.js wallpaper-live.js full-demo-live.js demo-controls-live.js \
-            demo-complete-live.js demo-extras-live.js; do
+          for script in             platform.js demo-cleanup.js admin-live.js room-live.js gift-live.js room-actions.js             room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js             cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js             feature-hub-live.js shop-live.js wallpaper-live.js full-demo-live.js demo-controls-live.js             demo-complete-live.js demo-extras-live.js; do
             test -s "frontend/$script"
             node --check "frontend/$script"
           done
+          test -s scripts/admin_browser_smoke.mjs
+          node --check scripts/admin_browser_smoke.mjs
           echo 'Python/JavaScript syntax and frontend source checks OK'
       - name: Customer demo surface integrity
         run: python scripts/demo_surface_integrity.py
@@ -114,7 +111,6 @@ jobs:
         run: node scripts/rtc_signaling_security_smoke.mjs
       - name: Real two-browser WebRTC smoke
         run: node scripts/rtc_two_browser_smoke.mjs
-
       - name: System identity and admin smoke
         working-directory: backend
         run: python ../scripts/system_identity_admin_smoke.py
