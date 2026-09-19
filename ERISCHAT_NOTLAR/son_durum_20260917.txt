@@ -314,3 +314,10 @@
 - [x] Exchange işlemi Lidya/Lidya Gem ledger/audit kaydı ve reference_id ile izlenebilir.
 - [x] Profil demo UI artık her dönüşümde idempotency anahtarı gönderiyor.
 - [ ] Yeni Quality runner/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+2026-09-19 — GAME ROUND STATE CHECKPOINT
+- [x] GameRound'a state_data JSON alanı eklendi.
+- [x] Persist edilen round state için GET /v1/games/rounds/{round_id} endpointi eklendi.
+- [x] Oda roundlarında erişim kontrolü mevcut RoomMember üyeliğiyle korunuyor.
+- [x] Startup bootstrap game_rounds.state_data kolonunu mevcut DB'lere ekliyor.
+- [ ] Blackjack hit/stand gibi çok adımlı state mutation endpointleri henüz yapılmadı.
