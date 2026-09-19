@@ -1,6 +1,19 @@
 (() => {
   const esc=v=>String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
   let audio=null,timer=null,roomId=null;
+  const musicApi=async(path,options={})=>{
+    if(window.ErisPlatform?.api)return window.ErisPlatform.api(path,options);
+    const api=(window.ERIS_API||'/v1').replace(/\\/$/,'');
+    const token=localStorage.getItem('erischat_access_token')||'';
+    const headers=Object.assign({'Content-Type':'application/json'},options.headers||{},token?{Authorization:'Bearer '+token}:{});
+    const r=await fetch(api+path,Object.assign({},options,{headers}));
+    const data=await r.json().catch(()=>[]); if(!r.ok)throw new Error(data.detail||('HTTP '+r.status)); return data;
+  };
+  window.ErisRoom=window.ErisRoom||{};
+  window.ErisRoom.music=window.ErisRoom.music||((id)=>musicApi('/rooms/'+encodeURIComponent(id)+'/music'));
+  window.ErisRoom.musicPlayback=window.ErisRoom.musicPlayback||((id,musicId,action,position)=>musicApi('/rooms/'+encodeURIComponent(id)+'/music/'+encodeURIComponent(musicId)+'/playback',{method:'POST',body:JSON.stringify({action,position_seconds:position})}));
+  window.ErisRoom.addMusic=window.ErisRoom.addMusic||((id,title,source_url)=>musicApi('/rooms/'+encodeURIComponent(id)+'/music',{method:'POST',body:JSON.stringify({title,source_url})}));
+  window.ErisRoom.deleteMusic=window.ErisRoom.deleteMusic||((id,musicId)=>musicApi('/rooms/'+encodeURIComponent(id)+'/music/'+encodeURIComponent(musicId),{method:'DELETE'}));
   const rid=()=>roomId||window.ErisCurrentRoomId||window.currentRoomId||new URLSearchParams(location.search).get('room_id')||new URLSearchParams(location.search).get('room');
   function ensureAudio(x){
     if(!audio||audio.dataset.musicId!==String(x.id)||audio.src!==x.source_url){
