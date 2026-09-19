@@ -1103,3 +1103,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Wallpaper smoke içindeki `asset_key` / `key` sözleşme uyumsuzluğu düzeltildi.
 - [x] Fix commit `953ce521788575ef1109f5d9ef039458d243a51b`.
 - [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 63] QUALITY #1227 KÖK DÜZELTME
+- [x] Wallpaper smoke purchase/apply/current API payload sözleşmesi düzeltildi.
+- [x] Fix commit `4174ef9469281278cf64c9d4d06c0c2dded6c835`.
+- [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
