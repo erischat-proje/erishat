@@ -384,3 +384,4 @@ Room control checkpoint
 - 2026-09-19: Tüm 6 non-Blackjack oyun motoru (Roulette, 4 Cups, Horse Race, Crash, Vault, Wheel) harden edildi: profil doğrulama, normalize sonuç/state alanları, seçim kaydı ve zengin animasyon metadata. Oyunlar free-play; Lidya/Gem bahis/payout bağlantısı yok.
 - 2026-09-19: Oyun registry'sine fail-fast bütünlük kontrolü eklendi; oda/özel oyun listesi ile kayıtlı motorlar eşleşmezse veya bir motor play() sunmazsa sistem import aşamasında hata veriyor.
 - 2026-09-19: Oyun API katmanı sadeleştirildi: eski inline/ulaşılamayan oyun fallback kodu kaldırıldı; motor çıktıları result/data tipi ve hata davranışı açısından sınırda doğrulanıyor.
+- 2026-09-19: Tüm non-Blackjack oyun motorlarına playback-ready animasyon state'i eklendi: Roulette frame dizisi, Cups shuffle sırası, Horse Race checkpoint'leri, Crash curve adımları, Vault açılış fazları ve Wheel frame dizisi. Bunlar free-play görsel akışı içindir; Lidya/Gem payout içermez.
