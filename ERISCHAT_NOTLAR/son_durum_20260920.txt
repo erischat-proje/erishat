@@ -111,3 +111,5 @@ NOT
 - `1044175b55fee3e93648c7c08773fa415b2fd342`: Oda müzik merkezi backend/oda bulunamadı durumlarını açıkça gösteriyor; gerçek kuyruk ve playback yapısı korunarak belirsiz boş yüzey azaltıldı.
 
 - `77e2e36777af33aed831f5346627b724e9e20ec3`: Duyuru yönetimi yüzeyinde oda/servis durumu görünür hale getirildi; duyuru yükleme hatası artık 'henüz duyuru yok' gibi gösterilmiyor ve işlemler oda yokken güvenli biçimde engelleniyor.
+
+- `77d49a4f7de3bdcb6d7b505ff248018feaadcfd6`: Oda koltukları/gerçek ses demo yükleme fonksiyonu async olarak düzeltildi; koltuk ve RTC servis hataları artık sessizce yutulmuyor, durum paneline aktarılıyor.
