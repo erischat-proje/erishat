@@ -129,7 +129,14 @@
     const walletBtns=m.querySelector('#walletBtns'), out=()=>{m.querySelector('#walletLidya').textContent=Number(wallet.lidya||0).toLocaleString('tr-TR');m.querySelector('#walletGem').textContent=Number(wallet.lidya_gem||0).toLocaleString('tr-TR')};
     const exchange=async direction=>{const raw=window.prompt(direction==='lidya_to_gem'?'Kaç Lidya → Gem?':'Kaç Gem → Lidya?','1');if(raw===null)return;const amount=Number(raw);if(!Number.isInteger(amount)||amount<1){window.toast?.('1 veya daha büyük tam sayı girin');return}const d=await api('/me/wallet/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({direction,amount,idempotency_key:(crypto?.randomUUID?.()||('wallet-'+Date.now()+'-'+Math.random().toString(16).slice(2)))})}).catch(e=>({error:e.message}));if(d?.error||d?.detail){window.toast?.(d.detail||d.error||'Takas başarısız');return}wallet=d;out();window.toast?.('1:1 takas tamamlandı')};
     walletBtns.append(button('💰 → 💎 Lidya Gem Al',()=>exchange('lidya_to_gem')),button('💎 → 💰 Lidya Al',()=>exchange('gem_to_lidya')));
-    ['✨ Avatarı uygula','🖼 Çerçeveyi uygula','⭐ Favoriye ekle','🎁 Hediye vitrini','➕ Takip et'].forEach(t=>m.querySelector('#profileBtns').append(button(t,()=>window.toast?.(`${t} demo yüzeyi`))));
+    let followed=false,favorite=false,avatarApplied=false,frameApplied=false;
+    const pb=m.querySelector('#profileBtns');
+    const addAction=(label,fn)=>pb.append(button(label,fn));
+    addAction('✨ Avatarı uygula',()=>{avatarApplied=!avatarApplied;window.toast?.(avatarApplied?'Avatar demo profiline uygulandı ✓':'Avatar uygulaması kaldırıldı ✓');});
+    addAction('🖼 Çerçeveyi uygula',()=>{frameApplied=!frameApplied;window.toast?.(frameApplied?'Çerçeve demo profiline uygulandı ✓':'Çerçeve uygulaması kaldırıldı ✓');});
+    addAction('⭐ Favoriye ekle',()=>{favorite=!favorite;window.toast?.(favorite?'Profil favorilere eklendi ✓':'Profil favorilerden çıkarıldı ✓');});
+    addAction('🎁 Hediye vitrini',()=>window.ErisDemoExtras?.roomGift?.());
+    addAction('➕ Takip et',()=>{followed=!followed;window.toast?.(followed?'Takip edildi ✓':'Takip bırakıldı ✓');});
   }
 
   function roomGiftDemo(){
