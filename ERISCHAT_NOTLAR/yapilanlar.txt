@@ -628,3 +628,11 @@ Room control checkpoint
 - [x] Browser smoke aile davet oluşturma → inbox → kabul → ownership transfer → eski owner leave ve ayrı reject lifecycle'larını kapsıyor.
 - [x] Demo aile panelinde gerçek davet gönderme ve davet inbox kabul/reddet UI akışları eklendi.
 - [ ] Fresh Quality/CI sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19] Aile yaşam döngüsü hardening
+- FamilyInvitation modeli ve pending/accepted/rejected/expired akışı eklendi.
+- Aile davet kabulünde aile üyeliği ve aile sohbet üyeliği birlikte oluşturuluyor.
+- Owner transfer endpointi ve demo aksiyonu eklendi.
+- Demo aile davetleri kabul/reddet ve DELETE leave akışına hizalandı.
+- Fresh CI/Quality sonucu henüz doğrulanmadı.
