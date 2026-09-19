@@ -1072,3 +1072,11 @@ Room control checkpoint
 - Cosmetics browser render testi, yeni yüklenen assetler nedeniyle 171 sabit sayısından 178'e güncellendi.
 - Commit: 48697a06da5f1d58c4e2da40fe7d7c991d1f70f5
 - Yeni Quality sonucu henüz doğrulanmadı; PASS iddiası yapılmayacak.
+
+
+[2026-09-19 devam 58] MÜŞTERİ DEMO V1 GİRİŞ NOKTASI
+- [x] `frontend/demo.html` eklendi; müşteri için tek girişli demo kabuğu oluşturuldu.
+- [x] Demo kabuğundan VIP 1–12, Oyunlar, Demo Kontrol ve Ana Uygulama yüzeylerine doğrudan erişim var.
+- [x] `frontend/index.html` içindeki bozuk nested `room-music-ui.js` / `wallpaper-live.js` script etiketleri düzeltildi.
+- [x] Commitler: `9bde910df65ded4eaf773fb0df9abacd0b1e1c54`, `8726c1890527d263a1f1dba585bb01ca0617d5df`.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı.
