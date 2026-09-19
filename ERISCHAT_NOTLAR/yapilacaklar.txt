@@ -1070,3 +1070,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Backend katalog yeni PNG yollarına bağlandı; normal 19, VIP 12.
 - [x] Wallpaper smoke gerçek asset yollarını ve VIP1–VIP12 anahtar eşleşmesini kontrol edecek şekilde güncellendi.
 - [ ] Fresh Quality sonucu doğrulanacak.
+
+
+[2026-09-19 devam 57] QUALITY ASSET COUNT FIX
+- Cosmetics browser render'daki eski 171 asset beklentisi 178'e güncellendi.
+- Yeni Quality çalıştırmasıyla doğrulanacak.
