@@ -91,3 +91,5 @@ NOT
 - `cbc84216fee5307043d4a7eaf7369a3e88e9241a`: Profil VIP ilerleme çubuğundaki eski düşük eşikler kaldırıldı; VIP 1–12 ilerlemesi proje için tanımlanan toplam harcama eşikleriyle hizalandı: 1K / 5K / 15K / 30K / 60K / 120K / 250K / 500K / 1M / 2M / 5M / 10M.
 
 - `433a5b713e6f58ce98d712c7d3106e7b6e01c02c`: Tüm Sistemler > Gizlilik paneli güçlendirildi; backend boş ayar döndürürse açık durum gösteriliyor, değişiklik sırasında kontrol kilitleniyor ve başarılı/başarısız kayıt sonucu panel içinde görünür hale getirildi.
+
+- `6cc71e93ed36c4cde880f980e946c766fe94af77`: VIP müşteri demo tablosuna gerçek VIP 1–12 toplam harcama eşikleri eklendi: 1K → 5K → 15K → 30K → 60K → 120K → 250K → 500K → 1M → 2M → 5M → 10M Lidya.
