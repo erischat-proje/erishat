@@ -16,7 +16,7 @@
     if(document.getElementById('erisHub')) return;
     add(css);
     document.body.insertAdjacentHTML('beforeend', `
-      <button id="erisHubBtn" aria-label="ErisChat sistemleri">🧩</button>
+
       <div id="erisHub"><div class="eh-sheet">
         <div class="eh-head"><div><div class="eh-kicker">ERISCHAT LIVE SYSTEMS</div><h2>Tüm sistemleri gör</h2></div><button class="eh-close" id="ehClose">×</button></div>
         <div class="eh-tabs">
@@ -27,7 +27,7 @@
         <div id="eh-discover" class="eh-panel"></div><div id="eh-profile" class="eh-panel"></div><div id="eh-privacy" class="eh-panel"></div><div id="eh-report" class="eh-panel"></div>
       </div></div>`);
     const hub=document.getElementById('erisHub');
-    document.getElementById('erisHubBtn').onclick=()=>{hub.classList.add('show');loadTab('rooms');};
+    window.openErisHub=()=>{hub.classList.add('show');loadTab('rooms');};
     document.getElementById('ehClose').onclick=()=>hub.classList.remove('show');
     hub.addEventListener('click',e=>{if(e.target===hub) hub.classList.remove('show');});
     hub.querySelectorAll('.eh-tab').forEach(btn=>btn.onclick=()=>loadTab(btn.dataset.tab));
