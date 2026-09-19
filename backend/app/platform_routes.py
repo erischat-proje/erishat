@@ -21,7 +21,7 @@ from .room_models import Room, RoomGiftEvent, RoomMember
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
-from .oyunlar import GAME_ENGINES
+from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -519,9 +519,9 @@ def register_platform_auth(current_user_dependency):
         if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
         payload = payload or {}
         room_id = str(payload.get("room_id") or "").strip() or None
-        if room_id and game_type in PRIVATE_GAME_TYPES:
+        if room_id and is_private_game(game_type):
             raise HTTPException(status_code=400, detail="Bu oyun özel/kişisel modda çalışır")
-        if game_type in ROOM_GAME_TYPES and not room_id:
+        if is_room_game(game_type) and not room_id:
             raise HTTPException(status_code=400, detail="Bu oyun oda içinden başlatılmalıdır")
         if room_id:
             room = db.get(Room, room_id)
