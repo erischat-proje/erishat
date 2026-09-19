@@ -869,3 +869,12 @@ Room control checkpoint
 - [x] frontend/room-music-ui.js içine canonical ErisPlatform.api tabanlı music API adapter'ları eklendi ve window.ErisRoom müzik fonksiyonları garanti altına alındı.
 - [x] Commit: d7f911160281a03d0624001d95e962c1adf77fa2.
 - [ ] Bu düzeltmenin yeni Quality run'ında tam PASS olarak doğrulanması bekleniyor.
+
+
+[2026-09-19 devam 39] QUALITY #1038 SONRASI MÜZİK UI CHECKPOINT
+- [x] Quality #1038 (run 35443029537) ilk gerçek failure: room music HTMLAudio binding kurulamadı.
+- [x] Kök neden frontend/room-music-ui.js içinde canonical music API yüzeyinin garanti edilmemesiydi.
+- [x] Commit d7f911160281a03d0624001d95e962c1adf77fa2 ile ErisPlatform.api tabanlı music adapter'ları ve ErisRoom müzik fonksiyonları garanti altına alındı.
+- [x] Yeni browser console kaynak teşhisi için commit 831bea45e3f8f0615fb6e4e68299cb74a2e4d5fb ile frontend smoke'a console error capture eklendi.
+- [ ] 831bea4 sonrası yeni Quality run sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+- [ ] Yeni run başarısız olursa ilk gerçek console/runtime kaynağından devam edilecek; spekülatif değişiklik yapılmayacak.
