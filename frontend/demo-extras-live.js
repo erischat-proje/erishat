@@ -70,17 +70,17 @@
   }
 
   async function announcementDemo(){
-    let roomId=''; try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; } catch(e){}
-    const m=modal('📢 Duyuru yönetimi',`<div style="display:grid;gap:8px"><input id="annText" placeholder="Oda duyurusu..." style="padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:10px"><div id="annOut"></div><div id="annBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>`);
+    let roomId='',loadError=''; try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; if(!roomId)loadError='Kullanılabilir oda bulunamadı.'; } catch(e){loadError=e?.message||'Duyuru servisine erişilemedi.';}
+    const m=modal('📢 Duyuru yönetimi',`<div style="display:grid;gap:8px"><div id="annState">${card('<small style="color:#938a9f">'+esc(loadError|| (roomId?'Oda bağlı':'Oda bulunamadı'))+'</small>')}</div><input id="annText" placeholder="Oda duyurusu..." style="padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:10px"><div id="annOut"></div><div id="annBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>`);
     const out=m.querySelector('#annOut'),bs=m.querySelector('#annBtns'),input=m.querySelector('#annText'); let selected=null;
     const render=async()=>{
       if(!roomId){out.innerHTML=card('<b>Oda bulunamadı</b>');return;}
-      const data=await api('/rooms/'+encodeURIComponent(roomId)+'/announcements').catch(()=>[]);
-      const rows=Array.isArray(data)?data:(data.announcements||[]);
+      let data=null; try{data=await api('/rooms/'+encodeURIComponent(roomId)+'/announcements');}catch(e){out.innerHTML=card('<b>Duyurular yüklenemedi</b><small style="display:block;color:#938a9f;margin-top:4px">'+esc(e.message||'Servis hatası')+'</small>');return;}
+      const rows=Array.isArray(data)?data:(data?.announcements||[]);
       out.innerHTML=rows.length?rows.map(x=>`<div data-id="${esc(x.id)}" style="padding:8px;margin-top:5px;border:1px solid #ffffff12;border-radius:9px"><b>${esc(x.message)}</b><small style="display:block;color:#938a9f">#${esc(x.id)} • ${x.pinned?'📌 sabit':'aktif'}</small></div>`).join(''):card('<small>Henüz duyuru yok.</small>');
       out.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>{selected=el.dataset.id;input.value=rows.find(x=>String(x.id)===String(selected))?.message||'';});
     };
-    const send=async(path,method,body)=>{const d=await api(path,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(e=>({detail:e.message})); if(d?.detail&&d?.error){out.innerHTML=card('<b>İşlem başarısız</b><small>'+esc(d.detail||'Yetki veya oda hatası')+'</small>');return false;} await render(); return true;};
+    const send=async(path,method,body)=>{if(!roomId){out.innerHTML=card('<b>Oda yok</b><small>Önce kullanılabilir bir odaya bağlanılmalı.</small>');return false;}const d=await api(path,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(e=>({detail:e.message,error:true})); if(d?.detail&&d?.error){out.innerHTML=card('<b>İşlem başarısız</b><small style="display:block;color:#938a9f;margin-top:4px">'+esc(d.detail||'Yetki veya oda hatası')+'</small>');return false;} await render(); return true;};
     bs.append(button('➕ Yayınla',()=>send('/rooms/'+encodeURIComponent(roomId)+'/announcements','POST',{message:input.value.trim()})));
     bs.append(button('✏️ Düzenle',()=>selected?send('/rooms/'+encodeURIComponent(roomId)+'/announcements/'+encodeURIComponent(selected),'PATCH',{message:input.value.trim()}):null));
     bs.append(button('📌 Sabitle',()=>selected?send('/rooms/'+encodeURIComponent(roomId)+'/announcements/'+encodeURIComponent(selected),'PATCH',{pinned:true}):null));
