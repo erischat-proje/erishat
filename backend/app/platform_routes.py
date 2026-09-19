@@ -441,6 +441,25 @@ def register_platform_auth(current_user_dependency):
 
 
 
+    @router.get("/games/rounds/{round_id}")
+    def game_round_state(round_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(GameRound, round_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Oyun turu bulunamadı")
+        if row.room_id:
+            member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == row.room_id, RoomMember.user_id == user.id))
+            if not member:
+                raise HTTPException(status_code=403, detail="Bu oyun turuna erişiminiz yok")
+        try:
+            state = json.loads(row.state_data or "{}")
+        except (TypeError, json.JSONDecodeError):
+            state = {}
+        return {
+            "round_id": row.id, "game": row.game_type, "room_id": row.room_id,
+            "status": row.status, "started_at": row.started_at, "ends_at": row.ends_at,
+            "result": row.result_key, "state": state,
+        }
+
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
@@ -518,6 +537,7 @@ def register_platform_auth(current_user_dependency):
             started_at=now,
             ends_at=now,
             result_key=result,
+            state_data=json.dumps(data, ensure_ascii=False, separators=(",", ":")),
         ))
         db.flush()
         return _save_game_play(db, user, game_type, choice, result, data)
