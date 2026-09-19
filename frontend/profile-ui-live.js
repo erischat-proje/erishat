@@ -62,7 +62,7 @@
           title.textContent = level ? (vip.title || ('VIP '+level)) + ' • Seviye ' + level : 'VIP değil';
           if (!level) { progress.textContent = 'VIP seviyesi henüz açılmadı.'; bar.style.width = '0%'; }
           else if (!next) { progress.textContent = spent.toLocaleString('tr-TR') + ' toplam harcama • Maksimum VIP seviyesi'; bar.style.width = '100%'; }
-          else { const current = Number(vip.current_level_spent ?? 0); const pct = Math.max(0, Math.min(100, next > current ? ((spent-current)/(next-current))*100 : 0)); progress.textContent = spent.toLocaleString('tr-TR') + ' / ' + next.toLocaleString('tr-TR') + ' • Sonraki seviye VIP ' + (level+1); bar.style.width = pct + '%'; }
+          else { const thresholds=[0,1000,5000,15000,30000,60000,120000,250000,500000,1000000,2000000,5000000,10000000]; const base=thresholds[Math.min(level,12)]||0; const localSpent=vip.current_level_spent==null?Math.max(0,spent-base):Math.max(0,Number(vip.current_level_spent||0)); const needed=Math.max(1,next-base); const pct=Math.max(0,Math.min(100,(localSpent/needed)*100)); progress.textContent = spent.toLocaleString('tr-TR') + ' / ' + next.toLocaleString('tr-TR') + ' • Sonraki seviye VIP ' + (level+1); bar.style.width = pct + '%'; }
           const perkList = Array.isArray(vip.perks) ? vip.perks.slice(-4) : []; perks.textContent = perkList.length ? 'Açılan özellikler: ' + perkList.join(' • ') : 'Açılan özellik bulunmuyor.';
         }).catch(() => { progress.textContent = 'VIP verisi alınamadı.'; });
       }
