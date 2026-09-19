@@ -770,3 +770,10 @@ Room control checkpoint
 - [x] `requests==2.32.4` canonical backend requirements'a eklendi.
 - [x] Fix commit: `c9a7b5d15e2f6f41d0d7a5dfb1ef5d5e25b6bdee`.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+[2026-09-19 devam 26] QUALITY #999 — LIVE ROOM SMOKE ODA ADI SINIRI KÖK DÜZELTMESİ
+- [x] Quality/runner 35440664523 içindeki ilk gerçek failure Live room smoke adımında HTTP 422 string_too_long oldu; Smoke Discovery 2 oda adı backend'in 16 karakter sınırını aşıyordu.
+- [x] Kök neden ürün/backend değil, scripts/room_live_smoke.py içindeki stale smoke test verisiydi.
+- [x] Smoke Discovery {index} test oda adı Smoke Disc {index} olacak şekilde düzeltildi.
+- [x] Fix commit: a2c1ac2b5a15ff83184c10f53ed5e6b0e0f7c2b0.
+- [ ] Fresh Quality #999 sonucu henüz doğrulanmadı; PASS varsayılmıyor.
