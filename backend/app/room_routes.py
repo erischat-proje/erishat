@@ -632,6 +632,21 @@ def register_room_auth(current_user_dependency):
             if music.is_playing:
                 music.started_at = now
         elif action == "play":
+            # A room has a single canonical active track. Pause any other
+            # currently playing queue item before starting this one.
+            active_rows = db.scalars(
+                select(RoomMusic).where(
+                    RoomMusic.room_id == room.id,
+                    RoomMusic.id != music.id,
+                    RoomMusic.is_playing.is_(True),
+                ).with_for_update()
+            ).all()
+            for active in active_rows:
+                if active.started_at:
+                    active.position_seconds += max(0, int((now - active.started_at).total_seconds()))
+                active.is_playing = False
+                active.started_at = None
+                active.updated_at = now
             music.position_seconds = payload.position_seconds
             music.is_playing = True
             music.started_at = now
