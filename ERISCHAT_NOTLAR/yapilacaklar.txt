@@ -804,3 +804,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Kök neden: admin smoke scripti `requests` kullanıyor, fakat Quality workflow `backend/requirements.txt` kurulumundan sonra scripti çalıştırıyor ve requirements'ta `requests` yoktu.
 - [x] `backend/requirements.txt` içine `requests==2.32.4` eklendi; fix commit `c9a7b5d15e2f6f41d0d7a5dfb1ef5d5e25b6bdee`.
 - [ ] Yeni Quality/CI sonucu doğrulanacak; PASS varsayılmıyor.
+
+[2026-09-19 devam 26] QUALITY #999 — LIVE ROOM SMOKE ODA ADI SINIRI KÖK DÜZELTMESİ
+- [x] Yeni run 35440744528 öncesi gerçek ilk failure room_live_smoke.py içinde Smoke Discovery 2 oda adının backend'in 16 karakter sınırını aşmasıydı (HTTP 422 string_too_long).
+- [x] Kök neden backend değil, smoke scriptindeki stale test verisiydi: Smoke Discovery 2 17 karakterdi.
+- [x] Test verisi Smoke Disc 2/3 olarak 16 karakter sınırının altında olacak şekilde düzeltildi.
+- [x] Fix commit: a2c1ac2b5a15ff83184c10f53ed5e6b0e0f7c2b0.
+- [ ] Quality #999 hâlâ çalışıyor; PASS varsayılmıyor.
