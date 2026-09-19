@@ -57,7 +57,7 @@
       const [catalog, owned, vip] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip')]);
       const items = list(catalog);
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
-      const currentVip = Math.max(Number(vip?.level || 0), 12);
+      const currentVip = Number(vip?.level || 0);
       const localOwned = new Set(demoOwned());
       const renderItems = filter => {
         grid.innerHTML = '';
