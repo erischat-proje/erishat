@@ -678,3 +678,10 @@ Room control checkpoint
 - [x] Kök neden: smoke `rose` gönderiyordu; canonical `GIFT_CATALOG` anahtarı `Zeytin Dalı`.
 - [x] Browser smoke canonical gift key ile hizalandı.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı.
+
+[2026-09-19 devam 15] QUALITY #35438903283 — MUSIC PLAYBACK LOG PARAMETRE ÇAKIŞMASI
+- [x] Frontend backend browser smoke gerçek müzik playback akışında backend 500 verdi.
+- [x] Kök neden `record(kind, action, **details)` imzasındaki `action` parametresiyle `music_playback` detayının aynı isimde gönderilmesiydi; Python `TypeError: record() got multiple values for argument 'action'` üretti.
+- [x] Log detay alanı `playback_action` olarak ayrıştırıldı; davranış ve endpoint sözleşmesi değişmedi.
+- [x] Fix commit: `ad001f8829c8e557d7e84d3decb45237d20d7a49`.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
