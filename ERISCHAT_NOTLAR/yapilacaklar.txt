@@ -430,3 +430,8 @@ GÜVENLİK/KAPSAM NOTU
 2026-09-19 — RTC CONFIG
 - [x] Authenticated room RTC config endpoint eklendi; STUN ICE server frontend RTCPeerConnection'a bağlandı.
 - [ ] TURN credentials, gerçek 2-browser audio E2E ve mobil ağ doğrulaması açık.
+
+2026-09-19 — RTC ICE CONFIG
+- [x] Authenticated `/v1/rooms/{room_id}/rtc-config` eklendi; STUN varsayılan, TURN ayarları sunucu config'inden opsiyonel alınabiliyor.
+- [x] Browser peer bağlantısı ICE config endpointine bağlandı.
+- [ ] Gerçek TURN credential/2-browser E2E ve mobil doğrulaması açık.
