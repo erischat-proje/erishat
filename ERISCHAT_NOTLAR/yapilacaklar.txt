@@ -544,3 +544,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] Son düzeltme: Browser smoke syntax kaynaklı literal `\\n` problemi temizlendi. Yeni CI koşuları mevcut SHA için queued; henüz PASS sonucu yok.
+
+
+[2026-09-19] Kritik smoke düzeltmesi: duplicate `reportFlow` const syntax problemi giderildi. Fresh CI/Quality PASS henüz doğrulanmadı.
