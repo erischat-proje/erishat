@@ -24,7 +24,208 @@ router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
 
 LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 8, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 8, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 8, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 8, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 12, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 12, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 16, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 16, "required_spend": 1_560_000}}
 GIFT_RECIPIENT_PERCENT = 70
-GIFT_CATALOG = {"Zeytin Dalı": 1, "Kil Toprak Çanak": 2, "Pazaryeri Üzümü": 3, "Parşömen Rulosu": 4, "Kilden Mühür": 5, "Tunç Broş": 6, "Baharat Kesesi": 7, "Antik Çömlek": 8, "Karakalem Sardes Çizimi": 9, "Meşale Kıvılcımı": 10, "Gümüş Broş": 12, "Zeytinyağı Şişesi": 13, "Antik Tarak": 14, "Seramik Kase": 15, "Tunç Para (Sikke)": 18, "Antik Arp": 20, "Zeytin Taç": 30, "Mavi Boncuk / Nazarlık": 40, "Kraliyet Şarabı": 50, "Lidya Mühür Yüzüğü": 60, "Poyraz Rüzgarı": 70, "Gümüş Sikke Kesesi": 90, "Altın Zeytin Dalı": 100, "Sardes Sütunu": 120, "Altın Broş": 150, "Güneş Kursu": 180, "Sardes Altın Feneri": 200, "Kral Alyattes’in Kılıcı": 250, "Paktalos Nehri Altını": 350, "Antik Savaş Arabası": 500, "Kroisos’un Altın Sikkesi": 750, "Kraliyet Asası": 1000, "Anadolu Kaplanı": 1250, "Efes Artemis Tapınağı Sütunu": 1500, "Kraliyet Tahtı": 2000, "Altın Nehir Yağmuru": 3000, "Eris & Lidya Anıtı": 4500, "Kroisos’un Hazinesi": 6000, "Lidya Savaş Gemisi (Trirem)": 8000, "Antik Güneş Tanrısı Heykeli": 10000, "Altın Kanatlı Griffin": 12500, "Sardes Sarayı": 15000, "Efsanevi Lidyum Aslanı": 17500, "Dünyanın İlk Parası Anıtı": 19000, "Kroisos’un Altın Tahtı": 20000}
+GIFT_CATALOG = {
+  "Zeytin Dalı": 1,
+  "Kil Çanak": 2,
+  "Ekmek Lavaş": 3,
+  "Kuru İncir": 4,
+  "Topaç": 5,
+  "Taş Bebek": 6,
+  "Ahşap Kaşık": 7,
+  "Kenevir İp": 8,
+  "Hasır Sepet": 9,
+  "Meşe Palamudu": 10,
+  "Deniz Kabuğu": 11,
+  "Tohum Kesesi": 12,
+  "Bakır Çivi": 14,
+  "Nazar Boncuğu": 15,
+  "Yün Yumak": 16,
+  "Çakmak Taşı": 18,
+  "Kurutulmuş Balık": 20,
+  "Kil Düdük": 21,
+  "Kırmızı Kurdele": 22,
+  "Eski Parşömen": 23,
+  "Küçük Çakıl": 25,
+  "Keçi Sütü": 26,
+  "Zencefil Kökü": 27,
+  "Toprak Bardak": 28,
+  "Sokak Çiçeği": 29,
+  "Keçi Peyniri": 33,
+  "Üzüm Salkımı": 36,
+  "Kil Kase Şarap": 40,
+  "Bal ve Ekmek": 44,
+  "Zeytinyağı Şişesi": 48,
+  "Nar Suyu": 52,
+  "Kavrulmuş Nohut": 56,
+  "İncir Reçeli": 60,
+  "Tuzlu Balık": 64,
+  "Közde Mısır": 68,
+  "Ekşi Elma": 72,
+  "Ceviz İçi": 76,
+  "Kekik Çayı": 80,
+  "Mantar Sote": 83,
+  "Kuru Üzüm": 87,
+  "Pide Ekmeği": 91,
+  "Koyun Yoğurdu": 94,
+  "Baharat Karışımı": 96,
+  "Susamlı Gevrek": 98,
+  "Antik Çörek": 99,
+  "Deri Sandalet": 121,
+  "Keten Kumaş": 142,
+  "Tunç Broş": 163,
+  "Bakır Ayna": 184,
+  "Göz Alıcı Kemer": 205,
+  "Demir Çekiç": 226,
+  "Seramik Testi": 247,
+  "Ahşap Sandık": 268,
+  "Yün Cübbe": 289,
+  "İşlemeli Örtü": 310,
+  "Kemik Tarak": 331,
+  "Maden Kepçe": 352,
+  "Deri Eldiven": 373,
+  "Şamdan": 394,
+  "Gümüş İğne": 415,
+  "Tunç Bıçak": 436,
+  "Kemer Tokası": 457,
+  "Terazi": 478,
+  "Fener": 489,
+  "Mühür Yüzüğü": 499,
+  "Tunç Mızrak": 526,
+  "Meşale": 552,
+  "Deri Kalkan": 578,
+  "Antik Yay": 605,
+  "Ok Kutusu": 631,
+  "Zırh Gömleği": 657,
+  "Demir Miğfer": 684,
+  "Savaş Baltası": 710,
+  "Hançer": 736,
+  "Binici Kamçısı": 763,
+  "Nöbet Çanı": 789,
+  "Gözcü Dürbünü": 815,
+  "Bronz Sopa": 842,
+  "Ateş Çanağı": 868,
+  "Sancak": 894,
+  "Bıçak Kını": 921,
+  "Zırh Eldiveni": 947,
+  "Çelik Çizme": 973,
+  "Taktik Haritası": 986,
+  "Savaş Borusu": 999,
+  "İpek Şal": 1000,
+  "Parfüm Şişesi": 1374,
+  "Gümüş Kase": 1749,
+  "Bronz Heykelcik": 2124,
+  "Altın Kaplama Vazo": 2499,
+  "Mücevher Kutusu": 2874,
+  "Kadife Kumaş": 3249,
+  "Kıymetli Baharat": 3624,
+  "Fildişi Tarak": 3999,
+  "Renkli Cam Sürahi": 4374,
+  "İncir Ağacı Oyması": 4749,
+  "Sedef Sandık": 5124,
+  "Şam Kumaşı": 5499,
+  "Bronz Şamdan": 5874,
+  "Lapis Lazuli Taş": 6249,
+  "Kehribar Kolye": 6624,
+  "Gümüş Tepsi": 6999,
+  "Kristal Karaf": 7374,
+  "Parşömen Rulosu": 7749,
+  "Antik Vazo": 8124,
+  "Mermer Kase": 8499,
+  "Yaldızlı Kupa": 8874,
+  "Mücevherli Kemer": 9249,
+  "Bakır Heykel": 9624,
+  "Özel Dokuma Halı": 9999,
+  "Altın Gerdanlık": 10000,
+  "Yakut Küpe": 10526,
+  "Kraliyet Çelengi": 11052,
+  "Safir Yüzük": 11578,
+  "Zümrüt Broş": 12105,
+  "Elmas Tacı": 12631,
+  "Altın Bilezik": 13157,
+  "İnci Gerdanlık": 13684,
+  "Kraliyet Mührü": 14210,
+  "Gümüş Kılıç": 14736,
+  "Altın Kase": 15263,
+  "Değerli Taş": 15789,
+  "Kraliyet Arması": 16315,
+  "Gümüş Taht": 16842,
+  "Altın Şamdan": 17368,
+  "Safir Gerdanlık": 17894,
+  "Kraliyet Kaftanı": 18421,
+  "Elmas Broş": 18947,
+  "Altın Kemer": 19473,
+  "Mücevherli Taç": 19999,
+  "Savaş Arabası": 20000,
+  "Akdeniz Gemisi": 21249,
+  "Mermer Köşk": 22499,
+  "Saray Bahçesi": 23749,
+  "Altın Taht": 24999,
+  "Büyük Çeşme": 26249,
+  "Mermer Sütun": 27499,
+  "Antik Heykel": 28749,
+  "Mozaik Zemin": 29999,
+  "Bronz Kapı": 31249,
+  "Özel At Ahırı": 32499,
+  "Gözlemevi Kulesi": 33749,
+  "Zafer Takı": 34999,
+  "Mermer Havuz": 36249,
+  "Hükümdar Çadırı": 37499,
+  "Lüks Yat": 38749,
+  "Heybetli Sütun": 39999,
+  "İhtişamlı Kemer": 41249,
+  "Büyük Saray Salonu": 42499,
+  "Kraliyet Çiftliği": 43749,
+  "Antik Amfi": 44999,
+  "Mermer Merdiven": 46249,
+  "Özel Kütüphane": 47499,
+  "Şölen Sofrası": 48749,
+  "Anıtsal Heykel": 49999,
+  "Zeus Yıldırımı": 50000,
+  "Pegasus Kanadı": 52105,
+  "Altın Post": 54210,
+  "Apollon Liri": 56315,
+  "Athena Kalkanı": 58421,
+  "Poseidon Üçlüsü": 60526,
+  "Ares Kılıcı": 62631,
+  "Hermes Sandaleti": 64736,
+  "Hades Miğferi": 66842,
+  "Afrodit Aynası": 68947,
+  "Dionysos Asası": 71052,
+  "Artemis Oku": 73157,
+  "Demeter Başak": 75263,
+  "Chronos Saati": 77368,
+  "Prometheus Ateşi": 79473,
+  "Medusa Gözü": 81578,
+  "Hydra Dişi": 83684,
+  "Minotaur Boynuzu": 85789,
+  "Sphinx Kanadı": 87894,
+  "Titan Çekici": 89999,
+  "Paktolos Altını": 90000,
+  "Krezus Mührü": 90416,
+  "Lidya Tahtı": 90833,
+  "İlk Altın Sikke": 91250,
+  "Sardis Tacı": 91666,
+  "Kraliyet Hazinesi": 92083,
+  "Ebedi Meşale": 92500,
+  "Altın Nehir Heykeli": 92916,
+  "Krezus’un Zırhı": 93333,
+  "Sonsuzluk Çanağı": 93750,
+  "Antik İmparatorluk Tacı": 94166,
+  "Kraliyet Asası": 94583,
+  "Mitolojik Güneş Kursu": 95000,
+  "Krezus'un Kasesi": 95416,
+  "Lidya Saray Anahtarı": 95833,
+  "Altın Kartal Heykeli": 96250,
+  "Büyük Sardis Simgesi": 96666,
+  "Ebedi Kalkan": 97083,
+  "Kraliyet Yüzüğü": 97500,
+  "Sardis'in Zirvesi": 97916,
+  "Paktolos İncisi": 98333,
+  "Krezus'un Kılıcı": 98750,
+  "Lidya Ebedi Tahtı": 99166,
+  "Altın Başak": 99583,
+  "Sardis'in Kalbi": 100000
+}
 
 class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class RoomChatUpdate(BaseModel): enabled: bool
@@ -58,6 +259,35 @@ def level_for_spend(spend: int) -> int:
     for level, rule in LEVELS.items():
         if spend >= rule["required_spend"]: current = level
     return current
+
+def gift_level_for_price(price: int) -> int:
+    if price <= 29: return 1
+    if price <= 99: return 2
+    if price <= 499: return 3
+    if price <= 999: return 4
+    if price <= 9_999: return 5
+    if price <= 19_999: return 6
+    if price <= 49_999: return 7
+    if price <= 89_999: return 8
+    return 9
+
+GIFT_ANIMATION_PROFILES = {
+    1: {"name": "none", "intensity": 0, "duration_ms": 0},
+    2: {"name": "soft", "intensity": 1, "duration_ms": 900},
+    3: {"name": "spark", "intensity": 2, "duration_ms": 1100},
+    4: {"name": "flare", "intensity": 3, "duration_ms": 1300},
+    5: {"name": "royal", "intensity": 4, "duration_ms": 1500},
+    6: {"name": "treasure", "intensity": 5, "duration_ms": 1700},
+    7: {"name": "grand", "intensity": 6, "duration_ms": 2100},
+    8: {"name": "mythic", "intensity": 7, "duration_ms": 2500},
+    9: {"name": "kroisos", "intensity": 8, "duration_ms": 3000},
+}
+
+def gift_presentation(price: int) -> dict:
+    level = gift_level_for_price(int(price))
+    profile = GIFT_ANIMATION_PROFILES[level]
+    return {"level": level, "animation": level > 1, "animation_profile": profile["name"], "animation_intensity": profile["intensity"], "animation_duration_ms": profile["duration_ms"], "global_announcement": level >= 7}
+
 
 def refresh_level(db: Session, room: Room) -> int:
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
@@ -323,21 +553,26 @@ def register_room_auth(current_user_dependency):
         if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
         recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100; sender.lidya -= total; recipient.lidya += recipient_amount
         event = RoomGiftEvent(room_id=room.id, sender_id=sender.id, recipient_id=recipient.id, gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity, total_price=total, recipient_percent=GIFT_RECIPIENT_PERCENT, recipient_amount=recipient_amount)
+        presentation = gift_presentation(total)
         db.add(event); db.add(Notification(user_id=recipient.id, kind="gift", title="Yeni hediye", body=f"{sender.nickname} size {payload.gift_key} gönderdi.")); db.commit(); db.refresh(event); refresh_level(db, room)
-        from .main import _broadcast_room_chat
-        await _broadcast_room_chat(room.id, {"type":"room_gift","id":event.id,"room_id":room.id,"sender_id":sender.id,"recipient_id":recipient.id,"gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,"recipient_amount":event.recipient_amount,"animation":event.total_price >= 30,"created_at":event.created_at.isoformat() if event.created_at else None})
-        return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,"total_price":total,"recipient_percent":GIFT_RECIPIENT_PERCENT,"recipient_amount":recipient_amount,"animation":total >= 30}
+        from .main import _broadcast_room_chat, _broadcast_global_gift_announcement
+        room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,"sender_id":sender.id,"recipient_id":recipient.id,"sender_nickname":sender.nickname,"recipient_nickname":recipient.nickname,"gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,"recipient_amount":event.recipient_amount,"created_at":event.created_at.isoformat() if event.created_at else None, **presentation}
+        await _broadcast_room_chat(room.id, room_payload)
+        await _broadcast_room_chat(room.id, {"type":"room_chat","room_id":room.id,"user_id":sender.id,"nickname":sender.nickname,"text":f"{sender.nickname}, {recipient.nickname} adlı kişiye {event.gift_key} verdi.","system":True,"created_at":event.created_at.isoformat() if event.created_at else None})
+        if presentation["global_announcement"]:
+            await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
+        return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,"total_price":total,"recipient_percent":GIFT_RECIPIENT_PERCENT,"recipient_amount":recipient_amount,**presentation}
     @router.get("/{room_id}/gift-catalog")
     def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        return [{"gift_key": key, "unit_price": price, "animation": price >= 30} for key, price in GIFT_CATALOG.items()]
+        return [{"gift_key": key, "unit_price": price, **gift_presentation(price)} for key, price in GIFT_CATALOG.items()]
     @router.get("/{room_id}/gift-events")
     def gift_events(room_id: str, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         limit = max(1, min(limit, 100)); rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit))); rows.reverse()
-        return [{"id":row.id,"sender_id":row.sender_id,"recipient_id":row.recipient_id,"gift_key":row.gift_key,"unit_price":row.unit_price,"quantity":row.quantity,"total_price":row.total_price,"recipient_percent":row.recipient_percent,"recipient_amount":row.recipient_amount,"created_at":row.created_at,"animation":row.total_price >= 30} for row in rows]
+        return [{"id":row.id,"sender_id":row.sender_id,"recipient_id":row.recipient_id,"gift_key":row.gift_key,"unit_price":row.unit_price,"quantity":row.quantity,"total_price":row.total_price,"recipient_percent":row.recipient_percent,"recipient_amount":row.recipient_amount,"created_at":row.created_at,**gift_presentation(row.total_price)} for row in rows]
     @router.get("/{room_id}/gift-leaderboard")
     def gift_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
