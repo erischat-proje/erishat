@@ -10,7 +10,7 @@ try {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
-  page.on('pageerror', e => errors.push(e.message));
+  page.on('pageerror', e => errors.push(`${e.message} @ ${e.stack || 'no-stack'}`));
 
   await page.route('**/v1/**', async route => {
     const url = new URL(route.request().url());
