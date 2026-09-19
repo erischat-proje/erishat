@@ -1062,3 +1062,11 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
 
 [2026-09-19 devam 55] VIP WALLPAPER SVG QA — Quality #1186, wallpaper_01..08 VIP SVG render hatası verdi. 8 dosyada malformed stroke-opacity/stroke-width attribute düzeltildi. Sonraki Quality'de browser render yeniden doğrulanacak; Railway deploy yok.
+
+
+[2026-09-19 devam 56] YÜKLENEN WALLPAPER KOLEKSİYONU ENTEGRASYONU
+- [x] Yeni normal wallpaper koleksiyonu 19 PNG (`1.png`–`19.png`) olarak repo ağacında doğrulandı.
+- [x] Yeni VIP wallpaper koleksiyonu 12 PNG (`vip1.png`–`vip12.png`) olarak repo ağacında doğrulandı.
+- [x] Backend katalog yeni PNG yollarına bağlandı; normal 19, VIP 12.
+- [x] Wallpaper smoke gerçek asset yollarını ve VIP1–VIP12 anahtar eşleşmesini kontrol edecek şekilde güncellendi.
+- [ ] Fresh Quality sonucu doğrulanacak.
