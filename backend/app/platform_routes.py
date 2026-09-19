@@ -335,6 +335,22 @@ def register_platform_auth(current_user_dependency):
         badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""
         neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)
         return {"level":v.level,"total_spent":int(v.total_spent or 0),"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3}
+    @router.post("/me/vip/claims/{claim}")
+    def claim_vip_perk(claim: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        v=vip_row(db,user.id)
+        claim=claim.strip().lower()
+        requirements={"knight_badge":10,"wallpaper":10}
+        if claim not in requirements:
+            raise HTTPException(status_code=404,detail="VIP claim bulunamadı")
+        required=requirements[claim]
+        if v.level < required:
+            raise HTTPException(status_code=403,detail=f"VIP {required} gerekli")
+        field="knight_badge_claimed" if claim=="knight_badge" else "wallpaper_claimed"
+        already=bool(getattr(v,field))
+        setattr(v,field,True)
+        db.commit()
+        return {"claim":claim,"claimed":True,"already_claimed":already,"level":v.level}
+
     @router.get("/users/{user_id}/vip")
     def public_vip(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target=db.get(User,user_id)
