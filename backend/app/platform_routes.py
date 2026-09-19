@@ -265,6 +265,26 @@ def register_platform_auth(current_user_dependency):
         if not seat: return {"released":False}
         db.delete(seat); db.commit(); return {"released":True}
 
+    @router.patch("/rooms/{room_id}/seats/{seat_number}")
+    def room_moderate_seat(room_id: str, seat_number: int, payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if seat_number < 1 or seat_number > 12: raise HTTPException(status_code=422, detail="Geçersiz koltuk")
+        room=db.get(Room,room_id)
+        if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
+        allowed = user.id == room.owner_id or db.scalar(select(RoomModerator.id).where(RoomModerator.room_id==room_id,RoomModerator.user_id==user.id))
+        if not allowed: raise HTTPException(status_code=403,detail="Yetkiniz yok")
+        seat=db.scalar(select(RoomSeat).where(RoomSeat.room_id==room_id,RoomSeat.seat_number==seat_number))
+        if not seat:
+            seat=RoomSeat(room_id=room_id,seat_number=seat_number); db.add(seat); db.flush()
+        changed=False
+        if "locked" in payload:
+            seat.locked=bool(payload["locked"]); changed=True
+        if "muted" in payload:
+            seat.muted=bool(payload["muted"]); changed=True
+        if not changed: raise HTTPException(status_code=422,detail="locked veya muted gerekli")
+        record("room","room_seat_moderated",actor_id=user.id,target_id=room_id,seat_number=seat_number,locked=seat.locked,muted=seat.muted)
+        db.commit()
+        return {"seat_number":seat.seat_number,"user_id":seat.user_id,"locked":seat.locked,"muted":seat.muted}
+
     @router.get("/rooms/{room_id}/chat")
     def room_chat_list(room_id: str, before_id: int | None = Query(default=None, ge=1), limit: int = Query(default=50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = db.get(Room, room_id)
