@@ -334,7 +334,8 @@ def register_platform_auth(current_user_dependency):
         v=vip_row(db,user.id); db.commit(); title = ("VIP Taç" if v.level >= 12 else "VIP Şövalye" if v.level >= 10 else "VIP Elit" if v.level >= 5 else "VIP Üye" if v.level >= 1 else "")
         badge = "👑" if v.level >= 12 else "♞" if v.level >= 10 else "💎" if v.level >= 1 else ""
         neon = v.neon_color or ("gold" if v.level >= 12 else "violet" if v.level >= 3 else None)
-        return {"level":v.level,"total_spent":int(v.total_spent or 0),"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3,"knight_badge_claimed":bool(v.knight_badge_claimed),"wallpaper_claimed":bool(v.wallpaper_claimed)}
+        current_level_spent = VIP_SPEND_THRESHOLDS.get(v.level, 0) if v.level > 0 else 0
+        return {"level":v.level,"total_spent":int(v.total_spent or 0),"current_level_spent":current_level_spent,"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3,"knight_badge_claimed":bool(v.knight_badge_claimed),"wallpaper_claimed":bool(v.wallpaper_claimed)}
     @router.post("/me/vip/claims/{claim}")
     def claim_vip_perk(claim: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         v=vip_row(db,user.id)
