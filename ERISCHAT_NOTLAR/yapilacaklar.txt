@@ -556,3 +556,8 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] RTC signaling eşleşmesi tip-güvenli hale getirildi. Fresh Quality PASS henüz doğrulanmadı.
+
+
+[2026-09-19] ODA SOHBETİ UI E2E HARDENING
+- [x] Gerçek Oda Sohbeti demo UI'sı için belirli oda hedefleme ve browser mesaj gönderim/read-back smoke kapsamı eklendi.
+- [ ] Fresh Quality runner sonucu bekleniyor.
