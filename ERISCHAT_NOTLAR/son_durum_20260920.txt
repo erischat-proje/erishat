@@ -125,3 +125,5 @@ NOT
 - `d07aa78daa0abf94c5661d758bbecacd48c78896`: Demo profil paneli artık `/me` ve `/me/wallet` servislerini ayrı ayrı izliyor; profil veya cüzdan backend'i başarısızsa boş/sahte veri gibi görünmek yerine panel içinde gerçek hata durumu gösteriliyor.
 
 - `db036581bd0cc7e1f66d35e6e0800d0c79b79deb`: Profil demo servis-hata paneli eklenirken oluşan template literal bozulması düzeltildi; profil demo HTML'i tekrar tek ve geçerli template olarak çalışıyor.
+
+- `8fdb570f4e896d222c5c228ac1b85831a8323e95`: Feature Hub içindeki kozmetik demo vitrini artık doğrudan canlı mağaza yüzüne geçiş sunuyor; satın alma/sahiplik/uygulama için ayrı bir ölü demo akışı yerine mevcut `shop-live.js` kullanılıyor.
