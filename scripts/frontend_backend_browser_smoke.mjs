@@ -76,6 +76,24 @@ async function main(){
   },API);
   if(notificationRead.readStatus!==200&&notificationRead.readStatus!==204) throw new Error('notification read failed: '+JSON.stringify(notificationRead));
   if(!notificationRead.skipped && notificationRead.readback!==true) throw new Error('notification readback failed: '+JSON.stringify(notificationRead));
+  const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
+    const ownerToken=localStorage.getItem('erischat_access_token');
+    const oh={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
+    const mh={Authorization:'Bearer '+memberToken,'Content-Type':'application/json'};
+    const denied=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements',{method:'POST',headers:mh,body:JSON.stringify({message:'denied announcement'})});
+    const created=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements',{method:'POST',headers:oh,body:JSON.stringify({message:'browser announcement'})});
+    const row=await created.json();
+    const listed=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements',{headers:oh}).then(r=>r.json());
+    const edited=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements/'+row.id,{method:'PATCH',headers:oh,body:JSON.stringify({message:'browser announcement edited',pinned:true})});
+    const editedData=await edited.json();
+    const memberList=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements',{headers:mh}).then(r=>r.json());
+    const disabled=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements/'+row.id,{method:'PATCH',headers:oh,body:JSON.stringify({enabled:false})});
+    const afterDisable=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements',{headers:oh}).then(r=>r.json());
+    const deleted=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/announcements/'+row.id,{method:'DELETE',headers:oh});
+    return {denied:denied.status,created:created.status,row,listed,edited:edited.status,editedData,memberList,disabled:disabled.status,afterDisable,deleted:deleted.status};
+  },{api:API,roomId:room.data.id,targetId:member.user.id,memberToken:member.access_token});
+  if(announcementFlow.denied!==403||announcementFlow.created!==200||!announcementFlow.row?.id||announcementFlow.edited!==200||announcementFlow.editedData?.pinned!==true||!announcementFlow.memberList.some(x=>x.id===announcementFlow.row.id)||announcementFlow.disabled!==200||announcementFlow.afterDisable.some(x=>x.id===announcementFlow.row.id)||announcementFlow.deleted!==200) throw new Error('announcement browser permission/lifecycle flow failed: '+JSON.stringify(announcementFlow));
+
   const reportFlow=await page.evaluate(async ({api,targetId})=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
