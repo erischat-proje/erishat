@@ -435,3 +435,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Authenticated `/v1/rooms/{room_id}/rtc-config` eklendi; STUN varsayılan, TURN ayarları sunucu config'inden opsiyonel alınabiliyor.
 - [x] Browser peer bağlantısı ICE config endpointine bağlandı.
 - [ ] Gerçek TURN credential/2-browser E2E ve mobil doğrulaması açık.
+
+2026-09-19 — WEBRTC AĞ GELİŞTİRMESİ
+- [x] RTC config opsiyonel TURN URL/kullanıcı/credential env değişkenlerini destekliyor.
+- [x] WebRTC signaling artık `chat_enabled=false` durumundan bağımsız çalışabiliyor; chat mesajları ayrıca kendi chat_enabled kontrolünü koruyor.
+- [ ] Gerçek TURN sunucusu secret provisioning ve 2-browser/mobile E2E açık.
