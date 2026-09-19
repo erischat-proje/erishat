@@ -640,3 +640,5 @@ Room control checkpoint
 [2026-09-19 devam 4] Family browser smoke token wiring düzeltildi: davet oluşturma artık açıkça yeni owner/member tokenını kullanıyor; rol değiştirme ve üye silme callback'leri token parametresini doğru şekilde alıyor. Commit 8ba8b65.
 
 [2026-09-19 devam 8] Fresh Quality runları incelendi: 023fa9c commitindeki Quality #892 "Customer demo surface integrity" adımında duruyordu; kök neden family demo markerının güncel UI'daki "➕ Davet gönder" yerine eski "➕ Üye ekle" olarak kalmasıydı. Marker hizalandı. Fix commit: 9ad53be. Yeni Quality sonucu bu commit sonrası ayrıca doğrulanacak; PASS varsayılmıyor.
+
+[2026-09-19 devam 9] Quality #893'te Family production integrity kök nedeni düzeltildi: test artık kaldırılmış eski main.py aile production route markerlarını aramıyor; canonical family_router entegrasyonunu ve güncel invitation/ownership/leave route'larını doğruluyor. Commit 78927b3; yeni Quality sonucu henüz doğrulanmadı.
