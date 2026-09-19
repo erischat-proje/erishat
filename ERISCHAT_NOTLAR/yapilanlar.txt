@@ -651,3 +651,11 @@ Room control checkpoint
 - [x] Hediye paneli oda modalındaki mevcut “🎁 Hediye” kontrolünden açılıyor.
 - [x] Gerçek oda ID'si üzerinden katalog/alıcılar/bakiye ve gönderim akışı korunuyor.
 - Commit: 2ce71e30eac4e13a6292b500271058430c36cfc4.
+
+
+[2026-09-19 — ODA MODALİ VE JS DÜZELTMESİ]
+- [x] Ana HTML'deki kritik `async async function sendChat()` sözdizimi hatası düzeltildi.
+- [x] Gerçek oda modalı için `openRoom/closeRealRoom` eklendi; oda detayları ve koltuklar backend'den yükleniyor.
+- [x] Boş koltuğa tıklayınca gerçek `joinSeat` çağrısı yapılıyor.
+- [x] Oda açılışında gerçek room WebSocket bağlantısı başlatılıyor; kapanışta leave + socket disconnect yapılıyor.
+- Commitler: f587fae758091ab8bcbfcf810a0cf5dd6e81e222, b13ba43f3c9251e2339c2f59d29fbac8483e41ca.
