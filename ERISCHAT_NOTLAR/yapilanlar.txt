@@ -809,3 +809,11 @@ Room control checkpoint
 - [x] scripts/room_live_smoke.py artık iki istemcide startup realtime frame'lerini beklenen room_chat gelene kadar tüketiyor; ürün WebSocket protokolü değiştirilmedi.
 - [x] Fix commit: 5cd1b49d6588a7742fec1f63b729bf4fcf2dfe88.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 31] QUALITY #1013 — COSMETIC VIP GATE SMOKE KÖK DÜZELTMESİ
+- [x] Quality run 35441180591 / job 105892117694: static, browser, room, family, admin, anonymous, Live family/room/ban/DM smoke adımları geçti; ilk gerçek failure Live cosmetic smoke adımında oluştu.
+- [x] Kök neden smoke testinin iki standart kozmetik satın alımından sonra kullanıcının spend-based VIP seviyesinin yükselmesini hesaba katmamasıydı. Test sabit olarak VIP 1 asset'ini 403 bekliyordu; iki adet 1000 Lidya satın alımı kullanıcıyı VIP 2 yaptığı için VIP 1 apply 200 döndü.
+- [x] scripts/cosmetic_live_smoke.py artık satın alımlar sonrasındaki gerçek vip_level değerini okuyor ve mevcut seviyenin üstündeki ilk VIP asset'i seçerek purchase/apply gate'inin 403 olduğunu doğruluyor.
+- [x] Fix commit: 77dfbdd5a18f010b002d06f4aafc7c1e62a58794.
+- [ ] Bu fix sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
