@@ -985,3 +985,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] İki Chromium context, ayrı kullanıcı oturumları, fake microphone MediaStream, offer/answer, ICE gathering ve connectionState=connected doğrulandı.
 - [x] Önceki owner session 401 kök nedeni düzeltildi; smoke artık CI içinde özel owner session oluşturuyor.
 - [ ] Gerçek cihaz/gerçek mobil ağ ses transportu ve production TURN credential provisioning hâlâ dış altyapı kanıtı gerektiriyor.
+
+
+[2026-09-19 devam 52] QUALITY #1087 — MÜZİK QUEUE HARDENING PASS
+- [x] Quality run 35450075246 / job 105915577067 SUCCESS.
+- [x] Frontend/backend browser smoke, RTC security, gerçek 2-browser WebRTC ve tüm live smoke adımları SUCCESS.
+- [x] Room music playback artık play sırasında aynı odadaki başka aktif parçaları durdurup konumlarını koruyor.
+- [x] Browser smoke iki müzik parçası ekleyip ikinciyi oynattığında ilkinin inactive, ikincinin active kaldığını doğruluyor.
+- [ ] Gerçek harici müzik kaynağı/uzun süreli playback ve üretim sağlayıcı entegrasyonu hâlâ ayrı açık iş.
