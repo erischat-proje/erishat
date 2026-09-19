@@ -195,12 +195,24 @@ async function main(){
     const playData=play?await play.json():null;
     const pause=musicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicData.id+'/playback',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken,'Content-Type':'application/json'},body:JSON.stringify({action:'pause'})}):null;
     const musicList=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music',{headers:h}).then(r=>r.json());
-    const delMusic=musicData?.id?await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicData.id,{method:'DELETE',headers:h}):null;
+    const delMusic=null;
     return {join:join.status,seat:seat.status,mute:mute.status,unmute:unmute.status,lockSeat:lockSeat.status,unlockSeat:unlockSeat.status,mod:mod.status,mods,music:music.status,musicData,play:play?.status,playData,pause:pause?.status,musicList,delMusic:delMusic?.status};
   },{api:API,roomId:room.data.id,targetId:member.user.id});
   if(![200,201,204].includes(roomControls.join)||!roomControls.seat||roomControls.mute!==200||roomControls.unmute!==200||roomControls.lockSeat!==200||roomControls.unlockSeat!==200) throw new Error('room seat controls failed: '+JSON.stringify(roomControls));
   if(![200,201].includes(roomControls.mod)||!roomControls.mods.some(x=>x.user_id===member.user.id)) throw new Error('room moderator flow failed: '+JSON.stringify(roomControls));
-  if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)||roomControls.delMusic!==200) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
+  if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
+  const musicRealtime=await page.evaluate(async ({roomId,musicId,memberToken})=>{
+    const url=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);
+    const ws=new WebSocket(url(memberToken));
+    const messages=[];
+    await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error('music websocket open timeout')),5000);ws.onopen=()=>{clearTimeout(t);resolve();};ws.onerror=()=>{clearTimeout(t);reject(new Error('music websocket error'));};ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};});
+    ws.send(JSON.stringify({type:'music_sync',music_id:musicId,action:'seek',position_seconds:17}));
+    const sync=await new Promise((resolve,reject)=>{const start=Date.now();const tick=()=>{const found=messages.find(x=>x?.type==='music_sync'&&x.music_id===musicId&&x.position_seconds===17);if(found)return resolve(found);if(Date.now()-start>5000)return reject(new Error('music sync timeout'));setTimeout(tick,25);};tick();});
+    ws.close(); return sync;
+  },{roomId:room.data.id,musicId:roomControls.musicData.id,memberToken:member.access_token});
+  if(musicRealtime?.type!=='music_sync'||Number(musicRealtime.position_seconds)!==17) throw new Error('music realtime sync browser flow failed: '+JSON.stringify(musicRealtime));
+  const musicCleanup=await page.evaluate(async ({api,roomId,musicId})=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicId,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});return r.status;},{api:API,roomId:room.data.id,musicId:roomControls.musicData.id});
+  if(musicCleanup!==200) throw new Error('music cleanup failed: '+musicCleanup);
   if(!giftFlow.notifications.some(x=>x.kind==='gift')) throw new Error('gift notification missing: '+JSON.stringify(giftFlow.notifications));
   if(!giftFlow.profile.some(x=>x.gift==='rose')) throw new Error('profile gift history missing: '+JSON.stringify(giftFlow.profile));
   if(!giftFlow.events.some(x=>x.gift_key==='rose')) throw new Error('gift event history missing: '+JSON.stringify(giftFlow.events));
