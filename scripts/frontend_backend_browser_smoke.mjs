@@ -138,6 +138,9 @@ async function main(){
     const offerPc=make('offer'), answerPc=make('answer');
     pcs.set('offer',offerPc); pcs.set('answer',answerPc);
     const candidateQueues={owner:[],member:[]};
+    const applyCandidate=async(pc,queue,candidate)=>{if(!candidate)return;if(pc.remoteDescription)await pc.addIceCandidate(candidate);else queue.push(candidate)};
+    member.ws.addEventListener('message',async ev=>{try{const d=JSON.parse(ev.data);if(d?.type==='rtc_ice'&&d.from_user_id===resolvedOwnerId)await applyCandidate(offerPc,candidateQueues.member,d.payload)}catch{}});
+    owner.ws.addEventListener('message',async ev=>{try{const d=JSON.parse(ev.data);if(d?.type==='rtc_ice'&&d.from_user_id===resolvedMemberId)await applyCandidate(answerPc,candidateQueues.owner,d.payload)}catch{}});
     offerPc.onicecandidate=e=>{if(e.candidate)member.ws.send(JSON.stringify({type:'rtc_ice',to_user_id:resolvedOwnerId,payload:e.candidate}))};
     answerPc.onicecandidate=e=>{if(e.candidate)owner.ws.send(JSON.stringify({type:'rtc_ice',to_user_id:resolvedMemberId,payload:e.candidate}))};
     offerPc.ontrack=()=>{}; answerPc.ontrack=()=>{};
@@ -146,10 +149,12 @@ async function main(){
     member.ws.send(JSON.stringify({type:'rtc_offer',to_user_id:resolvedOwnerId,payload:offerPc.localDescription}));
     const receivedOffer=await wait('offer',owner.messages,m=>m?.type==='rtc_offer'&&m.from_user_id===resolvedMemberId&&m.payload?.sdp);
     await answerPc.setRemoteDescription(receivedOffer.payload);
+    for(const candidate of candidateQueues.owner.splice(0)){try{await answerPc.addIceCandidate(candidate)}catch{}}
     const answer=await answerPc.createAnswer(); await answerPc.setLocalDescription(answer);
     owner.ws.send(JSON.stringify({type:'rtc_answer',to_user_id:resolvedMemberId,payload:answerPc.localDescription}));
     const receivedAnswer=await wait('answer',member.messages,m=>m?.type==='rtc_answer'&&m.from_user_id===resolvedOwnerId&&m.payload?.sdp);
     await offerPc.setRemoteDescription(receivedAnswer.payload);
+    for(const candidate of candidateQueues.member.splice(0)){try{await offerPc.addIceCandidate(candidate)}catch{}}
     const connected=await Promise.race([Promise.all([offerPc.__connected,answerPc.__connected]).then(()=>true),new Promise(r=>setTimeout(()=>r(false),7000))]);
     const connectionStates=[offerPc.connectionState,answerPc.connectionState];
     if(!connected||connectionStates.some(x=>x!=='connected')) throw new Error('real RTCPeerConnection did not connect: '+JSON.stringify(connectionStates));
