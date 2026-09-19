@@ -84,7 +84,41 @@ async function main(){
   if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
 
 
-  const memberRoomJoin=await page.evaluate(async ({api,roomId,memberToken})=>{\n    const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST',headers:{Authorization:'Bearer '+memberToken,'Content-Type':'application/json'}});\n    return {status:r.status,data:await r.json().catch(()=>null)};\n  },{api:API,roomId:room.data.id,memberToken:member.access_token});\n  if(![200,201,204].includes(memberRoomJoin.status)) throw new Error('member room join before realtime smoke failed: '+JSON.stringify(memberRoomJoin));\n\n  const roomChatRealtime=await page.evaluate(async ({roomId,ownerToken,memberToken})=>{\n    const wsUrl=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);\n    const openSocket=token=>new Promise((resolve,reject)=>{\n      const ws=new WebSocket(wsUrl(token));\n      const messages=[];\n      const timer=setTimeout(()=>{try{ws.close();}catch{} reject(new Error('room websocket open timeout'));},5000);\n      ws.onopen=()=>{clearTimeout(timer);resolve({ws,messages});};\n      ws.onerror=()=>{clearTimeout(timer);reject(new Error('room websocket error'));};\n      ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};\n    });\n    const owner=await openSocket(ownerToken);\n    const member=await openSocket(memberToken);\n    const waitFor=(messages,predicate,timeout=5000)=>new Promise((resolve,reject)=>{\n      const start=Date.now();\n      const tick=()=>{const found=messages.find(predicate); if(found)return resolve(found); if(Date.now()-start>timeout)return reject(new Error('room websocket message timeout')); setTimeout(tick,25);};\n      tick();\n    });\n    const ownerHistory=await waitFor(owner.messages,m=>m?.type==='room_history');\n    const memberHistory=await waitFor(member.messages,m=>m?.type==='room_history');\n    const text='browser realtime room chat smoke';\n    member.ws.send(JSON.stringify({type:'room_chat',text}));\n    const received=await waitFor(owner.messages,m=>m?.type==='room_chat'&&m.text===text);\n    const echoed=await waitFor(member.messages,m=>m?.type==='room_chat'&&m.text===text);\n    owner.ws.close(); member.ws.close();\n    return {ownerHistoryCount:ownerHistory.messages?.length||0,memberHistoryCount:memberHistory.messages?.length||0,received,echoed};\n  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token});\n  if(roomChatRealtime.ownerHistoryCount<0||roomChatRealtime.memberHistoryCount<0||roomChatRealtime.received?.text!=='browser realtime room chat smoke'||roomChatRealtime.echoed?.text!=='browser realtime room chat smoke') throw new Error('room realtime chat browser flow failed: '+JSON.stringify(roomChatRealtime));\n\n  const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
+  const memberRoomJoin=await page.evaluate(async ({api,roomId,memberToken})=>{
+    const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST',headers:{Authorization:'Bearer '+memberToken,'Content-Type':'application/json'}});
+    return {status:r.status,data:await r.json().catch(()=>null)};
+  },{api:API,roomId:room.data.id,memberToken:member.access_token});
+  if(![200,201,204].includes(memberRoomJoin.status)) throw new Error('member room join before realtime smoke failed: '+JSON.stringify(memberRoomJoin));
+
+  const roomChatRealtime=await page.evaluate(async ({roomId,ownerToken,memberToken})=>{
+    const wsUrl=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);
+    const openSocket=token=>new Promise((resolve,reject)=>{
+      const ws=new WebSocket(wsUrl(token));
+      const messages=[];
+      const timer=setTimeout(()=>{try{ws.close();}catch{} reject(new Error('room websocket open timeout'));},5000);
+      ws.onopen=()=>{clearTimeout(timer);resolve({ws,messages});};
+      ws.onerror=()=>{clearTimeout(timer);reject(new Error('room websocket error'));};
+      ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};
+    });
+    const owner=await openSocket(ownerToken);
+    const member=await openSocket(memberToken);
+    const waitFor=(messages,predicate,timeout=5000)=>new Promise((resolve,reject)=>{
+      const start=Date.now();
+      const tick=()=>{const found=messages.find(predicate); if(found)return resolve(found); if(Date.now()-start>timeout)return reject(new Error('room websocket message timeout')); setTimeout(tick,25);};
+      tick();
+    });
+    const ownerHistory=await waitFor(owner.messages,m=>m?.type==='room_history');
+    const memberHistory=await waitFor(member.messages,m=>m?.type==='room_history');
+    const text='browser realtime room chat smoke';
+    member.ws.send(JSON.stringify({type:'room_chat',text}));
+    const received=await waitFor(owner.messages,m=>m?.type==='room_chat'&&m.text===text);
+    const echoed=await waitFor(member.messages,m=>m?.type==='room_chat'&&m.text===text);
+    owner.ws.close(); member.ws.close();
+    return {ownerHistoryCount:ownerHistory.messages?.length||0,memberHistoryCount:memberHistory.messages?.length||0,received,echoed};
+  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token});
+  if(roomChatRealtime.ownerHistoryCount<0||roomChatRealtime.memberHistoryCount<0||roomChatRealtime.received?.text!=='browser realtime room chat smoke'||roomChatRealtime.echoed?.text!=='browser realtime room chat smoke') throw new Error('room realtime chat browser flow failed: '+JSON.stringify(roomChatRealtime));
+
+  const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
     const oh={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
     const mh={Authorization:'Bearer '+memberToken,'Content-Type':'application/json'};
@@ -201,7 +235,16 @@ async function main(){
   if(![200,201,204].includes(roomControls.join)||!roomControls.seat||roomControls.mute!==200||roomControls.unmute!==200||roomControls.lockSeat!==200||roomControls.unlockSeat!==200) throw new Error('room seat controls failed: '+JSON.stringify(roomControls));
   if(![200,201].includes(roomControls.mod)||!roomControls.mods.some(x=>x.user_id===member.user.id)) throw new Error('room moderator flow failed: '+JSON.stringify(roomControls));
   if(roomControls.music!==200||!roomControls.musicData?.id||roomControls.play!==200||roomControls.pause!==200||Number(roomControls.playData?.position_seconds)!==3||!Array.isArray(roomControls.musicList)) throw new Error('room music queue flow failed: '+JSON.stringify(roomControls));
-  const musicRealtime=await page.evaluate(async ({roomId,musicId,ownerToken,memberToken})=>{\n    const url=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);\n    const open=token=>new Promise((resolve,reject)=>{const ws=new WebSocket(url(token));const messages=[];const t=setTimeout(()=>reject(new Error('music websocket open timeout')),5000);ws.onopen=()=>{clearTimeout(t);resolve({ws,messages});};ws.onerror=()=>{clearTimeout(t);reject(new Error('music websocket error'));};ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};});\n    const owner=await open(ownerToken); const member=await open(memberToken);\n    member.ws.send(JSON.stringify({type:'music_sync',music_id:musicId,action:'seek',position_seconds:17}));\n    const sync=await new Promise((resolve,reject)=>{const start=Date.now();const tick=()=>{const found=owner.messages.find(x=>x?.type==='music_sync'&&x.music_id===musicId&&x.position_seconds===17);if(found)return resolve(found);if(Date.now()-start>5000)return reject(new Error('music sync timeout'));setTimeout(tick,25);};tick();});\n    owner.ws.close(); member.ws.close(); return sync;\n  },{roomId:room.data.id,musicId:roomControls.musicData.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token});\n  if(musicRealtime?.type!=='music_sync'||Number(musicRealtime.position_seconds)!==17) throw new Error('music realtime sync browser flow failed: '+JSON.stringify(musicRealtime));\n  const musicCleanup=await page.evaluate(async ({api,roomId,musicId})=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicId,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});return r.status;},{api:API,roomId:room.data.id,musicId:roomControls.musicData.id});
+  const musicRealtime=await page.evaluate(async ({roomId,musicId,ownerToken,memberToken})=>{
+    const url=token=>'ws://127.0.0.1:8000/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token);
+    const open=token=>new Promise((resolve,reject)=>{const ws=new WebSocket(url(token));const messages=[];const t=setTimeout(()=>reject(new Error('music websocket open timeout')),5000);ws.onopen=()=>{clearTimeout(t);resolve({ws,messages});};ws.onerror=()=>{clearTimeout(t);reject(new Error('music websocket error'));};ws.onmessage=e=>{try{messages.push(JSON.parse(e.data));}catch{}};});
+    const owner=await open(ownerToken); const member=await open(memberToken);
+    member.ws.send(JSON.stringify({type:'music_sync',music_id:musicId,action:'seek',position_seconds:17}));
+    const sync=await new Promise((resolve,reject)=>{const start=Date.now();const tick=()=>{const found=owner.messages.find(x=>x?.type==='music_sync'&&x.music_id===musicId&&x.position_seconds===17);if(found)return resolve(found);if(Date.now()-start>5000)return reject(new Error('music sync timeout'));setTimeout(tick,25);};tick();});
+    owner.ws.close(); member.ws.close(); return sync;
+  },{roomId:room.data.id,musicId:roomControls.musicData.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token});
+  if(musicRealtime?.type!=='music_sync'||Number(musicRealtime.position_seconds)!==17) throw new Error('music realtime sync browser flow failed: '+JSON.stringify(musicRealtime));
+  const musicCleanup=await page.evaluate(async ({api,roomId,musicId})=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/music/'+musicId,{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});return r.status;},{api:API,roomId:room.data.id,musicId:roomControls.musicData.id});
   if(musicCleanup!==200) throw new Error('music cleanup failed: '+musicCleanup);
   if(!giftFlow.notifications.some(x=>x.kind==='gift')) throw new Error('gift notification missing: '+JSON.stringify(giftFlow.notifications));
   if(!giftFlow.profile.some(x=>x.gift==='rose')) throw new Error('profile gift history missing: '+JSON.stringify(giftFlow.profile));
@@ -354,13 +397,21 @@ async function main(){
   if(!roomJoinText.includes('Katıl')||!roomJoinText.includes('Mikrofon')) throw new Error('room UI controls missing');
   await page.getByRole('button',{name:'Katıl',exact:true}).click();
   await page.waitForSelector('#edRoomActions');
-  await page.evaluate(() => { window.__micSmoke={requested:0,stopped:0}; const md=navigator.mediaDevices; if(!md)return; md.__originalGetUserMedia=md.getUserMedia.bind(md); md.getUserMedia=async constraints=>{window.__micSmoke.requested++; return {getTracks:()=>[{stop:()=>window.__micSmoke.stopped++}]};}; });\n  await page.evaluate(() => { window.__rtcSmoke={created:0,tracks:0,offers:0,local:0,closed:0}; window.ERIS_WEBRTC_ICE_SERVERS=[{urls:'stun:smoke.invalid'}]; window.__OriginalRTCPeerConnection=window.RTCPeerConnection; class SmokePC { constructor(config){window.__rtcSmoke.created++;window.__rtcSmoke.config=config;this.localDescription=null;this.connectionState='new';this.onicecandidate=null;this.ontrack=null;this.signalingState='stable';} addTrack(){window.__rtcSmoke.tracks++;} async createOffer(){window.__rtcSmoke.offers++;return {type:'offer',sdp:'v=0\\r\\n'};} async setLocalDescription(d){this.localDescription=d;window.__rtcSmoke.local++; if(this.onicecandidate) this.onicecandidate({candidate:{candidate:'candidate:smoke',sdpMid:'0',sdpMLineIndex:0,toJSON(){return {candidate:'candidate:smoke',sdpMid:'0',sdpMLineIndex:0};}}});} async setRemoteDescription(){this.signalingState='stable';} async createAnswer(){return {type:'answer',sdp:'v=0\\r\\n'};} async addIceCandidate(){window.__rtcSmoke.ice=(window.__rtcSmoke.ice||0)+1;} close(){window.__rtcSmoke.closed++;this.connectionState='closed';} } window.RTCPeerConnection=SmokePC; });
+  await page.evaluate(() => { window.__micSmoke={requested:0,stopped:0}; const md=navigator.mediaDevices; if(!md)return; md.__originalGetUserMedia=md.getUserMedia.bind(md); md.getUserMedia=async constraints=>{window.__micSmoke.requested++; return {getTracks:()=>[{stop:()=>window.__micSmoke.stopped++}]};}; });
+  await page.evaluate(() => { window.__rtcSmoke={created:0,tracks:0,offers:0,local:0,closed:0}; window.ERIS_WEBRTC_ICE_SERVERS=[{urls:'stun:smoke.invalid'}]; window.__OriginalRTCPeerConnection=window.RTCPeerConnection; class SmokePC { constructor(config){window.__rtcSmoke.created++;window.__rtcSmoke.config=config;this.localDescription=null;this.connectionState='new';this.onicecandidate=null;this.ontrack=null;this.signalingState='stable';} addTrack(){window.__rtcSmoke.tracks++;} async createOffer(){window.__rtcSmoke.offers++;return {type:'offer',sdp:'v=0\\r\
+'};} async setLocalDescription(d){this.localDescription=d;window.__rtcSmoke.local++; if(this.onicecandidate) this.onicecandidate({candidate:{candidate:'candidate:smoke',sdpMid:'0',sdpMLineIndex:0,toJSON(){return {candidate:'candidate:smoke',sdpMid:'0',sdpMLineIndex:0};}}});} async setRemoteDescription(){this.signalingState='stable';} async createAnswer(){return {type:'answer',sdp:'v=0\\r\
+'};} async addIceCandidate(){window.__rtcSmoke.ice=(window.__rtcSmoke.ice||0)+1;} close(){window.__rtcSmoke.closed++;this.connectionState='closed';} } window.RTCPeerConnection=SmokePC; });
   await page.getByRole('button',{name:'🎙️ Mikrofon',exact:true}).click();
   const micOn=await page.evaluate(()=>({state:document.querySelector('#edRoomDetail')?.querySelector('#edRoomActions')?.textContent||'',requested:window.__micSmoke?.requested||0,flag:document.querySelector('#edRoomDetail')?.dataset?.mic}));
-  if((micOn.requested||0)!==1) throw new Error('real microphone permission flow was not requested');\n  const rtcOn=await page.evaluate(()=>({...window.__rtcSmoke,iceServers:window.__rtcSmoke?.config?.iceServers||[]}));\n  if(rtcOn.created<1||rtcOn.tracks<1||rtcOn.offers<1||rtcOn.local<1) throw new Error('WebRTC peer setup was not exercised: '+JSON.stringify(rtcOn));\n  if(rtcOn.iceServers.length<1||rtcOn.iceServers[0]?.urls!=='stun:smoke.invalid') throw new Error('WebRTC ICE configuration was not passed to RTCPeerConnection: '+JSON.stringify(rtcOn));
+  if((micOn.requested||0)!==1) throw new Error('real microphone permission flow was not requested');
+  const rtcOn=await page.evaluate(()=>({...window.__rtcSmoke,iceServers:window.__rtcSmoke?.config?.iceServers||[]}));
+  if(rtcOn.created<1||rtcOn.tracks<1||rtcOn.offers<1||rtcOn.local<1) throw new Error('WebRTC peer setup was not exercised: '+JSON.stringify(rtcOn));
+  if(rtcOn.iceServers.length<1||rtcOn.iceServers[0]?.urls!=='stun:smoke.invalid') throw new Error('WebRTC ICE configuration was not passed to RTCPeerConnection: '+JSON.stringify(rtcOn));
   await page.getByRole('button',{name:'🎙️ Mikrofon',exact:true}).click();
   const micOff=await page.evaluate(()=>({stopped:window.__micSmoke?.stopped||0,flag:document.querySelector('#edRoomDetail')?.querySelector('#edRoomActions')?.parentElement?.dataset?.mic}));
-  if((micOff.stopped||0)!==1) throw new Error('microphone stream was not stopped');\n  const rtcOff=await page.evaluate(()=>({...window.__rtcSmoke}));\n  if(rtcOff.closed<1) throw new Error('WebRTC peer was not closed during microphone cleanup: '+JSON.stringify(rtcOff));
+  if((micOff.stopped||0)!==1) throw new Error('microphone stream was not stopped');
+  const rtcOff=await page.evaluate(()=>({...window.__rtcSmoke}));
+  if(rtcOff.closed<1) throw new Error('WebRTC peer was not closed during microphone cleanup: '+JSON.stringify(rtcOff));
 
   const emptySeat=page.locator('#edSeats button').filter({hasText:'▫️'}).first();
   if(await emptySeat.count()) await emptySeat.click();
