@@ -12,19 +12,7 @@
       });
     } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>el.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Odalar şu anda yüklenemedi.</div>'); }
   }
-  function loadProductLayers() {
-    const files=['./full-demo-live.js','./demo-controls-live.js','./demo-complete-live.js','./demo-extras-live.js'];
-    const markers=['data-eris-full-demo','data-eris-demo-controls','data-eris-demo-complete','data-eris-demo-extras'];
-    files.forEach((src,index)=>{const marker=markers[index];if(document.querySelector(`script[${marker}]`))return;const s=document.createElement('script');s.src=src;s.setAttribute(marker,'1');s.async=false;s.onerror=()=>console.warn(`[ErisChat] ${src} unavailable`);document.body.appendChild(s);});
-  }
-  function addRoomGamesButton(){if(document.getElementById('erisRoomGamesBtn'))return;const b=document.createElement('button');b.id='erisRoomGamesBtn';b.type='button';b.textContent='🎮 Oyunlar';b.style.cssText='position:fixed;left:14px;bottom:72px;z-index:289;border:0;border-radius:12px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:10px 13px;font-weight:800;font-size:10px;box-shadow:0 10px 25px #0008';b.onclick=()=>window.ErisChatGameHub?.open?.()||window.toast?.('Oyun merkezi yükleniyor…');document.body.appendChild(b)} window.ErisChatGameHub={open:()=>{const b=document.getElementById('erisGameEntry');if(b)b.click();else window.toast?.('Oyun merkezi yükleniyor…')}};  function mountRoomGames() {
-    if (document.getElementById('erisRoomGamesBtn')) return;
-    const b=document.createElement('button');
-    b.id='erisRoomGamesBtn'; b.type='button'; b.textContent='🎮 Oyunlar';
-    b.style.cssText='position:fixed;right:14px;bottom:250px;z-index:295;border:0;border-radius:13px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:10px 13px;font-size:10px;font-weight:800;box-shadow:0 10px 25px #0008';
-    b.onclick=()=>{const id=window.ErisCurrentRoomId||window.currentRoomId||new URLSearchParams(location.search).get('room_id')||new URLSearchParams(location.search).get('room'); if(window.ErisChatGames?.open) window.ErisChatGames.open('room',id); else window.toast?.('Oyun merkezi yükleniyor…')};
-    document.body.appendChild(b);
-  }
   window.ErisChatRoomList={load:loadRooms};
+
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{loadRooms();loadProductLayers();mountRoomGames();addRoomGamesButton();},{once:true}); else { loadRooms(); loadProductLayers(); mountRoomGames(); }
 })();
