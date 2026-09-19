@@ -642,3 +642,10 @@ Room control checkpoint
 [2026-09-19 devam 8] Fresh Quality runları incelendi: 023fa9c commitindeki Quality #892 "Customer demo surface integrity" adımında duruyordu; kök neden family demo markerının güncel UI'daki "➕ Davet gönder" yerine eski "➕ Üye ekle" olarak kalmasıydı. Marker hizalandı. Fix commit: 9ad53be. Yeni Quality sonucu bu commit sonrası ayrıca doğrulanacak; PASS varsayılmıyor.
 
 [2026-09-19 devam 9] Quality #893'te Family production integrity kök nedeni düzeltildi: test artık kaldırılmış eski main.py aile production route markerlarını aramıyor; canonical family_router entegrasyonunu ve güncel invitation/ownership/leave route'larını doğruluyor. Commit 78927b3; yeni Quality sonucu henüz doğrulanmadı.
+
+[2026-09-19 devam 10] QUALITY #? — FAMILY INVITATION LIST ROUTE KÖK NEDENİ
+- [x] Quality #35438237128 logunda Family production integration integrity gerçek failure'ı doğrulandı: `GET /families/invitations` canonical family route olarak bulunamadı.
+- [x] Kök neden: family_routes.py'de accept/reject endpointleri olmasına rağmen davet inbox listeleme GET endpointi eksikti; integrity testi güncel frontend/backend sözleşmesini doğru yakalıyordu.
+- [x] `GET /v1/families/invitations` eklendi; yalnızca mevcut kullanıcının davetlerini döndürüyor, süresi dolan pending kayıtları expired'a çekiyor ve aile/davet eden kullanıcı bilgilerini taşıyor.
+- [x] Fix commit: `b0640cbda36e3218777c6d3a4a1568ae4efb0af5`.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
