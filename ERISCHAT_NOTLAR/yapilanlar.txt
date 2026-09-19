@@ -678,3 +678,8 @@ Room control checkpoint
 - [x] Ana arama scriptinde önceki yamadan kalmış bozuk/stale `/search` kodu bulundu ve tamamen kaldırıldı.
 - [x] Arama yalnızca mevcut `/discover/rooms` + `/discover/nearby` endpointleri üzerinden çalışacak şekilde temizlendi.
 - Commitler: 6652f5d0077e49e2b7d917792bd42ed0d21317bb, 6c22fb55e6ce4c700f30b837f053a2d0551cea3d.
+
+
+[2026-09-19 — ODA JOIN AKIŞI]
+- [x] Oda kartında openRoom() sonrası tekrar ErisRoom.join() çağıran duplicate join kaldırıldı; oda katılımı artık tek noktadan yönetiliyor.
+- Commit: db5715fe5763f61ff2fd535078b84900d8b9414c.
