@@ -32,10 +32,25 @@
     q.querySelectorAll('[data-play-item]').forEach(btn=>btn.onclick=()=>play(Number(btn.dataset.playItem)));
   }
 
-  async function announcementDemo(){
+  async async function announcementDemo(){
     let roomId=''; try { const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]); roomId=arr[0]?.id||arr[0]?.room_id||''; } catch(e){}
-    const m=modal('📢 Duyuru yönetimi',`<div style="display:grid;gap:8px"><input id="annText" placeholder="Oda duyurusu..." style="padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:10px"><div id="annOut"></div><small style="color:#938a9f">Mevcut backend yalnızca son duyuruyu GET ile gösteriyor; yazma endpointi yoksa buton demo durumunda kalır.</small><div id="annBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>`);
-    const out=m.querySelector('#annOut'),bs=m.querySelector('#annBtns'); ['📌 Yayınla','✏️ Düzenle','🗑 Kaldır','📣 Sabitle'].forEach(t=>bs.append(button(t,async()=>{ if(t.includes('Yayınla')&&roomId){try{const x=await api(`/rooms/${encodeURIComponent(roomId)}/announcement`);out.innerHTML=card(`<b>📢 ${esc(x.message||'Yeni duyuru')}</b>`);}catch(e){out.innerHTML=card('<b>Demo duyuru</b><small style="display:block;color:#938a9f">Backend yazma endpointi mevcut değil.</small>')}}else out.innerHTML=card(`<b>${esc(t)}</b><small style="display:block;color:#938a9f">Müşteri demo etkileşimi gösterildi.</small>`)}))); }
+    const m=modal('📢 Duyuru yönetimi',`<div style="display:grid;gap:8px"><input id="annText" placeholder="Oda duyurusu..." style="padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:10px"><div id="annOut"></div><div id="annBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>`);
+    const out=m.querySelector('#annOut'),bs=m.querySelector('#annBtns'),input=m.querySelector('#annText'); let selected=null;
+    const render=async()=>{
+      if(!roomId){out.innerHTML=card('<b>Oda bulunamadı</b>');return;}
+      const r=await api('/rooms/'+encodeURIComponent(roomId)+'/announcements').catch(()=>null); const data=r?await r.json().catch(()=>[]):[];
+      const rows=Array.isArray(data)?data:(data.announcements||[]);
+      out.innerHTML=rows.length?rows.map(x=>`<div data-id="${esc(x.id)}" style="padding:8px;margin-top:5px;border:1px solid #ffffff12;border-radius:9px"><b>${esc(x.message)}</b><small style="display:block;color:#938a9f">#${esc(x.id)} • ${x.pinned?'📌 sabit':'aktif'}</small></div>`).join(''):card('<small>Henüz duyuru yok.</small>');
+      out.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>{selected=el.dataset.id;input.value=rows.find(x=>String(x.id)===String(selected))?.message||'';});
+    };
+    const send=async(path,method,body)=>{const r=await api(path,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>null); if(!r?.ok){let d={};try{d=await r?.json()}catch(e){} out.innerHTML=card('<b>İşlem başarısız</b><small>'+esc(d.detail||'Yetki veya oda hatası')+'</small>');return false;} await render(); return true;};
+    bs.append(button('➕ Yayınla',()=>send('/rooms/'+encodeURIComponent(roomId)+'/announcements','POST',{message:input.value.trim()})));
+    bs.append(button('✏️ Düzenle',()=>selected?send('/rooms/'+encodeURIComponent(roomId)+'/announcements/'+encodeURIComponent(selected),'PATCH',{message:input.value.trim()}):null));
+    bs.append(button('📌 Sabitle',()=>selected?send('/rooms/'+encodeURIComponent(roomId)+'/announcements/'+encodeURIComponent(selected),'PATCH',{pinned:true}):null));
+    bs.append(button('🟢/⚪ Aç-Kapat',()=>selected?send('/rooms/'+encodeURIComponent(roomId)+'/announcements/'+encodeURIComponent(selected),'PATCH',{enabled:true}):null));
+    bs.append(button('🗑 Sil',()=>selected?send('/rooms/'+encodeURIComponent(roomId)+'/announcements/'+encodeURIComponent(selected),'DELETE',{}):null));
+    await render();
+  }
 
   async function familyDemo(){
     let data=null; try { const me=await api('/me'); const families=await api('/families'); data=Array.isArray(families)?families[0]:families; if(!data && me) data={name:'Demo Ailesi',level:1,balance:0,capacity:30}; } catch(e){ data={name:'Demo Ailesi',level:1,balance:0,capacity:30}; }
