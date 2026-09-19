@@ -580,3 +580,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `frontend/demo-extras-live.js` müzik demo body stringindeki `URL'sini` kaynaklı syntax hatası düzeltildi.
 - [ ] f76c43b89100febcaa4223706d3c8246717016d3 sonrası Fresh Quality PASS bekleniyor.
 - [ ] Quality PASS sonrasında kalan müşteri demo E2E açıkları sırayla kapatılacak: oyunlar, profil/try-on, aile lifecycle, admin, WebRTC gerçek 2-browser/TURN/mobile, müzik gerçek playback ve diğer UI zincirleri.
+
+
+[2026-09-19] QUALITY #859 — DEMO SURFACE INTEGRITY
+- [x] Fresh Quality #859 static syntax aşamasını geçti.
+- [x] İlk sonraki hata `scripts/demo_surface_integrity.py` içinde güncel seats UI metinleriyle eski integrity marker'larının uyuşmaması olarak tespit edildi.
+- [x] Test marker'ları mevcut canonical seats UI metinlerine (`12 koltuk`, `🎤 Mikrofon açık`) hizalandı.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
