@@ -31,52 +31,75 @@ def can_split(state):
 
 def action(state, action):
     deck=list(state.get("deck") or [])
-    player=list(state.get("player_hand") or [])
     dealer=list(state.get("dealer_hand") or [])
+    hands=list(state.get("hands") or [{"cards": list(state.get("player_hand") or []), "done": False}])
+    active=int(state.get("active_hand", 0))
     if state.get("phase") != "player":
         raise ValueError("Oyuncu aksiyonu beklenmiyor")
-    if action not in {"hit", "stand", "double"}:
+    if active < 0 or active >= len(hands):
+        raise ValueError("Geçersiz aktif el")
+    hand=hands[active]
+    player=list(hand.get("cards") or [])
+    if hand.get("done"):
+        raise ValueError("Bu el tamamlandı")
+    if action not in {"hit", "stand", "double", "split"}:
         raise ValueError("Geçersiz blackjack aksiyonu")
+
+    if action == "split":
+        if len(hands) != 1 or not can_split(state):
+            raise ValueError("Split bu aşamada kullanılamaz")
+        if len(deck) < 2:
+            raise ValueError("Split için deste yetersiz")
+        a,b=player
+        first=[a, deck.pop()]
+        second=[b, deck.pop()]
+        hands=[{"cards": first, "done": False, "result": "pending"},
+               {"cards": second, "done": False, "result": "pending"}]
+        state.update({"deck":deck,"hands":hands,"active_hand":0,"player_hand":first,"player_total":hand_total(first),"split":True})
+        return "pending", state
+
     if action == "double":
-        if not can_double(state):
+        if len(hands) != 1 or not can_double(state):
             raise ValueError("Double bu aşamada kullanılamaz")
         if not deck:
             raise ValueError("Deste tükendi")
         player.append(deck.pop())
-        total = hand_total(player)
-        if total <= 21:
-            while hand_total(dealer) < 17 and deck:
-                dealer.append(deck.pop())
-        dt = hand_total(dealer)
-        result = "loss" if total > 21 or (dt <= 21 and total < dt) else ("push" if total == dt else "win")
-        state.update({
-            "phase": "finished", "deck": deck, "player_hand": player,
-            "dealer_hand": dealer, "player_total": total, "dealer_total": dt,
-            "result": result, "double_down": True,
-            "natural_blackjack": False, "dealer_natural": False,
-        })
-        return result, state
-
-    if action == "hit":
+        hand["cards"]=player; hand["done"]=True
+    elif action == "hit":
         if not deck:
             raise ValueError("Deste tükendi")
         player.append(deck.pop())
-        total = hand_total(player)
-        if total < 21:
-            state.update({"deck": deck, "player_hand": player, "player_total": total})
-            return "pending", state
+        hand["cards"]=player
+        if hand_total(player) >= 21:
+            hand["done"]=True
+    else:
+        hand["done"]=True
 
-    total = hand_total(player)
-    if total <= 21:
-        while hand_total(dealer) < 17 and deck:
-            dealer.append(deck.pop())
-    dt = hand_total(dealer)
-    result = "loss" if total > 21 or (dt <= 21 and total < dt) else ("push" if total == dt else "win")
+    if len(hands) > 1 and not hand["done"]:
+        state.update({"deck":deck,"hands":hands,"active_hand":active,"player_hand":player,"player_total":hand_total(player)})
+        return "pending", state
+
+    if len(hands) > 1 and hand["done"] and active + 1 < len(hands):
+        active += 1
+        nxt=hands[active]["cards"]
+        state.update({"deck":deck,"hands":hands,"active_hand":active,"player_hand":nxt,"player_total":hand_total(nxt)})
+        return "pending", state
+
+    while hand_total(dealer) < 17 and deck:
+        dealer.append(deck.pop())
+    dealer_total=hand_total(dealer)
+    results=[]
+    for h in hands:
+        total=hand_total(h["cards"])
+        result="loss" if total>21 or (dealer_total<=21 and total<dealer_total) else ("push" if total==dealer_total else "win")
+        h["result"]=result
+        results.append(result)
+    overall=results[0] if len(results)==1 else "split_complete"
+    final_hand=hands[active]["cards"]
     state.update({
-        "phase": "finished", "deck": deck, "player_hand": player,
-        "dealer_hand": dealer, "player_total": total, "dealer_total": dt,
-        "result": result, "natural_blackjack": len(player) == 2 and total == 21,
-        "dealer_natural": len(dealer) == 2 and dt == 21,
+        "phase":"finished","deck":deck,"hands":hands,"active_hand":active,
+        "player_hand":final_hand,"player_total":hand_total(final_hand),
+        "dealer_hand":dealer,"dealer_total":dealer_total,"result":overall,
     })
-    return result, state
+    return overall,state
 
