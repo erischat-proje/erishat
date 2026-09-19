@@ -322,3 +322,8 @@
 - [x] Startup bootstrap game_rounds.state_data kolonunu mevcut DB'lere ekliyor.
 - [ ] Blackjack hit/stand gibi çok adımlı state mutation endpointleri henüz yapılmadı.
 - 2026-09-19: Blackjack natural 21 / dealer natural / double-natural push başlangıç çözümlemeleri eklendi; bust ve final state geçişleri sağlamlaştırıldı. Free-play olarak kaldı.
+
+2026-09-19 — OYUN UI HARDENING
+- [x] Blackjack split elleri frontend'de ayrı el kartlarıyla gösteriliyor; aktif el vurgulanıyor.
+- [x] Blackjack action API hataları için görünür hata yüzeyi eklendi.
+- [ ] Fresh Quality/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
