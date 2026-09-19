@@ -736,3 +736,10 @@ Room control checkpoint
 - [ ] GitHub Pages yeni deploy sonucu ve canlı HTTP/görsel doğrulaması hâlâ açık; bu doğrulama yapılmadan “canlı demo PASS” ilan edilmeyecek.
 - [ ] Firma demosu için gerçek tarayıcıda son uçtan uca görsel/etkileşim kontrolü yapılacak.
 - [ ] 139 kozmetiğin manuel görsel/alpha incelemesi ve üretim TURN/mobil ses transportu ayrı doğrulama olarak açık.
+
+
+[2026-09-19 — DEMO HTML MARKUP TEMİZLİĞİ]
+- [x] frontend/erischat-main.html içinde demo cüzdan stil bloğunun yanlışlıkla iç içe `<style>` olarak kapanması düzeltildi; stil blokları geçerli ayrı HTML style blokları olarak normalize edildi.
+- [x] Değişiklik main branch'e commitlendi: 7fe96343ca3157b667d7552ab5edbe045ef55c8b.
+- [ ] Bu commit için yeni Quality workflow sonucu henüz doğrulanmadı; PASS ilan edilmiyor.
+- [ ] GitHub Pages deploy/live URL ve gerçek tarayıcı son E2E doğrulaması hâlâ açık.
