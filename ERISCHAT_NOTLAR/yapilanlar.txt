@@ -557,3 +557,9 @@ Room control checkpoint
 - [x] Canonical `musicDemo` UI'da mevcut gerçek marker olan `Gerçek kuyruk` kullanıldı.
 - [x] Commit `4dc9d1fc77207653e6882040513fe497a6389055`.
 - [ ] Bu commit sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+[2026-09-19] QUALITY #869 — ANNOUNCEMENT INTEGRITY MARKER DÜZELTMESİ
+- [x] Static syntax geçti; Customer demo surface integrity `announcement` yüzeyinde eski `📣 Sabitle` marker'ı nedeniyle kaldı.
+- [x] Canonical `announcementDemo` UI'daki gerçek marker `📌 Sabitle` olarak düzeltildi.
+- [x] Commit `6a36a4bf63f62e17335cebcebb8beb7ae014e548`.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
