@@ -664,3 +664,10 @@ Room control checkpoint
 - [x] Smoke payload'ına `category: 'safety'` eklendi; backend sözleşmesiyle hizalandı.
 - [x] Fix commit: `1a9a5de5ea42ab03ddf4082cdf0433f69efad359` sonrası düzeltme commit'i oluşturuldu.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 13] QUALITY #35438662825 — STALE REST RTC SMOKE CLEANUP
+- [x] RTC identity ve report düzeltmelerinden sonra yeni Quality failure, eski REST `/rtc-signals` smoke bloğunda üç geçerli sinyal gönderiminin 422 dönmesiydi.
+- [x] Aynı REST relay için ayrı `rtc_signaling_security_smoke.mjs` zaten offer=200, invalid type=422, target=404 ve non-member=403 sözleşmesini kapsıyor; ana E2E smoke'taki duplicate/stale blok kaldırıldı.
+- [x] Ana E2E smoke artık canonical `rtc-config` + gerçek WebSocket signaling + gerçek `RTCPeerConnection` akışına odaklanıyor.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
