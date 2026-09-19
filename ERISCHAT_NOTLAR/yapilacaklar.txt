@@ -963,3 +963,12 @@ GÜVENLİK/KAPSAM NOTU
 - [x] 30 ana kalite adımı ve cleanup tamamlandı; frontend/browser, room, family, cosmetics, backend browser ve live smoke zincirleri SUCCESS.
 - [x] Cosmetics frame alpha audit çalıştı ve PASS verdi.
 - [ ] Alpha audit tanısal olduğu için opak frame'lerin görsel tasarım standardı ayrıca incelenecek.
+
+
+[2026-09-19 devam 49] RTC SIGNALING SECURITY QUALITY KAPATILDI
+- [x] Quality #1074 / run 35449464248 / job 105913984278 SUCCESS.
+- [x] RTC signaling security smoke artık gerçek Quality gate içinde PASS.
+- [x] Non-member GET/POST → 403, member → non-member target → 404, invalid type → 422, valid offer → 200 + queued=true doğrulandı.
+- [x] RTC config: non-member → 403, member → 200 + ice_servers array doğrulandı.
+- [ ] Gerçek 2-browser/2-device ses transportu, üretim TURN credential provisioning ve mobil/gerçek ağ kanıtı açık.
+- [ ] Sonraki ana sıra: gerçek WebRTC transport kanıtı; ardından frame görsel standardı, gerçek music source/long playback/queue depth, VIP lifecycle/fan-admin eksikleri ve Pages canlı zinciri.
