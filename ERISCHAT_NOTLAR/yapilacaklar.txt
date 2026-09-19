@@ -46,3 +46,7 @@ Tarih: 2026-09-18
 - [ ] Rapor oluşturma ve rapor geçmişinin browser E2E doğrulaması.
 - [ ] Engelleme/unblock ve gizlilik ayarlarının browser E2E doğrulaması.
 - [x] Sosyal fan sayısı/fan seviyesi gerçek UserFollow kayıtlarından hesaplanıyor; browser smoke ile doğrulama eklendi.
+
+[2026-09-19 devam — VIP QUALITY STATIC GATE]
+- VIP lifecycle browser smoke scripti quality workflow'un static syntax/required-file gate'ine de eklendi; bundan sonra dosya eksikliği/syntax hatası lifecycle çalışmadan önce yakalanacak.
+- Quality #1264 (run 35457300569) tam SUCCESS; VIP lifecycle smoke adımı da workflow içinde çalıştırıldı.
