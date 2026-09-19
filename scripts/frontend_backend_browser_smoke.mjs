@@ -320,7 +320,7 @@ async function main(){
   },{api:API,familyId:family.id,userId:member.user.id});
   if(transfer.status!==200||transfer.data?.owner_id!==member.user.id) throw new Error('family ownership transfer failed: '+JSON.stringify(transfer));
   const ownerLeave=await page.evaluate(async ({api,familyId})=>{
-    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/leave',{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});
+    const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/leave',{method:'DELETE',headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});
     return {status:r.status,data:await r.json()};
   },{api:API,familyId:family.id});
   if(ownerLeave.status!==200||ownerLeave.data?.left!==true) throw new Error('former owner leave after transfer failed: '+JSON.stringify(ownerLeave));
