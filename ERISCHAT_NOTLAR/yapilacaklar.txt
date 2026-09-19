@@ -1060,3 +1060,5 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Wallpaper browser render hatasının kökü belirlendi: normal wallpaper SVG'lerinde bozuk XML attribute sözdizimi vardı.
 - [x] 12 normal wallpaper SVG'sindeki `stroke-opacity` attribute'ları düzeltildi.
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+[2026-09-19 devam 55] VIP WALLPAPER SVG QA — Quality #1186, wallpaper_01..08 VIP SVG render hatası verdi. 8 dosyada malformed stroke-opacity/stroke-width attribute düzeltildi. Sonraki Quality'de browser render yeniden doğrulanacak; Railway deploy yok.
