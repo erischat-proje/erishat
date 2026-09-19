@@ -895,3 +895,12 @@ Room control checkpoint
 - [x] Kök neden frontend/room-music-ui.js içindeki fallback URL temizleme regexinin hatalı escape edilmesiydi.
 - [x] Fix commit: b3cd489095d6d78a5d621281d9f03b0a6696c8de.
 - [ ] Fix sonrası yeni Quality sonucu bekleniyor; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 41] QUALITY #1048 MÜZİK UI API RESPONSE KÖK DÜZELTMESİ
+- [x] Quality #1048 / run 35444515417 ilk gerçek failure yine room music HTMLAudio binding oldu.
+- [x] Backend music endpointleri 200 ve doğru veri döndürdüğü için kök neden frontend tarafındaki API response sözleşme uyumsuzluğu olarak doğrulandı.
+- [x] ErisPlatform.api JSON veriyi doğrudan döndürüyor; room-music-ui.js ise eski Response benzeri ok/r.json sözleşmesini kullanıyordu.
+- [x] Music list/play/add akışları parsed JSON sözleşmesine hizalandı.
+- [x] Fix commit: 4bf353234b437077bc6577777f865d7985b6c470.
+- [ ] Fix sonrası yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
