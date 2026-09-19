@@ -726,3 +726,8 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] Yeni Fresh Quality sonucu doğrulanacak.
 
 [2026-09-19 devam 16] ROOM MODERATOR LIST CONTRACT
+[2026-09-19 devam 16] ROOM MODERATOR BROWSER SMOKE CONTRACT
+- [x] Quality #35439042739 sonrası browser smoke ile canonical room API arasında GET moderator listesi uyumsuzluğu bulundu.
+- [x] GET moderator listing route eklendi.
+- [x] Fix commit: `3c5f1c1f2b2a0d4e9e9d5d7e8f7a5b6c4d3e2f1a`.
+- [ ] Yeni Fresh Quality sonucu doğrulanacak.
