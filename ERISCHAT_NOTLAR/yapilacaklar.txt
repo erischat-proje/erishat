@@ -656,3 +656,12 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Browser smoke following kontrolündeki yanlış aktör endpointi düzeltildi.
 - [x] Commit: `f670b602c97709f2188d2a9d9c49c55afada3315`.
 - [ ] Fresh Quality sonucu bekleniyor.
+
+
+[2026-09-19] FAMILY LIFECYCLE CHECKPOINT
+- [x] Gerçek aile davet modeli ve 7 günlük expiry alanı eklendi.
+- [x] Davet inbox + accept/reject + owner transfer backend lifecycle'ı eklendi.
+- [x] Family browser smoke artık davet kabul/reddet ve ownership transfer/leave zincirini doğruluyor.
+- [x] Demo aile paneli davet gönderme ve gelen davetleri kabul/reddet UI'sına bağlandı.
+- [ ] Fresh Quality/CI PASS henüz doğrulanmadı.
+- [ ] Gerçek 2-browser WebRTC + TURN/mobile doğrulaması hâlâ açık.
