@@ -60,9 +60,10 @@
     const render=(title,rows,empty='Sonuç bulunamadı.')=>{
       const arr=Array.isArray(rows)?rows:(rows?.users||rows?.items||rows?.results||[]);
       out.innerHTML='<div class="eh-kicker">'+esc(title)+'</div>'+ (arr.length
-        ? '<div class="eh-grid">'+arr.map(u=>'<div class="eh-card"><b>'+esc(u.nickname||u.display_name||u.name||u.user_id||'Kullanıcı')+'</b><small>'+esc(u.distance_km!=null?String(u.distance_km)+' km':(u.room_name||u.title||u.conversation_id||u.room_id||'Eşleşme bulundu'))+'</small></div>').join('')+'</div>'
+        ? '<div class="eh-grid">'+arr.map(u=>{const uid=u.user_id||u.id||u.user?.id||'';const rid=u.room_id||u.room?.id||'';const name=u.nickname||u.display_name||u.name||u.user?.nickname||'Kullanıcı';const meta=u.distance_km!=null?String(u.distance_km)+' km':(u.room_name||u.title||u.conversation_id||rid||'Eşleşme bulundu');const action=rid&&window.openRoom?'<button class="eh-btn" data-disc-room="'+esc(rid)+'">Odayı aç</button>':uid&&window.openChat?'<button class="eh-btn" data-disc-user="'+esc(uid)+'">Sohbet</button>':'';return '<div class="eh-card"><b>'+esc(name)+'</b><small>'+esc(meta)+'</small>'+action+'</div>';}).join('')+'</div>'
         : '<div class="eh-note">'+esc(empty)+'</div>');
     };
+    out.addEventListener('click',e=>{const rb=e.target.closest('[data-disc-room]');if(rb){window.openRoom?.(rb.dataset.discRoom);return;}const ub=e.target.closest('[data-disc-user]');if(ub){window.openChat?.(ub.dataset.discUser,ub.dataset.discUser);}});
     g.append(btn('Yakındakiler',async()=>{
       try{const x=await api('/discover/nearby');render('Yakındaki kullanıcılar',x,'Yakında kullanıcı yok.');}
       catch(e){render('Yakındaki kullanıcılar',[], 'Yakındakiler şu anda kullanılamıyor: '+(e.message||'servis hatası'));}
