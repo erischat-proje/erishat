@@ -228,3 +228,8 @@ ERISCHAT LIDYA DÖNEMI 200 HEDIYELIK SISTEM LISTESI
 198. Lidya Ebedi Tahtı – `99.166` Lidya Parası
 199. Altın Başak – `99.583` Lidya Parası
 200. Sardis'in Kalbi – `100.000` Lidya Parası
+
+sistem olarak olay şu en yüksek lidyalı 3 kademe şu kişiye şu hediye atıldı diye duyuyu geçicek
+her kademe de animasyonlar artıcak ilk kategori de animasyon dahi olmayacak
+her atılan hediye kime atıldı ise chatte yazıcak şu kişi şuna şunu verdi diye
+ve son olarak ilk kademe harici animasyonlar giderek artacak yani her seviye arttıkça animasyonlar o seviye ye özel hissettiricek
