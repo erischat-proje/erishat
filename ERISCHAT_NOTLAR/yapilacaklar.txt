@@ -1097,3 +1097,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Live wallpaper smoke failure için eksik `/me/vip/claims/wallpaper` endpointi eklendi.
 - [x] Fix commit `d8e47746dedd5ae80e846b64edcc00b7c86a5a18`.
 - [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 62] QUALITY #1223 KÖK DÜZELTME
+- [x] Wallpaper smoke içindeki `asset_key` / `key` sözleşme uyumsuzluğu düzeltildi.
+- [x] Fix commit `953ce521788575ef1109f5d9ef039458d243a51b`.
+- [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
