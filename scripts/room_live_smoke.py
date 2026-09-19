@@ -77,7 +77,7 @@ def main() -> int:
     # after the server ranks/filter rooms, not twice at the database query level.
     discovery_ids = [room_id]
     for index in (2, 3):
-        status, extra_room = request("POST", "/rooms", token_a, {"name": f"Smoke Discovery {index}"})
+        status, extra_room = request("POST", "/rooms", token_a, {"name": f"Smoke Disc {index}"})
         if status >= 300:
             raise RuntimeError(f"discovery room create failed: HTTP {status} {extra_room}")
         extra_id = extra_room.get("id") or extra_room.get("room_id")
