@@ -413,6 +413,24 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             pass
 
 
+@app.get("/v1/rooms/{room_id}/rtc-config")
+def room_rtc_config(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict:
+    room = db.get(Room, room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="Oda bulunamadı")
+    member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
+    banned = db.scalar(select(RoomBan.id).where(RoomBan.room_id == room_id, RoomBan.user_id == user.id))
+    if not member or banned:
+        raise HTTPException(status_code=403, detail="Oda erişimi yok")
+    # Production TURN can be supplied through settings without exposing credentials in source.
+    turn_url = getattr(settings, "rtc_turn_url", None)
+    turn_username = getattr(settings, "rtc_turn_username", None)
+    turn_credential = getattr(settings, "rtc_turn_credential", None)
+    servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
+    if turn_url and turn_username and turn_credential:
+        servers.append({"urls": [turn_url], "username": turn_username, "credential": turn_credential})
+    return {"ice_servers": servers}
+
 room_chat_connections: dict[str, set[WebSocket]] = {}
 room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 
