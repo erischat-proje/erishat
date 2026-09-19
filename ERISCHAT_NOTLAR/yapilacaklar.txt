@@ -1128,3 +1128,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `admin-live.js` Quality static syntax/required-file gate kapsamına alındı.
 - [ ] Yeni Quality runner PASS sonucu doğrulanacak.
 - [ ] SA / UA / DA yönetim panelinin gerçek browser UI → backend enforcement E2E kapsamı ayrıca genişletilecek.
+
+
+[2026-09-19 devam — ADMIN UI → BACKEND E2E]
+- [x] `scripts/admin_browser_smoke.mjs` eklendi: DA yönetim panelinin gerçek Chromium UI açılışı, DA rolü görünümü, ID Sorgu/Yönetici Yetkileri yüzeyleri ve backend admin enforcement kontrolü.
+- [x] `system_identity_admin_smoke.py` ephemeral DA token + hedef kullanıcı fixture'ı üretir; workflow sonunda fixture temizlenir.
+- [x] Quality workflow admin browser smoke adımını ve `admin_browser_smoke.mjs` static syntax gate'ini içeriyor.
+- [ ] Bu yeni zincirin GitHub Actions Quality runner PASS sonucu henüz doğrulanmadı; PASS varsayılmayacak.
