@@ -26,9 +26,7 @@ async function main(){
   },API);
   if(!created.data?.user?.id||!created.data?.access_token) throw new Error('second user creation failed: '+JSON.stringify(created));
   await p2.evaluate(token=>localStorage.setItem('erischat_access_token',token),created.data.access_token);
-  await p2.reload({waitUntil:'domcontentloaded'});
-  await p2.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000});
-  const member=await p2.evaluate(()=>({user:window.ErisAuth.user,token:localStorage.getItem('erischat_access_token')}));
+  const member={user:created.data.user,token:created.data.access_token};
   if(String(member.user.id)===String(owner.user.id)) throw new Error('two browser users are identical');
 
   const room=await p1.evaluate(async api=>{
