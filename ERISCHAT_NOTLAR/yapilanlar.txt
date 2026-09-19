@@ -904,3 +904,11 @@ Room control checkpoint
 - [x] Music list/play/add akışları parsed JSON sözleşmesine hizalandı.
 - [x] Fix commit: 4bf353234b437077bc6577777f865d7985b6c470.
 - [ ] Fix sonrası yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam 42] QUALITY #1051 MÜZİK HTMLAUDIO DOM KÖK DÜZELTMESİ
+- [x] Quality #1051 / run 35444614111 ilk gerçek failure: music row oluştu ve panel açıldı ancak DOM içinde audio elementi yoktu.
+- [x] Kök neden room-music-ui.js'in new Audio() ile elementi oluşturup DOM'a eklememesiydi; browser smoke gerçek HTMLAudio elementini document üzerinden doğruluyor.
+- [x] Audio elementi artık görünmez olarak document.body'ye mount ediliyor ve yaşam döngüsünde remove ediliyor.
+- [x] Fix commit: 594bbaf2867a301d67c4b047113de9546ac738ae.
+- [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
