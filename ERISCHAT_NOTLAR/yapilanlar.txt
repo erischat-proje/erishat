@@ -1120,3 +1120,9 @@ Room control checkpoint
 - [x] Smoke testi purchase/apply/current wallpaper çağrılarını gerçek API sözleşmesine hizalayacak şekilde düzeltildi.
 - [x] Fix commit: 4174ef9469281278cf64c9d4d06c0c2dded6c835.
 - [ ] Fresh Quality sonucu doğrulanmadı.
+
+
+[2026-09-19 devam 64] QUALITY #1232 — WALLPAPER SMOKE PASS
+- [x] Quality #1232 başarıyla PASS oldu.
+- [x] Wallpaper smoke artık katalog, purchase, apply, persistence, VIP gate ve VIP10 claim gate akışlarını doğruluyor.
+- [x] Son kök düzeltme commit'i: 9892d328e020675ae40ecff792db6ced4f2b4785.
