@@ -218,7 +218,7 @@ async function main(){
       }
     }
     return {all:(all.items||[]).length,avatars:(avatars.items||[]).length,frames:(frames.items||[]).length,candidate:candidate?.asset_key,purchaseStatus:purchase?.status,purchaseData:purchase?await purchase.clone().json().catch(()=>null):null,vipAfter,applyStatus:apply?.status,avatarAsset:me?.avatar_asset};
-  },API);  if(cosmeticSurface.all!==139||cosmeticSurface.avatars<1||cosmeticSurface.frames<1) throw new Error('cosmetic catalog/filter surface failed: '+JSON.stringify(cosmeticSurface));
+  },API);  if(cosmeticSurface.all!==147||cosmeticSurface.avatars<1||cosmeticSurface.frames<1) throw new Error('cosmetic catalog/filter surface failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.purchaseStatus!==200) throw new Error('cosmetic purchase failed: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && (Number(cosmeticSurface.purchaseData?.total_spent||0)<Number(cosmeticSurface.purchaseData?.spent||0)||Number(cosmeticSurface.vipAfter?.total_spent||0)<Number(cosmeticSurface.purchaseData?.spent||0))) throw new Error('VIP spending progression was not recorded: '+JSON.stringify(cosmeticSurface));
   if(cosmeticSurface.candidate && cosmeticSurface.applyStatus!==200) throw new Error('cosmetic apply failed: '+JSON.stringify(cosmeticSurface));
