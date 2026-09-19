@@ -64,7 +64,7 @@ class UserOut(BaseModel):
 
 
 class CosmeticOut(BaseModel):
-    cosmetic_type: Literal["avatar", "frame"]
+    cosmetic_type: Literal["avatar", "frame", "wallpaper"]
     asset_key: str
     gender: str | None = None
     price: int = 1000
@@ -72,12 +72,12 @@ class CosmeticOut(BaseModel):
 
 
 class CosmeticPurchase(BaseModel):
-    cosmetic_type: Literal["avatar", "frame"]
+    cosmetic_type: Literal["avatar", "frame", "wallpaper"]
     asset_key: str = Field(min_length=1, max_length=255)
 
 
 class CosmeticApply(BaseModel):
-    cosmetic_type: Literal["avatar", "frame"]
+    cosmetic_type: Literal["avatar", "frame", "wallpaper"]
     asset_key: str = Field(min_length=1, max_length=255)
 
 
