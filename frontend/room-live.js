@@ -10,9 +10,16 @@
       targets.forEach(el => { el.innerHTML=''; if (!rooms.length) { el.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Henüz aktif oda yok.</div>'; return; }
         rooms.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||`Oda #${id}`, count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('small').textContent=`${count} kişi • ${owner}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
       });
-    } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>el.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Odalar şu anda yüklenemedi.</div>'); }
+    } catch(e) { console.warn('[ErisChat] room list unavailable',e); window.dispatchEvent(new CustomEvent('erischat:demo-rooms-fallback')); }
   }
   window.ErisChatRoomList={load:loadRooms};
+  window.addEventListener('erischat:demo-rooms-fallback',()=>{
+    const data=[
+      ['demo-room-1','Gece Muhabbeti',8,'Rana','🌙'],['demo-room-2','Müzik Köşesi',12,'Eris','🎵'],['demo-room-3','Yeni Tanışmalar',5,'Lavin','💜'],['demo-room-4','Oyun Salonu',9,'Noir','🎮'],['demo-room-5','VIP Lounge',11,'NØXIA','👑'],['demo-room-6','Gece Yayını',7,'Mira','✨']
+    ];
+    document.querySelectorAll('#realRooms,#rooms').forEach(el=>{el.innerHTML='';data.forEach(r=>{const b=document.createElement('button');b.className='room card';b.innerHTML='<div class="ava">'+r[4]+'<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">DEMO CANLI</span>';b.querySelector('b').textContent=r[1];b.querySelector('small').textContent=r[2]+' kişi • '+r[3];b.onclick=()=>openRoom(r[0],r[1]);el.appendChild(b)});});
+  });
+
 
   async function openRoom(roomId, name){
     const id=String(roomId||''); if(!id) return;
@@ -43,7 +50,15 @@
         if(!list.length) seats.innerHTML='<div class="card" style="padding:14px;text-align:center;color:#938a9f">Koltuk bilgisi yok.</div>';
       }
       window.connectRoomGiftSocket?.(id);
-    }catch(e){if(meta) meta.textContent='Oda açılamadı';window.toast?.(e.message||'Odaya bağlanılamadı.');}
+    }catch(e){
+      if(String(id).startsWith('demo-room-')){
+        const seatsFallback=[]; for(let n=1;n<=12;n++) seatsFallback.push({seat_number:n,user_id:n===1?'demo-owner':null,nickname:n===1?'Oda Sahibi':''});
+        if(meta) meta.textContent='Demo oda • 12 koltuk • sohbet aktif';
+        if(seats){seats.innerHTML='';seatsFallback.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='item card';b.innerHTML='<div class="ava">'+(s.user_id?'👤':'🎙️')+'</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=s.user_id?(s.nickname||'Dolu'):'Koltuk '+s.seat_number;b.querySelector('small').textContent=s.user_id?'Dolu':'Boş';b.onclick=()=>{b.querySelector('b').textContent='Sen';b.querySelector('small').textContent='Dolu';window.toast?.('Koltuk alındı ✓')};seats.appendChild(b)})}
+        window.toast?.('Demo oda açıldı ✓'); return;
+      }
+      if(meta) meta.textContent='Oda açılamadı';window.toast?.(e.message||'Odaya bağlanılamadı.');
+    }
   }
   function closeRealRoom(){
     const id=window.ErisCurrentRoomId||window.currentRoomId;
