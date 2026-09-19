@@ -997,3 +997,11 @@ Room control checkpoint
 - [x] Aynı smoke VIP level'ın threshold sonrası açıldığını doğruluyor.
 - [x] Hediye harcaması backend'de VipStatus.total_spent alanına işlenip vip_level_from_spend ile seviye yeniden hesaplanıyor.
 - [ ] VIP lifecycle'ın kalan unlock/claim/effect zinciri ayrıca doğrulanacak.
+
+
+[2026-09-19 devam 54] QUALITY #1096 — VIP UNLOCK CONTRACT PASS
+- [x] Quality run 35450515580 / job 105916736317 SUCCESS.
+- [x] VIP harcama smoke'u gerçek açılan level'a göre title/neon contract'ını doğruluyor.
+- [x] Level 1/3+/5+/10+/12 davranışları smoke contract içine alındı.
+- [x] Cosmetics, frontend/backend browser, RTC security ve gerçek 2-browser WebRTC adımları aynı Quality run içinde PASS.
+- [ ] VIP unlock/claim/effect zincirinin daha yüksek seviyelerde gerçek UI etkileşimleri ayrıca genişletilecek.
