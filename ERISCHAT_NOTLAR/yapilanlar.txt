@@ -525,3 +525,6 @@ Room control checkpoint
 - [x] Fresh Quality run 829 logundan API startup failure kökü tespit edildi: `backend/app/oyunlar/registry.py` tüm kayıtlı motorlarda `play()` arıyor, fakat `blackjack.py` yalnızca `start()` sağlıyordu.
 - [x] Blackjack'in mevcut özel `start()` akışını bozmadan registry uyumluluğu için `play(choice, profile, data)` adapter'ı eklendi.
 - [ ] Yeni SHA Quality sonucu bekleniyor; sonraki gerçek failure adımı takip edilecek.
+
+
+[2026-09-19] Quality run 35434355473 / job 105874397708 gerçek hata kökü: frontend/full-demo-live.js içindeki report(p) fonksiyonu await kullandığı halde async değildi. Node --check bu nedenle 'await is only valid in async functions' ile Static syntax adımında durdu. Fonksiyon async yapıldı ve 8f3140119fa24d64167a5274fa43b9751c098f8c commit'i oluşturuldu. Yeni Quality koşusu bekleniyor; PASS henüz doğrulanmadı.
