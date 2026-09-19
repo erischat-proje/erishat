@@ -588,3 +588,10 @@ Room control checkpoint
 - [x] Commit `4f9db700528bfbe2542bb9437ad9099d11713e2f`.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
 
+
+
+[2026-09-19] QUALITY #885 — BROWSER SMOKE SYNTAX KÖK NEDENİ
+- [x] Quality #885 static syntax ve önceki integrity/browser yüzey adımlarını geçti; Frontend backend browser smoke adımında `scripts/frontend_backend_browser_smoke.mjs:186` civarında `Unexpected token ','` syntax hatası yakalandı.
+- [x] Kök neden kozmetik smoke içindeki `if(candidate)` bloğunun kapanış süslü parantezinin eksik olmasıydı.
+- [x] Commit `b571a8f8e3611b2d326089d6f298bc35771bbc9e` ile yalnızca eksik blok kapanışı düzeltildi; browser smoke kapsamı geri alındı/değiştirilmedi.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
