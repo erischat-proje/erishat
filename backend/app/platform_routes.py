@@ -603,7 +603,7 @@ def register_platform_auth(current_user_dependency):
             if payload.position_seconds is None: raise HTTPException(status_code=422, detail="position_seconds gerekli")
             row.position_seconds=payload.position_seconds
         row.updated_at=datetime.now(timezone.utc); db.commit(); db.refresh(row)
-        record("system", "room_music_playback", user_id=user.id, room_id=room_id, music_id=row.id, action=payload.action, position_seconds=row.position_seconds)
+        record("system", "room_music_playback", user_id=user.id, room_id=room_id, music_id=row.id, playback_action=payload.action, position_seconds=row.position_seconds)
         return _music_view(row)
 
     @router.delete("/rooms/{room_id}/music/{music_id}")
