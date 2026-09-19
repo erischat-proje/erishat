@@ -312,6 +312,16 @@ async function main(){
   const accepted=await page.evaluate(async ({api,token,id})=>{const r=await fetch(api+'/families/invitations/'+encodeURIComponent(id)+'/accept',{method:'POST',headers:{Authorization:'Bearer '+token}});return {status:r.status,data:await r.json()};},{api:API,token:member.access_token,id:familyInvite.data.id});
   if(accepted.status!==200||accepted.data?.accepted!==true) throw new Error('family invitation accept failed: '+JSON.stringify(accepted));
   const membersAfterAccept=await page.evaluate(async ({api,token,familyId})=>fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),{api:API,token:member.access_token,familyId:family.id});
+  const concurrentDonations=await page.evaluate(async ({api,familyId,ownerToken,memberToken})=>{
+    const send=token=>fetch(api+'/families/'+encodeURIComponent(familyId)+'/donate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({amount:1000})}).then(async r=>({status:r.status,data:await r.json()}));
+    return Promise.all([send(ownerToken),send(memberToken)]);
+  },{api:API,familyId:family.id,ownerToken:localStorage.getItem('erischat_access_token'),memberToken:member.access_token});
+  if(concurrentDonations.some(x=>x.status!==200)||concurrentDonations.some(x=>Number(x.data?.balance)!==41000)&&concurrentDonations.every(x=>Number(x.data?.balance)!==42000)){
+    throw new Error('family concurrent donation requests failed: '+JSON.stringify(concurrentDonations));
+  }
+  const donationFinal=await page.evaluate(async ({api,familyId,token})=>fetch(api+'/families/'+encodeURIComponent(familyId),{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),{api:API,familyId:family.id,token:localStorage.getItem('erischat_access_token')});
+  if(Number(donationFinal.balance)!==42000) throw new Error('family concurrent donation final balance mismatch: '+JSON.stringify(donationFinal));
+
   if(!membersAfterAccept.some(x=>x.user_id===member.user.id)) throw new Error('accepted family member missing: '+JSON.stringify(membersAfterAccept));
   const transfer=await page.evaluate(async ({api,familyId,userId})=>{
     const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
