@@ -98,8 +98,8 @@
      fetch(api()+'/discover/rooms?limit=50',{headers}).then(r=>r.ok?r.json():[]),
      fetch(api()+'/discover/nearby?limit=50',{headers}).then(r=>r.ok?r.json():[])
    ]);
-   const roomRows=(Array.isArray(rooms)?rooms:[]).filter(x=>String(x.name||'').toLowerCase().includes(q)).map(x=>({type:'Oda',title:x.name,sub:(x.member_count||0)+' kişi • seviye '+(x.level||1),run:()=>window.openRoom?.(x.room_id||x.id,x.name)}));
-   const userRows=(Array.isArray(people)?people:[]).filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.ErisChatDM?.create?.(x.user_id,x.nickname)}));
+   const roomList=Array.isArray(rooms)?rooms:(rooms?.rooms||rooms?.items||rooms?.data||[]); const peopleList=Array.isArray(people)?people:(people?.users||people?.items||people?.data||[]); const roomRows=roomList.filter(x=>String(x.name||'').toLowerCase().includes(q)).map(x=>({type:'Oda',title:x.name,sub:(x.member_count||0)+' kişi • seviye '+(x.level||1),run:()=>window.openRoom?.(x.room_id||x.id,x.name)}));
+   const userRows=peopleList.filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.ErisChatDM?.create?.(x.user_id,x.nickname)}));
    const matches=[...roomRows,...userRows]; out.innerHTML='';
    if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
    matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
