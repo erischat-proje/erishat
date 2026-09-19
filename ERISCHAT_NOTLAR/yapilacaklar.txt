@@ -905,3 +905,6 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] Bu commit sonrası Quality run sonucu bekleniyor; PASS varsayılmıyor.
 - [ ] Sonraki adım: yeni Quality run tamamlandığında ilk gerçek failure/console source okunacak ve kök neden düzeltilecek.
 - [ ] Müzik UI zinciri PASS olmadan gerçek playback/queue tamamlandı kabul edilmeyecek.
+
+
+[2026-09-19 devam 40] Quality #1045 ilk gercek hata dogrudan logdan bulundu ve b3cd489095d6d78a5d621281d9f03b0a6696c8de ile duzeltildi. Yeni Quality sonucu bekleniyor.
