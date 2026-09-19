@@ -568,3 +568,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Pages workflow source verified: configure-pages/upload-pages-artifact/deploy-pages and github-pages environment are present.
 - [ ] GitHub repository/environment Pages policy must be verified from the completed diagnostic output before changing workflow logic; no speculative Pages change made.
 - [ ] Quality final result still pending.
+
+
+[2026-09-19] PAGES DIAGNOSTICS GATE DÜZELTMESİ
+- [x] Pages diagnostics, GitHub Pages repository/environment durumunu raporlayan non-blocking tanı adımına çevrildi.
+- [x] Pages deployment workflow'unda değişiklik yapılmadı; yalnızca diagnostics workflow'undaki yanlış failure gate kaldırıldı.
+- [ ] Yeni run sonucu doğrulanacak.
