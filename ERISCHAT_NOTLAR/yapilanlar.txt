@@ -359,3 +359,10 @@ Room control checkpoint
 - [x] Exchange işlemi Lidya/Lidya Gem ledger/audit kaydı ve reference_id ile izlenebilir.
 - [x] Profil demo UI artık her dönüşümde idempotency anahtarı gönderiyor.
 - [ ] Yeni Quality runner/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+2026-09-19 — FREE-PLAY GAME ROUND PERSISTENCE
+- [x] Her oyun çalıştırmasında mevcut round_id artık GameRound tablosuna da kaydediliyor.
+- [x] Room oyunlarında room_id, kişisel oyunlarda NULL; sonuç status=finished olarak izlenebilir.
+- [x] GamePlay geçmişi ile GameRound round_id aynı işlem sonucuna bağlandı.
+- [ ] Blackjack çok adımlı hit/stand oturumu ve diğer oyunların canlı round lifecycle derinleştirmesi sonraki adım.
+- [ ] Yeni Quality runner/browser sonucu henüz doğrulanmadı.
