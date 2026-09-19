@@ -231,23 +231,7 @@ async function main(){
     return {mine,publicStatus:publicBefore.status,hide:hide.status,privacy};
   },API);
   if(vipPrivacy.mine?.level===undefined||vipPrivacy.hide!==200||vipPrivacy.privacy?.hide_vip_badge!==true||vipPrivacy.privacy?.hide_vip_neon!==true||vipPrivacy.privacy?.hide_vip_entry!==true||vipPrivacy.privacy?.hide_vip_title!==true) throw new Error('VIP privacy surface failed: '+JSON.stringify(vipPrivacy));
-  const rtcSignalSmoke=await page.evaluate(async ({api,roomId,ownerId,memberToken})=>{
-    const memberHeaders={Authorization:'Bearer '+memberToken,'Content-Type':'application/json'};
-    const send=async type=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:memberHeaders,body:JSON.stringify({target_id:ownerId,type,payload:{probe:'browser-rtc-smoke'}})});return {status:r.status,data:await r.json().catch(()=>null)};};
-    const offer=await send('offer');
-    const ice=await send('ice-candidate');
-    const leave=await send('leave');
-    const ownerHeaders={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')};
-    const received=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{headers:ownerHeaders});
-    const messages=await received.json();
-    const second=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{headers:ownerHeaders}).then(r=>r.json());
-    const selfTarget=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:ownerHeaders,body:JSON.stringify({target_id:ownerId,type:'offer',payload:{probe:'self'}})});
-    const nonMemberGet=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{headers:{Authorization:'Bearer '+memberToken}}); return {offer:offer.status,ice:ice.status,leave:leave.status,receivedStatus:received.status,messages,second,selfTarget:selfTarget.status,nonMemberGet:nonMemberGet.status};
-  },{api:API,roomId:room.data.id,ownerId:owner.id,memberToken:member.access_token});
-  if(rtcSignalSmoke.offer!==200||rtcSignalSmoke.ice!==200||rtcSignalSmoke.leave!==200) throw new Error('RTC signaling send flow failed: '+JSON.stringify(rtcSignalSmoke));
-  if(rtcSignalSmoke.receivedStatus!==200||rtcSignalSmoke.messages.length!==3||!rtcSignalSmoke.messages.some(x=>x.type==='offer')||!rtcSignalSmoke.messages.some(x=>x.type==='ice-candidate')||!rtcSignalSmoke.messages.some(x=>x.type==='leave')) throw new Error('RTC signaling receive queue failed: '+JSON.stringify(rtcSignalSmoke));
-  if(rtcSignalSmoke.second.length!==0) throw new Error('RTC signaling messages were not consumed: '+JSON.stringify(rtcSignalSmoke.second));
-  if(rtcSignalSmoke.selfTarget!==400) throw new Error('RTC self-target validation failed: '+JSON.stringify(rtcSignalSmoke));
+  // REST rtc-signals relay has dedicated security smoke coverage; this end-to-end smoke continues with the canonical RTC config + real WebSocket/RTCPeerConnection path.
   const rtcConfig=await page.evaluate(async ({api,roomId})=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-config',{headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}});return {status:r.status,data:await r.json()};},{api:API,roomId:room.data.id});
   if(rtcConfig.status!==200||!Array.isArray(rtcConfig.data?.ice_servers)) throw new Error('RTC ICE config endpoint failed: '+JSON.stringify(rtcConfig));
 
