@@ -1,6 +1,24 @@
 ERISCHAT OYUN MOTORU — BLACKJACK
+
 Kaynak kod: blackjack.py
 Ana bağlantı: registry.py → platform_routes.py
-Kapsam: gerçek 52 kartlık deste, start, hit, stand, dealer çözümleme, Ace hesabı, natural/push/loss/win.
-Round state GameRound.state_data içinde tutulur.
-Para/Lidya/Gem bahis bağlantısı yoktur.
+
+AKIŞ
+1. start() 52 kartlık desteyi oluşturur ve karıştırır.
+2. Oyuncu/dealer başlangıç elleri dağıtılır.
+3. Natural 21 durumları başlangıçta çözülür.
+4. Player phase sırasında hit/stand işlenir.
+5. 21 altındaki hit sonucu round açık kalır.
+6. Stand veya bust sonrası dealer 17+ olana kadar açılır.
+7. Sonuç win/push/loss olarak tamamlanır.
+8. Round state GameRound.state_data içinde saklanır.
+
+İLERİ KURALLAR İÇİN HAZIRLIK
+- can_double(): yalnızca ilk iki kartta double koşulunu kontrol eder.
+- can_split(): aynı rank iki kart için split uygunluğunu kontrol eder.
+- Bu yardımcılar henüz ayrı action endpointi olarak aktif değildir.
+
+GÜVENLİK
+- Free-play.
+- Lidya/Lidya Gem stake veya payout yok.
+- Oyun sonucu kullanıcı bakiyesini değiştirmez.
