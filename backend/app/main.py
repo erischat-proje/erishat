@@ -463,9 +463,6 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         if not room or not member or banned:
             await websocket.close(code=1008, reason="oda üyeliği gerekli")
             return
-        if not room.chat_enabled:
-            await websocket.close(code=1008, reason="oda sohbeti kapalı")
-            return
         history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
         history.reverse()
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
