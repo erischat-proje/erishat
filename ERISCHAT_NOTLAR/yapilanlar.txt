@@ -629,3 +629,11 @@ Room control checkpoint
 - [x] Arama ekranındaki sahte “Arama hazır” bildirimi kaldırıldı ve gerçek /search?q=... renderer'ı eklendi.
 - [x] Commitler: 7cbbe80e40a3a51542b44916b4f0a54b243a9da0, 78d7786b03530b448e1f7676650003fdb5a0abec, 089795522290aeaf8e2376cd759748e2b5df8e80.
 - [ ] Pages canlı HTTP/görsel doğrulaması ve firma demosu son smoke kontrolü.
+
+
+[2026-09-19 — PLACEHOLDER TEMİZLİĞİ]
+- [x] Ana keşfet ekranındaki “etkinlik API yakında” placeholder'ı kaldırıldı; gerçek veri yoksa dürüst boş durum gösteriliyor.
+- [x] Profilde sabit VIP 12/12 seviye demo verisi kaldırıldı; VIP seviyesi /me/vip üzerinden gerçek kullanıcı durumundan render ediliyor.
+- [x] Arama kodu olmayan /search endpoint'ine bağımlı olmaktan çıkarıldı; gerçek /discover/rooms + /discover/nearby sonuçlarından oda/kullanıcı araması yapıyor.
+- [x] Canlı Pages URL'si bu ortamda tekrar kontrol edildi; web erişimi “Internal Error” döndürdüğü için canlı görsel PASS ilan edilmedi.
+- Commitler: 021c7582cf29be5b8948cbbd6542ebdb928c915d, ebf71a61f24348733a1774392401188f0e03471c6.
