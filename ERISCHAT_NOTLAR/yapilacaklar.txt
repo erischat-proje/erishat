@@ -698,3 +698,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Canonical `GET /v1/families/invitations` route'u eklendi; pending davet inbox'ı ve expiry temizliği sağlandı.
 - [x] Commit: `b0640cbda36e3218777c6d3a4a1568ae4efb0af5`.
 - [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
+
+[2026-09-19 devam 11] RTC BROWSER SMOKE IDENTITY
+- [x] Quality #35438348943 gerçek RTC smoke failure kökü düzeltildi: owner kimliği artık auth'suz /me çağrısından değil, mevcut authenticated browser session'daki `owner.id` değerinden alınıyor.
+- [x] Commit: `1a9a5de5ea42ab03ddf4082cdf0433f69efad359`.
+- [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
