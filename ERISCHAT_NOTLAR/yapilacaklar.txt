@@ -538,3 +538,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] Kalan doğrulama: Gerçek room WebSocket chat browser smoke eklendi. Fresh Quality/CI sonucu henüz PASS değil; gerçek iki-browser WebRTC + TURN/cellular-network doğrulaması ayrıca açık.
+
+
+[2026-09-19] Kalan doğrulama: Music `music_sync` iki-WebSocket browser E2E eklendi. Fresh CI/Quality PASS hâlâ bekleniyor; TURN/cellular-network gerçek saha testi ayrıca açık.
