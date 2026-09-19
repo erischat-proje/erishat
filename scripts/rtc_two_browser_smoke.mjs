@@ -18,7 +18,14 @@ async function main(){
     p1.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000}),
     p2.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000})
   ]);
-  const owner=await p1.evaluate(()=>({user:window.ErisAuth.user,token:localStorage.getItem('erischat_access_token')}));
+  const ownerCreated=await p1.evaluate(async api=>{
+    const s=Math.random().toString(36).slice(2,8);
+    const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'RTC2B_OWNER_'+s,avatar:'🎙️',gender:'male'})});
+    return {status:r.status,data:await r.json()};
+  },API);
+  if(!ownerCreated.data?.user?.id||!ownerCreated.data?.access_token) throw new Error('owner creation failed: '+JSON.stringify(ownerCreated));
+  const owner={user:ownerCreated.data.user,token:ownerCreated.data.access_token};
+  await p1.evaluate(token=>localStorage.setItem('erischat_access_token',token),owner.token);
   const created=await p1.evaluate(async api=>{
     const s=Math.random().toString(36).slice(2,8);
     const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'RTC2B_'+s,avatar:'🎧',gender:'male'})});
