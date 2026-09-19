@@ -82,7 +82,21 @@
           const act=async(action)=>{
             actionBox.querySelectorAll('button').forEach(b=>b.disabled=true);
             const rr=await api('/games/blackjack/'+encodeURIComponent(data.round_id)+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})}).catch(()=>null);
-            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total; data.available_actions=dd.available_actions||[]; if(Array.isArray(dd.state?.hands)){data.blackjack_hands=dd.state.hands; data.blackjack_active_hand=dd.state.active_hand||0;}
+            const dd=rr?await rr.json().catch(()=>({})):{}; data.state=dd.state||data.state; data.player_total=dd.state?.player_total; data.dealer_total=dd.state?.dealer_total; data.available_actions=dd.available_actions||[]; if(Array.isArray(dd.state?.hands)){
+function renderBlackjackHands(container, hands, activeIndex){
+  if(!container || !Array.isArray(hands) || hands.length===0) return;
+  let box=container.querySelector('.blackjack-split-hands');
+  if(!box){ box=document.createElement('div'); box.className='blackjack-split-hands'; container.appendChild(box); }
+  box.innerHTML='';
+  hands.forEach((h,i)=>{
+    const el=document.createElement('div'); el.className='blackjack-hand'+(i===activeIndex?' active':'');
+    const title=document.createElement('div'); title.textContent='El '+(i+1)+(i===activeIndex?' • Aktif':'');
+    const cards=document.createElement('div'); cards.textContent=(h.cards||[]).join('  ');
+    const total=document.createElement('div'); total.textContent='Toplam: '+(h.total??0)+(h.result?' • '+h.result:'');
+    el.append(title,cards,total); box.appendChild(el);
+  });
+}
+data.blackjack_hands=dd.state.hands; data.blackjack_active_hand=dd.state.active_hand||0;}
             if(dd.result==='pending'){show();return;}
             out.innerHTML=`<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 Sonuç: <b>${esc(dd.result||dd.detail||'Bilinmiyor')}</b><br>Sen: ${esc(dd.state?.player_total??'')} • Dealer: ${esc(dd.state?.dealer_total??'')}</div>`;
           };
