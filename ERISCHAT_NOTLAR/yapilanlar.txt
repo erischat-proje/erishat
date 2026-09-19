@@ -656,3 +656,11 @@ Room control checkpoint
 - [x] Smoke artık zaten doğrulanmış `owner.id` değerini RTC callback'ine doğrudan geçiriyor.
 - [x] Fix commit: `1a9a5de5ea42ab03ddf4082cdf0433f69efad359`.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 12] QUALITY #35438451566 — REPORT SMOKE CATEGORY FIX
+- [x] Fresh Quality, RTC identity düzeltmesinden sonra report flow aşamasında gerçek 422 failure verdi.
+- [x] Kök neden: ReportCreate şeması zorunlu `category` alanı isterken browser smoke yalnızca `target_user_id` ve `reason` gönderiyordu.
+- [x] Smoke payload'ına `category: 'safety'` eklendi; backend sözleşmesiyle hizalandı.
+- [x] Fix commit: `1a9a5de5ea42ab03ddf4082cdf0433f69efad359` sonrası düzeltme commit'i oluşturuldu.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
