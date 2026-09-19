@@ -119,7 +119,7 @@
   }
   const boot=()=>bind();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('erischat:room-opened',()=>setTimeout(bind,0));
   window.ErisRoomCompleteV3={openMenu,openName,openLevels};
 })();
 /* Room UI v5 — single in-room controls, working demo capacity/theme controls. */
@@ -307,5 +307,5 @@
   }
   const boot=()=>bind();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('erischat:room-opened',()=>setTimeout(bind,0));
 })();
