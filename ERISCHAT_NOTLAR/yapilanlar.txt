@@ -1141,3 +1141,10 @@ Room control checkpoint
 - [x] Quality workflow static syntax/required-file listesine `admin-live.js` eklendi; artık admin frontend kodu da `node --check` ile gerçek runner kapısında kontrol edilecek.
 - [x] Fix commit: 0d9ef4948caeb1ad985aff16d744eed8b15facb4.
 - [ ] Bu commit sonrası yeni Quality runner sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+
+[2026-09-19 devam — ADMIN UI → BACKEND E2E]
+- [x] `scripts/admin_browser_smoke.mjs` eklendi: DA yönetim panelinin gerçek Chromium UI açılışı, DA rolü görünümü, ID Sorgu/Yönetici Yetkileri yüzeyleri ve backend admin enforcement kontrolü.
+- [x] `system_identity_admin_smoke.py` ephemeral DA token + hedef kullanıcı fixture'ı üretir; workflow sonunda fixture temizlenir.
+- [x] Quality workflow admin browser smoke adımını ve `admin_browser_smoke.mjs` static syntax gate'ini içeriyor.
+- [ ] Bu yeni zincirin GitHub Actions Quality runner PASS sonucu henüz doğrulanmadı; PASS varsayılmayacak.
