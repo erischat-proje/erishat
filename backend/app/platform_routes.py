@@ -615,6 +615,20 @@ def register_platform_auth(current_user_dependency):
             data["natural_blackjack"] = len(player_hand) == 2 and data["player_total"] == 21
             data["dealer_natural"] = len(dealer_hand) == 2 and _blackjack_hand_total(dealer_hand) == 21
             data["rules"] = "free-play multi-step blackjack; hit/stand; standard ace scoring"
+            if data["natural_blackjack"] or data["dealer_natural"]:
+                if data["natural_blackjack"] and not data["dealer_natural"]:
+                    data["result"] = "blackjack"
+                elif data["natural_blackjack"] and data["dealer_natural"]:
+                    data["result"] = "push"
+                elif data["dealer_natural"]:
+                    data["result"] = "loss"
+                data["state"]["phase"] = "finished"
+                data["state"]["result"] = data["result"]
+                data["state"]["dealer_hand"] = dealer_hand
+                data["state"]["dealer_total"] = _blackjack_hand_total(dealer_hand)
+                data["state"]["deck"] = deck
+                data["state"]["natural_blackjack"] = data["natural_blackjack"]
+                data["state"]["dealer_natural"] = data["dealer_natural"]
             data["animation"] = {"type": "blackjack_deal", "steps": 4, "reveal": "dealer_second_card_last"}
         elif game_type == "crash":
             ranges = {"x1_00_1_49": (1.0,1.49), "x1_50_1_99": (1.5,1.99), "x2_00_4_99": (2.0,4.99), "x5_00_9_99": (5.0,9.99), "x10_plus": (10.0,25.0)}
@@ -639,10 +653,10 @@ def register_platform_auth(current_user_dependency):
             id=round_id,
             room_id=room_id,
             game_type=game_type,
-            status="finished",
+            status=("finished" if game_type != "blackjack" or data.get("result") != "pending" else "open"),
             started_at=now,
             ends_at=now,
-            result_key=(None if game_type == "blackjack" else result),
+            result_key=(data.get("result") if game_type == "blackjack" and data.get("result") != "pending" else (None if game_type == "blackjack" else result)),
             state_data=json.dumps(data.get("state", data), ensure_ascii=False, separators=(",", ":")),
         ))
         db.flush()
