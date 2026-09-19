@@ -123,3 +123,5 @@ NOT
 - `5823a1fbef80cf8a0961e0ff946d47bacc27dcc7`: Profil VIP ilerleme çubuğundaki hesap düzeltildi; `current_level_spent` varsa mevcut VIP aralığı içinde ilerleme olarak kullanılıyor, yoksa toplam harcamadan eşik tabanı çıkarılıyor. VIP 1–12 eşikleri demo ile hizalı.
 
 - `d07aa78daa0abf94c5661d758bbecacd48c78896`: Demo profil paneli artık `/me` ve `/me/wallet` servislerini ayrı ayrı izliyor; profil veya cüzdan backend'i başarısızsa boş/sahte veri gibi görünmek yerine panel içinde gerçek hata durumu gösteriliyor.
+
+- `db036581bd0cc7e1f66d35e6e0800d0c79b79deb`: Profil demo servis-hata paneli eklenirken oluşan template literal bozulması düzeltildi; profil demo HTML'i tekrar tek ve geçerli template olarak çalışıyor.
