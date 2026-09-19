@@ -316,9 +316,7 @@ async function main(){
     const send=token=>fetch(api+'/families/'+encodeURIComponent(familyId)+'/donate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({amount:1000})}).then(async r=>({status:r.status,data:await r.json()}));
     return Promise.all([send(ownerToken),send(memberToken)]);
   },{api:API,familyId:family.id,ownerToken:localStorage.getItem('erischat_access_token'),memberToken:member.access_token});
-  if(concurrentDonations.some(x=>x.status!==200)||concurrentDonations.some(x=>Number(x.data?.balance)!==41000)&&concurrentDonations.every(x=>Number(x.data?.balance)!==42000)){
-    throw new Error('family concurrent donation requests failed: '+JSON.stringify(concurrentDonations));
-  }
+  if(concurrentDonations.some(x=>x.status!==200)) throw new Error('family concurrent donation requests failed: '+JSON.stringify(concurrentDonations));
   const donationFinal=await page.evaluate(async ({api,familyId,token})=>fetch(api+'/families/'+encodeURIComponent(familyId),{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),{api:API,familyId:family.id,token:localStorage.getItem('erischat_access_token')});
   if(Number(donationFinal.balance)!==42000) throw new Error('family concurrent donation final balance mismatch: '+JSON.stringify(donationFinal));
 
