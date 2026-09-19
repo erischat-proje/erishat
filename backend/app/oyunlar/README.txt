@@ -26,3 +26,8 @@ GELİŞTİRME KURALI
 - registry.py üzerinden sisteme kaydedilir.
 - Ana router'a oyun algoritması gömülmez.
 - Persistence ve yetkilendirme ana sistemde kalır.
+
+Registry integrity
+- registry.py validates that every declared room/private game is registered.
+- Every registered engine must expose play(choice, profile, data).
+- This fails fast during import instead of silently exposing a broken game catalog.
