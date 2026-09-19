@@ -198,7 +198,6 @@ async function main(){
     return {mine,publicStatus:publicBefore.status,hide:hide.status,privacy};
   },API);
   if(vipPrivacy.mine?.level===undefined||vipPrivacy.hide!==200||vipPrivacy.privacy?.hide_vip_badge!==true||vipPrivacy.privacy?.hide_vip_neon!==true||vipPrivacy.privacy?.hide_vip_entry!==true||vipPrivacy.privacy?.hide_vip_title!==true) throw new Error('VIP privacy surface failed: '+JSON.stringify(vipPrivacy));
-  if(roomInvite.status!==201||!roomInvite.data?.invited||!roomInvite.memberNotifications.some(x=>x.kind==='room_invite')) throw new Error('room invite notification flow failed: '+JSON.stringify(roomInvite));
   const rtcSignalSmoke=await page.evaluate(async ({api,roomId,ownerId,memberToken})=>{
     const memberHeaders={Authorization:'Bearer '+memberToken,'Content-Type':'application/json'};
     const send=async type=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:memberHeaders,body:JSON.stringify({target_id:ownerId,type,payload:{probe:'browser-rtc-smoke'}})});return {status:r.status,data:await r.json().catch(()=>null)};};
@@ -349,6 +348,7 @@ async function main(){
     const n=await fetch(api+'/me/notifications',{headers:{Authorization:'Bearer '+window.__memberToken}}).catch(()=>null);
     return {status:r.status,data:await r.json(),memberNotifications:n?await n.json():[]};
   },{api:API,roomId:room.data.id,targetId:member.user.id});
+  if(roomInvite.status!==201||!roomInvite.data?.invited||!roomInvite.memberNotifications.some(x=>x.kind==='room_invite')) throw new Error('room invite notification flow failed: '+JSON.stringify(roomInvite));
   await page.locator('#erisDemoBtn').click();
   await page.locator('[data-ed="profile"]').click();
   await page.waitForFunction(() => document.querySelector('#ed-profile')?.textContent.includes('AKTİF GÖRÜNÜM / TRY-ON'));
