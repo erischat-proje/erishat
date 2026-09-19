@@ -51,7 +51,7 @@ if s>=300: raise RuntimeError(f"initial wallpaper failed: {s} {me}")
 item=normal[0]
 s,buy=req("POST","/me/wallpaper/purchase",token,{"asset_key":item["key"]})
 if s>=300: raise RuntimeError(f"wallpaper purchase failed: {s} {buy}")
-s,apply=req("POST","/me/wallpaper/apply",token,{"key":item["key"]})
+s,apply=req("POST","/me/wallpaper/apply",token,{"asset_key":item["key"]})
 if s>=300: raise RuntimeError(f"wallpaper apply failed: {s} {apply}")
 s,after=req("GET","/me/wallpaper",token)
 if s>=300 or after.get("asset_key")!=item["key"]:
