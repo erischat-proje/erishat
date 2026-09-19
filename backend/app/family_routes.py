@@ -131,9 +131,18 @@ def register_family_auth(current_user_dependency):
     @router.post("/families/{family_id}/donate")
     def donate_family(family_id: str, payload: FamilyDonationCreate, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
-        if user.lidya < payload.amount: raise HTTPException(status_code=400, detail="Yetersiz Lidya")
-        user.lidya -= payload.amount; family.balance += payload.amount; family.level = family_level(family.balance)
-        db.add(FamilyDonation(family_id=family.id, user_id=user.id, amount=payload.amount)); db.commit(); return family_payload(db, family)
+        if payload.amount < 1: raise HTTPException(status_code=400, detail="Geçerli bir bağış miktarı gerekli")
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        locked_family = db.scalar(select(Family).where(Family.id == family_id).with_for_update())
+        if not locked_user or not locked_family: raise HTTPException(status_code=404, detail="Aile veya kullanıcı bulunamadı")
+        if locked_user.lidya < payload.amount: raise HTTPException(status_code=400, detail="Yetersiz Lidya")
+        locked_user.lidya -= payload.amount
+        locked_family.balance += payload.amount
+        locked_family.level = family_level(locked_family.balance)
+        db.add(FamilyDonation(family_id=locked_family.id, user_id=locked_user.id, amount=payload.amount))
+        db.commit()
+        db.refresh(locked_family)
+        return family_payload(db, locked_family)
 
     @router.get("/families/{family_id}/chat")
     def family_chat(family_id: str, limit: int = Query(100, ge=1, le=200), offset: int = Query(0, ge=0), db: Session = Depends(get_db), user: User = auth()):
