@@ -22,6 +22,11 @@
       <div data-profile-status style="font-size:8px;color:#938a9f;min-height:11px"></div>
     `;
     profile.appendChild(controls);
+    const vipPanel = document.createElement('div');
+    vipPanel.setAttribute('data-erischat-vip-panel', '');
+    vipPanel.style.cssText = 'margin-top:10px;padding:14px;border:1px solid #ffffff14;border-radius:18px;background:linear-gradient(135deg,#ffffff07,#8a5cff0d);display:grid;gap:8px';
+    vipPanel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;font-weight:900">VIP DURUMU</span><span data-vip-badge style="font-size:18px"></span></div><div data-vip-title style="font-size:10px;color:#fff">VIP değil</div><div data-vip-progress style="font-size:8px;color:#938a9f">Seviye bilgisi yükleniyor…</div><div style="height:6px;background:#ffffff0b;border-radius:99px;overflow:hidden"><div data-vip-bar style="height:100%;width:0%;background:linear-gradient(90deg,#7b4cff,#ff4fa3);border-radius:99px;transition:width .25s"></div></div><div data-vip-perks style="font-size:8px;color:#938a9f;line-height:1.45"></div>';
+    profile.appendChild(vipPanel);
     const nicknameInput = controls.querySelector('[data-profile-nickname]');
     const saveButton = controls.querySelector('[data-profile-save]');
     const notificationButton = controls.querySelector('[data-profile-notifications]');
@@ -38,6 +43,29 @@
       if (balance && user.lidya != null) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
       if (name && user.nickname) name.textContent = user.nickname;
       if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
+      const vipPanel = controls.parentElement?.querySelector('[data-erischat-vip-panel]');
+      if (vipPanel) {
+        const badge = vipPanel.querySelector('[data-vip-badge]');
+        const title = vipPanel.querySelector('[data-vip-title]');
+        const progress = vipPanel.querySelector('[data-vip-progress]');
+        const bar = vipPanel.querySelector('[data-vip-bar]');
+        const perks = vipPanel.querySelector('[data-vip-perks]');
+        Promise.resolve().then(async () => {
+          const apiBase = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-production.up.railway.app/v1').replace(/\\/$/, '');
+          const token = localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
+          const response = await fetch(apiBase + '/me/vip', {headers:{Accept:'application/json', Authorization:'Bearer '+token}});
+          if (!response.ok) throw new Error('VIP verisi alınamadı');
+          return response.json();
+        }).then(vip => {
+          const level = Number(vip.level || 0); const spent = Number(vip.total_spent || 0); const next = vip.next_level_spent == null ? null : Number(vip.next_level_spent);
+          badge.textContent = vip.badge || '';
+          title.textContent = level ? (vip.title || ('VIP '+level)) + ' • Seviye ' + level : 'VIP değil';
+          if (!level) { progress.textContent = 'VIP seviyesi henüz açılmadı.'; bar.style.width = '0%'; }
+          else if (!next) { progress.textContent = spent.toLocaleString('tr-TR') + ' toplam harcama • Maksimum VIP seviyesi'; bar.style.width = '100%'; }
+          else { const current = level === 1 ? 1000 : Number([0,1000,5000,15000,30000,60000,120000,250000,500000,1000000,2000000,5000000,10000000][level] || 0); const pct = Math.max(0, Math.min(100, ((spent-current)/(next-current))*100)); progress.textContent = spent.toLocaleString('tr-TR') + ' / ' + next.toLocaleString('tr-TR') + ' • Sonraki seviye VIP ' + (level+1); bar.style.width = pct + '%'; }
+          const perkList = Array.isArray(vip.perks) ? vip.perks.slice(-4) : []; perks.textContent = perkList.length ? 'Açılan özellikler: ' + perkList.join(' • ') : 'Açılan özellik bulunmuyor.';
+        }).catch(() => { progress.textContent = 'VIP verisi alınamadı.'; });
+      }
     };
     const refresh = async () => {
       try {
