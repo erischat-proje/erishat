@@ -890,3 +890,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Quality run 35442508009 / run #1032 / HEAD 6e444cb3eba514fecb2dfa02deeb3bbb086dc14b SUCCESS ile tamamlandı.
 - [x] 28 ana kalite adımının tamamı geçti; müzik kuyruk Lidya row-lock + unique-slot IntegrityError hardening sonrası regression oluşmadı.
 - [ ] Sonraki ana teknik sıra: gerçek müzik kaynağı/playback derinleştirmesi, gerçek 2-browser WebRTC + TURN/mobile transport kanıtı, 139 frame alpha görsel standardı ve Pages canlı zinciri.
+
+[2026-09-19 devam 38] MÜZİK UI API BAĞLANTISI HARDENING
+- [x] Quality #1038 (run 35443029537) ilk gerçek hatayı verdi: frontend-backend browser smoke içinde music UI satırı oluşmadı; hata çıktısı `room music HTMLAudio playback binding failed: {"panel":false,"audio":false,"src":"","musicId":"","row":false}`.
+- [x] Kök neden: frontend/room-music-ui.js, ErisRoom.music/musicPlayback/addMusic/deleteMusic API yüzeyinin başka bir dosyada garanti edildiğini varsayıyordu; bağımsız UI açılışında bu yüzey mevcut olmayınca liste yüklenmiyordu.
+- [x] frontend/room-music-ui.js içine canonical ErisPlatform.api tabanlı music API adapter'ları eklendi ve window.ErisRoom müzik fonksiyonları garanti altına alındı.
+- [x] Commit: d7f911160281a03d0624001d95e962c1adf77fa2.
+- [ ] Bu düzeltmenin yeni Quality run'ında tam PASS olarak doğrulanması bekleniyor.
