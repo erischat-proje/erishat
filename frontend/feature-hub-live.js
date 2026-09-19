@@ -68,14 +68,15 @@
       ['👤 Profil Try-on','Avatar ve çerçeve deneme','profile'],
       ['🛡️ Güvenlik / Mod','Bildirim, engelleme ve moderasyon','safety'],
       ['🚀 Onboarding','İlk kullanım akışı','onboarding'],
-      ['⚙️ Oda Ayarları','Oda sahibi ayarları','roomSettings']
+      ['⚙️ Oda Ayarları','Oda sahibi ayarları','roomSettings'],
+      ['🎮 Oyun Merkezi','7 oyunluk müşteri demo kataloğu','games']
     ];
     panel.innerHTML='<div class="eh-note">Tüm yardımcı sistemler burada. Artık ekranın üzerinde sürekli duran popup/buton yığını yok.</div><div class="eh-grid" id="ehToolsGrid"></div>';
     const grid=panel.querySelector('#ehToolsGrid');
     systems.forEach(([title,desc,key])=>{
       const card=document.createElement('div');card.className='eh-card';
       card.innerHTML='<b>'+esc(title)+'</b><small>'+esc(desc)+'</small>';
-      const fn=window.ErisDemoExtras?.[key];
+      const fn=key==='games' ? (window.ErisChatGames?.open ? (()=>window.ErisChatGames.open('main')) : null) : window.ErisDemoExtras?.[key];
       card.append(btn(fn?'Aç':'Hazırlanıyor',fn||(()=>window.toast?.('Bu sistem henüz bağlanmadı.')),!fn));
       grid.append(card);
     });
