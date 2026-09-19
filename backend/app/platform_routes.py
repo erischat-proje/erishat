@@ -455,6 +455,19 @@ def register_platform_auth(current_user_dependency):
                 raise HTTPException(status_code=403, detail="Bu oyun turuna erişiminiz yok")
         return row
 
+    def _blackjack_hand_total(hand: list[str]) -> int:
+        values = {"J": 10, "Q": 10, "K": 10, "A": 11}
+        total = 0
+        aces = 0
+        for card in hand:
+            rank = card[:-1]
+            total += values.get(rank, int(rank) if rank.isdigit() else 0)
+            aces += int(rank == "A")
+        while total > 21 and aces:
+            total -= 10
+            aces -= 1
+        return total
+
     @router.get("/games/rounds/{round_id}")
     def game_round_state(round_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = db.get(GameRound, round_id)
@@ -569,21 +582,30 @@ def register_platform_auth(current_user_dependency):
         elif game_type == "cups":
             data.update({"winning_cup": result, "choice_hit": bool(choice and choice == result), "animation": {"type": "cups_shuffle", "steps": 8, "reveal": result}})
         if game_type == "blackjack":
-            ranks = list(range(2, 11)) + [10, 10, 10, 11]
-            player = [random.choice(ranks), random.choice(ranks)]
-            dealer = [random.choice(ranks), random.choice(ranks)]
-            def hand_total(hand):
-                total = sum(hand); aces = hand.count(11)
-                while total > 21 and aces: total -= 10; aces -= 1
-                return total
-            ps, ds = hand_total(player), hand_total(dealer)
-            natural = len(player) == 2 and ps == 21; dealer_natural = len(dealer) == 2 and ds == 21
-            if natural and not dealer_natural: result = "blackjack"
-            elif ps > 21: result = "loss"
-            elif ds > 21 or ps > ds: result = "win"
-            elif ps == ds: result = "push"
-            else: result = "loss"
-            data.update({"player_hand": player, "dealer_hand": dealer, "player_total": ps, "dealer_total": ds, "natural_blackjack": natural, "dealer_natural": dealer_natural, "rules": "single-hand demo; standard ace scoring", "animation": {"type": "blackjack_deal", "steps": 4, "reveal": "dealer_second_card_last"}})
+            suits = ["H", "D", "C", "S"]
+            ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+            deck = [r + s for s in suits for r in ranks]
+            random.shuffle(deck)
+            player_hand = [deck.pop(), deck.pop()]
+            dealer_hand = [deck.pop(), deck.pop()]
+            data["result"] = "pending"
+            data["state"] = {
+                "phase": "player",
+                "deck": deck,
+                "player_hand": player_hand,
+                "dealer_hand": dealer_hand,
+                "player_total": _blackjack_hand_total(player_hand),
+                "dealer_total": _blackjack_hand_total(dealer_hand[:1]),
+                "result": "pending",
+            }
+            data["player_hand"] = player_hand
+            data["dealer_hand"] = dealer_hand
+            data["player_total"] = _blackjack_hand_total(player_hand)
+            data["dealer_total"] = _blackjack_hand_total(dealer_hand[:1])
+            data["natural_blackjack"] = len(player_hand) == 2 and data["player_total"] == 21
+            data["dealer_natural"] = len(dealer_hand) == 2 and _blackjack_hand_total(dealer_hand) == 21
+            data["rules"] = "free-play multi-step blackjack; hit/stand; standard ace scoring"
+            data["animation"] = {"type": "blackjack_deal", "steps": 4, "reveal": "dealer_second_card_last"}
         elif game_type == "crash":
             ranges = {"x1_00_1_49": (1.0,1.49), "x1_50_1_99": (1.5,1.99), "x2_00_4_99": (2.0,4.99), "x5_00_9_99": (5.0,9.99), "x10_plus": (10.0,25.0)}
             lo, hi = ranges[result]; data["multiplier"] = round(random.uniform(lo, hi), 2); data["animation"] = {"type": "crash_curve", "duration_ms": random.randint(2200, 5200), "crash_at": data["multiplier"]}
@@ -610,8 +632,8 @@ def register_platform_auth(current_user_dependency):
             status="finished",
             started_at=now,
             ends_at=now,
-            result_key=result,
-            state_data=json.dumps(data, ensure_ascii=False, separators=(",", ":")),
+            result_key=(None if game_type == "blackjack" else result),
+            state_data=json.dumps(data.get("state", data), ensure_ascii=False, separators=(",", ":")),
         ))
         db.flush()
         return _save_game_play(db, user, game_type, choice, result, data)
