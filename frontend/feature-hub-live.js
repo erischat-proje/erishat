@@ -4,7 +4,7 @@
   const esc = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
   const api = (path, options = {}) => window.ErisPlatform?.api(path, options) ?? Promise.reject(new Error('Platform hazır değil'));
   const css = `
-    #erisHubBtn{position:fixed;right:14px;bottom:88px;z-index:80;border:1px solid #ffffff22;background:#17121f;color:#fff;border-radius:14px;width:44px;height:44px;box-shadow:0 12px 30px #0007}
+    /* legacy floating hub trigger removed */ #erisHubBtn{display:none!important;position:fixed;right:14px;bottom:88px;z-index:80;border:1px solid #ffffff22;background:#17121f;color:#fff;border-radius:14px;width:44px;height:44px;box-shadow:0 12px 30px #0007}
     #erisHub{display:none;position:fixed;inset:0;z-index:200;background:#030208ee;align-items:flex-end}
     #erisHub.show{display:flex}.eh-sheet{width:min(520px,100%);max-height:92vh;overflow:auto;background:#0b0911;border:1px solid #ffffff18;border-radius:27px 27px 0 0;padding:16px;color:#fff}
     .eh-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eh-head h2{margin:0;font-size:19px}.eh-close{border:0;background:#ffffff0b;color:#fff;width:36px;height:36px;border-radius:11px}
