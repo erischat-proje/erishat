@@ -133,3 +133,4 @@ NOT
 - `f05e8605ea62e83f4c2239fbb5dcd56a44056445`: Aile demo fonksiyonunda `await` kullanılmasına rağmen fonksiyonun `async` olmaması düzeltildi; aile/üye/sohbet yükleme akışı artık JavaScript sözdizimi hatasına takılmadan başlatılabilir.
 
 - `4e5e9c8b921e57590bd5c67e00f93fb742543fdc`: `demo-extras-live.js` içindeki backend `await` kullanan üst seviye demo yükleyicileri (`seatsDemo`, `roomChatDemo`, `musicDemo`, `announcementDemo`, `familyDemo`, `storeDemo`, `profileDemo`) `async` olarak işaretlendi; böylece demo sistemleri açılırken sözdizimi kaynaklı çalışma hatası riski giderildi.
+- `a3fec8895721da3e4f2719438201fc3dff0765b6`: Feature Hub listeleri daha dayanıklı hale getirildi; odalar, kozmetik ve sahip olunan kozmetik endpoint'lerinin dizi/`items`/`rooms`/`data` gibi farklı cevap şekilleri destekleniyor. Aile paneli de localStorage boş olsa bile `/families` üzerinden mevcut ilk aileyi keşfedip `eris_family_id` ile oturumu sürdürüyor.
