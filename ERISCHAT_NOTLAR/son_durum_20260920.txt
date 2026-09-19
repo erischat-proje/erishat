@@ -105,3 +105,5 @@ NOT
 - `b8398698ec008a10c3b8283d90d3511451ba26a6`: Aile demo backend durumları ayrıştırıldı; aile servisi erişilemezken 'aile yok' gösterilmiyor, tekrar dene aksiyonu geliyor. Aile sohbetinde API hatası artık 'henüz mesaj yok' gibi yanlış görünmüyor.
 
 - `da57963db90e2d5b8974ba099af41ab890c52306`: Keşfet yüzeyindeki Yakındakiler/Rastgele Sohbet/Rastgele Oda API hataları artık yalnızca toast'a bırakılmıyor; sonuç panelinde açık servis durumu gösteriliyor.
+
+- `5f8a27287e9aa7703a90087c5c5c07ca1741c3d5`: Oda sohbeti demo yüzeyinde bağlantı/oda bulunamama durumları görünür hale getirildi; Yenile aksiyonu ve gönderim sırasında bağlantı hazır değil uyarısı eklendi. Gerçek WebSocket oda sohbeti kullanılmaya devam ediyor.
