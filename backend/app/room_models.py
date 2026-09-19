@@ -82,6 +82,10 @@ class RoomMusic(Base):
     title: Mapped[str] = mapped_column(String(128), nullable=False)
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
     paid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    is_playing: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    position_seconds: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
