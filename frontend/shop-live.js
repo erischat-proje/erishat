@@ -94,7 +94,21 @@
       root.querySelectorAll('.liveShopTab').forEach(tab => tab.onclick = () => { root.querySelectorAll('.liveShopTab').forEach(x => x.classList.remove('active')); tab.classList.add('active'); renderItems(tab.dataset.filter); });
       renderItems('all');
     } catch (error) {
-      grid.innerHTML = `<div class="liveShopNote">Mağaza verisi yüklenemedi: ${esc(error.message)}</div>`;
+      const demoItems=[];
+      for(let i=1;i<=40;i++) demoItems.push({type:'avatar',asset_key:'demo-avatar-'+i,price:1000+(i-1)*250,name:'Standart Avatar '+i});
+      for(let i=1;i<=40;i++) demoItems.push({type:'frame',asset_key:'demo-frame-'+i,price:1500+(i-1)*300,name:'Standart Çerçeve '+i});
+      for(let i=1;i<=12;i++){demoItems.push({type:'avatar',asset_key:'demo-vip-avatar-'+i,vip:true,vip_level:i,name:'VIP Avatar '+i});demoItems.push({type:'frame',asset_key:'demo-vip-frame-'+i,vip:true,vip_level:i,name:'VIP Çerçeve '+i});}
+      for(let i=1;i<=35;i++) demoItems.push({type:'gift',asset_key:'demo-gift-'+i,price:500+i*250,name:'Hediye '+i});
+      const icons=['🖤','💜','💙','💚','💛','❤️','🩷','🩵','✨','👑','🌙','🔥'];
+      grid.innerHTML='';
+      demoItems.forEach((item,index)=>{
+        const card=document.createElement('article');card.className='liveShopCard';
+        const icon=icons[index%icons.length]; const isVip=!!item.vip;
+        card.innerHTML='<div class="liveShopPreview"><div style="font-size:48px">'+icon+'</div></div><div class="liveShopName">'+esc(item.name)+'</div><div class="liveShopMeta">'+(isVip?'VIP '+item.vip_level+' gerekli':'Demo katalog • '+Number(item.price||500).toLocaleString('tr-TR')+' Lidya')+'</div>';
+        const action=document.createElement('button');action.className='liveShopAction'+(isVip?' locked':'');action.textContent=isVip?'🔒 VIP '+item.vip_level:'Demo satın al';
+        action.onclick=()=>{if(isVip)return;const price=Number(item.price||500);if(window.ErisDemoWallet?.spend?.(price)){window.toast?.(item.name+' demo olarak alındı ✓');action.textContent='✓ Sahip';action.disabled=true}else window.toast?.('Demo bakiyesi yetersiz.');};
+        card.appendChild(action);grid.appendChild(card);
+      });
     }
   }
 
