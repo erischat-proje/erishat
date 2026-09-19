@@ -14,7 +14,7 @@ function walk(dir) {
   });
 }
 const assets = walk(ASSET_ROOT).map(p => relative(ROOT,p).replaceAll('\\','/')).sort();
-if (assets.length !== 139) throw new Error(`expected 139 assets, found ${assets.length}`);
+if (assets.length !== 171) throw new Error(`expected 171 assets, found ${assets.length}`);
 
 const server = spawn('python', ['-m','http.server','4174','--directory',ROOT], {stdio:'ignore'});
 try {
