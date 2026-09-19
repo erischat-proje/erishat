@@ -133,3 +133,8 @@ Tarih: 2026-09-18
 - [ ] GitHub Pages canlı HTTP/görsel doğrulaması.
 - [ ] Firma demosu için son uçtan uca browser smoke ve kalan statik yüzeylerin taranması
 - [x] Pages'te workflow tarafından sonradan enjekte edilen room-ban / room-gift / demo-cleanup modülleri ana HTML'e de doğrudan bağlandı..
+
+
+[2026-09-19 devam — ANA YÜZEY ERİŞİM KONTROLÜ]
+- [x] Ana HTML üzerinde Oda Aç/createRoom, oda açılışı/openRoom, Tüm sistemler, mağaza, profil, anonimlik ve gerçek oda modalı giriş noktaları mevcut olarak doğrulandı.
+- [ ] GitHub Pages canlı HTTP/görsel doğrulaması: web erişim katmanı canlı URL'yi açamadığı için gerçek tarayıcı doğrulaması ayrıca bekliyor.
