@@ -85,7 +85,7 @@
           } else {
             const price = Number(item.price || 1000);
             action.textContent = `Satın al • ${price.toLocaleString('tr-TR')}`;
-            action.onclick = async () => { const price = Number(item.price || catalog.price || 1000); try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { const wallet = demoWallet(); if (!wallet?.spend || !wallet.spend(price)) { alert(error.message); return; } const owned = demoOwned(); if (!owned.includes(`${type}:${key}`)) owned.push(`${type}:${key}`); saveDemoOwned(owned); } await render(); window.toast?.('Kozmetik demo olarak satın alındı ✓'); };
+            action.onclick = async () => { const price = Number(item.price || catalog.price || 1000); try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { const wallet = demoWallet(); if (!wallet?.spend || !wallet.spend(price)) { window.toast?.(error.message||'Satın alma başarısız.'); return; } const owned = demoOwned(); if (!owned.includes(`${type}:${key}`)) owned.push(`${type}:${key}`); saveDemoOwned(owned); } await render(); window.toast?.('Kozmetik demo olarak satın alındı ✓'); };
           }
           card.appendChild(action);
           grid.appendChild(card);
