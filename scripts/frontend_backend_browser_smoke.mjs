@@ -166,7 +166,7 @@ async function main(){
     const receivedLeave=await wait('leave',owner.messages,m=>m?.type==='rtc_leave'&&m.from_user_id===resolvedMemberId);
     offerPc.close(); answerPc.close(); source.stop(); audioCtx.close(); owner.ws.close(); member.ws.close();
     return {receivedOffer,receivedAnswer,receivedLeave,connectionStates,realPeerConnection:true,iceServerCount:rtcConfig.ice_servers.length};
-  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token,ownerId:String(await page.evaluate(async api=>{const r=await fetch(api+'/me');const d=await r.json();return d.id;},API)),memberId:String(member.user.id)});
+  },{roomId:room.data.id,ownerToken:await page.evaluate(()=>localStorage.getItem('erischat_access_token')),memberToken:member.access_token,ownerId:String(owner.id),memberId:String(member.user.id)});
   if(!rtcSignalingRealtime.realPeerConnection||rtcSignalingRealtime.connectionStates.some(x=>x!=='connected')||!rtcSignalingRealtime.receivedOffer||!rtcSignalingRealtime.receivedAnswer||!rtcSignalingRealtime.receivedLeave) throw new Error('RTC real browser flow failed: '+JSON.stringify(rtcSignalingRealtime));
 
   const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
