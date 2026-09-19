@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     db_pool_timeout: int = 30
     db_pool_recycle: int = 1800
     initial_da_ids: str = ""
+    rtc_turn_url: str = ""
+    rtc_turn_username: str = ""
+    rtc_turn_credential: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
