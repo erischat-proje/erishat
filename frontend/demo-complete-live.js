@@ -126,5 +126,5 @@
     const wrap=document.createElement('div');wrap.style.cssText='position:fixed;right:14px;bottom:196px;z-index:290;display:flex;flex-direction:column;gap:6px;align-items:flex-end';
     [['erisDemoCompleteVip','✨ VIP + Ödüller',vipDemo],['erisDemoCompleteGames','🎮 Oyunlar',()=>gamesDemo('main',null)],['erisDemoCompleteCheck','☑ Demo Kontrol',checklistDemo]].forEach(([id,text,fn])=>{const b=btn(text,fn);b.id=id;b.style.fontSize='8px';wrap.append(b)});document.body.append(wrap);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mountButtons();mountGameEntryPoints()},{once:true});else {mountButtons();mountGameEntryPoints();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mountButtons()},{once:true});else {mountButtons();}
 })();
