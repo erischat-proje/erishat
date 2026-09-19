@@ -966,3 +966,11 @@ Room control checkpoint
 - [x] Önceki RTC payload contract fix'i d3d511e59e59fd8643ce6e1b4d9737fbc5d9ee2f ile doğrulandı.
 - [x] Bu checkpoint ile RTC signaling security smoke Quality kapısına bağlanmış ve gerçek PASS kanıtı alınmış oldu.
 - [ ] Gerçek iki tarayıcı/iki cihaz WebRTC ses E2E, üretim STUN/TURN credential provisioning ve mobil/gerçek ağ transport kanıtı hâlâ açık.
+
+
+[2026-09-19 devam 50] GERÇEK 2-BROWSER WEBRTC SMOKE EKLENDİ
+- [x] scripts/rtc_two_browser_smoke.mjs iki ayrı Chromium browser context'i ile iki farklı kullanıcı/oda oturumu açıyor.
+- [x] Chromium fake microphone cihazı + microphone permission ile iki gerçek MediaStream audio track'i oluşturuluyor.
+- [x] İki browser arasında gerçek RTCPeerConnection offer/answer ve ICE gathering sonrası SDP transport doğrulanıyor; connectionState=connected bekleniyor.
+- [x] Quality workflow'a Real two-browser WebRTC smoke gate'i eklendi.
+- [ ] Bu yeni gate için Fresh Quality PASS henüz doğrulanmadı; PASS varsayılmayacak.
