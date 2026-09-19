@@ -29,6 +29,22 @@ def can_split(state):
     hand = state.get("player_hand") or []
     return state.get("phase") == "player" and len(hand) == 2 and hand[0][:-1] == hand[1][:-1] and not state.get("split")
 
+def display_state(state):
+    """UI-safe state snapshot: exposes split hands and active hand without deck data."""
+    hands = state.get("hands") or [{"cards": state.get("player_hand") or [], "total": state.get("player_total", 0), "result": state.get("result")}]
+    return {
+        "phase": state.get("phase"),
+        "hands": [
+            {"cards": h.get("cards", []), "total": h.get("total", 0), "result": h.get("result")}
+            for h in hands
+        ],
+        "active_hand": state.get("active_hand", 0),
+        "dealer_hand": state.get("dealer_hand") or [],
+        "dealer_total": state.get("dealer_total", 0),
+        "result": state.get("result"),
+        "split": bool(state.get("split")),
+    }
+
 def available_actions(state):
     if state.get("phase") != "player":
         return []
