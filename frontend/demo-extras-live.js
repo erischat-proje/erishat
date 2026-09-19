@@ -90,16 +90,16 @@
   }
 
   async function familyDemo(){
-    let data=null,members=[],familyLoadError='';
-    try{const families=await api('/families');const rows=Array.isArray(families)?families:(families?.families||[]);data=rows[0]||null;if(data)members=await api('/families/'+encodeURIComponent(data.id)+'/members');}
+    let data=null,members=[],familyLoadError='',membersLoadError='';
+    try{const families=await api('/families');const rows=Array.isArray(families)?families:(families?.families||[]);data=rows[0]||null;if(data){try{members=await api('/families/'+encodeURIComponent(data.id)+'/members');}catch(e){membersLoadError=e?.message||'Üye servisine erişilemedi.';}}}
     catch(e){familyLoadError=e?.message||'Aile servisine erişilemedi.';}
     const m=modal('👑 Aile yönetimi + aile sohbeti',`<div id="familyHead"></div><div id="familyMembers" style="margin-top:9px"></div><div id="familyActions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px"></div><div id="familyChat" style="margin-top:9px"></div>`);
     const head=m.querySelector('#familyHead'),list=m.querySelector('#familyMembers'),actions=m.querySelector('#familyActions'),chat=m.querySelector('#familyChat');
-    const render=()=>{head.innerHTML=card('<b>👑 '+esc(data?.name||'Aile bulunamadı')+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+(data?('Seviye '+Number(data.level||1)+' • '+Number(data.member_count||0)+' / '+Number(data.capacity||0)+' üye • '+Number(data.balance||0).toLocaleString('tr-TR')+' bakiye'):(familyLoadError?'Aile servisine erişilemedi: '+esc(familyLoadError):'Hesabında bağlı aile bulunamadı'))+'</small>');list.innerHTML=members.length?members.map(x=>card('<div style="display:flex;justify-content:space-between"><b>'+esc(x.nickname||x.user_id)+'</b><span>'+esc(x.role||'member')+'</span></div><small style="display:block;color:#938a9f;margin-top:4px">'+esc(x.user_id)+'</small>')).join('<div style="height:6px"></div>'):card('<small style="color:#938a9f">Üye listesi boş.</small>');};
+    const render=()=>{head.innerHTML=card('<b>👑 '+esc(data?.name||'Aile bulunamadı')+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+(data?('Seviye '+Number(data.level||1)+' • '+Number(data.member_count||0)+' / '+Number(data.capacity||0)+' üye • '+Number(data.balance||0).toLocaleString('tr-TR')+' bakiye'):(familyLoadError?'Aile servisine erişilemedi: '+esc(familyLoadError):'Hesabında bağlı aile bulunamadı'))+'</small>');list.innerHTML=members.length?members.map(x=>card('<div style="display:flex;justify-content:space-between"><b>'+esc(x.nickname||x.user_id)+'</b><span>'+esc(x.role||'member')+'</span></div><small style="display:block;color:#938a9f;margin-top:4px">'+esc(x.user_id)+'</small>')).join('<div style="height:6px"></div>'):card('<small style="color:#938a9f">'+esc(membersLoadError||'Üye listesi boş.')+'</small>');};
     render();
     if(!data){if(familyLoadError){actions.append(button('🔄 Tekrar dene',()=>{m.remove();familyDemo();}));}else{actions.append(button('➕ Aile oluştur',async()=>{const name=prompt('Aile adı','ErisChat Ailesi')?.trim();if(!name)return;const d=await api('/families',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}).catch(e=>({detail:e.message}));if(d?.detail){window.toast?.(d.detail);return}m.remove();familyDemo();}));}return;}
     const fid=encodeURIComponent(data.id);
-    actions.append(button('🔄 Yenile',async()=>{members=await api('/families/'+fid+'/members').catch(()=>[]);render();}));
+    actions.append(button('🔄 Yenile',async()=>{membersLoadError='';try{members=await api('/families/'+fid+'/members');}catch(e){members=[];membersLoadError=e?.message||'Üye servisine erişilemedi.';}render();}));
     actions.append(button('📨 Davetler',async()=>{
       const invites=await api('/families/invitations').catch(()=>[]);
       const pending=(Array.isArray(invites)?invites:[]).filter(x=>x.status==='pending');
