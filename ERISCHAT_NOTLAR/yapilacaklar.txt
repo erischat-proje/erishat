@@ -911,3 +911,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19 devam 41] Quality #1048 ilk gercek music UI failure sonrasi frontend API response uyumsuzlugu duzeltildi. Commit 4bf353234b437077bc6577777f865d7985b6c470. Yeni Quality sonucu bekleniyor.
+
+
+[2026-09-19 devam 43] Quality #1053 ilk gercek music UI failure sonrasi smoke tarafinda acik panelin navigasyonu engellemesi duzeltildi. Commit c5400f70c15fdc59e1eb592134b105b4a7f9b1fc. Yeni Quality sonucu bekleniyor.
