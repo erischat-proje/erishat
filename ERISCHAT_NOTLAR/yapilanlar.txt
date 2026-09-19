@@ -708,3 +708,9 @@ Room control checkpoint
 - [x] Profilde sabit 128 takipçi / 42 takip değerleri artık backend alanları varsa gerçek sayılarla güncelleniyor.
 - [x] VIP ilerleme çubuğu gerçek `/me/vip` total_spent verisine göre hesaplanıyor; VIP 12'de MAX gösteriliyor.
 - Commit: 6d249364ef990e7e80f9e869810030def95cab65.
+
+
+[2026-09-19 — DEMO CÜZDAN ETİKETİ]
+- [x] 500.000.000 Lidya demo cüzdanının yalnızca bu tarayıcıdaki local test kredisi olduğu açıkça belirtildi.
+- [x] `ErisDemoWallet.isLocalOnly=true` ile gerçek backend bakiyesiyle karıştırılmaması sağlandı.
+- Commit: 4565a23838a54f0152a5b14749d689e2881c271b.
