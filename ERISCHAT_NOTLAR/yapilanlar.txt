@@ -486,3 +486,6 @@ Room control checkpoint
 
 
 [2026-09-19] Browser smoke düzenleme: `scripts/frontend_backend_browser_smoke.mjs` içinde oda oluşturma adımı announcement/roomInvite akışlarından önceye taşındı; daha aşağıdaki yinelenen `const room` tanımı kaldırıldı. Böylece oda değişkeninin TDZ/sıra hatası temizlendi. CI henüz yeniden doğrulanmadı.
+
+
+[2026-09-19] Browser E2E: `frontend_backend_browser_smoke.mjs` içine gerçek iki WebSocket ile `/ws/rooms/{room_id}` oda sohbet testi eklendi. Owner + member `room_history` alıyor; member `room_chat` gönderiyor; owner ve member realtime mesajı alıyor. Ayrıca smoke sırası için member oda join adımı announcement öncesine eklendi.
