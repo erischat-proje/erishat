@@ -608,3 +608,15 @@ Room control checkpoint
 - Commitler: f1ecf7570d208dfaccc1cbdb514210ab81598723, 90de00850b35bf3be2327a356f364fd8545cd313.
 - [ ] Yeni Pages deploy tamamlandıktan sonra canlı URL görsel/etkileşim kontrolü.
 - [ ] Gerçek mobil TURN/audio üretim testi ve 139 kozmetik manuel görsel/alpha incelemesi.
+
+
+2026-09-19 — DEMO ARAYÜZ TOPARLAMA / CANLI SİSTEM YÜZEYİ
+- [x] Ana sayfadaki statik mağaza placeholder'ları canlı 139 kozmetik mount'una çevrildi.
+- [x] Ana VIP placeholder listesi kaldırıldı; gerçek VIP merkezi için canlı mount bırakıldı.
+- [x] Anonimlik/gizlilik alanı statik toggle yerine gerçek privacy sistemi için canlı mount'a hazırlandı.
+- [x] Eski floating hub trigger CSS'i etkisizleştirildi.
+- [x] Aktif oda ID'si room-live üzerinden global room controls'a aktarılıyor.
+- [x] Demo mağazada sahte VIP 12 zorlaması kaldırıldı; gerçek VIP seviyesi esas alınıyor.
+- [x] Global floating müzik butonu kaldırıldı; müzik paneli oda bağlamında kullanılacak.
+- [ ] Pages canlı HTTP + gerçek tarayıcı görsel doğrulaması.
+- [ ] Ana ekranın kalan statik mesaj/arama/etkinlik yüzeylerinin gerçek backend renderer'larıyla tamamlanması.
