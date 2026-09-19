@@ -30,16 +30,20 @@
       .eris-room-wall{position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,rgba(255,80,170,.16),transparent 30%),linear-gradient(145deg,#100a1c,#090813 48%,#150b19);background-position:center;background-size:cover;overflow:hidden}
       .eris-room-wall.has-wallpaper{background-image:var(--eris-room-wallpaper),linear-gradient(180deg,rgba(5,4,12,.18),rgba(5,4,12,.58))}
       .eris-room-wall:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,3,10,.12),rgba(4,3,10,.18) 45%,rgba(4,3,10,.72) 100%);pointer-events:none}
-      .eris-room-top{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(#05040acc,transparent);z-index:4}
+      .eris-room-top{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(#05040a88,transparent);backdrop-filter:blur(8px);z-index:4}
       .eris-room-top button{border:1px solid #ffffff18;background:#08070baa;color:#fff;border-radius:12px;width:40px;height:40px}
       .eris-room-title{flex:1;min-width:0}.eris-room-title b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eris-room-title small{display:block;color:#c0b7c7;font-size:9px;margin-top:3px}
       .eris-room-stage{position:absolute;inset:62px 0 205px;min-height:330px}
       .eris-seat{position:absolute;transform:translate(-50%,-50%);width:82px;height:82px;border-radius:50%;border:1px solid #ffffff2c;background:radial-gradient(circle at 35% 25%,#ffffff22,transparent 28%),linear-gradient(145deg,#241b35,#120e19);box-shadow:0 10px 30px #0008,inset 0 0 18px #ffffff08;color:#fff;display:grid;place-items:center;text-align:center;padding:6px;z-index:2}
       .eris-seat.empty{border-style:dashed;background:radial-gradient(circle,#8a5cff22,#0d0a12 70%);color:#c9bfd2}.eris-seat.me{border-color:#ff5bad;box-shadow:0 0 0 4px #ff4fa31a,0 12px 35px #0008}.eris-seat.locked{opacity:.42;cursor:not-allowed}
+      [data-seat-count="12"] .eris-seat,[data-seat-count="16"] .eris-seat{width:72px;height:72px}
+      [data-seat-count="16"] .eris-seat{width:64px;height:64px}
+      [data-seat-count="12"] .eris-seat .seat-ava{width:30px;height:30px;font-size:14px}
+      [data-seat-count="16"] .eris-seat .seat-ava{width:26px;height:26px;font-size:12px}
       .eris-seat .seat-ava{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:16px;margin:auto}.eris-seat.empty .seat-ava{background:#ffffff0d;color:#aaa0ad}
       .eris-seat b{display:block;font-size:9px;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eris-seat small{display:block;color:#a69cad;font-size:7px;margin-top:2px}
       .seat1{left:50%;top:18%}.seat2{left:25%;top:31%}.seat3{left:75%;top:31%}.seat4{left:14%;top:55%}.seat5{left:86%;top:55%}.seat6{left:29%;top:76%}.seat7{left:71%;top:76%}.seat8{left:50%;top:91%}
-      .eris-room-chat{position:absolute;left:0;right:0;bottom:0;height:205px;background:linear-gradient(180deg,#05040a00 0%,#05040ae8 20%,#05040af7);z-index:5;display:flex;flex-direction:column}
+      .eris-room-chat{position:absolute;left:0;right:0;bottom:0;height:205px;background:linear-gradient(180deg,rgba(5,4,10,0) 0%,rgba(5,4,10,.58) 20%,rgba(5,4,10,.82) 100%);backdrop-filter:blur(7px);z-index:5;display:flex;flex-direction:column}
       .eris-chat-list{flex:1;overflow:auto;padding:30px 14px 7px;display:flex;flex-direction:column;gap:6px}
       .eris-chat-msg{max-width:82%;padding:7px 10px;border-radius:12px;background:#17121eaa;border:1px solid #ffffff0b;font-size:10px}.eris-chat-msg.me{align-self:flex-end;background:linear-gradient(135deg,#754cffcc,#ff4fa3cc)}.eris-chat-msg b{font-size:8px;color:#d5cbdc}.eris-chat-msg span{display:block;margin-top:2px}
       .eris-room-compose{display:flex;gap:6px;padding:8px 10px 12px}.eris-room-compose input{flex:1;min-width:0;border:1px solid #ffffff16;background:#0c0a12e8;color:#fff;border-radius:12px;padding:11px;outline:none}.eris-room-compose button{border:0;border-radius:12px;padding:0 14px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800}
