@@ -811,3 +811,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Test verisi Smoke Disc 2/3 olarak 16 karakter sınırının altında olacak şekilde düzeltildi.
 - [x] Fix commit: a2c1ac2b5a15ff83184c10f53ed5e6b0e0f7c2b0.
 - [ ] Quality #999 hâlâ çalışıyor; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 27] QUALITY #999 — ADMIN SMOKE BACKEND IMPORT KÖK DÜZELTMESİ
+- [x] İlk gerçek failure `ModuleNotFoundError: No module named 'app'` olarak doğrulandı.
+- [x] Kök neden: `scripts/system_identity_admin_smoke.py` doğrudan `from app.admin_models import AdminRole` yapıyor; script `scripts/` altından çalıştırıldığında `backend/` Python path'e eklenmiyordu.
+- [x] Script başlangıcına canonical `backend/` path ekleme eklendi.
+- [x] Fix commit: `a91360187e357307410ea3a0ed2667a86b513dfe`.
+- [ ] Yeni Quality sonucu doğrulanacak; PASS varsayılmıyor.
