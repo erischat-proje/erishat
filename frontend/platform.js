@@ -3,10 +3,16 @@
   const tokenKey = 'erischat_access_token';
   const token = () => localStorage.getItem(tokenKey) || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   async function request(path, options = {}) {
+    const requestOptions = { ...options }; delete requestOptions.timeout;
     const headers = new Headers(options.headers || {});
     if (options.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     if (token()) headers.set('Authorization', `Bearer ${token()}`);
-    const res = await fetch(`${API}${path}`, { ...options, headers });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), Number(options.timeout || 8000));
+    let res;
+    try { res = await fetch(`${API}${path}`, { ...options, headers, signal: controller.signal }); }
+    catch (e) { throw new Error(e?.name === 'AbortError' ? 'Sunucu yanıt vermedi (8 sn zaman aşımı).' : (e?.message || 'Ağ bağlantısı kurulamadı.')); }
+    finally { clearTimeout(timeout); }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
     return data;
