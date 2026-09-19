@@ -58,7 +58,7 @@
     panel.innerHTML='<div class="eh-note">Konum/discovery izinleri backend tercihleriyle çalışır. Konum izni verilmeden yakın kullanıcılar listelenmez.</div><div class="eh-grid" id="ehDiscActions"></div><div id="ehDiscResults" style="margin-top:9px"></div>';
     const g=panel.querySelector('#ehDiscActions'),out=panel.querySelector('#ehDiscResults');
     const render=(title,rows,empty='Sonuç bulunamadı.')=>{
-      const arr=Array.isArray(rows)?rows:(rows?.users||rows?.items||rows?.results||[]);
+      const arr=Array.isArray(rows)?rows:(rows?.users||rows?.items||rows?.results||rows?.data||rows?.rooms||[]);
       out.innerHTML='<div class="eh-kicker">'+esc(title)+'</div>'+ (arr.length
         ? '<div class="eh-grid">'+arr.map(u=>{const uid=u.user_id||u.id||u.user?.id||'';const rid=u.room_id||u.room?.id||'';const name=u.nickname||u.display_name||u.name||u.user?.nickname||'Kullanıcı';const meta=u.distance_km!=null?String(u.distance_km)+' km':(u.room_name||u.title||u.conversation_id||rid||'Eşleşme bulundu');const action=rid&&window.openRoom?'<button class="eh-btn" data-disc-room="'+esc(rid)+'">Odayı aç</button>':uid&&window.openChat?'<button class="eh-btn" data-disc-user="'+esc(uid)+'">Sohbet</button>':'';return '<div class="eh-card"><b>'+esc(name)+'</b><small>'+esc(meta)+'</small>'+action+'</div>';}).join('')+'</div>'
         : '<div class="eh-note">'+esc(empty)+'</div>');
