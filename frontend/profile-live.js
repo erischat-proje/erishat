@@ -20,6 +20,7 @@
     if (balance && Number.isFinite(Number(user.lidya))) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
     document.querySelectorAll('[data-erischat-nickname]').forEach(el => { el.textContent = user.nickname || 'Anonim'; });
     if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
+    fetch((window.ERIS_API||window.ERISCHAT_API||'https://erischat-production.up.railway.app/v1')+'/me/vip',{headers:(()=>{const t=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';return t?{Authorization:'Bearer '+t}:{}})()}).then(r=>r.ok?r.json():null).then(v=>{if(!v)return;const l=document.getElementById('profileVipLevel'),b=document.getElementById('profileVipBadge');if(l)l.textContent=String(v.level||0);if(b)b.textContent=v.level?'VIP '+v.level:'VIP';}).catch(()=>{});
   }
 
   async function refresh() {
