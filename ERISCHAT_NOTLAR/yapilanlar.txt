@@ -649,3 +649,10 @@ Room control checkpoint
 - [x] `GET /v1/families/invitations` eklendi; yalnızca mevcut kullanıcının davetlerini döndürüyor, süresi dolan pending kayıtları expired'a çekiyor ve aile/davet eden kullanıcı bilgilerini taşıyor.
 - [x] Fix commit: `b0640cbda36e3218777c6d3a4a1568ae4efb0af5`.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+[2026-09-19 devam 11] QUALITY #35438348943 — RTC IDENTITY SMOKE FIX
+- [x] Family invitation route düzeltmesinden sonraki Quality run'ında tüm integrity adımları geçti; Frontend backend browser smoke gerçek RTC aşamasında `rtc identity mismatch` ile durdu.
+- [x] Kök neden backend RTC kimliği değil, smoke callback'inin ownerId'yi auth header olmadan `/me` çağrısından üretmesiydi; 401 sonucu `undefined` kimlik oluşturuyordu.
+- [x] Smoke artık zaten doğrulanmış `owner.id` değerini RTC callback'ine doğrudan geçiriyor.
+- [x] Fix commit: `1a9a5de5ea42ab03ddf4082cdf0433f69efad359`.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
