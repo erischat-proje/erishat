@@ -14,3 +14,6 @@ ERISCHAT — YAPILANLAR CHECKPOINT
 - ERISCHAT_NOTLAR/yapilanlar.txt, yapilacaklar.txt ve son_durum_20260917_gece.txt güncellendi.
 - Railway deploy yapılmadı.
 - Gerçek iki kullanıcı smoke testi henüz yapılmadı.
+
+- 2026-09-19: erischat-main.html içindeki hatalı iç içe script etiketi düzeltildi; room/wallpaper scriptleri ayrı ve geçerli şekilde yükleniyor. Commit: b3377910e0dde6e9325865d58e019a3e2f0aeb38.
+- 2026-09-19: Quality #1235 Step 13 Room browser surface smoke failure kök neden adayı olarak bu frontend script yükleme hatası düzeltildi; yeni Quality sonucu bekleniyor.
