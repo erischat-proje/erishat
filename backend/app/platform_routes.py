@@ -21,6 +21,7 @@ from .room_models import Room, RoomGiftEvent, RoomMember
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
+from .oyunlar import GAME_ENGINES
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -501,59 +502,14 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=409, detail="Bu blackjack roundu kapalı")
         try:
             state = json.loads(row.state_data or "{}")
-        except (TypeError, json.JSONDecodeError):
-            raise HTTPException(status_code=409, detail="Round state bozuk")
-        if state.get("phase") != "player":
-            raise HTTPException(status_code=409, detail="Oyuncu aksiyonu beklenmiyor")
-
-        deck = list(state.get("deck") or [])
-        player = list(state.get("player_hand") or [])
-        dealer = list(state.get("dealer_hand") or [])
-
-        if payload.action == "hit":
-            if not deck:
-                raise HTTPException(status_code=409, detail="Deste tükendi")
-            player.append(deck.pop())
-            player_total = _blackjack_hand_total(player)
-            state.update({"deck": deck, "player_hand": player, "player_total": player_total})
-            if player_total < 21:
-                row.state_data = json.dumps(state, ensure_ascii=False, separators=(",", ":"))
-                db.commit()
-                return {"round_id": row.id, "status": row.status, "result": "pending", "state": state}
-            payload_action = "stand"
-        else:
-            player_total = _blackjack_hand_total(player)
-            payload_action = "stand"
-
-        if player_total > 21:
-            result = "loss"
-        else:
-            while _blackjack_hand_total(dealer) < 17 and deck:
-                dealer.append(deck.pop())
-            dealer_total = _blackjack_hand_total(dealer)
-            if dealer_total > 21 or player_total > dealer_total:
-                result = "win"
-            elif player_total == dealer_total:
-                result = "push"
-            else:
-                result = "loss"
-
-        dealer_total = _blackjack_hand_total(dealer)
-        state.update({
-            "phase": "finished",
-            "deck": deck,
-            "player_hand": player,
-            "dealer_hand": dealer,
-            "player_total": player_total,
-            "dealer_total": dealer_total,
-            "result": result,
-            "natural_blackjack": len(player) == 2 and player_total == 21,
-            "dealer_natural": len(dealer) == 2 and dealer_total == 21,
-        })
+            result, state = GAME_ENGINES["blackjack"].action(state, payload.action)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc))
         row.state_data = json.dumps(state, ensure_ascii=False, separators=(",", ":"))
-        row.status = "finished"
-        row.result_key = result
-        row.ends_at = datetime.now(timezone.utc)
+        if result != "pending":
+            row.status = "finished"
+            row.result_key = result
+            row.ends_at = datetime.now(timezone.utc)
         db.commit()
         return {"round_id": row.id, "status": row.status, "result": result, "state": state}
 
@@ -584,6 +540,28 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=400, detail="Geçersiz at seçimi")
         if game_type == "wheel" and choice and choice not in {x[0] for x in GAME_PROFILES["wheel"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
+        engine = GAME_ENGINES[game_type]
+        if game_type == "blackjack":
+            result, data = engine.start({
+                "free_play": True, "investment_required": False,
+                "scope": "private", "room_id": room_id, "round_id": str(uuid4()),
+                "engine_version": "games-v4",
+            })
+        else:
+            data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v4", "animation": {"duration_ms": 1800, "reveal_ms": 1200}}
+            result, data = engine.play(choice, GAME_PROFILES[game_type], data)
+        round_id = data["round_id"]
+        now = datetime.now(timezone.utc)
+        db.add(GameRound(
+            id=round_id, room_id=room_id, game_type=game_type,
+            status=("finished" if game_type != "blackjack" or result != "pending" else "open"),
+            started_at=now, ends_at=now,
+            result_key=(None if result == "pending" else result),
+            state_data=json.dumps(data.get("state", data), ensure_ascii=False, separators=(",", ":")),
+        ))
+        db.flush()
+        return _save_game_play(db, user, game_type, choice, result, data)
+
         result = _weighted_result(game_type)
         data = {"free_play": True, "investment_required": False, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v3", "animation": {"duration_ms": 1800, "reveal_ms": 1200}}
         if game_type == "roulette":
