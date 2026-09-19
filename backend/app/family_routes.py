@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
-from .platform_models import Family, FamilyDonation, FamilyMember, Notification
+from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyMember, Notification
 
 router = APIRouter(prefix="/v1", tags=["families"])
 
@@ -32,6 +33,9 @@ class FamilyMemberUpdate(BaseModel):
 
 class FamilyMessageCreate(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
+
+class FamilyOwnershipTransfer(BaseModel):
+    user_id: str = Field(min_length=1, max_length=64)
 
 
 def family_level(balance: int) -> int:
@@ -109,15 +113,79 @@ def register_family_auth(current_user_dependency):
     @router.post("/families/{family_id}/members", status_code=201)
     def invite_member(family_id: str, payload: FamilyMemberUpdate, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); actor = membership(db, family_id, user.id)
-        if not can_manage(family, actor): raise HTTPException(status_code=403, detail="Üye davet etmek için aile yöneticisi olmalısınız")
+        if not can_manage(family, actor):
+            raise HTTPException(status_code=403, detail="Üye davet etmek için aile yöneticisi olmalısınız")
         target = db.get(User, payload.user_id)
-        if not target or not target.is_active: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        if db.scalar(select(FamilyMember.id).where(FamilyMember.family_id == family_id, FamilyMember.user_id == target.id)): raise HTTPException(status_code=409, detail="Kullanıcı zaten ailede")
-        level = family_level(family.balance); count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family_id)) or 0)
-        if count >= FAMILY_LEVELS[level]["capacity"]: raise HTTPException(status_code=409, detail="Aile kapasitesi dolu")
-        row = FamilyMember(family_id=family_id, user_id=target.id, role=payload.role or "member")
-        db.add(row); db.add(ConversationMember(conversation_id=family.chat_conversation_id, user_id=target.id)); db.add(Notification(user_id=target.id, kind="family_invite", title="Aile daveti", body=f"{family.name} ailesine davet edildiniz.")); db.commit()
-        return {"family_id": family_id, "user_id": target.id, "role": row.role, "added": True}
+        if not target or not target.is_active:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        if db.scalar(select(FamilyMember.id).where(FamilyMember.family_id == family_id, FamilyMember.user_id == target.id)):
+            raise HTTPException(status_code=409, detail="Kullanıcı zaten ailede")
+        pending = db.scalar(select(FamilyInvitation).where(FamilyInvitation.family_id == family_id, FamilyInvitation.user_id == target.id, FamilyInvitation.status == "pending"))
+        if pending and pending.expires_at > datetime.now(timezone.utc):
+            raise HTTPException(status_code=409, detail="Bu kullanıcıya bekleyen aile daveti zaten var")
+        if pending:
+            pending.status = "expired"
+        level = family_level(family.balance)
+        count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family_id)) or 0)
+        if count >= FAMILY_LEVELS[level]["capacity"]:
+            raise HTTPException(status_code=409, detail="Aile kapasitesi dolu")
+        invite = FamilyInvitation(id="finv_" + uuid4().hex[:12], family_id=family_id, inviter_id=user.id, user_id=target.id, role="member", status="pending", expires_at=datetime.now(timezone.utc) + timedelta(days=7))
+        db.add(invite)
+        db.add(Notification(user_id=target.id, kind="family_invite", title="Aile daveti", body=f"{family.name} ailesine davet edildiniz. Davet: {invite.id}"))
+        db.commit()
+        return {"id": invite.id, "family_id": family_id, "user_id": target.id, "role": invite.role, "status": invite.status, "expires_at": invite.expires_at}
+
+    @router.get("/families/invitations")
+    def list_family_invitations(db: Session = Depends(get_db), user: User = auth()):
+        now = datetime.now(timezone.utc)
+        rows = list(db.scalars(select(FamilyInvitation).where(FamilyInvitation.user_id == user.id).order_by(FamilyInvitation.created_at.desc())))
+        changed = False
+        result = []
+        for row in rows:
+            if row.status == "pending" and row.expires_at <= now:
+                row.status = "expired"; changed = True
+            family = db.get(Family, row.family_id)
+            if family:
+                result.append({"id": row.id, "family_id": row.family_id, "family_name": family.name, "inviter_id": row.inviter_id, "role": row.role, "status": row.status, "expires_at": row.expires_at})
+        if changed:
+            db.commit()
+        return result
+
+    @router.post("/families/invitations/{invitation_id}/accept")
+    def accept_family_invitation(invitation_id: str, db: Session = Depends(get_db), user: User = auth()):
+        invite = db.scalar(select(FamilyInvitation).where(FamilyInvitation.id == invitation_id, FamilyInvitation.user_id == user.id).with_for_update())
+        if not invite:
+            raise HTTPException(status_code=404, detail="Aile daveti bulunamadı")
+        if invite.status != "pending":
+            raise HTTPException(status_code=409, detail="Aile daveti artık beklemede değil")
+        if invite.expires_at <= datetime.now(timezone.utc):
+            invite.status = "expired"; db.commit()
+            raise HTTPException(status_code=410, detail="Aile davetinin süresi dolmuş")
+        family = get_family(db, invite.family_id)
+        if db.scalar(select(FamilyMember.id).where(FamilyMember.family_id == family.id, FamilyMember.user_id == user.id)):
+            invite.status = "accepted"; db.commit()
+            return {"invitation_id": invite.id, "family_id": family.id, "accepted": True, "already_member": True}
+        level = family_level(family.balance)
+        count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family.id)) or 0)
+        if count >= FAMILY_LEVELS[level]["capacity"]:
+            raise HTTPException(status_code=409, detail="Aile kapasitesi dolu")
+        db.add(FamilyMember(family_id=family.id, user_id=user.id, role="member"))
+        if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == family.chat_conversation_id, ConversationMember.user_id == user.id)):
+            db.add(ConversationMember(conversation_id=family.chat_conversation_id, user_id=user.id))
+        invite.status = "accepted"
+        db.commit()
+        return {"invitation_id": invite.id, "family_id": family.id, "accepted": True, "already_member": False}
+
+    @router.post("/families/invitations/{invitation_id}/reject")
+    def reject_family_invitation(invitation_id: str, db: Session = Depends(get_db), user: User = auth()):
+        invite = db.scalar(select(FamilyInvitation).where(FamilyInvitation.id == invitation_id, FamilyInvitation.user_id == user.id).with_for_update())
+        if not invite:
+            raise HTTPException(status_code=404, detail="Aile daveti bulunamadı")
+        if invite.status != "pending":
+            raise HTTPException(status_code=409, detail="Aile daveti artık beklemede değil")
+        invite.status = "rejected"
+        db.commit()
+        return {"invitation_id": invite.id, "family_id": invite.family_id, "rejected": True}
 
     @router.patch("/families/{family_id}/members/{member_user_id}")
     def update_member_role(family_id: str, member_user_id: str, payload: FamilyMemberUpdate, db: Session = Depends(get_db), user: User = auth()):
@@ -127,6 +195,21 @@ def register_family_auth(current_user_dependency):
         target = membership(db, family_id, member_user_id)
         if family.owner_id == member_user_id: raise HTTPException(status_code=400, detail="Aile sahibinin rolü değiştirilemez")
         target.role = payload.role; db.commit(); return {"family_id": family_id, "user_id": member_user_id, "role": target.role}
+
+    @router.post("/families/{family_id}/transfer-ownership")
+    def transfer_family_ownership(family_id: str, payload: FamilyOwnershipTransfer, db: Session = Depends(get_db), user: User = auth()):
+        family = get_family(db, family_id)
+        if family.owner_id != user.id:
+            raise HTTPException(status_code=403, detail="Sahiplik yalnızca mevcut aile sahibi tarafından devredilebilir")
+        if payload.user_id == user.id:
+            raise HTTPException(status_code=400, detail="Sahiplik zaten bu kullanıcıda")
+        target = membership(db, family_id, payload.user_id)
+        current = membership(db, family_id, user.id)
+        family.owner_id = target.user_id
+        current.role = "member"
+        target.role = "owner"
+        db.commit()
+        return {"family_id": family_id, "owner_id": target.user_id, "transferred": True}
 
     @router.delete("/families/{family_id}/members/{member_user_id}")
     def remove_member(family_id: str, member_user_id: str, db: Session = Depends(get_db), user: User = auth()):
