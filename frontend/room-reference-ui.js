@@ -34,6 +34,10 @@
     #erisRoomSurface .eris-room-top .room-action.back {
       width:34px;background:transparent;font-size:29px;
     }
+    /* One room skin only: the reference controls live on the side rails. */
+    #erisRoomSurface .eris-room-top #erisRoomGift,
+    #erisRoomSurface .eris-room-top #erisRoomMusic,
+    #erisRoomSurface .eris-room-tools { display:none !important; }
     #erisRoomSurface .eris-room-title { padding:0 4px; }
     #erisRoomSurface .eris-room-title b { font-size:15px;line-height:18px; }
     #erisRoomSurface .eris-room-title small { font-size:8px;margin-top:2px;opacity:.72; }
@@ -260,11 +264,6 @@
     if (!surface || surface.dataset.referenceUi === '1') return;
     surface.dataset.referenceUi='1';
 
-    const rank=document.createElement('div');
-    rank.className='eris-room-rank';
-    rank.innerHTML='<b>🏆 Oda sıralaması</b><span style="margin-left:7px;color:#d9cde0">Bugünün canlı odaları</span>';
-    surface.appendChild(rank);
-
     const seats=surface.querySelector('#erisLiveSeats');
     const watcher=new MutationObserver(()=>arrange(surface));
     watcher.observe(seats||surface,{childList:true,subtree:true,attributes:true});
@@ -293,8 +292,13 @@
     if(document.getElementById('eris-room-complete-v2')) return;
     const s=document.createElement('style'); s.id='eris-room-complete-v2';
     s.textContent=[
-      '#erisRoomSurface .erc-side-rail{position:absolute;left:10px;bottom:230px;z-index:27;display:flex;flex-direction:column;gap:7px}',
-      '#erisRoomSurface .erc-side-rail button{width:40px;height:40px;border-radius:13px;border:1px solid #ffffff12;background:#0c0618a0;color:#fff;backdrop-filter:blur(10px);box-shadow:0 7px 20px #0004;cursor:pointer;font-size:16px}',
+      '#erisRoomSurface .erc-side-rail{position:absolute;left:0;right:0;bottom:230px;height:140px;z-index:27;pointer-events:none}',
+      '#erisRoomSurface .erc-side-rail button{position:absolute;width:40px;height:40px;border-radius:13px;border:1px solid #ffffff12;background:#0c0618a0;color:#fff;backdrop-filter:blur(10px);box-shadow:0 7px 20px #0004;cursor:pointer;font-size:16px;pointer-events:auto}
+      #erisRoomSurface .erc-side-rail button:nth-child(1){left:10px;bottom:48px}
+      #erisRoomSurface .erc-side-rail button:nth-child(2){left:10px;bottom:0}
+      #erisRoomSurface .erc-side-rail button:nth-child(3){right:10px;bottom:96px}
+      #erisRoomSurface .erc-side-rail button:nth-child(4){right:10px;bottom:48px}
+      #erisRoomSurface .erc-side-rail button:nth-child(5){right:10px;bottom:0}',
       '#erisRoomSurface .erc-room-panel{position:absolute;right:10px;top:88px;bottom:234px;width:min(360px,calc(100% - 20px));z-index:60;display:none;flex-direction:column;border:1px solid #ffffff14;border-radius:18px;background:#090512e8;backdrop-filter:blur(22px);box-shadow:0 18px 50px #0008;overflow:hidden}',
       '#erisRoomSurface .erc-room-panel.show{display:flex}',
       '#erisRoomSurface .erc-panel-head{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid #ffffff0d}',
@@ -320,7 +324,7 @@
       '#erisRoomSurface .erc-seat-card-head{display:flex;align-items:center;gap:8px}.erc-seat-card-head .erc-avatar{width:38px;height:38px}',
       '#erisRoomSurface .erc-seat-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}',
       '#erisRoomSurface .erc-notice{padding:8px 9px;border-radius:10px;background:#ffffff06;color:#aaa0ad;font-size:8px;line-height:1.45}',
-      '#erisRoomSurface .erc-chat-tabs{display:flex;gap:5px;padding:6px 10px 0;max-width:620px;width:100%;margin:0 auto;box-sizing:border-box;z-index:2}.erc-chat-tabs button{border:1px solid #ffffff0b;background:#ffffff08;color:#aaa0ad;border-radius:9px;padding:6px 9px;font-size:8px}.erc-chat-tabs button.active{color:#fff;background:#ffffff14}'+'@media(max-width:520px){#erisRoomSurface .erc-room-panel{left:8px;right:8px;top:82px;bottom:228px;width:auto}#erisRoomSurface .erc-side-rail{left:7px;bottom:228px}#erisRoomSurface .erc-side-rail button{width:36px;height:36px}}'
+      '#erisRoomSurface .erc-chat-tabs{display:flex;gap:5px;padding:6px 10px 0;max-width:620px;width:100%;margin:0 auto;box-sizing:border-box;z-index:2}.erc-chat-tabs button{border:1px solid #ffffff0b;background:#ffffff08;color:#aaa0ad;border-radius:9px;padding:6px 9px;font-size:8px}.erc-chat-tabs button.active{color:#fff;background:#ffffff14}'+'@media(max-width:520px){#erisRoomSurface .erc-room-panel{left:8px;right:8px;top:82px;bottom:228px;width:auto}#erisRoomSurface .erc-side-rail{left:0;right:0;bottom:228px}#erisRoomSurface .erc-side-rail button{width:36px;height:36px}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -343,9 +347,8 @@
   function rail(surface){
     if(surface.querySelector('.erc-side-rail')) return;
     const r=document.createElement('div'); r.className='erc-side-rail';
-    r.innerHTML='<button title="Oda bilgisi" data-tab="info">ℹ️</button><button title="Kullanıcılar" data-tab="users">👥</button>'+
-      '<button title="Hediyeler" data-tab="gifts">🎁</button><button title="Müzik" data-tab="music">🎵</button>'+
-      '<button title="Ayarlar" data-tab="controls">⚙️</button><button title="Duyuru" data-extra="announcement">📢</button><button title="Ayrıl" data-leave="1">🚪</button>';
+    r.innerHTML='<button title="Hediyeler" data-tab="gifts">🎁</button><button title="Müzik" data-tab="music">🎵</button>'+
+      '<button title="Oda bilgisi" data-tab="info">ℹ️</button><button title="Ayarlar" data-tab="controls">⚙️</button><button title="Ayrıl" data-leave="1">🚪</button>';
     r.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
     r.querySelector('[data-extra]').onclick=()=>extra('announcement'); r.querySelector('[data-leave]').onclick=()=>window.closeRealRoom?.();
     surface.appendChild(r);
