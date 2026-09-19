@@ -505,40 +505,50 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=409, detail="Round state bozuk")
         if state.get("phase") != "player":
             raise HTTPException(status_code=409, detail="Oyuncu aksiyonu beklenmiyor")
-        deck = state.get("deck") or []
+
+        deck = list(state.get("deck") or [])
         player = list(state.get("player_hand") or [])
         dealer = list(state.get("dealer_hand") or [])
+
         if payload.action == "hit":
             if not deck:
                 raise HTTPException(status_code=409, detail="Deste tükendi")
             player.append(deck.pop())
-            state["deck"] = deck
-            state["player_hand"] = player
-            state["player_total"] = _blackjack_hand_total(player)
-            if state["player_total"] >= 21:
-                payload_action = "stand"
-            else:
-                payload_action = "hit"
-            if payload_action == "hit":
+            player_total = _blackjack_hand_total(player)
+            state.update({"deck": deck, "player_hand": player, "player_total": player_total})
+            if player_total < 21:
                 row.state_data = json.dumps(state, ensure_ascii=False, separators=(",", ":"))
                 db.commit()
-                return {"round_id": row.id, "status": row.status, "state": state}
-        total = _blackjack_hand_total(player)
-        while _blackjack_hand_total(dealer) < 17 and deck:
-            dealer.append(deck.pop())
-        dealer_total = _blackjack_hand_total(dealer)
-        if total > 21:
-            result = "loss"
-        elif dealer_total > 21 or total > dealer_total:
-            result = "win"
-        elif total == dealer_total:
-            result = "push"
+                return {"round_id": row.id, "status": row.status, "result": "pending", "state": state}
+            payload_action = "stand"
         else:
+            player_total = _blackjack_hand_total(player)
+            payload_action = "stand"
+
+        if player_total > 21:
             result = "loss"
+        else:
+            while _blackjack_hand_total(dealer) < 17 and deck:
+                dealer.append(deck.pop())
+            dealer_total = _blackjack_hand_total(dealer)
+            if dealer_total > 21 or player_total > dealer_total:
+                result = "win"
+            elif player_total == dealer_total:
+                result = "push"
+            else:
+                result = "loss"
+
+        dealer_total = _blackjack_hand_total(dealer)
         state.update({
-            "phase": "finished", "deck": deck, "player_hand": player,
-            "dealer_hand": dealer, "player_total": total,
-            "dealer_total": dealer_total, "result": result,
+            "phase": "finished",
+            "deck": deck,
+            "player_hand": player,
+            "dealer_hand": dealer,
+            "player_total": player_total,
+            "dealer_total": dealer_total,
+            "result": result,
+            "natural_blackjack": len(player) == 2 and player_total == 21,
+            "dealer_natural": len(dealer) == 2 and dealer_total == 21,
         })
         row.state_data = json.dumps(state, ensure_ascii=False, separators=(",", ":"))
         row.status = "finished"
