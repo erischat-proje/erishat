@@ -422,3 +422,7 @@ GÜVENLİK/KAPSAM NOTU
 2026-09-19 — WEBRTC SİGNALING
 - [x] Authenticated room WebSocket üzerinden rtc_offer / rtc_answer / rtc_ice / rtc_leave hedef kullanıcıya aktarımı eklendi.
 - [ ] Tarayıcı RTCPeerConnection + getUserMedia entegrasyonu, STUN/TURN, gerçek 2-browser audio E2E ve çoklu instance açık.
+
+2026-09-19 — WEBRTC TARAYICI YÜZEYİ
+- [x] Demo koltuk ekranına getUserMedia(audio only), RTCPeerConnection, ICE, offer/answer ve remote audio bağlandı.
+- [ ] Gerçek iki tarayıcı E2E, STUN/TURN ve mobil cihaz doğrulaması açık.
