@@ -15,7 +15,7 @@ function walk(dir) {
 }
 const cosmeticRoot = join(ROOT, 'Gereken_icerikler');
 const assets = walk(cosmeticRoot).map(p => relative(ROOT,p).replaceAll('\\','/')).sort();
-if (assets.length !== 171) throw new Error(`expected 171 assets, found ${assets.length}`);
+if (assets.length !== 178) throw new Error(`expected 178 assets, found ${assets.length}`);
 
 const server = spawn('python', ['-m','http.server','4174','--directory',ROOT], {stdio:'ignore'});
 try {
