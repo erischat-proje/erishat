@@ -113,3 +113,5 @@ NOT
 - `77e2e36777af33aed831f5346627b724e9e20ec3`: Duyuru yönetimi yüzeyinde oda/servis durumu görünür hale getirildi; duyuru yükleme hatası artık 'henüz duyuru yok' gibi gösterilmiyor ve işlemler oda yokken güvenli biçimde engelleniyor.
 
 - `77d49a4f7de3bdcb6d7b505ff248018feaadcfd6`: Oda koltukları/gerçek ses demo yükleme fonksiyonu async olarak düzeltildi; koltuk ve RTC servis hataları artık sessizce yutulmuyor, durum paneline aktarılıyor.
+
+- `cb3fb39ee3a98ecdd2d8d141aee3bb76df3105f4`: Aile üye listesi artık backend hatasını gerçek 'liste boş' durumundan ayırıyor; yenileme de hata durumunu görünür tutuyor.
