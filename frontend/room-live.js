@@ -24,7 +24,7 @@
   function ensureRoomSurface(){
     if(document.getElementById('erisRoomSurface')) return document.getElementById('erisRoomSurface');
     const style=document.createElement('style'); style.id='erisRoomSurfaceStyle';
-    style.textContent=\`
+    style.textContent=`
       #erisRoomSurface{position:fixed;inset:0;z-index:900;background:#05040a;color:#fff;display:none;overflow:hidden;font-family:Inter,system-ui,sans-serif}
       #erisRoomSurface.show{display:block}
       .eris-room-wall{position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,rgba(255,80,170,.16),transparent 30%),linear-gradient(145deg,#100a1c,#090813 48%,#150b19);background-position:center;background-size:cover;overflow:hidden}
@@ -52,7 +52,7 @@
       .eris-room-tools{position:absolute;right:12px;bottom:242px;z-index:8;display:flex;gap:7px}.eris-room-tools button{border:1px solid #ffffff18;background:rgba(8,7,11,.46);color:#fff;border-radius:50%;width:44px;height:44px;font-size:15px;backdrop-filter:blur(8px);box-shadow:0 8px 22px #0005}.eris-room-tools #erisRoomMic{font-size:0}.eris-room-tools #erisRoomMic:after{content:"🎙️";font-size:17px}
       @media(max-width:520px){.eris-seat{width:70px;height:70px}.eris-room-core{width:82px;height:82px}.eris-room-stage{inset:72px 0 224px}.eris-room-tools{bottom:240px}.eris-room-chat{height:224px}}
       @media(min-width:760px){.eris-room-stage{left:50%;right:auto;width:min(900px,100%);transform:translateX(-50%)}.eris-room-chat{left:50%;right:auto;width:min(900px,100%);transform:translateX(-50%)}.eris-room-tools{right:max(12px,calc((100% - 900px)/2 + 12px))}}
-    \`;
+    `;
     document.head.appendChild(style);
     const s=document.createElement('section');s.id='erisRoomSurface';
     s.innerHTML='<div class="eris-room-wall"></div><div class="eris-room-top"><button class="room-action back" id="erisRoomBack" aria-label="Geri">‹</button><div class="eris-room-title"><b id="erisLiveTitle">Oda</b><small id="erisLiveMeta">Bağlanıyor…</small></div><button class="room-action" id="erisRoomGift" aria-label="Hediyeler">🎁</button><button class="room-action" id="erisRoomMusic" aria-label="Müzik">🎵</button></div><div class="eris-room-stage" id="erisLiveSeats"><div class="eris-room-core"><div><b>CANLI ODA</b><small>sohbete katıl</small></div></div><div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div></div><div class="eris-room-tools"><button id="erisRoomMic">🎙️ Mikrofon</button><button id="erisRoomMore">•••</button></div><div class="eris-room-chat"><div class="eris-chat-list" id="erisLiveChat"><div style="color:#938a9f;font-size:9px">Oda sohbetine bağlanılıyor…</div></div><div class="eris-room-compose"><input id="erisLiveInput" maxlength="500" placeholder="Odaya mesaj yaz…"><button id="erisLiveSend">Gönder</button></div></div>';
