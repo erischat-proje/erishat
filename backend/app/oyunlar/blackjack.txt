@@ -1,0 +1,6 @@
+ERISCHAT OYUN MOTORU — BLACKJACK
+Kaynak kod: blackjack.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: gerçek 52 kartlık deste, start, hit, stand, dealer çözümleme, Ace hesabı, natural/push/loss/win.
+Round state GameRound.state_data içinde tutulur.
+Para/Lidya/Gem bahis bağlantısı yoktur.
