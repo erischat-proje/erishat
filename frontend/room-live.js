@@ -99,7 +99,8 @@
 
   function closeRealRoom(){
     const id=window.ErisCurrentRoomId||window.currentRoomId;
-    document.getElementById('realRoomModal')?.classList.remove('show');
+    document.getElementById('erisRoomSurface')?.classList.remove('show');
+    window.__erisRoomSocket?.close?.(); window.__erisRoomSocket=null;
     if(id) window.ErisRoom?.leave?.(id).catch(()=>{});
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null;
