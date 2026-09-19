@@ -473,3 +473,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Aile demo ekranı sahte üye/bağış/sohbet butonlarından gerçek API akışına geçirildi.
 - [x] Aile oluşturma, üye listeleme/ekleme, bağış ve aile chat geçmişi/mesaj gönderimi bağlandı.
 - [ ] Aile rol değiştirme/üye çıkarma ve davet kabul lifecycle E2E açık.
+
+2026-09-19 — FAMILY ECONOMY SAFETY
+- [x] Aile bağışında kullanıcı ve aile satırları işlem sırasında kilitleniyor.
+- [x] Yetersiz bakiye kontrolü kilit sonrası yapılıyor; eşzamanlı çift harcama riski azaltıldı.
+- [x] Bağış miktarı için pozitif tutar kontrolü eklendi.
+- [ ] Aile bağışı için gerçek eşzamanlı runner/E2E doğrulaması açık.
