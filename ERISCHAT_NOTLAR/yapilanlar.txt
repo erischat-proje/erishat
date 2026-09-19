@@ -531,3 +531,10 @@ Room control checkpoint
 [2026-09-19 devam — VIP PROGRESS ASSERTION HARDENING]
 - [x] Commit c7419619fe237c9fbb1e23995f71c5650b564353: VIP lifecycle browser smoke artık /me/vip.current_level_spent değerini VIP 0/1/2/3 geçişlerinde doğrudan assert ediyor.
 - [ ] Bu yeni commit sonrası Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam — QUALITY WORKFLOW TANIMI DÜZELTİLDİ]
+- [x] Main branch quality workflow dosyasının kendisi bozulmuştu: dosya yalnızca indented step gövdesiyle başlıyor ve `name/on/jobs` üst yapısını kaybetmişti; bu nedenle Quality #1279–#1282 runları job oluşturmadan FAILURE oluyordu.
+- [x] Commit d94f5a68da4be8d214ddc3f7280efdc979900e1d ile geçerli `name/on/permissions/env/jobs/quality` yapısı geri yüklendi.
+- [x] VIP lifecycle static gate ve `VIP spend lifecycle browser smoke` adımı workflow'a korunarak eklendi.
+- [ ] Bu düzeltme sonrası yeni Quality run conclusion henüz doğrulanmadı; gerçek job/step sonucu görülmeden PASS ilan edilmeyecek.
