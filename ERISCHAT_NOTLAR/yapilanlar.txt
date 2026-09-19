@@ -518,3 +518,11 @@ Room control checkpoint
 [2026-09-19 devam — PROFİL VIP BROWSER ASSERTION]
 - scripts/frontend_backend_browser_smoke.mjs profil ekranında data-erischat-vip-panel varlığını, VIP başlığı/ilerleme metni ve progress bar renderını gerçek browser DOM üzerinden doğrulayacak assertion ile güçlendirildi.
 - Commit: 50fc1df59445e0a7062295d0ff6ddbd8ed5d1d84
+
+
+[2026-09-19 devam — VIP PROGRESS BACKEND SOURCE SYNC + LIVE E2E]
+- [x] Commit 4a346e49213e8007cdc46ae3c9b9ba6925e1e51f ile /me/vip yanıtına backend'in hesapladığı current_level_spent alanı eklendi.
+- [x] Commit 2a0bf923c40f3c0f1431b85a508dba8147edb606 ile profil VIP progress hesabı hardcoded eşik yerine /me/vip.current_level_spent kullanacak şekilde hizalandı.
+- [x] Yeni live-e2e job 105936497380 SUCCESS: API wait, anonymous session, live room, live ban, live DM, live cosmetic ve cleanup adımlarının tamamı geçti.
+- [x] Probe job 105936497479 SUCCESS; diagnostics job 105936497235 SUCCESS.
+- [ ] Pages deploy job 105936497278 yine github-pages environment aşamasında FAILURE; canlı Pages URL doğrulanmadı ve bu nedenle canlı demo PASS ilan edilmiyor.
