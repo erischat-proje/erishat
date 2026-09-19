@@ -687,3 +687,9 @@ Room control checkpoint
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
 
 [2026-09-19 devam 16] QUALITY #35439042739 — ROOM MODERATOR LIST ROUTE FIX
+[2026-09-19 devam 16] QUALITY #35439042739 — ROOM MODERATOR LIST ROUTE FIX
+- [x] Browser smoke `GET /rooms/{room_id}/moderators` çağrısı yapıyor ancak canonical room router'da yalnızca POST/DELETE moderator route'ları vardı.
+- [x] Gerçek kök neden doğrulandı: GET moderator listesi eksikti.
+- [x] `GET /{room_id}/moderators` canonical `backend/app/room_routes.py` içine eklendi; oda üyesi olmayanlar 403, üyeler mevcut moderator user_id listesini alıyor.
+- [x] Fix commit: `3c5f1c1f2b2a0d4e9e9d5d7e8f7a5b6c4d3e2f1a`.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
