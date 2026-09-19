@@ -13,7 +13,8 @@ function walk(dir) {
     return entry.isDirectory() ? walk(p) : exts.has(entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase()) ? [p] : [];
   });
 }
-const assets = walk(ASSET_ROOT).map(p => relative(ROOT,p).replaceAll('\\','/')).sort();
+const cosmeticRoot = join(ROOT, 'Gereken_icerikler');
+const assets = walk(cosmeticRoot).map(p => relative(ROOT,p).replaceAll('\\','/')).sort();
 if (assets.length !== 171) throw new Error(`expected 171 assets, found ${assets.length}`);
 
 const server = spawn('python', ['-m','http.server','4174','--directory',ROOT], {stdio:'ignore'});
@@ -30,7 +31,7 @@ try {
       try { await img.decode(); } catch (_) {}
       const ok=img.complete && img.naturalWidth>0 && img.naturalHeight>0;
       let transparent=null;
-      if(ok && path.toLowerCase().endsWith('.png')){
+      if(ok && /\.(png|svg)$/i.test(path)){
         const canvas=document.createElement('canvas');
         canvas.width=Math.min(img.naturalWidth,160);
         canvas.height=Math.min(img.naturalHeight,160);
@@ -45,7 +46,7 @@ try {
     return rows;
   },assets);
   const failed=result.filter(x=>!x.ok);
-  const frames=result.filter(x=>/cerceve/i.test(x.path) && x.path.toLowerCase().endsWith('.png'));
+  const frames=result.filter(x=>/cerceve/i.test(x.path) && /\.(png|svg)$/i.test(x.path));
   const opaqueFrames=frames.filter(x=>x.ok && x.transparent===false);
   if(failed.length) throw new Error('asset render failures: '+failed.map(x=>x.path).join(','));
   console.log(`COSMETICS_BROWSER_RENDER_PASS assets=${result.length} png_alpha_frames=${frames.length-opaqueFrames.length}/${frames.length} opaque_png_frames=${opaqueFrames.length}`);
