@@ -153,20 +153,29 @@
 
   function safetyDemo(){
     const state={notifications:3,blocked:false,vipHidden:false,report:'Bekliyor'};
-    const m=modal('🛡️ Bildirim • Güvenlik • Moderasyon',`<div style="display:grid;gap:8px">
-      <div id="safeNotice">${card('<b>🔔 Bildirim merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Okunmamış bildirimleri ve okundu durumunu test et.</small><button id="safeRead" style="margin-top:7px">✓ Tümünü okundu yap</button></div></div>
-      <div id="safeBlock">${card('<b>🚫 Engelleme</b><small style="display:block;color:#938a9f;margin-top:4px">Demo kullanıcı engelleme durumunu değiştir.</small><button id="safeBlockBtn" style="margin-top:7px">🚫 Engelle</button></div></div>
-      <div id="safePrivacy">${card('<b>🔒 Gizlilik</b><small style="display:block;color:#938a9f;margin-top:4px">VIP görünürlüğünü demo olarak aç/kapat.</small><button id="safeVipBtn" style="margin-top:7px">👁 VIP görünürlüğünü değiştir</button></div></div>
-      <div id="safeAdmin">${card('<b>🧰 Moderasyon</b><small style="display:block;color:#938a9f;margin-top:4px">Örnek raporun durum akışını incele.</small><button id="safeReportBtn" style="margin-top:7px">🛡 Raporu incele</button></div></div>
-      <div id="safeStatus">${card('<small style="color:#938a9f">Demo işlemleri gerçek kullanıcıyı/hesabı değiştirmez.</small>')}</div>`);
-    const render=()=>{m.querySelector('#safeNotice small').textContent=state.notifications?'Okunmamış bildirim: '+state.notifications:'Tüm demo bildirimleri okundu.';m.querySelector('#safeBlock small').textContent=state.blocked?'Demo kullanıcı engellendi.':'Kullanıcı engelli değil.';m.querySelector('#safeBlockBtn').textContent=state.blocked?'↩ Engeli kaldır':'🚫 Engelle';m.querySelector('#safePrivacy small').textContent=state.vipHidden?'VIP görünürlüğü gizli (demo).':'VIP görünürlüğü açık (demo).';m.querySelector('#safeAdmin small').textContent='Rapor #DEMO-001 • '+state.report;};
+    const html=[
+      '<div style="display:grid;gap:8px">',
+      '<div id="safeNotice">'+card('<b>🔔 Bildirim merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Okunmamış bildirimleri ve okundu durumunu test et.</small><button id="safeRead" style="margin-top:7px">✓ Tümünü okundu yap</button>')+'</div>',
+      '<div id="safeBlock">'+card('<b>🚫 Engelleme</b><small style="display:block;color:#938a9f;margin-top:4px">Demo kullanıcı engelleme durumunu değiştir.</small><button id="safeBlockBtn" style="margin-top:7px">🚫 Engelle</button>')+'</div>',
+      '<div id="safePrivacy">'+card('<b>🔒 Gizlilik</b><small style="display:block;color:#938a9f;margin-top:4px">VIP görünürlüğünü demo olarak aç/kapat.</small><button id="safeVipBtn" style="margin-top:7px">👁 VIP görünürlüğünü değiştir</button>')+'</div>',
+      '<div id="safeAdmin">'+card('<b>🧰 Moderasyon</b><small style="display:block;color:#938a9f;margin-top:4px">Örnek raporun durum akışını incele.</small><button id="safeReportBtn" style="margin-top:7px">🛡 Raporu incele</button>')+'</div>',
+      '<div id="safeStatus">'+card('<small style="color:#938a9f">Demo işlemleri gerçek kullanıcıyı/hesabı değiştirmez.</small>')+'</div>',
+      '</div>'
+    ].join('');
+    const m=modal('🛡️ Bildirim • Güvenlik • Moderasyon',html);
+    const render=()=>{
+      m.querySelector('#safeNotice small').textContent=state.notifications?'Okunmamış bildirim: '+state.notifications:'Tüm demo bildirimleri okundu.';
+      m.querySelector('#safeBlock small').textContent=state.blocked?'Demo kullanıcı engellendi.':'Kullanıcı engelli değil.';
+      m.querySelector('#safeBlockBtn').textContent=state.blocked?'↩ Engeli kaldır':'🚫 Engelle';
+      m.querySelector('#safePrivacy small').textContent=state.vipHidden?'VIP görünürlüğü gizli (demo).':'VIP görünürlüğü açık (demo).';
+      m.querySelector('#safeAdmin small').textContent='Rapor #DEMO-001 • '+state.report;
+    };
     m.querySelector('#safeRead').onclick=()=>{state.notifications=0;render();};
     m.querySelector('#safeBlockBtn').onclick=()=>{state.blocked=!state.blocked;render();};
     m.querySelector('#safeVipBtn').onclick=()=>{state.vipHidden=!state.vipHidden;render();};
     m.querySelector('#safeReportBtn').onclick=()=>{state.report=state.report==='Bekliyor'?'İncelendi • işlem bekliyor':'Bekliyor';render();};
     render();
   }
-
   function onboardingDemo(){
     const steps=[['👋 Hoş geldin','Anonim giriş / oturum'],['✏️ Takma ad','Kullanıcı adı seç'],['♂♀ Cinsiyet','Profil tercihi'],['🖼 Avatar','Başlangıç görünümü'],['🎯 İlgi alanları','Keşif kişiselleştirme'],['🔒 Gizlilik','Görünürlük tercihleri'],['🚀 Başla','Odalar + keşif + DM']];
     let index=0;
