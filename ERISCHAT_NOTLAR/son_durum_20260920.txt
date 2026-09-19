@@ -65,3 +65,5 @@ NOT
 - Safety, onboarding ve room-settings demo yüzeyleri etkileşimli hale getirildi; demo-session durumları gerçek backend kalıcılığı olarak sunulmuyor.
 - Son kontrol edilen `a4a2528...` commit'i için GitHub workflow sorgusu şu anda workflow sonucu döndürmedi; bu nedenle yeni CI PASS ilan edilmedi.
 - Bir sonraki teknik odak: müşteri demo yüzeylerindeki kalan boş/ölü CTA'ları tek tek kapatmak, ardından Pages canlı görsel/etkileşim kontrolünü yapmak.
+
+- 2026-09-20 devam: Tüm Sistemler > Araçlar paneline merkezi 7 oyunluk Oyun Merkezi de eklendi. Böylece oyun kataloğu yalnızca ana navigasyondan değil, merkezi sistem hub'ından da açılabiliyor. Commit: 6728cdcac02e428bc718b4a3990ef7c0a037fb7e.
