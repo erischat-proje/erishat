@@ -839,3 +839,11 @@ Room control checkpoint
 - [ ] Gerçek TURN credential provisioning ve gerçek iki cihaz/mobil ağ E2E'si dış altyapı kanıtı gerektiriyor; kaynak kodda STUN varsayılanı + opsiyonel TURN env desteği mevcut.
 - [ ] 139 frame için görsel alpha standardı ayrıca tasarım incelemesi gerektiriyor; render PASS tek başına tasarım standardı PASS sayılmayacak.
 - [ ] Gerçek müzik kaynağı/playback ve Pages canlı zinciri ayrı sonraki aşamalar olarak korunuyor.
+
+
+[2026-09-19 devam 34] ODA DUYURU BROWSER YÜZEYİ CRUD ZİNCİRİNE BAĞLANDI
+- [x] frontend/full-demo-live.js içindeki eski tekil /announcement okuması kaldırıldı; oda Duyurular butonu canonical /rooms/{room_id}/announcements GET akışına bağlandı.
+- [x] Duyuru yönetimi için mevcut announcement CRUD uçlarıyla POST/DELETE akışı bağlandı; yetkisiz kullanıcı mevcut duyuruları okuyabiliyor, yönetim yetkisi olmayan yazma denemeleri backend tarafından korunuyor.
+- [x] scripts/room_browser_surface_smoke.mjs canonical announcements endpointini mock'layıp Duyurular butonunu browser yüzeyinde tetikliyor.
+- [x] Kod commitleri: 830409dc3dd3629bf00a9f527655b16cf7076535 ve 75385b35088b173632987c4dfdbc3ccfb5f67c78.
+- [ ] Bu iki commit sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
