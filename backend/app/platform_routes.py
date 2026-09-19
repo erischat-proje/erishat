@@ -348,8 +348,13 @@ def register_platform_auth(current_user_dependency):
         field="knight_badge_claimed" if claim=="knight_badge" else "wallpaper_claimed"
         already=bool(getattr(v,field))
         setattr(v,field,True)
+        if claim=="wallpaper":
+            wallpaper_key="vip_wallpaper_10"
+            exists=db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid":user.id,"key":wallpaper_key}).first()
+            if not exists:
+                db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,'wallpaper',:key)"), {"uid":user.id,"key":wallpaper_key})
         db.commit()
-        return {"claim":claim,"claimed":True,"already_claimed":already,"level":v.level}
+        return {"claim":claim,"claimed":True,"already_claimed":already,"level":v.level,"wallpaper_asset_key":"vip_wallpaper_10" if claim=="wallpaper" else None}
 
     @router.get("/users/{user_id}/vip")
     def public_vip(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
