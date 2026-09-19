@@ -771,3 +771,14 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Kök neden stale gift-event assertion olarak düzeltildi; hem room gift-event hem profile gift UI read-back assertion'ları canonical `Zeytin Dalı` anahtarına hizalandı.
 - [x] Fix commit: `6fa6f4528c5dfa33bad98b5ff78f79c6009d7cd2`.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam 22] 200 HEDİYELİ LİDYA SİSTEMİ + GLOBAL ODA DUYURUSU
+- [x] `erischathediyesistemi.txt` içindeki 200 hediyenin tamamı canonical `backend/app/room_routes.py` GIFT_CATALOG'a aktarıldı; eski 45 hediyelik runtime katalog kaldırıldı.
+- [x] Hediye fiyatına göre 1-9 seviye presentation profili eklendi: Seviye 1 animasyonsuz; 2-9 giderek artan ve seviyeye özel animasyon profilleri.
+- [x] Seviye 7-9 (en yüksek üç kademe) için global `gift_announcement` realtime yayını eklendi; açık tüm oda WebSocket'lerine gider.
+- [x] Her hediye gönderiminde oda sohbetine "gönderen → alıcı → hediye" sistem mesajı yayınlanıyor.
+- [x] Global duyuru payload'ında kesin `room_id` + `room_public_id` + oda adı bulunuyor; frontend üst banner tıklanınca doğrudan hedef odayı açıyor.
+- [x] `frontend/index.html` 200 hediyelik kataloğa hizalandı ve tıklanabilir yüksek seviye oda duyuru bannerı eklendi.
+- [x] Backend gift-catalog ve gift-events response'ları seviye/animasyon metadata'sı döndürüyor.
+- [ ] Bu değişikliklerden sonra yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
