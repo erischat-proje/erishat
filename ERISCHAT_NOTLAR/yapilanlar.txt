@@ -476,3 +476,10 @@ Room control checkpoint
 - [x] Demo müzik yüzeyi realtime music_sync dinliyor; playback/seek/pause durumunu diğer istemciden uyguluyor.
 - [x] Browser smoke müzik için play/pause/position akışını doğrulayacak şekilde genişletildi.
 - [ ] Gerçek CI/Quality PASS henüz alınmadı; test sonucu PASS ilan edilmiyor.
+
+
+2026-09-19 — DUYURU BROWSER E2E KAPSAMI
+- [x] Browser smoke owner tarafından duyuru oluşturma, düzenleme, sabitleme, kapatma ve silme yaşam döngüsünü doğruluyor.
+- [x] Normal member'ın duyuru oluşturma yetkisinin 403 ile sınırlandığı doğrulanıyor.
+- [x] Member'ın aktif duyuruyu listeleyebildiği browser akışında doğrulanıyor.
+- [ ] Bu yeni smoke değişikliklerinin Quality sonucu henüz alınmadı.
