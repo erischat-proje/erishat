@@ -181,6 +181,7 @@ async function main(){
       purchase=await fetch(api+'/me/cosmetics/purchase',{method:'POST',headers:h,body:JSON.stringify({cosmetic_type:'avatar',asset_key:candidate.asset_key})});
       if(purchase.status===201||purchase.status===200) { vipAfter=await fetch(api+'/me/vip',{headers:h}).then(r=>r.json()); apply=await fetch(api+'/me/cosmetics/apply',{method:'POST',headers:h,body:JSON.stringify({cosmetic_type:'avatar',asset_key:candidate.asset_key})});
       me=await fetch(api+'/me',{headers:h}).then(r=>r.json());
+      }
     }
     return {all:(all.items||[]).length,avatars:(avatars.items||[]).length,frames:(frames.items||[]).length,candidate:candidate?.asset_key,purchaseStatus:purchase?.status,purchaseData:purchase?await purchase.clone().json().catch(()=>null):null,vipAfter,applyStatus:apply?.status,avatarAsset:me?.avatar_asset};
   },API);  if(cosmeticSurface.all!==139||cosmeticSurface.avatars<1||cosmeticSurface.frames<1) throw new Error('cosmetic catalog/filter surface failed: '+JSON.stringify(cosmeticSurface));
