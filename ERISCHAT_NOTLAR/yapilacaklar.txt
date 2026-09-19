@@ -535,3 +535,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] Kalan doğrulama: Browser smoke oda oluşturma sırası düzeltildi. Announcement/roomInvite artık mevcut oda üzerinden çalışmalı. Fresh Quality/CI PASS ve gerçek iki tarayıcı WebRTC/mobil ağ doğrulaması hâlâ açık; PASS varsayılmıyor.
+
+
+[2026-09-19] Kalan doğrulama: Gerçek room WebSocket chat browser smoke eklendi. Fresh Quality/CI sonucu henüz PASS değil; gerçek iki-browser WebRTC + TURN/cellular-network doğrulaması ayrıca açık.
