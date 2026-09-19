@@ -498,3 +498,6 @@ Room control checkpoint
 
 
 [2026-09-19] Browser smoke syntax kontrolü: aynı scope içinde iki kez tanımlanan `reportFlow` değişkeni bulundu ve ikinci akış `familyReportFlow` olarak ayrıldı. Güncel dosyada duplicate `const` ve literal `\\n` kontrolü temiz.
+
+
+[2026-09-19] RTC signaling browser E2E eklendi: aynı oda içinde owner/member iki WebSocket ile gerçek `rtc_offer` → `rtc_answer` → `rtc_ice` → `rtc_leave` yönlendirmeleri smoke kapsamına alındı. Owner kimliği `/me` üzerinden alınıyor. Bu test gerçek mikrofon/WebRTC medya bağlantısını değil, signaling zincirini doğrular.
