@@ -519,3 +519,9 @@ Room control checkpoint
 - [x] Fresh Quality run 850 gerçek failure noktası logdan tespit edildi: `frontend/platform.js` içindeki `replace(/\\/v1$/, '')` ifadesi Node 20 syntax check'te `Invalid regular expression flags` veriyordu.
 - [x] Regex, URL pathindeki `/v1` son ekini doğru biçimde eşleyecek `/\/v1$/` formuna düzeltildi.
 - [ ] Yeni SHA için Fresh Quality sonucu bekleniyor.
+
+
+[2026-09-19] QUALITY API START FAILURE DÜZELTMESİ
+- [x] Fresh Quality run 829 logundan API startup failure kökü tespit edildi: `backend/app/oyunlar/registry.py` tüm kayıtlı motorlarda `play()` arıyor, fakat `blackjack.py` yalnızca `start()` sağlıyordu.
+- [x] Blackjack'in mevcut özel `start()` akışını bozmadan registry uyumluluğu için `play(choice, profile, data)` adapter'ı eklendi.
+- [ ] Yeni SHA Quality sonucu bekleniyor; sonraki gerçek failure adımı takip edilecek.
