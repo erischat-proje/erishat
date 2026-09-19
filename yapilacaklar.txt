@@ -1,7 +1,7 @@
 ERISCHAT — YARIN DEVAM CHECKPOINT
 2026-09-17 gece
 
-1. GitHub Actions / Pages job'suz failure nedenini çöz.
+1. Yeni Quality koşusunda Room browser surface smoke sonucunu doğrula; başarısızsa ilk gerçek hatayı tekrar düzelt.
 2. GitHub Pages canlı yayını doğrula.
 3. Frontend'i doğrulanmış Railway API adresine güvenli şekilde bağla.
 4. WebSocket bağlantısını doğrula: wss://erischat-production.up.railway.app/ws/rooms/{room_id}.
@@ -15,3 +15,5 @@ KURAL:
 - Projenin tekrar anlatılması istenmeyecek.
 - Railway deploy kullanıcı açıkça 'deploy' demeden yapılmayacak.
 - Büyük frontend dosyası kısmi içerikle asla overwrite edilmeyecek.
+
+- 2026-09-19: Müşteri demo linki için canlı Pages doğrulaması Quality sonrasında yapılacak; sahte URL paylaşılmayacak.
