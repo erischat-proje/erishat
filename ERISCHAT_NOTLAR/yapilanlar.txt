@@ -847,3 +847,8 @@ Room control checkpoint
 - [x] scripts/room_browser_surface_smoke.mjs canonical announcements endpointini mock'layıp Duyurular butonunu browser yüzeyinde tetikliyor.
 - [x] Kod commitleri: 830409dc3dd3629bf00a9f527655b16cf7076535 ve 75385b35088b173632987c4dfdbc3ccfb5f67c78.
 - [ ] Bu iki commit sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+[2026-09-19 devam 35] QUALITY 35442350192 — DUYURU BROWSER YÜZEYİ DOĞRULANDI
+- [x] Quality run 35442350192 / job 105895236839 SUCCESS; 28 ana kalite adımının tamamı geçti.
+- [x] Room Browser Surface smoke, yeni 📢 Duyurular yüzeyini de çalıştırarak geçti.
+- [x] Announcement UI + canonical GET/POST/DELETE CRUD bağlantısı Quality içinde doğrulandı.
