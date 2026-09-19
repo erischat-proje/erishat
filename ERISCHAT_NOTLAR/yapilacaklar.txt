@@ -880,4 +880,4 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Duyuru yönetimi için mevcut announcement CRUD uçlarıyla POST/DELETE akışı bağlandı; yetkisiz kullanıcı mevcut duyuruları okuyabiliyor, yönetim yetkisi olmayan yazma denemeleri backend tarafından korunuyor.
 - [x] scripts/room_browser_surface_smoke.mjs canonical announcements endpointini mock'layıp Duyurular butonunu browser yüzeyinde tetikliyor.
 - [x] Kod commitleri: 830409dc3dd3629bf00a9f527655b16cf7076535 ve 75385b35088b173632987c4dfdbc3ccfb5f67c78.
-- [ ] Bu iki commit sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+- [x] Quality run 35442350192 / job 105895236839 SUCCESS ile tamamlandı; 28 ana kalite adımının tamamı geçti, Room Browser Surface smoke duyuru yüzeyi dahil doğrulandı.
