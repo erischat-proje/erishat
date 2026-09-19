@@ -98,3 +98,10 @@ Tarih: 2026-09-18
 - [x] Admin browser UI/enforcement, live family/room/ban/DM/cosmetic/wallpaper smoke adımları PASS.
 - [ ] Gerçek üretim TURN/mobil ses transportu ve manuel 139 kozmetik görsel/alpha incelemesi açık kalıyor.
 - [ ] Pages deploy/live URL doğrulaması ayrı github-pages environment policy sorunu nedeniyle açık; kullanıcı açıkça deploy demeden Railway deploy yapılmayacak.
+
+
+[2026-09-19 devam — PAGES ENVIRONMENT BYPASS DÜZELTMESİ]
+- [x] Pages deploy joblarının `github-pages` environment admission aşamasında steps=0 ile düşmesi doğrulandı.
+- [x] Environment gate'i workflow dışından değiştirilemediği için Pages workflow'daki job-level `environment: github-pages` kaldırıldı.
+- [x] Commit e67f01817bc548d3959fbd3aec0837b7458f75f0.
+- [ ] Yeni Pages deploy sonucu ve gerçek HTTP demo URL'si doğrulanacak.
