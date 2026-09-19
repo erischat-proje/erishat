@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
-from .platform_models import Notification
+from .platform_models import Notification, VipStatus
+from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
 from .system_data import RoomIdRegistry
 from .system_logs import record
