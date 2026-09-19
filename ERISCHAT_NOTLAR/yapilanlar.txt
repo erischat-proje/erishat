@@ -714,3 +714,10 @@ Room control checkpoint
 - [x] 500.000.000 Lidya demo cüzdanının yalnızca bu tarayıcıdaki local test kredisi olduğu açıkça belirtildi.
 - [x] `ErisDemoWallet.isLocalOnly=true` ile gerçek backend bakiyesiyle karıştırılmaması sağlandı.
 - Commit: 4565a23838a54f0152a5b14749d689e2881c271b.
+
+
+[2026-09-19 devam — STATİK YÜZEY TARAMASI]
+- [x] shop-live.js içinde gambling benzeri oyun türlerinin mağaza yüzeyine sızmadığı kontrol edildi.
+- [x] Ana HTML'deki sahte mesajlar ve sabit VIP %64 kaldırılmış durumda.
+- [x] demo-cleanup.js ana Pages enjeksiyonundan çıkarıldı; gerçek içerikleri sonradan silme riski kaldırıldı.
+- [ ] Pages deploy ve canlı HTTP/görsel doğrulama hâlâ beklemede.
