@@ -438,3 +438,9 @@ Room control checkpoint
 - [x] `ERISCHAT_TURN_URL`, `ERISCHAT_TURN_USERNAME`, `ERISCHAT_TURN_PASSWORD` ile opsiyonel TURN yapılandırması eklendi.
 - [x] Oda sohbeti kapalı olsa bile WebRTC signaling bağlantısı kurulabiliyor; chat mesajı yine chat_enabled ile engelleniyor.
 - [ ] Gerçek TURN sunucusu ve gerçek 2-browser/mobile E2E henüz doğrulanmadı.
+
+2026-09-19 — LIVE DEMO API RESPONSE HARDENING
+- [x] Profil Lidya↔Gem takası demo akışı api() parsed response sözleşmesine hizalandı.
+- [x] Müzik ekleme/oynatma akışındaki yanlış .ok/.json() kullanımı temizlendi.
+- [x] Duyuru listeleme akışı parsed response ile hizalandı.
+- [x] WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması tamamlandı.
