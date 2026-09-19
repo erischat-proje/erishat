@@ -81,3 +81,5 @@ NOT
 - `9f73623437a4150f8cae97c310668a10f48108c4`: ana ekran/sistemler profil girişleri artık profil verisini yeniliyor; Keşfet etkinliklerindeki Müzik Köşesi CTA'sı boşa giden `openRoom` yerine merkezi müzik demo paneline bağlandı.
 
 - `a953ec045102d00b6fb96098bb6257f4acbbab9c`: gerçek oda modalındaki tanımsız kapat/hediye/müzik aksiyonları düzeltildi; kapatma doğrudan modalı kapatıyor, hediye ve müzik merkezi demo panellerine bağlandı; oda mesajı demo oturumunda mesaj balonu oluşturuyor.
+
+- `483c7a502bd5bf0e8eed425d3531cd73f07b8111`: gerçek oda modalında hediye tekrar gerçek `openRoomGift`, müzik gerçek `ErisChatMusic.open` ve kapatma gerçek `closeRealRoom` akışına bağlandı; demo merkezi yalnızca demo oda yüzeylerinde kullanılıyor.
