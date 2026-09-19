@@ -619,3 +619,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Commit `aebcad4bac69bb814b507462a385e5604e9f611b`.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
 
+2026-09-19 — QUALITY #877 GAMES INTEGRITY MARKER DÜZELTMESİ
+- [x] Static syntax geçti; Customer demo surface integrity `games` yüzeyi eski `Oyun merkezi` ve `Roulette` marker'ları nedeniyle kaldı.
+- [x] Canonical `gamesDemo` UI'daki gerçek marker'lar `Oyun Merkezi` ve `Rulet` olarak hizalandı; `4 Kupa` mevcut marker olarak korundu.
+- [x] Commit `36bc24f374986a9ee782914c9d4861bd5c3c896c`.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
