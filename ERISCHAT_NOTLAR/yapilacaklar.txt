@@ -1135,3 +1135,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `system_identity_admin_smoke.py` ephemeral DA token + hedef kullanıcı fixture'ı üretir; workflow sonunda fixture temizlenir.
 - [x] Quality workflow admin browser smoke adımını ve `admin_browser_smoke.mjs` static syntax gate'ini içeriyor.
 - [ ] Bu yeni zincirin GitHub Actions Quality runner PASS sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+
+[2026-09-19 devam — SONRAKİ QUALITY TETİĞİ]
+- Admin browser smoke reload-race fix `0a416fdfd8f2e4e66444af0fb37ec42eb7e3bef9` sonrası Quality workflow'un yeni push sonucu doğrulanacak.
+- `fetch_commit_workflow_runs` yalnız PR tetiklemeli sonuçları döndürdüğü için push çalışmasının durumunu bu araçtan doğrulamak mümkün olmadı.
+- Quality sonucu görülmeden PASS kabul edilmeyecek.
