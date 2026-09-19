@@ -30,6 +30,18 @@
     document.body.append(el);el.querySelector('[data-close]').onclick=()=>el.remove();return el;
   };
   const card = (html) => `<div style="background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px">${html}</div>`;
+  const playGameAnimation = (out, data) => {
+    const a=data?.animation;
+    if(!a) return;
+    const box=document.createElement('div');
+    box.style.cssText='margin-top:7px;padding:9px;border-radius:10px;background:#09070d;border:1px solid #ffffff12;font-size:9px';
+    const title=document.createElement('b'); title.textContent='🎬 Oyun akışı'; box.append(title);
+    const stage=document.createElement('div'); stage.style.cssText='margin-top:7px;min-height:28px;display:grid;place-items:center'; box.append(stage); out.append(box);
+    const frames=a.frames||a.curve||a.checkpoints;
+    if(Array.isArray(frames)&&frames.length){
+      let i=0; const tick=()=>{const v=frames[i]; stage.textContent=Array.isArray(v)?v.join(' • '):typeof v==='object'?Object.entries(v).map(([k,x])=>k+': '+x).join(' • '):String(v); i++; if(i<frames.length) setTimeout(tick,Math.max(80,Math.floor((a.duration_ms||1600)/frames.length)));}; tick();
+    } else if(Array.isArray(a.phases)){ let i=0; const tick=()=>{stage.textContent=a.phases[i++]; if(i<a.phases.length)setTimeout(tick,300)}; tick(); }
+  };
   const btn = (text, action) => {const b=document.createElement('button');b.textContent=text;b.style.cssText='border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800';b.onclick=action;return b;};
 
   async function vipDemo() {
@@ -76,7 +88,7 @@
           const d=res?await res.json().catch(()=>({})):{}; const data=d.data||{};
           const hit=data.choice_hit;
           const base=()=>`<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12">🎲 Sonuç: <b>${esc(d.result||d.detail||'Sonuç alınamadı')}</b>${selected?'<br>'+(hit?'✅ Seçimin tuttu!':'❌ Seçimin tutmadı.') : ''}${data.multiplier?'<br>🚀 '+data.multiplier+'×':''}${data.player_total?'<br>🃏 Sen '+data.player_total+' • Dağıtıcı '+data.dealer_total:''}${data.finish_order?'<br>🏁 '+data.finish_order.join(' → '):''}${data.animation?.type?'<br>🎬 '+esc(data.animation.type)+' • animasyon '+esc(data.animation.duration_ms||data.animation.steps||data.animation.turns||''):''}</div>`;
-          if(g.key!=='blackjack'||!data.round_id||d.result!=='pending'){out.innerHTML=base();return;}
+          if(g.key!=='blackjack'||!data.round_id||d.result!=='pending'){out.innerHTML=base(); playGameAnimation(out,data); return;}
           const actionBox=document.createElement('div'); actionBox.style.cssText='margin-top:7px;display:flex;gap:5px;flex-wrap:wrap';
           const show=()=>{const s=data.state||{};out.innerHTML=`<div style="padding:9px;border-radius:10px;background:#8a5cff12">🃏 El: <b>${esc((s.player_hand||data.player_hand||[]).join(' '))}</b><br>Toplam: <b>${esc(s.player_total??data.player_total??'')}</b><br>Dealer: <b>${esc((s.dealer_hand||data.dealer_hand||[]).map((x,i)=>i===1&&s.phase==='player'?'🂠':x).join(' '))}</b></div>`; out.append(actionBox);};
           const act=async(action)=>{
