@@ -1085,3 +1085,9 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] Quality #1216'da ilk gerçek failure cosmetics asset integrity idi; 32 yerine 40 standart frame sözleşmesi fixlendi.
 - [ ] Fix commit b8202cd8668a02af87d48aaae95709d2a5f15200 sonrası Fresh Quality sonucu doğrulanacak.
 - [ ] Pages canlı zinciri hâlâ ayrı ortam/deploy konusu; kullanıcı açıkça deploy demeden Railway deploy yapılmayacak.
+
+
+[2026-09-19 devam 60] QUALITY #1219 KÖK DÜZELTME
+- [x] Frontend-backend browser smoke içindeki eski 139 kozmetik katalog beklentisi 147'ye güncellendi.
+- [x] Fix commit `ab2d7546795d02db690d0028629cfa24d6dc9ff5`.
+- [ ] Fresh Quality sonucu bekleniyor; PASS varsayılmayacak.
