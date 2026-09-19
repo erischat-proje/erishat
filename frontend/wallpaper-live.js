@@ -12,7 +12,7 @@
     box.innerHTML='<div style="font-weight:900;font-size:12px">🌌 Duvar Kağıtları</div><div style="font-size:9px;color:#938a9f;margin:4px 0 10px">Normal koleksiyon satın alınabilir; VIP koleksiyonu seviyeye göre açılır.</div><div data-wg style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">Yükleniyor…</div>';
     const grid=box.querySelector('[data-wg]');
     try{
-      const [data,vip,user]=await Promise.all([api('/wallpapers'),api('/me/vip'),api('/me')]);
+      const [data,vip,user,ownedData]=await Promise.all([api('/wallpapers'),api('/me/vip'),api('/me'),api('/me/cosmetics')]);
       const items=data.items||[]; const level=Number(vip.level||0);
       const owned=(await api('/me/cosmetics')).items||[];
       const own=new Set(owned.filter(x=>x.cosmetic_type==='wallpaper').map(x=>x.asset_key));
