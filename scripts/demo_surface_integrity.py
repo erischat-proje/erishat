@@ -17,7 +17,7 @@ REQUIRED_EXTRAS_MARKERS = {
     "announcement": ("announcementDemo", "Duyuru yönetimi", "📌 Sabitle"),
     "family": ("familyDemo", "Aile yönetimi + aile sohbeti", "➕ Üye ekle"),
     "store": ("storeDemo", "139 kozmetik", "cosFilter"),
-    "profile": ("profileDemo", "Profil + avatar/çerçeve try-on", "Avatarı uygula"),
+    "profile": ("profileDemo", "👤 Profil + Lidya / Lidya Gem", "Avatarı uygula"),
     "safety": ("safetyDemo", "Bildirim • Güvenlik • Moderasyon", "Engelleme"),
     "onboarding": ("onboardingDemo", "Onboarding", "Anonim"),
 }
