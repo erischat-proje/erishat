@@ -593,3 +593,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `frontend_backend_browser_smoke.mjs` içinde `roomInvite` değişkeni tanımlanmadan önce kontrol ediliyordu; bu TDZ/runtime hatası oluşturabilecek yanlış sıralama düzeltildi.
 - [x] `roomInvite` kontrolü artık ilgili `const roomInvite=...` akışının hemen sonrasında yapılıyor.
 - [ ] `e060332652bba9ee0715fb4a228f4e0a4064bfca` sonrası Fresh Quality/CI sonucu henüz doğrulanmadı.
+
+
+[2026-09-19] QUALITY #867 — MUSIC INTEGRITY MARKER DÜZELTMESİ
+- [x] Quality #867 static syntax geçti; Customer demo surface integrity aşamasında `music` yüzeyi eski `DJ kilidi` marker'ı nedeniyle kaldı.
+- [x] Canonical `musicDemo` UI'da mevcut gerçek marker olan `Gerçek kuyruk` kullanıldı.
+- [x] Commit `4dc9d1fc77207653e6882040513fe497a6389055`.
+- [ ] Bu commit sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
