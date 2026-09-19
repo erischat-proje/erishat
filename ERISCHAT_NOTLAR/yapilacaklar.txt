@@ -850,4 +850,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Kök neden smoke testinin iki standart kozmetik satın alımından sonra kullanıcının spend-based VIP seviyesinin yükselmesini hesaba katmamasıydı. Test sabit olarak VIP 1 asset'ini 403 bekliyordu; iki adet 1000 Lidya satın alımı kullanıcıyı VIP 2 yaptığı için VIP 1 apply 200 döndü.
 - [x] scripts/cosmetic_live_smoke.py artık satın alımlar sonrasındaki gerçek vip_level değerini okuyor ve mevcut seviyenin üstündeki ilk VIP asset'i seçerek purchase/apply gate'inin 403 olduğunu doğruluyor.
 - [x] Fix commit: 77dfbdd5a18f010b002d06f4aafc7c1e62a58794.
-- [ ] Bu fix sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+- [x] Fresh Quality #1015 sonucu doğrulandı: SUCCESS.
+
+
+[2026-09-19 devam 32] QUALITY #1015 — COSMETIC VIP GATE DÜZELTMESİ DOĞRULANDI
+- [x] Quality run 35441312241 / job 105892458515 tam olarak SUCCESS ile tamamlandı.
+- [x] Tüm ana adımlar başarıyla geçti: static, frontend/browser, cosmetics render/integrity/URL, room, family, admin, anonymous, Live family, Live room, Live ban, Live DM ve Live cosmetic smoke.
+- [x] Live cosmetic smoke, spend-based VIP yükselmesi sonrası mevcut VIP seviyesinin üstündeki asset gate'ini doğru şekilde doğruladı.
+- [x] 77dfbdd5a18f010b002d06f4aafc7c1e62a58794 fix'i doğrulanmış durumda.
