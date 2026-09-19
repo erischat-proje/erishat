@@ -103,3 +103,5 @@ NOT
 - `e7dd7181d6452f2f7fd222a308369419f9d3855e`: Güvenlik/Moderasyon demo yüzeyi state tabanlı hale getirildi; bildirim okundu, engelle/engel kaldır, VIP görünürlüğü ve örnek rapor inceleme durumları aynı panelde anlık güncelleniyor.
 
 - `b8398698ec008a10c3b8283d90d3511451ba26a6`: Aile demo backend durumları ayrıştırıldı; aile servisi erişilemezken 'aile yok' gösterilmiyor, tekrar dene aksiyonu geliyor. Aile sohbetinde API hatası artık 'henüz mesaj yok' gibi yanlış görünmüyor.
+
+- `da57963db90e2d5b8974ba099af41ab890c52306`: Keşfet yüzeyindeki Yakındakiler/Rastgele Sohbet/Rastgele Oda API hataları artık yalnızca toast'a bırakılmıyor; sonuç panelinde açık servis durumu gösteriliyor.
