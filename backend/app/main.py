@@ -219,24 +219,6 @@ def me(user: User = Depends(current_user)) -> User:
     return user
 
 
-@app.post("/v1/families")
-def create_family_production(payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
-    name = str(payload.get("name", "")).strip()
-    if not name or len(name) > 64:
-        raise HTTPException(status_code=422, detail="Geçerli bir aile adı gerekli")
-    family_id = "family_" + uuid4().hex[:12]
-    conversation_id = "family_chat_" + family_id
-    conversation = Conversation(id=conversation_id, type="family")
-    family = Family(id=family_id, owner_id=user.id, name=name, level=1, balance=0, chat_conversation_id=conversation_id)
-    db.add(conversation)
-    db.add(family)
-    db.flush()
-    db.add(ConversationMember(conversation_id=conversation_id, user_id=user.id))
-    db.add(FamilyMember(family_id=family_id, user_id=user.id, role="member"))
-    db.commit()
-    return {"id": family.id, "name": family.name, "level": 1}
-
-
 @app.patch("/v1/me", response_model=UserOut)
 def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
     if payload.nickname is not None:
