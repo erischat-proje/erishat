@@ -1112,3 +1112,11 @@ Room control checkpoint
 - [x] Smoke testi katalog sözleşmesine göre `key` kullanacak şekilde düzeltildi.
 - [x] Fix commit: 953ce521788575ef1109f5d9ef039458d243a51b.
 - [ ] Fresh Quality sonucu doğrulanmadı.
+
+
+[2026-09-19 devam 63] QUALITY #1227 — WALLPAPER PURCHASE KÖK DÜZELTMESİ
+- [x] İlk failure artık `wallpaper purchase failed: 404 Duvar kağıdı bulunamadı`.
+- [x] Katalogda `key`, purchase/apply API payload'larında `asset_key` kullanıldığı doğrulandı.
+- [x] Smoke testi purchase/apply/current wallpaper çağrılarını gerçek API sözleşmesine hizalayacak şekilde düzeltildi.
+- [x] Fix commit: 4174ef9469281278cf64c9d4d06c0c2dded6c835.
+- [ ] Fresh Quality sonucu doğrulanmadı.
