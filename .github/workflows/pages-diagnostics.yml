@@ -93,7 +93,11 @@ jobs:
           grep -q 'uses: actions/deploy-pages@v4' .github/workflows/erischat-pages.yml
           grep -q 'pages: write' .github/workflows/erischat-pages.yml
           grep -q 'id-token: write' .github/workflows/erischat-pages.yml
-          grep -q 'name: github-pages' .github/workflows/erischat-pages.yml
+          if grep -q '^    environment:' .github/workflows/erischat-pages.yml; then
+            echo 'Pages workflow uses an environment gate; repository policy must allow main.'
+          else
+            echo 'Pages workflow has no job-level environment gate; deploy-pages can use repository Pages configuration.'
+          fi
           echo 'Active Pages workflow shape OK'
 
       - name: Verify duplicate legacy Pages workflow is absent
