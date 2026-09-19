@@ -17,3 +17,6 @@ ERISCHAT — YAPILANLAR CHECKPOINT
 
 - 2026-09-19: erischat-main.html içindeki hatalı iç içe script etiketi düzeltildi; room/wallpaper scriptleri ayrı ve geçerli şekilde yükleniyor. Commit: b3377910e0dde6e9325865d58e019a3e2f0aeb38.
 - 2026-09-19: Quality #1235 Step 13 Room browser surface smoke failure kök neden adayı olarak bu frontend script yükleme hatası düzeltildi; yeni Quality sonucu bekleniyor.
+
+
+- 2026-09-20: Demo oda sistemi yeniden incelendi. Ana Pages girişinin eski v54 yüzeyine yönelme riski kaldırıldı; root index artık güncel `frontend/erischat-main.html` yüzeyine yönlendiriyor. Ana oda renderer'ının gerçek API ile gelen odaları 350ms sonra sahte demo odalarıyla ezmesi düzeltildi. Demo 12 koltuk akışı da dolu koltukları gerçekten kilitleyip tek kullanıcı koltuğu seçimini koruyacak şekilde düzeltildi. Commitler: 887eeca4e280c63fd9b5c78f132bf6fd65008abb ve 80acf52349a434ca7c80e9ab9a73891e9700de89.
