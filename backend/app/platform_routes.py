@@ -508,6 +508,18 @@ def register_platform_auth(current_user_dependency):
         elif game_type == "wheel":
             segments = [x[0] for x in GAME_PROFILES["wheel"]["results"]]
             data.update({"segment": result, "segment_index": segments.index(result) + 1, "choice_hit": bool(choice and choice == result), "animation": {"type": "wheel_spin", "turns": 6, "final_segment": segments.index(result) + 1}})
+        round_id = data["round_id"]
+        now = datetime.now(timezone.utc)
+        db.add(GameRound(
+            id=round_id,
+            room_id=room_id,
+            game_type=game_type,
+            status="finished",
+            started_at=now,
+            ends_at=now,
+            result_key=result,
+        ))
+        db.flush()
         return _save_game_play(db, user, game_type, choice, result, data)
 
     def _require_game_analytics_admin(db: Session, user: User):
