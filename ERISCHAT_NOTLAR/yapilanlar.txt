@@ -1104,3 +1104,11 @@ Room control checkpoint
 - [x] VIP10 claim endpointi eklendi; VIP10 altında 403, VIP10+ için `vip_wallpaper_10` sahipliği ve `wallpaper_claimed` durumu işleniyor.
 - [x] Fix commit: d8e47746dedd5ae80e846b64edcc00b7c86a5a18.
 - [ ] Fresh Quality sonucu henüz doğrulanmadı.
+
+
+[2026-09-19 devam 62] QUALITY #1223 — WALLPAPER SMOKE KÖK DÜZELTMESİ
+- [x] İlk gerçek failure: `Live wallpaper smoke` içinde `KeyError: asset_key`.
+- [x] Backend wallpaper catalog sözleşmesi `key` kullanıyor; smoke yanlışlıkla `asset_key` bekliyordu.
+- [x] Smoke testi katalog sözleşmesine göre `key` kullanacak şekilde düzeltildi.
+- [x] Fix commit: 953ce521788575ef1109f5d9ef039458d243a51b.
+- [ ] Fresh Quality sonucu doğrulanmadı.
