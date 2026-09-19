@@ -473,7 +473,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 room = db.get(Room, room_id)
                 member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
                 banned = db.query(RoomBan).filter(RoomBan.room_id == room_id, RoomBan.user_id == user.id).first()
-                if not room or not member or banned or not room.chat_enabled:
+                if not room or not member or banned:
                     room_chat_connections.get(room_id, set()).discard(websocket)
                     room_rtc_users.get(room_id, {}).pop(websocket, None)
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
@@ -525,6 +525,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                     db.commit()
                     payload = {"type":"music_sync","music_id":music.id,"action":action,"position_seconds":music.position_seconds,"is_playing":music.is_playing,"started_at":music.started_at.isoformat() if music.started_at else None,"from_user_id":user.id}
                 await _broadcast_room_event(room_id, payload)
+                continue
+            if data.get("type") == "room_chat" and not room.chat_enabled:
+                await websocket.send_json({"type":"room_chat_error","code":"chat_disabled","message":"Sohbet kapalı."})
                 continue
             if data.get("type") != "room_chat":
                 continue
