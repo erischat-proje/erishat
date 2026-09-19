@@ -612,3 +612,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Canonical `familyDemo` UI'daki mevcut gerçek aksiyon `➕ Üye ekle` olarak düzeltildi.
 - [x] Commit `604aa510d211865f52ff9e7db6103837de978c5b`.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+2026-09-19 — QUALITY #874 PROFILE INTEGRITY MARKER DÜZELTMESİ
+- [x] Quality #874 static syntax geçti; Customer demo surface integrity `profile` yüzeyi eski `Profil + avatar/çerçeve try-on` marker'ı nedeniyle kaldı.
+- [x] Canonical `profileDemo` UI başlığı `👤 Profil + Lidya / Lidya Gem`; integrity marker buna hizalandı ve mevcut `Avatarı uygula` aksiyonu korundu.
+- [x] Commit `aebcad4bac69bb814b507462a385e5604e9f611b`.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
