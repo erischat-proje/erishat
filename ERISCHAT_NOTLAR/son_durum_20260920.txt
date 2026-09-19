@@ -127,3 +127,5 @@ NOT
 - `db036581bd0cc7e1f66d35e6e0800d0c79b79deb`: Profil demo servis-hata paneli eklenirken oluşan template literal bozulması düzeltildi; profil demo HTML'i tekrar tek ve geçerli template olarak çalışıyor.
 
 - `8fdb570f4e896d222c5c228ac1b85831a8323e95`: Feature Hub içindeki kozmetik demo vitrini artık doğrudan canlı mağaza yüzüne geçiş sunuyor; satın alma/sahiplik/uygulama için ayrı bir ölü demo akışı yerine mevcut `shop-live.js` kullanılıyor.
+
+- `48a8b478054e6d6bf9fa7d2158d678290d7a819b`: Feature Hub VIP merkezi gerçek `/me/vip` verisiyle toplam harcama, sonraki VIP eşiği ve seviye içi ilerleme çubuğunu göstermeye başladı; eşikler VIP 1–12 sistemiyle hizalandı.
