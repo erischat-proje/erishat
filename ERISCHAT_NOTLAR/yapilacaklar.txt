@@ -1019,3 +1019,12 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] Wallpaper asset URL/decode smoke.
 - [ ] VIP 10 özel wallpaper claim'ini gerçek wallpaper sahipliğiyle bağlama.
 - [ ] Wallpaper tasarımlarının manuel görsel kalite kontrolü.
+
+
+[2026-09-19 devam — wallpaper/VIP sahiplik sertleştirme]
+- VIP 10 wallpaper claim artık user_cosmetics içinde vip_wallpaper_10 sahipliği oluşturmaya bağlandı.
+- Cosmetic schema ve catalog wallpaper tipini kabul edecek şekilde güncellendi.
+- Wallpaper UI duplicate /me/cosmetics çağrısı azaltıldı.
+- Quality #1143 gerçek sonucu bekleniyor; PASS varsayılmayacak.
+- Repo taramasında mevcut standart asset sayıları: kadın avatar 46, erkek avatar 49, standart çerçeve 32. Hedef 40/40/40 olduğundan kadın/erkek tarafında hedef üstü mevcut; standart çerçevede 8 eksik.
+- Sonraki teknik iş: wallpaper E2E + asset/decode smoke + VIP claim tekrar kullanım testi; ardından standart çerçeve koleksiyonunu 40'a tamamlama ve manuel görsel QA.
