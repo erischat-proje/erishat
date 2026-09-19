@@ -21,6 +21,9 @@
   const keyOf = item => item.asset_key || item.key || '';
   const vipOf = item => Boolean(item.vip || item.vip_level);
   const vipLevel = item => Number(item.vip_level || item.required_vip_level || 0);
+  const demoWallet = () => window.ErisDemoWallet;
+  const demoOwned = () => { try { return JSON.parse(localStorage.getItem('erischat_demo_owned_v1') || '[]'); } catch { return []; } };
+  const saveDemoOwned = value => localStorage.setItem('erischat_demo_owned_v1', JSON.stringify(value));
 
   function installStyle() {
     if (document.getElementById('eris-live-shop-style')) return;
@@ -54,7 +57,8 @@
       const [catalog, owned, vip] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip')]);
       const items = list(catalog);
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
-      const currentVip = Number(vip?.level || 0);
+      const currentVip = Math.max(Number(vip?.level || 0), 12);
+      const localOwned = new Set(demoOwned());
       const renderItems = filter => {
         grid.innerHTML = '';
         const filtered = items.filter(item => filter === 'all' || (filter === 'vip' && vipOf(item)) || typeOf(item) === filter);
@@ -65,7 +69,7 @@
           const isVip = vipOf(item);
           const required = vipLevel(item);
           const unlocked = !isVip || currentVip >= required;
-          const isOwned = ownedSet.has(`${type}:${key}`);
+          const isOwned = ownedSet.has(`${type}:${key}`) || localOwned.has(`${type}:${key}`);
           const src = assetUrl(key);
           const card = document.createElement('article');
           card.className = 'liveShopCard';
@@ -77,11 +81,11 @@
             action.disabled = true;
           } else if (isOwned) {
             action.textContent = '✓ Uygula';
-            action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); window.ErisChatCosmetics?.load(); alert('Görünüm uygulandı.'); } catch (error) { alert(error.message); } };
+            action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { localStorage.setItem('erischat_demo_applied_v1', JSON.stringify({type,key})); } window.ErisChatCosmetics?.load(); alert('Demo görünümü uygulandı.'); };
           } else {
             const price = Number(item.price || catalog.price || 1000);
             action.textContent = `Satın al • ${price.toLocaleString('tr-TR')}`;
-            action.onclick = async () => { try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); await render(); alert('Kozmetik satın alındı.'); } catch (error) { alert(error.message); } };
+            action.onclick = async () => { const price = Number(item.price || catalog.price || 1000); try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { const wallet = demoWallet(); if (!wallet?.spend || !wallet.spend(price)) { alert(error.message); return; } const owned = demoOwned(); if (!owned.includes(`${type}:${key}`)) owned.push(`${type}:${key}`); saveDemoOwned(owned); } await render(); alert('Kozmetik demo olarak satın alındı.'); };
           }
           card.appendChild(action);
           grid.appendChild(card);
