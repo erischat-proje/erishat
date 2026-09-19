@@ -819,3 +819,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Script başlangıcına canonical `backend/` path ekleme eklendi.
 - [x] Fix commit: `a91360187e357307410ea3a0ed2667a86b513dfe`.
 - [ ] Yeni Quality sonucu doğrulanacak; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 28] QUALITY #1004 — ADMIN SMOKE METADATA FOREIGN KEY KÖK DÜZELTMESİ
+- [x] Quality #1004 gerçek ilk failure: System identity/admin smoke içinde SQLAlchemy `NoReferencedTableError` verdi; `admin_roles.granted_by -> users.id` FK'si için `users` tablosu metadata'ya yüklenmemişti.
+- [x] Kök neden smoke scriptinin yalnızca `AdminRole` modelini import etmesi; standalone SQLAlchemy metadata'sında `users` ve `rooms` tablolarının kayıtlı olmamasıydı.
+- [x] Script artık canonical `app.models.User` ve `app.room_models.Room` modellerini smoke DB session'ından önce import ederek ortak metadata'ya referans tablolarını kaydediyor.
+- [x] Fix commit: c62505f8d9f2294da75dc347655a02b6de8ab408.
+- [ ] Yeni Quality/CI sonucu doğrulanacak; PASS varsayılmıyor.
