@@ -993,3 +993,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Room music playback artık play sırasında aynı odadaki başka aktif parçaları durdurup konumlarını koruyor.
 - [x] Browser smoke iki müzik parçası ekleyip ikinciyi oynattığında ilkinin inactive, ikincinin active kaldığını doğruluyor.
 - [ ] Gerçek harici müzik kaynağı/uzun süreli playback ve üretim sağlayıcı entegrasyonu hâlâ ayrı açık iş.
+
+
+[2026-09-19 devam 53] VIP HARCAMA LIFECYCLE QUALITY PASS
+- [x] Quality #1092 / run 35450281074 SUCCESS.
+- [x] Gift spending artık VipStatus.total_spent değerine işleniyor ve vip_level_from_spend ile level yeniden hesaplanıyor.
+- [x] Room live smoke yüksek değerli hediye sonrası /me/vip total_spent artışını ve level >= 1 açılmasını doğruluyor.
+- [ ] VIP lifecycle'ın kalan unlock/claim/effect zinciri açık.
