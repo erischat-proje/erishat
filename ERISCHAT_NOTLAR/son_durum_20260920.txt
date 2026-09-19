@@ -129,3 +129,5 @@ NOT
 - `8fdb570f4e896d222c5c228ac1b85831a8323e95`: Feature Hub içindeki kozmetik demo vitrini artık doğrudan canlı mağaza yüzüne geçiş sunuyor; satın alma/sahiplik/uygulama için ayrı bir ölü demo akışı yerine mevcut `shop-live.js` kullanılıyor.
 
 - `48a8b478054e6d6bf9fa7d2158d678290d7a819b`: Feature Hub VIP merkezi gerçek `/me/vip` verisiyle toplam harcama, sonraki VIP eşiği ve seviye içi ilerleme çubuğunu göstermeye başladı; eşikler VIP 1–12 sistemiyle hizalandı.
+
+- `f05e8605ea62e83f4c2239fbb5dcd56a44056445`: Aile demo fonksiyonunda `await` kullanılmasına rağmen fonksiyonun `async` olmaması düzeltildi; aile/üye/sohbet yükleme akışı artık JavaScript sözdizimi hatasına takılmadan başlatılabilir.
