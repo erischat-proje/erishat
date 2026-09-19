@@ -35,7 +35,7 @@ vip=[x for x in items if x.get("tier")=="vip"]
 if len(normal)!=19 or len(vip)!=12:
     raise AssertionError(f"expected 19+12 wallpapers, got {len(normal)}+{len(vip)}")
 
-for i,x in enumerate(sorted(normal,key=lambda x:int(x["asset_key"].split("_")[-1])),1):
+for i,x in enumerate(sorted(normal,key=lambda x:int(x["key"].split("_")[-1])),1):
     expected=f"Gereken_icerikler/duvarkagidi/normal/{i}.png"
     if x.get("asset")!=expected:
         raise AssertionError(f"normal wallpaper asset mismatch: {x}")
@@ -43,25 +43,25 @@ for i,x in enumerate(sorted(vip,key=lambda x:int(x.get("vip_level") or 0)),1):
     expected=f"Gereken_icerikler/duvarkagidi/vip/vip{i}.png"
     if x.get("asset")!=expected:
         raise AssertionError(f"VIP wallpaper asset mismatch: {x}")
-    if x.get("asset_key")!=f"vip_wallpaper_{i:02d}":
+    if x.get("key")!=f"vip_wallpaper_{i:02d}":
         raise AssertionError(f"VIP wallpaper key mismatch: {x}")
 
 s,me=req("GET","/me/wallpaper",token)
 if s>=300: raise RuntimeError(f"initial wallpaper failed: {s} {me}")
 item=normal[0]
-s,buy=req("POST","/me/wallpaper/purchase",token,{"asset_key":item["asset_key"]})
+s,buy=req("POST","/me/wallpaper/purchase",token,{"key":item["key"]})
 if s>=300: raise RuntimeError(f"wallpaper purchase failed: {s} {buy}")
-s,apply=req("POST","/me/wallpaper/apply",token,{"asset_key":item["asset_key"]})
+s,apply=req("POST","/me/wallpaper/apply",token,{"key":item["key"]})
 if s>=300: raise RuntimeError(f"wallpaper apply failed: {s} {apply}")
 s,after=req("GET","/me/wallpaper",token)
-if s>=300 or after.get("asset_key")!=item["asset_key"]:
+if s>=300 or after.get("key")!=item["key"]:
     raise AssertionError(f"wallpaper persistence failed: {s} {after}")
 
 blocked=next(x for x in sorted(vip,key=lambda x:int(x.get("vip_level") or 0)) if int(x.get("vip_level") or 0)>0)
-s,detail=req("POST","/me/wallpaper/apply",token,{"asset_key":blocked["asset_key"]})
+s,detail=req("POST","/me/wallpaper/apply",token,{"key":blocked["key"]})
 if s!=403: raise AssertionError(f"VIP wallpaper gate expected 403, got {s} {detail}")
 
-claim_key=next(x["asset_key"] for x in vip if int(x.get("vip_level") or 0)==10)
+claim_key=next(x["key"] for x in vip if int(x.get("vip_level") or 0)==10)
 if claim_key!="vip_wallpaper_10":
     raise AssertionError(f"VIP10 wallpaper key mismatch: {claim_key}")
 s,claim=req("POST","/me/vip/claims/wallpaper",token)
