@@ -606,3 +606,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Canonical `announcementDemo` UI'daki gerçek marker `📌 Sabitle` olarak düzeltildi.
 - [x] Commit `6a36a4bf63f62e17335cebcebb8beb7ae014e548`.
 - [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+[2026-09-19] QUALITY #871 — FAMILY INTEGRITY MARKER DÜZELTMESİ
+- [x] Static syntax geçti; Customer demo surface integrity `family` yüzeyinde eski `Rol değiştir` marker'ı nedeniyle kaldı.
+- [x] Canonical `familyDemo` UI'daki mevcut gerçek aksiyon `➕ Üye ekle` olarak düzeltildi.
+- [x] Commit `604aa510d211865f52ff9e7db6103837de978c5b`.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
