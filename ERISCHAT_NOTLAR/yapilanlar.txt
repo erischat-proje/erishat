@@ -423,3 +423,8 @@ Room control checkpoint
 - [x] `demo-extras-live.js` gerçek mikrofon izni, RTCPeerConnection ve room WebSocket signaling ile bağlandı.
 - [x] Platform katmanı authenticated token/realtime URL yardımcılarını dışarı açıyor.
 - [ ] İki ayrı gerçek tarayıcıda ses E2E henüz çalıştırılıp doğrulanmadı; STUN/TURN ve mobil de açık.
+
+2026-09-19 — RTC CONFIG
+- [x] `/rooms/{room_id}/rtc-config` üyelik/ban kontrolüyle ICE yapılandırması döndürüyor.
+- [x] Frontend peer connection artık oda RTC config'ini kullanıyor.
+- [ ] TURN ve gerçek 2-browser/mobile E2E henüz doğrulanmadı.
