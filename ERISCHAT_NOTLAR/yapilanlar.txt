@@ -671,3 +671,10 @@ Room control checkpoint
 - [x] Profil panelindeki gerçek hesap, bildirim, VIP ve kozmetik senkronizasyonu korunarak kontrol edildi.
 - [x] Ana DM penceresindeki sahte “Merhaba 👋” placeholder mesajı kaldırıldı; konuşma gövdesi artık gerçek DM akışından dolduruluyor.
 - Commit: 5e790f19be475ce728b1bab19e11e6339c8dac36.
+
+
+[2026-09-19 — SEARCH VE HUB TEMİZLİĞİ]
+- [x] Feature hub içindeki blocking alert pencereleri toast akışına çevrildi.
+- [x] Ana arama scriptinde önceki yamadan kalmış bozuk/stale `/search` kodu bulundu ve tamamen kaldırıldı.
+- [x] Arama yalnızca mevcut `/discover/rooms` + `/discover/nearby` endpointleri üzerinden çalışacak şekilde temizlendi.
+- Commitler: 6652f5d0077e49e2b7d917792bd42ed0d21317bb, 6c22fb55e6ce4c700f30b837f053a2d0551cea3d.
