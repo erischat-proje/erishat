@@ -671,3 +671,10 @@ Room control checkpoint
 - [x] Aynı REST relay için ayrı `rtc_signaling_security_smoke.mjs` zaten offer=200, invalid type=422, target=404 ve non-member=403 sözleşmesini kapsıyor; ana E2E smoke'taki duplicate/stale blok kaldırıldı.
 - [x] Ana E2E smoke artık canonical `rtc-config` + gerçek WebSocket signaling + gerçek `RTCPeerConnection` akışına odaklanıyor.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 14] QUALITY #35438813272 — GIFT SMOKE KEY FIX
+- [x] Fresh Quality, RTC smoke sonrasında gift flow'da gerçek 400 alındı: `Geçersiz hediye`.
+- [x] Kök neden: smoke `rose` gönderiyordu; canonical `GIFT_CATALOG` anahtarı `Zeytin Dalı`.
+- [x] Browser smoke canonical gift key ile hizalandı.
+- [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı.
