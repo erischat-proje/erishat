@@ -571,3 +571,11 @@ Room control checkpoint
 - [x] Uygulama/Quality tarafı değil environment gate kaynaklı olduğu için `.github/workflows/erischat-pages.yml` içindeki job-level `environment: github-pages` referansı kaldırıldı; Pages workflow doğrudan `pages: write` + `id-token: write` ile deploy-pages çalıştıracak şekilde sadeleştirildi.
 - [x] Commit: e67f01817bc548d3959fbd3aec0837b7458f75f0.
 - [ ] Bu commit sonrası Pages deploy ve gerçek HTTP demo URL'si doğrulanacak.
+
+
+[2026-09-19 — DEMO ARAYÜZ RESPONSIVE DÜZELTMESİ]
+- [x] Canlı demo ana arayüzünün masaüstünde 520px telefon kolonuna sıkışmasına neden olan responsive eksikliği giderildi.
+- [x] Desktop görünümünde içerik genişliği, oda/hızlı erişim/mağaza/ayar gridleri, modal ve alt navigasyon responsive hale getirildi.
+- [x] Mobil görünüm korunarak taşma davranışı temizlendi.
+- [x] Commit: c5d9214c41111956e22bfa3b32e486995efab4fd.
+- [ ] Yeni Pages deploy sonrası canlı görsel kontrol yapılacak.
