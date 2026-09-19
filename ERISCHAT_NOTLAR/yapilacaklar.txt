@@ -718,3 +718,9 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 14] GIFT BROWSER SMOKE CONTRACT
 - [x] Gift smoke payload canonical `Zeytin Dalı` anahtarına hizalandı.
 - [ ] Yeni Fresh Quality sonucu doğrulanacak.
+
+[2026-09-19 devam 15] MUSIC PLAYBACK BROWSER SMOKE CONTRACT
+- [x] Quality #35438903283 gerçek music playback akışında `record() got multiple values for argument 'action'` failure kökü doğrulandı.
+- [x] `music_playback` audit detayında çakışan `action` anahtarı `playback_action` olarak düzeltildi.
+- [x] Commit: `ad001f8829c8e557d7e84d3decb45237d20d7a49`.
+- [ ] Yeni Fresh Quality sonucu doğrulanacak.
