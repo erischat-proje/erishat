@@ -41,6 +41,8 @@ async function main(){
   await page.waitForSelector('#chatBody .bubble.me');
   const dmVisible=await page.locator('#chatBody .bubble.me').count();
   if(dmVisible<1) throw new Error('DM bubble did not render');
+  await page.evaluate(()=>{ if(typeof window.closeChat==='function') window.closeChat(); });
+  await page.waitForFunction(()=>!document.querySelector('#chat')?.classList.contains('show'));
   const social=await page.evaluate(async ({api,targetId,memberToken,ownerId})=>{
     const token=localStorage.getItem('erischat_access_token');
     const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
