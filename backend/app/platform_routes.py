@@ -255,7 +255,7 @@ def register_platform_auth(current_user_dependency):
         if ban: raise HTTPException(status_code=403, detail="Bu odada yasaklısınız")
         row = RoomChatMessage(room_id=room_id, user_id=user.id, text=payload.text.strip())
         db.add(row); db.flush()
-        record(db, "room_chat_message_created", actor_id=user.id, target_id=room_id, details={"message_id": row.id})
+        record("room", "room_chat_message_created", actor_id=user.id, target_id=room_id, message_id=row.id)
         db.commit()
         db.refresh(row)
         return {"id": row.id, "room_id": row.room_id, "user_id": row.user_id, "text": row.text, "created_at": row.created_at}
