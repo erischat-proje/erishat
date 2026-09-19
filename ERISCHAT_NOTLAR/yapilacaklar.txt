@@ -713,3 +713,8 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 13] RTC REST SMOKE AYRIŞTIRMA
 - [x] Duplicate/stale REST rtc-signals browser smoke kaldırıldı; ayrı security smoke kapsamı korunuyor.
 - [ ] Yeni Fresh Quality sonucu doğrulanacak.
+
+
+[2026-09-19 devam 14] GIFT BROWSER SMOKE CONTRACT
+- [x] Gift smoke payload canonical `Zeytin Dalı` anahtarına hizalandı.
+- [ ] Yeni Fresh Quality sonucu doğrulanacak.
