@@ -17,7 +17,7 @@ from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
-from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomChatMessage, RoomBan
+from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomChatMessage, RoomBan, RoomSeat
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
@@ -84,6 +84,8 @@ class AnnouncementUpdate(BaseModel):
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128)
     source_url: str = Field(min_length=8, max_length=2000)
+class RoomSeatUpdate(BaseModel):
+    seat_number: int = Field(ge=1, le=12)
 class RoomChatCreate(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
 class MusicPlayback(BaseModel):
@@ -231,6 +233,37 @@ def register_platform_auth(current_user_dependency):
             "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem),
             "reference_id": reference_id,
         }
+
+    @router.get("/rooms/{room_id}/seats")
+    def room_seats(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = db.get(Room, room_id)
+        if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
+        member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
+        if not member: raise HTTPException(status_code=403, detail="Odaya üye değilsiniz")
+        rows = db.scalars(select(RoomSeat).where(RoomSeat.room_id == room_id).order_by(RoomSeat.seat_number)).all()
+        occupied={r.seat_number:r for r in rows}
+        return [{"seat_number":n,"user_id":occupied[n].user_id if n in occupied else None,"locked":occupied[n].locked if n in occupied else False,"muted":occupied[n].muted if n in occupied else False} for n in range(1,13)]
+
+    @router.post("/rooms/{room_id}/seats")
+    def room_take_seat(room_id: str, payload: RoomSeatUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room=db.get(Room,room_id)
+        if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
+        if not db.scalar(select(RoomMember.id).where(RoomMember.room_id==room_id,RoomMember.user_id==user.id)): raise HTTPException(status_code=403,detail="Odaya üye değilsiniz")
+        existing=db.scalar(select(RoomSeat).where(RoomSeat.room_id==room_id,RoomSeat.user_id==user.id))
+        if existing: raise HTTPException(status_code=409,detail="Zaten bir koltuktasınız")
+        seat=db.scalar(select(RoomSeat).where(RoomSeat.room_id==room_id,RoomSeat.seat_number==payload.seat_number))
+        if seat and seat.locked: raise HTTPException(status_code=403,detail="Koltuk kilitli")
+        if seat and seat.user_id: raise HTTPException(status_code=409,detail="Koltuk dolu")
+        if not seat: seat=RoomSeat(room_id=room_id,seat_number=payload.seat_number,user_id=user.id); db.add(seat)
+        else: seat.user_id=user.id
+        db.commit()
+        return {"seat_number":seat.seat_number,"user_id":seat.user_id,"muted":seat.muted,"locked":seat.locked}
+
+    @router.delete("/rooms/{room_id}/seats")
+    def room_leave_seat(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        seat=db.scalar(select(RoomSeat).where(RoomSeat.room_id==room_id,RoomSeat.user_id==user.id))
+        if not seat: return {"released":False}
+        db.delete(seat); db.commit(); return {"released":True}
 
     @router.get("/rooms/{room_id}/chat")
     def room_chat_list(room_id: str, before_id: int | None = Query(default=None, ge=1), limit: int = Query(default=50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
