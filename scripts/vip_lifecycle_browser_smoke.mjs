@@ -23,7 +23,7 @@ async function main() {
   const auth = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
 
   const vip0 = await jsonFetch(API, '/me/vip', { headers: auth });
-  if (vip0.status !== 200 || vip0.data?.level !== 0) {
+  if (vip0.status !== 200 || vip0.data?.level !== 0 || vip0.data?.current_level_spent !== 0) {
     throw new Error('fresh VIP state was not level 0: ' + JSON.stringify(vip0));
   }
 
@@ -56,7 +56,7 @@ async function main() {
     if (![200, 201].includes(result.status)) throw new Error('VIP2 purchase failed: ' + JSON.stringify(result));
   }
   const vip2 = await jsonFetch(API, '/me/vip', { headers: auth });
-  if (vip2.data?.level !== 2 || vip2.data?.total_spent !== 5000) {
+  if (vip2.data?.level !== 2 || vip2.data?.total_spent !== 5000 || vip2.data?.current_level_spent !== 5000) {
     throw new Error('VIP2 threshold transition failed: ' + JSON.stringify(vip2));
   }
 
@@ -65,7 +65,7 @@ async function main() {
     if (![200, 201].includes(result.status)) throw new Error('VIP3 purchase failed: ' + JSON.stringify(result));
   }
   const vip3 = await jsonFetch(API, '/me/vip', { headers: auth });
-  if (vip3.data?.level !== 3 || vip3.data?.total_spent !== 15000) {
+  if (vip3.data?.level !== 3 || vip3.data?.total_spent !== 15000 || vip3.data?.current_level_spent !== 15000) {
     throw new Error('VIP3 threshold transition failed: ' + JSON.stringify(vip3));
   }
 
@@ -88,9 +88,9 @@ async function main() {
     ok: true,
     lifecycle: [
       { level: 0, spent: 0 },
-      { level: 1, spent: 1000, unlock: 'vip1-avatar' },
-      { level: 2, spent: 5000 },
-      { level: 3, spent: 15000, unlock: 'vip3-avatar' }
+      { level: 1, spent: 1000, currentLevelSpent: 1000, unlock: 'vip1-avatar' },
+      { level: 2, spent: 5000, currentLevelSpent: 5000 },
+      { level: 3, spent: 15000, currentLevelSpent: 15000, unlock: 'vip3-avatar' }
     ],
     totalStandardPurchases: 15
   }, null, 2));
