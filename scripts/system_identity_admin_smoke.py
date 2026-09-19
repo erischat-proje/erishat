@@ -7,6 +7,8 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from app.models import User  # noqa: F401 — register users table in shared SQLAlchemy metadata
+from app.room_models import Room  # noqa: F401 — register rooms table in shared SQLAlchemy metadata
 from app.admin_models import AdminRole
 
 BASE = os.getenv("ERISCHAT_SMOKE_BASE_URL", "http://127.0.0.1:8000")
