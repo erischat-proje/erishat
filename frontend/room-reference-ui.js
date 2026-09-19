@@ -320,7 +320,7 @@
       '#erisRoomSurface .erc-seat-card-head{display:flex;align-items:center;gap:8px}.erc-seat-card-head .erc-avatar{width:38px;height:38px}',
       '#erisRoomSurface .erc-seat-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}',
       '#erisRoomSurface .erc-notice{padding:8px 9px;border-radius:10px;background:#ffffff06;color:#aaa0ad;font-size:8px;line-height:1.45}',
-      '@media(max-width:520px){#erisRoomSurface .erc-room-panel{left:8px;right:8px;top:82px;bottom:228px;width:auto}#erisRoomSurface .erc-side-rail{left:7px;bottom:228px}#erisRoomSurface .erc-side-rail button{width:36px;height:36px}}'
+      '#erisRoomSurface .erc-chat-tabs{display:flex;gap:5px;padding:6px 10px 0;max-width:620px;width:100%;margin:0 auto;box-sizing:border-box;z-index:2}.erc-chat-tabs button{border:1px solid #ffffff0b;background:#ffffff08;color:#aaa0ad;border-radius:9px;padding:6px 9px;font-size:8px}.erc-chat-tabs button.active{color:#fff;background:#ffffff14}'+'@media(max-width:520px){#erisRoomSurface .erc-room-panel{left:8px;right:8px;top:82px;bottom:228px;width:auto}#erisRoomSurface .erc-side-rail{left:7px;bottom:228px}#erisRoomSurface .erc-side-rail button{width:36px;height:36px}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -345,9 +345,9 @@
     const r=document.createElement('div'); r.className='erc-side-rail';
     r.innerHTML='<button title="Oda bilgisi" data-tab="info">ℹ️</button><button title="Kullanıcılar" data-tab="users">👥</button>'+
       '<button title="Hediyeler" data-tab="gifts">🎁</button><button title="Müzik" data-tab="music">🎵</button>'+
-      '<button title="Ayarlar" data-tab="controls">⚙️</button><button title="Duyuru" data-extra="announcement">📢</button>';
+      '<button title="Ayarlar" data-tab="controls">⚙️</button><button title="Duyuru" data-extra="announcement">📢</button><button title="Ayrıl" data-leave="1">🚪</button>';
     r.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
-    r.querySelector('[data-extra]').onclick=()=>extra('announcement');
+    r.querySelector('[data-extra]').onclick=()=>extra('announcement'); r.querySelector('[data-leave]').onclick=()=>window.closeRealRoom?.();
     surface.appendChild(r);
   }
 
@@ -460,6 +460,26 @@
     surface.querySelector('#erisRoomGift').onclick=()=>openTab('gifts');
     surface.querySelector('#erisRoomMusic').onclick=()=>openTab('music');
     const card=document.createElement('div');card.className='erc-seat-card';surface.appendChild(card);
+    const chat=surface.querySelector('.eris-room-chat');
+    if(chat && !chat.querySelector('.erc-chat-tabs')){
+      const tabs=document.createElement('div'); tabs.className='erc-chat-tabs';
+      tabs.innerHTML='<button class="active" data-chat="chat">Oda Sohbeti</button><button data-chat="users">Kullanıcılar</button>';
+      const list=chat.querySelector('.eris-chat-list');
+      const people=document.createElement('div'); people.className='erc-inline-users'; people.style.cssText='display:none;flex:1;overflow:auto;padding:34px 12px 8px;max-width:620px;width:100%;margin:0 auto;';
+      if(list)list.before(tabs);
+      if(list)list.after(people);
+      tabs.querySelectorAll('button').forEach(b=>b.onclick=async()=>{
+        tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
+        const usersMode=b.dataset.chat==='users';
+        if(list)list.style.display=usersMode?'none':'flex';
+        people.style.display=usersMode?'block':'none';
+        if(usersMode){
+          const r=await room();
+          const seats=Array.isArray(r?.seats)?r.seats:[];
+          people.innerHTML=seats.filter(x=>x.user_id).map(x=>'<div class="erc-row"><div class="grow"><b>'+esc(x.nickname||x.user_name||'Kullanıcı')+'</b><small>Koltuk '+Number(x.seat_number||0)+' • '+(x.muted?'🔇':'🎙️')+'</small></div></div>').join('')||'<div class="erc-notice">Kullanıcı yok.</div>';
+        }
+      });
+    }
     surface.addEventListener('dblclick',e=>{
       const seat=e.target.closest('.eris-seat'); if(!seat)return;
       const name=seat.querySelector('b')?.textContent||'Kullanıcı',num=seat.dataset.seatNumber||'';
