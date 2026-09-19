@@ -650,3 +650,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Follow notification smoke'ta yanlış kullanıcı tokenı kullanılması düzeltildi; bildirim hedef kullanıcı/member hesabından okunup mark-read ediliyor.
 - [x] Commit: `a05c9c6055238e653decde72045df73508ca486d`.
 - [ ] Fresh Quality/CI sonucu bekleniyor; PASS varsayılmıyor.
+
+
+[2026-09-19] QUALITY #895 — FOLLOWING ACTOR ENDPOINT FIX
+- [x] Browser smoke following kontrolündeki yanlış aktör endpointi düzeltildi.
+- [x] Commit: `f670b602c97709f2188d2a9d9c49c55afada3315`.
+- [ ] Fresh Quality sonucu bekleniyor.
