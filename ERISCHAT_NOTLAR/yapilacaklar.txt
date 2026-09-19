@@ -827,3 +827,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Script artık canonical `app.models.User` ve `app.room_models.Room` modellerini smoke DB session'ından önce import ederek ortak metadata'ya referans tablolarını kaydediyor.
 - [x] Fix commit: c62505f8d9f2294da75dc347655a02b6de8ab408.
 - [ ] Yeni Quality/CI sonucu doğrulanacak; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 29] QUALITY #1007 — FAMILY INVITE ACCEPT CONTRACT KÖK DÜZELTMESİ
+- [x] Quality run 35440913606 / job 105891629103 ilk gerçek failure'ı Live family smoke adımında doğrulandı: davet POST 201 sonrasında rol PATCH 403 döndü.
+- [x] Kök neden backend family lifecycle ile smoke sözleşmesinin uyumsuz olmasıydı: POST /families/{family_id}/members artık kullanıcıyı doğrudan FamilyMember yapmıyor; pending FamilyInvitation oluşturuyor. Rol değiştirme endpointi ise gerçek aile üyesi olmayan hedefi membership() ile 403 reddediyor.
+- [x] Smoke artık davet response'undaki invitation id'yi alıp davet edilen kullanıcının tokenıyla POST /families/invitations/{invitation_id}/accept çağrısını yapıyor; ardından owner tokenıyla role=admin PATCH'ine geçiyor.
+- [x] Fix commit: 23e6899a7771592b4c51e9b752a89cc0ca24d108.
+- [ ] Bu fix sonrası Fresh Quality runner sonucu henüz doğrulanmadı; PASS varsayılmıyor.
