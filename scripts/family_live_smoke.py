@@ -85,6 +85,17 @@ def main() -> None:
     if invited.get("user_id") != member_id or invited.get("role") != "member":
         raise AssertionError(f"family member invite mismatch: {invited}")
 
+    invitation_id = invited.get("id")
+    if not invitation_id:
+        raise AssertionError(f"family member invite missing invitation id: {invited}")
+    member_token = member_session.get("access_token")
+    if not member_token:
+        raise AssertionError(f"family member session missing access token: {member_session}")
+    status, accepted = request("POST", f"/families/invitations/{invitation_id}/accept", token=member_token)
+    expect(status, 200, "family member invite accept", accepted)
+    if accepted.get("family_id") != family_id or accepted.get("accepted") is not True or accepted.get("already_member") is not False:
+        raise AssertionError(f"family member invite accept mismatch: {accepted}")
+
     status, promoted = request("PATCH", f"/families/{family_id}/members/{member_id}", {"user_id": member_id, "role": "admin"}, token)
     expect(status, 200, "family member role", promoted)
     if promoted.get("user_id") != member_id or promoted.get("role") != "admin":
