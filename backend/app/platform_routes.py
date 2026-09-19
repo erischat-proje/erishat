@@ -461,7 +461,7 @@ def register_platform_auth(current_user_dependency):
         aces = 0
         for card in hand:
             rank = card[:-1]
-            total += values.get(rank, int(rank) if rank.isdigit() else 0)
+            total += values[rank] if rank in values else int(rank)
             aces += int(rank == "A")
         while total > 21 and aces:
             total -= 10
