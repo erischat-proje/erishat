@@ -5,7 +5,7 @@ from typing import Any
 
 PRICE = 1000
 VIP_PRICE = 5000
-COSMETIC_TYPES = {"avatar", "frame"}
+COSMETIC_TYPES = {"avatar", "frame", "wallpaper"}
 
 
 def _asset_root() -> Path:
