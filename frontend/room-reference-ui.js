@@ -456,9 +456,9 @@
   function bind(surface){
     if(surface.dataset.ercComplete==='1')return;
     surface.dataset.ercComplete='1'; css(); panel(surface); rail(surface);
-    surface.querySelector('#erisRoomMore')?.addEventListener('click',()=>openTab('controls'));
-    surface.querySelector('#erisRoomGift')?.addEventListener('click',()=>openTab('gifts'));
-    surface.querySelector('#erisRoomMusic')?.addEventListener('click',()=>openTab('music'));
+    surface.querySelector('#erisRoomMore').onclick=()=>openTab('controls');
+    surface.querySelector('#erisRoomGift').onclick=()=>openTab('gifts');
+    surface.querySelector('#erisRoomMusic').onclick=()=>openTab('music');
     const card=document.createElement('div');card.className='erc-seat-card';surface.appendChild(card);
     surface.addEventListener('dblclick',e=>{
       const seat=e.target.closest('.eris-seat'); if(!seat)return;
