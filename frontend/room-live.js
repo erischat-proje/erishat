@@ -67,6 +67,7 @@
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null;
   }
+  window.openLiveRoomChat=()=>{const id=window.ErisCurrentRoomId||window.currentRoomId;if(!id){window.toast?.('Önce bir oda aç.');return}window.ERIS_DEMO_ROOM_ID=String(id);if(window.ErisDemoExtras?.roomChat){window.ErisDemoExtras.roomChat();}else{window.toast?.('Canlı sohbet arayüzü yükleniyor…');setTimeout(()=>window.ErisDemoExtras?.roomChat?.(),250);}};
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
 
