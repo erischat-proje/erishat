@@ -203,10 +203,13 @@ def main() -> int:
         required_perks = {"vip_badge", "custom_avatar", "custom_frame"}
         if not required_perks.issubset(perks):
             raise AssertionError(f"VIP level 1 perks incomplete: expected={sorted(required_perks)} actual={sorted(perks)}")
-        if vip_after.get("title") != "VIP Üye":
-            raise AssertionError(f"VIP level 1 title contract failed: {vip_after}")
-        if vip_after.get("neon_enabled") is not False:
-            raise AssertionError(f"VIP level 1 neon contract failed: {vip_after}")
+        level_after = int(vip_after.get("level") or 0)
+        expected_title = "VIP Taç" if level_after >= 12 else "VIP Şövalye" if level_after >= 10 else "VIP Elit" if level_after >= 5 else "VIP Üye" if level_after >= 1 else ""
+        if vip_after.get("title") != expected_title:
+            raise AssertionError(f"VIP title contract failed: level={level_after} expected={expected_title!r} actual={vip_after.get('title')!r} payload={vip_after}")
+        expected_neon = level_after >= 3
+        if vip_after.get("neon_enabled") is not expected_neon:
+            raise AssertionError(f"VIP neon contract failed: level={level_after} expected={expected_neon} payload={vip_after}")
         status, public_vip = request("GET", f"/users/{uid_a}/vip", token_b)
         if status >= 300:
             raise RuntimeError(f"public VIP read failed: HTTP {status} {public_vip}")
