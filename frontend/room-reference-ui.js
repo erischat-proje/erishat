@@ -505,3 +505,289 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   new MutationObserver(boot).observe(document.body,{childList:true,subtree:true});
 })();
+
+
+/* ErisChat room layout v3 — clean in-room controls.
+   Header: room name + id / level / more + leave.
+   Footer: mic + chat composer + gift beside send.
+   All room menus stay inside #erisRoomSurface. */
+(() => {
+  'use strict';
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  const surface = () => document.getElementById('erisRoomSurface');
+  const roomId = () => String(window.ErisCurrentRoomId || window.currentRoomId || '');
+  const currentUser = () => String(window.ErisCurrentUserId || localStorage.getItem('eris_user_id') || '');
+  const api = () => window.ErisRoom || {};
+
+  function installCss(){
+    if(document.getElementById('eris-room-v3-css')) return;
+    const s=document.createElement('style');
+    s.id='eris-room-v3-css';
+    s.textContent=String.raw\`
+      /* ---- single clean room chrome ---- */
+      #erisRoomSurface .eris-room-top{
+        height:76px!important;min-height:76px!important;padding:9px 10px!important;
+        display:flex!important;align-items:center!important;gap:8px!important;
+        background:linear-gradient(180deg,rgba(7,4,18,.78),rgba(7,4,18,.12))!important;
+        border:0!important;z-index:80!important;
+      }
+      #erisRoomSurface .eris-room-top .room-action.back{
+        width:38px!important;height:38px!important;font-size:27px!important;
+        background:rgba(255,255,255,.08)!important;flex:none!important;
+      }
+      #erisRoomSurface .eris-room-title{
+        flex:0 1 43%!important;min-width:0!important;cursor:pointer!important;
+        padding:2px 3px!important;
+      }
+      #erisRoomSurface .eris-room-title b{
+        font-size:14px!important;line-height:17px!important;font-weight:900!important;
+      }
+      #erisRoomSurface .eris-room-title small{
+        font-size:8px!important;margin-top:2px!important;color:#bcb3c7!important;
+      }
+      #erisRoomSurface .eris-room-title .room-id{color:#8f879a!important}
+      #erisRoomSurface .eris-room-top .room-action{
+        width:38px!important;height:38px!important;border-radius:12px!important;
+        border:1px solid rgba(255,255,255,.12)!important;background:rgba(255,255,255,.09)!important;
+        box-shadow:none!important;flex:none!important;
+      }
+      #erisRoomSurface .eris-room-top #erisRoomGift,
+      #erisRoomSurface .eris-room-top #erisRoomMusic{display:none!important}
+      #erisRoomSurface #erisRoomLevel{
+        position:absolute!important;left:50%!important;top:10px!important;
+        transform:translateX(-50%)!important;width:auto!important;min-width:92px!important;
+        height:38px!important;padding:0 12px!important;border-radius:13px!important;
+        background:rgba(20,11,38,.72)!important;border:1px solid rgba(255,255,255,.14)!important;
+        color:#fff!important;display:grid!important;place-items:center!important;
+        line-height:1.05!important;box-shadow:0 8px 24px rgba(0,0,0,.22)!important;
+      }
+      #erisRoomSurface #erisRoomLevel b{font-size:10px!important;display:block!important}
+      #erisRoomSurface #erisRoomLevel small{font-size:7px!important;color:#bdb2c7!important;display:block!important;margin-top:2px!important}
+      #erisRoomSurface #erisRoomMoreTop{margin-left:auto!important}
+      #erisRoomSurface #erisRoomLeaveTop{
+        background:rgba(255,72,111,.13)!important;border-color:rgba(255,96,125,.25)!important;
+      }
+
+      /* Stage gets a little more room because the old rank/rail are gone. */
+      #erisRoomSurface .eris-room-rank,
+      #erisRoomSurface .erc-side-rail{display:none!important}
+      #erisRoomSurface .eris-room-stage{
+        top:82px!important;bottom:196px!important;
+      }
+
+      /* Bottom composer is the only home for the gift action. */
+      #erisRoomSurface .eris-room-chat{
+        height:196px!important;z-index:55!important;
+      }
+      #erisRoomSurface .eris-room-compose{
+        display:flex!important;align-items:center!important;gap:6px!important;
+        padding:7px 10px 11px!important;
+        max-width:760px!important;margin:0 auto!important;
+      }
+      #erisRoomSurface .eris-room-compose input{
+        height:40px!important;padding:0 14px!important;border-radius:20px!important;
+        font-size:10px!important;
+      }
+      #erisRoomSurface .eris-room-compose .room-inline-action{
+        width:40px!important;height:40px!important;padding:0!important;flex:none!important;
+        display:grid!important;place-items:center!important;border-radius:50%!important;
+        border:1px solid rgba(255,255,255,.12)!important;background:rgba(255,255,255,.09)!important;
+        color:#fff!important;box-shadow:none!important;font-size:17px!important;
+      }
+      #erisRoomSurface .eris-room-compose #erisLiveSend{
+        width:auto!important;min-width:66px!important;height:40px!important;
+        padding:0 14px!important;border-radius:20px!important;font-size:10px!important;
+        background:linear-gradient(135deg,#754cff,#ff4fa3)!important;
+      }
+      #erisRoomSurface .eris-room-tools{
+        right:10px!important;bottom:202px!important;z-index:70!important;
+        display:flex!important;gap:6px!important;
+      }
+      #erisRoomSurface .eris-room-tools button{
+        width:40px!important;height:40px!important;border-radius:50%!important;
+        background:rgba(10,6,22,.66)!important;border:1px solid rgba(255,255,255,.12)!important;
+      }
+      #erisRoomSurface .eris-room-tools #erisRoomMic{
+        font-size:0!important;
+      }
+      #erisRoomSurface .eris-room-tools #erisRoomMic:after{content:"🎙️";font-size:16px!important}
+
+      /* Every room menu is an overlay INSIDE the room surface. */
+      #erisRoomSurface .erc-room-panel{
+        left:50%!important;right:auto!important;top:82px!important;bottom:204px!important;
+        transform:translateX(-50%)!important;width:min(420px,calc(100% - 20px))!important;
+        z-index:120!important;border-radius:18px!important;
+      }
+      #erisRoomSurface .erc-room-panel.show{display:flex!important}
+      #erisRoomSurface .erc-seat-card{z-index:130!important}
+
+      /* Name and level overlays share the same in-room glass language. */
+      #erisRoomSurface .erc-v3-overlay{
+        position:absolute;left:50%;top:82px;bottom:204px;transform:translateX(-50%);
+        width:min(420px,calc(100% - 20px));z-index:125;display:none;
+        flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.14);
+        border-radius:18px;background:rgba(8,4,18,.94);backdrop-filter:blur(24px);
+        box-shadow:0 22px 70px rgba(0,0,0,.55);
+      }
+      #erisRoomSurface .erc-v3-overlay.show{display:flex}
+      #erisRoomSurface .erc-v3-head{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+      #erisRoomSurface .erc-v3-head strong{font-size:12px;flex:1}
+      #erisRoomSurface .erc-v3-close{width:30px;height:30px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff}
+      #erisRoomSurface .erc-v3-body{padding:11px;overflow:auto;flex:1}
+      #erisRoomSurface .erc-v3-input{
+        width:100%;box-sizing:border-box;height:44px;padding:0 13px;border-radius:13px;
+        border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;outline:none;
+      }
+      #erisRoomSurface .erc-v3-save{
+        margin-top:8px;width:100%;height:42px;border:0;border-radius:13px;
+        background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800;
+      }
+      #erisRoomSurface .erc-v3-note{font-size:8px;color:#a49aaa;line-height:1.45;margin-top:8px}
+      #erisRoomSurface .erc-level-card{
+        border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);
+        border-radius:14px;padding:10px;margin-bottom:7px;
+      }
+      #erisRoomSurface .erc-level-card.current{border-color:rgba(255,79,163,.42);background:linear-gradient(135deg,rgba(117,76,255,.13),rgba(255,79,163,.08))}
+      #erisRoomSurface .erc-level-line{display:flex;align-items:center;gap:8px}
+      #erisRoomSurface .erc-level-num{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:900;font-size:10px}
+      #erisRoomSurface .erc-level-main{flex:1;min-width:0}
+      #erisRoomSurface .erc-level-main b{display:block;font-size:10px}
+      #erisRoomSurface .erc-level-main small{display:block;color:#a39aa9;font-size:7px;margin-top:3px}
+      #erisRoomSurface .erc-level-reward{margin-top:7px;font-size:8px;color:#d7cedd}
+      #erisRoomSurface .erc-level-progress{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}
+      #erisRoomSurface .erc-level-progress i{display:block;height:100%;background:linear-gradient(90deg,#754cff,#ff4fa3)}
+      @media(max-width:520px){
+        #erisRoomSurface .eris-room-title{max-width:38%!important}
+        #erisRoomSurface #erisRoomLevel{min-width:84px!important;padding:0 9px!important}
+        #erisRoomSurface .eris-room-chat{height:196px!important}
+        #erisRoomSurface .eris-room-tools{bottom:202px!important}
+        #erisRoomSurface .erc-v3-overlay,#erisRoomSurface .erc-room-panel{top:80px!important;bottom:202px!important}
+      }
+    \`;
+    document.head.appendChild(s);
+  }
+
+  function makeTopControls(s){
+    const top=s.querySelector('.eris-room-top');
+    if(!top) return;
+    if(!top.querySelector('#erisRoomLevel')){
+      const level=document.createElement('button');
+      level.id='erisRoomLevel'; level.type='button'; level.innerHTML='<b>Seviye 1</b><small>ilerleme</small>';
+      level.title='Oda seviyesi';
+      level.onclick=()=>openLevel();
+      top.appendChild(level);
+    }
+    if(!top.querySelector('#erisRoomMoreTop')){
+      const more=document.createElement('button');
+      more.id='erisRoomMoreTop'; more.type='button'; more.textContent='•••'; more.title='Oda menüsü';
+      more.onclick=()=>window.ErisRoomComplete?.openTab?.('controls');
+      top.appendChild(more);
+    }
+    if(!top.querySelector('#erisRoomLeaveTop')){
+      const leave=document.createElement('button');
+      leave.id='erisRoomLeaveTop'; leave.type='button'; leave.textContent='↪'; leave.title='Odadan çık';
+      leave.onclick=()=>window.closeRealRoom?.();
+      top.appendChild(leave);
+    }
+    const oldGift=top.querySelector('#erisRoomGift'), oldMusic=top.querySelector('#erisRoomMusic');
+    if(oldGift) oldGift.style.display='none';
+    if(oldMusic) oldMusic.style.display='none';
+  }
+
+  function moveGiftToComposer(s){
+    const compose=s.querySelector('.eris-room-compose');
+    if(!compose || compose.querySelector('#erisRoomGiftInline')) return;
+    const b=document.createElement('button');
+    b.type='button'; b.id='erisRoomGiftInline'; b.className='room-inline-action'; b.textContent='🎁';
+    b.title='Hediye gönder';
+    b.onclick=()=>window.ErisRoomComplete?.openTab?.('gifts');
+    const send=compose.querySelector('#erisLiveSend');
+    compose.insertBefore(b,send||null);
+  }
+
+  async function getRoom(){
+    const id=roomId();
+    if(!id) return {};
+    try{return await api().get?.(id)||{}}catch(e){return {}}
+  }
+
+  function isOwner(r){
+    const me=currentUser();
+    return !!me && [r?.owner_id,r?.owner?.id,r?.created_by,r?.creator_id].filter(Boolean).some(x=>String(x)===me);
+  }
+
+  function openOverlay(title,html){
+    const s=surface(); if(!s)return null;
+    let o=s.querySelector('.erc-v3-overlay');
+    if(!o){o=document.createElement('div');o.className='erc-v3-overlay';s.appendChild(o)}
+    o.innerHTML='<div class="erc-v3-head"><strong>'+esc(title)+'</strong><button class="erc-v3-close">×</button></div><div class="erc-v3-body">'+html+'</div>';
+    o.classList.add('show');
+    o.querySelector('.erc-v3-close').onclick=()=>o.classList.remove('show');
+    return o;
+  }
+
+  function openName(){
+    getRoom().then(r=>{
+      const title=document.getElementById('erisLiveTitle')?.textContent||r?.name||'Oda';
+      const owner=isOwner(r) || roomId().startsWith('demo-room-');
+      if(!owner){window.toast?.('Oda adını yalnızca oda sahibi değiştirebilir.');return}
+      const o=openOverlay('Oda adını düzenle','<input id="ercV3RoomName" class="erc-v3-input" maxlength="40" value="'+esc(title)+'" placeholder="Oda adı"><button class="erc-v3-save" id="ercV3RoomNameSave">Kaydet</button><div class="erc-v3-note">Oda ilk oluşturulurken verilen ad buradan yeniden düzenlenebilir.</div>');
+      o.querySelector('#ercV3RoomNameSave').onclick=async()=>{
+        const input=o.querySelector('#ercV3RoomName'), name=input.value.trim();
+        if(name.length<2){window.toast?.('Oda adı en az 2 karakter olmalı.');return}
+        const id=roomId();
+        let saved=false;
+        try{
+          if(typeof api().rename==='function'){await api().rename(id,name);saved=true}
+          else if(window.ErisPlatform?.api){await window.ErisPlatform.api('/rooms/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({name})});saved=true}
+        }catch(e){ if(!id.startsWith('demo-room-')){window.toast?.(e.message||'Oda adı kaydedilemedi.');return} }
+        document.getElementById('erisLiveTitle').textContent=name;
+        const meta=document.getElementById('erisLiveMeta'); if(meta?.dataset.roomNameMeta) meta.textContent=meta.dataset.roomNameMeta;
+        if(id.startsWith('demo-room-')) localStorage.setItem('eris_demo_room_name_'+id,name);
+        o.classList.remove('show');
+        window.toast?.(saved?'Oda adı güncellendi ✓':'Demo oda adı bu oturum için güncellendi ✓');
+      };
+    });
+  }
+
+  function levelData(level,r){
+    const raw=Array.isArray(r?.level_rewards)?r.level_rewards:null;
+    if(raw && raw.length) return raw.map((x,i)=>({level:Number(x.level||i+1),need:Number(x.required||x.threshold||0),reward:x.reward||x.rewards||'Oda ayrıcalıkları'}));
+    const out=[];
+    for(let i=1;i<=8;i++){
+      const cap=i>=7?16:i>=5?12:8;
+      out.push({level:i,need:Number((r?.level_thresholds||[])[i-1]||0),reward:(cap+' koltuk kapasitesi')+(i===1?' • temel oda':i===5?' • 12 koltuk açılır':i===7?' • 16 koltuk açılır':' • yeni oda ayrıcalıkları')});
+    }
+    return out;
+  }
+
+  async function openLevel(){
+    const r=await getRoom(), level=Math.max(1,Number(r?.level||1));
+    const cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8));
+    const progress=Number(r?.level_progress??r?.progress??0);
+    const nextNeed=Number(r?.next_level_threshold??r?.next_level_cost??0);
+    const pct=nextNeed>0?Math.max(0,Math.min(100,progress/nextNeed*100)):100;
+    const data=levelData(level,r);
+    const rows=data.map(x=>{
+      const cur=x.level===level, done=x.level<level;
+      return '<div class="erc-level-card '+(cur?'current':'')+'"><div class="erc-level-line"><div class="erc-level-num">'+x.level+'</div><div class="erc-level-main"><b>Seviye '+x.level+(cur?' • mevcut':'')+'</b><small>'+(x.need?x.need.toLocaleString('tr-TR')+' puan/eşik':'İlerleme verisi bekleniyor')+'</small></div><span>'+((done)?'✓':(cur?'●':'🔒'))+'</span></div><div class="erc-level-reward">🎁 '+esc(x.reward)+'</div>'+(cur?'<div class="erc-level-progress"><i style="width:'+pct+'%"></i></div><small style="display:block;color:#a39aa9;font-size:7px;margin-top:4px">'+(nextNeed?progress.toLocaleString('tr-TR')+' / '+nextNeed.toLocaleString('tr-TR'):'Mevcut ilerleme backend verisiyle güncellenir')+'</small>':'')+'</div>';
+    }).join('');
+    openOverlay('Oda seviyeleri','<div class="erc-v3-note" style="margin:0 0 8px">Mevcut seviye: <b>Seviye '+level+'</b> • '+cap+' koltuk. Seviyeye dokunarak hangi ayrıcalıkların açıldığını ve ilerlemeyi görebilirsin.</div>'+rows);
+  }
+
+  function bind(){
+    const s=surface(); if(!s)return false;
+    installCss(); makeTopControls(s); moveGiftToComposer(s);
+    const title=s.querySelector('.eris-room-title');
+    if(title && title.dataset.v3Bound!=='1'){title.dataset.v3Bound='1';title.onclick=openName}
+    const level=s.querySelector('#erisRoomLevel');
+    if(level) level.onclick=openLevel;
+    return true;
+  }
+
+  const boot=()=>{if(bind()) return};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  new MutationObserver(()=>{const s=surface();if(s){installCss();makeTopControls(s);moveGiftToComposer(s);const t=s.querySelector('.eris-room-title');if(t&&t.dataset.v3Bound!=='1'){t.dataset.v3Bound='1';t.onclick=openName}}}).observe(document.body,{childList:true,subtree:true});
+
+  window.ErisRoomLayoutV3={openName,openLevel};
+})();
