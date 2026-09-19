@@ -595,3 +595,10 @@ Room control checkpoint
 - [x] Kök neden kozmetik smoke içindeki `if(candidate)` bloğunun kapanış süslü parantezinin eksik olmasıydı.
 - [x] Commit `b571a8f8e3611b2d326089d6f298bc35771bbc9e` ile yalnızca eksik blok kapanışı düzeltildi; browser smoke kapsamı geri alındı/değiştirilmedi.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19] QUALITY #890 — BROWSER SMOKE SYNTAX
+- [x] Quality #890 frontend/backend browser smoke aşamasında `main().catch(...)` sonrasına yanlışlıkla eklenmiş `const announcementFlow` bloğu `Unexpected token 'const'` hatasına yol açtı.
+- [x] Kök neden: announcement flow'un main fonksiyonunun dışında kalması / main kapanışından sonra ikinci kez eklenmesi.
+- [x] Commit `586803fd277bc1cd693935389bdba504207e0e5b` ile announcement flow tek main akışı içinde bırakıldı ve dosya kapanışı düzeltildi.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
