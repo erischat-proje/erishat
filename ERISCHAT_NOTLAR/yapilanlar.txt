@@ -695,3 +695,10 @@ Room control checkpoint
 - [x] Wallpaper renderer'da aynı `/me/cosmetics` endpointine iki kez istek atılması kaldırıldı; mevcut Promise sonucu kullanılıyor.
 - [x] Wallpaper satın alma/uygulama sırasında blocking alert yerine uygulamanın toast UI'ı kullanılıyor.
 - Commit: f7ae31a21b93e3916ef99fadf7dc6f061a79688c.
+
+
+[2026-09-19 — GİZLİLİK AYARLARI GERÇEKLEŞTİRİLDİ]
+- [x] Ana gizlilik ekranındaki sahte/local switch'ler kaldırıldı.
+- [x] VIP görünürlüğü, VIP rozeti, VIP neon efekti ve konum gizleme seçenekleri `GET/PATCH /me/privacy` ile gerçek backend ayarlarına bağlandı.
+- [x] Kaydetme sonrası toast ve hata durumunda eski değere dönme eklendi.
+- Commit: 27d47156adc9c3061bb52781d23e95b763fe158a.
