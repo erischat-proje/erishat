@@ -50,8 +50,9 @@
   }
   function open(){roomId=rid();const p=document.getElementById('erisMusicPanel');if(!p)return;p.style.display='flex';load();clearInterval(timer);timer=setInterval(load,4000)}
   function mount(){
-    if(document.getElementById('erisRoomMusicBtn'))return;
-    const b=document.createElement('button');b.id='erisRoomMusicBtn';b.textContent='🎵 Müzik';b.style.cssText='position:fixed;right:14px;bottom:300px;z-index:296;border:0;border-radius:13px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:10px 13px;font-size:10px;font-weight:800';b.onclick=open;document.body.appendChild(b);
+    // Müzik sistemi yalnızca oda içindeki gerçek müzik panelinden açılır.
+    // Global/floating müzik butonu oluşturma; ana arayüzde görünür bir panel tetikleyicisi kullan.
+    if(document.getElementById('erisMusicPanel')) return;
     const p=document.createElement('div');p.id='erisMusicPanel';p.style.cssText='display:none;position:fixed;inset:0;z-index:700;background:#020107e8;align-items:flex-end;justify-content:center';
     p.innerHTML='<div style="width:min(520px,100%);max-height:82vh;overflow:auto;background:#0b0911;border-radius:24px 24px 0 0;padding:15px;color:#fff"><div style="display:flex;justify-content:space-between"><b>🎵 Oda Müziği</b><button id="musicClose">×</button></div><div style="display:flex;gap:5px;margin-top:10px"><input id="musicTitle" placeholder="Parça adı"><input id="musicUrl" placeholder="Audio URL"><button id="musicAdd">＋</button></div><div id="erisMusicList"></div></div>';
     document.body.appendChild(p);p.querySelector('#musicClose').onclick=()=>{p.style.display='none';clearInterval(timer)};
