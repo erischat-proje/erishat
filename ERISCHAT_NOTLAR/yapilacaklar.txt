@@ -680,3 +680,5 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam] Family browser smoke mevcut invite accept/reject + ownership transfer akışını içeriyor; eski owner leave isteği DELETE endpointine düzeltildi (commit 3f6dad0). Fresh workflow run bu commit için GitHub'da henüz görünmüyor.
 
 [2026-09-19 devam 2] Family browser smoke genişletildi: davet kabulünden sonra yeni owner tokenıyla üye rolünü admin'e yükseltme, üyeyi DELETE ile çıkarma ve listeden kaybolduğunu doğrulama eklendi. Commit ca4f401. Fresh workflow sonucu henüz doğrulanmadı.
+
+[2026-09-19 devam 3] Family smoke'a iki farklı kullanıcı tokenıyla eşzamanlı 1.000+1.000 Lidya bağışı eklendi; final aile bakiyesi 42.000 doğrulanıyor. Donation endpointindeki kullanıcı/aile row lock yaklaşımı bu E2E ile hedefleniyor. Commit 8baf47f. Fresh workflow sonucu henüz doğrulanmadı.
