@@ -1148,3 +1148,11 @@ Room control checkpoint
 - [x] `system_identity_admin_smoke.py` ephemeral DA token + hedef kullanıcı fixture'ı üretir; workflow sonunda fixture temizlenir.
 - [x] Quality workflow admin browser smoke adımını ve `admin_browser_smoke.mjs` static syntax gate'ini içeriyor.
 - [ ] Bu yeni zincirin GitHub Actions Quality runner PASS sonucu henüz doğrulanmadı; PASS varsayılmayacak.
+
+
+[2026-09-19 devam — ADMIN SMOKE WORKFLOW PATH FIX]
+
+- Quality workflow static gate içindeki yeni admin browser smoke dosyası yanlışlıkla frontend/$script altında aranıyordu.
+- Gerçek dosya konumu scripts/admin_browser_smoke.mjs olduğu için gate düzeltildi: frontend script listesi korunurken admin smoke ayrı test edilir ve node --check scripts/admin_browser_smoke.mjs ile doğrulanır.
+- Fix commit: ba698399e58adc43d7451102d28311dfb7defc03
+- Bu değişiklikten sonra yeni Quality runner sonucu henüz doğrulanmadı; PASS varsayılmıyor.
