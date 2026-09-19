@@ -693,3 +693,13 @@ Room control checkpoint
 - [x] `GET /{room_id}/moderators` canonical `backend/app/room_routes.py` içine eklendi; oda üyesi olmayanlar 403, üyeler mevcut moderator user_id listesini alıyor.
 - [x] Fix commit: `3c5f1c1f2b2a0d4e9e9d5d7e8f7a5b6c4d3e2f1a`.
 - [ ] Bu düzeltme sonrası Fresh Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 17] QUALITY #967 — MUSIC PLAYBACK POSITION ROOT FIX
+- [x] Fresh Quality #967 ilk gerçek failure'ı `Frontend backend browser smoke` adımında verdi; önceki static/browser/room/family/cosmetics zinciri geçti.
+- [x] Gerçek failure: play response `position_seconds` değerini istenen 3 yerine 0 döndürdü.
+- [x] Kök neden: canonical room router'da HTTP music playback endpointi kaynak kodda bulunmuyordu; mevcut playback state davranışı istenen play position'ı HTTP akışında korumuyordu.
+- [x] `MusicPlaybackUpdate` eklendi; dış API `action` alanını korurken iç model alanı `playback_action` olarak ayrıştırıldı.
+- [x] `POST /{room_id}/music/{music_id}/playback` canonical `backend/app/room_routes.py` içine eklendi; play/seek istenen `position_seconds` değerini koruyor, pause/stop state'i doğru güncelliyor.
+- [x] Fix commit: `9e88bf569d37e29c1a40ac8a9aec9d6ea75e52dc`.
+- [ ] Bu fix sonrası yeni Quality run sonucu henüz doğrulanmadı; PASS varsayılmıyor.
