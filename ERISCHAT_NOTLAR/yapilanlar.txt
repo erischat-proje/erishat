@@ -1005,3 +1005,15 @@ Room control checkpoint
 - [x] Level 1/3+/5+/10+/12 davranışları smoke contract içine alındı.
 - [x] Cosmetics, frontend/backend browser, RTC security ve gerçek 2-browser WebRTC adımları aynı Quality run içinde PASS.
 - [ ] VIP unlock/claim/effect zincirinin daha yüksek seviyelerde gerçek UI etkileşimleri ayrıca genişletilecek.
+
+2026-09-19 — WALLPAPER SİSTEMİ BAŞLANGIÇ CHECKPOINT
+- [x] Quality run 35451023615 / #1103, job 105918075409 SUCCESS: ae7fd3f syntax düzeltmesi tüm 31 kalite adımını geçti.
+- [x] Normal wallpaper tasarım koleksiyonu eklendi: 12 SVG asset.
+- [x] VIP wallpaper tasarım koleksiyonu eklendi: 12 SVG asset.
+- [x] `users.wallpaper_asset` kalıcı seçim alanı eklendi ve startup migration ile mevcut DB'lerde güvenli kolon ekleme bağlandı.
+- [x] `/wallpapers`, `/me/wallpaper`, `/me/wallpaper/purchase`, `/me/wallpaper/apply` backend akışları eklendi.
+- [x] UserOut artık seçili wallpaper_asset döndürüyor.
+- [x] Frontend seçili wallpaper'ı uygulama arka planına render ediyor.
+- [x] Wallpaper mağaza/uygulama UI'sı eklendi ve quality syntax gate'e dahil edildi.
+- [ ] Wallpaper browser E2E / asset URL smoke henüz eklenmedi.
+- [ ] VIP 10 `wallpaper` claim'i ile belirli özel wallpaper'ın sahiplik bağı henüz sıkılaştırılmadı; şu an VIP seviye ile apply açılıyor.
