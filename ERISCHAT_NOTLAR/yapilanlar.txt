@@ -553,3 +553,14 @@ Room control checkpoint
 - [x] 36 adımlı quality zincirinde uygulama adımları başarıyla tamamlandı; yalnızca hata durumunda çalışan API log adımı doğal olarak SKIPPED.
 - [x] 2b1e455e8a1f14ae71209ecc74efa4d89fdb8e50 commitindeki profile-ui-live.js yükleme düzeltmesi Quality tarafından doğrulandı.
 - [x] Profil VIP paneli + backend browser zinciri artık gerçek Quality PASS kapsamında.
+
+
+[2026-09-19 devam — QUALITY #1291 TAM PASS]
+- [x] Quality #1291 / run 35458827069 / job 105938863059 SUCCESS.
+- [x] 36 ana kalite adımının tamamı uygulama/test açısından geçti; API log-on-failure adımı hata olmadığı için SKIPPED.
+- [x] Frontend/backend browser smoke, sosyal/bildirim/rapor/gift/profile/room/family zincirleri gerçek runner'da geçti.
+- [x] VIP spend lifecycle browser smoke geçti: VIP 0→1→2→3, current_level_spent ve VIP kozmetik unlock/apply.
+- [x] Real two-browser WebRTC smoke geçti.
+- [x] Admin browser enforcement ve live family/room/ban/DM/cosmetic/wallpaper smoke adımları geçti.
+- [ ] Kalan gerçek ürün doğrulaması: production TURN/mobil ses transportu ve manuel 139 kozmetik görsel/alpha incelemesi.
+- [ ] Pages canlı deploy ayrı github-pages environment policy problemi nedeniyle açık.
