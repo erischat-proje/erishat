@@ -30,7 +30,7 @@ async function main(){
 
   const room=await page.evaluate(async api=>{
     const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
-    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'RTC Security Smoke'})});
+    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'RTC Sec Smoke'})});
     return {status:r.status,data:await r.json()};
   },API);
   if(room.status!==201||!room.data?.id) throw new Error('room creation failed: '+JSON.stringify(room));
