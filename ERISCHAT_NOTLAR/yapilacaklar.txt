@@ -131,4 +131,5 @@ Tarih: 2026-09-18
 - [x] Oda içi Müzik paneli tetikleyicisi.
 - [x] Arama ekranının gerçek endpoint renderer'ı.
 - [ ] GitHub Pages canlı HTTP/görsel doğrulaması.
-- [ ] Firma demosu için son uçtan uca browser smoke ve kalan statik yüzeylerin taranması.
+- [ ] Firma demosu için son uçtan uca browser smoke ve kalan statik yüzeylerin taranması
+- [x] Pages'te workflow tarafından sonradan enjekte edilen room-ban / room-gift / demo-cleanup modülleri ana HTML'e de doğrudan bağlandı..
