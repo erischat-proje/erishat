@@ -502,11 +502,12 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 continue
             if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
                 target = str(data.get("to_user_id") or "").strip()
-                if not target or target == user.id:
+                sender_user_id = str(user.id)
+                if not target or target == sender_user_id:
                     continue
-                payload = {"type": data["type"], "from_user_id": user.id, "to_user_id": target, "payload": data.get("payload")}
+                payload = {"type": data["type"], "from_user_id": sender_user_id, "to_user_id": target, "payload": data.get("payload")}
                 for peer_ws, peer_user in list(room_rtc_users.get(room_id, {}).items()):
-                    if peer_user == target:
+                    if str(peer_user) == target:
                         try:
                             await peer_ws.send_json(payload)
                         except Exception:
