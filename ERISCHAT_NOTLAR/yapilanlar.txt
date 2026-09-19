@@ -526,3 +526,8 @@ Room control checkpoint
 - [x] Yeni live-e2e job 105936497380 SUCCESS: API wait, anonymous session, live room, live ban, live DM, live cosmetic ve cleanup adımlarının tamamı geçti.
 - [x] Probe job 105936497479 SUCCESS; diagnostics job 105936497235 SUCCESS.
 - [ ] Pages deploy job 105936497278 yine github-pages environment aşamasında FAILURE; canlı Pages URL doğrulanmadı ve bu nedenle canlı demo PASS ilan edilmiyor.
+
+
+[2026-09-19 devam — VIP PROGRESS ASSERTION HARDENING]
+- [x] Commit c7419619fe237c9fbb1e23995f71c5650b564353: VIP lifecycle browser smoke artık /me/vip.current_level_spent değerini VIP 0/1/2/3 geçişlerinde doğrudan assert ediyor.
+- [ ] Bu yeni commit sonrası Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
