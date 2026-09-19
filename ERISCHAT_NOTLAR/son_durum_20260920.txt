@@ -79,3 +79,5 @@ NOT
 - `6f04edf7744c17676b971b70902a53bc59a34e68`: profil demo aksiyonları artık yalnızca toast göstermek yerine avatar/çerçeve uygulama, favori ve takip durumlarını etkileşimli değiştiriyor; hediye vitrini merkezi demo paneline bağlı.
 
 - `9f73623437a4150f8cae97c310668a10f48108c4`: ana ekran/sistemler profil girişleri artık profil verisini yeniliyor; Keşfet etkinliklerindeki Müzik Köşesi CTA'sı boşa giden `openRoom` yerine merkezi müzik demo paneline bağlandı.
+
+- `a953ec045102d00b6fb96098bb6257f4acbbab9c`: gerçek oda modalındaki tanımsız kapat/hediye/müzik aksiyonları düzeltildi; kapatma doğrudan modalı kapatıyor, hediye ve müzik merkezi demo panellerine bağlandı; oda mesajı demo oturumunda mesaj balonu oluşturuyor.
