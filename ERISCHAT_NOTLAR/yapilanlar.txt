@@ -1017,3 +1017,11 @@ Room control checkpoint
 - [x] Wallpaper mağaza/uygulama UI'sı eklendi ve quality syntax gate'e dahil edildi.
 - [ ] Wallpaper browser E2E / asset URL smoke henüz eklenmedi.
 - [ ] VIP 10 `wallpaper` claim'i ile belirli özel wallpaper'ın sahiplik bağı henüz sıkılaştırılmadı; şu an VIP seviye ile apply açılıyor.
+
+
+[2026-09-19 devam — wallpaper/VIP sahiplik sertleştirme]
+- VIP 10 wallpaper claim gerçek user_cosmetics sahipliğine bağlandı (vip_wallpaper_10).
+- Wallpaper cosmetic type schema/catalog katmanına eklendi.
+- Wallpaper UI aynı cosmetic sahiplik verisini yeniden kullanacak şekilde sadeleştirildi.
+- Standart asset audit sonucu: kadın avatar 46, erkek avatar 49, standart çerçeve 32; hedef 40/40/40 karşısında yalnızca standart çerçeve sayısı eksik.
+- Quality #1143 çalışıyor; gerçek sonuç bekleniyor.
