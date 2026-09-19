@@ -76,6 +76,14 @@ async function main(){
   },API);
   if(notificationRead.readStatus!==200&&notificationRead.readStatus!==204) throw new Error('notification read failed: '+JSON.stringify(notificationRead));
   if(!notificationRead.skipped && notificationRead.readback!==true) throw new Error('notification readback failed: '+JSON.stringify(notificationRead));
+  const room=await page.evaluate(async api=>{
+    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'Browser UI Room'})});
+    return {status:r.status,data:await r.json()};
+  },API);
+  if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
+
+
   const announcementFlow=await page.evaluate(async ({api,roomId,targetId,memberToken})=>{
     const ownerToken=localStorage.getItem('erischat_access_token');
     const oh={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
@@ -138,13 +146,6 @@ async function main(){
   },API);
   if(vipPrivacy.mine?.level===undefined||vipPrivacy.hide!==200||vipPrivacy.privacy?.hide_vip_badge!==true||vipPrivacy.privacy?.hide_vip_neon!==true||vipPrivacy.privacy?.hide_vip_entry!==true||vipPrivacy.privacy?.hide_vip_title!==true) throw new Error('VIP privacy surface failed: '+JSON.stringify(vipPrivacy));
   if(roomInvite.status!==201||!roomInvite.data?.invited||!roomInvite.memberNotifications.some(x=>x.kind==='room_invite')) throw new Error('room invite notification flow failed: '+JSON.stringify(roomInvite));
-  const room=await page.evaluate(async api=>{
-    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
-    const r=await fetch(api+'/rooms',{method:'POST',headers:h,body:JSON.stringify({name:'Browser UI Room'})});
-    return {status:r.status,data:await r.json()};
-  },API);
-  if(room.status!==201||!room.data?.id) throw new Error('room browser backend create failed: '+JSON.stringify(room));
-
   const rtcSignalSmoke=await page.evaluate(async ({api,roomId,ownerId,memberToken})=>{
     const memberHeaders={Authorization:'Bearer '+memberToken,'Content-Type':'application/json'};
     const send=async type=>{const r=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/rtc-signals',{method:'POST',headers:memberHeaders,body:JSON.stringify({target_id:ownerId,type,payload:{probe:'browser-rtc-smoke'}})});return {status:r.status,data:await r.json().catch(()=>null)};};
