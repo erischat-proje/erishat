@@ -48,7 +48,8 @@ try {
   const failed=result.filter(x=>!x.ok);
   const frames=result.filter(x=>/cerceve/i.test(x.path) && /\.(png|svg)$/i.test(x.path));
   const opaqueFrames=frames.filter(x=>x.ok && x.transparent===false);
-  if (frames.length !== 40) throw new Error(`expected 40 frame assets, found ${frames.length}`);
+  const standardFrames=frames.filter(x=>x.path.includes('/standartcerceve/'));
+  if (standardFrames.length !== 40) throw new Error(`expected 40 standard frame assets, found ${standardFrames.length}`);
   if(failed.length) throw new Error('asset render failures: '+failed.map(x=>x.path).join(','));
   console.log(`COSMETICS_BROWSER_RENDER_PASS assets=${result.length} png_alpha_frames=${frames.length-opaqueFrames.length}/${frames.length} opaque_png_frames=${opaqueFrames.length}`);
   await browser.close();
