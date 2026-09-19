@@ -1134,3 +1134,10 @@ Room control checkpoint
 - [x] GitHub dokümantasyonu custom Pages workflow için repository Settings → Pages → Source = GitHub Actions seçilmesini ve deploy job'unda github-pages environment kullanılmasını doğruluyor.
 - [ ] Mevcut GitHub bağlantısında environment deployment branch policy/Pages Source ayarını değiştirecek yönetim aracı bulunmuyor; bu ayar çözülmeden canlı deploy doğrulanmayacak.
 - [ ] Pages SUCCESS sonrası canlı HTTP/index ve Pages → Railway API zinciri doğrulanacak.
+
+
+[2026-09-19 devam — ADMIN FRONTEND QUALITY GATE]
+- [x] `frontend/admin-live.js` mevcut yönetim panelinin ana frontend dosyası olarak doğrulandı.
+- [x] Quality workflow static syntax/required-file listesine `admin-live.js` eklendi; artık admin frontend kodu da `node --check` ile gerçek runner kapısında kontrol edilecek.
+- [x] Fix commit: 0d9ef4948caeb1ad985aff16d744eed8b15facb4.
+- [ ] Bu commit sonrası yeni Quality runner sonucu henüz doğrulanmadı; PASS varsayılmayacak.
