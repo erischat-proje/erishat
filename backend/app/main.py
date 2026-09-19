@@ -414,6 +414,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 
 room_chat_connections: dict[str, set[WebSocket]] = {}
+room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
     connections = room_chat_connections.get(room_id, set())
@@ -452,12 +453,14 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept()
     room_chat_connections.setdefault(room_id, set()).add(websocket)
+    room_rtc_users.setdefault(room_id, {})[websocket] = user.id
     await websocket.send_json({"type":"room_history","messages":history_payload})
     try:
         while True:
             data = await websocket.receive_json()
             if not websocket_session_active(token):
                 room_chat_connections.get(room_id, set()).discard(websocket)
+                room_rtc_users.get(room_id, {}).pop(websocket, None)
                 await websocket.close(code=1008, reason="oturum sona erdi")
                 return
             with Session(engine) as db:
@@ -466,12 +469,26 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 banned = db.query(RoomBan).filter(RoomBan.room_id == room_id, RoomBan.user_id == user.id).first()
                 if not room or not member or banned or not room.chat_enabled:
                     room_chat_connections.get(room_id, set()).discard(websocket)
+                    room_rtc_users.get(room_id, {}).pop(websocket, None)
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     return
             if not isinstance(data, dict):
                 continue
             if data.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
+                continue
+            if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
+                target = str(data.get("to_user_id") or "").strip()
+                if not target or target == user.id:
+                    continue
+                payload = {"type": data["type"], "from_user_id": user.id, "to_user_id": target, "payload": data.get("payload")}
+                for peer_ws, peer_user in list(room_rtc_users.get(room_id, {}).items()):
+                    if peer_user == target:
+                        try:
+                            await peer_ws.send_json(payload)
+                        except Exception:
+                            room_chat_connections.get(room_id, set()).discard(peer_ws)
+                            room_rtc_users.get(room_id, {}).pop(peer_ws, None)
                 continue
             if data.get("type") != "room_chat":
                 continue
@@ -497,8 +514,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             await _broadcast_room_chat(room_id, payload)
     except WebSocketDisconnect:
         room_chat_connections.get(room_id, set()).discard(websocket)
+        room_rtc_users.get(room_id, {}).pop(websocket, None)
     except Exception:
         room_chat_connections.get(room_id, set()).discard(websocket)
+        room_rtc_users.get(room_id, {}).pop(websocket, None)
         try:
             await websocket.close(code=1011)
         except Exception:
