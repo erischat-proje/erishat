@@ -195,3 +195,10 @@ Tarih: 2026-09-18
 - Gerçek regex `/\/$/` olarak düzeltildi.
 - Commit: afff857d3764159b4d47a92dc38b71c901a6a6f1 — fix: repair invalid api regex in demo page.
 - Yeni Quality koşusu bekleniyor; PASS ilan edilmiyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE IIFE DÜZELTME]
+- Quality #1393 (run 35465205458) static syntax, demo surface integrity ve frontend surface integrity geçti; Frontend browser smoke `Unexpected end of input` ile kaldı.
+- Kaynak: frontend/erischat-main.html içindeki ErisSearch IIFE kapanışı eksikti; `}};` sonrasında `})();` bulunmuyordu.
+- Düzeltildi ve main'e commit edildi: 63a4956e605fb85ac3cf068a808e9b5bfd60e623 (`fix: close search script IIFE`).
+- Yeni Quality sonucu bekleniyor; PASS ilan edilmedi.
