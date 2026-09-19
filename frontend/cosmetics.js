@@ -72,8 +72,11 @@
     if (!user) return;
     const avatarKey = assetValue(user.avatar_asset, '');
     const frameKey = assetValue(user.frame_asset, '');
+    const wallpaperKey = assetValue(user.wallpaper_asset, '');
     const avatar = assetUrl(avatarKey);
     const frame = assetUrl(frameKey);
+    const wallpaper = assetUrl(wallpaperKey);
+    if (wallpaper) document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); else document.documentElement.style.removeProperty('--eris-wallpaper');
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {
       if (!avatar) return;
       el.style.backgroundImage = `url("${avatar}")`;
