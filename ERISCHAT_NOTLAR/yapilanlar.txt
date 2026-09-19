@@ -989,3 +989,11 @@ Room control checkpoint
 - [x] Room music playback artık play sırasında aynı odadaki başka aktif parçaları durdurup konumlarını koruyor.
 - [x] Browser smoke iki müzik parçası ekleyip ikinciyi oynattığında ilkinin inactive, ikincinin active kaldığını doğruluyor.
 - [ ] Gerçek harici müzik kaynağı/uzun süreli playback ve üretim sağlayıcı entegrasyonu hâlâ ayrı açık iş.
+
+
+[2026-09-19 devam 53] QUALITY #1092 — VIP HARCAMA LIFECYCLE PASS
+- [x] Quality run 35450281074 (#1092) SUCCESS.
+- [x] Room gift smoke artık yüksek değerli hediye ile /me/vip total_spent artışını doğruluyor.
+- [x] Aynı smoke VIP level'ın threshold sonrası açıldığını doğruluyor.
+- [x] Hediye harcaması backend'de VipStatus.total_spent alanına işlenip vip_level_from_spend ile seviye yeniden hesaplanıyor.
+- [ ] VIP lifecycle'ın kalan unlock/claim/effect zinciri ayrıca doğrulanacak.
