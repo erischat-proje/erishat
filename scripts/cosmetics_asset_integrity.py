@@ -12,13 +12,13 @@ EXPECTED_FOLDERS = {
     "viperkekavatar": ("avatar", "male", True),
     "vipcerceve": ("frame", None, True),
 }
-# Keep the active 139-asset catalog structurally stable. These counts are the
+# Keep the active cosmetic catalog structurally stable. These counts are the
 # repository's current production asset contract; a visual redesign can change
 # the files, but it must intentionally update this contract at the same time.
 EXPECTED_FOLDER_COUNTS = {
     "kadınavatar": 34,
     "erkekavatar": 37,
-    "standartcerceve": 32,
+    "standartcerceve": 40,
     "vipkadınavatar": 12,
     "viperkekavatar": 12,
     "vipcerceve": 12,
@@ -48,7 +48,7 @@ def main() -> None:
 
     keys = [entry[0] for entry in entries]
     assert len(keys) == len(set(keys)), "duplicate cosmetic asset_key detected"
-    assert len(entries) == 139, f"unexpected cosmetic asset count: {len(entries)} (expected 139)"
+    assert len(entries) == 147, f"unexpected cosmetic asset count: {len(entries)} (expected 147)"
 
     by_type = {"avatar": 0, "frame": 0}
     by_tier = {False: 0, True: 0}
@@ -56,8 +56,8 @@ def main() -> None:
         by_type[kind] += 1
         by_tier[vip] += 1
 
-    assert by_type == {"avatar": 95, "frame": 44}, f"unexpected type totals: {by_type}"
-    assert by_tier == {False: 103, True: 36}, f"unexpected tier totals: {by_tier}"
+    assert by_type == {"avatar": 95, "frame": 52}, f"unexpected type totals: {by_type}"
+    assert by_tier == {False: 111, True: 36}, f"unexpected tier totals: {by_tier}"
 
     print(
         "Cosmetics assets OK: "
