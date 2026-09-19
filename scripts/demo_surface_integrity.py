@@ -15,7 +15,7 @@ REQUIRED_EXTRAS_MARKERS = {
     "seats": ("seatsDemo", "12 koltuk", "🎤 Mikrofon açık"),
     "music": ("musicDemo", "Oda müzik merkezi", "Gerçek kuyruk"),
     "announcement": ("announcementDemo", "Duyuru yönetimi", "📌 Sabitle"),
-    "family": ("familyDemo", "Aile yönetimi + aile sohbeti", "➕ Üye ekle"),
+    "family": ("familyDemo", "Aile yönetimi + aile sohbeti", "➕ Davet gönder"),
     "store": ("storeDemo", "139 kozmetik", "cosFilter"),
     "profile": ("profileDemo", "👤 Profil + Lidya / Lidya Gem", "Avatarı uygula"),
     "safety": ("safetyDemo", "Bildirim • Güvenlik • Moderasyon", "Engelleme"),
