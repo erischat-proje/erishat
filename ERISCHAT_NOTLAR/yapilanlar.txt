@@ -504,3 +504,6 @@ Room control checkpoint
 
 
 [2026-09-19] RTC smoke sağlamlaştırma: owner/member user ID değerleri signaling payload'larına gönderilmeden önce String'e normalize edildi.
+
+
+[2026-09-19] Backend RTC signaling sağlamlaştırması: `to_user_id`, sender ID ve bağlı peer kullanıcı ID'leri String karşılaştırmasına normalize edildi; payload sender ID de normalize ediliyor.
