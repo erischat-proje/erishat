@@ -31,6 +31,10 @@ class RoomChatUpdate(BaseModel): enabled: bool
 class RoomNameUpdate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class BanUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
+class MusicPlaybackUpdate(BaseModel):
+    playback_action: str = Field(alias="action")
+    position_seconds: int = Field(default=0, ge=0, le=86400)
+    model_config = {"populate_by_name": True}
 class RoomInvite(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64); gift_key: str = Field(min_length=1, max_length=64); quantity: int = Field(ge=1, le=99)
@@ -357,6 +361,44 @@ def register_room_auth(current_user_dependency):
         if not music: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
         if music.user_id != user.id and room.owner_id != user.id: raise HTTPException(status_code=403, detail="Bu müziği silemezsiniz")
         db.delete(music); db.commit(); return {"deleted":True}
+    @router.post("/{room_id}/music/{music_id}/playback")
+    def update_music_playback(room_id: str, music_id: int, payload: MusicPlaybackUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
+        if not music:
+            raise HTTPException(status_code=404, detail="Müzik bulunamadı")
+        if music.user_id != user.id and room.owner_id != user.id:
+            raise HTTPException(status_code=403, detail="Bu müziği kontrol edemezsiniz")
+        action = payload.playback_action
+        if action not in {"play", "pause", "stop", "seek"}:
+            raise HTTPException(status_code=400, detail="Geçersiz müzik oynatma işlemi")
+        now = datetime.now(timezone.utc)
+        if action == "seek":
+            music.position_seconds = payload.position_seconds
+            if music.is_playing:
+                music.started_at = now
+        elif action == "play":
+            music.position_seconds = payload.position_seconds
+            music.is_playing = True
+            music.started_at = now
+        elif action == "pause":
+            if music.is_playing and music.started_at:
+                music.position_seconds += max(0, int((now - music.started_at).total_seconds()))
+            music.is_playing = False
+            music.started_at = None
+        else:
+            music.is_playing = False
+            music.position_seconds = 0
+            music.started_at = None
+        music.updated_at = now
+        db.commit()
+        db.refresh(music)
+        return {"id": music.id, "slot": music.slot, "title": music.title, "source_url": music.source_url,
+                "position_seconds": music.position_seconds, "is_playing": music.is_playing,
+                "started_at": music.started_at, "updated_at": music.updated_at}
+
     @router.get("/{room_id}/music")
     def list_music(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
