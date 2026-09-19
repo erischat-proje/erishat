@@ -240,7 +240,7 @@ async function main(){
     const h={Authorization:'Bearer '+ownerToken,'Content-Type':'application/json'};
     const jr=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST',headers:h});
     const mr=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/join',{method:'POST',headers:{Authorization:'Bearer '+window.__memberToken,'Content-Type':'application/json'}});
-    const gr=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/gifts',{method:'POST',headers:h,body:JSON.stringify({recipient_id:targetId,gift_key:'rose',quantity:1})});
+    const gr=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/gifts',{method:'POST',headers:h,body:JSON.stringify({recipient_id:targetId,gift_key:'Zeytin Dalı',quantity:1})});
     const notifications=await fetch(api+'/me/notifications',{headers:{Authorization:'Bearer '+window.__memberToken}}).then(r=>r.json());
     const profile=await fetch(api+'/users/'+encodeURIComponent(targetId)+'/profile-gifts',{headers:h}).then(r=>r.json());
     const events=await fetch(api+'/rooms/'+encodeURIComponent(roomId)+'/gift-events',{headers:h}).then(r=>r.json());
