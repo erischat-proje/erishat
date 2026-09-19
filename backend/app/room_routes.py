@@ -585,10 +585,22 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
         if not seat: raise HTTPException(status_code=403, detail="Müzik eklemek için mikrofonda olmalısınız")
-        current = db.scalar(select(func.count(RoomMusic.id)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id)) or 0
+        # Aynı kullanıcının paralel isteklerinde hem slot hem Lidya bakiyesi atomik korunmalı.
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if not locked_user:
+            raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
+        current = db.scalar(select(func.count(RoomMusic.id)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == locked_user.id)) or 0
         if current >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
-        if user.lidya < 150: raise HTTPException(status_code=400, detail="Müzik eklemek için 150 Lidya gerekli")
-        user.lidya -= 150; music = RoomMusic(room_id=room.id, user_id=user.id, slot=int(current)+1, title=payload.title.strip(), source_url=payload.source_url.strip(), paid_until=datetime.now(timezone.utc)+timedelta(days=7)); db.add(music); db.commit(); db.refresh(music)
+        if locked_user.lidya < 150: raise HTTPException(status_code=400, detail="Müzik eklemek için 150 Lidya gerekli")
+        locked_user.lidya -= 150
+        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=int(current)+1, title=payload.title.strip(), source_url=payload.source_url.strip(), paid_until=datetime.now(timezone.utc)+timedelta(days=7))
+        db.add(music)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(status_code=409, detail="Müzik kuyruğu isteği eşzamanlı olarak işlendi; tekrar deneyin")
+        db.refresh(music)
         return {"id":music.id,"slot":music.slot,"title":music.title,"source_url":music.source_url,"paid_until":music.paid_until}
     @router.delete("/{room_id}/music/{music_id}")
     def delete_music(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
