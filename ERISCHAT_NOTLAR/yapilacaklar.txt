@@ -1122,3 +1122,9 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] GitHub Settings → Pages → Source değerinin GitHub Actions olması ve github-pages environment deployment branch policy içinde main'in izinli olması gerekiyor.
 - [ ] Bu repository bağlantısında Pages/environment yönetim ayarı aracı olmadığı için ayar değişikliği varsayılmayacak.
 - [ ] Ayar düzeldikten sonra Pages deploy SUCCESS + canlı HTTP/index doğrulaması yapılacak.
+
+
+[2026-09-19 devam — ADMIN FRONTEND QUALITY GATE]
+- [x] `admin-live.js` Quality static syntax/required-file gate kapsamına alındı.
+- [ ] Yeni Quality runner PASS sonucu doğrulanacak.
+- [ ] SA / UA / DA yönetim panelinin gerçek browser UI → backend enforcement E2E kapsamı ayrıca genişletilecek.
