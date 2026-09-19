@@ -105,6 +105,7 @@ class GameRound(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     result_key: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    state_data: Mapped[str] = mapped_column(Text, default="{}", server_default="{}", nullable=False)
 
 
 class GameBet(Base):
