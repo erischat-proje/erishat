@@ -636,3 +636,5 @@ Room control checkpoint
 - Owner transfer endpointi ve demo aksiyonu eklendi.
 - Demo aile davetleri kabul/reddet ve DELETE leave akışına hizalandı.
 - Fresh CI/Quality sonucu henüz doğrulanmadı.
+
+[2026-09-19 devam 4] Family browser smoke token wiring düzeltildi: davet oluşturma artık açıkça yeni owner/member tokenını kullanıyor; rol değiştirme ve üye silme callback'leri token parametresini doğru şekilde alıyor. Commit 8ba8b65.
