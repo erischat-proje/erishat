@@ -479,3 +479,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Yetersiz bakiye kontrolü kilit sonrası yapılıyor; eşzamanlı çift harcama riski azaltıldı.
 - [x] Bağış miktarı için pozitif tutar kontrolü eklendi.
 - [ ] Aile bağışı için gerçek eşzamanlı runner/E2E doğrulaması açık.
+
+2026-09-19 — FAMILY CONCURRENCY / MEMBERSHIP HARDENING
+- [x] Aile üyesinin kendi ailesinden ayrılabilmesi için gerçek DELETE /families/{family_id}/leave endpoint'i eklendi.
+- [x] Aile sahibi yanlışlıkla ayrılıp aileyi sahipsiz bırakamasın diye owner ayrılışı engellendi; önce sahiplik devri gerekiyor.
+- [x] Aile bağışında aile satırı row-lock ile korunarak eşzamanlı bakiye güncellemesi güçlendirildi.
+- [ ] Aile davet kabul/ret, davet süresi ve sahiplik devri E2E hâlâ açık.
