@@ -790,3 +790,10 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Stale demo bölümünün yerine mevcut frontend'in gerçek navigation/profile/shop yüzeyini doğrulayan kısa current-UI smoke eklendi.
 - [x] Fix commit: `7b15ceb6c93fcd50a73a826c6e0a7c9ba07f0035`.
 - [ ] Bu fix sonrası yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19 devam 24] QUALITY #990 — DM OVERLAY SMOKE ROOT FIX
+- [x] Quality #990 failure kökü: DM browser smoke sonrasında `#chat` overlay açık kaldığı için sabit alt navigasyondaki `Mağaza` tıklaması 30 saniye timeout verdi.
+- [x] `scripts/frontend_backend_browser_smoke.mjs` içine DM doğrulamasından sonra `window.closeChat()` çağrısı ve overlay kapanış beklemesi eklendi.
+- [x] Fix commit: `e161ec932fc9696e2149ccdda424cda50cd904ed`.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
