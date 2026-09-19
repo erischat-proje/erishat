@@ -283,7 +283,7 @@ async function main(){
   if(musicCleanup!==200) throw new Error('music cleanup failed: '+musicCleanup);
   if(!giftFlow.notifications.some(x=>x.kind==='gift')) throw new Error('gift notification missing: '+JSON.stringify(giftFlow.notifications));
   if(!giftFlow.profile.some(x=>x.gift==='Zeytin Dalı')) throw new Error('profile gift history missing: '+JSON.stringify(giftFlow.profile));
-  if(!giftFlow.events.some(x=>x.gift_key==='rose')) throw new Error('gift event history missing: '+JSON.stringify(giftFlow.events));
+  if(!giftFlow.events.some(x=>x.gift_key==='Zeytin Dalı')) throw new Error('gift event history missing: '+JSON.stringify(giftFlow.events));
   await page.locator('#erisDemoBtn').click();
   await page.locator('[data-ed="shop"]').click();
   await page.waitForFunction(() => document.querySelector('#ed-shop')?.textContent.includes('139 görünüm'));
@@ -551,7 +551,7 @@ async function main(){
     return {notifications,profile,events};
   },{api:API,targetId:member.user.id,roomId:room.data.id,memberToken:member.access_token});
   if(!giftUiReadback.notifications.some(x=>x.kind==='gift')) throw new Error('gift UI notification read-back missing: '+JSON.stringify(giftUiReadback.notifications));
-  if(!giftUiReadback.profile.some(x=>x.gift==='rose')) throw new Error('gift UI profile-gifts read-back missing: '+JSON.stringify(giftUiReadback.profile));
+  if(!giftUiReadback.profile.some(x=>x.gift==='Zeytin Dalı')) throw new Error('gift UI profile-gifts read-back missing: '+JSON.stringify(giftUiReadback.profile));
   const roomUiState=await page.evaluate(async ({api,id})=>{const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}; const r=await fetch(api+'/rooms/'+encodeURIComponent(id),{headers:h}); return {status:r.status,data:await r.json()};},{api:API,id:room.data.id});
   if(roomUiState.status!==200||!Array.isArray(roomUiState.data?.seats)) throw new Error('room UI state read-back failed: '+JSON.stringify(roomUiState));
   await page.evaluate(id=>{window.ERIS_DEMO_ROOM_ID=id},room.data.id);
