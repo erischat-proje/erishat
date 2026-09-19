@@ -78,10 +78,6 @@
   function ensureUi() {
     if (!document.body || document.getElementById('erischatGiftFab')) return;
     injectStyles();
-    const fab = document.createElement('button');
-    fab.id = 'erischatGiftFab'; fab.type = 'button'; fab.textContent = '🎁'; fab.title = 'Oda hediyesi';
-    fab.onclick = () => { const panel = document.getElementById('erischatGiftPanel'); if (panel) { panel.classList.toggle('show'); if (panel.classList.contains('show')) refresh(); } };
-    document.body.appendChild(fab);
     const panel = document.createElement('section');
     panel.id = 'erischatGiftPanel';
     panel.innerHTML = '<div class="egp-head"><div><div class="egp-title">🎁 Odaya hediye gönder</div><div class="egp-balance" id="egpBalance">Bakiye yükleniyor…</div></div><button class="egp-close" type="button">×</button></div><div class="egp-note">Önce alıcıyı, sonra hediyeyi seç.</div><div class="egp-row" id="egpRecipients"></div><div class="egp-grid" id="egpGifts"></div><button class="egp-send" id="egpSend" type="button" disabled>Hediye gönder</button>';
@@ -92,9 +88,7 @@
 
   function setRoom(roomId, open = false) {
     state.roomId = roomId ? String(roomId) : null;
-    const fab = document.getElementById('erischatGiftFab');
-    if (fab) fab.style.display = state.roomId ? 'block' : 'none';
-    if (state.roomId && open) refresh();
+    if (state.roomId && open) { ensureUi(); document.getElementById('erischatGiftPanel')?.classList.add('show'); refresh(); }
   }
 
   window.addEventListener('erischat:room-ws', event => {
@@ -104,5 +98,6 @@
   });
   window.addEventListener('erischat:room-gift', () => {});
   window.addEventListener('erischat:room-actions-ready', () => { if (state.roomId) ensureUi(); });
+  window.openRoomGift = function(roomId) { setRoom(roomId || window.ErisCurrentRoomId || window.currentRoomId, true); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureUi, { once: true }); else ensureUi();
 })();
