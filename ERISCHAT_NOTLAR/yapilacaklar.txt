@@ -684,3 +684,5 @@ GÜVENLİK/KAPSAM NOTU
 [2026-09-19 devam 3] Family smoke'a iki farklı kullanıcı tokenıyla eşzamanlı 1.000+1.000 Lidya bağışı eklendi; final aile bakiyesi 42.000 doğrulanıyor. Donation endpointindeki kullanıcı/aile row lock yaklaşımı bu E2E ile hedefleniyor. Commit 8baf47f. Fresh workflow sonucu henüz doğrulanmadı.
 
 [2026-09-19 devam 4] RTC browser smoke artık yalnızca offer/answer/ICE/leave mesajlarını değil, gerçek Chromium RTCPeerConnection oluşturup iki uçta SDP exchange sonrası connectionState=connected durumunu da doğrulamayı hedefliyor. Commit 7d33395. TURN/mobile gerçek ağ E2E ayrıca açık; fresh workflow sonucu henüz doğrulanmadı.
+
+[2026-09-19 devam 5] Gerçek RTCPeerConnection smoke'ında ICE adaylarının iki uçta gerçekten RTCPeerConnection'a uygulanması ve remoteDescription öncesi adayların kuyruklanması eklendi. Commit 3b66e60. Fresh workflow sonucu hâlâ doğrulanmadı.
