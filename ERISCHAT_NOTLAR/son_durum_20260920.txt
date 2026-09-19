@@ -54,3 +54,5 @@ NOT
 - Sonraki odak: ana müşteri demo yüzeylerini tek tek açıp boş/ölü CTA bırakmamak ve Pages canlı kontrolünü ayrıca doğrulamak.
 
 - 2026-09-20 devam: ana üst menüdeki sistem ikonunun gereksiz profil sekmesine yönlenmesi kaldırıldı; ikon artık doğrudan Tüm Sistemler / Feature Hub'ı açıyor. Commit: 306baaaa5ea012e55155345f868302c7a6f9d81a.
+
+- 2026-09-20 devam: Ana HTML'deki eski 4 mini-oyun launcher'ı kaldırıldı; tüm Oyun Merkezi çağrıları artık merkezi 7 oyunluk demo kataloğuna yönleniyor. Böylece eski Zar/Taş-Kağıt-Makas/Quiz/Hafıza yüzeyi tekrar görünmeyecek. Commit: 76b0101a90d34b112fcaab099241cccf21369c62.
