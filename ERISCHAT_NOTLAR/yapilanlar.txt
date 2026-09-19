@@ -507,3 +507,9 @@ Room control checkpoint
 
 
 [2026-09-19] Backend RTC signaling sağlamlaştırması: `to_user_id`, sender ID ve bağlı peer kullanıcı ID'leri String karşılaştırmasına normalize edildi; payload sender ID de normalize ediliyor.
+
+
+[2026-09-19] ODA SOHBETİ UI E2E HARDENING
+- [x] demo-extras-live.js oda sohbeti artık smoke tarafından oluşturulan belirli oda ID'sini ERIS_DEMO_ROOM_ID üzerinden kullanabiliyor; rastgele ilk odaya bağlanma riski azaltıldı.
+- [x] frontend_backend_browser_smoke.mjs gerçek Oda Sohbeti demo UI'sını açıp mesaj gönderimini ve mesajın UI'a realtime düşmesini doğrulayacak şekilde genişletildi.
+- [ ] Bu değişiklik sonrası fresh Quality runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
