@@ -450,3 +450,9 @@ Room control checkpoint
 - Live demo API response handling hardened for wallet exchange, music and announcements.
 - Family: authenticated family list endpoint added; family demo connected to family list, members, donation and chat APIs.
 - No fresh CI/Quality PASS has been claimed after these changes.
+
+2026-09-19 — AİLE DEMO ENTEGRASYONU
+- [x] Aileleri listeleyen GET /families endpoint'i eklendi.
+- [x] Aile demo ekranı gerçek aile/üye/bağış/sohbet API'lerine bağlandı.
+- [x] Aile oluşturma, üye ekleme, bağış ve aile mesajı gönderme canlı akışa bağlandı.
+- [x] WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması önceki checkpoint'te tamamlandı.
