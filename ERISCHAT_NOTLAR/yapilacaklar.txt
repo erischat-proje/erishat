@@ -553,3 +553,6 @@ GÜVENLİK/KAPSAM NOTU
 
 
 [2026-09-19] RTC signaling E2E için kimlik tipi normalizasyonu eklendi; güncel CI sonucu henüz PASS değil.
+
+
+[2026-09-19] RTC signaling eşleşmesi tip-güvenli hale getirildi. Fresh Quality PASS henüz doğrulanmadı.
