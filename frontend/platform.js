@@ -15,7 +15,7 @@
     api: request,
     getMe: () => request('/me'),
     getAccessToken: () => token(),
-    getRealtimeUrl: path => { const base=(window.ERIS_API||'https://erischat-production.up.railway.app/v1').replace(/\\/v1$/, '').replace(/^http:/,'ws:').replace(/^https:/,'wss:'); return base+path; },
+    getRealtimeUrl: path => { const base=(window.ERIS_API||'https://erischat-production.up.railway.app/v1').replace(/\/v1$/, '').replace(/^http:/,'ws:').replace(/^https:/,'wss:'); return base+path; },
     getVip: () => request('/me/vip'), getPrivacy: () => request('/me/privacy'),
     setPrivacy: payload => request('/me/privacy', { method:'PATCH', body:JSON.stringify(payload) }),
     setLocation: payload => request('/me/location', { method:'PUT', body:JSON.stringify(payload) }),
