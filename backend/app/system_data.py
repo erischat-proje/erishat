@@ -32,6 +32,7 @@ class LidyaGemLedger(Base):
     balance_after: Mapped[int] = mapped_column(BigInteger, nullable=False)
     operation: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     reference_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True, index=True)
     details: Mapped[str] = mapped_column(Text, default="", server_default="", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
