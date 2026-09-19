@@ -398,3 +398,8 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Blackjack split elleri artık oyuncu ekranında aktif el + toplam + sonuç bilgisiyle görselleştiriliyor.
 - [x] Blackjack action endpoint hataları UI'da sessizce yutulmak yerine kullanıcıya gösteriliyor.
 - [ ] Fresh Quality/browser E2E sonucu hâlâ bekleniyor.
+
+2026-09-19 — DUYURU UI ENTEGRASYONU
+- [x] Duyuru demo ekranı gerçek GET/POST/PATCH/DELETE `/rooms/{room_id}/announcements` endpointlerine bağlandı.
+- [x] Listeleme, seçme, düzenleme, sabitleme, aç/kapat ve silme aksiyonları UI üzerinden gerçek API'ye gönderiliyor.
+- [ ] Gerçek yetkili kullanıcı browser E2E ve fresh Quality PASS hâlâ bekleniyor.
