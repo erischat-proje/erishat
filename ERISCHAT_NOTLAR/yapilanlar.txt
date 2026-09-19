@@ -418,3 +418,8 @@ Room control checkpoint
 - [x] Oda WebSocket'i authenticated RTC signaling mesajlarını hedef kullanıcıya taşıyor.
 - [x] RTC bağlantısı oda üyeliği/ban ve aktif session kontrolleri olan mevcut WebSocket kanalına bağlandı.
 - [ ] Gerçek WebRTC media transportu ve 2-browser E2E henüz doğrulanmadı.
+
+2026-09-19 — WEBRTC TARAYICI YÜZEYİ
+- [x] `demo-extras-live.js` gerçek mikrofon izni, RTCPeerConnection ve room WebSocket signaling ile bağlandı.
+- [x] Platform katmanı authenticated token/realtime URL yardımcılarını dışarı açıyor.
+- [ ] İki ayrı gerçek tarayıcıda ses E2E henüz çalıştırılıp doğrulanmadı; STUN/TURN ve mobil de açık.
