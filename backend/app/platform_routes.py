@@ -234,6 +234,15 @@ def register_platform_auth(current_user_dependency):
             "reference_id": reference_id,
         }
 
+    @router.get("/rooms/{room_id}/rtc-config")
+    def room_rtc_config(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room=db.get(Room,room_id)
+        if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
+        member=db.scalar(select(RoomMember.id).where(RoomMember.room_id==room_id,RoomMember.user_id==user.id))
+        ban=db.scalar(select(RoomBan.id).where(RoomBan.room_id==room_id,RoomBan.user_id==user.id))
+        if not member or ban: raise HTTPException(status_code=403,detail="Odaya erişiminiz yok")
+        return {"ice_servers":[{"urls":["stun:stun.l.google.com:19302"]}],"ice_transport_policy":"all"}
+
     @router.get("/rooms/{room_id}/seats")
     def room_seats(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = db.get(Room, room_id)
