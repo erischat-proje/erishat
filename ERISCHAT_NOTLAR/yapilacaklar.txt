@@ -724,3 +724,5 @@ GÜVENLİK/KAPSAM NOTU
 - [x] `music_playback` audit detayında çakışan `action` anahtarı `playback_action` olarak düzeltildi.
 - [x] Commit: `ad001f8829c8e557d7e84d3decb45237d20d7a49`.
 - [ ] Yeni Fresh Quality sonucu doğrulanacak.
+
+[2026-09-19 devam 16] ROOM MODERATOR LIST CONTRACT
