@@ -317,7 +317,7 @@ Room control checkpoint
 - [ ] Admin SA/UA/DA tam browser E2E + enforcement.
 - [ ] Gerçek WebRTC iki tarayıcı ses E2E + STUN/TURN.
 - [ ] Music gerçek playback/queue/senkron backend + UI.
-- [ ] Announcement gerçek CRUD/pin/moderasyon backend + UI.
+- [x] Announcement CRUD/pin/moderasyon backend tamamlandı.\n- [ ] Announcement browser UI/E2E ve yeni Quality PASS.
 - [ ] Notification/follow/block/report/privacy tüm uçtan uca zincirleri.
 - [ ] VIP/Lidya atomicity, concurrency, idempotency ve ödül/uygulama zinciri.
 - [ ] Family tüm kalan UI/izin/edge-case zincirleri.
