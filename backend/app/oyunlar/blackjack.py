@@ -22,6 +22,13 @@ def start(data):
     data.update({"result":result,"player_hand":player,"dealer_hand":dealer,"player_total":pt,"dealer_total":dt,"natural_blackjack":natural,"dealer_natural":dealer_natural,"rules":"free-play multi-step blackjack; hit/stand; standard ace scoring","animation":{"type":"blackjack_deal","steps":4,"reveal":"dealer_second_card_last"},"state":{"phase":"finished" if result!="pending" else "player","deck":deck,"player_hand":player,"dealer_hand":dealer,"player_total":pt,"dealer_total":dt if result!="pending" else hand_total(dealer[:1]),"result":result,"natural_blackjack":natural,"dealer_natural":dealer_natural}})
     return result,data
 
+def can_double(state):
+    return state.get("phase") == "player" and len(state.get("player_hand") or []) == 2 and bool(state.get("deck"))
+
+def can_split(state):
+    hand = state.get("player_hand") or []
+    return state.get("phase") == "player" and len(hand) == 2 and hand[0][:-1] == hand[1][:-1]
+
 def action(state, action):
     deck=list(state.get("deck") or []); player=list(state.get("player_hand") or []); dealer=list(state.get("dealer_hand") or [])
     if state.get("phase")!="player": raise ValueError("Oyuncu aksiyonu beklenmiyor")
