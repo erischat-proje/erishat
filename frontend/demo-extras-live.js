@@ -34,8 +34,9 @@
   async function roomChatDemo(){
     let roomId='',socket=null,me='';
     try{
+      const preferred=String(window.ERIS_DEMO_ROOM_ID||'').trim();
       const rooms=await api('/rooms'); const arr=Array.isArray(rooms)?rooms:(rooms?.rooms||[]);
-      roomId=arr[0]?.id||arr[0]?.room_id||''; const md=await api('/me'); me=md?.id||'';
+      roomId=preferred || arr[0]?.id || arr[0]?.room_id || ''; const md=await api('/me'); me=md?.id||'';
     }catch(e){}
     const m=modal('💬 Oda sohbeti + gerçek zamanlı',`<div style="display:flex;gap:7px;margin-bottom:8px"><span style="padding:8px 10px;border-radius:10px;background:#8a5cff18">${esc(roomId?'Oda bağlı':'Oda bulunamadı')}</span><span id="chatState" style="padding:8px 10px;border-radius:10px;background:#ffffff08">Bağlanıyor…</span></div><div id="chatList" style="height:300px;overflow:auto;background:#08070c;border:1px solid #ffffff12;border-radius:12px;padding:8px"></div><div style="display:flex;gap:6px;margin-top:8px"><input id="chatInput" maxlength="500" placeholder="Mesaj yaz…" style="flex:1;padding:10px;background:#ffffff08;color:#fff;border:1px solid #ffffff14;border-radius:9px"><button id="chatSend" style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 12px;font-weight:800">Gönder</button></div>`);
     const list=m.querySelector('#chatList'),state=m.querySelector('#chatState'),input=m.querySelector('#chatInput');
