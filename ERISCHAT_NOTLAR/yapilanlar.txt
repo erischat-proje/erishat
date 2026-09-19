@@ -757,3 +757,10 @@ Room control checkpoint
 - Test, ürün arayüzüne ait gerçek bir konuşma adı varsaymak yerine mevcut DM API yüzeyini deterministik olarak açacak şekilde düzeltildi.
 - Commit: 466cc55e423c372f2996d2acd47a2b2307f17ea6 — fix: make frontend browser smoke deterministic.
 - Yeni Quality sonucu henüz doğrulanmadı; PASS iddiası yapılmıyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE HATA KAYNAĞI İZLEME]
+- Quality #1387 / run 35465015031: static syntax, Customer demo surface integrity ve Frontend surface integrity geçti; Frontend browser smoke browser error nedeniyle başarısız oldu.
+- Kök hata: browser runtime `Invalid regular expression flags`; mevcut smoke testi bu hatanın kaynak dosya/satır bilgisini yeterince göstermiyordu.
+- Commit aebc312f85f91ecfac2fec19bcaed79d5aa0919d ile smoke'a window error source/line/column yakalama eklendi; sonraki Quality koşusu gerçek kaynak konumunu gösterecek.
+- Yeni Quality sonucu bekleniyor; PASS ilan edilmiyor.
