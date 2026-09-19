@@ -1048,3 +1048,9 @@ GÜVENLİK/KAPSAM NOTU
 - [x] #1165 Cosmetics browser render hatası incelendi: 40 assert'i standart + VIP çerçeveleri birlikte sayıp 52 buluyordu.
 - [x] Kök neden test kapsamı hatası; standart çerçeve assert'i artık yalnızca `standartcerceve/` altında tam 40 dosyayı kontrol ediyor.
 - [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
+
+
+[2026-09-19 devam — Quality #1169 sonrası]
+- [x] #1169 Cosmetics browser render kapsam hatası düzeltildi: frame keşfi artık `standartcerceve/` ve `vipcerceve/` klasörlerine göre yapılıyor.
+- [x] Standard frame klasörü repo ağacında 40 asset olarak doğrulandı.
+- [ ] Yeni Quality sonucu bekleniyor; PASS varsayılmayacak.
