@@ -595,3 +595,16 @@ Room control checkpoint
 - [x] Oda ekranındaki yüzen oyun/demo butonları kaldırıldı; ana arayüzde rahatsız edici sabit popup kalabalığı azaltıldı.
 - [x] Commitler: 77fc687a830ce619c6220cdf4329c3c874141378, 6c5dd4e10dcb3f906f05167ad4f1f77445f2195c.
 - [ ] Pages deploy + son görsel smoke kontrolü.
+
+
+[2026-09-19 — DEMO TAM ARAYÜZ / MAĞAZA / SİSTEM HUB DÜZELTME TURU]
+- [x] Sağ alttaki yüzen sistem butonu kaldırılmış halde bırakıldı; sistem merkezi artık ana arayüzden açılacak şekilde düzenlendi.
+- [x] feature-hub-live.js ana HTML'e geri bağlandı ancak yüzen tetikleyici oluşturmayacak şekilde kullanılıyor; ana “Tüm sistemler” kartı açılış noktası.
+- [x] room-actions.js ana HTML'e bağlandı; Oda Aç akışının gerekli JS katmanı artık yükleniyor.
+- [x] room-live.js içindeki eski demo/game hook çağrıları kaldırıldı; oda yükleme doğrudan loadRooms() ile başlıyor.
+- [x] shop-live.js demo sanal cüzdan ile katalog kozmetiklerini test edilebilir hale getirildi; backend satın alma başarısızsa yalnızca demo sanal sahiplik fallback'i kullanılıyor.
+- [x] VIP kozmetiklerin firma demosunda önizleme/testi için demo görünümünde VIP 1–12 kilitleri açıldı; gerçek backend VIP seviyesi değiştirilmedi.
+- [x] Gerçek backend satın alma/apply çalışıyorsa önce o kullanılıyor; fallback açıkça demo sanal cüzdan/sahiplik mantığıdır.
+- Commitler: f1ecf7570d208dfaccc1cbdb514210ab81598723, 90de00850b35bf3be2327a356f364fd8545cd313.
+- [ ] Yeni Pages deploy tamamlandıktan sonra canlı URL görsel/etkileşim kontrolü.
+- [ ] Gerçek mobil TURN/audio üretim testi ve 139 kozmetik manuel görsel/alpha incelemesi.
