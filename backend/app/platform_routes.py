@@ -22,7 +22,7 @@ from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
-from .oyunlar.blackjack import available_actions
+from .oyunlar.blackjack import available_actions, display_state
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -512,7 +512,7 @@ def register_platform_auth(current_user_dependency):
             row.result_key = result
             row.ends_at = datetime.now(timezone.utc)
         db.commit()
-        return {"round_id": row.id, "status": row.status, "result": result, "state": state, "available_actions": available_actions(state)}
+        return {"round_id": row.id, "status": row.status, "result": result, "state": display_state(state), "available_actions": available_actions(state)}
 
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
