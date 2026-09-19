@@ -485,3 +485,11 @@ GÜVENLİK/KAPSAM NOTU
 - [x] Aile sahibi yanlışlıkla ayrılıp aileyi sahipsiz bırakamasın diye owner ayrılışı engellendi; önce sahiplik devri gerekiyor.
 - [x] Aile bağışında aile satırı row-lock ile korunarak eşzamanlı bakiye güncellemesi güçlendirildi.
 - [ ] Aile davet kabul/ret, davet süresi ve sahiplik devri E2E hâlâ açık.
+
+2026-09-19 — FAMILY FLOW EXTENSION
+- [x] Kimliği doğrulanmış kullanıcı için /families canlı liste endpoint'i.
+- [x] Aile demo ekranı canlı üye/bağış/sohbet işlemlerine bağlandı.
+- [x] Üye olmayan kullanıcı için aile oluşturma akışı korundu.
+- [x] Owner'ın yanlışlıkla aileden ayrılmasını engelleyen leave endpoint'i eklendi.
+- [x] Normal üye için aileden ayrılma demo aksiyonu eklendi.
+- [ ] Owner transferi ve gerçek davet kabul/reddet yaşam döngüsü ayrıca doğrulanacak.
