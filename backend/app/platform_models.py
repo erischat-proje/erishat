@@ -92,7 +92,9 @@ class RoomAnnouncement(Base):
     __tablename__ = "room_announcements"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), index=True, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
