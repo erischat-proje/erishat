@@ -76,6 +76,16 @@ def register_family_auth(current_user_dependency):
         rows = list(db.scalars(select(Family).join(FamilyMember, FamilyMember.family_id == Family.id).where(FamilyMember.user_id == user.id).order_by(Family.created_at.desc())))
         return [family_payload(db, row) for row in rows]
 
+    @router.post("/families/{family_id}/leave")
+    def leave_family(family_id: str, db: Session = Depends(get_db), user: User = auth()):
+        family = get_family(db, family_id); member = membership(db, family_id, user.id)
+        if family.owner_id == user.id:
+            raise HTTPException(status_code=400, detail="Aile sahibi aileden ayrılamaz; önce sahiplik devri gerekir")
+        db.delete(member)
+        chat_member = db.scalar(select(ConversationMember).where(ConversationMember.conversation_id == family.chat_conversation_id, ConversationMember.user_id == user.id))
+        if chat_member: db.delete(chat_member)
+        db.commit(); return {"family_id": family_id, "left": True}
+
     @router.get("/families/{family_id}")
     def get_family_details(family_id: str, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id); return family_payload(db, family)
