@@ -115,3 +115,5 @@ NOT
 - `77d49a4f7de3bdcb6d7b505ff248018feaadcfd6`: Oda koltukları/gerçek ses demo yükleme fonksiyonu async olarak düzeltildi; koltuk ve RTC servis hataları artık sessizce yutulmuyor, durum paneline aktarılıyor.
 
 - `cb3fb39ee3a98ecdd2d8d141aee3bb76df3105f4`: Aile üye listesi artık backend hatasını gerçek 'liste boş' durumundan ayırıyor; yenileme de hata durumunu görünür tutuyor.
+
+- `6a2fac8992675b04adf827acdcaf394360b51865`: Keşif sonuç kartlarına mevcut kimlik alanları varsa doğrudan `Sohbet` veya `Odayı aç` aksiyonu eklendi; sonuçlar artık yalnızca görüntülenmekle kalmıyor.
