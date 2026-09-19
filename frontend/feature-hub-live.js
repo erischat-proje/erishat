@@ -77,7 +77,31 @@
     }));
   }
   async function profile(panel){try{const me=await api('/me');panel.innerHTML=`<div class="eh-card"><b>${esc(me.nickname||me.display_name||me.id)}</b><small>Lidya: ${me.lidya??0} • Cinsiyet: ${esc(me.gender||'-')}</small></div><div class="eh-grid" style="margin-top:8px"><div class="eh-card"><b>Avatar</b><small>${esc(me.avatar_asset||'varsayılan')}</small></div><div class="eh-card"><b>Çerçeve</b><small>${esc(me.frame_asset||'varsayılan')}</small></div></div>`;const id=me.id;const [fans,gifts]=await Promise.all([api(`/users/${encodeURIComponent(id)}/fans`),api(`/users/${encodeURIComponent(id)}/profile-gifts`)]);panel.insertAdjacentHTML('beforeend',`<div class="eh-kicker">Sosyal profil</div><div class="eh-grid"><div class="eh-card"><b>Hayran</b><small>${Array.isArray(fans)?fans.length:(fans.total??0)}</small></div><div class="eh-card"><b>Profil hediyesi</b><small>${Array.isArray(gifts)?gifts.length:(gifts.total??0)}</small></div></div>`);}catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message)}</div>`;}}
-  async function privacy(panel){try{const p=await api('/me/privacy');panel.innerHTML='<div class="eh-note">Profilde VIP, rozet, neon, giriş ve konum görünürlüğünü yönet.</div>';Object.entries(p).forEach(([key,val])=>{const row=document.createElement('label');row.className='eh-row';row.innerHTML=`<span>${esc(key)}</span><input type="checkbox" ${val?'checked':''}></label>`;row.querySelector('input').onchange=async e=>{try{await api('/me/privacy',{method:'PATCH',body:JSON.stringify({[key]:e.target.checked})});}catch(err){e.target.checked=!e.target.checked;(window.toast?.(err.message), null)}};panel.append(row);});}catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message)}</div>`;}}
+  async function privacy(panel){
+    try{
+      const p=await api('/me/privacy');
+      const entries=Object.entries(p||{});
+      panel.innerHTML='<div class="eh-note">Profilde VIP, rozet, neon, giriş ve konum görünürlüğünü yönet.</div><div id="privacyRows"></div><div id="privacyStatus" class="eh-note" style="margin-top:8px">Değişiklikler kaydedildiğinde burada gösterilir.</div>';
+      const rows=panel.querySelector('#privacyRows'),status=panel.querySelector('#privacyStatus');
+      if(!entries.length){rows.innerHTML='<div class="eh-card"><b>Gizlilik ayarı bulunamadı</b><small>Backend henüz bu hesap için görünürlük alanı döndürmedi.</small></div>';return;}
+      entries.forEach(([key,val])=>{
+        const row=document.createElement('label');row.className='eh-row';
+        row.innerHTML=`<span>${esc(key)}</span><input type="checkbox" ${val?'checked':''}></label>`;
+        const input=row.querySelector('input');
+        input.onchange=async e=>{
+          input.disabled=true;
+          try{
+            await api('/me/privacy',{method:'PATCH',body:JSON.stringify({[key]:e.target.checked})});
+            status.textContent='✓ '+key+' gizlilik ayarı güncellendi.';
+          }catch(err){
+            e.target.checked=!e.target.checked;
+            status.textContent='Güncelleme başarısız: '+(err.message||'bilinmeyen hata');
+          }finally{input.disabled=false;}
+        };
+        rows.append(row);
+      });
+    }catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message||'Gizlilik ayarları alınamadı.')}</div>`;}
+  }
   function tools(panel){
     const systems=[
       ['🎙️ Ses / Koltuk','Oda koltukları ve ses yüzeyi','seats'],
