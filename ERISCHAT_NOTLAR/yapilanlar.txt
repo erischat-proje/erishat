@@ -397,3 +397,9 @@ Room control checkpoint
 - [x] `announcementDemo()` gerçek duyuru CRUD API'sine bağlandı; listeleme ve yönetim aksiyonları artık backend üzerinden çalışıyor.
 - [x] Duyuru seçimi, düzenleme, sabitleme, silme ve enabled güncelleme akışları eklendi.
 - [ ] Browser E2E / fresh Quality PASS henüz doğrulanmadı.
+
+2026-09-19 — ODA SOHBETİ BACKEND
+- [x] Authenticated `/rooms/{room_id}/chat` GET/POST akışı eklendi.
+- [x] Üyelik + oda sohbeti açık/kapalı + oda banı enforcement uygulandı.
+- [x] Mesaj kalıcılığı ve oda audit kaydı bağlandı.
+- [ ] Realtime, chat mute/moderasyon UI ve browser E2E sonraki eksikler.
