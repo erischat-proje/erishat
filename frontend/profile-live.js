@@ -6,8 +6,8 @@
     if (!user) return;
     const name = $('.profile .name h2');
     const stats = document.querySelectorAll('.profile .stats .stat b');
-    if (stats[0] && user.followers_count != null) stats[0].textContent = Number(user.followers_count).toLocaleString('tr-TR');
-    if (stats[1] && user.following_count != null) stats[1].textContent = Number(user.following_count).toLocaleString('tr-TR');
+    if (stats[0]) stats[0].textContent = user.followers_count != null ? Number(user.followers_count).toLocaleString('tr-TR') : '—';
+    if (stats[1]) stats[1].textContent = user.following_count != null ? Number(user.following_count).toLocaleString('tr-TR') : '—';
     if (name) name.textContent = user.nickname || 'Anonim';
     const face = $('.profile .face');
     if (face) {
