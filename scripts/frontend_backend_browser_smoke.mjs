@@ -351,7 +351,7 @@ async function main(){
   },API);
   if(!roleUser?.user?.id||!roleUser?.access_token) throw new Error('family role/remove user registration failed');
   const roleInvite=await page.evaluate(async ({api,token,familyId,userId})=>{
-    const h={Authorization:'Bearer '+localStorage.getItem('erischat_access_token'),'Content-Type':'application/json'};
+    const h={Authorization:'Bearer '+token,'Content-Type':'application/json'};
     const r=await fetch(api+'/families/'+encodeURIComponent(familyId)+'/members',{method:'POST',headers:h,body:JSON.stringify({user_id:userId})});
     return {status:r.status,data:await r.json()};
   },{api:API,token:member.access_token,familyId:family.id,userId:roleUser.user.id});
