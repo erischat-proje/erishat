@@ -123,3 +123,12 @@ Tarih: 2026-09-18
 - Commitler: f1ecf7570d208dfaccc1cbdb514210ab81598723, 90de00850b35bf3be2327a356f364fd8545cd313.
 - [ ] Yeni Pages deploy tamamlandıktan sonra canlı URL görsel/etkileşim kontrolü.
 - [ ] Gerçek mobil TURN/audio üretim testi ve 139 kozmetik manuel görsel/alpha incelemesi.
+
+
+[2026-09-19 — SON CANLI YÜZEYLER]
+- [x] Ana navigasyonun canlı sistem çağrıları.
+- [x] Oda seçimi ve join bağlantısı.
+- [x] Oda içi Müzik paneli tetikleyicisi.
+- [x] Arama ekranının gerçek endpoint renderer'ı.
+- [ ] GitHub Pages canlı HTTP/görsel doğrulaması.
+- [ ] Firma demosu için son uçtan uca browser smoke ve kalan statik yüzeylerin taranması.
