@@ -727,3 +727,11 @@ Room control checkpoint
 - [x] Kök neden stale test assertion olarak düzeltildi; profil hediye geçmişi assertion'ı canonical `Zeytin Dalı` anahtarına hizalandı.
 - [x] Fix commit: `a42eb9e7aae5d721dc5fb589d81d037cd8581eef`.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam 21] QUALITY #979 GIFT EVENT HISTORY SMOKE ROOT FIX
+- [x] Quality #979 ilk gerçek failure: Frontend backend browser smoke içinde `gift event history missing`.
+- [x] API canonical gift event `gift_key: Zeytin Dalı` döndürürken smoke `gift_key === 'rose'` arıyordu; önceki fix yalnızca profil geçmişi assertion'ını hizalamıştı.
+- [x] Kök neden stale gift-event assertion olarak düzeltildi; hem room gift-event hem profile gift UI read-back assertion'ları canonical `Zeytin Dalı` anahtarına hizalandı.
+- [x] Fix commit: `6fa6f4528c5dfa33bad98b5ff78f79c6009d7cd2`.
+- [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
