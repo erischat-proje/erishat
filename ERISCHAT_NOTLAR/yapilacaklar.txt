@@ -54,7 +54,9 @@ KOZMETİK
 - [x] Aktif katalog 139 asset.
 - [x] Asset URL/path smoke kontrolü gerçek runner'da geçti.
 - [x] Demo+ görsel katalog, arama, filtre ve avatar/çerçeve önizleme yüzeyi eklendi.
-- [ ] Tarayıcıda gerçek asset render/şeffaflık doğrulaması.
+- [x] Tarayıcıda 139 asset gerçek render/decode doğrulaması Quality #1069 ile tekrar geçti.
+- [x] Frame alpha audit Quality #1069 ile runner içinde çalıştı; alpha durumu raporlanıyor.
+- [ ] Frame'lerin görsel tasarım standardı (opak/şeffaf uygunluğu) hâlâ manuel/görsel inceleme gerektiriyor.
 
 FRONTEND
 - [x] Auth/session canlı scriptleri mevcut.
@@ -954,3 +956,10 @@ GÜVENLİK/KAPSAM NOTU
 - [ ] VIP lifecycle, fan/admin, bildirim ve tam room E2E açık kalan ürün zincirleri.
 - [ ] Gerçek music source / uzun playback / queue depth açık.
 - [ ] GitHub Pages environment policy → deploy SUCCESS → canlı HTTP/index → Pages→Railway zinciri açık; Railway deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
+
+
+2026-09-19 — QUALITY #1069 CHECKPOINT
+- [x] Quality run 35449053830 / job 105912914246 SUCCESS.
+- [x] 30 ana kalite adımı ve cleanup tamamlandı; frontend/browser, room, family, cosmetics, backend browser ve live smoke zincirleri SUCCESS.
+- [x] Cosmetics frame alpha audit çalıştı ve PASS verdi.
+- [ ] Alpha audit tanısal olduğu için opak frame'lerin görsel tasarım standardı ayrıca incelenecek.
