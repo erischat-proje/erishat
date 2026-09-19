@@ -36,14 +36,6 @@ class GiftSend(BaseModel):
     recipient_id: str = Field(min_length=1, max_length=64); gift_key: str = Field(min_length=1, max_length=64); quantity: int = Field(ge=1, le=99)
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128); source_url: str = Field(min_length=1, max_length=2000)
-class MusicPlayback(BaseModel):
-    action: str = Field(pattern=r"^(play|pause|stop|seek)$")
-    position_seconds: int = Field(default=0, ge=0, le=86400)
-class RTCSignal(BaseModel):
-    target_id: str = Field(min_length=1, max_length=64)
-    type: str = Field(pattern=r"^(offer|answer|ice-candidate|leave)$")
-    payload: dict = Field(default_factory=dict)
-
 _RTC_SIGNAL_TTL = 60.0
 _RTC_SIGNAL_LIMIT = 100
 _rtc_signals: dict[str, deque] = defaultdict(deque)
@@ -364,25 +356,4 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"source_url":m.source_url,"paid_until":m.paid_until,"is_playing":m.is_playing,"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
-    @router.post("/{room_id}/music/{music_id}/playback")
-    def music_playback(room_id: str, music_id: int, payload: MusicPlayback, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
-        if not music: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
-        if music.user_id != user.id and room.owner_id != user.id:
-            raise HTTPException(status_code=403, detail="Bu müziği yönetemezsiniz")
-        now = datetime.now(timezone.utc)
-        if payload.action == "seek":
-            music.position_seconds = payload.position_seconds
-            if music.is_playing: music.started_at = now
-        elif payload.action == "play":
-            music.is_playing = True; music.started_at = now
-        elif payload.action == "pause":
-            if music.is_playing and music.started_at:
-                music.position_seconds += max(0, int((now - music.started_at).total_seconds()))
-            music.is_playing = False; music.started_at = None
-        else:
-            music.is_playing = False; music.position_seconds = 0; music.started_at = None
-        db.commit(); db.refresh(music)
-        return {"id":music.id,"user_id":music.user_id,"slot":music.slot,"title":music.title,"source_url":music.source_url,"paid_until":music.paid_until,"is_playing":music.is_playing,"position_seconds":music.position_seconds,"started_at":music.started_at}
+
