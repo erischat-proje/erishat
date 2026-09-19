@@ -155,10 +155,7 @@
     document.getElementById('demoRoomModal').classList.add('show');
   };
   window.sendDemoRoomMessage=()=>{const i=document.getElementById('demoRoomInput'),m=i.value.trim();if(!m)return;const b=document.createElement('div');b.className='bubble me';b.textContent=m;document.getElementById('demoRoomChat').appendChild(b);i.value='';};
-  window.openGameDemo=()=>{
-    const old=document.getElementById('gameDemoModal');if(old)old.remove();
-    const m=document.createElement('div');m.id='gameDemoModal';m.className='modal show';m.innerHTML='<div class="sheet"><div class="sheetHead"><div><b>🎮 Oyun Merkezi</b><small class="muted" style="display:block;margin-top:4px">Oda ve kişisel oyunlar</small></div><button class="close">×</button></div><div class="quick"><button data-game="dice">🎲<strong>Zar</strong><span>Hemen oyna</span></button><button data-game="rps">✊<strong>Taş Kağıt Makas</strong><span>Hemen oyna</span></button><button data-game="quiz">🧠<strong>Hızlı Quiz</strong><span>Hemen oyna</span></button><button data-game="memory">🧩<strong>Hafıza</strong><span>Hemen oyna</span></button></div><div id="gameOut" class="card" style="margin-top:10px;padding:14px;text-align:center">Bir oyun seç.</div></div>';document.body.appendChild(m);m.querySelector('.close').onclick=()=>m.remove();m.querySelectorAll('[data-game]').forEach(b=>b.onclick=()=>{const g=b.dataset.game,o=m.querySelector('#gameOut');if(g==='dice')o.innerHTML='<h3>🎲 '+(1+Math.floor(Math.random()*6))+'</h3><button class="primary" style="height:38px" onclick="openGameDemo()">Tekrar</button>';else if(g==='rps'){const x=['✊','✋','✌️'][Math.floor(Math.random()*3)];o.innerHTML='<h3>'+x+'</h3><small>Rakip seçimini yaptı.</small>'}else if(g==='quiz'){o.innerHTML='<b>🧠 Mini soru</b><p>Türkiye’nin başkenti?</p><button class="primary" onclick="this.parentElement.innerHTML=\'✓ Ankara\'">Ankara</button>'}else{o.innerHTML='<h3>🧩 Hafıza</h3><p>2 kartı eşleştir: ⭐ + ⭐</p><button class="primary" onclick="this.parentElement.innerHTML=\'✓ Eşleşti\'">Eşleştir</button>'}}); 
-  };
+  window.openGameDemo=()=>{ if(window.ErisChatGames?.open){ window.ErisChatGames.open('main'); return; } toast('Oyun merkezi hazırlanıyor…'); };
   document.addEventListener('DOMContentLoaded',()=>setTimeout(renderDemoRooms,350));
 })();
 </script><script>
