@@ -159,6 +159,26 @@ def purchase_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: S
     return {"ok": True, "asset_key": key, "spent": price}
 
 
+@router.post("/me/vip/claims/wallpaper")
+def claim_vip_wallpaper(user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    current = vip_level(db, user.id)
+    if current < 10:
+        raise HTTPException(status_code=403, detail="VIP 10 seviyesi gerekli")
+    vip = db.get(VipStatus, user.id)
+    if not vip:
+        vip = VipStatus(user_id=user.id, level=current, total_spent=0)
+        db.add(vip)
+        db.flush()
+    if vip.wallpaper_claimed:
+        return {"ok": True, "claimed": True, "asset_key": "vip_wallpaper_10", "vip_level": current, "already_claimed": True}
+    owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key='vip_wallpaper_10'"), {"uid": user.id}).first()
+    if not owned:
+        db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,'wallpaper','vip_wallpaper_10')"), {"uid": user.id})
+    vip.wallpaper_claimed = True
+    db.commit()
+    return {"ok": True, "claimed": True, "asset_key": "vip_wallpaper_10", "vip_level": current, "already_claimed": False}
+
+
 @router.post("/me/wallpaper/apply")
 def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     key = str(payload.get("asset_key") or "").strip()
