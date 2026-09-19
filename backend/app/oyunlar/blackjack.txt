@@ -21,3 +21,4 @@ GÜVENLİK
 - Free-play.
 - Lidya/Lidya Gem stake veya payout yok.
 - Oyun sonucu kullanıcı bakiyesini değiştirmez.
+- available_actions() artık mevcut state'e göre Hit/Stand/Double/Split seçeneklerini hesaplıyor; API bunu UI'ya aktarıyor ve uygun olmayan butonlar devre dışı bırakılıyor.
