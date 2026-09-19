@@ -544,3 +544,9 @@ Room control checkpoint
 - [x] İlk sonraki hata `scripts/demo_surface_integrity.py` içinde güncel seats UI metinleriyle eski integrity marker'larının uyuşmaması olarak tespit edildi.
 - [x] Test marker'ları mevcut canonical seats UI metinlerine (`12 koltuk`, `🎤 Mikrofon açık`) hizalandı.
 - [ ] Yeni Quality sonucu henüz doğrulanmadı; PASS varsayılmıyor.
+
+
+[2026-09-19] BROWSER SMOKE SIRA HATASI DÜZELTMESİ
+- [x] `frontend_backend_browser_smoke.mjs` içinde `roomInvite` değişkeni tanımlanmadan önce kontrol ediliyordu; bu TDZ/runtime hatası oluşturabilecek yanlış sıralama düzeltildi.
+- [x] `roomInvite` kontrolü artık ilgili `const roomInvite=...` akışının hemen sonrasında yapılıyor.
+- [ ] `e060332652bba9ee0715fb4a228f4e0a4064bfca` sonrası Fresh Quality/CI sonucu henüz doğrulanmadı.
