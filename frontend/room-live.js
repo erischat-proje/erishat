@@ -46,9 +46,9 @@
       .eris-seat{position:absolute;transform:translate(-50%,-50%);width:82px;height:82px;border-radius:50%;border:1px solid #ffffff2c;background:rgba(22,16,34,.30);box-shadow:0 12px 32px #0008,inset 0 0 20px #ffffff09;color:#fff;display:grid;place-items:center;text-align:center;padding:5px;z-index:3;backdrop-filter:blur(7px);transition:transform .18s,border-color .18s,box-shadow .18s}.eris-seat:hover{transform:translate(-50%,-50%) scale(1.05);border-color:#ffffff55}.eris-seat.occupied{background:rgba(25,18,39,.34)}
       .eris-seat.empty{border-style:dashed;background:radial-gradient(circle,#8a5cff22,#0d0a12 70%);color:#c9bfd2}.eris-seat.me{border-color:#ff5bad;box-shadow:0 0 0 4px #ff4fa31a,0 12px 35px #0008}.eris-seat.locked{opacity:.42;cursor:not-allowed}
       [data-seat-count="12"] .eris-seat,[data-seat-count="16"] .eris-seat{width:72px;height:72px}
-      [data-seat-count="16"] .eris-seat{width:64px;height:64px}
+      [data-seat-count="16"] .eris-seat{width:58px;height:58px}
       [data-seat-count="12"] .eris-seat .seat-ava{width:30px;height:30px;font-size:14px}
-      [data-seat-count="16"] .eris-seat .seat-ava{width:26px;height:26px;font-size:12px}
+      [data-seat-count="16"] .eris-seat .seat-ava{width:24px;height:24px;font-size:11px}
       .eris-seat .seat-ava{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:16px;margin:auto;overflow:hidden;border:1px solid #ffffff28}.eris-seat .seat-ava.avatar{background-size:cover;background-position:center}.eris-seat.empty .seat-ava{background:rgba(255,255,255,.055);color:#aaa0ad}
       .eris-seat b{display:block;font-size:9px;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eris-seat small{display:block;color:#a69cad;font-size:7px;margin-top:2px}
       .eris-room-chat{position:absolute;left:0;right:0;bottom:0;height:224px;background:linear-gradient(180deg,rgba(5,4,10,0) 0%,rgba(5,4,10,.52) 18%,rgba(5,4,10,.86) 100%);backdrop-filter:blur(9px);z-index:5;display:flex;flex-direction:column}.eris-room-chat:before{content:"";position:absolute;left:14px;right:14px;top:0;height:1px;background:linear-gradient(90deg,transparent,#ffffff18,transparent)}
@@ -72,7 +72,7 @@
   }
 
   function seatLayout(count,index){
-    const centerY=count<=8?46:48, radiusX=count<=8?36:39, radiusY=count<=8?34:37;
+    const centerY=count<=8?46:49, radiusX=count<=8?36:(count===12?41:44), radiusY=count<=8?34:(count===12?37:40);
     const angle=(-90+(360/count)*index)*Math.PI/180;
     return {left:(50+Math.cos(angle)*radiusX).toFixed(2)+'%',top:(centerY+Math.sin(angle)*radiusY).toFixed(2)+'%'};
   }
@@ -216,7 +216,7 @@
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const seatCount=Math.min(16,Math.max(8,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
       const liveRoomId=String(room.id||id);
-      if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); }
+      if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat};
       document.getElementById('erisLiveMeta').textContent='ID: '+String(room.public_id||id);
       document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+String(room.public_id||id);
       const levelButton=document.getElementById('erisRoomLevel');
