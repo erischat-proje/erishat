@@ -45,7 +45,23 @@
     if(!b){
       b=document.createElement('button');b.id='erisRoomMoreTop';b.className='room-v5-topbtn';b.textContent='⋯';b.title='Oda ayarları';top.appendChild(b);
     }
-    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisRoomCompleteV3?.openMenu?.('settings');};
+    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();openOwnerSettings(r);};
+  }
+
+  function openOwnerSettings(r){
+    const s=document.getElementById('erisRoomSurface'); if(!s)return;
+    let p=s.querySelector('#erisDirectRoomSettings');
+    if(!p){p=document.createElement('div');p.id='erisDirectRoomSettings';p.className='room-v5-panel show';p.innerHTML='<div class="v5-title">⚙️ Oda ayarları <button class="v5-btn" data-close>Kapat</button></div><div id="erisDirectRoomSettingsBody"></div>';s.appendChild(p);p.querySelector('[data-close]').onclick=()=>p.classList.remove('show');}
+    const body=p.querySelector('#erisDirectRoomSettingsBody'),owner=!!r.is_owner,staff=!!(r.is_owner||r.is_moderator);
+    body.innerHTML='<div class="v5-card"><b>'+ (owner?'👑 Oda sahibi':'🛡️ Moderatör') +'</b><div class="v5-note">Yetkin olan ayarlar burada görünür.</div></div>'+
+      (owner?'<div class="v5-card"><b>Oda adı</b><input id="erisDirectRoomName" class="v5-btn" style="width:100%;margin-top:7px;text-align:left" maxlength="16" value="'+String(r.name||'').replace(/"/g,'&quot;')+'"><button class="v5-btn primary" id="erisDirectRename" style="width:100%;margin-top:7px">Kaydet</button></div>':'')+
+      (staff?'<div class="v5-card"><div class="v5-grid"><button class="v5-btn" id="erisDirectLock">'+(r.locked?'🔓 Kilidi aç':'🔒 Odayı kilitle')+'</button><button class="v5-btn" id="erisDirectChat">'+(r.chat_enabled===false?'💬 Sohbeti aç':'💬 Sohbeti kapat')+'</button></div>'+
+      (owner?'<input id="erisDirectPass" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="4 haneli şifre"><button class="v5-btn" id="erisDirectPassSet" style="width:100%;margin-top:7px">🔐 Şifreyi kaydet</button>':'')+'</div>':'');
+    p.classList.add('show');
+    body.querySelector('#erisDirectRename')?.addEventListener('click',async()=>{try{const name=body.querySelector('#erisDirectRoomName').value.trim();await req('/v1/rooms/'+encodeURIComponent(r.id)+'/name',{method:'PATCH',body:JSON.stringify({name})});document.getElementById('erisLiveTitle').textContent=name;window.toast?.('Oda adı güncellendi ✓');}catch(e){window.toast?.(e.message)}}); 
+    body.querySelector('#erisDirectLock')?.addEventListener('click',async()=>{try{if(r.locked)await req('/v1/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'DELETE'});else await req('/v1/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'POST'});window.toast?.('Oda kilidi güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}}); 
+    body.querySelector('#erisDirectChat')?.addEventListener('click',async()=>{try{await req('/v1/rooms/'+encodeURIComponent(r.id)+'/chat',{method:'PATCH',body:JSON.stringify({enabled:r.chat_enabled===false})});window.toast?.('Sohbet ayarı güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}}); 
+    body.querySelector('#erisDirectPassSet')?.addEventListener('click',async()=>{try{const pass=body.querySelector('#erisDirectPass').value.trim();if(!/^\\d{4}$/.test(pass))throw new Error('4 haneli şifre gir.');await req('/v1/rooms/'+encodeURIComponent(r.id)+'/password',{method:'PUT',body:JSON.stringify({password:pass})});window.toast?.('Oda şifresi kaydedildi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}}); 
   }
 
   function addMusicPanel(r){
