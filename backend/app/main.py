@@ -463,7 +463,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         if not user or not user.is_active:
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
-        room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
+        room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
         internal_room_id = room.id if room else room_id
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
         banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
