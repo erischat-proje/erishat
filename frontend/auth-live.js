@@ -67,13 +67,7 @@
             window.ErisAuth.user = session.user;
             idBox.textContent = 'Kullanıcı ID: ' + session.user.public_id;
             emit('erischat:auth', { state:'ready', user:session.user, real:true });
-            setTimeout(() => {
-              if (!session.user.profile_completed) {
-                window.ErisOnboarding?.show?.(session.user);
-              } else if (!session.user.welcome_gift_claimed) {
-                window.ErisWelcome?.show?.(session.user);
-              }
-            }, 100);
+            continueAfterAuth(session.user);
             setTimeout(closeGate, 250);
             connectGeneralWs();
           } catch (e) {
@@ -135,11 +129,40 @@
 
   window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
+  function continueAfterAuth(user) {
+    window.ErisAuth = window.ErisAuth || {};
+    window.ErisAuth.user = user;
+    let attempts = 0;
+
+    const run = () => {
+      attempts++;
+      const current = window.ErisAuth?.user || user;
+      if (!current) return;
+
+      if (!current.profile_completed) {
+        if (window.ErisOnboarding?.show) {
+          window.ErisOnboarding.show(current);
+          return;
+        }
+      } else if (!current.welcome_gift_claimed) {
+        if (window.ErisWelcome?.show) {
+          window.ErisWelcome.show(current);
+          return;
+        }
+      }
+
+      if (attempts < 50) setTimeout(run, 100);
+    };
+
+    setTimeout(run, 0);
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       const user = await ensureSession();
       if (user) {
         emit('erischat:auth',{state:'ready',user,real:!!user.google_email});
+        continueAfterAuth(user);
         connectGeneralWs();
       } else {
         await googleRegister();
