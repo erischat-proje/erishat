@@ -381,7 +381,20 @@ def register_room_auth(current_user_dependency):
         record("room_id", "room_public_id_created", room_id=room.id, public_id=room.public_id, owner_id=user.id, owner_nickname=user.nickname)
         return room_view(db, room, user)
     @router.get("")
-    def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room, user) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
+    def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        # Keşfette aynı kullanıcının eski/test kaynaklı mükerrer sahiplik kayıtlarını tekrar göstermiyoruz.
+        # Başka kullanıcıların odaları normal şekilde görünür; moderatörlük sahiplik sayısına dahil değildir.
+        rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc())))
+        seen_owner: set[str] = set()
+        visible = []
+        for room in rooms:
+            owner_id = str(room.owner_id)
+            if owner_id == str(user.id):
+                if owner_id in seen_owner:
+                    continue
+                seen_owner.add(owner_id)
+            visible.append(room)
+        return [room_view(db, room, user) for room in visible]
     @router.get("/me/rooms")
     def list_my_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         # Eski test/veri kayıtlarında aynı kullanıcıya ait birden fazla sahiplik kalmış olabilir.
