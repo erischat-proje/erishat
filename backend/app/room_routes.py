@@ -366,6 +366,10 @@ def register_room_auth(current_user_dependency):
         name = payload.name.strip()
         if not name: raise HTTPException(status_code=400, detail="Oda adı boş olamaz")
         if len(name) > 16: raise HTTPException(status_code=422, detail="Oda adı en fazla 16 karakter olabilir")
+        # Her kullanıcı yalnızca tek bir odanın sahibi olabilir.
+        existing_owned_room = db.scalar(select(Room.id).where(Room.owner_id == user.id).limit(1))
+        if existing_owned_room:
+            raise HTTPException(status_code=409, detail="Zaten bir odanız var. Her kullanıcı yalnızca 1 oda oluşturabilir.")
         room = Room(id="room_" + uuid4().hex, public_id=generate_room_public_id(db), owner_id=user.id, name=name)
         db.add(room); db.flush()
         db.add(RoomIdRegistry(room_id=room.id, public_id=room.public_id))
