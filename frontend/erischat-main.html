@@ -115,7 +115,7 @@
  window.sendRealRoomMessage=()=>{const i=document.getElementById('realRoomMsg'),body=document.getElementById('realRoomChat'),msg=i?.value?.trim();if(!msg||!body)return;const b=document.createElement('div');b.className='bubble me';b.textContent=msg;body.appendChild(b);body.scrollTop=body.scrollHeight;i.value='';};
  window.openCreateRoom=()=>document.getElementById('createRoomModal')?.classList.add('show');
  window.closeCreateRoom=()=>document.getElementById('createRoomModal')?.classList.remove('show');
- window.createRoom=async()=>{const input=document.getElementById('newRoomName'),status=document.getElementById('createRoomStatus');const name=input?.value.trim();if(!name){status.textContent='Oda adı yaz.';return}if(name.length>16){status.textContent='Oda adı en fazla 16 karakter olabilir.';return}try{const r=await window.ErisRoom.create(name);status.textContent='Gerçek oda oluşturuldu ✓';input.value='';window.ErisChatRoomList?.load?.();setTimeout(closeCreateRoom,500);window.openRoom?.(r.id,r.name||name)}catch(e){status.textContent=(e?.message||'API yok')+' • test modu açılıyor…';const id='demo-room-created-'+Date.now();window.ErisDemoRoomConfig=window.ErisDemoRoomConfig||{};window.ErisDemoRoomConfig[id]={id,name,member_count:1,owner:'Sen',level:10,seat_count:16};localStorage.setItem('eris_demo_room_name_'+id,name);input.value='';setTimeout(()=>{closeCreateRoom();window.openRoom?.(id,name)},350)}};
+ window.createRoom=async()=>{const input=document.getElementById('newRoomName'),status=document.getElementById('createRoomStatus');const name=input?.value.trim();if(!name){status.textContent='Oda adı yaz.';return}if(name.length>16){status.textContent='Oda adı en fazla 16 karakter olabilir.';return}try{const r=await window.ErisRoom.create(name);status.textContent='Gerçek oda oluşturuldu ✓';input.value='';window.ErisChatRoomList?.load?.();window.dispatchEvent(new CustomEvent('erischat:room-created',{detail:{room:r}}));setTimeout(closeCreateRoom,500);window.openRoom?.(r.id,r.name||name)}catch(e){status.textContent=(e?.message||'API yok')+' • test modu açılıyor…';const id='demo-room-created-'+Date.now();window.ErisDemoRoomConfig=window.ErisDemoRoomConfig||{};window.ErisDemoRoomConfig[id]={id,name,member_count:1,owner:'Sen',level:10,seat_count:16};localStorage.setItem('eris_demo_room_name_'+id,name);input.value='';setTimeout(()=>{closeCreateRoom();window.openRoom?.(id,name)},350)}};
  document.addEventListener('DOMContentLoaded',()=>{paint();const h=document.querySelector('#home .hero');if(h&&!h.querySelector('.demoWallet'))h.insertAdjacentHTML('beforeend','<div class="demoWallet"><div><b>Demo cüzdanı</b><small>Demo Modu • yalnızca bu tarayıcıdaki test alışverişleri için</small></div><strong data-demo-balance>💎 500.000.000</strong></div>')});
 })();
 </script><script>
@@ -197,8 +197,8 @@
  window.gameResult=function(ok){const o=document.getElementById('gameScreen');o.innerHTML=ok?'<h2>✓ Doğru!</h2><p class="muted">Harika. Başka bir oyun seçebilirsin.</p>':'<h2>Tekrar dene</h2><p class="muted">Cevabın doğru değildi.</p>';};
 })();
 </script>
-<script src="./access-messages-hardening.js?v=hardening-3"></script>
-<script src="./profile-rooms-hardening.js?v=hardening-3"></script>
+<script src="./access-messages-hardening.js?v=hardening-4"></script>
+<script src="./profile-rooms-hardening.js?v=hardening-4"></script>
 <script src="./user-profile-navigation.js?v=hardening-3"></script>
-<script src="./room-hardening.js?v=hardening-4"></script>
+<script src="./room-hardening.js?v=hardening-5"></script>
 </body></html>
