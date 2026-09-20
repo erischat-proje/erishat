@@ -39,7 +39,13 @@
   function addOwnerSettingsButton(r){
     const surface=document.getElementById('erisRoomSurface'),top=surface?.querySelector('.eris-room-top');
     if(!top)return;
-    const can=!!(r?.is_owner||r?.is_moderator||r?.can_manage);
+    const can=!!(r?.is_owner||r?.is_moderator);
+    const legacyMore=surface.querySelector('#erisRoomMore');
+    if(legacyMore){
+      legacyMore.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();if(can)openOwnerSettings(r);};
+      legacyMore.style.display=can?'':'none';
+      legacyMore.setAttribute('aria-hidden',can?'false':'true');
+    }
     let b=top.querySelector('#erisRoomMoreTop');
     if(!can){b?.remove();return;}
     if(!b){
@@ -66,22 +72,21 @@
 
   function addMusicPanel(r){
     const surface=document.getElementById('erisRoomSurface'); if(!surface)return;
-    const open=surface.querySelector('#roomMusicOpen'); if(!open||open.dataset.bound==='1')return;
-    open.dataset.bound='1';
-    open.onclick=async e=>{
-      e.preventDefault();e.stopImmediatePropagation();
-      const id=r?.id||rid();
-      const title=prompt('Müzik adı:','Müzik');
-      if(title===null)return;
-      const source=prompt('Müzik URL:','');
-      if(source===null||!source.trim()){window.toast?.('Müzik URL gerekli.');return;}
-      try{
-        const result=await req('/v1/rooms/'+encodeURIComponent(id)+'/music',{method:'POST',body:JSON.stringify({title:title.trim()||'Müzik',source_url:source.trim()})});
-        window.toast?.('🎵 Müzik eklendi ✓');
-        window.ErisRoomCompleteV3?.openMenu?.('music');
-        return result;
-      }catch(err){window.toast?.(err.message||'Müzik eklenemedi.');}
-    };
+    const music=surface.querySelector('#erisRoomMusic');
+    if(music && music.dataset.bound!=='1'){
+      music.dataset.bound='1';
+      music.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisChatMusic?.open?.();};
+    }
+    const old=surface.querySelector('#roomMusicOpen');
+    if(old && old.dataset.bound!=='1'){
+      old.dataset.bound='1';
+      old.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisChatMusic?.open?.();};
+    }
+    const gift=surface.querySelector('#erisRoomGift');
+    if(gift && gift.dataset.bound!=='1'){
+      gift.dataset.bound='1';
+      gift.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.openRoomGift?.(r?.id||rid());};
+    }
   }
 
   async function bindRoom(){
@@ -102,7 +107,7 @@
   function css(){
     if(document.getElementById('eris-room-hardening-css'))return;
     const s=document.createElement('style');s.id='eris-room-hardening-css';
-    s.textContent='#roomModal.show{display:none!important}#erisRoomSurface.show{z-index:9000!important}.room-v5-panel,.room-v3-panel{z-index:9100!important}';
+    s.textContent='#roomModal.show{display:none!important}#erisRoomSurface.show{z-index:9000!important}.room-v5-panel,.room-v3-panel{z-index:9100!important}#erisMusicPanel,#erischatGiftPanel,#erisUserProfileModal,#eris-dm-profile-modal{z-index:10050!important}';
     document.head.appendChild(s);
   }
 
