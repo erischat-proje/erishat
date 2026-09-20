@@ -1,5 +1,5 @@
 (() => {
-  const API = () => (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-production.up.railway.app/v1').replace(/\/$/,'');
+  const API = () => (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
   const TOKEN_KEY = 'erischat_access_token';
   const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   const setToken = token => { if (token) localStorage.setItem(TOKEN_KEY, token); };
