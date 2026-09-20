@@ -21,6 +21,8 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     last_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
     device_info: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    google_sub: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
+    google_email: Mapped[str | None] = mapped_column(String(320), index=True, nullable=True)
     cosmetics: Mapped[list["UserCosmetic"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 class UserCosmetic(Base):
