@@ -11,8 +11,9 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
-from .auth import create_anonymous_user
+from .auth import create_anonymous_user, create_or_login_google_user
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .db import Base, engine, get_db
@@ -47,6 +48,9 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya_gem BIGINT NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email VARCHAR(320)"))
+        conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_sub ON users (google_sub) WHERE google_sub IS NOT NULL"))
         conn.execute(text("ALTER TABLE system_lidya_gem_ledger ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)"))
         conn.execute(text("ALTER TABLE game_rounds ADD COLUMN IF NOT EXISTS state_data TEXT NOT NULL DEFAULT '{}'"))
         conn.execute(text("ALTER TABLE room_announcements ADD COLUMN IF NOT EXISTS message TEXT NOT NULL DEFAULT ''"))
@@ -214,6 +218,26 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> Session
 @app.post("/v1/users/demo/ensure", response_model=UserOut)
 def create_demo_user(db: Session = Depends(get_db)) -> UserOut:
     return ensure_demo_user(db)
+
+
+class GoogleLoginPayload(BaseModel):
+    credential: str = Field(min_length=20, max_length=20000)
+
+
+@app.get("/v1/auth/google-config")
+def google_config() -> dict[str, str | bool]:
+    return {"enabled": bool(settings.google_client_id), "client_id": settings.google_client_id}
+
+
+@app.post("/v1/auth/google", response_model=SessionOut)
+def google_login(payload: GoogleLoginPayload, request: Request, db: Session = Depends(get_db)) -> SessionOut:
+    ip = request.client.host if request.client else None
+    device_info = request.headers.get("user-agent", "")[:512]
+    try:
+        user = create_or_login_google_user(db, payload.credential, ip=ip, device_info=device_info)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return SessionOut(access_token=create_session(db, user), user=user)
 
 
 @app.get("/v1/me", response_model=UserOut)
