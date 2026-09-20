@@ -188,7 +188,7 @@
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('Oda sunucusuna bağlantı zaman aşımına uğradı.')),ms))
     ]);
     try{
-      await withTimeout(window.ErisRoom?.join?.(id),8000);
+      try{await withTimeout(window.ErisRoom?.join?.(id),8000);}catch(joinError){if(/şifre|kilitli|password/i.test(String(joinError.message||''))){const pass=prompt('Bu oda kilitli. 4 haneli şifreyi gir:','');if(pass===null)throw joinError;await withTimeout(window.ErisRoom?.join?.(id,String(pass).trim()),8000);}else throw joinError;}
       const room=await withTimeout(window.ErisRoom?.get?.(id),8000);
       if(!room)throw new Error('Oda bilgisi alınamadı');
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
