@@ -179,6 +179,7 @@
     // Demo rooms never call the live API. This prevents a dead/unreachable backend from
     // freezing the customer demo while opening an example room.
     if(id.startsWith('demo-room-')){
+      window.__erisRoomPermissions={is_owner:false,is_moderator:false,can_manage:false,current_user_seat:null};
       const demo=window.ErisDemoRoomConfig?.[id]||{id,name:name||'Demo Oda',level:1,seat_count:8,member_count:1,owner:'ErisChat',locked:false,password:''};
       if(id==='demo-room-5' && localStorage.getItem('eris_demo_lock_v2_initialized')!=='1'){
         localStorage.setItem('eris_demo_room_locked_'+id,'1');
@@ -192,8 +193,13 @@
       if(locked && password){
         const unlocked=localStorage.getItem('eris_demo_room_unlocked_'+id)==='1';
         if(!unlocked){
-          const entered=await window.ErisRoomPasswordModal?.();
-          if(entered===null || String(entered).trim()!==password){
+          let accepted=false;
+          for(let attempt=0;attempt<3&&!accepted;attempt++){
+            const entered=await window.ErisRoomPasswordModal?.(attempt?'Şifre yanlış. Tekrar dene.':'');
+            if(entered===null) break;
+            if(String(entered).trim()===password) accepted=true;
+          }
+          if(!accepted){
             window.toast?.('Şifre yanlış ✕ Odaya giriş reddedildi.');
             surface.classList.remove('show');
             return;
