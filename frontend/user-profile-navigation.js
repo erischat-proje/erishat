@@ -85,7 +85,7 @@
     if (!conversationId) return;
     try {
       const c = await request('/v1/conversations/' + encodeURIComponent(conversationId));
-      const me = localStorage.getItem('eris_user_id') || window.ErisCurrentUserId || '';
+      const me = window.ErisChatAPI?.state?.user?.id || window.ErisCurrentUserId || localStorage.getItem('eris_user_id') || '';
       const member = (c.members || []).find(x => String(x.user_id) !== String(me));
       if (member?.user_id) {
         window.__erisActiveDmUserId = member.user_id;
