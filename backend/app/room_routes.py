@@ -7,6 +7,7 @@ import os
 from collections import defaultdict, deque
 from typing import Literal
 import time
+import hashlib
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -15,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat
+from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword
 from .platform_models import Notification, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
@@ -230,6 +231,8 @@ GIFT_CATALOG = {
 }
 
 class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
+class RoomPasswordUpdate(BaseModel): password: str = Field(min_length=4, max_length=4, pattern=r"^\\d{4}$")
+class RoomJoinPayload(BaseModel): password: str | None = Field(default=None, max_length=4)
 class RoomChatUpdate(BaseModel): enabled: bool
 class RoomNameUpdate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
@@ -381,8 +384,13 @@ def register_room_auth(current_user_dependency):
         record("room", "room_name_changed", room_id=room.id, public_id=room.public_id, actor_id=user.id, old_name=old_name, new_name=name)
         return room_view(db, room)
     @router.post("/{room_id}/join")
-    def join_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    def join_room(room_id: str, payload: RoomJoinPayload | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
+        stored = db.get(RoomPassword, room.id)
+        if room.locked and stored and room.owner_id != user.id:
+            supplied = (payload.password if payload else None) or ""
+            if not supplied or hashlib.sha256(supplied.encode()).hexdigest() != stored.password_hash:
+                raise HTTPException(status_code=403, detail="Oda kilitli. 4 haneli şifre gerekli.")
         if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odadan atıldınız")
         admin = db.get(AdminRole, user.id)
         admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
@@ -431,6 +439,24 @@ def register_room_auth(current_user_dependency):
     @router.patch("/{room_id}/chat")
     def set_chat(room_id: str, payload: RoomChatUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); room.chat_enabled = payload.enabled; db.commit(); return {"chat_enabled": room.chat_enabled}
+    @router.put("/{room_id}/password")
+    def set_room_password(room_id: str, payload: RoomPasswordUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id); require_owner(db, room, user)
+        row = db.get(RoomPassword, room.id)
+        hashed = hashlib.sha256(payload.password.encode()).hexdigest()
+        if row: row.password_hash = hashed
+        else: db.add(RoomPassword(room_id=room.id, password_hash=hashed))
+        room.locked = True; room.lock_expires_at = datetime.now(timezone.utc) + timedelta(days=3650)
+        db.commit()
+        return {"locked": True, "password_set": True}
+
+    @router.delete("/{room_id}/password")
+    def clear_room_password(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id); require_owner(db, room, user)
+        db.query(RoomPassword).filter(RoomPassword.room_id == room.id).delete(synchronize_session=False)
+        room.locked = False; room.lock_expires_at = None; db.commit()
+        return {"locked": False, "password_set": False}
+
     @router.get("/{room_id}/moderators")
     def list_moderators(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
