@@ -52,7 +52,7 @@
     messages.querySelectorAll('button').forEach(b=>{if(/yeni konuşma/i.test(b.textContent||''))b.remove()});
     const h2=messages.querySelector('h2');
     const p=document.createElement('div');p.className='eris-dm-search';
-    p.innerHTML='<input id="erisDmSearchInput" inputmode="numeric" autocomplete="off" placeholder="Kullanıcı ID ara…"><button type="button" id="erisDmSearchBtn">Ara</button>';
+    p.innerHTML='<input id="erisDmSearchInput" inputmode="text" autocomplete="off" placeholder="Kullanıcı ID ara…"><button type="button" id="erisDmSearchBtn">Ara</button>';
     const results=document.createElement('div');results.id='erisDmSearchResults';
     if(h2)h2.insertAdjacentElement('afterend',p);else messages.prepend(p);p.insertAdjacentElement('afterend',results);
     const input=p.querySelector('input'),btn=p.querySelector('button');btn.onclick=()=>findUser(input.value);input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();findUser(input.value)}};
