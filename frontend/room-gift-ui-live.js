@@ -1,6 +1,6 @@
 /* Live room gift picker. Uses the existing REST gift bridge and room view seats. */
 (() => {
-  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all' };
+  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all', balance: 0 };
   const GIFT_CATEGORIES = [
     ['all','Tümü',0,Infinity,0],
     ['agora','Agora & Halk Pazarı',1,29,1],
@@ -40,7 +40,7 @@
     if (document.getElementById('erischat-gift-live-style')) return;
     const style = document.createElement('style');
     style.id = 'erischat-gift-live-style';
-    style.textContent = '#erisGiftFx{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at center,#ff4fa322,transparent 45%);animation:egfxbg 1s ease-out}.egfx-card{position:relative;text-align:center;padding:26px 32px;border:1px solid #ffffff33;border-radius:24px;background:#0d0915ee;box-shadow:0 0 50px #ff4fa366;animation:egfxcard 1s ease-out}.egfx-level{font-size:10px;letter-spacing:3px;color:#f1c96b;font-weight:900}.egfx-icon{font-size:64px;margin:10px}.egfx-title{font-size:18px;font-weight:900}.egfx-gift{margin-top:7px;color:#d8cfe0;font-size:11px}.level-2 .egfx-card{animation-duration:1.4s}.level-3 .egfx-card{animation-duration:1.6s}.level-4 .egfx-card{animation:egfxcard 1.8s ease-out}.level-5 .egfx-card{animation:egfxcard 2s ease-out}.level-6 .egfx-card{animation:egfxcard 2.2s ease-out}.level-7 .egfx-card{animation:egfxcard 2.5s ease-out;box-shadow:0 0 90px #ffcf4a99}.level-8 .egfx-card{animation:egfxcard 3s ease-out;box-shadow:0 0 120px #9d6bffff}.level-9 .egfx-card{animation:egfxcard 3.5s ease-out;box-shadow:0 0 160px #ffcf4aff}.egfx-glow{position:absolute;inset:20%;border-radius:50%;filter:blur(30px);background:#ff4fa355;animation:egfxpulse 1s infinite alternate}@keyframes egfxcard{0%{opacity:0;transform:scale(.35) translateY(30px)}45%{opacity:1;transform:scale(1.08) translateY(0)}100%{opacity:0;transform:scale(1.18) translateY(-15px)}}@keyframes egfxbg{0%{opacity:0}20%{opacity:1}100%{opacity:0}}@keyframes egfxpulse{from{transform:scale(.7);opacity:.25}to{transform:scale(1.3);opacity:.8}}#erischatGiftFab{position:fixed;right:16px;bottom:86px;z-index:115;width:48px;height:48px;border:1px solid #ffffff22;border-radius:16px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-size:20px;box-shadow:0 12px 30px #0008;display:none}#erischatGiftPanel{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:116;width:min(500px,calc(100% - 24px));max-height:70vh;overflow:auto;padding:15px;border:1px solid #ffffff18;border-radius:22px;background:#0b0911;box-shadow:0 22px 60px #000b;display:none}#erischatGiftPanel.show{display:block}.egp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.egp-title{font-size:14px;font-weight:900}.egp-close{border:0;background:#ffffff09;color:#fff;border-radius:10px;width:34px;height:34px}.egp-row{display:flex;gap:7px;overflow:auto;margin:8px 0}.egp-chip{border:1px solid #ffffff14;background:#ffffff06;color:#ddd;border-radius:12px;padding:8px 10px;white-space:nowrap;font-size:9px}.egp-chip.active{border-color:#ff4fa3;background:#ff4fa31c;color:#fff}.egp-cats{display:flex;gap:6px;overflow:auto;margin:5px 0 10px}.egp-cat{border:1px solid #ffffff14;background:#ffffff06;color:#bbb;border-radius:11px;padding:7px 9px;white-space:nowrap;font-size:8px}.egp-cat.active{border-color:#ff4fa3;background:#ff4fa31c;color:#fff}.egp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.egp-gift{border:1px solid #ffffff12;background:#ffffff05;color:#fff;border-radius:14px;padding:9px;text-align:left}.egp-gift.active{border-color:#8a5cff;background:#8a5cff18}.egp-gift b{display:block;font-size:9px}.egp-gift small{display:block;color:#e4b85d;font-size:8px;margin-top:4px}.egp-send{width:100%;margin-top:10px;border:0;border-radius:13px;padding:11px;background:linear-gradient(135deg,#7b4cff,#ff4fa3);color:#fff;font-weight:900;font-size:10px}.egp-send:disabled{opacity:.45}.egp-note{color:#938a9f;font-size:9px;padding:8px 0}.egp-balance{color:#e4b85d;font-size:9px;font-weight:800}\n';
+    style.textContent = '#erisGiftFx{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at center,#ff4fa322,transparent 45%);animation:egfxbg 1s ease-out}.egfx-card{position:relative;text-align:center;padding:26px 32px;border:1px solid #ffffff33;border-radius:24px;background:#0d0915ee;box-shadow:0 0 50px #ff4fa366;animation:egfxcard 1s ease-out}.egfx-level{font-size:10px;letter-spacing:3px;color:#f1c96b;font-weight:900}.egfx-icon{font-size:64px;margin:10px}.egfx-title{font-size:18px;font-weight:900}.egfx-gift{margin-top:7px;color:#d8cfe0;font-size:11px}.level-2 .egfx-card{animation-duration:1.4s}.level-3 .egfx-card{animation-duration:1.6s}.level-4 .egfx-card{animation:egfxcard 1.8s ease-out}.level-5 .egfx-card{animation:egfxcard 2s ease-out}.level-6 .egfx-card{animation:egfxcard 2.2s ease-out}.level-7 .egfx-card{animation:egfxcard 2.5s ease-out;box-shadow:0 0 90px #ffcf4a99}.level-8 .egfx-card{animation:egfxcard 3s ease-out;box-shadow:0 0 120px #9d6bffff}.level-9 .egfx-card{animation:egfxcard 3.5s ease-out;box-shadow:0 0 160px #ffcf4aff}.egfx-glow{position:absolute;inset:20%;border-radius:50%;filter:blur(30px);background:#ff4fa355;animation:egfxpulse 1s infinite alternate}@keyframes egfxcard{0%{opacity:0;transform:scale(.35) translateY(30px)}45%{opacity:1;transform:scale(1.08) translateY(0)}100%{opacity:0;transform:scale(1.18) translateY(-15px)}}@keyframes egfxbg{0%{opacity:0}20%{opacity:1}100%{opacity:0}}@keyframes egfxpulse{from{transform:scale(.7);opacity:.25}to{transform:scale(1.3);opacity:.8}}#erischatGiftFab{position:fixed;right:16px;bottom:86px;z-index:115;width:48px;height:48px;border:1px solid #ffffff22;border-radius:16px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-size:20px;box-shadow:0 12px 30px #0008;display:none}#erischatGiftPanel{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:116;width:min(500px,calc(100% - 24px));max-height:70vh;overflow:auto;padding:15px;border:1px solid #ffffff18;border-radius:22px;background:#0b0911;box-shadow:0 22px 60px #000b;display:none}#erischatGiftPanel.show{display:block}.egp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.egp-title{font-size:14px;font-weight:900}.egp-close{border:0;background:#ffffff09;color:#fff;border-radius:10px;width:34px;height:34px}.egp-row{display:flex;gap:7px;overflow:auto;margin:8px 0}.egp-chip{border:1px solid #ffffff14;background:#ffffff06;color:#ddd;border-radius:12px;padding:8px 10px;white-space:nowrap;font-size:9px}.egp-chip.active{border-color:#ff4fa3;background:#ff4fa31c;color:#fff}.egp-cats{display:flex;gap:6px;overflow:auto;margin:5px 0 10px}.egp-cat{border:1px solid #ffffff14;background:#ffffff06;color:#bbb;border-radius:11px;padding:7px 9px;white-space:nowrap;font-size:8px}.egp-cat.active{border-color:#ff4fa3;background:#ff4fa31c;color:#fff}.egp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.egp-gift{border:1px solid #ffffff12;background:#ffffff05;color:#fff;border-radius:14px;padding:9px;text-align:left}.egp-gift.active{border-color:#8a5cff;background:#8a5cff18}.egp-gift:disabled{opacity:.3;filter:grayscale(1)}.egp-gift b{display:block;font-size:9px}.egp-gift small{display:block;color:#e4b85d;font-size:8px;margin-top:4px}.egp-send{width:100%;margin-top:10px;border:0;border-radius:13px;padding:11px;background:linear-gradient(135deg,#7b4cff,#ff4fa3);color:#fff;font-weight:900;font-size:10px}.egp-send:disabled{opacity:.45}.egp-note{color:#938a9f;font-size:9px;padding:8px 0}.egp-balance{color:#e4b85d;font-size:9px;font-weight:800}\n';
     document.head.appendChild(style);
   }
 
@@ -65,6 +65,7 @@
     box.innerHTML = visible.length ? visible.map(g => {
       const name=String(g.gift_key||g.name||'');
       const price=Number(g.price||g.unit_price||0);
+      const affordable=state.balance>=price;
       return `<button class="egp-gift${state.selectedGift === name ? ' active' : ''}" data-gift="${esc(name)}" type="button" title="${esc(name)}" aria-label="${esc(name)}"><span class="egp-icon">${giftIcon(name)}</span><span class="egp-price">💎 ${price.toLocaleString('tr-TR')}</span></button>`;
     }).join('') : '<div class="egp-note">Bu kategoride hediye yok.</div>';
     cats?.querySelectorAll('[data-cat]').forEach(btn=>{btn.onclick=()=>{state.category=btn.dataset.cat;renderGifts();};});
@@ -96,8 +97,9 @@
     if (!state.roomId || !window.ErisPlatform) return;
     try {
       const me = await window.ErisPlatform.getMe();
+      state.balance = Number(me.lidya || 0);
       const balance = document.getElementById('egpBalance');
-      if (balance) balance.textContent = `💎 ${Number(me.lidya || 0).toLocaleString('tr-TR')}`;
+      if (balance) balance.textContent = `💎 ${state.balance.toLocaleString('tr-TR')} Lidya`;
       await Promise.all([loadRecipients(), loadGifts()]);
       updateSend();
     } catch (error) { toastSafe(error.message || 'Hediye paneli yüklenemedi.'); }
@@ -111,7 +113,7 @@
       await window.ErisRoomGift.send(state.roomId, state.selectedRecipient, state.selectedGift, 1);
       toastSafe('Hediye gönderildi 🎁');
       document.getElementById('erischatGiftPanel')?.classList.remove('show');
-    } catch (error) { toastSafe(error.message || 'Hediye gönderilemedi.'); }
+    } catch (error) { toastSafe(error.message || 'Hediye gönderilemedi.'); const note=document.querySelector('#erischatGiftPanel .egp-note'); if(note) note.textContent=error.message||'Hediye gönderilemedi.'; }
     finally { if (button) { button.textContent = 'Hediye gönder'; updateSend(); } }
   }
 
@@ -128,7 +130,7 @@
 
   function setRoom(roomId, open = false) {
     state.roomId = roomId ? String(roomId) : null;
-    if (state.roomId && open) { ensureUi(); document.getElementById('erischatGiftPanel')?.classList.add('show'); refresh(); }
+    if (state.roomId && open) { state.selectedGift=null; state.selectedRecipient=null; state.category='all'; ensureUi(); document.getElementById('erischatGiftPanel')?.classList.add('show'); refresh(); }
   }
 
   function showGiftAnimation(data){
