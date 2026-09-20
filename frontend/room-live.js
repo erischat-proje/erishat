@@ -65,8 +65,8 @@
     document.body.appendChild(s);
     s.querySelector('#erisRoomBack').onclick=window.closeRealRoom;
     s.querySelector('#erisRoomMusic').onclick=()=>window.ErisChatMusic?.open?.();
-    s.querySelector('#erisRoomGift').onclick=()=>window.ErisDemoExtras?.roomGift?.();
-    s.querySelector('#erisRoomMore').onclick=()=>window.ErisDemoExtras?.roomSettings?.();
+    s.querySelector('#erisRoomGift').onclick=()=>window.openRoomGift?.(window.ErisCurrentRoomId||window.currentRoomId);
+    s.querySelector('#erisRoomMore').onclick=()=>{const p=window.__erisRoomPermissions||{};if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCompleteV3?.openMenu?.('settings');};
     s.querySelector('#erisRoomMic').onclick=()=>window.toast?.('Mikrofon: gerçek oda RTC bağlantısı için koltuğa oturun.');
     return s;
   }
@@ -122,8 +122,8 @@
       const currentId=window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||String(window.__erisCurrentRoomUserId||'');
       const isMe=occupied&&String(seat.user_id)===String(currentId);
       const user=seat.user||seat.profile||{};
-      const avatarRaw=seat.avatar_url||seat.avatar||seat.profile_image||seat.photo_url||seat.user_avatar||user.avatar_url||user.avatar||user.profile_image||(isMe?window.ErisChatCosmetics?.state?.user?.avatar_asset:'')||'';
-      const frameRaw=seat.frame_url||seat.frame||seat.profile_frame||seat.user_frame||user.frame_url||user.frame||(isMe?window.ErisChatCosmetics?.state?.user?.frame_asset:'')||'';
+      const avatarRaw=seat.avatar_url||seat.avatar_asset||seat.avatar||seat.profile_image||seat.photo_url||seat.user_avatar||user.avatar_url||user.avatar_asset||user.avatar||user.profile_image||(isMe?window.ErisChatCosmetics?.state?.user?.avatar_asset:'')||'';
+      const frameRaw=seat.frame_url||seat.frame_asset||seat.frame||seat.profile_frame||seat.user_frame||user.frame_url||user.frame_asset||user.frame||(isMe?window.ErisChatCosmetics?.state?.user?.frame_asset:'')||'';
       const avatarUrl=avatarRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(avatarRaw):avatarRaw;
       const frameUrl=frameRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(frameRaw):frameRaw;
       const b=document.createElement('button');b.type='button';
@@ -146,7 +146,7 @@
       }
       b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+num;
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
-      if(!occupied&&!locked)b.onclick=async()=>{
+      if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Profili aç';}else if(!occupied&&!locked)b.onclick=async()=>{
         try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}
         catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}
       };
@@ -253,7 +253,7 @@
       document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+String(room.public_id||id);
       const levelButton=document.getElementById('erisRoomLevel');
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
-      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId);
+      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCompleteV3?.openMenu?.('settings'); else window.toast?.('Bu odada yönetim yetkiniz yok.');};
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       surface.classList.remove('show');window.toast?.(e.message||'Odaya bağlanılamadı.');
