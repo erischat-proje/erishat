@@ -95,7 +95,7 @@
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small>Gerçek konuşma</small></div>';
         renderAvatar(b.querySelector('.ava'), avatar, name.slice(0, 1).toUpperCase());
         b.querySelector('b').textContent = name;
-        b.onclick = () => openRealChat(id, name, avatar);
+        b.onclick = () => { window.__erisActiveDmUserId = other.id || other.user_id || null; openRealChat(id, name, avatar); };
         list.appendChild(b);
       });
     } catch (e) {
@@ -130,7 +130,7 @@
 
   async function createConversation(participantId, participantName = 'Anonim kullanıcı') {
     if (!participantId || !api()?.createConversation) return null;
-    const conversation = await api().createConversation(participantId);
+    const conversation = await api().createConversation(participantId); window.__erisActiveDmUserId = participantId;
     const id = conversation?.id || conversation?.conversation_id || conversation?.conversation?.id;
     if (id) {
       await loadConversations();
