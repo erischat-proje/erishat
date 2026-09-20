@@ -56,8 +56,8 @@
     const total=Number(data.total_price||unit);
     const quantity=Math.max(1,Number(data.quantity||1));
     const level=giftLevelByPrice(unit);
-    const sender=String(data.sender_name||roomPeopleCache[data.sender_id]||data.sender_id||'Bir kullanıcı');
-    const recipient=String(data.recipient_name||roomPeopleCache[data.recipient_id]||data.recipient_id||'Bir kullanıcı');
+    const sender=String(data.sender_name||data.sender_nickname||roomPeopleCache[data.sender_id]||data.sender_id||'Bir kullanıcı');
+    const recipient=String(data.recipient_name||data.recipient_nickname||roomPeopleCache[data.recipient_id]||data.recipient_id||'Bir kullanıcı');
     return {...data,gift_name:giftName,unit_price:unit,total_price:total,quantity,level,sender_name:sender,recipient_name:recipient};
   }
   function renderGiftEvent(data){
