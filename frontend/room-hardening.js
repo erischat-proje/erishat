@@ -1,10 +1,10 @@
 (() => {
   'use strict';
-  const api=()=>String(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace(/\/$/,'');
+  const api=()=>window.ErisPlatform?.api?null:(window.ERIS_API||window.ERISCHAT_API||'https://erischat-production.up.railway.app/v1').replace(/\/$/,'');
   const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
   const headers=()=>token()?{Authorization:'Bearer '+token(),'Content-Type':'application/json'}:{'Content-Type':'application/json'};
   const rid=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
-  async function req(path,opt={}){const r=await fetch(api()+path,{...opt,headers:{...headers(),...(opt.headers||{})}});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.detail||'İşlem başarısız');return b;}
+  async function req(path,opt={}){if(window.ErisPlatform?.api)return window.ErisPlatform.api(path,opt);const r=await fetch(api()+path,{...opt,headers:{...headers(),...(opt.headers||{})}});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.detail||'İşlem başarısız');return b;}
 
   async function room(){
     const id=rid(); if(!id)return null;
