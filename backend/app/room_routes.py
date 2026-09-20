@@ -381,9 +381,15 @@ def register_room_auth(current_user_dependency):
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room, user) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
     @router.get("/me/rooms")
     def list_my_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        owned = select(Room.id).where(Room.owner_id == user.id)
-        moderated = select(RoomModerator.room_id).where(RoomModerator.user_id == user.id)
-        rooms = list(db.scalars(select(Room).where((Room.owner_id == user.id) | Room.id.in_(moderated)).order_by(Room.created_at.desc())))
+        # Eski test/veri kayıtlarında aynı kullanıcıya ait birden fazla sahiplik kalmış olabilir.
+        # Kullanıcı arayüzünde yalnızca tek sahip olunan oda gösterilir; moderatör olunan odalar ayrıca listelenir.
+        owned_room = db.scalar(select(Room).where(Room.owner_id == user.id).order_by(Room.created_at.desc()).limit(1))
+        moderated_rooms = list(db.scalars(
+            select(Room)
+            .where(Room.id.in_(select(RoomModerator.room_id).where(RoomModerator.user_id == user.id)), Room.owner_id != user.id)
+            .order_by(Room.created_at.desc())
+        ))
+        rooms = ([owned_room] if owned_room else []) + moderated_rooms
         result = []
         for room in rooms:
             view = room_view(db, room, user)
