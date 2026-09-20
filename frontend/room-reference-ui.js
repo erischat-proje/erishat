@@ -60,9 +60,9 @@
     let p=s.querySelector('.room-v3-panel');
     if(p) return p;
     p=document.createElement('aside');p.className='room-v3-panel';
-    p.innerHTML='<div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close">×</button></div><div class="room-v3-tabs"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="settings">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div>';
+    p.innerHTML='<div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close">×</button></div><div class="room-v3-tabs"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div>';
     s.appendChild(p);
-    p.querySelector('.room-v3-close').onclick=()=>p.classList.remove('show');
+    p.querySelector('.room-v3-close').onclick=()=>p.classList.remove('show');\n    const settingsTab=p.querySelector('[data-management-tab]'); if(settingsTab){const r=window.__erisRoomPermissions||{}; settingsTab.style.display=(r.is_owner||r.is_moderator||r.can_manage)?'':'none';}
     p.querySelectorAll('.room-v3-tab').forEach(b=>b.onclick=()=>openMenu(b.dataset.tab));
     return p;
   }
@@ -72,7 +72,7 @@
     if(!h.querySelector('#erisRoomLevel')){const b=document.createElement('button');b.id='erisRoomLevel';b.type='button';b.innerHTML='<b>Seviye 1</b><small>ilerleme</small>';b.onclick=openLevels;h.appendChild(b)}
     if(!h.querySelector('#erisRoomMoreTop')){const r=window.__erisRoomPermissions||{};const can=!!(r.is_owner||r.is_moderator||r.can_manage);if(can){const b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>openMenu('settings');h.appendChild(b)}}
     if(!h.querySelector('#erisRoomLeaveTop')){const b=document.createElement('button');b.id='erisRoomLeaveTop';b.type='button';b.className='room-v3-top-btn';b.textContent='↪';b.title='Odadan çık';b.onclick=()=>window.closeRealRoom?.();h.appendChild(b)}
-    h.querySelector('#erisRoomGift')?.style.setProperty('display','none','important');h.querySelector('#erisRoomMusic')?.style.setProperty('display','none','important');
+    
   }
 
   function gift(s){
