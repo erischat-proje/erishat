@@ -118,6 +118,7 @@
         const m = await api().sendMessage(id, text);
         const row = document.createElement('div');
         row.className = 'bubble me';
+        if (m?.id != null) row.dataset.messageId = String(m.id);
         row.textContent = m?.text || m?.message || text;
         body.appendChild(row);
         input.value = '';
@@ -177,6 +178,26 @@
     if (!id || !text?.trim() || !api()?.sendMessage) throw new Error('Geçerli konuşma gerekli.');
     return api().sendMessage(id, text.trim());
   }
+  function handleRealtimeMessage(event) {
+    const data = event?.detail;
+    if (!data || data.type !== 'dm_message' || !data.conversation_id) return;
+    const id = String(data.conversation_id);
+    if (String(activeConversationId || '') === id) {
+      const body = document.querySelector('#chat .chatBody');
+      if (!body || body.querySelector('[data-message-id="'+String(data.message_id).replace(/"/g,'&quot;')+'"]')) return;
+      const mine = String(data.sender_id || '') === String(currentUserId || '');
+      const row = document.createElement('div');
+      row.className = 'bubble' + (mine ? ' me' : '');
+      if (data.message_id != null) row.dataset.messageId = String(data.message_id);
+      row.textContent = data.text || '';
+      body.appendChild(row);
+      body.scrollTop = body.scrollHeight;
+    }
+    loadConversations();
+  }
+
+  window.addEventListener('erischat:event', handleRealtimeMessage);
+
   window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, send: sendMessage, activeId: () => activeConversationId };
 
   window.addEventListener('erischat:auth', event => {
