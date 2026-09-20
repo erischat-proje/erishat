@@ -40,18 +40,12 @@
     const surface=document.getElementById('erisRoomSurface'),top=surface?.querySelector('.eris-room-top');
     if(!top)return;
     const can=!!(r?.is_owner||r?.is_moderator);
-    const legacyMore=surface.querySelector('#erisRoomMore');
-    if(legacyMore){
-      legacyMore.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();if(can)openOwnerSettings(r);};
-      legacyMore.style.display=can?'':'none';
-      legacyMore.setAttribute('aria-hidden',can?'false':'true');
-    }
-    let b=top.querySelector('#erisRoomMoreTop');
-    if(!can){b?.remove();return;}
-    if(!b){
-      b=document.createElement('button');b.id='erisRoomMoreTop';b.className='room-v5-topbtn';b.textContent='⋯';b.title='Oda ayarları';top.appendChild(b);
-    }
-    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();openOwnerSettings(r);};
+    const b=top.querySelector('#erisRoomMoreTop');
+    if(!b)return;
+    if(!can){b.style.display='none';b.setAttribute('aria-hidden','true');return;}
+    b.style.display='';b.setAttribute('aria-hidden','false');
+    // Keep the existing room button/order; only replace its action with the real permission-aware menu.
+    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisRoomCompleteV3?.openMenu?.('settings');};
   }
 
   function openOwnerSettings(r){
