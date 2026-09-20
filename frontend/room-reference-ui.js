@@ -134,6 +134,7 @@
   }
   const boot=()=>bind();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.ErisRoomPasswordModal=passwordModal;
   window.addEventListener('erischat:room-opened',()=>setTimeout(bind,0));
   window.ErisRoomCompleteV3={openMenu,openName,openLevels};
 })();
@@ -197,7 +198,7 @@
     h.querySelector('#erisRoomLevel')?.remove();
     const lv=document.createElement('button');
     lv.id='erisRoomLevel';lv.className='room-v5-topbtn';
-    lv.innerHTML='<b>Seviye 10</b><small>16 koltuk</small>';lv.title='Oda seviyesi ve koltuk ayarları';lv.onclick=()=>demo()?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
+    lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';lv.onclick=()=>demo()?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
     const more=document.createElement('button');
     more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';more.onclick=menu;h.appendChild(more);
     const leave=document.createElement('button');
@@ -206,13 +207,15 @@
     syncHeader();
   }
 
-  function syncHeader(){
+  async function syncHeader(){
     const lv=q('erisRoomLevel'),d=demo();
     if(!lv)return;
     if(d){
       const level=Number(d.level||10),cap=Math.min(16,Math.max(8,Number(d.seat_count)||16));
       lv.innerHTML='<b>Seviye '+level+'</b><small>'+cap+' koltuk</small>';
+      return;
     }
+    try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||8)+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.();}catch{};
   }
 
   async function menu(){
@@ -225,15 +228,15 @@
       '<button class="v5-btn" data-v5="users">👥 Kullanıcılar</button>'+
       '<button class="v5-btn" data-v5="gifts">🎁 Hediyeler</button>'+
       '<button class="v5-btn" data-v5="music">🎵 Müzik</button>'+
-      (canManage?'<button class="v5-btn" data-v5="settings">⚙️ Oda ayarları</button>':'')+
-      '<button class="v5-btn" data-v5="theme">🎨 Oda teması</button>'+
+      (canManage?'<button class="v5-btn" data-v5="settings">⚙️ Oda ayarları</button><button class="v5-btn" data-v5="theme">🎨 Oda teması</button>':'')+
       '</div>'+
       '<div class="v5-card"><b style="font-size:10px">'+(canManage?'👑 Oda yönetimi':'👤 Oda kullanıcısı')+'</b><div class="v5-note" style="margin-top:4px">'+(canManage?'Yönetim yetkileri sadece oda sahibi ve atanmış moderatörde görünür.':'Bu odanın sahibi/moderatörü değilsin; yönetim kontrolleri gizlendi.')+'</div></div>';
     p.classList.add('show');
     p.querySelector('[data-close]').onclick=()=>p.classList.remove('show');
     p.querySelectorAll('[data-v5]').forEach(b=>b.onclick=()=>{
       const t=b.dataset.v5;
-      if(t==='theme') return theme();
+      if(t==='theme' && !canManage) return;
+      if(t==='settings' && !canManage) return;
       closePanels();
       window.ErisRoomCompleteV3?.openMenu?.(t);
     });
@@ -320,6 +323,20 @@
     c.insertBefore(b,send||null);
   }
 
+  function passwordModal(title='Odaya giriş şifresi'){
+    return new Promise(resolve=>{
+      document.getElementById('eris-room-password-modal')?.remove();
+      const wrap=document.createElement('div');wrap.id='eris-room-password-modal';
+      wrap.innerHTML='<div class="erp-backdrop"></div><div class="erp-box"><button class="erp-x" aria-label="Kapat">×</button><div class="erp-title">🔒 '+esc(title)+'</div><div class="erp-sub">4 haneli oda şifresini gir</div><div class="erp-cells"><input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="erp-cell"><input maxlength="1" inputmode="numeric" class="erp-cell"><input maxlength="1" inputmode="numeric" class="erp-cell"><input maxlength="1" inputmode="numeric" class="erp-cell"></div><div class="erp-error"></div><button class="erp-ok">Tamam</button></div>';
+      const st=document.createElement('style');st.textContent='#eris-room-password-modal{position:fixed;inset:0;z-index:6000;display:grid;place-items:center}.erp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(8px)}.erp-box{position:relative;width:min(330px,calc(100% - 40px));box-sizing:border-box;padding:20px;border-radius:18px;background:rgba(72,72,78,.94);border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 80px #000b;text-align:center}.erp-x{position:absolute;right:9px;top:8px;width:30px;height:30px;border:0;border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:20px}.erp-title{font-size:14px;font-weight:900;color:#fff}.erp-sub{margin-top:6px;font-size:9px;color:#d5d1d8}.erp-cells{display:flex;justify-content:center;gap:8px;margin:18px 0}.erp-cell{width:48px;height:52px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;text-align:center;font-size:24px;outline:none}.erp-cell:focus{border-color:#ff5bad}.erp-error{min-height:18px;color:#ff9dbd;font-size:9px}.erp-ok{width:100%;height:42px;border:0;border-radius:12px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:900}.erp-backdrop{cursor:pointer}';wrap.appendChild(st);document.body.appendChild(wrap);
+      const cells=[...wrap.querySelectorAll('.erp-cell')],err=wrap.querySelector('.erp-error');let done=false;
+      const finish=v=>{if(done)return;done=true;wrap.remove();resolve(v)};
+      wrap.querySelector('.erp-x').onclick=()=>finish(null);wrap.querySelector('.erp-backdrop').onclick=()=>finish(null);
+      cells.forEach((c,i)=>{c.oninput=()=>{c.value=c.value.replace(/\\D/g,'').slice(0,1);if(c.value&&cells[i+1])cells[i+1].focus();};c.onkeydown=e=>{if(e.key==='Backspace'&&!c.value&&cells[i-1])cells[i-1].focus();if(e.key==='Enter')wrap.querySelector('.erp-ok').click()}});
+      wrap.querySelector('.erp-ok').onclick=()=>{const v=cells.map(x=>x.value).join('');if(!/^\\d{4}$/.test(v)){err.textContent='4 haneli şifreyi tamamla.';return}finish(v)};
+      cells[0].focus();
+    });
+  }
   function demoId(){
     const id=rid(); if(!id.startsWith('demo-room-'))return;
     const meta=q('erisLiveMeta');if(meta)meta.textContent='ID: 482731 • DEMO';
@@ -327,7 +344,7 @@
 
   function bind(){
     if(!root())return;
-    css();top();mic();demoId();seatActions();
+    css();top();mic();demoId();seatActions();syncHeader();
     const saved=localStorage.getItem('eris_room_theme_'+rid());
     if(saved)applyTheme(saved);
   }
