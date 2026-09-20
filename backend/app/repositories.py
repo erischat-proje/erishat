@@ -54,11 +54,17 @@ class ConversationRepository:
         return None
 
     def list_for_user(self, user_id: str, limit: int = 50, offset: int = 0) -> list[Conversation]:
+        latest_message = (
+            select(func.max(Message.created_at))
+            .where(Message.conversation_id == Conversation.id)
+            .correlate(Conversation)
+            .scalar_subquery()
+        )
         stmt = (
             select(Conversation)
             .join(ConversationMember, ConversationMember.conversation_id == Conversation.id)
             .where(ConversationMember.user_id == user_id)
-            .order_by(Conversation.created_at.desc())
+            .order_by(latest_message.desc().nullslast(), Conversation.created_at.desc())
             .offset(offset)
             .limit(limit)
         )
