@@ -221,7 +221,7 @@
   async function menu(){
     const p=panel(); if(!p)return;
     const r=demo()?demo():(await roomApi().get?.(rid()).catch(()=>({}))||{});
-    const canManage=!!(demo()||r.is_owner||r.is_moderator||isOwner(r));
+    const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
     p.innerHTML='<div class="v5-title">Oda menüsü <button class="v5-btn" data-close>Kapat</button></div>'+
       '<div class="v5-grid">'+
       '<button class="v5-btn" data-v5="info">ℹ️ Oda bilgisi</button>'+
