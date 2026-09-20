@@ -195,9 +195,9 @@ def ready() -> dict[str, str]:
 
 
 @app.get("/v1/users/{user_id}", response_model=UserOut)
-def get_user(user_id: str, db: Session = Depends(get_db)) -> User:
-    user = UserRepository(db).get(user_id)
-    if not user:
+def get_user(user_id: str, db: Session = Depends(get_db), current: User = Depends(current_user)) -> User:
+    user = UserRepository(db).get(user_id) or db.scalar(select(User).where(User.public_id == user_id))
+    if not user or not user.is_active:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     return user
 
