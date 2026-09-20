@@ -16,8 +16,9 @@ from pydantic import BaseModel, Field
 from .auth import create_anonymous_user, create_or_login_google_user
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
+from .cosmetics import catalog
 from .db import Base, engine, get_db
-from .models import Conversation, ConversationMember, User
+from .models import Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import register_room_auth, router as room_router
@@ -30,7 +31,7 @@ from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files
-from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, SessionOut, UserCreate, UserOut, UserUpdate
+from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 
@@ -50,6 +51,12 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email VARCHAR(320)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(64)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(64)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date VARCHAR(10)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT false"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS welcome_gift_claimed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_sub ON users (google_sub) WHERE google_sub IS NOT NULL"))
         conn.execute(text("ALTER TABLE system_lidya_gem_ledger ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)"))
         conn.execute(text("ALTER TABLE game_rounds ADD COLUMN IF NOT EXISTS state_data TEXT NOT NULL DEFAULT '{}'"))
@@ -240,8 +247,113 @@ def google_login(payload: GoogleLoginPayload, request: Request, db: Session = De
     return SessionOut(access_token=create_session(db, user), user=user)
 
 
+@app.post("/v1/welcome/claim", response_model=UserOut)
+def claim_welcome_gift(
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> User:
+    if not user.profile_completed:
+        raise HTTPException(status_code=400, detail="Önce profilini tamamlamalısın.")
+
+    locked_user = (
+        db.query(User)
+        .filter(User.id == user.id)
+        .with_for_update()
+        .one()
+    )
+
+    if locked_user.welcome_gift_claimed:
+        return locked_user
+
+    gender = locked_user.gender if locked_user.gender in {"female", "male"} else None
+    if not gender:
+        raise HTTPException(status_code=400, detail="Geçerli bir cinsiyet seçilmemiş.")
+
+    avatar_item = next(
+        (
+            item for item in catalog()
+            if item.get("type") == "avatar"
+            and item.get("gender") == gender
+            and item.get("tier") == "standard"
+        ),
+        None,
+    )
+
+    if not avatar_item:
+        raise HTTPException(status_code=500, detail="Standart avatar bulunamadı.")
+
+    frame_key = "standartcerceve/cerceve_01.png"
+
+    locked_user.lidya = int(locked_user.lidya or 0) + 500
+    locked_user.avatar_asset = avatar_item["asset_key"]
+    locked_user.frame_asset = frame_key
+    locked_user.welcome_gift_claimed = True
+
+    db.add(
+        UserCosmetic(
+            user_id=locked_user.id,
+            cosmetic_type="avatar",
+            asset_key=avatar_item["asset_key"],
+        )
+    )
+    db.add(
+        UserCosmetic(
+            user_id=locked_user.id,
+            cosmetic_type="frame",
+            asset_key=frame_key,
+        )
+    )
+
+    db.commit()
+    db.refresh(locked_user)
+    return locked_user
+
+
 @app.get("/v1/me", response_model=UserOut)
 def me(user: User = Depends(current_user)) -> User:
+    return user
+
+
+@app.post("/v1/onboarding", response_model=UserOut)
+def complete_onboarding(
+    payload: OnboardingRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> User:
+    if user.profile_completed:
+        raise HTTPException(status_code=400, detail="Profil zaten tamamlanmış")
+
+    username = payload.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Kullanıcı adı boş olamaz")
+
+    existing = (
+        db.query(User)
+        .filter(User.nickname == username, User.id != user.id)
+        .first()
+    )
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="Bu kullanıcı adı zaten kullanılıyor")
+
+    user.first_name = payload.first_name.strip()
+    user.last_name = payload.last_name.strip()
+    user.birth_date = payload.birth_date
+    user.gender = payload.gender
+    user.nickname = username
+    user.bio = payload.bio.strip()
+    user.profile_completed = True
+    welcome_conversation_id = f"welcome:{user.id}"
+    welcome_conversation = db.get(Conversation, welcome_conversation_id)
+    if welcome_conversation is None:
+        welcome_conversation = Conversation(id=welcome_conversation_id, type="welcome")
+        db.add(welcome_conversation)
+        db.add(ConversationMember(conversation_id=welcome_conversation_id, user_id=user.id))
+        db.flush()
+        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Selam {user.nickname} ErisChat'e hoşgeldin seni aramızda gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile keyifli vakitler."))
+
+
+    db.commit()
+    db.refresh(user)
     return user
 
 
@@ -326,6 +438,8 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
     if not conversation:
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
     if not repo.is_member(conversation_id, user.id):
+        if repo.get(conversation_id).type == "welcome":
+            raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     return conversation
 
@@ -336,6 +450,8 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
     if not repo.is_member(conversation_id, user.id):
+        if repo.get(conversation_id).type == "welcome":
+            raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
     try:
         message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
@@ -361,6 +477,8 @@ def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
     if not repo.is_member(conversation_id, user.id):
+        if repo.get(conversation_id).type == "welcome":
+            raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişim yok")
     return MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
 

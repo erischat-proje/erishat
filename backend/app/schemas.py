@@ -18,6 +18,39 @@ class UserCreate(BaseModel):
         return value
 
 
+class OnboardingRequest(BaseModel):
+    first_name: str = Field(min_length=1, max_length=64)
+    last_name: str = Field(min_length=1, max_length=64)
+    birth_date: str = Field(min_length=10, max_length=10)
+    gender: Literal["female", "male"]
+    username: str = Field(min_length=3, max_length=32)
+    bio: str = Field(default="", max_length=300)
+
+    @field_validator("first_name", "last_name", "username", "bio")
+    @classmethod
+    def clean_text(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("birth_date")
+    @classmethod
+    def validate_birth_date(cls, value: str) -> str:
+        from datetime import date
+        try:
+            parsed = date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError("Doğum tarihi YYYY-AA-GG formatında olmalı") from exc
+        if parsed > date.today():
+            raise ValueError("Doğum tarihi gelecekte olamaz")
+        return value
+
+    @field_validator("bio")
+    @classmethod
+    def validate_bio(cls, value: str) -> str:
+        if len(value) > 300:
+            raise ValueError("Biyografi en fazla 300 karakter olabilir")
+        return value
+
+
 class UserUpdate(BaseModel):
     nickname: str | None = Field(default=None, min_length=1, max_length=32)
     avatar: str | None = Field(default=None, min_length=1, max_length=16)
@@ -60,6 +93,12 @@ class UserOut(BaseModel):
     lidya: int
     lidya_gem: int = 0
     notifications_enabled: bool
+    first_name: str | None = None
+    last_name: str | None = None
+    birth_date: str | None = None
+    bio: str | None = None
+    profile_completed: bool = False
+    welcome_gift_claimed: bool = False
     created_at: datetime
 
 

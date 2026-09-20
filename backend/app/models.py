@@ -23,6 +23,12 @@ class User(Base):
     device_info: Mapped[str | None] = mapped_column(String(512), nullable=True)
     google_sub: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
     google_email: Mapped[str | None] = mapped_column(String(320), index=True, nullable=True)
+    first_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    birth_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    bio: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    profile_completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    welcome_gift_claimed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     cosmetics: Mapped[list["UserCosmetic"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 class UserCosmetic(Base):
