@@ -71,7 +71,7 @@
   function top(s){
     const h=s.querySelector('.eris-room-top');if(!h)return;
     if(!h.querySelector('#erisRoomLevel')){const b=document.createElement('button');b.id='erisRoomLevel';b.type='button';b.innerHTML='<b>Seviye 1</b><small>ilerleme</small>';b.onclick=openLevels;h.appendChild(b)}
-    if(!h.querySelector('#erisRoomMoreTop')){const b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>openMenu('settings');h.appendChild(b)}
+    if(!h.querySelector('#erisRoomMoreTop')){const r=window.__erisRoomPermissions||{};const can=!!(r.is_owner||r.is_moderator||r.can_manage);if(can){const b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>openMenu('settings');h.appendChild(b)}}
     if(!h.querySelector('#erisRoomLeaveTop')){const b=document.createElement('button');b.id='erisRoomLeaveTop';b.type='button';b.className='room-v3-top-btn';b.textContent='↪';b.title='Odadan çık';b.onclick=()=>window.closeRealRoom?.();h.appendChild(b)}
     h.querySelector('#erisRoomGift')?.style.setProperty('display','none','important');h.querySelector('#erisRoomMusic')?.style.setProperty('display','none','important');
   }
@@ -82,7 +82,7 @@
   }
 
   async function getRoom(){const id=roomId();if(!id)return{};try{return await roomApi().get?.(id)||{}}catch(e){return{}}}
-  function isOwner(r){const me=userId();return !!me&&[r?.owner_id,r?.owner?.id,r?.created_by,r?.creator_id].filter(Boolean).some(x=>String(x)===me)}
+  function isOwner(r){if(r?.is_owner===true)return true;const me=userId();return !!me&&[r?.owner_id,r?.owner?.id,r?.created_by,r?.creator_id].filter(Boolean).some(x=>String(x)===me)}
 
   async function openName(){
     const r=await getRoom(),id=roomId(),name=document.getElementById('erisLiveTitle')?.textContent||r?.name||'Oda';
