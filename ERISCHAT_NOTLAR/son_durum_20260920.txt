@@ -139,3 +139,14 @@ NOT
 - `2524e638eaaeab2f5bf9d2547a0abf197f62e482`: Oda listesi yükleyicisi `/rooms` cevabında `data` sarmalayıcısını da destekleyecek şekilde güçlendirildi; backend cevap şekli değiştiğinde oda listesinin gereksiz yere demo fallback'e düşmesi azaltıldı.
 - `75fd672a11e46a59eb25e46d1d18cd9d278e0e07`: Feature Hub oda detayında `seats` alanı yoksa artık JavaScript hatası vermiyor; VIP paneli de `/me/vip` cevabının `data` sarmalamasını destekliyor.
 - `1b9a62f8e77c16e3fffee3603662a70f0f6c3472`: Keşif paneli sonuçları `data` ve `rooms` sarmalayıcılarını da destekliyor; Yakındakiler/Rastgele Sohbet/Rastgele Oda backend cevap şekillerine karşı daha dayanıklı.
+
+## 2026-09-20 — oda yetki / profil / mesaj erişimi düzeltmesi
+- Oda yönetimi artık UI'da yalnızca gerçek oda sahibi veya atanmış aktif moderatöre açılıyor. Demo oda kimliği tek başına yönetim yetkisi vermiyor.
+- Gerçek oda API görünümünde moderatör listesi ve koltuk mute bilgisi yetkisiz kullanıcıya gönderilmiyor; yönetim yetkileri ayrı `management` alanıyla açıkça kapsamlandırıldı.
+- Oda adı değiştirme, oda kilidi/şifresi, moderatör yönetimi, koltuk kilitleme ve sessize alma backend'de mevcut oda sahibi/moderatör kontrolleriyle korunuyor; oda sahibi dışındaki işlemler için `require_staff`, sahip işlemleri için `require_owner` kullanılıyor.
+- Profildeki `Odalarım` akışı korunarak kullanıcının kendi odaları ve moderatör olduğu odalar `/v1/rooms/me/rooms` üzerinden listeleniyor; oda oluşturma DB'de kalıcı olarak tutuluyor.
+- Mesajlar yüzeyine saydam arama alanı eklendi: kullanıcı ID/public ID ile aktif kullanıcı bulunabiliyor, profil açılabiliyor ve doğrudan DM oluşturulabiliyor.
+- `/v1/users/{user_id}` endpoint'i artık authenticated kullanıcı için hem dahili kullanıcı ID'sini hem public kullanıcı ID'sini çözebiliyor.
+- Kilitli oda şifre ekranında 4 ayrı saydam kutu, rakamların gizlenmesi, otomatik sonraki kutuya geçiş, yanlış şifre geri bildirimi ve yeniden deneme akışı uygulanıyor.
+- Son commit: 10914404cacd48f837800ad9ae6c5a4e5b60bbf0.
+- Bu commit için Quality / Pages workflow'ları tetiklendi; kontrol anında workflow'lar queued durumundaydı.
