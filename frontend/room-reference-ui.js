@@ -76,9 +76,21 @@
     
   }
 
+  window.addEventListener('erischat:room-opened',()=>setTimeout(syncManagementUI,0));
+
   function gift(s){
     const c=s.querySelector('.eris-room-compose');if(!c||c.querySelector('#erisRoomGiftInline'))return;
     const b=document.createElement('button');b.id='erisRoomGiftInline';b.type='button';b.className='room-v3-gift';b.textContent='🎁';b.title='Hediye gönder';b.onclick=()=>openMenu('gifts');c.insertBefore(b,c.querySelector('#erisLiveSend')||null);
+  }
+
+  function syncManagementUI(){
+    const s=surface(); if(!s)return;
+    const r=window.__erisRoomPermissions||{}; const can=!!(r.is_owner||r.is_moderator||r.can_manage);
+    const p=s.querySelector('.room-v3-panel'); const tab=p?.querySelector('[data-management-tab]'); if(tab)tab.style.display=can?'':'none';
+    const h=s.querySelector('.eris-room-top'); if(!h)return;
+    let b=h.querySelector('#erisRoomMoreTop');
+    if(can && !b){b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>openMenu('settings');h.appendChild(b)}
+    if(b){b.style.display=can?'':'none';b.setAttribute('aria-hidden',can?'false':'true');}
   }
 
   async function getRoom(){const id=roomId();if(!id)return{};try{return await roomApi().get?.(id)||{}}catch(e){return{}}}
