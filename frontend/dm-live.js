@@ -196,6 +196,35 @@
     loadConversations();
   }
 
+  // One authenticated user socket carries DM realtime events. Room sockets stay separate.
+  let dmSocket = null;
+  let dmReconnectTimer = null;
+  let dmReconnectAttempt = 0;
+  function dmToken(){ return localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || ''; }
+  function connectDmSocket(){
+    const token = dmToken();
+    if (!token) return;
+    try { dmSocket?.close(); } catch (_) {}
+    const apiBase = String(window.ERISCHAT_API_BASE || 'https://erischat-production.up.railway.app/v1').replace(/\\/$/, '');
+    const wsBase = apiBase.replace(/\\/v1\\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+    const ws = new WebSocket(wsBase + '/ws?token=' + encodeURIComponent(token));
+    dmSocket = ws;
+    ws.onopen = () => { dmReconnectAttempt = 0; try { ws.send(JSON.stringify({type:'ping'})); } catch (_) {} };
+    ws.onmessage = event => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === 'dm_message') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
+      } catch (_) {}
+    };
+    ws.onclose = () => {
+      if (dmSocket !== ws) return;
+      dmSocket = null;
+      if (!dmToken()) return;
+      const delay = Math.min(15000, 1000 * Math.pow(2, dmReconnectAttempt++));
+      clearTimeout(dmReconnectTimer);
+      dmReconnectTimer = setTimeout(connectDmSocket, delay);
+    };
+  }
   window.addEventListener('erischat:event', handleRealtimeMessage);
 
   window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, send: sendMessage, activeId: () => activeConversationId };
@@ -203,10 +232,15 @@
   window.addEventListener('erischat:auth', event => {
     if (event?.detail?.state === 'ready') {
       currentUserId = event.detail.user?.id || currentUserId;
+      connectDmSocket();
       if (currentUserId !== loadedForUserId) loadConversations();
     } else if (event?.detail?.state === 'logged_out') {
       currentUserId = null;
       loadedForUserId = null;
+      clearTimeout(dmReconnectTimer);
+      dmReconnectTimer = null;
+      try { dmSocket?.close(); } catch (_) {}
+      dmSocket = null;
     }
   });
 
