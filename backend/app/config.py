@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     db_pool_timeout: int = 30
     db_pool_recycle: int = 1800
     initial_da_ids: str = ""
+    google_client_id: str = ""
+    initial_da_google_emails: str = ""
     rtc_turn_url: str = ""
     rtc_turn_username: str = ""
     rtc_turn_credential: str = ""
