@@ -33,10 +33,36 @@
     box.innerHTML='';
     data.messages.forEach(renderChatMessage);
   }
+  let giftCatalogCache=[];
+  let roomPeopleCache={};
+  const giftLevelByPrice=p=>p>=90000?9:p>=50000?8:p>=20000?7:p>=10000?6:p>=1000?5:p>=500?4:p>=100?3:p>=30?2:1;
+  async function refreshGiftMeta(){
+    try{
+      if(window.ErisRoomGift&&currentRoomId) giftCatalogCache=await window.ErisRoomGift.catalog(currentRoomId);
+      const room=await window.ErisRoom?.get?.(currentRoomId);
+      roomPeopleCache={};
+      if(room){
+        if(room.current_user_id)roomPeopleCache[room.current_user_id]=room.current_user_name||'Sen';
+        if(room.owner_id)roomPeopleCache[room.owner_id]=room.owner_name||'Oda sahibi';
+        (room.seats||[]).forEach(s=>{if(s.user_id)roomPeopleCache[s.user_id]=s.user_name||s.nickname||('Koltuk '+s.seat_number);});
+      }
+    }catch(_){}
+  }
   function renderGiftEvent(data){
-    appendRow('🎁 '+String(data.sender_id||'')+' → '+String(data.recipient_id||'')+': '+String(data.gift_key||'')+' × '+Number(data.quantity||1).toLocaleString('tr-TR')+' • '+Number(data.total_price||0).toLocaleString('tr-TR'),'gift');
-    window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:data}));
-    if(data.animation){
+    const key=String(data.gift_key||'');
+    const meta=(Array.isArray(giftCatalogCache)?giftCatalogCache:[]).find(g=>String(g.gift_key||g.name)===key)||{};
+    const giftName=String(data.gift_name||meta.name||key||'Hediye');
+    const total=Number(data.total_price||meta.price||meta.unit_price||0);
+    const level=giftLevelByPrice(total/Math.max(1,Number(data.quantity||1)));
+    const sender=String(data.sender_name||roomPeopleCache[data.sender_id]||data.sender_id||'Bir kullanıcı');
+    const recipient=String(data.recipient_name||roomPeopleCache[data.recipient_id]||data.recipient_id||'Bir kullanıcı');
+    const detail={...data,gift_name:giftName,total_price:total,level,sender_name:sender,recipient_name:recipient};
+    appendRow('🎁 '+sender+' kişisi '+recipient+' kişisine '+giftName+' verdi'+(Number(data.quantity||1)>1?' × '+Number(data.quantity).toLocaleString('tr-TR'):'')+' • 💎 '+total.toLocaleString('tr-TR'),'gift');
+    window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail}));
+    if(level>=7){
+      appendRow('📢 '+sender+' → '+recipient+' kişisine '+giftName+' verdi! • 💎 '+total.toLocaleString('tr-TR'),'gift');
+    }
+    if(level>1){
       const box=roomBox(), row=box&&box.lastElementChild;
       if(row){row.style.outline='2px solid #ff68b5';row.style.boxShadow='0 0 22px #ff4fa366';setTimeout(()=>{row.style.outline='';row.style.boxShadow='';},900);}
     }
@@ -69,6 +95,7 @@
     ws.onopen=()=>{
       if(socket!==ws || currentRoomId!==activeRoom) return;
       reconnectAttempt=0;
+      refreshGiftMeta();
       try{ws.send(JSON.stringify({type:'ping'}));}catch(_){}
       window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'open'}}));
     };
