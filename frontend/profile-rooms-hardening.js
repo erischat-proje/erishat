@@ -37,8 +37,8 @@
       wrapped.__erisProfileRooms=true; window.openView=wrapped;
     }
     if(document.getElementById('profile')?.classList.contains('show'))load();
-    const mo=new MutationObserver(()=>{if(document.getElementById('profile')?.classList.contains('show'))load();});
-    mo.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+    const profileEl=document.getElementById('profile');
+    if(profileEl){const mo=new MutationObserver(()=>{if(profileEl.classList.contains('show'))load();});mo.observe(profileEl,{attributes:true,attributeFilter:['class']});}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
