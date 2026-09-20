@@ -8,7 +8,7 @@
       const r = await fetch(`${API}/rooms`, { headers: headers() }); if (!r.ok) throw new Error(`rooms:${r.status}`);
       const data = await r.json(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
       targets.forEach(el => { el.innerHTML=''; if (!rooms.length) { window.dispatchEvent(new CustomEvent('erischat:demo-rooms-fallback')); return; }
-        rooms.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||`Oda #${id}`, count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('small').textContent=`${count} kişi • ${owner}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
+        rooms.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||`Oda #${id}`, count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('small').textContent=`${count} kişi • ${owner}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;window.__erisCurrentRoomUserId=localStorage.getItem('eris_user_id')||'';if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
       });
     } catch(e) { console.warn('[ErisChat] room list unavailable',e); window.dispatchEvent(new CustomEvent('erischat:demo-rooms-fallback')); }
   }
@@ -105,7 +105,7 @@
       const num=seat.seat_number??i+1;
       const occupied=!!seat.user_id;
       const locked=!!seat.locked;
-      const currentId=window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'';
+      const currentId=window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||String(window.__erisCurrentRoomUserId||'');
       const isMe=occupied&&String(seat.user_id)===String(currentId);
       const user=seat.user||seat.profile||{};
       const avatarRaw=seat.avatar_url||seat.avatar||seat.profile_image||seat.photo_url||seat.user_avatar||user.avatar_url||user.avatar||user.profile_image||(isMe?window.ErisChatCosmetics?.state?.user?.avatar_asset:'')||'';
@@ -215,11 +215,13 @@
       if(!room)throw new Error('Oda bilgisi alınamadı');
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const seatCount=Math.min(16,Math.max(8,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
-      document.getElementById('erisLiveMeta').textContent='ID: '+String(room.id||id);
-      document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+String(room.id||id);
+      const liveRoomId=String(room.id||id);
+      if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); }
+      document.getElementById('erisLiveMeta').textContent='ID: '+String(room.public_id||id);
+      document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+String(room.public_id||id);
       const levelButton=document.getElementById('erisRoomLevel');
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
-      renderRoomSeats(id,room.name||name,room.seats,seatCount);attachRoomChat(id);window.connectRoomGiftSocket?.(id);
+      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId);
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       surface.classList.remove('show');window.toast?.(e.message||'Odaya bağlanılamadı.');
