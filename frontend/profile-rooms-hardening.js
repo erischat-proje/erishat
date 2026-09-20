@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const api=()=>String(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace(/\/$/,'');
+  const api=()=>window.ErisPlatform?.api?null:(window.ERIS_API||window.ERISCHAT_API||'https://erischat-production.up.railway.app/v1').replace(/\/$/,'');
   const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
   async function load(){
     const profile=document.getElementById('profile'); if(!profile)return;
@@ -14,10 +14,10 @@
     const list=document.getElementById('erisProfileRoomsList');
     try{
       const t=token(); if(!t){list.innerHTML='<div class="empty">Oda sahipliği ve moderatörlük bilgisi için giriş gerekli.</div>';return;}
-      const r=await fetch(api()+'/v1/rooms/me/rooms',{headers:{Authorization:'Bearer '+t}});
-      const data=await r.json().catch(()=>[]);
-      if(!r.ok)throw new Error(data?.detail||'Odalar alınamadı');
-      const rooms=Array.isArray(data)?data:[];
+      let data;
+      if(window.ErisPlatform?.api) data=await window.ErisPlatform.api('/rooms/me/rooms');
+      else { const r=await fetch(api()+'/rooms/me/rooms',{headers:{Authorization:'Bearer '+t}}); data=await r.json().catch(()=>[]); if(!r.ok)throw new Error(data?.detail||'Odalar alınamadı'); }
+      const rooms=Array.isArray(data)?data:(data?.rooms||data?.items||data?.data||[]);
       if(!rooms.length){list.innerHTML='<div class="empty">Sahibi veya moderatörü olduğun oda yok.</div>';return;}
       list.innerHTML='';
       rooms.forEach(room=>{
