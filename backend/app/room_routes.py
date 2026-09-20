@@ -339,13 +339,17 @@ def ensure_seats(db: Session, room: Room) -> None:
         if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == number)): db.add(RoomSeat(room_id=room.id, seat_number=number))
     db.commit()
 
-def room_view(db: Session, room: Room) -> dict:
+def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     ensure_seats(db, room)
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
     members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
     seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id).order_by(RoomSeat.seat_number)))
-    return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "level": room.level, "capacity": LEVELS[room.level]["capacity"], "max_moderators": LEVELS[room.level]["moderators"], "seat_count": LEVELS[room.level]["seats"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "lock_expires_at": room.lock_expires_at, "member_count": members, "spent_lidya": int(spend), "moderators": moderators, "seats": [{"seat_number": s.seat_number, "user_id": s.user_id, "locked": s.locked, "muted": s.muted} for s in seats]}
+    current_id = str(user.id) if user else ""
+    is_owner = bool(user and str(room.owner_id) == current_id)
+    is_moderator = bool(user and any(str(x) == current_id for x in moderators))
+    current_seat = next((s.seat_number for s in seats if user and str(s.user_id or "") == current_id), None)
+    return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "level": room.level, "capacity": LEVELS[room.level]["capacity"], "max_moderators": LEVELS[room.level]["moderators"], "seat_count": LEVELS[room.level]["seats"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "lock_expires_at": room.lock_expires_at, "member_count": members, "spent_lidya": int(spend), "moderators": moderators, "seats": [{"seat_number": s.seat_number, "user_id": s.user_id, "locked": s.locked, "muted": s.muted} for s in seats], "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": bool(is_owner or is_moderator)}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -366,7 +370,7 @@ def register_room_auth(current_user_dependency):
         db.add(RoomMember(room_id=room.id, user_id=user.id))
         ensure_seats(db, room); db.commit(); db.refresh(room)
         record("room_id", "room_public_id_created", room_id=room.id, public_id=room.public_id, owner_id=user.id, owner_nickname=user.nickname)
-        return room_view(db, room)
+        return room_view(db, room, user)
     @router.get("")
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
     @router.get("/{room_id}")
@@ -382,7 +386,7 @@ def register_room_auth(current_user_dependency):
         room.name = name
         db.commit()
         record("room", "room_name_changed", room_id=room.id, public_id=room.public_id, actor_id=user.id, old_name=old_name, new_name=name)
-        return room_view(db, room)
+        return room_view(db, room, user)
     @router.post("/{room_id}/join")
     def join_room(room_id: str, payload: RoomJoinPayload | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -403,7 +407,7 @@ def register_room_auth(current_user_dependency):
             count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
             if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
             db.add(RoomMember(room_id=room.id, user_id=user.id)); db.commit()
-        return room_view(db, room)
+        return room_view(db, room, user)
     @router.post("/{room_id}/invite", status_code=201)
     def invite_to_room(room_id: str, payload: RoomInvite, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -472,7 +476,7 @@ def register_room_auth(current_user_dependency):
         current = db.scalar(select(func.count(RoomModerator.id)).where(RoomModerator.room_id == room.id)) or 0
         if current >= LEVELS[room.level]["moderators"]: raise HTTPException(status_code=409, detail="Bu oda seviyesindeki moderatör sınırına ulaşıldı")
         if not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)): db.add(RoomModerator(room_id=room.id, user_id=payload.user_id)); db.commit()
-        return room_view(db, room)
+        return room_view(db, room, user)
     @router.delete("/{room_id}/moderators/{moderator_id}")
     def remove_moderator(room_id: str, moderator_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == moderator_id)); db.commit(); return {"removed": True}
