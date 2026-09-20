@@ -159,7 +159,6 @@
     const x=document.createElement('style'); x.id='eris-room-v5-css';
     x.textContent=[
       '#erisRoomSurface .eris-room-top{height:64px!important;min-height:64px!important;padding:7px 8px!important;gap:5px!important;box-sizing:border-box!important;overflow:hidden!important}',
-      '#erisRoomSurface .eris-room-top .room-action.back{display:none!important}',
       '#erisRoomSurface .eris-room-title{flex:1 1 auto!important;max-width:calc(100% - 164px)!important;min-width:0!important;overflow:hidden!important}',
       '#erisRoomSurface .eris-room-title b,#erisRoomSurface .eris-room-title small{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}',
       '#erisRoomSurface .eris-room-title b{font-size:13px!important}',
@@ -201,10 +200,6 @@
 
   function top(){
     const s=root(),h=s?.querySelector('.eris-room-top'); if(!h)return;
-    h.querySelector('.room-action.back')?.remove();
-    h.querySelector('#erisRoomMoreTop')?.remove();
-    h.querySelector('#erisRoomLeaveTop')?.remove();
-    h.querySelector('#erisRoomLevel')?.remove();
     const lv=document.createElement('button');
     lv.id='erisRoomLevel';lv.className='room-v5-topbtn';
     lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';lv.onclick=()=>(demo()&&window.__erisRoomPermissions?.can_manage)?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
@@ -212,7 +207,6 @@
     more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';more.onclick=menu;h.appendChild(more);
     const leave=document.createElement('button');
     leave.id='erisRoomLeaveTop';leave.className='room-v5-topbtn';leave.textContent='↪';leave.title='Odadan çık';leave.onclick=()=>window.closeRealRoom?.();h.appendChild(leave);
-    h.querySelectorAll('#erisRoomGift,#erisRoomMusic').forEach(x=>x.style.display='none');
     syncHeader();
   }
 
