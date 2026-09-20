@@ -1,7 +1,7 @@
 /* ErisChat cosmetics integration layer. */
 (() => {
   'use strict';
-  const API = () => window.ERIS_API || 'https://erischat-production.up.railway.app/v1';
+  const API = () => window.ERIS_API || 'https://erischat-api-production.up.railway.app/v1';
   const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   const api = async (path, options = {}) => {
     const headers = new Headers(options.headers || {});

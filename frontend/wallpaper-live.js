@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const API=()=> (window.ERIS_API||window.ERISCHAT_API||'https://erischat-production.up.railway.app/v1').replace(/\/$/,'');
+  const API=()=> (window.ERIS_API||window.ERISCHAT_API||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
   const token=()=>localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';
   const api=async(path,options={})=>{const h=new Headers(options.headers||{});h.set('Accept','application/json');if(options.body!==undefined)h.set('Content-Type','application/json');const t=token();if(t)h.set('Authorization','Bearer '+t);const r=await fetch(API()+path,{...options,headers:h});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.detail||'HTTP '+r.status);return d};
   const url=k=>window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(k):k;

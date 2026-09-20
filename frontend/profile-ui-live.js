@@ -80,7 +80,7 @@
         const bar = vipPanel.querySelector('[data-vip-bar]');
         const perks = vipPanel.querySelector('[data-vip-perks]');
         Promise.resolve().then(async () => {
-          const apiBase = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-production.up.railway.app/v1').replace(/\/$/, '');
+          const apiBase = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
           const token = localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
           const response = await fetch(apiBase + '/me/vip', {headers:{Accept:'application/json', Authorization:'Bearer '+token}});
           if (!response.ok) throw new Error('VIP verisi alınamadı');

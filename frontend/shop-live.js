@@ -1,7 +1,7 @@
 /* ErisChat live shop: render the real cosmetic catalog in the main shop view. */
 (() => {
   'use strict';
-  const API = () => (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-production.up.railway.app/v1').replace(/\/$/, '');
+  const API = () => (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
   const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   async function api(path, options = {}) {
     const headers = new Headers(options.headers || {});
