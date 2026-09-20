@@ -107,7 +107,8 @@
         const data=JSON.parse(ev.data);
         if(data && data.type==='room_history') renderHistory(data);
         else if(data && data.type==='room_chat') renderChatMessage(data);
-        else if(data && data.type==='room_gift') renderGiftEvent(data);\n        else if(data && data.type==='gift_announcement') renderGiftAnnouncement(data);
+        else if(data && data.type==='room_gift') renderGiftEvent(data);
+        else if(data && data.type==='gift_announcement') renderGiftAnnouncement(data);
       }catch(_){}
     };
     ws.onerror=()=>{
@@ -148,8 +149,6 @@
     events: (roomId, limit=50) => roomApi() ? roomApi().giftEvents(roomId, limit) : Promise.reject(new Error('ErisRoom hazır değil')),
     leaderboard: roomId => roomApi() ? roomApi().leaderboard(roomId) : Promise.reject(new Error('ErisRoom hazır değil'))
   };
-
-  window.addEventListener('erischat:room-gift',()=>{});
 
   const originalFetch=window.fetch;
   window.fetch=async function(input,init){
