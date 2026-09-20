@@ -115,7 +115,7 @@
       const b=document.createElement('button');b.type='button';
       const pos=seatLayout(count,i);
       b.style.left=pos.left;b.style.top=pos.top;
-      b.dataset.seatNumber=String(num);
+      b.dataset.seatNumber=String(num);b.dataset.userId=String(seat.user_id||'');
       b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
       b.setAttribute('aria-label',occupied?(seat.nickname||seat.user_name||'Konuşmacı'):'Koltuk '+num);
       b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span><b></b><small></small></div>';
