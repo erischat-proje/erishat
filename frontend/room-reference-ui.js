@@ -29,7 +29,6 @@
       '#erisRoomSurface .eris-room-title{flex:0 1 42%!important;min-width:0!important;padding:2px 3px!important;cursor:pointer!important}',
       '#erisRoomSurface .eris-room-title b{font-size:14px!important;line-height:17px!important;font-weight:900!important}',
       '#erisRoomSurface .eris-room-title small{font-size:8px!important;margin-top:2px!important;color:#bcb3c7!important}',
-      '#erisRoomSurface .eris-room-top #erisRoomGift,#erisRoomSurface .eris-room-top #erisRoomMusic{display:none!important}',
       '#erisRoomSurface .room-v3-top-btn{width:38px!important;height:38px!important;border-radius:12px!important;border:1px solid rgba(255,255,255,.12)!important;background:rgba(255,255,255,.09)!important;color:#fff!important;box-shadow:none!important;flex:none!important}',
       '#erisRoomSurface #erisRoomLevel{position:absolute;left:50%;top:10px;transform:translateX(-50%);min-width:92px;height:38px;padding:0 11px;border-radius:13px;background:rgba(20,11,38,.76);border:1px solid rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;line-height:1.05;box-shadow:0 8px 24px rgba(0,0,0,.22)}',
       '#erisRoomSurface #erisRoomLevel b{font-size:10px;display:block}#erisRoomSurface #erisRoomLevel small{font-size:7px;color:#bdb2c7;display:block;margin-top:2px}',
