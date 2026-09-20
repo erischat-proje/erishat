@@ -463,14 +463,14 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         if not user or not user.is_active:
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
-        room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
+        room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
         internal_room_id = room.id if room else room_id
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
         banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
         if not room or not member or banned:
             await websocket.close(code=1008, reason="oda üyeliği gerekli")
             return
-        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
+        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
         history.reverse()
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept()
@@ -482,8 +482,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         while True:
             data = await websocket.receive_json()
             if not websocket_session_active(token):
-                room_chat_connections.get(room_id, set()).discard(websocket)
-                room_rtc_users.get(room_id, {}).pop(websocket, None)
+                room_chat_connections.get(internal_room_id, set()).discard(websocket)
+                room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
                 await websocket.close(code=1008, reason="oturum sona erdi")
                 return
             with Session(engine) as db:
@@ -491,8 +491,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
                 banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
                 if not room or not member or banned:
-                    room_chat_connections.get(room_id, set()).discard(websocket)
-                    room_rtc_users.get(room_id, {}).pop(websocket, None)
+                    room_chat_connections.get(internal_room_id, set()).discard(websocket)
+                    room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     return
             if not isinstance(data, dict):
@@ -506,13 +506,13 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 if not target or target == sender_user_id:
                     continue
                 payload = {"type": data["type"], "from_user_id": sender_user_id, "to_user_id": target, "payload": data.get("payload")}
-                for peer_ws, peer_user in list(room_rtc_users.get(room_id, {}).items()):
+                for peer_ws, peer_user in list(room_rtc_users.get(internal_room_id, {}).items()):
                     if str(peer_user) == target:
                         try:
                             await peer_ws.send_json(payload)
                         except Exception:
-                            room_chat_connections.get(room_id, set()).discard(peer_ws)
-                            room_rtc_users.get(room_id, {}).pop(peer_ws, None)
+                            room_chat_connections.get(internal_room_id, set()).discard(peer_ws)
+                            room_rtc_users.get(internal_room_id, {}).pop(peer_ws, None)
                 continue
             if data.get("type") == "music_sync":
                 music_id = data.get("music_id")
@@ -521,11 +521,11 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 if not isinstance(music_id, int) or action not in {"play","pause","stop","seek"}:
                     continue
                 with Session(engine) as db:
-                    room = db.get(Room, room_id)
-                    member = db.query(RoomMember).filter(RoomMember.room_id == room_id, RoomMember.user_id == user.id).first()
+                    room = db.get(Room, internal_room_id)
+                    member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
                     if not room or not member:
                         continue
-                    music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == room_id).first()
+                    music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == internal_room_id).first()
                     if not music or (music.user_id != user.id and room.owner_id != user.id):
                         continue
                     now = datetime.now(timezone.utc)
@@ -541,7 +541,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                         music.is_playing = False; music.position_seconds = 0; music.started_at = None
                     db.commit()
                     payload = {"type":"music_sync","music_id":music.id,"action":action,"position_seconds":music.position_seconds,"is_playing":music.is_playing,"started_at":music.started_at.isoformat() if music.started_at else None,"from_user_id":user.id}
-                await _broadcast_room_event(room_id, payload)
+                await _broadcast_room_event(internal_room_id, payload)
                 continue
             if data.get("type") == "room_chat" and not room.chat_enabled:
                 await websocket.send_json({"type":"room_chat_error","code":"chat_disabled","message":"Sohbet kapalı."})
@@ -555,25 +555,25 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
                 member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
                 banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
-                seat = db.query(RoomSeat).filter(RoomSeat.room_id == room_id, RoomSeat.user_id == user.id).first()
+                seat = db.query(RoomSeat).filter(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id).first()
                 if not room or not member or banned or not room.chat_enabled:
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     break
                 if seat and seat.muted:
                     await websocket.send_json({"type":"room_chat_error","code":"muted","message":"Mikrofonunuz susturuldu."})
                     continue
-                msg = RoomChatMessage(room_id=room_id, user_id=user.id, text=text_value)
+                msg = RoomChatMessage(room_id=internal_room_id, user_id=user.id, text=text_value)
                 db.add(msg)
                 db.commit()
                 db.refresh(msg)
                 payload = {"type":"room_chat","id":msg.id,"room_id":room_id,"user_id":user.id,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
-            await _broadcast_room_chat(room_id, payload)
+            await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
-        room_chat_connections.get(room_id, set()).discard(websocket)
-        room_rtc_users.get(room_id, {}).pop(websocket, None)
+        room_chat_connections.get(internal_room_id, set()).discard(websocket)
+        room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
     except Exception:
-        room_chat_connections.get(room_id, set()).discard(websocket)
-        room_rtc_users.get(room_id, {}).pop(websocket, None)
+        room_chat_connections.get(internal_room_id, set()).discard(websocket)
+        room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
         try:
             await websocket.close(code=1011)
         except Exception:
