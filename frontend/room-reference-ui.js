@@ -212,14 +212,24 @@
 
   function top(){
     const s=root(),h=s?.querySelector('.eris-room-top'); if(!h)return;
-    const lv=document.createElement('button');
-    lv.id='erisRoomLevel';lv.className='room-v5-topbtn';
-    lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';lv.onclick=()=>(demo()&&window.__erisRoomPermissions?.can_manage)?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
-    const more=document.createElement('button');
-    more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';more.onclick=menu;h.appendChild(more);
-    const leave=document.createElement('button');
-    leave.id='erisRoomLeaveTop';leave.className='room-v5-topbtn';leave.textContent='↪';leave.title='Odadan çık';leave.onclick=()=>window.closeRealRoom?.();h.appendChild(leave);
+    let lv=h.querySelector('#erisRoomLevel');
+    if(!lv){lv=document.createElement('button');lv.id='erisRoomLevel';lv.className='room-v5-topbtn';lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';h.appendChild(lv);}
+    lv.onclick=()=>(demo()&&window.__erisRoomPermissions?.can_manage)?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();
+    let more=h.querySelector('#erisRoomMoreTop');
+    if(!more){more=document.createElement('button');more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';h.appendChild(more);}
+    more.onclick=menu;
+    let leave=h.querySelector('#erisRoomLeaveTop');
+    if(!leave){leave=document.createElement('button');leave.id='erisRoomLeaveTop';leave.className='room-v5-topbtn';leave.textContent='↪';leave.title='Odadan çık';h.appendChild(leave);}
+    leave.onclick=()=>window.closeRealRoom?.();
     syncHeader();
+  }
+
+  function syncManagementHeader(r){
+    const can=!!(r?.is_owner||r?.is_moderator||r?.can_manage);
+    const b=document.getElementById('erisRoomMoreTop');
+    if(b){b.style.display=can?'':'none';b.setAttribute('aria-hidden',can?'false':'true');}
+    const tab=root()?.querySelector('.room-v3-tab[data-management-tab]');
+    if(tab)tab.style.display=can?'':'none';
   }
 
   async function syncHeader(){
@@ -230,7 +240,7 @@
       lv.innerHTML='<b>Seviye '+level+'</b><small>'+cap+' koltuk</small>';
       return;
     }
-    try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||8)+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.();}catch{};
+    try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||8)+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.(); syncManagementHeader(r);}catch{syncManagementHeader(window.__erisRoomPermissions||{});};
   }
 
   async function menu(){
