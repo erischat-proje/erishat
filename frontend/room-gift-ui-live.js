@@ -77,10 +77,11 @@
     const room = await window.ErisPlatform.api(`/rooms/${encodeURIComponent(state.roomId)}`);
     const me = await window.ErisPlatform.getMe().catch(() => null);
     const ids = new Set();
+    const meId=String(me?.id||'');
     const recipients = [];
-    if (room.owner_id && room.owner_id !== me?.id) { ids.add(room.owner_id); recipients.push({ id: room.owner_id, name: 'Oda sahibi' }); }
+    if (room.owner_id && String(room.owner_id)!==meId) { const rid=String(room.owner_id); ids.add(rid); recipients.push({ id: rid, name: 'Oda sahibi' }); }
     (Array.isArray(room.seats) ? room.seats : []).forEach(seat => {
-      if (seat.user_id && seat.user_id !== me?.id && !ids.has(seat.user_id)) { ids.add(seat.user_id); recipients.push({ id: seat.user_id, name: `Koltuk ${seat.seat_number}` }); }
+      if (seat.user_id && String(seat.user_id)!==meId && !ids.has(String(seat.user_id))) { const rid=String(seat.user_id); ids.add(rid); recipients.push({ id: rid, name: `Koltuk ${seat.seat_number}` }); }
     });
     state.recipients = recipients;
     renderRecipients();
