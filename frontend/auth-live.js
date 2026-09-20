@@ -67,6 +67,13 @@
             window.ErisAuth.user = session.user;
             idBox.textContent = 'Kullanıcı ID: ' + session.user.public_id;
             emit('erischat:auth', { state:'ready', user:session.user, real:true });
+            setTimeout(() => {
+              if (!session.user.profile_completed) {
+                window.ErisOnboarding?.show?.(session.user);
+              } else if (!session.user.welcome_gift_claimed) {
+                window.ErisWelcome?.show?.(session.user);
+              }
+            }, 100);
             setTimeout(closeGate, 250);
             connectGeneralWs();
           } catch (e) {
