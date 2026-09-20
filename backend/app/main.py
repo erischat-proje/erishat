@@ -307,16 +307,28 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
-def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+async def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
     if not repo.is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
     try:
-        return MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
+        message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    event = {
+        "type": "dm_message",
+        "conversation_id": conversation_id,
+        "message_id": message.id,
+        "sender_id": user.id,
+        "sender_nickname": user.nickname,
+        "text": message.text,
+        "created_at": message.created_at.isoformat() if message.created_at else None,
+    }
+    for member_id in repo.members(conversation_id):
+        await manager.send_user(member_id, event)
+    return message
 
 
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
