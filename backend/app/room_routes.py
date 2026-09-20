@@ -372,7 +372,7 @@ def register_room_auth(current_user_dependency):
         record("room_id", "room_public_id_created", room_id=room.id, public_id=room.public_id, owner_id=user.id, owner_nickname=user.nickname)
         return room_view(db, room, user)
     @router.get("")
-    def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
+    def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room, user) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
     @router.get("/{room_id}")
     def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return room_view(db, get_room_or_404(db, room_id))
     @router.patch("/{room_id}/name")
