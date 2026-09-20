@@ -60,3 +60,42 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
   window.addEventListener('erischat:room-opened',()=>{});
 })();
+(() => {
+  'use strict';
+  const api=()=>String(window.ERISCHAT_API_BASE||localStorage.getItem('erischat.apiBase')||'').replace(/\/$/,'');
+  const tok=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
+  async function rq(path){const h=tok()?{Authorization:'Bearer '+tok()}:{};const r=await fetch(api()+path,{headers:h});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.detail||'İstek başarısız');return b;}
+  async function refresh(){
+    const root=document.getElementById('messages'); if(!root||!tok())return;
+    let list=root.querySelector('.messages-list');
+    if(!list){list=document.createElement('div');list.className='list messages-list';root.appendChild(list);}
+    try{
+      const rows=await rq('/v1/conversations?limit=100');
+      const me=window.ErisChatAPI?.state?.user?.id||'';
+      const convs=Array.isArray(rows)?rows:[];
+      if(!convs.length){list.innerHTML='<div class="empty">Henüz mesajlaşma yok.</div>';return;}
+      const users=await Promise.all(convs.map(async c=>{
+        const other=(c.members||[]).find(m=>String(m.user_id)!==String(me))||c.members?.[0];
+        if(!other)return null;
+        try{return {c,u:await rq('/v1/users/'+encodeURIComponent(other.user_id))};}catch{return {c,u:{id:other.user_id,nickname:'Kullanıcı',avatar:'👤',public_id:other.user_id}};}
+      }));
+      list.innerHTML='';
+      users.filter(Boolean).forEach(({c,u})=>{
+        const b=document.createElement('button');b.type='button';b.className='item';
+        b.innerHTML='<div class="pic"></div><div><b></b><br><span class="muted">Sohbeti aç</span></div>';
+        b.querySelector('.pic').textContent=u.avatar||'👤';b.querySelector('b').textContent=u.nickname||'Kullanıcı';
+        b.onclick=async()=>{window.openView?.('messages');window.openChat?.(u.nickname||'Kullanıcı',String(u.nickname||'K').charAt(0).toUpperCase());await window.ErisChatAPI?.setConversation?.(c.id);};
+        list.appendChild(b);
+      });
+    }catch(e){console.warn('[ErisChat] conversations refresh failed',e);}
+  }
+  window.ErisMessagesRefresh=refresh;
+  const oldCreate=window.ErisChatAPI?.createConversation;
+  if(oldCreate&&!oldCreate.__erisRefresh){
+    const wrapped=async function(...args){const c=await oldCreate.apply(this,args);setTimeout(refresh,50);return c;};
+    wrapped.__erisRefresh=true;window.ErisChatAPI.createConversation=wrapped;
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,700),{once:true});
+  window.addEventListener('erischat:room-opened',()=>{});
+  setInterval(()=>{if(document.getElementById('messages')?.classList.contains('show'))refresh();},4000);
+})();
