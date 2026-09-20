@@ -400,6 +400,8 @@
     show,
   };
 
+  if (window.ErisAuth?.user) setTimeout(() => show(window.ErisAuth.user), 100);
+
   window.addEventListener('erischat:auth', event => {
     const detail = event.detail || {};
     if (detail.state === 'ready' && detail.user && !detail.user.profile_completed) {
