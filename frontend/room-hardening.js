@@ -22,19 +22,7 @@
     if(legacy) legacy.classList.remove('show');
   }
 
-  function installSeatFix(){
-    const box=document.getElementById('erisLiveSeats'); if(!box||box.dataset.erisSeatFix==='1')return;
-    box.dataset.erisSeatFix='1';
-    box.addEventListener('click',async e=>{
-      const seat=e.target.closest('.eris-seat');
-      if(!seat)return;
-      if(seat.dataset.longPressed==='1'){seat.dataset.longPressed='0';return;}
-      if(seat.classList.contains('locked')||seat.classList.contains('occupied'))return;
-      e.preventDefault();e.stopImmediatePropagation();
-      try{await joinSeat(Number(seat.dataset.seatNumber));window.toast?.('Koltuk alındı 🎙️');}
-      catch(err){window.toast?.(err.message||'Koltuk alınamadı.');}
-    },true);
-  }
+  function installSeatFix(){ /* Seat clicks are owned by room-live.js; avoid duplicate handlers. */ }
 
   function addOwnerSettingsButton(r){
     const surface=document.getElementById('erisRoomSurface'),top=surface?.querySelector('.eris-room-top');
