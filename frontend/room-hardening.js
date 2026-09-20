@@ -13,7 +13,7 @@
 
   async function joinSeat(seatNumber){
     const id=rid(); if(!id)throw new Error('Oda açık değil');
-    await req('/v1/rooms/'+encodeURIComponent(id)+'/seats/'+encodeURIComponent(seatNumber)+'/join',{method:'POST'});
+    await req('/v1/rooms/'+encodeURIComponent(id)+'/join',{method:'POST',body:JSON.stringify({})}); await req('/v1/rooms/'+encodeURIComponent(id)+'/seats/'+encodeURIComponent(seatNumber)+'/join',{method:'POST'});
     await window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda');
   }
 
