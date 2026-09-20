@@ -125,7 +125,7 @@
   }
 
   async function openMenu(tab){
-    const s=surface();if(!s)return;css();top(s);gift(s);const p=panel(s);p.classList.add('show');p.querySelectorAll('.room-v3-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));p.querySelector('#roomV3Title').textContent={info:'Oda bilgisi',users:'Kullanıcılar',gifts:'Hediyeler',music:'Müzik',settings:'Oda ayarları'}[tab]||'Oda';const body=p.querySelector('#roomV3Body');body.innerHTML='<div class="room-v3-note">Yükleniyor…</div>';const r=await getRoom();if(tab==='info')await info(body,r);else if(tab==='users')await users(body,r);else if(tab==='gifts')await gifts(body,r);else if(tab==='music')await music(body,r);else await settings(body,r)
+    const s=surface();if(!s)return;css();top(s);gift(s);const p=panel(s);p.classList.add('show');p.querySelectorAll('.room-v3-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));p.querySelector('#roomV3Title').textContent={info:'Oda bilgisi',users:'Kullanıcılar',gifts:'Hediyeler',music:'Müzik',settings:'Oda ayarları'}[tab]||'Oda';const body=p.querySelector('#roomV3Body');body.innerHTML='<div class="room-v3-note">Yükleniyor…</div>';const r=await getRoom();if(tab==='settings'&&!r.is_owner&&!r.is_moderator){await info(body,r);return}if(tab==='info')await info(body,r);else if(tab==='users')await users(body,r);else if(tab==='gifts')await gifts(body,r);else if(tab==='music')await music(body,r);else await settings(body,r)
   }
 
   function bind(){
