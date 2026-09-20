@@ -22,7 +22,7 @@
       ['demo-room-5','VIP Lounge',11,'NØXIA','👑',7],
       ['demo-room-6','Gece Yayını',7,'Mira','✨',7]
     ];
-    window.ErisDemoRoomConfig=Object.fromEntries(data.map(r=>[r[0],{id:r[0],name:r[1],member_count:r[2],owner:r[3],level:r[5],seat_count:r[5]>=7?16:r[5]>=5?12:8}]));
+    window.ErisDemoRoomConfig=Object.fromEntries(data.map(r=>[r[0],{id:r[0],name:r[1],member_count:r[2],owner:r[3],level:r[5],seat_count:r[5]>=7?16:r[5]>=5?12:8,locked:r[0]==='demo-room-5',password:r[0]==='demo-room-5'?'3456':''}]));
     document.querySelectorAll('#realRooms,#rooms').forEach(el=>{el.innerHTML='';data.forEach(r=>{const b=document.createElement('button');b.className='room card';b.innerHTML='<div class="ava">'+r[4]+'<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">DEMO CANLI</span>';b.querySelector('b').textContent=r[1];b.querySelector('small').textContent=r[2]+' kişi • '+r[3];b.onclick=()=>openRoom(r[0],r[1]);el.appendChild(b)});});
   });
 
@@ -165,8 +165,25 @@
     // Demo rooms never call the live API. This prevents a dead/unreachable backend from
     // freezing the customer demo while opening an example room.
     if(id.startsWith('demo-room-')){
-      const demo=window.ErisDemoRoomConfig?.[id]||{id,name:name||'Demo Oda',level:1,seat_count:8,member_count:1,owner:'ErisChat'};
-      const seatCount=Math.min(16,Math.max(8,Number(demo.seat_count)||8));
+      const demo=window.ErisDemoRoomConfig?.[id]||{id,name:name||'Demo Oda',level:1,seat_count:8,member_count:1,owner:'ErisChat',locked:false,password:''};
+      const defaultLocked=demo.locked===true;
+      const savedLocked=localStorage.getItem('eris_demo_room_locked_'+id);
+      const locked=savedLocked===null?defaultLocked:savedLocked==='1';
+      const password=localStorage.getItem('eris_demo_room_password_'+id)||String(demo.password||'');
+      if(locked && password){
+        const unlocked=localStorage.getItem('eris_demo_room_unlocked_'+id)==='1';
+        if(!unlocked){
+          const entered=prompt('🔒 Demo oda kilitli. 4 haneli şifreyi gir:','');
+          if(entered===null || String(entered).trim()!==password){
+            window.toast?.('Şifre yanlış ✕ Odaya giriş reddedildi.');
+            surface.classList.remove('show');
+            return;
+          }
+          localStorage.setItem('eris_demo_room_unlocked_'+id,'1');
+          window.toast?.('Şifre doğru ✓ Demo odaya giriş kabul edildi.');
+        }
+      }
+      const seatCount=Math.min(16,Math.max(8,Number(localStorage.getItem('eris_demo_room_capacity_'+id)||demo.seat_count)||8));
       const demoSavedName=localStorage.getItem('eris_demo_room_name_'+id)||demo.name||name||'Demo Oda';
       document.getElementById('erisLiveTitle').textContent=demoSavedName;
       document.getElementById('erisLiveMeta').textContent='ID: 482731 • DEMO';
