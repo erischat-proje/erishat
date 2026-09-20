@@ -231,7 +231,7 @@ GIFT_CATALOG = {
 }
 
 class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
-class RoomPasswordUpdate(BaseModel): password: str = Field(min_length=4, max_length=4, pattern=r"^\\d{4}$")
+class RoomPasswordUpdate(BaseModel): password: str = Field(min_length=4, max_length=4, pattern=r"^\d{4}$")
 class RoomJoinPayload(BaseModel): password: str | None = Field(default=None, max_length=4)
 class RoomChatUpdate(BaseModel): enabled: bool
 class RoomNameUpdate(BaseModel): name: str = Field(min_length=1, max_length=16)
