@@ -48,24 +48,26 @@
       }
     }catch(_){}
   }
-  function renderGiftEvent(data){
+  function giftDetail(data){
     const key=String(data.gift_key||'');
     const meta=(Array.isArray(giftCatalogCache)?giftCatalogCache:[]).find(g=>String(g.gift_key||g.name)===key)||{};
     const giftName=String(data.gift_name||meta.name||key||'Hediye');
-    const total=Number(data.total_price||meta.price||meta.unit_price||0);
-    const level=giftLevelByPrice(total/Math.max(1,Number(data.quantity||1)));
+    const unit=Number(data.unit_price||meta.price||meta.unit_price||0);
+    const total=Number(data.total_price||unit);
+    const quantity=Math.max(1,Number(data.quantity||1));
+    const level=giftLevelByPrice(unit);
     const sender=String(data.sender_name||roomPeopleCache[data.sender_id]||data.sender_id||'Bir kullanıcı');
     const recipient=String(data.recipient_name||roomPeopleCache[data.recipient_id]||data.recipient_id||'Bir kullanıcı');
-    const detail={...data,gift_name:giftName,total_price:total,level,sender_name:sender,recipient_name:recipient};
-    appendRow('🎁 '+sender+' kişisi '+recipient+' kişisine '+giftName+' verdi'+(Number(data.quantity||1)>1?' × '+Number(data.quantity).toLocaleString('tr-TR'):'')+' • 💎 '+total.toLocaleString('tr-TR'),'gift');
+    return {...data,gift_name:giftName,unit_price:unit,total_price:total,quantity,level,sender_name:sender,recipient_name:recipient};
+  }
+  function renderGiftEvent(data){
+    const detail=giftDetail(data);
     window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail}));
-    if(level>=7){
-      appendRow('📢 '+sender+' → '+recipient+' kişisine '+giftName+' verdi! • 💎 '+total.toLocaleString('tr-TR'),'gift');
-    }
-    if(level>1){
-      const box=roomBox(), row=box&&box.lastElementChild;
-      if(row){row.style.outline='2px solid #ff68b5';row.style.boxShadow='0 0 22px #ff4fa366';setTimeout(()=>{row.style.outline='';row.style.boxShadow='';},900);}
-    }
+  }
+  function renderGiftAnnouncement(data){
+    const detail=giftDetail(data);
+    appendRow('📢 '+detail.sender_name+' kişisi '+detail.recipient_name+' kişisine '+detail.gift_name+' verdi • 💎 '+detail.total_price.toLocaleString('tr-TR'),'gift');
+    window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...detail,global:true}}));
   }
 
   function scheduleReconnect(roomId){
@@ -105,7 +107,7 @@
         const data=JSON.parse(ev.data);
         if(data && data.type==='room_history') renderHistory(data);
         else if(data && data.type==='room_chat') renderChatMessage(data);
-        else if(data && data.type==='room_gift') renderGiftEvent(data);
+        else if(data && data.type==='room_gift') renderGiftEvent(data);\n        else if(data && data.type==='gift_announcement') renderGiftAnnouncement(data);
       }catch(_){}
     };
     ws.onerror=()=>{
