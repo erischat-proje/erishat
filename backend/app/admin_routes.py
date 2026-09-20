@@ -232,6 +232,21 @@ def register_admin_auth(current_user_dependency):
         db.commit(); db.refresh(row)
         return {"id": row.id, "saved": True}
 
+    @router.get("/users")
+    def users_list(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        require_role(db, user, "DA")
+        rows = db.scalars(select(User).order_by(User.created_at.desc()).limit(500)).all()
+        roles = {r.user_id: r.role for r in db.scalars(select(AdminRole)).all()}
+        return [{
+            "id": x.id,
+            "public_id": x.public_id,
+            "nickname": x.nickname,
+            "google_email": getattr(x, "google_email", None),
+            "role": roles.get(x.id),
+            "is_active": x.is_active,
+            "created_at": x.created_at,
+        } for x in rows]
+
     @router.get("/users/{user_id}")
     def user_lookup(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db, user, "DA")
