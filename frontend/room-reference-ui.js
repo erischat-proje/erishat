@@ -207,7 +207,7 @@
     h.querySelector('#erisRoomLevel')?.remove();
     const lv=document.createElement('button');
     lv.id='erisRoomLevel';lv.className='room-v5-topbtn';
-    lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';lv.onclick=()=>demo()?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
+    lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';lv.onclick=()=>(demo()&&window.__erisRoomPermissions?.can_manage)?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
     const more=document.createElement('button');
     more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';more.onclick=menu;h.appendChild(more);
     const leave=document.createElement('button');
