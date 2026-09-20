@@ -166,6 +166,11 @@
     // freezing the customer demo while opening an example room.
     if(id.startsWith('demo-room-')){
       const demo=window.ErisDemoRoomConfig?.[id]||{id,name:name||'Demo Oda',level:1,seat_count:8,member_count:1,owner:'ErisChat',locked:false,password:''};
+      if(id==='demo-room-5' && localStorage.getItem('eris_demo_lock_v2_initialized')!=='1'){
+        localStorage.setItem('eris_demo_room_locked_'+id,'1');
+        localStorage.setItem('eris_demo_room_password_'+id,'3456');
+        localStorage.setItem('eris_demo_lock_v2_initialized','1');
+      }
       const defaultLocked=demo.locked===true;
       const savedLocked=localStorage.getItem('eris_demo_room_locked_'+id);
       const locked=savedLocked===null?defaultLocked:savedLocked==='1';
