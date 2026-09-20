@@ -182,7 +182,7 @@
     h.querySelector('#erisRoomLevel')?.remove();
     const lv=document.createElement('button');
     lv.id='erisRoomLevel';lv.className='room-v5-topbtn';
-    lv.innerHTML='<b>Seviye 10</b><small>16 koltuk</small>';lv.title='Oda seviyesi ve koltuk ayarları';lv.onclick=demoSettings;h.appendChild(lv);
+    lv.innerHTML='<b>Seviye 10</b><small>16 koltuk</small>';lv.title='Oda seviyesi ve koltuk ayarları';lv.onclick=()=>demo()?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();h.appendChild(lv);
     const more=document.createElement('button');
     more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';more.onclick=menu;h.appendChild(more);
     const leave=document.createElement('button');
@@ -200,8 +200,10 @@
     }
   }
 
-  function menu(){
+  async function menu(){
     const p=panel(); if(!p)return;
+    const r=demo()?demo():(await roomApi().get?.(rid()).catch(()=>({}))||{});
+    const canManage=!!(demo()||r.is_owner||r.is_moderator||isOwner(r));
     p.innerHTML='<div class="v5-title">Oda menüsü <button class="v5-btn" data-close>Kapat</button></div>'+
       '<div class="v5-grid">'+
       '<button class="v5-btn" data-v5="info">ℹ️ Oda bilgisi</button>'+
