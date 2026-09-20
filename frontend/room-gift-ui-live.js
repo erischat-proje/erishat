@@ -1,6 +1,28 @@
 /* Live room gift picker. Uses the existing REST gift bridge and room view seats. */
 (() => {
-  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null };
+  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all' };
+  const giftCategory = gift => {
+    const price=Number(gift?.price||gift?.unit_price||0);
+    if(price<=99) return 'Başlangıç';
+    if(price<=999) return 'Eşya & Savaş';
+    if(price<=9999) return 'Zenginlik';
+    if(price<=19999) return 'Kraliyet';
+    if(price<=49999) return 'Saray';
+    if(price<=89999) return 'Mitoloji';
+    return 'Lidya';
+  };
+  const giftIcon = name => {
+    const n=String(name||'').toLocaleLowerCase('tr-TR');
+    const rules=[
+      [/gül|çiçek|başak|incir ağacı/,'🌹'],[/kalp|aşk|afrodit|inci/,'💖'],[/altın|hazine|taht|krezus|lidya|sikke|paktolos/,'👑'],
+      [/elmas|mücevher|yakut|safir|zümrüt|lapis|kehribar|değerli taş/,'💎'],[/kılıç|mızrak|bıçak|hançer|balta|yay|ok|zırh|kalkan|çekiç|kamçı/,'⚔️'],
+      [/taç|çelenk|gerdanlık|bilezik|yüzük|broş|kemer|mühür/,'👑'],[/yemek|ekmek|bal|peynir|süt|yoğurt|balık|meyve|elma|ceviz|üzüm|noh[u]?t|çörek|pide|çay|baharat|reçel|mısır/,'🍯'],
+      [/şarap|kase|kupa|karaf|vazo|şişe|sürahi|bardak/,'🏺'],[/gemi|yat|araba|ahır/,'🛥️'],[/saray|köşk|kule|bahçe|havuz|çeşme|sütun|amfi|kütüphane|çiftlik/,'🏛️'],
+      [/zeus|pegasus|apollon|athena|poseidon|ares|hermes|hades|dionysos|artemis|demeter|chronos|prometheus|medusa|hydra|minotaur|sphinx|titan/,'⚡'],
+      [/ateş|meşale|şimşek|yıldırım/,'🔥'],[/müzik|liri|borusu|çan/,'🎵'],[/kitap|parşömen|harita/,'📜'],[/kumaş|şal|cübbe|kaftan|halı|örtü/,'🧵'],[/ayna|tarak|parfüm|sandalet|eldiven/,'✨']
+    ];
+    return (rules.find(([re])=>re.test(n))||[])[1] || (Number(name?.price||0)>=90000?'🏆':Number(name?.price||0)>=50000?'✨':'🎁');
+  };
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
   const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : console.warn('[ErisChat gift]', message);
 
@@ -26,8 +48,17 @@
 
   function renderGifts() {
     const box = document.getElementById('egpGifts');
+    const cats = document.getElementById('egpCategories');
     if (!box) return;
-    box.innerHTML = state.gifts.length ? state.gifts.map(g => `<button class="egp-gift${state.selectedGift === g.gift_key ? ' active' : ''}" data-gift="${esc(g.gift_key)}" type="button"><b>🎁 ${esc(g.gift_key)}</b><small>💎 ${Number(g.price || g.unit_price || 0).toLocaleString('tr-TR')}</small></button>`).join('') : '<div class="egp-note">Hediye kataloğu boş.</div>';
+    const categories=['all','Başlangıç','Eşya & Savaş','Zenginlik','Kraliyet','Saray','Mitoloji','Lidya'];
+    if(cats) cats.innerHTML=categories.map(x=>`<button class="egp-cat${state.category===x?' active':''}" data-cat="${esc(x)}" type="button">${x==='all'?'Tümü':x}</button>`).join('');
+    const visible=state.gifts.filter(g=>state.category==='all'||giftCategory(g)===state.category);
+    box.innerHTML = visible.length ? visible.map(g => {
+      const name=String(g.gift_key||g.name||'');
+      const price=Number(g.price||g.unit_price||0);
+      return `<button class="egp-gift${state.selectedGift === name ? ' active' : ''}" data-gift="${esc(name)}" type="button" title="${esc(name)}" aria-label="${esc(name)}"><span class="egp-icon">${giftIcon(name)}</span><span class="egp-price">💎 ${price.toLocaleString('tr-TR')}</span></button>`;
+    }).join('') : '<div class="egp-note">Bu kategoride hediye yok.</div>';
+    cats?.querySelectorAll('[data-cat]').forEach(btn=>{btn.onclick=()=>{state.category=btn.dataset.cat;renderGifts();};});
     box.querySelectorAll('[data-gift]').forEach(btn => { btn.onclick = () => { state.selectedGift = btn.dataset.gift; renderGifts(); updateSend(); }; });
   }
 
@@ -80,7 +111,7 @@
     injectStyles();
     const panel = document.createElement('section');
     panel.id = 'erischatGiftPanel';
-    panel.innerHTML = '<div class="egp-head"><div><div class="egp-title">🎁 Odaya hediye gönder</div><div class="egp-balance" id="egpBalance">Bakiye yükleniyor…</div></div><button class="egp-close" type="button">×</button></div><div class="egp-note">Önce alıcıyı, sonra hediyeyi seç.</div><div class="egp-row" id="egpRecipients"></div><div class="egp-grid" id="egpGifts"></div><button class="egp-send" id="egpSend" type="button" disabled>Hediye gönder</button>';
+    panel.innerHTML = '<div class="egp-head"><div><div class="egp-title">🎁 Odaya hediye gönder</div><div class="egp-balance" id="egpBalance">Bakiye yükleniyor…</div></div><button class="egp-close" type="button">×</button></div><div class="egp-note">Alıcıyı seç, sonra kategoriden hediyeyi bul ve logosuna dokun.</div><div class="egp-row" id="egpRecipients"></div><div class="egp-cats" id="egpCategories"></div><div class="egp-grid" id="egpGifts"></div><button class="egp-send" id="egpSend" type="button" disabled>Hediye gönder</button>';
     panel.querySelector('.egp-close').onclick = () => panel.classList.remove('show');
     panel.querySelector('#egpSend').onclick = send;
     document.body.appendChild(panel);
