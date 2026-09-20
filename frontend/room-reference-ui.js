@@ -210,10 +210,10 @@
       '<button class="v5-btn" data-v5="users">👥 Kullanıcılar</button>'+
       '<button class="v5-btn" data-v5="gifts">🎁 Hediyeler</button>'+
       '<button class="v5-btn" data-v5="music">🎵 Müzik</button>'+
-      '<button class="v5-btn" data-v5="settings">⚙️ Oda ayarları</button>'+
+      (canManage?'<button class="v5-btn" data-v5="settings">⚙️ Oda ayarları</button>':'')+
       '<button class="v5-btn" data-v5="theme">🎨 Oda teması</button>'+
       '</div>'+
-      '<div class="v5-card"><b style="font-size:10px">👑 Oda yönetimi</b><div class="v5-note" style="margin-top:4px">Seviye/koltuk: üstteki Seviye düğmesi. Tema: bu menüden. Mikrofon: mesaj kutusunun yanında.</div></div>';
+      '<div class="v5-card"><b style="font-size:10px">'+(canManage?'👑 Oda yönetimi':'👤 Oda kullanıcısı')+'</b><div class="v5-note" style="margin-top:4px">'+(canManage?'Yönetim yetkileri sadece oda sahibi ve atanmış moderatörde görünür.':'Bu odanın sahibi/moderatörü değilsin; yönetim kontrolleri gizlendi.')+'</div></div>';
     p.classList.add('show');
     p.querySelector('[data-close]').onclick=()=>p.classList.remove('show');
     p.querySelectorAll('[data-v5]').forEach(b=>b.onclick=()=>{
