@@ -373,8 +373,19 @@ def register_room_auth(current_user_dependency):
         return room_view(db, room, user)
     @router.get("")
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return [room_view(db, room, user) for room in db.scalars(select(Room).order_by(Room.created_at.desc()))]
+    @router.get("/me/rooms")
+    def list_my_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        owned = select(Room.id).where(Room.owner_id == user.id)
+        moderated = select(RoomModerator.room_id).where(RoomModerator.user_id == user.id)
+        rooms = list(db.scalars(select(Room).where((Room.owner_id == user.id) | Room.id.in_(moderated)).order_by(Room.created_at.desc())))
+        result = []
+        for room in rooms:
+            view = room_view(db, room, user)
+            view["role"] = "owner" if view["is_owner"] else "moderator"
+            result.append(view)
+        return result
     @router.get("/{room_id}")
-    def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return room_view(db, get_room_or_404(db, room_id))
+    def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return room_view(db, get_room_or_404(db, room_id), user)
     @router.patch("/{room_id}/name")
     def rename_room(room_id: str, payload: RoomNameUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
