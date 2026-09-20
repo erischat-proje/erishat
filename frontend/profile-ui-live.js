@@ -44,6 +44,33 @@
       setNotificationState(user.notifications_enabled !== false);
       if (balance && user.lidya != null) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
       if (name && user.nickname) name.textContent = user.nickname;
+      const face = profile.querySelector('.face');
+      const frame = profile.querySelector('.frameImg');
+      const assetValue = value => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        return value.url || value.src || value.asset_url || value.path || value.asset_key || '';
+      };
+      const assetUrl = value => {
+        const raw = assetValue(value);
+        return raw && window.ErisChatCosmetics?.assetUrl ? window.ErisChatCosmetics.assetUrl(raw) : raw;
+      };
+      const avatarUrl = assetUrl(user.avatar_asset);
+      const frameUrl = assetUrl(user.frame_asset);
+      if (face) {
+        if (avatarUrl) {
+          face.style.backgroundImage = `url("${avatarUrl.replace(/"/g,'%22')}")`;
+          face.style.backgroundSize = 'cover';
+          face.style.backgroundPosition = 'center';
+          face.textContent = '';
+        } else {
+          face.style.backgroundImage = '';
+        }
+      }
+      if (frame) {
+        frame.src = frameUrl || '';
+        frame.style.display = frameUrl ? '' : 'none';
+      }
       if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
       const vipPanel = controls.parentElement?.querySelector('[data-erischat-vip-panel]');
       if (vipPanel) {
