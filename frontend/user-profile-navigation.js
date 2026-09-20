@@ -43,6 +43,21 @@
     const header=e.target.closest?.('#chat .chatHead .ava,#chat .chatHead b');
     if(header&&window.__erisActiveDmUserId){e.preventDefault();e.stopImmediatePropagation();openUserProfile(window.__erisActiveDmUserId);}
   },true);
+  async function openNamedProfile(name){
+    try{
+      const data=await api().api('/discover/nearby');
+      const rows=Array.isArray(data)?data:(data?.users||data?.items||data?.data||[]);
+      const u=rows.find(x=>String(x.nickname||'').toLowerCase()===String(name||'').toLowerCase());
+      if(u?.id||u?.user_id) return openUserProfile(u.id||u.user_id);
+    }catch{}
+  }
+  document.addEventListener('click',e=>{
+    const people=e.target.closest?.('#people .item');
+    if(people && !e.target.closest('button[data-profile-message]')){
+      const n=people.querySelector('b')?.textContent?.trim();
+      if(n){e.preventDefault();e.stopImmediatePropagation();openNamedProfile(n);}
+    }
+  },true);
   const mo=new MutationObserver(mark);
   const start=()=>{mark();mo.observe(document.body,{childList:true,subtree:true});};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
