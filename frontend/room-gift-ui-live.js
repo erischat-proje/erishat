@@ -67,9 +67,9 @@
     const ids = new Set();
     const meId=String(me?.id||'');
     const recipients = [];
-    if (room.owner_id && String(room.owner_id)!==meId) { const rid=String(room.owner_id); ids.add(rid); recipients.push({ id: rid, name: 'Oda sahibi' }); }
+    if (room.owner_id && String(room.owner_id)!==meId) { const rid=String(room.owner_id); ids.add(rid); recipients.push({ id: rid, name: String(room.owner_name || 'Oda sahibi') }); }
     (Array.isArray(room.seats) ? room.seats : []).forEach(seat => {
-      if (seat.user_id && String(seat.user_id)!==meId && !ids.has(String(seat.user_id))) { const rid=String(seat.user_id); ids.add(rid); recipients.push({ id: rid, name: `Koltuk ${seat.seat_number}` }); }
+      if (seat.user_id && String(seat.user_id)!==meId && !ids.has(String(seat.user_id))) { const rid=String(seat.user_id); ids.add(rid); recipients.push({ id: rid, name: String(seat.user_name || `Koltuk ${seat.seat_number}`) }); }
     });
     state.recipients = recipients;
     renderRecipients();
