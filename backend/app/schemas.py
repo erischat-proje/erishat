@@ -162,3 +162,16 @@ class MessageOut(BaseModel):
     sender_id: str
     text: str
     created_at: datetime
+
+
+class OTPRequest(BaseModel):
+    provider: Literal["phone", "email"]
+    identifier: str = Field(min_length=3, max_length=320)
+    purpose: Literal["register", "login", "link"]
+
+
+class OTPVerify(BaseModel):
+    provider: Literal["phone", "email"]
+    identifier: str = Field(min_length=3, max_length=320)
+    purpose: Literal["register", "login", "link"]
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")

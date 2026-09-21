@@ -18,7 +18,7 @@ from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
 from .db import Base, engine, get_db
-from .models import Conversation, ConversationMember, Message, User, UserCosmetic
+from .models import AuthOTP, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import register_room_auth, router as room_router
@@ -31,9 +31,10 @@ from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files
-from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, SessionOut, UserCreate, UserOut, UserUpdate
+from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, OTPRequest, OTPVerify, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
+from .otp import create_otp, verify_otp
 
 logger = logging.getLogger("erischat.api")
 app = FastAPI(title="ErisChat API", version="1.0.0")
@@ -245,6 +246,70 @@ def google_login(payload: GoogleLoginPayload, request: Request, db: Session = De
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return SessionOut(access_token=create_session(db, user), user=user)
+
+
+@app.post("/v1/auth/otp/request")
+def request_otp(
+    payload: OTPRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
+
+    try:
+        otp, _code = create_otp(
+            db,
+            provider=payload.provider,
+            identifier=identifier,
+            purpose=payload.purpose,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+
+    logger.info(
+        "OTP requested provider=%s purpose=%s identifier=%s expires_at=%s ip=%s",
+        payload.provider,
+        payload.purpose,
+        identifier,
+        otp.expires_at.isoformat(),
+        request.client.host if request.client else None,
+    )
+
+    return {
+        "accepted": True,
+        "expires_at": otp.expires_at,
+        "message": "Doğrulama kodu gönderim kuyruğuna alındı.",
+    }
+
+
+@app.post("/v1/auth/otp/verify")
+def verify_otp_code(
+    payload: OTPVerify,
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
+
+    otp = (
+        db.query(AuthOTP)
+        .filter(
+            AuthOTP.provider == payload.provider,
+            AuthOTP.identifier == identifier,
+            AuthOTP.purpose == payload.purpose,
+            AuthOTP.consumed_at.is_(None),
+        )
+        .order_by(AuthOTP.created_at.desc())
+        .first()
+    )
+
+    if otp is None or not verify_otp(db, otp, payload.code):
+        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş doğrulama kodu.")
+
+    return {
+        "verified": True,
+        "provider": payload.provider,
+        "identifier": identifier,
+        "purpose": payload.purpose,
+    }
 
 
 @app.post("/v1/welcome/claim", response_model=UserOut)

@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     initial_da_ids: str = ""
     google_client_id: str = ""
     initial_da_google_emails: str = ""
+    otp_expiry_seconds: int = 300
+    otp_resend_cooldown_seconds: int = 60
+    otp_max_attempts: int = 5
+    otp_length: int = 6
     rtc_turn_url: str = ""
     rtc_turn_username: str = ""
     rtc_turn_credential: str = ""
