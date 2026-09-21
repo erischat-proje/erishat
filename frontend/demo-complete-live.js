@@ -101,9 +101,16 @@
   }
 
   function mountButtons(){
-    // Customer demo controls are exposed through the main navigation / feature hub.
-    // Keep the primary surface uncluttered: no floating demo toolbar.
     document.getElementById('erisDemoCompleteTools')?.remove();
+
+    const tools=document.createElement('div');
+    tools.id='erisDemoCompleteTools';
+    tools.style.cssText='position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden';
+    tools.innerHTML='<button id="erisDemoCompleteVip" type="button">VIP 1–12</button><button id="erisDemoCompleteCheck" type="button">Kontrol</button>';
+    document.body.append(tools);
+
+    tools.querySelector('#erisDemoCompleteVip').onclick=()=>vipDemo();
+    tools.querySelector('#erisDemoCompleteCheck').onclick=()=>checklistDemo();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mountButtons()},{once:true});else {mountButtons();}
 })();
