@@ -15,7 +15,11 @@
     }
     const response = await fetch(`${API()}${path}`, { ...options, headers });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+    if (!response.ok) {
+      const error = new Error(data.detail || `HTTP ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
     return data;
   }
 
@@ -141,7 +145,7 @@
         window.ErisAuth.user = user;
         return user;
       } catch (error) {
-        if (!String(error.message).includes('401')) throw error;
+        if (error?.status !== 401) throw error;
         clearToken();
       }
     }
