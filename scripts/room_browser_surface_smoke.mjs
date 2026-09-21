@@ -27,6 +27,15 @@ try{
   await page.goto(`http://127.0.0.1:4175/erischat-main.html`,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#home.view.show');
   await page.waitForSelector('#realRooms .room');
+
+await page.evaluate(() => {
+  const gate = document.querySelector('#erisGoogleGate');
+  if (gate) {
+    gate.style.display = 'none';
+    gate.setAttribute('aria-hidden', 'true');
+  }
+});
+
   await page.locator('.nav button',{hasText:'Keşfet'}).click();
   // Room list is rendered and separately verified; opening the modal is covered by the dedicated room UI layer.
   await page.locator('.nav button',{hasText:'Mesaj'}).click();
