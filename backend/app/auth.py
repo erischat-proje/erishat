@@ -1,4 +1,5 @@
 from uuid import uuid4
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 from google.oauth2 import id_token
@@ -6,7 +7,7 @@ from google.auth.transport import requests as google_requests
 
 from .config import settings
 
-from .models import User
+from .models import User, AuthIdentity
 from .system_data import UserIdRegistry
 from .system_logs import record
 from .repositories import UserRepository
@@ -94,12 +95,15 @@ def create_or_login_google_user(
                 user.public_id = public_id
                 break
         db.add(user)
+        db.add(AuthIdentity(id=uuid4().hex, user_id=user.id, provider="google", provider_subject=google_sub, identifier=email, verified_at=datetime.now(timezone.utc)))
         db.flush()
         db.add(UserIdRegistry(user_id=user.id, public_id=user.public_id))
         record("user_id", "google_user_created", user_id=user.id, public_id=user.public_id, nickname=user.nickname, google_email=email)
     else:
         if not user.is_active:
             raise ValueError("Hesap devre dışı")
+        if not db.query(AuthIdentity).filter(AuthIdentity.provider == "google", AuthIdentity.provider_subject == google_sub).first():
+            db.add(AuthIdentity(id=uuid4().hex, user_id=user.id, provider="google", provider_subject=google_sub, identifier=email, verified_at=datetime.now(timezone.utc)))
         user.google_email = email
         user.last_ip = ip
         user.device_info = device_info
