@@ -13,7 +13,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .auth import create_anonymous_user, create_or_login_google_user
+from .auth import create_anonymous_user, create_or_login_google_user, create_or_login_verified_identity
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
@@ -35,6 +35,7 @@ from .schemas import ConversationCreate, ConversationOut, MessageCreate, Message
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 from .otp import create_otp, verify_otp
+from .otp_delivery import send_email_otp
 
 logger = logging.getLogger("erischat.api")
 app = FastAPI(title="ErisChat API", version="1.0.0")
@@ -257,7 +258,7 @@ def request_otp(
     identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
 
     try:
-        otp, _code = create_otp(
+        otp, code = create_otp(
             db,
             provider=payload.provider,
             identifier=identifier,
@@ -265,6 +266,31 @@ def request_otp(
         )
     except ValueError as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
+
+    if payload.provider == "email":
+        try:
+            send_email_otp(
+                recipient=identifier,
+                code=code,
+                purpose=payload.purpose,
+            )
+        except Exception as exc:
+            db.delete(otp)
+            db.commit()
+            logger.exception("Email OTP gönderilemedi: %s", exc)
+            raise HTTPException(
+                status_code=503,
+                detail="Doğrulama kodu gönderilemedi.",
+            ) from exc
+
+    elif payload.provider == "phone":
+        # SMS sağlayıcısı bağlanana kadar telefon OTP'si gönderilmez.
+        db.delete(otp)
+        db.commit()
+        raise HTTPException(
+            status_code=503,
+            detail="Telefon doğrulama servisi henüz yapılandırılmadı.",
+        )
 
     logger.info(
         "OTP requested provider=%s purpose=%s identifier=%s expires_at=%s ip=%s",
@@ -282,11 +308,12 @@ def request_otp(
     }
 
 
-@app.post("/v1/auth/otp/verify")
+@app.post("/v1/auth/otp/verify", response_model=SessionOut)
 def verify_otp_code(
     payload: OTPVerify,
+    request: Request,
     db: Session = Depends(get_db),
-) -> dict[str, object]:
+) -> SessionOut:
     identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
 
     otp = (
@@ -304,12 +331,27 @@ def verify_otp_code(
     if otp is None or not verify_otp(db, otp, payload.code):
         raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş doğrulama kodu.")
 
-    return {
-        "verified": True,
-        "provider": payload.provider,
-        "identifier": identifier,
-        "purpose": payload.purpose,
-    }
+    if payload.purpose not in {"register", "login"}:
+        raise HTTPException(status_code=400, detail="Bu OTP amacı henüz desteklenmiyor.")
+
+    ip = request.client.host if request.client else None
+    device_info = request.headers.get("user-agent", "")[:512]
+
+    try:
+        user = create_or_login_verified_identity(
+            db,
+            provider=payload.provider,
+            identifier=identifier,
+            ip=ip,
+            device_info=device_info,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return SessionOut(
+        access_token=create_session(db, user),
+        user=user,
+    )
 
 
 @app.post("/v1/welcome/claim", response_model=UserOut)

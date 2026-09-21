@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     otp_resend_cooldown_seconds: int = 60
     otp_max_attempts: int = 5
     otp_length: int = 6
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = "erischat@erischat.com"
+    smtp_use_tls: bool = True
     rtc_turn_url: str = ""
     rtc_turn_username: str = ""
     rtc_turn_credential: str = ""

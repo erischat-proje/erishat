@@ -46,6 +46,91 @@ def create_anonymous_user(
     return created
 
 
+
+def create_or_login_verified_identity(
+    db: Session,
+    provider: str,
+    identifier: str,
+    ip: str | None = None,
+    device_info: str | None = None,
+) -> User:
+    identifier = identifier.strip().lower() if provider == "email" else identifier.strip()
+
+    identity = (
+        db.query(AuthIdentity)
+        .filter(
+            AuthIdentity.provider == provider,
+            AuthIdentity.identifier == identifier,
+        )
+        .first()
+    )
+
+    if identity is not None:
+        user = db.get(User, identity.user_id)
+        if user is None or not user.is_active:
+            raise ValueError("Hesap bulunamadı veya devre dışı")
+
+        identity.verified_at = datetime.now(timezone.utc)
+        user.last_ip = ip
+        user.device_info = device_info
+        db.commit()
+        db.refresh(user)
+        return user
+
+    nickname = (
+        identifier.split("@", 1)[0]
+        if provider == "email"
+        else f"Eris Kullanıcısı {identifier[-4:]}"
+    )
+    nickname = nickname.strip()[:32] or "Eris Kullanıcısı"
+
+    user = User(
+        id=uuid4().hex,
+        public_id="",
+        nickname=nickname,
+        avatar="👤",
+        gender="unspecified",
+        last_ip=ip,
+        device_info=device_info,
+    )
+
+    while True:
+        public_id = f"{uuid4().int % 10_000_000_000:010d}"
+        if (
+            not db.query(User).filter(User.public_id == public_id).first()
+            and not db.query(UserIdRegistry).filter(UserIdRegistry.public_id == public_id).first()
+        ):
+            user.public_id = public_id
+            break
+
+    db.add(user)
+    db.flush()
+
+    db.add(
+        AuthIdentity(
+            id=uuid4().hex,
+            user_id=user.id,
+            provider=provider,
+            provider_subject=identifier,
+            identifier=identifier,
+            verified_at=datetime.now(timezone.utc),
+        )
+    )
+    db.add(UserIdRegistry(user_id=user.id, public_id=user.public_id))
+
+    record(
+        "user_id",
+        f"{provider}_user_created",
+        user_id=user.id,
+        public_id=user.public_id,
+        nickname=user.nickname,
+        identifier=identifier,
+    )
+
+    db.commit()
+    db.refresh(user)
+    return user
+
 # Import after the auth definitions so the family route bootstrap can safely
 # wrap platform route registration without changing main.py.
 from . import family_bootstrap as _family_bootstrap  # noqa: E402,F401
