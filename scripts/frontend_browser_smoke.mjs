@@ -37,6 +37,14 @@ try {
   await page.waitForSelector('#home.view.show');
   await page.waitForSelector('#realRooms .room');
 
+  await page.evaluate(() => {
+    const gate = document.querySelector('#erisGoogleGate');
+    if (gate) {
+      gate.style.display = 'none';
+      gate.setAttribute('aria-hidden', 'true');
+    }
+  });
+
   for (const label of ['Profil', 'Keşfet']) {
     await page.locator('.nav button', { hasText: label }).click();
   }
