@@ -155,7 +155,6 @@
   }
   const boot=()=>bind();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  window.ErisRoomPasswordModal=passwordModal;
   window.addEventListener('erischat:room-opened',()=>setTimeout(bind,0));
   window.ErisRoomCompleteV3={openMenu,openName,openLevels};
 })();
@@ -362,6 +361,8 @@
       cells[0].focus();
     });
   }
+  window.ErisRoomPasswordModal=passwordModal;
+
   function demoId(){
     const id=rid(); if(!id.startsWith('demo-room-'))return;
     const meta=q('erisLiveMeta');if(meta)meta.textContent='ID: 482731 • DEMO';
