@@ -44,7 +44,39 @@
     p.innerHTML=`<div class="ed-hero"><strong>🎙️ Canlı oda sistemi</strong><small>Kalıcı odaların burada tutulur. Kendi odanı açtıktan sonra oda ID'n değişmez; kendi odanı tekrar bulup açabilirsin.</small></div><input id="edRoomName" class="ed-input" placeholder="Yeni oda adı"><div id="edRoomCreate"></div><div class="ed-k" style="margin:12px 0 7px">ODALARIM</div><div id="edMyRooms"></div><div class="ed-k" style="margin:12px 0 7px">DİĞER AKTİF ODALAR</div><div id="edRooms"></div>`;
     p.querySelector('#edRoomCreate').append(btn('＋ Kendi odamı aç',async()=>{const name=p.querySelector('#edRoomName').value.trim();if(!name)return alert('Oda adı yaz.');try{const created=await api('/rooms',{method:'POST',body:JSON.stringify({name})});localStorage.setItem('eris_my_room_id',String(created.id||created.room_id||''));await rooms(p)}catch(e){alert(e.message)}}));
     const my=p.querySelector('#edMyRooms'),box=p.querySelector('#edRooms');
-    try{const rows=await api('/rooms');const list=Array.isArray(rows)?rows:(rows.items||[]);const me=window.ErisAuth?.user?.id||window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'';const mine=list.filter(r=>String(r.owner_id||'')===String(me)||String(r.id||'')===String(localStorage.getItem('eris_my_room_id')||''));my.innerHTML=mine.length?mine.map(r=>{const id=r.id||r.room_id;const locked=r.locked?'🔒 Kilitli':'🟢 Açık';const row=document.createElement('div');row.className='ed-row';row.innerHTML=`<div><b>👑 ${esc(r.name||r.title||id)}</b><small>ID: ${esc(r.public_id||id)} • Lv.${r.level||1} • ${r.seat_count||8} koltuk • ${locked}</small></div></div>`;row.append(btn('Odayı aç',()=>window.openRoom?.(id,r.name||r.title||'Odam'),true));my.append(row);}).length?'':'<div class="ed-note">Henüz kendi odan yok.</div>';box.innerHTML='';list.filter(r=>!mine.some(m=>String(m.id)===String(r.id))).forEach(r=>{const id=r.id||r.room_id,row=document.createElement('div');row.className='ed-row';row.innerHTML=`<div><b>🎙️ ${esc(r.name||r.title||id)}</b><small>${r.member_count??0}/${r.capacity??35} kişi • Lv.${r.level??1} • ${r.locked?'🔒 Kilitli':'Açık'}</small></div>`;row.append(btn('İncele',()=>roomDetail(id,r.name||r.title||'Oda'),true));box.append(row)});if(!box.children.length)box.innerHTML='<div class="ed-note">Aktif başka oda yok.</div>';}catch(e){my.innerHTML='<div class="ed-note">Odalar yüklenemedi.</div>';box.innerHTML=note('API bağlantısı yoksa demo odaları ana ekrandan açabilirsin.')}
+    try {
+      const rows=await api('/rooms');
+      const list=Array.isArray(rows)?rows:(rows.items||[]);
+      const me=window.ErisAuth?.user?.id||window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'';
+      const mine=list.filter(r=>String(r.owner_id||'')===String(me)||String(r.id||'')===String(localStorage.getItem('eris_my_room_id')||''));
+      my.innerHTML='';
+      if(mine.length){
+        mine.forEach(r=>{
+          const id=r.id||r.room_id;
+          const locked=r.locked?'🔒 Kilitli':'🟢 Açık';
+          const row=document.createElement('div');
+          row.className='ed-row';
+          row.innerHTML=`<div><b>👑 ${esc(r.name||r.title||id)}</b><small>ID: ${esc(r.public_id||id)} • Lv.${r.level||1} • ${r.seat_count||8} koltuk • ${locked}</small></div>`;
+          row.append(btn('Odayı aç',()=>window.openRoom?.(id,r.name||r.title||'Odam'),true));
+          my.append(row);
+        });
+      }else{
+        my.innerHTML='<div class="ed-note">Henüz kendi odan yok.</div>';
+      }
+      box.innerHTML='';
+      list.filter(r=>!mine.some(m=>String(m.id)===String(r.id))).forEach(r=>{
+        const id=r.id||r.room_id;
+        const row=document.createElement('div');
+        row.className='ed-row';
+        row.innerHTML=`<div><b>🎙️ ${esc(r.name||r.title||id)}</b><small>${r.member_count??0}/${r.capacity??35} kişi • Lv.${r.level??1} • ${r.locked?'🔒 Kilitli':'Açık'}</small></div>`;
+        row.append(btn('İncele',()=>roomDetail(id,r.name||r.title||'Oda'),true));
+        box.append(row);
+      });
+      if(!box.children.length)box.innerHTML='<div class="ed-note">Aktif başka oda yok.</div>';
+    }catch(e){
+      my.innerHTML='<div class="ed-note">Odalar yüklenemedi.</div>';
+      box.innerHTML=note('API bağlantısı yoksa demo odaları ana ekrandan açabilirsin.');
+    }
   }
 
   async function signalRoomRTCLeave(roomId,target){

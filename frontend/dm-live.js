@@ -205,8 +205,8 @@
     const token = dmToken();
     if (!token) return;
     try { dmSocket?.close(); } catch (_) {}
-    const apiBase = String(window.ERISCHAT_API_BASE || 'https://erischat-api-production.up.railway.app/v1').replace(/\\/$/, '');
-    const wsBase = apiBase.replace(/\\/v1\\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+    const apiBase = String(window.ERISCHAT_API_BASE || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
+    const wsBase = apiBase.replace(/\/v1\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
     const ws = new WebSocket(wsBase + '/ws?token=' + encodeURIComponent(token));
     dmSocket = ws;
     ws.onopen = () => { dmReconnectAttempt = 0; try { ws.send(JSON.stringify({type:'ping'})); } catch (_) {} };
