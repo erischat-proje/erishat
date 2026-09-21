@@ -9,7 +9,10 @@
     const headers = new Headers(options.headers || {});
     if (options.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     const token = getToken();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
+    const publicPath = ['/auth/google-config', '/auth/google'];
+    if (token && !publicPath.includes(path)) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
     const response = await fetch(`${API()}${path}`, { ...options, headers });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
