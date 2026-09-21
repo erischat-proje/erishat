@@ -26,19 +26,105 @@
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail })); }
 
   function addGate() {
-    if (document.getElementById('erisGoogleGate')) return;
-    const style = document.createElement('style');
-    style.id = 'erisGoogleGateStyle';
-    style.textContent = '#erisGoogleGate{position:fixed;inset:0;z-index:100000;background:rgba(4,3,8,.96);display:grid;place-items:center;padding:22px}.erisGoogleCard{width:min(430px,100%);background:#0f0c16;border:1px solid #ffffff18;border-radius:26px;padding:28px;box-shadow:0 25px 90px #000b;text-align:center}.erisGoogleCard h1{margin:0 0 8px;font-size:28px}.erisGoogleCard p{color:#aaa1b1;font-size:12px;line-height:1.6}.erisGoogleLogo{font-size:42px;margin-bottom:10px}.erisGoogleButton{min-height:44px;display:flex;justify-content:center;margin:18px 0}.erisGoogleFallback{appearance:none;border:0;border-radius:999px;background:#fff;color:#111;font-weight:700;font-size:14px;padding:13px 28px;min-width:320px;cursor:pointer;box-shadow:0 4px 18px #0005}.erisGoogleFallback:active{transform:scale(.98)}.erisGoogleStatus{font-size:10px;color:#ff8ebd;min-height:18px}.erisGoogleId{font-size:9px;color:#756d80;margin-top:16px;word-break:break-all}.erisGoogleCard .realOnly{font-size:9px;color:#7f7687;margin-top:12px}';
-    document.head.appendChild(style);
-    const gate = document.createElement('div');
-    gate.id = 'erisGoogleGate';
-    gate.innerHTML = '<div class="erisGoogleCard"><div class="erisGoogleLogo">◉</div><h1>ErisChat</h1><p>Gerçek kullanıcı hesabı oluşturmak için Google hesabınla giriş yap.</p><div id="erisGoogleButton" class="erisGoogleButton"></div><div id="erisGoogleStatus" class="erisGoogleStatus"></div><div id="erisGoogleId" class="erisGoogleId"></div><div class="realOnly">Gerçek kayıt • gerçek veritabanı • gerçek yetki sistemi</div></div>';
-    document.body.appendChild(gate);
-    return gate;
-  }
+  if (document.getElementById('erisGoogleGate')) return;
 
-  function closeGate() { document.getElementById('erisGoogleGate')?.remove(); document.getElementById('erisGoogleGateStyle')?.remove(); }
+  const style = document.createElement('style');
+  style.id = 'erisGoogleGateStyle';
+  style.textContent = `
+    #erisGoogleGate{position:fixed;inset:0;z-index:100000;background:rgba(4,3,8,.97);display:grid;place-items:center;padding:22px}
+    .erisGoogleCard{width:min(430px,100%);background:#0f0c16;border:1px solid #ffffff18;border-radius:26px;padding:24px;box-shadow:0 25px 90px #000b;text-align:center}
+    .erisGoogleCard h1{margin:0 0 7px;font-size:28px}
+    .erisGoogleCard p{color:#aaa1b1;font-size:12px;line-height:1.6;margin:0 0 18px}
+    .authMethods{display:grid;gap:9px}
+    .authBtn{width:100%;min-height:46px;border:1px solid #ffffff18;border-radius:14px;color:#fff;background:#17131f;font-weight:800;cursor:pointer}
+    .authBtn:hover{background:#211b2b}
+    .authGoogle{background:#fff;color:#111}
+    .authEmail{display:grid;gap:8px;margin-top:2px}
+    .authEmail input{width:100%;box-sizing:border-box;background:#09070d;border:1px solid #ffffff18;color:#fff;border-radius:12px;padding:13px;outline:none}
+    .authStatus{font-size:10px;color:#ff8ebd;min-height:18px;margin-top:12px}
+    .authOtp{display:none;gap:8px;margin-top:8px}
+    .authOtp input{flex:1;min-width:0;background:#09070d;border:1px solid #ffffff18;color:#fff;border-radius:12px;padding:13px;outline:none}
+    .authOtp button{border:0;border-radius:12px;padding:0 14px;background:linear-gradient(135deg,#7b4cff,#ff4fa3);color:#fff;font-weight:800}
+    .realOnly{font-size:9px;color:#7f7687;margin-top:14px}
+  `;
+  document.head.appendChild(style);
+
+  const gate = document.createElement('div');
+  gate.id = 'erisGoogleGate';
+  gate.innerHTML = `
+    <div class="erisGoogleCard">
+      <div style="font-size:40px;margin-bottom:8px">◉</div>
+      <h1>ErisChat</h1>
+      <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
+
+      <div class="authMethods">
+        <button type="button" id="authGoogleBtn" class="authBtn authGoogle">Google ile devam et</button>
+        <button type="button" id="authAppleBtn" class="authBtn"> Apple ile devam et</button>
+        <button type="button" id="authFacebookBtn" class="authBtn">Facebook ile devam et</button>
+
+        <div class="authEmail">
+          <input id="authEmailInput" type="email" autocomplete="email" placeholder="Email adresin">
+          <button type="button" id="authEmailBtn" class="authBtn">Email kodu gönder</button>
+          <div class="authOtp" id="authOtpBox">
+            <input id="authOtpInput" inputmode="numeric" maxlength="6" placeholder="6 haneli kod">
+            <button type="button" id="authOtpBtn">Doğrula</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="erisGoogleStatus" class="authStatus"></div>
+      <div class="realOnly">Tek hesap • gerçek kullanıcı • ortak onboarding</div>
+    </div>
+  `;
+
+  document.body.appendChild(gate);
+
+  const status = gate.querySelector('#erisGoogleStatus');
+
+  gate.querySelector('#authGoogleBtn').onclick = () => {
+    googleRegister().catch(e => {
+      status.textContent = e.message || 'Google giriş başlatılamadı.';
+    });
+  };
+
+  gate.querySelector('#authAppleBtn').onclick = () => {
+    status.textContent = 'Apple girişini başlatmak için Apple yapılandırması gerekiyor.';
+  };
+
+  gate.querySelector('#authFacebookBtn').onclick = () => {
+    status.textContent = 'Facebook girişini başlatmak için Facebook yapılandırması gerekiyor.';
+  };
+
+  gate.querySelector('#authEmailBtn').onclick = async () => {
+    const email = gate.querySelector('#authEmailInput').value.trim();
+
+    try {
+      status.textContent = 'Doğrulama kodu gönderiliyor…';
+      await emailOtpLogin(email);
+      gate.querySelector('#authOtpBox').style.display = 'flex';
+      status.textContent = 'Kod email adresine gönderildi.';
+    } catch (e) {
+      status.textContent = e.message || 'Kod gönderilemedi.';
+    }
+  };
+
+  gate.querySelector('#authOtpBtn').onclick = async () => {
+    const email = gate.querySelector('#authEmailInput').value.trim();
+    const code = gate.querySelector('#authOtpInput').value.trim();
+
+    try {
+      status.textContent = 'Kod doğrulanıyor…';
+      await emailOtpLogin(email, code);
+      closeGate();
+    } catch (e) {
+      status.textContent = e.message || 'Kod doğrulanamadı.';
+    }
+  };
+
+  return gate;
+}
+
+function closeGate() { document.getElementById('erisGoogleGate')?.remove(); document.getElementById('erisGoogleGateStyle')?.remove(); }
 
   function loadGsi() {
     return new Promise((resolve, reject) => {
@@ -54,7 +140,7 @@
   }
 
   async function googleRegister() {
-    const gate = addGate();
+    const gate = document.getElementById('erisGoogleGate') || addGate();
     const status = gate.querySelector('#erisGoogleStatus');
     const box = gate.querySelector('#erisGoogleButton');
 
@@ -130,7 +216,73 @@
     }
   }
 
-  async function registerAnonymous() {
+
+async function emailOtpLogin(email, code = null) {
+  email = String(email || '').trim().toLowerCase();
+  if (!email) throw new Error('Email adresini gir.');
+
+  if (!code) {
+    return request('/auth/otp/request', {
+      method: 'POST',
+      body: JSON.stringify({
+        provider: 'email',
+        identifier: email,
+        purpose: 'login'
+      })
+    });
+  }
+
+  const session = await request('/auth/otp/verify', {
+    method: 'POST',
+    body: JSON.stringify({
+      provider: 'email',
+      identifier: email,
+      purpose: 'login',
+      code: String(code).trim()
+    })
+  });
+
+  setToken(session.access_token);
+  window.ErisAuth.user = session.user;
+  emit('erischat:auth', {state:'ready', user:session.user, real:true});
+  continueAfterAuth(session.user);
+  connectGeneralWs();
+  return session.user;
+}
+
+async function appleLogin(authorizationCode) {
+  const session = await request('/auth/apple', {
+    method: 'POST',
+    body: JSON.stringify({
+      authorization_code: authorizationCode
+    })
+  });
+
+  setToken(session.access_token);
+  window.ErisAuth.user = session.user;
+  emit('erischat:auth', {state:'ready', user:session.user, real:true});
+  continueAfterAuth(session.user);
+  connectGeneralWs();
+  return session.user;
+}
+
+async function facebookLogin(accessToken) {
+  const session = await request('/auth/facebook', {
+    method: 'POST',
+    body: JSON.stringify({
+      access_token: accessToken
+    })
+  });
+
+  setToken(session.access_token);
+  window.ErisAuth.user = session.user;
+  emit('erischat:auth', {state:'ready', user:session.user, real:true});
+  continueAfterAuth(session.user);
+  connectGeneralWs();
+  return session.user;
+}
+
+async function registerAnonymous() {
     const suffix = Math.random().toString(36).slice(2, 7);
     const session = await request('/users', { method:'POST', body:JSON.stringify({ nickname:`Anonim_${suffix}`, gender:'male', avatar:'👤' }) });
     setToken(session.access_token);
@@ -172,7 +324,7 @@
     location.reload();
   }
 
-  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
+  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, appleLogin, facebookLogin, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
   function continueAfterAuth(user) {
     window.ErisAuth = window.ErisAuth || {};
@@ -210,7 +362,7 @@
         continueAfterAuth(user);
         connectGeneralWs();
       } else {
-        await googleRegister();
+        addGate();
         emit('erischat:auth',{state:'login_required'});
       }
     } catch (error) {

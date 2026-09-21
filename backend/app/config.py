@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     db_pool_recycle: int = 1800
     initial_da_ids: str = ""
     google_client_id: str = ""
+    apple_client_id: str = ""
+    apple_client_secret: str = ""
+    apple_redirect_uri: str = ""
+    facebook_app_id: str = ""
+    facebook_app_secret: str = ""
+
     initial_da_google_emails: str = ""
     otp_expiry_seconds: int = 300
     otp_resend_cooldown_seconds: int = 60

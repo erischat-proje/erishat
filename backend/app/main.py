@@ -13,7 +13,14 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .auth import create_anonymous_user, create_or_login_google_user, create_or_login_verified_identity
+from .auth import (
+    create_anonymous_user,
+    create_or_login_google_user,
+    create_or_login_verified_identity,
+    create_or_login_external_identity,
+    verify_apple_authorization_code,
+    verify_facebook_access_token,
+)
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
@@ -233,6 +240,18 @@ class GoogleLoginPayload(BaseModel):
     credential: str = Field(min_length=20, max_length=20000)
 
 
+@app.get("/v1/auth/provider-config")
+def provider_config():
+    return {
+        "google": bool(settings.google_client_id),
+        "google_client_id": settings.google_client_id,
+        "apple": bool(settings.apple_client_id),
+        "apple_client_id": settings.apple_client_id,
+        "apple_redirect_uri": settings.apple_redirect_uri,
+        "facebook": bool(settings.facebook_app_id),
+        "facebook_app_id": settings.facebook_app_id,
+    }
+
 @app.get("/v1/auth/google-config")
 def google_config() -> dict[str, str | bool]:
     return {"enabled": bool(settings.google_client_id), "client_id": settings.google_client_id}
@@ -247,6 +266,76 @@ def google_login(payload: GoogleLoginPayload, request: Request, db: Session = De
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return SessionOut(access_token=create_session(db, user), user=user)
+
+
+
+class AppleLoginPayload(BaseModel):
+    authorization_code: str = Field(min_length=10, max_length=10000)
+
+
+class FacebookLoginPayload(BaseModel):
+    access_token: str = Field(min_length=20, max_length=10000)
+
+
+@app.post("/v1/auth/apple", response_model=SessionOut)
+def apple_login(
+    payload: AppleLoginPayload,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> SessionOut:
+    ip = request.client.host if request.client else None
+    device_info = request.headers.get("user-agent", "")[:512]
+
+    try:
+        apple = verify_apple_authorization_code(payload.authorization_code)
+
+        email = apple.get("email") if apple.get("email_verified") else None
+
+        user = create_or_login_external_identity(
+            db,
+            provider="apple",
+            provider_subject=apple["sub"],
+            email=email,
+            ip=ip,
+            device_info=device_info,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return SessionOut(
+        access_token=create_session(db, user),
+        user=user,
+    )
+
+
+@app.post("/v1/auth/facebook", response_model=SessionOut)
+def facebook_login(
+    payload: FacebookLoginPayload,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> SessionOut:
+    ip = request.client.host if request.client else None
+    device_info = request.headers.get("user-agent", "")[:512]
+
+    try:
+        facebook = verify_facebook_access_token(payload.access_token)
+
+        user = create_or_login_external_identity(
+            db,
+            provider="facebook",
+            provider_subject=facebook["sub"],
+            email=facebook.get("email"),
+            nickname=facebook.get("nickname"),
+            ip=ip,
+            device_info=device_info,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return SessionOut(
+        access_token=create_session(db, user),
+        user=user,
+    )
 
 
 @app.post("/v1/auth/otp/request")
@@ -314,7 +403,40 @@ def verify_otp_code(
     request: Request,
     db: Session = Depends(get_db),
 ) -> SessionOut:
-    identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
+    identifier = (
+        payload.identifier.strip().lower()
+        if payload.provider == "email"
+        else payload.identifier.strip()
+    )
+
+    # OTP link işlemi mevcut oturumdaki kullanıcıya yapılır.
+    # Authorization olmadan link işlemi kesinlikle kabul edilmez.
+    link_user = None
+
+    if payload.purpose == "link":
+        authorization = request.headers.get("authorization", "").strip()
+
+        if not authorization.lower().startswith("bearer "):
+            raise HTTPException(
+                status_code=401,
+                detail="Email bağlamak için aktif oturum gerekli.",
+            )
+
+        token = authorization[7:].strip()
+
+        if not token:
+            raise HTTPException(
+                status_code=401,
+                detail="Geçersiz oturum.",
+            )
+
+        link_user = get_user_from_token(db, token)
+
+        if link_user is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Oturum geçersiz veya süresi dolmuş.",
+            )
 
     otp = (
         db.query(AuthOTP)
@@ -329,24 +451,77 @@ def verify_otp_code(
     )
 
     if otp is None or not verify_otp(db, otp, payload.code):
-        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş doğrulama kodu.")
-
-    if payload.purpose not in {"register", "login"}:
-        raise HTTPException(status_code=400, detail="Bu OTP amacı henüz desteklenmiyor.")
+        raise HTTPException(
+            status_code=400,
+            detail="Geçersiz veya süresi dolmuş doğrulama kodu.",
+        )
 
     ip = request.client.host if request.client else None
     device_info = request.headers.get("user-agent", "")[:512]
 
     try:
-        user = create_or_login_verified_identity(
-            db,
-            provider=payload.provider,
-            identifier=identifier,
-            ip=ip,
-            device_info=device_info,
-        )
+        if payload.purpose == "link":
+            # Email identity başka bir kullanıcıya bağlıysa mevcut hesabı
+            # ele geçirecek şekilde yeniden bağlamıyoruz.
+            existing_identity = (
+                db.query(AuthIdentity)
+                .filter(
+                    AuthIdentity.provider == payload.provider,
+                    AuthIdentity.identifier == identifier,
+                )
+                .first()
+            )
+
+            if existing_identity is not None:
+                if existing_identity.user_id != link_user.id:
+                    raise ValueError(
+                        "Bu email başka bir ErisChat hesabına bağlı."
+                    )
+
+                existing_identity.verified_at = datetime.now(timezone.utc)
+                db.commit()
+                user = link_user
+            else:
+                db.add(
+                    AuthIdentity(
+                        id=uuid4().hex,
+                        user_id=link_user.id,
+                        provider=payload.provider,
+                        provider_subject=identifier,
+                        identifier=identifier,
+                        verified_at=datetime.now(timezone.utc),
+                    )
+                )
+
+                # Email doğrulaması başarılı olduğundan User alanlarını da
+                # güncel tutuyoruz. Mevcut Google email'i ezmiyoruz.
+                if not link_user.google_email:
+                    link_user.google_email = identifier
+
+                db.commit()
+                db.refresh(link_user)
+                user = link_user
+
+        else:
+            user = create_or_login_verified_identity(
+                db,
+                provider=payload.provider,
+                identifier=identifier,
+                ip=ip,
+                device_info=device_info,
+            )
+
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Bu kimlik başka bir hesapla zaten bağlı.",
+        ) from exc
 
     return SessionOut(
         access_token=create_session(db, user),
