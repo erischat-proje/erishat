@@ -16,7 +16,7 @@ missing_ids = sorted(required_ids - ids)
 if missing_ids:
     raise SystemExit(f"FRONTEND_SURFACE_FAIL missing_ids={','.join(missing_ids)}")
 
-scripts = re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', html)
+scripts = [re.sub(r"\?.*$", "", x) for x in re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', html)]
 dupes = sorted({x for x in scripts if scripts.count(x) > 1})
 if dupes:
     raise SystemExit("FRONTEND_SURFACE_FAIL duplicate_scripts=" + ",".join(dupes))
