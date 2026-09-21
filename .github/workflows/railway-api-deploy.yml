@@ -1,0 +1,28 @@
+name: Deploy ErisChat API to Railway
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy API
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up \
+            --project b72ba3ca-a30d-411c-89a7-6242e7c2911c \
+            --environment production \
+            --service e0f83323-bc17-4a16-b6d3-831b4534d857 \
+            --ci
