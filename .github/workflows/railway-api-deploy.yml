@@ -24,5 +24,5 @@ jobs:
           railway up \
             --project b72ba3ca-a30d-411c-89a7-6242e7c2911c \
             --environment production \
-            --service e0f83323-bc17-4a16-b6d3-831b4534d857 \
+            --service erischat-api \
             --ci
