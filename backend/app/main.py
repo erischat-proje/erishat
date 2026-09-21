@@ -369,7 +369,7 @@ def request_otp(
             logger.exception("Email OTP gönderilemedi: %s", exc)
             raise HTTPException(
                 status_code=503,
-                detail="Doğrulama kodu gönderilemedi.",
+                detail=f"MAIL_ERROR: {exc}",
             ) from exc
 
     elif payload.provider == "phone":
