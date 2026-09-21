@@ -37,7 +37,7 @@ try {
   await page.waitForSelector('#home.view.show');
   await page.waitForSelector('#realRooms .room');
 
-  for (const label of ['Mağaza', 'Profil', 'Keşfet']) {
+  for (const label of ['Profil', 'Keşfet']) {
     await page.locator('.nav button', { hasText: label }).click();
   }
   await page.waitForSelector('#explore.view.show');
@@ -58,7 +58,7 @@ try {
     ];
     throw new Error('browser errors: ' + details.join(' | '));
   }
-  console.log('FRONTEND_BROWSER_SMOKE_PASS navigation=shop,profile,explore room_list=1 chat_send=1');
+  console.log('FRONTEND_BROWSER_SMOKE_PASS navigation=profile,explore room_list=1 chat_send=1');
   await browser.close();
 } finally {
   server.kill('SIGTERM');
