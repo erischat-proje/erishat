@@ -7,12 +7,19 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Railway Project Token
+      - name: Check token
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          curl -sS \
-            -X POST https://backboard.railway.com/graphql/v2 \
+          echo "PROJECT TOKEN TEST:"
+          curl -sS -X POST https://backboard.railway.com/graphql/v2 \
             -H "Project-Access-Token: $RAILWAY_TOKEN" \
             -H "Content-Type: application/json" \
             --data '{"query":"query { projectToken { projectId environmentId } }"}'
+
+          echo
+          echo "BEARER TOKEN TEST:"
+          curl -sS -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"query":"query { me { name email } }"}'
