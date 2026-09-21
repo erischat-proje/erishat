@@ -30,6 +30,7 @@ class User(Base):
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     welcome_gift_claimed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     cosmetics: Mapped[list["UserCosmetic"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    auth_identities: Mapped[list["AuthIdentity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 class UserCosmetic(Base):
     __tablename__ = "user_cosmetics"
@@ -64,3 +65,65 @@ class Message(Base):
     sender_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+class AuthIdentity(Base):
+    __tablename__ = "auth_identities"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_subject: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    identifier: Mapped[str | None] = mapped_column(String(320), nullable=True, index=True)
+    secret_hash: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="auth_identities")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "provider",
+            "provider_subject",
+            name="uq_auth_identity_provider_subject",
+        ),
+        UniqueConstraint(
+            "provider",
+            "identifier",
+            name="uq_auth_identity_provider_identifier",
+        ),
+    )
+
+class AuthIdentity(Base):
+    __tablename__ = "auth_identities"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_subject: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    identifier: Mapped[str | None] = mapped_column(String(320), nullable=True, index=True)
+    secret_hash: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="auth_identities")
+
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_subject", name="uq_auth_identity_provider_subject"),
+        UniqueConstraint("provider", "identifier", name="uq_auth_identity_provider_identifier"),
+    )
