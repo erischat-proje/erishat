@@ -58,6 +58,8 @@
       <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
 
       <div class="authMethods">
+        <div id="erisGoogleButton"></div>
+        <div id="erisGoogleId"></div>
         <button type="button" id="authGoogleBtn" class="authBtn authGoogle">Google ile devam et</button>
         <button type="button" id="authAppleBtn" class="authBtn"> Apple ile devam et</button>
         <button type="button" id="authFacebookBtn" class="authBtn">Facebook ile devam et</button>
@@ -81,7 +83,7 @@
 
   const status = gate.querySelector('#erisGoogleStatus');
 
-  gate.querySelector('#authGoogleBtn').onclick = () => {
+  gate.querySelector('#erisGoogleButton').onclick = () => {
     googleRegister().catch(e => {
       status.textContent = e.message || 'Google giriş başlatılamadı.';
     });
@@ -149,7 +151,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
 
       if (!cfg.enabled || !cfg.client_id) {
         status.textContent = 'Google kayıt sistemi henüz etkinleştirilmemiş.';
-        box.innerHTML = '<button type="button" class="erisGoogleFallback">Google ile giriş yap</button>';
+        box.type = 'button'; box.className = 'authBtn authGoogle'; box.textContent = 'Google ile giriş yap';
         return;
       }
 
@@ -168,8 +170,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
 
             setToken(session.access_token);
             window.ErisAuth.user = session.user;
-            gate.querySelector('#erisGoogleId').textContent =
-              'Kullanıcı ID: ' + session.user.public_id;
+            
 
             emit('erischat:auth', { state:'ready', user:session.user, real:true });
             continueAfterAuth(session.user);
@@ -195,7 +196,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
 
       setTimeout(() => {
         if (!box.querySelector('iframe')) {
-          box.innerHTML = '<button type="button" class="erisGoogleFallback">Google ile giriş yap</button>';
+          box.type = 'button'; box.className = 'authBtn authGoogle'; box.textContent = 'Google ile giriş yap';
           box.querySelector('button').onclick = () => {
             status.textContent = 'Google giriş servisi başlatılıyor…';
             try {
@@ -209,7 +210,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
 
     } catch (e) {
       status.textContent = e.message || 'Google giriş arayüzü yüklenemedi.';
-      box.innerHTML = '<button type="button" class="erisGoogleFallback">Google ile giriş yap</button>';
+      box.type = 'button'; box.className = 'authBtn authGoogle'; box.textContent = 'Google ile giriş yap';
       box.querySelector('button').onclick = () => {
         status.textContent = 'Google giriş servisi yüklenemedi. Sayfayı yenileyip tekrar dene.';
       };
