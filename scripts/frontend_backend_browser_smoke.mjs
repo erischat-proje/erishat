@@ -20,7 +20,7 @@ async function main(){
   await page.reload({waitUntil:'domcontentloaded'});
   await page.evaluate(async api=>{const r=await fetch(api+"/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nickname:"Smoke_"+Math.random().toString(36).slice(2,8),avatar:"👤",gender:"male"})});const d=await r.json();if(!d.access_token)throw new Error("anonymous smoke registration failed");localStorage.setItem("erischat_access_token",d.access_token)},API);
   await page.waitForFunction(()=>!!window.ErisAuth?.getToken);
-  await page.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000}).catch(async()=>{ throw new Error('anonymous auth timeout; token='+await page.evaluate(()=>localStorage.getItem('erischat_access_token')?'present':'missing')+' auth='+await page.evaluate(()=>JSON.stringify({keys:Object.keys(window.ErisAuth||{}),user:window.ErisAuth?.user||null}))); });
+  await page.waitForFunction(async()=>{if(!window.ErisAuth?.getMe)return false;const u=await window.ErisAuth.getMe();return !!u?.id},{timeout:15000});
   const owner=await page.evaluate(()=>window.ErisAuth.user);
   if(!owner?.id) throw new Error('anonymous browser session missing user');
   const vip=await page.evaluate(async api=>fetch(api+'/me/vip',{headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}}).then(r=>r.json()),API);
@@ -28,7 +28,7 @@ async function main(){
   await page.evaluate(()=>{const kill=()=>document.querySelector("#erisOnboarding")?.remove();kill();new MutationObserver(kill).observe(document.body,{childList:true,subtree:true});});
   await page.locator('.nav button',{hasText:'Profil'}).click();
   await page.waitForFunction(()=>document.querySelector('#profile')?.classList.contains('show'));
-  await page.waitForFunction(expected => document.querySelector('.profile .name h2')?.textContent === expected.nickname, owner);
+    await page.waitForFunction(expected => document.querySelector('.profile .name h2')?.textContent?.trim() === expected.nickname?.trim(), owner);
   await page.waitForSelector('[data-erischat-vip-panel]');
   const vipPanel=await page.evaluate(()=>({title:document.querySelector('[data-vip-title]')?.textContent||'',progress:document.querySelector('[data-vip-progress]')?.textContent||'',badge:document.querySelector('[data-vip-badge]')?.textContent||'',bar:document.querySelector('[data-vip-bar]')?.style.width||''}));
   if(!vipPanel.title||!vipPanel.progress||!vipPanel.bar) throw new Error('Profile VIP panel did not render: '+JSON.stringify(vipPanel));
