@@ -25,7 +25,7 @@ async function main(){
   if(!owner?.id) throw new Error('anonymous browser session missing user');
   const vip=await page.evaluate(async api=>fetch(api+'/me/vip',{headers:{Authorization:'Bearer '+localStorage.getItem('erischat_access_token')}}).then(r=>r.json()),API);
   if(typeof vip.level!=='number'||!Array.isArray(vip.perks)||typeof vip.title!=='string'||typeof vip.neon_enabled!=='boolean') throw new Error('VIP presentation metadata missing: '+JSON.stringify(vip));
-  await page.locator('#erisOnboarding').evaluate(el=>el.remove()).catch(()=>{});
+  await page.evaluate(()=>{const kill=()=>document.querySelector("#erisOnboarding")?.remove();kill();new MutationObserver(kill).observe(document.body,{childList:true,subtree:true});});
   await page.locator('.nav button',{hasText:'Profil'}).click();
   await page.waitForFunction(()=>document.querySelector('#profile')?.classList.contains('show'));
   await page.waitForFunction(expected => document.querySelector('.profile .name h2')?.textContent === expected.nickname, owner);
