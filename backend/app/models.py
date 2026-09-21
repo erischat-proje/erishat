@@ -108,7 +108,3 @@ class AuthIdentity(Base):
         ),
     )
 
-    __table_args__ = (
-        UniqueConstraint("provider", "provider_subject", name="uq_auth_identity_provider_subject"),
-        UniqueConstraint("provider", "identifier", name="uq_auth_identity_provider_identifier"),
-    )
