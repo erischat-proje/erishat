@@ -10,6 +10,15 @@ async function main(){
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(api=>{window.ERIS_API=api;},API);
   await page.goto(pageUrl,{waitUntil:'domcontentloaded'});
+  const anonymous = await page.evaluate(async api=>{
+    const suffix=Math.random().toString(36).slice(2,8);
+    const r=await fetch(api+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nickname:'Smoke_'+suffix,avatar:'👤',gender:'male'})});
+    return {status:r.status,data:await r.json()};
+  },API);
+  if(anonymous.status!==201&&anonymous.status!==200) throw new Error('anonymous smoke registration failed: '+JSON.stringify(anonymous));
+  await page.evaluate(token=>localStorage.setItem('erischat_access_token',token),anonymous.data.access_token);
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.evaluate(async api=>{const r=await fetch(api+"/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nickname:"Smoke_"+Math.random().toString(36).slice(2,8),avatar:"👤",gender:"male"})});const d=await r.json();if(!d.access_token)throw new Error("anonymous smoke registration failed");localStorage.setItem("erischat_access_token",d.access_token)},API);
   await page.waitForFunction(()=>!!window.ErisAuth?.getToken);
   await page.waitForFunction(()=>!!window.ErisAuth?.user,{timeout:15000}).catch(async()=>{ throw new Error('anonymous auth timeout; token='+await page.evaluate(()=>localStorage.getItem('erischat_access_token')?'present':'missing')+' auth='+await page.evaluate(()=>JSON.stringify({keys:Object.keys(window.ErisAuth||{}),user:window.ErisAuth?.user||null}))); });
   const owner=await page.evaluate(()=>window.ErisAuth.user);
