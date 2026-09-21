@@ -9,7 +9,7 @@
     const headers = new Headers(options.headers || {});
     if (options.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     const token = getToken();
-    const publicPath = ['/auth/google-config', '/auth/google'];
+    const publicPath = ['/auth/google-config', '/auth/google', '/auth/otp/request', '/auth/otp/verify'];
     if (token && !publicPath.includes(path)) {
       headers.set('Authorization', `Bearer ${token}`);
     }
@@ -34,6 +34,15 @@
     const gate = document.createElement('div');
     gate.id = 'erisGoogleGate';
     gate.innerHTML = '<div class="erisGoogleCard"><div class="erisGoogleLogo">◉</div><h1>ErisChat</h1><p>Gerçek kullanıcı hesabı oluşturmak için Google hesabınla giriş yap.</p><div id="erisGoogleButton" class="erisGoogleButton"></div><div id="erisGoogleStatus" class="erisGoogleStatus"></div><div id="erisGoogleId" class="erisGoogleId"></div><div class="realOnly">Gerçek kayıt • gerçek veritabanı • gerçek yetki sistemi</div></div>';
+    gate.querySelector('.erisGoogleCard p').textContent =
+      'Gerçek kullanıcı hesabı oluşturmak için e-posta veya Google hesabınla giriş yap.';
+    const emailButton = document.createElement('button');
+    emailButton.type = 'button';
+    emailButton.className = 'erisGoogleFallback';
+    emailButton.textContent = 'E-posta ile kayıt ol / giriş yap';
+    emailButton.style.marginTop = '10px';
+    emailButton.onclick = () => emailRegister();
+    gate.querySelector('.erisGoogleCard').insertBefore(emailButton, gate.querySelector('.erisGoogleButton'));
     document.body.appendChild(gate);
     return gate;
   }
@@ -130,6 +139,108 @@
     }
   }
 
+  async function emailRegister() {
+    const gate = addGate();
+    const status = gate.querySelector('#erisGoogleStatus');
+    const box = gate.querySelector('#erisGoogleButton');
+
+    box.innerHTML = `
+      <div style="width:100%;display:grid;gap:10px">
+        <input id="erisEmailInput" type="email" autocomplete="email"
+          placeholder="E-posta adresin"
+          style="width:100%;box-sizing:border-box;padding:13px 15px;border-radius:14px;border:1px solid #ffffff20;background:#17121f;color:#fff">
+        <button id="erisEmailSend" type="button" class="erisGoogleFallback" style="min-width:0;width:100%">
+          E-posta ile devam et
+        </button>
+        <input id="erisEmailCode" type="text" inputmode="numeric" autocomplete="one-time-code"
+          maxlength="6" placeholder="6 haneli doğrulama kodu"
+          style="display:none;width:100%;box-sizing:border-box;padding:13px 15px;border-radius:14px;border:1px solid #ffffff20;background:#17121f;color:#fff">
+        <button id="erisEmailVerify" type="button" class="erisGoogleFallback" style="display:none;min-width:0;width:100%">
+          Kodu doğrula
+        </button>
+      </div>`;
+
+    const emailInput = gate.querySelector('#erisEmailInput');
+    const sendButton = gate.querySelector('#erisEmailSend');
+    const codeInput = gate.querySelector('#erisEmailCode');
+    const verifyButton = gate.querySelector('#erisEmailVerify');
+
+    sendButton.onclick = async () => {
+      const email = emailInput.value.trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        status.textContent = 'Geçerli bir e-posta adresi gir.';
+        return;
+      }
+
+      sendButton.disabled = true;
+      status.textContent = 'Doğrulama kodu gönderiliyor…';
+
+      try {
+        await request('/auth/otp/request', {
+          method: 'POST',
+          body: JSON.stringify({
+            provider: 'email',
+            identifier: email,
+            purpose: 'register'
+          })
+        });
+
+        emailInput.disabled = true;
+        sendButton.style.display = 'none';
+        codeInput.style.display = 'block';
+        verifyButton.style.display = 'block';
+        codeInput.focus();
+        status.textContent = 'Kod e-posta adresine gönderildi.';
+      } catch (e) {
+        sendButton.disabled = false;
+        status.textContent = e.message || 'Doğrulama kodu gönderilemedi.';
+      }
+    };
+
+    verifyButton.onclick = async () => {
+      const email = emailInput.value.trim().toLowerCase();
+      const code = codeInput.value.trim();
+
+      if (!/^\d{6}$/.test(code)) {
+        status.textContent = '6 haneli doğrulama kodunu gir.';
+        return;
+      }
+
+      verifyButton.disabled = true;
+      status.textContent = 'Kod doğrulanıyor…';
+
+      try {
+        const session = await request('/auth/otp/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            provider: 'email',
+            identifier: email,
+            purpose: 'register',
+            code
+          })
+        });
+
+        setToken(session.access_token);
+        window.ErisAuth.user = session.user;
+        gate.querySelector('#erisGoogleId').textContent =
+          'Kullanıcı ID: ' + session.user.public_id;
+
+        emit('erischat:auth', {
+          state: 'ready',
+          user: session.user,
+          real: true
+        });
+
+        continueAfterAuth(session.user);
+        setTimeout(closeGate, 250);
+        connectGeneralWs();
+      } catch (e) {
+        verifyButton.disabled = false;
+        status.textContent = e.message || 'E-posta doğrulaması başarısız.';
+      }
+    };
+  }
+
   async function registerAnonymous() {
     const suffix = Math.random().toString(36).slice(2, 7);
     const session = await request('/users', { method:'POST', body:JSON.stringify({ nickname:`Anonim_${suffix}`, gender:'male', avatar:'👤' }) });
@@ -172,7 +283,7 @@
     location.reload();
   }
 
-  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
+  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailRegister, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
   function continueAfterAuth(user) {
     window.ErisAuth = window.ErisAuth || {};
