@@ -22,7 +22,7 @@
     if (document.getElementById('erisGoogleGate')) return;
     const style = document.createElement('style');
     style.id = 'erisGoogleGateStyle';
-    style.textContent = '#erisGoogleGate{position:fixed;inset:0;z-index:100000;background:rgba(4,3,8,.96);display:grid;place-items:center;padding:22px}.erisGoogleCard{width:min(430px,100%);background:#0f0c16;border:1px solid #ffffff18;border-radius:26px;padding:28px;box-shadow:0 25px 90px #000b;text-align:center}.erisGoogleCard h1{margin:0 0 8px;font-size:28px}.erisGoogleCard p{color:#aaa1b1;font-size:12px;line-height:1.6}.erisGoogleLogo{font-size:42px;margin-bottom:10px}.erisGoogleButton{min-height:44px;display:flex;justify-content:center;margin:18px 0}.erisGoogleStatus{font-size:10px;color:#ff8ebd;min-height:18px}.erisGoogleId{font-size:9px;color:#756d80;margin-top:16px;word-break:break-all}.erisGoogleCard .realOnly{font-size:9px;color:#7f7687;margin-top:12px}';
+    style.textContent = '#erisGoogleGate{position:fixed;inset:0;z-index:100000;background:rgba(4,3,8,.96);display:grid;place-items:center;padding:22px}.erisGoogleCard{width:min(430px,100%);background:#0f0c16;border:1px solid #ffffff18;border-radius:26px;padding:28px;box-shadow:0 25px 90px #000b;text-align:center}.erisGoogleCard h1{margin:0 0 8px;font-size:28px}.erisGoogleCard p{color:#aaa1b1;font-size:12px;line-height:1.6}.erisGoogleLogo{font-size:42px;margin-bottom:10px}.erisGoogleButton{min-height:44px;display:flex;justify-content:center;margin:18px 0}.erisGoogleFallback{appearance:none;border:0;border-radius:999px;background:#fff;color:#111;font-weight:700;font-size:14px;padding:13px 28px;min-width:320px;cursor:pointer;box-shadow:0 4px 18px #0005}.erisGoogleFallback:active{transform:scale(.98)}.erisGoogleStatus{font-size:10px;color:#ff8ebd;min-height:18px}.erisGoogleId{font-size:9px;color:#756d80;margin-top:16px;word-break:break-all}.erisGoogleCard .realOnly{font-size:9px;color:#7f7687;margin-top:12px}';
     document.head.appendChild(style);
     const gate = document.createElement('div');
     gate.id = 'erisGoogleGate';
@@ -49,23 +49,35 @@
   async function googleRegister() {
     const gate = addGate();
     const status = gate.querySelector('#erisGoogleStatus');
-    const idBox = gate.querySelector('#erisGoogleId');
+    const box = gate.querySelector('#erisGoogleButton');
+
     try {
       const cfg = await request('/auth/google-config');
+
       if (!cfg.enabled || !cfg.client_id) {
-        status.textContent = 'Google kayıt sistemi henüz etkinleştirilmemiş. Railway GOOGLE_CLIENT_ID bekleniyor.';
+        status.textContent = 'Google kayıt sistemi henüz etkinleştirilmemiş.';
+        box.innerHTML = '<button type="button" class="erisGoogleFallback">Google ile giriş yap</button>';
         return;
       }
+
       await loadGsi();
+
       window.google.accounts.id.initialize({
         client_id: cfg.client_id,
         callback: async response => {
           status.textContent = 'Google hesabı doğrulanıyor…';
+
           try {
-            const session = await request('/auth/google', { method:'POST', body:JSON.stringify({credential:response.credential}) });
+            const session = await request('/auth/google', {
+              method: 'POST',
+              body: JSON.stringify({ credential: response.credential })
+            });
+
             setToken(session.access_token);
             window.ErisAuth.user = session.user;
-            idBox.textContent = 'Kullanıcı ID: ' + session.user.public_id;
+            gate.querySelector('#erisGoogleId').textContent =
+              'Kullanıcı ID: ' + session.user.public_id;
+
             emit('erischat:auth', { state:'ready', user:session.user, real:true });
             continueAfterAuth(session.user);
             setTimeout(closeGate, 250);
@@ -75,13 +87,39 @@
           }
         },
         auto_select: false,
-        cancel_on_tap_outside: false,
+        cancel_on_tap_outside: false
       });
-      window.google.accounts.id.renderButton(gate.querySelector('#erisGoogleButton'), {
-        theme:'filled_black', size:'large', shape:'pill', text:'continue_with', width:320
+
+      box.innerHTML = '';
+
+      window.google.accounts.id.renderButton(box, {
+        theme:'filled_black',
+        size:'large',
+        shape:'pill',
+        text:'continue_with',
+        width:320
       });
+
+      setTimeout(() => {
+        if (!box.querySelector('iframe')) {
+          box.innerHTML = '<button type="button" class="erisGoogleFallback">Google ile giriş yap</button>';
+          box.querySelector('button').onclick = () => {
+            status.textContent = 'Google giriş servisi başlatılıyor…';
+            try {
+              window.google.accounts.id.prompt();
+            } catch (e) {
+              status.textContent = 'Google giriş servisi başlatılamadı.';
+            }
+          };
+        }
+      }, 1500);
+
     } catch (e) {
       status.textContent = e.message || 'Google giriş arayüzü yüklenemedi.';
+      box.innerHTML = '<button type="button" class="erisGoogleFallback">Google ile giriş yap</button>';
+      box.querySelector('button').onclick = () => {
+        status.textContent = 'Google giriş servisi yüklenemedi. Sayfayı yenileyip tekrar dene.';
+      };
     }
   }
 
