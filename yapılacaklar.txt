@@ -237,3 +237,39 @@ Mevcut çalışan özellikler kaldırılmayacak. Her değişiklikten sonra dosya
 - [ ] Hediye eventlerini `/ws/rooms/{room_id}` üzerinden canlı yayınla.
 - [ ] Hediye menüsünü gerçek oda UI'sına bağla.
 - [ ] Railway deploy ve gerçek hediye smoke testi.
+
+16. 2026-09-21 — GÜNCEL DEVAM NOKTASI / SOHBET DEVRİ
+
+CI / FRONTEND
+- [x] Frontend JavaScript syntax hataları düzeltildi; commit 1ce4f6d.
+- [x] frontend_surface_integrity.py script src içindeki ?v=... sürüm parametrelerini normalize edecek şekilde düzeltildi.
+- [x] Lokal frontend surface integrity PASS: 8 view, 10 id, 27 script.
+- [x] Lokal git diff --check, Python compile ve tüm frontend JS node --check kontrolleri PASS.
+- [x] Fix commit 7d7e979 main branch'e pushlandı.
+- [ ] 7d7e979 sonrası GitHub Actions yeni run sonucunu doğrula.
+- [ ] Quality PASS sonrası Pages deploy ve diğer workflow sonuçlarını doğrula.
+- [ ] CI yeni hata verirse yalnızca yeni hatayı incele.
+
+AUTH / GİRİŞ
+- [x] Google giriş akışı mevcut.
+- [x] Email OTP backend kayıt/giriş akışı eklendi.
+- [x] Telefon OTP endpoint iskeleti eklendi.
+- [ ] Email SMTP production gönderimini doğrula.
+- [ ] Telefon SMS sağlayıcısını bağla.
+- [ ] Apple Sign In backend + frontend tamamla.
+- [ ] Email/telefon/Apple UI akışlarını bağla.
+- [ ] Oturum geri yükleme ve çıkış smoke testlerini tamamla.
+
+CANLI ORTAM
+- [x] Mevcut Railway API service kullanılacak; duplicate service oluşturulmayacak.
+- [x] Railway deploy token workflow'u RAILWAY_API_TOKEN ile düzeltildi.
+- [ ] 7d7e979 sonrası Railway API deploy sonucunu doğrula.
+- [ ] Production API health/ready ve auth smoke testlerini yap.
+
+SOHBET DEVRİ
+- [ ] Yeni sohbette önce yapılacaklar.txt ve yapılanlar.txt okunacak.
+- [ ] Güncel CI + Railway durumu yeniden doğrulanacak.
+- [ ] Termux: ~/ErisChat-Correct
+- [ ] Branch: main
+- [ ] Çalışan özellikler silinmeyecek.
+- [ ] CI sonucu görülmeden başarı varsayılmayacak.
