@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from_email: str = "erischat@erischat.com"
     smtp_use_tls: bool = True
+    gmail_client_id: str = ""
+    gmail_client_secret: str = ""
+    gmail_refresh_token: str = ""
+    gmail_from_email: str = "erischat@erischat.com"
     rtc_turn_url: str = ""
     rtc_turn_username: str = ""
     rtc_turn_credential: str = ""
