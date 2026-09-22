@@ -42,7 +42,6 @@ def send_gmail_message(
     body: str,
 ) -> None:
     message = EmailMessage()
-    message["From"] = settings.gmail_from_email
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(body)
