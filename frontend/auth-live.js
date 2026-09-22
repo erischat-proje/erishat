@@ -61,8 +61,6 @@
         <div id="erisGoogleButton"></div>
         <div id="erisGoogleId"></div>
         <button type="button" id="authGoogleBtn" class="authBtn authGoogle">Google ile devam et</button>
-        <button type="button" id="authAppleBtn" class="authBtn"> Apple ile devam et</button>
-        <button type="button" id="authFacebookBtn" class="authBtn">Facebook ile devam et</button>
 
         <div class="authEmail">
           <input id="authEmailInput" type="email" autocomplete="email" placeholder="Email adresin">
