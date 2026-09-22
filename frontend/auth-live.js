@@ -111,7 +111,7 @@
   };
 
   gate.querySelector('#authOtpBtn').onclick = async () => {
-    // duplicate email declaration removed
+    const email = gate.querySelector('#authEmailInput').value.trim();
     const code = gate.querySelector('#authOtpInput').value.trim();
 
     try {
