@@ -143,6 +143,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
     const gate = document.getElementById('erisGoogleGate') || addGate();
     const status = gate.querySelector('#erisGoogleStatus');
     const box = gate.querySelector('#erisGoogleButton');
+    const googleBtn = gate.querySelector('#authGoogleBtn');
 
     try {
       const cfg = await request('/auth/google-config');
@@ -181,6 +182,17 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
         auto_select: false,
         cancel_on_tap_outside: false
       });
+
+      if (googleBtn) {
+        googleBtn.onclick = () => {
+          status.textContent = 'Google giriş servisi başlatılıyor…';
+          try {
+            window.google.accounts.id.prompt();
+          } catch (e) {
+            status.textContent = 'Google giriş servisi başlatılamadı.';
+          }
+        };
+      }
 
       box.innerHTML = '';
 
