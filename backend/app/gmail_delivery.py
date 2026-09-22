@@ -53,21 +53,6 @@ def send_gmail_message(
 
     access_token = _get_access_token()
 
-    profile = requests.get(
-        GMAIL_PROFILE_URL,
-        headers={
-            "Authorization": f"Bearer {access_token}",
-        },
-        timeout=15,
-    )
-    profile.raise_for_status()
-
-    print(
-        "GMAIL_AUTH_EMAIL:",
-        profile.json().get("emailAddress"),
-        flush=True,
-    )
-
     response = requests.post(
         GMAIL_SEND_URL,
         headers={
