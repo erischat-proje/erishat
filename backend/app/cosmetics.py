@@ -9,7 +9,7 @@ COSMETIC_TYPES = {"avatar", "frame", "wallpaper"}
 
 
 def _asset_root() -> Path:
-    return Path(__file__).resolve().parents[2] / "Gereken_icerikler"
+    return Path(__file__).resolve().parents[1] / "Gereken_icerikler"
 
 
 def _safe_key(value: str) -> str:
