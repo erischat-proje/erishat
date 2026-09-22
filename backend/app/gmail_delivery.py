@@ -8,6 +8,7 @@ from .config import settings
 
 GMAIL_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GMAIL_SEND_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+GMAIL_PROFILE_URL = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
 
 
 def _get_access_token() -> str:
@@ -58,7 +59,7 @@ def send_gmail_message(
     response = requests.post(
         GMAIL_SEND_URL,
         headers={
-            "Authorization": f"Bearer {_get_access_token()}",
+            "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
         },
         json={"raw": raw},
