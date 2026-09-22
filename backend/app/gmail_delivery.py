@@ -65,3 +65,5 @@ def send_gmail_message(
         timeout=15,
     )
     response.raise_for_status()
+    print("GMAIL_SEND_STATUS:", response.status_code, flush=True)
+    print("GMAIL_SEND_RESPONSE:", response.text, flush=True)
