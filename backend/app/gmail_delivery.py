@@ -29,6 +29,8 @@ def _get_access_token() -> str:
         timeout=15,
     )
     response.raise_for_status()
+    print("GMAIL_SEND_STATUS:", response.status_code, flush=True)
+    print("GMAIL_SEND_ID:", response.json().get("id"), flush=True)
     print("GMAIL_SEND_OK:", response.json().get("id"))
 
     access_token = response.json().get("access_token")
