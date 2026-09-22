@@ -43,6 +43,7 @@ def send_gmail_message(
 ) -> None:
     message = EmailMessage()
     message["To"] = recipient
+    print("GMAIL_RECIPIENT:", recipient, flush=True)
     message["Subject"] = subject
     message.set_content(body)
 
