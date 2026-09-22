@@ -29,6 +29,7 @@ jobs:
           rm -rf _site
           mkdir -p _site
           cp -R frontend/. _site/
+          cp -R Gereken_icerikler _site/Gereken_icerikler
           cp _site/erischat-main.html _site/index.html
           python - <<'PY'
           from pathlib import Path

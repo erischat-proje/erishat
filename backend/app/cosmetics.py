@@ -9,7 +9,7 @@ COSMETIC_TYPES = {"avatar", "frame", "wallpaper"}
 
 
 def _asset_root() -> Path:
-    return Path(__file__).resolve().parents[1] / "Gereken_icerikler"
+    return Path(__file__).resolve().parents[2] / "Gereken_icerikler"
 
 
 def _safe_key(value: str) -> str:
@@ -23,7 +23,14 @@ def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, g
     directory = root / folder
     if not directory.exists():
         return
-    paths = [path for path in sorted(directory.rglob("*")) if path.is_file()]
+    paths = [path for path in directory.rglob("*") if path.is_file()]
+
+    def natural_key(path: Path):
+        import re
+        parts = re.split(r"(\d+)", path.name.lower())
+        return [int(part) if part.isdigit() else part for part in parts]
+
+    paths.sort(key=natural_key)
     for index, path in enumerate(paths, start=1):
         key = path.relative_to(root).as_posix()
         result.append({
