@@ -254,6 +254,15 @@
         </div>
 
         <div id="erisStep2" class="eris-step">
+          <div class="eris-cosmetics-section">
+            <label>Avatarını seç</label>
+            <div id="erisAvatarGallery" class="eris-cosmetics-gallery"></div>
+          </div>
+
+          <div class="eris-cosmetics-section">
+            <label>Çerçeveni seç</label>
+            <div id="erisFrameGallery" class="eris-cosmetics-gallery"></div>
+          </div>
           <label>Kullanıcı adın</label>
           <input id="erisUsername" maxlength="32" minlength="3" autocomplete="username" placeholder="Kullanıcı adın">
 
@@ -274,6 +283,8 @@
     document.body.appendChild(root);
 
     let selectedGender = '';
+    let selectedAvatarAsset = '';
+    let selectedFrameAsset = '';
 
     const step1 = root.querySelector('#erisStep1');
     const step2 = root.querySelector('#erisStep2');
@@ -297,7 +308,100 @@
       bioCount.textContent = String(bio.value.length);
     });
 
-    root.querySelector('#erisStep1Next').addEventListener('click', () => {
+    async function loadOnboardingCosmetics() {
+      const avatarGallery = root.querySelector('#erisAvatarGallery');
+      const frameGallery = root.querySelector('#erisFrameGallery');
+
+      avatarGallery.innerHTML = '<div class="eris-cosmetics-loading">Avatarlar yükleniyor...</div>';
+      frameGallery.innerHTML = '<div class="eris-cosmetics-loading">Çerçeveler yükleniyor...</div>';
+
+      try {
+        const catalogResponse = await request('/cosmetics');
+        const catalog = Array.isArray(catalogResponse)
+          ? catalogResponse
+          : (catalogResponse?.items || []);
+
+        const avatars = catalog.filter(item =>
+          item.type === 'avatar' &&
+          item.vip === false &&
+          item.gender === selectedGender
+        );
+
+        const frames = catalog.filter(item =>
+          item.type === 'frame' &&
+          item.vip === false
+        );
+
+        avatarGallery.innerHTML = '';
+        frameGallery.innerHTML = '';
+
+        avatars.forEach((item, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'eris-cosmetic-item';
+          button.innerHTML = '<img alt="Avatar" loading="lazy">';
+
+          const img = button.querySelector('img');
+          img.src = window.ErisChatCosmetics
+            ? window.ErisChatCosmetics.assetUrl(item.asset_key)
+            : 'Gereken_icerikler/' + item.asset_key;
+
+          button.addEventListener('click', () => {
+            selectedAvatarAsset = item.asset_key;
+            avatarGallery.querySelectorAll('.eris-cosmetic-item')
+              .forEach(x => x.classList.remove('selected'));
+            button.classList.add('selected');
+          });
+
+          avatarGallery.appendChild(button);
+
+          if (index === 0) {
+            selectedAvatarAsset = item.asset_key;
+            button.classList.add('selected');
+          }
+        });
+
+        frames.forEach((item, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'eris-cosmetic-item eris-frame-item';
+          button.innerHTML = '<img alt="Çerçeve" loading="lazy">';
+
+          const img = button.querySelector('img');
+          img.src = window.ErisChatCosmetics
+            ? window.ErisChatCosmetics.assetUrl(item.asset_key)
+            : 'Gereken_icerikler/' + item.asset_key;
+
+          button.addEventListener('click', () => {
+            selectedFrameAsset = item.asset_key;
+            frameGallery.querySelectorAll('.eris-cosmetic-item')
+              .forEach(x => x.classList.remove('selected'));
+            button.classList.add('selected');
+          });
+
+          frameGallery.appendChild(button);
+
+          if (index === 0) {
+            selectedFrameAsset = item.asset_key;
+            button.classList.add('selected');
+          }
+        });
+
+        if (!avatars.length) {
+          avatarGallery.innerHTML = '<div class="eris-cosmetics-loading">Avatar bulunamadı.</div>';
+        }
+
+        if (!frames.length) {
+          frameGallery.innerHTML = '<div class="eris-cosmetics-loading">Standart çerçeve bulunamadı.</div>';
+        }
+      } catch (error) {
+        console.error('Onboarding cosmetics yüklenemedi:', error);
+        avatarGallery.innerHTML = '<div class="eris-cosmetics-loading">Avatarlar yüklenemedi.</div>';
+        frameGallery.innerHTML = '<div class="eris-cosmetics-loading">Çerçeveler yüklenemedi.</div>';
+      }
+    }
+
+    root.querySelector('#erisStep1Next').addEventListener('click', async () => {
       const firstName = root.querySelector('#erisFirstName').value.trim();
       const lastName = root.querySelector('#erisLastName').value.trim();
       const birthDate = root.querySelector('#erisBirthDate').value;
@@ -323,6 +427,7 @@
       }
 
       error1.textContent = '';
+      await loadOnboardingCosmetics();
       step1.classList.remove('active');
       step2.classList.add('active');
       progress1.classList.remove('active');
@@ -365,6 +470,8 @@
             gender: selectedGender,
             username,
             bio: bioValue,
+                                    avatar_asset: selectedAvatarAsset || null,
+                                    frame_asset: selectedFrameAsset || null,
           }),
         });
 

@@ -623,6 +623,33 @@ def complete_onboarding(
     user.gender = payload.gender
     user.nickname = username
     user.bio = payload.bio.strip()
+
+    # Onboarding cosmetics: yalnızca standart ve cinsiyete uygun avatar/çerçeve.
+    if payload.avatar_asset:
+        avatar_key = payload.avatar_asset.replace("\\", "/").lstrip("./")
+        expected_folder = "kadınavatar" if payload.gender == "female" else "erkekavatar"
+        avatar_root = Path(__file__).resolve().parents[1] / "Gereken_icerikler" / expected_folder
+        avatar_path = avatar_root / Path(avatar_key).name
+        if (
+            avatar_key.startswith(expected_folder + "/")
+            and avatar_path.is_file()
+        ):
+            user.avatar_asset = f"{expected_folder}/{avatar_path.name}"
+        else:
+            raise HTTPException(status_code=400, detail="Geçersiz avatar seçimi")
+
+    if payload.frame_asset:
+        frame_key = payload.frame_asset.replace("\\", "/").lstrip("./")
+        frame_root = Path(__file__).resolve().parents[1] / "Gereken_icerikler" / "standartcerceve"
+        frame_path = frame_root / Path(frame_key).name
+        if (
+            frame_key.startswith("standartcerceve/")
+            and frame_path.is_file()
+        ):
+            user.frame_asset = f"standartcerceve/{frame_path.name}"
+        else:
+            raise HTTPException(status_code=400, detail="Geçersiz çerçeve seçimi")
+
     user.profile_completed = True
     welcome_conversation_id = f"welcome:{user.id}"
     welcome_conversation = db.get(Conversation, welcome_conversation_id)

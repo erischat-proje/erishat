@@ -25,6 +25,8 @@ class OnboardingRequest(BaseModel):
     gender: Literal["female", "male"]
     username: str = Field(min_length=3, max_length=32)
     bio: str = Field(default="", max_length=300)
+    avatar_asset: str | None = Field(default=None, max_length=255)
+    frame_asset: str | None = Field(default=None, max_length=255)
 
     @field_validator("first_name", "last_name", "username", "bio")
     @classmethod
