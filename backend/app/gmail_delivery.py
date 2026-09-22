@@ -1,14 +1,12 @@
 from email.message import EmailMessage
 import base64
-
 import requests
 
 from .config import settings
 
-
 GMAIL_TOKEN_URL = "https://oauth2.googleapis.com/token"
-GMAIL_SEND_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
 GMAIL_PROFILE_URL = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
+GMAIL_SEND_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
 
 
 def _get_access_token() -> str:
@@ -30,9 +28,6 @@ def _get_access_token() -> str:
         timeout=15,
     )
     response.raise_for_status()
-    print("GMAIL_SEND_STATUS:", response.status_code, flush=True)
-    print("GMAIL_SEND_ID:", response.json().get("id"), flush=True)
-    print("GMAIL_SEND_OK:", response.json().get("id"))
 
     access_token = response.json().get("access_token")
     if not access_token:
@@ -56,6 +51,23 @@ def send_gmail_message(
         message.as_bytes()
     ).decode("ascii")
 
+    access_token = _get_access_token()
+
+    profile = requests.get(
+        GMAIL_PROFILE_URL,
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
+        timeout=15,
+    )
+    profile.raise_for_status()
+
+    print(
+        "GMAIL_AUTH_EMAIL:",
+        profile.json().get("emailAddress"),
+        flush=True,
+    )
+
     response = requests.post(
         GMAIL_SEND_URL,
         headers={
@@ -66,5 +78,9 @@ def send_gmail_message(
         timeout=15,
     )
     response.raise_for_status()
-    print("GMAIL_SEND_STATUS:", response.status_code, flush=True)
-    print("GMAIL_SEND_RESPONSE:", response.text, flush=True)
+
+    print(
+        "GMAIL_SEND_RESPONSE:",
+        response.text,
+        flush=True,
+    )
