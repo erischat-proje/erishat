@@ -81,18 +81,10 @@
 
   const status = gate.querySelector('#erisGoogleStatus');
 
-  gate.querySelector('#erisGoogleButton').onclick = () => {
+  gate.querySelector('#authGoogleBtn').onclick = () => {
     googleRegister().catch(e => {
       status.textContent = e.message || 'Google giriş başlatılamadı.';
     });
-  };
-
-  gate.querySelector('#authAppleBtn').onclick = () => {
-    status.textContent = 'Apple girişini başlatmak için Apple yapılandırması gerekiyor.';
-  };
-
-  gate.querySelector('#authFacebookBtn').onclick = () => {
-    status.textContent = 'Facebook girişini başlatmak için Facebook yapılandırması gerekiyor.';
   };
 
   gate.querySelector('#authEmailBtn').onclick = async () => {
