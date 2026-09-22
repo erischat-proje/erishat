@@ -200,7 +200,55 @@
           text-align: right;
         }
 
-        #erisOnboarding .eris-progress {
+        #erisOnboarding .eris-cosmetics-gallery {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
+      }
+
+      #erisOnboarding .eris-cosmetic-item {
+        width: 100%;
+        height: 82px;
+        min-width: 0;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.045);
+      }
+
+      #erisOnboarding .eris-cosmetic-item img {
+        display: block;
+        width: 58px;
+        height: 58px;
+        max-width: 58px;
+        max-height: 58px;
+        min-width: 0;
+        min-height: 0;
+        object-fit: contain;
+        object-position: center;
+        flex: 0 0 auto;
+      }
+
+      #erisOnboarding .eris-frame-item img {
+        width: 68px;
+        height: 68px;
+        max-width: 68px;
+        max-height: 68px;
+        object-fit: contain;
+      }
+
+      #erisOnboarding .eris-cosmetic-item.selected {
+        border-color: rgba(132,108,255,.9);
+        box-shadow: 0 0 0 2px rgba(132,108,255,.18);
+      }
+
+      #erisOnboarding .eris-progress {
           display: flex;
           gap: 7px;
           margin: 0 0 22px;
