@@ -628,7 +628,7 @@ def complete_onboarding(
     if payload.avatar_asset:
         avatar_key = payload.avatar_asset.replace("\\", "/").lstrip("./")
         expected_folder = "kadınavatar" if payload.gender == "female" else "erkekavatar"
-        avatar_root = Path(__file__).resolve().parents[2] / "Gereken_icerikler" / expected_folder
+        avatar_root = Path(__file__).resolve().parents[1] / "Gereken_icerikler" / expected_folder
         avatar_path = avatar_root / Path(avatar_key).name
         if (
             avatar_key.startswith(expected_folder + "/")
@@ -640,7 +640,7 @@ def complete_onboarding(
 
     if payload.frame_asset:
         frame_key = payload.frame_asset.replace("\\", "/").lstrip("./")
-        frame_root = Path(__file__).resolve().parents[2] / "Gereken_icerikler" / "standartcerceve"
+        frame_root = Path(__file__).resolve().parents[1] / "Gereken_icerikler" / "standartcerceve"
         frame_path = frame_root / Path(frame_key).name
         if (
             frame_key.startswith("standartcerceve/")
