@@ -236,6 +236,8 @@ class RoomPasswordUpdate(BaseModel): password: str = Field(min_length=4, max_len
 class RoomJoinPayload(BaseModel): password: str | None = Field(default=None, max_length=4)
 class RoomChatUpdate(BaseModel): enabled: bool
 class RoomNameUpdate(BaseModel): name: str = Field(min_length=1, max_length=16)
+class RoomThemeUpdate(BaseModel): theme: str = Field(min_length=1, max_length=32)
+class RoomSeatCountUpdate(BaseModel): seat_count: int
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class BanUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class MusicPlaybackUpdate(BaseModel):
@@ -482,6 +484,45 @@ def register_room_auth(current_user_dependency):
     @router.delete("/{room_id}/seats/leave")
     def leave_seat(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None}, synchronize_session=False); db.commit(); return {"left_seat": True}
+    @router.patch("/{room_id}/theme")
+    def set_theme(room_id: str, payload: RoomThemeUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_owner(db, room, user)
+        theme = payload.theme.strip().lower()
+        if theme not in {"normal", "vip"}:
+            raise HTTPException(status_code=422, detail="Geçersiz oda teması")
+        room.theme = theme
+        db.commit()
+        return {"theme": room.theme}
+
+    @router.patch("/{room_id}/seats")
+    def set_seat_count(room_id: str, payload: RoomSeatCountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_owner(db, room, user)
+        target = int(payload.seat_count)
+        allowed = LEVELS[room.level]["seats"]
+        if target not in {8, 12, 16} or target > allowed:
+            raise HTTPException(status_code=422, detail=f"Bu oda seviyesinde en fazla {allowed} koltuk kullanılabilir")
+        occupied = db.scalar(
+            select(func.count(RoomSeat.id)).where(
+                RoomSeat.room_id == room.id,
+                RoomSeat.seat_number > target,
+                RoomSeat.user_id.is_not(None)
+            )
+        ) or 0
+        if occupied:
+            raise HTTPException(status_code=409, detail="Kullanılan koltukları kapatamazsınız")
+        db.query(RoomSeat).filter(
+            RoomSeat.room_id == room.id,
+            RoomSeat.seat_number > target
+        ).delete(synchronize_session=False)
+        for number in range(1, target + 1):
+            if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == number)):
+                db.add(RoomSeat(room_id=room.id, seat_number=number))
+        room.seat_count = target
+        db.commit()
+        return {"seat_count": target}
+
     @router.patch("/{room_id}/chat")
     def set_chat(room_id: str, payload: RoomChatUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); room.chat_enabled = payload.enabled; db.commit(); return {"chat_enabled": room.chat_enabled}
