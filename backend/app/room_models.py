@@ -12,6 +12,8 @@ class Room(Base):
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(64), nullable=False)
     level: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
+    seat_count: Mapped[int] = mapped_column(Integer, default=8, server_default="8", nullable=False)
+    theme: Mapped[str] = mapped_column(String(32), default="normal", server_default="normal", nullable=False)
     chat_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     lock_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

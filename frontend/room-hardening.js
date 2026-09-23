@@ -24,6 +24,75 @@
 
   function installSeatFix(){ /* Seat clicks are owned by room-live.js; avoid duplicate handlers. */ }
 
+  function isStaff(r=window.__erisRoomPermissions||{}){
+    return !!(r.is_owner || r.is_moderator || r.can_manage);
+  }
+
+  function enforceManagementUi(r){
+    const staff=isStaff(r);
+
+    const selectors=[
+      '[data-room-management]',
+      '[data-room-settings]',
+      '[data-room-admin]',
+      '[data-room-owner-only]',
+      '#erisRoomMoreTop',
+      '#roomSettingsBtn',
+      '#roomThemeBtn',
+      '#roomLockBtn',
+      '#roomMuteBtn',
+      '#roomKickBtn',
+      '#roomSeatLockBtn',
+      '#roomModerationBtn',
+      '#roomMusicManage'
+    ];
+
+    document.querySelectorAll(selectors.join(',')).forEach(el=>{
+      if(staff){
+        el.style.removeProperty('display');
+        el.removeAttribute('aria-hidden');
+        el.removeAttribute('data-management-hidden');
+      }else{
+        el.style.setProperty('display','none','important');
+        el.setAttribute('aria-hidden','true');
+        el.setAttribute('data-management-hidden','1');
+      }
+    });
+
+    // Menü içindeki yönetim maddeleri de yetkisiz kullanıcıya görünmemeli.
+    document.querySelectorAll(
+      '[data-room-action="settings"],' +
+      '[data-room-action="rename"],' +
+      '[data-room-action="theme"],' +
+      '[data-room-action="lock"],' +
+      '[data-room-action="moderation"],' +
+      '[data-room-action="kick"],' +
+      '[data-room-action="mute"],' +
+      '[data-room-action="seat-lock"]'
+    ).forEach(el=>{
+      if(staff){
+        el.style.removeProperty('display');
+        el.removeAttribute('aria-hidden');
+      }else{
+        el.style.setProperty('display','none','important');
+        el.setAttribute('aria-hidden','true');
+      }
+    });
+
+    // Yetkisiz kullanıcı mevcut yönetim panelini açık bırakmışsa kapat.
+    if(!staff){
+      document.querySelectorAll(
+        '#erisDirectRoomSettings,' +
+        '#erisRoomSettings,' +
+        '#roomSettingsPanel,' +
+        '#roomManagementPanel'
+      ).forEach(el=>{
+        el.classList.remove('show','open','active');
+        el.style.setProperty('display','none','important');
+      });
+    }
+  }
+
   function addOwnerSettingsButton(r){
     const surface=document.getElementById('erisRoomSurface'),top=surface?.querySelector('.eris-room-top');
     if(!top)return;
@@ -82,6 +151,7 @@
       window.__erisRoomPermissions={is_owner:!!r.is_owner,is_moderator:!!r.is_moderator,can_manage:!!r.can_manage,current_user_seat:r.current_user_seat};
       addOwnerSettingsButton(r);
       addMusicPanel(r);
+      enforceManagementUi(r);
       document.getElementById('erisLiveTitle')?.setAttribute('data-room-owner',r.is_owner?'1':'0');
     }catch{}
   }

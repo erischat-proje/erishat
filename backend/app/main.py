@@ -989,7 +989,21 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                     if not room or not member:
                         continue
                     music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == internal_room_id).first()
-                    if not music or (music.user_id != user.id and room.owner_id != user.id):
+                    if not music:
+                        continue
+
+                    # Müzik sahibi kendi parçasını kontrol edebilir;
+                    # oda sahibi veya aktif moderatör ise oda müziğini yönetebilir.
+                    is_owner = room.owner_id == user.id
+                    is_moderator = bool(
+                        db.query(RoomModerator.id)
+                        .filter(
+                            RoomModerator.room_id == room.id,
+                            RoomModerator.user_id == user.id,
+                        )
+                        .first()
+                    )
+                    if music.user_id != user.id and not is_owner and not is_moderator:
                         continue
                     now = datetime.now(timezone.utc)
                     if action == "seek":
