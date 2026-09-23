@@ -80,6 +80,21 @@
   document.body.appendChild(gate);
 
   const status = gate.querySelector('#erisGoogleStatus');
+  let emailPurpose = 'login';
+
+  const loginMode = document.createElement('button');
+  loginMode.type='button';
+  loginMode.className='authBtn';
+  loginMode.textContent='Giriş';
+  loginMode.onclick=()=>{emailPurpose='login';status.textContent='Email giriş modu';};
+
+  const registerMode = document.createElement('button');
+  registerMode.type='button';
+  registerMode.className='authBtn';
+  registerMode.textContent='Kayıt ol';
+  registerMode.onclick=()=>{emailPurpose='register';status.textContent='Email kayıt modu';};
+
+  gate.querySelector('.authMethods')?.prepend(registerMode,loginMode);
 
   gate.querySelector('#authGoogleBtn').onclick = () => {
     googleRegister().catch(e => {
@@ -134,6 +149,21 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
   async function googleRegister() {
     const gate = document.getElementById('erisGoogleGate') || addGate();
     const status = gate.querySelector('#erisGoogleStatus');
+  let emailPurpose = 'login';
+
+  const loginMode = document.createElement('button');
+  loginMode.type='button';
+  loginMode.className='authBtn';
+  loginMode.textContent='Giriş';
+  loginMode.onclick=()=>{emailPurpose='login';status.textContent='Email giriş modu';};
+
+  const registerMode = document.createElement('button');
+  registerMode.type='button';
+  registerMode.className='authBtn';
+  registerMode.textContent='Kayıt ol';
+  registerMode.onclick=()=>{emailPurpose='register';status.textContent='Email kayıt modu';};
+
+  gate.querySelector('.authMethods')?.prepend(registerMode,loginMode);
     const box = gate.querySelector('#erisGoogleButton');
     const googleBtn = gate.querySelector('#authGoogleBtn');
 
@@ -220,7 +250,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
   }
 
 
-async function emailOtpLogin(email, code = null) {
+async function emailOtpLogin(email, code = null, purpose = 'login') {
   email = String(email || '').trim().toLowerCase();
   if (!email) throw new Error('Email adresini gir.');
 
@@ -230,7 +260,7 @@ async function emailOtpLogin(email, code = null) {
       body: JSON.stringify({
         provider: 'email',
         identifier: email,
-        purpose: 'login'
+        purpose: purpose === 'register' ? 'register' : 'login'
       })
     });
   }
@@ -240,7 +270,7 @@ async function emailOtpLogin(email, code = null) {
     body: JSON.stringify({
       provider: 'email',
       identifier: email,
-      purpose: 'login',
+      purpose: purpose === 'register' ? 'register' : 'login',
       code: String(code).trim()
     })
   });

@@ -16,7 +16,7 @@
     leaveSeat: roomId => api(`/rooms/${id(roomId)}/seats/leave`, { method: 'DELETE' }),
     setChat: (roomId, enabled) => api(`/rooms/${id(roomId)}/chat`, { method: 'PATCH', body: JSON.stringify({ enabled: !!enabled }) }),
     rename: (roomId, name) => api(`/rooms/${id(roomId)}/name`, { method: 'PATCH', body: JSON.stringify({ name: String(name || '').trim() }) }),
-    setCapacity: (roomId, seatCount) => api(`/rooms/${id(roomId)}/capacity`, { method: 'PATCH', body: JSON.stringify({ seat_count: Number(seatCount) }) }),
+    setCapacity: (roomId, seatCount) => api(`/rooms/${id(roomId)}/seats`, { method: 'PATCH', body: JSON.stringify({ seat_count: Number(seatCount) }) }),
     setTheme: (roomId, theme) => api(`/rooms/${id(roomId)}/theme`, { method: 'PATCH', body: JSON.stringify({ theme: String(theme || 'normal') }) }),
     addModerator: (roomId, userId) => api(`/rooms/${id(roomId)}/moderators`, body({ user_id: userId })),
     removeModerator: (roomId, userId) => api(`/rooms/${id(roomId)}/moderators/${id(userId)}`, { method: 'DELETE' }),
