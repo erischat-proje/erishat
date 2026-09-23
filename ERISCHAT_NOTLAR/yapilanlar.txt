@@ -1,0 +1,797 @@
+2026-09-19 — BROWSER E2E KANIT SENKRONİZASYONU
+- [x] Quality #1261 / run 35456917966 SUCCESS.
+- [x] Gerçek browser smoke; DM, sosyal follow/unfollow, block/unblock, privacy, notification read, room chat, RTC signaling + RTCPeerConnection, announcements, reports/history, cosmetics purchase/apply, VIP privacy, gifts→notification→profile-gifts, seat/moderation ve room music UI/realtime zincirlerini kapsıyor.
+- [x] Bu kapsam Quality #1261 runner sonucuyla doğrulandı; önceki "sonuç bekleniyor" notları artık güncel değil.
+- [ ] Üretim STUN/TURN ile iki ayrı gerçek tarayıcı ses transportu.
+- [ ] 139 kozmetiğin manuel görsel/alpha standardı incelemesi.
+- [ ] VIP spend→level→unlock bağımsız uçtan uca yaşam döngüsü.
+
+ERISCHAT — YAPILANLAR / GÜNCEL
+Tarih: 2026-09-18 — FAMILY ROUTER CLEANUP CHECKPOINT
+
+AMAÇ
+- Önce mevcut kodu tamamlanmış temel sistem seviyesine getirmek.
+- Ürün geliştirmesine ancak temel sistem gerçek runner ve canlı ortamda doğrulandıktan sonra geçmek.
+- Railway production deploy kullanıcı açıkça "deploy" demeden yapılmayacak.
+
+GÜNCEL RUNNER KANITI
+- [x] Quality v4 run 35265208929 / job 105350554959 SUCCESS.
+- [x] Güncel önceki HEAD eac244e6d901a6b269991dabdede9cef11afc423 üzerinde temel zincir çalıştı.
+- [x] Static syntax ve required-file checks.
+- [x] 139 cosmetic asset integrity.
+- [x] Cosmetic asset URL smoke.
+- [x] Local API startup + /ready.
+- [x] Anonymous session smoke.
+- [x] Live room smoke.
+- [x] Live ban smoke.
+- [x] Live DM smoke.
+- [x] Live cosmetic smoke.
+- [x] Container cleanup.
+
+BAN SMOKE DÜZELTMESİ
+- [x] Commit eac244e6d901a6b269991dabdede9cef11afc423: room ban smoke kullanıcılarında API'nin kabul ettiği male gender kullanıldı.
+- [x] Kullanıcı oluşturma HTTP/response sonucu ayrıca doğrulanıyor.
+- [x] Bu düzeltme sonrası güncel HEAD Quality v4 SUCCESS verdi.
+
+WEBSOCKET GÜVENLİĞİ
+- [x] Session revoke sonrası yeni mesaj işlenmeden önce token/session yeniden doğrulanıyor.
+- [x] Geçersiz session için 1008 close uygulanıyor.
+- [x] Room WS mesaj öncesi üyelik/ban/chat_enabled kontrolü yapıyor.
+- [x] Güncel Quality runner room/ban zincirini tekrar geçti.
+
+AİLE RUNTIME
+- [x] Family production create route gerçek runner'da doğrulandı.
+- [x] Family detail route gerçek runner'da doğrulandı.
+- [x] Family donation route gerçek runner'da doğrulandı.
+- [x] 40000 Lidya donation sonrası level 2 ve capacity 40 gerçek runner'da doğrulandı.
+- [x] Family chat GET gerçek runner'da doğrulandı.
+- [x] Quality run 35277688638 / job 105392132238 SUCCESS.
+- [x] Live family smoke adımı SUCCESS; 405 ve önceki persistence problemi artık runner zincirinde tekrarlanmadı.
+- [x] Family member list/invite/role/remove canlı smoke: Quality run 35278981991 / job 105396283536 SUCCESS.
+- [x] Family chat message POST canlı smoke: Quality run 35278981991 / job 105396283536 SUCCESS.
+- [x] Family route duplicate/sadeleştirme temizliği: canonical family_router 9 endpoint ile ayrıştırıldı; platform router üzerindeki 4 duplicate family route kaldırıldı.
+
+KOZMETİK
+- [x] Aktif katalog 139 asset.
+- [x] Asset integrity runner kontrolü.
+- [x] Asset URL smoke runner kontrolü.
+- [ ] Gerçek browser render/şeffaflık kontrolü.
+
+FRONTEND
+- [x] Auth/session, room, DM, gift ve cosmetics canlı scriptleri mevcut.
+- [x] Son frontend değişiklikleri güncel Quality static/smoke zinciriyle uyumlu.
+- [ ] Gerçek tarayıcı etkileşim doğrulaması.
+
+PAGES / CANLI
+- [x] Pages environment admission kök nedeni tespit edildi: github-pages custom branch policy main'i kabul etmiyor.
+- [ ] Environment policy'ye main eklenmesi.
+- [ ] Pages deploy SUCCESS.
+- [ ] Canlı Pages HTTP/index.
+- [ ] Pages → Railway API.
+- [ ] Gerçek Pages origin görüldükten sonra CORS daraltması.
+- [ ] Railway production deploy — kullanıcı açıkça deploy demeden yapılmayacak.
+
+DOKÜMANTASYON
+- [x] Family runtime smoke checkpoint'i işlendi.
+- [x] Family member/chat message smoke checkpoint'i işlendi.
+- [x] yapilacaklar.txt family runtime kanıtına göre senkronize edildi.
+- [x] Quality run 35279859803 / job 105399048309 SUCCESS; family production integration ve live family smoke dahil tüm quality adımları geçti.
+
+BROWSER SMOKE CHECKPOINT
+- [x] Commit c61894244a6091b46c195c968d8c498935966cc1: Playwright tabanlı frontend browser smoke eklendi.
+- [x] Quality v4 run 35280867500 / job 105402227348 SUCCESS.
+- [x] Browser smoke adımı SUCCESS; Mağaza/Profil/Keşfet navigasyonu, gerçek oda listesi renderı ve Mesaj → Rana'nın Odası → mesaj gönderme doğrulandı.
+- [ ] Tüm ürün sekmelerinin, 139 kozmetiğin ve oda/gift/seat/moderasyon zincirinin tam browser E2E doğrulaması.
+
+BROWSER/COSMETICS CHECKPOINT
+- [x] Commit 5c6387801424fe53e33ca6b01c03aa6dd3e37fab: tüm 139 kozmetik asset için Chromium render smoke eklendi.
+- [x] Quality run 35281783827 / job 105405134485 SUCCESS.
+- [x] 139/139 asset browser tarafından decode/render edildi.
+- [ ] PNG frame alpha: 16/44 şeffaf, 28/44 opak; opak frame'ler tasarım açısından ayrıca incelenecek.
+
+Room control checkpoint
+- [x] Live room smoke genişletildi: join seat, moderator add/remove, seat mute/unmute, seat lock/unlock, room lock/unlock.
+- [x] Quality run 35282680644 / job 105407977869 SUCCESS.
+
+
+2026-09-18 — BROWSER E2E İLERLEME
+- [x] Frontend → gerçek backend browser smoke: anonymous session + profile render + gerçek DM oluşturma/gönderme + aile create/detail/donation/chat doğrulandı; Quality run 35381313253 / job 105717875500 adım 21 SUCCESS.
+- [x] Room browser surface smoke, canlı DM renderer ile uyumlu hale getirildi; commit 98dce70a11cdad94242a1f87868507c57bb7f808.
+- [ ] Aynı Quality run'ın live room/ban/DM/cosmetic son smoke adımları henüz tamamlanmadı.
+
+
+2026-09-18 — FAN + PROFİL GERÇEKLİK GÜNCELLEMESİ
+- [x] Commit 9c55925dbfb650f0fb041b15fc5296990d365a68: /users/{user_id}/fans artık UserFollow kayıtlarından gerçek takipçi sayısını hesaplıyor; hatalı FanProfile.total bağımlılığı kaldırıldı.
+- [x] Commit 6381e47959bcce894c5bad0a482559b27dc3ed9f: frontend backend browser smoke fan endpointini ve fan seviyesi doğrulamasını ekledi.
+- [x] Commit 0e1d5d017bc4987375b164370b72eb36acc8c059: Profil müşteri paneli gerçek avatar_asset/frame_asset, VIP, fan seviyesi ve profil hediyesi özetini göstermeye başladı.
+- [x] Commit 3c794b6111e26c56d613aa8242b60235c3109f85: yapılacaklar checkpointi güncellendi.
+- [ ] Commit 6381e479 sonrası Quality run 35382739544 henüz tamamlanmadı; PASS sonucu beklenmeden doğrulanmış kabul edilmeyecek.
+
+
+2026-09-18 — QUALITY SYNTAX KORUMA
+- [x] Quality run 35383263356, job 105724200717, platform_models.py satır 156'da kalan `rom datetime` sözdizimi hatasını yakaladı.
+- [x] Commit 862494292808de71ed6decccac1eacc0aa4ae304 ile yinelenen/bozuk ikinci model bloğu kaldırıldı.
+- [x] Yapılacaklar listesine bildirim read/unread, rapor geçmişi, engelleme/gizlilik ve profile try-on/VIP görünüm browser doğrulama eksikleri eklendi.
+- [ ] 8624942 sonrası yeni Quality run sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — SOSYAL/GIFT/PROFİL EKSİKLERİ
+- [x] Commit 22eb488ec5e4565a0983e87eb232a0bac784bce0: platform_routes sosyal modelleri (Notification/UserFollow/UserBlock) gerçek importlara bağlandı; profil hediyesi sorgusu RoomGiftEvent.recipient_id/sender_id/total_price alanlarıyla düzeltildi.
+- [x] Commit d58f140453befdc6d5202f47220aa36af3720b4f: oda hediyesi gönderiminde alıcıya gerçek Notification(kind=gift) oluşturuluyor.
+- [x] Commit 333db6fddcb33a474da63055b3ff7a10ab76f3a5: Profil paneline gerçek kozmetik try-on/apply kartları eklendi.
+- [x] Commit 648a7bda72a2b0394353b64f0c4541f8ab6cbb29: VIP kozmetiklerde satın alma yerine doğrudan apply akışı düzeltildi.
+- [ ] Quality run 35386247069, 0c6eccfa commitinde follow akışında UserFollow import eksikliği nedeniyle frontend backend browser smoke adımında 500 verdi; sonraki commitler bu kök nedeni düzeltti ve yeni Quality sonucu bekleniyor.
+
+
+2026-09-18 — BİLDİRİM TETİKLEYİCİLERİ
+- [x] Commit b371d0c8b259ac3bf06e70279356cb9921c6a52e1: aileye üye davet/ekleme işleminde hedef kullanıcıya family_invite bildirimi eklendi.
+- [x] Oda hediye gönderimi d58f140 ile gift bildirimi oluşturuyor ve gerçek profil hediye kayıtlarıyla birlikte tutuluyor.
+
+- [x] Commit e40acb9a96af90803c320e76c3480ea3cfb9be34: /me/vip artık badge, title, neon_enabled ve sunum rengi metadata'sı döndürüyor.\n- [x] Commit 8dddaaeaff48da2d16eee9ecc1c52d443529d7: VIP merkezi bu badge/neon/title bilgilerini gerçek API'den gösteriyor.\n- [x] Commit 01593847976b16f758f5725b2e017f03d7abc22f: backend browser smoke VIP metadata sözleşmesini doğruluyor.\n
+- [x] Commit 5be2a412b67c0ce4e04eb093ade51c8e43ecbab9: Oda sahibi/moderatör için gerçek oda daveti endpoint'i eklendi; hedef kullanıcıya `room_invite` bildirimi oluşturuluyor.\n- [x] Commit a36aa595c4f0cb5389e1847c4c1ea652e45544b2: Browser backend smoke oda daveti + hedef kullanıcı bildirimini doğruluyor.\n
+- [x] Commit 36d233be67c43d5245541b7e40247a7e7763e479: Browser smoke aile davetini hedef kullanıcının `family_invite` bildirimiyle doğruluyor.\n
+- [x] Commit 27515f015e5410b0674d32c34e07267ee9c686bb: Oda hediye harcaması yeni seviyeye çıkınca oda sahibine `room_level` bildirimi ekleniyor.\n
+- [x] Commit 92d1a206486ff0320f597d2975e05d0d1d616d2b: Browser backend smoke hediye gönderimini, `gift` bildirimini, profil hediye geçmişini ve oda hediye event geçmişini doğruluyor.\n
+- [x] Commit 464213c8680cc22a9ac255114341e10d48e4a0ae: Browser backend smoke oda koltuk mute/unmute + lock/unlock, moderatör ekleme/listeleme ve müzik ekleme/listeleme/silme zincirlerini kapsıyor.\n
+- [x] Commit 78a0e10107dcfc63412f7761ea5b367ac9dd854d: `/me/reports` ile kullanıcının kendi şikayet geçmişi endpointi eklendi.\n- [x] Commit ca261fc946626d36b06995783b49df12931f94db: Browser backend smoke report oluşturma + şikayet geçmişinde doğrulama yapıyor.\n
+- [x] Commit 9a7d1c95a19d8c77ba617855443fa1f4fd62366c: Browser backend smoke artık canlı Profil → TRY-ON avatar uygulamasını ve `/me` avatar_asset + `/me/vip` metadata dönüşünü doğruluyor.\n
+- [x] Commit 16d7cb10a2902747d8fd44072503ee9f26843114: Browser social smoke `following` + `unfollow` doğrulamasını ekledi; bildirim read/unread ve report history assertionları API'nin gerçek array dönüşüne göre sağlamlaştırıldı.\n
+- [x] Commit bcf3da9ed2e0a0d89eb8cd06a33f0dda2a53bf6a: Browser backend smoke VIP metadata (`/me/vip`) ve VIP badge/neon/entry/title gizlilik ayarlarının gerçek API akışını kapsıyor.\n
+- [x] Commit 8eee5666b743d85b5ec33875e22780e18f538559: Browser backend smoke keşfetme tercihleri, nearby kullanıcılar, keşfedilebilir odalar ve random-room akışlarını doğruluyor.\n
+- [x] Commit 765c192bcfd42a728975b0054fc8025cd92ce42c: Browser backend smoke kullanıcı konumunu kaydetme ve `/me/location` read-back akışını doğruluyor.\n
+- [x] Commit 039bf915f6c61e27be29c84a5251b3ba42b7a242: Browser backend smoke DM conversation create/detail, mesaj gönderme ve mesaj geçmişinde read-back doğrulamasını sertleştirdi.\n
+
+2026-09-18 — BROWSER SMOKE ORDER FIX
+- [x] Commit düzeltmesi: frontend_backend_browser_smoke.mjs içinde oda oluşturma bloğu roomInvite/gift/room-control akışlarından önce tanımlanacak şekilde sıralandı; önceki checkpointte görünen room TDZ riskini kaldırdı.
+- [x] VIP public lookup hedefi için member user id test state'ine açıkça yazıldı.
+- [ ] Bu değişiklik sonrası yeni Quality runner sonucu henüz doğrulanmadı; PASS iddiası yok.
+
+
+2026-09-18 — SOCIAL/REPORT UI EXTENSION
+- [x] Commit e31fd934717c4b1af3d2bfe48b1f0797d06d963c: sosyal panel follow/unfollow + block/unblock UI, notification mark-read UI ve report history UI genişletildi.
+- [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — SOCIAL/REPORT/NOTIFICATION UI E2E EXTENSION
+- [x] Commit 0bc43435092e5b0118868495ed5357e58f566042: sosyal ters aksiyonları, bildirim mark-read UI ve report form/history browser smoke'a eklendi.
+- [ ] Bu commit sonrası Quality runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — GIFT UI E2E EXTENSION
+- [x] Commit 80ead31ae374d3a1adf1c0799dc494da38e18dae: gift UI sonrası alıcı notification/profile-gifts read-back eklendi.
+- [ ] Runner sonucu henüz doğrulanmadı.
+
+
+2026-09-18 — MICROPHONE UI
+- [x] Commit 6084415a894c6a0f2edaac0511be899bccdd6a6f: gerçek mikrofon stream lifecycle eklendi.
+- [x] Commit f06257ad47749e3b43586bb6d8209f264f506ea3: browser smoke mikrofon request/stop lifecycle kontrolü eklendi.
+- [ ] Gerçek WebRTC transport/signaling tamamlanmadı.
+
+
+2026-09-18 — WEBRTC SIGNALING TEMELİ
+- [x] Oda üyeleri için kimlik doğrulamalı RTC signaling relay eklendi: POST/GET /v1/rooms/{room_id}/rtc-signals.
+- [x] Offer / answer / ICE candidate / leave mesaj tipleri doğrulanıyor; hedef kullanıcının aynı odada olması zorunlu.
+- [x] Sinyaller 60 saniye TTL ve oda başına 100 mesaj sınırıyla geçici bellekte tutuluyor; bu katman henüz çoklu instance/kalıcı signaling altyapısı değil.
+- [ ] Frontend RTCPeerConnection + offer/answer/ICE akışı bu relay'e bağlanacak.
+
+
+2026-09-18 — WEBRTC DETERMINISTIC INITIATOR + SMOKE
+- [x] Commit `bc27af2fe81312e468cf3b24f8d5d8e3f1eb1396`: WebRTC initiator deterministik hale getirildi ve ICE server config'i `window.ERIS_WEBRTC_ICE_SERVERS` üzerinden alınabilir yapıldı.
+- [x] Commit `074115adb877d02ddcd6c0c7fd9ae00f90ce39f7`: browser smoke WebRTC peer setup/cleanup ve ICE config assertionları eklendi.
+- [ ] Bu iki commit için yeni Quality PASS kanıtı henüz yok.
+
+2026-09-18 — WEBRTC ICE/LEAVE HARDENING
+- [x] Commit `572632acb0ca69c8c15859987c894312269f5a89`: erken ICE candidate queue + remote-description sonrası flush eklendi.
+- [x] Mikrofon kapanışında peer'lere `leave` signaling gönderimi eklendi.
+- [ ] Bu commit için yeni Quality PASS kanıtı henüz yok.
+
+2026-09-18 — WEBRTC PEER CLEANUP HARDENING
+- [x] Commit 25d984b2933c27ac10b86d43c6d4850985999490: failed/disconnected peer durumunda RTC metadata ve uzak audio DOM kaynağı temizleniyor.
+- [x] Mikrofon kapanışında __rtcPeersMeta de temizleniyor; yeniden açılışta stale peer state kalmıyor.
+- [ ] Bu commit sonrası yeni Quality PASS kanıtı henüz yok.
+
+
+2026-09-18 — RTC SIGNALING SMOKE COVERAGE
+- [x] c10cd8fdea5c334ae5b8b6109eb4aaedf1f41fe5: browser smoke artık authenticated RTC signaling offer/ICE/leave mesajlarını gönderip karşı tarafta okuma/tüketim akışını doğruluyor.
+- [x] Self-target güvenlik kontrolü de smoke kapsamına alındı.
+- [ ] Yeni Quality PASS henüz alınmadı.
+
+
+2026-09-18 — RTC SIGNALING SECURITY SMOKE
+- [x] Commit `fc6a60fce28ff6c0e5c0b32aa188b695f203d5c6`: `scripts/rtc_signaling_security_smoke.mjs` eklendi.
+- [x] Senaryo; non-member GET/POST için 403, member → non-member target için 404, geçersiz signal type için 422 ve geçerli offer için 200 + queued=true kontrollerini kapsıyor.
+- [ ] Quality runner entegrasyonu/gerçek PASS henüz doğrulanmadı.
+
+
+2026-09-18 — WEBRTC ICE CONFIG BOOTSTRAP
+- [x] `f47a17384b0964245d1f47237dc120c2f4e5387b`: authenticated env-backed RTC ICE config endpoint.
+- [x] `e83e8cc5bec0e9b7a2708dcd3d3efe4330e63fe9`: frontend artık oda başlarken `/rtc-config` üzerinden ICE server listesini alıyor.
+- [x] Yapılandırma yoksa boş liste korunuyor; gerçek STUN/TURN endpoint/credential değeri repo içine gömülmedi.
+
+
+2026-09-18 — RTC ICE CONFIG SMOKE
+- [x] `f9b2c890` ile RTC smoke akışına ICE config endpoint çağrısı eklendi.
+- [x] `3da3e067` ile smoke, auth'lu room RTC config response'unu 200 + array olarak doğruluyor.
+- [ ] Runner PASS henüz doğrulanmadı.
+
+
+2026-09-18 — RTC CONFIG SECURITY SMOKE
+- [x] `4d89487821` ile RTC güvenlik smoke'una oda dışı `/rtc-config` 403 ve oda üyesi `/rtc-config` 200 + `ice_servers` kontrolleri eklendi.
+- [ ] Yeni runner PASS henüz doğrulanmadı.
+
+
+2026-09-18 — VIP SPENDING PROGRESSION
+- [x] VIP harcama sayaç + seviye ilerleme backend zinciri eklendi.
+- [x] Kozmetik satın alma smoke'u toplam harcama read-back kontrol ediyor (`86f6e595`).
+- [ ] Runner PASS henüz doğrulanmadı.
+
+
+2026-09-18 — YÖNETİM SİSTEMİ TEMELİ
+- [x] admin_models.py: SA/UA/DA AdminRole, Ghost Mode, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan ve ApplicationGap modelleri eklendi.
+- [x] admin_routes.py: role inheritance (DA > UA > SA), Ghost Mode, destek kabul/red/mesaj/kapanış, şikayet, uygulama eksiği, DA ID sorgu, Lidya, ban/unban, oda banı, chat banı, VIP ve rol yönetimi API'leri eklendi.
+- [x] main.py: admin router kaydı, son IP/device bilgisi takibi ve initial DA bootstrap eklendi.
+- [x] support_routes.py: destek talepleri pending başlatılıyor ve destek.txt'ye kullanıcı kimliğiyle not düşülüyor.
+- [x] room_routes.py: aktif SA/UA/DA Ghost Mode kullanıcıları kilitli odalara girebiliyor ve public room view'da gizleniyor; yönetim oda banı enforcement eklendi.
+- [x] frontend/admin-live.js + index entegrasyonu: yalnızca yetkili hesapların görebildiği Yönetim butonu ve rol bazlı yönetim paneli eklendi.
+- [ ] Yeni Quality runner sonucu henüz alınmadı; PASS ilan edilmiyor.
+
+- [x] Normal kullanıcı public ID üretimi ve mevcut kayıtların migration'ı 10 haneli sayısal ID standardına alındı; SA/UA/DA profillerinde public_id gizleniyor.
+
+- [x] Oda adı limiti 16 karaktere çekildi; oda public ID'si 12 haneli olarak üretilecek/mevcut odalar migrate edilecek ve oda ekranında adın hemen altında gösterilecek.
+- [x] UA'lara ban yetkileri eklendi: hesap banı, cihaz banı, chat banı, oda banı ve bunların kaldırılması; UA'lara DA'nın ID/Lidya/VIP/yetki gibi diğer araçları açılmadı.
+
+
+2026-09-18 — SİSTEM VERİ AYRIŞTIRMA / ID GÜVENLİĞİ
+- [x] Kullanıcı public ID 10 hane; oda public ID 12 hane olacak şekilde ayrıştırıldı.
+- [x] Oda public ID üretimi dedicated registry kontrolüyle çakışma güvenli hale getirildi.
+- [x] Mevcut oda public ID migration'ı 12 haneli standarda geçirildi.
+- [x] UserIdRegistry, RoomIdRegistry ve LidyaLedger modelleri eklendi.
+- [x] users.lidya BIGINT'e yükseltildi; yüksek miktarlı Lidya için Integer sınırı kaldırıldı.
+- [x] Lidya değişiklikleri otomatik `system_lidya_ledger` tablosuna ve `sistemönemliveriler/lidya_islemleri.txt` kaydına alınıyor.
+- [x] `sistemönemliveriler` klasöründe admin, destek, rapor, uygulama eksiği, ban, oda banı, chat banı, ghost, admin yetki, ID sorgu, Lidya, VIP, oda, kullanıcı ID, oda ID ve sistem işlem TXT'leri oluşturuldu.
+- [x] Admin audit helper ilgili işlem türüne göre özel TXT kaydını otomatik üretiyor.
+- [x] Admin destek ticket görüntüleme işlemi admin adı/id + hedef kullanıcı adı/id + ticket/mesaj sayısı ile ayrı kayda alınıyor.
+- [x] UA'nın Lidya değiştirme yetkisi kaldırıldı; Lidya araçları DA-only kaldı.
+- [x] Oda admin ban endpointleri 12 haneli public room ID ile çalışacak şekilde düzeltildi.
+- [x] Oda adı değiştirme endpointi 16 karakter sınırıyla eklendi.
+- [x] ID/admin smoke quality gate eklendi: 10 hane kullanıcı, 12 hane oda, 16/17 karakter oda adı, normal kullanıcı admin erişim reddi, SA/UA/DA yetki sınırları ve DA Lidya kontrolü.
+- [ ] Yeni Quality runner PASS henüz doğrulanmadı.
+
+2026-09-18 — SİSTEM KAYITLARI HARDENING
+- [x] Kullanıcı public ID üretiminde tarihsel ID registry tekrar kullanımını engelleyen kontrol eklendi.
+- [x] Oda public ID üretimi ayrı oda registry ile çakışma kontrolü yapıyor.
+- [x] Startup'ta sistem TXT dosyaları otomatik oluşturuluyor.
+- [x] Admin oda banı/unban artık 12 haneli public oda ID'sini kabul ediyor.
+- [x] Quality workflow'a ID/yetki smoke gate eklendi.
+- [ ] Bu son commitler için fresh Quality PASS henüz bekleniyor.
+
+2026-09-19 — EKSİKLERİ TAMAMLAMA TURU BAŞLANGICI
+- Öncelik sırası netleştirildi: önce tüm eksik özellikler/arayüzler/backend bağlantıları/e2e testleri eklenecek; sistem optimizasyonu ve nihai entegrasyon bundan sonra yapılacak.
+- main üzerindeki Quality failure kökü tespit edildi: backend/app/cosmetic_routes.py ve backend/app/platform_routes.py içinde literal \\n karakterleri Python kaynak koduna girmişti.
+- İki dosyadaki literal \\n dizileri gerçek satır sonlarına çevrildi.
+- Sonraki adım: yeni runner kanıtı alıp kalan eksik ürün yüzeylerini sırayla eklemek; optimizasyon aşamasına henüz geçilmemesi.
+2026-09-19 — Oyun katmanında eksik temel ekonomi akışı eklendi: Lidya kilitleme, bahis düşümü, payout, GameRound kaydı ve audit log. Standalone round için room_id migration eklendi. E2E/runner kanıtı henüz PASS değildir.
+
+
+2026-09-19 — 7 OYUN RNG MOTORLARI
+- [x] Rulet, 4 Kupa, At Yarışı, Blackjack, Crash, Kasa Açma ve Şans Çarkı için ayrı ücretsiz/RNG oynanış endpointleri eklendi.
+- [x] Oyun kataloğu ve oyun geçmişi endpointleri eklendi.
+- [x] Oyun sonuçları kullanıcı bazlı GamePlay geçmişine kaydediliyor ve sistem loguna yazılıyor.
+- [x] Oyun motorlarında yatırım/bahis/payout bulunmuyor; bu tur yalnızca oyun kuralları ve RNG sonuç katmanı geliştirildi.
+- [ ] Gerçek browser/E2E runner kanıtı henüz alınmadı.
+- [ ] Oyun UI butonlarının yeni 7 endpoint ile uçtan uca bağlanması bekliyor.
+
+
+2026-09-19 — OYUN ERİŞİMİ + İSTATİSTİK YÜZEYİ
+- [x] Ana menüden 🎮 Oyunlar giriş noktası eklendi.
+- [x] Oda tarafına 🎮 Oyunlar giriş noktası eklendi.
+- [x] Oyunlar genel/oda ortak (Rulet, 4 Kupa, At Yarışı, Şans Çarkı) ve özel/kişisel (Blackjack, Crash, Kasa Açma) olarak etiketlendi.
+- [x] Her oyun için kendi sonuç geçmişinden istatistik görüntüleme yüzeyi eklendi.
+- [ ] Oda ortak oyunlarının gerçek oda round/state senkronizasyonu ve browser E2E henüz tamamlanmadı.
+- [ ] Fresh Quality sonucu henüz alınmadı.
+
+
+2026-09-19 — OYUN ERİŞİM / KAPSAM / İSTATİSTİK
+- [x] Genel/Oda oyunları: Rulet, 4 Kupa, At Yarışı, Şans Çarkı.
+- [x] Özel/Kişisel oyunlar: Blackjack, Crash, Kasa Açma.
+- [x] Ana ürün merkezi içinde 🎮 Oyunlar sekmesi 7 oyunu ve kapsamlarını gösteriyor.
+- [x] Oda detayına 🎮 Oyunlar butonu eklendi; oda oyunları room_id ile açılıyor.
+- [x] Her oyun için sonuç örneklemi, sonuç adedi ve yüzdesel oranları döndüren istatistik endpointi eklendi.
+- [x] Oyun sonuçları GamePlay geçmişinde tutuluyor.
+- [ ] Yeni UI/runner browser E2E sonucu henüz alınmadı.
+- [ ] Gerçek oda katılımı sonrası 7 oyunun browser uçtan uca doğrulaması bekliyor.
+
+2026-09-19 — OYUN ANALİTİK SİSTEMİ
+- [x] Commit 04085e0: 7 ücretsiz oyunun teorik/gerçekleşen oran, örneklem, sapma, streak ve seçim-isabet analizi eklendi.
+- [x] Crash çarpan istatistikleri ve At Yarışı podyum istatistikleri eklendi.
+- [x] Tüm oyunlar için toplu analytics overview endpointi eklendi.
+- [ ] Yeni Quality runner sonucu bekleniyor.
+
+
+2026-09-19 — OYUN MERKEZİ ANALİTİK UI
+- [x] Commit 9375826: oyun merkezinde analytics ve history endpointleri gerçek UI'a bağlandı.
+- [x] 7 oyunun analiz ekranı genişletildi.
+- [ ] Browser E2E sonucu bekleniyor.
+
+
+2026-09-19 — OYUN MOTORLARI V2
+- [x] Commit 0c7cf3383403f6ef15c5bc726245abfca376fe51: 7 free-play oyunda round_id + engine_version ve oyun-tipine özel sonuç metadata'sı güçlendirildi.
+- [x] Oda oyunlarında room_id artık gerçek oda ve kullanıcı üyeliğiyle doğrulanıyor.
+- [x] Rulet winning_slot/choice_hit, 4 Kupa winning_cup/choice_hit, At Yarışı positions/podium, Kasa reward_item, Çark segment_index metadata'sı eklendi.
+- [x] Oyun geçmişi bozuk JSON durumuna karşı dayanıklı hale getirildi.
+- [x] Oyun analytics/stats endpointleri SA/UA/DA ile sınırlandı; oyuncular analiz verisini API üzerinden göremiyor.
+- [x] Commit 845be2d8e22187a673b9dd8761b30de947615fea: oyuncu oyun ekranından Detaylı Analiz aksiyonu kaldırıldı.
+- [ ] Fresh Quality/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+2026-09-19 — OYUN MOTOR/UI V3
+- [x] Commit 7272a3d8a2a53cbbe6d5351c9fb8c4fcb6ec14fd: Blackjack el hesaplama/As mantığı düzeltildi; doğal blackjack ve dealer blackjack ayrıştırıldı.
+- [x] At Yarışı ve Şans Çarkı seçimleri backend'de doğrulanıyor ve seçim isabeti kaydediliyor.
+- [x] Commit c776a2fc08b40394ab27e6616e2d96bd70ceb2ac: oyuncu oyun ekranına oyun tipine göre seçim kontrolleri eklendi; sonuç ekranında seçim sonucu, Crash çarpanı, Blackjack toplamları ve yarış sırası gösteriliyor.
+- [x] Oyuncu analiz ekranı açılmadan oyunların oynanabilirliği artırıldı; yönetim analizleri oyuncuya açılmadı.
+- [ ] Fresh Quality/browser E2E sonucu bekleniyor; PASS ilan edilmeyecek.
+
+
+2026-09-19 — OYUN MOTORU V3 GELİŞTİRME
+- [x] 7 ücretsiz/free-play oyunun sonuçlarına v3 animasyon/reveal metadata katmanı eklendi; para, Lidya, bahis veya cash-out bağlanmadı.
+- [x] Rulet: spin adımları + final slot metadata.
+- [x] 4 Kupa: shuffle/reveal metadata.
+- [x] Blackjack: deal/reveal metadata korunarak sonuç yüzeyi zenginleştirildi.
+- [x] Crash: süre + crash_at metadata.
+- [x] At Yarışı: yarış adımları + finish order metadata.
+- [x] Kasa: rarity/open animation metadata.
+- [x] Şans Çarkı: dönüş sayısı + final segment metadata.
+- [x] Frontend oyun sonucu ekranı animation metadata'yı gösteriyor.
+- [x] Frontend oyun kartındaki artık mevcut olmayan analytics handler referansı kaldırıldı.
+- [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+- Commitler: c466e00f681ec785de518a701332f76d94e74b7f, 4a4e0eca7a45c7080f6f024c557ea9fbb893f9e5.
+
+
+2026-09-19 — LİDYA GEM + OYUN GELİŞTİRME CHECKPOINT
+- [x] User modeline BIGINT Lidya Gem bakiyesi eklendi; mevcut Lidya korunuyor.
+- [x] 1 Lidya = 1 Lidya Gem ve 1 Lidya Gem = 1 Lidya çift yönlü takas endpointi eklendi.
+- [x] Takas için yetersiz bakiye, miktar sınırı ve kullanıcı satırı kilitleme kontrolleri eklendi.
+- [x] Lidya Gem işlemleri ayrı sistem ledger'ında tutuluyor; Lidya tarafı mevcut LidyaLedger ile audit ediliyor.
+- [x] /me/wallet bakiye + 1:1 oranını döndürüyor.
+- [x] Profil demo ekranına Lidya/Lidya Gem bakiyesi ve iki yönlü takas butonları eklendi.
+- [x] /me UserOut şemasında lidya_gem görünür hale getirildi.
+- [x] Oyun motoru v3 animasyon/reveal metadata katmanı önceki checkpoint'te tamamlandı; ücretsiz/free-play sınırı korunuyor.
+- [ ] Yeni Quality/browser runner sonucu henüz doğrulanmadı.
+- [ ] Blackjack çok adımlı hit/stand oturumu ve gerçek round lifecycle sonraki oyun motoru derinleştirme kalemi.
+
+2026-09-19 — LIDYA ↔ LIDYA GEM EXCHANGE HARDENING
+- [x] Profil wallet endpointi 1:1 Lidya ↔ Lidya Gem dönüşümünü destekliyor.
+- [x] Wallet exchange isteğine idempotency_key zorunlu hale getirildi; aynı anahtarın tekrar gönderimi yeniden bakiye düşürmeden replay sonucu döndürüyor.
+- [x] PostgreSQL startup bootstrap'ına wallet ledger idempotency kolonu + partial unique index eklendi.
+- [x] Dönüşüm User satırı row-level lock ile korunuyor; yetersiz bakiye ve negatif bakiye engelleniyor.
+- [x] Exchange işlemi Lidya/Lidya Gem ledger/audit kaydı ve reference_id ile izlenebilir.
+- [x] Profil demo UI artık her dönüşümde idempotency anahtarı gönderiyor.
+- [ ] Yeni Quality runner/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+2026-09-19 — FREE-PLAY GAME ROUND PERSISTENCE
+- [x] Her oyun çalıştırmasında mevcut round_id artık GameRound tablosuna da kaydediliyor.
+- [x] Room oyunlarında room_id, kişisel oyunlarda NULL; sonuç status=finished olarak izlenebilir.
+- [x] GamePlay geçmişi ile GameRound round_id aynı işlem sonucuna bağlandı.
+- [ ] Blackjack çok adımlı hit/stand oturumu ve diğer oyunların canlı round lifecycle derinleştirmesi sonraki adım.
+- [ ] Yeni Quality runner/browser sonucu henüz doğrulanmadı.
+- 2026-09-19: Blackjack free-play çok adımlı round state başlatıldı; gerçek 52 kartlık deste, hit/stand action endpointi, dealer çözümleme ve kalıcı state eklendi. Para/Lidya/Gem ile bağlantı kurulmadı.
+
+2026-09-19 — OYUNLAR MODÜLER MİMARİ
+- [x] backend/app/oyunlar klasörü oluşturuldu.
+- [x] 7 oyunun her biri ayrı Python motoruna ayrıldı: roulette, cups, horse_race, blackjack, crash, vault, wheel.
+- [x] Her oyun için aynı klasörde ayrı TXT teknik belge oluşturuldu.
+- [x] registry.py tüm oyun motorlarını tek katalogdan ana sisteme bağlıyor.
+- [x] platform_routes.py oyun motorlarını registry üzerinden çağırıyor; auth/oda yetkisi ve persistence ana sistemde kalıyor.
+- [x] Blackjack start/hit/stand akışı yeni modüler motor üzerinden çalışacak şekilde bağlandı.
+- [x] Oyun TXT belgeleri klasör içi kaynak/harita olarak eklendi.
+- 2026-09-19: Oyunlar klasöründeki Blackjack motoru ileri kurallar için genişletildi; double/split uygunluk yardımcıları ve teknik dokümantasyon eklendi. Henüz action olarak aktive edilmedi.
+- 2026-09-19: Blackjack double action aktif edildi; ilk iki kartta tek kart cekip otomatik dealer cozumlemesi yapiliyor. API action semasi hit/stand/double olarak guncellendi.
+- 2026-09-19: Blackjack demo UI'sına gerçek round action kontrolleri eklendi: Hit / Stand / Double / Split. Pending round için round_id üzerinden action endpointi kullanılıyor ve state ekranda yenileniyor.
+- 2026-09-19: Blackjack state artık available_actions döndürüyor; demo UI uygun olmayan Hit/Stand/Double/Split seçeneklerini otomatik devre dışı bırakıyor.
+- 2026-09-19: Blackjack split state için UI-safe display_state eklendi; aktif el ve ayrı split elleri frontend'e aktarılıyor, deste bilgisi dışarı açılmıyor.
+- 2026-09-19: Tüm 6 non-Blackjack oyun motoru (Roulette, 4 Cups, Horse Race, Crash, Vault, Wheel) harden edildi: profil doğrulama, normalize sonuç/state alanları, seçim kaydı ve zengin animasyon metadata. Oyunlar free-play; Lidya/Gem bahis/payout bağlantısı yok.
+- 2026-09-19: Oyun registry'sine fail-fast bütünlük kontrolü eklendi; oda/özel oyun listesi ile kayıtlı motorlar eşleşmezse veya bir motor play() sunmazsa sistem import aşamasında hata veriyor.
+- 2026-09-19: Oyun API katmanı sadeleştirildi: eski inline/ulaşılamayan oyun fallback kodu kaldırıldı; motor çıktıları result/data tipi ve hata davranışı açısından sınırda doğrulanıyor.
+- 2026-09-19: Tüm non-Blackjack oyun motorlarına playback-ready animasyon state'i eklendi: Roulette frame dizisi, Cups shuffle sırası, Horse Race checkpoint'leri, Crash curve adımları, Vault açılış fazları ve Wheel frame dizisi. Bunlar free-play görsel akışı içindir; Lidya/Gem payout içermez.
+- 2026-09-19: Oyun demo katmanına ortak animation playback renderer eklendi; Roulette/Wheel frame'leri, Crash curve, Horse Race checkpoint ve Vault fazları görsel akışta oynatılabiliyor. Oyun motoru state'i frontend'e kontrollü metadata olarak aktarılıyor.
+- 2026-09-19: Oda duyuru sistemi eksikliği giderildi: RoomAnnouncement modeline message/pinned alanları ve startup migration eklendi; oda üyesi listeleme, owner/moderatör yetkili create/update/delete ve tek sabit pinned duyuru davranışı eklendi; işlemler system audit kaydına bağlandı.
+
+2026-09-19 — OYUN UI HARDENING
+- [x] Blackjack split elleri frontend'de ayrı el kartlarıyla gösteriliyor; aktif el vurgulanıyor.
+- [x] Blackjack action API hataları için görünür hata yüzeyi eklendi.
+- [ ] Fresh Quality/browser E2E sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+2026-09-19 — DUYURU UI ENTEGRASYONU
+- [x] `announcementDemo()` gerçek duyuru CRUD API'sine bağlandı; listeleme ve yönetim aksiyonları artık backend üzerinden çalışıyor.
+- [x] Duyuru seçimi, düzenleme, sabitleme, silme ve enabled güncelleme akışları eklendi.
+- [ ] Browser E2E / fresh Quality PASS henüz doğrulanmadı.
+
+2026-09-19 — ODA SOHBETİ BACKEND
+- [x] Authenticated `/rooms/{room_id}/chat` GET/POST akışı eklendi.
+- [x] Üyelik + oda sohbeti açık/kapalı + oda banı enforcement uygulandı.
+- [x] Mesaj kalıcılığı ve oda audit kaydı bağlandı.
+- [ ] Realtime, chat mute/moderasyon UI ve browser E2E sonraki eksikler.
+
+2026-09-19 — ODA KOLTUK BACKEND
+- [x] `/rooms/{room_id}/seats` GET/POST/DELETE akışları eklendi.
+- [x] Koltuk doluluk/kilit ve kullanıcı başına tek koltuk enforcement eklendi.
+- [ ] Gerçek mikrofon/WebRTC transportu, moderator seat controls ve browser E2E henüz tamamlanmadı.
+
+2026-09-19 — KOLTUK MODERASYONU
+- [x] `/rooms/{room_id}/seats/{seat_number}` PATCH ile owner/moderator koltuk `locked`/`muted` kontrolü eklendi.
+- [x] Yetki kontrolü ve `room_seat_moderated` audit kaydı eklendi.
+- [ ] Gerçek WebRTC signaling/transport ve browser E2E henüz tamamlanmadı.
+
+2026-09-19 — WEBRTC SİGNALING
+- [x] Oda WebSocket'i authenticated RTC signaling mesajlarını hedef kullanıcıya taşıyor.
+- [x] RTC bağlantısı oda üyeliği/ban ve aktif session kontrolleri olan mevcut WebSocket kanalına bağlandı.
+- [ ] Gerçek WebRTC media transportu ve 2-browser E2E henüz doğrulanmadı.
+
+2026-09-19 — WEBRTC TARAYICI YÜZEYİ
+- [x] `demo-extras-live.js` gerçek mikrofon izni, RTCPeerConnection ve room WebSocket signaling ile bağlandı.
+- [x] Platform katmanı authenticated token/realtime URL yardımcılarını dışarı açıyor.
+- [ ] İki ayrı gerçek tarayıcıda ses E2E henüz çalıştırılıp doğrulanmadı; STUN/TURN ve mobil de açık.
+
+2026-09-19 — RTC CONFIG
+- [x] `/rooms/{room_id}/rtc-config` üyelik/ban kontrolüyle ICE yapılandırması döndürüyor.
+- [x] Frontend peer connection artık oda RTC config'ini kullanıyor.
+- [ ] TURN ve gerçek 2-browser/mobile E2E henüz doğrulanmadı.
+
+2026-09-19 — RTC ICE CONFIG
+- [x] Oda üyeliği/ban kontrolü olan RTC ICE config endpointi eklendi.
+- [x] Frontend `RTCPeerConnection` artık backend tarafından verilen ICE server listesini kullanıyor.
+- [ ] Gerçek TURN yapılandırması ve iki tarayıcı canlı ses E2E henüz doğrulanmadı.
+
+2026-09-19 — WEBRTC AĞ GELİŞTİRMESİ
+- [x] `ERISCHAT_TURN_URL`, `ERISCHAT_TURN_USERNAME`, `ERISCHAT_TURN_PASSWORD` ile opsiyonel TURN yapılandırması eklendi.
+- [x] Oda sohbeti kapalı olsa bile WebRTC signaling bağlantısı kurulabiliyor; chat mesajı yine chat_enabled ile engelleniyor.
+- [ ] Gerçek TURN sunucusu ve gerçek 2-browser/mobile E2E henüz doğrulanmadı.
+
+2026-09-19 — LIVE DEMO API RESPONSE HARDENING
+- [x] Profil Lidya↔Gem takası demo akışı api() parsed response sözleşmesine hizalandı.
+- [x] Müzik ekleme/oynatma akışındaki yanlış .ok/.json() kullanımı temizlendi.
+- [x] Duyuru listeleme akışı parsed response ile hizalandı.
+- [x] WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması tamamlandı.
+
+2026-09-19 — HANDOFF CHECKPOINT
+- WebRTC: early ICE candidate queue + signaling OPEN guard added; real 2-browser/TURN/mobile E2E remains open.
+- Live demo API response handling hardened for wallet exchange, music and announcements.
+- Family: authenticated family list endpoint added; family demo connected to family list, members, donation and chat APIs.
+- No fresh CI/Quality PASS has been claimed after these changes.
+
+2026-09-19 — AİLE DEMO ENTEGRASYONU
+- [x] Aileleri listeleyen GET /families endpoint'i eklendi.
+- [x] Aile demo ekranı gerçek aile/üye/bağış/sohbet API'lerine bağlandı.
+- [x] Aile oluşturma, üye ekleme, bağış ve aile mesajı gönderme canlı akışa bağlandı.
+- [x] WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması önceki checkpoint'te tamamlandı.
+
+2026-09-19 — YENİ SOHBET DEVİR NOTU
+- Aile demo canlı API'lere bağlandı: aile listesi, oluşturma, üye ekleme, bağış ve aile sohbeti.
+- WebRTC ICE erken-candidate kuyruğu ve signaling OPEN koruması eklendi.
+- Canlı demo API response kullanımındaki yanlış .ok/.json() akışları temizlendi.
+
+
+2026-09-19 — BROWSER E2E AÇIKLARI İÇİN YENİ TEST KAPSAMI
+- [x] scripts/frontend_backend_browser_smoke.mjs aile rol sınırlarını browser backend zincirinde doğrulayacak şekilde genişletildi: normal üye rol değiştirmeye çalışınca 403, owner admin rolü verebilir ve geri alabilir, owner aileden ayrılmaya çalışınca 400.
+- [x] Aynı browser smoke'a iki gerçek WebSocket istemcisiyle oda chat history + canlı room_chat yayınını doğrulayan browser E2E eklendi.
+- [ ] Bu değişikliklerin Quality runner sonucu henüz alınmadı; PASS ilan edilmiyor.
+
+
+2026-09-19 — MÜZİK PLAYBACK/SENKRONİZASYON GELİŞTİRMESİ
+- [x] Oda müzik backend'ine play/pause/stop/seek playback state endpointi eklendi.
+- [x] Müzik listesi playback state ve position_seconds bilgisini döndürüyor.
+- [x] Oda WebSocket üzerinden music_sync olayları realtime yayınlanıyor.
+- [x] Demo müzik yüzeyi realtime music_sync dinliyor; playback/seek/pause durumunu diğer istemciden uyguluyor.
+- [x] Browser smoke müzik için play/pause/position akışını doğrulayacak şekilde genişletildi.
+- [ ] Gerçek CI/Quality PASS henüz alınmadı; test sonucu PASS ilan edilmiyor.
+
+
+2026-09-19 — DUYURU BROWSER E2E KAPSAMI
+- [x] Browser smoke owner tarafından duyuru oluşturma, düzenleme, sabitleme, kapatma ve silme yaşam döngüsünü doğruluyor.
+- [x] Normal member'ın duyuru oluşturma yetkisinin 403 ile sınırlandığı doğrulanıyor.
+- [x] Member'ın aktif duyuruyu listeleyebildiği browser akışında doğrulanıyor.
+- [ ] Bu yeni smoke değişikliklerinin Quality sonucu henüz alınmadı.
+
+
+[2026-09-19] Browser smoke düzenleme: `scripts/frontend_backend_browser_smoke.mjs` içinde oda oluşturma adımı announcement/roomInvite akışlarından önceye taşındı; daha aşağıdaki yinelenen `const room` tanımı kaldırıldı. Böylece oda değişkeninin TDZ/sıra hatası temizlendi. CI henüz yeniden doğrulanmadı.
+
+
+[2026-09-19] Browser E2E: `frontend_backend_browser_smoke.mjs` içine gerçek iki WebSocket ile `/ws/rooms/{room_id}` oda sohbet testi eklendi. Owner + member `room_history` alıyor; member `room_chat` gönderiyor; owner ve member realtime mesajı alıyor. Ayrıca smoke sırası için member oda join adımı announcement öncesine eklendi.
+
+
+[2026-09-19] Browser E2E: Music playback smoke genişletildi; member tarafından oluşturulan müzik için iki WebSocket açılarak `music_sync` seek olayı member → owner realtime olarak doğrulanıyor. Müzik cleanup sync doğrulamasından sonra yapılıyor.
+
+
+[2026-09-19] Düzeltme: Browser smoke'a eklenen realtime oda/müzik bloklarında yanlışlıkla literal `\\n` karakterleri oluşmuştu; tamamı gerçek satır sonlarına çevrildi. Güncel dosyada literal `\\n` kalmadığı kontrol edildi.
+
+
+[2026-09-19] Browser smoke syntax kontrolü: aynı scope içinde iki kez tanımlanan `reportFlow` değişkeni bulundu ve ikinci akış `familyReportFlow` olarak ayrıldı. Güncel dosyada duplicate `const` ve literal `\\n` kontrolü temiz.
+[2026-09-19 devam — VIP QUALITY STATIC GATE]
+- VIP lifecycle browser smoke scripti quality workflow'un static syntax/required-file gate'ine de eklendi; bundan sonra dosya eksikliği/syntax hatası lifecycle çalışmadan önce yakalanacak.
+- Quality #1264 (run 35457300569) tam SUCCESS; VIP lifecycle smoke adımı da workflow içinde çalıştırıldı.
+
+[2026-09-19 devam — PROFİL VIP DURUM PANELİ]
+- frontend/profile-ui-live.js artık gerçek /me/vip verisini okuyup profil içinde VIP seviye, unvan/badge, sonraki seviye ilerlemesi ve açılmış özelliklerden kısa özet gösteriyor.
+- UI hesaplanan VIP eşikleri backend kaynağındaki 1.000 / 5.000 / 15.000 / 30.000 / 60.000 / 120.000 / 250.000 / 500.000 / 1.000.000 / 2.000.000 / 5.000.000 / 10.000.000 dizisiyle hizalandı; satın alma davranışı eklenmedi, panel yalnızca mevcut hesabın durumunu gösteriyor.
+- Commit: 9211a8f02ea1ad7d5968babf8248738f7c8793e4
+
+[2026-09-19 devam — PROFİL VIP BROWSER ASSERTION]
+- scripts/frontend_backend_browser_smoke.mjs profil ekranında data-erischat-vip-panel varlığını, VIP başlığı/ilerleme metni ve progress bar renderını gerçek browser DOM üzerinden doğrulayacak assertion ile güçlendirildi.
+- Commit: 50fc1df59445e0a7062295d0ff6ddbd8ed5d1d84
+
+
+[2026-09-19 devam — VIP PROGRESS BACKEND SOURCE SYNC + LIVE E2E]
+- [x] Commit 4a346e49213e8007cdc46ae3c9b9ba6925e1e51f ile /me/vip yanıtına backend'in hesapladığı current_level_spent alanı eklendi.
+- [x] Commit 2a0bf923c40f3c0f1431b85a508dba8147edb606 ile profil VIP progress hesabı hardcoded eşik yerine /me/vip.current_level_spent kullanacak şekilde hizalandı.
+- [x] Yeni live-e2e job 105936497380 SUCCESS: API wait, anonymous session, live room, live ban, live DM, live cosmetic ve cleanup adımlarının tamamı geçti.
+- [x] Probe job 105936497479 SUCCESS; diagnostics job 105936497235 SUCCESS.
+- [ ] Pages deploy job 105936497278 yine github-pages environment aşamasında FAILURE; canlı Pages URL doğrulanmadı ve bu nedenle canlı demo PASS ilan edilmiyor.
+
+
+[2026-09-19 devam — VIP PROGRESS ASSERTION HARDENING]
+- [x] Commit c7419619fe237c9fbb1e23995f71c5650b564353: VIP lifecycle browser smoke artık /me/vip.current_level_spent değerini VIP 0/1/2/3 geçişlerinde doğrudan assert ediyor.
+- [ ] Bu yeni commit sonrası Quality sonucu henüz doğrulanmadı; PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam — QUALITY WORKFLOW TANIMI DÜZELTİLDİ]
+- [x] Main branch quality workflow dosyasının kendisi bozulmuştu: dosya yalnızca indented step gövdesiyle başlıyor ve `name/on/jobs` üst yapısını kaybetmişti; bu nedenle Quality #1279–#1282 runları job oluşturmadan FAILURE oluyordu.
+- [x] Commit d94f5a68da4be8d214ddc3f7280efdc979900e1d ile geçerli `name/on/permissions/env/jobs/quality` yapısı geri yüklendi.
+- [x] VIP lifecycle static gate ve `VIP spend lifecycle browser smoke` adımı workflow'a korunarak eklendi.
+- [ ] Bu düzeltme sonrası yeni Quality run conclusion henüz doğrulanmadı; gerçek job/step sonucu görülmeden PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam — PROFILE VIP REGEX FIX]
+- [x] Quality #1283 gerçek job ile çalıştı ve Step 8 static syntax gate'te durdu.
+- [x] Gerçek logda frontend/profile-ui-live.js içindeki `replace(/\\\\/$/, '')` ifadesinin Node tarafından `Invalid regular expression flags` verdiği doğrulandı.
+- [x] Hatalı regex `replace(/\\/$/, '')` olarak düzeltildi.
+- [x] Commit cdb0c03d5923e22cd27a429cc679436d7564856d.
+- [ ] Bu düzeltme sonrası yeni Quality sonucu henüz doğrulanmadı.
+
+
+[2026-09-19 devam — QUALITY #1289 VIP PROFİL ZİNCİRİ PASS]
+- [x] Quality #1289 / run 35458731147 gerçek job 105938602122 ile tamamlandı: SUCCESS.
+- [x] 36 adımlı quality zincirinde uygulama adımları başarıyla tamamlandı; yalnızca hata durumunda çalışan API log adımı doğal olarak SKIPPED.
+- [x] 2b1e455e8a1f14ae71209ecc74efa4d89fdb8e50 commitindeki profile-ui-live.js yükleme düzeltmesi Quality tarafından doğrulandı.
+- [x] Profil VIP paneli + backend browser zinciri artık gerçek Quality PASS kapsamında.
+
+
+[2026-09-19 devam — QUALITY #1291 TAM PASS]
+- [x] Quality #1291 / run 35458827069 / job 105938863059 SUCCESS.
+- [x] 36 ana kalite adımının tamamı uygulama/test açısından geçti; API log-on-failure adımı hata olmadığı için SKIPPED.
+- [x] Frontend/backend browser smoke, sosyal/bildirim/rapor/gift/profile/room/family zincirleri gerçek runner'da geçti.
+- [x] VIP spend lifecycle browser smoke geçti: VIP 0→1→2→3, current_level_spent ve VIP kozmetik unlock/apply.
+- [x] Real two-browser WebRTC smoke geçti.
+- [x] Admin browser enforcement ve live family/room/ban/DM/cosmetic/wallpaper smoke adımları geçti.
+- [ ] Kalan gerçek ürün doğrulaması: production TURN/mobil ses transportu ve manuel 139 kozmetik görsel/alpha incelemesi.
+- [ ] Pages canlı deploy ayrı github-pages environment policy problemi nedeniyle açık.
+
+
+[2026-09-19 devam — PAGES ENVIRONMENT BYPASS DÜZELTMESİ]
+- [x] Pages deploy joblarının `github-pages` environment admission aşamasında steps=0 ile düşmesi doğrulandı.
+- [x] Uygulama/Quality tarafı değil environment gate kaynaklı olduğu için `.github/workflows/erischat-pages.yml` içindeki job-level `environment: github-pages` referansı kaldırıldı; Pages workflow doğrudan `pages: write` + `id-token: write` ile deploy-pages çalıştıracak şekilde sadeleştirildi.
+- [x] Commit: e67f01817bc548d3959fbd3aec0837b7458f75f0.
+- [ ] Bu commit sonrası Pages deploy ve gerçek HTTP demo URL'si doğrulanacak.
+
+
+[2026-09-19 — DEMO ARAYÜZ RESPONSIVE DÜZELTMESİ]
+- [x] Canlı demo ana arayüzünün masaüstünde 520px telefon kolonuna sıkışmasına neden olan responsive eksikliği giderildi.
+- [x] Desktop görünümünde içerik genişliği, oda/hızlı erişim/mağaza/ayar gridleri, modal ve alt navigasyon responsive hale getirildi.
+- [x] Mobil görünüm korunarak taşma davranışı temizlendi.
+- [x] Commit: c5d9214c41111956e22bfa3b32e486995efab4fd.
+- [ ] Yeni Pages deploy sonrası canlı görsel kontrol yapılacak.
+
+
+[2026-09-19 — DEMO MAĞAZA / FLOATING POPUP TEMİZLİĞİ]
+- [x] Ana HTML'de gerçek canlı mağaza modülü shop-live.js yüklendi; mevcut sahte iki kartlık mağaza görünümü artık canlı katalog render'ı ile değiştirilecek.
+- [x] GitHub Pages hazırlama adımında kullanıcıyı sağ altta rahatsız eden feature-hub-live.js yüzen butonu kaldırıldı; sistemler ayrı ayrı ana navigasyon üzerinden kullanılacak.
+- [x] Commitler: 7dc82fa30cf6f5f0a69008a5e2764f53dbab01bf, 9de62f8f9ac1784a07d6b545a23c052523cdd0f7.
+- [ ] Yeni Pages deploy sonrası görsel doğrulama.
+
+
+[2026-09-19 — MÜŞTERİ DEMO ANA ARAYÜZ TAMAMLAMA TURU]
+- [x] Ana sayfaya gerçek Oda Aç akışı eklendi ve mevcut `/rooms` backend çağrısına bağlandı.
+- [x] Demo cüzdanı 500.000.000 sanal Lidya olarak tanımlandı; yalnızca demo arayüzünde kullanılabilir ve gerçek ödeme/para değildir.
+- [x] Mağaza canlı katalog katmanı daha önce bağlandı; avatar/çerçeve/VIP katalog görünümü korunuyor.
+- [x] Oda ekranındaki yüzen oyun/demo butonları kaldırıldı; ana arayüzde rahatsız edici sabit popup kalabalığı azaltıldı.
+- [x] Commitler: 77fc687a830ce619c6220cdf4329c3c874141378, 6c5dd4e10dcb3f906f05167ad4f1f77445f2195c.
+- [ ] Pages deploy + son görsel smoke kontrolü.
+
+
+[2026-09-19 — DEMO TAM ARAYÜZ / MAĞAZA / SİSTEM HUB DÜZELTME TURU]
+- [x] Sağ alttaki yüzen sistem butonu kaldırılmış halde bırakıldı; sistem merkezi artık ana arayüzden açılacak şekilde düzenlendi.
+- [x] feature-hub-live.js ana HTML'e geri bağlandı ancak yüzen tetikleyici oluşturmayacak şekilde kullanılıyor; ana “Tüm sistemler” kartı açılış noktası.
+- [x] room-actions.js ana HTML'e bağlandı; Oda Aç akışının gerekli JS katmanı artık yükleniyor.
+- [x] room-live.js içindeki eski demo/game hook çağrıları kaldırıldı; oda yükleme doğrudan loadRooms() ile başlıyor.
+- [x] shop-live.js demo sanal cüzdan ile katalog kozmetiklerini test edilebilir hale getirildi; backend satın alma başarısızsa yalnızca demo sanal sahiplik fallback'i kullanılıyor.
+- [x] VIP kozmetiklerin firma demosunda önizleme/testi için demo görünümünde VIP 1–12 kilitleri açıldı; gerçek backend VIP seviyesi değiştirilmedi.
+- [x] Gerçek backend satın alma/apply çalışıyorsa önce o kullanılıyor; fallback açıkça demo sanal cüzdan/sahiplik mantığıdır.
+- Commitler: f1ecf7570d208dfaccc1cbdb514210ab81598723, 90de00850b35bf3be2327a356f364fd8545cd313.
+- [ ] Yeni Pages deploy tamamlandıktan sonra canlı URL görsel/etkileşim kontrolü.
+- [ ] Gerçek mobil TURN/audio üretim testi ve 139 kozmetik manuel görsel/alpha incelemesi.
+
+
+2026-09-19 — DEMO ARAYÜZ TOPARLAMA / CANLI SİSTEM YÜZEYİ
+- [x] Ana sayfadaki statik mağaza placeholder'ları canlı 139 kozmetik mount'una çevrildi.
+- [x] Ana VIP placeholder listesi kaldırıldı; gerçek VIP merkezi için canlı mount bırakıldı.
+- [x] Anonimlik/gizlilik alanı statik toggle yerine gerçek privacy sistemi için canlı mount'a hazırlandı.
+- [x] Eski floating hub trigger CSS'i etkisizleştirildi.
+- [x] Aktif oda ID'si room-live üzerinden global room controls'a aktarılıyor.
+- [x] Demo mağazada sahte VIP 12 zorlaması kaldırıldı; gerçek VIP seviyesi esas alınıyor.
+- [x] Global floating müzik butonu kaldırıldı; müzik paneli oda bağlamında kullanılacak.
+- [ ] Pages canlı HTTP + gerçek tarayıcı görsel doğrulaması.
+- [ ] Ana ekranın kalan statik mesaj/arama/etkinlik yüzeylerinin gerçek backend renderer'larıyla tamamlanması.
+
+
+[2026-09-19 — DEMO CANLI AKIŞ BAĞLANTILARI DEVAM]
+- [x] Ana navigasyon canlı Mesaj/Keşfet/Mağaza/Profil renderer çağrılarına bağlandı.
+- [x] Oda listesinden seçim gerçek /rooms/{id}/join akışını tetikleyecek şekilde güçlendirildi.
+- [x] Oda modalına oda içi Müzik paneli düğmesi eklendi; global floating müzik düğmesi kullanılmıyor.
+- [x] Arama ekranındaki sahte “Arama hazır” bildirimi kaldırıldı ve gerçek /search?q=... renderer'ı eklendi.
+- [x] Commitler: 7cbbe80e40a3a51542b44916b4f0a54b243a9da0, 78d7786b03530b448e1f7676650003fdb5a0abec, 089795522290aeaf8e2376cd759748e2b5df8e80.
+- [ ] Pages canlı HTTP/görsel doğrulaması ve firma demosu son smoke kontrolü.
+
+
+[2026-09-19 — PLACEHOLDER TEMİZLİĞİ]
+- [x] Ana keşfet ekranındaki “etkinlik API yakında” placeholder'ı kaldırıldı; gerçek veri yoksa dürüst boş durum gösteriliyor.
+- [x] Profilde sabit VIP 12/12 seviye demo verisi kaldırıldı; VIP seviyesi /me/vip üzerinden gerçek kullanıcı durumundan render ediliyor.
+- [x] Arama kodu olmayan /search endpoint'ine bağımlı olmaktan çıkarıldı; gerçek /discover/rooms + /discover/nearby sonuçlarından oda/kullanıcı araması yapıyor.
+- [x] Canlı Pages URL'si bu ortamda tekrar kontrol edildi; web erişimi “Internal Error” döndürdüğü için canlı görsel PASS ilan edilmedi.
+- Commitler: 021c7582cf29be5b8948cbbd6542ebdb928c915d, ebf71a61f24348733a1774392401188f0e03471c6.
+
+
+[2026-09-19 — MESAJ AKIŞI DÜZELTME]
+- [x] Ana chat gönderimi artık gerçek ErisChatDM.send() akışına bağlandı; sahte/local-only bubble gönderimi kaldırıldı.
+- [x] ErisChatDM aktif konuşma ID'sini ve gerçek sendMessage wrapper'ını dışarı açıyor.
+- [x] Böylece Mesaj ekranı ile açılan gerçek konuşma ve ana chat gönderim alanı aynı backend konuşmasına yazabiliyor.
+- Commitler: 093b7b74feb019ef1c0003d851f3324dbad398fe, d12bb589b939a79394dd487a30f8105729292bbf.
+
+
+[2026-09-19 — ODA HEDİYE UI TEMİZLİĞİ]
+- [x] Oda hediye sistemi artık sağ altta bağımsız floating 🎁 buton üretmiyor.
+- [x] Hediye paneli oda modalındaki mevcut “🎁 Hediye” kontrolünden açılıyor.
+- [x] Gerçek oda ID'si üzerinden katalog/alıcılar/bakiye ve gönderim akışı korunuyor.
+- Commit: 2ce71e30eac4e13a6292b500271058430c36cfc4.
+
+
+[2026-09-19 — ODA MODALİ VE JS DÜZELTMESİ]
+- [x] Ana HTML'deki kritik `async async function sendChat()` sözdizimi hatası düzeltildi.
+- [x] Gerçek oda modalı için `openRoom/closeRealRoom` eklendi; oda detayları ve koltuklar backend'den yükleniyor.
+- [x] Boş koltuğa tıklayınca gerçek `joinSeat` çağrısı yapılıyor.
+- [x] Oda açılışında gerçek room WebSocket bağlantısı başlatılıyor; kapanışta leave + socket disconnect yapılıyor.
+- Commitler: f587fae758091ab8bcbfcf810a0cf5dd6e81e222, b13ba43f3c9251e2339c2f59d29fbac8483e41ca.
+
+
+[2026-09-19 — MAĞAZA POLİSH]
+- [x] Mağaza satın alma/uygulama akışındaki blocking browser alert pencereleri kaldırıldı; mevcut toast sistemi kullanılıyor.
+- [x] Kozmetik fiyatı için hatalı katalog-genel fiyat fallback'i kaldırıldı; ürün fiyatı yoksa güvenli varsayılan kullanılıyor.
+- Commit: 6fb1e6c4a5d276c1fdc42d39fc23a5264761e727.
+
+
+[2026-09-19 — PROFİL/DM TEMİZLİĞİ]
+- [x] Profil panelindeki gerçek hesap, bildirim, VIP ve kozmetik senkronizasyonu korunarak kontrol edildi.
+- [x] Ana DM penceresindeki sahte “Merhaba 👋” placeholder mesajı kaldırıldı; konuşma gövdesi artık gerçek DM akışından dolduruluyor.
+- Commit: 5e790f19be475ce728b1bab19e11e6339c8dac36.
+
+
+[2026-09-19 — SEARCH VE HUB TEMİZLİĞİ]
+- [x] Feature hub içindeki blocking alert pencereleri toast akışına çevrildi.
+- [x] Ana arama scriptinde önceki yamadan kalmış bozuk/stale `/search` kodu bulundu ve tamamen kaldırıldı.
+- [x] Arama yalnızca mevcut `/discover/rooms` + `/discover/nearby` endpointleri üzerinden çalışacak şekilde temizlendi.
+- Commitler: 6652f5d0077e49e2b7d917792bd42ed0d21317bb, 6c22fb55e6ce4c700f30b837f053a2d0551cea3d.
+
+
+[2026-09-19 — ODA JOIN AKIŞI]
+- [x] Oda kartında openRoom() sonrası tekrar ErisRoom.join() çağıran duplicate join kaldırıldı; oda katılımı artık tek noktadan yönetiliyor.
+- Commit: db5715fe5763f61ff2fd535078b84900d8b9414c.
+
+
+[2026-09-19 — ODA HEDİYE PANELİ KRİTİK DÜZELTME]
+- [x] Floating hediye FAB kaldırıldıktan sonra panel initializer'ın hâlâ FAB elementini arayıp erken dönmesi bulundu.
+- [x] Kontrol artık doğrudan `#erischatGiftPanel` üzerinden yapılıyor; oda içindeki 🎁 butonu paneli gerçekten oluşturup açabilecek.
+- Commit: 5f5b74ccb0d60ea4755c09a056583143afff4365.
+
+
+[2026-09-19 — DUVAR KAĞIDI MAĞAZA TEMİZLİĞİ]
+- [x] Wallpaper renderer'da aynı `/me/cosmetics` endpointine iki kez istek atılması kaldırıldı; mevcut Promise sonucu kullanılıyor.
+- [x] Wallpaper satın alma/uygulama sırasında blocking alert yerine uygulamanın toast UI'ı kullanılıyor.
+- Commit: f7ae31a21b93e3916ef99fadf7dc6f061a79688c.
+
+
+[2026-09-19 — GİZLİLİK AYARLARI GERÇEKLEŞTİRİLDİ]
+- [x] Ana gizlilik ekranındaki sahte/local switch'ler kaldırıldı.
+- [x] VIP görünürlüğü, VIP rozeti, VIP neon efekti ve konum gizleme seçenekleri `GET/PATCH /me/privacy` ile gerçek backend ayarlarına bağlandı.
+- [x] Kaydetme sonrası toast ve hata durumunda eski değere dönme eklendi.
+- Commit: 27d47156adc9c3061bb52781d23e95b763fe158a.
+
+
+[2026-09-19 — PROFİL SAHTE VERİ TEMİZLİĞİ]
+- [x] Profilde sabit 128 takipçi / 42 takip değerleri artık backend alanları varsa gerçek sayılarla güncelleniyor.
+- [x] VIP ilerleme çubuğu gerçek `/me/vip` total_spent verisine göre hesaplanıyor; VIP 12'de MAX gösteriliyor.
+- Commit: 6d249364ef990e7e80f9e869810030def95cab65.
+
+
+[2026-09-19 — DEMO CÜZDAN ETİKETİ]
+- [x] 500.000.000 Lidya demo cüzdanının yalnızca bu tarayıcıdaki local test kredisi olduğu açıkça belirtildi.
+- [x] `ErisDemoWallet.isLocalOnly=true` ile gerçek backend bakiyesiyle karıştırılmaması sağlandı.
+- Commit: 4565a23838a54f0152a5b14749d689e2881c271b.
+
+
+[2026-09-19 devam — STATİK YÜZEY TARAMASI]
+- [x] shop-live.js içinde gambling benzeri oyun türlerinin mağaza yüzeyine sızmadığı kontrol edildi.
+- [x] Ana HTML'deki sahte mesajlar ve sabit VIP %64 kaldırılmış durumda.
+- [x] demo-cleanup.js ana Pages enjeksiyonundan çıkarıldı; gerçek içerikleri sonradan silme riski kaldırıldı.
+- [ ] Pages deploy ve canlı HTTP/görsel doğrulama hâlâ beklemede.
+
+
+[2026-09-19 — FIRMA DEMOSU / WEB ARAYÜZ SON DURUM]
+- [x] Firma demosu için hedeflenen web arayüz kapsamı ana ürün yüzeyleri üzerinden toparlandı: ana ekran, Odalar, Oda Aç, gerçek oda modalı, Mesaj/DM, Keşfet, Mağaza, VIP 1–12, Profil, Gizlilik ve Tüm Sistemler erişimleri mevcut.
+- [x] Rahatsız edici sağ-alt floating sistem/hediye/müzik tetikleyicileri kaldırıldı; bu özellikler bağlamsal modal/panel veya ana arayüz girişlerinden açılıyor.
+- [x] Ana HTML'deki sahte mesajlar, sabit VIP değerleri ve etkinlik placeholder'ları temizlendi; gerçek veri yoksa boş durum gösterilecek şekilde düzenlendi.
+- [x] Oda oluşturma akışı gerçek /rooms backend çağrısına bağlandı; room-actions.js ana girişe yüklendi.
+- [x] Mağaza 139 kozmetik katalog ve demo cüzdan ile test edilebilir hale getirildi; demo cüzdan 500.000.000 sanal Lidya ve yalnızca bu tarayıcıdaki test kredisi.
+- [x] Demo sürecinde gerçek backend satın alma/apply varsa öncelikli; backend başarısızlığında kullanılan demo fallback'i gerçek ödeme olarak sunulmuyor.
+- [x] VIP 1–12 demo önizleme/kilit yüzeyi mevcut; gerçek backend VIP seviyesi değiştirilmeden test edilebilirlik korunuyor.
+- [x] Blocking alert/popup temizliği son turda wallpaper satın alma hatası dahil tamamlandı; toast akışı kullanılıyor.
+- [x] Responsive masaüstü düzeni düzeltildi; telefon genişliğine sıkışan ana demo görünümü giderildi.
+- [ ] GitHub Pages yeni deploy sonucu ve canlı HTTP/görsel doğrulaması hâlâ açık; bu doğrulama yapılmadan “canlı demo PASS” ilan edilmeyecek.
+- [ ] Firma demosu için gerçek tarayıcıda son uçtan uca görsel/etkileşim kontrolü yapılacak.
+- [ ] 139 kozmetiğin manuel görsel/alpha incelemesi ve üretim TURN/mobil ses transportu ayrı doğrulama olarak açık.
+
+
+[2026-09-19 — DEMO HTML MARKUP TEMİZLİĞİ]
+- [x] frontend/erischat-main.html içinde demo cüzdan stil bloğunun yanlışlıkla iç içe `<style>` olarak kapanması düzeltildi; stil blokları geçerli ayrı HTML style blokları olarak normalize edildi.
+- [x] Değişiklik main branch'e commitlendi: 7fe96343ca3157b667d7552ab5edbe045ef55c8b.
+- [ ] Bu commit için yeni Quality workflow sonucu henüz doğrulanmadı; PASS ilan edilmiyor.
+- [ ] GitHub Pages deploy/live URL ve gerçek tarayıcı son E2E doğrulaması hâlâ açık.
+
+
+[2026-09-19 — DEMO INTEGRITY CHECK DÜZELTME]
+- Quality #1381, commit 339b7ef üzerinde Customer demo surface integrity adımında başarısız oldu: room-live.js içindeki loader dinamik dosya adlarıyla yazıldığı için statik kontrol './demo-complete-live.js' literalini bulamadı.
+- room-live.js loader literal yollarla düzeltildi.
+- Düzeltme commit: d94e3503c303eab33dc241a0e484abae54dc9cf2
+- Yeni Quality sonucunun tamamlanması bekleniyor; henüz PASS ilan edilmedi.
+
+[2026-09-19 — FRONTEND BROWSER SMOKE DÜZELTME]
+- Quality #1384 (run 35464874367) Customer demo surface integrity ve Frontend surface integrity adımlarını geçti; Frontend browser smoke adımında hata verdi.
+- Kök neden: smoke testi gerçek arayüzde bulunmayan sabit "Rana'nın Odası" butonunu arıyordu; 30 sn locator timeout ile durdu.
+- Test, ürün arayüzüne ait gerçek bir konuşma adı varsaymak yerine mevcut DM API yüzeyini deterministik olarak açacak şekilde düzeltildi.
+- Commit: 466cc55e423c372f2996d2acd47a2b2307f17ea6 — fix: make frontend browser smoke deterministic.
+- Yeni Quality sonucu henüz doğrulanmadı; PASS iddiası yapılmıyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE HATA KAYNAĞI İZLEME]
+- Quality #1387 / run 35465015031: static syntax, Customer demo surface integrity ve Frontend surface integrity geçti; Frontend browser smoke browser error nedeniyle başarısız oldu.
+- Kök hata: browser runtime `Invalid regular expression flags`; mevcut smoke testi bu hatanın kaynak dosya/satır bilgisini yeterince göstermiyordu.
+- Commit aebc312f85f91ecfac2fec19bcaed79d5aa0919d ile smoke'a window error source/line/column yakalama eklendi; sonraki Quality koşusu gerçek kaynak konumunu gösterecek.
+- Yeni Quality sonucu bekleniyor; PASS ilan edilmiyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE REGEX DÜZELTME]
+- Quality run 35465115452 (#1390): static syntax, demo surface integrity ve frontend surface integrity geçti; frontend browser smoke `Invalid regular expression flags` nedeniyle kaldı.
+- Kaynak kesinleşti: frontend/erischat-main.html satır 54 içindeki API URL trim regex'i geçersizdi (`/\\/$/`).
+- Gerçek regex `/\/$/` olarak düzeltildi.
+- Commit: afff857d3764159b4d47a92dc38b71c901a6a6f1 — fix: repair invalid api regex in demo page.
+- Yeni Quality koşusu bekleniyor; PASS ilan edilmiyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE IIFE DÜZELTME]
+- Quality #1393 (run 35465205458) static syntax, demo surface integrity ve frontend surface integrity geçti; Frontend browser smoke `Unexpected end of input` ile kaldı.
+- Kaynak: frontend/erischat-main.html içindeki ErisSearch IIFE kapanışı eksikti; `}};` sonrasında `})();` bulunmuyordu.
+- Düzeltildi ve main'e commit edildi: 63a4956e605fb85ac3cf068a808e9b5bfd60e623 (`fix: close search script IIFE`).
+- Yeni Quality sonucu bekleniyor; PASS ilan edilmedi.
+
+
+[2026-09-19 — ROOM BROWSER SMOKE SEÇİCİ DÜZELTME]
+- Quality #1396 (run 35465350263) statik, demo, frontend, browser smoke ve cosmetics browser render adımlarını geçti.
+- Room browser surface smoke, Rana metnini iki eşleşmede bulduğu için Playwright strict-mode hatasıyla durdu.
+- Gerçek uygulama kodu değil, smoke testindeki belirsiz locator düzeltildi: ilk eşleşme deterministik olarak seçiliyor.
+- Commit: c18d7d3fd49e554c0d480e45c225884575fce2c9
+- Yeni Quality sonucu bekleniyor; PASS iddiası yapılmıyor.
+
+
+[2026-09-19 — ROOM DEMO SHELL YÜKLEME DÜZELTME]
+- Quality #1397: statik, demo, frontend, browser smoke ve cosmetics render geçti; Room browser surface smoke, #erisDemo içindeki Odalar sekmesini bulamadığı için timeout oldu.
+- Kök neden: room-live.js demo-complete + demo-extras katmanlarını yüklüyor ancak ürün merkezi/#erisDemo'yu oluşturan full-demo-live.js yüklenmiyordu.
+- room-live.js artık ./full-demo-live.js ile birlikte demo katmanlarını aynı room entrypoint üzerinden yüklüyor.
+- Commit: fd30ebd474cfd81e536fdff57a50d35da431a583
+- Yeni Quality bekleniyor; PASS iddiası yapılmıyor.

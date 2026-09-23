@@ -1,0 +1,4 @@
+:80
+root * /srv/frontend
+file_server
+try_files {path} /erischat-main.html

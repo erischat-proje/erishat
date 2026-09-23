@@ -1,0 +1,195 @@
+Toplam görsel: 170
+==========================================================================================
+Gereken_icerikler/duvarkagidi/normal/1.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/10.png                         736x1307  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/11.png                         736x1571  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/12.png                         736x1308  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/13.png                         736x1251  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/14.png                        1080x1920  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/15.png                         924x2048  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/16.png                         810x1440  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/17.png                        1148x2048  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/18.png                        1153x2048  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/19.png                        1080x1920  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/2.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/3.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/4.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/5.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/6.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/7.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/8.png                          564x1006  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/normal/9.png                          564x1007  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip1.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip10.png                         768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip11.png                         768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip12.png                         768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip2.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip3.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip4.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip5.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip6.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip7.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip8.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/duvarkagidi/vip/vip9.png                          768x1376  RGB      JPEG  DİĞER
+Gereken_icerikler/erkekavatar/avatar_01_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_05_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_06_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_07_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_08_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_09_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_10_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_11_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_12_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_13_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_14_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_15_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_16_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_17_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_18_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_19_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_20_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_21_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_22_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_23_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_24_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_25_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_26_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_27_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_28_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_29_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_30_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_31_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_32_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_33_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_34_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_35_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_36_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_37_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_38_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_39_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/erkekavatar/avatar_40_ULTRA_HD_CLEAN.jpg         2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_06_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_07_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_08_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_09_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_10_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_11_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_12_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_13_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_14_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_15_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_16_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_17_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_18_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_19_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_20_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_21_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_22_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_23_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_24_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_25_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_26_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_27_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_28_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_29_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_30_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_31_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_32_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_33_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_34_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_35_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_37_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_38_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_39_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/kadınavatar/kadin_avatar_40_ULTRA_HD_CLEAN.jpg   2048x2048  RGB      JPEG  KARE
+Gereken_icerikler/standartcerceve/#U00fc.png                        315x313   RGBA     PNG   DİĞER
+Gereken_icerikler/standartcerceve/#U011f.png                        313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/#U0131.png                        315x313   RGBA     PNG   DİĞER
+Gereken_icerikler/standartcerceve/a.png                             313x315   RGBA     PNG   DİĞER
+Gereken_icerikler/standartcerceve/cerceve_01.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_02.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_03.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_04.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_05.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_06.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_07.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_08.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_09.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_10.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_11.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_12.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_13.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_14.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_15.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/cerceve_16.png                   1024x1024  RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/d.png                             313x315   RGBA     PNG   DİĞER
+Gereken_icerikler/standartcerceve/e.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/f.png                             315x315   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/o.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/p.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/q.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/r.png                             315x313   RGBA     PNG   DİĞER
+Gereken_icerikler/standartcerceve/s.png                             313x315   RGBA     PNG   DİĞER
+Gereken_icerikler/standartcerceve/tt.png                            313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/u.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/w.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/standartcerceve/y.png                             313x313   RGBA     PNG   KARE
+Gereken_icerikler/vipcerceve/vip1.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip10.png                             1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip11.png                             1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip12.png                             1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip2.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip3.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip4.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip5.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip6.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip7.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip8.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipcerceve/vip9.png                              1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip1.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip10.png                         1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip11.png                         1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip12.png                         1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip2.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip3.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip4.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip5.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip6.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip7.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip8.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/viperkekavatar/vip9.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip10.png                         1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip11.png                         1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip12.png                         1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip1kadın.png                     1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip2.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip3.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip4.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip5.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip6.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip7.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip8.png                          1024x1024  RGB      JPEG  KARE
+Gereken_icerikler/vipkadınavatar/vip9.png                          1024x1024  RGB      JPEG  KARE
+
+==========================================================================================
+ÖZET
+==========================================================================================
+  71 adet | 2048x2048 | RGB      | JPEG  | KARE
+  36 adet | 1024x1024 | RGB      | JPEG  | KARE
+  19 adet | 768x1376 | RGB      | JPEG  | DİĞER
+  16 adet | 1024x1024 | RGBA     | PNG   | KARE
+   9 adet | 313x313 | RGBA     | PNG   | KARE
+   3 adet | 313x315 | RGBA     | PNG   | DİĞER
+   3 adet | 315x313 | RGBA     | PNG   | DİĞER
+   2 adet | 1080x1920 | RGB      | JPEG  | DİĞER
+   1 adet | 315x315 | RGBA     | PNG   | KARE
+   1 adet | 564x1006 | RGB      | JPEG  | DİĞER
+   1 adet | 564x1007 | RGB      | JPEG  | DİĞER
+   1 adet | 736x1251 | RGB      | JPEG  | DİĞER
+   1 adet | 736x1307 | RGB      | JPEG  | DİĞER
+   1 adet | 736x1308 | RGB      | JPEG  | DİĞER
+   1 adet | 736x1571 | RGB      | JPEG  | DİĞER
+   1 adet | 810x1440 | RGB      | JPEG  | DİĞER
+   1 adet | 924x2048 | RGB      | JPEG  | DİĞER
+   1 adet | 1148x2048 | RGB      | JPEG  | DİĞER
+   1 adet | 1153x2048 | RGB      | JPEG  | DİĞER

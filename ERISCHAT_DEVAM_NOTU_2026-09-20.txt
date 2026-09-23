@@ -1,0 +1,45 @@
+ERISCHAT DEVAM NOTU — 2026-09-20
+
+KALINAN YER:
+ErisChat repo: semihvarolymk-png/erischat
+GitHub Pages: https://semihvarolymk-png.github.io/erischat/
+
+Son GitHub commit:
+40a323a4d7f5ab9de74719b287b94b1909d79bd0
+
+Bugün yapılan düzeltmeler:
+- Keşfette aynı kullanıcının mükerrer sahiplik kaynaklı odalarını tekilleştirme.
+- Oda koltuklarında avatar/frame assetlerini backend'den taşıma.
+- Oda içi kullanıcı profilini açma.
+- Oda hediye ve yönetim butonlarının gerçek fonksiyonlara bağlanması.
+- Duplicate seat event handler kaldırıldı.
+- Profil avatar/frame render düzeltildi.
+- DM konuşmaları son mesaja göre sıralanıyor.
+- DM backend gerçek zamanlı event broadcast eklenmesi.
+- DM açık konuşmada gelen mesajı anında gösterme.
+- Frontend cache versiyonları güncellendi.
+
+KRİTİK KALAN SORUN:
+Railway backend servisi GitHub'daki yeni commitleri almıyor gibi görünüyor. Railway son redeploy:
+deployment f2448fbd-2f7c-45b6-b329-cf093ccd6236
+durum: BUILDING
+Railway metadata hâlâ eski commit e0be274f951993e679951861f841e0fc230d9b88 gösteriyor.
+Bu nedenle backend düzeltmeleri canlı kabul edilmeyecek; önce Railway kaynak/branch/deploy senkronizasyonu doğrulanacak.
+
+KULLANICININ AÇIK KALAN ANA TALEPLERİ:
+1. Keşfette fazladan odalar tamamen çözülmeli; gerçek veri/mükerrer DB kayıtları da incelenmeli.
+2. Kullanıcı kendi odasının tüm ayarlarını görebilmeli ve çalıştırabilmeli.
+3. Başkasının odasında owner/mod değilse hiçbir oda yönetim yetkisi veya ayarı görünmemeli.
+4. Butonların tamamı tek tek test edilmeli; yanlış/demo handler kalmamalı.
+5. Profil açma/gezinti akışı eksiksiz olmalı.
+6. Mesaj gönderince doğru konuşmaya düşme ve karşı tarafa anlık ulaşma tamamlanmalı.
+7. Avatarlar ve avatar çerçeveleri her ilgili yerde gerçekten görünmeli.
+8. Eksik UI öğeleri ve işlevler baştan sona taranmalı.
+9. Hediye sistemi TXT'deki exact kurallarla karşılaştırılmalı; sadece yüzeysel düzeltme yapılmamalı.
+10. Tüm frontend/backend kodu full audit edilmeli; sadece kullanıcının söylediği maddeler değil, bulunan diğer hatalar da düzeltilmeli.
+11. Demo/legacy kodların gerçek akışlara karışıp karışmadığı kontrol edilmeli.
+12. Auth/session, profile, room, permissions, DM, gifts, cosmetics, navigation ve responsive UI uçtan uca kontrol edilmeli.
+13. Değişikliklerden sonra cache bust + GitHub Pages + Railway canlılık kontrolü yapılmalı.
+
+ÖNEMLİ:
+Yarın devam edildiğinde buradan başlanacak; tekrar baştan konuşma istenmeyecek.

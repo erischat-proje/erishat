@@ -1,0 +1,220 @@
+
+
+2026-09-19 — VIP LIFECYCLE SMOKE EKLENDİ
+- [x] Backend gerçek VIP kaynak kodu doğrulandı: VIP_SPEND_THRESHOLDS = 1.000 / 5.000 / 15.000 / 30.000 / 60.000 / 120.000 / 250.000 / 500.000 / 1.000.000 / 2.000.000 / 5.000.000 / 10.000.000.
+- [x] Standard kozmetik satın alımı total_spent'i artırıyor ve seviyeyi backend eşiklerinden hesaplıyor.
+- [x] VIP kozmetik satın alınamaz; ilgili VIP seviyesinde kilit açılıyor ve apply endpoint'i seviyeyi zorunlu tutuyor.
+- [x] scripts/vip_lifecycle_browser_smoke.mjs eklendi; VIP 0 → 1 → 2 → 3, toplam harcama ve VIP 1/VIP 3 kozmetik unlock/apply read-back zincirini gerçek browser/API üzerinde doğruluyor.
+- [x] Quality workflow'a VIP spend lifecycle browser smoke adımı eklendi.
+- [ ] Quality #1264 / run 35457300569 sonucu bekleniyor; PASS ilan edilmeyecek.
+2026-09-19 — BROWSER E2E KANIT SENKRONİZASYONU
+- [x] Quality #1261 / run 35456917966 SUCCESS olarak doğrulandı.
+- [x] frontend_backend_browser_smoke.mjs; anonymous/me, DM, follow/unfollow, block/unblock, privacy PATCH→GET, notification read, room join/chat, gerçek RTCPeerConnection signaling, announcement lifecycle, report/history, cosmetic purchase/apply, VIP privacy, gift→notification→profile-gifts, seat/moderation ve room music UI/realtime zincirlerini kapsıyor.
+- [x] Bu smoke kapsamındaki zincirlerin Quality #1261 ile gerçek runner'da PASS olduğu doğrulandı.
+- [ ] İki ayrı gerçek tarayıcı arasında üretim STUN/TURN üzerinden ses transportu hâlâ ayrıca doğrulanacak.
+- [ ] 139 kozmetiğin görsel tasarım/alpha standardı için manuel görsel inceleme hâlâ açık.
+- [ ] VIP harcama→seviye→kilit açma yaşam döngüsünün bağımsız uçtan uca senaryosu ayrıca genişletilecek.
+
+ERISCHAT — YAPILACAKLAR / GÜNCEL
+Tarih: 2026-09-18
+
+ÜRÜN TEMELİ / MÜŞTERİ DEMOSU
+- [x] Ana ErisChat arayüzünde müşteri vitrini mevcut.
+- [x] Ürün merkezi tek ekranda Odalar / Mağaza / VIP / Aile / Oyunlar / Keşif / Sosyal / Gizlilik / Şikayet / Profil / DM / Ürün başlıklarını gösteriyor.
+- [x] Oda ürün yüzeyinde oda açma, canlı oda listesi, oda detayları, katılma/ayrılma, koltuklar, sohbet aç/kapat ve duyuru görünümü bağlandı.
+- [x] Oda demo+ katmanında 12 koltuk, mikrofon/ses durumları ve oda sahibi ayarları görünür.
+- [x] Oda demo+ katmanında müzik çalma/kuyruk/moderasyon yüzeyi görünür.
+- [x] Oda demo+ katmanında duyuru yönetim yüzeyi görünür; mevcut backend yalnızca GET ise bu durum açıkça belirtilir.
+- [x] Mağaza demo+ katmanında API kataloğu görsel grid, arama ve avatar/çerçeve/VIP/standart filtreleriyle gösterilir.
+- [x] VIP 1–12 görünümü müşteri vitrini olarak gösteriliyor.
+- [x] VIP ilerleme/ödül ekranı mevcut seviye ve kilitli/açık ödülleri gösteriyor.
+- [x] Aile oluşturma, seviye/kapasite/bakiye, bağış ve aile sohbeti yüzeyi gösteriliyor.
+- [x] Aile demo+ katmanında üye listesi, davet/çıkarma/rol aksiyonlarının müşteri yüzeyi gösteriliyor; doğrulanmış endpoint yoksa demo olduğu yazıyor.
+- [x] Keşif: yakındaki kullanıcı / rastgele sohbet / rastgele oda yüzeyleri bağlandı.
+- [x] Sosyal profil: kullanıcı, fan seviyesi ve profil hediyeleri yüzeyi bağlandı.
+- [x] Profil demo+ katmanında avatar + çerçeve birleşik try-on ve sosyal aksiyonlar görünür.
+- [x] Gizlilik: VIP/rozet/neon/giriş/unvan/konum görünürlüğü kontrolleri bağlandı.
+- [x] Güvenlik demo+ katmanında bildirim merkezi, engelleme ve admin/moderasyon ürün yüzeyi gösteriliyor; doğrulanmış production endpoint yoksa açıkça işaretleniyor.
+- [x] Şikayet: kullanıcı / oda / mesaj hedef tipleri için form yüzeyi bağlandı.
+- [x] Oyunlar müşteri vitrini olarak iki sistem alanını gösteriyor; oynanış/ekonomi ayrıntıları sonraki geliştirme turuna bırakıldı.
+- [x] Onboarding demo: anonim giriş, nickname, cinsiyet, avatar, ilgi alanları, gizlilik ve başlangıç akışı görünür.
+- [x] Quality workflow static syntax/required-file listesine demo-complete-live.js ve demo-extras-live.js eklendi.
+- [x] Quality workflow'a müşteri demo yüzey bütünlüğü statik kontrolü eklendi.
+- [x] Yeni Quality workflow run 35274783487 GitHub Actions üzerinden SUCCESS olarak doğrulandı; customer demo surface integrity dahil ilgili quality adımları geçti.
+- [ ] Gerçek tarayıcıda tüm ürün sekmelerinin etkileşim doğrulaması.
+- [ ] Bildirim merkezinde read/unread davranışının browser E2E doğrulaması.
+- [ ] Rapor oluşturma ve rapor geçmişinin browser E2E doğrulaması.
+- [ ] Engelleme/unblock ve gizlilik ayarlarının browser E2E doğrulaması.
+- [x] Sosyal fan sayısı/fan seviyesi gerçek UserFollow kayıtlarından hesaplanıyor; browser smoke ile doğrulama eklendi.
+
+[2026-09-19 devam — VIP QUALITY STATIC GATE]
+- VIP lifecycle browser smoke scripti quality workflow'un static syntax/required-file gate'ine de eklendi; bundan sonra dosya eksikliği/syntax hatası lifecycle çalışmadan önce yakalanacak.
+- Quality #1264 (run 35457300569) tam SUCCESS; VIP lifecycle smoke adımı da workflow içinde çalıştırıldı.
+
+[2026-09-19 devam — PROFİL VIP DURUM PANELİ]
+- frontend/profile-ui-live.js artık gerçek /me/vip verisini okuyup profil içinde VIP seviye, unvan/badge, sonraki seviye ilerlemesi ve açılmış özelliklerden kısa özet gösteriyor.
+- UI hesaplanan VIP eşikleri backend kaynağındaki 1.000 / 5.000 / 15.000 / 30.000 / 60.000 / 120.000 / 250.000 / 500.000 / 1.000.000 / 2.000.000 / 5.000.000 / 10.000.000 dizisiyle hizalandı; satın alma davranışı eklenmedi, panel yalnızca mevcut hesabın durumunu gösteriyor.
+- Commit: 9211a8f02ea1ad7d5968babf8248738f7c8793e4
+
+[2026-09-19 devam — PROFİL VIP BROWSER ASSERTION]
+- [x] Profil browser smoke artık gerçek VIP panelinin DOM renderını doğruluyor: seviye/unvan, ilerleme metni ve progress bar.
+- [ ] Yeni Quality run sonucunu doğrula; PASS ilanı yalnızca gerçek workflow conclusion success sonrası yapılacak.
+
+
+[2026-09-19 devam — VIP PROGRESS + LIVE E2E KANITI]
+- [x] /me/vip backend artık current_level_spent alanını gerçek VIP eşiklerinden hesaplayarak döndürüyor.
+- [x] Profil VIP progress bar backend'in current_level_spent alanını kullanıyor; frontend içinde ikinci bir eşik kaynağı tutulmuyor.
+- [x] Commit 2a0bf923c40f3c0f1431b85a508dba8147edb606 için live-e2e 105936497380 SUCCESS.
+- [x] Aynı commit için probe 105936497479 SUCCESS ve diagnostics 105936497235 SUCCESS.
+- [ ] Pages deploy 105936497278 github-pages environment admission aşamasında FAILURE; Settings tarafındaki environment policy düzeltilmeden canlı URL doğrulanmayacak.
+
+
+[2026-09-19 devam — VIP PROGRESS ASSERTION]
+- [x] VIP lifecycle smoke, backend current_level_spent alanını VIP 0/1/2/3 noktalarında test ediyor.
+- [x] Commit c7419619fe237c9fbb1e23995f71c5650b564353.
+- [ ] Bu commit sonrası yeni Quality sonucu bekleniyor; gerçek conclusion success olmadan PASS ilan edilmeyecek.
+
+
+[2026-09-19 devam — QUALITY WORKFLOW TANIMI DÜZELTİLDİ]
+- [x] Quality #1279–#1282 failure'larının uygulama testinden değil, workflow dosyasının bozulmuş üst yapısından kaynaklandığı doğrulandı; ilgili runlarda `jobs=[]` idi.
+- [x] Commit d94f5a68da4be8d214ddc3f7280efdc979900e1d ile `.github/workflows/erischat-quality.yml` geçerli workflow tanımıyla restore edildi.
+- [x] `workflow_dispatch`, main push trigger, Postgres service, static/browser/live smoke zinciri, admin smoke ve VIP lifecycle smoke yeniden aynı workflow altında.
+- [ ] Yeni Quality run job/step sonucu doğrulanacak.
+
+
+[2026-09-19 devam — QUALITY #1289 PASS]
+- [x] `frontend/profile-ui-live.js` ana HTML'e yüklenmesi sonrası Quality #1289 / run 35458731147 SUCCESS.
+- [x] Gerçek job 105938602122 SUCCESS; VIP profil paneli DOM assertion ve mevcut browser/live quality zinciri geçti.
+- [ ] Pages deploy hâlâ ayrı github-pages environment admission problemi nedeniyle doğrulanmadı; deploy/live URL işi bu checkpointten ayrı tutuluyor.
+- [ ] Sonraki geliştirme: ürün yüzeylerinde kalan manuel görsel inceleme ve gerçek iki-tarayıcı WebRTC ses taşıması; ardından gift→notification, follow/notification ve diğer eksik zincirlerin gerçek browser kanıtları.
+
+
+[2026-09-19 devam — QUALITY #1291 TAM PASS]
+- [x] Quality #1291 / run 35458827069, job 105938863059 SUCCESS.
+- [x] 36 ana kalite adımının tamamı başarıyla geçti; yalnızca hata durumunda çalışan API log adımı SKIPPED.
+- [x] Frontend backend browser smoke; bildirim read/unread, rapor oluşturma/geçmiş, block/unblock/privacy, gift→notification→profile-gifts, follow/unfollow, room chat, room controls ve aile zincirleri PASS kapsamında.
+- [x] VIP spend lifecycle browser smoke PASS: VIP 0→1→2→3, current_level_spent ve VIP kozmetik unlock/apply zinciri doğrulandı.
+- [x] Real two-browser WebRTC smoke PASS; gerçek iki tarayıcı signaling/peer bağlantı smoke zinciri geçti.
+- [x] Admin browser UI/enforcement, live family/room/ban/DM/cosmetic/wallpaper smoke adımları PASS.
+- [ ] Gerçek üretim TURN/mobil ses transportu ve manuel 139 kozmetik görsel/alpha incelemesi açık kalıyor.
+- [ ] Pages deploy/live URL doğrulaması ayrı github-pages environment policy sorunu nedeniyle açık; kullanıcı açıkça deploy demeden Railway deploy yapılmayacak.
+
+
+[2026-09-19 devam — PAGES ENVIRONMENT BYPASS DÜZELTMESİ]
+- [x] Pages deploy joblarının `github-pages` environment admission aşamasında steps=0 ile düşmesi doğrulandı.
+- [x] Environment gate'i workflow dışından değiştirilemediği için Pages workflow'daki job-level `environment: github-pages` kaldırıldı.
+- [x] Commit e67f01817bc548d3959fbd3aec0837b7458f75f0.
+- [ ] Yeni Pages deploy sonucu ve gerçek HTTP demo URL'si doğrulanacak.
+
+
+[2026-09-19 — DEMO ARAYÜZ RESPONSIVE DÜZELTMESİ]
+- [x] Ana demo masaüstünde telefon genişliğine kilitli kalmayacak şekilde responsive düzeltildi.
+- [ ] Pages yeni commit ile yeniden deploy olduktan sonra canlı URL'de manuel/görsel kontrol yapılacak.
+
+
+[2026-09-19 — DEMO TAM ARAYÜZ / MAĞAZA / SİSTEM HUB DÜZELTME TURU]
+- [x] Sağ alttaki yüzen sistem butonu kaldırılmış halde bırakıldı; sistem merkezi artık ana arayüzden açılacak şekilde düzenlendi.
+- [x] feature-hub-live.js ana HTML'e geri bağlandı ancak yüzen tetikleyici oluşturmayacak şekilde kullanılıyor; ana “Tüm sistemler” kartı açılış noktası.
+- [x] room-actions.js ana HTML'e bağlandı; Oda Aç akışının gerekli JS katmanı artık yükleniyor.
+- [x] room-live.js içindeki eski demo/game hook çağrıları kaldırıldı; oda yükleme doğrudan loadRooms() ile başlıyor.
+- [x] shop-live.js demo sanal cüzdan ile katalog kozmetiklerini test edilebilir hale getirildi; backend satın alma başarısızsa yalnızca demo sanal sahiplik fallback'i kullanılıyor.
+- [x] VIP kozmetiklerin firma demosunda önizleme/testi için demo görünümünde VIP 1–12 kilitleri açıldı; gerçek backend VIP seviyesi değiştirilmedi.
+- [x] Gerçek backend satın alma/apply çalışıyorsa önce o kullanılıyor; fallback açıkça demo sanal cüzdan/sahiplik mantığıdır.
+- Commitler: f1ecf7570d208dfaccc1cbdb514210ab81598723, 90de00850b35bf3be2327a356f364fd8545cd313.
+- [ ] Yeni Pages deploy tamamlandıktan sonra canlı URL görsel/etkileşim kontrolü.
+- [ ] Gerçek mobil TURN/audio üretim testi ve 139 kozmetik manuel görsel/alpha incelemesi.
+
+
+[2026-09-19 — SON CANLI YÜZEYLER]
+- [x] Ana navigasyonun canlı sistem çağrıları.
+- [x] Oda seçimi ve join bağlantısı.
+- [x] Oda içi Müzik paneli tetikleyicisi.
+- [x] Arama ekranının gerçek endpoint renderer'ı.
+- [ ] GitHub Pages canlı HTTP/görsel doğrulaması.
+- [ ] Firma demosu için son uçtan uca browser smoke ve kalan statik yüzeylerin taranması
+- [x] Pages'te workflow tarafından sonradan enjekte edilen room-ban / room-gift / demo-cleanup modülleri ana HTML'e de doğrudan bağlandı..
+
+
+[2026-09-19 devam — ANA YÜZEY ERİŞİM KONTROLÜ]
+- [x] Ana HTML üzerinde Oda Aç/createRoom, oda açılışı/openRoom, Tüm sistemler, mağaza, profil, anonimlik ve gerçek oda modalı giriş noktaları mevcut olarak doğrulandı.
+- [ ] GitHub Pages canlı HTTP/görsel doğrulaması: web erişim katmanı canlı URL'yi açamadığı için gerçek tarayıcı doğrulaması ayrıca bekliyor.
+
+
+[2026-09-19 devam — SON BLOKLAMA TEMİZLİĞİ]
+- [x] wallpaper-live.js içinde kalan son blocking alert satın alma hatasında bulundu ve uygulama toast akışına çevrildi.
+- Commit: 02d8aac4febcf89bb476826c2a8b36854c239db4.
+- [ ] Pages yeni deploy + canlı HTTP/görsel doğrulama.
+
+
+[2026-09-19 — FIRMA DEMOSU / WEB ARAYÜZ SON DURUM]
+- [x] Firma demosu için hedeflenen web arayüz kapsamı ana ürün yüzeyleri üzerinden toparlandı: ana ekran, Odalar, Oda Aç, gerçek oda modalı, Mesaj/DM, Keşfet, Mağaza, VIP 1–12, Profil, Gizlilik ve Tüm Sistemler erişimleri mevcut.
+- [x] Rahatsız edici sağ-alt floating sistem/hediye/müzik tetikleyicileri kaldırıldı; bu özellikler bağlamsal modal/panel veya ana arayüz girişlerinden açılıyor.
+- [x] Ana HTML'deki sahte mesajlar, sabit VIP değerleri ve etkinlik placeholder'ları temizlendi; gerçek veri yoksa boş durum gösterilecek şekilde düzenlendi.
+- [x] Oda oluşturma akışı gerçek /rooms backend çağrısına bağlandı; room-actions.js ana girişe yüklendi.
+- [x] Mağaza 139 kozmetik katalog ve demo cüzdan ile test edilebilir hale getirildi; demo cüzdan 500.000.000 sanal Lidya ve yalnızca bu tarayıcıdaki test kredisi.
+- [x] Demo sürecinde gerçek backend satın alma/apply varsa öncelikli; backend başarısızlığında kullanılan demo fallback'i gerçek ödeme olarak sunulmuyor.
+- [x] VIP 1–12 demo önizleme/kilit yüzeyi mevcut; gerçek backend VIP seviyesi değiştirilmeden test edilebilirlik korunuyor.
+- [x] Blocking alert/popup temizliği son turda wallpaper satın alma hatası dahil tamamlandı; toast akışı kullanılıyor.
+- [x] Responsive masaüstü düzeni düzeltildi; telefon genişliğine sıkışan ana demo görünümü giderildi.
+- [ ] GitHub Pages yeni deploy sonucu ve canlı HTTP/görsel doğrulaması hâlâ açık; bu doğrulama yapılmadan “canlı demo PASS” ilan edilmeyecek.
+- [ ] Firma demosu için gerçek tarayıcıda son uçtan uca görsel/etkileşim kontrolü yapılacak.
+- [ ] 139 kozmetiğin manuel görsel/alpha incelemesi ve üretim TURN/mobil ses transportu ayrı doğrulama olarak açık.
+
+
+[2026-09-19 — DEMO HTML MARKUP TEMİZLİĞİ]
+- [x] frontend/erischat-main.html içinde demo cüzdan stil bloğunun yanlışlıkla iç içe `<style>` olarak kapanması düzeltildi; stil blokları geçerli ayrı HTML style blokları olarak normalize edildi.
+- [x] Değişiklik main branch'e commitlendi: 7fe96343ca3157b667d7552ab5edbe045ef55c8b.
+- [ ] Bu commit için yeni Quality workflow sonucu henüz doğrulanmadı; PASS ilan edilmiyor.
+- [ ] GitHub Pages deploy/live URL ve gerçek tarayıcı son E2E doğrulaması hâlâ açık.
+
+
+[2026-09-19 — DEMO INTEGRITY CHECK DÜZELTME]
+- Quality #1381, commit 339b7ef üzerinde Customer demo surface integrity adımında başarısız oldu: room-live.js içindeki loader dinamik dosya adlarıyla yazıldığı için statik kontrol './demo-complete-live.js' literalini bulamadı.
+- room-live.js loader literal yollarla düzeltildi.
+- Düzeltme commit: d94e3503c303eab33dc241a0e484abae54dc9cf2
+- Yeni Quality sonucunun tamamlanması bekleniyor; henüz PASS ilan edilmedi.
+
+[2026-09-19 — FRONTEND BROWSER SMOKE DÜZELTME]
+- Quality #1384 (run 35464874367) Customer demo surface integrity ve Frontend surface integrity adımlarını geçti; Frontend browser smoke adımında hata verdi.
+- Kök neden: smoke testi gerçek arayüzde bulunmayan sabit "Rana'nın Odası" butonunu arıyordu; 30 sn locator timeout ile durdu.
+- Test, ürün arayüzüne ait gerçek bir konuşma adı varsaymak yerine mevcut DM API yüzeyini deterministik olarak açacak şekilde düzeltildi.
+- Commit: 466cc55e423c372f2996d2acd47a2b2307f17ea6 — fix: make frontend browser smoke deterministic.
+- Yeni Quality sonucu henüz doğrulanmadı; PASS iddiası yapılmıyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE HATA KAYNAĞI İZLEME]
+- Quality #1387 / run 35465015031: static syntax, Customer demo surface integrity ve Frontend surface integrity geçti; Frontend browser smoke browser error nedeniyle başarısız oldu.
+- Kök hata: browser runtime `Invalid regular expression flags`; mevcut smoke testi bu hatanın kaynak dosya/satır bilgisini yeterince göstermiyordu.
+- Commit aebc312f85f91ecfac2fec19bcaed79d5aa0919d ile smoke'a window error source/line/column yakalama eklendi; sonraki Quality koşusu gerçek kaynak konumunu gösterecek.
+- Yeni Quality sonucu bekleniyor; PASS ilan edilmiyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE REGEX DÜZELTME]
+- Quality run 35465115452 (#1390): static syntax, demo surface integrity ve frontend surface integrity geçti; frontend browser smoke `Invalid regular expression flags` nedeniyle kaldı.
+- Kaynak kesinleşti: frontend/erischat-main.html satır 54 içindeki API URL trim regex'i geçersizdi (`/\\/$/`).
+- Gerçek regex `/\/$/` olarak düzeltildi.
+- Commit: afff857d3764159b4d47a92dc38b71c901a6a6f1 — fix: repair invalid api regex in demo page.
+- Yeni Quality koşusu bekleniyor; PASS ilan edilmiyor.
+
+
+[2026-09-19 — FRONTEND BROWSER SMOKE IIFE DÜZELTME]
+- Quality #1393 (run 35465205458) static syntax, demo surface integrity ve frontend surface integrity geçti; Frontend browser smoke `Unexpected end of input` ile kaldı.
+- Kaynak: frontend/erischat-main.html içindeki ErisSearch IIFE kapanışı eksikti; `}};` sonrasında `})();` bulunmuyordu.
+- Düzeltildi ve main'e commit edildi: 63a4956e605fb85ac3cf068a808e9b5bfd60e623 (`fix: close search script IIFE`).
+- Yeni Quality sonucu bekleniyor; PASS ilan edilmedi.
+
+
+[2026-09-19 — ROOM BROWSER SMOKE SEÇİCİ DÜZELTME]
+- Quality #1396 (run 35465350263) statik, demo, frontend, browser smoke ve cosmetics browser render adımlarını geçti.
+- Room browser surface smoke, Rana metnini iki eşleşmede bulduğu için Playwright strict-mode hatasıyla durdu.
+- Gerçek uygulama kodu değil, smoke testindeki belirsiz locator düzeltildi: ilk eşleşme deterministik olarak seçiliyor.
+- Commit: c18d7d3fd49e554c0d480e45c225884575fce2c9
+- Yeni Quality sonucu bekleniyor; PASS iddiası yapılmıyor.
+
+
+[2026-09-19 — ROOM DEMO SHELL YÜKLEME DÜZELTME]
+- Quality #1397: statik, demo, frontend, browser smoke ve cosmetics render geçti; Room browser surface smoke, #erisDemo içindeki Odalar sekmesini bulamadığı için timeout oldu.
+- Kök neden: room-live.js demo-complete + demo-extras katmanlarını yüklüyor ancak ürün merkezi/#erisDemo'yu oluşturan full-demo-live.js yüklenmiyordu.
+- room-live.js artık ./full-demo-live.js ile birlikte demo katmanlarını aynı room entrypoint üzerinden yüklüyor.
+- Commit: fd30ebd474cfd81e536fdff57a50d35da431a583
+- Yeni Quality bekleniyor; PASS iddiası yapılmıyor.

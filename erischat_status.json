@@ -1,0 +1,696 @@
+{
+  "buckets": {
+    "edges": []
+  },
+  "deletedAt": null,
+  "environments": {
+    "edges": [
+      {
+        "node": {
+          "canAccess": true,
+          "deletedAt": null,
+          "id": "488eea62-d294-49ac-abd0-35ec1a4ab7ab",
+          "name": "production",
+          "serviceInstances": {
+            "edges": [
+              {
+                "node": {
+                  "activeDeployments": [
+                    {
+                      "createdAt": "2026-09-21T09:39:17.354Z",
+                      "deploymentStopped": false,
+                      "id": "af61784f-4273-499e-b187-b5cd1b1d9923",
+                      "instances": [
+                        {
+                          "id": "213b49fb-ab73-4dd9-bc6a-df00514fb34b",
+                          "status": "RUNNING"
+                        }
+                      ],
+                      "meta": {
+                        "buildOnly": false,
+                        "fileServiceManifest": {},
+                        "ignoreWatchPatterns": true,
+                        "imageDigest": "sha256:79177820a0d440e0e18f0149ae65b5fec61199349467d316e81cbbaeb9b93339",
+                        "logsV2": true,
+                        "nixpacksProviders": [],
+                        "propertyFileMapping": {},
+                        "reason": "redeploy",
+                        "rootDirectory": null,
+                        "runtime": "V2",
+                        "serviceManifest": {
+                          "build": {
+                            "buildCommand": null,
+                            "buildEnvironment": "V3",
+                            "builder": "RAILPACK",
+                            "dockerfilePath": "/Dockerfile",
+                            "nixpacksConfigPath": null,
+                            "nixpacksPlan": null,
+                            "watchPatterns": []
+                          },
+                          "deploy": {
+                            "cronSchedule": null,
+                            "drainingSeconds": null,
+                            "healthcheckPath": null,
+                            "healthcheckTimeout": null,
+                            "ipv6EgressEnabled": false,
+                            "limitOverride": null,
+                            "multiRegionConfig": {
+                              "sfo": {
+                                "numReplicas": 1
+                              }
+                            },
+                            "numReplicas": 1,
+                            "overlapSeconds": null,
+                            "preDeployCommand": null,
+                            "preDeployTimeoutSeconds": null,
+                            "region": null,
+                            "registryCredentials": null,
+                            "requiredMountPath": null,
+                            "restartPolicyMaxRetries": 10,
+                            "restartPolicyType": "ON_FAILURE",
+                            "runtime": "UNSPECIFIED",
+                            "sleepApplication": false,
+                            "startCommand": null,
+                            "useLegacyStacker": false
+                          }
+                        },
+                        "volumeMounts": []
+                      },
+                      "status": "SUCCESS"
+                    }
+                  ],
+                  "cronSchedule": null,
+                  "domains": {
+                    "customDomains": [],
+                    "serviceDomains": []
+                  },
+                  "environmentId": "488eea62-d294-49ac-abd0-35ec1a4ab7ab",
+                  "id": "091bd1d0-280a-4d9a-90f8-924736fa3a9d",
+                  "latestDeployment": {
+                    "canRedeploy": true,
+                    "createdAt": "2026-09-21T09:39:17.354Z",
+                    "deploymentStopped": false,
+                    "id": "af61784f-4273-499e-b187-b5cd1b1d9923",
+                    "instances": [
+                      {
+                        "id": "213b49fb-ab73-4dd9-bc6a-df00514fb34b",
+                        "status": "RUNNING"
+                      }
+                    ],
+                    "meta": {
+                      "buildOnly": false,
+                      "fileServiceManifest": {},
+                      "ignoreWatchPatterns": true,
+                      "imageDigest": "sha256:79177820a0d440e0e18f0149ae65b5fec61199349467d316e81cbbaeb9b93339",
+                      "logsV2": true,
+                      "nixpacksProviders": [],
+                      "propertyFileMapping": {},
+                      "reason": "redeploy",
+                      "rootDirectory": null,
+                      "runtime": "V2",
+                      "serviceManifest": {
+                        "build": {
+                          "buildCommand": null,
+                          "buildEnvironment": "V3",
+                          "builder": "RAILPACK",
+                          "dockerfilePath": "/Dockerfile",
+                          "nixpacksConfigPath": null,
+                          "nixpacksPlan": null,
+                          "watchPatterns": []
+                        },
+                        "deploy": {
+                          "cronSchedule": null,
+                          "drainingSeconds": null,
+                          "healthcheckPath": null,
+                          "healthcheckTimeout": null,
+                          "ipv6EgressEnabled": false,
+                          "limitOverride": null,
+                          "multiRegionConfig": {
+                            "sfo": {
+                              "numReplicas": 1
+                            }
+                          },
+                          "numReplicas": 1,
+                          "overlapSeconds": null,
+                          "preDeployCommand": null,
+                          "preDeployTimeoutSeconds": null,
+                          "region": null,
+                          "registryCredentials": null,
+                          "requiredMountPath": null,
+                          "restartPolicyMaxRetries": 10,
+                          "restartPolicyType": "ON_FAILURE",
+                          "runtime": "UNSPECIFIED",
+                          "sleepApplication": false,
+                          "startCommand": null,
+                          "useLegacyStacker": false
+                        }
+                      },
+                      "volumeMounts": []
+                    },
+                    "status": "SUCCESS"
+                  },
+                  "nextCronRunAt": null,
+                  "numReplicas": null,
+                  "serviceId": "2ad50a8c-37b2-4cff-a360-79b480df36e7",
+                  "serviceName": "Postgres",
+                  "source": {
+                    "image": "postgres:16-alpine",
+                    "repo": null
+                  },
+                  "startCommand": "docker-entrypoint.sh postgres"
+                }
+              },
+              {
+                "node": {
+                  "activeDeployments": [
+                    {
+                      "createdAt": "2026-09-21T08:49:29.905Z",
+                      "deploymentStopped": false,
+                      "id": "ba36a3c8-1d89-414d-8e0b-35af9152247e",
+                      "instances": [
+                        {
+                          "id": "30c2acce-c5a5-46d1-94e4-7d8128fd511b",
+                          "status": "RUNNING"
+                        }
+                      ],
+                      "meta": {
+                        "buildOnly": false,
+                        "fileServiceManifest": {},
+                        "ignoreWatchPatterns": true,
+                        "imageDigest": "sha256:f2dfa757ad58edbe0ef5613ec6a59455e8ee8c57d6caec628122609242ee565a",
+                        "logsV2": true,
+                        "nixpacksProviders": [],
+                        "propertyFileMapping": {},
+                        "reason": "redeploy",
+                        "rootDirectory": null,
+                        "runtime": "V2",
+                        "serviceManifest": {
+                          "build": {
+                            "buildCommand": null,
+                            "buildEnvironment": "V3",
+                            "builder": "DOCKERFILE",
+                            "dockerfilePath": "/Dockerfile",
+                            "nixpacksConfigPath": null,
+                            "nixpacksPlan": null,
+                            "watchPatterns": [
+                              "frontend/**",
+                              "Caddyfile",
+                              "Dockerfile",
+                              "railway.toml"
+                            ]
+                          },
+                          "deploy": {
+                            "cronSchedule": null,
+                            "drainingSeconds": null,
+                            "healthcheckPath": "/",
+                            "healthcheckTimeout": 120,
+                            "ipv6EgressEnabled": false,
+                            "limitOverride": null,
+                            "multiRegionConfig": {
+                              "sfo": {
+                                "numReplicas": 1
+                              }
+                            },
+                            "numReplicas": 1,
+                            "overlapSeconds": null,
+                            "preDeployCommand": null,
+                            "preDeployTimeoutSeconds": null,
+                            "region": null,
+                            "registryCredentials": null,
+                            "requiredMountPath": null,
+                            "restartPolicyMaxRetries": 3,
+                            "restartPolicyType": "ON_FAILURE",
+                            "runtime": "V2",
+                            "sleepApplication": false,
+                            "startCommand": "sh -c \"grep -rl 'https://erischat-production.up.railway.app/v1' /srv/frontend | xargs -r sed -i 's#https://erischat-production.up.railway.app/v1#https://erischat-api-production.up.railway.app/v1#g'; sed -i '1i<script>window.ERIS_API=\\\"https://erischat-api-production.up.railway.app/v1\\\";</script>' /srv/frontend/erischat-main.html; sed -i '/^root \\* \\/srv\\/frontend/a\\\\header Cache-Control \\\"no-store, no-cache, must-revalidate, max-age=0\\\"' /etc/caddy/Caddyfile; exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile\"",
+                            "useLegacyStacker": false
+                          }
+                        },
+                        "volumeMounts": []
+                      },
+                      "status": "SUCCESS"
+                    }
+                  ],
+                  "cronSchedule": null,
+                  "domains": {
+                    "customDomains": [],
+                    "serviceDomains": [
+                      {
+                        "domain": "erischat-production-850f.up.railway.app",
+                        "id": "1e954f6b-6ff3-4335-9f11-08c80a4c9d0d",
+                        "targetPort": null
+                      }
+                    ]
+                  },
+                  "environmentId": "488eea62-d294-49ac-abd0-35ec1a4ab7ab",
+                  "id": "40ed0f60-399a-4feb-8df6-1a6f6bd54af2",
+                  "latestDeployment": {
+                    "canRedeploy": true,
+                    "createdAt": "2026-09-21T09:02:58.645Z",
+                    "deploymentStopped": true,
+                    "id": "e1cab687-f7dc-45d0-ac26-e5e0c9ed33f6",
+                    "instances": [
+                      {
+                        "id": "69c9c6c9-b43c-4eb2-bb97-c9509a34eff9",
+                        "status": "REMOVED"
+                      }
+                    ],
+                    "meta": {
+                      "buildOnly": false,
+                      "fileServiceManifest": {},
+                      "logsV2": true,
+                      "nixpacksProviders": [],
+                      "propertyFileMapping": {},
+                      "reason": "deploy",
+                      "rootDirectory": null,
+                      "runtime": "V2",
+                      "serviceManifest": {
+                        "build": {
+                          "buildCommand": null,
+                          "buildEnvironment": "V3",
+                          "builder": "DOCKERFILE",
+                          "dockerfilePath": "Dockerfile",
+                          "nixpacksConfigPath": null,
+                          "nixpacksPlan": null,
+                          "watchPatterns": [
+                            "frontend/**",
+                            "Caddyfile",
+                            "Dockerfile",
+                            "railway.toml"
+                          ]
+                        },
+                        "deploy": {
+                          "cronSchedule": null,
+                          "drainingSeconds": null,
+                          "healthcheckPath": "/",
+                          "healthcheckTimeout": 120,
+                          "ipv6EgressEnabled": false,
+                          "limitOverride": null,
+                          "multiRegionConfig": {
+                            "sfo": {
+                              "numReplicas": 1
+                            }
+                          },
+                          "numReplicas": 1,
+                          "overlapSeconds": null,
+                          "preDeployCommand": null,
+                          "preDeployTimeoutSeconds": null,
+                          "region": null,
+                          "registryCredentials": null,
+                          "requiredMountPath": null,
+                          "restartPolicyMaxRetries": 3,
+                          "restartPolicyType": "ON_FAILURE",
+                          "runtime": "V2",
+                          "sleepApplication": false,
+                          "startCommand": "exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile",
+                          "useLegacyStacker": false
+                        }
+                      },
+                      "volumeMounts": []
+                    },
+                    "status": "FAILED"
+                  },
+                  "nextCronRunAt": null,
+                  "numReplicas": null,
+                  "serviceId": "41072358-0fe0-4782-ae8a-011fccdb902d",
+                  "serviceName": "erischat-web-v2",
+                  "source": {
+                    "image": null,
+                    "repo": "erischat-proje/erishat"
+                  },
+                  "startCommand": "exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
+                }
+              },
+              {
+                "node": {
+                  "activeDeployments": [
+                    {
+                      "createdAt": "2026-09-20T17:13:08.258Z",
+                      "deploymentStopped": false,
+                      "id": "463c98d0-d331-4b3f-ae90-7c97fdd6f983",
+                      "instances": [
+                        {
+                          "id": "142ce497-1bbc-47de-b0ba-d905d5185f29",
+                          "status": "RUNNING"
+                        }
+                      ],
+                      "meta": {
+                        "branch": "main",
+                        "buildOnly": false,
+                        "commitAuthor": "erischat-proje",
+                        "commitHash": "7c30d0fa4b5c3a40dd07bc333264c965dab7a9fe",
+                        "commitMessage": "Add files via upload",
+                        "fileServiceManifest": {},
+                        "ignoreWatchPatterns": true,
+                        "imageDigest": "sha256:66f1f05147958cfe748f8aa90242593aef700737c70ef30b06390973e3fc4490",
+                        "logsV2": true,
+                        "nixpacksProviders": [],
+                        "patchId": "e44f9598-1ff7-420f-b817-dcb015e225c7",
+                        "plan": "trial",
+                        "propertyFileMapping": {},
+                        "reason": "redeploy",
+                        "repo": "erischat-proje/erishat",
+                        "rootDirectory": "/backend",
+                        "runtime": "V2",
+                        "serviceManifest": {
+                          "build": {
+                            "buildCommand": null,
+                            "buildEnvironment": "V3",
+                            "builder": "DOCKERFILE",
+                            "dockerfilePath": "backend/Dockerfile",
+                            "nixpacksConfigPath": null,
+                            "nixpacksPlan": null,
+                            "watchPatterns": [
+                              "/backend/**",
+                              "/shared/**",
+                              "/backend/Dockerfile"
+                            ]
+                          },
+                          "deploy": {
+                            "cronSchedule": null,
+                            "drainingSeconds": null,
+                            "healthcheckPath": "/health",
+                            "healthcheckTimeout": 120,
+                            "ipv6EgressEnabled": false,
+                            "limitOverride": null,
+                            "multiRegionConfig": {
+                              "sfo": {
+                                "numReplicas": 1
+                              }
+                            },
+                            "numReplicas": 1,
+                            "overlapSeconds": null,
+                            "preDeployCommand": null,
+                            "preDeployTimeoutSeconds": null,
+                            "region": null,
+                            "registryCredentials": null,
+                            "requiredMountPath": null,
+                            "restartPolicyMaxRetries": 10,
+                            "restartPolicyType": "ON_FAILURE",
+                            "runtime": "V2",
+                            "sleepApplication": false,
+                            "startCommand": "sh -c 'python - <<\"PY\"\np=\"app/main.py\"\ns=open(p).read()\ns=s.replace(\"return {\\\"enabled\\\": bool(settings.google_client_id), \\\"client_id\\\": settings.google_client_id}\", \"return {\\\"enabled\\\": True, \\\"client_id\\\": settings.google_client_id or \\\"599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com\\\"}\")\nopen(p,\"w\").write(s)\nPY\nexport GOOGLE_CLIENT_ID=\"${GOOGLE_CLIENT_ID:-599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com}\"\nexec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'",
+                            "useLegacyStacker": false
+                          }
+                        },
+                        "volumeMounts": []
+                      },
+                      "status": "SUCCESS"
+                    }
+                  ],
+                  "cronSchedule": null,
+                  "domains": {
+                    "customDomains": [],
+                    "serviceDomains": [
+                      {
+                        "domain": "erischat-api-production.up.railway.app",
+                        "id": "be8ea60e-8364-44d7-90e4-5e824576d67d",
+                        "targetPort": null
+                      }
+                    ]
+                  },
+                  "environmentId": "488eea62-d294-49ac-abd0-35ec1a4ab7ab",
+                  "id": "72fa5e83-4ea0-48ad-830e-5688c5536e28",
+                  "latestDeployment": {
+                    "canRedeploy": true,
+                    "createdAt": "2026-09-21T09:42:16.289Z",
+                    "deploymentStopped": true,
+                    "id": "bcc2607f-fc53-474e-b752-4b5a463475c4",
+                    "instances": [
+                      {
+                        "id": "1e04a66e-1975-457f-a336-419ce9c7f0e8",
+                        "status": "REMOVED"
+                      }
+                    ],
+                    "meta": {
+                      "branch": "main",
+                      "buildOnly": false,
+                      "commitAuthor": "selenaysasmaz62-afk",
+                      "commitHash": "cb63491f857dd2c7d80b924d4920585aabd1f90d",
+                      "commitMessage": "Fix Google onboarding and welcome flow",
+                      "fileServiceManifest": {},
+                      "ignoreWatchPatterns": true,
+                      "logsV2": true,
+                      "nixpacksProviders": [],
+                      "patchId": "f11518d7-b849-47a6-89eb-9b4cbe372b22",
+                      "plan": "trial",
+                      "propertyFileMapping": {},
+                      "reason": "deploy",
+                      "repo": "erischat-proje/erishat",
+                      "rootDirectory": "/backend",
+                      "runtime": "V2",
+                      "serviceManifest": {
+                        "build": {
+                          "buildCommand": null,
+                          "buildEnvironment": "V3",
+                          "builder": "DOCKERFILE",
+                          "dockerfilePath": "backend/Dockerfile",
+                          "nixpacksConfigPath": null,
+                          "nixpacksPlan": null,
+                          "watchPatterns": [
+                            "/backend/**",
+                            "/shared/**",
+                            "/backend/Dockerfile"
+                          ]
+                        },
+                        "deploy": {
+                          "cronSchedule": null,
+                          "drainingSeconds": null,
+                          "healthcheckPath": "/health",
+                          "healthcheckTimeout": 120,
+                          "ipv6EgressEnabled": false,
+                          "limitOverride": null,
+                          "multiRegionConfig": {
+                            "sfo": {
+                              "numReplicas": 1
+                            }
+                          },
+                          "numReplicas": 1,
+                          "overlapSeconds": null,
+                          "preDeployCommand": null,
+                          "preDeployTimeoutSeconds": null,
+                          "region": null,
+                          "registryCredentials": null,
+                          "requiredMountPath": null,
+                          "restartPolicyMaxRetries": 10,
+                          "restartPolicyType": "ON_FAILURE",
+                          "runtime": "V2",
+                          "sleepApplication": false,
+                          "startCommand": "sh -c 'if [ -n \"$GOOGLE_CLIENT_ID\" ]; then echo GOOGLE_CLIENT_ID_SET=true; else echo GOOGLE_CLIENT_ID_SET=false; fi; exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'",
+                          "useLegacyStacker": false
+                        }
+                      },
+                      "volumeMounts": []
+                    },
+                    "status": "FAILED"
+                  },
+                  "nextCronRunAt": null,
+                  "numReplicas": null,
+                  "serviceId": "e0f83323-bc17-4a16-b6d3-831b4534d857",
+                  "serviceName": "erischat-api",
+                  "source": {
+                    "image": null,
+                    "repo": "erischat-proje/erishat"
+                  },
+                  "startCommand": "sh -c 'if [ -n \"$GOOGLE_CLIENT_ID\" ]; then echo GOOGLE_CLIENT_ID_SET=true; else echo GOOGLE_CLIENT_ID_SET=false; fi; exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'"
+                }
+              },
+              {
+                "node": {
+                  "activeDeployments": [
+                    {
+                      "createdAt": "2026-09-20T11:35:53.627Z",
+                      "deploymentStopped": false,
+                      "id": "ded9745c-a85c-4271-8a60-5f95bb80d79e",
+                      "instances": [
+                        {
+                          "id": "97052d77-a32a-4ea5-87e1-65077c483808",
+                          "status": "RUNNING"
+                        }
+                      ],
+                      "meta": {
+                        "branch": "main",
+                        "buildOnly": false,
+                        "commitAuthor": "semihvarolymk-png",
+                        "commitHash": "ffa35fb821797e1dc1c9c1cbd656e3464623d2b5",
+                        "commitMessage": "Cache-bust real Google auth and user admin UI",
+                        "fileServiceManifest": {},
+                        "ignoreWatchPatterns": true,
+                        "imageDigest": "sha256:1b5a1fd47227cae25a15e716e0a52c11b10490af9a5e7fe206d09a603c489f8d",
+                        "logsV2": true,
+                        "nixpacksProviders": [],
+                        "patchId": "8cdbdd6e-8512-4b57-96a3-0d74af4589a5",
+                        "plan": "trial",
+                        "propertyFileMapping": {},
+                        "reason": "deploy",
+                        "repo": "erischat-proje/erishat",
+                        "rootDirectory": null,
+                        "runtime": "V2",
+                        "serviceManifest": {
+                          "build": {
+                            "buildCommand": null,
+                            "buildEnvironment": "V3",
+                            "builder": "RAILPACK",
+                            "dockerfilePath": "/Dockerfile",
+                            "nixpacksConfigPath": null,
+                            "nixpacksPlan": null,
+                            "watchPatterns": []
+                          },
+                          "deploy": {
+                            "cronSchedule": null,
+                            "drainingSeconds": null,
+                            "healthcheckPath": null,
+                            "healthcheckTimeout": null,
+                            "ipv6EgressEnabled": false,
+                            "limitOverride": null,
+                            "multiRegionConfig": {
+                              "sfo": {
+                                "numReplicas": 1
+                              }
+                            },
+                            "numReplicas": 1,
+                            "overlapSeconds": null,
+                            "preDeployCommand": null,
+                            "preDeployTimeoutSeconds": null,
+                            "region": null,
+                            "registryCredentials": null,
+                            "requiredMountPath": null,
+                            "restartPolicyMaxRetries": 10,
+                            "restartPolicyType": "ALWAYS",
+                            "runtime": "UNSPECIFIED",
+                            "sleepApplication": false,
+                            "startCommand": null,
+                            "useLegacyStacker": false
+                          }
+                        },
+                        "volumeMounts": []
+                      },
+                      "status": "SUCCESS"
+                    }
+                  ],
+                  "cronSchedule": null,
+                  "domains": {
+                    "customDomains": [],
+                    "serviceDomains": []
+                  },
+                  "environmentId": "488eea62-d294-49ac-abd0-35ec1a4ab7ab",
+                  "id": "f85cfd65-e913-488d-ab9f-8c32f668e3a3",
+                  "latestDeployment": {
+                    "canRedeploy": true,
+                    "createdAt": "2026-09-20T19:42:37.037Z",
+                    "deploymentStopped": true,
+                    "id": "b873ff59-34d4-4d82-b0ad-ac3740c7028c",
+                    "instances": [
+                      {
+                        "id": "33e57592-f59a-468c-93a4-ec1546883ebe",
+                        "status": "REMOVED"
+                      }
+                    ],
+                    "meta": {
+                      "branch": "main",
+                      "commitAuthor": "semihvarolymk-png",
+                      "commitHash": "ffa35fb821797e1dc1c9c1cbd656e3464623d2b5",
+                      "commitMessage": "Cache-bust real Google auth and user admin UI",
+                      "ignoreWatchPatterns": true,
+                      "logsV2": true,
+                      "patchId": "5e9d130f-97ce-4a6c-b619-6ce155b54f0a",
+                      "plan": "trial",
+                      "reason": "redeploy",
+                      "repo": "erischat-proje/erishat",
+                      "runtime": "V2",
+                      "serviceManifest": {
+                        "build": {
+                          "buildCommand": null,
+                          "buildEnvironment": "V3",
+                          "builder": "RAILPACK",
+                          "dockerfilePath": null,
+                          "nixpacksConfigPath": null,
+                          "nixpacksPlan": null,
+                          "watchPatterns": []
+                        },
+                        "deploy": {
+                          "cronSchedule": null,
+                          "drainingSeconds": null,
+                          "healthcheckPath": "/",
+                          "healthcheckTimeout": 10,
+                          "ipv6EgressEnabled": false,
+                          "limitOverride": null,
+                          "multiRegionConfig": {
+                            "sfo": {
+                              "numReplicas": 1
+                            }
+                          },
+                          "numReplicas": 1,
+                          "overlapSeconds": null,
+                          "preDeployCommand": null,
+                          "preDeployTimeoutSeconds": null,
+                          "region": null,
+                          "registryCredentials": null,
+                          "requiredMountPath": null,
+                          "restartPolicyMaxRetries": 10,
+                          "restartPolicyType": "ON_FAILURE",
+                          "runtime": "V2",
+                          "sleepApplication": false,
+                          "startCommand": "sh -c \"grep -rl 'https://erischat-production.up.railway.app/v1' /srv/frontend | xargs -r sed -i 's#https://erischat-production.up.railway.app/v1#https://erischat-api-production.up.railway.app/v1#g' && caddy run --config /etc/caddy/Caddyfile --adapter caddyfile\"",
+                          "useLegacyStacker": false
+                        }
+                      },
+                      "volumeMounts": []
+                    },
+                    "status": "FAILED"
+                  },
+                  "nextCronRunAt": null,
+                  "numReplicas": null,
+                  "serviceId": "e32aee8b-a970-440a-b1f3-e4581048e916",
+                  "serviceName": "erischat",
+                  "source": {
+                    "image": null,
+                    "repo": "erischat-proje/erishat"
+                  },
+                  "startCommand": "exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"
+                }
+              }
+            ]
+          },
+          "unmergedChangesCount": null,
+          "volumeInstances": {
+            "edges": []
+          }
+        }
+      }
+    ]
+  },
+  "id": "b72ba3ca-a30d-411c-89a7-6242e7c2911c",
+  "name": "erischat",
+  "services": {
+    "edges": [
+      {
+        "node": {
+          "id": "2ad50a8c-37b2-4cff-a360-79b480df36e7",
+          "name": "Postgres"
+        }
+      },
+      {
+        "node": {
+          "id": "41072358-0fe0-4782-ae8a-011fccdb902d",
+          "name": "erischat-web-v2"
+        }
+      },
+      {
+        "node": {
+          "id": "e0f83323-bc17-4a16-b6d3-831b4534d857",
+          "name": "erischat-api"
+        }
+      },
+      {
+        "node": {
+          "id": "e32aee8b-a970-440a-b1f3-e4581048e916",
+          "name": "erischat"
+        }
+      }
+    ]
+  },
+  "workspace": {
+    "name": "erischat-proje's Projects"
+  }
+}

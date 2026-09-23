@@ -1,0 +1,2 @@
+# ErisChat sistem kaydı: ghost_mode.txt
+# JSONL kayıtları aşağıya eklenir.

@@ -1,0 +1,1 @@
+(() => { const hide=()=>document.querySelectorAll('#messages [data-dm-create-panel],#messages [data-dm-new]').forEach(x=>x.remove()); if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hide,{once:true});else hide(); })();

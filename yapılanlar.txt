@@ -1,0 +1,107 @@
+ERISCHAT – YAPILANLAR
+
+Bu dosya, projede gerçekten tamamlanan işleri ve kontrol noktalarını kronolojik olarak takip eder.
+
+1. Frontend ve giriş yapısı
+- v54 arayüzü ana giriş yapısına taşındı.
+- Eski iframe tabanlı v35/v54 yükleme yapısı kaldırıldı.
+- frontend/index.html güncel ana arayüzle eşitlendi.
+- Modal pencerelerin dış alana tıklayınca kapanması sağlandı.
+- Escape tuşuyla modal/sohbet pencerelerini kapatma desteği eklendi.
+- Tarayıcı uyumluluğu için CSS.escape yedeği eklendi.
+
+2. Profil ve kullanıcı bilgileri
+- Nickname ve avatar güncelleme altyapısı eklendi.
+- Profil bilgilerinin tarayıcıda korunması için kalıcı kayıt desteği hazırlandı.
+- API üzerinden profil güncelleme endpoint'i eklendi.
+- Oturum kapatırken token, kullanıcı bilgisi ve WebSocket temizleme mantığı eklendi.
+
+3. Backend ve API
+- UserUpdate şeması eklendi.
+- PATCH /v1/me endpoint'i eklendi.
+- GET /v1/conversations endpoint'i eklendi.
+- Konuşma oluşturma fonksiyonu eklendi.
+- Aynı iki kullanıcı arasında tekrar eden özel konuşmaların önlenmesi için kontrol eklendi.
+- Conversation ve ConversationMember ilişkileri düzenlendi.
+- ConversationOut yanıt modelinin serileştirme uyumu geliştirildi.
+- CORS yapılandırmasındaki hatalı wildcard/credentials kombinasyonu düzeltildi.
+- API köprüsüne request, health, listConversations, createConversation, updateProfile ve logout fonksiyonları eklendi.
+
+4. Mesajlaşma altyapısı
+- WebSocket üzerinden gelen mesajların veritabanına kaydedilmesi için altyapı eklendi.
+- Mesaj gövdesi doğrulaması eklendi.
+- Mesaj uzunluğu kontrolü eklendi.
+- Konuşma üyeliği kontrolü eklendi.
+- Mesajların konuşma üyelerine yayınlanması sağlandı.
+- HTTP ve WebSocket üzerinden aynı mesajın iki kez görünmesini önlemek için kimlik kontrolü eklendi.
+- WebSocket yeniden bağlanma ve bağlantı kesme fonksiyonları eklendi.
+- Mesaj geçmişini API'den yükleme altyapısı eklendi.
+
+5. Önceki kontroller
+- Backend Python derleme kontrolleri yapıldı.
+- Frontend JavaScript sözdizimi kontrolleri yapıldı.
+- ZIP arşiv bütünlük kontrolleri yapıldı.
+
+6. 2026-09-17 — YENİ ÜRÜN GEREKSİNİMLERİ İÇİN AUDIT CHECKPOINT
+- [x] Kullanıcının gönderdiği oda, VIP 1-12, profil/fan, keşfet/rastgele, oyun ve aile gereksinimleri proje backlog'una işlendi.
+- [x] `yapılacaklar.txt` yeni ürün gereksinimleri ve takip kurallarıyla güncellendi.
+- [x] Mevcut oda altyapısında Room, RoomMember, RoomModerator, RoomBan, RoomSeat, RoomGiftEvent ve RoomMusic modellerinin bulunduğu tespit edildi.
+- [x] Oda seviye haritasının mevcut backend'de büyük ölçüde bulunduğu tespit edildi.
+- [x] VIP gizlilik, VIP durumu, konum, keşif tercihi, rapor, aile, oyun ve fan için mevcut model temelleri tespit edildi.
+- [x] Yeni geliştirmeye başlamadan önce mevcut çalışan kodu koruma ve her aşamada iki takip dosyasını güncelleme kuralı kayda alındı.
+
+7. 2026-09-17 — ODA BACKEND MİLADI
+- [x] `backend/app/room_routes.py` oda koltuğuna katılma endpoint'i eklendi.
+- [x] Kullanıcının koltuktan ayrılması endpoint'i eklendi.
+- [x] Kilitli/dolu koltuk ve aynı kullanıcının ikinci koltuğa geçmesi engellendi.
+- [x] Mikrofon koltuğu kuralları oda seviyesindeki koltuk sayısıyla kontrol ediliyor.
+- [x] Müzik ekleme yalnızca odada ve mikrofonda bulunan kullanıcıya bağlandı.
+- [x] Haftalık 150 Lidya ödeme mantığı aynı kullanıcı için aktif ödeme süresince tekrar ücret kesmeyecek şekilde düzenlendi.
+- [x] Kullanıcının oda müzik listesi yalnızca kendi yüklediği parçaları döndürüyor.
+- [x] Müzik oynatma endpoint'i yalnızca mikrofondaki kullanıcıya açıldı.
+- [x] 30 Lidya eşiği hediye toplam harcaması üzerinden animasyon flag'ine bağlandı.
+
+8. 2026-09-17 — ODA API İLERLEMESİ
+- [x] `GET /v1/rooms` endpoint'i eklendi.
+- [x] Oda listeleme yanıtı mevcut oda görünümüyle aynı kapasite/seviye/koltuk/üye bilgilerini taşıyor.
+- [x] Müzik ekleme akışında 10 parça sınırı ödeme işleminden önce kontrol ediliyor.
+- [x] Değişiklikler `main` branch'e GitHub üzerinden commit edildi.
+- [ ] Railway deploy ve gerçek API smoke test.
+
+9. 2026-09-17 — FRONTEND ODA API BAĞLANTISI
+- [x] Ana sayfa ve Keşfet oda listeleri gerçek `GET /v1/rooms` verisine bağlandı.
+- [x] Oda listesi üye sayısına göre sıralanıyor.
+- [x] Oda kartları gerçek oda kimliğiyle join API çağrısı yapıyor.
+- [x] API base boşsa `location.origin` fallback'i eklendi.
+- [x] Patch GitHub Actions üzerinde başarıyla çalıştı.
+
+10. 2026-09-17 — GERÇEK ODA EKRANI
+- [x] Gerçek oda ekranı modalı eklendi.
+- [x] Oda adı, seviye, kişi sayısı, harcama, mikrofon koltukları ve sohbet alanı mevcut.
+- [x] Gerçek oda detayını API'den yükleme bağlantısı eklendi.
+- [x] Koltuğa geçme/kalkma akışı gerçek endpointlere bağlandı.
+
+11. 2026-09-17 — ODA GERÇEK ZAMANLI SOHBET
+- [x] RoomChatMessage modeli eklendi.
+- [x] Oda WebSocket kanalı eklendi.
+- [x] Oda sohbet geçmişi ve canlı mesaj yayınlama eklendi.
+- [x] Frontend oda sohbeti WebSocket istemcisi bağlandı.
+
+12. 2026-09-17 — ODA HEDİYE EKONOMİSİ GÜVENLİK DÜZELTMESİ
+- [x] İstemcinin recipient_percent belirlemesi kaldırıldı.
+- [x] Server-side sabit %70 alıcı payout kuralı.
+- [x] Gönderici/alıcı cüzdan satır kilitleme ve atomic transaction.
+- [x] Maksimum 99 adet.
+- [x] 30 Lidya ve üzeri animasyon flag'i.
+- [x] Server-side 45 hediyelik katalog ve fiyat doğrulaması.
+- [x] Geçersiz hediye reddi.
+
+13. 2026-09-17 — HEDİYE API + FRONTEND BAĞLANTI AŞAMASI
+- [x] `GET /v1/rooms/{room_id}/gift-catalog` mevcut room API içinde doğrulandı.
+- [x] `GET /v1/rooms/{room_id}/gift-events` mevcut room API içinde doğrulandı.
+- [x] Gerçek oda ekranındaki demo hediye butonunu gerçek API menüsüne bağlayan patch workflow'u oluşturuldu.
+- [x] Hediye menüsünde kendim / mikrofondakiler / seçilen kişi hedefleri için UI hazırlandı.
+- [x] Hediye katalog fiyatı frontend'den değil server API'den alınacak şekilde tasarlandı.
+- [ ] Patch workflow'un çalışması ve frontend commit'inin doğrulanması.
+- [ ] Hediye eventlerinin WebSocket'te canlı yayınlanması.
+- [ ] Railway deploy + gerçek gift smoke testi.

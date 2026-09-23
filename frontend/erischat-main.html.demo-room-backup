@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07060b"><title>ErisChat</title>
+<style>
+:root{--bg:#07060b;--p:#100d16;--p2:#17121f;--line:#fff1;--muted:#938a9f;--pink:#ff4fa3;--violet:#8a5cff;--gold:#e4b85d}*{box-sizing:border-box}html,body{margin:0;background:#05050a;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}button,input{font:inherit}button{cursor:pointer}.app{width:min(100%,520px);min-height:100vh;margin:auto;background:radial-gradient(500px 250px at 90% -5%,#8a5cff1c,transparent),radial-gradient(450px 260px at -10% 35%,#ff4fa308,transparent),var(--bg)}.top{height:72px;padding:14px 17px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;background:#07060bea;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.brand{font-size:23px;font-weight:950;letter-spacing:-1px}.brand i{font-style:normal;color:var(--pink)}.actions{display:flex;gap:7px}.icon{width:40px;height:40px;border:1px solid var(--line);background:#ffffff08;color:#fff;border-radius:13px}.content{padding:18px 16px 104px}.view{display:none}.view.show{display:block}.eyebrow{font-size:9px;letter-spacing:1.5px;color:#a69cad;text-transform:uppercase}.muted{color:var(--muted)}.title{font-size:30px;line-height:1.02;letter-spacing:-1.2px;margin:7px 0 18px}.card{background:linear-gradient(145deg,#12101a,#0c0a11);border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 45px #0005}.hero{padding:20px;position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;right:-70px;top:-70px;background:#8a5cff16}.hero h2{font-size:21px;margin:8px 0}.hero p{font-size:11px;line-height:1.65;color:#aaa1b1;margin:0;max-width:350px}.heroRow{display:flex;justify-content:space-between;gap:12px}.balance{padding:9px 11px;height:max-content;border-radius:12px;background:#e4b85d12;border:1px solid #e4b85d35;color:#f0cd7d;font-size:10px;font-weight:900;white-space:nowrap}.section{display:flex;justify-content:space-between;align-items:center;margin:24px 2px 10px}.section h3{margin:0;font-size:14px}.link{border:0;background:none;color:#ff70b6;font-size:10px}.rooms,.list{display:grid;gap:9px}.room,.item,.setting{width:100%;border:1px solid var(--line);background:var(--p);color:#fff;border-radius:18px;padding:13px;text-align:left}.room{display:flex;align-items:center;gap:12px}.room:hover,.item:hover,.setting:hover{background:var(--p2);border-color:#fff2}.ava{width:47px;height:47px;border-radius:15px;display:grid;place-items:center;flex:none;background:linear-gradient(145deg,#33244b,#854c70);font-weight:900;position:relative}.round{border-radius:50%}.online{position:absolute;width:10px;height:10px;border-radius:50%;right:0;bottom:0;background:#54dfaa;border:2px solid #100d15}.grow{flex:1}.roomText b,.item b{font-size:12px}.roomText small,.item small{display:block;color:var(--muted);font-size:9px;margin-top:5px}.live{font-size:8px;color:#ff72b8;background:#ff4fa314;padding:5px 7px;border-radius:8px}.quick{display:grid;grid-template-columns:1fr 1fr;gap:9px}.quick button{border:1px solid var(--line);background:var(--p);color:#fff;border-radius:18px;padding:15px;text-align:left}.quick button strong{display:block;font-size:11px;margin-top:8px}.quick button span{display:block;color:var(--muted);font-size:9px;margin-top:4px}.nav{position:fixed;z-index:40;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);display:grid;grid-template-columns:repeat(5,1fr);padding:9px 6px calc(9px + env(safe-area-inset-bottom));background:#08070cf4;border-top:1px solid var(--line);backdrop-filter:blur(18px)}.nav button{border:0;background:none;color:#6f6878;font-size:8px;padding:5px}.nav button b{display:block;font-size:18px;margin-bottom:3px}.nav button.active{color:#ff68b3}.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px}.toolbar h2{margin:0}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:15px 0}.tab{border:1px solid var(--line);background:#ffffff06;color:#918999;border-radius:12px;padding:10px;font-size:10px}.tab.active{color:#fff;background:#8a5cff18;border-color:#8a5cff55}.item{display:flex;align-items:center;gap:11px}.badge{margin-left:auto;background:var(--pink);padding:5px 7px;border-radius:99px;font-size:8px}.profile{padding:18px;overflow:hidden;position:relative}.glow{position:absolute;width:220px;height:220px;border-radius:50%;right:-90px;top:-90px;background:#8a5cff16;filter:blur(10px)}.stage{height:210px;display:grid;place-items:center;position:relative}.face{width:126px;height:126px;border-radius:50%;position:relative;z-index:2;background:radial-gradient(circle at 45% 35%,#e5b39a 0 8%,transparent 9%),radial-gradient(circle at 50% 53%,#ad705b 0 27%,transparent 28%),linear-gradient(145deg,#171320,#744b69);box-shadow:0 0 35px #8a5cff4d}.hair{position:absolute;width:92px;height:70px;left:17px;top:7px;border-radius:55% 55% 35% 35%;background:linear-gradient(145deg,#18121e,#3e2941)}.eyes{position:absolute;width:7px;height:4px;border-radius:50%;background:#1a121a;left:29px;top:59px;box-shadow:24px 0 #1a121a}.frameImg{position:absolute;width:194px;height:194px;z-index:5;pointer-events:none}.crown{position:absolute;z-index:6;top:1px;font-size:26px;filter:drop-shadow(0 0 9px #e4b85d)}.name{text-align:center;position:relative;z-index:7}.name h2{margin:0 0 7px;font-size:23px}.vip{display:inline-flex;padding:6px 11px;border-radius:99px;background:linear-gradient(100deg,#7048d5,#d2a43d);font-size:9px;font-weight:900}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}.stat{text-align:center;padding:10px;background:#ffffff06;border:1px solid var(--line);border-radius:14px}.stat b{display:block;font-size:13px}.stat span{font-size:8px;color:var(--muted)}.progress{margin-top:15px}.progressTop{display:flex;justify-content:space-between;font-size:9px}.bar{height:8px;margin-top:7px;border-radius:99px;background:#251d2e;overflow:hidden}.bar i{display:block;width:0%;height:100%;background:linear-gradient(90deg,#754cff,#e4b85d);border-radius:99px}.shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.shop{padding:10px;border:1px solid var(--line);background:var(--p);border-radius:18px;text-align:left;color:#fff}.preview{height:118px;border-radius:14px;background:radial-gradient(circle,#8a5cff18,transparent 65%),#09070d;display:grid;place-items:center;position:relative;overflow:hidden}.miniA{width:64px;height:64px;border-radius:50%;background:linear-gradient(145deg,#c48670,#50324d);z-index:2}.miniF{position:absolute;width:92px;height:92px}.shop b{display:block;font-size:10px;margin-top:9px}.shop small{display:block;color:var(--muted);font-size:8px;margin-top:4px}.price{display:block;color:#e6bc65;font-size:9px;font-weight:900;margin-top:7px}.vipList{display:grid;gap:8px}.vipRow{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);background:var(--p);border-radius:17px;color:#fff;text-align:left}.lvl{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#6942d2,#b88838);font-size:10px;font-weight:950}.vipRow small{display:block;color:var(--muted);font-size:8px;margin-top:4px}.lock{color:#918999}.search{display:flex;gap:8px}.search input,.compose input{flex:1;min-width:0;background:#ffffff07;border:1px solid var(--line);color:#fff;border-radius:13px;padding:12px;outline:none}.primary{border:0;border-radius:13px;background:linear-gradient(135deg,#7b4cff,#ff4fa3);color:#fff;padding:0 15px;font-weight:800}.settings{display:grid;gap:8px}.setting{display:flex;align-items:center;gap:10px}.setting small{display:block;color:var(--muted);font-size:8px;margin-top:4px}.switch{width:41px;height:23px;border-radius:99px;background:#342c3d;position:relative}.switch:after{content:"";position:absolute;width:19px;height:19px;border-radius:50%;left:2px;top:2px;background:#aaa;transition:.2s}.switch.on{background:#8a5cff66}.switch.on:after{left:20px;background:#fff}.modal,.chat{display:none;position:fixed;inset:0;z-index:100;background:#020107e2;align-items:flex-end}.modal.show,.chat.show{display:flex}.sheet{width:min(520px,100%);background:#0b0911;border-radius:27px 27px 0 0;border:1px solid var(--line);padding:16px;max-height:88vh;overflow:auto}.sheetHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.close{border:0;background:#ffffff09;color:#fff;width:35px;height:35px;border-radius:11px}.giftGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.gift{border:1px solid var(--line);background:#ffffff05;color:#fff;border-radius:15px;padding:11px;text-align:left}.gift em{font-style:normal;font-size:23px}.gift b{display:block;font-size:9px;margin-top:5px}.gift small{display:block;color:#e4b85d;font-size:8px;margin-top:3px}.chatSheet{width:min(520px,100%);height:88vh;background:#0b0911;border-radius:27px 27px 0 0;display:flex;flex-direction:column}.chatHead{display:flex;align-items:center;gap:9px;padding:13px 15px;border-bottom:1px solid var(--line)}.chatBody{flex:1;overflow:auto;padding:16px;display:grid;align-content:start;gap:8px}.bubble{max-width:78%;padding:10px 12px;border-radius:15px;background:#17131e;font-size:10px}.me{justify-self:end;background:linear-gradient(135deg,#754cff,#ff4fa3)}.compose{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line)}.toast{position:fixed;z-index:150;left:50%;bottom:94px;transform:translate(-50%,20px);opacity:0;background:#19151f;border:1px solid #fff2;padding:10px 14px;border-radius:13px;font-size:10px;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (min-width: 760px){
+  html,body{overflow-x:hidden}
+  .app{width:100%;max-width:none;min-height:100vh}
+  .top{height:78px;padding:14px clamp(24px,4vw,64px)}
+  .content{max-width:1180px;margin:0 auto;padding:28px 28px 120px}
+  .hero{padding:28px}
+  .hero h1.title{font-size:42px}
+  .rooms{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quick{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .shopGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .shop .preview{height:150px}
+  .vipList{grid-template-columns:repeat(2,minmax(0,1fr));display:grid}
+  .settings{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .search{max-width:720px}
+  .nav{width:min(900px,calc(100% - 40px));border:1px solid var(--line);border-radius:20px 20px 0 0;padding:10px 12px}
+  .modal,.chat{align-items:center}
+  .sheet,.chatSheet{width:min(900px,calc(100% - 40px));max-height:88vh;border-radius:26px}
+  .chatSheet{height:82vh}
+}
+@media (max-width: 759px){
+  .content{overflow-x:hidden}
+  .heroRow{align-items:flex-start}
+  .balance{font-size:9px}
+}
+</style><style>
+#demoBalance{font-size:10px;letter-spacing:.2px}
+.demoWallet{margin-top:10px;padding:12px;border:1px solid #e4b85d35;border-radius:16px;background:linear-gradient(135deg,#e4b85d10,#8a5cff10);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.demoWallet b{font-size:12px}.demoWallet small{display:block;color:#938a9f;font-size:8px;margin-top:3px}
+@media(min-width:760px){.content{padding-bottom:120px}.hero{min-height:190px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr))}.liveShopGrid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+</style></head><body>
+<main class="app"><header class="top"><div class="brand">Eris<i>Chat</i></div><div class="actions"><button class="icon" onclick="showView('search')">⌕</button><button class="icon" aria-label="Tüm sistemler" onclick="window.openErisHub?.()">♧</button></div></header><section class="content">
+<section id="home" class="view show"><div class="eyebrow">ERISCHAT • SOSYAL KEŞİF</div><div class="hero card"><div class="heroRow"><div><h1 class="title">Kendi dünyanı kur.</h1><p>Odaları keşfet, sohbet et, anonim kal ve profilini kendi tarzında oluştur.</p></div></div></div><div class="section"><h3>Canlı odalar</h3><div style="display:flex;gap:7px"><button class="link" onclick="openCreateRoom()">＋ Oda aç</button><button class="link" onclick="showView('explore');window.ErisChatRoomList?.load?.()">Tümünü gör →</button></div></div><div class="rooms" id="realRooms"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Gerçek odalar yükleniyor…</div></div><div class="section"><h3>Hızlı erişim</h3></div><div class="section"><h3>Demo kontrol merkezi</h3><button class="link" onclick="document.getElementById('demoAudit')?.classList.toggle('show')">Eksikleri göster →</button></div><div class="section"><h3>Oyun merkezi</h3><button class="link" onclick="openGameDemo()">Tüm oyunlar →</button></div><div class="quick"><button onclick="openGameDemo()">🎮<strong>Oyun merkezi</strong><span>Oda ve kişisel oyunlar</span></button><button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="family"]')?.click(),0)">👑<strong>Aile</strong><span>Aile sistemi</span></button><button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="discover"]')?.click(),0)">🧭<strong>Keşif</strong><span>Yakın • rastgele</span></button><button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),0)">🛡️<strong>Güvenlik</strong><span>Şikayet • engel</span></button></div><div class="quick"><button onclick="showView('profile');window.ErisProfile?.refresh?.()">👑<strong>Profilim</strong><span>Avatar, frame ve VIP</span></button><button onclick="showView('shop')">💎<strong>Lidya mağazası</strong><span>Avatar, frame, hediye</span></button><button onclick="showView('vip')">✨<strong>VIP merkezi</strong><span>VIP 1 → VIP 12</span></button><button onclick="showView('anon')">🕶️<strong>Anonimlik</strong><span>Görünürlüğünü yönet</span></button><button onclick="window.openErisHub?.()">🧩<strong>Tüm sistemler</strong><span>Aile • keşif • gizlilik • şikâyet</span></button></div></section>
+<section id="messages" class="view"><div class="eyebrow">MESAJLAR</div><h1 class="title">Sohbetlerin.</h1><div class="list">
+
+</div></section>
+<section id="explore" class="view"><div class="eyebrow">KEŞFET</div><h1 class="title">Nereye gidelim?</h1><div class="tabs"><button class="tab active" onclick="tab('rooms',this)">🔥 Odalar</button><button class="tab" onclick="tab('people',this)">👥 İnsanlar</button><button class="tab" onclick="tab('events',this)">✨ Etkinlik</button></div><div id="rooms" class="list"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Gerçek odalar yükleniyor…</div></div><div id="people" class="list" style="display:none">
+
+</div><div id="events" class="list" style="display:none">
+
+
+</div></section>
+<section id="profile" class="view"><div class="toolbar"><h2>Profilim</h2></div><div class="profile card"><div class="glow"></div><div class="stage"><div class="face"><div class="hair"></div><div class="eyes"></div></div><img class="frameImg" alt="" src=""><div class="crown">♛</div></div><div class="name"><h2>Eris Kullanıcısı</h2><span class="vip" id="profileVipBadge">—</span></div><div class="stats"><div class="stat"><b id="profileFollowers">—</b><span>Takipçi</span></div><div class="stat"><b id="profileFollowing">—</b><span>Takip</span></div><div class="stat"><b id="profileVipLevel">—</b><span>VIP seviyesi</span></div></div><div class="progress"><div class="progressTop"><span>VIP ilerleme</span><span>—</span></div><div class="bar"><i></i></div></div></div></section>
+<section id="shop" class="view"><div class="eyebrow">MAĞAZA</div><h1 class="title">Tarzını seç.</h1><div id="shopLiveMount" class="shopGrid"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">139 kozmetik yükleniyor…</div></div></section>
+<section id="vip" class="view"><div class="eyebrow">VIP MERKEZİ</div><h1 class="title">VIP 1 → VIP 12</h1><div id="vipLiveMount" class="vipList"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">VIP merkezi yükleniyor…</div></div></section>
+<section id="anon" class="view"><div class="eyebrow">GİZLİLİK</div><h1 class="title">Anonimlik.</h1><div class="settings"><button class="setting" data-privacy-key="hide_vip" type="button"><div class="ava">🕶️</div><div class="grow"><b>VIP görünürlüğünü gizle</b><small>Profilindeki VIP bilgisini diğer kullanıcılardan gizle</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_vip_badge" type="button"><div class="ava">👑</div><div class="grow"><b>VIP rozeti</b><small>VIP rozetinin görünürlüğünü kontrol et</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_vip_neon" type="button"><div class="ava">✨</div><div class="grow"><b>VIP neon efekti</b><small>VIP profil efektini gizle</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_location" type="button"><div class="ava">📍</div><div class="grow"><b>Konum</b><small>Konum bilgisinin görünürlüğünü kontrol et</small></div><span class="switch"></span></button></div><div id="privacyStatus" class="muted" style="margin-top:10px;font-size:9px"></div></section>
+<section id="games" class="view"><div class="eyebrow">OYUN MERKEZİ</div><h1 class="title">Oyna.</h1><div class="quick">
+<button onclick="openGameDemo()">🎰<strong>Rulet</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🥤<strong>4 Kupa</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🐎<strong>At Yarışı</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🃏<strong>Blackjack</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🚀<strong>Crash</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🎁<strong>Kasa Açma</strong><span>Demo arayüzü</span></button>
+<button onclick="openGameDemo()">🎡<strong>Şans Çarkı</strong><span>Demo arayüzü</span></button>
+</div><div id="gameScreen" class="card" style="margin-top:12px;padding:18px;text-align:center"><b>Bir oyun seç.</b><p class="muted" style="font-size:9px">Oyunlar burada doğrudan çalışır; oda açılır penceresine bağlı değildir.</p></div></section>
+<section id="systems" class="view"><div class="eyebrow">ERISCHAT SİSTEMLERİ</div><h1 class="title">Her şey burada.</h1><div class="quick">
+<button onclick="showView('shop')">🛍️<strong>Mağaza</strong><span>139 görünüm + hediyeler</span></button>
+<button onclick="showView('vip')">👑<strong>VIP 1–12</strong><span>Seviye ve ödüller</span></button>
+<button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="family"]')?.click(),0)">👨‍👩‍👧<strong>Aile</strong><span>Kur • üye ol • bağış</span></button>
+<button onclick="showView('explore')">🧭<strong>Keşif</strong><span>İnsanlar • odalar • etkinlik</span></button>
+<button onclick="showView('anon')">🕶️<strong>Gizlilik</strong><span>Anonimlik ayarları</span></button>
+<button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),0)">🛡️<strong>Güvenlik</strong><span>Şikayet • engelle</span></button>
+<button onclick="showView('profile');window.ErisProfile?.refresh?.()">👤<strong>Profil</strong><span>Avatar • frame • sosyal</span></button>
+<button onclick="openGameDemo()">🎮<strong>Oyunlar</strong><span>7 oyun merkezi</span></button>
+</div></section>
+<section id="search" class="view"><div class="eyebrow">ARAMA</div><h1 class="title">Keşfet.</h1><div class="search"><input id="searchInput" placeholder="Oda veya kullanıcı ara"><button class="primary" onclick="window.ErisSearch?.run?.()">Ara</button></div></section>
+</section><nav class="nav"><button class="active" onclick="showView('home',this)"><b>⌂</b>Ana sayfa</button><button onclick="showView('messages',this);window.ErisChatDM?.load?.()"><b>☏</b>Mesaj</button><button onclick="showView('explore',this);window.ErisChatRoomList?.load?.()"><b>◈</b>Keşfet</button><button onclick="showView('games',this)"><b>🎮</b>Oyun</button><button onclick="showView('profile',this);window.ErisProfile?.refresh?.()"><b>♙</b>Profil</button></nav></main>
+<div id="chat" class="chat"><div class="chatSheet"><div class="chatHead"><div class="ava round" id="chatAva">R</div><div class="grow"><b id="chatTitle">Sohbet</b><small class="muted">çevrimiçi</small></div><button class="close" onclick="closeChat()">×</button></div><div class="chatBody" id="chatBody"></div><div class="compose"><input id="chatInput" placeholder="Mesaj yaz…" onkeydown="if(event.key==='Enter')sendChat()"><button class="primary" onclick="sendChat()">Gönder</button></div></div></div>
+<div id="realRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b id="realRoomTitle">Oda</b><small id="realRoomMeta" class="muted" style="display:block;margin-top:4px">Gerçek oda</small></div><button class="close" onclick="window.closeRealRoom?.()">×</button></div><div id="realRoomSeats" class="list"></div><div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="primary" style="height:42px;width:100%" onclick="window.openRoomGift?.()">🎁 Hediye</button><button class="primary" style="height:42px;width:100%" onclick="window.ErisChatMusic?.open?.()">🎵 Müzik</button></div><div class="card" style="margin-top:10px;padding:12px"><div id="realRoomChat" style="min-height:50px;max-height:180px;overflow:auto;font-size:10px;color:#aaa1b1"><div class="muted" style="font-size:9px">Canlı oda sohbeti ayrı bağlantı üzerinden açılır.</div></div><button class="primary" style="width:100%;height:40px;margin-top:8px" onclick="window.openLiveRoomChat?.()">💬 Canlı oda sohbetini aç</button></div></div></div><div id="createRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b>＋ Yeni oda</b><small class="muted" style="display:block;margin-top:4px">Kendi odanı oluştur</small></div><button class="close" onclick="closeCreateRoom()">×</button></div><input id="newRoomName" class="search-input" placeholder="Oda adı" style="width:100%;box-sizing:border-box;background:#ffffff07;border:1px solid #ffffff14;color:#fff;border-radius:13px;padding:12px;outline:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="primary" style="height:44px" onclick="createRoom()">Odayı oluştur</button><button class="close" style="width:auto;height:44px" onclick="closeCreateRoom()">İptal</button></div><div id="createRoomStatus" class="muted" style="margin-top:10px;font-size:9px"></div></div></div>
+<div id="demoRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b id="demoRoomTitle">ErisChat Odası</b><small class="muted" style="display:block;margin-top:4px">Demo oda • 12 koltuk • sohbet • oyun • hediye</small></div><button class="close" onclick="document.getElementById('demoRoomModal').classList.remove('show')">×</button></div><div id="demoRoomSeats" class="quick" style="grid-template-columns:repeat(3,1fr)"></div><div class="card" style="margin-top:10px;padding:10px"><div id="demoRoomChat" style="height:130px;overflow:auto;font-size:10px"></div><div class="compose" style="padding:8px 0 0;border:0"><input id="demoRoomInput" placeholder="Odaya mesaj yaz…"><button class="primary" onclick="sendDemoRoomMessage()">Gönder</button></div></div><div class="quick" style="margin-top:9px"><button onclick="window.ErisDemoExtras?.roomGift?.()">🎁<strong>Hediye</strong><span>Gönder</span></button><button onclick="window.ErisDemoExtras?.music?.()">🎵<strong>Müzik</strong><span>Kuyruğu</span></button><button onclick="openGameDemo()">🎮<strong>Oyun</strong><span>Oda oyunu</span></button><button onclick="window.ErisDemoExtras?.announcement?.()">📢<strong>Duyuru</strong><span>Yönet</span></button></div></div></div><div id="toast" class="toast"></div>
+<script>function showView(id,btn){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id)?.classList.add('show');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn?.closest('.nav'))btn.classList.add('active')}function tab(id,btn){['rooms','people','events'].forEach(x=>document.getElementById(x).style.display=x===id?'grid':'none');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}async function openChat(n,a){window.ErisDemoChatActive=false;try{const users=await window.ErisPlatform?.nearby?.();const list=Array.isArray(users)?users:(users?.users||users?.items||users?.data||[]);const u=list.find(x=>String(x.nickname||'').toLowerCase()===String(n||'').toLowerCase())||list.find(x=>String(x.nickname||'').toLowerCase().includes(String(n||'').toLowerCase()));if(u){await window.ErisChatDM?.create?.(u.user_id||u.id,n);return;}}catch(e){console.warn('[ErisChat] real discover chat failed',e)}window.ErisDemoChatActive=true;document.getElementById('chatTitle').textContent=n;document.getElementById('chatAva').textContent=a;const body=document.getElementById('chatBody');if(body)body.innerHTML='<div class="muted" style="font-size:10px;text-align:center;margin-bottom:8px">Gerçek kullanıcı bulunamadı.</div>';document.getElementById('chat').classList.add('show')}function closeChat(){window.ErisDemoChatActive=false;document.getElementById('chat').classList.remove('show')}async function sendChat(){const i=document.getElementById('chatInput');const msg=i?.value?.trim();if(!msg)return;const id=window.ErisChatDM?.activeId?.();const body=document.getElementById('chatBody');if(window.ErisDemoChatActive&&!id){if(body){const b=document.createElement('div');b.className='bubble me';b.textContent=msg;body.appendChild(b);body.scrollTop=body.scrollHeight}i.value='';return}if(!id){toast('Önce bir gerçek konuşma aç.');return}try{const m=await window.ErisChatDM.send(id,msg);if(body){const b=document.createElement('div');b.className='bubble me';b.textContent=m?.text||msg;body.appendChild(b);body.scrollTop=body.scrollHeight}i.value=''}catch(e){toast(e.message||'Mesaj gönderilemedi.')}}</script>
+<script>
+(function(){
+  const API=()=> (window.ERIS_API||window.ERISCHAT_API||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
+  const tok=()=>localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';
+  window.ErisSearch={run:async function(){
+ const q=(document.getElementById('searchInput')?.value||'').trim().toLowerCase();
+ const box=document.getElementById('search');
+ if(!q){toast('Bir arama yaz.');return}
+ const api=()=>((window.ERIS_API||window.ERISCHAT_API||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,''));
+ box.innerHTML='<div class="eyebrow">ARAMA</div><h1 class="title">Sonuçlar</h1><div class="list" id="searchResults"><div class="card" style="padding:16px;text-align:center;color:#938a9f">Aranıyor…</div></div>';
+ const out=document.getElementById('searchResults');
+ const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';
+ const headers=token?{Authorization:'Bearer '+token}:{};
+ try{
+   const [rooms,people]=await Promise.all([
+     fetch(api()+'/discover/rooms?limit=50',{headers}).then(r=>r.ok?r.json():[]),
+     fetch(api()+'/discover/nearby?limit=50',{headers}).then(r=>r.ok?r.json():[])
+   ]);
+   const roomList=Array.isArray(rooms)?rooms:(rooms?.rooms||rooms?.items||rooms?.data||[]); const peopleList=Array.isArray(people)?people:(people?.users||people?.items||people?.data||[]); const roomRows=roomList.filter(x=>String(x.name||'').toLowerCase().includes(q)).map(x=>({type:'Oda',title:x.name,sub:(x.member_count||0)+' kişi • seviye '+(x.level||1),run:()=>window.openRoom?.(x.room_id||x.id,x.name)}));
+   const userRows=peopleList.filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.ErisChatDM?.create?.(x.user_id,x.nickname)}));
+   const matches=[...roomRows,...userRows]; out.innerHTML='';
+   if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
+   matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
+ }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d">Arama şu anda kullanılamıyor.</div>'}
+}};})();</script><script src="./auth-live.js?v=email-auth-3"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js"></script><script src="./admin-live.js?v=users-1"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=profilefix-4"></script><script src="./dm-live.js?v=20260920-2"></script><script src="./gift-live.js"></script><script src="./room-live.js?v=roomfix-8"></script><script src="./room-reference-ui.js?v=roomfix-7"></script><script src="./google-flow-fix.js?v=google-flow-1"></script>
+<script src="./demo-complete-live.js" data-eris-demo="./demo-complete-live.js"></script><script src="./room-actions.js?v=roomfix-4"></script><script src="./room-music-ui.js?v=roomfix-6"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./feature-hub-live.js"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
+<script>
+(function(){
+ const DEMO_KEY='erischat_demo_wallet_v1', START=500000000;
+ function wallet(){return Number(localStorage.getItem(DEMO_KEY)||START)}
+ function paint(){const n=wallet();document.querySelectorAll('#demoBalance,[data-demo-balance]').forEach(x=>x.textContent='💎 '+n.toLocaleString('tr-TR'))}
+ window.ErisDemoWallet={balance:wallet,spend:function(amount){amount=Number(amount)||0;if(amount>wallet())return false;localStorage.setItem(DEMO_KEY,String(wallet()-amount));paint();return true},reset:function(){localStorage.setItem(DEMO_KEY,String(START));paint()},isLocalOnly:true};
+ window.sendRealRoomMessage=()=>{const i=document.getElementById('realRoomMsg'),body=document.getElementById('realRoomChat'),msg=i?.value?.trim();if(!msg||!body)return;const b=document.createElement('div');b.className='bubble me';b.textContent=msg;body.appendChild(b);body.scrollTop=body.scrollHeight;i.value='';};
+ window.openCreateRoom=()=>document.getElementById('createRoomModal')?.classList.add('show');
+ window.closeCreateRoom=()=>document.getElementById('createRoomModal')?.classList.remove('show');
+ window.createRoom=async()=>{const input=document.getElementById('newRoomName'),status=document.getElementById('createRoomStatus');const name=input?.value.trim();if(!name){status.textContent='Oda adı yaz.';return}if(name.length>16){status.textContent='Oda adı en fazla 16 karakter olabilir.';return}try{const r=await window.ErisRoom.create(name);status.textContent='Gerçek oda oluşturuldu ✓';input.value='';window.ErisChatRoomList?.load?.();window.dispatchEvent(new CustomEvent('erischat:room-created',{detail:{room:r}}));setTimeout(closeCreateRoom,500);window.openRoom?.(r.id,r.name||name)}catch(e){status.textContent=(e?.message||'API yok')+' • test modu açılıyor…';const id='demo-room-created-'+Date.now();window.ErisDemoRoomConfig=window.ErisDemoRoomConfig||{};window.ErisDemoRoomConfig[id]={id,name,member_count:1,owner:'Sen',level:10,seat_count:16};localStorage.setItem('eris_demo_room_name_'+id,name);input.value='';setTimeout(()=>{closeCreateRoom();window.openRoom?.(id,name)},350)}};
+ document.addEventListener('DOMContentLoaded',()=>{paint();const h=document.querySelector('#home .hero');if(h&&!h.querySelector('.demoWallet'))h.insertAdjacentHTML('beforeend','<div class="demoWallet"><div><b>Demo cüzdanı</b><small>Demo Modu • yalnızca bu tarayıcıdaki test alışverişleri için</small></div><strong data-demo-balance>💎 500.000.000</strong></div>')});
+})();
+</script><script>
+(function(){
+ async function loadPrivacy(){
+  const status=document.getElementById('privacyStatus'); if(!window.ErisPlatform?.api)return;
+  try{const p=await window.ErisPlatform.api('/me/privacy'); document.querySelectorAll('[data-privacy-key]').forEach(el=>{el.querySelector('.switch')?.classList.toggle('on',!!p[el.dataset.privacyKey]);}); if(status)status.textContent='Ayarlar sunucuya kaydediliyor.';}
+  catch(e){if(status)status.textContent='Gizlilik ayarları yüklenemedi.';}
+ }
+ async function togglePrivacy(el){
+  const key=el.dataset.privacyKey, sw=el.querySelector('.switch'), next=!sw.classList.contains('on'); sw.classList.toggle('on',next);
+  try{const p=await window.ErisPlatform.api('/me/privacy',{method:'PATCH',body:JSON.stringify({[key]:next})}); document.querySelectorAll('[data-privacy-key]').forEach(x=>{if(p[x.dataset.privacyKey]!==undefined)x.querySelector('.switch')?.classList.toggle('on',!!p[x.dataset.privacyKey]);}); toast('Gizlilik ayarı kaydedildi ✓');}
+  catch(e){sw.classList.toggle('on',next); toast(e.message||'Gizlilik ayarı kaydedilemedi.');}
+ }
+ document.addEventListener('click',e=>{const el=e.target.closest('[data-privacy-key]');if(el)togglePrivacy(el);});
+ window.ErisPrivacy={load:loadPrivacy};
+ window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready')loadPrivacy();});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadPrivacy,{once:true});else loadPrivacy();
+})();
+</script><script src="./room-ban-live.js"></script><script src="./room-gift-ui-live.js"></script><script>
+(function(){
+  const demoRooms=[
+    {id:'demo-room-1',name:'Gece Muhabbeti',count:8,owner:'Rana',icon:'🌙'},
+    {id:'demo-room-2',name:'Müzik Köşesi',count:12,owner:'Eris',icon:'🎵'},
+    {id:'demo-room-3',name:'Yeni Tanışmalar',count:5,owner:'Lavin',icon:'💜'},
+    {id:'demo-room-4',name:'Oyun Salonu',count:9,owner:'Noir',icon:'🎮'},
+    {id:'demo-room-5',name:'VIP Lounge',count:11,owner:'NØXIA',icon:'👑'},
+    {id:'demo-room-6',name:'Gece Yayını',count:7,owner:'Mira',icon:'✨'}
+  ];
+  const renderDemoRooms=()=>{
+    const targets=[document.getElementById('realRooms'),document.getElementById('rooms')].filter(Boolean);
+    targets.forEach(el=>{
+      if(el.dataset.demoRendered==='1')return;
+      const hasRealContent=el.querySelector('.room') && !/yükleniyor/i.test(el.textContent||'');
+      if(hasRealContent)return;
+      el.innerHTML='';
+      demoRooms.forEach(r=>{
+        const b=document.createElement('button');b.className='room card';
+        b.innerHTML='<div class="ava">'+r.icon+'<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">DEMO CANLI</span>';
+        b.querySelector('b').textContent=r.name;
+        b.querySelector('small').textContent=r.count+' kişi • '+r.owner;
+        b.onclick=()=>openDemoRoom(r);
+        el.appendChild(b);
+      });
+      el.dataset.demoRendered='1';
+    });
+  };
+  window.openDemoRoom=r=>{
+    document.getElementById('demoRoomTitle').textContent=r.name;
+    const seats=document.getElementById('demoRoomSeats'); seats.innerHTML='';
+    let selectedSeat=null;
+    for(let i=1;i<=12;i++){
+      const occupied=i<=Math.min(r.count,12);
+      const b=document.createElement('button'); b.type='button'; b.dataset.seat=i;
+      b.innerHTML='🎙️<strong>Koltuk '+i+'</strong><span>'+(occupied?(i===1?r.owner:'Misafir '+i):'Boş')+'</span>';
+      if(occupied){b.disabled=true;b.style.opacity='.58';}
+      else b.onclick=()=>{
+        if(selectedSeat){const prev=seats.querySelector('[data-seat="'+selectedSeat+'"]');if(prev){prev.disabled=false;prev.style.opacity='';prev.querySelector('span').textContent='Boş';}}
+        selectedSeat=i;b.disabled=true;b.style.opacity='1';b.querySelector('span').textContent='Sen';toast('Koltuk '+i+' alındı ✓');
+      };
+      seats.appendChild(b);
+    }
+    document.getElementById('demoRoomChat').innerHTML='<div class="bubble"><b>'+r.owner+'</b><br>Hoş geldiniz 👋</div><div class="bubble"><b>Misafir</b><br>Bugün ne dinliyoruz? 🎵</div>';
+    document.getElementById('demoRoomModal').classList.add('show');
+  };
+  window.sendDemoRoomMessage=()=>{const i=document.getElementById('demoRoomInput'),m=i.value.trim();if(!m)return;const b=document.createElement('div');b.className='bubble me';b.textContent=m;document.getElementById('demoRoomChat').appendChild(b);i.value='';};
+  window.openGameDemo=()=>{ if(window.ErisChatGames?.open){ window.ErisChatGames.open('main'); return; } toast('Oyun merkezi hazırlanıyor…'); };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(renderDemoRooms,350));
+})();
+</script><script>
+(function(){
+ window.openSafeGame=function(type){
+  const o=document.getElementById('gameScreen');if(!o)return;
+  if(type==='quiz')o.innerHTML='<h2>🧠 Mini Quiz</h2><p>Türkiye’nin başkenti hangisidir?</p><div class="quick"><button onclick="gameResult(true)">Ankara</button><button onclick="gameResult(false)">İzmir</button></div>';
+  if(type==='memory')o.innerHTML='<h2>🧩 Hafıza</h2><p>⭐ kartını eşleştir.</p><button class="primary" style="height:42px" onclick="gameResult(true)">⭐ + ⭐ Eşleştir</button>';
+  if(type==='word')o.innerHTML='<h2>🔤 Kelime</h2><p>ERISCHAT kelimesindeki eksik harfi bul: ERISCH_T</p><div class="quick"><button onclick="gameResult(true)">A</button><button onclick="gameResult(false)">E</button></div>';
+  if(type==='reaction')o.innerHTML='<h2>⚡ Refleks</h2><p>Hazır olduğunda dokun.</p><button class="primary" style="height:50px;width:100%" onclick="gameResult(true)">ŞİMDİ!</button>';
+ };
+ window.gameResult=function(ok){const o=document.getElementById('gameScreen');o.innerHTML=ok?'<h2>✓ Doğru!</h2><p class="muted">Harika. Başka bir oyun seçebilirsin.</p>':'<h2>Tekrar dene</h2><p class="muted">Cevabın doğru değildi.</p>';};
+})();
+</script>
+<script src="./access-messages-hardening.js?v=hardening-4"></script>
+<script src="./profile-rooms-hardening.js?v=hardening-5"></script>
+<script src="./user-profile-navigation.js?v=hardening-4"></script>
+<script src="./room-hardening.js?v=hardening-7"></script>
+</body></html>
