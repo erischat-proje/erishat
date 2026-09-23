@@ -35,9 +35,130 @@
 
 
 @media(min-width:760px){.content{padding-bottom:120px}.hero{min-height:190px}.rooms{grid-template-columns:repeat(3,minmax(0,1fr))}.liveShopGrid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+
+.content{min-height:calc(100vh - 72px);padding-bottom:140px}
+.homeSectionActions{display:flex;gap:7px;align-items:center}
+.homeMenu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.homeMenuItem{
+min-height:112px;
+border:1px solid var(--line);
+background:linear-gradient(145deg,#12101a,#0c0a11);
+color:#fff;
+border-radius:20px;
+padding:14px;
+text-align:left;
+display:flex;
+flex-direction:column;
+align-items:flex-start;
+justify-content:flex-start;
+box-shadow:0 12px 30px #0003
+}
+.homeMenuItem span{font-size:25px;line-height:1;margin-bottom:11px}
+.homeMenuItem strong{font-size:11px}
+.homeMenuItem small{display:block;color:var(--muted);font-size:8px;margin-top:5px;line-height:1.35}
+.homeMenuItem:active{transform:translateY(1px);background:var(--p2)}
+.homeGameQuick{margin-bottom:18px}
+.nav{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+@media(min-width:760px){
+.content{padding-bottom:150px}
+.homeMenu{grid-template-columns:repeat(4,minmax(0,1fr))}
+.homeMenuItem{min-height:128px}
+}
+@media(max-width:390px){
+.homeMenu{grid-template-columns:1fr}
+.homeMenuItem{
+min-height:96px;
+display:grid;
+grid-template-columns:34px 1fr;
+grid-template-rows:auto auto;
+column-gap:9px
+}
+.homeMenuItem span{grid-row:1 / span 2;margin:0}
+.homeMenuItem strong{align-self:end}
+.homeMenuItem small{margin-top:2px}
+}
 </style></head><body>
-<main class="app"><header class="top"><div class="brand">Eris<i>Chat</i></div><div class="actions"><button class="icon" onclick="showView('search')">⌕</button><button class="icon" aria-label="Tüm sistemler" onclick="window.openErisHub?.()">♧</button></div></header><section class="content">
-<section id="home" class="view show"><div class="eyebrow">ERISCHAT • SOSYAL KEŞİF</div><div class="hero card"><div class="heroRow"><div><h1 class="title">Kendi dünyanı kur.</h1><p>Odaları keşfet, sohbet et, anonim kal ve profilini kendi tarzında oluştur.</p></div><div class="balance" id="demoBalance">💎 Bakiye</div></div></div><div class="section"><h3>Canlı odalar</h3><div style="display:flex;gap:7px"><button class="link" onclick="openCreateRoom()">＋ Oda aç</button><button class="link" onclick="showView('explore');window.ErisChatRoomList?.load?.()">Tümünü gör →</button></div></div><div class="rooms" id="realRooms"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Gerçek odalar yükleniyor…</div></div><div class="section"><h3>Hızlı erişim</h3></div><div class="section"><h3>Oyun merkezi</h3><button class="link" onclick="openGameDemo()">Tüm oyunlar →</button></div><div class="quick"><button onclick="openGameDemo()">🎮<strong>Oyun merkezi</strong><span>Oda ve kişisel oyunlar</span></button><button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="family"]')?.click(),0)">👑<strong>Aile</strong><span>Aile sistemi</span></button><button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="discover"]')?.click(),0)">🧭<strong>Keşif</strong><span>Yakın • rastgele</span></button><button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),0)">🛡️<strong>Güvenlik</strong><span>Şikayet • engel</span></button></div><div class="quick"><button onclick="showView('profile');window.ErisProfile?.refresh?.()">👑<strong>Profilim</strong><span>Avatar, frame ve VIP</span></button><button onclick="showView('shop')">💎<strong>Lidya mağazası</strong><span>Avatar, frame, hediye</span></button><button onclick="showView('vip')">✨<strong>VIP merkezi</strong><span>VIP 1 → VIP 12</span></button><button onclick="showView('anon')">🕶️<strong>Anonimlik</strong><span>Görünürlüğünü yönet</span></button><button onclick="window.openErisHub?.()">🧩<strong>Tüm sistemler</strong><span>Aile • keşif • gizlilik • şikâyet</span></button></div></section>
+<main class="app"><header class="top"><div class="brand">Eris<i>Chat</i></div><div class="actions"><button class="icon" onclick="showView('search')">⌕</button></div></header><section class="content">
+<section id="home" class="view show">
+<div class="eyebrow">ERISCHAT • SOSYAL KEŞİF</div>
+
+<div class="hero card">
+  <div class="heroRow">
+    <div>
+      <h1 class="title">Kendi dünyanı kur.</h1>
+      <p>Odaları keşfet, sohbet et, anonim kal ve profilini kendi tarzında oluştur.</p>
+    </div>
+    <div class="balance" id="demoBalance">💎 Bakiye</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Canlı odalar</h3>
+  <div class="homeSectionActions">
+    <button class="link" onclick="openCreateRoom()">＋ Oda aç</button>
+    <button class="link" onclick="showView('explore');window.ErisChatRoomList?.load?.()">Tümünü gör →</button>
+  </div>
+</div>
+
+<div class="rooms" id="realRooms">
+  <div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">
+    Gerçek odalar yükleniyor…
+  </div>
+</div>
+
+<div class="section">
+  <h3>Ana menü</h3>
+</div>
+
+<div class="homeMenu">
+
+  <button class="homeMenuItem" onclick="showView('messages');window.ErisChatDM?.load?.()">
+    <span>💬</span><strong>Mesajlar</strong><small>Gerçek konuşmalar</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="showView('explore');window.ErisChatRoomList?.load?.()">
+    <span>🧭</span><strong>Keşfet</strong><small>Odalar ve kullanıcılar</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="showView('profile');window.ErisProfile?.refresh?.()">
+    <span>👑</span><strong>Profilim</strong><small>Avatar, çerçeve ve sosyal</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="showView('shop')">
+    <span>💎</span><strong>Lidya mağazası</strong><small>Avatar ve çerçeveler</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="showView('vip')">
+    <span>✨</span><strong>VIP merkezi</strong><small>VIP 1 → VIP 12</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="showView('anon');window.ErisPrivacy?.load?.()">
+    <span>🕶️</span><strong>Gizlilik</strong><small>Görünürlük ayarları</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="family"]')?.click(),40)">
+    <span>👨‍👩‍👧</span><strong>Aile</strong><small>Aile ve bağış sistemi</small>
+  </button>
+
+  <button class="homeMenuItem" onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),40)">
+    <span>🛡️</span><strong>Güvenlik</strong><small>Şikayet ve güvenlik</small>
+  </button>
+
+</div>
+
+<div class="section">
+  <h3>Oyun merkezi</h3>
+  <button class="link" onclick="showView('games')">Tüm oyunlar →</button>
+</div>
+
+<div class="quick homeGameQuick">
+  <button onclick="showView('games');window.openSafeGame?.('quiz')">🧠<strong>Mini Quiz</strong><span>Hızlı oyun</span></button>
+  <button onclick="showView('games');window.openSafeGame?.('memory')">🧩<strong>Hafıza</strong><span>Kısa oyun</span></button>
+  <button onclick="showView('games');window.openSafeGame?.('word')">🔤<strong>Kelime</strong><span>Kelimeni bul</span></button>
+  <button onclick="showView('games');window.openSafeGame?.('reaction')">⚡<strong>Refleks</strong><span>Hızlı test</span></button>
+</div>
+
+</section>
 <section id="messages" class="view"><div class="eyebrow">MESAJLAR</div><h1 class="title">Sohbetlerin.</h1><div class="list">
 <button class="item card" onclick="openChat('Rana','R')"><div class="ava round">R</div><div class="grow"><b>Rana</b><small>Bugün odada görüşürüz 👋 • şimdi</small></div><span class="badge">1</span></button>
 <button class="item card" onclick="openChat('Eris','E')"><div class="ava round">E</div><div class="grow"><b>Eris</b><small>Yeni oda daveti gönderdi 🎵</small></div></button>
@@ -48,7 +169,7 @@
 <button class="item card" onclick="openChat('Noir','N')"><div class="ava round">N</div><div class="grow"><b>Noir</b><small>👑 VIP 7 • Oyun Salonu</small></div><span class="live">CANLI</span></button>
 <button class="item card" onclick="openChat('Lavin','L')"><div class="ava round">L</div><div class="grow"><b>Lavin</b><small>💜 Yeni arkadaşlar arıyor</small></div></button>
 </div><div id="events" class="list" style="display:none">
-<button class="item card" onclick="openGameDemo()"><div class="ava">🎮</div><div class="grow"><b>Gece Oyun Buluşması</b><small>Oyun Salonu • 21:00 • 18 katılımcı</small></div><span class="live">KATIL</span></button>
+<button class="item card" onclick="window.ErisChatGames?.open?.('main')"><div class="ava">🎮</div><div class="grow"><b>Gece Oyun Buluşması</b><small>Oyun Salonu • 21:00 • 18 katılımcı</small></div><span class="live">KATIL</span></button>
 <button class="item card" onclick="window.ErisDemoExtras?.music?.()"><div class="ava">🎵</div><div class="grow"><b>Gece Müzik Odası</b><small>Müzik Köşesi • şimdi canlı</small></div><span class="live">CANLI</span></button>
 </div></section>
 <section id="profile" class="view"><div class="toolbar"><h2>Profilim</h2></div><div class="profile card"><div class="glow"></div><div class="stage"><div class="face"><div class="hair"></div><div class="eyes"></div></div><img class="frameImg" alt="" src=""><div class="crown">♛</div></div><div class="name"><h2>Eris Kullanıcısı</h2><span class="vip" id="profileVipBadge">—</span></div><div class="stats"><div class="stat"><b id="profileFollowers">—</b><span>Takipçi</span></div><div class="stat"><b id="profileFollowing">—</b><span>Takip</span></div><div class="stat"><b id="profileVipLevel">—</b><span>VIP seviyesi</span></div></div><div class="progress"><div class="progressTop"><span>VIP ilerleme</span><span>—</span></div><div class="bar"><i></i></div></div></div></section>
@@ -56,29 +177,19 @@
 <section id="vip" class="view"><div class="eyebrow">VIP MERKEZİ</div><h1 class="title">VIP 1 → VIP 12</h1><div id="vipLiveMount" class="vipList"><div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">VIP merkezi yükleniyor…</div></div></section>
 <section id="anon" class="view"><div class="eyebrow">GİZLİLİK</div><h1 class="title">Anonimlik.</h1><div class="settings"><button class="setting" data-privacy-key="hide_vip" type="button"><div class="ava">🕶️</div><div class="grow"><b>VIP görünürlüğünü gizle</b><small>Profilindeki VIP bilgisini diğer kullanıcılardan gizle</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_vip_badge" type="button"><div class="ava">👑</div><div class="grow"><b>VIP rozeti</b><small>VIP rozetinin görünürlüğünü kontrol et</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_vip_neon" type="button"><div class="ava">✨</div><div class="grow"><b>VIP neon efekti</b><small>VIP profil efektini gizle</small></div><span class="switch"></span></button><button class="setting" data-privacy-key="hide_location" type="button"><div class="ava">📍</div><div class="grow"><b>Konum</b><small>Konum bilgisinin görünürlüğünü kontrol et</small></div><span class="switch"></span></button></div><div id="privacyStatus" class="muted" style="margin-top:10px;font-size:9px"></div></section>
 <section id="games" class="view"><div class="eyebrow">OYUN MERKEZİ</div><h1 class="title">Oyna.</h1><div class="quick">
-<button onclick="openGameDemo()">🎰<strong>Rulet</strong><span>Demo arayüzü</span></button>
-<button onclick="openGameDemo()">🥤<strong>4 Kupa</strong><span>Demo arayüzü</span></button>
-<button onclick="openGameDemo()">🐎<strong>At Yarışı</strong><span>Demo arayüzü</span></button>
-<button onclick="openGameDemo()">🃏<strong>Blackjack</strong><span>Demo arayüzü</span></button>
-<button onclick="openGameDemo()">🚀<strong>Crash</strong><span>Demo arayüzü</span></button>
-<button onclick="openGameDemo()">🎁<strong>Kasa Açma</strong><span>Demo arayüzü</span></button>
-<button onclick="openGameDemo()">🎡<strong>Şans Çarkı</strong><span>Demo arayüzü</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🎰<strong>Rulet</strong><span>Oyun merkezi</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🥤<strong>4 Kupa</strong><span>Oyun merkezi</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🐎<strong>At Yarışı</strong><span>Oyun merkezi</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🃏<strong>Blackjack</strong><span>Oyun merkezi</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🚀<strong>Crash</strong><span>Oyun merkezi</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🎁<strong>Kasa Açma</strong><span>Oyun merkezi</span></button>
+<button onclick="window.ErisChatGames?.open?.('main')">🎡<strong>Şans Çarkı</strong><span>Oyun merkezi</span></button>
 </div><div id="gameScreen" class="card" style="margin-top:12px;padding:18px;text-align:center"><b>Bir oyun seç.</b><p class="muted" style="font-size:9px">Oyunlar burada doğrudan çalışır; oda açılır penceresine bağlı değildir.</p></div></section>
-<section id="systems" class="view"><div class="eyebrow">ERISCHAT SİSTEMLERİ</div><h1 class="title">Her şey burada.</h1><div class="quick">
-<button onclick="showView('shop')">🛍️<strong>Mağaza</strong><span>139 görünüm + hediyeler</span></button>
-<button onclick="showView('vip')">👑<strong>VIP 1–12</strong><span>Seviye ve ödüller</span></button>
-<button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="family"]')?.click(),0)">👨‍👩‍👧<strong>Aile</strong><span>Kur • üye ol • bağış</span></button>
-<button onclick="showView('explore')">🧭<strong>Keşif</strong><span>İnsanlar • odalar • etkinlik</span></button>
-<button onclick="showView('anon')">🕶️<strong>Gizlilik</strong><span>Anonimlik ayarları</span></button>
-<button onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),0)">🛡️<strong>Güvenlik</strong><span>Şikayet • engelle</span></button>
-<button onclick="showView('profile');window.ErisProfile?.refresh?.()">👤<strong>Profil</strong><span>Avatar • frame • sosyal</span></button>
-<button onclick="openGameDemo()">🎮<strong>Oyunlar</strong><span>7 oyun merkezi</span></button>
-</div></section>
 <section id="search" class="view"><div class="eyebrow">ARAMA</div><h1 class="title">Keşfet.</h1><div class="search"><input id="searchInput" placeholder="Oda veya kullanıcı ara"><button class="primary" onclick="window.ErisSearch?.run?.()">Ara</button></div></section>
 </section><nav class="nav"><button class="active" onclick="showView('home',this)"><b>⌂</b>Ana sayfa</button><button onclick="showView('messages',this);window.ErisChatDM?.load?.()"><b>☏</b>Mesaj</button><button onclick="showView('explore',this);window.ErisChatRoomList?.load?.()"><b>◈</b>Keşfet</button><button onclick="showView('games',this)"><b>🎮</b>Oyun</button><button onclick="showView('profile',this);window.ErisProfile?.refresh?.()"><b>♙</b>Profil</button></nav></main>
 <div id="chat" class="chat"><div class="chatSheet"><div class="chatHead"><div class="ava round" id="chatAva">R</div><div class="grow"><b id="chatTitle">Sohbet</b><small class="muted">çevrimiçi</small></div><button class="close" onclick="closeChat()">×</button></div><div class="chatBody" id="chatBody"></div><div class="compose"><input id="chatInput" placeholder="Mesaj yaz…" onkeydown="if(event.key==='Enter')sendChat()"><button class="primary" onclick="sendChat()">Gönder</button></div></div></div>
 <div id="realRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b id="realRoomTitle">Oda</b><small id="realRoomMeta" class="muted" style="display:block;margin-top:4px">Gerçek oda</small></div><button class="close" onclick="window.closeRealRoom?.()">×</button></div><div id="realRoomSeats" class="list"></div><div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="primary" style="height:42px;width:100%" onclick="window.openRoomGift?.()">🎁 Hediye</button><button class="primary" style="height:42px;width:100%" onclick="window.ErisChatMusic?.open?.()">🎵 Müzik</button></div><div class="card" style="margin-top:10px;padding:12px"><div id="realRoomChat" style="min-height:50px;max-height:180px;overflow:auto;font-size:10px;color:#aaa1b1"><div class="muted" style="font-size:9px">Canlı oda sohbeti ayrı bağlantı üzerinden açılır.</div></div><button class="primary" style="width:100%;height:40px;margin-top:8px" onclick="window.openLiveRoomChat?.()">💬 Canlı oda sohbetini aç</button></div></div></div><div id="createRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b>＋ Yeni oda</b><small class="muted" style="display:block;margin-top:4px">Kendi odanı oluştur</small></div><button class="close" onclick="closeCreateRoom()">×</button></div><input id="newRoomName" class="search-input" placeholder="Oda adı" style="width:100%;box-sizing:border-box;background:#ffffff07;border:1px solid #ffffff14;color:#fff;border-radius:13px;padding:12px;outline:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="primary" style="height:44px" onclick="createRoom()">Odayı oluştur</button><button class="close" style="width:auto;height:44px" onclick="closeCreateRoom()">İptal</button></div><div id="createRoomStatus" class="muted" style="margin-top:10px;font-size:9px"></div></div></div>
-<div class="quick" style="margin-top:9px"><button onclick="window.ErisDemoExtras?.roomGift?.()">🎁<strong>Hediye</strong><span>Gönder</span></button><button onclick="window.ErisDemoExtras?.music?.()">🎵<strong>Müzik</strong><span>Kuyruğu</span></button><button onclick="openGameDemo()">🎮<strong>Oyun</strong><span>Oda oyunu</span></button><button onclick="window.ErisDemoExtras?.announcement?.()">📢<strong>Duyuru</strong><span>Yönet</span></button></div></div></div><div id="toast" class="toast"></div>
+<div class="quick" style="margin-top:9px"><button onclick="window.ErisDemoExtras?.roomGift?.()">🎁<strong>Hediye</strong><span>Gönder</span></button><button onclick="window.ErisDemoExtras?.music?.()">🎵<strong>Müzik</strong><span>Kuyruğu</span></button><button onclick="window.ErisChatGames?.open?.('main')">🎮<strong>Oyun</strong><span>Oda oyunu</span></button><button onclick="window.ErisDemoExtras?.announcement?.()">📢<strong>Duyuru</strong><span>Yönet</span></button></div></div></div><div id="toast" class="toast"></div>
 <script>function showView(id,btn){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id)?.classList.add('show');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn?.closest('.nav'))btn.classList.add('active')}function tab(id,btn){['rooms','people','events'].forEach(x=>document.getElementById(x).style.display=x===id?'grid':'none');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}async function openChat(n,a){window.ErisDemoChatActive=false;try{const users=await window.ErisPlatform?.nearby?.();const list=Array.isArray(users)?users:(users?.users||users?.items||users?.data||[]);const u=list.find(x=>String(x.nickname||'').toLowerCase()===String(n||'').toLowerCase())||list.find(x=>String(x.nickname||'').toLowerCase().includes(String(n||'').toLowerCase()));if(u){await window.ErisChatDM?.create?.(u.user_id||u.id,n);return;}}catch(e){console.warn('[ErisChat] real discover chat failed',e)}window.ErisDemoChatActive=true;document.getElementById('chatTitle').textContent=n;document.getElementById('chatAva').textContent=a;const body=document.getElementById('chatBody');if(body)body.innerHTML='<div class="muted" style="font-size:10px;text-align:center;margin-bottom:8px">Gerçek kullanıcı bulunamadı.</div>';document.getElementById('chat').classList.add('show')}function closeChat(){window.ErisDemoChatActive=false;document.getElementById('chat').classList.remove('show')}async function sendChat(){const i=document.getElementById('chatInput');const msg=i?.value?.trim();if(!msg)return;const id=window.ErisChatDM?.activeId?.();const body=document.getElementById('chatBody');if(window.ErisDemoChatActive&&!id){if(body){const b=document.createElement('div');b.className='bubble me';b.textContent=msg;body.appendChild(b);body.scrollTop=body.scrollHeight}i.value='';return}if(!id){toast('Önce bir gerçek konuşma aç.');return}try{const m=await window.ErisChatDM.send(id,msg);if(body){const b=document.createElement('div');b.className='bubble me';b.textContent=m?.text||msg;body.appendChild(b);body.scrollTop=body.scrollHeight}i.value=''}catch(e){toast(e.message||'Mesaj gönderilemedi.')}}</script>
 <script>
 (function(){
@@ -141,4 +252,5 @@
 <script src="./room-hardening.js?v=hardening-7"></script>
 <script src="./ui-production-overhaul.js?v=20260923"></script>
 <script src="production-live-sync-v2.js"></script><script src="production-final-live.js"></script>
+<script src="./menu-unification-live.js?v=menu-unified-2"></script>
 </body></html>

@@ -9,7 +9,7 @@ from typing import Literal
 import time
 import hashlib
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
@@ -25,6 +25,20 @@ from .system_data import RoomIdRegistry
 from .system_logs import record
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
+
+def _room_auth_unconfigured():
+    raise HTTPException(status_code=500, detail="Room auth dependency is not configured")
+
+_room_auth_impl = _room_auth_unconfigured
+
+def _room_auth_dependency(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(default=None),
+):
+    return _room_auth_impl(db, authorization)
+
+current_user_dependency = _room_auth_dependency
+
 
 LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 8, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 8, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 8, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 8, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 12, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 12, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 16, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 16, "required_spend": 1_560_000}}
 GIFT_RECIPIENT_PERCENT = 70
@@ -366,6 +380,8 @@ def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), 
     raise HTTPException(status_code=500, detail="room auth dependency not configured")
 
 def register_room_auth(current_user_dependency):
+    global _room_auth_impl
+    _room_auth_impl = current_user_dependency
     router.dependencies.clear()
     for route in list(router.routes):
         if getattr(route, "path", None) == "/v1/rooms" and getattr(route, "methods", set()) == {"POST"}: router.routes.remove(route)
@@ -800,7 +816,7 @@ def update_room_theme(
     room_id: str,
     payload: RoomThemeUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_room_auth_dependency),
 ):
     room = get_room_or_404(db, room_id)
     if room.owner_id != current_user.id:
@@ -819,7 +835,7 @@ def update_room_seat_count(
     room_id: str,
     payload: RoomSeatCountUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_room_auth_dependency),
 ):
     room = get_room_or_404(db, room_id)
     if room.owner_id != current_user.id:
@@ -845,6 +861,6 @@ def update_room_capacity_alias(
     room_id: str,
     payload: RoomSeatCountUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_room_auth_dependency),
 ):
     return update_room_seat_count(room_id,payload,db,current_user)

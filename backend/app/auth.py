@@ -3,8 +3,7 @@ import requests
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
+# Google id_token imported lazily
 
 from .config import settings
 
@@ -320,6 +319,7 @@ def create_or_login_google_user(
     if not settings.google_client_id:
         raise ValueError("Google kayıt sistemi henüz yapılandırılmadı")
     try:
+                
         claims = id_token.verify_oauth2_token(
             credential,
             google_requests.Request(),

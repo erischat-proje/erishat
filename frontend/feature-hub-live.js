@@ -5,11 +5,11 @@
   const api = (path, options = {}) => window.ErisPlatform?.api(path, options) ?? Promise.reject(new Error('Platform hazır değil'));
   const css = `
     /* legacy floating hub trigger removed */ #erisHubBtn{display:none!important;position:fixed;right:14px;bottom:88px;z-index:80;border:1px solid #ffffff22;background:#17121f;color:#fff;border-radius:14px;width:44px;height:44px;box-shadow:0 12px 30px #0007}
-    #erisHub{display:none;position:fixed;inset:0;z-index:200;background:#030208ee;align-items:flex-end}
-    #erisHub.show{display:flex}.eh-sheet{width:min(520px,100%);max-height:92vh;overflow:auto;background:#0b0911;border:1px solid #ffffff18;border-radius:27px 27px 0 0;padding:16px;color:#fff}
+    #erisHub{display:none;position:fixed;inset:0;z-index:200;background:#030208ee;align-items:center}
+    #erisHub.show{display:flex}.eh-sheet{width:min(520px,100%);max-height:92vh;overflow:auto;background:#0b0911;border:1px solid #ffffff18;border-radius:26px;padding:16px;color:#fff}
     .eh-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eh-head h2{margin:0;font-size:19px}.eh-close{border:0;background:#ffffff0b;color:#fff;width:36px;height:36px;border-radius:11px}
-    .eh-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:13px 0}.eh-tab{border:1px solid #ffffff12;background:#ffffff06;color:#a9a1b0;border-radius:11px;padding:9px 4px;font-size:9px}.eh-tab.active{color:#fff;background:#8a5cff1c;border-color:#8a5cff55}
-    .eh-panel{display:none}.eh-panel.active{display:block}.eh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.eh-card{border:1px solid #ffffff12;background:#12101a;border-radius:15px;padding:10px}.eh-card b{font-size:10px}.eh-card small{display:block;color:#938a9f;font-size:8px;margin-top:4px}.eh-btn{border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800}.eh-btn.alt{background:#ffffff0a;border:1px solid #ffffff12}.eh-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:1px solid #ffffff10;background:#12101a;border-radius:14px;margin-bottom:7px}.eh-input{width:100%;box-sizing:border-box;background:#ffffff08;border:1px solid #ffffff14;color:#fff;border-radius:10px;padding:9px;margin:4px 0;font-size:10px}.eh-preview{height:92px;border-radius:12px;background:#09070d;display:grid;place-items:center;position:relative;overflow:hidden}.eh-avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,#c48670,#50324d);background-size:cover;background-position:center}.eh-frame{position:absolute;width:84px;height:84px;background-size:contain;background-position:center;background-repeat:no-repeat}.eh-note{padding:10px;border:1px dashed #ffffff18;border-radius:12px;color:#938a9f;font-size:9px;line-height:1.5;margin-bottom:8px}.eh-seats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.eh-seat{border:1px solid #ffffff12;background:#ffffff06;color:#fff;border-radius:10px;padding:8px 2px;font-size:8px}.eh-seat.occupied{border-color:#ff4fa355}.eh-ok{color:#61e6af}.eh-err{color:#ff819d}.eh-kicker{color:#938a9f;font-size:8px;text-transform:uppercase;letter-spacing:1.2px;margin:4px 0 7px}
+    .eh-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:13px 0}.eh-tab{border:1px solid #ffffff12;background:#ffffff06;color:#a9a1b0;border-radius:11px;padding:9px 4px;font-size:9px}.eh-tab.active{color:#fff;background:#8a5cff1c;border-color:#8a5cff55}
+    .eh-panel{display:none}.eh-panel.active{display:block}.eh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.eh-card{border:1px solid #ffffff12;background:#12101a;border-radius:15px;padding:10px}.eh-card b{font-size:10px}.eh-card small{display:block;color:#938a9f;font-size:8px;margin-top:4px}.eh-btn{border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800}.eh-btn.alt{background:#ffffff0a;border:1px solid #ffffff12}.eh-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:1px solid #ffffff10;background:#12101a;border-radius:14px;margin-bottom:7px}.eh-input{width:100%;box-sizing:border-box;background:#ffffff08;border:1px solid #ffffff14;color:#fff;border-radius:10px;padding:9px;margin:4px 0;font-size:10px}.eh-preview{height:92px;border-radius:12px;background:#09070d;display:grid;place-items:center;position:relative;overflow:hidden}.eh-avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,#c48670,#50324d);background-size:cover;background-position:center}.eh-frame{position:absolute;width:84px;height:84px;background-size:contain;background-position:center;background-repeat:no-repeat}.eh-note{padding:10px;border:1px dashed #ffffff18;border-radius:12px;color:#938a9f;font-size:9px;line-height:1.5;margin-bottom:8px}.eh-seats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.eh-seat{border:1px solid #ffffff12;background:#ffffff06;color:#fff;border-radius:10px;padding:8px 2px;font-size:8px}.eh-seat.occupied{border-color:#ff4fa355}.eh-ok{color:#61e6af}.eh-err{color:#ff819d}.eh-kicker{color:#938a9f;font-size:8px;text-transform:uppercase;letter-spacing:1.2px;margin:4px 0 7px}
   `;
   const add = html => document.head.insertAdjacentHTML('beforeend', `<style>${html}</style>`);
   function init(){
@@ -18,13 +18,13 @@
     document.body.insertAdjacentHTML('beforeend', `
 
       <div id="erisHub"><div class="eh-sheet">
-        <div class="eh-head"><div><div class="eh-kicker">ERISCHAT LIVE SYSTEMS</div><h2>Tüm sistemleri gör</h2></div><button class="eh-close" id="ehClose">×</button></div>
+        <div class="eh-head"><div><div class="eh-kicker">ERISCHAT LIVE SYSTEMS</div><h2>ErisChat sistemleri</h2></div><button class="eh-close" id="ehClose">×</button></div>
         <div class="eh-tabs">
           <button class="eh-tab active" data-tab="rooms">Odalar</button><button class="eh-tab" data-tab="shop">Mağaza</button><button class="eh-tab" data-tab="vip">VIP</button><button class="eh-tab" data-tab="family">Aile</button>
-          <button class="eh-tab" data-tab="discover">Keşif</button><button class="eh-tab" data-tab="profile">Profil</button><button class="eh-tab" data-tab="privacy">Gizlilik</button><button class="eh-tab" data-tab="report">Şikayet</button><button class="eh-tab" data-tab="tools">Araçlar</button>
+          <button class="eh-tab" data-tab="discover">Keşif</button><button class="eh-tab" data-tab="profile">Profil</button><button class="eh-tab" data-tab="privacy">Gizlilik</button><button class="eh-tab" data-tab="report">Şikayet</button>
         </div>
         <div id="eh-rooms" class="eh-panel active"></div><div id="eh-shop" class="eh-panel"></div><div id="eh-vip" class="eh-panel"></div><div id="eh-family" class="eh-panel"></div>
-        <div id="eh-discover" class="eh-panel"></div><div id="eh-profile" class="eh-panel"></div><div id="eh-privacy" class="eh-panel"></div><div id="eh-report" class="eh-panel"></div><div id="eh-tools" class="eh-panel"></div>
+        <div id="eh-discover" class="eh-panel"></div><div id="eh-profile" class="eh-panel"></div><div id="eh-privacy" class="eh-panel"></div><div id="eh-report" class="eh-panel"></div>
       </div></div>`);
     const hub=document.getElementById('erisHub');
     window.openErisHub=()=>{hub.classList.add('show');loadTab('rooms');};
@@ -37,7 +37,7 @@
     document.querySelectorAll('.eh-panel').forEach(x=>x.classList.toggle('active',x.id===`eh-${tab}`));
     const panel=document.getElementById(`eh-${tab}`); if(!panel) return;
     if(tab==='rooms') return rooms(panel); if(tab==='shop') return shop(panel); if(tab==='vip') return vip(panel); if(tab==='family') return family(panel);
-    if(tab==='discover') return discover(panel); if(tab==='profile') return profile(panel); if(tab==='privacy') return privacy(panel); if(tab==='report') return report(panel); if(tab==='tools') return tools(panel);
+    if(tab==='discover') return discover(panel); if(tab==='profile') return profile(panel); if(tab==='privacy') return privacy(panel); if(tab==='report') return report(panel);
   }
   const btn=(label,fn,alt=false)=>{const b=document.createElement('button');b.className=`eh-btn${alt?' alt':''}`;b.textContent=label;b.onclick=fn;return b;};
   async function rooms(panel){
@@ -121,30 +121,6 @@
         rows.append(row);
       });
     }catch(e){panel.innerHTML=`<div class="eh-err">${esc(e.message||'Gizlilik ayarları alınamadı.')}</div>`;}
-  }
-  function tools(panel){
-    const systems=[
-      ['🎙️ Ses / Koltuk','Oda koltukları ve ses yüzeyi','seats'],
-      ['💬 Oda Sohbeti','Gerçek oda sohbet yüzeyi','roomChat'],
-      ['🎵 Müzik','Oda müzik kuyruğu ve oynatma','music'],
-      ['📢 Duyuru','Oda duyuru yönetimi','announcement'],
-      ['👑 Aile','Aile yönetimi ve sohbet','family'],
-      ['🛍️ Mağaza','139 kozmetik vitrini','store'],
-      ['👤 Profil Try-on','Avatar ve çerçeve deneme','profile'],
-      ['🛡️ Güvenlik / Mod','Bildirim, engelleme ve moderasyon','safety'],
-      ['🚀 Onboarding','İlk kullanım akışı','onboarding'],
-      ['⚙️ Oda Ayarları','Oda sahibi ayarları','roomSettings'],
-      ['🎮 Oyun Merkezi','7 oyunluk müşteri demo kataloğu','games']
-    ];
-    panel.innerHTML='<div class="eh-note">Tüm yardımcı sistemler burada. Artık ekranın üzerinde sürekli duran popup/buton yığını yok.</div><div class="eh-grid" id="ehToolsGrid"></div>';
-    const grid=panel.querySelector('#ehToolsGrid');
-    systems.forEach(([title,desc,key])=>{
-      const card=document.createElement('div');card.className='eh-card';
-      card.innerHTML='<b>'+esc(title)+'</b><small>'+esc(desc)+'</small>';
-      const fn=key==='games' ? (window.ErisChatGames?.open ? (()=>window.ErisChatGames.open('main')) : null) : window.ErisDemoExtras?.[key];
-      card.append(btn(fn?'Aç':'Hazırlanıyor',fn||(()=>window.toast?.('Bu sistem henüz bağlanmadı.')),!fn));
-      grid.append(card);
-    });
   }
   function report(panel){panel.innerHTML='<div class="eh-note">Kullanıcı, oda veya mesaj için şikayet oluştur. En az bir hedef alanı ve neden gerekli.</div><input id="ehTarget" class="eh-input" placeholder="Hedef kullanıcı ID (opsiyonel)"><input id="ehRoom" class="eh-input" placeholder="Oda ID (opsiyonel)"><input id="ehMsg" class="eh-input" type="number" placeholder="Mesaj ID (opsiyonel)"><input id="ehCat" class="eh-input" placeholder="Kategori"><textarea id="ehReason" class="eh-input" rows="4" placeholder="Şikayet nedeni"></textarea><div id="ehReportStatus" class="eh-note" style="margin-top:8px">Henüz gönderilmedi.</div><div id="ehReportBtn"></div>';const root=panel.querySelector('#ehReportBtn'),status=panel.querySelector('#ehReportStatus');root.append(btn('Şikayet gönder',async()=>{const category=panel.querySelector('#ehCat').value.trim(),reason=panel.querySelector('#ehReason').value.trim(),target=panel.querySelector('#ehTarget').value.trim(),room=panel.querySelector('#ehRoom').value.trim(),message=panel.querySelector('#ehMsg').value.trim();if(!category||!reason){status.textContent='Kategori ve şikayet nedeni gerekli.';return}if(!target&&!room&&!message){status.textContent='En az bir hedef alanı doldur.';return}const payload={target_user_id:target||null,room_id:room||null,message_id:Number(message)||null,category,reason};const buttonEl=root.querySelector('button');if(buttonEl)buttonEl.disabled=true;status.textContent='Gönderiliyor…';try{await api('/reports',{method:'POST',body:JSON.stringify(payload)});status.textContent='✓ Şikayet kaydedildi.';panel.querySelector('#ehCat').value='';panel.querySelector('#ehReason').value='';}catch(e){status.textContent='Şikayet gönderilemedi: '+(e.message||'servis hatası');}finally{if(buttonEl)buttonEl.disabled=false;}}));}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
