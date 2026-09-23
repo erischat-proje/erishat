@@ -1,4 +1,4 @@
-/* ErisChat customer demo completion layer: VIP roadmap, gender rewards, cosmetics preview and playable demo games. */
+/* ErisChat customer  completion layer: VIP roadmap, gender rewards, cosmetics preview and playable  games. */
 (() => {
   'use strict';
   if (window.__ERIS_DEMO_COMPLETE__) return;
@@ -48,7 +48,7 @@
 
   async function vipDemo() {
     let me={}, v={level:0};
-    try {[me,v]=await Promise.all([api('/me'),api('/me/vip')]);} catch(e) { console.warn('[ErisChat demo] VIP data',e.message); }
+    try {[me,v]=await Promise.all([api('/me'),api('/me/vip')]);} catch(e) { console.warn('[ErisChat ] VIP data',e.message); }
     const gender=me.gender||'unspecified', level=Number(v.level||0);
     const body=document.createElement('div');
     body.innerHTML=`<div style="padding:14px;border-radius:17px;background:linear-gradient(145deg,#15101d,#0d0a12);border:1px solid #ffffff12;margin-bottom:10px"><b style="font-size:15px">✨ VIP 1 → VIP 12</b><small style="display:block;color:#938a9f;margin-top:5px">Mevcut: VIP ${level} • Cinsiyet: ${genderName(gender)}. Her seviye kendi erkek/kadın avatarını ve VIP çerçevesini gösterir; seviyeye bağlı sistem ayrıcalıkları aşağıda görünür.</small></div><div id="vipGender" style="display:flex;gap:6px;margin-bottom:9px"></div><div id="vipTable"></div>`;
@@ -69,13 +69,13 @@
 
   async function gamesDemo(scope='main', roomId=null) {
     const games = [
-      ['roulette','🎰 Rulet','Oda oyunu • demo arayüzü'],
-      ['cups','🥤 4 Kupa','Oda oyunu • demo arayüzü'],
-      ['horse_race','🐎 At Yarışı','Oda oyunu • demo arayüzü'],
-      ['blackjack','🃏 Blackjack','Kişisel oyun • demo arayüzü'],
-      ['crash','🚀 Crash','Kişisel oyun • demo arayüzü'],
-      ['vault','🎁 Kasa Açma','Kişisel oyun • demo arayüzü'],
-      ['wheel','🎡 Şans Çarkı','Kişisel oyun • demo arayüzü']
+      ['roulette','🎰 Rulet','Oda oyunu •  arayüzü'],
+      ['cups','🥤 4 Kupa','Oda oyunu •  arayüzü'],
+      ['horse_race','🐎 At Yarışı','Oda oyunu •  arayüzü'],
+      ['blackjack','🃏 Blackjack','Kişisel oyun •  arayüzü'],
+      ['crash','🚀 Crash','Kişisel oyun •  arayüzü'],
+      ['vault','🎁 Kasa Açma','Kişisel oyun •  arayüzü'],
+      ['wheel','🎡 Şans Çarkı','Kişisel oyun •  arayüzü']
     ];
     const body=document.createElement('div');
     body.innerHTML='<div style="padding:12px;border-radius:15px;background:#12101a;border:1px solid #ffffff12;margin-bottom:9px"><b>🎮 Oyun Merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">7 oyun • oda ve kişisel oyun ekranları.</small></div><div id="gameGrid" style="display:grid;grid-template-columns:1fr;gap:8px"></div>';
@@ -85,7 +85,7 @@
       el.innerHTML='<b>'+esc(title)+'</b><small style="display:block;color:#938a9f;margin:5px 0 8px">'+esc(desc)+'</small><div style="display:flex;gap:5px;flex-wrap:wrap"><button data-play style="border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800">▶ Oyna</button><button data-history style="border:1px solid #ffffff12;border-radius:10px;background:#ffffff08;color:#fff;padding:9px 10px;font-size:9px">🕘 Geçmiş</button></div><div data-out></div>';
       const out=el.querySelector('[data-out]');
       el.querySelector('[data-play]').onclick=()=>{
-        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12"><b>'+esc(title)+' açıldı.</b><br><small>Oyun arayüzü ve seçim alanı hazır. '+esc(scope==='room'?'Oda içi':'Kişisel')+' demo modu.</small></div>';
+        out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#8a5cff12"><b>'+esc(title)+' açıldı.</b><br><small>Oyun arayüzü ve seçim alanı hazır. '+esc(scope==='room'?'Oda içi':'Kişisel')+'  modu.</small></div>';
       };
       el.querySelector('[data-history]').onclick=()=>{
         out.innerHTML='<div style="margin-top:7px;padding:9px;border-radius:10px;background:#ffffff06"><b>🕘 Oyun geçmişi</b><small style="display:block;margin-top:4px">Bu oyuna ait geçmiş burada görüntülenir.</small></div>';
@@ -97,7 +97,7 @@
   window.ErisChatGames={open:(scope='main',roomId=null)=>gamesDemo(scope,roomId)};
   function checklistDemo() {
     const items=[['VIP 1–12 ödül matrisi','Tamamlandı'],['Erkek/kadın VIP avatarları','12 + 12 gösterim'],['VIP çerçeveleri','12 seviye'],['VIP sistem ayrıcalıkları','12 seviye'],['139 kozmetik vitrini','Mağaza ekranında'],['Odalar / koltuk / moderasyon','Ürün yüzeyinde'],['Aile / keşif / sosyal / DM','Ürün yüzeyinde'],['Güvenlik / gizlilik / şikayet','Ürün yüzeyinde'],['Oyun ekranları','Demo simülasyonu'],['Gerçek ses/WebRTC','Geliştirme kalemi'],['Browser E2E','Doğrulama kalemi'],['Pages → Railway canlı zincir','Deploy/ortam kalemi']];
-    modal('Müşteri demo kontrol listesi',items.map(x=>card(`<b>${x[0]}</b><small style="display:block;color:#938a9f;margin-top:4px">${x[1]}</small>`)).join('<div style="height:6px"></div>'));
+    modal('Müşteri  kontrol listesi',items.map(x=>card(`<b>${x[0]}</b><small style="display:block;color:#938a9f;margin-top:4px">${x[1]}</small>`)).join('<div style="height:6px"></div>'));
   }
 
   function mountButtons(){

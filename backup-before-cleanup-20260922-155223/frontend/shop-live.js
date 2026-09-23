@@ -21,9 +21,9 @@
   const keyOf = item => item.asset_key || item.key || '';
   const vipOf = item => Boolean(item.vip || item.vip_level);
   const vipLevel = item => Number(item.vip_level || item.required_vip_level || 0);
-  const demoWallet = () => window.ErisDemoWallet;
-  const demoOwned = () => { try { return JSON.parse(localStorage.getItem('erischat_demo_owned_v1') || '[]'); } catch { return []; } };
-  const saveDemoOwned = value => localStorage.setItem('erischat_demo_owned_v1', JSON.stringify(value));
+  const Wallet = () => window.ErisDemoWallet;
+  const Owned = () => { try { return JSON.parse(localStorage.getItem('erischat__owned_v1') || '[]'); } catch { return []; } };
+  const saveDemoOwned = value => localStorage.setItem('erischat__owned_v1', JSON.stringify(value));
 
   function installStyle() {
     if (document.getElementById('eris-live-shop-style')) return;
@@ -58,14 +58,14 @@
       let items = list(catalog);
       if (!items.length) {
         items = [];
-        for(let i=1;i<=40;i++) items.push({type:'avatar',asset_key:'demo-avatar-'+i,price:1000+(i-1)*250,name:'Standart Avatar '+i});
-        for(let i=1;i<=40;i++) items.push({type:'frame',asset_key:'demo-frame-'+i,price:1500+(i-1)*300,name:'Standart Çerçeve '+i});
-        for(let i=1;i<=12;i++){items.push({type:'avatar',asset_key:'demo-vip-avatar-'+i,vip:true,vip_level:i,name:'VIP Avatar '+i});items.push({type:'frame',asset_key:'demo-vip-frame-'+i,vip:true,vip_level:i,name:'VIP Çerçeve '+i});}
-        for(let i=1;i<=35;i++) items.push({type:'gift',asset_key:'demo-gift-'+i,price:500+i*250,name:'Hediye '+i});
+        for(let i=1;i<=40;i++) items.push({type:'avatar',asset_key:'-avatar-'+i,price:1000+(i-1)*250,name:'Standart Avatar '+i});
+        for(let i=1;i<=40;i++) items.push({type:'frame',asset_key:'-frame-'+i,price:1500+(i-1)*300,name:'Standart Çerçeve '+i});
+        for(let i=1;i<=12;i++){items.push({type:'avatar',asset_key:'-vip-avatar-'+i,vip:true,vip_level:i,name:'VIP Avatar '+i});items.push({type:'frame',asset_key:'-vip-frame-'+i,vip:true,vip_level:i,name:'VIP Çerçeve '+i});}
+        for(let i=1;i<=35;i++) items.push({type:'gift',asset_key:'-gift-'+i,price:500+i*250,name:'Hediye '+i});
       }
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
       const currentVip = Number(vip?.level || 0);
-      const localOwned = new Set(demoOwned());
+      const localOwned = new Set(Owned());
       const renderItems = filter => {
         grid.innerHTML = '';
         const filtered = items.filter(item => filter === 'all' || (filter === 'vip' && vipOf(item)) || typeOf(item) === filter);
@@ -88,11 +88,11 @@
             action.disabled = true;
           } else if (isOwned) {
             action.textContent = '✓ Uygula';
-            action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { localStorage.setItem('erischat_demo_applied_v1', JSON.stringify({type,key})); } window.ErisChatCosmetics?.load(); window.toast?.('Görünüm uygulandı ✓'); };
+            action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { localStorage.setItem('erischat__applied_v1', JSON.stringify({type,key})); } window.ErisChatCosmetics?.load(); window.toast?.('Görünüm uygulandı ✓'); };
           } else {
             const price = Number(item.price || 1000);
             action.textContent = `Satın al • ${price.toLocaleString('tr-TR')}`;
-            action.onclick = async () => { const price = Number(item.price || catalog.price || 1000); try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { const wallet = demoWallet(); if (!wallet?.spend || !wallet.spend(price)) { window.toast?.(error.message||'Satın alma başarısız.'); return; } const owned = demoOwned(); if (!owned.includes(`${type}:${key}`)) owned.push(`${type}:${key}`); saveDemoOwned(owned); } await render(); window.toast?.('Kozmetik demo olarak satın alındı ✓'); };
+            action.onclick = async () => { const price = Number(item.price || catalog.price || 1000); try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); } catch (error) { const wallet = Wallet(); if (!wallet?.spend || !wallet.spend(price)) { window.toast?.(error.message||'Satın alma başarısız.'); return; } const owned = Owned(); if (!owned.includes(`${type}:${key}`)) owned.push(`${type}:${key}`); saveDemoOwned(owned); } await render(); window.toast?.('Kozmetik  olarak satın alındı ✓'); };
           }
           card.appendChild(action);
           grid.appendChild(card);
@@ -101,19 +101,19 @@
       root.querySelectorAll('.liveShopTab').forEach(tab => tab.onclick = () => { root.querySelectorAll('.liveShopTab').forEach(x => x.classList.remove('active')); tab.classList.add('active'); renderItems(tab.dataset.filter); });
       renderItems('all');
     } catch (error) {
-      const demoItems=[];
-      for(let i=1;i<=40;i++) demoItems.push({type:'avatar',asset_key:'demo-avatar-'+i,price:1000+(i-1)*250,name:'Standart Avatar '+i});
-      for(let i=1;i<=40;i++) demoItems.push({type:'frame',asset_key:'demo-frame-'+i,price:1500+(i-1)*300,name:'Standart Çerçeve '+i});
-      for(let i=1;i<=12;i++){demoItems.push({type:'avatar',asset_key:'demo-vip-avatar-'+i,vip:true,vip_level:i,name:'VIP Avatar '+i});demoItems.push({type:'frame',asset_key:'demo-vip-frame-'+i,vip:true,vip_level:i,name:'VIP Çerçeve '+i});}
-      for(let i=1;i<=35;i++) demoItems.push({type:'gift',asset_key:'demo-gift-'+i,price:500+i*250,name:'Hediye '+i});
+      const Items=[];
+      for(let i=1;i<=40;i++) Items.push({type:'avatar',asset_key:'-avatar-'+i,price:1000+(i-1)*250,name:'Standart Avatar '+i});
+      for(let i=1;i<=40;i++) Items.push({type:'frame',asset_key:'-frame-'+i,price:1500+(i-1)*300,name:'Standart Çerçeve '+i});
+      for(let i=1;i<=12;i++){Items.push({type:'avatar',asset_key:'-vip-avatar-'+i,vip:true,vip_level:i,name:'VIP Avatar '+i});Items.push({type:'frame',asset_key:'-vip-frame-'+i,vip:true,vip_level:i,name:'VIP Çerçeve '+i});}
+      for(let i=1;i<=35;i++) Items.push({type:'gift',asset_key:'-gift-'+i,price:500+i*250,name:'Hediye '+i});
       const icons=['🖤','💜','💙','💚','💛','❤️','🩷','🩵','✨','👑','🌙','🔥'];
       grid.innerHTML='';
-      demoItems.forEach((item,index)=>{
+      Items.forEach((item,index)=>{
         const card=document.createElement('article');card.className='liveShopCard';
         const icon=icons[index%icons.length]; const isVip=!!item.vip;
         card.innerHTML='<div class="liveShopPreview"><div style="font-size:48px">'+icon+'</div></div><div class="liveShopName">'+esc(item.name)+'</div><div class="liveShopMeta">'+(isVip?'VIP '+item.vip_level+' gerekli':'Demo katalog • '+Number(item.price||500).toLocaleString('tr-TR')+' Lidya')+'</div>';
         const action=document.createElement('button');action.className='liveShopAction'+(isVip?' locked':'');action.textContent=isVip?'🔒 VIP '+item.vip_level:'Demo satın al';
-        action.onclick=()=>{if(isVip)return;const price=Number(item.price||500);if(window.ErisDemoWallet?.spend?.(price)){window.toast?.(item.name+' demo olarak alındı ✓');action.textContent='✓ Sahip';action.disabled=true}else window.toast?.('Demo bakiyesi yetersiz.');};
+        action.onclick=()=>{if(isVip)return;const price=Number(item.price||500);if(window.ErisDemoWallet?.spend?.(price)){window.toast?.(item.name+'  olarak alındı ✓');action.textContent='✓ Sahip';action.disabled=true}else window.toast?.('Demo bakiyesi yetersiz.');};
         card.appendChild(action);grid.appendChild(card);
       });
     }

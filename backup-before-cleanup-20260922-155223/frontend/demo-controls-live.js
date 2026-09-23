@@ -1,4 +1,4 @@
-/* ErisChat demo controls: fills the remaining visible product flows without replacing the core shell. */
+/* ErisChat  controls: fills the remaining visible product flows without replacing the core shell. */
 (() => {
   'use strict';
   if (window.__ERIS_DEMO_CONTROLS__) return;
@@ -11,7 +11,7 @@
   async function games(){
     const p=document.querySelector('#ed-games'); if(!p) return;
     const existing=p.querySelector('.ed-real-games'); if(existing) return;
-    const box=document.createElement('div');box.className='ed-extra ed-real-games';box.innerHTML='<h3>🎮 Oynanabilir demo</h3><div class="ed-game" id="edRoulette"></div><div class="ed-extra" style="margin-top:7px"><h3>🥤 4 Kupa</h3><input id="edCupAmount" type="number" min="1" value="100"><div class="ed-mini" id="edCups"></div><div class="out" id="edCupOut"></div></div><div class="out" id="edRouletteOut"></div>';
+    const box=document.createElement('div');box.className='ed-extra ed-real-games';box.innerHTML='<h3>🎮 Oynanabilir </h3><div class="ed-game" id="edRoulette"></div><div class="ed-extra" style="margin-top:7px"><h3>🥤 4 Kupa</h3><input id="edCupAmount" type="number" min="1" value="100"><div class="ed-mini" id="edCups"></div><div class="out" id="edCupOut"></div></div><div class="out" id="edRouletteOut"></div>';
     p.appendChild(box);
     const amount=document.createElement('input');amount.id='edRouletteAmount';amount.type='number';amount.min='1';amount.value='100';amount.style.cssText='width:100%;box-sizing:border-box;background:#ffffff08;border:1px solid #ffffff12;color:#fff;border-radius:9px;padding:8px;margin:3px 0;font-size:9px';box.insertBefore(amount,box.querySelector('#edRoulette'));
     const roulette=box.querySelector('#edRoulette');['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].forEach(k=>roulette.append(mkBtn(k,async()=>{const out=box.querySelector('#edRouletteOut');try{const r=await api('/game/bet',{method:'POST',body:JSON.stringify({choice:k,amount:Number(amount.value)||1})});out.innerHTML=`Sonuç: <b>${esc(r.result)}</b> • ödeme: <b>${r.payout}</b> Lidya`;}catch(e){out.textContent=e.message}})));
@@ -32,8 +32,8 @@
 
 (() => {
   const load = () => {
-    if (document.querySelector('script[data-eris-demo-complete]')) return;
-    const s=document.createElement('script');s.src='./demo-complete-live.js';s.async=false;s.setAttribute('data-eris-demo-complete','1');s.onerror=()=>console.warn('[ErisChat] complete demo layer unavailable');document.body.appendChild(s);
+    if (document.querySelector('script[data-eris--complete]')) return;
+    const s=document.createElement('script');s.src='./-complete-live.js';s.async=false;s.setAttribute('data-eris--complete','1');s.onerror=()=>console.warn('[ErisChat] complete  layer unavailable');document.body.appendChild(s);
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
 })();

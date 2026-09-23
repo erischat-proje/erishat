@@ -134,7 +134,7 @@
       ['🛡️ Güvenlik / Mod','Bildirim, engelleme ve moderasyon','safety'],
       ['🚀 Onboarding','İlk kullanım akışı','onboarding'],
       ['⚙️ Oda Ayarları','Oda sahibi ayarları','roomSettings'],
-      ['🎮 Oyun Merkezi','7 oyunluk müşteri demo kataloğu','games']
+      ['🎮 Oyun Merkezi','7 oyunluk müşteri  kataloğu','games']
     ];
     panel.innerHTML='<div class="eh-note">Tüm yardımcı sistemler burada. Artık ekranın üzerinde sürekli duran popup/buton yığını yok.</div><div class="eh-grid" id="ehToolsGrid"></div>';
     const grid=panel.querySelector('#ehToolsGrid');

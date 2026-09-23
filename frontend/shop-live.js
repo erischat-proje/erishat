@@ -59,7 +59,7 @@
       }
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
       const currentVip = Number(vip?.level || 0);
-      const localOwned = new Set(demoOwned());
+      const localOwned = new Set(Owned());
       const renderItems = filter => {
         grid.innerHTML = '';
         const filtered = items.filter(item => filter === 'all' || (filter === 'vip' && vipOf(item)) || typeOf(item) === filter);

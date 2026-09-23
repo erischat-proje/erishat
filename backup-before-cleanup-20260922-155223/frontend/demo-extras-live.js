@@ -1,4 +1,4 @@
-/* ErisChat customer demo extras: visualize remaining product surfaces without pretending unavailable backend is live. */
+/* ErisChat customer  extras: visualize remaining product surfaces without pretending unavailable backend is live. */
 (() => {
   'use strict';
   if (window.__ERIS_DEMO_EXTRAS__) return;
@@ -9,7 +9,7 @@
   const asset = key => window.ErisChatCosmetics?.assetUrl ? window.ErisChatCosmetics.assetUrl(key) : `Gereken_icerikler/${String(key || '').replace(/^\//,'')}`;
   const card = html => `<div style="background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px">${html}</div>`;
   const button = (text, fn) => { const b=document.createElement('button'); b.textContent=text; b.style.cssText='border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800'; b.onclick=fn; return b; };
-  const modal = (title, body) => { const el=document.createElement('div'); el.style.cssText='position:fixed;inset:0;z-index:520;background:#020107ed;display:flex;align-items:flex-end;justify-content:center'; el.innerHTML=`<div style="width:min(620px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">ERISCHAT • CUSTOMER DEMO+</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div id="demoExtraBody">${body}</div></div>`; document.body.append(el); el.querySelector('[data-close]').onclick=()=>el.remove(); return el; };
+  const modal = (title, body) => { const el=document.createElement('div'); el.style.cssText='position:fixed;inset:0;z-index:520;background:#020107ed;display:flex;align-items:flex-end;justify-content:center'; el.innerHTML=`<div style="width:min(620px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">ERISCHAT • CUSTOMER DEMO+</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div id="ExtraBody">${body}</div></div>`; document.body.append(el); el.querySelector('[data-close]').onclick=()=>el.remove(); return el; };
 
   async function seatsDemo(){
     let roomId='', seats=[], socket=null, stream=null, peers=new Map(), pendingIce=new Map(), me='', rtcConfig={iceServers:[]};
@@ -135,8 +135,8 @@
     let followed=false,favorite=false,avatarApplied=false,frameApplied=false;
     const pb=m.querySelector('#profileBtns');
     const addAction=(label,fn)=>pb.append(button(label,fn));
-    addAction('✨ Avatarı uygula',()=>{avatarApplied=!avatarApplied;window.toast?.(avatarApplied?'Avatar demo profiline uygulandı ✓':'Avatar uygulaması kaldırıldı ✓');});
-    addAction('🖼 Çerçeveyi uygula',()=>{frameApplied=!frameApplied;window.toast?.(frameApplied?'Çerçeve demo profiline uygulandı ✓':'Çerçeve uygulaması kaldırıldı ✓');});
+    addAction('✨ Avatarı uygula',()=>{avatarApplied=!avatarApplied;window.toast?.(avatarApplied?'Avatar  profiline uygulandı ✓':'Avatar uygulaması kaldırıldı ✓');});
+    addAction('🖼 Çerçeveyi uygula',()=>{frameApplied=!frameApplied;window.toast?.(frameApplied?'Çerçeve  profiline uygulandı ✓':'Çerçeve uygulaması kaldırıldı ✓');});
     addAction('⭐ Favoriye ekle',()=>{favorite=!favorite;window.toast?.(favorite?'Profil favorilere eklendi ✓':'Profil favorilerden çıkarıldı ✓');});
     addAction('🎁 Hediye vitrini',()=>window.ErisDemoExtras?.roomGift?.());
     addAction('➕ Takip et',()=>{followed=!followed;window.toast?.(followed?'Takip edildi ✓':'Takip bırakıldı ✓');});
@@ -144,11 +144,11 @@
 
   function roomGiftDemo(){
     const gifts=[['🌹 Gül','1.000'],['💎 Elmas','5.000'],['👑 Taç','25.000'],['🚀 Roket','100.000'],['🌌 Galaksi','500.000']];
-    const m=modal('🎁 Oda hediyeleri — müşteri demosu','<div class="card" style="padding:12px"><b>Demo hediye vitrini</b><small style="display:block;color:#938a9f;margin-top:4px">Bu panel gerçek ödeme yapmaz. Hediye animasyonu ve alıcı seçimi arayüzünü test eder.</small></div><div style="display:flex;gap:7px;overflow:auto;margin:9px 0" id="giftRecipients"><button data-rec="Oda sahibi">👑 Oda sahibi</button><button data-rec="Koltuk 2">👤 Koltuk 2</button><button data-rec="Koltuk 3">👤 Koltuk 3</button></div><div id="giftGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px"></div><div id="giftStatus" class="card" style="padding:10px;margin-top:9px;color:#938a9f">Önce bir alıcı ve hediye seç.</div>');
+    const m=modal('🎁 Oda hediyeleri — müşteri su','<div class="card" style="padding:12px"><b>Demo hediye vitrini</b><small style="display:block;color:#938a9f;margin-top:4px">Bu panel gerçek ödeme yapmaz. Hediye animasyonu ve alıcı seçimi arayüzünü test eder.</small></div><div style="display:flex;gap:7px;overflow:auto;margin:9px 0" id="giftRecipients"><button data-rec="Oda sahibi">👑 Oda sahibi</button><button data-rec="Koltuk 2">👤 Koltuk 2</button><button data-rec="Koltuk 3">👤 Koltuk 3</button></div><div id="giftGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px"></div><div id="giftStatus" class="card" style="padding:10px;margin-top:9px;color:#938a9f">Önce bir alıcı ve hediye seç.</div>');
     let recipient='',gift=null; const grid=m.querySelector('#giftGrid'),status=m.querySelector('#giftStatus');
     grid.innerHTML=gifts.map(g=>'<button data-gift="'+esc(g[0])+'" style="padding:12px;border:1px solid #ffffff14;border-radius:13px;background:#ffffff06;color:#fff;text-align:left"><b>'+g[0]+'</b><small style="display:block;color:#e4b85d;margin-top:4px">💎 '+g[1]+'</small></button>').join('');
     m.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>{recipient=b.dataset.rec;m.querySelectorAll('[data-rec]').forEach(x=>x.style.outline='');b.style.outline='2px solid #ff4fa3';status.textContent=gift?recipient+' → '+gift+' hazır.':'Alıcı seçildi. Şimdi bir hediye seç.';});
-    grid.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{gift=b.dataset.gift;grid.querySelectorAll('[data-gift]').forEach(x=>x.style.outline='');b.style.outline='2px solid #8a5cff';status.innerHTML=recipient?'<b>✓ '+esc(recipient)+' → '+esc(gift)+'</b><small style="display:block;color:#938a9f;margin-top:4px">Demo gönderim hazır.</small><button id="demoGiftSend" style="margin-top:7px;padding:9px;border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800">🎁 Gönder</button>':'Bir alıcı seçtikten sonra demo gönderim hazır olacak.';m.querySelector('#demoGiftSend')?.addEventListener('click',()=>{status.innerHTML='<b>✨ Hediye gönderildi</b><small style="display:block;color:#61e6af;margin-top:4px">'+esc(recipient)+' için '+esc(gift)+' demo animasyonu tetiklendi.</small>';window.toast?.('🎁 Demo hediyesi gönderildi ✓');});});
+    grid.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{gift=b.dataset.gift;grid.querySelectorAll('[data-gift]').forEach(x=>x.style.outline='');b.style.outline='2px solid #8a5cff';status.innerHTML=recipient?'<b>✓ '+esc(recipient)+' → '+esc(gift)+'</b><small style="display:block;color:#938a9f;margin-top:4px">Demo gönderim hazır.</small><button id="GiftSend" style="margin-top:7px;padding:9px;border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800">🎁 Gönder</button>':'Bir alıcı seçtikten sonra  gönderim hazır olacak.';m.querySelector('#GiftSend')?.addEventListener('click',()=>{status.innerHTML='<b>✨ Hediye gönderildi</b><small style="display:block;color:#61e6af;margin-top:4px">'+esc(recipient)+' için '+esc(gift)+'  animasyonu tetiklendi.</small>';window.toast?.('🎁 Demo hediyesi gönderildi ✓');});});
   }
 
   function safetyDemo(){
@@ -157,17 +157,17 @@
       '<div style="display:grid;gap:8px">',
       '<div id="safeNotice">'+card('<b>🔔 Bildirim merkezi</b><small style="display:block;color:#938a9f;margin-top:4px">Okunmamış bildirimleri ve okundu durumunu test et.</small><button id="safeRead" style="margin-top:7px">✓ Tümünü okundu yap</button>')+'</div>',
       '<div id="safeBlock">'+card('<b>🚫 Engelleme</b><small style="display:block;color:#938a9f;margin-top:4px">Demo kullanıcı engelleme durumunu değiştir.</small><button id="safeBlockBtn" style="margin-top:7px">🚫 Engelle</button>')+'</div>',
-      '<div id="safePrivacy">'+card('<b>🔒 Gizlilik</b><small style="display:block;color:#938a9f;margin-top:4px">VIP görünürlüğünü demo olarak aç/kapat.</small><button id="safeVipBtn" style="margin-top:7px">👁 VIP görünürlüğünü değiştir</button>')+'</div>',
+      '<div id="safePrivacy">'+card('<b>🔒 Gizlilik</b><small style="display:block;color:#938a9f;margin-top:4px">VIP görünürlüğünü  olarak aç/kapat.</small><button id="safeVipBtn" style="margin-top:7px">👁 VIP görünürlüğünü değiştir</button>')+'</div>',
       '<div id="safeAdmin">'+card('<b>🧰 Moderasyon</b><small style="display:block;color:#938a9f;margin-top:4px">Örnek raporun durum akışını incele.</small><button id="safeReportBtn" style="margin-top:7px">🛡 Raporu incele</button>')+'</div>',
       '<div id="safeStatus">'+card('<small style="color:#938a9f">Demo işlemleri gerçek kullanıcıyı/hesabı değiştirmez.</small>')+'</div>',
       '</div>'
     ].join('');
     const m=modal('🛡️ Bildirim • Güvenlik • Moderasyon',html);
     const render=()=>{
-      m.querySelector('#safeNotice small').textContent=state.notifications?'Okunmamış bildirim: '+state.notifications:'Tüm demo bildirimleri okundu.';
+      m.querySelector('#safeNotice small').textContent=state.notifications?'Okunmamış bildirim: '+state.notifications:'Tüm  bildirimleri okundu.';
       m.querySelector('#safeBlock small').textContent=state.blocked?'Demo kullanıcı engellendi.':'Kullanıcı engelli değil.';
       m.querySelector('#safeBlockBtn').textContent=state.blocked?'↩ Engeli kaldır':'🚫 Engelle';
-      m.querySelector('#safePrivacy small').textContent=state.vipHidden?'VIP görünürlüğü gizli (demo).':'VIP görünürlüğü açık (demo).';
+      m.querySelector('#safePrivacy small').textContent=state.vipHidden?'VIP görünürlüğü gizli ().':'VIP görünürlüğü açık ().';
       m.querySelector('#safeAdmin small').textContent='Rapor #DEMO-001 • '+state.report;
     };
     m.querySelector('#safeRead').onclick=()=>{state.notifications=0;render();};
@@ -196,19 +196,19 @@
       const save=()=>{if(index===1)state.nickname=m.querySelector('#obNick')?.value.trim()||state.nickname;if(index===2)state.gender=m.querySelector('#obGender')?.value||state.gender;if(index===4){const v=m.querySelector('#obInterests')?.value||'';state.interests=v.split(',').map(x=>x.trim()).filter(Boolean).slice(0,8);}if(index===5)state.privacy=!!m.querySelector('#obPrivacy')?.checked;};
       m.querySelector('#onboardBtns').innerHTML='';
       const bs=m.querySelector('#onboardBtns');
-      bs.append(button('← Geri',()=>{save();index=Math.max(0,index-1);draw();}),button(index<steps.length-1?'İleri →':'Tamamla ✓',()=>{save();if(index<steps.length-1){index++;draw();}else{m.remove();window.toast?.('Onboarding demo tamamlandı ✓');}}));
+      bs.append(button('← Geri',()=>{save();index=Math.max(0,index-1);draw();}),button(index<steps.length-1?'İleri →':'Tamamla ✓',()=>{save();if(index<steps.length-1){index++;draw();}else{m.remove();window.toast?.('Onboarding  tamamlandı ✓');}}));
     };
     draw();
   }
 
   function roomSettingsDemo(){
     const settings=[['🔒 Odayı kilitle',true],['💬 Sohbet',true],['🎁 Hediyeler',true],['🎵 Müzik',true],['📢 Duyuru',true]];
-    const m=modal('⚙️ Oda sahibi ayarları','<div id="roomSettings"></div><div style="margin-top:9px">'+card('<small style="color:#938a9f">Değişiklikler bu müşteri demo oturumunda gösterilir; backend oda ayarını değiştirdiği iddia edilmez.</small>')+'</div>');
+    const m=modal('⚙️ Oda sahibi ayarları','<div id="roomSettings"></div><div style="margin-top:9px">'+card('<small style="color:#938a9f">Değişiklikler bu müşteri  oturumunda gösterilir; backend oda ayarını değiştirdiği iddia edilmez.</small>')+'</div>');
     const draw=()=>{m.querySelector('#roomSettings').innerHTML=settings.map((s,i)=>card('<label style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>'+s[0]+'</b><input type="checkbox" '+(s[1]?'checked':'')+' data-setting="'+i+'"></label>')).join('<div style="height:6px"></div>');m.querySelectorAll('[data-setting]').forEach(x=>x.onchange=()=>{settings[Number(x.dataset.setting)][1]=x.checked;window.toast?.('Demo ayarı güncellendi ✓');});};
     draw();
   }
 
-  // Eski floating demo araç çubuğu kaldırıldı.
+  // Eski floating  araç çubuğu kaldırıldı.
   // Sistemler artık tek bir merkezi arayüzden açılacak.
   window.ErisDemoExtras = Object.freeze({
     seats: seatsDemo,

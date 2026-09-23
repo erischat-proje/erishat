@@ -98,10 +98,10 @@
 
   async function openName(){
     const r=await getRoom(),id=roomId(),name=document.getElementById('erisLiveTitle')?.textContent||r?.name||'Oda';
-    if(!isOwner(r)&&!id.startsWith('demo-room-')){window.toast?.('Oda adını yalnızca oda sahibi değiştirebilir.');return}
+    if(!isOwner(r)&&!id.startsWith('-room-')){window.toast?.('Oda adını yalnızca oda sahibi değiştirebilir.');return}
     const p=panel(surface());p.classList.add('show');p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));
     p.querySelector('#roomV3Title').textContent='Oda adı';p.querySelector('#roomV3Body').innerHTML='<input id="roomV3Name" class="room-v3-input" maxlength="40" value="'+esc(name)+'" placeholder="Oda adı"><button class="room-v3-save" id="roomV3NameSave">Kaydet</button><div class="room-v3-note">Oda adı sadece oda sahibi tarafından değiştirilebilir.</div>';
-    p.querySelector('#roomV3NameSave').onclick=async()=>{const next=p.querySelector('#roomV3Name').value.trim();if(next.length<2){window.toast?.('Oda adı en az 2 karakter olmalı.');return}let saved=false;try{if(typeof roomApi().rename==='function'){await roomApi().rename(id,next);saved=true}else if(window.ErisPlatform?.api){await window.ErisPlatform.api('/rooms/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({name:next})});saved=true}}catch(e){if(!id.startsWith('demo-room-')){window.toast?.(e.message||'Oda adı kaydedilemedi.');return}}document.getElementById('erisLiveTitle').textContent=next;if(id.startsWith('demo-room-'))localStorage.setItem('eris_demo_room_name_'+id,next);p.classList.remove('show');window.toast?.(saved?'Oda adı güncellendi ✓':'Demo oda adı bu oturum için güncellendi ✓')};
+    p.querySelector('#roomV3NameSave').onclick=async()=>{const next=p.querySelector('#roomV3Name').value.trim();if(next.length<2){window.toast?.('Oda adı en az 2 karakter olmalı.');return}let saved=false;try{if(typeof roomApi().rename==='function'){await roomApi().rename(id,next);saved=true}else if(window.ErisPlatform?.api){await window.ErisPlatform.api('/rooms/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({name:next})});saved=true}}catch(e){if(!id.startsWith('-room-')){window.toast?.(e.message||'Oda adı kaydedilemedi.');return}}document.getElementById('erisLiveTitle').textContent=next;if(id.startsWith('-room-'))localStorage.setItem('eris__room_name_'+id,next);p.classList.remove('show');window.toast?.(saved?'Oda adı güncellendi ✓':'Demo oda adı bu oturum için güncellendi ✓')};
   }
 
   function levelRows(r,level){const raw=Array.isArray(r?.level_rewards)?r.level_rewards:[];if(raw.length)return raw;return Array.from({length:8},(_,i)=>{const n=i+1,cap=n>=7?16:n>=5?12:8;return{level:n,threshold:Number((r?.level_thresholds||[])[i]||0),reward:LEVEL_REWARDS[n]||('Oda ayrıcalıkları • '+cap+' koltuk')}})}
@@ -158,12 +158,12 @@
   window.addEventListener('erischat:room-opened',()=>setTimeout(bind,0));
   window.ErisRoomCompleteV3={openMenu,openName,openLevels};
 })();
-/* Room UI v5 — single in-room controls, working demo capacity/theme controls. */
+/* Room UI v5 — single in-room controls, working  capacity/theme controls. */
 (() => {
   const root=()=>document.getElementById('erisRoomSurface');
   const q=s=>document.getElementById(s);
   const rid=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
-  const demo=()=>window.ErisDemoRoomConfig?.[rid()]||null;
+  const =()=>window.ErisDemoRoomConfig?.[rid()]||null;
 
   function css(){
     if(q('eris-room-v5-css')) return;
@@ -213,7 +213,7 @@
     const s=root(),h=s?.querySelector('.eris-room-top'); if(!h)return;
     let lv=h.querySelector('#erisRoomLevel');
     if(!lv){lv=document.createElement('button');lv.id='erisRoomLevel';lv.className='room-v5-topbtn';lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';h.appendChild(lv);}
-    lv.onclick=()=>(demo()&&window.__erisRoomPermissions?.can_manage)?demoSettings():window.ErisRoomCompleteV3?.openLevels?.();
+    lv.onclick=()=>(()&&window.__erisRoomPermissions?.can_manage)?Settings():window.ErisRoomCompleteV3?.openLevels?.();
     let more=h.querySelector('#erisRoomMoreTop');
     if(!more){more=document.createElement('button');more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';h.appendChild(more);}
     more.onclick=menu;
@@ -232,7 +232,7 @@
   }
 
   async function syncHeader(){
-    const lv=q('erisRoomLevel'),d=demo();
+    const lv=q('erisRoomLevel'),d=();
     if(!lv)return;
     if(d){
       const level=Number(d.level||10),cap=Math.min(16,Math.max(8,Number(d.seat_count)||16));
@@ -244,7 +244,7 @@
 
   async function menu(){
     const p=panel(); if(!p)return;
-    const r=demo()?demo():(await roomApi().get?.(rid()).catch(()=>({}))||{});
+    const r=()?():(await roomApi().get?.(rid()).catch(()=>({}))||{});
     const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
     p.innerHTML='<div class="v5-title">Oda menüsü <button class="v5-btn" data-close>Kapat</button></div>'+
       '<div class="v5-grid">'+
@@ -295,27 +295,27 @@
     window.toast?.('Oda teması uygulandı ✓');
   }
 
-  function demoSettings(){
-    const p=panel(),d=demo();if(!p)return;
+  function Settings(){
+    const p=panel(),d=();if(!p)return;
     const level=Number(d?.level||10),cap=Math.min(16,Math.max(8,Number(d?.seat_count)||16));
-    const demoLockedDefault=demo()?.locked===true;
-    const savedLock=localStorage.getItem('eris_demo_room_locked_'+rid());
-    const locked=savedLock===null?demoLockedDefault:savedLock==='1';
+    const LockedDefault=()?.locked===true;
+    const savedLock=localStorage.getItem('eris__room_locked_'+rid());
+    const locked=savedLock===null?LockedDefault:savedLock==='1';
     p.innerHTML='<div class="v5-title">👑 Örnek oda yönetimi <button class="v5-btn" data-close>Kapat</button></div>'+
       '<div class="v5-card"><div class="v5-row"><b>Seviye '+level+'</b><small>VIP 12 • TÜM DENEME ÖZELLİKLERİ</small></div><div class="v5-note" style="margin-top:5px">Deneme hesabı: VIP 12 • Oda özelliklerini burada test edebilirsin.</div></div>'+
       '<div class="v5-card"><div class="v5-row"><b>🪑 Koltuk kapasitesi</b><small>'+cap+' / 16</small></div><div class="v5-grid" style="margin-top:7px"><button class="v5-btn '+(cap===8?'primary':'')+'" data-cap="8">8 koltuk</button><button class="v5-btn '+(cap===12?'primary':'')+'" data-cap="12">12 koltuk</button><button class="v5-btn '+(cap===16?'primary':'')+'" data-cap="16">16 koltuk</button><button class="v5-btn" data-cap="auto">Seviyeye göre</button></div></div>'+
-      '<div class="v5-card"><div class="v5-row"><b>🔒 Oda kilidi</b><small>'+(locked?'KİLİTLİ':'AÇIK')+'</small></div><input id="v5RoomPassword" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="4 haneli şifre" value="'+(locked?(localStorage.getItem('eris_demo_room_password_'+rid())||'3456'):'')+'" style="width:100%;margin-top:7px;box-sizing:border-box;text-align:left"><div class="v5-grid" style="margin-top:7px"><button class="v5-btn" data-lock>'+(locked?'Kilidi aç':'Kilitle ve şifre belirle')+'</button><button class="v5-btn" data-test-lock>🔐 Giriş testi</button></div><div class="v5-grid" style="margin-top:7px"><button class="v5-btn" data-test-wrong>❌ Yanlış şifre testi</button><button class="v5-btn" data-test-right>✅ Doğru şifre testi</button></div><div class="v5-note">VIP Lounge demo odası varsayılan olarak 3456 ile kilitlidir. Yanlış şifre girişi reddedilir; doğru şifreyle oda açılır.</div></div>'+
+      '<div class="v5-card"><div class="v5-row"><b>🔒 Oda kilidi</b><small>'+(locked?'KİLİTLİ':'AÇIK')+'</small></div><input id="v5RoomPassword" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="4 haneli şifre" value="'+(locked?(localStorage.getItem('eris__room_password_'+rid())||'3456'):'')+'" style="width:100%;margin-top:7px;box-sizing:border-box;text-align:left"><div class="v5-grid" style="margin-top:7px"><button class="v5-btn" data-lock>'+(locked?'Kilidi aç':'Kilitle ve şifre belirle')+'</button><button class="v5-btn" data-test-lock>🔐 Giriş testi</button></div><div class="v5-grid" style="margin-top:7px"><button class="v5-btn" data-test-wrong>❌ Yanlış şifre testi</button><button class="v5-btn" data-test-right>✅ Doğru şifre testi</button></div><div class="v5-note">VIP Lounge  odası varsayılan olarak 3456 ile kilitlidir. Yanlış şifre girişi reddedilir; doğru şifreyle oda açılır.</div></div>'+
       '<div class="v5-card"><b style="font-size:10px">🧪 Sanal kullanıcı testi</b><div class="v5-note" style="margin-top:5px">Koltuk kullanıcılarına dokunup susturma, kilitleme ve odadan atma akışlarını deneyebilirsin.</div><button class="v5-btn" data-ban-history style="width:100%;margin-top:7px">🚫 Odadan atılanlar geçmişi</button></div>'+
       '<div class="v5-card"><b style="font-size:10px">🏆 VIP 12 deneme</b><div class="v5-note" style="margin-top:5px">VIP rozeti • neon • giriş efekti • özel tema • duvar kâğıdı testleri açık.</div></div>';
     p.classList.add('show');p.querySelector('[data-close]').onclick=()=>p.classList.remove('show');
     p.querySelectorAll('[data-cap]').forEach(b=>b.onclick=()=>setCapacity(b.dataset.cap));
-    p.querySelector('[data-lock]').onclick=()=>toggleDemoLock(p);p.querySelector('[data-test-lock]').onclick=()=>testDemoLock();p.querySelector('[data-test-wrong]').onclick=()=>testDemoPassword('0000');p.querySelector('[data-test-right]').onclick=()=>testDemoPassword(localStorage.getItem('eris_demo_room_password_'+rid())||'3456');p.querySelector('[data-ban-history]').onclick=showBanHistory;
+    p.querySelector('[data-lock]').onclick=()=>toggleDemoLock(p);p.querySelector('[data-test-lock]').onclick=()=>testDemoLock();p.querySelector('[data-test-wrong]').onclick=()=>testDemoPassword('0000');p.querySelector('[data-test-right]').onclick=()=>testDemoPassword(localStorage.getItem('eris__room_password_'+rid())||'3456');p.querySelector('[data-ban-history]').onclick=showBanHistory;
   }
-  function toggleDemoLock(p){const id=rid(),old=localStorage.getItem('eris_demo_room_locked_'+id)==='1'||(localStorage.getItem('eris_demo_room_locked_'+id)===null&&demo()?.locked===true);if(old){localStorage.removeItem('eris_demo_room_locked_'+id);localStorage.removeItem('eris_demo_room_password_'+id);window.toast?.('Demo oda kilidi açıldı ✓');demoSettings();return;}const pass=String(p.querySelector('#v5RoomPassword')?.value||'').trim();if(!/^\d{4}$/.test(pass)){window.toast?.('Tam 4 haneli sayı gir.');return;}localStorage.setItem('eris_demo_room_locked_'+id,'1');localStorage.setItem('eris_demo_room_password_'+id,pass);window.toast?.('Oda kilitlendi. Şifre kaydedildi ✓');demoSettings();}
-  function testDemoLock(){const id=rid(),pass=localStorage.getItem('eris_demo_room_password_'+id)||'3456';if(localStorage.getItem('eris_demo_room_locked_'+id)!=='1' && !(demo()?.locked===true && localStorage.getItem('eris_demo_room_locked_'+id)===null)){window.toast?.('Önce odayı kilitle.');return;}const entered=prompt('Kilitli odaya giriş testi — 4 haneli şifre:','');if(entered===null)return;window.toast?.(entered===pass?'Şifre doğru ✓ Giriş kabul edildi.':'Şifre yanlış ✕ Giriş reddedildi.');}
-  function testDemoPassword(testPassword){const id=rid(),pass=localStorage.getItem('eris_demo_room_password_'+id)||demo()?.password||'3456';localStorage.setItem('eris_demo_room_locked_'+id,'1');localStorage.setItem('eris_demo_room_password_'+id,pass);window.toast?.(String(testPassword)===String(pass)?'Doğru şifre testi ✓ Giriş kabul edilir.':'Yanlış şifre testi ✓ Giriş reddedilir.');}
-  function showBanHistory(){const id=rid(),rows=JSON.parse(localStorage.getItem('eris_demo_ban_history_'+id)||'[]'),p=panel();p.innerHTML='<div class="v5-title">🚫 Odadan atılanlar <button class="v5-btn" data-back>Geri</button></div>'+(rows.length?rows.map(x=>'<div class="v5-card"><b>🚫 '+esc(x.name)+'</b><small>'+esc(x.reason||'Oda yöneticisi tarafından atıldı')+' • '+esc(x.time||'şimdi')+'</small></div>').join(''):'<div class="v5-note">Henüz atılan yok.</div>');p.classList.add('show');p.querySelector('[data-back]').onclick=demoSettings;}
-  function setCapacity(value){const d=demo();if(!d){window.toast?.('Gerçek odada kapasite backend ayarıdır.');return;}const next=value==='auto'?(Number(d.level||10)>=7?16:Number(d.level||10)>=5?12:8):Number(value);d.seat_count=Math.min(16,Math.max(8,next));d.level=Math.max(Number(d.level||1),d.seat_count===16?7:d.seat_count===12?5:1);localStorage.setItem('eris_demo_room_capacity_'+rid(),String(d.seat_count));window.toast?.(d.seat_count+' koltuk seçildi ✓');window.openRoom?.(rid(),q('erisLiveTitle')?.textContent||d.name||'Örnek Oda');}
+  function toggleDemoLock(p){const id=rid(),old=localStorage.getItem('eris__room_locked_'+id)==='1'||(localStorage.getItem('eris__room_locked_'+id)===null&&()?.locked===true);if(old){localStorage.removeItem('eris__room_locked_'+id);localStorage.removeItem('eris__room_password_'+id);window.toast?.('Demo oda kilidi açıldı ✓');Settings();return;}const pass=String(p.querySelector('#v5RoomPassword')?.value||'').trim();if(!/^\d{4}$/.test(pass)){window.toast?.('Tam 4 haneli sayı gir.');return;}localStorage.setItem('eris__room_locked_'+id,'1');localStorage.setItem('eris__room_password_'+id,pass);window.toast?.('Oda kilitlendi. Şifre kaydedildi ✓');Settings();}
+  function testDemoLock(){const id=rid(),pass=localStorage.getItem('eris__room_password_'+id)||'3456';if(localStorage.getItem('eris__room_locked_'+id)!=='1' && !(()?.locked===true && localStorage.getItem('eris__room_locked_'+id)===null)){window.toast?.('Önce odayı kilitle.');return;}const entered=prompt('Kilitli odaya giriş testi — 4 haneli şifre:','');if(entered===null)return;window.toast?.(entered===pass?'Şifre doğru ✓ Giriş kabul edildi.':'Şifre yanlış ✕ Giriş reddedildi.');}
+  function testDemoPassword(testPassword){const id=rid(),pass=localStorage.getItem('eris__room_password_'+id)||()?.password||'3456';localStorage.setItem('eris__room_locked_'+id,'1');localStorage.setItem('eris__room_password_'+id,pass);window.toast?.(String(testPassword)===String(pass)?'Doğru şifre testi ✓ Giriş kabul edilir.':'Yanlış şifre testi ✓ Giriş reddedilir.');}
+  function showBanHistory(){const id=rid(),rows=JSON.parse(localStorage.getItem('eris__ban_history_'+id)||'[]'),p=panel();p.innerHTML='<div class="v5-title">🚫 Odadan atılanlar <button class="v5-btn" data-back>Geri</button></div>'+(rows.length?rows.map(x=>'<div class="v5-card"><b>🚫 '+esc(x.name)+'</b><small>'+esc(x.reason||'Oda yöneticisi tarafından atıldı')+' • '+esc(x.time||'şimdi')+'</small></div>').join(''):'<div class="v5-note">Henüz atılan yok.</div>');p.classList.add('show');p.querySelector('[data-back]').onclick=Settings;}
+  function setCapacity(value){const d=();if(!d){window.toast?.('Gerçek odada kapasite backend ayarıdır.');return;}const next=value==='auto'?(Number(d.level||10)>=7?16:Number(d.level||10)>=5?12:8):Number(value);d.seat_count=Math.min(16,Math.max(8,next));d.level=Math.max(Number(d.level||1),d.seat_count===16?7:d.seat_count===12?5:1);localStorage.setItem('eris__room_capacity_'+rid(),String(d.seat_count));window.toast?.(d.seat_count+' koltuk seçildi ✓');window.openRoom?.(rid(),q('erisLiveTitle')?.textContent||d.name||'Örnek Oda');}
 
   function seatActions(){
     const box=q('erisLiveSeats');if(!box||box.dataset.v5SeatsBound==='1')return;
@@ -323,8 +323,8 @@
     if(!document.getElementById('eris-seat-action-css')){const st=document.createElement('style');st.id='eris-seat-action-css';st.textContent='.seat-action-pop{position:fixed;z-index:5000;display:flex;gap:7px;padding:7px;border:1px solid #ffffff20;border-radius:16px;background:rgba(10,6,20,.96);box-shadow:0 18px 55px #0009;backdrop-filter:blur(16px)}.seat-action-pop button{width:44px;height:44px;border:1px solid #ffffff16;border-radius:13px;background:#ffffff0c;color:#fff;font-size:20px}.eris-seat{touch-action:none}';document.head.appendChild(st)}
     let timer=0,longPressed=false;
     const hide=()=>document.querySelector('.seat-action-pop')?.remove();
-    const canManage=()=>{const r=window.__erisRoomPermissions||{};return String(window.ErisCurrentRoomId||'').startsWith('demo-room-')||!!(r.is_owner||r.is_moderator)};
-    const show=seat=>{if(!canManage())return;hide();const demoMode=String(window.ErisCurrentRoomId||'').startsWith('demo-room-'),occupied=seat.classList.contains('occupied'),muted=seat.classList.contains('seat-muted'),locked=seat.classList.contains('locked');const pop=document.createElement('div');pop.className='seat-action-pop';pop.innerHTML=occupied?'<button data-act="mute" title="Sessize al">'+(muted?'🔊':'🔇')+'</button><button data-act="kick" title="Odadan at">🚪</button>':'<button data-act="lock" title="Koltuğu kilitle">'+(locked?'🔓':'🔒')+'</button><button data-act="mute" title="Mikrofonu sessize al">'+(seat.dataset.muted==='1'?'🔊':'🔇')+'</button>';document.body.appendChild(pop);const rr=seat.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;pop.style.left=Math.max(8,Math.min(innerWidth-w-8,rr.left+rr.width/2-w/2))+'px';pop.style.top=Math.max(70,Math.min(innerHeight-h-210,rr.top-h-8))+'px';pop.querySelectorAll('[data-act]').forEach(btn=>btn.onclick=async()=>{const act=btn.dataset.act,num=Number(seat.dataset.seatNumber||0),id=String(window.ErisCurrentRoomId||'');try{if(act==='mute'){if(!demoMode){if(seat.classList.contains('seat-muted')){await roomApi().unmuteSeat(id,num);seat.classList.remove('seat-muted')}else{await roomApi().muteSeat(id,num);seat.classList.add('seat-muted')}}else{seat.dataset.muted=seat.dataset.muted==='1'?'0':'1';seat.querySelector('.seat-mic').textContent=seat.dataset.muted==='1'?'🔇':'🎙'}window.toast?.('Sessize alma durumu güncellendi ✓')}else if(act==='lock'){if(!demoMode){if(seat.classList.contains('locked')){await roomApi().unlockSeat(id,num);seat.classList.remove('locked')}else{await roomApi().lockSeat(id,num);seat.classList.add('locked')}}else seat.classList.toggle('locked');window.toast?.('Koltuk kilidi güncellendi ✓')}else if(act==='kick'){if(!demoMode)await roomApi().ban(id,seat.dataset.userId||'');const rows=JSON.parse(localStorage.getItem('eris_demo_ban_history_'+id)||'[]');rows.unshift({name:seat.querySelector('b')?.textContent||'Kullanıcı',reason:'Odadan atıldı',time:new Date().toLocaleString('tr-TR')});localStorage.setItem('eris_demo_ban_history_'+id,JSON.stringify(rows.slice(0,50)));seat.classList.remove('occupied');seat.classList.add('empty');seat.querySelector('b').textContent='Koltuk '+num;seat.querySelector('small').textContent='Boş • otur';seat.querySelector('.seat-ava').textContent='＋';window.toast?.('Kullanıcı odadan atıldı ✓')}hide()}catch(e){window.toast?.(e.message||'İşlem reddedildi')}})};
+    const canManage=()=>{const r=window.__erisRoomPermissions||{};return String(window.ErisCurrentRoomId||'').startsWith('-room-')||!!(r.is_owner||r.is_moderator)};
+    const show=seat=>{if(!canManage())return;hide();const Mode=String(window.ErisCurrentRoomId||'').startsWith('-room-'),occupied=seat.classList.contains('occupied'),muted=seat.classList.contains('seat-muted'),locked=seat.classList.contains('locked');const pop=document.createElement('div');pop.className='seat-action-pop';pop.innerHTML=occupied?'<button data-act="mute" title="Sessize al">'+(muted?'🔊':'🔇')+'</button><button data-act="kick" title="Odadan at">🚪</button>':'<button data-act="lock" title="Koltuğu kilitle">'+(locked?'🔓':'🔒')+'</button><button data-act="mute" title="Mikrofonu sessize al">'+(seat.dataset.muted==='1'?'🔊':'🔇')+'</button>';document.body.appendChild(pop);const rr=seat.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;pop.style.left=Math.max(8,Math.min(innerWidth-w-8,rr.left+rr.width/2-w/2))+'px';pop.style.top=Math.max(70,Math.min(innerHeight-h-210,rr.top-h-8))+'px';pop.querySelectorAll('[data-act]').forEach(btn=>btn.onclick=async()=>{const act=btn.dataset.act,num=Number(seat.dataset.seatNumber||0),id=String(window.ErisCurrentRoomId||'');try{if(act==='mute'){if(!Mode){if(seat.classList.contains('seat-muted')){await roomApi().unmuteSeat(id,num);seat.classList.remove('seat-muted')}else{await roomApi().muteSeat(id,num);seat.classList.add('seat-muted')}}else{seat.dataset.muted=seat.dataset.muted==='1'?'0':'1';seat.querySelector('.seat-mic').textContent=seat.dataset.muted==='1'?'🔇':'🎙'}window.toast?.('Sessize alma durumu güncellendi ✓')}else if(act==='lock'){if(!Mode){if(seat.classList.contains('locked')){await roomApi().unlockSeat(id,num);seat.classList.remove('locked')}else{await roomApi().lockSeat(id,num);seat.classList.add('locked')}}else seat.classList.toggle('locked');window.toast?.('Koltuk kilidi güncellendi ✓')}else if(act==='kick'){if(!Mode)await roomApi().ban(id,seat.dataset.userId||'');const rows=JSON.parse(localStorage.getItem('eris__ban_history_'+id)||'[]');rows.unshift({name:seat.querySelector('b')?.textContent||'Kullanıcı',reason:'Odadan atıldı',time:new Date().toLocaleString('tr-TR')});localStorage.setItem('eris__ban_history_'+id,JSON.stringify(rows.slice(0,50)));seat.classList.remove('occupied');seat.classList.add('empty');seat.querySelector('b').textContent='Koltuk '+num;seat.querySelector('small').textContent='Boş • otur';seat.querySelector('.seat-ava').textContent='＋';window.toast?.('Kullanıcı odadan atıldı ✓')}hide()}catch(e){window.toast?.(e.message||'İşlem reddedildi')}})};
     box.addEventListener('pointerdown',e=>{const seat=e.target.closest('.eris-seat');if(!seat)return;longPressed=false;timer=setTimeout(()=>{longPressed=true;show(seat)},520);seat.setPointerCapture?.(e.pointerId)});
     box.addEventListener('pointerup',e=>{clearTimeout(timer);timer=0;const seat=e.target.closest('.eris-seat');if(seat&&longPressed){seat.dataset.longPressed='1';e.preventDefault()}});
     box.addEventListener('pointercancel',()=>{clearTimeout(timer);timer=0});
@@ -363,14 +363,14 @@
   }
   window.ErisRoomPasswordModal=passwordModal;
 
-  function demoId(){
-    const id=rid(); if(!id.startsWith('demo-room-'))return;
+  function Id(){
+    const id=rid(); if(!id.startsWith('-room-'))return;
     const meta=q('erisLiveMeta');if(meta)meta.textContent='ID: 482731 • DEMO';
   }
 
   function bind(){
     if(!root())return;
-    css();top();mic();demoId();seatActions();syncHeader();
+    css();top();mic();Id();seatActions();syncHeader();
     const saved=localStorage.getItem('eris_room_theme_'+rid());
     if(saved)applyTheme(saved);
   }

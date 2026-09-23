@@ -75,7 +75,7 @@
       if(!box.children.length)box.innerHTML='<div class="ed-note">Aktif başka oda yok.</div>';
     }catch(e){
       my.innerHTML='<div class="ed-note">Odalar yüklenemedi.</div>';
-      box.innerHTML=note('API bağlantısı yoksa demo odaları ana ekrandan açabilirsin.');
+      box.innerHTML=note('API bağlantısı yoksa  odaları ana ekrandan açabilirsin.');
     }
   }
 
