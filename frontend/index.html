@@ -1,11 +1,514 @@
-<!doctype html>
-<html lang="tr"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08060d">
-<meta http-equiv="refresh" content="0;url=./erischat-main.html">
-<title>ErisChat</title>
-</head><body>
-<p style="font-family:system-ui;background:#08060d;color:#fff;padding:24px">ErisChat yükleniyor…</p>
-<script>location.replace('./erischat-main.html');</script>
-</body></html>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ErisChat — Canlı Sosyal Sesli Sohbet ve Topluluk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131b2e;
+            --bg-card-hover: #1a243f;
+            --accent-primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --lidya-color: #f59e0b;
+            --gem-color: #38bdf8;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Global Header / Cüzdan Barı */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .global-wallet {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-card);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .wallet-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .wallet-item.lidya { color: var(--lidya-color); }
+        .wallet-item.gem { color: var(--gem-color); }
+
+        /* Main Container & View System */
+        .app-main {
+            flex: 1;
+            padding: 16px;
+            padding-bottom: 90px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero & User Welcome Banner */
+        .hero-banner {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-info h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .hero-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .create-room-btn {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .create-room-btn:active { transform: scale(0.96); }
+
+        /* Rooms Grid */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .room-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .room-card:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-card-hover);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(19, 27, 46, 0.95);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 8px calc(10px + var(--safe-bottom)) 8px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        .nav-item.active {
+            color: var(--accent-primary);
+        }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Desktop Layout Adaptation */
+        @media (min-width: 900px) {
+            body { flex-direction: row; }
+            .bottom-nav {
+                width: 260px;
+                height: 100vh;
+                flex-direction: column;
+                justify-content: flex-start;
+                padding: 24px;
+                gap: 12px;
+                border-top: none;
+                border-right: 1px solid var(--border-color);
+                position: sticky;
+                top: 0;
+            }
+            .nav-item {
+                flex-direction: row;
+                font-size: 15px;
+                width: 100%;
+                padding: 12px 16px;
+                border-radius: 12px;
+            }
+            .nav-item.active {
+                background: rgba(99, 102, 241, 0.15);
+            }
+            .app-main { padding: 32px; }
+            .app-header { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Desktop / Mobile Nav -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchView('home', this)">
+            <i class="fa-solid fa-house"></i>
+            <span>Ana Sayfa</span>
+        </button>
+        <button class="nav-item" onclick="switchView('explore', this)">
+            <i class="fa-solid fa-compass"></i>
+            <span>Keşfet</span>
+        </button>
+        <button class="nav-item" onclick="switchView('messages', this)">
+            <i class="fa-solid fa-message"></i>
+            <span>Mesajlar</span>
+        </button>
+        <button class="nav-item" onclick="switchView('shop', this)">
+            <i class="fa-solid fa-store"></i>
+            <span>Mağaza</span>
+        </button>
+        <button class="nav-item" onclick="switchView('profile', this)">
+            <i class="fa-solid fa-user"></i>
+            <span>Profil</span>
+        </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+        
+        <!-- Header for mobile -->
+        <header class="app-header" style="margin-bottom: 20px;">
+            <div class="brand-logo">
+                <i class="fa-solid fa-cube"></i> ErisChat
+            </div>
+            <div class="global-wallet">
+                <div class="wallet-item lidya"><i class="fa-solid fa-coins"></i> <span id="user-lidya">12,500</span></div>
+                <div class="wallet-item gem"><i class="fa-solid fa-gem"></i> <span id="user-gem">320</span></div>
+            </div>
+        </header>
+
+        <!-- HOME VIEW -->
+        <section id="view-home" class="view-section active">
+            <div class="hero-banner">
+                <div class="hero-info">
+                    <h1 id="welcome-title">Hoş geldin, Eris Kullanıcısı</h1>
+                    <p>Kendi sesli odanı kur, topluluğunu oluştur ve sohbete başla.</p>
+                </div>
+                <button class="create-room-btn" onclick="openCreateRoomModal()">
+                    <i class="fa-solid fa-plus"></i> Oda Aç
+                </button>
+            </div>
+
+            <div class="section-title">
+                <span>Canlı Odalar</span>
+                <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="loadRooms()">Yenile</span>
+            </div>
+
+            <div class="rooms-grid" id="rooms-container">
+                <!-- Canlı Odalar Dinamik Yüklenecek -->
+            </div>
+        </section>
+
+        <!-- EXPLORE VIEW -->
+        <section id="view-explore" class="view-section">
+            <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Keşfet ve Topluluk</h2>
+            <p style="color: var(--text-muted);">Popüler odalar, etkinlikler ve yeni kullanıcılar.</p>
+        </section>
+
+        <!-- MESSAGES VIEW -->
+        <section id="view-messages" class="view-section">
+            <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Mesajlar (DM)</h2>
+            <div id="dm-container" style="color: var(--text-muted);">Aktif mesajlaşma akışı yükleniyor...</div>
+        </section>
+
+        <!-- SHOP VIEW -->
+        <section id="view-shop" class="view-section">
+            <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Mağaza & Kozmetikler</h2>
+            <div id="shop-container" style="color: var(--text-muted);">Avatar, çerçeve ve rozetler yükleniyor...</div>
+        </section>
+
+        <!-- PROFILE VIEW -->
+        <section id="view-profile" class="view-section">
+            <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Kullanıcı Profili</h2>
+            <div style="background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div style="width: 64px; height: 64px; background: var(--accent-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;">EK</div>
+                    <div>
+                        <h3 id="profile-username" style="font-size: 18px; font-weight: 700;">Eris Kullanıcısı</h3>
+                        <p id="profile-id" style="font-size: 12px; color: var(--text-muted);">ID: #ERIS-2026</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Create Room Modal -->
+    <div class="modal-overlay" id="createRoomModal">
+        <div class="modal-content">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Yeni Sesli Oda Kur</h3>
+            <div class="form-group">
+                <label>Oda Başlığı</label>
+                <input type="text" id="roomTitleInput" class="form-control" placeholder="Örn: Müzik & Sohbet Gecesi">
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="form-control" style="background: transparent; cursor: pointer;" onclick="closeCreateRoomModal()">İptal</button>
+                <button class="create-room-btn" style="flex: 1;" onclick="submitCreateRoom()">Odayı Başlat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Core Live Modules Entegrasyonu -->
+    <script src="/frontend/platform.js" defer></script>
+    <script src="/frontend/room-live.js" defer></script>
+    <script src="/frontend/shop-live.js" defer></script>
+
+    <script>
+        function switchView(viewName, element) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById('view-' + viewName).classList.add('active');
+            element.classList.add('active');
+        }
+
+        window.toast = function(message) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = message;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        };
+
+        function openCreateRoomModal() {
+            document.getElementById('createRoomModal').classList.add('active');
+        }
+
+        function closeCreateRoomModal() {
+            document.getElementById('createRoomModal').classList.remove('active');
+        }
+
+        function submitCreateRoom() {
+            const title = document.getElementById('roomTitleInput').value.trim();
+            if (!title) {
+                window.toast('Lütfen bir oda başlığı yazın.');
+                return;
+            }
+            window.toast('Oda oluşturuluyor...');
+            closeCreateRoomModal();
+            // Gerçek API yönlendirmesi
+            setTimeout(() => {
+                window.location.href = `/room.html?room=${encodeURIComponent(title)}`;
+            }, 500);
+        }
+
+        function loadRooms() {
+            const container = document.getElementById('rooms-container');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="room-card" onclick="window.location.href='/room.html?room=genel'">
+                    <div style="font-weight: 700; margin-bottom: 6px;">Eris Genel Sohbet Odası 🎙️</div>
+                    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Topluluk canlı sesli sohbet ve müzik alanı.</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                        <span style="color: var(--success);"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Aktif Canlı</span>
+                        <span style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary); padding: 4px 8px; border-radius: 8px;">Katıl</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRooms();
+        });
+    </script>
+</body>
+</html>
