@@ -254,11 +254,11 @@ def provider_config():
     return {
         "google": bool(settings.google_client_id),
         "google_client_id": settings.google_client_id,
-        "apple": bool(settings.apple_client_id),
-        "apple_client_id": settings.apple_client_id,
-        "apple_redirect_uri": settings.apple_redirect_uri,
-        "facebook": bool(settings.facebook_app_id),
-        "facebook_app_id": settings.facebook_app_id,
+        "apple": False,
+        "apple_client_id": None,
+        "apple_redirect_uri": None,
+        "facebook": False,
+        "facebook_app_id": None,
     }
 
 @app.get("/v1/auth/google-config")
@@ -512,6 +512,27 @@ def verify_otp_code(
                 user = link_user
 
         else:
+            existing_identity = (
+                db.query(AuthIdentity)
+                .filter(
+                    AuthIdentity.provider == payload.provider,
+                    AuthIdentity.identifier == identifier,
+                )
+                .first()
+            )
+
+            if payload.purpose == "register":
+                if existing_identity is not None:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Bu email zaten kayıtlı. Giriş yapabilirsiniz.",
+                    )
+            elif existing_identity is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Bu email ile kayıt bulunamadı. Önce kayıt olun.",
+                )
+
             user = create_or_login_verified_identity(
                 db,
                 provider=payload.provider,

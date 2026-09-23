@@ -793,3 +793,58 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"source_url":m.source_url,"paid_until":m.paid_until,"is_playing":m.is_playing,"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
 
+
+
+@router.patch("/{room_id}/theme")
+def update_room_theme(
+    room_id: str,
+    payload: RoomThemeUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    room = get_room_or_404(db, room_id)
+    if room.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Oda sahibi yetkisi gerekli")
+    theme = str(payload.theme or "").strip()
+    if not theme or len(theme) > 80:
+        raise HTTPException(status_code=400, detail="Geçersiz tema")
+    room.theme = theme
+    db.commit()
+    db.refresh(room)
+    return room
+
+
+@router.patch("/{room_id}/seats")
+def update_room_seat_count(
+    room_id: str,
+    payload: RoomSeatCountUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    room = get_room_or_404(db, room_id)
+    if room.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Oda sahibi yetkisi gerekli")
+
+    if payload.seat_count not in {8,12,16}:
+        raise HTTPException(status_code=400, detail="Koltuk sayısı 8, 12 veya 16 olabilir")
+
+    occupied=sum(
+        1 for seat in getattr(room,"seats",[])
+        if getattr(seat,"user_id",None) is not None
+    )
+    if payload.seat_count < occupied:
+        raise HTTPException(status_code=400,detail="Dolu koltuk sayısından düşük olamaz")
+
+    room.seat_count=payload.seat_count
+    db.commit()
+    db.refresh(room)
+    return room
+
+@router.patch("/{room_id}/capacity")
+def update_room_capacity_alias(
+    room_id: str,
+    payload: RoomSeatCountUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return update_room_seat_count(room_id,payload,db,current_user)
