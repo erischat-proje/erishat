@@ -25,7 +25,7 @@ from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
 from .db import Base, engine, get_db
-from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
+from .models import AuthOTP, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import register_room_auth, router as room_router

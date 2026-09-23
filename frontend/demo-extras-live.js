@@ -1,4 +1,4 @@
-/* ErisChat customer demo extras: visualize remaining product surfaces without pretending unavailable backend is live. */
+/* ErisChat ErisChat extras: visualize remaining product surfaces without pretending unavailable backend is live. */
 (() => {
   'use strict';
   if (window.__ERIS_DEMO_EXTRAS__) return;
@@ -9,7 +9,7 @@
   const asset = key => window.ErisChatCosmetics?.assetUrl ? window.ErisChatCosmetics.assetUrl(key) : `Gereken_icerikler/${String(key || '').replace(/^\//,'')}`;
   const card = html => `<div style="background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px">${html}</div>`;
   const button = (text, fn) => { const b=document.createElement('button'); b.textContent=text; b.style.cssText='border:0;border-radius:10px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;padding:9px 10px;font-size:9px;font-weight:800'; b.onclick=fn; return b; };
-  const modal = (title, body) => { const el=document.createElement('div'); el.style.cssText='position:fixed;inset:0;z-index:520;background:#020107ed;display:flex;align-items:flex-end;justify-content:center'; el.innerHTML=`<div style="width:min(620px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">ERISCHAT • CUSTOMER DEMO+</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div id="demoExtraBody">${body}</div></div>`; document.body.append(el); el.querySelector('[data-close]').onclick=()=>el.remove(); return el; };
+  const modal = (title, body) => { const el=document.createElement('div'); el.style.cssText='position:fixed;inset:0;z-index:520;background:#020107ed;display:flex;align-items:flex-end;justify-content:center'; el.innerHTML=`<div style="width:min(620px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">ERISCHAT</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div id="demoExtraBody">${body}</div></div>`; document.body.append(el); el.querySelector('[data-close]').onclick=()=>el.remove(); return el; };
 
   async function seatsDemo(){
     let roomId='', seats=[], socket=null, stream=null, peers=new Map(), pendingIce=new Map(), me='', rtcConfig={iceServers:[]};

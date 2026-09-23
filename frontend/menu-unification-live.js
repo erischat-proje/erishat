@@ -136,3 +136,32 @@
   };
 
 })();
+
+(() => {
+  const clean=()=>{
+    document.querySelectorAll(
+      '[aria-label="Tüm sistemler"],' +
+      '[aria-label="Tüm özellikler"],' +
+      '[data-tab="tools"],' +
+      '#eh-tools,' +
+      '#systems,' +
+      '#erisDemoBtn,' +
+      '#erisDemo'
+    ).forEach(x=>x.remove());
+
+    document.querySelectorAll('button,.item,.card').forEach(el=>{
+      const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(
+        /^Tüm sistemler$/i.test(t) ||
+        /^Tüm özellikler$/i.test(t) ||
+        /^Tüm sistemleri gör$/i.test(t)
+      ) el.remove();
+    });
+  };
+
+  if(document.readyState==="loading")
+    document.addEventListener("DOMContentLoaded",clean,{once:true});
+  else clean();
+
+  new MutationObserver(clean).observe(document.body,{childList:true,subtree:true});
+})();
