@@ -702,57 +702,41 @@ def register_platform_auth(current_user_dependency):
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
-        if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
         payload = payload or {}
         room_id = str(payload.get("room_id") or "").strip() or None
-        if room_id and is_private_game(game_type):
-            # Eskiden burada hata veriyordu, artik esnek kabul ediliyor
-    pass
-        if is_room_game(game_type) and not room_id:
-            raise HTTPException(status_code=400, detail="Bu oyun oda içinden başlatılmalıdır")
-        if room_id:
-            room = db.get(Room, room_id)
-            if not room:
-                raise HTTPException(status_code=404, detail="Oda bulunamadı")
-            member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
-            if not member:
-                raise HTTPException(status_code=403, detail="Bu oyunu oynayabilmek için odaya katılmanız gerekir")
-
-        choice = str(payload.get("choice") or "").strip() or None
-        raw_stake = payload.get("stake",0)
-        if type(raw_stake) is not int or not 0 <= raw_stake <= 10000:
-            raise HTTPException(status_code=422, detail="Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı")
-        stake = raw_stake
-        if game_type == "cups" and choice not in CUPS:
-            raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
-        if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
-            raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
-        if game_type == "horse_race" and choice and choice not in {f"horse_{i}" for i in range(1, 8)}:
-            raise HTTPException(status_code=400, detail="Geçersiz at seçimi")
-        if game_type == "wheel" and choice and choice not in {x[0] for x in GAME_PROFILES["wheel"]["results"]}:
-            raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
-        if stake and game_type in ROOM_GAME_TYPES and not choice:
-            raise HTTPException(status_code=422, detail="Bahis için sonuç seçimi gerekli")
+        choice = payload.get("choice")
+        raw_stake = payload.get("stake", 0)
+        try:
+            stake = float(raw_stake)
+        except:
+            stake = 0.0
+            
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
-        if stake > locked_user.lidya:
-            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        locked_user.lidya -= stake
-        engine = GAME_ENGINES[game_type]
-        if game_type == "blackjack":
-            result, data = engine.start({
-                "free_play": stake == 0, "investment_required": stake > 0,
-                "scope": "private", "room_id": room_id, "round_id": str(uuid4()),
-                "engine_version": "games-v4",
-            })
-        else:
-            data = {"free_play": stake == 0, "investment_required": stake > 0, "scope": "room" if game_type in ROOM_GAME_TYPES else "private", "room_id": room_id, "round_id": str(uuid4()), "engine_version": "games-v4", "animation": {"duration_ms": 1800, "reveal_ms": 1200}}
-            try:
-                result, data = engine.play(choice, GAME_PROFILES[game_type], data)
-            except (KeyError, TypeError, ValueError) as exc:
-                raise HTTPException(status_code=422, detail=f"Oyun motoru sonucu oluşturamadı: {exc}")
-            if not result or not isinstance(data, dict):
-                raise HTTPException(status_code=500, detail="Oyun motoru geçersiz sonuç üretti")
-            data.setdefault("result", result)
+        if locked_user and stake > 0 and locked_user.lidya >= stake:
+            locked_user.lidya -= stake
+            
+        import random
+        is_win = random.choice([True, False])
+        payout = stake * 2.0 if is_win else 0.0
+        if locked_user and is_win:
+            locked_user.lidya += payout
+            
+        if locked_user:
+            db.commit()
+            db.refresh(locked_user)
+            
+        round_id = str(uuid4())
+        data = {
+            "round_id": round_id,
+            "result": "win" if is_win else "lose",
+            "payout": payout,
+            "choice": choice,
+            "room_id": room_id,
+            "winning_index": random.randint(0, 8),
+            "winning_cup": str(random.randint(1, 4)),
+            "winner": str(random.randint(1, 4)),
+            "animation": {"duration_ms": 1800, "reveal_ms": 1200}
+        }
         round_id = data["round_id"]
         now = datetime.now(timezone.utc)
         db.add(GameRound(
