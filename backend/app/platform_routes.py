@@ -705,26 +705,21 @@ def register_platform_auth(current_user_dependency):
         payload = payload or {}
         room_id = str(payload.get("room_id") or "").strip() or None
         choice = payload.get("choice")
-        raw_stake = payload.get("stake", 0)
         try:
-            stake = float(raw_stake)
+            stake = float(payload.get("stake", 0))
         except:
             stake = 0.0
-            
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
-        if locked_user and stake > 0 and locked_user.lidya >= stake:
-            locked_user.lidya -= stake
-            
         import random
         is_win = random.choice([True, False])
         payout = stake * 2.0 if is_win else 0.0
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if locked_user and stake > 0 and locked_user.lidya >= stake:
+            locked_user.lidya -= stake
         if locked_user and is_win:
             locked_user.lidya += payout
-            
         if locked_user:
             db.commit()
             db.refresh(locked_user)
-            
         round_id = str(uuid4())
         data = {
             "round_id": round_id,
@@ -737,7 +732,7 @@ def register_platform_auth(current_user_dependency):
             "winner": str(random.randint(1, 4)),
             "animation": {"duration_ms": 1800, "reveal_ms": 1200}
         }
-        round_id = data["round_id"]
+        return data
         now = datetime.now(timezone.utc)
         db.add(GameRound(
             id=round_id, user_id=user.id, room_id=room_id, game_type=game_type,
