@@ -1,6 +1,6 @@
 (() => {
     'use strict';
-    
+
     const gameModules = {
         wheel: () => window.ErisGameWheel,
         crash: () => window.ErisGameCrash,
@@ -147,7 +147,7 @@
             game = key;
             modal.querySelector('[data-name]').textContent = labels[key];
             tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.game === key));
-            
+
             const mod = gameModules[key]();
             const stage = modal.querySelector('.eg-stage');
             if (mod && typeof mod.render === 'function') {
@@ -174,18 +174,32 @@
         modal.querySelector('[data-play]').onclick = async () => {
             const button = modal.querySelector('[data-play]'),
                   stage = modal.querySelector('.eg-stage'),
-                  result = modal.querySelector('.eg-result'),
+                  result = modal.querySelector('[data-result] || .eg-result'),
                   controls = modal.querySelector('[data-controls]');
-            
+
             button.disabled = true;
             controls.replaceChildren();
-            result.textContent = 'Oyun başlatılıyor…';
-            
+            modal.querySelector('.eg-result').textContent = 'Oyun başlatılıyor…';
+
             try {
+                // Aktif oda ID'sini bulalım veya sunucudan açık olan ilk odayı çekelim
+                let targetRoomId = roomId || window.ErisCurrentRoomId || window.currentRoomId || localStorage.getItem('eris_my_room_id');
+                if (!targetRoomId) {
+                    try {
+                        const roomsRes = await api('/rooms');
+                        const roomsList = Array.isArray(roomsRes) ? roomsRes : (roomsRes?.rooms || roomsRes?.items || []);
+                        if (roomsList.length > 0) {
+                            targetRoomId = roomsList[0].id || roomsList[0].room_id || roomsList[0]._id;
+                        }
+                    } catch (err) {
+                        console.warn('Oda listesi alınamadı, genel oda deneniyor');
+                    }
+                }
+
                 const res = await api('/games/' + game + '/play', {
                     method: 'POST',
                     body: JSON.stringify({
-                        room_id: window.ErisCurrentRoomId || window.currentRoomId || localStorage.getItem('eris_my_room_id') || 'global-game-room',
+                        room_id: targetRoomId || null,
                         choice: modal.querySelector('[data-choice]').value,
                         stake: Number(modal.querySelector('[data-stake]').value)
                     })
@@ -195,9 +209,8 @@
                 if (mod && typeof mod.animate === 'function') {
                     await mod.animate(stage, res.data);
                 }
+                modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
 
-                result.textContent = '🎉 Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
-                
                 if (game === 'blackjack' && res.result === 'pending') {
                     for (const [action, label] of [['hit', 'Kart Çek'], ['stand', 'Dur']]) {
                         const b = document.createElement('button');
@@ -212,12 +225,12 @@
                                 if (mod && typeof mod.animate === 'function') {
                                     await mod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.player_hand?.slice(-1)[0] });
                                 }
-                                result.textContent = '🎉 Sonuç: ' + next.result + ' • Ödül: ' + (next.payout || 0) + ' Lidya';
+                                modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + next.result + ' • Ödül: ' + (next.payout || 0) + ' Lidya';
                                 if (next.status === 'finished') controls.replaceChildren();
                                 else controls.querySelectorAll('button').forEach(x => x.disabled = false);
                                 refreshBalance();
                             } catch (e) {
-                                result.textContent = e.message;
+                                modal.querySelector('.eg-result').textContent = e.message;
                                 controls.querySelectorAll('button').forEach(x => x.disabled = false);
                             }
                         };
@@ -226,7 +239,7 @@
                 }
                 refreshBalance();
             } catch (e) {
-                result.textContent = e.message || 'Oyun başlatılamadı.';
+                modal.querySelector('.eg-result').textContent = e.message || 'Oyun başlatılamadı.';
             } finally {
                 button.disabled = false;
             }
