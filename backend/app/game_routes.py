@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Any
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .auth import get_current_user
+from .oyunlar.registry import GameRegistry
 
 router = APIRouter(prefix="/api/games", tags=["games"])
 
@@ -16,47 +17,28 @@ class GamePlayRequest(BaseModel):
 
 @router.post("/play")
 def play_game(payload: GamePlayRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    game_id = payload.game_id.lower()
-    bet = payload.bet_amount
-    choice = payload.choice
-    
-    if bet <= 0:
+    if payload.bet_amount <= 0:
         raise HTTPException(status_code=400, detail="Geçersiz bahis miktarı.")
         
-    if current_user.balance < bet:
+    if current_user.balance < payload.bet_amount:
         raise HTTPException(status_code=400, detail="Yetersiz bakiye.")
 
-    # Bakiye düşme
-    current_user.balance -= bet
-    
-    # Oyun mantığı ve sonuç simülasyonu (Hiçbir oyun "kişisel mod" veya "geçersiz seçim" hatası vermez, esnek işlenir)
-    import random
-    
-    multiplier = 2.0
-    is_win = random.choice([True, False])
-    
-    if is_win:
-        payout = bet * multiplier
-        current_user.balance += payout
-        result_status = "win"
-    else:
-        payout = 0.0
-        result_status = "lose"
-        
+    # Bahis düşülür
+    current_user.balance -= payload.bet_amount
+
+    # Oyun motoru çağrılır (Asla hata patlatmaz, tüm seçimleri ve modları esnek işler)
+    outcome = GameRegistry.process_game(payload.game_id, payload.bet_amount, payload.choice, payload.mode)
+
+    if outcome["result"] == "win":
+        current_user.balance += outcome["payout"]
+
     db.commit()
     db.refresh(current_user)
 
     return {
         "success": True,
-        "result": result_status,
-        "payout": payout,
+        "result": outcome["result"],
+        "payout": outcome["payout"],
         "new_balance": current_user.balance,
-        "details": {
-            "game": game_id,
-            "choice": choice,
-            "winning_index": random.randint(0, 8),
-            "winning_cup": str(random.randint(1, 4)),
-            "winner": str(random.randint(1, 4)),
-            "multiplier": multiplier
-        }
+        "details": outcome["details"]
     }
