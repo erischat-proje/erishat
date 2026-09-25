@@ -151,11 +151,14 @@ column-gap:9px
   <button class="link" onclick="showView('games')">Tüm oyunlar →</button>
 </div>
 
-<div class="quick homeGameQuick">
-  <button onclick="window.ErisChatGames.open('main',null,'blackjack')">🃏<strong>Blackjack</strong><span>Ücretsiz veya Lidya ile</span></button>
-  <button onclick="window.ErisChatGames.open('main',null,'crash')">🚀<strong>Crash</strong><span>Ücretsiz veya Lidya ile</span></button>
-  <button onclick="window.ErisChatGames.open('main',null,'vault')">🎁<strong>Kasa Açma</strong><span>Ücretsiz veya Lidya ile</span></button>
-</div>
+<div class="homeGameQuick" id="home-games-launcher"></div>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.ErisGamesMenuConfig && typeof window.ErisGamesMenuConfig.renderLauncher === "function") {
+      window.ErisGamesMenuConfig.renderLauncher(document.getElementById("home-games-launcher"));
+    }
+  });
+</script>
 
 </section>
 <section id="messages" class="view"><div class="eyebrow">MESAJLAR</div><h1 class="title">Sohbetlerin.</h1><div class="list"><div class="card" style="padding:16px;color:#938a9f">Konuşmalar yükleniyor…</div></div></section>
@@ -169,11 +172,15 @@ column-gap:9px
 
 
 
-<button onclick="window.ErisChatGames.open('main',null,'blackjack')"><strong>Blackjack</strong><span>Ücretsiz veya Lidya ile</span></button>
-<button onclick="window.ErisChatGames.open('main',null,'crash')"><strong>Crash</strong><span>Ücretsiz veya Lidya ile</span></button>
-<button onclick="window.ErisChatGames.open('main',null,'vault')"><strong>Kasa Açma</strong><span>Ücretsiz veya Lidya ile</span></button>
-
-</div><div id="gameScreen" class="card" style="margin-top:12px;padding:18px;text-align:center"><b>Oyunlar</b><p class="muted" style="font-size:10px">Oyun seçimi bir panel açar. Rulet, kupa, at yarışı ve çark oyunları oda içinde bulunur.</p></div></section>
+</div>
+<div id="tab-games-launcher"></div>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.ErisGamesMenuConfig && typeof window.ErisGamesMenuConfig.renderLauncher === "function") {
+      window.ErisGamesMenuConfig.renderLauncher(document.getElementById("tab-games-launcher"));
+    }
+  });
+</script></section>
 <section id="search" class="view"><div class="eyebrow">ARAMA</div><h1 class="title">Keşfet.</h1><div class="search"><input id="searchInput" placeholder="Oda veya kullanıcı ara"><button class="primary" onclick="window.ErisSearch?.run?.()">Ara</button></div></section>
 </section><nav class="nav"><button class="active" onclick="showView('home',this)"><b>⌂</b>Ana sayfa</button><button onclick="showView('messages',this);window.ErisChatDM?.load?.()"><b>☏</b>Mesaj</button><button onclick="showView('explore',this);window.ErisChatRoomList?.load?.()"><b>◈</b>Keşfet</button><button onclick="showView('games',this)"><b>🎮</b>Oyun</button><button onclick="showView('profile',this);window.ErisProfile?.refresh?.()"><b>♙</b>Profil</button></nav></main>
 <div id="chat" class="chat"><div class="chatSheet"><div class="chatHead"><div class="ava round" id="chatAva">R</div><div class="grow"><b id="chatTitle">Sohbet</b><small class="muted">çevrimiçi</small></div><button class="close" onclick="closeChat()">×</button></div><div class="chatBody" id="chatBody"></div><div class="compose"><input id="chatInput" placeholder="Mesaj yaz…" onkeydown="if(event.key==='Enter')sendChat()"><button class="primary" onclick="sendChat()">Gönder</button></div></div></div>
