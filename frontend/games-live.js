@@ -80,7 +80,7 @@
                 box-shadow: 0 0 20px rgba(124, 78, 228, 0.5);
             }
             #erisGamesModal .eg-stage {
-                min-height: 220px;
+                min-height: 240px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -132,8 +132,6 @@
         modal.querySelector('[data-close]').onclick = () => modal.remove();
         modal.onclick = e => { if (e.target === modal) modal.remove(); };
 
-        const id = roomId || window.ErisCurrentRoomId || window.currentRoomId;
-        const roomMode = scope === 'room';
         const keys = Object.keys(gameModules);
         const tabs = modal.querySelector('.eg-keys');
         let game = keys.includes(selected) ? selected : keys[0];
@@ -179,10 +177,6 @@
                   result = modal.querySelector('.eg-result'),
                   controls = modal.querySelector('[data-controls]');
             
-            if (roomMode && !id) {
-                result.textContent = 'Önce odaya gir.';
-                return;
-            }
             button.disabled = true;
             controls.replaceChildren();
             result.textContent = 'Oyun başlatılıyor…';
@@ -191,7 +185,7 @@
                 const res = await api('/games/' + game + '/play', {
                     method: 'POST',
                     body: JSON.stringify({
-                        room_id: roomMode ? id : null,
+                        room_id: null,
                         choice: modal.querySelector('[data-choice]').value,
                         stake: Number(modal.querySelector('[data-stake]').value)
                     })
