@@ -1,43 +1,87 @@
 (() => {
     'use strict';
-    function render(stageEl) {
-        stageEl.innerHTML = `
-            <div class="eg-cups-wrapper">
-                <div class="eg-cups-container">
-                    <div class="eg-cup" data-index="0"><div class="eg-cup-top">🏆</div><div class="eg-cup-body"></div></div>
-                    <div class="eg-cup" data-index="1"><div class="eg-cup-top"></div><div class="eg-cup-body"></div></div>
-                    <div class="eg-cup" data-index="2"><div class="eg-cup-top"></div><div class="eg-cup-body"></div></div>
+
+    const CUPS_OPTIONS = [
+        ['1', '1 Numaralı Kupa'],
+        ['2', '2 Numaralı Kupa'],
+        ['3', '3 Numaralı Kupa'],
+        ['4', '4 Numaralı Kupa']
+    ];
+
+    const CupsGame = {
+        options: CUPS_OPTIONS,
+
+        render(container) {
+            container.innerHTML = `
+                <div style="width:100%; min-height:210px; background:radial-gradient(circle, #20132b 0%, #0c0714 100%); border-radius:14px; border:1px solid rgba(168,85,247,0.3); padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box;">
+                    <div style="font-size:12px; color:#e9d5ff; font-weight:700; margin-bottom:16px; text-shadow:0 0 10px rgba(168,85,247,0.5);">
+                        🥤 DÖRT KUPA • Altını Saklayan Kupayı Seç
+                    </div>
+                    
+                    <!-- Tam 4 Adet Profesyonel Kupa -->
+                    <div style="display:flex; gap:12px; justify-content:center; align-items:center;" id="proCupsContainer">
+                        <div class="pro-cup" data-cup="1" style="width:50px; height:65px; background:linear-gradient(135deg, #4c1d95, #2e1065); border:2px solid #a855f7; border-radius:10px 10px 6px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 15px rgba(168,85,247,0.3); transition:all 0.3s;">
+                            <span style="font-size:22px;">🥤</span>
+                            <span style="font-size:10px; color:#f3e8ff; font-weight:bold; margin-top:2px;">1</span>
+                        </div>
+                        <div class="pro-cup" data-cup="2" style="width:50px; height:65px; background:linear-gradient(135deg, #4c1d95, #2e1065); border:2px solid #a855f7; border-radius:10px 10px 6px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 15px rgba(168,85,247,0.3); transition:all 0.3s;">
+                            <span style="font-size:22px;">🥤</span>
+                            <span style="font-size:10px; color:#f3e8ff; font-weight:bold; margin-top:2px;">2</span>
+                        </div>
+                        <div class="pro-cup" data-cup="3" style="width:50px; height:65px; background:linear-gradient(135deg, #4c1d95, #2e1065); border:2px solid #a855f7; border-radius:10px 10px 6px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 15px rgba(168,85,247,0.3); transition:all 0.3s;">
+                            <span style="font-size:22px;">🥤</span>
+                            <span style="font-size:10px; color:#f3e8ff; font-weight:bold; margin-top:2px;">3</span>
+                        </div>
+                        <div class="pro-cup" data-cup="4" style="width:50px; height:65px; background:linear-gradient(135deg, #4c1d95, #2e1065); border:2px solid #a855f7; border-radius:10px 10px 6px 6px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 15px rgba(168,85,247,0.3); transition:all 0.3s;">
+                            <span style="font-size:22px;">🥤</span>
+                            <span style="font-size:10px; color:#f3e8ff; font-weight:bold; margin-top:2px;">4</span>
+                        </div>
+                    </div>
+                    
+                    <div id="cupsStatusText" style="font-size:11px; color:#c084fc; margin-top:16px; font-weight:600; min-height:16px;">Bahsini yap ve kupalardan birini seç!</div>
                 </div>
-                <div class="eg-cups-status">Kupalar karıştırıldı. Doğru kupayı seç!</div>
-            </div>
-            <style>
-                .eg-cups-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; min-height: 240px; }
-                .eg-cups-container { display: flex; gap: 28px; align-items: center; justify-content: center; height: 120px; }
-                .eg-cup { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.3s ease; position: relative; }
-                .eg-cup:hover { transform: translateY(-10px); }
-                .eg-cup-top { width: 54px; height: 54px; background: linear-gradient(135deg, #f1c40f, #d4ac0d); border-radius: 50% 50% 12% 12%; box-shadow: 0 8px 20px rgba(241,196,15,0.5); display: grid; place-items: center; font-size: 22px; border: 2px solid #fff; transform: translateY(16px); z-index: 2; }
-                .eg-cup-body { width: 70px; height: 60px; background: linear-gradient(135deg, #3498db, #2980b9); border-radius: 12px 12% 40% 40%; box-shadow: 0 10px 25px rgba(52,152,219,0.5); border: 2px solid rgba(255,255,255,0.35); }
-                .eg-cups-status { margin-top: 16px; font-weight: 700; color: #ffd700; font-size: 13px; text-align: center; }
-            </style>
-        `;
-    }
-    async function animate(stageEl, data) {
-        const status = stageEl.querySelector('.eg-cups-status');
-        const cups = stageEl.querySelectorAll('.eg-cup');
-        if (!status) return;
-        status.textContent = '🥤 Kupalar gizemli bir şekilde yer değiştiriyor...';
-        for (let i = 0; i < 4; i++) {
-            cups.forEach(c => c.style.transform = `translateX(${(Math.random() - 0.5) * 35}px) translateY(${Math.random() * -12}px)`);
-            await new Promise(r => setTimeout(r, 250));
+            `;
+
+            // Kullanıcı arayüzdeki kupalara doğrudan tıklayarak da seçim yapabilsin
+            const cupElements = container.querySelectorAll('.pro-cup');
+            cupElements.forEach(cup => {
+                cup.onclick = () => {
+                    cupElements.forEach(c => c.style.borderColor = '#a855f7');
+                    cup.style.borderColor = '#facc15';
+                    const selectEl = document.querySelector('[data-choice]');
+                    if (selectEl) selectEl.value = cup.dataset.cup;
+                };
+            });
+        },
+
+        async animate(container, data) {
+            const statusText = document.getElementById('cupsStatusText');
+            const winningCup = String(data?.winning_cup || data?.winningIndex || Math.floor(Math.random() * 4) + 1);
+
+            if (statusText) statusText.textContent = '🔄 Kupalar karıştırılıyor ve heyecan zirvede...';
+
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const cups = container.querySelectorAll('.pro-cup');
+                    cups.forEach(cup => {
+                        if (cup.dataset.cup === winningCup) {
+                            cup.style.transform = 'translateY(-12px) scale(1.08)';
+                            cup.style.borderColor = '#22c55e';
+                            cup.style.background = 'linear-gradient(135deg, #166534, #14532d)';
+                            cup.querySelector('span').textContent = '🪙';
+                        } else {
+                            cup.style.opacity = '0.5';
+                        }
+                    });
+
+                    if (statusText) {
+                        statusText.textContent = data?.result === 'win' ? '🎉 Tebrikler! Altını buldun!' : '❌ Maalesef boş kupa! Kazanan: Kupa ' + winningCup;
+                    }
+                    setTimeout(resolve, 1500);
+                }, 2000);
+            });
         }
-        cups.forEach(c => c.style.transform = 'none');
-        const winningIndex = data && data.winningIndex !== undefined ? data.winningIndex : 0;
-        cups.forEach((c, idx) => {
-            const top = c.querySelector('.eg-cup-top');
-            top.textContent = idx === winningIndex ? '💎' : '❌';
-            if (idx === winningIndex) c.style.transform = 'translateY(-18px) scale(1.05)';
-        });
-        status.textContent = '🎉 ' + (data.result || 'Doğru kupayı buldun, ödül senin!');
-    }
-    window.ErisGameCups = { render, animate, options: [['cup1','1. Kupa'],['cup2','2. Kupa'],['cup3','3. Kupa']] };
+    };
+
+    window.ErisGameCups = CupsGame;
 })();
