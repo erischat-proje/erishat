@@ -700,9 +700,12 @@ def register_platform_auth(current_user_dependency):
         return {"round_id": row.id, "status": row.status, "result": result, "state": display_state(state), "available_actions": [a for a in available_actions(state) if a in {"hit","stand"}], "payout": bet.payout if result != "pending" and bet else 0}
 
     @router.post("/games/{game_type}/play")
-    def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    async def play_game(game_type: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
-        payload = payload or {}
+        try:
+            payload = await request.json()
+        except:
+            payload = {}
         room_id = str(payload.get("room_id") or "").strip() or None
         choice = payload.get("choice")
         try:
