@@ -706,7 +706,8 @@ def register_platform_auth(current_user_dependency):
         payload = payload or {}
         room_id = str(payload.get("room_id") or "").strip() or None
         if room_id and is_private_game(game_type):
-            raise HTTPException(status_code=400, detail="Bu oyun özel/kişisel modda çalışır")
+            # Eskiden burada hata veriyordu, artik esnek kabul ediliyor
+    pass
         if is_room_game(game_type) and not room_id:
             raise HTTPException(status_code=400, detail="Bu oyun oda içinden başlatılmalıdır")
         if room_id:
