@@ -4,6 +4,7 @@
   const headers = () => token() ? { Authorization: `Bearer ${token()}` } : {};
   async function loadRooms() {
     const targets = [...document.querySelectorAll('#realRooms,#rooms')]; if (!targets.length) return;
+    if (!token()) { targets.forEach(el=>{el.textContent='Odaları görmek için giriş yap.'}); return; }
     try {
       const r = await fetch(`${API}/rooms`, { headers: headers() }); if (!r.ok) throw new Error(`rooms:${r.status}`);
       const data = await r.json(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
@@ -222,6 +223,10 @@
   window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
+
+  window.addEventListener('erischat:auth',event=>{
+    if(event.detail?.state==='ready'||event.detail?.state==='logged_out')loadRooms();
+  });
 
   window.addEventListener('pagehide',()=>{
     const id=window.ErisCurrentRoomId||window.currentRoomId;

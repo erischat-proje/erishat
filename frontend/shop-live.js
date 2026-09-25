@@ -50,6 +50,7 @@
     installStyle();
     root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatar ve çerçeveler mağazadan alınır. VIP avatar ve çerçeveler VIP seviyesine ulaşıldığında açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="all">Tümü</button><button class="liveShopTab" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip">VIP</button></div><select class="liveShopGender" aria-label="Cinsiyet filtresi"><option value="all">Tüm cinsiyetler</option><option value="female">Kadın</option><option value="male">Erkek</option></select><div class="liveShopGrid">Yükleniyor…</div>';
     const grid = root.querySelector('.liveShopGrid');
+    if (!token()) { grid.textContent='Mağazayı görmek için giriş yap.'; return; }
     try {
       const [catalog, owned, vip] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip')]);
       let items = list(catalog);

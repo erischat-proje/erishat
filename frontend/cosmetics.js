@@ -31,6 +31,7 @@
   };
 
   async function load() {
+    if (!token()) return state;
     try {
       const [catalog, owned, user] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me')]);
       state.catalog = list(catalog);

@@ -27,7 +27,7 @@
   }
 
   async function refresh() {
-    if (!auth()?.getMe) return null;
+    if (!auth()?.getMe || !(localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token'))) return null;
     const user = await auth().getMe();
     auth().user = user;
     render(user);
