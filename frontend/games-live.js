@@ -21,7 +21,7 @@
         wheel: '🎡 Şans Çarkı'
     };
 
-    const api = (p, o) => window.ErisPlatform.api(p, o);
+    const api = (path, options = {}) => window.ErisPlatform?.api ? window.ErisPlatform.api(path, options) : Promise.reject(new Error('Platform hazır değil'));
     let modal = null;
 
     function injectStyles() {
