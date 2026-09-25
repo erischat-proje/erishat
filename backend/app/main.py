@@ -192,6 +192,7 @@ app.include_router(platform_router)
 app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
+app.include_router(game_router)
 
 
 @app.get("/health")
