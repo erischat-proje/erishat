@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import Optional, Any
+from fastapi import APIRouter, Depends, HTTPException, Optional
+from pydantic import BaseModel, Field
+from typing import Any
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
@@ -12,8 +12,9 @@ router = APIRouter(prefix="/api/games", tags=["games"])
 class GamePlayRequest(BaseModel):
     game_id: str
     bet_amount: float
-    choice: Optional[Any] = None
-    mode: Optional[str] = "room"
+    choice: Any = None
+    mode: str = "room"
+    room_id: Any = None  # Oda ID zorunluluğu tamamen esnetildi
 
 @router.post("/play")
 def play_game(payload: GamePlayRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -26,8 +27,10 @@ def play_game(payload: GamePlayRequest, db: Session = Depends(get_db), current_u
     # Bahis düşülür
     current_user.balance -= payload.bet_amount
 
-    # Oyun motoru çağrılır (Asla hata patlatmaz, tüm seçimleri ve modları esnek işler)
-    outcome = GameRegistry.process_game(payload.game_id, payload.bet_amount, payload.choice, payload.mode)
+    # Oda veya kişisel mod kısıtlamasına takılmadan güvenle çalışır
+    mode = payload.mode if payload.mode in ["room", "personal"] else "room"
+    
+    outcome = GameRegistry.process_game(payload.game_id, payload.bet_amount, payload.choice, mode)
 
     if outcome["result"] == "win":
         current_user.balance += outcome["payout"]
