@@ -255,7 +255,7 @@
 
   function installMessageSearch() {
     const view = document.getElementById('messages');
-    if (!view || view.dataset.productionSearch === '1') return;
+    if (!view || view.dataset.productionSearch === '1' || view.querySelector('[data-dm-search]')) return;
 
     view.dataset.productionSearch = '1';
 

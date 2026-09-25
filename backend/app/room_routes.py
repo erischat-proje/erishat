@@ -9,7 +9,8 @@ from typing import Literal
 import time
 import hashlib
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, File, Form, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
@@ -721,11 +722,23 @@ def register_room_auth(current_user_dependency):
         rows = db.execute(select(RoomGiftEvent.sender_id, func.sum(RoomGiftEvent.total_price).label("total")).where(RoomGiftEvent.room_id == room.id).group_by(RoomGiftEvent.sender_id).order_by(func.sum(RoomGiftEvent.total_price).desc())).all()
         return [{"rank":i,"user_id":uid,"total_lidya":int(total or 0)} for i,(uid,total) in enumerate(rows,1)]
     @router.post("/{room_id}/music")
-    def add_music(room_id: str, payload: MusicCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    async def add_music(room_id: str, file: UploadFile = File(...), title: str = Form(""), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
-        if not seat: raise HTTPException(status_code=403, detail="Müzik eklemek için mikrofonda olmalısınız")
+        # Only bounded audio is retained; never fetch user-supplied URLs on the server.
+        data = await file.read(8 * 1024 * 1024 + 1)
+        await file.close()
+        if len(data) > 8 * 1024 * 1024 or len(data) < 32:
+            raise HTTPException(status_code=413, detail="Müzik 8 MB sınırını aşamaz")
+        mime = None
+        if data.startswith(b"ID3") or (data[0] == 0xff and data[1] & 0xe0 == 0xe0): mime = "audio/mpeg"
+        elif data.startswith(b"OggS"): mime = "audio/ogg"
+        elif data.startswith(b"fLaC"): mime = "audio/flac"
+        elif data.startswith(b"RIFF") and data[8:12] == b"WAVE": mime = "audio/wav"
+        elif data[4:8] == b"ftyp" and data[8:12] in {b"M4A ", b"isom", b"mp42", b"mp41"}: mime = "audio/mp4"
+        if not mime:
+            raise HTTPException(status_code=415, detail="MP3, M4A, OGG, FLAC veya WAV müzik seçin")
+        track_title = (title.strip() or file.filename or "Müzik")[:128]
         # Aynı kullanıcının paralel isteklerinde hem slot hem Lidya bakiyesi atomik korunmalı.
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
         if not locked_user:
@@ -734,7 +747,7 @@ def register_room_auth(current_user_dependency):
         if current >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
         if locked_user.lidya < 150: raise HTTPException(status_code=400, detail="Müzik eklemek için 150 Lidya gerekli")
         locked_user.lidya -= 150
-        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=int(current)+1, title=payload.title.strip(), source_url=payload.source_url.strip(), paid_until=datetime.now(timezone.utc)+timedelta(days=7))
+        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=int(current)+1, title=track_title, source_url="", audio_bytes=data, audio_mime=mime, paid_until=datetime.now(timezone.utc)+timedelta(days=7))
         db.add(music)
         try:
             db.commit()
@@ -742,7 +755,14 @@ def register_room_auth(current_user_dependency):
             db.rollback()
             raise HTTPException(status_code=409, detail="Müzik kuyruğu isteği eşzamanlı olarak işlendi; tekrar deneyin")
         db.refresh(music)
-        return {"id":music.id,"slot":music.slot,"title":music.title,"source_url":music.source_url,"paid_until":music.paid_until}
+        return {"id":music.id,"slot":music.slot,"title":music.title,"audio_url":f"/rooms/{room.id}/music/{music.id}/audio","paid_until":music.paid_until}
+    @router.get("/{room_id}/music/{music_id}/audio")
+    def music_audio(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
+        if not music or not music.audio_bytes: raise HTTPException(status_code=404, detail="Müzik dosyası bulunamadı")
+        return Response(content=music.audio_bytes, media_type=music.audio_mime or "application/octet-stream", headers={"Cache-Control":"private, no-store", "X-Content-Type-Options":"nosniff"})
     @router.delete("/{room_id}/music/{music_id}")
     def delete_music(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
@@ -807,7 +827,7 @@ def register_room_auth(current_user_dependency):
     def list_music(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"source_url":m.source_url,"paid_until":m.paid_until,"is_playing":m.is_playing,"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
+        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if m.audio_bytes else None,"source_url":m.source_url if not m.audio_bytes else None,"paid_until":m.paid_until,"is_playing":m.is_playing,"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
 
 
 

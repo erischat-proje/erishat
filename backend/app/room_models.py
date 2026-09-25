@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -83,6 +83,8 @@ class RoomMusic(Base):
     slot: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String(128), nullable=False)
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    audio_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    audio_mime: Mapped[str | None] = mapped_column(String(32), nullable=True)
     paid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_playing: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     position_seconds: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)

@@ -44,8 +44,8 @@ def display_state(state):
             for h in hands
         ],
         "active_hand": state.get("active_hand", 0),
-        "dealer_hand": state.get("dealer_hand") or [],
-        "dealer_total": state.get("dealer_total", 0),
+        "dealer_hand": (state.get("dealer_hand") or []) if state.get("phase") == "finished" else (state.get("dealer_hand") or [])[:1],
+        "dealer_total": state.get("dealer_total", 0) if state.get("phase") == "finished" else None,
         "result": state.get("result"),
         "split": bool(state.get("split")),
     }
@@ -137,4 +137,3 @@ def action(state, action):
         "dealer_hand":dealer,"dealer_total":dealer_total,"result":overall,
     })
     return overall,state
-

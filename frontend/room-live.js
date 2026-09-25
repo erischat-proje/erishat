@@ -7,8 +7,8 @@
     try {
       const r = await fetch(`${API}/rooms`, { headers: headers() }); if (!r.ok) throw new Error(`rooms:${r.status}`);
       const data = await r.json(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
-      targets.forEach(el => { el.innerHTML=''; if (!rooms.length) { el.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Henüz oda yok. İlk odayı açabilirsin.</div>'; return; }
-        rooms.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||`Oda #${id}`, count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('small').textContent=`${count} kişi • ${owner}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;window.__erisCurrentRoomUserId=localStorage.getItem('eris_user_id')||'';if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
+      targets.forEach(el => { el.innerHTML=''; const shown=el.id==='rooms'?rooms.filter(room=>Number(room.member_count||0)>1):rooms; if (!shown.length) { el.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Şu anda aktif oda yok.</div>'; return; }
+        shown.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||`Oda #${id}`, count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('small').textContent=`${count} kişi • ${owner}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;window.__erisCurrentRoomUserId=localStorage.getItem('eris_user_id')||'';if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
       });
     } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>{el.textContent=e.message||'Odalar yüklenemedi.'}); }
   }
@@ -221,6 +221,13 @@
   window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
+
+  window.addEventListener('pagehide',()=>{
+    const id=window.ErisCurrentRoomId||window.currentRoomId;
+    if(id&&document.getElementById('erisRoomSurface')?.classList.contains('show')){
+      fetch(`${API}/rooms/${encodeURIComponent(id)}/leave`,{method:'POST',headers:{...headers(),'Content-Type':'application/json'},body:'{}',keepalive:true}).catch(()=>{});
+    }
+  });
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadRooms,{once:true}); else loadRooms();
 })();

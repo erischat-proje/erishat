@@ -52,6 +52,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credent
 def ensure_system_data_columns() -> None:
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE users ALTER COLUMN lidya TYPE BIGINT"))
+        conn.execute(text("ALTER TABLE users ALTER COLUMN lidya SET DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya_gem BIGINT NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
@@ -66,11 +67,14 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_sub ON users (google_sub) WHERE google_sub IS NOT NULL"))
         conn.execute(text("ALTER TABLE system_lidya_gem_ledger ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)"))
         conn.execute(text("ALTER TABLE game_rounds ADD COLUMN IF NOT EXISTS state_data TEXT NOT NULL DEFAULT '{}'"))
+        conn.execute(text("ALTER TABLE game_rounds ADD COLUMN IF NOT EXISTS user_id VARCHAR(64)"))
         conn.execute(text("ALTER TABLE room_announcements ADD COLUMN IF NOT EXISTS message TEXT NOT NULL DEFAULT ''"))
         conn.execute(text("ALTER TABLE room_music ADD COLUMN IF NOT EXISTS is_playing BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE room_music ADD COLUMN IF NOT EXISTS position_seconds INTEGER NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE room_music ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ"))
         conn.execute(text("ALTER TABLE room_music ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()"))
+        conn.execute(text("ALTER TABLE room_music ADD COLUMN IF NOT EXISTS audio_bytes BYTEA"))
+        conn.execute(text("ALTER TABLE room_music ADD COLUMN IF NOT EXISTS audio_mime VARCHAR(32)"))
         conn.execute(text("ALTER TABLE room_announcements ADD COLUMN IF NOT EXISTS pinned BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_system_lidya_gem_ledger_idempotency ON system_lidya_gem_ledger (idempotency_key) WHERE idempotency_key IS NOT NULL"))
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
