@@ -17,7 +17,11 @@ class GamePlayRequest(BaseModel):
     room_id: Any = None  # Oda ID zorunluluğu tamamen esnetildi
 
 @router.post("/play")
-def play_game(payload: GamePlayRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def play_game(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        payload = await request.json()
+    except:
+        payload = {}
     if payload.bet_amount <= 0:
         raise HTTPException(status_code=400, detail="Geçersiz bahis miktarı.")
         
