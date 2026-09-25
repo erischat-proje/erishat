@@ -214,7 +214,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
       setTimeout(() => {
         if (!box.querySelector('iframe')) {
           box.type = 'button'; box.className = 'authBtn authGoogle'; box.textContent = 'Google ile giriş yap';
-          box.querySelector('button').onclick = () => {
+          box.onclick = () => {
             status.textContent = 'Google giriş servisi başlatılıyor…';
             try {
               window.google.accounts.id.prompt();
@@ -268,38 +268,6 @@ async function emailOtpLogin(email, code = null, purpose = 'login') {
   return session.user;
 }
 
-async function appleLogin(authorizationCode) {
-  const session = await request('/auth/apple', {
-    method: 'POST',
-    body: JSON.stringify({
-      authorization_code: authorizationCode
-    })
-  });
-
-  setToken(session.access_token);
-  window.ErisAuth.user = session.user;
-  emit('erischat:auth', {state:'ready', user:session.user, real:true});
-  continueAfterAuth(session.user);
-  connectGeneralWs();
-  return session.user;
-}
-
-async function facebookLogin(accessToken) {
-  const session = await request('/auth/facebook', {
-    method: 'POST',
-    body: JSON.stringify({
-      access_token: accessToken
-    })
-  });
-
-  setToken(session.access_token);
-  window.ErisAuth.user = session.user;
-  emit('erischat:auth', {state:'ready', user:session.user, real:true});
-  continueAfterAuth(session.user);
-  connectGeneralWs();
-  return session.user;
-}
-
 async function registerAnonymous() {
     const suffix = Math.random().toString(36).slice(2, 7);
     const session = await request('/users', { method:'POST', body:JSON.stringify({ nickname:`Anonim_${suffix}`, gender:'male', avatar:'👤' }) });
@@ -327,7 +295,7 @@ async function registerAnonymous() {
     const token = getToken();
     if (!token || (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING))) return;
     const base = API().replace(/^http/, 'ws').replace(/\/v1$/, '');
-    socket = new WebSocket(`${base}/ws?token=${encodeURIComponent(token)}`);
+    socket = new WebSocket(`${base}/ws`, ['erischat', `token.${token}`]);
     socket.onopen = () => { retryMs=1000; emit('erischat:ws',{state:'open'}); socket.send(JSON.stringify({type:'ping'})); };
     socket.onmessage = event => { try { emit('erischat:event', JSON.parse(event.data)); } catch (_) {} };
     socket.onclose = () => { emit('erischat:ws',{state:'closed'}); if(!getToken())return; clearTimeout(retryTimer); retryTimer=setTimeout(connectGeneralWs,retryMs); retryMs=Math.min(retryMs*2,15000); };
@@ -342,7 +310,7 @@ async function registerAnonymous() {
     location.reload();
   }
 
-  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, appleLogin, facebookLogin, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
+  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
   function continueAfterAuth(user) {
     window.ErisAuth = window.ErisAuth || {};

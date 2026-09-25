@@ -17,9 +17,6 @@ from .auth import (
     create_anonymous_user,
     create_or_login_google_user,
     create_or_login_verified_identity,
-    create_or_login_external_identity,
-    verify_apple_authorization_code,
-    verify_facebook_access_token,
 )
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
@@ -193,20 +190,6 @@ app.include_router(support_router)
 app.include_router(admin_router)
 
 
-def ensure_demo_user(db: Session) -> User:
-    repo = UserRepository(db)
-    user = repo.get("demo")
-    if user:
-        return user
-    public_id = "0000000001"
-    while db.scalar(select(User.id).where(User.public_id == public_id)) or db.scalar(select(UserIdRegistry.user_id).where(UserIdRegistry.public_id == public_id)):
-        public_id = f"{uuid4().int % 10_000_000_000:010d}"
-    created = repo.create(User(id="demo", public_id=public_id, nickname="Eris", avatar="🦊", gender="unspecified", lidya=10_000_000))
-    db.add(UserIdRegistry(user_id=created.id, public_id=created.public_id))
-    db.commit()
-    return created
-
-
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "erischat-api", "version": app.version}
@@ -240,11 +223,6 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> Session
     return SessionOut(access_token=create_session(db, user), user=user)
 
 
-@app.post("/v1/users/demo/ensure", response_model=UserOut)
-def create_demo_user(db: Session = Depends(get_db)) -> UserOut:
-    return ensure_demo_user(db)
-
-
 class GoogleLoginPayload(BaseModel):
     credential: str = Field(min_length=20, max_length=20000)
 
@@ -254,11 +232,6 @@ def provider_config():
     return {
         "google": bool(settings.google_client_id),
         "google_client_id": settings.google_client_id,
-        "apple": False,
-        "apple_client_id": None,
-        "apple_redirect_uri": None,
-        "facebook": False,
-        "facebook_app_id": None,
     }
 
 @app.get("/v1/auth/google-config")
@@ -276,75 +249,6 @@ def google_login(payload: GoogleLoginPayload, request: Request, db: Session = De
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return SessionOut(access_token=create_session(db, user), user=user)
 
-
-
-class AppleLoginPayload(BaseModel):
-    authorization_code: str = Field(min_length=10, max_length=10000)
-
-
-class FacebookLoginPayload(BaseModel):
-    access_token: str = Field(min_length=20, max_length=10000)
-
-
-@app.post("/v1/auth/apple", response_model=SessionOut)
-def apple_login(
-    payload: AppleLoginPayload,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> SessionOut:
-    ip = request.client.host if request.client else None
-    device_info = request.headers.get("user-agent", "")[:512]
-
-    try:
-        apple = verify_apple_authorization_code(payload.authorization_code)
-
-        email = apple.get("email") if apple.get("email_verified") else None
-
-        user = create_or_login_external_identity(
-            db,
-            provider="apple",
-            provider_subject=apple["sub"],
-            email=email,
-            ip=ip,
-            device_info=device_info,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    return SessionOut(
-        access_token=create_session(db, user),
-        user=user,
-    )
-
-
-@app.post("/v1/auth/facebook", response_model=SessionOut)
-def facebook_login(
-    payload: FacebookLoginPayload,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> SessionOut:
-    ip = request.client.host if request.client else None
-    device_info = request.headers.get("user-agent", "")[:512]
-
-    try:
-        facebook = verify_facebook_access_token(payload.access_token)
-
-        user = create_or_login_external_identity(
-            db,
-            provider="facebook",
-            provider_subject=facebook["sub"],
-            email=facebook.get("email"),
-            nickname=facebook.get("nickname"),
-            ip=ip,
-            device_info=device_info,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    return SessionOut(
-        access_token=create_session(db, user),
-        user=user,
-    )
 
 
 @app.post("/v1/auth/otp/request")
@@ -826,8 +730,8 @@ class ConnectionManager:
     def __init__(self) -> None:
         self.connections: dict[str, set[WebSocket]] = {}
 
-    async def connect(self, user_id: str, websocket: WebSocket) -> None:
-        await websocket.accept()
+    async def connect(self, user_id: str, websocket: WebSocket, subprotocol: str | None = None) -> None:
+        await websocket.accept(subprotocol=subprotocol)
         self.connections.setdefault(user_id, set()).add(websocket)
 
     def disconnect(self, user_id: str, websocket: WebSocket) -> None:
@@ -855,9 +759,17 @@ def websocket_session_active(token: str) -> bool:
         return bool(user and user.is_active)
 
 
+def websocket_token(websocket: WebSocket) -> str | None:
+    # Browser WebSocket APIs cannot set Authorization; keep credentials out of URLs/logs.
+    for protocol in websocket.scope.get("subprotocols", []):
+        if protocol.startswith("token."):
+            return protocol[6:]
+    return None
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
-    token = websocket.query_params.get("token")
+    token = websocket_token(websocket)
     if not token:
         await websocket.close(code=1008, reason="token gerekli")
         return
@@ -870,7 +782,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         user_id = user.id
-    await manager.connect(user_id, websocket)
+    await manager.connect(user_id, websocket, subprotocol="erischat")
     try:
         while True:
             data = await websocket.receive_json()
@@ -947,7 +859,7 @@ async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
 
 @app.websocket("/ws/rooms/{room_id}")
 async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
-    token = websocket.query_params.get("token")
+    token = websocket_token(websocket)
     if not token:
         await websocket.close(code=1008, reason="token gerekli")
         return
@@ -966,7 +878,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
         history.reverse()
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
-    await websocket.accept()
+    await websocket.accept(subprotocol="erischat")
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
     room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
     await websocket.send_json({"type":"room_history","messages":history_payload})
@@ -1085,18 +997,6 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             await websocket.close(code=1011)
         except Exception:
             pass
-
-
-@app.get("/v1/demo")
-def demo(db: Session = Depends(get_db)) -> dict:
-    user = ensure_demo_user(db)
-    return {"id": user.id, "public_id": user.public_id, "nickname": user.nickname, "avatar": user.avatar, "message": "ErisChat API hazır"}
-
-
-@app.get("/v1/debug/tables")
-def debug_tables(db: Session = Depends(get_db)) -> dict[str, list[str]]:
-    result = db.execute(text("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).all()
-    return {"tables": [row[0] for row in result]}
 
 
 static_dir = Path(__file__).resolve().parents[2] / "frontend"

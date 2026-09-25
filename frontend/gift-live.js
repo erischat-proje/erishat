@@ -90,9 +90,9 @@
     currentRoomId=String(roomId);
     const t=token();
     if(!t) return null;
-    const url=wsBase()+'/ws/rooms/'+encodeURIComponent(currentRoomId)+'?token='+encodeURIComponent(t);
+    const url=wsBase()+'/ws/rooms/'+encodeURIComponent(currentRoomId);
     const activeRoom=currentRoomId;
-    const ws=new WebSocket(url);
+    const ws=new WebSocket(url,['erischat','token.'+t]);
     socket=ws;
     ws.onopen=()=>{
       if(socket!==ws || currentRoomId!==activeRoom) return;

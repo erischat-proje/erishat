@@ -7,10 +7,10 @@
     try {
       const r = await fetch(`${API}/rooms`, { headers: headers() }); if (!r.ok) throw new Error(`rooms:${r.status}`);
       const data = await r.json(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
-      targets.forEach(el => { el.innerHTML=''; if (!rooms.length) { return; }
+      targets.forEach(el => { el.innerHTML=''; if (!rooms.length) { el.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Henüz oda yok. İlk odayı açabilirsin.</div>'; return; }
         rooms.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||`Oda #${id}`, count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('small').textContent=`${count} kişi • ${owner}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;window.__erisCurrentRoomUserId=localStorage.getItem('eris_user_id')||'';if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
       });
-    } catch(e) { console.warn('[ErisChat] room list unavailable',e); }
+    } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>{el.textContent=e.message||'Odalar yüklenemedi.'}); }
   }
   window.ErisChatRoomList={load:loadRooms};
 
@@ -147,7 +147,7 @@
     if(!list||!window.ErisPlatform?.getRealtimeUrl)return;
     const token=window.ErisPlatform.getAccessToken?.(); if(!token){list.innerHTML='<div style="color:#ff9bc9;font-size:9px">Giriş yapınca canlı oda sohbeti burada çalışır.</div>';return;}
     window.__erisRoomSocket?.close?.();
-    const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)+'?token='+encodeURIComponent(token)));window.__erisRoomSocket=socket;
+    const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;
     const add=d=>{const e=document.createElement('div');e.className='eris-chat-msg'+(String(d.user_id||'')===String(localStorage.getItem('eris_user_id')||'')?' me':'');e.innerHTML='<b></b><span></span>';e.querySelector('b').textContent=String(d.user_id||'')===String(localStorage.getItem('eris_user_id')||'')?'Sen':(d.nickname||d.user_id||'Kullanıcı');e.querySelector('span').textContent=d.text||'';list.appendChild(e);list.scrollTop=list.scrollHeight;};
     socket.onopen=()=>{state.textContent='Canlı oda • sohbet bağlı';list.innerHTML='';};
     socket.onclose=()=>{if(document.getElementById('erisRoomSurface')?.classList.contains('show'))state.textContent='Oda • sohbet bağlantısı kapandı';};
