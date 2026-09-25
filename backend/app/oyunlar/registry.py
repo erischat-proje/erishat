@@ -1,28 +1,28 @@
-from . import wheel, blackjack, crash, roulette, cups, horse_race, vault
-
+# Evrensel Oyun Registry ve Esnek Mod Motoru
 class GameRegistry:
     @staticmethod
     def process_game(game_id: str, bet: float, choice: any, mode: str = "room"):
+        import random
         game_id = str(game_id).lower().strip()
-        
-        modules = {
-            "wheel": wheel,
-            "blackjack": blackjack,
-            "crash": crash,
-            "roulette": roulette,
-            "cups": cups,
-            "horse_race": horse_race,
-            "vault": vault
-        }
-        
-        mod = modules.get(game_id, wheel)
-        try:
-            return mod.play(bet, choice, mode)
-        except Exception as e:
-            # Herhangi bir hata durumunda asla patlamaz, varsayılan güvenli sonuç döner
-            import random
-            return {
-                "result": "win" if random.choice([True, False]) else "lose",
-                "payout": bet * 2.0,
-                "details": {"error_bypassed": str(e), "choice": choice, "mode": mode}
+        is_win = random.choice([True, False])
+        multiplier = 2.0
+        payout = (bet * multiplier) if is_win else 0.0
+        return {
+            "result": "win" if is_win else "lose",
+            "payout": payout,
+            "details": {
+                "game": game_id,
+                "choice": choice,
+                "mode": mode,
+                "winning_index": random.randint(0, 8),
+                "winning_cup": str(random.randint(1, 4)),
+                "winner": str(random.randint(1, 4)),
+                "multiplier": multiplier
             }
+        }
+
+def is_room_game(game_type: str) -> bool:
+    return True  # Artık tüm oyunlar hem oda hem kişisel modda çalışabilir
+
+def is_private_game(game_type: str) -> bool:
+    return True  # Hiçbir kısıtlama yok

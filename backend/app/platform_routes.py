@@ -568,7 +568,7 @@ def register_platform_auth(current_user_dependency):
         return {"deleted": True, "id": announcement_id}
 
     GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
-    ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel"}
+    ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel", "blackjack", "crash", "vault"}
     PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
     GAME_PROFILES = {
         "roulette": {
