@@ -185,7 +185,7 @@
                 const res = await api('/games/' + game + '/play', {
                     method: 'POST',
                     body: JSON.stringify({
-                        room_id: null,
+                        room_id: window.ErisCurrentRoomId || window.currentRoomId || localStorage.getItem('eris_my_room_id') || 'global-game-room',
                         choice: modal.querySelector('[data-choice]').value,
                         stake: Number(modal.querySelector('[data-stake]').value)
                     })
