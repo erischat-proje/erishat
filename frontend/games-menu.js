@@ -1,7 +1,6 @@
 (() => {
     'use strict';
-    
-    // 7 Oyunun ana sayfa ve menü entegrasyon listesi
+
     const ALL_GAMES = [
         { id: 'wheel', name: 'Şans Çarkı', icon: '🎡', desc: 'Çarkı çevir, büyük ödülü kap!' },
         { id: 'crash', name: 'Crash', icon: '🚀', desc: 'Çarpanlar yükselmeden roketten atla!' },
@@ -28,21 +27,25 @@
                 </div>
                 <style>
                     .eg-launcher-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; padding: 10px; width: 100%; }
-                    .eg-launcher-card { background: linear-gradient(145deg, #221836, #140e21); border: 1px solid rgba(138,92,255,0.3); border-radius: 16px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: all 0.3s ease; color: white; }
-                    .eg-launcher-card:hover { transform: translateY(-4px); border-color: #a77aff; box-shadow: 0 10px 25px rgba(138,92,255,0.35); background: linear-gradient(145deg, #31224f, #1a112c); }
-                    .eg-lc-icon { font-size: 28px; margin-bottom: 6px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
-                    .eg-lc-title { font-weight: 700; font-size: 13px; color: #ffd700; margin-bottom: 4px; }
-                    .eg-lc-desc { font-size: 10px; color: rgba(255,255,255,0.65); line-height: 1.2; }
+                    .eg-launcher-card { background: #1a1625; border: 1px solid #ffffff14; border-radius: 14px; padding: 14px; text-align: left; color: #fff; cursor: pointer; transition: all 0.2s; }
+                    .eg-launcher-card:hover { border-color: #a855f7; transform: translateY(-2px); background: #221c33; }
+                    .eg-lc-icon { font-size: 24px; margin-bottom: 8px; }
+                    .eg-lc-title { font-weight: bold; font-size: 13px; margin-bottom: 4px; }
+                    .eg-lc-desc { font-size: 10px; color: #938a9f; line-height: 1.3; }
                 </style>
             `;
-            containerEl.querySelectorAll('.eg-launcher-card').forEach(btn => {
-                btn.onclick = () => {
-                    const gameId = btn.dataset.game;
-                    if (window.ErisChatGames && typeof window.ErisChatGames.open === 'function') {
-                        window.ErisChatGames.open('main', null, gameId);
+
+            if (!containerEl.dataset.hasClickListener) {
+                containerEl.dataset.hasClickListener = "true";
+                containerEl.addEventListener("click", (e) => {
+                    const card = e.target.closest(".eg-launcher-card");
+                    if (!card) return;
+                    const gameId = card.dataset.game;
+                    if (gameId && window.ErisGames && typeof window.ErisGames.open === 'function') {
+                        window.ErisGames.open('main', null, gameId);
                     }
-                };
-            });
+                });
+            }
         }
     };
 })();
