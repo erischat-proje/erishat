@@ -174,7 +174,7 @@
         modal.querySelector('[data-play]').onclick = async () => {
             const button = modal.querySelector('[data-play]'),
                   stage = modal.querySelector('.eg-stage'),
-                  result = modal.querySelector('[data-result] || .eg-result'),
+                  result = modal.querySelector('[data-result]') || modal.querySelector('.eg-result'),
                   controls = modal.querySelector('[data-controls]');
 
             button.disabled = true;
