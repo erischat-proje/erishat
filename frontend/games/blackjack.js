@@ -1,55 +1,64 @@
 (() => {
     'use strict';
-    function render(stageEl) {
-        stageEl.innerHTML = `
-            <div class="eg-bj-wrapper">
-                <div class="eg-bj-table">
-                    <div class="eg-bj-section">
-                        <div class="eg-bj-label">Krupiye Masa</div>
-                        <div class="eg-bj-cards">
-                            <div class="eg-bj-card card-back">🂠</div>
-                            <div class="eg-bj-card">K♠</div>
+
+    const BLACKJACK_OPTIONS = [
+        ['standard', 'Klasik Blackjack'],
+        ['aggressive', 'Yüksek Bahis (High Roller)']
+    ];
+
+    const BlackjackGame = {
+        options: BLACKJACK_OPTIONS,
+
+        render(container) {
+            container.innerHTML = `
+                <div style="width:100%; min-height:210px; background:radial-gradient(circle, #0f291e 0%, #06120c 100%); border-radius:14px; border:1px solid rgba(34,197,94,0.3); padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;">
+                    <!-- Krupiye Alanı -->
+                    <div style="text-align:center;">
+                        <div style="font-size:10px; color:#86efac; font-weight:600; margin-bottom:4px;">KRUPİYE</div>
+                        <div id="bjDealerCards" style="display:flex; justify-content:center; gap:6px; min-height:45px; align-items:center;">
+                            <div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff;">🂠</div>
+                            <div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff;">🂠</div>
                         </div>
                     </div>
-                    <div class="eg-bj-divider"></div>
-                    <div class="eg-bj-section">
-                        <div class="eg-bj-label">Senin Elin</div>
-                        <div class="eg-bj-cards">
-                            <div class="eg-bj-card animate-deal">A♥</div>
-                            <div class="eg-bj-card animate-deal">K♦</div>
+
+                    <!-- Masa Ortası / Bilgi -->
+                    <div style="text-align:center; font-size:12px; color:#facc15; font-weight:700; text-shadow:0 0 10px rgba(250,204,21,0.4);">
+                        BLACKJACK 21 • Krupiyeyi Alt Et
+                    </div>
+
+                    <!-- Oyuncu Alanı -->
+                    <div style="text-align:center;">
+                        <div id="bjPlayerCards" style="display:flex; justify-content:center; gap:6px; min-height:45px; align-items:center;">
+                            <div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff;">🂠</div>
+                            <div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff;">🂠</div>
                         </div>
+                        <div style="font-size:10px; color:#86efac; font-weight:600; margin-top:4px;">OYUNCU</div>
                     </div>
                 </div>
-                <div class="eg-bj-status">Masaya oturdun. Kararını ver!</div>
-            </div>
-            <style>
-                .eg-bj-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; min-height: 240px; }
-                .eg-bj-table { width: 92%; max-width: 300px; background: radial-gradient(circle, #0b533e 0%, #031b12 100%); border-radius: 20px; border: 4px solid #d4af37; padding: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.6); }
-                .eg-bj-section { display: flex; flex-direction: column; align-items: center; margin: 4px 0; }
-                .eg-bj-label { font-size: 11px; font-weight: 700; color: #f3e5ab; margin-bottom: 6px; letter-spacing: 0.5px; }
-                .eg-bj-cards { display: flex; gap: 10px; }
-                .eg-bj-card { width: 38px; height: 54px; background: linear-gradient(135deg, #ffffff, #e0e0e0); color: #1a1a1a; border-radius: 8px; font-weight: 800; font-size: 13px; display: grid; place-items: center; box-shadow: 0 6px 15px rgba(0,0,0,0.5); border: 1px solid #ccc; }
-                .eg-bj-card.card-back { background: linear-gradient(135deg, #c0392b, #962d22); color: #f1c40f; font-size: 18px; border-color: #e74c3c; }
-                .eg-bj-divider { width: 100%; height: 1px; background: rgba(212, 175, 55, 0.4); margin: 8px 0; }
-                .eg-bj-status { margin-top: 12px; font-weight: 700; color: #ffd700; font-size: 13px; text-align: center; }
-                @keyframes cardDeal { 0% { transform: translateY(-35px) scale(0.7); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
-                .animate-deal { animation: cardDeal 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-            </style>
-        `;
-    }
-    async function animate(stageEl, data) {
-        const status = stageEl.querySelector('.eg-bj-status');
-        const playerSec = stageEl.querySelector('.eg-bj-section:last-child .eg-bj-cards');
-        if (!status) return;
-        status.textContent = '🃏 Kartlar dağıtılıyor...';
-        await new Promise(r => setTimeout(r, 700));
-        if (data && data.newCard) {
-            const cardEl = document.createElement('div');
-            cardEl.className = 'eg-bj-card animate-deal';
-            cardEl.textContent = data.newCard;
-            playerSec.appendChild(cardEl);
+            `;
+        },
+
+        async animate(container, data) {
+            const playerBox = document.getElementById('bjPlayerCards');
+            const dealerBox = document.getElementById('bjDealerCards');
+            if (!playerBox || !dealerBox) return;
+
+            const state = data?.state || data;
+            const playerHand = state?.player_hand || ['A', '10'];
+            const dealerHand = state?.dealer_hand || ['10', '?'];
+
+            // Kartları profesyonelce ekrana yansıtma animasyonu
+            playerBox.innerHTML = playerHand.map(c => `
+                <div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff; transform:scale(0.8); animation: popIn 0.3s forwards;">${c}</div>
+            `).join('');
+
+            dealerBox.innerHTML = dealerHand.map(c => `
+                <div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff; transform:scale(0.8); animation: popIn 0.3s forwards;">${c}</div>
+            `).join('');
+
+            return new Promise(resolve => setTimeout(resolve, 600));
         }
-        status.textContent = '🏆 El Sonucu: ' + (data.result || 'Tamamlandı');
-    }
-    window.ErisGameBlackjack = { render, animate, options: [['hit','Kart Çek (Hit)'],['stand','Pas (Stand)'],['double','İkiye Katla (Double)']] };
+    };
+
+    window.ErisGameBlackjack = BlackjackGame;
 })();
