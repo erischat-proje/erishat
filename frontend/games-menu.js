@@ -41,8 +41,8 @@
                     const card = e.target.closest(".eg-launcher-card");
                     if (!card) return;
                     const gameId = card.dataset.game;
-                    if (gameId && window.ErisGames && typeof window.ErisGames.open === 'function') {
-                        window.ErisGames.open('main', null, gameId);
+                    if (gameId && window.ErisGames && typeof window.ErisChatGames.open === 'function') {
+                        window.ErisChatGames.open('main', null, gameId);
                     }
                 });
             }
