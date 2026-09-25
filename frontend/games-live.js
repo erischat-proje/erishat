@@ -171,17 +171,7 @@
         }
         loadGameModule(game);
 
-        modal.querySelector([data-play]).onclick = async () => {
-        let activeRoomId = window.ErisCurrentRoomId || window.currentRoomId || localStorage.getItem(eris_my_room_id);
-        if (!activeRoomId) {
-            try {
-                const roomsData = await api(/rooms);
-                const roomsList = Array.isArray(roomsData) ? roomsData : (roomsData?.rooms || roomsData?.items || []);
-                if (roomsList.length > 0) {
-                    activeRoomId = roomsList[0].id || roomsList[0].room_id || null;
-                }
-            } catch (err) {}
-        }
+        modal.querySelector('[data-play]').onclick = async () => {
             const button = modal.querySelector('[data-play]'),
                   stage = modal.querySelector('.eg-stage'),
                   result = modal.querySelector('.eg-result'),
@@ -195,7 +185,7 @@
                 const res = await api('/games/' + game + '/play', {
                     method: 'POST',
                     body: JSON.stringify({
-                        room_id: activeRoomId || 'global-game-room',
+                        room_id: window.ErisCurrentRoomId || window.currentRoomId || localStorage.getItem('eris_my_room_id') || 'global-game-room',
                         choice: modal.querySelector('[data-choice]').value,
                         stake: Number(modal.querySelector('[data-stake]').value)
                     })
