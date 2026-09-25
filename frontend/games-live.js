@@ -185,7 +185,7 @@
                 const res = await api('/games/' + game + '/play', {
                     method: 'POST',
                     body: JSON.stringify({
-                        room_id: roomId,
+                        room_id: null,
                         choice: modal.querySelector('[data-choice]').value,
                         stake: Number(modal.querySelector('[data-stake]').value)
                     })
