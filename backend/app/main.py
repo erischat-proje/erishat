@@ -210,14 +210,6 @@ def ready() -> dict[str, str]:
         raise HTTPException(status_code=503, detail="database not ready") from exc
 
 
-@app.get("/v1/users/{user_id}", response_model=UserOut)
-def get_user(user_id: str, db: Session = Depends(get_db), current: User = Depends(current_user)) -> User:
-    user = UserRepository(db).get(user_id) or db.scalar(select(User).where(User.public_id == user_id))
-    if not user or not user.is_active:
-        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-    return user
-
-
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> SessionOut:
     try:
@@ -884,9 +876,14 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
+    existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
     room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
     await websocket.send_json({"type":"room_history","messages":history_payload})
-    await websocket.send_json({"type":"rtc_ready","user_id":str(user.id),"room_id":internal_room_id})
+    await websocket.send_json({"type":"rtc_ready","user_id":str(user.id),"room_id":internal_room_id,"peers":existing_peers})
+    for peer_ws in list(room_rtc_users.get(internal_room_id, {})):
+        if peer_ws is not websocket:
+            try: await peer_ws.send_json({"type":"rtc_peer_joined","user_id":str(user.id)})
+            except Exception: pass
     try:
         while True:
             data = await websocket.receive_json()
@@ -914,6 +911,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 sender_user_id = str(user.id)
                 if not target or target == sender_user_id:
                     continue
+                if data["type"] == "rtc_offer":
+                    with Session(engine) as db:
+                        seat = db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id, RoomSeat.muted.is_(False)))
+                        if not seat: continue
                 payload = {"type": data["type"], "from_user_id": sender_user_id, "to_user_id": target, "payload": data.get("payload")}
                 for peer_ws, peer_user in list(room_rtc_users.get(internal_room_id, {}).items()):
                     if str(peer_user) == target:

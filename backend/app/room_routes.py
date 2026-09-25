@@ -637,16 +637,23 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)):
+            raise HTTPException(status_code=403, detail="Odaya erişiminiz yok")
         raw = os.getenv("ERIS_WEBRTC_ICE_SERVERS_JSON", "").strip()
-        if not raw:
-            return {"ice_servers": []}
-        try:
-            value = json.loads(raw)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
-        if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
-            raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
-        return {"ice_servers": value}
+        if raw:
+            try: value = json.loads(raw)
+            except json.JSONDecodeError: raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
+            if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
+                raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
+            return {"ice_servers": value}
+        from .config import settings
+        servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
+        turn_url = settings.rtc_turn_url or os.getenv("ERISCHAT_TURN_URL", "")
+        turn_user = settings.rtc_turn_username or os.getenv("ERISCHAT_TURN_USERNAME", "")
+        turn_password = settings.rtc_turn_credential or os.getenv("ERISCHAT_TURN_PASSWORD", "")
+        if turn_url and turn_user and turn_password:
+            servers.append({"urls":[turn_url],"username":turn_user,"credential":turn_password})
+        return {"ice_servers": servers}
 
     @router.post("/{room_id}/rtc-signals")
     def send_rtc_signal(room_id: str, payload: RTCSignal, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -743,11 +750,12 @@ def register_room_auth(current_user_dependency):
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
         if not locked_user:
             raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
-        current = db.scalar(select(func.count(RoomMusic.id)).where(RoomMusic.room_id == room.id, RoomMusic.user_id == locked_user.id)) or 0
-        if current >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
+        used_slots = set(db.scalars(select(RoomMusic.slot).where(RoomMusic.room_id == room.id, RoomMusic.user_id == locked_user.id)))
+        slot = next((number for number in range(1, 11) if number not in used_slots), None)
+        if slot is None or len(used_slots) >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
         if locked_user.lidya < 150: raise HTTPException(status_code=400, detail="Müzik eklemek için 150 Lidya gerekli")
         locked_user.lidya -= 150
-        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=int(current)+1, title=track_title, source_url="", audio_bytes=data, audio_mime=mime, paid_until=datetime.now(timezone.utc)+timedelta(days=7))
+        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=slot, title=track_title, source_url="", audio_bytes=data, audio_mime=mime, paid_until=datetime.now(timezone.utc)+timedelta(days=7))
         db.add(music)
         try:
             db.commit()
@@ -778,6 +786,8 @@ def register_room_auth(current_user_dependency):
         music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
         if not music:
             raise HTTPException(status_code=404, detail="Müzik bulunamadı")
+        if not music.audio_bytes:
+            raise HTTPException(status_code=409, detail="Eski URL kaydını telefondan yeniden yükleyin")
         if music.user_id != user.id:
             require_staff(db, room, user)
         action = payload.playback_action
@@ -827,60 +837,4 @@ def register_room_auth(current_user_dependency):
     def list_music(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if m.audio_bytes else None,"source_url":m.source_url if not m.audio_bytes else None,"paid_until":m.paid_until,"is_playing":m.is_playing,"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
-
-
-
-@router.patch("/{room_id}/theme")
-def update_room_theme(
-    room_id: str,
-    payload: RoomThemeUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(_room_auth_dependency),
-):
-    room = get_room_or_404(db, room_id)
-    if room.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Oda sahibi yetkisi gerekli")
-    theme = str(payload.theme or "").strip()
-    if not theme or len(theme) > 80:
-        raise HTTPException(status_code=400, detail="Geçersiz tema")
-    room.theme = theme
-    db.commit()
-    db.refresh(room)
-    return room
-
-
-@router.patch("/{room_id}/seats")
-def update_room_seat_count(
-    room_id: str,
-    payload: RoomSeatCountUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(_room_auth_dependency),
-):
-    room = get_room_or_404(db, room_id)
-    if room.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Oda sahibi yetkisi gerekli")
-
-    if payload.seat_count not in {8,12,16}:
-        raise HTTPException(status_code=400, detail="Koltuk sayısı 8, 12 veya 16 olabilir")
-
-    occupied=sum(
-        1 for seat in getattr(room,"seats",[])
-        if getattr(seat,"user_id",None) is not None
-    )
-    if payload.seat_count < occupied:
-        raise HTTPException(status_code=400,detail="Dolu koltuk sayısından düşük olamaz")
-
-    room.seat_count=payload.seat_count
-    db.commit()
-    db.refresh(room)
-    return room
-
-@router.patch("/{room_id}/capacity")
-def update_room_capacity_alias(
-    room_id: str,
-    payload: RoomSeatCountUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(_room_auth_dependency),
-):
-    return update_room_seat_count(room_id,payload,db,current_user)
+        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if m.audio_bytes else None,"needs_reupload":not bool(m.audio_bytes),"paid_until":m.paid_until,"is_playing":m.is_playing and bool(m.audio_bytes),"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]

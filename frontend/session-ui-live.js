@@ -17,13 +17,13 @@
       const user = detailEvent?.detail?.user || window.ErisAuth?.user;
       if (state === 'error') {
         title.textContent = detailEvent.type === 'erischat:ws' ? 'Canlı bağlantı hatası' : 'Oturum kullanılamıyor';
-        detail.textContent = detailEvent.type === 'erischat:ws' ? 'Bağlantı tekrar kurulacak.' : 'Anonim oturum oluşturulamadı.';
+        detail.textContent = detailEvent.type === 'erischat:ws' ? 'Bağlantı tekrar kurulacak.' : 'Oturum oluşturulamadı.';
         dot.style.background = '#ff6b81';
         return;
       }
       if (state === 'logged_out') { title.textContent = 'Oturum kapalı'; detail.textContent = 'Token temizlendi. Yeni oturum gerektiğinde oluşturulacak.'; dot.style.background = '#e4b85d'; return; }
       if (state === 'ready' || user) {
-        title.textContent = 'Anonim oturum aktif';
+        title.textContent = 'Oturum aktif';
         detail.textContent = user?.nickname ? `${user.nickname} • oturum güvenli` : 'Oturum token ile aktif';
         dot.style.background = '#54dfaa';
         return;

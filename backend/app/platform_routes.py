@@ -18,7 +18,7 @@ from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
-from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomChatMessage, RoomBan, RoomSeat
+from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomChatMessage, RoomBan, RoomSeat
 from .admin_models import AdminRole
 from .system_logs import record
 from .system_data import LidyaGemLedger
@@ -82,16 +82,10 @@ class AnnouncementUpdate(BaseModel):
     message: str | None = Field(default=None, min_length=1, max_length=500)
     enabled: bool | None = None
     pinned: bool | None = None
-class MusicCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=128)
-    source_url: str = Field(min_length=8, max_length=2000)
 class RoomSeatUpdate(BaseModel):
     seat_number: int = Field(ge=1, le=12)
 class RoomChatCreate(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
-class MusicPlayback(BaseModel):
-    action: str = Field(pattern="^(play|pause|stop|seek)$")
-    position_seconds: int | None = Field(default=None, ge=0, le=86400)
 class GameBetCreate(BaseModel):
     choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
 class BlackjackAction(BaseModel):
@@ -234,21 +228,6 @@ def register_platform_auth(current_user_dependency):
             "lidya": int(locked.lidya), "lidya_gem": int(locked.lidya_gem),
             "reference_id": reference_id,
         }
-
-    @router.get("/rooms/{room_id}/rtc-config")
-    def room_rtc_config(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room=db.get(Room,room_id)
-        if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
-        member=db.scalar(select(RoomMember.id).where(RoomMember.room_id==room_id,RoomMember.user_id==user.id))
-        ban=db.scalar(select(RoomBan.id).where(RoomBan.room_id==room_id,RoomBan.user_id==user.id))
-        if not member or ban: raise HTTPException(status_code=403,detail="Odaya erişiminiz yok")
-        ice_servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
-        turn_url = os.getenv("ERISCHAT_TURN_URL", "").strip()
-        turn_user = os.getenv("ERISCHAT_TURN_USERNAME", "").strip()
-        turn_password = os.getenv("ERISCHAT_TURN_PASSWORD", "").strip()
-        if turn_url and turn_user and turn_password:
-            ice_servers.append({"urls": [turn_url], "username": turn_user, "credential": turn_password})
-        return {"ice_servers": ice_servers, "ice_transport_policy": "all"}
 
     @router.get("/rooms/{room_id}/seats")
     def room_seats(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -434,8 +413,8 @@ def register_platform_auth(current_user_dependency):
     def random_room(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rooms=list(db.scalars(select(Room).order_by(Room.created_at.desc()).limit(300))); candidates=[]
         for room in rooms:
-            members=int(db.scalar(select(RoomMember.id).where(RoomMember.room_id==room.id).limit(1)) is not None)
-            if members and not room.locked: candidates.append(room)
+            visitors=int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id==room.id, RoomMember.user_id!=room.owner_id)) or 0)
+            if visitors and not room.locked: candidates.append(room)
         if not candidates: raise HTTPException(status_code=404,detail="Uygun oda bulunamadı")
         room=random.choice(candidates); return {"room_id":room.id,"name":room.name,"member_count":int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id==room.id)) or 0)}
     @router.get("/conversations")
@@ -473,8 +452,8 @@ def register_platform_auth(current_user_dependency):
         message=Message(conversation_id=conversation_id,sender_id=user.id,text=text); db.add(message); db.commit(); db.refresh(message); return message
     @router.get("/users/{user_id}")
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        target=db.get(User,user_id)
-        if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        if not target or not target.is_active: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         admin = db.get(AdminRole, target.id)
         visible_public_id = None if admin and admin.role in {"SA", "UA", "DA"} else target.public_id
         return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
@@ -588,67 +567,19 @@ def register_platform_auth(current_user_dependency):
         record("system", "room_announcement_deleted", user_id=user.id, room_id=room_id, announcement_id=announcement_id)
         return {"deleted": True, "id": announcement_id}
 
-    def _require_music_manager(db: Session, room_id: str, user_id: str) -> Room:
-        room = db.get(Room, room_id)
-        if not room:
-            raise HTTPException(status_code=404, detail="Oda bulunamadı")
-        if room.owner_id != user_id and not db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room_id, RoomModerator.user_id == user_id)):
-            raise HTTPException(status_code=403, detail="Müzik yönetme yetkiniz yok")
-        return room
-
-    def _music_view(row: RoomMusic) -> dict:
-        return {"id": row.id, "slot": row.slot, "title": row.title, "source_url": row.source_url, "position_seconds": int(row.position_seconds or 0), "is_playing": bool(row.is_playing), "started_at": row.started_at, "updated_at": row.updated_at}
-
-    @router.get("/rooms/{room_id}/music")
-    def music_queue(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = db.get(Room, room_id)
-        if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
-        if not db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odaya erişiminiz yok")
-        return [_music_view(row) for row in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room_id).order_by(RoomMusic.slot, RoomMusic.id))]
-
-    @router.post("/rooms/{room_id}/music")
-    def music_add(room_id: str, payload: MusicCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        _require_music_manager(db, room_id, user.id)
-        slot = int(db.scalar(select(func.max(RoomMusic.slot)).where(RoomMusic.room_id == room_id)) or 0) + 1
-        row = RoomMusic(room_id=room_id, user_id=user.id, slot=slot, title=payload.title.strip(), source_url=payload.source_url.strip(), paid_until=datetime.now(timezone.utc))
-        db.add(row); db.commit(); db.refresh(row); record("system", "room_music_added", user_id=user.id, room_id=room_id, music_id=row.id)
-        return _music_view(row)
-
-    @router.post("/rooms/{room_id}/music/{music_id}/playback")
-    def music_playback(room_id: str, music_id: int, payload: MusicPlayback, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        _require_music_manager(db, room_id, user.id)
-        row = db.get(RoomMusic, music_id)
-        if not row or row.room_id != room_id: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
-        if payload.action == "play":
-            db.query(RoomMusic).filter(RoomMusic.room_id == room_id, RoomMusic.id != row.id).update({"is_playing": False}, synchronize_session=False); row.is_playing=True; row.started_at=datetime.now(timezone.utc)
-        elif payload.action == "pause": row.is_playing=False
-        elif payload.action == "stop": row.is_playing=False; row.position_seconds=0; row.started_at=None
-        else:
-            if payload.position_seconds is None: raise HTTPException(status_code=422, detail="position_seconds gerekli")
-            row.position_seconds=payload.position_seconds
-        row.updated_at=datetime.now(timezone.utc); db.commit(); db.refresh(row)
-        record("system", "room_music_playback", user_id=user.id, room_id=room_id, music_id=row.id, playback_action=payload.action, position_seconds=row.position_seconds)
-        return _music_view(row)
-
-    @router.delete("/rooms/{room_id}/music/{music_id}")
-    def music_delete(room_id: str, music_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        _require_music_manager(db, room_id, user.id); row=db.get(RoomMusic,music_id)
-        if not row or row.room_id != room_id: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
-        db.delete(row); db.commit(); record("system","room_music_deleted",user_id=user.id,room_id=room_id,music_id=music_id); return {"deleted":True,"id":music_id}
-
     GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
     ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel"}
     PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
     GAME_PROFILES = {
         "roulette": {
             "results": [("rose", 45), ("heart", 20), ("star", 12), ("diamond", 8), ("crown", 6), ("gift", 4), ("fire", 3), ("gem", 1.5), ("jackpot", 0.5)],
-            "description": "Ağırlıklı RNG ile tek sonuçlu rulet demosu.",
+            "description": "Ağırlıklı rulet; seçimin tutarsa ağırlığına göre 1–20 kat ödül.",
         },
         "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
         "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
-        "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Tek elli blackjack demosu; deste ve sonuç RNG ile üretilir."},
-        "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Rastgele crash çarpanı sınıfı; yatırım veya cash-out yoktur."},
-        "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı RNG ile seçilir; parasal payout yoktur."},
+        "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Kart çek veya dur; galibiyet 2 kat, blackjack 2,5 kat, beraberlik iade."},
+        "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Otomatik hedef 2×; çarpan 2×'e erişirse bahis 2 kat döner."},
+        "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı: sıradan 0, nadir 2, destansı 4, efsanevi 10, mitik 20 kat."},
         "wheel": {"results": [("small", 40), ("medium", 30), ("large", 20), ("special", 8), ("grand", 2)], "description": "Ağırlıklı şans çarkı sonucu."},
     }
 

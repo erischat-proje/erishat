@@ -16,8 +16,7 @@
       if(!res.ok)throw new Error('Müzik dosyası açılamadı ('+res.status+').');
       currentUrl=URL.createObjectURL(await res.blob());
       audio=new Audio(currentUrl);
-    } else if(track.source_url){audio=new Audio(track.source_url)}
-    else throw new Error('Müzik dosyası bulunamadı.');
+    } else throw new Error('Eski URL kaydı çalınamaz. Bu parçayı telefondan yeniden yükle.');
     currentId=track.id;audio.style.display='none';document.body.append(audio);
     audio.onended=()=>{api(path(room())+'/'+track.id+'/playback',{method:'POST',body:JSON.stringify({action:'stop',position_seconds:0})}).catch(()=>{});load()};
     return audio;
@@ -29,8 +28,8 @@
       const rows=await api(path(room()));const box=document.getElementById('erisMusicList');if(!box)return;
       box.replaceChildren();
       if(!rows.length)box.textContent='Müzik kuyruğu boş.';
-      for(const x of rows){const item=document.createElement('div');item.style.cssText='display:flex;gap:8px;align-items:center;padding:9px;border:1px solid #fff2;border-radius:10px;margin:6px 0';item.innerHTML='<span style="flex:1"><b>'+escape(x.title)+'</b><small style="display:block">'+(x.is_playing?'▶ Oynuyor':'⏸ Durdu')+'</small></span>';
-        const play=document.createElement('button');play.textContent=x.is_playing?'⏸':'▶';play.onclick=async()=>{try{if(!x.is_playing)await ensureAudio(x);await api(path(room())+'/'+x.id+'/playback',{method:'POST',body:JSON.stringify({action:x.is_playing?'pause':'play',position_seconds:Math.floor(audio?.currentTime||x.position_seconds||0)})});await load()}catch(e){window.toast?.(e.message)}};item.append(play);
+      for(const x of rows){const item=document.createElement('div');item.style.cssText='display:flex;gap:8px;align-items:center;padding:9px;border:1px solid #fff2;border-radius:10px;margin:6px 0';item.innerHTML='<span style="flex:1"><b>'+escape(x.title)+'</b><small style="display:block">'+(x.needs_reupload?'⚠ Telefondan yeniden yükle':x.is_playing?'▶ Oynuyor':'⏸ Durdu')+'</small></span>';
+        const play=document.createElement('button');play.textContent=x.is_playing?'⏸':'▶';play.disabled=!!x.needs_reupload;play.onclick=async()=>{try{if(!x.is_playing)await ensureAudio(x);await api(path(room())+'/'+x.id+'/playback',{method:'POST',body:JSON.stringify({action:x.is_playing?'pause':'play',position_seconds:Math.floor(audio?.currentTime||x.position_seconds||0)})});await load()}catch(e){window.toast?.(e.message)}};item.append(play);
         const del=document.createElement('button');del.textContent='🗑️';del.setAttribute('aria-label','Müziği sil');del.onclick=async()=>{try{await api(path(room())+'/'+x.id,{method:'DELETE'});if(currentId===x.id)clearAudio();await load()}catch(e){window.toast?.(e.message)}};item.append(del);box.append(item)}
       const active=rows.find(x=>x.is_playing);if(active){try{const player=await ensureAudio(active);const position=Number(active.position_seconds||0)+(active.started_at?Math.max(0,(Date.now()-Date.parse(active.started_at))/1000):0);if(Number.isFinite(position)&&Math.abs(player.currentTime-position)>3)player.currentTime=position;if(player.paused)await player.play()}catch(e){if(e.name!=='NotAllowedError')window.toast?.(e.message)}}else audio?.pause();
     }catch(e){const box=document.getElementById('erisMusicList');if(box)box.textContent=e.message||'Müzikler yüklenemedi.'}finally{loading=false}

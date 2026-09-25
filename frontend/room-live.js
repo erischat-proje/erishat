@@ -150,9 +150,9 @@
     const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;
     const add=d=>{const e=document.createElement('div');e.className='eris-chat-msg'+(String(d.user_id||'')===String(localStorage.getItem('eris_user_id')||'')?' me':'');e.innerHTML='<b></b><span></span>';e.querySelector('b').textContent=String(d.user_id||'')===String(localStorage.getItem('eris_user_id')||'')?'Sen':(d.nickname||d.user_id||'Kullanıcı');e.querySelector('span').textContent=d.text||'';list.appendChild(e);list.scrollTop=list.scrollHeight;};
     socket.onopen=()=>{state.textContent='Canlı oda • sohbet bağlı';list.innerHTML='';};
-    socket.onclose=()=>{if(document.getElementById('erisRoomSurface')?.classList.contains('show'))state.textContent='Oda • sohbet bağlantısı kapandı';};
+    socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();if(document.getElementById('erisRoomSurface')?.classList.contains('show'))state.textContent='Oda • sohbet bağlantısı kapandı';}};
     socket.onerror=()=>{state.textContent='Oda • sohbet bağlantı hatası';};
-    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')state.textContent='Oda • '+(d.message||'sohbet kapalı');}catch{}};
+    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')state.textContent='Oda • '+(d.message||'sohbet kapalı');else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
     const doSend=()=>{const t=input.value.trim();if(!t||socket.readyState!==1)return;if(t.length>500)return;socket.send(JSON.stringify({type:'room_chat',text:t}));input.value='';};
     send.onclick=doSend;input.onkeydown=e=>{if(e.key==='Enter')doSend();};
   }
@@ -203,6 +203,7 @@
   }
 
   function closeRealRoom(){
+    window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;
     document.getElementById('erisRoomSurface')?.classList.remove('show');
     window.__erisRoomSocket?.close?.(); window.__erisRoomSocket=null;

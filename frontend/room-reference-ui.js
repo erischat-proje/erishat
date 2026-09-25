@@ -235,7 +235,7 @@
 
   async function menu(){
     const p=panel(); if(!p)return;
-    const r=demo()?demo():(await roomApi().get?.(rid()).catch(()=>({}))||{});
+    const r=await roomApi().get?.(rid()).catch(()=>({}))||{};
     const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
     p.innerHTML='<div class="v5-title">Oda menüsü <button class="v5-btn" data-close>Kapat</button></div>'+
       '<div class="v5-grid">'+
@@ -305,12 +305,7 @@
     const old=q('erisRoomMic');
     old?.remove();
     const b=document.createElement('button');b.id='erisRoomMicInline';b.type='button';b.textContent='🎙️';b.title='Mikrofonu aç/kapat';b.setAttribute('aria-label','Mikrofonu aç/kapat');
-    b.onclick=()=>{
-      const on=b.classList.toggle('on');
-      b.textContent=on?'🎙️':'🔇';
-      b.title=on?'Mikrofon açık — kapat':'Mikrofon kapalı — aç';
-      window.toast?.(on?'Mikrofon açıldı':'Mikrofon kapatıldı');
-    };
+    b.onclick=()=>window.ErisRoomRTC?.toggle?.();
     const send=q('erisLiveSend');
     c.insertBefore(b,send||null);
   }
