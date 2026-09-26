@@ -5,7 +5,10 @@
         { id: '1', name: '⚡ Şimşek', color: '#38bdf8' },
         { id: '2', name: '🔥 Alev', color: '#f43f5e' },
         { id: '3', name: '🌪️ Fırtına', color: '#eab308' },
-        { id: '4', name: '👑 Asil', color: '#a855f7' }
+        { id: '4', name: '👑 Asil', color: '#a855f7' },
+        { id: '5', name: '🌟 Yıldız', color: '#f59e0b' },
+        { id: '6', name: '💎 Safir', color: '#22d3ee' },
+        { id: '7', name: '🍀 Şans', color: '#4ade80' }
     ];
 
     const HorseRaceGame = {

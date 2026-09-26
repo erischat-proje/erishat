@@ -146,7 +146,7 @@
         modal?.remove();
         modal = document.createElement('div');
         modal.id = 'erisGamesModal';
-        modal.style.cssText = 'position:fixed; inset:0; z-index:1100; background:rgba(2, 1, 7, 0.88); display:grid; place-items:center; padding:10px; color:white; backdrop-filter:blur(8px);';
+        modal.style.cssText = 'position:fixed; inset:0; z-index:10100; background:rgba(2, 1, 7, 0.88); display:grid; place-items:center; padding:10px; color:white; backdrop-filter:blur(8px);';
         modal.innerHTML = `
             <div class="eg-panel">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -221,32 +221,40 @@
             modal.querySelector('.eg-result').textContent = 'Oyun başlatılıyor…';
 
             try {
-                // Aktif oda ID'sini bulalım veya sunucudan açık olan ilk odayı çekelim
-                let targetRoomId = roomId || window.ErisCurrentRoomId || window.currentRoomId || localStorage.getItem('eris_my_room_id');
-                if (!targetRoomId) {
-                    try {
-                        const roomsRes = await api('/rooms');
-                        const roomsList = Array.isArray(roomsRes) ? roomsRes : (roomsRes?.rooms || roomsRes?.items || []);
-                        if (roomsList.length > 0) {
-                            targetRoomId = roomsList[0].id || roomsList[0].room_id || roomsList[0]._id;
-                        }
-                    } catch (err) {
-                        console.warn('Oda listesi alınamadı, genel oda deneniyor');
-                    }
+                // Oda modu yalnızca gerçekten açık olan odayı kullanır.
+                const activeRoom = document.getElementById('erisRoomSurface')?.classList.contains('show');
+                const targetRoomId = scope === 'room' && activeRoom
+                    ? (roomId || window.ErisCurrentRoomId || window.currentRoomId || null)
+                    : null;
+                if (scope === 'room' && !targetRoomId) {
+                    throw new Error('Oda bağlantısı bulunamadı. Odayı yeniden açıp tekrar dene.');
                 }
-
+                const choiceValue = modal.querySelector('[data-choice]').value;
+                const choice = game === 'cups' ? 'cup_' + choiceValue
+                    : game === 'horse_race' ? 'horse_' + choiceValue
+                    : game === 'roulette' ? choiceValue
+                    : game === 'wheel' ? choiceValue
+                    : choiceValue;
                 const res = await api('/games/' + game + '/play', {
                     method: 'POST',
                     body: JSON.stringify({
                         room_id: targetRoomId || null,
-                        choice: modal.querySelector('[data-choice]').value,
+                        choice,
                         stake: Number(modal.querySelector('[data-stake]').value)
                     })
                 });
 
                 const mod = gameModules[game]();
                 if (mod && typeof mod.animate === 'function') {
-                    await mod.animate(stage, res.data);
+                    await mod.animate(stage, {
+                        ...res.data,
+                        result: res.payout > 0 ? 'win' : 'lose',
+                        result_key: res.result,
+                        winning_cup: String(res.result).replace('cup_', ''),
+                        winner: String(res.result).replace('horse_', ''),
+                        winning_index: ['small','medium','large','special','grand'].indexOf(res.result),
+                        multiplier: res.data?.multiplier
+                    });
                 }
                 modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
 
@@ -262,7 +270,7 @@
                                     body: JSON.stringify({ action })
                                 });
                                 if (mod && typeof mod.animate === 'function') {
-                                    await mod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.player_hand?.slice(-1)[0] });
+                                    await mod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.hands?.[0]?.cards?.slice(-1)[0] });
                                 }
                                 modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + next.result + ' • Ödül: ' + (next.payout || 0) + ' Lidya';
                                 if (next.status === 'finished') controls.replaceChildren();

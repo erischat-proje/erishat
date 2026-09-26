@@ -2,9 +2,9 @@
     'use strict';
 
     const ROULETTE_OPTIONS = [
-        ['red', 'Kırmızı'],
-        ['black', 'Siyah'],
-        ['green', 'Yeşil']
+        ['rose','Gül'], ['heart','Kalp'], ['star','Yıldız'],
+        ['diamond','Elmas'], ['crown','Taç'], ['gift','Hediye'],
+        ['fire','Ateş'], ['gem','Mücevher'], ['jackpot','Jackpot']
     ];
 
     let wheelAngle = 0;
@@ -31,7 +31,7 @@
             const center = canvas.width / 2;
             const outerRadius = center - 4;
             const innerRadius = 55;
-            const pockets = 18;
+            const pockets = ROULETTE_OPTIONS.length;
             const sliceAngle = (2 * Math.PI) / pockets;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -48,9 +48,7 @@
                 ctx.arc(center, center, innerRadius, endAngle, startAngle, true);
                 ctx.closePath();
 
-                if (i === 0) ctx.fillStyle = '#22c55e';
-                else if (i % 2 === 0) ctx.fillStyle = '#dc2626';
-                else ctx.fillStyle = '#171717';
+                ctx.fillStyle = ['#dc2626','#e11d48','#a855f7','#2563eb','#eab308','#ec4899','#f97316','#14b8a6','#16a34a'][i];
 
                 ctx.fill();
                 ctx.strokeStyle = '#3a3052';
@@ -65,7 +63,8 @@
             if (!canvas) return;
 
             const extraSpins = 360 * 5;
-            const randomOffset = Math.random() * 360;
+            const segment = Math.max(0, ROULETTE_OPTIONS.findIndex(([key]) => key === data?.result_key));
+            const randomOffset = (360 - ((segment + 0.5) * (360 / ROULETTE_OPTIONS.length))) % 360;
             const finalAngle = wheelAngle + extraSpins + randomOffset;
             const startTime = performance.now();
             const duration = 4000;

@@ -37,8 +37,8 @@
             if (!playerBox || !dealerBox) return;
 
             const state = data?.state || data;
-            const playerHand = state?.player_hand || ['A', '10'];
-            const dealerHand = state?.dealer_hand || ['10', '?'];
+            const playerHand = state?.hands?.[0]?.cards || state?.player_hand || [];
+            const dealerHand = state?.dealer_hand || [];
 
             playerBox.innerHTML = playerHand.map(c => `<div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff;">${c}</div>`).join('');
             dealerBox.innerHTML = dealerHand.map(c => `<div style="background:#134e2f; border:1px solid #22c55e; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:bold; color:#fff;">${c}</div>`).join('');

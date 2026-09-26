@@ -1,11 +1,15 @@
-def play(bet: float, choice, mode: str = "room"):
-    import random
-    winning_vault = str(random.randint(1, 3))
-    is_win = str(choice) == winning_vault or random.choice([True, False])
-    multiplier = 3.0
-    payout = (bet * multiplier) if is_win else 0.0
-    return {
-        "result": "win" if is_win else "lose",
-        "payout": payout,
-        "details": {"winning_vault": winning_vault, "choice": choice, "mode": mode}
-    }
+import random
+
+ITEMS={"common":"coin_pack","rare":"crystal","epic":"phoenix_badge","legendary":"royal_chest","mythic":"mythic_crown"}
+
+
+def play(choice, profile, data):
+    entries=profile.get("results") or []
+    classes=[x[0] for x in entries]
+    if not classes: raise ValueError("vault profile has no results")
+    result=random.choices(classes,weights=[x[1] for x in entries],k=1)[0]
+    item=ITEMS.get(result,result)
+    data.update({"reward_class":result,"reward_item":item,"choice":choice,
+                 "animation":{"type":"vault_open","rarity":result,"phases":["locked","shake","unlock","reveal"],"shake_ms":650,"reveal_ms":900}})
+    data["result"]=result
+    return result,data

@@ -42,7 +42,7 @@
                     if (!card) return;
                     const gameId = card.dataset.game;
                     if (gameId && typeof window.ErisChatGames === 'object' && typeof window.ErisChatGames.open === 'function') {
-                        window.ErisChatGames.open('main', null, gameId);
+                        window.ErisChatGames.open(document.getElementById('erisRoomSurface')?.classList.contains('show') ? 'room' : 'main', window.ErisCurrentRoomId || window.currentRoomId || null, gameId);
                     }
                 });
             }

@@ -1,13 +1,11 @@
 (() => {
     'use strict';
 
-    const WHEEL_COLORS = [
-        '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', 
-        '#3b82f6', '#8b5cf6', '#ec4899', '#10b981'
+    const WHEEL_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#8b5cf6'];
+    const WHEEL_OPTIONS = [
+        ['small','Küçük'], ['medium','Orta'], ['large','Büyük'],
+        ['special','Özel'], ['grand','Büyük ödül']
     ];
-
-    // Backend'in kabul ettiği net string/index eşleşmesi
-    const WHEEL_OPTIONS = WHEEL_COLORS.map((_, index) => [String(index), `Dilim ${index + 1}`]);
 
     let currentRotation = 0;
 
