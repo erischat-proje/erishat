@@ -52,7 +52,7 @@
     note(out,'Aranıyor…');
     try{
       const [roomResponse,userResponse]=await Promise.all([api('/discover/rooms?limit=50'),api('/discover/nearby?limit=50')]);
-      const entries=[...list(roomResponse).filter(x=>String(x.name||'').toLocaleLowerCase('tr-TR').includes(q)).map(x=>({name:x.name,detail:'Oda',open:()=>window.openRoom?.(x.room_id||x.id,x.name)})),...list(userResponse).filter(x=>String(x.nickname||'').toLocaleLowerCase('tr-TR').includes(q)).map(x=>({name:x.nickname,detail:'Kullanıcı',open:()=>window.ErisChatDM?.create?.(x.user_id||x.id,x.nickname)}))];
+      const entries=[...list(roomResponse).filter(x=>String(x.name||'').toLocaleLowerCase('tr-TR').includes(q)).map(x=>({name:x.name,detail:'Oda • ID: '+(/^\d{12}$/.test(String(x.public_id||''))?x.public_id:'yüklenemedi'),open:()=>window.openRoom?.(x.room_id||x.id,x.name)})),...list(userResponse).filter(x=>String(x.nickname||'').toLocaleLowerCase('tr-TR').includes(q)).map(x=>({name:x.nickname,detail:'Kullanıcı • ID: '+(/^\d{10}$/.test(String(x.public_id||''))?x.public_id:'gizli'),open:()=>window.openUserProfile?.(x.user_id||x.id)}))];
       out.replaceChildren();
       if(!entries.length){note(out,'Eşleşme bulunamadı.');return}
       entries.forEach(entry=>{const button=document.createElement('button');button.type='button';button.className='item card';const name=document.createElement('b');name.textContent=entry.name;const detail=document.createElement('small');detail.textContent=entry.detail;button.append(name,detail);button.onclick=entry.open;out.append(button)})

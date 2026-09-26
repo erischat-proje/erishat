@@ -384,7 +384,7 @@ def register_platform_auth(current_user_dependency):
             # Oda sahibi otomatik üyedir; yalnızca sahibi bulunan oda keşfette tutulmaz.
             visitors=int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id==room.id,RoomMember.user_id!=room.owner_id)) or 0)
             if visitors<=0: continue
-            rows.append({"room_id":room.id,"name":room.name,"owner_id":room.owner_id,"member_count":members,"level":room.level,"locked":room.locked})
+            rows.append({"room_id":room.id,"public_id":room.public_id,"name":room.name,"owner_id":room.owner_id,"member_count":members,"level":room.level,"locked":room.locked})
         rows.sort(key=lambda x:(-x["member_count"],-x["level"],x["room_id"])); return rows[offset:offset+limit]
     def location_or_409(db:Session,user_id:str)->UserLocation:
         row=db.get(UserLocation,user_id)
@@ -404,7 +404,13 @@ def register_platform_auth(current_user_dependency):
         result.sort(key=lambda item:item[1]); return result
     @router.get("/discover/nearby")
     def nearby(limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        result=candidate_users(db,user,20)[:limit]; return [{"user_id":u.id,"nickname":u.nickname,"avatar":u.avatar,"gender":u.gender,"city":db.get(UserLocation,u.id).city,"distance_km":round(d,1)} for u,d in result]
+        result=candidate_users(db,user,20)[:limit]; rows=[]
+        for target,distance in result:
+            admin=db.get(AdminRole,target.id)
+            public_id=None if admin and admin.role in {"SA","UA","DA"} else target.public_id
+            location=db.get(UserLocation,target.id)
+            rows.append({"user_id":target.id,"public_id":public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"city":location.city if location else None,"distance_km":round(distance,1)})
+        return rows
     @router.post("/discover/random-chat")
     def random_chat(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         pref=db.get(DiscoveryPreference,user.id)
@@ -462,7 +468,7 @@ def register_platform_auth(current_user_dependency):
         target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
         if not target or not target.is_active: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         admin = db.get(AdminRole, target.id)
-        visible_public_id = None if admin and admin.role in {"SA", "UA", "DA"} else target.public_id
+        visible_public_id = target.public_id if target.id == user.id or not (admin and admin.role in {"SA", "UA", "DA"}) else None
         is_following = bool(db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==target.id)))
         return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"is_following":is_following,"is_self":target.id==user.id}
     @router.post("/users/{user_id}/follow", status_code=201)

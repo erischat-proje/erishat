@@ -23,7 +23,8 @@
       rooms.forEach(room=>{
         const b=document.createElement('button'); b.type='button'; b.className='setting';
         const role=room.role==='owner'?'👑 Sahibi':'🛡️ Moderatör';
-        b.innerHTML='<span><b>'+esc(room.name||'Oda')+'</b><small style="display:block;margin-top:4px;color:#8f8498">'+role+' • '+Number(room.member_count||0)+' kişi</small></span><span>›</span>';
+        const publicId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'yüklenemedi';
+        b.innerHTML='<span><b>'+esc(room.name||'Oda')+'</b><small style="display:block;margin-top:4px;color:#8f8498">ID: '+publicId+' • '+role+' • '+Number(room.member_count||0)+' kişi</small></span><span>›</span>';
         b.onclick=()=>{window.ErisCurrentRoomId=room.id;window.currentRoomId=room.id;if(typeof window.openRoom==='function')window.openRoom(room.id,room.name||'Oda');};
         list.appendChild(b);
       });

@@ -6,6 +6,13 @@
     if (!profile || profile.querySelector('[data-erischat-profile-controls]')) return;
     const name = profile.querySelector('.name h2');
     const balance = profile.querySelector('.balance, .profile .balance');
+    const idButton = document.createElement('button');
+    idButton.type = 'button';
+    idButton.setAttribute('data-profile-public-id', '');
+    idButton.setAttribute('aria-label', 'Kullanıcı ID bilgisini kopyala');
+    idButton.style.cssText = 'display:block;margin:8px auto 0;padding:7px 11px;border:1px solid #e4b85d44;border-radius:999px;background:#e4b85d10;color:#f0cd7d;font:inherit;font-size:10px;font-weight:700;cursor:pointer';
+    idButton.textContent = 'Kullanıcı ID: Yükleniyor…';
+    profile.querySelector('.name')?.appendChild(idButton);
     const controls = document.createElement('div');
     controls.setAttribute('data-erischat-profile-controls', '');
     controls.style.cssText = 'margin-top:18px;padding:14px;border:1px solid #ffffff14;border-radius:18px;background:#ffffff05;display:grid;gap:9px';
@@ -24,7 +31,7 @@
     `;
     profile.appendChild(controls);
     const roomsBtn=document.createElement('button');roomsBtn.type='button';roomsBtn.textContent='🏠 Odalar';roomsBtn.style.cssText='border:1px solid #ffffff14;background:#ffffff05;color:#fff;border-radius:12px;padding:11px;font-size:10px;font-weight:800';controls.appendChild(roomsBtn);
-    const openMyRooms=async()=>{const modal=document.createElement('div');modal.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(2,1,7,.78);backdrop-filter:blur(10px);display:grid;place-items:center;padding:18px';modal.innerHTML='<div style="width:min(440px,100%);max-height:82vh;overflow:auto;background:#0b0911;border:1px solid #ffffff14;border-radius:24px;padding:18px;color:#fff"><div style="display:flex;justify-content:space-between;align-items:center"><b>🏠 Odalarım</b><button class="close" data-close>×</button></div><div data-myrooms style="margin-top:12px">Yükleniyor…</div></div>';document.body.appendChild(modal);modal.querySelector('[data-close]').onclick=()=>modal.remove();try{const raw=await window.ErisPlatform.api('/rooms/me/rooms');const rows=Array.isArray(raw)?raw:(raw?.rooms||raw?.items||raw?.data||[]);const box=modal.querySelector('[data-myrooms]');box.innerHTML=rows.length?rows.map(r=>'<button data-room="'+escapeHtml(r.id)+'" data-name="'+escapeHtml(r.name||'Oda')+'" style="width:100%;text-align:left;margin-bottom:8px;border:1px solid #ffffff12;background:#ffffff06;color:#fff;border-radius:16px;padding:12px"><b>🏠 '+escapeHtml(r.name||'Oda')+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+(r.role==='owner'?'👑 Oda sahibi':'🛡️ Moderatör')+' • ID '+escapeHtml(r.public_id||r.id)+' • Seviye '+Number(r.level||1)+'</small></button>').join(''):'<div style="color:#938a9f;font-size:9px">Sahibi veya moderatörü olduğun oda yok.</div>';box.querySelectorAll('[data-room]').forEach(b=>b.onclick=()=>{modal.remove();window.openRoom?.(b.dataset.room,b.dataset.name)});}catch(e){modal.querySelector('[data-myrooms]').textContent=e.message||'Odalar alınamadı.'}};roomsBtn.onclick=openMyRooms;
+    const openMyRooms=async()=>{const modal=document.createElement('div');modal.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(2,1,7,.78);backdrop-filter:blur(10px);display:grid;place-items:center;padding:18px';modal.innerHTML='<div style="width:min(440px,100%);max-height:82vh;overflow:auto;background:#0b0911;border:1px solid #ffffff14;border-radius:24px;padding:18px;color:#fff"><div style="display:flex;justify-content:space-between;align-items:center"><b>🏠 Odalarım</b><button class="close" data-close>×</button></div><div data-myrooms style="margin-top:12px">Yükleniyor…</div></div>';document.body.appendChild(modal);modal.querySelector('[data-close]').onclick=()=>modal.remove();try{const raw=await window.ErisPlatform.api('/rooms/me/rooms');const rows=Array.isArray(raw)?raw:(raw?.rooms||raw?.items||raw?.data||[]);const box=modal.querySelector('[data-myrooms]');box.innerHTML=rows.length?rows.map(r=>'<button data-room="'+escapeHtml(r.id)+'" data-name="'+escapeHtml(r.name||'Oda')+'" style="width:100%;text-align:left;margin-bottom:8px;border:1px solid #ffffff12;background:#ffffff06;color:#fff;border-radius:16px;padding:12px"><b>🏠 '+escapeHtml(r.name||'Oda')+'</b><small style="display:block;color:#938a9f;margin-top:4px">'+(r.role==='owner'?'👑 Oda sahibi':'🛡️ Moderatör')+' • ID: '+escapeHtml(/^\d{12}$/.test(String(r.public_id||''))?r.public_id:'yüklenemedi')+' • Seviye '+Number(r.level||1)+'</small></button>').join(''):'<div style="color:#938a9f;font-size:9px">Sahibi veya moderatörü olduğun oda yok.</div>';box.querySelectorAll('[data-room]').forEach(b=>b.onclick=()=>{modal.remove();window.openRoom?.(b.dataset.room,b.dataset.name)});}catch(e){modal.querySelector('[data-myrooms]').textContent=e.message||'Odalar alınamadı.'}};roomsBtn.onclick=openMyRooms;
     const vipPanel = document.createElement('div');
     vipPanel.setAttribute('data-erischat-vip-panel', '');
     vipPanel.style.cssText = 'margin-top:10px;padding:14px;border:1px solid #ffffff14;border-radius:18px;background:linear-gradient(135deg,#ffffff07,#8a5cff0d);display:grid;gap:8px';
@@ -38,6 +45,12 @@
     const label = controls.querySelector('[data-profile-notification-label]');
     const status = controls.querySelector('[data-profile-status]');
     const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : (status.textContent = message);
+    idButton.addEventListener('click', async () => {
+      const publicId = idButton.dataset.publicId;
+      if (!/^\d{10}$/.test(publicId || '')) return toastSafe('Kullanıcı ID bilgisi henüz alınamadı.');
+      try { await navigator.clipboard.writeText(publicId); toastSafe('Kullanıcı ID kopyalandı.'); }
+      catch (_) { toastSafe('Kullanıcı ID: ' + publicId); }
+    });
     const setNotificationState = enabled => { switchEl.classList.toggle('on', !!enabled); label.textContent = enabled ? 'Açık' : 'Kapalı'; };
     const render = user => {
       if (!user) return;
@@ -45,6 +58,9 @@
       setNotificationState(user.notifications_enabled !== false);
       if (balance && user.lidya != null) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
       if (name && user.nickname) name.textContent = user.nickname;
+      const publicId = /^\d{10}$/.test(String(user.public_id || '')) ? String(user.public_id) : '';
+      idButton.dataset.publicId = publicId;
+      idButton.textContent = publicId ? `Kullanıcı ID: ${publicId}  ⧉` : 'Kullanıcı ID yüklenemedi';
       const face = profile.querySelector('.face');
       const frame = profile.querySelector('.frameImg');
       const assetValue = value => {

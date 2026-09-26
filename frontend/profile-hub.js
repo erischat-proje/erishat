@@ -39,7 +39,8 @@
       const me=await window.ErisAuth.getMe();if(index!==requestIndex)return;
       if(key==='info') {
         body.innerHTML='<h3>Hesap bilgileri</h3><div class="eph-muted" data-id></div><label>Ad<input data-first maxlength="64" autocomplete="given-name"></label><label>Soyad<input data-last maxlength="64" autocomplete="family-name"></label><label>Hakkımda<textarea data-bio maxlength="300" rows="3"></textarea></label><button type="button" data-save>Bilgileri kaydet</button><div class="eph-muted" data-status role="status"></div>';
-        body.querySelector('[data-id]').textContent='Kullanıcı ID: '+(me.public_id||me.id);
+        const publicId=/^\d{10}$/.test(String(me.public_id||''))?String(me.public_id):'';
+        body.querySelector('[data-id]').textContent='Kullanıcı ID: '+(publicId||'yüklenemedi');
         body.querySelector('[data-first]').value=me.first_name||'';body.querySelector('[data-last]').value=me.last_name||'';body.querySelector('[data-bio]').value=me.bio||'';
         body.querySelector('[data-save]').onclick=async()=>{
           const btn=body.querySelector('[data-save]');btn.disabled=true;

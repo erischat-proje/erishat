@@ -139,6 +139,40 @@
             #erisGamesModal .eg-result { min-height: 40px; color: #f5dcff; font-size: 12px; margin-top: 8px; text-align: center; font-weight: 600; }
         `;
         document.head.append(s);
+
+        const polish = document.createElement('style');
+        polish.id = 'eris-games-polish-style';
+        polish.textContent = `
+            #erisGamesModal { overflow:auto; backdrop-filter:blur(16px); }
+            #erisGamesModal .eg-panel {
+                position:relative; width:min(660px,100%); max-height:min(94dvh,940px);
+                padding:clamp(18px,4vw,28px); border-color:#ffffff22; border-radius:28px;
+                background:radial-gradient(680px 280px at 100% 0%,#a15aff20,transparent 66%),linear-gradient(155deg,#1a1428f7,#09070ff8 72%);
+                box-shadow:0 32px 110px #000c,inset 0 1px #ffffff12;
+            }
+            #erisGamesModal .eg-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+            #erisGamesModal .eg-head h2 { font-size:clamp(21px,5vw,28px)!important; letter-spacing:-.7px; }
+            #erisGamesModal [data-close] { width:40px; height:40px; border-radius:14px!important; background:#ffffff0c!important; font-size:20px; }
+            #erisGamesModal .eg-intro { margin:8px 0 13px!important; color:#b5adbf!important; font-size:12px!important; line-height:1.55; }
+            #erisGamesModal .eg-wallet { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:12px 0; padding:11px 13px; border:1px solid #e4b85d35; border-radius:15px; background:linear-gradient(100deg,#e4b85d12,#ffffff04); color:#f0cd7d!important; }
+            #erisGamesModal .eg-wallet [data-scope] { color:#d2c5eb; font-size:10px; font-weight:800; letter-spacing:.5px; }
+            #erisGamesModal .eg-keys { grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+            #erisGamesModal .eg-keys button { min-height:45px; border-color:#ffffff16; background:linear-gradient(140deg,#211a2d,#171220); font-weight:800; }
+            #erisGamesModal .eg-keys button.active { background:linear-gradient(130deg,#7047d8,#aa4dc2); border-color:#d6b6ff88; box-shadow:0 8px 25px #754cff35; }
+            #erisGamesModal [data-name] { margin:14px 0 8px!important; font-size:19px!important; letter-spacing:-.25px; }
+            #erisGamesModal .eg-stage { min-height:clamp(200px,34vh,310px); border-color:#ffffff18; border-radius:20px; perspective:1000px; background:radial-gradient(ellipse at 50% 40%,#8f55dc36,#271a3b 48%,#100d19 100%); box-shadow:inset 0 1px #ffffff0c,0 16px 36px #0005; }
+            #erisGamesModal .eg-stage canvas { max-width:100%; filter:drop-shadow(0 12px 24px #0007); }
+            #erisGamesModal .eg-stage [style*="position:absolute"] { filter:drop-shadow(0 8px 12px #0008); }
+            #erisGamesModal .eg-form { padding:13px; border:1px solid #ffffff12; border-radius:17px; background:#ffffff05; }
+            #erisGamesModal .eg-form label { display:grid; gap:6px; color:#c1b8cb; font-size:10px; font-weight:750; }
+            #erisGamesModal .eg-form select { max-width:none; min-width:110px; background:#181321; border-color:#ffffff1b; border-radius:12px; padding:10px; }
+            #erisGamesModal [data-play] { min-height:43px; margin-left:auto; padding-inline:22px; border:0; background:linear-gradient(120deg,#7550e7,#e449a0); box-shadow:0 9px 25px #b34cff30; font-weight:900; }
+            #erisGamesModal .eg-result { min-height:44px; margin-top:12px; padding:11px 13px; border:1px solid #ffffff10; border-radius:14px; background:#ffffff05; color:#e9def4; }
+            #erisGamesModal [data-controls] button { min-height:42px; background:linear-gradient(125deg,#5d3caf,#9a43af); font-weight:850; }
+            @media(max-width:520px) { #erisGamesModal { padding:8px!important; place-items:end center!important; } #erisGamesModal .eg-panel { max-height:95dvh; border-radius:25px 25px 18px 18px; padding:18px; } #erisGamesModal .eg-form { display:grid; grid-template-columns:1fr 1fr; } #erisGamesModal .eg-form label { min-width:0; } #erisGamesModal [data-play] { grid-column:1/-1; margin:2px 0 0; } #erisGamesModal .eg-stage { min-height:190px; } }
+            @media(prefers-reduced-motion:reduce) { #erisGamesModal *,#erisGamesModal *:before,#erisGamesModal *:after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
+        `;
+        document.head.append(polish);
     }
 
     function open(scope = 'main', roomId = null, selected = null) {
@@ -146,15 +180,18 @@
         modal?.remove();
         modal = document.createElement('div');
         modal.id = 'erisGamesModal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', 'Oyun merkezi');
         modal.style.cssText = 'position:fixed; inset:0; z-index:10100; background:rgba(2, 1, 7, 0.88); display:grid; place-items:center; padding:10px; color:white; backdrop-filter:blur(8px);';
         modal.innerHTML = `
             <div class="eg-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="eg-head">
                     <h2 style="margin:0; font-size:17px; font-weight:700;">🎮 Oyun Merkezi (Modüler 3D)</h2>
                     <button data-close style="background:transparent; border:none; font-size:20px; padding:2px 6px;">×</button>
                 </div>
-                <p style="font-size:11px; color:rgba(255,255,255,0.6); margin:4px 0 10px 0;">Profesyonel casino görselleri ve akıcı animasyonlar.</p>
-                <div data-balance style="font-size:12px; font-weight:600; color:#e6af34; margin-bottom:6px;"></div>
+                <p class="eg-intro">Sunucu kontrollü oyunlar, akıcı animasyonlar ve anlık Lidya bakiyesi.</p>
+                <div class="eg-wallet"><span data-balance>💰 Bakiye yükleniyor…</span><span data-scope></span></div>
                 <div class="eg-keys"></div>
                 <h3 data-name style="margin:8px 0 2px 0; font-size:14px; color:#a77aff;"></h3>
                 <div class="eg-stage" aria-live="polite">Oyun yükleniyor...</div>
@@ -168,8 +205,11 @@
             </div>
         `;
         document.body.append(modal);
-        modal.querySelector('[data-close]').onclick = () => modal.remove();
-        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        const close = () => modal?.remove();
+        modal.querySelector('[data-close]').onclick = close;
+        modal.onclick = e => { if (e.target === modal) close(); };
+        modal.onkeydown = e => { if (e.key === 'Escape') close(); };
+        modal.querySelector('[data-scope]').textContent = scope === 'room' ? 'ODA OYUNLARI' : 'KİŞİSEL OYUNLAR';
 
         const keys = Object.keys(gameModules);
         const tabs = modal.querySelector('.eg-keys');
