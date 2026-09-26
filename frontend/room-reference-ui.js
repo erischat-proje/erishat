@@ -319,8 +319,8 @@
       const cells=[...wrap.querySelectorAll('.erp-cell')],err=wrap.querySelector('.erp-error');let done=false;
       const finish=v=>{if(done)return;done=true;wrap.remove();resolve(v)};
       wrap.querySelector('.erp-x').onclick=()=>finish(null);wrap.querySelector('.erp-backdrop').onclick=()=>finish(null);
-      cells.forEach((c,i)=>{c.oninput=()=>{c.value=c.value.replace(/\\D/g,'').slice(0,1);if(c.value&&cells[i+1])cells[i+1].focus();};c.onkeydown=e=>{if(e.key==='Backspace'&&!c.value&&cells[i-1])cells[i-1].focus();if(e.key==='Enter')wrap.querySelector('.erp-ok').click()}});
-      wrap.querySelector('.erp-ok').onclick=()=>{const v=cells.map(x=>x.value).join('');if(!/^\\d{4}$/.test(v)){err.textContent='4 haneli şifreyi tamamla.';return}finish(v)};
+      cells.forEach((c,i)=>{c.oninput=()=>{c.value=c.value.replace(/\D/g,'').slice(0,1);if(c.value&&cells[i+1])cells[i+1].focus();};c.onkeydown=e=>{if(e.key==='Backspace'&&!c.value&&cells[i-1])cells[i-1].focus();if(e.key==='Enter')wrap.querySelector('.erp-ok').click()}});
+      wrap.querySelector('.erp-ok').onclick=()=>{const v=cells.map(x=>x.value).join('');if(!/^\d{4}$/.test(v)){err.textContent='4 haneli şifreyi tamamla.';return}finish(v)};
       cells[0].focus();
     });
   }
