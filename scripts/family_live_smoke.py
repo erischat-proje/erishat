@@ -63,6 +63,15 @@ def main() -> None:
     if not member_id:
         raise AssertionError(f"member registration response missing user: {member_session}")
 
+    applicant_nickname = f"FamilyApplicant_{suffix}"
+    status, applicant_session = request("POST", "/users", {"nickname": applicant_nickname, "avatar": "🦊", "gender": "unspecified"})
+    expect(status, 201, "family applicant registration", applicant_session)
+    applicant = applicant_session.get("user") or {}
+    applicant_id = applicant.get("id")
+    applicant_token = applicant_session.get("access_token")
+    if not applicant_id or not applicant_token:
+        raise AssertionError(f"applicant registration response missing session/user: {applicant_session}")
+
     family_name = f"Smoke Family {suffix}"
     status, created = request("POST", "/families", {"name": family_name}, token)
     expect(status, 201, "family create", created)
@@ -80,7 +89,7 @@ def main() -> None:
     if not any(item.get("user_id") == owner_id and item.get("role") in {"member", "owner"} for item in member_items(members)):
         raise AssertionError(f"owner missing from member list: {members}")
 
-    status, invited = request("POST", f"/families/{family_id}/members", {"user_id": member_id}, token)
+    status, invited = request("POST", f"/families/{family_id}/members", {"user_id": member.get("public_id") or member_id}, token)
     expect(status, 201, "family member invite", invited)
     if invited.get("user_id") != member_id or invited.get("role") != "member":
         raise AssertionError(f"family member invite mismatch: {invited}")
@@ -95,6 +104,10 @@ def main() -> None:
     expect(status, 200, "family member invite accept", accepted)
     if accepted.get("family_id") != family_id or accepted.get("accepted") is not True or accepted.get("already_member") is not False:
         raise AssertionError(f"family member invite accept mismatch: {accepted}")
+    status, member_notices = request("GET", "/me/notifications?limit=50", token=member_token)
+    expect(status, 200, "invite accepted notification", member_notices)
+    if not any("katılım işleminiz gerçekleştirilmiştir" in row.get("body", "") for row in member_notices):
+        raise AssertionError(f"invite acceptance notification missing: {member_notices}")
 
     status, promoted = request("PATCH", f"/families/{family_id}/members/{member_id}", {"user_id": member_id, "role": "admin"}, token)
     expect(status, 200, "family member role", promoted)
@@ -105,6 +118,42 @@ def main() -> None:
     expect(status, 200, "family member list after role", members_after_role)
     if not any(item.get("user_id") == member_id and item.get("role") == "admin" for item in member_items(members_after_role)):
         raise AssertionError(f"promoted member missing from list: {members_after_role}")
+
+    status, applied = request("POST", f"/families/{family_id}/applications", {"message": "Family smoke application"}, applicant_token)
+    expect(status, 201, "family application", applied)
+    status, applications = request("GET", f"/families/{family_id}/applications", token=member_token)
+    expect(status, 200, "manager application inbox", applications)
+    application = next((row for row in applications if row.get("user_id") == applicant_id), None)
+    if not application:
+        raise AssertionError(f"application missing from manager inbox: {applications}")
+    status, accepted_application = request("POST", f"/families/{family_id}/applications/{application['id']}/accept", token=member_token)
+    expect(status, 200, "manager accepts application", accepted_application)
+    if accepted_application.get("accepted") is not True:
+        raise AssertionError(f"application accept response mismatch: {accepted_application}")
+    status, applicant_notices = request("GET", "/me/notifications?limit=50", token=applicant_token)
+    expect(status, 200, "application accepted notification", applicant_notices)
+    if not any("katılım işleminiz gerçekleştirilmiştir" in row.get("body", "") for row in applicant_notices):
+        raise AssertionError(f"application acceptance notification missing: {applicant_notices}")
+
+    status, denied_admin_role = request("PATCH", f"/families/{family_id}/members/{applicant_id}", {"user_id": applicant_id, "role": "admin"}, member_token)
+    expect(status, 403, "admin cannot grant manager role", denied_admin_role)
+    status, kicked = request("DELETE", f"/families/{family_id}/members/{applicant_id}", token=member_token)
+    expect(status, 200, "manager removes regular member", kicked)
+    status, owner_notices = request("GET", "/me/notifications?limit=50", token=token)
+    expect(status, 200, "owner receives manager kick notice", owner_notices)
+    if not any("yetkiliniz tarafından aileden atılmıştır" in row.get("body", "") and applicant_nickname in row.get("body", "") for row in owner_notices):
+        raise AssertionError(f"owner-specific kick notice missing: {owner_notices}")
+    status, applicant_removed_notices = request("GET", "/me/notifications?limit=50", token=applicant_token)
+    expect(status, 200, "removed member notification", applicant_removed_notices)
+    if not any("ailesinden atıldınız" in row.get("body", "") for row in applicant_removed_notices):
+        raise AssertionError(f"removed-member notice missing: {applicant_removed_notices}")
+
+    status, left = request("DELETE", f"/families/{family_id}/leave", token=member_token)
+    expect(status, 200, "manager leaves family", left)
+    status, owner_notices = request("GET", "/me/notifications?limit=50", token=token)
+    expect(status, 200, "owner receives leave notice", owner_notices)
+    if not any(member_nickname in row.get("body", "") and "aileden ayrılmıştır" in row.get("body", "") for row in owner_notices):
+        raise AssertionError(f"family leave notice missing: {owner_notices}")
 
     donation = 40_000
     status, donated = request("POST", f"/families/{family_id}/donate", {"amount": donation}, token)
@@ -128,21 +177,16 @@ def main() -> None:
     if not message.get("sender_id") or message.get("text") != message_text:
         raise AssertionError(f"family chat message mismatch: {message}")
 
-    status, removed = request("DELETE", f"/families/{family_id}/members/{member_id}", token=token)
-    expect(status, 200, "family member remove", removed)
-    if removed.get("removed") is not True or removed.get("user_id") != member_id:
-        raise AssertionError(f"family member remove mismatch: {removed}")
-
     status, members_final = request("GET", f"/families/{family_id}/members", token=token)
     expect(status, 200, "family member list final", members_final)
-    if any(item.get("user_id") == member_id for item in member_items(members_final)):
-        raise AssertionError(f"removed member still present: {members_final}")
+    if any(item.get("user_id") in {member_id, applicant_id} for item in member_items(members_final)):
+        raise AssertionError(f"left or removed users still present: {members_final}")
 
     print("FAMILY_LIVE_SMOKE_PASS")
     print(f"family_id={family_id}")
     print(f"owner_id={owner_id} invited={member_id} removed=1")
     print(f"balance={detail_after.get('balance')} level={detail_after.get('level')} capacity={detail_after.get('capacity')}")
-    print("member_list=1 invite=1 role=1 remove=1 chat_message=1")
+    print("member_list=1 public_id_invite=1 invite_notice=1 application_accept=1 role_guard=1 manager_kick=1 leave_notice=1 chat_message=1")
 
 
 if __name__ == "__main__":
