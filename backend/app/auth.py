@@ -2,8 +2,9 @@ from uuid import uuid4
 from datetime import datetime, timezone
 import logging
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 from sqlalchemy.orm import Session
-# Google id_token imported lazily
 
 from .config import settings
 
