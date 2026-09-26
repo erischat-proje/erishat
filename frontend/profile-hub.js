@@ -21,7 +21,7 @@
       #erisProfileHub .eph-muted{color:#aea0bc;font-size:11px;line-height:1.5}
     </style><div class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div><div class="eph-body" role="tabpanel" aria-live="polite"></div>`;
     view.append(hub);
-    const tabs = [['info','Bilgilerim'],['social','Takip'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
+    const tabs = [['info','Bilgilerim'],['social','Takip'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
     const strip = hub.querySelector('.eph-tabs');
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.textContent=label;
@@ -87,11 +87,20 @@
       if(key==='wallet') {
         const wallet=await api('/me/wallet');if(index!==requestIndex)return;
         body.innerHTML='<h3>Cüzdan</h3><div class="eph-row"><span>Lidya</span><b data-lidya></b></div><div class="eph-row"><span>Lidya taşı</span><b data-gem></b></div>';
-        body.querySelector('[data-lidya]').textContent=Number(wallet.lidya||0).toLocaleString('tr-TR');body.querySelector('[data-gem]').textContent=Number(wallet.lidya_gem||0).toLocaleString('tr-TR');return;
+        body.querySelector('[data-lidya]').textContent=Number(wallet.lidya||0).toLocaleString('tr-TR');body.querySelector('[data-gem]').textContent=Number(wallet.lidya_gem||0).toLocaleString('tr-TR');
+        body.insertAdjacentHTML('beforeend','<h3 style="margin-top:18px">1:1 takas</h3><label>Tutar<input data-amount type="number" min="1" step="1" inputmode="numeric" placeholder="Takas miktarı"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-exchange="lidya_to_gem">Lidya → Gem</button><button type="button" data-exchange="gem_to_lidya">Gem → Lidya</button></div><div class="eph-muted" data-wallet-status role="status"></div>');
+        body.querySelectorAll('[data-exchange]').forEach(button=>button.onclick=async()=>{const amount=Number(body.querySelector('[data-amount]').value),status=body.querySelector('[data-wallet-status]');if(!Number.isSafeInteger(amount)||amount<1){status.textContent='1 veya daha büyük tam sayı gir.';return}button.disabled=true;try{const key=globalThis.crypto?.randomUUID?.()||('wallet-'+Date.now()+'-'+Math.random().toString(16).slice(2));const updated=await api('/me/wallet/exchange',{method:'POST',body:JSON.stringify({direction:button.dataset.exchange,amount,idempotency_key:key})});body.querySelector('[data-lidya]').textContent=Number(updated.lidya||0).toLocaleString('tr-TR');body.querySelector('[data-gem]').textContent=Number(updated.lidya_gem||0).toLocaleString('tr-TR');status.textContent='Takas tamamlandı.'}catch(error){status.textContent=error.message||'Takas başarısız.'}finally{button.disabled=false}});return;
       }
       if(key==='gifts') {
         const rows=await api('/users/'+encodeURIComponent(me.id)+'/profile-gifts');if(index!==requestIndex)return;
         body.innerHTML='<h3>Profil hediyeleri</h3>'+(rows.length?rows.map(row=>'<div class="eph-row"><span>'+escape(row.gift)+'</span><b>'+Number(row.amount||0).toLocaleString('tr-TR')+' Lidya</b></div>').join(''):'<div class="eph-muted">Henüz profil hediyesi yok.</div>');return;
+      }
+      if(key==='notifications') {
+        const rows=await api('/me/notifications?limit=50');if(index!==requestIndex)return;
+        body.innerHTML='<h3>Bildirimler</h3><div data-notifications></div>';
+        const list=body.querySelector('[data-notifications]');
+        if(!rows.length){list.innerHTML='<div class="eph-muted">Şimdilik bildirim yok.</div>';return}
+        for(const row of rows){const line=document.createElement('div');line.className='eph-row';const text=document.createElement('div');const title=document.createElement('b');title.textContent=row.title||'Bildirim';const message=document.createElement('div');message.className='eph-muted';message.textContent=row.body||'';text.append(title,message);line.append(text);if(!row.read){const button=document.createElement('button');button.type='button';button.textContent='Okundu';button.onclick=async()=>{button.disabled=true;try{await api('/me/notifications/'+encodeURIComponent(row.id)+'/read',{method:'POST'});line.remove();if(!list.children.length)list.textContent='Tüm bildirimler okundu.'}catch(error){button.disabled=false;button.textContent=error.message||'Tekrar dene'}};line.append(button)}else{const read=document.createElement('span');read.className='eph-muted';read.textContent='Okundu';line.append(read)}list.append(line)}return;
       }
       if(key==='privacy') {
         body.innerHTML='<h3>Gizlilik ayarları</h3><p class="eph-muted">Profil görünürlüğünü gizlilik ekranından yönetebilirsin.</p><button data-open type="button">Gizlilik ayarlarını aç</button>';

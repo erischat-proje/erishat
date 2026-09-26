@@ -9,14 +9,20 @@
   async function openUserProfile(userId){
     const id=String(userId||'').trim(); if(!id)return;
     try{
-      const u=await getUser(id);
+      const [u,blockedRows]=await Promise.all([getUser(id),api().api('/me/blocks').catch(()=>[])]);
+      const blocked=(Array.isArray(blockedRows)?blockedRows:[]).some(row=>row.user_id===u.id);
       document.getElementById('erisUserProfileModal')?.remove();
       const m=document.createElement('div');m.id='erisUserProfileModal';
       m.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(2,1,7,.78);backdrop-filter:blur(14px);display:grid;place-items:center;padding:18px';
-      m.innerHTML='<div style="width:min(390px,100%);background:#0b0811;border:1px solid #ffffff18;border-radius:24px;padding:20px;color:#fff"><button data-close style="float:right;border:0;background:#ffffff10;color:#fff;border-radius:10px;padding:8px;font-size:18px">×</button><div style="display:flex;gap:13px;align-items:center;padding-top:4px"><div style="width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,#824dff,#ff4da8);display:grid;place-items:center;font-size:30px">'+esc(u.avatar||'👤')+'</div><div><h2 style="margin:0">'+esc(u.nickname||'Kullanıcı')+'</h2><small style="color:#918699">Kullanıcı ID: '+esc(u.public_id||u.id||id)+'</small></div></div><button data-message style="width:100%;margin-top:18px;border:1px solid #ffffff18;background:#ffffff0c;color:#fff;border-radius:12px;padding:11px;font-weight:800">💬 Mesaj gönder</button></div>';
+      m.innerHTML=`<div style="width:min(390px,100%);background:#0b0811;border:1px solid #ffffff18;border-radius:24px;padding:20px;color:#fff"><button data-close style="float:right;border:0;background:#ffffff10;color:#fff;border-radius:10px;padding:8px;font-size:18px">×</button><div style="display:flex;gap:13px;align-items:center;padding-top:4px"><div style="width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,#824dff,#ff4da8);display:grid;place-items:center;font-size:30px">${esc(u.avatar||'👤')}</div><div><h2 style="margin:0">${esc(u.nickname||'Kullanıcı')}</h2><small style="color:#918699">Kullanıcı ID: ${esc(u.public_id||u.id||id)}</small><div style="font-size:11px;color:#c9bfd3;margin-top:6px">${esc(u.bio||'')}</div></div></div><div style="display:flex;gap:8px;margin-top:16px"><button data-follow style="flex:1;border:0;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;border-radius:12px;padding:11px;font-weight:800">${u.is_following?'Takip ediliyor':'Takip et'}</button><button data-block style="flex:1;border:1px solid #ffffff18;background:#ffffff0c;color:#fff;border-radius:12px;padding:11px;font-weight:800">${blocked?'Engeli kaldır':'Engelle'}</button></div><button data-message style="width:100%;margin-top:8px;border:1px solid #ffffff18;background:#ffffff0c;color:#fff;border-radius:12px;padding:11px;font-weight:800">💬 Mesaj gönder</button></div>`;
       document.body.appendChild(m);
       m.querySelector('[data-close]').onclick=()=>m.remove();
       m.onclick=e=>{if(e.target===m)m.remove();};
+      const followButton=m.querySelector('[data-follow]');
+      if(u.is_self){followButton.disabled=true;followButton.textContent='Bu senin profilin';}
+      followButton.onclick=async()=>{followButton.disabled=true;try{const following=followButton.textContent==='Takip ediliyor';await api().api('/users/'+encodeURIComponent(u.id)+'/follow',{method:following?'DELETE':'POST'});followButton.textContent=following?'Takip et':'Takip ediliyor';window.ErisProfile?.refresh?.()}catch(error){window.toast?.(error.message||'Takip işlemi başarısız.')}finally{followButton.disabled=false}};
+      const blockButton=m.querySelector('[data-block]');
+      blockButton.onclick=async()=>{blockButton.disabled=true;try{const isBlocked=blockButton.textContent==='Engeli kaldır';await api().api('/users/'+encodeURIComponent(u.id)+'/block',{method:isBlocked?'DELETE':'POST'});blockButton.textContent=isBlocked?'Engelle':'Engeli kaldır';window.toast?.(isBlocked?'Engel kaldırıldı.':'Kullanıcı engellendi.')}catch(error){window.toast?.(error.message||'Engelleme işlemi başarısız.')}finally{blockButton.disabled=false}};
       m.querySelector('[data-message]').onclick=async()=>{
         try{
           const c=await api().createConversation(id);

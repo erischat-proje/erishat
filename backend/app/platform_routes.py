@@ -392,9 +392,13 @@ def register_platform_auth(current_user_dependency):
         return row
     def candidate_users(db:Session,user:User,max_km:float)->list[tuple[User,float]]:
         origin=location_or_409(db,user.id); pref=db.get(DiscoveryPreference,user.id); wanted=pref.gender_filter if pref else "any"; result=[]
+        hidden_ids=set(db.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id==user.id)))
+        hidden_ids.update(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id==user.id)))
         for loc in list(db.scalars(select(UserLocation).where(UserLocation.user_id!=user.id))):
             target=db.get(User,loc.user_id)
-            if not target or not target.is_active or (wanted!="any" and target.gender!=wanted): continue
+            if not target or not target.is_active or target.id in hidden_ids or (wanted!="any" and target.gender!=wanted): continue
+            target_privacy=db.get(UserPrivacy,target.id)
+            if target_privacy and target_privacy.hide_location: continue
             d=distance_km(origin.latitude,origin.longitude,loc.latitude,loc.longitude)
             if d<=max_km: result.append((target,d))
         result.sort(key=lambda item:item[1]); return result
@@ -403,6 +407,9 @@ def register_platform_auth(current_user_dependency):
         result=candidate_users(db,user,20)[:limit]; return [{"user_id":u.id,"nickname":u.nickname,"avatar":u.avatar,"gender":u.gender,"city":db.get(UserLocation,u.id).city,"distance_km":round(d,1)} for u,d in result]
     @router.post("/discover/random-chat")
     def random_chat(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        pref=db.get(DiscoveryPreference,user.id)
+        if pref and not pref.random_enabled:
+            raise HTTPException(status_code=403,detail="Rastgele sohbet keşif ayarlarında kapalı")
         candidates=candidate_users(db,user,30)
         if not candidates: raise HTTPException(status_code=404,detail="Uygun eşleşme bulunamadı")
         target,d=random.choice(candidates); conversation_id="dm_"+"_".join(sorted((user.id,target.id))); conversation=db.get(Conversation,conversation_id)
@@ -456,7 +463,8 @@ def register_platform_auth(current_user_dependency):
         if not target or not target.is_active: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         admin = db.get(AdminRole, target.id)
         visible_public_id = None if admin and admin.role in {"SA", "UA", "DA"} else target.public_id
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None)}
+        is_following = bool(db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==target.id)))
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"is_following":is_following,"is_self":target.id==user.id}
     @router.post("/users/{user_id}/follow", status_code=201)
     def follow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi takip edemezsiniz")

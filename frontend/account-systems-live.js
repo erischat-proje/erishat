@@ -1,0 +1,24 @@
+(() => {
+  'use strict';
+  const platform=()=>window.ErisPlatform;
+  const escape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  window.ErisChatPeople={load:async()=>{
+    const root=document.getElementById('people');if(!root)return;
+    root.textContent='Yakındaki kullanıcılar yükleniyor…';
+    try{const rows=await platform().nearby(),list=Array.isArray(rows)?rows:rows?.users||[];root.replaceChildren();if(!list.length){root.textContent='Bu filtreye uygun yakındaki kullanıcı yok.';return}for(const user of list){const button=document.createElement('button');button.type='button';button.className='item card';const name=document.createElement('b');name.textContent=user.nickname||'Kullanıcı';const meta=document.createElement('small');meta.textContent=[user.city,user.distance_km!=null?Number(user.distance_km).toFixed(1)+' km':null].filter(Boolean).join(' • ');button.append(name,meta);button.onclick=()=>window.ErisChatDM?.create?.(user.user_id,user.nickname||'Kullanıcı');root.append(button)}}catch(error){root.textContent=error.message||'Yakındaki kullanıcılar yüklenemedi.'}
+  }};
+  function mount(){
+    const explore=document.getElementById('explore');if(!explore||document.getElementById('erisDiscoverySettings'))return;
+    const panel=document.createElement('details');panel.id='erisDiscoverySettings';panel.style.cssText='margin:0 0 12px;padding:12px 14px;background:#100d16;border:1px solid #ffffff14;border-radius:16px;color:#fff';
+    panel.innerHTML='<summary style="cursor:pointer;font-size:11px;font-weight:800">⚙️ Keşif ve yakınlık ayarları</summary><div style="padding-top:10px"><label style="font-size:10px;color:#bcb2c5">Kullanıcı filtresi<select data-gender style="display:block;width:100%;margin:6px 0;padding:10px;border:1px solid #ffffff22;border-radius:10px;background:#17121f;color:#fff"><option value="any">Herkes</option><option value="female">Kadın</option><option value="male">Erkek</option></select></label><label style="display:flex;gap:8px;align-items:center;font-size:10px;margin:9px 0"><input data-random type="checkbox"> Rastgele sohbet eşleşmelerini etkinleştir</label><button data-save type="button" class="primary" style="min-height:38px">Tercihleri kaydet</button><button data-location type="button" style="margin-left:7px;border:1px solid #ffffff22;border-radius:10px;padding:9px;background:#ffffff08;color:#fff">Yakınımdaki kullanıcıları aç</button><div data-status role="status" style="font-size:9px;color:#a99bb6;margin-top:7px"></div></div>';
+    const tabs=explore.querySelector('.tabs');if(tabs)tabs.before(panel);else explore.prepend(panel);
+    panel.querySelector('[data-save]').onclick=async()=>{const button=panel.querySelector('[data-save]'),status=panel.querySelector('[data-status]');button.disabled=true;try{const result=await platform().setDiscovery({gender_filter:panel.querySelector('[data-gender]').value,random_enabled:panel.querySelector('[data-random]').checked});panel.querySelector('[data-gender]').value=result.gender_filter;panel.querySelector('[data-random]').checked=result.random_enabled;status.textContent='Keşif tercihleri kaydedildi.'}catch(error){status.textContent=error.message||'Tercihler kaydedilemedi.'}finally{button.disabled=false}};
+    panel.querySelector('[data-location]').onclick=()=>{const status=panel.querySelector('[data-status]');if(!navigator.geolocation){status.textContent='Bu tarayıcı konum iznini desteklemiyor.';return}status.textContent='Konum izni bekleniyor…';navigator.geolocation.getCurrentPosition(async position=>{try{await platform().setLocation({latitude:position.coords.latitude,longitude:position.coords.longitude,city:'Yakınım'});status.textContent='Konum kaydedildi.';document.querySelector('#explore .tabs .tab:nth-child(2)')?.click();await window.ErisChatPeople?.load?.()}catch(error){status.textContent=error.message||'Konum kaydedilemedi.'}},error=>{status.textContent=error.code===1?'Konum izni verilmedi. Tarayıcı ayarlarından izin verip tekrar dene.':'Konum alınamadı.'},{enableHighAccuracy:false,timeout:12000,maximumAge:300000})};
+  }
+  async function load(){
+    const panel=document.getElementById('erisDiscoverySettings');if(!panel||!platform()?.getDiscovery)return;
+    try{const prefs=await platform().getDiscovery();panel.querySelector('[data-gender]').value=prefs.gender_filter||'any';panel.querySelector('[data-random]').checked=prefs.random_enabled!==false;panel.querySelector('[data-status]').textContent='Tercihler sunucudan yüklendi.'}catch(error){panel.querySelector('[data-status]').textContent=error.message||'Keşif tercihleri yüklenemedi.'}
+  }
+  function boot(){mount();load();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready'){mount();load()}})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
