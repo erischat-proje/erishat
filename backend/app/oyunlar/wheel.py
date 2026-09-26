@@ -6,7 +6,7 @@ def play(choice, profile, data):
     segments=[x[0] for x in entries]
     if not segments: raise ValueError("wheel profile has no results")
     result=random.choices(segments,weights=[x[1] for x in entries],k=1)[0]
-    index=segments.index(result)+1
+    index=segments.index(result)
     total=6*len(segments)+index
     frames=[(i % len(segments))+1 for i in range(total)]
     data.update({"segments":segments,"segment":result,"segment_index":index,"choice":choice,"choice_hit":bool(choice and choice==result),

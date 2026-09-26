@@ -32,7 +32,7 @@
         },
 
         async animate(container, data) {
-            const statusText = document.getElementById('raceStatusText');
+            const statusText = container.querySelector('#raceStatusText');
             const winningHorse = String(data?.winner || data?.winning_horse || '1');
 
             if (statusText) statusText.textContent = '🚦 Start verildi! Atlar koşuyor...';
@@ -40,9 +40,13 @@
             return new Promise(resolve => {
                 setTimeout(() => {
                     const runners = container.querySelectorAll('.horse-runner');
+                    runners.forEach(runner => { runner.style.transition = 'none'; runner.style.left = '80px'; runner.style.filter = ''; });
+                    void container.offsetWidth;
+                    runners.forEach(runner => { runner.style.transition = ''; });
                     runners.forEach(runner => {
                         const isWinner = runner.dataset.horse === winningHorse;
-                        runner.style.left = isWinner ? '78%' : (40 + Math.random() * 25) + '%';
+                        runner.style.left = isWinner ? '78%' : (38 + Math.random() * 32) + '%';
+                        runner.style.filter = isWinner ? 'drop-shadow(0 0 8px #facc15)' : '';
                     });
 
                     setTimeout(() => {

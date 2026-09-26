@@ -40,7 +40,7 @@ def display_state(state):
     return {
         "phase": state.get("phase"),
         "hands": [
-            {"cards": h.get("cards", []), "total": h.get("total", 0), "result": h.get("result")}
+            {"cards": h.get("cards", []), "total": h.get("total", hand_total(h.get("cards") or [])), "result": h.get("result")}
             for h in hands
         ],
         "active_hand": state.get("active_hand", 0),

@@ -39,30 +39,27 @@
         },
 
         async animate(container, data) {
-            const statusText = document.getElementById('cupsStatusText');
+            const statusText = container.querySelector('#cupsStatusText');
             const winningCup = String(data?.winning_cup || data?.winningIndex || '1');
 
             if (statusText) statusText.textContent = '🔄 Kupalar karıştırılıyor...';
-
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const cups = container.querySelectorAll('.pro-cup');
-                    cups.forEach(cup => {
-                        if (cup.dataset.cup === winningCup) {
-                            cup.style.transform = 'translateY(-12px) scale(1.08)';
-                            cup.style.borderColor = '#22c55e';
-                            cup.querySelector('span').textContent = '🪙';
-                        } else {
-                            cup.style.opacity = '0.5';
-                        }
-                    });
-
-                    if (statusText) {
-                        statusText.textContent = data?.result === 'win' ? '🎉 Kazandın!' : '❌ Kaybettin!';
-                    }
-                    setTimeout(resolve, 1500);
-                }, 2000);
+            const cups = [...container.querySelectorAll('.pro-cup')];
+            cups.forEach(cup => { cup.style.transition = 'transform .22s ease, opacity .2s ease, border-color .2s ease'; cup.style.transform = ''; cup.style.opacity = '1'; cup.style.borderColor = '#a855f7'; cup.querySelector('span').textContent = '🥤'; });
+            for (let step = 0; step < 8; step++) {
+                cups.forEach((cup, i) => { cup.style.transform = `translate(${((step + i) % 2 ? 1 : -1) * (10 + step)}px,${step % 2 ? -5 : 5}px) rotate(${step % 2 ? 7 : -7}deg)`; });
+                await new Promise(resolve => setTimeout(resolve, 150));
+            }
+            cups.forEach(cup => cup.style.transform = '');
+            await new Promise(resolve => setTimeout(resolve, 220));
+            cups.forEach(cup => {
+                const win = cup.dataset.cup === winningCup;
+                cup.style.transform = win ? 'translateY(-12px) scale(1.08)' : '';
+                cup.style.borderColor = win ? '#22c55e' : '#a855f7';
+                cup.style.opacity = win ? '1' : '.55';
+                if (win) cup.querySelector('span').textContent = '🪙';
             });
+            if (statusText) statusText.textContent = data?.result === 'win' ? '🎉 Doğru kupa!' : `Sonuç: Kupa ${winningCup}`;
+            await new Promise(resolve => setTimeout(resolve, 900));
         }
     };
 

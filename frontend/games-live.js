@@ -135,7 +135,7 @@
             }
             #erisGamesModal .eg-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
             #erisGamesModal .eg-form label { font-size: 11px; color: rgba(255,255,255,0.7); }
-            #erisGamesModal .eg-form select { max-width: 150px; }
+            #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width: 170px; }
             #erisGamesModal .eg-result { min-height: 40px; color: #f5dcff; font-size: 12px; margin-top: 8px; text-align: center; font-weight: 600; }
         `;
         document.head.append(s);
@@ -165,7 +165,9 @@
             #erisGamesModal .eg-stage [style*="position:absolute"] { filter:drop-shadow(0 8px 12px #0008); }
             #erisGamesModal .eg-form { padding:13px; border:1px solid #ffffff12; border-radius:17px; background:#ffffff05; }
             #erisGamesModal .eg-form label { display:grid; gap:6px; color:#c1b8cb; font-size:10px; font-weight:750; }
-            #erisGamesModal .eg-form select { max-width:none; min-width:110px; background:#181321; border-color:#ffffff1b; border-radius:12px; padding:10px; }
+            #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width:none; min-width:110px; background:#181321; border-color:#ffffff1b; border-radius:12px; padding:10px; }
+            #erisGamesModal .eg-stake-presets { display:flex; gap:5px; flex-wrap:wrap; align-items:end; }
+            #erisGamesModal .eg-stake-presets button { padding:8px 10px; font-size:10px; }
             #erisGamesModal [data-play] { min-height:43px; margin-left:auto; padding-inline:22px; border:0; background:linear-gradient(120deg,#7550e7,#e449a0); box-shadow:0 9px 25px #b34cff30; font-weight:900; }
             #erisGamesModal .eg-result { min-height:44px; margin-top:12px; padding:11px 13px; border:1px solid #ffffff10; border-radius:14px; background:#ffffff05; color:#e9def4; }
             #erisGamesModal [data-controls] button { min-height:42px; background:linear-gradient(125deg,#5d3caf,#9a43af); font-weight:850; }
@@ -197,7 +199,8 @@
                 <div class="eg-stage" aria-live="polite">Oyun yükleniyor...</div>
                 <div class="eg-form">
                     <label>Seçim <select data-choice></select></label>
-                    <label>Lidya <select data-stake><option value="0">Ücretsiz</option><option value="10">10</option><option value="50">50</option><option value="100">100</option><option value="500">500</option></select></label>
+                    <label>Bahis · 0–10.000 Lidya <input data-stake type="number" inputmode="numeric" min="0" max="10000" step="1" value="0" aria-label="Lidya bahsi"></label>
+                    <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="100">100</button><button type="button" data-stake-value="500">500</button><button type="button" data-stake-value="1000">1.000</button><button type="button" data-stake-value="5000">5.000</button></div>
                     <button data-play>Oyna</button>
                 </div>
                 <div class="eg-result" role="status"></div>
@@ -250,6 +253,11 @@
         }
         loadGameModule(game);
 
+        modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
+            modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
+        });
+        let activeBlackjackRoundId = null;
+
         modal.querySelector('[data-play]').onclick = async () => {
             const button = modal.querySelector('[data-play]'),
                   stage = modal.querySelector('.eg-stage'),
@@ -261,6 +269,9 @@
             modal.querySelector('.eg-result').textContent = 'Oyun başlatılıyor…';
 
             try {
+                const stake = Number(modal.querySelector('[data-stake]').value);
+                if (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000) throw new Error('Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
+                gameModules[game]()?.render?.(stage);
                 // Oda modu yalnızca gerçekten açık olan odayı kullanır.
                 const activeRoom = document.getElementById('erisRoomSurface')?.classList.contains('show');
                 const targetRoomId = scope === 'room' && activeRoom
@@ -280,7 +291,7 @@
                     body: JSON.stringify({
                         room_id: targetRoomId || null,
                         choice,
-                        stake: Number(modal.querySelector('[data-stake]').value)
+                        stake
                     })
                 });
 
@@ -292,20 +303,23 @@
                         result_key: res.result,
                         winning_cup: String(res.result).replace('cup_', ''),
                         winner: String(res.result).replace('horse_', ''),
-                        winning_index: ['small','medium','large','special','grand'].indexOf(res.result),
+                        winning_index: ['red','orange','yellow','lime','green','cyan','blue','violet','pink'].indexOf(res.result),
                         multiplier: res.data?.multiplier
                     });
                 }
-                modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
+                modal.querySelector('.eg-result').textContent = game === 'blackjack' && res.result === 'pending'
+                    ? 'İlk el dağıtıldı. Kartlarını ve krupiyenin açık kartını inceleyip hamleni seç.'
+                    : 'Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
 
                 if (game === 'blackjack' && res.result === 'pending') {
+                    activeBlackjackRoundId = res.data.round_id;
                     for (const [action, label] of [['hit', 'Kart Çek'], ['stand', 'Dur']]) {
                         const b = document.createElement('button');
                         b.textContent = label;
                         b.onclick = async () => {
                             controls.querySelectorAll('button').forEach(x => x.disabled = true);
                             try {
-                                const next = await api('/games/blackjack/' + encodeURIComponent(res.data.round_id) + '/action', {
+                                const next = await api('/games/blackjack/' + encodeURIComponent(activeBlackjackRoundId) + '/action', {
                                     method: 'POST',
                                     body: JSON.stringify({ action })
                                 });
@@ -313,7 +327,7 @@
                                     await mod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.hands?.[0]?.cards?.slice(-1)[0] });
                                 }
                                 modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + next.result + ' • Ödül: ' + (next.payout || 0) + ' Lidya';
-                                if (next.status === 'finished') controls.replaceChildren();
+                                if (next.status === 'finished') { controls.replaceChildren(); activeBlackjackRoundId = null; button.disabled = false; }
                                 else controls.querySelectorAll('button').forEach(x => x.disabled = false);
                                 refreshBalance();
                             } catch (e) {
@@ -328,7 +342,7 @@
             } catch (e) {
                 modal.querySelector('.eg-result').textContent = e.message || 'Oyun başlatılamadı.';
             } finally {
-                button.disabled = false;
+                button.disabled = !!activeBlackjackRoundId;
             }
         };
     }

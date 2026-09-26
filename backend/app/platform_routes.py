@@ -586,15 +586,15 @@ def register_platform_auth(current_user_dependency):
     PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
     GAME_PROFILES = {
         "roulette": {
-            "results": [("rose", 45), ("heart", 20), ("star", 12), ("diamond", 8), ("crown", 6), ("gift", 4), ("fire", 3), ("gem", 1.5), ("jackpot", 0.5)],
-            "description": "Ağırlıklı rulet; seçimin tutarsa ağırlığına göre 1–20 kat ödül.",
+            "results": [(str(n), 1) for n in range(37)],
+            "description": "Avrupa ruleti: tek sıfır, 37 cep, sayı veya kırmızı/siyah bahisleri.",
         },
         "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
         "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
         "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Kart çek veya dur; galibiyet 2 kat, blackjack 2,5 kat, beraberlik iade."},
         "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Otomatik hedef 2×; çarpan 2×'e erişirse bahis 2 kat döner."},
         "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı: sıradan 0, nadir 2, destansı 4, efsanevi 10, mitik 20 kat."},
-        "wheel": {"results": [("small", 40), ("medium", 30), ("large", 20), ("special", 8), ("grand", 2)], "description": "Ağırlıklı şans çarkı sonucu."},
+        "wheel": {"results": [(color, 1) for color in ("red", "orange", "yellow", "lime", "green", "cyan", "blue", "violet", "pink")], "description": "Dokuz eşit renk dilimli şans çarkı; renk seçimine bahis."},
     }
 
     def game_payout(game_type: str, choice: str | None, result: str, stake: int, data: dict) -> int:
@@ -606,6 +606,16 @@ def register_platform_auth(current_user_dependency):
         if game_type == "crash":
             # Fixed auto cash-out at 2x; the multiplier is generated server-side.
             return stake * 2 if float(data.get("multiplier",0)) >= 2 else 0
+        if game_type == "roulette":
+            number = int(result)
+            color = data.get("winning_color")
+            if choice == str(number): return stake * 36
+            if choice in {"red", "black"} and choice == color: return stake * 2
+            if choice == "even" and number != 0 and number % 2 == 0: return stake * 2
+            if choice == "odd" and number % 2 == 1: return stake * 2
+            return 0
+        if game_type == "wheel":
+            return stake * 9 if choice == result else 0
         if choice != result: return 0
         weight = next((float(weight) for key,weight in GAME_PROFILES[game_type]["results"] if key == result),0)
         return min(stake * 20, int(stake * min(20, 90 / weight))) if weight else 0
@@ -734,7 +744,7 @@ def register_platform_auth(current_user_dependency):
         stake = raw_stake
         if game_type == "cups" and choice not in CUPS:
             raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
-        if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
+        if game_type == "roulette" and choice and choice not in ({x[0] for x in GAME_PROFILES["roulette"]["results"]} | {"red", "black", "even", "odd"}):
             raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
         if game_type == "horse_race" and choice and choice not in {f"horse_{i}" for i in range(1, 8)}:
             raise HTTPException(status_code=400, detail="Geçersiz at seçimi")

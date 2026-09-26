@@ -34,7 +34,7 @@ from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssig
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
-from .system_logs import ensure_log_files
+from .system_logs import ensure_log_files, record
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, OTPRequest, OTPVerify, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
@@ -150,6 +150,25 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
     for user_id in ids:
         if db.get(User, user_id) and not db.get(AdminRole, user_id):
             db.add(AdminRole(user_id=user_id, role="DA"))
+    public_ids = [x.strip() for x in settings.initial_da_public_ids.split(",") if x.strip()]
+    for public_id in public_ids:
+        if len(public_id) != 10 or not public_id.isdigit():
+            logger.error("Ignoring malformed INITIAL_DA_PUBLIC_IDS entry")
+            continue
+        target = db.scalar(select(User).where(User.public_id == public_id))
+        if target is None:
+            logger.error("Configured initial DA public ID was not found: %s", public_id)
+            record("role", "initial_da_target_not_found", target_public_id=public_id, role="DA")
+            continue
+        role = db.get(AdminRole, target.id)
+        if role is None:
+            db.add(AdminRole(user_id=target.id, role="DA"))
+            logger.info("Initial DA role granted for public ID %s", public_id)
+            record("role", "initial_da_granted", target_user_id=target.id, target_public_id=public_id, role="DA")
+        elif role.role != "DA":
+            role.role = "DA"
+            logger.info("Initial DA role elevated for public ID %s", public_id)
+            record("role", "initial_da_elevated", target_user_id=target.id, target_public_id=public_id, role="DA")
     db.commit()
 
 

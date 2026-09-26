@@ -1,10 +1,10 @@
 (() => {
     'use strict';
 
-    const WHEEL_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#8b5cf6'];
+    const WHEEL_COLORS = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
     const WHEEL_OPTIONS = [
-        ['small','Küçük'], ['medium','Orta'], ['large','Büyük'],
-        ['special','Özel'], ['grand','Büyük ödül']
+        ['red','Kırmızı'], ['orange','Turuncu'], ['yellow','Sarı'], ['lime','Lime'], ['green','Yeşil'],
+        ['cyan','Camgöbeği'], ['blue','Mavi'], ['violet','Mor'], ['pink','Pembe']
     ];
 
     let currentRotation = 0;
@@ -18,7 +18,7 @@
                     <div style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-top:18px solid #facc15; z-index:20; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));"></div>
                     <canvas id="proWheelCanvas" width="220" height="220" style="width:100%; height:100%; border-radius:50%; box-shadow: 0 0 25px rgba(138,92,255,0.4), inset 0 0 15px rgba(0,0,0,0.6); border:4px solid #3b2a5b;"></canvas>
                 </div>
-                <div style="font-size:11px; color:#c4b5fd; margin-top:10px; text-align:center; font-weight:600;">9 Renkli Profesyonel Şans Çarkı</div>
+                <div style="font-size:11px; color:#c4b5fd; margin-top:10px; text-align:center; font-weight:600;">9 renkten birini seç, rengin üzerine bahis yap.</div>
             `;
             this.drawWheel(currentRotation);
         },
@@ -54,7 +54,8 @@
                 ctx.textAlign = 'right';
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 11px sans-serif';
-                ctx.fillText(i + 1, radius - 16, 4);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(WHEEL_OPTIONS[i][1], radius - 13, 4);
                 ctx.restore();
             }
             ctx.restore();
@@ -69,11 +70,12 @@
         },
 
         async animate(container, data) {
-            const winningIndex = typeof data?.winning_index === 'number' ? data.winning_index : Math.floor(Math.random() * WHEEL_COLORS.length);
+            const fromResult = WHEEL_OPTIONS.findIndex(([key]) => key === data?.result_key || key === data?.result);
+            const winningIndex = fromResult >= 0 ? fromResult : (typeof data?.winning_index === 'number' && data.winning_index >= 0 ? data.winning_index : 0);
             const sliceDeg = 360 / WHEEL_COLORS.length;
             const targetSliceAngle = winningIndex * sliceDeg + (sliceDeg / 2);
-            const extraSpins = 360 * 6;
-            const finalAngle = currentRotation + extraSpins + (360 - (currentRotation % 360)) + (360 - targetSliceAngle);
+            const targetRotation = (270 - targetSliceAngle + 360) % 360;
+            const finalAngle = currentRotation + 360 * 6 + ((targetRotation - currentRotation % 360 + 360) % 360);
 
             const startTime = performance.now();
             const duration = 4000;
