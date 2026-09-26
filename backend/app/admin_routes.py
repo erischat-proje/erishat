@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,7 @@ from .support_models import SupportTicket
 from .system_logs import record
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
-    UserBan, ChatBan, RoomAdminBan, ApplicationGap,
+    UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement,
 )
 
 router = APIRouter(prefix="/v1/admin", tags=["administration"])
@@ -107,6 +107,19 @@ class TicketDecision(BaseModel):
 
 class TicketMessage(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
+    attachments: list[str] = Field(default_factory=list, max_length=3)
+
+    @staticmethod
+    def _check_images(value: list[str]) -> list[str]:
+        import re
+        if any(len(image) > 2_100_000 or not re.fullmatch(r"data:image/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}", image) for image in value):
+            raise ValueError("Fotoğraflar JPEG, PNG veya WebP olmalı ve her biri en fazla 1,5 MB olmalı")
+        return value
+
+    @field_validator("attachments")
+    @classmethod
+    def validate_attachments(cls, value):
+        return cls._check_images(value)
 
 
 class AmountUpdate(BaseModel):
@@ -123,6 +136,10 @@ class VipUpdate(BaseModel):
 
 
 class GapCreate(BaseModel):
+    message: str = Field(min_length=3, max_length=4000)
+
+
+class AnnouncementCreate(BaseModel):
     message: str = Field(min_length=3, max_length=4000)
 
 
@@ -147,6 +164,7 @@ def register_admin_auth(current_user_dependency):
         rows = db.scalars(select(SupportTicket).order_by(SupportTicket.created_at.desc())).all()
         record("support", "support_ticket_list_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
         return [{"id": x.id, "user_id": x.user_id, "category": x.category, "subject": x.subject, "message": x.message,
+                 "has_attachments": bool(x.attachments_json and x.attachments_json != "[]"),
                  "status": x.status, "created_at": x.created_at} for x in rows]
 
     @router.get("/tickets/{ticket_id}")
@@ -164,7 +182,10 @@ def register_admin_auth(current_user_dependency):
         return {"id": ticket.id, "user_id": ticket.user_id, "category": ticket.category, "subject": ticket.subject,
                 "message": ticket.message, "status": ticket.status, "created_at": ticket.created_at,
                 "assignment": None if not assignment else {"admin_id": assignment.admin_id, "decision": assignment.decision, "note": assignment.decision_note, "decided_at": assignment.decided_at},
-                "messages": [{"sender_id": m.sender_id, "sender_role": m.sender_role, "message": m.message, "created_at": m.created_at} for m in messages]}
+                "messages": [{"sender_id": ticket.user_id, "sender_role": "USER", "message": ticket.message,
+                              "attachments": json.loads(ticket.attachments_json or "[]"), "created_at": ticket.created_at}]
+                           + [{"sender_id": m.sender_id, "sender_role": m.sender_role, "message": m.message,
+                               "attachments": json.loads(m.attachments_json or "[]"), "created_at": m.created_at} for m in messages]}
 
     @router.post("/tickets/{ticket_id}/accept")
     def accept_ticket(ticket_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -200,10 +221,22 @@ def register_admin_auth(current_user_dependency):
         row = require_role(db, user, "SA")
         ticket = db.get(SupportTicket, ticket_id)
         if not ticket or ticket.status not in {"accepted", "pending", "open"}: raise HTTPException(status_code=409, detail="Destek talebi aktif değil")
-        db.add(SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role=row.role, message=payload.message.strip()))
+        db.add(SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role=row.role, message=payload.message.strip(),
+                              attachments_json=json.dumps(payload.attachments)))
         audit(db, user, "support_message", {"ticket_id": ticket_id, "message": payload.message}, target_user_id=ticket.user_id, target_id=str(ticket_id))
         db.commit()
         return {"sent": True}
+
+    @router.post("/announcements", status_code=201)
+    def create_announcement(payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        require_role(db, user, "SA")
+        announcement = SystemAnnouncement(admin_id=user.id, title="ErisChat Yönetim", message=payload.message.strip())
+        db.add(announcement)
+        db.flush()
+        audit(db, user, "admin_announcement", {"announcement_id": announcement.id, "message_length": len(announcement.message)}, target_id=str(announcement.id))
+        db.commit()
+        db.refresh(announcement)
+        return {"id": announcement.id, "title": announcement.title, "message": announcement.message, "created_at": announcement.created_at}
 
     @router.post("/tickets/{ticket_id}/close")
     def close_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):

@@ -15,6 +15,7 @@ class Room(Base):
     seat_count: Mapped[int] = mapped_column(Integer, default=8, server_default="8", nullable=False)
     theme: Mapped[str] = mapped_column(String(32), default="normal", server_default="normal", nullable=False)
     chat_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     lock_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -106,4 +107,12 @@ class RoomPassword(Base):
     __tablename__ = "room_passwords"
     room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
     password_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class RoomWallpaper(Base):
+    __tablename__ = "room_wallpapers"
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
+    asset_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    paid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -18,12 +18,13 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword
+from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper
 from .platform_models import Notification, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
 from .system_data import RoomIdRegistry
 from .system_logs import record
+from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
 
@@ -248,6 +249,7 @@ GIFT_CATALOG = {
 
 class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
 class RoomPasswordUpdate(BaseModel): password: str = Field(min_length=4, max_length=4, pattern=r"^\d{4}$")
+class RoomWallpaperUpdate(BaseModel): asset_key: str = Field(min_length=1, max_length=255); days: Literal[1, 7, 30]
 class RoomJoinPayload(BaseModel): password: str | None = Field(default=None, max_length=4)
 class RoomChatUpdate(BaseModel): enabled: bool
 class RoomNameUpdate(BaseModel): name: str = Field(min_length=1, max_length=16)
@@ -372,9 +374,12 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     for s in seats:
         seat_user = db.get(User, s.user_id) if s.user_id else None
         public_seats.append({"seat_number": s.seat_number, "user_id": s.user_id, "user_name": (getattr(seat_user, "nickname", None) or getattr(seat_user, "username", None) or str(s.user_id)) if seat_user else None, "avatar": getattr(seat_user, "avatar", None) if seat_user else None, "avatar_asset": getattr(seat_user, "avatar_asset", None) if seat_user else None, "frame_asset": getattr(seat_user, "frame_asset", None) if seat_user else None, "locked": bool(s.locked), **({"muted": bool(s.muted)} if can_manage else {})})
+    wallpaper = db.get(RoomWallpaper, room.id)
+    wallpaper_expiry = wallpaper.paid_until if wallpaper and wallpaper.paid_until.tzinfo else (wallpaper.paid_until.replace(tzinfo=timezone.utc) if wallpaper else None)
+    wallpaper_active = bool(wallpaper_expiry and wallpaper_expiry > datetime.now(timezone.utc))
     return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]),
-        "theme": room.theme, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "member_count": members, "spent_lidya": int(spend), "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
+        "theme": room.theme, "is_active": room.is_active, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -395,7 +400,7 @@ def register_room_auth(current_user_dependency):
         existing_owned_room = db.scalar(select(Room.id).where(Room.owner_id == user.id).limit(1))
         if existing_owned_room:
             raise HTTPException(status_code=409, detail="Zaten bir odanız var. Her kullanıcı yalnızca 1 oda oluşturabilir.")
-        room = Room(id="room_" + uuid4().hex, public_id=generate_room_public_id(db), owner_id=user.id, name=name)
+        room = Room(id="room_" + uuid4().hex, public_id=generate_room_public_id(db), owner_id=user.id, name=name, is_active=False)
         db.add(room); db.flush()
         db.add(RoomIdRegistry(room_id=room.id, public_id=room.public_id))
         db.add(RoomMember(room_id=room.id, user_id=user.id))
@@ -406,7 +411,7 @@ def register_room_auth(current_user_dependency):
     def list_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         # Keşfette aynı kullanıcının eski/test kaynaklı mükerrer sahiplik kayıtlarını tekrar göstermiyoruz.
         # Başka kullanıcıların odaları normal şekilde görünür; moderatörlük sahiplik sayısına dahil değildir.
-        rooms = list(db.scalars(select(Room).order_by(Room.created_at.desc())))
+        rooms = list(db.scalars(select(Room).where(Room.is_active.is_(True)).order_by(Room.created_at.desc())))
         seen_owner: set[str] = set()
         visible = []
         for room in rooms:
@@ -451,14 +456,14 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/join")
     def join_room(room_id: str, payload: RoomJoinPayload | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
+        admin = db.get(AdminRole, user.id)
+        admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
         stored = db.get(RoomPassword, room.id)
-        if room.locked and stored and room.owner_id != user.id:
+        if room.locked and stored and room.owner_id != user.id and not admin_mode:
             supplied = (payload.password if payload else None) or ""
             if not supplied or hashlib.sha256(supplied.encode()).hexdigest() != stored.password_hash:
                 raise HTTPException(status_code=403, detail="Oda kilitli. 4 haneli şifre gerekli.")
         if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)): raise HTTPException(status_code=403, detail="Bu odadan atıldınız")
-        admin = db.get(AdminRole, user.id)
-        admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
         active_admin_ban = db.scalar(select(RoomAdminBan).where(RoomAdminBan.room_id == room.id, RoomAdminBan.active.is_(True), (RoomAdminBan.expires_at.is_(None)) | (RoomAdminBan.expires_at > datetime.now(timezone.utc))))
         if active_admin_ban and not admin_mode: raise HTTPException(status_code=403, detail="Oda yönetim tarafından yasaklandı")
         active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))
@@ -467,7 +472,9 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id):
             count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
             if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
-            db.add(RoomMember(room_id=room.id, user_id=user.id)); db.commit()
+            db.add(RoomMember(room_id=room.id, user_id=user.id))
+        room.is_active = True
+        db.commit()
         return room_view(db, room, user)
     @router.post("/{room_id}/invite", status_code=201)
     def invite_to_room(room_id: str, payload: RoomInvite, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -484,8 +491,10 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/leave")
     def leave_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if room.owner_id == user.id: raise HTTPException(status_code=400, detail="Oda sahibi odadan ayrılamaz; odayı kapatmalıdır")
-        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)); db.commit(); return {"left": True}
+        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
+        remaining = int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0)
+        room.is_active = remaining > 0
+        db.commit(); return {"left": True, "is_active": room.is_active}
     @router.post("/{room_id}/seats/{seat_number}/join")
     def join_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -494,9 +503,11 @@ def register_room_auth(current_user_dependency):
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         if seat.locked: raise HTTPException(status_code=409, detail="Bu koltuk kilitli")
-        occupied = db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
-        if occupied and occupied != seat.id: raise HTTPException(status_code=409, detail="Zaten başka bir koltuktasınız")
+        occupied = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).with_for_update())
         if seat.user_id and seat.user_id != user.id: raise HTTPException(status_code=409, detail="Bu koltuk dolu")
+        if occupied and occupied.id != seat.id:
+            occupied.user_id = None
+            db.flush()
         seat.user_id = user.id; db.commit(); return {"seat_number": seat_number, "user_id": user.id}
     @router.delete("/{room_id}/seats/leave")
     def leave_seat(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -560,6 +571,44 @@ def register_room_auth(current_user_dependency):
         db.query(RoomPassword).filter(RoomPassword.room_id == room.id).delete(synchronize_session=False)
         room.locked = False; room.lock_expires_at = None; db.commit()
         return {"locked": False, "password_set": False}
+
+    @router.get("/{room_id}/wallpaper")
+    def get_room_wallpaper(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id) and room.owner_id != user.id:
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        view = room_view(db, room, user)
+        return {"asset_key": view["wallpaper_asset"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
+                "prices": {1: 1000, 7: 5000, 30: 18000}, "items": wallpaper_catalog()}
+
+    @router.post("/{room_id}/wallpaper")
+    def buy_room_wallpaper(room_id: str, payload: RoomWallpaperUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_owner(db, room, user)
+        item = find_wallpaper(payload.asset_key)
+        if not item:
+            raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+        if item["tier"] == "vip":
+            vip = db.get(VipStatus, user.id)
+            if int(vip.level if vip else 0) < int(item["vip_level"]):
+                raise HTTPException(status_code=403, detail=f"Oda duvar kağıdı için VIP {item['vip_level']} gerekli")
+        price = {1: 1000, 7: 5000, 30: 18000}[payload.days]
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if not locked_user or int(locked_user.lidya or 0) < price:
+            raise HTTPException(status_code=400, detail=f"Bu süre için {price:,} Lidya gerekli")
+        now = datetime.now(timezone.utc)
+        row = db.get(RoomWallpaper, room.id)
+        locked_user.lidya -= price
+        row_expiry = row.paid_until if row and row.paid_until.tzinfo else (row.paid_until.replace(tzinfo=timezone.utc) if row else None)
+        expires_from = row_expiry if row and row.asset_key == payload.asset_key and row_expiry > now else now
+        paid_until = expires_from + timedelta(days=payload.days)
+        if row:
+            row.asset_key = payload.asset_key
+            row.paid_until = paid_until
+        else:
+            db.add(RoomWallpaper(room_id=room.id, asset_key=payload.asset_key, paid_until=paid_until))
+        db.commit()
+        return {"ok": True, "asset_key": payload.asset_key, "paid_until": paid_until, "spent": price, "days": payload.days}
 
     @router.get("/{room_id}/moderators")
     def list_moderators(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):

@@ -33,6 +33,7 @@ class SupportMessage(Base):
     sender_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     sender_role: Mapped[str] = mapped_column(String(2), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
+    attachments_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -84,4 +85,14 @@ class ApplicationGap(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     reporter_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class SystemAnnouncement(Base):
+    __tablename__ = "system_announcements"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    admin_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(100), default="ErisChat Yönetim", server_default="ErisChat Yönetim", nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

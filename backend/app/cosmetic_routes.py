@@ -6,7 +6,8 @@ from .db import get_db
 from .cosmetics import catalog, find_asset, PRICE, VIP_PRICE
 from .schemas import CosmeticApply, CosmeticPurchase
 from .session import get_user_from_token
-from .platform_models import VipStatus
+from .models import UserCosmetic
+from .platform_models import VipStatus, VipRewardClaim
 from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1", tags=["cosmetics"])
@@ -34,6 +35,20 @@ def vip_level(db: Session, user_id: str) -> int:
     return int(row.level) if row else 0
 
 
+def vip_level_rewards(user) -> list[dict]:
+    gender = user.gender if user.gender in {"female", "male"} else None
+    by_level: dict[int, list[dict]] = {}
+    for item in catalog():
+        if not item.get("vip"):
+            continue
+        if item["type"] == "avatar" and gender and item.get("gender") != gender:
+            continue
+        by_level.setdefault(int(item["vip_level"]), []).append({
+            "cosmetic_type": item["type"], "asset_key": item["asset_key"], "gender": item.get("gender")
+        })
+    return [{"level": level, "rewards": by_level.get(level, [])} for level in range(1, 13)]
+
+
 @router.get("/cosmetics")
 def list_cosmetics(kind: str | None = None, gender: str | None = None):
     items = catalog()
@@ -51,6 +66,36 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
         {"uid": user.id},
     ).mappings().all()
     return {"items": [dict(row) for row in rows], "vip_level": vip_level(db, user.id)}
+
+
+@router.get("/me/vip/rewards")
+def list_vip_rewards(user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    current = vip_level(db, user.id)
+    claimed = {int(row.level) for row in db.query(VipRewardClaim).filter(VipRewardClaim.user_id == user.id).all()}
+    return [{**row, "unlocked": row["level"] <= current, "claimed": row["level"] in claimed} for row in vip_level_rewards(user)]
+
+
+@router.post("/me/vip/rewards/{level}/claim")
+def claim_vip_level_rewards(level: int, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    if level < 1 or level > 12:
+        raise HTTPException(status_code=404, detail="VIP ödülü bulunamadı")
+    db.execute(text("SELECT id FROM users WHERE id=:uid FOR UPDATE"), {"uid": user.id}).first()
+    if vip_level(db, user.id) < level:
+        raise HTTPException(status_code=403, detail=f"VIP {level} seviyesi gerekli")
+    already_claimed = db.get(VipRewardClaim, (user.id, level)) is not None
+    rewards = next((item["rewards"] for item in vip_level_rewards(user) if item["level"] == level), [])
+    if not already_claimed:
+        db.add(VipRewardClaim(user_id=user.id, level=level))
+        for reward in rewards:
+            owned = db.query(UserCosmetic.id).filter(
+                UserCosmetic.user_id == user.id,
+                UserCosmetic.cosmetic_type == reward["cosmetic_type"],
+                UserCosmetic.asset_key == reward["asset_key"],
+            ).first()
+            if not owned:
+                db.add(UserCosmetic(user_id=user.id, cosmetic_type=reward["cosmetic_type"], asset_key=reward["asset_key"]))
+        db.commit()
+    return {"level": level, "claimed": True, "already_claimed": already_claimed, "rewards": rewards}
 
 
 @router.post("/me/cosmetics/purchase")

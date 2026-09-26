@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
-from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyMember, Notification
+from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, Notification, VipStatus
 
 router = APIRouter(prefix="/v1", tags=["families"])
 
@@ -33,6 +33,9 @@ class FamilyMemberUpdate(BaseModel):
 
 class FamilyMessageCreate(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
+
+class FamilyApplicationCreate(BaseModel):
+    message: str = Field(default="", max_length=500)
 
 class FamilyOwnershipTransfer(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
@@ -67,8 +70,13 @@ def can_manage(family: Family, member: FamilyMember) -> bool:
 def family_payload(db: Session, family: Family) -> dict:
     level = family_level(family.balance)
     count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family.id)) or 0)
+    rank = int(db.scalar(select(func.count(Family.id)).where(Family.balance > family.balance)) or 0) + 1
+    current_required = FAMILY_LEVELS[level]["required"]
+    next_required = FAMILY_LEVELS.get(level + 1, {}).get("required")
+    progress = 100 if next_required is None else min(100, max(0, (family.balance - current_required) / max(1, next_required - current_required) * 100))
     return {"id": family.id, "name": family.name, "owner_id": family.owner_id, "balance": family.balance, "level": level,
-            "capacity": FAMILY_LEVELS[level]["capacity"], "member_count": count, "chat_conversation_id": family.chat_conversation_id}
+            "capacity": FAMILY_LEVELS[level]["capacity"], "member_count": count, "rank": rank, "current_level_required": current_required,
+            "next_level_required": next_required, "next_level_progress": round(progress, 1), "chat_conversation_id": family.chat_conversation_id}
 
 
 def register_family_auth(current_user_dependency):
@@ -80,9 +88,67 @@ def register_family_auth(current_user_dependency):
         rows = list(db.scalars(select(Family).join(FamilyMember, FamilyMember.family_id == Family.id).where(FamilyMember.user_id == user.id).order_by(Family.created_at.desc())))
         return [family_payload(db, row) for row in rows]
 
+    @router.get("/families/discover")
+    def discover_families(limit: int = Query(30, ge=1, le=50), db: Session = Depends(get_db), user: User = auth()):
+        rows=list(db.scalars(select(Family).order_by(Family.balance.desc(),Family.created_at.desc()).limit(limit)))
+        result=[]
+        for family in rows:
+            current=membership(db,family.id,user.id) if db.scalar(select(FamilyMember.id).where(FamilyMember.family_id==family.id,FamilyMember.user_id==user.id)) else None
+            owner=db.get(User,family.owner_id)
+            request=db.scalar(select(FamilyJoinRequest).where(FamilyJoinRequest.family_id==family.id,FamilyJoinRequest.user_id==user.id))
+            result.append({**family_payload(db,family),"owner_name":owner.nickname if owner else "","is_member":bool(current),"application_status":request.status if request else None})
+        return result
+
     @router.get("/families/{family_id}")
     def get_family_details(family_id: str, db: Session = Depends(get_db), user: User = auth()):
-        family = get_family(db, family_id); membership(db, family_id, user.id); return family_payload(db, family)
+        family = get_family(db, family_id)
+        member=db.scalar(select(FamilyMember.id).where(FamilyMember.family_id==family_id,FamilyMember.user_id==user.id))
+        request=db.scalar(select(FamilyJoinRequest).where(FamilyJoinRequest.family_id==family_id,FamilyJoinRequest.user_id==user.id))
+        return {**family_payload(db,family),"is_member":bool(member),"application_status":request.status if request else None}
+
+    @router.post("/families/{family_id}/applications", status_code=201)
+    def apply_to_family(family_id: str, payload: FamilyApplicationCreate, db: Session = Depends(get_db), user: User = auth()):
+        family=get_family(db,family_id)
+        if db.scalar(select(FamilyMember.id).where(FamilyMember.user_id==user.id)):
+            raise HTTPException(status_code=409,detail="Yeni aileye başvurmadan önce mevcut ailenden ayrılmalısın")
+        row=db.scalar(select(FamilyJoinRequest).where(FamilyJoinRequest.family_id==family.id,FamilyJoinRequest.user_id==user.id))
+        if row and row.status=="pending": raise HTTPException(status_code=409,detail="Bu aileye başvurun zaten bekliyor")
+        if row: row.message=payload.message.strip();row.status="pending";row.created_at=datetime.now(timezone.utc);row.responded_at=None
+        else: row=FamilyJoinRequest(id="fjoin_"+uuid4().hex[:12],family_id=family.id,user_id=user.id,message=payload.message.strip());db.add(row)
+        managers={family.owner_id,*db.scalars(select(FamilyMember.user_id).where(FamilyMember.family_id==family.id,FamilyMember.role=="admin"))}
+        for manager_id in managers:
+            db.add(Notification(user_id=manager_id,kind="family_application",title="Aile katılım başvurusu",body=f"{user.nickname} {family.name} ailesine katılmak istiyor."))
+        db.commit();return {"id":row.id,"status":"pending","family_id":family.id}
+
+    @router.get("/families/{family_id}/applications")
+    def family_applications(family_id: str, db: Session = Depends(get_db), user: User = auth()):
+        family=get_family(db,family_id);actor=membership(db,family_id,user.id)
+        if not can_manage(family,actor): raise HTTPException(status_code=403,detail="Aile yöneticisi olmalısınız")
+        rows=db.scalars(select(FamilyJoinRequest).where(FamilyJoinRequest.family_id==family.id,FamilyJoinRequest.status=="pending").order_by(FamilyJoinRequest.created_at.asc())).all()
+        return [{"id":r.id,"user_id":r.user_id,"nickname":(db.get(User,r.user_id).nickname if db.get(User,r.user_id) else ""),"message":r.message,"created_at":r.created_at} for r in rows]
+
+    @router.post("/families/{family_id}/applications/{request_id}/accept")
+    def accept_family_application(family_id: str, request_id: str, db: Session = Depends(get_db), user: User = auth()):
+        family=get_family(db,family_id);actor=membership(db,family_id,user.id)
+        if not can_manage(family,actor): raise HTTPException(status_code=403,detail="Aile yöneticisi olmalısınız")
+        request=db.get(FamilyJoinRequest,request_id)
+        if not request or request.family_id!=family_id or request.status!="pending": raise HTTPException(status_code=404,detail="Bekleyen başvuru bulunamadı")
+        if db.scalar(select(FamilyMember.id).where(FamilyMember.user_id==request.user_id)): raise HTTPException(status_code=409,detail="Kullanıcı başka bir aileye üye olmuş")
+        count=int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id==family.id)) or 0)
+        if count>=FAMILY_LEVELS[family_level(family.balance)]["capacity"]: raise HTTPException(status_code=409,detail="Aile kapasitesi dolu")
+        db.add(FamilyMember(family_id=family.id,user_id=request.user_id,role="member"));db.add(ConversationMember(conversation_id=family.chat_conversation_id,user_id=request.user_id))
+        request.status="accepted";request.responded_at=datetime.now(timezone.utc)
+        db.add(Notification(user_id=request.user_id,kind="family_application",title="Aile başvurun kabul edildi",body=f"{family.name} ailesine katıldın."));db.commit()
+        return {"accepted":True,"family_id":family.id,"user_id":request.user_id}
+
+    @router.post("/families/{family_id}/applications/{request_id}/reject")
+    def reject_family_application(family_id: str, request_id: str, db: Session = Depends(get_db), user: User = auth()):
+        family=get_family(db,family_id);actor=membership(db,family_id,user.id)
+        if not can_manage(family,actor): raise HTTPException(status_code=403,detail="Aile yöneticisi olmalısınız")
+        request=db.get(FamilyJoinRequest,request_id)
+        if not request or request.family_id!=family_id or request.status!="pending": raise HTTPException(status_code=404,detail="Bekleyen başvuru bulunamadı")
+        request.status="rejected";request.responded_at=datetime.now(timezone.utc);db.commit()
+        return {"rejected":True,"family_id":family.id}
 
     @router.post("/families", status_code=201)
     def create_family(payload: FamilyCreate, db: Session = Depends(get_db), user: User = auth()):
@@ -98,7 +164,15 @@ def register_family_auth(current_user_dependency):
     def list_members(family_id: str, db: Session = Depends(get_db), user: User = auth()):
         get_family(db, family_id); membership(db, family_id, user.id)
         rows = list(db.scalars(select(FamilyMember).where(FamilyMember.family_id == family_id).order_by(FamilyMember.created_at.asc())))
-        return [{"user_id": r.user_id, "nickname": db.get(User, r.user_id).nickname, "avatar": db.get(User, r.user_id).avatar, "role": r.role, "joined_at": r.created_at} for r in rows if db.get(User, r.user_id)]
+        result=[]
+        for r in rows:
+            member=db.get(User,r.user_id)
+            if not member: continue
+            vip=db.get(VipStatus,member.id)
+            result.append({"user_id":member.id,"public_id":member.public_id,"nickname":member.nickname,"avatar":member.avatar,
+                           "avatar_asset":member.avatar_asset,"frame_asset":member.frame_asset,"vip_level":int(vip.level if vip else 0),
+                           "role":r.role,"joined_at":r.created_at})
+        return result
 
     @router.post("/families/{family_id}/members", status_code=201)
     def invite_member(family_id: str, payload: FamilyMemberUpdate, db: Session = Depends(get_db), user: User = auth()):

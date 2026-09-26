@@ -30,7 +30,7 @@ from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, G
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
-from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap
+from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -64,6 +64,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS welcome_gift_claimed BOOLEAN NOT NULL DEFAULT false"))
+        conn.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS attachments_json TEXT NOT NULL DEFAULT '[]'"))
+        conn.execute(text("ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS attachments_json TEXT NOT NULL DEFAULT '[]'"))
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_sub ON users (google_sub) WHERE google_sub IS NOT NULL"))
         conn.execute(text("ALTER TABLE system_lidya_gem_ledger ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128)"))
         conn.execute(text("ALTER TABLE game_rounds ADD COLUMN IF NOT EXISTS state_data TEXT NOT NULL DEFAULT '{}'"))
@@ -86,6 +88,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 8"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS theme VARCHAR(32) NOT NULL DEFAULT 'normal'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS chat_enabled BOOLEAN NOT NULL DEFAULT true"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true"))
+        conn.execute(text("UPDATE rooms SET is_active = false WHERE NOT EXISTS (SELECT 1 FROM room_members WHERE room_members.room_id = rooms.id)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS lock_expires_at TIMESTAMPTZ"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()"))
@@ -227,6 +231,12 @@ def ready() -> dict[str, str]:
     except OperationalError as exc:
         logger.warning("Readiness DB check failed: %s", exc)
         raise HTTPException(status_code=503, detail="database not ready") from exc
+
+
+@app.get("/v1/announcements")
+def list_announcements(limit: int = Query(default=20, ge=1, le=50), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    rows = db.scalars(select(SystemAnnouncement).where(SystemAnnouncement.active.is_(True)).order_by(SystemAnnouncement.created_at.desc()).limit(limit)).all()
+    return [{"id": row.id, "title": "ErisChat Yönetim", "message": row.message, "created_at": row.created_at} for row in rows]
 
 
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
@@ -934,7 +944,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             return
         history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
         history.reverse()
-        history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+        history_users = {row.id: row.nickname for row in db.query(User.id, User.nickname).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
+        history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users.get(m.user_id,"Kullanıcı"),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
     existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
@@ -1051,7 +1062,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 db.add(msg)
                 db.commit()
                 db.refresh(msg)
-                payload = {"type":"room_chat","id":msg.id,"room_id":room_id,"user_id":user.id,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+                payload = {"type":"room_chat","id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
         room_chat_connections.get(internal_room_id, set()).discard(websocket)

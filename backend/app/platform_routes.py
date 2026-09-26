@@ -16,7 +16,7 @@ from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
-    GameRound, Notification, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
+    GameRound, Notification, ProfileVisit, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
 )
 from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomChatMessage, RoomBan, RoomSeat
 from .admin_models import AdminRole
@@ -467,10 +467,25 @@ def register_platform_auth(current_user_dependency):
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
         if not target or not target.is_active: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        if target.id != user.id:
+            visit=db.scalar(select(ProfileVisit).where(ProfileVisit.profile_user_id==target.id,ProfileVisit.visitor_user_id==user.id))
+            if visit: visit.visited_at=datetime.now(timezone.utc)
+            else: db.add(ProfileVisit(profile_user_id=target.id,visitor_user_id=user.id))
+            db.commit()
         admin = db.get(AdminRole, target.id)
         visible_public_id = target.public_id if target.id == user.id or not (admin and admin.role in {"SA", "UA", "DA"}) else None
         is_following = bool(db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==target.id)))
         return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"is_following":is_following,"is_self":target.id==user.id}
+    @router.get("/me/profile-visitors")
+    def profile_visitors(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        rows=list(db.scalars(select(ProfileVisit).where(ProfileVisit.profile_user_id==user.id).order_by(ProfileVisit.visited_at.desc()).limit(limit)))
+        result=[]
+        for visit in rows:
+            visitor=db.get(User,visit.visitor_user_id)
+            if visitor and visitor.is_active:
+                result.append({"user_id":visitor.id,"nickname":visitor.nickname,"avatar":visitor.avatar,"avatar_asset":visitor.avatar_asset,
+                               "frame_asset":visitor.frame_asset,"visited_at":visit.visited_at})
+        return result
     @router.post("/users/{user_id}/follow", status_code=201)
     def follow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi takip edemezsiniz")
