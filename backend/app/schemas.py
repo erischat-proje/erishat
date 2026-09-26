@@ -56,6 +56,9 @@ class OnboardingRequest(BaseModel):
 class UserUpdate(BaseModel):
     nickname: str | None = Field(default=None, min_length=1, max_length=32)
     avatar: str | None = Field(default=None, min_length=1, max_length=16)
+    first_name: str | None = Field(default=None, min_length=1, max_length=64)
+    last_name: str | None = Field(default=None, min_length=1, max_length=64)
+    bio: str | None = Field(default=None, max_length=300)
     notifications_enabled: bool | None = None
 
     @field_validator("nickname")
@@ -67,6 +70,18 @@ class UserUpdate(BaseModel):
         if not value:
             raise ValueError("İsim boş olamaz")
         return value
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def validate_profile_name(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("Ad veya soyad boş olamaz")
+        return value.strip() if value is not None else None
+
+    @field_validator("bio")
+    @classmethod
+    def clean_profile_bio(cls, value: str | None) -> str | None:
+        return value.strip() if value is not None else None
 
 
 class NicknameChange(BaseModel):

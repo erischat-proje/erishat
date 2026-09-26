@@ -131,14 +131,7 @@
       logoutButton.disabled = true;
       try {
         await window.ErisAuth.logout();
-        nicknameInput.value = '';
-        status.textContent = 'Oturum kapatıldı. Yeni anonim oturum hazırlanıyor…';
-        const user = await window.ErisAuth.ensureSession();
-        window.ErisAuth.user = user;
-        render(user);
-        window.ErisAuth.connectGeneralWs();
-        window.dispatchEvent(new CustomEvent('erischat:auth', { detail: { state: 'ready', user } }));
-        toastSafe('Yeni anonim oturum açıldı ✓');
+        status.textContent = 'Oturum kapatıldı.';
       } catch (error) { toastSafe(error.message || 'Oturum kapatılamadı.'); }
       finally { logoutButton.disabled = false; }
     });

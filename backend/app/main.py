@@ -602,7 +602,14 @@ def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = D
         nickname = payload.nickname.strip()
         if not nickname:
             raise HTTPException(status_code=400, detail="İsim boş olamaz")
+        other = db.query(User).filter(User.nickname == nickname, User.id != user.id).first()
+        if other:
+            raise HTTPException(status_code=409, detail="Bu kullanıcı adı zaten kullanılıyor")
         user.nickname = nickname
+    for key in ("first_name", "last_name", "bio"):
+        value = getattr(payload, key)
+        if value is not None:
+            setattr(user, key, value)
     if payload.avatar is not None:
         user.avatar = payload.avatar
     if payload.notifications_enabled is not None:
