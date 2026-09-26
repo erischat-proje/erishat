@@ -1,5 +1,6 @@
 from uuid import uuid4
 from datetime import datetime, timezone
+import logging
 
 from sqlalchemy.orm import Session
 # Google id_token imported lazily
@@ -10,6 +11,8 @@ from .models import User, AuthIdentity
 from .system_data import UserIdRegistry
 from .system_logs import record
 from .repositories import UserRepository
+
+logger = logging.getLogger("erischat.auth")
 
 
 
@@ -153,7 +156,16 @@ def create_or_login_google_user(
             settings.google_client_id,
         )
     except Exception as exc:
-        raise ValueError("Google kimlik doğrulaması geçersiz") from exc
+        # The credential itself is sensitive; log only a classified reason.
+        reason = str(exc).lower()
+        logger.warning("Google ID token verification failed (%s)", type(exc).__name__)
+        if "audience" in reason or "aud" in reason:
+            raise ValueError(
+                "Google OAuth istemci kimliği eşleşmiyor. Railway GOOGLE_CLIENT_ID değerini Google Web istemci kimliğiyle eşleştirin."
+            ) from exc
+        if "expired" in reason or "too early" in reason:
+            raise ValueError("Google giriş bileti zaman aşımına uğradı. Tekrar deneyin.") from exc
+        raise ValueError("Google kimlik doğrulaması geçersiz. Tekrar deneyin.") from exc
 
     google_sub = str(claims.get("sub") or "").strip()
     email = str(claims.get("email") or "").strip().lower()

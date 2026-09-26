@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import logging
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -440,25 +440,60 @@ def verify_otp_code(
                 .first()
             )
 
+            # Google-created accounts have a verified google_email but may not
+            # yet have an email AuthIdentity. Once this address has passed our
+            # email OTP, attach it to that same account instead of returning a
+            # false "not registered" response or creating a duplicate account.
+            google_email_user = None
+            if payload.provider == "email" and existing_identity is None:
+                google_email_user = (
+                    db.query(User)
+                    .filter(func.lower(User.google_email) == identifier)
+                    .first()
+                )
+                if google_email_user is not None and not google_email_user.is_active:
+                    raise HTTPException(status_code=403, detail="Hesap devre dışı.")
+
             if payload.purpose == "register":
-                if existing_identity is not None:
+                if existing_identity is not None or google_email_user is not None:
                     raise HTTPException(
                         status_code=409,
-                        detail="Bu email zaten kayıtlı. Giriş yapabilirsiniz.",
+                        detail=(
+                            "Bu email zaten kayıtlı. Google ile giriş yapabilir veya e-posta ile giriş yapabilirsiniz."
+                            if google_email_user is not None
+                            else "Bu email zaten kayıtlı. Giriş yapabilirsiniz."
+                        ),
                     )
-            elif existing_identity is None:
+            elif existing_identity is None and google_email_user is None:
                 raise HTTPException(
                     status_code=404,
                     detail="Bu email ile kayıt bulunamadı. Önce kayıt olun.",
                 )
 
-            user = create_or_login_verified_identity(
-                db,
-                provider=payload.provider,
-                identifier=identifier,
-                ip=ip,
-                device_info=device_info,
-            )
+            if google_email_user is not None:
+                db.add(
+                    AuthIdentity(
+                        id=uuid4().hex,
+                        user_id=google_email_user.id,
+                        provider="email",
+                        provider_subject=identifier,
+                        identifier=identifier,
+                        verified_at=datetime.now(timezone.utc),
+                    )
+                )
+                google_email_user.last_ip = ip
+                google_email_user.device_info = device_info
+                db.commit()
+                db.refresh(google_email_user)
+                user = google_email_user
+            else:
+                user = create_or_login_verified_identity(
+                    db,
+                    provider=payload.provider,
+                    identifier=identifier,
+                    ip=ip,
+                    device_info=device_info,
+                )
 
     except ValueError as exc:
         raise HTTPException(
