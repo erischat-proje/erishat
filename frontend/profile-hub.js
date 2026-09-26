@@ -21,7 +21,7 @@
       #erisProfileHub .eph-muted{color:#aea0bc;font-size:11px;line-height:1.5}
     </style><div class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div><div class="eph-body" role="tabpanel" aria-live="polite"></div>`;
     view.append(hub);
-    const tabs = [['info','Bilgilerim'],['social','Takip'],['wallet','Cüzdan'],['gifts','Hediyeler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
+    const tabs = [['info','Bilgilerim'],['social','Takip'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
     const strip = hub.querySelector('.eph-tabs');
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.textContent=label;
@@ -58,6 +58,31 @@
         const list=body.querySelector('[data-list]');list.textContent='Takip ettiklerin: ';
         if(!following.length) list.append('Henüz kimseyi takip etmiyorsun.');
         for(const row of following){const button=document.createElement('button');button.type='button';button.textContent=row.user_id;button.onclick=()=>window.openUserProfile?.(row.user_id);list.append(button)}return;
+      }
+      if(key==='collection') {
+        const [catalogData,ownedData]=await Promise.all([api('/cosmetics'),api('/me/cosmetics')]);if(index!==requestIndex)return;
+        const catalog=Array.isArray(catalogData)?catalogData:catalogData?.items||catalogData?.cosmetics||[];
+        const owned=Array.isArray(ownedData)?ownedData:ownedData?.items||ownedData?.cosmetics||[];
+        const vipData=await api('/me/vip');if(index!==requestIndex)return;
+        body.innerHTML='<h3>Avatar ve çerçeve koleksiyonum</h3><div class="eph-muted" data-count></div><div class="eph-assets" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px"></div><button type="button" data-shop style="margin-top:12px">Mağazayı aç</button>';
+        body.querySelector('[data-count]').textContent=owned.length+' sahip olunan görünüm • VIP '+Number(vipData.level||0);
+        const grid=body.querySelector('.eph-assets');
+        if(!owned.length)grid.innerHTML='<div class="eph-muted">Henüz satın alınmış kozmetik yok. Standart görünümünü mağazadan seçebilirsin.</div>';
+        for(const item of owned){
+          const key=item.asset_key||item.key,type=item.cosmetic_type||item.type||'avatar';
+          const card=document.createElement('div');card.style.cssText='padding:10px;border:1px solid #ffffff18;background:#ffffff08;border-radius:14px;text-align:center';
+          const image=document.createElement('div');image.style.cssText='height:66px;background:center/contain no-repeat;margin-bottom:6px';
+          image.style.backgroundImage='url("'+(window.ErisChatCosmetics?.assetUrl(key)||'')+'")';
+          const label=document.createElement('div');label.className='eph-muted';label.textContent=type==='frame'?'Çerçeve':'Avatar';
+          const use=document.createElement('button');use.type='button';use.textContent='Uygula';use.onclick=async()=>{use.disabled=true;try{await window.ErisChatCosmetics.apply(type,key);await window.ErisProfile.refresh();use.textContent='Uygulandı ✓'}catch(error){use.disabled=false;use.textContent=error.message||'Uygulanamadı'}};
+          card.append(image,label,use);grid.append(card);
+        }
+        const shop=body.querySelector('[data-shop]');shop.onclick=()=>window.showView?.('shop');return;
+      }
+      if(key==='vip') {
+        const vip=await api('/me/vip');if(index!==requestIndex)return;
+        body.innerHTML='<h3>VIP üyeliği</h3><div class="eph-row"><span>Seviye</span><b data-level></b></div><div class="eph-row"><span>Toplam harcama</span><b data-spent></b></div><div class="eph-row"><span>Sonraki seviye</span><b data-next></b></div><div class="eph-muted" data-perks></div><button type="button" data-open style="margin-top:10px">VIP merkezini aç</button>';
+        body.querySelector('[data-level]').textContent=String(vip.level||0);body.querySelector('[data-spent]').textContent=Number(vip.total_spent||0).toLocaleString('tr-TR')+' Lidya';body.querySelector('[data-next]').textContent=vip.next_level_spent?Number(vip.next_level_spent).toLocaleString('tr-TR')+' Lidya':'Maksimum seviye';body.querySelector('[data-perks]').textContent=(vip.perks||[]).join(' • ')||'Henüz açılmış VIP özelliği yok.';body.querySelector('[data-open]').onclick=()=>window.showView?.('vip');return;
       }
       if(key==='wallet') {
         const wallet=await api('/me/wallet');if(index!==requestIndex)return;
