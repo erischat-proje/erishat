@@ -37,6 +37,11 @@ def require_role(db: Session, user: User, minimum: str) -> AdminRole:
     return row
 
 
+def resolve_admin_user(db: Session, user_key: str) -> User | None:
+    """Allow operator tools to use either the internal ID or the public 10-digit ID."""
+    return db.get(User, user_key) or db.scalar(select(User).where(User.public_id == user_key))
+
+
 def audit(db: Session, admin: User, action: str, details: dict | None = None, target_user_id: str | None = None,
           target_room_id: str | None = None, target_id: str | None = None) -> None:
     payload = details or {}
@@ -250,7 +255,7 @@ def register_admin_auth(current_user_dependency):
     @router.get("/users/{user_id}")
     def user_lookup(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db, user, "DA")
-        target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        target = resolve_admin_user(db, user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         loc = db.get(UserLocation, target.id)
         record("id_lookup", "admin_user_lookup", admin_id=user.id, admin_nickname=user.nickname, target_user_id=target.id, target_public_id=target.public_id)
@@ -260,57 +265,61 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/lidya/add")
     def add_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "DA"); target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        require_role(db, user, "DA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         db.info.update(lidya_operation="admin_lidya_add", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
         before=target.lidya; target.lidya += payload.amount
-        audit(db,user,"lidya_add",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=user_id)
+        audit(db,user,"lidya_add",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=target.id)
         db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        require_role(db,user,"DA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         db.info.update(lidya_operation="admin_lidya_remove", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
         before=target.lidya; target.lidya=max(0,target.lidya-payload.amount)
-        audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=user_id)
+        audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=target.id)
         db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
 
     @router.post("/users/{user_id}/ban")
     def ban_user(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        ban=UserBan(user_id=user_id,ban_type="account",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
-        db.add(ban); audit(db,user,"user_ban",{"days":payload.days,"reason":payload.reason},target_user_id=user_id); db.commit()
+        ban=UserBan(user_id=target.id,ban_type="account",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
+        db.add(ban); audit(db,user,"user_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
         return {"banned":True,"expires_at":ban.expires_at}
 
     @router.post("/users/{user_id}/device-ban")
     def device_ban(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        ban=UserBan(user_id=user_id,ban_type="device",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
-        db.add(ban); audit(db,user,"device_ban",{"days":payload.days,"reason":payload.reason},target_user_id=user_id); db.commit()
+        ban=UserBan(user_id=target.id,ban_type="device",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
+        db.add(ban); audit(db,user,"device_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
         return {"banned":True,"expires_at":ban.expires_at}
 
     @router.delete("/users/{user_id}/ban")
     def unban_user(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db,user,"UA")
-        rows=db.scalars(select(UserBan).where(UserBan.user_id==user_id,UserBan.active.is_(True))).all()
+        target=resolve_admin_user(db,user_id)
+        if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        rows=db.scalars(select(UserBan).where(UserBan.user_id==target.id,UserBan.active.is_(True))).all()
         for x in rows: x.active=False
-        audit(db,user,"user_unban",target_user_id=user_id); db.commit(); return {"unbanned":True,"count":len(rows)}
+        audit(db,user,"user_unban",target_user_id=target.id); db.commit(); return {"unbanned":True,"count":len(rows)}
 
     @router.post("/users/{user_id}/chat-ban")
     def chat_ban(user_id: str,payload: BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=db.get(User,user_id)
+        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        row=ChatBan(user_id=user_id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason); db.add(row)
-        audit(db,user,"chat_ban",{"days":payload.days,"reason":payload.reason},target_user_id=user_id); db.commit(); return {"banned":True,"expires_at":row.expires_at}
+        row=ChatBan(user_id=target.id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason); db.add(row)
+        audit(db,user,"chat_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit(); return {"banned":True,"expires_at":row.expires_at}
 
     @router.delete("/users/{user_id}/chat-ban")
     def unchat_ban(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); rows=db.scalars(select(ChatBan).where(ChatBan.user_id==user_id,ChatBan.active.is_(True))).all()
+        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
+        if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        rows=db.scalars(select(ChatBan).where(ChatBan.user_id==target.id,ChatBan.active.is_(True))).all()
         for x in rows:x.active=False
-        audit(db,user,"chat_unban",target_user_id=user_id);db.commit();return {"unbanned":True}
+        audit(db,user,"chat_unban",target_user_id=target.id);db.commit();return {"unbanned":True}
 
     @router.post("/rooms/{room_id}/ban")
     def room_ban(room_id:str,payload:BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
@@ -329,12 +338,12 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/vip")
     def vip_update(user_id:str,payload:VipUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");target=db.get(User,user_id)
+        require_role(db,user,"DA");target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        vip=db.get(VipStatus,user_id)
-        if not vip: vip=VipStatus(user_id=user_id,level=payload.level,total_spent=0);db.add(vip)
+        vip=db.get(VipStatus,target.id)
+        if not vip: vip=VipStatus(user_id=target.id,level=payload.level,total_spent=0);db.add(vip)
         before=vip.level;vip.level=payload.level
-        audit(db,user,"vip_update",{"before":before,"after":payload.level},target_user_id=user_id);db.commit()
+        audit(db,user,"vip_update",{"before":before,"after":payload.level},target_user_id=target.id);db.commit()
         return {"level":vip.level,"total_spent":vip.total_spent}
 
     @router.get("/roles")
@@ -346,13 +355,13 @@ def register_admin_auth(current_user_dependency):
 
     @router.put("/roles")
     def set_role(payload:RoleUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");target=db.get(User,payload.user_id)
+        require_role(db,user,"DA");target=resolve_admin_user(db,payload.user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        row=db.get(AdminRole,payload.user_id)
-        if not row: row=AdminRole(user_id=payload.user_id,role=payload.role,granted_by=user.id);db.add(row)
+        row=db.get(AdminRole,target.id)
+        if not row: row=AdminRole(user_id=target.id,role=payload.role,granted_by=user.id);db.add(row)
         else: row.role=payload.role;row.granted_by=user.id
-        audit(db,user,"role_grant",{"role":payload.role},target_user_id=payload.user_id);db.commit()
-        return {"user_id":payload.user_id,"role":row.role}
+        audit(db,user,"role_grant",{"role":payload.role,"public_id":target.public_id},target_user_id=target.id);db.commit()
+        return {"user_id":target.id,"public_id":target.public_id,"role":row.role}
 
     @router.delete("/roles/{user_id}")
     def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):

@@ -136,11 +136,13 @@ column-gap:9px
     <span>🕶️</span><strong>Gizlilik</strong><small>Görünürlük ayarları</small>
   </button>
 
-  <button class="homeMenuItem" onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="family"]')?.click(),40)">
+  <div id="adminMenuMount" style="display:contents"></div>
+
+  <button class="homeMenuItem" type="button" data-hub-tab="family">
     <span>👨‍👩‍👧</span><strong>Aile</strong><small>Aile ve bağış sistemi</small>
   </button>
 
-  <button class="homeMenuItem" onclick="window.openErisHub?.();setTimeout(()=>document.querySelector('[data-tab="report"]')?.click(),40)">
+  <button class="homeMenuItem" type="button" data-hub-tab="report">
     <span>🛡️</span><strong>Güvenlik</strong><small>Şikayet ve güvenlik</small>
   </button>
 
@@ -220,9 +222,9 @@ async function sendChat(){
    if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
    matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
  }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d">Arama şu anda kullanılamıyor.</div>'}
-}};})();</script><script src="./auth-live.js?v=repair-1"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js"></script><script src="./admin-live.js?v=users-audit-2"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=public-id-2"></script><script src="./dm-live.js?v=public-id-2"></script><script src="./gift-live.js?v=repair-1"></script><script src="./room-live.js?v=public-id-2"></script><script src="./room-reference-ui.js?v=public-id-2"></script>
+}};})();</script><script src="./auth-live.js?v=repair-1"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js"></script><script src="./admin-live.js?v=admin-home-professional-1"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=public-id-2"></script><script src="./dm-live.js?v=public-id-2"></script><script src="./gift-live.js?v=repair-1"></script><script src="./room-live.js?v=public-id-2"></script><script src="./room-reference-ui.js?v=public-id-2"></script>
 <script src="./room-actions.js?v=roomfix-4"></script><script src="./room-rtc-live.js?v=rtc-1"></script><script src="./room-music-ui.js?v=roomfix-6"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script>
-<script src="./games-menu.js?v=games-room-fix-1"></script><script src="./feature-hub-live.js?v=integration-audit-1"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
+<script src="./games-menu.js?v=games-room-fix-1"></script><script src="./feature-hub-live.js?v=family-safety-direct-1"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
 <script>
 (function(){
  async function loadPrivacy(){

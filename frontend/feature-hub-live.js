@@ -27,7 +27,10 @@
         <div id="eh-discover" class="eh-panel"></div><div id="eh-profile" class="eh-panel"></div><div id="eh-privacy" class="eh-panel"></div><div id="eh-report" class="eh-panel"></div><div id="eh-support" class="eh-panel"></div>
       </div></div>`);
     const hub=document.getElementById('erisHub');
-    window.openErisHub=()=>{hub.classList.add('show');loadTab('rooms');};
+    const openTab=tab=>{hub.classList.add('show');return loadTab(tab);};
+    window.openErisHub=()=>openTab('rooms');
+    window.ErisChatHub={openTab};
+    document.querySelectorAll('[data-hub-tab]').forEach(button=>button.addEventListener('click',()=>openTab(button.dataset.hubTab)));
     document.getElementById('ehClose').onclick=()=>hub.classList.remove('show');
     hub.addEventListener('click',e=>{if(e.target===hub) hub.classList.remove('show');});
     hub.querySelectorAll('.eh-tab').forEach(btn=>btn.onclick=()=>loadTab(btn.dataset.tab));
