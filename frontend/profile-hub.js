@@ -9,14 +9,17 @@
     const hub = document.createElement('section');
     hub.id = 'erisProfileHub';
     hub.innerHTML = `<style>
-      #erisProfileHub{margin:12px 0 24px;color:#fff}
-      #erisProfileHub .eph-tabs{display:flex;gap:7px;overflow:auto;padding:5px 0 12px;scrollbar-width:thin}
-      #erisProfileHub button{border:1px solid #a98aff44;background:#21172f;color:#f9f3ff;border-radius:12px;padding:10px 12px;font-size:11px;white-space:nowrap}
-      #erisProfileHub button[aria-selected=true]{background:#754cff;border-color:#b79bff}
-      #erisProfileHub .eph-body{background:linear-gradient(145deg,#171023,#0c0913);border:1px solid #ffffff1b;border-radius:19px;padding:15px;min-height:82px;font-size:12px}
-      #erisProfileHub .eph-body h3{margin:0 0 12px;font-size:15px}
+      #erisProfileHub{margin:12px 0 24px;color:#fff;min-width:0}
+      #erisProfileHub .eph-tabs{display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;padding:5px 2px 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;max-width:100%}
+      #erisProfileHub .eph-tabs::-webkit-scrollbar{display:none}
+      #erisProfileHub button{flex:0 0 auto;border:1px solid #ffffff20;background:#15121b;color:#d7d0dc;border-radius:12px;padding:10px 14px;font-size:12px;white-space:nowrap;transition:background .16s,border-color .16s,color .16s}
+      #erisProfileHub button[aria-selected=true]{background:#754cff24;border-color:#9c78ff;color:#fff;box-shadow:inset 0 -2px #a77aff}
+      #erisProfileHub .eph-body{background:linear-gradient(145deg,#15121c,#0c0a10);border:1px solid #ffffff18;border-radius:19px;padding:17px;min-height:82px;font-size:13px;box-shadow:0 12px 30px #0003}
+      #erisProfileHub .eph-body h3{margin:0 0 14px;font-size:16px;letter-spacing:-.2px}
       #erisProfileHub .eph-row{padding:9px 0;border-bottom:1px solid #ffffff12;display:flex;align-items:center;justify-content:space-between;gap:9px}
-      #erisProfileHub .eph-body input,#erisProfileHub .eph-body textarea{display:block;width:100%;box-sizing:border-box;padding:11px;background:#ffffff0b;border:1px solid #ffffff24;color:#fff;border-radius:11px;margin:5px 0 12px;font:inherit}
+      #erisProfileHub .eph-body input,#erisProfileHub .eph-body textarea{display:block;width:100%;box-sizing:border-box;padding:12px;background:#100e15;border:1px solid #ffffff20;color:#fff;border-radius:12px;margin:6px 0 14px;font:inherit;outline:none}
+      #erisProfileHub .eph-body input:focus,#erisProfileHub .eph-body textarea:focus{border-color:#9b76ff;box-shadow:0 0 0 3px #8a5cff22}
+      @media(max-width:520px){#erisProfileHub .eph-tabs{margin-inline:-4px;padding-inline:4px}#erisProfileHub .eph-body{padding:15px;border-radius:17px}}
       #erisProfileHub .eph-body label{font-size:11px;color:#c4b5d2}
       #erisProfileHub .eph-muted{color:#aea0bc;font-size:11px;line-height:1.5}
     </style><div class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div><div class="eph-body" role="tabpanel" aria-live="polite"></div>`;
@@ -34,6 +37,7 @@
     const hub=panel();if(!hub)return;
     const index=++requestIndex, body=hub.querySelector('.eph-body');
     hub.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===key)));
+    hub.querySelector(`[data-tab="${key}"]`)?.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'smooth'});
     body.textContent='Yükleniyor…';
     try {
       const me=await window.ErisAuth.getMe();if(index!==requestIndex)return;

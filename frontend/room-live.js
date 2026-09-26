@@ -39,8 +39,9 @@
       [data-seat-count="16"] .eris-seat{width:58px;height:58px}
       [data-seat-count="12"] .eris-seat .seat-ava{width:30px;height:30px;font-size:14px}
       [data-seat-count="16"] .eris-seat .seat-ava{width:24px;height:24px;font-size:11px}
-      .eris-seat .seat-ava{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:16px;margin:auto;overflow:hidden;border:1px solid #ffffff28}.eris-seat .seat-ava.avatar{background-size:cover;background-position:center}.eris-seat.empty .seat-ava{background:rgba(255,255,255,.055);color:#aaa0ad}
-      .eris-seat b{display:block;font-size:9px;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eris-seat small{display:block;color:#a69cad;font-size:7px;margin-top:2px}
+      .eris-seat .seat-ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:18px;margin:auto;overflow:hidden;border:1px solid #ffffff28}.eris-seat .seat-ava.avatar{background-size:cover;background-position:center}.eris-seat.empty .seat-ava{background:rgba(255,255,255,.055);color:#aaa0ad}
+      .eris-seat .seat-pod{width:100%;height:100%;display:grid;place-items:center}.eris-seat b,.eris-seat small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+      .eris-seat{touch-action:manipulation;user-select:none;-webkit-user-select:none}.eris-seat:focus-visible{outline:2px solid #ff70b6;outline-offset:3px}
       .eris-room-chat{position:absolute;left:0;right:0;bottom:0;height:224px;background:linear-gradient(180deg,rgba(5,4,10,0) 0%,rgba(5,4,10,.52) 18%,rgba(5,4,10,.86) 100%);backdrop-filter:blur(9px);z-index:5;display:flex;flex-direction:column}.eris-room-chat:before{content:"";position:absolute;left:14px;right:14px;top:0;height:1px;background:linear-gradient(90deg,transparent,#ffffff18,transparent)}
       .eris-chat-list{flex:1;overflow:auto;padding:30px 14px 7px;display:flex;flex-direction:column;gap:6px}
       .eris-chat-msg{max-width:82%;padding:8px 11px;border-radius:13px;background:rgba(23,18,30,.62);border:1px solid #ffffff0b;font-size:10px;backdrop-filter:blur(6px)}.eris-chat-msg.me{align-self:flex-end;background:linear-gradient(135deg,#754cffcc,#ff4fa3cc)}.eris-chat-msg b{font-size:8px;color:#d5cbdc}.eris-chat-msg span{display:block;margin-top:2px}
@@ -120,8 +121,9 @@
       const pos=seatLayout(count,i);
       b.style.left=pos.left;b.style.top=pos.top;
       b.dataset.seatNumber=String(num);b.dataset.userId=String(seat.user_id||'');
+      b.dataset.muted=String(!!seat.muted);
       b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
-      b.setAttribute('aria-label',occupied?(seat.nickname||seat.user_name||'Konuşmacı'):'Koltuk '+num);
+      b.setAttribute('aria-label',occupied?('Koltuk '+num+' • '+(isMe?'Sen':seat.nickname||seat.user_name||'Konuşmacı')):((locked?'Kilitli koltuk ':'Boş koltuk ')+num));
       b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span><b></b><small></small></div>';
       if(avatarUrl){
         const ava=b.querySelector('.seat-ava');
@@ -136,7 +138,7 @@
       }
       b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+num;
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
-      if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Profili aç';}else if(!occupied&&!locked)b.onclick=async()=>{
+      if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Koltuk '+num+' • '+(isMe?'Sen':'Profili aç');}else if(!occupied&&!locked)b.onclick=async()=>{
         try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}
         catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}
       };
@@ -204,12 +206,15 @@
     }
   }
 
-  function closeRealRoom(){
+  async function closeRealRoom(){
     window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;
     document.getElementById('erisRoomSurface')?.classList.remove('show');
     window.__erisRoomSocket?.close?.(); window.__erisRoomSocket=null;
-    if(id) window.ErisRoom?.leave?.(id).catch(()=>{});
+    if(id){
+      try{await window.ErisRoom?.leaveSeat?.(id)}catch{}
+      try{await window.ErisRoom?.leave?.(id)}catch{}
+    }
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null;
   }

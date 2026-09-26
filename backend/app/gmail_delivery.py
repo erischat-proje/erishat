@@ -42,8 +42,8 @@ def send_gmail_message(
     body: str,
 ) -> None:
     message = EmailMessage()
+    message["From"] = settings.gmail_from_email
     message["To"] = recipient
-    print("GMAIL_RECIPIENT:", recipient, flush=True)
     message["Subject"] = subject
     message.set_content(body)
 
@@ -63,9 +63,3 @@ def send_gmail_message(
         timeout=15,
     )
     response.raise_for_status()
-
-    print(
-        "GMAIL_SEND_RESPONSE:",
-        response.text,
-        flush=True,
-    )

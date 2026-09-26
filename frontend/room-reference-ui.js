@@ -43,15 +43,16 @@
       '#erisRoomSurface .eris-room-tools{right:10px!important;bottom:202px!important;z-index:70!important;display:flex!important;gap:6px!important}',
       '#erisRoomSurface .eris-room-tools button{width:40px!important;height:40px!important;border-radius:50%!important;background:rgba(10,6,22,.66)!important;border:1px solid rgba(255,255,255,.12)!important}',
       '#erisRoomSurface .eris-room-tools #erisRoomMic{font-size:0!important}#erisRoomSurface .eris-room-tools #erisRoomMic:after{content:"🎙️";font-size:16px!important}',
-      '#erisRoomSurface .room-v3-panel{position:absolute;left:50%;top:82px;bottom:204px;transform:translateX(-50%);width:min(420px,calc(100% - 20px));z-index:120;display:none;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:18px;background:rgba(8,4,18,.94);backdrop-filter:blur(24px);box-shadow:0 22px 70px rgba(0,0,0,.55)}',
-      '#erisRoomSurface .room-v3-panel.show{display:flex}#erisRoomSurface .room-v3-head{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}#erisRoomSurface .room-v3-head strong{font-size:12px;flex:1}#erisRoomSurface .room-v3-close{width:30px;height:30px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff}',
-      '#erisRoomSurface .room-v3-body{padding:11px;overflow:auto;flex:1}#erisRoomSurface .room-v3-tabs{display:flex;gap:5px;padding:8px;border-bottom:1px solid rgba(255,255,255,.07);overflow:auto}#erisRoomSurface .room-v3-tab{white-space:nowrap;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#bfb5c8;border-radius:10px;padding:7px 9px;font-size:8px}.room-v3-tab.active{color:#fff;background:linear-gradient(135deg,rgba(117,76,255,.34),rgba(255,79,163,.25))}',
-      '#erisRoomSurface .room-v3-card{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.045);border-radius:13px;padding:10px;margin-bottom:7px}.room-v3-card b{font-size:10px}.room-v3-card small{display:block;color:#9f95a8;font-size:8px;margin-top:4px;line-height:1.4}',
-      '#erisRoomSurface .room-v3-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.room-v3-btn{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.07);color:#fff;border-radius:10px;padding:8px 9px;font-size:8px}.room-v3-btn.primary{background:linear-gradient(135deg,#754cff,#ff4fa3);border:0}',
-      '#erisRoomSurface .room-v3-input{width:100%;box-sizing:border-box;height:44px;padding:0 13px;border-radius:13px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;outline:none}.room-v3-save{margin-top:8px;width:100%;height:42px;border:0;border-radius:13px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:800}',
-      '#erisRoomSurface .room-v3-note{font-size:8px;color:#a49aaa;line-height:1.45;margin-top:8px}.room-v3-progress{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}.room-v3-progress i{display:block;height:100%;background:linear-gradient(90deg,#754cff,#ff4fa3)}',
-      '#erisRoomSurface .room-v3-level{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045);border-radius:14px;padding:10px;margin-bottom:7px}.room-v3-level.current{border-color:rgba(255,79,163,.42);background:linear-gradient(135deg,rgba(117,76,255,.13),rgba(255,79,163,.08))}.room-v3-levelline{display:flex;align-items:center;gap:8px}.room-v3-levelnum{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:900;font-size:10px}.room-v3-levelmain{flex:1;min-width:0}.room-v3-levelmain b{display:block;font-size:10px}.room-v3-levelmain small{display:block;color:#a39aa9;font-size:7px;margin-top:3px}',
-      '@media(max-width:520px){#erisRoomSurface .eris-room-title{max-width:38%!important}#erisRoomSurface #erisRoomLevel{min-width:84px!important;padding:0 9px!important}#erisRoomSurface .eris-room-chat{height:196px!important}#erisRoomSurface .eris-room-tools{bottom:202px!important}#erisRoomSurface .room-v3-panel{top:80px;bottom:202px}}'
+      '#erisRoomSurface .room-v3-panel{position:absolute;inset:0;z-index:140;display:none;place-items:center;padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom));box-sizing:border-box;background:rgba(3,2,8,.68);backdrop-filter:blur(7px)}',
+      '#erisRoomSurface .room-v3-panel.show{display:grid}#erisRoomSurface .room-v3-dialog{width:min(560px,100%);height:min(760px,90dvh);max-height:calc(100dvh - 28px);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.16);border-radius:24px;background:linear-gradient(155deg,#14111b,#0b0910);box-shadow:0 24px 80px rgba(0,0,0,.58);color:#fff}',
+      '#erisRoomSurface .room-v3-head{min-height:60px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.09)}#erisRoomSurface .room-v3-head strong{font-size:17px;letter-spacing:-.2px;flex:1}#erisRoomSurface .room-v3-close{width:40px;height:40px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.07);color:#fff;font-size:21px}',
+      '#erisRoomSurface .room-v3-body{padding:16px;overflow:auto;flex:1;overscroll-behavior:contain}#erisRoomSurface .room-v3-tabs{display:flex;gap:7px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.08);overflow:auto;scrollbar-width:none}#erisRoomSurface .room-v3-tabs::-webkit-scrollbar{display:none}#erisRoomSurface .room-v3-tab{white-space:nowrap;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:#c3bacb;border-radius:12px;padding:10px 14px;font-size:12px}.room-v3-tab.active{color:#fff;background:rgba(117,76,255,.2);border-color:rgba(155,118,255,.65);box-shadow:inset 0 -2px #a77aff}',
+      '#erisRoomSurface .room-v3-card{border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.04);border-radius:15px;padding:14px;margin-bottom:9px}.room-v3-card b{font-size:14px}.room-v3-card small{display:block;color:#aaa1b2;font-size:12px;margin-top:5px;line-height:1.5}',
+      '#erisRoomSurface .room-v3-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.room-v3-btn{min-height:44px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.055);color:#fff;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:600}.room-v3-btn.primary{background:#754cff;border-color:#9b76ff}',
+      '#erisRoomSurface .room-v3-input{width:100%;box-sizing:border-box;min-height:46px;padding:0 13px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#100e15;color:#fff;outline:none;font:inherit;font-size:14px}.room-v3-input:focus{border-color:#9b76ff;box-shadow:0 0 0 3px rgba(138,92,255,.16)}.room-v3-save{margin-top:10px;width:100%;min-height:46px;border:0;border-radius:12px;background:#754cff;color:#fff;font-weight:700;font-size:14px}',
+      '#erisRoomSurface .room-v3-note{font-size:12px;color:#aaa1b2;line-height:1.5;margin-top:9px}.room-v3-progress{height:8px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:12px}.room-v3-progress i{display:block;height:100%;background:linear-gradient(90deg,#754cff,#d74bb5);border-radius:99px}',
+      '#erisRoomSurface .room-v3-level{border:1px solid rgba(255,255,255,.1);background:#121019;border-radius:15px;padding:14px;margin-bottom:9px}.room-v3-level.current{border-color:rgba(155,118,255,.55);background:linear-gradient(145deg,rgba(117,76,255,.12),rgba(255,255,255,.035))}.room-v3-levelline{display:flex;align-items:center;gap:12px}.room-v3-levelnum{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:750;font-size:14px}.room-v3-levelmain{flex:1;min-width:0}.room-v3-levelmain b{display:block;font-size:14px}.room-v3-levelmain small{display:block;color:#a39aa9;font-size:11px;margin-top:4px}.room-v3-levelstate{font-size:14px;color:#b9a0ff}.room-v3-summary{padding:16px;border:1px solid #ffffff16;border-radius:16px;background:#17131f;margin-bottom:12px}.room-v3-summary-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.room-v3-summary-title{font-size:15px;font-weight:700}.room-v3-summary-meta{color:#aaa1b2;font-size:12px;margin-top:5px}.room-v3-summary .room-v3-progress{margin-top:14px}',
+      '@media(max-width:520px){#erisRoomSurface .eris-room-title{max-width:38%!important}#erisRoomSurface #erisRoomLevel{min-width:84px!important;padding:0 9px!important}#erisRoomSurface .room-v3-dialog{width:100%;height:min(780px,88dvh);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);border-radius:21px}#erisRoomSurface .room-v3-body{padding:13px}#erisRoomSurface .room-v3-head{min-height:58px;padding:0 14px}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -59,10 +60,11 @@
   function panel(s){
     let p=s.querySelector('.room-v3-panel');
     if(p) return p;
-    p=document.createElement('aside');p.className='room-v3-panel';
-    p.innerHTML='<div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close">×</button></div><div class="room-v3-tabs"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div>';
+    p=document.createElement('aside');p.className='room-v3-panel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Oda bilgileri ve araçları');
+    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
     s.appendChild(p);
     p.querySelector('.room-v3-close').onclick=()=>p.classList.remove('show');
+    p.addEventListener('click',event=>{if(event.target===p)p.classList.remove('show')});
     const settingsTab=p.querySelector('[data-management-tab]'); if(settingsTab){const r=window.__erisRoomPermissions||{}; settingsTab.style.display=(r.is_owner||r.is_moderator||r.can_manage)?'':'none';}
     p.querySelectorAll('.room-v3-tab').forEach(b=>b.onclick=()=>openMenu(b.dataset.tab));
     return p;
@@ -99,15 +101,22 @@
   async function openName(){
     const r=await getRoom(),id=roomId(),name=document.getElementById('erisLiveTitle')?.textContent||r?.name||'Oda';
     if(!isOwner(r)){window.toast?.('Oda adını yalnızca oda sahibi değiştirebilir.');return}
-    const p=panel(surface());p.classList.add('show');p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));
+    const p=panel(surface());p.classList.add('show');p.querySelector('.room-v3-tabs').style.display='none';p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));
     p.querySelector('#roomV3Title').textContent='Oda adı';p.querySelector('#roomV3Body').innerHTML='<input id="roomV3Name" class="room-v3-input" maxlength="40" value="'+esc(name)+'" placeholder="Oda adı"><button class="room-v3-save" id="roomV3NameSave">Kaydet</button><div class="room-v3-note">Oda adı sadece oda sahibi tarafından değiştirilebilir.</div>';
   }
 
   function levelRows(r,level){const raw=Array.isArray(r?.level_rewards)?r.level_rewards:[];if(raw.length)return raw;return Array.from({length:8},(_,i)=>{const n=i+1,cap=n>=7?16:n>=5?12:8;return{level:n,threshold:Number((r?.level_thresholds||[])[i]||0),reward:LEVEL_REWARDS[n]||('Oda ayrıcalıkları • '+cap+' koltuk')}})}
   async function openLevels(){
-    const r=await getRoom(),level=Math.max(1,Number(r?.level||1)),cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8)),progress=Number(r?.level_progress??r?.progress??0),next=Number(r?.next_level_threshold??r?.next_level_cost??0),pct=next?Math.min(100,Math.max(0,progress/next*100)):100;
-    const rows=levelRows(r,level).map(x=>{const n=Number(x.level||1),cur=n===level,done=n<level,need=Number(x.threshold||x.required||0),reward=x.reward||x.rewards||'Oda ayrıcalıkları';return '<div class="room-v3-level '+(cur?'current':'')+'"><div class="room-v3-levelline"><div class="room-v3-levelnum">'+n+'</div><div class="room-v3-levelmain"><b>Seviye '+n+(cur?' • mevcut':'')+'</b><small>'+(need?need.toLocaleString('tr-TR')+' eşik':'Seviye bilgisi')+'</small></div><span>'+(done?'✓':cur?'●':'🔒')+'</span></div><div class="room-v3-note">🎁 '+esc(reward)+'</div>'+(cur?'<div class="room-v3-progress"><i style="width:'+pct+'%"></i></div><div class="room-v3-note">'+(next?progress.toLocaleString('tr-TR')+' / '+next.toLocaleString('tr-TR'):'Mevcut ilerleme backend verisiyle güncellenir')+'</div>':'')+'</div>'}).join('');
-    const p=panel(surface());p.classList.add('show');p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));p.querySelector('#roomV3Title').textContent='Oda seviyeleri';p.querySelector('#roomV3Body').innerHTML='<div class="room-v3-note" style="margin:0 0 8px">Mevcut seviye: <b>Seviye '+level+'</b> • '+cap+' koltuk. İlerlemeyi ve diğer seviyelerde açılacak kazanımları buradan görebilirsin.</div>'+rows;
+    const r=await getRoom(),level=Math.max(1,Number(r?.level||1)),cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8));
+    const progress=Math.max(0,Number(r?.level_progress??r?.progress??0)),next=Math.max(0,Number(r?.next_level_threshold??r?.next_level_cost??0)),pct=next?Math.min(100,Math.max(0,progress/next*100)):0;
+    const rows=levelRows(r,level).map(item=>{
+      const n=Math.max(1,Number(item.level||1)),cur=n===level,done=n<level,need=Number(item.threshold||item.required||0),reward=String(item.reward||item.rewards||'Oda ayrıcalıkları');
+      const state=done?'Tamamlandı':cur?'Mevcut seviye':'Kilitli';
+      return '<div class="room-v3-level '+(cur?'current':'')+'"><div class="room-v3-levelline"><div class="room-v3-levelnum">'+n+'</div><div class="room-v3-levelmain"><b>Seviye '+n+'</b><small>'+(need?need.toLocaleString('tr-TR')+' Lidya eşiği':state)+'</small></div><span class="room-v3-levelstate" aria-label="'+state+'">'+(done?'✓':cur?'●':'🔒')+'</span></div><div class="room-v3-note">'+esc(reward)+'</div></div>';
+    }).join('');
+    const progressBlock=next?'<div class="room-v3-progress"><i style="width:'+pct+'%"></i></div><div class="room-v3-summary-meta">'+progress.toLocaleString('tr-TR')+' / '+next.toLocaleString('tr-TR')+' Lidya • sonraki seviyeye '+Math.max(0,next-progress).toLocaleString('tr-TR')+' kaldı</div>':'<div class="room-v3-summary-meta">Seviye ilerleme bilgisi sunucuda henüz tanımlı değil.</div>';
+    const p=panel(surface());p.classList.add('show');p.querySelector('.room-v3-tabs').style.display='none';p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));p.querySelector('#roomV3Title').textContent='Oda gelişimi';
+    p.querySelector('#roomV3Body').innerHTML='<div class="room-v3-summary"><div class="room-v3-summary-top"><div><div class="room-v3-summary-title">Seviye '+level+'</div><div class="room-v3-summary-meta">'+cap+' koltuk • '+Number(r?.member_count||r?.members_count||0)+' katılımcı</div></div><span class="room-v3-levelnum">'+level+'</span></div>'+progressBlock+'</div><div class="room-v3-note" style="margin:0 0 10px">Seviye ödülleri ve açılacak oda özellikleri</div>'+rows;
   }
 
   async function info(body,r){const level=Number(r?.level||1),cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8)),members=Number(r?.member_count||r?.members_count||0),publicId=/^\d{12}$/.test(String(r?.public_id||''))?String(r.public_id):'yüklenemedi';body.innerHTML='<div class="room-v3-card"><b>🏠 '+esc(r?.name||document.getElementById('erisLiveTitle')?.textContent||'Oda')+'</b><small>ID: '+publicId+'</small></div><div class="room-v3-card"><b>Seviye '+level+'</b><small>'+members+' kişi • '+cap+' koltuk • '+(r?.locked?'🔒 Kilitli':'🟢 Açık')+'</small></div><div class="room-v3-grid"><button class="room-v3-btn" data-announcements>📢 Duyurular</button><button class="room-v3-btn" data-room-games>🎮 Oda oyunları</button></div>';body.querySelector('[data-announcements]').onclick=()=>window.ErisRoomAnnouncements?.open?.();body.querySelector('[data-room-games]').onclick=()=>window.ErisChatGames?.open?.('room',r.id||roomId())}
@@ -142,6 +151,7 @@
     const settingsTab=p.querySelector('.room-v3-tab[data-tab="settings"]');
     if(settingsTab) settingsTab.style.display=canManage?'':'none';
     if(tab==='settings'&&!canManage) tab='info';
+    p.querySelector('.room-v3-tabs').style.display='';
     p.querySelectorAll('.room-v3-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
     p.querySelector('#roomV3Title').textContent={info:'Oda bilgisi',users:'Kullanıcılar',gifts:'Hediyeler',music:'Müzik',settings:'Oda ayarları'}[tab]||'Oda';
     const body=p.querySelector('#roomV3Body');body.innerHTML='<div class="room-v3-note">Yükleniyor…</div>';
@@ -181,16 +191,17 @@
       '#erisRoomSurface #erisRoomMicInline.on{background:linear-gradient(135deg,#754cff,#ff4fa3)!important}',
       '#erisRoomSurface #erisRoomGiftInline{width:42px!important;height:42px!important;min-width:42px!important;padding:0!important}',
       '#erisRoomSurface .room-v3-panel{top:70px!important;bottom:204px!important}',
-      '#erisRoomSurface .room-v5-panel{display:none;position:absolute;left:50%;top:70px;bottom:204px;transform:translateX(-50%);width:min(430px,calc(100% - 16px));z-index:190;overflow:auto;border:1px solid rgba(255,255,255,.15);border-radius:18px;background:rgba(8,4,18,.97);backdrop-filter:blur(24px);padding:10px;box-sizing:border-box}',
-      '#erisRoomSurface .room-v5-panel.show{display:block}',
-      '#erisRoomSurface .v5-title{font-size:13px;font-weight:900;margin:2px 2px 10px;display:flex;justify-content:space-between;align-items:center}',
-      '#erisRoomSurface .v5-card{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.05);border-radius:13px;padding:10px;margin-bottom:7px}',
-      '#erisRoomSurface .v5-row{display:flex;align-items:center;gap:7px;justify-content:space-between}',
-      '#erisRoomSurface .v5-row b{font-size:10px}.v5-row small{font-size:7px;color:#aaa0b2}',
-      '#erisRoomSurface .v5-btn{height:38px;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(255,255,255,.07);color:#fff;font-size:9px;padding:0 10px}',
-      '#erisRoomSurface .v5-btn.primary{background:linear-gradient(135deg,#754cff,#ff4fa3);border:0}',
-      '#erisRoomSurface .v5-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}',
-      '#erisRoomSurface .v5-note{font-size:8px;color:#aaa0b2;line-height:1.45}',
+      '#erisRoomSurface .room-v5-panel{display:none;position:absolute;inset:0;z-index:190;place-items:center;padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom));box-sizing:border-box;background:rgba(3,2,8,.68);backdrop-filter:blur(7px)}',
+      '#erisRoomSurface .room-v5-panel.show{display:grid}#erisRoomSurface .room-v5-dialog{width:min(540px,100%);max-height:min(760px,88dvh);overflow:auto;border:1px solid rgba(255,255,255,.16);border-radius:24px;background:linear-gradient(155deg,#14111b,#0b0910);padding:18px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.58)}',
+      '#erisRoomSurface .v5-title{font-size:18px;font-weight:750;letter-spacing:-.2px;margin:0 0 5px;display:flex;justify-content:space-between;align-items:center}#erisRoomSurface .v5-subtitle{font-size:12px;color:#a8a0af;margin-bottom:16px;line-height:1.45}',
+      '#erisRoomSurface .v5-card{border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.04);border-radius:15px;padding:14px;margin-bottom:9px}',
+      '#erisRoomSurface .v5-row{display:flex;align-items:center;gap:10px;justify-content:space-between}',
+      '#erisRoomSurface .v5-row b{font-size:14px}.v5-row small{font-size:12px;color:#aaa0b2}',
+      '#erisRoomSurface .v5-btn{min-height:44px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:rgba(255,255,255,.055);color:#fff;font-size:13px;font-weight:600;padding:0 14px}',
+      '#erisRoomSurface .v5-btn.primary{background:#754cff;border-color:#9b76ff}',
+      '#erisRoomSurface .v5-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}',
+      '#erisRoomSurface .v5-item{min-height:86px;width:100%;display:flex;align-items:center;gap:11px;text-align:left;border:1px solid rgba(255,255,255,.12);border-radius:15px;background:rgba(255,255,255,.04);color:#fff;padding:12px;transition:background .15s,border-color .15s}.v5-item:hover{background:rgba(255,255,255,.08);border-color:rgba(155,118,255,.52)}.v5-icon{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:rgba(138,92,255,.15);font-size:17px}.v5-item-copy{flex:1;min-width:0}.v5-item-copy b{display:block;font-size:13px}.v5-item-copy small{display:block;color:#a9a0b0;font-size:11px;line-height:1.35;margin-top:4px}.v5-chevron{color:#8f8798;font-size:20px}',
+      '#erisRoomSurface .v5-note{font-size:12px;color:#aaa0b2;line-height:1.5}',
       '@media(max-width:520px){#erisRoomSurface .eris-room-top{padding:6px!important}#erisRoomSurface .eris-room-title{max-width:calc(100% - 142px)!important}#erisRoomSurface #erisRoomLevel{flex-basis:70px!important;width:70px!important;min-width:70px!important}.room-v5-topbtn{width:32px!important;min-width:32px!important;flex-basis:32px!important}}'
     ].join('');
     document.head.appendChild(x);
@@ -198,9 +209,9 @@
 
   function panel(){
     const s=root(); if(!s) return null;
-    let p=s.querySelector('.room-v5-panel');
-    if(!p){p=document.createElement('div');p.className='room-v5-panel';s.appendChild(p);}
-    return p;
+    let overlay=s.querySelector('.room-v5-panel');
+    if(!overlay){overlay=document.createElement('div');overlay.className='room-v5-panel';overlay.innerHTML='<section class="room-v5-dialog" role="dialog" aria-modal="true" aria-label="Oda menüsü"></section>';overlay.addEventListener('click',event=>{if(event.target===overlay)closePanels()});s.appendChild(overlay);}
+    return overlay.querySelector('.room-v5-dialog');
   }
 
   function closePanels(){
@@ -230,60 +241,52 @@
   }
 
   async function syncHeader(){
-    const lv=q('erisRoomLevel'); try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||8)+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.(); syncManagementHeader(r);}catch{syncManagementHeader(window.__erisRoomPermissions||{});};
+    const lv=q('erisRoomLevel'); try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||8)+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.();paintTheme(r.theme||'normal');syncManagementHeader(r);}catch{syncManagementHeader(window.__erisRoomPermissions||{});};
   }
 
   async function menu(){
+    closePanels();
     const p=panel(); if(!p)return;
     const r=await roomApi().get?.(rid()).catch(()=>({}))||{};
     const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
-    p.innerHTML='<div class="v5-title">Oda menüsü <button class="v5-btn" data-close>Kapat</button></div>'+
-      '<div class="v5-grid">'+
-      '<button class="v5-btn" data-v5="info">ℹ️ Oda bilgisi</button>'+
-      '<button class="v5-btn" data-v5="users">👥 Kullanıcılar</button>'+
-      '<button class="v5-btn" data-v5="gifts">🎁 Hediyeler</button>'+
-      '<button class="v5-btn" data-v5="music">🎵 Müzik</button>'+
-      (canManage?'<button class="v5-btn" data-v5="settings">⚙️ Oda ayarları</button><button class="v5-btn" data-v5="theme">🎨 Oda teması</button>':'')+
-      '</div>'+
-      '<div class="v5-card"><b style="font-size:10px">'+(canManage?'👑 Oda yönetimi':'👤 Oda kullanıcısı')+'</b><div class="v5-note" style="margin-top:4px">'+(canManage?'Yönetim yetkileri sadece oda sahibi ve atanmış moderatörde görünür.':'Bu odanın sahibi/moderatörü değilsin; yönetim kontrolleri gizlendi.')+'</div></div>';
-    p.classList.add('show');
-    p.querySelector('[data-close]').onclick=()=>p.classList.remove('show');
+    const items=[['info','⌂','Oda bilgileri','Oda kimliği, duyurular ve oyunlar'],['users','♙','Katılımcılar','Koltukları ve oda üyelerini gör'],['gifts','◇','Hediyeler','Odada hediye gönder'],['music','♫','Oda müziği','Paylaşılan müzik kuyruğunu yönet']];
+    if(canManage)items.push(['settings','⚙','Oda yönetimi','Sohbet ve güvenlik ayarları']);
+    if(isOwner(r))items.push(['theme','◈','Oda görünümü','Odanın temasını düzenle']);
+    p.innerHTML='<div class="v5-title">Oda menüsü <button type="button" class="v5-btn" data-close aria-label="Menüyü kapat">Kapat</button></div><div class="v5-subtitle">Oda araçlarına ve yönetim ayarlarına buradan eriş.</div><div class="v5-grid">'+items.map(([key,icon,title,description])=>'<button type="button" class="v5-item" data-v5="'+key+'"><span class="v5-icon" aria-hidden="true">'+icon+'</span><span class="v5-item-copy"><b>'+title+'</b><small>'+description+'</small></span><span class="v5-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
+    p.closest('.room-v5-panel').classList.add('show');
+    p.querySelector('[data-close]').onclick=()=>p.closest('.room-v5-panel').classList.remove('show');
     p.querySelectorAll('[data-v5]').forEach(b=>b.onclick=()=>{
       const t=b.dataset.v5;
-      if(t==='theme' && !canManage) return;
+      if(t==='theme' && !isOwner(r)) return;
       if(t==='settings' && !canManage) return;
       closePanels();
       window.ErisRoomCompleteV3?.openMenu?.(t);
     });
   }
 
-  function theme(){
+  async function theme(){
     const p=panel();if(!p)return;
-    p.innerHTML='<div class="v5-title">🎨 Oda teması <button class="v5-btn" data-close>Geri</button></div>'+
-      '<div class="v5-card"><div class="v5-row"><b>Gece Neon</b><button class="v5-btn primary" data-theme="neon">Uygula</button></div></div>'+
-      '<div class="v5-card"><div class="v5-row"><b>Mor Kozmik</b><button class="v5-btn" data-theme="cosmic">Uygula</button></div></div>'+
-      '<div class="v5-card"><div class="v5-row"><b>Altın VIP</b><button class="v5-btn" data-theme="gold">Uygula</button></div></div>'+
-      '<div class="v5-card"><div class="v5-row"><b>💎 VIP 12 Royal</b><button class="v5-btn" data-theme="vip12">Uygula</button></div></div>'+
-      '<div class="v5-card"><div class="v5-row"><b>🌙 Normal</b><button class="v5-btn" data-theme="normal">Uygula</button></div></div>'+
-      '<div class="v5-note">Tema oda yüzeyinin renklerini değiştirir; kullanıcının kişisel duvar kâğıdı varsa o arka plan korunur.</div>';
-    p.classList.add('show');
+    const r=await getRoom(),active=r.theme==='vip'?'vip':'normal';
+    const options=[['normal','Standart','ErisChat gece arayüzünü kullan'],['vip','VIP altın','Odaya altın vurgu rengi uygula']];
+    p.innerHTML='<div class="v5-title">Oda görünümü <button type="button" class="v5-btn" data-close>Geri</button></div><div class="v5-subtitle">Oda temasını kaydet. Değişiklik odayı yeniden açan üyelerde de görünür.</div>'+options.map(([key,title,description])=>'<div class="v5-card"><div class="v5-row"><div><b>'+title+(active===key?' • Etkin':'')+'</b><div class="v5-note" style="margin-top:5px">'+description+'</div></div><button type="button" class="v5-btn '+(active===key?'primary':'')+'" data-theme="'+key+'">'+(active===key?'Etkin':'Uygula')+'</button></div></div>').join('');
+    p.closest('.room-v5-panel').classList.add('show');
     p.querySelector('[data-close]').onclick=menu;
-    p.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>applyTheme(b.dataset.theme));
+    p.querySelectorAll('[data-theme]').forEach(b=>b.onclick=async()=>{b.disabled=true;await applyTheme(b.dataset.theme);await theme()});
   }
 
-  function applyTheme(theme){
+  function paintTheme(theme){
     const s=root();if(!s)return;
     const wall=s.querySelector('.eris-room-wall');
-    const themes={
-      neon:{a:'#ff5bad',b:'#754cff',g:'#ffd166'},
-      cosmic:{a:'#a78bfa',b:'#4f46e5',g:'#c4b5fd'},
-      gold:{a:'#ffd166',b:'#b7791f',g:'#ffe7a3'},vip12:{a:'#f5d06f',b:'#8b5cf6',g:'#fff1a8'},normal:{a:'#8a5cff',b:'#4f46e5',g:'#c4b5fd'}
-    };
-    const t=themes[theme]||themes.neon;
+    const themes={normal:{a:'#8a5cff',b:'#4f46e5',g:'#c4b5fd'},vip:{a:'#ffd166',b:'#b7791f',g:'#ffe7a3'}};
+    const t=themes[theme]||themes.normal;
     s.style.setProperty('--room-accent',t.a);s.style.setProperty('--room-secondary',t.b);s.style.setProperty('--room-gold',t.g);
-    if(wall) wall.style.filter=theme==='gold'?'saturate(1.12) sepia(.16)':'none';
+    if(wall)wall.style.filter=theme==='vip'?'saturate(1.12) sepia(.16)':'none';
     try{localStorage.setItem('eris_room_theme_'+rid(),theme)}catch{}
-    window.toast?.('Oda teması uygulandı ✓');
+  }
+  async function applyTheme(theme){
+    if(!['normal','vip'].includes(theme))return;
+    try{await roomApi().setTheme?.(rid(),theme);paintTheme(theme);window.toast?.('Oda görünümü kaydedildi ✓')}
+    catch(error){window.toast?.(error.message||'Oda görünümü kaydedilemedi')}
   }
   async function setCapacity(value){
     const n=Number(value);
@@ -310,6 +313,48 @@
     c.insertBefore(b,send||null);
   }
 
+  function seatMenu(seat){
+    document.getElementById('eris-seat-actions')?.remove();
+    const id=roomId(),number=Number(seat.dataset.seatNumber),target=String(seat.dataset.userId||''),me=target&&target===userId();
+    const permissions=window.__erisRoomPermissions||{},canManage=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
+    const wrap=document.createElement('div');wrap.id='eris-seat-actions';wrap.setAttribute('role','presentation');
+    wrap.innerHTML='<style>#eris-seat-actions{position:fixed;inset:0;z-index:10000;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box;background:rgba(3,2,8,.66);backdrop-filter:blur(7px)}#eris-seat-actions .esa-card{width:min(440px,100%);background:linear-gradient(160deg,#1a1424,#0d0a12);border:1px solid #ffffff20;border-radius:22px;padding:18px;box-shadow:0 24px 80px #000b;color:#fff;font:14px system-ui;max-height:75vh;overflow:auto}#eris-seat-actions .esa-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}#eris-seat-actions .esa-logo{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,#754cff,#ff4fa3);font-size:21px}#eris-seat-actions .esa-title{font-weight:750;font-size:16px}#eris-seat-actions .esa-sub{font-size:12px;color:#aa9fb4;margin-top:3px}#eris-seat-actions .esa-actions{display:grid;gap:8px}#eris-seat-actions button{min-height:46px;border:1px solid #ffffff19;border-radius:14px;background:#ffffff09;color:#fff;text-align:left;padding:0 14px;font:600 14px system-ui}#eris-seat-actions button:active{transform:scale(.99)}#eris-seat-actions button.danger{background:#ed4c7417;border-color:#ed4c7440;color:#ffadc1}#eris-seat-actions button.primary{background:linear-gradient(120deg,#754cff,#d244ac);border:0}#eris-seat-actions button.close{color:#b9afc2;text-align:center;background:transparent;border:0;min-height:40px}</style><section class="esa-card" role="dialog" aria-modal="true" aria-label="Koltuk seçenekleri"><div class="esa-head"><div class="esa-logo">'+(me?'◉':'♙')+'</div><div><div class="esa-title">'+(me?'Koltuk '+number:'Koltuk '+number+' • kullanıcı')+'</div><div class="esa-sub">'+(me?'Bu koltukta oturuyorsun':'Koltuk işlemleri')+'</div></div></div><div class="esa-actions"></div><button class="close" data-close>Kapat</button></section>';
+    document.body.append(wrap);
+    const actions=wrap.querySelector('.esa-actions');
+    const add=(label,kind,run)=>{const button=document.createElement('button');button.type='button';button.className=kind||'';button.textContent=label;button.onclick=async()=>{button.disabled=true;try{await run();wrap.remove()}catch(error){window.toast?.(error.message||'İşlem tamamlanamadı');button.disabled=false}};actions.append(button)};
+    if(me){
+      add('Koltuktan kalk','danger',async()=>{await roomApi().leaveSeat?.(id);await window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda')});
+      add('Mikrofonu aç / kapat','',async()=>{await window.ErisRoomRTC?.toggle?.()});
+    }else{
+      add('Profili görüntüle','primary',()=>window.openUserProfile?.(target));
+      if(canManage)add(seat.dataset.muted==='true'?'Mikrofon sesini aç':'Mikrofonu sustur','',async()=>{if(seat.dataset.muted==='true')await roomApi().unmuteSeat?.(id,number);else await roomApi().muteSeat?.(id,number);await window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda')});
+    }
+    wrap.querySelector('[data-close]').onclick=()=>wrap.remove();wrap.addEventListener('click',event=>{if(event.target===wrap)wrap.remove()});
+    const escape=event=>{if(event.key==='Escape'){wrap.remove();document.removeEventListener('keydown',escape)}};document.addEventListener('keydown',escape);
+    wrap.querySelector('button:not(.close)')?.focus();
+  }
+
+  function seatActions(){
+    const s=surface();if(!s)return;
+    const stage=s.querySelector('#erisLiveSeats');if(!stage||stage.dataset.seatActions==='1')return;
+    stage.dataset.seatActions='1';
+    let timer=0,longPressed=false;
+    stage.addEventListener('pointerdown',event=>{
+      const seat=event.target.closest('.eris-seat');if(!seat||!seat.classList.contains('occupied'))return;
+      longPressed=false;
+      timer=window.setTimeout(()=>{longPressed=true;seatMenu(seat)},420);
+    });
+    const clear=()=>{window.clearTimeout(timer);timer=0};
+    stage.addEventListener('pointerup',clear);stage.addEventListener('pointercancel',clear);stage.addEventListener('pointerleave',clear);
+    stage.addEventListener('contextmenu',event=>{if(event.target.closest('.eris-seat.occupied'))event.preventDefault()});
+    stage.addEventListener('click',event=>{
+      const seat=event.target.closest('.eris-seat');if(!seat)return;
+      if(longPressed){event.preventDefault();event.stopImmediatePropagation();longPressed=false;return}
+      if(!seat.classList.contains('occupied'))return;
+      if(seat.classList.contains('me')){event.preventDefault();event.stopImmediatePropagation();seatMenu(seat)}
+    },true);
+  }
+
   function passwordModal(title='Odaya giriş şifresi'){
     return new Promise(resolve=>{
       document.getElementById('eris-room-password-modal')?.remove();
@@ -330,7 +375,7 @@
     if(!root())return;
     css();top();mic();seatActions();syncHeader();
     const saved=localStorage.getItem('eris_room_theme_'+rid());
-    if(saved)applyTheme(saved);
+    if(saved)paintTheme(saved);
   }
   const boot=()=>bind();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
