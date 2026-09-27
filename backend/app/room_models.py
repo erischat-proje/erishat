@@ -21,6 +21,18 @@ class Room(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+
+class RoomInvitation(Base):
+    __tablename__ = "room_invitations"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), index=True, nullable=False)
+    sender_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    recipient_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending", nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class RoomMember(Base):
     __tablename__ = "room_members"
     __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_room_member"),)
@@ -92,6 +104,12 @@ class RoomGiftEvent(Base):
     recipient_percent: Mapped[int] = mapped_column(Integer, nullable=False)
     recipient_amount: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class RoomMusicAccess(Base):
+    __tablename__ = "room_music_access"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class RoomMusic(Base):

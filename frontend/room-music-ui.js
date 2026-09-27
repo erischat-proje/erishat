@@ -70,7 +70,52 @@
       const active=rows.find(x=>x.is_playing);if(active){try{const player=await ensureAudio(active);const position=Number(active.position_seconds||0)+(active.started_at?Math.max(0,(Date.now()-Date.parse(active.started_at))/1000):0);if(Number.isFinite(position)&&Math.abs(player.currentTime-position)>3)player.currentTime=position;if(player.paused)await player.play()}catch(e){if(e.name!=='NotAllowedError')window.toast?.(e.message)}}else audio?.pause();updatePlayer();
     }catch(e){const box=document.getElementById('erisMusicList');if(box)box.textContent=e.message||'Müzikler yüklenemedi.'}finally{loading=false}
   }
-  function mount(){if(document.getElementById('erisMusicPanel'))return;const panel=document.createElement('div');panel.id='erisMusicPanel';panel.style.cssText='display:none;position:fixed;inset:0;z-index:1000;background:#020107e8;align-items:flex-end;justify-content:center;color:#fff';panel.innerHTML='<div style="width:min(520px,100%);max-height:82vh;overflow:auto;background:#0b0911;border-radius:24px 24px 0 0;padding:15px"><div style="display:flex;justify-content:space-between"><b>🎵 Oda Müziği</b><button data-close aria-label="Kapat">×</button></div><p>Telefonundan MP3, M4A, OGG, FLAC veya WAV seç. En fazla 8 MB; parça başına 150 Lidya.</p><input data-title placeholder="Parça adı" maxlength="128" style="width:100%;box-sizing:border-box"><input data-file type="file" accept=".mp3,.m4a,.ogg,.flac,.wav,audio/*" style="width:100%;margin:10px 0"><button data-add type="button">Müziği odaya ekle</button>'+"<section id=\"erisMusicPlayer\" style=\"margin:16px 0;padding:15px;border:1px solid #ffffff26;border-radius:20px;background:linear-gradient(145deg,#261936,#11101a)\">\n<b id=\"erisMusicNow\" style=\"display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Çalan parça yok</b>\n<input id=\"erisMusicProgress\" aria-label=\"Parçada ilerle\" type=\"range\" min=\"0\" max=\"100\" value=\"0\" style=\"width:100%;accent-color:#ae63ef;margin:14px 0\">\n<div style=\"display:flex;gap:10px;align-items:center;justify-content:center\">\n<button type=\"button\" data-prev aria-label=\"Önceki parça\" style=\"min-width:48px;min-height:46px\">⏮</button>\n<button type=\"button\" data-toggle aria-label=\"Oynat veya duraklat\" style=\"min-width:54px;min-height:50px;border-radius:50%;background:linear-gradient(120deg,#8849ed,#e146ad);color:white\">▶</button>\n<button type=\"button\" data-next aria-label=\"Sonraki parça\" style=\"min-width:48px;min-height:46px\">⏭</button>\n</div>\n<label style=\"display:flex;gap:12px;align-items:center;margin-top:14px\">🔊 <input id=\"erisMusicVolume\" aria-label=\"Müzik ses düzeyi\" type=\"range\" min=\"0\" max=\"100\" value=\"70\" style=\"flex:1;accent-color:#ae63ef\"></label>\n</section>"+'<div id="erisMusicList" role="status"></div></div>';document.body.append(panel);
+  function confirmMusicAccess(){
+    return new Promise(resolve=>{
+      const overlay=document.createElement('div');
+      overlay.style.cssText='position:fixed;inset:0;z-index:15000;display:grid;place-items:center;padding:20px;background:#03020bd9;backdrop-filter:blur(10px)';
+      overlay.innerHTML='<section role="dialog" aria-modal="true" aria-label="Müzik erişimi onayı" style="width:min(390px,100%);padding:24px;border:1px solid #ffffff28;border-radius:23px;background:linear-gradient(145deg,#261a34,#0e0b15);color:#fff;box-shadow:0 28px 80px #000a;font:14px system-ui"><div style="font-size:30px">🎵</div><h2 style="margin:12px 0">Müzik erişimini aç</h2><p style="color:#c7bdce;line-height:1.5">150 Lidya ödeyerek müziği 24 saat boyunca tüm odalarda kullanacaksın. Onaylıyor musun?</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px"><button type="button" data-no style="min-height:46px;border:1px solid #ffffff33;border-radius:12px;background:#ffffff12;color:#fff">Reddet</button><button type="button" data-yes style="min-height:46px;border:0;border-radius:12px;background:linear-gradient(110deg,#8248ec,#e248a5);color:#fff;font-weight:700">Kabul et</button></div></section>';
+      document.body.append(overlay);
+      const done=value=>{overlay.remove();resolve(value)};
+      overlay.querySelector('[data-no]').onclick=()=>done(false);
+      overlay.querySelector('[data-yes]').onclick=()=>done(true);
+    });
+  }
+  async function refreshAccess(){
+    const panel=document.getElementById('erisMusicPanel');
+    if(!panel)return;
+    const label=panel.querySelector('[data-pass-state]');
+    const unlock=panel.querySelector('[data-unlock]');
+    const upload=panel.querySelector('[data-upload]');
+    try{
+      const access=await api('/rooms/music-access/status');
+      const active=!!access.active;
+      label.textContent=active
+        ?'✓ Müzik açık · '+new Date(access.expires_at).toLocaleString('tr-TR')+' tarihine kadar'
+        :'🔒 Müzik ekleme kilitli · 150 Lidya / 24 saat';
+      unlock.style.display=active?'none':'block';
+      upload.style.filter=active?'none':'blur(3px)';
+      upload.style.pointerEvents=active?'auto':'none';
+      upload.style.opacity=active?'1':'.55';
+    }catch(error){
+      label.textContent=error.message||'Müzik erişimi kontrol edilemedi.';
+      unlock.style.display='none';
+      upload.style.filter='blur(3px)';
+      upload.style.pointerEvents='none';
+    }
+  }
+  function mount(){if(document.getElementById('erisMusicPanel'))return;const panel=document.createElement('div');panel.id='erisMusicPanel';panel.style.cssText='display:none;position:fixed;inset:0;z-index:1000;background:#020107e8;align-items:flex-end;justify-content:center;color:#fff';panel.innerHTML='<div style="width:min(520px,100%);max-height:82vh;overflow:auto;background:#0b0911;border-radius:24px 24px 0 0;padding:15px"><div style="display:flex;justify-content:space-between"><b>🎵 Oda Müziği</b><button data-close aria-label="Kapat">×</button></div><p>Telefonundan MP3, M4A, OGG, FLAC veya WAV seç. En fazla 8 MB. 150 Lidya karşılığında 24 saat boyunca tüm odalarda müzik ekleyebilirsin.</p><div data-pass style="padding:13px;border-radius:17px;border:1px solid #ffffff25;background:linear-gradient(130deg,#291b39,#14111e);margin:13px 0"><strong data-pass-state>🎵 Müzik erişimi kontrol ediliyor…</strong><button type="button" data-unlock style="display:none;width:100%;margin-top:12px">🔓 150 Lidya · 24 saat aç</button></div><div data-upload><input data-title placeholder="Parça adı" maxlength="128" style="width:100%;box-sizing:border-box"><input data-file type="file" accept=".mp3,.m4a,.ogg,.flac,.wav,audio/*" style="width:100%;margin:10px 0"><button data-add type="button">Müziği odaya ekle</button></div>'+"<section id=\"erisMusicPlayer\" style=\"margin:16px 0;padding:15px;border:1px solid #ffffff26;border-radius:20px;background:linear-gradient(145deg,#261936,#11101a)\">\n<b id=\"erisMusicNow\" style=\"display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Çalan parça yok</b>\n<input id=\"erisMusicProgress\" aria-label=\"Parçada ilerle\" type=\"range\" min=\"0\" max=\"100\" value=\"0\" style=\"width:100%;accent-color:#ae63ef;margin:14px 0\">\n<div style=\"display:flex;gap:10px;align-items:center;justify-content:center\">\n<button type=\"button\" data-prev aria-label=\"Önceki parça\" style=\"min-width:48px;min-height:46px\">⏮</button>\n<button type=\"button\" data-toggle aria-label=\"Oynat veya duraklat\" style=\"min-width:54px;min-height:50px;border-radius:50%;background:linear-gradient(120deg,#8849ed,#e146ad);color:white\">▶</button>\n<button type=\"button\" data-next aria-label=\"Sonraki parça\" style=\"min-width:48px;min-height:46px\">⏭</button>\n</div>\n<label style=\"display:flex;gap:12px;align-items:center;margin-top:14px\">🔊 <input id=\"erisMusicVolume\" aria-label=\"Müzik ses düzeyi\" type=\"range\" min=\"0\" max=\"100\" value=\"70\" style=\"flex:1;accent-color:#ae63ef\"></label>\n</section>"+'<div id="erisMusicList" role="status"></div></div>';document.body.append(panel);
+    panel.querySelector('[data-unlock]').onclick=async event=>{
+      const button=event.currentTarget;
+      button.disabled=true;
+      try{
+        if(!await confirmMusicAccess())return;
+        await api('/rooms/music-access/activate',{method:'POST',body:'{}'});
+        await refreshAccess();
+        window.toast?.('Müzik 24 saat boyunca tüm odalarda açık.');
+      }catch(error){window.toast?.(error.message||'Müzik açılamadı.')}
+      finally{button.disabled=false}
+    };
     panel.querySelector('[data-prev]').onclick=()=>skipTrack(-1).catch(e=>window.toast?.(e.message));
     panel.querySelector('[data-next]').onclick=()=>skipTrack(1).catch(e=>window.toast?.(e.message));
     panel.querySelector('[data-toggle]').onclick=()=>{
@@ -102,7 +147,14 @@
       tracks=[];
     }
     roomId=nextRoom;
-    mount();const panel=document.getElementById('erisMusicPanel');panel.style.display='flex';load();clearInterval(timer);timer=setInterval(load,4000)}};
+    mount();const panel=document.getElementById('erisMusicPanel');panel.style.display='flex';refreshAccess();load();clearInterval(timer);timer=setInterval(load,4000)}};
   window.ErisRoom=window.ErisRoom||{};window.ErisRoom.music=id=>api(path(id));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+})();
+
+// Room music controls use the same dark theme as the room center.
+(() => {
+  const style=document.createElement('style');
+  style.textContent='#erisMusicPanel button,#erisMusicPanel input:not([type=file]){border:1px solid #ffffff29;border-radius:13px;background:#201827;color:#fff;min-height:42px;padding:8px;font:600 14px system-ui}#erisMusicPanel [data-add],#erisMusicPanel [data-unlock]{background:linear-gradient(115deg,#8149ed,#dd45a3);border:0;color:#fff;font-weight:750}#erisMusicPanel input[type=file]{color:#ddd;background:#1c1525;border:1px solid #ffffff25;border-radius:12px;padding:10px;box-sizing:border-box}';
+  document.head.append(style);
 })();
