@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import Room, RoomBan, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper
+from .room_models import Room, RoomBan, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState
 from .platform_models import Notification, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
@@ -377,10 +377,12 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper = db.get(RoomWallpaper, room.id)
     wallpaper_expiry = wallpaper.paid_until if wallpaper and wallpaper.paid_until.tzinfo else (wallpaper.paid_until.replace(tzinfo=timezone.utc) if wallpaper else None)
     wallpaper_active = bool(wallpaper_expiry and wallpaper_expiry > datetime.now(timezone.utc))
+    wallpaper_state = db.get(RoomWallpaperState, room.id)
+    wallpaper_applied = bool(wallpaper_state.applied) if wallpaper_state else wallpaper_active
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
     return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]),
-        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
+        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -611,7 +613,7 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id) and room.owner_id != user.id:
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         view = room_view(db, room, user)
-        return {"asset_key": view["wallpaper_asset"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
+        return {"asset_key": view["wallpaper_owned_asset"], "applied": view["wallpaper_applied"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
                 "prices": {1: 1000, 7: 5000, 30: 18000}, "items": wallpaper_catalog()}
 
     @router.post("/{room_id}/wallpaper")
@@ -640,8 +642,42 @@ def register_room_auth(current_user_dependency):
             row.paid_until = paid_until
         else:
             db.add(RoomWallpaper(room_id=room.id, asset_key=payload.asset_key, paid_until=paid_until))
+        state = db.get(RoomWallpaperState, room.id)
+        if state:
+            state.applied = True
+        else:
+            db.add(RoomWallpaperState(room_id=room.id, applied=True))
         db.commit()
         return {"ok": True, "asset_key": payload.asset_key, "paid_until": paid_until, "spent": price, "days": payload.days}
+
+    @router.post("/{room_id}/wallpaper/apply")
+    def apply_room_wallpaper(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_owner(db, room, user)
+        row = db.get(RoomWallpaper, room.id)
+        expiry = row.paid_until if row and row.paid_until.tzinfo else (row.paid_until.replace(tzinfo=timezone.utc) if row else None)
+        if not row or not expiry or expiry <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Uygulanabilir süreli oda duvar kâğıdı yok")
+        state = db.get(RoomWallpaperState, room.id)
+        if state:
+            state.applied = True
+        else:
+            db.add(RoomWallpaperState(room_id=room.id, applied=True))
+        db.commit()
+        return {"applied": True, "asset_key": row.asset_key, "paid_until": row.paid_until}
+
+    @router.delete("/{room_id}/wallpaper")
+    def reset_room_wallpaper(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_owner(db, room, user)
+        state = db.get(RoomWallpaperState, room.id)
+        if not state:
+            state = RoomWallpaperState(room_id=room.id, applied=False)
+            db.add(state)
+        else:
+            state.applied = False
+        db.commit()
+        return {"applied": False, "asset_key": None}
 
     @router.get("/{room_id}/moderators")
     def list_moderators(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):

@@ -73,6 +73,17 @@ def main() -> int:
         raise RuntimeError(f"room create response has no id: {room}")
     print(f"room created: {room_id}")
 
+    status, unavailable_wallpaper = request("POST", f"/rooms/{room_id}/wallpaper/apply", token_a, {})
+    if status != 400:
+        raise AssertionError(f"apply without a paid wallpaper expected HTTP 400, got {status}: {unavailable_wallpaper}")
+    status, normal_theme = request("DELETE", f"/rooms/{room_id}/wallpaper", token_a)
+    if status >= 300 or normal_theme.get("applied"):
+        raise RuntimeError(f"normal room theme switch failed: HTTP {status} {normal_theme}")
+    status, room_after_reset = request("GET", f"/rooms/{room_id}", token_a)
+    if status >= 300 or room_after_reset.get("wallpaper_applied") or room_after_reset.get("wallpaper_asset"):
+        raise AssertionError(f"normal theme state was not persisted: HTTP {status} {room_after_reset}")
+    print("room wallpaper apply guard and normal-theme reset persistence OK")
+
     status, own_follow = request("POST", f"/rooms/{room_id}/follow", token_a, {})
     if status != 400:
         raise AssertionError(f"room owner follow expected HTTP 400, got {status}: {own_follow}")

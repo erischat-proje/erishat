@@ -123,7 +123,7 @@
   }
   function applyRoomWallpaper(){
     const wall=document.querySelector('#erisRoomSurface .eris-room-wall');if(!wall)return;
-    const key=window.__erisActiveRoomWallpaper||window.ErisChatCosmetics?.state?.user?.wallpaper_asset;
+    const key=window.__erisActiveRoomWallpaper;
     const raw=typeof key==='string'?key:(key?.url||key?.src||key?.asset_url||key?.path||key?.asset_key||'');
     const url=raw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(raw):raw;
     if(url){wall.style.setProperty('--eris-room-wallpaper','url("'+url.replace(/"/g,'%22')+'")');wall.classList.add('has-wallpaper');}
@@ -184,10 +184,10 @@
     window.__erisRoomSocket?.close?.();
     const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;
     const add=d=>{const e=document.createElement('div'),me=String(d.user_id||'')===String(window.__erisCurrentRoomUserId||window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');e.className='eris-chat-msg'+(me?' me':'');e.innerHTML='<b></b><span></span>';e.querySelector('b').textContent=me?'Sen':(d.nickname||d.user_id||'Kullanıcı');e.querySelector('span').textContent=d.text||'';list.appendChild(e);list.scrollTop=list.scrollHeight;};
-    socket.onopen=()=>{state.textContent='Canlı oda • sohbet bağlı';list.innerHTML='';};
-    socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();if(document.getElementById('erisRoomSurface')?.classList.contains('show'))state.textContent='Oda • sohbet bağlantısı kapandı';}};
-    socket.onerror=()=>{state.textContent='Oda • sohbet bağlantı hatası';};
-    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')state.textContent='Oda • '+(d.message||'sohbet kapalı');else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
+    socket.onopen=()=>{state.dataset.connectionStatus='connected';list.innerHTML='';};
+    socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();state.dataset.connectionStatus='disconnected';}};
+    socket.onerror=()=>{state.dataset.connectionStatus='error';};
+    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
     const doSend=()=>{const t=input.value.trim();if(!t||socket.readyState!==1)return;if(t.length>500)return;socket.send(JSON.stringify({type:'room_chat',text:t}));input.value='';};
     send.onclick=doSend;input.onkeydown=e=>{if(e.key==='Enter')doSend();};
   }

@@ -35,6 +35,8 @@
     clearPassword: roomId => api(`/rooms/${id(roomId)}/password`, { method:'DELETE' }),
     unlock: roomId => api(`/rooms/${id(roomId)}/lock`, { method: 'DELETE' }),
     giftCatalog: roomId => api(`/rooms/${id(roomId)}/gift-catalog`),
+    applyWallpaper: roomId => api(`/rooms/${id(roomId)}/wallpaper/apply`, body({})),
+    resetWallpaper: roomId => api(`/rooms/${id(roomId)}/wallpaper`, { method: 'DELETE' }),
     giftEvents: (roomId, limit = 50) => api(`/rooms/${id(roomId)}/gift-events?limit=${Math.max(1, Math.min(100, Number(limit) || 50))}`),
     leaderboard: roomId => api(`/rooms/${id(roomId)}/gift-leaderboard`),
     sendGift: (roomId, recipientId, giftKey, quantity = 1) => api(`/rooms/${id(roomId)}/gifts`, body({ recipient_id: recipientId, gift_key: giftKey, quantity: Number(quantity) })),
