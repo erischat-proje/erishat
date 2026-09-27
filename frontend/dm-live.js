@@ -97,6 +97,7 @@
     const members = asList(conversation?.members, ['members']);
     const other = members.find(member => String(member?.user_id) !== String(currentUserId));
     if (!other?.user_id) return {};
+    if (other.nickname) return other;
     try {
       return await api().api(`/users/${encodeURIComponent(other.user_id)}`);
     } catch (error) {
@@ -193,7 +194,8 @@
     };
     let holdTimer = null, held = false;
     body?.addEventListener('pointerdown', event => { const row = event.target.closest('.bubble[data-message-id]'); if (!row) return; held = false; holdTimer = setTimeout(() => { held = true; setSelected(row); }, 520); });
-    body?.addEventListener('pointerup', () => clearTimeout(holdTimer)); body?.addEventListener('pointerleave', () => clearTimeout(holdTimer));
+    body?.addEventListener('pointerup', () => clearTimeout(holdTimer)); body?.addEventListener('pointercancel', () => clearTimeout(holdTimer)); body?.addEventListener('pointerleave', () => clearTimeout(holdTimer));
+    body?.addEventListener('contextmenu', event => { const row=event.target.closest('.bubble[data-message-id]'); if(!row)return; event.preventDefault(); setSelected(row); });
     body?.addEventListener('click', event => { const row = event.target.closest('.bubble[data-message-id]'); if (held) { held = false; return; } if (selectedMessages.size && row) { event.preventDefault(); setSelected(row); } });
     const compose = chat.querySelector('.compose');
     const chatName=String(chat.querySelector('.chatHead b')?.textContent||'');

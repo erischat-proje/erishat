@@ -150,6 +150,10 @@ class ConversationCreate(BaseModel):
 class ConversationMemberOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_id: str
+    nickname: str | None = None
+    avatar: str | None = None
+    avatar_asset: str | None = None
+    frame_asset: str | None = None
 
 
 class ConversationOut(BaseModel):

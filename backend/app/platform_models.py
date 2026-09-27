@@ -286,3 +286,23 @@ class FamilyVisual(Base):
     mime_type: Mapped[str] = mapped_column(String(64), nullable=False)
     image_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class SocialStory(Base):
+    __tablename__ = "social_stories"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    caption: Mapped[str] = mapped_column(String(300), default="", server_default="", nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    image_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
+
+
+class SocialStoryView(Base):
+    __tablename__ = "social_story_views"
+    __table_args__ = (UniqueConstraint("story_id", "viewer_id", name="uq_social_story_view"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    story_id: Mapped[int] = mapped_column(ForeignKey("social_stories.id", ondelete="CASCADE"), index=True, nullable=False)
+    viewer_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    viewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

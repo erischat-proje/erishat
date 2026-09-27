@@ -7,7 +7,7 @@ import asyncio
 import logging
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
-from sqlalchemy import func, select, text, update
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -29,7 +29,8 @@ from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator
 from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
-    MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification)
+    MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
+    SocialStory, SocialStoryView, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -234,6 +235,17 @@ register_family_auth(current_user)
 register_support_auth(current_user)
 register_admin_auth(current_user)
 app.include_router(room_router)
+# These legacy router handlers were mounted before the authoritative DM
+# handlers below, so FastAPI resolved requests to the stale versions first.
+# Keep only the conversation and text-message routes implemented in this file.
+_authoritative_dm_routes = {
+    ("/v1/conversations", "GET"), ("/v1/conversations", "POST"),
+    ("/v1/conversations/{conversation_id}", "GET"),
+    ("/v1/messages/{conversation_id}", "GET"), ("/v1/messages/{conversation_id}", "POST"),
+}
+platform_router.routes[:] = [route for route in platform_router.routes if not any(
+    (getattr(route, "path", ""), method) in _authoritative_dm_routes
+    for method in (getattr(route, "methods", None) or set()))]
 app.include_router(platform_router)
 app.include_router(family_router)
 app.include_router(support_router)
@@ -761,6 +773,20 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
 def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
+    # Older family records predate the shared inbox. Restore the conversation
+    # membership from the authoritative family membership table on read.
+    family_rows = db.execute(select(Family.chat_conversation_id, FamilyMember.user_id)
+        .join(FamilyMember, FamilyMember.family_id == Family.id)
+        .where(FamilyMember.user_id == user.id)).all()
+    changed = False
+    for conversation_id, member_id in family_rows:
+        if not db.scalar(select(ConversationMember.id).where(
+            ConversationMember.conversation_id == conversation_id,
+            ConversationMember.user_id == member_id)):
+            db.add(ConversationMember(conversation_id=conversation_id, user_id=member_id))
+            changed = True
+    if changed:
+        db.commit()
     rows = ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
     result = []
     for conversation in rows:
@@ -772,8 +798,16 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
         unread = int(db.scalar(select(func.count(Message.id)).where(Message.conversation_id == conversation.id,
             Message.sender_id != user.id, Message.id > (state.last_read_message_id if state else 0), ~hidden)) or 0)
         display_name = (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)
+        member_details = []
+        for member_id in members:
+            member_user = db.get(User, member_id)
+            member_details.append({"user_id": member_id,
+                "nickname": member_user.nickname if member_user else None,
+                "avatar": member_user.avatar if member_user else None,
+                "avatar_asset": member_user.avatar_asset if member_user else None,
+                "frame_asset": member_user.frame_asset if member_user else None})
         result.append({"id": conversation.id, "type": "family" if family_name else conversation.type,
-            "created_at": conversation.created_at, "members": [{"user_id": value} for value in members],
+            "created_at": conversation.created_at, "members": member_details,
             "name": display_name, "unread_count": unread,
             "last_message": last.text if last else None, "last_message_at": last.created_at if last else None})
     return result
@@ -790,8 +824,16 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation_id))
+    member_details = []
+    for member in conversation.members:
+        member_user = db.get(User, member.user_id)
+        member_details.append({"user_id": member.user_id,
+            "nickname": member_user.nickname if member_user else None,
+            "avatar": member_user.avatar if member_user else None,
+            "avatar_asset": member_user.avatar_asset if member_user else None,
+            "frame_asset": member_user.frame_asset if member_user else None})
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
-        "created_at": conversation.created_at, "members": [{"user_id": m.user_id} for m in conversation.members],
+        "created_at": conversation.created_at, "members": member_details,
         "name": (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)}
 
 
@@ -944,6 +986,75 @@ def get_message_media(conversation_id: str, message_id: int, db: Session = Depen
     return Response(content=media.data, media_type=media.mime_type,
         headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache",
             "X-Content-Type-Options":"nosniff", "X-Erischat-Expires-In":str(countdown)})
+
+
+@app.get("/v1/stories")
+def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    now = datetime.now(timezone.utc)
+    db.execute(delete(SocialStory).where(SocialStory.expires_at <= now))
+    db.commit()
+    following = list(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
+    visible_ids = {user.id, *following}
+    rows = list(db.scalars(select(SocialStory).where(SocialStory.user_id.in_(visible_ids),
+        SocialStory.expires_at > now).order_by(SocialStory.created_at.desc()).limit(limit))) if visible_ids else []
+    result = []
+    for story in rows:
+        author = db.get(User, story.user_id)
+        if not author or not author.is_active:
+            continue
+        viewed = story.user_id != user.id and bool(db.scalar(select(SocialStoryView.id).where(
+            SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)))
+        view_count = int(db.scalar(select(func.count(SocialStoryView.id)).where(SocialStoryView.story_id == story.id)) or 0)
+        result.append({"id": story.id, "user_id": author.id, "nickname": author.nickname,
+            "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": story.caption,
+            "created_at": story.created_at, "expires_at": story.expires_at, "viewed": viewed,
+            "view_count": view_count, "media_url": f"/stories/{story.id}/media"})
+    return result
+
+
+@app.post("/v1/stories", status_code=201)
+async def create_story(file: UploadFile = File(...), caption: str = Form(default=""),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    mime_type = (file.content_type or "").split(";", 1)[0].strip().lower()
+    signatures = {"image/jpeg": (b"\xff\xd8\xff",), "image/png": (b"\x89PNG\r\n\x1a\n",),
+        "image/gif": (b"GIF87a", b"GIF89a"), "image/webp": (b"RIFF",)}
+    if mime_type not in signatures:
+        raise HTTPException(status_code=415, detail="Story için JPG, PNG, WEBP veya GIF görseli seçin")
+    data = await file.read(10 * 1024 * 1024 + 1)
+    if not data or len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Story görseli en fazla 10 MB olabilir")
+    valid = any(data.startswith(prefix) for prefix in signatures[mime_type])
+    if mime_type == "image/webp": valid = valid and data[8:12] == b"WEBP"
+    if not valid: raise HTTPException(status_code=415, detail="Görsel dosyası okunamadı")
+    story = SocialStory(user_id=user.id, caption=caption.strip()[:300], mime_type=mime_type,
+        image_bytes=data, expires_at=datetime.now(timezone.utc) + timedelta(hours=24))
+    db.add(story); db.commit(); db.refresh(story)
+    return {"id": story.id, "user_id": user.id, "caption": story.caption, "created_at": story.created_at,
+        "expires_at": story.expires_at, "media_url": f"/stories/{story.id}/media", "view_count": 0, "viewed": False}
+
+
+@app.get("/v1/stories/{story_id}/media")
+def get_story_media(story_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    story = db.get(SocialStory, story_id)
+    if not story or story.expires_at <= datetime.now(timezone.utc) or story.image_bytes is None:
+        raise HTTPException(status_code=410, detail="Story süresi dolmuş veya kaldırılmış")
+    if story.user_id != user.id and not db.scalar(select(UserFollow.id).where(
+        UserFollow.follower_id == user.id, UserFollow.following_id == story.user_id)):
+        raise HTTPException(status_code=403, detail="Bu story yalnızca takipçilere görünür")
+    if story.user_id != user.id and not db.scalar(select(SocialStoryView.id).where(
+        SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)):
+        db.add(SocialStoryView(story_id=story.id, viewer_id=user.id)); db.commit()
+    return Response(content=story.image_bytes, media_type=story.mime_type,
+        headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
+
+
+@app.delete("/v1/stories/{story_id}")
+def delete_story(story_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    story = db.get(SocialStory, story_id)
+    if not story: raise HTTPException(status_code=404, detail="Story bulunamadı")
+    if story.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi story'ni silebilirsin")
+    db.delete(story); db.commit()
+    return {"deleted": True, "story_id": story_id}
 
 
 @app.post("/v1/messages/{conversation_id}/delete")

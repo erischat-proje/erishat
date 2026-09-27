@@ -37,6 +37,27 @@ def request(method: str, path: str, token: str | None = None, payload=None):
         return exc.code, data
 
 
+def upload(path: str, token: str, field: str, filename: str, mime: str, data: bytes, fields=None):
+    boundary = "----ErisChatSmokeBoundary"
+    chunks = []
+    for key, value in (fields or {}).items():
+        chunks.extend([f"--{boundary}\r\nContent-Disposition: form-data; name=\"{key}\"\r\n\r\n{value}\r\n".encode()])
+    chunks.extend([f"--{boundary}\r\nContent-Disposition: form-data; name=\"{field}\"; filename=\"{filename}\"\r\nContent-Type: {mime}\r\n\r\n".encode(), data, f"\r\n--{boundary}--\r\n".encode()])
+    req = Request(API + path, data=b"".join(chunks), headers={
+        "Authorization": f"Bearer {token}", "Content-Type": f"multipart/form-data; boundary={boundary}"}, method="POST")
+    try:
+        with urlopen(req, timeout=TIMEOUT) as response:
+            raw = response.read().decode()
+            return response.status, json.loads(raw) if raw else {}
+    except HTTPError as exc:
+        raw = exc.read().decode()
+        try:
+            data = json.loads(raw)
+        except Exception:
+            data = {"detail": raw}
+        return exc.code, data
+
+
 def register(label: str) -> tuple[str, dict]:
     status, data = request("POST", "/users", payload={
         "nickname": f"DM Smoke {label}", "avatar": "👤", "gender": "male"
@@ -111,6 +132,15 @@ def main() -> int:
         raise AssertionError(f"read receipt invariant failed: HTTP {status} {sender_messages}")
     print("unread counter and read receipt invariants OK")
 
+    status, voice = upload(f"/messages/{conversation_id}/media", token_a, "file", "voice.ogg", "audio/ogg", b"OggS" + b"\0" * 64,
+        {"media_type": "voice", "view_seconds": "0"})
+    if status not in (200, 201) or voice.get("media_type") != "voice":
+        raise AssertionError(f"voice message upload failed: HTTP {status} {voice}")
+    status, voice_history = request("GET", f"/messages/{conversation_id}", token_b)
+    if status >= 300 or not any(m.get("id") == voice.get("id") and m.get("media_type") == "voice" for m in voice_history):
+        raise AssertionError(f"voice message missing from recipient history: HTTP {status} {voice_history}")
+    print("voice upload and history invariants OK")
+
     status, pinned = request("POST", f"/conversations/{conversation_id}/pins/{sent['id']}", token_a)
     if status >= 300 or not pinned.get("pinned"):
         raise AssertionError(f"pin failed: HTTP {status} {pinned}")
@@ -145,6 +175,24 @@ def main() -> int:
     if status != 402:
         raise AssertionError(f"unlock must not apply to another sender: HTTP {status} {c_blocked}")
     print("gift unlock and sender-specific restriction invariants OK")
+
+    status, followed = request("POST", f"/users/{uid_a}/follow", token_b, {})
+    if status >= 300:
+        raise AssertionError(f"story follow setup failed: HTTP {status} {followed}")
+    status, story = upload("/stories", token_a, "file", "story.jpg", "image/jpeg", b"\xff\xd8\xff" + b"\0" * 64,
+        {"caption": "24h story smoke"})
+    if status != 201 or not story.get("expires_at"):
+        raise AssertionError(f"story upload failed: HTTP {status} {story}")
+    status, visible_stories = request("GET", "/stories", token_b)
+    if status >= 300 or not any(item.get("id") == story.get("id") for item in visible_stories):
+        raise AssertionError(f"followed story missing from feed: HTTP {status} {visible_stories}")
+    status, own_stories = request("GET", "/stories", token_a)
+    if status >= 300 or not any(item.get("id") == story.get("id") for item in own_stories):
+        raise AssertionError(f"own story missing from feed: HTTP {status} {own_stories}")
+    status, deleted_story = request("DELETE", f"/stories/{story['id']}", token_a)
+    if status >= 300 or not deleted_story.get("deleted"):
+        raise AssertionError(f"own story delete failed: HTTP {status} {deleted_story}")
+    print("24h story creation, follower visibility, and deletion invariants OK")
 
     status, reread = request("GET", f"/messages/{conversation_id}", token_b)
     if status >= 300:

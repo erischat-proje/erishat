@@ -46,6 +46,10 @@
     report: payload => request('/reports',{method:'POST',body:JSON.stringify(payload)}),
     createFamily: name => request('/families',{method:'POST',body:JSON.stringify({name})}), family:id=>request(`/families/${encodeURIComponent(id)}`), donateFamily:(id,amount)=>request(`/families/${encodeURIComponent(id)}/donate`,{method:'POST',body:JSON.stringify({amount})}),
     familyChat:id=>request(`/families/${encodeURIComponent(id)}/chat`), fans:userId=>request(`/users/${encodeURIComponent(userId)}/fans`),
-    profileGifts:userId=>request(`/users/${encodeURIComponent(userId)}/profile-gifts`)
+    profileGifts:userId=>request(`/users/${encodeURIComponent(userId)}/profile-gifts`),
+    stories:limit=>request(`/stories?limit=${Number(limit)||100}`),
+    createStory:(file,caption='')=>{const body=new FormData();body.append('file',file);body.append('caption',caption);return request('/stories',{method:'POST',body,timeout:30000});},
+    deleteStory:id=>request(`/stories/${encodeURIComponent(id)}`,{method:'DELETE'}),
+    storyMediaUrl:path=>`${API}/${String(path||'').replace(/^\/+/, '')}`
   };
 })();
