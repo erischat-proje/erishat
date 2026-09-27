@@ -26,6 +26,10 @@
         <span><b style="display:block;font-size:10px">Bildirimler</b><small data-profile-notification-label style="color:#938a9f;font-size:8px">Yükleniyor…</small></span>
         <span data-profile-switch class="switch"></span>
       </button>
+      <div style="border:1px solid #ffffff14;background:#ffffff05;color:#fff;border-radius:12px;padding:10px;display:grid;gap:8px">
+        <div><b style="font-size:10px">Mesajları kısıtla</b><small data-dm-lock-label style="display:block;color:#938a9f;font-size:8px;margin-top:3px">Yükleniyor…</small></div>
+        <div style="display:flex;gap:7px"><select data-dm-lock-gift style="flex:1;min-width:0;background:#100d16;color:#fff;border:1px solid #ffffff18;border-radius:10px;padding:8px;font-size:9px"></select><button data-dm-lock-toggle type="button" style="border:1px solid #ffffff18;background:#ffffff0a;color:#fff;border-radius:10px;padding:0 10px;font-size:9px">Aç</button></div>
+      </div>
       <button data-profile-logout type="button" style="border:1px solid #ff4f6d44;background:#ff4f6d0d;color:#ff9aaa;border-radius:12px;padding:10px;font-size:10px;font-weight:800">Oturumu kapat</button>
       <div data-profile-status style="font-size:8px;color:#938a9f;min-height:11px"></div>
     `;
@@ -54,6 +58,13 @@
       catch (_) { toastSafe('Kullanıcı ID: ' + publicId); }
     });
     const setNotificationState = enabled => { switchEl.classList.toggle('on', !!enabled); label.textContent = enabled ? 'Açık' : 'Kapalı'; };
+    const lockLabel = controls.querySelector('[data-dm-lock-label]'), lockGift = controls.querySelector('[data-dm-lock-gift]'), lockToggle = controls.querySelector('[data-dm-lock-toggle]');
+    let dmLock = {enabled:false,gift_key:'Zeytin Dalı'};
+    Promise.all([window.ErisPlatform?.getMessageRestriction?.(),window.ErisPlatform?.messageGifts?.()]).then(([state,gifts])=>{
+      dmLock=state||dmLock; lockGift.replaceChildren(); (gifts||[]).forEach(g=>{const option=document.createElement('option');option.value=g.gift_key;option.textContent=`${g.gift_key} · ${Number(g.unit_price).toLocaleString('tr-TR')} Lidya`;lockGift.append(option)});
+      lockGift.value=dmLock.gift_key; lockLabel.textContent=dmLock.enabled?`Açık · Her yeni kullanıcı ${dmLock.gift_key} gönderdikten sonra yazabilir.`:'Kapalı · Sana herkes mesaj gönderebilir.';lockToggle.textContent=dmLock.enabled?'Kapat':'Aç';
+    }).catch(()=>{lockLabel.textContent='Ayar yüklenemedi.'});
+    lockToggle.addEventListener('click',async()=>{try{dmLock=await window.ErisPlatform.setMessageRestriction({enabled:!dmLock.enabled,gift_key:lockGift.value});lockLabel.textContent=dmLock.enabled?`Açık · Her yeni kullanıcı ${dmLock.gift_key} gönderdikten sonra yazabilir.`:'Kapalı · Sana herkes mesaj gönderebilir.';lockToggle.textContent=dmLock.enabled?'Kapat':'Aç';toastSafe(dmLock.enabled?'Mesaj kısıtlaması açıldı.':'Mesaj kısıtlaması kapatıldı.')}catch(e){toastSafe(e.message||'Ayar kaydedilemedi.')}});
     const render = user => {
       if (!user) return;
       if (nicknameInput && user.nickname) nicknameInput.value = user.nickname;
@@ -139,6 +150,7 @@
       const enabled = !switchEl.classList.contains('on');
       notificationButton.disabled = true;
       try {
+        if (enabled && 'Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
         const user = await window.ErisAuth.updateMe({ notifications_enabled: enabled });
         render(user);
         toastSafe(enabled ? 'Bildirimler açıldı 🔔' : 'Bildirimler kapatıldı');

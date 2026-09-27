@@ -209,7 +209,7 @@ def register_family_auth(current_user_dependency):
     def create_family(payload: FamilyCreate, db: Session = Depends(get_db), user: User = auth()):
         family_id = "family_" + uuid4().hex[:12]
         conversation_id = "family_chat_" + uuid4().hex[:12]
-        db.add(Conversation(id=conversation_id)); db.flush()
+        db.add(Conversation(id=conversation_id, type="family")); db.flush()
         db.add(ConversationMember(conversation_id=conversation_id, user_id=user.id))
         family = Family(id=family_id, owner_id=user.id, name=payload.name.strip(), level=1, balance=0, chat_conversation_id=conversation_id)
         db.add(family); db.add(FamilyMember(family_id=family_id, user_id=user.id, role="owner")); db.commit(); db.refresh(family)
@@ -403,4 +403,7 @@ def register_family_auth(current_user_dependency):
     def send_family_message(family_id: str, payload: FamilyMessageCreate, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
         message = Message(conversation_id=family.chat_conversation_id, sender_id=user.id, text=payload.text.strip())
-        db.add(message); db.commit(); db.refresh(message); return message
+        db.add(message)
+        for row in db.scalars(select(FamilyMember).where(FamilyMember.family_id == family_id, FamilyMember.user_id != user.id)):
+            db.add(Notification(user_id=row.user_id, kind="dm_message", title=family.name + " aile sohbeti", body=payload.text.strip()[:180]))
+        db.commit(); db.refresh(message); return message

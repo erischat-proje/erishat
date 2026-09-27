@@ -158,6 +158,10 @@ class ConversationOut(BaseModel):
     type: str
     created_at: datetime
     members: list[ConversationMemberOut] = Field(default_factory=list)
+    name: str | None = None
+    unread_count: int = 0
+    last_message: str | None = None
+    last_message_at: datetime | None = None
 
 
 class MessageCreate(BaseModel):
@@ -179,6 +183,9 @@ class MessageOut(BaseModel):
     sender_id: str
     text: str
     created_at: datetime
+    is_read: bool = False
+    is_pinned: bool = False
+    gift_key: str | None = None
 
 
 class OTPRequest(BaseModel):

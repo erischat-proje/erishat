@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import logging
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -25,8 +25,10 @@ from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
-from .room_routes import register_room_auth, router as room_router
-from .platform_models import Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus
+from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
+from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
+    Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
+    PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -738,7 +740,21 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
 def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
-    return ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
+    rows = ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
+    result = []
+    for conversation in rows:
+        members = ConversationRepository(db).members(conversation.id)
+        family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation.id))
+        state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == conversation.id, ConversationReadState.user_id == user.id))
+        hidden = select(MessageHidden.id).where(MessageHidden.message_id == Message.id, MessageHidden.user_id == user.id).exists()
+        last = db.scalar(select(Message).where(Message.conversation_id == conversation.id, ~hidden).order_by(Message.id.desc()).limit(1))
+        unread = int(db.scalar(select(func.count(Message.id)).where(Message.conversation_id == conversation.id,
+            Message.sender_id != user.id, Message.id > (state.last_read_message_id if state else 0), ~hidden)) or 0)
+        result.append({"id": conversation.id, "type": "family" if family_name else conversation.type,
+            "created_at": conversation.created_at, "members": [{"user_id": value} for value in members],
+            "name": (family_name + " aile sohbeti") if family_name else None, "unread_count": unread,
+            "last_message": last.text if last else None, "last_message_at": last.created_at if last else None})
+    return result
 
 
 @app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
@@ -751,7 +767,10 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
-    return conversation
+    family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation_id))
+    return {"id": conversation.id, "type": "family" if family_name else conversation.type,
+        "created_at": conversation.created_at, "members": [{"user_id": m.user_id} for m in conversation.members],
+        "name": (family_name + " aile sohbeti") if family_name else None}
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
@@ -763,6 +782,16 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
+    is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
+    if not is_family_conversation:
+        recipient_ids = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
+        for recipient_id in recipient_ids:
+            restriction = db.get(DirectMessageRestriction, recipient_id)
+            unlocked = db.scalar(select(DirectMessageUnlock.id).where(DirectMessageUnlock.owner_id == recipient_id,
+                DirectMessageUnlock.sender_id == user.id))
+            if restriction and restriction.enabled and not unlocked:
+                gift_price = GIFT_CATALOG.get(restriction.gift_key, 0)
+                raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {restriction.gift_key} ({gift_price} Lidya) göndermelisin.")
     try:
         message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
     except ValueError as exc:
@@ -777,12 +806,16 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
         "created_at": message.created_at.isoformat() if message.created_at else None,
     }
     for member_id in repo.members(conversation_id):
+        if member_id != user.id:
+            db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
+                body=payload.text[:180]))
         await manager.send_user(member_id, event)
-    return message
+    db.commit()
+    return _message_out(db, message, user.id)
 
 
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
-def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
+async def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
@@ -790,7 +823,137 @@ def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişim yok")
-    return MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
+    state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == conversation_id, ConversationReadState.user_id == user.id))
+    messages = MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
+    latest_incoming = max((m.id for m in messages if m.sender_id != user.id), default=0)
+    if latest_incoming:
+        if state is None:
+            state = ConversationReadState(conversation_id=conversation_id, user_id=user.id, last_read_message_id=latest_incoming)
+            db.add(state)
+        else:
+            state.last_read_message_id = max(state.last_read_message_id, latest_incoming)
+        db.commit()
+        for member_id in repo.members(conversation_id):
+            if member_id != user.id:
+                await manager.send_user(member_id, {"type":"dm_read", "conversation_id":conversation_id,
+                    "reader_id":user.id, "read_up_to":latest_incoming})
+    return [_message_out(db, message, user.id) for message in messages
+        if not db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == message.id, MessageHidden.user_id == user.id))]
+
+
+def _message_out(db: Session, message: Message, viewer_id: str) -> dict:
+    conversation = db.get(Conversation, message.conversation_id)
+    is_family = bool(db.scalar(select(Family.id).where(Family.chat_conversation_id == message.conversation_id)))
+    state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == message.conversation_id,
+        ConversationReadState.user_id != viewer_id)) if conversation and conversation.type != "family" and not is_family else None
+    pinned = db.scalar(select(PinnedMessage.id).where(PinnedMessage.conversation_id == message.conversation_id,
+        PinnedMessage.message_id == message.id)) is not None
+    gift = db.get(DirectMessageGift, message.id)
+    return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
+        "text": message.text, "created_at": message.created_at,
+        "is_read": message.sender_id == viewer_id and bool(state and state.last_read_message_id >= message.id),
+        "is_pinned": pinned, "gift_key": gift.gift_key if gift else None}
+
+
+@app.post("/v1/messages/{conversation_id}/delete")
+def hide_messages(conversation_id: str, payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not ConversationRepository(db).is_member(conversation_id, user.id):
+        raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    ids = list(dict.fromkeys(int(value) for value in (payload.get("message_ids") or []) if str(value).isdigit()))
+    if not ids or len(ids) > 100:
+        raise HTTPException(status_code=400, detail="1 ile 100 arasında mesaj seçin")
+    rows = list(db.scalars(select(Message).where(Message.id.in_(ids), Message.conversation_id == conversation_id)))
+    for row in rows:
+        if not db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == row.id, MessageHidden.user_id == user.id)):
+            db.add(MessageHidden(message_id=row.id, user_id=user.id))
+    db.commit()
+    return {"deleted": len(rows), "scope": "me"}
+
+
+@app.post("/v1/conversations/{conversation_id}/pins/{message_id}")
+def pin_message(conversation_id: str, message_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    message = db.get(Message, message_id)
+    if not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
+    if db.scalar(select(PinnedMessage.id).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id)):
+        return {"pinned": True}
+    count = int(db.scalar(select(func.count(PinnedMessage.id)).where(PinnedMessage.conversation_id == conversation_id)) or 0)
+    if count >= 5: raise HTTPException(status_code=409, detail="Bir konuşmada en fazla 5 mesaj sabitlenebilir")
+    db.add(PinnedMessage(conversation_id=conversation_id, message_id=message_id, pinned_by=user.id)); db.commit()
+    return {"pinned": True}
+
+
+@app.delete("/v1/conversations/{conversation_id}/pins/{message_id}")
+def unpin_message(conversation_id: str, message_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    row = db.scalar(select(PinnedMessage).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id))
+    if row: db.delete(row); db.commit()
+    return {"pinned": False}
+
+
+@app.get("/v1/me/message-restriction")
+def get_message_restriction(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    row = db.get(DirectMessageRestriction, user.id)
+    return {"enabled": bool(row and row.enabled), "gift_key": row.gift_key if row else next(iter(GIFT_CATALOG)),
+        "gift_price": GIFT_CATALOG.get(row.gift_key, 0) if row else GIFT_CATALOG[next(iter(GIFT_CATALOG))]}
+
+
+@app.put("/v1/me/message-restriction")
+def set_message_restriction(payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    gift_key = str(payload.get("gift_key") or "")
+    if gift_key not in GIFT_CATALOG: raise HTTPException(status_code=400, detail="Katalogda olmayan hediye")
+    row = db.get(DirectMessageRestriction, user.id)
+    if row is None:
+        row = DirectMessageRestriction(owner_id=user.id, enabled=bool(payload.get("enabled")), gift_key=gift_key); db.add(row)
+    else:
+        row.enabled = bool(payload.get("enabled")); row.gift_key = gift_key
+    db.commit()
+    return {"enabled": row.enabled, "gift_key": row.gift_key, "gift_price": GIFT_CATALOG[row.gift_key]}
+
+
+@app.get("/v1/users/{user_id}/message-restriction")
+def public_message_restriction(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    target = db.get(User, user_id)
+    if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    row = db.get(DirectMessageRestriction, target.id)
+    return {"enabled": bool(row and row.enabled), "gift_key": row.gift_key if row else None,
+        "gift_price": GIFT_CATALOG.get(row.gift_key, 0) if row else 0,
+        "unlocked": bool(db.scalar(select(DirectMessageUnlock.id).where(DirectMessageUnlock.owner_id == target.id, DirectMessageUnlock.sender_id == user.id)))}
+
+
+@app.get("/v1/message-gifts")
+def message_gifts():
+    return [{"gift_key": key, "unit_price": price} for key, price in GIFT_CATALOG.items()]
+
+
+@app.post("/v1/messages/{conversation_id}/gifts")
+async def send_direct_gift(conversation_id: str, payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    repo = ConversationRepository(db)
+    if not repo.is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    recipients = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
+    if len(recipients) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
+        raise HTTPException(status_code=400, detail="Bu hediye DM konuşmalarında kullanılabilir")
+    recipient_id = recipients[0]; gift_key = str(payload.get("gift_key") or ""); price = GIFT_CATALOG.get(gift_key)
+    if price is None: raise HTTPException(status_code=400, detail="Katalogda olmayan hediye")
+    restriction = db.get(DirectMessageRestriction, recipient_id)
+    unlock = db.scalar(select(DirectMessageUnlock).where(DirectMessageUnlock.owner_id == recipient_id, DirectMessageUnlock.sender_id == user.id))
+    if restriction and restriction.enabled and not unlock and gift_key != restriction.gift_key:
+        raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {restriction.gift_key} hediyesi gerekli")
+    receiver_amount = price * 70 // 100
+    charged = db.execute(update(User).where(User.id == user.id, User.lidya >= price).values(lidya=User.lidya - price))
+    if charged.rowcount != 1: db.rollback(); raise HTTPException(status_code=400, detail="Yetersiz Lidya")
+    db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + receiver_amount))
+    message = Message(conversation_id=conversation_id, sender_id=user.id, text="🎁 " + gift_key); db.add(message); db.flush()
+    db.add(DirectMessageGift(message_id=message.id, sender_id=user.id, recipient_id=recipient_id, gift_key=gift_key, unit_price=price, recipient_amount=receiver_amount))
+    if restriction and restriction.enabled and not unlock:
+        db.add(DirectMessageUnlock(owner_id=recipient_id, sender_id=user.id, gift_key=gift_key))
+    db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye", body=user.nickname + " sana " + gift_key + " gönderdi."))
+    db.commit(); db.refresh(message)
+    event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
+        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key,
+        "created_at":message.created_at.isoformat() if message.created_at else None}
+    for member_id in repo.members(conversation_id): await manager.send_user(member_id, event)
+    return _message_out(db, message, user.id)
 
 
 class ConnectionManager:
