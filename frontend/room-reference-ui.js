@@ -61,9 +61,10 @@
     let p=s.querySelector('.room-v3-panel');
     if(p) return p;
     p=document.createElement('aside');p.className='room-v3-panel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Oda bilgileri ve araçları');
-    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="staff" data-staff-tab="1">Yetkililer</button><button class="room-v3-tab" data-tab="guests" data-staff-tab="1">Misafirler</button><button class="room-v3-tab" data-tab="bans" data-staff-tab="1">Atılanlar</button><button class="room-v3-tab" data-tab="mutes" data-staff-tab="1">Chatte susturulanlar</button><button class="room-v3-tab" data-tab="moderators" data-owner-tab="1">Moderatörler</button><button class="room-v3-tab" data-tab="promote" data-owner-tab="1">Moderatör yap</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
+    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-eyebrow">ERISCHAT • ODA MERKEZİ</div><div class="room-v3-head"><button type="button" class="room-v3-back" aria-label="Oda merkezine dön">‹</button><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="staff" data-staff-tab="1">Yetkililer</button><button class="room-v3-tab" data-tab="guests" data-staff-tab="1">Misafirler</button><button class="room-v3-tab" data-tab="bans" data-staff-tab="1">Atılanlar</button><button class="room-v3-tab" data-tab="mutes" data-staff-tab="1">Chatte susturulanlar</button><button class="room-v3-tab" data-tab="moderators" data-owner-tab="1">Moderatörler</button><button class="room-v3-tab" data-tab="promote" data-owner-tab="1">Moderatör yap</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
     s.appendChild(p);
     p.querySelector('.room-v3-close').onclick=()=>p.classList.remove('show');
+    p.querySelector('.room-v3-back').onclick=()=>window.ErisRoomCenterMenu?.();
     p.addEventListener('click',event=>{if(event.target===p)p.classList.remove('show')});
     const settingsTab=p.querySelector('[data-management-tab]'); if(settingsTab){const r=window.__erisRoomPermissions||{}; settingsTab.style.display=(r.is_owner||r.is_moderator||r.can_manage)?'':'none';}
     p.querySelectorAll('.room-v3-tab').forEach(b=>b.onclick=()=>openMenu(b.dataset.tab));
@@ -392,7 +393,7 @@
     p.querySelectorAll('[data-owner-tab]').forEach(button=>button.style.display=r.is_owner?'':'none');
     if(['settings','staff','guests','bans','mutes'].includes(tab)&&!canManage)tab='info';
     if(['moderators','promote'].includes(tab)&&!r.is_owner)tab='info';
-    p.querySelector('.room-v3-tabs').style.display='';
+    p.querySelector('.room-v3-tabs').style.display='none';
     p.querySelectorAll('.room-v3-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
     p.querySelector('#roomV3Title').textContent={info:'Oda bilgisi',users:'Kullanıcılar',gifts:'Hediyeler',music:'Müzik',report:'Şikâyet',staff:'Yetkililer',guests:'Misafirler',bans:'Odadan atılanlar',mutes:'Chatte susturulanlar',moderators:'Moderatörler',promote:'Moderatör yap',settings:'Oda ayarları'}[tab]||'Oda';
     const body=p.querySelector('#roomV3Body');body.innerHTML='<div class="room-v3-note">Yükleniyor…</div>';
@@ -470,6 +471,20 @@
       #erisRoomSurface .room-center-item b{font-size:13px;line-height:1.35}
       #erisRoomSurface .room-center-item:active{transform:scale(.98);border-color:#a677ff}
       @media(max-width:370px){#erisRoomSurface .room-v5-dialog{padding:18px!important}#erisRoomSurface .room-center-item{min-height:67px;padding:10px}#erisRoomSurface .room-center-item b{font-size:11px}}
+
+      #erisRoomSurface .room-v3-panel{inset:0!important;top:0!important;bottom:0!important;z-index:600!important;padding:16px!important;background:rgba(4,3,10,.78)!important;backdrop-filter:blur(9px)}
+      #erisRoomSurface .room-v3-panel.show{display:grid!important;place-items:center!important}
+      #erisRoomSurface .room-v3-dialog{width:min(650px,100%)!important;height:auto!important;min-height:0!important;max-height:88dvh!important;box-sizing:border-box!important;padding:24px!important;overflow:hidden!important;border:1px solid #ffffff24!important;border-radius:28px!important;background:radial-gradient(circle at 87% 0%,#302040 0%,transparent 39%),linear-gradient(150deg,#171321,#0c0a12 68%)!important;box-shadow:0 32px 90px #000b!important}
+      #erisRoomSurface .room-v3-eyebrow{color:#bba3f4;font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:9px}
+      #erisRoomSurface .room-v3-head{padding:0 0 18px!important;min-height:48px!important;border:0!important;gap:12px!important}
+      #erisRoomSurface .room-v3-head strong{font-size:26px!important;line-height:1.2}
+      #erisRoomSurface .room-v3-back,#erisRoomSurface .room-v3-close{width:44px!important;height:44px!important;flex:none;border:1px solid #ffffff20!important;border-radius:14px!important;background:#ffffff09!important;color:#fff!important;font-size:24px!important}
+      #erisRoomSurface .room-v3-tabs{display:none!important}
+      #erisRoomSurface .room-v3-body{padding:0!important;min-height:0!important;max-height:calc(88dvh - 116px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+      #erisRoomSurface .room-v3-card{padding:18px!important;border-radius:19px!important;background:linear-gradient(140deg,#ffffff08,#ffffff03)!important}
+      #erisRoomSurface .room-v3-grid{gap:10px!important}
+      #erisRoomSurface .room-v3-btn{min-height:58px!important;border-radius:17px!important;background:linear-gradient(140deg,#ffffff08,#ffffff03)!important}
+      @media(max-width:370px){#erisRoomSurface .room-v3-dialog{padding:16px!important}#erisRoomSurface .room-v3-btn{font-size:11px!important}}
     `;
   }
 
@@ -715,6 +730,7 @@
       cells[0].focus();
     });
   }
+  window.ErisRoomCenterMenu=menu;
   window.ErisRoomPasswordModal=passwordModal;
 
   function bind(){

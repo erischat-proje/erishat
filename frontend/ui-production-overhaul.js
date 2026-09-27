@@ -580,7 +580,7 @@
     if (!surface) return;
 
     hardenRoomHeader();
-    installSeatLongPress();
+    document.querySelector('.eris-seat-action-sheet')?.remove();
 
     const compose = surface.querySelector('.eris-room-compose');
     if (compose) {
