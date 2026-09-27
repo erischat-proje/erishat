@@ -8,7 +8,7 @@ import asyncio
 import logging
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
-from sqlalchemy import delete, func, select, text, update
+from sqlalchemy import and_, delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -32,7 +32,7 @@ from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
-    SocialPost, SocialStory, SocialStoryView, UserFollow)
+    SocialPost, SocialStory, SocialStoryView, UserBlock, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -68,6 +68,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date VARCHAR(10)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)"))
+        conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS audience VARCHAR(16) NOT NULL DEFAULT 'public'"))
+        conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS welcome_gift_claimed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS attachments_json TEXT NOT NULL DEFAULT '[]'"))
@@ -832,6 +834,12 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
     if not is_family_conversation:
         recipient_ids = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
+        if len(recipient_ids) == 1:
+            target_id = recipient_ids[0]
+            if db.scalar(select(UserBlock.id).where(UserBlock.blocker_id == target_id, UserBlock.blocked_id == user.id)):
+                raise HTTPException(status_code=403, detail="Bu kullanıcı tarafından engellendiniz.")
+            if db.scalar(select(UserBlock.id).where(UserBlock.blocker_id == user.id, UserBlock.blocked_id == target_id)):
+                raise HTTPException(status_code=403, detail="Bu kullanıcıyı engellediniz.")
         for recipient_id in recipient_ids:
             restriction = db.get(DirectMessageRestriction, recipient_id)
             unlocked = db.scalar(select(DirectMessageUnlock.id).where(DirectMessageUnlock.owner_id == recipient_id,
@@ -913,6 +921,17 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     conversation = db.get(Conversation, conversation_id)
+    if conversation and not db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
+        recipient_ids = list(db.scalars(select(ConversationMember.user_id).where(
+            ConversationMember.conversation_id == conversation_id,
+            ConversationMember.user_id != user.id,
+        )))
+        if len(recipient_ids) == 1:
+            target_id = recipient_ids[0]
+            if db.scalar(select(UserBlock.id).where(UserBlock.blocker_id == target_id, UserBlock.blocked_id == user.id)):
+                raise HTTPException(status_code=403, detail="Bu kullanıcı tarafından engellendiniz.")
+            if db.scalar(select(UserBlock.id).where(UserBlock.blocker_id == user.id, UserBlock.blocked_id == target_id)):
+                raise HTTPException(status_code=403, detail="Bu kullanıcıyı engellediniz.")
     if not conversation or conversation.type == "welcome": raise HTTPException(status_code=400, detail="Bu konuşmaya medya gönderilemez")
     if media_type not in {"image", "voice"}: raise HTTPException(status_code=400, detail="Geçersiz medya türü")
     if media_type == "image":
@@ -997,26 +1016,95 @@ def get_message_media(conversation_id: str, message_id: int, preview: bool = Que
             "X-Content-Type-Options":"nosniff", "X-Erischat-Expires-In":str(countdown)})
 
 
+async def _read_social_upload(file: UploadFile, video_limit: int):
+    mime = (file.content_type or "").split(";", 1)[0].strip().lower()
+    images = {
+        "image/jpeg": (b"\xff\xd8\xff",),
+        "image/png": (b"\x89PNG\r\n\x1a\n",),
+        "image/gif": (b"GIF87a", b"GIF89a"),
+        "image/webp": (b"RIFF",),
+    }
+    if mime in images:
+        limit = 10 * 1024 * 1024
+    elif mime in {"video/mp4", "video/webm"}:
+        limit = video_limit
+    else:
+        raise HTTPException(status_code=415, detail="JPG, PNG, WEBP, GIF, MP4 veya WEBM seçin")
+    data = await file.read(limit + 1)
+    if not data or len(data) > limit:
+        raise HTTPException(status_code=413, detail=f"Medya dosyası en fazla {limit // (1024 * 1024)} MB olabilir")
+    if mime in images:
+        valid = any(data.startswith(prefix) for prefix in images[mime])
+        if mime == "image/webp":
+            valid = valid and data[8:12] == b"WEBP"
+    elif mime == "video/mp4":
+        valid = b"ftyp" in data[:16]
+    else:
+        valid = data.startswith(b"\x1a\x45\xdf\xa3")
+    if not valid:
+        raise HTTPException(status_code=415, detail="Medya dosyası okunamadı")
+    return mime, data
+
+
+@app.get("/v1/users/{user_id}/posts")
+def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0), db: Session = Depends(get_db),
+    user: User = Depends(current_user)):
+    target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
+    if not target or not target.is_active:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    is_owner = target.id == user.id
+    follows = bool(db.scalar(select(UserFollow.id).where(
+        UserFollow.follower_id == user.id, UserFollow.following_id == target.id
+    )))
+    query = select(SocialPost).where(SocialPost.user_id == target.id)
+    if not is_owner:
+        query = query.where(SocialPost.is_hidden.is_(False))
+        query = query.where(SocialPost.audience.in_(["public", "followers"]) if follows
+                            else SocialPost.audience == "public")
+    rows = list(db.scalars(query.order_by(
+        SocialPost.created_at.desc(), SocialPost.id.desc()
+    ).offset(offset).limit(limit)))
+    return [{
+        "id": post.id, "user_id": target.id, "nickname": target.nickname,
+        "avatar": target.avatar, "avatar_asset": target.avatar_asset,
+        "caption": post.caption, "created_at": post.created_at,
+        "updated_at": post.updated_at, "mime_type": post.mime_type,
+        "has_image": post.image_bytes is not None,
+        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
+        "is_mine": is_owner, "is_hidden": bool(getattr(post, "is_hidden", False)),
+    } for post in rows]
+
+
 @app.get("/v1/posts/feed")
 def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|following|recent)$"),
     limit: int = Query(default=30, ge=1, le=100), offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
-    following = list(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
-    query = select(SocialPost).join(User, User.id == SocialPost.user_id).where(User.is_active.is_(True))
+    following = set(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
+    visible_ids = following | {user.id}
+    blocked = set(db.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id == user.id)))
+    blocked |= set(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id == user.id)))
+    query = select(SocialPost).join(User, User.id == SocialPost.user_id).where(
+        User.is_active.is_(True), SocialPost.is_hidden.is_(False))
+    if blocked:
+        query = query.where(~SocialPost.user_id.in_(blocked))
     if mode == "following":
-        query = query.where(SocialPost.user_id.in_({user.id, *following}))
-    rows = list(db.scalars(query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
+        query = query.where(SocialPost.user_id.in_(visible_ids))
+    else:
+        query = query.where(or_(SocialPost.audience == "public",
+            and_(SocialPost.audience == "followers", SocialPost.user_id.in_(visible_ids))))
+    rows = list(db.scalars(query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc())
+        .offset(offset).limit(limit)))
     result = []
     for post in rows:
         author = db.get(User, post.user_id)
-        if not author:
-            continue
-        result.append({"id": post.id, "user_id": author.id, "nickname": author.nickname,
-            "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": post.caption,
-            "created_at": post.created_at, "updated_at": post.updated_at,
-            "has_image": post.image_bytes is not None,
-            "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
-            "is_mine": post.user_id == user.id})
+        if author:
+            result.append({"id": post.id, "user_id": author.id, "nickname": author.nickname,
+                "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": post.caption,
+                "created_at": post.created_at, "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
+                "mime_type": post.mime_type, "media_kind": "video" if (post.mime_type or "").startswith("video/") else "image",
+                "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
+                "audience": post.audience, "is_hidden": False, "is_mine": post.user_id == user.id})
     return result
 
 
@@ -1025,73 +1113,60 @@ def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: 
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     rows = list(db.scalars(select(SocialPost).where(SocialPost.user_id == user.id)
         .order_by(SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
-    return [{"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
-        "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
-        "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
-        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None, "is_mine": True}
-        for post in rows]
+    return [{"id": p.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
+        "avatar_asset": user.avatar_asset, "caption": p.caption, "created_at": p.created_at,
+        "updated_at": p.updated_at, "has_image": p.image_bytes is not None, "mime_type": p.mime_type,
+        "media_kind": "video" if (p.mime_type or "").startswith("video/") else "image",
+        "media_url": f"/posts/{p.id}/media" if p.image_bytes is not None else None,
+        "audience": p.audience, "is_hidden": p.is_hidden, "is_mine": True} for p in rows]
 
 
 @app.post("/v1/posts", status_code=201)
 async def create_social_post(caption: str = Form(default=""), file: UploadFile | None = File(default=None),
-    db: Session = Depends(get_db), user: User = Depends(current_user)):
-    caption = caption.strip()
-    if len(caption) > 2000:
-        raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
-    if not caption and file is None:
-        raise HTTPException(status_code=400, detail="Gönderi için metin veya fotoğraf ekleyin")
-    mime_type = None
-    data = None
-    if file is not None:
-        mime_type = (file.content_type or "").split(";", 1)[0].strip().lower()
-        signatures = {"image/jpeg": (b"\xff\xd8\xff",), "image/png": (b"\x89PNG\r\n\x1a\n",),
-            "image/gif": (b"GIF87a", b"GIF89a"), "image/webp": (b"RIFF",)}
-        if mime_type not in signatures:
-            raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
-        data = await file.read(10 * 1024 * 1024 + 1)
-        valid = bool(data) and len(data) <= 10 * 1024 * 1024 and any(data.startswith(prefix) for prefix in signatures[mime_type])
-        if mime_type == "image/webp": valid = valid and data[8:12] == b"WEBP"
-        if not valid:
-            raise HTTPException(status_code=413 if data and len(data) > 10 * 1024 * 1024 else 415,
-                detail="Fotoğraf 10 MB sınırını aşmamalı ve geçerli bir görsel olmalı")
-    post = SocialPost(user_id=user.id, caption=caption, mime_type=mime_type, image_bytes=data)
+    audience: str = Form(default="public"), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    caption, audience = caption.strip(), audience.strip().lower()
+    if audience not in {"public", "followers"}:
+        raise HTTPException(status_code=400, detail="Paylaşım hedef kitlesi geçersiz")
+    if len(caption) > 2000: raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
+    if not caption and file is None: raise HTTPException(status_code=400, detail="Metin veya medya ekleyin")
+    mime, data = await _read_social_upload(file, 80 * 1024 * 1024) if file else (None, None)
+    post = SocialPost(user_id=user.id, caption=caption, mime_type=mime, image_bytes=data, audience=audience)
     db.add(post); db.commit(); db.refresh(post)
     return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
-        "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
-        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None, "is_mine": True}
+        "updated_at": post.updated_at, "has_image": data is not None, "mime_type": mime,
+        "media_kind": "video" if (mime or "").startswith("video/") else "image",
+        "media_url": f"/posts/{post.id}/media" if data is not None else None,
+        "audience": audience, "is_hidden": False, "is_mine": True}
 
 
 @app.patch("/v1/posts/{post_id}")
 async def update_social_post(post_id: int, caption: str | None = Form(default=None),
     file: UploadFile | None = File(default=None), remove_image: bool = Form(default=False),
+    audience: str | None = Form(default=None), is_hidden: bool | None = Form(default=None),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     post = db.get(SocialPost, post_id)
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini düzenleyebilirsin")
     if caption is not None:
         caption = caption.strip()
-        if len(caption) > 2000: raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
+        if len(caption) > 2000: raise HTTPException(status_code=400, detail="Metin en fazla 2000 karakter olabilir")
         post.caption = caption
-    if remove_image:
-        post.image_bytes = None; post.mime_type = None
-    if file is not None:
-        mime_type = (file.content_type or "").split(";", 1)[0].strip().lower()
-        signatures = {"image/jpeg": (b"\xff\xd8\xff",), "image/png": (b"\x89PNG\r\n\x1a\n",),
-            "image/gif": (b"GIF87a", b"GIF89a"), "image/webp": (b"RIFF",)}
-        if mime_type not in signatures: raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
-        data = await file.read(10 * 1024 * 1024 + 1)
-        valid = bool(data) and len(data) <= 10 * 1024 * 1024 and any(data.startswith(prefix) for prefix in signatures[mime_type])
-        if mime_type == "image/webp": valid = valid and data[8:12] == b"WEBP"
-        if not valid: raise HTTPException(status_code=413 if data and len(data) > 10 * 1024 * 1024 else 415, detail="Fotoğraf geçersiz veya 10 MB sınırını aşıyor")
-        post.image_bytes = data; post.mime_type = mime_type
+    if audience is not None:
+        if audience not in {"public", "followers"}: raise HTTPException(status_code=400, detail="Hedef kitle geçersiz")
+        post.audience = audience
+    if is_hidden is not None: post.is_hidden = is_hidden
+    if remove_image: post.image_bytes = None; post.mime_type = None
+    if file is not None: post.mime_type, post.image_bytes = await _read_social_upload(file, 80 * 1024 * 1024)
     if not post.caption and post.image_bytes is None:
-        raise HTTPException(status_code=400, detail="Gönderide metin veya fotoğraf kalmalı")
+        raise HTTPException(status_code=400, detail="Gönderide metin veya medya kalmalı")
     db.commit(); db.refresh(post)
     return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
-        "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
-        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None, "is_mine": True}
+        "updated_at": post.updated_at, "has_image": post.image_bytes is not None, "mime_type": post.mime_type,
+        "media_kind": "video" if (post.mime_type or "").startswith("video/") else "image",
+        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
+        "audience": post.audience, "is_hidden": post.is_hidden, "is_mine": True}
 
 
 @app.delete("/v1/posts/{post_id}")
@@ -1107,7 +1182,15 @@ def delete_social_post(post_id: int, db: Session = Depends(get_db), user: User =
 def get_social_post_media(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
     post = db.get(SocialPost, post_id)
     if not post or post.image_bytes is None or not post.mime_type:
-        raise HTTPException(status_code=404, detail="Gönderi fotoğrafı bulunamadı")
+        raise HTTPException(status_code=404, detail="Gönderi medyası bulunamadı")
+    if post.user_id != user.id:
+        blocked = db.scalar(select(UserBlock.id).where(or_(
+            and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == post.user_id),
+            and_(UserBlock.blocker_id == post.user_id, UserBlock.blocked_id == user.id))))
+        follows = db.scalar(select(UserFollow.id).where(
+            UserFollow.follower_id == user.id, UserFollow.following_id == post.user_id))
+        if blocked or post.is_hidden or (post.audience == "followers" and not follows):
+            raise HTTPException(status_code=404, detail="Gönderi medyası bulunamadı")
     return Response(content=post.image_bytes, media_type=post.mime_type,
         headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
 
@@ -1115,46 +1198,40 @@ def get_social_post_media(post_id: int, db: Session = Depends(get_db), user: Use
 @app.get("/v1/stories")
 def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = Depends(get_db), user: User = Depends(current_user)):
     now = datetime.now(timezone.utc)
-    db.execute(delete(SocialStory).where(SocialStory.expires_at <= now))
-    db.commit()
-    following = list(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
-    visible_ids = {user.id, *following}
+    db.execute(delete(SocialStory).where(SocialStory.expires_at <= now)); db.commit()
+    following = set(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
+    visible_ids = following | {user.id}
+    blocked = set(db.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id == user.id)))
+    blocked |= set(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id == user.id)))
     rows = list(db.scalars(select(SocialStory).where(SocialStory.user_id.in_(visible_ids),
-        SocialStory.expires_at > now).order_by(SocialStory.created_at.desc()).limit(limit))) if visible_ids else []
+        SocialStory.expires_at > now).order_by(SocialStory.created_at.desc()).limit(limit)))
     result = []
     for story in rows:
         author = db.get(User, story.user_id)
-        if not author or not author.is_active:
-            continue
+        if not author or not author.is_active or author.id in blocked: continue
         viewed = story.user_id != user.id and bool(db.scalar(select(SocialStoryView.id).where(
             SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)))
-        view_count = int(db.scalar(select(func.count(SocialStoryView.id)).where(SocialStoryView.story_id == story.id)) or 0)
+        count = int(db.scalar(select(func.count(SocialStoryView.id)).where(SocialStoryView.story_id == story.id)) or 0)
         result.append({"id": story.id, "user_id": author.id, "nickname": author.nickname,
             "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": story.caption,
             "created_at": story.created_at, "expires_at": story.expires_at, "viewed": viewed,
-            "view_count": view_count, "media_url": f"/stories/{story.id}/media", "is_mine": story.user_id == user.id})
+            "view_count": count, "mime_type": story.mime_type,
+            "media_kind": "video" if story.mime_type.startswith("video/") else "image",
+            "media_url": f"/stories/{story.id}/media", "is_mine": story.user_id == user.id})
     return result
 
 
 @app.post("/v1/stories", status_code=201)
 async def create_story(file: UploadFile = File(...), caption: str = Form(default=""),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
-    mime_type = (file.content_type or "").split(";", 1)[0].strip().lower()
-    signatures = {"image/jpeg": (b"\xff\xd8\xff",), "image/png": (b"\x89PNG\r\n\x1a\n",),
-        "image/gif": (b"GIF87a", b"GIF89a"), "image/webp": (b"RIFF",)}
-    if mime_type not in signatures:
-        raise HTTPException(status_code=415, detail="Story için JPG, PNG, WEBP veya GIF görseli seçin")
-    data = await file.read(10 * 1024 * 1024 + 1)
-    if not data or len(data) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Story görseli en fazla 10 MB olabilir")
-    valid = any(data.startswith(prefix) for prefix in signatures[mime_type])
-    if mime_type == "image/webp": valid = valid and data[8:12] == b"WEBP"
-    if not valid: raise HTTPException(status_code=415, detail="Görsel dosyası okunamadı")
-    story = SocialStory(user_id=user.id, caption=caption.strip()[:300], mime_type=mime_type,
+    mime, data = await _read_social_upload(file, 50 * 1024 * 1024)
+    story = SocialStory(user_id=user.id, caption=caption.strip()[:300], mime_type=mime,
         image_bytes=data, expires_at=datetime.now(timezone.utc) + timedelta(hours=24))
     db.add(story); db.commit(); db.refresh(story)
     return {"id": story.id, "user_id": user.id, "caption": story.caption, "created_at": story.created_at,
-        "expires_at": story.expires_at, "media_url": f"/stories/{story.id}/media", "view_count": 0, "viewed": False, "is_mine": True}
+        "expires_at": story.expires_at, "mime_type": mime,
+        "media_kind": "video" if mime.startswith("video/") else "image",
+        "media_url": f"/stories/{story.id}/media", "view_count": 0, "viewed": False, "is_mine": True}
 
 
 @app.get("/v1/stories/{story_id}/media")
@@ -1162,12 +1239,16 @@ def get_story_media(story_id: int, db: Session = Depends(get_db), user: User = D
     story = db.get(SocialStory, story_id)
     if not story or story.expires_at <= datetime.now(timezone.utc) or story.image_bytes is None:
         raise HTTPException(status_code=410, detail="Story süresi dolmuş veya kaldırılmış")
-    if story.user_id != user.id and not db.scalar(select(UserFollow.id).where(
-        UserFollow.follower_id == user.id, UserFollow.following_id == story.user_id)):
-        raise HTTPException(status_code=403, detail="Bu story yalnızca takipçilere görünür")
-    if story.user_id != user.id and not db.scalar(select(SocialStoryView.id).where(
-        SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)):
-        db.add(SocialStoryView(story_id=story.id, viewer_id=user.id)); db.commit()
+    if story.user_id != user.id:
+        blocked = db.scalar(select(UserBlock.id).where(or_(
+            and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == story.user_id),
+            and_(UserBlock.blocker_id == story.user_id, UserBlock.blocked_id == user.id))))
+        follows = db.scalar(select(UserFollow.id).where(
+            UserFollow.follower_id == user.id, UserFollow.following_id == story.user_id))
+        if blocked or not follows: raise HTTPException(status_code=404, detail="Story bulunamadı")
+        if not db.scalar(select(SocialStoryView.id).where(
+            SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)):
+            db.add(SocialStoryView(story_id=story.id, viewer_id=user.id)); db.commit()
     return Response(content=story.image_bytes, media_type=story.mime_type,
         headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
 
