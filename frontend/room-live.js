@@ -224,7 +224,7 @@
       if(!room)throw new Error('Oda bilgisi alınamadı');
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const liveRoomId=String(room.id||id);
-      window.__erisActiveRoomWallpaper=room.wallpaper_asset||null;
+      window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;
       window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
       const seatCount=Math.min(16,Math.max(8,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();

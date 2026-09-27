@@ -48,7 +48,7 @@
         toggle.disabled=true;
         try{
           if(isApplied){await window.ErisRoom.resetWallpaper(roomId);isApplied=false;window.__erisActiveRoomWallpaper=null;room.wallpaper_asset=null;room.wallpaper_applied=false;window.toast?.('Normal oda teması etkinleştirildi. Satın alma süren duruyor.')}
-          else{const result=await window.ErisRoom.applyWallpaper(roomId);isApplied=true;window.__erisActiveRoomWallpaper=result.asset_key;room.wallpaper_asset=result.asset_key;room.wallpaper_applied=true;window.toast?.('Satın aldığın duvar kâğıdı yeniden uygulandı.')}
+          else{const result=await window.ErisRoom.applyWallpaper(roomId);isApplied=true;window.__erisActiveRoomWallpaper=result.asset_path;room.wallpaper_asset=result.asset_key;room.wallpaper_asset_path=result.asset_path;room.wallpaper_applied=true;window.toast?.('Satın aldığın duvar kâğıdı yeniden uygulandı.')}
           draw();window.dispatchEvent(new Event('erischat:cosmetics-updated'));
         }catch(e){modal.querySelector('[data-error]').textContent=e.message||'Oda teması değiştirilemedi.'}
         finally{toggle.disabled=false}
@@ -57,7 +57,7 @@
         const status=modal.querySelector('[data-error]');status.textContent='';
         try{
           const result=await api('/rooms/'+encodeURIComponent(roomId)+'/wallpaper',{method:'POST',body:JSON.stringify({asset_key:select.value,days})});
-          window.__erisActiveRoomWallpaper=result.asset_key;room.wallpaper_asset=result.asset_key;room.wallpaper_applied=true;
+          window.__erisActiveRoomWallpaper=result.asset_path;room.wallpaper_asset=result.asset_key;room.wallpaper_asset_path=result.asset_path;room.wallpaper_applied=true;
           window.dispatchEvent(new Event('erischat:cosmetics-updated'));window.toast?.('Oda duvar kâğıdı '+days+' gün için satın alındı ve uygulandı.');modal.remove();
         }catch(e){status.textContent=e.message||'Satın alma başarısız.'}
       };
