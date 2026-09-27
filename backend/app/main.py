@@ -32,7 +32,7 @@ from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
-    SocialPost, SocialStory, SocialStoryView, UserBlock, UserFollow)
+    SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, UserBlock, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -1054,6 +1054,10 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
     if not target or not target.is_active:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     is_owner = target.id == user.id
+    if not is_owner and db.scalar(select(UserBlock.id).where(or_(
+        and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == target.id),
+        and_(UserBlock.blocker_id == target.id, UserBlock.blocked_id == user.id)))):
+        raise HTTPException(status_code=404, detail="Gönderiler bulunamadı")
     follows = bool(db.scalar(select(UserFollow.id).where(
         UserFollow.follower_id == user.id, UserFollow.following_id == target.id
     )))
@@ -1193,6 +1197,158 @@ def get_social_post_media(post_id: int, db: Session = Depends(get_db), user: Use
             raise HTTPException(status_code=404, detail="Gönderi medyası bulunamadı")
     return Response(content=post.image_bytes, media_type=post.mime_type,
         headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
+
+
+
+
+class SocialCommentInput(BaseModel):
+    body: str = Field(min_length=1, max_length=1000)
+    parent_id: int | None = None
+
+
+def _social_access(db: Session, post_id: int, viewer: User) -> SocialPost:
+    post = db.get(SocialPost, post_id)
+    author = db.get(User, post.user_id) if post else None
+    if not post or not author or not author.is_active:
+        raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    if post.user_id != viewer.id:
+        blocked = db.scalar(select(UserBlock.id).where(or_(
+            and_(UserBlock.blocker_id == viewer.id, UserBlock.blocked_id == post.user_id),
+            and_(UserBlock.blocker_id == post.user_id, UserBlock.blocked_id == viewer.id))))
+        follows = db.scalar(select(UserFollow.id).where(
+            UserFollow.follower_id == viewer.id, UserFollow.following_id == post.user_id))
+        if blocked or post.is_hidden or (post.audience == "followers" and not follows):
+            raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    return post
+
+
+def _social_counts(db: Session, post_id: int, viewer_id: str) -> dict:
+    return {
+        "like_count": db.scalar(select(func.count()).select_from(SocialPostLike).where(
+            SocialPostLike.post_id == post_id)) or 0,
+        "comment_count": db.scalar(select(func.count()).select_from(SocialPostComment).where(
+            SocialPostComment.post_id == post_id)) or 0,
+        "liked_by_me": bool(db.get(SocialPostLike, (post_id, viewer_id))),
+    }
+
+
+@app.get("/v1/posts/{post_id}/engagement")
+def social_post_engagement(post_id: int, db: Session = Depends(get_db),
+    user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    return _social_counts(db, post_id, user.id)
+
+
+@app.post("/v1/posts/{post_id}/like")
+def like_social_post(post_id: int, db: Session = Depends(get_db),
+    user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    if not db.get(SocialPostLike, (post_id, user.id)):
+        db.add(SocialPostLike(post_id=post_id, user_id=user.id))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+    return _social_counts(db, post_id, user.id)
+
+
+@app.delete("/v1/posts/{post_id}/like")
+def unlike_social_post(post_id: int, db: Session = Depends(get_db),
+    user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    db.execute(delete(SocialPostLike).where(
+        SocialPostLike.post_id == post_id, SocialPostLike.user_id == user.id))
+    db.commit()
+    return _social_counts(db, post_id, user.id)
+
+
+def _social_comment_row(db: Session, item: SocialPostComment, viewer: User) -> dict:
+    author = db.get(User, item.user_id)
+    return {
+        "id": item.id, "post_id": item.post_id, "parent_id": item.parent_id,
+        "user_id": item.user_id, "nickname": author.nickname if author else "Kullanıcı",
+        "avatar": author.avatar if author else None,
+        "avatar_asset": author.avatar_asset if author else None,
+        "gender": author.gender if author else None,
+        "body": item.body, "created_at": item.created_at,
+        "is_mine": item.user_id == viewer.id,
+        "like_count": db.scalar(select(func.count()).select_from(SocialPostCommentLike).where(
+            SocialPostCommentLike.comment_id == item.id)) or 0,
+        "liked_by_me": bool(db.get(SocialPostCommentLike, (item.id, viewer.id))),
+    }
+
+
+@app.get("/v1/posts/{post_id}/comments")
+def list_social_comments(post_id: int, limit: int = Query(default=100, ge=1, le=200),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    items = db.scalars(select(SocialPostComment).where(
+        SocialPostComment.post_id == post_id).order_by(
+        SocialPostComment.created_at.asc(), SocialPostComment.id.asc()).limit(limit))
+    return [_social_comment_row(db, item, user) for item in items]
+
+
+@app.post("/v1/posts/{post_id}/comments", status_code=201)
+def create_social_comment(post_id: int, payload: SocialCommentInput,
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    body = payload.body.strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="Yorum boş olamaz")
+    if payload.parent_id is not None:
+        parent = db.get(SocialPostComment, payload.parent_id)
+        if not parent or parent.post_id != post_id:
+            raise HTTPException(status_code=404, detail="Yanıtlanacak yorum bulunamadı")
+        parent_id = parent.parent_id or parent.id
+    else:
+        parent_id = None
+    item = SocialPostComment(post_id=post_id, user_id=user.id, parent_id=parent_id, body=body)
+    db.add(item); db.commit(); db.refresh(item)
+    return _social_comment_row(db, item, user)
+
+
+@app.post("/v1/posts/{post_id}/comments/{comment_id}/like")
+def like_social_comment(post_id: int, comment_id: int, db: Session = Depends(get_db),
+    user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    item = db.get(SocialPostComment, comment_id)
+    if not item or item.post_id != post_id:
+        raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    if not db.get(SocialPostCommentLike, (comment_id, user.id)):
+        db.add(SocialPostCommentLike(comment_id=comment_id, user_id=user.id))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+    return _social_comment_row(db, item, user)
+
+
+@app.delete("/v1/posts/{post_id}/comments/{comment_id}/like")
+def unlike_social_comment(post_id: int, comment_id: int, db: Session = Depends(get_db),
+    user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    item = db.get(SocialPostComment, comment_id)
+    if not item or item.post_id != post_id:
+        raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    db.execute(delete(SocialPostCommentLike).where(
+        SocialPostCommentLike.comment_id == comment_id,
+        SocialPostCommentLike.user_id == user.id))
+    db.commit()
+    return _social_comment_row(db, item, user)
+
+
+
+@app.delete("/v1/posts/{post_id}/comments/{comment_id}")
+def delete_social_comment(post_id: int, comment_id: int,
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = _social_access(db, post_id, user)
+    item = db.get(SocialPostComment, comment_id)
+    if not item or item.post_id != post_id:
+        raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    if item.user_id != user.id and post.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Yorumu silme yetkin yok")
+    db.delete(item); db.commit()
+    return {"deleted": True, **_social_counts(db, post_id, user.id)}
 
 
 @app.get("/v1/stories")
