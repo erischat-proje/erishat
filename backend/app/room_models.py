@@ -58,6 +58,16 @@ class RoomBan(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class RoomChatMute(Base):
+    __tablename__ = "room_chat_mutes"
+    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_room_chat_mute"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    muted_by: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class RoomSeat(Base):
     __tablename__ = "room_seats"
     __table_args__ = (UniqueConstraint("room_id", "seat_number", name="uq_room_seat"), UniqueConstraint("room_id", "user_id", name="uq_room_user_seat"),)

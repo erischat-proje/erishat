@@ -18,12 +18,14 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import Room, RoomBan, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState
+from .room_models import Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState
 from .platform_models import Notification, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
 from .system_data import RoomIdRegistry
 from .system_logs import record
+from .support_models import SupportTicket
+from .support_routes import SupportCreate
 from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
@@ -257,6 +259,9 @@ class RoomThemeUpdate(BaseModel): theme: str = Field(min_length=1, max_length=32
 class RoomSeatCountUpdate(BaseModel): seat_count: int
 class ModeratorUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class BanUpdate(BaseModel): user_id: str = Field(min_length=1, max_length=64)
+class RoomReportInput(BaseModel):
+    reason: str = Field(min_length=1, max_length=200)
+    attachments: list[str] = Field(default_factory=list, max_length=3)
 class MusicPlaybackUpdate(BaseModel):
     playback_action: str = Field(alias="action")
     position_seconds: int = Field(default=0, ge=0, le=86400)
@@ -348,6 +353,14 @@ def require_staff(db: Session, room: Room, user: User) -> None:
     moderator = db.scalar(select(RoomModerator.id).where(RoomModerator.room_id == room.id, RoomModerator.user_id == user.id))
     if not moderator or not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Oda sahibi veya aktif moderatör olmalısınız")
 
+def require_manageable_guest(db: Session, room: Room, actor: User, target_id: str) -> None:
+    if target_id == room.owner_id:
+        raise HTTPException(status_code=403, detail="Oda sahibi yönetilemez")
+    if actor.id != room.owner_id and db.scalar(select(RoomModerator.id).where(
+        RoomModerator.room_id == room.id, RoomModerator.user_id == target_id)):
+        raise HTTPException(status_code=403, detail="Moderatörü yalnızca oda sahibi yönetebilir")
+
+
 def is_member(db: Session, room_id: str, user_id: str) -> bool:
     return bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id)))
 
@@ -383,7 +396,7 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
     return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]),
-        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else None, "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
+        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else None, "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -495,7 +508,7 @@ def register_room_auth(current_user_dependency):
         admin = db.get(AdminRole, user.id)
         admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
         stored = db.get(RoomPassword, room.id)
-        if room.locked and stored and room.owner_id != user.id and not admin_mode:
+        if stored and room.owner_id != user.id:
             supplied = (payload.password if payload else None) or ""
             if not supplied or hashlib.sha256(supplied.encode()).hexdigest() != stored.password_hash:
                 raise HTTPException(status_code=403, detail="Oda kilitli. 4 haneli şifre gerekli.")
@@ -504,7 +517,7 @@ def register_room_auth(current_user_dependency):
         if active_admin_ban and not admin_mode: raise HTTPException(status_code=403, detail="Oda yönetim tarafından yasaklandı")
         active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))
         if active_user_ban and not admin_mode: raise HTTPException(status_code=403, detail="Hesabınız yasaklı")
-        if room.locked and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id and not admin_mode: raise HTTPException(status_code=403, detail="Oda kilitli")
+        if room.locked and not stored and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id and not admin_mode: raise HTTPException(status_code=403, detail="Oda kilitli")
         if not is_member(db, room.id, user.id):
             count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
             if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
@@ -543,11 +556,14 @@ def register_room_auth(current_user_dependency):
         if seat.user_id and seat.user_id != user.id: raise HTTPException(status_code=409, detail="Bu koltuk dolu")
         if occupied and occupied.id != seat.id:
             occupied.user_id = None
+            occupied.muted = False
             db.flush()
+        if seat.user_id != user.id:
+            seat.muted = False
         seat.user_id = user.id; db.commit(); return {"seat_number": seat_number, "user_id": user.id}
     @router.delete("/{room_id}/seats/leave")
     def leave_seat(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None}, synchronize_session=False); db.commit(); return {"left_seat": True}
+        room = get_room_or_404(db, room_id); db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None, "muted": False}, synchronize_session=False); db.commit(); return {"left_seat": True}
     @router.patch("/{room_id}/theme")
     def set_theme(room_id: str, payload: RoomThemeUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -592,7 +608,7 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); room.chat_enabled = payload.enabled; db.commit(); return {"chat_enabled": room.chat_enabled}
     @router.put("/{room_id}/password")
     def set_room_password(room_id: str, payload: RoomPasswordUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_owner(db, room, user)
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
         row = db.get(RoomPassword, room.id)
         hashed = hashlib.sha256(payload.password.encode()).hexdigest()
         if row: row.password_hash = hashed
@@ -603,7 +619,7 @@ def register_room_auth(current_user_dependency):
 
     @router.delete("/{room_id}/password")
     def clear_room_password(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); require_owner(db, room, user)
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
         db.query(RoomPassword).filter(RoomPassword.room_id == room.id).delete(synchronize_session=False)
         room.locked = False; room.lock_expires_at = None; db.commit()
         return {"locked": False, "password_set": False}
@@ -681,11 +697,58 @@ def register_room_auth(current_user_dependency):
         db.commit()
         return {"applied": False, "asset_key": None}
 
+    @router.post("/{room_id}/reports", status_code=201)
+    def report_room(room_id: str, payload: RoomReportInput,
+        db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        reason = payload.reason.strip()
+        if not reason:
+            raise HTTPException(status_code=400, detail="Şikâyet nedenini yazın")
+        attachments = SupportCreate._attachments(payload.attachments)
+        ticket = SupportTicket(
+            user_id=user.id, category="room",
+            subject=f"Oda şikâyeti: {room.name} (ID: {room.public_id})"[:120],
+            message=reason, attachments_json=json.dumps(attachments),
+        )
+        db.add(ticket); db.commit(); db.refresh(ticket)
+        record("support", "room_report_created", ticket_id=ticket.id,
+               room_id=room.id, room_public_id=room.public_id, reporter_id=user.id)
+        return {"id": ticket.id, "status": ticket.status}
+
     @router.get("/{room_id}/moderators")
     def list_moderators(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         require_staff(db, room, user)
-        return [{"user_id": user_id} for user_id in db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id).order_by(RoomModerator.user_id))]
+        owner = db.get(User, room.owner_id)
+        rows = [{"user_id": room.owner_id, "nickname": owner.nickname if owner else room.owner_id, "role": "owner"}]
+        for moderator_id in db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id).order_by(RoomModerator.user_id)):
+            moderator = db.get(User, moderator_id)
+            rows.append({"user_id": moderator_id, "nickname": moderator.nickname if moderator else moderator_id, "role": "moderator"})
+        return rows
+
+    @router.get("/{room_id}/members")
+    def list_members(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
+        moderator_ids = set(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
+        seats = {seat.user_id: seat.seat_number for seat in db.scalars(
+            select(RoomSeat).where(RoomSeat.room_id == room.id)) if seat.user_id}
+        result = []
+        for member in db.scalars(select(RoomMember).where(
+            RoomMember.room_id == room.id).order_by(RoomMember.joined_at)):
+            person = db.get(User, member.user_id)
+            if person:
+                result.append({
+                    "user_id": member.user_id, "nickname": person.nickname,
+                    "avatar": person.avatar, "avatar_asset": person.avatar_asset,
+                    "role": "owner" if member.user_id == room.owner_id else (
+                        "moderator" if member.user_id in moderator_ids else "user"),
+                    "seat_number": seats.get(member.user_id),
+                })
+        return result
     @router.post("/{room_id}/moderators")
     def add_moderator(room_id: str, payload: ModeratorUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user)
@@ -702,10 +765,10 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/bans")
     def add_ban(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
-        if payload.user_id == room.owner_id: raise HTTPException(status_code=400, detail="Oda sahibi atılamaz")
+        require_manageable_guest(db, room, user, payload.user_id)
         if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)):
-            db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)); db.commit()
+            db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)); db.execute(delete(RoomChatMute).where(RoomChatMute.room_id == room.id, RoomChatMute.user_id == payload.user_id)); db.commit()
         return {"banned": True}
     @router.get("/{room_id}/bans")
     def list_bans(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -714,18 +777,50 @@ def register_room_auth(current_user_dependency):
         result = []
         for ban in rows:
             banned_user = db.get(User, ban.user_id)
-            result.append({"user_id": ban.user_id, "display_name": getattr(banned_user, "display_name", None) or getattr(banned_user, "username", None) or ban.user_id, "banned_by": ban.banned_by})
+            result.append({"user_id": ban.user_id, "display_name": getattr(banned_user, "nickname", None) or ban.user_id, "banned_by": ban.banned_by})
         return result
     @router.delete("/{room_id}/bans/{banned_user_id}")
     def remove_ban(room_id: str, banned_user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); db.execute(delete(RoomBan).where(RoomBan.room_id == room.id, RoomBan.user_id == banned_user_id)); db.commit(); return {"removed": True}
+    @router.get("/{room_id}/chat-mutes")
+    def list_chat_mutes(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
+        result = []
+        for row in db.scalars(select(RoomChatMute).where(
+            RoomChatMute.room_id == room.id).order_by(RoomChatMute.created_at.desc())):
+            target = db.get(User, row.user_id)
+            result.append({"user_id": row.user_id, "nickname": target.nickname if target else row.user_id})
+        return result
+
+    @router.post("/{room_id}/chat-mutes/{target_id}")
+    def mute_room_chat(room_id: str, target_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
+        require_manageable_guest(db, room, user, target_id)
+        if not is_member(db, room.id, target_id):
+            raise HTTPException(status_code=404, detail="Kullanıcı odada değil")
+        if not db.scalar(select(RoomChatMute.id).where(
+            RoomChatMute.room_id == room.id, RoomChatMute.user_id == target_id)):
+            db.add(RoomChatMute(room_id=room.id, user_id=target_id, muted_by=user.id))
+            db.commit()
+        return {"muted": True}
+
+    @router.delete("/{room_id}/chat-mutes/{target_id}")
+    def unmute_room_chat(room_id: str, target_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id); require_staff(db, room, user)
+        require_manageable_guest(db, room, user, target_id)
+        db.execute(delete(RoomChatMute).where(
+            RoomChatMute.room_id == room.id, RoomChatMute.user_id == target_id))
+        db.commit()
+        return {"muted": False}
+
     @router.post("/{room_id}/seats/{seat_number}/lock")
     def lock_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         if seat_number < 1 or seat_number > LEVELS[room.level]["seats"]: raise HTTPException(status_code=400, detail="Geçersiz koltuk")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
-        seat.locked = True; seat.user_id = None; db.commit(); return {"locked": True}
+        if seat.user_id: raise HTTPException(status_code=409, detail="Yalnızca boş koltuk kilitlenebilir")
+        seat.locked = True; seat.muted = False; db.commit(); return {"locked": True}
     @router.delete("/{room_id}/seats/{seat_number}/lock")
     def unlock_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
@@ -735,11 +830,14 @@ def register_room_auth(current_user_dependency):
     def mute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
+        if not seat.user_id: raise HTTPException(status_code=409, detail="Koltukta kullanıcı yok")
+        require_manageable_guest(db, room, user, seat.user_id)
         seat.muted = True; db.commit(); return {"muted": True}
     @router.delete("/{room_id}/seats/{seat_number}/mute")
     def unmute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
+        if seat.user_id: require_manageable_guest(db, room, user, seat.user_id)
         seat.muted = False; db.commit(); return {"muted": False}
     @router.post("/{room_id}/lock")
     def lock_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -759,13 +857,22 @@ def register_room_auth(current_user_dependency):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         if db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == user.id)):
             raise HTTPException(status_code=403, detail="Odaya erişiminiz yok")
+        def seat_status():
+            seat = db.scalar(select(RoomSeat).where(
+                RoomSeat.room_id == room.id, RoomSeat.user_id == user.id
+            ))
+            return {
+                "seat_number": seat.seat_number if seat else None,
+                "muted": bool(seat.muted) if seat else False,
+            }
+
         raw = os.getenv("ERIS_WEBRTC_ICE_SERVERS_JSON", "").strip()
         if raw:
             try: value = json.loads(raw)
             except json.JSONDecodeError: raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
             if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
                 raise HTTPException(status_code=500, detail="WebRTC ICE yapılandırması geçersiz")
-            return {"ice_servers": value}
+            return {"ice_servers": value, **seat_status()}
         from .config import settings
         servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
         turn_url = settings.rtc_turn_url or os.getenv("ERISCHAT_TURN_URL", "")
@@ -773,7 +880,7 @@ def register_room_auth(current_user_dependency):
         turn_password = settings.rtc_turn_credential or os.getenv("ERISCHAT_TURN_PASSWORD", "")
         if turn_url and turn_user and turn_password:
             servers.append({"urls":[turn_url],"username":turn_user,"credential":turn_password})
-        return {"ice_servers": servers}
+        return {"ice_servers": servers, **seat_status()}
 
     @router.post("/{room_id}/rtc-signals")
     def send_rtc_signal(room_id: str, payload: RTCSignal, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -903,6 +1010,9 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        if not db.scalar(select(RoomSeat.id).where(
+            RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)):
+            raise HTTPException(status_code=403, detail="Müzik oynatmak için koltuğa oturun")
         music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
         if not music:
             raise HTTPException(status_code=404, detail="Müzik bulunamadı")

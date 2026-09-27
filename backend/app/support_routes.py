@@ -10,6 +10,8 @@ from .system_logs import record
 from pathlib import Path
 from datetime import datetime, timezone
 import json
+import base64
+import re
 
 NOTES_DIR = Path(__file__).resolve().parents[2] / "ERISCHAT_NOTLAR"
 SUPPORT_LOG = NOTES_DIR / "destek.txt"
@@ -25,11 +27,38 @@ class SupportCreate(BaseModel):
 
     @staticmethod
     def _attachments(value: list[str]) -> list[str]:
-        import re
-        for image in value:
-            if len(image) > 2_100_000 or not re.fullmatch(r"data:image/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}", image):
-                raise ValueError("Fotoğraflar JPEG, PNG veya WebP olmalı ve her biri en fazla 1,5 MB olmalı")
+        videos = 0
+        for attachment in value:
+            match = re.fullmatch(
+                r"data:(image/(?:jpeg|png|webp)|video/(?:mp4|webm));base64,([A-Za-z0-9+/]+={0,2})",
+                attachment,
+            )
+            if not match:
+                raise ValueError("Kanıt JPEG, PNG, WebP, MP4 veya WebM olmalı")
+            mime, encoded = match.groups()
+            limit = 8 * 1024 * 1024 if mime.startswith("video/") else 1_500_000
+            if len(encoded) > ((limit + 2) // 3) * 4:
+                raise ValueError("Fotoğraf 1,5 MB, video 8 MB sınırını aşamaz")
+            try:
+                data = base64.b64decode(encoded, validate=True)
+            except (ValueError, base64.binascii.Error):
+                raise ValueError("Kanıt dosyası okunamadı")
+            if not data or len(data) > limit:
+                raise ValueError("Fotoğraf 1,5 MB, video 8 MB sınırını aşamaz")
+            valid = (
+                mime == "image/jpeg" and data.startswith(bytes.fromhex("ffd8ff"))
+                or mime == "image/png" and data.startswith(bytes.fromhex("89504e470d0a1a0a"))
+                or mime == "image/webp" and data.startswith(b"RIFF") and data[8:12] == b"WEBP"
+                or mime == "video/mp4" and b"ftyp" in data[:16]
+                or mime == "video/webm" and data.startswith(bytes.fromhex("1a45dfa3"))
+            )
+            if not valid:
+                raise ValueError("Kanıt dosyasının biçimi geçersiz")
+            videos += mime.startswith("video/")
+        if videos and (videos != 1 or len(value) != 1):
+            raise ValueError("Video yalnızca tek başına eklenebilir")
         return value
+
 
     @field_validator("attachments")
     @classmethod
