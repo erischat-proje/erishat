@@ -5,16 +5,15 @@
   const token = () => api()?.getAccessToken?.() || localStorage.getItem('erischat_access_token') || localStorage.getItem('token') || '';
   let loading = false;
   const style = document.createElement('style');
-  style.textContent = '.eris-stories{margin:0 0 15px;padding:12px;border:1px solid #ffffff14;border-radius:20px;background:linear-gradient(135deg,#17121f,#0c0a11)}.eris-stories-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.eris-stories-head b{font-size:12px}.eris-stories-head small{display:block;color:#9b92a4;font-size:9px;margin-top:3px}.eris-stories-row{display:flex;gap:12px;overflow-x:auto;padding:2px 1px 5px;scrollbar-width:none}.eris-story{border:0;background:transparent;color:#fff;padding:0;flex:0 0 64px;text-align:center}.eris-story-face{width:58px;height:58px;border-radius:20px;margin:0 auto 5px;border:2px solid #aa75ff;padding:2px;background:linear-gradient(140deg,#8a5cff,#ff4fa3);display:grid;place-items:center;font-size:22px;overflow:hidden}.eris-story-face img{width:100%;height:100%;object-fit:cover;border-radius:16px}.eris-story.seen .eris-story-face{border-color:#77717f;opacity:.78}.eris-story-name{display:block;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eris-story-add .eris-story-face{background:#ffffff0a;border:1px dashed #aa75ff;color:#bd9cff;font-size:27px}.eris-story-viewer{position:fixed;inset:0;z-index:21000;background:#05040a;display:flex;align-items:center;justify-content:center;color:#fff}.eris-story-viewer img{max-width:100vw;max-height:84vh;object-fit:contain}.eris-story-viewer header{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;gap:9px}.eris-story-viewer header b{flex:1}.eris-story-viewer footer{position:absolute;left:18px;right:18px;bottom:max(20px,env(safe-area-inset-bottom));text-align:center;font-size:12px;text-shadow:0 1px 7px #000}.eris-story-modal{position:fixed;inset:0;z-index:20500;background:#020107c9;display:grid;place-items:center;padding:18px}.eris-story-modal section{width:min(430px,100%);padding:17px;border:1px solid #ffffff20;border-radius:22px;background:#100d16;color:#fff}.eris-story-modal input{width:100%;margin:12px 0;padding:12px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff08;color:#fff}.eris-story-modal button{border:1px solid #ffffff1c;border-radius:11px;padding:10px;background:#ffffff08;color:#fff}.eris-story-modal .story-primary{background:linear-gradient(120deg,#8055ff,#ef4eac);border:0;font-weight:800}.eris-story-progress{height:3px;background:#ffffff42;position:absolute;top:max(8px,env(safe-area-inset-top));left:14px;right:14px;border-radius:9px}.eris-story-progress i{display:block;height:100%;background:#fff;border-radius:9px}';
+  style.textContent = '.eris-stories{margin:0 0 7px;padding:5px 0 10px;border:0;border-bottom:1px solid #ffffff12;border-radius:0;background:transparent;overflow:hidden}.eris-stories-head{display:none}.eris-stories-row{display:flex;gap:14px;overflow-x:auto;padding:3px 2px 5px;scrollbar-width:none}.eris-stories-row::-webkit-scrollbar{display:none}.eris-story-wrap{position:relative;flex:0 0 68px}.eris-story{position:relative;border:0;background:transparent;color:#fff;padding:0;flex:0 0 68px;text-align:center}.eris-story-face{position:relative;width:62px;height:62px;border-radius:50%;margin:0 auto 5px;border:2px solid transparent;padding:3px;background:linear-gradient(#100d16,#100d16) padding-box,linear-gradient(135deg,#ffc857,#ef347d,#8e4dff) border-box;display:grid;place-items:center;font-size:23px;overflow:visible}.eris-story-face img{width:100%;height:100%;object-fit:cover;border-radius:50%}.eris-story.seen .eris-story-face{background:linear-gradient(#100d16,#100d16) padding-box,linear-gradient(135deg,#6e6875,#403b47) border-box;opacity:.84}.eris-story-name{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e6e0eb}.eris-story-add .eris-story-face{background:linear-gradient(#100d16,#100d16) padding-box,linear-gradient(135deg,#494153,#393342) border-box}.eris-story-plus{position:absolute;right:2px;top:41px;width:22px;height:22px;padding:0;border:2px solid #100d16;border-radius:50%;display:grid;place-items:center;background:#fff;color:#15111b;font-size:18px;line-height:1;font-weight:700}.eris-story-viewer{position:fixed;inset:0;z-index:21000;background:#05040a;display:flex;align-items:center;justify-content:center;color:#fff}.eris-story-viewer img{max-width:100vw;max-height:84vh;object-fit:contain}.eris-story-viewer header{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;gap:9px}.eris-story-viewer header b{flex:1}.eris-story-viewer footer{position:absolute;left:18px;right:18px;bottom:max(20px,env(safe-area-inset-bottom));text-align:center;font-size:12px;text-shadow:0 1px 7px #000}.eris-story-modal{position:fixed;inset:0;z-index:20500;background:#020107c9;display:grid;place-items:center;padding:18px}.eris-story-modal section{width:min(430px,100%);padding:17px;border:1px solid #ffffff20;border-radius:22px;background:#100d16;color:#fff}.eris-story-modal input{width:100%;margin:12px 0;padding:12px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff08;color:#fff}.eris-story-modal button{border:1px solid #ffffff1c;border-radius:11px;padding:10px;background:#ffffff08;color:#fff}.eris-story-modal .story-primary{background:linear-gradient(120deg,#8055ff,#ef4eac);border:0;font-weight:800}.eris-story-progress{height:3px;background:#ffffff42;position:absolute;top:max(8px,env(safe-area-inset-top));left:14px;right:14px;border-radius:9px}.eris-story-progress i{display:block;height:100%;background:#fff;border-radius:9px}';
   document.head.append(style);
 
   function mount() {
     const explore = document.getElementById('explore');
     if (!explore || explore.querySelector('[data-eris-stories]')) return explore?.querySelector('[data-eris-stories]');
     const root = document.createElement('section'); root.className = 'eris-stories'; root.dataset.erisStories = '';
-    root.innerHTML = '<div class="eris-stories-head"><div><b>Story’ler</b><small>Paylaşımlar 24 saat sonra silinir</small></div><button type="button" class="close" data-story-add aria-label="Story paylaş">＋</button></div><div class="eris-stories-row" data-story-list></div>';
+    root.innerHTML = '<div class="eris-stories-row" data-story-list aria-label="Hikâyeler"></div>';
     const tabs = explore.querySelector('.tabs'); explore.insertBefore(root, tabs || explore.firstChild.nextSibling);
-    root.querySelector('[data-story-add]').onclick = () => compose(root);
     return root;
   }
 
@@ -24,20 +23,30 @@
     const list = root.querySelector('[data-story-list]');
     try {
       const rows = await api().stories(100); list.replaceChildren();
-      list.append(storyButton({id:'new',nickname:'Story ekle',avatar:'＋',isAdd:true}, root));
-      rows.forEach(item => list.append(storyButton(item, root)));
+      const own = rows.find(item => item.is_mine || (window.ErisAuth?.user?.id && String(item.user_id) === String(window.ErisAuth.user.id)));
+      list.append(storyButton({...(own||{}),nickname:'Hikâyen',isAdd:true,ownStory:own}, root));
+      const seenUsers = new Set();
+      rows.filter(item => item !== own && !item.is_mine).forEach(item => {
+        const key = String(item.user_id ?? item.id);
+        if (seenUsers.has(key)) return; seenUsers.add(key); list.append(storyButton(item, root));
+      });
     } catch (error) { list.innerHTML = '<small style="color:#f7aac7;font-size:9px">Story’ler yüklenemedi. Tekrar denemek için sayfayı yenileyin.</small>'; }
     finally { loading = false; }
   }
 
   function storyButton(item, root) {
+    const wrapper = item.isAdd ? document.createElement('div') : null;
+    if(wrapper)wrapper.className='eris-story-wrap';
     const button = document.createElement('button'); button.type='button'; button.className='eris-story'+(item.viewed?' seen':'')+(item.isAdd?' eris-story-add':'');
     const face=document.createElement('span');face.className='eris-story-face';
-    const avatar=item.avatar_asset||item.avatar||'👤';
-    if(!item.isAdd&&typeof avatar==='string'&&/^(https?:|\/|data:|\.\.?\/)/.test(avatar)){const img=document.createElement('img');img.alt='';img.src=window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar;face.append(img)}else face.textContent=item.isAdd?'＋':avatar;
-    const name=document.createElement('span');name.className='eris-story-name';name.textContent=item.isAdd?'Story ekle':item.nickname||'Kullanıcı';button.append(face,name);
-    button.onclick=()=>item.isAdd?compose(root):openStory(item);
-    return button;
+    const avatar=item.avatar_asset||item.avatar||window.ErisChatCosmetics?.state?.user?.avatar_asset||'👤';
+    if(typeof avatar==='string'&&/^(https?:|\/|data:|\.\.?\/)/.test(avatar)){const img=document.createElement('img');img.alt='';img.src=window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar;face.append(img)}else face.textContent=avatar;
+    const name=document.createElement('span');name.className='eris-story-name';name.textContent=item.isAdd?'Hikâyen':item.nickname||'Kullanıcı';button.append(face,name);
+    button.setAttribute('aria-label',item.isAdd?'Hikâye ekle':`${item.nickname||'Kullanıcı'} hikâyesini görüntüle`);
+    button.onclick=()=>item.isAdd?(item.ownStory?openStory(item.ownStory):compose(root)):openStory(item);
+    if(!item.isAdd)return button;
+    const plus=document.createElement('button');plus.type='button';plus.className='eris-story-plus';plus.textContent='+';plus.setAttribute('aria-label','Hikâye ekle');plus.onclick=()=>compose(root);
+    wrapper.append(button,plus);return wrapper;
   }
 
   function compose(root) {
