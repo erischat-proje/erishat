@@ -255,8 +255,80 @@
     try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const recorder=new MediaRecorder(stream);const chunks=[];activeRecorder=recorder;recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onerror=()=>window.toast?.('Ses kaydı sırasında hata oluştu.');recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const type=(recorder.mimeType||'audio/webm').split(';',1)[0]||'audio/webm';const blob=new Blob(chunks,{type});activeRecorder=null;if(blob.size)await uploadMedia(new File([blob],`voice-${Date.now()}.${type==='audio/mp4'?'m4a':type==='audio/ogg'?'ogg':'webm'}`,{type}),'voice',0)};recorder.start();button.textContent='⏹';button.title='Kaydı bitir ve gönder'}catch(error){activeRecorder=null;window.toast?.(error.name==='NotAllowedError'?'Mikrofon izni gerekli.':'Ses kaydı başlatılamadı.')}
   }
 
+  let activeCaptureKey = null;
+
+  function syncDmCapturePreference(chat) {
+    if (activeCaptureKey && window.ErisScreenProtection?.set) {
+      window.ErisScreenProtection.set(activeCaptureKey, false);
+    }
+    activeCaptureKey = null;
+    if (!chat) return;
+
+    const head = chat.querySelector(".chatHead");
+    if (!head) return;
+
+    let button = head.querySelector("[data-dm-capture-toggle]");
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.dataset.dmCaptureToggle = "1";
+      button.className = "close";
+      button.style.marginRight = "8px";
+      head.insertBefore(button, head.querySelector(".close"));
+    }
+
+    const personId = String(window.__erisActiveDmUserId || "");
+    button.hidden = !personId;
+    if (!personId) return;
+
+    const accountId = String(
+      window.__erisCurrentUserId || window.currentUserId || "current"
+    );
+    const storageKey = `eris_dm_capture_protection:${accountId}:${personId}`;
+    const protectionKey = `dm-user:${accountId}:${personId}`;
+
+    const render = () => {
+      const enabled = localStorage.getItem(storageKey) === "1";
+      button.textContent = enabled ? "▣" : "▢";
+      button.title = enabled
+        ? "Bu sohbet için ekran koruması açık"
+        : "Bu sohbet için ekran korumasını aç";
+      button.setAttribute("aria-label", button.title);
+      button.setAttribute("aria-pressed", String(enabled));
+      if (enabled && window.ErisScreenProtection?.set) {
+        window.ErisScreenProtection.set(protectionKey, true);
+        activeCaptureKey = protectionKey;
+      }
+    };
+
+    button.onclick = () => {
+      const enabled = localStorage.getItem(storageKey) !== "1";
+      localStorage.setItem(storageKey, enabled ? "1" : "0");
+      if (window.ErisScreenProtection?.set) {
+        window.ErisScreenProtection.set(protectionKey, enabled);
+      }
+      activeCaptureKey = enabled ? protectionKey : null;
+      render();
+    };
+
+    if (!chat.dataset.captureCloseBound) {
+      chat.dataset.captureCloseBound = "1";
+      chat.addEventListener("click", event => {
+        if (!event.target.closest(".close")) return;
+        if (activeCaptureKey && window.ErisScreenProtection?.set) {
+          window.ErisScreenProtection.set(activeCaptureKey, false);
+        }
+        activeCaptureKey = null;
+      }, true);
+    }
+
+    render();
+  }
+
   function installChatTools(chat) {
-    if (!chat || chat.querySelector('[data-dm-tools]')) return;
+    if (!chat) return;
+    syncDmCapturePreference(chat);
+    if (chat.querySelector('[data-dm-tools]')) return;
     const style = document.createElement('style');
     style.textContent = '.dm-unread{margin-left:auto;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:#ff4fa3;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900}.dm-selected{outline:2px solid #e9c66b!important}.dm-select-tools{display:flex;align-items:center;gap:7px;padding:7px 11px;border-bottom:1px solid #ffffff12;background:#100d16}.dm-select-tools[hidden]{display:none}.dm-select-tools button{border:1px solid #ffffff20;background:#ffffff0a;color:#fff;border-radius:10px;padding:6px 9px;font-size:9px}.dm-pinned{position:sticky;top:0;z-index:2;background:#e4b85d18;border:1px solid #e4b85d44;border-radius:10px;padding:7px 10px;font-size:9px;color:#f3d995}.dm-gift-sheet{position:fixed;inset:0;z-index:500;background:#020107bb;display:flex;align-items:flex-end}.dm-gift-sheet>section{width:min(520px,100%);max-height:76vh;overflow:auto;background:#0b0911;border:1px solid #ffffff20;border-radius:24px 24px 0 0;padding:16px}.dm-gift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.dm-gift-grid button{background:#ffffff08;color:#fff;border:1px solid #ffffff15;border-radius:14px;padding:10px;font-size:11px}.dm-gift-grid small{display:block;color:#e4b85d;margin-top:4px;font-size:9px}';
     document.head.appendChild(style);
@@ -279,11 +351,30 @@
         selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear(); refreshSelectionBar();
       } catch (e) { window.toast?.(e.message || 'Sabitleme işlemi başarısız.'); }
     };
-    let holdTimer = null, held = false;
-    body?.addEventListener('pointerdown', event => { const row = event.target.closest('.bubble[data-message-id]'); if (!row) return; held = false; holdTimer = setTimeout(() => { held = true; setSelected(row); }, 520); });
-    body?.addEventListener('pointerup', () => clearTimeout(holdTimer)); body?.addEventListener('pointercancel', () => clearTimeout(holdTimer)); body?.addEventListener('pointerleave', () => clearTimeout(holdTimer));
-    body?.addEventListener('contextmenu', event => { const row=event.target.closest('.bubble[data-message-id]'); if(!row)return; event.preventDefault(); setSelected(row); });
-    body?.addEventListener('click', event => { const row = event.target.closest('.bubble[data-message-id]'); if (held) { held = false; return; } if (selectedMessages.size && row) { event.preventDefault(); setSelected(row); } });
+    let holdTimer = null, suppressNextClick = false, lastLongPressRow = null;
+    const clearHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
+    body?.addEventListener('pointerdown', event => {
+      const row = event.target.closest('.bubble[data-message-id]');
+      if (!row || (event.button !== undefined && event.button !== 0)) return;
+      clearHold(); suppressNextClick = false; lastLongPressRow = row;
+      holdTimer = setTimeout(() => { suppressNextClick = true; setSelected(row); }, 520);
+    }, {passive:true});
+    body?.addEventListener('pointerup', clearHold);
+    body?.addEventListener('pointercancel', clearHold);
+    body?.addEventListener('pointerleave', clearHold);
+    body?.addEventListener('contextmenu', event => {
+      const row = event.target.closest('.bubble[data-message-id]');
+      if (!row) return;
+      event.preventDefault();
+      clearTimeout(holdTimer);
+      if (row.classList.contains('dm-selected')) return;
+      setSelected(row);
+    });
+    body?.addEventListener('click', event => {
+      const row = event.target.closest('.bubble[data-message-id]');
+      if (suppressNextClick && row === lastLongPressRow) { suppressNextClick = false; event.preventDefault(); return; }
+      if (selectedMessages.size && row) { event.preventDefault(); setSelected(row); }
+    });
     const compose = chat.querySelector('.compose');
     const chatName=String(chat.querySelector('.chatHead b')?.textContent||'');
     const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=chatName==='ErisChat';
