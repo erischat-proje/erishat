@@ -399,7 +399,6 @@
     const staff = roomPermission();
 
     [
-      '#erisRoomMoreTop',
       '[data-management-tab]',
       '[data-room-management]',
       '[data-room-settings]',

@@ -74,7 +74,7 @@
   function top(s){
     const h=s.querySelector('.eris-room-top');if(!h)return;
     if(!h.querySelector('#erisRoomLevel')){const b=document.createElement('button');b.id='erisRoomLevel';b.type='button';b.innerHTML='<b>Seviye 1</b><small>ilerleme</small>';b.onclick=openLevels;h.appendChild(b)}
-    if(!h.querySelector('#erisRoomMoreTop')){const r=window.__erisRoomPermissions||{};const can=!!(r.is_owner||r.is_moderator||r.can_manage);if(can){const b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>openMenu('settings');h.appendChild(b)}}
+    if(!h.querySelector('#erisRoomMoreTop')){const r=window.__erisRoomPermissions||{};const can=!!(r.is_owner||r.is_moderator||r.can_manage);if(can){const b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>window.ErisRoomCenterMenu?.();h.appendChild(b)}}
     if(!h.querySelector('#erisRoomLeaveTop')){const b=document.createElement('button');b.id='erisRoomLeaveTop';b.type='button';b.className='room-v3-top-btn';b.textContent='↪';b.title='Odadan çık';b.onclick=()=>window.closeRealRoom?.();h.appendChild(b)}
     
   }
@@ -92,8 +92,8 @@
     const p=s.querySelector('.room-v3-panel'); const tab=p?.querySelector('[data-management-tab]'); if(tab)tab.style.display=can?'':'none';
     const h=s.querySelector('.eris-room-top'); if(!h)return;
     let b=h.querySelector('#erisRoomMoreTop');
-    if(can && !b){b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>openMenu('settings');h.appendChild(b)}
-    if(b){b.style.display=can?'':'none';b.setAttribute('aria-hidden',can?'false':'true');}
+    if(can && !b){b=document.createElement('button');b.id='erisRoomMoreTop';b.type='button';b.className='room-v3-top-btn';b.textContent='•••';b.title='Oda menüsü';b.onclick=()=>window.ErisRoomCenterMenu?.();h.appendChild(b)}
+    if(b){b.style.display='';b.setAttribute('aria-hidden','false');}
   }
 
   async function getRoom(){const id=roomId();if(!id)return{};try{return await roomApi().get?.(id)||{}}catch(e){return{}}}
@@ -516,7 +516,7 @@
   function syncManagementHeader(r){
     const can=!!(r?.is_owner||r?.is_moderator||r?.can_manage);
     const b=document.getElementById('erisRoomMoreTop');
-    if(b){b.style.display=can?'':'none';b.setAttribute('aria-hidden',can?'false':'true');}
+    if(b){b.style.display='';b.setAttribute('aria-hidden','false');}
     const tab=root()?.querySelector('.room-v3-tab[data-management-tab]');
     if(tab)tab.style.display=can?'':'none';
   }
@@ -703,16 +703,42 @@
     const stage=s.querySelector('#erisLiveSeats');
     if(!stage||stage.dataset.seatActions==='1')return;
     stage.dataset.seatActions='1';
+    let timer=0,pressed=false,startX=0,startY=0;
+    const clear=()=>{window.clearTimeout(timer);timer=0};
+    const available=seat=>{
+      if(!seat)return false;
+      const permissions=window.__erisRoomPermissions||{};
+      return seat.classList.contains('occupied')||
+        !!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
+    };
+    stage.addEventListener('pointerdown',event=>{
+      clear();pressed=false;
+      if(event.button!==0||!available(event.target.closest('.eris-seat')))return;
+      const seat=event.target.closest('.eris-seat');
+      startX=event.clientX;startY=event.clientY;
+      timer=window.setTimeout(()=>{
+        timer=0;pressed=true;seatMenu(seat);
+      },450);
+    });
+    stage.addEventListener('pointermove',event=>{
+      if(Math.abs(event.clientX-startX)>12||Math.abs(event.clientY-startY)>12)clear();
+    });
+    stage.addEventListener('pointerup',clear);
+    stage.addEventListener('pointercancel',clear);
+    stage.addEventListener('pointerleave',clear);
+    stage.addEventListener('contextmenu',event=>{
+      const seat=event.target.closest('.eris-seat');
+      if(!available(seat))return;
+      event.preventDefault();clear();
+      if(!pressed){pressed=true;seatMenu(seat)}
+    });
     stage.addEventListener('click',event=>{
       const seat=event.target.closest('.eris-seat');
-      if(!seat)return;
-      const permissions=window.__erisRoomPermissions||{};
-      const staff=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
-      if(seat.classList.contains('occupied')||staff){
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        seatMenu(seat);
-      }
+      if(!available(seat))return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if(pressed){pressed=false;return}
+      seatMenu(seat);
     },true);
   }
 
