@@ -24,8 +24,8 @@
   const signal=(type,to_user_id,payload)=>{if(socket()?.readyState===WebSocket.OPEN)socket().send(JSON.stringify({type,to_user_id,payload}))};
   const button=()=>document.getElementById('erisRoomMicInline');
   const outputButton=()=>document.getElementById('erisRoomAudioOutput');
-  function show(){const b=button();if(!b)return;b.classList.toggle('on',!!stream);b.textContent=stream?'🎙️':'🔇';b.title=stream?'Mikrofon açık — kapat':'Mikrofon kapalı — aç'}
-  function showOutput(){const b=outputButton();if(!b)return;b.textContent=outputEnabled?'🔊':'🔇';b.classList.toggle('on',outputEnabled);b.setAttribute('aria-pressed',String(outputEnabled));b.title=outputEnabled?'Oda sesini kapat':'Oda sesini aç';b.setAttribute('aria-label',b.title)}
+  function show(){const b=button();if(!b)return;b.classList.toggle('on',!!stream);b.textContent='🎙️';b.setAttribute('aria-pressed',String(!!stream));b.title=stream?'Mikrofon açık — kapat':'Mikrofon kapalı — aç'}
+  function showOutput(){const b=outputButton();if(!b)return;b.textContent=outputEnabled?'🔊':'🔈';b.classList.toggle('on',outputEnabled);b.setAttribute('aria-pressed',String(outputEnabled));b.title=outputEnabled?'Oda sesini kapat':'Oda sesini aç';b.setAttribute('aria-label',b.title)}
   async function toggleOutput(){
     outputEnabled=!outputEnabled;localStorage.setItem('eris_room_audio_output',String(outputEnabled));
     for(const audio of sounds.values()){audio.muted=!outputEnabled;if(outputEnabled){try{await audio.play()}catch(e){window.toast?.('Tarayıcı sesi başlatmadı. Oda ses düğmesine tekrar dokun.')}}}

@@ -80,7 +80,16 @@
       [data-seat-count="12"] .eris-seat .seat-ava{width:30px;height:30px;font-size:14px}
       [data-seat-count="16"] .eris-seat .seat-ava{width:24px;height:24px;font-size:11px}
       .eris-seat .seat-ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:18px;margin:auto;overflow:hidden;border:1px solid #ffffff28}.eris-seat .seat-ava.avatar{background-size:cover;background-position:center}.eris-seat.empty .seat-ava{background:rgba(255,255,255,.055);color:#aaa0ad}
-      .eris-seat .seat-pod{width:100%;height:100%;display:grid;place-items:center}.eris-seat b,.eris-seat small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+      .eris-seat .seat-pod{width:100%;height:100%;display:grid;place-items:center}
+      .eris-seat .seat-mic{display:none!important}
+      .eris-seat .seat-ava{width:100%;height:100%;border:0;box-sizing:border-box}
+      .eris-seat.empty .seat-ava{background:transparent;border:0;font-size:28px}
+      .eris-seat .seat-frame{pointer-events:none}
+      #erisRoomSurface .eris-seat .seat-ava{width:100%!important;height:100%!important}
+      #erisRoomSurface .eris-seat .seat-mic{display:none!important}
+      #erisRoomSurface .eris-room-core{display:none!important}
+
+.eris-seat b,.eris-seat small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
       .eris-seat{touch-action:manipulation;user-select:none;-webkit-user-select:none}.eris-seat:focus-visible{outline:2px solid #ff70b6;outline-offset:3px}
       .eris-room-chat{position:absolute;left:0;right:0;bottom:0;height:224px;background:linear-gradient(180deg,rgba(5,4,10,0) 0%,rgba(5,4,10,.52) 18%,rgba(5,4,10,.86) 100%);backdrop-filter:blur(9px);z-index:5;display:flex;flex-direction:column}.eris-room-chat:before{content:"";position:absolute;left:14px;right:14px;top:0;height:1px;background:linear-gradient(90deg,transparent,#ffffff18,transparent)}
       .eris-chat-list{flex:1;overflow:auto;padding:30px 14px 7px;display:flex;flex-direction:column;gap:6px}
@@ -117,10 +126,20 @@
   }
   window.ErisRoomPasswordModal=roomPasswordModal;
   function seatLayout(count,index){
-    const centerY=count<=8?46:49, radiusX=count<=8?36:(count===12?41:44), radiusY=count<=8?34:(count===12?37:40);
-    const angle=(-90+(360/count)*index)*Math.PI/180;
-    return {left:(50+Math.cos(angle)*radiusX).toFixed(2)+'%',top:(centerY+Math.sin(angle)*radiusY).toFixed(2)+'%'};
+    const stage=document.getElementById('erisLiveSeats');
+    const width=stage?.clientWidth||window.innerWidth||390;
+    const height=stage?.clientHeight||480;
+    const rows=Math.ceil(count/4);
+    const size=Math.min(82,Math.max(52,(width-28)/5.35));
+    const columns=[-2,-1,1,2];
+    const column=columns[index%4];
+    const row=Math.floor(index/4);
+    const gap=size+12;
+    const left=width/2+column*size*1.06;
+    const top=height/2+(row-(rows-1)/2)*gap;
+    return {left:left.toFixed(1)+'px',top:top.toFixed(1)+'px'};
   }
+
   function seatCountForRoom(room,list){
     const fromList=Array.isArray(list)?list.length:0;
     if(fromList>=16)return 16;
@@ -160,6 +179,8 @@
       const b=document.createElement('button');b.type='button';
       const pos=seatLayout(count,i);
       b.style.left=pos.left;b.style.top=pos.top;
+      b.style.width='min(82px, calc((100vw - 28px) / 5.35))';
+      b.style.height=b.style.width;
       b.dataset.seatNumber=String(num);b.dataset.userId=String(seat.user_id||'');
       b.dataset.muted=String(!!seat.muted);
       b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');

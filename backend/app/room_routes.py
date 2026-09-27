@@ -18,8 +18,8 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState
-from .platform_models import Notification, VipStatus
+from .room_models import Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomMusicAccess, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState, RoomInvitation
+from .platform_models import Notification, UserBlock, UserFollow, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
 from .system_data import RoomIdRegistry
@@ -525,6 +525,84 @@ def register_room_auth(current_user_dependency):
         room.is_active = True
         db.commit()
         return room_view(db, room, user)
+    @router.post("/{room_id}/call-followers")
+    def call_followers(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(status_code=403, detail="Takipçilerini çağırmak için odada olmalısın")
+        now = datetime.now(timezone.utc)
+        recent = db.scalar(select(RoomInvitation.id).where(
+            RoomInvitation.room_id == room.id,
+            RoomInvitation.sender_id == user.id,
+            RoomInvitation.created_at > now - timedelta(hours=6),
+        ).limit(1))
+        if recent:
+            raise HTTPException(status_code=429, detail="Takipçilerini yeniden çağırmak için 6 saat bekle")
+        follower_ids = db.scalars(select(UserFollow.follower_id).where(
+            UserFollow.following_id == user.id
+        ).limit(200)).all()
+        sent = 0
+        for follower_id in follower_ids:
+            if follower_id == user.id or is_member(db, room.id, follower_id):
+                continue
+            blocked = db.scalar(select(UserBlock.id).where(
+                ((UserBlock.blocker_id == user.id) & (UserBlock.blocked_id == follower_id)) |
+                ((UserBlock.blocker_id == follower_id) & (UserBlock.blocked_id == user.id))
+            ).limit(1))
+            if blocked:
+                continue
+            follower = db.get(User, follower_id)
+            if not follower or not follower.is_active:
+                continue
+            db.add(RoomInvitation(
+                room_id=room.id, sender_id=user.id, recipient_id=follower_id,
+                status="pending", expires_at=now + timedelta(minutes=15)
+            ))
+            sent += 1
+        db.commit()
+        return {"sent": sent, "room_id": room.id}
+
+    @router.get("/invites/pending")
+    def pending_room_invitations(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        now = datetime.now(timezone.utc)
+        rows = db.scalars(select(RoomInvitation).where(
+            RoomInvitation.recipient_id == user.id,
+            RoomInvitation.status == "pending",
+            RoomInvitation.expires_at > now
+        ).order_by(RoomInvitation.created_at.desc()).limit(10)).all()
+        result = []
+        for invite in rows:
+            room = db.get(Room, invite.room_id)
+            sender = db.get(User, invite.sender_id)
+            if room and sender and sender.is_active:
+                result.append({
+                    "id": invite.id, "room_id": room.id, "room_name": room.name,
+                    "sender_name": sender.nickname, "expires_at": invite.expires_at
+                })
+        return result
+
+    @router.post("/invites/{invite_id}/accept")
+    def accept_room_invitation(invite_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        invite = db.get(RoomInvitation, invite_id)
+        if not invite or invite.recipient_id != user.id:
+            raise HTTPException(status_code=404, detail="Davet bulunamadı")
+        if invite.status != "pending" or invite.expires_at <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=409, detail="Davet artık geçerli değil")
+        invite.status = "accepted"
+        db.commit()
+        return {"room_id": invite.room_id}
+
+    @router.post("/invites/{invite_id}/reject")
+    def reject_room_invitation(invite_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        invite = db.get(RoomInvitation, invite_id)
+        if not invite or invite.recipient_id != user.id:
+            raise HTTPException(status_code=404, detail="Davet bulunamadı")
+        if invite.status != "pending":
+            raise HTTPException(status_code=409, detail="Davet zaten yanıtlandı")
+        invite.status = "rejected"
+        db.commit()
+        return {"rejected": True}
+
     @router.post("/{room_id}/invite", status_code=201)
     def invite_to_room(room_id: str, payload: RoomInvite, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -955,10 +1033,50 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         rows = db.execute(select(RoomGiftEvent.sender_id, func.sum(RoomGiftEvent.total_price).label("total")).where(RoomGiftEvent.room_id == room.id).group_by(RoomGiftEvent.sender_id).order_by(func.sum(RoomGiftEvent.total_price).desc())).all()
         return [{"rank":i,"user_id":uid,"total_lidya":int(total or 0)} for i,(uid,total) in enumerate(rows,1)]
+    @router.get("/music-access/status")
+    def music_access_status(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(RoomMusicAccess, user.id)
+        now = datetime.now(timezone.utc)
+        expiry = row.expires_at if row and row.expires_at.tzinfo else (
+            row.expires_at.replace(tzinfo=timezone.utc) if row else None
+        )
+        return {"active": bool(expiry and expiry > now), "expires_at": expiry, "price": 150}
+
+    @router.post("/music-access/activate")
+    def activate_music_access(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if not locked_user:
+            raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
+        now = datetime.now(timezone.utc)
+        row = db.get(RoomMusicAccess, user.id)
+        expiry = row.expires_at if row and row.expires_at.tzinfo else (
+            row.expires_at.replace(tzinfo=timezone.utc) if row else None
+        )
+        if expiry and expiry > now:
+            return {"active": True, "expires_at": expiry, "spent": 0}
+        if int(locked_user.lidya or 0) < 150:
+            raise HTTPException(status_code=400, detail="24 saatlik müzik erişimi için 150 Lidya gerekli")
+        locked_user.lidya -= 150
+        expiry = now + timedelta(hours=24)
+        if row:
+            row.expires_at = expiry
+        else:
+            db.add(RoomMusicAccess(user_id=user.id, expires_at=expiry))
+        db.commit()
+        return {"active": True, "expires_at": expiry, "spent": 150}
+
     @router.post("/{room_id}/music")
     async def add_music(room_id: str, file: UploadFile = File(...), title: str = Form(""), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        access_row = db.get(RoomMusicAccess, user.id)
+        now = datetime.now(timezone.utc)
+        access_expiry = access_row.expires_at if access_row and access_row.expires_at.tzinfo else (
+            access_row.expires_at.replace(tzinfo=timezone.utc) if access_row else None
+        )
+        if not access_expiry or access_expiry <= now:
+            raise HTTPException(status_code=403, detail="Önce 150 Lidya ile 24 saatlik müzik erişimi aç")
+
         # Only bounded audio is retained; never fetch user-supplied URLs on the server.
         data = await file.read(8 * 1024 * 1024 + 1)
         await file.close()
@@ -980,9 +1098,7 @@ def register_room_auth(current_user_dependency):
         used_slots = set(db.scalars(select(RoomMusic.slot).where(RoomMusic.room_id == room.id, RoomMusic.user_id == locked_user.id)))
         slot = next((number for number in range(1, 11) if number not in used_slots), None)
         if slot is None or len(used_slots) >= 10: raise HTTPException(status_code=409, detail="En fazla 10 müzik ekleyebilirsiniz")
-        if locked_user.lidya < 150: raise HTTPException(status_code=400, detail="Müzik eklemek için 150 Lidya gerekli")
-        locked_user.lidya -= 150
-        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=slot, title=track_title, source_url="", audio_bytes=data, audio_mime=mime, paid_until=datetime.now(timezone.utc)+timedelta(days=7))
+        music = RoomMusic(room_id=room.id, user_id=locked_user.id, slot=slot, title=track_title, source_url="", audio_bytes=data, audio_mime=mime, paid_until=access_expiry)
         db.add(music)
         try:
             db.commit()
