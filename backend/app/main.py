@@ -48,7 +48,6 @@ from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
 
 logger = logging.getLogger("erischat.api")
-_media_expiry_task = None
 app = FastAPI(title="ErisChat API", version="1.0.0")
 app.include_router(cosmetic_router)
 
@@ -185,7 +184,6 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 
 @app.on_event("startup")
 def startup() -> None:
-    global _media_expiry_task
     logger.info("ErisChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
@@ -194,25 +192,8 @@ def startup() -> None:
         cleanup_expired_sessions(db)
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
-    try:
-        _media_expiry_task = asyncio.get_running_loop().create_task(_expire_temporary_media_loop())
-    except RuntimeError:
-        _media_expiry_task = None
     logger.info("ErisChat API startup complete")
 
-
-async def _expire_temporary_media_loop() -> None:
-    while True:
-        await asyncio.sleep(30)
-        try:
-            with Session(engine) as db:
-                now = datetime.now(timezone.utc)
-                db.execute(update(MessageMedia).where(MessageMedia.temporary.is_(True),
-                    MessageMedia.expires_at.is_not(None), MessageMedia.expires_at <= now,
-                    MessageMedia.data.is_not(None)).values(data=None))
-                db.commit()
-        except Exception:
-            logger.exception("Temporary message media cleanup failed")
 
 
 def bearer_token(authorization: str | None) -> str:
@@ -979,14 +960,18 @@ def _blur_temporary_photo(data: bytes) -> bytes:
         return output.getvalue()
 
 
+def _temporary_photo_expired_for_viewer(media, message, user, now: datetime | None = None) -> bool:
+    now = now or datetime.now(timezone.utc)
+    return bool(media.temporary and media.expires_at and media.expires_at <= now and user.id != message.sender_id)
+
+
 @app.get("/v1/messages/{conversation_id}/{message_id}/media")
 def get_message_media(conversation_id: str, message_id: int, preview: bool = Query(default=False), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     media = db.get(MessageMedia, message_id)
     message = db.get(Message, message_id)
     if not media or not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Medya bulunamadı")
-    if media.temporary and media.expires_at and media.expires_at <= datetime.now(timezone.utc):
-        if media.data is not None: media.data = None; db.commit()
+    if _temporary_photo_expired_for_viewer(media, message, user):
         raise HTTPException(status_code=410, detail="Süreli fotoğrafın görüntüleme süresi doldu")
     if media.data is None: raise HTTPException(status_code=410, detail="Fotoğraf artık kullanılamıyor")
     if preview and media.temporary:

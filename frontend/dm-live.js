@@ -9,6 +9,7 @@
   let selectedMessages = new Set();
   let selectionBar = null;
   let activeRecorder = null;
+  const mediaUploadsInFlight = new Set();
 
   function messageTime(value) {
     if (!value) return '';
@@ -62,6 +63,7 @@
   function renderMessage(message, mine) {
     const row = document.createElement('div');
     row.className = 'bubble' + (mine ? ' me' : '');
+    if (message?.media_type === 'image' || message?.media_type === 'voice') row.classList.add('dm-media-bubble');
     if (message?.id != null) row.dataset.messageId = String(message.id);
     row.dataset.read = message?.is_read ? '1' : '0';
     const body = document.createElement('div'); body.className='dm-message-text';
@@ -92,6 +94,18 @@
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
     row.append(meta);
     if (message?.is_pinned) row.dataset.pinned = '1';
+    return row;
+  }
+
+  function appendMessageOnce(body, message, mine) {
+    if (!body || !message) return null;
+    const id = message.id ?? message.message_id;
+    if (id != null) {
+      const existing = [...body.querySelectorAll('.bubble[data-message-id]')].find(row => row.dataset.messageId === String(id));
+      if (existing) return existing;
+    }
+    const row = renderMessage({...message, id}, mine);
+    body.appendChild(row);
     return row;
   }
 
@@ -205,9 +219,21 @@
   }
 
   async function uploadMedia(file,type,seconds=0){
-    if(!activeConversationId||!api()?.sendMessageMedia)return;
-    try{const message=await api().sendMessageMedia(activeConversationId,file,type,seconds),body=document.querySelector('#chat .chatBody');body?.append(renderMessage(message,true));if(body)body.scrollTop=body.scrollHeight;loadConversations()}
-    catch(error){window.toast?.(error.message||'Medya gönderilemedi.')}
+    const conversationId=activeConversationId;
+    if(!conversationId||!api()?.sendMessageMedia||!file)return;
+    const lock=String(conversationId);
+    if(mediaUploadsInFlight.has(lock))return;
+    mediaUploadsInFlight.add(lock);
+    try{
+      const message=await api().sendMessageMedia(conversationId,file,type,seconds);
+      if(String(activeConversationId)===lock){
+        const body=document.querySelector('#chat .chatBody');
+        appendMessageOnce(body,message,true);
+        if(body)body.scrollTop=body.scrollHeight;
+      }
+      loadConversations();
+    }catch(error){window.toast?.(error.message||'Medya gönderilemedi.')}
+    finally{mediaUploadsInFlight.delete(lock)}
   }
 
   function pickPhoto(seconds=0,camera=false){
@@ -235,7 +261,7 @@
     style.textContent = '.dm-unread{margin-left:auto;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:#ff4fa3;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900}.dm-selected{outline:2px solid #e9c66b!important}.dm-select-tools{display:flex;align-items:center;gap:7px;padding:7px 11px;border-bottom:1px solid #ffffff12;background:#100d16}.dm-select-tools[hidden]{display:none}.dm-select-tools button{border:1px solid #ffffff20;background:#ffffff0a;color:#fff;border-radius:10px;padding:6px 9px;font-size:9px}.dm-pinned{position:sticky;top:0;z-index:2;background:#e4b85d18;border:1px solid #e4b85d44;border-radius:10px;padding:7px 10px;font-size:9px;color:#f3d995}.dm-gift-sheet{position:fixed;inset:0;z-index:500;background:#020107bb;display:flex;align-items:flex-end}.dm-gift-sheet>section{width:min(520px,100%);max-height:76vh;overflow:auto;background:#0b0911;border:1px solid #ffffff20;border-radius:24px 24px 0 0;padding:16px}.dm-gift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.dm-gift-grid button{background:#ffffff08;color:#fff;border:1px solid #ffffff15;border-radius:14px;padding:10px;font-size:11px}.dm-gift-grid small{display:block;color:#e4b85d;margin-top:4px;font-size:9px}';
     document.head.appendChild(style);
     const mediaStyle=document.createElement('style');
-    mediaStyle.textContent=`.dm-unread[hidden]{display:none!important}.dm-image-message{margin-top:7px}.dm-photo-open{position:relative;display:block;max-width:100%;padding:0;border:0;background:transparent;color:#fff;text-align:left}.dm-inline-photo{display:block;width:min(250px,68vw);max-height:320px;min-height:96px;object-fit:cover;border-radius:14px;background:#201a28}.dm-media-loading{display:block;padding:8px 12px;color:#aaa1b1;font-size:10px}.dm-temp-preview{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;overflow:hidden;width:min(250px,68vw);min-height:112px;padding:14px;border:1px solid #ffffff20;border-radius:15px;background:linear-gradient(135deg,#201a2c,#37213d 55%,#562948);color:#fff;text-align:left}.dm-temp-blur{position:absolute;z-index:-1;inset:-12px;background:radial-gradient(ellipse at 22% 28%,#e872b9a8 0 13%,transparent 46%),radial-gradient(ellipse at 76% 74%,#7860ffa6 0 18%,transparent 52%),linear-gradient(130deg,#29213a,#b14878);filter:blur(15px);transform:scale(1.12)}.dm-temp-lock{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid #ffffff5c;border-radius:50%;background:#0907116e;font-size:17px}.dm-temp-label,.dm-temp-preview>span:last-child{display:grid;gap:4px}.dm-temp-preview b{font-size:12px}.dm-temp-preview small{font-size:10px;color:#f0e6f4}.dm-temp-preview.expired{min-height:74px;background:#16131b;color:#aaa1b1}.dm-voice-player{display:flex;align-items:center;gap:10px;width:min(285px,72vw);margin-top:6px;padding:9px 11px;border:1px solid #ffffff14;border-radius:18px;background:linear-gradient(135deg,#211b2a,#15121b)}.dm-voice-toggle{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:50%;background:linear-gradient(135deg,#8c54ff,#d44bad);color:white;font-size:15px}.dm-voice-main{position:relative;flex:1;min-width:0;padding-bottom:15px}.dm-wave{height:25px;display:flex;align-items:center;gap:2px;overflow:hidden}.dm-wave i{flex:1;min-width:2px;height:var(--h);border-radius:3px;background:#c6bacf8c}.dm-voice-progress{position:absolute;inset:0 0 14px;width:100%;height:26px;margin:0;opacity:0;cursor:pointer}.dm-voice-time{position:absolute;bottom:0;left:0;color:#b9b0c1;font-size:9px}.dm-photo-viewer{position:fixed;inset:0;z-index:20000;background:#05040af5;display:grid;place-items:center;padding:16px}.dm-photo-viewer-head{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:13px}.dm-photo-viewer-head button{border:1px solid #ffffff20;background:#ffffff12;color:#fff;border-radius:14px;width:42px;height:42px;font-size:22px}.dm-photo-viewer img{display:block;max-width:100%;max-height:82vh;object-fit:contain;border-radius:14px}.dm-photo-viewer>small{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));color:#fff;font-size:12px}.dm-photo-viewer.capture-hidden img{filter:blur(24px);visibility:hidden}.dm-gift-sheet button:not(.close){min-height:44px;border:1px solid #ffffff18;border-radius:14px;background:linear-gradient(145deg,#201a2a,#15121b);color:#f5eff8;font-size:12px;font-weight:650;box-shadow:0 5px 18px #0003;transition:transform .15s,border-color .15s}.dm-gift-sheet button:not(.close):active{transform:scale(.97)}.dm-gift-sheet [data-temp][aria-pressed=true]{border-color:#bd8cff;background:linear-gradient(135deg,#6044a1,#452d66);color:#fff;box-shadow:0 0 0 2px #a67aff26}.dm-gift-sheet .close{border:1px solid #ffffff16;background:#ffffff0b;color:#fff;border-radius:13px;width:42px;height:42px;font-size:21px}.dm-gift-sheet p{font-size:11px!important}.compose button.close[data-dm-photo],.compose button.close[data-dm-voice],.compose button.close[data-dm-gift]{width:46px;height:46px;flex:0 0 46px;border:1px solid #ffffff18;border-radius:15px;background:linear-gradient(145deg,#211a2a,#121019);color:#f8f3fb;font-size:18px;box-shadow:0 5px 15px #0003}.compose button.close[data-dm-photo]:active,.compose button.close[data-dm-voice]:active,.compose button.close[data-dm-gift]:active{transform:scale(.96)}.compose button.close[data-dm-voice][title="Kaydı bitir ve gönder"]{background:linear-gradient(135deg,#c83d69,#8e2f62);box-shadow:0 0 0 3px #ff4fa326}`;
+    mediaStyle.textContent=`.dm-unread[hidden]{display:none!important}.bubble.dm-media-bubble,.bubble.me.dm-media-bubble{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;overflow:visible!important}.dm-image-message{margin-top:7px}.dm-photo-open{position:relative;display:block;max-width:100%;padding:0;border:0;background:transparent;color:#fff;text-align:left}.dm-inline-photo{display:block;width:min(250px,68vw);max-height:320px;min-height:96px;object-fit:cover;border-radius:14px;background:#201a28}.dm-media-loading{display:block;padding:8px 12px;color:#aaa1b1;font-size:10px}.dm-temp-preview{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;overflow:hidden;width:min(250px,68vw);min-height:112px;padding:14px;border:1px solid #ffffff20;border-radius:15px;background:linear-gradient(135deg,#201a2c,#37213d 55%,#562948);color:#fff;text-align:left}.dm-temp-blur{position:absolute;z-index:-1;inset:-12px;background:radial-gradient(ellipse at 22% 28%,#e872b9a8 0 13%,transparent 46%),radial-gradient(ellipse at 76% 74%,#7860ffa6 0 18%,transparent 52%),linear-gradient(130deg,#29213a,#b14878);filter:blur(15px);transform:scale(1.12)}.dm-temp-lock{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid #ffffff5c;border-radius:50%;background:#0907116e;font-size:17px}.dm-temp-label,.dm-temp-preview>span:last-child{display:grid;gap:4px}.dm-temp-preview b{font-size:12px}.dm-temp-preview small{font-size:10px;color:#f0e6f4}.dm-temp-preview.expired{min-height:74px;background:#16131b;color:#aaa1b1}.dm-voice-player{display:flex;align-items:center;gap:10px;width:min(285px,72vw);margin-top:6px;padding:9px 11px;border:1px solid #ffffff14;border-radius:18px;background:linear-gradient(135deg,#211b2a,#15121b)}.dm-voice-toggle{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:50%;background:linear-gradient(135deg,#8c54ff,#d44bad);color:white;font-size:15px}.dm-voice-main{position:relative;flex:1;min-width:0;padding-bottom:15px}.dm-wave{height:25px;display:flex;align-items:center;gap:2px;overflow:hidden}.dm-wave i{flex:1;min-width:2px;height:var(--h);border-radius:3px;background:#c6bacf8c}.dm-voice-progress{position:absolute;inset:0 0 14px;width:100%;height:26px;margin:0;opacity:0;cursor:pointer}.dm-voice-time{position:absolute;bottom:0;left:0;color:#b9b0c1;font-size:9px}.dm-photo-viewer{position:fixed;inset:0;z-index:20000;background:#05040af5;display:grid;place-items:center;padding:16px}.dm-photo-viewer-head{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:13px}.dm-photo-viewer-head button{border:1px solid #ffffff20;background:#ffffff12;color:#fff;border-radius:14px;width:42px;height:42px;font-size:22px}.dm-photo-viewer img{display:block;max-width:100%;max-height:82vh;object-fit:contain;border-radius:14px}.dm-photo-viewer>small{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));color:#fff;font-size:12px}.dm-photo-viewer.capture-hidden img{filter:blur(24px);visibility:hidden}.dm-gift-sheet button:not(.close){min-height:44px;border:1px solid #ffffff18;border-radius:14px;background:linear-gradient(145deg,#201a2a,#15121b);color:#f5eff8;font-size:12px;font-weight:650;box-shadow:0 5px 18px #0003;transition:transform .15s,border-color .15s}.dm-gift-sheet button:not(.close):active{transform:scale(.97)}.dm-gift-sheet [data-temp][aria-pressed=true]{border-color:#bd8cff;background:linear-gradient(135deg,#6044a1,#452d66);color:#fff;box-shadow:0 0 0 2px #a67aff26}.dm-gift-sheet .close{border:1px solid #ffffff16;background:#ffffff0b;color:#fff;border-radius:13px;width:42px;height:42px;font-size:21px}.dm-gift-sheet p{font-size:11px!important}.compose button.close[data-dm-photo],.compose button.close[data-dm-voice],.compose button.close[data-dm-gift]{width:46px;height:46px;flex:0 0 46px;border:1px solid #ffffff18;border-radius:15px;background:linear-gradient(145deg,#211a2a,#121019);color:#f8f3fb;font-size:18px;box-shadow:0 5px 15px #0003}.compose button.close[data-dm-photo]:active,.compose button.close[data-dm-voice]:active,.compose button.close[data-dm-gift]:active{transform:scale(.96)}.compose button.close[data-dm-voice][title="Kaydı bitir ve gönder"]{background:linear-gradient(135deg,#c83d69,#8e2f62);box-shadow:0 0 0 3px #ff4fa326}`;
     mediaStyle.textContent += '.dm-temp-preview img.dm-temp-blur{inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:cover;opacity:.86;filter:blur(13px)}.dm-temp-status{position:absolute;inset:0;pointer-events:none}.dm-voice-player .dm-wave{background:linear-gradient(90deg,#de89ff var(--played,0%),transparent var(--played,0%))}.dm-track{height:3px;margin-top:3px;border-radius:9px;background:#ffffff24;overflow:hidden}.dm-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a76bff,#f45db5)}.dm-voice-player input:focus-visible{opacity:.25;outline:2px solid #bd8cff}';
     document.head.appendChild(mediaStyle);
     selectionBar = document.createElement('div'); selectionBar.className = 'dm-select-tools'; selectionBar.dataset.dmTools = ''; selectionBar.hidden = true;
@@ -272,7 +298,7 @@
     if (!activeConversationId || !api()?.messageGifts) return;
     const modal = document.createElement('div'); modal.className='dm-gift-sheet'; modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Hediye seç</b><button class="close" data-close>×</button></div><div class="dm-gift-grid">Yükleniyor…</div></section>'; document.body.appendChild(modal);
     modal.querySelector('[data-close]').onclick=()=>modal.remove(); modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
-    try { const gifts=await api().messageGifts(); const grid=modal.querySelector('.dm-gift-grid'); grid.replaceChildren(); gifts.forEach(g=>{const b=document.createElement('button');b.innerHTML=`<span>🎁 ${escapeHtml(g.gift_key)}</span><small>${Number(g.unit_price).toLocaleString('tr-TR')} Lidya</small>`;b.onclick=async()=>{try{const m=await api().sendMessageGift(activeConversationId,g.gift_key);document.querySelector('#chat .chatBody')?.append(renderMessage(m,true));modal.remove();loadConversations()}catch(e){window.toast?.(e.message||'Hediye gönderilemedi.')}};grid.append(b)}); }
+    try { const gifts=await api().messageGifts(); const grid=modal.querySelector('.dm-gift-grid'); grid.replaceChildren(); gifts.forEach(g=>{const b=document.createElement('button');b.innerHTML=`<span>🎁 ${escapeHtml(g.gift_key)}</span><small>${Number(g.unit_price).toLocaleString('tr-TR')} Lidya</small>`;b.onclick=async()=>{try{const m=await api().sendMessageGift(activeConversationId,g.gift_key);appendMessageOnce(document.querySelector('#chat .chatBody'),m,true);modal.remove();loadConversations()}catch(e){window.toast?.(e.message||'Hediye gönderilemedi.')}};grid.append(b)}); }
     catch(e){modal.querySelector('.dm-gift-grid').textContent=e.message||'Hediyeler yüklenemedi.';}
   }
 
@@ -353,7 +379,7 @@
       if (!id || !text || !body) return;
       try {
         const m = await api().sendMessage(id, text);
-        body.appendChild(renderMessage(m, true));
+        appendMessageOnce(body, m, true);
         input.value = '';
         body.scrollTop = body.scrollHeight;
       } catch (e) {
@@ -426,7 +452,7 @@
       const body = document.querySelector('#chat .chatBody');
       if (!body || body.querySelector('[data-message-id="'+String(data.message_id).replace(/"/g,'&quot;')+'"]')) return;
       const mine = String(data.sender_id || '') === String(currentUserId || '');
-      body.appendChild(renderMessage({...data,id:data.message_id}, mine));
+      appendMessageOnce(body, data, mine);
       body.scrollTop = body.scrollHeight;
       if (!mine) api().messages(id).catch(()=>{});
     } else if (String(data.sender_id || '') !== String(currentUserId || '') && 'Notification' in window && Notification.permission === 'granted') {
