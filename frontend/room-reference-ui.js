@@ -439,6 +439,18 @@
   const root=()=>document.getElementById('erisRoomSurface');
   const q=s=>document.getElementById(s);
   const rid=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
+  const userId=()=>String(window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');
+  const roomApi=()=>window.ErisRoom||{};
+  const roomId=()=>rid();
+  const surface=()=>root();
+  const esc=value=>String(value??'').replace(/[&<>"']/g,
+    char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const isOwner=r=>{
+    if(r?.is_owner===true)return true;
+    const me=userId();
+    return !!me&&[r?.owner_id,r?.owner?.id,r?.created_by,r?.creator_id]
+      .filter(Boolean).some(id=>String(id)===me);
+  };
 
   function css(){
     if(q('eris-room-v5-css')) return;
@@ -515,8 +527,8 @@
 
   function panel(){
     const s=root(); if(!s) return null;
-    let overlay=s.querySelector('.room-v5-panel');
-    if(!overlay){overlay=document.createElement('div');overlay.className='room-v5-panel';overlay.innerHTML='<section class="room-v5-dialog" role="dialog" aria-modal="true" aria-label="Oda menüsü"></section>';overlay.addEventListener('click',event=>{if(event.target===overlay)closePanels()});s.appendChild(overlay);}
+    let overlay=s.querySelector('.room-v5-panel[data-room-center="1"]');
+    if(!overlay){overlay=document.createElement('div');overlay.className='room-v5-panel';overlay.dataset.roomCenter='1';overlay.innerHTML='<section class="room-v5-dialog" role="dialog" aria-modal="true" aria-label="Oda menüsü"></section>';overlay.addEventListener('click',event=>{if(event.target===overlay)closePanels()});s.appendChild(overlay);}
     return overlay.querySelector('.room-v5-dialog');
   }
 
