@@ -319,3 +319,26 @@ class SocialPost(Base):
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class SocialPostLike(Base):
+    __tablename__ = "social_post_likes"
+    post_id: Mapped[int] = mapped_column(ForeignKey("social_posts.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class SocialPostComment(Base):
+    __tablename__ = "social_post_comments"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("social_posts.id", ondelete="CASCADE"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("social_post_comments.id", ondelete="CASCADE"), nullable=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class SocialPostCommentLike(Base):
+    __tablename__ = "social_post_comment_likes"
+    comment_id: Mapped[int] = mapped_column(ForeignKey("social_post_comments.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
