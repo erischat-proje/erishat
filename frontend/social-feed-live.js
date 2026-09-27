@@ -9,6 +9,7 @@
   const style = document.createElement('style');
   style.textContent = `
     #explore>.title{font-size:27px;margin:0 0 4px}#explore>.eyebrow{margin-top:0}
+    .ec-explore-subnav{display:flex;gap:8px;margin:2px 0 10px;padding:3px 0}.ec-explore-subnav button{flex:1;border:1px solid #ffffff16;border-radius:12px;background:#ffffff05;color:#aaa1b2;padding:9px 12px;font-size:12px;font-weight:700}.ec-explore-subnav button[aria-selected=true]{border-color:#a77aff;background:#8a5cff20;color:#fff}.ec-social-directory{margin-top:2px}.ec-social-directory[hidden],.ec-social[hidden]{display:none!important}
     .ec-social{margin:0 0 15px;padding:0 0 8px;border:0;border-radius:0;background:transparent;color:#fff}
     .ec-social-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px}.ec-social-head h2{font-size:15px;margin:0}.ec-social-head small{display:none}
     .ec-social-create-wrap{display:flex;align-items:center;gap:8px}.ec-social-create{width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:9px;border:1px solid #ffffff18;border-radius:14px;background:#ffffff06;color:#aaa1b2}.ec-social-create b{color:#fff;font-size:12px;font-weight:600}.ec-social-photo-action{flex:0 0 43px;width:43px;height:43px;border:1px solid #ffffff18;border-radius:14px;background:#ffffff08;color:#fff;font-size:18px}
@@ -22,6 +23,25 @@
   document.head.append(style);
 
   function cleanupUrls(){ for(const url of objectUrls) URL.revokeObjectURL(url); objectUrls.clear(); }
+  function ensureExploreLayout(view,root){
+    let menu=view.querySelector('.ec-explore-subnav');
+    if(!menu){menu=document.createElement('nav');menu.className='ec-explore-subnav';menu.setAttribute('aria-label','Keşfet bölümleri');menu.innerHTML='<button type="button" data-pane="feed" aria-selected="true">Akış</button><button type="button" data-pane="social" aria-selected="false">Sosyal</button>';menu.querySelectorAll('[data-pane]').forEach(button=>button.onclick=()=>setPane(view,button.dataset.pane));}
+    const story=view.querySelector('[data-eris-stories]');
+    if(story?.nextElementSibling!==menu)view.insertBefore(menu,story?.nextSibling||root);
+    let directory=view.querySelector('[data-social-directory]');
+    if(!directory){directory=document.createElement('div');directory.className='ec-social-directory';directory.dataset.socialDirectory='';directory.hidden=true;}
+    for(const selector of ['.tabs','#rooms','#people','#followingRooms','#erisDiscoverySettings']){const node=view.querySelector(selector);if(node&&node.parentElement!==directory)directory.append(node)}
+    if(root.nextElementSibling!==directory)view.insertBefore(directory,root.nextSibling);
+    if(!menu.dataset.bound){menu.querySelectorAll('[data-pane]').forEach(button=>button.onclick=()=>setPane(view,button.dataset.pane));menu.dataset.bound='true'}
+    if(!view.dataset.explorePane)view.dataset.explorePane='feed';
+    setPane(view,view.dataset.explorePane);
+  }
+  function setPane(view,pane){
+    view.dataset.explorePane=pane;
+    const root=view.querySelector('[data-ec-social]'),directory=view.querySelector('[data-social-directory]');
+    if(root)root.hidden=pane!=='feed';if(directory)directory.hidden=pane!=='social';
+    view.querySelectorAll('.ec-explore-subnav [data-pane]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.pane===pane)));
+  }
   async function imageUrl(path){
     const response=await fetch(api().postMediaUrl(path),{headers:token()?{Authorization:'Bearer '+token()}: {},cache:'no-store'});
     if(!response.ok)throw new Error('Fotoğraf yüklenemedi.');
@@ -29,14 +49,17 @@
   }
   function mount(){
     const view=document.getElementById('explore');if(!view)return null;
-    let root=view.querySelector('[data-ec-social]');if(root)return root;
-    root=document.createElement('section');root.className='ec-social';root.dataset.ecSocial='';
-    root.innerHTML='<div class="ec-social-head"><div><h2>Gönderiler</h2><small>Topluluktan paylaşımlar</small></div></div><div class="ec-social-create-wrap"><button type="button" class="ec-social-create" data-compose><span class="ec-social-avatar">＋</span><b>Bir gönderi paylaş…</b></button><button type="button" class="ec-social-photo-action" data-compose-photo aria-label="Fotoğraf paylaş">▧</button></div><div class="ec-social-modes" role="tablist" aria-label="Gönderi akışı"><button type="button" data-mode="following">Takip edilen</button><button type="button" data-mode="for-you">Senin için</button><button type="button" data-mode="recent">En son</button></div><div data-feed><div class="ec-social-empty">Gönderiler yükleniyor…</div></div>';
-    const stories=view.querySelector('[data-eris-stories]');
-    if(stories?.nextSibling)view.insertBefore(root,stories.nextSibling);else{const tabs=view.querySelector('.tabs');view.insertBefore(root,tabs||view.firstChild)}
-    root.querySelector('[data-compose]').onclick=()=>compose();
-    root.querySelector('[data-compose-photo]').onclick=()=>compose(null,true);
-    root.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{mode=button.dataset.mode;loadFeed(root)});
+    let root=view.querySelector('[data-ec-social]');
+    if(!root){root=document.createElement('section');root.className='ec-social';root.dataset.ecSocial='';
+      root.innerHTML='<div class="ec-social-head"><div><h2>Gönderiler</h2><small>Topluluktan paylaşımlar</small></div></div><div class="ec-social-create-wrap"><button type="button" class="ec-social-create" data-compose><span class="ec-social-avatar">＋</span><b>Bir gönderi paylaş…</b></button><button type="button" class="ec-social-photo-action" data-compose-photo aria-label="Fotoğraf paylaş">▧</button></div><div class="ec-social-modes" role="tablist" aria-label="Gönderi akışı"><button type="button" data-mode="following">Takip edilen</button><button type="button" data-mode="for-you">Senin için</button><button type="button" data-mode="recent">En son</button></div><div data-feed><div class="ec-social-empty">Gönderiler yükleniyor…</div></div>';
+      root.querySelector('[data-compose]').onclick=()=>compose();
+      root.querySelector('[data-compose-photo]').onclick=()=>compose(null,true);
+      root.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{mode=button.dataset.mode;loadFeed(root)});
+    }
+    const story=view.querySelector('[data-eris-stories]');
+    if(story&&story.nextElementSibling!==root)view.insertBefore(root,story.nextSibling);
+    else if(!root.parentElement){const tabs=view.querySelector('.tabs');view.insertBefore(root,tabs||view.firstChild)}
+    ensureExploreLayout(view,root);
     return root;
   }
   function formatDate(value){try{return new Intl.DateTimeFormat('tr-TR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value))}catch(_){return ''}}

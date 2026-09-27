@@ -10,10 +10,12 @@
 
   function mount() {
     const explore = document.getElementById('explore');
-    if (!explore || explore.querySelector('[data-eris-stories]')) return explore?.querySelector('[data-eris-stories]');
+    if (!explore) return null;
+    const existing=explore.querySelector('[data-eris-stories]');
+    if(existing){const anchor=explore.querySelector('.ec-explore-subnav,[data-ec-social],.tabs');if(anchor&&existing.nextElementSibling!==anchor)explore.insertBefore(existing,anchor);return existing}
     const root = document.createElement('section'); root.className = 'eris-stories'; root.dataset.erisStories = '';
     root.innerHTML = '<div class="eris-stories-row" data-story-list aria-label="Hikâyeler"></div>';
-    const tabs = explore.querySelector('.tabs'); explore.insertBefore(root, tabs || explore.firstChild.nextSibling);
+    const anchor = explore.querySelector('.ec-explore-subnav,[data-ec-social],.tabs'); explore.insertBefore(root, anchor || explore.firstChild.nextSibling);
     return root;
   }
 
@@ -40,7 +42,8 @@
     const button = document.createElement('button'); button.type='button'; button.className='eris-story'+(item.viewed?' seen':'')+(item.isAdd?' eris-story-add':'');
     const face=document.createElement('span');face.className='eris-story-face';
     const avatar=item.avatar_asset||item.avatar||window.ErisChatCosmetics?.state?.user?.avatar_asset||'👤';
-    if(typeof avatar==='string'&&/^(https?:|\/|data:|\.\.?\/)/.test(avatar)){const img=document.createElement('img');img.alt='';img.src=window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar;face.append(img)}else face.textContent=avatar;
+    const isAsset=typeof avatar==='string'&&(/^(https?:|\/|data:|\.\.?\/)/.test(avatar)||(/[/.]/.test(avatar)&&/\.(?:png|jpe?g|webp|gif|svg)(?:[?#].*)?$/i.test(avatar)));
+    if(isAsset){const img=document.createElement('img');img.alt='';img.src=window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar;face.append(img)}else face.textContent=avatar;
     const name=document.createElement('span');name.className='eris-story-name';name.textContent=item.isAdd?'Hikâyen':item.nickname||'Kullanıcı';button.append(face,name);
     button.setAttribute('aria-label',item.isAdd?'Hikâye ekle':`${item.nickname||'Kullanıcı'} hikâyesini görüntüle`);
     button.onclick=()=>item.isAdd?(item.ownStory?openStory(item.ownStory):compose(root)):openStory(item);
