@@ -8,6 +8,14 @@
     const open=document.createElement('button');open.type='button';open.className='eris-room-list-open';
     open.innerHTML='<span class="ava">🎙️<i class="online"></i></span><span class="grow roomText"><b></b><small class="room-meta"></small><small class="room-id"></small></span>';
     open.querySelector('b').textContent=name;
+    if(room.password_set||room.locked){
+      const lock=document.createElement('span');
+      lock.className='eris-room-lock-badge';
+      lock.textContent='🔒';
+      lock.title='Şifreli oda';
+      lock.setAttribute('aria-label','Şifreli oda');
+      open.querySelector('b').append(' ',lock);
+    }
     const owner=room.owner_name||room.owner||'ErisChat';
     const count=Number(room.member_count??room.members_count??room.online_count??0);
     open.querySelector('.room-meta').textContent=`${count} kişi • ${owner}`;

@@ -61,7 +61,7 @@
     let p=s.querySelector('.room-v3-panel');
     if(p) return p;
     p=document.createElement('aside');p.className='room-v3-panel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Oda bilgileri ve araçları');
-    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
+    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-head"><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="staff" data-staff-tab="1">Yetkililer</button><button class="room-v3-tab" data-tab="guests" data-staff-tab="1">Misafirler</button><button class="room-v3-tab" data-tab="bans" data-staff-tab="1">Atılanlar</button><button class="room-v3-tab" data-tab="mutes" data-staff-tab="1">Chatte susturulanlar</button><button class="room-v3-tab" data-tab="moderators" data-owner-tab="1">Moderatörler</button><button class="room-v3-tab" data-tab="promote" data-owner-tab="1">Moderatör yap</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
     s.appendChild(p);
     p.querySelector('.room-v3-close').onclick=()=>p.classList.remove('show');
     p.addEventListener('click',event=>{if(event.target===p)p.classList.remove('show')});
@@ -120,7 +120,123 @@
   }
 
   async function info(body,r){const level=Number(r?.level||1),cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8)),members=Number(r?.member_count||r?.members_count||0),publicId=/^\d{12}$/.test(String(r?.public_id||''))?String(r.public_id):'yüklenemedi';body.innerHTML='<div class="room-v3-card"><b>🏠 '+esc(r?.name||document.getElementById('erisLiveTitle')?.textContent||'Oda')+'</b><small>ID: '+publicId+'</small></div><div class="room-v3-card"><b>Seviye '+level+'</b><small>'+members+' kişi • '+cap+' koltuk • '+(r?.locked?'🔒 Kilitli':'🟢 Açık')+'</small></div><div class="room-v3-grid"><button class="room-v3-btn" data-announcements>📢 Duyurular</button><button class="room-v3-btn" data-room-games>🎮 Oda oyunları</button></div>';body.querySelector('[data-announcements]').onclick=()=>window.ErisRoomAnnouncements?.open?.();body.querySelector('[data-room-games]').onclick=()=>window.ErisChatGames?.open?.('room',r.id||roomId())}
-  async function users(body,r){const seats=Array.isArray(r?.seats)?r.seats:[],rows=seats.filter(x=>x.user_id),mods=new Set((r?.moderators||[]).map(String)),owner=isOwner(r),staff=!!(owner||r?.is_moderator);body.innerHTML='<div class="room-v3-note">'+rows.length+' kullanıcı koltukta • '+mods.size+'/'+Number(r?.max_moderators||0)+' moderatör.</div>'+ (rows.length?rows.map(x=>{const uid=String(x.user_id),mod=mods.has(uid),nm=esc(x.nickname||x.user_name||uid);return '<div class="room-v3-card" data-user="'+esc(uid)+'"><b>'+nm+'</b><small>Koltuk '+Number(x.seat_number||0)+' • '+(x.muted?'🔇 Susturuldu':'🎙️ Mikrofon açık')+(mod?' • 🛡️ Moderatör':'')+'</small>'+(staff?'<div class="room-v3-grid" style="margin-top:6px">'+(owner?'<button class="room-v3-btn" data-mod="'+uid+'">'+(mod?'Moderatorsüz yap':'Moderatör yap')+'</button>':'')+'<button class="room-v3-btn" data-kick="'+uid+'">Odadan at</button></div>':'')+'</div>'}).join(''):'<div class="room-v3-card"><small>Koltuklarda kullanıcı yok.</small></div>');body.querySelectorAll('[data-mod]').forEach(b=>b.onclick=async()=>{try{const uid=b.dataset.mod;if(mods.has(uid))await roomApi().removeModerator?.(roomId(),uid);else await roomApi().addModerator?.(roomId(),uid);openMenu('users')}catch(e){window.toast?.(e.message||'Moderatör işlemi reddedildi')}});body.querySelectorAll('[data-kick]').forEach(b=>b.onclick=async()=>{try{await roomApi().ban?.(roomId(),b.dataset.kick);openMenu('users')}catch(e){window.toast?.(e.message||'Kullanıcı atılamadı')}})}
+  async function reportRoom(body,r){
+    body.innerHTML='<form class="room-v3-card" data-room-report>'
+      +'<b>⚑ Odayı şikâyet et</b><small>Şikâyetin destek ekibine iletilir. Kanıt isteğe bağlıdır.</small>'
+      +'<textarea class="room-v3-input" name="reason" required maxlength="200" placeholder="Şikâyet nedenini yazın (en fazla 200 karakter)" style="min-height:110px;padding:12px;margin-top:12px;resize:vertical"></textarea>'
+      +'<label class="room-v3-note" style="display:block;margin-top:12px">En fazla 3 fotoğraf veya 1 video'
+      +'<input name="evidence" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple style="display:block;width:100%;margin-top:8px"></label>'
+      +'<small data-selected>Kanıt seçilmedi.</small>'
+      +'<button class="room-v3-save" type="submit">Desteğe gönder</button>'
+      +'<div class="room-v3-note" data-error role="alert"></div></form>';
+    const form=body.querySelector('[data-room-report]');
+    const fileInput=form.querySelector('[name=evidence]');
+    const error=form.querySelector('[data-error]');
+    fileInput.onchange=()=>{
+      const files=[...fileInput.files];
+      form.querySelector('[data-selected]').textContent=files.length
+        ? files.map(file=>file.name).join(', ')
+        : 'Kanıt seçilmedi.';
+    };
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      error.textContent='';
+      const files=[...fileInput.files];
+      const videos=files.filter(file=>file.type.startsWith('video/'));
+      if(files.length>3 || (videos.length && (files.length!==1 || videos.length!==1))){
+        error.textContent='En fazla 3 fotoğraf veya yalnızca 1 video seç.';
+        return;
+      }
+      for(const file of files){
+        const video=file.type.startsWith('video/');
+        if(video && file.size>8*1024*1024){
+          error.textContent='Video en fazla 8 MB olabilir.';return;
+        }
+        if(!video && file.size>1_500_000){
+          error.textContent='Her fotoğraf en fazla 1,5 MB olabilir.';return;
+        }
+      }
+      const submit=form.querySelector('[type=submit]');
+      submit.disabled=true;
+      try{
+        const attachments=await Promise.all(files.map(file=>new Promise((resolve,reject)=>{
+          const reader=new FileReader();
+          reader.onload=()=>resolve(String(reader.result));
+          reader.onerror=()=>reject(new Error('Kanıt okunamadı.'));
+          reader.readAsDataURL(file);
+        })));
+        const result=await window.ErisPlatform.api(
+          '/rooms/'+encodeURIComponent(r.id||roomId())+'/reports',
+          {method:'POST',body:JSON.stringify({reason:form.reason.value.trim(),attachments})}
+        );
+        window.toast?.('Şikâyet desteğe iletildi. Kayıt #'+result.id);
+        await openMenu('info');
+      }catch(err){
+        error.textContent=err.message||'Şikâyet gönderilemedi.';
+        submit.disabled=false;
+      }
+    };
+  }
+
+  async function users(body,r){
+    const id=r.id||roomId(),staff=!!(r.is_owner||r.is_moderator);
+    let rows;
+    try{rows=await roomApi().members(id)}
+    catch(error){body.textContent=error.message||'Odadaki kullanıcılar yüklenemedi.';return}
+    body.replaceChildren();
+    const note=document.createElement('p');note.className='room-v3-note';
+    note.textContent=rows.length+' oda üyesi';body.append(note);
+    if(!rows.length){const empty=document.createElement('div');empty.className='room-v3-card';empty.textContent='Odada kullanıcı yok.';body.append(empty);return}
+    for(const member of rows){
+      const card=document.createElement('div');card.className='room-v3-card';
+      const name=document.createElement('b');name.textContent=member.nickname||'Kullanıcı';
+      const meta=document.createElement('small');
+      meta.textContent=(member.role==='owner'?'👑 Oda sahibi':member.role==='moderator'?'🛡️ Moderatör':'Kullanıcı')
+        +(member.seat_number?' · '+member.seat_number+'. koltuk':' · koltukta değil');
+      const buttons=document.createElement('div');buttons.className='room-v3-grid';buttons.style.marginTop='10px';
+      const action=(label,run)=>{
+        const button=document.createElement('button');
+        button.type='button';button.className='room-v3-btn';button.textContent=label;
+        button.onclick=async()=>{
+          button.disabled=true;
+          try{await run();button.disabled=false}
+          catch(error){button.disabled=false;window.toast?.(error.message||'İşlem yapılamadı.')}
+        };
+        buttons.append(button);
+      };
+      if(String(member.user_id)!==String(r.current_user_id)){
+        action('👤 Profil',async()=>window.openUserProfile?.(member.user_id));
+        action('＋ Takip et',async()=>{
+          await window.ErisPlatform.api('/users/'+encodeURIComponent(member.user_id)+'/follow',{method:'POST'});
+          window.toast?.('Kullanıcı takip edildi.');
+        });
+        action('💬 Mesaj gönder',async()=>{
+          const conversation=await window.ErisPlatform.createConversation(member.user_id);
+          window.__erisActiveDmUserId=member.user_id;
+          window.ErisChatDM?.load?.();
+          window.ErisChatDM?.open?.(
+            conversation?.id||conversation?.conversation_id||conversation?.conversation?.id,
+            member.nickname||'Kullanıcı',member.avatar_asset||member.avatar||'',member.user_id
+          );
+          surface()?.querySelector('.room-v3-panel')?.classList.remove('show');
+        });
+        if(staff&&(r.is_owner||member.role==='user')){
+          action('Odadan at',async()=>{
+            if(!window.confirm((member.nickname||'Kullanıcı')+' odadan atılsın mı?'))return;
+            await roomApi().ban(id,member.user_id);
+            await openMenu('users');
+          });
+          action('Chatte sustur',async()=>{
+            await roomApi().muteChat(id,member.user_id);
+            window.toast?.('Kullanıcı chatte susturuldu.');
+          });
+        }
+      }
+      card.append(name,meta,buttons);
+      body.append(card);
+    }
+  }
+
   async function gifts(body,r){
     const id=r?.id||roomId(),rows=Array.isArray(r?.seats)?r.seats.filter(x=>x.user_id):[];
     let data=[];try{data=await roomApi().giftCatalog?.(id)||[]}catch(e){}
@@ -138,11 +254,132 @@
     body.innerHTML='<div class="room-v3-card"><b>🎵 Oda müziği</b><small>Telefonundan parça seçebilir, oynatabilir ve listeden kaldırabilirsin. Oda kuyruğuna eklenen URL parçaları yetki/ücret kurallarına tabidir.</small><button class="room-v3-btn primary" id="roomMusicOpen" style="margin-top:7px;width:100%">🎵 Müzik panelini aç</button></div>'+ (rows.length?rows.map(x=>'<div class="room-v3-card"><b>'+esc(x.title||'Müzik')+'</b><small>'+(x.is_playing?'▶ Oynuyor':'⏸ Bekliyor')+'</small></div>').join(''):'<div class="room-v3-card"><small>Sunucu kuyruğu boş. Telefon müziği bu cihazda ayrıca test edilebilir.</small></div>');
     body.querySelector('#roomMusicOpen')?.addEventListener('click',()=>window.ErisChatMusic?.open?.());
   }
-  async function settings(body,r){const owner=isOwner(r),staff=!!(owner||r?.is_moderator);body.innerHTML='<div class="room-v3-card"><b>⚙️ Oda ayarları</b><small>'+(r?.locked?'🔒 Oda kilitli':'🟢 Oda açık')+' • '+(r?.chat_enabled===false?'Sohbet kapalı':'Sohbet açık')+'</small></div>'+(staff?'<div class="room-v3-grid"><button class="room-v3-btn" id="roomV3Lock">'+(r?.locked?'Kilidi aç':'Odayı kilitle')+'</button><button class="room-v3-btn" id="roomV3Chat">'+(r?.chat_enabled===false?'Sohbeti aç':'Sohbeti kapat')+'</button></div>':'<div class="room-v3-note">Yönetim işlemleri yalnızca oda sahibi veya atanmış moderatör tarafından kullanılabilir.</div>')+(owner?'<div class="room-v3-card" style="margin-top:7px"><b>👑 Oda sahibi</b><small>Oda adı ve gelişmiş kontroller sana ait.</small><button class="room-v3-btn primary" id="roomV3Rename" style="margin-top:7px">Oda adını değiştir</button><button class="room-v3-btn" id="roomV3Password" style="margin-top:7px">'+(r?.password_set?'🔓 Oda şifresini kaldır':'🔐 4 haneli şifre belirle')+'</button></div>':'');
-    body.querySelector('#roomV3Rename')?.addEventListener('click',openName);
-    body.querySelector('#roomV3Password')?.addEventListener('click',async()=>{try{if(r?.password_set){await roomApi().clearPassword(r.id);window.ErisScreenProtection?.set?.('room',false);window.toast?.('Oda şifresi kaldırıldı.')}else{const password=window.prompt('Oda için yeni 4 haneli şifre belirle:');if(password===null)return;if(!/^\d{4}$/.test(password)){window.toast?.('Şifre tam 4 rakam olmalı.');return}await roomApi().setPassword(r.id,password);window.ErisScreenProtection?.set?.('room',true);window.toast?.('Oda şifresi kaydedildi.')}openMenu('settings')}catch(e){window.toast?.(e.message||'Oda şifresi güncellenemedi.')}});
-    body.querySelector('#roomV3Lock')?.addEventListener('click',async()=>{try{if(r?.locked){await roomApi().unlock(r.id);window.ErisScreenProtection?.set?.('room',false)}else{await roomApi().lock(r.id);window.ErisScreenProtection?.set?.('room',true)}window.toast?.('Oda durumu güncellendi ✓');openMenu('settings')}catch(e){window.toast?.(e.message||'İşlem başarısız')}})
-    body.querySelector('#roomV3Chat')?.addEventListener('click',async()=>{try{await roomApi().setChat(r.id,r?.chat_enabled===false);window.toast?.('Sohbet ayarı güncellendi ✓');openMenu('settings')}catch(e){window.toast?.(e.message||'İşlem başarısız')}})
+
+  function managementRow(body,label,subtitle,buttonLabel,action){
+    const card=document.createElement('div');card.className='room-v3-card';
+    const title=document.createElement('b');title.textContent=label;
+    const detail=document.createElement('small');detail.textContent=subtitle;
+    card.append(title,detail);
+    if(buttonLabel){
+      const button=document.createElement('button');
+      button.type='button';button.className='room-v3-btn';
+      button.style.marginTop='10px';button.textContent=buttonLabel;
+      button.onclick=async()=>{
+        button.disabled=true;
+        try{await action()}
+        catch(error){button.disabled=false;window.toast?.(error.message||'İşlem yapılamadı.')}
+      };
+      card.append(button);
+    }
+    body.append(card);
+  }
+  async function staff(body,r){
+    const rows=await roomApi().moderators(r.id);
+    body.replaceChildren();
+    rows.forEach(row=>managementRow(body,row.nickname,row.role==='owner'?'👑 Oda sahibi':'🛡️ Moderatör'));
+  }
+  async function guests(body,r){
+    const rows=(await roomApi().members(r.id)).filter(row=>row.role==='user');
+    body.replaceChildren();
+    if(!rows.length){body.textContent='Odada yönetilecek misafir yok.';return}
+    for(const row of rows){
+      const card=document.createElement('div');card.className='room-v3-card';
+      const title=document.createElement('b');title.textContent=row.nickname;
+      const meta=document.createElement('small');
+      meta.textContent=row.seat_number?row.seat_number+'. koltuk':'Koltukta değil';
+      const actions=document.createElement('div');actions.className='room-v3-grid';actions.style.marginTop='10px';
+      for(const [label,run] of [
+        ['👤 Profil',()=>window.openUserProfile?.(row.user_id)],
+        ['💬 Mesaj',async()=>{
+          const conversation=await window.ErisPlatform.createConversation(row.user_id);
+          window.__erisActiveDmUserId=row.user_id;
+          window.ErisChatDM?.load?.();
+          window.ErisChatDM?.open?.(
+            conversation?.id||conversation?.conversation_id||conversation?.conversation?.id,
+            row.nickname||'Kullanıcı',row.avatar_asset||row.avatar||'',row.user_id
+          );
+          surface()?.querySelector('.room-v3-panel')?.classList.remove('show');
+        }],
+        ['Odadan at',()=>roomApi().ban(r.id,row.user_id)],
+        ['Chatte sustur',()=>roomApi().muteChat(r.id,row.user_id)]
+      ]){
+        const button=document.createElement('button');
+        button.type='button';button.className='room-v3-btn';button.textContent=label;
+        button.onclick=async()=>{
+          button.disabled=true;
+          try{await run();await openMenu('guests')}
+          catch(error){button.disabled=false;window.toast?.(error.message||'İşlem yapılamadı.')}
+        };
+        actions.append(button);
+      }
+      card.append(title,meta,actions);body.append(card);
+    }
+  }
+  async function bans(body,r){
+    const rows=await roomApi().bans(r.id);body.replaceChildren();
+    if(!rows.length){body.textContent='Odadan atılmış kullanıcı yok.';return}
+    rows.forEach(row=>managementRow(body,row.display_name||row.user_id,'Odadan atıldı','× Listeden çıkar',async()=>{
+      await roomApi().unban(r.id,row.user_id);await openMenu('bans');
+    }));
+  }
+  async function mutes(body,r){
+    const rows=await roomApi().chatMutes(r.id);body.replaceChildren();
+    if(!rows.length){body.textContent='Chatte susturulan kullanıcı yok.';return}
+    rows.forEach(row=>managementRow(body,row.nickname||row.user_id,'Chatte susturuldu','× Susturmayı kaldır',async()=>{
+      await roomApi().unmuteChat(r.id,row.user_id);await openMenu('mutes');
+    }));
+  }
+  async function moderators(body,r){
+    const rows=(await roomApi().moderators(r.id)).filter(row=>row.role==='moderator');
+    body.replaceChildren();
+    if(!rows.length){body.textContent='Henüz moderatör yok.';return}
+    rows.forEach(row=>managementRow(body,row.nickname,'🛡️ Moderatör','× Yetkiyi kaldır',async()=>{
+      await roomApi().removeModerator(r.id,row.user_id);await openMenu('moderators');
+    }));
+  }
+  async function promote(body,r){
+    const rows=(await roomApi().members(r.id)).filter(row=>row.role==='user');
+    body.replaceChildren();
+    if(!rows.length){body.textContent='Moderatör yapılabilecek kullanıcı yok.';return}
+    rows.forEach(row=>managementRow(body,row.nickname,'Oda kullanıcısı','＋ Moderatör yap',async()=>{
+      await roomApi().addModerator(r.id,row.user_id);await openMenu('promote');
+    }));
+  }
+
+  async function settings(body,r){
+    const owner=isOwner(r),staff=!!(owner||r?.is_moderator);
+    if(!staff){body.textContent='Bu bölüme yalnızca oda yetkilileri erişebilir.';return}
+    body.innerHTML='<div class="room-v3-card"><b>⚙️ Oda yönetimi</b><small>Chat ve oda girişini yönet.</small></div>'
+      +'<div class="room-v3-card"><b>💬 Oda chat ayarı</b><small>'
+      +(r.chat_enabled===false?'Chat kapalı. Oda sahibi dahil kimse yazamaz.':'Chat açık. Odadaki herkes yazabilir.')
+      +'</small><button class="room-v3-btn" data-chat style="margin-top:10px;width:100%">'
+      +(r.chat_enabled===false?'Chat’i aç':'Chat’i kapat')+'</button></div>'
+      +'<div class="room-v3-card"><b>🔐 Oda kilidi</b><small>'
+      +(r.password_set?'Girişte 4 haneli şifre gerekiyor. Yalnızca oda sahibi şifresiz girebilir.':'Odaya giriş için 4 haneli şifre belirle.')
+      +'</small><div class="room-v3-grid" style="margin-top:10px"><button class="room-v3-btn primary" data-password>Şifre belirle / değiştir</button>'
+      +(r.password_set?'<button class="room-v3-btn" data-clear-password>Şifreyi kaldır</button>':'')
+      +'</div></div>'
+      +(owner?'<div class="room-v3-card"><b>👑 Oda sahibi</b><button class="room-v3-btn" data-rename style="margin-top:10px;width:100%">Oda adını değiştir</button></div>':'');
+    body.querySelector('[data-chat]').onclick=async event=>{
+      const button=event.currentTarget;button.disabled=true;
+      try{
+        await roomApi().setChat(r.id,r.chat_enabled===false);
+        window.toast?.(r.chat_enabled===false?'Oda chati açıldı.':'Oda chati kapatıldı.');
+        await openMenu('settings');
+      }catch(error){button.disabled=false;window.toast?.(error.message||'Chat ayarı değiştirilemedi.')}
+    };
+    body.querySelector('[data-password]').onclick=async()=>{
+      const password=window.prompt('Oda için 4 haneli şifre:');
+      if(password===null)return;
+      if(!/^\d{4}$/.test(password)){window.toast?.('Şifre tam 4 rakam olmalı.');return}
+      try{await roomApi().setPassword(r.id,password);window.toast?.('Oda şifresi kaydedildi.');await openMenu('settings')}
+      catch(error){window.toast?.(error.message||'Şifre kaydedilemedi.')}
+    };
+    body.querySelector('[data-clear-password]')?.addEventListener('click',async()=>{
+      try{await roomApi().clearPassword(r.id);window.toast?.('Oda şifresi kaldırıldı.');await openMenu('settings')}
+      catch(error){window.toast?.(error.message||'Şifre kaldırılamadı.')}
+    });
+    body.querySelector('[data-rename]')?.addEventListener('click',openName);
   }
 
   async function openMenu(tab){
@@ -151,12 +388,15 @@
     const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
     const settingsTab=p.querySelector('.room-v3-tab[data-tab="settings"]');
     if(settingsTab) settingsTab.style.display=canManage?'':'none';
-    if(tab==='settings'&&!canManage) tab='info';
+    p.querySelectorAll('[data-staff-tab]').forEach(button=>button.style.display=canManage?'':'none');
+    p.querySelectorAll('[data-owner-tab]').forEach(button=>button.style.display=r.is_owner?'':'none');
+    if(['settings','staff','guests','bans','mutes'].includes(tab)&&!canManage)tab='info';
+    if(['moderators','promote'].includes(tab)&&!r.is_owner)tab='info';
     p.querySelector('.room-v3-tabs').style.display='';
     p.querySelectorAll('.room-v3-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-    p.querySelector('#roomV3Title').textContent={info:'Oda bilgisi',users:'Kullanıcılar',gifts:'Hediyeler',music:'Müzik',settings:'Oda ayarları'}[tab]||'Oda';
+    p.querySelector('#roomV3Title').textContent={info:'Oda bilgisi',users:'Kullanıcılar',gifts:'Hediyeler',music:'Müzik',report:'Şikâyet',staff:'Yetkililer',guests:'Misafirler',bans:'Odadan atılanlar',mutes:'Chatte susturulanlar',moderators:'Moderatörler',promote:'Moderatör yap',settings:'Oda ayarları'}[tab]||'Oda';
     const body=p.querySelector('#roomV3Body');body.innerHTML='<div class="room-v3-note">Yükleniyor…</div>';
-    if(tab==='info')await info(body,r);else if(tab==='users')await users(body,r);else if(tab==='gifts')await gifts(body,r);else if(tab==='music')await music(body,r);else await settings(body,r)
+    if(tab==='info')await info(body,r);else if(tab==='report')await reportRoom(body,r);else if(tab==='users')await users(body,r);else if(tab==='gifts')await gifts(body,r);else if(tab==='music')await music(body,r);else if(tab==='staff')await staff(body,r);else if(tab==='guests')await guests(body,r);else if(tab==='bans')await bans(body,r);else if(tab==='mutes')await mutes(body,r);else if(tab==='moderators')await moderators(body,r);else if(tab==='promote')await promote(body,r);else await settings(body,r)
   }
 
   function bind(){
@@ -208,6 +448,29 @@
       '@media(max-width:520px){#erisRoomSurface .eris-room-top{padding:6px!important}#erisRoomSurface .eris-room-title{max-width:calc(100% - 142px)!important}#erisRoomSurface #erisRoomLevel{flex-basis:70px!important;width:70px!important;min-width:70px!important}.room-v5-topbtn{width:32px!important;min-width:32px!important;flex-basis:32px!important}}'
     ].join('');
     document.head.appendChild(x);
+    x.textContent += `
+      #erisRoomSurface .room-v5-panel{background:rgba(4,3,10,.75)!important;backdrop-filter:blur(9px)}
+      #erisRoomSurface .room-v5-dialog{width:min(650px,calc(100% - 24px))!important;max-height:min(88dvh,900px)!important;overflow:auto!important;box-sizing:border-box!important;padding:26px!important;border:1px solid #ffffff24!important;border-radius:28px!important;background:radial-gradient(circle at 87% 0%,#302040 0%,transparent 39%),linear-gradient(150deg,#171321,#0c0a12 68%)!important;box-shadow:0 32px 90px #000b!important}
+      #erisRoomSurface .room-center-eyebrow{color:#bba3f4;font-size:11px;font-weight:800;letter-spacing:2.5px}
+      #erisRoomSurface .room-center-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:8px 0 22px}
+      #erisRoomSurface .room-center-heading h2{margin:0;color:#fff;font-size:28px;letter-spacing:-.7px}
+      #erisRoomSurface .room-center-heading p{margin:6px 0 0;color:#a99eaf;font-size:13px;line-height:1.4}
+      #erisRoomSurface .room-center-close{flex:none;width:48px;height:48px;border:1px solid #ffffff20;border-radius:15px;background:#ffffff09;color:#fff;font-size:25px}
+      #erisRoomSurface .room-center-identity{display:flex;align-items:center;gap:13px;padding:17px;margin-bottom:26px;border:1px solid #ffffff1c;border-radius:20px;background:#ffffff06}
+      #erisRoomSurface .room-center-symbol{width:52px;height:52px;flex:none;display:grid;place-items:center;border-radius:15px;background:linear-gradient(135deg,#8052e8,#bf46bc);font-size:24px}
+      #erisRoomSurface .room-center-identity-text{flex:1;min-width:0}
+      #erisRoomSurface .room-center-identity-text strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:18px}
+      #erisRoomSurface .room-center-identity-text small{display:block;color:#aba1b4;font-size:12px;margin-top:4px}
+      #erisRoomSurface .room-center-role{border-radius:30px;padding:7px 11px;background:#7652c02e;color:#d8c5ff;font-size:10px;font-weight:800;white-space:nowrap}
+      #erisRoomSurface .room-center-section{margin:20px 0}
+      #erisRoomSurface .room-center-section h3{margin:0 0 10px;color:#aaa0b1;font-size:11px;letter-spacing:1.7px}
+      #erisRoomSurface .room-center-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      #erisRoomSurface .room-center-item{min-height:77px;display:flex;align-items:center;gap:12px;padding:14px;text-align:left;border:1px solid #ffffff19;border-radius:17px;background:linear-gradient(140deg,#ffffff08,#ffffff03);color:#fff;cursor:pointer}
+      #erisRoomSurface .room-center-item span{font-size:21px;color:#c8a8ff}
+      #erisRoomSurface .room-center-item b{font-size:13px;line-height:1.35}
+      #erisRoomSurface .room-center-item:active{transform:scale(.98);border-color:#a677ff}
+      @media(max-width:370px){#erisRoomSurface .room-v5-dialog{padding:18px!important}#erisRoomSurface .room-center-item{min-height:67px;padding:10px}#erisRoomSurface .room-center-item b{font-size:11px}}
+    `;
   }
 
   function panel(){
@@ -249,21 +512,55 @@
 
   async function menu(){
     closePanels();
-    const p=panel(); if(!p)return;
+    const p=panel();if(!p)return;
     const r=await roomApi().get?.(rid()).catch(()=>({}))||{};
-    const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
-    const items=[['info','⌂','Oda bilgileri','Oda kimliği, duyurular ve oyunlar'],['users','♙','Katılımcılar','Koltukları ve oda üyelerini gör'],['gifts','◇','Hediyeler','Odada hediye gönder'],['music','♫','Oda müziği','Paylaşılan müzik kuyruğunu yönet']];
-    if(canManage)items.push(['settings','⚙','Oda yönetimi','Sohbet ve güvenlik ayarları']);
-    if(isOwner(r))items.push(['theme','◈','Oda görünümü','Odanın temasını düzenle']);
-    p.innerHTML='<div class="v5-title">Oda menüsü <button type="button" class="v5-btn" data-close aria-label="Menüyü kapat">Kapat</button></div><div class="v5-subtitle">Oda araçlarına ve yönetim ayarlarına buradan eriş.</div><div class="v5-grid">'+items.map(([key,icon,title,description])=>'<button type="button" class="v5-item" data-v5="'+key+'"><span class="v5-icon" aria-hidden="true">'+icon+'</span><span class="v5-item-copy"><b>'+title+'</b><small>'+description+'</small></span><span class="v5-chevron" aria-hidden="true">›</span></button>').join('')+'</div>';
+    const owner=isOwner(r),staff=!!(owner||r.is_moderator||r.can_manage);
+    const role=owner?'ODA SAHİBİ':staff?'MODERATÖR':'KULLANICI';
+    const groups=[
+      ['ODA',[
+        ['info','⌂','Oda bilgileri'],
+        ['report','⚑','Şikâyet'],
+        ['users','♙','Kullanıcılar'],
+        ['music','♫','Müzik'],
+        ['gifts','◇','Hediyeler']
+      ]]
+    ];
+    if(staff)groups.push(['ODA YÖNETİMİ',[
+      ['staff','♛','Yetkililer'],
+      ['guests','♙','Misafirler'],
+      ['bans','⊘','Odadan atılanlar'],
+      ['mutes','♧','Chatte susturulanlar'],
+      ['settings','⚙','Oda kilidi ve chat']
+    ]]);
+    if(owner)groups.push(['ODA SAHİBİ',[
+      ['moderators','♛','Moderatörler'],
+      ['promote','＋','Moderatör yap'],
+      ['theme','◈','Oda görünümü']
+    ]]);
+    p.innerHTML='<div class="room-center-eyebrow">ERISCHAT • ODA</div>'
+      +'<div class="room-center-heading"><div><h2>Oda Merkezi</h2>'
+      +'<p>Oda araçları ve yetkine uygun işlemler.</p></div>'
+      +'<button type="button" class="room-center-close" data-close aria-label="Menüyü kapat">×</button></div>'
+      +'<div class="room-center-identity"><div class="room-center-symbol">⌂</div>'
+      +'<div class="room-center-identity-text"><strong></strong><small></small></div>'
+      +'<span class="room-center-role"></span></div>'
+      +groups.map(([heading,items])=>'<section class="room-center-section">'
+        +'<h3>'+heading+'</h3><div class="room-center-grid">'
+        +items.map(([key,icon,title])=>'<button type="button" class="room-center-item" data-v5="'+key+'">'
+          +'<span aria-hidden="true">'+icon+'</span><b>'+title+'</b></button>').join('')
+        +'</div></section>').join('');
+    p.querySelector('.room-center-identity-text strong').textContent=r.name||'Oda';
+    p.querySelector('.room-center-identity-text small').textContent='ID: '+(r.public_id||'yükleniyor');
+    p.querySelector('.room-center-role').textContent=role;
     p.closest('.room-v5-panel').classList.add('show');
-    p.querySelector('[data-close]').onclick=()=>p.closest('.room-v5-panel').classList.remove('show');
-    p.querySelectorAll('[data-v5]').forEach(b=>b.onclick=()=>{
-      const t=b.dataset.v5;
-      if(t==='theme' && !isOwner(r)) return;
-      if(t==='settings' && !canManage) return;
+    p.querySelector('[data-close]').onclick=closePanels;
+    p.querySelectorAll('[data-v5]').forEach(button=>button.onclick=()=>{
+      const tab=button.dataset.v5;
+      if(['staff','guests','bans','mutes','settings'].includes(tab)&&!staff)return;
+      if(['moderators','promote','theme'].includes(tab)&&!owner)return;
       closePanels();
-      window.ErisRoomCompleteV3?.openMenu?.(t);
+      if(tab==='theme')theme();
+      else window.ErisRoomCompleteV3?.openMenu?.(tab);
     });
   }
 
@@ -317,43 +614,85 @@
 
   function seatMenu(seat){
     document.getElementById('eris-seat-actions')?.remove();
-    const id=roomId(),number=Number(seat.dataset.seatNumber),target=String(seat.dataset.userId||''),me=target&&target===userId();
-    const permissions=window.__erisRoomPermissions||{},canManage=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
-    const wrap=document.createElement('div');wrap.id='eris-seat-actions';wrap.setAttribute('role','presentation');
-    wrap.innerHTML='<style>#eris-seat-actions{position:fixed;inset:0;z-index:10000;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box;background:rgba(3,2,8,.66);backdrop-filter:blur(7px)}#eris-seat-actions .esa-card{width:min(440px,100%);background:linear-gradient(160deg,#1a1424,#0d0a12);border:1px solid #ffffff20;border-radius:22px;padding:18px;box-shadow:0 24px 80px #000b;color:#fff;font:14px system-ui;max-height:75vh;overflow:auto}#eris-seat-actions .esa-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}#eris-seat-actions .esa-logo{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,#754cff,#ff4fa3);font-size:21px}#eris-seat-actions .esa-title{font-weight:750;font-size:16px}#eris-seat-actions .esa-sub{font-size:12px;color:#aa9fb4;margin-top:3px}#eris-seat-actions .esa-actions{display:grid;gap:8px}#eris-seat-actions button{min-height:46px;border:1px solid #ffffff19;border-radius:14px;background:#ffffff09;color:#fff;text-align:left;padding:0 14px;font:600 14px system-ui}#eris-seat-actions button:active{transform:scale(.99)}#eris-seat-actions button.danger{background:#ed4c7417;border-color:#ed4c7440;color:#ffadc1}#eris-seat-actions button.primary{background:linear-gradient(120deg,#754cff,#d244ac);border:0}#eris-seat-actions button.close{color:#b9afc2;text-align:center;background:transparent;border:0;min-height:40px}</style><section class="esa-card" role="dialog" aria-modal="true" aria-label="Koltuk seçenekleri"><div class="esa-head"><div class="esa-logo">'+(me?'◉':'♙')+'</div><div><div class="esa-title">'+(me?'Koltuk '+number:'Koltuk '+number+' • kullanıcı')+'</div><div class="esa-sub">'+(me?'Bu koltukta oturuyorsun':'Koltuk işlemleri')+'</div></div></div><div class="esa-actions"></div><button class="close" data-close>Kapat</button></section>';
+    const id=roomId(),number=Number(seat.dataset.seatNumber);
+    const target=String(seat.dataset.userId||'');
+    const occupied=seat.classList.contains('occupied');
+    const mine=occupied&&target===userId();
+    const permissions=window.__erisRoomPermissions||{};
+    const staff=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
+    if(!occupied&&!staff)return;
+    const wrap=document.createElement('div');
+    wrap.id='eris-seat-actions';
+    wrap.innerHTML='<style>#eris-seat-actions{position:fixed;inset:0;z-index:10000}#eris-seat-actions .esa-shade{position:absolute;inset:0;background:transparent}#eris-seat-actions .esa-toolbar{position:fixed;display:flex;gap:5px;align-items:center;justify-content:center;padding:7px;border-radius:17px;border:1px solid #ffffff35;background:#211a2eec;box-shadow:0 12px 38px #000b;backdrop-filter:blur(12px);max-width:calc(100vw - 20px)}#eris-seat-actions button{width:43px;height:43px;flex:none;display:grid;place-items:center;border:1px solid #ffffff27;border-radius:12px;background:#ffffff12;color:white;font-size:21px}#eris-seat-actions button:active{background:#934de0}#eris-seat-actions button.danger{color:#ff8da8}</style><div class="esa-shade"></div><div class="esa-toolbar" role="toolbar" aria-label="Koltuk '+number+' işlemleri"></div>';
     document.body.append(wrap);
-    const actions=wrap.querySelector('.esa-actions');
-    const add=(label,kind,run)=>{const button=document.createElement('button');button.type='button';button.className=kind||'';button.textContent=label;button.onclick=async()=>{button.disabled=true;try{await run();wrap.remove()}catch(error){window.toast?.(error.message||'İşlem tamamlanamadı');button.disabled=false}};actions.append(button)};
-    if(me){
-      add('Koltuktan kalk','danger',async()=>{await roomApi().leaveSeat?.(id);await window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda')});
-      add('Mikrofonu aç / kapat','',async()=>{await window.ErisRoomRTC?.toggle?.()});
+    const toolbar=wrap.querySelector('.esa-toolbar');
+    const add=(icon,label,run,danger=false)=>{
+      const button=document.createElement('button');
+      button.type='button';button.textContent=icon;button.title=label;
+      button.setAttribute('aria-label',label);
+      if(danger)button.className='danger';
+      button.onclick=async()=>{
+        button.disabled=true;
+        try{await run();wrap.remove()}
+        catch(error){button.disabled=false;window.toast?.(error.message||'İşlem yapılamadı.')}
+      };
+      toolbar.append(button);
+    };
+    const refresh=()=>window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda');
+    if(!occupied){
+      add(seat.classList.contains('locked')?'🔓':'🔒',
+          seat.classList.contains('locked')?'Koltuğun kilidini aç':'Koltuğu kilitle',
+          async()=>{if(seat.classList.contains('locked'))await roomApi().unlockSeat(id,number);
+                  else await roomApi().lockSeat(id,number);await refresh()});
+    }else if(mine){
+      add('🎙️','Mikrofonu aç veya kapat',()=>window.ErisRoomRTC?.toggle?.());
+      add('↗','Koltuktan kalk',async()=>{await roomApi().leaveSeat(id);await refresh()});
     }else{
-      add('Profili görüntüle','primary',()=>window.openUserProfile?.(target));
-      if(canManage)add(seat.dataset.muted==='true'?'Mikrofon sesini aç':'Mikrofonu sustur','',async()=>{if(seat.dataset.muted==='true')await roomApi().unmuteSeat?.(id,number);else await roomApi().muteSeat?.(id,number);await window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda')});
+      add('👤','Profili görüntüle',()=>window.openUserProfile?.(target));
+      add('💬','Mesaj gönder',async()=>{
+        const conversation=await window.ErisPlatform.createConversation(target);
+        window.__erisActiveDmUserId=target;
+        window.ErisChatDM?.load?.();
+        window.ErisChatDM?.open?.(
+          conversation?.id||conversation?.conversation_id||conversation?.conversation?.id,
+          seat.getAttribute('aria-label')||'Kullanıcı','',target
+        );
+      });
+      if(staff){
+        add(seat.dataset.muted==='true'?'🔊':'🔇',
+            seat.dataset.muted==='true'?'Koltuk mikrofonunu aç':'Koltuk mikrofonunu sustur',
+            async()=>{if(seat.dataset.muted==='true')await roomApi().unmuteSeat(id,number);
+                    else await roomApi().muteSeat(id,number);await refresh()});
+        add('🚫','Kullanıcıyı odadan at',async()=>{
+          if(!window.confirm('Bu kullanıcı odadan çıkarılsın mı?'))return;
+          await roomApi().ban(id,target);await refresh();
+        },true);
+      }
     }
-    wrap.querySelector('[data-close]').onclick=()=>wrap.remove();wrap.addEventListener('click',event=>{if(event.target===wrap)wrap.remove()});
-    const escape=event=>{if(event.key==='Escape'){wrap.remove();document.removeEventListener('keydown',escape)}};document.addEventListener('keydown',escape);
-    wrap.querySelector('button:not(.close)')?.focus();
+    wrap.querySelector('.esa-shade').onclick=()=>wrap.remove();
+    const rect=seat.getBoundingClientRect();
+    const width=Math.min(toolbar.children.length*48+16,innerWidth-20);
+    const left=Math.max(10,Math.min(innerWidth-width-10,rect.left+rect.width/2-width/2));
+    toolbar.style.left=left+'px';
+    toolbar.style.top=(rect.top>70?Math.max(8,rect.top-62):Math.min(innerHeight-60,rect.bottom+8))+'px';
+    toolbar.querySelector('button')?.focus();
   }
 
   function seatActions(){
     const s=surface();if(!s)return;
-    const stage=s.querySelector('#erisLiveSeats');if(!stage||stage.dataset.seatActions==='1')return;
+    const stage=s.querySelector('#erisLiveSeats');
+    if(!stage||stage.dataset.seatActions==='1')return;
     stage.dataset.seatActions='1';
-    let timer=0,longPressed=false;
-    stage.addEventListener('pointerdown',event=>{
-      const seat=event.target.closest('.eris-seat');if(!seat||!seat.classList.contains('occupied'))return;
-      longPressed=false;
-      timer=window.setTimeout(()=>{longPressed=true;seatMenu(seat)},420);
-    });
-    const clear=()=>{window.clearTimeout(timer);timer=0};
-    stage.addEventListener('pointerup',clear);stage.addEventListener('pointercancel',clear);stage.addEventListener('pointerleave',clear);
-    stage.addEventListener('contextmenu',event=>{if(event.target.closest('.eris-seat.occupied'))event.preventDefault()});
     stage.addEventListener('click',event=>{
-      const seat=event.target.closest('.eris-seat');if(!seat)return;
-      if(longPressed){event.preventDefault();event.stopImmediatePropagation();longPressed=false;return}
-      if(!seat.classList.contains('occupied'))return;
-      if(seat.classList.contains('me')){event.preventDefault();event.stopImmediatePropagation();seatMenu(seat)}
+      const seat=event.target.closest('.eris-seat');
+      if(!seat)return;
+      const permissions=window.__erisRoomPermissions||{};
+      const staff=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
+      if(seat.classList.contains('occupied')||staff){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        seatMenu(seat);
+      }
     },true);
   }
 

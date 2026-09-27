@@ -27,7 +27,7 @@ from .cosmetics import catalog
 from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
+from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
@@ -1595,24 +1595,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             pass
 
 
-@app.get("/v1/rooms/{room_id}/rtc-config")
-def room_rtc_config(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict:
-    room = db.get(Room, room_id)
-    if not room:
-        raise HTTPException(status_code=404, detail="Oda bulunamadı")
-    member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
-    banned = db.scalar(select(RoomBan.id).where(RoomBan.room_id == room_id, RoomBan.user_id == user.id))
-    if not member or banned:
-        raise HTTPException(status_code=403, detail="Oda erişimi yok")
-    # Production TURN can be supplied through settings without exposing credentials in source.
-    turn_url = getattr(settings, "rtc_turn_url", None)
-    turn_username = getattr(settings, "rtc_turn_username", None)
-    turn_credential = getattr(settings, "rtc_turn_credential", None)
-    servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
-    if turn_url and turn_username and turn_credential:
-        servers.append({"urls": [turn_url], "username": turn_username, "credential": turn_credential})
-    return {"ice_servers": servers}
-
 room_chat_connections: dict[str, set[WebSocket]] = {}
 room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 
@@ -1709,10 +1691,15 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 sender_user_id = str(user.id)
                 if not target or target == sender_user_id:
                     continue
-                if data["type"] == "rtc_offer":
+                if data["type"] != "rtc_leave":
                     with Session(engine) as db:
-                        seat = db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id, RoomSeat.muted.is_(False)))
-                        if not seat: continue
+                        seat = db.scalar(select(RoomSeat.id).where(
+                            RoomSeat.room_id == internal_room_id,
+                            RoomSeat.user_id == user.id,
+                            RoomSeat.muted.is_(False),
+                        ))
+                        if not seat:
+                            continue
                 payload = {"type": data["type"], "from_user_id": sender_user_id, "to_user_id": target, "payload": data.get("payload")}
                 for peer_ws, peer_user in list(room_rtc_users.get(internal_room_id, {}).items()):
                     if str(peer_user) == target:
@@ -1732,6 +1719,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                     room = db.get(Room, internal_room_id)
                     member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
                     if not room or not member:
+                        continue
+                    seated = db.scalar(select(RoomSeat.id).where(
+                        RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id))
+                    if not seated:
                         continue
                     music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == internal_room_id).first()
                     if not music:
@@ -1777,12 +1768,16 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
                 member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
                 banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
-                seat = db.query(RoomSeat).filter(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id).first()
-                if not room or not member or banned or not room.chat_enabled:
+                if not room or not member or banned:
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     break
-                if seat and seat.muted:
-                    await websocket.send_json({"type":"room_chat_error","code":"muted","message":"Mikrofonunuz susturuldu."})
+                if not room.chat_enabled:
+                    await websocket.send_json({"type":"room_chat_error","code":"chat_disabled","message":"Oda sohbeti kapalı."})
+                    continue
+                chat_muted = db.scalar(select(RoomChatMute.id).where(
+                    RoomChatMute.room_id == internal_room_id, RoomChatMute.user_id == user.id))
+                if chat_muted:
+                    await websocket.send_json({"type":"room_chat_error","code":"chat_muted","message":"Oda sohbetinde susturuldunuz."})
                     continue
                 msg = RoomChatMessage(room_id=internal_room_id, user_id=user.id, text=text_value)
                 db.add(msg)
