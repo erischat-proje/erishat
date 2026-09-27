@@ -97,7 +97,7 @@
     s.querySelector('#erisRoomBack').onclick=window.closeRealRoom;
     s.querySelector('#erisRoomMusic').onclick=()=>window.ErisChatMusic?.open?.();
     s.querySelector('#erisRoomGift').onclick=()=>window.openRoomGift?.(window.ErisCurrentRoomId||window.currentRoomId);
-    s.querySelector('#erisRoomMore').onclick=()=>{const p=window.__erisRoomPermissions||{};if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCompleteV3?.openMenu?.('settings');};
+    s.querySelector('#erisRoomMore').onclick=()=>{const p=window.__erisRoomPermissions||{};if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCenterMenu?.();};
     s.querySelector('#erisRoomMic').onclick=()=>window.toast?.('Mikrofon: gerçek oda RTC bağlantısı için koltuğa oturun.');
     return s;
   }
@@ -247,7 +247,7 @@
       followButton.onclick=async()=>{followButton.disabled=true;try{if(room.is_following){await window.ErisRoom.unfollowRoom(liveRoomId);room.is_following=false;window.toast?.('Oda takibinden çıkarıldı.')}else{await window.ErisRoom.followRoom(liveRoomId);room.is_following=true;window.toast?.('Oda takip listene eklendi.')}paintFollow();window.ErisChatRoomList?.loadFollowing?.()}catch(error){window.toast?.(error.message||'Oda takibi güncellenemedi.')}finally{followButton.disabled=false}};
       const levelButton=document.getElementById('erisRoomLevel');
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
-      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCompleteV3?.openMenu?.('settings'); else window.toast?.('Bu odada yönetim yetkiniz yok.');};
+      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       surface.classList.remove('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
