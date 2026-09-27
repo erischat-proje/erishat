@@ -190,6 +190,8 @@
       '#erisRoomSurface .eris-room-compose{align-items:center!important;gap:6px!important}',
       '#erisRoomSurface #erisRoomMicInline{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;min-width:42px!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:13px!important;background:rgba(255,255,255,.07)!important;color:#fff!important;padding:0!important}',
       '#erisRoomSurface #erisRoomMicInline.on{background:linear-gradient(135deg,#754cff,#ff4fa3)!important}',
+      '#erisRoomSurface #erisRoomAudioOutput{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;min-width:42px!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:13px!important;background:rgba(255,255,255,.07)!important;color:#fff!important;padding:0!important;font-size:16px!important}',
+      '#erisRoomSurface #erisRoomAudioOutput.on{background:linear-gradient(135deg,#315b58,#28766c)!important;border-color:#74d9bc55!important}',
       '#erisRoomSurface #erisRoomGiftInline{width:42px!important;height:42px!important;min-width:42px!important;padding:0!important}',
       '#erisRoomSurface .room-v3-panel{top:70px!important;bottom:204px!important}',
       '#erisRoomSurface .room-v5-panel{display:none;position:absolute;inset:0;z-index:190;place-items:center;padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom));box-sizing:border-box;background:rgba(3,2,8,.68);backdrop-filter:blur(7px)}',
@@ -305,13 +307,12 @@
   }
   function mic(){
     const s=root(),c=s?.querySelector('.eris-room-compose');if(!s||!c)return;
-    if(c.querySelector('#erisRoomMicInline'))return;
-    const old=q('erisRoomMic');
-    old?.remove();
-    const b=document.createElement('button');b.id='erisRoomMicInline';b.type='button';b.textContent='🎙️';b.title='Mikrofonu aç/kapat';b.setAttribute('aria-label','Mikrofonu aç/kapat');
+    let b=c.querySelector('#erisRoomMicInline');
+    if(!b){const old=q('erisRoomMic');old?.remove();b=document.createElement('button');b.id='erisRoomMicInline';b.type='button';b.textContent='🎙️';b.title='Mikrofonu aç/kapat';b.setAttribute('aria-label','Mikrofonu aç/kapat');const send=q('erisLiveSend');c.insertBefore(b,send||null)}
     b.onclick=()=>window.ErisRoomRTC?.toggle?.();
-    const send=q('erisLiveSend');
-    c.insertBefore(b,send||null);
+    let output=c.querySelector('#erisRoomAudioOutput');
+    if(!output){output=document.createElement('button');output.id='erisRoomAudioOutput';output.type='button';output.textContent='🔊';output.title='Oda sesini kapat';output.setAttribute('aria-label','Oda sesini kapat')}
+    output.onclick=()=>window.ErisRoomRTC?.toggleOutput?.();b.after(output);window.ErisRoomRTC?.showOutput?.();
   }
 
   function seatMenu(seat){

@@ -73,6 +73,17 @@ def main() -> int:
         raise RuntimeError(f"room create response has no id: {room}")
     print(f"room created: {room_id}")
 
+    status, own_follow = request("POST", f"/rooms/{room_id}/follow", token_a, {})
+    if status != 400:
+        raise AssertionError(f"room owner follow expected HTTP 400, got {status}: {own_follow}")
+    status, followed = request("POST", f"/rooms/{room_id}/follow", token_b, {})
+    if status >= 300 or not followed.get("following"):
+        raise RuntimeError(f"room follow failed: HTTP {status} {followed}")
+    status, following = request("GET", "/rooms/following", token_b)
+    if status >= 300 or not any(row.get("id") == room_id and row.get("is_following") for row in following):
+        raise AssertionError(f"followed room missing from list: HTTP {status} {following}")
+    print("room follow and followed-room listing OK")
+
     # Regression coverage for room discovery pagination: offset must be applied
     # after the server ranks/filter rooms, not twice at the database query level.
     discovery_ids = [room_id]
@@ -103,6 +114,18 @@ def main() -> int:
         status, data = request("POST", f"/rooms/{room_id}/join", token, {})
         if status >= 300:
             raise RuntimeError(f"join failed: HTTP {status} {data}")
+
+    status, following = request("GET", "/rooms/following", token_b)
+    followed_room = next((row for row in following if row.get("id") == room_id), None) if isinstance(following, list) else None
+    if status >= 300 or not followed_room or not followed_room.get("is_active") or int(followed_room.get("member_count") or 0) < 2:
+        raise AssertionError(f"followed room online status missing after members join: HTTP {status} {following}")
+    status, unfollowed = request("DELETE", f"/rooms/{room_id}/follow", token_b)
+    if status >= 300 or unfollowed.get("following"):
+        raise RuntimeError(f"room unfollow failed: HTTP {status} {unfollowed}")
+    status, following = request("GET", "/rooms/following", token_b)
+    if status >= 300 or any(row.get("id") == room_id for row in following):
+        raise AssertionError(f"unfollowed room remains in list: HTTP {status} {following}")
+    print("followed room online state and unfollow OK")
 
     status, data = request("PATCH", f"/rooms/{room_id}/chat", token_a, {"enabled": True})
     if status >= 300:

@@ -2,18 +2,50 @@
   const API = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
   const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   const headers = () => token() ? { Authorization: `Bearer ${token()}` } : {};
+  function roomCard(room, followed=false) {
+    const id=room.id??room.room_id,name=room.name||room.title||'Oda';
+    const card=document.createElement('article');card.className='room card eris-room-list-card';
+    const open=document.createElement('button');open.type='button';open.className='eris-room-list-open';
+    open.innerHTML='<span class="ava">🎙️<i class="online"></i></span><span class="grow roomText"><b></b><small class="room-meta"></small><small class="room-id"></small></span>';
+    open.querySelector('b').textContent=name;
+    const owner=room.owner_name||room.owner||'ErisChat';
+    const count=Number(room.member_count??room.members_count??room.online_count??0);
+    open.querySelector('.room-meta').textContent=`${count} kişi • ${owner}`;
+    const publicId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi';
+    open.querySelector('.room-id').textContent=`ID: ${publicId}`;
+    open.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;window.__erisCurrentRoomUserId=localStorage.getItem('eris_user_id')||'';if(typeof window.openRoom==='function')window.openRoom(id,name);else window.toast?.(`${name} odasına bağlanılıyor…`)};
+    card.append(open);
+    if(followed){
+      const status=document.createElement('span');status.className='eris-room-follow-status '+(room.is_active&&count>0?'online':'offline');status.textContent=room.is_active&&count>0?'Çevrimiçi':'Çevrim dışı';card.append(status);
+      const menu=document.createElement('details');menu.className='eris-room-follow-menu';menu.innerHTML='<summary aria-label="Oda takip seçenekleri">•••</summary><button type="button">Takibi bırak</button>';
+      menu.querySelector('button').onclick=async()=>{try{await window.ErisRoom.unfollowRoom(id);menu.open=false;window.toast?.(name+' takibinden çıkarıldı.');await loadFollowedRooms()}catch(e){window.toast?.(e.message||'Oda takibi bırakılamadı.')}};card.append(menu);
+    }else{
+      const follow=document.createElement('button');follow.type='button';follow.className='eris-room-follow-button';
+      const paint=()=>{follow.textContent=room.is_following?'✓ Takipte':'＋ Takip et';follow.setAttribute('aria-pressed',String(!!room.is_following))};paint();
+      follow.onclick=async()=>{follow.disabled=true;try{if(room.is_following){await window.ErisRoom.unfollowRoom(id);room.is_following=false;window.toast?.('Oda takibinden çıkarıldı.')}else{await window.ErisRoom.followRoom(id);room.is_following=true;window.toast?.('Oda takip listene eklendi.')}paint();if(room.is_following)await loadFollowedRooms()}catch(e){window.toast?.(e.message||'Oda takibi güncellenemedi.')}finally{follow.disabled=false}};card.append(follow);
+    }
+    return card;
+  }
+  function roomListStyle(){if(document.getElementById('eris-room-follow-style'))return;const style=document.createElement('style');style.id='eris-room-follow-style';style.textContent='.eris-room-list-card{gap:8px!important;padding:9px!important}.eris-room-list-open{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:58px;padding:4px;border:0;background:transparent;color:inherit;text-align:left}.eris-room-follow-button{flex:none;border:1px solid #a77aff55;border-radius:999px;background:#8a5cff18;color:#d8c5ff;padding:8px 10px;font-size:9px;font-weight:750}.eris-room-follow-button[aria-pressed=true]{border-color:#ffffff1a;background:#ffffff08;color:#c8c0d0}.eris-room-follow-status{font-size:9px;white-space:nowrap;padding:6px 8px;border-radius:999px}.eris-room-follow-status.online{color:#8be2bd;background:#48d9a214}.eris-room-follow-status.offline{color:#aaa1b1;background:#ffffff0b}.eris-room-follow-menu{position:relative;flex:none}.eris-room-follow-menu summary{list-style:none;color:#aaa1b1;padding:7px;cursor:pointer}.eris-room-follow-menu button{position:absolute;right:0;top:28px;z-index:10;white-space:nowrap;padding:10px 13px;border:1px solid #ffffff20;border-radius:11px;background:#1b1621;color:#fff}#explore .tabs{grid-template-columns:repeat(3,minmax(0,1fr))}#explore .tabs .tab{font-size:9px;padding:9px 3px}@media(max-width:350px){.eris-room-follow-status{font-size:8px;padding:5px}.eris-room-follow-button{padding:7px;font-size:8px}}';document.head.append(style)}
+  async function loadFollowedRooms(){
+    const target=document.getElementById('followingRooms');if(!target||!token())return;
+    roomListStyle();target.innerHTML='<div class="card" style="padding:14px;color:#aaa1b1">Takip edilen odalar yükleniyor…</div>';
+    try{const rows=await window.ErisRoom.listFollowing();target.replaceChildren();if(!rows.length){target.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Henüz takip ettiğin oda yok. Beğendiğin bir odada “Takip et” düğmesine dokun.</div>';return}rows.forEach(room=>target.append(roomCard(room,true)))}catch(e){target.textContent=e.message||'Takip ettiğin odalar yüklenemedi.'}
+  }
   async function loadRooms() {
     const targets = [...document.querySelectorAll('#realRooms,#rooms')]; if (!targets.length) return;
     if (!token()) { targets.forEach(el=>{el.textContent='Odaları görmek için giriş yap.'}); return; }
+    roomListStyle();
     try {
       const r = await fetch(`${API}/rooms`, { headers: headers() }); if (!r.ok) throw new Error(`rooms:${r.status}`);
       const data = await r.json(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
-      targets.forEach(el => { el.innerHTML=''; const shown=el.id==='rooms'?rooms.filter(room=>Number(room.member_count||0)>1):rooms; if (!shown.length) { el.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Şu anda aktif oda yok.</div>'; return; }
-        shown.forEach(room => { const id=room.id ?? room.room_id, name=room.name||room.title||'Oda', publicId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi', count=room.member_count??room.members_count??room.online_count??0, owner=room.owner_name||room.owner||'ErisChat'; const b=document.createElement('button'); b.className='room card'; b.innerHTML='<div class="ava">🎙️<span class="online"></span></div><div class="grow roomText"><b></b><small class="room-meta"></small><small class="room-id"></small></div><span class="live">CANLI</span>'; b.querySelector('b').textContent=name; b.querySelector('.room-meta').textContent=`${count} kişi • ${owner}`; b.querySelector('.room-id').textContent=`ID: ${publicId}`; b.onclick=()=>{window.ErisCurrentRoomId=id;window.currentRoomId=id;window.__erisCurrentRoomUserId=localStorage.getItem('eris_user_id')||'';if(typeof window.openRoom==='function') window.openRoom(id,name); else window.toast?.(`${name} odasına bağlanılıyor…`)}; el.appendChild(b); });
+      targets.forEach(el => { el.replaceChildren(); const shown=el.id==='rooms'?rooms.filter(room=>Number(room.member_count||0)>1):rooms; if (!shown.length) { el.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Şu anda aktif oda yok.</div>'; return; }
+        shown.forEach(room => el.append(roomCard(room,false)));
       });
     } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>{el.textContent=e.message||'Odalar yüklenemedi.'}); }
+    await loadFollowedRooms();
   }
-  window.ErisChatRoomList={load:loadRooms};
+  window.ErisChatRoomList={load:loadRooms,loadFollowing:loadFollowedRooms};
 
 
 
@@ -31,7 +63,7 @@
       .eris-room-top .room-action{position:relative;z-index:1}
       .eris-room-top .room-action.back{font-size:25px;line-height:1}
       .eris-room-top button{border:1px solid #ffffff18;background:rgba(8,7,11,.55);color:#fff;border-radius:14px;width:42px;height:42px;box-shadow:0 8px 22px #0004}.eris-room-top button:active{transform:scale(.96)}
-      .eris-room-title{flex:1;min-width:0}.eris-room-title b{display:block;font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eris-room-title small{display:block;color:#c0b7c7;font-size:9px;margin-top:4px}.eris-room-title .room-id{color:#8f879a}
+      .eris-room-title{flex:1;min-width:0}.eris-room-title b{display:block;font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eris-room-title small{display:block;color:#c0b7c7;font-size:9px;margin-top:4px}.eris-room-title .room-id{color:#8f879a}.eris-room-follow-inline{display:block;margin-top:2px;padding:0;border:0;background:transparent;color:#c9aaff;font-size:8px;line-height:1.2;text-align:left}.eris-room-follow-inline[hidden]{display:none}
       .eris-room-stage{position:absolute;inset:72px 0 205px;min-height:330px;overflow:hidden}.eris-room-stage:before{content:"";position:absolute;left:50%;top:48%;width:min(310px,58vw);aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,79,163,.10),rgba(117,76,255,.06) 42%,transparent 70%);filter:blur(2px);pointer-events:none}.eris-room-core{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:96px;height:96px;border-radius:50%;display:grid;place-items:center;text-align:center;border:1px solid #ffffff16;background:rgba(10,7,18,.18);box-shadow:0 0 60px rgba(117,76,255,.18),inset 0 0 30px rgba(255,255,255,.035);backdrop-filter:blur(5px);z-index:1}.eris-room-core b{font-size:10px}.eris-room-core small{display:block;color:#aaa0b0;font-size:7px;margin-top:3px}
       .eris-seat{position:absolute;transform:translate(-50%,-50%);width:82px;height:82px;border-radius:50%;border:1px solid #ffffff2c;background:rgba(22,16,34,.30);box-shadow:0 12px 32px #0008,inset 0 0 20px #ffffff09;color:#fff;display:grid;place-items:center;text-align:center;padding:5px;z-index:3;backdrop-filter:blur(7px);transition:transform .18s,border-color .18s,box-shadow .18s}.eris-seat:hover{transform:translate(-50%,-50%) scale(1.05);border-color:#ffffff55}.eris-seat.occupied{background:rgba(25,18,39,.34)}
       .eris-seat.empty{border-style:dashed;background:radial-gradient(circle,#8a5cff22,#0d0a12 70%);color:#c9bfd2}.eris-seat.me{border-color:#ff5bad;box-shadow:0 0 0 4px #ff4fa31a,0 12px 35px #0008}.eris-seat.locked{opacity:.42;cursor:not-allowed}
@@ -200,6 +232,11 @@
       const publicRoomId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi';
       document.getElementById('erisLiveMeta').textContent='ID: '+publicRoomId;
       document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+publicRoomId;
+      let followButton=document.getElementById('erisRoomFollow');
+      if(!followButton){followButton=document.createElement('button');followButton.id='erisRoomFollow';followButton.type='button';followButton.className='eris-room-follow-inline';document.querySelector('#erisRoomSurface .eris-room-title')?.append(followButton)}
+      followButton.hidden=!!room.is_owner;
+      const paintFollow=()=>{followButton.textContent=room.is_following?'✓ Takip ediliyor':'＋ Odayı takip et';followButton.setAttribute('aria-pressed',String(!!room.is_following))};paintFollow();
+      followButton.onclick=async()=>{followButton.disabled=true;try{if(room.is_following){await window.ErisRoom.unfollowRoom(liveRoomId);room.is_following=false;window.toast?.('Oda takibinden çıkarıldı.')}else{await window.ErisRoom.followRoom(liveRoomId);room.is_following=true;window.toast?.('Oda takip listene eklendi.')}paintFollow();window.ErisChatRoomList?.loadFollowing?.()}catch(error){window.toast?.(error.message||'Oda takibi güncellenemedi.')}finally{followButton.disabled=false}};
       const levelButton=document.getElementById('erisRoomLevel');
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
       renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCompleteV3?.openMenu?.('settings'); else window.toast?.('Bu odada yönetim yetkiniz yok.');};

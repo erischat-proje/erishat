@@ -2,16 +2,24 @@
   'use strict';
   const peers=new Map(), known=new Set(), sounds=new Map(), pendingIce=new Map(), reconnectTimers=new Map();
   let stream=null, iceServers=[{urls:'stun:stun.l.google.com:19302'}], myId=null;
+  let outputEnabled=localStorage.getItem('eris_room_audio_output')!=='false';
   const socket=()=>window.__erisRoomSocket;
   const signal=(type,to_user_id,payload)=>{if(socket()?.readyState===WebSocket.OPEN)socket().send(JSON.stringify({type,to_user_id,payload}))};
   const button=()=>document.getElementById('erisRoomMicInline');
+  const outputButton=()=>document.getElementById('erisRoomAudioOutput');
   function show(){const b=button();if(!b)return;b.classList.toggle('on',!!stream);b.textContent=stream?'🎙️':'🔇';b.title=stream?'Mikrofon açık — kapat':'Mikrofon kapalı — aç'}
+  function showOutput(){const b=outputButton();if(!b)return;b.textContent=outputEnabled?'🔊':'🔇';b.classList.toggle('on',outputEnabled);b.setAttribute('aria-pressed',String(outputEnabled));b.title=outputEnabled?'Oda sesini kapat':'Oda sesini aç';b.setAttribute('aria-label',b.title)}
+  async function toggleOutput(){
+    outputEnabled=!outputEnabled;localStorage.setItem('eris_room_audio_output',String(outputEnabled));
+    for(const audio of sounds.values()){audio.muted=!outputEnabled;if(outputEnabled){try{await audio.play()}catch(e){window.toast?.('Tarayıcı sesi başlatmadı. Oda ses düğmesine tekrar dokun.')}}}
+    showOutput();window.toast?.(outputEnabled?'Oda sesleri açıldı.':'Oda sesleri kapatıldı.');
+  }
   function shouldInitiate(id){return Boolean(myId&&id&&myId<id)}
   async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[ErisChat] ICE aday sinyali uygulanamadı',e)}}}
   function drop(id){const timer=reconnectTimers.get(id);if(timer)clearTimeout(timer);reconnectTimers.delete(id);pendingIce.delete(id);const pc=peers.get(id);peers.delete(id);if(pc&&pc.signalingState!=='closed')pc.close();const audio=sounds.get(id);if(audio){audio.srcObject=null;audio.remove()}sounds.delete(id)}
   function peer(id){if(peers.has(id))return peers.get(id);const pc=new RTCPeerConnection({iceServers});peers.set(id,pc);
     pc.onicecandidate=e=>{if(e.candidate)signal('rtc_ice',id,e.candidate.toJSON())};
-    pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}audio.srcObject=e.streams[0]||new MediaStream([e.track]);audio.play().catch(()=>{})};
+    pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=outputEnabled;audio.playsInline=true;audio.muted=!outputEnabled;audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}audio.srcObject=e.streams[0]||new MediaStream([e.track]);if(outputEnabled)audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
     pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){const t=reconnectTimers.get(id);if(t)clearTimeout(t);reconnectTimers.delete(id);return}if(['failed','disconnected','closed'].includes(pc.connectionState)&&!reconnectTimers.has(id)){const timer=setTimeout(()=>{reconnectTimers.delete(id);if(pc.connectionState==='connected'||pc.connectionState==='closed')return;drop(id);if(stream&&shouldInitiate(id))setTimeout(()=>offer(id).catch(()=>{}),350)},3000);reconnectTimers.set(id,timer)}};
     if(stream)stream.getTracks().forEach(track=>pc.addTrack(track,stream));return pc;
   }
@@ -30,6 +38,6 @@
     try{const id=window.ErisCurrentRoomId||window.currentRoomId;const cfg=await window.ErisPlatform.api('/rooms/'+encodeURIComponent(id)+'/rtc-config');if(Array.isArray(cfg.ice_servers))iceServers=cfg.ice_servers;stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});stream.getAudioTracks()[0]?.addEventListener('ended',stop,{once:true});show();for(const peerId of known)await offer(peerId);window.toast?.('Mikrofon açıldı')}
     catch(e){stop();window.toast?.(e.name==='NotAllowedError'?'Mikrofon izni verilmedi.':e.message||'Mikrofon açılamadı.')}
   }
-  window.ErisRoomRTC={toggle,stop,message};
-  window.addEventListener('erischat:room-opened',()=>{show()});
+  window.ErisRoomRTC={toggle,stop,message,toggleOutput,showOutput};
+  window.addEventListener('erischat:room-opened',()=>{show();showOutput()});
 })();

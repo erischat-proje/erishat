@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper
+from .room_models import Room, RoomBan, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomPassword, RoomWallpaper
 from .platform_models import Notification, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
@@ -377,9 +377,10 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper = db.get(RoomWallpaper, room.id)
     wallpaper_expiry = wallpaper.paid_until if wallpaper and wallpaper.paid_until.tzinfo else (wallpaper.paid_until.replace(tzinfo=timezone.utc) if wallpaper else None)
     wallpaper_active = bool(wallpaper_expiry and wallpaper_expiry > datetime.now(timezone.utc))
+    is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
     return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]),
-        "theme": room.theme, "is_active": room.is_active, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
+        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": bool(room.locked and (room.lock_expires_at is None or room.lock_expires_at > datetime.now(timezone.utc))), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage and is_owner, "password": can_manage and is_owner, "moderators": can_manage and is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -439,6 +440,38 @@ def register_room_auth(current_user_dependency):
             view["role"] = "owner" if view["is_owner"] else "moderator"
             result.append(view)
         return result
+    @router.get("/following")
+    def list_followed_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        rooms = list(db.scalars(select(Room).join(RoomFollow, RoomFollow.room_id == Room.id)
+            .where(RoomFollow.user_id == user.id).order_by(RoomFollow.created_at.desc())))
+        result = []
+        for room in rooms:
+            view = room_view(db, room, user)
+            view["is_following"] = True
+            result.append(view)
+        return result
+    @router.post("/{room_id}/follow", status_code=201)
+    def follow_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if room.owner_id == user.id:
+            raise HTTPException(status_code=400, detail="Kendi odanızı takip edemezsiniz")
+        existing = db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id))
+        if existing:
+            return {"following": True, "room_id": room.id, "is_following": True}
+        db.add(RoomFollow(room_id=room.id, user_id=user.id))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            if not db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)):
+                raise
+        return {"following": True, "room_id": room.id, "is_following": True}
+    @router.delete("/{room_id}/follow")
+    def unfollow_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        db.execute(delete(RoomFollow).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id))
+        db.commit()
+        return {"following": False, "room_id": room.id, "is_following": False}
     @router.get("/{room_id}")
     def get_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)): return room_view(db, get_room_or_404(db, room_id), user)
     @router.patch("/{room_id}/name")

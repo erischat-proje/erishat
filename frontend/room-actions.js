@@ -8,6 +8,9 @@
 
   window.ErisRoom = {
     list: () => api('/rooms'),
+    listFollowing: () => api('/rooms/following'),
+    followRoom: roomId => api(`/rooms/${id(roomId)}/follow`, body({})),
+    unfollowRoom: roomId => api(`/rooms/${id(roomId)}/follow`, { method: 'DELETE' }),
     get: roomId => api(`/rooms/${id(roomId)}`),
     create: name => api('/rooms', body({ name })),
     join: (roomId,password='') => api(`/rooms/${id(roomId)}/join`, body(password ? {password} : {})),

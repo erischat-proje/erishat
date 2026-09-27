@@ -30,6 +30,15 @@ class RoomMember(Base):
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class RoomFollow(Base):
+    __tablename__ = "room_follows"
+    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_room_follow"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class RoomModerator(Base):
     __tablename__ = "room_moderators"
     __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_room_moderator"),)
