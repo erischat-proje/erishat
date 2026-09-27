@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from uuid import uuid4
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+import asyncio
 import logging
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
@@ -27,8 +28,8 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_models import Room, RoomBan, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
-    Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
-    PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification)
+    Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
+    MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -44,6 +45,7 @@ from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
 
 logger = logging.getLogger("erischat.api")
+_media_expiry_task = None
 app = FastAPI(title="ErisChat API", version="1.0.0")
 app.include_router(cosmetic_router)
 
@@ -180,6 +182,7 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 
 @app.on_event("startup")
 def startup() -> None:
+    global _media_expiry_task
     logger.info("ErisChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
@@ -188,7 +191,25 @@ def startup() -> None:
         cleanup_expired_sessions(db)
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
+    try:
+        _media_expiry_task = asyncio.get_running_loop().create_task(_expire_temporary_media_loop())
+    except RuntimeError:
+        _media_expiry_task = None
     logger.info("ErisChat API startup complete")
+
+
+async def _expire_temporary_media_loop() -> None:
+    while True:
+        await asyncio.sleep(30)
+        try:
+            with Session(engine) as db:
+                now = datetime.now(timezone.utc)
+                db.execute(update(MessageMedia).where(MessageMedia.temporary.is_(True),
+                    MessageMedia.expires_at.is_not(None), MessageMedia.expires_at <= now,
+                    MessageMedia.data.is_not(None)).values(data=None))
+                db.commit()
+        except Exception:
+            logger.exception("Temporary message media cleanup failed")
 
 
 def bearer_token(authorization: str | None) -> str:
@@ -750,9 +771,10 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
         last = db.scalar(select(Message).where(Message.conversation_id == conversation.id, ~hidden).order_by(Message.id.desc()).limit(1))
         unread = int(db.scalar(select(func.count(Message.id)).where(Message.conversation_id == conversation.id,
             Message.sender_id != user.id, Message.id > (state.last_read_message_id if state else 0), ~hidden)) or 0)
+        display_name = (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)
         result.append({"id": conversation.id, "type": "family" if family_name else conversation.type,
             "created_at": conversation.created_at, "members": [{"user_id": value} for value in members],
-            "name": (family_name + " aile sohbeti") if family_name else None, "unread_count": unread,
+            "name": display_name, "unread_count": unread,
             "last_message": last.text if last else None, "last_message_at": last.created_at if last else None})
     return result
 
@@ -770,7 +792,7 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
     family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation_id))
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
         "created_at": conversation.created_at, "members": [{"user_id": m.user_id} for m in conversation.members],
-        "name": (family_name + " aile sohbeti") if family_name else None}
+        "name": (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)}
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
@@ -849,10 +871,79 @@ def _message_out(db: Session, message: Message, viewer_id: str) -> dict:
     pinned = db.scalar(select(PinnedMessage.id).where(PinnedMessage.conversation_id == message.conversation_id,
         PinnedMessage.message_id == message.id)) is not None
     gift = db.get(DirectMessageGift, message.id)
+    media = db.get(MessageMedia, message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
         "text": message.text, "created_at": message.created_at,
         "is_read": message.sender_id == viewer_id and bool(state and state.last_read_message_id >= message.id),
-        "is_pinned": pinned, "gift_key": gift.gift_key if gift else None}
+        "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
+        "media_type": media.media_type if media else None,
+        "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
+        "temporary": bool(media and media.temporary), "view_seconds": media.view_seconds if media else None,
+        "expires_at": media.expires_at if media else None}
+
+
+@app.post("/v1/messages/{conversation_id}/media", status_code=201, response_model=MessageOut)
+async def send_message_media(conversation_id: str, file: UploadFile = File(...), media_type: str = Form(...),
+    view_seconds: int = Form(default=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+    if not ConversationRepository(db).is_member(conversation_id, user.id):
+        raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    conversation = db.get(Conversation, conversation_id)
+    if not conversation or conversation.type == "welcome": raise HTTPException(status_code=400, detail="Bu konuşmaya medya gönderilemez")
+    if media_type not in {"image", "voice"}: raise HTTPException(status_code=400, detail="Geçersiz medya türü")
+    if media_type == "image":
+        if file.content_type not in {"image/jpeg", "image/png", "image/webp", "image/gif"}:
+            raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
+        if view_seconds not in {0, 10, 20, 30}: raise HTTPException(status_code=400, detail="Fotoğraf süresi 10, 20 veya 30 saniye olmalı")
+    else:
+        if (file.content_type or "").split(";", 1)[0].strip().lower() not in {"audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav", "audio/x-wav"}:
+            raise HTTPException(status_code=415, detail="Desteklenmeyen ses biçimi")
+        if view_seconds != 0: raise HTTPException(status_code=400, detail="Ses kaydı süreli olamaz")
+    data = await file.read(12 * 1024 * 1024 + 1)
+    if not data or len(data) > 12 * 1024 * 1024: raise HTTPException(status_code=413, detail="Medya en fazla 12 MB olabilir")
+    if media_type == "image":
+        valid = data.startswith((b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n", b"GIF87a", b"GIF89a")) or (data.startswith(b"RIFF") and data[8:12] == b"WEBP")
+        if not valid: raise HTTPException(status_code=415, detail="Fotoğraf dosyası okunamadı")
+    elif not (data.startswith(b"OggS") or data.startswith(b"RIFF") or data.startswith(b"ID3") or data[0:1] == b"\x1a" or (len(data) > 8 and data[4:8] == b"ftyp")):
+        raise HTTPException(status_code=415, detail="Ses dosyası okunamadı")
+    temporary = media_type == "image" and view_seconds > 0
+    message = Message(conversation_id=conversation_id, sender_id=user.id, text="[Fotoğraf]" if media_type == "image" else "[Sesli mesaj]")
+    db.add(message); db.flush()
+    mime_type = (file.content_type or "application/octet-stream").split(";", 1)[0].strip().lower()
+    db.add(MessageMedia(message_id=message.id, media_type=media_type, mime_type=mime_type,
+        data=data, temporary=temporary, view_seconds=view_seconds if temporary else None))
+    for member_id in ConversationRepository(db).members(conversation_id):
+        if member_id != user.id: db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
+            body="Sana süreli fotoğraf gönderdi." if temporary else ("Sana bir fotoğraf gönderdi." if media_type == "image" else "Sana sesli mesaj gönderdi.")))
+    db.commit(); db.refresh(message)
+    event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id,
+        "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
+        "media_type":media_type, "temporary":temporary, "view_seconds":view_seconds if temporary else None,
+        "media_url":f"/messages/{conversation_id}/{message.id}/media", "created_at":message.created_at.isoformat() if message.created_at else None}
+    for member_id in ConversationRepository(db).members(conversation_id): await manager.send_user(member_id, event)
+    return _message_out(db, message, user.id)
+
+
+@app.get("/v1/messages/{conversation_id}/{message_id}/media")
+def get_message_media(conversation_id: str, message_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    media = db.get(MessageMedia, message_id)
+    message = db.get(Message, message_id)
+    if not media or not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Medya bulunamadı")
+    if media.temporary and media.expires_at and media.expires_at <= datetime.now(timezone.utc):
+        if media.data is not None: media.data = None; db.commit()
+        raise HTTPException(status_code=410, detail="Süreli fotoğrafın görüntüleme süresi doldu")
+    if media.data is None: raise HTTPException(status_code=410, detail="Fotoğraf artık kullanılamıyor")
+    countdown = 0
+    if media.temporary and user.id != message.sender_id:
+        now = datetime.now(timezone.utc)
+        if media.viewed_at is None:
+            media.viewed_at = now
+            media.expires_at = now + timedelta(seconds=media.view_seconds or 10)
+            db.commit()
+        countdown = max(0, int((media.expires_at - now).total_seconds()))
+    return Response(content=media.data, media_type=media.mime_type,
+        headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache",
+            "X-Content-Type-Options":"nosniff", "X-Erischat-Expires-In":str(countdown)})
 
 
 @app.post("/v1/messages/{conversation_id}/delete")

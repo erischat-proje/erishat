@@ -8,7 +8,7 @@
   let loadedForUserId = null;
   let selectedMessages = new Set();
   let selectionBar = null;
-  let notificationsRequested = false;
+  let activeRecorder = null;
 
   function messageTime(value) {
     if (!value) return '';
@@ -30,6 +30,13 @@
     const body = document.createElement('div');
     body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : String(message?.text ?? message?.message ?? '');
     row.append(body);
+    if (message?.media_type === 'image') {
+      const open=document.createElement('button');open.type='button';open.textContent=message.temporary?`🕒 Süreli fotoğraf · ${Number(message.view_seconds||10)} sn`:'🖼 Fotoğrafı görüntüle';
+      open.style.cssText='display:block;margin-top:6px;border:1px solid #ffffff25;border-radius:9px;padding:7px 9px;background:#ffffff12;color:#fff;font-size:9px';
+      open.onclick=()=>viewPhoto(message); row.append(open);
+    } else if (message?.media_type === 'voice') {
+      const play=document.createElement('button');play.type='button';play.textContent='▶ Sesli mesajı dinle';play.style.cssText='display:block;margin-top:6px;border:1px solid #ffffff25;border-radius:9px;padding:7px 9px;background:#ffffff12;color:#fff;font-size:9px';play.onclick=()=>playVoice(message);row.append(play);
+    }
     if (message?.is_pinned) { const pin=document.createElement('span'); pin.dataset.pinIcon=''; pin.textContent='📌 '; pin.style.cssText='font-size:8px;color:#f3d995'; row.prepend(pin); }
     const meta = document.createElement('small');
     meta.style.cssText = 'display:flex;justify-content:flex-end;gap:5px;margin-top:4px;font-size:8px;line-height:1;color:#ffffff9c;white-space:nowrap';
@@ -74,8 +81,10 @@
     const avatar = avatarValue(value, fallback);
     el.textContent = '';
     el.style.backgroundImage = '';
-    if (/^(https?:|data:|\/|\.\.?\/)/.test(avatar)) {
-      el.style.backgroundImage = `url(${avatar})`;
+    const fileAsset=/\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(avatar);
+    const imageUrl=fileAsset?(window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar):avatar;
+    if (/^(https?:|data:|\/|\.\.?\/)/.test(imageUrl)) {
+      el.style.backgroundImage = `url("${imageUrl.replace(/"/g,'%22')}")`;
       el.style.backgroundSize = 'cover';
       el.style.backgroundPosition = 'center';
       el.setAttribute('aria-label', fallback || 'Avatar');
@@ -98,6 +107,68 @@
 
   function showListError(list) {
     if (list) list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Konuşmalar yüklenemedi.</div>';
+  }
+
+  async function fetchMedia(message) {
+    const token=api()?.getAccessToken?.()||localStorage.getItem('erischat_access_token')||localStorage.getItem('token')||'';
+    const url=api()?.messageMediaUrl?.(message.media_url);
+    if(!url)throw new Error('Medya adresi bulunamadı.');
+    const response=await fetch(url,{headers:token?{Authorization:'Bearer '+token}:{},cache:'no-store'});
+    if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.detail||'Medya açılamadı.');}
+    return response;
+  }
+
+  async function viewPhoto(message) {
+    let response,objectUrl;
+    try{response=await fetchMedia(message);objectUrl=URL.createObjectURL(await response.blob());}
+    catch(error){window.toast?.(error.message||'Fotoğraf açılamadı.');return;}
+    const seconds=Number(response.headers.get('X-Erischat-Expires-In')||0);
+    const protectedView=!!message.temporary&&seconds>0;
+    const modal=document.createElement('div');modal.id='erisTemporaryPhotoViewer';modal.style.cssText='position:fixed;inset:0;z-index:20000;background:#05040af5;display:grid;place-items:center;padding:16px';
+    modal.innerHTML='<div style="position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;color:white;font-size:12px"><b data-photo-label></b><button data-photo-close style="border:0;background:#ffffff20;color:white;border-radius:12px;width:40px;height:40px;font-size:22px">×</button></div><img data-photo-image alt="Gönderilen fotoğraf" style="display:block;max-width:100%;max-height:82vh;object-fit:contain;border-radius:12px"><small data-photo-timer style="position:absolute;bottom:max(18px,env(safe-area-inset-bottom));color:#fff"></small>';
+    document.body.append(modal);modal.querySelector('[data-photo-image]').src=objectUrl;
+    let remain=seconds,timer=null;
+    const label=modal.querySelector('[data-photo-label]'),countdown=modal.querySelector('[data-photo-timer]');
+    const update=()=>{label.textContent=protectedView?'Süreli fotoğraf':'';countdown.textContent=protectedView?`Fotoğraf ${remain} saniye içinde silinecek`:''};update();
+    const close=()=>{if(timer)clearInterval(timer);window.ErisScreenProtection?.set?.('temporary-photo',false);modal.remove();URL.revokeObjectURL(objectUrl);document.removeEventListener('contextmenu',block);document.removeEventListener('keydown',keyBlock,true);window.removeEventListener('blur',blurCheck);document.removeEventListener('visibilitychange',visibilityCheck)};
+    const block=e=>{if(protectedView)e.preventDefault()};
+    const keyBlock=e=>{if(protectedView&&(e.key==='PrintScreen'||(e.ctrlKey&&['s','p','c'].includes(e.key.toLowerCase())))){e.preventDefault();e.stopImmediatePropagation()}};
+    const blurCheck=()=>{if(protectedView)modal.classList.add('capture-hidden')};
+    const visibilityCheck=()=>{if(document.hidden&&protectedView)modal.classList.add('capture-hidden');else modal.classList.remove('capture-hidden')};
+    modal.querySelector('[data-photo-close]').onclick=close;modal.addEventListener('click',e=>{if(e.target===modal&&!protectedView)close()});
+    if(protectedView){window.ErisScreenProtection?.set?.('temporary-photo',true);modal.addEventListener('contextmenu',block);document.addEventListener('contextmenu',block);document.addEventListener('keydown',keyBlock,true);window.addEventListener('blur',blurCheck);document.addEventListener('visibilitychange',visibilityCheck);timer=setInterval(()=>{remain-=1;update();if(remain<=0)close()},1000)}
+  }
+
+  async function playVoice(message) {
+    const button=document.querySelector(`#chat .bubble[data-message-id="${String(message.id).replace(/[^\w-]/g,'')}"] button`);
+    if(button){button.disabled=true;button.textContent='⏳ Ses yükleniyor…'}
+    try{const response=await fetchMedia(message),url=URL.createObjectURL(await response.blob()),audio=new Audio(url);audio.onended=()=>{URL.revokeObjectURL(url);if(button){button.disabled=false;button.textContent='▶ Sesli mesajı dinle'}};await audio.play();if(button)button.textContent='⏸ Çalıyor…'}
+    catch(error){if(button){button.disabled=false;button.textContent='▶ Tekrar dene'}window.toast?.(error.message||'Sesli mesaj oynatılamadı.')}
+  }
+
+  async function uploadMedia(file,type,seconds=0){
+    if(!activeConversationId||!api()?.sendMessageMedia)return;
+    try{const message=await api().sendMessageMedia(activeConversationId,file,type,seconds),body=document.querySelector('#chat .chatBody');body?.append(renderMessage(message,true));if(body)body.scrollTop=body.scrollHeight;loadConversations()}
+    catch(error){window.toast?.(error.message||'Medya gönderilemedi.')}
+  }
+
+  function pickPhoto(seconds=0,camera=false){
+    const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp,image/gif';if(camera)input.setAttribute('capture','environment');
+    input.onchange=()=>{const file=input.files?.[0];if(file)uploadMedia(file,'image',seconds)};input.click();
+  }
+
+  function openPhotoChooser(){
+    const modal=document.createElement('div');modal.className='dm-gift-sheet';modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between"><b>Fotoğraf gönder</b><button class="close" data-x>×</button></div><p style="font-size:9px;color:#aaa1b1;line-height:1.5">Normal fotoğraf mesajda kalır. Süreli fotoğraf, alıcı ilk açtığında seçilen sürenin sonunda silinir.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button data-gallery>🖼 Galeriden fotoğraf</button><button data-camera>📷 Kamerayla fotoğraf</button></div><hr style="border-color:#ffffff15;margin:14px 0"><b style="font-size:11px">Süreli fotoğraf</b><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px"><button data-temp="10">10 sn</button><button data-temp="20">20 sn</button><button data-temp="30">30 sn</button></div><div data-temp-source style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><button data-source="gallery">🖼 Süreli galeriden</button><button data-source="camera">📸 Süreli kamera</button></div></section>';document.body.append(modal);
+    let duration=10;modal.querySelector('[data-x]').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
+    modal.querySelector('[data-gallery]').onclick=()=>{modal.remove();pickPhoto(0,false)};modal.querySelector('[data-camera]').onclick=()=>{modal.remove();pickPhoto(0,true)};
+    modal.querySelectorAll('[data-temp]').forEach(b=>b.onclick=()=>{duration=Number(b.dataset.temp);modal.querySelectorAll('[data-temp]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));modal.querySelector('[data-temp-source]').style.outline='1px solid #a679ff';window.toast?.('Süre '+duration+' saniye seçildi; galeriden veya kameradan gönder.')});
+    modal.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{modal.remove();pickPhoto(duration,b.dataset.source==='camera')});
+  }
+
+  async function toggleVoiceRecording(button){
+    if(activeRecorder){activeRecorder.stop();activeRecorder=null;button.textContent='🎙';button.title='Ses kaydet';return}
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){window.toast?.('Bu tarayıcı ses kaydını desteklemiyor.');return}
+    try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const recorder=new MediaRecorder(stream);const chunks=[];activeRecorder=recorder;recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onerror=()=>window.toast?.('Ses kaydı sırasında hata oluştu.');recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const type=(recorder.mimeType||'audio/webm').split(';',1)[0]||'audio/webm';const blob=new Blob(chunks,{type});activeRecorder=null;if(blob.size)await uploadMedia(new File([blob],`voice-${Date.now()}.${type==='audio/mp4'?'m4a':type==='audio/ogg'?'ogg':'webm'}`,{type}),'voice',0)};recorder.start();button.textContent='⏹';button.title='Kaydı bitir ve gönder'}catch(error){activeRecorder=null;window.toast?.(error.name==='NotAllowedError'?'Mikrofon izni gerekli.':'Ses kaydı başlatılamadı.')}
   }
 
   function installChatTools(chat) {
@@ -125,8 +196,13 @@
     body?.addEventListener('pointerup', () => clearTimeout(holdTimer)); body?.addEventListener('pointerleave', () => clearTimeout(holdTimer));
     body?.addEventListener('click', event => { const row = event.target.closest('.bubble[data-message-id]'); if (held) { held = false; return; } if (selectedMessages.size && row) { event.preventDefault(); setSelected(row); } });
     const compose = chat.querySelector('.compose');
-    const familyChat = / aile sohbeti$/i.test(String(chat.querySelector('.chatHead b')?.textContent||''));
-    if (compose && !familyChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.textContent='🎁'; button.title='Hediye gönder'; compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
+    const chatName=String(chat.querySelector('.chatHead b')?.textContent||'');
+    const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=chatName==='ErisChat';
+    if(compose&&systemChat){compose.style.display='none';}
+    else if(compose){compose.style.display='';}
+    if (compose && !familyChat && !systemChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.textContent='🎁'; button.title='Hediye gönder'; compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
+    if (compose && !systemChat && !compose.querySelector('[data-dm-photo]')) {const b=document.createElement('button');b.type='button';b.dataset.dmPhoto='';b.className='close';b.textContent='📷';b.title='Fotoğraf gönder';compose.insertBefore(b,compose.firstChild);b.onclick=openPhotoChooser;}
+    if (compose && !systemChat && !compose.querySelector('[data-dm-voice]')) {const b=document.createElement('button');b.type='button';b.dataset.dmVoice='';b.className='close';b.textContent='🎙';b.title='Ses kaydet';compose.insertBefore(b,compose.firstChild);b.onclick=()=>toggleVoiceRecording(b);}
   }
 
   async function openGiftSheet() {
@@ -139,6 +215,7 @@
 
   async function loadUserProfile(userId){
     const id=String(userId||'').trim(); if(!id||!api()?.api)return;
+    if (window.openUserProfile) { window.openUserProfile(id); return; }
     document.getElementById('eris-dm-profile-modal')?.remove();
     const modal=document.createElement('div');modal.id='eris-dm-profile-modal';modal.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(2,1,7,.78);backdrop-filter:blur(10px);display:grid;place-items:center;padding:18px';
     modal.innerHTML='<div style="width:min(420px,100%);max-height:80vh;overflow:auto;background:#0b0911;border:1px solid #ffffff14;border-radius:24px;padding:18px;color:#fff"><div style="display:flex;justify-content:space-between;align-items:center"><b>Kullanıcı profili</b><button id="erpClose" class="close">×</button></div><div id="erpBody" style="margin-top:12px">Yükleniyor…</div></div>';document.body.appendChild(modal);modal.querySelector('#erpClose').onclick=()=>modal.remove();
@@ -173,13 +250,14 @@
         list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Henüz konuşma yok.</div>';
         return;
       }
-      const participants = await Promise.all(items.map(resolveParticipant));
+      const participants = await Promise.all(items.map(c => c.type === 'welcome' ? Promise.resolve({ nickname: 'ErisChat' }) : resolveParticipant(c)));
       items.forEach((c, index) => {
         const other = participants[index] || {};
         const id = c.id || c.conversation_id;
         if (!id) return;
-        const family = c.type === 'family' || / aile sohbeti$/.test(String(c.name || ''));
-        const name = family ? (c.name || 'Aile sohbeti') : (other.nickname || other.name || c.name || 'Anonim kullanıcı');
+        const family = c.type === 'family' || / aile sohbeti$/i.test(String(c.name || ''));
+        const welcome = c.type === 'welcome';
+        const name = family ? (c.name || 'Aile sohbeti') : (welcome ? 'ErisChat' : (other.nickname || other.name || c.name || 'Kullanıcı'));
         const avatar = avatarValue(other.avatar_asset || other.avatar_url || other.avatar, name.slice(0, 1).toUpperCase());
         const b = document.createElement('button');
         b.className = 'item';
@@ -190,7 +268,7 @@
         const badge = b.querySelector('.dm-unread');
         const unread = Number(c.unread_count || 0);
         if (unread) { badge.hidden = false; badge.textContent = unread > 99 ? '99+' : String(unread); }
-        b.onclick = () => { window.__erisActiveDmUserId = other.id || other.user_id || null; openRealChat(id, name, family ? '👪' : avatar); };
+        b.onclick = () => { window.__erisActiveDmUserId = family || welcome ? null : (other.id || other.user_id || null); openRealChat(id, name, family ? '👪' : avatar, window.__erisActiveDmUserId); };
         list.appendChild(b);
       });
     } catch (e) {
@@ -221,7 +299,7 @@
     };
   }
 
-  async function createConversation(participantId, participantName = 'Anonim kullanıcı') {
+  async function createConversation(participantId, participantName = 'Kullanıcı') {
     if (!participantId || !api()?.createConversation) return null;
     const conversation = await api().createConversation(participantId); window.__erisActiveDmUserId = participantId;
     const id = conversation?.id || conversation?.conversation_id || conversation?.conversation?.id;
@@ -230,16 +308,17 @@
       const participant = await resolveParticipant(conversation);
       const name = participant.nickname || participant.name || participantName;
       const avatar = avatarValue(participant.avatar_asset || participant.avatar_url || participant.avatar, name.slice(0, 1).toUpperCase());
-      openRealChat(id, name, avatar);
+      openRealChat(id, name, avatar, participantId);
     }
     return conversation;
   }
 
-  async function openRealChat(id, name, avatar = '') {
+  async function openRealChat(id, name, avatar = '', participantId = window.__erisActiveDmUserId) {
     const chat = $('chat');
     const body = chat?.querySelector('.chatBody');
     if (!chat || !body || !api()?.messages) return;
     activeConversationId = id;
+    window.__erisActiveDmUserId = participantId || null;
     selectedMessages.clear();
     chat.classList.add('show');
     installChatTools(chat);
@@ -254,7 +333,7 @@
       if (!messages.length) body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Henüz mesaj yok.</div>';
       messages.forEach(m => {
         const senderId = m.sender_id ?? m.user_id;
-        const mine = typeof m.is_mine === 'boolean' ? m.is_mine : String(senderId) === String(currentUserId);
+        const mine = name==='ErisChat' ? false : (typeof m.is_mine === 'boolean' ? m.is_mine : String(senderId) === String(currentUserId));
         body.appendChild(renderMessage(m, mine));
       });
       refreshSelectionBar();

@@ -5,7 +5,7 @@
   async function request(path, options = {}) {
     const requestOptions = { ...options }; delete requestOptions.timeout;
     const headers = new Headers(options.headers || {});
-    if (options.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+    if (options.body !== undefined && !(typeof FormData !== 'undefined' && options.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     if (token()) headers.set('Authorization', `Bearer ${token()}`);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), Number(options.timeout || 8000));
@@ -35,6 +35,8 @@
     sendMessage: (id,text) => request(`/messages/${encodeURIComponent(id)}`,{method:'POST',body:JSON.stringify({text})}),
     messageGifts: () => request('/message-gifts'),
     sendMessageGift: (id,gift_key) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key})}),
+    sendMessageMedia: (id,file,mediaType,viewSeconds=0) => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:30000});},
+    messageMediaUrl: path => `${API}/${String(path||'').replace(/^\/+/, '')}`,
     deleteMessages: (id,message_ids) => request(`/messages/${encodeURIComponent(id)}/delete`,{method:'POST',body:JSON.stringify({message_ids})}),
     pinMessage: (id,message_id) => request(`/conversations/${encodeURIComponent(id)}/pins/${message_id}`,{method:'POST'}),
     unpinMessage: (id,message_id) => request(`/conversations/${encodeURIComponent(id)}/pins/${message_id}`,{method:'DELETE'}),

@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
-from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, Notification, VipStatus
+from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, FamilyVisual, Notification, VipStatus
 
 router = APIRouter(prefix="/v1", tags=["families"])
 
@@ -88,7 +88,8 @@ def family_payload(db: Session, family: Family) -> dict:
     progress = 100 if next_required is None else min(100, max(0, (family.balance - current_required) / max(1, next_required - current_required) * 100))
     return {"id": family.id, "name": family.name, "owner_id": family.owner_id, "balance": family.balance, "level": level,
             "capacity": FAMILY_LEVELS[level]["capacity"], "member_count": count, "rank": rank, "current_level_required": current_required,
-            "next_level_required": next_required, "next_level_progress": round(progress, 1), "chat_conversation_id": family.chat_conversation_id}
+            "next_level_required": next_required, "next_level_progress": round(progress, 1), "chat_conversation_id": family.chat_conversation_id,
+            "avatar_url": f"/families/{family.id}/avatar" if db.get(FamilyVisual, family.id) else None}
 
 
 def register_family_auth(current_user_dependency):
@@ -149,6 +150,28 @@ def register_family_auth(current_user_dependency):
         viewer= db.scalar(select(FamilyMember).where(FamilyMember.family_id==family_id,FamilyMember.user_id==user.id))
         request=db.scalar(select(FamilyJoinRequest).where(FamilyJoinRequest.family_id==family_id,FamilyJoinRequest.user_id==user.id))
         return {**family_payload(db,family),"is_member":bool(viewer),"viewer_role":viewer.role if viewer else None,"application_status":request.status if request else None}
+
+    @router.put("/families/{family_id}/avatar")
+    async def set_family_avatar(family_id: str, file: UploadFile = File(...), db: Session = Depends(get_db), user: User = auth()):
+        family = get_family(db, family_id)
+        member = membership(db, family_id, user.id)
+        if family.owner_id != user.id or member.role != "owner": raise HTTPException(status_code=403, detail="Yalnızca aile kurucusu görsel belirleyebilir")
+        if file.content_type not in {"image/jpeg", "image/png", "image/webp"}: raise HTTPException(status_code=415, detail="JPG, PNG veya WEBP görsel seçin")
+        data = await file.read(5 * 1024 * 1024 + 1)
+        if not data or len(data) > 5 * 1024 * 1024: raise HTTPException(status_code=413, detail="Aile görseli en fazla 5 MB olabilir")
+        valid = data.startswith((b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")) or (data.startswith(b"RIFF") and data[8:12] == b"WEBP")
+        if not valid: raise HTTPException(status_code=415, detail="Görsel dosyası okunamadı")
+        visual = db.get(FamilyVisual, family_id)
+        if visual is None: visual = FamilyVisual(family_id=family_id, mime_type=file.content_type or "image/jpeg", image_bytes=data); db.add(visual)
+        else: visual.mime_type=file.content_type or "image/jpeg"; visual.image_bytes=data
+        db.commit(); return {"saved":True,"avatar_url":f"/families/{family_id}/avatar"}
+
+    @router.get("/families/{family_id}/avatar")
+    def get_family_avatar(family_id: str, db: Session = Depends(get_db), user: User = auth()):
+        get_family(db, family_id); membership(db, family_id, user.id)
+        visual=db.get(FamilyVisual,family_id)
+        if not visual: raise HTTPException(status_code=404,detail="Aile görseli bulunamadı")
+        return Response(content=visual.image_bytes,media_type=visual.mime_type,headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"})
 
     @router.post("/families/{family_id}/applications", status_code=201)
     def apply_to_family(family_id: str, payload: FamilyApplicationCreate, db: Session = Depends(get_db), user: User = auth()):

@@ -193,6 +193,7 @@
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const liveRoomId=String(room.id||id);
       window.__erisActiveRoomWallpaper=room.wallpaper_asset||null;
+      window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
       const seatCount=Math.min(16,Math.max(8,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
       if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat};
@@ -204,11 +205,12 @@
       renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; if(p.is_owner||p.is_moderator||p.can_manage) window.ErisRoomCompleteV3?.openMenu?.('settings'); else window.toast?.('Bu odada yönetim yetkiniz yok.');};
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
-      surface.classList.remove('show');window.toast?.(e.message||'Odaya bağlanılamadı.');
+      surface.classList.remove('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
     }
   }
 
   async function closeRealRoom(){
+    window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;
     document.getElementById('erisRoomSurface')?.classList.remove('show');
