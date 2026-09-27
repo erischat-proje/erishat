@@ -578,7 +578,7 @@ def register_room_auth(current_user_dependency):
     @router.patch("/{room_id}/seats")
     def set_seat_count(room_id: str, payload: RoomSeatCountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        require_owner(db, room, user)
+        require_staff(db, room, user)
         target = int(payload.seat_count)
         allowed = LEVELS[room.level]["seats"]
         if target not in {8, 12, 16} or target > allowed:

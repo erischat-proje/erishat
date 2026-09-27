@@ -360,7 +360,32 @@
       +'</small><div class="room-v3-grid" style="margin-top:10px"><button class="room-v3-btn primary" data-password>Şifre belirle / değiştir</button>'
       +(r.password_set?'<button class="room-v3-btn" data-clear-password>Şifreyi kaldır</button>':'')
       +'</div></div>'
+      +'<div class="room-v3-card"><b>🪑 Koltuk sayısı</b><small>Mevcut: '
+      +Number(r.seat_count||8)+' koltuk. Seviye '+Number(r.level||1)
+      +' için en fazla '+(Number(r.level||1)>=7?16:Number(r.level||1)>=5?12:8)
+      +' koltuk açılabilir.</small><div class="room-v3-grid" style="margin-top:10px">'
+      +[8,12,16].filter(count=>count<=(Number(r.level||1)>=7?16:Number(r.level||1)>=5?12:8))
+        .map(count=>'<button type="button" class="room-v3-btn'
+          +(Number(r.seat_count||8)===count?' primary':'')
+          +'" data-seat-count="'+count+'"'
+          +(Number(r.seat_count||8)===count?' disabled':'')
+          +'>'+count+' koltuk</button>').join('')
+      +'</div></div>'
       +(owner?'<div class="room-v3-card"><b>👑 Oda sahibi</b><button class="room-v3-btn" data-rename style="margin-top:10px;width:100%">Oda adını değiştir</button></div>':'');
+    body.querySelectorAll('[data-seat-count]').forEach(button=>{
+      button.onclick=async()=>{
+        button.disabled=true;
+        try{
+          await roomApi().setCapacity(r.id,Number(button.dataset.seatCount));
+          window.toast?.('Koltuk sayısı güncellendi.');
+          await window.openRoom?.(r.id,r.name||'Oda');
+          await openMenu('settings');
+        }catch(error){
+          button.disabled=false;
+          window.toast?.(error.message||'Koltuk sayısı değiştirilemedi.');
+        }
+      };
+    });
     body.querySelector('[data-chat]').onclick=async event=>{
       const button=event.currentTarget;button.disabled=true;
       try{
@@ -707,25 +732,45 @@
     const clear=()=>{window.clearTimeout(timer);timer=0};
     const available=seat=>{
       if(!seat)return false;
-      const permissions=window.__erisRoomPermissions||{};
+      const p=window.__erisRoomPermissions||{};
       return seat.classList.contains('occupied')||
-        !!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
+        !!(p.is_owner||p.is_moderator||p.can_manage);
     };
-    stage.addEventListener('pointerdown',event=>{
+    const begin=(seat,x,y)=>{
       clear();pressed=false;
-      if(event.button!==0||!available(event.target.closest('.eris-seat')))return;
-      const seat=event.target.closest('.eris-seat');
-      startX=event.clientX;startY=event.clientY;
+      if(!available(seat))return;
+      startX=x;startY=y;
       timer=window.setTimeout(()=>{
         timer=0;pressed=true;seatMenu(seat);
       },450);
+    };
+    const moved=(x,y)=>{
+      if(Math.abs(x-startX)>20||Math.abs(y-startY)>20)clear();
+    };
+    stage.addEventListener('pointerdown',event=>{
+      if(event.pointerType==='touch')return;
+      if(event.button!==0)return;
+      begin(event.target.closest('.eris-seat'),event.clientX,event.clientY);
     });
     stage.addEventListener('pointermove',event=>{
-      if(Math.abs(event.clientX-startX)>12||Math.abs(event.clientY-startY)>12)clear();
+      if(event.pointerType!=='touch')moved(event.clientX,event.clientY);
     });
-    stage.addEventListener('pointerup',clear);
-    stage.addEventListener('pointercancel',clear);
-    stage.addEventListener('pointerleave',clear);
+    stage.addEventListener('pointerup',event=>{
+      if(event.pointerType!=='touch')clear();
+    });
+    stage.addEventListener('pointercancel',event=>{
+      if(event.pointerType!=='touch')clear();
+    });
+    stage.addEventListener('touchstart',event=>{
+      const touch=event.touches[0];
+      if(touch)begin(event.target.closest('.eris-seat'),touch.clientX,touch.clientY);
+    },{passive:true});
+    stage.addEventListener('touchmove',event=>{
+      const touch=event.touches[0];
+      if(touch)moved(touch.clientX,touch.clientY);
+    },{passive:true});
+    stage.addEventListener('touchend',clear,{passive:true});
+    stage.addEventListener('touchcancel',clear,{passive:true});
     stage.addEventListener('contextmenu',event=>{
       const seat=event.target.closest('.eris-seat');
       if(!available(seat))return;
