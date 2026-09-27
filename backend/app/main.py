@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from io import BytesIO
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 import asyncio
@@ -13,6 +14,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from PIL import Image, ImageFilter
 
 from .auth import (
     create_anonymous_user,
@@ -51,7 +53,7 @@ app = FastAPI(title="ErisChat API", version="1.0.0")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview"])
 
 
 def ensure_system_data_columns() -> None:
@@ -965,8 +967,20 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     return _message_out(db, message, user.id)
 
 
+def _blur_temporary_photo(data: bytes) -> bytes:
+    with Image.open(BytesIO(data)) as source:
+        if source.width * source.height > 24_000_000:
+            raise ValueError("Fotoğraf boyutu önizleme için fazla büyük")
+        source.seek(0)
+        source.thumbnail((96, 96))
+        frame = source.convert("RGB").filter(ImageFilter.GaussianBlur(radius=12))
+        output = BytesIO()
+        frame.save(output, format="JPEG", quality=48, optimize=True)
+        return output.getvalue()
+
+
 @app.get("/v1/messages/{conversation_id}/{message_id}/media")
-def get_message_media(conversation_id: str, message_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def get_message_media(conversation_id: str, message_id: int, preview: bool = Query(default=False), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     media = db.get(MessageMedia, message_id)
     message = db.get(Message, message_id)
@@ -975,6 +989,16 @@ def get_message_media(conversation_id: str, message_id: int, db: Session = Depen
         if media.data is not None: media.data = None; db.commit()
         raise HTTPException(status_code=410, detail="Süreli fotoğrafın görüntüleme süresi doldu")
     if media.data is None: raise HTTPException(status_code=410, detail="Fotoğraf artık kullanılamıyor")
+    if preview and media.temporary:
+        if media.media_type != "image": raise HTTPException(status_code=400, detail="Önizleme yalnızca fotoğraf içindir")
+        try:
+            blurred = _blur_temporary_photo(media.data)
+        except Exception as exc:
+            logger.warning("Temporary photo preview failed for message %s: %s", message_id, exc)
+            raise HTTPException(status_code=415, detail="Fotoğraf önizlemesi oluşturulamadı") from exc
+        return Response(content=blurred, media_type="image/jpeg",
+            headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache",
+                "X-Content-Type-Options":"nosniff", "X-Erischat-Preview":"blurred"})
     countdown = 0
     if media.temporary and user.id != message.sender_id:
         now = datetime.now(timezone.utc)

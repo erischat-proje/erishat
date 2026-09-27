@@ -22,20 +22,68 @@
     return `${label} · ${time}`;
   }
 
+  function markPhotoExpired(message) {
+    message._expired = true;
+    const row = document.querySelector(`#chat .bubble[data-message-id="${String(message.id).replace(/[^\w-]/g,'')}"]`);
+    const media=row?.querySelector('.dm-image-message');
+    if(media)media.innerHTML='<div class="dm-temp-preview expired"><span class="dm-temp-lock">⌛</span><span><b>Süre doldu</b><small>Bu fotoğraf artık görüntülenemiyor</small></span></div>';
+  }
+
+  function schedulePhotoExpiry(message, seconds) {
+    if (!message.id || !(seconds > 0)) return;
+    clearTimeout(message._expiryTimer);
+    message._expiresClientAt = Date.now() + seconds * 1000;
+    message._expiryTimer = setTimeout(() => markPhotoExpired(message), seconds * 1000 + 100);
+  }
+
+  function formatAudioTime(value) {
+    if (!Number.isFinite(value)) return '0:00';
+    const n = Math.max(0, Math.floor(value));
+    return `${Math.floor(n / 60)}:${String(n % 60).padStart(2,'0')}`;
+  }
+
+  function releaseMediaUrls(root){
+    root?.querySelectorAll('[data-object-url]').forEach(node=>{URL.revokeObjectURL(node.dataset.objectUrl);delete node.dataset.objectUrl});
+    root?.querySelectorAll('.dm-voice-player').forEach(player=>{player._audio?.pause();if(player._objectUrl)URL.revokeObjectURL(player._objectUrl);player._audio=null;player._objectUrl=null});
+  }
+
+  function loadRegularPhoto(message, image, status) {
+    fetchMedia(message).then(async response => {
+      const url = URL.createObjectURL(await response.blob());
+      if (!image.isConnected) { URL.revokeObjectURL(url); return; }
+      image.src = url; image.dataset.objectUrl = url; image.classList.add('loaded'); status?.remove();
+    }).catch(error => { if (image.isConnected && status) status.textContent = error.message || 'Fotoğraf yüklenemedi'; });
+  }
+
+  function loadTemporaryPreview(message,image,status){
+    fetchMedia(message,true).then(async response=>{const url=URL.createObjectURL(await response.blob());if(!image.isConnected){URL.revokeObjectURL(url);return}image.src=url;image.dataset.objectUrl=url;status?.remove()}).catch(error=>{if(error?.message?.includes('süresi doldu')||error?.message?.includes('artık kullanılamıyor'))markPhotoExpired(message);else if(status)status.textContent='Süreli fotoğraf'});
+  }
+
   function renderMessage(message, mine) {
     const row = document.createElement('div');
     row.className = 'bubble' + (mine ? ' me' : '');
     if (message?.id != null) row.dataset.messageId = String(message.id);
     row.dataset.read = message?.is_read ? '1' : '0';
-    const body = document.createElement('div');
-    body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : String(message?.text ?? message?.message ?? '');
+    const body = document.createElement('div'); body.className='dm-message-text';
+    body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (message?.media_type ? '' : String(message?.text ?? message?.message ?? ''));
     row.append(body);
     if (message?.media_type === 'image') {
-      const open=document.createElement('button');open.type='button';open.textContent=message.temporary?`🕒 Süreli fotoğraf · ${Number(message.view_seconds||10)} sn`:'🖼 Fotoğrafı görüntüle';
-      open.style.cssText='display:block;margin-top:6px;border:1px solid #ffffff25;border-radius:9px;padding:7px 9px;background:#ffffff12;color:#fff;font-size:9px';
-      open.onclick=()=>viewPhoto(message); row.append(open);
+      const media=document.createElement('div');media.className='dm-image-message';
+      const expired=message.temporary&&message.expires_at&&new Date(message.expires_at).getTime()<=Date.now();
+      if(message.temporary&&!mine){
+        const open=document.createElement('button');open.type='button';open.className='dm-temp-preview'+(expired?' expired':'');open.innerHTML=expired?'<span class="dm-temp-lock">⌛</span><span><b>Süre doldu</b><small>Bu fotoğraf artık görüntülenemiyor</small></span>':`<span class="dm-temp-lock">◉</span><span class="dm-temp-label"><b>Süreli fotoğraf</b><small>${Number(message.view_seconds||10)} sn · Dokunup aç</small></span>`;
+        if(!expired){const preview=document.createElement('img');preview.className='dm-temp-blur';preview.alt='Bulanık süreli fotoğraf önizlemesi';open.prepend(preview);const status=document.createElement('span');status.className='dm-temp-status';open.prepend(status);loadTemporaryPreview(message,preview,status)}
+        open.disabled=!!expired;open.onclick=()=>viewPhoto(message);media.append(open);
+      }else{
+        const image=document.createElement('img');image.className='dm-inline-photo';image.alt='Gönderilen fotoğraf';image.loading='lazy';
+        const status=document.createElement('span');status.className='dm-media-loading';status.textContent='Fotoğraf yükleniyor…';
+        const open=document.createElement('button');open.type='button';open.className='dm-photo-open';open.setAttribute('aria-label','Fotoğrafı büyüt');open.append(image,status);open.onclick=()=>viewPhoto(message);media.append(open);loadRegularPhoto(message,image,status);
+      }
+      row.append(media);
     } else if (message?.media_type === 'voice') {
-      const play=document.createElement('button');play.type='button';play.textContent='▶ Sesli mesajı dinle';play.style.cssText='display:block;margin-top:6px;border:1px solid #ffffff25;border-radius:9px;padding:7px 9px;background:#ffffff12;color:#fff;font-size:9px';play.onclick=()=>playVoice(message);row.append(play);
+      const player=document.createElement('div');player.className='dm-voice-player';
+      player.innerHTML='<button type="button" class="dm-voice-toggle" aria-label="Sesli mesajı oynat">▶</button><div class="dm-voice-main"><div class="dm-wave" aria-hidden="true">'+Array.from({length:24},(_,i)=>`<i style="--h:${20+((i*17+9)%68)}%"></i>`).join('')+'</div><input class="dm-voice-progress" type="range" min="0" max="1000" value="0" aria-label="Sesli mesaj konumu"><div class="dm-track" aria-hidden="true"><i></i></div><small class="dm-voice-time">0:00</small></div>';
+      player.querySelector('.dm-voice-toggle').onclick=()=>playVoice(message,player);player.querySelector('.dm-voice-progress').oninput=()=>{const audio=player._audio;if(audio?.duration)audio.currentTime=audio.duration*Number(player.querySelector('.dm-voice-progress').value)/1000};row.append(player);
     }
     if (message?.is_pinned) { const pin=document.createElement('span'); pin.dataset.pinIcon=''; pin.textContent='📌 '; pin.style.cssText='font-size:8px;color:#f3d995'; row.prepend(pin); }
     const meta = document.createElement('small');
@@ -110,41 +158,50 @@
     if (list) list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Konuşmalar yüklenemedi.</div>';
   }
 
-  async function fetchMedia(message) {
+  async function fetchMedia(message, preview=false) {
     const token=api()?.getAccessToken?.()||localStorage.getItem('erischat_access_token')||localStorage.getItem('token')||'';
-    const url=api()?.messageMediaUrl?.(message.media_url);
+    let url=api()?.messageMediaUrl?.(message.media_url);
     if(!url)throw new Error('Medya adresi bulunamadı.');
+    if(preview)url+=(url.includes('?')?'&':'?')+'preview=1';
     const response=await fetch(url,{headers:token?{Authorization:'Bearer '+token}:{},cache:'no-store'});
     if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.detail||'Medya açılamadı.');}
     return response;
   }
 
   async function viewPhoto(message) {
+    if(message._expired)return;
     let response,objectUrl;
     try{response=await fetchMedia(message);objectUrl=URL.createObjectURL(await response.blob());}
-    catch(error){window.toast?.(error.message||'Fotoğraf açılamadı.');return;}
+    catch(error){if(error?.message?.includes('süresi doldu')||error?.message?.includes('artık kullanılamıyor'))markPhotoExpired(message);window.toast?.(error.message||'Fotoğraf açılamadı.');return;}
     const seconds=Number(response.headers.get('X-Erischat-Expires-In')||0);
     const protectedView=!!message.temporary&&seconds>0;
-    const modal=document.createElement('div');modal.id='erisTemporaryPhotoViewer';modal.style.cssText='position:fixed;inset:0;z-index:20000;background:#05040af5;display:grid;place-items:center;padding:16px';
-    modal.innerHTML='<div style="position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;color:white;font-size:12px"><b data-photo-label></b><button data-photo-close style="border:0;background:#ffffff20;color:white;border-radius:12px;width:40px;height:40px;font-size:22px">×</button></div><img data-photo-image alt="Gönderilen fotoğraf" style="display:block;max-width:100%;max-height:82vh;object-fit:contain;border-radius:12px"><small data-photo-timer style="position:absolute;bottom:max(18px,env(safe-area-inset-bottom));color:#fff"></small>';
+    if(protectedView)schedulePhotoExpiry(message,seconds);
+    const modal=document.createElement('div');modal.id='erisTemporaryPhotoViewer';modal.className='dm-photo-viewer';
+    modal.innerHTML='<div class="dm-photo-viewer-head"><b data-photo-label></b><button type="button" data-photo-close aria-label="Kapat">×</button></div><img data-photo-image alt="Gönderilen fotoğraf"><small data-photo-timer></small>';
     document.body.append(modal);modal.querySelector('[data-photo-image]').src=objectUrl;
-    let remain=seconds,timer=null;
+    let timer=null;const expiresAt=Date.now()+seconds*1000;
     const label=modal.querySelector('[data-photo-label]'),countdown=modal.querySelector('[data-photo-timer]');
-    const update=()=>{label.textContent=protectedView?'Süreli fotoğraf':'';countdown.textContent=protectedView?`Fotoğraf ${remain} saniye içinde silinecek`:''};update();
+    const update=()=>{const remain=Math.max(0,Math.ceil((expiresAt-Date.now())/1000));label.textContent=protectedView?'Süreli fotoğraf':'';countdown.textContent=protectedView?`Kalan süre · ${remain} sn`:'';return remain};update();
     const close=()=>{if(timer)clearInterval(timer);window.ErisScreenProtection?.set?.('temporary-photo',false);modal.remove();URL.revokeObjectURL(objectUrl);document.removeEventListener('contextmenu',block);document.removeEventListener('keydown',keyBlock,true);window.removeEventListener('blur',blurCheck);document.removeEventListener('visibilitychange',visibilityCheck)};
     const block=e=>{if(protectedView)e.preventDefault()};
     const keyBlock=e=>{if(protectedView&&(e.key==='PrintScreen'||(e.ctrlKey&&['s','p','c'].includes(e.key.toLowerCase())))){e.preventDefault();e.stopImmediatePropagation()}};
     const blurCheck=()=>{if(protectedView)modal.classList.add('capture-hidden')};
     const visibilityCheck=()=>{if(document.hidden&&protectedView)modal.classList.add('capture-hidden');else modal.classList.remove('capture-hidden')};
     modal.querySelector('[data-photo-close]').onclick=close;modal.addEventListener('click',e=>{if(e.target===modal&&!protectedView)close()});
-    if(protectedView){window.ErisScreenProtection?.set?.('temporary-photo',true);modal.addEventListener('contextmenu',block);document.addEventListener('contextmenu',block);document.addEventListener('keydown',keyBlock,true);window.addEventListener('blur',blurCheck);document.addEventListener('visibilitychange',visibilityCheck);timer=setInterval(()=>{remain-=1;update();if(remain<=0)close()},1000)}
+    if(protectedView){window.ErisScreenProtection?.set?.('temporary-photo',true);modal.addEventListener('contextmenu',block);document.addEventListener('contextmenu',block);document.addEventListener('keydown',keyBlock,true);window.addEventListener('blur',blurCheck);document.addEventListener('visibilitychange',visibilityCheck);timer=setInterval(()=>{if(update()<=0){markPhotoExpired(message);close()}},250)}
   }
 
-  async function playVoice(message) {
-    const button=document.querySelector(`#chat .bubble[data-message-id="${String(message.id).replace(/[^\w-]/g,'')}"] button`);
-    if(button){button.disabled=true;button.textContent='⏳ Ses yükleniyor…'}
-    try{const response=await fetchMedia(message),url=URL.createObjectURL(await response.blob()),audio=new Audio(url);audio.onended=()=>{URL.revokeObjectURL(url);if(button){button.disabled=false;button.textContent='▶ Sesli mesajı dinle'}};await audio.play();if(button)button.textContent='⏸ Çalıyor…'}
-    catch(error){if(button){button.disabled=false;button.textContent='▶ Tekrar dene'}window.toast?.(error.message||'Sesli mesaj oynatılamadı.')}
+  async function playVoice(message, player) {
+    const button=player?.querySelector('.dm-voice-toggle'),progress=player?.querySelector('.dm-voice-progress'),time=player?.querySelector('.dm-voice-time');
+    if(!player)return;
+    if(player._audio){if(player._audio.paused){await player._audio.play().catch(()=>{});if(button)button.textContent='Ⅱ'}else{player._audio.pause();if(button)button.textContent='▶'}return}
+    if(button){button.disabled=true;button.textContent='…'}
+    try{
+      const response=await fetchMedia(message),url=URL.createObjectURL(await response.blob()),audio=new Audio(url);player._audio=audio;player._objectUrl=url;
+      const sync=()=>{if(!progress||!time)return;const ratio=audio.duration?audio.currentTime/audio.duration:0;progress.value=String(Math.round(ratio*1000));progress.style.setProperty('--played',`${ratio*100}%`);player.querySelector('.dm-wave')?.style.setProperty('--played',`${ratio*100}%`);const track=player.querySelector('.dm-track i');if(track)track.style.width=`${ratio*100}%`;time.textContent=audio.duration?`${formatAudioTime(audio.currentTime)} / ${formatAudioTime(audio.duration)}`:formatAudioTime(audio.currentTime)};
+      audio.ontimeupdate=sync;audio.onloadedmetadata=sync;audio.onplay=()=>{if(button){button.disabled=false;button.textContent='Ⅱ'}};audio.onpause=()=>{if(button){button.disabled=false;button.textContent='▶'}};audio.onended=()=>{audio.currentTime=0;sync();if(button)button.textContent='▶'};
+      if(button)button.disabled=false;await audio.play();
+    }catch(error){if(button){button.disabled=false;button.textContent='↻'}window.toast?.(error.message||'Sesli mesaj oynatılamadı.')}
   }
 
   async function uploadMedia(file,type,seconds=0){
@@ -159,7 +216,7 @@
   }
 
   function openPhotoChooser(){
-    const modal=document.createElement('div');modal.className='dm-gift-sheet';modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between"><b>Fotoğraf gönder</b><button class="close" data-x>×</button></div><p style="font-size:9px;color:#aaa1b1;line-height:1.5">Normal fotoğraf mesajda kalır. Süreli fotoğraf, alıcı ilk açtığında seçilen sürenin sonunda silinir.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button data-gallery>🖼 Galeriden fotoğraf</button><button data-camera>📷 Kamerayla fotoğraf</button></div><hr style="border-color:#ffffff15;margin:14px 0"><b style="font-size:11px">Süreli fotoğraf</b><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px"><button data-temp="10">10 sn</button><button data-temp="20">20 sn</button><button data-temp="30">30 sn</button></div><div data-temp-source style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><button data-source="gallery">🖼 Süreli galeriden</button><button data-source="camera">📸 Süreli kamera</button></div></section>';document.body.append(modal);
+    const modal=document.createElement('div');modal.className='dm-gift-sheet';modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between"><b>Fotoğraf gönder</b><button class="close" data-x>×</button></div><p style="font-size:9px;color:#aaa1b1;line-height:1.5">Normal fotoğraf mesajda kalır. Süreli fotoğraf, alıcı ilk açtığında seçilen sürenin sonunda silinir.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button data-gallery>🖼 Galeriden fotoğraf</button><button data-camera>📷 Kamerayla fotoğraf</button></div><hr style="border-color:#ffffff15;margin:14px 0"><b style="font-size:11px">Süreli fotoğraf</b><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px"><button data-temp="10" aria-pressed="true">10 sn</button><button data-temp="20">20 sn</button><button data-temp="30">30 sn</button></div><div data-temp-source style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><button data-source="gallery">🖼 Süreli galeriden</button><button data-source="camera">📸 Süreli kamera</button></div></section>';document.body.append(modal);
     let duration=10;modal.querySelector('[data-x]').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
     modal.querySelector('[data-gallery]').onclick=()=>{modal.remove();pickPhoto(0,false)};modal.querySelector('[data-camera]').onclick=()=>{modal.remove();pickPhoto(0,true)};
     modal.querySelectorAll('[data-temp]').forEach(b=>b.onclick=()=>{duration=Number(b.dataset.temp);modal.querySelectorAll('[data-temp]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));modal.querySelector('[data-temp-source]').style.outline='1px solid #a679ff';window.toast?.('Süre '+duration+' saniye seçildi; galeriden veya kameradan gönder.')});
@@ -177,6 +234,10 @@
     const style = document.createElement('style');
     style.textContent = '.dm-unread{margin-left:auto;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:#ff4fa3;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900}.dm-selected{outline:2px solid #e9c66b!important}.dm-select-tools{display:flex;align-items:center;gap:7px;padding:7px 11px;border-bottom:1px solid #ffffff12;background:#100d16}.dm-select-tools[hidden]{display:none}.dm-select-tools button{border:1px solid #ffffff20;background:#ffffff0a;color:#fff;border-radius:10px;padding:6px 9px;font-size:9px}.dm-pinned{position:sticky;top:0;z-index:2;background:#e4b85d18;border:1px solid #e4b85d44;border-radius:10px;padding:7px 10px;font-size:9px;color:#f3d995}.dm-gift-sheet{position:fixed;inset:0;z-index:500;background:#020107bb;display:flex;align-items:flex-end}.dm-gift-sheet>section{width:min(520px,100%);max-height:76vh;overflow:auto;background:#0b0911;border:1px solid #ffffff20;border-radius:24px 24px 0 0;padding:16px}.dm-gift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.dm-gift-grid button{background:#ffffff08;color:#fff;border:1px solid #ffffff15;border-radius:14px;padding:10px;font-size:11px}.dm-gift-grid small{display:block;color:#e4b85d;margin-top:4px;font-size:9px}';
     document.head.appendChild(style);
+    const mediaStyle=document.createElement('style');
+    mediaStyle.textContent=`.dm-unread[hidden]{display:none!important}.dm-image-message{margin-top:7px}.dm-photo-open{position:relative;display:block;max-width:100%;padding:0;border:0;background:transparent;color:#fff;text-align:left}.dm-inline-photo{display:block;width:min(250px,68vw);max-height:320px;min-height:96px;object-fit:cover;border-radius:14px;background:#201a28}.dm-media-loading{display:block;padding:8px 12px;color:#aaa1b1;font-size:10px}.dm-temp-preview{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;overflow:hidden;width:min(250px,68vw);min-height:112px;padding:14px;border:1px solid #ffffff20;border-radius:15px;background:linear-gradient(135deg,#201a2c,#37213d 55%,#562948);color:#fff;text-align:left}.dm-temp-blur{position:absolute;z-index:-1;inset:-12px;background:radial-gradient(ellipse at 22% 28%,#e872b9a8 0 13%,transparent 46%),radial-gradient(ellipse at 76% 74%,#7860ffa6 0 18%,transparent 52%),linear-gradient(130deg,#29213a,#b14878);filter:blur(15px);transform:scale(1.12)}.dm-temp-lock{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid #ffffff5c;border-radius:50%;background:#0907116e;font-size:17px}.dm-temp-label,.dm-temp-preview>span:last-child{display:grid;gap:4px}.dm-temp-preview b{font-size:12px}.dm-temp-preview small{font-size:10px;color:#f0e6f4}.dm-temp-preview.expired{min-height:74px;background:#16131b;color:#aaa1b1}.dm-voice-player{display:flex;align-items:center;gap:10px;width:min(285px,72vw);margin-top:6px;padding:9px 11px;border:1px solid #ffffff14;border-radius:18px;background:linear-gradient(135deg,#211b2a,#15121b)}.dm-voice-toggle{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:50%;background:linear-gradient(135deg,#8c54ff,#d44bad);color:white;font-size:15px}.dm-voice-main{position:relative;flex:1;min-width:0;padding-bottom:15px}.dm-wave{height:25px;display:flex;align-items:center;gap:2px;overflow:hidden}.dm-wave i{flex:1;min-width:2px;height:var(--h);border-radius:3px;background:#c6bacf8c}.dm-voice-progress{position:absolute;inset:0 0 14px;width:100%;height:26px;margin:0;opacity:0;cursor:pointer}.dm-voice-time{position:absolute;bottom:0;left:0;color:#b9b0c1;font-size:9px}.dm-photo-viewer{position:fixed;inset:0;z-index:20000;background:#05040af5;display:grid;place-items:center;padding:16px}.dm-photo-viewer-head{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:13px}.dm-photo-viewer-head button{border:1px solid #ffffff20;background:#ffffff12;color:#fff;border-radius:14px;width:42px;height:42px;font-size:22px}.dm-photo-viewer img{display:block;max-width:100%;max-height:82vh;object-fit:contain;border-radius:14px}.dm-photo-viewer>small{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));color:#fff;font-size:12px}.dm-photo-viewer.capture-hidden img{filter:blur(24px);visibility:hidden}.dm-gift-sheet button:not(.close){min-height:44px;border:1px solid #ffffff18;border-radius:14px;background:linear-gradient(145deg,#201a2a,#15121b);color:#f5eff8;font-size:12px;font-weight:650;box-shadow:0 5px 18px #0003;transition:transform .15s,border-color .15s}.dm-gift-sheet button:not(.close):active{transform:scale(.97)}.dm-gift-sheet [data-temp][aria-pressed=true]{border-color:#bd8cff;background:linear-gradient(135deg,#6044a1,#452d66);color:#fff;box-shadow:0 0 0 2px #a67aff26}.dm-gift-sheet .close{border:1px solid #ffffff16;background:#ffffff0b;color:#fff;border-radius:13px;width:42px;height:42px;font-size:21px}.dm-gift-sheet p{font-size:11px!important}.compose button.close[data-dm-photo],.compose button.close[data-dm-voice],.compose button.close[data-dm-gift]{width:46px;height:46px;flex:0 0 46px;border:1px solid #ffffff18;border-radius:15px;background:linear-gradient(145deg,#211a2a,#121019);color:#f8f3fb;font-size:18px;box-shadow:0 5px 15px #0003}.compose button.close[data-dm-photo]:active,.compose button.close[data-dm-voice]:active,.compose button.close[data-dm-gift]:active{transform:scale(.96)}.compose button.close[data-dm-voice][title="Kaydı bitir ve gönder"]{background:linear-gradient(135deg,#c83d69,#8e2f62);box-shadow:0 0 0 3px #ff4fa326}`;
+    mediaStyle.textContent += '.dm-temp-preview img.dm-temp-blur{inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:cover;opacity:.86;filter:blur(13px)}.dm-temp-status{position:absolute;inset:0;pointer-events:none}.dm-voice-player .dm-wave{background:linear-gradient(90deg,#de89ff var(--played,0%),transparent var(--played,0%))}.dm-track{height:3px;margin-top:3px;border-radius:9px;background:#ffffff24;overflow:hidden}.dm-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a76bff,#f45db5)}.dm-voice-player input:focus-visible{opacity:.25;outline:2px solid #bd8cff}';
+    document.head.appendChild(mediaStyle);
     selectionBar = document.createElement('div'); selectionBar.className = 'dm-select-tools'; selectionBar.dataset.dmTools = ''; selectionBar.hidden = true;
     selectionBar.innerHTML = '<span data-selected-count style="flex:1;font-size:9px;color:#d8cddd"></span><button data-pin-selected>Sabitle</button><button data-delete-selected>Sil</button><button data-clear-selected>Kapat</button>';
     const body = chat.querySelector('.chatBody'); body?.parentNode?.insertBefore(selectionBar, body);
@@ -269,7 +330,8 @@
         b.querySelector('small').textContent = c.last_message || (family ? 'Aile sohbeti' : 'Mesajlaşma');
         const badge = b.querySelector('.dm-unread');
         const unread = Number(c.unread_count || 0);
-        if (unread) { badge.hidden = false; badge.textContent = unread > 99 ? '99+' : String(unread); }
+        if (Number.isFinite(unread) && unread > 0 && c.last_message) { badge.hidden = false; badge.textContent = unread > 99 ? '99+' : String(unread); }
+        else badge.remove();
         b.onclick = () => { window.__erisActiveDmUserId = family || welcome ? null : (other.id || other.user_id || null); openRealChat(id, name, family ? '👪' : avatar, window.__erisActiveDmUserId); };
         list.appendChild(b);
       });
@@ -327,7 +389,7 @@
     const title = chat.querySelector('.chatHead b');
     if (title) title.textContent = name;
     renderAvatar(chat.querySelector('.chatHead .ava'), avatar, name?.slice(0, 1)?.toUpperCase());
-    body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Mesajlar yükleniyor…</div>';
+    releaseMediaUrls(body);body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Mesajlar yükleniyor…</div>';
     try {
       const payload = await api().messages(id);
       const messages = asList(payload, ['messages', 'items', 'data']);
