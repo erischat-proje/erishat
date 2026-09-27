@@ -99,10 +99,10 @@
     const can=!!(r?.is_owner||r?.is_moderator);
     const b=top.querySelector('#erisRoomMoreTop');
     if(!b)return;
-    if(!can){b.style.display='none';b.setAttribute('aria-hidden','true');return;}
+
     b.style.display='';b.setAttribute('aria-hidden','false');
     // Keep the existing room button/order; only replace its action with the real permission-aware menu.
-    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisRoomCompleteV3?.openMenu?.('settings');};
+    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisRoomCenterMenu?.();};
   }
 
   function openOwnerSettings(r){
@@ -115,9 +115,9 @@
       (staff?'<div class="v5-card"><div class="v5-grid"><button class="v5-btn" id="erisDirectLock">'+(r.locked?'🔓 Kilidi aç':'🔒 Odayı kilitle')+'</button><button class="v5-btn" id="erisDirectChat">'+(r.chat_enabled===false?'💬 Sohbeti aç':'💬 Sohbeti kapat')+'</button></div>'+
       (owner?'<input id="erisDirectPass" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="4 haneli şifre"><button class="v5-btn" id="erisDirectPassSet" style="width:100%;margin-top:7px">🔐 Şifreyi kaydet</button>':'')+'</div>':'');
     p.classList.add('show');
-    body.querySelector('#erisDirectRename')?.addEventListener('click',async()=>{try{const name=body.querySelector('#erisDirectRoomName').value.trim();await req('/rooms/'+encodeURIComponent(r.id)+'/name',{method:'PATCH',body:JSON.stringify({name})});document.getElementById('erisLiveTitle').textContent=name;window.toast?.('Oda adı güncellendi ✓');}catch(e){window.toast?.(e.message)}}); 
-    body.querySelector('#erisDirectLock')?.addEventListener('click',async()=>{try{if(r.locked)await req('/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'DELETE'});else await req('/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'POST'});window.toast?.('Oda kilidi güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}}); 
-    body.querySelector('#erisDirectChat')?.addEventListener('click',async()=>{try{await req('/rooms/'+encodeURIComponent(r.id)+'/chat',{method:'PATCH',body:JSON.stringify({enabled:r.chat_enabled===false})});window.toast?.('Sohbet ayarı güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}}); 
+    body.querySelector('#erisDirectRename')?.addEventListener('click',async()=>{try{const name=body.querySelector('#erisDirectRoomName').value.trim();await req('/rooms/'+encodeURIComponent(r.id)+'/name',{method:'PATCH',body:JSON.stringify({name})});document.getElementById('erisLiveTitle').textContent=name;window.toast?.('Oda adı güncellendi ✓');}catch(e){window.toast?.(e.message)}});
+    body.querySelector('#erisDirectLock')?.addEventListener('click',async()=>{try{if(r.locked)await req('/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'DELETE'});else await req('/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'POST'});window.toast?.('Oda kilidi güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}});
+    body.querySelector('#erisDirectChat')?.addEventListener('click',async()=>{try{await req('/rooms/'+encodeURIComponent(r.id)+'/chat',{method:'PATCH',body:JSON.stringify({enabled:r.chat_enabled===false})});window.toast?.('Sohbet ayarı güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}});
     body.querySelector('#erisDirectPassSet')?.addEventListener('click',async()=>{try{const pass=body.querySelector('#erisDirectPass').value.trim();if(!/^\d{4}$/.test(pass))throw new Error('4 haneli şifre gir.');await req('/rooms/'+encodeURIComponent(r.id)+'/password',{method:'PUT',body:JSON.stringify({password:pass})});window.toast?.('Oda şifresi kaydedildi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}});
   }
 
