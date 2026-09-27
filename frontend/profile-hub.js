@@ -9,24 +9,25 @@
     const hub = document.createElement('section');
     hub.id = 'erisProfileHub';
     hub.innerHTML = `<style>
-      #erisProfileHub{margin:12px 0 24px;color:#fff;min-width:0}
-      #erisProfileHub .eph-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:5px 0 12px;max-width:100%}
+      #erisProfileHub{margin:16px 0 24px;color:#fff;min-width:0}
+      #erisProfileHub .eph-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:5px 0 12px;max-width:100%}
       #erisProfileHub button{min-width:0;width:100%;border:1px solid #ffffff20;background:#15121b;color:#d7d0dc;border-radius:12px;padding:10px 8px;font-size:12px;white-space:normal;min-height:42px;transition:background .16s,border-color .16s,color .16s}
-      #erisProfileHub button[aria-selected=true]{background:#754cff24;border-color:#9c78ff;color:#fff;box-shadow:inset 0 -2px #a77aff}
+      #erisProfileHub button[aria-selected=true]{background:linear-gradient(135deg,#754cff32,#ef4eac18);border-color:#9c78ff;color:#fff;box-shadow:inset 3px 0 #a77aff}
       #erisProfileHub .eph-body{background:linear-gradient(145deg,#15121c,#0c0a10);border:1px solid #ffffff18;border-radius:19px;padding:17px;min-height:82px;font-size:13px;box-shadow:0 12px 30px #0003}
       #erisProfileHub .eph-body h3{margin:0 0 14px;font-size:16px;letter-spacing:-.2px}
       #erisProfileHub .eph-row{padding:9px 0;border-bottom:1px solid #ffffff12;display:flex;align-items:center;justify-content:space-between;gap:9px}
       #erisProfileHub .eph-body input,#erisProfileHub .eph-body textarea{display:block;width:100%;box-sizing:border-box;padding:12px;background:#100e15;border:1px solid #ffffff20;color:#fff;border-radius:12px;margin:6px 0 14px;font:inherit;outline:none}
       #erisProfileHub .eph-body input:focus,#erisProfileHub .eph-body textarea:focus{border-color:#9b76ff;box-shadow:0 0 0 3px #8a5cff22}
-      @media(max-width:520px){#erisProfileHub .eph-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#erisProfileHub .eph-tabs button{font-size:11px;padding:9px 5px}#erisProfileHub .eph-body{padding:15px;border-radius:17px}}
+      @media(max-width:520px){#erisProfileHub .eph-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#erisProfileHub .eph-tabs button{font-size:11px;padding:9px 7px;min-height:44px}#erisProfileHub .eph-body{padding:15px;border-radius:17px}}
       #erisProfileHub .eph-body label{font-size:11px;color:#c4b5d2}
       #erisProfileHub .eph-muted{color:#aea0bc;font-size:11px;line-height:1.5}
     </style><div class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div><div class="eph-body" role="tabpanel" aria-live="polite"></div>`;
     view.append(hub);
-    const tabs = [['info','Bilgilerim'],['social','Takip'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
+    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
     const strip = hub.querySelector('.eph-tabs');
+    const icons={info:'👤',posts:'✍️',social:'👥',collection:'✨',vip:'♛',wallet:'💎',gifts:'🎁',notifications:'🔔',privacy:'🛡️',blocked:'🚫'};
     for (const [key,label] of tabs) {
-      const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.textContent=label;
+      const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML='<span aria-hidden="true" style="width:22px;font-size:16px">'+icons[key]+'</span><span>'+escape(label)+'</span>';
       button.onclick=()=>show(key);strip.append(button);
     }
     show('info');
@@ -53,6 +54,13 @@
             body.querySelector('[data-status]').textContent=updated?'Profil kaydedildi.':'Profil kaydedilemedi.';
           }catch(error){body.querySelector('[data-status]').textContent=error.message||'Profil kaydedilemedi.'}finally{btn.disabled=false}
         };return;
+      }
+      if(key==='posts') {
+        body.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><h3 style="margin:0 0 4px">Gönderilerim</h3><div class="eph-muted">Paylaşımlarını buradan düzenle veya kaldır.</div></div><button type="button" data-create>＋ Paylaş</button></div><div data-posts-list style="margin-top:12px"></div>';
+        body.querySelector('[data-create]').onclick=()=>window.ErisSocialFeed?.compose?.();
+        const list=body.querySelector('[data-posts-list]');
+        if(window.ErisSocialFeed?.loadMine)await window.ErisSocialFeed.loadMine(list);else list.textContent='Gönderi sistemi yüklenemedi.';
+        return;
       }
       if(key==='social') {
         const [followers,following,fans]=await Promise.all([api('/users/'+encodeURIComponent(me.id)+'/followers'),api('/users/'+encodeURIComponent(me.id)+'/following'),api('/users/'+encodeURIComponent(me.id)+'/fans')]);if(index!==requestIndex)return;

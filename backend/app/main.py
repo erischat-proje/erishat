@@ -30,7 +30,7 @@ from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
-    SocialStory, SocialStoryView, UserFollow)
+    SocialPost, SocialStory, SocialStoryView, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -988,6 +988,121 @@ def get_message_media(conversation_id: str, message_id: int, db: Session = Depen
             "X-Content-Type-Options":"nosniff", "X-Erischat-Expires-In":str(countdown)})
 
 
+@app.get("/v1/posts/feed")
+def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|following|recent)$"),
+    limit: int = Query(default=30, ge=1, le=100), offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    following = list(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
+    query = select(SocialPost).join(User, User.id == SocialPost.user_id).where(User.is_active.is_(True))
+    if mode == "following":
+        query = query.where(SocialPost.user_id.in_({user.id, *following}))
+    rows = list(db.scalars(query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
+    result = []
+    for post in rows:
+        author = db.get(User, post.user_id)
+        if not author:
+            continue
+        result.append({"id": post.id, "user_id": author.id, "nickname": author.nickname,
+            "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": post.caption,
+            "created_at": post.created_at, "updated_at": post.updated_at,
+            "has_image": post.image_bytes is not None,
+            "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
+            "is_mine": post.user_id == user.id})
+    return result
+
+
+@app.get("/v1/me/posts")
+def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    rows = list(db.scalars(select(SocialPost).where(SocialPost.user_id == user.id)
+        .order_by(SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
+    return [{"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
+        "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
+        "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
+        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None, "is_mine": True}
+        for post in rows]
+
+
+@app.post("/v1/posts", status_code=201)
+async def create_social_post(caption: str = Form(default=""), file: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    caption = caption.strip()
+    if len(caption) > 2000:
+        raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
+    if not caption and file is None:
+        raise HTTPException(status_code=400, detail="Gönderi için metin veya fotoğraf ekleyin")
+    mime_type = None
+    data = None
+    if file is not None:
+        mime_type = (file.content_type or "").split(";", 1)[0].strip().lower()
+        signatures = {"image/jpeg": (b"\xff\xd8\xff",), "image/png": (b"\x89PNG\r\n\x1a\n",),
+            "image/gif": (b"GIF87a", b"GIF89a"), "image/webp": (b"RIFF",)}
+        if mime_type not in signatures:
+            raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
+        data = await file.read(10 * 1024 * 1024 + 1)
+        valid = bool(data) and len(data) <= 10 * 1024 * 1024 and any(data.startswith(prefix) for prefix in signatures[mime_type])
+        if mime_type == "image/webp": valid = valid and data[8:12] == b"WEBP"
+        if not valid:
+            raise HTTPException(status_code=413 if data and len(data) > 10 * 1024 * 1024 else 415,
+                detail="Fotoğraf 10 MB sınırını aşmamalı ve geçerli bir görsel olmalı")
+    post = SocialPost(user_id=user.id, caption=caption, mime_type=mime_type, image_bytes=data)
+    db.add(post); db.commit(); db.refresh(post)
+    return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
+        "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
+        "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
+        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None, "is_mine": True}
+
+
+@app.patch("/v1/posts/{post_id}")
+async def update_social_post(post_id: int, caption: str | None = Form(default=None),
+    file: UploadFile | None = File(default=None), remove_image: bool = Form(default=False),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = db.get(SocialPost, post_id)
+    if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini düzenleyebilirsin")
+    if caption is not None:
+        caption = caption.strip()
+        if len(caption) > 2000: raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
+        post.caption = caption
+    if remove_image:
+        post.image_bytes = None; post.mime_type = None
+    if file is not None:
+        mime_type = (file.content_type or "").split(";", 1)[0].strip().lower()
+        signatures = {"image/jpeg": (b"\xff\xd8\xff",), "image/png": (b"\x89PNG\r\n\x1a\n",),
+            "image/gif": (b"GIF87a", b"GIF89a"), "image/webp": (b"RIFF",)}
+        if mime_type not in signatures: raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
+        data = await file.read(10 * 1024 * 1024 + 1)
+        valid = bool(data) and len(data) <= 10 * 1024 * 1024 and any(data.startswith(prefix) for prefix in signatures[mime_type])
+        if mime_type == "image/webp": valid = valid and data[8:12] == b"WEBP"
+        if not valid: raise HTTPException(status_code=413 if data and len(data) > 10 * 1024 * 1024 else 415, detail="Fotoğraf geçersiz veya 10 MB sınırını aşıyor")
+        post.image_bytes = data; post.mime_type = mime_type
+    if not post.caption and post.image_bytes is None:
+        raise HTTPException(status_code=400, detail="Gönderide metin veya fotoğraf kalmalı")
+    db.commit(); db.refresh(post)
+    return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
+        "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
+        "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
+        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None, "is_mine": True}
+
+
+@app.delete("/v1/posts/{post_id}")
+def delete_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = db.get(SocialPost, post_id)
+    if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini silebilirsin")
+    db.delete(post); db.commit()
+    return {"deleted": True, "post_id": post_id}
+
+
+@app.get("/v1/posts/{post_id}/media")
+def get_social_post_media(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = db.get(SocialPost, post_id)
+    if not post or post.image_bytes is None or not post.mime_type:
+        raise HTTPException(status_code=404, detail="Gönderi fotoğrafı bulunamadı")
+    return Response(content=post.image_bytes, media_type=post.mime_type,
+        headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
+
+
 @app.get("/v1/stories")
 def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = Depends(get_db), user: User = Depends(current_user)):
     now = datetime.now(timezone.utc)
@@ -1008,7 +1123,7 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
         result.append({"id": story.id, "user_id": author.id, "nickname": author.nickname,
             "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": story.caption,
             "created_at": story.created_at, "expires_at": story.expires_at, "viewed": viewed,
-            "view_count": view_count, "media_url": f"/stories/{story.id}/media"})
+            "view_count": view_count, "media_url": f"/stories/{story.id}/media", "is_mine": story.user_id == user.id})
     return result
 
 
@@ -1030,7 +1145,7 @@ async def create_story(file: UploadFile = File(...), caption: str = Form(default
         image_bytes=data, expires_at=datetime.now(timezone.utc) + timedelta(hours=24))
     db.add(story); db.commit(); db.refresh(story)
     return {"id": story.id, "user_id": user.id, "caption": story.caption, "created_at": story.created_at,
-        "expires_at": story.expires_at, "media_url": f"/stories/{story.id}/media", "view_count": 0, "viewed": False}
+        "expires_at": story.expires_at, "media_url": f"/stories/{story.id}/media", "view_count": 0, "viewed": False, "is_mine": True}
 
 
 @app.get("/v1/stories/{story_id}/media")

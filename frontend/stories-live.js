@@ -24,10 +24,8 @@
     const list = root.querySelector('[data-story-list]');
     try {
       const rows = await api().stories(100); list.replaceChildren();
-      const own = rows.filter(x => String(x.user_id) === String(window.ErisAuth?.user?.id || ''));
-      if (!own.length) list.append(storyButton({id:'new',nickname:'Story ekle',avatar:'＋',isAdd:true}, root));
+      list.append(storyButton({id:'new',nickname:'Story ekle',avatar:'＋',isAdd:true}, root));
       rows.forEach(item => list.append(storyButton(item, root)));
-      if (!rows.length && own.length) list.append(storyButton({id:'new',nickname:'Story ekle',avatar:'＋',isAdd:true}, root));
     } catch (error) { list.innerHTML = '<small style="color:#f7aac7;font-size:9px">Story’ler yüklenemedi. Tekrar denemek için sayfayı yenileyin.</small>'; }
     finally { loading = false; }
   }
@@ -56,7 +54,14 @@
     catch(error){window.toast?.(error.message||'Story açılamadı.');await load();return}
     const viewer=document.createElement('div');viewer.className='eris-story-viewer';viewer.innerHTML='<div class="eris-story-progress"><i></i></div><header><b></b><button type="button" class="close" style="color:white">×</button></header><img alt="Story"><footer></footer>';
     viewer.querySelector('header b').textContent=item.nickname||'Kullanıcı';viewer.querySelector('img').src=objectUrl;viewer.querySelector('footer').textContent=item.caption||'';document.body.append(viewer);
-    const close=()=>{clearTimeout(timer);URL.revokeObjectURL(objectUrl);viewer.remove()};viewer.querySelector('button').onclick=close;let timer=setTimeout(close,6000);await load();
+    const close=()=>{clearTimeout(timer);URL.revokeObjectURL(objectUrl);viewer.remove()};viewer.querySelector('button').onclick=close;let timer=setTimeout(close,6000);
+    const myId=window.ErisAuth?.user?.id;
+    if(item.is_mine||(myId&&String(myId)===String(item.user_id))){
+      const remove=document.createElement('button');remove.type='button';remove.className='close';remove.textContent='Sil';remove.style.cssText='color:#fff;border:1px solid #ffffff30;background:#21131c;padding:0 12px;width:auto';
+      remove.onclick=async()=>{if(!window.confirm('Bu story silinsin mi?'))return;remove.disabled=true;try{await api().deleteStory(item.id);close();window.toast?.('Story silindi.');await load()}catch(error){remove.disabled=false;window.toast?.(error.message||'Story silinemedi.')}};
+      viewer.querySelector('header').insertBefore(remove,viewer.querySelector('header button'));
+    }
+    await load();
   }
 
   window.ErisChatStories={load,compose};

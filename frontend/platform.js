@@ -50,6 +50,12 @@
     stories:limit=>request(`/stories?limit=${Number(limit)||100}`),
     createStory:(file,caption='')=>{const body=new FormData();body.append('file',file);body.append('caption',caption);return request('/stories',{method:'POST',body,timeout:30000});},
     deleteStory:id=>request(`/stories/${encodeURIComponent(id)}`,{method:'DELETE'}),
-    storyMediaUrl:path=>`${API}/${String(path||'').replace(/^\/+/, '')}`
+    storyMediaUrl:path=>`${API}/${String(path||'').replace(/^\/+/, '')}`,
+    socialFeed:(mode='for-you',limit=30,offset=0)=>request(`/posts/feed?mode=${encodeURIComponent(mode)}&limit=${Number(limit)||30}&offset=${Number(offset)||0}`),
+    myPosts:(limit=100,offset=0)=>request(`/me/posts?limit=${Number(limit)||100}&offset=${Number(offset)||0}`),
+    createPost:(caption,file)=>{const body=new FormData();body.append('caption',caption||'');if(file)body.append('file',file);return request('/posts',{method:'POST',body,timeout:30000});},
+    updatePost:(id,caption,file,removeImage=false)=>{const body=new FormData();body.append('caption',caption||'');body.append('remove_image',String(!!removeImage));if(file)body.append('file',file);return request(`/posts/${encodeURIComponent(id)}`,{method:'PATCH',body,timeout:30000});},
+    deletePost:id=>request(`/posts/${encodeURIComponent(id)}`,{method:'DELETE'}),
+    postMediaUrl:path=>`${API}/${String(path||'').replace(/^\/+/, '')}`
   };
 })();
