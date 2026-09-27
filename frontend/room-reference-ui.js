@@ -640,6 +640,11 @@
     };
     const refresh=()=>window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda');
     if(!occupied){
+      if(!seat.classList.contains('locked'))
+        add('＋','Koltuğa otur',async()=>{
+          await roomApi().joinSeat(id,number);
+          await refresh();
+        });
       add(seat.classList.contains('locked')?'🔓':'🔒',
           seat.classList.contains('locked')?'Koltuğun kilidini aç':'Koltuğu kilitle',
           async()=>{if(seat.classList.contains('locked'))await roomApi().unlockSeat(id,number);

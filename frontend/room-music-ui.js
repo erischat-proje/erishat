@@ -95,7 +95,14 @@
     panel.querySelector('[data-close]').onclick=()=>{panel.style.display='none';clearInterval(timer)};
     panel.querySelector('[data-add]').onclick=async()=>{const file=panel.querySelector('[data-file]').files[0],button=panel.querySelector('[data-add]');if(!file)return window.toast?.('Telefonundan bir müzik seç.');if(file.size>8*1024*1024)return window.toast?.('Müzik en fazla 8 MB olabilir.');const form=new FormData();form.append('file',file);form.append('title',panel.querySelector('[data-title]').value.trim()||file.name);button.disabled=true;try{const res=await fetch(base()+path(room()),{method:'POST',headers:{Authorization:'Bearer '+token()},body:form});const result=await res.json().catch(()=>({}));if(!res.ok)throw new Error(result.detail||'Müzik eklenemedi.');panel.querySelector('[data-file]').value='';panel.querySelector('[data-title]').value='';window.toast?.('Müzik oda kuyruğuna eklendi.');await load()}catch(e){window.toast?.(e.message)}finally{button.disabled=false}};
   }
-  window.ErisChatMusic={open(){roomId=room();mount();const panel=document.getElementById('erisMusicPanel');panel.style.display='flex';load();clearInterval(timer);timer=setInterval(load,4000)}};
+  window.ErisChatMusic={open(){
+    const nextRoom=window.ErisCurrentRoomId||window.currentRoomId||roomId;
+    if(roomId&&nextRoom&&String(roomId)!==String(nextRoom)){
+      clearAudio();
+      tracks=[];
+    }
+    roomId=nextRoom;
+    mount();const panel=document.getElementById('erisMusicPanel');panel.style.display='flex';load();clearInterval(timer);timer=setInterval(load,4000)}};
   window.ErisRoom=window.ErisRoom||{};window.ErisRoom.music=id=>api(path(id));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
