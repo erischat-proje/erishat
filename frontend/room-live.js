@@ -194,7 +194,21 @@
     const token=window.ErisPlatform.getAccessToken?.(); if(!token){list.innerHTML='<div style="color:#ff9bc9;font-size:9px">Giriş yapınca canlı oda sohbeti burada çalışır.</div>';return;}
     window.__erisRoomSocket?.close?.();
     const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;
-    const add=d=>{const e=document.createElement('div'),me=String(d.user_id||'')===String(window.__erisCurrentRoomUserId||window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');e.className='eris-chat-msg'+(me?' me':'');e.innerHTML='<b></b><span></span>';e.querySelector('b').textContent=me?'Sen':(d.nickname||d.user_id||'Kullanıcı');e.querySelector('span').textContent=d.text||'';list.appendChild(e);list.scrollTop=list.scrollHeight;};
+    const add=d=>{
+      const e=document.createElement('div'),me=String(d.user_id||'')===String(window.__erisCurrentRoomUserId||window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');
+      e.className='eris-chat-msg'+(me?' me':'');
+      const identity=document.createElement('div');identity.className='eris-chat-identity';
+      const portrait=document.createElement('span');portrait.className='eris-chat-portrait';
+      const cosmetics=window.ErisChatCosmetics;
+      const asset=d.avatar_asset&&cosmetics?.assetUrl?.(d.avatar_asset);
+      if(asset){const img=document.createElement('img');img.className='eris-chat-avatar';img.src=asset;img.alt='';portrait.appendChild(img)}
+      else portrait.textContent=d.avatar||'◈';
+      const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
+      if(frame){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
+      const author=document.createElement('b');author.textContent=me?'Sen':(d.nickname||d.user_id||'Kullanıcı');
+      const body=document.createElement('span');body.className='eris-chat-text';body.textContent=d.text||'';
+      identity.append(portrait,author);e.append(identity,body);list.appendChild(e);list.scrollTop=list.scrollHeight;
+    };
     socket.onopen=()=>{state.dataset.connectionStatus='connected';list.innerHTML='';};
     socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();state.dataset.connectionStatus='disconnected';}};
     socket.onerror=()=>{state.dataset.connectionStatus='error';};

@@ -1693,8 +1693,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             return
         history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
         history.reverse()
-        history_users = {row.id: row.nickname for row in db.query(User.id, User.nickname).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
-        history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users.get(m.user_id,"Kullanıcı"),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+        history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
+        history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
     existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
@@ -1824,7 +1824,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 db.add(msg)
                 db.commit()
                 db.refresh(msg)
-                payload = {"type":"room_chat","id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+                payload = {"type":"room_chat","id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
         room_chat_connections.get(internal_room_id, set()).discard(websocket)
