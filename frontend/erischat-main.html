@@ -77,6 +77,21 @@ column-gap:9px
 .homeMenuItem strong{align-self:end}
 .homeMenuItem small{margin-top:2px}
 }
+</style><style>
+/* Oda Merkezi tasarım dili: ilk adımda ana sayfa. */
+#home>.eyebrow{margin:8px 2px 16px;color:#c9a9ff;font-size:12px;font-weight:800;letter-spacing:2.4px}
+#home .hero.card{position:relative;overflow:hidden;padding:clamp(22px,5vw,34px);border:1px solid #ac86dc38;border-radius:30px;background:radial-gradient(circle at 100% 0,#9b4fbe34,transparent 55%),linear-gradient(145deg,#201629,#100e18 78%);box-shadow:0 22px 55px #0006}
+#home .hero h1.title{font-size:clamp(27px,6vw,42px);line-height:1.12;letter-spacing:-.8px}
+#home .hero p{font-size:clamp(13px,3.4vw,16px);line-height:1.5;color:#bdb3c8}
+#home .section h3{font-size:clamp(17px,4vw,22px);letter-spacing:-.35px}
+#home .homeMenu{gap:12px}
+#home .homeMenuItem{min-height:128px;padding:18px;border:1px solid #ffffff1b;border-radius:24px;background:linear-gradient(145deg,#191520,#100e17);box-shadow:0 10px 28px #0003;transition:transform .18s,border-color .18s,background .18s}
+#home .homeMenuItem:hover,#home .homeMenuItem:focus-visible{border-color:#b68fff80;background:linear-gradient(145deg,#241b31,#13101d);transform:translateY(-2px)}
+#home .homeMenuItem span{display:grid;place-items:center;width:44px;height:44px;margin-bottom:13px;border-radius:15px;background:linear-gradient(145deg,#8354d6,#a343bc);font-size:23px}
+#home .homeMenuItem strong{font-size:15px;line-height:1.25}
+#home .homeMenuItem small{font-size:11px;line-height:1.4}
+@media(max-width:390px){#home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))}#home .homeMenuItem{min-height:138px;display:flex}#home .homeMenuItem span{flex:none}}
+@media(prefers-reduced-motion:reduce){#home .homeMenuItem{transition:none}#home .homeMenuItem:hover{transform:none}}
 </style></head><body>
 <main class="app"><header class="top"><div class="brand">Eris<i>Chat</i></div><div class="actions"><button class="icon" onclick="showView('search')">⌕</button></div></header><section class="content">
 <section id="home" class="view show">
@@ -227,7 +242,7 @@ async function sendChat(){
    if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
    matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
  }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d">Arama şu anda kullanılamıyor.</div>'}
-}};})();</script><script src="./auth-live.js?v=business-auth-20260926-1"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js?v=story-24h-1"></script><script src="./admin-live.js?v=admin-home-announcement-2"></script><script src="./announcement-live.js?v=announcements-2"></script><script src="./vip-rewards-live.js?v=vip-rewards-2"></script><script src="./support-live.js?v=support-2"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=messaging-restriction-1"></script><script src="./screen-protection.js?v=capture-1"></script><script src="./dm-live.js?v=messaging-media-4"></script><script src="./stories-live.js?v=story-24h-1"></script><script src="./social-feed-live.js?v=social-feed-posts-1"></script><script src="./gift-live.js?v=repair-1"></script><script src="./room-live.js?v=room-experience-20260928"></script><script src="./room-reference-ui.js?v=room-experience-20260928"></script><script src="./room-wallpaper-live.js?v=room-wallpaper-2"></script><script src="./room-actions.js?v=room-experience-20260928"></script><script src="./room-rtc-live.js?v=room-experience-20260928"></script><script src="./room-music-ui.js?v=room-experience-20260928"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./games-menu.js?v=games-room-fix-1"></script><script src="./feature-hub-live.js?v=vip-rewards-20260928-1"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
+}};})();</script><script src="./auth-live.js?v=business-auth-20260926-1"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js?v=story-24h-1"></script><script src="./admin-live.js?v=modern-home-admin-20260928-1"></script><script src="./announcement-live.js?v=announcements-2"></script><script src="./vip-rewards-live.js?v=vip-rewards-2"></script><script src="./support-live.js?v=support-2"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=messaging-restriction-1"></script><script src="./screen-protection.js?v=capture-1"></script><script src="./dm-live.js?v=messaging-media-4"></script><script src="./stories-live.js?v=story-24h-1"></script><script src="./social-feed-live.js?v=social-feed-posts-1"></script><script src="./gift-live.js?v=repair-1"></script><script src="./room-live.js?v=room-experience-20260928"></script><script src="./room-reference-ui.js?v=room-experience-20260928"></script><script src="./room-wallpaper-live.js?v=room-wallpaper-2"></script><script src="./room-actions.js?v=room-experience-20260928"></script><script src="./room-rtc-live.js?v=room-experience-20260928"></script><script src="./room-music-ui.js?v=room-experience-20260928"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./games-menu.js?v=games-room-fix-1"></script><script src="./feature-hub-live.js?v=vip-rewards-20260928-1"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
 <script>
 (function(){
  async function loadPrivacy(){
