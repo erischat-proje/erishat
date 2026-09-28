@@ -31,12 +31,8 @@
       #erisProfileHub .eph-row{padding:13px 0}
       @media(max-width:390px){#erisProfileHub .eph-tabs button{min-height:70px;padding:10px;gap:8px;font-size:11px}#erisProfileHub .eph-icon{width:20px;height:20px}}
       #erisProfileHub .eph-tabs[hidden],#erisProfileHub .eph-body[hidden]{display:none!important}
-      #erisProfileHub .eph-menu-toggle{display:flex;align-items:center;gap:13px;text-align:left;min-height:74px;padding:15px 17px;border-color:#b18ade6c;border-radius:20px;background:linear-gradient(145deg,#21172b,#13101b)}
-      #erisProfileHub .eph-menu-toggle b{display:block;font-size:15px;color:#fff}
-      #erisProfileHub .eph-menu-toggle small{display:block;margin-top:4px;font-size:11px;color:#bbaacb}
-      #erisProfileHub .eph-menu-toggle .eph-arrow{margin-left:auto;font-size:22px;color:#ba99e9;transition:transform .18s}
-      #erisProfileHub .eph-menu-toggle[aria-expanded=true] .eph-arrow{transform:rotate(180deg)}
-      #erisProfileHub .eph-tabs{margin-top:8px;padding:12px;max-height:min(48vh,430px);overflow-y:auto;border:1px solid #ffffff1b;border-radius:18px;background:#15111d}
+      #erisProfileHub .eph-tabs{margin-top:10px;padding:0;max-height:none;overflow:visible;border:0;background:none}
+      #erisProfileHub .eph-section-label{display:block;margin:0 2px 12px;color:#b69ace;font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
       #erisProfileHub .eph-tabs button{min-height:52px}
       #erisProfileHub .eph-body{margin-top:12px}
       body.eph-dialog-open{overflow:hidden}
@@ -59,14 +55,14 @@
       .eph-overlay #erisProfileRooms{display:block!important;margin:0}
       .eph-overlay #erisProfileRooms[hidden],.eph-overlay [data-erischat-profile-controls][hidden]{display:none!important}
       @media(max-width:520px){.eph-overlay{padding:12px}.eph-dialog{max-height:90dvh;border-radius:24px}.eph-dialog-head{padding:17px}.eph-dialog-content{padding:16px}}
-    </style><div class="eph-nav"><button type="button" class="eph-menu-toggle" aria-controls="ephTabs" aria-expanded="false"><svg class="eph-icon" aria-hidden="true"><use href="#home-profile"></use></svg><span><b>Profil menüsü</b><small data-current>Bir bölüm seç</small></span><span class="eph-arrow" aria-hidden="true">⌄</span></button><div id="ephTabs" class="eph-tabs" role="tablist" aria-label="Profil bölümleri" hidden></div></div><div class="eph-body" role="tabpanel" aria-live="polite" hidden></div>`;
+    </style><div class="eph-nav"><span class="eph-section-label">Profil bölümleri</span><div id="ephTabs" class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div></div><div class="eph-body" role="tabpanel" aria-live="polite" hidden></div>`;
     view.append(hub);
     const overlay=document.createElement('div');overlay.className='eph-overlay';overlay.hidden=true;
     overlay.innerHTML='<section class="eph-dialog" role="dialog" aria-modal="true" aria-labelledby="ephDialogTitle"><header class="eph-dialog-head"><div><small>ERISCHAT • PROFİL</small><h2 id="ephDialogTitle">Profil</h2></div><button type="button" class="eph-close" aria-label="Kapat">×</button></header><div class="eph-dialog-content"></div></section>';
     document.body.append(overlay);
     overlay.querySelector('.eph-dialog-content').append(hub.querySelector('.eph-body'));
     const settings=view.querySelector('[data-erischat-profile-controls]');if(settings)overlay.querySelector('.eph-dialog-content').append(settings);
-    const close=()=>{if(overlay.hidden)return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview');hub.querySelector('.eph-menu-toggle').focus()};
+    let lastTrigger=null;const close=()=>{if(overlay.hidden)return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview');if(lastTrigger?.isConnected)lastTrigger.focus()};
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
@@ -75,9 +71,8 @@
     const icons={info:'profile',posts:'posts',social:'family',collection:'collection',vip:'vip',wallet:'wallet',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',settings:'security'};
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML='<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg><span>'+escape(label)+'</span>';
-      button.onclick=()=>show(key);strip.append(button);
+      button.onclick=()=>{lastTrigger=button;show(key)};strip.append(button);
     }
-    const toggle=hub.querySelector('.eph-menu-toggle');toggle.onclick=()=>{const open=strip.hidden;strip.hidden=!open;toggle.setAttribute('aria-expanded',String(open))};toggle.onkeydown=e=>{if(e.key==='Escape'){strip.hidden=true;toggle.setAttribute('aria-expanded','false')}};
     show('overview');
   }
   let requestIndex=0;
@@ -86,8 +81,6 @@
     const index=++requestIndex, overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
     const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',collection:'Koleksiyon',vip:'VIP',wallet:'Cüzdan',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
     hub.closest('#profile')?.setAttribute('data-profile-section',key);
-    hub.querySelector('[data-current]').textContent=labels[key]||'Bir bölüm seç';
-    const list=hub.querySelector('.eph-tabs');list.hidden=true;hub.querySelector('.eph-menu-toggle').setAttribute('aria-expanded','false');
     hub.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===key)));
     body.hidden=['overview','settings','rooms'].includes(key);
     const settings=overlay.querySelector('[data-erischat-profile-controls]');if(settings)settings.hidden=key!=='settings';
@@ -116,7 +109,7 @@
       }
       if(key==='posts') {
         body.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><h3 style="margin:0 0 4px">Gönderilerim</h3><div class="eph-muted">Paylaşımlarını buradan düzenle veya kaldır.</div></div><button type="button" data-create>＋ Paylaş</button></div><div data-posts-list style="margin-top:12px"></div>';
-        body.querySelector('[data-create]').onclick=()=>window.ErisSocialFeed?.compose?.();
+        body.querySelector('[data-create]').onclick=()=>{window.ErisProfileHub.close();window.ErisSocialFeed?.compose?.()};
         const list=body.querySelector('[data-posts-list]');
         if(window.ErisSocialFeed?.loadMine)await window.ErisSocialFeed.loadMine(list);else list.textContent='Gönderi sistemi yüklenemedi.';
         return;
@@ -127,7 +120,7 @@
         body.querySelector('[data-followers]').textContent=String(followers.length);body.querySelector('[data-following]').textContent=String(following.length);body.querySelector('[data-level]').textContent=String(fans.level||0);
         const list=body.querySelector('[data-list]');list.textContent='Takip ettiklerin: ';
         if(!following.length) list.append('Henüz kimseyi takip etmiyorsun.');
-        for(const row of following){const button=document.createElement('button');button.type='button';button.textContent=row.user_id;button.onclick=()=>window.openUserProfile?.(row.user_id);list.append(button)}return;
+        for(const row of following){const button=document.createElement('button');button.type='button';button.textContent=row.user_id;button.onclick=()=>{window.ErisProfileHub.close();window.openUserProfile?.(row.user_id)};list.append(button)}return;
       }
       if(key==='collection') {
         const [catalogData,ownedData]=await Promise.all([api('/cosmetics'),api('/me/cosmetics')]);if(index!==requestIndex)return;
@@ -147,7 +140,7 @@
           const use=document.createElement('button');use.type='button';use.textContent='Uygula';use.onclick=async()=>{use.disabled=true;try{await window.ErisChatCosmetics.apply(type,key);await window.ErisProfile.refresh();use.textContent='Uygulandı ✓'}catch(error){use.disabled=false;use.textContent=error.message||'Uygulanamadı'}};
           card.append(image,label,use);grid.append(card);
         }
-        const shop=body.querySelector('[data-shop]');shop.onclick=()=>window.showView?.('shop');return;
+        const shop=body.querySelector('[data-shop]');shop.onclick=()=>{window.ErisProfileHub.close();window.showView?.('shop')};return;
       }
       if(key==='vip') {
         const vip=await api('/me/vip');if(index!==requestIndex)return;
@@ -175,7 +168,7 @@
       }
       if(key==='privacy') {
         body.innerHTML='<h3>Gizlilik ayarları</h3><p class="eph-muted">Profil görünürlüğünü gizlilik ekranından yönetebilirsin.</p><button data-open type="button">Gizlilik ayarlarını aç</button>';
-        body.querySelector('[data-open]').onclick=()=>window.showView?.('anon');return;
+        body.querySelector('[data-open]').onclick=()=>{window.ErisProfileHub.close();window.showView?.('anon')};return;
       }
       if(key==='blocked') {
         const rows=await api('/me/blocks');if(index!==requestIndex)return;
@@ -185,7 +178,7 @@
       }
     }catch(error){if(index===requestIndex)body.textContent=error.message||'Profil bilgileri yüklenemedi.'}
   }
-  window.ErisProfileHub={reset:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')}};
+  window.ErisProfileHub={close:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')},reset:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')}};
   const start=()=>{mount();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready' && panel()?.closest('#profile')?.dataset.profileSection==='info')show('info')})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
