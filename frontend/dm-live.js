@@ -391,8 +391,43 @@
   async function openGiftSheet() {
     if (!activeConversationId || !api()?.messageGifts) return;
     const modal = document.createElement('div'); modal.className='dm-gift-sheet'; modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Hediye seç</b><button class="close" data-close>×</button></div><div class="dm-gift-grid">Yükleniyor…</div></section>'; document.body.appendChild(modal);
+    const giftStyle=document.createElement('style');giftStyle.textContent='.dm-gift-controls{display:grid;gap:8px;margin:8px 0}.dm-gift-categories,.dm-gift-quantities{display:flex;gap:5px;overflow:auto}.dm-gift-controls button{white-space:nowrap;padding:8px;font-size:11px}.dm-gift-controls button.active{border-color:#bd8cff;background:#6044a1}.dm-gift-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}.dm-gift-art{width:82px;height:82px;object-fit:contain}.dm-gift-price{font-size:10px}.dm-gift-price .eris-lidya-coin{width:12px!important;height:12px!important;vertical-align:-2px!important}';modal.append(giftStyle);
     modal.querySelector('[data-close]').onclick=()=>modal.remove(); modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
-    try { const gifts=await api().messageGifts(); const grid=modal.querySelector('.dm-gift-grid'); grid.replaceChildren();grid.style.gridTemplateColumns="repeat(3,minmax(0,1fr))"; gifts.forEach(g=>{const b=document.createElement('button');b.title=g.gift_key;b.setAttribute("aria-label",g.gift_key+" • "+g.unit_price+" Lidya");b.innerHTML=`<img src="${escapeHtml(g.image_url)}" alt="" loading="lazy" style="display:block;width:70px;height:70px;object-fit:contain;margin:auto"><small>${Number(g.unit_price).toLocaleString('tr-TR')} Lidya</small>`;b.onclick=async()=>{try{const m=await api().sendMessageGift(activeConversationId,g.gift_key);appendMessageOnce(document.querySelector('#chat .chatBody'),m,true);modal.remove();loadConversations()}catch(e){window.toast?.(e.message||'Hediye gönderilemedi.')}};grid.append(b)}); }
+    try {
+      const gifts=await api().messageGifts(),grid=modal.querySelector('.dm-gift-grid');
+      const categories=[['all','Tümü',0,Infinity],['agora','Agora & Halk Pazarı',1,29],['sofra','Antik Sofra & Bağlar',30,99],['zanaat','Zanaat & Atölye',100,499],['muhafiz','Saray Muhafızları',500,999],['tuccar','Sardis Tüccarları',1000,9999],['krallik','Krallık Hazinesi',10000,19999],['ihtisam','Antik İhtişam',20000,49999],['mitoloji','Mitoloji & Tanrılar',50000,89999],['krezus','Krezus’un Mirası',90000,Infinity]];
+      let category='all',quantity=1;
+      const controls=document.createElement('div');controls.className='dm-gift-controls';
+      const tabs=document.createElement('div');tabs.className='dm-gift-categories';
+      const qty=document.createElement('div');qty.className='dm-gift-quantities';
+      controls.append(tabs,qty);grid.before(controls);
+      function draw(){
+        tabs.replaceChildren();for(const [key,label,min,max] of categories){
+          const count=key==='all'?gifts.length:gifts.filter(g=>Number(g.unit_price)>=min&&Number(g.unit_price)<=max).length;
+          const button=document.createElement('button');button.type='button';button.textContent=label+' ('+count+')';button.className=category===key?'active':'';
+          button.onclick=()=>{category=key;draw()};tabs.append(button);
+        }
+        qty.replaceChildren();for(const n of [1,3,5,9,49,99]){
+          const button=document.createElement('button');button.type='button';button.textContent='×'+n;button.className=quantity===n?'active':'';
+          button.onclick=()=>{quantity=n;draw()};qty.append(button);
+        }
+        grid.replaceChildren();grid.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
+        const selected=categories.find(x=>x[0]===category);
+        for(const g of gifts.filter(g=>category==='all'||Number(g.unit_price)>=selected[2]&&Number(g.unit_price)<=selected[3])){
+          const button=document.createElement('button');button.type='button';button.title=g.name||g.gift_key;
+          const image=document.createElement('img');image.src=g.image_url;image.alt='';image.loading='lazy';image.className='dm-gift-art';
+          const price=document.createElement('small');price.className='dm-gift-price';price.textContent=Number(g.unit_price).toLocaleString('tr-TR')+' Lidya';
+          button.append(image,price);
+          button.onclick=async()=>{button.disabled=true;try{
+            const message=await api().sendMessageGift(activeConversationId,g.gift_key,quantity);
+            appendMessageOnce(document.querySelector('#chat .chatBody'),message,true);
+            modal.remove();loadConversations();
+          }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}};
+          grid.append(button);
+        }
+      }
+      draw();
+    }
     catch(e){modal.querySelector('.dm-gift-grid').textContent=e.message||'Hediyeler yüklenemedi.';}
   }
 

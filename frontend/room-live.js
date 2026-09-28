@@ -208,7 +208,7 @@
       const author=document.createElement('b');author.textContent=d.nickname||d.user_id||'Kullanıcı';
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
       const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
-      if(fanLevel)badge.onclick=()=>window.ErisRoomFanRanking?.();else badge.hidden=true;
+      if(fanLevel)badge.onclick=()=>window.ErisPersonalFanRanking?.(d.user_id);else badge.hidden=true;
       const body=document.createElement('span');body.className='eris-chat-text';body.textContent=d.text||'';
       identity.append(portrait,author,badge);e.append(identity,body);list.appendChild(e);list.scrollTop=list.scrollHeight;
     };

@@ -294,16 +294,12 @@
   }
 
   async function gifts(body,r){
-    const id=r?.id||roomId(),rows=Array.isArray(r?.seats)?r.seats.filter(x=>x.user_id):[];
-    let data=[];try{data=await roomApi().giftCatalog?.(id)||[]}catch(e){}
-    const gs=Array.isArray(data)?data:(data?.items||data?.gifts||[]);
-    body.innerHTML='<div class="room-v3-card"><b>🎁 Hediye gönder</b><small>200+ oda hediyesi • alıcı seç, hediyeyi seç ve gönder.</small></div><select id="roomGiftRecipient" class="room-v3-input" style="margin-bottom:7px"><option value="">Alıcı seç</option>'+rows.map(x=>'<option value="'+esc(x.user_id)+'">'+esc(x.nickname||x.user_name||x.user_id)+'</option>').join('')+'</select><input id="roomGiftSearch" class="room-v3-input" placeholder="Hediye ara..." style="margin-bottom:7px"><div id="roomV3GiftCount" class="room-v3-note"></div><div class="room-v3-grid" id="roomV3Gifts"></div>';
-    const g=body.querySelector('#roomV3Gifts'),search=body.querySelector('#roomGiftSearch'),recipient=body.querySelector('#roomGiftRecipient'),count=body.querySelector('#roomV3GiftCount');
-    if(!gs.length){g.innerHTML='<div class="room-v3-card"><small>Hediye kataloğu alınamadı. Gerçek odaya bağlı ve giriş yapmış olmalısın.</small></div>';return}
-    g.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
-    const draw=()=>{const q=search.value.trim().toLocaleLowerCase('tr-TR');const list=gs.filter(x=>!q||String(x.name||x.title||x.gift_key||x.key||'').toLocaleLowerCase('tr-TR').includes(q));count.textContent=list.length+' / '+gs.length+' hediye';g.innerHTML='';list.forEach(x=>{const key=x.gift_key||x.key||x.name||x.title,price=Number(x.unit_price??x.price??x.cost??0);const b=document.createElement('button');b.className='room-v3-card';b.title=x.name||key;b.setAttribute('aria-label',(x.name||key)+' • '+price+' Lidya');b.innerHTML='<img src="'+esc(x.image_url||'')+'" alt="" loading="lazy" style="display:block;width:75px;height:75px;object-fit:contain;margin:auto;filter:drop-shadow(0 0 8px #e4b85d77)"><small>'+price.toLocaleString('tr-TR')+' Lidya</small>';b.style.textAlign='center';b.onclick=async()=>{const to=recipient.value;if(!to){window.toast?.('Önce alıcı seç.');return}try{const result=await roomApi().sendGift?.(id,to,key,1);if(!result)throw new Error('Hediye gönderilemedi');window.toast?.('🎁 '+(x.name||key)+' gönderildi ✓')}catch(e){window.toast?.(e.message||'Hediye gönderilemedi')}};g.appendChild(b)})};
-    search.oninput=draw;draw();
+    const id=r?.id||roomId();
+    body.innerHTML='<div class="room-v3-card"><b>🎁 Hediye gönder</b><small>Alıcı, kategori ve adet seçimi</small><button type="button" class="room-v3-input" id="roomOpenUnifiedGifts">Hediye seçicisini aç</button></div>';
+    body.querySelector('#roomOpenUnifiedGifts').onclick=()=>{document.querySelector('.room-v3-panel.show')?.classList.remove('show');window.openRoomGift?.(id)};
+    body.querySelector('#roomOpenUnifiedGifts').click();
   }
+
   async function music(body,r){
     body.textContent='Müzik paneli açılıyor…';
     window.ErisChatMusic?.open?.();

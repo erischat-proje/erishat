@@ -346,46 +346,10 @@
 #erisRoomSurface.room-layout-v6 .eris-chat-text {
   display:block;margin:2px 0 0!important;color:#fff;font-size:12px;line-height:17px;
 }
-/* Fan levels and a single permanent ranking. */
+/* Personal fan badge beside the chat author. */
 #erisRoomSurface.room-layout-v6 .eris-chat-msg.me {align-self:flex-start!important;text-align:left!important}
 #erisRoomSurface.room-layout-v6 .eris-chat-identity {display:flex;align-items:center;gap:5px}
 #erisRoomSurface.room-layout-v6 .eris-chat-identity b {display:inline-block}
 #erisRoomSurface.room-layout-v6 .eris-fan-badge {display:block;width:28px;height:28px;object-fit:contain;cursor:pointer}
 #erisRoomSurface.room-layout-v6 .eris-fan-badge[hidden] {display:none}
-#erisRoomFanButton {position:absolute;right:12px;top:83px;z-index:8;border:1px solid #c396e877;border-radius:20px;background:#211235be;color:white;padding:8px 10px;font-weight:700;font-size:11px}
-#erisRoomFanRanking {position:absolute;inset:0;z-index:60;display:grid;place-items:center}
-#erisRoomFanRanking[hidden] {display:none}
-#erisRoomFanRanking .rf-explain {font-size:12px;line-height:1.5;color:#c7b8d8;margin:4px 0 14px}
-#erisRoomFanRanking .rf-row {gap:6px}
-#erisRoomFanRanking .rf-level {width:30px;height:32px;object-fit:contain;flex:none}
-#erisRoomFanRanking .rc-amount {white-space:nowrap}
 .eris-lidya-coin {width:1.05em;height:1.05em;vertical-align:-.15em;object-fit:contain;margin-left:3px}
-
-#erisRoomFanRanking .rc-avatar {position:relative;overflow:visible}
-#erisRoomFanRanking .rf-avatar-frame {position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);object-fit:contain;pointer-events:none}
-
-/* Match the room contribution dialog without duplicating its period tabs. */
-#erisRoomFanRanking .rc-shade {position:absolute;inset:0;background:#06030dbd;backdrop-filter:blur(9px)}
-#erisRoomFanRanking .rc-panel {
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(480px,calc(100% - 28px));height:min(680px,85dvh);display:flex;flex-direction:column;
-  padding:18px;box-sizing:border-box;border:1px solid #bd93ed80;border-radius:25px;
-  background:linear-gradient(155deg,#251636f5,#100b1ef7);box-shadow:0 30px 90px #000b;
-}
-#erisRoomFanRanking header {display:flex;justify-content:space-between;align-items:start}
-#erisRoomFanRanking header small {font-size:10px;letter-spacing:2px;color:#c3a4ed}
-#erisRoomFanRanking h2 {margin:5px 0 13px;font-size:24px}
-#erisRoomFanRanking .rc-close {width:37px;height:37px;border:1px solid #d6bbf85a;border-radius:12px;background:#ffffff10;color:#fff;font-size:25px}
-#erisRoomFanRanking .rc-periods {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:13px}
-#erisRoomFanRanking .rc-periods button {min-width:0;padding:9px 2px;border:1px solid #d7bded57;border-radius:12px;background:#ffffff0b;color:#e8d9f5;font-size:11px}
-#erisRoomFanRanking .rc-periods button.active {background:#7145bb;border-color:#d4b3ff;color:#fff}
-#erisRoomFanRanking .rc-list {overflow:auto;min-height:0;flex:1;color:#cdbbe0;font-size:13px}
-#erisRoomFanRanking .rc-row {display:flex;align-items:center;gap:6px;margin-bottom:8px}
-#erisRoomFanRanking .rc-rank {flex:0 0 22px;text-align:center;color:#d6b2ff;font-weight:800}
-#erisRoomFanRanking .rc-avatar {flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;overflow:hidden;border:1px solid #c9a6f7;border-radius:50%;background:#492e6b;color:#fff}
-#erisRoomFanRanking .rc-avatar img {width:100%;height:100%;object-fit:cover;border-radius:50%}
-#erisRoomFanRanking .rc-name,#erisRoomFanRanking .rc-amount {min-width:0;padding:9px 10px;border:1px solid #d6b4f451;border-radius:25px;background:#ffffff0c;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#erisRoomFanRanking .rc-name {flex:1}
-
-#erisRoomFanRanking .rc-avatar {overflow:visible}
-#erisRoomFanRanking .rc-avatar img.rf-avatar-frame {position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);object-fit:contain}

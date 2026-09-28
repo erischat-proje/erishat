@@ -14,7 +14,7 @@ import hashlib
 from fastapi import APIRouter, Depends, HTTPException, Header, File, Form, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -28,7 +28,6 @@ from .system_data import RoomIdRegistry
 from .system_logs import record
 from .support_models import SupportTicket
 from .support_routes import SupportCreate
-from .room_fan_levels import level_for_total
 from .wallpapers import DEFAULT_ROOM_WALLPAPER, catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
@@ -78,7 +77,10 @@ class MusicPlaybackUpdate(BaseModel):
     model_config = {"populate_by_name": True}
 class RoomInvite(BaseModel): user_id: str = Field(min_length=1, max_length=64)
 class GiftSend(BaseModel):
-    recipient_id: str = Field(min_length=1, max_length=64); gift_key: str = Field(min_length=1, max_length=64); quantity: int = Field(ge=1, le=99)
+    recipient_id: str | None = Field(default=None, max_length=64)
+    target: Literal["user", "mic", "room"] = "user"
+    gift_key: str = Field(min_length=1, max_length=64)
+    quantity: int = Field(ge=1, le=99)
 class MusicCreate(BaseModel):
     title: str = Field(min_length=1, max_length=128); source_url: str = Field(min_length=1, max_length=2000)
 class RTCSignal(BaseModel):
@@ -814,32 +816,63 @@ def register_room_auth(current_user_dependency):
     async def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        if not is_member(db, room.id, payload.recipient_id): raise HTTPException(status_code=404, detail="Hediye alıcısı odada değil")
-        sender = db.scalar(select(User).where(User.id == user.id).with_for_update()); recipient = db.scalar(select(User).where(User.id == payload.recipient_id).with_for_update())
-        if not sender: raise HTTPException(status_code=404, detail="Gönderen bulunamadı")
-        if not recipient: raise HTTPException(status_code=404, detail="Alıcı bulunamadı")
+        if payload.target == "mic":
+            recipient_ids = set(db.scalars(select(RoomSeat.user_id).where(RoomSeat.room_id == room.id, RoomSeat.user_id.is_not(None))))
+        elif payload.target == "room":
+            recipient_ids = set(db.scalars(select(RoomMember.user_id).where(RoomMember.room_id == room.id)))
+        else:
+            if not payload.recipient_id: raise HTTPException(status_code=400, detail="Alıcı seçmelisiniz")
+            recipient_ids = {payload.recipient_id}
+        recipient_ids.discard(None)
+        active_ids = set(db.scalars(select(RoomMember.user_id).where(RoomMember.room_id == room.id)))
+        if not recipient_ids or not recipient_ids.issubset(active_ids):
+            raise HTTPException(status_code=400, detail="Aktif alıcı bulunamadı")
         unit_price = GIFT_CATALOG.get(payload.gift_key)
         if unit_price is None: raise HTTPException(status_code=400, detail="Geçersiz hediye")
-        total = unit_price * payload.quantity
-        if sender.lidya < total: raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        recipient_amount = total * GIFT_RECIPIENT_PERCENT // 100; sender.lidya -= total; recipient.lidya += recipient_amount
-        vip = db.get(VipStatus, sender.id)
+        per_person = unit_price * payload.quantity
+        total = per_person * len(recipient_ids)
+        # Balance check and subtraction happen in one transaction, before any gifts are created.
+        charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total).values(lidya=User.lidya - total))
+        if charged.rowcount != 1:
+            db.rollback(); raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
+        recipient_amount = per_person * GIFT_RECIPIENT_PERCENT // 100
+        for recipient_id in sorted(recipient_ids):
+            db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + recipient_amount))
+        vip = db.get(VipStatus, user.id)
         if not vip:
-            vip = VipStatus(user_id=sender.id, level=0, total_spent=0)
-            db.add(vip)
-            db.flush()
+            vip = VipStatus(user_id=user.id, level=0, total_spent=0); db.add(vip); db.flush()
         vip.total_spent = int(vip.total_spent or 0) + total
         vip.level = vip_level_from_spend(vip.total_spent)
-        event = RoomGiftEvent(room_id=room.id, sender_id=sender.id, recipient_id=recipient.id, gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity, total_price=total, recipient_percent=GIFT_RECIPIENT_PERCENT, recipient_amount=recipient_amount)
-        presentation = gift_presentation(unit_price)
-        db.add(event); db.add(Notification(user_id=recipient.id, kind="gift", title="Yeni hediye", body=f"{sender.nickname} size {payload.gift_key} gönderdi.")); db.commit(); db.refresh(event); refresh_level(db, room)
+        events=[]
+        for recipient_id in sorted(recipient_ids):
+            event = RoomGiftEvent(room_id=room.id, sender_id=user.id, recipient_id=recipient_id,
+                gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity,
+                total_price=per_person, recipient_percent=GIFT_RECIPIENT_PERCENT,
+                recipient_amount=recipient_amount)
+            db.add(event); events.append(event)
+            db.add(Notification(user_id=recipient_id, kind="gift", title="Yeni hediye",
+                body=f"{user.nickname} size {payload.gift_key} gönderdi."))
+        db.commit(); refresh_level(db, room)
         from .main import _broadcast_room_chat, _broadcast_global_gift_announcement
-        room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,"sender_id":sender.id,"recipient_id":recipient.id,"sender_nickname":sender.nickname,"recipient_nickname":recipient.nickname,"gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,"recipient_amount":event.recipient_amount,"created_at":event.created_at.isoformat() if event.created_at else None, **presentation, **gift_visual(event.gift_key), "id": event.id}
-        await _broadcast_room_chat(room.id, room_payload)
-        await _broadcast_room_chat(room.id, {"type":"room_chat","room_id":room.id,"user_id":sender.id,"nickname":sender.nickname,"text":f"{sender.nickname}, {recipient.nickname} adlı kişiye {event.gift_key} verdi.","system":True,"created_at":event.created_at.isoformat() if event.created_at else None})
-        if presentation["global_announcement"]:
-            await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
-        return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,"total_price":total,"recipient_percent":GIFT_RECIPIENT_PERCENT,"recipient_amount":recipient_amount,**presentation}
+        presentation = gift_presentation(unit_price)
+        recipients = {r.id:r.nickname for r in db.scalars(select(User).where(User.id.in_(recipient_ids)))}
+        for event in events:
+            room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,
+                "sender_id":user.id,"recipient_id":event.recipient_id,
+                "sender_nickname":user.nickname,"recipient_nickname":recipients.get(event.recipient_id,"Kullanıcı"),
+                "gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,
+                "recipient_amount":event.recipient_amount,"created_at":event.created_at.isoformat() if event.created_at else None,
+                **presentation, **gift_visual(event.gift_key), "id":event.id}
+            await _broadcast_room_chat(room.id, room_payload)
+            if presentation["global_announcement"]:
+                await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
+        label = recipients.get(next(iter(recipient_ids)), "Kullanıcı") if len(recipient_ids)==1 else f"{len(recipient_ids)} kişiye"
+        await _broadcast_room_chat(room.id, {"type":"room_chat","room_id":room.id,"user_id":user.id,
+            "nickname":user.nickname,"text":f"{user.nickname}, {label} {payload.gift_key} hediyesi verdi.",
+            "system":True,"created_at":datetime.now(timezone.utc).isoformat()})
+        return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,
+            "total_price":total,"recipient_count":len(recipient_ids),"recipient_amount":recipient_amount,
+            **presentation}
     @router.get("/{room_id}/gift-catalog")
     def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -851,20 +884,6 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         limit = max(1, min(limit, 100)); rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit))); rows.reverse()
         return [{"id":row.id,"sender_id":row.sender_id,"recipient_id":row.recipient_id,"gift_key":row.gift_key,"unit_price":row.unit_price,"quantity":row.quantity,"total_price":row.total_price,"recipient_percent":row.recipient_percent,"recipient_amount":row.recipient_amount,"created_at":row.created_at,**gift_presentation(row.unit_price), **gift_visual(row.gift_key), "id": row.id} for row in rows]
-    @router.get("/{room_id}/fan-leaderboard")
-    def fan_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id)
-        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        total = func.sum(RoomGiftEvent.total_price).label("total")
-        rows = db.execute(select(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset, total)
-            .join(RoomGiftEvent, RoomGiftEvent.sender_id == User.id)
-            .where(RoomGiftEvent.room_id == room.id)
-            .group_by(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset)
-            .order_by(total.desc(), User.id).limit(50)).all()
-        return [{"rank": rank, "user_id": uid, "nickname": name, "avatar": avatar,
-                 "avatar_asset": asset, "frame_asset": frame, "total_lidya": int(amount),
-                 "fan_level": level_for_total(amount)}
-                for rank, (uid, name, avatar, asset, frame, amount) in enumerate(rows, 1)]
     @router.get("/{room_id}/gift-leaderboard")
     def gift_leaderboard(room_id: str, period: Literal["daily", "weekly", "monthly", "season"] = "season", db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
