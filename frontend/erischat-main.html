@@ -86,6 +86,30 @@ column-gap:9px
 #profile>[data-erischat-profile-controls] input,#profile>[data-erischat-profile-controls] select{font-size:13px!important}
 #profile .profileActionIcon{width:18px;height:18px;vertical-align:-4px;margin-right:6px;color:#ba99eb;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media(min-width:760px){#profile>[data-erischat-vip-panel],#profile>[data-erischat-profile-controls]{max-width:790px;margin-left:auto!important;margin-right:auto!important}}
+/* Kompakt profil özeti. Ayrıntılar seçildiğinde açılır. */
+#profile .profile.card{display:grid;grid-template-columns:108px minmax(0,1fr);gap:0 15px;align-items:center;padding:18px 16px 16px}
+#profile .profile .stage{grid-column:1;grid-row:1;height:112px;min-width:0}
+#profile .profile .face{width:76px;height:76px;box-shadow:0 0 0 3px #bd99ec17,0 8px 25px #0006}
+#profile .profile .frameImg{width:108px;height:108px}
+#profile .profile .crown{top:0;font-size:17px}
+#profile .profile .name{grid-column:2;grid-row:1;text-align:left;min-width:0}
+#profile .profile .name h2{overflow-wrap:anywhere;font-size:clamp(17px,4vw,24px);margin-bottom:5px}
+#profile .profile [data-profile-public-id]{margin:7px 0 0!important;font-size:9px!important;max-width:100%;white-space:normal}
+#profile .profile .stats{grid-column:1/-1;margin-top:12px;gap:6px}
+#profile .profile .stat{padding:9px 3px;border-radius:13px}
+#profile .profile .stat b{font-size:15px}
+#profile .profile .stat span{font-size:10px}
+#profile .profile .progress{grid-column:1/-1;margin-top:12px;padding:0}
+#profile .profile .progressTop{font-size:10px}
+#profile .profile .bar{height:5px;margin-top:6px}
+#profile [data-erischat-session-status],#profile [data-erischat-vip-panel],#profile .eris-own-room{display:none!important}
+#profile [data-erischat-profile-controls],#profile #erisProfileRooms{display:none!important}
+#profile[data-profile-section="settings"] [data-erischat-profile-controls]{display:grid!important}
+#profile[data-profile-section="rooms"] #erisProfileRooms{display:block!important}
+#profile #erisProfileRooms{margin-top:14px}
+#profile #erisProfileRooms .section-title{margin:0 0 9px}
+#profile #erisProfileRoomsList{display:grid;gap:8px}
+@media(max-width:360px){#profile .profile.card{grid-template-columns:90px minmax(0,1fr);gap:0 10px}#profile .profile .stage{height:96px}#profile .profile .frameImg{width:96px;height:96px}#profile .profile .face{width:68px;height:68px}}
 /* Profil kartı ve gezinmesi ana menü ile aynı görsel sistemde. */
 #profile>.eyebrow{margin:8px 2px 13px;color:#bea3e6;font-size:11px;font-weight:800;letter-spacing:2.2px}
 #profile>.toolbar{margin-bottom:16px}#profile>.toolbar h2{margin:0;font-size:clamp(25px,6vw,34px);letter-spacing:-.8px}
@@ -245,7 +269,7 @@ column-gap:9px
 <div id="chat" class="chat"><div class="chatSheet"><div class="chatHead"><div class="ava round" id="chatAva">R</div><div class="grow"><b id="chatTitle">Sohbet</b><small class="muted">çevrimiçi</small></div><button class="close" onclick="closeChat()">×</button></div><div class="chatBody" id="chatBody"></div><div class="compose"><input id="chatInput" placeholder="Mesaj yaz…" onkeydown="if(event.key==='Enter')sendChat()"><button class="primary" onclick="sendChat()">Gönder</button></div></div></div>
 <div id="realRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b id="realRoomTitle">Oda</b><small id="realRoomMeta" class="muted" style="display:block;margin-top:4px">Gerçek oda</small></div><button class="close" onclick="window.closeRealRoom?.()">×</button></div><div id="realRoomSeats" class="list"></div><div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="primary" style="height:42px;width:100%" onclick="window.openRoomGift?.()">🎁 Hediye</button><button class="primary" style="height:42px;width:100%" onclick="window.ErisChatMusic?.open?.()">🎵 Müzik</button></div><div class="card" style="margin-top:10px;padding:12px"><div id="realRoomChat" style="min-height:50px;max-height:180px;overflow:auto;font-size:10px;color:#aaa1b1"><div class="muted" style="font-size:9px">Canlı oda sohbeti ayrı bağlantı üzerinden açılır.</div></div><button class="primary" style="width:100%;height:40px;margin-top:8px" onclick="window.openLiveRoomChat?.()">💬 Canlı oda sohbetini aç</button></div></div></div><div id="createRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b>＋ Yeni oda</b><small class="muted" style="display:block;margin-top:4px">Kendi odanı oluştur</small></div><button class="close" onclick="closeCreateRoom()">×</button></div><input id="newRoomName" class="search-input" placeholder="Oda adı" style="width:100%;box-sizing:border-box;background:#ffffff07;border:1px solid #ffffff14;color:#fff;border-radius:13px;padding:12px;outline:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="primary" style="height:44px" onclick="createRoom()">Odayı oluştur</button><button class="close" style="width:auto;height:44px" onclick="closeCreateRoom()">İptal</button></div><div id="createRoomStatus" class="muted" style="margin-top:10px;font-size:9px"></div></div></div>
 <div id="toast" class="toast"></div>
-<script>function showView(id,btn){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id)?.classList.add('show');if(id==='vip')window.ErisChatVIP?.load?.();if(id==='explore'){window.ErisChatStories?.load?.();window.ErisSocialFeed?.load?.()}document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));const nav=btn?.closest('.nav')?btn:[...document.querySelectorAll('.nav button')].find(x=>x.getAttribute('onclick')?.includes("showView('"+id+"'"));nav?.classList.add('active')}function tab(id,btn){['rooms','people','followingRooms'].forEach(x=>{const panel=document.getElementById(x);if(panel)panel.style.display=x===id?'grid':'none'});document.querySelectorAll('#explore .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}function openChat(name){window.toast?.('Kullanıcıyı arama ekranından seç.');showView('search')}
+<script>function showView(id,btn){document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id)?.classList.add('show');if(id==='profile')window.ErisProfileHub?.reset?.();if(id==='vip')window.ErisChatVIP?.load?.();if(id==='explore'){window.ErisChatStories?.load?.();window.ErisSocialFeed?.load?.()}document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));const nav=btn?.closest('.nav')?btn:[...document.querySelectorAll('.nav button')].find(x=>x.getAttribute('onclick')?.includes("showView('"+id+"'"));nav?.classList.add('active')}function tab(id,btn){['rooms','people','followingRooms'].forEach(x=>{const panel=document.getElementById(x);if(panel)panel.style.display=x===id?'grid':'none'});document.querySelectorAll('#explore .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}function openChat(name){window.toast?.('Kullanıcıyı arama ekranından seç.');showView('search')}
 function closeChat(){document.getElementById('chat')?.classList.remove('show')}
 async function sendChat(){
  const input=document.getElementById('chatInput'),message=input?.value.trim(),id=window.ErisChatDM?.activeId?.();
@@ -299,8 +323,8 @@ async function sendChat(){
 })();
 </script><script src="./room-ban-live.js"></script><script src="./room-gift-ui-live.js"></script>
 <script src="./access-messages-hardening.js?v=hardening-4"></script>
-<script src="./profile-rooms-hardening.js?v=public-id-6"></script>
-<script src="./profile-hub.js?v=modern-profile-20260928-1"></script>
+<script src="./profile-rooms-hardening.js?v=compact-profile-20260928-2"></script>
+<script src="./profile-hub.js?v=compact-profile-20260928-2"></script>
 <script src="./account-systems-live.js?v=account-systems-1"></script>
 <script src="./user-profile-navigation.js?v=real-profile-2"></script>
 <script src="./room-hardening.js?v=room-menu-longpress-20260927"></script>
