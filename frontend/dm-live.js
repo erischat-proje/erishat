@@ -67,7 +67,10 @@
     if (message?.id != null) row.dataset.messageId = String(message.id);
     row.dataset.read = message?.is_read ? '1' : '0';
     const body = document.createElement('div'); body.className='dm-message-text';
-    body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (message?.media_type ? '' : String(message?.text ?? message?.message ?? ''));
+    if(message?.gift_key && message?.gift_image_url){
+      const img=document.createElement('img');img.src=message.gift_image_url;img.alt=message.gift_key;img.style.cssText='display:block;width:70px;height:70px;object-fit:contain;margin:auto';body.append(img);
+      const price=document.createElement('small');price.textContent=Number(message.gift_price||0).toLocaleString('tr-TR')+' Lidya';body.append(price);
+    }else body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (message?.media_type ? '' : String(message?.text ?? message?.message ?? ''));
     row.append(body);
     if (message?.media_type === 'image') {
       const media=document.createElement('div');media.className='dm-image-message';
@@ -389,7 +392,7 @@
     if (!activeConversationId || !api()?.messageGifts) return;
     const modal = document.createElement('div'); modal.className='dm-gift-sheet'; modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Hediye seç</b><button class="close" data-close>×</button></div><div class="dm-gift-grid">Yükleniyor…</div></section>'; document.body.appendChild(modal);
     modal.querySelector('[data-close]').onclick=()=>modal.remove(); modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
-    try { const gifts=await api().messageGifts(); const grid=modal.querySelector('.dm-gift-grid'); grid.replaceChildren(); gifts.forEach(g=>{const b=document.createElement('button');b.innerHTML=`<span>🎁 ${escapeHtml(g.gift_key)}</span><small>${Number(g.unit_price).toLocaleString('tr-TR')} Lidya</small>`;b.onclick=async()=>{try{const m=await api().sendMessageGift(activeConversationId,g.gift_key);appendMessageOnce(document.querySelector('#chat .chatBody'),m,true);modal.remove();loadConversations()}catch(e){window.toast?.(e.message||'Hediye gönderilemedi.')}};grid.append(b)}); }
+    try { const gifts=await api().messageGifts(); const grid=modal.querySelector('.dm-gift-grid'); grid.replaceChildren();grid.style.gridTemplateColumns="repeat(3,minmax(0,1fr))"; gifts.forEach(g=>{const b=document.createElement('button');b.title=g.gift_key;b.setAttribute("aria-label",g.gift_key+" • "+g.unit_price+" Lidya");b.innerHTML=`<img src="${escapeHtml(g.image_url)}" alt="" loading="lazy" style="display:block;width:70px;height:70px;object-fit:contain;margin:auto"><small>${Number(g.unit_price).toLocaleString('tr-TR')} Lidya</small>`;b.onclick=async()=>{try{const m=await api().sendMessageGift(activeConversationId,g.gift_key);appendMessageOnce(document.querySelector('#chat .chatBody'),m,true);modal.remove();loadConversations()}catch(e){window.toast?.(e.message||'Hediye gönderilemedi.')}};grid.append(b)}); }
     catch(e){modal.querySelector('.dm-gift-grid').textContent=e.message||'Hediyeler yüklenemedi.';}
   }
 

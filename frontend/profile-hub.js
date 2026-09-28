@@ -105,7 +105,7 @@
       }
       if(key==='gifts') {
         const rows=await api('/users/'+encodeURIComponent(me.id)+'/profile-gifts');if(index!==requestIndex)return;
-        body.innerHTML='<h3>Profil hediyeleri</h3>'+(rows.length?rows.map(row=>'<div class="eph-row"><span>'+escape(row.gift)+'</span><b>'+Number(row.amount||0).toLocaleString('tr-TR')+' Lidya</b></div>').join(''):'<div class="eph-muted">Henüz profil hediyesi yok.</div>');return;
+        body.innerHTML='<h3>Profil hediyeleri</h3>'+(rows.length?rows.map(row=>'<div class="eph-row" title="'+escape(row.gift)+'"><img src="'+escape(row.image_url||'')+'" alt="" style="width:52px;height:52px;object-fit:contain"><b>'+Number(row.amount||0).toLocaleString('tr-TR')+' Lidya</b></div>').join(''):'<div class="eph-muted">Henüz profil hediyesi yok.</div>');return;
       }
       if(key==='notifications') {
         const rows=await api('/me/notifications?limit=50');if(index!==requestIndex)return;

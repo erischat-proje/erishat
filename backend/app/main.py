@@ -28,7 +28,7 @@ from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
-from .room_routes import GIFT_CATALOG, register_room_auth, router as room_router
+from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
@@ -909,6 +909,8 @@ def _message_out(db: Session, message: Message, viewer_id: str) -> dict:
         "text": message.text, "created_at": message.created_at,
         "is_read": message.sender_id == viewer_id and bool(state and state.last_read_message_id >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
+        "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,
+        "gift_price": gift.unit_price if gift else None,
         "media_type": media.media_type if media else None,
         "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
         "temporary": bool(media and media.temporary), "view_seconds": media.view_seconds if media else None,
@@ -1486,7 +1488,7 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
 
 @app.get("/v1/message-gifts")
 def message_gifts():
-    return [{"gift_key": key, "unit_price": price} for key, price in GIFT_CATALOG.items()]
+    return [{"gift_key": key, "unit_price": price, **gift_visual(key)} for key, price in GIFT_CATALOG.items()]
 
 
 @app.post("/v1/messages/{conversation_id}/gifts")
@@ -1513,7 +1515,7 @@ async def send_direct_gift(conversation_id: str, payload: dict, db: Session = De
     db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye", body=user.nickname + " sana " + gift_key + " gönderdi."))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
-        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key,
+        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":price,
         "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in repo.members(conversation_id): await manager.send_user(member_id, event)
     return _message_out(db, message, user.id)
