@@ -236,7 +236,7 @@
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const liveRoomId=String(room.id||id);
       window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;
-      window.ErisScreenProtection?.set?.('room',!!room.locked);
+      window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
       const seatCount=Math.min(24,Math.max(16,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
       if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat};
