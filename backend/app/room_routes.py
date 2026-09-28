@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from uuid import uuid4
 from pathlib import Path
 import json
@@ -850,11 +851,19 @@ def register_room_auth(current_user_dependency):
         limit = max(1, min(limit, 100)); rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit))); rows.reverse()
         return [{"id":row.id,"sender_id":row.sender_id,"recipient_id":row.recipient_id,"gift_key":row.gift_key,"unit_price":row.unit_price,"quantity":row.quantity,"total_price":row.total_price,"recipient_percent":row.recipient_percent,"recipient_amount":row.recipient_amount,"created_at":row.created_at,**gift_presentation(row.unit_price), **gift_visual(row.gift_key), "id": row.id} for row in rows]
     @router.get("/{room_id}/gift-leaderboard")
-    def gift_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    def gift_leaderboard(room_id: str, period: Literal["daily", "weekly", "monthly", "season"] = "season", db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        rows = db.execute(select(RoomGiftEvent.sender_id, func.sum(RoomGiftEvent.total_price).label("total")).where(RoomGiftEvent.room_id == room.id).group_by(RoomGiftEvent.sender_id).order_by(func.sum(RoomGiftEvent.total_price).desc())).all()
-        return [{"rank":i,"user_id":uid,"total_lidya":int(total or 0)} for i,(uid,total) in enumerate(rows,1)]
+        now = datetime.now(ZoneInfo("Europe/Istanbul"))
+        start = None
+        if period == "daily": start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == "weekly": start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == "monthly": start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        total = func.sum(RoomGiftEvent.total_price).label("total")
+        query = select(User.id, User.nickname, User.avatar, User.avatar_asset, total).join(RoomGiftEvent, RoomGiftEvent.sender_id == User.id).where(RoomGiftEvent.room_id == room.id)
+        if start is not None: query = query.where(RoomGiftEvent.created_at >= start.astimezone(timezone.utc))
+        rows = db.execute(query.group_by(User.id, User.nickname, User.avatar, User.avatar_asset).order_by(total.desc(), User.id).limit(50)).all()
+        return [{"rank":i,"user_id":uid,"nickname":nickname,"avatar":avatar,"avatar_asset":asset,"total_lidya":int(amount or 0)} for i,(uid,nickname,avatar,asset,amount) in enumerate(rows,1)]
     @router.get("/music-access/status")
     def music_access_status(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = db.get(RoomMusicAccess, user.id)

@@ -216,3 +216,72 @@
   #erisRoomSurface.room-layout-v6 .eris-room-stage {align-content:start;overflow-y:auto}
   #erisRoomSurface.room-layout-v6 [data-seat-count="24"] {--seat-row-gap:28px}
 }
+
+/* Contribution opens from the upper left; room actions sit in the free space on the right. */
+#erisRoomSurface.room-layout-v6 #erisRoomContributionButton {
+  position:absolute;z-index:8;top:85px;left:12px;min-height:35px;padding:0 13px;
+  border:1px solid #e3c3ff88;border-radius:14px;color:#fff;font-size:12px;font-weight:750;
+  background:#28163dc9;backdrop-filter:blur(14px);box-shadow:0 8px 24px #0005;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
+  top:auto;left:auto;right:12px;bottom:70px;display:flex;flex-direction:column;
+  width:48px;gap:6px;padding:5px;border-radius:18px;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {
+  flex:none;width:46px;height:44px;min-height:44px;padding:0;
+  border:1px solid #d4b8f553!important;border-radius:13px;font-size:22px;
+  background:#20123588;color:#f2e3ff;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button span {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button svg {width:23px;height:23px;display:block}
+#erisRoomSurface.room-layout-v6 .eris-room-stage {top:128px!important;bottom:220px!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-list {padding-right:75px!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose {justify-content:flex-start!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomGiftInline {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose input#erisLiveInput {
+  order:1!important;display:block!important;flex:1 1 auto!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:44px!important;padding:0 13px!important;font-size:14px!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {order:2!important;flex-basis:35px!important;min-width:35px!important;width:35px!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {order:3!important;min-width:57px!important;height:44px!important}
+#erisRoomMinimize {cursor:pointer}
+#erisRoomFloatingBubble[hidden],#erisRoomContribution[hidden] {display:none!important}
+#erisRoomFloatingBubble {
+  position:fixed;z-index:850;right:15px;bottom:110px;width:73px;height:73px;
+  touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2px solid #d4abff;border-radius:50%;color:#fff;
+  background:linear-gradient(145deg,#7140af,#211137);box-shadow:0 8px 28px #0009,0 0 0 4px #ae83ed35;
+  user-select:none;-webkit-user-select:none;
+}
+#erisRoomFloatingBubble span {font-size:27px;line-height:1}
+#erisRoomFloatingBubble small {font-size:9px;font-weight:700;white-space:nowrap}
+#erisRoomContribution {position:absolute;inset:0;z-index:500}
+#erisRoomContribution .rc-shade {position:absolute;inset:0;background:#06030dbd;backdrop-filter:blur(9px)}
+#erisRoomContribution .rc-panel {
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(480px,calc(100% - 28px));height:min(680px,85dvh);display:flex;flex-direction:column;
+  padding:18px;box-sizing:border-box;border:1px solid #bd93ed80;border-radius:25px;
+  background:linear-gradient(155deg,#251636f5,#100b1ef7);box-shadow:0 30px 90px #000b;
+}
+#erisRoomContribution header {display:flex;justify-content:space-between;align-items:start}
+#erisRoomContribution header small {font-size:10px;letter-spacing:2px;color:#c3a4ed}
+#erisRoomContribution h2 {margin:5px 0 13px;font-size:24px}
+#erisRoomContribution .rc-close {width:37px;height:37px;border:1px solid #d6bbf85a;border-radius:12px;background:#ffffff10;color:#fff;font-size:25px}
+#erisRoomContribution .rc-periods {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:13px}
+#erisRoomContribution .rc-periods button {min-width:0;padding:9px 2px;border:1px solid #d7bded57;border-radius:12px;background:#ffffff0b;color:#e8d9f5;font-size:11px}
+#erisRoomContribution .rc-periods button.active {background:#7145bb;border-color:#d4b3ff;color:#fff}
+#erisRoomContribution .rc-list {overflow:auto;min-height:0;flex:1;color:#cdbbe0;font-size:13px}
+#erisRoomContribution .rc-row {display:flex;align-items:center;gap:6px;margin-bottom:8px}
+#erisRoomContribution .rc-rank {flex:0 0 22px;text-align:center;color:#d6b2ff;font-weight:800}
+#erisRoomContribution .rc-avatar {flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;overflow:hidden;border:1px solid #c9a6f7;border-radius:50%;background:#492e6b;color:#fff}
+#erisRoomContribution .rc-avatar img {width:100%;height:100%;object-fit:cover;border-radius:50%}
+#erisRoomContribution .rc-name,#erisRoomContribution .rc-amount {min-width:0;padding:9px 10px;border:1px solid #d6b4f451;border-radius:25px;background:#ffffff0c;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#erisRoomContribution .rc-name {flex:1}
+#erisRoomContribution .rc-amount {flex:none;max-width:42%;font-size:11px;color:#e7c8ff}
+@media(max-width:380px){
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {flex-basis:30px!important;min-width:30px!important;width:30px!important}
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {min-width:52px!important}
+}
