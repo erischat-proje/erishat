@@ -31,6 +31,7 @@
     }catch(e){list.innerHTML='<div class="empty">'+esc(e.message||'Odalar yüklenemedi.')+'</div>';}
   }
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  window.ErisProfileRooms={load};
   window.addEventListener('erischat:room-created',()=>setTimeout(load,150));
   function install(){
     const old=window.openView;

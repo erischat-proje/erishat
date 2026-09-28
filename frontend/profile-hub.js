@@ -30,22 +30,39 @@
       #erisProfileHub .eph-body h3{font-size:19px;letter-spacing:-.35px}
       #erisProfileHub .eph-row{padding:13px 0}
       @media(max-width:390px){#erisProfileHub .eph-tabs button{min-height:70px;padding:10px;gap:8px;font-size:11px}#erisProfileHub .eph-icon{width:20px;height:20px}}
-    </style><div class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div><div class="eph-body" role="tabpanel" aria-live="polite"></div>`;
+      #erisProfileHub .eph-tabs[hidden],#erisProfileHub .eph-body[hidden]{display:none!important}
+      #erisProfileHub .eph-menu-toggle{display:flex;align-items:center;gap:13px;text-align:left;min-height:74px;padding:15px 17px;border-color:#b18ade6c;border-radius:20px;background:linear-gradient(145deg,#21172b,#13101b)}
+      #erisProfileHub .eph-menu-toggle b{display:block;font-size:15px;color:#fff}
+      #erisProfileHub .eph-menu-toggle small{display:block;margin-top:4px;font-size:11px;color:#bbaacb}
+      #erisProfileHub .eph-menu-toggle .eph-arrow{margin-left:auto;font-size:22px;color:#ba99e9;transition:transform .18s}
+      #erisProfileHub .eph-menu-toggle[aria-expanded=true] .eph-arrow{transform:rotate(180deg)}
+      #erisProfileHub .eph-tabs{margin-top:8px;padding:12px;max-height:min(48vh,430px);overflow-y:auto;border:1px solid #ffffff1b;border-radius:18px;background:#15111d}
+      #erisProfileHub .eph-tabs button{min-height:52px}
+      #erisProfileHub .eph-body{margin-top:12px}
+    </style><div class="eph-nav"><button type="button" class="eph-menu-toggle" aria-controls="ephTabs" aria-expanded="false"><svg class="eph-icon" aria-hidden="true"><use href="#home-profile"></use></svg><span><b>Profil menüsü</b><small data-current>Bir bölüm seç</small></span><span class="eph-arrow" aria-hidden="true">⌄</span></button><div id="ephTabs" class="eph-tabs" role="tablist" aria-label="Profil bölümleri" hidden></div></div><div class="eph-body" role="tabpanel" aria-live="polite" hidden></div>`;
     view.append(hub);
-    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
+    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['settings','Ayarlar']];
     const strip = hub.querySelector('.eph-tabs');
-    const icons={info:'profile',posts:'posts',social:'family',collection:'collection',vip:'vip',wallet:'wallet',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked'};
+    const icons={info:'profile',posts:'posts',social:'family',collection:'collection',vip:'vip',wallet:'wallet',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',settings:'security'};
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML='<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg><span>'+escape(label)+'</span>';
-      button.onclick=()=>show(key);strip.append(button);
+      button.onclick=()=>{show(key);hub.querySelector('.eph-menu-toggle').focus()};strip.append(button);
     }
-    show('info');
+    const toggle=hub.querySelector('.eph-menu-toggle');toggle.onclick=()=>{const open=strip.hidden;strip.hidden=!open;toggle.setAttribute('aria-expanded',String(open))};toggle.onkeydown=e=>{if(e.key==='Escape'){strip.hidden=true;toggle.setAttribute('aria-expanded','false')}};
+    show('overview');
   }
   let requestIndex=0;
   async function show(key) {
     const hub=panel();if(!hub)return;
     const index=++requestIndex, body=hub.querySelector('.eph-body');
+    const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',collection:'Koleksiyon',vip:'VIP',wallet:'Cüzdan',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
+    hub.closest('#profile')?.setAttribute('data-profile-section',key);
+    hub.querySelector('[data-current]').textContent=labels[key]||'Bir bölüm seç';
+    const list=hub.querySelector('.eph-tabs');list.hidden=true;hub.querySelector('.eph-menu-toggle').setAttribute('aria-expanded','false');
     hub.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===key)));
+    body.hidden=['overview','settings','rooms'].includes(key);
+    if(key==='overview'||key==='settings')return;
+    if(key==='rooms'){await window.ErisProfileRooms?.load?.();return}
     body.textContent='Yükleniyor…';
     try {
       const me=await window.ErisAuth.getMe();if(index!==requestIndex)return;
@@ -135,6 +152,7 @@
       }
     }catch(error){if(index===requestIndex)body.textContent=error.message||'Profil bilgileri yüklenemedi.'}
   }
-  const start=()=>{mount();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready')show('info')})};
+  window.ErisProfileHub={reset:()=>show('overview')};
+  const start=()=>{mount();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready' && panel()?.closest('#profile')?.dataset.profileSection==='info')show('info')})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
