@@ -224,7 +224,7 @@
   background:#28163dc9;backdrop-filter:blur(14px);box-shadow:0 8px 24px #0005;
 }
 #erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
-  top:auto;left:auto;right:12px;bottom:70px;display:flex;flex-direction:column;
+  top:auto;left:auto;right:12px;bottom:70px;z-index:80!important;display:flex;flex-direction:column;
   width:48px;gap:6px;padding:5px;border-radius:18px;
 }
 #erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {
