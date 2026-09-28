@@ -1,0 +1,41 @@
+﻿| Level | O Level İçin Gereken Lidya | Toplam Harcanan Lidya | Statü / Lig |
+| Level 1 | 1 Lidya | 1 Lidya | Başlangıç |
+| Level 2 | 15 Lidya | 16 Lidya | Çırak |
+| Level 3 | 50 Lidya | 66 Lidya | Çırak |
+| Level 4 | 130 Lidya | 196 Lidya | Çırak |
+| Level 5 | 300 Lidya | 496 Lidya | Bronz Hayran |
+| Level 6 | 600 Lidya | 1,096 Lidya | Aktif Destekçi |
+| Level 7 | 1,150 Lidya | 2,246 Lidya | Aktif Destekçi |
+| Level 8 | 2,050 Lidya | 4,296 Lidya | Aktif Destekçi |
+| Level 9 | 3,450 Lidya | 7,746 Lidya | Aktif Destekçi |
+| Level 10 | 5,500 Lidya | 13,246 Lidya | Gümüş Hayran |
+| Level 11 | 8,400 Lidya | 21,646 Lidya | Sadık Takipçi |
+| Level 12 | 12,300 Lidya | 33,946 Lidya | Sadık Takipçi |
+| Level 13 | 17,500 Lidya | 51,446 Lidya | Sadık Takipçi |
+| Level 14 | 24,300 Lidya | 75,746 Lidya | Sadık Takipçi |
+| Level 15 | 33,200 Lidya | 108,946 Lidya | Altın Hayran |
+| Level 16 | 44,700 Lidya | 153,646 Lidya | Uzman Destekçi |
+| Level 17 | 59,500 Lidya | 213,146 Lidya | Uzman Destekçi |
+| Level 18 | 78,400 Lidya | 291,546 Lidya | Uzman Destekçi |
+| Level 19 | 102,300 Lidya | 393,846 Lidya | Uzman Destekçi |
+| Level 20 | 132,300 Lidya | 526,146 Lidya | Platin Hayran (Yarım Yol) |
+| Level 21 | 169,800 Lidya | 695,946 Lidya | VIP Bölge |
+| Level 22 | 216,400 Lidya | 912,346 Lidya | VIP Bölge |
+| Level 23 | 273,800 Lidya | 1,186,146 Lidya | VIP Bölge |
+| Level 24 | 344,000 Lidya | 1,530,146 Lidya | VIP Bölge |
+| Level 25 | 429,200 Lidya | 1,959,346 Lidya | Elmas Hayran (~2M) |
+| Level 26 | 532,100 Lidya | 2,491,446 Lidya | Hardcore Lig |
+| Level 27 | 655,500 Lidya | 3,146,946 Lidya | Hardcore Lig |
+| Level 28 | 802,400 Lidya | 3,949,346 Lidya | Hardcore Lig |
+| Level 29 | 976,500 Lidya | 4,925,846 Lidya | Hardcore Lig |
+| Level 30 | 1,181,700 Lidya | 6,107,546 Lidya | Üstat Hayran (~6.1M) |
+| Level 31 | 1,422,900 Lidya | 7,530,446 Lidya | Efsanevi Hat |
+| Level 32 | 1,705,600 Lidya | 9,236,046 Lidya | Efsanevi Hat |
+| Level 33 | 2,036,000 Lidya | 11,272,046 Lidya | Efsanevi Hat |
+| Level 34 | 2,421,400 Lidya | 13,693,446 Lidya | Efsanevi Hat |
+| Level 35 | 2,870,300 Lidya | 16,563,746 Lidya | Kraliyet Hayranı (~16.5M) |
+| Level 36 | 3,392,500 Lidya | 19,956,246 Lidya | Zirveye Doğru |
+| Level 37 | 4,000,000 Lidya | 23,956,246 Lidya | Zirveye Doğru |
+| Level 38 | 4,707,500 Lidya | 28,663,746 Lidya | Tanrısal Seviye |
+| Level 39 | 5,532,500 Lidya | 34,196,246 Lidya | Tanrısal Seviye |
+| Level 40 | 15,803,754 Lidya | 50,000,000 Lidya | 🏆 Mythic / 50 Milyon Zirve |
