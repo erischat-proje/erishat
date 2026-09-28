@@ -1,6 +1,6 @@
 /* Live room gift picker. Uses the existing REST gift bridge and room view seats. */
 (() => {
-  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all', balance: 0 };
+  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all', balance: 0, quantity: 1 };
   const GIFT_CATEGORIES = [
     ['all','Tümü',0,Infinity,0],
     ['agora','Agora & Halk Pazarı',1,29,1],
@@ -15,7 +15,7 @@
   ];
   const giftCategory = gift => {
     const price=Number(gift?.price||gift?.unit_price||0);
-    return (GIFT_CATEGORIES.find(x=>price>=x[2]&&price<=x[3])||GIFT_CATEGORIES[9])[0];
+    return (GIFT_CATEGORIES.slice(1).find(x=>price>=x[2]&&price<=x[3])||GIFT_CATEGORIES[9])[0];
   };
   const giftLevel = gift => {
     const key=giftCategory(gift);
@@ -33,6 +33,7 @@
     style.textContent = '#erisGiftFx{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at center,#ff4fa322,transparent 45%);animation:egfxbg 1s ease-out}.egfx-card{position:relative;text-align:center;padding:26px 32px;border:1px solid #ffffff33;border-radius:24px;background:#0d0915ee;box-shadow:0 0 50px #ff4fa366;animation:egfxcard 1s ease-out}.egfx-level{font-size:10px;letter-spacing:3px;color:#f1c96b;font-weight:900}.egfx-icon{font-size:64px;margin:10px}.egfx-title{font-size:18px;font-weight:900}.egfx-gift{margin-top:7px;color:#d8cfe0;font-size:11px}.level-2 .egfx-card{animation-duration:1.4s}.level-3 .egfx-card{animation-duration:1.6s}.level-4 .egfx-card{animation:egfxcard 1.8s ease-out}.level-5 .egfx-card{animation:egfxcard 2s ease-out}.level-6 .egfx-card{animation:egfxcard 2.2s ease-out}.level-7 .egfx-card{animation:egfxcard 2.5s ease-out;box-shadow:0 0 90px #ffcf4a99}.level-8 .egfx-card{animation:egfxcard 3s ease-out;box-shadow:0 0 120px #9d6bffff}.level-9 .egfx-card{animation:egfxcard 3.5s ease-out;box-shadow:0 0 160px #ffcf4aff}.egfx-glow{position:absolute;inset:20%;border-radius:50%;filter:blur(30px);background:#ff4fa355;animation:egfxpulse 1s infinite alternate}@keyframes egfxcard{0%{opacity:0;transform:scale(.35) translateY(30px)}45%{opacity:1;transform:scale(1.08) translateY(0)}100%{opacity:0;transform:scale(1.18) translateY(-15px)}}@keyframes egfxbg{0%{opacity:0}20%{opacity:1}100%{opacity:0}}@keyframes egfxpulse{from{transform:scale(.7);opacity:.25}to{transform:scale(1.3);opacity:.8}}.level-2 .egfx-glow{animation-duration:1.3s}.level-3 .egfx-glow{animation-duration:1.1s;filter:blur(24px)}.level-4 .egfx-glow{animation-duration:.9s;transform:scale(1.15)}.level-5 .egfx-glow{animation-duration:.75s;filter:blur(34px)}.level-6 .egfx-glow{animation-duration:.65s;transform:scale(1.25)}.level-7 .egfx-glow{animation-duration:.55s;filter:blur(42px)}.level-8 .egfx-glow{animation-duration:.45s;transform:scale(1.4)}.level-9 .egfx-glow{animation-duration:.35s;filter:blur(52px);transform:scale(1.55)}.level-7 #erisGiftFx,.level-8 #erisGiftFx,.level-9 #erisGiftFx{background:radial-gradient(circle at center,#ffcf4a44,transparent 55%)}.level-7 .egfx-card,.level-8 .egfx-card,.level-9 .egfx-card{border-width:2px}#erischatGiftFab{position:fixed;right:16px;bottom:86px;z-index:115;width:48px;height:48px;border:1px solid #ffffff22;border-radius:16px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-size:20px;box-shadow:0 12px 30px #0008;display:none}#erischatGiftPanel{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:116;width:min(500px,calc(100% - 24px));max-height:70vh;overflow:auto;padding:15px;border:1px solid #ffffff18;border-radius:22px;background:#0b0911;box-shadow:0 22px 60px #000b;display:none}#erischatGiftPanel.show{display:block}.egp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.egp-title{font-size:14px;font-weight:900}.egp-close{border:0;background:#ffffff09;color:#fff;border-radius:10px;width:34px;height:34px}.egp-row{display:flex;gap:7px;overflow:auto;margin:8px 0}.egp-chip{border:1px solid #ffffff14;background:#ffffff06;color:#ddd;border-radius:12px;padding:8px 10px;white-space:nowrap;font-size:9px}.egp-chip.active{border-color:#ff4fa3;background:#ff4fa31c;color:#fff}.egp-cats{display:flex;gap:6px;overflow:auto;margin:5px 0 10px}.egp-cat{border:1px solid #ffffff14;background:#ffffff06;color:#bbb;border-radius:11px;padding:7px 9px;white-space:nowrap;font-size:8px}.egp-cat.active{border-color:#ff4fa3;background:#ff4fa31c;color:#fff}.egp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.egp-gift{border:1px solid #ffffff12;background:#ffffff05;color:#fff;border-radius:14px;padding:9px;text-align:left}.egp-gift.active{border-color:#8a5cff;background:#8a5cff18}.egp-gift:disabled{opacity:.3;filter:grayscale(1)}.egp-gift .egp-name{display:block;font-size:10px;line-height:1.25;min-height:26px}.egp-gift .egp-price{display:block;color:#e4b85d;font-size:8px;margin-top:5px}.egp-send{width:100%;margin-top:10px;border:0;border-radius:13px;padding:11px;background:linear-gradient(135deg,#7b4cff,#ff4fa3);color:#fff;font-weight:900;font-size:10px}.egp-send:disabled{opacity:.45}.egp-note{color:#938a9f;font-size:9px;padding:8px 0}.egp-balance{color:#e4b85d;font-size:9px;font-weight:800}\n';
     style.textContent += '.egp-gift{display:grid;grid-template-rows:48px auto auto;align-items:center}.egp-art{display:grid;place-items:center;width:44px;height:44px;margin:0 auto 5px;border-radius:14px;background:radial-gradient(circle,#e8b45128,#8a5cff16 70%);font-size:28px;filter:drop-shadow(0 4px 8px #0008)}.egp-gift:hover .egp-art{transform:translateY(-3px) rotate(-4deg);transition:transform .18s}.egfx-kind-feast .egfx-icon{animation:giftBounce .7s ease-in-out infinite alternate}.egfx-kind-relic .egfx-icon{animation:giftSpin 1.6s ease-in-out infinite}.egfx-kind-royal .egfx-icon{animation:giftRise 1.3s ease-in-out infinite alternate}.egfx-kind-mythic .egfx-icon{animation:giftMythic 1.1s ease-in-out infinite alternate}.level-1 .egfx-card{animation-duration:1.25s}.level-1 .egfx-glow{animation-duration:1.25s}@keyframes giftBounce{to{transform:translateY(-12px) scale(1.12)}}@keyframes giftSpin{to{transform:rotateY(180deg) scale(1.08)}}@keyframes giftRise{to{transform:translateY(-12px) rotate(-7deg) scale(1.12)}}@keyframes giftMythic{to{transform:translateY(-8px) rotate(12deg) scale(1.25);filter:drop-shadow(0 0 18px #ffcf4a)}}';
     style.textContent += '.egp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.egp-gift{display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;min-height:110px}.egp-gift img{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 9px #e4b85d88)}.egp-gift .egp-price{font-size:10px}.egfx-card img{width:min(50vw,240px);height:min(50vw,240px);object-fit:contain;filter:drop-shadow(0 0 25px #f9d780aa)}@keyframes egspin{from{transform:rotate(-90deg) scale(.4)}to{transform:rotate(360deg) scale(1.1)}}@keyframes egfloat{from{transform:translateY(90px) scale(.6)}to{transform:translateY(-20px) scale(1.1)}}@keyframes egdrop{from{transform:translateY(-120px) scale(.5)}60%{transform:translateY(12px) scale(1.1)}to{transform:translateY(0) scale(1)}}@keyframes egopen{from{clip-path:circle(0%);transform:scale(.7)}to{clip-path:circle(80%);transform:scale(1.15)}}@keyframes egsway{from{transform:rotate(-20deg) translateX(-50px)}50%{transform:rotate(14deg) translateX(20px)}to{transform:rotate(0)}}';
+    style.textContent += '.egp-gift>img{width:80px;height:80px;object-fit:contain}.egp-gift .eris-lidya-coin{width:12px!important;height:12px!important;display:inline!important;margin-left:2px!important;filter:none!important}.egp-gift .egp-price{display:flex;align-items:center;justify-content:center;gap:2px;font-size:10px}.egp-qty{display:flex;align-items:center;gap:5px;overflow:auto;margin:8px 0;color:#bdaed0;font-size:10px}.egp-qty button{flex:none;border:1px solid #ffffff24;border-radius:10px;padding:7px 9px;color:white;background:#ffffff0b}.egp-qty button.active{background:#754cff;border-color:#a580ff}';
     document.head.appendChild(style);
   }
 
@@ -44,7 +45,7 @@
   function renderRecipients() {
     const box = document.getElementById('egpRecipients');
     if (!box) return;
-    box.innerHTML = state.recipients.length ? state.recipients.map(r => `<button class="egp-chip${state.selectedRecipient === r.id ? ' active' : ''}" data-rec="${esc(r.id)}" type="button">👤 ${esc(r.name)}</button>`).join('') : '<div class="egp-note">Şu anda hediye gönderilebilecek aktif koltuk bulunamadı.</div>';
+    box.innerHTML = state.recipients.map(r => `<button class="egp-chip${state.selectedRecipient === r.id ? ' active' : ''}" data-rec="${esc(r.id)}" type="button">${r.special?'✦':'👤'} ${esc(r.name)}</button>`).join('');
     box.querySelectorAll('[data-rec]').forEach(btn => { btn.onclick = () => { state.selectedRecipient = btn.dataset.rec; renderRecipients(); updateSend(); }; });
   }
 
@@ -57,7 +58,7 @@
     box.innerHTML = visible.length ? visible.map(g => {
       const name=String(g.gift_key||g.name||'');
       const price=Number(g.price||g.unit_price||0);
-      const affordable=state.balance>=price;
+      const affordable=state.balance>=price*state.quantity;
       return `<button class="egp-gift${state.selectedGift === name ? ' active' : ''}" data-gift="${esc(name)}" type="button" title="${esc(name)}" aria-label="${esc(name)}" ${affordable?'':'disabled'}><img src="${esc(g.image_url)}" alt="" loading="lazy"><span class="egp-price">${price.toLocaleString('tr-TR')} Lidya</span></button>`;
     }).join('') : '<div class="egp-note">Bu kategoride hediye yok.</div>';
     cats?.querySelectorAll('[data-cat]').forEach(btn=>{btn.onclick=()=>{state.category=btn.dataset.cat;renderGifts();};});
@@ -66,16 +67,14 @@
 
   async function loadRecipients() {
     if (!state.roomId || !window.ErisPlatform?.api) return;
-    const room = await window.ErisPlatform.api(`/rooms/${encodeURIComponent(state.roomId)}`);
-    const me = await window.ErisPlatform.getMe().catch(() => null);
-    const ids = new Set();
-    const meId=String(me?.id||'');
-    const recipients = [];
-    if (room.owner_id && String(room.owner_id)!==meId) { const rid=String(room.owner_id); ids.add(rid); recipients.push({ id: rid, name: String(room.owner_name || 'Oda sahibi') }); }
-    (Array.isArray(room.seats) ? room.seats : []).forEach(seat => {
-      if (seat.user_id && String(seat.user_id)!==meId && !ids.has(String(seat.user_id))) { const rid=String(seat.user_id); ids.add(rid); recipients.push({ id: rid, name: String(seat.user_name || `Koltuk ${seat.seat_number}`) }); }
-    });
+    const members = await window.ErisPlatform.api(`/rooms/${encodeURIComponent(state.roomId)}/members`);
+    const recipients = [
+      {id:'@mic',name:'Mikrofondaki herkes',special:true},
+      {id:'@room',name:'Odadaki herkes',special:true}
+    ];
+    for (const member of members) recipients.push({id:String(member.user_id),name:String(member.nickname||'Kullanıcı')});
     state.recipients = recipients;
+    if (!recipients.some(r=>r.id===state.selectedRecipient)) state.selectedRecipient = null;
     renderRecipients();
   }
 
@@ -92,7 +91,7 @@
       const me = await window.ErisPlatform.getMe();
       state.balance = Number(me.lidya || 0);
       const balance = document.getElementById('egpBalance');
-      if (balance) balance.textContent = `💎 ${state.balance.toLocaleString('tr-TR')} Lidya`;
+      if (balance) balance.textContent = `Bakiye: ${state.balance.toLocaleString('tr-TR')} Lidya`;
       await Promise.all([loadRecipients(), loadGifts()]);
       updateSend();
     } catch (error) { toastSafe(error.message || 'Hediye paneli yüklenemedi.'); }
@@ -103,7 +102,10 @@
     const button = document.getElementById('egpSend');
     if (button) { button.disabled = true; button.textContent = 'Gönderiliyor…'; }
     try {
-      await window.ErisRoomGift.send(state.roomId, state.selectedRecipient, state.selectedGift, 1);
+      const target=state.selectedRecipient==='@mic'?'mic':state.selectedRecipient==='@room'?'room':'user';
+      await window.ErisPlatform.api(`/rooms/${encodeURIComponent(state.roomId)}/gifts`,{
+        method:'POST',body:JSON.stringify({target,recipient_id:target==='user'?state.selectedRecipient:null,
+          gift_key:state.selectedGift,quantity:state.quantity})});
       toastSafe('Hediye gönderildi 🎁');
       document.getElementById('erischatGiftPanel')?.classList.remove('show');
     } catch (error) { toastSafe(error.message || 'Hediye gönderilemedi.'); const note=document.querySelector('#erischatGiftPanel .egp-note'); if(note) note.textContent=error.message||'Hediye gönderilemedi.'; }
@@ -115,15 +117,23 @@
     injectStyles();
     const panel = document.createElement('section');
     panel.id = 'erischatGiftPanel';
-    panel.innerHTML = '<div class="egp-head"><div><div class="egp-title">🎁 Odaya hediye gönder</div><div class="egp-balance" id="egpBalance">Bakiye yükleniyor…</div></div><button class="egp-close" type="button">×</button></div><div class="egp-note">Alıcıyı seç; kategoriyi seç; hediyeyi adından seç.</div><div class="egp-row" id="egpRecipients"></div><div class="egp-cats" id="egpCategories"></div><div class="egp-grid" id="egpGifts"></div><button class="egp-send" id="egpSend" type="button" disabled>Hediye gönder</button>';
+    panel.innerHTML = '<div class="egp-head"><div><div class="egp-title">🎁 Odaya hediye gönder</div><div class="egp-balance" id="egpBalance">Bakiye yükleniyor…</div></div><button class="egp-close" type="button">×</button></div><div class="egp-note">Alıcıyı seç; kategoriyi seç; hediyeyi adından seç.</div><div class="egp-row" id="egpRecipients"></div><div class="egp-cats" id="egpCategories"></div><div class="egp-qty" id="egpQuantity"></div><div class="egp-grid" id="egpGifts"></div><button class="egp-send" id="egpSend" type="button" disabled>Hediye gönder</button>';
     panel.querySelector('.egp-close').onclick = () => panel.classList.remove('show');
     panel.querySelector('#egpSend').onclick = send;
+    const qty=panel.querySelector('#egpQuantity');
+    qty.innerHTML='Adet: '+[1,3,5,9,49,99].map(n=>`<button type="button" data-qty="${n}">${n}</button>`).join('');
+    qty.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>{
+      state.quantity=Number(b.dataset.qty);
+      qty.querySelectorAll('[data-qty]').forEach(x=>x.classList.toggle('active',x===b));
+      renderGifts();updateSend();
+    });
+    qty.querySelector('[data-qty="1"]').classList.add('active');
     document.body.appendChild(panel);
   }
 
   function setRoom(roomId, open = false) {
     state.roomId = roomId ? String(roomId) : null;
-    if (state.roomId && open) { state.selectedGift=null; state.selectedRecipient=null; state.category='all'; ensureUi(); document.getElementById('erischatGiftPanel')?.classList.add('show'); refresh(); }
+    if (state.roomId && open) { state.selectedGift=null; state.selectedRecipient=null; state.category='all';state.quantity=1; ensureUi();document.querySelectorAll('#egpQuantity [data-qty]').forEach(b=>b.classList.toggle('active',b.dataset.qty==='1')); document.getElementById('erischatGiftPanel')?.classList.add('show'); refresh(); }
   }
 
   let audioContext;

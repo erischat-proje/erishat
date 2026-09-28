@@ -29,6 +29,7 @@ from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_fan_levels import level_for_total
+from .personal_fans import gift_totals, fan_leaderboard
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
@@ -135,6 +136,7 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE room_announcements ADD COLUMN IF NOT EXISTS pinned BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_system_lidya_gem_ledger_idempotency ON system_lidya_gem_ledger (idempotency_key) WHERE idempotency_key IS NOT NULL"))
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
+        conn.execute(text("ALTER TABLE vip_status ALTER COLUMN total_spent TYPE BIGINT"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS wallpaper_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id VARCHAR(64)"))
@@ -1526,6 +1528,12 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
         "unlocked": bool(db.scalar(select(DirectMessageUnlock.id).where(DirectMessageUnlock.owner_id == target.id, DirectMessageUnlock.sender_id == user.id)))}
 
 
+@app.get("/v1/users/{user_id}/fan-leaderboard")
+def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not db.get(User, user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    return fan_leaderboard(db, user_id)
+
+
 @app.get("/v1/message-gifts")
 def message_gifts():
     return [{"gift_key": key, "unit_price": price, **gift_visual(key)} for key, price in GIFT_CATALOG.items()]
@@ -1539,23 +1547,27 @@ async def send_direct_gift(conversation_id: str, payload: dict, db: Session = De
     if len(recipients) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         raise HTTPException(status_code=400, detail="Bu hediye DM konuşmalarında kullanılabilir")
     recipient_id = recipients[0]; gift_key = str(payload.get("gift_key") or ""); price = GIFT_CATALOG.get(gift_key)
+    quantity = payload.get("quantity", 1)
+    if type(quantity) is not int or quantity not in (1, 3, 5, 9, 49, 99):
+        raise HTTPException(status_code=400, detail="Geçersiz hediye adedi")
     if price is None: raise HTTPException(status_code=400, detail="Katalogda olmayan hediye")
     restriction = db.get(DirectMessageRestriction, recipient_id)
     unlock = db.scalar(select(DirectMessageUnlock).where(DirectMessageUnlock.owner_id == recipient_id, DirectMessageUnlock.sender_id == user.id))
     if restriction and restriction.enabled and not unlock and gift_key != restriction.gift_key:
         raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {restriction.gift_key} hediyesi gerekli")
-    receiver_amount = price * 70 // 100
-    charged = db.execute(update(User).where(User.id == user.id, User.lidya >= price).values(lidya=User.lidya - price))
+    total_price = price * quantity
+    receiver_amount = total_price * 70 // 100
+    charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total_price).values(lidya=User.lidya - total_price))
     if charged.rowcount != 1: db.rollback(); raise HTTPException(status_code=400, detail="Yetersiz Lidya")
     db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + receiver_amount))
-    message = Message(conversation_id=conversation_id, sender_id=user.id, text="🎁 " + gift_key); db.add(message); db.flush()
-    db.add(DirectMessageGift(message_id=message.id, sender_id=user.id, recipient_id=recipient_id, gift_key=gift_key, unit_price=price, recipient_amount=receiver_amount))
+    message = Message(conversation_id=conversation_id, sender_id=user.id, text="🎁 " + gift_key + (" ×" + str(quantity) if quantity > 1 else "")); db.add(message); db.flush()
+    db.add(DirectMessageGift(message_id=message.id, sender_id=user.id, recipient_id=recipient_id, gift_key=gift_key, unit_price=total_price, recipient_amount=receiver_amount))
     if restriction and restriction.enabled and not unlock:
         db.add(DirectMessageUnlock(owner_id=recipient_id, sender_id=user.id, gift_key=gift_key))
     db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye", body=user.nickname + " sana " + gift_key + " gönderdi."))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
-        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":price,
+        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"quantity":quantity,
         "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in repo.members(conversation_id): await manager.send_user(member_id, event)
     return _message_out(db, message, user.id)
@@ -1696,9 +1708,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history.reverse()
         history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
         history_ids = {m.user_id for m in history}
-        fan_totals = dict(db.query(RoomGiftEvent.sender_id, func.sum(RoomGiftEvent.total_price))
-            .filter(RoomGiftEvent.room_id == internal_room_id, RoomGiftEvent.sender_id.in_(history_ids))
-            .group_by(RoomGiftEvent.sender_id).all()) if history_ids else {}
+        fan_totals = gift_totals(db, history_ids)
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
@@ -1829,8 +1839,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 db.add(msg)
                 db.commit()
                 db.refresh(msg)
-                fan_total = db.query(func.sum(RoomGiftEvent.total_price)).filter(
-                    RoomGiftEvent.room_id == internal_room_id, RoomGiftEvent.sender_id == user.id).scalar() or 0
+                fan_total = gift_totals(db, {user.id})[user.id]
                 payload = {"type":"room_chat","fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:

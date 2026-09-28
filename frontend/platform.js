@@ -34,7 +34,7 @@
     messages: (id,limit=100,offset=0) => request(`/messages/${encodeURIComponent(id)}?limit=${limit}&offset=${offset}`),
     sendMessage: (id,text) => request(`/messages/${encodeURIComponent(id)}`,{method:'POST',body:JSON.stringify({text})}),
     messageGifts: () => request('/message-gifts'),
-    sendMessageGift: (id,gift_key) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key})}),
+    sendMessageGift: (id,gift_key,quantity=1) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key,quantity})}),
     sendMessageMedia: (id,file,mediaType,viewSeconds=0) => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:30000});},
     messageMediaUrl: path => `${API}/${String(path||'').replace(/^\/+/, '')}`,
     deleteMessages: (id,message_ids) => request(`/messages/${encodeURIComponent(id)}/delete`,{method:'POST',body:JSON.stringify({message_ids})}),
