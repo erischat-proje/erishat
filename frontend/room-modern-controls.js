@@ -64,7 +64,7 @@
       list.replaceChildren();
       if(!Array.isArray(rows)||!rows.length){list.textContent='Bu dönemde henüz odaya hediye gönderilmedi.';return;}
       for(const row of rows){
-        const item=document.createElement('div');item.className='rc-row';
+        const item=document.createElement('div');item.className='rc-row';item.setAttribute('data-user-id', row.user_id || row.id || '');item.setAttribute('data-username', row.nickname || '');item.style.cursor='pointer';
         const rank=document.createElement('span');rank.className='rc-rank';rank.textContent=String(row.rank||'');
         const avatar=document.createElement('span');avatar.className='rc-avatar';
         const asset=row.avatar_asset && window.ErisChatCosmetics?.assetUrl?.(row.avatar_asset);
