@@ -71,7 +71,11 @@
         if(asset){const img=document.createElement('img');img.src=asset;img.alt='';avatar.appendChild(img)}else avatar.textContent=row.avatar||'◈';
         const name=document.createElement('span');name.className='rc-name';name.textContent=row.nickname||'Kullanıcı';
         const amount=document.createElement('span');amount.className='rc-amount';amount.textContent=Number(row.total_lidya||0).toLocaleString('tr-TR')+' Lidya';
-        item.append(rank,avatar,name,amount);list.appendChild(item);
+        item.append(rank,avatar,name,amount);item.onclick=()=>{
+          const uid = row.user_id || row.id;
+          if(uid item.append(rank,avatar,name,amount);list.appendChild(item);item.append(rank,avatar,name,amount);list.appendChild(item); typeof window.openUserProfile ==='function') window.openUserProfile(uid);
+        };
+        list.appendChild(item);
       }
     }catch(e){if(request===requestNumber)list.textContent=e.message||'Sıralama yüklenemedi.';}
   }
