@@ -134,8 +134,8 @@
 
     function avatarFor(row){
       const fallback=String(row.gender||row.avatar||'').toLowerCase().includes('kad')
-        ? 'kadınavatar/kadin_avatar_06_ULTRA_HD_CLEAN.jpg'
-        : 'erkekavatar/avatar_01_ULTRA_HD_CLEAN.jpg';
+        ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
+        : 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR/1.png';
       return window.ErisChatCosmetics?.assetUrl?.(row.avatar_asset||fallback)||row.avatar_asset||fallback;
     }
     function renderComment(row,children=[]){
@@ -246,8 +246,8 @@
     for(const post of rows){
       const card=document.createElement('article');card.className='ec-social-post';
       const fallbackAvatar=String(post.gender||post.avatar||'').toLowerCase().includes('kad')
-        ? 'kadınavatar/kadin_avatar_06_ULTRA_HD_CLEAN.jpg'
-        : 'erkekavatar/avatar_01_ULTRA_HD_CLEAN.jpg';
+        ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
+        : 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR/1.png';
       const avatar=post.avatar_asset||fallbackAvatar;
       card.innerHTML='<div class="ec-social-author"><button type="button" class="ec-social-profile-link ec-social-avatar" data-avatar data-user-id></button><span style="min-width:0"><button type="button" class="ec-social-profile-link" data-author-name data-user-id><b></b></button><small class="ec-social-date"></small></span>'+(owner?'<details class="ec-social-menu"><summary aria-label="Gönderi işlemleri">•••</summary><button type="button" data-edit>✎ Düzenle</button><button type="button" data-delete>Sil</button></details>':'')+'</div><div class="ec-social-caption"></div><small data-visibility style="display:block;color:#aaa1b1;font-size:10px"></small><div data-photo></div>';
       card.querySelectorAll('[data-user-id]').forEach(el => {

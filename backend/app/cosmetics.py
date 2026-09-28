@@ -12,6 +12,12 @@ def _asset_root() -> Path:
     return Path(__file__).resolve().parents[1] / "Gereken_icerikler"
 
 
+def _new_asset_root() -> Path:
+    """Repository root locally, /app in the API container."""
+    base = Path(__file__).resolve().parents[1]
+    return base if (base / "avatarveduvarkağıdı").is_dir() else base.parent
+
+
 def _safe_key(value: str) -> str:
     value = (value or "").strip().replace("\\", "/")
     if not value or value.startswith("/") or ".." in value.split("/"):
@@ -50,13 +56,14 @@ def catalog() -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
 
     # Standard catalog: the repository uses these exact folder names.
-    _collect(result, root, "kadınavatar", "avatar", "female", False)
-    _collect(result, root, "erkekavatar", "avatar", "male", False)
+    new_root = _new_asset_root()
+    _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR", "avatar", "female", False)
+    _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR", "avatar", "male", False)
     _collect(result, root, "cercevesistemi/standart", "frame", None, False)
 
     # VIP catalog: these are unlock rewards, not normal Lidya purchases.
-    _collect(result, root, "vipkadınavatar", "avatar", "female", True)
-    _collect(result, root, "viperkekavatar", "avatar", "male", True)
+    _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP", "avatar", "female", True)
+    _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP", "avatar", "male", True)
     _collect(result, root, "cercevesistemi/vip", "frame", None, True)
 
     return result

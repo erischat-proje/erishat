@@ -14,18 +14,17 @@
     if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
     return data;
   };
-  const state = {catalog: [], owned: [], user: null, prices: {standard: 1000, vip: 5000}};
+  const state = {catalog: [], wallpapers: [], owned: [], user: null, prices: {standard: 1000, vip: 5000}};
   const list = value => Array.isArray(value) ? value : value?.items || value?.cosmetics || value?.data || [];
   const emit = () => window.dispatchEvent(new CustomEvent('erischat:cosmetics-updated', {detail: state}));
 
-  // Backend asset_key values are relative to Gereken_icerikler. Resolve them
-  // from the repository root so GitHub Pages serves /erischat/Gereken_icerikler/...
-  // while absolute URLs and already-prefixed paths remain untouched.
+  // The new avatar and wallpaper collection lives at the repository root.
+  // Frames and earlier non-replaced assets live under Gereken_icerikler.
   const assetUrl = key => {
     if (!key) return '';
     if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
     let clean = String(key).replace(/^\.\//, '');
-    if (!clean.startsWith('Gereken_icerikler/')) clean = `Gereken_icerikler/${clean}`;
+    if (!clean.startsWith('Gereken_icerikler/') && !clean.startsWith('avatarveduvarkağıdı/')) clean = `Gereken_icerikler/${clean}`;
     const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
     return new URL(`./${encodedPath}`, document.baseURI).href;
   };
@@ -33,8 +32,9 @@
   async function load() {
     if (!token()) return state;
     try {
-      const [catalog, owned, user] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me')]);
+      const [catalog, owned, user, wallpapers] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me'), api('/wallpapers').catch(() => ({items: []}))]);
       state.catalog = list(catalog);
+      state.wallpapers = list(wallpapers);
       state.owned = list(owned);
       state.user = user;
       state.prices = {
@@ -76,7 +76,7 @@
     const wallpaperKey = assetValue(user.wallpaper_asset, '');
     const avatar = assetUrl(avatarKey);
     const frame = assetUrl(frameKey);
-    const wallpaper = assetUrl(wallpaperKey);
+    const wallpaper = assetUrl(state.wallpapers.find(item => item.key === wallpaperKey)?.asset);
     if (wallpaper) { document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); document.body.style.backgroundImage = `linear-gradient(#05030aa8,#05030ad9), url("${wallpaper}")`; document.body.style.backgroundSize = 'cover'; document.body.style.backgroundAttachment = 'fixed'; } else { document.documentElement.style.removeProperty('--eris-wallpaper'); document.body.style.backgroundImage = ''; }
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {
       if (!avatar) return;

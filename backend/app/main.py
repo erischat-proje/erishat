@@ -71,6 +71,29 @@ def migrate_legacy_frames(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='frame' AND asset_key=:old"), {"old": old})
     db.commit()
 
+
+def migrate_legacy_avatars(db: Session) -> None:
+    """Keep existing avatar purchases and equipped looks when retiring old files."""
+    prefixes = ("erkekavatar/", "kadınavatar/", "viperkekavatar/", "vipkadınavatar/")
+    rows = db.execute(text("SELECT DISTINCT asset_key FROM user_cosmetics WHERE cosmetic_type='avatar' UNION SELECT DISTINCT avatar_asset FROM users WHERE avatar_asset IS NOT NULL")).scalars().all()
+    old_keys = [key for key in rows if key and key.startswith(prefixes)]
+    if not old_keys:
+        return
+    avatars = [item for item in catalog() if item["type"] == "avatar"]
+    for old in old_keys:
+        vip = old.startswith("vip")
+        gender = "female" if "kadınavatar/" in old else "male"
+        choices = [item["asset_key"] for item in avatars if item["vip"] == vip and item["gender"] == gender]
+        if len(choices) != (12 if vip else 48):
+            raise RuntimeError("Yeni avatar koleksiyonu eksik; eski avatarlar taşınmadı")
+        digits = re.findall(r"\d+", old.rsplit("/", 1)[-1])
+        index = min(max(int(digits[-1]) - 1, 0), len(choices) - 1) if digits else 0
+        new = choices[index]
+        db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) SELECT user_id, 'avatar', :new FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old ON CONFLICT (user_id, cosmetic_type, asset_key) DO NOTHING"), {"old": old, "new": new})
+        db.execute(text("UPDATE users SET avatar_asset=:new WHERE avatar_asset=:old"), {"old": old, "new": new})
+        db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
+    db.commit()
+
 app = FastAPI(title="ErisChat API", version="1.0.0")
 app.include_router(cosmetic_router)
 
@@ -215,6 +238,7 @@ def startup() -> None:
     ensure_system_data_columns()
     with Session(engine) as db:
         migrate_legacy_frames(db)
+        migrate_legacy_avatars(db)
         cleanup_expired_sessions(db)
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
@@ -665,14 +689,9 @@ def complete_onboarding(
     # Onboarding cosmetics: yalnızca standart ve cinsiyete uygun avatar/çerçeve.
     if payload.avatar_asset:
         avatar_key = payload.avatar_asset.replace("\\", "/").lstrip("./")
-        expected_folder = "kadınavatar" if payload.gender == "female" else "erkekavatar"
-        avatar_root = Path(__file__).resolve().parents[1] / "Gereken_icerikler" / expected_folder
-        avatar_path = avatar_root / Path(avatar_key).name
-        if (
-            avatar_key.startswith(expected_folder + "/")
-            and avatar_path.is_file()
-        ):
-            user.avatar_asset = f"{expected_folder}/{avatar_path.name}"
+        avatar_item = next((item for item in catalog() if item["type"] == "avatar" and not item["vip"] and item["gender"] == payload.gender and item["asset_key"] == avatar_key), None)
+        if avatar_item:
+            user.avatar_asset = avatar_item["asset_key"]
         else:
             raise HTTPException(status_code=400, detail="Geçersiz avatar seçimi")
 

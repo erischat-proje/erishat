@@ -18,8 +18,8 @@
       const publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';
       const avatarPath=u.avatar_asset||(
         String(u.gender||u.avatar||'').toLowerCase().includes('kad')
-          ? 'kadınavatar/kadin_avatar_06_ULTRA_HD_CLEAN.jpg'
-          : 'erkekavatar/avatar_01_ULTRA_HD_CLEAN.jpg'
+          ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
+          : 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR/1.png'
       ),framePath=u.frame_asset||'';
       const avatarUrl=avatarPath?(window.ErisChatCosmetics?.assetUrl?.(avatarPath)||avatarPath):'';
       const frameUrl=framePath?(window.ErisChatCosmetics?.assetUrl?.(framePath)||framePath):'';
