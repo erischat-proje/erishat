@@ -3,9 +3,9 @@ window.openUserProfileModal = async function(userData) {
     const existing = document.getElementById('erischatUserProfileOverlay');
     if (existing) existing.remove();
 
-    const userId = userData.id || userData.user_id || "1";
-    const username = userData.username || userData.name || "Kullanıcı";
-    const avatar = userData.avatar || 'https://via.placeholder.com/50';
+    const userId = userData.id || userData.user_id || userData.userId || "1";
+    const username = userData.username || userData.name || userData.nickname || "Kullanıcı";
+    const avatar = userData.avatar || userData.avatar_asset || 'https://via.placeholder.com/50';
     const frame = userData.frame || '';
     const followers = userData.followers_count || 0;
     const following = userData.following_count || 0;
@@ -94,10 +94,25 @@ window.openUserProfileModal = async function(userData) {
     };
 };
 
-// Genel Tıklama Dinleyicisi (Sohbet ve Katkı Listesi Dahil)
+// Oda katkı listesindeki satırlara dinamik olarak data-user-id enjekte etme ve tıklama yakalama
 document.addEventListener('click', (e) => {
-    const userTarget = e.target.closest('[data-user-id], .room-chat-username, .room-chat-avatar, .erischat-upc-username, .room-contribution-item, img[src*="avatar"], .user-profile-trigger');
-    
+    // 1. Oda katkı listesindeki bir satıra tıklandıysa (.rc-row)
+    const rcRow = e.target.closest('.rc-row');
+    if (rcRow) {
+        // Satır içerisindeki metin veya elementlerden kullanıcı adını ve ID'yi yakalayalım
+        const nameEl = rcRow.querySelector('.rc-name');
+        const username = nameEl ? nameEl.textContent.trim() : "Kullanıcı";
+        const imgEl = rcRow.querySelector('img');
+        const avatar = imgEl ? imgEl.src : 'https://via.placeholder.com/50';
+        // row datasından veya elementten ID almaya çalışalım
+        const userId = rcRow.getAttribute('data-user-id') || rcRow.dataset?.userId || username;
+        
+        window.openUserProfileModal({ id: userId, username, avatar });
+        return;
+    }
+
+    // 2. Sohbet akışındaki veya genel alanlardaki kullanıcı elementleri
+    const userTarget = e.target.closest('[data-user-id], .room-chat-username, .room-chat-avatar, .erischat-upc-username, img[src*="avatar"]');
     if (userTarget) {
         const userId = userTarget.getAttribute('data-user-id') || userTarget.dataset?.userId || "1";
         const username = userTarget.getAttribute('data-username') || userTarget.textContent?.trim() || "Kullanıcı";
