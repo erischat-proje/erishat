@@ -78,20 +78,27 @@ column-gap:9px
 .homeMenuItem small{margin-top:2px}
 }
 </style><style>
-/* Oda Merkezi tasarım dili: ilk adımda ana sayfa. */
-#home>.eyebrow{margin:8px 2px 16px;color:#c9a9ff;font-size:12px;font-weight:800;letter-spacing:2.4px}
-#home .hero.card{position:relative;overflow:hidden;padding:clamp(22px,5vw,34px);border:1px solid #ac86dc38;border-radius:30px;background:radial-gradient(circle at 100% 0,#9b4fbe34,transparent 55%),linear-gradient(145deg,#201629,#100e18 78%);box-shadow:0 22px 55px #0006}
+/* Oda Merkezi ile ortak: sakin yüzeyler, çizgi ikonlar ve net hiyerarşi. */
+#home>.eyebrow{margin:8px 2px 16px;color:#bea3e6;font-size:11px;font-weight:800;letter-spacing:2.2px}
+#home .hero.card{position:relative;overflow:hidden;padding:clamp(22px,5vw,34px);border:1px solid #ad84cf30;border-radius:28px;background:radial-gradient(circle at 100% 0,#9b4fbe2c,transparent 55%),linear-gradient(145deg,#201629,#100e18 78%);box-shadow:0 22px 55px #0005}
 #home .hero h1.title{font-size:clamp(27px,6vw,42px);line-height:1.12;letter-spacing:-.8px}
 #home .hero p{font-size:clamp(13px,3.4vw,16px);line-height:1.5;color:#bdb3c8}
-#home .section h3{font-size:clamp(17px,4vw,22px);letter-spacing:-.35px}
-#home .homeMenu{gap:12px}
-#home .homeMenuItem{min-height:128px;padding:18px;border:1px solid #ffffff1b;border-radius:24px;background:linear-gradient(145deg,#191520,#100e17);box-shadow:0 10px 28px #0003;transition:transform .18s,border-color .18s,background .18s}
-#home .homeMenuItem:hover,#home .homeMenuItem:focus-visible{border-color:#b68fff80;background:linear-gradient(145deg,#241b31,#13101d);transform:translateY(-2px)}
-#home .homeMenuItem span{display:grid;place-items:center;width:44px;height:44px;margin-bottom:13px;border-radius:15px;background:linear-gradient(145deg,#8354d6,#a343bc);font-size:23px}
-#home .homeMenuItem strong{font-size:15px;line-height:1.25}
-#home .homeMenuItem small{font-size:11px;line-height:1.4}
-@media(max-width:390px){#home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))}#home .homeMenuItem{min-height:138px;display:flex}#home .homeMenuItem span{flex:none}}
-@media(prefers-reduced-motion:reduce){#home .homeMenuItem{transition:none}#home .homeMenuItem:hover{transform:none}}
+#home .section h3{font-size:clamp(18px,4vw,22px);letter-spacing:-.35px}
+#home .homeMenu{gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+#home .homeMenuGroup{grid-column:1/-1;margin:18px 2px 2px;color:#a99bb6;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+#home .homeMenuGroup:first-of-type{margin-top:2px}
+#home .homeMenuItem{min-width:0;min-height:92px;display:flex;flex-direction:row;align-items:center;gap:12px;padding:14px;border:1px solid #ffffff1a;border-radius:20px;background:linear-gradient(145deg,#17131e,#100e17);box-shadow:none;text-align:left;transition:border-color .18s,background .18s}
+#home .homeMenuItem:hover,#home .homeMenuItem:focus-visible{border-color:#c19cf180;background:#21192c;transform:none}
+#home .homeMenuIcon{flex:none;width:29px;height:29px;color:#b995e8;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#home .homeMenuCopy{min-width:0;display:block}
+#home .homeMenuItem strong{display:block;font-size:14px;line-height:1.3;font-weight:720}
+#home .homeMenuItem small{display:block;margin-top:4px;color:#a79caf;font-size:10px;line-height:1.35}
+#home .eris-admin-menu{grid-column:1/-1;min-height:88px;padding:15px 19px;border-color:#a479d044;background:radial-gradient(circle at 100% 0,#9b4fbe20,transparent 55%),linear-gradient(145deg,#201729,#13101b)}
+#home .eris-admin-menu .homeMenuIcon{width:32px;height:32px}
+#home .eris-admin-menu .ea-role{flex:none;margin-left:auto}
+@media(min-width:760px){#home .homeMenu{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:390px){#home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))}#home .homeMenuItem{min-height:104px;gap:9px;padding:11px}#home .homeMenuIcon{width:25px;height:25px}#home .homeMenuItem strong{font-size:12px}#home .homeMenuItem small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){#home .homeMenuItem{transition:none}}
 </style></head><body>
 <main class="app"><header class="top"><div class="brand">Eris<i>Chat</i></div><div class="actions"><button class="icon" onclick="showView('search')">⌕</button></div></header><section class="content">
 <section id="home" class="view show">
@@ -125,44 +132,48 @@ column-gap:9px
   <h3>Ana menü</h3>
 </div>
 
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><defs><symbol id="home-chat" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"/><path d="M7.5 11.5h9"/></symbol><symbol id="home-discover" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.7 8.3-2.4 5-5 2.4 2.4-5 5-2.4Z"/></symbol><symbol id="home-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.4-3.5 3.1-5.5 7-5.5s6.6 2 7 5.5"/></symbol><symbol id="home-shop" viewBox="0 0 24 24"><path d="M4 9h16l-1.5 11h-13L4 9ZM8 9V7a4 4 0 0 1 8 0v2"/></symbol><symbol id="home-vip" viewBox="0 0 24 24"><path d="m12 2 2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2ZM20 18l.6 1.4L22 20l-1.4.6L20 22l-.6-1.4L18 20l1.4-.6L20 18Z"/></symbol><symbol id="home-privacy" viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.5"/><path d="M4 20 20 4"/></symbol><symbol id="home-family" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c.3-3.4 2.5-5 6.5-5s6.2 1.6 6.5 5H2.5ZM17 5a3 3 0 0 1 0 6M18 14c2.1.4 3.3 2 3.5 5h-4"/></symbol><symbol id="home-security" viewBox="0 0 24 24"><path d="m12 2 8 3v6c0 5.3-3 8.5-8 11-5-2.5-8-5.7-8-11V5l8-3Z"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="home-support" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 10h8M8 13h5"/></symbol></defs></svg>
 <div class="homeMenu">
+  <div class="homeMenuGroup">Sosyal alan</div>
 
   <button class="homeMenuItem" onclick="showView('messages');window.ErisChatDM?.load?.()">
-    <span>💬</span><strong>Mesajlar</strong><small>Gerçek konuşmalar</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-chat"></use></svg><div class="homeMenuCopy"><strong>Mesajlar</strong><small>Gerçek konuşmalar</small></div>
   </button>
 
   <button class="homeMenuItem" onclick="showView('explore');window.ErisChatRoomList?.load?.()">
-    <span>🧭</span><strong>Keşfet</strong><small>Odalar ve kullanıcılar</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-discover"></use></svg><div class="homeMenuCopy"><strong>Keşfet</strong><small>Odalar ve kullanıcılar</small></div>
   </button>
 
   <button class="homeMenuItem" onclick="showView('profile');window.ErisProfile?.refresh?.()">
-    <span>👑</span><strong>Profilim</strong><small>Avatar, çerçeve ve sosyal</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-profile"></use></svg><div class="homeMenuCopy"><strong>Profilim</strong><small>Avatar, çerçeve ve sosyal</small></div>
   </button>
 
   <button class="homeMenuItem" onclick="showView('shop')">
-    <span>💎</span><strong>Lidya mağazası</strong><small>Avatar ve çerçeveler</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-shop"></use></svg><div class="homeMenuCopy"><strong>Lidya mağazası</strong><small>Avatar ve çerçeveler</small></div>
   </button>
 
   <button class="homeMenuItem" onclick="showView('vip');window.ErisChatVIP?.load?.()">
-    <span>✨</span><strong>VIP merkezi</strong><small>VIP 1 → VIP 12</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-vip"></use></svg><div class="homeMenuCopy"><strong>VIP merkezi</strong><small>VIP 1 → VIP 12</small></div>
   </button>
 
   <button class="homeMenuItem" onclick="showView('anon');window.ErisPrivacy?.load?.()">
-    <span>🕶️</span><strong>Gizlilik</strong><small>Görünürlük ayarları</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-privacy"></use></svg><div class="homeMenuCopy"><strong>Gizlilik</strong><small>Görünürlük ayarları</small></div>
   </button>
 
+  <div class="homeMenuGroup">Hesabın ve yönetim</div>
   <div id="adminMenuMount" style="display:contents"></div>
 
+  <div class="homeMenuGroup">Topluluk ve destek</div>
   <button class="homeMenuItem" type="button" data-hub-tab="family">
-    <span>👨‍👩‍👧</span><strong>Aile</strong><small>Aile ve bağış sistemi</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-family"></use></svg><div class="homeMenuCopy"><strong>Aile</strong><small>Aile ve bağış sistemi</small></div>
   </button>
 
   <button class="homeMenuItem" type="button" data-hub-tab="report">
-    <span>🛡️</span><strong>Güvenlik</strong><small>Şikayet ve güvenlik</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-security"></use></svg><div class="homeMenuCopy"><strong>Güvenlik</strong><small>Şikayet ve güvenlik</small></div>
   </button>
 
   <button class="homeMenuItem" onclick="window.ErisSupport?.open?.()">
-    <span>🎫</span><strong>Destek taleplerim</strong><small>Talep aç ve ekiple yanıtlaş</small>
+    <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-support"></use></svg><div class="homeMenuCopy"><strong>Destek taleplerim</strong><small>Talep aç ve ekiple yanıtlaş</small></div>
   </button>
 
 </div>
@@ -242,7 +253,7 @@ async function sendChat(){
    if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
    matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
  }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d">Arama şu anda kullanılamıyor.</div>'}
-}};})();</script><script src="./auth-live.js?v=business-auth-20260926-1"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js?v=story-24h-1"></script><script src="./admin-live.js?v=modern-home-admin-20260928-1"></script><script src="./announcement-live.js?v=announcements-2"></script><script src="./vip-rewards-live.js?v=vip-rewards-2"></script><script src="./support-live.js?v=support-2"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=messaging-restriction-1"></script><script src="./screen-protection.js?v=capture-1"></script><script src="./dm-live.js?v=messaging-media-4"></script><script src="./stories-live.js?v=story-24h-1"></script><script src="./social-feed-live.js?v=social-feed-posts-1"></script><script src="./gift-live.js?v=repair-1"></script><script src="./room-live.js?v=room-experience-20260928"></script><script src="./room-reference-ui.js?v=room-experience-20260928"></script><script src="./room-wallpaper-live.js?v=room-wallpaper-2"></script><script src="./room-actions.js?v=room-experience-20260928"></script><script src="./room-rtc-live.js?v=room-experience-20260928"></script><script src="./room-music-ui.js?v=room-experience-20260928"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./games-menu.js?v=games-room-fix-1"></script><script src="./feature-hub-live.js?v=vip-rewards-20260928-1"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
+}};})();</script><script src="./auth-live.js?v=business-auth-20260926-1"></script><script src="./onboarding-live.js?v=onboarding-1"></script><script src="./welcome-live.js?v=welcome-1"></script><script src="./platform.js?v=story-24h-1"></script><script src="./admin-live.js?v=home-redesign-20260928-2"></script><script src="./announcement-live.js?v=announcements-2"></script><script src="./vip-rewards-live.js?v=vip-rewards-2"></script><script src="./support-live.js?v=support-2"></script><script src="./profile-live.js"></script><script src="./profile-ui-live.js?v=messaging-restriction-1"></script><script src="./screen-protection.js?v=capture-1"></script><script src="./dm-live.js?v=messaging-media-4"></script><script src="./stories-live.js?v=story-24h-1"></script><script src="./social-feed-live.js?v=social-feed-posts-1"></script><script src="./gift-live.js?v=repair-1"></script><script src="./room-live.js?v=room-experience-20260928"></script><script src="./room-reference-ui.js?v=room-experience-20260928"></script><script src="./room-wallpaper-live.js?v=room-wallpaper-2"></script><script src="./room-actions.js?v=room-experience-20260928"></script><script src="./room-rtc-live.js?v=room-experience-20260928"></script><script src="./room-music-ui.js?v=room-experience-20260928"></script><script src="./wallpaper-live.js"></script><script src="./cosmetics.js"></script><script src="./shop-live.js"></script><script src="./games-menu.js?v=games-room-fix-1"></script><script src="./feature-hub-live.js?v=vip-rewards-20260928-1"></script><script src="./session-ui-live.js"></script><script src="./dm-create-live.js?v=dmfix-2"></script>
 <script>
 (function(){
  async function loadPrivacy(){
