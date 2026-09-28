@@ -102,7 +102,7 @@
     document.head.appendChild(style);
     const s=document.createElement('section');s.id='erisRoomSurface';
     s.classList.add('room-layout-v6');
-    s.innerHTML='<div class="eris-room-wall"></div><div class="eris-room-top"><button class="room-action back" id="erisRoomBack" aria-label="Geri">‹</button><div class="eris-room-title"><b id="erisLiveTitle">Oda</b><small id="erisLiveMeta">Bağlanıyor…</small></div></div><div class="eris-room-quick-actions"><button class="room-action" id="erisRoomGift" aria-label="Hediyeler">◇ <span>Hediyeler</span></button><button class="room-action" id="erisRoomMusic" aria-label="Müzik">♫ <span>Müzik</span></button><button class="room-action" id="erisRoomWallpaper" aria-label="Oda duvar kâğıdı" title="Oda duvar kâğıdı" style="display:none">▧ <span>Duvar kâğıdı</span></button></div><div class="eris-room-stage" id="erisLiveSeats"><div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div></div><div class="eris-room-tools"><button id="erisRoomMic">🎙️ Mikrofon</button><button id="erisRoomMore">•••</button></div><div class="eris-room-chat"><div class="eris-chat-list" id="erisLiveChat"><div style="color:#938a9f;font-size:9px">Oda sohbetine bağlanılıyor…</div></div><div class="eris-room-compose"><input id="erisLiveInput" maxlength="500" placeholder="Odaya mesaj yaz…"><button id="erisLiveSend">Gönder</button></div></div>';
+    s.innerHTML='<div class="eris-room-wall"></div><div class="eris-room-top"><button class="room-action back" id="erisRoomBack" aria-label="Geri">‹</button><div class="eris-room-emblem" aria-hidden="true">⌂</div><div class="eris-room-title"><b id="erisLiveTitle">Oda</b><small id="erisLiveMeta">Bağlanıyor…</small></div></div><div class="eris-room-quick-actions"><button class="room-action" id="erisRoomGift" aria-label="Hediyeler">◇ <span>Hediyeler</span></button><button class="room-action" id="erisRoomMusic" aria-label="Müzik">♫ <span>Müzik</span></button><button class="room-action" id="erisRoomWallpaper" aria-label="Oda duvar kâğıdı" title="Oda duvar kâğıdı" style="display:none">▧ <span>Duvar kâğıdı</span></button></div><div class="eris-room-stage" id="erisLiveSeats"><div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div></div><div class="eris-room-tools"><button id="erisRoomMic">🎙️ Mikrofon</button><button id="erisRoomMore">•••</button></div><div class="eris-room-chat"><div class="eris-room-activity"><span class="activity-dot"></span><span id="erisRoomActivity">Oda sohbeti</span></div><div class="eris-chat-list" id="erisLiveChat"><div style="color:#938a9f;font-size:9px">Oda sohbetine bağlanılıyor…</div></div><div class="eris-room-compose"><input id="erisLiveInput" maxlength="500" placeholder="Odaya mesaj yaz…"><button id="erisLiveSend">Gönder</button></div></div>';
     document.body.appendChild(s);
     s.querySelector('#erisRoomBack').onclick=window.closeRealRoom;
     s.querySelector('#erisRoomMusic').onclick=()=>window.ErisChatMusic?.open?.();
@@ -179,7 +179,7 @@
         frame.style.backgroundImage='url("'+String(frameUrl).replace(/"/g,'%22')+'")';
         frame.classList.add('has-frame');
       }
-      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Koltuk '+num;
+      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Boş';
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
       if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Koltuk '+num+' • '+(isMe?'Sen':'Profili aç');}else if(!occupied&&!locked)b.onclick=async()=>{
         try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}
@@ -250,7 +250,10 @@
       followButton.onclick=async()=>{followButton.disabled=true;try{if(room.is_following){await window.ErisRoom.unfollowRoom(liveRoomId);room.is_following=false;window.toast?.('Oda takibinden çıkarıldı.')}else{await window.ErisRoom.followRoom(liveRoomId);room.is_following=true;window.toast?.('Oda takip listene eklendi.')}paintFollow();window.ErisChatRoomList?.loadFollowing?.()}catch(error){window.toast?.(error.message||'Oda takibi güncellenemedi.')}finally{followButton.disabled=false}};
       const levelButton=document.getElementById('erisRoomLevel');
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
-      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
+      renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);
+      const occupiedSeats=(room.seats||[]).filter(seat=>seat.user_id).length;
+      document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  Oda sohbeti';
+      attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       surface.classList.remove('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
