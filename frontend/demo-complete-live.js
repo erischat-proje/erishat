@@ -57,7 +57,7 @@
       genderBox.innerHTML='';['male','female'].forEach(x=>genderBox.append(btn(x==='male'?'♂ Erkek ödülleri':'♀ Kadın ödülleri',()=>render(x))));
       table.innerHTML='';
       for(let n=1;n<=12;n++){
-        const unlocked=n<=level, avatarKey=`${g==='female'?'vipkadınavatar':'viperkekavatar'}/vip${n}.png`, frameKey=`vipcerceve/vip${n}.png`;
+        const unlocked=n<=level, avatarKey=`${g==='female'?'vipkadınavatar':'viperkekavatar'}/vip${n}.png`, frameKey=`cercevesistemi/vip/VİP${n}.png`;
         const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:68px 1fr;gap:8px;margin-bottom:8px;align-items:stretch';
         row.innerHTML=`<div style="background:#09070d;border:1px solid #ffffff12;border-radius:12px;display:grid;place-items:center;overflow:hidden"><img src="${esc(asset(avatarKey))}" style="width:62px;height:62px;object-fit:contain;${unlocked?'':'filter:grayscale(1);opacity:.5'}"></div><div style="background:#12101a;border:1px solid #ffffff12;border-radius:12px;padding:9px"><b>${unlocked?'✨':'🔒'} VIP ${n} • ${labels[n-1]}</b><small style="display:block;color:#938a9f;margin:4px 0">${unlocked?'Açık':'VIP '+n+' gerekli'} • Toplam harcama eşiği: ${formatLidya(vipThresholds[n])} Lidya • ${g==='female'?'Kadın':'Erkek'} avatar: vip${n}.png • Çerçeve: vip${n}.png</small><div style="font-size:8px;color:#d5cddd">${perks[n].map(esc).join(' • ')}</div><div style="margin-top:6px"><img src="${esc(asset(frameKey))}" style="height:30px;max-width:100%;object-fit:contain;${unlocked?'':'filter:grayscale(1);opacity:.4'}"></div></div>`;
         table.append(row);

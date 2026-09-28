@@ -80,12 +80,12 @@
       [data-seat-count="12"] .eris-seat .seat-ava{width:30px;height:30px;font-size:14px}
       [data-seat-count="16"] .eris-seat .seat-ava{width:24px;height:24px;font-size:11px}
       .eris-seat .seat-ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:18px;margin:auto;overflow:hidden;border:1px solid #ffffff28}.eris-seat .seat-ava.avatar{background-size:cover;background-position:center}.eris-seat.empty .seat-ava{background:rgba(255,255,255,.055);color:#aaa0ad}
-      .eris-seat .seat-pod{width:100%;height:100%;display:grid;place-items:center}
+      .eris-seat .seat-pod{width:100%;height:100%;display:grid;place-items:center;position:relative}
       .eris-seat .seat-mic{display:none!important}
       .eris-seat .seat-ava{width:100%;height:100%;border:0;box-sizing:border-box}
       .eris-seat.empty .seat-ava{background:transparent;border:0;font-size:28px}
-      .eris-seat .seat-frame{pointer-events:none}
-      #erisRoomSurface .eris-seat .seat-ava{width:100%!important;height:100%!important}
+      .eris-seat .seat-frame{position:absolute;inset:-8%;z-index:2;background:center/contain no-repeat;pointer-events:none}
+      #erisRoomSurface .eris-seat.occupied .seat-ava{width:72%!important;height:72%!important;border-radius:50%!important}
       #erisRoomSurface .eris-seat .seat-mic{display:none!important}
       #erisRoomSurface .eris-room-core{display:none!important}
 

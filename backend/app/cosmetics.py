@@ -52,12 +52,12 @@ def catalog() -> list[dict[str, Any]]:
     # Standard catalog: the repository uses these exact folder names.
     _collect(result, root, "kadınavatar", "avatar", "female", False)
     _collect(result, root, "erkekavatar", "avatar", "male", False)
-    _collect(result, root, "standartcerceve", "frame", None, False)
+    _collect(result, root, "cercevesistemi/standart", "frame", None, False)
 
     # VIP catalog: these are unlock rewards, not normal Lidya purchases.
     _collect(result, root, "vipkadınavatar", "avatar", "female", True)
     _collect(result, root, "viperkekavatar", "avatar", "male", True)
-    _collect(result, root, "vipcerceve", "frame", None, True)
+    _collect(result, root, "cercevesistemi/vip", "frame", None, True)
 
     return result
 
