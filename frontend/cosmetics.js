@@ -91,7 +91,7 @@
       if (el.tagName === 'IMG') el.src = frame;
       else {
         el.style.backgroundImage = `url("${frame}")`;
-        el.style.backgroundSize = 'cover';
+        el.style.backgroundSize = 'contain';
         el.style.backgroundPosition = 'center';
         el.style.backgroundRepeat = 'no-repeat';
       }

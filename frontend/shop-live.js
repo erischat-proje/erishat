@@ -69,15 +69,16 @@
           const unlocked = !isVip || currentVip >= required;
           const isOwned = ownedSet.has(`${type}:${key}`);
           const src = assetUrl(key);
+          const frameNumber = type === 'frame' ? items.filter(entry => typeOf(entry) === 'frame' && vipOf(entry) === isVip).indexOf(item) + 1 : 0;
           const card = document.createElement('article');
           card.className = 'liveShopCard';
-          card.innerHTML = `<div class="liveShopPreview"><div class="liveShopAvatar" style="background-image:url('${esc(src)}')"></div>${type === 'frame' ? `<div class="liveShopFrame" style="background-image:url('${esc(src)}')"></div>` : ''}</div><div class="liveShopName">${type === 'frame' ? 'Çerçeve' : 'Avatar'} #${index + 1}${isVip ? ' • VIP' : ''}</div><div class="liveShopMeta">${isVip ? (unlocked ? `VIP ${required} açıldı` : `VIP ${required} gerekli`) : `${esc(item.gender || 'standart')} • ${Number(item.price || catalog.price || 1000).toLocaleString('tr-TR')} Lidya`}</div>`;
+          card.innerHTML = `<div class="liveShopPreview"><div class="liveShopAvatar" ${type === 'avatar' ? `style="background-image:url('${esc(src)}')"` : ''}></div>${type === 'frame' ? `<div class="liveShopFrame" style="background-image:url('${esc(src)}')"></div>` : ''}</div><div class="liveShopName">${type === 'frame' ? `${isVip ? 'VIP' : 'Standart'} çerçeve #${frameNumber}` : `Avatar #${index + 1}${isVip ? ' • VIP' : ''}`}</div><div class="liveShopMeta">${isVip ? (unlocked ? `VIP ${required} açıldı` : `VIP ${required} gerekli`) : `${esc(item.gender || 'standart')} • ${Number(item.price || catalog.price || 1000).toLocaleString('tr-TR')} Lidya`}</div>`;
           const action = document.createElement('button');
           action.className = `liveShopAction${isVip && !unlocked ? ' locked' : ''}`;
           if (isVip && !unlocked) {
             action.textContent = `🔒 VIP ${required}`;
             action.disabled = true;
-          } else if (isOwned) {
+          } else if (isOwned || isVip && unlocked) {
             action.textContent = '✓ Uygula';
             action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); window.ErisChatCosmetics?.load(); window.toast?.('Görünüm uygulandı ✓'); } catch (error) { window.toast?.(error.message || 'Görünüm uygulanamadı.'); } };
           } else {
