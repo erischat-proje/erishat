@@ -82,9 +82,14 @@
       erisRoomMusic:'<path d="M9 18V5l12-2v13M9 8l12-2"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
       erisRoomWallpaper:'<rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="9" r="2"/><path d="m3 18 6-5 4 3 3-3 5 5"/>'
     };
+    const actionLabels={erisRoomGift:'Hediyeler',erisRoomMusic:'Müzik',erisRoomWallpaper:'Duvar kâğıdı'};
     for(const [id,paths] of Object.entries(icons)){
       const button=s.querySelector('#'+id);
-      if(button && !button.querySelector('svg'))button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths+'</svg>';
+      if(!button)continue;
+      if(!button.querySelector('svg'))button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths+'</svg>';
+      let label=button.querySelector('span');
+      if(!label){label=document.createElement('span');button.appendChild(label)}
+      label.textContent=actionLabels[id];
     }
     const emblem=s.querySelector('.eris-room-emblem');
     if(emblem && emblem.tagName!=='BUTTON'){

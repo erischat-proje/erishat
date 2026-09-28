@@ -225,17 +225,22 @@
 }
 #erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
   top:auto;left:auto;right:12px;bottom:70px;z-index:80!important;display:flex;flex-direction:column;
-  width:48px;gap:6px;padding:5px;border-radius:18px;
+  width:116px;gap:6px;padding:5px;border-radius:18px;
 }
 #erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {
-  flex:none;width:46px;height:44px;min-height:44px;padding:0;
-  border:1px solid #d4b8f553!important;border-radius:13px;font-size:22px;
+  flex:none;display:flex!important;align-items:center;justify-content:flex-start;gap:6px;
+  width:114px;height:44px;min-height:44px;padding:0 8px;
+  border:1px solid #d4b8f553!important;border-radius:13px;font-size:19px;
   background:#20123588;color:#f2e3ff;
 }
-#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button span {display:none!important}
-#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button svg {width:23px;height:23px;display:block}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display: none"],
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display:none"] {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button span {
+  display:inline!important;min-width:0;white-space:nowrap;font-size:10.5px;font-weight:700;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button svg {width:20px;height:20px;min-width:20px;display:block}
 #erisRoomSurface.room-layout-v6 .eris-room-stage {top:128px!important;bottom:220px!important}
-#erisRoomSurface.room-layout-v6 .eris-chat-list {padding-right:75px!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-list {padding-right:133px!important}
 #erisRoomSurface.room-layout-v6 .eris-room-compose {justify-content:flex-start!important}
 #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomGiftInline {display:none!important}
 #erisRoomSurface.room-layout-v6 .eris-room-compose input#erisLiveInput {
