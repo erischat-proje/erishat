@@ -28,6 +28,7 @@ from .system_data import RoomIdRegistry
 from .system_logs import record
 from .support_models import SupportTicket
 from .support_routes import SupportCreate
+from .room_fan_levels import level_for_total
 from .wallpapers import DEFAULT_ROOM_WALLPAPER, catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
@@ -850,6 +851,20 @@ def register_room_auth(current_user_dependency):
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         limit = max(1, min(limit, 100)); rows = list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.room_id == room.id).order_by(RoomGiftEvent.created_at.desc()).limit(limit))); rows.reverse()
         return [{"id":row.id,"sender_id":row.sender_id,"recipient_id":row.recipient_id,"gift_key":row.gift_key,"unit_price":row.unit_price,"quantity":row.quantity,"total_price":row.total_price,"recipient_percent":row.recipient_percent,"recipient_amount":row.recipient_amount,"created_at":row.created_at,**gift_presentation(row.unit_price), **gift_visual(row.gift_key), "id": row.id} for row in rows]
+    @router.get("/{room_id}/fan-leaderboard")
+    def fan_leaderboard(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        total = func.sum(RoomGiftEvent.total_price).label("total")
+        rows = db.execute(select(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset, total)
+            .join(RoomGiftEvent, RoomGiftEvent.sender_id == User.id)
+            .where(RoomGiftEvent.room_id == room.id)
+            .group_by(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset)
+            .order_by(total.desc(), User.id).limit(50)).all()
+        return [{"rank": rank, "user_id": uid, "nickname": name, "avatar": avatar,
+                 "avatar_asset": asset, "frame_asset": frame, "total_lidya": int(amount),
+                 "fan_level": level_for_total(amount)}
+                for rank, (uid, name, avatar, asset, frame, amount) in enumerate(rows, 1)]
     @router.get("/{room_id}/gift-leaderboard")
     def gift_leaderboard(room_id: str, period: Literal["daily", "weekly", "monthly", "season"] = "season", db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)

@@ -195,8 +195,8 @@
     window.__erisRoomSocket?.close?.();
     const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;
     const add=d=>{
-      const e=document.createElement('div'),me=String(d.user_id||'')===String(window.__erisCurrentRoomUserId||window.ErisCurrentUserId||localStorage.getItem('eris_user_id')||'');
-      e.className='eris-chat-msg'+(me?' me':'');
+      const e=document.createElement('div');
+      e.className='eris-chat-msg';
       const identity=document.createElement('div');identity.className='eris-chat-identity';
       const portrait=document.createElement('span');portrait.className='eris-chat-portrait';
       const cosmetics=window.ErisChatCosmetics;
@@ -205,9 +205,12 @@
       else portrait.textContent=d.avatar||'◈';
       const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
       if(frame){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
-      const author=document.createElement('b');author.textContent=me?'Sen':(d.nickname||d.user_id||'Kullanıcı');
+      const author=document.createElement('b');author.textContent=d.nickname||d.user_id||'Kullanıcı';
+      const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
+      const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
+      if(fanLevel)badge.onclick=()=>window.ErisRoomFanRanking?.();else badge.hidden=true;
       const body=document.createElement('span');body.className='eris-chat-text';body.textContent=d.text||'';
-      identity.append(portrait,author);e.append(identity,body);list.appendChild(e);list.scrollTop=list.scrollHeight;
+      identity.append(portrait,author,badge);e.append(identity,body);list.appendChild(e);list.scrollTop=list.scrollHeight;
     };
     socket.onopen=()=>{state.dataset.connectionStatus='connected';list.innerHTML='';};
     socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();state.dataset.connectionStatus='disconnected';}};
