@@ -541,8 +541,9 @@ def register_platform_auth(current_user_dependency):
         return {"user_id":user_id,"total":total,"level":fan_level(total)}
     @router.get("/users/{user_id}/profile-gifts")
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        from .room_routes import GIFT_META
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
-        return [{"gift":r.gift_key,"amount":r.total_price,"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
+        return [{"gift":r.gift_key,"amount":r.total_price,"image_url":GIFT_META.get(r.gift_key,{}).get("image_url"),"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]
     def _require_room_announcement_manager(db: Session, room_id: str, user_id: str) -> Room:
         room = db.get(Room, room_id)
         if not room:
