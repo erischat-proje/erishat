@@ -45,7 +45,7 @@ def _room_auth_dependency(
 current_user_dependency = _room_auth_dependency
 
 
-LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 8, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 8, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 8, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 8, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 12, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 12, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 16, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 16, "required_spend": 1_560_000}}
+LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 16, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 16, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 16, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 16, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 20, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 20, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 24, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 24, "required_spend": 1_560_000}}
 GIFT_RECIPIENT_PERCENT = 70
 GIFT_ITEMS = json.loads(Path(__file__).with_name("gift_catalog.json").read_text(encoding="utf-8"))
 GIFT_META = {gift["name"]: gift for gift in GIFT_ITEMS}
@@ -151,7 +151,9 @@ def generate_room_public_id(db: Session) -> str:
 def get_room_or_404(db: Session, room_id: str) -> Room:
     room = db.get(Room, room_id) or db.scalar(select(Room).where(Room.public_id == room_id))
     if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
-    refresh_level(db, room); return room
+    refresh_level(db, room)
+    ensure_seats(db, room)
+    return room
 
 def require_owner(db: Session, room: Room, user: User) -> None:
     if room.owner_id != user.id: raise HTTPException(status_code=403, detail="Sadece oda sahibi yapabilir")
@@ -173,11 +175,17 @@ def is_member(db: Session, room_id: str, user_id: str) -> bool:
     return bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id)))
 
 def ensure_seats(db: Session, room: Room) -> None:
-    count = db.scalar(select(func.count(RoomSeat.id)).where(RoomSeat.room_id == room.id)) or 0
-    target = LEVELS[room.level]["seats"]
-    if count >= target: return
+    allowed = LEVELS[room.level]["seats"]
+    current = int(room.seat_count or 0)
+    # The level fixes the room layout. Old seats and occupants are retained.
+    target = allowed
+    if target != current:
+        room.seat_count = target
+    existing = set(db.scalars(select(RoomSeat.seat_number).where(RoomSeat.room_id == room.id)))
+    if target == current and all(number in existing for number in range(1, target + 1)):
+        return
     for number in range(1, target + 1):
-        if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == number)): db.add(RoomSeat(room_id=room.id, seat_number=number))
+        if number not in existing: db.add(RoomSeat(room_id=room.id, seat_number=number))
     db.commit()
 
 def room_view(db: Session, room: Room, user: User | None = None) -> dict:
@@ -185,7 +193,7 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
     members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
-    seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id).order_by(RoomSeat.seat_number)))
+    seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number <= room.seat_count).order_by(RoomSeat.seat_number)))
     current_id = str(user.id) if user else ""
     is_owner = bool(user and str(room.owner_id) == current_id)
     is_moderator = bool(user and any(str(x) == current_id for x in moderators))
@@ -470,8 +478,8 @@ def register_room_auth(current_user_dependency):
         require_staff(db, room, user)
         target = int(payload.seat_count)
         allowed = LEVELS[room.level]["seats"]
-        if target not in {8, 12, 16} or target > allowed:
-            raise HTTPException(status_code=422, detail=f"Bu oda seviyesinde en fazla {allowed} koltuk kullanılabilir")
+        if target != allowed:
+            raise HTTPException(status_code=422, detail=f"Seviye {room.level} için {allowed} koltuk kullanılır")
         occupied = db.scalar(
             select(func.count(RoomSeat.id)).where(
                 RoomSeat.room_id == room.id,
