@@ -36,6 +36,7 @@
   let giftCatalogCache=[];
   const seenGifts=new Set();
   let giftPollTimer=null;
+  let announcementCursor=null;
   let roomPeopleCache={};
   const giftLevelByPrice=p=>p>=90000?9:p>=50000?8:p>=20000?7:p>=10000?6:p>=1000?5:p>=500?4:p>=100?3:p>=30?2:1;
   async function refreshGiftMeta(){
@@ -70,6 +71,11 @@
     appendRow('🎁 '+detail.sender_name+' kişisi '+detail.recipient_name+' kişisine '+detail.gift_name+' verdi • '+detail.total_price.toLocaleString('tr-TR')+' Lidya','gift');
     window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail}));
   }
+  window.addEventListener('erischat:room-gift', event=>{
+    const data=event.detail||{};
+    if(data.transaction_id && !data.global && String(data.room_id||currentRoomId)===currentRoomId)
+      renderGiftEvent(data);
+  });
   function renderGiftAnnouncement(data){
     const detail=giftDetail(data);
     appendRow('📢 '+detail.sender_name+' kişisi '+detail.recipient_name+' kişisine '+detail.gift_name+' verdi • 💎 '+detail.total_price.toLocaleString('tr-TR'),'gift');
@@ -80,6 +86,23 @@
     if(!currentRoomId || !window.ErisRoomGift)return;
     try{const rows=await window.ErisRoomGift.events(currentRoomId,50);if(Array.isArray(rows))rows.slice().reverse().forEach(renderGiftEvent)}catch(_){}
   }
+  async function pollAnnouncements(){
+    if(!token() || !window.ErisPlatform?.api)return;
+    try{
+      const rows=await window.ErisPlatform.api('/gifts/announcements');
+      if(!Array.isArray(rows))return;
+      if(announcementCursor===null){announcementCursor=Number(rows[0]?.transaction_id||0);return;}
+      const fresh=rows.filter(row=>Number(row.transaction_id)>announcementCursor).reverse();
+      if(rows.length)announcementCursor=Math.max(announcementCursor,Number(rows[0].transaction_id));
+      fresh.forEach(row=>{
+        const message=`📢 ${row.sender_name||'Bir kullanıcı'} kişisi ${row.recipient_name||'bir kullanıcı'} kişisine ${row.gift_name} verdi`;
+        toastSafe(message);
+        window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...row,level:row.tier,global:true}}));
+      });
+    }catch(_){}
+  }
+  setInterval(pollAnnouncements,10000);
+  pollAnnouncements();
   function scheduleReconnect(roomId){
     if(!roomId || reconnectTimer) return;
     const delay=Math.min(15000,1000*Math.pow(2,reconnectAttempt++));

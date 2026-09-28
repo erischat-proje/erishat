@@ -8,13 +8,12 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .db import get_db, SessionLocal
 from .gift_models import GiftAuditLog, GiftItem, GiftTransaction, UserProfileGift
-from .models import User
-from .platform_models import Ledger
-from .room_models import Room
+from .models import Room, User
 from .session import get_user_from_token
 
 router = APIRouter(prefix="/v1", tags=["gifts"])
@@ -68,7 +67,16 @@ def catalog():
 
 @router.post("/rooms/{room_id}/gifts")
 def room_send(room_id: int, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(authenticated_user)):
-    if db.get(Room, room_id) is None:
+    return send_gift(room_id, payload, db, user)
+
+
+@router.post("/gifts/send")
+def direct_send(payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(authenticated_user)):
+    return send_gift(None, payload, db, user)
+
+
+def send_gift(room_id: int | None, payload: GiftSend, db: Session, user: User):
+    if room_id is not None and db.get(Room, room_id) is None:
         raise HTTPException(404, "Oda bulunamadı.")
     try:
         gift_id = int(payload.gift_key)
@@ -83,7 +91,9 @@ def room_send(room_id: int, payload: GiftSend, db: Session = Depends(get_db), us
     try:
         existing = db.query(GiftTransaction).filter_by(idempotency_key=key).first()
         if existing:
-            if existing.sender_id != user.id:
+            if (existing.sender_id != user.id or existing.receiver_id != payload.recipient_id
+                or existing.gift_id != gift_id or existing.quantity != payload.quantity
+                or existing.room_id != room_id):
                 raise HTTPException(409, "İşlem anahtarı zaten kullanılmış.")
             return {"status": "success", "transaction_id": existing.id, "duplicate": True}
         # Lock in a stable order, including the receiver, to avoid transfer deadlocks.
@@ -102,12 +112,17 @@ def room_send(room_id: int, payload: GiftSend, db: Session = Depends(get_db), us
                              gift_id=gift_id, quantity=payload.quantity, total_price=total, idempotency_key=key)
         db.add(tx)
         db.flush()
-        db.add(Ledger(user_id=str(sender.id), target_user_id=str(receiver.id), module="gift", action="debit",
-                      amount=total, balance_before=before_sender, balance_after=sender.lidya,
-                      idempotency_key=key+":debit", description=gift["name"]))
-        db.add(Ledger(user_id=str(receiver.id), target_user_id=str(sender.id), module="gift", action="credit",
-                      amount=total, balance_before=before_receiver, balance_after=receiver.lidya,
-                      idempotency_key=key+":credit", description=gift["name"]))
+        ledger_insert = text("""INSERT INTO ledger
+            (idempotency_key, user_id, target_user_id, module, action, amount,
+             balance_before, balance_after, description)
+            VALUES (:idempotency_key, :user_id, :target_user_id, 'gift', :action,
+                    :amount, :balance_before, :balance_after, :description)""")
+        db.execute(ledger_insert, {"idempotency_key": key+":debit", "user_id": str(sender.id),
+                   "target_user_id": str(receiver.id), "action": "debit", "amount": total,
+                   "balance_before": before_sender, "balance_after": sender.lidya, "description": gift["name"]})
+        db.execute(ledger_insert, {"idempotency_key": key+":credit", "user_id": str(receiver.id),
+                   "target_user_id": str(sender.id), "action": "credit", "amount": total,
+                   "balance_before": before_receiver, "balance_after": receiver.lidya, "description": gift["name"]})
         profile = db.query(UserProfileGift).filter_by(user_id=receiver.id, gift_id=gift_id).with_for_update().first()
         if profile:
             profile.count += payload.quantity
@@ -130,6 +145,21 @@ def room_events(room_id: int, limit: int = 50, db: Session = Depends(get_db), us
     names = {u.id: u.username for u in db.query(User).filter(User.id.in_({uid for row in rows for uid in (row.sender_id, row.receiver_id)})).all()}
     return [{"transaction_id": row.id, "gift_key": str(row.gift_id), "gift_name": BY_ID.get(row.gift_id, {}).get("name"),
              "sender_id": row.sender_id, "sender_name": names.get(row.sender_id), "recipient_id": row.receiver_id, "recipient_name": names.get(row.receiver_id), "quantity": row.quantity,
+             "total_price": row.total_price, "created_at": row.created_at} for row in rows]
+
+
+@router.get("/gifts/announcements")
+def announcements(db: Session = Depends(get_db), user: User = Depends(authenticated_user)):
+    """The highest three gift tiers are visible across rooms."""
+    expensive = [gift["id"] for gift in CATALOG if gift["tier"] >= 8]
+    rows = db.query(GiftTransaction).filter(GiftTransaction.gift_id.in_(expensive))\
+        .order_by(GiftTransaction.id.desc()).limit(20).all()
+    names = {u.id: u.username for u in db.query(User).filter(
+        User.id.in_({uid for row in rows for uid in (row.sender_id, row.receiver_id)})).all()}
+    return [{"transaction_id": row.id, "gift_id": row.gift_id,
+             "gift_name": BY_ID[row.gift_id]["name"], "image_url": BY_ID[row.gift_id]["image_url"],
+             "tier": BY_ID[row.gift_id]["tier"], "sender_name": names.get(row.sender_id),
+             "recipient_name": names.get(row.receiver_id), "room_id": row.room_id,
              "total_price": row.total_price, "created_at": row.created_at} for row in rows]
 
 
