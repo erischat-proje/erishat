@@ -1,0 +1,102 @@
+/* Live room: framed seats remain above the user's selected wallpaper. */
+#erisRoomSurface.room-layout-v6 .eris-room-wall:before {
+  background: linear-gradient(180deg,rgba(4,3,10,.12),transparent 22%,transparent 76%,rgba(4,3,10,.25)) !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-top {
+  height:68px !important; min-height:68px !important; overflow:visible !important;
+  background:rgba(12,9,24,.38) !important; backdrop-filter:blur(10px) !important;
+  border-bottom:1px solid rgba(255,255,255,.13) !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-title {max-width:none !important;flex:1 1 auto !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
+  position:absolute;top:73px;right:10px;z-index:6;display:flex;gap:3px;
+  padding:4px;border:1px solid rgba(255,255,255,.15);border-radius:16px;
+  background:rgba(13,9,27,.34);backdrop-filter:blur(9px);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {
+  display:flex;align-items:center;justify-content:center;gap:5px;width:auto;min-height:34px;
+  padding:0 9px;border:0;border-right:1px solid rgba(255,255,255,.17);border-radius:8px;
+  background:transparent;color:#fff;font-size:16px;font-weight:600;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button:last-child {border-right:0;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomGift,
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomMusic {display:flex !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomWallpaper:not([style*="display:none"]):not([style*="display: none"]) {display:flex !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display: none"],
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display:none"] {display:none !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions span {font-size:10px;white-space:nowrap;}
+#erisRoomSurface.room-layout-v6 .eris-room-stage {
+  top:122px !important;bottom:205px !important;min-height:0 !important;display:grid !important;
+  grid-template-columns:repeat(var(--seat-columns),minmax(0,1fr));
+  grid-template-rows:repeat(4,max-content);column-gap:var(--seat-column-gap);row-gap:var(--seat-row-gap);
+  align-content:center;align-items:start;box-sizing:border-box;padding:10px 15px 22px;
+  overflow-x:hidden;overflow-y:auto;scrollbar-width:none;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-stage::-webkit-scrollbar {display:none;}
+#erisRoomSurface.room-layout-v6 [data-seat-count="16"] {
+  --seat-columns:4;--seat-size:min(74px,calc((100vw - 130px)/4));
+  --seat-column-gap:10px;--seat-row-gap:25px;
+}
+#erisRoomSurface.room-layout-v6 [data-seat-count="20"] {
+  --seat-columns:5;--seat-size:min(68px,calc((100vw - 141px)/5));
+  --seat-column-gap:8px;--seat-row-gap:29px;
+}
+#erisRoomSurface.room-layout-v6 [data-seat-count="24"] {
+  --seat-columns:6;--seat-size:min(62px,calc((100vw - 156px)/6));
+  --seat-column-gap:7px;--seat-row-gap:31px;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat {
+  position:relative !important;left:auto !important;top:auto !important;
+  transform:none !important;width:var(--seat-size) !important;height:var(--seat-size) !important;
+  min-width:0 !important;min-height:0 !important;margin:0 auto !important;
+  padding:0 !important;border:1px solid rgba(207,192,241,.34) !important;
+  background:rgba(24,17,43,.25) !important;box-shadow:0 2px 12px rgba(0,0,0,.15) !important;
+  backdrop-filter:blur(5px) !important;overflow:visible !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat:focus-visible {outline:2px solid #ff74b5;outline-offset:4px;}
+#erisRoomSurface.room-layout-v6 .eris-seat.occupied:has(.seat-frame.has-frame) {
+  background:transparent !important;border-color:transparent !important;
+  box-shadow:none !important;backdrop-filter:none !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat .seat-pod {width:100%;height:100%;}
+#erisRoomSurface.room-layout-v6 .eris-seat.occupied .seat-ava {
+  width:76% !important;height:76% !important;border-radius:50% !important;
+  background-size:cover;background-position:center;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat .seat-frame {
+  inset:-9% !important;background-size:contain !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat:before {
+  content:attr(data-seat-number);position:absolute;z-index:4;left:-7px;top:-7px;
+  display:grid;place-items:center;width:20px;height:20px;border-radius:50%;
+  border:1px solid #bd9afd;background:rgba(33,21,65,.87);color:#fff;font-size:10px;font-weight:800;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat b {
+  position:absolute !important;z-index:4;top:calc(100% + 5px);left:-13%;
+  display:block;width:126%;height:auto;overflow:hidden;clip-path:none !important;
+  white-space:nowrap;text-overflow:ellipsis;border-radius:10px;
+  background:rgba(16,11,34,.46);border:1px solid rgba(255,255,255,.13);
+  color:#fff;font-size:9px;font-weight:700;line-height:17px;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat.empty b {background:transparent;border:0;opacity:.7;}
+#erisRoomSurface.room-layout-v6 .eris-seat .seat-mic,
+#erisRoomSurface.room-layout-v6 .eris-seat small {display:none !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-chat {
+  height:198px !important;background:rgba(10,8,21,.34) !important;
+  backdrop-filter:blur(7px) !important;border-top:1px solid rgba(255,255,255,.15);
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-msg {
+  background:rgba(17,13,32,.42);border-color:rgba(255,255,255,.12);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose input,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput,
+#erisRoomSurface.room-layout-v6 .eris-room-compose .room-v3-gift {
+  background:rgba(17,13,32,.37) !important;backdrop-filter:blur(6px);
+}
+@media(max-width:370px) {
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions {right:5px;}
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {padding:0 5px;}
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions span {font-size:9px;}
+  #erisRoomSurface.room-layout-v6 .eris-room-stage {padding-left:10px;padding-right:10px;}
+}

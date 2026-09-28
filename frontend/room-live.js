@@ -101,7 +101,8 @@
     `;
     document.head.appendChild(style);
     const s=document.createElement('section');s.id='erisRoomSurface';
-    s.innerHTML='<div class="eris-room-wall"></div><div class="eris-room-top"><button class="room-action back" id="erisRoomBack" aria-label="Geri">‹</button><div class="eris-room-title"><b id="erisLiveTitle">Oda</b><small id="erisLiveMeta">Bağlanıyor…</small></div><button class="room-action" id="erisRoomGift" aria-label="Hediyeler">🎁</button><button class="room-action" id="erisRoomMusic" aria-label="Müzik">🎵</button><button class="room-action" id="erisRoomWallpaper" aria-label="Oda duvar kâğıdı" title="Süreli oda duvar kâğıdı" style="display:none">🌌</button></div><div class="eris-room-stage" id="erisLiveSeats"><div class="eris-room-core"><div><b>CANLI ODA</b><small>sohbete katıl</small></div></div><div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div></div><div class="eris-room-tools"><button id="erisRoomMic">🎙️ Mikrofon</button><button id="erisRoomMore">•••</button></div><div class="eris-room-chat"><div class="eris-chat-list" id="erisLiveChat"><div style="color:#938a9f;font-size:9px">Oda sohbetine bağlanılıyor…</div></div><div class="eris-room-compose"><input id="erisLiveInput" maxlength="500" placeholder="Odaya mesaj yaz…"><button id="erisLiveSend">Gönder</button></div></div>';
+    s.classList.add('room-layout-v6');
+    s.innerHTML='<div class="eris-room-wall"></div><div class="eris-room-top"><button class="room-action back" id="erisRoomBack" aria-label="Geri">‹</button><div class="eris-room-title"><b id="erisLiveTitle">Oda</b><small id="erisLiveMeta">Bağlanıyor…</small></div></div><div class="eris-room-quick-actions"><button class="room-action" id="erisRoomGift" aria-label="Hediyeler">◇ <span>Hediyeler</span></button><button class="room-action" id="erisRoomMusic" aria-label="Müzik">♫ <span>Müzik</span></button><button class="room-action" id="erisRoomWallpaper" aria-label="Oda duvar kâğıdı" title="Oda duvar kâğıdı" style="display:none">▧ <span>Duvar kâğıdı</span></button></div><div class="eris-room-stage" id="erisLiveSeats"><div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div></div><div class="eris-room-tools"><button id="erisRoomMic">🎙️ Mikrofon</button><button id="erisRoomMore">•••</button></div><div class="eris-room-chat"><div class="eris-chat-list" id="erisLiveChat"><div style="color:#938a9f;font-size:9px">Oda sohbetine bağlanılıyor…</div></div><div class="eris-room-compose"><input id="erisLiveInput" maxlength="500" placeholder="Odaya mesaj yaz…"><button id="erisLiveSend">Gönder</button></div></div>';
     document.body.appendChild(s);
     s.querySelector('#erisRoomBack').onclick=window.closeRealRoom;
     s.querySelector('#erisRoomMusic').onclick=()=>window.ErisChatMusic?.open?.();
@@ -125,28 +126,13 @@
     });
   }
   window.ErisRoomPasswordModal=roomPasswordModal;
-  function seatLayout(count,index){
-    const stage=document.getElementById('erisLiveSeats');
-    const width=stage?.clientWidth||window.innerWidth||390;
-    const height=stage?.clientHeight||480;
-    const rows=Math.ceil(count/4);
-    const size=Math.min(82,Math.max(52,(width-28)/5.35));
-    const columns=[-2,-1,1,2];
-    const column=columns[index%4];
-    const row=Math.floor(index/4);
-    const gap=size+12;
-    const left=width/2+column*size*1.06;
-    const top=height/2+(row-(rows-1)/2)*gap;
-    return {left:left.toFixed(1)+'px',top:top.toFixed(1)+'px'};
-  }
-
   function seatCountForRoom(room,list){
     const fromList=Array.isArray(list)?list.length:0;
+    if(fromList>=24)return 24;
+    if(fromList>=20)return 20;
     if(fromList>=16)return 16;
-    if(fromList>=12)return 12;
-    if(fromList>=8)return 8;
     const level=Number(room?.level||1);
-    return level>=7?16:(level>=5?12:8);
+    return level>=7?24:(level>=5?20:16);
   }
   function applyRoomWallpaper(){
     const wall=document.querySelector('#erisRoomSurface .eris-room-wall');if(!wall)return;
@@ -161,9 +147,9 @@
   });
   function renderRoomSeats(roomId,name,list,forcedCount){
     const box=document.getElementById('erisLiveSeats');if(!box)return;
-    const count=Math.min(16,Math.max(8,Number(forcedCount)||seatCountForRoom(null,list)));
-    const seats=(Array.isArray(list)?list:[]).slice(0,count);
-    while(seats.length<count)seats.push({seat_number:seats.length+1,user_id:null,locked:false});
+    const count=Math.min(24,Math.max(16,Number(forcedCount)||seatCountForRoom(null,list)));
+    const byNumber=new Map((Array.isArray(list)?list:[]).map(seat=>[Number(seat.seat_number),seat]));
+    const seats=Array.from({length:count},(_,i)=>byNumber.get(i+1)||{seat_number:i+1,user_id:null,locked:false});
     box.innerHTML='';box.dataset.seatCount=String(count);
     seats.forEach((seat,i)=>{
       const num=seat.seat_number??i+1;
@@ -177,10 +163,6 @@
       const avatarUrl=avatarRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(avatarRaw):avatarRaw;
       const frameUrl=frameRaw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(frameRaw):frameRaw;
       const b=document.createElement('button');b.type='button';
-      const pos=seatLayout(count,i);
-      b.style.left=pos.left;b.style.top=pos.top;
-      b.style.width='min(82px, calc((100vw - 28px) / 5.35))';
-      b.style.height=b.style.width;
       b.dataset.seatNumber=String(num);b.dataset.userId=String(seat.user_id||'');
       b.dataset.muted=String(!!seat.muted);
       b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
@@ -256,7 +238,7 @@
       window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;
       window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
-      const seatCount=Math.min(16,Math.max(8,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
+      const seatCount=Math.min(24,Math.max(16,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
       if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat};
       const publicRoomId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi';
       document.getElementById('erisLiveMeta').textContent='ID: '+publicRoomId;

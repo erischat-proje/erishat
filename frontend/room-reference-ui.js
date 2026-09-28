@@ -7,13 +7,13 @@
   const roomApi = () => window.ErisRoom || {};
 
   const LEVEL_REWARDS = {
-    1:'Temel oda • 8 koltuk',
+    1:'Temel oda • 16 koltuk',
     2:'Yeni oda rozetleri ve görsel ayrıcalıklar',
     3:'Yeni oda görseli / emoji ayrıcalıkları',
     4:'Yeni oda görsel ayrıcalıkları',
-    5:'12 koltuk kapasitesi açılır',
+    5:'20 koltuk kapasitesi açılır',
     6:'Yeni oda görsel ve sosyal ayrıcalıkları',
-    7:'16 koltuk kapasitesi açılır',
+    7:'24 koltuk kapasitesi açılır',
     8:'Özel oda görseli ve sahip ayrıcalıkları'
   };
 
@@ -106,9 +106,10 @@
     p.querySelector('#roomV3Title').textContent='Oda adı';p.querySelector('#roomV3Body').innerHTML='<input id="roomV3Name" class="room-v3-input" maxlength="40" value="'+esc(name)+'" placeholder="Oda adı"><button class="room-v3-save" id="roomV3NameSave">Kaydet</button><div class="room-v3-note">Oda adı sadece oda sahibi tarafından değiştirilebilir.</div>';
   }
 
-  function levelRows(r,level){const raw=Array.isArray(r?.level_rewards)?r.level_rewards:[];if(raw.length)return raw;return Array.from({length:8},(_,i)=>{const n=i+1,cap=n>=7?16:n>=5?12:8;return{level:n,threshold:Number((r?.level_thresholds||[])[i]||0),reward:LEVEL_REWARDS[n]||('Oda ayrıcalıkları • '+cap+' koltuk')}})}
+  const seatsForLevel=level=>Number(level)>=7?24:Number(level)>=5?20:16;
+  function levelRows(r,level){const raw=Array.isArray(r?.level_rewards)?r.level_rewards:[];if(raw.length)return raw;return Array.from({length:8},(_,i)=>{const n=i+1;return{level:n,threshold:Number((r?.level_thresholds||[])[i]||0),reward:LEVEL_REWARDS[n]||('Oda ayrıcalıkları • '+seatsForLevel(n)+' koltuk')}})}
   async function openLevels(){
-    const r=await getRoom(),level=Math.max(1,Number(r?.level||1)),cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8));
+    const r=await getRoom(),level=Math.max(1,Number(r?.level||1)),cap=Number(r?.seat_count||seatsForLevel(level));
     const progress=Math.max(0,Number(r?.level_progress??r?.progress??0)),next=Math.max(0,Number(r?.next_level_threshold??r?.next_level_cost??0)),pct=next?Math.min(100,Math.max(0,progress/next*100)):0;
     const rows=levelRows(r,level).map(item=>{
       const n=Math.max(1,Number(item.level||1)),cur=n===level,done=n<level,need=Number(item.threshold||item.required||0),reward=String(item.reward||item.rewards||'Oda ayrıcalıkları');
@@ -120,7 +121,7 @@
     p.querySelector('#roomV3Body').innerHTML='<div class="room-v3-summary"><div class="room-v3-summary-top"><div><div class="room-v3-summary-title">Seviye '+level+'</div><div class="room-v3-summary-meta">'+cap+' koltuk • '+Number(r?.member_count||r?.members_count||0)+' katılımcı</div></div><span class="room-v3-levelnum">'+level+'</span></div>'+progressBlock+'</div><div class="room-v3-note" style="margin:0 0 10px">Seviye ödülleri ve açılacak oda özellikleri</div>'+rows;
   }
 
-  async function info(body,r){const level=Number(r?.level||1),cap=Number(r?.seat_count||r?.capacity||(level>=7?16:level>=5?12:8)),members=Number(r?.member_count||r?.members_count||0),publicId=/^\d{12}$/.test(String(r?.public_id||''))?String(r.public_id):'yüklenemedi';body.innerHTML='<div class="room-v3-card"><b>🏠 '+esc(r?.name||document.getElementById('erisLiveTitle')?.textContent||'Oda')+'</b><small>ID: '+publicId+'</small></div><div class="room-v3-card"><b>Seviye '+level+'</b><small>'+members+' kişi • '+cap+' koltuk • '+(r?.locked?'🔒 Kilitli':'🟢 Açık')+'</small></div><button type="button" class="room-v3-btn primary" data-call-followers style="width:100%;margin-top:12px">📣 Takipçilerini çağır</button><small>Takipçilerini 6 saatte bir odana davet edebilirsin.</small>';body.querySelector('[data-call-followers]').onclick=async event=>{
+  async function info(body,r){const level=Number(r?.level||1),cap=Number(r?.seat_count||seatsForLevel(level)),members=Number(r?.member_count||r?.members_count||0),publicId=/^\d{12}$/.test(String(r?.public_id||''))?String(r.public_id):'yüklenemedi';body.innerHTML='<div class="room-v3-card"><b>🏠 '+esc(r?.name||document.getElementById('erisLiveTitle')?.textContent||'Oda')+'</b><small>ID: '+publicId+'</small></div><div class="room-v3-card"><b>Seviye '+level+'</b><small>'+members+' kişi • '+cap+' koltuk • '+(r?.locked?'🔒 Kilitli':'🟢 Açık')+'</small></div><button type="button" class="room-v3-btn primary" data-call-followers style="width:100%;margin-top:12px">📣 Takipçilerini çağır</button><small>Takipçilerini 6 saatte bir odana davet edebilirsin.</small>';body.querySelector('[data-call-followers]').onclick=async event=>{
     const button=event.currentTarget;
     button.disabled=true;
     try{
@@ -412,17 +413,8 @@
       +'</small><div class="room-v3-grid" style="margin-top:10px"><button class="room-v3-btn primary" data-password>Şifre belirle / değiştir</button>'
       +(r.password_set?'<button class="room-v3-btn" data-clear-password>Şifreyi kaldır</button>':'')
       +'</div></div>'
-      +'<div class="room-v3-card"><b>🪑 Koltuk sayısı</b><small>Mevcut: '
-      +Number(r.seat_count||8)+' koltuk. Seviye '+Number(r.level||1)
-      +' için en fazla '+(Number(r.level||1)>=7?16:Number(r.level||1)>=5?12:8)
-      +' koltuk açılabilir.</small><div class="room-v3-grid" style="margin-top:10px">'
-      +[8,12,16].filter(count=>count<=(Number(r.level||1)>=7?16:Number(r.level||1)>=5?12:8))
-        .map(count=>'<button type="button" class="room-v3-btn'
-          +(Number(r.seat_count||8)===count?' primary':'')
-          +'" data-seat-count="'+count+'"'
-          +(Number(r.seat_count||8)===count?' disabled':'')
-          +'>'+count+' koltuk</button>').join('')
-      +'</div></div>'
+      +'<div class="room-v3-card"><b>🪑 Koltuk düzeni</b><small>Seviye '+Number(r.level||1)
+      +' için '+seatsForLevel(r.level)+' koltuk açılır. Seviye 5: 20, seviye 7: 24 koltuk. Düzen seviyen yükseldiğinde otomatik güncellenir.</small></div>'
       +(owner?'<div class="room-v3-card"><b>👑 Oda sahibi</b><button class="room-v3-btn" data-rename style="margin-top:10px;width:100%">Oda adını değiştir</button></div>':'');
     body.querySelectorAll('[data-seat-count]').forEach(button=>{
       button.onclick=async()=>{
@@ -614,7 +606,7 @@
   }
 
   async function syncHeader(){
-    const lv=q('erisRoomLevel'); try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||8)+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.();paintTheme(r.theme||'normal');syncManagementHeader(r);}catch{syncManagementHeader(window.__erisRoomPermissions||{});};
+    const lv=q('erisRoomLevel'); try{const r=await roomApi().get?.(rid())||{}; lv.innerHTML='<b>Seviye '+Number(r.level||1)+'</b><small>'+Number(r.seat_count||seatsForLevel(r.level))+' koltuk</small>'; lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.();paintTheme(r.theme||'normal');syncManagementHeader(r);}catch{syncManagementHeader(window.__erisRoomPermissions||{});};
   }
 
   async function menu(){
@@ -698,8 +690,8 @@
   }
   async function setCapacity(value){
     const n=Number(value);
-    if(![8,12,16].includes(n)){
-      window.toast?.('Koltuk sayısı 8, 12 veya 16 olabilir.');
+    if(![16,20,24].includes(n)){
+      window.toast?.('Koltuk sayısı 16, 20 veya 24 olabilir.');
       return;
     }
     try{
