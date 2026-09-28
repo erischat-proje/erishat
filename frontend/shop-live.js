@@ -31,7 +31,7 @@
       #shop .liveShopCard{border:1px solid #ffffff12;background:#100d16;border-radius:18px;padding:9px;color:#fff}
       #shop .liveShopPreview{height:125px;border-radius:14px;background:radial-gradient(circle,#8a5cff18,transparent 65%),#09070d;display:grid;place-items:center;position:relative;overflow:hidden}
       #shop .liveShopAvatar{width:72px;height:72px;border-radius:50%;background:#2a2034 center/cover no-repeat;z-index:2}
-      #shop .liveShopFrame{position:absolute;width:105px;height:105px;background:center/contain no-repeat;z-index:3;pointer-events:none}
+      #shop .liveShopFrame{display:block;width:105px;height:105px;object-fit:contain;pointer-events:none}
       #shop .liveShopName{font-size:10px;font-weight:800;margin-top:8px;word-break:break-word}
       #shop .liveShopMeta{font-size:8px;color:#938a9f;margin-top:4px;min-height:24px}
       #shop .liveShopAction{width:100%;border:0;border-radius:11px;padding:9px 7px;margin-top:7px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-size:9px;font-weight:900}
@@ -72,7 +72,7 @@
           const frameNumber = type === 'frame' ? items.filter(entry => typeOf(entry) === 'frame' && vipOf(entry) === isVip).indexOf(item) + 1 : 0;
           const card = document.createElement('article');
           card.className = 'liveShopCard';
-          card.innerHTML = `<div class="liveShopPreview"><div class="liveShopAvatar" ${type === 'avatar' ? `style="background-image:url('${esc(src)}')"` : ''}></div>${type === 'frame' ? `<div class="liveShopFrame" style="background-image:url('${esc(src)}')"></div>` : ''}</div><div class="liveShopName">${type === 'frame' ? `${isVip ? 'VIP' : 'Standart'} çerçeve #${frameNumber}` : `Avatar #${index + 1}${isVip ? ' • VIP' : ''}`}</div><div class="liveShopMeta">${isVip ? (unlocked ? `VIP ${required} açıldı` : `VIP ${required} gerekli`) : `${esc(item.gender || 'standart')} • ${Number(item.price || catalog.price || 1000).toLocaleString('tr-TR')} Lidya`}</div>`;
+          card.innerHTML = `<div class="liveShopPreview">${type === 'frame' ? `<img class="liveShopFrame" src="${esc(src)}" alt="" loading="lazy">` : `<div class="liveShopAvatar" style="background-image:url('${esc(src)}')"></div>`}</div><div class="liveShopName">${type === 'frame' ? `${isVip ? 'VIP' : 'Standart'} çerçeve #${frameNumber}` : `Avatar #${index + 1}${isVip ? ' • VIP' : ''}`}</div><div class="liveShopMeta">${isVip ? (unlocked ? `VIP ${required} açıldı` : `VIP ${required} gerekli`) : `${esc(item.gender || 'standart')} • ${Number(item.price || catalog.price || 1000).toLocaleString('tr-TR')} Lidya`}</div>`;
           const action = document.createElement('button');
           action.className = `liveShopAction${isVip && !unlocked ? ' locked' : ''}`;
           if (isVip && !unlocked) {
