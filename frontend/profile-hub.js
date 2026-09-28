@@ -21,13 +21,22 @@
       @media(max-width:520px){#erisProfileHub .eph-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#erisProfileHub .eph-tabs button{font-size:11px;padding:9px 7px;min-height:44px}#erisProfileHub .eph-body{padding:15px;border-radius:17px}}
       #erisProfileHub .eph-body label{font-size:11px;color:#c4b5d2}
       #erisProfileHub .eph-muted{color:#aea0bc;font-size:11px;line-height:1.5}
+      #erisProfileHub{margin-top:18px}
+      #erisProfileHub .eph-tabs{gap:9px;padding-bottom:14px}
+      #erisProfileHub .eph-tabs button{display:flex;align-items:center;gap:11px;text-align:left;min-height:64px;padding:12px 15px;border-radius:18px;border-color:#ffffff1b;background:linear-gradient(145deg,#17131e,#100e17);color:#eee8f3;font-size:13px;font-weight:700}
+      #erisProfileHub .eph-tabs button[aria-selected=true]{border-color:#b18ade82;background:linear-gradient(145deg,#302139,#191321);box-shadow:none}
+      #erisProfileHub .eph-icon{flex:none;width:24px;height:24px;color:#bb99e9;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+      #erisProfileHub .eph-body{padding:clamp(18px,4vw,26px);border-color:#a986ce31;border-radius:23px;background:linear-gradient(145deg,#191420,#100e17);box-shadow:none}
+      #erisProfileHub .eph-body h3{font-size:19px;letter-spacing:-.35px}
+      #erisProfileHub .eph-row{padding:13px 0}
+      @media(max-width:390px){#erisProfileHub .eph-tabs button{min-height:70px;padding:10px;gap:8px;font-size:11px}#erisProfileHub .eph-icon{width:20px;height:20px}}
     </style><div class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div><div class="eph-body" role="tabpanel" aria-live="polite"></div>`;
     view.append(hub);
     const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler']];
     const strip = hub.querySelector('.eph-tabs');
-    const icons={info:'👤',posts:'✍️',social:'👥',collection:'✨',vip:'♛',wallet:'💎',gifts:'🎁',notifications:'🔔',privacy:'🛡️',blocked:'🚫'};
+    const icons={info:'profile',posts:'posts',social:'family',collection:'collection',vip:'vip',wallet:'wallet',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked'};
     for (const [key,label] of tabs) {
-      const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML='<span aria-hidden="true" style="width:22px;font-size:16px">'+icons[key]+'</span><span>'+escape(label)+'</span>';
+      const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML='<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg><span>'+escape(label)+'</span>';
       button.onclick=()=>show(key);strip.append(button);
     }
     show('info');
