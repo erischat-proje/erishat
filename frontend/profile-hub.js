@@ -135,6 +135,7 @@
           const key=item.asset_key||item.key,type=item.cosmetic_type||item.type||'avatar';
           const card=document.createElement('div');card.style.cssText='padding:10px;border:1px solid #ffffff18;background:#ffffff08;border-radius:14px;text-align:center';
           const image=document.createElement('div');image.style.cssText='height:66px;background:center/contain no-repeat;margin-bottom:6px';
+          if(type==='avatar')image.style.cssText='width:66px;height:66px;border-radius:50%;background:center/cover no-repeat;margin:0 auto 6px';
           image.style.backgroundImage='url("'+(window.ErisChatCosmetics?.assetUrl(key)||'')+'")';
           const label=document.createElement('div');label.className='eph-muted';label.textContent=type==='frame'?'Çerçeve':'Avatar';
           const use=document.createElement('button');use.type='button';use.textContent='Uygula';use.onclick=async()=>{use.disabled=true;try{await window.ErisChatCosmetics.apply(type,key);await window.ErisProfile.refresh();use.textContent='Uygulandı ✓'}catch(error){use.disabled=false;use.textContent=error.message||'Uygulanamadı'}};

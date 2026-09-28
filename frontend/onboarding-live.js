@@ -235,6 +235,11 @@
         flex: 0 0 auto;
       }
 
+      #erisOnboarding .eris-cosmetic-item:not(.eris-frame-item) img {
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
       #erisOnboarding .eris-frame-item img {
         width: 68px;
         height: 68px;

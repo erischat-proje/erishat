@@ -93,6 +93,8 @@
       root.querySelectorAll('.liveShopTab').forEach(tab => tab.onclick = () => { root.querySelectorAll('.liveShopTab').forEach(x => x.classList.remove('active')); tab.classList.add('active'); renderItems(tab.dataset.filter); });
       root.querySelector('.liveShopGender').onchange=()=>renderItems(root.querySelector('.liveShopTab.active')?.dataset.filter||'all');
       renderItems('all');
+      // The shop rebuilds its root on each refresh; mount wallpapers afterwards.
+      window.ErisChatWallpapers?.render?.();
     } catch (error) {
       grid.textContent = error.message || 'Mağaza yüklenemedi.';
     }

@@ -29,9 +29,13 @@
         preview.alt=item?item.key+' · tam boy önizleme':'Duvar kâğıdı önizlemesi';
         const canApply=!!ownedKey&&select.value===ownedKey;
         toggle.hidden=!canApply;
-        toggle.textContent=isApplied?'Normal oda temasına dön':'Satın aldığım duvar kâğıdını uygula';
-        modal.querySelector('[data-owned-note]').textContent=ownedKey?'Satın alınan tema '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar tekrar uygulanabilir.': 'Henüz süreli oda duvar kâğıdı satın alınmadı.';
-        modal.querySelector('[data-buy]').textContent=ownedKey&&select.value===ownedKey?'Süreyi uzat ve uygula':'Satın al ve uygula';
+        toggle.textContent=isApplied?'ErisChat standart duvar kâğıdına dön':'Duvar kâğıdımı uygula';
+        const vipReward=item?.tier==='vip';
+        modal.querySelector('header small').textContent=vipReward?'VIP seviyesine bağlı ücretsiz ödül':'Standart temalar süreli kullanım için satılır';
+        modal.querySelector('[data-owned-note]').textContent=vipReward?'VIP '+item.vip_level+' seviyesine ulaştığında ücretsiz uygulanır.':ownedKey===select.value&&data.paid_until?'Satın alınan tema '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar tekrar uygulanabilir.':'ErisChat standart duvar kâğıdı herkese açık.';
+        modal.querySelector('[data-days]').previousElementSibling.style.display=vipReward?'none':'';
+        modal.querySelector('[data-days]').style.display=vipReward?'none':'grid';
+        modal.querySelector('[data-buy]').textContent=vipReward?'VIP ödülünü ücretsiz uygula':ownedKey&&select.value===ownedKey?'Süreyi uzat ve uygula':'Satın al ve uygula';
       };
       select.onchange=draw;draw();
       modal.querySelector('[data-preview]').onclick=()=>{
@@ -41,14 +45,14 @@
         zoom.querySelector('img').src=preview.src;zoom.querySelector('button').onclick=()=>zoom.remove();zoom.onclick=e=>{if(e.target===zoom)zoom.remove()};document.body.append(zoom);
       };
       const current=modal.querySelector('[data-current]');
-      current.textContent=ownedKey?'Satın alınmış tema: '+ownedKey+' · '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar':'Bu odada etkin süreli duvar kâğıdı yok.';
+      current.textContent=ownedKey?'Seçili tema: '+ownedKey+(data.paid_until?' · '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar':''):'ErisChat standart duvar kâğıdı etkin.';
       const dayBox=modal.querySelector('[data-days]');
       [1,7,30].forEach(d=>{const b=document.createElement('button');b.type='button';b.textContent=d+' gün · '+Number(priceMap[d]).toLocaleString('tr-TR')+' Lidya';b.style.cssText='padding:11px 5px;border:1px solid #ffffff22;border-radius:10px;background:#ffffff08;color:white;font-size:11px';b.onclick=()=>{days=d;dayBox.querySelectorAll('button').forEach(x=>x.style.borderColor='#ffffff22');b.style.borderColor='#a779ff'};if(d===1)b.style.borderColor='#a779ff';dayBox.append(b)});
       toggle.onclick=async()=>{
         toggle.disabled=true;
         try{
-          if(isApplied){await window.ErisRoom.resetWallpaper(roomId);isApplied=false;window.__erisActiveRoomWallpaper=null;room.wallpaper_asset=null;room.wallpaper_applied=false;window.toast?.('Normal oda teması etkinleştirildi. Satın alma süren duruyor.')}
-          else{const result=await window.ErisRoom.applyWallpaper(roomId);isApplied=true;window.__erisActiveRoomWallpaper=result.asset_path;room.wallpaper_asset=result.asset_key;room.wallpaper_asset_path=result.asset_path;room.wallpaper_applied=true;window.toast?.('Satın aldığın duvar kâğıdı yeniden uygulandı.')}
+          if(isApplied){await window.ErisRoom.resetWallpaper(roomId);isApplied=false;window.__erisActiveRoomWallpaper=data.default_asset;room.wallpaper_asset=null;room.wallpaper_asset_path=data.default_asset;room.wallpaper_applied=false;window.toast?.('ErisChat standart duvar kâğıdı etkinleştirildi.')}
+          else{const result=await window.ErisRoom.applyWallpaper(roomId);isApplied=true;window.__erisActiveRoomWallpaper=result.asset_path;room.wallpaper_asset=result.asset_key;room.wallpaper_asset_path=result.asset_path;room.wallpaper_applied=true;window.toast?.('Duvar kâğıdı yeniden uygulandı.')}
           draw();window.dispatchEvent(new Event('erischat:cosmetics-updated'));
         }catch(e){modal.querySelector('[data-error]').textContent=e.message||'Oda teması değiştirilemedi.'}
         finally{toggle.disabled=false}
@@ -58,7 +62,7 @@
         try{
           const result=await api('/rooms/'+encodeURIComponent(roomId)+'/wallpaper',{method:'POST',body:JSON.stringify({asset_key:select.value,days})});
           window.__erisActiveRoomWallpaper=result.asset_path;room.wallpaper_asset=result.asset_key;room.wallpaper_asset_path=result.asset_path;room.wallpaper_applied=true;
-          window.dispatchEvent(new Event('erischat:cosmetics-updated'));window.toast?.('Oda duvar kâğıdı '+days+' gün için satın alındı ve uygulandı.');modal.remove();
+          window.dispatchEvent(new Event('erischat:cosmetics-updated'));window.toast?.(result.spent?'Oda duvar kâğıdı '+days+' gün için satın alındı ve uygulandı.':'VIP oda duvar kâğıdı uygulandı.');modal.remove();
         }catch(e){status.textContent=e.message||'Satın alma başarısız.'}
       };
     }catch(e){modal.querySelector('[data-error]').textContent=e.message||'Duvar kâğıtları alınamadı.'}
