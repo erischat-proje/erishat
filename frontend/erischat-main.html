@@ -86,6 +86,17 @@ column-gap:9px
 #profile>[data-erischat-profile-controls] input,#profile>[data-erischat-profile-controls] select{font-size:13px!important}
 #profile .profileActionIcon{width:18px;height:18px;vertical-align:-4px;margin-right:6px;color:#ba99eb;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media(min-width:760px){#profile>[data-erischat-vip-panel],#profile>[data-erischat-profile-controls]{max-width:790px;margin-left:auto!important;margin-right:auto!important}}
+/* Avatar ve çerçeve, sonradan yüklenen kozmetiklerin ardından da kompakt kalır. */
+#profile .profile.card{grid-template-columns:78px minmax(0,1fr)!important;gap:0 12px!important;overflow:hidden}
+#profile .profile.card .stage{width:76px!important;height:82px!important;min-height:0!important;max-height:82px!important;overflow:hidden!important}
+#profile .profile.card .stage .face{width:56px!important;height:56px!important;min-width:0!important;min-height:0!important;background-position:center!important;background-size:cover!important}
+#profile .profile.card .stage .frameImg{width:76px!important;height:76px!important;max-width:76px!important;max-height:76px!important;object-fit:contain!important}
+#profile .profile.card .stage .crown{font-size:13px!important;top:0!important}
+#profile .profile.card .name{padding-left:3px;max-width:100%;overflow:hidden}
+#profile .profile.card .name h2{font-size:clamp(15px,3.8vw,21px)!important;line-height:1.2;overflow-wrap:anywhere}
+#profile .profile.card .stats{margin-top:9px}
+#profile .profile.card .progress{margin-top:9px}
+@media(max-width:360px){#profile .profile.card{grid-template-columns:68px minmax(0,1fr)!important;gap:0 8px!important}#profile .profile.card .stage{width:66px!important}#profile .profile.card .stage .frameImg{width:66px!important;height:66px!important}}
 /* Kompakt profil özeti. Ayrıntılar seçildiğinde açılır. */
 #profile .profile.card{display:grid;grid-template-columns:108px minmax(0,1fr);gap:0 15px;align-items:center;padding:18px 16px 16px}
 #profile .profile .stage{grid-column:1;grid-row:1;height:112px;min-width:0}
@@ -324,7 +335,7 @@ async function sendChat(){
 </script><script src="./room-ban-live.js"></script><script src="./room-gift-ui-live.js"></script>
 <script src="./access-messages-hardening.js?v=hardening-4"></script>
 <script src="./profile-rooms-hardening.js?v=compact-profile-20260928-2"></script>
-<script src="./profile-hub.js?v=compact-profile-20260928-2"></script>
+<script src="./profile-hub.js?v=profile-dialog-20260928-3"></script>
 <script src="./account-systems-live.js?v=account-systems-1"></script>
 <script src="./user-profile-navigation.js?v=real-profile-2"></script>
 <script src="./room-hardening.js?v=room-menu-longpress-20260927"></script>
