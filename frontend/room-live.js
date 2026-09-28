@@ -315,3 +315,140 @@
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadRooms,{once:true}); else loadRooms();
 })();
+
+// --- Yüzen Profil Kartı ve Etkileşim Yönetimi ---
+window.openUserProfileModalital = async function(userData) {
+    // Eski modal varsa kaldır
+    const existing = document.getElementById('erischatUserProfileOverlay');
+    if (existing) existing.remove();
+
+    const userId = userData.id || userData.user_id;
+    const username = userData.username || userData.name || "Kullanıcı";
+    const avatar = userData.avatar || 'https://via.placeholder.com/50';
+    const frame = userData.frame || '';
+    const followers = userData.followers_count || 0;
+    const following = userData.following_count || 0;
+    let isFollowing = userData.is_following || false;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'erischatUserProfileOverlay';
+    overlay.className = 'erischat-user-profile-overlay';
+
+    overlay.innerHTML = `
+        <div class="erischat-user-profile-card">
+            <div class="erischat-upc-header">
+                <div class="erischat-upc-user-info">
+                    <div class="erischat-upc-avatar-wrap">
+                        <img src="${avatar}" class="erischat-upc-avatar" alt="Avatar">
+                        ${frame ? `<img src="${frame}" class="erischat-upc-frame" alt="Çerçeve">` : ''}
+                    </div>
+                    <div>
+                        <div class="erischat-upc-name-area">
+                            <span class="erischat-upc-username">${username}</span>
+                            <img src="/frontend/fan-levels/LEVEL1.png" class="erischat-upc-fan-badge" alt="Hayran Listesi" title="Hayran Listesi" id="upcFanListBtn">
+                        </div>
+                    </div>
+                </div>
+                <div class="erischat-upc-top-actions">
+                    <button class="erischat-upc-icon-btn" id="upcReportBtn" title="Şikayet Et">!</button>
+                    <button class="erischat-upc-icon-btn" id="upcCloseBtn" title="Kapat">✕</button>
+                </div>
+            </div>
+            
+            <div class="erischat-upc-stats">
+                <span><b>${followers}</b> Takipçi</span>
+                <span><b>${following}</b> Takip</span>
+            </div>
+
+            <div class="erischat-upc-actions">
+                <button class="erischat-upc-btn erischat-upc-follow-btn ${isFollowing ? 'following' : ''}" id="upcFollowBtn">
+                    ${isFollowing ? 'Takibi Bırak' : 'Takip Et'}
+                </button>
+                <button class="erischat-upc-btn erischat-upc-gift-btn" id="upcGiftBtn">Hediye Gönder</button>
+                <button class="erischat-upc-btn erischat-upc-dm-btn" id="upcDmBtn">Mesaj</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Kapatma butonları
+    document.getElementById('upcCloseBtn').onclick = () => overlay.remove();
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    // Takip Et / Takibi Bırak Mantığı
+    const followBtn = document.getElementById('upcFollowBtn');
+    followBtn.onclick = async () => {
+        try {
+            const endpoint = isFollowing ? `/api/users/${userId}/unfollow` : `/api/users/${userId}/follow`;
+            const res = await fetch(endpoint, { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') } });
+            if (res.ok) {
+                isFollowing = !isFollowing;
+                followBtn.textContent = isFollowing ? 'Takibi Bırak' : 'Takip Et';
+                followBtn.classList.toggle('following', isFollowing);
+            }
+        } catch (err) {
+            console.error('Takip işlemi hatası:', err);
+        }
+    };
+
+    // Hayran Listesi Butonu
+    document.getElementById('upcFanListBtn').onclick = () => {
+        overlay.remove();
+        if (typeof window.openRoomFanRanking === 'function') {
+            window.openRoomFanRanking(userId);
+        } else {
+            alert('Hayran sıralaması açılıyor...');
+        }
+    };
+
+    // Hediye Gönder Butonu
+    document.getElementById('upcGiftBtn').onclick = () => {
+        overlay.remove();
+        if (typeof window.openGiftModal === 'function') {
+            window.openGiftModal(userId);
+        } else if (typeof window.openRoomGiftUi === 'function') {
+            window.openRoomGiftUi(userId);
+        } else {
+            console.log('Hediye paneli açılacak:', userId);
+        }
+    };
+
+    // Mesaj Gönder Butonu
+    document.getElementById('upcDmBtn').onclick = () => {
+        overlay.remove();
+        if (typeof window.openDirectMessage === 'function') {
+            window.openDirectMessage(userId, username);
+        } else {
+            console.log('DM açılacak:', userId);
+        }
+    };
+
+    // Şikayet (!) Butonu
+    document.getElementById('upcReportBtn').onclick = () => {
+        overlay.remove();
+        if (typeof window.openReportModal === 'function') {
+            window.openReportModal('user', userId);
+        } else {
+            const reason = prompt('Şikayet nedeninizi yazın (en fazla 200 karakter):');
+            if (reason) {
+                alert('Şikayetiniz destek ekibine iletildi.');
+            }
+        }
+    };
+};
+
+// Sohbet mesajlarındaki tıklamaları dinleme (Event Delegation)
+document.addEventListener('click', (e) => {
+    const target = e.target.closest('.room-chat-username, .room-chat-avatar, .user-mention-trigger');
+    if (target) {
+        const userId = target.getAttribute('data-user-id') || target.dataset.userId;
+        const username = target.getAttribute('data-username') || target.textContent.trim();
+        const avatar = target.getAttribute('data-avatar') || '';
+        const frame = target.getAttribute('data-frame') || '';
+        
+        if (userId) {
+            window.openUserProfileModal({ id: userId, username, avatar, frame });
+        }
+    }
+});
