@@ -290,3 +290,36 @@
   #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {flex-basis:30px!important;min-width:30px!important;width:30px!important}
   #erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {min-width:52px!important}
 }
+
+/* Three individual symbols in the chat's right gutter, with no surrounding frame. */
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions {
+  position:absolute!important;top:38px!important;bottom:auto!important;right:8px!important;left:auto!important;
+  z-index:80!important;width:44px!important;display:flex!important;flex-direction:column!important;
+  align-items:center;gap:7px!important;padding:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button {
+  flex:0 0 38px!important;display:grid!important;place-items:center!important;
+  width:42px!important;height:38px!important;min-height:38px!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+  color:#f2e0ff!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button[style*="display: none"],
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button[style*="display:none"] {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button span {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button svg {width:26px;height:26px;min-width:26px}
+#erisRoomSurface.room-layout-v6 .eris-chat-list {padding-right:58px!important;padding-left:17px!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-msg {overflow:visible;min-width:0}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity {display:flex;align-items:center;gap:8px;min-height:30px}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity b {font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#erisRoomSurface.room-layout-v6 .eris-chat-portrait {
+  position:relative;flex:0 0 29px;display:grid!important;place-items:center;
+  width:29px;height:29px;margin:0!important;border-radius:50%;
+  background:#523776;color:#fff;font-size:17px;line-height:1;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-avatar {width:100%;height:100%;object-fit:cover;border-radius:50%}
+#erisRoomSurface.room-layout-v6 .eris-chat-frame {
+  position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:42px;height:42px;object-fit:contain;pointer-events:none;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-text {margin-left:37px!important;margin-top:0!important;overflow-wrap:anywhere}
