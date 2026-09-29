@@ -3,14 +3,15 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
-from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, FamilyVisual, Notification, VipStatus
+from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, FamilyVisual, MessageHidden, Notification, VipStatus
+from .dm_folders import require_unlocked, _folder
 
 router = APIRouter(prefix="/v1", tags=["families"])
 
@@ -417,16 +418,22 @@ def register_family_auth(current_user_dependency):
         return family_payload(db, locked_family)
 
     @router.get("/families/{family_id}/chat")
-    def family_chat(family_id: str, limit: int = Query(100, ge=1, le=200), offset: int = Query(0, ge=0), db: Session = Depends(get_db), user: User = auth()):
+    def family_chat(family_id: str, limit: int = Query(100, ge=1, le=200), offset: int = Query(0, ge=0),
+                    x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
-        messages = list(db.scalars(select(Message).where(Message.conversation_id == family.chat_conversation_id).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
+        require_unlocked(db, user.id, family.chat_conversation_id, x_eris_dm_vault)
+        hidden=select(MessageHidden.id).where(MessageHidden.message_id==Message.id,MessageHidden.user_id==user.id).exists()
+        messages = list(db.scalars(select(Message).where(Message.conversation_id == family.chat_conversation_id,~hidden).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
         return {"family_id": family_id, "conversation_id": family.chat_conversation_id, "enabled": True, "messages": messages}
 
     @router.post("/families/{family_id}/chat/messages", status_code=201)
-    def send_family_message(family_id: str, payload: FamilyMessageCreate, db: Session = Depends(get_db), user: User = auth()):
+    def send_family_message(family_id: str, payload: FamilyMessageCreate,
+                            x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
+        require_unlocked(db, user.id, family.chat_conversation_id, x_eris_dm_vault)
         message = Message(conversation_id=family.chat_conversation_id, sender_id=user.id, text=payload.text.strip())
         db.add(message)
         for row in db.scalars(select(FamilyMember).where(FamilyMember.family_id == family_id, FamilyMember.user_id != user.id)):
-            db.add(Notification(user_id=row.user_id, kind="dm_message", title=family.name + " aile sohbeti", body=payload.text.strip()[:180]))
+            locked=_folder(db,row.user_id,family.chat_conversation_id)
+            db.add(Notification(user_id=row.user_id, kind="dm_message", title=family.name + " aile sohbeti", body="Kilitli sohbette yeni mesaj" if locked and locked.locked else payload.text.strip()[:180]))
         db.commit(); db.refresh(message); return message
