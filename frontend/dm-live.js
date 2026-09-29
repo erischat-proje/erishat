@@ -706,6 +706,7 @@
     chat.classList.remove('eris-floating-dm');
     chat.classList.add('show');
     installChatTools(chat);
+    window.ErisCalls?.syncChat?.();
     const title = chat.querySelector('.chatHead b');
     if (title) title.textContent = name;
     renderAvatar(chat.querySelector('.chatHead .ava'), avatar, name?.slice(0, 1)?.toUpperCase());

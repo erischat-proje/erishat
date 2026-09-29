@@ -245,6 +245,7 @@
 
   async function openRoom(roomId,name){
     const id=String(roomId||'');if(!id)return;
+    localStorage.removeItem('eris_last_room');
     window.ErisCurrentRoomId=id;window.currentRoomId=id;
     const surface=ensureRoomSurface();surface.classList.add('show');applyRoomWallpaper();
     document.getElementById('erisLiveTitle').textContent=name||'Oda';
@@ -305,6 +306,8 @@
     window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;
+    const name=document.getElementById('erisLiveTitle')?.textContent||'Oda';
+    if(id)localStorage.setItem('eris_last_room',JSON.stringify({id,name,user_id:window.__erisCurrentRoomUserId||window.ErisCurrentUserId||null}));
     document.getElementById('erisRoomSurface')?.classList.remove('show');
     window.__erisRoomSocket?.close?.(); window.__erisRoomSocket=null;
     if(id){
@@ -313,6 +316,7 @@
     }
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null; window.__erisActiveRoomWallpaper=null;
+    if(id&&document.visibilityState==='visible')setTimeout(offerReturnToRoom,400);
   }
   window.openLiveRoomChat=()=>{
     const surface=document.getElementById('erisRoomSurface');
@@ -326,16 +330,41 @@
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
 
+  async function offerReturnToRoom(){
+    if(document.visibilityState!=='visible'||window.ErisCurrentRoomId||document.getElementById('eris-room-return'))return;
+    let previous;try{previous=JSON.parse(localStorage.getItem('eris_last_room')||'null')}catch{return}
+    if(!previous?.id||!window.ErisPlatform?.getAccessToken?.())return;
+    try{const me=await window.ErisPlatform.getMe();if(previous.user_id&&String(me.id)!==String(previous.user_id))return}catch{return}
+    let room;try{room=await window.ErisRoom?.get?.(previous.id)}catch{localStorage.removeItem('eris_last_room');return}
+    if(!room||room.is_active===false){localStorage.removeItem('eris_last_room');return}
+    const overlay=document.createElement('div');overlay.id='eris-room-return';overlay.style.cssText='position:fixed;inset:0;z-index:21050;display:grid;place-items:center;padding:18px;background:#04020bbd;backdrop-filter:blur(8px)';
+    const card=document.createElement('section');card.style.cssText='width:min(380px,100%);padding:22px;border:1px solid #aa82e477;border-radius:22px;background:#1b1327;color:#fff;text-align:center;box-shadow:0 20px 60px #000a';
+    const heading=document.createElement('h3');heading.textContent='Odaya geri dön';const desc=document.createElement('p');desc.textContent='En son '+(room.name||previous.name)+' odasındaydın. Geri dönmek ister misin?';desc.style.cssText='font-size:13px;line-height:1.5;color:#c9bcd6';
+    const actions=document.createElement('div');actions.style.cssText='display:flex;gap:10px';const accept=document.createElement('button'),reject=document.createElement('button');accept.textContent='Kabul et';reject.textContent='Reddet';for(const button of [accept,reject])button.style.cssText='flex:1;padding:12px;border:1px solid #ffffff33;border-radius:13px;color:#fff;background:#6546a5';reject.style.background='#362840';actions.append(accept,reject);card.append(heading,desc,actions);overlay.append(card);document.body.append(overlay);
+    reject.onclick=()=>{overlay.remove();localStorage.removeItem('eris_last_room')};
+    accept.onclick=()=>{overlay.remove();localStorage.removeItem('eris_last_room');openRoom(previous.id,room.name||previous.name)};
+  }
+
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden'){
+      if(window.ErisCurrentRoomId)closeRealRoom().catch(()=>{});
+    }else setTimeout(offerReturnToRoom,350);
+  });
+
   window.addEventListener('erischat:auth',event=>{
     if(event.detail?.state==='ready'||event.detail?.state==='logged_out')loadRooms();
+    if(event.detail?.state==='ready')setTimeout(offerReturnToRoom,550);
   });
 
   window.addEventListener('pagehide',()=>{
     const id=window.ErisCurrentRoomId||window.currentRoomId;
     if(id&&document.getElementById('erisRoomSurface')?.classList.contains('show')){
+      localStorage.setItem('eris_last_room',JSON.stringify({id,name:document.getElementById('erisLiveTitle')?.textContent||'Oda',user_id:window.__erisCurrentRoomUserId||window.ErisCurrentUserId||null}));
       fetch(`${API}/rooms/${encodeURIComponent(id)}/leave`,{method:'POST',headers:{...headers(),'Content-Type':'application/json'},body:'{}',keepalive:true}).catch(()=>{});
     }
   });
+
+  setTimeout(offerReturnToRoom,1200);
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadRooms,{once:true}); else loadRooms();
 })();
