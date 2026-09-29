@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .platform_models import Report, VipStatus, UserLocation
-from .room_models import Room
+from .room_models import Room, RoomMember, RoomSeat
 from .support_models import SupportTicket
 from .system_logs import record
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
-    UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement,
+    UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement, BanApproval, BanAppeal,
 )
 
 router = APIRouter(prefix="/v1/admin", tags=["administration"])
@@ -131,6 +131,21 @@ class BanRequest(BaseModel):
     reason: str = Field(default="", max_length=2000)
 
 
+class AppealCreate(BaseModel):
+    reason: str = Field(min_length=3, max_length=200)
+    explanation: str = Field(min_length=1, max_length=400)
+    images: list[str] = Field(default_factory=list, max_length=3)
+
+    @field_validator("images")
+    @classmethod
+    def validate_images(cls, value):
+        return TicketMessage._check_images(value)
+
+
+class Decision(BaseModel):
+    action: str = Field(pattern="^(approve|reject)$")
+
+
 class VipUpdate(BaseModel):
     level: int = Field(ge=0, le=12)
 
@@ -154,6 +169,11 @@ def register_admin_auth(current_user_dependency):
     def ghost_mode(payload: GhostUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
         row.ghost_mode = payload.enabled
+        for member in db.scalars(select(RoomMember).where(RoomMember.user_id==user.id)):
+            member.ghost = payload.enabled
+        if payload.enabled:
+            for seat in db.scalars(select(RoomSeat).where(RoomSeat.user_id==user.id)):
+                seat.user_id=None;seat.muted=False
         audit(db, user, "ghost_mode", {"enabled": payload.enabled})
         db.commit()
         return {"enabled": row.ghost_mode}
@@ -314,10 +334,96 @@ def register_admin_auth(current_user_dependency):
         audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=target.id)
         db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
 
+    def queue_ban(db, user, payload, kind, target):
+        role = require_role(db, user, "UA")
+        if not payload.reason.strip() or "days" not in payload.model_fields_set:
+            raise HTTPException(422, "Ban süresi ve nedeni zorunludur; süresiz için Süresiz seçin.")
+        if role.role == "DA": return None
+        pending = BanApproval(requester_id=user.id, target_user_id=target.id if kind != "room" else None,
+                              target_room_id=target.id if kind == "room" else None,
+                              kind=kind, days=payload.days, reason=payload.reason.strip())
+        db.add(pending); db.commit()
+        audit(db, user, "ban_request", {"kind":kind,"request_id":pending.id},
+              target_room_id=pending.target_room_id, target_user_id=pending.target_user_id)
+        db.commit()
+        return {"pending": True, "request_id": pending.id}
+
+    def approval_view(db, row):
+        requester = db.get(User, row.requester_id)
+        target = db.get(Room, row.target_room_id) if row.target_room_id else db.get(User, row.target_user_id)
+        return {"id":row.id,"kind":row.kind,"days":row.days,"reason":row.reason,"status":row.status,
+                "appeal_used":row.appeal_used,"requester_id":row.requester_id,
+                "requester_name":requester.nickname if requester else "Yönetici",
+                "requester_avatar":requester.avatar_asset if requester else None,
+                "requester_frame":requester.frame_asset if requester else None,
+                "target_id":target.public_id if target else None,"target_name":target.name if row.target_room_id and target else target.nickname if target else "Kullanıcı",
+                "target_avatar":target.avatar_asset if target and not row.target_room_id else None,
+                "target_frame":target.frame_asset if target and not row.target_room_id else None,
+                "created_at":row.created_at.isoformat() if row.created_at else None}
+
+    @router.get("/ban-requests")
+    def ban_requests(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        role=require_role(db,user,"UA")
+        query=select(BanApproval).order_by(BanApproval.created_at.desc()).limit(100)
+        if role.role!="DA":query=query.where(BanApproval.requester_id==user.id)
+        return [approval_view(db,r) for r in db.scalars(query)]
+
+    @router.post("/ban-requests/{request_id}/decision")
+    def decide_ban(request_id:int,body:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if require_role(db,user,"DA").role!="DA":raise HTTPException(403,"DA yetkisi gerekli")
+        row=db.scalar(select(BanApproval).where(BanApproval.id==request_id).with_for_update())
+        if not row or row.status!="pending":raise HTTPException(409,"Talep artık beklemede değil")
+        if body.action=="approve":
+            if row.kind=="account" or row.kind=="device":
+                db.add(UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=None if row.kind=="device" else expiry(row.days),banned_by=user.id,reason=row.reason))
+            elif row.kind=="chat":
+                db.add(ChatBan(user_id=row.target_user_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
+            else:
+                db.add(RoomAdminBan(room_id=row.target_room_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
+        row.status="approved" if body.action=="approve" else "rejected";row.decision_by=user.id
+        audit(db,user,"ban_request_"+row.status,{"request_id":row.id,"kind":row.kind},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
+        db.commit();return approval_view(db,row)
+
+    @router.post("/ban-requests/{request_id}/appeal")
+    def appeal_ban(request_id:int,body:AppealCreate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_role(db,user,"UA")
+        row=db.scalar(select(BanApproval).where(BanApproval.id==request_id).with_for_update())
+        if not row or row.requester_id!=user.id or row.status!="rejected" or row.appeal_used:
+            raise HTTPException(409,"Bu talep için itiraz hakkı bulunmuyor")
+        row.appeal_used=True
+        db.add(BanAppeal(approval_id=row.id,reason=body.reason.strip(),explanation=body.explanation.strip(),images_json=json.dumps(body.images)))
+        audit(db,user,"ban_appeal",{"request_id":row.id},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
+        db.commit();return {"appealed":True}
+
+    @router.get("/ban-appeals")
+    def ban_appeals(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        role=require_role(db,user,"UA")
+        query=select(BanAppeal).join(BanApproval,BanAppeal.approval_id==BanApproval.id).order_by(BanAppeal.created_at.desc()).limit(100)
+        if role.role!="DA":query=query.where(BanApproval.requester_id==user.id)
+        rows=db.scalars(query).all()
+        return [{"id":r.id,"status":r.status,"reason":r.reason,"explanation":r.explanation,
+                 "images":json.loads(r.images_json),"request":approval_view(db,db.get(BanApproval,r.approval_id))} for r in rows]
+
+    @router.post("/ban-appeals/{appeal_id}/decision")
+    def decide_appeal(appeal_id:int,body:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if require_role(db,user,"DA").role!="DA":raise HTTPException(403,"DA yetkisi gerekli")
+        appeal=db.scalar(select(BanAppeal).where(BanAppeal.id==appeal_id).with_for_update())
+        if not appeal or appeal.status!="pending":raise HTTPException(409,"İtiraz artık beklemede değil")
+        row=db.get(BanApproval,appeal.approval_id)
+        if body.action=="approve":
+            if row.kind in {"account","device"}:db.add(UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=None if row.kind=="device" else expiry(row.days),banned_by=user.id,reason=row.reason))
+            elif row.kind=="chat":db.add(ChatBan(user_id=row.target_user_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
+            else:db.add(RoomAdminBan(room_id=row.target_room_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
+        appeal.status="approved" if body.action=="approve" else "rejected"
+        audit(db,user,"ban_appeal_"+appeal.status,{"request_id":row.id},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
+        db.commit();return {"id":appeal.id,"status":appeal.status}
+
     @router.post("/users/{user_id}/ban")
     def ban_user(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        queued=queue_ban(db,user,payload,"account",target)
+        if queued:return queued
         ban=UserBan(user_id=target.id,ban_type="account",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
         db.add(ban); audit(db,user,"user_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
         return {"banned":True,"expires_at":ban.expires_at}
@@ -326,6 +432,8 @@ def register_admin_auth(current_user_dependency):
     def device_ban(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        queued=queue_ban(db,user,payload,"device",target)
+        if queued:return queued
         ban=UserBan(user_id=target.id,ban_type="device",expires_at=None,banned_by=user.id,reason=payload.reason)
         db.add(ban); audit(db,user,"device_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
         return {"banned":True,"expires_at":ban.expires_at}
@@ -343,6 +451,8 @@ def register_admin_auth(current_user_dependency):
     def chat_ban(user_id: str,payload: BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        queued=queue_ban(db,user,payload,"chat",target)
+        if queued:return queued
         row=ChatBan(user_id=target.id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason); db.add(row)
         audit(db,user,"chat_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit(); return {"banned":True,"expires_at":row.expires_at}
 
@@ -358,6 +468,8 @@ def register_admin_auth(current_user_dependency):
     def room_ban(room_id:str,payload:BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"UA"); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
         if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
+        queued=queue_ban(db,user,payload,"room",room)
+        if queued:return queued
         row=RoomAdminBan(room_id=room.id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason);db.add(row)
         audit(db,user,"room_ban",{"days":payload.days,"reason":payload.reason},target_room_id=room.id,target_id=room.public_id);db.commit();return {"banned":True,"expires_at":row.expires_at,"room_id":room.id,"public_id":room.public_id}
 
