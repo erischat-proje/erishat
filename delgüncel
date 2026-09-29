@@ -1,0 +1,9 @@
+odaya biri girdiğinde (kullanıcı adı) adlı kullanıcı odaya katıldı diye bir mesaj gelicek otomatik olarak chat e herkezde görünecek şekilde
+DA larda olan yönetici rolleri kısmında sa ua da seçenekleri var ama yetki al butonu yok o eklenicek ona basıldığı zaman hangi ıd yazıldı ise o ıd nin yetkisi alınacak yetkisi ne olursa olsun
+ve da larda tüm herkesin dalarda da hil yönetici yolleri kısmında herkesin ıd si gözükür olucak
+odaya herhangi bir normal kullanıcı girdiğinde oda seviye butonundaki chat açıp kapatma butonunu oda kilidi kısmını koltuk düzeni kısmını göremicek
+oda kilidi kısmında da şu ayarı yapıyoruz şifre değiştirme butonu kalıyor orası şu şekilde olucak odada kilit yokken oda kitlenirken şifre isticek her seferinde oda kilidi açılınca bir kere olsun odayı kitlemek istersek yeni şifre belirlenmek zorunda ve üçüncü bir şey gelicek oraya şifre değiştir
+şifre değiştir butonuna basınca mevcut olan şifreyi değiştirebileceğiz ki oda da biri girmek zorunda kalınca kilidi açmadan şifreyi değiştirebilelim ve oda moderatörleri de kilitli olaya girerken şifre girmek zorunda tek kendi odasına girerken şifre girmesi gerekmeyen oda sahibi olucak
+bir oda kilitlenirse otomatik olarak odalar kısmında kilit ikonu gelicek yanına
+  
+  
