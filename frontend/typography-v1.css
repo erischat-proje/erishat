@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--eris-font:Manrope,Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+html,body,button,input,textarea,select{font-family:var(--eris-font)!important}
+body{font-weight:500;letter-spacing:-.015em}
+h1,h2,h3,h4,strong,b{letter-spacing:-.025em}
+.profile .face{width:108px;height:108px;box-shadow:none;background-position:center!important;background-size:cover!important}
+.profile .frameImg{width:194px;height:194px;object-fit:contain;object-position:center}
