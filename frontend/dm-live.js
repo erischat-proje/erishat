@@ -621,7 +621,7 @@
   }
   window.addEventListener('erischat:event', handleRealtimeMessage);
 
-  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, send: sendMessage, activeId: () => activeConversationId };
+  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, send: sendMessage, openGiftSheet, activeId: () => activeConversationId };
 
   window.addEventListener('erischat:auth', event => {
     if (event?.detail?.state === 'ready') {
