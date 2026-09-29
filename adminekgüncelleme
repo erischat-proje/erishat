@@ -1,0 +1,20 @@
+bu güncelleme neyi içericek bizde ua larda zaten ban yetkisi  var ama bununla ilgili bir güncelleme yapacağız herhangi birine bir süre ve ban cinsi farketmeksizin ban atmak istediklerinde
+DA özel olan menüye ban talepleri diye bir kısım ekliyoruz bunun içinde öncelikli olarak UA larda ban atabilecekleri tüm boşlukları doldurmalarını zorunlu hale getiriyoruz  ve buna dayanarak varsayalım birini banlıyorlar
+herşeyi doldurdu ve devam et dedi banın türü fark etmeksizin o kısım kaydolucak ve ekranı kapanıcak normal yönetim merkezine dönücek ve ekranında yüzen balon halinde şu yazıcak (Ban işleminiz yetkili DA lara iletilmiştir) yazıcak ve sağ üstünde X olucak buna basarak kapatabilecekler
+ordaki ban talebinde doldurulan her bilgi bizim DA menüsüne düşücek burda da sistem şu şekilde olucak
+solda adminin banlamak istediği kullanıcı nın avatar ve çerçevesi yanında kullanıcı adı
+onun altında banlamak istediği süre ne ise o yazıcak
+onun altında ban nedeni yazıcak
+ve onun altında yeşil renk ban onay ve kırmızı renk ban reddet butonu olucak
+eğer ban onay a basılır ise yapmak istediği işlem onaylanacak ve ban gerçekleşecek
+ban talebi oluşturan adminin ekranına (kullanıcı adı) isimli kullanıcı için yapmış olduğunuz ban talebi onaylanmıştır yazıcak
+
+eğer ban reddet e basılır ise yapmak istediği işlem reddedilmiş sayılacak
+admine uyarı gidicek yüzen pencere içinde (kullanıcı adı) adlı kullanıcı için yapmış olduğunuz ban talebi reddedilmiştir yazıcak sağ üstünde X işareti olucak ona basarak kapatacak ve altında itiraz olucak itiraz a basarsa
+o pencere kapanıp karşısına bir yine yüzen pencere açılacak burada itiraz nedeni yazacak ve onun altında 400 karakter yazabileceği bir açıklama kısmı bulunacak bunun altında da kanıt ekleyebileceği bir kısım olucak 3 adete kadar resim ekleyebilecek
+ve eğer itiraz işlemi gerçekleşirse bizde itiraz talebi diye DA larda bir menü daha olacak bu itiraz oraya düşecek biz burada 
+en üstte solda adminin avatar çerçevesi yanında kullanıcı adı gözükecek onun altında 
+hangi kişinin banına itiraz etti ise o kişinin kullanıcı adı yanında ıd si yazıcak
+ve onun altında itiraz nedeni ve onun altında açıklama yer  alıcak
+onun altına da kanıt resmi koydu ise o gelicek biz onu üstüne tıklayarak büyütebileceğiz resim geldiğinde küçük olarak gelicek eğer bir kere daha aynı kişi için itirazı reddedilirse
+tekrardan ekranına uyarı gidicek (kullanıcı adı) isimli kullanıcı için yapmış olduğunuz ban itirazınız reddedilmiştir yazıcak tekrar itiraz edemicek
