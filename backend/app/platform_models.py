@@ -242,6 +242,13 @@ class DirectCallSignal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class DirectCallPayment(Base):
+    __tablename__ = "direct_call_payments"
+    call_id: Mapped[str] = mapped_column(ForeignKey("direct_calls.id", ondelete="CASCADE"), primary_key=True)
+    amount: Mapped[int] = mapped_column(Integer, default=40, nullable=False)
+    state: Mapped[str] = mapped_column(String(16), default="held", nullable=False)
+
+
 class MessageHidden(Base):
     __tablename__ = "message_hidden"
     __table_args__ = (UniqueConstraint("message_id", "user_id", name="uq_message_hidden_user"),)
