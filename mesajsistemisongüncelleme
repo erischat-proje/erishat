@@ -1,0 +1,37 @@
+İLK adım mesaj silme
+mesaj kısmında herangi bir mesaja basılı tutarsak mesaj balonları hafif sola kayarak soluna yorum kısmında basılı tutarken yaptığımız temaya uygun olucak şekilde içi boş kare gelicek
+ve karelere tıklarsak içine tik işareti geliyor bu gelirse o mesajı seçtiğimiz anlamına geliyor ve tekrar tıklarsak o tik kayboluyor yani o mesajın seçimi iptal olduğu anlamına geliyor
+mesaja basılı tutunca mesaj silme özelliği geliyor bir mesaja basılı tuttu isek sağ üstteki boş alana ilk olarak kare içinde x işareti geliyor buna basarsak işlemi iptal edip mesajlar normale dönüyor
+eğer buna basmazsak onun soluna kırmızı renk yuvarlak içinde - işareti geliyor mesaj seçili iken ekrana uyarı geliyor mesajları gerçekten silmek istiyormusun diye tek mesaj seçili ise mesajı silmek istiyormusun diye
+bunun altında iki buton oluyor kabul et yeşil renk buna basılırsa kullanıcının seçmiş olduğu mesaj ve mesajlar siliniyor iptal ederse tekrardan seçme kısmına geri dönüyor bu uyarı ekrana arkası yaydam bizim temamıza uygun yüzen pencere olarak geliyor
+ve sağ üste mesaj seçim ekranında iken boş bir kare geliyor buna basarsak tüm mesajları silebiliyoruz eğer tekrar basarsak tüm mesaj seçimi geri kalkıyor
+
+ikinci adım mesajlara arşiv özelliği getiriyoruz
+ilk olarak arşiv özelliği şu şekilde olucak mesaj bildirimlerini aç butonu küçülüp onun yanına yanında mail logosu gibi bir logo olan içinde arşiv yazan bir buton geliyor
+bunun işlevi şu şekilde işliyor buna tıklarsak arşivdeki mesajlara girebiliyoruz arşive girince sol üstte geri butonu oluyor ona basınca arşivden tekrar normal mesajların olduğu kısma dönüyoruz
+normal mesajlarda iken bir mesaja tıklarsak çıkan önceki butonların yanında bir buton daha oluyor oda yine arşiv butonundaki logo nun aynısı oluyor ona basarsak normal mesajlarda olan mevcut mesaj arşiv e taşınıyor
+eğer arşiv içinde iken herhangi bir mesaja basılı tutarsak mesaja basılı tutma işlevleri yine çalışıyor ama bu sefer mesaja basılı tutma seçme işlebetvi sırasında üst tarafa gelen mail butonuna tekrar basarsak mesaj arşivden çıkıyor ve normal mesaj kutusuna dönüyor
+
+üçüncü adım kilitli sohbetler bunun işlevine gelince
+sohbet kilitleme şu şekilde olucak arşivde veya normal mesajlarda bir mesaja basılı tutunca kilit işareti çıkıcak bu durumda iki ihtimal var mesajın daha önce kitlenmiş olması veya yeni kitlenicek olması daha doğrusu kişinin daha önce kitli sohbetleri kullanmış olması veya yeni kullanıcak olması
+eğer kilitli sohbetlerdeki tüm mesajlar çıkarılırsa kilitli sohbetlerin şifresi sıfırlanır kişi herhangi bir mesaj kitlerken tekarar şifre oluşturması gerekir ve kilitli sohbette mesaj varken kilitli sohbetlere girebilmek için 6 haneli oluşturduğu password şifreyi mesaj kısmında kullanıcı ıd ara bölümüne yazması gerekir
+ilk ihtimalden ilki ilk defa kitleyecek olması ihtimali
+bu durumda kişinin ekranına bizim modern görünümümüzde arkası saydam bir yüzen pencere geliyor
+burda şu oluyor sağ üstten iptal için ve sayfayı kapatmak için kare işareti içinde x işareti oluyor buna basınca kapanıyo
+şifre oluşturmaya gelicek olursak o zaman sohbeti kitlemek için 6 haneli bir şifre belirleyin yazıcak altında şifre girme kısmı olucak ve 6 haneli şifreyi belirleyin kısmında kırmızı renk küçük bir not yazıcak kilitli sohbetlere erişmek için mesaj kısmında kullanıcı ıd arama yerine altı haneli şifrenizi yazınız
+kişi altı haneli şifreyi yazma ekranında  şifreyi yazdığı yerin hemen altında şifre ipucu giricek maks 30 haneli ve onun altında ipucu na cevap belirleyecek maks 100 haneli şifre oluştururken bu kısımların hepsini doldurması zorunlu olucak kullanıcının
+ve hepsini doldurdu ise en aşşada solda yeşil renk kabul butonu ve onun sağında bilgileri sıfırla butonu olucak kabul e basarsa sistem bunların tamamını kaydedecek eğer sıfırlaya basarsa bütün formu geri boşaltıcak kişinin bilgileri tekrar doldurması gerekicek
+ne en altta ufak bir kırmızı not daha eğer kitli klasör şifrenizi unutursanız burda yazdığınız ipucu cevabı sizden istenecektir yazıcak
+şimdi diğer ihtimale geliyoruz daha önce kilitli kısmına sohbet attı ise yani aktif olarak kilitli sohbeti var ise
+bir mesaja basılı tutup kilit ikonuna basarsa sohbeti kitlemek için şifrenizi giriniz kısmı olucak şifreyi girince o sohbeti de kilitli sohbetlere ekleyebilecek ve şifreyi girdikten sonra hemen altında iki buton olucak yeşil renk kabul ve kırmızı renk red butonu kabul e basarsa o sohbet de kitli sohbetlere eklenicek
+kırmızı renk reddet butonuna basarsa işlem iptal olucak ve yüzen pencere iptal olup normal mesajlara geri dönücek kullanıcı
+bir ihtimalde kişi varolan kilitli sohbet şifresini unuttu ise herhangi bir sohbet kilitlemek veya kilitli sohbeti çıkarmak için ekran üzerinde şifreyi unuttum butonu olucak
+buna basınca yeni yüzen ekrana geçicek bu ekranın sol üstünde geri butonu olucak basarsa geri dönücek varsayalım şifre sıfırlicak ve şifre olayını unuttu şifresini yani
+şifre sıfırlama ekranına girdiğinde üstte kişinin şifre oluştururken yazdığı ipucu yazıcak ve onun altında cevabı girmesini isticek 5 deneme hakkı olucak her bir yanlışta altta kırmızı renk uyarı yazıcak verdiğiniz cevap yanlış şu kadar deneme hakkınız kaldı eğer hakkınız dolarsa kilitli olan mesajlarınız imha edilecektir diye
+varsayalım kullanıcı 5 hakkını da doldurdu ve bütün girdiği şifreler yanlış ekrana yüzen balon içinde bir uyarı gelicek tüm haklarınızı doldurdunuz mesajlarınız imha edilmiştir diye mesajlar ekranına geri dönücek
+yeni bir sohbet kitlemeye çalıştığında sıfırdan şifre oluşturma ekranına gidiyor varsayalım cevabı doğru girdi o zamanda şu olucak 
+yeni bir yüzen pencereye çeçicek şifre sıfırlama ekranı gelicek burda şu olucak
+6 haneli bir şifre yazıcak hemen altında ipucu yazın kısmı olucak onun altında cevap kısmı olucak ve bunu yaparsa bizdeki verileri yani eski şifre verileri yenileniyor işin özeti tüm bu şifre işlemlerine bizdeki verisi güncelleniyor
+ek olarak kilitli sohbetlerin içinde iken sağ üste bir kilit işareti ve yanında kalem işareti olucak aynı kutu içinde buna basarsa kilitli sohbetlerin şifresini yenileyebilecek bu da şu şekilde işleyecek
+yine bir yüzen pencere açılacak mevcut olan 6 haneli şifresini isteyecek hemen altında ipucu yazıcak normalde olan ipucu kayıtlı olan neyse ve onun cevabını girmesini isticek eğer bunları doldurup kabul butonuna basarsa şifre sıfırlama ekranına atıcak 
+orası da şu şekilde işlicek yeni şifre yazıcak hemen altında ipucu girme hemen altında cevap girme ve en altta kabul butonu ve bu işlemi yapınca ekrana şifreniz değişmiştir uyarısı ve bizdeki verisi güncellenicek artık yeni şifreyi ve cevabı ve soruyu kullanıcak
