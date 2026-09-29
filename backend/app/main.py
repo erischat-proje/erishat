@@ -42,6 +42,7 @@ from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
 from .moderation import active_ban, require_feature, profile_notice
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
+from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -279,6 +280,7 @@ register_family_auth(current_user)
 register_support_auth(current_user)
 register_admin_auth(current_user)
 register_dm_folder_auth(current_user)
+register_call_auth(current_user)
 app.include_router(room_router)
 # These legacy router handlers were mounted before the authoritative DM
 # handlers below, so FastAPI resolved requests to the stale versions first.
@@ -296,6 +298,7 @@ app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
 app.include_router(dm_folder_router)
+app.include_router(call_router)
 
 
 @app.get("/health")
