@@ -46,7 +46,7 @@
     [data-reply-label] button{border:0;background:none;color:#fff;text-decoration:underline}
   `;
   document.head.append(style);style.textContent += '.ec-social-video{display:block;width:100%;max-height:min(78vh,850px);border-radius:12px;background:#09070d}';
-  style.textContent += '.ec-social-post,.ec-post-comment{position:relative}.ec-hold-actions{position:absolute;right:3px;top:3px;display:flex;gap:5px;z-index:2}.ec-hold-actions button{width:31px;height:31px;display:grid;place-items:center;border:1px solid #ffffff35;border-radius:50%;background:#21172de8;color:#fff;font-size:16px}.ec-hold-actions[hidden],.ec-hold-actions button[hidden]{display:none}.ec-post-pin{position:absolute;right:42px;top:9px;color:#cda4ff;font-size:16px}.ec-pin-marker{position:absolute;right:6px;top:5px;font-size:14px;color:#cda4ff}.ec-post-comment .ec-hold-actions{top:4px}.ec-social-post.ec-actions-open,.ec-post-comment.ec-actions-open{background:#a778ff0d}.ec-report-preview{display:flex;gap:10px;align-items:center;padding:10px;margin:12px 0;border:1px solid #ffffff24;border-radius:12px}.ec-report-preview img,.ec-report-preview video{width:72px;height:72px;object-fit:cover;border-radius:9px}.ec-report-preview p{margin:0;overflow-wrap:anywhere}.ec-social-modal input[type=file]{max-width:100%;color:white}';
+  style.textContent += '.ec-social-post,.ec-post-comment{position:relative}.ec-hold-actions{position:absolute;right:3px;top:3px;display:flex;gap:5px;z-index:2}.ec-hold-actions button{width:31px;height:31px;display:grid;place-items:center;border:1px solid #ffffff35;border-radius:50%;background:#21172de8;color:#fff;font-size:16px}.ec-hold-actions[hidden],.ec-hold-actions button[hidden]{display:none}.ec-post-pin{position:absolute;right:42px;top:9px;color:#cda4ff;font-size:16px}.ec-pin-marker{position:absolute;right:6px;top:5px;font-size:14px;color:#cda4ff}.ec-post-comment .ec-hold-actions{top:4px}.ec-social-post.ec-actions-open,.ec-post-comment.ec-actions-open{background:#a778ff0d}.ec-report-preview{display:flex;gap:10px;align-items:center;padding:10px;margin:12px 0;border:1px solid #ffffff24;border-radius:12px}.ec-report-preview img,.ec-report-preview video{width:72px;height:72px;object-fit:cover;border-radius:9px}.ec-report-preview p{margin:0;overflow-wrap:anywhere}.ec-social-modal input[type=file]{max-width:100%;color:white}.ec-social-menu{display:flex;align-items:center;gap:5px;margin-left:0!important}.ec-social-menu summary{border:1px solid #b996dc39;border-radius:11px;padding:5px 9px;background:#191321;color:#cbbbe1}.ec-visibility-toggle{margin-left:auto;width:33px;height:33px;border:1px solid #b996dc55;border-radius:11px;background:#21172b;color:#e8d8ff;display:grid;place-items:center}.ec-visibility-toggle svg{width:18px;height:18px}.ec-visibility-toggle[aria-pressed=true] svg{opacity:.55}.eph-overlay .ec-social-post .ec-social-profile-link,.eph-overlay .ec-social-post .ec-post-engagement button,.eph-overlay .ec-social-post .ec-comment-controls button{min-height:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:inherit!important}.eph-overlay .ec-social-post .ec-hold-actions button{width:31px!important;height:31px!important;min-height:31px!important;padding:0!important;border-radius:50%!important;background:#21172de8!important}.eph-overlay .ec-social-post .ec-social-menu button,.eph-overlay .ec-social-post .ec-visibility-toggle{min-height:33px!important;padding:5px!important}.eph-overlay .ec-social-post{padding:13px 0!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}.eph-overlay .ec-social-avatar{width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;padding:0!important}.eph-overlay .ec-post-comment{padding:9px 0!important}';
 
   function holdActions(target,actions){
     let timer,startX=0,startY=0;
@@ -65,24 +65,58 @@
       modal.onclick=e=>{if(e.target===modal)done(false)};
     });
   }
-  function reportPost(post,card){
-    const modal=document.createElement('div');modal.className='ec-social-modal';
-    modal.innerHTML='<section role="dialog" aria-modal="true" aria-label="Gönderiyi bildir"><header style="display:flex;justify-content:space-between;align-items:center"><b>Gönderiyi bildir</b><button type="button" data-close aria-label="Kapat">×</button></header><div class="ec-report-preview"></div><textarea data-reason minlength="3" maxlength="2000" placeholder="Şikâyet nedenini yaz"></textarea><label>Kanıt ekle (en fazla 3 fotoğraf veya 1 video)<input type="file" data-evidence accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><p data-error role="alert" style="color:#ff9dbd"></p><button type="button" class="ec-primary" data-submit>Desteğe gönder</button></section>';
-    document.body.append(modal);const preview=modal.querySelector('.ec-report-preview');
+  function captureSnapshot(post,card,comment){
+    const canvas=document.createElement('canvas');canvas.width=640;canvas.height=460;
+    const c=canvas.getContext('2d');if(!c)throw new Error('Ekran görüntüsü oluşturulamadı.');
+    c.fillStyle='#100b1b';c.fillRect(0,0,640,460);
+    c.fillStyle='#261835';c.fillRect(16,16,608,428);c.strokeStyle='#b996dc';c.strokeRect(16,16,608,428);
+    c.fillStyle='#fff';c.font='bold 25px system-ui';c.fillText(String(post.nickname||'ErisChat kullanıcısı').slice(0,32),38,57);
+    c.font='16px system-ui';c.fillStyle='#bcb0ca';c.fillText(formatDate(post.created_at),38,83);
+    const wrap=(value,x,y,maxWidth,lineHeight,maxLines)=>{
+      const words=String(value||'').split(/\s+/);let line='',lines=0;
+      for(const word of words){const next=(line?line+' ':'')+word;if(c.measureText(next).width>maxWidth&&line){c.fillText(line,x,y);y+=lineHeight;lines++;line=word;if(lines>=maxLines)return y}else line=next}
+      if(line&&lines<maxLines){c.fillText(line,x,y);y+=lineHeight}return y;
+    };
+    c.fillStyle='#fff';c.font='20px system-ui';let y=wrap(post.caption||'Medya gönderisi',38,126,562,29,3);
     const media=card.querySelector('.ec-social-photo,.ec-social-video');
-    if(media){const thumb=document.createElement(media.tagName.toLowerCase());thumb.src=media.src;preview.append(thumb)}
-    const meta=document.createElement('p');meta.textContent=formatDate(post.created_at)+' · '+(post.caption||'Medya gönderisi').slice(0,110);preview.append(meta);
+    if(media&&((media.tagName==='IMG'&&media.complete&&media.naturalWidth)||(media.tagName==='VIDEO'&&media.readyState>=2))){
+      const width=media.videoWidth||media.naturalWidth,height=media.videoHeight||media.naturalHeight;
+      const boxW=220,boxH=comment?90:160,scale=Math.min(boxW/width,boxH/height);
+      try{c.drawImage(media,38,Math.min(y+5,comment?248:350),width*scale,height*scale);y+=comment?100:170}catch(_){}
+    }
+    if(comment){const top=Math.min(Math.max(y+8,282),305);c.fillStyle='#a777e4';c.fillRect(30,top,580,105);c.fillStyle='#fff';c.font='bold 18px system-ui';c.fillText('Yorum · '+String(comment.nickname||'Kullanıcı').slice(0,30),42,top+23);c.font='18px system-ui';wrap(comment.body,42,top+53,550,24,2)}
+    c.font='13px system-ui';c.fillStyle='#aa94c9';c.fillText('Gönderi #'+post.id+(comment?' · Yorum #'+comment.id:''),38,423);
+    try{return canvas.toDataURL('image/jpeg',.72)}catch(_){
+      const fallback=document.createElement('canvas');fallback.width=640;fallback.height=460;
+      const fc=fallback.getContext('2d');fc.fillStyle='#100b1b';fc.fillRect(0,0,640,460);fc.fillStyle='#fff';fc.font='bold 24px system-ui';fc.fillText(String(post.nickname||'ErisChat kullanıcısı').slice(0,32),38,57);
+      fc.font='16px system-ui';fc.fillText(formatDate(post.created_at),38,83);fc.font='20px system-ui';
+      const lines=(value,start)=>{let line=0;for(const part of String(value||'').match(/.{1,50}/g)||[]){if(line>=4)break;fc.fillText(part,38,start+line*29);line++}};
+      lines(post.caption||'Medya gönderisi',126);
+      if(comment){fc.fillStyle='#a777e4';fc.fillRect(30,282,580,105);fc.fillStyle='#fff';fc.font='bold 18px system-ui';fc.fillText('Yorum · '+String(comment.nickname||'Kullanıcı').slice(0,30),42,305);fc.font='18px system-ui';lines(comment.body,335)}
+      fc.font='13px system-ui';fc.fillText('Gönderi #'+post.id+(comment?' · Yorum #'+comment.id:''),38,423);
+      return fallback.toDataURL('image/jpeg',.72);
+    }
+  }
+  function reportPost(post,card,comment=null){
+    const modal=document.createElement('div');modal.className='ec-social-modal';
+    modal.innerHTML='<section role="dialog" aria-modal="true" aria-label="'+(comment?'Yorumu':'Gönderiyi')+' bildir"><header style="display:flex;justify-content:space-between;align-items:center"><b>'+(comment?'Yorumu':'Gönderiyi')+' bildir</b><button type="button" data-close aria-label="Kapat">×</button></header><div class="ec-report-preview"></div><p style="font-size:12px;color:#c9b9d8">Ekran görüntüsü otomatik eklendi. Ek kanıt da seçebilirsin.</p><textarea data-reason minlength="3" maxlength="2000" placeholder="Şikâyet nedenini yaz"></textarea><label>Ek kanıt (en fazla 3 fotoğraf veya 1 video)<input type="file" data-evidence accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><p data-error role="alert" style="color:#ff9dbd"></p><button type="button" class="ec-primary" data-submit>Desteğe gönder</button></section>';
+    document.body.append(modal);const preview=modal.querySelector('.ec-report-preview');
+    let screenshot='';try{screenshot=captureSnapshot(post,card,comment)}catch(error){modal.querySelector('[data-error]').textContent=error.message}
+    if(screenshot){const img=document.createElement('img');img.src=screenshot;img.alt='Otomatik gönderi ekran görüntüsü';preview.append(img)}
+    const meta=document.createElement('p');meta.textContent=formatDate(comment?.created_at||post.created_at)+' · '+(comment?.body||post.caption||'Medya gönderisi').slice(0,110);preview.append(meta);
     const close=()=>modal.remove();modal.querySelector('[data-close]').onclick=close;modal.onclick=e=>{if(e.target===modal)close()};
     modal.querySelector('[data-submit]').onclick=async e=>{
       const button=e.currentTarget,error=modal.querySelector('[data-error]');error.textContent='';
       const reason=modal.querySelector('[data-reason]').value.trim(),files=[...modal.querySelector('[data-evidence]').files];
       const videos=files.filter(file=>file.type.startsWith('video/'));
+      if(!screenshot){error.textContent='Otomatik ekran görüntüsü oluşturulamadı. Tekrar dene.';return}
       if(reason.length<3){error.textContent='Şikâyet nedenini yaz.';return}
       if(files.length>3||videos.length&&(videos.length!==1||files.length!==1)||files.some(file=>!['image/jpeg','image/png','image/webp','video/mp4','video/webm'].includes(file.type)||file.size>(file.type.startsWith('video/')?8*1024*1024:1500000))){error.textContent='En fazla 3 fotoğraf (1,5 MB) veya 1 video (8 MB) ekle.';return}
       button.disabled=true;
-      try{const attachments=await Promise.all(files.map(file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})));
-        await api().api('/support/tickets',{method:'POST',body:JSON.stringify({category:'post_report',subject:'Gönderi şikâyeti #'+post.id,message:'Gönderi ID: '+post.id+'\nGönderen: '+post.user_id+'\nTarih: '+formatDate(post.created_at)+'\nŞikâyet: '+reason,attachments})});
-        close();window.toast?.('Gönderi şikâyeti desteğe iletildi.');
+      try{const extra=await Promise.all(files.map(file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})));
+        const attachments=[screenshot,...extra];
+        await api().api('/support/tickets',{method:'POST',body:JSON.stringify({category:comment?'comment_report':'post_report',subject:(comment?'Yorum':'Gönderi')+' şikâyeti #'+(comment?.id||post.id),message:'Gönderi ID: '+post.id+(comment?'\nYorum ID: '+comment.id:'')+'\nGönderen: '+(comment?.user_id||post.user_id)+'\nTarih: '+formatDate(comment?.created_at||post.created_at)+'\nŞikâyet: '+reason,attachments})});
+        close();window.toast?.('Şikâyet ekran görüntüsü ve kanıtlarıyla desteğe iletildi.');
       }catch(err){error.textContent=err.message||'Şikâyet gönderilemedi.';button.disabled=false}
     };
   }
@@ -226,11 +260,17 @@
       if(row.is_pinned&&!post.is_mine){const marker=document.createElement('span');marker.className='ec-pin-marker';marker.textContent='📌';marker.title='Sabit yorum';content.append(marker)}
       if(post.is_mine){
         const tools=document.createElement('div');tools.className='ec-hold-actions';tools.hidden=!row.is_pinned;
-        tools.innerHTML='<button type="button" data-pin aria-label="'+(row.is_pinned?'Sabitlemeyi kaldır':'Yorumu sabitle')+'">📌</button><button type="button" data-remove aria-label="Yorumu sil">−</button>';
+        tools.innerHTML='<button type="button" data-pin aria-label="'+(row.is_pinned?'Sabitlemeyi kaldır':'Yorumu sabitle')+'">📌</button><button type="button" data-report aria-label="Yorumu bildir">!</button><button type="button" data-remove aria-label="Yorumu sil">−</button>';
         const remove=tools.querySelector('[data-remove]');remove.hidden=!!row.is_pinned;
         holdActions(item,tools);
         tools.querySelector('[data-pin]').onclick=async()=>{try{await api().api('/posts/'+id+'/comments/'+row.id+'/pin',{method:row.is_pinned?'DELETE':'PUT'});await refreshComments()}catch(error){window.toast?.(error.message||'Yorum sabitlenemedi.')}};
+        tools.querySelector('[data-report]').onclick=()=>reportPost(post,card,row);
         remove.onclick=async()=>{if(!await confirmDelete('yorum'))return;remove.disabled=true;try{await api().api('/posts/'+id+'/comments/'+row.id,{method:'DELETE'});await refreshComments()}catch(error){remove.disabled=false;window.toast?.(error.message||'Yorum silinemedi.')}};
+        item.append(tools);
+      }else{
+        const tools=document.createElement('div');tools.className='ec-hold-actions';tools.hidden=true;
+        tools.innerHTML='<button type="button" data-report aria-label="Yorumu bildir">!</button>';
+        holdActions(item,tools);tools.querySelector('[data-report]').onclick=()=>reportPost(post,card,row);
         item.append(tools);
       }
       content.append(name,body,controls);
@@ -299,7 +339,7 @@
       card.querySelector('.ec-social-author b').textContent=post.nickname||'ErisChat kullanıcısı';card.querySelector('.ec-social-date').textContent=formatDate(post.created_at)+(post.updated_at&&post.created_at!==post.updated_at?' · düzenlendi':'');card.querySelector('.ec-social-caption').textContent=post.caption||'';card.querySelector('[data-visibility]').textContent=owner?(post.is_hidden?'Profilden gizli · yalnızca sen görebilirsin':(post.audience==='followers'?'Takipçilerim':'Herkese açık')):'';
       if(post.media_url){try{const url=await imageUrl(post.media_url);if(post.media_kind==='video'||String(post.mime_type||'').startsWith('video/')){const video=document.createElement('video');video.className='ec-social-video';video.controls=true;video.playsInline=true;video.preload='metadata';video.src=url;card.querySelector('[data-photo]').append(video)}else{const img=document.createElement('img');img.className='ec-social-photo';img.alt='Gönderi fotoğrafı';img.src=url;card.querySelector('[data-photo]').append(img)}}catch(_){}}
       if(post.is_pinned&&!owner){const marker=document.createElement('span');marker.className='ec-post-pin';marker.textContent='📌';marker.title='Sabit gönderi';card.append(marker)}
-      if(owner){const hide=document.createElement('button');hide.type='button';hide.textContent=post.is_hidden?'Profilden göster':'Profilden gizle';card.querySelector('.ec-social-menu').append(hide);hide.onclick=async()=>{hide.disabled=true;try{await api().updatePost(post.id,post.caption,null,false,post.audience,!post.is_hidden);window.toast?.(post.is_hidden?'Gönderi profilde gösteriliyor.':'Gönderi profilden gizlendi.');await loadMine(container)}catch(e){hide.disabled=false;window.toast?.(e.message||'Görünürlük değiştirilemedi.')}};card.querySelector('[data-edit]').onclick=()=>compose(post);const removePost=async()=>{if(!await confirmDelete('gönderi'))return;try{await api().deletePost(post.id);window.toast?.('Gönderi silindi.');await loadMine(container)}catch(e){window.toast?.(e.message||'Gönderi silinemedi.')}};card.querySelector('[data-delete]').onclick=removePost;
+      if(owner){const hide=document.createElement('button');hide.type='button';hide.className='ec-visibility-toggle';hide.title=post.is_hidden?'Profilden gizlemeyi kaldır':'Profilden gizle';hide.setAttribute('aria-label',hide.title);hide.setAttribute('aria-pressed',String(!!post.is_hidden));hide.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/>'+(post.is_hidden?'<path d="M3 21 21 3" stroke-width="2.4"/>':'')+'</svg>';card.querySelector('.ec-social-menu').before(hide);hide.onclick=async()=>{hide.disabled=true;try{await api().updatePost(post.id,post.caption,null,false,post.audience,!post.is_hidden);window.toast?.(post.is_hidden?'Gönderi profilde gösteriliyor.':'Gönderi profilden gizlendi.');await loadMine(container)}catch(e){hide.disabled=false;window.toast?.(e.message||'Görünürlük değiştirilemedi.')}};card.querySelector('[data-edit]').onclick=()=>compose(post);const removePost=async()=>{if(!await confirmDelete('gönderi'))return;try{await api().deletePost(post.id);window.toast?.('Gönderi silindi.');await loadMine(container)}catch(e){window.toast?.(e.message||'Gönderi silinemedi.')}};card.querySelector('[data-delete]').onclick=removePost;
         const tools=document.createElement('div');tools.className='ec-hold-actions';tools.hidden=!post.is_pinned;tools.innerHTML='<button type="button" data-pin aria-label="'+(post.is_pinned?'Sabitlemeyi kaldır':'Gönderiyi sabitle')+'">📌</button><button type="button" data-remove aria-label="Gönderiyi sil" '+(post.is_pinned?'hidden':'')+'>−</button>';card.append(tools);holdActions(card,tools);
         tools.querySelector('[data-pin]').onclick=async()=>{try{await api().api('/posts/'+post.id+'/pin',{method:post.is_pinned?'DELETE':'PUT'});await loadMine(container)}catch(e){window.toast?.(e.message||'Gönderi sabitlenemedi.')}};
         tools.querySelector('[data-remove]').onclick=removePost;

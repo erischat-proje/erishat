@@ -23,7 +23,7 @@ class SupportCreate(BaseModel):
     category: str = Field(min_length=1, max_length=32)
     subject: str = Field(min_length=1, max_length=120)
     message: str = Field(min_length=3, max_length=4000)
-    attachments: list[str] = Field(default_factory=list, max_length=3)
+    attachments: list[str] = Field(default_factory=list, max_length=4)
 
     @staticmethod
     def _attachments(value: list[str]) -> list[str]:
@@ -55,8 +55,8 @@ class SupportCreate(BaseModel):
             if not valid:
                 raise ValueError("Kanıt dosyasının biçimi geçersiz")
             videos += mime.startswith("video/")
-        if videos and (videos != 1 or len(value) != 1):
-            raise ValueError("Video yalnızca tek başına eklenebilir")
+        if videos and (videos != 1 or len(value) > 2 or (len(value) == 2 and not value[0].startswith("data:image/"))):
+            raise ValueError("Video yalnızca tek başına veya otomatik ekran görüntüsüyle eklenebilir")
         return value
 
 
