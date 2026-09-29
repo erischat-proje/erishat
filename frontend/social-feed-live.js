@@ -46,6 +46,46 @@
     [data-reply-label] button{border:0;background:none;color:#fff;text-decoration:underline}
   `;
   document.head.append(style);style.textContent += '.ec-social-video{display:block;width:100%;max-height:min(78vh,850px);border-radius:12px;background:#09070d}';
+  style.textContent += '.ec-social-post,.ec-post-comment{position:relative}.ec-hold-actions{position:absolute;right:3px;top:3px;display:flex;gap:5px;z-index:2}.ec-hold-actions button{width:31px;height:31px;display:grid;place-items:center;border:1px solid #ffffff35;border-radius:50%;background:#21172de8;color:#fff;font-size:16px}.ec-hold-actions[hidden],.ec-hold-actions button[hidden]{display:none}.ec-post-pin{position:absolute;right:42px;top:9px;color:#cda4ff;font-size:16px}.ec-pin-marker{position:absolute;right:6px;top:5px;font-size:14px;color:#cda4ff}.ec-post-comment .ec-hold-actions{top:4px}.ec-social-post.ec-actions-open,.ec-post-comment.ec-actions-open{background:#a778ff0d}.ec-report-preview{display:flex;gap:10px;align-items:center;padding:10px;margin:12px 0;border:1px solid #ffffff24;border-radius:12px}.ec-report-preview img,.ec-report-preview video{width:72px;height:72px;object-fit:cover;border-radius:9px}.ec-report-preview p{margin:0;overflow-wrap:anywhere}.ec-social-modal input[type=file]{max-width:100%;color:white}';
+
+  function holdActions(target,actions){
+    let timer,startX=0,startY=0;
+    const cancel=()=>{clearTimeout(timer);timer=null};
+    target.addEventListener('pointerdown',e=>{if(e.target.closest('button,input,video,summary'))return;startX=e.clientX;startY=e.clientY;cancel();timer=setTimeout(()=>{actions.hidden=false;actions.querySelector('[data-remove]')?.removeAttribute('hidden');target.classList.add('ec-actions-open');timer=null},550)});
+    target.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-startX)>12||Math.abs(e.clientY-startY)>12)cancel()});
+    for(const type of ['pointerup','pointercancel','pointerleave'])target.addEventListener(type,cancel);
+    target.addEventListener('contextmenu',e=>{e.preventDefault();cancel();actions.hidden=false;actions.querySelector('[data-remove]')?.removeAttribute('hidden');target.classList.add('ec-actions-open')});
+  }
+  function confirmDelete(kind){
+    return new Promise(resolve=>{
+      const modal=document.createElement('div');modal.className='ec-social-modal';
+      modal.innerHTML='<section role="alertdialog" aria-modal="true"><b>Silme onayı</b><p>Bu '+(kind==='yorum'?'yorumu':'gönderiyi')+' silmek istediğine emin misin?</p><div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" data-no>Reddet</button><button type="button" class="ec-primary" data-yes>Kabul et</button></div></section>';
+      document.body.append(modal);const done=value=>{modal.remove();resolve(value)};
+      modal.querySelector('[data-no]').onclick=()=>done(false);modal.querySelector('[data-yes]').onclick=()=>done(true);
+      modal.onclick=e=>{if(e.target===modal)done(false)};
+    });
+  }
+  function reportPost(post,card){
+    const modal=document.createElement('div');modal.className='ec-social-modal';
+    modal.innerHTML='<section role="dialog" aria-modal="true" aria-label="Gönderiyi bildir"><header style="display:flex;justify-content:space-between;align-items:center"><b>Gönderiyi bildir</b><button type="button" data-close aria-label="Kapat">×</button></header><div class="ec-report-preview"></div><textarea data-reason minlength="3" maxlength="2000" placeholder="Şikâyet nedenini yaz"></textarea><label>Kanıt ekle (en fazla 3 fotoğraf veya 1 video)<input type="file" data-evidence accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><p data-error role="alert" style="color:#ff9dbd"></p><button type="button" class="ec-primary" data-submit>Desteğe gönder</button></section>';
+    document.body.append(modal);const preview=modal.querySelector('.ec-report-preview');
+    const media=card.querySelector('.ec-social-photo,.ec-social-video');
+    if(media){const thumb=document.createElement(media.tagName.toLowerCase());thumb.src=media.src;preview.append(thumb)}
+    const meta=document.createElement('p');meta.textContent=formatDate(post.created_at)+' · '+(post.caption||'Medya gönderisi').slice(0,110);preview.append(meta);
+    const close=()=>modal.remove();modal.querySelector('[data-close]').onclick=close;modal.onclick=e=>{if(e.target===modal)close()};
+    modal.querySelector('[data-submit]').onclick=async e=>{
+      const button=e.currentTarget,error=modal.querySelector('[data-error]');error.textContent='';
+      const reason=modal.querySelector('[data-reason]').value.trim(),files=[...modal.querySelector('[data-evidence]').files];
+      const videos=files.filter(file=>file.type.startsWith('video/'));
+      if(reason.length<3){error.textContent='Şikâyet nedenini yaz.';return}
+      if(files.length>3||videos.length&&(videos.length!==1||files.length!==1)||files.some(file=>!['image/jpeg','image/png','image/webp','video/mp4','video/webm'].includes(file.type)||file.size>(file.type.startsWith('video/')?8*1024*1024:1500000))){error.textContent='En fazla 3 fotoğraf (1,5 MB) veya 1 video (8 MB) ekle.';return}
+      button.disabled=true;
+      try{const attachments=await Promise.all(files.map(file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})));
+        await api().api('/support/tickets',{method:'POST',body:JSON.stringify({category:'post_report',subject:'Gönderi şikâyeti #'+post.id,message:'Gönderi ID: '+post.id+'\nGönderen: '+post.user_id+'\nTarih: '+formatDate(post.created_at)+'\nŞikâyet: '+reason,attachments})});
+        close();window.toast?.('Gönderi şikâyeti desteğe iletildi.');
+      }catch(err){error.textContent=err.message||'Şikâyet gönderilemedi.';button.disabled=false}
+    };
+  }
 
   function cleanupUrls(){ for(const url of objectUrls) URL.revokeObjectURL(url); objectUrls.clear(); }
   function ensureExploreLayout(view,root){
@@ -141,7 +181,7 @@
     function renderComment(row,children=[]){
       const item=document.createElement('div');
       item.className='ec-post-comment';
-      if(row.parent_id)item.classList.add('ec-post-reply');
+      if(row.parent_id&&!row.is_pinned)item.classList.add('ec-post-reply');
       const avatar=document.createElement('button');
       avatar.type='button';avatar.className='ec-social-profile-link ec-comment-avatar';
       avatar.dataset.userId=String(row.user_id);
@@ -183,21 +223,15 @@
         input.focus();
       };
       controls.append(likeComment,reply);
-      if(row.is_mine || post.is_mine){
-        const remove=document.createElement('button');
-        remove.type='button';remove.textContent='Sil';
-        remove.onclick=async()=>{
-          if(!window.confirm('Bu yorum silinsin mi?'))return;
-          remove.disabled=true;
-          try{
-            await api().api('/posts/'+id+'/comments/'+row.id,{method:'DELETE'});
-            await refreshComments();
-          }catch(error){
-            remove.disabled=false;
-            window.toast?.(error.message||'Yorum silinemedi.');
-          }
-        };
-        controls.append(remove);
+      if(row.is_pinned&&!post.is_mine){const marker=document.createElement('span');marker.className='ec-pin-marker';marker.textContent='📌';marker.title='Sabit yorum';content.append(marker)}
+      if(post.is_mine){
+        const tools=document.createElement('div');tools.className='ec-hold-actions';tools.hidden=!row.is_pinned;
+        tools.innerHTML='<button type="button" data-pin aria-label="'+(row.is_pinned?'Sabitlemeyi kaldır':'Yorumu sabitle')+'">📌</button><button type="button" data-remove aria-label="Yorumu sil">−</button>';
+        const remove=tools.querySelector('[data-remove]');remove.hidden=!!row.is_pinned;
+        holdActions(item,tools);
+        tools.querySelector('[data-pin]').onclick=async()=>{try{await api().api('/posts/'+id+'/comments/'+row.id+'/pin',{method:row.is_pinned?'DELETE':'PUT'});await refreshComments()}catch(error){window.toast?.(error.message||'Yorum sabitlenemedi.')}};
+        remove.onclick=async()=>{if(!await confirmDelete('yorum'))return;remove.disabled=true;try{await api().api('/posts/'+id+'/comments/'+row.id,{method:'DELETE'});await refreshComments()}catch(error){remove.disabled=false;window.toast?.(error.message||'Yorum silinemedi.')}};
+        item.append(tools);
       }
       content.append(name,body,controls);
       item.append(avatar,content);
@@ -212,8 +246,10 @@
         empty.className='ec-comment-empty';empty.textContent='İlk yorumu sen yaz.';
         list.append(empty);
       }else{
-        const roots=rows.filter(row=>!row.parent_id);
-        roots.forEach(row=>renderComment(row,rows.filter(child=>child.parent_id===row.id)));
+        const pinned=rows.find(row=>row.is_pinned);
+        if(pinned)renderComment(pinned,rows.filter(child=>child.parent_id===pinned.id));
+        const roots=rows.filter(row=>!row.parent_id&&row.id!==pinned?.id);
+        roots.forEach(row=>renderComment(row,rows.filter(child=>child.parent_id===row.id&&child.id!==pinned?.id)));
       }
       await refreshCounts();
     }
@@ -249,7 +285,7 @@
         ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
         : 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR/1.png';
       const avatar=post.avatar_asset||fallbackAvatar;
-      card.innerHTML='<div class="ec-social-author"><button type="button" class="ec-social-profile-link ec-social-avatar" data-avatar data-user-id></button><span style="min-width:0"><button type="button" class="ec-social-profile-link" data-author-name data-user-id><b></b></button><small class="ec-social-date"></small></span>'+(owner?'<details class="ec-social-menu"><summary aria-label="Gönderi işlemleri">•••</summary><button type="button" data-edit>✎ Düzenle</button><button type="button" data-delete>Sil</button></details>':'')+'</div><div class="ec-social-caption"></div><small data-visibility style="display:block;color:#aaa1b1;font-size:10px"></small><div data-photo></div>';
+      card.innerHTML='<div class="ec-social-author"><button type="button" class="ec-social-profile-link ec-social-avatar" data-avatar data-user-id></button><span style="min-width:0"><button type="button" class="ec-social-profile-link" data-author-name data-user-id><b></b></button><small class="ec-social-date"></small></span>'+(owner?'<details class="ec-social-menu"><summary aria-label="Gönderi işlemleri">•••</summary><button type="button" data-edit>✎ Düzenle</button><button type="button" data-delete>Sil</button></details>':(post.is_mine?'':'<button type="button" data-report aria-label="Gönderiyi bildir" style="margin-left:auto;border:0;background:transparent;color:#fff;font-size:20px">!</button>'))+'</div><div class="ec-social-caption"></div><small data-visibility style="display:block;color:#aaa1b1;font-size:10px"></small><div data-photo></div>';
       card.querySelectorAll('[data-user-id]').forEach(el => {
         el.dataset.userId=String(post.user_id||'');
         el.setAttribute('aria-label',(post.nickname||'Kullanıcı')+' profilini aç');
@@ -262,7 +298,12 @@
       avatarEl.append(avatarImg);
       card.querySelector('.ec-social-author b').textContent=post.nickname||'ErisChat kullanıcısı';card.querySelector('.ec-social-date').textContent=formatDate(post.created_at)+(post.updated_at&&post.created_at!==post.updated_at?' · düzenlendi':'');card.querySelector('.ec-social-caption').textContent=post.caption||'';card.querySelector('[data-visibility]').textContent=owner?(post.is_hidden?'Profilden gizli · yalnızca sen görebilirsin':(post.audience==='followers'?'Takipçilerim':'Herkese açık')):'';
       if(post.media_url){try{const url=await imageUrl(post.media_url);if(post.media_kind==='video'||String(post.mime_type||'').startsWith('video/')){const video=document.createElement('video');video.className='ec-social-video';video.controls=true;video.playsInline=true;video.preload='metadata';video.src=url;card.querySelector('[data-photo]').append(video)}else{const img=document.createElement('img');img.className='ec-social-photo';img.alt='Gönderi fotoğrafı';img.src=url;card.querySelector('[data-photo]').append(img)}}catch(_){}}
-      if(owner){const hide=document.createElement('button');hide.type='button';hide.textContent=post.is_hidden?'Profilden göster':'Profilden gizle';card.querySelector('.ec-social-menu').append(hide);hide.onclick=async()=>{hide.disabled=true;try{await api().updatePost(post.id,post.caption,null,false,post.audience,!post.is_hidden);window.toast?.(post.is_hidden?'Gönderi profilde gösteriliyor.':'Gönderi profilden gizlendi.');await loadMine(container)}catch(e){hide.disabled=false;window.toast?.(e.message||'Görünürlük değiştirilemedi.')}};card.querySelector('[data-edit]').onclick=()=>compose(post);card.querySelector('[data-delete]').onclick=async()=>{if(!window.confirm('Bu gönderi silinsin mi?'))return;try{await api().deletePost(post.id);window.toast?.('Gönderi silindi.');if(owner==='profile')await loadMine(container);else await loadFeed()}catch(e){window.toast?.(e.message||'Gönderi silinemedi.')}}}
+      if(post.is_pinned&&!owner){const marker=document.createElement('span');marker.className='ec-post-pin';marker.textContent='📌';marker.title='Sabit gönderi';card.append(marker)}
+      if(owner){const hide=document.createElement('button');hide.type='button';hide.textContent=post.is_hidden?'Profilden göster':'Profilden gizle';card.querySelector('.ec-social-menu').append(hide);hide.onclick=async()=>{hide.disabled=true;try{await api().updatePost(post.id,post.caption,null,false,post.audience,!post.is_hidden);window.toast?.(post.is_hidden?'Gönderi profilde gösteriliyor.':'Gönderi profilden gizlendi.');await loadMine(container)}catch(e){hide.disabled=false;window.toast?.(e.message||'Görünürlük değiştirilemedi.')}};card.querySelector('[data-edit]').onclick=()=>compose(post);const removePost=async()=>{if(!await confirmDelete('gönderi'))return;try{await api().deletePost(post.id);window.toast?.('Gönderi silindi.');await loadMine(container)}catch(e){window.toast?.(e.message||'Gönderi silinemedi.')}};card.querySelector('[data-delete]').onclick=removePost;
+        const tools=document.createElement('div');tools.className='ec-hold-actions';tools.hidden=!post.is_pinned;tools.innerHTML='<button type="button" data-pin aria-label="'+(post.is_pinned?'Sabitlemeyi kaldır':'Gönderiyi sabitle')+'">📌</button><button type="button" data-remove aria-label="Gönderiyi sil" '+(post.is_pinned?'hidden':'')+'>−</button>';card.append(tools);holdActions(card,tools);
+        tools.querySelector('[data-pin]').onclick=async()=>{try{await api().api('/posts/'+post.id+'/pin',{method:post.is_pinned?'DELETE':'PUT'});await loadMine(container)}catch(e){window.toast?.(e.message||'Gönderi sabitlenemedi.')}};
+        tools.querySelector('[data-remove]').onclick=removePost;
+      }else if(!post.is_mine){card.querySelector('[data-report]').onclick=()=>reportPost(post,card)}
       attachPostEngagement(card,post);
       container.append(card);
     }

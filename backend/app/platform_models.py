@@ -317,6 +317,7 @@ class SocialPost(Base):
     image_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     audience: Mapped[str] = mapped_column(String(16), default="public", server_default="public", nullable=False)
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -335,6 +336,7 @@ class SocialPostComment(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("social_post_comments.id", ondelete="CASCADE"), nullable=True)
     body: Mapped[str] = mapped_column(Text, nullable=False)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
