@@ -118,6 +118,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS audience VARCHAR(16) NOT NULL DEFAULT 'public'"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT false"))
+        conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT false"))
+        conn.execute(text("ALTER TABLE social_post_comments ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS welcome_gift_claimed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS attachments_json TEXT NOT NULL DEFAULT '[]'"))
@@ -1111,7 +1113,7 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
         query = query.where(SocialPost.audience.in_(["public", "followers"]) if follows
                             else SocialPost.audience == "public")
     rows = list(db.scalars(query.order_by(
-        SocialPost.created_at.desc(), SocialPost.id.desc()
+        SocialPost.is_pinned.desc(), SocialPost.created_at.desc(), SocialPost.id.desc()
     ).offset(offset).limit(limit)))
     return [{
         "id": post.id, "user_id": target.id, "nickname": target.nickname,
@@ -1121,6 +1123,7 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
         "has_image": post.image_bytes is not None,
         "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
         "is_mine": is_owner, "is_hidden": bool(getattr(post, "is_hidden", False)),
+        "is_pinned": bool(post.is_pinned),
     } for post in rows]
 
 
@@ -1153,6 +1156,7 @@ def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|fol
                 "mime_type": post.mime_type, "media_kind": "video" if (post.mime_type or "").startswith("video/") else "image",
                 "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
                 "audience": post.audience, "is_hidden": False, "is_mine": post.user_id == user.id})
+            result[-1]["is_pinned"] = bool(post.is_pinned)
     return result
 
 
@@ -1160,13 +1164,13 @@ def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|fol
 def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     rows = list(db.scalars(select(SocialPost).where(SocialPost.user_id == user.id)
-        .order_by(SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
+        .order_by(SocialPost.is_pinned.desc(), SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
     return [{"id": p.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": p.caption, "created_at": p.created_at,
         "updated_at": p.updated_at, "has_image": p.image_bytes is not None, "mime_type": p.mime_type,
         "media_kind": "video" if (p.mime_type or "").startswith("video/") else "image",
         "media_url": f"/posts/{p.id}/media" if p.image_bytes is not None else None,
-        "audience": p.audience, "is_hidden": p.is_hidden, "is_mine": True} for p in rows]
+        "audience": p.audience, "is_hidden": p.is_hidden, "is_pinned": bool(p.is_pinned), "is_mine": True} for p in rows]
 
 
 @app.post("/v1/posts", status_code=201)
@@ -1224,6 +1228,29 @@ def delete_social_post(post_id: int, db: Session = Depends(get_db), user: User =
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini silebilirsin")
     db.delete(post); db.commit()
     return {"deleted": True, "post_id": post_id}
+
+
+@app.put("/v1/posts/{post_id}/pin")
+def pin_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    # Serialize competing pin requests for the same profile.
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    post = db.get(SocialPost, post_id)
+    if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini sabitleyebilirsin")
+    db.execute(update(SocialPost).where(SocialPost.user_id == user.id).values(is_pinned=False))
+    post.is_pinned = True
+    db.commit()
+    return {"id": post.id, "is_pinned": True}
+
+
+@app.delete("/v1/posts/{post_id}/pin")
+def unpin_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = db.get(SocialPost, post_id)
+    if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderinin sabitlemesini kaldırabilirsin")
+    post.is_pinned = False
+    db.commit()
+    return {"id": post.id, "is_pinned": False}
 
 
 @app.get("/v1/posts/{post_id}/media")
@@ -1315,6 +1342,7 @@ def _social_comment_row(db: Session, item: SocialPostComment, viewer: User) -> d
         "avatar_asset": author.avatar_asset if author else None,
         "gender": author.gender if author else None,
         "body": item.body, "created_at": item.created_at,
+        "is_pinned": bool(item.is_pinned),
         "is_mine": item.user_id == viewer.id,
         "like_count": db.scalar(select(func.count()).select_from(SocialPostCommentLike).where(
             SocialPostCommentLike.comment_id == item.id)) or 0,
@@ -1328,7 +1356,7 @@ def list_social_comments(post_id: int, limit: int = Query(default=100, ge=1, le=
     _social_access(db, post_id, user)
     items = db.scalars(select(SocialPostComment).where(
         SocialPostComment.post_id == post_id).order_by(
-        SocialPostComment.created_at.asc(), SocialPostComment.id.asc()).limit(limit))
+        SocialPostComment.is_pinned.desc(), SocialPostComment.created_at.asc(), SocialPostComment.id.asc()).limit(limit))
     return [_social_comment_row(db, item, user) for item in items]
 
 
@@ -1349,6 +1377,36 @@ def create_social_comment(post_id: int, payload: SocialCommentInput,
     item = SocialPostComment(post_id=post_id, user_id=user.id, parent_id=parent_id, body=body)
     db.add(item); db.commit(); db.refresh(item)
     return _social_comment_row(db, item, user)
+
+
+@app.put("/v1/posts/{post_id}/comments/{comment_id}/pin")
+def pin_social_comment(post_id: int, comment_id: int,
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = _social_access(db, post_id, user)
+    if post.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Yalnızca kendi gönderindeki yorumu sabitleyebilirsin")
+    db.scalar(select(SocialPost).where(SocialPost.id == post_id).with_for_update())
+    item = db.get(SocialPostComment, comment_id)
+    if not item or item.post_id != post_id:
+        raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    db.execute(update(SocialPostComment).where(SocialPostComment.post_id == post_id).values(is_pinned=False))
+    item.is_pinned = True
+    db.commit()
+    return {"id": comment_id, "is_pinned": True}
+
+
+@app.delete("/v1/posts/{post_id}/comments/{comment_id}/pin")
+def unpin_social_comment(post_id: int, comment_id: int,
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    post = _social_access(db, post_id, user)
+    if post.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Yalnızca kendi gönderindeki sabitlemeyi kaldırabilirsin")
+    item = db.get(SocialPostComment, comment_id)
+    if not item or item.post_id != post_id:
+        raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    item.is_pinned = False
+    db.commit()
+    return {"id": comment_id, "is_pinned": False}
 
 
 @app.post("/v1/posts/{post_id}/comments/{comment_id}/like")
@@ -1389,7 +1447,7 @@ def delete_social_comment(post_id: int, comment_id: int,
     item = db.get(SocialPostComment, comment_id)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
-    if item.user_id != user.id and post.user_id != user.id:
+    if post.user_id != user.id:
         raise HTTPException(status_code=403, detail="Yorumu silme yetkin yok")
     db.delete(item); db.commit()
     return {"deleted": True, **_social_counts(db, post_id, user.id)}
