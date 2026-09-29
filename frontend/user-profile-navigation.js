@@ -80,9 +80,9 @@
   }
   document.addEventListener('click',e=>{
     const t=e.target.closest?.('[data-user-id]');
-    if(t?.dataset.userId){e.preventDefault();e.stopImmediatePropagation();openUserProfile(t.dataset.userId);return;}
+    if(t?.dataset.userId){e.preventDefault();e.stopImmediatePropagation();(document.getElementById('chat')?.classList.contains('eris-floating-dm')?window.ErisFloatingProfile?.open(t.dataset.userId):openUserProfile(t.dataset.userId));return;}
     const header=e.target.closest?.('#chat .chatHead .ava,#chat .chatHead b');
-    if(header&&window.__erisActiveDmUserId){e.preventDefault();e.stopImmediatePropagation();openUserProfile(window.__erisActiveDmUserId);}
+    if(header&&window.__erisActiveDmUserId){e.preventDefault();e.stopImmediatePropagation();(document.getElementById('chat')?.classList.contains('eris-floating-dm')?window.ErisFloatingProfile?.open(window.__erisActiveDmUserId):openUserProfile(window.__erisActiveDmUserId));}
   },true);
   async function openNamedProfile(name){
     try{

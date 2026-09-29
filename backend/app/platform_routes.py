@@ -477,10 +477,11 @@ def register_platform_auth(current_user_dependency):
         is_following = bool(db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==target.id)))
         you_blocked = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==user.id,UserBlock.blocked_id==target.id)))
         blocked_by_them = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==target.id,UserBlock.blocked_id==user.id)))
-        from .personal_fans import fan_count
+        from .personal_fans import fan_count, gift_totals
+        from .room_fan_levels import level_for_total
         followers_count=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id==target.id)) or 0)
         following_count=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.follower_id==target.id)) or 0)
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"followers_count":followers_count,"following_count":following_count,"gift_fan_count":fan_count(db,target.id),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them}
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"followers_count":followers_count,"following_count":following_count,"gift_fan_count":fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them}
     @router.get("/me/profile-visitors")
     def profile_visitors(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(ProfileVisit).where(ProfileVisit.profile_user_id==user.id).order_by(ProfileVisit.visited_at.desc()).limit(limit)))
