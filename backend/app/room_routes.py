@@ -187,8 +187,8 @@ def is_member(db: Session, room_id: str, user_id: str) -> bool:
 def ensure_seats(db: Session, room: Room) -> None:
     allowed = LEVELS[room.level]["seats"]
     current = int(room.seat_count or 0)
-    # The level fixes the room layout. Old seats and occupants are retained.
-    target = allowed
+    # Preserve the owner's selected layout when the room gains a level.
+    target = current if current in (16, 20, 24) and current <= allowed else allowed
     if target != current:
         room.seat_count = target
     existing = set(db.scalars(select(RoomSeat.seat_number).where(RoomSeat.room_id == room.id)))
@@ -459,7 +459,7 @@ def register_room_auth(current_user_dependency):
     def join_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
-        if seat_number < 1 or seat_number > LEVELS[room.level]["seats"]: raise HTTPException(status_code=400, detail="Bu seviyede bu koltuk yok")
+        if seat_number < 1 or seat_number > room.seat_count: raise HTTPException(status_code=400, detail="Bu düzende bu koltuk yok")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         if seat.locked: raise HTTPException(status_code=409, detail="Bu koltuk kilitli")
@@ -474,7 +474,15 @@ def register_room_auth(current_user_dependency):
         seat.user_id = user.id; db.commit(); return {"seat_number": seat_number, "user_id": user.id}
     @router.delete("/{room_id}/seats/leave")
     def leave_seat(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        room = get_room_or_404(db, room_id); db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None, "muted": False}, synchronize_session=False); db.commit(); return {"left_seat": True}
+        room = get_room_or_404(db, room_id)
+        db.query(RoomSeat).filter(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).update({"user_id": None, "muted": False}, synchronize_session=False)
+        for track in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id, RoomMusic.user_id == user.id, RoomMusic.is_playing.is_(True))):
+            if track.started_at:
+                track.position_seconds += max(0, int((datetime.now(timezone.utc) - track.started_at).total_seconds()))
+            track.is_playing = False
+            track.started_at = None
+        db.commit()
+        return {"left_seat": True}
     @router.patch("/{room_id}/theme")
     def set_theme(room_id: str, payload: RoomThemeUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
@@ -489,11 +497,11 @@ def register_room_auth(current_user_dependency):
     @router.patch("/{room_id}/seats")
     def set_seat_count(room_id: str, payload: RoomSeatCountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        require_staff(db, room, user)
+        require_owner(db, room, user)
         target = int(payload.seat_count)
         allowed = LEVELS[room.level]["seats"]
-        if target != allowed:
-            raise HTTPException(status_code=422, detail=f"Seviye {room.level} için {allowed} koltuk kullanılır")
+        if target not in (16, 20, 24) or target > allowed:
+            raise HTTPException(status_code=422, detail=f"Seviye {room.level} için en fazla {allowed} koltuk kullanılır")
         occupied = db.scalar(
             select(func.count(RoomSeat.id)).where(
                 RoomSeat.room_id == room.id,
@@ -542,7 +550,7 @@ def register_room_auth(current_user_dependency):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         view = room_view(db, room, user)
         return {"asset_key": view["wallpaper_owned_asset"], "asset_path": view["wallpaper_owned_asset_path"], "applied": view["wallpaper_applied"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
-                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1000, 7: 5000, 30: 18000}, "items": wallpaper_catalog()}
+                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": wallpaper_catalog()}
 
     @router.post("/{room_id}/wallpaper")
     def buy_room_wallpaper(room_id: str, payload: RoomWallpaperUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -556,7 +564,7 @@ def register_room_auth(current_user_dependency):
             if int(vip.level if vip else 0) < int(item["vip_level"]):
                 raise HTTPException(status_code=403, detail=f"Oda duvar kağıdı için VIP {item['vip_level']} gerekli")
         vip_reward = item["tier"] == "vip"
-        price = 0 if vip_reward else {1: 1000, 7: 5000, 30: 18000}[payload.days]
+        price = 0 if vip_reward else int(item["price"]) * {1: 1, 7: 5, 30: 18}[payload.days]
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
         if not locked_user or int(locked_user.lidya or 0) < price:
             raise HTTPException(status_code=400, detail=f"Bu süre için {price:,} Lidya gerekli")
@@ -730,7 +738,7 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/seats/{seat_number}/lock")
     def lock_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
-        if seat_number < 1 or seat_number > LEVELS[room.level]["seats"]: raise HTTPException(status_code=400, detail="Geçersiz koltuk")
+        if seat_number < 1 or seat_number > room.seat_count: raise HTTPException(status_code=400, detail="Geçersiz koltuk")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         if seat.user_id: raise HTTPException(status_code=409, detail="Yalnızca boş koltuk kilitlenebilir")
@@ -746,6 +754,12 @@ def register_room_auth(current_user_dependency):
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         if not seat.user_id: raise HTTPException(status_code=409, detail="Koltukta kullanıcı yok")
         require_manageable_guest(db, room, user, seat.user_id)
+        playing = list(db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id, RoomMusic.user_id == seat.user_id, RoomMusic.is_playing.is_(True))))
+        for track in playing:
+            if track.started_at:
+                track.position_seconds += max(0, int((datetime.now(timezone.utc) - track.started_at).total_seconds()))
+            track.is_playing = False
+            track.started_at = None
         seat.muted = True; db.commit(); return {"muted": True}
     @router.delete("/{room_id}/seats/{seat_number}/mute")
     def unmute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -910,47 +924,19 @@ def register_room_auth(current_user_dependency):
         return [{"rank":i,"user_id":uid,"nickname":nickname,"avatar":avatar,"avatar_asset":asset,"total_lidya":int(amount or 0)} for i,(uid,nickname,avatar,asset,amount) in enumerate(rows,1)]
     @router.get("/music-access/status")
     def music_access_status(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        row = db.get(RoomMusicAccess, user.id)
-        now = datetime.now(timezone.utc)
-        expiry = row.expires_at if row and row.expires_at.tzinfo else (
-            row.expires_at.replace(tzinfo=timezone.utc) if row else None
-        )
-        return {"active": bool(expiry and expiry > now), "expires_at": expiry, "price": 150}
+        return {"active": True, "expires_at": None, "price": 0}
 
     @router.post("/music-access/activate")
     def activate_music_access(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
-        if not locked_user:
-            raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
-        now = datetime.now(timezone.utc)
-        row = db.get(RoomMusicAccess, user.id)
-        expiry = row.expires_at if row and row.expires_at.tzinfo else (
-            row.expires_at.replace(tzinfo=timezone.utc) if row else None
-        )
-        if expiry and expiry > now:
-            return {"active": True, "expires_at": expiry, "spent": 0}
-        if int(locked_user.lidya or 0) < 150:
-            raise HTTPException(status_code=400, detail="24 saatlik müzik erişimi için 150 Lidya gerekli")
-        locked_user.lidya -= 150
-        expiry = now + timedelta(hours=24)
-        if row:
-            row.expires_at = expiry
-        else:
-            db.add(RoomMusicAccess(user_id=user.id, expires_at=expiry))
-        db.commit()
-        return {"active": True, "expires_at": expiry, "spent": 150}
+        # Legacy clients may still call this endpoint; music is free now.
+        return {"active": True, "expires_at": None, "spent": 0}
 
     @router.post("/{room_id}/music")
     async def add_music(room_id: str, file: UploadFile = File(...), title: str = Form(""), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        access_row = db.get(RoomMusicAccess, user.id)
         now = datetime.now(timezone.utc)
-        access_expiry = access_row.expires_at if access_row and access_row.expires_at.tzinfo else (
-            access_row.expires_at.replace(tzinfo=timezone.utc) if access_row else None
-        )
-        if not access_expiry or access_expiry <= now:
-            raise HTTPException(status_code=403, detail="Önce 150 Lidya ile 24 saatlik müzik erişimi aç")
+        access_expiry = now + timedelta(days=36500)
 
         # Only bounded audio is retained; never fetch user-supplied URLs on the server.
         data = await file.read(8 * 1024 * 1024 + 1)
@@ -1001,9 +987,9 @@ def register_room_auth(current_user_dependency):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        if not db.scalar(select(RoomSeat.id).where(
-            RoomSeat.room_id == room.id, RoomSeat.user_id == user.id)):
-            raise HTTPException(status_code=403, detail="Müzik oynatmak için koltuğa oturun")
+        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
+        if payload.playback_action in {"play", "seek"} and (not seat or seat.muted):
+            raise HTTPException(status_code=403, detail="Müzik oynatmak için susturulmamış bir koltuğa oturun")
         music = db.scalar(select(RoomMusic).where(RoomMusic.id == music_id, RoomMusic.room_id == room.id))
         if not music:
             raise HTTPException(status_code=404, detail="Müzik bulunamadı")
@@ -1058,4 +1044,5 @@ def register_room_auth(current_user_dependency):
     def list_music(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if m.audio_bytes else None,"needs_reupload":not bool(m.audio_bytes),"paid_until":m.paid_until,"is_playing":m.is_playing and bool(m.audio_bytes),"position_seconds":m.position_seconds,"started_at":m.started_at} for m in db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot))]
+        rows = list(db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot)))
+        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if m.audio_bytes else None,"needs_reupload":not bool(m.audio_bytes),"paid_until":m.paid_until,"is_playing":m.is_playing and bool(m.audio_bytes) and bool(db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == m.user_id, RoomSeat.muted.is_(False)))),"position_seconds":m.position_seconds,"started_at":m.started_at} for m in rows]

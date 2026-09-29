@@ -5,7 +5,7 @@
     .eris-mini-shade{position:fixed;inset:0;z-index:11030;display:grid;place-items:center;padding:16px;background:#060411a8;backdrop-filter:blur(8px)}
     .eris-mini-card{box-sizing:border-box;width:min(390px,100%);padding:20px;border:1px solid #bd93ee77;border-radius:24px;background:linear-gradient(135deg,#291a3bde,#100b1ce8);box-shadow:0 25px 80px #000b;color:#fff}
     .eris-mini-head{display:flex;align-items:center;gap:12px}.eris-mini-portrait{position:relative;width:64px;height:64px;flex:none;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:#49336d;color:#fff;font-size:24px;cursor:pointer}.eris-mini-portrait img:not(.eris-mini-frame){width:100%;height:100%;border-radius:50%;object-fit:cover}.eris-mini-frame{position:absolute;inset:-6px;width:76px;height:76px;object-fit:contain;pointer-events:none}
-    .eris-mini-name{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:800}.eris-mini-icon{flex:none;width:34px;height:34px;border:1px solid #d4bafa66;border-radius:11px;background:#ffffff13;color:white;font-size:19px;cursor:pointer}.eris-mini-top{display:flex;gap:5px;align-self:flex-start}
+    .eris-mini-name{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:800}.eris-mini-icon{flex:none;width:34px;height:34px;border:1px solid #d4bafa66;border-radius:11px;background:#ffffff13;color:white;font-size:19px;cursor:pointer}.eris-mini-top{display:flex;gap:5px;align-items:center;align-self:flex-start}.eris-mini-fan{align-self:flex-start;border:0;background:transparent;padding:0;display:grid;place-items:center}
     .eris-mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:19px 0}.eris-mini-stats div{min-width:0;padding:10px 5px;text-align:center;border:1px solid #ffffff1d;border-radius:13px;background:#ffffff0d}.eris-mini-stats b{display:block;font-size:17px}.eris-mini-stats small{display:block;color:#cabdd7;font-size:10px}
     .eris-mini-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.eris-mini-actions button,.eris-mini-submit{min-height:42px;padding:7px;border:1px solid #bd93ee77;border-radius:13px;background:#7b4cff44;color:white;font-weight:700;cursor:pointer}.eris-mini-actions button:disabled{opacity:.5;cursor:default}
     .eris-mini-block{width:100%;margin-top:8px;border-color:#ff8a9c77!important;background:#ff5a7918!important}
@@ -65,7 +65,7 @@
       const fanButton=shade.querySelector('[data-fans]');
       fanButton.title='Hayran seviyesi '+level+' · listeyi aç';
       fanButton.setAttribute('aria-label',fanButton.title);
-      if(level){const badge=document.createElement('img');badge.src='./fan-levels/LEVEL'+level+'.png';badge.alt='Hayran seviyesi '+level;badge.style.cssText='width:29px;height:29px;object-fit:contain';fanButton.replaceChildren(badge)}
+      if(level){const badge=document.createElement('img');badge.src='./fan-levels/LEVEL'+level+'.png';badge.alt='Hayran seviyesi '+level;badge.style.cssText='width:34px;height:34px;object-fit:contain';fanButton.replaceChildren(badge)}
       shade.querySelector('[data-followers]').textContent=count(u.followers_count);
       shade.querySelector('[data-following]').textContent=count(u.following_count);
       shade.querySelector('[data-gifters]').textContent=count(u.gift_fan_count);
