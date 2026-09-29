@@ -41,6 +41,7 @@ from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
 from .moderation import active_ban, require_feature, profile_notice
+from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -277,6 +278,7 @@ register_platform_auth(current_user)
 register_family_auth(current_user)
 register_support_auth(current_user)
 register_admin_auth(current_user)
+register_dm_folder_auth(current_user)
 app.include_router(room_router)
 # These legacy router handlers were mounted before the authoritative DM
 # handlers below, so FastAPI resolved requests to the stale versions first.
@@ -293,6 +295,7 @@ app.include_router(platform_router)
 app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
+app.include_router(dm_folder_router)
 
 
 @app.get("/health")
@@ -807,7 +810,13 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
-def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
+def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0),
+                       folder: str = Query(default="inbox"), x_eris_dm_vault: str | None = Header(default=None),
+                       db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
+    if folder not in {"inbox", "archive", "locked"}:
+        raise HTTPException(400, "Geçersiz mesaj klasörü")
+    if folder == "locked" and not _session(db, user.id, x_eris_dm_vault):
+        raise HTTPException(403, "Kilitli sohbet şifrenizi girin")
     # Older family records predate the shared inbox. Restore the conversation
     # membership from the authoritative family membership table on read.
     family_rows = db.execute(select(Family.chat_conversation_id, FamilyMember.user_id)
@@ -822,7 +831,10 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
             changed = True
     if changed:
         db.commit()
-    rows = ConversationRepository(db).list_for_user(user.id, limit=limit, offset=offset)
+    conversation_count = int(db.scalar(select(func.count(ConversationMember.id)).where(ConversationMember.user_id == user.id)) or 0)
+    rows = ConversationRepository(db).list_for_user(user.id, limit=conversation_count, offset=0)
+    rows = [row for row in rows if ("locked" if (state := _folder(db, user.id, row.id)) and state.locked
+            else "archive" if state and state.archived else "inbox") == folder][offset:offset+limit]
     result = []
     for conversation in rows:
         members = ConversationRepository(db).members(conversation.id)
@@ -849,7 +861,8 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
 
 
 @app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
-def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)) -> ConversationOut:
+def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(default=None),
+                     db: Session = Depends(get_db), user: User = Depends(current_user)) -> ConversationOut:
     repo = ConversationRepository(db)
     conversation = repo.get(conversation_id)
     if not conversation:
@@ -858,6 +871,7 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation_id))
     member_details = []
     for member in conversation.members:
@@ -873,7 +887,7 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db), user: 
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
-async def create_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
@@ -881,6 +895,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     require_feature(db, user.id, [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
     if not is_family_conversation:
@@ -914,14 +929,14 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
     for member_id in repo.members(conversation_id):
         if member_id != user.id:
             db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
-                body=payload.text[:180]))
-        await manager.send_user(member_id, event)
+                body="Kilitli sohbette yeni mesaj" if (_folder(db, member_id, conversation_id) and _folder(db, member_id, conversation_id).locked) else payload.text[:180]))
+        await _send_dm_event(db, member_id, event)
     db.commit()
     return _message_out(db, message, user.id)
 
 
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
-async def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
+async def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
@@ -929,6 +944,7 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişim yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == conversation_id, ConversationReadState.user_id == user.id))
     messages = MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
     latest_incoming = max((m.id for m in messages if m.sender_id != user.id), default=0)
@@ -970,9 +986,10 @@ def _message_out(db: Session, message: Message, viewer_id: str) -> dict:
 
 @app.post("/v1/messages/{conversation_id}/media", status_code=201, response_model=MessageOut)
 async def send_message_media(conversation_id: str, file: UploadFile = File(...), media_type: str = Form(...),
-    view_seconds: int = Form(default=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+    view_seconds: int = Form(default=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     require_feature(db, user.id, [uid for uid in ConversationRepository(db).members(conversation_id) if uid != user.id])
     conversation = db.get(Conversation, conversation_id)
     if conversation and not db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
@@ -1017,7 +1034,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
         "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
         "media_type":media_type, "temporary":temporary, "view_seconds":view_seconds if temporary else None,
         "media_url":f"/messages/{conversation_id}/{message.id}/media", "created_at":message.created_at.isoformat() if message.created_at else None}
-    for member_id in ConversationRepository(db).members(conversation_id): await manager.send_user(member_id, event)
+    for member_id in ConversationRepository(db).members(conversation_id): await _send_dm_event(db, member_id, event)
     return _message_out(db, message, user.id)
 
 
@@ -1039,8 +1056,11 @@ def _temporary_photo_expired_for_viewer(media, message, user, now: datetime | No
 
 
 @app.get("/v1/messages/{conversation_id}/{message_id}/media")
-def get_message_media(conversation_id: str, message_id: int, preview: bool = Query(default=False), db: Session = Depends(get_db), user: User = Depends(current_user)):
+def get_message_media(conversation_id: str, message_id: int, preview: bool = Query(default=False), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
+    if db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == message_id, MessageHidden.user_id == user.id)):
+        raise HTTPException(404, "Medya bulunamadı")
     media = db.get(MessageMedia, message_id)
     message = db.get(Message, message_id)
     if not media or not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Medya bulunamadı")
@@ -1610,25 +1630,32 @@ async def reply_to_story(story_id: int, text: str = Form(...), snapshot: UploadF
     message = Message(conversation_id=conversation.id, sender_id=user.id, text=f"[Story yanıtı #{story.id}] {text}")
     db.add(message); db.flush()
     if image: db.add(MessageMedia(message_id=message.id, media_type="image", mime_type=mime, data=image))
+    locked_story_folder = _folder(db, story.user_id, conversation.id)
     db.add(Notification(user_id=story.user_id, kind="dm_message", title=user.nickname,
-        body="Story'ne yorum yaptı: " + text[:100]))
+        body="Kilitli sohbette yeni mesaj" if locked_story_folder and locked_story_folder.locked else "Story'ne yorum yaptı: " + text[:100]))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation.id, "message_id":message.id,
         "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
         "media_type":"image" if image else None,
         "media_url":f"/messages/{conversation.id}/{message.id}/media" if image else None,
         "created_at":message.created_at.isoformat() if message.created_at else None}
-    await manager.send_user(story.user_id, event); await manager.send_user(user.id, event)
+    await _send_dm_event(db, story.user_id, event); await _send_dm_event(db, user.id, event)
     return _message_out(db, message, user.id)
 
 
 @app.post("/v1/messages/{conversation_id}/delete")
-def hide_messages(conversation_id: str, payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
+    all_messages = payload.get("all") is True
     ids = list(dict.fromkeys(int(value) for value in (payload.get("message_ids") or []) if str(value).isdigit()))
-    if not ids or len(ids) > 100:
+    if not all_messages and (not ids or len(ids) > 100):
         raise HTTPException(status_code=400, detail="1 ile 100 arasında mesaj seçin")
+    if all_messages:
+        ids = list(db.scalars(select(Message.id).where(Message.conversation_id == conversation_id)))
+    if not ids:
+        return {"deleted": 0, "scope": "me"}
     rows = list(db.scalars(select(Message).where(Message.id.in_(ids), Message.conversation_id == conversation_id)))
     for row in rows:
         if not db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == row.id, MessageHidden.user_id == user.id)):
@@ -1638,8 +1665,9 @@ def hide_messages(conversation_id: str, payload: dict, db: Session = Depends(get
 
 
 @app.post("/v1/conversations/{conversation_id}/pins/{message_id}")
-def pin_message(conversation_id: str, message_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def pin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     message = db.get(Message, message_id)
     if not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
     if db.scalar(select(PinnedMessage.id).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id)):
@@ -1651,8 +1679,9 @@ def pin_message(conversation_id: str, message_id: int, db: Session = Depends(get
 
 
 @app.delete("/v1/conversations/{conversation_id}/pins/{message_id}")
-def unpin_message(conversation_id: str, message_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def unpin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     row = db.scalar(select(PinnedMessage).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id))
     if row: db.delete(row); db.commit()
     return {"pinned": False}
@@ -1718,9 +1747,10 @@ def message_gifts():
 
 
 @app.post("/v1/messages/{conversation_id}/gifts")
-async def send_direct_gift(conversation_id: str, payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user)):
+async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     repo = ConversationRepository(db)
     if not repo.is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     recipients = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
     if len(recipients) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         raise HTTPException(status_code=400, detail="Bu hediye DM konuşmalarında kullanılabilir")
@@ -1743,12 +1773,14 @@ async def send_direct_gift(conversation_id: str, payload: dict, db: Session = De
     db.add(DirectMessageGift(message_id=message.id, sender_id=user.id, recipient_id=recipient_id, gift_key=gift_key, unit_price=total_price, recipient_amount=receiver_amount))
     if restriction and restriction.enabled and not unlock:
         db.add(DirectMessageUnlock(owner_id=recipient_id, sender_id=user.id, gift_key=gift_key))
-    db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye", body=user.nickname + " sana " + gift_key + " gönderdi."))
+    locked_gift_folder = _folder(db, recipient_id, conversation_id)
+    db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye",
+        body="Kilitli sohbette yeni hediye" if locked_gift_folder and locked_gift_folder.locked else user.nickname + " sana " + gift_key + " gönderdi."))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
         "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"quantity":quantity,
         "created_at":message.created_at.isoformat() if message.created_at else None}
-    for member_id in repo.members(conversation_id): await manager.send_user(member_id, event)
+    for member_id in repo.members(conversation_id): await _send_dm_event(db, member_id, event)
     return _message_out(db, message, user.id)
 
 
@@ -1777,6 +1809,16 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+async def _send_dm_event(db: Session, user_id: str, event: dict) -> None:
+    folder = _folder(db, user_id, str(event.get("conversation_id") or ""))
+    if folder and folder.locked:
+        # The socket has no vault credential. Deliver only an opaque change signal.
+        await manager.send_user(user_id, {"type": "dm_message", "conversation_id": event["conversation_id"],
+                                           "locked": True})
+    else:
+        await manager.send_user(user_id, event)
 
 
 def websocket_session_active(token: str) -> bool:

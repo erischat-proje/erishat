@@ -7,6 +7,11 @@
   let currentUserId = null;
   let loadedForUserId = null;
   let selectedMessages = new Set();
+  let messageSelectionMode = false;
+  let allMessagesSelected = false;
+  let inboxFolder = 'inbox';
+  const selectedConversations = new Set();
+  let vaultToken = '';
   let selectionBar = null;
   let activeRecorder = null;
   const mediaUploadsInFlight = new Set();
@@ -116,16 +121,22 @@
 
   function refreshSelectionBar() {
     if (!selectionBar) return;
-    selectionBar.hidden = selectedMessages.size === 0;
+    selectionBar.hidden = !messageSelectionMode;
+    $('chat')?.classList.toggle('dm-selection-mode', messageSelectionMode);
     const count = selectionBar.querySelector('[data-selected-count]');
-    if (count) count.textContent = `${selectedMessages.size} seçildi`;
+    if (count) count.textContent = allMessagesSelected?'Tüm mesajlar seçildi':`${selectedMessages.size} seçildi`;
     const pin = selectionBar.querySelector('[data-pin-selected]');
-    if (pin) pin.textContent = [...selectedMessages].some(row => row.dataset.pinned === '1') ? 'Sabitlemeyi kaldır' : 'Sabitle';
+    if (pin) {pin.textContent='📌';pin.title=[...selectedMessages].some(row => row.dataset.pinned === '1') ? 'Sabitlemeyi kaldır' : 'Sabitle';pin.setAttribute('aria-label',pin.title)}
+    selectionBar.querySelector('[data-delete-selected]').disabled = !selectedMessages.size;
+    selectionBar.querySelector('[data-pin-selected]').disabled = !selectedMessages.size;
+    selectionBar.querySelector('[data-all-selected]').setAttribute('aria-pressed',String(allMessagesSelected));selectionBar.querySelector('[data-all-selected]').textContent=allMessagesSelected?'☑':'□';
   }
 
   function setSelected(row) {
     const id = row?.dataset?.messageId;
     if (!id) return;
+    messageSelectionMode = true;
+    allMessagesSelected = false;
     if (selectedMessages.has(row)) { selectedMessages.delete(row); row.classList.remove('dm-selected'); }
     else { selectedMessages.add(row); row.classList.add('dm-selected'); }
     refreshSelectionBar();
@@ -135,6 +146,18 @@
     if (Array.isArray(value)) return value;
     for (const key of keys) if (Array.isArray(value?.[key])) return value[key];
     return [];
+  }
+
+  function dmConfirm(question){
+    return new Promise(resolve=>{
+      const modal=document.createElement('div');modal.className='dm-vault-modal';
+      modal.innerHTML='<section role="alertdialog" aria-modal="true"><header><h3>Silme onayı</h3><button type="button" data-no aria-label="Kapat">×</button></header><p></p><footer><button type="button" class="accept" data-yes>Kabul et</button><button type="button" class="reject" data-cancel>İptal</button></footer></section>';
+      modal.querySelector('p').textContent=question;document.body.append(modal);
+      const done=value=>{modal.remove();resolve(value)};
+      modal.querySelector('[data-yes]').onclick=()=>done(true);
+      modal.querySelector('[data-no]').onclick=modal.querySelector('[data-cancel]').onclick=()=>done(false);
+      modal.onclick=e=>{if(e.target===modal)done(false)};
+    });
   }
 
   function avatarValue(value, fallback = '') {
@@ -182,7 +205,9 @@
     let url=api()?.messageMediaUrl?.(message.media_url);
     if(!url)throw new Error('Medya adresi bulunamadı.');
     if(preview)url+=(url.includes('?')?'&':'?')+'preview=1';
-    const response=await fetch(url,{headers:token?{Authorization:'Bearer '+token}:{},cache:'no-store'});
+    const headers=token?{Authorization:'Bearer '+token}:{};
+    if(vaultToken)headers['X-Eris-DM-Vault']=vaultToken;
+    const response=await fetch(url,{headers,cache:'no-store'});
     if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.detail||'Medya açılamadı.');}
     return response;
   }
@@ -331,6 +356,28 @@
     render();
   }
 
+  function installFolderStyles(){
+    if(document.getElementById("dm-folder-style"))return;
+    const folderStyle=document.createElement('style');folderStyle.id='dm-folder-style';folderStyle.textContent=`
+      #chat .chatHead{position:relative;min-height:65px}#chat.dm-selection-mode .chatHead>.ava,#chat.dm-selection-mode .chatHead>.grow,#chat.dm-selection-mode .chatHead>.close{visibility:hidden}
+      #chat .dm-select-tools{position:absolute;inset:0 0 auto 0;min-height:65px;z-index:5;justify-content:flex-end;background:#15101ce8;flex-wrap:wrap}
+      #chat .dm-select-tools[hidden]{display:none!important}#chat .dm-select-tools [data-selected-count]{margin-right:auto}
+      #chat .dm-select-tools button{width:34px;height:34px;border-radius:11px;font-size:17px;padding:0}
+      #chat .dm-select-tools button[data-delete-selected]{color:#ff6d87;border-color:#ff6d8755}#chat .dm-select-tools button:disabled{opacity:.4}
+      #chat.dm-selection-mode .chatBody .bubble[data-message-id]{position:relative;transform:translateX(24px);margin-right:25px;max-width:calc(78% - 24px);cursor:pointer}
+      #chat.dm-selection-mode .chatBody .bubble[data-message-id]::before{content:'';position:absolute;left:-31px;top:calc(50% - 10px);width:19px;height:19px;border:1px solid #bda4d5;border-radius:5px;background:#21172b}
+      #chat.dm-selection-mode .chatBody .bubble.dm-selected::before{content:'✓';text-align:center;line-height:19px;background:#8255d9;border-color:#a881f4;color:white}
+      #messages .dm-inbox-nav{display:flex;gap:8px;margin:8px 0 12px}#messages .dm-inbox-nav button,#messages .dm-list-tools button{border:1px solid #ffffff25;border-radius:12px;background:#21172b;color:#f3e7fa;padding:9px 10px;font-size:11px}
+      #messages .dm-inbox-nav button{flex:1}#messages .dm-list-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}#messages .dm-list-tools[hidden]{display:none!important}
+      #messages .dm-list-selected{border-color:#a46fff;box-shadow:0 0 0 1px #a46fff}#messages .dm-list-selected::before{content:'✓';border:1px solid #ae87ea;border-radius:5px;padding:2px 5px;background:#62459c}
+      .dm-vault-modal{position:fixed;inset:0;z-index:22000;background:#07040bc9;backdrop-filter:blur(7px);display:grid;place-items:center;padding:18px}
+      .dm-vault-modal section{width:min(440px,100%);max-height:90vh;overflow:auto;padding:18px;border:1px solid #aa83d466;border-radius:23px;background:linear-gradient(140deg,#23162d,#100b19);box-shadow:0 18px 50px #0009}
+      .dm-vault-modal header{display:flex;align-items:center;justify-content:space-between;gap:8px}.dm-vault-modal h3{margin:0;font-size:18px}.dm-vault-modal p{font-size:12px;line-height:1.45;color:#cabdd5}
+      .dm-vault-modal label{display:block;font-size:11px;color:#e2d6ed;margin:12px 0}.dm-vault-modal input{display:block;width:100%;margin-top:5px;padding:11px;border:1px solid #ffffff36;border-radius:11px;background:#0f0b16;color:#fff;font-size:14px}
+      .dm-vault-modal footer{display:flex;gap:8px;margin-top:15px}.dm-vault-modal button{border:1px solid #ffffff35;border-radius:11px;background:#ffffff12;color:#fff;padding:9px 13px}.dm-vault-modal .accept{background:#19895b;border-color:#47ce91}.dm-vault-modal .reject{background:#802d48;border-color:#bc5b78}.dm-vault-modal .warn{color:#ff7787;font-size:10px}.dm-vault-modal .error{color:#ff7787;font-size:11px}
+    `;document.head.appendChild(folderStyle);
+  }
+
   function installChatTools(chat) {
     if (!chat) return;
     syncDmCapturePreference(chat);
@@ -343,12 +390,17 @@
     mediaStyle.textContent += '.dm-temp-preview img.dm-temp-blur{inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:cover;opacity:.86;filter:blur(13px)}.dm-temp-status{position:absolute;inset:0;pointer-events:none}.dm-voice-player .dm-wave{background:linear-gradient(90deg,#de89ff var(--played,0%),transparent var(--played,0%))}.dm-track{height:3px;margin-top:3px;border-radius:9px;background:#ffffff24;overflow:hidden}.dm-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a76bff,#f45db5)}.dm-voice-player input:focus-visible{opacity:.25;outline:2px solid #bd8cff}';
     mediaStyle.textContent += '.dm-inline-photo{width:min(150px,42vw);max-height:160px;min-height:55px}.dm-temp-preview{width:min(180px,50vw);min-height:80px}.dm-voice-player{width:min(218px,60vw);padding:6px 8px;gap:7px}.dm-voice-toggle{width:31px;height:31px;flex-basis:31px}.dm-wave{height:17px}.dm-story-reply .dm-image-message{margin:0 0 5px}.dm-story-reply .dm-inline-photo{opacity:.62;width:min(142px,42vw);max-height:148px}.dm-story-reply .dm-message-text{font-size:12px;padding:4px 8px}.dm-story-reply .dm-photo-open{cursor:zoom-in}';
     document.head.appendChild(mediaStyle);
+    installFolderStyles();
     selectionBar = document.createElement('div'); selectionBar.className = 'dm-select-tools'; selectionBar.dataset.dmTools = ''; selectionBar.hidden = true;
-    selectionBar.innerHTML = '<span data-selected-count style="flex:1;font-size:9px;color:#d8cddd"></span><button data-pin-selected>Sabitle</button><button data-delete-selected>Sil</button><button data-clear-selected>Kapat</button>';
-    const body = chat.querySelector('.chatBody'); body?.parentNode?.insertBefore(selectionBar, body);
-    selectionBar.querySelector('[data-clear-selected]').onclick = () => { selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear(); refreshSelectionBar(); };
+    selectionBar.innerHTML = '<span data-selected-count style="font-size:10px;color:#d8cddd"></span><button type="button" data-all-selected aria-label="Tümünü seç" title="Tümünü seç">□</button><button type="button" data-pin-selected aria-label="Sabitle" title="Sabitle">📌</button><button type="button" data-delete-selected aria-label="Seçilenleri sil" title="Seçilenleri sil">−</button><button type="button" data-clear-selected aria-label="Seçimi kapat" title="Seçimi kapat">×</button>';
+    const body = chat.querySelector('.chatBody'); chat.querySelector('.chatHead')?.append(selectionBar);
+    selectionBar.querySelector('[data-clear-selected]').onclick = () => { selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear();allMessagesSelected=false; messageSelectionMode=false;refreshSelectionBar(); };
+    selectionBar.querySelector('[data-all-selected]').onclick = () => { const rows=[...body.querySelectorAll('.bubble[data-message-id]')];allMessagesSelected=!allMessagesSelected;selectedMessages.clear();rows.forEach(row=>{row.classList.toggle('dm-selected',allMessagesSelected);if(allMessagesSelected)selectedMessages.add(row)});refreshSelectionBar() };
     selectionBar.querySelector('[data-delete-selected]').onclick = async () => {
-      try { await api().deleteMessages(activeConversationId, [...selectedMessages].map(row => Number(row.dataset.messageId))); [...selectedMessages].forEach(row => row.remove()); selectedMessages.clear(); refreshSelectionBar(); }
+      if(!selectedMessages.size&&!allMessagesSelected)return;
+      const approved=await dmConfirm(allMessagesSelected?'Bu konuşmadaki tüm mesajları silmek istediğine emin misin?':selectedMessages.size===1?'Bu mesajı silmek istediğine emin misin?':'Seçtiğin '+selectedMessages.size+' mesajı silmek istediğine emin misin?');
+      if(!approved)return;
+      try { await api().deleteMessages(activeConversationId, [...selectedMessages].map(row => Number(row.dataset.messageId)),allMessagesSelected); if(allMessagesSelected){releaseMediaUrls(body);body.replaceChildren()}else [...selectedMessages].forEach(row => row.remove()); selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false; refreshSelectionBar(); }
       catch (e) { window.toast?.(e.message || 'Mesajlar silinemedi.'); }
     };
     selectionBar.querySelector('[data-pin-selected]').onclick = async () => {
@@ -358,14 +410,15 @@
         selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear(); refreshSelectionBar();
       } catch (e) { window.toast?.(e.message || 'Sabitleme işlemi başarısız.'); }
     };
-    let holdTimer = null, suppressNextClick = false, lastLongPressRow = null;
+    let holdTimer = null, suppressNextClick = false, lastLongPressRow = null,holdX=0,holdY=0;
     const clearHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
     body?.addEventListener('pointerdown', event => {
       const row = event.target.closest('.bubble[data-message-id]');
       if (!row || (event.button !== undefined && event.button !== 0)) return;
-      clearHold(); suppressNextClick = false; lastLongPressRow = row;
+      clearHold(); suppressNextClick = false; lastLongPressRow = row;holdX=event.clientX;holdY=event.clientY;
       holdTimer = setTimeout(() => { suppressNextClick = true; setSelected(row); }, 520);
     }, {passive:true});
+    body?.addEventListener('pointermove',event=>{if(Math.abs(event.clientX-holdX)>12||Math.abs(event.clientY-holdY)>12)clearHold()},{passive:true});
     body?.addEventListener('pointerup', clearHold);
     body?.addEventListener('pointercancel', clearHold);
     body?.addEventListener('pointerleave', clearHold);
@@ -379,9 +432,9 @@
     });
     body?.addEventListener('click', event => {
       const row = event.target.closest('.bubble[data-message-id]');
-      if (suppressNextClick && row === lastLongPressRow) { suppressNextClick = false; event.preventDefault(); return; }
-      if (selectedMessages.size && row) { event.preventDefault(); setSelected(row); }
-    });
+      if (suppressNextClick && row === lastLongPressRow) { suppressNextClick = false; event.preventDefault();event.stopImmediatePropagation(); return; }
+      if (messageSelectionMode && row) { event.preventDefault();event.stopImmediatePropagation();setSelected(row); }
+    },true);
     const compose = chat.querySelector('.compose');
     const chatName=String(chat.querySelector('.chatHead b')?.textContent||'');
     const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=chatName==='ErisChat';
@@ -443,11 +496,101 @@
     modal.innerHTML='<div style="width:min(420px,100%);max-height:80vh;overflow:auto;background:#0b0911;border:1px solid #ffffff14;border-radius:24px;padding:18px;color:#fff"><div style="display:flex;justify-content:space-between;align-items:center"><b>Kullanıcı profili</b><button id="erpClose" class="close">×</button></div><div id="erpBody" style="margin-top:12px">Yükleniyor…</div></div>';document.body.appendChild(modal);modal.querySelector('#erpClose').onclick=()=>modal.remove();
     try{const [u,f,g]=await Promise.all([api().api('/users/'+encodeURIComponent(id)),api().api('/users/'+encodeURIComponent(id)+'/fans').catch(()=>({level:0,total:0})),api().api('/users/'+encodeURIComponent(id)+'/profile-gifts').catch(()=>[])]);const body=modal.querySelector('#erpBody'),publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';body.innerHTML='<div class="card" style="padding:14px"><div style="font-size:20px">👤</div><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small style="display:block;color:#938a9f;margin-top:5px">ID: '+escapeHtml(publicId)+'</small><small style="display:block;color:#938a9f;margin-top:4px">Fan seviyesi '+Number(f.level||0)+' • '+Number(f.total||0)+' fan • '+(Array.isArray(g)?g.length:0)+' profil hediyesi</small></div><div style="display:flex;gap:7px;margin-top:9px"><button id="erpMsg" class="primary" style="height:40px;flex:1">Mesaj gönder</button></div>';body.querySelector('#erpMsg').onclick=async()=>{modal.remove();try{await createConversation(u.id||id,u.nickname||'Anonim kullanıcı')}catch(e){window.toast?.(e.message||'Konuşma açılamadı.')}}}catch(e){modal.querySelector('#erpBody').textContent=e.message||'Kullanıcı bulunamadı.'}
   }
+  function vaultForm(title,fields,note='',buttons=['Kabul et','İptal']){
+    return new Promise(resolve=>{
+      const modal=document.createElement('div');modal.className='dm-vault-modal';
+      const section=document.createElement('section'),head=document.createElement('header'),heading=document.createElement('h3'),x=document.createElement('button'),form=document.createElement('form'),footer=document.createElement('footer'),error=document.createElement('p');
+      heading.textContent=title;x.type='button';x.textContent='×';x.setAttribute('aria-label','Kapat');head.append(heading,x);section.append(head);
+      const inputs={};for(const field of fields){const label=document.createElement('label'),input=document.createElement('input');label.textContent=field.label;input.name=field.name;input.type=field.type||'text';input.required=true;input.maxLength=field.max||100;if(field.pin){input.inputMode='numeric';input.pattern='[0-9]{6}';input.maxLength=6}label.append(input);form.append(label);inputs[field.name]=input}
+      if(note){const info=document.createElement('p');info.className='warn';info.textContent=note;form.append(info)}
+      error.className='error';error.hidden=true;form.append(error);
+      const accept=document.createElement('button'),cancel=document.createElement('button');accept.type='submit';accept.className='accept';accept.textContent=buttons[0];cancel.type='button';cancel.className='reject';cancel.textContent=buttons[1];footer.append(accept,cancel);form.append(footer);section.append(form);modal.append(section);document.body.append(modal);
+      const done=value=>{modal.remove();resolve(value)};x.onclick=()=>done(null);cancel.onclick=()=>{if(buttons[1]==='Bilgileri sıfırla'){form.reset();Object.values(inputs)[0]?.focus()}else done(buttons[1]==='Şifremi unuttum'?{recover:true}:null)};modal.onclick=e=>{if(e.target===modal)done(null)};
+      form.onsubmit=e=>{e.preventDefault();const values={};for(const [name,input] of Object.entries(inputs))values[name]=input.value.trim();done(values)};
+      setTimeout(()=>Object.values(inputs)[0]?.focus(),50);
+    });
+  }
+  const pinField={name:'pin',label:'6 haneli şifre',type:'password',pin:true};
+  const setupFields=[pinField,{name:'hint',label:'Şifre ipucu (en fazla 30 karakter)',max:30},{name:'answer',label:'İpucu cevabı (en fazla 100 karakter)',max:100}];
+  const vaultNote='Kilitli sohbetlere erişmek için mesajlardaki Kullanıcı ID ara alanına 6 haneli şifrenizi yazın. Şifreyi unutursanız ipucu cevabınız istenir.';
+  async function unlockFolder(pin){
+    const entry=pin?{pin}:await vaultForm('Kilitli sohbetler',[pinField],'Şifrenizi unutursanız kurtarma seçeneğini kullanın.',['Kabul et','Şifremi unuttum']);
+    if(entry?.recover)return recoverFolder();
+    const value=entry?.pin;
+    if(!value)return false;
+    const result=await api().api('/me/dm-vault/unlock',{method:'POST',body:JSON.stringify({pin:value})});
+    vaultToken=result.token;window.ErisChatDMVaultToken=vaultToken;return true;
+  }
+  async function recoverFolder(){
+    const info=await api().api('/me/dm-vault/recover');
+    let result,remaining=info.attempts_left;
+    while(!result){
+      const answer=await vaultForm('Şifremi unuttum',[{name:'answer',label:'İpucu: '+info.hint,max:100}],`${remaining} deneme hakkınız kaldı. Beş yanlış cevapta kilitli mesajlarınız imha edilir.`,['Kabul et','Geri']);
+      if(!answer)return false;
+      try{result=await api().api('/me/dm-vault/recover',{method:'POST',body:JSON.stringify(answer)})}
+      catch(e){window.toast?.(e.message);if(/imha edilmiştir/i.test(e.message)){inboxFolder='inbox';await loadConversations();return false}remaining=(await api().api('/me/dm-vault/recover')).attempts_left}
+    }
+    const next=await vaultForm('Yeni kilitli sohbet şifresi',setupFields,vaultNote);
+    if(!next)return false;
+    window.ErisChatDMVaultToken=result.recovery_token;
+    const changed=await api().api('/me/dm-vault',{method:'PUT',body:JSON.stringify(next)});
+    vaultToken=changed.token;window.ErisChatDMVaultToken=vaultToken;window.toast?.('Şifreniz değişmiştir.');return true;
+  }
+  async function enterLockedFolder(pin){
+    try{
+      if(!await unlockFolder(pin))return;
+      inboxFolder='locked';selectedConversations.clear();await loadConversations();
+    }catch(e){window.toast?.(e.message||'Kilitli sohbetlere girilemedi.')}
+  }
+  async function changeVault(){
+    try{
+      const info=await api().api('/me/dm-vault/recover');
+      const old=await vaultForm('Kilitli sohbet şifresini değiştir',[{...pinField,name:'old_pin',label:'Mevcut 6 haneli şifre'},{name:'old_answer',label:'Mevcut ipucu: '+info.hint+' · cevabı',max:100}]);
+      if(!old)return;
+      await unlockFolder(old.old_pin);
+      const next=await vaultForm('Yeni şifre ve ipucu',setupFields,vaultNote);
+      if(!next)return;
+      const result=await api().api('/me/dm-vault',{method:'PUT',body:JSON.stringify({...old,...next})});
+      vaultToken=result.token;window.ErisChatDMVaultToken=vaultToken;window.toast?.('Şifreniz değişmiştir.');
+    }catch(e){window.toast?.(e.message||'Şifre değiştirilemedi.')}
+  }
+  async function moveSelected(kind){
+    const ids=[...selectedConversations];if(!ids.length)return;
+    try{
+      if(kind==='locked'&&inboxFolder!=='locked'){
+        const status=await api().api('/me/dm-vault');
+        if(!status.configured){const setup=await vaultForm('Kilitli sohbet şifresi oluştur',setupFields,vaultNote,['Kabul et','Bilgileri sıfırla']);if(!setup)return;const result=await api().api('/me/dm-vault/setup',{method:'POST',body:JSON.stringify(setup)});vaultToken=result.token;window.ErisChatDMVaultToken=vaultToken}
+        else if(!await unlockFolder())return;
+      }
+      for(const id of ids)await api().api('/conversations/'+encodeURIComponent(id)+'/folder',{method:'PATCH',body:JSON.stringify(kind==='locked'?{locked:inboxFolder!=='locked'}:{archived:inboxFolder!=='archive'})});
+      selectedConversations.clear();await loadConversations();
+      window.toast?.(kind==='locked'?'Kilitli sohbetler güncellendi.':'Arşiv güncellendi.');
+    }catch(e){window.toast?.(e.message||'Sohbet taşınamadı.');await loadConversations()}
+  }
+  function installFolderControls(root){
+    if(root.querySelector('.dm-inbox-nav'))return;
+    const nav=document.createElement('div');nav.className='dm-inbox-nav';nav.innerHTML='<button type="button" data-back hidden>← Geri</button><button type="button" data-archive>✉ Arşiv</button><button type="button" data-locked>🔒 Kilitli</button><button type="button" data-change hidden>🔒✎</button>';
+    const tools=document.createElement('div');tools.className='dm-list-tools';tools.hidden=true;tools.innerHTML='<small data-count style="flex:1"></small><button type="button" data-move>✉ Arşiv</button><button type="button" data-lock>🔒 Kilitle</button><button type="button" data-cancel>×</button>';
+    root.querySelector('[data-dm-search]')?.after(nav,tools);
+    nav.querySelector('[data-back]').onclick=()=>{inboxFolder='inbox';selectedConversations.clear();vaultToken='';window.ErisChatDMVaultToken='';loadConversations()};
+    nav.querySelector('[data-archive]').onclick=()=>{inboxFolder='archive';selectedConversations.clear();loadConversations()};
+    nav.querySelector('[data-locked]').onclick=async()=>{try{const status=await api().api('/me/dm-vault');if(!status.configured){window.toast?.('Henüz kilitli sohbetin yok. Bir sohbeti basılı tutarak kilitleyebilirsin.');return}await enterLockedFolder()}catch(e){window.toast?.(e.message)}};
+    nav.querySelector('[data-change]').onclick=changeVault;
+    tools.querySelector('[data-move]').onclick=()=>moveSelected('archive');tools.querySelector('[data-lock]').onclick=()=>moveSelected('locked');tools.querySelector('[data-cancel]').onclick=()=>{selectedConversations.clear();loadConversations()};
+  }
+  function renderFolderControls(root){
+    const nav=root.querySelector('.dm-inbox-nav'),tools=root.querySelector('.dm-list-tools');if(!nav||!tools)return;
+    nav.querySelector('[data-back]').hidden=inboxFolder==='inbox';nav.querySelector('[data-archive]').hidden=true;nav.querySelector('[data-locked]').hidden=inboxFolder!=='inbox';nav.querySelector('[data-change]').hidden=inboxFolder!=='locked';
+    tools.hidden=!selectedConversations.size;tools.querySelector('[data-count]').textContent=selectedConversations.size+' sohbet seçildi';
+    tools.querySelector('[data-move]').textContent=inboxFolder==='archive'?'✉ Arşivden çıkar':'✉ Arşivle';tools.querySelector('[data-move]').hidden=inboxFolder==='locked';
+    tools.querySelector('[data-lock]').textContent=inboxFolder==='locked'?'🔓 Kilidi kaldır':'🔒 Kilitle';
+  }
   function installMessageSearch(){
+    installFolderStyles();
     const root=document.getElementById('messages');if(!root||root.querySelector('[data-dm-search]'))return;
     const title=root.querySelector('.title');const search=document.createElement('div');search.setAttribute('data-dm-search','');search.style.cssText='margin:0 0 14px;position:relative';search.innerHTML='<input data-dm-user-search class="search-input" inputmode="text" autocomplete="off" placeholder="Kullanıcı ID ara…" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.055);border:1px solid #ffffff14;color:#fff;border-radius:18px;padding:13px 45px 13px 15px;outline:none"><button data-dm-search-btn class="primary" style="position:absolute;right:5px;top:5px;height:36px;border-radius:14px">⌕</button><div data-dm-search-result style="margin-top:7px"></div>';title?.parentNode?.insertBefore(search,title.nextSibling);
-    const notify=document.createElement('button');notify.type='button';notify.textContent='🔔 Mesaj bildirimlerini aç';notify.style.cssText='margin-top:7px;width:100%;padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:9px';notify.onclick=async()=>{if(!('Notification' in window)){window.toast?.('Bu tarayıcı masaüstü bildirimlerini desteklemiyor.');return}const permission=await Notification.requestPermission();notify.textContent=permission==='granted'?'🔔 Bildirimler açık':'🔕 Bildirim izni verilmedi'};search.appendChild(notify);
-    const input=search.querySelector('[data-dm-user-search]'),out=search.querySelector('[data-dm-search-result]');const run=async()=>{const q=input.value.trim();if(!q){out.innerHTML='';return}out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#aaa">Aranıyor…</div>';try{const u=await api().api('/users/'+encodeURIComponent(q)),publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';out.innerHTML='<button type="button" class="item card" style="width:100%;text-align:left"><div class="ava round">👤</div><div class="grow"><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small>ID: '+escapeHtml(publicId)+' • Profili görüntüle</small></div></button>';out.querySelector('button').onclick=()=>loadUserProfile(u.id||q)}catch(e){out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#ff9dbd">Kullanıcı bulunamadı.</div>'}};search.querySelector('[data-dm-search-btn]').onclick=run;input.onkeydown=e=>{if(e.key==='Enter')run()};
+    const controls=document.createElement('div');controls.style.cssText='display:flex;gap:7px;margin-top:7px';const notify=document.createElement('button');notify.type='button';notify.textContent='🔔 Mesaj bildirimlerini aç';notify.style.cssText='flex:1;min-width:0;padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:9px';notify.onclick=async()=>{if(!('Notification' in window)){window.toast?.('Bu tarayıcı masaüstü bildirimlerini desteklemiyor.');return}const permission=await Notification.requestPermission();notify.textContent=permission==='granted'?'🔔 Bildirimler açık':'🔕 Bildirim izni verilmedi'};const archive=document.createElement('button');archive.type='button';archive.textContent='✉ Arşiv';archive.style.cssText='padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:9px';archive.onclick=()=>{inboxFolder='archive';selectedConversations.clear();loadConversations()};controls.append(notify,archive);search.append(controls);
+    const input=search.querySelector('[data-dm-user-search]'),out=search.querySelector('[data-dm-search-result]');const run=async()=>{const q=input.value.trim();if(!q){out.innerHTML='';return}if(/^\d{6}$/.test(q)){input.value='';out.replaceChildren();await enterLockedFolder(q);return}out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#aaa">Aranıyor…</div>';try{const u=await api().api('/users/'+encodeURIComponent(q)),publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';out.innerHTML='<button type="button" class="item card" style="width:100%;text-align:left"><div class="ava round">👤</div><div class="grow"><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small>ID: '+escapeHtml(publicId)+' • Profili görüntüle</small></div></button>';out.querySelector('button').onclick=()=>loadUserProfile(u.id||q)}catch(e){out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#ff9dbd">Kullanıcı bulunamadı.</div>'}};search.querySelector('[data-dm-search-btn]').onclick=run;input.onkeydown=e=>{if(e.key==='Enter')run()};installFolderControls(root);
   }
   async function loadConversations() {
     installMessageSearch();
@@ -464,12 +607,13 @@
         }
       }
       if (!currentUserId) return;
-      const payload = await api().conversations();
+      const payload = await api().api('/conversations?folder='+inboxFolder+'&limit=100');
       const items = asList(payload, ['conversations', 'items', 'data']);
       list.innerHTML = '';
+      renderFolderControls(document.getElementById('messages'));
       loadedForUserId = currentUserId;
       if (!items.length) {
-        list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Henüz konuşma yok.</div>';
+        list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">'+(inboxFolder==='archive'?'Arşivde':inboxFolder==='locked'?'Kilitli sohbetlerde':'Henüz')+' konuşma yok.</div>';
         return;
       }
       const participants = await Promise.all(items.map(c => c.type === 'welcome' ? Promise.resolve({ nickname: 'ErisChat' }) : resolveParticipant(c)));
@@ -491,7 +635,14 @@
         const unread = Number(c.unread_count || 0);
         if (Number.isFinite(unread) && unread > 0 && c.last_message) { badge.hidden = false; badge.textContent = unread > 99 ? '99+' : String(unread); }
         else badge.remove();
-        b.onclick = () => { window.__erisActiveDmUserId = family || welcome ? null : (other.id || other.user_id || null); openRealChat(id, name, family ? '👪' : avatar, window.__erisActiveDmUserId); };
+        b.classList.toggle('dm-list-selected',selectedConversations.has(String(id)));
+        let held=false,timer=null,x=0,y=0;
+        const toggle=()=>{const key=String(id);if(selectedConversations.has(key))selectedConversations.delete(key);else selectedConversations.add(key);b.classList.toggle('dm-list-selected',selectedConversations.has(key));renderFolderControls(document.getElementById('messages'))};
+        b.addEventListener('pointerdown',e=>{x=e.clientX;y=e.clientY;held=false;clearTimeout(timer);timer=setTimeout(()=>{held=true;toggle()},520)});
+        b.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-x)>12||Math.abs(e.clientY-y)>12)clearTimeout(timer)});
+        ['pointerup','pointercancel','pointerleave'].forEach(type=>b.addEventListener(type,()=>clearTimeout(timer)));
+        b.oncontextmenu=e=>{e.preventDefault();if(!held){held=true;toggle()}};
+        b.onclick = e => {if(held){held=false;e.preventDefault();return}if(selectedConversations.size){toggle();return}window.__erisActiveDmUserId = family || welcome ? null : (other.id || other.user_id || null); openRealChat(id, name, family ? '👪' : avatar, window.__erisActiveDmUserId); };
         list.appendChild(b);
       });
     } catch (e) {
@@ -542,7 +693,7 @@
     if (!chat || !body || !api()?.messages) return;
     activeConversationId = id;
     window.__erisActiveDmUserId = participantId || null;
-    selectedMessages.clear();
+    selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;refreshSelectionBar();
     chat.classList.remove('eris-floating-dm');
     chat.classList.add('show');
     installChatTools(chat);
@@ -565,6 +716,12 @@
     } catch (e) {
       console.warn('[ErisChat] messages unavailable', e);
       body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Konuşma yüklenemedi.</div>';
+      if(/kilitli sohbet/i.test(String(e.message||''))){
+        const status=await api().api('/me/dm-vault').catch(()=>null);
+        if(status?.configured && await unlockFolder().catch(error=>{window.toast?.(error.message);return false})){
+          openRealChat(id,name,avatar,participantId).catch(()=>{});return;
+        }
+      }
     }
     bindSender(chat);
   }
@@ -582,6 +739,13 @@
     }
     if (!data || data.type !== 'dm_message' || !data.conversation_id) return;
     const id = String(data.conversation_id);
+    if(data.locked){
+      if(String(activeConversationId||'')===id && vaultToken){
+        const chat=$('chat'),name=chat?.querySelector('.chatHead b')?.textContent||'Sohbet';
+        openRealChat(id,name,'',window.__erisActiveDmUserId).catch(()=>{});
+      }
+      loadConversations();return;
+    }
     if (String(activeConversationId || '') === id) {
       const body = document.querySelector('#chat .chatBody');
       if (!body || body.querySelector('[data-message-id="'+String(data.message_id).replace(/"/g,'&quot;')+'"]')) return;
@@ -644,6 +808,7 @@
     } else if (event?.detail?.state === 'logged_out') {
       currentUserId = null;
       loadedForUserId = null;
+      vaultToken='';window.ErisChatDMVaultToken='';inboxFolder='inbox';selectedConversations.clear();
       clearTimeout(dmReconnectTimer);
       dmReconnectTimer = null;
       try { dmSocket?.close(); } catch (_) {}

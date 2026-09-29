@@ -228,6 +228,33 @@ class MessageHidden(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class ConversationFolder(Base):
+    __tablename__ = "conversation_folders"
+    __table_args__ = (UniqueConstraint("user_id", "conversation_id", name="uq_conversation_folder_user"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True, nullable=False)
+    archived: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+
+
+class ConversationVault(Base):
+    __tablename__ = "conversation_vaults"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    pin_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    hint: Mapped[str] = mapped_column(String(30), nullable=False)
+    answer_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+
+
+class ConversationVaultSession(Base):
+    __tablename__ = "conversation_vault_sessions"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    scope: Mapped[str] = mapped_column(String(16), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class PinnedMessage(Base):
     __tablename__ = "pinned_messages"
     __table_args__ = (UniqueConstraint("conversation_id", "message_id", name="uq_pinned_message"),)
