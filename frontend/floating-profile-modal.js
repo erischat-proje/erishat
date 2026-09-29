@@ -1,140 +1,72 @@
-// --- İstediğin Tasarıma Tam Uyumlu Yüzen Profil Popup Modülü ---
 (() => {
-    'use strict';
-    const escapeHtml = val => String(val ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-
-    window.openUserProfile = async function(identifier) {
-        if (!identifier) return;
-
-        // Eski açık modal varsa kapat
-        document.getElementById('erischat-floating-profile')?.remove();
-
-        // Modal arkaplanı (Yarı saydam ve blur)
-        const modal = document.createElement('div');
-        modal.id = 'erischat-floating-profile';
-        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(2,1,7,0.78);backdrop-filter:blur(12px);display:grid;place-items:center;padding:16px;animation:fadeIn 0.2s ease;';
-
-        // Kart kutusu
-        const card = document.createElement('div');
-        card.style.cssText = 'width:min(360px,100%);background:linear-gradient(135deg,rgba(18,14,26,0.95),rgba(10,8,16,0.98));border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:20px;color:#fff;box-shadow:0 20px 40px rgba(0,0,0,0.6);position:relative;display:flex;flex-direction:column;gap:18px;';
-
-        // Üst Kısım: Avatar, İsim, Takip Bilgileri ve Sağ üstte X ile ! butonları
-        card.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <div style="position:relative;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7b4cff,#ff4fa3);display:grid;place-items:center;font-size:24px;" data-profile-avatar>
-                        👤
-                    </div>
-                    <div>
-                        <b style="font-size:15px;display:block;color:#fff;" data-profile-name>Yükleniyor...</b>
-                        <small style="color:#a99fb1;font-size:11px;display:block;margin-top:2px;" data-profile-stats>Takipçi: ... • Takip: ...</small>
-                    </div>
-                </div>
-                <div style="display:flex;gap:6px;align-items:center;">
-                    <button type="button" data-action="report" title="Şikayet Et" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#ff9aaa;display:grid;place-items:center;cursor:pointer;font-weight:bold;font-size:13px;">!</button>
-                    <button type="button" data-action="close" title="Kapat" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;display:grid;place-items:center;cursor:pointer;font-weight:bold;font-size:15px;">×</button>
-                </div>
-            </div>
-
-            <!-- Alt Kısım: Aksiyon Butonları (Takip Et/Bırak, Hediye Gönder, Mesaj Gönder) -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
-                <button type="button" data-action="follow" style="padding:10px 8px;border-radius:14px;border:1px solid rgba(123,76,255,0.4);background:rgba(123,76,255,0.15);color:#d0bfff;font-weight:700;font-size:11px;cursor:pointer;text-align:center;">Takip Et</button>
-                <button type="button" data-action="gift" style="padding:10px 8px;border-radius:14px;border:1px solid rgba(255,79,163,0.4);background:rgba(255,79,163,0.15);color:#ffb8df;font-weight:700;font-size:11px;cursor:pointer;text-align:center;">Hediye</button>
-                <button type="button" data-action="dm" style="padding:10px 8px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-weight:700;font-size:11px;cursor:pointer;text-align:center;">Mesaj</button>
-            </div>
-        `;
-
-        modal.appendChild(card);
-        document.body.appendChild(modal);
-
-        // Kapatma butonları
-        modal.querySelector('[data-action="close"]').onclick = () => modal.remove();
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-
-        // Şikayet butonu (!)
-        modal.querySelector('[data-action="report"]').onclick = () => {
-            alert('Şikayet menüsü açılıyor...');
-        };
-
-        // Verileri API'den çekme
-        let isFollowing = false;
-        let userId = identifier;
-
-        try {
-            // Eğer identifier nickname ise veya id ise uygun endpoint'ten bilgileri çekelim
-            const res = await window.ErisPlatform?.api(`/users/${identifier}/profile`).catch(() => null) || 
-                        await window.ErisPlatform?.api(`/discover/nearby`).catch(() => null);
-
-            // Gelen veriyi işle
-            let userData = res?.user || res;
-            if (Array.isArray(res)) {
-                userData = res.find(x => x.id == identifier || x.user_id == identifier || String(x.nickname).toLowerCase() === String(identifier).toLowerCase());
-            }
-
-            if (userData) {
-                userId = userData.id || userData.user_id || identifier;
-                card.querySelector('[data-profile-name]').textContent = userData.nickname || userData.username || identifier;
-                card.querySelector('[data-profile-stats]').textContent = `Takipçi: ${userData.followers_count || 0} • Takip: ${userData.following_count || 0}`;
-                if (userData.avatar) {
-                    card.querySelector('[data-profile-avatar]').textContent = '';
-                    const img = document.createElement('img');
-                    img.src = userData.avatar;
-                    img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
-                    card.querySelector('[data-profile-avatar]').appendChild(img);
-                }
-                isFollowing = !!userData.is_following;
-            } else {
-                card.querySelector('[data-profile-name]').textContent = identifier;
-                card.querySelector('[data-profile-stats]').textContent = 'Takipçi: 0 • Takip: 0';
-            }
-        } catch (err) {
-            card.querySelector('[data-profile-name]').textContent = identifier;
-            card.querySelector('[data-profile-stats]').textContent = 'Bilgiler yüklenemedi';
-        }
-
-        const followBtn = modal.querySelector('[data-action="follow"]');
-        const updateFollowUI = () => {
-            if (isFollowing) {
-                followBtn.textContent = 'Takibi Bırak';
-                followBtn.style.background = 'rgba(255,79,109,0.15)';
-                followBtn.style.borderColor = 'rgba(255,79,109,0.4)';
-                followBtn.style.color = '#ff9aaa';
-            } else {
-                followBtn.textContent = 'Takip Et';
-                followBtn.style.background = 'rgba(123,76,255,0.15)';
-                followBtn.style.borderColor = 'rgba(123,76,255,0.4)';
-                followBtn.style.color = '#d0bfff';
-            }
-        };
-        updateFollowUI();
-
-        // Takip Et / Bırak Butonu Mantığı
-        followBtn.onclick = async () => {
-            try {
-                // API isteği simülasyonu / gerçek çağrı
-                isFollowing = !isFollowing;
-                updateFollowUI();
-            } catch (e) {
-                console.error(e);
-            }
-        };
-
-        // Hediye Gönder Butonu
-        modal.querySelector('[data-action="gift"]').onclick = () => {
-            if (typeof window.openGiftModal === 'function') {
-                window.openGiftModal(userId);
-            } else {
-                alert('Hediye paneli açılıyor...');
-            }
-        };
-
-        // Mesaj Gönder Butonu
-        modal.querySelector('[data-action="dm"]').onclick = () => {
-            if (typeof window.openDirectMessage === 'function') {
-                window.openDirectMessage(userId);
-            } else {
-                alert('Özel mesaj penceresi açılıyor...');
-            }
-        };
+  'use strict';
+  const css = document.createElement('style');
+  css.textContent = `
+    .eris-mini-shade{position:fixed;inset:0;z-index:11000;display:grid;place-items:center;padding:16px;background:#060411a8;backdrop-filter:blur(8px)}
+    .eris-mini-card{box-sizing:border-box;width:min(390px,100%);padding:20px;border:1px solid #bd93ee77;border-radius:24px;background:linear-gradient(135deg,#291a3bde,#100b1ce8);box-shadow:0 25px 80px #000b;color:#fff}
+    .eris-mini-head{display:flex;align-items:center;gap:12px}.eris-mini-portrait{position:relative;width:64px;height:64px;flex:none;display:grid;place-items:center;border-radius:50%;background:#49336d}.eris-mini-portrait img:not(.eris-mini-frame){width:100%;height:100%;border-radius:50%;object-fit:cover}.eris-mini-frame{position:absolute;inset:-6px;width:76px;height:76px;object-fit:contain;pointer-events:none}
+    .eris-mini-name{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:800}.eris-mini-icon{flex:none;width:34px;height:34px;border:1px solid #d4bafa66;border-radius:11px;background:#ffffff13;color:white;font-size:19px;cursor:pointer}.eris-mini-top{display:flex;gap:5px;align-self:flex-start}
+    .eris-mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:19px 0}.eris-mini-stats div{min-width:0;padding:10px 5px;text-align:center;border:1px solid #ffffff1d;border-radius:13px;background:#ffffff0d}.eris-mini-stats b{display:block;font-size:17px}.eris-mini-stats small{display:block;color:#cabdd7;font-size:10px}
+    .eris-mini-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.eris-mini-actions button,.eris-mini-submit{min-height:42px;padding:7px;border:1px solid #bd93ee77;border-radius:13px;background:#7b4cff44;color:white;font-weight:700;cursor:pointer}.eris-mini-actions button:disabled{opacity:.5;cursor:default}
+    .eris-mini-report-shade{z-index:11010}.eris-mini-report-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eris-mini-report-head h2{margin:0;font-size:19px}.eris-mini-card textarea{box-sizing:border-box;width:100%;min-height:110px;margin:15px 0 10px;padding:11px;border:1px solid #ffffff33;border-radius:13px;background:#0e0a19;color:#fff;resize:vertical}.eris-mini-card input[type=file]{max-width:100%;margin:10px 0;color:#fff}.eris-mini-error{min-height:18px;color:#ffa6b7;font-size:12px}`;
+  document.head.append(css);
+  const api = (path, options) => window.ErisPlatform.api(path, options);
+  const asset = path => path ? (window.ErisChatCosmetics?.assetUrl?.(path) || path) : '';
+  const count = n => Number(n || 0).toLocaleString('tr-TR');
+  const closeProfile = () => { document.querySelector('.eris-mini-report-shade')?.remove(); document.querySelector('.eris-mini-profile-shade')?.remove(); };
+  function closeReport() { document.querySelector('.eris-mini-report-shade')?.remove(); }
+  function report(user) {
+    closeReport();
+    const shade = document.createElement('div'); shade.className='eris-mini-shade eris-mini-report-shade';
+    shade.innerHTML='<form class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Kişiyi şikâyet et"><div class="eris-mini-report-head"><h2>Kişiyi şikâyet et</h2><button type="button" class="eris-mini-icon" aria-label="Şikâyeti kapat">×</button></div><textarea name="reason" required minlength="3" maxlength="2000" placeholder="Şikâyet nedenini yazın"></textarea><label>Kanıt (en fazla 3 fotoğraf veya 1 video)<input type="file" name="evidence" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><p class="eris-mini-error" role="alert"></p><button class="eris-mini-submit" type="submit">Desteğe gönder</button></form>';
+    document.body.append(shade);
+    shade.querySelector('.eris-mini-icon').onclick=closeReport;
+    shade.onclick=e=>{if(e.target===shade)closeReport()};
+    const form=shade.querySelector('form'), error=shade.querySelector('.eris-mini-error');
+    form.onsubmit=async e=>{
+      e.preventDefault(); error.textContent='';
+      const files=[...form.elements.evidence.files], videos=files.filter(f=>f.type.startsWith('video/'));
+      if(files.length>3 || (videos.length && (files.length!==1 || videos.length!==1)) || files.some(f=>!['image/jpeg','image/png','image/webp','video/mp4','video/webm'].includes(f.type) || f.size>(f.type.startsWith('video/')?8*1024*1024:1500000))){error.textContent='En fazla 3 fotoğraf (her biri 1,5 MB) veya 1 video (8 MB) seçin.';return}
+      if(!form.elements.reason.value.trim() || form.elements.reason.value.trim().length<3){error.textContent='Şikâyet nedenini yazın.';return}
+      const submit=form.querySelector('[type=submit]');submit.disabled=true;
+      try{
+        const attachments=await Promise.all(files.map(f=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(new Error('Kanıt okunamadı.'));r.readAsDataURL(f)})));
+        await api('/support/tickets',{method:'POST',body:JSON.stringify({category:'user_report',subject:'Kullanıcı şikâyeti: '+String(user.nickname||user.id).slice(0,85),message:'Şikâyet edilen kullanıcı ID: '+user.id+'\n'+form.elements.reason.value.trim(),attachments})});
+        closeReport();window.toast?.('Şikâyet kanıtlarıyla birlikte desteğe iletildi.');
+      }catch(err){error.textContent=err.message||'Şikâyet gönderilemedi.';submit.disabled=false}
     };
+  }
+  async function open(identifier) {
+    if(!identifier)return;
+    closeProfile();
+    const shade=document.createElement('div');shade.className='eris-mini-shade eris-mini-profile-shade';
+    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-head"><div class="eris-mini-portrait">👤</div><div class="eris-mini-name">Yükleniyor…</div><button class="eris-mini-icon" data-fans type="button" title="Hayran listesi" aria-label="Hayran listesi">✦</button><div class="eris-mini-top"><button class="eris-mini-icon" data-report type="button" title="Şikâyet et" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-gifters>–</b><small>Hediye gönderen</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><p class="eris-mini-error" role="alert"></p></section>';
+    document.body.append(shade);
+    shade.querySelector('[data-close]').onclick=closeProfile;
+    shade.onclick=e=>{if(e.target===shade)closeProfile()};
+    const error=shade.querySelector('.eris-mini-error');
+    try{
+      const u=await api('/users/'+encodeURIComponent(identifier));
+      if(!shade.isConnected)return;
+      shade.querySelector('.eris-mini-name').textContent=u.nickname||'Kullanıcı';
+      const portrait=shade.querySelector('.eris-mini-portrait'), avatar=asset(u.avatar_asset);
+      portrait.textContent='';
+      if(avatar){const img=document.createElement('img');img.src=avatar;img.alt='';portrait.append(img)}else portrait.textContent=u.avatar||'👤';
+      const frame=asset(u.frame_asset);
+      if(frame){const img=document.createElement('img');img.className='eris-mini-frame';img.src=frame;img.alt='';portrait.append(img)}
+      shade.querySelector('[data-followers]').textContent=count(u.followers_count);
+      shade.querySelector('[data-following]').textContent=count(u.following_count);
+      shade.querySelector('[data-gifters]').textContent=count(u.gift_fan_count);
+      shade.querySelector('[data-fans]').onclick=()=>{closeProfile();window.ErisPersonalFanRanking?.(u.id)};
+      shade.querySelector('[data-report]').onclick=()=>report(u);
+      const follow=shade.querySelector('[data-follow]'), gift=shade.querySelector('[data-gift]'), message=shade.querySelector('[data-message]');
+      let following=!!u.is_following;
+      follow.textContent=u.is_self?'Kendi profilin':following?'Takibi bırak':'Takip et';
+      follow.disabled=!!u.is_self;gift.disabled=!!u.is_self||!!u.you_blocked||!!u.blocked_by_them;message.disabled=gift.disabled;
+      follow.onclick=async()=>{follow.disabled=true;error.textContent='';try{await api('/users/'+encodeURIComponent(u.id)+'/follow',{method:following?'DELETE':'POST'});following=!following;follow.textContent=following?'Takibi bırak':'Takip et';const followers=shade.querySelector('[data-followers]');followers.textContent=count(Number(String(followers.textContent).replace(/\D/g,''))+(following?1:-1));window.ErisProfile?.refresh?.()}catch(e){error.textContent=e.message||'Takip işlemi başarısız.'}finally{follow.disabled=false}};
+      const conversation=async withGift=>{error.textContent='';try{if(!window.ErisChatDM?.create)throw new Error('Mesajlaşma hazır değil.');await window.ErisChatDM.create(u.id,u.nickname||'Kullanıcı');closeProfile();if(withGift)await window.ErisChatDM.openGiftSheet?.()}catch(e){error.textContent=e.message||'Konuşma açılamadı.'}};
+      message.onclick=()=>conversation(false);gift.onclick=()=>conversation(true);
+    }catch(e){if(shade.isConnected)error.textContent=e.message||'Profil yüklenemedi.'}
+  }
+  window.ErisFloatingProfile={open,close:closeProfile};
 })();

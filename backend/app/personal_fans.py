@@ -35,3 +35,11 @@ def fan_leaderboard(db, recipient_id):
              'avatar_asset':asset,'frame_asset':frame,'total_lidya':int(amount),
              'fan_level':level_for_total(amount)}
             for rank,(uid,name,avatar,asset,frame,amount) in enumerate(rows,1)]
+
+
+def fan_count(db, recipient_id):
+    senders=union_all(
+        select(RoomGiftEvent.sender_id.label("sender_id")).where(RoomGiftEvent.recipient_id==recipient_id),
+        select(DirectMessageGift.sender_id.label("sender_id")).where(DirectMessageGift.recipient_id==recipient_id),
+    ).subquery()
+    return int(db.scalar(select(func.count(func.distinct(senders.c.sender_id)))) or 0)

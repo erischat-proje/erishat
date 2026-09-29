@@ -28,6 +28,7 @@
         const name=document.createElement('span');name.className='personal-fan-name';name.textContent=row.nickname||'Kullanıcı';
         const badge=document.createElement('img');badge.className='personal-fan-level';badge.src='./fan-levels/LEVEL'+Math.max(1,Math.min(40,Number(row.fan_level)||1))+'.png';badge.alt='Hayran seviyesi '+row.fan_level;
         const amount=document.createElement('span');amount.className='personal-fan-amount';amount.textContent=Number(row.total_lidya||0).toLocaleString('tr-TR')+' Lidya';
+        if(row.user_id){avatar.style.cursor='pointer';name.style.cursor='pointer';avatar.onclick=name.onclick=()=>window.ErisFloatingProfile?.open(row.user_id)}
         item.append(rank,avatar,name,badge,amount);list.append(item);
       }
     }).catch(e=>{if(current===request)list.textContent=e.message||'Sıralama yüklenemedi.'});
