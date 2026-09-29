@@ -1,0 +1,29 @@
+mesaj kısmında ekran görüntüsü butonunu sola kaydırıyoruz çarpı butonu ve ekran görüntüsü kapatma butonunun ikisinin ortasına iki buton ekliyoruz
+biri kamera butonu biri telefon butonu
+iki türlü de  arama yapmak için iki tarafında birbini takip etmesi gerekiyor
+eğer aramayı yapan taraf kişiyi takip etmiyorsa
+telefon araması yapmaya çalıştığında (Arama yapabilmek için önce kişiyi takip etmelisiniz)
+mesajı verilecek veya aramaya çalıştığı kişi kendisini takip etmiyorsa (karşı taraf sizi takip etmediği sürece arayamazsınız) uyarısı verilecek
+
+
+telefon araması şu şekilde olucak telefon butonuna basınca karşı tarafa çağrı gidicek
+ekranında gözüken şu olucak
+ortada üste yakın avatar ve çerçeve hemen altında kullanıcı adı yazıcak
+onun altında müsait değilim yazan buton olucak eğer arama gönderdiğimiz kişi buna basarsa çağrıyı reddetmiş sayılacak ve karşıya normal mesajından Şuanda müsait değilim lütfen daha sonra tekrar ara mesajı gidicek
+bunun altında solda yeşil renk arama kabul etme butonu sağda kırmızı renk arama reddetme butonu olucak eğer kullanıcı yeşil butona basarsa arama açılacak kırmızı butona basarsa arama reddedilcek
+karşı tarafın ekranına arama kapanmadan meşgul yazıcak hemen peşinden arama kapanacak
+eğer kişiler aramaya başlarsa
+en üstte aramanın süresini görücekler hemen altında iki tarafta da karşı tarafın avatarı ve çerçevesi onun hemen altında solda kamera açma butonu buna basarsa kullanıcı normal aramada da kamera açabilecek ama isteyen kendi kamerasını açıcak
+tekrar aynı butona basarsa kamerasını kapatabilecek kamera açınca kendi kamerası üstüne basıp sağa süre sürükleyebilir şekilde gözükecek ve o gözüken çerçeve içinde kamera değiştirme butonu olucak ona basarsa arka kamera ve tekrar basarsa tekrar kamera yönü değiştirebilecek
+onun ortada kırmızı renk çağrıyı sonlandırma butonu ve sağda mesaj butonu olucak ona basarsa arama sağ üsste küçülecek kişi ile olan mesajı açılacak ama şu var bir ihtimal herhangi biri o butona basarsa otomatik olarak basan kişinin kamerası kapanacak
+
+video araması şu şekilde olucak eğer birini görüntülü arıyorsak otomatik çağrı giderken ekranın ortasında kameramı kapat butonu olucak buna basarsa kişi daha telefon çalarken kamerasını kapatabilecek kişi de de aramayı açmadan önce yine bu olay olucak açmadan önce kamerasını kapatabilecek
+onun dışında reddetme vs özellikleri bunda da geçerli aynı şekilde 
+görüntülü arama açılırsa avatar felan gözükmicek sol üstte iki taraf içinde kullanıcı adı yazıcak karşı tarafındaki kimse onun kullanıcı adı
+onun dışında ekrana dokununca görüntülü arama açıksa bütün ekrandaki butonlar kaybolcak bir kere daha dokunulursa geri gelicek
+biz arama sırasında kendi görüntümüzü sağ üstte görücez onu tutarak istediğimiz yere sürükleyebileceğiz onun dışında sol altta kamera açma kapama butonu olucak
+onun hemen sağında kırmızı renk arama butonu ve onun sağında yine mesaj butonu eğer ona basılırsa yine arama küçülecek hareket edebilir hale gelicek basan kişi için tekrar üstüne tıklarayak aramaya dönebilecek
+götüntülü aramada bunlara ek olarak bir buton daha olucak oda telefon işareti şeklinde olucak buna basarsa iki tarafta ekran paylaşımını karşıya açabilecek hatta bunu iki arama türü içinde açabilelim ama ekran paylaşımı sadece uygulama içinde geçerli olucak
+herhangi bir şekilde uygulama aşşa alınırsa hem arama hem ekran paylaşımı ne varsa devre dışı kalıcak ek olarak herhangi bir şekilde herhangi bir odada isek uygulama aşşa alınırsa otomatik olarak odadan çıkıcaz 
+eğer odadan çıkarsak bir şekilde veya uygulamayı kapatarak çıkarsak o oda hala açıksa ekranımıza uyarı gelicek en son şu oda da idin geri dönmek istermisin diye sol altta kabul butonu olucak ona basarsa kullancıcı en son olduğu odaya geri dönücek ama koltuğa otomatik oturma gibi bir olay olmicak yine
+onun dışında reddetmeye basarsa odaya geri dönmicek
