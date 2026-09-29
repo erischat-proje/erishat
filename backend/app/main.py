@@ -1783,8 +1783,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                     if not room or not member:
                         continue
                     seated = db.scalar(select(RoomSeat.id).where(
-                        RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id))
-                    if not seated:
+                        RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id, RoomSeat.muted.is_(False)))
+                    if action in {"play", "seek"} and not seated:
                         continue
                     music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == internal_room_id).first()
                     if not music:
