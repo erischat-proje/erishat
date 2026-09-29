@@ -539,6 +539,7 @@
     activeConversationId = id;
     window.__erisActiveDmUserId = participantId || null;
     selectedMessages.clear();
+    chat.classList.remove('eris-floating-dm');
     chat.classList.add('show');
     installChatTools(chat);
     const title = chat.querySelector('.chatHead b');
@@ -621,7 +622,15 @@
   }
   window.addEventListener('erischat:event', handleRealtimeMessage);
 
-  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, send: sendMessage, openGiftSheet, activeId: () => activeConversationId };
+  async function openFloating(participantId, participantName, withGift=false) {
+    const conversation=await createConversation(participantId, participantName);
+    const chat=$('chat');
+    if(!conversation || !chat?.classList.contains('show') || !activeConversationId) throw new Error('Konuşma açılamadı.');
+    chat.classList.add('eris-floating-dm');
+    if(withGift) await openGiftSheet();
+    return conversation;
+  }
+  window.ErisChatDM = { load: loadConversations, open: openRealChat, create: createConversation, openFloating, send: sendMessage, openGiftSheet, activeId: () => activeConversationId };
 
   window.addEventListener('erischat:auth', event => {
     if (event?.detail?.state === 'ready') {
