@@ -16,11 +16,11 @@ from .support_models import SupportTicket
 from .system_logs import record
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
-    UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement, BanApproval, BanAppeal,
+    UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement, BanApproval, BanAppeal, FaActionLog,
 )
 
 router = APIRouter(prefix="/v1/admin", tags=["administration"])
-ROLE_LEVEL = {"SA": 1, "UA": 2, "DA": 3}
+ROLE_LEVEL = {"SA": 1, "UA": 2, "FA": 3, "DA": 4}
 NOTES_DIR = Path(__file__).resolve().parents[2] / "ERISCHAT_NOTLAR"
 SUPPORT_LOG = NOTES_DIR / "destek.txt"
 GAPS_LOG = NOTES_DIR / "uygulamaeksikleri.txt"
@@ -37,6 +37,23 @@ def require_role(db: Session, user: User, minimum: str) -> AdminRole:
     return row
 
 
+def fa_view(db: Session, user: User, action: str, **details) -> None:
+    if (role := role_row(db, user.id)) and role.role == "FA":
+        db.add(FaActionLog(admin_id=user.id, action=action, details=json.dumps(details, ensure_ascii=False)))
+        db.commit()
+
+
+def require_ua_or_da(db: Session, user: User) -> AdminRole:
+    row = require_role(db, user, "UA")
+    if row.role not in {"UA", "DA"}:
+        raise HTTPException(status_code=403, detail="Bu ban işlemi için UA veya DA yetkisi gerekli")
+    return row
+
+
+def require_fa_or_da(db: Session, user: User) -> AdminRole:
+    return require_role(db, user, "FA")
+
+
 def resolve_admin_user(db: Session, user_key: str) -> User | None:
     """Allow operator tools to use either the internal ID or the public 10-digit ID."""
     return db.get(User, user_key) or db.scalar(select(User).where(User.public_id == user_key))
@@ -50,6 +67,9 @@ def audit(db: Session, admin: User, action: str, details: dict | None = None, ta
         target_room_id=target_room_id, target_id=target_id,
         details=json.dumps(payload, ensure_ascii=False),
     ))
+    if (role := role_row(db, admin.id)) and role.role == "FA":
+        db.add(FaActionLog(admin_id=admin.id, action=action, target_user_id=target_user_id,
+                           target_room_id=target_room_id, details=json.dumps(payload, ensure_ascii=False)))
     if action.startswith("support_"):
         kind = "support"
     elif action in {"ghost_mode"}:
@@ -94,7 +114,7 @@ def expiry(days: int | None) -> datetime | None:
 
 class RoleUpdate(BaseModel):
     user_id: str = Field(min_length=1, max_length=64)
-    role: str = Field(pattern="^(SA|UA|DA)$")
+    role: str = Field(pattern="^(SA|UA|FA|DA)$")
 
 
 class GhostUpdate(BaseModel):
@@ -183,6 +203,7 @@ def register_admin_auth(current_user_dependency):
         require_role(db, user, "SA")
         rows = db.scalars(select(SupportTicket).order_by(SupportTicket.created_at.desc())).all()
         record("support", "support_ticket_list_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
+        fa_view(db,user,"support_ticket_list_view",count=len(rows))
         return [{"id": x.id, "user_id": x.user_id, "category": x.category, "subject": x.subject, "message": x.message,
                  "has_attachments": bool(x.attachments_json and x.attachments_json != "[]"),
                  "status": x.status, "created_at": x.created_at} for x in rows]
@@ -196,6 +217,7 @@ def register_admin_auth(current_user_dependency):
         messages = db.scalars(select(SupportMessage).where(SupportMessage.ticket_id == ticket_id).order_by(SupportMessage.created_at)).all()
         assignment = db.get(SupportAssignment, ticket_id)
         target_user = db.get(User, ticket.user_id)
+        fa_view(db,user,"support_ticket_view",ticket_id=ticket_id,target_user_id=ticket.user_id)
         record("support_view", "support_ticket_view", admin_id=user.id, admin_nickname=user.nickname,
                target_user_id=ticket.user_id, target_nickname=getattr(target_user, "nickname", None),
                ticket_id=ticket_id, message_count=len(messages))
@@ -249,7 +271,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/announcements", status_code=201)
     def create_announcement(payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "SA")
+        require_fa_or_da(db,user)
         announcement = SystemAnnouncement(admin_id=user.id, title="ErisChat Yönetim", message=payload.message.strip())
         db.add(announcement)
         db.flush()
@@ -278,8 +300,17 @@ def register_admin_auth(current_user_dependency):
         require_role(db, user, "UA")
         rows = db.scalars(select(Report).order_by(Report.created_at.desc())).all()
         record("report", "admin_reports_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
+        fa_view(db,user,"admin_reports_view",count=len(rows))
         return [{"id": r.id, "reporter_id": r.reporter_id, "target_user_id": r.target_user_id, "room_id": r.room_id, "message_id": r.message_id,
                  "category": r.category, "reason": r.reason, "status": r.status, "created_at": r.created_at} for r in rows]
+
+    @router.get("/application-gaps")
+    def application_gaps(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_fa_or_da(db,user)
+        rows=db.scalars(select(ApplicationGap).order_by(ApplicationGap.created_at.desc()).limit(200)).all()
+        fa_view(db,user,"application_gaps_view",count=len(rows))
+        return [{"id":r.id,"reporter_id":r.reporter_id,"message":r.message,
+                 "created_at":r.created_at.isoformat()} for r in rows]
 
     @router.post("/application-gaps")
     def application_gap(payload: GapCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -318,7 +349,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/lidya/add")
     def add_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "DA"); target=resolve_admin_user(db,user_id)
+        require_fa_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         db.info.update(lidya_operation="admin_lidya_add", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
         before=target.lidya; target.lidya += payload.amount
@@ -327,7 +358,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"DA"); target=resolve_admin_user(db,user_id)
+        require_fa_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         db.info.update(lidya_operation="admin_lidya_remove", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
         before=target.lidya; target.lidya=max(0,target.lidya-payload.amount)
@@ -335,7 +366,7 @@ def register_admin_auth(current_user_dependency):
         db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
 
     def queue_ban(db, user, payload, kind, target):
-        role = require_role(db, user, "UA")
+        role = require_ua_or_da(db, user)
         if not payload.reason.strip() or "days" not in payload.model_fields_set:
             raise HTTPException(422, "Ban süresi ve nedeni zorunludur; süresiz için Süresiz seçin.")
         if role.role == "DA": return None
@@ -365,12 +396,13 @@ def register_admin_auth(current_user_dependency):
     def ban_requests(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         role=require_role(db,user,"UA")
         query=select(BanApproval).order_by(BanApproval.created_at.desc()).limit(100)
-        if role.role!="DA":query=query.where(BanApproval.requester_id==user.id)
-        return [approval_view(db,r) for r in db.scalars(query)]
+        if role.role not in {"DA","FA"}:query=query.where(BanApproval.requester_id==user.id)
+        rows=list(db.scalars(query))
+        return [approval_view(db,r) for r in rows]
 
     @router.post("/ban-requests/{request_id}/decision")
     def decide_ban(request_id:int,body:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        if require_role(db,user,"DA").role!="DA":raise HTTPException(403,"DA yetkisi gerekli")
+        require_fa_or_da(db,user)
         row=db.scalar(select(BanApproval).where(BanApproval.id==request_id).with_for_update())
         if not row or row.status!="pending":raise HTTPException(409,"Talep artık beklemede değil")
         if body.action=="approve":
@@ -381,7 +413,7 @@ def register_admin_auth(current_user_dependency):
             else:
                 db.add(RoomAdminBan(room_id=row.target_room_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
         row.status="approved" if body.action=="approve" else "rejected";row.decision_by=user.id
-        audit(db,user,"ban_request_"+row.status,{"request_id":row.id,"kind":row.kind},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
+        audit(db,user,"ban_request_"+row.status,{"request_id":row.id,"kind":row.kind,"days":row.days,"reason":row.reason},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
         db.commit();return approval_view(db,row)
 
     @router.post("/ban-requests/{request_id}/appeal")
@@ -399,14 +431,14 @@ def register_admin_auth(current_user_dependency):
     def ban_appeals(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         role=require_role(db,user,"UA")
         query=select(BanAppeal).join(BanApproval,BanAppeal.approval_id==BanApproval.id).order_by(BanAppeal.created_at.desc()).limit(100)
-        if role.role!="DA":query=query.where(BanApproval.requester_id==user.id)
+        if role.role not in {"DA","FA"}:query=query.where(BanApproval.requester_id==user.id)
         rows=db.scalars(query).all()
         return [{"id":r.id,"status":r.status,"reason":r.reason,"explanation":r.explanation,
                  "images":json.loads(r.images_json),"request":approval_view(db,db.get(BanApproval,r.approval_id))} for r in rows]
 
     @router.post("/ban-appeals/{appeal_id}/decision")
     def decide_appeal(appeal_id:int,body:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        if require_role(db,user,"DA").role!="DA":raise HTTPException(403,"DA yetkisi gerekli")
+        require_fa_or_da(db,user)
         appeal=db.scalar(select(BanAppeal).where(BanAppeal.id==appeal_id).with_for_update())
         if not appeal or appeal.status!="pending":raise HTTPException(409,"İtiraz artık beklemede değil")
         row=db.get(BanApproval,appeal.approval_id)
@@ -415,12 +447,12 @@ def register_admin_auth(current_user_dependency):
             elif row.kind=="chat":db.add(ChatBan(user_id=row.target_user_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
             else:db.add(RoomAdminBan(room_id=row.target_room_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
         appeal.status="approved" if body.action=="approve" else "rejected"
-        audit(db,user,"ban_appeal_"+appeal.status,{"request_id":row.id},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
+        audit(db,user,"ban_appeal_"+appeal.status,{"request_id":row.id,"appeal_id":appeal.id,"kind":row.kind,"days":row.days,"reason":row.reason},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
         db.commit();return {"id":appeal.id,"status":appeal.status}
 
     @router.post("/users/{user_id}/ban")
     def ban_user(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
+        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         queued=queue_ban(db,user,payload,"account",target)
         if queued:return queued
@@ -430,7 +462,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/device-ban")
     def device_ban(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
+        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         queued=queue_ban(db,user,payload,"device",target)
         if queued:return queued
@@ -440,7 +472,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.delete("/users/{user_id}/ban")
     def unban_user(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db,user,"UA")
+        require_ua_or_da(db,user)
         target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         rows=db.scalars(select(UserBan).where(UserBan.user_id==target.id,UserBan.active.is_(True))).all()
@@ -449,7 +481,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/users/{user_id}/chat-ban")
     def chat_ban(user_id: str,payload: BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
+        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         queued=queue_ban(db,user,payload,"chat",target)
         if queued:return queued
@@ -458,7 +490,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.delete("/users/{user_id}/chat-ban")
     def unchat_ban(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
+        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         rows=db.scalars(select(ChatBan).where(ChatBan.user_id==target.id,ChatBan.active.is_(True))).all()
         for x in rows:x.active=False
@@ -466,7 +498,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.post("/rooms/{room_id}/ban")
     def room_ban(room_id:str,payload:BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
+        require_ua_or_da(db,user); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
         if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
         queued=queue_ban(db,user,payload,"room",room)
         if queued:return queued
@@ -475,7 +507,7 @@ def register_admin_auth(current_user_dependency):
 
     @router.delete("/rooms/{room_id}/ban")
     def room_unban(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"UA"); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
+        require_ua_or_da(db,user); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
         if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
         rows=db.scalars(select(RoomAdminBan).where(RoomAdminBan.room_id==room.id,RoomAdminBan.active.is_(True))).all()
         for x in rows:x.active=False
@@ -490,6 +522,21 @@ def register_admin_auth(current_user_dependency):
         before=vip.level;vip.level=payload.level
         audit(db,user,"vip_update",{"before":before,"after":payload.level},target_user_id=target.id);db.commit()
         return {"level":vip.level,"total_spent":vip.total_spent}
+
+    @router.get("/fa-actions")
+    def fa_actions(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_role(db,user,"DA")
+        rows=db.scalars(select(FaActionLog).order_by(FaActionLog.created_at.desc(),FaActionLog.id.desc()).limit(500)).all()
+        result=[]
+        for row in rows:
+            actor=db.get(User,row.admin_id)
+            target=db.get(User,row.target_user_id) if row.target_user_id else None
+            room=db.get(Room,row.target_room_id) if row.target_room_id else None
+            result.append({"id":row.id,"admin_id":row.admin_id,"admin_name":actor.nickname if actor else "FA",
+                           "action":row.action,"target_id":target.public_id if target else room.public_id if room else None,
+                           "target_name":target.nickname if target else room.name if room else None,
+                           "details":json.loads(row.details),"created_at":row.created_at.isoformat()})
+        return result
 
     @router.get("/roles")
     def roles(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
