@@ -20,6 +20,7 @@ from .platform_models import (
 )
 from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomChatMessage, RoomBan, RoomSeat
 from .admin_models import AdminRole
+from .moderation import active_ban, profile_notice, require_feature
 from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
@@ -294,6 +295,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.post("/rooms/{room_id}/chat")
     def room_chat_send(room_id: str, payload: RoomChatCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        require_feature(db, user.id)
         room = db.get(Room, room_id)
         if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
         member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user.id))
@@ -467,6 +469,12 @@ def register_platform_auth(current_user_dependency):
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
         if not target or not target.is_active: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        banned=active_ban(db,target.id)
+        if banned:
+            return {"id":target.id,"public_id":None,"nickname":target.nickname,"avatar":target.avatar,
+                "avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),
+                "bio":None,"followers_count":0,"following_count":0,"gift_fan_count":0,"fan_level":0,
+                "is_self":target.id==user.id,"is_following":False,"banned":True,"ban_notice":profile_notice(banned)}
         if target.id != user.id:
             visit=db.scalar(select(ProfileVisit).where(ProfileVisit.profile_user_id==target.id,ProfileVisit.visitor_user_id==user.id))
             if visit: visit.visited_at=datetime.now(timezone.utc)
@@ -496,6 +504,7 @@ def register_platform_auth(current_user_dependency):
     def follow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi takip edemezsiniz")
         if not db.get(User,user_id): raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        require_feature(db,user.id,[user_id])
         if db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==user_id)):
             return {"following":True,"created":False}
         row=UserFollow(follower_id=user.id,following_id=user_id); db.add(row)
@@ -508,10 +517,12 @@ def register_platform_auth(current_user_dependency):
         return {"following":False}
     @router.get("/users/{user_id}/followers")
     def followers(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if active_ban(db,user_id): return []
         rows=list(db.scalars(select(UserFollow).where(UserFollow.following_id==user_id).order_by(UserFollow.created_at.desc()).limit(200)))
         return [{"user_id":r.follower_id,"created_at":r.created_at} for r in rows]
     @router.get("/users/{user_id}/following")
     def following(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if active_ban(db,user_id): return []
         rows=list(db.scalars(select(UserFollow).where(UserFollow.follower_id==user_id).order_by(UserFollow.created_at.desc()).limit(200)))
         return [{"user_id":r.following_id,"created_at":r.created_at} for r in rows]
     @router.post("/users/{user_id}/block")
@@ -541,10 +552,12 @@ def register_platform_auth(current_user_dependency):
         row.read=True; db.commit(); return {"read":True}
     @router.get("/users/{user_id}/fans")
     def fans(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if active_ban(db,user_id): return {"user_id":user_id,"total":0,"level":0}
         total=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id==user_id)) or 0)
         return {"user_id":user_id,"total":total,"level":fan_level(total)}
     @router.get("/users/{user_id}/profile-gifts")
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if active_ban(db,user_id): return []
         from .room_routes import GIFT_META
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))
         return [{"gift":r.gift_key,"amount":r.total_price,"image_url":GIFT_META.get(r.gift_key,{}).get("image_url"),"from_user_id":r.sender_id,"created_at":r.created_at} for r in rows]

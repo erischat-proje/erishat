@@ -24,6 +24,7 @@ from .room_models import Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent,
 from .platform_models import Notification, UserBlock, UserFollow, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
+from .moderation import require_feature
 from .system_data import RoomIdRegistry
 from .system_logs import record
 from .support_models import SupportTicket
@@ -851,6 +852,7 @@ def register_room_auth(current_user_dependency):
         active_ids = set(db.scalars(select(RoomMember.user_id).where(RoomMember.room_id == room.id)))
         if not recipient_ids or not recipient_ids.issubset(active_ids):
             raise HTTPException(status_code=400, detail="Aktif alıcı bulunamadı")
+        require_feature(db, user.id, recipient_ids)
         unit_price = GIFT_CATALOG.get(payload.gift_key)
         if unit_price is None: raise HTTPException(status_code=400, detail="Geçersiz hediye")
         per_person = unit_price * payload.quantity

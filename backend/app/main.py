@@ -40,6 +40,7 @@ from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
+from .moderation import active_ban, require_feature, profile_notice
 from .support_routes import register_support_auth, router as support_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -264,6 +265,10 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
     user = get_user_from_token(db, bearer_token(authorization))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
+    account_ban=active_ban(db,user.id)
+    if account_ban:
+        from .moderation import ban_until
+        raise HTTPException(status_code=403,detail=ban_until(account_ban))
     return user
 
 
@@ -785,6 +790,7 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
     participant = UserRepository(db).get(payload.participant_id)
     if not participant or not participant.is_active:
         raise HTTPException(status_code=404, detail="Katılımcı bulunamadı")
+    require_feature(db, user.id, [participant.id])
     repo = ConversationRepository(db)
     existing = repo.find_direct([user.id, participant.id])
     if existing:
@@ -875,6 +881,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, db: Sessi
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
+    require_feature(db, user.id, [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
     if not is_family_conversation:
         recipient_ids = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
@@ -966,6 +973,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     view_seconds: int = Form(default=0), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    require_feature(db, user.id, [uid for uid in ConversationRepository(db).members(conversation_id) if uid != user.id])
     conversation = db.get(Conversation, conversation_id)
     if conversation and not db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         recipient_ids = list(db.scalars(select(ConversationMember.user_id).where(
@@ -1099,6 +1107,7 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
     target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
     if not target or not target.is_active:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if active_ban(db, target.id): return []
     is_owner = target.id == user.id
     if not is_owner and db.scalar(select(UserBlock.id).where(or_(
         and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == target.id),
@@ -1280,7 +1289,7 @@ class SocialCommentInput(BaseModel):
 def _social_access(db: Session, post_id: int, viewer: User) -> SocialPost:
     post = db.get(SocialPost, post_id)
     author = db.get(User, post.user_id) if post else None
-    if not post or not author or not author.is_active:
+    if not post or not author or not author.is_active or active_ban(db, author.id):
         raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != viewer.id:
         blocked = db.scalar(select(UserBlock.id).where(or_(
@@ -1363,6 +1372,10 @@ def list_social_comments(post_id: int, limit: int = Query(default=100, ge=1, le=
 @app.post("/v1/posts/{post_id}/comments", status_code=201)
 def create_social_comment(post_id: int, payload: SocialCommentInput,
     db: Session = Depends(get_db), user: User = Depends(current_user)):
+    account_ban=active_ban(db,user.id)
+    if account_ban:
+        from .moderation import ban_until
+        raise HTTPException(status_code=403,detail=ban_until(account_ban))
     _social_access(db, post_id, user)
     body = payload.body.strip()
     if not body:
@@ -1376,6 +1389,20 @@ def create_social_comment(post_id: int, payload: SocialCommentInput,
         parent_id = None
     item = SocialPostComment(post_id=post_id, user_id=user.id, parent_id=parent_id, body=body)
     db.add(item); db.commit(); db.refresh(item)
+    return _social_comment_row(db, item, user)
+
+
+@app.patch("/v1/posts/{post_id}/comments/{comment_id}")
+def edit_social_comment(post_id: int, comment_id: int, payload: SocialCommentInput,
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    _social_access(db, post_id, user)
+    item = db.get(SocialPostComment, comment_id)
+    if not item or item.post_id != post_id: raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    if item.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi yorumunu düzenleyebilirsin")
+    body = payload.body.strip()
+    if not body: raise HTTPException(status_code=400, detail="Yorum boş olamaz")
+    item.body = body
+    db.commit(); db.refresh(item)
     return _social_comment_row(db, item, user)
 
 
@@ -1447,7 +1474,7 @@ def delete_social_comment(post_id: int, comment_id: int,
     item = db.get(SocialPostComment, comment_id)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
-    if post.user_id != user.id:
+    if post.user_id != user.id and item.user_id != user.id:
         raise HTTPException(status_code=403, detail="Yorumu silme yetkin yok")
     db.delete(item); db.commit()
     return {"deleted": True, **_social_counts(db, post_id, user.id)}
@@ -1553,6 +1580,7 @@ def toggle_story_like(story_id: int, db: Session = Depends(get_db), user: User =
 async def reply_to_story(story_id: int, text: str = Form(...), snapshot: UploadFile | None = File(default=None),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     story = _visible_story(db, story_id, user)
+    require_feature(db, user.id, [story.user_id])
     text = text.strip()
     if not text or len(text) > 1000: raise HTTPException(status_code=400, detail="Yorum 1-1000 karakter olmalı")
     if story.user_id == user.id: raise HTTPException(status_code=400, detail="Kendi story'ne yorum gönderemezsin")
@@ -1663,7 +1691,25 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
 @app.get("/v1/users/{user_id}/fan-leaderboard")
 def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not db.get(User, user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if active_ban(db,user_id): return []
     return fan_leaderboard(db, user_id)
+
+
+@app.get("/v1/users/{user_id}/received-gifts")
+def received_gifts(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not db.get(User,user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if active_ban(db,user_id): return []
+    counts = {}
+    for key, quantity in db.execute(select(RoomGiftEvent.gift_key, func.sum(RoomGiftEvent.quantity))
+            .where(RoomGiftEvent.recipient_id == user_id).group_by(RoomGiftEvent.gift_key)):
+        counts[key] = int(quantity or 0)
+    for gift, message in db.execute(select(DirectMessageGift, Message)
+            .join(Message, Message.id == DirectMessageGift.message_id)
+            .where(DirectMessageGift.recipient_id == user_id)):
+        match = re.search(r"×(\d+)$", message.text or "")
+        counts[gift.gift_key] = counts.get(gift.gift_key,0) + (int(match.group(1)) if match else 1)
+    return [{"gift_key":key,"count":count,"image_url":GIFT_META.get(key,{}).get("image_url")}
+            for key,count in sorted(counts.items(),key=lambda row:(-row[1],row[0]))]
 
 
 @app.get("/v1/message-gifts")
@@ -1678,7 +1724,8 @@ async def send_direct_gift(conversation_id: str, payload: dict, db: Session = De
     recipients = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
     if len(recipients) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         raise HTTPException(status_code=400, detail="Bu hediye DM konuşmalarında kullanılabilir")
-    recipient_id = recipients[0]; gift_key = str(payload.get("gift_key") or ""); price = GIFT_CATALOG.get(gift_key)
+    recipient_id = recipients[0]; require_feature(db, user.id, [recipient_id])
+    gift_key = str(payload.get("gift_key") or ""); price = GIFT_CATALOG.get(gift_key)
     quantity = payload.get("quantity", 1)
     if type(quantity) is not int or quantity not in (1, 3, 5, 9, 49, 99):
         raise HTTPException(status_code=400, detail="Geçersiz hediye adedi")
@@ -1735,7 +1782,7 @@ manager = ConnectionManager()
 def websocket_session_active(token: str) -> bool:
     with Session(engine) as db:
         user = get_user_from_token(db, token)
-        return bool(user and user.is_active)
+        return bool(user and user.is_active and not active_ban(db,user.id))
 
 
 def websocket_token(websocket: WebSocket) -> str | None:
@@ -1757,7 +1804,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         return
     with Session(engine) as db:
         user = get_user_from_token(db, token)
-        if not user or not user.is_active:
+        if not user or not user.is_active or active_ban(db,user.id):
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         user_id = user.id
@@ -1826,7 +1873,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         return
     with Session(engine) as db:
         user = get_user_from_token(db, token)
-        if not user or not user.is_active:
+        if not user or not user.is_active or active_ban(db,user.id):
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
@@ -1965,6 +2012,11 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 if not room or not member or banned:
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     break
+                restriction = active_ban(db, user.id) or active_ban(db, user.id, chat=True)
+                if restriction:
+                    from .moderation import ban_until
+                    await websocket.send_json({"type":"room_chat_error","code":"admin_ban","message":ban_until(restriction)})
+                    continue
                 if not room.chat_enabled:
                     await websocket.send_json({"type":"room_chat_error","code":"chat_disabled","message":"Oda sohbeti kapalı."})
                     continue
