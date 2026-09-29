@@ -1,0 +1,8 @@
+basılı tutarak mesaj seçince üst tarafa gelen x e basana kadar o pencere kapanmaması lazım
+mesaj bildirimlerini aç ve arşiv butonu ikisi de aynı ölçüde olması lazım bunun oranını daha düzgün ayarla
+arayüzde kilitli adı altında sabit gözüken bir buton var o kalkması lazım onun olmaması lazım
+çünkü biz kilitli sohbete sohbeti kitleyince o şifreyi arama kısmına yazarak gidicez
+son olarak kilitli sohbetlerde bir mesajdan kilidi kaldırırken şifre istemiyor o olay yanlış şifre istemesi lazım
+mesajların tümünü seçme olayı normal mesajlarda arşivde veya kilitli sohbetlerde yok onu da düzeltcez
+direkt tümü olan  bir buton olması lazım yanibunun içinde gelen 1 sohbet seçildi yazısının yanına bir kutu koyabilirsin buna basarsak mesajların tümünü seçebiliriz
+ve mesaj silme özelliği yok
