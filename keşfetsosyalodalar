@@ -1,0 +1,12 @@
+buraya girince güncelleme sistemi şu olucak
+sıralama mantığı şu şekilde işleyecek
+en dolu odalar en üstten başlicak
+ve sıralamada ikinci bir mantık daha olucak
+aynı sayıda kullanıcı olan iki oda varsa eğer o gün içinde daha çok hediye atılan oda hangisi ise o daha üstte durucak
+keşif ve yakınlık ayarı burdan kalkıyor 
+insanlar kısmında şu oluyor
+keşif ve yakınlık ayarı burada aktif işe yarayacak uygulamada zaten zorunlu konum açtırdığımız için kişi herkes veya herhangi bir cinsiyet seçtiğinde
+seçtiği seçeneğe göre konumuna en yakın olandan başlayarak neyi seçti ise herkesi seçti ise kem kadın erkek kadın seçti ise kadın erkek seçti ise erkek en yakın konumdan en uzağa kadar sıralanıyor
+ve burda o an uygulamada aktif olanlar gözüküyor
+takip ettiklerim kısmından keşif ve yakınlık ayarı kalkıyor takip ettiğin odalar çevrimiçi olunca burda gözüküyor
+yine sıralama en kalabalıktan en aza doğru ilerliyor ama özel bir sistem kurcaksın bir oda kapanırsa veya bir değişim olursa bir kullanıcı uygulamadan çıkarsa otomatik liste güncelleniyor 
