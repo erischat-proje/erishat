@@ -350,7 +350,7 @@ def register_room_auth(current_user_dependency):
         )):
             raise HTTPException(status_code=403, detail="Bu kişi tarafından engellendiniz; odasına katılamazsınız.")
         admin = db.get(AdminRole, user.id)
-        admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
+        admin_mode = bool(admin and admin.role in {"SA", "UA", "FA", "DA"})
         stored = db.get(RoomPassword, room.id)
         if stored and room.owner_id != user.id and not (admin and admin.role == "DA"):
             supplied = (payload.password if payload else None) or ""

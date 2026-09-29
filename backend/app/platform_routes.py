@@ -409,7 +409,7 @@ def register_platform_auth(current_user_dependency):
         result=candidate_users(db,user,20)[:limit]; rows=[]
         for target,distance in result:
             admin=db.get(AdminRole,target.id)
-            public_id=None if admin and admin.role in {"SA","UA","DA"} else target.public_id
+            public_id=None if admin and admin.role in {"SA","UA","FA","DA"} else target.public_id
             location=db.get(UserLocation,target.id)
             rows.append({"user_id":target.id,"public_id":public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"city":location.city if location else None,"distance_km":round(distance,1)})
         return rows
@@ -481,7 +481,7 @@ def register_platform_auth(current_user_dependency):
             else: db.add(ProfileVisit(profile_user_id=target.id,visitor_user_id=user.id))
             db.commit()
         admin = db.get(AdminRole, target.id)
-        visible_public_id = target.public_id if target.id == user.id or not (admin and admin.role in {"SA", "UA", "DA"}) else None
+        visible_public_id = target.public_id if target.id == user.id or not (admin and admin.role in {"SA", "UA", "FA", "DA"}) else None
         is_following = bool(db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==target.id)))
         you_blocked = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==user.id,UserBlock.blocked_id==target.id)))
         blocked_by_them = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==target.id,UserBlock.blocked_id==user.id)))
