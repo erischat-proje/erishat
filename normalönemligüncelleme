@@ -1,0 +1,31 @@
+yönetici panelinde şu güncellemeleri yapıyoruz
+lidya sorgu ve vip sorgu menüsü id girince mevcutu göstermiyor bu düzelicek onun dışında başka bir ıd daha yazarsak pencereyi kapatmadan güncellenicek yani girilen ıd yi algılicak direkt
+ilk olarak id girin diyecek buna basıp yanındaki arama butonuna basarsak aşşadaki bilgileri vericek ama şu var bizim arattığımız id kısmı ve arama butonu kaybolmicak
+ıd sorgu ek olarak daha düzenli olucak sol üstte kişinin avatar ve çerçevesi gözükecek hemen yanında kişinin kullaıcı adı yazıcak
+hemen bir altında kişinin mevcut olan lidya miktarı yanında lidya coin işareti
+onun bir altında kişinin mevcut ip bilgisi
+onun altında kişinin kayıt yöntemi yazıcak
+onun hemen altında kişinin kayıt olduğu cihaz markası modeli yazıcak
+onun altında kişinin kayıt yöntemindeki epostası yazıcak zaten google da da mailde de ikisinde de eposta var sonuç olarak
+onun hemen altında işinin konumu hangi ilde olduğu yazıcak 
+onun hemen altında kişinin mac adresi yazıcak
+
+vip sorgu ya girince ilk olarak id girin diyecek buna basıp yanındaki arama butonuna basarsak aşşadaki bilgileri vericek ama şu var bizim arattığımız id kısmı ve arama butonu kaybolmicak
+eğer tekrardan bir ıd yazıp sorgularsak o bilgiler karşımıza gelicek eskisi gidicek karşımıza gelecek olan bilgilerde aşşağıda yazıyor 
+kişinin avatar çerçevesi olucak yanında kullanıcı adı yazıcak
+onun altında kişinin mevcut vip seviyesi yazıcak
+onun hemen altında istediğimiz vip seviyesini girme kısmı olucak
+ve onun hemen altında güncelle butonu olucak ve vip iptal etme butonu olucak 
+vip iptal etme butonu şu şekilde işlicek eğer biz bir id de o butona basarsak tüm vip özellikleri sıfırlanıcak ve vip ile gelen herşey en başa dönücek
+kişi de sıfırlanmış olarak görücek
+eğer güncelle ye basarsak kişinin vip seviyesini yazmış olduğumuz vip seviyesine getirecek
+
+lidya sorgu kısmı
+ilk olarak id girin diyecek buna basıp yanındaki arama butonuna basarsak aşşadaki bilgileri vericek ama şu var bizim arattığımız id kısmı ve arama butonu kaybolmicak
+kişinin mevcut avatarı çıkıcak hemen sağında kişinin kullanıcı adı yazıcak
+hemen altında kişinin mevcut lidya miktarı yanında lidya coin işareti olucak
+hemen altında istediğiniz miktar boşluğu olucak onaraya rakamı yazınca aşşada iki buton olucak ekle ve çıkar butonu ekle ye basarsak kişinin hesabına yazdığımız rakamda lidya eklenicek ve güncellenicek
+çıkar a basarsak kişinin lidya miktarından istediğmiz rakam eksilecek ve güncellenecek  
+
+tabi bu yaptığımız işlemler kişinin hesına da direkt yansıyacak yani lidya eklendi veya çıkarıldı ise kişi dede güncellenecek veya vip işlemi içinde aynısı geçerli
+
