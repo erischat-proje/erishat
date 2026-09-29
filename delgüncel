@@ -6,4 +6,12 @@ oda kilidi kısmında da şu ayarı yapıyoruz şifre değiştirme butonu kalıy
 şifre değiştir butonuna basınca mevcut olan şifreyi değiştirebileceğiz ki oda da biri girmek zorunda kalınca kilidi açmadan şifreyi değiştirebilelim ve oda moderatörleri de kilitli olaya girerken şifre girmek zorunda tek kendi odasına girerken şifre girmesi gerekmeyen oda sahibi olucak
 bir oda kilitlenirse otomatik olarak odalar kısmında kilit ikonu gelicek yanına
   
-  
+mikrofonlar için ekstra bir güncelleme getiriyorum bu kısmın adı koltuk izni olucak altında yeşil renk aktif et kırmızı renk kapat butonu olucak
+eğer aktif olursa boşta olan tüm koltukların üstüne el işareti gelicek eğer biri el işareti olan bir koltuğa tıklarsa otomatik olarak oturma izni istemiş sayılacak
+oda daki moderatörler ve oda sahibi el işareti olan herhangi bir koltuğa tıklarsa yüzen arkası saydam bir pencere açılacak sağ üstünde x olacak buna basarsak bu menüyü kapatabileceğiz
+oranın içeriği de şu şekilde olucak kullanıcı avatar çerçevesi yanında ismi ve yanında yeşil renk tik işareti kırmızı renk x işareti birinin yanındaki yeşil tik e basarsak o zaman o koltuğa oturabilmiş olucak
+kırmızı x e basarsak kullanıcı ya yine yüzen arkası saydam pencere de koltuğa oturma talebiniz reddedilmiştir yazıcak x e basarsa kapatabilecek
+ve moderatörlerde ve oda sahiplerinde oturma onay veya reddetme menüsünün altında davet et kısmı olucak oraya basınca liste şeklinde yüzen pencere açılacak yine sağ üstünde x işareti  olucak buna basarak kapatabilecekler
+o liste açıldığında odadaki tüm herkes koltuğa oturmayan liste halinde gözükecek solda avatar ve çerçevesi yanında kullanıcı adı ve onun yanında + işareti olucak + ya basarsak kullanıcı nın ekranına yüzen pencere gidicek
+o pencere de de şu yazıcak hangi koltuğa tıklayarak bu işlemi gerçekleştirdi isek koltuk numarası yazıcak (koltuk numarası) numaralı koltuk için mikrofon daveti aldınız yazıcak aşşada kabul et reddet butonu olucak eğer kullanıcı kabul et e basarsa davet edildiği numaralı koltuğa oturacak
+reddet e basarsa davet eden moderatör veya oda sahibinin ekranına yüzen pencere şeklinde bir pencere gidicek arkası saydam şekilde sağ üstünde X işareti olucak buna basarak kapatabilecek ve içinde şu yazıcak (kullanıcı adı) adlı kullanıcı mikrofon davetinizi reddetti yazıcak
