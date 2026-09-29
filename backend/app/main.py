@@ -35,7 +35,7 @@ from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_aut
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
-    SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, UserBlock, UserFollow)
+    SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -1473,7 +1473,8 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
         result.append({"id": story.id, "user_id": author.id, "nickname": author.nickname,
             "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": story.caption,
             "created_at": story.created_at, "expires_at": story.expires_at, "viewed": viewed,
-            "view_count": count, "mime_type": story.mime_type,
+            "view_count": count, "like_count": int(db.scalar(select(func.count()).select_from(SocialStoryLike).where(SocialStoryLike.story_id == story.id)) or 0),
+            "liked": db.get(SocialStoryLike, (story.id, user.id)) is not None, "mime_type": story.mime_type,
             "media_kind": "video" if story.mime_type.startswith("video/") else "image",
             "media_url": f"/stories/{story.id}/media", "is_mine": story.user_id == user.id})
     return result
@@ -1518,6 +1519,79 @@ def delete_story(story_id: int, db: Session = Depends(get_db), user: User = Depe
     if story.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi story'ni silebilirsin")
     db.delete(story); db.commit()
     return {"deleted": True, "story_id": story_id}
+
+
+def _visible_story(db: Session, story_id: int, viewer: User) -> SocialStory:
+    story = db.get(SocialStory, story_id)
+    if not story or story.expires_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=404, detail="Story bulunamadı")
+    if story.user_id != viewer.id:
+        blocked = db.scalar(select(UserBlock.id).where(or_(
+            and_(UserBlock.blocker_id == viewer.id, UserBlock.blocked_id == story.user_id),
+            and_(UserBlock.blocker_id == story.user_id, UserBlock.blocked_id == viewer.id))))
+        follows = db.scalar(select(UserFollow.id).where(UserFollow.follower_id == viewer.id,
+            UserFollow.following_id == story.user_id))
+        if blocked or not follows: raise HTTPException(status_code=404, detail="Story bulunamadı")
+    return story
+
+
+@app.post("/v1/stories/{story_id}/like")
+def toggle_story_like(story_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    story = _visible_story(db, story_id, user)
+    like = db.get(SocialStoryLike, (story.id, user.id))
+    if like: db.delete(like)
+    else:
+        db.add(SocialStoryLike(story_id=story.id, user_id=user.id))
+        if story.user_id != user.id:
+            db.add(Notification(user_id=story.user_id, kind="story_like", title=user.nickname,
+                body="Story'ni beğendi."))
+    db.commit()
+    return {"liked": not bool(like), "like_count": int(db.scalar(select(func.count()).select_from(SocialStoryLike).where(SocialStoryLike.story_id == story.id)) or 0)}
+
+
+@app.post("/v1/stories/{story_id}/reply", response_model=MessageOut)
+async def reply_to_story(story_id: int, text: str = Form(...), snapshot: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db), user: User = Depends(current_user)):
+    story = _visible_story(db, story_id, user)
+    text = text.strip()
+    if not text or len(text) > 1000: raise HTTPException(status_code=400, detail="Yorum 1-1000 karakter olmalı")
+    if story.user_id == user.id: raise HTTPException(status_code=400, detail="Kendi story'ne yorum gönderemezsin")
+    conversation = ConversationRepository(db).find_direct([user.id, story.user_id])
+    if not conversation:
+        conversation_id = "dm_" + "_".join(sorted((user.id, story.user_id)))
+        try: conversation = ConversationRepository(db).create_direct(conversation_id, [user.id, story.user_id])
+        except IntegrityError:
+            db.rollback()
+            conversation = ConversationRepository(db).find_direct([user.id, story.user_id])
+            if not conversation: raise HTTPException(status_code=409, detail="Konuşma açılamadı")
+    image = story.image_bytes if story.mime_type.startswith("image/") else None
+    mime = story.mime_type if image else "image/jpeg"
+    if snapshot:
+        if snapshot.content_type != "image/jpeg": raise HTTPException(status_code=415, detail="Story önizlemesi JPEG olmalı")
+        image = await snapshot.read(1_500_001)
+        if len(image) > 1_500_000 or not image.startswith(b"\xff\xd8\xff"):
+            raise HTTPException(status_code=413, detail="Story önizlemesi geçersiz")
+        mime = "image/jpeg"
+    if image and len(image) > 1_500_000:
+        try:
+            with Image.open(BytesIO(image)) as source:
+                source.thumbnail((640, 640))
+                output = BytesIO(); source.convert("RGB").save(output, format="JPEG", quality=78)
+                image, mime = output.getvalue(), "image/jpeg"
+        except Exception: image = None
+    message = Message(conversation_id=conversation.id, sender_id=user.id, text=f"[Story yanıtı #{story.id}] {text}")
+    db.add(message); db.flush()
+    if image: db.add(MessageMedia(message_id=message.id, media_type="image", mime_type=mime, data=image))
+    db.add(Notification(user_id=story.user_id, kind="dm_message", title=user.nickname,
+        body="Story'ne yorum yaptı: " + text[:100]))
+    db.commit(); db.refresh(message)
+    event = {"type":"dm_message", "conversation_id":conversation.id, "message_id":message.id,
+        "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
+        "media_type":"image" if image else None,
+        "media_url":f"/messages/{conversation.id}/{message.id}/media" if image else None,
+        "created_at":message.created_at.isoformat() if message.created_at else None}
+    await manager.send_user(story.user_id, event); await manager.send_user(user.id, event)
+    return _message_out(db, message, user.id)
 
 
 @app.post("/v1/messages/{conversation_id}/delete")

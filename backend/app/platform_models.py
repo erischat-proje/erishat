@@ -308,6 +308,13 @@ class SocialStoryView(Base):
     viewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class SocialStoryLike(Base):
+    __tablename__ = "social_story_likes"
+    story_id: Mapped[int] = mapped_column(ForeignKey("social_stories.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class SocialPost(Base):
     __tablename__ = "social_posts"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
