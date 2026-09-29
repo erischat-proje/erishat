@@ -15,6 +15,7 @@
     .dm-gift-sheet{z-index:11010!important;align-items:center!important;justify-content:center!important;padding:14px;backdrop-filter:blur(8px)}
     .dm-gift-sheet>section{box-sizing:border-box;border-radius:24px!important;background:#171025ed!important;max-height:78dvh!important;box-shadow:0 25px 80px #000b}
     .eris-mini-report-shade{z-index:11040}.eris-mini-report-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eris-mini-report-head h2{margin:0;font-size:19px}.eris-mini-card textarea{box-sizing:border-box;width:100%;min-height:110px;margin:15px 0 10px;padding:11px;border:1px solid #ffffff33;border-radius:13px;background:#0e0a19;color:#fff;resize:vertical}.eris-mini-card input[type=file]{max-width:100%;margin:10px 0;color:#fff}.eris-mini-error{min-height:18px;color:#ffa6b7;font-size:12px}`;
+  css.textContent += '.eris-mini-card [hidden]{display:none!important}';
   document.head.append(css);
   const api = (path, options) => window.ErisPlatform.api(path, options);
   const asset = path => path ? (window.ErisChatCosmetics?.assetUrl?.(path) || path) : '';
@@ -69,6 +70,14 @@
       shade.querySelector('[data-followers]').textContent=count(u.followers_count);
       shade.querySelector('[data-following]').textContent=count(u.following_count);
       shade.querySelector('[data-gifters]').textContent=count(u.gift_fan_count);
+      if(u.banned){
+        shade.querySelector('[data-fans]').hidden=true;
+        shade.querySelector('.eris-mini-actions').hidden=true;
+        shade.querySelector('[data-block]').hidden=true;
+        const notice=document.createElement('p');notice.className='eris-mini-error';notice.textContent=u.ban_notice||'Bu kullanıcı yasaklanmıştır.';
+        shade.querySelector('.eris-mini-stats').after(notice);
+        return;
+      }
       shade.querySelector('[data-fans]').onclick=()=>{closeProfile();window.ErisPersonalFanRanking?.(u.id)};
       shade.querySelector('[data-report]').onclick=()=>report(u);
       const follow=shade.querySelector('[data-follow]'), gift=shade.querySelector('[data-gift]'), message=shade.querySelector('[data-message]'), block=shade.querySelector('[data-block]');

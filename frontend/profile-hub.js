@@ -66,7 +66,7 @@
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
-    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['fan-ranking','Hayran sıralamam'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['gifts','Hediyeler'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['settings','Ayarlar']];
+    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['fan-ranking','Hayran sıralamam'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['settings','Ayarlar']];
     const strip = hub.querySelector('.eph-tabs');
     const icons={info:'profile',posts:'posts',social:'family','fan-ranking':'family',collection:'collection',vip:'vip',wallet:'wallet',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',settings:'security'};
     for (const [key,label] of tabs) {
@@ -153,12 +153,7 @@
         const wallet=await api('/me/wallet');if(index!==requestIndex)return;
         body.innerHTML='<h3>Cüzdan</h3><div class="eph-row"><span>Lidya</span><b data-lidya></b></div><div class="eph-row"><span>Lidya taşı</span><b data-gem></b></div>';
         body.querySelector('[data-lidya]').textContent=Number(wallet.lidya||0).toLocaleString('tr-TR');body.querySelector('[data-gem]').textContent=Number(wallet.lidya_gem||0).toLocaleString('tr-TR');
-        body.insertAdjacentHTML('beforeend','<h3 style="margin-top:18px">1:1 takas</h3><label>Tutar<input data-amount type="number" min="1" step="1" inputmode="numeric" placeholder="Takas miktarı"></label><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-exchange="lidya_to_gem">Lidya → Gem</button><button type="button" data-exchange="gem_to_lidya">Gem → Lidya</button></div><div class="eph-muted" data-wallet-status role="status"></div>');
-        body.querySelectorAll('[data-exchange]').forEach(button=>button.onclick=async()=>{const amount=Number(body.querySelector('[data-amount]').value),status=body.querySelector('[data-wallet-status]');if(!Number.isSafeInteger(amount)||amount<1){status.textContent='1 veya daha büyük tam sayı gir.';return}button.disabled=true;try{const key=globalThis.crypto?.randomUUID?.()||('wallet-'+Date.now()+'-'+Math.random().toString(16).slice(2));const updated=await api('/me/wallet/exchange',{method:'POST',body:JSON.stringify({direction:button.dataset.exchange,amount,idempotency_key:key})});body.querySelector('[data-lidya]').textContent=Number(updated.lidya||0).toLocaleString('tr-TR');body.querySelector('[data-gem]').textContent=Number(updated.lidya_gem||0).toLocaleString('tr-TR');status.textContent='Takas tamamlandı.'}catch(error){status.textContent=error.message||'Takas başarısız.'}finally{button.disabled=false}});return;
-      }
-      if(key==='gifts') {
-        const rows=await api('/users/'+encodeURIComponent(me.id)+'/profile-gifts');if(index!==requestIndex)return;
-        body.innerHTML='<h3>Profil hediyeleri</h3>'+(rows.length?rows.map(row=>'<div class="eph-row" title="'+escape(row.gift)+'"><img src="'+escape(row.image_url||'')+'" alt="" style="width:52px;height:52px;object-fit:contain"><b>'+Number(row.amount||0).toLocaleString('tr-TR')+' Lidya</b></div>').join(''):'<div class="eph-muted">Henüz profil hediyesi yok.</div>');return;
+        return;
       }
       if(key==='notifications') {
         const rows=await api('/me/notifications?limit=50');if(index!==requestIndex)return;

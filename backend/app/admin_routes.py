@@ -326,7 +326,7 @@ def register_admin_auth(current_user_dependency):
     def device_ban(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_role(db,user,"UA"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        ban=UserBan(user_id=target.id,ban_type="device",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
+        ban=UserBan(user_id=target.id,ban_type="device",expires_at=None,banned_by=user.id,reason=payload.reason)
         db.add(ban); audit(db,user,"device_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
         return {"banned":True,"expires_at":ban.expires_at}
 
