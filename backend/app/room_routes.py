@@ -176,6 +176,16 @@ def require_manageable_guest(db: Session, room: Room, actor: User, target_id: st
         raise HTTPException(status_code=403, detail="Moderatörü yalnızca oda sahibi yönetebilir")
 
 
+def ghost_active(db: Session, user_id: str) -> bool:
+    admin = db.get(AdminRole, user_id)
+    return bool(admin and admin.ghost_mode)
+
+
+def reject_ghost(db: Session, user: User, action: str = "Bu işlemi yapmak") -> None:
+    if ghost_active(db, user.id):
+        raise HTTPException(status_code=403, detail=f"{action} için önce Ghost Mode’u kapatın.")
+
+
 def is_member(db: Session, room_id: str, user_id: str) -> bool:
     member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id))
     if not member: return False
@@ -202,7 +212,7 @@ def ensure_seats(db: Session, room: Room) -> None:
 def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     ensure_seats(db, room)
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
-    members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
+    members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
     seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number <= room.seat_count).order_by(RoomSeat.seat_number)))
     current_id = str(user.id) if user else ""
@@ -342,7 +352,7 @@ def register_room_auth(current_user_dependency):
         admin = db.get(AdminRole, user.id)
         admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
         stored = db.get(RoomPassword, room.id)
-        if stored and room.owner_id != user.id:
+        if stored and room.owner_id != user.id and not (admin and admin.role == "DA"):
             supplied = (payload.password if payload else None) or ""
             if not supplied or hashlib.sha256(supplied.encode()).hexdigest() != stored.password_hash:
                 raise HTTPException(status_code=403, detail="Oda kilitli. 4 haneli şifre gerekli.")
@@ -352,10 +362,13 @@ def register_room_auth(current_user_dependency):
         active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))
         if active_user_ban and not admin_mode: raise HTTPException(status_code=403, detail="Hesabınız yasaklı")
         if room.locked and not stored and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id and not admin_mode: raise HTTPException(status_code=403, detail="Oda kilitli")
-        if not is_member(db, room.id, user.id):
-            count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0
-            if count >= LEVELS[room.level]["capacity"]: raise HTTPException(status_code=409, detail="Oda dolu")
-            db.add(RoomMember(room_id=room.id, user_id=user.id))
+        existing_member = db.scalar(select(RoomMember).where(RoomMember.room_id==room.id,RoomMember.user_id==user.id))
+        if not existing_member:
+            count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0
+            if count >= LEVELS[room.level]["capacity"] and not (admin and admin.ghost_mode): raise HTTPException(status_code=409, detail="Oda dolu")
+            db.add(RoomMember(room_id=room.id, user_id=user.id, ghost=bool(admin and admin.ghost_mode)))
+        else:
+            existing_member.ghost=bool(admin and admin.ghost_mode)
         room.is_active = True
         db.commit()
         return room_view(db, room, user)
@@ -453,13 +466,14 @@ def register_room_auth(current_user_dependency):
     def leave_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id))
-        remaining = int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)) or 0)
+        remaining = int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0)
         room.is_active = remaining > 0
         db.commit(); return {"left": True, "is_active": room.is_active}
     @router.post("/{room_id}/seats/{seat_number}/join")
     def join_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
+        reject_ghost(db,user,"Koltuğa oturmak")
         if seat_number < 1 or seat_number > room.seat_count: raise HTTPException(status_code=400, detail="Bu düzende bu koltuk yok")
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
@@ -661,7 +675,7 @@ def register_room_auth(current_user_dependency):
             select(RoomSeat).where(RoomSeat.room_id == room.id)) if seat.user_id}
         result = []
         for member in db.scalars(select(RoomMember).where(
-            RoomMember.room_id == room.id).order_by(RoomMember.joined_at)):
+            RoomMember.room_id == room.id, RoomMember.ghost.is_(False)).order_by(RoomMember.joined_at)):
             person = db.get(User, member.user_id)
             if person:
                 result.append({
@@ -840,11 +854,12 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/gifts")
     async def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
+        reject_ghost(db,user,"Hediye göndermek")
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         if payload.target == "mic":
             recipient_ids = set(db.scalars(select(RoomSeat.user_id).where(RoomSeat.room_id == room.id, RoomSeat.user_id.is_not(None))))
         elif payload.target == "room":
-            recipient_ids = set(db.scalars(select(RoomMember.user_id).where(RoomMember.room_id == room.id)))
+            recipient_ids = set(db.scalars(select(RoomMember.user_id).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))))
         else:
             if not payload.recipient_id: raise HTTPException(status_code=400, detail="Alıcı seçmelisiniz")
             recipient_ids = {payload.recipient_id}

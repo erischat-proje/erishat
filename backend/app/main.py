@@ -148,6 +148,7 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'ErisChat Odası'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 8"))
+        conn.execute(text("ALTER TABLE room_members ADD COLUMN IF NOT EXISTS ghost BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS theme VARCHAR(32) NOT NULL DEFAULT 'normal'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS chat_enabled BOOLEAN NOT NULL DEFAULT true"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true"))
@@ -1940,10 +1941,11 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
     await websocket.accept(subprotocol="erischat")
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
     existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
-    room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
+    if not member.ghost:
+        room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
     await websocket.send_json({"type":"room_history","messages":history_payload})
     await websocket.send_json({"type":"rtc_ready","user_id":str(user.id),"room_id":internal_room_id,"peers":existing_peers})
-    for peer_ws in list(room_rtc_users.get(internal_room_id, {})):
+    for peer_ws in (list(room_rtc_users.get(internal_room_id, {})) if not member.ghost else []):
         if peer_ws is not websocket:
             try: await peer_ws.send_json({"type":"rtc_peer_joined","user_id":str(user.id)})
             except Exception: pass
@@ -1967,12 +1969,19 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                     room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     return
+            if member.ghost and websocket in room_rtc_users.get(internal_room_id, {}):
+                room_rtc_users[internal_room_id].pop(websocket,None)
+                for peer_ws in list(room_rtc_users.get(internal_room_id, {})):
+                    try: await peer_ws.send_json({"type":"rtc_peer_left","user_id":str(user.id)})
+                    except Exception: pass
             if not isinstance(data, dict):
                 continue
             if data.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
                 continue
             if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
+                with Session(engine) as db:
+                    if db.get(AdminRole,user.id) and db.get(AdminRole,user.id).ghost_mode: continue
                 target = str(data.get("to_user_id") or "").strip()
                 sender_user_id = str(user.id)
                 if not target or target == sender_user_id:
@@ -2057,6 +2066,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 if not room or not member or banned:
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     break
+                admin_row=db.get(AdminRole,user.id)
+                if admin_row and admin_row.ghost_mode:
+                    await websocket.send_json({"type":"room_chat_error","code":"ghost_mode","message":"Chat’e yazabilmek için önce Ghost Mode’u kapatın."})
+                    continue
                 restriction = active_ban(db, user.id) or active_ban(db, user.id, chat=True)
                 if restriction:
                     from .moderation import ban_until
