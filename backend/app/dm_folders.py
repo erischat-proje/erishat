@@ -116,6 +116,7 @@ class VaultChange(VaultSetup):
 class FolderUpdate(BaseModel):
     archived: bool | None = None
     locked: bool | None = None
+    pin: str | None = None
 
 
 @router.get("/me/dm-vault")
@@ -222,6 +223,10 @@ def update_folder(conversation_id: str, payload: FolderUpdate,
         raise HTTPException(409, "Önce kilitli sohbet şifresi oluşturun")
     if (payload.locked is not None or (row and row.locked)) and not _session(db, user.id, x_eris_dm_vault):
         raise HTTPException(403, "Kilitli sohbet şifrenizi girin")
+    if payload.locked is False and row and row.locked:
+        vault = db.get(ConversationVault, user.id)
+        if not payload.pin or not vault or not _matches(payload.pin, vault.pin_hash):
+            raise HTTPException(403, "Kilidi kaldırmak için mevcut 6 haneli şifrenizi girin")
     if row is None:
         row = ConversationFolder(user_id=user.id, conversation_id=conversation_id)
         db.add(row)
