@@ -2,6 +2,27 @@
   const API = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
   const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   const headers = () => token() ? { Authorization: `Bearer ${token()}` } : {};
+  const blockedUsers = new Set();
+  window.ErisRoomBlocks = {has: id => blockedUsers.has(String(id||''))};
+  async function loadRoomBlocks(){
+    try{
+      const rows=await window.ErisPlatform.api('/me/blocks');
+      blockedUsers.clear();
+      for(const row of rows||[])blockedUsers.add(String(row.user_id));
+      document.querySelectorAll('#erisLiveChat .eris-chat-msg[data-room-sender-id]').forEach(el=>{
+        el.hidden=blockedUsers.has(el.dataset.roomSenderId);
+      });
+      window.dispatchEvent(new CustomEvent('erischat:room-blocks-updated'));
+    }catch(e){console.warn('[ErisChat] Engellenen kullanıcılar yüklenemedi',e)}
+  }
+  window.addEventListener('erischat:user-block-changed',event=>{
+    const id=String(event.detail?.userId||'');if(!id)return;
+    if(event.detail.blocked)blockedUsers.add(id);else blockedUsers.delete(id);
+    document.querySelectorAll('#erisLiveChat .eris-chat-msg[data-room-sender-id]').forEach(el=>{
+      if(el.dataset.roomSenderId===id)el.hidden=blockedUsers.has(id);
+    });
+    window.dispatchEvent(new CustomEvent('erischat:room-blocks-updated'));
+  });
   function roomCard(room, followed=false) {
     const id=room.id??room.room_id,name=room.name||room.title||'Oda';
     const card=document.createElement('article');card.className='room card eris-room-list-card';
@@ -197,6 +218,7 @@
     const add=d=>{
       const e=document.createElement('div');
       e.className='eris-chat-msg';
+      e.dataset.roomSenderId=String(d.user_id||'');e.hidden=blockedUsers.has(e.dataset.roomSenderId);
       const identity=document.createElement('div');identity.className='eris-chat-identity';
       const portrait=document.createElement('span');portrait.className='eris-chat-portrait';
       const cosmetics=window.ErisChatCosmetics;
@@ -251,6 +273,7 @@
       }catch(joinError){throw joinError;}
       const room=await withTimeout(window.ErisRoom?.get?.(id),8000);
       if(!room)throw new Error('Oda bilgisi alınamadı');
+      await loadRoomBlocks();
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const liveRoomId=String(room.id||id);
       window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;

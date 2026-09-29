@@ -176,7 +176,13 @@ def require_manageable_guest(db: Session, room: Room, actor: User, target_id: st
 
 
 def is_member(db: Session, room_id: str, user_id: str) -> bool:
-    return bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id)))
+    member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id))
+    if not member: return False
+    room = db.get(Room, room_id)
+    if room and room.owner_id != user_id and db.scalar(select(UserBlock.id).where(
+        UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user_id
+    )): return False
+    return True
 
 def ensure_seats(db: Session, room: Room) -> None:
     allowed = LEVELS[room.level]["seats"]
@@ -328,6 +334,10 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/join")
     def join_room(room_id: str, payload: RoomJoinPayload | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
+        if room.owner_id != user.id and db.scalar(select(UserBlock.id).where(
+            UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
+        )):
+            raise HTTPException(status_code=403, detail="Bu kişi tarafından engellendiniz; odasına katılamazsınız.")
         admin = db.get(AdminRole, user.id)
         admin_mode = bool(admin and admin.role in {"SA", "UA", "DA"})
         stored = db.get(RoomPassword, room.id)

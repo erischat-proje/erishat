@@ -1701,7 +1701,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         internal_room_id = room.id if room else room_id
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
         banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
-        if not room or not member or banned:
+        owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
+            UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
+        )))
+        if not room or not member or banned or owner_blocked:
             await websocket.close(code=1008, reason="oda üyeliği gerekli")
             return
         history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
@@ -1732,7 +1735,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
                 member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
                 banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
-                if not room or not member or banned:
+                owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
+                    UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
+                )))
+                if not room or not member or banned or owner_blocked:
                     room_chat_connections.get(internal_room_id, set()).discard(websocket)
                     room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
