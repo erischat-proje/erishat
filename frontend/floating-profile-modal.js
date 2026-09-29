@@ -8,6 +8,7 @@
     .eris-mini-name{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:800}.eris-mini-icon{flex:none;width:34px;height:34px;border:1px solid #d4bafa66;border-radius:11px;background:#ffffff13;color:white;font-size:19px;cursor:pointer}.eris-mini-top{display:flex;gap:5px;align-self:flex-start}
     .eris-mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:19px 0}.eris-mini-stats div{min-width:0;padding:10px 5px;text-align:center;border:1px solid #ffffff1d;border-radius:13px;background:#ffffff0d}.eris-mini-stats b{display:block;font-size:17px}.eris-mini-stats small{display:block;color:#cabdd7;font-size:10px}
     .eris-mini-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.eris-mini-actions button,.eris-mini-submit{min-height:42px;padding:7px;border:1px solid #bd93ee77;border-radius:13px;background:#7b4cff44;color:white;font-weight:700;cursor:pointer}.eris-mini-actions button:disabled{opacity:.5;cursor:default}
+    .eris-mini-block{width:100%;margin-top:8px;border-color:#ff8a9c77!important;background:#ff5a7918!important}
     #chat.eris-floating-dm{z-index:11000;align-items:center;justify-content:center;padding:14px;background:#060411a8;backdrop-filter:blur(8px)}
     #chat.eris-floating-dm .chatSheet{width:min(480px,100%);height:min(640px,78dvh);min-height:280px;max-height:calc(100dvh - 28px);border:1px solid #bd93ee77;border-radius:24px;background:linear-gradient(145deg,#241736eb,#100b1deb);box-shadow:0 25px 80px #000b;overflow:hidden;backdrop-filter:blur(18px)}
     #chat.eris-floating-dm .chatHead{background:#ffffff08}#chat.eris-floating-dm .chatHead .ava{cursor:pointer}
@@ -45,7 +46,7 @@
     if(!identifier)return;
     closeProfile();
     const shade=document.createElement('div');shade.className='eris-mini-shade eris-mini-profile-shade';
-    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-head"><button type="button" class="eris-mini-portrait" aria-label="Tam profili aç">👤</button><div class="eris-mini-name">Yükleniyor…</div><button class="eris-mini-icon eris-mini-fan" data-fans type="button" title="Hayran listesi" aria-label="Hayran listesi">✦</button><div class="eris-mini-top"><button class="eris-mini-icon" data-report type="button" title="Şikâyet et" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-gifters>–</b><small>Hediye gönderen</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><p class="eris-mini-error" role="alert"></p></section>';
+    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-head"><button type="button" class="eris-mini-portrait" aria-label="Tam profili aç">👤</button><div class="eris-mini-name">Yükleniyor…</div><button class="eris-mini-icon eris-mini-fan" data-fans type="button" title="Hayran listesi" aria-label="Hayran listesi">✦</button><div class="eris-mini-top"><button class="eris-mini-icon" data-report type="button" title="Şikâyet et" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-gifters>–</b><small>Hediye gönderen</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><button type="button" class="eris-mini-submit eris-mini-block" data-block disabled>Engelle</button><p class="eris-mini-error" role="alert"></p></section>';
     document.body.append(shade);
     shade.querySelector('[data-close]').onclick=closeProfile;
     shade.onclick=e=>{if(e.target===shade)closeProfile()};
@@ -70,14 +71,21 @@
       shade.querySelector('[data-gifters]').textContent=count(u.gift_fan_count);
       shade.querySelector('[data-fans]').onclick=()=>{closeProfile();window.ErisPersonalFanRanking?.(u.id)};
       shade.querySelector('[data-report]').onclick=()=>report(u);
-      const follow=shade.querySelector('[data-follow]'), gift=shade.querySelector('[data-gift]'), message=shade.querySelector('[data-message]');
+      const follow=shade.querySelector('[data-follow]'), gift=shade.querySelector('[data-gift]'), message=shade.querySelector('[data-message]'), block=shade.querySelector('[data-block]');
       let following=!!u.is_following;
+      let blocked=!!u.you_blocked;
       follow.textContent=u.is_self?'Kendi profilin':following?'Takibi bırak':'Takip et';
-      follow.disabled=!!u.is_self;gift.disabled=!!u.is_self||!!u.you_blocked||!!u.blocked_by_them;message.disabled=gift.disabled;
+      const syncBlock=()=>{block.textContent=blocked?'Engeli kaldır':'Engelle';gift.disabled=!!u.is_self||blocked||!!u.blocked_by_them;message.disabled=gift.disabled};
+      follow.disabled=!!u.is_self;block.disabled=!!u.is_self;syncBlock();
+      block.onclick=async()=>{block.disabled=true;error.textContent='';try{
+        await api('/users/'+encodeURIComponent(u.id)+'/block',{method:blocked?'DELETE':'POST'});
+        blocked=!blocked;syncBlock();
+        window.dispatchEvent(new CustomEvent('erischat:user-block-changed',{detail:{userId:u.id,blocked}}));
+      }catch(e){error.textContent=e.message||'Engel işlemi başarısız.'}finally{block.disabled=!!u.is_self}};
       follow.onclick=async()=>{follow.disabled=true;error.textContent='';try{await api('/users/'+encodeURIComponent(u.id)+'/follow',{method:following?'DELETE':'POST'});following=!following;follow.textContent=following?'Takibi bırak':'Takip et';const followers=shade.querySelector('[data-followers]');followers.textContent=count(Number(String(followers.textContent).replace(/\D/g,''))+(following?1:-1));window.ErisProfile?.refresh?.()}catch(e){error.textContent=e.message||'Takip işlemi başarısız.'}finally{follow.disabled=false}};
       const conversation=async withGift=>{error.textContent='';try{if(!window.ErisChatDM?.openFloating)throw new Error('Mesajlaşma hazır değil.');await window.ErisChatDM.openFloating(u.id,u.nickname||'Kullanıcı',withGift);closeProfile()}catch(e){error.textContent=e.message||'Konuşma açılamadı.'}};
       message.onclick=()=>conversation(false);gift.onclick=()=>conversation(true);
     }catch(e){if(shade.isConnected)error.textContent=e.message||'Profil yüklenemedi.'}
   }
-  window.ErisFloatingProfile={open,close:closeProfile};
+  window.ErisFloatingProfile={open,close:closeProfile,report};
 })();

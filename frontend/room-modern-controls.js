@@ -12,10 +12,20 @@
   bubble.setAttribute('aria-label', 'Odaya geri dön');
   bubble.innerHTML = '<span aria-hidden="true">⌂</span><small>Odaya dön</small>';
   document.body.appendChild(bubble);
+  const exitTarget = document.createElement('div');
+  exitTarget.id = 'erisRoomBubbleExit'; exitTarget.hidden = true;
+  exitTarget.setAttribute('aria-hidden', 'true');
+  exitTarget.innerHTML = '<span>×</span>';
+  document.body.appendChild(exitTarget);
+  const overExit = () => {
+    const b=bubble.getBoundingClientRect(), x=exitTarget.getBoundingClientRect();
+    return b.left+b.width/2 >= x.left && b.left+b.width/2 <= x.right && b.top+b.height/2 >= x.top && b.top+b.height/2 <= x.bottom;
+  };
+  const hideExit = () => {exitTarget.hidden=true;exitTarget.classList.remove('near')};
   let start = null, moved = false;
   bubble.addEventListener('pointerdown', e => {
     start = {x:e.clientX, y:e.clientY, left:bubble.getBoundingClientRect().left, top:bubble.getBoundingClientRect().top};
-    moved = false; bubble.setPointerCapture(e.pointerId);
+    moved = false; exitTarget.hidden=false; bubble.setPointerCapture(e.pointerId);
   });
   bubble.addEventListener('pointermove', e => {
     if (!start) return;
@@ -25,12 +35,20 @@
     const left=Math.min(window.innerWidth-bubble.offsetWidth-8,Math.max(8,start.left+dx));
     const top=Math.min(window.innerHeight-bubble.offsetHeight-8,Math.max(8,start.top+dy));
     bubble.style.left=left+'px';bubble.style.top=top+'px';bubble.style.right='auto';bubble.style.bottom='auto';
+    exitTarget.classList.toggle('near',overExit());
   });
-  bubble.addEventListener('pointerup', () => { start=null; });
-  bubble.addEventListener('pointercancel', () => { start=null; });
+  bubble.addEventListener('pointerup', () => {
+    const exit=moved&&overExit();start=null;hideExit();
+    if(exit){
+      moved=true;minimized=false;bubble.hidden=true;
+      bubble.style.left='';bubble.style.top='';bubble.style.right='';bubble.style.bottom='';
+      Promise.resolve(window.closeRealRoom?.()).catch(e=>window.toast?.(e.message||'Odadan çıkılamadı.'));
+    }
+  });
+  bubble.addEventListener('pointercancel', () => { start=null;hideExit(); });
   bubble.onclick=() => {
     if (moved || !roomId()) return;
-    minimized=false;bubble.hidden=true;surface()?.classList.add('show');
+    minimized=false;bubble.hidden=true;hideExit();surface()?.classList.add('show');
     window.ErisScreenProtection?.set?.('room',!!window.__erisCurrentRoomLocked);
   };
   function minimize(){
@@ -101,11 +119,11 @@
     let contribution=s.querySelector('#erisRoomContributionButton');
     if(!contribution){contribution=document.createElement('button');contribution.id='erisRoomContributionButton';contribution.type='button';contribution.textContent='◇ Oda katkısı';contribution.onclick=()=>{const d=dialog();d.hidden=false;load(activePeriod)};s.appendChild(contribution)}
     const gift=s.querySelector('#erisRoomGiftInline');if(gift)gift.remove();
-    if(minimized){minimized=false;bubble.hidden=true;s.classList.add('show')}
+    if(minimized){minimized=false;bubble.hidden=true;hideExit();s.classList.add('show')}
   }
   window.addEventListener('erischat:room-opened',setup);
-  window.addEventListener('erischat:room-closed',()=>{bubble.hidden=true;minimized=false;close()});
+  window.addEventListener('erischat:room-closed',()=>{bubble.hidden=true;hideExit();minimized=false;close()});
   const originalClose=window.closeRealRoom;
-  if(typeof originalClose==='function')window.closeRealRoom=async(...args)=>{bubble.hidden=true;minimized=false;close();return originalClose(...args)};
+  if(typeof originalClose==='function')window.closeRealRoom=async(...args)=>{bubble.hidden=true;hideExit();minimized=false;close();return originalClose(...args)};
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dialog()?.hidden)close()});
 })();

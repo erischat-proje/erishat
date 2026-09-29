@@ -20,6 +20,14 @@
   window.setInterval(checkMicrophoneSeat,2500);
 
   let outputEnabled=localStorage.getItem('eris_room_audio_output')!=='false';
+  const isBlocked=id=>!!window.ErisRoomBlocks?.has?.(id);
+  function syncBlockedAudio(){
+    for(const [id,audio] of sounds){
+      audio.muted=!outputEnabled||isBlocked(id);
+      if(!audio.muted)audio.play().catch(()=>{});
+    }
+  }
+  window.addEventListener('erischat:room-blocks-updated',syncBlockedAudio);
   const socket=()=>window.__erisRoomSocket;
   const signal=(type,to_user_id,payload)=>{if(socket()?.readyState===WebSocket.OPEN)socket().send(JSON.stringify({type,to_user_id,payload}))};
   const button=()=>document.getElementById('erisRoomMicInline');
@@ -28,7 +36,7 @@
   function showOutput(){const b=outputButton();if(!b)return;b.textContent=outputEnabled?'🔊':'🔈';b.classList.toggle('on',outputEnabled);b.setAttribute('aria-pressed',String(outputEnabled));b.title=outputEnabled?'Oda sesini kapat':'Oda sesini aç';b.setAttribute('aria-label',b.title)}
   async function toggleOutput(){
     outputEnabled=!outputEnabled;localStorage.setItem('eris_room_audio_output',String(outputEnabled));
-    for(const audio of sounds.values()){audio.muted=!outputEnabled;if(outputEnabled){try{await audio.play()}catch(e){window.toast?.('Tarayıcı sesi başlatmadı. Oda ses düğmesine tekrar dokun.')}}}
+    for(const [id,audio] of sounds){audio.muted=!outputEnabled||isBlocked(id);if(outputEnabled&&!isBlocked(id)){try{await audio.play()}catch(e){window.toast?.('Tarayıcı sesi başlatmadı. Oda ses düğmesine tekrar dokun.')}}}
     showOutput();window.toast?.(outputEnabled?'Oda sesleri açıldı.':'Oda sesleri kapatıldı.');
   }
   function shouldInitiate(id){return Boolean(myId&&id&&myId<id)}
@@ -36,7 +44,7 @@
   function drop(id){const timer=reconnectTimers.get(id);if(timer)clearTimeout(timer);reconnectTimers.delete(id);pendingIce.delete(id);const pc=peers.get(id);peers.delete(id);if(pc&&pc.signalingState!=='closed')pc.close();const audio=sounds.get(id);if(audio){audio.srcObject=null;audio.remove()}sounds.delete(id)}
   function peer(id){if(peers.has(id))return peers.get(id);const pc=new RTCPeerConnection({iceServers});peers.set(id,pc);
     pc.onicecandidate=e=>{if(e.candidate)signal('rtc_ice',id,e.candidate.toJSON())};
-    pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=outputEnabled;audio.playsInline=true;audio.muted=!outputEnabled;audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}audio.srcObject=e.streams[0]||new MediaStream([e.track]);if(outputEnabled)audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
+    pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=outputEnabled;audio.playsInline=true;audio.muted=!outputEnabled||isBlocked(id);audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}audio.muted=!outputEnabled||isBlocked(id);audio.srcObject=e.streams[0]||new MediaStream([e.track]);if(outputEnabled&&!isBlocked(id))audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
     pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){const t=reconnectTimers.get(id);if(t)clearTimeout(t);reconnectTimers.delete(id);return}if(['failed','disconnected','closed'].includes(pc.connectionState)&&!reconnectTimers.has(id)){const timer=setTimeout(()=>{reconnectTimers.delete(id);if(pc.connectionState==='connected'||pc.connectionState==='closed')return;drop(id);if(stream&&shouldInitiate(id))setTimeout(()=>offer(id).catch(()=>{}),350)},3000);reconnectTimers.set(id,timer)}};
     if(stream)stream.getTracks().forEach(track=>pc.addTrack(track,stream));return pc;
   }

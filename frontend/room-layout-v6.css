@@ -252,7 +252,11 @@
 #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {order:2!important;flex-basis:35px!important;min-width:35px!important;width:35px!important}
 #erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {order:3!important;min-width:57px!important;height:44px!important}
 #erisRoomMinimize {cursor:pointer}
-#erisRoomFloatingBubble[hidden],#erisRoomContribution[hidden] {display:none!important}
+#erisRoomFloatingBubble[hidden],#erisRoomBubbleExit[hidden],#erisRoomContribution[hidden] {display:none!important}
+#erisRoomBubbleExit{position:fixed;z-index:851;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);width:86px;height:86px;display:grid;place-items:center;border:2px solid #d4abff;border-radius:50%;background:#211137dd;box-shadow:0 0 0 8px #ae83ed25;color:#fff;pointer-events:none;transition:background .15s,scale .15s}
+#erisRoomBubbleExit span{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#ffffff1b;font-size:32px;line-height:1}
+#erisRoomBubbleExit.near{background:#b63d6ddd;scale:1.12}
+#erisLiveChat .eris-chat-msg[hidden]{display:none!important}
 #erisRoomFloatingBubble {
   position:fixed;z-index:850;right:15px;bottom:110px;width:73px;height:73px;
   touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
