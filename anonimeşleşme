@@ -1,0 +1,90 @@
+1. Ana Sayfa ve Mod Seçimi
+Karşılama: Kullanıcı ana sayfaya girdiğinde karşısına 'Anonim işlemler' kategorisi altında "Anonim Sesli Arama" ve "Anonim Görüntülü Arama" olmak üzere iki temel seçenek çıkar.
+
+Eşleşme Havuzu Çalışma Mantığı:
+Sesli arama butonunu seçen kullanıcılar yalnızca sesli arama kuyruğunda bekleyen diğer kullanıcılarla eşleşir. Aynı kural görüntülü arama için de geçerlidir; modlar birbirine karıştırılmaz.
+Standart ve Premium statüsündeki kullanıcılar aynı ortak havuzda eşleşirler. Havuz açısından herhangi bir ayrım veya kısıtlama bulunmaz.
+
+2. Arama Modu Seçimi ve Buton Yapıları
+Kullanıcı hangi arama moduna (sesli veya görüntülü) girdiyse, karşısına biri standart diğeri premium olmak üzere iki görsel buton çıkar:
+
+Sesli Arama Modu: standartsesli.png ve premiumsesli.png
+Görüntülü Arama Modu: standartgörüntülü.png ve premium görüntülü.png
+Premium Butonu ve Kilit Mekanizması
+Görünüm: Premium butonu hafif saydam (opacity) bir tasarımla ve üzerinde bir kilit simgesi ile görünür.
+
+Tetiklenme: Kullanıcı bu butona tıkladığında karşısına satın alma işlemlerini yöneteceği bir Yüzen Pencere (Modal) açılır. 
+
+3. Paket Hakları ve Süre Kuralları
+Sistem genelindeki tüm hak ve süre dengesi şu parametrelere göre çalışır:
+Günlük Arama Hakkı: Standart kullanıcılar için günlük 10 hak, Premium kullanıcılar için günlük 20 hak tanımlıdır.
+Başlangıç Arama Süresi: Standart aramalarda konuşma süresi 60 saniye ile başlarken, Premium aramalarda bu süre 120 saniyedir.
+Ek Süre (Kum Saati): Görüşme esnasında ek süre satın almak isteyen kullanıcılar 100 Lidya öderler. Süre miktarı süreyi satın alanın paketine göre belirlenir; Premium kullanıcılar 240 saniye, Standart kullanıcılar ise 120 saniye ek süreyi ortak sayaçlarına ekler.
+
+4. Premium Satın Alma ve Bilgilendirme Pencereleri
+A. Satın Alma Penceresi (Modal)
+Sağ Üst: Pencereyi kapatmak için bir X işareti yer alır.
+Sol Üst: Detaylı bilgi almak için bir ? (Soru İşareti) butonu bulunur.
+Orta Metin: "Premium giriş özelliğini satın almak istiyor musunuz? 500 Lidya"
+
+Alt Butonlar:
+Sol Buton (Kabul Et): Özelliği anında aktif eder ve pencereyi kapatır.
+Sağ Buton (Reddet): İşlemi iptal eder, pencereyi kapatarak bir önceki ekrana döndürür.
+
+B. Bilgilendirme / Soru İşareti (?) Penceresi
+Sağ Üst: Pencereyi kapatmak için bir X işareti bulunur (kullanıcıyı tekrar satın alma penceresine geri döndürür).
+
+İçerik Metinleri:
+Başlık: Premium özellik neleri aktif eder?
+Madde 1: Günlük arama hakkınız 10'dan 20'ye çıkar.
+Madde 2: Başlangıç arama süreniz 60 saniyeden 120 saniyeye çıkar.
+Madde 3: Süre uzatmalarınızda standart kullanıcılar 120 saniye alırken, artık 100 Lidya karşılığında 240 saniye alabilirsiniz.
+Kapanış Notu: Premium özelliğiniz gece saat 24.00'a kadar geçerlidir.
+
+C. Satın Alma Sonrası Arayüz Durumu
+Kullanıcı teklifi kabul edip Premium özelliğini aktif ettiğinde; gece saat 24.00'a kadar veya günlük 20 arama hakkı dolana kadar arayüzden "Standart Arama" butonu tamamen kaybolur.
+
+5. Arama Kuyruğu ve Eşleşme Süreci
+Kuyruğa Giriş: Kullanıcı aramaya başla butonuna tıkladığında ekranda "Lütfen bekleyin, aramaya bağlanacaksınız" uyarısı çıkar ve 3 saniyelik geri sayım başlar.
+
+Bekleme Ekranı:
+
+Sayaç bittiğinde eşleşme arama ekranına geçiş yapılır.
+
+Karşı taraf bulunana kadar arka planda kesintisiz olarak "Santral Bekleme Müziği - Santral Fon Müziği.mp3" çalmaya başlar.
+
+Ekran Yerleşimi:
+
+En Üst: "Bağlanıyorsunuz..." yazısı.
+
+Hemen Altında: Kullanıcının paketine göre geriye sayan süre sayacı (Standart için 60, Premium için 120 saniye).
+
+Sağ Üst Köşe: O anda arama butonunda aktif olan toplam kullanıcı sayısını yeşil bir balon içinde gösteren mini alan.
+
+En Alt: Kırmızı renkli "Telefonu Kapat" butonu.
+
+6. Görüşme Anı ve Etkileşimler
+Müsait olan iki kullanıcı birbiriyle eşleştiği anda:
+
+Ekranda "Aramaya katılıyorsunuz, hazırlanın" yazısı görünür ve 3 saniyelik bir sayaç başlar. Bu süre bitiminde her iki kullanıcı da canlı görüşme ekranına aktarılır.
+
+Arama İçi Butonlar ve Özellikler
+Profil İsteği Gönderme:
+
+Ekranın sağ üst köşesinde bir profil simgesi bulunur.
+
+Bu butona basan taraf, karşı tarafa profil isteği gönderir. Karşı tarafın ekranına sağ üstünde X işareti bulunan şu yüzen pencere düşer: "Karşı taraf profilinize erişmek istedi, onaylıyor musunuz?"
+
+Pencerenin altında Kabul ve Reddet butonları yer alır.
+
+Red durumunda: İsteği atan tarafa sağ üstü X'li "Karşı taraf profil isteğinizi reddetti" bildirimi gider.
+
+Kabul durumunda: Çift taraflı onay sağlandığı için her iki kullanıcının ekranının sol üst köşesine bir Profil Butonu eklenir. Bu sayede ekran küçülür; kullanıcılar birbirlerinin profillerine geçebilir, birbirlerini takip edebilir ve mesajlaşabilirler.
+
+Ek Süre Satın Alma (Kum Saati):
+
+Ekranın sol alt köşesinde bir Kum Saati Butonu yer alır.
+
+Butona basıldığında açılan pencerede: "<100 Lidya> karşılığında ek süre almak istiyor musunuz?" sorusu yer alır.
+
+Kabul edildiğinde; kum saati butonuna basan/süreyi talep eden kullanıcının paket türüne göre (Premium ise 240 saniye, Standart ise 120 saniye) ek süre anında aktif sayaçlarına yansıtılır.
