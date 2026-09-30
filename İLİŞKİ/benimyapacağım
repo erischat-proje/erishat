@@ -11,7 +11,12 @@ Yazılım altyapısını ve geliştirme kısmını kendin halledeceğin varsayı
 * **Gümüş & Safir Parıltılı Yüzükler (Orta Segment):** Etrafında hafif parıltı efektleri olan, profil kartında mavi/gümüş parıltı yayan tasarımlar.
 * **Altın & Pırlanta "Elit" Yüzükler (Yüksek Segment):** Profil çerçevesinde elmas ışıltısı çıkaran, ismin yanında özel elmas simgesi gösteren lüks yüzükler.
 * **"Efsanevi / Sonsuzluk" Tacı ve Yüzükleri (En Üst Segment):** Sadece çok yüksek Lidya bütçesi olanların alabileceği, odaya girerken özel animasyon patlatan en üst düzey taç+yüzük kombinasyonları.
-
+bu kısım için gereken tüm herşey aynı klasörde var 
+Bronş / Bakır Seviye Yüzükler (bakıryüzüktasarım1.png - bakıryüzüktasarım2.png)
+*Gümüş & Safir Parıltılı Yüzükler (gümüşyüzüktasarım1.png-gümüşyüzüktasarım2.png)
+* **Altın & Pırlanta "Elit" Yüzükler (altınyüzüktasarım1.png-altınyüzüktasarım2.png)
+* **"Efsanevi / Sonsuzluk" Tacı ve Yüzükleri (efsanevi1.png-efsanevi2.png)
+her bir görselde 10 adet var sen doğru kodlayarak bunları algılayacak şekilde işlem yapıcaksın ne gerekiyorsa ona göre yap işte
 ---
 
 ## 2. Özel Çift Efektleri ve Animasyonlar (Room Entrance Effects)
