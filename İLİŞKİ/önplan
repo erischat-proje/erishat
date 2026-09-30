@@ -1,0 +1,67 @@
+# ErisChat "Ruh İkizi / Sevgili ve Yüzük Sistemi" (Tam Kapsamlı Ekosistem Mimarisi)
+
+ErisChat platformunda kullanıcıların birbirleriyle kurduğu duygusal ve özel bağları en üst düzeye çıkarmak, Litmatch benzeri kanıtlanmış gamification (oyunlaştırma) ve samimiyet mekanizmalarını platformumuza entegre etmek amacıyla **"Sevgili / Ruh İkizi ve Yüzük"** sistemi profesyonel standartlarda uçtan uca tasarlanmıştır.
+
+---
+
+## 1. Samimiyet Puanı (Yakınlık Seviyesi) ve Ön Koşullar
+
+Her iki kullanıcının doğrudan resmi olarak yüzük takabilmesi ve sevgili olabilmesi için belirli bir etkileşim geçmişine sahip olması gerekir:
+* **Puan Kazanma Yolları:** Birebir metin sohbetleri (Soul Game), sesli sohbet odalarında (Voice/Party Chat) geçirilen süreler, birbirlerinin profillerine/gönderilerine etkileşim vermek ve ortak odalarda vakit geçirmek Samimiyet Puanı'nı artırır.
+* **Seviye Eşiği:** Belirlenen samimiyet puanı eşiği aşılmadan sistem "Yüzük Teklifi" gönderilmesine izin vermez.
+
+---
+
+## 2. Yüzük Satın Alma ve Fiyatlandırma (Lidya Bakiyesi ile)
+
+* **Ödeme Aracı:** ErisChat platformunda Litmatch mantığıyla entegre edilen yüzükler, platformun resmi para birimi olan **Lidya** ile satın alınır.
+* **Çeşitlilik:** Yüzüklerin fiyatları, tasarımlarına, profilde duruş şekillerine ve sundukları özel görsel/animasyon efektlerine göre kademeli olarak değişiklik gösterir.
+
+---
+
+## 3. Teklif Etme ve Kabul Protokolü
+
+* **Teklif Gönderimi:** Yüzüğü (Lidya ile) satın alan kullanıcı, sevgilisi olmak istediği kişinin profilinde yer alan özel **"Yüzük Teklifi Gönder"** butonuna basar veya sohbet penceresindeki özel ilişki/hediye alanından yüzüğü seçerek teklifini iletir. Teklif gönderilirken özel bir aşk sözü/notu eklenebilir.
+* **Onay Ekranı:** Karşı tarafın ekranına sağ üstünde kapatma **(X)** işareti olan şeffaf yüzen bir pencere düşer:
+  > *"[Kullanıcı Adı] size [Yüzük Adı] ile Ruh İkizi / Sevgili teklifi gönderdi. Kabul ediyor musunuz?"*
+  > *Alt kısımda **"Kabul Et ve Yüzüğü Tak"** ve **"Reddet"** butonları bulunur.*
+* **Kabul Sonrası:** Kabul edildiği an sistem genelinde resmi duyuru yapılır, yüzükler parmaklara takılır ve profiller mühürlenir.
+
+---
+
+## 4. Sevgili Sisteminin Sağladığı Ayrıcalıklar ve Görsel Kimlik (Aura & Rozetler)
+
+* **Profil Bağlama ve Gösterge:** Çiftlerin profillerinde birbirlerinin avatarları, isimleri ve ortak bir ilişki simgesi (takılan yüzük ve özel kalpler) görünür. Profili ziyaret eden herkes resmi olarak sevgili olduklarını net bir şekilde görür.
+* **Özel Unvanlar ve Seviyeler:** İlişki süresi uzadıkça ve etkileşim devam ettikçe "İlişki Seviyesi" (Aşk XP'si) artar. Bu seviyeler profile özel renkli efektler, unvanlar ve auralar kazandırır.
+* **Ses Odalarında Özel Girişler:** Sevgililerden biri veya ikisi birlikte bir sesli sohbet odasına (Party Chat) girdiğinde, odaya girişleri ekranı kaplayan özel bir animasyon ve oda genelinde geçen özel bir duyuru ile gösterilir.
+
+---
+
+## 5. Ortak Oda Sahipliği ve "Şifresiz Geçiş" Ayrıcalığı
+
+* **Ortak Oda Yönetimi:** Sevgili olan iki kullanıcı ortak bir oda açtığında, ikisi de sistemde **"Co-Owner (Ortak Oda Sahibi)"** yetkisine sahip olur. Oda yönetim paneli üzerindeki yetkiler eşit olarak paylaşılır.
+* **Kilitli Odalarda Şifre Muafiyeti:** Sevgililerden biri kilitli bir oda açtığında veya ortak odalarında kilit aktif olduğunda, normal moderatörlerin veya kullanıcıların girmek için şifre girmesi zorunluyken; **bu iki sevgili birbirlerinin odalarına girerken kesinlikle şifre sormaz, doğrudan ve sınırsız giriş hakkına sahip olur.**
+
+---
+
+## 6. Özel "Çift Koltuğu" (Couple Seats) ve Ses Mimarisi
+
+* **Koltuk Düzeni Entegrasyonu:** Oda içerisindeki koltuk yönetiminde, sevgililer istedikleri zaman yan yana olan iki koltuğu **"Çift Koltuğu"** olarak kilitleyebilir/işaretleyebilir. 
+* **Özel Oturma Koruması:** Bu iki koltuğa sevgililerden başkası (oda sahibi veya yüksek yetkili moderatörler dahi olsa) oturamaz; o koltuklar tamamen ikisine özel rezerve edilir.
+* **Özel Fısıltı / Çift Sohbet Modu:** Oda içerisindeyken odanın genel sesinden bağımsız olarak sadece ikisinin duyabileceği özel bir ses/fısıltı kanalını aktif edebilirler.
+
+---
+
+## 7. Çiftlere Özel Hediye Serisi ve "Aşk Kasası" (Couple Wallet)
+
+* **Özel Animasyonlu Hediyeler:** Sevgililer birbirlerine oda içinde hediye attığında, ekranda standart animasyonlar yerine devasa kalpler, yüzük efektleri ve isimlerinin yazılı olduğu özel bannerlar patlar.
+* **Ortak Çift Kasası:** Sevgililerin ortak biriktirebileceği **"Çift Lidya Kasası"** bulunur. İki taraf da bu kasaya Lidya aktarabilir; bu kasadaki bakiyeyle sadece çiftlere özel devasa hediyeler satın alabilir ve "En Güçlü Çiftler" sıralama tahtasında yer alabilirler.
+
+---
+
+## 8. Sevgili / Yüzük Sistemini Sonlandırma ("Ayrılık / Boşanma" Protokolü)
+
+İlişkinin bitmesi durumunda sistemin düzenini ve hakkaniyetini korumak için şu kurallar uygulanır:
+* **Ayrılma İşlemi:** Taraflardan biri profilindeki ilişki ayarları bölümünden **"Bağlantıyı / Yüzüğü Sonlandır"** butonuna basarak ayrılma talebi oluşturabilir.
+* **Soğuma / Bekleme Süresi:** Tek taraflı ayrılıklarda sistem çiftler için belirli bir soğuma/düşünme süresi (bekleme süresi) verir veya bağın anında koparılması için ekstra Lidya/Elmas maliyeti talep edebilir.
+* **Hakların Durumu:** Bağ koptuğunda daha önce harcanan yüzükler ve Lidialar **kesinlikle iade edilmez**. Profillerdeki özel aura, ortak yüzük simgeleri ve unvanlar anında silinerek standart görünüme geri dönülür.
