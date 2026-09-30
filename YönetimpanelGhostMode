@@ -1,15 +1,21 @@
-İLK OLARAK YÖNETİM PANEL BUTON İŞLEVLERİNE BAŞLAYACAK OLURSAK
-Ghost Mode butonu ilk olarak (Bu buton sadece [DA] YETKİLİLERDE Gözükecek)
-bu butona basınca ekranında arkası saydam bir yüzen pencere açılacak
-pencerenin sağ üstünde bir adet (x) işareti olucak buna basarak kapatabilecek
-pencere içeriği şu şekilde olucak
-pencere içeriği metini: Ghost mod aktif ettikten sonra artık odalarda görünmez olarak girebilirsin sevgili [DA](kullanıcı adı) Ghost mod senden şunları yasaklayacaktır
-1-) Odalarda yazma özelliğin engellenecektir
-2-) Odalara girdiğinin bilgisi engellenecektir
-3-) Kilitli odalara şifre girmeden girme yetkin aktif olacaktır
-4-) Odalarda koltuğa oturma özelliğin engellenecektir
-5-) Odalarda hediye atma özelliğin engellenecektir
-Bu işlevlerin tekrar aktif hale gelmesi için Ghost mod kapatmalısın gizlilik esastır
-Ve buna göre admin yetkilerini düzenleyeceksin tamamını
-herhangi bir admin statüsünde [DA] larda dahil kilitli odalara girme yetkisi olmayacak [DA] yetkisi olanlarda Ghost Mode açmadan hiçbir şekilde giremeyecek kilitli odalara Girerken Ghost mode açmak zorunda olucak
-(Ghost modda olan tüm işlemler bütün admin yetkilerinden kalkacaktır herhangi bir admin ghost mod açmadan bu işlevleri herhanbi bir şekilde gerçekleştiremez)
+Yönetim Paneli: Ghost Mode (Hayalet Modu) Tasarımı
+Sistem güvenliğini, gizliliği ve yetki denetimini en üst düzeye çıkarmak üzere Ghost Mode mekanizması tamamen profesyonel, şeffaf ve kuralcı bir Mimaride yeniden yapılandırılmıştır.
+1. Yetkilendirme ve Görünürlük Kriterleri
+Özel Erişim: Bu buton ve işlev yalnızca [DA] (Director Admin / Üst Düzey Yetkili) seviyesindeki yetkililerin panelinde görüntülenecektir. Alt kademe adminler bu butonu göremez ve hiçbir şekilde tetikleyemez.
+Kilitli Oda Kısıtlaması: Hiçbir admin statüsü (dahil olmak üzere standart [DA] yetkileri) doğrudan kilitli odalara şifresiz giriş yapamaz. [DA] yetkililerinin kilitli odalara girebilmesi için mutlaka Ghost Mode'u aktif hale getirmesi zorunludur.
+2. Yüzen Pencere (Floating Window) Arayüzü
+Butona tıklandığında ekranın ortasında/uygun bir köşesinde, modern bir arayüze sahip saydam arka planlı (blur/transparan) bir yüzen pencere açılır.
+Kapatma Butonu: Pencerenin sağ üst köşesinde şık bir (X) işareti bulunur. Kullanıcı buna tıklayarak pencereyi kapatabilir (bu işlem Ghost Mode'u kapatmaz, yalnızca bilgilendirme penceresini gizler).
+Pencere İçeriği Metni:
+"Ghost modu aktif ettikten sonra artık odalarda görünmez olarak girebilirsin sevgili [DA] <kullanıcı_adı>. Ghost mod senin için şu kısıtlamaları ve yetkileri devreye sokacaktır:
+Sohbet Kısıtlaması: Odalarda yazma özelliğin tamamen engellenecektir.
+Giriş Gizliliği: Odalara girdiğine dair sistem bildirimleri ve log bilgileri engellenecektir.
+Kilitli Oda Erişimi: Şifre girmeden kilitli odalara giriş yetkin aktif olacaktır (Bu kural, [DA] yetkililerinin kilitli odalara girmesi için zorunlu ön koşuldur).
+Koltuk Kısıtlaması: Odalarda koltuğa oturma özelliğin engellenecektir.
+Hediye Kısıtlaması: Odalarda hediye atma özelliğin engellenecektir.
+Bu işlevlerin normale dönmesi ve standart yetkilerini tekrar kazanabilmek için Ghost Modu kapatmalısın. Gizlilik esastır."
+3. Teknik ve Güvenlik Kuralları (Admin Yetki Matrisi)
+Ghost Mode mimarisi, istisnasız tüm admin yetkilerini şu şekilde yeniden sınırlar:
+Sıfır İstisna Kuralı: Hiçbir admin (Ghost Mode açılmadığı sürece) kilitli odalara sızamaz, yazamaz, koltuğa oturamaz veya hediye gönderemez.
+Mod Geçiş Güvenliği: Ghost Mode aktifken yapılan tüm eylemler (girişler, çıkışlar) sistem loglarında şifrelenir/gizlenir; dışarıdan izlenemez.
+Yetki Geri Yükleme: Ghost Mode kapatıldığı anda, [DA] kullanıcısı normal yetki statüsüne güvenli bir şekilde geri döner.
