@@ -1,0 +1,15 @@
+İLK OLARAK YÖNETİM PANEL BUTON İŞLEVLERİNE BAŞLAYACAK OLURSAK
+Ghost Mode butonu ilk olarak (Bu buton sadece [DA] YETKİLİLERDE Gözükecek)
+bu butona basınca ekranında arkası saydam bir yüzen pencere açılacak
+pencerenin sağ üstünde bir adet (x) işareti olucak buna basarak kapatabilecek
+pencere içeriği şu şekilde olucak
+pencere içeriği metini: Ghost mod aktif ettikten sonra artık odalarda görünmez olarak girebilirsin sevgili [DA](kullanıcı adı) Ghost mod senden şunları yasaklayacaktır
+1-) Odalarda yazma özelliğin engellenecektir
+2-) Odalara girdiğinin bilgisi engellenecektir
+3-) Kilitli odalara şifre girmeden girme yetkin aktif olacaktır
+4-) Odalarda koltuğa oturma özelliğin engellenecektir
+5-) Odalarda hediye atma özelliğin engellenecektir
+Bu işlevlerin tekrar aktif hale gelmesi için Ghost mod kapatmalısın gizlilik esastır
+Ve buna göre admin yetkilerini düzenleyeceksin tamamını
+herhangi bir admin statüsünde [DA] larda dahil kilitli odalara girme yetkisi olmayacak [DA] yetkisi olanlarda Ghost Mode açmadan hiçbir şekilde giremeyecek kilitli odalara Girerken Ghost mode açmak zorunda olucak
+(Ghost modda olan tüm işlemler bütün admin yetkilerinden kalkacaktır herhangi bir admin ghost mod açmadan bu işlevleri herhanbi bir şekilde gerçekleştiremez)
