@@ -1,20 +1,48 @@
-lidyayükleme.png de örnek bir uygulama nın yükleme ekranı tasarımı var
-bizim sisteme gelecek olursak şu şekilde olucak profilde lidya yükleme diye solunda lidya coin sembolü olan bir buton olucak profil sekmesinde
-oraya basınca fiyat listesini ben yazıyorum şimdi
-her sıra da ücreti satıcağımız lidya ve vereceğimiz  bonus yazıyor
-2 TL ücret 80 lidya ve bonus 15 lidya
-7 tl ücret 320 lidya ve bonus 79 lidya
-14 tl ücret 640 lidya ve bonus 172 lidya
-28 tl ücret 1280 lidya ve bonus 326 lidya
-42 tl ücret 1920 lidya ve bonus 498 lidya
-73 tl ücret 3360 lidya ve bonus 872 lidya
-105 tl ücret 4800 lidya ve bonus 1245 lidya
-205 tl ücret 9000 lidya ve bonus 2334 lidya 
-305 tl ücret 13200 lidya ve bonus 3423 lidya 
-504 tl ücret 21600 lidya ve bonus 5602 lidya
-856 tl ücret 37800 lidya ve bonus 9800 lidya
-1209 tl ücret 54000 lidya ve bonus 14000 lidya
-1813 tl ücret 81000 lidya ve bonus 21000 lidya 
-2418 tl ücret 108000 lidya ve bonus 28000 lidya
-3022 tl ücret 135000 lidya ve bonus 35000 lidya
-3627 tl ücret 162000 lidya ve bonus 42000 lidya 
+# ErisChat Kullanıcı Profil Paneli: Manuel Ödeme (Mail Order / IBAN) ve Lidya Yükleme Mimarisi
+
+ErisChat platformunda aktif bir sanal pos / güvenli ödeme entegrasyonu tamamlanana kadar geçiş sürecinde kullanılacak **Manuel Ödeme (IBAN / Havale / EFT ve Mail Order)** altyapısı, kullanıcı deneyimini kusursuz ve güvenli tutacak şekilde tasarlanmıştır.
+
+---
+
+## 1. Profil Arayüzü ve Paket Seçim Ekranı
+
+* **Buton Konumu:** Kullanıcı profil sekmesindeki alt menüde, sol kısmında resmi **Lidya Coin sembolü** bulunan **"Lidya Yükleme"** butonuna tıklandığında modern, şeffaf arka planlı yükleme penceresi açılır.
+* **Fiyat Tarifesi ve Paket Seçimi:** Kullanıcı, bütçesine ve ihtiyacına uygun olan resmi paket listesinden (2 TL - 3627 TL aralığındaki 16 kademeli temel + bonus avantajlı paketler) birini seçer.
+
+---
+
+## 2. Manuel Ödeme Yönlendirme ve Bilgilendirme Akışı
+
+Kullanıcı dilediği paketi seçip **"Satın Al / Yükleme Yap"** butonuna tıkladığı an, sistem henüz otomatik ödeme entegrasyonu bulunmadığı için onu doğrudan **Manuel Ödeme ve Bildirim Ekranı**na yönlendirir.
+
+### A. Açılan Yüzen Pencere ve Yönlendirmeler
+Ekranın ortasında sağ üst köşesinde kapatmak için **(X)** işareti bulunan şeffaf bir pencere açılır. Pencere içeriği şu adımlardan oluşur:
+
+1. **Ödeme Yöntemi Bilgilendirmesi:** 
+   > *"Geçici bir süre için ödemelerimiz güvenli **IBAN (Havale/EFT)** veya **Mail Order** yoluyla manuel olarak alınmaktadır. Lütfen aşağıdaki resmi şirket IBAN bilgilerimize ödemenizi gerçekleştiriniz."*
+2. **Şirket / Kurum IBAN Bilgileri:** 
+   * **Banka Adı:** [Banka Adı Örn: Ziraat / Garanti vb.]
+   * **Alıcı Adı / Unvanı:** ErisChat Bilişim Teknolojileri LTD. ŞTİ.
+   * **IBAN Numarası:** `TR00 0000 0000 0000 0000 0000 00`
+   * **Açıklama / Referans Kodu:** Kullanıcıya özel üretilen işlem referans kodu (Örn: `ERIS-LIDYA-9982`). *Kullanıcı bu kodu açıklama kısmına yazmak zorundadır.*
+3. **Ödeme Bildirim Formu (Dekont Yükleme):** 
+   * Kullanıcı ödemeyi yaptıktan sonra aynı pencere içerisinde yer alan form alanına **İşlem Dekontu (Görsel/PDF)** yükler.
+   * **Gönder Butonu:** Dekontu yükledikten sonra "Ödemeyi Bildir" butonuna basar.
+
+---
+
+## 3. Kullanıcıya Giden Onay Bildirimi
+
+Kullanıcı "Ödemeyi Bildir" butonuna bastığı an, mevcut pencere kapanır ve karşısına sağ üstünde **(X)** işareti olan şu bilgi ekranı gelir:
+
+> *"Ödeme bildiriminiz ve dekontunuz başarıyla finans/müşteri hizmetleri departmanımıza iletilmiştir. Uzmanlarımız dekontunuzu kontrol ettikten sonra seçtiğiniz paket (Temel + Bonus Lidya) en kısa sürede hesabınıza otomatik olarak tanımlanacaktır. İlginiz için teşekkür ederiz."*
+
+---
+
+## 4. Yönetim Tarafı ([DA] / [FA]) Manuel Onay Paneli
+
+Kullanıcıların gönderdiği manuel ödeme bildirimleri, yönetim merkezinde yer alan **Lidya Ödeme Bildirimleri Paneli**ne düşer.
+
+* **İnceleme Ekranı:** Yetkili ([DA] veya [FA]) ekrana gelen bildirimde; kullanıcının kullanıcı adını, ID'sini, seçtiği paketi, ödeme yaptığı tutarı ve yüklediği dekont görselini inceler.
+* **Kanıt / Dekont Zorunluluğu:** Manuel işlemlerde dekont görseli sistem tarafından zorunlu kılınmıştır; dekont olmadan onay verilemez.
+* **Onay ve Bakiye Tanımlama:** Yetkili bilgileri doğrulayıp **"Onayla ve Bakiyeyi Yükle"** butonuna bastığı an, sistem kullanıcının hesabına ilgili Lidya miktarını (temel + bonus) anında yansütır ve log sistemine kaydeder.
