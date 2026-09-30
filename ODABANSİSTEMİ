@@ -1,0 +1,84 @@
+# ErisChat Oda Ban ve Yetkili Denetim Mekanizması Mimarisi
+İLK OLARAK ODA MODERASYONU BUTONUNUN ADI ODA BAN OLARAK GÜNCELLENİYOR 
+ErisChat platformunda genel ban sisteminin yanı sıra, belirli bir odaya özel olarak uygulanan **Oda Ban** sistemi; haksız veya yetkisiz oda uzaklaştırma/yasaklama işlemlerini önlemek, yetki sınırlarını netleştirmek ve log denetimini sağlamak amacıyla uçtan uca modernize edilmiştir.
+
+---
+
+## 1. Yetki ve Görünürlük Kriterleri
+
+* **Erişim Noktası:** Yönetim veya oda panellerinde yer alan **Oda Ban** seçeneği/butonu.
+* **Yetki Kısıtı:** Bu buton yalnızca **[UA] (Uzman Admin)** ve **[DA] (Director Admin)** yetki sınıfına sahip yöneticilerde görünür. Alt kademelerde kesinlikle yer almaz.
+
+---
+
+## 2. Oda Ban Talep ve Doğrudan Oda Ban Akışı
+
+* **[DA] Yetkilisi İçin:** Oda ban formundaki tüm alanlar doldurulduktan sonra devam tuşuna basıldığı an, **[DA] yetkisinin doğrudan oda ban yetkisi bulunduğu için** işlem anında gerçekleşir ve kullanıcı ilgili odadan yasaklanır.
+* **[UA] Yetkilisi İçin:** [UA] kademesinin doğrudan oda ban yetkisi yoktur. Formu eksiksiz doldurup devam tuşuna bastığında işlem bir **Oda Ban Talebi** olarak işleme alınır:
+  * [UA] ekranında sağ üstünde kapatma **(X)** işareti olan şeffaf bir yüzen pencere açılır:
+    > *"Sevgili müşteri temsilcimiz [Kullanıcı Adı], oda ban talebiniz alınmıştır. Üst yetkililere aktarılmıştır. İlginiz için teşekkür ederiz. İyi çalışmalar."*
+
+---
+
+## 3. Üst Kademeye İletim ve Cezai Sorumluluk (FA / DA Yönlendirmesi)
+
+[UA] tarafından açılan oda ban talebi, sırasıyla üst yönetim havuzuna aktarılır:
+1. **Hiyerarşik Kontrol:** Sistem ilk olarak sistemde aktif bir **FA (Firma Admin)** olup olmadığını kontrol eder. Aktif FA varsa talep öncelikle FA kademesine düşer. Eğer aktif FA yoksa doğrudan **DA** kademesine yönlendirilir.
+2. **FA Cezai Sorumluluk Kuralı (3 Dakika Kısıtlaması):** 
+   * Yetkili ekrana gelen oda ban talebi penceresini incelemeden doğrudan **(X) işaretine basıp kapatırsa**, FA rütbesindeki admin için **3 dakikalık sistem kısıtlaması** devreye girer.
+   * Bu süre zarfında keşfet vb. herhangi bir yere tıklamak isterse şu uyarı ekranı gelir: *"Oda ban talebi ile ilgilenmediğiniz için işlemleriniz 3 dakikalığına kısıtlanmıştır."* (Sağ üstte kalan süreyi gösteren sayaç ve kapatmak için **(X)** işareti bulunur).
+   * Bu ceza **[DA] yetkililerinde kesinlikle uygulanmaz**.
+
+---
+
+## 4. Talep İnceleme Paneli ve Onay Mekanizması
+
+Talep ekranı açıldığında sağ üstte kapatma **(X) işareti yer almaz**. Zorunlu inceleme esastır.
+
+### A. Oda Ban Talep Detay Bileşenleri
+* **Talep Numarası:** Sistem tarafından `1`den başlayarak artan sayaç (`Oda Ban Talep No: #0001`).
+* **Talep Oluşturan:** İşlemi başlatan [UA] yetkilisinin adı ve ID bilgisi.
+* **Talep Zamanı:** Talebin oluşturulduğu tarih ve saat.
+* **Hedef Oda ID / Adı:** Ban işleminin uygulanacağı oda bilgisi.
+* **Ban Talep Edilen ID:** Odadan yasaklanması istenen kullanıcının ID numarası.
+* **Oda Ban Süresi:** Gün bazlı süre veya "Süresiz" ibaresi.
+* **İşlem Nedeni:** Yetkilinin odadan uzaklaştırma gerekçesi.
+* **Kanıt Yükleme Alanı:** İşlem nedeninin altında isteğe bağlı olarak en fazla **3 adet fotoğraf** veya **1 adet video** eklenebilir. Talep ekranında bunlar küçük ön izleme (thumbnail) olarak görünür; yetkili üzerine tıklayarak dosyayı büyütebilir, sağ üstteki **(X)** ile kapatabilir.
+
+### B. Karar Butonları
+* **Kabul Butonu (Yeşil):** Tıklandığı an kullanıcının ilgili odadan banlanması resmi olarak gerçekleştirilir.
+* **Reddet Butonu:** Oda ban talebini reddeder. (Eğer reddeden **FA** ise yine yukarıda belirtilen 3 dakikalık kısıtlama cezası uygulanır).
+
+---
+
+## 5. Onay Sonrası Etkileşimler ve Bildirimler
+
+* **Talebi Açan [UA] Yetkilisine Giden Ekran:** Oda banı onaylandığı an [UA] yetkilisinin ekranına şu yüzen pencere gelir:
+  > *"Oda ban talebiniz [Tarih/Saat] tarihinde müşteri danışmanlarımız tarafından onaylanmış ve oda ban işleminiz gerçekleşmiştir."* (Sağ üstte **(X)** kapatma işareti ve altında **Teşekkür Et** butonu bulunur).
+* **Teşekkür Butonu Etkisi:** [UA] "Teşekkür Et" butonuna bastığında, talebi onaylayan üst yetkilinin ekranına şu bilgi düşer:
+  > *"[Kullanıcı Adı] admin oda banı onayınız için size teşekkürlerini iletti. Keyifli çalışmalar."* (Sağ üstte **(X)** işareti bulunur).
+
+---
+
+## 6. Gelişmiş Loglama ve "İşlemi Geri Al" Mekanizması
+
+Onaylanan tüm oda ban işlemleri (FA veya DA onaylı fark etmeksizin) merkezi log sistemine şu formatta kaydedilir:
+
+```text
+==================================================
+[ERISCHAT ODA BAN TALEBİ VE ONAY LOGU]
+==================================================
+ODA BAN TALEBİ OLUŞTURAN   : [Rütbe - Kullanıcı Adı - ID]
+ODA BAN TALEBİNİ KABUL EDEN: [Rütbe - Kullanıcı Adı - ID]
+TALEP ZAMANI               : [Tarih ve Saat]
+HEDEF ODA                  : [Oda Adı / Oda ID]
+BAN TALEP EDİLEN KULLANICI : [Kullanıcı Adı ve ID]
+SÜRE                       : [X Gün / Süresiz]
+İŞLEM NEDENİ               : [Belirtilen Gerekçe]
+KANIT                      : [Ön İzleme / Küçük Resim Bağlantısı]
+--------------------------------------------------
+[ALT YETKİ / DA YÖNETİM İŞLEMLERİ]
+* Eğer üst yetkili veya [DA] tarafından "İşlemi Geri Al" butonuna basılırsa oda banı kaldırılır.
+* Talebi Onaylayan Admin Ekranı Bildirimi: "Oda ban talebi onayınız gözden geçirilmiş ve haksız bir oda banı olduğuna karar verilmiştir. Lütfen bir daha ki sefer daha dikkatli olunuz."
+* İşlemi Geri Alan Yetkili Ekranı Bildirimi: "[Kullanıcı Adı] tarafından onaylanan oda ban talebi geri alınıp kullanıcının oda yasağı kaldırılmıştır."
+==================================================
