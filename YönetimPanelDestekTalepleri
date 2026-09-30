@@ -1,47 +1,100 @@
-Destek talepleri butonları şu şekilde çalışacak
-GİZLİLİK NEDENİ İLE KULLANICI DA KESİNLİKLE DESTEĞE BAKAN YETKİLİ NİN KİM OLDUĞU GÖZÜKMİCEK MÜŞTERİ TEMSİLCİSİ YAZICAK MESAJLAŞMA SIRASINA
-Birincisi şu şekilde güncellenecek herhangi bir yetkili aktif olduğunda uygulamada (SA UA FA DA) YETKİ SIRASINA GÖRE İLERLİCEK SİSTEM
-SİSTEM SA VARSA AKTİF DAHA ÜSTLERE GÖNDERMİCEK DESTEK TALEBİNİ EĞER SA LARDAN KABUL EDEN OLMAZSA 20 SANİYE İÇİNDE UA LARA GÖNDERECEK YİNE 20 SANİYE KURALI FA LARA İLETİCEK YİNE 20 SANİYE KURALI SONRASINDA DALARA İLETİCEK
-SİSTEM ŞU ŞEKİLDE ÇALIŞACAK HERHANGİ BİR KULLANICI DESTEK TALEBİ OLUŞTURDUYSA SİSTEM BU YUKARDAKİ KURALA GÖRE İLERLİCEK HERHANGİ BİR ŞEKİLDE UA LARA İLETİLSE BİLE EĞER ORDAN CEVAP GELMEDİ VARSAYALIM AMA O SIRADA BİR SA AKTİF DURUMA GEÇTİ TEKRARDAN O SA YA GÖNDERİLECEK
-HER BİR DESTEK TALEBİ KENDİ BEYNİNDE GÖNDERİLDİĞİ YETKİLİYİ NOT EDİCEKKİ TEKRARDAN AYNI YETKİLİ YE GÖNDERİLMESİN
-YETKİLİNİN EKRANINA YÜZEN PENCERE GELİCEK HER ŞİKAYET ŞU ŞEKİLDE İSİMLENDİRİLECEK (ŞİKAYET NUMARASI(1 DEN BAŞLAYACAK DEVAM EDİCEK SİSTEM SAYAÇ TUTUCAK)
-ŞİKAYET NUMARASI: YUKARIDAKİ ANLATTIĞIM
-ŞİKAYETİ OLUŞTURAN: BURDA GİZLİLİK NEDENİ İLE (SA VE UA) OLAN ADMİNLERDE KULLANICI ADI GÖZÜKMEYECEK ÜSTÜ OLAN (FA VE DA) OLAN ADMİNLERDE GÖZÜKECEK SA VE UA LARDA (ERİSCHAT MÜŞTERİ) YAZICAK
-ŞİKAYETÇİ ID: BURDA GİZLİLİK NEDENİ İLE (SA VE UA) OLAN ADMİNLERDE KULLANICI ID NUMARASI GÖZÜKMEYECEK ÜSTÜ OLAN (FA VE DA) OLAN ADMİNLERDE GÖZÜKECEK (ID GİZLENMİŞTİR) YAZICAK
-ŞİKAYET NEDENİ: BURDA KULLANICININ YAZMIŞ OLDUĞU NEDEN GÖZÜKECEK
-ANLIK LOG: BURDA SİSTEMİN ALMIŞ OLDUĞU EKRAN GÖRÜNTÜSÜ OLUCAK ŞİKAYET KONUSUNDA HERHANGİ BİR ŞEY ŞİKAYET EDİLİRSE SİSTEM KULLANICININ KANIT KOYMAMA İHTİMALİNE KARŞIN OTOMATİK EKRAN GÖRÜNTÜSÜ ALIP BURAYA KOYACAK KULLANICI YA EKRAN GÖRÜNTÜSÜ BELLİ EDİLMEYECEK
-(BUNUN NEDENİ ŞU KULLANICILARIN HAKSIZ YERE BİRİNİ ŞİKAYET EDİP BANLATMAYA ÇALIŞMASININ ÖNÜNE GEÇMEK)
-ŞİKAYET KANITI: BURDA KULLANICI NIN YÜKLEMİŞ OLDUĞU KANIT RESİM VE VİDEO VARSA KÜÇÜK OLARAK GÖZÜKECEK ADMİN BUNU ÜSTÜNE TIKLARAK BÜYÜTEBİLECEK BÜYÜTTÜKTEN SONRA KAPATACAK KAPATABİLMESİ İÇİN KANITLARI SAĞ ÜSTÜNDE X İŞARETİ OLUCAK
-BUNLARIN ALTINDA SOL ALTTA KABUL ET BUTONU KABUL ETE BASINCA İLK OLARAK KULLANICI YA BİLDİRİM GİDİCEK DESTEK TALEBİNİZ YETKİLİ MÜŞTERİ TEMSİLCİNİZ TARAFINDAN KABUL EDİLMİŞTİR HAZIRLANIN CANLI DESTEĞE BAĞLANACAKSINIZ
-MÜŞTERİ TEMSİLCİSİNDE İKİNCİ OLARAK SAĞ ALTTA MÜSAİT DEĞİLİM BUTONU OLUCAK EĞER BU BUTONA BASARDA MÜSAİT DEĞİL OLARAK İŞARETLENİCEK SİSTEM ÜZERİNDE 1 DAKİKA BOYUNCA EĞER BUNA BASARSA MÜŞTERİ TEMSİLCİSİ EĞER ANLIK OLARAK BİR ODA DA İSE O ODADAN SİSTEM TARAFINDAN ÇIKARILACAK
-VEYA MESAJLARA KEŞFET VS GİBİ YERLERE İŞLEM BİLİNÇLİ REDDİNDEN DOLAYI 3 DAKİKA BOYUNCA GİRMESİ YASAKLANACAK EĞER GİRMEYE ÇALIŞIR İSE EKRANINA BİR YÜZEN PENCERE GELİCEK O PENCERE SAĞ ÜSTÜNDE X İŞARETİ OLUCAK ONA BASABİLECEK
-3 DAKİKA SAYACI SİSTEM TARAFINDAN SAYILACAK VE MÜŞTERİ TEMSİLCİSİ HERHANGİ BİR YERE TIKLADIĞINDA ANLIK OLARAK KALAN SÜRESİ DEĞİŞECEK
-VE EKRANINDA ŞU YAZICAK MÜŞTERİ TALEPLERİNE GEREKEN ÖZENİ GÖSTERMEDİĞİNİZ İÇİN NORMAL İŞLEVLERİNİZ (KALAN SÜRE) BOYUNCA YASAKLANMIŞTIR
-3 DAKİKALIK SÜRESİ DOLUNCA MÜŞTERİ TEMSİLCİSİ TEKRARDAN MÜSAİT DURUMA GEÇECEKTİR BU KISITLAMA [DA] HARİÇ HERKEZDE GEÇERLİ OLACAKTIR
-BURDA KULLANICI ÖNÜNDE İKİ BUTON OLUCAK SOLDA HAZIRIM BUTONU BUNA BASINCA KULLANICI DESTEK TALEBİNİ KABUL EDEN MÜŞTERİ TEMSİLCİSİNE BİLGİ GİDİCEK YARDIMCI OLDUĞUNUZ MÜŞTERİNİZ HAZIR KONUŞMAYA BAĞLIYORUM SİZİ YAZICAK
-HAZIRIM BUTONU BUNA BASINCA KULLANICI DESTEK TALEBİNİ KABUL EDEN MÜŞTERİ TEMSİLCİSİNE BİLGİ GİDİCEK YARDIMCI OLDUĞUNUZ MÜŞTERİNİZ HAZIR KONUŞMAYA BAĞLIYORUM SİZİ YAZICAK
-HAZIR DEĞİLİM BUTONUNA BASARSA KULLANICI DESTEK TALEBİNE BİLGİ GİDİCEK YİNE MÜŞTERİNİZ MÜSAİT OLMADIĞINDAN DOLAYI DESTEK TALEBİ SONLANDIRILMIŞTIR KEYİFLİ ÇALIŞMALAR DİLERİZ
-EĞER HAZIR İŞLEVİ GERÇEKLEŞİRSE MÜŞTERİ TEMSİLCİSİ VE MÜŞTERİ NİN EKRANINA BİR YÜZEN PENCERE GİDİCEK
-SOL ÜSTTE TALEP NUMARASI SAĞ ÜSTTE X İŞARETİ BULUNACAK ALTINDA MESAJ EKRANI VE BİR ALTINDA SOLDA + İŞARETİ BUNA BASARAK FOTOĞRAF VE VİDEO YÜKLEME YAPABİLECEKLER MÜŞTERİLER BU BUTON SADECE MÜŞTERİLERDE GÖZÜKECEK MÜŞTERİ TEMSİLCİLERİNDE GÖZÜKMEYECEK
-HEMEN ONUN YANINDA CEVAP YAZMAK İÇİN TIKLAYABİLECEKLERİ CEVAP KUTUSU ONUN SAĞINDA  GÖNDER BUTONU 
-MESAJLARDA ŞU ŞEKİLDE OLUCAK
-MESAJ YAZILINCA MESAJIN SAĞ ALTINDA MESAJ TARİHİ VE ONUN YANINDA SAAT DAKİKA VE ONUN YANINDA KARŞI TARAF TARAFINDAN OKUNDUĞUNU BELLİ EDEN TEK TİK İKİ TİK MUHABBETİ 
-BİR ŞEKİLDE KONUŞMA TAMAMLANDI VE MÜŞTERİ TARAFINDAN SAĞ ÜSTTE BULUNAN X BUTONUNA BASILIP TALEP KAPATILIRSA MÜŞTERİ TEMSİLCİSİ EKRANINDAN DA KAPATILACAK VE MÜŞTERİ TEMSİLCİSİNİN EKRANINA BİR YÜZEN PENCERE GELİCEK SAĞ ÜSTÜNDE PENCEREYİ KAPATABİLECEĞİ X İŞARETİ OLUCAK
-PENCERENİN İÇİNDE MÜŞTERİMİZ İLE İLGİLENDİĞİNİZ ZAMAN AYIRDIĞINIZ İÇİN TEŞEKKÜR EDERİZ İYİ ÇALIŞMALAR YAZICAK
-EĞER BİR ŞEKİLDE MÜŞTERİ TEMSİLCİSİNDE BULUNAN X İŞARETİNE BASILIP KONUŞMA KAPATILIRSA MÜŞTERİNİN EKRANINA BİR YÜZEN PENCERE DE UYARI GİDİCEK ERİSCHAT AİLESİ OLARAK BİZİMLE ARAMIZDA OLDUĞUNUZ İÇİN ÇOK MEMNUNUZ (KULLANICI ADI) HERHANGİ BİR TALEBİNİZ OLDUĞUNDA TEKRARDAN MÜŞTERİ TEMSİLCİLERİMİZ İLE İLETİŞİME GEÇEBİLİRSİNİZ YAZICAK KAPATABİLMESİ İÇİN X İŞARETİ OLUCAK
-İKİ TARAFLI DA DESTEK TALEBİ KAPANIRSA MÜŞTERİNİN KARŞISINDA BİR YÜZEN PENCERE GİDİCEK MÜŞTERİ TEMSİLCİMİZİ DEĞERLENDİRİRMİSİNİZ DEĞERLENDİRMENİZ BİZİM İÇİN ÖNEMLİ YAZICAK SAĞ ÜSSTE MÜŞTERİNİN PENCEREYİ KAPATABİLECEĞİ BİR X İŞARETİ OLUCAK
-DEĞERLENDİRMEK ZORUNDA OLMAYACAK YANİ
-ALTINDA BİR CEVAP KISMI OLUCAK ORAYA BASARAK MÜŞTERİ TEMSİLCİMİZİ DEĞERLENDİREBİLECEKLER VE ONUN HEMEN ALTINDA GÖNDER BUTONU OLUCAK
-BUNUN LOG SİSTEMİNE GELİCEK OLURSAK 
+# ErisChat Profesyonel Destek ve Şikayet Yönetim Sistemi Mimarisi
 
-LOGLARA HANGİ LOG İSE SA UA FA FARKETMEKSİZİN LOG SİSTEMİNE ŞU ŞEKİLDE DÜŞÜCEK 
-ŞİKAYET İLE İLGİLENEN YETKİLİ (RÜTBESİ [DA-UA-SA-FA] KULLANICI ADI - ID NUMARASI)
-ŞİKAYET NUMARASI:
-ŞİKAYETİ OLUŞTURAN:
-ŞİKAYETÇİ ID:
-ŞİKAYET NEDENİ:
-ANLIK LOG:
-ŞİKAYET KANITI:
-VE ALTINDA İKİ TARAF ARASINDA GEÇEN KONUŞMA TAMAMI
+ErisChat platformu için tasarlanan **Gelişmiş Destek ve Şikayet Yönetim Sistemi**, müşteri gizliliğini en üst düzeyde tutarken yetkili kademeleri arasında kusursuz iş yükü dağılımı, katı güvenlik denetimleri ve profesyonel loglama altyapısı sağlayacak şekilde modernize edilmiştir.
 
-TÜM SİSTEM BUNA GÖRE GÜNCELLENECEK 
+---
+
+## 1. Yetkilendirme ve Dağıtım Algoritması (Hiyerarşik Yönlendirme)
+
+Destek talepleri sistem havuzuna düştüğü andan itibaren hiyerarşik bir sıra izler.
+
+* **Yetki Sıralaması:** Sistem önceliği sırasıyla **SA (Super Admin) $\rightarrow$ UA (Uzman Admin) $\rightarrow$ FA (Firma/Field Admin) $\rightarrow$ DA (Director Admin)** kademelerine verir.
+* **Zaman Aşımı ve Otomatik Yönlendirme Kuralı:**
+  1. Oluşturulan talep ilk olarak aktif **SA** kademesine iletilir. Sistemde aktif SA varsa talep üst kademelere kesinlikle iletilmez.
+  2. **20 saniye** içinde SA havuzundan talep kabul edilmezse sistem otomatik olarak **UA** kademesine yönlendirir.
+  3. UA kademesinde de 20 saniye içinde yanıt alınamazsa talep sırasıyla **FA** ve ardından **DA** kademelerine iletilir.
+* **Dinamik Geri Dönüş (Re-Routing):** Üst kademelere iletilmiş bir talep işleme alınmadan önce daha üst veya eşdeğer bir **SA** çevrimiçi (aktif) duruma gelirse sistem talebi anında aktif olan o SA'ya geri yönlendirir.
+* **Tekrar Önleme Mekanizması (Memory Lock):** Her bir destek talebi kendi veritabanı belleğinde kendisine daha önce atanmış ve reddedilmiş/yanıtsız bırakılmış yetkilileri kaydeder (`not_assigned_list`). Aynı talep süreç içinde daha önce reddettiği veya süre aşımına uğrattığı aynı yetkiliye **asla tekrar gönderilmez**.
+
+---
+
+## 2. Gizlilik ve Rütbeye Göre Görünürlük Matrisi
+
+Müşteri gizliliğini korumak ve suiistimallerin önüne geçmek amacıyla yetkililerin rütbelerine göre şikayet ekranındaki veriler maskelenir:
+
+| Veri Alanı | SA (Super Admin) ve UA (Uzman Admin) Görünümü | FA (Firma Admin) ve DA (Director Admin) Görünümü |
+| :--- | :--- | :--- |
+| **Destek Alan Yetkili** | Müşteriye **kesinlikle gözükmez** (Sadece "Müşteri Temsilcisi" görünür). | Müşteriye **kesinlikle gözükmez** (Sadece "Müşteri Temsilcisi" görünür). |
+| **Şikayeti Oluşturan (Kullanıcı Adı)** | `ERISCHAT MÜŞTERİ` olarak maskelenir. | Gerçek kullanıcı adı açıkça görünür. |
+| **Şikayetçi ID** | `(ID GİZLENMİŞTİR)` olarak maskelenir. | Gerçek kullanıcı ID numarası açıkça görünür. |
+
+---
+
+## 3. Yetkili Paneli (Yüzen Pencere) ve Kontrol Mekanizması
+
+Destek talebini karşılayan yetkilinin ekranına gelen şeffaf yüzen pencere şu yapıdan oluşur:
+
+### A. Arayüz ve İçerik Bileşenleri
+* **Şikayet Numarası:** `1`den başlayarak sistem tarafından otomatik artan sayaç (`Şikayet No: #0001`).
+* **Şikayetçi Bilgileri:** Rütbe yetkisine göre maskelenmiş veya açık kullanıcı adı ve ID bilgisi.
+* **Şikayet Nedeni:** Kullanıcının beyan ettiği sorun açıklaması.
+* **Anlık Log (Otomatik Güvenlik Ekran Görüntüsü):** Kullanıcıların haksız yere kişileri şikayet edip cezalandırmaya çalışmasını engellemek amacıyla, şikayet anında sistem arka planda otomatik olarak ilgili ekranın görüntüsünü alır ve bu alana ekler. Kullanıcı bu ekran görüntüsünün alındığını veya içeriğini göremez.
+* **Şikayet Kanıtı:** Kullanıcının yüklediği görsel veya videolar bu alanda küçük birer ön izleme (thumbnail) olarak listelenir. Yetkili görselin üzerine tıklayarak dosyayı tam ekran boyutunda açabilir; sağ üst köşesinde bulunan **(X)** işaretine tıklayarak kanıt penceresini kapatabilir.
+
+### B. Aksiyon Butonları ve "Müsait Değilim" Cezai Sistemi
+* **Kabul Et Butonu (Sol Alt):** Yetkili bu butona bastığında süreç resmen başlar ve kullanıcıya anlık bildirim gider: *"Destek talebiniz yetkili müşteri temsilciniz tarafından kabul edilmiştir. Hazırlanan canlı desteğe bağlanacaksınız."*
+* **Müsait Değilim Butonu (Sağ Alt):** Müşteri temsilcisi bu butona basarak sistem üzerinde **1 dakika boyunca "Müsait Değil"** statüsüne geçer.
+  * *Oda İhlali:* Eğer bu butona bastığı anda aktif olarak bir odada bulunuyorsa sistem tarafından odadan aniden çıkarılır.
+  * *Keşfet ve Alan Yasakları:* Bilinçli iş reddi politikası gereği temsilcinin **3 dakika boyunca** mesajlaşma, keşfet vb. alanlara girmesi tamamen yasaklanır.
+  * *Kısıtlama Ekranı:* Yasaklı süre boyunca herhangi kısıtlı bir alana girmeye çalışırsa sağ üstünde **(X)** işareti olan bir uyarı penceresi açılır ve ekranda şu metin yer alır:
+    > *"Müşteri taleplerine gereken özeni göstermediğiniz için normal işlevleriniz (Kalan Süre: X saniye) boyunca yasaklanmıştır."*
+  * *Dinamik Sayaç:* 3 dakikalık süre sistem tarafından saniye saniye geri sayılır. Temsilci herhangi bir yere tıkladığında anlık kalan süresi güncellenir. Süre dolduğunda sistem temsilciyi otomatik olarak tekrar **Müsait** duruma getirir. *(Bu kısıtlama **[DA] hariç** tüm yetkililerde istisnasız geçerlidir).*
+
+---
+
+## 4. Kullanıcı Arayüzü ve Canlı Değerlendirme Süreci
+
+Yetkili talebi kabul ettikten sonra kullanıcıya iki seçenekli bir onay penceresi iletilir:
+
+* **Hazırım Butonu (Sol):** Kullanıcı tıkladığında temsilciye şu bilgi iletilir: *"Yardımcı olduğunuz müşteriniz hazır, konuşmaya bağlıyorum sizi."*
+* **Hazır Değilim Butonu (Sağ):** Kullanıcı tıkladığında talep sonlandırılır ve temsilciye bildirim düşer: *"Müşteriniz müsait olmadığından dolayı destek talebi sonlandırılmıştır. Keyifli çalışmalar dileriz."*
+
+### Canlı Mesajlaşma Arayüzü (Yüzen Pencere)
+Her iki taraf da hazır olduğunda açılan ortak pencere mimarisi:
+* **Başlık & Kapatma:** Sol üstte *Talep Numarası*, sağ üstte kapatma için **(X)** işareti bulunur.
+* **Medya Yükleme (`+` İşareti):** Sadece **müşterilerde** gözüken sol alttaki `+` butonuna basılarak fotoğraf ve video yüklemesi yapılabilir (Temsilcilerde bu buton yer almaz).
+* **Mesajlaşma Akışı:** Cevap kutusu ve gönder butonunun yanında yazılan mesajların sağ altında sırasıyla; **Mesaj Tarihi, Saat:Dakika** ve karşı tarafın okuduğunu belirten **Tek Tik / Çift Tik (Okundu bilgisi)** yer alır.
+
+---
+
+## 5. Oturum Kapatma ve Değerlendirme Senaryoları
+
+1. **Müşteri Tarafından Kapatma:** Müşteri sağ üstteki **(X)** butonuna basıp talebi kapatırsa, temsilcinin ekranı da kapanır ve önüne sağ üstünde **(X)** işareti olan şu bilgi penceresi gelir:
+   > *"Müşterimiz ile ilgilendiğiniz zaman ayırdığınız için teşekkür ederiz. İyi çalışmalar."*
+2. **Temsilci Tarafından Kapatma:** Temsilci görüşmeyi sonlandırırsa, müşterinin ekranına şu uyarı penceresi gönderilir:
+   > *"ErisChat ailesi olarak bizimle aranızda olduğunuzdan çok memnunuz <kullanıcı_adı>. Herhangi bir talebiniz olduğunda tekrardan müşteri temsilcilerimiz ile iletişime geçebilirsiniz."* (Kapatmak için sağ üstte **(X)** işareti bulunur).
+3. **Çift Taraflı Kapanış ve Değerlendirme:** Talep tamamen sonlandığında müşterinin karşısına değerlendirme ekranı çıkar:
+   > *"Müşteri temsilcimizi değerlendirir misiniz? Değerlendirmeniz bizim için önemlidir."* *(Değerlendirme zorunlu değildir).* Sağ üstte kapatma **(X)** işareti yer alır. Alt kısımda puan/cevap alanı ve bir **Gönder** butonu bulunur.
+
+---
+
+## 6. Gelişmiş Merkezi Loglama (Kayıt) Sistemi
+
+Görüşme tamamlandığı anda, hangi rütbeden (SA, UA, FA, DA) olursa olsun tüm veriler sistem log veritabanına standart ve profesyonel formatta kaydedilir:
+
+```text
+==================================================
+[ERISCHAT DESTEK & ŞİKAYET DENETİM LOGU]
+==================================================
+ŞİKAYET İLE İLGİLENEN YETKİLİ : [RÜTBE - KULLANICI_ADI - ID]
+ŞİKAYET NUMARASI              : #0001
+ŞİKAYETİ OLUŞTURAN            : [Kullanıcı Adı veya Maskelenmiş Bilgi]
+ŞİKAYETÇİ ID                  : [ID veya (ID GİZLENMİŞTİR)]
+ŞİKAYET NEDENİ                : [Kullanıcının Belirttiği Açıklama]
+ANLIK LOG (Sistem Görseli)    : [Otomatik Alınan Güvenlik Ekran Görüntüsü Dosyası]
+ŞİKAYET KANITI                : [Yüklenen Resim/Video Dosya Bağlantıları]
+--------------------------------------------------
+TARAFLAR ARASINDA GEÇEN TAM KONUŞMA GEÇMİŞİ:
+[Saat:Dakika] [Gönderen]: Mesaj içeriği...
+[Saat:Dakika] [Gönderen]: Mesaj içeriği...
+==================================================
