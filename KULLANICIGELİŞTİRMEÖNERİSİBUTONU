@@ -1,15 +1,50 @@
-HER KULLANICI PROFİLİNE ALT MENÜLERDE BULUNAN YERE GELİŞİM FİKRİ DİYE BİR BUTON GELİYOR BUNA BASINCA KULLANICI ÖNÜNE BİR YÜZEN PENCERE GELİCEK
-PENCERE NİN SAĞ ÜSTÜNDE X İŞARETİ OLUCAK BUNA BASINCA PENCERE KAPATABİLECEK
-GELİŞİM KONUSU KISMI OLUCAK MÜŞTERİ BURAYA 1000 KARAKTER E KADAR GELİŞİM FİKRİ SUNABİLECEK EĞER BURAYA BİRŞEY YAZARSA
-HEMEN ALTINDA GÖNDER BUTONU OLUCAK BUNA BASARSA O EKRAN KAPANIP KARŞISINA BİR YÜZEN PENCERE GELİCEK GELİŞİM FİKRİ VERDİĞİNİZ VE GEREKLİ ZAMANINIZI AYIRDIĞINIZ İÇİN ERİSCHAT YÖNETİMİ OLARAK SİZE TEŞEKKÜR EDERİZ
-VE BUDA YÖNETİM MERKEZİNDE BULUNAN UYGULAMA GERİ BİLDİRİMİ PANELİNE DÜŞÜCEK O PANEL SADECE [DA] YETKİSİ OLANLARDA OKUNACAK ŞEKİLDE DÜZELİCEK
-ORAYA GİRİNCE ÖNERİ NUMARALARI SİSTEM TARAFINDAN NUMARALARNDIRILACAK 1 DEN BAŞLAYARAK DEVAM EDİCEK
-DA ORAYA GİRDİĞİNDE ÖNERİ NUMARASI GÖZÜKECEK ONUN ÜSTÜNE BASARAK GİREBİLECEK GİRDİĞİ ZAMAN X BUTONU OLMAYACAK OKUMADAN KAPATAMAYACAK
-KULLANICI ADI:
-KULLANICI ID: 
-YAZILAN GELİŞTİRME FİKRİ:
-VE ONUN ALTINDA OKUDUM ANLADIM BUTONU DA BUNA BASINCA OKUMUŞ KABUL EDİLECEK VE DA TEKRARDAN BİR ÖNCEKİ PENCERE YE DÖNECEK
-VE KULLANICI YA DA BUNU OKUDUĞU ZAMAN BİR YÜZEN PENCERE GİDECEK ORDA DA ŞU OLUCAK SAĞ ÜSTÜNDE KAPATABİLECEĞİ BİR X İŞARETİ BUNA BASARSA KAPATABİLECEK
-VE EN ALTTA TEŞEKKÜR BUTONU BUNA BASARSA DA YA BİR YÜZEN PENCERE GİDİCEK BURDA DA ŞU OLUCAK
-SAĞ ÜSTÜNDE X KAPATMA BUTONU ALTINDA MESAJ OLARAK (KULLANICI ADI) İSİMLİ KULLANICINIZ FİKİRLERİNE ÖNEM VERDİĞİNİZ İÇİN TEŞEKKÜR ETTİ :)
-EK OLARAK KULLANICI ŞİKAYETLERİ YAZAN BUTON TAMAMEN İPTAL OLUYOR KALKIYOR
+# ErisChat Gelişim Fikri ve Yönetim Geri Bildirim Sistemi Mimarisi
+
+ErisChat platformunda kullanıcıların platformun gelişimine doğrudan katkı sağlamasını amaçlayan **Gelişşim Fikri** sistemi ile bu fikirlerin [DA] (Director Admin) denetiminde incelenmesini sağlayan **Uygulama Geri Bildirimi Paneli** uçtan uca modernize edilmiştir. *(Not: Eski "Kullanıcı Şikayetleri" butonu tamamen kaldırılmış ve tüm sistem bu yeni yapı üzerine kurulmuştur).*
+
+---
+
+## 1. Kullanıcı Profili ve "Gelişim Fikri" Gönderim Mekanizması
+
+* **Erişim Noktası:** Her kullanıcının profilindeki alt menülerde yer alan **"Gelişşim Fikri"** butonuna tıklandığında, ekranın ortasında modern, şeffaf arka planlı bir yüzen pencere açılır.
+* **Pencere Kapatma:** Pencerenin sağ üst köşesinde bulunan **(X)** işaretine tıklanarak pencere her zaman kapatılabilir.
+* **İçerik ve Sınırlar:** 
+  * Kullanıcıların fikirlerini rahatça ifade edebilmesi için **1000 karaktere kadar** yazım destekli bir **"Gelişim Konusu"** metin alanı bulunur.
+  * Metin alanının hemen altında bir **"Gönder"** butonu yer alır.
+* **Başarılı Gönderim ve Teşhis:** Gönder butonuna basıldığı an mevcut pencere kapanır ve kullanıcının karşısına şu bilgi metnini içeren yeni bir yüzen pencere gelir:
+  > *"Gelişim fikri verdiğiniz ve gerekli zamanınızı ayırdığınız için ErisChat yönetimi olarak size teşekkür ederiz."*
+
+---
+
+## 2. Yönetim Merkezi: Uygulama Geri Bildirimi Paneli ([DA] Özel)
+
+Kullanıcıların gönderdiği tüm gelişim fikirleri, yönetim merkezinde yer alan ve **yalnızca [DA] yetkisine sahip kişilerin** erişebildiği/okuyabildiği **Uygulama Geri Bildirimi Paneli**ne düşer.
+
+* **Sistem Numaralandırması:** Düşen her öneri sistem tarafından `1`den başlayarak otomatik olarak artan bir sayaç ile numaralandırılır (Örn: *Öneri No: #0001*).
+* **Zorunlu Okuma Kuralı (Kilitli Akış):** 
+  * [DA] paneli açtığında listeden bir öneri numarasına tıklayarak detay sayfasına giriş yapar.
+  * Bu ekranda **(X) kapatma butonu kesinlikle bulunmaz**. [DA] yetkilisi içeriği okumadan ve onaylamadan bu sayfadan çıkış yapamaz.
+* **Detay Ekranı İçeriği:**
+  * **Kullanıcı Adı:** Fikri gönderen kullanıcının gerçek adı.
+  * **Kullanıcı ID:** Fikri gönderen kullanıcının sistem ID numarası.
+  * **Yazılan Geliştirme Fikri:** Kullanıcının 1000 karaktere kadar ilettiği öneri metni.
+  * **Okudum Anladım Butonu:** Sayfanın en altında yer alır. [DA] bu butona bastığı anda metin "okundu" olarak sisteme işlenir ve [DA] otomatik olarak bir önceki listeleme penceresine geri döner.
+
+---
+
+## 3. Kullanıcıya Geri Bildirim ve Teşhis Döngüsü
+
+[DA] yetkilisi **"Okudum Anladım"** butonuna bastığı an, sistem otomatik olarak kullanıcı tarafında şu etkileşimleri tetikler:
+
+1. **Kullanıcı Bildirim Penceresi:** Kullanıcının ekranına sağ üstünde **(X)** kapatma işareti bulunan bir yüzen pencere iletilir.
+2. **Teşekkür Butonu:** Pencerenin en altında bir **"Teşekkür Et"** butonu yer alır.
+3. **DA Bildirimi:** Kullanıcı bu "Teşekkür Et" butonuna tıkladığı an, ilgili [DA] yetkilisine anlık bir yüzen pencere (bildirim) düşer. Bildirim içeriği şu şekildedir:
+   * *Sağ üstte kapatmak için (X) işareti bulunur.*
+   * *Mesaj gövdesi:* `"[Kullanıcı Adı] isimli kullanıcınız fikirlerine önem verdiğiniz için teşekkür etti :)"`
+
+---
+
+## 4. Özet Mimari ve Güncelleme Notu
+
+* **Eski Sistem Değişikliği:** Eski "Kullanıcı Şikayetleri" butonu tamamen iptal edilmiş ve sistemden kaldırılmıştır.
+* **Güvenlik ve Gizlilik:** [DA] yetkilileri dışındaki alt kademeler Uygulama Geri Bildirimi Paneline erişemez. Gelişim fikirleri süreci tamamen şeffaf, kayıt altında ve çift taraflı etkileşimli bir yapıyla sınırlandırılmıştır.
