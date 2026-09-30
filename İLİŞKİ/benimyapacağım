@@ -1,0 +1,49 @@
+# ErisChat "Ruh İkizi / Sevgili" Mağazası ve Satın Alınabilir İçerik Mimarisi
+
+Yazılım altyapısını ve geliştirme kısmını kendin halledeceğin varsayımıyla, platformda kullanıcıların **Lidya** harcayarak satın alabileceği, uygulamanın hem ekonomisini (monetization) döndürecek hem de kullanıcı bağlılığını tavan ettirecek **satın alınabilir içerik ve ürün tasarımları** uçtan uca şu şekildedir:
+
+---
+
+## 1. Yüzük Koleksiyonu Mağazası (Ring Store)
+İlişkiyi resmiyete dökmek veya statüyü yükseltmek için Lidya karşılığı satın alınan, profillerde ve odalarda sergilenen özel yüzük serileri:
+
+* **Bronş / Bakır Seviye Yüzükler (Giriş Segmenti):** Sade metalik tasarımlar, küçük kalp detayları. (Yeni başlayan çiftler için uygun fiyatlı).
+* **Gümüş & Safir Parıltılı Yüzükler (Orta Segment):** Etrafında hafif parıltı efektleri olan, profil kartında mavi/gümüş parıltı yayan tasarımlar.
+* **Altın & Pırlanta "Elit" Yüzükler (Yüksek Segment):** Profil çerçevesinde elmas ışıltısı çıkaran, ismin yanında özel elmas simgesi gösteren lüks yüzükler.
+* **"Efsanevi / Sonsuzluk" Tacı ve Yüzükleri (En Üst Segment):** Sadece çok yüksek Lidya bütçesi olanların alabileceği, odaya girerken özel animasyon patlatan en üst düzey taç+yüzük kombinasyonları.
+
+---
+
+## 2. Özel Çift Efektleri ve Animasyonlar (Room Entrance Effects)
+Sevgililerden biri veya ikisi birden herhangi bir sesli odaya (Party Chat) giriş yaptığında odadakilerin göreceği satın alınabilir giriş efektleri:
+
+* **Gül Yaprakları Yağmuru:** Odaya girildiği an ekranın yukarısından aşağıya süzülen kırmızı gül yaprakları animasyonu.
+* **Ateşli Kalp Patlaması:** Odanın ortasında büyük bir kalbin patlayıp çiftin isimlerini yazdığı özel 3D animasyon.
+* **Gökyüzü Havai Fişekleri:** Sadece çiftler odaya girdiğinde patlayan özel romantik havai fişek seti.
+
+---
+
+## 3. Profil "Aura" ve Çerçeve Paketleri (Profile Auras & Frames)
+Çiftlerin profil kartlarında, oda içi koltuklarında ve listelerde diğer kullanıcılardan tamamen ayrılmasını sağlayan görsel özelleştirmeler:
+
+* **Kalp Atışlı (Pulse) Çerçeve:** Avatarın etrafında sürekli ritmik bir şekilde büyüyüp küçülen neon pembe/kırmızı ışık halkası.
+* **Melek & Şeytan Kanatları Çerçevesi:** Çiftlerin profillerini arkadan saran hareketli kanat efektleri (İsteyenler için uyumlu renk setleri).
+* **Sonsuzluk Çizgisi:** Profil isminin etrafını saran ve hiç durmadan dönen altın rengi sonsuzluk simgesi aurası.
+
+---
+
+## 4. Özel Çift Hediyeleri (Couple-Only Gift Collection)
+Sadece ilişki statüsünde olan kullanıcıların birbirine atabileceği, atıldığında odadaki herkesin bildirimini göreceği özel hediye setleri:
+
+* **"Ruh İkizi" Kolyesi:** Karşı tarafa atıldığında envanterine özel bir rozet kazandıran sembolik hediye.
+* **Aşk İksiri Şişesi:** Çiftlerin "Samimiyet Puanı / Aşk XP'sini" hızla artıran özel tüketilebilir hediye.
+* **Devasa "Sonsuzluk Kalbi":** Odada atıldığında tüm ekranı kaplayan, arkada romantik bir melodi çalan (opsiyonel ses efekti) en yüksek Lidya değerli prestij hediyesi.
+
+---
+
+## 5. Çift Oda Temaları (Couple Room Backgrounds)
+Sevgililerin ortak açtıkları özel odalar için satın alabileceği veya kiralayabileceği oda arayüzü temaları:
+
+* **Gün Batımı / Sahil Teması:** Oda arka planının romantik bir sahil animasyonuna dönüştüğü tema.
+* **Yıldızlı Gece & Galaksi Teması:** Arka planda kayan yıldızların ve romantik mor/mavi tonların hakim olduğu oda tasarımı.
+* **Lüks VIP Loundge:** Oda duvarlarının altın sarısı detaylarla kaplandığı özel prestij oda teması.
