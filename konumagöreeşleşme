@@ -1,0 +1,45 @@
+Lazım olanlar
+sesli eşleşme için (standartsesli.png - premiumsesli.png)
+görüntülü eşleşme için (standartgörüntülü.png - premium görüntülü.png)
+Fon müzik bekleme müziği (Santral Bekleme Müziği - Santral Fon Müziği.mp3)
+bunların hepsi githubda mevcut
+
+
+
+📍 KAPSAMLI ÜRÜN ÖZELLİK DOKÜMANI: KONUMA GÖRE EŞLEŞME
+1. Ürünün Amacı ve KonumlandırmasıKonuma Göre Eşleşme, kullanıcıların coğrafi konumlarına yakın aktif kişilerle, sesli veya görüntülü olarak sosyal keşif gerçekleştirmesini sağlayan özel bir etkileşim alanıdır.
+Mevcut Anonim İşlemler sisteminden tamamen ayrı bir ürün olarak konumlandırılır. Arayüz terminolojisi, kullanıcı deneyimi akışları ve eşleşme havuzları birbirinden kesinlikle ayrılmıştır; ancak arka plandaki günlük hak ve süre mantığı korunurken ticari maliyetler 2 katı ($2\times$) olarak uygulanır.
+2. Ana Sayfa ve Kategori YapısıAna sayfada yer alan kategori başlığı ve altındaki ana yönlendirmeler şu şekildedir:Kategori Başlığı: 📍 Konuma Göre Eşleşme
+Açıklama: Konumuna göre yakınındaki aktif kullanıcılarla sesli veya görüntülü olarak eşleş.
+Kategoriye giriş yapan kullanıcı, doğrudan bir arama kuyruğuna alınmaz. 
+Önce iki büyük görsel karttan oluşan mod seçim ekranıyla karşılaşır:
+🎙️ Sesli Eşleşme: Yakınındaki bir kullanıcıyla sesli bağlantı kur.📹 
+Görüntülü Eşleşme: Yakınındaki bir kullanıcıyla görüntülü bağlantı kur.
+3. Alt Modlar ve Paket Seçenekleri (Sesli / Görüntülü)Kullanıcı hangi modu seçerse seçsin (Sesli veya Görüntülü), karşısına iki alt seçenek çıkar:
+Standart Seçenek: Temel haklarla eşleşme başlatır.👑 Premium Seçenek: Gelişmiş haklar sunar.Premium Görünürlük Kuralı:Kullanıcı Premium değilse, Premium seçenek arayüzde tamamen gizlenmez. 
+Özelliğin varlığını görebilmesi için %60–70 hafif saydamlık (opacity) ve üzerinde 🔒 kilit simgesi ile listelenir. 
+Tıklandığında doğrudan satın alma modalı tetiklenir.
+4. Premium Satın Alma ve Bilgilendirme AkışıSatın Alma Modalı: Premium seçeneğe tıklandığında açılan pencerede;Üst Sağ: 
+Kapatma (✕) butonuÜst Sol: Bilgilendirme (?) butonuMerkez: “Premium eşleşme özelliğini satın almak istiyor musunuz?” ve 1.000 Lidya ibaresi.Alt Butonlar: Kabul Et | Reddet
+Bilgilendirme Penceresi (? Butonu): Kullanıcı soru işaretine bastığında şu avantajları içeren bilgi ekranı açılır:
+Günlük eşleşme hakkı 10'dan 20'ye çıkar.
+Başlangıç eşleşme süresi 60 saniyeden 120 saniyeye çıkar.
+Süre uzatmalarında Standart kullanıcılar 120 sn, Premium kullanıcılar 240 sn ek süre elde eder.
+Özellik gece saat 24.00'a kadar geçerlidir.
+Aktivasyon Sonrası: Kullanıcı 1.000 Lidya ödeyip Premium'u aktif ettiğinde, arayüzdeki Standart Eşleşme seçeneği tamamen gizlenir. 
+Sistem sadece Premium akışla devam eder. 
+Haklar tükenirse veya gece 00.00'a ulaşılırsa Premium sona erer.
+5. Eşleşme ve Hak Matrisi ($2\times$ Maliyet Kuralı)Özellik / ParametreStandart KullanıcıPremium Kullanıcı
+Günlük Eşleşme Hakkı10 Hak (Örn: 7 / 10)20 Hak (Örn: 14 / 20)
+Başlangıç Görüşme Süresi60 Saniye120 SaniyeEk Süre (Kum Saati Maliyeti)200 Lidya200 LidyaEk Süre Kazanımı+120 Saniye+240 SaniyeAktivasyon Ücreti—1.000 Lidya6. 
+Eşleşme ve Görüşme Yaşam DöngüsüHazırlık Aşaması: Kullanıcı modunu seçip Eşleşmeyi Başlat butonuna bastığında:
+Ekran mesajı: "Hazırlanıyoruz... Yakınındaki uygun bir kullanıcı aranıyor."3 saniyelik geri sayım: 3 → 2 → 1
+Arama ve Havuz Mantığı:Sesli isteyenler yalnızca sesli, görüntülü isteyenler yalnızca görüntülü havuzda aranır.
+Sağ üst köşede ilgili modun anlık aktif kullanıcı sayısı baloncukla gösterilir (Örn: 🟢 42 kişi).Arka planda bekleme sesi (fon müziği) çalmaya başlar (Santral Bekleme Müziği - Santral Fon Müziği.mp3).
+Kullanıcı isterse 🔴 Eşleşmeyi Sonlandır ile aramayı iptal edebilir.
+Eşleşme Bulundu: Uygun eşleşme sağlandığında
+Ekran uyarısı: "Eşleşme bulundu! Hazırlanın, bağlantınız kuruluyor."3 saniyelik bağlantı sayacı (3 → 2 → 1) ardından aktif görüşme ekranı açılır.
+Görüşme Ekranı Özellikleri:Üst Bölüm: Mod adı (Sesli Eşleşme / Görüntülü Eşleşme) ve sürekli akan sayaç.
+Sağ Üst (👤 Profil İste): Karşı taraftan profil izni isteme butonu. Kabul edilirse çift taraflı 👤 Profil butonu açılır; reddedilirse istek atana bildirim gitmez.
+Sol Alt (⌛ Kum Saati): 200 Lidya karşılığında süreyi uzatma butonu (Standart'a +120 sn, Premium'a +240 sn kazandırır).
+Alt Orta (🔴 Eşleşmeyi Sonlandır): Görüşmeyi dilediğin an bitirme tuşu (Bu esnada bekleme müziği/fon sesleri tamamen kapanır)
