@@ -1,48 +1,99 @@
-# ErisChat Kullanıcı Profil Paneli: Manuel Ödeme (Mail Order / IBAN) ve Lidya Yükleme Mimarisi
+# ErisChat Lidya İşlemleri, Fiyat Tarifesi ve Manuel/Mail Order Ödeme Mimarisi
 
-ErisChat platformunda aktif bir sanal pos / güvenli ödeme entegrasyonu tamamlanana kadar geçiş sürecinde kullanılacak **Manuel Ödeme (IBAN / Havale / EFT ve Mail Order)** altyapısı, kullanıcı deneyimini kusursuz ve güvenli tutacak şekilde tasarlanmıştır.
-
----
-
-## 1. Profil Arayüzü ve Paket Seçim Ekranı
-
-* **Buton Konumu:** Kullanıcı profil sekmesindeki alt menüde, sol kısmında resmi **Lidya Coin sembolü** bulunan **"Lidya Yükleme"** butonuna tıklandığında modern, şeffaf arka planlı yükleme penceresi açılır.
-* **Fiyat Tarifesi ve Paket Seçimi:** Kullanıcı, bütçesine ve ihtiyacına uygun olan resmi paket listesinden (2 TL - 3627 TL aralığındaki 16 kademeli temel + bonus avantajlı paketler) birini seçer.
+ErisChat platformunda finansal güvenliği sağlamak, yetki suistimallerini önlemek, tüm Lidya ekleme/çıkarma operasyonlarını katı kanıt kurallarıyla denetlemek ve henüz sanal POS entegrasyonu tamamlanmadığı için **Manuel Ödeme (IBAN/Havale)** ile **Mail Order** süreçlerini eksiksiz yönetmek amacıyla sistem uçtan uca modernize edilmiştir.
 
 ---
 
-## 2. Manuel Ödeme Yönlendirme ve Bilgilendirme Akışı
+## 1. Yetki ve Görünürlük Kriterleri ([DA] ve [FA] Paneli)
 
-Kullanıcı dilediği paketi seçip **"Satın Al / Yükleme Yap"** butonuna tıkladığı an, sistem henüz otomatik ödeme entegrasyonu bulunmadığı için onu doğrudan **Manuel Ödeme ve Bildirim Ekranı**na yönlendirir.
-
-### A. Açılan Yüzen Pencere ve Yönlendirmeler
-Ekranın ortasında sağ üst köşesinde kapatmak için **(X)** işareti bulunan şeffaf bir pencere açılır. Pencere içeriği şu adımlardan oluşur:
-
-1. **Ödeme Yöntemi Bilgilendirmesi:** 
-   > *"Geçici bir süre için ödemelerimiz güvenli **IBAN (Havale/EFT)** veya **Mail Order** yoluyla manuel olarak alınmaktadır. Lütfen aşağıdaki resmi şirket IBAN bilgilerimize ödemenizi gerçekleştiriniz."*
-2. **Şirket / Kurum IBAN Bilgileri:** 
-   * **Banka Adı:** [Banka Adı Örn: Ziraat / Garanti vb.]
-   * **Alıcı Adı / Unvanı:** ErisChat Bilişim Teknolojileri LTD. ŞTİ.
-   * **IBAN Numarası:** `TR00 0000 0000 0000 0000 0000 00`
-   * **Açıklama / Referans Kodu:** Kullanıcıya özel üretilen işlem referans kodu (Örn: `ERIS-LIDYA-9982`). *Kullanıcı bu kodu açıklama kısmına yazmak zorundadır.*
-3. **Ödeme Bildirim Formu (Dekont Yükleme):** 
-   * Kullanıcı ödemeyi yaptıktan sonra aynı pencere içerisinde yer alan form alanına **İşlem Dekontu (Görsel/PDF)** yükler.
-   * **Gönder Butonu:** Dekontu yükledikten sonra "Ödemeyi Bildir" butonuna basar.
+* **Erişim Noktası:** Yönetim merkezinde yer alan **Lidya İşlemleri** butonu.
+* **Yetki Kısıtı:** Bu buton yalnızca **[DA] (Director Admin)** ve **[FA] (Firma/Field Admin)** yetki sınıfına sahip yöneticilerde görünür. Alt kademelerdeki diğer hiçbir admin sınıfı bu butonu göremez ve erişemez.
 
 ---
 
-## 3. Kullanıcıya Giden Onay Bildirimi
+## 2. Kanıt Zorunluluğu ve İstisna Mekanizması (`KANITGEREKMEYENID.txt`)
 
-Kullanıcı "Ödemeyi Bildir" butonuna bastığı an, mevcut pencere kapanır ve karşısına sağ üstünde **(X)** işareti olan şu bilgi ekranı gelir:
-
-> *"Ödeme bildiriminiz ve dekontunuz başarıyla finans/müşteri hizmetleri departmanımıza iletilmiştir. Uzmanlarımız dekontunuzu kontrol ettikten sonra seçtiğiniz paket (Temel + Bonus Lidya) en kısa sürede hesabınıza otomatik olarak tanımlanacaktır. İlginiz için teşekkür ederiz."*
+* **Genel Kural:** İşlemi yapan yetkili ister **[FA]** ister **[DA]** olsun, rütbesi ne fark ederse etsin, Lidya işlemlerinde **kanıt koymak kesinlikle zorunludur**. Kanıt olmadan hiçbir şekilde Lidya ekleme veya çıkarma işlemi gerçekleştirilemez. *(Bu kural [DA] yetkilileri için de istisnasız geçerlidir).*
+* **Dinamik İstisna Listesi (`KANITGEREKMEYENID.txt`):** 
+  * Sistem arka planda GitHub reposu içerisinde yer alan `KANITGEREKMEYENID.txt` belgesini anlık olarak okur ve senkronize eder.
+  * Bu dosya içerisinde ID'si bulunan hesaplara yapılacak işlemler sistem tarafından otomatik olarak algılanır ve bu özel ID'ler için **kanıt zorunluluğu geçici olarak devre dışı bırakılır**.
+  * Eğer bir ID ilgili metin belgesinden silinirse, sistem bunu anında algılar ve bir sonraki işlemde tekrar zorunlu olarak kanıt talebinde bulunur.
 
 ---
 
-## 4. Yönetim Tarafı ([DA] / [FA]) Manuel Onay Paneli
+## 3. Lidya İşlem Akışı, Log Ayrımı ve Veri Alanları
 
-Kullanıcıların gönderdiği manuel ödeme bildirimleri, yönetim merkezinde yer alan **Lidya Ödeme Bildirimleri Paneli**ne düşer.
+Yönetici panelinden Lidya işlemini gerçekleştirmek için gerekli form alanları eksiksiz doldurulmalıdır. İşlem onaylandığı anda sistem verileri otomatik olarak hesaplar, loglar ve **işlemi yapan adminin rütbesine göre (FA Logları veya DA Logları olarak ayrı ayrı)** ilgili veritabanı paneline kaydeder.
 
-* **İnceleme Ekranı:** Yetkili ([DA] veya [FA]) ekrana gelen bildirimde; kullanıcının kullanıcı adını, ID'sini, seçtiği paketi, ödeme yaptığı tutarı ve yüklediği dekont görselini inceler.
-* **Kanıt / Dekont Zorunluluğu:** Manuel işlemlerde dekont görseli sistem tarafından zorunlu kılınmıştır; dekont olmadan onay verilemez.
-* **Onay ve Bakiye Tanımlama:** Yetkili bilgileri doğrulayıp **"Onayla ve Bakiyeyi Yükle"** butonuna bastığı an, sistem kullanıcının hesabına ilgili Lidya miktarını (temel + bonus) anında yansütır ve log sistemine kaydeder.
+### İşlem Formu Bileşenleri
+1. **İşlemi Yapan Admin:** İşlemi gerçekleştiren yöneticinin rütbesi (`[DA]` veya `[FA]`) ve kullanıcı adı.
+2. **İşlem Tarihi:** İşlemin yapıldığı anın sistem saat ve tarihi.
+3. **Lidya ID:** Lidya işleminin (ekleme veya çıkarma) gerçekleştirildiği hedef hesabın sistem ID numarası.
+4. **Lidya Miktarı:** İşlem yapılan toplam Lidya miktarı.
+5. **İşlem Öncesi Lidya Miktarı:** Hedef hesabın işlem yapılmadan önceki mevcut Lidya bakiyesi.
+6. **İşlem Sonrası Lidya Miktarı:** İşlem tamamlandıktan sonra hesabın güncel Lidya bakiyesi.
+7. **Yapılan İşlem:** İşlemin türü (`EKLEME` veya `ÇIKARMA`).
+8. **Kanıt:** Yöneticinin yüklediği kanıt görseli (İstisna listesindeki ID'ler haricinde zorunludur. Panelde küçük ön izleme -thumbnail- olarak görünür; üzerine tıklanarak büyütülebilir).
+
+---
+
+## 4. Kullanıcı Profil Paneli: Lidya Fiyat Tarifesi
+
+Kullanıcıların profil sekmesinde sol kısmında resmi **Lidya Coin sembolü** bulunan **"Lidya Yükleme"** butonuna tıklandığında açılan şeffaf pencerede, resmi temel ve bonus avantajlı 16 kademeli paket tarifesi yer alır:
+
+| Sıra | Fiyat (TL) | Temel Lidya Miktarı | Bonus Lidya Miktarı | Toplam Lidya (Temel + Bonus) |
+| :---: | :---: | :---: | :---: | :---: |
+| **1** | **2 TL** | 80 Lidya | +15 Lidya | **95 Lidya** |
+| **2** | **7 TL** | 320 Lidya | +79 Lidya | **399 Lidya** |
+| **3** | **14 TL** | 640 Lidya | +172 Lidya | **812 Lidya** |
+| **4** | **28 TL** | 1280 Lidya | +326 Lidya | **1606 Lidya** |
+| **5** | **42 TL** | 1920 Lidya | +498 Lidya | **2418 Lidya** |
+| **6** | **73 TL** | 3360 Lidya | +872 Lidya | **4232 Lidya** |
+| **7** | **105 TL** | 4800 Lidya | +1245 Lidya | **6045 Lidya** |
+| **8** | **205 TL** | 9000 Lidya | +2334 Lidya | **11334 Lidya** |
+| **9** | **305 TL** | 13200 Lidya | +3423 Lidya | **16623 Lidya** |
+| **10** | **504 TL** | 21600 Lidya | +5602 Lidya | **27202 Lidya** |
+| **11** | **856 TL** | 37800 Lidya | +9800 Lidya | **47600 Lidya** |
+| **12** | **1209 TL** | 54000 Lidya | +14000 Lidya | **68000 Lidya** |
+| **13** | **1813 TL** | 81000 Lidya | +21000 Lidya | **102000 Lidya** |
+| **14** | **2418 TL** | 108000 Lidya | +28000 Lidya | **136000 Lidya** |
+| **15** | **3022 TL** | 135000 Lidya | +35000 Lidya | **170000 Lidya** |
+| **16** | **3627 TL** | 162000 Lidya | +42000 Lidya | **204000 Lidya** |
+
+---
+
+## 5. Ödeme Yöntemleri ve Entegrasyon Akışı
+
+Aktif bir sanal POS altyapısı bulunmadığı için kullanıcı paket seçimi sonrasında iki manuel ödeme yönteminden birini seçer:
+
+### Yöntem A: IBAN / Havale / EFT ile Manuel Ödeme
+* **İşleyiş:** Kullanıcı şirket IBAN bilgilerine (`TR00 ...`) ödemeyi gerçekleştirir ve açıklama kısmına kendisine özel verilen referans kodunu (`ERIS-LIDYA-...`) yazar.
+* **Bildirim:** Aynı pencere üzerinden **İşlem Dekontu (Görsel/PDF)** yüklenir ve "Ödemeyi Bildir" butonuna basılır.
+* **Yönetim Onayı:** Bildirim, yönetim merkezindeki **Lidya Ödeme Bildirimleri Paneli**ne düşer. [DA] veya [FA] dekontu onayladığı an bakiye kullanıcıya otomatik yüklenir.
+
+### Yöntem B: Mail Order ve Canlı Destek Yönlendirme Protokolü
+* **Özel Yetkili Kısıtı:** Mail Order işlemlerini yürütmeye sistem genelinde yetkili **tek hesap ID**: **`1980629492`** (`[DA]` statüsünde özel yönetim hesabı).
+* **Canlı Desteğe Aktarım:** Kullanıcı Mail Order seçtiğinde genel destek kuyruğu bypass edilerek doğrudan yetkili `1980629492` ID'li hesaba yönlendirilir. Kullanıcıya şeffaf pencerede güvenli bağlantı bildirimi gösterilir.
+* **Güvenli Mesajlaşma:** Yetkili `1980629492` çağrıyı kabul eder. Sohbet penceresinde şu resmi uyarı sabit yer alır: 
+  > *"Dikkat: Bu görüşme yalnızca resmi ve yetkili Mail Order yöneticisi ([DA] - ID: 1980629492) tarafından yürütülmektedir. Kredi kartı bilgilerinizi yalnızca bu yetkiliye iletiniz."*
+* **Medya Paylaşımı:** Müşteri `+` butonunu kullanarak kart ekstresi veya onay belgesi yükleyebilir. İşlem tamamlandığında yetkili bakiyeyi yükler ve oturumu kapatır.
+
+---
+
+## 6. Gelişmiş Merkezi Loglama Sistemi
+
+Gerçekleştirilen tüm Lidya ve ödeme işlemleri, rütbe ayrımlarına dikkat edilerek merkezi log veritabanına şu formatta kaydedilir:
+
+```text
+==================================================
+[ERISCHAT LİDYA İŞLEMLERİ DENETİM LOGU]
+==================================================
+İŞLEMİ YAPAN ADMİN          : [Rütbe: DA / FA] - [Kullanıcı Adı]
+İŞLEM TARİHİ                : [Tarih ve Saat]
+LİDYA ID                    : [Hedef Hesap ID Numarası]
+LİDYA MİKTARI               : [İşlem Yapılan Miktar]
+İŞLEM ÖNCESİ LİDYA MİKTARI  : [Önceki Bakiye]
+İŞLEM SONRASI LİDYA MİKTARI : [Sonraki Bakiye]
+YAPILAN İŞLEM               : [EKLEME / ÇIKARMA]
+KANIT                       : [Ön İzleme / Küçük Resim Bağlantısı veya "Muaf (ID Listesi Dahilinde)"]
+==================================================
