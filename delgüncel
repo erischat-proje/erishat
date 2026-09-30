@@ -1,17 +1,71 @@
-odaya biri girdiğinde (kullanıcı adı) adlı kullanıcı odaya katıldı diye bir mesaj gelicek otomatik olarak chat e herkezde görünecek şekilde
-DA larda olan yönetici rolleri kısmında sa ua da seçenekleri var ama yetki al butonu yok o eklenicek ona basıldığı zaman hangi ıd yazıldı ise o ıd nin yetkisi alınacak yetkisi ne olursa olsun
-ve da larda tüm herkesin dalarda da hil yönetici yolleri kısmında herkesin ıd si gözükür olucak
-odaya herhangi bir normal kullanıcı girdiğinde oda seviye butonundaki chat açıp kapatma butonunu oda kilidi kısmını koltuk düzeni kısmını göremicek
-oda kilidi kısmında da şu ayarı yapıyoruz şifre değiştirme butonu kalıyor orası şu şekilde olucak odada kilit yokken oda kitlenirken şifre isticek her seferinde oda kilidi açılınca bir kere olsun odayı kitlemek istersek yeni şifre belirlenmek zorunda ve üçüncü bir şey gelicek oraya şifre değiştir
-şifre değiştir butonuna basınca mevcut olan şifreyi değiştirebileceğiz ki oda da biri girmek zorunda kalınca kilidi açmadan şifreyi değiştirebilelim ve oda moderatörleri de kilitli olaya girerken şifre girmek zorunda tek kendi odasına girerken şifre girmesi gerekmeyen oda sahibi olucak
-bir oda kilitlenirse otomatik olarak odalar kısmında kilit ikonu gelicek yanına
-  
-mikrofonlar için ekstra bir güncelleme getiriyorum bu kısmın adı koltuk izni olucak altında yeşil renk aktif et kırmızı renk kapat butonu olucak
-eğer aktif olursa boşta olan tüm koltukların üstüne el işareti gelicek eğer biri el işareti olan bir koltuğa tıklarsa otomatik olarak oturma izni istemiş sayılacak
-oda daki moderatörler ve oda sahibi el işareti olan herhangi bir koltuğa tıklarsa yüzen arkası saydam bir pencere açılacak sağ üstünde x olacak buna basarsak bu menüyü kapatabileceğiz
-oranın içeriği de şu şekilde olucak kullanıcı avatar çerçevesi yanında ismi ve yanında yeşil renk tik işareti kırmızı renk x işareti birinin yanındaki yeşil tik e basarsak o zaman o koltuğa oturabilmiş olucak
-kırmızı x e basarsak kullanıcı ya yine yüzen arkası saydam pencere de koltuğa oturma talebiniz reddedilmiştir yazıcak x e basarsa kapatabilecek
-ve moderatörlerde ve oda sahiplerinde oturma onay veya reddetme menüsünün altında davet et kısmı olucak oraya basınca liste şeklinde yüzen pencere açılacak yine sağ üstünde x işareti  olucak buna basarak kapatabilecekler
-o liste açıldığında odadaki tüm herkes koltuğa oturmayan liste halinde gözükecek solda avatar ve çerçevesi yanında kullanıcı adı ve onun yanında + işareti olucak + ya basarsak kullanıcı nın ekranına yüzen pencere gidicek
-o pencere de de şu yazıcak hangi koltuğa tıklayarak bu işlemi gerçekleştirdi isek koltuk numarası yazıcak (koltuk numarası) numaralı koltuk için mikrofon daveti aldınız yazıcak aşşada kabul et reddet butonu olucak eğer kullanıcı kabul et e basarsa davet edildiği numaralı koltuğa oturacak
-reddet e basarsa davet eden moderatör veya oda sahibinin ekranına yüzen pencere şeklinde bir pencere gidicek arkası saydam şekilde sağ üstünde X işareti olucak buna basarak kapatabilecek ve içinde şu yazıcak (kullanıcı adı) adlı kullanıcı mikrofon davetinizi reddetti yazıcak
+# ErisChat Kapsamlı Oda, Yetki, Koltuk ve Güvenlik Güncelleme Mimarisi
+
+ErisChat platformunun oda içi etkileşimleri, yetki denetim mekanizmaları, koltuk yönetimi, kilit sistemleri ve giriş bildirimleri profesyonel standartlarda uçtan uca modernize edilmiştir.
+
+---
+
+## 1. Oda Katılım Bildirim Sistemi
+
+* **Otomatik Duyuru:** Herhangi bir kullanıcı odaya giriş yaptığı an, sohbet (chat) ekranında herkesin görebileceği şekilde sistem tarafından otomatik olarak şu formatta duyuru mesajı düşer:
+  > *"[Kullanıcı Adı] adlı kullanıcı odaya katıldı."*
+
+---
+
+## 2. DA Yönetim Paneli: Yetki Al Mekanizması
+
+* **Erişim ve Eksik Tamamlama:** DA (Director Admin) yetkililerinde yer alan **Yönetici Rolleri** paneli içerisinde (`SA`, `UA`, `DA` seçenekleri bulunan alan); eksik olan **"Yetki Al"** butonu entegre edilmiştir.
+* **İşleyiş:** Yetkili, ilgili panele hedef kullanıcının sistem ID'sini yazar ve **"Yetki Al"** butonuna basar. Sistem, kullanıcının mevcut yetki rütbesi ne olursa olsun (rütbe gözetmeksizin) yetkisini anında düşürür ve hesabı standart kullanıcı statüsüne getirir.
+
+---
+
+## 3. Normal Kullanıcı Oda Arayüz Kısıtlamaları
+
+* **Yetki Sınırlandırması:** Odaya giriş yapan herhangi bir **normal kullanıcı**, oda arayüzünde bulunan şu kritik yönetim butonlarını kesinlikle **göremez ve erişemez**:
+  1. Oda Seviye Butonundaki **Chat Aç / Kapat** butonu
+  2. **Oda Kilidi** paneli
+  3. **Koltuk Düzeni** yönetim paneli
+
+---
+
+## 4. Gelişmiş Oda Kilidi ve Şifre Yönetim Mimarisi
+
+Oda kilidi mekanizması güvenlik ve esneklik ilkelerine göre 3 temel fonksiyona ayrılmıştır:
+
+1. **Kilitleme ve Yeni Şifre Zorunluluğu:** 
+   * Oda kilitsiz durumdayken kilitlenmek istendiğinde sistem her seferinde **yeni bir şifre belirlenmesini zorunlu kılar**. Daha önce kullanılan şifreler hafızada tutulmaz; her kilitleme işleminde taze şifre girilir.
+2. **Kilit İkonu (Oda Listesi):** 
+   * Bir oda kilitlendiği an, ana odalar listesindeki oda adının yanında otomatik olarak görsel bir **kilit ikonu** belirişir.
+3. **Şifre Değiştir Butonu:** 
+   * Kilit paneline eklenen üçüncü seçenek olan **"Şifre Değiştir"** butonuna basılarak, odayı kilitten kaldırmaya gerek kalmadan mevcut şifre güncellenebilir. Bu sayede oda içerisindeki akış kesilmeden yeni katılımcıların güvenli girişi sağlanır.
+4. **Moderatör ve Oda Sahibi Kuralı:** 
+   * Kilitli bir odaya giriş yaparken oda moderatörleri de şifre girmek zorundadır. **Tek istisna oda sahibidir;** oda sahibi kendi odasına girerken şifre girmek zorunda değildir.
+
+---
+
+## 5. "Koltuk İzni" ve Akıllı El İşareti Mekanizması
+
+Mikrofon ve koltuk yönetimini optimize etmek amacıyla yeni bir **Koltuk İzni** sistemi eklenmiştir:
+
+* **Aktifleştirme Butonu:** Yönetim panelinde yer alan **"Koltuk İzni"** başlığının altında **Yeşil renkli "Aktif Et"** ve **Kırmızı renkli "Kapat"** butonları yer alır.
+* **El İşareti Entegrasyonu:** Koltuk izni aktif edildiğinde, odadaki tüm boş koltukların üzerinde görsel bir **el işareti** belirir. Normal bir kullanıcı bu el işareti olan boş bir koltuğa tıkladığı an, sisteme otomatik olarak **"oturma izni"** talebi iletmiş sayılır.
+
+### Moderatör ve Oda Sahibi Onay / Ret Paneli
+El işareti bulunan koltuklara odadaki moderatörler veya oda sahibi tıkladığında, sağ üst köşesinde kapatmak için **(X)** işareti bulunan, arkası saydam modern bir yüzen pencere açılır:
+* **İçerik:** Talep eden kullanıcının avatarı, çerçevesi, kullanıcı adı ve yanlarında **Yeşil Tik (Onay)** ile **Kırmızı X (Ret)** butonları yer alır.
+* **Onay İşlemi (Yeşil Tik):** Tıklandığı an kullanıcı ilgili koltuğa başarıyla oturur.
+* **Ret İşlemi (Kırmızı X):** Tıklandığında kullanıcının ekranına saydam arka planlı ve sağ üstünde `(X)` olan şu yüzen pencere gider: 
+  > *"Koltuğa oturma talebiniz reddedilmiştir."* (Kullanıcı `X` ile kapatabilir).
+
+---
+
+## 6. Koltuk Davet Et ve Kullanıcı Çağırma Protokolü
+
+Moderatörlerde ve oda sahiplerinde, oturma onay/ret menüsünün hemen altında **"Davet Et"** seçeneği bulunur.
+
+* **Davet Listesi:** Bu butona basıldığında sağ üst köşesinde **(X)** kapatma işareti bulunan şeffaf bir liste penceresi açılır. Listede, o an odada bulunan ancak koltuğa oturmamış olan tüm kullanıcılar (solda avatar/çerçeve, kullanıcı adı ve yanında **`+`** işareti ile) sıralanır.
+* **Davet Gönderimi (`+` Butonu):** Listeden bir kullanıcının yanındaki `+` işaretine basıldığında, o kullanıcının ekranına özel bir davet penceresi düşer:
+  > *"[Koltuk Numarası] numaralı koltuk için mikrofon daveti aldınız."*
+  > *Alt kısımda **Kabul Et** ve **Reddet** butonları yer alır.*
+* **Kabul Senaryosu:** Kullanıcı **Kabul Et** butonuna basarsa, davet edildiği boş koltuğa otomatik olarak oturur.
+* **Ret Senaryosu:** Kullanıcı **Reddet** butonuna basarsa, daveti gönderen moderatör veya oda sahibinin ekranına sağ üstünde `(X)` işareti olan şeffaf bir bildirim penceresi düşer:
+  > *"[Kullanıcı Adı] adlı kullanıcı mikrofon davetinizi reddetti."* (Yetkili `X` ile bu bildirimi kapatabilir).
