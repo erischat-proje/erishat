@@ -1,12 +1,41 @@
-buraya girince güncelleme sistemi şu olucak
-sıralama mantığı şu şekilde işleyecek
-en dolu odalar en üstten başlicak
-ve sıralamada ikinci bir mantık daha olucak
-aynı sayıda kullanıcı olan iki oda varsa eğer o gün içinde daha çok hediye atılan oda hangisi ise o daha üstte durucak
-keşif ve yakınlık ayarı burdan kalkıyor 
-insanlar kısmında şu oluyor
-keşif ve yakınlık ayarı burada aktif işe yarayacak uygulamada zaten zorunlu konum açtırdığımız için kişi herkes veya herhangi bir cinsiyet seçtiğinde
-seçtiği seçeneğe göre konumuna en yakın olandan başlayarak neyi seçti ise herkesi seçti ise kem kadın erkek kadın seçti ise kadın erkek seçti ise erkek en yakın konumdan en uzağa kadar sıralanıyor
-ve burda o an uygulamada aktif olanlar gözüküyor
-takip ettiklerim kısmından keşif ve yakınlık ayarı kalkıyor takip ettiğin odalar çevrimiçi olunca burda gözüküyor
-yine sıralama en kalabalıktan en aza doğru ilerliyor ama özel bir sistem kurcaksın bir oda kapanırsa veya bir değişim olursa bir kullanıcı uygulamadan çıkarsa otomatik liste güncelleniyor 
+# ErisChat Akıllı Oda Listeleme, Keşif ve Konum Bazlı Kullanıcı Filtreleme Mimarisi
+
+ErisChat platformunda odaların listelenme algoritması, ana sayfa sekmeleri (Keşif / Yakınlık entegrasyonu), insan filtreleme mantığı ve anlık otomatik güncellenen dinamik veri akışı uçtan uca modernize edilmiştir.
+
+---
+
+## 1. Odalar Sekmesi: Akıllı Sıralama ve Hediye Algoritmasi
+
+Odalar sekmesinde eski keşif ve yakınlık mantığı tamamen kaldırılmış olup, odaların listelenmesinde adil, rekabetçi ve popülariteyi esas alan iki aşamalı bir sıralama algoritması devreye sokulmuştur:
+
+1. **Ana Sıralama Kriteri (Doluluk Oranı):** 
+   * Odalar, içerisindeki toplam kullanıcı sayısına göre **en kalabalıktan (en dolu odadan) en aza doğru** yukarıdan aşağıya sıralanır.
+2. **İkincil Sıralama Kriteri (Günlük Hediye Hacmi):** 
+   * Eğer iki veya daha fazla odadaki anlık kullanıcı sayısı **tamamen aynıysa**, sistem o gün (00:00 itibarıyla) **içerisinde en çok hediye atılan (hediye hacmi yüksek olan) oda hangisi ise onu bir üst sıraya** taşır. Bu sayede aktif ve etkileşimli odalar her zaman ön planda tutulur.
+
+---
+
+## 2. İnsanlar Sekmesi: Konum ve Cinsiyet Bazlı Akıllı Sıralama
+
+Uygulamada zorunlu konum izni protokolü bulunduğu için, "İnsanlar" sekmesindeki filtreleme ve sıralama mekanizması şu kurallara göre çalıştırılır:
+
+* **Aktiflik Durumu:** Bu sekmede yalnızca o an uygulamada **çevrim içi (aktif)** olan kullanıcılar listelenir.
+* **Cinsiyet Filtresi:** Kullanıcının tercihlerine göre seçim yapılır (`Herkes`, `Kadın` veya `Erkek`).
+* **Konum Bazlı Mesafe Sıralaması:** Seçilen cinsiyet kriterine uyan kişiler, **kullanıcının kendi konumuna en yakın olandan en uzağa doğru (kilometre bazlı mesafe)** dinamik olarak sıralanır.
+
+---
+
+## 3. Takip Ettiklerim Sekmesi ve Canlı Takip Mimarisi
+
+* **Filtre Değişikliği:** "Takip Ettiklerim" sekmesinden keşif ve yakınlık ayarları tamamen kaldırılmıştır.
+* **Listeleme Mantığı:** Bu sekmede, kullanıcının takip ettiği kişilerin oda sahipliği yaptığı veya bulunduğu odalar **çevrim içi oldukları anda** listelenir.
+* **Sıralama:** Odalar kendi içinde yine **en kalabalıktan en aza doğru** sıralanır.
+
+---
+
+## 4. Anlık WebSocket / Real-Time Dinamik Güncelleme Altyapısı
+
+Tüm liste ekranları (Odalar, İnsanlar, Takip Ettiklerim) statik olmaktan çıkarılmış ve tam entegre gerçek zamanlı (real-time) bir sistemle donatılmıştır:
+
+* **Otomatik Tetikleyiciler:** Herhangi bir oda kapandığında, bir oda içerisindeki kullanıcı sayısı değiştiğinde, bir kullanıcı odaya girip çıktığında veya uygulamadan tamamen ayrıldığında sayfa yenilemeye gerek kalmadan **liste arka planda anlık olarak otomatik güncellenir**.
+* **Senkronizasyon:** Sunucu tabanlı anlık dinleme mekanizmaları sayesinde tüm kullanıcıların ekranındaki sıralamalar ve aktiflik durumları milisaniyeler içinde güncel tutulur.
