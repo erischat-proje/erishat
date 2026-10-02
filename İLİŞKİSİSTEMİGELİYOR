@@ -1,0 +1,105 @@
+İlişki Sistemi Özellik ve İşleyiş Dokümanı (Feature Specification)
+1. Arayüz ve Navigasyon (UI/UX Eklemeleri)
+Menü Entegrasyonu: Ana sayfa alt menüsünde yer alan "Profil" sekmesinin içerisine "İlişki" adında yeni bir yönlendirme butonu eklenecektir.
+İkonografi: Butonun yanında görsel belirteç olarak bir "Kalp" logosu konumlandırılacaktır.
+Görüntüleme Mantığı: İlgili butona tıklandığında ekranı tam kaplamayan, sağ üst köşesinde standart bir kapatma (X) butonu bulunan bir modal (yüzen pencere) açılacaktır.
+
+2. Listeleme ve Algoritma
+Filtreleme Kriteri: Sistem, kullanıcıların uygulamaya ilk kayıt aşamasında seçtikleri cinsiyet bilgisini referans alacaktır.
+Hedef Kitle: İlişki penceresinde, kullanıcının daha önce "Mesajlar" sekmesi üzerinden iletişim kurduğu karşı cinsteki kullanıcılar listelenecektir.
+Kullanıcı Kartı Tasarımı: Liste içerisindeki her bir kullanıcı şu hiyerarşiyle gösterilecektir:
+Sol Alan: Kullanıcının avatarı ve mevcut çerçevesi.
+Orta/Sağ Alan: Kullanıcı adı.
+Alt Alan: İlgili kullanıcı ile aradaki etkileşimi gösteren "İlişki Barı".
+
+3. İlerleme Sistemi (İlişki Barı Modülü)
+Kapasite ve Veri: İlişki barı 0 ile 3.000 puan arasında bir ölçeğe sahip olacaktır.
+Puanlama Mantığı: Bu bar, iki kullanıcının DM (Özel Mesaj) veya Odalar üzerinden birbirlerine gönderdikleri hediyelerin "Lidya" değeri baz alınarak dolacaktır.
+Senkronizasyon: İlişki barı, her iki kullanıcı için ortak (senkronize) çalışacaktır. Bir tarafın gönderdiği hediye ortak havuzu dolduracaktır.
+Tetikleyici (Trigger): Bar 3.000 sınırına (maksimum kapasite) ulaştığında, listedeki kullanıcı satırının sağ tarafında etkileşimli bir "Kalp" butonu belirecektir. Bu butona iki kullanıcıdan herhangi biri basabilir.
+
+4. İtiraf ve Bildirim Akışı
+İtiraf Penceresi: 3.000 puanlık bar dolup kalp butonuna tıklandığında yeni bir modal açılacaktır (Sağ üstte kapatma (X) butonu ile).
+İçerik: Pencerenin merkezinde "Karşı tarafa aşkınızı ilan edin" başlığı, hemen altında kullanıcının kişiselleştirilmiş bir mesaj yazabileceği metin giriş alanı (text input) ve işlemi onaylamak için "İlişki İtirafı" butonu bulunacaktır.
+Alıcı Görünümü (Bildirim): İtiraf gönderildiğinde karşı tarafın ekranına bir pop-up düşecektir:
+Başlık: "[Kullanıcı Adı] size aşkını itiraf etti!"
+Açıklama: Göndericinin yazdığı özel mesaj.
+Aksiyon Butonları: Sol tarafta "Kabul Et", sağ tarafta "Reddet" butonu.
+
+5. Onay Sonrası Profil Güncellemeleri
+Profil Revizyonu: Karşı taraf "Kabul Et" butonuna basarsa her iki tarafın profili güncellenecektir.
+Ziyaretçi Görünümü: Profili ziyaret eden üçüncü şahıslar şu tasarımı görecektir:
+Mevcut "Hayran" sembolünün sol tarafında özel yüzük tasarımı ve sistem klasöründen çekilecek olan sevgili.png görseli yer alacaktır.
+Bu tasarımın sağ kısmında kalan boşluğa, partnerin (ilişki kurulan karşı tarafın) çerçevesi ve avatarı entegre edilecektir.
+Menü Revizyonu: İlişki onaylandıktan sonra, kullanıcının kendi profilindeki "İlişki" menüsü, aktif ilişki statüsüne uygun yeni bir yönetim arayüzüne dönüşecektir.
+
+================================================================================
+                    SEVIYE 1 EV VE SOZ YUZUGU SISTEMI UI/UX
+================================================================================
+
+[1. GENEL BAKIS VE MENU YAPISI]
+  -> Onay Sonrasi Arayuz : Her iki tarafin ana menusu "EV SISTEMLERI" klasoru
+                           icindeki SEVIYE1EV.PNG ile baslatilir.
+  -> Sol Profil         : Sol taraftaki cerceveye erkek kullanicinin avatarı tam oturur.
+  -> Sag Profil         : Sag taraftaki cerceveye kadin kullanicinin avatarl tam oturur.
+
+[2. ORTA ALAN VE SOZ YUZUGU SATIN ALIM AKISI]
+  -> Baslangic Durumu   : Cercevelerin ortasindaki boslukta "Yuzuk Satin Al" yazisi/butonu yer alir.
+  -> Secenek Ekrani     : Tiklandiginda tiklanabilir iki logo secenegi sunulur:
+                          - Bakir Logo (Uzerinde "Bakir" yazili)
+                          - Gumus Logo (Uzerinde "Gumus" yazili)
+  -> Bakir Koleksiyonu  : BAKIRSOZYUZUGU klasorundeki 20 yuzuk listelenir.
+                          * Birim Fiyat : 1.200 Lidya (+ Lidya Coin logosu)
+  -> Gumus Koleksiyonu  : GUMUSSOZYUZUGU klasorundeki 20 yuzuk listelenir.
+                          * Birim Fiyat : 2.100 Lidya (+ Lidya Coin logosu)
+
+[3. PROFIL VE DURUM GUNCELLEMELERI]
+  -> Orta Cerceve Gor.  : Satin alinan yuzuk, çiftin ortasindaki cercevede sergilenir.
+  -> Statu Degisimi     : Tercihe gore profil statuleri guncellenir:
+                          - Bakir yuzuk takilirsa -> BAKIRSÖZLÜ.PNG
+                          - Gumus yuzuk takilirsa -> GÜMÜŞSÖZLÜ.PNG
+
+[4. YUZEN PENCERELER (POP-UP) VE MALZEME SISTEMI]
+  -> Seviye Uyarisi     : Ekrana seviye 2 yapmalari gerektigini belirten pencere gelir.
+                          * Sag ust kosesinde kapatma (X) isareti bulunur.
+                          * Bilgilendirme: "Ilk seviye eve gecis yaptiniz, 1 adet bakir yuzuk satin almalisiniz."
+  -> Malzeme Panelleri  : Herhangi bir malzemeye (orn. Tugla) tiklandiginda:
+                          - Ust Kisim   : TUGLA.PNG gorseli
+                          - Alt Kisim   : "Tugla satin almak icin herhangi bir rakam girin. 
+                                         Tugla adet fiyati 750 Lidya" (Sabit Fiyat)
+
+ -> Malzeme Panelleri  : Herhangi bir malzemeye (orn. Boya) tiklandiginda:
+                          - Ust Kisim   : BOYA.PNG gorseli
+                          - Alt Kisim   : "Boya satin almak icin herhangi bir rakam girin. 
+                                         Boya adet fiyati 750 Lidya" (Sabit Fiyat)
+
+-> Malzeme Panelleri  : Herhangi bir malzemeye (orn. tahta) tiklandiginda:
+                          - Ust Kisim   : TAHTA.PNG gorseli
+                          - Alt Kisim   : "Tahta satin almak icin herhangi bir rakam girin. 
+                                         Boya adet fiyati 750 Lidya" (Sabit Fiyat)
+
+EĞER İLK TAKTIKLARI DIŞINDA ORTADAKİ YÜZÜĞÜ DEĞİŞTİRMEK İSTEYEBİLİRLER 
+ORTADAKİ YÜZÜĞÜN ÜSTÜNE TIKLAYARAK YENİDEN BAŞKA YÜZÜK SATIN ALABİLİRLER 
+TEKRAR AYNI ŞEKİLDE KATEGORİ OLARAK GÖRÜP ORDAN ALABİLİRLER
+EV ORDAKİ DURUMLARA GÖRE DEĞİŞİR HER GÖRSELDE NEYDEN KAÇ TANE İSTEDİĞİMİZ ZATEN MEVCUT
+
+HERHANGİ BİR SEVİYE DE KİŞİ EVLİLİK TEKLİF EDEBİLİR BU DURUM İÇİN İLİŞKİ EV PENCERESİNDE ŞU ZATEN OLUCAK
+SAĞDAKİ İLİŞKİ SAYACI ALTINDAKİ KUTU DA YİNE TEMA İLE UYGUN GOLD RENKLERDE GÜN YAZICAK KAÇ GÜN OLDU İSE İLİŞKİ HER GÜN 24.00 DA 1 GÜN YÜKSELİCEK
+VE EK OLARAK İNSANLAR MALZEME SATIN ALDIKÇA ALTINDAKİSAYI DA ONA GÖRE DÜŞÜCEK GÜNCEL GÖZÜKECEK VE GEREKEN MALZEMELERİ ALDIKLARINDA EV SEVİYE YÜKSELİCEK
+
+VE EK OLARAK 4 SEVİYE EVE ULAŞTIKLARINDA 
+GÜMÜŞNİŞANLI.PNG
+BAKIRNİŞANLI.PNG OLUCAK PROFİLLERİNDEKİ
+VE BU OLDUKTAN SONRA SOL ÜSTE EVLİLİK TEKLİFİ ET GELİCEK BUNA BASARLARSA EVLİLİK TEKLİF EDEBİLECEKLER BASAN KİŞİNİN KARŞISINA BİR ADET YÜZEN PENCERE GELİCEK 
+SAĞ ÜSTTE X İŞARETİ OLUCAK EVLİLİK MESAJINIZI YAZINIZ YAZICAK VE AŞAĞI DA EVLİLİK TEKLİFİNİZ İÇİN YÜZÜK SEÇİNİZ BUTONU OLUCAK BUNA BASINCA 
+KARŞISINA ALTINEVLİLİKYÜZÜĞÜ KLASÖRÜ İÇİNDEKİ YÜZÜKLERİN LİSTESİ GELİCEK VE ALTINDA LİDYA MİKTARLARI OLAN 2800 LİDYA YAZICAK YANINDA LİDYA COİN İŞARETİ OLUCAK HERHANGİ BİRİNİ SECİNCE BU YÜZÜĞÜ SATIN ALMAK İSTİYORMUSUNUZ ŞEKLİNDE UYARI YÜZEN PENCERESİ GELİCEK SAĞ ÜSTTE X OLCAK
+LİDYA ÖDEMELİSİNİZ YANINDA LİDYA COİN İŞARETİ OLUCAK ONAYLAR İSE EVLİLİK TEKLİF ETMİŞ OLUCAK
+KARŞI TARAFA BİR YÜZEN PENCER GİDİCEK ÜSTTE YÜZÜK GÖRSELİ VE ALTINDA NİŞANLINIZ (KULLANICI ADI) SİZE EVLİLİK TEKLİF ETTİ KABUL EDİYORMUSUNUZ YAZICAK SOL ALT EVET SAĞ ALT HAYIR
+EVET E BASARSA KARŞIYA BİR YÜZEN PENCERE GİDİCEK VE (KULLANICI ADI) EVLİLİK TEKLİFİNİZİ KABUL ETTİ SİZE EVET DEDİ YAZICAK SAĞ ÜSTTE X OLUCAK
+HAYIR A BASARSA KARŞIYA BİR YÜZEN PENCERE GİDİCEK VE (KULLANICI ADI) EVLİLİK TEKLİFİNİZİ REDDETTİ SİZE HAYIR DEDİ YAZICAK SAĞ ÜSTTE X OLUCAK
+EĞER KABUL EDİLİRSE PROFİLLERİNDEKİ 
+- Bakir yuzuk takilirsa -> BAKIRSÖZLÜ.PNG
+- Gumus yuzuk takilirsa -> GÜMÜŞSÖZLÜ.PNG GİDİCEK VE ONUN YERİNE İKİ PROFİLDEDE ALTINEVLİ.PNG OLUCAK İNSANLAR BU ARADA ONLARIN EVLİLİĞİ NE SEVİYEDE OLURSA OLSUN HANGİ DURUMDA OLURSA OLSUN ONLARA BAĞIŞ YAPABİLECEKLER KATKI YAPABİLECEKLER ONA GÖRE BİRŞEY TASARLA İŞTE SEN
+VE EĞER BİRİ ONLARA BAĞIŞ YAPARSA İKİ TARAFA DA YÜZEN PENCERE GİDİCEK (KULLANICI ADI) İSİMLİ DOSTUNUZ SİZİN AİLE EVİNİZE KATKIDA BULUNDU YAZICAK VE SAĞ ÜSTÜNDE X İŞARETİ OLUCAK 
+VE ALT TARAFTA TEŞEKKÜR ET BUTONU ONA BASARLARSA KATKIDA BULUNAN KİŞİYE HEDİYE GÖNDERDİĞİNİZ ÇİFTİMİZ SİZE TEŞEKKÜR ETTİ MESAJI GİDİCEK X E BASARAK KAPATABİLECEK
+
