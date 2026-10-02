@@ -45,6 +45,7 @@ from .dm_folders import register_auth as register_dm_folder_auth, router as dm_f
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
 from . import support_workflow
+from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
@@ -301,6 +302,8 @@ register_room_auth(current_user)
 register_platform_auth(current_user)
 register_family_auth(current_user)
 register_support_auth(current_user)
+register_suggestion_auth(current_user)
+app.include_router(suggestion_router)
 register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_support_agent(user_id))
 support_workflow.register_auth(current_user, lambda user_id: disconnect_support_agent(user_id))
 app.include_router(support_workflow.router)
