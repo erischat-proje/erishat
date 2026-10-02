@@ -5,8 +5,9 @@
 [1. GÖRSEL DOSYA DAĞILIMI VE YAPISI]
 --------------------------------------------------------------------------------
 - VİPGEKEKLİMATERYALLER klasöründeki dosyalar iki ana gruba ayrılır:
-  1. Menü Logoları     : VİP1MENÜLOGO.png - VİP12MENÜLOGO.png (VIP Seviye İkonları)
-  2. Yatay Kartvizitler: VİP1YATAYKARTVİZİT.png - VİP12YATAYKARTVİZİT.png (Profil & Yüzen Pencere)
+  1. Menü Logoları      : VİP1MENÜLOGO.png - VİP12MENÜLOGO.png (VIP Seviye İkonları)
+  2. Yatay Kartvizitler : VİP1YATAYKARTVİZİT.png - VİP12YATAYKARTVİZİT.png (Profil & Yüzen Pencere)
+  3. Yüzen Pencereler   : VİP1YÜZENPENCERE.png - VİP12YÜZENPENCERE.png (Dinamik Pop-up Arka Planları)
 
 [2. ADIM ADIM UYGULAMA VE ENTEGRASYON REHBERİ]
 --------------------------------------------------------------------------------
@@ -18,50 +19,52 @@ A. ANA SAYFA VIP MERKEZİ ENTEGRASYONU:
 
 B. PROFİL SAYFASI VE KARTVİZİT YERLEŞİMLERİ:
    - Eski VIP Alanı Kaldırma: Profilde yer alan, içinde VIP seviyesi yazan mevcut 
-                              eski VIP kutusu tamamen kaldırılacak.
+                            eski VIP kutusu tamamen kaldırılacak.
    - Profil Bilgi Güncelleme: Takipçi ve takip edilen kişi sayısının yanı sıra 
-                              "Hediye" yazan kısım güncellenecek; buraya kullanıcının 
-                              şimdiye kadar aldığı toplam hediye Lidya miktarı yazılacak 
-                              ve yeni hediye alındıkça dinamik olarak güncellenecek.
+                             "Hediye" yazan kısım güncellenecek; buraya kullanıcının 
+                             şimdiye kadar aldığı toplam hediye Lidya miktarı yazılacak 
+                             YANINDA LİDYA COİN LOGOSU OLUCAK ve yeni hediye alındıkça dinamik olarak güncellenecek.
    - Kullanıcı Adı Yanı     : Kullanıcı adlarının sağ tarafına kullanıcının sahip 
-                              olduğu VIP seviyesine ait yatay kartvizit 
-                              (VİP[Seviye]YATAYKARTVİZİT.png) eklenecek.
+                             olduğu VIP seviyesine ait yatay kartvizit 
+                             (VİP[Seviye]YATAYKARTVİZİT.png) eklenecek.
 
 C. ODALAR / CHAT YÜZEN PENCERE (POP-UP) ENTEGRASYONU:
    - Konumlandırma          : Odalarda veya chat içinde herhangi birinin profiline 
-                              tıklandığında açılan yüzen pencerede (pop-up), sağ 
-                              üst köşedeki "Hayran" butonunun sol tarafına ilgili 
-                              VIP yatay kartviziti eklenecek.
+                             tıklandığında açılan yüzen pencerede (pop-up), sağ 
+                             üst köşedeki "Hayran" butonunun sol tarafına ilgili 
+                             VIP yatay kartviziti eklenecek.
+   - Seviye Bazlı Pop-up    : Her VIP seviyesinin kendine ait VİP[Seviye]YÜZENPENCERE 
+                             görseli şeffaf arka plan yapısıyla entegre edilecek.
+                             İster kişi kendi profiline, ister başkası onun profiline 
+                             tıkladığında kullanıcının güncel VIP seviyesine uygun 
+                             yüzen pencere tasarımı dinamik olarak yüklenecek.
+   - Standart Profiller     : VIP statüsü olmayan kullanıcılar normal şekilde 
+                             açılmaya devam edecek ve bu alanlar için daha 
+                             kompakt, profesyonel bir arayüz güncellemesi yapılacak.
 
 D. VIP SEVİYE ÖDÜLLERİNİN GÜNCELLENMESİ:
    - Eksik Giderimi         : Sadece çerçeve ve avatarların olduğu ödül ekranı düzeltilecek.
-   - Duvar Kağıtları         : avatarveduvarkağıdı/BİTMİŞ DUVAR KAĞIDI/VİP DUVAR KAĞIDI 
-                              klasöründeki 1'den 12'ye kadar olan duvar kağıtları 
-                              ilgili seviye ödüllerine dahil edilecek.
+   - Duvar Kağıtları        : avatarveduvarkağıdı/BİTMİŞ DUVAR KAĞIDI/VİP DUVAR KAĞIDI 
+                             klasöründeki 1'den 12'ye kadar olan duvar kağıtları 
+                             ilgili seviye ödüllerine dahil edilecek.
    - Envanter Kontrolü      : Her seviyede kullanıcılara sunulan ekstra hediyeler 
-                              (elmas, rozet vb.) sistem üzerinde netleştirilecek.
+                             (elmas, rozet vb.) sistem üzerinde netleştirilecek.
 
 E. PROFİL VIP BUTONU VE YÜZEN PENCERE MİMARİSİ:
    - Profil Düzenlemesi     : Profildeki yetersiz VIP butonu menüsü kaldırılacak.
    - Birebir Aktarım        : Ana sayfadaki VIP menüsünün aynısı profil alanına uyarlanacak.
    - Yüzen Pencere          : Bu menü uygulama genelinde her yerden tetiklenebilir 
-                              yüzen pencere (pop-up) yapısına kavuşturulacak.
+                             yüzen pencere (pop-up) yapısına kavuşturulacak.
 
-[3. KONTROL VE ÖZET TABlosu]
+[3. KONTROL VE ÖZET TABLOSU]
 --------------------------------------------------------------------------------
 > Ana Sayfa VIP Menüsü    : 12 seviye için özel logo ikon entegrasyonu
 > Profil Kartvizit        : Kullanıcı adı sağına yatay kartvizit entegrasyonu
 > Profil İstatistikleri   : Toplam Lidya hediye miktarının gösterimi ve güncellenmesi
 > Chat Yüzen Pencere      : Hayran butonunun soluna yatay kartvizit eklenmesi
+> VIP Pop-up Tasarımı     : Seviyelere özel yüzen pencere arayüzlerinin dinamik gösterimi
+> Standart Profil Opt.    : VIP olmayan kullanıcılar için kompakt arayüz tasarımı
 > Ödül Ekranı             : Çerçeve/avatar yanına özel duvar kağıtlarının eklenmesi
 > Profil VIP Entegrasyonu : Mevcut VIP alanının ana menü tasarımıyla yenilenmesi
 > Ödül Envanteri          : Her seviyenin hediye kapsamının eksiksiz doğrulanması
 ================================================================================
-
-
-BU İŞ BİTTİKTEN HEMEN SONRA BİR DOSYA DAHA EKLEDİM VİP YÜZEN PENCERE DİYE ONUN İÇİNDE 
-VİP1 DEN 12 YE KADAR OLAN TÜM YÜZEN PENCERE TASARIMLARI VAR
-İNSANLARA ARTIK ÖDÜLLERDE BUNU VERİYORUZ VE VİP SEVİYESİNE GÖRE GÜNCELLENİYOR
-BU DA ŞU İŞE YARIYOR CHATTA İNSANLARIN PROFİLİNE BASINCA AÇILAN YÜZEN PENCERELER VİP SEVİYESİNE GÖRE
-GÜNCELLENEREK BU ŞEKİLDE GÖZÜKECEK HEM İNSANLAR BİZE TIKLADIĞINDA HEM KİŞİ KENDİSİ TIKLADIĞINDA VİP SEVİYESİNE GÖRE NEYSE ONU GÖRÜCEK
-VİP OLMAYAN İNSANLAR NORMAL ŞEKİLDE AÇILMAYA DEVAM EDİCEK VE EK OLARAK ORDA DA DAHA KOMPAKT BİR TASARIM GÜNCELLEMESİ YAP
