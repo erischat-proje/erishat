@@ -369,7 +369,13 @@ def register_platform_auth(current_user_dependency):
     @router.post("/reports",status_code=201)
     def create_report(payload: ReportCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         if not any((payload.target_user_id,payload.room_id,payload.message_id)): raise HTTPException(status_code=400,detail="Şikayet hedefi gerekli")
-        report=Report(reporter_id=user.id,**payload.model_dump()); db.add(report); db.commit(); db.refresh(report)
+        report=Report(reporter_id=user.id,**payload.model_dump()); db.add(report); db.flush()
+        from .support_models import SupportTicket
+        from .support_workflow import initialize_ticket, dispatch
+        ticket = SupportTicket(user_id=user.id, category="safety", subject=f"Şikayet #{report.id}", message=payload.reason)
+        db.add(ticket); db.flush()
+        initialize_ticket(db, ticket, room_id=payload.room_id)
+        db.commit(); dispatch(db); db.refresh(report)
         record("report", "user_report_created", report_id=report.id, reporter_id=user.id, reporter_nickname=user.nickname,
                target_user_id=report.target_user_id, room_id=report.room_id, message_id=report.message_id,
                category=report.category, reason=report.reason, status=report.status)
