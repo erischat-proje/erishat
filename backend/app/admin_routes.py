@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .platform_models import Report, VipStatus, UserLocation
-from .room_models import Room, RoomMember, RoomSeat
+from .room_models import Room, RoomMember, RoomSeat, RoomPassword
 from .support_models import SupportTicket
 from .system_logs import record
 from .admin_models import (
@@ -178,7 +178,23 @@ class AnnouncementCreate(BaseModel):
     message: str = Field(min_length=3, max_length=4000)
 
 
-def register_admin_auth(current_user_dependency):
+def update_room_ghost(db: Session, user_id: str, enabled: bool) -> None:
+    for member in db.scalars(select(RoomMember).where(RoomMember.user_id==user_id)):
+        room = db.get(Room, member.room_id)
+        if not enabled and member.ghost and room and room.owner_id != user_id and (
+            db.get(RoomPassword, room.id) or (room.locked and (
+                not room.lock_expires_at or room.lock_expires_at > datetime.now(timezone.utc)
+            ))
+        ):
+            db.delete(member)
+        else:
+            member.ghost = enabled
+    if enabled:
+        for seat in db.scalars(select(RoomSeat).where(RoomSeat.user_id==user_id)):
+            seat.user_id=None;seat.muted=False
+
+
+def register_admin_auth(current_user_dependency, ghost_transition=None):
     @router.get("/me")
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
@@ -186,16 +202,14 @@ def register_admin_auth(current_user_dependency):
         return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode}
 
     @router.patch("/ghost-mode")
-    def ghost_mode(payload: GhostUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        row = require_role(db, user, "SA")
+    async def ghost_mode(payload: GhostUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = require_role(db, user, "DA")
         row.ghost_mode = payload.enabled
-        for member in db.scalars(select(RoomMember).where(RoomMember.user_id==user.id)):
-            member.ghost = payload.enabled
-        if payload.enabled:
-            for seat in db.scalars(select(RoomSeat).where(RoomSeat.user_id==user.id)):
-                seat.user_id=None;seat.muted=False
+        update_room_ghost(db, user.id, payload.enabled)
         audit(db, user, "ghost_mode", {"enabled": payload.enabled})
         db.commit()
+        if ghost_transition:
+            await ghost_transition(user.id, payload.enabled)
         return {"enabled": row.ghost_mode}
 
     @router.get("/tickets")
@@ -546,19 +560,28 @@ def register_admin_auth(current_user_dependency):
         return [{"user_id":r.user_id,"role":r.role,"ghost_mode":r.ghost_mode,"created_at":r.created_at} for r in rows]
 
     @router.put("/roles")
-    def set_role(payload:RoleUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    async def set_role(payload:RoleUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA");target=resolve_admin_user(db,payload.user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         row=db.get(AdminRole,target.id)
         if not row: row=AdminRole(user_id=target.id,role=payload.role,granted_by=user.id);db.add(row)
         else: row.role=payload.role;row.granted_by=user.id
+        if payload.role != "DA":
+            row.ghost_mode = False
+            update_room_ghost(db, target.id, False)
         audit(db,user,"role_grant",{"role":payload.role,"public_id":target.public_id},target_user_id=target.id);db.commit()
+        if payload.role != "DA" and ghost_transition:
+            await ghost_transition(target.id, False)
         return {"user_id":target.id,"public_id":target.public_id,"role":row.role}
 
     @router.delete("/roles/{user_id}")
-    def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    async def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA");row=db.get(AdminRole,user_id)
         if not row: raise HTTPException(status_code=404,detail="Admin yetkisi bulunamadı")
-        db.delete(row);audit(db,user,"role_revoke",target_user_id=user_id);db.commit();return {"removed":True}
+        update_room_ghost(db, user_id, False)
+        db.delete(row);audit(db,user,"role_revoke",target_user_id=user_id);db.commit()
+        if ghost_transition:
+            await ghost_transition(user_id, False)
+        return {"removed":True}
 
     return router

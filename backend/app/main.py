@@ -279,7 +279,7 @@ register_room_auth(current_user)
 register_platform_auth(current_user)
 register_family_auth(current_user)
 register_support_auth(current_user)
-register_admin_auth(current_user)
+register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled))
 register_dm_folder_auth(current_user)
 register_call_auth(current_user)
 app.include_router(room_router)
@@ -1860,6 +1860,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             data = await websocket.receive_json()
             if not websocket_session_active(token):
                 manager.disconnect(user_id, websocket)
+                room_socket_users.pop(websocket, None)
                 await websocket.close(code=1008, reason="oturum sona erdi")
                 return
             if isinstance(data, dict) and data.get("type") == "ping":
@@ -1876,6 +1877,29 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
 room_chat_connections: dict[str, set[WebSocket]] = {}
 room_rtc_users: dict[str, dict[WebSocket, str]] = {}
+room_socket_users: dict[WebSocket, tuple[str, str]] = {}
+
+
+async def transition_room_ghost(user_id: str, enabled: bool) -> None:
+    # Remove public RTC presence before reconnecting all tabs under the new rules.
+    for ws, (room_id, socket_user_id) in list(room_socket_users.items()):
+        if socket_user_id != user_id:
+            continue
+        visible = room_rtc_users.get(room_id, {}).pop(ws, None)
+        room_chat_connections.get(room_id, set()).discard(ws)
+        room_socket_users.pop(ws, None)
+        if visible:
+            for peer in list(room_rtc_users.get(room_id, {})):
+                try:
+                    await peer.send_json({"type": "rtc_peer_left", "user_id": user_id})
+                except Exception:
+                    pass
+        try:
+            await ws.send_json({"type": "ghost_mode_changed", "enabled": enabled})
+            await ws.close(code=1000)
+        except Exception:
+            pass
+
 
 async def _broadcast_room_event(room_id: str, payload: dict) -> None:
     connections = room_chat_connections.get(room_id, set())
@@ -1939,6 +1963,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         fan_totals = gift_totals(db, history_ids)
         history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
+    room_socket_users[websocket] = (internal_room_id, str(user.id))
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
     existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
     if not member.ghost:
@@ -1955,6 +1980,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             if not websocket_session_active(token):
                 room_chat_connections.get(internal_room_id, set()).discard(websocket)
                 room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
+                room_socket_users.pop(websocket, None)
                 await websocket.close(code=1008, reason="oturum sona erdi")
                 return
             with Session(engine) as db:
@@ -1967,6 +1993,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 if not room or not member or banned or owner_blocked:
                     room_chat_connections.get(internal_room_id, set()).discard(websocket)
                     room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
+                    room_socket_users.pop(websocket, None)
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     return
             if member.ghost and websocket in room_rtc_users.get(internal_room_id, {}):
@@ -1978,6 +2005,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 continue
             if data.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
+                continue
+            if member.ghost:
+                await websocket.send_json({"type": "room_chat_error", "code": "ghost_mode", "message": "Bu işlem için önce Ghost Mode’u kapatın."})
                 continue
             if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
                 with Session(engine) as db:
@@ -2091,9 +2121,11 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 payload = {"type":"room_chat","fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
+        room_socket_users.pop(websocket, None)
         room_chat_connections.get(internal_room_id, set()).discard(websocket)
         room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
     except Exception:
+        room_socket_users.pop(websocket, None)
         room_chat_connections.get(internal_room_id, set()).discard(websocket)
         room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
         try:
