@@ -178,7 +178,7 @@ def require_manageable_guest(db: Session, room: Room, actor: User, target_id: st
 
 def ghost_active(db: Session, user_id: str) -> bool:
     admin = db.get(AdminRole, user_id)
-    return bool(admin and admin.ghost_mode)
+    return bool(admin and admin.role == "DA" and admin.ghost_mode)
 
 
 def reject_ghost(db: Session, user: User, action: str = "Bu işlemi yapmak") -> None:
@@ -351,8 +351,9 @@ def register_room_auth(current_user_dependency):
             raise HTTPException(status_code=403, detail="Bu kişi tarafından engellendiniz; odasına katılamazsınız.")
         admin = db.get(AdminRole, user.id)
         admin_mode = bool(admin and admin.role in {"SA", "UA", "FA", "DA"})
+        ghost = ghost_active(db, user.id)
         stored = db.get(RoomPassword, room.id)
-        if stored and room.owner_id != user.id and not (admin and admin.role == "DA"):
+        if stored and room.owner_id != user.id and not ghost:
             supplied = (payload.password if payload else None) or ""
             if not supplied or hashlib.sha256(supplied.encode()).hexdigest() != stored.password_hash:
                 raise HTTPException(status_code=403, detail="Oda kilitli. 4 haneli şifre gerekli.")
@@ -361,14 +362,14 @@ def register_room_auth(current_user_dependency):
         if active_admin_ban and not admin_mode: raise HTTPException(status_code=403, detail="Oda yönetim tarafından yasaklandı")
         active_user_ban = db.scalar(select(UserBan).where(UserBan.user_id == user.id, UserBan.active.is_(True), (UserBan.expires_at.is_(None)) | (UserBan.expires_at > datetime.now(timezone.utc))))
         if active_user_ban and not admin_mode: raise HTTPException(status_code=403, detail="Hesabınız yasaklı")
-        if room.locked and not stored and room.lock_expires_at and room.lock_expires_at > datetime.now(timezone.utc) and room.owner_id != user.id and not admin_mode: raise HTTPException(status_code=403, detail="Oda kilitli")
+        if room.locked and not stored and (not room.lock_expires_at or room.lock_expires_at > datetime.now(timezone.utc)) and room.owner_id != user.id and not ghost: raise HTTPException(status_code=403, detail="Oda kilitli")
         existing_member = db.scalar(select(RoomMember).where(RoomMember.room_id==room.id,RoomMember.user_id==user.id))
         if not existing_member:
             count = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0
-            if count >= LEVELS[room.level]["capacity"] and not (admin and admin.ghost_mode): raise HTTPException(status_code=409, detail="Oda dolu")
-            db.add(RoomMember(room_id=room.id, user_id=user.id, ghost=bool(admin and admin.ghost_mode)))
+            if count >= LEVELS[room.level]["capacity"] and not ghost: raise HTTPException(status_code=409, detail="Oda dolu")
+            db.add(RoomMember(room_id=room.id, user_id=user.id, ghost=ghost))
         else:
-            existing_member.ghost=bool(admin and admin.ghost_mode)
+            existing_member.ghost=ghost
         room.is_active = True
         db.commit()
         return room_view(db, room, user)
