@@ -1,0 +1,59 @@
+================================================================================
+          ERISCHAT - VIP SİSTEMİ VE MATERYAL ENTEGRASYON PLANI (GÜNCELLENDİ)
+================================================================================
+
+[1. GÖRSEL DOSYA DAĞILIMI VE YAPISI]
+--------------------------------------------------------------------------------
+- VİPGEKEKLİMATERYALLER klasöründeki dosyalar iki ana gruba ayrılır:
+  1. Menü Logoları     : VİP1MENÜLOGO.png - VİP12MENÜLOGO.png (VIP Seviye İkonları)
+  2. Yatay Kartvizitler: VİP1YATAYKARTVİZİT.png - VİP12YATAYKARTVİZİT.png (Profil & Yüzen Pencere)
+
+[2. ADIM ADIM UYGULAMA VE ENTEGRASYON REHBERİ]
+--------------------------------------------------------------------------------
+
+A. ANA SAYFA VIP MERKEZİ ENTEGRASYONU:
+   - Erişim Noktası : Erischat ana sayfasındaki "VIP Merkezi" butonu.
+   - Logo Yerleşimi : VIP 1 ile VIP 12 arasındaki her seviye kartına, ilgili 
+                      VİP[Seviye]MENÜLOGO.png dosyası ikon olarak eklenecek.
+
+B. PROFİL SAYFASI VE KARTVİZİT YERLEŞİMLERİ:
+   - Eski VIP Alanı Kaldırma: Profilde yer alan, içinde VIP seviyesi yazan mevcut 
+                              eski VIP kutusu tamamen kaldırılacak.
+   - Profil Bilgi Güncelleme: Takipçi ve takip edilen kişi sayısının yanı sıra 
+                              "Hediye" yazan kısım güncellenecek; buraya kullanıcının 
+                              şimdiye kadar aldığı toplam hediye Lidya miktarı yazılacak 
+                              ve yeni hediye alındıkça dinamik olarak güncellenecek.
+   - Kullanıcı Adı Yanı     : Kullanıcı adlarının sağ tarafına kullanıcının sahip 
+                              olduğu VIP seviyesine ait yatay kartvizit 
+                              (VİP[Seviye]YATAYKARTVİZİT.png) eklenecek.
+
+C. ODALAR / CHAT YÜZEN PENCERE (POP-UP) ENTEGRASYONU:
+   - Konumlandırma          : Odalarda veya chat içinde herhangi birinin profiline 
+                              tıklandığında açılan yüzen pencerede (pop-up), sağ 
+                              üst köşedeki "Hayran" butonunun sol tarafına ilgili 
+                              VIP yatay kartviziti eklenecek.
+
+D. VIP SEVİYE ÖDÜLLERİNİN GÜNCELLENMESİ:
+   - Eksik Giderimi         : Sadece çerçeve ve avatarların olduğu ödül ekranı düzeltilecek.
+   - Duvar Kağıtları         : avatarveduvarkağıdı/BİTMİŞ DUVAR KAĞIDI/VİP DUVAR KAĞIDI 
+                              klasöründeki 1'den 12'ye kadar olan duvar kağıtları 
+                              ilgili seviye ödüllerine dahil edilecek.
+   - Envanter Kontrolü      : Her seviyede kullanıcılara sunulan ekstra hediyeler 
+                              (elmas, rozet vb.) sistem üzerinde netleştirilecek.
+
+E. PROFİL VIP BUTONU VE YÜZEN PENCERE MİMARİSİ:
+   - Profil Düzenlemesi     : Profildeki yetersiz VIP butonu menüsü kaldırılacak.
+   - Birebir Aktarım        : Ana sayfadaki VIP menüsünün aynısı profil alanına uyarlanacak.
+   - Yüzen Pencere          : Bu menü uygulama genelinde her yerden tetiklenebilir 
+                              yüzen pencere (pop-up) yapısına kavuşturulacak.
+
+[3. KONTROL VE ÖZET TABlosu]
+--------------------------------------------------------------------------------
+> Ana Sayfa VIP Menüsü    : 12 seviye için özel logo ikon entegrasyonu
+> Profil Kartvizit        : Kullanıcı adı sağına yatay kartvizit entegrasyonu
+> Profil İstatistikleri   : Toplam Lidya hediye miktarının gösterimi ve güncellenmesi
+> Chat Yüzen Pencere      : Hayran butonunun soluna yatay kartvizit eklenmesi
+> Ödül Ekranı             : Çerçeve/avatar yanına özel duvar kağıtlarının eklenmesi
+> Profil VIP Entegrasyonu : Mevcut VIP alanının ana menü tasarımıyla yenilenmesi
+> Ödül Envanteri          : Her seviyenin hediye kapsamının eksiksiz doğrulanması
+================================================================================
