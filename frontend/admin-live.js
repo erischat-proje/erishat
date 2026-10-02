@@ -31,7 +31,7 @@ async function action(a,me,p){try{
  if(a==='banrequests'){await renderBanRequests(p,me);return}
  if(a==='banappeals'){await renderBanAppeals(p,me);return}
  if(a==='gaps'&&['FA','DA'].includes(me.role)){const rows=await req('/v1/admin/application-gaps');showData(p,'🧩 Uygulama geri bildirimi',rows.map(r=>({name:r.reporter_id,title:r.message,created_at:r.created_at,message:r.message})),me);return}
- if(a==='tickets'){const rows=await req('/v1/admin/tickets');showTickets(p,rows,me);return}
+ if(a==='tickets'){p.remove();window.ErisSupport?.openAdmin?.();return}
  if(a==='announcement'){renderAnnouncement(p,me);return}
  if(['lookup','calls','lidya','vip','ban','roomban','chatban','roles','gaps'].includes(a)){showActionForm(a,me,p);return}
  if(a==='users'){const rows=await req('/v1/admin/users');showData(p,'👤 Gerçek Kullanıcılar',rows,me);return}

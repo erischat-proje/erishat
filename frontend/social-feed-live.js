@@ -103,24 +103,24 @@
   }
   function reportPost(post,card,comment=null){
     const modal=document.createElement('div');modal.className='ec-social-modal';
-    modal.innerHTML='<section role="dialog" aria-modal="true" aria-label="'+(comment?'Yorumu':'Gönderiyi')+' bildir"><header style="display:flex;justify-content:space-between;align-items:center"><b>'+(comment?'Yorumu':'Gönderiyi')+' bildir</b><button type="button" data-close aria-label="Kapat">×</button></header><div class="ec-report-preview"></div><p style="font-size:12px;color:#c9b9d8">Ekran görüntüsü otomatik eklendi. Ek kanıt da seçebilirsin.</p><textarea data-reason minlength="3" maxlength="2000" placeholder="Şikâyet nedenini yaz"></textarea><label>Ek kanıt (en fazla 3 fotoğraf veya 1 video)<input type="file" data-evidence accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><p data-error role="alert" style="color:#ff9dbd"></p><button type="button" class="ec-primary" data-submit>Desteğe gönder</button></section>';
+    modal.innerHTML='<section role="dialog" aria-modal="true" aria-label="'+(comment?'Yorumu':'Gönderiyi')+' bildir"><header style="display:flex;justify-content:space-between;align-items:center"><b>'+(comment?'Yorumu':'Gönderiyi')+' bildir</b><button type="button" data-close aria-label="Kapat">×</button></header><div class="ec-report-preview"></div><p style="font-size:12px;color:#c9b9d8">Şikâyet nedenini ve ek kanıtlarını ilet.</p><textarea data-reason minlength="3" maxlength="2000" placeholder="Şikâyet nedenini yaz"></textarea><label>Ek kanıt (en fazla 3 fotoğraf veya 1 video)<input type="file" data-evidence accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><p data-error role="alert" style="color:#ff9dbd"></p><button type="button" class="ec-primary" data-submit>Desteğe gönder</button></section>';
     document.body.append(modal);const preview=modal.querySelector('.ec-report-preview');
     let screenshot='';try{screenshot=captureSnapshot(post,card,comment)}catch(error){modal.querySelector('[data-error]').textContent=error.message}
-    if(screenshot){const img=document.createElement('img');img.src=screenshot;img.alt='Otomatik gönderi ekran görüntüsü';preview.append(img)}
+
     const meta=document.createElement('p');meta.textContent=formatDate(comment?.created_at||post.created_at)+' · '+(comment?.body||post.caption||'Medya gönderisi').slice(0,110);preview.append(meta);
     const close=()=>modal.remove();modal.querySelector('[data-close]').onclick=close;modal.onclick=e=>{if(e.target===modal)close()};
     modal.querySelector('[data-submit]').onclick=async e=>{
       const button=e.currentTarget,error=modal.querySelector('[data-error]');error.textContent='';
       const reason=modal.querySelector('[data-reason]').value.trim(),files=[...modal.querySelector('[data-evidence]').files];
       const videos=files.filter(file=>file.type.startsWith('video/'));
-      if(!screenshot){error.textContent='Otomatik ekran görüntüsü oluşturulamadı. Tekrar dene.';return}
+      if(!screenshot){error.textContent='Şikâyet kaydı hazırlanamadı. Tekrar dene.';return}
       if(reason.length<3){error.textContent='Şikâyet nedenini yaz.';return}
       if(files.length>3||videos.length&&(videos.length!==1||files.length!==1)||files.some(file=>!['image/jpeg','image/png','image/webp','video/mp4','video/webm'].includes(file.type)||file.size>(file.type.startsWith('video/')?8*1024*1024:1500000))){error.textContent='En fazla 3 fotoğraf (1,5 MB) veya 1 video (8 MB) ekle.';return}
       button.disabled=true;
       try{const extra=await Promise.all(files.map(file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})));
-        const attachments=[screenshot,...extra];
-        await api().api('/support/tickets',{method:'POST',body:JSON.stringify({category:comment?'comment_report':'post_report',subject:(comment?'Yorum':'Gönderi')+' şikâyeti #'+(comment?.id||post.id),message:'Gönderi ID: '+post.id+(comment?'\nYorum ID: '+comment.id:'')+'\nGönderen: '+(comment?.user_id||post.user_id)+'\nTarih: '+formatDate(comment?.created_at||post.created_at)+'\nŞikâyet: '+reason,attachments})});
-        close();window.toast?.('Şikâyet ekran görüntüsü ve kanıtlarıyla desteğe iletildi.');
+        const attachments=extra;
+        await api().api('/support/tickets',{method:'POST',body:JSON.stringify({category:comment?'comment_report':'post_report',subject:(comment?'Yorum':'Gönderi')+' şikâyeti #'+(comment?.id||post.id),message:'Gönderi ID: '+post.id+(comment?'\nYorum ID: '+comment.id:'')+'\nGönderen: '+(comment?.user_id||post.user_id)+'\nTarih: '+formatDate(comment?.created_at||post.created_at)+'\nŞikâyet: '+reason,attachments,security_snapshot:screenshot,context_post_id:post.id,context_comment_id:comment?.id||null})});
+        close();window.toast?.('Şikâyetin desteğe iletildi.');
       }catch(err){error.textContent=err.message||'Şikâyet gönderilemedi.';button.disabled=false}
     };
   }

@@ -14,6 +14,7 @@ from .platform_models import Report, VipStatus, UserLocation
 from .room_models import Room, RoomMember, RoomSeat, RoomPassword
 from .support_models import SupportTicket
 from .system_logs import record
+from . import support_workflow as support_live
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
     UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement, BanApproval, BanAppeal, FaActionLog,
@@ -194,7 +195,7 @@ def update_room_ghost(db: Session, user_id: str, enabled: bool) -> None:
             seat.user_id=None;seat.muted=False
 
 
-def register_admin_auth(current_user_dependency, ghost_transition=None):
+def register_admin_auth(current_user_dependency, ghost_transition=None, support_disconnect=None):
     @router.get("/me")
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
@@ -214,74 +215,27 @@ def register_admin_auth(current_user_dependency, ghost_transition=None):
 
     @router.get("/tickets")
     def tickets(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "SA")
-        rows = db.scalars(select(SupportTicket).order_by(SupportTicket.created_at.desc())).all()
-        record("support", "support_ticket_list_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
-        fa_view(db,user,"support_ticket_list_view",count=len(rows))
-        return [{"id": x.id, "user_id": x.user_id, "category": x.category, "subject": x.subject, "message": x.message,
-                 "has_attachments": bool(x.attachments_json and x.attachments_json != "[]"),
-                 "status": x.status, "created_at": x.created_at} for x in rows]
+        return support_live.admin_tickets(db, user)
 
     @router.get("/tickets/{ticket_id}")
     def ticket_detail(ticket_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "SA")
-        ticket = db.get(SupportTicket, ticket_id)
-        if not ticket:
-            raise HTTPException(status_code=404, detail="Destek talebi bulunamadı")
-        messages = db.scalars(select(SupportMessage).where(SupportMessage.ticket_id == ticket_id).order_by(SupportMessage.created_at)).all()
-        assignment = db.get(SupportAssignment, ticket_id)
-        target_user = db.get(User, ticket.user_id)
-        fa_view(db,user,"support_ticket_view",ticket_id=ticket_id,target_user_id=ticket.user_id)
-        record("support_view", "support_ticket_view", admin_id=user.id, admin_nickname=user.nickname,
-               target_user_id=ticket.user_id, target_nickname=getattr(target_user, "nickname", None),
-               ticket_id=ticket_id, message_count=len(messages))
-        return {"id": ticket.id, "user_id": ticket.user_id, "category": ticket.category, "subject": ticket.subject,
-                "message": ticket.message, "status": ticket.status, "created_at": ticket.created_at,
-                "assignment": None if not assignment else {"admin_id": assignment.admin_id, "decision": assignment.decision, "note": assignment.decision_note, "decided_at": assignment.decided_at},
-                "messages": [{"sender_id": ticket.user_id, "sender_role": "USER", "message": ticket.message,
-                              "attachments": json.loads(ticket.attachments_json or "[]"), "created_at": ticket.created_at}]
-                           + [{"sender_id": m.sender_id, "sender_role": m.sender_role, "message": m.message,
-                               "attachments": json.loads(m.attachments_json or "[]"), "created_at": m.created_at} for m in messages]}
+        ticket, _, _ = support_live.ticket_for(db, ticket_id, user, offered=True)
+        return support_live.view(db, ticket, user)
 
     @router.post("/tickets/{ticket_id}/accept")
     def accept_ticket(ticket_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        row = require_role(db, user, "SA")
-        ticket = db.get(SupportTicket, ticket_id)
-        if not ticket: raise HTTPException(status_code=404, detail="Destek talebi bulunamadı")
-        if ticket.status not in {"pending", "open"}: raise HTTPException(status_code=409, detail="Talep artık beklemede değil")
-        ticket.status = "accepted"
-        assignment = db.get(SupportAssignment, ticket_id)
-        if assignment: assignment.admin_id = user.id; assignment.decision = "accepted"; assignment.decision_note = None
-        else: db.add(SupportAssignment(ticket_id=ticket_id, admin_id=user.id, decision="accepted"))
-        db.add(SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role=row.role, message="Destek talebi kabul edildi."))
-        audit(db, user, "support_accept", {"ticket_id": ticket_id}, target_user_id=ticket.user_id, target_id=str(ticket_id))
-        db.commit()
-        return {"accepted": True, "ticket_id": ticket_id}
+        return support_live.accept(db, user, ticket_id)
 
     @router.post("/tickets/{ticket_id}/reject")
-    def reject_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        row = require_role(db, user, "SA")
-        ticket = db.get(SupportTicket, ticket_id)
-        if not ticket: raise HTTPException(status_code=404, detail="Destek talebi bulunamadı")
-        ticket.status = "rejected"
-        assignment = db.get(SupportAssignment, ticket_id)
-        if assignment: assignment.admin_id = user.id; assignment.decision = "rejected"; assignment.decision_note = payload.note
-        else: db.add(SupportAssignment(ticket_id=ticket_id, admin_id=user.id, decision="rejected", decision_note=payload.note))
-        db.add(SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role=row.role, message=payload.note or "Destek talebi reddedildi."))
-        audit(db, user, "support_reject", {"ticket_id": ticket_id, "note": payload.note}, target_user_id=ticket.user_id, target_id=str(ticket_id))
-        db.commit()
-        return {"rejected": True, "ticket_id": ticket_id}
+    async def reject_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        result = support_live.decline(db, user, ticket_id)
+        if result["restriction_seconds"] and support_disconnect:
+            await support_disconnect(user.id)
+        return result
 
     @router.post("/tickets/{ticket_id}/message")
     def ticket_message(ticket_id: int, payload: TicketMessage, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        row = require_role(db, user, "SA")
-        ticket = db.get(SupportTicket, ticket_id)
-        if not ticket or ticket.status not in {"accepted", "pending", "open"}: raise HTTPException(status_code=409, detail="Destek talebi aktif değil")
-        db.add(SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role=row.role, message=payload.message.strip(),
-                              attachments_json=json.dumps(payload.attachments)))
-        audit(db, user, "support_message", {"ticket_id": ticket_id, "message": payload.message}, target_user_id=ticket.user_id, target_id=str(ticket_id))
-        db.commit()
-        return {"sent": True}
+        return support_live.send(db, user, ticket_id, payload.message, payload.attachments)
 
     @router.post("/announcements", status_code=201)
     def create_announcement(payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -296,26 +250,15 @@ def register_admin_auth(current_user_dependency, ghost_transition=None):
 
     @router.post("/tickets/{ticket_id}/close")
     def close_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        row = require_role(db, user, "SA")
-        ticket = db.get(SupportTicket, ticket_id)
-        if not ticket: raise HTTPException(status_code=404, detail="Destek talebi bulunamadı")
-        result = payload.note.strip() or "unspecified"
-        if result not in {"supported", "unsupported"}:
-            result = "supported" if "olundu" in result.lower() else "unsupported" if "olunmadı" in result.lower() else result
-        ticket.status = "closed"
-        db.add(SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role=row.role, message=f"Destek sonucu: {result}"))
-        audit(db, user, "support_close", {"ticket_id": ticket_id, "result": result}, target_user_id=ticket.user_id, target_id=str(ticket_id))
-        append_note(SUPPORT_LOG, f"[{datetime.now(timezone.utc).isoformat()}] ticket={ticket_id} admin={user.nickname}({user.id}) user={ticket.user_id} status=closed result={result}")
-        db.commit()
-        return {"closed": True, "result": result}
+        return support_live.close(db, user, ticket_id)
 
     @router.get("/reports")
     def reports(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "UA")
+        report_role = require_role(db, user, "UA")
         rows = db.scalars(select(Report).order_by(Report.created_at.desc())).all()
         record("report", "admin_reports_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
         fa_view(db,user,"admin_reports_view",count=len(rows))
-        return [{"id": r.id, "reporter_id": r.reporter_id, "target_user_id": r.target_user_id, "room_id": r.room_id, "message_id": r.message_id,
+        return [{"id": r.id, "reporter_id": (db.get(User, r.reporter_id).public_id if report_role.role in {"FA", "DA"} and db.get(User, r.reporter_id) else "(ID GİZLENMİŞTİR)"), "target_user_id": r.target_user_id, "room_id": r.room_id, "message_id": r.message_id,
                  "category": r.category, "reason": r.reason, "status": r.status, "created_at": r.created_at} for r in rows]
 
     @router.get("/application-gaps")

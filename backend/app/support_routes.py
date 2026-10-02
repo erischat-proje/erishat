@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 from .support_models import SupportTicket
+from . import support_workflow as live
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage
 from .system_logs import record
 from pathlib import Path
@@ -24,6 +25,19 @@ class SupportCreate(BaseModel):
     subject: str = Field(min_length=1, max_length=120)
     message: str = Field(min_length=3, max_length=4000)
     attachments: list[str] = Field(default_factory=list, max_length=4)
+    security_snapshot: str = Field(default="", max_length=2000000)
+    context_room_id: str | None = Field(default=None, max_length=64)
+    context_post_id: int | None = Field(default=None, ge=1)
+    context_comment_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("security_snapshot")
+    @classmethod
+    def validate_snapshot(cls, value):
+        if value:
+            if not value.startswith("data:image/"):
+                raise ValueError("Sistem görüntüsü bir fotoğraf olmalı")
+            cls._attachments([value])
+        return value
 
     @staticmethod
     def _attachments(value: list[str]) -> list[str]:
@@ -77,13 +91,7 @@ class SupportReply(BaseModel):
 
 
 def serialize_ticket(ticket: SupportTicket, db: Session):
-    replies = db.scalars(select(SupportMessage).where(SupportMessage.ticket_id == ticket.id).order_by(SupportMessage.created_at)).all()
-    messages = [{"sender_id": ticket.user_id, "sender_role": "USER", "message": ticket.message,
-                 "attachments": json.loads(ticket.attachments_json or "[]"), "created_at": ticket.created_at}]
-    messages.extend({"sender_id": r.sender_id, "sender_role": ("USER" if r.sender_role == "US" else r.sender_role), "message": r.message,
-                     "attachments": json.loads(r.attachments_json or "[]"), "created_at": r.created_at} for r in replies)
-    return {"id": ticket.id, "category": ticket.category, "subject": ticket.subject, "status": ticket.status,
-            "created_at": ticket.created_at, "messages": messages}
+    return live.view(db, ticket, db.get(User, ticket.user_id))
 
 
 def register_support_auth(current_user_dependency):
@@ -92,7 +100,10 @@ def register_support_auth(current_user_dependency):
         ticket = SupportTicket(user_id=user.id, category=payload.category.strip(), subject=payload.subject.strip(),
                                message=payload.message.strip(), attachments_json=json.dumps(payload.attachments))
         db.add(ticket)
+        db.flush()
+        live.initialize_ticket(db, ticket, payload.security_snapshot, payload.context_room_id, payload.context_post_id, payload.context_comment_id)
         db.commit()
+        live.dispatch(db)
         db.refresh(ticket)
         SUPPORT_LOG.parent.mkdir(parents=True, exist_ok=True)
         with SUPPORT_LOG.open("a", encoding="utf-8") as handle:
@@ -104,7 +115,7 @@ def register_support_auth(current_user_dependency):
     @router.get("/tickets")
     def list_tickets(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         rows = db.scalars(select(SupportTicket).where(SupportTicket.user_id == user.id).order_by(SupportTicket.created_at.desc())).all()
-        return [serialize_ticket(r, db) for r in rows]
+        return [live.summary(db, r, user) for r in rows]
 
     @router.get("/tickets/{ticket_id}")
     def get_ticket(ticket_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -118,15 +129,6 @@ def register_support_auth(current_user_dependency):
         ticket = db.get(SupportTicket, ticket_id)
         if not ticket or ticket.user_id != user.id:
             raise HTTPException(status_code=404, detail="Destek kaydı bulunamadı")
-        if ticket.status not in {"pending", "open", "accepted"}:
-            raise HTTPException(status_code=409, detail="Kapatılmış destek kaydına yanıt gönderilemez")
-        msg = SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role="US", message=payload.message.strip(),
-                             attachments_json=json.dumps(payload.attachments))
-        db.add(msg)
-        db.commit()
-        db.refresh(msg)
-        record("support", "support_ticket_user_reply", ticket_id=ticket.id, user_id=user.id, message_id=msg.id)
-        return {"sent": True, "message": {"sender_id": user.id, "sender_role": "USER", "message": msg.message,
-                "attachments": payload.attachments, "created_at": msg.created_at}}
+        return live.send(db, user, ticket_id, payload.message, payload.attachments)
 
     return router
