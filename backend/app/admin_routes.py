@@ -263,7 +263,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
 
     @router.get("/application-gaps")
     def application_gaps(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_fa_or_da(db,user)
+        require_role(db,user,"DA")
         rows=db.scalars(select(ApplicationGap).order_by(ApplicationGap.created_at.desc()).limit(200)).all()
         fa_view(db,user,"application_gaps_view",count=len(rows))
         return [{"id":r.id,"reporter_id":r.reporter_id,"message":r.message,
@@ -271,7 +271,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
 
     @router.post("/application-gaps")
     def application_gap(payload: GapCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_role(db, user, "UA")
+        require_role(db, user, "DA")
         row = ApplicationGap(reporter_id=user.id, message=payload.message.strip())
         db.add(row); audit(db, user, "application_gap", {"message": payload.message}, target_id=str(row.id))
         append_note(GAPS_LOG, f"[{datetime.now(timezone.utc).isoformat()}] admin={user.nickname}({user.id}) gap={payload.message.strip()}")
