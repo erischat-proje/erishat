@@ -1,5 +1,6 @@
 :80
 root * /srv/frontend
+encode zstd gzip
 file_server
 @entry path / /index.html /erischat-main.html
 header @entry Cache-Control "no-cache, must-revalidate"

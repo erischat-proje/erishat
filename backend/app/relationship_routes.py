@@ -1,3 +1,4 @@
+from .runtime_tasks import database_task
 """Mutual relationship consent and transactional shared house inventory."""
 import json
 import re
@@ -491,6 +492,7 @@ def acknowledge(event_id: int, db: Session = Depends(get_db), user: User = Depen
 
 
 @router.post('/end')
+@database_task
 async def end_relationship(db: Session = Depends(get_db), user: User = Depends(authenticated)):
     house = owned_house(db,user.id,lock=True)
     rewards.revoke(db,house)
@@ -589,6 +591,7 @@ class CoupleGiftSend(BaseModel):
 
 
 @router.post('/houses/{house_id}/gifts')
+@database_task
 async def send_couple_gift(house_id: str,payload: CoupleGiftSend,db: Session=Depends(get_db),user: User=Depends(authenticated)):
     public_house(house_id,db,user)
     couple_room(house_id,db,user)

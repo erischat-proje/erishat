@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .runtime_tasks import database_task
+
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -156,6 +158,7 @@ def register_family_auth(current_user_dependency):
         return {**family_payload(db,family),"is_member":bool(viewer),"viewer_role":viewer.role if viewer else None,"application_status":request.status if request else None}
 
     @router.put("/families/{family_id}/avatar")
+    @database_task
     async def set_family_avatar(family_id: str, file: UploadFile = File(...), db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id)
         member = membership(db, family_id, user.id)

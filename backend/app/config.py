@@ -8,8 +8,11 @@ class Settings(BaseSettings):
     cors_origins: str = "*"
     db_pool_size: int = 5
     db_max_overflow: int = 10
-    db_pool_timeout: int = 30
+    db_pool_timeout: int = 5
     db_pool_recycle: int = 1800
+    db_connect_timeout: int = 5
+    db_statement_timeout_ms: int = 15000
+    db_lock_timeout_ms: int = 5000
     initial_da_ids: str = ""
     initial_da_public_ids: str = ""
     google_client_id: str = ""

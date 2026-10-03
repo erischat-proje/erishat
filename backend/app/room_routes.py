@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .runtime_tasks import database_task
+
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from uuid import uuid4
@@ -362,6 +364,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         record("room", "room_name_changed", room_id=room.id, public_id=room.public_id, actor_id=user.id, old_name=old_name, new_name=name)
         return room_view(db, room, user)
     @router.post("/{room_id}/join")
+    @database_task
     async def join_room(room_id: str, payload: RoomJoinPayload | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = seat_workflow.lock_room(db,get_room_or_404(db, room_id))
         require_room_access(db,room.id,user.id)
@@ -869,6 +872,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
             queue.extend(queue_copy)
         return [{"id":x["id"], "sender_id":x["sender_id"], "type":x["type"], "payload":x["payload"]} for x in messages]
     @router.post("/{room_id}/gifts")
+    @database_task
     async def send_gift(room_id: str, payload: GiftSend, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         reject_ghost(db,user,"Hediye göndermek")
@@ -903,6 +907,8 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         per_person = unit_price * payload.quantity
         total = per_person * len(recipient_ids)
         # Balance check and subtraction happen in one transaction, before any gifts are created.
+        from .relationship_routes import lock_users
+        lock_users(db, [user.id, *recipient_ids])
         charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total).values(lidya=User.lidya - total))
         if charged.rowcount != 1:
             db.rollback(); raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
@@ -984,6 +990,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         return {"active": True, "expires_at": None, "spent": 0}
 
     @router.post("/{room_id}/music")
+    @database_task
     async def add_music(room_id: str, file: UploadFile = File(...), title: str = Form(""), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
@@ -1096,5 +1103,6 @@ def register_room_auth(current_user_dependency, join_announcement=None):
     def list_music(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
-        rows = list(db.scalars(select(RoomMusic).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot)))
-        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if m.audio_bytes else None,"needs_reupload":not bool(m.audio_bytes),"paid_until":m.paid_until,"is_playing":m.is_playing and bool(m.audio_bytes) and bool(db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.user_id == m.user_id, RoomSeat.muted.is_(False)))),"position_seconds":m.position_seconds,"started_at":m.started_at} for m in rows]
+        rows = list(db.execute(select(RoomMusic, RoomMusic.audio_bytes.is_not(None)).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot)))
+        seated = set(db.scalars(select(RoomSeat.user_id).where(RoomSeat.room_id == room.id, RoomSeat.muted.is_(False), RoomSeat.user_id.is_not(None))))
+        return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if has_audio else None,"needs_reupload":not bool(has_audio),"paid_until":m.paid_until,"is_playing":m.is_playing and bool(has_audio) and m.user_id in seated,"position_seconds":m.position_seconds,"started_at":m.started_at} for m, has_audio in rows]

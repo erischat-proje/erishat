@@ -800,7 +800,7 @@
       if(nearBottom)body.scrollTop=body.scrollHeight;
     }catch{}finally{reconciling=false}
   }
-  setInterval(reconcileChat,3500);
+  window.ErisApiTransport.poll(reconcileChat,8000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reconcileChat()});
 
   // One authenticated user socket carries DM realtime events. Room sockets stay separate.
@@ -862,5 +862,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadConversations, { once: true });
   else loadConversations();
-  setInterval(() => { if (document.visibilityState !== 'hidden') loadConversations(); }, 18000);
+  window.ErisApiTransport.poll(loadConversations,20000);
 })();

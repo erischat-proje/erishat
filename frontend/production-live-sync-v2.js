@@ -4,14 +4,7 @@ const API=()=>((window.ERIS_API||window.ERISCHAT_API||
 "https://erischat-api-production.up.railway.app/v1").replace(/\/$/,""));
 const token=()=>localStorage.getItem("erischat_access_token")||
 localStorage.getItem("erischat.accessToken.v1")||localStorage.getItem("token")||"";
-async function api(path,opt={}){
- const h={Accept:"application/json",...(token()?{Authorization:"Bearer "+token()}: {})};
- if(opt.body)h["Content-Type"]="application/json";
- const r=await fetch(API()+path,{...opt,headers:h});
- const d=await r.json().catch(()=>({}));
- if(!r.ok)throw Error(d.detail||("HTTP "+r.status));
- return d;
-}
+async function api(path,opt={}){return window.ErisPlatform.api(path,opt);}
 function roomId(){
  return window.ErisCurrentRoomId||window.currentRoomId||"";
 }
@@ -27,9 +20,10 @@ function apply(d){
  document.querySelectorAll("[data-room-level]").forEach(x=>x.textContent="Lv "+d.level);
  document.querySelectorAll("[data-room-capacity]").forEach(x=>x.textContent=(d.seat_count||8)+" koltuk");
 }
+let refreshing=false;
 async function refresh(){
- const id=roomId(); if(!id)return;
- try{const room=await api("/rooms/"+encodeURIComponent(id));if(String(roomId())===String(id))apply(room);}catch{}
+ const id=roomId(); if(!id||refreshing||document.hidden)return;refreshing=true;
+ try{const room=await api("/rooms/"+encodeURIComponent(id));if(String(roomId())===String(id))apply(room);}catch{}finally{refreshing=false;}
 }
 window.ErisProductionRoom={
  refresh,
@@ -47,7 +41,7 @@ window.ErisProductionRoom={
 if(document.readyState==="loading")
  document.addEventListener("DOMContentLoaded",refresh,{once:true});
 else refresh();
-setInterval(refresh,5000);
+window.ErisApiTransport.poll(refresh,10000,()=>!!roomId());
 window.addEventListener('erischat:room-opened',e=>apply(e.detail?.room));
 window.addEventListener('erischat:room-closed',()=>{window.__erisLiveRoom=null;window.__erisRoomPermissions={};});
 })();

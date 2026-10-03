@@ -122,7 +122,7 @@ class RoomMusic(Base):
     slot: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String(128), nullable=False)
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
-    audio_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    audio_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True, nullable=True)
     audio_mime: Mapped[str | None] = mapped_column(String(32), nullable=True)
     paid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_playing: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)

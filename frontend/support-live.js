@@ -58,5 +58,5 @@
   document.addEventListener('visibilitychange',()=>{if(role&&token())req('/support/live/presence',{method:'POST',body:JSON.stringify({active:!document.hidden})}).catch(()=>{});if(!document.hidden)pulse();});
   window.addEventListener('erischat:auth',()=>{if(!token()){identity='';role=null;announced.clear();restrictedUntil=0;restrictionBox?.remove();dismiss();document.querySelectorAll('.support-window,.support-lightbox').forEach(p=>p.remove());adminList=false;loadList();}else pulse();});
   window.ErisSupport={open(){adminList=false;mount();window.showView?.('support');loadList();},openAdmin(){adminList=true;mount();window.showView?.('support');loadList();pulse();},load:loadList,restrict};
-  window.addEventListener('load',()=>{mount();pulse();});setInterval(pulse,2500);setInterval(updateRestriction,1000);
+  window.addEventListener('load',()=>{mount();pulse();});window.ErisApiTransport.poll(pulse,5000);setInterval(updateRestriction,1000);
 })();

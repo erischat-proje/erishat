@@ -75,7 +75,7 @@
   function watch(root,id){if(!root||!id)return;const existing=watchers.get(root);if(existing?.id===id)return;const entry={id,busy:false};watchers.set(root,entry);refreshOne(root,entry)}
   async function refreshOne(root,entry){if(!root.isConnected){watchers.delete(root);return}if(entry.busy||!token())return;entry.busy=true;try{const u=await api('/users/'+encodeURIComponent(entry.id)+'/profile-stats');if(root.isConnected&&watchers.get(root)===entry)decorate(root,u)}catch(_){}finally{entry.busy=false}}
   function refreshProfiles(){if(document.hidden)return;for(const [root,entry] of watchers){if(!root.isConnected){watchers.delete(root);continue}if(!root.closest('.view:not(.show)'))refreshOne(root,entry)}}
-  setInterval(refreshProfiles,8000);
+  window.ErisApiTransport.poll(refreshProfiles,20000);
   for(const name of ['erischat:room-gift','erischat:gift-updated','erischat:cosmetics-updated'])window.addEventListener(name,refreshProfiles);
   window.addEventListener('erischat:event',e=>{if(e.detail?.gift_key||e.detail?.kind==='dm_gift')refreshProfiles()});
   document.addEventListener('visibilitychange',refreshProfiles);

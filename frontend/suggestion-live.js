@@ -20,6 +20,6 @@
   document.addEventListener('keydown',e=>{if(!locked)return;const overlay=document.querySelector('.esi-overlay[data-review]');if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();return;}if(e.key==='Tab'&&overlay){e.preventDefault();const ack=overlay.querySelector('[data-ack]');(ack.disabled?overlay.querySelector('[data-message]'):ack).focus();}},true);
   document.addEventListener('click',e=>{if(locked&&!e.target.closest('.esi-overlay[data-review]')){e.preventDefault();e.stopImmediatePropagation();}},true);
   window.addEventListener('erischat:auth',()=>{if(!token()||identity!==token()){identity=token();locked=false;review=null;eventPanel=null;document.querySelectorAll('.esi-overlay').forEach(p=>p.remove());}poll();});
-  window.addEventListener('load',poll);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});setInterval(poll,2500);
+  window.addEventListener('load',poll);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});window.ErisApiTransport.poll(poll,15000);
   window.ErisSuggestions={open,openAdmin:()=>openAdmin().catch(e=>window.toast?.(e.message)),isReviewing:()=>locked};
 })();

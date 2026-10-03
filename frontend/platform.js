@@ -14,18 +14,19 @@
     if (token()) headers.set('Authorization', `Bearer ${token()}`);
     if (window.ErisChatDMVaultToken && (/^\/(?:messages|conversations)\b/.test(path) || path.startsWith('/me/dm-vault') || /^\/families\/[^/]+\/chat/.test(path)))
       headers.set('X-Eris-DM-Vault', window.ErisChatDMVaultToken);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), Number(options.timeout || 8000));
-    let res;
-    try { res = await fetch(`${API}${path}`, { ...requestOptions, headers, signal: controller.signal }); }
-    catch (e) { throw new Error(e?.name === 'AbortError' ? 'Sunucu yanıt vermedi (8 sn zaman aşımı).' : (e?.message || 'Ağ bağlantısı kurulamadı.')); }
-    finally { clearTimeout(timeout); }
-    const data = await res.json().catch(() => ({}));
+    let res, data;
+    try {
+      res = await fetch(`${API}${path}`, { ...requestOptions, headers, timeout:Number(options.timeout)||20000 });
+      data = await res.json().catch(() => ({}));
+    } catch (e) {
+      const error=new Error(e?.name==='TimeoutError' ? e.message : e?.name==='AbortError' ? 'İstek iptal edildi.' : 'Ağ bağlantısı kurulamadı. İnternet bağlantınızı kontrol edin.');
+      error.name=e?.name||'Error';error.cause=e;throw error;
+    }
     if (!res.ok) {
       const detail = typeof data.detail==='string'?data.detail:data.detail?.message;
       const error = new Error(res.status===404 && detail==='Not Found'
         ? 'Bu özellik için sunucu güncellemesi gerekli.' : detail || `HTTP ${res.status}`);
-      error.status=res.status;error.detail=data.detail;throw error;
+      error.status=res.status;error.detail=data.detail;error.requestId=res.headers.get('X-Request-ID');throw error;
     }
     return data;
   }

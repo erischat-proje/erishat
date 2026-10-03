@@ -140,14 +140,13 @@
     }
   }
 
-  async function bindRoom(){
+  async function bindRoom(r=window.__erisLiveRoom){
     const surface=document.getElementById('erisRoomSurface');
     if(!surface?.classList.contains('show'))return;
     hideLegacyRoom();
     installSeatFix();
     try{
-      const r=await room();
-      if(!r)return;
+      if(!r||String(r.id)!==rid())return;
       window.__erisRoomPermissions={is_owner:!!r.is_owner,is_moderator:!!r.is_moderator,can_manage:!!r.can_manage,current_user_seat:r.current_user_seat};
       addOwnerSettingsButton(r);
       addMusicPanel(r);
@@ -164,8 +163,7 @@
   }
 
   css();
-  window.addEventListener('erischat:room-opened',()=>setTimeout(bindRoom,20));
-  const observer=new MutationObserver(()=>{if(document.getElementById('erisRoomSurface')?.classList.contains('show'))bindRoom();});
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  window.addEventListener('erischat:room-opened',e=>bindRoom(e.detail?.room));
+  window.addEventListener('erischat:room-permissions',e=>bindRoom(e.detail?.room));
   setTimeout(bindRoom,500);
 })();

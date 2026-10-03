@@ -579,7 +579,6 @@
     if (!surface) return;
 
     hardenRoomHeader();
-    document.querySelector('.eris-seat-action-sheet')?.remove();
 
     const compose = surface.querySelector('.eris-room-compose');
     if (compose) {
@@ -623,8 +622,10 @@
     setTimeout(normalizeRoom, 60)
   );
 
+  let roomFrame=0;
   const observer = new MutationObserver(() => {
-    if (document.getElementById('erisRoomSurface')) normalizeRoom();
+    if(roomFrame||!document.getElementById('erisRoomSurface'))return;
+    roomFrame=requestAnimationFrame(()=>{roomFrame=0;observer.disconnect();normalizeRoom();observer.observe(document.body,{childList:true,subtree:true});});
   });
 
   if (document.readyState === 'loading') {
