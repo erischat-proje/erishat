@@ -155,7 +155,7 @@ def public_brief(db, uid):
         return None
     partner_id = house.female_id if uid == house.male_id else house.male_id
     status=rewards.status_for(db,house,uid)
-    return {'id':house.id, 'status':status, 'status_asset':rewards.status_asset(status), 'ring':house.ring, 'level':house.level,
+    return {'id':house.id, 'status':status, 'status_asset':rewards.status_asset(status), 'ring':house.ring, 'ring_asset':ring_asset(house.ring) if house.ring else None, 'level':house.level,
             'partner':portrait(db.get(User, partner_id)), 'title_asset':rewards.selected(db,uid,'title')}
 
 
