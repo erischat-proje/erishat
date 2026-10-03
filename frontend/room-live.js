@@ -192,7 +192,7 @@
       b.dataset.muted=String(!!seat.muted);
       b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
       b.setAttribute('aria-label',occupied?('Koltuk '+num+' • '+(isMe?'Sen':seat.nickname||seat.user_name||'Konuşmacı')):((locked?'Kilitli koltuk ':'Boş koltuk ')+num));
-      b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':window.__erisRoomPermissions?.seat_permission?'✋':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span><b></b><small></small></div>';
+      b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':window.__erisRoomPermissions?.seat_permission?'✋':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span></div><b class="seat-name"></b><small></small>';
       if(avatarUrl){
         const ava=b.querySelector('.seat-ava');
         ava.textContent='';
@@ -204,9 +204,10 @@
         frame.style.backgroundImage='url("'+String(frameUrl).replace(/"/g,'%22')+'")';
         frame.classList.add('has-frame');
       }
-      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Boş';
+      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'';
+      b.title=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):b.getAttribute('aria-label');
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
-      if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Koltuk '+num+' • '+(isMe?'Sen':'Profili aç');}else if(!occupied&&!locked)b.onclick=async()=>{
+      if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Koltuk '+num+' • '+(seat.nickname||seat.user_name||(isMe?'Sen':'Profili aç'));}else if(!occupied&&!locked)b.onclick=async()=>{
         try{const result=await window.ErisRoom.joinSeat(roomId,num);if(result?.pending)window.toast?.('Koltuğa oturma talebiniz iletildi.');await refreshRoom()}
         catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}
       };

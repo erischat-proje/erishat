@@ -32,7 +32,8 @@
   const api = (path, options) => window.ErisPlatform.api(path, options);
   const asset = path => path ? (window.ErisChatCosmetics?.assetUrl?.(path) || path) : '';
   const count = n => Number(n || 0).toLocaleString('tr-TR');
-  const closeProfile = () => { document.querySelector('.eris-mini-profile-shade .eris-mini-card')?._artObserver?.disconnect(); document.querySelector('.eris-mini-report-shade')?.remove(); document.querySelector('.eris-mini-profile-shade')?.remove(); };
+  let profileTrigger=null;
+  const closeProfile = () => { document.querySelector('.eris-mini-profile-shade .eris-mini-card')?._artObserver?.disconnect(); document.querySelector('.eris-mini-report-shade')?.remove(); document.querySelector('.eris-mini-profile-shade')?.remove();if(profileTrigger?.isConnected)profileTrigger.focus();profileTrigger=null; };
   function closeReport() { document.querySelector('.eris-mini-report-shade')?.remove(); }
   function report(user) {
     closeReport();
@@ -55,19 +56,26 @@
       }catch(err){error.textContent=err.message||'Şikâyet gönderilemedi.';submit.disabled=false}
     };
   }
-  async function open(identifier) {
-    if(!identifier)return;
+  async function open(identifier, options = {}) {
+    if(!identifier&&!options.preview)return;
     closeProfile();
+    profileTrigger=document.activeElement;
     const shade=document.createElement('div');shade.className='eris-mini-shade eris-mini-profile-shade';
-    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-topbar"><img class="eris-vip-card" data-vip-card hidden alt=""><button class="eris-mini-icon eris-mini-fan" data-fans type="button" aria-label="Hayran listesi">✦</button><button class="eris-mini-icon" data-report type="button" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div><div class="eris-mini-head"><button type="button" class="eris-mini-portrait" aria-label="Tam profili aç">👤</button><div class="eris-mini-name">Yükleniyor…</div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-received-gifts>–</b><small>Alınan hediye</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><button type="button" class="eris-mini-submit eris-mini-block" data-block disabled>Engelle</button><p class="eris-mini-error" role="alert"></p></section>';
+    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-topbar"><img class="eris-vip-card" data-vip-card hidden alt=""><button class="eris-mini-icon eris-mini-fan" data-fans type="button" aria-label="Hayran listesi">✦</button><button class="eris-mini-icon" data-report type="button" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div><div class="eris-mini-head"><button type="button" class="eris-mini-portrait" aria-label="Tam profili aç">👤</button><div class="eris-mini-identity"><div class="eris-mini-name">Yükleniyor…</div><button type="button" class="eris-mini-id" aria-label="Kullanıcı ID bilgisini kopyala"></button></div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-received-gifts>–</b><small>Alınan hediye</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><button type="button" class="eris-mini-submit eris-mini-block" data-block disabled>Engelle</button><p class="eris-mini-error" role="alert"></p></section>';
     document.body.append(shade);
     shade.querySelector('[data-close]').onclick=closeProfile;
+    shade.querySelector('[data-close]').focus();
+    shade.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const controls=[...shade.querySelectorAll('button:not(:disabled)')].filter(b=>b.getClientRects().length);const first=controls[0],last=controls.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}});
     shade.onclick=e=>{if(e.target===shade)closeProfile()};
     const error=shade.querySelector('.eris-mini-error');
     try{
-      const u=await api('/users/'+encodeURIComponent(identifier));
+      const u=options.preview||await api('/users/'+encodeURIComponent(identifier));
       if(!shade.isConnected)return;
       shade.querySelector('.eris-mini-name').textContent=u.nickname||'Kullanıcı';
+      const idButton=shade.querySelector('.eris-mini-id'), publicId=String(u.public_id||'');
+      idButton.textContent=/^\d{10,12}$/.test(publicId)?'ID: '+publicId+' ⧉':'ID gizli';
+      idButton.disabled=!/^\d{10,12}$/.test(publicId);
+      idButton.onclick=async()=>{try{await navigator.clipboard.writeText(publicId);window.toast?.('Kullanıcı ID kopyalandı.')}catch{window.toast?.('ID: '+publicId)}};
       const portrait=shade.querySelector('.eris-mini-portrait'), avatar=asset(u.avatar_asset);
       portrait.textContent='';
       if(avatar){const img=document.createElement('img');img.src=avatar;img.alt='';portrait.append(img)}else portrait.textContent=u.avatar||'👤';
@@ -82,7 +90,15 @@
       shade.querySelector('[data-followers]').textContent=count(u.followers_count);
       shade.querySelector('[data-following]').textContent=count(u.following_count);
       window.ErisChatVIP?.decorate?.(shade,u);
-      window.ErisChatVIP?.watch?.(shade,u.id);
+      if(!options.preview)window.ErisChatVIP?.watch?.(shade,u.id);
+      if(options.preview){
+        shade.classList.add('eris-mini-preview-shade');
+        const card=shade.querySelector('.eris-mini-card');
+        const note=document.createElement('p');note.className='eris-mini-preview-note';note.textContent='VIP '+u.vip_level+' profil penceresi önizlemesi';card.append(note);
+        shade.querySelectorAll('[data-follow],[data-gift],[data-message],[data-block],[data-report],[data-fans]').forEach(b=>{b.disabled=true});
+        portrait.onclick=null;idButton.disabled=true;
+        return;
+      }
       if(u.banned){
         shade.querySelector('[data-fans]').hidden=true;
         shade.querySelector('.eris-mini-actions').hidden=true;
@@ -109,5 +125,10 @@
       message.onclick=()=>conversation(false);gift.onclick=()=>conversation(true);
     }catch(e){if(shade.isConnected)error.textContent=e.message||'Profil yüklenemedi.'}
   }
-  window.ErisFloatingProfile={open,close:closeProfile,report};
+  function preview(level){
+    const n=Math.max(1,Math.min(12,Number(level)||1)),me=window.ErisAuth?.user||window.ErisChatCosmetics?.state?.user||{};
+    return open(null,{preview:{...me,id:me.id||'preview',nickname:me.nickname||'Eris kullanıcısı',public_id:me.public_id||'0000000000',vip_level:n,vip_neon_hidden:false,vip_badge_hidden:false,followers_count:me.followers_count||0,following_count:me.following_count||0,received_gift_lidya:me.received_gift_lidya||0}});
+  }
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.eris-mini-profile-shade')){e.stopPropagation();closeProfile()}});
+  window.ErisFloatingProfile={open,close:closeProfile,report,preview};
 })();

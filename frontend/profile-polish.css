@@ -1,0 +1,103 @@
+/* Local variable font keeps Turkish text consistent without a font service. */
+@font-face{font-family:'Eris Jakarta';font-style:normal;font-weight:200 800;font-display:swap;src:url('./fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Eris Jakarta';font-style:normal;font-weight:200 800;font-display:swap;src:url('./fonts/plus-jakarta-sans-latin-wght-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--eris-font:'Eris Jakarta',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+body{font-weight:500;letter-spacing:-.012em;font-synthesis:none}
+button,input,textarea,select{letter-spacing:inherit}
+h1,h2,h3,strong,b{font-weight:750;letter-spacing:-.035em}
+
+/* All seats stay in the stage; labels remain available to assistive tools. */
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage[data-seat-count]{--seat-columns:6;--seat-rows:4;--seat-gap:8px;--seat-size:max(0px,min(68px,calc((min(var(--app-width),900px) - 20px) / var(--seat-columns) - 12px),calc((var(--room-stage-height) - 16px - (var(--seat-rows) - 1) * var(--seat-gap)) / var(--seat-rows))))!important;grid-template-columns:repeat(var(--seat-columns),minmax(0,1fr))!important;grid-template-rows:repeat(var(--seat-rows),minmax(0,1fr))!important;grid-auto-rows:auto!important;align-content:stretch!important;align-items:center!important;padding:8px 10px!important;gap:var(--seat-gap) 8px!important;overflow:hidden!important;scrollbar-width:none}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage[data-seat-count="16"]{--seat-columns:4}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage[data-seat-count="20"]{--seat-columns:5}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat{display:grid!important;grid-template-rows:1fr!important;align-content:center!important;align-items:center!important;height:100%!important;width:100%!important;min-width:0!important;min-height:0!important;max-width:none!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-pod{grid-row:1!important;width:var(--seat-size)!important;height:var(--seat-size)!important;min-width:0;min-height:0;border-color:#ffffff75!important;border-width:1px!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat.occupied:has(.has-frame) .seat-pod{border-color:transparent!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat :is(b,small,.seat-mic),
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat:before{display:none!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat.empty .seat-ava{visibility:hidden!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat.locked .seat-pod{border-style:dashed!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-frame{inset:-5%!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat.occupied .seat-ava{width:74%!important;height:74%!important}
+html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage[data-seat-count]{--seat-columns:8;--seat-rows:3;--seat-gap:4px;column-gap:4px!important;overflow:hidden!important}
+html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage[data-seat-count="16"]{--seat-rows:2}
+
+/* Profile: portrait and identity share one row, with equal size badges at right. */
+#profile .profile.card.profile{--profile-badge-width:clamp(88px,26vw,108px);display:grid!important;grid-template-columns:64px minmax(0,1fr) var(--profile-badge-width)!important;grid-template-rows:auto auto;gap:8px!important;align-items:center!important;padding:14px 8px 12px 12px!important;border-radius:22px;overflow:visible!important;min-height:0!important}
+#profile .profile.card.profile>.glow{display:none!important}
+#profile .profile.card.profile .stage{grid-column:1!important;grid-row:1!important;justify-self:center!important;align-self:center!important;width:64px!important;height:74px!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:7px 0 0!important}
+#profile .profile.card.profile .stage .face{width:46px!important;height:46px!important;min-width:0!important;min-height:0!important;font-size:26px!important}
+#profile .profile.card.profile .stage .frameImg{width:64px!important;height:64px!important;max-width:64px!important;max-height:64px!important}
+#profile .profile.card.profile .stage .crown{display:none!important}
+#profile .profile.card.profile .name{grid-column:2!important;grid-row:1!important;min-width:0!important;width:100%;max-width:none!important;padding:0!important;gap:5px!important;align-items:flex-start!important;justify-content:center;overflow:visible!important;text-align:left!important}
+#profile .profile.card.profile .name h2{font-size:clamp(12px,3.35vw,17px)!important;line-height:1.3!important;text-align:left!important;justify-self:start!important;margin:0!important;overflow-wrap:anywhere;letter-spacing:-.035em}
+#profile .profile.card.profile .name [data-profile-public-id]{align-self:flex-start!important;justify-self:start!important;font-size:9px!important;line-height:1.35!important;padding:4px 0!important;margin:0!important;background:transparent!important;border:0!important;border-radius:0!important;color:#c5b5d5;white-space:normal!important;overflow-wrap:anywhere;letter-spacing:0;font-variant-numeric:tabular-nums}
+#profile .profile.card.profile>.eris-profile-badges{grid-column:3!important;grid-row:1!important;justify-self:end;align-self:center;display:flex!important;flex-direction:column;align-items:flex-end!important;justify-content:center;gap:3px!important;width:var(--profile-badge-width)!important;min-width:0;margin:0!important}
+#profile .profile.card.profile>.eris-profile-badges>:is(.rel-public.rel-public,.rel-title,[data-vip-card]){width:var(--profile-badge-width)!important;max-width:var(--profile-badge-width)!important;height:30px!important;min-height:30px;flex:none!important;margin:0!important;aspect-ratio:auto!important;object-fit:contain}
+#profile .profile.card.profile .rel-public-status{width:100%!important;height:100%!important}
+#profile .profile.card.profile .rel-status-art{width:100%;height:100%;object-fit:fill}
+#profile .profile.card.profile .stats{grid-column:1/-1!important;grid-row:2!important;margin:4px 0 0!important;gap:6px!important;align-items:stretch}
+#profile .profile.card.profile .stat{padding:9px 4px!important;min-height:57px;border-radius:14px!important;display:flex;flex-direction:column;justify-content:center;gap:3px}
+#profile .profile.card.profile .stat b{font-size:14px!important;line-height:1.3!important;min-width:0}
+#profile .profile.card.profile .stat span:not([data-received-gifts] span){font-size:10px!important;line-height:1.3}
+#profile .profile.card.profile [data-received-gifts]{font-size:clamp(9px,2.6vw,13px)!important;gap:3px!important;white-space:nowrap!important;flex-wrap:nowrap!important}
+#profile .profile.card.profile [data-received-gifts] span{font-size:inherit!important}
+#profile .profile.card.profile [data-received-gifts] img{width:13px!important;height:13px!important}
+
+/* One compact profile card, with a distinct accent and crest for each VIP level. */
+.eris-mini-profile-shade.eris-mini-shade{padding:12px!important;overflow-y:auto!important;align-items:center!important;background:#060510b8;backdrop-filter:blur(10px)}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-modern{position:relative!important;width:min(420px,100%)!important;max-height:calc(var(--app-height,100dvh) - 24px)!important;overflow:auto!important;margin:auto!important;padding:16px!important;border:1px solid #77688c66!important;border-image:none!important;border-radius:24px!important;background:radial-gradient(ellipse at 95% 0%,#66519626,transparent 50%),linear-gradient(155deg,#211a2e,#110e1b)!important;box-shadow:0 24px 80px #0008!important;isolation:isolate;color:#f6f3ff}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-modern.eris-mini-vip{border-color:var(--vip-accent)!important;box-shadow:0 24px 80px #0008,0 0 24px color-mix(in srgb,var(--vip-accent) 13%,transparent)!important}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-modern:before{display:none!important}
+.eris-mini-profile-shade .eris-mini-topbar{display:flex!important;align-items:center;justify-content:flex-end!important;flex-wrap:nowrap!important;gap:6px!important;margin:0 0 12px!important}
+.eris-mini-profile-shade .eris-mini-topbar:before{content:'PROFİL';font-size:10px;font-weight:700;letter-spacing:.16em;color:#aea1c0;margin-right:auto}
+.eris-mini-profile-shade .eris-mini-icon{width:36px!important;height:36px!important;min-width:36px!important;border-radius:11px;font-size:19px!important;padding:0!important;display:grid;place-items:center;border:1px solid #ffffff22;background:#ffffff06}
+.eris-mini-profile-shade .eris-mini-fan img{width:30px!important;height:30px!important}
+.eris-mini-profile-shade .eris-mini-vip-hero{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:0 0 14px;border:1px solid color-mix(in srgb,var(--vip-accent) 30%,transparent);border-radius:17px;background:linear-gradient(110deg,color-mix(in srgb,var(--vip-accent) 10%,transparent),transparent)}
+.eris-mini-profile-shade .eris-mini-vip-hero[hidden]{display:none!important}
+.eris-mini-profile-shade .eris-mini-vip-hero>img{width:60px;height:62px;object-fit:contain;flex:none}
+.eris-mini-profile-shade .eris-mini-vip-hero>div{display:grid;gap:3px;min-width:0}
+.eris-mini-profile-shade .eris-mini-vip-hero small{font-size:9px;letter-spacing:.18em;color:var(--vip-accent);font-weight:700}
+.eris-mini-profile-shade .eris-mini-vip-hero strong{font-size:23px;line-height:1.1;font-weight:800}
+.eris-mini-profile-shade .eris-mini-vip-hero span{font-size:10px;color:#c3b8d4}
+.eris-mini-profile-shade .eris-mini-head{display:flex;align-items:center;gap:12px;min-width:0;padding:2px 4px 8px}
+.eris-mini-profile-shade .eris-mini-portrait{width:58px!important;height:58px!important;flex:none;box-shadow:none;background:#342740;font-size:25px}
+.eris-mini-profile-shade .eris-mini-frame{inset:-6px!important;width:70px!important;height:70px!important;max-width:none}
+.eris-mini-profile-shade .eris-mini-identity{min-width:0;flex:1;display:grid;gap:5px}
+.eris-mini-profile-shade .eris-mini-name{font-size:16px!important;line-height:1.35;font-weight:750;overflow-wrap:anywhere;letter-spacing:-.03em}
+.eris-mini-profile-shade .eris-mini-id{justify-self:start;min-width:0;max-width:100%;border:0;background:transparent;color:#bfb2ce;font-size:10px;line-height:1.4;letter-spacing:0;padding:0;text-align:left;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.eris-mini-profile-shade .eris-mini-relationship{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;gap:5px!important;margin:6px 0 12px!important;padding:0;min-width:0}
+.eris-mini-profile-shade .eris-mini-relationship>:is(.rel-public.rel-public,.rel-title,[data-vip-card]){width:100px!important;max-width:100px!important;height:30px!important;min-height:30px;aspect-ratio:auto!important;object-fit:contain;flex:none!important;margin:0!important}
+.eris-mini-profile-shade .eris-mini-relationship .rel-status-art{object-fit:fill}
+.eris-mini-profile-shade .eris-mini-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:0 0 12px!important}
+.eris-mini-profile-shade .eris-mini-stats>div{grid-column:auto!important;padding:10px 3px!important;min-width:0;min-height:60px;border:1px solid #ffffff14;border-radius:13px;background:#ffffff04!important;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.eris-mini-profile-shade .eris-mini-stats b{font-size:15px!important;line-height:1.3;font-weight:750}
+.eris-mini-profile-shade .eris-mini-stats small{font-size:9px;line-height:1.3;color:#b9acc8}
+.eris-mini-profile-shade .eris-mini-stats [data-received-gifts]{font-size:clamp(9px,2.9vw,13px)!important;gap:2px!important;white-space:nowrap!important}
+.eris-mini-profile-shade [data-received-gifts] img{width:12px;height:12px}
+.eris-mini-profile-shade .eris-mini-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+.eris-mini-profile-shade .eris-mini-actions>button{grid-column:auto!important;min-height:44px!important;padding:8px 4px!important;border-radius:12px;font-size:11px!important;line-height:1.3;letter-spacing:-.02em;background:#ffffff08;border:1px solid #ffffff22}
+.eris-mini-profile-shade .eris-mini-actions>[data-follow]{background:linear-gradient(130deg,#6551a7,#564584);border-color:#c7b5ff44}
+.eris-mini-profile-shade .eris-mini-block{min-height:38px!important;margin-top:8px!important;padding:6px!important;border-radius:12px;background:transparent!important;border:1px solid #dd899b38!important;color:#e6a2b1;font-size:11px}
+.eris-mini-profile-shade .eris-mini-preview-note{font-size:10px;color:#b9acc8;line-height:1.5;text-align:center;margin:10px 0 0}
+.eris-mini-profile-shade button:focus-visible{outline:2px solid var(--vip-accent,#c2aaff);outline-offset:3px}
+.eris-mini-preview-shade{z-index:11300!important}
+@media(max-height:550px){.eris-mini-profile-shade.eris-mini-shade{align-items:start!important}.eris-mini-profile-shade .eris-mini-vip-hero{margin-bottom:10px;padding:7px 10px}.eris-mini-profile-shade .eris-mini-vip-hero>img{width:42px;height:44px}.eris-mini-profile-shade .eris-mini-vip-hero strong{font-size:19px}}
+
+/* The same level presentation is visible in VIP rewards. */
+.eris-vip-content .eris-vip-summary{padding:16px;border-radius:18px}
+.eris-vip-content .eris-vip-summary h2{font-size:22px;line-height:1.25}
+.eris-vip-content .eris-vip-row{grid-template-columns:48px minmax(0,1fr);padding:12px;gap:10px;border-radius:18px;background:linear-gradient(135deg,#21192d,#15101e)}
+.eris-vip-content .eris-vip-level{width:48px;height:55px}
+.eris-vip-content .eris-vip-note{margin:5px 0 8px;font-size:11px}
+.eris-vip-content .eris-vip-assets{gap:8px;margin:9px 0}
+.eris-vip-content .eris-vip-presentation{display:flex;align-items:center;gap:9px;padding:9px 0;margin:4px 0 6px;border-top:1px solid #ffffff12}
+.eris-vip-content .eris-vip-presentation img{width:104px;height:32px;object-fit:contain;flex:none}
+.eris-vip-content .eris-vip-presentation span{font-size:10px;line-height:1.5;color:#baacc8}
+.eris-vip-content .eris-vip-buttons{gap:6px}
+.eris-vip-content .eris-vip-buttons button{min-height:42px;font-size:11px;padding:8px 9px;border-radius:11px}
+.eris-vip-content [data-preview-profile]{border-color:#baa1ee55;background:#6b4ca025}
+
+#profile .profile.card.profile .stage .face>:is(.hair,.eyes){display:none!important}
+#profile .profile.card.profile:not(:has(.eris-profile-badges>:not([hidden]))){grid-template-columns:64px minmax(0,1fr)!important}
+#profile .profile.card.profile:not(:has(.eris-profile-badges>:not([hidden])))>.eris-profile-badges{display:none!important}

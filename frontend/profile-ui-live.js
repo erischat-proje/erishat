@@ -11,7 +11,7 @@
     idButton.setAttribute('data-profile-public-id', '');
     idButton.setAttribute('aria-label', 'Kullanıcı ID bilgisini kopyala');
     idButton.style.cssText = 'display:block;margin:8px auto 0;padding:7px 11px;border:1px solid #e4b85d44;border-radius:999px;background:#e4b85d10;color:#f0cd7d;font:inherit;font-size:10px;font-weight:700;cursor:pointer';
-    idButton.textContent = 'Kullanıcı ID: Yükleniyor…';
+    idButton.textContent = 'ID: Yükleniyor…';
     profile.querySelector('.name')?.appendChild(idButton);
     const controls = document.createElement('div');
     controls.setAttribute('data-erischat-profile-controls', '');
@@ -68,7 +68,7 @@
       if (name && user.nickname) name.textContent = user.nickname;
       const publicId = /^\d{10}$/.test(String(user.public_id || '')) ? String(user.public_id) : '';
       idButton.dataset.publicId = publicId;
-      idButton.textContent = publicId ? `Kullanıcı ID: ${publicId}  ⧉` : 'Kullanıcı ID yüklenemedi';
+      idButton.textContent = publicId ? `ID: ${publicId}  ⧉` : 'Kullanıcı ID yüklenemedi';
       const face = profile.querySelector('.face');
       const frame = profile.querySelector('.frameImg');
       const assetValue = value => {
