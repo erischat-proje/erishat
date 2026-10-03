@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
+from .purchase_routes import ManualAmount as AmountUpdate, manual_change
 from .db import get_db
 from .models import User
 from .platform_models import Report, VipStatus, UserLocation
@@ -144,10 +145,6 @@ class TicketMessage(BaseModel):
     @classmethod
     def validate_attachments(cls, value):
         return cls._check_images(value)
-
-
-class AmountUpdate(BaseModel):
-    amount: int = Field(gt=0, le=9_000_000_000_000_000_000)
 
 
 class BanRequest(BaseModel):
@@ -311,19 +308,13 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     def add_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_fa_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        db.info.update(lidya_operation="admin_lidya_add", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
-        before=target.lidya; target.lidya += payload.amount
-        audit(db,user,"lidya_add",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=target.id)
-        db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
+        return manual_change(db,user,target,payload,"EKLEME")
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_fa_or_da(db,user); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        db.info.update(lidya_operation="admin_lidya_remove", lidya_actor_id=user.id, lidya_reference_id=str(target.id), lidya_details=f"amount={payload.amount}")
-        before=target.lidya; target.lidya=max(0,target.lidya-payload.amount)
-        audit(db,user,"lidya_remove",{"before":before,"amount":payload.amount,"after":target.lidya},target_user_id=target.id)
-        db.commit(); return {"before":before,"amount":payload.amount,"after":target.lidya}
+        return manual_change(db,user,target,payload,"ÇIKARMA")
 
     def queue_ban(db, user, payload, kind, target):
         role = require_ua_or_da(db, user)
