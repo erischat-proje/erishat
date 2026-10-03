@@ -103,7 +103,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="ErisChat API", version="1.0.0")
+app = FastAPI(title="ErisChat API", version="1.0.1-html-audit-20261003")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]

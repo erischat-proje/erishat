@@ -13,24 +13,23 @@ async function api(path,opt={}){
  return d;
 }
 function roomId(){
- return window.__erisRoom?.public_id||window.__erisRoom?.id||
- document.querySelector("[data-room-id]")?.dataset.roomId||
- localStorage.getItem("erischat.currentRoom")||"";
+ return window.ErisCurrentRoomId||window.currentRoomId||"";
 }
 function apply(d){
  if(!d)return;
- window.__erisRoomPermissions={
+ window.__erisRoomPermissions={...window.__erisRoomPermissions,
   is_owner:!!d.is_owner,is_moderator:!!d.is_moderator,
   can_manage:!!d.can_manage,can_moderate:!!d.can_manage
  };
  window.__erisLiveRoom=d;
+ window.dispatchEvent(new CustomEvent('erischat:room-permissions',{detail:{room:d}}));
  document.querySelectorAll("[data-room-name]").forEach(x=>x.textContent=d.name||x.textContent);
  document.querySelectorAll("[data-room-level]").forEach(x=>x.textContent="Lv "+d.level);
  document.querySelectorAll("[data-room-capacity]").forEach(x=>x.textContent=(d.seat_count||8)+" koltuk");
 }
 async function refresh(){
  const id=roomId(); if(!id)return;
- try{apply(await api("/rooms/"+encodeURIComponent(id)));}catch{}
+ try{const room=await api("/rooms/"+encodeURIComponent(id));if(String(roomId())===String(id))apply(room);}catch{}
 }
 window.ErisProductionRoom={
  refresh,
@@ -49,4 +48,6 @@ if(document.readyState==="loading")
  document.addEventListener("DOMContentLoaded",refresh,{once:true});
 else refresh();
 setInterval(refresh,5000);
+window.addEventListener('erischat:room-opened',e=>apply(e.detail?.room));
+window.addEventListener('erischat:room-closed',()=>{window.__erisLiveRoom=null;window.__erisRoomPermissions={};});
 })();

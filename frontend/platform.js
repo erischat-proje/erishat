@@ -1,5 +1,10 @@
 (() => {
-  const API = window.ERIS_API || 'https://erischat-api-production.up.railway.app/v1';
+  const API = (window.ERIS_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/+$/, '');
+  const mediaUrl = path => {
+    const value = String(path || '');
+    if (/^(https?:|blob:|data:)/i.test(value)) return value;
+    return `${API}/${value.replace(/^\/+/, '').replace(/^v1\//, '')}`;
+  };
   const tokenKey = 'erischat_access_token';
   const token = () => localStorage.getItem(tokenKey) || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   async function request(path, options = {}) {
@@ -12,11 +17,16 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), Number(options.timeout || 8000));
     let res;
-    try { res = await fetch(`${API}${path}`, { ...options, headers, signal: controller.signal }); }
+    try { res = await fetch(`${API}${path}`, { ...requestOptions, headers, signal: controller.signal }); }
     catch (e) { throw new Error(e?.name === 'AbortError' ? 'Sunucu yanıt vermedi (8 sn zaman aşımı).' : (e?.message || 'Ağ bağlantısı kurulamadı.')); }
     finally { clearTimeout(timeout); }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(typeof data.detail==='string'?data.detail:data.detail?.message||`HTTP ${res.status}`);
+    if (!res.ok) {
+      const detail = typeof data.detail==='string'?data.detail:data.detail?.message;
+      const error = new Error(res.status===404 && detail==='Not Found'
+        ? 'Bu özellik için sunucu güncellemesi gerekli.' : detail || `HTTP ${res.status}`);
+      error.status=res.status;error.detail=data.detail;throw error;
+    }
     return data;
   }
   window.ErisPlatform = {
@@ -38,7 +48,7 @@
     messageGifts: () => request('/message-gifts'),
     sendMessageGift: (id,gift_key,quantity=1) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key,quantity})}),
     sendMessageMedia: (id,file,mediaType,viewSeconds=0) => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:30000});},
-    messageMediaUrl: path => `${API}/${String(path||'').replace(/^\/+/, '')}`,
+    messageMediaUrl: mediaUrl,
     deleteMessages: (id,message_ids,all=false) => request(`/messages/${encodeURIComponent(id)}/delete`,{method:'POST',body:JSON.stringify({message_ids,all})}),
     pinMessage: (id,message_id) => request(`/conversations/${encodeURIComponent(id)}/pins/${message_id}`,{method:'POST'}),
     unpinMessage: (id,message_id) => request(`/conversations/${encodeURIComponent(id)}/pins/${message_id}`,{method:'DELETE'}),
@@ -52,12 +62,12 @@
     stories:limit=>request(`/stories?limit=${Number(limit)||100}`),
     createStory:(file,caption='')=>{const body=new FormData();body.append('file',file);body.append('caption',caption);return request('/stories',{method:'POST',body,timeout:120000});},
     deleteStory:id=>request(`/stories/${encodeURIComponent(id)}`,{method:'DELETE'}),
-    storyMediaUrl:path=>`${API}/${String(path||'').replace(/^\/+/, '')}`,
+    storyMediaUrl:mediaUrl,
     socialFeed:(mode='for-you',limit=30,offset=0)=>request(`/posts/feed?mode=${encodeURIComponent(mode)}&limit=${Number(limit)||30}&offset=${Number(offset)||0}`),
     myPosts:(limit=100,offset=0)=>request(`/me/posts?limit=${Number(limit)||100}&offset=${Number(offset)||0}`),
     createPost:(caption,file,audience='public')=>{const body=new FormData();body.append('caption',caption||'');body.append('audience',audience);if(file)body.append('file',file);return request('/posts',{method:'POST',body,timeout:120000});},
     updatePost:(id,caption,file,removeImage=false,audience,hidden)=>{const body=new FormData();body.append('caption',caption||'');body.append('remove_image',String(!!removeImage));if(audience)body.append('audience',audience);if(hidden!==undefined)body.append('is_hidden',String(!!hidden));if(file)body.append('file',file);return request(`/posts/${encodeURIComponent(id)}`,{method:'PATCH',body,timeout:120000});},
     deletePost:id=>request(`/posts/${encodeURIComponent(id)}`,{method:'DELETE'}),
-    postMediaUrl:path=>`${API}/${String(path||'').replace(/^\/+/, '')}`
+    postMediaUrl:mediaUrl
   };
 })();

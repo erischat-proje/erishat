@@ -16,6 +16,7 @@
                    '[data-room-password],[data-room-moderator]');
       el.hidden = ownerRequired ? !ownerOnly : !canManage;
       if (el.hidden) el.setAttribute('aria-hidden','true');
+      else el.removeAttribute('aria-hidden');
     });
 
     document.querySelectorAll('.roomManage,.roomSettings,.roomTheme,' +
@@ -28,6 +29,7 @@
 
   window.addEventListener('erischat:room-permissions', applyPermissions);
   window.addEventListener('erischat:room-loaded', applyPermissions);
+  window.addEventListener('erischat:room-opened', applyPermissions);
   document.addEventListener('click', () => setTimeout(applyPermissions,0), true);
   new MutationObserver(applyPermissions).observe(document.documentElement,{subtree:true,childList:true});
   document.addEventListener('DOMContentLoaded', applyPermissions);

@@ -95,6 +95,8 @@ def family_payload(db: Session, family: Family) -> dict:
 
 
 def register_family_auth(current_user_dependency):
+    # Registration belongs to main.py; repeated setup must not duplicate routes.
+    router.routes.clear()
     def auth():
         return Depends(current_user_dependency)
 

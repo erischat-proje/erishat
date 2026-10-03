@@ -136,10 +136,6 @@ def create_or_login_verified_identity(
     db.refresh(user)
     return user
 
-# Import after the auth definitions so the family route bootstrap can safely
-# wrap platform route registration without changing main.py.
-from . import family_bootstrap as _family_bootstrap  # noqa: E402,F401
-
 
 def create_or_login_google_user(
     db: Session,
