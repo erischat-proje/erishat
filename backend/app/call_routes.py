@@ -114,10 +114,13 @@ def start_call(body: Start, db: Session = Depends(get_db), user: User = Depends(
     if db.scalar(select(UserBlock.id).where(or_(and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == target.id),
                                                 and_(UserBlock.blocker_id == target.id, UserBlock.blocked_id == user.id)))):
         raise HTTPException(403, "Bu kullanıcıyla arama yapılamıyor")
-    from . import anonymous_calls
+    from . import anonymous_calls, location_calls
     expire(db)
     anonymous_calls.serialize(db)
     anonymous_calls.expire(db)
+    location_calls.expire(db)
+    if location_calls.user_busy(db,user.id) or location_calls.user_busy(db,target.id) or db.get(location_calls.Queue,user.id) or db.get(location_calls.Queue,target.id):
+        raise HTTPException(409,'Kullanıcılardan biri konuma göre eşleşmede')
     if anonymous_calls.user_busy(db,user.id) or anonymous_calls.user_busy(db,target.id) or db.get(anonymous_calls.Queue,user.id) or db.get(anonymous_calls.Queue,target.id):
         raise HTTPException(409,"Kullanıcılardan biri anonim aramada")
     occupied = db.scalar(select(DirectCall.id).where(DirectCall.status.in_(("ringing", "active")),
