@@ -32,7 +32,7 @@
   const api = (path, options) => window.ErisPlatform.api(path, options);
   const asset = path => path ? (window.ErisChatCosmetics?.assetUrl?.(path) || path) : '';
   const count = n => Number(n || 0).toLocaleString('tr-TR');
-  const closeProfile = () => { document.querySelector('.eris-mini-report-shade')?.remove(); document.querySelector('.eris-mini-profile-shade')?.remove(); };
+  const closeProfile = () => { document.querySelector('.eris-mini-profile-shade .eris-mini-card')?._artObserver?.disconnect(); document.querySelector('.eris-mini-report-shade')?.remove(); document.querySelector('.eris-mini-profile-shade')?.remove(); };
   function closeReport() { document.querySelector('.eris-mini-report-shade')?.remove(); }
   function report(user) {
     closeReport();

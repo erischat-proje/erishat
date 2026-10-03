@@ -449,6 +449,7 @@
     if (compose && !systemChat && !compose.querySelector('[data-dm-voice]')) {const b=document.createElement('button');b.type='button';b.dataset.dmVoice='';b.className='close';b.textContent='🎙';b.title='Ses kaydet';compose.insertBefore(b,compose.firstChild);b.onclick=()=>toggleVoiceRecording(b);}
   }
 
+  let sendingGift=false;
   async function openGiftSheet() {
     if (!activeConversationId || !api()?.messageGifts) return;
     const modal = document.createElement('div'); modal.className='dm-gift-sheet'; modal.innerHTML='<section><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Hediye seç</b><button class="close" data-close>×</button></div><div class="dm-gift-grid">Yükleniyor…</div></section>'; document.body.appendChild(modal);
@@ -479,14 +480,14 @@
           const image=document.createElement('img');image.src=g.image_url;image.alt='';image.loading='lazy';image.className='dm-gift-art';
           const price=document.createElement('small');price.className='dm-gift-price';price.textContent=Number(g.unit_price).toLocaleString('tr-TR')+' Lidya';
           button.append(image,price);
-          button.onclick=async()=>{button.disabled=true;try{
-            const message=await api().sendMessageGift(activeConversationId,g.gift_key,quantity);
-            appendMessageOnce(document.querySelector('#chat .chatBody'),message,true);
+          button.onclick=async()=>{if(sendingGift)return;sendingGift=true;button.disabled=true;const conversation=activeConversationId,count=quantity;try{
+            const message=await api().sendMessageGift(conversation,g.gift_key,count);
+            const chatBody=document.querySelector('#chat .chatBody');if(conversation===activeConversationId&&chatBody)appendMessageOnce(chatBody,message,true);
             modal.remove();loadConversations();
-            window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:{...message,gift_key:g.gift_key,quantity,sender_name:'Sen'}}));
+            window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:{...message,gift_key:g.gift_key,quantity:count,sender_name:'Sen'}}));
             window.dispatchEvent(new Event('erischat:gift-updated'));
-          }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}};
-          const cell=document.createElement('div');cell.append(button);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.textContent='Önizle';preview.onclick=()=>window.ErisGiftStage?.preview?.({gift_key:g.gift_key,quantity});cell.append(preview);grid.append(cell);
+          }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}finally{sendingGift=false}};
+          const cell=document.createElement('div');cell.className='gift-preview-cell';cell.append(button);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';preview.setAttribute('aria-label',(g.name||g.gift_key)+' önizle');preview.title='Ücretsiz önizle';preview.onclick=()=>window.ErisGiftStage?.preview?.({gift_key:g.gift_key,quantity});cell.append(preview);grid.append(cell);
         }
       }
       draw();

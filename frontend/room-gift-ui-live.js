@@ -1,6 +1,6 @@
 /* Live room gift picker. Uses the existing REST gift bridge and room view seats. */
 (() => {
-  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all', balance: 0, quantity: 1 };
+  const state = { roomId: null, gifts: [], recipients: [], selectedGift: null, selectedRecipient: null, category: 'all', balance: 0, quantity: 1, sending: false };
   const GIFT_CATEGORIES = [
     ['all','Tümü',0,Infinity,0],
     ['agora','Agora & Halk Pazarı',1,29,1],
@@ -40,14 +40,14 @@
 
   function updateSend() {
     const button = document.querySelector('#egpGifts .egp-send');
-    if (button) button.disabled = !(state.roomId && state.selectedRecipient && state.selectedGift);
+    if (button) button.disabled = state.sending || !(state.roomId && state.selectedRecipient && state.selectedGift);
   }
 
   function renderRecipients() {
     const box = document.getElementById('egpRecipients');
     if (!box) return;
     box.innerHTML = state.recipients.map(r => `<button class="egp-chip${state.selectedRecipient === r.id ? ' active' : ''}" data-rec="${esc(r.id)}" type="button">${r.special?'✦':'👤'} ${esc(r.name)}</button>`).join('');
-    box.querySelectorAll('[data-rec]').forEach(btn => { btn.onclick = () => { state.selectedRecipient = btn.dataset.rec; renderRecipients(); updateSend(); }; });
+    box.querySelectorAll('[data-rec]').forEach(btn => { btn.onclick = () => { if(state.sending)return;state.selectedRecipient = btn.dataset.rec; renderRecipients(); updateSend(); }; });
   }
 
   function renderGifts() {
@@ -60,12 +60,12 @@
       const name=String(g.gift_key||g.name||'');
       const price=Number(g.price||g.unit_price||0);
       const affordable=state.balance>=price*state.quantity;
-      return `<div class="egp-gift${state.selectedGift === name ? ' active' : ''}"><button class="egp-select" data-gift="${esc(name)}" type="button" title="${esc(name)}" aria-label="${esc(name)}" ${affordable?'':'disabled'}><img src="${esc(g.image_url)}" alt="" loading="lazy"><span class="egp-price">${price.toLocaleString('tr-TR')} Lidya</span></button><button class="gift-preview-button" data-gift-preview="${esc(name)}" type="button">Önizle</button>${state.selectedGift===name?'<button class="egp-send" type="button">Gönder</button>':''}</div>`;
+      return `<div class="egp-gift gift-preview-cell${state.selectedGift === name ? ' active' : ''}"><button class="egp-select" data-gift="${esc(name)}" type="button" title="${esc(name)}" aria-label="${esc(name)}" ${affordable?'':'disabled'}><img src="${esc(g.image_url)}" alt="" loading="lazy"><span class="egp-price">${price.toLocaleString('tr-TR')} Lidya</span></button><button class="gift-preview-button" data-gift-preview="${esc(name)}" type="button" aria-label="${esc(name)} önizle" title="Ücretsiz önizle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>${state.selectedGift===name?'<button class="egp-send" type="button">Gönder</button>':''}</div>`;
     }).join('') : '<div class="egp-note">Bu kategoride hediye yok.</div>';
     cats?.querySelectorAll('[data-cat]').forEach(btn=>{btn.onclick=()=>{state.category=btn.dataset.cat;renderGifts();};});
     box.querySelectorAll('[data-gift-preview]').forEach(b=>b.onclick=()=>window.ErisGiftStage?.preview?.({gift_key:b.dataset.giftPreview,quantity:state.quantity}));
     box.querySelector('.egp-send')?.addEventListener('click',send);
-    box.querySelectorAll('[data-gift]').forEach(btn => { btn.onclick = () => { state.selectedGift = state.selectedGift===btn.dataset.gift?null:btn.dataset.gift; renderGifts(); updateSend(); }; });
+    box.querySelectorAll('[data-gift]').forEach(btn => { btn.onclick = () => { if(state.sending)return;state.selectedGift = state.selectedGift===btn.dataset.gift?null:btn.dataset.gift; renderGifts(); updateSend(); }; });
   }
 
   async function loadRecipients() {
@@ -101,8 +101,8 @@
   }
 
   async function send() {
-    if (!state.roomId || !state.selectedRecipient || !state.selectedGift || !window.ErisRoomGift) return;
-    const button = document.querySelector('#egpGifts .egp-send');
+    if (state.sending || !state.roomId || !state.selectedRecipient || !state.selectedGift || !window.ErisRoomGift) return;
+    state.sending=true;const sentRoom=state.roomId,sentGift=state.selectedGift;const button = document.querySelector('#egpGifts .egp-send');
     if (button) { button.disabled = true; button.textContent = 'Gönderiliyor…'; }
     try {
       const target=state.selectedRecipient==='@mic'?'mic':state.selectedRecipient==='@room'?'room':'user';
@@ -110,9 +110,9 @@
         method:'POST',body:JSON.stringify({target,recipient_id:target==='user'?state.selectedRecipient:null,
           gift_key:state.selectedGift,quantity:state.quantity})});
       toastSafe('Hediye gönderildi 🎁');
-      document.getElementById('erischatGiftPanel')?.classList.remove('show'); state.selectedGift=null; renderGifts();
+      if(state.roomId===sentRoom&&state.selectedGift===sentGift){document.getElementById('erischatGiftPanel')?.classList.remove('show');state.selectedGift=null;renderGifts();}
     } catch (error) { toastSafe(error.message || 'Hediye gönderilemedi.'); const note=document.querySelector('#erischatGiftPanel .egp-note'); if(note) note.textContent=error.message||'Hediye gönderilemedi.'; }
-    finally { if (button) { button.textContent = 'Gönder'; updateSend(); } }
+    finally { state.sending=false;if (button) { button.textContent = 'Gönder'; updateSend(); } }
   }
 
   function ensureUi() {
@@ -126,7 +126,7 @@
     panel.querySelector('.egp-close').onclick = () => {panel.classList.remove('show');state.selectedGift=null;renderGifts()};
     const qty=panel.querySelector('#egpQuantity');
     qty.innerHTML='Adet: '+[1,3,5,9,49,99].map(n=>`<button type="button" data-qty="${n}">${n}</button>`).join('');
-    qty.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>{
+    qty.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>{if(state.sending)return;
       state.quantity=Number(b.dataset.qty);
       qty.querySelectorAll('[data-qty]').forEach(x=>x.classList.toggle('active',x===b));
       renderGifts();updateSend();

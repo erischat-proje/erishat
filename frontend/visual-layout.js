@@ -1,0 +1,22 @@
+/* Shared responsive artwork geometry. Unknown artwork never receives guessed text slots. */
+(() => {
+  'use strict';
+  const metadata=new Map(),pending=new Map(),base=new URL('.',document.currentScript?.src||location.href);
+  const clean=key=>{try{return decodeURIComponent(new URL(key,document.baseURI).pathname).replace(/^\//,'').replace(/^.*?(?=(?:vip-assets|relationship-assets)\/)/,'')}catch{return String(key||'').replace(/^\.\//,'')}};
+  const manifest=fetch(new URL('visual-layout.json?v=room-system-20261003',base),{signal:window.AbortSignal?.timeout?.(6000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(data=>{for(const [key,value] of Object.entries(data.assets||{}))metadata.set(key,value)}).catch(()=>{});
+  const url=key=>window.ErisChatCosmetics?.assetUrl?.(key)||new URL(key,base).href;
+  async function describe(key){
+    await manifest;const path=clean(key);if(pending.has(path))return pending.get(path);const known=metadata.get(path);
+    const result=new Promise(resolve=>{const image=new Image();let done=false;const finish=value=>{if(done)return;done=true;clearTimeout(timer);if(!value)pending.delete(path);resolve(value)};const timer=setTimeout(()=>finish(known||null),6000);
+      image.onload=()=>{const width=image.naturalWidth,height=image.naturalHeight;if(known&&known.width===width&&known.height===height)return finish(known);
+        const value={width,height,name:null};if(known?.slice)value.slice=known.slice.map((n,i)=>Math.round(n*(i%2?width/known.width:height/known.height)));
+        if(known&&Math.abs(width/height-known.width/known.height)<.1){value.avatar=known.avatar;value.ring=known.ring;}finish(value);};image.onerror=()=>finish(null);image.src=url(key);});
+    pending.set(path,result);if(pending.size>128)pending.delete(pending.keys().next().value);return result;
+  }
+  function sliced(el,key,slices,widths){el.style.backgroundImage='none';el.style.borderStyle='solid';el.style.borderColor='transparent';el.style.borderImageSource='url("'+url(key).replace(/"/g,'%22')+'")';el.style.borderImageSlice=slices.join(' ')+' fill';el.style.borderImageWidth='1';el.style.borderImageRepeat='stretch';el.style.borderWidth=widths.map(n=>Math.round(n)+'px').join(' ');}
+  async function popup(el,key){const ticket={};el._artTicket=ticket;const m=await describe(key);if(!m||el._artTicket!==ticket||!el.isConnected)return;const slice=m.slice||[m.height*.42,m.width*.14,m.height*.18,m.width*.14];const fit=()=>{if(!el.isConnected){observer?.disconnect();return}const width=el.getBoundingClientRect().width||Math.min(innerWidth-24,460),scale=width/m.width;sliced(el,key,slice,slice.map(n=>n*scale));};let observer;fit();if(window.ResizeObserver){observer=new ResizeObserver(fit);observer.observe(el);el._artObserver?.disconnect();el._artObserver=observer;}}
+  async function bubble(el,key){const ticket={};el._artTicket=ticket;el.classList.add('visual-chat-bubble');const m=await describe(key);if(!m||!el.isConnected||el._artTicket!==ticket)return;const s=m.slice||[m.height*.16,m.width*.1,m.height*.35,m.width*.1];const fit=()=>{if(!el.isConnected){observer?.disconnect();return}const w=el.getBoundingClientRect().width||280,scale=Math.min(w/m.width,.28);sliced(el,key,s,s.map(n=>Math.max(5,n*scale)));el.style.borderImageRepeat='stretch round';};let observer;fit();if(window.ResizeObserver){observer=new ResizeObserver(fit);observer.observe(el);el._artObserver=observer;}}
+  let frame=0;function viewport(){cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{const v=window.visualViewport,w=v?.width||innerWidth,h=v?.height||innerHeight,root=document.documentElement;root.style.setProperty('--app-width',Math.round(w)+'px');root.style.setProperty('--app-height',Math.round(h)+'px');root.style.setProperty('--app-top',Math.round(v?.offsetTop||0)+'px');root.style.setProperty('--room-chat-height',Math.round(Math.min(300,Math.max(160,h*.32)))+'px');root.style.setProperty('--room-stage-height',Math.round(Math.max(80,h-120-Math.min(300,Math.max(160,h*.32))))+'px');root.classList.toggle('visual-compact',h<550);});}
+  window.addEventListener('resize',viewport,{passive:true});window.visualViewport?.addEventListener('resize',viewport,{passive:true});window.visualViewport?.addEventListener('scroll',viewport,{passive:true});window.addEventListener('orientationchange',viewport,{passive:true});viewport();
+  window.ErisVisualLayout={describe,popup,bubble,url,status:async(el,key)=>{const m=await describe(key);if(m&&el.isConnected)el.style.aspectRatio=m.width+'/'+m.height;}};
+})();

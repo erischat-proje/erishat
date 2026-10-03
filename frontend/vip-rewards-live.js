@@ -65,7 +65,8 @@
   function decorate(root,u){
     const level=Math.max(0,Math.min(12,Number(u.vip_level)||0));
     root.querySelectorAll('[data-vip-card]').forEach(img=>{img.hidden=!level||!!u.vip_badge_hidden;if(!img.hidden){img.src=material('card',level);img.alt='VIP '+level}});
-    const mini=root.querySelector('.eris-mini-card');if(mini){mini.classList.toggle('eris-mini-vip',!!level&&!u.vip_neon_hidden);mini.style.setProperty('--vip-popup',level&&!u.vip_neon_hidden?`url("${material('popup',level)}")`:'none')}
+    const mini=root.querySelector('.eris-mini-card');if(mini){const visible=!!level&&!u.vip_neon_hidden;mini.classList.toggle('eris-mini-vip',visible);mini.classList.toggle('visual-vip-card',visible);if(visible)window.ErisVisualLayout?.popup(mini,'vip-assets/popup-'+level+'.png');else{mini._artTicket=null;mini._artObserver?.disconnect();for(const key of ['border-image-source','border-image-slice','border-image-width','border-image-repeat','border-width','border-style','border-color','background-image'])mini.style.removeProperty(key);}}
+
     for(const [selector,value] of Object.entries({'[data-followers]':u.followers_count,'[data-following]':u.following_count}))if(value!=null)root.querySelectorAll(selector).forEach(el=>{el.textContent=number(value)});
     root.querySelectorAll('[data-received-gifts]').forEach(el=>{el.innerHTML='<span>'+number(u.received_gift_lidya)+'</span><img src="./lidya-coin.png" alt="Lidya">'});
     window.ErisRelationship?.decorate?.(root,u.relationship);

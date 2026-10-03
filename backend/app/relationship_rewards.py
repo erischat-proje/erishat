@@ -56,6 +56,8 @@ def ensure_rewards(db,house):
         key=f'level-{tier}'
         if house.level>=level and not db.get(CoupleRing,(house.id,key)):
             db.add(CoupleRing(couple_id=house.id,ring=key,source='level'))
+    # Sessions disable autoflush: persist level rings before checking the selected ring.
+    db.flush()
     if house.ring and not db.get(CoupleRing,(house.id,house.ring)):
         db.add(CoupleRing(couple_id=house.id,ring=house.ring,source='purchased'))
     db.flush()
