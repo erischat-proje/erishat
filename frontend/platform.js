@@ -16,7 +16,7 @@
     catch (e) { throw new Error(e?.name === 'AbortError' ? 'Sunucu yanıt vermedi (8 sn zaman aşımı).' : (e?.message || 'Ağ bağlantısı kurulamadı.')); }
     finally { clearTimeout(timeout); }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    if (!res.ok) throw new Error(typeof data.detail==='string'?data.detail:data.detail?.message||`HTTP ${res.status}`);
     return data;
   }
   window.ErisPlatform = {

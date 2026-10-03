@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .db import get_db
+from .moderation import require_chat_write
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, FamilyVisual, MessageHidden, Notification, VipStatus
 from .dm_folders import require_unlocked, _folder
@@ -429,6 +430,7 @@ def register_family_auth(current_user_dependency):
     @router.post("/families/{family_id}/chat/messages", status_code=201)
     def send_family_message(family_id: str, payload: FamilyMessageCreate,
                             x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = auth()):
+        require_chat_write(db,user.id)
         family = get_family(db, family_id); membership(db, family_id, user.id)
         require_unlocked(db, user.id, family.chat_conversation_id, x_eris_dm_vault)
         message = Message(conversation_id=family.chat_conversation_id, sender_id=user.id, text=payload.text.strip())

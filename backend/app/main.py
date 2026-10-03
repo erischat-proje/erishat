@@ -40,7 +40,7 @@ from .platform_routes import register_platform_auth, router as platform_router
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
-from .moderation import active_ban, require_feature, profile_notice
+from .moderation import active_ban, require_feature, profile_notice, require_chat_write, chat_ban_detail
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
@@ -1248,6 +1248,7 @@ def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: 
 @app.post("/v1/posts", status_code=201)
 async def create_social_post(caption: str = Form(default=""), file: UploadFile | None = File(default=None),
     audience: str = Form(default="public"), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    require_chat_write(db,user.id)
     caption, audience = caption.strip(), audience.strip().lower()
     if audience not in {"public", "followers"}:
         raise HTTPException(status_code=400, detail="Paylaşım hedef kitlesi geçersiz")
@@ -1269,6 +1270,7 @@ async def update_social_post(post_id: int, caption: str | None = Form(default=No
     file: UploadFile | None = File(default=None), remove_image: bool = Form(default=False),
     audience: str | None = Form(default=None), is_hidden: bool | None = Form(default=None),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
+    require_chat_write(db,user.id)
     post = db.get(SocialPost, post_id)
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini düzenleyebilirsin")
@@ -1435,6 +1437,7 @@ def list_social_comments(post_id: int, limit: int = Query(default=100, ge=1, le=
 @app.post("/v1/posts/{post_id}/comments", status_code=201)
 def create_social_comment(post_id: int, payload: SocialCommentInput,
     db: Session = Depends(get_db), user: User = Depends(current_user)):
+    require_chat_write(db,user.id)
     account_ban=active_ban(db,user.id)
     if account_ban:
         from .moderation import ban_until
@@ -1458,6 +1461,7 @@ def create_social_comment(post_id: int, payload: SocialCommentInput,
 @app.patch("/v1/posts/{post_id}/comments/{comment_id}")
 def edit_social_comment(post_id: int, comment_id: int, payload: SocialCommentInput,
     db: Session = Depends(get_db), user: User = Depends(current_user)):
+    require_chat_write(db,user.id)
     _social_access(db, post_id, user)
     item = db.get(SocialPostComment, comment_id)
     if not item or item.post_id != post_id: raise HTTPException(status_code=404, detail="Yorum bulunamadı")
@@ -1573,6 +1577,7 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
 @app.post("/v1/stories", status_code=201)
 async def create_story(file: UploadFile = File(...), caption: str = Form(default=""),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
+    require_chat_write(db,user.id)
     mime, data = await _read_social_upload(file, 50 * 1024 * 1024)
     story = SocialStory(user_id=user.id, caption=caption.strip()[:300], mime_type=mime,
         image_bytes=data, expires_at=datetime.now(timezone.utc) + timedelta(hours=24))
@@ -2185,7 +2190,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 restriction = active_ban(db, user.id) or active_ban(db, user.id, chat=True)
                 if restriction:
                     from .moderation import ban_until
-                    await websocket.send_json({"type":"room_chat_error","code":"admin_ban","message":ban_until(restriction)})
+                    await websocket.send_json({"type":"room_chat_error",**chat_ban_detail(db,restriction)} if isinstance(restriction,ChatBan) else {"type":"room_chat_error","code":"admin_ban","message":ban_until(restriction)})
                     continue
                 if not room.chat_enabled:
                     await websocket.send_json({"type":"room_chat_error","code":"chat_disabled","message":"Oda sohbeti kapalı."})

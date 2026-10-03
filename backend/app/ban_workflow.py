@@ -12,16 +12,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
-from .admin_models import AdminRole, BanApproval, UserBan, AdminAuditLog, FaActionLog
+from .admin_models import AdminRole, BanApproval, UserBan, ChatBan, AdminAuditLog, FaActionLog
 from .platform_models import Notification
 from .support_models import SupportAgent
 from .room_models import Room, RoomMember, RoomSeat
 from .room_ban_models import RoomUserBan, RoomBanRequestBinding, BanRestrictionReason
 from .room_ban_rules import ROOM_RESTRICTION_MESSAGE
+from .chat_ban_models import ChatBanRequestBinding
 from .ban_workflow_models import BanWorkflow, BanReviewSession, BanPresence, BanEvent, UserBrowserDevice
 
 router = APIRouter(prefix='/v1/admin/ban-workflow', tags=['ban-workflow'])
 TZ = ZoneInfo('Europe/Istanbul')
+CHAT_RESTRICTION_MESSAGE = 'Sohbet ban talebi ile ilgilenmediğiniz için işlemleriniz 3 dakikalığına kısıtlanmıştır.'
 RESTRICTION_MESSAGE = 'Ban talebi ile ilgilenmediğiniz için işlemleriniz 3 dakikalığına kısıtlanmıştır.'
 def now(): return datetime.now(timezone.utc)
 def utc(value): return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
@@ -44,9 +46,10 @@ def restriction_message(db,uid):
     cause=db.get(BanRestrictionReason,uid)
     return cause.message if cause else RESTRICTION_MESSAGE
 
-def label(row):return "Oda ban" if row.kind=="room_user" else "Ban"
+def label(row):return {"room_user":"Oda ban","chat":"Sohbet ban"}.get(row.kind,"Ban")
 
 def binding(db,rid):return db.scalar(select(RoomBanRequestBinding).where(RoomBanRequestBinding.approval_id==rid))
+def chat_binding(db,rid):return db.scalar(select(ChatBanRequestBinding).where(ChatBanRequestBinding.approval_id==rid))
 
 def penalize(db, user, kind="account"):
     if role(db, user.id) != 'FA': return
@@ -55,7 +58,7 @@ def penalize(db, user, kind="account"):
     presence.restricted_until = now()+timedelta(seconds=180)
     cause=db.get(BanRestrictionReason,user.id)
     if not cause:cause=BanRestrictionReason(user_id=user.id,message="");db.add(cause)
-    cause.message=ROOM_RESTRICTION_MESSAGE if kind=="room_user" else RESTRICTION_MESSAGE
+    cause.message={"room_user":ROOM_RESTRICTION_MESSAGE,"chat":CHAT_RESTRICTION_MESSAGE}.get(kind,RESTRICTION_MESSAGE)
     for member in db.scalars(select(RoomMember).where(RoomMember.user_id==user.id)): db.delete(member)
     for seat in db.scalars(select(RoomSeat).where(RoomSeat.user_id==user.id)): seat.user_id=None
 
@@ -137,6 +140,7 @@ def serialize(db,row,flow,details=False,include_evidence=True):
     if row.kind=='room_user':
         room=db.get(Room,row.target_room_id); request=binding(db,row.id)
         result.update(number=f'#{request.id:04d}',room_id=room.id,room_public_id=room.public_id,room_name=room.name)
+    if row.kind=='chat':result['number']=f'#{chat_binding(db,row.id).id:04d}'
     if details:
         evidence=json.loads(flow.evidence_json)
         result.update(reason=row.reason,evidence=evidence if include_evidence else [],evidence_count=len(evidence),log_text=flow.log_text)
@@ -144,6 +148,15 @@ def serialize(db,row,flow,details=False,include_evidence=True):
 
 def build_log(db,row,flow):
     requester=db.get(User,row.requester_id); approver=db.get(User,row.decision_by)
+    if row.kind=='chat':
+        target=db.get(User,row.target_user_id)
+        return '\n'.join(['='*50,'[ERISCHAT SOHBET BAN TALEBİ VE ONAY LOGU]','='*50,
+            f'SOHBET BAN TALEBİ OLUŞTURAN : [{flow.requester_role} - {requester.nickname} - {requester.public_id}]',
+            f'SOHBET BAN TALEBİNİ KABUL EDEN : [{flow.reviewer_role} - {approver.nickname} - {approver.public_id}]',
+            'TALEP ZAMANI : '+stamp(row.created_at),'ONAY ZAMANI : '+stamp(flow.decided_at),
+            'SOHBET BAN TALEP EDİLEN KULLANICI : '+target.nickname+' / '+target.public_id,
+            'SÜRE : '+('Süresiz' if row.days is None else str(row.days)+' Gün'),'İŞLEM NEDENİ : '+row.reason,
+            'KANIT : '+', '.join(f'/v1/admin/ban-workflow/requests/{row.id}/evidence/{i}' for i in range(len(json.loads(flow.evidence_json))))])
     if row.kind=='room_user':
         room=db.get(Room,row.target_room_id);target=db.get(User,row.target_user_id)
         return '\n'.join(['='*50,'[ERISCHAT ODA BAN TALEBİ VE ONAY LOGU]','='*50,
@@ -167,6 +180,9 @@ def apply_ban(db,row,flow,user):
     if row.kind=='room_user':
         ban=RoomUserBan(room_id=row.target_room_id,user_id=row.target_user_id,expires_at=until,banned_by=user.id,reason=row.reason)
         db.add(ban);db.flush();binding(db,row.id).ban_id=ban.id
+    elif row.kind=='chat':
+        ban=ChatBan(user_id=row.target_user_id,expires_at=until,banned_by=user.id,reason=row.reason)
+        db.add(ban);db.flush();chat_binding(db,row.id).ban_id=ban.id
     else:
         ban=UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=until,banned_by=user.id,reason=row.reason)
         db.add(ban);db.flush();flow.ban_id=ban.id
@@ -175,9 +191,10 @@ def apply_ban(db,row,flow,user):
     members=select(RoomMember).where(RoomMember.user_id==row.target_user_id)
     seats=select(RoomSeat).where(RoomSeat.user_id==row.target_user_id)
     if row.kind=='room_user':members=members.where(RoomMember.room_id==row.target_room_id);seats=seats.where(RoomSeat.room_id==row.target_room_id)
-    for member in db.scalars(members):db.delete(member)
-    for seat in db.scalars(seats):seat.user_id=None
-    audit(db,user,row,'room_ban_workflow_approved' if row.kind=='room_user' else 'ban_workflow_approved',log=flow.log_text)
+    if row.kind!='chat':
+        for member in db.scalars(members):db.delete(member)
+        for seat in db.scalars(seats):seat.user_id=None
+    audit(db,user,row,{'room_user':'room_ban_workflow_approved','chat':'chat_ban_workflow_approved'}.get(row.kind,'ban_workflow_approved'),log=flow.log_text)
     if row.requester_id!=user.id:add_event(db,row,row.requester_id,'approved',f'{label(row)} talebiniz {stamp(flow.decided_at)} tarihinde müşteri danışmanlarımız tarafından onaylanmış ve {label(row).lower()} işleminiz gerçekleşmiştir.')
 
 def submit(db,user,target,payload,kind,room=None):
@@ -191,6 +208,7 @@ def submit(db,user,target,payload,kind,room=None):
     flow=BanWorkflow(approval_id=row.id,requester_role=rank,evidence_json=json.dumps(payload.evidence),skipped_json='[]',log_text='')
     db.add(flow);db.flush()
     if kind=="room_user":db.add(RoomBanRequestBinding(approval_id=row.id));db.flush()
+    if kind=="chat":db.add(ChatBanRequestBinding(approval_id=row.id));db.flush()
     if rank=='DA':apply_ban(db,row,flow,user)
     else:route_request(db,row,flow);audit(db,user,row,'ban_workflow_requested',kind=kind)
     db.commit()
@@ -220,27 +238,28 @@ def decide(db,user,rid,action):
     if action=='approve':apply_ban(db,row,flow,user)
     else:
         row.status='rejected';row.decision_by=user.id;flow.reviewer_role=role(db,user.id);flow.decided_at=now();penalize(db,user,row.kind)
-        audit(db,user,row,'room_ban_workflow_rejected' if row.kind=='room_user' else 'ban_workflow_rejected');add_event(db,row,row.requester_id,'rejected',label(row)+' talebiniz yönetim tarafından reddedildi.')
+        audit(db,user,row,{'room_user':'room_ban_workflow_rejected','chat':'chat_ban_workflow_rejected'}.get(row.kind,'ban_workflow_rejected'));add_event(db,row,row.requester_id,'rejected',label(row)+' talebiniz yönetim tarafından reddedildi.')
     for session in db.scalars(select(BanReviewSession).where(BanReviewSession.pending_id==rid)):session.pending_id=None
     db.commit();return {**serialize(db,row,flow),'restriction_seconds':restriction(db,user.id),'restriction_message':restriction_message(db,user.id)}
 
 def undo(db,user,row,flow):
     rank=require(db,user,{'DA'}) # DA is the only rank above both FA and DA reviewers.
     room_binding=binding(db,row.id) if row.kind=='room_user' else None
-    ban_id=room_binding.ban_id if room_binding else flow.ban_id
+    chat_request=chat_binding(db,row.id) if row.kind=='chat' else None
+    ban_id=room_binding.ban_id if room_binding else chat_request.ban_id if chat_request else flow.ban_id
     if row.status!='approved' or not ban_id:raise HTTPException(409,'Onaylanmış ban bulunamadı')
     if not flow.undone_at:
-        ban=db.get(RoomUserBan if room_binding else UserBan,ban_id);ban.active=False;flow.undone_at=now();flow.undone_by=user.id
+        ban=db.get(RoomUserBan if room_binding else ChatBan if chat_request else UserBan,ban_id);ban.active=False;flow.undone_at=now();flow.undone_by=user.id
         flow.log_text+='\n'+'-'*50+'\n[ALT YETKİ / DA YÖNETİM İŞLEMLERİ]\nİŞLEMİ GERİ ALAN : '+user.nickname+' - '+user.public_id+'\nGERİ ALMA ZAMANI : '+stamp(flow.undone_at)
         for ev in db.scalars(select(BanEvent).where(BanEvent.approval_id==row.id,BanEvent.kind=='approved')):
             ev.seen_at=now();db.get(Notification,ev.notification_id).read=True
-        add_event(db,row,row.decision_by,'undone','Oda ban talebi onayınız gözden geçirilmiş ve haksız bir oda banı olduğuna karar verilmiştir. Lütfen bir daha ki sefer daha dikkatli olunuz.' if row.kind=='room_user' else 'Ban talebi onayınız gözden geçirilmiş ve haksız ban olduğuna karar verilmiştir. Lütfen bir daha ki sefer daha dikkatli olunuz.')
+        add_event(db,row,row.decision_by,'undone','Oda ban talebi onayınız gözden geçirilmiş ve haksız bir oda banı olduğuna karar verilmiştir. Lütfen bir daha ki sefer daha dikkatli olunuz.' if row.kind=='room_user' else 'Sohbet ban talebi onayınız gözden geçirilmiş ve haksız bir sohbet banı olduğuna karar verilmiştir. Lütfen bir daha ki sefer daha dikkatli olunuz.' if row.kind=='chat' else 'Ban talebi onayınız gözden geçirilmiş ve haksız ban olduğuna karar verilmiştir. Lütfen bir daha ki sefer daha dikkatli olunuz.')
         approver=db.get(User,row.decision_by)
-        add_event(db,row,user.id,'undo_receipt',f'{approver.nickname} tarafından onaylanan oda ban talebi geri alınıp kullanıcının oda yasağı kaldırılmıştır.' if row.kind=='room_user' else f'{approver.nickname} tarafından onaylanan ban talebi geri alınıp kullanıcı banı kaldırılmıştır.')
-        audit(db,user,row,'room_ban_workflow_undone' if row.kind=='room_user' else 'ban_workflow_undone',log=flow.log_text)
+        add_event(db,row,user.id,'undo_receipt',f'{approver.nickname} tarafından onaylanan oda ban talebi geri alınıp kullanıcının oda yasağı kaldırılmıştır.' if row.kind=='room_user' else f'{approver.nickname} tarafından onaylanan sohbet ban talebi geri alınıp kullanıcının sohbet yasağı kaldırılmıştır.' if row.kind=='chat' else f'{approver.nickname} tarafından onaylanan ban talebi geri alınıp kullanıcı banı kaldırılmıştır.')
+        audit(db,user,row,{'room_user':'room_ban_workflow_undone','chat':'chat_ban_workflow_undone'}.get(row.kind,'ban_workflow_undone'),log=flow.log_text)
     return flow
 
-def register_auth(current_user_dependency, disconnect=None, room_disconnect=None):
+def register_auth(current_user_dependency, disconnect=None, room_disconnect=None, chat_notify=None):
     @router.post('/room-requests/{room_id}/{user_id}')
     async def create_room_request(room_id:str,user_id:str,payload:EvidencePayload,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require(db,user,{'UA','DA'})
@@ -272,10 +291,10 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         return {'items':rows,'pending_id':s.pending_id if s else None,'restriction_seconds':restriction(db,user.id),'restriction_message':restriction_message(db,user.id)}
 
     @router.get('/requests')
-    def listing(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    def listing(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rank=require(db,user,{'UA','FA','DA'})
         q=select(BanApproval).join(BanWorkflow).order_by(BanApproval.id.desc()).limit(50)
-        q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind!='room_user')
+        q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind=='chat' if scope=='chat' else BanApproval.kind.notin_(['room_user','chat']))
         if before:q=q.where(BanApproval.id<before)
         if rank=='UA':q=q.where(BanApproval.requester_id==user.id)
         if rank=='FA':q=q.where((BanWorkflow.assigned_id==user.id)|(BanApproval.decision_by==user.id))
@@ -296,6 +315,8 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
             row=db.get(BanApproval,rid)
             if payload.action=='approve' and row.kind=='room_user':
                 if room_disconnect:await room_disconnect(row.target_user_id,row.target_room_id)
+            elif payload.action=='approve' and row.kind=='chat':
+                if chat_notify:await chat_notify(row.target_user_id)
             else:await disconnect(user.id if result['restriction_seconds'] else row.target_user_id)
         return result
 
@@ -317,7 +338,7 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         if row.requester_id!=user.id:raise HTTPException(404,'Talep bulunamadı')
         if row.status!='approved' or flow.undone_at:raise HTTPException(409,'Bu talep için teşekkür gönderilemez')
         if not flow.thanked_at:
-            flow.thanked_at=now();add_event(db,row,row.decision_by,'thanks',f'{user.nickname} admin oda banı onayınız için size teşekkürlerini iletti. Keyifli çalışmalar.' if row.kind=='room_user' else f'{user.nickname} admin size teşekkürlerini iletti. Keyifli çalışmalar.')
+            flow.thanked_at=now();add_event(db,row,row.decision_by,'thanks',f'{user.nickname} admin oda banı onayınız için size teşekkürlerini iletti. Keyifli çalışmalar.' if row.kind=='room_user' else f'{user.nickname} admin sohbet banı onayınız için size teşekkürlerini iletti. Keyifli çalışmalar.' if row.kind=='chat' else f'{user.nickname} admin size teşekkürlerini iletti. Keyifli çalışmalar.')
         for ev in db.scalars(select(BanEvent).where(BanEvent.approval_id==rid,BanEvent.recipient_id==user.id,BanEvent.kind=='approved')):
             ev.seen_at=now();db.get(Notification,ev.notification_id).read=True
         db.commit();return {'thanked':True}
@@ -334,10 +355,10 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         ev.seen_at=now();db.get(Notification,ev.notification_id).read=True;db.commit();return {'seen':True}
 
     @router.get('/logs')
-    def logs(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    def logs(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rank=require(db,user,{'FA','DA'})
         q=select(BanApproval).join(BanWorkflow).where(BanApproval.status=='approved').order_by(BanApproval.id.desc()).limit(30)
-        q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind!='room_user')
+        q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind=='chat' if scope=='chat' else BanApproval.kind.notin_(['room_user','chat']))
         if before:q=q.where(BanApproval.id<before)
         if rank=='FA':q=q.where(BanApproval.decision_by==user.id)
         rows=list(db.scalars(q));return {'items':[serialize(db,r,db.get(BanWorkflow,r.id),True,False) for r in rows],'can_undo':rank=='DA','next_before':rows[-1].id if len(rows)==30 else None}
