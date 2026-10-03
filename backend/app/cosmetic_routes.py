@@ -46,6 +46,11 @@ def vip_level_rewards(user) -> list[dict]:
         by_level.setdefault(int(item["vip_level"]), []).append({
             "cosmetic_type": item["type"], "asset_key": item["asset_key"], "gender": item.get("gender")
         })
+    for item in wallpaper_catalog():
+        if item["tier"] == "vip":
+            by_level.setdefault(item["vip_level"], []).append({
+                "cosmetic_type": "wallpaper", "asset_key": item["key"], "asset_url": item["asset"]
+            })
     return [{"level": level, "rewards": by_level.get(level, [])} for level in range(1, 13)]
 
 
@@ -72,7 +77,10 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
 def list_vip_rewards(user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     current = vip_level(db, user.id)
     claimed = {int(row.level) for row in db.query(VipRewardClaim).filter(VipRewardClaim.user_id == user.id).all()}
-    return [{**row, "unlocked": row["level"] <= current, "claimed": row["level"] in claimed} for row in vip_level_rewards(user)]
+    owned = {(r.cosmetic_type, r.asset_key) for r in db.query(UserCosmetic).filter(UserCosmetic.user_id == user.id)}
+    return [{**row, "unlocked": row["level"] <= current, "claimed": row["level"] in claimed,
+             "complete": all((r["cosmetic_type"], r["asset_key"]) in owned for r in row["rewards"])}
+            for row in vip_level_rewards(user)]
 
 
 @router.post("/me/vip/rewards/{level}/claim")
@@ -86,15 +94,17 @@ def claim_vip_level_rewards(level: int, user=Depends(current_cosmetic_user), db:
     rewards = next((item["rewards"] for item in vip_level_rewards(user) if item["level"] == level), [])
     if not already_claimed:
         db.add(VipRewardClaim(user_id=user.id, level=level))
-        for reward in rewards:
-            owned = db.query(UserCosmetic.id).filter(
-                UserCosmetic.user_id == user.id,
-                UserCosmetic.cosmetic_type == reward["cosmetic_type"],
-                UserCosmetic.asset_key == reward["asset_key"],
-            ).first()
-            if not owned:
-                db.add(UserCosmetic(user_id=user.id, cosmetic_type=reward["cosmetic_type"], asset_key=reward["asset_key"]))
-        db.commit()
+    # Older claims only contained avatars/frames. Repair missing inventory items
+    # under the same user lock; never pay currency or duplicate existing rewards.
+    for reward in rewards:
+        owned = db.query(UserCosmetic.id).filter(
+            UserCosmetic.user_id == user.id,
+            UserCosmetic.cosmetic_type == reward["cosmetic_type"],
+            UserCosmetic.asset_key == reward["asset_key"],
+        ).first()
+        if not owned:
+            db.add(UserCosmetic(user_id=user.id, cosmetic_type=reward["cosmetic_type"], asset_key=reward["asset_key"]))
+    db.commit()
     return {"level": level, "claimed": True, "already_claimed": already_claimed, "rewards": rewards}
 
 
@@ -206,6 +216,7 @@ def purchase_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: S
 
 @router.post("/me/vip/claims/wallpaper")
 def claim_vip_wallpaper(user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    db.execute(text("SELECT id FROM users WHERE id=:uid FOR UPDATE"), {"uid": user.id}).first()
     current = vip_level(db, user.id)
     if current < 10:
         raise HTTPException(status_code=403, detail="VIP 10 seviyesi gerekli")

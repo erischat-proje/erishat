@@ -71,7 +71,7 @@
     const icons={info:'profile',posts:'posts',social:'family','fan-ranking':'family',collection:'collection',vip:'vip',wallet:'wallet',calls:'bell',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',suggestion:'posts',settings:'security'};
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML=(key==='topup'?'<img class="eph-icon" src="./lidya-coin.png" alt="">':'<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg>')+'<span>'+escape(label)+'</span>';
-      button.onclick=()=>{if(key==='topup'){window.ErisPurchases?.open?.();return}if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}lastTrigger=button;show(key)};strip.append(button);
+      button.onclick=()=>{if(key==='vip'){window.ErisChatVIP?.open?.();return}if(key==='topup'){window.ErisPurchases?.open?.();return}if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}lastTrigger=button;show(key)};strip.append(button);
     }
     show('overview');
   }
@@ -150,10 +150,9 @@
         const shop=body.querySelector('[data-shop]');shop.onclick=()=>{window.ErisProfileHub.close();window.showView?.('shop')};return;
       }
       if(key==='vip') {
-        const vip=await api('/me/vip');if(index!==requestIndex)return;
-        body.innerHTML='<h3>VIP üyeliği</h3><div class="eph-row"><span>Seviye</span><b data-level></b></div><div class="eph-row"><span>Toplam harcama</span><b data-spent></b></div><div class="eph-row"><span>Sonraki seviye</span><b data-next></b></div><div class="eph-muted" data-perks></div><div data-vip-claims></div><button type="button" data-open style="margin-top:10px">VIP merkezini aç</button>';
-        body.querySelector('[data-level]').textContent=String(vip.level||0);body.querySelector('[data-spent]').textContent=Number(vip.total_spent||0).toLocaleString('tr-TR')+' Lidya';body.querySelector('[data-next]').textContent=vip.next_level_spent?Number(vip.next_level_spent).toLocaleString('tr-TR')+' Lidya':'Maksimum seviye';body.querySelector('[data-perks]').textContent=(vip.perks||[]).join(' • ')||'Henüz açılmış VIP özelliği yok.';body.querySelector('[data-open]').onclick=()=>window.showView?.('vip');
-        if(Number(vip.level||0)>=10){const claims=body.querySelector('[data-vip-claims]');claims.innerHTML='<h4>VIP 10 ödülleri</h4>';for(const [key,label,claimed] of [['knight_badge','Şövalye rozetini al',vip.knight_badge_claimed],['wallpaper','Özel duvar kağıdını al',vip.wallpaper_claimed]]){const button=document.createElement('button');button.type='button';button.textContent=claimed?'Ödül alındı':label;button.disabled=!!claimed;button.onclick=async()=>{button.disabled=true;try{await api('/me/vip/claims/'+encodeURIComponent(key),{method:'POST'});await show('vip');window.toast?.('VIP ödülü hesabına eklendi ✓')}catch(error){button.disabled=false;button.textContent=error.message||'Ödül alınamadı'}};claims.append(button)}}return;
+        window.ErisProfileHub.close();
+        window.ErisChatVIP?.open?.();
+        return;
       }
       if(key==='wallet') {
         const wallet=await api('/me/wallet');if(index!==requestIndex)return;

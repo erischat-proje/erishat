@@ -15,7 +15,19 @@
     .dm-gift-sheet{z-index:11010!important;align-items:center!important;justify-content:center!important;padding:14px;backdrop-filter:blur(8px)}
     .dm-gift-sheet>section{box-sizing:border-box;border-radius:24px!important;background:#171025ed!important;max-height:78dvh!important;box-shadow:0 25px 80px #000b}
     .eris-mini-report-shade{z-index:11040}.eris-mini-report-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eris-mini-report-head h2{margin:0;font-size:19px}.eris-mini-card textarea{box-sizing:border-box;width:100%;min-height:110px;margin:15px 0 10px;padding:11px;border:1px solid #ffffff33;border-radius:13px;background:#0e0a19;color:#fff;resize:vertical}.eris-mini-card input[type=file]{max-width:100%;margin:10px 0;color:#fff}.eris-mini-error{min-height:18px;color:#ffa6b7;font-size:12px}`;
-  css.textContent += '.eris-mini-card [hidden]{display:none!important}';
+  css.textContent += `
+    .eris-mini-card [hidden]{display:none!important}
+    .eris-mini-card{width:min(420px,100%);padding:16px;border-radius:20px;background:linear-gradient(145deg,#231a2e,#100c18)}
+    .eris-mini-topbar{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:12px}.eris-mini-topbar [data-vip-card]{margin-right:auto}
+    .eris-mini-head{gap:10px}.eris-mini-portrait{width:52px;height:52px}.eris-mini-frame{width:64px;height:64px}
+    .eris-mini-stats{margin:13px 0;gap:6px}.eris-mini-stats div{padding:8px 3px}.eris-mini-stats b{font-size:14px}.eris-mini-stats small{font-size:10px}
+    .eris-mini-actions button{min-height:38px;font-size:11px}.eris-mini-block{min-height:34px;font-size:11px}.eris-mini-error:empty{display:none}
+    .eris-mini-vip{position:relative;border:0;background:transparent;padding:35% 8% 10%;box-shadow:none;width:min(490px,100%);isolation:isolate}
+    .eris-mini-vip:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--vip-popup) center/100% 100% no-repeat;pointer-events:none}
+    .eris-mini-vip .eris-mini-topbar{margin-bottom:9px}.eris-mini-vip .eris-mini-stats div{background:#160c32b0}
+    @media(max-width:380px){.eris-mini-shade{padding:10px}.eris-mini-vip{padding-top:35%}.eris-mini-name{font-size:13px}.eris-mini-vip .eris-vip-card{width:86px}}
+    @media(max-height:600px){.eris-mini-shade{overflow:auto;align-items:start}.eris-mini-vip{margin:8px auto}}
+  `;
   document.head.append(css);
   const api = (path, options) => window.ErisPlatform.api(path, options);
   const asset = path => path ? (window.ErisChatCosmetics?.assetUrl?.(path) || path) : '';
@@ -47,7 +59,7 @@
     if(!identifier)return;
     closeProfile();
     const shade=document.createElement('div');shade.className='eris-mini-shade eris-mini-profile-shade';
-    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-head"><button type="button" class="eris-mini-portrait" aria-label="Tam profili aç">👤</button><div class="eris-mini-name">Yükleniyor…</div><button class="eris-mini-icon eris-mini-fan" data-fans type="button" title="Hayran listesi" aria-label="Hayran listesi">✦</button><div class="eris-mini-top"><button class="eris-mini-icon" data-report type="button" title="Şikâyet et" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-gifters>–</b><small>Hediye gönderen</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><button type="button" class="eris-mini-submit eris-mini-block" data-block disabled>Engelle</button><p class="eris-mini-error" role="alert"></p></section>';
+    shade.innerHTML='<section class="eris-mini-card" role="dialog" aria-modal="true" aria-label="Mini profil"><div class="eris-mini-topbar"><img class="eris-vip-card" data-vip-card hidden alt=""><button class="eris-mini-icon eris-mini-fan" data-fans type="button" aria-label="Hayran listesi">✦</button><button class="eris-mini-icon" data-report type="button" aria-label="Şikâyet et">!</button><button class="eris-mini-icon" data-close type="button" aria-label="Profili kapat">×</button></div><div class="eris-mini-head"><button type="button" class="eris-mini-portrait" aria-label="Tam profili aç">👤</button><div class="eris-mini-name">Yükleniyor…</div></div><div class="eris-mini-stats"><div><b data-followers>–</b><small>Takipçi</small></div><div><b data-following>–</b><small>Takip</small></div><div><b data-received-gifts>–</b><small>Alınan hediye</small></div></div><div class="eris-mini-actions"><button type="button" data-follow disabled>Takip et</button><button type="button" data-gift disabled>Hediye</button><button type="button" data-message disabled>Mesaj gönder</button></div><button type="button" class="eris-mini-submit eris-mini-block" data-block disabled>Engelle</button><p class="eris-mini-error" role="alert"></p></section>';
     document.body.append(shade);
     shade.querySelector('[data-close]').onclick=closeProfile;
     shade.onclick=e=>{if(e.target===shade)closeProfile()};
@@ -69,7 +81,8 @@
       if(level){const badge=document.createElement('img');badge.src='./fan-levels/LEVEL'+level+'.png';badge.alt='Hayran seviyesi '+level;badge.style.cssText='width:34px;height:34px;object-fit:contain';fanButton.replaceChildren(badge)}
       shade.querySelector('[data-followers]').textContent=count(u.followers_count);
       shade.querySelector('[data-following]').textContent=count(u.following_count);
-      shade.querySelector('[data-gifters]').textContent=count(u.gift_fan_count);
+      window.ErisChatVIP?.decorate?.(shade,u);
+      window.ErisChatVIP?.watch?.(shade,u.id);
       if(u.banned){
         shade.querySelector('[data-fans]').hidden=true;
         shade.querySelector('.eris-mini-actions').hidden=true;

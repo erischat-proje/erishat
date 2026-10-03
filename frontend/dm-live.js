@@ -483,6 +483,7 @@
             const message=await api().sendMessageGift(activeConversationId,g.gift_key,quantity);
             appendMessageOnce(document.querySelector('#chat .chatBody'),message,true);
             modal.remove();loadConversations();
+            window.dispatchEvent(new Event('erischat:gift-updated'));
           }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}};
           grid.append(button);
         }
