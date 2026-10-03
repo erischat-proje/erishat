@@ -32,6 +32,7 @@
     if (!auth()?.getMe || !(localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token'))) return null;
     const user = await auth().getMe();
     auth().user = user;
+    if(window.ErisChatCosmetics?.state)window.ErisChatCosmetics.state.user=user;
     render(user);
     return user;
   }
@@ -40,6 +41,7 @@
     if (!auth()?.updateMe) return null;
     const user = await auth().updateMe(payload);
     auth().user = user;
+    if(window.ErisChatCosmetics?.state)window.ErisChatCosmetics.state.user=user;
     render(user);
     window.dispatchEvent(new CustomEvent('erischat:profile', { detail: user }));
     return user;

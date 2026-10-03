@@ -1932,6 +1932,28 @@ discovery_live.register_auth(current_user, engine, websocket_token, get_user_fro
 app.include_router(discovery_live.router)
 
 
+
+def _room_history_page(db,internal_room_id,room_id,before=None,limit=200):
+    query=db.query(RoomChatMessage).filter(RoomChatMessage.room_id==internal_room_id)
+    if before is not None:query=query.filter(RoomChatMessage.id<before)
+    history=query.order_by(RoomChatMessage.id.desc()).limit(limit).all()
+    history.reverse()
+    history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
+    history_ids = {m.user_id for m in history}
+    fan_totals = gift_totals(db, history_ids)
+    system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
+    # Resolve owned rewards for active couples in one query for the whole page.
+    from .relationship_models import Couple, CoupleMember, CoupleRewardSelection
+    from .models import UserCosmetic
+    reward_bubbles=dict(db.execute(select(CoupleRewardSelection.user_id,CoupleRewardSelection.asset_key)
+        .join(CoupleMember,CoupleMember.user_id==CoupleRewardSelection.user_id)
+        .join(Couple,Couple.id==CoupleMember.couple_id)
+        .join(UserCosmetic,(UserCosmetic.user_id==CoupleRewardSelection.user_id)&(UserCosmetic.cosmetic_type=='bubble')&(UserCosmetic.asset_key==CoupleRewardSelection.asset_key))
+        .where(CoupleRewardSelection.user_id.in_(history_ids),CoupleRewardSelection.kind=='bubble',Couple.active.is_(True))).all()) if history_ids else {}
+
+    history_payload = [{"type":"room_chat","bubble_asset":reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+    return history_payload
+
 def _load_room_socket(token, room_id):
     with Session(engine) as db:
         user = get_user_from_token(db, token)
@@ -1946,17 +1968,11 @@ def _load_room_socket(token, room_id):
         )))
         if not room or not member or banned or owner_blocked:
             raise HTTPException(403, "oda üyeliği gerekli")
-        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(200).all())
-        history.reverse()
-        history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
-        history_ids = {m.user_id for m in history}
-        fan_totals = gift_totals(db, history_ids)
-        system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
-        reward_bubbles={uid:relationship_routes.rewards.selected(db,uid,'bubble') for uid in history_ids}
+        history_payload=_room_history_page(db,internal_room_id,room_id)
         entrance_asset=relationship_routes.rewards.selected(db,user.id,'entrance')
         entrance_house=relationship_routes.my_couple(db,user.id)
-        entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
-        history_payload = [{"type":"room_chat","bubble_asset":reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+        entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'frame_asset':user.frame_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
+
     return user, room, member, internal_room_id, history_payload, entrance_asset, entrance_payload
 
 
@@ -2314,6 +2330,20 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         if not peers:
             room_rtc_users.pop(internal_room_id, None)
 
+
+
+@app.get('/v1/rooms/{room_id}/chat-history')
+def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit:int=Query(default=100,ge=1,le=200),db:Session=Depends(get_db),user:User=Depends(current_user)):
+    room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
+    if not room:raise HTTPException(404,'Oda bulunamadı.')
+    member=db.scalar(select(RoomMember.id).where(RoomMember.room_id==room.id,RoomMember.user_id==user.id))
+    banned=db.scalar(select(RoomBan.id).where(RoomBan.room_id==room.id,RoomBan.user_id==user.id)) or active_room_user_ban(db,room.id,user.id)
+    owner_blocked=db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==room.owner_id,UserBlock.blocked_id==user.id))
+    if not member or banned or owner_blocked:raise HTTPException(403,'Oda sohbetine erişiminiz yok.')
+    rows=_room_history_page(db,room.id,room_id,before,limit+1)
+    more=len(rows)>limit
+    if more:rows=rows[1:]
+    return {'messages':rows,'has_more':more,'next_before':rows[0]['id'] if rows else None}
 
 
 static_dir = Path(__file__).resolve().parents[2] / "frontend"

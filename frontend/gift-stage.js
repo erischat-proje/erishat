@@ -150,7 +150,7 @@
   const doc=global.document;const api={renderFrame};global.ErisGiftStage=api;if(!doc)return;
   const base=new URL('.',doc.currentScript?.src||global.location.href);
   let catalogPromise,plans=new Map(),giftNames=new Map(),queue=[],active=null,epoch=0,raf=0,root=null,audioContext,master,audioReady=Promise.resolve();
-  const images=new Map(),sounds=new Map(),seen=new Map();let enabled=true;
+  const images=new Map(),sounds=new Map(),seen=new Map(),scopeVersions={room:0,dm:0,preview:0};let enabled=true;
   try{enabled=global.localStorage.getItem('eris.gift.sound')!=='off';}catch(_){}
   async function catalog(){catalogPromise ||= global.fetch(new URL('gift-effects/catalog.json?v=cinema-20261003',base),{signal:global.AbortSignal?.timeout?.(8000)}).then(r=>{if(!r.ok)throw new Error('Hediye efektleri yüklenemedi.');return r.json();}).then(r=>{plans=new Map(r.items.map(p=>[String(p.id),p]));giftNames=new Map(r.items.map(p=>[String(p.name),String(p.id)]));return plans;}).catch(e=>{catalogPromise=null;throw e;});return catalogPromise;}
   function unlock(){if(!enabled)return;try{const C=global.AudioContext||global.webkitAudioContext;if(!C)return;audioContext ||= new C();if(!master){master=audioContext.createGain();master.gain.value=.28;master.connect(audioContext.destination);}if(audioContext.state==='suspended')audioReady=audioContext.resume().catch(()=>{});}catch(_){} }
@@ -162,15 +162,15 @@
   async function soundFor(p){if(!enabled||!audioContext)return null;await limited(audioReady,600);if(audioContext.state!=='running')return null;if(sounds.has(p.id))return sounds.get(p.id);try{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4000);try{const r=await global.fetch(new URL(p.audio,base),{signal:controller.signal});if(!r.ok)return null;const buffer=await audioContext.decodeAudioData(await r.arrayBuffer());return retain(sounds,p.id,buffer,6);}finally{clearTimeout(timer);}}catch(_){return null;}}
   function mount(){if(root)return;root=doc.createElement('section');root.className='eris-gift-cinema';root.setAttribute('aria-label','Hediye animasyonu');root.innerHTML='<canvas aria-hidden="true"></canvas><div class="gift-cinema-caption" role="status" aria-live="polite"><b></b><span></span></div><div class="gift-cinema-tools"><button type="button" data-gift-sound></button><button type="button" data-skip aria-label="Bu animasyonu kapat">×</button></div>';doc.body.append(root);root.querySelector('[data-gift-sound]').onclick=()=>soundEnabled(!enabled);root.querySelector('[data-skip]').onclick=()=>finish();soundEnabled(enabled);}
   function finish(){epoch++;if(raf)global.cancelAnimationFrame(raf);raf=0;try{active?.source?.stop();}catch(_){}active=null;root?.remove();root=null;next();}
-  function clear(){queue=[];finish();}
+  function clear(scope){if(scope)scopeVersions[scope]=(scopeVersions[scope]||0)+1;else Object.keys(scopeVersions).forEach(key=>scopeVersions[key]++);queue=scope?queue.filter(item=>item.scope!==scope):[];if(!scope||active?.item.scope===scope)finish();}
   function destination(item){if(item.scope==='room'){const target=[...doc.querySelectorAll('.eris-seat[data-user-id]')].find(n=>n.dataset.userId===String(item.recipient_id));if(target){const r=target.getBoundingClientRect();if(r.width)return {x:r.left+r.width/2,y:r.top+r.height/2};}}return null;}
   async function next(){
     if(active||!queue.length||doc.hidden)return;const item=queue.shift(),p=plans.get(String(item.gift_key));if(!p)return next();const generation=++epoch;active={item,p};
-    const [asset,buffer]=await Promise.all([imageFor(p),limited(soundFor(p),4500)]);if(epoch!==generation||!active)return;
+    const audio=soundFor(p);const asset=await imageFor(p);if(epoch!==generation||!active)return;
     if(!asset){global.toast?.((item.preview?'Önizleme yüklenemedi: ':'Hediye: ')+p.name+' ×'+item.quantity);active=null;return next();}
     mount();root.querySelector('.gift-cinema-caption b').textContent=p.name+' ×'+item.quantity;
     root.querySelector('.gift-cinema-caption span').textContent=item.preview?'Ücretsiz önizleme':(item.sender_nickname||item.sender_name||'Bir kullanıcı')+' → '+(item.recipient_nickname||item.recipient_name||'Alıcı');
-    if(buffer&&enabled&&audioContext?.state==='running'){try{const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(master);source.start(audioContext.currentTime+.02);active.source=source;}catch(_){}}
+    audio.then(buffer=>{if(epoch!==generation||!active||!buffer||!enabled||audioContext?.state!=='running')return;try{const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(master);source.start(audioContext.currentTime+.02);active.source=source;}catch(_){}});
     const canvas=root.querySelector('canvas'),c=canvas.getContext('2d',{alpha:true});if(!c){const fallback=doc.createElement('img');fallback.src=new URL(p.image,base).href;fallback.alt=p.name;fallback.style.cssText='position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(70vw,450px);max-height:60vh;object-fit:contain';root.append(fallback);setTimeout(()=>{if(epoch===generation)finish();},Math.round(p.duration*1000));return;}
     const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches,lasting=reduced?1.1:p.duration;
     let w=0,h=0,dpr=1,quality=(global.navigator.deviceMemory||4)<=2?.55:1,start=global.performance.now(),last=start,slow=0;
@@ -180,8 +180,9 @@
       raf=global.requestAnimationFrame(tick);};raf=global.requestAnimationFrame(tick);
   }
   async function enqueue(detail,scope='room',preview=false){
-    if(doc.hidden&&preview)return;
+    if(doc.hidden&&preview)return;const scopeVersion=scopeVersions[scope]||0;
     try{await catalog();}catch(_){global.toast?.('Hediye efektleri yüklenemedi.');return;}
+    if(scopeVersion!==(scopeVersions[scope]||0))return;
     const key=String(detail?.gift_key||''),id=String(detail?.gift_id||(/^[0-9]{1,3}$/.test(key)?key:giftNames.get(key))||'');
     if(!plans.has(id))return;
     const eventId=detail.id??detail.message_id,eventKey=eventId==null?null:(scope==='dm'?'dm:':'gift:')+eventId;
@@ -191,15 +192,15 @@
     const same=queue.find(q=>!preview&&!q.preview&&q.gift_key===id&&q.scope===scope);
     if(same){same.quantity+=quantity;if(same.sender_id!==detail.sender_id)same.sender_nickname='Birden çok gönderici';if(same.recipient_id!==detail.recipient_id)same.recipient_nickname='Birden çok alıcı';}
     else{if(preview&&queue.some(q=>q.preview))queue=queue.filter(q=>!q.preview);queue.push({...detail,gift_key:id,quantity,scope,preview});}
-    queue.sort((a,b)=>Number(a.preview)-Number(b.preview));
-    if(!preview&&active?.item.preview){finish();return;}
-    // At most one pending item per gift and context; close/visibility clears stale scenes.
+    queue.sort((a,b)=>Number(b.preview)-Number(a.preview));
+    if(preview&&active){if(!active.item.preview)queue.push(active.item);finish();return;}
+    // Keep paid gifts across previews and visibility changes; room exit clears room scenes only.
     next();
   }
   global.addEventListener('erischat:event',e=>{const d=e.detail;if(d?.type==='dm_message'&&d.gift_key)enqueue(d,'dm')});
   global.addEventListener('erischat:room-gift',e=>enqueue(e.detail||{},'room'));
   global.addEventListener('erischat:dm-gift',e=>enqueue(e.detail||{},'dm'));
-  global.addEventListener('erischat:room-closed',clear);
-  doc.addEventListener('visibilitychange',()=>{if(doc.hidden)clear();else next();});
+  global.addEventListener('erischat:room-closed',()=>clear('room'));
+  doc.addEventListener('visibilitychange',()=>{if(doc.hidden){queue=queue.filter(item=>!item.preview);if(active&&!active.item.preview)queue.unshift(active.item);finish();}else next();});
   Object.assign(api,{preview:gift=>{unlock();return enqueue(gift,'preview',true);},play:enqueue,clear,soundEnabled,load:catalog});
 })(typeof window==='undefined'?globalThis:window);
