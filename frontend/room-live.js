@@ -238,7 +238,7 @@
     socket.onopen=()=>{state.dataset.connectionStatus='connected';list.innerHTML='';};
     socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();state.dataset.connectionStatus='disconnected';}};
     socket.onerror=()=>{state.dataset.connectionStatus='error';};
-    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');else if(d.type==='support_restricted'){window.ErisSupport?.restrict?.(d.remaining_seconds);closeRealRoom().catch(()=>{});}else if(d.type==='ghost_mode_changed'){window.ErisRoomRTC?.stop?.();setTimeout(()=>{if(window.ErisCurrentRoomId===roomId)openRoom(roomId,document.getElementById('erisLiveTitle')?.textContent||'Oda');},0);}else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
+    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error')window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');else if(d.type==='room_user_banned'){window.toast?.(d.message||'Bu odadan yasaklandınız.');closeRealRoom({banned:true}).catch(()=>{});}else if(d.type==='support_restricted'){window.ErisSupport?.restrict?.(d.remaining_seconds);closeRealRoom().catch(()=>{});}else if(d.type==='ghost_mode_changed'){window.ErisRoomRTC?.stop?.();setTimeout(()=>{if(window.ErisCurrentRoomId===roomId)openRoom(roomId,document.getElementById('erisLiveTitle')?.textContent||'Oda');},0);}else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
     const doSend=()=>{const t=input.value.trim();if(!t||socket.readyState!==1)return;if(t.length>500)return;socket.send(JSON.stringify({type:'room_chat',text:t}));input.value='';};
     send.onclick=doSend;input.onkeydown=e=>{if(e.key==='Enter')doSend();};
   }
@@ -302,12 +302,13 @@
     }
   }
 
-  async function closeRealRoom(){
+  async function closeRealRoom(options={}){
     window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;
     const name=document.getElementById('erisLiveTitle')?.textContent||'Oda';
-    if(id)localStorage.setItem('eris_last_room',JSON.stringify({id,name,user_id:window.__erisCurrentRoomUserId||window.ErisCurrentUserId||null}));
+    if(options.banned)localStorage.removeItem('eris_last_room');
+    if(id&&!options.banned)localStorage.setItem('eris_last_room',JSON.stringify({id,name,user_id:window.__erisCurrentRoomUserId||window.ErisCurrentUserId||null}));
     document.getElementById('erisRoomSurface')?.classList.remove('show');
     window.__erisRoomSocket?.close?.(); window.__erisRoomSocket=null;
     if(id){
@@ -316,7 +317,7 @@
     }
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null; window.__erisActiveRoomWallpaper=null;
-    if(id&&document.visibilityState==='visible')setTimeout(offerReturnToRoom,400);
+    if(id&&!options.banned&&document.visibilityState==='visible')setTimeout(offerReturnToRoom,400);
   }
   window.openLiveRoomChat=()=>{
     const surface=document.getElementById('erisRoomSurface');

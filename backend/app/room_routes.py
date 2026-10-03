@@ -24,6 +24,7 @@ from .room_models import Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent,
 from .platform_models import Notification, UserBlock, UserFollow, VipStatus
 from .platform_routes import vip_level_from_spend
 from .admin_models import AdminRole, RoomAdminBan, UserBan
+from .room_ban_rules import active_room_user_ban, require_room_access
 from .moderation import require_feature
 from .system_data import RoomIdRegistry
 from .system_logs import record
@@ -187,6 +188,7 @@ def reject_ghost(db: Session, user: User, action: str = "Bu işlemi yapmak") -> 
 
 
 def is_member(db: Session, room_id: str, user_id: str) -> bool:
+    if active_room_user_ban(db,room_id,user_id):return False
     member = db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id))
     if not member: return False
     room = db.get(Room, room_id)
@@ -345,6 +347,7 @@ def register_room_auth(current_user_dependency):
     @router.post("/{room_id}/join")
     def join_room(room_id: str, payload: RoomJoinPayload | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
+        require_room_access(db,room.id,user.id)
         if room.owner_id != user.id and db.scalar(select(UserBlock.id).where(
             UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
         )):
