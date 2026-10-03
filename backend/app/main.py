@@ -1025,10 +1025,13 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
 
 def _message_out(db: Session, message: Message, viewer_id: str, context=None) -> dict:
     context = context if context is not None else message_context(db, [message], viewer_id)
+    sender=context.get('senders',{}).get(message.sender_id)
     pinned = message.id in context['pinned']
     gift = context['gifts'].get(message.id)
     media = context['media'].get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
+        "sender_avatar":sender.avatar if sender else None, "sender_avatar_asset":sender.avatar_asset if sender else None,
+        "sender_frame_asset":sender.frame_asset if sender else None, "bubble_asset":context.get("bubbles",{}).get(message.sender_id),
         "text": message.text, "created_at": message.created_at,
         "is_read": message.sender_id == viewer_id and bool(context["read"] >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
@@ -1902,6 +1905,12 @@ async def _send_dm_event(db: Session, user_id: str, event: dict) -> None:
         await manager.send_user(user_id, {"type": "dm_message", "conversation_id": event["conversation_id"],
                                            "locked": True})
     else:
+        if event.get('type')=='dm_message' and event.get('sender_id'):
+            sender=db.get(User,event['sender_id'])
+            event={**event,'sender_avatar':sender.avatar if sender else None,
+                'sender_avatar_asset':sender.avatar_asset if sender else None,
+                'sender_frame_asset':sender.frame_asset if sender else None,
+                'bubble_asset':relationship_routes.rewards.selected(db,event['sender_id'],'bubble')}
         await manager.send_user(user_id, event)
 
 
@@ -1937,7 +1946,7 @@ def _load_room_socket(token, room_id):
         )))
         if not room or not member or banned or owner_blocked:
             raise HTTPException(403, "oda üyeliği gerekli")
-        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
+        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(200).all())
         history.reverse()
         history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
         history_ids = {m.user_id for m in history}

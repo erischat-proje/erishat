@@ -14,7 +14,13 @@ def message_context(db, messages, viewer_id):
     family = db.scalar(select(Family.id).where(Family.chat_conversation_id == cid))
     state = db.scalar(select(ConversationReadState).where(
         ConversationReadState.conversation_id == cid, ConversationReadState.user_id != viewer_id)) if conversation and conversation.type != 'family' and not family else None
-    return {'read': state.last_read_message_id if state else 0,
+    from .relationship_models import CoupleRewardSelection, CoupleMember, Couple
+    sender_ids={m.sender_id for m in messages}
+    senders={u.id:u for u in db.scalars(select(User).where(User.id.in_(sender_ids)))}
+    bubbles=dict(db.execute(select(CoupleRewardSelection.user_id,CoupleRewardSelection.asset_key).join(
+        CoupleMember,CoupleMember.user_id==CoupleRewardSelection.user_id).join(Couple,Couple.id==CoupleMember.couple_id).where(
+        CoupleRewardSelection.user_id.in_(sender_ids),CoupleRewardSelection.kind=='bubble',Couple.active.is_(True))).all())
+    return {'senders':senders,'bubbles':bubbles,'read': state.last_read_message_id if state else 0,
         'hidden': set(db.scalars(select(MessageHidden.message_id).where(MessageHidden.user_id == viewer_id, MessageHidden.message_id.in_(ids)))),
         'pinned': set(db.scalars(select(PinnedMessage.message_id).where(PinnedMessage.conversation_id == cid, PinnedMessage.message_id.in_(ids)))),
         'gifts': {r.message_id: r for r in db.scalars(select(DirectMessageGift).where(DirectMessageGift.message_id.in_(ids)))},

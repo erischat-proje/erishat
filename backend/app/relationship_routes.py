@@ -154,7 +154,8 @@ def public_brief(db, uid):
     if not house or not house.active or not available(db, house.male_id) or not available(db, house.female_id):
         return None
     partner_id = house.female_id if uid == house.male_id else house.male_id
-    return {'id':house.id, 'status':status_key(house), 'ring':house.ring, 'level':house.level,
+    status=rewards.status_for(db,house,uid)
+    return {'id':house.id, 'status':status, 'status_asset':rewards.status_asset(status), 'ring':house.ring, 'level':house.level,
             'partner':portrait(db.get(User, partner_id)), 'title_asset':rewards.selected(db,uid,'title')}
 
 
@@ -330,9 +331,19 @@ def respond(request_id: str, payload: Decision, db: Session = Depends(get_db), u
             house = owned_house(db,user.id,lock=True)
             if house.id != row.couple_id or house.married:
                 raise HTTPException(409,'Bu evlilik teklifi artık geçerli değil.')
+            if house.level < 4:
+                raise HTTPException(403,'Evlenmek için aile evi en az seviye 4 olmalıdır.')
             house.married,house.ring = True,row.ring
             if not db.get(CoupleRing,(house.id,row.ring)):
                 db.add(CoupleRing(couple_id=house.id,ring=row.ring,source='purchased'))
+    if payload.action == 'accept':
+        rewards.ensure_rewards(db,house)
+        if row.kind == 'marriage':
+            for uid in (house.male_id,house.female_id):
+                choice=db.get(CoupleRewardSelection,(uid,'relationship_status'))
+                if not choice:
+                    choice=CoupleRewardSelection(user_id=uid,kind='relationship_status');db.add(choice)
+                choice.asset_key=rewards.status_asset('married')
     row.status = result
     sender_notice = user.nickname + (' evlilik teklifinizi kabul etti; size evet dedi!' if result == 'accepted' else ' evlilik teklifinizi reddetti; size hayır dedi!') if row.kind == 'marriage' else user.nickname + (' ilişki itirafınızı kabul etti!' if result == 'accepted' else ' ilişki itirafınızı reddetti.')
     notify(db,row.sender_id,'result',{'title':sender_notice,'message':''})
@@ -346,6 +357,8 @@ def buy_ring(payload: Purchase, db: Session = Depends(get_db), user: User = Depe
     check_pair(db,house.male_id,house.female_id)
     if not re.fullmatch(r'(copper|silver|gold)-(?:[1-9]|1[0-9]|20)',payload.item) or payload.quantity != 1:
         raise HTTPException(400,'Geçerli bir söz yüzüğü seçiniz.')
+    if payload.item.startswith('gold-') and house.level < 4:
+        raise HTTPException(403,'Altın evlilik yüzüğü için aile evi seviye 4 olmalıdır.')
     if db.get(CoupleRing,(house.id,payload.item)):
         house.ring=payload.item;advance(db,house);db.commit()
         return {'already_owned':True,'active':summary(db,house)}
@@ -391,7 +404,8 @@ def marriage(payload: Marriage, db: Session = Depends(get_db), user: User = Depe
     house = owned_house(db,user.id,lock=True)
     peer = house.female_id if user.id == house.male_id else house.male_id
     check_pair(db,user.id,peer);require_feature(db,user.id,[peer])
-    # The document explicitly allows proposals at every house level.
+    if house.level < 4:
+        raise HTTPException(403,'Evlenmek için aile evi en az seviye 4 olmalıdır.')
     op,replay = operation_existing(db,user.id,house,payload,'marriage',payload.ring,1)
     if replay:
         return request_info(db,db.get(LoveRequest,op.request_id),user.id)
@@ -536,7 +550,7 @@ def reward_inventory(db: Session=Depends(get_db),user: User=Depends(authenticate
 
 
 class EquipReward(BaseModel):
-    kind: str=Field(pattern='^(bubble|title|frame|wallpaper|entrance)$')
+    kind: str=Field(pattern='^(bubble|title|frame|wallpaper|entrance|relationship_status)$')
     asset_key: str | None=Field(default=None,max_length=255)
 
 
@@ -544,7 +558,10 @@ class EquipReward(BaseModel):
 def equip_reward(payload: EquipReward,db: Session=Depends(get_db),user: User=Depends(authenticated)):
     house=owned_house(db,user.id,lock=True);rewards.ensure_rewards(db,house)
     valid=next((r for r in rewards.items(user.gender) if r['type']==payload.kind and r['asset_key']==payload.asset_key and r['level']<=house.level),None)
-    if payload.asset_key and not valid:raise HTTPException(403,'Bu ilişki ödülü açık değil.')
+    if payload.kind=='relationship_status':
+        key=next((k for k in rewards.STATUS_NAMES if rewards.status_asset(k)==payload.asset_key),None)
+        valid=key in rewards.status_unlocked(db,house) and rewards.status_compatible(house,key)
+    if payload.asset_key and not valid:raise HTTPException(403,'Bu ünvan veya ödül açık değil ya da takılı yüzükle uyumlu değil.')
     row=db.get(CoupleRewardSelection,(user.id,payload.kind))
     if not row:row=CoupleRewardSelection(user_id=user.id,kind=payload.kind);db.add(row)
     row.asset_key=payload.asset_key
@@ -561,6 +578,7 @@ class SelectRing(BaseModel):
 def equip_ring(payload: SelectRing,db: Session=Depends(get_db),user: User=Depends(authenticated)):
     house=owned_house(db,user.id,lock=True);rewards.ensure_rewards(db,house)
     if not db.get(CoupleRing,(house.id,payload.ring)):raise HTTPException(403,'Bu yüzük koleksiyonunuzda yok.')
+    if payload.ring.startswith('gold-') and house.level < 4:raise HTTPException(403,'Evlilik yüzüğü için seviye 4 gerekli.')
     house.ring=payload.ring;advance(db,house);db.commit();return summary(db,house)
 
 

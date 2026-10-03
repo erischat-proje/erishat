@@ -187,6 +187,12 @@ class MessageOut(BaseModel):
     sender_id: str
     text: str
     created_at: datetime
+    sender_avatar: str | None = None
+    sender_avatar_asset: str | None = None
+    sender_frame_asset: str | None = None
+    bubble_asset: str | None = None
+    gift_image_url: str | None = None
+    gift_price: int | None = None
     is_read: bool = False
     is_pinned: bool = False
     gift_key: str | None = None
