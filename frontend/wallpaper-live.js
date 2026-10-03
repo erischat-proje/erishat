@@ -6,7 +6,7 @@
   const url=k=>window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(k):k;
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   async function render(){
-    const root=document.getElementById('shop'); if(!root)return;
+    const root=document.getElementById('shop');root?.querySelector('[data-eris-wallpapers]')?.remove();return;
     let box=root.querySelector('[data-eris-wallpapers]');
     if(!box){box=document.createElement('section');box.dataset.erisWallpapers='';box.style.cssText='margin-top:16px;padding-top:14px;border-top:1px solid #ffffff12';root.appendChild(box)}
     box.innerHTML='<div style="font-weight:900;font-size:12px">🌌 Duvar Kağıtları</div><div style="font-size:9px;color:#938a9f;margin:4px 0 10px">Normal koleksiyon satın alınabilir; VIP koleksiyonu seviyeye göre açılır.</div><div data-wg style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">Yükleniyor…</div>';

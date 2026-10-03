@@ -14,18 +14,15 @@ from .platform_models import DirectMessageGift, UserBlock, Notification
 from .room_models import RoomGiftEvent
 from .admin_models import AdminRole
 from .moderation import active_ban, require_feature
-from .relationship_models import Couple, CoupleMember, LoveRequest, CoupleOperation, CoupleEvent, CoupleRewardSelection, CoupleRing, CoupleRoom, CoupleGift
+from .relationship_models import Couple, CoupleMember, LoveRequest, CoupleOperation, CoupleEvent, CoupleRewardSelection, CoupleRing, CoupleRoom, CoupleGift, CoupleUpgradeProgress
 from . import relationship_rewards as rewards
 
 router = APIRouter(prefix='/v1/relationship', tags=['relationship'])
 _current_user = None
 ISTANBUL = ZoneInfo('Europe/Istanbul')
 MATERIALS = ('brick', 'wood', 'paint')
-# Requirements printed on each current house artwork, consumed to advance.
-HOUSE_NEEDS = {i: dict(zip(MATERIALS, values)) for i, values in enumerate([
-    (30,50,5), (45,75,8), (70,110,12), (105,160,18), (155,230,26),
-    (225,330,38), (320,470,54), (450,660,76), (630,920,106),
-    (880,1280,148), (1220,1780,206), (1680,2450,284)], 1)}
+# Material costs follow the selected ring metal; old stock is preserved.
+HOUSE_NEEDS = {i:dict(zip(MATERIALS,(1,1,0) if i<=4 else (2,2,1) if i<=8 else (3,3,2))) for i in range(1,13)}
 PRICES = {'copper':1200, 'silver':2100, 'gold':2800}
 
 
@@ -164,14 +161,17 @@ def summary(db, house):
     start = house.started_at
     if start.tzinfo is None:
         start = start.replace(tzinfo=timezone.utc)
-    needs = HOUSE_NEEDS[house.level] if house.level < 12 else {m:0 for m in MATERIALS}
+    needs = upgrade_needs(house) if house.level < 12 else {m:0 for m in MATERIALS}
+    progress = db.get(CoupleUpgradeProgress, house.id)
+    paid = {m:getattr(progress,m) if progress and progress.level==house.level else 0 for m in MATERIALS}
     return {'id':house.id, 'level':house.level, 'status':status_key(house), 'ring':house.ring, 'married':house.married,
             'male':portrait(db.get(User, house.male_id)), 'female':portrait(db.get(User, house.female_id)),
             'days':max(1, (now().astimezone(ISTANBUL).date() - start.astimezone(ISTANBUL).date()).days + 1),
             'owned_rings':[{'key':r.ring,'source':r.source,'asset':ring_asset(r.ring)} for r in db.scalars(select(CoupleRing).where(CoupleRing.couple_id==house.id))],
             'ring_asset':ring_asset(house.ring) if house.ring else None,
             'started_at':start.isoformat(), 'materials':{m:getattr(house,m) for m in MATERIALS},
-            'remaining':{m:max(0,needs[m]-getattr(house,m)) for m in MATERIALS},
+            'remaining':{m:max(0,needs[m]-paid[m]-getattr(house,m)) for m in MATERIALS},
+            'requirements':needs, 'contributed':paid,
             'material_price':750, 'needs_first_copper':not bool(house.ring), 'max_level':house.level == 12}
 
 
@@ -186,20 +186,34 @@ def request_info(db, row, uid):
             'peer':portrait(db.get(User, row.sender_id if row.recipient_id == uid else row.recipient_id))}
 
 
+def upgrade_needs(house):
+    metal = 'gold' if house.ring and house.ring.startswith('level-') else (house.ring or 'copper').split('-')[0]
+    return dict(zip(MATERIALS, {'copper':(1,1,0), 'silver':(2,2,1), 'gold':(3,3,2)}.get(metal,(1,1,0))))
+
+
 def advance(db, house):
     old = house.level
-    # The first promise ring is a requirement of the level-one tutorial.
+    progress = db.get(CoupleUpgradeProgress,house.id)
+    if progress is None:
+        progress=CoupleUpgradeProgress(couple_id=house.id,level=house.level,brick=0,wood=0,paint=0)
+        db.add(progress)
     while house.ring and house.level < 12:
-        needs = HOUSE_NEEDS[house.level]
-        if any(getattr(house,m) < needs[m] for m in MATERIALS):
-            break
+        if progress.level != house.level:
+            progress.level=house.level
+            for m in MATERIALS:setattr(progress,m,0)
+        needs=upgrade_needs(house)
         for m in MATERIALS:
-            setattr(house,m,getattr(house,m)-needs[m])
-        house.level += 1
+            take=min(getattr(house,m),max(0,needs[m]-getattr(progress,m)))
+            setattr(house,m,getattr(house,m)-take)
+            setattr(progress,m,getattr(progress,m)+take)
+        if any(getattr(progress,m)<needs[m] for m in MATERIALS):break
+        house.level+=1
+        progress.level=house.level
+        for m in MATERIALS:setattr(progress,m,0)
     rewards.ensure_rewards(db,house)
     if house.level != old:
-        for uid in (house.male_id, house.female_id):
-            notify(db,uid,'upgrade',{'title':'Aile eviniz seviye ' + str(house.level) + ' oldu!', 'message':'Ortak malzemelerinizle eviniz gelişti.'})
+        for uid in (house.male_id,house.female_id):
+            notify(db,uid,'upgrade',{'title':'Aile eviniz seviye '+str(house.level)+' oldu!','message':'Ortak malzemelerinizle eviniz gelişti.'})
 
 
 def charge(db, uid, amount, ref):
@@ -207,7 +221,9 @@ def charge(db, uid, amount, ref):
     if int(user.lidya or 0) < amount:
         raise HTTPException(402, f'{amount} Lidya gerekli.')
     user.lidya -= amount
+    from .vip_spending import record_spend
     db.info.update(lidya_operation='relationship_purchase', lidya_actor_id=uid, lidya_reference_id=ref)
+    record_spend(db,uid,amount,"relationship_purchase",ref)
     db.flush()
     for key in ('lidya_operation','lidya_actor_id','lidya_reference_id'):
         db.info.pop(key,None)
@@ -330,7 +346,7 @@ def buy_ring(payload: Purchase, db: Session = Depends(get_db), user: User = Depe
     if not re.fullmatch(r'(copper|silver|gold)-(?:[1-9]|1[0-9]|20)',payload.item) or payload.quantity != 1:
         raise HTTPException(400,'Geçerli bir söz yüzüğü seçiniz.')
     if db.get(CoupleRing,(house.id,payload.item)):
-        house.ring=payload.item;db.commit()
+        house.ring=payload.item;advance(db,house);db.commit()
         return {'already_owned':True,'active':summary(db,house)}
     if not house.ring and not payload.item.startswith('copper-'):
         raise HTTPException(403,'İlk yüzük bakır olmalıdır.')

@@ -110,8 +110,8 @@ def add_event(db, row, recipient, kind, message):
     db.add(note); db.flush(); db.add(BanEvent(approval_id=row.id,recipient_id=recipient,notification_id=note.id,kind=kind,message=message))
 
 def audit(db,user,row,action,**details):
-    db.add(AdminAuditLog(admin_id=user.id,action=action,target_user_id=row.target_user_id,target_room_id=row.target_room_id,details=json.dumps({'request_id':row.id,**details},ensure_ascii=False)))
-    if role(db,user.id)=='FA':db.add(FaActionLog(admin_id=user.id,action=action,target_user_id=row.target_user_id,target_room_id=row.target_room_id,details=json.dumps({'request_id':row.id,**details},ensure_ascii=False)))
+    db.add(AdminAuditLog(admin_id=user.id,action=action,target_user_id=row.target_user_id,target_room_id=row.target_room_id,details=json.dumps({'request_id':row.id,**details,'actor_role':role(db,user.id)},ensure_ascii=False)))
+    if role(db,user.id)=='FA':db.add(FaActionLog(admin_id=user.id,action=action,target_user_id=row.target_user_id,target_room_id=row.target_room_id,details=json.dumps({'request_id':row.id,**details,'actor_role':role(db,user.id)},ensure_ascii=False)))
 
 def route_request(db,row,flow):
     if row.status!='pending':return
@@ -356,7 +356,7 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
 
     @router.get('/logs')
     def logs(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        rank=require(db,user,{'FA','DA'})
+        rank=require(db,user,{'DA'})
         q=select(BanApproval).join(BanWorkflow).where(BanApproval.status=='approved').order_by(BanApproval.id.desc()).limit(30)
         q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind=='chat' if scope=='chat' else BanApproval.kind.notin_(['room_user','chat']))
         if before:q=q.where(BanApproval.id<before)
@@ -365,7 +365,7 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
 
     @router.get('/logs/{rid}')
     def log_detail(rid:int,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        row,flow=load(db,rid);rank=require(db,user,{'FA','DA'})
+        row,flow=load(db,rid);rank=require(db,user,{'DA'})
         if row.status!='approved' or (rank=='FA' and row.decision_by!=user.id):raise HTTPException(403,'Bu loga erişiminiz yok')
         return serialize(db,row,flow,True)
 

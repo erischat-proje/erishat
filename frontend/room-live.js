@@ -225,13 +225,13 @@
       e.className='eris-chat-msg';
       e.dataset.roomSenderId=String(d.user_id||'');e.hidden=!d.system&&blockedUsers.has(e.dataset.roomSenderId);if(d.system)e.classList.add('system');
       const identity=document.createElement('div');identity.className='eris-chat-identity';
-      const portrait=document.createElement('span');portrait.className='eris-chat-portrait';
+      const portrait=document.createElement('span');portrait.className='eris-chat-portrait';if(d.system){portrait.textContent='📢';portrait.style.cssText='width:20px;height:20px;min-width:20px;font-size:13px;background:none';}
       const cosmetics=window.ErisChatCosmetics;
       const asset=d.avatar_asset&&cosmetics?.assetUrl?.(d.avatar_asset);
-      if(asset){const img=document.createElement('img');img.className='eris-chat-avatar';img.src=asset;img.alt='';portrait.appendChild(img)}
-      else portrait.textContent=d.avatar||'◈';
+      if(asset&&!d.system){const img=document.createElement('img');img.className='eris-chat-avatar';img.src=asset;img.alt='';portrait.appendChild(img)}
+      else if(!d.system)portrait.textContent=d.avatar||'◈';
       const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
-      if(frame){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
+      if(frame&&!d.system){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
       const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
       const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;if(fanLevel)badge.src='./fan-levels/LEVEL'+fanLevel+'.png';

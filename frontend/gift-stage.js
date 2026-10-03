@@ -152,7 +152,7 @@
   let catalogPromise,plans=new Map(),queue=[],active=null,epoch=0,raf=0,root=null,audioContext,master,audioReady=Promise.resolve();
   const images=new Map(),sounds=new Map(),seen=new Map();let enabled=true;
   try{enabled=global.localStorage.getItem('eris.gift.sound')!=='off';}catch(_){}
-  async function catalog(){catalogPromise ||= global.fetch(new URL('gift-effects/catalog.json?v=cinema-20261003',base)).then(r=>{if(!r.ok)throw new Error('Hediye efektleri yüklenemedi.');return r.json();}).then(r=>{plans=new Map(r.items.map(p=>[String(p.id),p]));return plans;}).catch(e=>{catalogPromise=null;throw e;});return catalogPromise;}
+  async function catalog(){catalogPromise ||= global.fetch(new URL('gift-effects/catalog.json?v=cinema-20261003',base),{signal:global.AbortSignal?.timeout?.(8000)}).then(r=>{if(!r.ok)throw new Error('Hediye efektleri yüklenemedi.');return r.json();}).then(r=>{plans=new Map(r.items.map(p=>[String(p.id),p]));return plans;}).catch(e=>{catalogPromise=null;throw e;});return catalogPromise;}
   function unlock(){if(!enabled)return;try{const C=global.AudioContext||global.webkitAudioContext;if(!C)return;audioContext ||= new C();if(!master){master=audioContext.createGain();master.gain.value=.28;master.connect(audioContext.destination);}if(audioContext.state==='suspended')audioReady=audioContext.resume().catch(()=>{});}catch(_){} }
   function soundEnabled(value){if(value===undefined)return enabled;enabled=!!value;try{global.localStorage.setItem('eris.gift.sound',enabled?'on':'off');}catch(_){}if(!enabled&&active?.source){try{active.source.stop();}catch(_){}}if(enabled)unlock();doc.querySelectorAll('[data-gift-sound]').forEach(b=>{b.textContent=enabled?'Ses açık':'Ses kapalı';b.setAttribute('aria-pressed',String(enabled));});return enabled;}
   doc.addEventListener('pointerdown',unlock,{capture:true,passive:true});doc.addEventListener('keydown',unlock,{capture:true});
@@ -170,7 +170,7 @@
     if(!asset){global.toast?.((item.preview?'Önizleme yüklenemedi: ':'Hediye: ')+p.name+' ×'+item.quantity);active=null;return next();}
     mount();root.querySelector('.gift-cinema-caption b').textContent=p.name+' ×'+item.quantity;
     root.querySelector('.gift-cinema-caption span').textContent=item.preview?'Ücretsiz önizleme':(item.sender_nickname||item.sender_name||'Bir kullanıcı')+' → '+(item.recipient_nickname||item.recipient_name||'Alıcı');
-    const canvas=root.querySelector('canvas'),c=canvas.getContext('2d',{alpha:true});if(!c){finish();return;}
+    const canvas=root.querySelector('canvas'),c=canvas.getContext('2d',{alpha:true});if(!c){const fallback=doc.createElement('img');fallback.src=new URL(p.image,global.location.href).href;fallback.alt=p.name;fallback.style.cssText='position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(70vw,450px);max-height:60vh;object-fit:contain';root.append(fallback);setTimeout(()=>{if(epoch===generation)finish();},Math.round(p.duration*1000));return;}
     const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches,lasting=reduced?1.1:p.duration;
     let w=0,h=0,dpr=1,quality=(global.navigator.deviceMemory||4)<=2?.55:1,start=global.performance.now(),last=start,slow=0;
     const fit=()=>{w=global.innerWidth;h=global.innerHeight;dpr=Math.min(global.devicePixelRatio||1,1.6,Math.sqrt(1400000/(w*h)));canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';};fit();

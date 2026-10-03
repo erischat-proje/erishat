@@ -204,6 +204,8 @@ def accept(db, user, ticket_id):
         assignment.admin_id, assignment.decision = user.id, "accepted"
     else:
         db.add(SupportAssignment(ticket_id=ticket_id, admin_id=user.id, decision="accepted"))
+    from .admin_routes import audit
+    audit(db,user,"support_accept",{"ticket_id":ticket_id},target_user_id=ticket.user_id)
     db.add(Notification(user_id=ticket.user_id, kind="support_accepted", title="Destek talebiniz kabul edildi", body="Destek talebiniz yetkili müşteri temsilciniz tarafından kabul edilmiştir. Hazırlanan canlı desteğe bağlanacaksınız."))
     db.commit()
     return view(db, ticket, user)
@@ -231,6 +233,8 @@ def decline(db, user, ticket_id):
             room = db.get(Room, room_id)
             if room:
                 room.is_active = bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id == room_id, RoomMember.ghost.is_(False)).limit(1)))
+    from .admin_routes import audit
+    audit(db,user,"support_decline",{"ticket_id":ticket_id},target_user_id=ticket.user_id)
     flow.tier = min(3, flow.tier + 1)
     db.commit(); dispatch(db)
     return {"declined": True, "restriction_seconds": remaining_restriction(db, user.id)}
@@ -245,7 +249,11 @@ def send(db, user, ticket_id, message, attachments):
     if not message.strip():
         raise HTTPException(422, "Mesaj boş olamaz")
     msg = SupportMessage(ticket_id=ticket_id, sender_id=user.id, sender_role="US" if role == "USER" else role, message=message.strip(), attachments_json=json.dumps(attachments))
-    db.add(msg); db.commit()
+    db.add(msg)
+    if role != "USER":
+        from .admin_routes import audit
+        audit(db,user,"support_reply",{"ticket_id":ticket_id},target_user_id=ticket.user_id)
+    db.commit()
     return view(db, ticket, user)
 
 
@@ -255,6 +263,9 @@ def close(db, user, ticket_id, not_ready=False):
         return view(db, ticket, user)
     flow.phase = "closed"; flow.closed_by = "not_ready" if not_ready else "customer" if role == "USER" else "agent"
     ticket.status = "closed"
+    if role != "USER":
+        from .admin_routes import audit
+        audit(db,user,"support_close",{"ticket_id":ticket_id},target_user_id=ticket.user_id)
     assignment = db.get(SupportAssignment, ticket_id)
     admin = db.get(User, assignment.admin_id) if assignment else None
     admin_role = db.get(AdminRole, admin.id) if admin else None

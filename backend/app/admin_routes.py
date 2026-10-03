@@ -66,7 +66,7 @@ def resolve_admin_user(db: Session, user_key: str) -> User | None:
 
 def audit(db: Session, admin: User, action: str, details: dict | None = None, target_user_id: str | None = None,
           target_room_id: str | None = None, target_id: str | None = None) -> None:
-    payload = details or {}
+    payload = {**(details or {}), "actor_role": (role_row(db, admin.id).role if role_row(db, admin.id) else None)}
     db.add(AdminAuditLog(
         admin_id=admin.id, action=action, target_user_id=target_user_id,
         target_room_id=target_room_id, target_id=target_id,
@@ -475,6 +475,22 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         before=vip.level;vip.level=payload.level
         audit(db,user,"vip_update",{"before":before,"after":payload.level},target_user_id=target.id);db.commit()
         return {"level":vip.level,"total_spent":vip.total_spent}
+
+    @router.get("/role-actions/{rank}")
+    def role_actions(rank: str, db:Session=Depends(get_db), user:User=Depends(current_user_dependency)):
+        require_role(db,user,"DA")
+        if rank not in ROLE_LEVEL:
+            raise HTTPException(404,"Yetki rütbesi bulunamadı.")
+        rows=db.scalars(select(AdminAuditLog).where(
+            AdminAuditLog.details.like('%"actor_role": "' + rank + '"%')
+        ).order_by(AdminAuditLog.id.desc()).limit(500)).all()
+        result=[]
+        for row in rows:
+            actor=db.get(User,row.admin_id)
+            result.append({"id":row.id,"admin_name":actor.nickname if actor else rank,
+                "action":row.action,"target_id":row.target_user_id or row.target_room_id or row.target_id,
+                "details":json.loads(row.details or '{}'),"created_at":row.created_at.isoformat()})
+        return result
 
     @router.get("/fa-actions")
     def fa_actions(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
