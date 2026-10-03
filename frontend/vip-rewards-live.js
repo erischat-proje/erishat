@@ -46,6 +46,8 @@
       for(const item of rewards||[]) {
         const row=document.createElement('article');row.className='eris-vip-row';const complete=!!item.claimed&&!!item.complete;
         row.innerHTML=`<img class="eris-vip-level" src="${material('logo',item.level)}" alt="VIP ${item.level}" loading="lazy"><div><b>VIP ${item.level}</b><p class="eris-vip-note">${number(thresholds[item.level])} Lidya harcama</p><div class="eris-vip-assets">${(item.rewards||[]).map(x=>{const path=x.asset_url?'./'+x.asset_url.split('/').map(encodeURIComponent).join('/'):window.ErisChatCosmetics?.assetUrl?.(x.asset_key)||x.asset_key;return `<div class="eris-vip-asset"><img src="${esc(path)}" alt="VIP ${item.level} ${kinds[x.cosmetic_type]}" loading="lazy">${kinds[x.cosmetic_type]||''}</div>`}).join('')}</div><div class="eris-vip-buttons"><button type="button" data-claim ${!item.unlocked||complete?'disabled':''}>${complete?'✓ Ödüller alındı':!item.unlocked?'Kilitli':item.claimed?'Eksik ödülleri tamamla':'Ödülleri al'}</button></div></div>`;
+        const preview=document.createElement('button');preview.type='button';preview.dataset.previewProfile=String(item.level);preview.textContent='Profil penceresini gör';preview.onclick=()=>window.ErisFloatingProfile?.preview?.(item.level);row.querySelector('.eris-vip-buttons').append(preview);
+        const presentation=document.createElement('div');presentation.className='eris-vip-presentation';presentation.innerHTML='<img src="'+material('card',item.level)+'" alt="VIP '+item.level+' kartviziti" loading="lazy"><span>Kartvizit ve özel profil penceresi</span>';row.querySelector('.eris-vip-assets').after(presentation);
         const claim=row.querySelector('[data-claim]');claim.onclick=()=>action(claim,()=>api('/me/vip/rewards/'+item.level+'/claim',{method:'POST'}));
         if(complete)for(const x of item.rewards||[]){const b=document.createElement('button');b.type='button';b.textContent=(kinds[x.cosmetic_type]||'Görünüm')+' uygula';b.onclick=async()=>{b.disabled=true;try{await api(x.cosmetic_type==='wallpaper'?'/me/wallpaper/apply':'/me/cosmetics/apply',{method:'POST',body:JSON.stringify({cosmetic_type:x.cosmetic_type,asset_key:x.asset_key})});window.toast?.('VIP görünümü uygulandı ✓');window.dispatchEvent(new Event('erischat:cosmetics-updated'))}catch(e){window.toast?.(e.message)}finally{b.disabled=false}};row.querySelector('.eris-vip-buttons').append(b)}
         root.append(row);
@@ -62,10 +64,22 @@
     shade.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();close()}if(e.key==='Tab'){const buttons=[...shade.querySelectorAll('button:not(:disabled)')],first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
     document.body.append(shade);document.body.classList.add('eris-vip-open');shade.querySelector('button').focus();load(shade.querySelector('.eris-vip-content'));
   }
+  const profileColors=['#b9a8ff','#91bfff','#6ed8d5','#99e0ab','#eacb88','#ffb79e','#d59cff','#98afff','#ed94cb','#ffd68d','#a5eaff','#dbabff'];
+  function profileTheme(card,level,enabled=true){
+    const n=Math.max(0,Math.min(12,Number(level)||0)),visible=!!n&&enabled;
+    card._artTicket=null;card._artObserver?.disconnect();card._artObserver=null;
+    for(const key of ['border-image-source','border-image-slice','border-image-width','border-image-repeat','border-width','border-style','border-color','background-image'])card.style.removeProperty(key);
+    card.classList.remove('visual-vip-card');card.classList.toggle('eris-mini-vip',visible);card.classList.add('eris-mini-modern');card.dataset.vipLevel=String(visible?n:0);
+    card.style.setProperty('--vip-accent',profileColors[Math.max(0,n-1)]);
+    let hero=card.querySelector('.eris-mini-vip-hero');
+    if(!hero){hero=document.createElement('div');hero.className='eris-mini-vip-hero';hero.innerHTML='<img alt=""><div><small>LIDYA</small><strong></strong><span>Özel profil görünümü</span></div>';card.querySelector('.eris-mini-topbar')?.after(hero)}
+    hero.hidden=!visible;
+    if(visible){hero.querySelector('img').src=material('logo',n);hero.querySelector('img').alt='VIP '+n;hero.querySelector('strong').textContent='VIP '+n;}
+  }
   function decorate(root,u){
     const level=Math.max(0,Math.min(12,Number(u.vip_level)||0));
     root.querySelectorAll('[data-vip-card]').forEach(img=>{img.hidden=!level||!!u.vip_badge_hidden;if(!img.hidden){img.src=material('card',level);img.alt='VIP '+level}});
-    const mini=root.querySelector('.eris-mini-card');if(mini){const visible=!!level&&!u.vip_neon_hidden;mini.classList.toggle('eris-mini-vip',visible);mini.classList.toggle('visual-vip-card',visible);if(visible)window.ErisVisualLayout?.popup(mini,'vip-assets/popup-'+level+'.png');else{mini._artTicket=null;mini._artObserver?.disconnect();for(const key of ['border-image-source','border-image-slice','border-image-width','border-image-repeat','border-width','border-style','border-color','background-image'])mini.style.removeProperty(key);}}
+    const mini=root.querySelector('.eris-mini-card');if(mini)profileTheme(mini,level,!u.vip_neon_hidden);
 
     for(const [selector,value] of Object.entries({'[data-followers]':u.followers_count,'[data-following]':u.following_count}))if(value!=null)root.querySelectorAll(selector).forEach(el=>{el.textContent=number(value)});
     root.querySelectorAll('[data-received-gifts]').forEach(el=>{el.innerHTML='<span>'+number(u.received_gift_lidya)+'</span><img src="./lidya-coin.png" alt="Lidya">'});
@@ -79,6 +93,6 @@
   for(const name of ['erischat:room-gift','erischat:gift-updated','erischat:cosmetics-updated'])window.addEventListener(name,refreshProfiles);
   window.addEventListener('erischat:event',e=>{if(e.detail?.gift_key||e.detail?.kind==='dm_gift')refreshProfiles()});
   document.addEventListener('visibilitychange',refreshProfiles);
-  window.ErisChatVIP={load,open,close,material,decorate,watch};window.openVIPCenter=open;
+  window.ErisChatVIP={load,open,close,material,decorate,watch,profileTheme};window.openVIPCenter=open;
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready'){load();refreshProfiles()}else if(['logged_out','login_required'].includes(e.detail?.state)){close();watchers.clear();roots.clear()}});
 })();
