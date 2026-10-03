@@ -44,7 +44,7 @@ from .moderation import active_ban, require_feature, profile_notice
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
-from . import support_workflow
+from . import support_workflow, ban_workflow
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -286,9 +286,14 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
     user = get_user_from_token(db, bearer_token(authorization))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
+    ban_workflow.remember_device(db,user,request.headers.get("x-eris-device") if request else None)
+    ban_remaining = ban_workflow.restriction(db,user.id)
     remaining = support_workflow.remaining_restriction(db, user.id)
     path = request.url.path if request else ""
     allowed = path == "/v1/me" or path.startswith(("/v1/support/", "/v1/admin/", "/v1/notifications", "/v1/auth/"))
+    ban_allowed = path in {"/v1/me","/v1/admin/me"} or path.startswith(("/v1/admin/ban-workflow/","/v1/notifications","/v1/auth/"))
+    if ban_remaining and not ban_allowed:
+        raise HTTPException(403,detail={"code":"ban_review_restricted","remaining_seconds":ban_remaining,"message":ban_workflow.RESTRICTION_MESSAGE})
     if remaining and not allowed:
         raise HTTPException(403, detail={"code": "support_restricted", "remaining_seconds": remaining, "message": f"Müşteri taleplerine gereken özeni göstermediğiniz için normal işlevleriniz (Kalan Süre: {remaining} saniye) boyunca yasaklanmıştır."})
     account_ban=active_ban(db,user.id)
@@ -303,8 +308,10 @@ register_platform_auth(current_user)
 register_family_auth(current_user)
 register_support_auth(current_user)
 register_suggestion_auth(current_user)
+ban_workflow.register_auth(current_user, lambda user_id: disconnect_ban_user(user_id))
+app.include_router(ban_workflow.router)
 app.include_router(suggestion_router)
-register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_support_agent(user_id))
+register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_ban_user(user_id))
 support_workflow.register_auth(current_user, lambda user_id: disconnect_support_agent(user_id))
 app.include_router(support_workflow.router)
 register_dm_folder_auth(current_user)
@@ -1855,7 +1862,7 @@ async def _send_dm_event(db: Session, user_id: str, event: dict) -> None:
 def websocket_session_active(token: str) -> bool:
     with Session(engine) as db:
         user = get_user_from_token(db, token)
-        return bool(user and user.is_active and not active_ban(db,user.id) and not support_workflow.remaining_restriction(db, user.id))
+        return bool(user and user.is_active and not active_ban(db,user.id) and not support_workflow.remaining_restriction(db, user.id) and not ban_workflow.restriction(db,user.id))
 
 
 def websocket_token(websocket: WebSocket) -> str | None:
@@ -1877,7 +1884,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         return
     with Session(engine) as db:
         user = get_user_from_token(db, token)
-        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id):
+        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id) or ban_workflow.restriction(db,user.id):
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         user_id = user.id
@@ -1907,7 +1914,15 @@ room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 room_socket_users: dict[WebSocket, tuple[str, str]] = {}
 
 
-async def disconnect_support_agent(user_id: str) -> None:
+async def disconnect_ban_user(user_id: str) -> None:
+    await disconnect_support_agent(user_id, notify=False)
+    for ws in list(manager.connections.get(user_id, set())):
+        manager.disconnect(user_id,ws)
+        try: await ws.close(code=1008,reason="Yönetim işlemi nedeniyle erişim kısıtlandı")
+        except Exception: pass
+
+
+async def disconnect_support_agent(user_id: str, notify: bool = True) -> None:
     for ws, (room_id, socket_user_id) in list(room_socket_users.items()):
         if socket_user_id != user_id:
             continue
@@ -1921,7 +1936,7 @@ async def disconnect_support_agent(user_id: str) -> None:
                 except Exception:
                     pass
         try:
-            await ws.send_json({"type": "support_restricted", "remaining_seconds": 180})
+            if notify: await ws.send_json({"type": "support_restricted", "remaining_seconds": 180})
             await ws.close(code=1008)
         except Exception:
             pass
@@ -1990,7 +2005,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         return
     with Session(engine) as db:
         user = get_user_from_token(db, token)
-        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id):
+        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id) or ban_workflow.restriction(db,user.id):
             await websocket.close(code=1008, reason="geçersiz oturum")
             return
         room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
