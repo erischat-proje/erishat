@@ -17,6 +17,7 @@ from .system_logs import record
 from . import support_workflow as support_live
 from . import ban_workflow
 from .ban_workflow_models import BanWorkflow
+from .chat_ban_models import ChatBanRequestBinding
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
     UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement, BanApproval, BanAppeal, FaActionLog,
@@ -441,20 +442,20 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         audit(db,user,"user_unban",target_user_id=target.id); db.commit(); return {"unbanned":True,"count":len(rows)}
 
     @router.post("/users/{user_id}/chat-ban")
-    def chat_ban(user_id: str,payload: BanRequest,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    def chat_ban(user_id: str,payload: ban_workflow.EvidencePayload,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
-        if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        queued=queue_ban(db,user,payload,"chat",target)
-        if queued:return queued
-        row=ChatBan(user_id=target.id,expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason); db.add(row)
-        audit(db,user,"chat_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit(); return {"banned":True,"expires_at":row.expires_at}
+        if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
+        return ban_workflow.submit(db,user,target,payload,"chat")
 
     @router.delete("/users/{user_id}/chat-ban")
     def unchat_ban(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
-        if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        rows=db.scalars(select(ChatBan).where(ChatBan.user_id==target.id,ChatBan.active.is_(True))).all()
-        for x in rows:x.active=False
+        require_role(db,user,"DA"); target=resolve_admin_user(db,user_id)
+        if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
+        rows=db.scalars(select(ChatBan).where(ChatBan.user_id==target.id,ChatBan.active.is_(True)).with_for_update()).all()
+        for ban in rows:
+            request=db.scalar(select(ChatBanRequestBinding).where(ChatBanRequestBinding.ban_id==ban.id))
+            if request:ban_workflow.undo(db,user,db.get(BanApproval,request.approval_id),db.get(BanWorkflow,request.approval_id))
+            else:ban.active=False
         audit(db,user,"chat_unban",target_user_id=target.id);db.commit();return {"unbanned":True}
 
     @router.post("/rooms/{room_id}/ban")

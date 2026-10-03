@@ -20,7 +20,7 @@ from .platform_models import (
 )
 from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomChatMessage, RoomBan, RoomSeat
 from .admin_models import AdminRole
-from .moderation import active_ban, profile_notice, require_feature
+from .moderation import active_ban, profile_notice, require_feature, require_chat_write
 from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
@@ -466,6 +466,7 @@ def register_platform_auth(current_user_dependency):
         return list(db.scalars(select(Message).where(Message.conversation_id==conversation_id).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
     @router.post("/messages/{conversation_id}")
     def send_message(conversation_id:str,payload:dict,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_chat_write(db,user.id)
         member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
         if not member: raise HTTPException(status_code=403,detail="Bu konuşmaya erişiminiz yok")
         text=str(payload.get("text") or "").strip()
@@ -590,6 +591,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.post("/rooms/{room_id}/announcements")
     def create_announcement(room_id: str, payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        require_chat_write(db,user.id)
         _require_room_announcement_manager(db, room_id, user.id)
         row = RoomAnnouncement(room_id=room_id, message=payload.message.strip(), enabled=True, pinned=False)
         db.add(row); db.commit(); db.refresh(row)
@@ -598,6 +600,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.patch("/rooms/{room_id}/announcements/{announcement_id}")
     def update_announcement(room_id: str, announcement_id: int, payload: AnnouncementUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if payload.message is not None:require_chat_write(db,user.id)
         _require_room_announcement_manager(db, room_id, user.id)
         row = db.get(RoomAnnouncement, announcement_id)
         if not row or row.room_id != room_id:
