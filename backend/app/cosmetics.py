@@ -74,4 +74,6 @@ def find_asset(asset_key: str, cosmetic_type: str) -> dict[str, Any] | None:
     key = _safe_key(asset_key)
     if cosmetic_type not in COSMETIC_TYPES:
         return None
-    return next((item for item in catalog() if item["asset_key"] == key and item["type"] == cosmetic_type), None)
+    from .relationship_rewards import items
+    choices=catalog()+[r for r in items() if r['type']=='frame']
+    return next((item for item in choices if item['asset_key']==key and item['type']==cosmetic_type),None)

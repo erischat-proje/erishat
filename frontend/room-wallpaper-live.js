@@ -25,7 +25,7 @@
       const items=data.items||[];
       selectedKey=ownedKey||items[0]?.key||null;
       function drawThumbs(){thumbs.replaceChildren();items.forEach(item=>{
-        const owned=item.key===ownedKey || (item.tier==='vip'&&Number(data.owner_vip_level||0)>=Number(item.vip_level));
+        const owned=item.unlocked || item.key===ownedKey || (item.tier==='vip'&&Number(data.owner_vip_level||0)>=Number(item.vip_level));
         const button=document.createElement('button');button.type='button';button.className='wallpaper-thumb'+(owned?'':' locked');button.setAttribute('aria-pressed',String(item.key===selectedKey));button.setAttribute('aria-label',item.key+(owned?' · kullanılabilir':' · kilitli'));
         const image=document.createElement('img');image.src=assetUrl(item.asset);image.alt='';button.append(image);
         if(!owned){const label=document.createElement('span');label.className='wallpaper-lock';const price=item.tier==='vip'?'VIP '+item.vip_level:Number(item.price||0).toLocaleString('tr-TR')+' <img src="./lidya-coin.png" alt="Lidya">';label.innerHTML='🔒<small>'+price+'</small>';button.append(label)}
@@ -39,13 +39,13 @@
         const canApply=!!ownedKey&&select.value===ownedKey;
         toggle.hidden=!canApply;
         toggle.textContent=isApplied?'ErisChat standart duvar kâğıdına dön':'Duvar kâğıdımı uygula';
-        const vipReward=item?.tier==='vip';
-        modal.querySelector('header small').textContent=vipReward?'VIP seviyesine bağlı ücretsiz ödül':'Standart temalar süreli kullanım için satılır';
-        modal.querySelector('[data-owned-note]').textContent=vipReward?'VIP '+item.vip_level+' seviyesine ulaştığında ücretsiz uygulanır.':ownedKey===select.value&&data.paid_until?'Satın alınan tema '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar tekrar uygulanabilir.':'ErisChat standart duvar kâğıdı herkese açık.';
+        const relationshipReward=item?.tier==='relationship';const vipReward=item?.tier==='vip'||relationshipReward;
+        modal.querySelector('header small').textContent=relationshipReward?'İlişki seviyesinde kazanılan duvar kağıdı':vipReward?'VIP seviyesine bağlı ücretsiz ödül':'Standart temalar süreli kullanım için satılır';
+        modal.querySelector('[data-owned-note]').textContent=relationshipReward?'Aktif ilişkiniz boyunca ücretsiz kullanabilirsiniz.':vipReward?'VIP '+item.vip_level+' seviyesine ulaştığında ücretsiz uygulanır.':ownedKey===select.value&&data.paid_until?'Satın alınan tema '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar tekrar uygulanabilir.':'ErisChat standart duvar kâğıdı herkese açık.';
         modal.querySelector('[data-days]').previousElementSibling.style.display=vipReward?'none':'';
         modal.querySelector('[data-days]').style.display=vipReward?'none':'grid';
         modal.querySelector('[data-days]')?.querySelectorAll('button').forEach((b,i)=>b.textContent=[1,7,30][i]+' gün · '+(Number(item?.price||0)*Number(priceMap[[1,7,30][i]])).toLocaleString('tr-TR')+' Lidya');
-        modal.querySelector('[data-buy]').textContent=vipReward?'VIP ödülünü ücretsiz uygula':ownedKey&&select.value===ownedKey?'Süreyi uzat ve uygula':'Satın al ve uygula';
+        modal.querySelector('[data-buy]').textContent=relationshipReward?'İlişki ödülünü uygula':vipReward?'VIP ödülünü ücretsiz uygula':ownedKey&&select.value===ownedKey?'Süreyi uzat ve uygula':'Satın al ve uygula';
       };
       draw();
       modal.querySelector('[data-preview]').onclick=()=>{

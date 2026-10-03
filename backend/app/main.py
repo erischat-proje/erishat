@@ -103,7 +103,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="ErisChat API", version="1.0.1-html-audit-20261003")
+app = FastAPI(title="ErisChat API", version="1.0.2-marriage-20261003")
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
@@ -252,6 +252,10 @@ def startup() -> None:
     with Session(engine) as db:
         migrate_legacy_frames(db)
         migrate_legacy_avatars(db)
+        for house in db.scalars(select(relationship_routes.Couple).where(relationship_routes.Couple.active.is_(True))):
+            relationship_routes.owned_house(db,house.male_id,lock=True)
+            relationship_routes.rewards.ensure_rewards(db,house)
+        db.commit()
         cleanup_expired_sessions(db)
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
@@ -2064,10 +2068,17 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history_ids = {m.user_id for m in history}
         fan_totals = gift_totals(db, history_ids)
         system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
-        history_payload = [{"type":"room_chat","system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+        reward_bubbles={uid:relationship_routes.rewards.selected(db,uid,'bubble') for uid in history_ids}
+        entrance_asset=relationship_routes.rewards.selected(db,user.id,'entrance')
+        entrance_house=relationship_routes.my_couple(db,user.id)
+        entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
+        history_payload = [{"type":"room_chat","bubble_asset":reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
+    already_connected=any(room_uid==(internal_room_id,str(user.id)) for room_uid in room_socket_users.values())
     room_socket_users[websocket] = (internal_room_id, str(user.id))
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
+    if entrance_asset and not member.ghost and not already_connected:
+        await _broadcast_room_chat(internal_room_id,entrance_payload)
     existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
     if not member.ghost:
         room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
@@ -2221,7 +2232,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 db.commit()
                 db.refresh(msg)
                 fan_total = gift_totals(db, {user.id})[user.id]
-                payload = {"type":"room_chat","fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+                payload = {"type":"room_chat","bubble_asset":relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
         room_socket_users.pop(websocket, None)

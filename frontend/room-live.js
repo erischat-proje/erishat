@@ -236,12 +236,12 @@
       if(d.user_id){portrait.style.cursor='pointer';author.style.cursor='pointer';portrait.onclick=author.onclick=()=>window.ErisFloatingProfile?.open(d.user_id)}
       if(fanLevel)badge.onclick=()=>window.ErisPersonalFanRanking?.(d.user_id);else badge.hidden=true;
       const body=document.createElement('span');body.className='eris-chat-text';body.textContent=d.text||'';
-      identity.append(portrait,author,badge);e.append(identity,body);list.appendChild(e);list.scrollTop=list.scrollHeight;
+      identity.append(portrait,author,badge);if(d.bubble_asset&&!d.system){const bubble=document.createElement('div');bubble.className='rel-chat-bubble';bubble.style.backgroundImage='url("'+cosmetics.assetUrl(d.bubble_asset)+'")';const line=document.createElement('div');line.className='rel-chat-line';line.append(author,document.createTextNode(': '),body);bubble.append(line);e.append(identity,bubble)}else e.append(identity,body);if(d.system){const match=String(d.text||'').match(/^(.* çiftimize )(\d+) Lidya( hediye gönderdi\.)$/);if(match){const coin=document.createElement('img');coin.src='./lidya-coin.png';coin.alt='Lidya';coin.style.cssText='width:15px;height:15px;vertical-align:middle;margin-left:3px';body.replaceChildren(document.createTextNode(match[1]+Number(match[2]).toLocaleString('tr-TR')),coin,document.createTextNode(match[3]))}}list.appendChild(e);list.scrollTop=list.scrollHeight;
     };
     socket.onopen=()=>{state.dataset.connectionStatus='connected';list.innerHTML='';};
     socket.onclose=()=>{if(window.__erisRoomSocket===socket){window.ErisRoomRTC?.stop?.();state.dataset.connectionStatus='disconnected';}};
     socket.onerror=()=>{state.dataset.connectionStatus='error';};
-    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='room_chat_error'){if(d.code==='chat_dm_banned')window.ErisChatBanNotice?.show?.(d);else window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');}else if(d.type==='room_user_banned'){window.toast?.(d.message||'Bu odadan yasaklandınız.');closeRealRoom({banned:true}).catch(()=>{});}else if(d.type==='support_restricted'){window.ErisSupport?.restrict?.(d.remaining_seconds);closeRealRoom().catch(()=>{});}else if(d.type==='ghost_mode_changed'){window.ErisRoomRTC?.stop?.();setTimeout(()=>{if(window.ErisCurrentRoomId===roomId)openRoom(roomId,document.getElementById('erisLiveTitle')?.textContent||'Oda');},0);}else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
+    socket.onmessage=ev=>{try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_history')d.messages?.forEach(add);else if(d.type==='room_chat')add(d);else if(d.type==='couple_room_closed'){window.toast?.(d.message);closeRealRoom().catch(()=>{});}else if(d.type==='room_entrance')window.ErisRelationshipEntrance?.show?.(d);else if(d.type==='room_chat_error'){if(d.code==='chat_dm_banned')window.ErisChatBanNotice?.show?.(d);else window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');}else if(d.type==='room_user_banned'){window.toast?.(d.message||'Bu odadan yasaklandınız.');closeRealRoom({banned:true}).catch(()=>{});}else if(d.type==='support_restricted'){window.ErisSupport?.restrict?.(d.remaining_seconds);closeRealRoom().catch(()=>{});}else if(d.type==='ghost_mode_changed'){window.ErisRoomRTC?.stop?.();setTimeout(()=>{if(window.ErisCurrentRoomId===roomId)openRoom(roomId,document.getElementById('erisLiveTitle')?.textContent||'Oda');},0);}else if(d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
     const doSend=()=>{const t=input.value.trim();if(!t||socket.readyState!==1)return;if(t.length>500)return;socket.send(JSON.stringify({type:'room_chat',text:t}));input.value='';};
     send.onclick=doSend;input.onkeydown=e=>{if(e.key==='Enter')doSend();};
   }
@@ -281,7 +281,7 @@
       await loadRoomBlocks();
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
       const liveRoomId=String(room.id||id);
-      window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;
+      window.__erisCurrentCoupleId=room.couple_id||null;window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;
       window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
       const seatCount=Math.min(24,Math.max(16,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
@@ -309,7 +309,7 @@
   }
 
   async function closeRealRoom(options={}){
-    joinedRoomId=null;
+    joinedRoomId=null;window.__erisCurrentCoupleId=null;window.ErisRelationshipEntrance?.clear?.();
     window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;

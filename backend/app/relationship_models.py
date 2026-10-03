@@ -63,3 +63,40 @@ class CoupleEvent(Base):
     payload: Mapped[str] = mapped_column(Text)
     acknowledged: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CoupleRewardSelection(Base):
+    __tablename__ = 'relationship_reward_selections'
+    user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(24), primary_key=True)
+    asset_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
+class CoupleRing(Base):
+    __tablename__ = 'relationship_owned_rings'
+    couple_id: Mapped[str] = mapped_column(ForeignKey('relationship_couples.id'), primary_key=True)
+    ring: Mapped[str] = mapped_column(String(32), primary_key=True)
+    source: Mapped[str] = mapped_column(String(16))
+
+
+class CoupleRoom(Base):
+    __tablename__ = 'relationship_rooms'
+    couple_id: Mapped[str] = mapped_column(ForeignKey('relationship_couples.id'), primary_key=True)
+    room_id: Mapped[str] = mapped_column(ForeignKey('rooms.id'), unique=True)
+
+
+class CoupleGift(Base):
+    __tablename__ = 'relationship_gifts'
+    __table_args__ = (UniqueConstraint('sender_id', 'request_key', name='uq_couple_gift_request'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    couple_id: Mapped[str] = mapped_column(ForeignKey('relationship_couples.id'), index=True)
+    sender_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
+    request_key: Mapped[str] = mapped_column(String(64))
+    gift_key: Mapped[str] = mapped_column(String(64))
+    quantity: Mapped[int] = mapped_column(Integer)
+    gross: Mapped[int] = mapped_column(Integer)
+    percent: Mapped[int] = mapped_column(Integer)
+    each_amount: Mapped[int] = mapped_column(Integer)
+    chat_message_id: Mapped[int | None] = mapped_column(ForeignKey('room_chat_messages.id'),nullable=True)
+    room_id: Mapped[str | None] = mapped_column(ForeignKey('rooms.id'), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
