@@ -149,13 +149,14 @@
       for(const gift of (Array.isArray(data)?data:data.items||[])){
         const name=gift.gift_key||gift.name,price=Number(gift.unit_price??gift.price??0);if(!name||!Number.isFinite(price)||price<0)continue;
         const card=document.createElement('div');card.className='rel-gift-card';card.innerHTML='<button type="button" class="rel-gift-send" hidden>Gönder</button><button type="button" class="rel-gift-pick"><img src="'+esc(gift.image_url)+'" alt="'+esc(name)+'"><span>'+esc(name)+'</span><span data-price></span></button>';
-        const c={card,name,price,pick:card.querySelector('.rel-gift-pick'),send:card.querySelector('.rel-gift-send'),priceLabel:card.querySelector('[data-price]')};cards.push(c);grid.append(card);
+        const c={card,name,price,pick:card.querySelector('.rel-gift-pick'),send:card.querySelector('.rel-gift-send'),priceLabel:card.querySelector('[data-price]')};cards.push(c);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.textContent='Önizle';preview.onclick=()=>window.ErisGiftStage?.preview?.({gift_key:name,quantity});card.append(preview);grid.append(card);
         c.pick.onclick=()=>{if(busy||uncertain)return;selected=c;requestKey=null;errorBox(modal.body).textContent='';paint();};
         c.send.onclick=async()=>{
           if(busy||selected!==c||(!uncertain&&price*quantity>balance))return;
           busy=true;requestKey=requestKey||key();errorBox(modal.body).textContent='';paint();
           try{
             const result=await post('/houses/'+encodeURIComponent(house.id)+'/gifts',{gift_key:name,quantity,request_key:requestKey});
+            window.ErisGiftStage?.play?.({id:result.id||requestKey,gift_key:name,quantity,sender_nickname:me.nickname||'Sen',recipient_nickname:'Çiftimiz'},'couple');
             requestKey=null;uncertain=false;balance=Math.max(0,balance-price*quantity);
             try{const fresh=await window.ErisPlatform.api('/me');balance=Number(fresh.lidya||0);}catch(_){}
             window.toast?.('Çiftin her partnerine '+amount(result.each_amount)+' Lidya aktarıldı.');window.ErisProfile?.refresh?.();
