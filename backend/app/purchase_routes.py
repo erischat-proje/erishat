@@ -191,6 +191,7 @@ def operation_view(row):
 
 def manual_change(db,user,target,payload,operation):
     admin_role=require_admin(db,user)
+    if operation == 'ÇIKARMA' and admin_role != 'DA': raise HTTPException(403,'Lidya çıkarma için DA yetkisi gerekli.')
     existing=db.scalar(select(LidyaOperation).where(LidyaOperation.request_key==payload.request_key))
     if existing:
         if (existing.admin_id,existing.user_id,existing.amount,existing.operation)!=(user.id,target.id,payload.amount,operation):
@@ -267,12 +268,13 @@ def register_auth(current_user):
 
     @router.get('/v1/admin/purchases/operations')
     def operations(admin_role:str=Query('FA',pattern='^(FA|DA)$'),db:Session=Depends(get_db),user:User=Depends(current_user)):
-        require_admin(db,user)
+        if role(db,user.id)!='DA': raise HTTPException(403,'İşlem logları için DA yetkisi gerekli.')
         return [operation_view(r) for r in db.scalars(select(LidyaOperation).where(LidyaOperation.admin_role==admin_role).order_by(LidyaOperation.created_at.desc()).limit(200))]
 
     @router.get('/v1/admin/purchases/operations/{identifier}/evidence')
     def operation_evidence(identifier:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
-        require_admin(db,user); row=db.get(LidyaOperation,identifier)
+        if role(db,user.id)!='DA': raise HTTPException(403,'İşlem kanıtları için DA yetkisi gerekli.')
+        row=db.get(LidyaOperation,identifier)
         if not row: raise HTTPException(404,'İşlem bulunamadı.')
         return document_response(row.evidence)
 

@@ -3,7 +3,7 @@
   const api=(window.ERIS_API||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
   const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||localStorage.getItem('token')||'';
   async function load(){
-    if(!token())return;
+    if(!token()||window.ErisNotifications?.enabled===false)return;
     try{
       const r=await fetch(api+'/announcements',{headers:{Authorization:'Bearer '+token()}});
       if(!r.ok)return;
@@ -25,7 +25,7 @@
       const inbox=document.querySelector('#messages > .list');if(inbox){const copy=card.cloneNode(true);copy.id='erisAnnouncementInbox';copy.querySelector('button')?.addEventListener('click',dismiss);inbox.prepend(copy)}
     }catch(_){}
   }
-  window.ErisAnnouncements={load};
+  window.ErisAnnouncements={load,open:()=>{localStorage.removeItem('eris.announcement.dismissed');return load()}};
   window.addEventListener('load',()=>setTimeout(load,900));
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready')load()});
 })();
