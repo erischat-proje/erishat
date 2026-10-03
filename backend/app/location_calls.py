@@ -66,7 +66,7 @@ class Signal(Base):
 
 class Extension(Base):
     __tablename__ = 'location_call_extensions'
-    __table_args__ = (UniqueConstraint('call_id', 'user_id', 'request_key', name='uq_anon_extension'),)
+    __table_args__ = (UniqueConstraint('call_id', 'user_id', 'request_key', name='uq_location_extension'),)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     call_id: Mapped[str] = mapped_column(ForeignKey('location_calls.id'))
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id'))

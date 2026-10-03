@@ -108,6 +108,13 @@
     });
   }
   document.addEventListener('click',e=>{
+    const chatHeader=e.target.closest?.('#chat .chatHead .ava,#chat .chatHead b');
+    if(chatHeader&&window.__erisActiveDmUserId){
+      e.preventDefault();e.stopImmediatePropagation();
+      if(window.ErisFloatingProfile?.open)window.ErisFloatingProfile.open(window.__erisActiveDmUserId);
+      else openUserProfile(window.__erisActiveDmUserId);
+      return;
+    }
     const t=e.target.closest?.('[data-user-id]');
     if(t?.dataset.userId){e.preventDefault();e.stopImmediatePropagation();(document.getElementById('chat')?.classList.contains('eris-floating-dm')?window.ErisFloatingProfile?.open(t.dataset.userId):openUserProfile(t.dataset.userId));return;}
     const header=e.target.closest?.('#chat .chatHead .ava,#chat .chatHead b');
