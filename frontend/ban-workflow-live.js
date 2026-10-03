@@ -36,5 +36,5 @@ window.addEventListener('erischat:ban-restriction',e=>restrict(e.detail.remainin
 window.addEventListener('erischat:auth',()=>{if(!token()||identity!==token()){identity=token();reset();}pulse();});
 document.addEventListener('visibilitychange',()=>{if(me&&token())req(path+'/presence',{method:'POST',body:JSON.stringify({active:!document.hidden})}).catch(()=>{});if(!document.hidden)pulse();});
 window.ErisBan={openChat:()=>open('chat').catch(e=>window.toast?.(e.message)),openChatRequests:()=>openRequests(null,'chat').catch(e=>window.toast?.(e.message)),openChatLogs:()=>openLogs(null,'chat').catch(e=>window.toast?.(e.message)),open:()=>open().catch(e=>window.toast?.(e.message)),openRoom:(room_id='',user_id='')=>open('room',{room_id,user_id}).catch(e=>window.toast?.(e.message)),openRoomRequests:()=>openRequests(null,'room').catch(e=>window.toast?.(e.message)),openRoomLogs:()=>openLogs(null,'room').catch(e=>window.toast?.(e.message)),openRequests:()=>openRequests().catch(e=>window.toast?.(e.message)),openLogs:()=>openLogs().catch(e=>window.toast?.(e.message)),isReviewing:()=>!!review};
-window.addEventListener('load',pulse);setInterval(pulse,2500);setInterval(updateRestriction,1000);
+window.addEventListener('load',pulse);window.ErisApiTransport.poll(pulse,5000);setInterval(updateRestriction,1000);
 })();

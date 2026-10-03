@@ -215,5 +215,5 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{boot();pollEvents()},{once:true});else{boot();pollEvents()}
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready'){boot();pollEvents()}else if(['logged_out','login_required'].includes(e.detail?.state)){for(const s of openDialogs){s._relLayoutObserver?.disconnect();s.remove()}openDialogs.clear();document.body.classList.remove('rel-dialog-open');main=null;seenEvents.clear();popupRequests.clear()}});
   window.addEventListener('erischat:event',pollEvents);window.addEventListener('erischat:room-gift',refreshMain);window.addEventListener('erischat:gift-updated',refreshMain);
-  document.addEventListener('visibilitychange',()=>{pollEvents();refreshMain()});setInterval(()=>{pollEvents();refreshMain()},6000);
+  document.addEventListener('visibilitychange',()=>{pollEvents();refreshMain()});window.ErisApiTransport.poll(async()=>{await pollEvents();await refreshMain()},12000);
 })();

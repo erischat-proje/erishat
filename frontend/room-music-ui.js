@@ -126,7 +126,7 @@
     mount();const panel=document.getElementById('erisMusicPanel');panel.style.display='flex';refreshAccess();load()}};
   window.ErisRoom=window.ErisRoom||{};window.ErisRoom.music=id=>api(path(id));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
-  setInterval(load,4000);
+  window.ErisApiTransport.poll(load,10000);
   document.addEventListener('pointerdown',()=>{if(audio?.paused&&tracks.some(x=>x.id===currentId&&x.is_playing))audio.play().catch(()=>{})});
 })();
 

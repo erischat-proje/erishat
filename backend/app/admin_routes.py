@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .runtime_tasks import database_task
+
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -203,6 +205,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode}
 
     @router.patch("/ghost-mode")
+    @database_task
     async def ghost_mode(payload: GhostUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "DA")
         row.ghost_mode = payload.enabled
@@ -227,6 +230,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         return support_live.accept(db, user, ticket_id)
 
     @router.post("/tickets/{ticket_id}/reject")
+    @database_task
     async def reject_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         result = support_live.decline(db, user, ticket_id)
         if result["restriction_seconds"] and support_disconnect:
@@ -405,6 +409,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         db.commit();return {"id":appeal.id,"status":appeal.status}
 
     @router.post("/users/{user_id}/ban")
+    @database_task
     async def ban_user(user_id: str, payload: ban_workflow.EvidencePayload, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
@@ -413,6 +418,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         return result
 
     @router.post("/users/{user_id}/device-ban")
+    @database_task
     async def device_ban(user_id: str, payload: ban_workflow.EvidencePayload, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
@@ -515,6 +521,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         return [{"user_id":r.user_id,"role":r.role,"ghost_mode":r.ghost_mode,"created_at":r.created_at} for r in rows]
 
     @router.put("/roles")
+    @database_task
     async def set_role(payload:RoleUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA");target=resolve_admin_user(db,payload.user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
@@ -530,6 +537,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         return {"user_id":target.id,"public_id":target.public_id,"role":row.role}
 
     @router.delete("/roles/{user_id}")
+    @database_task
     async def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA");target=resolve_admin_user(db,user_id)
         if not target:raise HTTPException(404,"Kullanıcı bulunamadı")

@@ -1,3 +1,4 @@
+from .runtime_tasks import database_task
 """Server-authorized UA requests, FA/DA review, restrictions and reversible bans."""
 import base64
 import hashlib
@@ -261,6 +262,7 @@ def undo(db,user,row,flow):
 
 def register_auth(current_user_dependency, disconnect=None, room_disconnect=None, chat_notify=None):
     @router.post('/room-requests/{room_id}/{user_id}')
+    @database_task
     async def create_room_request(room_id:str,user_id:str,payload:EvidencePayload,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require(db,user,{'UA','DA'})
         room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
@@ -309,6 +311,7 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         s.pending_id=rid;db.commit();return serialize(db,row,flow,True)
 
     @router.post('/requests/{rid}/decision')
+    @database_task
     async def decision(rid:int,payload:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         result=decide(db,user,rid,payload.action)
         if disconnect and (payload.action=='approve' or result['restriction_seconds']):
@@ -321,6 +324,7 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         return result
 
     @router.post('/requests/{rid}/dismiss')
+    @database_task
     async def dismiss(rid:int,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         row,flow=load(db,rid);can_review(db,user,row,flow)
         if row.status!='pending':raise HTTPException(409,'Talep artık beklemede değil')

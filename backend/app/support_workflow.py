@@ -1,3 +1,4 @@
+from .runtime_tasks import database_task
 """Persistent support routing, private conversations and their audit trail."""
 import asyncio
 import json
@@ -334,6 +335,7 @@ def register_auth(current_user_dependency, disconnect_agent=None):
         return accept(db, user, ticket_id)
 
     @router.post("/tickets/{ticket_id}/decline")
+    @database_task
     async def decline_route(ticket_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         result = decline(db, user, ticket_id)
         if result["restriction_seconds"] and disconnect_agent:

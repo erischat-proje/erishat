@@ -8,6 +8,7 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter,Depends,HTTPException,Query,WebSocket,WebSocketDisconnect
 from pydantic import BaseModel,Field
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy import Boolean,DateTime,ForeignKey,String,delete,func,select
 from sqlalchemy.orm import Mapped,Session,mapped_column
 from .db import Base,get_db
@@ -116,37 +117,70 @@ def register_auth(current_user,engine,token_from_socket,user_from_token,session_
     @router.get('/v1/discover/following')
     def following(limit:int=Query(100,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user)):return rooms(db,user,True,limit)
 
+    def socket_state(token, key, uid=None, renew=False, visible=True):
+        if not session_active(token):
+            return None
+        with Session(engine) as db:
+            user = db.get(User, uid) if uid else user_from_token(db, token)
+            if not user or not user.is_active:
+                return None
+            if db.scalar(select(UserBan).where(UserBan.user_id==user.id, UserBan.active.is_(True),
+                    (UserBan.expires_at.is_(None)) | (UserBan.expires_at > now()))):
+                return None
+            if renew:
+                lease(db, user.id, key, visible)
+            return user.id, snapshot(db, user) if visible else None
+
+    def release_lease(uid, key):
+        with Session(engine) as db:
+            lease(db, uid, key, False)
+
     @router.websocket('/ws/discovery')
     async def live(ws:WebSocket):
-        token=token_from_socket(ws)
-        if not token or not session_active(token):await ws.close(code=1008);return
-        key='ws_'+uuid4().hex
-        with Session(engine) as db:
-            user=user_from_token(db,token)
-            if not user or not user.is_active:await ws.close(code=1008);return
-            uid=user.id
-            if db.scalar(select(UserBan).where(UserBan.user_id==uid,UserBan.active.is_(True),(UserBan.expires_at.is_(None))|(UserBan.expires_at>now()))):await ws.close(code=1008);return
-            lease(db,uid,key)
-        await ws.accept(subprotocol='erischat')
-        previous='';last_lease=now();visible=True
+        token = token_from_socket(ws)
+        if not token:
+            await ws.close(code=1008)
+            return
+        key = 'ws_' + uuid4().hex
+        state = await run_in_threadpool(socket_state, token, key, None, True)
+        if state is None:
+            await ws.close(code=1008)
+            return
+        uid, data = state
+        previous = ''; last_lease = now(); visible = True; next_snapshot = 0
         try:
+            await ws.accept(subprotocol='erischat')
             while True:
-                if not session_active(token):await ws.close(code=1008);break
-                with Session(engine) as db:
-                    user=db.get(User,uid)
-                    if not user or not user.is_active or db.scalar(select(UserBan).where(UserBan.user_id==uid,UserBan.active.is_(True),(UserBan.expires_at.is_(None))|(UserBan.expires_at>now()))):await ws.close(code=1008);break
-                    if visible and (now()-last_lease).total_seconds()>=20:lease(db,uid,key);last_lease=now()
-                    data=snapshot(db,user)
-                digest=hashlib.sha256(json.dumps(data,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
-                if digest!=previous:
-                    await ws.send_json({'type':'discovery_snapshot',**data});previous=digest
+                at = asyncio.get_running_loop().time()
+                if at >= next_snapshot:
+                    renew = visible and (now()-last_lease).total_seconds() >= 20
+                    state = await run_in_threadpool(socket_state, token, key, uid, renew, visible)
+                    if state is None:
+                        await ws.close(code=1008)
+                        break
+                    _, data = state
+                    if renew:
+                        last_lease = now()
+                    next_snapshot = at + 5
+                    if data is not None:
+                        digest = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+                        if digest != previous:
+                            await ws.send_json({'type':'discovery_snapshot', **data})
+                            previous = digest
                 try:
-                    message=await asyncio.wait_for(ws.receive_json(),timeout=1)
-                    if isinstance(message,dict) and message.get('type')=='presence':
-                        visible=message.get('active') is True
-                        with Session(engine) as db:lease(db,uid,key,visible)
-                        last_lease=now()
-                except asyncio.TimeoutError:pass
-        except (WebSocketDisconnect,RuntimeError):pass
+                    message = await asyncio.wait_for(ws.receive_json(), timeout=1)
+                    if isinstance(message, dict) and message.get('type') == 'presence':
+                        value = message.get('active') is True
+                        if value != visible:
+                            visible = value
+                            if visible:
+                                next_snapshot = 0
+                            else:
+                                await run_in_threadpool(release_lease, uid, key)
+                            last_lease = now()
+                except asyncio.TimeoutError:
+                    pass
+        except (WebSocketDisconnect, RuntimeError):
+            pass
         finally:
-            with Session(engine) as db:lease(db,uid,key,False)
+            await run_in_threadpool(release_lease, uid, key)

@@ -258,27 +258,21 @@
     document.getElementById('erisLiveMeta').textContent='Gerçek oda • bağlanıyor…';
     document.getElementById('erisLiveSeats').innerHTML='<div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div>';
 
-    // Live API calls get a hard client-side timeout so the room surface can never remain
-    // in an endless "bağlanıyor" state when Railway/network/auth is unavailable.
-    const withTimeout=(promise,ms=8000)=>Promise.race([
-      Promise.resolve(promise),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error('Oda sunucusuna bağlantı zaman aşımına uğradı.')),ms))
-    ]);
     try{
       try{
         let joined=false,attemptMessage='';
         for(let attempt=0;attempt<3&&!joined;attempt++){
-          try{await withTimeout(window.ErisRoom?.join?.(id),8000);joined=true;}
+          try{await window.ErisRoom.join(id);joined=true;}
           catch(joinError){
             if(!/şifre|kilitli|password/i.test(String(joinError.message||''))) throw joinError;
             const pass=await window.ErisRoomPasswordModal?.(attemptMessage); if(pass===null) throw joinError;
-            try{await withTimeout(window.ErisRoom?.join?.(id,String(pass).trim()),8000);joined=true;}
+            try{await window.ErisRoom.join(id,String(pass).trim());joined=true;}
             catch(e){if(!/şifre|kilitli|password/i.test(String(e.message||''))) throw e;attemptMessage='wrong';}
           }
         }
         if(!joined) throw new Error('Oda şifresi 3 kez yanlış girildi.');
       }catch(joinError){throw joinError;}
-      const room=await withTimeout(window.ErisRoom?.get?.(id),8000);
+      const room=await window.ErisRoom.get(id);
       if(!room)throw new Error('Oda bilgisi alınamadı');
       await loadRoomBlocks();
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';

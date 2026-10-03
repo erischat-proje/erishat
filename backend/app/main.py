@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .runtime_tasks import database_task, live_socket, bind_live_loop
+
 from pathlib import Path
 from io import BytesIO
 from uuid import uuid4
@@ -10,10 +12,11 @@ import re
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 from sqlalchemy import and_, delete, func, or_, select, text, update
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, TimeoutError as PoolTimeout
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from PIL import Image, ImageFilter
 
@@ -54,6 +57,8 @@ from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, OTPRequest, OTPVerify, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
+from .performance_queries import message_context, conversation_page
+from .performance import install_diagnostics, ensure_query_indexes
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
@@ -104,11 +109,12 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="ErisChat API", version="1.0.2-marriage-20261003")
+app = FastAPI(title="ErisChat API", version="1.0.3-optimization-20261003")
+install_diagnostics(app)
 app.include_router(cosmetic_router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview"])
+app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview", "X-Request-ID", "Retry-After", "Server-Timing"])
 
 
 def ensure_system_data_columns() -> None:
@@ -166,9 +172,11 @@ def ensure_system_data_columns() -> None:
         rows = conn.execute(text("SELECT id, public_id FROM rooms")).fetchall()
         import uuid as _uuid
         import re as _re
+        from collections import Counter
+        counts = Counter(str(x[1]) for x in rows if x[1])
         used = {str(x[1]) for x in rows if _re.fullmatch(r"\d{12}", str(x[1] or ""))}
         for rid, pid in rows:
-            if not _re.fullmatch(r"\d{12}", str(pid or "")) or str(pid) in {str(x[1]) for x in rows if x[0] != rid and x[1]}:
+            if not _re.fullmatch(r"\d{12}", str(pid or "")) or counts[str(pid)] > 1:
                 while True:
                     candidate = f"{_uuid.uuid4().int % 1_000_000_000_000:012d}"
                     if candidate not in used:
@@ -244,8 +252,7 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
     db.commit()
 
 
-@app.on_event("startup")
-def startup() -> None:
+def _initialize_database() -> None:
     logger.info("ErisChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
@@ -256,15 +263,22 @@ def startup() -> None:
         for house in db.scalars(select(relationship_routes.Couple).where(relationship_routes.Couple.active.is_(True))):
             relationship_routes.owned_house(db,house.male_id,lock=True)
             relationship_routes.rewards.ensure_rewards(db,house)
-        db.commit()
+            db.commit()
         cleanup_expired_sessions(db)
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
+    ensure_query_indexes()
     logger.info("ErisChat API startup complete")
 
 
 @app.on_event("startup")
+async def startup() -> None:
+    await run_in_threadpool(_initialize_database)
+
+
+@app.on_event("startup")
 async def start_support_router():
+    bind_live_loop()
     app.state.support_routing_task = asyncio.create_task(support_workflow.routing_loop())
     app.state.ludo_routing_task = asyncio.create_task(ludo_live.routing_loop())
 
@@ -377,8 +391,8 @@ def ready() -> dict[str, str]:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return {"status": "ready", "service": "erischat-api", "version": app.version}
-    except OperationalError as exc:
-        logger.warning("Readiness DB check failed: %s", exc)
+    except (OperationalError, PoolTimeout) as exc:
+        logger.warning("Readiness DB check failed: %s", type(exc).__name__)
         raise HTTPException(status_code=503, detail="database not ready") from exc
 
 
@@ -901,33 +915,7 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
             changed = True
     if changed:
         db.commit()
-    conversation_count = int(db.scalar(select(func.count(ConversationMember.id)).where(ConversationMember.user_id == user.id)) or 0)
-    rows = ConversationRepository(db).list_for_user(user.id, limit=conversation_count, offset=0)
-    rows = [row for row in rows if ("locked" if (state := _folder(db, user.id, row.id)) and state.locked
-            else "archive" if state and state.archived else "inbox") == folder][offset:offset+limit]
-    result = []
-    for conversation in rows:
-        members = ConversationRepository(db).members(conversation.id)
-        family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation.id))
-        state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == conversation.id, ConversationReadState.user_id == user.id))
-        hidden = select(MessageHidden.id).where(MessageHidden.message_id == Message.id, MessageHidden.user_id == user.id).exists()
-        last = db.scalar(select(Message).where(Message.conversation_id == conversation.id, ~hidden).order_by(Message.id.desc()).limit(1))
-        unread = int(db.scalar(select(func.count(Message.id)).where(Message.conversation_id == conversation.id,
-            Message.sender_id != user.id, Message.id > (state.last_read_message_id if state else 0), ~hidden)) or 0)
-        display_name = (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)
-        member_details = []
-        for member_id in members:
-            member_user = db.get(User, member_id)
-            member_details.append({"user_id": member_id,
-                "nickname": member_user.nickname if member_user else None,
-                "avatar": member_user.avatar if member_user else None,
-                "avatar_asset": member_user.avatar_asset if member_user else None,
-                "frame_asset": member_user.frame_asset if member_user else None})
-        result.append({"id": conversation.id, "type": "family" if family_name else conversation.type,
-            "created_at": conversation.created_at, "members": member_details,
-            "name": display_name, "unread_count": unread,
-            "last_message": last.text if last else None, "last_message_at": last.created_at if last else None})
-    return result
+    return conversation_page(db, user.id, folder, limit, offset)
 
 
 @app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
@@ -957,6 +945,7 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
+@database_task
 async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
@@ -1006,6 +995,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
 
 
 @app.get("/v1/messages/{conversation_id}", response_model=list[MessageOut])
+@database_task
 async def list_messages(conversation_id: str, limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[MessageOut]:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
@@ -1018,7 +1008,7 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
     state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == conversation_id, ConversationReadState.user_id == user.id))
     messages = MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
     latest_incoming = max((m.id for m in messages if m.sender_id != user.id), default=0)
-    if latest_incoming:
+    if latest_incoming and (state is None or latest_incoming > state.last_read_message_id):
         if state is None:
             state = ConversationReadState(conversation_id=conversation_id, user_id=user.id, last_read_message_id=latest_incoming)
             db.add(state)
@@ -1029,23 +1019,20 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
             if member_id != user.id:
                 await manager.send_user(member_id, {"type":"dm_read", "conversation_id":conversation_id,
                     "reader_id":user.id, "read_up_to":latest_incoming})
-    return [_message_out(db, message, user.id) for message in messages
-        if not db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == message.id, MessageHidden.user_id == user.id))]
+    context = message_context(db, messages, user.id)
+    return [_message_out(db, message, user.id, context) for message in messages if message.id not in context['hidden']]
 
 
-def _message_out(db: Session, message: Message, viewer_id: str) -> dict:
-    conversation = db.get(Conversation, message.conversation_id)
-    is_family = bool(db.scalar(select(Family.id).where(Family.chat_conversation_id == message.conversation_id)))
-    state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == message.conversation_id,
-        ConversationReadState.user_id != viewer_id)) if conversation and conversation.type != "family" and not is_family else None
-    pinned = db.scalar(select(PinnedMessage.id).where(PinnedMessage.conversation_id == message.conversation_id,
-        PinnedMessage.message_id == message.id)) is not None
-    gift = db.get(DirectMessageGift, message.id)
-    media = db.get(MessageMedia, message.id)
+def _message_out(db: Session, message: Message, viewer_id: str, context=None) -> dict:
+    context = context if context is not None else message_context(db, [message], viewer_id)
+    pinned = message.id in context['pinned']
+    gift = context['gifts'].get(message.id)
+    media = context['media'].get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
         "text": message.text, "created_at": message.created_at,
-        "is_read": message.sender_id == viewer_id and bool(state and state.last_read_message_id >= message.id),
+        "is_read": message.sender_id == viewer_id and bool(context["read"] >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
+        "gift_id": GIFT_META.get(gift.gift_key, {}).get("id") if gift else None,
         "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,
         "gift_price": gift.unit_price if gift else None,
         "media_type": media.media_type if media else None,
@@ -1055,6 +1042,7 @@ def _message_out(db: Session, message: Message, viewer_id: str) -> dict:
 
 
 @app.post("/v1/messages/{conversation_id}/media", status_code=201, response_model=MessageOut)
+@database_task
 async def send_message_media(conversation_id: str, file: UploadFile = File(...), media_type: str = Form(...),
     view_seconds: int = Form(default=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     if not ConversationRepository(db).is_member(conversation_id, user.id):
@@ -1206,12 +1194,12 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
     follows = bool(db.scalar(select(UserFollow.id).where(
         UserFollow.follower_id == user.id, UserFollow.following_id == target.id
     )))
-    query = select(SocialPost).where(SocialPost.user_id == target.id)
+    query = select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).where(SocialPost.user_id == target.id)
     if not is_owner:
         query = query.where(SocialPost.is_hidden.is_(False))
         query = query.where(SocialPost.audience.in_(["public", "followers"]) if follows
                             else SocialPost.audience == "public")
-    rows = list(db.scalars(query.order_by(
+    rows = list(db.execute(query.order_by(
         SocialPost.is_pinned.desc(), SocialPost.created_at.desc(), SocialPost.id.desc()
     ).offset(offset).limit(limit)))
     return [{
@@ -1219,11 +1207,11 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
         "avatar": target.avatar, "avatar_asset": target.avatar_asset,
         "caption": post.caption, "created_at": post.created_at,
         "updated_at": post.updated_at, "mime_type": post.mime_type,
-        "has_image": post.image_bytes is not None,
-        "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
+        "has_image": has_image,
+        "media_url": f"/posts/{post.id}/media" if has_image else None,
         "is_mine": is_owner, "is_hidden": bool(getattr(post, "is_hidden", False)),
         "is_pinned": bool(post.is_pinned),
-    } for post in rows]
+    } for post, has_image in rows]
 
 
 @app.get("/v1/posts/feed")
@@ -1234,7 +1222,7 @@ def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|fol
     visible_ids = following | {user.id}
     blocked = set(db.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id == user.id)))
     blocked |= set(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id == user.id)))
-    query = select(SocialPost).join(User, User.id == SocialPost.user_id).where(
+    query = select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).join(User, User.id == SocialPost.user_id).where(
         User.is_active.is_(True), SocialPost.is_hidden.is_(False))
     if blocked:
         query = query.where(~SocialPost.user_id.in_(blocked))
@@ -1243,17 +1231,18 @@ def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|fol
     else:
         query = query.where(or_(SocialPost.audience == "public",
             and_(SocialPost.audience == "followers", SocialPost.user_id.in_(visible_ids))))
-    rows = list(db.scalars(query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc())
+    rows = list(db.execute(query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc())
         .offset(offset).limit(limit)))
+    authors = {u.id:u for u in db.scalars(select(User).where(User.id.in_({p.user_id for p, _ in rows})))}
     result = []
-    for post in rows:
-        author = db.get(User, post.user_id)
+    for post, has_image in rows:
+        author = authors.get(post.user_id)
         if author:
             result.append({"id": post.id, "user_id": author.id, "nickname": author.nickname,
                 "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": post.caption,
-                "created_at": post.created_at, "updated_at": post.updated_at, "has_image": post.image_bytes is not None,
+                "created_at": post.created_at, "updated_at": post.updated_at, "has_image": has_image,
                 "mime_type": post.mime_type, "media_kind": "video" if (post.mime_type or "").startswith("video/") else "image",
-                "media_url": f"/posts/{post.id}/media" if post.image_bytes is not None else None,
+                "media_url": f"/posts/{post.id}/media" if has_image else None,
                 "audience": post.audience, "is_hidden": False, "is_mine": post.user_id == user.id})
             result[-1]["is_pinned"] = bool(post.is_pinned)
     return result
@@ -1262,17 +1251,18 @@ def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|fol
 @app.get("/v1/me/posts")
 def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
-    rows = list(db.scalars(select(SocialPost).where(SocialPost.user_id == user.id)
+    rows = list(db.execute(select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).where(SocialPost.user_id == user.id)
         .order_by(SocialPost.is_pinned.desc(), SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
     return [{"id": p.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": p.caption, "created_at": p.created_at,
-        "updated_at": p.updated_at, "has_image": p.image_bytes is not None, "mime_type": p.mime_type,
+        "updated_at": p.updated_at, "has_image": has_image, "mime_type": p.mime_type,
         "media_kind": "video" if (p.mime_type or "").startswith("video/") else "image",
-        "media_url": f"/posts/{p.id}/media" if p.image_bytes is not None else None,
-        "audience": p.audience, "is_hidden": p.is_hidden, "is_pinned": bool(p.is_pinned), "is_mine": True} for p in rows]
+        "media_url": f"/posts/{p.id}/media" if has_image else None,
+        "audience": p.audience, "is_hidden": p.is_hidden, "is_pinned": bool(p.is_pinned), "is_mine": True} for p, has_image in rows]
 
 
 @app.post("/v1/posts", status_code=201)
+@database_task
 async def create_social_post(caption: str = Form(default=""), file: UploadFile | None = File(default=None),
     audience: str = Form(default="public"), db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_chat_write(db,user.id)
@@ -1293,6 +1283,7 @@ async def create_social_post(caption: str = Form(default=""), file: UploadFile |
 
 
 @app.patch("/v1/posts/{post_id}")
+@database_task
 async def update_social_post(post_id: int, caption: str | None = Form(default=None),
     file: UploadFile | None = File(default=None), remove_image: bool = Form(default=False),
     audience: str | None = Form(default=None), is_hidden: bool | None = Form(default=None),
@@ -1584,24 +1575,30 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
     blocked |= set(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id == user.id)))
     rows = list(db.scalars(select(SocialStory).where(SocialStory.user_id.in_(visible_ids),
         SocialStory.expires_at > now).order_by(SocialStory.created_at.desc()).limit(limit)))
+    ids = [r.id for r in rows]
+    authors = {r.id:r for r in db.scalars(select(User).where(User.id.in_({r.user_id for r in rows})))}
+    viewed_ids = set(db.scalars(select(SocialStoryView.story_id).where(SocialStoryView.story_id.in_(ids), SocialStoryView.viewer_id == user.id)))
+    views = dict(db.execute(select(SocialStoryView.story_id, func.count()).where(SocialStoryView.story_id.in_(ids)).group_by(SocialStoryView.story_id)).all())
+    likes = dict(db.execute(select(SocialStoryLike.story_id, func.count()).where(SocialStoryLike.story_id.in_(ids)).group_by(SocialStoryLike.story_id)).all())
+    liked_ids = set(db.scalars(select(SocialStoryLike.story_id).where(SocialStoryLike.story_id.in_(ids), SocialStoryLike.user_id == user.id)))
     result = []
     for story in rows:
-        author = db.get(User, story.user_id)
+        author = authors.get(story.user_id)
         if not author or not author.is_active or author.id in blocked: continue
-        viewed = story.user_id != user.id and bool(db.scalar(select(SocialStoryView.id).where(
-            SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)))
-        count = int(db.scalar(select(func.count(SocialStoryView.id)).where(SocialStoryView.story_id == story.id)) or 0)
+        viewed = story.user_id != user.id and story.id in viewed_ids
+        count = int(views.get(story.id,0))
         result.append({"id": story.id, "user_id": author.id, "nickname": author.nickname,
             "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": story.caption,
             "created_at": story.created_at, "expires_at": story.expires_at, "viewed": viewed,
-            "view_count": count, "like_count": int(db.scalar(select(func.count()).select_from(SocialStoryLike).where(SocialStoryLike.story_id == story.id)) or 0),
-            "liked": db.get(SocialStoryLike, (story.id, user.id)) is not None, "mime_type": story.mime_type,
+            "view_count": count, "like_count": int(likes.get(story.id,0)),
+            "liked": story.id in liked_ids, "mime_type": story.mime_type,
             "media_kind": "video" if story.mime_type.startswith("video/") else "image",
             "media_url": f"/stories/{story.id}/media", "is_mine": story.user_id == user.id})
     return result
 
 
 @app.post("/v1/stories", status_code=201)
+@database_task
 async def create_story(file: UploadFile = File(...), caption: str = Form(default=""),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_chat_write(db,user.id)
@@ -1672,6 +1669,7 @@ def toggle_story_like(story_id: int, db: Session = Depends(get_db), user: User =
 
 
 @app.post("/v1/stories/{story_id}/reply", response_model=MessageOut)
+@database_task
 async def reply_to_story(story_id: int, text: str = Form(...), snapshot: UploadFile | None = File(default=None),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     story = _visible_story(db, story_id, user)
@@ -1822,6 +1820,7 @@ def message_gifts():
 
 
 @app.post("/v1/messages/{conversation_id}/gifts")
+@database_task
 async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     repo = ConversationRepository(db)
     if not repo.is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
@@ -1841,6 +1840,7 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
         raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {restriction.gift_key} hediyesi gerekli")
     total_price = price * quantity
     receiver_amount = total_price * 70 // 100
+    relationship_routes.lock_users(db, [user.id, recipient_id])
     charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total_price).values(lidya=User.lidya - total_price))
     if charged.rowcount != 1: db.rollback(); raise HTTPException(status_code=400, detail="Yetersiz Lidya")
     db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + receiver_amount))
@@ -1855,10 +1855,15 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     record_spend(db,user.id,total_price,"dm_gift",str(message.id))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
-        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"quantity":quantity,
+        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"quantity":quantity,
         "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in repo.members(conversation_id): await _send_dm_event(db, member_id, event)
     return _message_out(db, message, user.id)
+
+
+@live_socket
+async def _bounded_send(websocket, payload):
+    await asyncio.wait_for(websocket.send_json(payload), timeout=3)
 
 
 class ConnectionManager:
@@ -1877,12 +1882,14 @@ class ConnectionManager:
         if not sockets:
             self.connections.pop(user_id, None)
 
+    @live_socket
     async def send_user(self, user_id: str, payload: dict) -> None:
-        for websocket in list(self.connections.get(user_id, set())):
-            try:
-                await websocket.send_json(payload)
-            except Exception:
-                self.disconnect(user_id, websocket)
+        sockets = list(self.connections.get(user_id, set()))
+        results = await asyncio.gather(*(_bounded_send(ws, payload) for ws in sockets), return_exceptions=True)
+        for ws, result in zip(sockets, results):
+            if isinstance(result, BaseException):
+                self.disconnect(user_id, ws)
+
 
 
 manager = ConnectionManager()
@@ -1916,26 +1923,153 @@ discovery_live.register_auth(current_user, engine, websocket_token, get_user_fro
 app.include_router(discovery_live.router)
 
 
+def _load_room_socket(token, room_id):
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id) or ban_workflow.restriction(db,user.id):
+            raise HTTPException(403, "geçersiz oturum")
+        room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
+        internal_room_id = room.id if room else room_id
+        member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
+        banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
+        owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
+            UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
+        )))
+        if not room or not member or banned or owner_blocked:
+            raise HTTPException(403, "oda üyeliği gerekli")
+        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
+        history.reverse()
+        history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
+        history_ids = {m.user_id for m in history}
+        fan_totals = gift_totals(db, history_ids)
+        system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
+        reward_bubbles={uid:relationship_routes.rewards.selected(db,uid,'bubble') for uid in history_ids}
+        entrance_asset=relationship_routes.rewards.selected(db,user.id,'entrance')
+        entrance_house=relationship_routes.my_couple(db,user.id)
+        entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
+        history_payload = [{"type":"room_chat","bubble_asset":reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+    return user, room, member, internal_room_id, history_payload, entrance_asset, entrance_payload
+
+
+def _room_socket_access(internal_room_id, room_id, user_id):
+    with Session(engine) as db:
+        room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
+        member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user_id).first()
+        banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user_id).first() or active_room_user_ban(db,internal_room_id,user_id)
+        owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
+            UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user_id
+        )))
+        if not room or not member or banned or owner_blocked:
+                raise HTTPException(403, "oda erişiminiz yok")
+    return room, member
+
+
+def _room_socket_music(internal_room_id, user, music_id, action, position):
+    with Session(engine) as db:
+        room = db.get(Room, internal_room_id)
+        member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
+        if not room or not member:
+            return None
+        seated = db.scalar(select(RoomSeat.id).where(
+            RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id, RoomSeat.muted.is_(False)))
+        if action in {"play", "seek"} and not seated:
+            return None
+        music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == internal_room_id).first()
+        if not music:
+            return None
+
+        # Müzik sahibi kendi parçasını kontrol edebilir;
+        # oda sahibi veya aktif moderatör ise oda müziğini yönetebilir.
+        is_owner = room.owner_id == user.id
+        is_moderator = bool(
+            db.query(RoomModerator.id)
+            .filter(
+                RoomModerator.room_id == room.id,
+                RoomModerator.user_id == user.id,
+            )
+            .first()
+        )
+        if music.user_id != user.id and not is_owner and not is_moderator:
+            return None
+        now = datetime.now(timezone.utc)
+        if action == "seek":
+            music.position_seconds = position
+            if music.is_playing: music.started_at = now
+        elif action == "play":
+            music.is_playing = True; music.started_at = now
+        elif action == "pause":
+            if music.is_playing and music.started_at: music.position_seconds += max(0, int((now-music.started_at).total_seconds()))
+            music.is_playing = False; music.started_at = None
+        else:
+            music.is_playing = False; music.position_seconds = 0; music.started_at = None
+        db.commit()
+        payload = {"type":"music_sync","music_id":music.id,"action":action,"position_seconds":music.position_seconds,"is_playing":music.is_playing,"started_at":music.started_at.isoformat() if music.started_at else None,"from_user_id":user.id}
+    return payload
+
+
+def _room_socket_chat(internal_room_id, room_id, user, text_value):
+    with Session(engine) as db:
+        room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
+        member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
+        banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
+        if not room or not member or banned:
+            return {"close": True}
+        admin_row=db.get(AdminRole,user.id)
+        if admin_row and admin_row.ghost_mode:
+            return {"error": {"type":"room_chat_error","code":"ghost_mode","message":"Chat’e yazabilmek için önce Ghost Mode’u kapatın."}}
+        restriction = active_ban(db, user.id) or active_ban(db, user.id, chat=True)
+        if restriction:
+            from .moderation import ban_until
+            return {"error": {"type":"room_chat_error",**chat_ban_detail(db,restriction)} if isinstance(restriction,ChatBan) else {"type":"room_chat_error","code":"admin_ban","message":ban_until(restriction)}}
+        if not room.chat_enabled:
+            return {"error": {"type":"room_chat_error","code":"chat_disabled","message":"Oda sohbeti kapalı."}}
+        chat_muted = db.scalar(select(RoomChatMute.id).where(
+            RoomChatMute.room_id == internal_room_id, RoomChatMute.user_id == user.id))
+        if chat_muted:
+            return {"error": {"type":"room_chat_error","code":"chat_muted","message":"Oda sohbetinde susturuldunuz."}}
+        msg = RoomChatMessage(room_id=internal_room_id, user_id=user.id, text=text_value)
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        fan_total = gift_totals(db, {user.id})[user.id]
+        payload = {"type":"room_chat","bubble_asset":relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+    return {"payload": payload}
+
+
+def _room_socket_can_signal(room_id, user_id, kind):
+    with Session(engine) as db:
+        admin = db.get(AdminRole, user_id)
+        if admin and admin.ghost_mode:
+            return False
+        return kind == "rtc_leave" or bool(db.scalar(select(RoomSeat.id).where(
+            RoomSeat.room_id == room_id, RoomSeat.user_id == user_id, RoomSeat.muted.is_(False))))
+
+
+def _socket_user_id(token):
+    with Session(engine) as db:
+        user = get_user_from_token(db, token)
+        return user.id if user else None
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
+    bind_live_loop()
     token = websocket_token(websocket)
     if not token:
         await websocket.close(code=1008, reason="token gerekli")
         return
-    if not websocket_session_active(token):
+    if not await run_in_threadpool(websocket_session_active, token):
         await websocket.close(code=1008, reason="geçersiz oturum")
         return
-    with Session(engine) as db:
-        user = get_user_from_token(db, token)
-        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id) or ban_workflow.restriction(db,user.id):
-            await websocket.close(code=1008, reason="geçersiz oturum")
-            return
-        user_id = user.id
+    user_id = await run_in_threadpool(_socket_user_id, token)
+    if not user_id:
+        await websocket.close(code=1008, reason="geçersiz oturum")
+        return
     await manager.connect(user_id, websocket, subprotocol="erischat")
     try:
         while True:
             data = await websocket.receive_json()
-            if not websocket_session_active(token):
+            if not await run_in_threadpool(websocket_session_active, token):
                 manager.disconnect(user_id, websocket)
                 room_socket_users.pop(websocket, None)
                 await websocket.close(code=1008, reason="oturum sona erdi")
@@ -1957,6 +2091,7 @@ room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 room_socket_users: dict[WebSocket, tuple[str, str]] = {}
 
 
+@live_socket
 async def disconnect_room_ban_user(user_id: str, room_id: str) -> None:
     for ws,(socket_room,socket_user) in list(room_socket_users.items()):
         if socket_user!=user_id or socket_room!=room_id:continue
@@ -1972,6 +2107,7 @@ async def disconnect_room_ban_user(user_id: str, room_id: str) -> None:
         except Exception:pass
 
 
+@live_socket
 async def disconnect_ban_user(user_id: str) -> None:
     await disconnect_support_agent(user_id, notify=False)
     for ws in list(manager.connections.get(user_id, set())):
@@ -1980,6 +2116,7 @@ async def disconnect_ban_user(user_id: str) -> None:
         except Exception: pass
 
 
+@live_socket
 async def disconnect_support_agent(user_id: str, notify: bool = True) -> None:
     for ws, (room_id, socket_user_id) in list(room_socket_users.items()):
         if socket_user_id != user_id:
@@ -2000,6 +2137,7 @@ async def disconnect_support_agent(user_id: str, notify: bool = True) -> None:
             pass
 
 
+@live_socket
 async def transition_room_ghost(user_id: str, enabled: bool) -> None:
     # Remove public RTC presence before reconnecting all tabs under the new rules.
     for ws, (room_id, socket_user_id) in list(room_socket_users.items()):
@@ -2021,110 +2159,75 @@ async def transition_room_ghost(user_id: str, enabled: bool) -> None:
             pass
 
 
+async def _send_room_sockets(sockets, payload):
+    results = await asyncio.gather(*(_bounded_send(ws, payload) for ws in sockets), return_exceptions=True)
+    for ws, result in zip(sockets, results):
+        if isinstance(result, BaseException):
+            membership = room_socket_users.pop(ws, None)
+            if membership:
+                rid, _ = membership
+                room_chat_connections.get(rid, set()).discard(ws)
+                room_rtc_users.get(rid, {}).pop(ws, None)
+
+
+@live_socket
 async def _broadcast_room_event(room_id: str, payload: dict) -> None:
-    connections = room_chat_connections.get(room_id, set())
-    dead = []
-    for ws in list(connections):
-        try: await ws.send_json(payload)
-        except Exception: dead.append(ws)
-    for ws in dead: connections.discard(ws)
+    await _send_room_sockets(list(room_chat_connections.get(room_id, set())), payload)
 
+
+@live_socket
 async def _broadcast_global_gift_announcement(payload: dict) -> None:
-    """Yüksek seviye hediyeyi, açık olan tüm oda websocket'lerine duyurur."""
-    dead = []
-    for connections in list(room_chat_connections.values()):
-        for ws in list(connections):
-            try:
-                await ws.send_json({"type": "gift_announcement", **payload})
-            except Exception:
-                dead.append(ws)
-    for ws in dead:
-        for connections in room_chat_connections.values():
-            connections.discard(ws)
+    sockets = list({ws for connections in room_chat_connections.values() for ws in connections})
+    await _send_room_sockets(sockets, {"type":"gift_announcement", **payload})
 
 
+@live_socket
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
-    connections = room_chat_connections.get(room_id, set())
-    dead = []
-    for ws in list(connections):
-        try:
-            await ws.send_json(payload)
-        except Exception:
-            dead.append(ws)
-    for ws in dead:
-        connections.discard(ws)
+    await _broadcast_room_event(room_id, payload)
 
 
 @app.websocket("/ws/rooms/{room_id}")
 async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
+    bind_live_loop()
     token = websocket_token(websocket)
     if not token:
         await websocket.close(code=1008, reason="token gerekli")
         return
-    with Session(engine) as db:
-        user = get_user_from_token(db, token)
-        if not user or not user.is_active or active_ban(db,user.id) or support_workflow.remaining_restriction(db, user.id) or ban_workflow.restriction(db,user.id):
-            await websocket.close(code=1008, reason="geçersiz oturum")
-            return
-        room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
-        internal_room_id = room.id if room else room_id
-        member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-        banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
-        owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
-            UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
-        )))
-        if not room or not member or banned or owner_blocked:
-            await websocket.close(code=1008, reason="oda üyeliği gerekli")
-            return
-        history = (db.query(RoomChatMessage).filter(RoomChatMessage.room_id == internal_room_id).order_by(RoomChatMessage.id.desc()).limit(50).all())
-        history.reverse()
-        history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
-        history_ids = {m.user_id for m in history}
-        fan_totals = gift_totals(db, history_ids)
-        system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
-        reward_bubbles={uid:relationship_routes.rewards.selected(db,uid,'bubble') for uid in history_ids}
-        entrance_asset=relationship_routes.rewards.selected(db,user.id,'entrance')
-        entrance_house=relationship_routes.my_couple(db,user.id)
-        entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
-        history_payload = [{"type":"room_chat","bubble_asset":reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
-    await websocket.accept(subprotocol="erischat")
-    already_connected=any(room_uid==(internal_room_id,str(user.id)) for room_uid in room_socket_users.values())
-    room_socket_users[websocket] = (internal_room_id, str(user.id))
-    room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
-    if not member.ghost and not already_connected:
-        if entrance_asset:await _broadcast_room_chat(internal_room_id,entrance_payload)
-        await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
-    existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
-    if not member.ghost:
-        room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
-    await websocket.send_json({"type":"room_history","messages":history_payload})
-    await websocket.send_json({"type":"rtc_ready","user_id":str(user.id),"room_id":internal_room_id,"peers":existing_peers})
-    for peer_ws in (list(room_rtc_users.get(internal_room_id, {})) if not member.ghost else []):
-        if peer_ws is not websocket:
-            try: await peer_ws.send_json({"type":"rtc_peer_joined","user_id":str(user.id)})
-            except Exception: pass
     try:
+        user, room, member, internal_room_id, history_payload, entrance_asset, entrance_payload = await run_in_threadpool(_load_room_socket, token, room_id)
+    except HTTPException as exc:
+        await websocket.close(code=1008, reason=str(exc.detail))
+        return
+    await websocket.accept(subprotocol="erischat")
+    try:
+        already_connected=any(room_uid==(internal_room_id,str(user.id)) for room_uid in room_socket_users.values())
+        room_socket_users[websocket] = (internal_room_id, str(user.id))
+        room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
+        if not member.ghost and not already_connected:
+            if entrance_asset:await _broadcast_room_chat(internal_room_id,entrance_payload)
+            await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
+        existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
+        if not member.ghost:
+            room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
+        await websocket.send_json({"type":"room_history","messages":history_payload})
+        await websocket.send_json({"type":"rtc_ready","user_id":str(user.id),"room_id":internal_room_id,"peers":existing_peers})
+        for peer_ws in (list(room_rtc_users.get(internal_room_id, {})) if not member.ghost else []):
+            if peer_ws is not websocket:
+                try: await peer_ws.send_json({"type":"rtc_peer_joined","user_id":str(user.id)})
+                except Exception: pass
         while True:
             data = await websocket.receive_json()
-            if not websocket_session_active(token):
+            if not await run_in_threadpool(websocket_session_active, token):
                 room_chat_connections.get(internal_room_id, set()).discard(websocket)
                 room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
                 room_socket_users.pop(websocket, None)
                 await websocket.close(code=1008, reason="oturum sona erdi")
                 return
-            with Session(engine) as db:
-                room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
-                member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-                banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
-                owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
-                    UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
-                )))
-                if not room or not member or banned or owner_blocked:
-                    room_chat_connections.get(internal_room_id, set()).discard(websocket)
-                    room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
-                    room_socket_users.pop(websocket, None)
-                    await websocket.close(code=1008, reason="oda erişiminiz yok")
-                    return
+            try:
+                room, member = await run_in_threadpool(_room_socket_access, internal_room_id, room_id, user.id)
+            except HTTPException:
+                await websocket.close(code=1008, reason="oda erişiminiz yok")
+                break
             if member.ghost and websocket in room_rtc_users.get(internal_room_id, {}):
                 room_rtc_users[internal_room_id].pop(websocket,None)
                 for peer_ws in list(room_rtc_users.get(internal_room_id, {})):
@@ -2139,21 +2242,12 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 await websocket.send_json({"type": "room_chat_error", "code": "ghost_mode", "message": "Bu işlem için önce Ghost Mode’u kapatın."})
                 continue
             if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
-                with Session(engine) as db:
-                    if db.get(AdminRole,user.id) and db.get(AdminRole,user.id).ghost_mode: continue
                 target = str(data.get("to_user_id") or "").strip()
                 sender_user_id = str(user.id)
                 if not target or target == sender_user_id:
                     continue
-                if data["type"] != "rtc_leave":
-                    with Session(engine) as db:
-                        seat = db.scalar(select(RoomSeat.id).where(
-                            RoomSeat.room_id == internal_room_id,
-                            RoomSeat.user_id == user.id,
-                            RoomSeat.muted.is_(False),
-                        ))
-                        if not seat:
-                            continue
+                if not await run_in_threadpool(_room_socket_can_signal, internal_room_id, user.id, data["type"]):
+                    continue
                 payload = {"type": data["type"], "from_user_id": sender_user_id, "to_user_id": target, "payload": data.get("payload")}
                 for peer_ws, peer_user in list(room_rtc_users.get(internal_room_id, {}).items()):
                     if str(peer_user) == target:
@@ -2169,45 +2263,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 position = max(0, min(86400, int(data.get("position_seconds") or 0)))
                 if not isinstance(music_id, int) or action not in {"play","pause","stop","seek"}:
                     continue
-                with Session(engine) as db:
-                    room = db.get(Room, internal_room_id)
-                    member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-                    if not room or not member:
-                        continue
-                    seated = db.scalar(select(RoomSeat.id).where(
-                        RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user.id, RoomSeat.muted.is_(False)))
-                    if action in {"play", "seek"} and not seated:
-                        continue
-                    music = db.query(RoomMusic).filter(RoomMusic.id == music_id, RoomMusic.room_id == internal_room_id).first()
-                    if not music:
-                        continue
-
-                    # Müzik sahibi kendi parçasını kontrol edebilir;
-                    # oda sahibi veya aktif moderatör ise oda müziğini yönetebilir.
-                    is_owner = room.owner_id == user.id
-                    is_moderator = bool(
-                        db.query(RoomModerator.id)
-                        .filter(
-                            RoomModerator.room_id == room.id,
-                            RoomModerator.user_id == user.id,
-                        )
-                        .first()
-                    )
-                    if music.user_id != user.id and not is_owner and not is_moderator:
-                        continue
-                    now = datetime.now(timezone.utc)
-                    if action == "seek":
-                        music.position_seconds = position
-                        if music.is_playing: music.started_at = now
-                    elif action == "play":
-                        music.is_playing = True; music.started_at = now
-                    elif action == "pause":
-                        if music.is_playing and music.started_at: music.position_seconds += max(0, int((now-music.started_at).total_seconds()))
-                        music.is_playing = False; music.started_at = None
-                    else:
-                        music.is_playing = False; music.position_seconds = 0; music.started_at = None
-                    db.commit()
-                    payload = {"type":"music_sync","music_id":music.id,"action":action,"position_seconds":music.position_seconds,"is_playing":music.is_playing,"started_at":music.started_at.isoformat() if music.started_at else None,"from_user_id":user.id}
+                payload = await run_in_threadpool(_room_socket_music, internal_room_id, user, music_id, action, position)
+                if payload is None:
+                    continue
                 await _broadcast_room_event(internal_room_id, payload)
                 continue
             if data.get("type") == "room_chat" and not room.chat_enabled:
@@ -2218,49 +2276,35 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             text_value = str(data.get("text") or "").strip()
             if not text_value or len(text_value) > 500:
                 continue
-            with Session(engine) as db:
-                room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
-                member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-                banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
-                if not room or not member or banned:
-                    await websocket.close(code=1008, reason="oda erişiminiz yok")
-                    break
-                admin_row=db.get(AdminRole,user.id)
-                if admin_row and admin_row.ghost_mode:
-                    await websocket.send_json({"type":"room_chat_error","code":"ghost_mode","message":"Chat’e yazabilmek için önce Ghost Mode’u kapatın."})
-                    continue
-                restriction = active_ban(db, user.id) or active_ban(db, user.id, chat=True)
-                if restriction:
-                    from .moderation import ban_until
-                    await websocket.send_json({"type":"room_chat_error",**chat_ban_detail(db,restriction)} if isinstance(restriction,ChatBan) else {"type":"room_chat_error","code":"admin_ban","message":ban_until(restriction)})
-                    continue
-                if not room.chat_enabled:
-                    await websocket.send_json({"type":"room_chat_error","code":"chat_disabled","message":"Oda sohbeti kapalı."})
-                    continue
-                chat_muted = db.scalar(select(RoomChatMute.id).where(
-                    RoomChatMute.room_id == internal_room_id, RoomChatMute.user_id == user.id))
-                if chat_muted:
-                    await websocket.send_json({"type":"room_chat_error","code":"chat_muted","message":"Oda sohbetinde susturuldunuz."})
-                    continue
-                msg = RoomChatMessage(room_id=internal_room_id, user_id=user.id, text=text_value)
-                db.add(msg)
-                db.commit()
-                db.refresh(msg)
-                fan_total = gift_totals(db, {user.id})[user.id]
-                payload = {"type":"room_chat","bubble_asset":relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+            result = await run_in_threadpool(_room_socket_chat, internal_room_id, room_id, user, text_value)
+            if result.get("close"):
+                await websocket.close(code=1008, reason="oda erişiminiz yok")
+                break
+            if result.get("error"):
+                await websocket.send_json(result["error"])
+                continue
+            payload = result["payload"]
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
-        room_socket_users.pop(websocket, None)
-        room_chat_connections.get(internal_room_id, set()).discard(websocket)
-        room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
+        pass
     except Exception:
-        room_socket_users.pop(websocket, None)
-        room_chat_connections.get(internal_room_id, set()).discard(websocket)
-        room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
         try:
             await websocket.close(code=1011)
         except Exception:
             pass
+    finally:
+        visible = room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
+        room_socket_users.pop(websocket, None)
+        connections = room_chat_connections.get(internal_room_id, set())
+        connections.discard(websocket)
+        peers = room_rtc_users.get(internal_room_id, {})
+        if visible and visible not in peers.values():
+            await asyncio.gather(*(_bounded_send(ws, {"type":"rtc_peer_left", "user_id":str(visible)}) for ws in list(peers)), return_exceptions=True)
+        if not connections:
+            room_chat_connections.pop(internal_room_id, None)
+        if not peers:
+            room_rtc_users.pop(internal_room_id, None)
+
 
 
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
