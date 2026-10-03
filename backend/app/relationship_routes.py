@@ -9,12 +9,13 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import and_, case, delete, func, or_, select
 from sqlalchemy.orm import Session, aliased
 from .db import get_db
-from .models import User, Conversation, ConversationMember, Message
+from .models import User, UserCosmetic, Conversation, ConversationMember, Message
 from .platform_models import DirectMessageGift, UserBlock, Notification
 from .room_models import RoomGiftEvent
 from .admin_models import AdminRole
 from .moderation import active_ban, require_feature
-from .relationship_models import Couple, CoupleMember, LoveRequest, CoupleOperation, CoupleEvent
+from .relationship_models import Couple, CoupleMember, LoveRequest, CoupleOperation, CoupleEvent, CoupleRewardSelection, CoupleRing, CoupleRoom, CoupleGift
+from . import relationship_rewards as rewards
 
 router = APIRouter(prefix='/v1/relationship', tags=['relationship'])
 _current_user = None
@@ -146,7 +147,7 @@ def status_key(house):
         return 'married'
     if not house.ring:
         return 'dating'
-    metal = house.ring.split('-')[0]
+    metal = 'gold' if house.ring.startswith('level-') else house.ring.split('-')[0]
     return metal + ('-engaged' if house.level >= 4 else '-promise')
 
 
@@ -156,7 +157,7 @@ def public_brief(db, uid):
         return None
     partner_id = house.female_id if uid == house.male_id else house.male_id
     return {'id':house.id, 'status':status_key(house), 'ring':house.ring, 'level':house.level,
-            'partner':portrait(db.get(User, partner_id))}
+            'partner':portrait(db.get(User, partner_id)), 'title_asset':rewards.selected(db,uid,'title')}
 
 
 def summary(db, house):
@@ -167,6 +168,8 @@ def summary(db, house):
     return {'id':house.id, 'level':house.level, 'status':status_key(house), 'ring':house.ring, 'married':house.married,
             'male':portrait(db.get(User, house.male_id)), 'female':portrait(db.get(User, house.female_id)),
             'days':max(1, (now().astimezone(ISTANBUL).date() - start.astimezone(ISTANBUL).date()).days + 1),
+            'owned_rings':[{'key':r.ring,'source':r.source,'asset':ring_asset(r.ring)} for r in db.scalars(select(CoupleRing).where(CoupleRing.couple_id==house.id))],
+            'ring_asset':ring_asset(house.ring) if house.ring else None,
             'started_at':start.isoformat(), 'materials':{m:getattr(house,m) for m in MATERIALS},
             'remaining':{m:max(0,needs[m]-getattr(house,m)) for m in MATERIALS},
             'material_price':750, 'needs_first_copper':not bool(house.ring), 'max_level':house.level == 12}
@@ -193,6 +196,7 @@ def advance(db, house):
         for m in MATERIALS:
             setattr(house,m,getattr(house,m)-needs[m])
         house.level += 1
+    rewards.ensure_rewards(db,house)
     if house.level != old:
         for uid in (house.male_id, house.female_id):
             notify(db,uid,'upgrade',{'title':'Aile eviniz seviye ' + str(house.level) + ' oldu!', 'message':'Ortak malzemelerinizle eviniz gelişti.'})
@@ -236,6 +240,8 @@ def state(db: Session = Depends(get_db), user: User = Depends(authenticated)):
         or_(LoveRequest.sender_id == user.id, LoveRequest.recipient_id == user.id)).order_by(LoveRequest.created_at.desc())))
     requests = [request_info(db,r,user.id) for r in pending if available(db,r.sender_id) and available(db,r.recipient_id) and not blocked(db,r.sender_id,r.recipient_id)]
     if house and house.active:
+        house=owned_house(db,user.id,lock=True)
+        rewards.ensure_rewards(db,house);db.commit()
         return {'active':summary(db,house), 'candidates':[], 'requests':requests}
     peers = dm_peers(db,user.id)
     opposite = {'male':'female','female':'male'}.get(user.gender)
@@ -300,6 +306,7 @@ def respond(request_id: str, payload: Decision, db: Session = Depends(get_db), u
             db.add(house);db.flush()
             db.add_all([CoupleMember(user_id=uid,couple_id=house.id) for uid in (sender.id,user.id)])
             row.couple_id = house.id
+            rewards.ensure_rewards(db,house)
             for uid in (sender.id,user.id):
                 notify(db,uid,'welcome',{'title':'İlk seviye eve geçiş yaptınız','message':'Seviye 2 için önce 1 adet bakır yüzük satın almalısınız. Ortak tuğla, tahta ve boya ihtiyacını tamamlayarak evinizi geliştirebilirsiniz.'})
         else:
@@ -307,6 +314,8 @@ def respond(request_id: str, payload: Decision, db: Session = Depends(get_db), u
             if house.id != row.couple_id or house.married:
                 raise HTTPException(409,'Bu evlilik teklifi artık geçerli değil.')
             house.married,house.ring = True,row.ring
+            if not db.get(CoupleRing,(house.id,row.ring)):
+                db.add(CoupleRing(couple_id=house.id,ring=row.ring,source='purchased'))
     row.status = result
     sender_notice = user.nickname + (' evlilik teklifinizi kabul etti; size evet dedi!' if result == 'accepted' else ' evlilik teklifinizi reddetti; size hayır dedi!') if row.kind == 'marriage' else user.nickname + (' ilişki itirafınızı kabul etti!' if result == 'accepted' else ' ilişki itirafınızı reddetti.')
     notify(db,row.sender_id,'result',{'title':sender_notice,'message':''})
@@ -318,13 +327,17 @@ def respond(request_id: str, payload: Decision, db: Session = Depends(get_db), u
 def buy_ring(payload: Purchase, db: Session = Depends(get_db), user: User = Depends(authenticated)):
     house = owned_house(db,user.id,lock=True)
     check_pair(db,house.male_id,house.female_id)
-    if house.married or not re.fullmatch(r'(copper|silver)-(?:[1-9]|1[0-9]|20)',payload.item) or payload.quantity != 1:
+    if not re.fullmatch(r'(copper|silver|gold)-(?:[1-9]|1[0-9]|20)',payload.item) or payload.quantity != 1:
         raise HTTPException(400,'Geçerli bir söz yüzüğü seçiniz.')
+    if db.get(CoupleRing,(house.id,payload.item)):
+        house.ring=payload.item;db.commit()
+        return {'already_owned':True,'active':summary(db,house)}
     if not house.ring and not payload.item.startswith('copper-'):
         raise HTTPException(403,'İlk yüzük bakır olmalıdır.')
     op,replay = operation(db,user.id,house,payload,'ring',payload.item,1,PRICES[payload.item.split('-')[0]])
     if not replay:
         house.ring = payload.item
+        db.add(CoupleRing(couple_id=house.id,ring=payload.item,source='purchased'))
         advance(db,house)
     db.commit()
     return {'operation_id':op.id,'already_processed':replay,'active':summary(db,house)}
@@ -371,7 +384,9 @@ def marriage(payload: Marriage, db: Session = Depends(get_db), user: User = Depe
         raise HTTPException(409,'Bekleyen evlilik teklifi var.')
     row = LoveRequest(id=str(uuid4()),sender_id=user.id,recipient_id=peer,kind='marriage',couple_id=house.id,ring=payload.ring,message=payload.message)
     db.add(row);db.flush()
-    op,_ = operation(db,user.id,house,payload,'marriage',payload.ring,1,2800)
+    owned_ring=db.get(CoupleRing,(house.id,payload.ring))
+    op,_ = operation(db,user.id,house,payload,'marriage',payload.ring,1,0 if owned_ring else 2800)
+    if not owned_ring:db.add(CoupleRing(couple_id=house.id,ring=payload.ring,source='purchased'))
     op.request_id = row.id
     notify(db,peer,'request',{'request_id':row.id,'sender_id':user.id,'ring':row.ring,'title':'Partneriniz ' + user.nickname + ' size evlilik teklif etti. Kabul ediyor musunuz?','message':row.message})
     db.commit()
@@ -460,8 +475,15 @@ def acknowledge(event_id: int, db: Session = Depends(get_db), user: User = Depen
 
 
 @router.post('/end')
-def end_relationship(db: Session = Depends(get_db), user: User = Depends(authenticated)):
+async def end_relationship(db: Session = Depends(get_db), user: User = Depends(authenticated)):
     house = owned_house(db,user.id,lock=True)
+    rewards.revoke(db,house)
+    link=db.get(CoupleRoom,house.id)
+    if link:
+        from .room_models import Room, RoomMember, RoomSeat
+        room=db.get(Room,link.room_id);room.is_active=False
+        db.execute(delete(RoomMember).where(RoomMember.room_id==room.id))
+        for seat in db.scalars(select(RoomSeat).where(RoomSeat.room_id==room.id)):seat.user_id=None
     house.active = False
     db.execute(delete(CoupleMember).where(CoupleMember.couple_id == house.id))
     for row in db.scalars(select(LoveRequest).where(LoveRequest.couple_id == house.id,LoveRequest.status == 'pending')):
@@ -469,4 +491,99 @@ def end_relationship(db: Session = Depends(get_db), user: User = Depends(authent
     peer = house.female_id if user.id == house.male_id else house.male_id
     notify(db,peer,'ended',{'title':user.nickname + ' ilişkinizi sonlandırdı.','message':'Ortak aile evi kapatıldı.'})
     db.commit()
+    if link:
+        from .main import room_chat_connections,room_rtc_users,room_socket_users
+        for ws in list(room_chat_connections.get(link.room_id,set())):
+            try:
+                await ws.send_json({'type':'couple_room_closed','message':'İlişki sona erdi; çift odası kapatıldı.'})
+                await ws.close(code=1000)
+            except Exception:pass
+            room_socket_users.pop(ws,None)
+        room_chat_connections.pop(link.room_id,None);room_rtc_users.pop(link.room_id,None)
     return {'ended':True}
+
+
+
+def ring_asset(key):
+    return 'relationship-assets/rewards/ring-'+key.split('-')[1]+'.png' if key and key.startswith('level-') else 'relationship-assets/'+str(key)+'.png'
+
+
+@router.get('/rewards')
+def reward_inventory(db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    house=rewards.house_for(db,user.id)
+    if house:
+        house=owned_house(db,user.id,lock=True);rewards.ensure_rewards(db,house);db.commit()
+    owned={(r.cosmetic_type,r.asset_key) for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id==user.id))}
+    return {'level':house.level if house else 0,'items':[{**r,'unlocked':bool(house and r['level']<=house.level),'owned':(r['type'],r['asset_key']) in owned,'equipped':rewards.selected(db,user.id,r['type'])==r['asset_key']} for r in rewards.items(user.gender)]}
+
+
+class EquipReward(BaseModel):
+    kind: str=Field(pattern='^(bubble|title|frame|wallpaper|entrance)$')
+    asset_key: str | None=Field(default=None,max_length=255)
+
+
+@router.post('/rewards/equip')
+def equip_reward(payload: EquipReward,db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    house=owned_house(db,user.id,lock=True);rewards.ensure_rewards(db,house)
+    valid=next((r for r in rewards.items(user.gender) if r['type']==payload.kind and r['asset_key']==payload.asset_key and r['level']<=house.level),None)
+    if payload.asset_key and not valid:raise HTTPException(403,'Bu ilişki ödülü açık değil.')
+    row=db.get(CoupleRewardSelection,(user.id,payload.kind))
+    if not row:row=CoupleRewardSelection(user_id=user.id,kind=payload.kind);db.add(row)
+    row.asset_key=payload.asset_key
+    if payload.kind=='frame':user.frame_asset=payload.asset_key
+    if payload.kind=='wallpaper':user.wallpaper_asset=('relationship_wallpaper_'+payload.asset_key.rsplit('-',1)[1].split('.')[0]) if payload.asset_key else None
+    db.commit();return {'ok':True}
+
+
+class SelectRing(BaseModel):
+    ring: str=Field(max_length=32)
+
+
+@router.post('/ring/equip')
+def equip_ring(payload: SelectRing,db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    house=owned_house(db,user.id,lock=True);rewards.ensure_rewards(db,house)
+    if not db.get(CoupleRing,(house.id,payload.ring)):raise HTTPException(403,'Bu yüzük koleksiyonunuzda yok.')
+    house.ring=payload.ring;advance(db,house);db.commit();return summary(db,house)
+
+
+@router.post('/houses/{house_id}/room')
+def couple_room(house_id: str,db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    public_house(house_id,db,user)
+    house=db.get(Couple,house_id);lock_users(db,[house.male_id,house.female_id])
+    house=db.scalar(select(Couple).where(Couple.id==house_id).with_for_update().execution_options(populate_existing=True))
+    if not house.active:raise HTTPException(409,'İlişki sona ermiş.')
+    link=db.get(CoupleRoom,house.id)
+    if not link:
+        from .room_models import Room,RoomSeat,RoomModerator
+        from .room_routes import generate_room_public_id
+        from .system_data import RoomIdRegistry
+        room=Room(id='couple_'+uuid4().hex,public_id=generate_room_public_id(db),owner_id=house.male_id,name='Çift odası',is_active=True)
+        db.add(room);db.flush()
+        db.add(RoomIdRegistry(room_id=room.id,public_id=room.public_id))
+        db.add_all([RoomSeat(room_id=room.id,seat_number=n) for n in range(1,17)])
+        db.add(RoomModerator(room_id=room.id,user_id=house.female_id))
+        link=CoupleRoom(couple_id=house.id,room_id=room.id);db.add(link);db.commit()
+    return {'room_id':link.room_id,'name':'Çift odası'}
+
+
+class CoupleGiftSend(BaseModel):
+    gift_key: str=Field(min_length=1,max_length=64)
+    quantity: int=Field(default=1,ge=1,le=1000,strict=True)
+    request_key: str=Field(min_length=16,max_length=64,pattern=r'^[A-Za-z0-9_-]+$')
+
+
+@router.post('/houses/{house_id}/gifts')
+async def send_couple_gift(house_id: str,payload: CoupleGiftSend,db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    public_house(house_id,db,user)
+    couple_room(house_id,db,user)
+    house=db.get(Couple,house_id)
+    lock_users(db,[user.id,house.male_id,house.female_id])
+    house=db.scalar(select(Couple).where(Couple.id==house.id).with_for_update().execution_options(populate_existing=True))
+    if not house.active:raise HTTPException(409,'İlişki sona ermiş.')
+    for uid in (house.male_id,house.female_id):check_pair(db,user.id,uid)
+    require_feature(db,user.id,[house.male_id,house.female_id])
+    from .couple_gifts import process_gift,broadcast_gift
+    row,replay=process_gift(db,house,user,payload.gift_key,payload.quantity,payload.request_key)
+    db.commit()
+    if not replay:await broadcast_gift(db,row,user)
+    return {'id':row.id,'gross':row.gross,'percent':row.percent,'each_amount':row.each_amount,'already_processed':replay}

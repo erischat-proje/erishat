@@ -3,7 +3,8 @@
   const api=(path,options)=>window.ErisPlatform.api('/relationship'+path,options);
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const amount=n=>Number(n||0).toLocaleString('tr-TR');
-  const asset=key=>'./relationship-assets/'+key+'.png';
+  const asset=key=>key?.startsWith('level-')?'./relationship-assets/rewards/ring-'+key.split('-')[1]+'.png':'./relationship-assets/'+key+'.png';
+  const rewardArt=name=>'./relationship-assets/rewards/'+name+'.png';
   const cosmetic=key=>key?(window.ErisChatCosmetics?.assetUrl?.(key)||key):'';
   const labels={brick:'Tuğla',wood:'Tahta',paint:'Boya',copper:'Bakır',silver:'Gümüş',gold:'Altın'};
   const coin=n=>'<span class="rel-money">'+amount(n)+'<img src="./lidya-coin.png" alt="Lidya"></span>';
@@ -44,6 +45,9 @@
     .rel-house-menu button{width:100%;min-height:44px;border:0;border-radius:10px;padding:10px;background:#8d3d553d;color:#ffd6dd;text-align:left;font-weight:700}
     .rel-house .rel-name{top:38.3%;height:2.7%;width:20%;padding:0 2px;background:transparent;border-radius:0;color:#ffe4a1;font-size:clamp(9px,2.7vw,18px);line-height:1.2;text-align:center}
     .rel-house .rel-male-name{left:17%}.rel-house .rel-female-name{left:66.5%}
+    .rel-house .rel-art-button{position:absolute!important;padding:0!important;min-height:0!important;border:0!important;border-radius:0!important;background:transparent!important;display:grid;place-items:center;cursor:pointer}
+    .rel-art-button img{width:100%;height:100%;object-fit:contain;pointer-events:none}.rel-room-button{left:9%;top:5%;width:20%;height:10%}.rel-rewards-button{left:6.5%;top:67.5%;width:14%;height:8%}.rel-gift-button{right:6.5%;top:67.5%;width:14%;height:8%}
+    .rel-couple-gifts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.rel-couple-gifts button{display:grid;justify-items:center;min-width:0}.rel-couple-gifts button>img{width:100%;height:75px;object-fit:contain}.rel-title{width:85px;height:28px;object-fit:contain;vertical-align:middle}.rel-public{display:inline-block;vertical-align:middle;width:125px!important;height:36px!important}
   `;document.head.append(style);
   let stack=0,main=null,catalogData=null;
   const openDialogs=new Set();
@@ -105,20 +109,42 @@
     const fitNames=()=>{if(!art.isConnected)return;for(const name of art.querySelectorAll('.rel-name')){name.style.removeProperty('font-size');if(!name.clientWidth)continue;let size=parseFloat(getComputedStyle(name).fontSize);while(name.scrollWidth>name.clientWidth&&size>7){size-=.5;name.style.fontSize=size+'px'}}};
     art.querySelector('.rel-house-art').addEventListener('load',fitNames);setTimeout(fitNames,0);
     if(typeof ResizeObserver!=='undefined'){current.shade._relLayoutObserver=new ResizeObserver(fitNames);current.shade._relLayoutObserver.observe(art)}
-    const ring=document.createElement('button');ring.type='button';ring.className='rel-ring';ring.setAttribute('aria-label',house.ring?'Yüzüğü değiştir':'Yüzük satın al');if(house.ring)ring.innerHTML='<img src="'+asset(house.ring)+'" alt="Çiftin yüzüğü">';else ring.textContent='Yüzük satın al';ring.disabled=!own||house.married;ring.onclick=()=>rings(house);art.append(ring);
+    const ring=document.createElement('button');ring.type='button';ring.className='rel-ring';ring.setAttribute('aria-label',house.ring?'Yüzüğü değiştir':'Yüzük satın al');if(house.ring)ring.innerHTML='<img src="'+asset(house.ring)+'" alt="Çiftin yüzüğü">';else ring.textContent='Yüzük satın al';ring.disabled=!own;ring.onclick=()=>rings(house);art.append(ring);
     for(const m of ['brick','wood','paint']){const b=document.createElement('button');b.type='button';b.className='rel-hotspot';b.dataset.material=m;b.setAttribute('aria-label',labels[m]+' · '+house.remaining[m]+' adet kaldı');b.innerHTML='<b>'+amount(house.remaining[m])+'</b>';b.disabled=own&&house.max_level;b.onclick=()=>materials(house,m,!own);art.append(b)}body.append(art);
+    const imageButton=(name,cls,label,handler)=>{const b=document.createElement('button');b.type='button';b.className='rel-art-button '+cls;b.setAttribute('aria-label',label);const img=document.createElement('img');img.src=rewardArt(name);img.alt=label;b.append(img);b.onclick=handler;art.append(b)};
+    imageButton('room-button','rel-room-button','Çift odasını aç',async()=>{try{const room=await post('/houses/'+encodeURIComponent(house.id)+'/room');current.close();await window.openRoom?.(room.room_id,room.name)}catch(e){errorBox(body).textContent=e.message}});
+    imageButton('rewards-button','rel-rewards-button','İlişki ödülleri',()=>showRewards(house));
+    imageButton('gift-button','rel-gift-button','Çifte hediye gönder',()=>coupleGifts(house));
     const note=document.createElement('p');note.className='rel-note';note.textContent=house.max_level?'En yüksek ev seviyesine ulaştınız.':'Seviye '+(house.level+1)+' için görseldeki kalan ihtiyaçları tamamlayın. Malzemelerin her biri 750 Lidya. '+(house.needs_first_copper?'İlk geçiş için 1 adet bakır yüzük gerekir.':'');body.append(note);
     if(!own){const donate=document.createElement('div');donate.className='rel-actions';for(const m of ['brick','wood','paint']){const b=document.createElement('button');b.textContent=labels[m]+' katkısı';b.onclick=()=>materials(house,m,true);donate.append(b)}body.append(donate)}
     const stock=document.createElement('p');stock.className='rel-note';stock.textContent='Ortak depo: '+Object.entries(house.materials).map(([m,n])=>labels[m]+' '+amount(n)).join(' · ');body.append(stock);
     if(own)api('/me').then(s=>{if(main===current&&body.isConnected&&current.renderTicket===ticket)renderRequests(body,s.requests||[])}).catch(()=>{});
   }
+  async function showRewards(house=null,collection=false){
+    const modal=dialog(collection?'İlişki koleksiyonum':'İlişki ödülleri','<p>Yükleniyor…</p>');
+    try{const data=await api('/rewards');if(!modal.shade.isConnected)return;modal.body.replaceChildren();
+      for(const r of data.items){if(collection&&!r.owned)continue;const row=document.createElement('article');row.className='rel-row';
+        const logo=document.createElement('img');logo.src=cosmetic(r.logo);logo.alt='Seviye '+r.level;logo.style.cssText='width:50px;height:50px;object-fit:contain';
+        const image=document.createElement('img');image.src=cosmetic(r.asset);image.alt=r.name;image.style.cssText='width:76px;height:60px;object-fit:contain';
+        const copy=document.createElement('div');copy.className='rel-row-copy';copy.innerHTML='<b>'+esc(r.name)+'</b><small>Seviye '+r.level+' · '+(r.unlocked?'Kazanıldı':'Kilitli')+'</small>';
+        row.append(logo,image,copy);if(r.owned&&r.type!=='ring'){const b=document.createElement('button');b.type='button';b.textContent=r.equipped?'Çıkar':'Uygula';b.onclick=()=>action(b,modal.body,async()=>{await post('/rewards/equip',{kind:r.type,asset_key:r.equipped?null:r.asset_key});r.equipped=!r.equipped;b.textContent=r.equipped?'Çıkar':'Uygula';modal.close();showRewards(house,collection);window.ErisChatCosmetics?.load?.();window.ErisProfile?.refresh?.();window.dispatchEvent(new Event('erischat:cosmetics-updated'));refreshMain()});row.append(b)}modal.body.append(row)}
+      if(!modal.body.children.length)modal.body.textContent='Aktif ilişkinizde henüz ödül yok.';
+    }catch(e){errorBox(modal.body).textContent=e.message}
+  }
+  async function coupleGifts(house){
+    const modal=dialog('Çifte hediye gönder','<p>Hediyeler yükleniyor…</p>');
+    try{const data=await window.ErisPlatform.api('/message-gifts');if(!modal.shade.isConnected)return;modal.body.innerHTML='<p class="rel-note">Hediye ortak hesaba sayılır. 30 Lidya üzerindeki hediyede üçte bir kesilir; kalan tutarın rastgele %1–100’ü iki partnere eşit dağıtılır.</p><label>Adet<input type="number" min="1" max="1000" step="1" value="1" data-quantity></label><div class="rel-couple-gifts"></div>';
+      const grid=modal.body.querySelector('.rel-couple-gifts');for(const gift of (Array.isArray(data)?data:data.items||[])){const b=document.createElement('button');b.type='button';const name=gift.gift_key||gift.name;b.innerHTML='<img src="'+esc(gift.image_url)+'" alt="'+esc(name)+'">'+coin(gift.unit_price||gift.price);let requestKey=null,requestQuantity=null;
+        b.onclick=()=>action(b,modal.body,async()=>{const quantity=Number(modal.body.querySelector('[data-quantity]').value);if(!Number.isInteger(quantity)||quantity<1||quantity>1000)throw new Error('1–1000 arası adet giriniz.');if(quantity!==requestQuantity){requestKey=key();requestQuantity=quantity}const r=await post('/houses/'+encodeURIComponent(house.id)+'/gifts',{gift_key:name,quantity,request_key:requestKey});requestKey=null;requestQuantity=null;window.toast?.('Çiftin her partnerine '+amount(r.each_amount)+' Lidya aktarıldı.');window.ErisProfile?.refresh?.()});grid.append(b)}
+    }catch(e){errorBox(modal.body).textContent=e.message}
+  }
   async function getCatalog(){if(!catalogData)catalogData=await api('/catalog');return catalogData}
   function rings(house,onSelect=null){
     const modal=dialog(onSelect?'Evlilik teklifiniz için yüzük seçiniz':'Yüzük satın al','<div class="rel-actions" data-categories></div><div class="rel-rings"></div>');
     getCatalog().then(data=>{
-      if(!modal.shade.isConnected)return;const categories=onSelect?['gold']:['copper','silver'];
-      const draw=metal=>{const grid=modal.body.querySelector('.rel-rings');grid.replaceChildren();for(const r of data.rings.filter(r=>r.category===metal)){const b=document.createElement('button');b.type='button';b.className='rel-ring-choice';b.innerHTML='<img src="'+esc(r.asset)+'" alt="'+labels[metal]+' yüzük '+r.key.split('-')[1]+'">'+coin(r.price);b.disabled=!onSelect&&house.needs_first_copper&&metal==='silver';b.onclick=()=>{if(onSelect){modal.close();onSelect(r);return}confirmRing(house,r,modal)};grid.append(b)}};
-      for(const metal of categories){const b=document.createElement('button');b.type='button';b.innerHTML='<img src="'+asset(metal+'-1')+'" alt="" style="width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:6px">'+labels[metal];b.onclick=()=>draw(metal);modal.body.querySelector('[data-categories]').append(b)}draw(categories[0]);
+      if(!modal.shade.isConnected)return;const categories=onSelect?['gold']:['owned','level','copper','silver','gold'];
+      const draw=metal=>{const grid=modal.body.querySelector('.rel-rings');grid.replaceChildren();if(metal==='owned'||metal==='level'){for(const r of (house.owned_rings||[]).filter(r=>metal==='level'?r.source==='level':r.source==='purchased')){const b=document.createElement('button');b.type='button';b.className='rel-ring-choice';b.innerHTML='<img src="'+esc(r.asset)+'" alt="Yüzük">'+(house.ring===r.key?'Takılı':'Tak');b.onclick=()=>action(b,modal.body,async()=>{await post('/ring/equip',{ring:r.key});modal.close();refreshMain();window.ErisProfile?.refresh?.();window.dispatchEvent(new Event('erischat:cosmetics-updated'))});grid.append(b)}if(!grid.children.length)grid.textContent='Bu kategoride henüz yüzük yok.';return;}for(const r of data.rings.filter(r=>r.category===metal)){const b=document.createElement('button');b.type='button';b.className='rel-ring-choice';b.innerHTML='<img src="'+esc(r.asset)+'" alt="'+labels[metal]+' yüzük '+r.key.split('-')[1]+'">'+coin(r.price);b.disabled=!onSelect&&house.needs_first_copper&&metal==='silver';b.onclick=()=>{if(onSelect){modal.close();onSelect({...r,price:(house.owned_rings||[]).some(x=>x.key===r.key)?0:r.price});return}confirmRing(house,r,modal)};grid.append(b)}};
+      for(const metal of categories){const b=document.createElement('button');b.type='button';b.innerHTML='<img src="'+asset((metal==='owned'||metal==='level'?'copper':metal)+'-1')+'" alt="" style="width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:6px">'+({owned:'Satın alınanlar',level:'Seviye bağlı yüzükler'}[metal]||labels[metal]);b.onclick=()=>draw(metal);modal.body.querySelector('[data-categories]').append(b)}draw(categories[0]);
       if(!onSelect&&house.needs_first_copper){const p=document.createElement('p');p.className='rel-note';p.textContent='İlk yüzük bakır olmalıdır; sonrasında gümüş veya farklı bakır yüzük seçebilirsiniz.';modal.body.append(p)}
     }).catch(e=>{errorBox(modal.body).textContent=e.message});
   }
@@ -149,13 +175,14 @@
     try{const rows=await api('/events');if(token()!==sessionToken)return;for(const event of rows){if(seenEvents.has(event.id))continue;seenEvents.add(event.id);if(event.kind==='request'){requestPopup(event);await post('/events/'+event.id+'/ack');break}const modal=dialog(event.title,'<p data-message></p>');modal.shade.classList.add('rel-notice');modal.body.querySelector('[data-message]').textContent=event.message||'';if(event.kind==='donation'){const b=document.createElement('button');b.type='button';b.className='rel-primary';b.textContent='Teşekkür et';b.onclick=()=>action(b,modal.body,async()=>{await post('/donations/'+encodeURIComponent(event.operation_id)+'/thank');await post('/events/'+event.id+'/ack');modal.close();window.toast?.('Teşekkürünüz gönderildi.')});modal.body.append(b)}await post('/events/'+event.id+'/ack');if(['welcome','upgrade','result','ended'].includes(event.kind)){refreshMain();window.dispatchEvent(new Event('erischat:cosmetics-updated'))}break}}catch(_){}finally{polling=false}
   }
   function decorate(root,relationship){
-    const old=root.querySelector('.rel-public');if(!relationship){old?.remove();return}
+    const old=root.querySelector('.rel-public');if(!relationship){old?.remove();root.querySelector('.rel-title')?.remove();return}
+    root.querySelector('.rel-title')?.remove();if(relationship.title_asset){const title=document.createElement('img');title.className='rel-title';title.src=cosmetic(relationship.title_asset);title.alt='İlişki ünvanı';(root.querySelector('.name')||root).append(title)}
     const slot=old||document.createElement('div');slot.className='rel-public';slot.style.setProperty('--rel-status',`url("${asset(relationship.status)}")`);slot.replaceChildren();
     const b=document.createElement('button');b.type='button';b.className='rel-public-status';b.setAttribute('aria-label',relationship.partner.nickname+' ile ilişki · aile evini aç');b.onclick=()=>open(relationship.id);if(relationship.ring){const ring=document.createElement('img');ring.className='rel-public-ring';ring.src=asset(relationship.ring);ring.alt='';b.append(ring)}slot.append(b,avatar(relationship.partner));
-    if(!old){const fan=root.querySelector('[data-fans]');if(fan)fan.before(slot);else root.querySelector('.name')?.append(slot)}
+    if(!old){const fan=root.querySelector('[data-fans]');if(fan)fan.before(slot);else (root.querySelector('.name')||root).append(slot)}const title=root.querySelector('.rel-title');if(title)slot.after(title);
   }
   function boot(){const tabs=document.querySelector('#ephTabs');if(!tabs)return;if(!tabs.querySelector('[data-tab=relationship]')){const b=document.createElement('button');b.type='button';b.dataset.tab='relationship';b.innerHTML='<span class="eph-icon" aria-hidden="true" style="font-size:25px;line-height:24px">♥</span><span>İlişki</span>';b.onclick=()=>open();tabs.append(b)}}
-  window.ErisRelationship={open,decorate};
+  window.ErisRelationship={open,decorate,showRewards,coupleGifts};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{boot();pollEvents()},{once:true});else{boot();pollEvents()}
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready'){boot();pollEvents()}else if(['logged_out','login_required'].includes(e.detail?.state)){for(const s of openDialogs){s._relLayoutObserver?.disconnect();s.remove()}openDialogs.clear();document.body.classList.remove('rel-dialog-open');main=null;seenEvents.clear();popupRequests.clear()}});
   window.addEventListener('erischat:event',pollEvents);window.addEventListener('erischat:room-gift',refreshMain);window.addEventListener('erischat:gift-updated',refreshMain);

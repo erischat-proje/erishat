@@ -62,7 +62,7 @@
     if(d)return d;
     d=document.createElement('div');d.id='erisRoomContribution';d.hidden=true;
     d.innerHTML='<div class="rc-shade"></div><section class="rc-panel" role="dialog" aria-modal="true" aria-label="Oda katkısı"><header><div><small>ERISCHAT · ODA</small><h2>Oda katkısı</h2></div><button class="rc-close" type="button" aria-label="Kapat">×</button></header><nav class="rc-periods" aria-label="Sıralama dönemi"></nav><div class="rc-list" aria-live="polite"></div></section>';
-    s.appendChild(d);
+    d.querySelector('h2').textContent=window.__erisCurrentCoupleId?'Çift hediyesi':'Oda katkısı';s.appendChild(d);
     d.querySelector('.rc-close').onclick=close;
     d.querySelector('.rc-shade').onclick=close;
     d.querySelector('.rc-periods').innerHTML=Object.entries(labels).map(([key,label])=>`<button type="button" data-period="${key}">${label}</button>`).join('');
@@ -71,7 +71,7 @@
   }
   function close(){const d=dialog();if(d)d.hidden=true;requestNumber++;}
   async function load(period){
-    const d=dialog(), id=roomId();if(!d || !id)return;
+    const d=dialog(), id=roomId();if(!d || !id)return;d.querySelector('h2').textContent=window.__erisCurrentCoupleId?'Çift hediyesi':'Oda katkısı';
     activePeriod=period;
     d.querySelectorAll('[data-period]').forEach(b=>{const selected=b.dataset.period===period;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));});
     const list=d.querySelector('.rc-list');list.textContent='Sıralama yükleniyor…';

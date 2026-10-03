@@ -26,7 +26,7 @@ VIP = [
 
 
 def catalog():
-    return NORMAL + VIP
+    return NORMAL + VIP + [{'key':f'relationship_wallpaper_{i}','tier':'relationship','vip_level':0,'asset':f'relationship-assets/rewards/wallpaper-{i}.png','price':0} for i in (1,2)]
 
 
 def find(key):

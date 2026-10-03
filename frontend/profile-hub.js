@@ -137,7 +137,8 @@
         body.querySelector('[data-count]').textContent=owned.length+' sahip olunan görünüm • VIP '+Number(vipData.level||0);
         const grid=body.querySelector('.eph-assets');
         if(!owned.length)grid.innerHTML='<div class="eph-muted">Henüz satın alınmış kozmetik yok. Standart görünümünü mağazadan seçebilirsin.</div>';
-        for(const item of owned){
+        const relationshipButton=document.createElement('button');relationshipButton.type='button';relationshipButton.textContent='İlişki ödüllerim';relationshipButton.onclick=()=>window.ErisRelationship?.showRewards?.(null,true);body.prepend(relationshipButton);
+        for(const item of owned.filter(item=>!String(item.asset_key||'').startsWith('relationship-assets/rewards/'))){
           const key=item.asset_key||item.key,type=item.cosmetic_type||item.type||'avatar';
           const card=document.createElement('div');card.style.cssText='padding:10px;border:1px solid #ffffff18;background:#ffffff08;border-radius:14px;text-align:center';
           const image=document.createElement('div');image.style.cssText='height:66px;background:center/contain no-repeat;margin-bottom:6px';

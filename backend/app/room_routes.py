@@ -10,6 +10,8 @@ from collections import defaultdict, deque
 from typing import Literal
 import time
 import hashlib
+from . import couple_gifts, relationship_rewards
+from .relationship_models import Couple, CoupleRoom
 
 from fastapi import APIRouter, Depends, HTTPException, Header, File, Form, UploadFile
 from fastapi.responses import Response
@@ -158,12 +160,15 @@ def generate_room_public_id(db: Session) -> str:
 def get_room_or_404(db: Session, room_id: str) -> Room:
     room = db.get(Room, room_id) or db.scalar(select(Room).where(Room.public_id == room_id))
     if not room: raise HTTPException(status_code=404, detail="Oda bulunamadı")
+    house=couple_gifts.room_house(db,room.id)
+    if house and not house.active:raise HTTPException(410,'Çift odası kapatıldı.')
     refresh_level(db, room)
     ensure_seats(db, room)
     return room
 
 def require_owner(db: Session, room: Room, user: User) -> None:
-    if room.owner_id != user.id: raise HTTPException(status_code=403, detail="Sadece oda sahibi yapabilir")
+    house=couple_gifts.room_house(db,room.id)
+    if room.owner_id != user.id and not (house and house.active and user.id in (house.male_id,house.female_id)):raise HTTPException(403,'Sadece oda sahibi yapabilir')
 
 def require_staff(db: Session, room: Room, user: User) -> None:
     if room.owner_id == user.id: return
@@ -225,7 +230,8 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
     seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number <= room.seat_count).order_by(RoomSeat.seat_number)))
     current_id = str(user.id) if user else ""
-    is_owner = bool(user and str(room.owner_id) == current_id)
+    couple_house=couple_gifts.room_house(db,room.id)
+    is_owner = bool(user and (str(room.owner_id) == current_id or (couple_house and couple_house.active and current_id in (couple_house.male_id,couple_house.female_id))))
     is_moderator = bool(user and is_member(db,room.id,user.id) and any(str(x) == current_id for x in moderators))
     current_seat = next((s.seat_number for s in seats if user and str(s.user_id or "") == current_id), None)
     can_manage = bool(is_owner or is_moderator)
@@ -238,12 +244,14 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper_choice = find_wallpaper(wallpaper.asset_key) if wallpaper else None
     owner_vip = db.get(VipStatus, room.owner_id) if wallpaper_choice and wallpaper_choice["tier"] == "vip" else None
     vip_unlocked = bool(owner_vip and int(owner_vip.level or 0) >= int(wallpaper_choice["vip_level"]))
-    wallpaper_active = bool(vip_unlocked or (wallpaper_expiry and wallpaper_expiry > datetime.now(timezone.utc)))
+    reward_unlocked=bool(wallpaper_choice and wallpaper_choice['tier']=='relationship' and relationship_rewards.owns_wallpaper(db,room.owner_id,wallpaper_choice['asset']))
+    wallpaper_active = bool(reward_unlocked or vip_unlocked or (wallpaper_expiry and wallpaper_expiry > datetime.now(timezone.utc)))
+    if wallpaper_choice and wallpaper_choice['tier']=='relationship':wallpaper_active=reward_unlocked
     wallpaper_state = db.get(RoomWallpaperState, room.id)
     wallpaper_applied = bool(wallpaper_state.applied) if wallpaper_state else wallpaper_active
     wallpaper_item = wallpaper_choice if wallpaper_active else None
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
-    return {"id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
+    return {"couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]), "seat_permission":seat_workflow.enabled(db,room.id),
         "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": room_is_locked(room), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else DEFAULT_ROOM_WALLPAPER, "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active and not vip_unlocked else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
@@ -292,13 +300,15 @@ def register_room_auth(current_user_dependency, join_announcement=None):
     def list_my_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         # Eski test/veri kayıtlarında aynı kullanıcıya ait birden fazla sahiplik kalmış olabilir.
         # Kullanıcı arayüzünde yalnızca tek sahip olunan oda gösterilir; moderatör olunan odalar ayrıca listelenir.
-        owned_room = db.scalar(select(Room).where(Room.owner_id == user.id).order_by(Room.created_at.desc()).limit(1))
+        owned_room = db.scalar(select(Room).where(Room.owner_id == user.id,~Room.id.in_(select(CoupleRoom.room_id))).order_by(Room.created_at.desc()).limit(1))
         moderated_rooms = list(db.scalars(
             select(Room)
             .where(Room.id.in_(select(RoomModerator.room_id).where(RoomModerator.user_id == user.id)), Room.owner_id != user.id)
             .order_by(Room.created_at.desc())
         ))
-        rooms = ([owned_room] if owned_room else []) + moderated_rooms
+        shared_rooms=list(db.scalars(select(Room).join(CoupleRoom,CoupleRoom.room_id==Room.id).join(Couple,Couple.id==CoupleRoom.couple_id).where(Couple.active.is_(True),(Couple.male_id==user.id)|(Couple.female_id==user.id))))
+        shared_ids={r.id for r in shared_rooms}
+        rooms = ([owned_room] if owned_room else []) + shared_rooms + [r for r in moderated_rooms if r.id not in shared_ids]
         result = []
         for room in rooms:
             view = room_view(db, room, user)
@@ -380,6 +390,8 @@ def register_room_auth(current_user_dependency, join_announcement=None):
             db.add(RoomMember(room_id=room.id, user_id=user.id, ghost=ghost))
         else:
             existing_member.ghost=ghost
+        couple_house=couple_gifts.room_house(db,room.id)
+        if couple_house and not couple_house.active:raise HTTPException(410,'Çift odası kapatıldı.')
         room.is_active = True
         if not existing_member and not ghost:
             entry=RoomChatMessage(room_id=room.id,user_id=user.id,text=user.nickname+' adlı kullanıcı odaya katıldı.')
@@ -568,7 +580,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         view = room_view(db, room, user)
         return {"asset_key": view["wallpaper_owned_asset"], "asset_path": view["wallpaper_owned_asset_path"], "applied": view["wallpaper_applied"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
-                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": wallpaper_catalog()}
+                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog()]}
 
     @router.post("/{room_id}/wallpaper")
     def buy_room_wallpaper(room_id: str, payload: RoomWallpaperUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -581,7 +593,10 @@ def register_room_auth(current_user_dependency, join_announcement=None):
             vip = db.get(VipStatus, user.id)
             if int(vip.level if vip else 0) < int(item["vip_level"]):
                 raise HTTPException(status_code=403, detail=f"Oda duvar kağıdı için VIP {item['vip_level']} gerekli")
-        vip_reward = item["tier"] == "vip"
+        relationship_reward=item['tier']=='relationship'
+        if relationship_reward and not relationship_rewards.owns_wallpaper(db,user.id,item['asset']):
+            raise HTTPException(403,'Önce ilişki duvar kağıdını koleksiyonunuzdan uygulayın.')
+        vip_reward = item['tier'] in ('vip','relationship')
         price = 0 if vip_reward else int(item["price"]) * {1: 1, 7: 5, 30: 18}[payload.days]
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
         if not locked_user or int(locked_user.lidya or 0) < price:
@@ -613,7 +628,8 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         expiry = row.paid_until if row and row.paid_until.tzinfo else (row.paid_until.replace(tzinfo=timezone.utc) if row else None)
         item = find_wallpaper(row.asset_key) if row else None
         vip = db.get(VipStatus, user.id) if item and item["tier"] == "vip" else None
-        vip_available = bool(vip and int(vip.level or 0) >= int(item["vip_level"]))
+        vip_available = bool(vip and int(vip.level or 0) >= int(item['vip_level'])) or bool(item and item['tier']=='relationship' and relationship_rewards.owns_wallpaper(db,user.id,item['asset']))
+        if item and item['tier']=='relationship' and not vip_available:raise HTTPException(403,'Aktif ilişki ödülü gerekli.')
         if not row or not item or (not vip_available and (not expiry or expiry <= datetime.now(timezone.utc))):
             raise HTTPException(status_code=400, detail="Uygulanabilir süreli oda duvar kâğıdı yok")
         state = db.get(RoomWallpaperState, room.id)
@@ -871,6 +887,19 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         require_feature(db, user.id, recipient_ids)
         unit_price = GIFT_CATALOG.get(payload.gift_key)
         if unit_price is None: raise HTTPException(status_code=400, detail="Geçersiz hediye")
+        house=couple_gifts.room_house(db,room.id)
+        couple_targets={house.male_id,house.female_id} if house and house.active else set()
+        if couple_targets.intersection(recipient_ids):
+            if recipient_ids-couple_targets:
+                raise HTTPException(400,'Çift odasında ortak hediye için partnerlerden birini seçiniz.')
+            from .relationship_routes import lock_users
+            if user.id in couple_targets:raise HTTPException(403,'Kendi çiftinize hediye gönderemezsiniz.')
+            lock_users(db,[user.id,house.male_id,house.female_id])
+            house=db.scalar(select(type(house)).where(type(house).id==house.id).with_for_update().execution_options(populate_existing=True))
+            if not house.active:raise HTTPException(409,'İlişki sona ermiş.')
+            row,_=couple_gifts.process_gift(db,house,user,payload.gift_key,payload.quantity,uuid4().hex,room.id)
+            db.commit();await couple_gifts.broadcast_gift(db,row,user)
+            return {'gift_key':payload.gift_key,'quantity':payload.quantity,'total_price':row.gross,'recipient_count':2,'recipient_amount':row.each_amount,'percent':row.percent,'couple_id':house.id}
         per_person = unit_price * payload.quantity
         total = per_person * len(recipient_ids)
         # Balance check and subtraction happen in one transaction, before any gifts are created.
@@ -935,6 +964,14 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         if period == "daily": start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         elif period == "weekly": start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
         elif period == "monthly": start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        house=couple_gifts.room_house(db,room.id)
+        if house and house.active:
+            from .relationship_models import CoupleGift
+            total=func.sum(CoupleGift.gross).label('total')
+            query=select(User.id,User.nickname,User.avatar,User.avatar_asset,total).join(CoupleGift,CoupleGift.sender_id==User.id).where(CoupleGift.couple_id==house.id)
+            if start is not None:query=query.where(CoupleGift.created_at>=start.astimezone(timezone.utc))
+            rows=db.execute(query.group_by(User.id,User.nickname,User.avatar,User.avatar_asset).order_by(total.desc(),User.id).limit(50)).all()
+            return [{'rank':i,'user_id':uid,'nickname':nickname,'avatar':avatar,'avatar_asset':asset,'total_lidya':int(value or 0)} for i,(uid,nickname,avatar,asset,value) in enumerate(rows,1)]
         total = func.sum(RoomGiftEvent.total_price).label("total")
         query = select(User.id, User.nickname, User.avatar, User.avatar_asset, total).join(RoomGiftEvent, RoomGiftEvent.sender_id == User.id).where(RoomGiftEvent.room_id == room.id)
         if start is not None: query = query.where(RoomGiftEvent.created_at >= start.astimezone(timezone.utc))

@@ -115,6 +115,7 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     asset = find_asset(key, kind)
     if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
+    if asset.get('relationship'):raise HTTPException(403,'Bu görünüm ilişki seviyesinde kazanılır.')
     if asset.get("vip"):
         raise HTTPException(status_code=403, detail=f"Bu VIP görünüm mağazadan satın alınamaz; VIP {asset.get('vip_level', 1)} seviyesinde açılır")
     price = int(asset.get("price") or PRICE)
@@ -174,6 +175,11 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
         if not owned:
             raise HTTPException(status_code=403, detail="Önce bu görünümü satın almalısınız")
 
+    if asset.get('relationship'):
+        from .relationship_rewards import house_for, items
+        house=house_for(db,user.id)
+        if not house or not any(r['asset_key']==key and r['level']<=house.level for r in items(user.gender)):
+            raise HTTPException(403,'Aktif ilişki ödülü gerekli.')
     column = "avatar_asset" if kind == "avatar" else "frame_asset" if kind == "frame" else None
     if not column:
         raise HTTPException(status_code=400, detail="Geçersiz görünüm türü")
@@ -199,6 +205,7 @@ def purchase_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: S
     item = find_wallpaper(key)
     if not item:
         raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+    if item['tier']=='relationship':raise HTTPException(403,'Bu duvar kağıdı ilişki seviyesinde kazanılır.')
     if item["tier"] == "vip":
         raise HTTPException(status_code=403, detail=f"Bu duvar kağıdı VIP {item['vip_level']} seviyesinde açılır")
     price = int(item["price"])
@@ -241,13 +248,16 @@ def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Sess
     item = find_wallpaper(key)
     if not item:
         raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+    if item['tier']=='relationship':
+        from .relationship_rewards import selected
+        if selected(db,user.id,'wallpaper')!=item['asset']:raise HTTPException(403,'Aktif ilişki duvar kağıdı gerekli.')
     if item["tier"] == "vip":
         current = vip_level(db, user.id)
         required = int(item["vip_level"])
         if current < required:
             raise HTTPException(status_code=403, detail=f"VIP {required} seviyesi gerekli")
     else:
-        owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid": user.id, "key": key}).first()
+        owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid": user.id, "key": item["asset"] if item["tier"]=="relationship" else key}).first()
         if not owned:
             raise HTTPException(status_code=403, detail="Önce bu duvar kağıdını satın almalısınız")
     db.execute(text("UPDATE users SET wallpaper_asset=:key WHERE id=:uid"), {"key": key, "uid": user.id})
