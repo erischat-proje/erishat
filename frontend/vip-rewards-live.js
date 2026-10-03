@@ -68,6 +68,7 @@
     const mini=root.querySelector('.eris-mini-card');if(mini){mini.classList.toggle('eris-mini-vip',!!level&&!u.vip_neon_hidden);mini.style.setProperty('--vip-popup',level&&!u.vip_neon_hidden?`url("${material('popup',level)}")`:'none')}
     for(const [selector,value] of Object.entries({'[data-followers]':u.followers_count,'[data-following]':u.following_count}))if(value!=null)root.querySelectorAll(selector).forEach(el=>{el.textContent=number(value)});
     root.querySelectorAll('[data-received-gifts]').forEach(el=>{el.innerHTML='<span>'+number(u.received_gift_lidya)+'</span><img src="./lidya-coin.png" alt="Lidya">'});
+    window.ErisRelationship?.decorate?.(root,u.relationship);
   }
   const watchers=new Map();
   function watch(root,id){if(!root||!id)return;const existing=watchers.get(root);if(existing?.id===id)return;const entry={id,busy:false};watchers.set(root,entry);refreshOne(root,entry)}

@@ -131,9 +131,10 @@ def user_can_show_vip(db: Session, user_id: str, field: str) -> bool:
     privacy = db.get(UserPrivacy, user_id); return True if not privacy else not bool(getattr(privacy, field, False))
 def profile_stats(db: Session, target: User, viewer: User) -> dict:
     from .personal_fans import received_total
+    from .relationship_routes import public_brief
     if active_ban(db, target.id):
         return {"followers_count": 0, "following_count": 0, "received_gift_lidya": 0,
-                "vip_level": 0, "vip_badge_hidden": True, "vip_neon_hidden": True}
+                "vip_level": 0, "vip_badge_hidden": True, "vip_neon_hidden": True, "relationship": None}
     v = db.get(VipStatus, target.id)
     own = target.id == viewer.id
     visible = own or user_can_show_vip(db, target.id, "hide_vip")
@@ -141,6 +142,7 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
         "followers_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id == target.id)) or 0),
         "following_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.follower_id == target.id)) or 0),
         "received_gift_lidya": received_total(db, target.id),
+        "relationship": public_brief(db, target.id),
         "vip_level": int(v.level or 0) if v and visible else 0,
         "vip_badge_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_badge"),
         "vip_neon_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_neon"),
