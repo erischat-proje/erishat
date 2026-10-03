@@ -304,6 +304,7 @@
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       surface.classList.remove('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
+      if(String(window.ErisCurrentRoomId)===String(id)){window.ErisCurrentRoomId=null;window.currentRoomId=null;window.__erisRoomPermissions={};window.__erisActiveRoomWallpaper=null;}
     }
   }
 

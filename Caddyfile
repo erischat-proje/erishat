@@ -1,4 +1,11 @@
 :80
 root * /srv/frontend
 file_server
-try_files {path} /erischat-main.html
+@entry path / /index.html /erischat-main.html
+header @entry Cache-Control "no-cache, must-revalidate"
+# Missing scripts and images must return 404 instead of HTML disguised as an asset.
+@page {
+    not path /v1/* /ws/*
+    not path_regexp extension \.[^/]+$
+}
+try_files @page {path} /erischat-main.html
