@@ -1,0 +1,67 @@
+================================================================================
+ERISCHAT PLATFORMU - GÜNCELLEME VE GELİŞTİRME GÖREV LİSTESİ (TASK SPECIFICATION)
+================================================================================
+
+1. YÖNETİM VE YETKİLENDİRME (LOG & PANEL) GÜNCELLEMELERİ
+   - Oda ban işlem logları, sohbet ban işlem logları ve genel ban işlem loglarının
+     tamamı "Geliştirici Yönetimi" altına taşınacaktır.
+   - Bu log menüleri ve yönetim butonları yalnızca DA (Direct Administrator/Developer)
+     yetkisine sahip kullanıcılar tarafından görüntülenebilecektir.
+     Ek olarak ludo oyununun tüm sorunları giderilecek tam çalışır hale gelicek
+
+2. LIDYA İŞLEMLERİ VE ÖDEME BİLDİRİMLERİ YAPILANDIRMASI
+   - "Lidya İşlemleri" menüsündeki mevcut üst menüler ve "Lidya Ödeme Bildirimleri 
+     Paneli" butonu arayüzden tamamen kaldırılacaktır.
+   - Lidya İşlemleri menüsü altında yeni bir "Yönetim" üst menüsü oluşturulacak ve 
+     ilgili tüm alt kısımlar bu yapıya entegre edilecektir.
+   - Bu yönetim butonu yalnızca DA yetki seviyesindeki kullanıcılar tarafından 
+     görülecektir (Lidya işlemleri tek bir yetkili buton üzerinden yürütülecektir).
+   - Geliştirici Yönetimi paneline eksik olan DA işlemleri, UA işlemleri ve SA işlemleri 
+     butonları eklenecektir. Yapılan işlemlerin yetki rütbelerine göre loglanma kuralları 
+     ilgili yönergelere göre uygulanacaktır.
+
+3. SEVİYEYE BAĞLI YÜZÜK VE GÖRSEL VARLIK (ASSET) YÖNETİMİ
+   - Cinsiyete ve seviyeye göre oda giriş/görsel dosyaları şu şekilde tanımlanacaktır:
+     * Kadın Seviye 1: kadınseviye1ordagirişimiz.png
+     * Kadın Seviye 2: kadınseviye2ordagirişimiz.png
+     * Erkek Seviye 1: erkekseviye1ordagirişimiz.png
+     * Erkek Seviye 2: erkekseviye2ordagirişimiz.png
+   - Arayüz yerleşiminde yüzük sağdaki boşlukta, avatar ise solda konumlandırılacaktır.
+   - Kullanıcılar dilerse geçmişte kazandıkları önceki öğeleri de kullanabileceklerdir.
+   - Tüm yüzük görselleri ilgili alanın tam ortasındaki yuvarlak alana kusursuz bir 
+     şekilde konumlandırılacaktır.
+
+4. İLİŞKİ SİSTEMİ VE EKONOMİ DÖNGÜSÜ
+   - İlişki sistemi ve bağlı alt menüler baştan sona gözden geçirilip optimize edilecektir.
+   - İlişki sayacındaki gün sayısı, arayüz çerçevesine tam ve hatasız oturacak şekilde 
+     ayarlanacaktır.
+   - İlişki seviyesi artışlarında resim üzerindeki sayaç sayıları üst üste binmek 
+     suretiyle değil, dinamik olarak kendi sayıları değişecek biçimde kodlanacaktır.
+   - Seviye atlama materyali maliyetleri şu şekilde güncellenecektir:
+     * Bakır Yüzük: 1 Tuğla, 1 Tahta
+     * Bakır-Gümüş Yüzük: 2 Tuğla, 2 Tahta, 1 Boya
+     * Altın-Bakır-Gümüş Yüzük: 3 Tuğla, 3 Tahta, 2 Boya
+   - Seviye atlama aşamalarında eksik kalan durumlarda tuğla, tahta veya boya değerlerinden 
+     ilgili eksilen miktar sistem tarafından kademeli olarak düşürülecektir.
+
+5. ARAYÜZ, ODA DUYURULARI VE ÇEVRESEL BİLEŞENLER
+   - Ana sayfadaki doğrudan oyunlar alanı kaldırılacak, oyunlar yalnızca alt menü 
+     üzerinden erişilebilir olacaktır.
+   - Tüm hediye animasyonlarının her ekran ve platformda sorunsuz önizleme verdiğinden 
+     ve eksiksiz çalıştığından emin olunacaktır.
+   - Oda duyuru sistemine "[Kullanıcı Adı] odaya geldi" bildirimi eklenecek, duyuru 
+     amblemi aşırı büyük görünümden arındırılarak daha küçük ve estetik boyuta getirilecektir.
+   - Seviye sistemindeki çerçeveler ile ev (home) alanındaki çerçeveler senkronize 
+     edilecek; bu çerçeve uyarlaması özellikle çift çerçevesi (couple frame) için 
+     eksiksiz uygulanacaktır.
+
+6. HARCAMA VE VİP SİSTEMİ ENTEGRASYONU
+   - İlişki sistemi harcamaları dahil olmak üzere platform genelinde yapılan tüm 
+     harcamaların VIP sistem puanlarını ve ilerlemesini hatalı şekilde etkilemesinin 
+     önüne geçilecek, VIP puan mantığı izole edilerek düzeltilecektir.
+
+7. LIDYA MAĞAZASI DÜZENLEMELERİ
+   - Lidya Mağazasında cinsiyet seçimi filtresi kaldırılacak, kullanıcılar doğrudan 
+     kendi cinsiyetlerine ait ürünleri ve öğeleri görecektir.
+   - Duvar kağıtları (wallpapers) Lidya Mağazasından tamamen kaldırılacaktır.
+================================================================================
