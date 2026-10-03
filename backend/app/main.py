@@ -44,7 +44,7 @@ from .moderation import active_ban, require_feature, profile_notice, require_cha
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
-from . import support_workflow, ban_workflow, purchase_routes
+from . import support_workflow, ban_workflow, purchase_routes, seat_workflow
 from .room_ban_rules import active_room_user_ban, require_room_access
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
@@ -310,7 +310,9 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
 
 purchase_routes.register_auth(current_user)
 app.include_router(purchase_routes.router)
-register_room_auth(current_user)
+seat_workflow.register_auth(current_user)
+app.include_router(seat_workflow.router)
+register_room_auth(current_user, lambda room_id,payload: _broadcast_room_chat(room_id,payload))
 register_platform_auth(current_user)
 register_family_auth(current_user)
 register_support_auth(current_user)
@@ -2050,7 +2052,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
         history_ids = {m.user_id for m in history}
         fan_totals = gift_totals(db, history_ids)
-        history_payload = [{"type":"room_chat","id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+        system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
+        history_payload = [{"type":"room_chat","system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     await websocket.accept(subprotocol="erischat")
     room_socket_users[websocket] = (internal_room_id, str(user.id))
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)

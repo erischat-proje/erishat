@@ -4,6 +4,8 @@
   const esc = value => String(value ?? '');
   const escapeHtml = value => esc(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   let activeConversationId = null;
+  let chatRevision=0;
+  const textSends=new Map();
   let currentUserId = null;
   let loadedForUserId = null;
   let selectedMessages = new Set();
@@ -114,6 +116,7 @@
       const existing = [...body.querySelectorAll('.bubble[data-message-id]')].find(row => row.dataset.messageId === String(id));
       if (existing) return existing;
     }
+    body.querySelectorAll(':scope > .muted').forEach(node=>node.remove());
     const row = renderMessage({...message, id}, mine);
     body.appendChild(row);
     return row;
@@ -661,8 +664,8 @@
   }
 
   function bindSender(chat) {
-    const input = chat.querySelector('input');
-    const send = chat.querySelector('.primary');
+    const input = chat.querySelector('.compose #chatInput, .compose input:not([type=range])');
+    const send = chat.querySelector('.compose .primary');
     if (!send || send.dataset.realBound) return;
     send.dataset.realBound = '1';
     send.onclick = async () => {
@@ -671,15 +674,18 @@
       const body = chat.querySelector('.chatBody');
       if (!id || !text || !body) return;
       try {
-        const m = await api().sendMessage(id, text);
+        send.disabled=true;
+        const m = await sendMessage(id, text);
         appendMessageOnce(body, m, true);
-        input.value = '';
+        if(activeConversationId===id && input.value.trim()===text)input.value = '';
         body.scrollTop = body.scrollHeight;
       } catch (e) {
         if (/hediye ile kısıtlamış|hediyesi gerekli/i.test(String(e.message||''))) { window.toast?.(e.message); openGiftSheet(); return; }
         window.toast?.(e.message || 'Mesaj gönderilemedi.');
-      }
+      }finally{send.disabled=false}
     };
+    input?.removeAttribute('onkeydown');
+    input.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!send.disabled)send.click()}};
   }
 
   async function createConversation(participantId, participantName = 'Kullanıcı') {
@@ -700,6 +706,7 @@
     const chat = $('chat');
     const body = chat?.querySelector('.chatBody');
     if (!chat || !body || !api()?.messages) return;
+    const revision=++chatRevision;
     activeConversationId = id;
     window.__erisActiveDmUserId = participantId || null;
     selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;refreshSelectionBar();
@@ -713,6 +720,7 @@
     releaseMediaUrls(body);body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Mesajlar yükleniyor…</div>';
     try {
       const payload = await api().messages(id);
+      if(revision!==chatRevision || String(activeConversationId)!==String(id))return;
       const messages = asList(payload, ['messages', 'items', 'data']);
       body.innerHTML = '';
       if (!messages.length) body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Henüz mesaj yok.</div>';
@@ -725,6 +733,7 @@
       body.scrollTop = body.scrollHeight;
     } catch (e) {
       console.warn('[ErisChat] messages unavailable', e);
+      if(revision!==chatRevision)return;
       body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Konuşma yüklenemedi.</div>';
       if(/kilitli sohbet/i.test(String(e.message||''))){
         const status=await api().api('/me/dm-vault').catch(()=>null);
@@ -738,7 +747,12 @@
 
   async function sendMessage(id, text) {
     if (!id || !text?.trim() || !api()?.sendMessage) throw new Error('Geçerli konuşma gerekli.');
-    return api().sendMessage(id, text.trim());
+    if(textSends.has(String(id)))return textSends.get(String(id));
+    const task=(async()=>{const message=await api().sendMessage(id,text.trim());
+      if(String(activeConversationId)===String(id))appendMessageOnce(document.querySelector('#chat .chatBody'),message,true);
+      return message;})();
+    textSends.set(String(id),task);
+    try{return await task}finally{textSends.delete(String(id))}
   }
   function handleRealtimeMessage(event) {
     const data = event?.detail;
@@ -768,6 +782,22 @@
     }
     loadConversations();
   }
+
+  // HTTP reconciliation also covers reconnects and multi-worker socket delivery.
+  let reconciling=false;
+  async function reconcileChat(){
+    const id=activeConversationId,revision=chatRevision,chat=$('chat');
+    if(reconciling||!id||!chat?.classList.contains('show')||document.visibilityState==='hidden')return;
+    reconciling=true;
+    try{const rows=asList(await api().messages(id),['messages','items','data']);
+      if(revision!==chatRevision||String(activeConversationId)!==String(id))return;
+      const body=chat.querySelector('.chatBody'),nearBottom=body.scrollHeight-body.scrollTop-body.clientHeight<80;
+      for(const m of rows){const mine=String(m.sender_id||m.user_id)===String(currentUserId);const row=appendMessageOnce(body,m,mine);if(mine&&m.is_read){row.dataset.read='1';const marks=row.querySelector('.dm-checks');if(marks)marks.textContent='✓✓'}}
+      if(nearBottom)body.scrollTop=body.scrollHeight;
+    }catch{}finally{reconciling=false}
+  }
+  setInterval(reconcileChat,3500);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reconcileChat()});
 
   // One authenticated user socket carries DM realtime events. Room sockets stay separate.
   let dmSocket = null;
