@@ -1,0 +1,67 @@
+/* Message rows keep their measured content height when history grows. */
+#chat .chatSheet{min-height:0;overflow:hidden!important}
+#chat .chatHead,#chat .chatFoot,#chat .dm-select-tools{flex-shrink:0}
+#chat .chatBody{display:flex!important;flex-direction:column!important;align-items:flex-start!important;grid-auto-rows:auto!important;min-height:0;flex:1 1 0;overflow-y:auto!important;overscroll-behavior:contain;padding-bottom:18px!important;gap:16px!important}
+#chat .chatBody>.bubble,#chat .chatBody>.bubble.me{flex:0 0 auto!important;height:auto!important;min-height:44px;max-width:calc(100% - 8px)!important;box-sizing:border-box}
+#chat .dm-message-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+#chat .dm-award-content{min-height:44px}
+#chat .dm-award-content>small{line-height:1.4!important;flex-wrap:wrap;white-space:normal!important}
+
+/* The entire canvas and its percentage based hotspots fill the house page. */
+.rel-page>.rel-dialog{height:var(--app-height,100dvh)!important}
+.rel-page>.rel-dialog>.rel-body:has(>.rel-house-v2){display:flex;flex-direction:column;padding:0!important}
+.rel-page .rel-body>.rel-house-v2{flex:1 0 auto;aspect-ratio:auto;min-height:calc(min(100vw,680px) * 1.5);margin:0 auto!important}
+.rel-page .rel-house-v2>.rel-house-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill!important}
+.rel-page .rel-house-v2 .rel-house-scene>img{height:357.143%;object-fit:fill}
+
+/* Strong scope wins over legacy styles injected by room extensions. */
+#erisRoomSurface.room-layout-v6.room-layout-v6{--room-header-height:72px;color:#fff;text-shadow:0 1px 3px #000,0 0 5px #000}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-wall:before,
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage:before{display:none!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 :is(.eris-room-top,.eris-room-chat,.eris-room-activity,.eris-room-compose,.eris-room-quick-actions,.eris-seat,.eris-seat b,.eris-chat-portrait,.eris-room-emblem,.eris-room-tools,#erisRoomContributionButton){background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 :is(.eris-room-top button,.eris-room-compose button,.eris-room-compose input,.eris-room-tools button,.eris-room-quick-actions button,.eris-seat:before){background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;color:#fff;text-shadow:0 1px 3px #000,0 0 5px #000}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-top{height:72px!important;min-height:72px!important;padding:8px 10px!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 #erisRoomLevel{position:static!important;transform:none!important;flex:none!important;min-width:52px!important;height:42px!important;padding:3px 6px!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-title{min-width:0!important;max-width:none!important;flex:1!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 #erisRoomContributionButton{top:80px;left:10px;min-height:42px;padding:0 10px;max-width:43%;font-size:12px;border-radius:13px;border:1px solid #ffffff75}
+#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions{position:absolute!important;top:78px!important;right:8px!important;left:auto!important;bottom:auto!important;display:flex!important;flex-direction:row!important;width:auto!important;max-width:54%;gap:4px!important;padding:0!important;border:0!important;z-index:8!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions button{display:flex!important;flex-direction:column;justify-content:center;align-items:center;gap:3px!important;flex:0 0 auto!important;width:48px!important;min-width:44px;height:48px!important;min-height:44px!important;padding:2px!important;border:1px solid #ffffff65!important;border-radius:12px!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions button[style*="display:none"],
+#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions button[style*="display: none"]{display:none!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions button svg{width:22px;height:22px;min-width:22px;filter:drop-shadow(0 1px 2px #000)}
+#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions button span{display:block!important;font-size:10px!important;line-height:12px;white-space:nowrap}
+
+/* Each grid cell owns its number, portrait and name; names never cross cells. */
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-stage{top:132px!important;bottom:var(--room-chat-height)!important;min-height:0!important;padding:20px 10px 12px!important;grid-template-rows:none!important;grid-auto-rows:max-content;align-content:start!important;gap:20px 8px!important;overflow:auto!important;--seat-size:clamp(36px,calc((min(var(--app-width),900px) - 20px) / var(--seat-columns) - 10px),64px)!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat{position:relative!important;display:grid!important;grid-template-rows:var(--seat-size) 22px;align-content:start;justify-items:center;width:100%!important;max-width:100%!important;height:calc(var(--seat-size) + 28px)!important;min-height:0!important;border:0!important;border-radius:0!important;padding:0!important;transform:none!important;overflow:visible!important;transition:none}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-pod{grid-row:1;width:var(--seat-size)!important;height:var(--seat-size)!important;position:relative;border:1px solid #ffffff85;border-radius:50%;background:transparent!important;box-sizing:border-box}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat.occupied:has(.has-frame) .seat-pod{border-color:transparent}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat b{position:static!important;grid-row:2;display:block!important;transform:none!important;left:auto!important;top:auto!important;width:100%!important;max-width:100%;height:22px!important;margin:6px 0 0!important;padding:0 2px!important;clip-path:none!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px!important;line-height:16px!important;border:0!important;border-radius:0!important;pointer-events:none}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat:before{left:50%;top:-13px;transform:translateX(-50%);width:19px;height:19px;font-size:10px;line-height:1;z-index:4}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-frame{inset:-6%!important;background-size:contain!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-ava{background-color:transparent!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat small{display:none!important}
+
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-chat{height:var(--room-chat-height)!important;min-height:0!important;border-top:1px solid #ffffff55!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-activity{flex:0 0 30px;height:30px;min-height:30px;padding:0 12px;font-size:12px}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-list{flex:1 1 0!important;min-height:0!important;padding:10px 12px 16px!important;gap:16px!important;overflow-y:auto;overscroll-behavior:contain}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-list>*{flex-shrink:0!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-msg{display:grid!important;grid-template-columns:minmax(0,1fr);gap:4px!important;flex:0 0 auto!important;align-items:start;align-self:stretch!important;max-width:100%!important;min-height:52px;height:auto!important;margin:0!important;padding:4px 0 4px 48px!important;background:transparent!important;backdrop-filter:none!important;box-shadow:none!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-identity{display:flex!important;max-width:100%!important;min-width:0;gap:6px!important;min-height:22px}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-identity>b{max-width:none!important;min-width:0;flex:0 1 auto;font-size:12px!important;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-fan-badge{width:22px;height:22px;flex:none}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-portrait{left:4px;top:12px;transform:none;width:30px;height:30px}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-frame{width:42px;height:42px}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-msg>.rel-chat-bubble{width:100%;min-width:0;margin:0!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-chat-text{font-size:14px!important;line-height:1.5!important;margin:0!important;white-space:pre-wrap;overflow-wrap:anywhere}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-compose{flex:0 0 auto!important;width:100%!important;max-width:none!important;min-height:60px!important;margin:0!important;padding:6px 10px max(8px,env(safe-area-inset-bottom))!important;gap:6px!important;border-top:1px solid #ffffff40}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-compose #erisLiveInput{height:44px!important;font-size:14px!important;min-width:0!important;padding:0 10px!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-compose #erisLiveSend{height:44px!important;min-width:55px!important;border:1px solid #f2caff!important;font-size:12px!important}
+#erisRoomSurface.room-layout-v6.room-layout-v6 :is(button,input):focus-visible{outline:2px solid #f7d3ff!important;outline-offset:2px}
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-tools{display:none!important}
+@media(max-width:360px){#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-top{gap:5px!important}#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-emblem{width:32px;height:32px}#erisRoomSurface.room-layout-v6.room-layout-v6>.eris-room-quick-actions button{width:44px!important}#erisRoomSurface.room-layout-v6.room-layout-v6 #erisRoomContributionButton{font-size:11px;padding:0 7px}}
+
+#erisRoomSurface.room-layout-v6.room-layout-v6 [data-history-more]{position:static!important;flex:0 0 auto!important;min-height:28px;background:transparent!important;text-shadow:0 1px 3px #000;font-size:11px!important}
+
+#erisRoomSurface.room-layout-v6.room-layout-v6 #erisRoomBack{display:none!important}
+#chat:not(.eris-floating-dm) .chatSheet{max-height:var(--app-height,100dvh)!important}

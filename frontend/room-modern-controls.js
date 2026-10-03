@@ -105,11 +105,12 @@
       const button=s.querySelector('#'+id);
       if(!button)continue;
       if(!button.querySelector('svg'))button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths+'</svg>';
-      button.querySelector('span')?.remove();
+      const label={erisRoomGift:'Hediye',erisRoomMusic:'Müzik',erisRoomWallpaper:'Duvar'}[id];
+      button.title=button.getAttribute('aria-label')||label;
+      if(!button.querySelector('span')){const caption=document.createElement('span');caption.textContent=label;button.append(caption)}
     }
     const actions=s.querySelector('.eris-room-quick-actions');
-    const chat=s.querySelector('.eris-room-chat');
-    if(actions&&chat&&actions.parentElement!==chat)chat.appendChild(actions);
+    if(actions&&actions.parentElement!==s)s.appendChild(actions);
     const emblem=s.querySelector('.eris-room-emblem');
     if(emblem && emblem.tagName!=='BUTTON'){
       const home=document.createElement('button');home.id='erisRoomMinimize';home.type='button';home.className='eris-room-emblem';
