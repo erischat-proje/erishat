@@ -170,12 +170,12 @@
     if(!asset){global.toast?.((item.preview?'Önizleme yüklenemedi: ':'Hediye: ')+p.name+' ×'+item.quantity);active=null;return next();}
     mount();root.querySelector('.gift-cinema-caption b').textContent=p.name+' ×'+item.quantity;
     root.querySelector('.gift-cinema-caption span').textContent=item.preview?'Ücretsiz önizleme':(item.sender_nickname||item.sender_name||'Bir kullanıcı')+' → '+(item.recipient_nickname||item.recipient_name||'Alıcı');
+    if(buffer&&enabled&&audioContext?.state==='running'){try{const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(master);source.start(audioContext.currentTime+.02);active.source=source;}catch(_){}}
     const canvas=root.querySelector('canvas'),c=canvas.getContext('2d',{alpha:true});if(!c){const fallback=doc.createElement('img');fallback.src=new URL(p.image,global.location.href).href;fallback.alt=p.name;fallback.style.cssText='position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(70vw,450px);max-height:60vh;object-fit:contain';root.append(fallback);setTimeout(()=>{if(epoch===generation)finish();},Math.round(p.duration*1000));return;}
     const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches,lasting=reduced?1.1:p.duration;
     let w=0,h=0,dpr=1,quality=(global.navigator.deviceMemory||4)<=2?.55:1,start=global.performance.now(),last=start,slow=0;
-    const fit=()=>{w=global.innerWidth;h=global.innerHeight;dpr=Math.min(global.devicePixelRatio||1,1.6,Math.sqrt(1400000/(w*h)));canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';};fit();
-    if(buffer&&enabled&&audioContext?.state==='running'){try{const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(master);source.start(audioContext.currentTime+.02);active.source=source;}catch(_){}}
-    const target=destination(item),tick=now=>{if(epoch!==generation||!active)return;const time=(now-start)/1000;if(time>=lasting){finish();return;}const frameTime=now-last;last=now;if(frameTime>40&&++slow>8)quality=.5;if(w!==global.innerWidth||h!==global.innerHeight)fit();c.setTransform(dpr,0,0,dpr,0,0);
+    const fit=()=>{w=global.visualViewport?.width||global.innerWidth;h=global.visualViewport?.height||global.innerHeight;dpr=Math.min(global.devicePixelRatio||1,1.6,Math.sqrt(1400000/(w*h)));canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';};fit();
+    const target=destination(item),tick=now=>{if(epoch!==generation||!active)return;const time=(now-start)/1000;if(time>=lasting){finish();return;}const frameTime=now-last;last=now;if(frameTime>40&&++slow>8)quality=.5;if(w!==(global.visualViewport?.width||global.innerWidth)||h!==(global.visualViewport?.height||global.innerHeight))fit();c.setTransform(dpr,0,0,dpr,0,0);
       if(reduced){c.clearRect(0,0,w,h);sprite(c,asset,p,w*.5,h*.47,Math.min(w*.6,h*.45),0,1,smooth(time/.15)*smooth((lasting-time)/.2),1,1.4);}else renderFrame(c,p,asset,time,w,h,quality,target);
       raf=global.requestAnimationFrame(tick);};raf=global.requestAnimationFrame(tick);
   }
@@ -195,6 +195,7 @@
     // At most one pending item per gift and context; close/visibility clears stale scenes.
     next();
   }
+  global.addEventListener('erischat:event',e=>{const d=e.detail;if(d?.type==='dm_message'&&d.gift_key)enqueue(d,'dm')});
   global.addEventListener('erischat:room-gift',e=>enqueue(e.detail||{},'room'));
   global.addEventListener('erischat:dm-gift',e=>enqueue(e.detail||{},'dm'));
   global.addEventListener('erischat:room-closed',clear);

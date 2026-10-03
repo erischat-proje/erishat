@@ -128,28 +128,7 @@
         if(!following.length) list.append('Henüz kimseyi takip etmiyorsun.');
         for(const row of following){const button=document.createElement('button');button.type='button';button.textContent=row.user_id;button.onclick=()=>{window.ErisProfileHub.close();window.openUserProfile?.(row.user_id)};list.append(button)}return;
       }
-      if(key==='collection') {
-        const [catalogData,ownedData]=await Promise.all([api('/cosmetics'),api('/me/cosmetics')]);if(index!==requestIndex)return;
-        const catalog=Array.isArray(catalogData)?catalogData:catalogData?.items||catalogData?.cosmetics||[];
-        const owned=Array.isArray(ownedData)?ownedData:ownedData?.items||ownedData?.cosmetics||[];
-        const vipData=await api('/me/vip');if(index!==requestIndex)return;
-        body.innerHTML='<h3>Avatar ve çerçeve koleksiyonum</h3><div class="eph-muted" data-count></div><div class="eph-assets" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px"></div><button type="button" data-shop style="margin-top:12px">Mağazayı aç</button>';
-        body.querySelector('[data-count]').textContent=owned.length+' sahip olunan görünüm • VIP '+Number(vipData.level||0);
-        const grid=body.querySelector('.eph-assets');
-        if(!owned.length)grid.innerHTML='<div class="eph-muted">Henüz satın alınmış kozmetik yok. Standart görünümünü mağazadan seçebilirsin.</div>';
-        const relationshipButton=document.createElement('button');relationshipButton.type='button';relationshipButton.textContent='İlişki ödüllerim';relationshipButton.onclick=()=>window.ErisRelationship?.showRewards?.(null,true);body.prepend(relationshipButton);
-        for(const item of owned.filter(item=>!String(item.asset_key||'').startsWith('relationship-assets/rewards/'))){
-          const key=item.asset_key||item.key,type=item.cosmetic_type||item.type||'avatar';
-          const card=document.createElement('div');card.style.cssText='padding:10px;border:1px solid #ffffff18;background:#ffffff08;border-radius:14px;text-align:center';
-          const image=document.createElement('div');image.style.cssText='height:66px;background:center/contain no-repeat;margin-bottom:6px';
-          if(type==='avatar')image.style.cssText='width:66px;height:66px;border-radius:50%;background:center/cover no-repeat;margin:0 auto 6px';
-          image.style.backgroundImage='url("'+(window.ErisChatCosmetics?.assetUrl(key)||'')+'")';
-          const label=document.createElement('div');label.className='eph-muted';label.textContent=type==='frame'?'Çerçeve':'Avatar';
-          const use=document.createElement('button');use.type='button';use.textContent='Uygula';use.onclick=async()=>{use.disabled=true;try{await window.ErisChatCosmetics.apply(type,key);await window.ErisProfile.refresh();use.textContent='Uygulandı ✓'}catch(error){use.disabled=false;use.textContent=error.message||'Uygulanamadı'}};
-          card.append(image,label,use);grid.append(card);
-        }
-        const shop=body.querySelector('[data-shop]');shop.onclick=()=>{window.ErisProfileHub.close();window.showView?.('shop')};return;
-      }
+      if(key==='collection') {await window.ErisAppearanceInventory.render(body,()=>index===requestIndex);return;}
       if(key==='vip') {
         window.ErisProfileHub.close();
         window.ErisChatVIP?.open?.();
