@@ -37,6 +37,7 @@ from .platform_models import (ConversationReadState, DirectMessageGift, DirectMe
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
     SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
+from . import relationship_routes
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
@@ -318,6 +319,8 @@ seat_workflow.register_auth(current_user)
 app.include_router(seat_workflow.router)
 register_room_auth(current_user, lambda room_id,payload: _broadcast_room_chat(room_id,payload))
 register_platform_auth(current_user)
+relationship_routes.register_auth(current_user)
+app.include_router(relationship_routes.router)
 register_family_auth(current_user)
 register_support_auth(current_user)
 register_suggestion_auth(current_user)
