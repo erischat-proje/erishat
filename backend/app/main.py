@@ -44,7 +44,7 @@ from .moderation import active_ban, require_feature, profile_notice, require_cha
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
-from . import support_workflow, ban_workflow, purchase_routes, seat_workflow
+from . import support_workflow, ban_workflow, purchase_routes, seat_workflow, discovery_live
 from .room_ban_rules import active_room_user_ban, require_room_access
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
@@ -1885,6 +1885,10 @@ def websocket_token(websocket: WebSocket) -> str | None:
         if protocol.startswith("token."):
             return protocol[6:]
     return None
+
+
+discovery_live.register_auth(current_user, engine, websocket_token, get_user_from_token, websocket_session_active)
+app.include_router(discovery_live.router)
 
 
 @app.websocket("/ws")

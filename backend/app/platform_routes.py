@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from . import discovery_live
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
@@ -67,7 +68,7 @@ class PrivacyUpdate(BaseModel):
 class LocationUpdate(BaseModel):
     latitude: float = Field(ge=-90, le=90); longitude: float = Field(ge=-180, le=180); city: str = Field(min_length=1, max_length=128)
 class DiscoveryUpdate(BaseModel):
-    gender_filter: str = Field(pattern="^(female|male|any)$"); random_enabled: bool = True
+    gender_filter: str = Field(pattern="^(female|male|any)$"); random_enabled: bool | None = None
 class ReportCreate(BaseModel):
     target_user_id: str | None = None; room_id: str | None = None; message_id: int | None = None
     category: str = Field(min_length=1, max_length=32); reason: str = Field(min_length=3, max_length=2000)
@@ -365,7 +366,9 @@ def register_platform_auth(current_user_dependency):
     def update_discovery(payload: DiscoveryUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         p=db.get(DiscoveryPreference,user.id)
         if not p: p=DiscoveryPreference(user_id=user.id); db.add(p)
-        p.gender_filter,p.random_enabled=payload.gender_filter,p.random_enabled; db.commit(); return {"gender_filter":p.gender_filter,"random_enabled":p.random_enabled}
+        p.gender_filter=payload.gender_filter
+        if payload.random_enabled is not None:p.random_enabled=payload.random_enabled
+        db.commit(); return {"gender_filter":p.gender_filter,"random_enabled":p.random_enabled}
     @router.post("/reports",status_code=201)
     def create_report(payload: ReportCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         if not any((payload.target_user_id,payload.room_id,payload.message_id)): raise HTTPException(status_code=400,detail="Şikayet hedefi gerekli")
@@ -386,14 +389,7 @@ def register_platform_auth(current_user_dependency):
         return [{"id":r.id,"target_user_id":r.target_user_id,"room_id":r.room_id,"message_id":r.message_id,"category":r.category,"reason":r.reason,"status":r.status,"created_at":r.created_at} for r in rows]
     @router.get("/discover/rooms")
     def discover_rooms(limit:int=Query(50,ge=1,le=100),offset:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        rows=[]; rooms=list(db.scalars(select(Room).order_by(Room.created_at.desc()).limit(300)))
-        for room in rooms:
-            members=int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id==room.id)) or 0)
-            # Oda sahibi otomatik üyedir; yalnızca sahibi bulunan oda keşfette tutulmaz.
-            visitors=int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id==room.id,RoomMember.user_id!=room.owner_id)) or 0)
-            if visitors<=0: continue
-            rows.append({"room_id":room.id,"public_id":room.public_id,"name":room.name,"owner_id":room.owner_id,"member_count":members,"level":room.level,"locked":room.locked})
-        rows.sort(key=lambda x:(-x["member_count"],-x["level"],x["room_id"])); return rows[offset:offset+limit]
+        return discovery_live.rooms(db,user,limit=offset+limit)[offset:offset+limit]
     def location_or_409(db:Session,user_id:str)->UserLocation:
         row=db.get(UserLocation,user_id)
         if not row: raise HTTPException(status_code=409,detail="Konum izni gerekli")
@@ -412,13 +408,7 @@ def register_platform_auth(current_user_dependency):
         result.sort(key=lambda item:item[1]); return result
     @router.get("/discover/nearby")
     def nearby(limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        result=candidate_users(db,user,20)[:limit]; rows=[]
-        for target,distance in result:
-            admin=db.get(AdminRole,target.id)
-            public_id=None if admin and admin.role in {"SA","UA","FA","DA"} else target.public_id
-            location=db.get(UserLocation,target.id)
-            rows.append({"user_id":target.id,"public_id":public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"city":location.city if location else None,"distance_km":round(distance,1)})
-        return rows
+        return discovery_live.people(db,user,limit)
     @router.post("/discover/random-chat")
     def random_chat(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         pref=db.get(DiscoveryPreference,user.id)
