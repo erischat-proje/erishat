@@ -24,7 +24,7 @@
     .rel-money{display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;color:#efcc85}.rel-money img{width:18px;height:18px;object-fit:contain}
     .rel-rings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.rel-ring-choice{padding:8px!important;display:grid;justify-items:center;gap:7px;min-width:0;font-size:11px}.rel-ring-choice>img{width:100%;height:90px;object-fit:contain}.rel-ring-preview{display:block;width:140px;height:140px;object-fit:contain;margin:5px auto}
     .rel-house{position:relative;width:100%;isolation:isolate;color:#ffe9ad}.rel-house-art{display:block;width:100%;height:auto;border-radius:17px}.rel-house .rel-avatar{position:absolute;width:20%;height:auto;aspect-ratio:1;transform:translate(-50%,-50%);background:#211434;box-shadow:0 0 20px #0008}
-    .rel-house .rel-male{left:25%;top:28.5%}.rel-house .rel-female{left:74%;top:28.5%}
+    .rel-house .rel-avatar{width:23.5%;top:29%;box-shadow:none;overflow:hidden}.rel-house .rel-male{left:24.9%}.rel-house .rel-female{left:75.1%}
     .rel-name{position:absolute;top:38.8%;width:25%;height:3.6%;border:0;border-radius:8px;background:#100b1eed;color:#ffe4a1;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px;font-size:clamp(9px,2.4vw,15px)}.rel-male-name{left:12.5%}.rel-female-name{left:61.5%}
     .rel-ring{position:absolute;left:43%;top:24.5%;width:14%;height:12%;border:0;border-radius:50%;padding:4px;background:#140b1ce8;color:#f8d491;font-size:clamp(8px,2vw,13px);font-weight:800}.rel-ring img{width:100%;height:100%;object-fit:contain}
     .rel-days{position:absolute;left:70%;top:13.8%;width:24%;height:3.8%;display:grid;place-items:center;background:#100b1ef2;border-radius:10px;color:#ffd680;font-weight:900;font-size:clamp(10px,2.5vw,16px)}
@@ -33,34 +33,48 @@
     .rel-public{position:relative;width:165px;height:46px;flex:none}.rel-public-status{width:100%;height:100%;border:0;padding:0;background:var(--rel-status) center/contain no-repeat;cursor:pointer}.rel-public .rel-public-ring{position:absolute;left:18%;top:24%;width:24px;height:24px;object-fit:contain;pointer-events:none}.rel-public .rel-avatar{position:absolute;right:9%;top:22%;width:27px;height:27px;font-size:12px}
     .eris-mini-topbar{flex-wrap:wrap}.eris-mini-topbar .rel-public{width:140px;height:40px}.eris-mini-topbar .rel-public .rel-avatar{width:23px;height:23px}.profile .name>.rel-public{margin:8px auto 0}
     @media(max-width:370px){.rel-body{padding:12px}.rel-rings{gap:6px}.rel-ring-choice>img{height:72px}.rel-row{gap:9px;padding:10px}}
+    .rel-page{padding:0;background:#100b19;backdrop-filter:none}
+    .rel-page>.rel-dialog{width:100%;height:100dvh;max-height:none;border:0;border-radius:0;box-shadow:none}
+    .rel-page>.rel-dialog>header{flex:none;justify-content:flex-start;padding:calc(10px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 10px max(12px,env(safe-area-inset-left));background:#170e23;position:relative;z-index:2}
+    .rel-page h2{flex:1;font-size:18px}.rel-page .rel-back,.rel-house-menu-toggle{width:44px;height:44px;flex:none;display:grid;place-items:center;border:1px solid #d4ac6159;border-radius:13px;background:linear-gradient(145deg,#3b214c,#21142f);color:#ffe4a1;font-size:23px;cursor:pointer}
+    .rel-page>.rel-dialog>.rel-body{flex:1;min-height:0;width:100%;box-sizing:border-box;padding:16px max(12px,env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+    .rel-page .rel-body>*{max-width:680px;margin-left:auto;margin-right:auto}.rel-page .rel-body>.rel-row{max-width:654px}
+    .rel-page .rel-house-art{border-radius:0}.rel-house-menu-toggle[hidden],.rel-house-menu[hidden]{display:none!important}
+    .rel-house-menu{position:absolute;left:68px;top:calc(64px + env(safe-area-inset-top));width:min(250px,calc(100vw - 80px));padding:8px;border:1px solid #d4ac6170;border-radius:15px;background:#21132f;box-shadow:0 12px 32px #0008}
+    .rel-house-menu button{width:100%;min-height:44px;border:0;border-radius:10px;padding:10px;background:#8d3d553d;color:#ffd6dd;text-align:left;font-weight:700}
+    .rel-house .rel-name{top:38.3%;height:2.7%;width:20%;padding:0 2px;background:transparent;border-radius:0;color:#ffe4a1;font-size:clamp(9px,2.7vw,18px);line-height:1.2;text-align:center}
+    .rel-house .rel-male-name{left:17%}.rel-house .rel-female-name{left:66.5%}
   `;document.head.append(style);
   let stack=0,main=null,catalogData=null;
   const openDialogs=new Set();
-  function dialog(title,content='') {
+  function dialog(title,content='',fullPage=false) {
     const trigger=document.activeElement,shade=document.createElement('div');shade.className='rel-overlay';shade.style.zIndex=String(11300+(++stack));
     shade.innerHTML='<section class="rel-dialog" role="dialog" aria-modal="true"><header><h2></h2><button type="button" class="rel-close" aria-label="Kapat">×</button></header><div class="rel-body">'+content+'</div></section>';
     shade.querySelector('h2').textContent=title;shade.querySelector('section').setAttribute('aria-label',title);
-    const close=()=>{shade.remove();openDialogs.delete(shade);if(!document.querySelector('.rel-overlay'))document.body.classList.remove('rel-dialog-open');if(trigger?.isConnected)trigger.focus();if(main?.shade===shade)main=null;if(shade.dataset.requestId)popupRequests.delete(shade.dataset.requestId)};
+    if(fullPage){shade.classList.add('rel-page');const back=shade.querySelector('.rel-close');back.classList.add('rel-back');back.textContent='←';back.setAttribute('aria-label','Geri');shade.querySelector('header').prepend(back)}
+    const close=()=>{shade._relLayoutObserver?.disconnect();shade.remove();openDialogs.delete(shade);if(!document.querySelector('.rel-overlay'))document.body.classList.remove('rel-dialog-open');if(trigger?.isConnected)trigger.focus();if(main?.shade===shade)main=null;if(shade.dataset.requestId)popupRequests.delete(shade.dataset.requestId)};
     shade.querySelector('.rel-close').onclick=close;shade.onclick=e=>{if(e.target===shade)close()};
-    shade.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();close()}else if(e.key==='Tab'){const nodes=[...shade.querySelectorAll('button:not(:disabled),input,textarea,select')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
+    shade.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();close()}else if(e.key==='Tab'){const nodes=[...shade.querySelectorAll('button:not(:disabled),input,textarea,select')].filter(el=>!el.closest('[hidden]')),first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
     document.body.append(shade);openDialogs.add(shade);document.body.classList.add('rel-dialog-open');shade.querySelector('.rel-close').focus();
     return {shade,body:shade.querySelector('.rel-body'),close};
   }
   function errorBox(body){let el=body.querySelector('.rel-error');if(!el){el=document.createElement('p');el.className='rel-error';el.setAttribute('role','alert');body.append(el)}return el}
   async function action(button,body,fn){button.disabled=true;errorBox(body).textContent='';try{await fn()}catch(e){errorBox(body).textContent=typeof e.message==='string'?e.message:'İşlem tamamlanamadı.'}finally{if(button.isConnected)button.disabled=false}}
-  function avatar(user,className=''){
+  function avatar(user,className='',withFrame=true){
     const b=document.createElement('button');b.type='button';b.className='rel-avatar '+className;b.setAttribute('aria-label',(user.nickname||'Kullanıcı')+' profilini aç');
     if(user.avatar_asset){const img=document.createElement('img');img.src=cosmetic(user.avatar_asset);img.alt='';b.append(img)}else b.textContent=user.avatar||'👤';
-    if(user.frame_asset){const img=document.createElement('img');img.className='rel-frame';img.src=cosmetic(user.frame_asset);img.alt='';b.append(img)}
+    if(withFrame&&user.frame_asset){const img=document.createElement('img');img.className='rel-frame';img.src=cosmetic(user.frame_asset);img.alt='';b.append(img)}
     b.onclick=()=>{if(main?.body.contains(b))main.close();window.ErisFloatingProfile?.open?.(user.id)};return b;
   }
   async function refreshMain(){
     if(!main||main.refreshing||!main.shade.isConnected)return;const current=main;current.refreshing=true;
     try{const state=current.houseId?{active:await api('/houses/'+encodeURIComponent(current.houseId)),requests:[]}:await api('/me');if(main!==current||!current.shade.isConnected)return;renderState(current,state)}catch(e){if(current.shade.isConnected)errorBox(current.body).textContent=e.message||'İlişki bilgileri yüklenemedi.'}finally{current.refreshing=false}
   }
-  function open(houseId=null){if(main){if(main.houseId===houseId){main.shade.querySelector('.rel-close').focus();refreshMain();return}main.close()}main={...dialog(houseId?'Aile evine katkı':'İlişki','<p class="rel-note">Yükleniyor…</p>'),houseId};refreshMain()}
+  function open(houseId=null){if(main){if(main.houseId===houseId){main.shade.querySelector('.rel-close').focus();refreshMain();return}main.close()}main={...dialog(houseId?'Aile evi':'İlişki','<p class="rel-note">Yükleniyor…</p>',true),houseId};refreshMain()}
   function renderState(current,state){
     const body=current.body;current.renderTicket={};body.replaceChildren();
+    current.shade._relLayoutObserver?.disconnect();
+    current.shade.querySelector('.rel-house-menu-toggle')?.remove();current.shade.querySelector('.rel-house-menu')?.remove();
     if(state.active){renderHouse(current,state.active);return}
     const intro=document.createElement('p');intro.className='rel-note';intro.textContent=state.gender_required?'İlişki listesi için kayıt profilinizde kadın veya erkek cinsiyet bilgisi bulunmalıdır.':'DM üzerinden iletişim kurduğun karşı cinsteki kişiler. İki tarafın oda ve DM hediyeleri ortak 3.000 puanlık barı doldurur.';body.append(intro);
     renderRequests(body,state.requests||[]);
@@ -76,10 +90,21 @@
   }
   function renderHouse(current,house){
     const body=current.body,own=!current.houseId||!!house.is_owner,ticket=current.renderTicket;
-    if(own){const actions=document.createElement('div');actions.className='rel-actions';if(!house.married){const b=document.createElement('button');b.textContent='♥ Evlilik teklif et';b.className='rel-primary';b.onclick=()=>marriage(house);actions.append(b)}const end=document.createElement('button');end.textContent='İlişkiyi sonlandır';end.onclick=()=>{const modal=dialog('İlişkiyi sonlandır','<p>İlişki ve ortak aile evi kapanacak. İlişkiyi sonlandırmak istiyor musunuz?</p><button type="button" class="rel-primary">Sonlandır</button>');modal.body.querySelector('button').onclick=e=>action(e.currentTarget,modal.body,async()=>{await post('/end');modal.close();refreshMain();window.dispatchEvent(new Event('erischat:cosmetics-updated'))})};actions.append(end);body.append(actions)}
+    if(own){
+      const header=current.shade.querySelector('header'),toggle=document.createElement('button'),menu=document.createElement('div'),end=document.createElement('button');
+      toggle.type='button';toggle.className='rel-house-menu-toggle';toggle.textContent='⋯';toggle.setAttribute('aria-label','İlişki seçenekleri');toggle.setAttribute('aria-expanded','false');
+      menu.className='rel-house-menu';menu.hidden=true;end.type='button';end.textContent='İlişkiyi sonlandır';menu.append(end);current.shade.querySelector('.rel-back').after(toggle);header.append(menu);
+      const hideMenu=()=>{menu.hidden=true;toggle.setAttribute('aria-expanded','false')};toggle.onclick=()=>{menu.hidden=!menu.hidden;toggle.setAttribute('aria-expanded',String(!menu.hidden));if(!menu.hidden)end.focus()};
+      current.shade.onclick=e=>{if(!menu.contains(e.target)&&e.target!==toggle)hideMenu()};menu.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();hideMenu();toggle.focus()}};
+      end.onclick=()=>{hideMenu();const modal=dialog('İlişkiyi sonlandır','<p>İlişki ve ortak aile evi kapanacak. İlişkiyi sonlandırmak istiyor musunuz?</p><div class="rel-actions"><button type="button" class="rel-primary" data-end>Sonlandır</button><button type="button" data-cancel>İptal</button></div>');modal.body.querySelector('[data-cancel]').onclick=modal.close;modal.body.querySelector('[data-end]').onclick=e=>action(e.currentTarget,modal.body,async()=>{await post('/end');modal.close();if(main===current){current.houseId=null;current.shade.querySelector('h2').textContent='İlişki'}refreshMain();window.dispatchEvent(new Event('erischat:cosmetics-updated'))})};
+      if(!house.married){const actions=document.createElement('div');actions.className='rel-actions';const b=document.createElement('button');b.textContent='♥ Evlilik teklif et';b.className='rel-primary';b.onclick=()=>marriage(house);actions.append(b);body.append(actions)}
+    }
     const art=document.createElement('div');art.className='rel-house';art.innerHTML='<img class="rel-house-art" src="'+asset('house-'+house.level)+'" alt="Seviye '+house.level+' aile evi"><span class="rel-days">'+amount(house.days)+' gün</span>';
-    art.append(avatar(house.male,'rel-male'),avatar(house.female,'rel-female'));
-    for(const [person,cls] of [[house.male,'rel-male-name'],[house.female,'rel-female-name']]){const name=document.createElement('button');name.type='button';name.className='rel-name '+cls;name.textContent=person.nickname;name.onclick=()=>{current.close();window.ErisFloatingProfile?.open?.(person.id)};art.append(name)}
+    art.append(avatar(house.male,'rel-male',false),avatar(house.female,'rel-female',false));
+    for(const [person,cls] of [[house.male,'rel-male-name'],[house.female,'rel-female-name']]){const name=document.createElement('button');name.type='button';name.className='rel-name '+cls;name.textContent=person.nickname;name.title=person.nickname;name.setAttribute('aria-label',person.nickname+' profilini aç');name.onclick=()=>{current.close();window.ErisFloatingProfile?.open?.(person.id)};art.append(name)}
+    const fitNames=()=>{if(!art.isConnected)return;for(const name of art.querySelectorAll('.rel-name')){name.style.removeProperty('font-size');if(!name.clientWidth)continue;let size=parseFloat(getComputedStyle(name).fontSize);while(name.scrollWidth>name.clientWidth&&size>7){size-=.5;name.style.fontSize=size+'px'}}};
+    art.querySelector('.rel-house-art').addEventListener('load',fitNames);setTimeout(fitNames,0);
+    if(typeof ResizeObserver!=='undefined'){current.shade._relLayoutObserver=new ResizeObserver(fitNames);current.shade._relLayoutObserver.observe(art)}
     const ring=document.createElement('button');ring.type='button';ring.className='rel-ring';ring.setAttribute('aria-label',house.ring?'Yüzüğü değiştir':'Yüzük satın al');if(house.ring)ring.innerHTML='<img src="'+asset(house.ring)+'" alt="Çiftin yüzüğü">';else ring.textContent='Yüzük satın al';ring.disabled=!own||house.married;ring.onclick=()=>rings(house);art.append(ring);
     for(const m of ['brick','wood','paint']){const b=document.createElement('button');b.type='button';b.className='rel-hotspot';b.dataset.material=m;b.setAttribute('aria-label',labels[m]+' · '+house.remaining[m]+' adet kaldı');b.innerHTML='<b>'+amount(house.remaining[m])+'</b>';b.disabled=own&&house.max_level;b.onclick=()=>materials(house,m,!own);art.append(b)}body.append(art);
     const note=document.createElement('p');note.className='rel-note';note.textContent=house.max_level?'En yüksek ev seviyesine ulaştınız.':'Seviye '+(house.level+1)+' için görseldeki kalan ihtiyaçları tamamlayın. Malzemelerin her biri 750 Lidya. '+(house.needs_first_copper?'İlk geçiş için 1 adet bakır yüzük gerekir.':'');body.append(note);
@@ -132,7 +157,7 @@
   function boot(){const tabs=document.querySelector('#ephTabs');if(!tabs)return;if(!tabs.querySelector('[data-tab=relationship]')){const b=document.createElement('button');b.type='button';b.dataset.tab='relationship';b.innerHTML='<span class="eph-icon" aria-hidden="true" style="font-size:25px;line-height:24px">♥</span><span>İlişki</span>';b.onclick=()=>open();tabs.append(b)}}
   window.ErisRelationship={open,decorate};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{boot();pollEvents()},{once:true});else{boot();pollEvents()}
-  window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready'){boot();pollEvents()}else if(['logged_out','login_required'].includes(e.detail?.state)){for(const s of openDialogs)s.remove();openDialogs.clear();document.body.classList.remove('rel-dialog-open');main=null;seenEvents.clear();popupRequests.clear()}});
+  window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready'){boot();pollEvents()}else if(['logged_out','login_required'].includes(e.detail?.state)){for(const s of openDialogs){s._relLayoutObserver?.disconnect();s.remove()}openDialogs.clear();document.body.classList.remove('rel-dialog-open');main=null;seenEvents.clear();popupRequests.clear()}});
   window.addEventListener('erischat:event',pollEvents);window.addEventListener('erischat:room-gift',refreshMain);window.addEventListener('erischat:gift-updated',refreshMain);
   document.addEventListener('visibilitychange',()=>{pollEvents();refreshMain()});setInterval(()=>{pollEvents();refreshMain()},6000);
 })();
