@@ -125,6 +125,7 @@
       try {
         if (enabled && 'Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
         const user = await window.ErisAuth.updateMe({ notifications_enabled: enabled });
+        window.ErisNotifications?.apply({hide_notifications:!enabled});
         render(user);
         toastSafe(enabled ? 'Bildirimler açıldı 🔔' : 'Bildirimler kapatıldı');
       } catch (error) { toastSafe(error.message || 'Bildirim ayarı güncellenemedi.'); }

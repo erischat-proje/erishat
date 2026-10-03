@@ -63,6 +63,7 @@ ROULETTE = [
 CUPS = {"cup_1", "cup_2", "cup_3", "cup_4"}
 
 class PrivacyUpdate(BaseModel):
+    hide_notifications: bool | None = None
     hide_vip: bool | None = None; hide_vip_badge: bool | None = None; hide_vip_neon: bool | None = None
     hide_vip_entry: bool | None = None; hide_vip_title: bool | None = None; hide_location: bool | None = None
 class LocationUpdate(BaseModel):
@@ -128,7 +129,7 @@ def distance_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float
     h = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
     return 2*r*math.asin(math.sqrt(h))
 def user_can_show_vip(db: Session, user_id: str, field: str) -> bool:
-    privacy = db.get(UserPrivacy, user_id); return True if not privacy else not bool(getattr(privacy, field, False))
+    privacy = db.get(UserPrivacy, user_id); return True if not privacy else not bool(privacy.hide_vip or getattr(privacy, field, False))
 def profile_stats(db: Session, target: User, viewer: User) -> dict:
     from .personal_fans import received_total
     from .relationship_routes import public_brief
@@ -164,12 +165,17 @@ def register_platform_auth(current_user_dependency):
         if getattr(route, "path", "") == "/v1/me/privacy": router.routes.remove(route)
     @router.get("/me/privacy")
     def get_privacy_auth(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        p=privacy_row(db,user.id); db.commit(); return {k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}
+        p=privacy_row(db,user.id); db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, "hide_notifications": not user.notifications_enabled}
     @router.patch("/me/privacy")
     def update_privacy(payload: PrivacyUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         p=privacy_row(db,user.id)
-        for key,value in payload.model_dump(exclude_none=True).items(): setattr(p,key,value)
-        db.commit(); return {k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}
+        for key,value in payload.model_dump(exclude_none=True).items():
+            if key == "hide_notifications": user.notifications_enabled = not value
+            else: setattr(p,key,value)
+        if payload.hide_vip is not None:
+            for key in ("hide_vip_badge", "hide_vip_neon", "hide_vip_entry", "hide_vip_title"):
+                setattr(p, key, payload.hide_vip)
+        db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, "hide_notifications": not user.notifications_enabled}
     @router.get("/me/wallet")
     def my_wallet(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         return {"lidya": int(user.lidya or 0), "lidya_gem": int(getattr(user, "lidya_gem", 0) or 0), "exchange_rate": {"lidya_to_gem": 1, "gem_to_lidya": 1}}
@@ -565,6 +571,7 @@ def register_platform_auth(current_user_dependency):
         return [{"user_id":r.blocked_id,"created_at":r.created_at} for r in rows]
     @router.get("/me/notifications")
     def notifications(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if not user.notifications_enabled: return []
         rows=list(db.scalars(select(Notification).where(Notification.user_id==user.id).order_by(Notification.created_at.desc()).limit(limit)))
         return [{"id":r.id,"kind":r.kind,"title":r.title,"body":r.body,"read":r.read,"created_at":r.created_at} for r in rows]
     @router.post("/me/notifications/{notification_id}/read")

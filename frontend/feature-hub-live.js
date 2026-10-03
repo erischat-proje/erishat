@@ -167,18 +167,18 @@
   async function privacy(panel){
     try{
       const p=await api('/me/privacy');
-      const entries=Object.entries(p||{});
-      panel.innerHTML='<div class="eh-note">Profilde VIP, rozet, neon, giriş ve konum görünürlüğünü yönet.</div><div id="privacyRows"></div><div id="privacyStatus" class="eh-note" style="margin-top:8px">Değişiklikler kaydedildiğinde burada gösterilir.</div>';
+      window.ErisNotifications?.apply(p); const labels={hide_vip:'VIP görünürlüğünü gizle',hide_location:'Konumu gizle',hide_notifications:'Bildirimleri gizle'};const entries=Object.keys(labels).map(key=>[key,!!p[key]]);
+      panel.innerHTML='<div class="eh-note">VIP görünürlüğünü, konumunu ve bildirimlerini yönet.</div><div id="privacyRows"></div><div id="privacyStatus" class="eh-note" style="margin-top:8px">Değişiklikler kaydedildiğinde burada gösterilir.</div>';
       const rows=panel.querySelector('#privacyRows'),status=panel.querySelector('#privacyStatus');
       if(!entries.length){rows.innerHTML='<div class="eh-card"><b>Gizlilik ayarı bulunamadı</b><small>Backend henüz bu hesap için görünürlük alanı döndürmedi.</small></div>';return;}
       entries.forEach(([key,val])=>{
         const row=document.createElement('label');row.className='eh-row';
-        row.innerHTML=`<span>${esc(key)}</span><input type="checkbox" ${val?'checked':''}></label>`;
+        row.innerHTML=`<span>${esc(labels[key])}</span><input type="checkbox" ${val?'checked':''}></label>`;
         const input=row.querySelector('input');
         input.onchange=async e=>{
           input.disabled=true;
           try{
-            await api('/me/privacy',{method:'PATCH',body:JSON.stringify({[key]:e.target.checked})});
+            const saved=await api('/me/privacy',{method:'PATCH',body:JSON.stringify({[key]:e.target.checked})});window.ErisNotifications?.apply(saved);
             status.textContent='✓ '+key+' gizlilik ayarı güncellendi.';
           }catch(err){
             e.target.checked=!e.target.checked;

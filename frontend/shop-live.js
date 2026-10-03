@@ -48,7 +48,7 @@
     const root = document.getElementById('shop');
     if (!root) return;
     installStyle();
-    root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatar ve çerçeveler mağazadan alınır. VIP avatar ve çerçeveler VIP seviyesine ulaşıldığında açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="all">Tümü</button><button class="liveShopTab" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip">VIP</button></div><div class="liveShopGrid">Yükleniyor…</div>';
+    root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatar ve çerçeveler mağazadan alınır. VIP avatar ve çerçeveler VIP seviyesine ulaşıldığında açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip-avatar">VIP Avatar</button><button class="liveShopTab" data-filter="vip-frame">VIP Çerçeve</button></div><div class="liveShopGrid">Yükleniyor…</div>';
     const grid = root.querySelector('.liveShopGrid');
     if (!token()) { grid.textContent='Mağazayı görmek için giriş yap.'; return; }
     try {
@@ -59,7 +59,7 @@
       const renderItems = filter => {
         grid.innerHTML = '';
         const gender=me.gender;
-        const filtered = items.filter(item => (filter === 'all' || (filter === 'vip' && vipOf(item)) || typeOf(item) === filter) && (!item.gender || item.gender === gender));
+        const filtered = items.filter(item => (typeOf(item) === filter.replace('vip-', '') && vipOf(item) === filter.startsWith('vip-')) && (!item.gender || item.gender === gender));
         if (!filtered.length) { grid.innerHTML = '<div class="liveShopNote">Bu kategoride kayıtlı kozmetik yok.</div>'; return; }
         filtered.forEach((item, index) => {
           const type = typeOf(item);
@@ -91,7 +91,7 @@
         });
       };
       root.querySelectorAll('.liveShopTab').forEach(tab => tab.onclick = () => { root.querySelectorAll('.liveShopTab').forEach(x => x.classList.remove('active')); tab.classList.add('active'); renderItems(tab.dataset.filter); });
-      renderItems('all');
+      renderItems('avatar');
       // The shop rebuilds its root on each refresh; mount wallpapers afterwards.
 
     } catch (error) {

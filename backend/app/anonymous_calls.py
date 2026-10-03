@@ -297,7 +297,7 @@ def events(cid: str, after: int = Query(0, ge=0), db: Session = Depends(get_db),
         else:
             call.second_seen = now()
     rows = list(db.scalars(select(Signal).where(Signal.call_id == cid, Signal.id > after).order_by(Signal.id).limit(100)))
-    result = {'call': summary(db, call, user.id), 'events': [{'kind': r.kind, 'payload': json.loads(r.payload)} for r in rows if r.sender_id != user.id],
+    result = {'call': summary(db, call, user.id), 'events': [{'id': r.id, 'kind': r.kind, 'payload': json.loads(r.payload)} for r in rows if r.sender_id != user.id],
               'cursor': rows[-1].id if rows else after, 'active_users': count(db, call.mode)}
     db.commit()
     return result
