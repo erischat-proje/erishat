@@ -166,7 +166,7 @@ def summary(db, house):
     needs = HOUSE_NEEDS[house.level] if house.level < 12 else {m:0 for m in MATERIALS}
     return {'id':house.id, 'level':house.level, 'status':status_key(house), 'ring':house.ring, 'married':house.married,
             'male':portrait(db.get(User, house.male_id)), 'female':portrait(db.get(User, house.female_id)),
-            'days':max(0, (now().astimezone(ISTANBUL).date() - start.astimezone(ISTANBUL).date()).days),
+            'days':max(1, (now().astimezone(ISTANBUL).date() - start.astimezone(ISTANBUL).date()).days + 1),
             'started_at':start.isoformat(), 'materials':{m:getattr(house,m) for m in MATERIALS},
             'remaining':{m:max(0,needs[m]-getattr(house,m)) for m in MATERIALS},
             'material_price':750, 'needs_first_copper':not bool(house.ring), 'max_level':house.level == 12}
