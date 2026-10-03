@@ -44,13 +44,14 @@ def ensure_rewards(db,house):
         user=db.get(User,uid)
         owned={(r.cosmetic_type,r.asset_key) for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id==uid))}
         for reward in items(user.gender):
-            if reward['level']>house.level or (reward['type'],reward['asset_key']) in owned:continue
+            if reward['level']>house.level:continue
             kind,key=reward['type'],reward['asset_key']
-            db.add(UserCosmetic(user_id=uid,cosmetic_type=kind,asset_key=key));owned.add((kind,key))
+            if (kind,key) not in owned:
+                db.add(UserCosmetic(user_id=uid,cosmetic_type=kind,asset_key=key));owned.add((kind,key))
             row=db.get(CoupleRewardSelection,(uid,kind))
             if row is None:
                 db.add(CoupleRewardSelection(user_id=uid,kind=kind,asset_key=key))
-                if kind=='frame':user.frame_asset=key
+                if kind=='frame' and not user.frame_asset:user.frame_asset=key
             db.flush()
     for tier,level in ((1,6),(2,12)):
         key=f'level-{tier}'
@@ -94,7 +95,7 @@ def status_asset(key):
 def status_unlocked(db, house):
     rings = {r.ring for r in db.scalars(select(CoupleRing).where(CoupleRing.couple_id == house.id))}
     keys = {'dating'}
-    if any(r.startswith('copper-') for r in rings): keys.add('copper-promise')
+    if house.level >= 2 or any(r.startswith('copper-') for r in rings): keys.add('copper-promise')
     if house.level >= 2 or any(r.startswith('silver-') for r in rings): keys.add('silver-promise')
     if house.level >= 4: keys.update(('copper-engaged', 'silver-engaged'))
     if house.married: keys.add('married')

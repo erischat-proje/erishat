@@ -119,6 +119,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credent
 
 def ensure_system_data_columns() -> None:
     with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE user_cosmetics ALTER COLUMN cosmetic_type TYPE VARCHAR(32)"))
         conn.execute(text("ALTER TABLE users ALTER COLUMN lidya TYPE BIGINT"))
         conn.execute(text("ALTER TABLE users ALTER COLUMN lidya SET DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya_gem BIGINT NOT NULL DEFAULT 0"))
