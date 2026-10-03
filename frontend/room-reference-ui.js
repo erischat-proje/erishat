@@ -577,6 +577,8 @@
     const r=await roomApi().get?.(rid()).catch(()=>({}))||{};
     const owner=isOwner(r),staff=!!(owner||r.is_moderator||r.can_manage);
     const role=owner?'ODA SAHİBİ':staff?'MODERATÖR':'KULLANICI';
+    const platformAdmin=await window.ErisPlatform?.api?.('/admin/me').catch(()=>null);
+    const canRoomBan=['UA','DA'].includes(platformAdmin?.role);
     const groups=[
       ['ODA',[
         ['info','⌂','Oda bilgileri'],
@@ -586,6 +588,7 @@
         ['gifts','◇','Hediyeler']
       ]]
     ];
+    if(canRoomBan)groups.push(['PLATFORM YÖNETİMİ',[['adminroomban','⊘','Oda Ban']]]);
     if(staff)groups.push(['ODA YÖNETİMİ',[
       ['staff','♛','Yetkililer'],
       ['guests','♙','Misafirler'],
@@ -620,7 +623,8 @@
       if(['staff','guests','bans','mutes','settings'].includes(tab)&&!staff)return;
       if(['moderators','promote','theme'].includes(tab)&&!owner)return;
       closePanels();
-      if(tab==='theme')theme();
+      if(tab==='adminroomban'&&canRoomBan)window.ErisBan?.openRoom?.(r.public_id||r.id);
+      else if(tab==='theme')theme();
       else if(tab==='music')window.ErisChatMusic?.open?.();
       else window.ErisRoomCompleteV3?.openMenu?.(tab);
     });

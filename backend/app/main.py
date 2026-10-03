@@ -45,6 +45,7 @@ from .dm_folders import register_auth as register_dm_folder_auth, router as dm_f
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
 from . import support_workflow, ban_workflow
+from .room_ban_rules import active_room_user_ban, require_room_access
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -293,9 +294,13 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
     allowed = path == "/v1/me" or path.startswith(("/v1/support/", "/v1/admin/", "/v1/notifications", "/v1/auth/"))
     ban_allowed = path in {"/v1/me","/v1/admin/me"} or path.startswith(("/v1/admin/ban-workflow/","/v1/notifications","/v1/auth/"))
     if ban_remaining and not ban_allowed:
-        raise HTTPException(403,detail={"code":"ban_review_restricted","remaining_seconds":ban_remaining,"message":ban_workflow.RESTRICTION_MESSAGE})
+        raise HTTPException(403,detail={"code":"ban_review_restricted","remaining_seconds":ban_remaining,"message":ban_workflow.restriction_message(db,user.id)})
     if remaining and not allowed:
         raise HTTPException(403, detail={"code": "support_restricted", "remaining_seconds": remaining, "message": f"Müşteri taleplerine gereken özeni göstermediğiniz için normal işlevleriniz (Kalan Süre: {remaining} saniye) boyunca yasaklanmıştır."})
+    if path.startswith("/v1/rooms/") and not path.endswith("/leave"):
+        room_key=path.split("/")[3]
+        room=db.get(Room,room_key) or db.scalar(select(Room).where(Room.public_id==room_key))
+        if room: require_room_access(db,room.id,user.id)
     account_ban=active_ban(db,user.id)
     if account_ban:
         from .moderation import ban_until
@@ -308,7 +313,7 @@ register_platform_auth(current_user)
 register_family_auth(current_user)
 register_support_auth(current_user)
 register_suggestion_auth(current_user)
-ban_workflow.register_auth(current_user, lambda user_id: disconnect_ban_user(user_id))
+ban_workflow.register_auth(current_user, lambda user_id: disconnect_ban_user(user_id), lambda user_id, room_id: disconnect_room_ban_user(user_id,room_id))
 app.include_router(ban_workflow.router)
 app.include_router(suggestion_router)
 register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_ban_user(user_id))
@@ -1914,6 +1919,21 @@ room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 room_socket_users: dict[WebSocket, tuple[str, str]] = {}
 
 
+async def disconnect_room_ban_user(user_id: str, room_id: str) -> None:
+    for ws,(socket_room,socket_user) in list(room_socket_users.items()):
+        if socket_user!=user_id or socket_room!=room_id:continue
+        visible=room_rtc_users.get(room_id,{}).pop(ws,None)
+        room_socket_users.pop(ws,None);room_chat_connections.get(room_id,set()).discard(ws)
+        if visible:
+            for peer in list(room_rtc_users.get(room_id,{})):
+                try:await peer.send_json({"type":"rtc_peer_left","user_id":user_id})
+                except Exception:pass
+        try:
+            await ws.send_json({"type":"room_user_banned","room_id":room_id,"message":"Yönetim tarafından bu odadan yasaklandınız."})
+            await ws.close(code=1008,reason="Oda yasağı")
+        except Exception:pass
+
+
 async def disconnect_ban_user(user_id: str) -> None:
     await disconnect_support_agent(user_id, notify=False)
     for ws in list(manager.connections.get(user_id, set())):
@@ -2011,7 +2031,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         room = db.get(Room, room_id) or db.query(Room).filter(Room.public_id == room_id).first()
         internal_room_id = room.id if room else room_id
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-        banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
+        banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
         owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
             UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
         )))
@@ -2048,7 +2068,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             with Session(engine) as db:
                 room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
                 member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-                banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
+                banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
                 owner_blocked = bool(room and db.scalar(select(UserBlock.id).where(
                     UserBlock.blocker_id == room.owner_id, UserBlock.blocked_id == user.id
                 )))
@@ -2154,7 +2174,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             with Session(engine) as db:
                 room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
                 member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
-                banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first()
+                banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
                 if not room or not member or banned:
                     await websocket.close(code=1008, reason="oda erişiminiz yok")
                     break
