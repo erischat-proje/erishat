@@ -1,4 +1,4 @@
-"""Transactional anonymous matchmaking, shared timers and mutual profile consent."""
+"""Separate location matching pools with nearest-first selection and independent rights."""
 import json
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -9,13 +9,16 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstr
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from .db import Base, get_db
 from .models import User
-from .platform_models import DirectCall, UserBlock
+from .platform_models import DirectCall, UserBlock, UserLocation, UserPrivacy
+from .discovery_live import distance
+from . import anonymous_calls
 from .admin_models import AdminRole
 from .moderation import active_ban, require_feature
 
-router = APIRouter(prefix='/v1/anonymous-calls', tags=['anonymous-calls'])
+router = APIRouter(prefix='/v1/location-calls', tags=['location-calls'])
 _current_user = None
 ISTANBUL = ZoneInfo('Europe/Istanbul')
+MATCH_RADIUS_KM = 30
 
 def register_auth(fn):
     global _current_user
@@ -25,21 +28,21 @@ def authenticated(db: Session = Depends(get_db), authorization: str | None = Hea
     return _current_user(db, authorization, request)
 
 class Account(Base):
-    __tablename__ = 'anonymous_call_accounts'
+    __tablename__ = 'location_call_accounts'
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     day: Mapped[str] = mapped_column(String(10))
     used: Mapped[int] = mapped_column(Integer, default=0)
     premium_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 class Queue(Base):
-    __tablename__ = 'anonymous_call_queue'
+    __tablename__ = 'location_call_queue'
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     mode: Mapped[str] = mapped_column(String(8), index=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 class Call(Base):
-    __tablename__ = 'anonymous_calls'
+    __tablename__ = 'location_calls'
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     mode: Mapped[str] = mapped_column(String(8))
     first_id: Mapped[str] = mapped_column(ForeignKey('users.id'), index=True)
@@ -54,18 +57,18 @@ class Call(Base):
     reason: Mapped[str] = mapped_column(String(24), default='')
 
 class Signal(Base):
-    __tablename__ = 'anonymous_call_signals'
+    __tablename__ = 'location_call_signals'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    call_id: Mapped[str] = mapped_column(ForeignKey('anonymous_calls.id', ondelete='CASCADE'), index=True)
+    call_id: Mapped[str] = mapped_column(ForeignKey('location_calls.id', ondelete='CASCADE'), index=True)
     sender_id: Mapped[str] = mapped_column(ForeignKey('users.id'))
     kind: Mapped[str] = mapped_column(String(12))
     payload: Mapped[str] = mapped_column(Text)
 
 class Extension(Base):
-    __tablename__ = 'anonymous_call_extensions'
+    __tablename__ = 'location_call_extensions'
     __table_args__ = (UniqueConstraint('call_id', 'user_id', 'request_key', name='uq_anon_extension'),)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    call_id: Mapped[str] = mapped_column(ForeignKey('anonymous_calls.id'))
+    call_id: Mapped[str] = mapped_column(ForeignKey('location_calls.id'))
     user_id: Mapped[str] = mapped_column(ForeignKey('users.id'))
     request_key: Mapped[str] = mapped_column(String(64))
     seconds: Mapped[int] = mapped_column(Integer)
@@ -77,11 +80,7 @@ def utc(value):
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 def serialize(db):
-    # One transaction lock across Railway workers protects quotas, matching and payments.
-    if db.bind.dialect.name == 'postgresql':
-        db.execute(text('SELECT pg_advisory_xact_lock(731905240)'))
-    elif db.bind.dialect.name == 'sqlite' and not db.connection().connection.driver_connection.in_transaction:
-        db.execute(text('BEGIN IMMEDIATE'))
+    anonymous_calls.serialize(db)
 
 def account(db, uid):
     day = now().astimezone(ISTANBUL).date().isoformat()
@@ -95,12 +94,12 @@ def account(db, uid):
     return row
 
 def premium(row):
-    return bool(row.premium_until and utc(row.premium_until) > now())
+    return bool(row.premium_until and utc(row.premium_until) > now() and row.used < 20)
 
 def quota(db, uid):
     row = account(db, uid)
     paid = premium(row)
-    maximum = 20 if paid else 10
+    maximum = 20 if paid or row.used >= 20 else 10
     return {'premium': paid, 'premium_until': utc(row.premium_until).isoformat() if paid else None,
             'used': row.used, 'daily_limit': maximum, 'remaining': max(0, maximum-row.used), 'initial_seconds': 120 if paid else 60}
 
@@ -120,6 +119,10 @@ def available(db, uid):
     if not user or not user.is_active or (role and role.role == 'DA' and role.ghost_mode):
         return False
     if active_ban(db, uid) or active_ban(db, uid, chat=True):
+        return False
+    location = db.get(UserLocation, uid)
+    privacy = db.get(UserPrivacy, uid)
+    if not location or (privacy and privacy.hide_location):
         return False
     from . import ban_workflow, support_workflow
     return not ban_workflow.restriction(db, uid) and not support_workflow.remaining_restriction(db, uid)
@@ -145,7 +148,7 @@ def expire(db):
 def owned_call(db, cid, uid):
     call = db.get(Call, cid)
     if not call or uid not in (call.first_id, call.second_id):
-        raise HTTPException(404, 'Arama bulunamadı.')
+        raise HTTPException(404, 'Eşleşme bulunamadı.')
     return call
 
 def summary(db, call, uid):
@@ -168,7 +171,7 @@ def state(db, user, mode='voice'):
     call = db.scalar(select(Call).where(Call.status == 'active', or_(Call.first_id == user.id, Call.second_id == user.id)))
     queue = db.get(Queue, user.id)
     return {'quota': quota(db, user.id), 'queued': bool(queue), 'mode': queue.mode if queue else None,
-            'active_users': count(db, queue.mode if queue else call.mode if call else mode), 'call': summary(db, call, user.id) if call else None}
+            'active_users': count(db, queue.mode if queue else call.mode if call else mode), 'call': summary(db, call, user.id) if call else None, 'radius_km': MATCH_RADIUS_KM, 'location_required': not bool(db.get(UserLocation,user.id)), 'location_hidden': bool(db.get(UserPrivacy,user.id) and db.get(UserPrivacy,user.id).hide_location)}
 
 def charge(db, uid, amount, operation, reference):
     user = db.scalar(select(User).where(User.id == uid).with_for_update().execution_options(populate_existing=True))
@@ -202,8 +205,10 @@ def status(mode: str = Query('voice', pattern='^(voice|video)$'), db: Session = 
 def buy_premium(db: Session = Depends(get_db), user: User = Depends(authenticated)):
     serialize(db)
     row = account(db, user.id)
+    if row.used >= 20:
+        raise HTTPException(403, 'Günlük eşleşme hakkınız doldu. Yeni gün başlayınca tekrar deneyin.')
     if not premium(row):
-        charge(db, user.id, 500, 'anonymous_premium', now().astimezone(ISTANBUL).date().isoformat())
+        charge(db, user.id, 1000, 'location_premium', now().astimezone(ISTANBUL).date().isoformat())
         row.premium_until = (now().astimezone(ISTANBUL).replace(hour=0, minute=0, second=0, microsecond=0)+timedelta(days=1)).astimezone(timezone.utc)
     result = quota(db, user.id)
     db.commit()
@@ -216,12 +221,16 @@ def join(body: Join, db: Session = Depends(get_db), user: User = Depends(authent
     serialize(db)
     expire(db)
     require_feature(db, user.id)
-    from . import location_calls
-    location_calls.expire(db)
-    if location_calls.user_busy(db,user.id) or db.get(location_calls.Queue,user.id):
-        raise HTTPException(409,'Önce konuma göre eşleşmenizi sonlandırın.')
+    anonymous_calls.expire(db)
+    if not db.get(UserLocation,user.id):
+        raise HTTPException(409,'Yakındaki kişilerle eşleşmek için konum izni verin.')
+    privacy = db.get(UserPrivacy,user.id)
+    if privacy and privacy.hide_location:
+        raise HTTPException(409,'Konumunuz gizli. Konuma göre eşleşmek için Gizlilik bölümünden konum görünürlüğünü açın.')
+    if anonymous_calls.user_busy(db,user.id) or db.get(anonymous_calls.Queue,user.id):
+        raise HTTPException(409,'Önce anonim aramanızı kapatın.')
     if not available(db, user.id):
-        raise HTTPException(403, 'Bu durumda anonim aramaya katılamazsınız.')
+        raise HTTPException(403, 'Bu durumda konuma göre eşleşmeye katılamazsınız.')
     existing = user_busy(db, user.id)
     if existing:
         result = {'call': summary(db, db.get(Call, existing), user.id)}
@@ -230,7 +239,7 @@ def join(body: Join, db: Session = Depends(get_db), user: User = Depends(authent
     if direct_busy(db, user.id):
         raise HTTPException(409, 'Önce devam eden aramanızı kapatın.')
     if quota(db, user.id)['remaining'] <= 0:
-        raise HTTPException(403, 'Günlük arama hakkınız doldu.')
+        raise HTTPException(403, 'Günlük eşleşme hakkınız doldu.')
     row = db.get(Queue, user.id)
     if row and row.mode != body.mode:
         raise HTTPException(409, 'Önce diğer arama kuyruğundan çıkın.')
@@ -240,11 +249,19 @@ def join(body: Join, db: Session = Depends(get_db), user: User = Depends(authent
     row.expires_at = now()+timedelta(seconds=25)
     db.flush()
     peer = None
-    for candidate in db.scalars(select(Queue).where(Queue.mode == body.mode, Queue.user_id != user.id, Queue.expires_at > now()).order_by(Queue.joined_at, Queue.user_id)):
+    origin = db.get(UserLocation,user.id)
+    candidates = []
+    for candidate in db.scalars(select(Queue).where(Queue.mode == body.mode, Queue.user_id != user.id, Queue.expires_at > now())):
+        location = db.get(UserLocation,candidate.user_id)
+        if location:
+            km = distance(origin,location)
+            if km <= MATCH_RADIUS_KM:candidates.append((km,utc(candidate.joined_at),candidate.user_id,candidate))
+    candidates.sort(key=lambda item:item[:3])
+    for _,_,_,candidate in candidates:
         if not available(db, candidate.user_id) or quota(db, candidate.user_id)['remaining'] <= 0 or user_busy(db, candidate.user_id):
             db.delete(candidate)
             continue
-        if direct_busy(db, candidate.user_id) or blocked(db, user.id, candidate.user_id) or location_calls.user_busy(db,candidate.user_id) or db.get(location_calls.Queue,candidate.user_id):
+        if direct_busy(db, candidate.user_id) or blocked(db, user.id, candidate.user_id) or anonymous_calls.user_busy(db,candidate.user_id) or db.get(anonymous_calls.Queue,candidate.user_id):
             continue
         peer = candidate
         break
@@ -306,12 +323,12 @@ def signal(cid: str, body: SignalIn, db: Session = Depends(get_db), user: User =
     expire(db)
     call = owned_call(db, cid, user.id)
     if call.status != 'active':
-        raise HTTPException(409, 'Arama sona erdi.')
+        raise HTTPException(409, 'Eşleşme sona erdi.')
     if (body.kind == 'offer' and user.id != call.first_id) or (body.kind == 'answer' and user.id != call.second_id):
         raise HTTPException(403, 'Sinyal sırası geçersiz.')
     encoded = json.dumps(body.payload)
     if len(encoded) > 20000:
-        raise HTTPException(413, 'Arama sinyali fazla büyük.')
+        raise HTTPException(413, 'Eşleşme sinyali fazla büyük.')
     db.add(Signal(call_id=cid, sender_id=user.id, kind=body.kind, payload=encoded))
     db.commit()
     return {'ok': True}
@@ -329,7 +346,7 @@ def extend(cid: str, body: Extend, db: Session = Depends(get_db), user: User = D
     if call.status != 'active' or now() < utc(call.starts_at):
         raise HTTPException(409, 'Aktif görüşme gerekli.')
     seconds = 240 if premium(account(db, user.id)) else 120
-    charge(db, user.id, 100, 'anonymous_extra_time', cid)
+    charge(db, user.id, 200, 'location_extra_time', cid)
     call.ends_at = utc(call.ends_at)+timedelta(seconds=seconds)
     db.add(Extension(call_id=cid, user_id=user.id, request_key=body.request_key, seconds=seconds))
     result = {'seconds': seconds, 'call': summary(db, call, user.id)}
