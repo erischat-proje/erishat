@@ -483,9 +483,10 @@
             const message=await api().sendMessageGift(activeConversationId,g.gift_key,quantity);
             appendMessageOnce(document.querySelector('#chat .chatBody'),message,true);
             modal.remove();loadConversations();
+            window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:{...message,gift_key:g.gift_key,quantity,sender_name:'Sen'}}));
             window.dispatchEvent(new Event('erischat:gift-updated'));
           }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}};
-          grid.append(button);
+          const cell=document.createElement('div');cell.append(button);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.textContent='Önizle';preview.onclick=()=>window.ErisGiftStage?.preview?.({gift_key:g.gift_key,quantity});cell.append(preview);grid.append(cell);
         }
       }
       draw();
@@ -776,6 +777,7 @@
       if (!body || body.querySelector('[data-message-id="'+String(data.message_id).replace(/"/g,'&quot;')+'"]')) return;
       const mine = String(data.sender_id || '') === String(currentUserId || '');
       appendMessageOnce(body, data, mine);
+      if(data.gift_key)window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:data}));
       body.scrollTop = body.scrollHeight;
       if (!mine) api().messages(id).catch(()=>{});
     } else if (String(data.sender_id || '') !== String(currentUserId || '') && 'Notification' in window && Notification.permission === 'granted') {
