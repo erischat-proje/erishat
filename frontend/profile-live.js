@@ -20,7 +20,7 @@
       }
     }
     const balance = $('.balance');
-    if (balance && Number.isFinite(Number(user.lidya))) balance.textContent = `💎 ${Number(user.lidya).toLocaleString('tr-TR')}`;
+    if (balance && Number.isFinite(Number(user.lidya))) balance.textContent = `${Number(user.lidya).toLocaleString('tr-TR')}`;
     document.querySelectorAll('[data-erischat-nickname]').forEach(el => { el.textContent = user.nickname || 'Anonim'; });
     if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
     const profile = document.querySelector('.profile');

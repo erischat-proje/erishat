@@ -102,13 +102,21 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     wallpapers = {i['key']: i for i in wallpaper_catalog()}
     result = []
     labels = {'avatar':'Avatar', 'frame':'Çerçeve', 'wallpaper':'Duvar kağıdı', 'bubble':'Sohbet balonu',
-              'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük'}
+              'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
     for kind, key in sorted(owned):
         if kind not in labels or kind == 'ring': continue
         relation = key.startswith(relationship_rewards.PREFIX)
         if relation and not house: continue
         item = normal.get((kind, key), {})
         wall = wallpapers.get(key, {}) if kind == 'wallpaper' else {}
+        if kind == 'relationship_status':
+            status=next((k for k in relationship_rewards.STATUS_NAMES if relationship_rewards.status_asset(k)==key),None)
+            if not house or status not in relationship_rewards.status_unlocked(db,house):continue
+            result.append({'type':kind,'asset_key':key,'asset':key,'name':relationship_rewards.STATUS_NAMES[status],
+                'source':'relationship','level':0,'equip_key':key,
+                'equipped':relationship_rewards.status_for(db,house,user.id)==status,
+                'compatible':relationship_rewards.status_compatible(house,status)})
+            continue
         reward = next((r for r in relationship_rewards.items(user.gender) if r['type'] == kind and r['asset_key'] == key), {}) if relation else {}
         if relation:
             equipped = relationship_rewards.selected(db, user.id, kind) == key

@@ -73,6 +73,11 @@
     if (message?.media_type === 'image' || message?.media_type === 'voice') row.classList.add('dm-media-bubble');
     if (message?.id != null) row.dataset.messageId = String(message.id);
     row.dataset.read = message?.is_read ? '1' : '0';
+    const portrait=document.createElement('span');portrait.className='dm-message-portrait';
+    const asset=window.ErisChatCosmetics?.assetUrl;
+    if(message.sender_avatar_asset){const img=document.createElement('img');img.src=asset?.(message.sender_avatar_asset)||message.sender_avatar_asset;img.alt='';portrait.append(img)}else portrait.textContent=message.sender_avatar||'👤';
+    if(message.sender_frame_asset){const frame=document.createElement('img');frame.className='dm-message-frame';frame.src=asset?.(message.sender_frame_asset)||message.sender_frame_asset;frame.alt='';portrait.append(frame)}
+    row.append(portrait);
     const body = document.createElement('div'); body.className='dm-message-text';
     if(message?.gift_key && message?.gift_image_url){
       const img=document.createElement('img');img.src=message.gift_image_url;img.alt=message.gift_key;img.style.cssText='display:block;width:70px;height:70px;object-fit:contain;margin:auto';body.append(img);
@@ -105,6 +110,8 @@
     const when = document.createElement('span'); when.textContent = messageTime(message?.created_at); meta.append(when);
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
     row.append(meta);
+    if(message.bubble_asset){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
+
     if (message?.is_pinned) row.dataset.pinned = '1';
     return row;
   }

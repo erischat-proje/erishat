@@ -61,6 +61,13 @@ def ensure_rewards(db,house):
     if house.ring and not db.get(CoupleRing,(house.id,house.ring)):
         db.add(CoupleRing(couple_id=house.id,ring=house.ring,source='purchased'))
     db.flush()
+    for uid in (house.male_id, house.female_id):
+        for key in status_unlocked(db, house):
+            asset = status_asset(key)
+            if not db.scalar(select(UserCosmetic.id).where(UserCosmetic.user_id == uid,
+                    UserCosmetic.cosmetic_type == 'relationship_status', UserCosmetic.asset_key == asset)):
+                db.add(UserCosmetic(user_id=uid, cosmetic_type='relationship_status', asset_key=asset))
+    db.flush()
 
 
 def revoke(db,house):
@@ -75,3 +82,37 @@ def revoke(db,house):
 
 def owns_wallpaper(db,uid,asset):
     return bool(house_for(db,uid) and db.scalar(select(UserCosmetic.id).where(UserCosmetic.user_id==uid,UserCosmetic.cosmetic_type=='wallpaper',UserCosmetic.asset_key==asset)))
+
+STATUS_NAMES = {'dating':'Sevgili','copper-promise':'Bakır sözlü','silver-promise':'Gümüş sözlü',
+                'copper-engaged':'Bakır nişanlı','silver-engaged':'Gümüş nişanlı','married':'Evli'}
+
+
+def status_asset(key):
+    return PREFIX + 'status/' + key + '.png'
+
+
+def status_unlocked(db, house):
+    rings = {r.ring for r in db.scalars(select(CoupleRing).where(CoupleRing.couple_id == house.id))}
+    keys = {'dating'}
+    if any(r.startswith('copper-') for r in rings): keys.add('copper-promise')
+    if house.level >= 2 or any(r.startswith('silver-') for r in rings): keys.add('silver-promise')
+    if house.level >= 4: keys.update(('copper-engaged', 'silver-engaged'))
+    if house.married: keys.add('married')
+    return keys
+
+
+def status_compatible(house, key):
+    if key == 'dating': return True
+    if key == 'married': return bool(house.married)
+    return bool(house.ring and house.ring.startswith(key.split('-')[0] + '-'))
+
+
+def status_for(db, house, uid):
+    unlocked = status_unlocked(db, house)
+    row = db.get(CoupleRewardSelection, (uid, 'relationship_status'))
+    chosen = next((k for k in STATUS_NAMES if row and row.asset_key == status_asset(k)), None)
+    if chosen in unlocked and status_compatible(house, chosen): return chosen
+    if house.married: return 'married'
+    metal = (house.ring or '').split('-')[0]
+    key = metal + ('-engaged' if house.level >= 4 else '-promise')
+    return key if key in unlocked and status_compatible(house, key) else 'dating'
