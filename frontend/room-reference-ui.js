@@ -583,6 +583,7 @@
     const groups=[
       ['ODA',[
         ['info','⌂','Oda bilgileri'],
+        ['ludo','🎮','Ludo'+(Number(r.level||1)<4?' 🔒':'')],
         ['report','⚑','Şikâyet'],
         ['users','♙','Kullanıcılar'],
         ['music','♫','Müzik'],
@@ -619,12 +620,15 @@
     p.querySelector('.room-center-role').textContent=role;
     p.closest('.room-v5-panel').classList.add('show');
     p.querySelector('[data-close]').onclick=closePanels;
+    p.querySelector('[data-v5="ludo"]')?.setAttribute('aria-disabled',String(Number(r.level||1)<4));
+    if(Number(r.level||1)<4){const ludo=p.querySelector('[data-v5="ludo"]');if(ludo)ludo.style.opacity='.4';}
     p.querySelectorAll('[data-v5]').forEach(button=>button.onclick=()=>{
       const tab=button.dataset.v5;
       if(['staff','guests','bans','mutes','settings'].includes(tab)&&!staff)return;
       if(['moderators','promote','theme'].includes(tab)&&!owner)return;
       closePanels();
-      if(tab==='adminroomban'&&canRoomBan)window.ErisBan?.openRoom?.(r.public_id||r.id);
+      if(tab==='ludo'){if(Number(r.level||1)<4){window.toast?.('Ludo 4. oda seviyesinde açılır.');return;}window.ErisLudo?.open?.();}
+      else if(tab==='adminroomban'&&canRoomBan)window.ErisBan?.openRoom?.(r.public_id||r.id);
       else if(tab==='theme')theme();
       else if(tab==='music')window.ErisChatMusic?.open?.();
       else window.ErisRoomCompleteV3?.openMenu?.(tab);
