@@ -22,10 +22,11 @@
     }catch(error){if(status)status.textContent=error.message||'Oda oluşturulamadı.'}
   };
   async function people(){
+    if(window.ErisDiscovery)return window.ErisDiscovery.load();
     const root=document.getElementById('people');if(!root)return;
     note(root,'Kullanıcılar yükleniyor…');
     try{
-      const rows=list(await api('/discover/nearby?limit=50'));
+      const rows=list(await api('/discover/nearby?limit=50'));if(window.ErisDiscovery)return window.ErisDiscovery.load();
       if(!rows.length){note(root,'Görünür kullanıcı yok. Konum ve keşif tercihlerine göre sonuçlar değişir.');return}
       root.replaceChildren();
       rows.forEach(user=>{

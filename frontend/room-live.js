@@ -58,17 +58,19 @@
   }
   function roomListStyle(){if(document.getElementById('eris-room-follow-style'))return;const style=document.createElement('style');style.id='eris-room-follow-style';style.textContent='.eris-room-list-card{gap:8px!important;padding:9px!important}.eris-room-list-open{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:58px;padding:4px;border:0;background:transparent;color:inherit;text-align:left}.eris-room-follow-button{flex:none;border:1px solid #a77aff55;border-radius:999px;background:#8a5cff18;color:#d8c5ff;padding:8px 10px;font-size:9px;font-weight:750}.eris-room-follow-button[aria-pressed=true]{border-color:#ffffff1a;background:#ffffff08;color:#c8c0d0}.eris-room-follow-status{font-size:9px;white-space:nowrap;padding:6px 8px;border-radius:999px}.eris-room-follow-status.online{color:#8be2bd;background:#48d9a214}.eris-room-follow-status.offline{color:#aaa1b1;background:#ffffff0b}.eris-room-follow-menu{position:relative;flex:none}.eris-room-follow-menu summary{list-style:none;color:#aaa1b1;padding:7px;cursor:pointer}.eris-room-follow-menu button{position:absolute;right:0;top:28px;z-index:10;white-space:nowrap;padding:10px 13px;border:1px solid #ffffff20;border-radius:11px;background:#1b1621;color:#fff}#explore .tabs{grid-template-columns:repeat(3,minmax(0,1fr))}#explore .tabs .tab{font-size:9px;padding:9px 3px}@media(max-width:350px){.eris-room-follow-status{font-size:8px;padding:5px}.eris-room-follow-button{padding:7px;font-size:8px}}';document.head.append(style)}
   async function loadFollowedRooms(){
+    if(window.ErisDiscovery)return window.ErisDiscovery.load();
     const target=document.getElementById('followingRooms');if(!target||!token())return;
     roomListStyle();target.innerHTML='<div class="card" style="padding:14px;color:#aaa1b1">Takip edilen odalar yükleniyor…</div>';
-    try{const rows=await window.ErisRoom.listFollowing();target.replaceChildren();if(!rows.length){target.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Henüz takip ettiğin oda yok. Beğendiğin bir odada “Takip et” düğmesine dokun.</div>';return}rows.forEach(room=>target.append(roomCard(room,true)))}catch(e){target.textContent=e.message||'Takip ettiğin odalar yüklenemedi.'}
+    try{const rows=await window.ErisRoom.listFollowing();if(window.ErisDiscovery)return window.ErisDiscovery.load();target.replaceChildren();if(!rows.length){target.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Henüz takip ettiğin oda yok. Beğendiğin bir odada “Takip et” düğmesine dokun.</div>';return}rows.forEach(room=>target.append(roomCard(room,true)))}catch(e){target.textContent=e.message||'Takip ettiğin odalar yüklenemedi.'}
   }
   async function loadRooms() {
+    if(window.ErisDiscovery)return window.ErisDiscovery.load();
     const targets = [...document.querySelectorAll('#realRooms,#rooms')]; if (!targets.length) return;
     if (!token()) { targets.forEach(el=>{el.textContent='Odaları görmek için giriş yap.'}); return; }
     roomListStyle();
     try {
       const r = await fetch(`${API}/rooms`, { headers: headers() }); if (!r.ok) throw new Error(`rooms:${r.status}`);
-      const data = await r.json(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
+      const data = await r.json(); if(window.ErisDiscovery)return window.ErisDiscovery.load(); const rooms = Array.isArray(data) ? data : (data.rooms || data.items || data.data || []);
       targets.forEach(el => { el.replaceChildren(); const shown=el.id==='rooms'?rooms.filter(room=>Number(room.member_count||0)>1):rooms; if (!shown.length) { el.innerHTML='<div class="card" style="padding:16px;color:#938a9f">Şu anda aktif oda yok.</div>'; return; }
         shown.forEach(room => el.append(roomCard(room,false)));
       });
