@@ -47,6 +47,7 @@
     .rel-house .rel-male-name{left:17%}.rel-house .rel-female-name{left:66.5%}
     .rel-house .rel-art-button{position:absolute!important;padding:0!important;min-height:0!important;border:0!important;border-radius:0!important;background:transparent!important;display:grid;place-items:center;cursor:pointer}
     .rel-art-button img{width:100%;height:100%;object-fit:contain;pointer-events:none}.rel-room-button{left:9%;top:5%;width:20%;height:10%}.rel-rewards-button{left:6.5%;top:67.5%;width:14%;height:8%}.rel-gift-button{right:6.5%;top:67.5%;width:14%;height:8%}
+    .rel-gift-quantities{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}.rel-gift-quantities button{flex:1;padding:9px 6px}.rel-gift-quantities button.selected{border-color:#ffe0a0;background:#795735}.rel-gift-card{position:relative;min-width:0;border:1px solid #ffffff16;border-radius:14px;padding:4px}.rel-gift-card.selected{border-color:#ffe0a0;background:#d8ae4b16}.rel-gift-card.unaffordable{opacity:.35}.rel-gift-card .rel-gift-pick{width:100%;border:0;background:transparent;padding:4px;font-size:10px}.rel-gift-card .rel-gift-send{width:100%;background:linear-gradient(135deg,#efcf8b,#9e673b);color:#180e20;font-size:10px;font-weight:800;margin-bottom:4px}.rel-gift-send[hidden]{display:none!important}.rel-gift-balance{font-size:11px;color:#e8cf9f}
     .rel-couple-gifts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.rel-couple-gifts button{display:grid;justify-items:center;min-width:0}.rel-couple-gifts button>img{width:100%;height:75px;object-fit:contain}.rel-title{width:85px;height:28px;object-fit:contain;vertical-align:middle}.rel-public{display:inline-block;vertical-align:middle;width:125px!important;height:36px!important}
   `;document.head.append(style);
   let stack=0,main=null,catalogData=null;
@@ -133,10 +134,37 @@
   }
   async function coupleGifts(house){
     const modal=dialog('Çifte hediye gönder','<p>Hediyeler yükleniyor…</p>');
-    try{const data=await window.ErisPlatform.api('/message-gifts');if(!modal.shade.isConnected)return;modal.body.innerHTML='<p class="rel-note">Hediye ortak hesaba sayılır. 30 Lidya üzerindeki hediyede üçte bir kesilir; kalan tutarın rastgele %1–100’ü iki partnere eşit dağıtılır.</p><label>Adet<input type="number" min="1" max="1000" step="1" value="1" data-quantity></label><div class="rel-couple-gifts"></div>';
-      const grid=modal.body.querySelector('.rel-couple-gifts');for(const gift of (Array.isArray(data)?data:data.items||[])){const b=document.createElement('button');b.type='button';const name=gift.gift_key||gift.name;b.innerHTML='<img src="'+esc(gift.image_url)+'" alt="'+esc(name)+'">'+coin(gift.unit_price||gift.price);let requestKey=null,requestQuantity=null;
-        b.onclick=()=>action(b,modal.body,async()=>{const quantity=Number(modal.body.querySelector('[data-quantity]').value);if(!Number.isInteger(quantity)||quantity<1||quantity>1000)throw new Error('1–1000 arası adet giriniz.');if(quantity!==requestQuantity){requestKey=key();requestQuantity=quantity}const r=await post('/houses/'+encodeURIComponent(house.id)+'/gifts',{gift_key:name,quantity,request_key:requestKey});requestKey=null;requestQuantity=null;window.toast?.('Çiftin her partnerine '+amount(r.each_amount)+' Lidya aktarıldı.');window.ErisProfile?.refresh?.()});grid.append(b)}
-    }catch(e){errorBox(modal.body).textContent=e.message}
+    try{
+      const [data,me]=await Promise.all([window.ErisPlatform.api('/message-gifts'),window.ErisPlatform.api('/me')]);
+      if(!modal.shade.isConnected)return;
+      let quantity=1,balance=Number(me.lidya||0),selected=null,busy=false,uncertain=false,requestKey=null;
+      modal.body.innerHTML='<p class="rel-note">Hediye ortak hesaba sayılır. 30 Lidya üzerindeki hediyede üçte bir kesilir; kalan tutarın rastgele %1–100’ü iki partnere eşit dağıtılır.</p><div class="rel-gift-quantities" aria-label="Hediye adedi">'+[1,3,5,9,49,99].map(n=>'<button type="button" data-quantity="'+n+'">'+n+'</button>').join('')+'</div><p class="rel-gift-balance"></p><div class="rel-couple-gifts"></div>';
+      const grid=modal.body.querySelector('.rel-couple-gifts'),cards=[];
+      const paint=()=>{
+        modal.body.querySelector('.rel-gift-balance').textContent='Bakiye: '+amount(balance)+' Lidya • '+quantity+' adet';
+        modal.body.querySelectorAll('[data-quantity]').forEach(b=>{b.classList.toggle('selected',Number(b.dataset.quantity)===quantity);b.setAttribute('aria-pressed',String(Number(b.dataset.quantity)===quantity));b.disabled=busy||uncertain;});
+        cards.forEach(c=>{const chosen=c===selected,affordable=c.price*quantity<=balance;c.card.classList.toggle('selected',chosen);c.card.classList.toggle('unaffordable',!affordable);c.pick.disabled=busy||!affordable||uncertain;c.pick.setAttribute('aria-pressed',String(chosen));c.send.hidden=!chosen;c.send.disabled=busy||(!affordable&&!uncertain);c.send.textContent=uncertain?'Tekrar dene':busy?'Gönderiliyor…':'Gönder • '+amount(c.price*quantity)+' Lidya';c.priceLabel.innerHTML=coin(c.price*quantity);});
+      };
+      modal.body.querySelectorAll('[data-quantity]').forEach(b=>b.onclick=()=>{if(busy||uncertain)return;quantity=Number(b.dataset.quantity);requestKey=null;paint();});
+      for(const gift of (Array.isArray(data)?data:data.items||[])){
+        const name=gift.gift_key||gift.name,price=Number(gift.unit_price??gift.price??0);if(!name||!Number.isFinite(price)||price<0)continue;
+        const card=document.createElement('div');card.className='rel-gift-card';card.innerHTML='<button type="button" class="rel-gift-send" hidden>Gönder</button><button type="button" class="rel-gift-pick"><img src="'+esc(gift.image_url)+'" alt="'+esc(name)+'"><span>'+esc(name)+'</span><span data-price></span></button>';
+        const c={card,name,price,pick:card.querySelector('.rel-gift-pick'),send:card.querySelector('.rel-gift-send'),priceLabel:card.querySelector('[data-price]')};cards.push(c);grid.append(card);
+        c.pick.onclick=()=>{if(busy||uncertain)return;selected=c;requestKey=null;errorBox(modal.body).textContent='';paint();};
+        c.send.onclick=async()=>{
+          if(busy||selected!==c||(!uncertain&&price*quantity>balance))return;
+          busy=true;requestKey=requestKey||key();errorBox(modal.body).textContent='';paint();
+          try{
+            const result=await post('/houses/'+encodeURIComponent(house.id)+'/gifts',{gift_key:name,quantity,request_key:requestKey});
+            requestKey=null;uncertain=false;balance=Math.max(0,balance-price*quantity);
+            try{const fresh=await window.ErisPlatform.api('/me');balance=Number(fresh.lidya||0);}catch(_){}
+            window.toast?.('Çiftin her partnerine '+amount(result.each_amount)+' Lidya aktarıldı.');window.ErisProfile?.refresh?.();
+          }catch(e){uncertain=!e.status;errorBox(modal.body).textContent=e.message+(uncertain?' Sonucu aynı işlem anahtarıyla kontrol etmek için Tekrar dene’ye basın.':'');if(!uncertain)requestKey=null;}
+          finally{busy=false;if(modal.shade.isConnected)paint();}
+        };
+      }
+      paint();
+    }catch(e){errorBox(modal.body).textContent=e.message;}
   }
   async function getCatalog(){if(!catalogData)catalogData=await api('/catalog');return catalogData}
   function rings(house,onSelect=null){

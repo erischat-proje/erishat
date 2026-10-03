@@ -174,6 +174,7 @@
     const count=Math.min(24,Math.max(16,Number(forcedCount)||seatCountForRoom(null,list)));
     const byNumber=new Map((Array.isArray(list)?list:[]).map(seat=>[Number(seat.seat_number),seat]));
     const seats=Array.from({length:count},(_,i)=>byNumber.get(i+1)||{seat_number:i+1,user_id:null,locked:false});
+    const ludoBoard=box.querySelector('.ludo-room');
     box.innerHTML='';box.dataset.seatCount=String(count);
     seats.forEach((seat,i)=>{
       const num=seat.seat_number??i+1;
@@ -211,6 +212,7 @@
       };
       box.appendChild(b);
     });
+    if(ludoBoard)box.appendChild(ludoBoard);
   }
   function attachRoomChat(roomId){
     const list=document.getElementById('erisLiveChat'),state=document.getElementById('erisLiveMeta'),input=document.getElementById('erisLiveInput'),send=document.getElementById('erisLiveSend');
