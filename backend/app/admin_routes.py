@@ -15,6 +15,8 @@ from .room_models import Room, RoomMember, RoomSeat, RoomPassword
 from .support_models import SupportTicket
 from .system_logs import record
 from . import support_workflow as support_live
+from . import ban_workflow
+from .ban_workflow_models import BanWorkflow
 from .admin_models import (
     AdminRole, AdminAuditLog, SupportMessage, SupportAssignment,
     UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement, BanApproval, BanAppeal, FaActionLog,
@@ -340,7 +342,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         requester = db.get(User, row.requester_id)
         target = db.get(Room, row.target_room_id) if row.target_room_id else db.get(User, row.target_user_id)
         return {"id":row.id,"kind":row.kind,"days":row.days,"reason":row.reason,"status":row.status,
-                "appeal_used":row.appeal_used,"requester_id":row.requester_id,
+                "appeal_used":row.appeal_used,"workflow":db.get(BanWorkflow,row.id) is not None,"requester_id":row.requester_id,
                 "requester_name":requester.nickname if requester else "Yönetici",
                 "requester_avatar":requester.avatar_asset if requester else None,
                 "requester_frame":requester.frame_asset if requester else None,
@@ -360,6 +362,8 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     @router.post("/ban-requests/{request_id}/decision")
     def decide_ban(request_id:int,body:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_fa_or_da(db,user)
+        if db.get(BanWorkflow,request_id):
+            raise HTTPException(409,"Bu talebi yeni Ban Talepleri panelinde inceleyip sonuçlandırın")
         row=db.scalar(select(BanApproval).where(BanApproval.id==request_id).with_for_update())
         if not row or row.status!="pending":raise HTTPException(409,"Talep artık beklemede değil")
         if body.action=="approve":
@@ -379,6 +383,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         row=db.scalar(select(BanApproval).where(BanApproval.id==request_id).with_for_update())
         if not row or row.requester_id!=user.id or row.status!="rejected" or row.appeal_used:
             raise HTTPException(409,"Bu talep için itiraz hakkı bulunmuyor")
+        if db.get(BanWorkflow,row.id):raise HTTPException(409,"Bu talep için yeni ban denetim akışını kullanın")
         row.appeal_used=True
         db.add(BanAppeal(approval_id=row.id,reason=body.reason.strip(),explanation=body.explanation.strip(),images_json=json.dumps(body.images)))
         audit(db,user,"ban_appeal",{"request_id":row.id},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
@@ -408,32 +413,31 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         db.commit();return {"id":appeal.id,"status":appeal.status}
 
     @router.post("/users/{user_id}/ban")
-    def ban_user(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
-        if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        queued=queue_ban(db,user,payload,"account",target)
-        if queued:return queued
-        ban=UserBan(user_id=target.id,ban_type="account",expires_at=expiry(payload.days),banned_by=user.id,reason=payload.reason)
-        db.add(ban); audit(db,user,"user_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
-        return {"banned":True,"expires_at":ban.expires_at}
+    async def ban_user(user_id: str, payload: ban_workflow.EvidencePayload, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        target=resolve_admin_user(db,user_id)
+        if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
+        result=ban_workflow.submit(db,user,target,payload,"account")
+        if result["banned"] and support_disconnect: await support_disconnect(target.id)
+        return result
 
     @router.post("/users/{user_id}/device-ban")
-    def device_ban(user_id: str, payload: BanRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_ua_or_da(db,user); target=resolve_admin_user(db,user_id)
-        if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        queued=queue_ban(db,user,payload,"device",target)
-        if queued:return queued
-        ban=UserBan(user_id=target.id,ban_type="device",expires_at=None,banned_by=user.id,reason=payload.reason)
-        db.add(ban); audit(db,user,"device_ban",{"days":payload.days,"reason":payload.reason},target_user_id=target.id); db.commit()
-        return {"banned":True,"expires_at":ban.expires_at}
+    async def device_ban(user_id: str, payload: ban_workflow.EvidencePayload, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        target=resolve_admin_user(db,user_id)
+        if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
+        result=ban_workflow.submit(db,user,target,payload,"device")
+        if result["banned"] and support_disconnect: await support_disconnect(target.id)
+        return result
 
     @router.delete("/users/{user_id}/ban")
     def unban_user(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_ua_or_da(db,user)
+        require_role(db,user,"DA")
         target=resolve_admin_user(db,user_id)
-        if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        rows=db.scalars(select(UserBan).where(UserBan.user_id==target.id,UserBan.active.is_(True))).all()
-        for x in rows: x.active=False
+        if not target: raise HTTPException(404,"Kullanıcı bulunamadı")
+        rows=db.scalars(select(UserBan).where(UserBan.user_id==target.id,UserBan.active.is_(True)).with_for_update()).all()
+        for ban in rows:
+            flow=db.scalar(select(BanWorkflow).where(BanWorkflow.ban_id==ban.id))
+            if flow: ban_workflow.undo(db,user,db.get(BanApproval,flow.approval_id),flow)
+            else: ban.active=False
         audit(db,user,"user_unban",target_user_id=target.id); db.commit(); return {"unbanned":True,"count":len(rows)}
 
     @router.post("/users/{user_id}/chat-ban")
