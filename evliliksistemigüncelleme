@@ -1,0 +1,34 @@
+YÜZÜK TASARIM VE İLİŞKİ SİSTEMİ içine 3 adet buton tasarımı attım
+seviye 1 2 erkek kadın oda giriş animasyonu ses efektleri
+Erkek seviye 1: Kısa, tok bir hava geçişi → metalik çınlama → hafif bas vuruşu.
+Erkek seviye 2: Derin hava geçişi → güçlü, tok vurgu → yükselen üç kristal nota ve kısa yankı.
+Kadın seviye 1: Yumuşak hava geçişi → iki zarif çan notası → ince parıltı sesi.
+Kadın seviye 2: İpeksi hava geçişi → yükselen arp ezgisi → kristal çan ve kısa, büyülü yankı.
+bu efektler oda giriş efekti hangisini takarlarsa onunla birlikte geçerli olur çıkardıklarında geçerliliği gider ve tüm ilişki ile gelen şeyler çiftler aydrıldığında gider
+hayran seviyeleri hariç ve gelen lidyalar hariç
+ilk buton çiftodasıbuton.png burdaki buton usstaki kalbin soluna gelicek ve oraya kenardaki çerçeve çizgilerine veya birşeye değmeyecek şekilde tam oturacak
+buna basınca çiftin odası açılacak bu oda havuzu ortak olucak burda çifttten herhangi birine hediye atılırsa bu hediye ortak baz alınacak
+30 lidya üstü her hediye 3 te biri sistem tarafından yok sayılacak geri kalan ½100 baz alınacak kalan rakamdan henhangi bir şansa bağlı % lik olaran gidecek olan hediye lidya miktarı sayılacak
+ve çifte ortak olarak bölünecek ve aşşağıda bu odada atılan hediyeler şu şekilde gözükecek chatte (kullanıcı adı) isimli kullanıcı çiftimize (lidya miktarı sağında lidya coin işareti) hediye gönderdi
+bu oda da yine hayran sistemi olucak ama şu hayran listesi yine normal liste gibi gözükecek sistemi yine ortak olucak aynı günlük haftalık aylık ve sezonluk sıralama geçerli olucak ama adı hayran listesi değil çift hediyesi olarak geçecek
+onun dışında ilişki butonuna tıkladığımızda ev açıksa ev seviyesi yazısı soluna eanar çerçevesine değmicek ve seviye olan çerçeve ye değmicek şekilde ölüller.png gelicek sağ tarafına hediyebutonu.png gelicek
+hediye butonu tıkladığında hediye gönder değil çifte hediye gönder yazıcak ve ordan atılan hediyeler çiftlere ortak dağıtılcak aynı mantık oda daki hediye sistemi ile
+sol taraftaki ödüller butonuna basınca seviye 1 den 12 ye kadar ödüller olucak
+1. seviye kadınlara kadınseviye1sohbet.png erkeklere seviye1erkeksohbet.png sohbetlerinde otomatik olarak chatte tüm odalarda uygulanacak profillerinde kolleksiyon kısmına düşücek isterlerse uygulamayı iptal edip çıkarabilecekler ama orda kalıcı olarak gözükecek
+2. seviye  seviye1unvan.png verilecek 2 tarafa da yine kolleksiyon olayı geçerli profillerinde sözlü kısmı çok büyük ve o biraz küçülüp daha sola kayıcak onunla aynı oranda onun sağına gelicek buda dilya vip seviyesi gibi küçük gözükecek
+3. seviye seviye 1 çerçeve alıcaklar kadınseviye1.png kadın olana seviye2erkekçerçeve.png erkek olana yine kolleksiyon olayı geçerli bunu yazmicam sürekli hepsinde geçerli olucak zaten
+4. seviye duvarkağıdı1.seviye.png iki tarafta hem normal odalarında kullanmak üzere bunu alıcak hemde çift odasında kullanabilecekler
+5. seviye erkek için seviye1erkekodagirişi.png verilir kadın seviye1kadınodagrişi.png verilir bunlar otomatik ses efektli olarak gelir ses efektini hiçbir yerde göremezler veya kaldıramazlar ama olur (oda girişlerinin solundaki boşluga her cinsin kendi avatarı içine tam sığcak sekilde oturur onun hemen sağındaki boşluğa (kullanıcı adı) bir sağındaki boşluğa yüzükleri tam oturcak şekilde gelir ve yüzük değiştirirlerse orda da güncellenir
+6. seviye çiftlere seviye1yüzük.png verilir ve bu da seviye bağlı yüzük olarak almış olurlar yüzüklerde seviye bağlı yüzük diye bir kategori gelir orda sürekli olarak görürler ha birde şu var bir yüzük satın aldıklarında kalıcı olarak almış satın olarak gözükür ve istedikleri zaman yüzükleri değiştirebilirler  buna göre de güncelle
+7. seviye seviye2erkeksohbet.png kadınseviye2sohbet.png yine aynı mantık
+8. seviye seviye2unvan.png gelir iki tarafa da yine aynı mantık
+9. seviye seviye2erkekçerçeve.png kadınseviye2.png yine aynı mantık
+10. seviye duvarkağıdı2.seviye.png yine aynı mantık
+11. seviye seviye2kadınodagirişi.png seviye2erkekodagirişi.png yine aynı mantık
+12. seviye seviye2yüzük.png yine aynı mantık
+ 
+ama ek olarak sohbet balonu verdiğimizde chatte yazılan yazının büyüklüğüne göre chatte genişlicek yazı tam sığcak
+onun dışında solda avatar felan onları anlatmama gerek yok heralde sohbet balonu içinde isim: mesaj olucak avatar çerçeve dışarda kalıcak
+ve her ödül seviyesi sistemi logosu tasarladım (seviye1ilişki.png diye başlıyor 12 ye kadar gidiyor onlarda mevcut olarak eklicem sen düzgünce seviye sistemlerinde logo olarak onu kullancaksın ilişki sistemi sevilerine
+ek olarak ekstra bişi düzenlicen bişi varsa düzenle
+bütün materyaller yine YÜZÜK TASARIM VE İLİŞKİ SİSTEMİ klasörüne atıldı
