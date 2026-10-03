@@ -43,3 +43,10 @@ def fan_count(db, recipient_id):
         select(DirectMessageGift.sender_id.label("sender_id")).where(DirectMessageGift.recipient_id==recipient_id),
     ).subquery()
     return int(db.scalar(select(func.count(func.distinct(senders.c.sender_id)))) or 0)
+
+
+def received_total(db, recipient_id):
+    """Gross gift value, including every room and DM gift, before commissions."""
+    room = db.scalar(select(func.sum(RoomGiftEvent.total_price)).where(RoomGiftEvent.recipient_id == recipient_id))
+    dm = db.scalar(select(func.sum(DirectMessageGift.unit_price)).where(DirectMessageGift.recipient_id == recipient_id))
+    return int(room or 0) + int(dm or 0)

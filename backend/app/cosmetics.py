@@ -9,7 +9,8 @@ COSMETIC_TYPES = {"avatar", "frame", "wallpaper"}
 
 
 def _asset_root() -> Path:
-    return Path(__file__).resolve().parents[1] / "Gereken_icerikler"
+    base = Path(__file__).resolve().parents[1]
+    return (base if (base / "Gereken_icerikler").is_dir() else base.parent) / "Gereken_icerikler"
 
 
 def _new_asset_root() -> Path:
@@ -29,7 +30,7 @@ def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, g
     directory = root / folder
     if not directory.exists():
         return
-    paths = [path for path in directory.rglob("*") if path.is_file()]
+    paths = [path for path in directory.rglob("*") if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"}]
 
     def natural_key(path: Path):
         import re

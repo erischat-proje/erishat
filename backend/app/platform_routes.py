@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from . import discovery_live
@@ -129,6 +129,23 @@ def distance_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float
     return 2*r*math.asin(math.sqrt(h))
 def user_can_show_vip(db: Session, user_id: str, field: str) -> bool:
     privacy = db.get(UserPrivacy, user_id); return True if not privacy else not bool(getattr(privacy, field, False))
+def profile_stats(db: Session, target: User, viewer: User) -> dict:
+    from .personal_fans import received_total
+    if active_ban(db, target.id):
+        return {"followers_count": 0, "following_count": 0, "received_gift_lidya": 0,
+                "vip_level": 0, "vip_badge_hidden": True, "vip_neon_hidden": True}
+    v = db.get(VipStatus, target.id)
+    own = target.id == viewer.id
+    visible = own or user_can_show_vip(db, target.id, "hide_vip")
+    return {
+        "followers_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id == target.id)) or 0),
+        "following_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.follower_id == target.id)) or 0),
+        "received_gift_lidya": received_total(db, target.id),
+        "vip_level": int(v.level or 0) if v and visible else 0,
+        "vip_badge_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_badge"),
+        "vip_neon_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_neon"),
+    }
+
 def require_family_member(db: Session, family_id: str, user_id: str) -> Family:
     family = db.get(Family, family_id)
     if not family: raise HTTPException(status_code=404, detail="Aile bulunamadı")
@@ -320,6 +337,7 @@ def register_platform_auth(current_user_dependency):
         return {"level":v.level,"total_spent":int(v.total_spent or 0),"current_level_spent":current_level_spent,"next_level":v.level+1 if v.level < 12 else None,"next_level_spent":VIP_SPEND_THRESHOLDS.get(v.level+1),"perks":sorted({p for level in range(1,v.level+1) for p in VIP_PERKS.get(level,[])}),"neon_color":neon,"entry_effect":v.entry_effect,"badge":badge,"title":title,"neon_enabled":v.level >= 3,"knight_badge_claimed":bool(v.knight_badge_claimed),"wallpaper_claimed":bool(v.wallpaper_claimed)}
     @router.post("/me/vip/claims/{claim}")
     def claim_vip_perk(claim: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        db.execute(text("SELECT id FROM users WHERE id=:uid FOR UPDATE"), {"uid": user.id}).first()
         v=vip_row(db,user.id)
         claim=claim.strip().lower()
         requirements={"knight_badge":10,"wallpaper":10}
@@ -484,9 +502,14 @@ def register_platform_auth(current_user_dependency):
         blocked_by_them = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==target.id,UserBlock.blocked_id==user.id)))
         from .personal_fans import fan_count, gift_totals
         from .room_fan_levels import level_for_total
-        followers_count=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id==target.id)) or 0)
-        following_count=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.follower_id==target.id)) or 0)
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"followers_count":followers_count,"following_count":following_count,"gift_fan_count":fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them}
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
+    @router.get("/users/{user_id}/profile-stats")
+    def user_profile_stats(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        if not target or not target.is_active:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        return profile_stats(db, target, user)
+
     @router.get("/me/profile-visitors")
     def profile_visitors(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(ProfileVisit).where(ProfileVisit.profile_user_id==user.id).order_by(ProfileVisit.visited_at.desc()).limit(limit)))
