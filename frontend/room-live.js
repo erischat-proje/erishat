@@ -232,7 +232,7 @@
       if(frame){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
       const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
-      const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
+      const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;if(fanLevel)badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
       if(d.user_id){portrait.style.cursor='pointer';author.style.cursor='pointer';portrait.onclick=author.onclick=()=>window.ErisFloatingProfile?.open(d.user_id)}
       if(fanLevel)badge.onclick=()=>window.ErisPersonalFanRanking?.(d.user_id);else badge.hidden=true;
       const body=document.createElement('span');body.className='eris-chat-text';body.textContent=d.text||'';
