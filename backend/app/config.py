@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     initial_da_ids: str = ""
     initial_da_public_ids: str = ""
     google_client_id: str = ""
+    payment_iban: str = ""
+    payment_account_name: str = ""
+    payment_bank_name: str = ""
+    github_read_token: str = ""
+    lidya_exempt_ref: str = "main"
 
     initial_da_google_emails: str = ""
     otp_expiry_seconds: int = 300

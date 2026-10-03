@@ -66,12 +66,12 @@
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
-    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['fan-ranking','Hayran sıralamam'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['calls','Arama geçmişleri'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['suggestion','Gelişim Fikri'],['settings','Ayarlar']];
+    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['fan-ranking','Hayran sıralamam'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['topup','Lidya Yükleme'],['calls','Arama geçmişleri'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['suggestion','Gelişim Fikri'],['settings','Ayarlar']];
     const strip = hub.querySelector('.eph-tabs');
     const icons={info:'profile',posts:'posts',social:'family','fan-ranking':'family',collection:'collection',vip:'vip',wallet:'wallet',calls:'bell',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',suggestion:'posts',settings:'security'};
     for (const [key,label] of tabs) {
-      const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML='<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg><span>'+escape(label)+'</span>';
-      button.onclick=()=>{if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}lastTrigger=button;show(key)};strip.append(button);
+      const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML=(key==='topup'?'<img class="eph-icon" src="./lidya-coin.png" alt="">':'<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg>')+'<span>'+escape(label)+'</span>';
+      button.onclick=()=>{if(key==='topup'){window.ErisPurchases?.open?.();return}if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}lastTrigger=button;show(key)};strip.append(button);
     }
     show('overview');
   }
