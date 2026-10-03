@@ -172,7 +172,7 @@ def lock_user(db,uid):
 def audit(db,user,action,details,target=None):
     with db.no_autoflush:
         admin_role=role(db,user.id)
-    data=json.dumps(details,ensure_ascii=False)
+    data=json.dumps({**details,"actor_role":admin_role},ensure_ascii=False)
     db.add(AdminAuditLog(admin_id=user.id,action=action,target_user_id=target,details=data))
     if admin_role=='FA': db.add(FaActionLog(admin_id=user.id,action=action,target_user_id=target,details=data))
 

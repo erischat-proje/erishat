@@ -51,9 +51,6 @@ def ensure_rewards(db,house):
             if row is None:
                 db.add(CoupleRewardSelection(user_id=uid,kind=kind,asset_key=key))
                 if kind=='frame':user.frame_asset=key
-            elif row.asset_key:
-                row.asset_key=key
-                if kind=='frame':user.frame_asset=key
             db.flush()
     for tier,level in ((1,6),(2,12)):
         key=f'level-{tier}'

@@ -909,11 +909,8 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         recipient_amount = per_person * GIFT_RECIPIENT_PERCENT // 100
         for recipient_id in sorted(recipient_ids):
             db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + recipient_amount))
-        vip = db.get(VipStatus, user.id)
-        if not vip:
-            vip = VipStatus(user_id=user.id, level=0, total_spent=0); db.add(vip); db.flush()
-        vip.total_spent = int(vip.total_spent or 0) + total
-        vip.level = vip_level_from_spend(vip.total_spent)
+        from .vip_spending import record_spend
+        record_spend(db,user.id,total,"room_gift")
         events=[]
         for recipient_id in sorted(recipient_ids):
             event = RoomGiftEvent(room_id=room.id, sender_id=user.id, recipient_id=recipient_id,

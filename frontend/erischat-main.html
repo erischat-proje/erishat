@@ -248,19 +248,7 @@ column-gap:9px
 
 </div>
 
-<div class="section">
-  <h3>Oyun merkezi</h3>
-  <button class="link" onclick="showView('games')">Tüm oyunlar →</button>
-</div>
 
-<div class="homeGameQuick" id="home-games-launcher"></div>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    if (window.ErisGamesMenuConfig && typeof window.ErisGamesMenuConfig.renderLauncher === "function") {
-      window.ErisGamesMenuConfig.renderLauncher(document.getElementById("home-games-launcher"));
-    }
-  });
-</script>
 
 </section>
 <section id="messages" class="view"><div class="eyebrow">MESAJLAR</div><h1 class="title">Sohbetlerin.</h1><div class="list"><div class="card" style="padding:16px;color:#938a9f">Konuşmalar yükleniyor…</div></div></section>
@@ -323,7 +311,7 @@ async function sendChat(){
    if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#938a9f">Eşleşme bulunamadı.</div>';return}
    matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
  }catch(e){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:#ff819d">Arama şu anda kullanılamıyor.</div>'}
-}};})();</script><script src="./auth-live.js?v=html-audit-20261003"></script><script src="./onboarding-live.js?v=html-audit-20261003"></script><script src="./welcome-live.js?v=html-audit-20261003"></script><script src="./platform.js?v=html-audit-20261003"></script><script src="./admin-live.js?v=html-audit-20261003"></script><script src="./announcement-live.js?v=html-audit-20261003"></script><script src="./vip-rewards-live.js?v=html-audit-20261003"></script><script src="./support-live.js?v=html-audit-20261003"></script><script src="./profile-live.js?v=html-audit-20261003"></script><script src="./profile-ui-live.js?v=html-audit-20261003"></script><script src="./screen-protection.js?v=html-audit-20261003"></script><script src="./dm-live.js?v=cinema-20261003"></script><script src="./dm-calls.js?v=html-audit-20261003"></script><script src="./stories-live.js?v=html-audit-20261003"></script><script src="./social-feed-live.js?v=html-audit-20261003"></script><script src="./gift-live.js?v=html-audit-20261003"></script><script src="./room-live.js?v=ludo-20261003"></script><link rel="stylesheet" href="./room-ludo.css?v=ludo-20261003"><script src="./room-ludo.js?v=ludo-20261003"></script><script src="./room-reference-ui.js?v=ludo-20261003"></script><script src="./room-wallpaper-live.js?v=marriage-20261003"></script><script src="./room-actions.js?v=html-audit-20261003"></script><script src="./room-rtc-live.js?v=html-audit-20261003"></script><script src="./room-music-ui.js?v=html-audit-20261003"></script><script src="./wallpaper-live.js?v=html-audit-20261003"></script><script src="./cosmetics.js?v=html-audit-20261003"></script><script src="./shop-live.js?v=html-audit-20261003"></script><script src="./games-menu.js?v=html-audit-20261003"></script><script src="./feature-hub-live.js?v=html-audit-20261003"></script><script src="./session-ui-live.js?v=html-audit-20261003"></script><script src="./dm-create-live.js?v=html-audit-20261003"></script>
+}};})();</script><script src="./auth-live.js?v=html-audit-20261003"></script><script src="./onboarding-live.js?v=html-audit-20261003"></script><script src="./welcome-live.js?v=html-audit-20261003"></script><script src="./platform.js?v=html-audit-20261003"></script><script src="./admin-live.js?v=system-20261003"></script><script src="./announcement-live.js?v=html-audit-20261003"></script><script src="./vip-rewards-live.js?v=html-audit-20261003"></script><script src="./support-live.js?v=html-audit-20261003"></script><script src="./profile-live.js?v=html-audit-20261003"></script><script src="./profile-ui-live.js?v=html-audit-20261003"></script><script src="./screen-protection.js?v=html-audit-20261003"></script><script src="./dm-live.js?v=cinema-20261003"></script><script src="./dm-calls.js?v=html-audit-20261003"></script><script src="./stories-live.js?v=html-audit-20261003"></script><script src="./social-feed-live.js?v=html-audit-20261003"></script><script src="./gift-live.js?v=html-audit-20261003"></script><script src="./room-live.js?v=system-20261003"></script><link rel="stylesheet" href="./room-ludo.css?v=ludo-20261003"><script src="./room-ludo.js?v=system-20261003"></script><script src="./room-reference-ui.js?v=ludo-20261003"></script><script src="./room-wallpaper-live.js?v=marriage-20261003"></script><script src="./room-actions.js?v=html-audit-20261003"></script><script src="./room-rtc-live.js?v=html-audit-20261003"></script><script src="./room-music-ui.js?v=html-audit-20261003"></script><script src="./wallpaper-live.js?v=system-20261003"></script><script src="./cosmetics.js?v=html-audit-20261003"></script><script src="./shop-live.js?v=system-20261003"></script><script src="./games-menu.js?v=html-audit-20261003"></script><script src="./feature-hub-live.js?v=html-audit-20261003"></script><script src="./session-ui-live.js?v=html-audit-20261003"></script><script src="./dm-create-live.js?v=html-audit-20261003"></script>
 <script>
 (function(){
  async function loadPrivacy(){
@@ -341,10 +329,10 @@ async function sendChat(){
  window.addEventListener('erischat:auth',e=>{if(e.detail?.state==='ready')loadPrivacy();});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadPrivacy,{once:true});else loadPrivacy();
 })();
-</script><script src="./room-ban-live.js?v=html-audit-20261003"></script><link rel="stylesheet" href="./gift-stage.css?v=cinema-20261003"><script src="./gift-stage.js?v=cinema-20261003"></script><script src="./room-gift-ui-live.js?v=cinema-20261003"></script>
+</script><script src="./room-ban-live.js?v=html-audit-20261003"></script><link rel="stylesheet" href="./gift-stage.css?v=cinema-20261003"><script src="./gift-stage.js?v=system-20261003"></script><script src="./room-gift-ui-live.js?v=cinema-20261003"></script>
 <script src="./access-messages-hardening.js?v=html-audit-20261003"></script>
 <script src="./profile-rooms-hardening.js?v=html-audit-20261003"></script>
-<script src="./purchase-live.js?v=html-audit-20261003"></script><script src="./profile-hub.js?v=marriage-20261003"></script><script src="./suggestion-live.js?v=html-audit-20261003"></script><script src="./ban-workflow-live.js?v=html-audit-20261003"></script>
+<script src="./purchase-live.js?v=system-20261003"></script><script src="./profile-hub.js?v=marriage-20261003"></script><script src="./suggestion-live.js?v=html-audit-20261003"></script><script src="./ban-workflow-live.js?v=html-audit-20261003"></script>
 <script src="./account-systems-live.js?v=html-audit-20261003"></script>
 <script src="./user-profile-navigation.js?v=startup-profile-20261003"></script>
 <script src="./floating-profile-modal.js?v=html-audit-20261003"></script>
@@ -363,5 +351,5 @@ async function sendChat(){
     <script src="./games/wheel.js?v=html-audit-20261003"></script>
     <script src="./games-live.js?v=html-audit-20261003"></script>
 
-<script src="./room-fan-ranking.js?v=html-audit-20261003"></script><script src="./lidya-symbol.js?v=html-audit-20261003"></script><script src="./seat-permission-live.js?v=html-audit-20261003"></script><script src="./discovery-live.js?v=html-audit-20261003"></script><script src="./anonymous-calls.js?v=html-audit-20261003"></script><script src="./location-calls.js?v=html-audit-20261003"></script><script src="./relationship-live.js?v=cinema-20261003"></script><script src="./relationship-entrance.js?v=marriage-20261003"></script>
+<script src="./room-fan-ranking.js?v=html-audit-20261003"></script><script src="./lidya-symbol.js?v=html-audit-20261003"></script><script src="./seat-permission-live.js?v=html-audit-20261003"></script><script src="./discovery-live.js?v=html-audit-20261003"></script><script src="./anonymous-calls.js?v=html-audit-20261003"></script><script src="./location-calls.js?v=html-audit-20261003"></script><script src="./relationship-live.js?v=system-20261003"></script><script src="./relationship-entrance.js?v=system-20261003"></script>
 </body></html>

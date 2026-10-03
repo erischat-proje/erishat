@@ -65,7 +65,7 @@
     if(animating){surface()?.querySelectorAll('.ludo-token,.ludo-dice,[data-stop]').forEach(n=>n.disabled=true);return;}
     const s=snapshot.state;
     if(!s||s.status==='closed'){clearBoard();renderDialog();return;}
-    const root=mount();if(!root)return;
+    if(s.status==='lobby'){clearBoard();renderDialog();return;}const root=mount();if(!root)return;
     root.querySelector('[data-stop]').hidden=!snapshot.can_manage;
     root.querySelector('[data-stop]').disabled=busy();
     root.querySelector('.ludo-pool').textContent=money(s.pool??s.players.reduce((n,p)=>n+p.stake,0))+' Lidya • '+(s.mode==='paired'?'Eşli':'Tekli');
@@ -116,12 +116,12 @@
     if(s&&s.round_id===round&&s.version<accepted)return;
     const first=!round||s?.round_id!==round,previous=accepted;
     data=snapshot;
-    if(!s){render();return;}
+    if(!s){clearBoard();renderDialog();return;}
     round=s.round_id;accepted=s.version;
-    if(first){clearBoard();render();return;}
+    if(first){epoch++;queue=Promise.resolve();animating=false;pending=false;retry=null;clearBoard();render();return;}
     if(s.version===previous){if(!animating)render();return;}
-    const events=s.events.filter(e=>e.seq>previous),generation=epoch;
-    queue=queue.catch(()=>{}).then(async()=>{if(epoch!==generation)return;animating=true;render(snapshot);try{for(const event of events)await animateEvent(event,generation);}finally{if(epoch===generation){animating=false;render(snapshot);}}});
+    const events=s.events.filter(e=>e.seq>previous),generation=epoch;if(events.length&&events[0].seq>previous+1){render();return;}
+    queue=queue.catch(()=>{}).then(async()=>{if(epoch!==generation)return;animating=true;render(snapshot);try{for(const event of events)await animateEvent(event,generation);}finally{if(epoch===generation){animating=false;render();}}});
   }
   async function poll(){if(!rid||polling||document.hidden)return;polling=true;const id=rid,generation=epoch;try{const result=await request();if(rid===id&&epoch===generation)receive(result);}catch(e){if(rid===id&&epoch===generation&&current()?.status==='playing'){lastError=e.message;render();}}finally{polling=false;}}
   async function send(action,extra={}){

@@ -29,7 +29,7 @@ from .oyunlar.blackjack import available_actions, display_state
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
-VIP_SPEND_THRESHOLDS = {1: 1_000, 2: 5_000, 3: 15_000, 4: 30_000, 5: 60_000, 6: 120_000, 7: 250_000, 8: 500_000, 9: 1_000_000, 10: 2_000_000, 11: 5_000_000, 12: 10_000_000}
+from .vip_spending import THRESHOLDS as VIP_SPEND_THRESHOLDS
 
 VIP_PERKS = {
     1: ["vip_badge", "custom_avatar", "custom_frame"],

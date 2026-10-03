@@ -100,3 +100,12 @@ class CoupleGift(Base):
     chat_message_id: Mapped[int | None] = mapped_column(ForeignKey('room_chat_messages.id'),nullable=True)
     room_id: Mapped[str | None] = mapped_column(ForeignKey('rooms.id'), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class CoupleUpgradeProgress(Base):
+    __tablename__ = 'relationship_upgrade_progress'
+    couple_id: Mapped[str] = mapped_column(ForeignKey('relationship_couples.id', ondelete='CASCADE'), primary_key=True)
+    level: Mapped[int] = mapped_column(Integer, nullable=False)
+    brick: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    wood: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    paint: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

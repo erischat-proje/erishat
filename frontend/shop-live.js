@@ -48,18 +48,18 @@
     const root = document.getElementById('shop');
     if (!root) return;
     installStyle();
-    root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatar ve çerçeveler mağazadan alınır. VIP avatar ve çerçeveler VIP seviyesine ulaşıldığında açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="all">Tümü</button><button class="liveShopTab" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip">VIP</button></div><select class="liveShopGender" aria-label="Cinsiyet filtresi"><option value="all">Tüm cinsiyetler</option><option value="female">Kadın</option><option value="male">Erkek</option></select><div class="liveShopGrid">Yükleniyor…</div>';
+    root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatar ve çerçeveler mağazadan alınır. VIP avatar ve çerçeveler VIP seviyesine ulaşıldığında açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="all">Tümü</button><button class="liveShopTab" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip">VIP</button></div><div class="liveShopGrid">Yükleniyor…</div>';
     const grid = root.querySelector('.liveShopGrid');
     if (!token()) { grid.textContent='Mağazayı görmek için giriş yap.'; return; }
     try {
-      const [catalog, owned, vip] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip')]);
+      const [catalog, owned, vip, me] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip'), api('/me')]);
       let items = list(catalog);
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
       const currentVip = Number(vip?.level || 0);
       const renderItems = filter => {
         grid.innerHTML = '';
-        const gender=root.querySelector('.liveShopGender').value;
-        const filtered = items.filter(item => (filter === 'all' || (filter === 'vip' && vipOf(item)) || typeOf(item) === filter) && (gender === 'all' || !item.gender || item.gender === gender));
+        const gender=me.gender;
+        const filtered = items.filter(item => (filter === 'all' || (filter === 'vip' && vipOf(item)) || typeOf(item) === filter) && (!item.gender || item.gender === gender));
         if (!filtered.length) { grid.innerHTML = '<div class="liveShopNote">Bu kategoride kayıtlı kozmetik yok.</div>'; return; }
         filtered.forEach((item, index) => {
           const type = typeOf(item);
@@ -91,10 +91,9 @@
         });
       };
       root.querySelectorAll('.liveShopTab').forEach(tab => tab.onclick = () => { root.querySelectorAll('.liveShopTab').forEach(x => x.classList.remove('active')); tab.classList.add('active'); renderItems(tab.dataset.filter); });
-      root.querySelector('.liveShopGender').onchange=()=>renderItems(root.querySelector('.liveShopTab.active')?.dataset.filter||'all');
       renderItems('all');
       // The shop rebuilds its root on each refresh; mount wallpapers afterwards.
-      window.ErisChatWallpapers?.render?.();
+
     } catch (error) {
       grid.textContent = error.message || 'Mağaza yüklenemedi.';
     }

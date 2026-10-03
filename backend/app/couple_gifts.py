@@ -40,9 +40,8 @@ def process_gift(db,house,user,gift_key,quantity,request_key,room_id=None):
     for uid in (house.male_id,house.female_id):
         db.get(User,uid).lidya+=each
         db.add(Notification(user_id=uid,kind='couple_gift',title='Çiftinize hediye',body=f'{user.nickname} çiftinize {gross} Lidya hediye gönderdi.'))
-    vip=db.get(VipStatus,user.id)
-    if not vip:vip=VipStatus(user_id=user.id,level=0,total_spent=0);db.add(vip)
-    vip.total_spent=int(vip.total_spent or 0)+gross;vip.level=vip_level_from_spend(vip.total_spent)
+    from .vip_spending import record_spend
+    record_spend(db,user.id,gross,"couple_gift",request_key)
     row=CoupleGift(id=str(uuid4()),couple_id=house.id,sender_id=user.id,request_key=request_key,gift_key=gift_key,quantity=quantity,gross=gross,percent=percent,each_amount=each,room_id=room_id)
     db.add(row)
     link=db.get(CoupleRoom,house.id)

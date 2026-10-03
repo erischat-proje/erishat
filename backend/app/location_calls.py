@@ -178,7 +178,9 @@ def charge(db, uid, amount, operation, reference):
     if user.lidya < amount:
         raise HTTPException(402, f'{amount} Lidya gerekli.')
     user.lidya -= amount
+    from .vip_spending import record_spend
     db.info.update(lidya_operation=operation, lidya_actor_id=uid, lidya_reference_id=reference)
+    record_spend(db,uid,amount,"location_purchase",str(operation)+":"+str(reference))
     db.flush()
     for key in ('lidya_operation', 'lidya_actor_id', 'lidya_reference_id'):
         db.info.pop(key, None)
@@ -346,7 +348,7 @@ def extend(cid: str, body: Extend, db: Session = Depends(get_db), user: User = D
     if call.status != 'active' or now() < utc(call.starts_at):
         raise HTTPException(409, 'Aktif görüşme gerekli.')
     seconds = 240 if premium(account(db, user.id)) else 120
-    charge(db, user.id, 200, 'location_extra_time', cid)
+    charge(db, user.id, 200, 'location_extra_time', cid+':'+body.request_key)
     call.ends_at = utc(call.ends_at)+timedelta(seconds=seconds)
     db.add(Extension(call_id=cid, user_id=user.id, request_key=body.request_key, seconds=seconds))
     result = {'seconds': seconds, 'call': summary(db, call, user.id)}

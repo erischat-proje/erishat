@@ -25,6 +25,7 @@ from .auth import (
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
+from . import vip_spending
 from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
@@ -833,6 +834,8 @@ def change_nickname(payload: NicknameChange, db: Session = Depends(get_db), user
         raise HTTPException(status_code=400, detail="İsim değiştirmek için 300 Lidya gerekli")
     user.nickname = new_name
     user.lidya -= 300
+    from .vip_spending import record_spend
+    record_spend(db,user.id,300,"nickname")
     db.commit()
     db.refresh(user)
     return user
@@ -1848,6 +1851,8 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     locked_gift_folder = _folder(db, recipient_id, conversation_id)
     db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye",
         body="Kilitli sohbette yeni hediye" if locked_gift_folder and locked_gift_folder.locked else user.nickname + " sana " + gift_key + " gönderdi."))
+    from .vip_spending import record_spend
+    record_spend(db,user.id,total_price,"dm_gift",str(message.id))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
         "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"quantity":quantity,
@@ -2086,8 +2091,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
     already_connected=any(room_uid==(internal_room_id,str(user.id)) for room_uid in room_socket_users.values())
     room_socket_users[websocket] = (internal_room_id, str(user.id))
     room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
-    if entrance_asset and not member.ghost and not already_connected:
-        await _broadcast_room_chat(internal_room_id,entrance_payload)
+    if not member.ghost and not already_connected:
+        if entrance_asset:await _broadcast_room_chat(internal_room_id,entrance_payload)
+        await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
     existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
     if not member.ghost:
         room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
