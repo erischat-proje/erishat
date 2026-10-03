@@ -118,14 +118,15 @@
     }).join('');
     const progressBlock=next?'<div class="room-v3-progress"><i style="width:'+pct+'%"></i></div><div class="room-v3-summary-meta">'+progress.toLocaleString('tr-TR')+' / '+next.toLocaleString('tr-TR')+' Lidya • sonraki seviyeye '+Math.max(0,next-progress).toLocaleString('tr-TR')+' kaldı</div>':'<div class="room-v3-summary-meta">Seviye ilerleme bilgisi sunucuda henüz tanımlı değil.</div>';
     const p=panel(surface());p.classList.add('show');p.querySelector('.room-v3-tabs').style.display='none';p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));p.querySelector('#roomV3Title').textContent='Oda gelişimi';
-    p.querySelector('#roomV3Body').innerHTML='<div class="room-v3-summary"><div class="room-v3-summary-top"><div><div class="room-v3-summary-title">Seviye '+level+'</div><div class="room-v3-summary-meta">'+cap+' koltuk • '+Number(r?.member_count||r?.members_count||0)+' katılımcı</div></div><span class="room-v3-levelnum">'+level+'</span></div>'+progressBlock+'</div><div class="room-v3-note" style="margin:0 0 10px">Seviye ödülleri ve açılacak oda özellikleri</div>'+rows+ (r.is_owner?'<div class="room-v3-card"><b>🪑 Koltuk düzeni</b><small>Oda seviyene göre açılan düzeni seç.</small><div class="room-v3-grid" style="margin-top:10px">'+[16,20,24].map(n=>'<button class="room-v3-btn" data-seat-count="'+n+'" '+(n>seatsForLevel(level)?'disabled title="Seviye '+(n===20?5:7)+' gerekli"':'')+'>'+(n>seatsForLevel(level)?'🔒 ':'')+n+' koltuk'+(cap===n?' ✓':'')+'</button>').join('')+'</div></div>':'');
+    p.querySelector('#roomV3Body').innerHTML='<div class="room-v3-summary"><div class="room-v3-summary-top"><div><div class="room-v3-summary-title">Seviye '+level+'</div><div class="room-v3-summary-meta">'+cap+' koltuk • '+Number(r?.member_count||r?.members_count||0)+' katılımcı</div></div><span class="room-v3-levelnum">'+level+'</span></div>'+progressBlock+'</div><div class="room-v3-note" style="margin:0 0 10px">Seviye ödülleri ve açılacak oda özellikleri</div>'+rows+ ((r.is_owner||r.is_moderator)?'<div class="room-v3-card"><b>🪑 Koltuk düzeni</b><small>Oda seviyene göre açılan düzeni seç.</small><div class="room-v3-grid" style="margin-top:10px">'+[16,20,24].map(n=>'<button class="room-v3-btn" data-seat-count="'+n+'" '+(n>seatsForLevel(level)?'disabled title="Seviye '+(n===20?5:7)+' gerekli"':'')+'>'+(n>seatsForLevel(level)?'🔒 ':'')+n+' koltuk'+(cap===n?' ✓':'')+'</button>').join('')+'</div></div>':'');
     p.querySelectorAll('[data-seat-count]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await roomApi().setCapacity(r.id,Number(button.dataset.seatCount));await window.openRoom?.(r.id,r.name||'Oda');await openLevels()}catch(e){button.disabled=false;window.toast?.(e.message||'Koltuk düzeni değiştirilemedi')}});
-    if(r.is_owner){
+    if(r.is_owner||r.is_moderator){
       const levelBody=p.querySelector('#roomV3Body');
-      levelBody.insertAdjacentHTML('beforeend','<div class="room-v3-card"><b>💬 Chat</b><button type="button" class="room-v3-btn" data-level-chat>'+(r.chat_enabled===false?'Chat’i aç':'Chat’i kapat')+'</button></div><div class="room-v3-card"><b>🔐 Oda kilidi</b><div class="room-v3-grid"><button class="room-v3-btn" data-level-lock>'+(r.locked?'Kilidi aç':'Odayı kilitle')+'</button><button class="room-v3-btn" data-level-password>Şifre belirle</button>'+(r.password_set?'<button class="room-v3-btn" data-level-clear>Şifreyi kaldır</button>':'')+'</div></div>');
+      const permission=document.createElement('button');permission.className='room-v3-btn';permission.textContent='Koltuk İzni';permission.onclick=()=>window.ErisSeatPermissions?.openSettings?.();levelBody.append(permission);
+      levelBody.insertAdjacentHTML('beforeend','<div class="room-v3-card"><b>💬 Chat</b><button type="button" class="room-v3-btn" data-level-chat>'+(r.chat_enabled===false?'Chat’i aç':'Chat’i kapat')+'</button></div><div class="room-v3-card"><b>🔐 Oda kilidi</b><div class="room-v3-grid"><button class="room-v3-btn" data-level-lock>'+(r.locked?'Kilidi aç':'Yeni şifreyle kilitle')+'</button><button class="room-v3-btn" data-level-password '+(r.locked?'':'disabled')+'>Şifre Değiştir</button>'+(r.password_set?'<button class="room-v3-btn" data-level-clear>Şifreyi kaldır</button>':'')+'</div></div>');
       levelBody.querySelector('[data-level-chat]').onclick=async()=>{try{await roomApi().setChat(r.id,r.chat_enabled===false);await openLevels()}catch(e){window.toast?.(e.message||'Chat değiştirilemedi')}};
-      levelBody.querySelector('[data-level-lock]').onclick=async()=>{try{await (r.locked?roomApi().unlock(r.id):roomApi().lock(r.id));await openLevels()}catch(e){window.toast?.(e.message||'Oda kilidi değiştirilemedi')}};
-      levelBody.querySelector('[data-level-password]').onclick=async()=>{const password=window.prompt('Oda için 4 haneli şifre:');if(password===null)return;if(!/^\d{4}$/.test(password))return window.toast?.('Şifre tam 4 rakam olmalı.');try{await roomApi().setPassword(r.id,password);await openLevels()}catch(e){window.toast?.(e.message||'Şifre kaydedilemedi')}};
+      levelBody.querySelector('[data-level-lock]').onclick=async()=>{try{if(r.locked)await roomApi().clearPassword(r.id);else{const password=await window.ErisRoomPasswordModal?.('Yeni şifre');if(password===null||!/^\d{4}$/.test(password||''))return;await roomApi().setPassword(r.id,password)}await window.ErisRoomUI?.refresh?.();await openLevels()}catch(e){window.toast?.(e.message||'Oda kilidi değiştirilemedi')}};
+      levelBody.querySelector('[data-level-password]').onclick=async()=>{const password=await window.ErisRoomPasswordModal?.('Şifre Değiştir');if(password===null)return;if(!/^\d{4}$/.test(password))return window.toast?.('Şifre tam 4 rakam olmalı.');try{await roomApi().setPassword(r.id,password);await openLevels()}catch(e){window.toast?.(e.message||'Şifre kaydedilemedi')}};
       levelBody.querySelector('[data-level-clear]')?.addEventListener('click',async()=>{try{await roomApi().clearPassword(r.id);await openLevels()}catch(e){window.toast?.(e.message||'Şifre kaldırılamadı')}});
     }
 
@@ -686,6 +687,7 @@
     const mine=occupied&&target===userId();
     const permissions=window.__erisRoomPermissions||{};
     const staff=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
+    if(!occupied && window.__erisRoomPermissions?.seat_permission && staff){window.ErisSeatPermissions?.openSeat?.(number);return}
     if(!occupied&&!staff)return;
     const wrap=document.createElement('div');
     wrap.id='eris-seat-actions';
@@ -711,6 +713,7 @@
           await roomApi().joinSeat(id,number);
           await refresh();
         });
+      add('✉','Davet et',()=>window.ErisSeatPermissions?.invite?.(number));
       add(seat.classList.contains('locked')?'🔓':'🔒',
           seat.classList.contains('locked')?'Koltuğun kilidini aç':'Koltuğu kilitle',
           async()=>{if(seat.classList.contains('locked'))await roomApi().unlockSeat(id,number);

@@ -515,7 +515,9 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
 
     @router.delete("/roles/{user_id}")
     async def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");row=db.get(AdminRole,user_id)
+        require_role(db,user,"DA");target=resolve_admin_user(db,user_id)
+        if not target:raise HTTPException(404,"Kullanıcı bulunamadı")
+        user_id=target.id;row=db.get(AdminRole,user_id)
         if not row: raise HTTPException(status_code=404,detail="Admin yetkisi bulunamadı")
         update_room_ghost(db, user_id, False)
         db.delete(row);audit(db,user,"role_revoke",target_user_id=user_id);db.commit()

@@ -1,4 +1,5 @@
 (() => {
+  let joinedRoomId=null;
   const API = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
   const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   const headers = () => token() ? { Authorization: `Bearer ${token()}` } : {};
@@ -188,7 +189,7 @@
       b.dataset.muted=String(!!seat.muted);
       b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
       b.setAttribute('aria-label',occupied?('Koltuk '+num+' • '+(isMe?'Sen':seat.nickname||seat.user_name||'Konuşmacı')):((locked?'Kilitli koltuk ':'Boş koltuk ')+num));
-      b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span><b></b><small></small></div>';
+      b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':window.__erisRoomPermissions?.seat_permission?'✋':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span><b></b><small></small></div>';
       if(avatarUrl){
         const ava=b.querySelector('.seat-ava');
         ava.textContent='';
@@ -203,7 +204,7 @@
       b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'Boş';
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
       if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Koltuk '+num+' • '+(isMe?'Sen':'Profili aç');}else if(!occupied&&!locked)b.onclick=async()=>{
-        try{await window.ErisRoom.joinSeat(roomId,num);await openRoom(roomId,name)}
+        try{const result=await window.ErisRoom.joinSeat(roomId,num);if(result?.pending)window.toast?.('Koltuğa oturma talebiniz iletildi.');await refreshRoom()}
         catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}
       };
       box.appendChild(b);
@@ -218,7 +219,7 @@
     const add=d=>{
       const e=document.createElement('div');
       e.className='eris-chat-msg';
-      e.dataset.roomSenderId=String(d.user_id||'');e.hidden=blockedUsers.has(e.dataset.roomSenderId);
+      e.dataset.roomSenderId=String(d.user_id||'');e.hidden=!d.system&&blockedUsers.has(e.dataset.roomSenderId);if(d.system)e.classList.add('system');
       const identity=document.createElement('div');identity.className='eris-chat-identity';
       const portrait=document.createElement('span');portrait.className='eris-chat-portrait';
       const cosmetics=window.ErisChatCosmetics;
@@ -227,7 +228,7 @@
       else portrait.textContent=d.avatar||'◈';
       const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
       if(frame){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
-      const author=document.createElement('b');author.textContent=d.nickname||d.user_id||'Kullanıcı';
+      const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
       const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
       if(d.user_id){portrait.style.cursor='pointer';author.style.cursor='pointer';portrait.onclick=author.onclick=()=>window.ErisFloatingProfile?.open(d.user_id)}
@@ -244,6 +245,7 @@
   }
 
   async function openRoom(roomId,name){
+    if(joinedRoomId===String(roomId)&&document.getElementById('erisRoomSurface')?.classList.contains('show'))return refreshRoom();
     const id=String(roomId||'');if(!id)return;
     localStorage.removeItem('eris_last_room');
     window.ErisCurrentRoomId=id;window.currentRoomId=id;
@@ -281,7 +283,7 @@
       window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
       const seatCount=Math.min(24,Math.max(16,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
-      if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat};
+      if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat,seat_permission:!!room.seat_permission};
       const publicRoomId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi';
       document.getElementById('erisLiveMeta').textContent='ID: '+publicRoomId;
       document.getElementById('erisLiveMeta').dataset.roomNameMeta='ID: '+publicRoomId;
@@ -296,6 +298,7 @@
       const occupiedSeats=(room.seats||[]).filter(seat=>seat.user_id).length;
       document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  Oda sohbeti';
       attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
+      joinedRoomId=String(liveRoomId);
       window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
     }catch(e){
       surface.classList.remove('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
@@ -303,6 +306,7 @@
   }
 
   async function closeRealRoom(options={}){
+    joinedRoomId=null;
     window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
     const id=window.ErisCurrentRoomId||window.currentRoomId;
@@ -315,6 +319,7 @@
       try{await window.ErisRoom?.leaveSeat?.(id)}catch{}
       try{await window.ErisRoom?.leave?.(id)}catch{}
     }
+    window.dispatchEvent(new CustomEvent('erischat:room-closed'));
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null; window.__erisActiveRoomWallpaper=null;
     if(id&&!options.banned&&document.visibilityState==='visible')setTimeout(offerReturnToRoom,400);
@@ -328,6 +333,21 @@
     surface.querySelector('.eris-room-chat')?.scrollIntoView?.({block:'nearest'});
   };
   window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
+  let refreshingRoom=false;
+  async function refreshRoom(){
+    const id=joinedRoomId;if(!id||refreshingRoom)return;
+    refreshingRoom=true;
+    try{const room=await window.ErisRoom.get(id);if(joinedRoomId!==id)return;
+      window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat,seat_permission:!!room.seat_permission};
+      window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
+      document.getElementById('erisLiveTitle').textContent=room.name;
+      renderRoomSeats(room.id,room.name,room.seats,room.seat_count);
+      const activity=document.getElementById('erisRoomActivity');if(activity)activity.textContent=(room.seats||[]).filter(s=>s.user_id).length+' / '+room.seat_count+' koltuk dolu · Oda sohbeti';
+      window.dispatchEvent(new CustomEvent('erischat:room-state-updated',{detail:{room}}));
+      return room;
+    }finally{refreshingRoom=false}
+  }
+  window.ErisRoomUI={refresh:refreshRoom};
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
 
