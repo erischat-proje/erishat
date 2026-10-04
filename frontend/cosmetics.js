@@ -20,13 +20,17 @@
 
   // The new avatar and wallpaper collection lives at the repository root.
   // Frames and earlier non-replaced assets live under Gereken_icerikler.
+  const premiumAssets = new Set(["shop-expansion/bubble-female-01.svg", "shop-expansion/bubble-female-02.svg", "shop-expansion/bubble-female-03.svg", "shop-expansion/bubble-female-04.svg", "shop-expansion/bubble-female-05.svg", "shop-expansion/bubble-female-08.svg", "shop-expansion/entrance-female-01.svg", "shop-expansion/entrance-female-02.svg", "shop-expansion/entrance-female-03.svg", "shop-expansion/entrance-female-04.svg", "shop-expansion/entrance-female-05.svg", "shop-expansion/entrance-female-08.svg", "shop-expansion/frame-female-01.svg", "shop-expansion/frame-female-02.svg", "shop-expansion/frame-female-03.svg", "shop-expansion/frame-female-04.svg", "shop-expansion/frame-female-07.svg", "shop-expansion/bubble-male-01.svg", "shop-expansion/bubble-male-02.svg", "shop-expansion/bubble-male-03.svg", "shop-expansion/bubble-male-04.svg", "shop-expansion/bubble-male-05.svg", "shop-expansion/bubble-male-08.svg", "shop-expansion/entrance-male-01.svg", "shop-expansion/entrance-male-02.svg", "shop-expansion/entrance-male-03.svg", "shop-expansion/entrance-male-04.svg", "shop-expansion/entrance-male-05.svg", "shop-expansion/entrance-male-07.svg", "shop-expansion/frame-male-02.svg", "shop-expansion/profile-female-01.svg", "shop-expansion/profile-female-02.svg", "shop-expansion/profile-female-03.svg", "shop-expansion/profile-female-04.svg", "shop-expansion/profile-female-05.svg", "shop-expansion/profile-female-08.svg", "shop-expansion/profile-male-01.svg", "shop-expansion/profile-male-02.svg", "shop-expansion/profile-male-03.svg", "shop-expansion/profile-male-04.svg", "shop-expansion/profile-male-08.svg"]);
   const assetUrl = key => {
     if (!key) return '';
     if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
     let clean = String(key).replace(/^\.\//, '');
-    if (!/^(Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
+    if (premiumAssets.has(clean)) clean = clean.replace('shop-expansion/', 'shop-premium-v2/').replace(/\.svg$/, '.webp');
+    if (!/^(shop-premium-v2|Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
     const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
-    return new URL(`./${encodedPath}`, document.baseURI).href;
+    const result = new URL(`./${encodedPath}`, document.baseURI);
+    if (/^(?:shop-expansion|shop-premium-v2)\/(?:frame|bubble|entrance|profile|title)-/.test(clean)) result.searchParams.set('v', 'premium720-20261004');
+    return result.href;
   };
 
   async function load() {

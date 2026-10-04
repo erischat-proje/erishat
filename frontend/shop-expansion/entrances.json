@@ -6,7 +6,8 @@
     "metal": "#e8f8ff",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-female-01.svg"
+    "entryFrame": "shop-expansion/entrance-female-01.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-female-02.svg": {
     "level": 0,
@@ -15,7 +16,8 @@
     "metal": "#b5f6d6",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-female-02.svg"
+    "entryFrame": "shop-expansion/entrance-female-02.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-female-03.svg": {
     "level": 0,
@@ -24,7 +26,8 @@
     "metal": "#ffd6db",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-female-03.svg"
+    "entryFrame": "shop-expansion/entrance-female-03.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-female-04.svg": {
     "level": 0,
@@ -33,7 +36,8 @@
     "metal": "#eadcff",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-female-04.svg"
+    "entryFrame": "shop-expansion/entrance-female-04.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-female-05.svg": {
     "level": 0,
@@ -42,7 +46,8 @@
     "metal": "#ffedba",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-female-05.svg"
+    "entryFrame": "shop-expansion/entrance-female-05.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-female-06.svg": {
     "level": 0,
@@ -69,7 +74,8 @@
     "metal": "#ffe0f3",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-female-08.svg"
+    "entryFrame": "shop-expansion/entrance-female-08.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-female-09.svg": {
     "level": 0,
@@ -726,7 +732,8 @@
     "metal": "#e8f8ff",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-male-01.svg"
+    "entryFrame": "shop-expansion/entrance-male-01.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-male-02.svg": {
     "level": 0,
@@ -735,7 +742,8 @@
     "metal": "#b5f6d6",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-male-02.svg"
+    "entryFrame": "shop-expansion/entrance-male-02.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-male-03.svg": {
     "level": 0,
@@ -744,7 +752,8 @@
     "metal": "#ffd6db",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-male-03.svg"
+    "entryFrame": "shop-expansion/entrance-male-03.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-male-04.svg": {
     "level": 0,
@@ -753,7 +762,8 @@
     "metal": "#eadcff",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-male-04.svg"
+    "entryFrame": "shop-expansion/entrance-male-04.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-male-05.svg": {
     "level": 0,
@@ -762,7 +772,8 @@
     "metal": "#ffedba",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-male-05.svg"
+    "entryFrame": "shop-expansion/entrance-male-05.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-male-06.svg": {
     "level": 0,
@@ -780,7 +791,8 @@
     "metal": "#c0f8f6",
     "motion": "moon",
     "duration": 4200,
-    "entryFrame": "shop-expansion/entrance-male-07.svg"
+    "entryFrame": "shop-expansion/entrance-male-07.svg",
+    "aspect_ratio": 2.0
   },
   "shop-expansion/entrance-male-08.svg": {
     "level": 0,

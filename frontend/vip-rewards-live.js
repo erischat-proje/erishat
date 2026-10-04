@@ -91,10 +91,23 @@
     hero.hidden=!visible;
     if(visible){hero.querySelector('img').src=material('logo',n);hero.querySelector('img').alt='VIP '+n;hero.querySelector('strong').textContent='VIP '+n;hero.querySelector('span').textContent=theme?.name||'Özel profil görünümü';}
   }
+  function paidProfile(card,key){
+    card.classList.remove('eris-mini-paid');
+    for(const name of ['--paid-art','--paid-slice','--paid-edge'])card.style.removeProperty(name);
+    if(!/^shop-expansion\/profile-(?:female|male)-\d{2}\.svg$/.test(key||''))return;
+    card.classList.add('eris-mini-paid');card.querySelector('.eris-mini-vip-hero')?.setAttribute('hidden','');
+    const ticket={};card._artTicket=ticket;
+    window.ErisVisualLayout.describe(key).then(m=>{
+      if(!m||card._artTicket!==ticket||!card.isConnected)return;
+      const slices=m.slice||[m.height*.29,m.width*.18,m.height*.27,m.width*.18];
+      const fit=()=>{if(!card.isConnected){card._artObserver?.disconnect();return;}const scale=card.getBoundingClientRect().width/m.width;card.style.setProperty('--paid-art','url("'+window.ErisChatCosmetics.assetUrl(key).replace(/"/g,'%22')+'")');card.style.setProperty('--paid-slice',slices.join(' ')+' fill');card.style.setProperty('--paid-edge',slices.map(n=>Math.round(n*scale)+'px').join(' '));};
+      fit();if(window.ResizeObserver){card._artObserver=new ResizeObserver(fit);card._artObserver.observe(card);}
+    });
+  }
   function decorate(root,u){
     const level=Math.max(0,Math.min(12,Number(u.vip_level)||0));
     root.querySelectorAll('[data-vip-card]').forEach(img=>{img.hidden=!level||!!u.vip_badge_hidden;if(!img.hidden){img.src=material('card',level);img.alt='VIP '+level}});
-    const mini=root.querySelector('.eris-mini-card');if(mini)profileTheme(mini,level,!u.vip_neon_hidden);
+    const mini=root.querySelector('.eris-mini-card');if(mini){profileTheme(mini,level,!u.vip_neon_hidden);paidProfile(mini,u.profile_asset);}
 
     for(const [selector,value] of Object.entries({'[data-followers]':u.followers_count,'[data-following]':u.following_count}))if(value!=null)root.querySelectorAll(selector).forEach(el=>{el.textContent=number(value)});
     root.querySelectorAll('[data-received-gifts]').forEach(el=>{el.innerHTML='<span>'+number(u.received_gift_lidya)+'</span><img src="./lidya-coin.png" alt="Lidya">'});

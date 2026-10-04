@@ -104,3 +104,18 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
 
 /* Matching frames stay centered inside the seat pod; portraits remain behind the complete ring. */
 #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-frame[style*="avatar-frame-"]{inset:0!important}
+
+/* Owned shop profile skins: a complete responsive frame around real controls. */
+.eris-mini-profile-shade .eris-mini-card.eris-mini-modern.eris-mini-paid{
+ border-style:solid!important;border-color:transparent!important;border-width:var(--paid-edge,60px 45px)!important;
+ border-image-source:var(--paid-art)!important;border-image-slice:var(--paid-slice)!important;border-image-width:1!important;border-image-repeat:stretch!important;
+ background:transparent!important;padding:8px!important;border-radius:0!important;
+}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-modern.eris-mini-paid:after{display:none!important}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-paid .eris-mini-vip-hero{display:none!important}
+
+/* Paid artwork leaves the identity and controls within its inner pane. */
+.eris-mini-profile-shade .eris-mini-card.eris-mini-paid .eris-mini-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-paid .eris-mini-stats>div{min-height:44px!important;padding:6px 3px!important}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-paid .eris-mini-stats>div:last-child{grid-column:1/-1!important}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-paid [data-received-gifts]{font-size:clamp(11px,3.2vw,14px)!important}

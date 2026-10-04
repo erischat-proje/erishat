@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const queue=[],seen=new Set();let active=null,epoch=0,pumping=false;
-  let shopThemes={};const shopReady=fetch(new URL('shop-expansion/entrances.json?v=expansion-800-20261004',document.currentScript.src),{signal:AbortSignal.timeout(8000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(x=>{shopThemes=x}).catch(()=>{});
+  let shopThemes={};const shopReady=fetch(new URL('shop-expansion/entrances.json?v=premium720-20261004',document.currentScript.src),{signal:AbortSignal.timeout(8000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(x=>{shopThemes=x}).catch(()=>{});
   const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   const asset=key=>window.ErisChatCosmetics?.assetUrl?.(key)||key;
   function finish(){if(!active)return;const a=active;active=null;clearTimeout(a.timer);clearTimeout(a.loadTimer);cancelAnimationFrame(a.raf);a.el.remove();a.resolve();}
