@@ -9,7 +9,7 @@ from .session import get_user_from_token
 from .models import UserCosmetic
 from .platform_models import VipStatus, VipRewardClaim
 from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
-from .vip_presentation import presentation_rewards
+from .vip_presentation import presentation_rewards, entry_style, entry_selection, entrance_inventory
 
 router = APIRouter(prefix="/v1", tags=["cosmetics"])
 
@@ -47,13 +47,13 @@ def vip_level_rewards(user) -> list[dict]:
         by_level.setdefault(int(item["vip_level"]), []).append({
             "cosmetic_type": item["type"], "asset_key": item["asset_key"], "gender": item.get("gender")
         })
-    for item in wallpaper_catalog():
+    for item in wallpaper_catalog(entry_style(user)):
         if item["tier"] == "vip":
             by_level.setdefault(item["vip_level"], []).append({
                 "cosmetic_type": "wallpaper", "asset_key": item["key"], "asset_url": item["asset"]
             })
     return [{"level": level, "rewards": by_level.get(level, []),
-             "presentation_rewards": presentation_rewards(level)} for level in range(1, 13)]
+             "presentation_rewards": presentation_rewards(level, entry_style(user))} for level in range(1, 13)]
 
 
 @router.get("/cosmetics")
@@ -83,7 +83,7 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     from .relationship_models import Couple, CoupleRing
     from .relationship_routes import owned_house, ring_asset
     from . import relationship_rewards
-    # Serialize inventory repair with purchases/equips; never grant unclaimed VIP levels.
+    # Serialize automatic entitlements and legacy claim repairs with purchases/equips.
     house = relationship_rewards.house_for(db, user.id)
     if house:
         house = owned_house(db, user.id, lock=True)
@@ -92,6 +92,15 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         db.scalar(select(User).where(User.id == user.id).with_for_update())
     owned = {(r.cosmetic_type, r.asset_key) for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id == user.id))}
     claimed = {r.level for r in db.scalars(select(VipRewardClaim).where(VipRewardClaim.user_id == user.id))}
+    # Presentation entrances and the new wallpapers are level entitlements,
+    # independent of historical avatar/frame reward claim records.
+    for item in wallpaper_catalog(entry_style(user)):
+        if not item.get('gender') or not (item.get('free') or item['vip_level'] <= vip_level(db, user.id)):
+            continue
+        pair = ('wallpaper', item['key'])
+        if pair not in owned:
+            db.add(UserCosmetic(user_id=user.id, cosmetic_type=pair[0], asset_key=pair[1]))
+            owned.add(pair)
     for level in vip_level_rewards(user):
         if level['level'] not in claimed or level['level'] > vip_level(db, user.id): continue
         for reward in level['rewards']:
@@ -102,11 +111,14 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     db.flush()
     normal = {(i['type'], i['asset_key']): i for i in catalog()}
     wallpapers = {i['key']: i for i in wallpaper_catalog()}
-    result = []
+    result = entrance_inventory(db, user)
+    entry_mode, _ = entry_selection(db, user.id)
     labels = {'avatar':'Avatar', 'frame':'Çerçeve', 'wallpaper':'Duvar kağıdı', 'bubble':'Sohbet balonu',
               'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
     for kind, key in sorted(owned):
         if kind not in labels or kind == 'ring': continue
+        if kind == 'wallpaper' and wallpapers.get(key, {}).get('gender') not in (None, entry_style(user)): continue
+        if kind == 'wallpaper' and wallpapers.get(key, {}).get('gender') and wallpapers[key]['vip_level'] > vip_level(db, user.id): continue
         relation = key.startswith(relationship_rewards.PREFIX)
         if relation and not house: continue
         item = normal.get((kind, key), {})
@@ -122,12 +134,14 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         reward = next((r for r in relationship_rewards.items(user.gender) if r['type'] == kind and r['asset_key'] == key), {}) if relation else {}
         if relation:
             equipped = relationship_rewards.selected(db, user.id, kind) == key
+            if kind == 'entrance':
+                equipped = equipped and entry_mode == 'relationship'
         else:
             equipped = getattr(user, kind + '_asset', None) == key
         result.append({'type':kind, 'asset_key':key, 'asset':wall.get('asset', key),
-                       'name':reward.get('name', labels[kind]), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'standard',
+                       'name':reward.get('name', wall.get('name', labels[kind])), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'standard',
                        'level':reward.get('level', item.get('vip_level', wall.get('vip_level', 0))) or 0,
-                       'equipped':equipped, 'equip_key':key})
+                'equipped':equipped, 'equip_key':key})
     if house:
         for ring in db.scalars(select(CoupleRing).where(CoupleRing.couple_id == house.id)):
             result.append({'type':'ring', 'asset_key':ring_asset(ring.ring), 'asset':ring_asset(ring.ring),
@@ -169,7 +183,27 @@ def claim_vip_level_rewards(level: int, user=Depends(current_cosmetic_user), db:
             db.add(UserCosmetic(user_id=user.id, cosmetic_type=reward["cosmetic_type"], asset_key=reward["asset_key"]))
     db.commit()
     return {"level": level, "claimed": True, "already_claimed": already_claimed, "rewards": rewards,
-            "presentation_rewards": presentation_rewards(level)}
+            "presentation_rewards": presentation_rewards(level, entry_style(user))}
+
+
+@router.post("/me/vip/entrance/equip")
+def equip_vip_entrance(payload: dict, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
+    from sqlalchemy import select
+    from .models import User
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    key = payload.get("asset_key")
+    current = max(0, min(12, vip_level(db, user.id)))
+    if key not in ("normal", "auto"):
+        allowed = {f"vip-entrance-{n}" for n in range(1, current + 1)}
+        if not isinstance(key, str) or key not in allowed:
+            raise HTTPException(403, "Bu VIP oda girişi henüz kazanılmadı.")
+    status = db.get(VipStatus, user.id)
+    if status is None:
+        status = VipStatus(user_id=user.id, level=0, total_spent=0)
+        db.add(status)
+    status.entry_effect = None if key == "auto" else key
+    db.commit()
+    return {"ok": True, "entry_effect": status.entry_effect}
 
 
 @router.post("/me/cosmetics/purchase")
@@ -310,12 +344,14 @@ def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Sess
     if item['tier']=='relationship':
         from .relationship_rewards import selected
         if selected(db,user.id,'wallpaper')!=item['asset']:raise HTTPException(403,'Aktif ilişki duvar kağıdı gerekli.')
+    if item.get("gender") not in (None, entry_style(user)):
+        raise HTTPException(403, "Bu duvar kağıdı profilinin cinsiyetine uygun değil.")
     if item["tier"] == "vip":
         current = vip_level(db, user.id)
         required = int(item["vip_level"])
         if current < required:
             raise HTTPException(status_code=403, detail=f"VIP {required} seviyesi gerekli")
-    else:
+    elif not item.get("free"):
         owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid": user.id, "key": item["asset"] if item["tier"]=="relationship" else key}).first()
         if not owned:
             raise HTTPException(status_code=403, detail="Önce bu duvar kağıdını satın almalısınız")

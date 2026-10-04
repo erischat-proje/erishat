@@ -565,6 +565,12 @@ def equip_reward(payload: EquipReward,db: Session=Depends(get_db),user: User=Dep
     row=db.get(CoupleRewardSelection,(user.id,payload.kind))
     if not row:row=CoupleRewardSelection(user_id=user.id,kind=payload.kind);db.add(row)
     row.asset_key=payload.asset_key
+    if payload.kind=='entrance':
+        from .platform_models import VipStatus
+        vip=db.get(VipStatus,user.id)
+        if vip is None:
+            vip=VipStatus(user_id=user.id,level=0,total_spent=0);db.add(vip)
+        vip.entry_effect='relationship' if payload.asset_key else 'normal'
     if payload.kind=='frame':user.frame_asset=payload.asset_key
     if payload.kind=='wallpaper':user.wallpaper_asset=('relationship_wallpaper_'+payload.asset_key.rsplit('-',1)[1].split('.')[0]) if payload.asset_key else None
     db.commit();return {'ok':True}
