@@ -1,0 +1,1442 @@
+{
+  "shop-expansion/entrance-female-01.svg": {
+    "level": 0,
+    "name": "Yörünge · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-01.svg"
+  },
+  "shop-expansion/entrance-female-02.svg": {
+    "level": 0,
+    "name": "Yörünge · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-02.svg"
+  },
+  "shop-expansion/entrance-female-03.svg": {
+    "level": 0,
+    "name": "Yörünge · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-03.svg"
+  },
+  "shop-expansion/entrance-female-04.svg": {
+    "level": 0,
+    "name": "Yörünge · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-04.svg"
+  },
+  "shop-expansion/entrance-female-05.svg": {
+    "level": 0,
+    "name": "Yörünge · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-05.svg"
+  },
+  "shop-expansion/entrance-female-06.svg": {
+    "level": 0,
+    "name": "Yörünge · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-06.svg"
+  },
+  "shop-expansion/entrance-female-07.svg": {
+    "level": 0,
+    "name": "Yörünge · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-07.svg"
+  },
+  "shop-expansion/entrance-female-08.svg": {
+    "level": 0,
+    "name": "Yörünge · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-08.svg"
+  },
+  "shop-expansion/entrance-female-09.svg": {
+    "level": 0,
+    "name": "Yörünge · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-09.svg"
+  },
+  "shop-expansion/entrance-female-10.svg": {
+    "level": 0,
+    "name": "Yörünge · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-10.svg"
+  },
+  "shop-expansion/entrance-female-11.svg": {
+    "level": 0,
+    "name": "Prizma · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-11.svg"
+  },
+  "shop-expansion/entrance-female-12.svg": {
+    "level": 0,
+    "name": "Prizma · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-12.svg"
+  },
+  "shop-expansion/entrance-female-13.svg": {
+    "level": 0,
+    "name": "Prizma · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-13.svg"
+  },
+  "shop-expansion/entrance-female-14.svg": {
+    "level": 0,
+    "name": "Prizma · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-14.svg"
+  },
+  "shop-expansion/entrance-female-15.svg": {
+    "level": 0,
+    "name": "Prizma · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-15.svg"
+  },
+  "shop-expansion/entrance-female-16.svg": {
+    "level": 0,
+    "name": "Prizma · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-16.svg"
+  },
+  "shop-expansion/entrance-female-17.svg": {
+    "level": 0,
+    "name": "Prizma · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-17.svg"
+  },
+  "shop-expansion/entrance-female-18.svg": {
+    "level": 0,
+    "name": "Prizma · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-18.svg"
+  },
+  "shop-expansion/entrance-female-19.svg": {
+    "level": 0,
+    "name": "Prizma · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-19.svg"
+  },
+  "shop-expansion/entrance-female-20.svg": {
+    "level": 0,
+    "name": "Prizma · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-20.svg"
+  },
+  "shop-expansion/entrance-female-21.svg": {
+    "level": 0,
+    "name": "Dalgalar · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-21.svg"
+  },
+  "shop-expansion/entrance-female-22.svg": {
+    "level": 0,
+    "name": "Dalgalar · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-22.svg"
+  },
+  "shop-expansion/entrance-female-23.svg": {
+    "level": 0,
+    "name": "Dalgalar · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-23.svg"
+  },
+  "shop-expansion/entrance-female-24.svg": {
+    "level": 0,
+    "name": "Dalgalar · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-24.svg"
+  },
+  "shop-expansion/entrance-female-25.svg": {
+    "level": 0,
+    "name": "Dalgalar · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-25.svg"
+  },
+  "shop-expansion/entrance-female-26.svg": {
+    "level": 0,
+    "name": "Dalgalar · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-26.svg"
+  },
+  "shop-expansion/entrance-female-27.svg": {
+    "level": 0,
+    "name": "Dalgalar · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-27.svg"
+  },
+  "shop-expansion/entrance-female-28.svg": {
+    "level": 0,
+    "name": "Dalgalar · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-28.svg"
+  },
+  "shop-expansion/entrance-female-29.svg": {
+    "level": 0,
+    "name": "Dalgalar · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-29.svg"
+  },
+  "shop-expansion/entrance-female-30.svg": {
+    "level": 0,
+    "name": "Dalgalar · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-30.svg"
+  },
+  "shop-expansion/entrance-female-31.svg": {
+    "level": 0,
+    "name": "Defne · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-31.svg"
+  },
+  "shop-expansion/entrance-female-32.svg": {
+    "level": 0,
+    "name": "Defne · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-32.svg"
+  },
+  "shop-expansion/entrance-female-33.svg": {
+    "level": 0,
+    "name": "Defne · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-33.svg"
+  },
+  "shop-expansion/entrance-female-34.svg": {
+    "level": 0,
+    "name": "Defne · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-34.svg"
+  },
+  "shop-expansion/entrance-female-35.svg": {
+    "level": 0,
+    "name": "Defne · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-35.svg"
+  },
+  "shop-expansion/entrance-female-36.svg": {
+    "level": 0,
+    "name": "Defne · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-36.svg"
+  },
+  "shop-expansion/entrance-female-37.svg": {
+    "level": 0,
+    "name": "Defne · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-37.svg"
+  },
+  "shop-expansion/entrance-female-38.svg": {
+    "level": 0,
+    "name": "Defne · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-38.svg"
+  },
+  "shop-expansion/entrance-female-39.svg": {
+    "level": 0,
+    "name": "Defne · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-39.svg"
+  },
+  "shop-expansion/entrance-female-40.svg": {
+    "level": 0,
+    "name": "Defne · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-40.svg"
+  },
+  "shop-expansion/entrance-female-41.svg": {
+    "level": 0,
+    "name": "Kutup · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-41.svg"
+  },
+  "shop-expansion/entrance-female-42.svg": {
+    "level": 0,
+    "name": "Kutup · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-42.svg"
+  },
+  "shop-expansion/entrance-female-43.svg": {
+    "level": 0,
+    "name": "Kutup · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-43.svg"
+  },
+  "shop-expansion/entrance-female-44.svg": {
+    "level": 0,
+    "name": "Kutup · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-44.svg"
+  },
+  "shop-expansion/entrance-female-45.svg": {
+    "level": 0,
+    "name": "Kutup · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-45.svg"
+  },
+  "shop-expansion/entrance-female-46.svg": {
+    "level": 0,
+    "name": "Kutup · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-46.svg"
+  },
+  "shop-expansion/entrance-female-47.svg": {
+    "level": 0,
+    "name": "Kutup · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-47.svg"
+  },
+  "shop-expansion/entrance-female-48.svg": {
+    "level": 0,
+    "name": "Kutup · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-48.svg"
+  },
+  "shop-expansion/entrance-female-49.svg": {
+    "level": 0,
+    "name": "Kutup · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-49.svg"
+  },
+  "shop-expansion/entrance-female-50.svg": {
+    "level": 0,
+    "name": "Kutup · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-50.svg"
+  },
+  "shop-expansion/entrance-female-51.svg": {
+    "level": 0,
+    "name": "Mozaik · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-51.svg"
+  },
+  "shop-expansion/entrance-female-52.svg": {
+    "level": 0,
+    "name": "Mozaik · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-52.svg"
+  },
+  "shop-expansion/entrance-female-53.svg": {
+    "level": 0,
+    "name": "Mozaik · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-53.svg"
+  },
+  "shop-expansion/entrance-female-54.svg": {
+    "level": 0,
+    "name": "Mozaik · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-54.svg"
+  },
+  "shop-expansion/entrance-female-55.svg": {
+    "level": 0,
+    "name": "Mozaik · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-55.svg"
+  },
+  "shop-expansion/entrance-female-56.svg": {
+    "level": 0,
+    "name": "Mozaik · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-56.svg"
+  },
+  "shop-expansion/entrance-female-57.svg": {
+    "level": 0,
+    "name": "Mozaik · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-57.svg"
+  },
+  "shop-expansion/entrance-female-58.svg": {
+    "level": 0,
+    "name": "Mozaik · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-58.svg"
+  },
+  "shop-expansion/entrance-female-59.svg": {
+    "level": 0,
+    "name": "Mozaik · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-59.svg"
+  },
+  "shop-expansion/entrance-female-60.svg": {
+    "level": 0,
+    "name": "Mozaik · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-60.svg"
+  },
+  "shop-expansion/entrance-female-61.svg": {
+    "level": 0,
+    "name": "Kanatlar · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-61.svg"
+  },
+  "shop-expansion/entrance-female-62.svg": {
+    "level": 0,
+    "name": "Kanatlar · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-62.svg"
+  },
+  "shop-expansion/entrance-female-63.svg": {
+    "level": 0,
+    "name": "Kanatlar · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-63.svg"
+  },
+  "shop-expansion/entrance-female-64.svg": {
+    "level": 0,
+    "name": "Kanatlar · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-64.svg"
+  },
+  "shop-expansion/entrance-female-65.svg": {
+    "level": 0,
+    "name": "Kanatlar · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-65.svg"
+  },
+  "shop-expansion/entrance-female-66.svg": {
+    "level": 0,
+    "name": "Kanatlar · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-66.svg"
+  },
+  "shop-expansion/entrance-female-67.svg": {
+    "level": 0,
+    "name": "Kanatlar · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-67.svg"
+  },
+  "shop-expansion/entrance-female-68.svg": {
+    "level": 0,
+    "name": "Kanatlar · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-68.svg"
+  },
+  "shop-expansion/entrance-female-69.svg": {
+    "level": 0,
+    "name": "Kanatlar · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-69.svg"
+  },
+  "shop-expansion/entrance-female-70.svg": {
+    "level": 0,
+    "name": "Kanatlar · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-70.svg"
+  },
+  "shop-expansion/entrance-female-71.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Buz · Kadın",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-71.svg"
+  },
+  "shop-expansion/entrance-female-72.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Zümrüt · Kadın",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-72.svg"
+  },
+  "shop-expansion/entrance-female-73.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Yakut · Kadın",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-73.svg"
+  },
+  "shop-expansion/entrance-female-74.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Ametist · Kadın",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-74.svg"
+  },
+  "shop-expansion/entrance-female-75.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Kehribar · Kadın",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-75.svg"
+  },
+  "shop-expansion/entrance-female-76.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Safir · Kadın",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-76.svg"
+  },
+  "shop-expansion/entrance-female-77.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Turkuaz · Kadın",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-77.svg"
+  },
+  "shop-expansion/entrance-female-78.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Gül · Kadın",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-78.svg"
+  },
+  "shop-expansion/entrance-female-79.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Platin · Kadın",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-79.svg"
+  },
+  "shop-expansion/entrance-female-80.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Altın · Kadın",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-female-80.svg"
+  },
+  "shop-expansion/entrance-male-01.svg": {
+    "level": 0,
+    "name": "Yörünge · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-01.svg"
+  },
+  "shop-expansion/entrance-male-02.svg": {
+    "level": 0,
+    "name": "Yörünge · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-02.svg"
+  },
+  "shop-expansion/entrance-male-03.svg": {
+    "level": 0,
+    "name": "Yörünge · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-03.svg"
+  },
+  "shop-expansion/entrance-male-04.svg": {
+    "level": 0,
+    "name": "Yörünge · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-04.svg"
+  },
+  "shop-expansion/entrance-male-05.svg": {
+    "level": 0,
+    "name": "Yörünge · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-05.svg"
+  },
+  "shop-expansion/entrance-male-06.svg": {
+    "level": 0,
+    "name": "Yörünge · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-06.svg"
+  },
+  "shop-expansion/entrance-male-07.svg": {
+    "level": 0,
+    "name": "Yörünge · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-07.svg"
+  },
+  "shop-expansion/entrance-male-08.svg": {
+    "level": 0,
+    "name": "Yörünge · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-08.svg"
+  },
+  "shop-expansion/entrance-male-09.svg": {
+    "level": 0,
+    "name": "Yörünge · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-09.svg"
+  },
+  "shop-expansion/entrance-male-10.svg": {
+    "level": 0,
+    "name": "Yörünge · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "moon",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-10.svg"
+  },
+  "shop-expansion/entrance-male-11.svg": {
+    "level": 0,
+    "name": "Prizma · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-11.svg"
+  },
+  "shop-expansion/entrance-male-12.svg": {
+    "level": 0,
+    "name": "Prizma · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-12.svg"
+  },
+  "shop-expansion/entrance-male-13.svg": {
+    "level": 0,
+    "name": "Prizma · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-13.svg"
+  },
+  "shop-expansion/entrance-male-14.svg": {
+    "level": 0,
+    "name": "Prizma · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-14.svg"
+  },
+  "shop-expansion/entrance-male-15.svg": {
+    "level": 0,
+    "name": "Prizma · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-15.svg"
+  },
+  "shop-expansion/entrance-male-16.svg": {
+    "level": 0,
+    "name": "Prizma · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-16.svg"
+  },
+  "shop-expansion/entrance-male-17.svg": {
+    "level": 0,
+    "name": "Prizma · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-17.svg"
+  },
+  "shop-expansion/entrance-male-18.svg": {
+    "level": 0,
+    "name": "Prizma · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-18.svg"
+  },
+  "shop-expansion/entrance-male-19.svg": {
+    "level": 0,
+    "name": "Prizma · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-19.svg"
+  },
+  "shop-expansion/entrance-male-20.svg": {
+    "level": 0,
+    "name": "Prizma · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "prism",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-20.svg"
+  },
+  "shop-expansion/entrance-male-21.svg": {
+    "level": 0,
+    "name": "Dalgalar · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-21.svg"
+  },
+  "shop-expansion/entrance-male-22.svg": {
+    "level": 0,
+    "name": "Dalgalar · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-22.svg"
+  },
+  "shop-expansion/entrance-male-23.svg": {
+    "level": 0,
+    "name": "Dalgalar · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-23.svg"
+  },
+  "shop-expansion/entrance-male-24.svg": {
+    "level": 0,
+    "name": "Dalgalar · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-24.svg"
+  },
+  "shop-expansion/entrance-male-25.svg": {
+    "level": 0,
+    "name": "Dalgalar · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-25.svg"
+  },
+  "shop-expansion/entrance-male-26.svg": {
+    "level": 0,
+    "name": "Dalgalar · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-26.svg"
+  },
+  "shop-expansion/entrance-male-27.svg": {
+    "level": 0,
+    "name": "Dalgalar · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-27.svg"
+  },
+  "shop-expansion/entrance-male-28.svg": {
+    "level": 0,
+    "name": "Dalgalar · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-28.svg"
+  },
+  "shop-expansion/entrance-male-29.svg": {
+    "level": 0,
+    "name": "Dalgalar · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-29.svg"
+  },
+  "shop-expansion/entrance-male-30.svg": {
+    "level": 0,
+    "name": "Dalgalar · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "comet",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-30.svg"
+  },
+  "shop-expansion/entrance-male-31.svg": {
+    "level": 0,
+    "name": "Defne · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-31.svg"
+  },
+  "shop-expansion/entrance-male-32.svg": {
+    "level": 0,
+    "name": "Defne · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-32.svg"
+  },
+  "shop-expansion/entrance-male-33.svg": {
+    "level": 0,
+    "name": "Defne · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-33.svg"
+  },
+  "shop-expansion/entrance-male-34.svg": {
+    "level": 0,
+    "name": "Defne · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-34.svg"
+  },
+  "shop-expansion/entrance-male-35.svg": {
+    "level": 0,
+    "name": "Defne · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-35.svg"
+  },
+  "shop-expansion/entrance-male-36.svg": {
+    "level": 0,
+    "name": "Defne · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-36.svg"
+  },
+  "shop-expansion/entrance-male-37.svg": {
+    "level": 0,
+    "name": "Defne · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-37.svg"
+  },
+  "shop-expansion/entrance-male-38.svg": {
+    "level": 0,
+    "name": "Defne · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-38.svg"
+  },
+  "shop-expansion/entrance-male-39.svg": {
+    "level": 0,
+    "name": "Defne · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-39.svg"
+  },
+  "shop-expansion/entrance-male-40.svg": {
+    "level": 0,
+    "name": "Defne · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "laurel",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-40.svg"
+  },
+  "shop-expansion/entrance-male-41.svg": {
+    "level": 0,
+    "name": "Kutup · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-41.svg"
+  },
+  "shop-expansion/entrance-male-42.svg": {
+    "level": 0,
+    "name": "Kutup · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-42.svg"
+  },
+  "shop-expansion/entrance-male-43.svg": {
+    "level": 0,
+    "name": "Kutup · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-43.svg"
+  },
+  "shop-expansion/entrance-male-44.svg": {
+    "level": 0,
+    "name": "Kutup · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-44.svg"
+  },
+  "shop-expansion/entrance-male-45.svg": {
+    "level": 0,
+    "name": "Kutup · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-45.svg"
+  },
+  "shop-expansion/entrance-male-46.svg": {
+    "level": 0,
+    "name": "Kutup · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-46.svg"
+  },
+  "shop-expansion/entrance-male-47.svg": {
+    "level": 0,
+    "name": "Kutup · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-47.svg"
+  },
+  "shop-expansion/entrance-male-48.svg": {
+    "level": 0,
+    "name": "Kutup · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-48.svg"
+  },
+  "shop-expansion/entrance-male-49.svg": {
+    "level": 0,
+    "name": "Kutup · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-49.svg"
+  },
+  "shop-expansion/entrance-male-50.svg": {
+    "level": 0,
+    "name": "Kutup · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "crystal",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-50.svg"
+  },
+  "shop-expansion/entrance-male-51.svg": {
+    "level": 0,
+    "name": "Mozaik · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-51.svg"
+  },
+  "shop-expansion/entrance-male-52.svg": {
+    "level": 0,
+    "name": "Mozaik · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-52.svg"
+  },
+  "shop-expansion/entrance-male-53.svg": {
+    "level": 0,
+    "name": "Mozaik · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-53.svg"
+  },
+  "shop-expansion/entrance-male-54.svg": {
+    "level": 0,
+    "name": "Mozaik · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-54.svg"
+  },
+  "shop-expansion/entrance-male-55.svg": {
+    "level": 0,
+    "name": "Mozaik · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-55.svg"
+  },
+  "shop-expansion/entrance-male-56.svg": {
+    "level": 0,
+    "name": "Mozaik · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-56.svg"
+  },
+  "shop-expansion/entrance-male-57.svg": {
+    "level": 0,
+    "name": "Mozaik · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-57.svg"
+  },
+  "shop-expansion/entrance-male-58.svg": {
+    "level": 0,
+    "name": "Mozaik · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-58.svg"
+  },
+  "shop-expansion/entrance-male-59.svg": {
+    "level": 0,
+    "name": "Mozaik · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-59.svg"
+  },
+  "shop-expansion/entrance-male-60.svg": {
+    "level": 0,
+    "name": "Mozaik · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "imperial",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-60.svg"
+  },
+  "shop-expansion/entrance-male-61.svg": {
+    "level": 0,
+    "name": "Kanatlar · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-61.svg"
+  },
+  "shop-expansion/entrance-male-62.svg": {
+    "level": 0,
+    "name": "Kanatlar · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-62.svg"
+  },
+  "shop-expansion/entrance-male-63.svg": {
+    "level": 0,
+    "name": "Kanatlar · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-63.svg"
+  },
+  "shop-expansion/entrance-male-64.svg": {
+    "level": 0,
+    "name": "Kanatlar · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-64.svg"
+  },
+  "shop-expansion/entrance-male-65.svg": {
+    "level": 0,
+    "name": "Kanatlar · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-65.svg"
+  },
+  "shop-expansion/entrance-male-66.svg": {
+    "level": 0,
+    "name": "Kanatlar · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-66.svg"
+  },
+  "shop-expansion/entrance-male-67.svg": {
+    "level": 0,
+    "name": "Kanatlar · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-67.svg"
+  },
+  "shop-expansion/entrance-male-68.svg": {
+    "level": 0,
+    "name": "Kanatlar · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-68.svg"
+  },
+  "shop-expansion/entrance-male-69.svg": {
+    "level": 0,
+    "name": "Kanatlar · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-69.svg"
+  },
+  "shop-expansion/entrance-male-70.svg": {
+    "level": 0,
+    "name": "Kanatlar · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "phoenix",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-70.svg"
+  },
+  "shop-expansion/entrance-male-71.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Buz · Erkek",
+    "color": "#8ddcff",
+    "metal": "#e8f8ff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-71.svg"
+  },
+  "shop-expansion/entrance-male-72.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Zümrüt · Erkek",
+    "color": "#42dbaa",
+    "metal": "#b5f6d6",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-72.svg"
+  },
+  "shop-expansion/entrance-male-73.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Yakut · Erkek",
+    "color": "#ed527c",
+    "metal": "#ffd6db",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-73.svg"
+  },
+  "shop-expansion/entrance-male-74.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Ametist · Erkek",
+    "color": "#b185ff",
+    "metal": "#eadcff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-74.svg"
+  },
+  "shop-expansion/entrance-male-75.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Kehribar · Erkek",
+    "color": "#edb94e",
+    "metal": "#ffedba",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-75.svg"
+  },
+  "shop-expansion/entrance-male-76.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Safir · Erkek",
+    "color": "#548cff",
+    "metal": "#d1e0ff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-76.svg"
+  },
+  "shop-expansion/entrance-male-77.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Turkuaz · Erkek",
+    "color": "#38d1dc",
+    "metal": "#c0f8f6",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-77.svg"
+  },
+  "shop-expansion/entrance-male-78.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Gül · Erkek",
+    "color": "#ed8dcc",
+    "metal": "#ffe0f3",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-78.svg"
+  },
+  "shop-expansion/entrance-male-79.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Platin · Erkek",
+    "color": "#aebbd8",
+    "metal": "#f0f4ff",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-79.svg"
+  },
+  "shop-expansion/entrance-male-80.svg": {
+    "level": 0,
+    "name": "Takımyıldız · Altın · Erkek",
+    "color": "#d7ac57",
+    "metal": "#ffedc4",
+    "motion": "eclipse",
+    "duration": 4200,
+    "entryFrame": "shop-expansion/entrance-male-80.svg"
+  }
+}

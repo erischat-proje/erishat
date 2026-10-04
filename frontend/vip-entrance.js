@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const queue=[],seen=new Set();let active=null,epoch=0,pumping=false;
+  let shopThemes={};const shopReady=fetch(new URL('shop-expansion/entrances.json?v=expansion-800-20261004',document.currentScript.src),{signal:AbortSignal.timeout(8000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(x=>{shopThemes=x}).catch(()=>{});
   const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   const asset=key=>window.ErisChatCosmetics?.assetUrl?.(key)||key;
   function finish(){if(!active)return;const a=active;active=null;clearTimeout(a.timer);clearTimeout(a.loadTimer);cancelAnimationFrame(a.raf);a.el.remove();a.resolve();}
@@ -69,7 +70,7 @@
   async function next(){
     if(pumping||active||!queue.length)return;const ticket=epoch,d=queue.shift();
     if(document.hidden||(!d.preview&&window.ErisRoomBlocks?.has?.(d.user_id))){next();return}
-    pumping=true;const theme=d.normal_entry?window.ErisVIPDesigns?.normal:window.ErisVIPDesigns?.get(d.vip_entry_level,d.vip_entry_style);
+    pumping=true;if(d.shop_entry)await shopReady;if(ticket!==epoch)return;const custom=shopThemes[d.shop_entry];const theme=custom?{...custom,entryFrame:asset(custom.entryFrame)}:d.normal_entry?window.ErisVIPDesigns?.normal:window.ErisVIPDesigns?.get(d.vip_entry_level,d.vip_entry_style);
     if(theme)await play(d,theme);
     if(ticket!==epoch)return;
     if(!d.preview&&d.entrance_asset)await window.ErisRelationshipEntrance?.show?.(d);
@@ -77,14 +78,15 @@
   }
   function show(d){
     if(!d||document.hidden||window.ErisRoomBlocks?.has?.(d.user_id))return;
-    if(!d.normal_entry&&!window.ErisVIPDesigns?.get(d.vip_entry_level)&&!d.entrance_asset)return;
+    if(!d.shop_entry&&!d.normal_entry&&!window.ErisVIPDesigns?.get(d.vip_entry_level)&&!d.entrance_asset)return;
     if(d.event_id){if(seen.has(d.event_id))return;seen.add(d.event_id);if(seen.size>120)seen.delete(seen.values().next().value)}
     if(queue.length<8){queue.push({...d});next()}
   }
   function preview(level,style){const user=window.ErisAuth?.user||{};style=style||user.gender;const theme=Number(level)===0?window.ErisVIPDesigns?.normal:window.ErisVIPDesigns?.get(level,style);if(!theme)return;
     queue.unshift({preview:true,normal_entry:theme.level===0,vip_entry_level:theme.level,vip_entry_style:style,nickname:user.nickname||'VIP misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();
   }
-  window.ErisRoomEntrance={show,clear,preview};
+  async function previewAsset(key){await shopReady;if(!shopThemes[key])return;const user=window.ErisAuth?.user||{};queue.unshift({preview:true,shop_entry:key,nickname:user.nickname||'ErisChat misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();}
+  window.ErisRoomEntrance={show,clear,preview,previewAsset};
   window.addEventListener('erischat:room-closed',clear);
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state!=='ready'){clear();seen.clear()}});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)clear()});

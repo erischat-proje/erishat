@@ -5,7 +5,7 @@ from typing import Any
 
 PRICE = 1000
 VIP_PRICE = 5000
-COSMETIC_TYPES = {"avatar", "frame", "wallpaper"}
+COSMETIC_TYPES = {"avatar", "frame", "wallpaper", "bubble", "entrance", "title"}
 
 
 def _asset_root() -> Path:
@@ -67,6 +67,8 @@ def catalog() -> list[dict[str, Any]]:
     _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP", "avatar", "male", True)
 
 
+    from .shop_expansion import data
+    result.extend(data()["items"])
     return result
 
 

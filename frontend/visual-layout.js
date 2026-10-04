@@ -2,8 +2,8 @@
 (() => {
   'use strict';
   const metadata=new Map(),pending=new Map(),base=new URL('.',document.currentScript?.src||location.href);
-  const clean=key=>{try{return decodeURIComponent(new URL(key,document.baseURI).pathname).replace(/^\//,'').replace(/^.*?(?=(?:vip-assets|relationship-assets)\/)/,'')}catch{return String(key||'').replace(/^\.\//,'')}};
-  const manifest=fetch(new URL('visual-layout.json?v=room-system-20261003',base),{signal:window.AbortSignal?.timeout?.(6000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(data=>{for(const [key,value] of Object.entries(data.assets||{}))metadata.set(key,value)}).catch(()=>{});
+  const clean=key=>{try{return decodeURIComponent(new URL(key,document.baseURI).pathname).replace(/^\//,'').replace(/^.*?(?=(?:vip-assets|shop-expansion|relationship-assets)\/)/,'')}catch{return String(key||'').replace(/^\.\//,'')}};
+  const manifest=fetch(new URL('visual-layout.json?v=expansion-800-20261004',base),{signal:window.AbortSignal?.timeout?.(6000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(data=>{for(const [key,value] of Object.entries(data.assets||{}))metadata.set(key,value)}).catch(()=>{});
   const url=key=>window.ErisChatCosmetics?.assetUrl?.(key)||new URL(key,base).href;
   async function describe(key){
     await manifest;const path=clean(key);if(pending.has(path))return pending.get(path);const known=metadata.get(path);

@@ -32,6 +32,7 @@ def entry_selection(db, user_id) -> tuple[str, int]:
     status = db.get(VipStatus, user_id)
     level = max(0, min(12, int(status.level or 0))) if status else 0
     key = status.entry_effect if status else None
+    if key and key.startswith('shop-expansion/entrance-'):return 'shop',0
     if key in ("normal", "relationship"):
         return key, 0
     if key and key.startswith("vip-entrance-"):
@@ -65,4 +66,11 @@ def entrance_inventory(db, user) -> list[dict]:
                       "name": THEMES[n - 1], "source": "vip", "level": n,
                       "entry_style": entry_style(user), "entry_selection": True,
                       "equipped": mode == "vip" and selected == n})
+    from .shop_expansion import data
+    from .models import UserCosmetic
+    from sqlalchemy import select
+    owned=set(db.scalars(select(UserCosmetic.asset_key).where(UserCosmetic.user_id==user.id,UserCosmetic.cosmetic_type=='entrance')))
+    for item in data()['items']:
+        if item['type']=='entrance' and item['asset_key'] in owned and item['gender']==entry_style(user):
+            items.append({'type':'entrance','asset_key':item['asset_key'],'equip_key':item['asset_key'], 'asset':item['asset_key'],'name':item['name'],'source':'shop','level':0,'entry_style':entry_style(user),'entry_selection':True,'equipped':mode=='shop' and status.entry_effect==item['asset_key']})
     return items

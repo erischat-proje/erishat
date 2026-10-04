@@ -144,6 +144,7 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
         "following_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.follower_id == target.id)) or 0),
         "received_gift_lidya": received_total(db, target.id),
         "relationship": public_brief(db, target.id),
+        "title_asset": target.title_asset,
         "vip_level": int(v.level or 0) if v and visible else 0,
         "vip_badge_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_badge"),
         "vip_neon_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_neon"),

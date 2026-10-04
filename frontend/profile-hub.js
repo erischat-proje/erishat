@@ -66,9 +66,9 @@
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
-    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['fan-ranking','Hayran sıralamam'],['collection','Koleksiyon'],['vip','VIP'],['wallet','Cüzdan'],['topup','Lidya Yükleme'],['calls','Arama geçmişleri'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['suggestion','Gelişim Fikri'],['settings','Ayarlar']];
+    const tabs = [['info','Bilgilerim'],['posts','Gönderilerim'],['social','Takip ve hayranlar'],['fan-ranking','Hayran sıralamam'],['collection','Koleksiyon'],['tasks','Görevler'],['vip','VIP'],['wallet','Cüzdan'],['topup','Lidya Yükleme'],['calls','Arama geçmişleri'],['notifications','Bildirimler'],['privacy','Gizlilik'],['blocked','Engellenenler'],['rooms','Odalarım'],['suggestion','Gelişim Fikri'],['settings','Ayarlar']];
     const strip = hub.querySelector('.eph-tabs');
-    const icons={info:'profile',posts:'posts',social:'family','fan-ranking':'family',collection:'collection',vip:'vip',wallet:'wallet',calls:'bell',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',suggestion:'posts',settings:'security'};
+    const icons={info:'profile',posts:'posts',social:'family','fan-ranking':'family',tasks:'posts',collection:'collection',vip:'vip',wallet:'wallet',calls:'bell',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',suggestion:'posts',settings:'security'};
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML=(key==='topup'?'<img class="eph-icon" src="./lidya-coin.png" alt="">':'<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg>')+'<span>'+escape(label)+'</span>';
       button.onclick=()=>{if(key==='vip'){window.ErisChatVIP?.open?.();return}if(key==='topup'){window.ErisPurchases?.open?.();return}if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}lastTrigger=button;show(key)};strip.append(button);
@@ -79,7 +79,7 @@
   async function show(key) {
     const hub=panel();if(!hub)return;
     const index=++requestIndex, overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
-    const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',collection:'Koleksiyon',vip:'VIP',wallet:'Cüzdan',calls:'Arama geçmişleri',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
+    const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',tasks:'Görevler',collection:'Koleksiyon',vip:'VIP',wallet:'Cüzdan',calls:'Arama geçmişleri',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
     hub.closest('#profile')?.setAttribute('data-profile-section',key);
     hub.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===key)));
     body.hidden=['overview','settings','rooms'].includes(key);
@@ -128,6 +128,7 @@
         if(!following.length) list.append('Henüz kimseyi takip etmiyorsun.');
         for(const row of following){const button=document.createElement('button');button.type='button';button.textContent=row.user_id;button.onclick=()=>{window.ErisProfileHub.close();window.openUserProfile?.(row.user_id)};list.append(button)}return;
       }
+      if(key==='tasks'){await window.ErisAppearanceTasks.render(body,()=>index===requestIndex);return;}
       if(key==='collection') {await window.ErisAppearanceInventory.render(body,()=>index===requestIndex);return;}
       if(key==='vip') {
         window.ErisProfileHub.close();
@@ -159,7 +160,7 @@
       }
     }catch(error){if(index===requestIndex)body.textContent=error.message||'Profil bilgileri yüklenemedi.'}
   }
-  window.ErisProfileHub={close:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')},reset:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')}};
+  window.ErisProfileHub={show,close:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')},reset:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')}};
   const start=()=>{mount();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready' && panel()?.closest('#profile')?.dataset.profileSection==='info')show('info')})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
