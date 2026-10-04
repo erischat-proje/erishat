@@ -60,12 +60,12 @@ def catalog() -> list[dict[str, Any]]:
     new_root = _new_asset_root()
     _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR", "avatar", "female", False)
     _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR", "avatar", "male", False)
-    _collect(result, root, "cercevesistemi/standart", "frame", None, False)
+    result.extend(frame_catalog())
 
     # VIP catalog: these are unlock rewards, not normal Lidya purchases.
     _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP", "avatar", "female", True)
     _collect(result, new_root, "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP", "avatar", "male", True)
-    _collect(result, root, "cercevesistemi/vip", "frame", None, True)
+
 
     return result
 
@@ -74,6 +74,13 @@ def find_asset(asset_key: str, cosmetic_type: str) -> dict[str, Any] | None:
     key = _safe_key(asset_key)
     if cosmetic_type not in COSMETIC_TYPES:
         return None
-    from .relationship_rewards import items
-    choices=catalog()+[r for r in items() if r['type']=='frame']
+    choices = catalog()
     return next((item for item in choices if item['asset_key']==key and item['type']==cosmetic_type),None)
+
+
+def frame_catalog():
+    from .vip_presentation import THEMES
+    return [{"type": "frame", "gender": gender, "asset_key": f"vip-designs/avatar-frame-{gender}-{n if n else 'standard'}.svg",
+             "price": 0, "free": n == 0, "vip": n > 0, "tier": "vip" if n else "standard",
+             "vip_level": n, "name": (f"VIP {n} · {THEMES[n-1]}" if n else "Standart") + (" · Erkek çerçevesi" if gender == "male" else " · Kadın çerçevesi")}
+            for gender in ("male", "female") for n in range(13)]

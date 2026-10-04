@@ -50,7 +50,12 @@ def get_user_from_token(db: Session, token: str | None) -> User | None:
         db.delete(row)
         db.commit()
         return None
-    return db.get(User, row.user_id)
+    user = db.get(User, row.user_id)
+    if user:
+        from .appearance_refresh import refresh_user
+        if refresh_user(db, user):
+            db.commit()
+    return user
 
 
 def revoke_session(db: Session, token: str | None) -> bool:

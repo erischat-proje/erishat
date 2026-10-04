@@ -160,7 +160,7 @@
   }
   function applyRoomWallpaper(){
     const wall=document.querySelector('#erisRoomSurface .eris-room-wall');if(!wall)return;
-    const key=window.__erisActiveRoomWallpaper || 'avatarveduvarkağıdı/BİTMİŞ DUVAR KAĞIDI/ERİSCHAT STANDART DUVAR KAĞIDI.png';
+    const key=window.__erisActiveRoomWallpaper || `vip-designs/wallpaper-${window.ErisChatCosmetics?.state?.user?.gender==='male'?'male':'female'}-standard.png`;
     const raw=typeof key==='string'?key:(key?.url||key?.src||key?.asset_url||key?.path||key?.asset_key||'');
     const url=raw&&window.ErisChatCosmetics?.assetUrl?window.ErisChatCosmetics.assetUrl(raw):raw;
     if(url){wall.style.setProperty('--eris-room-wallpaper','url("'+url.replace(/"/g,'%22')+'")');wall.classList.add('has-wallpaper');}

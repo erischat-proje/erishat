@@ -42,7 +42,7 @@ def vip_level_rewards(user) -> list[dict]:
     for item in catalog():
         if not item.get("vip"):
             continue
-        if item["type"] == "avatar" and gender and item.get("gender") != gender:
+        if item["type"] in {"avatar", "frame"} and item.get("gender") != entry_style(user):
             continue
         by_level.setdefault(int(item["vip_level"]), []).append({
             "cosmetic_type": item["type"], "asset_key": item["asset_key"], "gender": item.get("gender")
@@ -72,7 +72,9 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
         text("SELECT cosmetic_type, asset_key FROM user_cosmetics WHERE user_id=:uid ORDER BY id"),
         {"uid": user.id},
     ).mappings().all()
-    return {"items": [dict(row) for row in rows], "vip_level": vip_level(db, user.id)}
+    active = {(i['type'], i['asset_key']) for i in catalog()}
+    walls = {i['key'] for i in wallpaper_catalog()}
+    return {"items": [dict(row) for row in rows if (row['cosmetic_type'] not in ('frame', 'wallpaper') or (row['cosmetic_type'], row['asset_key']) in active or row['asset_key'] in walls)], "vip_level": vip_level(db, user.id)}
 
 
 @router.get("/me/appearance-inventory")
@@ -101,6 +103,13 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         if pair not in owned:
             db.add(UserCosmetic(user_id=user.id, cosmetic_type=pair[0], asset_key=pair[1]))
             owned.add(pair)
+    from .cosmetics import frame_catalog
+    for item in frame_catalog():
+        if item['gender'] != entry_style(user) or item['vip_level'] > vip_level(db, user.id): continue
+        pair = ('frame', item['asset_key'])
+        if pair not in owned:
+            db.add(UserCosmetic(user_id=user.id, cosmetic_type='frame', asset_key=pair[1]))
+            owned.add(pair)
     for level in vip_level_rewards(user):
         if level['level'] not in claimed or level['level'] > vip_level(db, user.id): continue
         for reward in level['rewards']:
@@ -117,6 +126,8 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
               'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
     for kind, key in sorted(owned):
         if kind not in labels or kind == 'ring': continue
+        if kind == 'frame' and ((kind, key) not in normal or normal[(kind, key)].get('gender') != entry_style(user) or normal[(kind, key)].get('vip_level', 0) > vip_level(db, user.id)): continue
+        if kind == 'wallpaper' and key not in wallpapers: continue
         if kind == 'wallpaper' and wallpapers.get(key, {}).get('gender') not in (None, entry_style(user)): continue
         if kind == 'wallpaper' and wallpapers.get(key, {}).get('gender') and wallpapers[key]['vip_level'] > vip_level(db, user.id): continue
         relation = key.startswith(relationship_rewards.PREFIX)
@@ -139,7 +150,7 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         else:
             equipped = getattr(user, kind + '_asset', None) == key
         result.append({'type':kind, 'asset_key':key, 'asset':wall.get('asset', key),
-                       'name':reward.get('name', wall.get('name', labels[kind])), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'standard',
+                       'name':reward.get('name', wall.get('name', item.get('name', labels[kind]))), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'standard',
                        'level':reward.get('level', item.get('vip_level', wall.get('vip_level', 0))) or 0,
                 'equipped':equipped, 'equip_key':key})
     if house:
@@ -216,7 +227,9 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     if asset.get('relationship'):raise HTTPException(403,'Bu görünüm ilişki seviyesinde kazanılır.')
     if asset.get("vip"):
         raise HTTPException(status_code=403, detail=f"Bu VIP görünüm mağazadan satın alınamaz; VIP {asset.get('vip_level', 1)} seviyesinde açılır")
-    price = int(asset.get("price") or PRICE)
+    if asset.get('free'):
+        return {'ok': True, 'spent': 0, 'asset_key': key, 'cosmetic_type': kind, 'vip': False}
+    price = int(asset.get("price", PRICE))
 
     # Lock the balance row before checking ownership/balance so concurrent purchases
     # cannot spend the same Lidya twice or race the unique cosmetic constraint.
@@ -255,12 +268,14 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
     if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
 
+    if asset.get('gender') not in (None, entry_style(user)):
+        raise HTTPException(403, 'Bu görünüm profilinin cinsiyetine uygun değil.')
     if asset.get("vip"):
         required = int(asset.get("vip_level") or 1)
         current = vip_level(db, user.id)
         if current < required:
             raise HTTPException(status_code=403, detail=f"VIP {required} seviyesi gerekli")
-    else:
+    elif not asset.get("free"):
         owned = db.execute(
             text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type=:kind AND asset_key=:key"),
             {"uid": user.id, "kind": kind, "key": key},
@@ -325,14 +340,14 @@ def claim_vip_wallpaper(user=Depends(current_cosmetic_user), db: Session = Depen
         vip = VipStatus(user_id=user.id, level=current, total_spent=0)
         db.add(vip)
         db.flush()
-    if vip.wallpaper_claimed:
-        return {"ok": True, "claimed": True, "asset_key": "vip_wallpaper_10", "vip_level": current, "already_claimed": True}
-    owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key='vip_wallpaper_10'"), {"uid": user.id}).first()
+    key = f"vip_wallpaper_{entry_style(user)}_10"
+    already_claimed = bool(vip.wallpaper_claimed)
+    owned = db.execute(text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type='wallpaper' AND asset_key=:key"), {"uid": user.id, "key": key}).first()
     if not owned:
-        db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,'wallpaper','vip_wallpaper_10')"), {"uid": user.id})
+        db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,'wallpaper',:key)"), {"uid": user.id, "key": key})
     vip.wallpaper_claimed = True
     db.commit()
-    return {"ok": True, "claimed": True, "asset_key": "vip_wallpaper_10", "vip_level": current, "already_claimed": False}
+    return {"ok": True, "claimed": True, "asset_key": key, "vip_level": current, "already_claimed": already_claimed}
 
 
 @router.post("/me/wallpaper/apply")

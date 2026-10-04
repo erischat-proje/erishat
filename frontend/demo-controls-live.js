@@ -33,7 +33,7 @@
 (() => {
   const load = () => {
     if (document.querySelector('script[data-eris-demo-complete]')) return;
-    const s=document.createElement('script');s.src='./demo-complete-live.js';s.async=false;s.setAttribute('data-eris-demo-complete','1');s.onerror=()=>console.warn('[ErisChat] complete demo layer unavailable');document.body.appendChild(s);
+    const s=document.createElement('script');s.src='./demo-complete-live.js?v=matching-frames-20261004';s.async=false;s.setAttribute('data-eris-demo-complete','1');s.onerror=()=>console.warn('[ErisChat] complete demo layer unavailable');document.body.appendChild(s);
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
 })();

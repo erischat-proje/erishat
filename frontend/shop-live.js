@@ -48,7 +48,7 @@
     const root = document.getElementById('shop');
     if (!root) return;
     installStyle();
-    root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatar ve çerçeveler mağazadan alınır. VIP avatar ve çerçeveler VIP seviyesine ulaşıldığında açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip-avatar">VIP Avatar</button><button class="liveShopTab" data-filter="vip-frame">VIP Çerçeve</button></div><div class="liveShopGrid">Yükleniyor…</div>';
+    root.innerHTML = '<div class="eyebrow">LİDYA MAĞAZASI</div><h1 class="title">Gerçek kozmetik kataloğu.</h1><div class="liveShopNote">Standart avatarlar mağazadan alınır. Standart çerçeve ücretsizdir; VIP tasarımları seviyene göre açılır.</div><div class="liveShopTabs"><button class="liveShopTab active" data-filter="avatar">Avatar</button><button class="liveShopTab" data-filter="frame">Çerçeve</button><button class="liveShopTab" data-filter="vip-avatar">VIP Avatar</button><button class="liveShopTab" data-filter="vip-frame">VIP Çerçeve</button></div><div class="liveShopGrid">Yükleniyor…</div>';
     const grid = root.querySelector('.liveShopGrid');
     if (!token()) { grid.textContent='Mağazayı görmek için giriş yap.'; return; }
     try {
@@ -72,13 +72,13 @@
           const frameNumber = type === 'frame' ? items.filter(entry => typeOf(entry) === 'frame' && vipOf(entry) === isVip).indexOf(item) + 1 : 0;
           const card = document.createElement('article');
           card.className = 'liveShopCard';
-          card.innerHTML = `<div class="liveShopPreview">${type === 'frame' ? `<img class="liveShopFrame" src="${esc(src)}" alt="" loading="lazy">` : `<div class="liveShopAvatar" style="background-image:url('${esc(src)}')"></div>`}</div><div class="liveShopName">${type === 'frame' ? `${isVip ? 'VIP' : 'Standart'} çerçeve #${frameNumber}` : `Avatar #${index + 1}${isVip ? ' • VIP' : ''}`}</div><div class="liveShopMeta">${isVip ? (unlocked ? `VIP ${required} açıldı` : `VIP ${required} gerekli`) : `${esc(item.gender || 'standart')} • ${Number(item.price || catalog.price || 1000).toLocaleString('tr-TR')} Lidya`}</div>`;
+          card.innerHTML = `<div class="liveShopPreview">${type === 'frame' ? `<img class="liveShopFrame" src="${esc(src)}" alt="" loading="lazy">` : `<div class="liveShopAvatar" style="background-image:url('${esc(src)}')"></div>`}</div><div class="liveShopName">${type === 'frame' ? esc(item.name || `${isVip ? 'VIP' : 'Standart'} çerçeve #${frameNumber}`) : `Avatar #${index + 1}${isVip ? ' • VIP' : ''}`}</div><div class="liveShopMeta">${isVip ? (unlocked ? `VIP ${required} açıldı` : `VIP ${required} gerekli`) : item.free ? 'Ücretsiz standart çerçeve' : `${esc(item.gender || 'standart')} • ${Number(item.price ?? catalog.price ?? 1000).toLocaleString('tr-TR')} Lidya`}</div>`;
           const action = document.createElement('button');
           action.className = `liveShopAction${isVip && !unlocked ? ' locked' : ''}`;
           if (isVip && !unlocked) {
             action.textContent = `🔒 VIP ${required}`;
             action.disabled = true;
-          } else if (isOwned || isVip && unlocked) {
+          } else if (item.free || isOwned || isVip && unlocked) {
             action.textContent = '✓ Uygula';
             action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); window.ErisChatCosmetics?.load(); window.toast?.('Görünüm uygulandı ✓'); } catch (error) { window.toast?.(error.message || 'Görünüm uygulanamadı.'); } };
           } else {
