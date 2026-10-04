@@ -21,7 +21,7 @@ class VIPPresentationTests(unittest.TestCase):
         # SQLite only autoincrements an INTEGER primary key; production uses PostgreSQL.
         for table in Base.metadata.tables.values():
             for column in table.columns:
-                if column.primary_key and isinstance(column.type, BigInteger):
+                if column.primary_key and isinstance(column.type, BigInteger) and 'sqlite' not in column.type._variant_mapping:
                     column.type = column.type.with_variant(Integer(), 'sqlite')
         Base.metadata.create_all(engine)
         for table in (User.__table__, UserPrivacy.__table__, VipStatus.__table__,

@@ -17,7 +17,8 @@ GENDER_STANDARD = [{"key": f"wallpaper_{gender}_standard", "tier": "normal",
 
 
 def catalog(gender=None):
-    variants = [i for i in GENDER_STANDARD + GENDER_VIP if not gender or i['gender'] == gender]
+    from .shop_expansion import data
+    variants = [i for i in GENDER_STANDARD + GENDER_VIP + data()['wallpapers'] if not gender or i['gender'] in (None, gender)]
     return variants
 
 

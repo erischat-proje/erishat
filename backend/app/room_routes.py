@@ -15,7 +15,7 @@ import hashlib
 from . import couple_gifts, relationship_rewards
 from .relationship_models import Couple, CoupleRoom
 
-from fastapi import APIRouter, Depends, HTTPException, Header, File, Form, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Header, File, Form, UploadFile, Body
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select, update
@@ -400,6 +400,8 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         couple_house=couple_gifts.room_house(db,room.id)
         if couple_house and not couple_house.active:raise HTTPException(410,'Çift odası kapatıldı.')
         room.is_active = True
+        from .shop_expansion import record_event
+        record_event(db,user.id,'rooms',room.id)
         if not existing_member and not ghost:
             entry=RoomChatMessage(room_id=room.id,user_id=user.id,text=user.nickname+' adlı kullanıcı odaya katıldı.')
             db.add(entry);db.flush();db.add(seat_workflow.RoomSystemEntry(message_id=entry.id))
@@ -586,8 +588,9 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         if not is_member(db, room.id, user.id) and room.owner_id != user.id:
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         view = room_view(db, room, user)
+        from .shop_expansion import RoomAppearanceLease
         return {"asset_key": view["wallpaper_owned_asset"], "asset_path": view["wallpaper_owned_asset_path"], "applied": view["wallpaper_applied"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
-                "default_asset": default_wallpaper(db.get(User, room.owner_id)), "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog("male" if user.gender == "male" else "female")]}
+                "rentals": {row.asset_key:row.paid_until for row in db.scalars(select(RoomAppearanceLease).where(RoomAppearanceLease.room_id==room.id))}, "default_asset": default_wallpaper(db.get(User, room.owner_id)), "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog("male" if user.gender == "male" else "female")]}
 
     @router.post("/{room_id}/wallpaper")
     def buy_room_wallpaper(room_id: str, payload: RoomWallpaperUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -611,11 +614,17 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         if not locked_user or int(locked_user.lidya or 0) < price:
             raise HTTPException(status_code=400, detail=f"Bu süre için {price:,} Lidya gerekli")
         now = datetime.now(timezone.utc)
+        from .shop_expansion import RoomAppearanceLease,utc
         row = db.get(RoomWallpaper, room.id)
+        lease=db.get(RoomAppearanceLease,(room.id,payload.asset_key))
         locked_user.lidya -= price
         row_expiry = row.paid_until if row and row.paid_until.tzinfo else (row.paid_until.replace(tzinfo=timezone.utc) if row else None)
         expires_from = row_expiry if row and row.asset_key == payload.asset_key and row_expiry and row_expiry > now else now
+        if lease and utc(lease.paid_until)>now:expires_from=utc(lease.paid_until)
         paid_until = now + timedelta(days=36500) if vip_reward else expires_from + timedelta(days=payload.days)
+        if item.get('room_only'):
+            if lease:lease.paid_until=paid_until
+            else:db.add(RoomAppearanceLease(room_id=room.id,asset_key=payload.asset_key,paid_until=paid_until))
         if row:
             row.asset_key = payload.asset_key
             row.paid_until = paid_until
@@ -630,10 +639,18 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         return {"ok": True, "asset_key": payload.asset_key, "asset_path": item["asset"], "paid_until": None if vip_reward else paid_until, "spent": price, "days": 0 if vip_reward else payload.days}
 
     @router.post("/{room_id}/wallpaper/apply")
-    def apply_room_wallpaper(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    def apply_room_wallpaper(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency), payload: dict | None = Body(default=None)):
         room = get_room_or_404(db, room_id)
         require_owner(db, room, user)
         row = db.get(RoomWallpaper, room.id)
+        if isinstance(payload,dict) and payload.get('asset_key'):
+            from .shop_expansion import RoomAppearanceLease,utc
+            key=payload['asset_key']
+            if not isinstance(key,str) or len(key)>255:raise HTTPException(422,'Geçersiz duvar kâğıdı.')
+            lease=db.get(RoomAppearanceLease,(room.id,key));item=find_wallpaper(key)
+            if not lease or not item or not item.get('room_only') or utc(lease.paid_until)<=datetime.now(timezone.utc):raise HTTPException(403,'Bu odada aktif kiralamanız bulunmuyor.')
+            if row:row.asset_key=key;row.paid_until=lease.paid_until
+            else:row=RoomWallpaper(room_id=room.id,asset_key=key,paid_until=lease.paid_until);db.add(row)
         expiry = row.paid_until if row and row.paid_until.tzinfo else (row.paid_until.replace(tzinfo=timezone.utc) if row else None)
         item = find_wallpaper(row.asset_key) if row else None
         vip = db.get(VipStatus, user.id) if item and item["tier"] == "vip" else None

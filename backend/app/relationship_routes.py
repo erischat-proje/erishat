@@ -567,6 +567,7 @@ def equip_reward(payload: EquipReward,db: Session=Depends(get_db),user: User=Dep
     row=db.get(CoupleRewardSelection,(user.id,payload.kind))
     if not row:row=CoupleRewardSelection(user_id=user.id,kind=payload.kind);db.add(row)
     row.asset_key=payload.asset_key
+    if payload.kind in ('bubble','title'):setattr(user,payload.kind+'_asset',None)
     if payload.kind=='entrance':
         from .platform_models import VipStatus
         vip=db.get(VipStatus,user.id)

@@ -84,7 +84,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         vip = old.startswith("vip")
         gender = "female" if "kadınavatar/" in old else "male"
         choices = [item["asset_key"] for item in avatars if item["vip"] == vip and item["gender"] == gender]
-        if len(choices) != (12 if vip else 48):
+        if (vip and len(choices) != 12) or (not vip and len(choices) < 48):
             raise RuntimeError("Yeni avatar koleksiyonu eksik; eski avatarlar taşınmadı")
         digits = re.findall(r"\d+", old.rsplit("/", 1)[-1])
         index = min(max(int(digits[-1]) - 1, 0), len(choices) - 1) if digits else 0
@@ -97,6 +97,8 @@ def migrate_legacy_avatars(db: Session) -> None:
 app = FastAPI(title="ErisChat API", version="1.0.3-optimization-20261003")
 install_diagnostics(app)
 app.include_router(cosmetic_router)
+from . import shop_expansion
+app.include_router(shop_expansion.router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview", "X-Request-ID", "Retry-After", "Server-Timing"])
@@ -140,6 +142,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE vip_status ADD COLUMN IF NOT EXISTS total_spent INTEGER NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE vip_status ALTER COLUMN total_spent TYPE BIGINT"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS wallpaper_asset VARCHAR(255)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bubble_asset VARCHAR(255)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS title_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id VARCHAR(64)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'ErisChat Odası'"))
@@ -1262,7 +1266,7 @@ async def create_social_post(caption: str = Form(default=""), file: UploadFile |
     if not caption and file is None: raise HTTPException(status_code=400, detail="Metin veya medya ekleyin")
     mime, data = await _read_social_upload(file, 80 * 1024 * 1024) if file else (None, None)
     post = SocialPost(user_id=user.id, caption=caption, mime_type=mime, image_bytes=data, audience=audience)
-    db.add(post); db.commit(); db.refresh(post)
+    db.add(post); db.flush(); shop_expansion.record_event(db,user.id,'posts',post.id); db.commit(); db.refresh(post)
     return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
         "updated_at": post.updated_at, "has_image": data is not None, "mime_type": mime,
@@ -1594,7 +1598,7 @@ async def create_story(file: UploadFile = File(...), caption: str = Form(default
     mime, data = await _read_social_upload(file, 50 * 1024 * 1024)
     story = SocialStory(user_id=user.id, caption=caption.strip()[:300], mime_type=mime,
         image_bytes=data, expires_at=datetime.now(timezone.utc) + timedelta(hours=24))
-    db.add(story); db.commit(); db.refresh(story)
+    db.add(story); db.flush(); shop_expansion.record_event(db,user.id,'stories',story.id); db.commit(); db.refresh(story)
     return {"id": story.id, "user_id": user.id, "caption": story.caption, "created_at": story.created_at,
         "expires_at": story.expires_at, "mime_type": mime,
         "media_kind": "video" if mime.startswith("video/") else "image",
@@ -1896,7 +1900,7 @@ async def _send_dm_event(db: Session, user_id: str, event: dict) -> None:
             event={**event,'sender_avatar':sender.avatar if sender else None,
                 'sender_avatar_asset':sender.avatar_asset if sender else None,
                 'sender_frame_asset':sender.frame_asset if sender else None,
-                'bubble_asset':relationship_routes.rewards.selected(db,event['sender_id'],'bubble')}
+                'bubble_asset':(sender.bubble_asset if sender else None) or relationship_routes.rewards.selected(db,event['sender_id'],'bubble')}
         await manager.send_user(user_id, event)
 
 
@@ -1924,7 +1928,7 @@ def _room_history_page(db,internal_room_id,room_id,before=None,limit=200):
     if before is not None:query=query.filter(RoomChatMessage.id<before)
     history=query.order_by(RoomChatMessage.id.desc()).limit(limit).all()
     history.reverse()
-    history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
+    history_users = {row.id: row for row in db.query(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset, User.bubble_asset).filter(User.id.in_({m.user_id for m in history})).all()} if history else {}
     history_ids = {m.user_id for m in history}
     fan_totals = gift_totals(db, history_ids)
     system_ids=set(db.scalars(select(seat_workflow.RoomSystemEntry.message_id).where(seat_workflow.RoomSystemEntry.message_id.in_([m.id for m in history]))))
@@ -1937,7 +1941,7 @@ def _room_history_page(db,internal_room_id,room_id,before=None,limit=200):
         .join(UserCosmetic,(UserCosmetic.user_id==CoupleRewardSelection.user_id)&(UserCosmetic.cosmetic_type=='bubble')&(UserCosmetic.asset_key==CoupleRewardSelection.asset_key))
         .where(CoupleRewardSelection.user_id.in_(history_ids),CoupleRewardSelection.kind=='bubble',Couple.active.is_(True))).all()) if history_ids else {}
 
-    history_payload = [{"type":"room_chat","bubble_asset":reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
+    history_payload = [{"type":"room_chat","bubble_asset":(history_users[m.user_id].bubble_asset if m.user_id in history_users else None) or reward_bubbles.get(m.user_id),"system":m.id in system_ids,"id":m.id,"room_id":room_id,"user_id":m.user_id,"nickname":history_users[m.user_id].nickname if m.user_id in history_users else "Kullanıcı","avatar":history_users[m.user_id].avatar if m.user_id in history_users else None,"avatar_asset":history_users[m.user_id].avatar_asset if m.user_id in history_users else None,"frame_asset":history_users[m.user_id].frame_asset if m.user_id in history_users else None,"fan_level":level_for_total(fan_totals.get(m.user_id, 0)),"text":m.text,"created_at":m.created_at.isoformat() if m.created_at else None} for m in history]
     return history_payload
 
 def _load_room_socket(token, room_id):
@@ -1964,6 +1968,7 @@ def _load_room_socket(token, room_id):
         entrance_payload['vip_entry_level'] = visible_entry_level(db, user.id)
         entrance_payload['vip_entry_style'] = entry_style(user)
         entrance_payload['normal_entry'] = entry_mode == 'normal'
+        entrance_payload['shop_entry'] = shop_expansion.selected_entry(db, user)
         # Membership identity stays stable during a socket reconnect, but changes on rejoin.
         entrance_payload['event_id'] = f"{internal_room_id}:{user.id}:{member.id}:{member.joined_at.isoformat()}"
         entrance_payload['room_id'] = internal_room_id
@@ -2029,6 +2034,9 @@ def _room_socket_music(internal_room_id, user, music_id, action, position):
 
 def _room_socket_chat(internal_room_id, room_id, user, text_value):
     with Session(engine) as db:
+        user = db.get(User, user.id)
+        if not user or not user.is_active:
+            return {"close": True}
         room = db.get(Room, internal_room_id) or db.query(Room).filter(Room.public_id == room_id).first()
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user.id).first()
         banned = db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user.id).first() or active_room_user_ban(db,internal_room_id,user.id)
@@ -2052,7 +2060,7 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
         db.commit()
         db.refresh(msg)
         fan_total = gift_totals(db, {user.id})[user.id]
-        payload = {"type":"room_chat","bubble_asset":relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+        payload = {"type":"room_chat","bubble_asset":user.bubble_asset or relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
     return {"payload": payload}
 
 
@@ -2224,7 +2232,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         room_socket_users[websocket] = (internal_room_id, str(user.id))
         room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
         if not member.ghost and not already_connected:
-            if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry']:
+            if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry'] or entrance_payload.get('shop_entry'):
                 await _broadcast_room_chat(internal_room_id,entrance_payload)
             await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
         existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})

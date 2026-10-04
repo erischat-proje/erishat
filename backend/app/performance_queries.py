@@ -20,6 +20,7 @@ def message_context(db, messages, viewer_id):
     bubbles=dict(db.execute(select(CoupleRewardSelection.user_id,CoupleRewardSelection.asset_key).join(
         CoupleMember,CoupleMember.user_id==CoupleRewardSelection.user_id).join(Couple,Couple.id==CoupleMember.couple_id).where(
         CoupleRewardSelection.user_id.in_(sender_ids),CoupleRewardSelection.kind=='bubble',Couple.active.is_(True))).all())
+    bubbles.update({uid:u.bubble_asset for uid,u in senders.items() if u.bubble_asset})
     return {'senders':senders,'bubbles':bubbles,'read': state.last_read_message_id if state else 0,
         'hidden': set(db.scalars(select(MessageHidden.message_id).where(MessageHidden.user_id == viewer_id, MessageHidden.message_id.in_(ids)))),
         'pinned': set(db.scalars(select(PinnedMessage.message_id).where(PinnedMessage.conversation_id == cid, PinnedMessage.message_id.in_(ids)))),

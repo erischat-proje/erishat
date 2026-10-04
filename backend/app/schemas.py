@@ -97,6 +97,8 @@ class NicknameChange(BaseModel):
 
 
 class UserOut(BaseModel):
+    bubble_asset: str | None = None
+    title_asset: str | None = None
     model_config = ConfigDict(from_attributes=True)
     id: str
     public_id: str
@@ -120,7 +122,7 @@ class UserOut(BaseModel):
 
 
 class CosmeticOut(BaseModel):
-    cosmetic_type: Literal["avatar", "frame", "wallpaper"]
+    cosmetic_type: Literal["avatar", "frame", "wallpaper", "bubble", "entrance", "title"]
     asset_key: str
     gender: str | None = None
     price: int = 1000
@@ -128,12 +130,12 @@ class CosmeticOut(BaseModel):
 
 
 class CosmeticPurchase(BaseModel):
-    cosmetic_type: Literal["avatar", "frame", "wallpaper"]
+    cosmetic_type: Literal["avatar", "frame", "wallpaper", "bubble", "entrance", "title"]
     asset_key: str = Field(min_length=1, max_length=255)
 
 
 class CosmeticApply(BaseModel):
-    cosmetic_type: Literal["avatar", "frame", "wallpaper"]
+    cosmetic_type: Literal["avatar", "frame", "wallpaper", "bubble", "entrance", "title"]
     asset_key: str = Field(min_length=1, max_length=255)
 
 

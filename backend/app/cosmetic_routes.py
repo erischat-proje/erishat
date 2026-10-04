@@ -6,7 +6,8 @@ from .db import get_db
 from .cosmetics import catalog, find_asset, PRICE, VIP_PRICE
 from .schemas import CosmeticApply, CosmeticPurchase
 from .session import get_user_from_token
-from .models import UserCosmetic
+from .models import UserCosmetic, User
+from sqlalchemy import select
 from .platform_models import VipStatus, VipRewardClaim
 from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
 from .vip_presentation import presentation_rewards, entry_style, entry_selection, entrance_inventory
@@ -123,9 +124,11 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     result = entrance_inventory(db, user)
     entry_mode, _ = entry_selection(db, user.id)
     labels = {'avatar':'Avatar', 'frame':'Çerçeve', 'wallpaper':'Duvar kağıdı', 'bubble':'Sohbet balonu',
-              'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
+              'room_wallpaper':'Oda duvar kâğıdı', 'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
     for kind, key in sorted(owned):
         if kind not in labels or kind == 'ring': continue
+        if kind=='entrance' and key.startswith('shop-expansion/'):continue
+        if kind in ('avatar','bubble','title') and normal.get((kind,key),{}).get('gender') not in (None,entry_style(user)):continue
         if kind == 'frame' and ((kind, key) not in normal or normal[(kind, key)].get('gender') != entry_style(user) or normal[(kind, key)].get('vip_level', 0) > vip_level(db, user.id)): continue
         if kind == 'wallpaper' and key not in wallpapers: continue
         if kind == 'wallpaper' and wallpapers.get(key, {}).get('gender') not in (None, entry_style(user)): continue
@@ -145,18 +148,21 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         reward = next((r for r in relationship_rewards.items(user.gender) if r['type'] == kind and r['asset_key'] == key), {}) if relation else {}
         if relation:
             equipped = relationship_rewards.selected(db, user.id, kind) == key
+            if kind in ('bubble','title') and getattr(user,kind+'_asset',None):equipped=False
             if kind == 'entrance':
                 equipped = equipped and entry_mode == 'relationship'
         else:
             equipped = getattr(user, kind + '_asset', None) == key
         result.append({'type':kind, 'asset_key':key, 'asset':wall.get('asset', key),
-                       'name':reward.get('name', wall.get('name', item.get('name', labels[kind]))), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'standard',
+                       'name':reward.get('name', wall.get('name', item.get('name', labels[kind]))), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'task' if item.get('task_only') else 'shop' if item.get('expansion') else 'standard',
                        'level':reward.get('level', item.get('vip_level', wall.get('vip_level', 0))) or 0,
                 'equipped':equipped, 'equip_key':key})
     if house:
         for ring in db.scalars(select(CoupleRing).where(CoupleRing.couple_id == house.id)):
             result.append({'type':'ring', 'asset_key':ring_asset(ring.ring), 'asset':ring_asset(ring.ring),
                            'name':'Yüzük', 'source':'relationship', 'level':0, 'equip_key':ring.ring, 'equipped':house.ring == ring.ring})
+    from .shop_expansion import room_inventory
+    result.extend(room_inventory(db,user))
     db.commit()
     return {'items':result, 'categories':list(labels), 'vip_level':vip_level(db, user.id)}
 
@@ -204,7 +210,11 @@ def equip_vip_entrance(payload: dict, user=Depends(current_cosmetic_user), db: S
     db.scalar(select(User).where(User.id == user.id).with_for_update())
     key = payload.get("asset_key")
     current = max(0, min(12, vip_level(db, user.id)))
-    if key not in ("normal", "auto"):
+    from .shop_expansion import find as shop_find,owns
+    shop=shop_find(key,'entrance') if isinstance(key,str) else None
+    if shop:
+        if shop['gender']!=entry_style(user) or not owns(db,user.id,key,'entrance'):raise HTTPException(403,'Önce bu oda girişini satın almalısınız.')
+    elif key not in ("normal", "auto"):
         allowed = {f"vip-entrance-{n}" for n in range(1, current + 1)}
         if not isinstance(key, str) or key not in allowed:
             raise HTTPException(403, "Bu VIP oda girişi henüz kazanılmadı.")
@@ -221,9 +231,12 @@ def equip_vip_entrance(payload: dict, user=Depends(current_cosmetic_user), db: S
 def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
-    asset = find_asset(key, kind)
+    try:asset=find_asset(key,kind)
+    except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
     if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
+    if asset.get('gender') not in (None,entry_style(user)):raise HTTPException(403,'Bu görünüm profilinin cinsiyetine uygun değil.')
+    if asset.get('task_only'):raise HTTPException(403,'Bu ünvan görev ödülü olarak kazanılır.')
     if asset.get('relationship'):raise HTTPException(403,'Bu görünüm ilişki seviyesinde kazanılır.')
     if asset.get("vip"):
         raise HTTPException(status_code=403, detail=f"Bu VIP görünüm mağazadan satın alınamaz; VIP {asset.get('vip_level', 1)} seviyesinde açılır")
@@ -233,10 +246,7 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
 
     # Lock the balance row before checking ownership/balance so concurrent purchases
     # cannot spend the same Lidya twice or race the unique cosmetic constraint.
-    locked_user = db.execute(
-        text("SELECT lidya FROM users WHERE id=:uid FOR UPDATE"),
-        {"uid": user.id},
-    ).first()
+    locked_user=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     if not locked_user:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
@@ -246,14 +256,11 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     ).first()
     if exists:
         raise HTTPException(status_code=409, detail="Bu görünüm zaten satın alınmış")
-    if int(locked_user[0]) < price:
+    if int(locked_user.lidya or 0) < price:
         raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
-    db.execute(text("UPDATE users SET lidya=lidya-:price WHERE id=:uid"), {"price": price, "uid": user.id})
-    db.execute(
-        text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) VALUES (:uid,:kind,:key)"),
-        {"uid": user.id, "kind": kind, "key": key},
-    )
+    locked_user.lidya-=price
+    db.add(UserCosmetic(user_id=user.id,cosmetic_type=kind,asset_key=key))
     from .vip_spending import record_spend
     vip=record_spend(db,user.id,price,"cosmetic",key)
     db.commit()
@@ -264,7 +271,8 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
 def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
-    asset = find_asset(key, kind)
+    try:asset=find_asset(key,kind)
+    except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
     if not asset:
         raise HTTPException(status_code=404, detail="Görünüm bulunamadı")
 
@@ -288,11 +296,12 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
         house=house_for(db,user.id)
         if not house or not any(r['asset_key']==key and r['level']<=house.level for r in items(user.gender)):
             raise HTTPException(403,'Aktif ilişki ödülü gerekli.')
-    column = "avatar_asset" if kind == "avatar" else "frame_asset" if kind == "frame" else None
+    if kind=='entrance':return equip_vip_entrance({'asset_key':key},user,db)
+    column={'avatar':'avatar_asset','frame':'frame_asset','bubble':'bubble_asset','title':'title_asset'}.get(kind)
     if not column:
         raise HTTPException(status_code=400, detail="Geçersiz görünüm türü")
 
-    db.execute(text(f"UPDATE users SET {column}=:key WHERE id=:uid"), {"key": key, "uid": user.id})
+    setattr(user,column,key)
     db.commit()
     return {"ok": True, "cosmetic_type": kind, "asset_key": key, "vip": bool(asset.get("vip")), "vip_level": asset.get("vip_level")}
 
@@ -313,6 +322,7 @@ def purchase_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: S
     item = find_wallpaper(key)
     if not item:
         raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+    if item.get('room_only'):raise HTTPException(403,'Bu duvar kâğıdı oda içinden süreli kiralanır.')
     if item['tier']=='relationship':raise HTTPException(403,'Bu duvar kağıdı ilişki seviyesinde kazanılır.')
     if item["tier"] == "vip":
         raise HTTPException(status_code=403, detail=f"Bu duvar kağıdı VIP {item['vip_level']} seviyesinde açılır")
@@ -356,6 +366,7 @@ def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Sess
     item = find_wallpaper(key)
     if not item:
         raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
+    if item.get('room_only'):raise HTTPException(403,'Bu duvar kâğıdı ilgili odada kullanılır.')
     if item['tier']=='relationship':
         from .relationship_rewards import selected
         if selected(db,user.id,'wallpaper')!=item['asset']:raise HTTPException(403,'Aktif ilişki duvar kağıdı gerekli.')
@@ -373,3 +384,11 @@ def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Sess
     db.execute(text("UPDATE users SET wallpaper_asset=:key WHERE id=:uid"), {"key": key, "uid": user.id})
     db.commit()
     return {"ok": True, "asset_key": key, "tier": item["tier"], "vip_level": item["vip_level"]}
+
+@router.post('/me/cosmetics/reset')
+def reset_cosmetic(payload:dict,user=Depends(current_cosmetic_user),db:Session=Depends(get_db)):
+    kind=payload.get('cosmetic_type')
+    if kind not in ('bubble','title'):raise HTTPException(422,'Geçersiz görünüm türü.')
+    user=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    setattr(user,kind+'_asset',None);db.commit()
+    return {'ok':True,'cosmetic_type':kind}

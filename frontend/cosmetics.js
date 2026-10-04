@@ -24,7 +24,7 @@
     if (!key) return '';
     if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
     let clean = String(key).replace(/^\.\//, '');
-    if (!/^(Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
+    if (!/^(Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
     const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
     return new URL(`./${encodedPath}`, document.baseURI).href;
   };

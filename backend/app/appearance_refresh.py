@@ -12,6 +12,9 @@ def replacement(key, gender, level, kind):
     if not key:
         return key
     if kind == 'frame':
+        from .shop_expansion import find as shop_find
+        shop=shop_find(key,'frame')
+        if shop and shop['gender']==gender:return key
         item = next((i for i in frame_catalog() if i['asset_key'] == key), None)
         if item and item['gender'] == gender and item['vip_level'] <= level:
             return key
@@ -22,7 +25,7 @@ def replacement(key, gender, level, kind):
         chosen = min(max(old_level, 0), level, 12)
         return f"vip-designs/avatar-frame-{gender}-{chosen if chosen else 'standard'}.svg"
     item = find(key)
-    if item and item['gender'] == gender and item['vip_level'] <= level:
+    if item and item['gender'] in (None,gender) and item['vip_level'] <= level:
         return key
     old_level = item['vip_level'] if item else 0
     if not item and key.startswith('vip_wallpaper_'):

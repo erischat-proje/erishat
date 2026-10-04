@@ -12,6 +12,8 @@ class User(Base):
     gender: Mapped[str] = mapped_column(String(16), default="unspecified", server_default="unspecified", nullable=False)
     avatar_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
     frame_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    bubble_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    title_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
     wallpaper_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     lidya: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0", nullable=False)

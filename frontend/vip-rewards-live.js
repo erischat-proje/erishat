@@ -99,6 +99,8 @@
     for(const [selector,value] of Object.entries({'[data-followers]':u.followers_count,'[data-following]':u.following_count}))if(value!=null)root.querySelectorAll(selector).forEach(el=>{el.textContent=number(value)});
     root.querySelectorAll('[data-received-gifts]').forEach(el=>{el.innerHTML='<span>'+number(u.received_gift_lidya)+'</span><img src="./lidya-coin.png" alt="Lidya">'});
     window.ErisRelationship?.decorate?.(root,u.relationship);
+    root.querySelector('.task-profile-title')?.remove();
+    if(u.title_asset&&u.title_asset.startsWith('shop-expansion/title-')){root.querySelector('.rel-title')?.remove();const badge=document.createElement('img');badge.className='rel-title task-profile-title';badge.src=window.ErisChatCosmetics.assetUrl(u.title_asset);badge.alt='Görev ünvanı';badge.style.cssText='width:100px;height:30px;object-fit:contain';const area=root.querySelector('.eris-profile-badges,.eris-mini-relationship');if(area)area.append(badge);}
   }
   const watchers=new Map();
   function watch(root,id){if(!root||!id)return;const existing=watchers.get(root);if(existing?.id===id)return;const entry={id,busy:false};watchers.set(root,entry);refreshOne(root,entry)}
