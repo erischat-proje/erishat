@@ -32,7 +32,7 @@ router = APIRouter(prefix="/v1", tags=["platform"])
 from .vip_spending import THRESHOLDS as VIP_SPEND_THRESHOLDS
 
 VIP_PERKS = {
-    1: ["vip_badge", "custom_avatar", "custom_frame"],
+    1: ["vip_badge", "custom_avatar", "custom_frame", "vip_profile_window", "vip_entry_effect"],
     2: ["vip_badge_2"],
     3: ["neon_name", "neon_palette_20"],
     4: ["vip_entry_message"],
