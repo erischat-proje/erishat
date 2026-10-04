@@ -245,10 +245,11 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper_expiry = wallpaper.paid_until if wallpaper and wallpaper.paid_until.tzinfo else (wallpaper.paid_until.replace(tzinfo=timezone.utc) if wallpaper else None)
     wallpaper_choice = find_wallpaper(wallpaper.asset_key) if wallpaper else None
     owner_vip = db.get(VipStatus, room.owner_id) if wallpaper_choice and wallpaper_choice["tier"] == "vip" else None
-    vip_unlocked = bool(owner_vip and int(owner_vip.level or 0) >= int(wallpaper_choice["vip_level"]))
+    vip_unlocked = bool(wallpaper_choice and wallpaper_choice.get("free")) or bool(owner_vip and int(owner_vip.level or 0) >= int(wallpaper_choice["vip_level"]))
     reward_unlocked=bool(wallpaper_choice and wallpaper_choice['tier']=='relationship' and relationship_rewards.owns_wallpaper(db,room.owner_id,wallpaper_choice['asset']))
     wallpaper_active = bool(reward_unlocked or vip_unlocked or (wallpaper_expiry and wallpaper_expiry > datetime.now(timezone.utc)))
     if wallpaper_choice and wallpaper_choice['tier']=='relationship':wallpaper_active=reward_unlocked
+    if wallpaper_choice and wallpaper_choice['tier']=='vip':wallpaper_active=vip_unlocked
     wallpaper_state = db.get(RoomWallpaperState, room.id)
     wallpaper_applied = bool(wallpaper_state.applied) if wallpaper_state else wallpaper_active
     wallpaper_item = wallpaper_choice if wallpaper_active else None
@@ -583,13 +584,15 @@ def register_room_auth(current_user_dependency, join_announcement=None):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         view = room_view(db, room, user)
         return {"asset_key": view["wallpaper_owned_asset"], "asset_path": view["wallpaper_owned_asset_path"], "applied": view["wallpaper_applied"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
-                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog()]}
+                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog("male" if user.gender == "male" else "female")]}
 
     @router.post("/{room_id}/wallpaper")
     def buy_room_wallpaper(room_id: str, payload: RoomWallpaperUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         require_owner(db, room, user)
         item = find_wallpaper(payload.asset_key)
+        if item and item.get("gender") not in (None, "male" if user.gender == "male" else "female"):
+            raise HTTPException(403, "Bu duvar kağıdı profilinin cinsiyetine uygun değil.")
         if not item:
             raise HTTPException(status_code=404, detail="Duvar kağıdı bulunamadı")
         if item["tier"] == "vip":
@@ -599,7 +602,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         relationship_reward=item['tier']=='relationship'
         if relationship_reward and not relationship_rewards.owns_wallpaper(db,user.id,item['asset']):
             raise HTTPException(403,'Önce ilişki duvar kağıdını koleksiyonunuzdan uygulayın.')
-        vip_reward = item['tier'] in ('vip','relationship')
+        vip_reward = item['tier'] in ('vip','relationship') or item.get('free',False)
         price = 0 if vip_reward else int(item["price"]) * {1: 1, 7: 5, 30: 18}[payload.days]
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
         if not locked_user or int(locked_user.lidya or 0) < price:
@@ -631,7 +634,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         expiry = row.paid_until if row and row.paid_until.tzinfo else (row.paid_until.replace(tzinfo=timezone.utc) if row else None)
         item = find_wallpaper(row.asset_key) if row else None
         vip = db.get(VipStatus, user.id) if item and item["tier"] == "vip" else None
-        vip_available = bool(vip and int(vip.level or 0) >= int(item['vip_level'])) or bool(item and item['tier']=='relationship' and relationship_rewards.owns_wallpaper(db,user.id,item['asset']))
+        vip_available = bool(item and item.get('free')) or bool(vip and int(vip.level or 0) >= int(item['vip_level'])) or bool(item and item['tier']=='relationship' and relationship_rewards.owns_wallpaper(db,user.id,item['asset']))
         if item and item['tier']=='relationship' and not vip_available:raise HTTPException(403,'Aktif ilişki ödülü gerekli.')
         if not row or not item or (not vip_available and (not expiry or expiry <= datetime.now(timezone.utc))):
             raise HTTPException(status_code=400, detail="Uygulanabilir süreli oda duvar kâğıdı yok")

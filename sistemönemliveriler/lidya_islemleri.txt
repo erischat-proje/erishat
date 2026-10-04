@@ -1,2 +1,20 @@
 # ErisChat sistem kaydı: lidya_islemleri.txt
 # JSONL kayıtları aşağıya eklenir.
+{"time": "2026-10-04T07:08:56.102186+00:00", "action": "initial_balance", "user_id": "wall-owner", "delta": 100, "balance_after": 100, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:08:56.102467+00:00", "action": "initial_balance", "user_id": "wall-visitor", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:10:24.020613+00:00", "action": "initial_balance", "user_id": "wall-owner", "delta": 100, "balance_after": 100, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:10:24.020909+00:00", "action": "initial_balance", "user_id": "wall-visitor", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:11:01.309785+00:00", "action": "initial_balance", "user_id": "wall-owner", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:11:01.310224+00:00", "action": "initial_balance", "user_id": "wall-visitor", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:12:33.568526+00:00", "action": "initial_balance", "user_id": "wall-owner", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:12:33.568781+00:00", "action": "initial_balance", "user_id": "wall-visitor", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:12:33.680437+00:00", "action": "initial_balance", "user_id": "collection", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:12:33.744445+00:00", "action": "initial_balance", "user_id": "selection", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:12:33.771037+00:00", "action": "initial_balance", "user_id": "privacy", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.242027+00:00", "action": "initial_balance", "user_id": "benefits", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.261987+00:00", "action": "initial_balance", "user_id": "normal", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.274247+00:00", "action": "initial_balance", "user_id": "privacy", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.286160+00:00", "action": "initial_balance", "user_id": "collection", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.452241+00:00", "action": "initial_balance", "user_id": "wall-owner", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.452420+00:00", "action": "initial_balance", "user_id": "wall-visitor", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
+{"time": "2026-10-04T07:14:43.499068+00:00", "action": "initial_balance", "user_id": "selection", "delta": 0, "balance_after": 0, "actor_id": null, "reference_id": null, "details": ""}
