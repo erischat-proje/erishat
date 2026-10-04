@@ -124,11 +124,11 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     result = entrance_inventory(db, user)
     entry_mode, _ = entry_selection(db, user.id)
     labels = {'avatar':'Avatar', 'frame':'Çerçeve', 'wallpaper':'Duvar kağıdı', 'bubble':'Sohbet balonu',
-              'room_wallpaper':'Oda duvar kâğıdı', 'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
+              'profile':'Profil görünümü', 'room_wallpaper':'Oda duvar kâğıdı', 'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
     for kind, key in sorted(owned):
         if kind not in labels or kind == 'ring': continue
         if kind=='entrance' and key.startswith('shop-expansion/'):continue
-        if kind in ('avatar','bubble','title') and normal.get((kind,key),{}).get('gender') not in (None,entry_style(user)):continue
+        if kind in ('avatar','bubble','title','profile') and normal.get((kind,key),{}).get('gender') not in (None,entry_style(user)):continue
         if kind == 'frame' and ((kind, key) not in normal or normal[(kind, key)].get('gender') != entry_style(user) or normal[(kind, key)].get('vip_level', 0) > vip_level(db, user.id)): continue
         if kind == 'wallpaper' and key not in wallpapers: continue
         if kind == 'wallpaper' and wallpapers.get(key, {}).get('gender') not in (None, entry_style(user)): continue
@@ -297,7 +297,7 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
         if not house or not any(r['asset_key']==key and r['level']<=house.level for r in items(user.gender)):
             raise HTTPException(403,'Aktif ilişki ödülü gerekli.')
     if kind=='entrance':return equip_vip_entrance({'asset_key':key},user,db)
-    column={'avatar':'avatar_asset','frame':'frame_asset','bubble':'bubble_asset','title':'title_asset'}.get(kind)
+    column={'avatar':'avatar_asset','frame':'frame_asset','bubble':'bubble_asset','title':'title_asset','profile':'profile_asset'}.get(kind)
     if not column:
         raise HTTPException(status_code=400, detail="Geçersiz görünüm türü")
 
@@ -388,7 +388,7 @@ def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Sess
 @router.post('/me/cosmetics/reset')
 def reset_cosmetic(payload:dict,user=Depends(current_cosmetic_user),db:Session=Depends(get_db)):
     kind=payload.get('cosmetic_type')
-    if kind not in ('bubble','title'):raise HTTPException(422,'Geçersiz görünüm türü.')
+    if kind not in ('bubble','title','profile'):raise HTTPException(422,'Geçersiz görünüm türü.')
     user=db.scalar(select(User).where(User.id==user.id).with_for_update())
     setattr(user,kind+'_asset',None);db.commit()
     return {'ok':True,'cosmetic_type':kind}
