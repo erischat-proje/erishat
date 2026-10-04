@@ -8,7 +8,7 @@
     @keyframes relEntrance{0%{transform:translateX(-105%);opacity:0}18%{transform:translateX(0);opacity:1}78%{transform:translateX(0);opacity:1}100%{transform:translateX(-12%);opacity:0}}
     @media(prefers-reduced-motion:reduce){.rel-entrance{animation:relEntranceFade 3.2s both}@keyframes relEntranceFade{0%,100%{opacity:0}18%,78%{opacity:1}}}
   `;document.head.append(style);
-  let context=null,active=null,timer=null;const queue=[];
+  let context=null,active=null,timer=null,activeDone=null;const queue=[];
   const asset=key=>window.ErisChatCosmetics?.assetUrl?.(key)||key;
   function audioContext(){if(!context){const C=window.AudioContext||window.webkitAudioContext;if(C)context=new C()}return context}
   document.addEventListener('pointerdown',()=>{try{audioContext()?.resume()?.catch(()=>{})}catch(_){}},{passive:true});
@@ -23,16 +23,18 @@
     else{tone(level2?95:125,.17,.4,level2?.07:.045,'sine',45);tone(440,.27,.9,.025,'triangle');if(level2)[523.25,659.25,783.99].forEach((f,i)=>tone(f,.45+i*.16,1.1,.025));else tone(880,.29,.75,.012);}
   }
   async function next(){
-    if(active||!queue.length)return;const d=queue.shift(),el=document.createElement('div');el.className='rel-entrance';active=el;
-    const key=String(d.entrance_asset),layout=await window.ErisVisualLayout?.describe(key);if(active!==el)return;
-    const art=document.createElement('img');art.className='rel-entrance-art';art.src=asset(key)+'?v=room-system-20261003';art.alt='Oda giriş efekti';art.onerror=()=>{if(active===el){el.remove();active=null;next()}};el.append(art);
+    if(active||!queue.length)return;const entry=queue.shift(),d=entry.data,el=document.createElement('div');el.className='rel-entrance';active=el;activeDone=entry.done;
+    const key=String(d.entrance_asset);let layout;
+    try{layout=await Promise.race([Promise.resolve(window.ErisVisualLayout?.describe(key)),new Promise(resolve=>setTimeout(resolve,1000))])}catch(_){}
+    if(active!==el)return;
+    const art=document.createElement('img');art.className='rel-entrance-art';art.src=asset(key)+'?v=room-system-20261003';art.alt='Oda giriş efekti';art.onerror=()=>{if(active===el){clearTimeout(timer);el.remove();active=null;activeDone?.();activeDone=null;next()}};el.append(art);
     for(const kind of ['avatar','ring']){const slot=layout?.[kind];if(!slot)continue;const element=document.createElement(kind==='ring'?'img':'span');element.className='rel-entrance-'+kind;element.style.left=(slot.x*100)+'%';element.style.top=(slot.y*100)+'%';element.style.width=(slot.diameter*100)+'%';
       if(kind==='ring'){if(!d.ring_asset)continue;element.src=asset(d.ring_asset);element.alt='';}else if(d.avatar_asset){const image=document.createElement('img');image.src=asset(d.avatar_asset);image.alt='';element.append(image);}else element.textContent=d.avatar||'👤';if(kind==='avatar'&&d.frame_asset){const frame=document.createElement('img');frame.className='rel-entrance-frame';frame.src=asset(d.frame_asset);frame.alt='';element.append(frame)}el.append(element);}
     // A nickname is permitted only in a declared empty text rectangle.
     if(layout?.name){const n=layout.name,name=document.createElement('span');name.className='rel-entrance-name';name.style.left=(n.x*100)+'%';name.style.top=(n.y*100)+'%';name.style.width=(n.width*100)+'%';name.style.height=(n.height*100)+'%';name.textContent=d.nickname||'Kullanıcı';el.append(name);}
-    document.body.append(el);try{sound(key)}catch(_){}timer=setTimeout(()=>{if(active!==el)return;el.remove();active=null;timer=null;next()},3200);
+    document.body.append(el);try{sound(key)}catch(_){}timer=setTimeout(()=>{if(active!==el)return;el.remove();active=null;timer=null;activeDone?.();activeDone=null;next()},3200);
   }
-  function show(d){if(!d?.entrance_asset||!String(d.entrance_asset).startsWith('relationship-assets/rewards/entrance-'))return;if(queue.length<8){queue.push(d);next()}}
-  function clear(){queue.length=0;clearTimeout(timer);timer=null;active?.remove();active=null}
+  function show(d){if(!d?.entrance_asset||!String(d.entrance_asset).startsWith('relationship-assets/rewards/entrance-'))return Promise.resolve();if(queue.length>=8)return Promise.resolve();return new Promise(done=>{queue.push({data:d,done});next()})}
+  function clear(){for(const item of queue)item.done();queue.length=0;clearTimeout(timer);timer=null;active?.remove();active=null;activeDone?.();activeDone=null}
   window.ErisRelationshipEntrance={show,clear};window.addEventListener('erischat:room-closed',clear);window.addEventListener('erischat:auth',e=>{if(e.detail?.state!=='ready')clear()});
 })();

@@ -29,6 +29,7 @@ from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
 from . import vip_spending
+from .vip_presentation import visible_entry_level
 from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
 from .repositories import ConversationRepository, MessageRepository, UserRepository
@@ -1973,6 +1974,10 @@ def _load_room_socket(token, room_id):
         entrance_asset=relationship_routes.rewards.selected(db,user.id,'entrance')
         entrance_house=relationship_routes.my_couple(db,user.id)
         entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'frame_asset':user.frame_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
+        entrance_payload['vip_entry_level'] = visible_entry_level(db, user.id)
+        # Membership identity stays stable during a socket reconnect, but changes on rejoin.
+        entrance_payload['event_id'] = f"{internal_room_id}:{user.id}:{member.id}:{member.joined_at.isoformat()}"
+        entrance_payload['room_id'] = internal_room_id
 
     return user, room, member, internal_room_id, history_payload, entrance_asset, entrance_payload
 
@@ -2230,7 +2235,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         room_socket_users[websocket] = (internal_room_id, str(user.id))
         room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
         if not member.ghost and not already_connected:
-            if entrance_asset:await _broadcast_room_chat(internal_room_id,entrance_payload)
+            if entrance_asset or entrance_payload['vip_entry_level']:
+                await _broadcast_room_chat(internal_room_id,entrance_payload)
             await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
         existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
         if not member.ghost:

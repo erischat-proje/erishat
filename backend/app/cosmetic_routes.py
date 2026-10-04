@@ -9,6 +9,7 @@ from .session import get_user_from_token
 from .models import UserCosmetic
 from .platform_models import VipStatus, VipRewardClaim
 from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
+from .vip_presentation import presentation_rewards
 
 router = APIRouter(prefix="/v1", tags=["cosmetics"])
 
@@ -51,7 +52,8 @@ def vip_level_rewards(user) -> list[dict]:
             by_level.setdefault(item["vip_level"], []).append({
                 "cosmetic_type": "wallpaper", "asset_key": item["key"], "asset_url": item["asset"]
             })
-    return [{"level": level, "rewards": by_level.get(level, [])} for level in range(1, 13)]
+    return [{"level": level, "rewards": by_level.get(level, []),
+             "presentation_rewards": presentation_rewards(level)} for level in range(1, 13)]
 
 
 @router.get("/cosmetics")
@@ -166,7 +168,8 @@ def claim_vip_level_rewards(level: int, user=Depends(current_cosmetic_user), db:
         if not owned:
             db.add(UserCosmetic(user_id=user.id, cosmetic_type=reward["cosmetic_type"], asset_key=reward["asset_key"]))
     db.commit()
-    return {"level": level, "claimed": True, "already_claimed": already_claimed, "rewards": rewards}
+    return {"level": level, "claimed": True, "already_claimed": already_claimed, "rewards": rewards,
+            "presentation_rewards": presentation_rewards(level)}
 
 
 @router.post("/me/cosmetics/purchase")
