@@ -101,3 +101,6 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
 #profile .profile.card.profile .stage .face>:is(.hair,.eyes){display:none!important}
 #profile .profile.card.profile:not(:has(.eris-profile-badges>:not([hidden]))){grid-template-columns:64px minmax(0,1fr)!important}
 #profile .profile.card.profile:not(:has(.eris-profile-badges>:not([hidden])))>.eris-profile-badges{display:none!important}
+
+/* Matching frames stay centered inside the seat pod; portraits remain behind the complete ring. */
+#erisRoomSurface.room-layout-v6.room-layout-v6 .eris-seat .seat-frame[style*="avatar-frame-"]{inset:0!important}

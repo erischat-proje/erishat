@@ -14,6 +14,7 @@ NAMES = {'bubble':'Sohbet balonu','title':'Ünvan','frame':'Çerçeve','wallpape
 def items(gender=None):
     result=[]
     for level,kind,name in REWARDS:
+        if kind in ('frame', 'wallpaper'): continue  # Retired: matching collection replaces these looks.
         tier=1 if level<=6 else 2
         for sex in ([gender] if gender in ('male','female') else ['male','female']) if kind in ('bubble','frame','entrance') else [None]:
             filename=f'{name}-{sex}-{tier}' if sex else f'{name}-{tier}'

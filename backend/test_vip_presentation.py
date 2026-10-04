@@ -146,7 +146,62 @@ class VIPPresentationTests(unittest.TestCase):
                 with self.assertRaises(HTTPException):buy(room.id,RoomWallpaperUpdate(asset_key=key,days=1),db,user)
             with self.assertRaises(HTTPException):buy(room.id,RoomWallpaperUpdate(asset_key='wallpaper_male_standard',days=1),db,visitor)
             vip.level=0;db.commit()
-            self.assertIsNone(room_view(db,room,user)['wallpaper_asset'])
+            self.assertEqual(room_view(db,room,user)['wallpaper_asset'], 'wallpaper_male_standard')
+
+
+    def test_retired_catalog_and_replacement_entitlements(self):
+        from app.cosmetics import frame_catalog, find_asset
+        from app.cosmetic_routes import apply_cosmetic, owned_cosmetics
+        from app.schemas import CosmeticApply
+        from app.appearance_refresh import migrate_retired_looks, refresh_user
+        from app.wallpapers import find
+        from app.room_models import Room, RoomWallpaper, RoomWallpaperState
+        from datetime import datetime, timezone, timedelta
+        with Session(engine) as db:
+            user=User(id='retired',public_id='0000000008',nickname='Test',gender='female',lidya=12345,
+                      frame_asset='vipcerceve/vip3.png',wallpaper_asset='vip_wallpaper_03')
+            status=VipStatus(user_id=user.id,level=4)
+            old=UserCosmetic(user_id=user.id,cosmetic_type='frame',asset_key='vipcerceve/vip3.png')
+            room=Room(id='retired-room',public_id='0000000101',owner_id=user.id,name='Test')
+            expiry=datetime.now(timezone.utc)+timedelta(days=5)
+            row=RoomWallpaper(room_id=room.id,asset_key='wallpaper_01',paid_until=expiry)
+            state=RoomWallpaperState(room_id=room.id,applied=False)
+            db.add_all([user,status,old,room,row,state]);db.commit()
+            migrate_retired_looks(db)
+            self.assertEqual(user.frame_asset,'vip-designs/avatar-frame-female-3.svg')
+            self.assertEqual(user.wallpaper_asset,'vip_wallpaper_female_03')
+            self.assertEqual(row.asset_key,'wallpaper_female_standard')
+            self.assertFalse(state.applied)
+            self.assertEqual(user.lidya,12345)
+            self.assertIsNotNone(db.get(UserCosmetic,old.id))
+            migrate_retired_looks(db)
+            data=appearance_inventory(user,db)['items']
+            frames=[i for i in data if i['type']=='frame']
+            self.assertEqual(len(frames),5)
+            self.assertTrue(all('female' in i['asset'] for i in frames))
+            self.assertFalse(any(i['asset_key']==old.asset_key for i in owned_cosmetics(user,db)['items']))
+            for key in ('vipcerceve/vip3.png','cercevesistemi/standart/STANDART1.png','relationship-assets/rewards/cerceve-female-1.png'):
+                self.assertIsNone(find_asset(key,'frame'))
+                with self.assertRaises(HTTPException):apply_cosmetic(CosmeticApply(cosmetic_type='frame',asset_key=key),user,db)
+            for key in ('wallpaper_01','vip_wallpaper_03','relationship_wallpaper_1'):
+                self.assertIsNone(find(key))
+                with self.assertRaises(HTTPException):apply_wallpaper({'asset_key':key},user,db)
+            for key in ('vip-designs/avatar-frame-male-1.svg','vip-designs/avatar-frame-female-5.svg'):
+                with self.assertRaises(HTTPException):apply_cosmetic(CosmeticApply(cosmetic_type='frame',asset_key=key),user,db)
+            apply_cosmetic(CosmeticApply(cosmetic_type='frame',asset_key='vip-designs/avatar-frame-female-standard.svg'),user,db)
+            self.assertEqual(user.lidya,12345)
+            user.gender='male';refresh_user(db,user);db.commit()
+            self.assertEqual(user.frame_asset,'vip-designs/avatar-frame-male-standard.svg')
+            self.assertEqual(user.wallpaper_asset,'vip_wallpaper_male_03')
+            status.level=1;refresh_user(db,user);db.commit()
+            self.assertEqual(user.wallpaper_asset,'vip_wallpaper_male_01')
+        self.assertEqual(len(frame_catalog()),26)
+        root=Path(__file__).resolve().parents[1]/'frontend'
+        for item in frame_catalog():self.assertTrue((root/item['asset_key']).is_file())
+        for item in wallpaper_catalog():
+            self.assertTrue((root/item['asset']).is_file())
+            if item['vip_level']:
+                self.assertIn('>VIP '+str(item['vip_level'])+'</text>',(root/item['asset']).read_text())
 
 
 if __name__ == "__main__":

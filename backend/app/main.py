@@ -68,24 +68,8 @@ logger = logging.getLogger("erischat.api")
 
 
 def migrate_legacy_frames(db: Session) -> None:
-    """Replace equipped and purchased legacy frames without losing entitlements."""
-    rows = db.execute(text("SELECT DISTINCT asset_key FROM user_cosmetics WHERE cosmetic_type='frame' AND (asset_key LIKE 'standartcerceve/%' OR asset_key LIKE 'vipcerceve/%') UNION SELECT DISTINCT frame_asset FROM users WHERE frame_asset LIKE 'standartcerceve/%' OR frame_asset LIKE 'vipcerceve/%'")).scalars().all()
-    if not rows:
-        return
-    frames = [item["asset_key"] for item in catalog() if item["type"] == "frame"]
-    standard = [key for key in frames if key.startswith("cercevesistemi/standart/")]
-    vip = [key for key in frames if key.startswith("cercevesistemi/vip/")]
-    if not standard or len(vip) != 12:
-        raise RuntimeError("Yeni çerçeve kataloğu eksik; eski çerçeveler taşınmadı")
-    for old in rows:
-        is_vip = old.startswith("vipcerceve/")
-        number = re.search(r"(?:vip|cerceve_)(\d+)", old.rsplit("/", 1)[-1], re.I)
-        items = vip if is_vip else standard
-        new = items[min(max(int(number.group(1)) - 1, 0), len(items) - 1)] if number else items[0]
-        db.execute(text("INSERT INTO user_cosmetics (user_id, cosmetic_type, asset_key) SELECT user_id, 'frame', :new FROM user_cosmetics WHERE cosmetic_type='frame' AND asset_key=:old ON CONFLICT (user_id, cosmetic_type, asset_key) DO NOTHING"), {"new": new, "old": old})
-        db.execute(text("UPDATE users SET frame_asset=:new WHERE frame_asset=:old"), {"new": new, "old": old})
-        db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='frame' AND asset_key=:old"), {"old": old})
-    db.commit()
+    from .appearance_refresh import migrate_retired_looks
+    migrate_retired_looks(db)
 
 
 def migrate_legacy_avatars(db: Session) -> None:
@@ -723,7 +707,7 @@ def claim_welcome_gift(
     if not avatar_item:
         raise HTTPException(status_code=500, detail="Standart avatar bulunamadı.")
 
-    frame_key = next(item["asset_key"] for item in catalog() if item["type"] == "frame" and not item["vip"])
+    frame_key = next(item["asset_key"] for item in catalog() if item["type"] == "frame" and not item["vip"] and item["gender"] == gender)
 
     locked_user.lidya = int(locked_user.lidya or 0) + 500
     locked_user.avatar_asset = avatar_item["asset_key"]
@@ -794,7 +778,7 @@ def complete_onboarding(
 
     if payload.frame_asset:
         frame_key = payload.frame_asset.replace("\\", "/").lstrip("./")
-        frame_item = next((item for item in catalog() if item["type"] == "frame" and not item["vip"] and item["asset_key"] == frame_key), None)
+        frame_item = next((item for item in catalog() if item["type"] == "frame" and not item["vip"] and item["gender"] == payload.gender and item["asset_key"] == frame_key), None)
         if frame_item:
             user.frame_asset = frame_item["asset_key"]
         else:

@@ -35,7 +35,7 @@ from .system_data import RoomIdRegistry
 from .system_logs import record
 from .support_models import SupportTicket
 from .support_routes import SupportCreate
-from .wallpapers import DEFAULT_ROOM_WALLPAPER, catalog as wallpaper_catalog, find as find_wallpaper
+from .wallpapers import default_wallpaper, catalog as wallpaper_catalog, find as find_wallpaper
 
 router = APIRouter(prefix="/v1/rooms", tags=["rooms"])
 
@@ -243,6 +243,9 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
         public_seats.append({"seat_number": s.seat_number, "user_id": s.user_id, "user_name": (getattr(seat_user, "nickname", None) or getattr(seat_user, "username", None) or str(s.user_id)) if seat_user else None, "avatar": getattr(seat_user, "avatar", None) if seat_user else None, "avatar_asset": getattr(seat_user, "avatar_asset", None) if seat_user else None, "frame_asset": getattr(seat_user, "frame_asset", None) if seat_user else None, "locked": bool(s.locked), **({"muted": bool(s.muted)} if can_manage else {})})
     wallpaper = db.get(RoomWallpaper, room.id)
     wallpaper_expiry = wallpaper.paid_until if wallpaper and wallpaper.paid_until.tzinfo else (wallpaper.paid_until.replace(tzinfo=timezone.utc) if wallpaper else None)
+    if wallpaper:
+        from .appearance_refresh import refresh_room
+        refresh_room(db, room, wallpaper)
     wallpaper_choice = find_wallpaper(wallpaper.asset_key) if wallpaper else None
     owner_vip = db.get(VipStatus, room.owner_id) if wallpaper_choice and wallpaper_choice["tier"] == "vip" else None
     vip_unlocked = bool(wallpaper_choice and wallpaper_choice.get("free")) or bool(owner_vip and int(owner_vip.level or 0) >= int(wallpaper_choice["vip_level"]))
@@ -256,7 +259,7 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
     return {"couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]), "seat_permission":seat_workflow.enabled(db,room.id),
-        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": room_is_locked(room), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else DEFAULT_ROOM_WALLPAPER, "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active and not vip_unlocked else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
+        "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": room_is_locked(room), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else default_wallpaper(db.get(User, room.owner_id)), "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active and not vip_unlocked else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
 @router.post("", status_code=201)
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
@@ -584,7 +587,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
             raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
         view = room_view(db, room, user)
         return {"asset_key": view["wallpaper_owned_asset"], "asset_path": view["wallpaper_owned_asset_path"], "applied": view["wallpaper_applied"], "paid_until": view["wallpaper_expires_at"], "is_owner": room.owner_id == user.id,
-                "default_asset": DEFAULT_ROOM_WALLPAPER, "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog("male" if user.gender == "male" else "female")]}
+                "default_asset": default_wallpaper(db.get(User, room.owner_id)), "prices": {1: 1, 7: 5, 30: 18}, "owner_vip_level": int(getattr(db.get(VipStatus, room.owner_id), "level", 0) or 0), "items": [{**item,"unlocked":relationship_rewards.owns_wallpaper(db,user.id,item["asset"])} if item["tier"]=="relationship" else item for item in wallpaper_catalog("male" if user.gender == "male" else "female")]}
 
     @router.post("/{room_id}/wallpaper")
     def buy_room_wallpaper(room_id: str, payload: RoomWallpaperUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
