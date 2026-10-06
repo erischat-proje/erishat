@@ -197,7 +197,7 @@ def manual_change(db,user,target,payload,operation):
         if (existing.admin_id,existing.user_id,existing.amount,existing.operation)!=(user.id,target.id,payload.amount,operation):
             raise HTTPException(409,'İstek anahtarı başka bir işlem için kullanılmış.')
         return operation_view(existing)
-    exempt,sha=exemption(target.public_id) if not payload.evidence else (False,'')
+    exempt,sha=exemption(user.public_id) if not payload.evidence else (False,'')
     if not payload.evidence and not exempt: raise HTTPException(422,'FA ve DA için fotoğraf kanıtı zorunludur. Muafiyet listesi doğrulanamadığında da kanıt gerekir.')
     target=lock_user(db,target.id); before=int(target.lidya or 0)
     after=before+payload.amount if operation=='EKLEME' else before-payload.amount
