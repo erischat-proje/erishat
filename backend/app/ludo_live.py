@@ -103,13 +103,18 @@ def view(db, room, row, user):
         if u and rooms.is_member(db,room.id,uid) and not rooms.ghost_active(db,uid):
             cards.append(dict(seat=seat,user_id=uid,name=u.nickname,avatar=u.avatar))
     legal=[]
+    moves=[]
     if state and state['status']=='playing':
         p=rules.player(state,state['turn'])
         if p['user_id']==user.id and present(db,room.id,p,seats) and not p.get('bot'):
-            legal=rules.legal(state,state['turn'])
+            for d in state.get('pending_dice',[]):
+                die=d['value']
+                for token in rules.legal(state,state['turn'],die):
+                    moves.append({'die':die,'token':token})
+            legal=sorted(set(m['token'] for m in moves))
     return dict(state=state,seats=cards,my_id=user.id,balance=user.lidya,
                 can_manage=can_manage(db,room,user),unlocked=room.level>=4,
-                legal=legal,server_time=time.time())
+                legal=legal,moves=moves,server_time=time.time())
 
 def resolve(db,rid,user,lock=False):
     # Existing room lookup refreshes authoritative level before locking.
@@ -181,27 +186,86 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
         elif payload.action in ('ready','withdraw'):
             if s['status']!='lobby':
                 raise HTTPException(409,'Oyun başlamış.')
-            if payload.action=='ready' and (seat is None or payload.stake not in rules.STAKES):
-                raise HTTPException(400,'İlk dört koltuk ve 50–300 Lidya seçeneklerinden birini seçin.')
+
+            if payload.action=='ready':
+                if seat is None or seat not in (1,2,3,4):
+                    raise HTTPException(400,'İlk dört koltuktan birine oturun.')
+                if payload.stake not in rules.STAKES:
+                    raise HTTPException(400,'50–300 Lidya seçeneklerinden birini seçin.')
+
+                # 1. koltuk oyunun zorunlu bahis değerini belirler.
+                seat1=next((q for q in s['players'] if q['seat']==1),None)
+
+                if seat != 1:
+                    if not seat1:
+                        raise HTTPException(409,'Önce 1. koltuktaki oyuncu oyun bahsini belirlemeli.')
+                    if payload.stake != seat1['stake']:
+                        raise HTTPException(
+                            409,
+                            f'Bu oyunun bahsi {seat1["stake"]} Lidya. Farklı bahis seçemezsiniz.'
+                        )
+
+                if any(q['seat']==seat and q['user_id']!=user.id for q in s['players']):
+                    raise HTTPException(409,'Bu koltuğun önceki oyuncusunun iadesi bekleniyor.')
+
             users=users_for_money(db,s)
-            actor=users.get(user.id) or db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
+            actor=users.get(user.id) or db.scalar(
+                select(User)
+                .where(User.id==user.id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+
             old=p['stake'] if p else 0
             new=payload.stake if payload.action=='ready' else 0
-            if actor.lidya+old<new:
-                raise HTTPException(400,'Lidya bakiyeniz yetersiz.')
-            if new and any(q['seat']==seat and q['user_id']!=user.id for q in s['players']):
-                raise HTTPException(409,'Bu koltuğun önceki oyuncusunun iadesi bekleniyor.')
-            actor.lidya+=old-new
-            s['players']=[q for q in s['players'] if q['user_id']!=user.id]
-            if new:
-                s['players'].append(dict(seat=seat,user_id=user.id,name=user.nickname,avatar=user.avatar,
-                                         stake=new,tokens=[-1]*4,bot=False))
-            rules.event(s,'ready',seat=seat)
+
+            # 1. koltuk hazır durumdan çekilirse bahis sahibi değişeceği için
+            # tüm hazır oyuncuların stake'i iade edilir ve hazır listesi sıfırlanır.
+            if payload.action=='withdraw' and p and p['seat']==1:
+                refund_users=users_for_money(db,s)
+                for q in s['players']:
+                    refund_users[q['user_id']].lidya += q['stake']
+                s['players']=[]
+                rules.event(s,'ready',seat=1,reset=True)
+            else:
+                if actor.lidya+old<new:
+                    raise HTTPException(400,'Lidya bakiyeniz yetersiz.')
+
+                actor.lidya+=old-new
+                s['players']=[q for q in s['players'] if q['user_id']!=user.id]
+
+                if new:
+                    s['players'].append(dict(
+                        seat=seat,
+                        user_id=user.id,
+                        name=user.nickname,
+                        avatar=user.avatar,
+                        stake=new,
+                        tokens=[-1]*4,
+                        bot=False
+                    ))
+                    rules.event(s,'ready',seat=seat)
+
         elif payload.action=='start':
             if s['status']!='lobby' or user.id!=s['host'] and not staff:
                 raise HTTPException(403,'Başlatmayı oyun kurucusu veya oda yönetimi yapar.')
             if not all(present(db,room.id,q,seats) for q in s['players']):
                 raise HTTPException(409,'Hazır oyuncular ilk dört koltukta bulunmalı.')
+
+            # Bahsi 1. koltuk belirler; tüm hazır oyuncular aynı bahisle başlamalı.
+            seat1 = next((q for q in s['players'] if q['seat'] == 1), None)
+            if not seat1:
+                raise HTTPException(409,'Oyunu başlatmak için 1. koltuk dolu olmalı.')
+
+            if any(q['stake'] != seat1['stake'] for q in s['players']):
+                raise HTTPException(
+                    409,
+                    '1. koltuğun belirlediği bahis tüm oyuncular için zorunludur.'
+                )
+
+            if len({q['stake'] for q in s['players']}) != 1:
+                raise HTTPException(409,'Tüm oyuncular aynı bahisle oynamalı.')
+
             try:
                 rules.begin(s)
             except ValueError as e:
@@ -214,7 +278,7 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
             p['bot']=False
             try:
                 if payload.action=='roll':rules.roll(s)
-                elif payload.action=='move':rules.move(s,payload.token)
+                elif payload.action=='move':rules.move(s,payload.token,die=payload.die)
             except ValueError as e:
                 raise HTTPException(400,str(e)) from e
             s['bot_due']=time.time()+2
@@ -255,10 +319,19 @@ def tick_room(rid, now):
                 rules.event(s,'close',reason='Hazırlık süresi doldu; Lidya iade edildi.')
             elif absent:
                 users=users_for_money(db,s)
-                for p in absent:
-                    users[p['user_id']].lidya+=p['stake']
-                    s['players'].remove(p)
-                rules.event(s,'ready')
+
+                # Bahsi belirleyen 1. koltuk kaybolduysa bütün hazır
+                # oyuncuların stake'lerini iade edip lobiyi sıfırla.
+                if any(p['seat']==1 for p in absent):
+                    for p in s['players']:
+                        users[p['user_id']].lidya += p['stake']
+                    s['players']=[]
+                    rules.event(s,'ready',seat=1,reset=True)
+                else:
+                    for p in absent:
+                        users[p['user_id']].lidya += p['stake']
+                        s['players'].remove(p)
+                    rules.event(s,'ready')
         else:
             for p in s['players']:
                 bot=not present(db,rid,p,seats)
