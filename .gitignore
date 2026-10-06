@@ -11,3 +11,10 @@ venv/
 .mypy_cache/
 .ruff_cache/
 .DS_Store
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aab
