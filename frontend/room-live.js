@@ -377,9 +377,9 @@
   }
 
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='hidden'){
-      if(window.ErisCurrentRoomId)closeRealRoom().catch(()=>{});
-    }else setTimeout(offerReturnToRoom,350);
+    if(document.visibilityState==='visible'){
+      setTimeout(offerReturnToRoom,350);
+    }
   });
 
   window.addEventListener('erischat:auth',event=>{
