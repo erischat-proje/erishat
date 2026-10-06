@@ -48,10 +48,10 @@ const bombPoint=i=>{const q=TRACK[i%TRACK.length];return {x:(q[1]+.5)*100/15,y:(
   function diceArt(value){const layouts={1:[[50,50]],2:[[24,24],[76,76]],3:[[24,24],[50,50],[76,76]],4:[[24,24],[76,24],[24,76],[76,76]],5:[[24,24],[76,24],[50,50],[24,76],[76,76]],6:[[24,24],[76,24],[24,50],[76,50],[24,76],[76,76]]};return '<svg viewBox="0 0 100 100" aria-hidden="true">'+(layouts[value]||layouts[1]).map(([x,y])=>'<circle cx="'+x+'" cy="'+y+'" r="9" fill="#2e2418"/>').join('')+'</svg>';}
 
   function mount(){
-    const host=stage();if(!host)return null;
-    let root=host.querySelector('.ludo-room');
+    const host=surface();if(!host)return null;
+    let root=host.querySelector(':scope > .ludo-room');
     if(root)return root;
-    host.classList.add('ludo-active');root=document.createElement('section');root.className='ludo-room ludo-enhanced';
+    stage()?.classList.add('ludo-active');root=document.createElement('section');root.className='ludo-room ludo-enhanced';
 const strip=document.createElement('div');
 strip.className='ludo-seat-strip';
 const originals=[...document.querySelectorAll('#erisRoomSurface .eris-room-stage .eris-seat')];
