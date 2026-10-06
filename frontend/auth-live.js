@@ -166,6 +166,58 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
     });
   }
 
+  async function handleNativeGoogleToken(credential) {
+    const gate = document.getElementById('erisGoogleGate') || addGate();
+    const status = gate.querySelector('#erisGoogleStatus');
+
+    try {
+      if (!credential) {
+        throw new Error('Google kimlik doğrulama bilgisi alınamadı.');
+      }
+
+      status.textContent = 'Google hesabı doğrulanıyor…';
+
+      const session = await request('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ credential })
+      });
+
+      setToken(session.access_token);
+      window.ErisAuth.user = session.user;
+
+      emit('erischat:auth', {
+        state: 'ready',
+        user: session.user,
+        real: true
+      });
+
+      continueAfterAuth(session.user);
+      setTimeout(closeGate, 250);
+      connectGeneralWs();
+
+    } catch (e) {
+      console.error('[ErisChat] Native Google login failed:', e);
+      status.textContent =
+        e.message || 'Google girişi tamamlanamadı.';
+    }
+  }
+
+  window.ErisAuthNativeGoogleSuccess = credential => {
+    handleNativeGoogleToken(credential).catch(error => {
+      console.error('[ErisChat] Native Google callback failed:', error);
+    });
+  };
+
+  window.ErisAuthNativeGoogleError = message => {
+    const gate = document.getElementById('erisGoogleGate');
+    const status = gate?.querySelector('#erisGoogleStatus');
+
+    if (status) {
+      status.textContent =
+        message || 'Google girişi başlatılamadı.';
+    }
+  };
+
   async function googleRegister() {
     const gate = document.getElementById('erisGoogleGate') || addGate();
     const status = gate.querySelector('#erisGoogleStatus');
@@ -180,6 +232,24 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
         box.querySelector('button').onclick = () => {
           status.textContent = 'Google kayıt sistemi henüz etkinleştirilmemiş.';
         };
+        return;
+      }
+
+      if (window.ErisNative?.googleSignIn) {
+        box.innerHTML =
+          '<button type="button" class="authBtn authGoogle" id="erisNativeGoogleBtn">Google ile giriş yap</button>';
+
+        box.querySelector('#erisNativeGoogleBtn').onclick = () => {
+          status.textContent = 'Google giriş penceresi açılıyor…';
+
+          try {
+            window.ErisNative.googleSignIn();
+          } catch (e) {
+            status.textContent =
+              e.message || 'Google giriş penceresi açılamadı.';
+          }
+        };
+
         return;
       }
 

@@ -3,23 +3,43 @@ package com.erischat.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CustomCredential;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+
+import java.security.SecureRandom;
+
 public class MainActivity extends Activity {
 
-    private static final String ERISCHAT_URL = "https://erischat-production-850f.up.railway.app/";
-    private WebView webView;
+    private static final String ERISCHAT_URL =
+            "https://erischat-production-850f.up.railway.app/";
 
-    @SuppressLint("SetJavaScriptEnabled")
+    private static final String GOOGLE_WEB_CLIENT_ID =
+            "599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com";
+
+    private WebView webView;
+    private CredentialManager credentialManager;
+
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        credentialManager = CredentialManager.create(this);
 
         webView = new WebView(this);
         setContentView(webView);
@@ -42,6 +62,8 @@ public class MainActivity extends Activity {
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+
+        webView.addJavascriptInterface(new ErisNativeBridge(), "ErisNative");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -66,6 +88,114 @@ public class MainActivity extends Activity {
         }
     }
 
+    private String generateNonce() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.encodeToString(
+                bytes,
+                Base64.NO_WRAP | Base64.URL_SAFE | Base64.NO_PADDING
+        );
+    }
+
+    private void startNativeGoogleSignIn() {
+        final String nonce = generateNonce();
+
+        GetSignInWithGoogleOption googleOption =
+                new GetSignInWithGoogleOption.Builder(
+                        GOOGLE_WEB_CLIENT_ID
+                )
+                        .setNonce(nonce)
+                        .build();
+
+        GetCredentialRequest request =
+                new GetCredentialRequest.Builder()
+                        .addCredentialOption(googleOption)
+                        .build();
+
+        try {
+            GetCredentialResponse result =
+                    credentialManager.getCredential(
+                            this,
+                            request
+                    );
+
+            if (result.getCredential() instanceof CustomCredential) {
+                CustomCredential credential =
+                        (CustomCredential) result.getCredential();
+
+                if (GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                        .equals(credential.getType())) {
+
+                    GoogleIdTokenCredential googleCredential =
+                            GoogleIdTokenCredential.createFrom(
+                                    credential.getData()
+                            );
+
+                    String idToken = googleCredential.getIdToken();
+                    sendGoogleTokenToWebView(idToken);
+                    return;
+                }
+            }
+
+            sendNativeError("Google kimlik bilgisi alınamadı.");
+
+        } catch (Exception e) {
+            String message = e.getMessage();
+
+            if (message == null || message.trim().isEmpty()) {
+                message = "Google girişi başarısız.";
+            }
+
+            sendNativeError(message);
+        }
+    }
+
+    private void sendGoogleTokenToWebView(String idToken) {
+        if (webView == null || idToken == null || idToken.isEmpty()) {
+            return;
+        }
+
+        String escapedToken =
+                org.json.JSONObject.quote(idToken);
+
+        String javascript =
+                "window.ErisAuthNativeGoogleSuccess && " +
+                "window.ErisAuthNativeGoogleSuccess(" +
+                escapedToken +
+                ");";
+
+        webView.post(() ->
+                webView.evaluateJavascript(javascript, null)
+        );
+    }
+
+    private void sendNativeError(String message) {
+        if (webView == null) {
+            return;
+        }
+
+        String escapedMessage =
+                org.json.JSONObject.quote(message);
+
+        String javascript =
+                "window.ErisAuthNativeGoogleError && " +
+                "window.ErisAuthNativeGoogleError(" +
+                escapedMessage +
+                ");";
+
+        runOnUiThread(() ->
+                webView.evaluateJavascript(javascript, null)
+        );
+    }
+
+    private class ErisNativeBridge {
+
+        @JavascriptInterface
+        public void googleSignIn() {
+            runOnUiThread(() -> startNativeGoogleSignIn());
+        }
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         webView.saveState(outState);
@@ -87,6 +217,7 @@ public class MainActivity extends Activity {
             webView.stopLoading();
             webView.destroy();
         }
+
         super.onDestroy();
     }
 }
