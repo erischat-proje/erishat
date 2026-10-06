@@ -31,7 +31,7 @@ import java.security.SecureRandom;
 public class MainActivity extends Activity {
 
     private static final String ERISCHAT_URL =
-            "https://erischat-web-v2-production.up.railway.app/";
+            "https://erischat-production-850f.up.railway.app/";
 
     private static final String GOOGLE_WEB_CLIENT_ID =
             "599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com";
