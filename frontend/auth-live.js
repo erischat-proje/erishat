@@ -174,6 +174,70 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
     const googleBtn = gate.querySelector('#authGoogleBtn');
 
     try {
+      // Android APK: Google girişini WebView içinde açma.
+      // Native Android köprüsü hesap seçiciyi açacak.
+      if (window.ErisChatAndroid?.googleSignIn) {
+        status.textContent = 'Google hesabı açılıyor…';
+        box.replaceChildren();
+        googleBtn.hidden = true;
+
+        const tokenHandler = async event => {
+          const credential = event?.detail?.credential;
+          if (!credential) {
+            status.textContent = 'Google doğrulama bilgisi alınamadı.';
+            return;
+          }
+
+          status.textContent = 'Google hesabı doğrulanıyor…';
+
+          try {
+            const session = await request('/auth/google', {
+              method: 'POST',
+              body: JSON.stringify({credential})
+            });
+
+            setToken(session.access_token);
+            window.ErisAuth.user = session.user;
+            emit('erischat:auth', {
+              state:'ready',
+              user:session.user,
+              real:true
+            });
+
+            continueAfterAuth(session.user);
+            setTimeout(closeGate,250);
+            connectGeneralWs();
+
+          } catch (e) {
+            status.textContent =
+              e.message || 'Google girişi tamamlanamadı.';
+          }
+        };
+
+        const errorHandler = event => {
+          status.textContent =
+            event?.detail?.message || 'Google giriş penceresi açılamadı.';
+          googleBtn.hidden = false;
+          googleBtn.textContent = 'Google ile tekrar dene';
+          googleBtn.onclick = () => googleRegister();
+        };
+
+        window.addEventListener(
+          'erischat:native-google-token',
+          tokenHandler,
+          {once:true}
+        );
+
+        window.addEventListener(
+          'erischat:native-google-error',
+          errorHandler,
+          {once:true}
+        );
+
+        window.ErisChatAndroid.googleSignIn();
+        return;
+      }
+
       const cfg = await request('/auth/google-config');
 
       if (!cfg.enabled || !cfg.client_id) {
