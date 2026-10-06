@@ -258,7 +258,13 @@
     window.ErisRoomEntrance?.clear?.();
     localStorage.removeItem('eris_last_room');
     window.ErisCurrentRoomId=id;window.currentRoomId=id;
-    const surface=ensureRoomSurface();surface.classList.add('show');applyRoomWallpaper();
+    const surface=ensureRoomSurface();
+    surface.classList.add('show');
+    surface.style.setProperty('display','block','important');
+    surface.style.setProperty('visibility','visible','important');
+    surface.style.setProperty('opacity','1','important');
+    surface.style.setProperty('z-index','30000','important');
+    applyRoomWallpaper();
     document.getElementById('erisLiveTitle').textContent=name||'Oda';
     document.getElementById('erisLiveMeta').textContent='Gerçek oda • bağlanıyor…';
     document.getElementById('erisLiveSeats').innerHTML='<div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div>';
