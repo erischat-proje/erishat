@@ -1,17 +1,84 @@
-#erisRoomSurface .eris-room-stage.ludo-active{min-height:0!important;overflow:hidden!important;padding:0!important}
-#erisRoomSurface .eris-room-stage.ludo-active>.eris-seat,#erisRoomSurface .eris-room-stage.ludo-active>.eris-room-core{display:none!important;pointer-events:none}
-#erisRoomSurface .eris-room-stage.ludo-active:before{display:none}
-.ludo-room{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;gap:5px;padding:4px 8px;box-sizing:border-box;color:#fff;background:radial-gradient(ellipse at center,#171731eb,#080815f2);border-radius:20px;isolation:isolate}
-.ludo-room *,.ludo-modal *{box-sizing:border-box}.ludo-room button,.ludo-modal button{font:inherit;cursor:pointer;touch-action:manipulation;color:inherit}
-.ludo-room button:focus-visible,.ludo-modal button:focus-visible{outline:2px solid #ffe1a0;outline-offset:2px}.ludo-room button:disabled,.ludo-modal button:disabled{opacity:.4;cursor:default}
-.ludo-toolbar{display:flex;align-items:center;gap:6px;flex:none;font-size:10px;min-height:27px}.ludo-toolbar strong{letter-spacing:2px;color:#ffe0a0;font-size:12px}.ludo-pool{margin-right:auto;color:#ebd59c}.ludo-toolbar button{border:1px solid #e2b46555;border-radius:9px;background:#342b4166;padding:6px 8px;font-size:10px}
-.ludo-players{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;flex:none}.ludo-player{min-width:0;padding:4px 5px;border:1px solid color-mix(in srgb,var(--pawn) 55%,transparent);border-radius:9px;background:linear-gradient(120deg,color-mix(in srgb,var(--pawn) 20%,#10121c),#10121c);font-size:9px;line-height:1.3}.ludo-player b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ludo-player small{opacity:.8;font-size:8px}.ludo-player.active{box-shadow:inset 0 0 12px color-mix(in srgb,var(--pawn) 25%,transparent),0 0 8px color-mix(in srgb,var(--pawn) 30%,transparent);border-color:var(--pawn)}
-.ludo-board-space{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;overflow:visible}.ludo-board{position:relative;flex:none;aspect-ratio:1;border-radius:16px;background:#10121e;box-shadow:0 10px 30px #0008,0 0 0 1px #d4b67c80;overflow:visible}.ludo-board>svg{display:block;width:100%;height:100%;border-radius:16px;pointer-events:none}
-.ludo-token{position:absolute;width:6%;height:7%;margin:-3.5% 0 0 -3%;padding:0;border:0;background:none;z-index:2;filter:drop-shadow(0 2px 1px #0009);transform-origin:50% 85%;will-change:left,top,transform}.ludo-token svg{width:100%;height:100%;overflow:visible}.ludo-token:disabled{opacity:1!important;cursor:default!important}.ludo-token.playable{cursor:pointer;z-index:4;animation:ludo-choice 1.2s ease-in-out infinite}.ludo-token.playable:after{content:'';position:absolute;inset:-15%;border:2px solid #ffe4a0;border-radius:50%;box-shadow:0 0 10px #fff1a4}.ludo-token.moving{z-index:8;animation:none}.ludo-token.finished{filter:drop-shadow(0 0 4px #ffdc6e)}
-@keyframes ludo-choice{50%{filter:drop-shadow(0 0 6px #ffdf86);transform:translateY(-3px)}}
-.ludo-control{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;min-height:43px}.ludo-dice{width:38px;height:38px;border:1px solid #ffe0a0!important;border-radius:10px;background:linear-gradient(145deg,#fff9e6,#c2a16a)!important;box-shadow:inset 0 1px 3px #fff,0 4px 0 #806434,0 6px 15px #0008;padding:5px!important;color:#261b0d!important;flex:none;perspective:300px}.ludo-dice svg{width:100%;height:100%;display:block}.ludo-dice.rolling{animation:ludo-roll .12s linear infinite}.ludo-status{font-size:10px;line-height:1.4;max-width:210px}.ludo-status small{display:block;color:#c2b6d6;font-size:9px}.ludo-status button{border:0;background:none;color:#ffdc87;padding:2px;text-decoration:underline}.ludo-clock{font-variant-numeric:tabular-nums;color:#ffdc87;font-weight:700}
-.ludo-picks{display:flex;gap:5px;margin-top:4px}.ludo-picks button{min-width:32px;min-height:28px;border:1px solid #ddbb7e;border-radius:8px;background:#53422c;color:#ffe4a2;text-decoration:none;font-weight:700}
-@keyframes ludo-roll{0%{transform:translateY(-4px) rotate(-16deg)}50%{transform:translateY(-8px) rotate(18deg)}100%{transform:translateY(-4px) rotate(-16deg)}}
-.ludo-modal{position:fixed;inset:0;display:grid;place-items:center;padding:12px;z-index:11500;color:#f6f1ff;background:#070511b5;backdrop-filter:blur(9px)}.ludo-dialog{width:min(470px,100%);max-height:88dvh;overflow:auto;border-radius:24px;border:1px solid #c4a26388;background:radial-gradient(circle at top right,#43365d88,transparent 70%),#10101e;box-shadow:0 25px 80px #000b;padding:18px}.ludo-dialog header{display:flex;justify-content:space-between;align-items:center;gap:8px}.ludo-dialog h2{margin:0;font-size:21px;color:#ffe1a0}.ludo-dialog h3{font-size:13px;margin:17px 0 9px}.ludo-dialog p{font-size:12px;line-height:1.6;color:#c9c1d7}.ludo-dialog button{border:1px solid #b79b6455;border-radius:12px;background:#282238;padding:10px 12px;font-size:12px}.ludo-dialog header button{padding:6px 12px;font-size:22px}.ludo-modes,.ludo-stakes{display:flex;gap:6px;flex-wrap:wrap}.ludo-dialog .chosen{border-color:#ffe0a0;background:linear-gradient(140deg,#8c693b,#493957);box-shadow:0 0 10px #d9ad3333}.ludo-stakes button{flex:1;min-width:48px;padding:9px 6px}.ludo-dialog .ludo-primary{display:block;width:100%;margin-top:14px;border-color:#dfbc72;color:#181322;background:linear-gradient(135deg,#ffebbd,#cb9f53);font-weight:800}.ludo-ready-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}.ludo-ready-card{border:1px solid #ffffff18;border-left:3px solid var(--pawn);padding:9px;border-radius:10px;background:#ffffff05;min-width:0;font-size:12px}.ludo-ready-card b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ludo-ready-card small{display:block;margin-top:4px;color:#b8aecb}.ludo-error{color:#ffb1bd!important;min-height:1em}.ludo-summary{padding:9px;border:1px solid #d4b47755;border-radius:10px;font-size:12px;color:#ffdfa1}.ludo-dialog details{margin-top:15px;font-size:12px}.ludo-dialog li{margin:7px 0;line-height:1.5}.ludo-result{position:absolute;inset:28% 10%;z-index:10;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px;border:1px solid #ffe1a0;border-radius:18px;background:#141127f2;box-shadow:0 0 35px #d7b36760;pointer-events:none}.ludo-result strong{font-size:20px;color:#ffdf91}.ludo-result p{font-size:11px}.ludo-spark{position:absolute;width:5px;height:9px;z-index:12;border-radius:2px;pointer-events:none;background:var(--spark)}
-@media(max-height:650px){.ludo-player{padding:2px 4px}.ludo-control{min-height:36px}.ludo-dice{width:32px;height:32px}.ludo-room{gap:3px}.ludo-toolbar{min-height:22px}.ludo-toolbar button{padding:4px 6px}}
-@media(prefers-reduced-motion:reduce){.ludo-token.playable,.ludo-dice.rolling{animation:none}.ludo-token{will-change:auto}}
+.ludo-room{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:rgba(8,8,14,.96);overflow:hidden}
+.ludo-seat-strip{display:flex;gap:8px;overflow-x:auto;flex:0 0 78px;padding:5px 8px;align-items:center;scrollbar-width:thin}
+.ludo-seat-strip .ludo-seat-proxy{position:relative!important;left:auto!important;top:auto!important;transform:none!important;flex:0 0 68px;width:68px!important;height:68px!important;opacity:1!important;pointer-events:auto!important}
+#erisRoomSurface .eris-room-stage.ludo-active>.eris-seat{opacity:0!important;pointer-events:none!important}
+.ludo-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:4px 8px}
+.ludo-dice{display:flex;gap:6px}
+.ludo-die{width:42px;height:42px;border-radius:10px;border:1px solid #d7b66a;background:#fff;color:#111;font-size:22px;font-weight:900}
+.ludo-die.active{box-shadow:0 0 0 2px #ffd75a,0 0 15px #ffd75a}
+.ludo-roll{min-height:42px;padding:0 14px;border:0;border-radius:10px;font-weight:800}
+.ludo-board-space{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:3px}
+.ludo-board{position:relative;width:min(98vw,calc(100dvh - 150px));height:min(98vw,calc(100dvh - 150px));max-width:700px;max-height:700px;touch-action:none}
+.ludo-board svg{position:absolute;inset:0;width:100%;height:100%}
+.ludo-pawn,.ludo-bomb{position:absolute;z-index:5;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);user-select:none}
+.ludo-pawn{width:6.5%;height:6.5%;border-radius:50%;font-size:clamp(10px,2.4vw,18px);font-weight:900;cursor:pointer;border:2px solid #fff;box-shadow:0 2px 8px #000}
+.ludo-bomb{width:7%;height:7%;font-size:clamp(16px,4vw,30px);filter:drop-shadow(0 2px 4px #000)}
+.ludo-bomb.explode{animation:ludoBomb .45s ease-out}
+.ludo-status{text-align:center;font-size:12px;font-weight:700;padding:2px 8px;min-height:18px}
+@keyframes ludoBomb{50%{transform:translate(-50%,-50%) scale(1.7) rotate(20deg);filter:brightness(2)}100%{transform:translate(-50%,-50%) scale(.2);opacity:0}}
+@media(max-width:520px){.ludo-seat-strip{flex-basis:72px}.ludo-seat-strip .ludo-seat-proxy{width:62px!important;height:62px!important;flex-basis:62px}.ludo-toolbar{min-height:50px}.ludo-die{width:38px;height:38px}.ludo-board{width:min(99vw,calc(100dvh - 130px));height:min(99vw,calc(100dvh - 130px))}}
+
+/* Ludo oyun modu: koltuklar ve tahta birbirine binmesin */
+.ludo-room{
+  box-sizing:border-box;
+}
+
+.ludo-seat-strip{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:4px;
+  width:100%;
+  flex:0 0 72px;
+  padding:4px 6px;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+
+.ludo-seat-strip .ludo-seat-proxy{
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+  width:100%!important;
+  max-width:68px;
+  height:64px!important;
+  min-width:0!important;
+  margin:auto!important;
+  flex:none!important;
+  box-sizing:border-box;
+}
+
+.ludo-board-space{
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+  padding:2px 4px;
+  box-sizing:border-box;
+}
+
+.ludo-board{
+  width:min(100%,calc(100dvh - 205px));
+  height:min(100%,calc(100dvh - 205px));
+  aspect-ratio:1/1;
+  flex:none;
+}
+
+@media(max-width:520px){
+  .ludo-seat-strip{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    flex-basis:66px;
+    gap:2px;
+    padding:3px 4px;
+  }
+
+  .ludo-seat-strip .ludo-seat-proxy{
+    width:100%!important;
+    max-width:58px;
+    height:58px!important;
+  }
+
+  .ludo-board{
+    width:min(100%,calc(100dvh - 190px));
+    height:min(100%,calc(100dvh - 190px));
+  }
+}
