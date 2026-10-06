@@ -82,3 +82,26 @@
     height:min(100%,calc(100dvh - 190px));
   }
 }
+
+
+/* Ludo foreground: oda yüzeyinin içinde, oda içeriğinin önünde */
+#erisRoomSurface{
+  position:relative!important;
+}
+
+#erisRoomSurface > .ludo-room{
+  position:absolute!important;
+  inset:0!important;
+  z-index:500!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  isolation:isolate;
+}
+
+#erisRoomSurface .eris-room-stage.ludo-active{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
