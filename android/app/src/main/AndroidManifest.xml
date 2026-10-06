@@ -8,6 +8,8 @@
         android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:label="@string/app_name"
+        android:icon="@drawable/uygulama_logo"
+        android:roundIcon="@drawable/uygulama_logo"
         android:resizeableActivity="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.ErisChat"
