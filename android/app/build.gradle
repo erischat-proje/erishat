@@ -14,8 +14,21 @@ android {
         versionName '1.0.0'
     }
 
+    signingConfigs {
+        erischat {
+            storeFile file("../erischat-release.jks")
+            storePassword System.getenv("ERISCHAT_KEYSTORE_PASSWORD")
+            keyAlias "erischat"
+            keyPassword System.getenv("ERISCHAT_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig signingConfigs.erischat
+        }
         release {
+            signingConfig signingConfigs.erischat
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

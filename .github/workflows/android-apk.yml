@@ -28,8 +28,18 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Build debug APK
+      - name: Restore ErisChat signing keystore
         working-directory: android
+        env:
+          ERISCHAT_KEYSTORE_BASE64: ${{ secrets.ERISCHAT_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ERISCHAT_KEYSTORE_BASE64" | base64 --decode > erischat-release.jks
+
+      - name: Build signed debug APK
+        working-directory: android
+        env:
+          ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
+          ERISCHAT_KEY_PASSWORD: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
         run: chmod +x gradlew && ./gradlew :app:assembleDebug
 
       - name: Upload APK
