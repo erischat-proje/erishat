@@ -302,7 +302,13 @@
       document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  Oda sohbeti';
       attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
       joinedRoomId=String(liveRoomId);
-      window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
+      setTimeout(()=>{
+        try{
+          window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
+        }catch(error){
+          console.error('[ErisChat] room-opened listener error:',error);
+        }
+      },0);
     }catch(e){
       surface.classList.remove('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
       if(String(window.ErisCurrentRoomId)===String(id)){window.ErisCurrentRoomId=null;window.currentRoomId=null;window.__erisRoomPermissions={};window.__erisActiveRoomWallpaper=null;}
