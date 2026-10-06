@@ -3,6 +3,7 @@ package com.erischat.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.util.Base64;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -13,10 +14,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.util.concurrent.Executor;
+
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.exceptions.GetCredentialException;
 
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
@@ -112,42 +117,67 @@ public class MainActivity extends Activity {
                         .addCredentialOption(googleOption)
                         .build();
 
-        try {
-            GetCredentialResponse result =
-                    credentialManager.getCredential(
-                            this,
-                            request
-                    );
+        Executor executor = getMainExecutor();
 
-            if (result.getCredential() instanceof CustomCredential) {
-                CustomCredential credential =
-                        (CustomCredential) result.getCredential();
+        credentialManager.getCredentialAsync(
+                this,
+                request,
+                new CancellationSignal(),
+                executor,
+                new CredentialManagerCallback<
+                        GetCredentialResponse,
+                        GetCredentialException
+                >() {
+                    @Override
+                    public void onResult(GetCredentialResponse result) {
+                        if (result.getCredential() instanceof CustomCredential) {
+                            CustomCredential credential =
+                                    (CustomCredential) result.getCredential();
 
-                if (GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-                        .equals(credential.getType())) {
+                            if (GoogleIdTokenCredential
+                                    .TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                                    .equals(credential.getType())) {
 
-                    GoogleIdTokenCredential googleCredential =
-                            GoogleIdTokenCredential.createFrom(
-                                    credential.getData()
-                            );
+                                try {
+                                    GoogleIdTokenCredential googleCredential =
+                                            GoogleIdTokenCredential.createFrom(
+                                                    credential.getData()
+                                            );
 
-                    String idToken = googleCredential.getIdToken();
-                    sendGoogleTokenToWebView(idToken);
-                    return;
+                                    String idToken =
+                                            googleCredential.getIdToken();
+
+                                    sendGoogleTokenToWebView(idToken);
+                                    return;
+
+                                } catch (Exception e) {
+                                    sendNativeError(
+                                            e.getMessage() != null
+                                                    ? e.getMessage()
+                                                    : "Google kimlik bilgisi okunamadı."
+                                    );
+                                    return;
+                                }
+                            }
+                        }
+
+                        sendNativeError(
+                                "Google kimlik bilgisi alınamadı."
+                        );
+                    }
+
+                    @Override
+                    public void onError(GetCredentialException e) {
+                        String message = e.getMessage();
+
+                        if (message == null || message.trim().isEmpty()) {
+                            message = "Google girişi başarısız.";
+                        }
+
+                        sendNativeError(message);
+                    }
                 }
-            }
-
-            sendNativeError("Google kimlik bilgisi alınamadı.");
-
-        } catch (Exception e) {
-            String message = e.getMessage();
-
-            if (message == null || message.trim().isEmpty()) {
-                message = "Google girişi başarısız.";
-            }
-
-            sendNativeError(message);
-        }
+        );
     }
 
     private void sendGoogleTokenToWebView(String idToken) {
