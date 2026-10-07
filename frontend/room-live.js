@@ -311,7 +311,7 @@
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
       renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);
       const occupiedSeats=(room.seats||[]).filter(seat=>seat.user_id).length;
-      document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  Oda sohbeti';
+      document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  '+Number(room.member_count||occupiedSeats)+' kişi odada';
       attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
       joinedRoomId=String(liveRoomId);
       setTimeout(()=>{
@@ -382,7 +382,7 @@
           seat.style.removeProperty('opacity');
         });
       }
-      const activity=document.getElementById('erisRoomActivity');if(activity)activity.textContent=(room.seats||[]).filter(s=>s.user_id).length+' / '+room.seat_count+' koltuk dolu · Oda sohbeti';
+      const activity=document.getElementById('erisRoomActivity');if(activity)activity.textContent=(room.seats||[]).filter(s=>s.user_id).length+' / '+room.seat_count+' koltuk dolu · '+Number(room.member_count||(room.seats||[]).filter(s=>s.user_id).length)+' kişi odada';
       window.dispatchEvent(new CustomEvent('erischat:room-state-updated',{detail:{room}}));
       return room;
     }finally{refreshingRoom=false}
