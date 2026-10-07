@@ -166,6 +166,20 @@
             #erisGamesModal .eg-form { padding:13px; border:1px solid #ffffff12; border-radius:17px; background:#ffffff05; }
             #erisGamesModal .eg-form label { display:grid; gap:6px; color:#c1b8cb; font-size:10px; font-weight:750; }
             #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width:none; min-width:110px; background:#181321; border-color:#ffffff1b; border-radius:12px; padding:10px; }
+            /* Wheel V2 premium symbol selector */
+            #erisGamesModal .eg-wheel-picks{display:none;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin:1px 0 5px}
+            #erisGamesModal .eg-wheel-picks.show{display:grid}
+            #erisGamesModal .eg-wheel-pick{position:relative;min-height:70px;padding:8px 4px;border:1px solid #ffffff12;border-radius:15px;background:linear-gradient(145deg,#201827,#120e17);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 1px #ffffff09,0 5px 12px #0003;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
+            #erisGamesModal .eg-wheel-pick:active{transform:scale(.96)}
+            #erisGamesModal .eg-wheel-pick.active{border-color:#e1b661;background:linear-gradient(145deg,#3a2941,#201527);box-shadow:0 0 0 1px #e1b66140,0 7px 20px #8d58d52e,inset 0 0 22px #d9a95c12}
+            #erisGamesModal .eg-wheel-icon{font-size:24px;line-height:1}
+            #erisGamesModal .eg-wheel-pick b{font-size:10px;line-height:1.2}
+            #erisGamesModal .eg-wheel-pick small{font-size:8px;color:#e5bd70;font-weight:900;letter-spacing:.25px}
+            #erisGamesModal .eg-wheel-pick.active:after{content:"✓";position:absolute;right:6px;top:6px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ffe09a,#bd843b);color:#211521;font-size:9px;font-weight:950;box-shadow:0 2px 7px #0007}
+            #erisGamesModal.eg-wheel-mode .eg-form>label:first-child{display:none}
+            #erisGamesModal.eg-wheel-mode .eg-form{border-color:#d9a85d25;background:linear-gradient(145deg,#ffffff06,#d7a35508)}
+            #erisGamesModal.eg-wheel-mode [data-play]{background:linear-gradient(120deg,#7951e8,#b953cf 55%,#c59049);box-shadow:0 9px 27px #9c55df42}
+
             #erisGamesModal .eg-stake-presets { display:flex; gap:5px; flex-wrap:wrap; align-items:end; }
             #erisGamesModal .eg-stake-presets button { padding:8px 10px; font-size:10px; }
             #erisGamesModal [data-play] { min-height:43px; margin-left:auto; padding-inline:22px; border:0; background:linear-gradient(120deg,#7550e7,#e449a0); box-shadow:0 9px 25px #b34cff30; font-weight:900; }
@@ -199,6 +213,7 @@
                 <div class="eg-stage" aria-live="polite">Oyun yükleniyor...</div>
                 <div class="eg-form">
                     <label>Seçim <select data-choice></select></label>
+                    <div class="eg-wheel-picks" data-wheel-picks aria-label="Şans Çarkı sembol seçimi"></div>
                     <label>Bahis · 0–10.000 Lidya <input data-stake type="number" inputmode="numeric" min="0" max="10000" step="1" value="0" aria-label="Lidya bahsi"></label>
                     <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="100">100</button><button type="button" data-stake-value="500">500</button><button type="button" data-stake-value="1000">1.000</button><button type="button" data-stake-value="5000">5.000</button></div>
                     <button data-play>Oyna</button>
@@ -237,10 +252,50 @@
             }
 
             const choice = modal.querySelector('[data-choice]');
+            const wheelPicks = modal.querySelector('[data-wheel-picks]');
+
             choice.replaceChildren();
+            wheelPicks.replaceChildren();
+            wheelPicks.classList.remove('show');
+            modal.classList.toggle('eg-wheel-mode', key === 'wheel');
+
             const opts = mod?.options || [['auto', 'Seçim yap']];
             for (const [val, lbl] of opts) {
                 choice.add(new Option(lbl, val));
+            }
+
+            if (key === 'wheel') {
+                const symbols = mod?.symbols || [];
+                symbols.forEach((symbol, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'eg-wheel-pick' + (index === 0 ? ' active' : '');
+                    button.dataset.value = symbol.key;
+
+                    const icon = document.createElement('span');
+                    icon.className = 'eg-wheel-icon';
+                    icon.textContent = symbol.icon;
+
+                    const name = document.createElement('b');
+                    name.textContent = symbol.name;
+
+                    const payout = document.createElement('small');
+                    payout.textContent = '9× ÖDEME';
+
+                    button.append(icon, name, payout);
+
+                    button.onclick = () => {
+                        choice.value = symbol.key;
+                        wheelPicks.querySelectorAll('.eg-wheel-pick').forEach(
+                            x => x.classList.toggle('active', x === button)
+                        );
+                    };
+
+                    wheelPicks.appendChild(button);
+                });
+
+                if (symbols[0]) choice.value = symbols[0].key;
+                wheelPicks.classList.add('show');
             }
         };
 
@@ -303,7 +358,7 @@
                         result_key: res.result,
                         winning_cup: String(res.result).replace('cup_', ''),
                         winner: String(res.result).replace('horse_', ''),
-                        winning_index: ['red','orange','yellow','lime','green','cyan','blue','violet','pink'].indexOf(res.result),
+                        winning_index: ['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].indexOf(res.result),
                         multiplier: res.data?.multiplier
                     });
                 }

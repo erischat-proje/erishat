@@ -702,7 +702,7 @@ def register_platform_auth(current_user_dependency):
         "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Kart çek veya dur; galibiyet 2 kat, blackjack 2,5 kat, beraberlik iade."},
         "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Otomatik hedef 2×; çarpan 2×'e erişirse bahis 2 kat döner."},
         "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı: sıradan 0, nadir 2, destansı 4, efsanevi 10, mitik 20 kat."},
-        "wheel": {"results": [(color, 1) for color in ("red", "orange", "yellow", "lime", "green", "cyan", "blue", "violet", "pink")], "description": "Dokuz eşit renk dilimli şans çarkı; renk seçimine bahis."},
+        "wheel": {"results": [(symbol, 1) for symbol in ("rose", "heart", "star", "diamond", "crown", "gift", "fire", "gem", "jackpot")], "description": "Dokuz eşit sembollü şans çarkı; doğru sembol seçimi 9 kat ödeme yapar."},
     }
 
     def game_payout(game_type: str, choice: str | None, result: str, stake: int, data: dict) -> int:
