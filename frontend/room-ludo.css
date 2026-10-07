@@ -582,7 +582,6 @@
 
 
 /* === ERISCHAT LUDO FINAL V3 ISOLATION === */
-#erisRoomSurface.ludo-mode > .eris-room-top,
 #erisRoomSurface.ludo-mode > .eris-room-quick-actions,
 #erisRoomSurface.ludo-mode > .eris-room-tools,
 #erisRoomSurface.ludo-mode > #erisRoomContributionButton,
@@ -610,4 +609,22 @@
 #erisRoomSurface:not(.ludo-mode) > .eris-room-stage > .eris-seat {
   visibility:visible !important;
   pointer-events:auto !important;
+}
+
+
+/* === LUDO V4 CONTROL CONTRACT === */
+#erisRoomSurface.ludo-mode > .eris-room-top{
+  pointer-events:none !important;
+}
+#erisRoomSurface.ludo-mode > .eris-room-top > #erisRoomMinimize{
+  pointer-events:auto !important;
+  position:relative;
+  z-index:900 !important;
+}
+#erisRoomSurface.ludo-mode > .eris-room-top > #erisRoomBack{
+  pointer-events:none !important;
+}
+#erisRoomSurface.ludo-mode .ludo-seat-proxy{
+  pointer-events:auto !important;
+  touch-action:manipulation;
 }

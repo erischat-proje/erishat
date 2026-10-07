@@ -692,7 +692,6 @@
     const permissions=window.__erisRoomPermissions||{};
     const staff=!!(permissions.is_owner||permissions.is_moderator||permissions.can_manage);
     if(!occupied && window.__erisRoomPermissions?.seat_permission && staff){window.ErisSeatPermissions?.openSeat?.(number);return}
-    if(!occupied&&!staff)return;
     const wrap=document.createElement('div');
     wrap.id='eris-seat-actions';
     wrap.innerHTML='<style>#eris-seat-actions{position:fixed;inset:0;z-index:10000}#eris-seat-actions .esa-shade{position:absolute;inset:0;background:transparent}#eris-seat-actions .esa-toolbar{position:fixed;display:flex;gap:5px;align-items:center;justify-content:center;padding:7px;border-radius:17px;border:1px solid #ffffff35;background:#211a2eec;box-shadow:0 12px 38px #000b;backdrop-filter:blur(12px);max-width:calc(100vw - 20px)}#eris-seat-actions button{width:43px;height:43px;flex:none;display:grid;place-items:center;border:1px solid #ffffff27;border-radius:12px;background:#ffffff12;color:white;font-size:21px}#eris-seat-actions button:active{background:#934de0}#eris-seat-actions button.danger{color:#ff8da8}</style><div class="esa-shade"></div><div class="esa-toolbar" role="toolbar" aria-label="Koltuk '+number+' işlemleri"></div>';
@@ -768,8 +767,9 @@
     const available=seat=>{
       if(!seat)return false;
       const p=window.__erisRoomPermissions||{};
+      const staff=!!(p.is_owner||p.is_moderator||p.can_manage);
       return seat.classList.contains('occupied')||
-        !!(p.is_owner||p.is_moderator||p.can_manage);
+        !seat.classList.contains('locked')||staff;
     };
     const begin=(seat,x,y)=>{
       clear();pressed=false;

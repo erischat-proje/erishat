@@ -207,10 +207,7 @@
       b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'';
       b.title=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):b.getAttribute('aria-label');
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
-      if(occupied && seat.user_id){b.onclick=()=>window.openUserProfile?.(seat.user_id);b.title='Koltuk '+num+' • '+(seat.nickname||seat.user_name||(isMe?'Sen':'Profili aç'));}else if(!occupied&&!locked)b.onclick=async()=>{
-        try{const result=await window.ErisRoom.joinSeat(roomId,num);if(result?.pending)window.toast?.('Koltuğa oturma talebiniz iletildi.');await refreshRoom()}
-        catch(e){window.toast?.(e.message||'Koltuk alınamadı.')}
-      };
+      /* Koltuk davranışının tek kaynağı room-reference-ui.js / seatMenu(). */
       box.appendChild(b);
     });
     if(ludoBoard)box.appendChild(ludoBoard);
