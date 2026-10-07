@@ -214,11 +214,11 @@
                 <div class="eg-form">
                     <label>Seçim <select data-choice></select></label>
                     <div class="eg-wheel-picks" data-wheel-picks aria-label="Şans Çarkı sembol seçimi"></div>
-                    <label>Bahis · 0–10.000 Lidya <input data-stake type="number" inputmode="numeric" min="0" max="10000" step="1" value="0" aria-label="Lidya bahsi"></label>
-                    <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="100">100</button><button type="button" data-stake-value="500">500</button><button type="button" data-stake-value="1000">1.000</button><button type="button" data-stake-value="5000">5.000</button></div>
+                    <label>Bahis · 0–10.000 Lidya <input data-stake type="number" inputmode="numeric" min="0" max="10000" step="1" value="100" aria-label="Lidya bahsi"></label>
+                    <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">10</button><button type="button" data-stake-value="25">25</button><button type="button" data-stake-value="50">50</button><button type="button" data-stake-value="75">75</button><button type="button" data-stake-value="100">100</button><button type="button" data-stake-value="250">250</button><button type="button" data-stake-value="500">500</button><button type="button" data-stake-value="1000">1000</button></div>
                     <button data-play>Oyna</button>
                 </div>
-                <div class="eg-result" role="status"></div>
+                <div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:#ffd477;margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid #ffffff12;border-radius:12px;font-size:11px"></div>
                 <div data-controls style="display:flex; gap:8px; justify-content:center; margin-top:6px;"></div>
             </div>
         `;
@@ -280,15 +280,21 @@
                     name.textContent = symbol.name;
 
                     const payout = document.createElement('small');
-                    payout.textContent = '9× ÖDEME';
+                    payout.textContent = ({rose:'1.5×',heart:'2×',star:'2.5×',diamond:'3×',crown:'3.5×',gift:'4×',fire:'4.5×',gem:'5×',jackpot:'6×'})[symbol.key]+' ÖDEME';
 
-                    button.append(icon, name, payout);
+                    const total=document.createElement('small');
+                    total.dataset.wheelTotal=symbol.key;
+                    total.style.cssText='display:none;color:#ffd477;margin-top:4px;font-weight:900';
+                    button.append(icon,name,payout,total);
 
-                    button.onclick = () => {
-                        choice.value = symbol.key;
-                        wheelPicks.querySelectorAll('.eg-wheel-pick').forEach(
-                            x => x.classList.toggle('active', x === button)
-                        );
+                    button.onclick = async () => {
+                        const amount=Number(modal.querySelector('[data-stake]').value);
+                        if(![10,25,50,75,100,250,500,1000].includes(amount)) return;
+                        try{
+                            await api('/games/wheel/live/bet',{method:'POST',body:JSON.stringify({choice:symbol.key,amount})});
+                            refreshBalance();
+                            refreshWheelLive().catch(()=>{});
+                        }catch(e){ modal.querySelector('.eg-result').textContent=e.message; }
                     };
 
                     wheelPicks.appendChild(button);
@@ -311,7 +317,34 @@
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
         });
-        let activeBlackjackRoundId = null;
+        let wheelShownRound=null, wheelAnimating=false;
+        const refreshWheelLive = async () => {
+            if(game !== 'wheel' || wheelAnimating) return;
+            const x=await api('/games/wheel/live');
+            const clock=modal.querySelector('[data-wheel-clock]');
+            if(clock){clock.style.display='block';clock.textContent=(x.betting_open?'⏱ ':'🔒 ')+x.remaining_seconds+' sn';}
+            modal.querySelectorAll('.eg-wheel-pick').forEach(b=>b.disabled=!x.betting_open);
+            modal.querySelectorAll('[data-wheel-total]').forEach(el=>{
+                const v=x.totals?.[el.dataset.wheelTotal];
+                el.style.display=x.totals?'block':'none';
+                el.textContent='🪙 '+Number(v||0).toLocaleString('tr-TR')+' Lidya';
+            });
+            if(x.result && wheelShownRound!==x.round_id){
+                wheelShownRound=x.round_id;
+                wheelAnimating=true;
+                const i=['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].indexOf(x.result);
+                await gameModules.wheel()?.animate?.(modal.querySelector('.eg-stage'),{result_key:x.result,winning_index:i});
+                wheelAnimating=false;
+            }
+            const box=modal.querySelector('[data-wheel-mine]');
+            if(!box) return;
+            const names={rose:'🌹 Gül',heart:'♥ Kalp',star:'★ Yıldız',diamond:'◆ Elmas',crown:'♛ Taç',gift:'🎁 Hediye',fire:'🔥 Alev',gem:'💠 Kristal',jackpot:'🏆 Jackpot'};
+            const rows=Object.entries(x.my_bets||{}).filter(([,v])=>Number(v)>0);
+            box.style.display='block';
+            box.innerHTML='<b>BU TURDAKİ BAHİSLERİM</b><br>'+(rows.length?rows.map(([k,v])=>names[k]+' · '+Number(v).toLocaleString('tr-TR')+' Lidya').join(' • '):'Henüz bahis yapmadın.');
+        };
+        refreshWheelLive(); setInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
+                let activeBlackjackRoundId = null;
 
         modal.querySelector('[data-play]').onclick = async () => {
             const button = modal.querySelector('[data-play]'),

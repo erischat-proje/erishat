@@ -702,7 +702,11 @@ def register_platform_auth(current_user_dependency):
         "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Kart çek veya dur; galibiyet 2 kat, blackjack 2,5 kat, beraberlik iade."},
         "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Otomatik hedef 2×; çarpan 2×'e erişirse bahis 2 kat döner."},
         "vault": {"results": [("common", 70), ("rare", 20), ("epic", 8), ("legendary", 1.8), ("mythic", 0.2)], "description": "Ödül sınıfı: sıradan 0, nadir 2, destansı 4, efsanevi 10, mitik 20 kat."},
-        "wheel": {"results": [(symbol, 1) for symbol in ("rose", "heart", "star", "diamond", "crown", "gift", "fire", "gem", "jackpot")], "description": "Dokuz eşit sembollü şans çarkı; doğru sembol seçimi 9 kat ödeme yapar."},
+        "wheel": {"results": [
+        ("rose", 24), ("heart", 20), ("star", 16),
+        ("diamond", 12), ("crown", 9), ("gift", 7),
+        ("fire", 5), ("gem", 4), ("jackpot", 3)
+    ], "description": "Yüksek çarpanlı sembollerin daha nadir geldiği dokuz sembollü şans çarkı."},
     }
 
     def game_payout(game_type: str, choice: str | None, result: str, stake: int, data: dict) -> int:
@@ -723,7 +727,23 @@ def register_platform_auth(current_user_dependency):
             if choice == "odd" and number % 2 == 1: return stake * 2
             return 0
         if game_type == "wheel":
-            return stake * 9 if choice == result else 0
+            if choice != result:
+                return 0
+            # Ödeme toplam geri dönüş miktarıdır.
+            # .5 çarpanlar tam sayı Lidya olarak aşağı yuvarlanır.
+            multipliers = {
+                "rose": (3, 2),       # 1.5x
+                "heart": (2, 1),      # 2x
+                "star": (5, 2),       # 2.5x
+                "diamond": (3, 1),    # 3x
+                "crown": (7, 2),      # 3.5x
+                "gift": (4, 1),       # 4x
+                "fire": (9, 2),       # 4.5x
+                "gem": (5, 1),        # 5x
+                "jackpot": (6, 1),    # 6x
+            }
+            numerator, denominator = multipliers.get(result, (0, 1))
+            return stake * numerator // denominator
         if choice != result: return 0
         weight = next((float(weight) for key,weight in GAME_PROFILES[game_type]["results"] if key == result),0)
         return min(stake * 20, int(stake * min(20, 90 / weight))) if weight else 0
@@ -830,6 +850,250 @@ def register_platform_auth(current_user_dependency):
                 locked_user.lidya += bet.payout
         db.commit()
         return {"round_id": row.id, "status": row.status, "result": result, "state": display_state(state), "available_actions": [a for a in available_actions(state) if a in {"hit","stand"}], "payout": bet.payout if result != "pending" and bet else 0}
+
+
+    # ===== WHEEL LIVE V3 =====
+    # Herkes için ortak 60 saniyelik tur.
+    WHEEL_LIVE_SECONDS = 60
+    WHEEL_LOCK_SECONDS = 5
+    WHEEL_LIVE_KEYS = (
+        "rose", "heart", "star", "diamond", "crown",
+        "gift", "fire", "gem", "jackpot",
+    )
+    WHEEL_LIVE_MULTIPLIERS = {
+        "rose": 1.5,
+        "heart": 2.0,
+        "star": 2.5,
+        "diamond": 3.0,
+        "crown": 3.5,
+        "gift": 4.0,
+        "fire": 4.5,
+        "gem": 5.0,
+        "jackpot": 6.0,
+    }
+
+    def _wheel_live_now():
+        return datetime.now(timezone.utc)
+
+    def _finish_wheel_live_round(row: GameRound, db: Session):
+        if row.status == "finished" and row.result_key:
+            return row
+
+        now = _wheel_live_now()
+        if row.ends_at > now:
+            return row
+
+        entries = GAME_PROFILES["wheel"]["results"]
+        result = random.choices(
+            [key for key, _ in entries],
+            weights=[float(weight) for _, weight in entries],
+            k=1,
+        )[0]
+
+        row.result_key = result
+        row.status = "finished"
+
+        bets = list(db.scalars(
+            select(GameBet).where(GameBet.round_id == row.id)
+        ))
+
+        winners = 0
+        total_payout = 0
+
+        for bet in bets:
+            payout = game_payout(
+                "wheel", bet.choice, result, int(bet.amount or 0), {}
+            )
+            bet.payout = payout
+
+            if payout > 0:
+                bettor = db.scalar(
+                    select(User)
+                    .where(User.id == bet.user_id)
+                    .with_for_update()
+                )
+                if bettor:
+                    bettor.lidya += payout
+                    winners += 1
+                    total_payout += payout
+
+        row.state_data = json.dumps({
+            "result": result,
+            "finished_at": now.isoformat(),
+            "bet_count": len(bets),
+            "winner_bets": winners,
+            "total_payout": total_payout,
+        }, ensure_ascii=False, separators=(",", ":"))
+
+        db.flush()
+        return row
+
+    def _get_wheel_live_round(db: Session):
+        now = _wheel_live_now()
+
+        row = db.scalar(
+            select(GameRound)
+            .where(
+                GameRound.game_type == "wheel_live",
+                GameRound.status == "open",
+            )
+            .order_by(GameRound.started_at.desc())
+            .with_for_update()
+        )
+
+        if row and row.ends_at <= now:
+            _finish_wheel_live_round(row, db)
+            return row
+
+        if row is None:
+            row = GameRound(
+                id=str(uuid4()),
+                user_id=None,
+                room_id=None,
+                game_type="wheel_live",
+                status="open",
+                started_at=now,
+                ends_at=now + timedelta(seconds=WHEEL_LIVE_SECONDS),
+                result_key=None,
+                state_data="{}",
+            )
+            db.add(row)
+            db.flush()
+
+        return row
+
+    def _wheel_live_response(row: GameRound, db: Session, user: User):
+        now = _wheel_live_now()
+        remaining = max(
+            0,
+            int((row.ends_at - now).total_seconds())
+        )
+
+        bets = list(db.scalars(
+            select(GameBet).where(GameBet.round_id == row.id)
+        ))
+
+        totals = {key: 0 for key in WHEEL_LIVE_KEYS}
+        my_bets = {key: 0 for key in WHEEL_LIVE_KEYS}
+
+        for bet in bets:
+            if bet.choice not in totals:
+                continue
+
+            totals[bet.choice] += int(bet.amount or 0)
+
+            if bet.user_id == user.id:
+                my_bets[bet.choice] += int(bet.amount or 0)
+
+        betting_open = (
+            row.status == "open"
+            and remaining > WHEEL_LOCK_SECONDS
+        )
+
+        return {
+            "round_id": row.id,
+            "status": row.status,
+            "started_at": row.started_at,
+            "ends_at": row.ends_at,
+            "remaining_seconds": remaining,
+            "betting_open": betting_open,
+            "lock_seconds": WHEEL_LOCK_SECONDS,
+            "result": row.result_key,
+            "multipliers": WHEEL_LIVE_MULTIPLIERS,
+            "my_bets": my_bets,
+
+            # Lobi toplamları sadece bahis kapandığında açılır.
+            "totals": (
+                totals
+                if remaining <= WHEEL_LOCK_SECONDS
+                or row.status == "finished"
+                else None
+            ),
+        }
+
+    @router.get("/games/wheel/live")
+    def wheel_live_state(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = _get_wheel_live_round(db)
+        payload = _wheel_live_response(row, db, user)
+        db.commit()
+        return payload
+
+    @router.post("/games/wheel/live/bet")
+    def wheel_live_bet(
+        payload: GameBetCreate,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        choice = payload.choice.strip().lower()
+
+        if choice not in WHEEL_LIVE_KEYS:
+            raise HTTPException(
+                status_code=400,
+                detail="Geçersiz çark sembolü",
+            )
+
+        # Mevcut oyun merkezi limitiyle aynı.
+        if payload.amount not in {10,25,50,75,100,250,500,1000}:
+            raise HTTPException(
+                status_code=422,
+                detail="Tek bahis en fazla 10.000 Lidya olabilir",
+            )
+
+        row = _get_wheel_live_round(db)
+        remaining = (row.ends_at - _wheel_live_now()).total_seconds()
+
+        if row.status != "open" or remaining <= WHEEL_LOCK_SECONDS:
+            raise HTTPException(
+                status_code=409,
+                detail="Bahisler kapandı. Yeni turu bekle.",
+            )
+
+        locked_user = db.scalar(
+            select(User)
+            .where(User.id == user.id)
+            .with_for_update()
+        )
+
+        if not locked_user:
+            raise HTTPException(
+                status_code=404,
+                detail="Kullanıcı bulunamadı",
+            )
+
+        if payload.amount > locked_user.lidya:
+            raise HTTPException(
+                status_code=400,
+                detail="Yeterli Lidya yok",
+            )
+
+        locked_user.lidya -= payload.amount
+
+        db.add(GameBet(
+            round_id=row.id,
+            user_id=user.id,
+            choice=choice,
+            amount=payload.amount,
+            payout=0,
+        ))
+
+        db.flush()
+        balance = locked_user.lidya
+        db.commit()
+
+        return {
+            "ok": True,
+            "round_id": row.id,
+            "choice": choice,
+            "amount": payload.amount,
+            "balance": balance,
+            "remaining_seconds": max(
+                0,
+                int((row.ends_at - _wheel_live_now()).total_seconds()),
+            ),
+        }
 
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):

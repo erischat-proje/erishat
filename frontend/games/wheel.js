@@ -42,7 +42,7 @@
         <div class="eris-wheel-v2">
           <div class="eris-wheel-caption">
             <span>ŞANS ÇARKI</span>
-            <b>DOĞRU SEMBOL · 9×</b>
+            <b>CANLI TUR · 60 SANİYE</b>
           </div>
 
           <div class="eris-wheel-wrap">
@@ -52,7 +52,7 @@
             <canvas id="proWheelCanvas" width="640" height="640"></canvas>
             <div class="eris-wheel-hub">
               <span>ERIS</span>
-              <b>9×</b>
+              <b>LIVE</b>
             </div>
           </div>
 
