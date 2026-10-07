@@ -148,4 +148,10 @@
   window.addEventListener('erischat:room-actions-ready', () => { if (state.roomId) ensureUi(); });
   window.openRoomGift = function(roomId) { setRoom(roomId || window.ErisCurrentRoomId || window.currentRoomId, true); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureUi, { once: true }); else ensureUi();
+  window.ErisRoomGiftUI=Object.assign(window.ErisRoomGiftUI||{},{
+    close(){
+      const panel=document.getElementById('erischatGiftPanel');
+      panel?.classList.remove('show');
+    }
+  });
 })();

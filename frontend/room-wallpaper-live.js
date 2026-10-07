@@ -80,5 +80,9 @@
       };
     }catch(e){modal.querySelector('[data-error]').textContent=e.message||'Duvar kâğıtları alınamadı.'}
   }
-  window.ErisChatRoomWallpaper={open};
+  function close(){
+    document.getElementById('erisRoomWallpaperZoom')?.remove();
+    document.getElementById('erisRoomWallpaperModal')?.remove();
+  }
+  window.ErisChatRoomWallpaper={open,close};
 })();

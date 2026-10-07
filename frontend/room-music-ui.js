@@ -135,4 +135,10 @@
   const style=document.createElement('style');
   style.textContent='#erisMusicPanel button,#erisMusicPanel input:not([type=file]){border:1px solid #ffffff29;border-radius:13px;background:#201827;color:#fff;min-height:42px;padding:8px;font:600 14px system-ui}#erisMusicPanel [data-add],#erisMusicPanel [data-unlock]{background:linear-gradient(115deg,#8149ed,#dd45a3);border:0;color:#fff;font-weight:750}#erisMusicPanel input[type=file]{color:#ddd;background:#1c1525;border:1px solid #ffffff25;border-radius:12px;padding:10px;box-sizing:border-box}';
   document.head.append(style);
+  window.ErisRoomMusicUI=Object.assign(window.ErisRoomMusicUI||{},{
+    close(){
+      const panel=document.getElementById('erisMusicPanel');
+      if(panel)panel.style.display='none';
+    }
+  });
 })();

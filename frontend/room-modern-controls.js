@@ -61,6 +61,13 @@
     document.getElementById('eris-seat-actions')?.remove();
     document.querySelector('.eris-seat-action-sheet')?.remove();
     window.ErisSeatPermissions?.closeUi?.();
+    window.ErisRoomGiftUI?.close?.();
+    window.ErisRoomMusicUI?.close?.();
+    window.ErisChatRoomWallpaper?.close?.();
+    document.getElementById('erischatGiftPanel')?.classList.remove('show');
+    const music=document.getElementById('erisMusicPanel');if(music)music.style.display='none';
+    document.getElementById('erisRoomWallpaperZoom')?.remove();
+    document.getElementById('erisRoomWallpaperModal')?.remove();
   }
   function minimize(){
     if (!roomId()) return;
