@@ -40,7 +40,7 @@
     muteSeat: (roomId, seatNumber) => api(`/rooms/${id(roomId)}/seats/${Number(seatNumber)}/mute`, body({})),
     unmuteSeat: (roomId, seatNumber) => api(`/rooms/${id(roomId)}/seats/${Number(seatNumber)}/mute`, { method: 'DELETE' }),
     lock: roomId => api(`/rooms/${id(roomId)}/lock`, body({})),
-    setPassword: (roomId,password) => api(`/rooms/${id(roomId)}/password`, { method:'PUT', body:JSON.stringify({password}) }),
+    setPassword: (roomId,password,currentPassword=null) => api(`/rooms/${id(roomId)}/password`, { method:'PUT', body:JSON.stringify({password,current_password:currentPassword}) }),
     clearPassword: roomId => api(`/rooms/${id(roomId)}/password`, { method:'DELETE' }),
     unlock: roomId => api(`/rooms/${id(roomId)}/lock`, { method: 'DELETE' }),
     giftCatalog: roomId => api(`/rooms/${id(roomId)}/gift-catalog`),

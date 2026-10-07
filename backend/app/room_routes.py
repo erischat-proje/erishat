@@ -68,7 +68,9 @@ def gift_visual(key: str) -> dict:
             "animation_description": gift.get("animation")}
 
 class RoomCreate(BaseModel): name: str = Field(min_length=1, max_length=16)
-class RoomPasswordUpdate(BaseModel): password: str = Field(min_length=4, max_length=4, pattern=r"^\d{4}$")
+class RoomPasswordUpdate(BaseModel):
+    password: str = Field(min_length=4, max_length=4, pattern=r"^\d{4}$")
+    current_password: str | None = Field(default=None, min_length=4, max_length=4, pattern=r"^\d{4}$")
 class RoomWallpaperUpdate(BaseModel): asset_key: str = Field(min_length=1, max_length=255); days: Literal[1, 7, 30]
 class RoomJoinPayload(BaseModel): password: str | None = Field(default=None, max_length=4)
 class RoomChatUpdate(BaseModel): enabled: bool
@@ -572,9 +574,17 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
     def set_room_password(room_id: str, payload: RoomPasswordUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         row = db.get(RoomPassword, room.id)
+        if row:
+            if not payload.current_password:
+                raise HTTPException(status_code=400, detail="Mevcut oda şifresini girin")
+            current_hash = hashlib.sha256(payload.current_password.encode()).hexdigest()
+            if current_hash != row.password_hash:
+                raise HTTPException(status_code=400, detail="Mevcut oda şifresi yanlış")
         hashed = hashlib.sha256(payload.password.encode()).hexdigest()
-        if row: row.password_hash = hashed
-        else: db.add(RoomPassword(room_id=room.id, password_hash=hashed))
+        if row:
+            row.password_hash = hashed
+        else:
+            db.add(RoomPassword(room_id=room.id, password_hash=hashed))
         room.locked = True; room.lock_expires_at = datetime.now(timezone.utc) + timedelta(days=3650)
         db.commit()
         return {"locked": True, "password_set": True}

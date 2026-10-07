@@ -147,7 +147,23 @@
       levelBody.querySelector('[data-level-seat-permission]').onclick=()=>window.ErisSeatPermissions?.openSettings?.();
       levelBody.querySelector('[data-level-chat]').onclick=async()=>{try{await roomApi().setChat(r.id,r.chat_enabled===false);await openLevels()}catch(e){window.toast?.(e.message||'Chat değiştirilemedi')}};
       levelBody.querySelector('[data-level-lock]').onclick=async()=>{try{if(r.locked)await roomApi().clearPassword(r.id);else{const password=await window.ErisRoomPasswordModal?.('Yeni şifre');if(password===null||!/^\d{4}$/.test(password||''))return;await roomApi().setPassword(r.id,password)}await window.ErisRoomUI?.refresh?.();await openLevels()}catch(e){window.toast?.(e.message||'Oda kilidi değiştirilemedi')}};
-      levelBody.querySelector('[data-level-password]').onclick=async()=>{const password=await window.ErisRoomPasswordModal?.('Şifre Değiştir');if(password===null)return;if(!/^\d{4}$/.test(password))return window.toast?.('Şifre tam 4 rakam olmalı.');try{await roomApi().setPassword(r.id,password);await openLevels()}catch(e){window.toast?.(e.message||'Şifre kaydedilemedi')}};
+      levelBody.querySelector('[data-level-password]').onclick=async()=>{
+        const currentPassword=await window.ErisRoomPasswordModal?.('Mevcut Şifre');
+        if(currentPassword===null)return;
+        if(!/^\d{4}$/.test(currentPassword))return window.toast?.('Mevcut şifre 4 rakam olmalı.');
+        const password=await window.ErisRoomPasswordModal?.('Yeni Şifre');
+        if(password===null)return;
+        if(!/^\d{4}$/.test(password))return window.toast?.('Yeni şifre 4 rakam olmalı.');
+        if(password===currentPassword)return window.toast?.('Yeni şifre mevcut şifreden farklı olmalı.');
+        try{
+          await roomApi().setPassword(r.id,password,currentPassword);
+          window.toast?.('Oda şifresi değiştirildi ✓');
+          await window.ErisRoomUI?.refresh?.();
+          await openLevels();
+        }catch(e){
+          window.toast?.(e.message||'Şifre değiştirilemedi.');
+        }
+      };
       levelBody.querySelector('[data-level-clear]')?.addEventListener('click',async()=>{try{await roomApi().clearPassword(r.id);await openLevels()}catch(e){window.toast?.(e.message||'Şifre kaldırılamadı')}});
     }
 
