@@ -67,6 +67,24 @@
       if(!audio.muted)audio.play().catch(()=>{});
     }
   }
+
+  async function resumeRoomAudio(){
+    if(!outputEnabled)return;
+    try{await audioContext?.resume?.()}catch{}
+    for(const [id,audio] of sounds){
+      if(isBlocked(id))continue;
+      audio.muted=false;
+      try{await audio.play()}catch{}
+    }
+  }
+
+  function unlockRoomAudio(){
+    resumeRoomAudio().catch(()=>{});
+  }
+
+  document.addEventListener('pointerdown',unlockRoomAudio,{passive:true});
+  document.addEventListener('touchstart',unlockRoomAudio,{passive:true});
+  document.addEventListener('keydown',unlockRoomAudio);
   window.addEventListener('erischat:room-blocks-updated',syncBlockedAudio);
   const socket=()=>window.__erisRoomSocket;
   const signal=(type,to_user_id,payload)=>{if(socket()?.readyState===WebSocket.OPEN)socket().send(JSON.stringify({type,to_user_id,payload}))};
@@ -122,7 +140,23 @@
     signal('rtc_offer',id,pc.localDescription);
   }
 
-  async function message(d){if(d.type==='rtc_ready'){myId=String(d.user_id);known.clear();(d.peers||[]).forEach(id=>known.add(String(id)));for(const id of known)if(shouldInitiate(id))offer(id).catch(()=>{});return}
+  async function message(d){if(d.type==='rtc_ready'){
+      myId=String(d.user_id);
+      const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
+
+      for(const id of [...peers.keys()]){
+        if(!fresh.has(id))drop(id);
+      }
+
+      known.clear();
+      for(const id of fresh)known.add(id);
+
+      resumeRoomAudio().catch(()=>{});
+      for(const id of known){
+        if(shouldInitiate(id))offer(id).catch(()=>{});
+      }
+      return;
+    }
     if(d.type==='rtc_peer_joined'){const id=String(d.user_id||'');if(id&&id!==myId){known.add(id);if(shouldInitiate(id))await offer(id)}return}
     if(d.type==='rtc_peer_left'){
       const id=String(d.user_id||'');
@@ -234,8 +268,11 @@
 
   speakingStyle();window.ErisRoomRTC={toggle,stop,message,toggleOutput,showOutput,leaveRoom};
   window.addEventListener('erischat:room-opened',()=>{
+    outputEnabled=true;
+    localStorage.setItem('eris_room_audio_output','true');
     show();
     showOutput();
+    resumeRoomAudio().catch(()=>{});
   });
 
   window.addEventListener('erischat:room-closed',leaveRoom);
