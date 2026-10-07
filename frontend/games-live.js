@@ -258,8 +258,9 @@
             const mod = gameModules[key]();
             const stage = modal.querySelector('.eg-stage');
             const wheelFeed=modal.querySelector('[data-wheel-feed]');
-            if(key==='wheel' && wheelFeed && stage?.parentNode){
-                stage.parentNode.insertBefore(wheelFeed,stage);
+            if(key==='wheel' && wheelFeed){
+                const head=modal.querySelector('.eg-head');
+                if(head?.parentNode) head.insertAdjacentElement('afterend',wheelFeed);
             }
 
             if (mod && typeof mod.render === 'function') {
@@ -381,6 +382,20 @@
                 wheelAnimating=true;
                 const i=['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].indexOf(x.result);
                 await gameModules.wheel()?.animate?.(modal.querySelector('.eg-stage'),{result_key:x.result,winning_index:i});
+                const resultNames={rose:'Gül',heart:'Kalp',star:'Yıldız',diamond:'Elmas',crown:'Taç',gift:'Hediye',fire:'Alev',gem:'Kristal',jackpot:'Jackpot'};
+                const resultIcons={rose:'🌹',heart:'♥',star:'★',diamond:'◆',crown:'♛',gift:'🎁',fire:'🔥',gem:'💠',jackpot:'🏆'};
+                const mult={rose:1.5,heart:2,star:2.5,diamond:3,crown:3.5,gift:4,fire:4.5,gem:5,jackpot:6};
+                const winningBet=Number(x.my_bets?.[x.result]||0);
+                const payout=Math.floor(winningBet*(mult[x.result]||0));
+                let pop=modal.querySelector('.eg-wheel-result-pop');
+                if(!pop){
+                    pop=document.createElement('div');
+                    pop.className='eg-wheel-result-pop';
+                    modal.appendChild(pop);
+                }
+                pop.innerHTML='<div class="wr-icon">'+(resultIcons[x.result]||'🎡')+'</div><div class="wr-name">'+(resultNames[x.result]||'Sonuç')+'</div><div class="wr-state">'+(winningBet>0?'KAZANDIN':'KAYBETTİN')+'</div><div class="wr-pay">'+(winningBet>0?'+ '+payout.toLocaleString('tr-TR')+' Lidya':'Bu tur kazanç yok')+'</div>';
+                requestAnimationFrame(()=>pop.classList.add('show'));
+                setTimeout(()=>pop.classList.remove('show'),3000);
                 wheelAnimating=false;
             }
             const box=modal.querySelector('[data-wheel-mine]');
@@ -688,3 +703,83 @@ __erisWheelResultCSS.textContent=`
 }
 `;
 document.head.appendChild(__erisWheelResultCSS);
+
+/* WHEEL FINAL PRO LAYOUT */
+const __erisWheelPro=document.createElement('style');
+__erisWheelPro.textContent=`
+#erisGamesModal.eg-wheel-mode .eg-wallet{
+ top:8px!important;
+ right:58px!important;
+ padding:5px 9px!important;
+ font-size:10px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-head [data-close]{
+ position:absolute!important;
+ top:7px!important;
+ right:9px!important;
+ width:42px!important;
+ height:34px!important;
+ z-index:20!important;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]{
+ margin:4px 0 3px!important;
+ width:100%!important;
+ flex:0 0 28px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stage{
+ position:relative!important;
+ margin-top:9px!important;
+ overflow:visible!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stage:before{
+ content:"▼";
+ position:absolute;
+ z-index:30;
+ left:50%;
+ top:-15px;
+ transform:translateX(-50%);
+ color:#ffd477;
+ font-size:24px;
+ line-height:24px;
+ text-shadow:0 2px 4px #000,0 0 10px #ffd47799;
+ pointer-events:none;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets{
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ width:100%!important;
+ gap:4px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+ width:100%!important;
+ min-width:0!important;
+ padding:7px 1px!important;
+ font-size:9px!important;
+ border-radius:10px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop{
+ position:fixed;
+ z-index:99999;
+ left:50%;
+ top:50%;
+ transform:translate(-50%,-50%) scale(.92);
+ width:min(300px,82vw);
+ padding:20px 16px;
+ border:1px solid #ffd47766;
+ border-radius:22px;
+ background:linear-gradient(160deg,#21162f,#0e0a16);
+ box-shadow:0 20px 70px #000c,0 0 35px #9b63e944;
+ text-align:center;
+ opacity:0;
+ transition:.2s ease;
+ pointer-events:none;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop.show{
+ opacity:1;
+ transform:translate(-50%,-50%) scale(1);
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-icon{font-size:50px}
+#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-name{font-size:18px;font-weight:950;margin:4px}
+#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-state{font-size:24px;font-weight:950;color:#ffd477;margin:8px}
+#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-pay{font-size:14px;font-weight:850}
+`;
+document.head.appendChild(__erisWheelPro);
