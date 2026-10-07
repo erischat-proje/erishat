@@ -1016,7 +1016,15 @@ def register_room_auth(current_user_dependency, join_announcement=None):
     @database_task
     async def add_music(room_id: str, file: UploadFile = File(...), title: str = Form(""), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
-        if not is_member(db, room.id, user.id): raise HTTPException(status_code=403, detail="Odaya katılmalısınız")
+        seated = db.scalar(select(RoomSeat.id).where(
+            RoomSeat.room_id == room.id,
+            RoomSeat.user_id == user.id
+        ))
+        if not is_member(db, room.id, user.id) and not seated:
+            raise HTTPException(
+                status_code=403,
+                detail="Odaya katılmalı veya bir koltuğa oturmalısınız"
+            )
         now = datetime.now(timezone.utc)
         access_expiry = now + timedelta(days=36500)
 

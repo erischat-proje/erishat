@@ -2,7 +2,7 @@
   'use strict';
   const css = document.createElement('style');
   css.textContent = `
-    .eris-mini-shade{position:fixed;inset:0;z-index:11030;display:grid;place-items:center;padding:16px;background:#060411a8;backdrop-filter:blur(8px)}
+    .eris-mini-shade{position:fixed;inset:0;z-index:50050;display:grid;place-items:center;padding:16px;background:#060411a8;backdrop-filter:blur(8px)}
     .eris-mini-card{box-sizing:border-box;width:min(390px,100%);padding:20px;border:1px solid #bd93ee77;border-radius:24px;background:linear-gradient(135deg,#291a3bde,#100b1ce8);box-shadow:0 25px 80px #000b;color:#fff}
     .eris-mini-head{display:flex;align-items:center;gap:12px}.eris-mini-portrait{position:relative;width:64px;height:64px;flex:none;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:#49336d;color:#fff;font-size:24px;cursor:pointer}.eris-mini-portrait img:not(.eris-mini-frame){width:100%;height:100%;border-radius:50%;object-fit:cover}.eris-mini-frame{position:absolute;inset:-6px;width:76px;height:76px;object-fit:contain;pointer-events:none}
     .eris-mini-name{min-width:0;flex:1;overflow-wrap:anywhere;font-weight:800}.eris-mini-icon{flex:none;width:34px;height:34px;border:1px solid #d4bafa66;border-radius:11px;background:#ffffff13;color:white;font-size:19px;cursor:pointer}.eris-mini-top{display:flex;gap:5px;align-items:center;align-self:flex-start}.eris-mini-fan{align-self:flex-start;border:0;background:transparent;padding:0;display:grid;place-items:center}
