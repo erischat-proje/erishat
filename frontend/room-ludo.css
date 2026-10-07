@@ -582,7 +582,6 @@
 
 
 /* === ERISCHAT LUDO FINAL V3 ISOLATION === */
-#erisRoomSurface.ludo-mode > .eris-room-quick-actions,
 #erisRoomSurface.ludo-mode > .eris-room-tools,
 #erisRoomSurface.ludo-mode > #erisRoomContributionButton,
 #erisRoomSurface.ludo-mode > .eris-room-stage {
@@ -628,3 +627,21 @@
   pointer-events:auto !important;
   touch-action:manipulation;
 }
+
+
+/* === LUDO V8 MEDIA CONTROL CONTRACT === */
+#erisRoomSurface.ludo-mode > .eris-room-quick-actions{
+  pointer-events:auto !important;
+  z-index:800 !important;
+}
+#erisRoomSurface.ludo-mode > .eris-room-quick-actions > #erisRoomGift,
+#erisRoomSurface.ludo-mode > .eris-room-quick-actions > #erisRoomMusic,
+#erisRoomSurface.ludo-mode > .eris-room-quick-actions > #erisRoomWallpaper{
+  pointer-events:auto !important;
+  position:relative;
+  z-index:801 !important;
+}
+#erischatGiftPanel,
+#erisMusicPanel{z-index:13050 !important;}
+#erisRoomWallpaperModal{z-index:13060 !important;}
+#erisRoomWallpaperZoom{z-index:13061 !important;}

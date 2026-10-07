@@ -108,7 +108,7 @@ root.querySelector('[data-settings]').onclick=open;
 
   function isLudoTarget(target){
     if(!(target instanceof Element))return false;
-    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat,#erisRoomMinimize,#erisRoomFloatingBubble');
+    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat,#erisRoomMinimize,#erisRoomFloatingBubble,#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erischatGiftPanel,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom');
   }
 
   function guardRoomEvent(event){
