@@ -48,6 +48,7 @@
   bubble.addEventListener('pointercancel', () => { start=null;hideExit(); });
   bubble.onclick=() => {
     if (moved || !roomId()) return;
+    clearSeatUi();
     minimized=false;bubble.hidden=true;hideExit();
     const s=surface();
     if(s){
@@ -56,8 +57,14 @@
     }
     window.ErisScreenProtection?.set?.('room',!!window.__erisCurrentRoomLocked);
   };
+  function clearSeatUi(){
+    document.getElementById('eris-seat-actions')?.remove();
+    document.querySelector('.eris-seat-action-sheet')?.remove();
+    window.ErisSeatPermissions?.closeUi?.();
+  }
   function minimize(){
     if (!roomId()) return;
+    clearSeatUi();
     const s=surface();
     minimized=true;
     if(s){
@@ -134,8 +141,9 @@
     if(minimized){minimized=false;bubble.hidden=true;hideExit();s.classList.add('show')}
   }
   window.addEventListener('erischat:room-opened',setup);
-  window.addEventListener('erischat:room-closed',()=>{bubble.hidden=true;hideExit();minimized=false;close()});
+  window.addEventListener('erischat:room-closed',()=>{clearSeatUi();bubble.hidden=true;hideExit();minimized=false;close()});
+  window.addEventListener('erischat:ludo-view-closed',clearSeatUi);
   const originalClose=window.closeRealRoom;
-  if(typeof originalClose==='function')window.closeRealRoom=async(...args)=>{bubble.hidden=true;hideExit();minimized=false;close();return originalClose(...args)};
+  if(typeof originalClose==='function')window.closeRealRoom=async(...args)=>{clearSeatUi();bubble.hidden=true;hideExit();minimized=false;close();return originalClose(...args)};
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dialog()?.hidden)close()});
 })();
