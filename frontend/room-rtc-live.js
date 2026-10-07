@@ -124,7 +124,13 @@
   async function message(d){if(d.type==='rtc_ready'){myId=String(d.user_id);known.clear();(d.peers||[]).forEach(id=>known.add(String(id)));for(const id of known)if(shouldInitiate(id))offer(id).catch(()=>{});return}
     if(d.type==='rtc_peer_joined'){const id=String(d.user_id||'');if(id&&id!==myId){known.add(id);if(shouldInitiate(id))await offer(id)}return}
     const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
-    if(d.type==='rtc_leave'){drop(id);return}
+    if(d.type==='rtc_leave'||d.type==='rtc_peer_left'){
+  drop(id);
+  if(d.type==='rtc_peer_left'){
+    setTimeout(()=>window.ErisRoomUI?.refresh?.().catch?.(()=>{}),150);
+  }
+  return;
+}
     try{if(d.type==='rtc_offer'){const pc=peer(id);await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc);const desc=await pc.createAnswer();await pc.setLocalDescription(desc);signal('rtc_answer',id,pc.localDescription)}
       else if(d.type==='rtc_answer'){const pc=peers.get(id);if(pc?.signalingState==='have-local-offer'){await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc)}}
       else if(d.type==='rtc_ice'){const pc=peer(id);if(pc.remoteDescription)await pc.addIceCandidate(new RTCIceCandidate(d.payload));else{const queue=pendingIce.get(id)||[];if(queue.length<64)queue.push(d.payload);pendingIce.set(id,queue)}}

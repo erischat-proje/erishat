@@ -2354,6 +2354,29 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         room_socket_users.pop(websocket, None)
         connections = room_chat_connections.get(internal_room_id, set())
         connections.discard(websocket)
+
+        # Kullanıcının bu odadaki son canlı socket'i kapandıysa koltuğu
+        # otomatik boşalt. Böylece uygulama/sekme zorla kapatılsa bile
+        # avatar ve çerçeve koltukta hayalet olarak kalmaz.
+        has_other_room_socket = any(
+            socket_room == internal_room_id and socket_user == str(user.id)
+            for socket_room, socket_user in room_socket_users.values()
+        )
+        if not has_other_room_socket:
+            try:
+                with Session(engine) as cleanup_db:
+                    cleanup_db.execute(
+                        update(RoomSeat)
+                        .where(
+                            RoomSeat.room_id == internal_room_id,
+                            RoomSeat.user_id == user.id,
+                        )
+                        .values(user_id=None, muted=False)
+                    )
+                    cleanup_db.commit()
+            except Exception as cleanup_error:
+                print("[ErisChat] disconnect seat cleanup failed:", cleanup_error)
+
         peers = room_rtc_users.get(internal_room_id, {})
         if visible and visible not in peers.values():
             await asyncio.gather(*(_bounded_send(ws, {"type":"rtc_peer_left", "user_id":str(visible)}) for ws in list(peers)), return_exceptions=True)
