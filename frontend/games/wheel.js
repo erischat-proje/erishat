@@ -57,7 +57,7 @@
           </div>
 
           <div class="eris-wheel-note">
-            Bir sembol seç · Çark o sembolde durursa bahsin 9 katı hesabına eklenir.
+            Gül 1.5× · Kalp 2× · Yıldız 2.5× · Elmas 3× · Taç 3.5× · Hediye 4× · Alev 4.5× · Kristal 5× · Jackpot 6×
           </div>
         </div>
       `;

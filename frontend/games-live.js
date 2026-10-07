@@ -218,7 +218,7 @@
                     <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">10</button><button type="button" data-stake-value="25">25</button><button type="button" data-stake-value="50">50</button><button type="button" data-stake-value="75">75</button><button type="button" data-stake-value="100">100</button><button type="button" data-stake-value="250">250</button><button type="button" data-stake-value="500">500</button><button type="button" data-stake-value="1000">1000</button></div>
                     <button data-play>Oyna</button>
                 </div>
-                <div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:#ffd477;margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid #ffffff12;border-radius:12px;font-size:11px"></div>
+                <div data-wheel-feed style="display:none;position:relative;height:38px;overflow:hidden;margin:5px 0"></div><div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:#ffd477;margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid #ffffff12;border-radius:12px;font-size:11px"></div>
                 <div data-controls style="display:flex; gap:8px; justify-content:center; margin-top:6px;"></div>
             </div>
         `;
@@ -228,6 +228,16 @@
         modal.onclick = e => { if (e.target === modal) close(); };
         modal.onkeydown = e => { if (e.key === 'Escape') close(); };
         modal.querySelector('[data-scope]').textContent = scope === 'room' ? 'ODA OYUNLARI' : 'KİŞİSEL OYUNLAR';
+        if(selected){
+            modal.classList.add('eg-single-game');
+            modal.style.padding='0';
+            const panel=modal.querySelector('.eg-panel');
+            if(panel){panel.style.width='100%';panel.style.maxWidth='none';panel.style.height='100dvh';panel.style.maxHeight='none';panel.style.borderRadius='0';}
+            modal.querySelector('.eg-keys').style.display='none';
+            modal.querySelector('.eg-intro').style.display='none';
+            modal.querySelector('.eg-head h2').textContent=labels[selected]||'Oyun';
+        }
+
 
         const keys = Object.keys(gameModules);
         const tabs = modal.querySelector('.eg-keys');
@@ -264,12 +274,24 @@
                 choice.add(new Option(lbl, val));
             }
 
+            if(key==='wheel'){
+                const input=modal.querySelector('[data-stake]')?.closest('label');
+                const play=modal.querySelector('[data-play]');
+                if(input) input.style.display='none';
+                if(play) play.style.display='none';
+            }else{
+                const input=modal.querySelector('[data-stake]')?.closest('label');
+                const play=modal.querySelector('[data-play]');
+                if(input) input.style.display='';
+                if(play) play.style.display='';
+            }
+
             if (key === 'wheel') {
                 const symbols = mod?.symbols || [];
                 symbols.forEach((symbol, index) => {
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'eg-wheel-pick' + (index === 0 ? ' active' : '');
+                    button.className = 'eg-wheel-pick';
                     button.dataset.value = symbol.key;
 
                     const icon = document.createElement('span');
@@ -288,7 +310,7 @@
                     button.append(icon,name,payout,total);
 
                     button.onclick = async () => {
-                        const amount=Number(modal.querySelector('[data-stake]').value);
+                        const amount=wheelStake;
                         if(![10,25,50,75,100,250,500,1000].includes(amount)) return;
                         try{
                             await api('/games/wheel/live/bet',{method:'POST',body:JSON.stringify({choice:symbol.key,amount})});
@@ -316,18 +338,35 @@
 
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
+            if(game==='wheel') wheelStake=Number(preset.dataset.stakeValue);
         });
-        let wheelShownRound=null, wheelAnimating=false;
+        let wheelShownRound=null,wheelAnimating=false,wheelSeenBets=new Set();
         const refreshWheelLive = async () => {
             if(game !== 'wheel' || wheelAnimating) return;
             const x=await api('/games/wheel/live');
+            const feed=modal.querySelector('[data-wheel-feed]');
+            const icons={rose:'🌹',heart:'♥',star:'★',diamond:'◆',crown:'♛',gift:'🎁',fire:'🔥',gem:'💠',jackpot:'🏆'};
+            (x.recent_bets||[]).forEach(b=>{
+                if(wheelSeenBets.has(b.id)) return;
+                wheelSeenBets.add(b.id);
+                if(!feed) return;
+                feed.style.display='block';
+                const n=document.createElement('span');
+                n.textContent='🪙 '+Number(b.amount).toLocaleString('tr-TR')+' Lidya  '+(icons[b.choice]||'');
+                n.style.cssText='position:absolute;left:-180px;top:'+(Math.random()*14)+'px;font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:#ffd477';
+                feed.appendChild(n);
+                requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px))'));
+                setTimeout(()=>n.remove(),3400);
+            });
             const clock=modal.querySelector('[data-wheel-clock]');
             if(clock){clock.style.display='block';clock.textContent=(x.betting_open?'⏱ ':'🔒 ')+x.remaining_seconds+' sn';}
             modal.querySelectorAll('.eg-wheel-pick').forEach(b=>b.disabled=!x.betting_open);
             modal.querySelectorAll('[data-wheel-total]').forEach(el=>{
                 const v=x.totals?.[el.dataset.wheelTotal];
                 el.style.display=x.totals?'block':'none';
-                el.textContent='🪙 '+Number(v||0).toLocaleString('tr-TR')+' Lidya';
+                const mine=Number(x.my_bets?.[el.dataset.wheelTotal]||0);
+                el.style.display=mine>0||x.totals?'block':'none';
+                el.textContent='🪙 '+mine.toLocaleString('tr-TR')+' Lidya';
             });
             if(x.result && wheelShownRound!==x.round_id){
                 wheelShownRound=x.round_id;
@@ -340,11 +379,12 @@
             if(!box) return;
             const names={rose:'🌹 Gül',heart:'♥ Kalp',star:'★ Yıldız',diamond:'◆ Elmas',crown:'♛ Taç',gift:'🎁 Hediye',fire:'🔥 Alev',gem:'💠 Kristal',jackpot:'🏆 Jackpot'};
             const rows=Object.entries(x.my_bets||{}).filter(([,v])=>Number(v)>0);
-            box.style.display='block';
+            box.style.display='none';
             box.innerHTML='<b>BU TURDAKİ BAHİSLERİM</b><br>'+(rows.length?rows.map(([k,v])=>names[k]+' · '+Number(v).toLocaleString('tr-TR')+' Lidya').join(' • '):'Henüz bahis yapmadın.');
         };
         refreshWheelLive(); setInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
-                let activeBlackjackRoundId = null;
+                let wheelStake=100;
+        let activeBlackjackRoundId = null;
 
         modal.querySelector('[data-play]').onclick = async () => {
             const button = modal.querySelector('[data-play]'),

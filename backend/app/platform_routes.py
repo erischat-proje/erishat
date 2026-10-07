@@ -933,17 +933,19 @@ def register_platform_auth(current_user_dependency):
 
         row = db.scalar(
             select(GameRound)
-            .where(
-                GameRound.game_type == "wheel_live",
-                GameRound.status == "open",
-            )
+            .where(GameRound.game_type == "wheel_live")
             .order_by(GameRound.started_at.desc())
             .with_for_update()
         )
 
-        if row and row.ends_at <= now:
+        if row and row.status == "open" and row.ends_at <= now:
             _finish_wheel_live_round(row, db)
             return row
+
+        if row and row.status == "finished":
+            if now < row.ends_at + timedelta(seconds=6):
+                return row
+            row = None
 
         if row is None:
             row = GameRound(
@@ -1001,6 +1003,10 @@ def register_platform_auth(current_user_dependency):
             "result": row.result_key,
             "multipliers": WHEEL_LIVE_MULTIPLIERS,
             "my_bets": my_bets,
+            "recent_bets": [
+                {"id": bet.id, "choice": bet.choice, "amount": int(bet.amount or 0)}
+                for bet in bets[-12:]
+            ],
 
             # Lobi toplamları sadece bahis kapandığında açılır.
             "totals": (
