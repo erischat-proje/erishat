@@ -365,7 +365,10 @@
                 n.style.cssText='position:absolute;left:-180px;top:'+(Math.random()*14)+'px;font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:#ffd477';
                 feed.appendChild(n);
                 requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px))'));
-                setTimeout(()=>n.remove(),3400);
+                setTimeout(()=>{
+                    n.remove();
+                    if(feed && !feed.children.length) feed.style.display='none';
+                },3400);
             });
             const clock=modal.querySelector('[data-wheel-clock]');
             if(clock){clock.style.display='block';clock.textContent=(x.betting_open?'⏱ ':'🔒 ')+x.remaining_seconds+' sn';}
@@ -859,3 +862,90 @@ __erisWheelFinalAlign.textContent=`
 }
 `;
 document.head.appendChild(__erisWheelFinalAlign);
+
+/* WHEEL MOBILE VISUAL FIX V2 */
+const __erisWheelVisualFix2=document.createElement('style');
+__erisWheelVisualFix2.textContent=`
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
+ height:24px!important;
+ min-height:24px!important;
+ margin:2px 0 5px!important;
+}
+
+/* Çark kartların üstüne binmesin */
+#erisGamesModal.eg-wheel-mode .eg-stage{
+ padding:9px 5px 10px!important;
+ margin:3px 0 5px!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
+ width:min(270px,76vw)!important;
+}
+
+/* Seçeneklerle çark arasında gerçek boşluk */
+#erisGamesModal.eg-wheel-mode .eg-form{
+ margin-top:4px!important;
+}
+
+/* Bahis miktarları paneli tamamen doldursun */
+#erisGamesModal.eg-wheel-mode .eg-stake-presets{
+ display:grid!important;
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ width:100%!important;
+ gap:3px!important;
+ padding:0!important;
+ margin:5px 0 0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+ width:100%!important;
+ min-width:0!important;
+ height:32px!important;
+ padding:0 1px!important;
+ border-radius:9px!important;
+ font-size:8px!important;
+ letter-spacing:-.45px!important;
+ overflow:hidden!important;
+ white-space:nowrap!important;
+}
+
+/* Coin/rakam üst üste binmesini engelle */
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+ font-size:0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button:before{
+ content:"🪙";
+ font-size:8px!important;
+ margin-right:1px;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button:after{
+ content:attr(data-stake-value);
+ font-size:8px!important;
+}
+
+/* sayaç yukarı */
+#erisGamesModal.eg-wheel-mode [data-wheel-clock]{
+ margin:4px 0 0!important;
+}
+`;
+document.head.appendChild(__erisWheelVisualFix2);
+
+/* WHEEL LIVE FEED COLLAPSE */
+const __erisWheelFeedFix=document.createElement('style');
+__erisWheelFeedFix.textContent=`
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]{
+ display:none;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
+ height:0!important;
+ min-height:0!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
+ height:28px!important;
+ min-height:28px!important;
+ margin:3px 0 5px!important;
+ border:1px solid #ffffff12!important;
+}
+`;
+document.head.appendChild(__erisWheelFeedFix);
