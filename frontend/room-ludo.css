@@ -677,3 +677,17 @@
   position:relative !important;
   z-index:951 !important;
 }
+
+
+/* === CANONICAL ROOM MEDIA FINAL V11 === */
+#erisRoomSurface.show .eris-room-quick-actions{
+  display:flex!important;visibility:visible!important;opacity:1!important;
+  pointer-events:auto!important;z-index:1200!important;
+}
+#erisRoomSurface.show [data-eris-media-control]{
+  pointer-events:auto!important;touch-action:manipulation!important;
+}
+#erischatGiftPanel.show{display:block!important;z-index:40050!important;pointer-events:auto!important}
+#erisMusicPanel{z-index:40050!important;pointer-events:auto!important}
+#erisRoomWallpaperModal{z-index:40060!important;pointer-events:auto!important}
+#erisRoomWallpaperZoom{z-index:40061!important;pointer-events:auto!important}

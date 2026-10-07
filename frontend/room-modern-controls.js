@@ -121,41 +121,42 @@
   }
   function runRoomControl(kind){
     const id=roomId();
-    if(!id)return;
-    if(kind==='gift'){
-      if(typeof window.openRoomGift!=='function')return window.toast?.('Hediye paneli hazır değil.');
-      window.openRoomGift(id);return;
-    }
-    if(kind==='music'){
-      if(typeof window.ErisChatMusic?.open!=='function')return window.toast?.('Müzik paneli hazır değil.');
-      window.ErisChatMusic.open();return;
-    }
-    if(kind==='wallpaper'){
-      if(typeof window.ErisChatRoomWallpaper?.open!=='function')return window.toast?.('Duvar kâğıdı paneli hazır değil.');
-      const room=window.__erisLiveRoom||{};
-      if(!(room.is_owner||window.__erisRoomPermissions?.is_owner))return;
-      window.ErisChatRoomWallpaper.open(id,room);
-    }
+    if(!id)return window.toast?.('Önce bir oda aç.');
+    try{
+      if(kind==='gift'){
+        if(typeof window.openRoomGift!=='function')throw new Error('Hediye paneli hazır değil.');
+        window.openRoomGift(id);
+      }else if(kind==='music'){
+        if(typeof window.ErisChatMusic?.open!=='function')throw new Error('Müzik paneli hazır değil.');
+        window.ErisChatMusic.open();
+      }else if(kind==='wallpaper'){
+        if(typeof window.ErisChatRoomWallpaper?.open!=='function')throw new Error('Duvar kâğıdı paneli hazır değil.');
+        if(!window.__erisRoomPermissions?.is_owner)return window.toast?.('Duvar kâğıdını yalnızca oda sahibi değiştirebilir.');
+        window.ErisChatRoomWallpaper.open(id,window.__erisLiveRoom||{id,is_owner:true});
+      }
+    }catch(error){window.toast?.(error?.message||'Oda aracı açılamadı.');}
   }
   function bindMediaControls(){
     const s=surface();if(!s)return;
     const map={erisRoomGift:'gift',erisRoomMusic:'music',erisRoomWallpaper:'wallpaper',erisRoomGiftInline:'gift'};
     for(const [id,kind] of Object.entries(map)){
-      const button=s.querySelector('#'+id);
-      if(!button)continue;
-      button.onclick=e=>{e.preventDefault();e.stopPropagation();runRoomControl(kind)};
+      const button=s.querySelector('#'+id);if(!button)continue;
+      button.dataset.erisMediaControl=kind;
+      button.onclick=null;
     }
   }
+
+  /* Tek medya event sahibi. Capture DEGIL: Ludo'nun document-capture guard'iyla
+     listener sirasi yarisi olusmasin diye olay butondan document'a normal bubble ile gelir. */
   document.addEventListener('click',event=>{
     const host=surface();
     if(!host?.classList.contains('show'))return;
-    const button=event.target instanceof Element ? event.target.closest('#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erisRoomGiftInline') : null;
+    const button=event.target instanceof Element ? event.target.closest('[data-eris-media-control]') : null;
     if(!button||!host.contains(button))return;
     event.preventDefault();
-    event.stopImmediatePropagation();
-    const kind=button.id==='erisRoomMusic'?'music':button.id==='erisRoomWallpaper'?'wallpaper':'gift';
-    runRoomControl(kind);
-  },true);
+    event.stopPropagation();
+    runRoomControl(button.dataset.erisMediaControl);
+  });
 
   function setup(){
     const s=surface();if(!s)return;

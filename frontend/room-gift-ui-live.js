@@ -137,7 +137,7 @@
 
   function setRoom(roomId, open = false) {
     state.roomId = roomId ? String(roomId) : null;
-    if (state.roomId && open) { state.selectedGift=null; state.selectedRecipient=null; state.category='all';state.quantity=1; ensureUi();document.querySelectorAll('#egpQuantity [data-qty]').forEach(b=>b.classList.toggle('active',b.dataset.qty==='1')); document.getElementById('erischatGiftPanel')?.classList.add('show'); refresh(); }
+    if (state.roomId && open) { state.selectedGift=null; state.selectedRecipient=null; state.category='all';state.quantity=1; ensureUi();document.querySelectorAll('#egpQuantity [data-qty]').forEach(b=>b.classList.toggle('active',b.dataset.qty==='1')); const panel=document.getElementById('erischatGiftPanel');panel?.classList.add('show');panel?.style.setProperty('display','block','important');panel?.style.setProperty('z-index','40050','important');panel?.style.setProperty('pointer-events','auto','important'); refresh(); }
   }
 
   window.addEventListener('erischat:room-ws', event => {
