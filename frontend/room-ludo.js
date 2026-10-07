@@ -368,7 +368,23 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
     renderDialog();
   }
   function leave(){epoch++;rid=null;data=null;round=null;accepted=-1;queue=Promise.resolve();animating=false;pending=false;retry=null;lastError='';closeDialog();clearBoard();}
-  window.addEventListener('erischat:room-opened',e=>{leave();rid=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(rid)poll();});
+  window.addEventListener('erischat:room-opened',e=>{
+    const nextRid=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');
+    if(!nextRid)return;
+
+    /* Ayni odanin yeniden render/open eventi Ludo'yu kapatamaz. */
+    if(rid===nextRid){
+      modal?.__syncLudoSeats?.();
+      surface()?.querySelector(':scope > .ludo-room')?.__syncLudoSeats?.();
+      poll();
+      return;
+    }
+
+    /* Yalnizca gercekten baska odaya geciste eski Ludo oturumunu temizle. */
+    leave();
+    rid=nextRid;
+    poll();
+  });
   window.addEventListener('erischat:room-state-updated',()=>{
     if(!rid||animating)return;
     modal?.__syncLudoSeats?.();
