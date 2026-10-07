@@ -620,3 +620,26 @@
   visibility:visible !important;
   pointer-events:auto !important;
 }
+
+/* === LUDO STRICT INTERACTION ISOLATION ===
+   Normal oda katmanı Ludo sırasında hiçbir dokunma/click alamaz.
+   Yalnız Ludo ve oda sohbeti yeniden etkinleştirilir.
+*/
+#erisRoomSurface.ludo-mode .eris-room-stage{
+  pointer-events:none !important;
+}
+
+#erisRoomSurface.ludo-mode > .ludo-room,
+#erisRoomSurface.ludo-mode > .ludo-modal,
+#erisRoomSurface.ludo-mode .ludo-room *,
+#erisRoomSurface.ludo-mode .ludo-modal *,
+#erisRoomSurface.ludo-mode .ludo-seat-strip,
+#erisRoomSurface.ludo-mode .ludo-seat-strip *,
+#erisRoomSurface.ludo-mode .ludo-lobby-seats,
+#erisRoomSurface.ludo-mode .ludo-lobby-seats *,
+#erisRoomSurface.ludo-mode .ludo-seat-proxy,
+#erisRoomSurface.ludo-mode .ludo-seat-proxy *,
+#erisRoomSurface.ludo-mode .eris-room-chat,
+#erisRoomSurface.ludo-mode .eris-room-chat *{
+  pointer-events:auto !important;
+}
