@@ -77,12 +77,16 @@ const syncSeats=()=>{
 
 syncSeats();
 root.setAttribute('aria-label','Oda Ludo oyunu');
-    root.innerHTML='<div class="ludo-toolbar"><strong>LUDO</strong><span class="ludo-pool"></span><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
+    root.innerHTML='<button class="ludo-view-close" data-view-close type="button" aria-label="Ludo görünümünü kapat">×</button><div class="ludo-toolbar"><strong>LUDO</strong><span class="ludo-pool"></span><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
     root.prepend(strip);
 host.append(root);
 root.__syncLudoSeats=syncSeats;
 root.querySelector('[data-settings]').onclick=open;
     root.querySelector('[data-stop]').onclick=()=>stopDialog();
+    root.querySelector('[data-view-close]').onclick=()=>{
+      closeDialog();
+      clearBoard();
+    };
     root.querySelector('.ludo-roll').onclick=()=>send('roll');
     resize?.disconnect();const fit=()=>{const area=root.querySelector('.ludo-board-space');const d=Math.max(1,Math.min(area.clientWidth,area.clientHeight));root.querySelector('.ludo-board').style.width=d+'px';};
     if(window.ResizeObserver){resize=new ResizeObserver(fit);resize.observe(root.querySelector('.ludo-board-space'));}requestAnimationFrame(fit);
