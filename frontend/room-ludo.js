@@ -108,7 +108,7 @@ root.querySelector('[data-settings]').onclick=open;
 
   function isLudoTarget(target){
     if(!(target instanceof Element))return false;
-    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat,#erisRoomMinimize,#erisRoomFloatingBubble,#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erischatGiftPanel,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom');
+    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat,#erisRoomMinimize,#erisRoomFloatingBubble,#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erisRoomGiftInline,#erisRoomMicInline,#erisRoomAudioOutput,#erisRoomMoreTop,#erisRoomLeaveTop,#erischatGiftPanel,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom');
   }
 
   function guardRoomEvent(event){

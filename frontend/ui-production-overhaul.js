@@ -128,10 +128,7 @@
         padding-left:10px!important;
       }
 
-      #erisRoomSurface #erisRoomGift,
-      #erisRoomSurface #erisRoomMusic {
-        display:none!important;
-      }
+      /* Oda medya kontrollerinin gorunurlugunu canonical room controls yonetir. */
 
       #erisRoomSurface #erisRoomMoreTop {
         order:4!important;

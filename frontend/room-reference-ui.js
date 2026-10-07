@@ -83,7 +83,7 @@
 
   function gift(s){
     const c=s.querySelector('.eris-room-compose');if(!c||c.querySelector('#erisRoomGiftInline'))return;
-    const b=document.createElement('button');b.id='erisRoomGiftInline';b.type='button';b.className='room-v3-gift';b.textContent='🎁';b.title='Hediye gönder';b.onclick=()=>openMenu('gifts');c.insertBefore(b,c.querySelector('#erisLiveSend')||null);
+    const b=document.createElement('button');b.id='erisRoomGiftInline';b.type='button';b.className='room-v3-gift';b.textContent='🎁';b.title='Hediye gönder';b.onclick=()=>window.openRoomGift?.(roomId());c.insertBefore(b,c.querySelector('#erisLiveSend')||null);
   }
 
   function syncManagementUI(){

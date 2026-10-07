@@ -119,8 +119,24 @@
       }
     }catch(e){if(request===requestNumber)list.textContent=e.message||'Sıralama yüklenemedi.';}
   }
+  function bindMediaControls(){
+    const s=surface();if(!s)return;
+    const gift=s.querySelector('#erisRoomGift');
+    const music=s.querySelector('#erisRoomMusic');
+    const wallpaper=s.querySelector('#erisRoomWallpaper');
+    if(gift)gift.onclick=()=>window.openRoomGift?.(roomId());
+    if(music)music.onclick=()=>window.ErisChatMusic?.open?.();
+    if(wallpaper)wallpaper.onclick=()=>{
+      const room=window.__erisLiveRoom||{};
+      if(!(room.is_owner||window.__erisRoomPermissions?.is_owner))return;
+      window.ErisChatRoomWallpaper?.open?.(roomId(),room);
+    };
+    const inline=s.querySelector('#erisRoomGiftInline');
+    if(inline)inline.onclick=()=>window.openRoomGift?.(roomId());
+  }
   function setup(){
     const s=surface();if(!s)return;
+    bindMediaControls();
     const icons={
       erisRoomGift:'<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9C6 9 6 3 9 3c2 0 3 3 3 6Zm0 0c6 0 6-6 3-6-2 0-3 3-3 6Z"/>',
       erisRoomMusic:'<path d="M9 18V5l12-2v13M9 8l12-2"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
@@ -144,7 +160,7 @@
     }
     let contribution=s.querySelector('#erisRoomContributionButton');
     if(!contribution){contribution=document.createElement('button');contribution.id='erisRoomContributionButton';contribution.type='button';contribution.textContent='◇ Oda katkısı';contribution.onclick=()=>{const d=dialog();d.hidden=false;load(activePeriod)};s.appendChild(contribution)}
-    const gift=s.querySelector('#erisRoomGiftInline');if(gift)gift.remove();
+    bindMediaControls();
     if(minimized){minimized=false;bubble.hidden=true;hideExit();s.classList.add('show')}
   }
   window.addEventListener('erischat:room-opened',setup);

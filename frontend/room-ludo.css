@@ -645,3 +645,20 @@
 #erisMusicPanel{z-index:13050 !important;}
 #erisRoomWallpaperModal{z-index:13060 !important;}
 #erisRoomWallpaperZoom{z-index:13061 !important;}
+
+
+/* === ERISCHAT ROOM CONTROLS FINAL V9 === */
+#erisRoomSurface.show .eris-room-quick-actions{pointer-events:auto !important}
+#erisRoomSurface.show #erisRoomGift,
+#erisRoomSurface.show #erisRoomMusic,
+#erisRoomSurface.show #erisRoomWallpaper,
+#erisRoomSurface.show #erisRoomGiftInline,
+#erisRoomSurface.show #erisRoomMicInline,
+#erisRoomSurface.show #erisRoomAudioOutput,
+#erisRoomSurface.show #erisRoomMinimize{pointer-events:auto !important}
+#erisRoomSurface.ludo-mode #erisRoomGiftInline,
+#erisRoomSurface.ludo-mode #erisRoomMicInline,
+#erisRoomSurface.ludo-mode #erisRoomAudioOutput{pointer-events:auto !important;position:relative;z-index:902 !important}
+#erischatGiftPanel,#erisMusicPanel{z-index:13050 !important;pointer-events:auto !important}
+#erisRoomWallpaperModal{z-index:13060 !important;pointer-events:auto !important}
+#erisRoomWallpaperZoom{z-index:13061 !important;pointer-events:auto !important}
