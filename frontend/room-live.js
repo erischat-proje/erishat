@@ -139,10 +139,10 @@
   function roomPasswordModal(message=''){
     return new Promise(resolve=>{
       document.getElementById('eris-room-password-modal')?.remove();
-      const wrap=document.createElement('div');wrap.id='eris-room-password-modal';
+      const wrap=document.createElement('div');wrap.id='eris-room-password-modal';wrap.style.setProperty('z-index','63000','important');
       const errText=message?'Şifre yanlış. Tekrar dene.':'';
       wrap.innerHTML='<div class="erp-backdrop"></div><div class="erp-box"><button class="erp-x" aria-label="Kapat">×</button><div class="erp-title">🔒 Oda şifresi</div><div class="erp-sub">4 haneli şifreyi gir</div><div class="erp-cells"><input maxlength="1" inputmode="numeric" class="erp-cell"><input maxlength="1" inputmode="numeric" class="erp-cell"><input maxlength="1" inputmode="numeric" class="erp-cell"><input maxlength="1" inputmode="numeric" class="erp-cell"></div><div class="erp-error">'+errText+'</div><button class="erp-ok">Tamam</button></div>';
-      const st=document.createElement('style');st.textContent='#eris-room-password-modal{position:fixed;inset:0;z-index:6000;display:grid;place-items:center}.erp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(8px)}.erp-box{position:relative;width:min(330px,calc(100% - 40px));padding:20px;border-radius:18px;background:rgba(72,72,78,.95);border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 80px #000b;text-align:center}.erp-x{position:absolute;right:9px;top:8px;width:30px;height:30px;border:0;border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:20px}.erp-title{font-size:14px;font-weight:900}.erp-sub{margin-top:6px;font-size:9px;color:#d5d1d8}.erp-cells{display:flex;justify-content:center;gap:8px;margin:18px 0}.erp-cell{width:48px;height:52px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;text-align:center;font-size:24px;outline:none}.erp-cell:focus{border-color:#ff5bad}.erp-error{min-height:18px;color:#ff9dbd;font-size:9px}.erp-ok{width:100%;height:42px;border:0;border-radius:12px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:900}';wrap.appendChild(st);document.body.appendChild(wrap);
+      const st=document.createElement('style');st.textContent='#eris-room-password-modal{position:fixed;inset:0;z-index:63000!important;display:grid;place-items:center;padding:16px;box-sizing:border-box}.erp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(8px)}.erp-box{position:relative;width:min(330px,calc(100% - 40px));padding:20px;border-radius:18px;background:rgba(72,72,78,.95);border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 80px #000b;text-align:center}.erp-x{position:absolute;right:9px;top:8px;width:30px;height:30px;border:0;border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:20px}.erp-title{font-size:14px;font-weight:900}.erp-sub{margin-top:6px;font-size:9px;color:#d5d1d8}.erp-cells{display:flex;justify-content:center;gap:8px;margin:18px 0}.erp-cell{width:48px;height:52px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;text-align:center;font-size:24px;outline:none}.erp-cell:focus{border-color:#ff5bad}.erp-error{min-height:18px;color:#ff9dbd;font-size:9px}.erp-ok{width:100%;height:42px;border:0;border-radius:12px;background:linear-gradient(135deg,#754cff,#ff4fa3);color:#fff;font-weight:900}';wrap.appendChild(st);document.body.appendChild(wrap);
       const cells=[...wrap.querySelectorAll('.erp-cell')],err=wrap.querySelector('.erp-error');let done=false;const finish=v=>{if(done)return;done=true;wrap.remove();resolve(v)};
       wrap.querySelector('.erp-x').onclick=()=>finish(null);wrap.querySelector('.erp-backdrop').onclick=()=>finish(null);
       cells.forEach((c,i)=>{c.oninput=()=>{c.value=c.value.replace(/\D/g,'').slice(0,1);if(c.value&&cells[i+1])cells[i+1].focus()};c.onkeydown=e=>{if(e.key==='Backspace'&&!c.value&&cells[i-1])cells[i-1].focus();if(e.key==='Enter')wrap.querySelector('.erp-ok').click()}});
@@ -255,40 +255,58 @@
     window.ErisRoomEntrance?.clear?.();
     localStorage.removeItem('eris_last_room');
     window.ErisCurrentRoomId=id;window.currentRoomId=id;
-    const surface=ensureRoomSurface();
-    surface.classList.add('show');
-    surface.style.setProperty('position','fixed','important');
-    surface.style.setProperty('inset','0','important');
-    surface.style.setProperty('top','0','important');
-    surface.style.setProperty('right','0','important');
-    surface.style.setProperty('bottom','0','important');
-    surface.style.setProperty('left','0','important');
-    surface.style.setProperty('width','100vw','important');
-    surface.style.setProperty('height','100dvh','important');
-    surface.style.setProperty('margin','0','important');
-    surface.style.setProperty('display','block','important');
-    surface.style.setProperty('visibility','visible','important');
-    surface.style.setProperty('opacity','1','important');
-    surface.style.setProperty('z-index','30000','important');
-    applyRoomWallpaper();
-    document.getElementById('erisLiveTitle').textContent=name||'Oda';
-    document.getElementById('erisLiveMeta').textContent='Gerçek oda • bağlanıyor…';
-    document.getElementById('erisLiveSeats').innerHTML='<div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div>';
-
+    /*
+     * Odayı ekrana basmadan önce giriş yetkisini doğrula.
+     * Kilitli odalarda kullanıcı artık "Koltuklar hazırlanıyor" ekranını
+     * görmeden şifre kapısında kalır.
+     */
     try{
-      try{
-        let joined=false,attemptMessage='';
-        for(let attempt=0;attempt<3&&!joined;attempt++){
-          try{await window.ErisRoom.join(id);joined=true;}
-          catch(joinError){
-            if(!/şifre|kilitli|password/i.test(String(joinError.message||''))) throw joinError;
-            const pass=await window.ErisRoomPasswordModal?.(attemptMessage); if(pass===null) throw joinError;
-            try{await window.ErisRoom.join(id,String(pass).trim());joined=true;}
-            catch(e){if(!/şifre|kilitli|password/i.test(String(e.message||''))) throw e;attemptMessage='wrong';}
+      let joined=false,attemptMessage='';
+      for(let attempt=0;attempt<3&&!joined;attempt++){
+        try{
+          await window.ErisRoom.join(id);
+          joined=true;
+        }catch(joinError){
+          if(!/şifre|kilitli|password/i.test(String(joinError.message||''))) throw joinError;
+
+          const pass=await window.ErisRoomPasswordModal?.(attemptMessage);
+          if(pass===null){
+            window.ErisCurrentRoomId=null;
+            window.currentRoomId=null;
+            return;
+          }
+
+          try{
+            await window.ErisRoom.join(id,String(pass).trim());
+            joined=true;
+          }catch(e){
+            if(!/şifre|kilitli|password/i.test(String(e.message||''))) throw e;
+            attemptMessage='wrong';
           }
         }
-        if(!joined) throw new Error('Oda şifresi 3 kez yanlış girildi.');
-      }catch(joinError){throw joinError;}
+      }
+      if(!joined) throw new Error('Oda şifresi 3 kez yanlış girildi.');
+
+      const surface=ensureRoomSurface();
+      surface.classList.add('show');
+      surface.style.setProperty('position','fixed','important');
+      surface.style.setProperty('inset','0','important');
+      surface.style.setProperty('top','0','important');
+      surface.style.setProperty('right','0','important');
+      surface.style.setProperty('bottom','0','important');
+      surface.style.setProperty('left','0','important');
+      surface.style.setProperty('width','100vw','important');
+      surface.style.setProperty('height','100dvh','important');
+      surface.style.setProperty('margin','0','important');
+      surface.style.setProperty('display','block','important');
+      surface.style.setProperty('visibility','visible','important');
+      surface.style.setProperty('opacity','1','important');
+      surface.style.setProperty('z-index','30000','important');
+
+      applyRoomWallpaper();
+      document.getElementById('erisLiveTitle').textContent=name||'Oda';
+      document.getElementById('erisLiveMeta').textContent='Gerçek oda • bağlanıyor…';
+      document.getElementById('erisLiveSeats').innerHTML='<div style="padding:30px;text-align:center;color:#aaa">Koltuklar hazırlanıyor…</div>';
       const room=await window.ErisRoom.get(id);
       if(!room)throw new Error('Oda bilgisi alınamadı');
       await loadRoomBlocks();
