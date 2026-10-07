@@ -253,8 +253,6 @@
   }
 
   async function openRoom(roomId,name){
-    const dbg=t=>{let e=document.getElementById('erisRoomDebug');if(!e){e=document.createElement('div');e.id='erisRoomDebug';e.style.cssText='position:fixed;top:8px;left:8px;z-index:999999;background:#000;color:#0f0;padding:7px 10px;font:12px monospace;pointer-events:none';document.body.append(e)}e.textContent=t};
-    dbg('OPEN');
     if(joinedRoomId===String(roomId)&&document.getElementById('erisRoomSurface')?.classList.contains('show'))return refreshRoom();
     const id=String(roomId||'');if(!id)return;
     window.ErisRoomEntrance?.clear?.();
@@ -262,6 +260,15 @@
     window.ErisCurrentRoomId=id;window.currentRoomId=id;
     const surface=ensureRoomSurface();
     surface.classList.add('show');
+    surface.style.setProperty('position','fixed','important');
+    surface.style.setProperty('inset','0','important');
+    surface.style.setProperty('top','0','important');
+    surface.style.setProperty('right','0','important');
+    surface.style.setProperty('bottom','0','important');
+    surface.style.setProperty('left','0','important');
+    surface.style.setProperty('width','100vw','important');
+    surface.style.setProperty('height','100dvh','important');
+    surface.style.setProperty('margin','0','important');
     surface.style.setProperty('display','block','important');
     surface.style.setProperty('visibility','visible','important');
     surface.style.setProperty('opacity','1','important');
@@ -275,7 +282,7 @@
       try{
         let joined=false,attemptMessage='';
         for(let attempt=0;attempt<3&&!joined;attempt++){
-          try{await window.ErisRoom.join(id);joined=true;dbg('JOIN OK');}
+          try{await window.ErisRoom.join(id);joined=true;}
           catch(joinError){
             if(!/şifre|kilitli|password/i.test(String(joinError.message||''))) throw joinError;
             const pass=await window.ErisRoomPasswordModal?.(attemptMessage); if(pass===null) throw joinError;
@@ -285,7 +292,7 @@
         }
         if(!joined) throw new Error('Oda şifresi 3 kez yanlış girildi.');
       }catch(joinError){throw joinError;}
-      const room=await window.ErisRoom.get(id);dbg('ROOM OK');
+      const room=await window.ErisRoom.get(id);
       if(!room)throw new Error('Oda bilgisi alınamadı');
       await loadRoomBlocks();
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
@@ -309,7 +316,7 @@
       const occupiedSeats=(room.seats||[]).filter(seat=>seat.user_id).length;
       document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  Oda sohbeti';
       attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
-      joinedRoomId=String(liveRoomId);dbg('READY');
+      joinedRoomId=String(liveRoomId);
       setTimeout(()=>{
         try{
           window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
@@ -324,7 +331,6 @@
   }
 
   async function closeRealRoom(options={}){
-    const d=document.getElementById('erisRoomDebug');if(d)d.textContent='CLOSE';
     joinedRoomId=null;window.__erisCurrentCoupleId=null;window.ErisRoomEntrance?.clear?.();
     window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
