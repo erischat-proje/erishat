@@ -215,7 +215,7 @@
                     <label>Seçim <select data-choice></select></label>
                     <div class="eg-wheel-picks" data-wheel-picks aria-label="Şans Çarkı sembol seçimi"></div>
                     <label>Bahis · 0–10.000 Lidya <input data-stake type="number" inputmode="numeric" min="0" max="10000" step="1" value="100" aria-label="Lidya bahsi"></label>
-                    <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">10</button><button type="button" data-stake-value="25">25</button><button type="button" data-stake-value="50">50</button><button type="button" data-stake-value="75">75</button><button type="button" data-stake-value="100">100</button><button type="button" data-stake-value="250">250</button><button type="button" data-stake-value="500">500</button><button type="button" data-stake-value="1000">1000</button></div>
+                    <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">🪙10</button><button type="button" data-stake-value="25">🪙25</button><button type="button" data-stake-value="50">🪙50</button><button type="button" data-stake-value="75">🪙75</button><button type="button" data-stake-value="100">🪙100</button><button type="button" data-stake-value="250">🪙250</button><button type="button" data-stake-value="500">🪙500</button><button type="button" data-stake-value="1000">🪙1000</button></div>
                     <button data-play>Oyna</button>
                 </div>
                 <div data-wheel-feed style="display:none;position:relative;height:38px;overflow:hidden;margin:5px 0"></div><div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:#ffd477;margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid #ffffff12;border-radius:12px;font-size:11px"></div>
@@ -783,3 +783,79 @@ __erisWheelPro.textContent=`
 #erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-pay{font-size:14px;font-weight:850}
 `;
 document.head.appendChild(__erisWheelPro);
+
+/* WHEEL FINAL MOBILE ALIGNMENT */
+const __erisWheelFinalAlign=document.createElement('style');
+__erisWheelFinalAlign.textContent=`
+/* Çark altındaki tekrar oran metni kesinlikle yok */
+#erisGamesModal.eg-wheel-mode .eris-wheel-note,
+#erisGamesModal.eg-wheel-mode .eris-wheel-caption{
+ display:none!important;
+}
+
+/* games-live tarafından eklenen ikinci oku kaldır; gerçek Wheel pointer kalsın */
+#erisGamesModal.eg-wheel-mode .eg-stage:before{
+ display:none!important;
+ content:none!important;
+}
+
+/* Üst alanı biraz aşağı al */
+#erisGamesModal.eg-wheel-mode .eg-head{
+ margin-top:7px!important;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]{
+ margin-top:6px!important;
+ margin-bottom:5px!important;
+}
+
+/* Çark için temiz, ortalanmış alan */
+#erisGamesModal.eg-wheel-mode .eg-stage{
+ margin:7px 0 3px!important;
+ padding:12px 5px 5px!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ overflow:visible!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-v2{
+ padding:0!important;
+ margin:0!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
+ width:min(292px,82vw)!important;
+ margin:0 auto!important;
+ box-sizing:border-box!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap:before{
+ inset:-5px!important;
+}
+#erisGamesModal.eg-wheel-mode #proWheelCanvas{
+ width:100%!important;
+ height:100%!important;
+}
+
+/* 8 bahis miktarı kenardan kenara tek sıra */
+#erisGamesModal.eg-wheel-mode .eg-stake-presets{
+ display:grid!important;
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ gap:2px!important;
+ width:100%!important;
+ padding:0!important;
+ margin:3px 0 0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+ min-width:0!important;
+ width:100%!important;
+ height:34px!important;
+ padding:0!important;
+ margin:0!important;
+ border-radius:9px!important;
+ font-size:8px!important;
+ letter-spacing:-.35px!important;
+ white-space:nowrap!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+`;
+document.head.appendChild(__erisWheelFinalAlign);
