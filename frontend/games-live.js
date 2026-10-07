@@ -550,8 +550,8 @@ erisWheelLayout.textContent=`
 /* BAKİYE + X */
 #erisGamesModal.eg-wheel-mode .eg-wallet{
  position:absolute!important;
- top:18px!important;
- right:62px!important;
+ top:22px!important;
+ right:66px!important;
  width:auto!important;
  margin:0!important;
  padding:6px 9px!important;
