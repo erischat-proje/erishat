@@ -257,6 +257,11 @@
 
             const mod = gameModules[key]();
             const stage = modal.querySelector('.eg-stage');
+            const wheelFeed=modal.querySelector('[data-wheel-feed]');
+            if(key==='wheel' && wheelFeed && stage?.parentNode){
+                stage.parentNode.insertBefore(wheelFeed,stage);
+            }
+
             if (mod && typeof mod.render === 'function') {
                 mod.render(stage);
             }
@@ -338,7 +343,10 @@
 
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
-            if(game==='wheel') wheelStake=Number(preset.dataset.stakeValue);
+            if(game==='wheel'){
+                wheelStake=Number(preset.dataset.stakeValue);
+                modal.querySelectorAll('[data-stake-value]').forEach(b=>b.classList.toggle('wheel-stake-active',b===preset));
+            }
         });
         let wheelShownRound=null,wheelAnimating=false,wheelSeenBets=new Set();
         const refreshWheelLive = async () => {
@@ -477,3 +485,206 @@
 
     window.ErisChatGames = { open };
 })();
+
+/* ERIS WHEEL COMPACT FULLSCREEN */
+const __erisWheelCompactStyle=document.createElement('style');
+__erisWheelCompactStyle.textContent=`
+#erisGamesModal.eg-single-game{
+  padding:0!important;
+  overflow:hidden!important;
+}
+#erisGamesModal.eg-single-game .eg-panel{
+  height:100dvh!important;
+  max-height:100dvh!important;
+  overflow:hidden!important;
+  border-radius:0!important;
+  padding:10px 12px!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+#erisGamesModal.eg-single-game .eg-head{
+  min-height:34px!important;
+  flex:0 0 auto;
+}
+#erisGamesModal.eg-single-game .eg-head h2{
+  font-size:17px!important;
+  margin:0!important;
+}
+#erisGamesModal.eg-single-game .eg-wallet{
+  position:absolute!important;
+  top:8px!important;
+  right:48px!important;
+  width:auto!important;
+  margin:0!important;
+  padding:5px 8px!important;
+  border-radius:10px!important;
+  font-size:10px!important;
+  z-index:5;
+}
+#erisGamesModal.eg-single-game .eg-wallet [data-scope]{
+  display:none!important;
+}
+#erisGamesModal.eg-single-game [data-name]{
+  display:none!important;
+}
+#erisGamesModal.eg-single-game .eg-stage{
+  min-height:0!important;
+  flex:1 1 auto!important;
+  margin:2px 0!important;
+  overflow:hidden!important;
+}
+#erisGamesModal.eg-single-game [data-wheel-feed]{
+  order:-1;
+  height:30px!important;
+  min-height:30px!important;
+  margin:2px 0!important;
+  border:1px solid #ffffff12;
+  border-radius:10px;
+  background:#09071188;
+}
+#erisGamesModal.eg-single-game [data-wheel-clock]{
+  margin:3px 0!important;
+}
+#erisGamesModal.eg-single-game .eg-form{
+  flex:0 0 auto!important;
+  margin:2px 0!important;
+  gap:5px!important;
+}
+#erisGamesModal.eg-single-game .eg-wheel-picks{
+  gap:5px!important;
+}
+#erisGamesModal.eg-single-game .eg-result{
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+#erisGamesModal.eg-single-game [data-wheel-mine]{
+  display:none!important;
+}
+#erisGamesModal.eg-single-game .eris-wheel-caption{
+  display:none!important;
+}
+`;
+document.head.appendChild(__erisWheelCompactStyle);
+
+/* ERIS WHEEL MOBILE FIT */
+const __erisWheelFit=document.createElement('style');
+__erisWheelFit.textContent=`
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
+  padding:7px 9px!important;
+  gap:0!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stage{
+  flex:1 1 0!important;
+  min-height:145px!important;
+  max-height:34dvh!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode [data-wheel-feed]{
+  flex:0 0 28px!important;
+  height:28px!important;
+  min-height:28px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-form{
+  padding:6px!important;
+  margin:2px 0!important;
+  border-radius:12px!important;
+  gap:4px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-picks{
+  gap:4px!important;
+  margin:0!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-pick{
+  min-height:49px!important;
+  padding:3px 2px!important;
+  border-radius:10px!important;
+  gap:1px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-pick b{
+  font-size:9px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-pick small{
+  font-size:7px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets{
+  display:grid!important;
+  grid-template-columns:repeat(4,1fr)!important;
+  width:100%!important;
+  gap:3px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets button{
+  padding:5px 2px!important;
+  min-height:27px!important;
+  font-size:9px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode [data-wheel-clock]{
+  font-size:11px!important;
+  line-height:18px!important;
+  height:18px!important;
+  margin:1px 0!important;
+}
+`;
+document.head.appendChild(__erisWheelFit);
+
+
+/* WHEEL STAKE ONE ROW */
+const __erisWheelStakeCSS=document.createElement('style');
+__erisWheelStakeCSS.textContent=`
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets{
+ display:grid!important;
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ gap:3px!important;
+ width:100%!important;
+ flex-wrap:nowrap!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets button{
+ min-width:0!important;
+ width:100%!important;
+ padding:6px 0!important;
+ min-height:29px!important;
+ font-size:9px!important;
+ border-radius:9px!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets button.wheel-stake-active{
+ border-color:#ffd477!important;
+ background:#4a3268!important;
+ box-shadow:0 0 0 1px #ffd47755,inset 0 0 12px #ffd47718!important;
+ color:#fff1bd!important;
+}
+`;
+document.head.appendChild(__erisWheelStakeCSS);
+
+requestAnimationFrame(()=>{
+ const m=document.getElementById('erisGamesModal');
+ const b=m?.querySelector('[data-stake-value="100"]');
+ if(m?.classList.contains('eg-wheel-mode')&&b)b.classList.add('wheel-stake-active');
+});
+
+/* WHEEL REMOVE DUPLICATE PAYOUT CAPTION */
+const __erisWheelCaptionCSS=document.createElement('style');
+__erisWheelCaptionCSS.textContent=`
+#erisGamesModal.eg-wheel-mode .eris-wheel-caption{
+ display:none!important;
+ margin:0!important;
+ height:0!important;
+}
+`;
+document.head.appendChild(__erisWheelCaptionCSS);
+
+/* WHEEL REMOVE EMPTY RESULT SPACE */
+const __erisWheelResultCSS=document.createElement('style');
+__erisWheelResultCSS.textContent=`
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-result:empty{
+ display:none!important;
+ height:0!important;
+ min-height:0!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode [data-wheel-clock]{
+ flex:0 0 auto!important;
+ margin:3px 0 1px!important;
+}
+`;
+document.head.appendChild(__erisWheelResultCSS);
