@@ -122,8 +122,29 @@
     p.querySelectorAll('[data-seat-count]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await roomApi().setCapacity(r.id,Number(button.dataset.seatCount));await window.openRoom?.(r.id,r.name||'Oda');await openLevels()}catch(e){button.disabled=false;window.toast?.(e.message||'Koltuk düzeni değiştirilemedi')}});
     if(r.is_owner||r.is_moderator){
       const levelBody=p.querySelector('#roomV3Body');
-      const permission=document.createElement('button');permission.className='room-v3-btn';permission.textContent='Koltuk İzni';permission.onclick=()=>window.ErisSeatPermissions?.openSettings?.();levelBody.append(permission);
-      levelBody.insertAdjacentHTML('beforeend','<div class="room-v3-card"><b>💬 Chat</b><button type="button" class="room-v3-btn" data-level-chat>'+(r.chat_enabled===false?'Chat’i aç':'Chat’i kapat')+'</button></div><div class="room-v3-card"><b>🔐 Oda kilidi</b><div class="room-v3-grid"><button class="room-v3-btn" data-level-lock>'+(r.locked?'Kilidi aç':'Yeni şifreyle kilitle')+'</button><button class="room-v3-btn" data-level-password '+(r.locked?'':'disabled')+'>Şifre Değiştir</button>'+(r.password_set?'<button class="room-v3-btn" data-level-clear>Şifreyi kaldır</button>':'')+'</div></div>');
+      levelBody.insertAdjacentHTML('beforeend',
+        '<div class="room-v3-card room-v3-control-card">'+
+          '<div class="room-v3-control-head"><span class="room-v3-control-icon">✋</span><div><b>Koltuk İzni</b><small>Oturma taleplerini ve koltuk davetlerini yönet.</small></div></div>'+
+          '<button type="button" class="room-v3-btn room-v3-action '+(r.seat_permission?'active':'')+'" data-level-seat-permission>'+
+            (r.seat_permission?'✓ Koltuk İzni Aktif':'Koltuk İznini Yönet')+
+          '</button>'+
+        '</div>'+
+        '<div class="room-v3-card room-v3-control-card">'+
+          '<div class="room-v3-control-head"><span class="room-v3-control-icon">💬</span><div><b>Oda Chat’i</b><small>'+(r.chat_enabled===false?'Chat şu anda kapalı.':'Katılımcılar mesaj gönderebilir.')+'</small></div></div>'+
+          '<button type="button" class="room-v3-btn room-v3-action '+(r.chat_enabled===false?'':'active')+'" data-level-chat>'+
+            (r.chat_enabled===false?'Chat’i Aç':'Chat’i Kapat')+
+          '</button>'+
+        '</div>'+
+        '<div class="room-v3-card room-v3-control-card">'+
+          '<div class="room-v3-control-head"><span class="room-v3-control-icon">🔐</span><div><b>Oda Kilidi</b><small>'+(r.locked?'Oda 4 haneli şifreyle korunuyor.':'Odaya giriş şu anda açık.')+'</small></div></div>'+
+          '<div class="room-v3-grid room-v3-control-grid">'+
+            '<button type="button" class="room-v3-btn '+(r.locked?'active':'')+'" data-level-lock>'+(r.locked?'🔓 Kilidi Aç':'🔒 Şifreyle Kilitle')+'</button>'+
+            '<button type="button" class="room-v3-btn" data-level-password '+(r.locked?'':'disabled')+'>🔑 Şifreyi Değiştir</button>'+
+            (r.password_set?'<button type="button" class="room-v3-btn danger" data-level-clear>Şifreyi Kaldır</button>':'')+
+          '</div>'+
+        '</div>'
+      );
+      levelBody.querySelector('[data-level-seat-permission]').onclick=()=>window.ErisSeatPermissions?.openSettings?.();
       levelBody.querySelector('[data-level-chat]').onclick=async()=>{try{await roomApi().setChat(r.id,r.chat_enabled===false);await openLevels()}catch(e){window.toast?.(e.message||'Chat değiştirilemedi')}};
       levelBody.querySelector('[data-level-lock]').onclick=async()=>{try{if(r.locked)await roomApi().clearPassword(r.id);else{const password=await window.ErisRoomPasswordModal?.('Yeni şifre');if(password===null||!/^\d{4}$/.test(password||''))return;await roomApi().setPassword(r.id,password)}await window.ErisRoomUI?.refresh?.();await openLevels()}catch(e){window.toast?.(e.message||'Oda kilidi değiştirilemedi')}};
       levelBody.querySelector('[data-level-password]').onclick=async()=>{const password=await window.ErisRoomPasswordModal?.('Şifre Değiştir');if(password===null)return;if(!/^\d{4}$/.test(password))return window.toast?.('Şifre tam 4 rakam olmalı.');try{await roomApi().setPassword(r.id,password);await openLevels()}catch(e){window.toast?.(e.message||'Şifre kaydedilemedi')}};
@@ -527,7 +548,27 @@
       #erisRoomSurface .room-v3-body{padding:0!important;min-height:0!important;max-height:calc(88dvh - 116px)!important;overflow-y:auto!important;overscroll-behavior:contain}
       #erisRoomSurface .room-v3-card{padding:18px!important;border-radius:19px!important;background:linear-gradient(140deg,#ffffff08,#ffffff03)!important}
       #erisRoomSurface .room-v3-grid{gap:10px!important}
-      #erisRoomSurface .room-v3-btn{min-height:58px!important;border-radius:17px!important;background:linear-gradient(140deg,#ffffff08,#ffffff03)!important}
+      #erisRoomSurface .room-v3-card{box-sizing:border-box;overflow:hidden}
+      #erisRoomSurface .room-v3-control-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;padding:17px 18px!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:21px!important;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;box-shadow:inset 0 1px rgba(255,255,255,.035)}
+      #erisRoomSurface .room-v3-control-head{display:flex;align-items:center;gap:12px;min-width:0}
+      #erisRoomSurface .room-v3-control-head>div{display:grid;gap:4px;min-width:0}
+      #erisRoomSurface .room-v3-control-head b{font-size:14px;line-height:1.2}
+      #erisRoomSurface .room-v3-control-head small{display:block!important;margin:0!important;color:#aaa7b8!important;font-size:11px!important;line-height:1.4}
+      #erisRoomSurface .room-v3-control-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.055);font-size:19px}
+      #erisRoomSurface .room-v3-action{width:auto!important;min-width:128px}
+      #erisRoomSurface .room-v3-btn.active{border-color:rgba(152,119,255,.55)!important;background:linear-gradient(140deg,rgba(117,76,255,.30),rgba(117,76,255,.12))!important;box-shadow:inset 0 0 0 1px rgba(178,153,255,.08)}
+      #erisRoomSurface .room-v3-btn.danger{border-color:rgba(255,100,130,.22)!important}
+      #erisRoomSurface .room-v3-btn:disabled{opacity:.38!important;cursor:not-allowed}
+      #erisRoomSurface .room-v3-control-grid{grid-column:1/-1;margin-top:2px}
+      #erisRoomSurface .room-v3-btn{min-height:52px!important;border-radius:15px!important;background:linear-gradient(140deg,#ffffff08,#ffffff03)!important}
+      @media(max-width:520px){
+        #erisRoomSurface .room-v3-control-card{grid-template-columns:1fr;gap:13px}
+        #erisRoomSurface .room-v3-action{width:100%!important}
+        #erisRoomSurface .room-v3-control-grid{grid-template-columns:1fr 1fr!important}
+      }
+      @media(max-width:370px){
+        #erisRoomSurface .room-v3-control-grid{grid-template-columns:1fr!important}
+      }
       @media(max-width:370px){#erisRoomSurface .room-v3-dialog{padding:16px!important}#erisRoomSurface .room-v3-btn{font-size:11px!important}}
     `;
   }
