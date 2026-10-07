@@ -362,7 +362,7 @@
                 if(!feed) return;
                 feed.style.display='block';
                 const n=document.createElement('span');
-                n.textContent='🪙 '+Number(b.amount).toLocaleString('tr-TR')+' Lidya  '+(icons[b.choice]||'');
+                n.textContent='🪙 '+Number(b.amount).toLocaleString('tr-TR')+' '+(icons[b.choice]||'');
                 n.style.cssText='position:absolute;left:-180px;top:50%;transform:translateY(-50%);font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:#ffd477';
                 feed.appendChild(n);
                 requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px)) translateY(-50%)'));
@@ -550,7 +550,7 @@ erisWheelLayout.textContent=`
 /* BAKİYE + X */
 #erisGamesModal.eg-wheel-mode .eg-wallet{
  position:absolute!important;
- top:15px!important;
+ top:18px!important;
  right:62px!important;
  width:auto!important;
  margin:0!important;
