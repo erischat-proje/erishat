@@ -69,7 +69,8 @@ const syncSeats=()=>{
     clone.addEventListener('click',e=>{
       e.preventDefault();
       e.stopPropagation();
-      real.click();
+      if(window.ErisRoomSeatMenu) window.ErisRoomSeatMenu(real);
+      else real.click();
     });
     strip.appendChild(clone);
   });
@@ -94,9 +95,36 @@ root.querySelector('[data-settings]').onclick=open;
   }
   function clearBoard(){
     resize?.disconnect();resize=null;
-    stage()?.classList.remove('ludo-active');
-    surface()?.classList.remove('ludo-mode');
-    surface()?.querySelector('.ludo-room')?.remove();
+    const host=surface();
+    const roomStage=stage();
+
+    closeDialog();
+    host?.querySelector(':scope > .ludo-room')?.remove();
+    host?.querySelectorAll(':scope > .ludo-modal').forEach(n=>n.remove());
+
+    roomStage?.classList.remove('ludo-active');
+    host?.classList.remove('ludo-mode');
+
+    /* Ludo CSS'inden kalan geçici görünürlük durumlarını kesin temizle. */
+    roomStage?.style.removeProperty('visibility');
+    roomStage?.style.removeProperty('pointer-events');
+    roomStage?.querySelectorAll(':scope > .eris-seat').forEach(seat=>{
+      seat.style.removeProperty('visibility');
+      seat.style.removeProperty('pointer-events');
+      seat.style.removeProperty('opacity');
+    });
+
+    /* Ludo sırasında açılmış normal oda katmanlarını kapat. */
+    host?.querySelectorAll('.room-v5-panel.show,.room-v3-panel.show').forEach(panel=>{
+      panel.classList.remove('show');
+    });
+
+    document.getElementById('eris-seat-actions')?.remove();
+
+    /* Normal oda yerleşimini tekrar senkronla. */
+    window.dispatchEvent(new CustomEvent('erischat:ludo-view-closed',{
+      detail:{room_id:rid}
+    }));
   }
   function render(snapshot=data){
     if(!snapshot||!rid)return;
@@ -314,7 +342,8 @@ const syncLobbySeats=()=>{
     clone.addEventListener('click',e=>{
       e.preventDefault();
       e.stopPropagation();
-      real.click();
+      if(window.ErisRoomSeatMenu) window.ErisRoomSeatMenu(real);
+      else real.click();
     });
 
     lobbySeats.appendChild(clone);
@@ -364,7 +393,14 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
     const host=surface();
     if(!host)return;
 
+    /* Ludo açılırken normal oda popup/panelleri arkada açık kalmasın. */
+    host.querySelectorAll('.room-v5-panel.show,.room-v3-panel.show').forEach(panel=>{
+      panel.classList.remove('show');
+    });
+    document.getElementById('eris-seat-actions')?.remove();
+
     host.classList.add('ludo-mode');
+    stage()?.classList.add('ludo-active');
 
     /* Oyun zaten başladıysa doğrudan tahtayı göster. */
     if(current()?.status==='playing'||current()?.status==='finished'){

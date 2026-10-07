@@ -578,3 +578,45 @@
   line-height:1!important;
   cursor:pointer!important;
 }
+
+/* === LUDO ROOM ISOLATION FIX ===
+   Ludo açıkken normal oda kontrolleri arkadan çalışamaz.
+   Oda sohbeti ve Ludo koltukları aktif kalır.
+*/
+
+#erisRoomSurface.ludo-mode .eris-room-stage > .eris-seat{
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Normal oda üst/orta aksiyonları Ludo arkasında tıklanamaz. */
+#erisRoomSurface.ludo-mode .room-v5-top-actions,
+#erisRoomSurface.ludo-mode .room-v5-quick-actions,
+#erisRoomSurface.ludo-mode .room-v3-actions,
+#erisRoomSurface.ludo-mode .eris-room-contribution,
+#erisRoomSurface.ludo-mode [data-room-contribution]{
+  pointer-events:none !important;
+}
+
+/* Açık kalmış normal oda popup/panellerini Ludo sırasında gösterme. */
+#erisRoomSurface.ludo-mode .room-v5-panel,
+#erisRoomSurface.ludo-mode .room-v3-panel{
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Ludo'nun kendi katmanları daima aktif. */
+#erisRoomSurface.ludo-mode > .ludo-room,
+#erisRoomSurface.ludo-mode > .ludo-modal,
+#erisRoomSurface.ludo-mode .ludo-seat-strip,
+#erisRoomSurface.ludo-mode .ludo-lobby-seats,
+#erisRoomSurface.ludo-mode .ludo-seat-proxy{
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+/* Oda sohbeti Ludo sırasında kullanılmaya devam eder. */
+#erisRoomSurface.ludo-mode .eris-room-chat{
+  visibility:visible !important;
+  pointer-events:auto !important;
+}

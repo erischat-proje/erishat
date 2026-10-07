@@ -756,6 +756,8 @@
     toolbar.querySelector('button')?.focus();
   }
 
+  window.ErisRoomSeatMenu=seatMenu;
+
   function seatActions(){
     const s=surface();if(!s)return;
     const stage=s.querySelector('#erisLiveSeats');
