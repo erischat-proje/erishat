@@ -113,10 +113,21 @@ root.querySelector('[data-settings]').onclick=open;
       return;
     }
 
-    /* Yalnizca sunucu oyunu gercekten kapattiysa Ludo modundan cik. */
+    /* Oyun state'i kapanabilir; Ludo gorunumu kullanici kapatmadikca acik kalir.
+       Tahtayi temizle ve yeni oyun/lobi ekranina don. */
     if(s.status==='closed'){
-      closeDialog();
-      clearBoard();
+      resize?.disconnect();
+      resize=null;
+      surface()?.querySelector(':scope > .ludo-room')?.remove();
+
+      if(surface()?.classList.contains('ludo-mode')){
+        stage()?.classList.add('ludo-active');
+        if(!modal){
+          dialog();
+          modal?.classList.add('ludo-inline-lobby');
+        }
+        renderDialog();
+      }
       return;
     }
 
