@@ -115,13 +115,12 @@
         z-index:12;
         display:grid;
         place-items:center;
-        width:42px;
-        height:42px;
-        border-radius:50%;
-        background:rgba(25,20,35,.82);
-        border:1px solid rgba(255,255,255,.20);
-        box-shadow:0 5px 18px rgba(0,0,0,.35);
-        font-size:23px;
+        width:auto;
+        height:auto;
+        background:transparent;
+        border:0;
+        box-shadow:none;
+        font-size:28px;
         line-height:1;
         pointer-events:none;
       }
