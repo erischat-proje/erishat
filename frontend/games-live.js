@@ -504,501 +504,111 @@
     window.ErisChatGames = { open };
 })();
 
-/* ERIS WHEEL COMPACT FULLSCREEN */
-const __erisWheelCompactStyle=document.createElement('style');
-__erisWheelCompactStyle.textContent=`
-#erisGamesModal.eg-single-game{
-  padding:0!important;
-  overflow:hidden!important;
-}
-#erisGamesModal.eg-single-game .eg-panel{
-  height:100dvh!important;
-  max-height:100dvh!important;
-  overflow:hidden!important;
-  border-radius:0!important;
-  padding:10px 12px!important;
-  display:flex!important;
-  flex-direction:column!important;
-}
-#erisGamesModal.eg-single-game .eg-head{
-  min-height:34px!important;
-  flex:0 0 auto;
-}
-#erisGamesModal.eg-single-game .eg-head h2{
-  font-size:17px!important;
-  margin:0!important;
-}
-#erisGamesModal.eg-single-game .eg-wallet{
-  position:absolute!important;
-  top:8px!important;
-  right:48px!important;
-  width:auto!important;
-  margin:0!important;
-  padding:5px 8px!important;
-  border-radius:10px!important;
-  font-size:10px!important;
-  z-index:5;
-}
-#erisGamesModal.eg-single-game .eg-wallet [data-scope]{
-  display:none!important;
-}
-#erisGamesModal.eg-single-game [data-name]{
-  display:none!important;
-}
-#erisGamesModal.eg-single-game .eg-stage{
-  min-height:0!important;
-  flex:1 1 auto!important;
-  margin:2px 0!important;
-  overflow:hidden!important;
-}
-#erisGamesModal.eg-single-game [data-wheel-feed]{
-  order:-1;
-  height:30px!important;
-  min-height:30px!important;
-  margin:2px 0!important;
-  border:1px solid #ffffff12;
-  border-radius:10px;
-  background:#09071188;
-}
-#erisGamesModal.eg-single-game [data-wheel-clock]{
-  margin:3px 0!important;
-}
-#erisGamesModal.eg-single-game .eg-form{
-  flex:0 0 auto!important;
-  margin:2px 0!important;
-  gap:5px!important;
-}
-#erisGamesModal.eg-single-game .eg-wheel-picks{
-  gap:5px!important;
-}
-#erisGamesModal.eg-single-game .eg-result{
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-}
-#erisGamesModal.eg-single-game [data-wheel-mine]{
-  display:none!important;
-}
-#erisGamesModal.eg-single-game .eris-wheel-caption{
-  display:none!important;
-}
-`;
-document.head.appendChild(__erisWheelCompactStyle);
 
-/* ERIS WHEEL MOBILE FIT */
-const __erisWheelFit=document.createElement('style');
-__erisWheelFit.textContent=`
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
-  padding:7px 9px!important;
-  gap:0!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stage{
-  flex:1 1 0!important;
-  min-height:145px!important;
-  max-height:34dvh!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode [data-wheel-feed]{
-  flex:0 0 28px!important;
-  height:28px!important;
-  min-height:28px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-form{
-  padding:6px!important;
-  margin:2px 0!important;
-  border-radius:12px!important;
-  gap:4px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-picks{
-  gap:4px!important;
-  margin:0!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-pick{
-  min-height:49px!important;
-  padding:3px 2px!important;
-  border-radius:10px!important;
-  gap:1px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-pick b{
-  font-size:9px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-wheel-pick small{
-  font-size:7px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets{
-  display:grid!important;
-  grid-template-columns:repeat(4,1fr)!important;
-  width:100%!important;
-  gap:3px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets button{
-  padding:5px 2px!important;
-  min-height:27px!important;
-  font-size:9px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode [data-wheel-clock]{
-  font-size:11px!important;
-  line-height:18px!important;
-  height:18px!important;
-  margin:1px 0!important;
-}
-`;
-document.head.appendChild(__erisWheelFit);
-
-
-/* WHEEL STAKE ONE ROW */
-const __erisWheelStakeCSS=document.createElement('style');
-__erisWheelStakeCSS.textContent=`
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets{
- display:grid!important;
- grid-template-columns:repeat(8,minmax(0,1fr))!important;
- gap:3px!important;
- width:100%!important;
- flex-wrap:nowrap!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets button{
- min-width:0!important;
- width:100%!important;
- padding:6px 0!important;
- min-height:29px!important;
- font-size:9px!important;
- border-radius:9px!important;
-}
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-stake-presets button.wheel-stake-active{
- border-color:#ffd477!important;
- background:#4a3268!important;
- box-shadow:0 0 0 1px #ffd47755,inset 0 0 12px #ffd47718!important;
- color:#fff1bd!important;
-}
-`;
-document.head.appendChild(__erisWheelStakeCSS);
-
-requestAnimationFrame(()=>{
- const m=document.getElementById('erisGamesModal');
- const b=m?.querySelector('[data-stake-value="100"]');
- if(m?.classList.contains('eg-wheel-mode')&&b)b.classList.add('wheel-stake-active');
-});
-
-/* WHEEL REMOVE DUPLICATE PAYOUT CAPTION */
-const __erisWheelCaptionCSS=document.createElement('style');
-__erisWheelCaptionCSS.textContent=`
-#erisGamesModal.eg-wheel-mode .eris-wheel-caption{
- display:none!important;
- margin:0!important;
- height:0!important;
-}
-`;
-document.head.appendChild(__erisWheelCaptionCSS);
-
-/* WHEEL REMOVE EMPTY RESULT SPACE */
-const __erisWheelResultCSS=document.createElement('style');
-__erisWheelResultCSS.textContent=`
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-result:empty{
- display:none!important;
- height:0!important;
- min-height:0!important;
- margin:0!important;
+/* WHEEL SINGLE MOBILE LAYOUT — ONLY SOURCE OF OVERRIDES */
+const erisWheelLayout=document.createElement('style');
+erisWheelLayout.textContent=`
+#erisGamesModal.eg-single-game.eg-wheel-mode{
  padding:0!important;
- border:0!important;
+ overflow:hidden!important;
 }
-#erisGamesModal.eg-single-game.eg-wheel-mode [data-wheel-clock]{
- flex:0 0 auto!important;
- margin:3px 0 1px!important;
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
+ width:100%!important;
+ height:100dvh!important;
+ max-width:none!important;
+ max-height:100dvh!important;
+ padding:10px 14px 14px!important;
+ border-radius:0!important;
+ overflow:hidden!important;
+ display:flex!important;
+ flex-direction:column!important;
+ box-sizing:border-box!important;
 }
-`;
-document.head.appendChild(__erisWheelResultCSS);
 
-/* WHEEL FINAL PRO LAYOUT */
-const __erisWheelPro=document.createElement('style');
-__erisWheelPro.textContent=`
+/* BAŞLIK */
+#erisGamesModal.eg-wheel-mode .eg-head{
+ position:relative!important;
+ flex:0 0 48px!important;
+ min-height:48px!important;
+ margin:0!important;
+ display:flex!important;
+ align-items:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-head h2{
+ margin:0!important;
+ font-size:18px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-intro,
+#erisGamesModal.eg-wheel-mode .eg-keys,
+#erisGamesModal.eg-wheel-mode [data-name],
+#erisGamesModal.eg-wheel-mode [data-wheel-mine],
+#erisGamesModal.eg-wheel-mode .eris-wheel-caption,
+#erisGamesModal.eg-wheel-mode .eris-wheel-note{
+ display:none!important;
+}
+
+/* BAKİYE + X */
 #erisGamesModal.eg-wheel-mode .eg-wallet{
- top:8px!important;
+ position:absolute!important;
+ top:10px!important;
  right:58px!important;
- padding:5px 9px!important;
+ width:auto!important;
+ margin:0!important;
+ padding:6px 9px!important;
+ border-radius:10px!important;
  font-size:10px!important;
+ z-index:20!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wallet [data-scope]{
+ display:none!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-head [data-close]{
  position:absolute!important;
- top:7px!important;
- right:9px!important;
- width:42px!important;
- height:34px!important;
- z-index:20!important;
+ top:9px!important;
+ right:10px!important;
+ width:40px!important;
+ height:36px!important;
+ z-index:21!important;
 }
+
+/* CANLI BAHİSLER — BAŞLIK ALTINDA, HİÇBİR ŞEYİN ÜSTÜNE BİNMEZ */
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]{
- margin:4px 0 3px!important;
- width:100%!important;
- flex:0 0 28px!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-stage{
  position:relative!important;
- margin-top:9px!important;
- overflow:visible!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-stage:before{
- content:"▼";
- position:absolute;
- z-index:30;
- left:50%;
- top:-15px;
- transform:translateX(-50%);
- color:#ffd477;
- font-size:24px;
- line-height:24px;
- text-shadow:0 2px 4px #000,0 0 10px #ffd47799;
- pointer-events:none;
-}
-#erisGamesModal.eg-wheel-mode .eg-stake-presets{
- grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ order:initial!important;
  width:100%!important;
- gap:4px!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
- width:100%!important;
- min-width:0!important;
- padding:7px 1px!important;
- font-size:9px!important;
- border-radius:10px!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop{
- position:fixed;
- z-index:99999;
- left:50%;
- top:50%;
- transform:translate(-50%,-50%) scale(.92);
- width:min(300px,82vw);
- padding:20px 16px;
- border:1px solid #ffd47766;
- border-radius:22px;
- background:linear-gradient(160deg,#21162f,#0e0a16);
- box-shadow:0 20px 70px #000c,0 0 35px #9b63e944;
- text-align:center;
- opacity:0;
- transition:.2s ease;
- pointer-events:none;
-}
-#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop.show{
- opacity:1;
- transform:translate(-50%,-50%) scale(1);
-}
-#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-icon{font-size:50px}
-#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-name{font-size:18px;font-weight:950;margin:4px}
-#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-state{font-size:24px;font-weight:950;color:#ffd477;margin:8px}
-#erisGamesModal.eg-wheel-mode .eg-wheel-result-pop .wr-pay{font-size:14px;font-weight:850}
-`;
-document.head.appendChild(__erisWheelPro);
-
-/* WHEEL FINAL MOBILE ALIGNMENT */
-const __erisWheelFinalAlign=document.createElement('style');
-__erisWheelFinalAlign.textContent=`
-/* Çark altındaki tekrar oran metni kesinlikle yok */
-#erisGamesModal.eg-wheel-mode .eris-wheel-note,
-#erisGamesModal.eg-wheel-mode .eris-wheel-caption{
- display:none!important;
-}
-
-/* games-live tarafından eklenen ikinci oku kaldır; gerçek Wheel pointer kalsın */
-#erisGamesModal.eg-wheel-mode .eg-stage:before{
- display:none!important;
- content:none!important;
-}
-
-/* Üst alanı biraz aşağı al */
-#erisGamesModal.eg-wheel-mode .eg-head{
- margin-top:7px!important;
-}
-#erisGamesModal.eg-wheel-mode [data-wheel-feed]{
- margin-top:6px!important;
- margin-bottom:5px!important;
-}
-
-/* Çark için temiz, ortalanmış alan */
-#erisGamesModal.eg-wheel-mode .eg-stage{
- margin:7px 0 3px!important;
- padding:12px 5px 5px!important;
- display:flex!important;
- align-items:center!important;
- justify-content:center!important;
- overflow:visible!important;
-}
-#erisGamesModal.eg-wheel-mode .eris-wheel-v2{
- padding:0!important;
- margin:0!important;
-}
-#erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
- width:min(292px,82vw)!important;
- margin:0 auto!important;
  box-sizing:border-box!important;
-}
-#erisGamesModal.eg-wheel-mode .eris-wheel-wrap:before{
- inset:-5px!important;
-}
-#erisGamesModal.eg-wheel-mode #proWheelCanvas{
- width:100%!important;
- height:100%!important;
-}
-
-/* 8 bahis miktarı kenardan kenara tek sıra */
-#erisGamesModal.eg-wheel-mode .eg-stake-presets{
- display:grid!important;
- grid-template-columns:repeat(8,minmax(0,1fr))!important;
- gap:2px!important;
- width:100%!important;
- padding:0!important;
- margin:3px 0 0!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
- min-width:0!important;
- width:100%!important;
- height:34px!important;
- padding:0!important;
- margin:0!important;
- border-radius:9px!important;
- font-size:8px!important;
- letter-spacing:-.35px!important;
- white-space:nowrap!important;
- display:flex!important;
- align-items:center!important;
- justify-content:center!important;
-}
-`;
-document.head.appendChild(__erisWheelFinalAlign);
-
-/* WHEEL MOBILE VISUAL FIX V2 */
-const __erisWheelVisualFix2=document.createElement('style');
-__erisWheelVisualFix2.textContent=`
-#erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
- height:24px!important;
- min-height:24px!important;
- margin:2px 0 5px!important;
-}
-
-/* Çark kartların üstüne binmesin */
-#erisGamesModal.eg-wheel-mode .eg-stage{
- padding:9px 5px 10px!important;
- margin:3px 0 5px!important;
-}
-#erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
- width:min(270px,76vw)!important;
-}
-
-/* Seçeneklerle çark arasında gerçek boşluk */
-#erisGamesModal.eg-wheel-mode .eg-form{
- margin-top:4px!important;
-}
-
-/* Bahis miktarları paneli tamamen doldursun */
-#erisGamesModal.eg-wheel-mode .eg-stake-presets{
- display:grid!important;
- grid-template-columns:repeat(8,minmax(0,1fr))!important;
- width:100%!important;
- gap:3px!important;
- padding:0!important;
- margin:5px 0 0!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
- width:100%!important;
- min-width:0!important;
- height:32px!important;
- padding:0 1px!important;
- border-radius:9px!important;
- font-size:8px!important;
- letter-spacing:-.45px!important;
- overflow:hidden!important;
- white-space:nowrap!important;
-}
-
-/* Coin/rakam üst üste binmesini engelle */
-#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
- font-size:0!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-stake-presets button:before{
- content:"🪙";
- font-size:8px!important;
- margin-right:1px;
-}
-#erisGamesModal.eg-wheel-mode .eg-stake-presets button:after{
- content:attr(data-stake-value);
- font-size:8px!important;
-}
-
-/* sayaç yukarı */
-#erisGamesModal.eg-wheel-mode [data-wheel-clock]{
- margin:4px 0 0!important;
-}
-`;
-document.head.appendChild(__erisWheelVisualFix2);
-
-/* WHEEL LIVE FEED COLLAPSE */
-const __erisWheelFeedFix=document.createElement('style');
-__erisWheelFeedFix.textContent=`
-#erisGamesModal.eg-wheel-mode [data-wheel-feed]{
- display:none;
-}
-#erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
- height:0!important;
- min-height:0!important;
- margin:0!important;
- padding:0!important;
- border:0!important;
-}
-#erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
- height:28px!important;
- min-height:28px!important;
- margin:3px 0 5px!important;
- border:1px solid #ffffff12!important;
-}
-`;
-document.head.appendChild(__erisWheelFeedFix);
-
-/* WHEEL FINAL VIEWPORT FIT V3 */
-const __erisWheelViewportV3=document.createElement('style');
-__erisWheelViewportV3.textContent=`
-#erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
- height:100dvh!important;
- max-height:100dvh!important;
- padding:12px 16px 16px!important;
  overflow:hidden!important;
 }
-
-/* Üst başlık */
-#erisGamesModal.eg-wheel-mode .eg-head{
- flex:0 0 48px!important;
- min-height:48px!important;
- margin:5px 0 0!important;
-}
-
-/* Canlı bahisler için gerçek ayrı satır.
-   Bahis yoksa alan kapanır, gelince çarkın üstünde açılır. */
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
  display:none!important;
  height:0!important;
  min-height:0!important;
  margin:0!important;
+ padding:0!important;
  border:0!important;
 }
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
  display:block!important;
- position:relative!important;
- flex:0 0 34px!important;
- width:100%!important;
- height:34px!important;
- min-height:34px!important;
- margin:5px 0 7px!important;
- overflow:hidden!important;
+ flex:0 0 32px!important;
+ height:32px!important;
+ min-height:32px!important;
+ margin:3px 0 6px!important;
  border:1px solid #ffffff18!important;
- border-radius:11px!important;
- background:#0b0813cc!important;
+ border-radius:10px!important;
+ background:#0b0813!important;
 }
 
-/* Çark artık kendi kutusunun DIŞINA taşmayacak */
+/* ÇARK — KUTUNUN İÇİNDE */
 #erisGamesModal.eg-wheel-mode .eg-stage{
- flex:0 0 342px!important;
- height:342px!important;
- min-height:342px!important;
- max-height:342px!important;
+ position:relative!important;
+ flex:0 0 318px!important;
+ width:100%!important;
+ height:318px!important;
+ min-height:318px!important;
+ max-height:318px!important;
+ margin:4px 0 8px!important;
+ padding:18px 8px 8px!important;
  box-sizing:border-box!important;
- margin:3px 0 10px!important;
- padding:24px 8px 8px!important;
  overflow:hidden!important;
  display:flex!important;
  align-items:center!important;
@@ -1006,45 +616,70 @@ __erisWheelViewportV3.textContent=`
 }
 #erisGamesModal.eg-wheel-mode .eris-wheel-v2{
  width:100%!important;
- height:100%!important;
  padding:0!important;
+ margin:0!important;
  display:flex!important;
  align-items:center!important;
  justify-content:center!important;
 }
 #erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
- width:min(294px,78vw)!important;
- max-width:294px!important;
+ width:min(276px,76vw)!important;
+ max-width:276px!important;
  margin:0 auto!important;
  flex:none!important;
 }
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap:before{
+ inset:-5px!important;
+}
 
-/* 9 seçim kartı aşağıda kendi alanında */
+/* 9 NESNE + BAHİS MİKTARLARI */
 #erisGamesModal.eg-wheel-mode .eg-form{
  flex:0 0 auto!important;
+ width:100%!important;
  margin:0!important;
  padding:8px!important;
- gap:7px!important;
-}
-#erisGamesModal.eg-wheel-mode .eg-wheel-picks{
+ box-sizing:border-box!important;
+ border-radius:15px!important;
  gap:6px!important;
 }
+#erisGamesModal.eg-wheel-mode .eg-form>label{
+ display:none!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-picks{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ width:100%!important;
+ gap:5px!important;
+ margin:0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-pick{
+ min-height:58px!important;
+ padding:4px 2px!important;
+ border-radius:11px!important;
+ gap:1px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-pick.active:after{
+ display:none!important;
+}
 
-/* 8 Lidya miktarı: tam genişlik + daha büyük */
+/* 8 BÜYÜK BUTON — TAM GENİŞLİK */
 #erisGamesModal.eg-wheel-mode .eg-stake-presets{
  display:grid!important;
  grid-template-columns:repeat(8,minmax(0,1fr))!important;
  width:100%!important;
  gap:4px!important;
- margin:7px 0 2px!important;
+ margin:7px 0 0!important;
  padding:0!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button{
- width:100%!important;
  min-width:0!important;
- height:42px!important;
+ width:100%!important;
+ height:40px!important;
+ margin:0!important;
  padding:0!important;
- border-radius:11px!important;
+ border-radius:10px!important;
+ font-size:0!important;
+ white-space:nowrap!important;
  overflow:hidden!important;
  display:flex!important;
  align-items:center!important;
@@ -1052,16 +687,20 @@ __erisWheelViewportV3.textContent=`
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button:before{
  content:"🪙"!important;
- font-size:9px!important;
+ font-size:8px!important;
  margin-right:1px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button:after{
  content:attr(data-stake-value)!important;
  font-size:9px!important;
- letter-spacing:-.45px!important;
+ letter-spacing:-.5px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button.wheel-stake-active{
+ border-color:#ffd477!important;
+ box-shadow:0 0 0 1px #ffd47766!important;
 }
 
-/* Sayaç da seçimlerin dibinde kalsın */
+/* SAYAÇ */
 #erisGamesModal.eg-wheel-mode [data-wheel-clock]{
  flex:0 0 24px!important;
  height:24px!important;
@@ -1069,5 +708,15 @@ __erisWheelViewportV3.textContent=`
  margin:5px 0 0!important;
  font-size:12px!important;
 }
+
+/* BOŞ SONUÇ ALANI YER YEMESİN */
+#erisGamesModal.eg-wheel-mode .eg-result:empty{
+ display:none!important;
+ margin:0!important;
+ padding:0!important;
+ height:0!important;
+ min-height:0!important;
+ border:0!important;
+}
 `;
-document.head.appendChild(__erisWheelViewportV3);
+document.head.appendChild(erisWheelLayout);
