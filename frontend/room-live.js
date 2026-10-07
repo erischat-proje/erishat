@@ -105,6 +105,26 @@
       [data-seat-count="16"] .eris-seat .seat-ava{width:24px;height:24px;font-size:11px}
       .eris-seat .seat-ava{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#8a5cff,#ff4fa3);font-size:18px;margin:auto;overflow:hidden;border:1px solid #ffffff28}.eris-seat .seat-ava.avatar{background-size:cover;background-position:center}.eris-seat.empty .seat-ava{background:rgba(255,255,255,.055);color:#aaa0ad}
       .eris-seat .seat-pod{width:100%;height:100%;display:grid;place-items:center;position:relative}
+      .eris-seat.permission-waiting .seat-ava{color:transparent!important;font-size:0!important}
+      .eris-seat.permission-waiting .seat-pod::after{
+        content:'✋';
+        position:absolute;
+        left:50%;
+        top:50%;
+        transform:translate(-50%,-50%);
+        z-index:12;
+        display:grid;
+        place-items:center;
+        width:42px;
+        height:42px;
+        border-radius:50%;
+        background:rgba(25,20,35,.82);
+        border:1px solid rgba(255,255,255,.20);
+        box-shadow:0 5px 18px rgba(0,0,0,.35);
+        font-size:23px;
+        line-height:1;
+        pointer-events:none;
+      }
       .eris-seat .seat-mic{display:none!important}
       .eris-seat .seat-ava{width:100%;height:100%;border:0;box-sizing:border-box}
       .eris-seat.empty .seat-ava{background:transparent;border:0;font-size:28px}
@@ -193,7 +213,7 @@
       const b=document.createElement('button');b.type='button';
       b.dataset.seatNumber=String(num);b.dataset.userId=String(seat.user_id||'');
       b.dataset.muted=String(!!seat.muted);
-      b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'');
+      b.className='eris-seat'+(occupied?' occupied':' empty')+(locked?' locked':'')+(isMe?' me':'')+(!occupied&&!locked&&window.__erisRoomPermissions?.seat_permission?' permission-waiting':'');
       b.setAttribute('aria-label',occupied?('Koltuk '+num+' • '+(isMe?'Sen':seat.nickname||seat.user_name||'Konuşmacı')):((locked?'Kilitli koltuk ':'Boş koltuk ')+num));
       b.innerHTML='<div class="seat-pod"><div class="seat-ava">'+(occupied?'👤':locked?'🔒':window.__erisRoomPermissions?.seat_permission?'✋':'＋')+'</div><div class="seat-frame"></div><span class="seat-mic">🎙</span></div><b class="seat-name"></b><small></small>';
       if(avatarUrl){
