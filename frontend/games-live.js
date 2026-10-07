@@ -550,7 +550,7 @@ erisWheelLayout.textContent=`
 /* BAKİYE + X */
 #erisGamesModal.eg-wheel-mode .eg-wallet{
  position:absolute!important;
- top:10px!important;
+ top:14px!important;
  right:58px!important;
  width:auto!important;
  margin:0!important;
@@ -580,12 +580,14 @@ erisWheelLayout.textContent=`
  overflow:hidden!important;
 }
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
- display:none!important;
- height:0!important;
- min-height:0!important;
- margin:0!important;
- padding:0!important;
- border:0!important;
+ display:block!important;
+ flex:0 0 32px!important;
+ height:32px!important;
+ min-height:32px!important;
+ margin:3px 0 6px!important;
+ border:1px solid #ffffff18!important;
+ border-radius:10px!important;
+ background:#0b0813!important;
 }
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
  display:block!important;
@@ -666,6 +668,7 @@ erisWheelLayout.textContent=`
 #erisGamesModal.eg-wheel-mode .eg-stake-presets{
  display:grid!important;
  grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ grid-column:1/-1!important;
  width:100%!important;
  gap:4px!important;
  margin:7px 0 0!important;
