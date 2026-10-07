@@ -925,3 +925,88 @@
     height:52px!important;
   }
 }
+/* LUDO BAGIMSIZ YATAY KOLTUK */
+#erisRoomSurface.ludo-mode .ludo-lobby-seats,
+#erisRoomSurface.ludo-mode .ludo-seat-strip{
+  display:flex!important;
+  flex-flow:row nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  white-space:nowrap!important;
+  touch-action:pan-x!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy{
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 52px!important;
+  width:52px!important;
+  min-width:52px!important;
+  max-width:52px!important;
+  height:52px!important;
+  margin:0!important;
+  padding:2px!important;
+  border:1px solid rgba(255,255,255,.32)!important;
+  border-radius:50%!important;
+  background:rgba(20,17,29,.92)!important;
+  box-sizing:border-box!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy .seat-pod{
+  position:relative!important;
+  width:100%!important;
+  height:100%!important;
+  display:grid!important;
+  place-items:center!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy .seat-ava{
+  width:100%!important;
+  height:100%!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  overflow:hidden!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy.occupied .seat-ava{
+  width:76%!important;
+  height:76%!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy .seat-frame{
+  position:absolute!important;
+  inset:-7%!important;
+  z-index:2!important;
+  background:center/contain no-repeat!important;
+  pointer-events:none!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy .seat-mic,
+#erisRoomSurface.ludo-mode .ludo-seat-proxy > b,
+#erisRoomSurface.ludo-mode .ludo-seat-proxy > small{
+  display:none!important;
+}
+
+#erisRoomSurface.ludo-mode > .ludo-modal > .ludo-lobby-seats{
+  position:relative!important;
+  order:0!important;
+  flex:0 0 60px!important;
+  height:60px!important;
+  min-height:60px!important;
+  padding:4px 7px!important;
+}
+
+#erisRoomSurface.ludo-mode > .ludo-modal > .ludo-dialog{
+  order:1!important;
+  margin:4px auto 0!important;
+}

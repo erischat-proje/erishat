@@ -62,6 +62,7 @@ const syncSeats=()=>{
   strip.replaceChildren();
   originals.forEach(real=>{
     const clone=real.cloneNode(true);
+    clone.classList.remove('eris-seat');
     clone.classList.add('ludo-seat-proxy');
     clone.style.visibility='visible';
     clone.style.pointerEvents='auto';
@@ -230,6 +231,7 @@ const syncLobbySeats=()=>{
 
   originals.forEach(real=>{
     const clone=real.cloneNode(true);
+    clone.classList.remove('eris-seat');
     clone.classList.add('ludo-seat-proxy');
     clone.style.visibility='visible';
     clone.style.pointerEvents='auto';
