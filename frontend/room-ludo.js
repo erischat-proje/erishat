@@ -124,6 +124,9 @@ root.querySelector('[data-settings]').onclick=open;
       const host=surface();
       if(!host?.classList.contains('ludo-mode'))return;
       if(!(event.target instanceof Element)||!host.contains(event.target))return;
+      /* Canonical oda medya kontrollerini room-modern-controls capture handler'i yonetir.
+         Ludo bunlarin pointerdown/click olaylarini yutmaz. */
+      if(event.target.closest('#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erisRoomGiftInline'))return;
       guardRoomEvent(event);
     },true);
   });

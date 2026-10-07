@@ -662,3 +662,18 @@
 #erischatGiftPanel,#erisMusicPanel{z-index:13050 !important;pointer-events:auto !important}
 #erisRoomWallpaperModal{z-index:13060 !important;pointer-events:auto !important}
 #erisRoomWallpaperZoom{z-index:13061 !important;pointer-events:auto !important}
+
+
+/* === ROOM CONTROL EVENT FINAL V10 === */
+#erisRoomSurface.show > .eris-room-quick-actions{
+  display:flex !important;
+  pointer-events:auto !important;
+  position:absolute !important;
+  z-index:950 !important;
+}
+#erisRoomSurface.show > .eris-room-quick-actions > button{
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+  position:relative !important;
+  z-index:951 !important;
+}

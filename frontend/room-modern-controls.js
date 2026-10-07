@@ -119,21 +119,44 @@
       }
     }catch(e){if(request===requestNumber)list.textContent=e.message||'Sıralama yüklenemedi.';}
   }
-  function bindMediaControls(){
-    const s=surface();if(!s)return;
-    const gift=s.querySelector('#erisRoomGift');
-    const music=s.querySelector('#erisRoomMusic');
-    const wallpaper=s.querySelector('#erisRoomWallpaper');
-    if(gift)gift.onclick=()=>window.openRoomGift?.(roomId());
-    if(music)music.onclick=()=>window.ErisChatMusic?.open?.();
-    if(wallpaper)wallpaper.onclick=()=>{
+  function runRoomControl(kind){
+    const id=roomId();
+    if(!id)return;
+    if(kind==='gift'){
+      if(typeof window.openRoomGift!=='function')return window.toast?.('Hediye paneli hazır değil.');
+      window.openRoomGift(id);return;
+    }
+    if(kind==='music'){
+      if(typeof window.ErisChatMusic?.open!=='function')return window.toast?.('Müzik paneli hazır değil.');
+      window.ErisChatMusic.open();return;
+    }
+    if(kind==='wallpaper'){
+      if(typeof window.ErisChatRoomWallpaper?.open!=='function')return window.toast?.('Duvar kâğıdı paneli hazır değil.');
       const room=window.__erisLiveRoom||{};
       if(!(room.is_owner||window.__erisRoomPermissions?.is_owner))return;
-      window.ErisChatRoomWallpaper?.open?.(roomId(),room);
-    };
-    const inline=s.querySelector('#erisRoomGiftInline');
-    if(inline)inline.onclick=()=>window.openRoomGift?.(roomId());
+      window.ErisChatRoomWallpaper.open(id,room);
+    }
   }
+  function bindMediaControls(){
+    const s=surface();if(!s)return;
+    const map={erisRoomGift:'gift',erisRoomMusic:'music',erisRoomWallpaper:'wallpaper',erisRoomGiftInline:'gift'};
+    for(const [id,kind] of Object.entries(map)){
+      const button=s.querySelector('#'+id);
+      if(!button)continue;
+      button.onclick=e=>{e.preventDefault();e.stopPropagation();runRoomControl(kind)};
+    }
+  }
+  document.addEventListener('click',event=>{
+    const host=surface();
+    if(!host?.classList.contains('show'))return;
+    const button=event.target instanceof Element ? event.target.closest('#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erisRoomGiftInline') : null;
+    if(!button||!host.contains(button))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const kind=button.id==='erisRoomMusic'?'music':button.id==='erisRoomWallpaper'?'wallpaper':'gift';
+    runRoomControl(kind);
+  },true);
+
   function setup(){
     const s=surface();if(!s)return;
     bindMediaControls();
