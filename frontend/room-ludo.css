@@ -651,3 +651,180 @@
     height:50px!important;
   }
 }
+
+/* === LUDO FINAL YERLEŞİM DÜZELTMESİ === */
+
+/* Chat biraz daha büyük */
+#erisRoomSurface.ludo-mode .eris-room-chat{
+  height:190px!important;
+}
+
+/* Ludo kullanılabilir alanı chatin hemen üstünde bitsin */
+#erisRoomSurface.ludo-mode > .ludo-room{
+  bottom:190px!important;
+}
+
+#erisRoomSurface.ludo-mode .eris-room-stage{
+  bottom:190px!important;
+}
+
+/* Lobi alanı: üst koltuk şeridi + kompakt orta panel */
+#erisRoomSurface.ludo-mode > .ludo-modal{
+  top:78px!important;
+  bottom:190px!important;
+
+  left:6px!important;
+  right:6px!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+
+  padding:0!important;
+  overflow:hidden!important;
+  background:rgba(5,5,10,.76)!important;
+}
+
+/* 1 -> 24 KOLTUK: MUTLAKA ÜSTTE YATAY TEK SIRA */
+#erisRoomSurface.ludo-mode > .ludo-modal > .ludo-lobby-seats{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+
+  order:0!important;
+
+  width:100%!important;
+  height:64px!important;
+  min-height:64px!important;
+  flex:0 0 64px!important;
+
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+
+  gap:6px!important;
+  padding:4px 7px!important;
+
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+}
+
+/* Eski oda koltuk CSS'sinin absolute konumlarını tamamen ez */
+#erisRoomSurface.ludo-mode > .ludo-modal > .ludo-lobby-seats > .ludo-seat-proxy{
+  position:relative!important;
+
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  left:auto!important;
+
+  inset:auto!important;
+  transform:none!important;
+
+  display:block!important;
+
+  flex:0 0 56px!important;
+  width:56px!important;
+  min-width:56px!important;
+  max-width:56px!important;
+  height:56px!important;
+
+  margin:0!important;
+
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+
+/* Ludo ayarları koltukların ALTINDA */
+#erisRoomSurface.ludo-mode > .ludo-modal > .ludo-dialog{
+  position:relative!important;
+
+  order:1!important;
+
+  width:min(560px,calc(100% - 8px))!important;
+  height:auto!important;
+  max-height:calc(100% - 70px)!important;
+
+  flex:0 1 auto!important;
+
+  margin:4px auto 0!important;
+  padding:0!important;
+
+  overflow-y:auto!important;
+
+  border-radius:14px!important;
+  box-sizing:border-box!important;
+}
+
+/* Önceki margin-top kuralını iptal et */
+#erisRoomSurface.ludo-mode .ludo-lobby-seats + .ludo-dialog{
+  margin-top:4px!important;
+}
+
+/* Lobi başlığı daha az yer kaplasın */
+#erisRoomSurface.ludo-mode .ludo-dialog > header{
+  min-height:42px!important;
+  height:42px!important;
+  padding:3px 8px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-dialog > header h2{
+  font-size:19px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-dialog > header [data-close]{
+  width:34px!important;
+  height:34px!important;
+  font-size:22px!important;
+}
+
+/* İçerik de devasa boşluk bırakmasın */
+#erisRoomSurface.ludo-mode .ludo-dialog [data-body]{
+  padding:8px 10px 12px!important;
+}
+
+/* Telefonda da aynı düzen */
+@media(max-width:520px){
+  #erisRoomSurface.ludo-mode .eris-room-chat{
+    height:180px!important;
+  }
+
+  #erisRoomSurface.ludo-mode > .ludo-room,
+  #erisRoomSurface.ludo-mode .eris-room-stage{
+    bottom:180px!important;
+  }
+
+  #erisRoomSurface.ludo-mode > .ludo-modal{
+    top:72px!important;
+    bottom:180px!important;
+  }
+
+  #erisRoomSurface.ludo-mode > .ludo-modal > .ludo-lobby-seats{
+    height:60px!important;
+    min-height:60px!important;
+    flex-basis:60px!important;
+  }
+
+  #erisRoomSurface.ludo-mode > .ludo-modal > .ludo-lobby-seats > .ludo-seat-proxy{
+    flex-basis:52px!important;
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+    height:52px!important;
+  }
+
+  #erisRoomSurface.ludo-mode > .ludo-modal > .ludo-dialog{
+    max-height:calc(100% - 64px)!important;
+  }
+}
