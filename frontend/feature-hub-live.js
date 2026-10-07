@@ -208,3 +208,229 @@
   // Main VIP page uses vip-rewards-live.js; this hub keeps its own VIP tab renderer.
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+
+/* ERIS FAMILY PREMIUM UI V2 */
+;(()=>{
+  if(document.getElementById('erisFamilyPremiumV2'))return;
+  const s=document.createElement('style');
+  s.id='erisFamilyPremiumV2';
+  s.textContent=`
+  .eh-family-shell{
+    --ef-line:#ffffff12;
+    --ef-soft:#ffffff08;
+    --ef-muted:#a99eb5;
+    color:#f8f4ff;
+    padding-bottom:28px
+  }
+
+  .eh-family-hero{
+    padding:20px!important;
+    border:1px solid #ffffff18!important;
+    border-radius:26px!important;
+    background:
+      radial-gradient(circle at 92% 5%,#ffd27a20 0,transparent 28%),
+      radial-gradient(circle at 4% 100%,#8d5cff24 0,transparent 38%),
+      linear-gradient(145deg,#21172b 0%,#15101d 52%,#100c16 100%)!important;
+    box-shadow:0 18px 55px #00000045,inset 0 1px #ffffff0b;
+  }
+
+  .eh-family-head{gap:15px!important}
+
+  .eh-family-crest{
+    width:76px!important;height:76px!important;
+    border-radius:23px!important;
+    border:1px solid #ffffff22!important;
+    box-shadow:0 10px 30px #0008,0 0 28px #925dff20!important;
+  }
+
+  .eh-family-head b{
+    font-size:20px!important;
+    letter-spacing:-.3px
+  }
+
+  .eh-family-meta{
+    color:#aaa0b4!important;
+    font-size:11px!important;
+    line-height:1.55!important
+  }
+
+  .eh-family-level{
+    min-width:48px;
+    text-align:center;
+    font-size:31px!important;
+    color:#ffd47d!important;
+    text-shadow:0 0 22px #ffb84d35
+  }
+
+  .eh-family-progress{
+    height:9px!important;
+    margin:17px 0 8px!important;
+    background:#ffffff0c!important;
+    border:1px solid #ffffff0a
+  }
+
+  .eh-family-progress i{
+    background:linear-gradient(90deg,#8055ff,#b86cff 48%,#ffc66d)!important;
+    box-shadow:0 0 16px #a96cff55
+  }
+
+  .eh-family-progress-label{
+    font-size:10px!important;
+    color:#aaa0b4!important
+  }
+
+  [data-action="family-avatar"]{
+    width:100%!important;
+    min-height:45px!important;
+    margin:12px 0 4px!important;
+    border-radius:15px!important;
+    border:1px solid #ffffff13!important;
+    background:linear-gradient(180deg,#ffffff0b,#ffffff05)!important;
+    color:#e9e1f0!important;
+    font-size:11px!important;
+    font-weight:800!important
+  }
+
+  .eh-family-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+    margin:12px 0 20px!important
+  }
+
+  .eh-family-actions button{
+    position:relative;
+    min-height:58px!important;
+    padding:10px 12px!important;
+    border:1px solid #ffffff11!important;
+    border-radius:17px!important;
+    background:linear-gradient(145deg,#17121d,#110d16)!important;
+    box-shadow:inset 0 1px #ffffff08,0 6px 18px #0002;
+    color:#f3edf7!important;
+    font-size:11px!important;
+    font-weight:850!important;
+    transition:transform .15s,border-color .15s,background .15s
+  }
+
+  .eh-family-actions button:active{
+    transform:scale(.975);
+    background:#201725!important
+  }
+
+  .eh-family-actions button[data-action="members"]{
+    border-color:#8567ff28!important
+  }
+
+  .eh-family-actions button[data-action="chat"]{
+    border-color:#58b7ff25!important
+  }
+
+  .eh-family-actions button[data-action="invite"],
+  .eh-family-actions button[data-action="applications"],
+  .eh-family-actions button[data-action="manage"]{
+    border-color:#c384ff22!important
+  }
+
+  .eh-family-actions button[data-action="donate"]{
+    border-color:#65d9d72b!important
+  }
+
+  .eh-family-actions button[data-action="leave"]{
+    color:#ff9da8!important;
+    border-color:#ff667326!important;
+    background:linear-gradient(145deg,#241218,#150d12)!important
+  }
+
+  .eh-family-section-title{
+    margin:23px 2px 12px!important;
+    padding-bottom:10px;
+    border-bottom:1px solid #ffffff0d;
+    font-size:15px!important;
+    letter-spacing:-.2px
+  }
+
+  .eh-family-member-strip{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px!important;
+    overflow:visible!important;
+    padding:0!important
+  }
+
+  .eh-family-person{
+    min-width:0!important;
+    min-height:115px;
+    padding:14px 8px 11px;
+    border:1px solid #ffffff10;
+    border-radius:18px;
+    background:linear-gradient(145deg,#17121e,#100c15);
+    box-shadow:inset 0 1px #ffffff07;
+    text-align:center!important
+  }
+
+  .eh-family-avatar{
+    width:62px!important;height:62px!important;
+    margin:0 auto 8px!important;
+    border:2px solid #986bff!important;
+    box-shadow:0 0 0 3px #986bff12,0 8px 22px #0006;
+  }
+
+  .eh-family-vip{
+    right:-8px!important;
+    bottom:-4px!important;
+    padding:3px 7px!important;
+    border:1px solid #c59cff50;
+    background:#543177!important;
+    box-shadow:0 4px 12px #0007
+  }
+
+  .eh-family-person b{
+    max-width:100%!important;
+    padding:0 3px;
+    font-size:11px!important
+  }
+
+  .eh-family-role{
+    margin-top:6px!important;
+    padding:4px 9px!important;
+    background:linear-gradient(135deg,#7c4dff30,#bc68ff22)!important;
+    border:1px solid #a779ff30;
+    color:#ddcaff!important;
+    font-size:8px!important;
+    font-weight:850
+  }
+
+  .eh-family-row{
+    min-height:68px;
+    padding:10px!important;
+    margin-bottom:7px;
+    border:1px solid #ffffff0d!important;
+    border-radius:15px;
+    background:#ffffff04
+  }
+
+  .eh-family-row .eh-family-avatar{
+    width:48px!important;height:48px!important;
+    margin:0!important
+  }
+
+  .eh-family-empty{
+    border-radius:17px!important;
+    border-color:#ffffff10!important;
+    background:#ffffff04!important
+  }
+
+  .eh-family-inline input,.eh-family-form input{
+    min-height:44px;
+    border-color:#ffffff13!important;
+    background:#ffffff07!important
+  }
+
+  @media(max-width:380px){
+    .eh-family-hero{padding:16px!important}
+    .eh-family-crest{width:66px!important;height:66px!important}
+    .eh-family-level{font-size:27px!important}
+    .eh-family-actions button{min-height:54px!important;font-size:10px!important}
+  }
+  `;
+  document.head.appendChild(s);
+})();
