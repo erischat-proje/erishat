@@ -1,93 +1,4 @@
-.ludo-room{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:rgba(8,8,14,.96);overflow:hidden}
-.ludo-seat-strip{display:flex;gap:8px;overflow-x:auto;flex:0 0 78px;padding:5px 8px;align-items:center;scrollbar-width:thin}
-.ludo-seat-strip .ludo-seat-proxy{position:relative!important;left:auto!important;top:auto!important;transform:none!important;flex:0 0 68px;width:68px!important;height:68px!important;opacity:1!important;pointer-events:auto!important}
-#erisRoomSurface .eris-room-stage.ludo-active>.eris-seat{opacity:0!important;pointer-events:none!important}
-.ludo-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:4px 8px}
-.ludo-dice{display:flex;gap:6px}
-.ludo-die{width:42px;height:42px;border-radius:10px;border:1px solid #d7b66a;background:#fff;color:#111;font-size:22px;font-weight:900}
-.ludo-die.active{box-shadow:0 0 0 2px #ffd75a,0 0 15px #ffd75a}
-.ludo-roll{min-height:42px;padding:0 14px;border:0;border-radius:10px;font-weight:800}
-.ludo-board-space{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:3px}
-.ludo-board{position:relative;width:min(98vw,calc(100dvh - 150px));height:min(98vw,calc(100dvh - 150px));max-width:700px;max-height:700px;touch-action:none}
-.ludo-board svg{position:absolute;inset:0;width:100%;height:100%}
-.ludo-pawn,.ludo-bomb{position:absolute;z-index:5;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);user-select:none}
-.ludo-pawn{width:6.5%;height:6.5%;border-radius:50%;font-size:clamp(10px,2.4vw,18px);font-weight:900;cursor:pointer;border:2px solid #fff;box-shadow:0 2px 8px #000}
-.ludo-bomb{width:7%;height:7%;font-size:clamp(16px,4vw,30px);filter:drop-shadow(0 2px 4px #000)}
-.ludo-bomb.explode{animation:ludoBomb .45s ease-out}
-.ludo-status{text-align:center;font-size:12px;font-weight:700;padding:2px 8px;min-height:18px}
-@keyframes ludoBomb{50%{transform:translate(-50%,-50%) scale(1.7) rotate(20deg);filter:brightness(2)}100%{transform:translate(-50%,-50%) scale(.2);opacity:0}}
-@media(max-width:520px){.ludo-seat-strip{flex-basis:72px}.ludo-seat-strip .ludo-seat-proxy{width:62px!important;height:62px!important;flex-basis:62px}.ludo-toolbar{min-height:50px}.ludo-die{width:38px;height:38px}.ludo-board{width:min(99vw,calc(100dvh - 130px));height:min(99vw,calc(100dvh - 130px))}}
-
-/* Ludo oyun modu: koltuklar ve tahta birbirine binmesin */
-.ludo-room{
-  box-sizing:border-box;
-}
-
-.ludo-seat-strip{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:4px;
-  width:100%;
-  flex:0 0 72px;
-  padding:4px 6px;
-  overflow:hidden;
-  box-sizing:border-box;
-}
-
-.ludo-seat-strip .ludo-seat-proxy{
-  position:relative!important;
-  inset:auto!important;
-  transform:none!important;
-  width:100%!important;
-  max-width:68px;
-  height:64px!important;
-  min-width:0!important;
-  margin:auto!important;
-  flex:none!important;
-  box-sizing:border-box;
-}
-
-.ludo-board-space{
-  flex:1 1 auto;
-  min-height:0;
-  min-width:0;
-  overflow:hidden;
-  padding:2px 4px;
-  box-sizing:border-box;
-}
-
-.ludo-board{
-  width:min(100%,calc(100dvh - 205px));
-  height:min(100%,calc(100dvh - 205px));
-  aspect-ratio:1/1;
-  flex:none;
-}
-
-@media(max-width:520px){
-  .ludo-seat-strip{
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    flex-basis:66px;
-    gap:2px;
-    padding:3px 4px;
-  }
-
-  .ludo-seat-strip .ludo-seat-proxy{
-    width:100%!important;
-    max-width:58px;
-    height:58px!important;
-  }
-
-  .ludo-board{
-    width:min(100%,calc(100dvh - 190px));
-    height:min(100%,calc(100dvh - 190px));
-  }
-}
-
-
-/* Ludo foreground: oda yüzeyinin içinde, oda içeriğinin önünde */
-#erisRoomSurface{
-  position:relative!important;
-}
+/* ErisChat Ludo — foreground oyun yerleşimi */
 
 #erisRoomSurface > .ludo-room{
   position:absolute!important;
@@ -97,11 +8,242 @@
   height:100%!important;
   max-width:none!important;
   max-height:none!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
   overflow:hidden!important;
   isolation:isolate;
+  background:rgba(8,8,14,.98);
 }
 
+/* Oyun açıkken gerçek oda koltukları arkada kalır */
 #erisRoomSurface .eris-room-stage.ludo-active{
   visibility:hidden!important;
   pointer-events:none!important;
+}
+
+/* Üst araç çubuğu */
+.ludo-toolbar{
+  flex:0 0 48px;
+  min-height:48px;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:4px 8px;
+  z-index:3;
+}
+
+.ludo-toolbar strong{
+  font-size:16px;
+  font-weight:900;
+}
+
+.ludo-toolbar .ludo-pool{
+  flex:1;
+  min-width:0;
+}
+
+.ludo-toolbar button{
+  min-height:36px;
+  border-radius:10px;
+}
+
+/* İlk dört oda koltuğu */
+.ludo-seat-strip{
+  flex:0 0 66px;
+  width:100%;
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:center;
+  gap:3px;
+  padding:2px 5px;
+  overflow:hidden;
+}
+
+.ludo-seat-strip .ludo-seat-proxy{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  top:auto!important;
+  transform:none!important;
+  width:100%!important;
+  max-width:60px!important;
+  height:60px!important;
+  min-width:0!important;
+  margin:auto!important;
+  flex:none!important;
+  box-sizing:border-box!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+
+/* Oyuncu bilgi satırı */
+.ludo-players{
+  flex:0 0 auto;
+  min-height:0;
+  width:100%;
+  box-sizing:border-box;
+}
+
+/* Tahta kullanılabilir alanı doldurur ama kare kalır */
+.ludo-board-space{
+  flex:1 1 0;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:2px 4px;
+}
+
+.ludo-board{
+  position:relative;
+  width:auto;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  aspect-ratio:1/1;
+  flex:none;
+  touch-action:none;
+}
+
+.ludo-board svg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+/* Piyonlar ve bombalar */
+.ludo-pawn,
+.ludo-bomb{
+  position:absolute;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform:translate(-50%,-50%);
+  user-select:none;
+}
+
+.ludo-pawn{
+  width:6.5%;
+  height:6.5%;
+  border-radius:50%;
+  font-size:clamp(10px,2.4vw,18px);
+  font-weight:900;
+  cursor:pointer;
+  border:2px solid #fff;
+  box-shadow:0 2px 8px #000;
+}
+
+.ludo-bomb{
+  width:7%;
+  height:7%;
+  font-size:clamp(16px,4vw,30px);
+  filter:drop-shadow(0 2px 4px #000);
+}
+
+.ludo-bomb.explode{
+  animation:ludoBomb .45s ease-out;
+}
+
+/* Alt zar/kontrol alanı */
+.ludo-control{
+  flex:0 0 76px;
+  min-height:76px;
+  box-sizing:border-box;
+  padding:4px 8px 6px;
+  overflow:hidden;
+}
+
+.ludo-dice-wrap,
+.ludo-dice{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.ludo-die{
+  width:40px;
+  height:40px;
+  flex:none;
+  padding:0;
+  border-radius:10px;
+  border:1px solid #d7b66a;
+  background:#fff;
+  color:#111;
+  font-size:22px;
+  font-weight:900;
+}
+
+.ludo-die.active{
+  box-shadow:0 0 0 2px #ffd75a,0 0 15px #ffd75a;
+}
+
+.ludo-roll{
+  min-height:40px;
+  padding:0 14px;
+  border:0;
+  border-radius:10px;
+  font-weight:800;
+}
+
+.ludo-status{
+  min-height:18px;
+  padding:2px 8px;
+  text-align:center;
+  font-size:11px;
+  font-weight:700;
+}
+
+@keyframes ludoBomb{
+  50%{
+    transform:translate(-50%,-50%) scale(1.7) rotate(20deg);
+    filter:brightness(2);
+  }
+  100%{
+    transform:translate(-50%,-50%) scale(.2);
+    opacity:0;
+  }
+}
+
+@media(max-width:520px){
+  .ludo-toolbar{
+    flex-basis:44px;
+    min-height:44px;
+  }
+
+  .ludo-seat-strip{
+    flex-basis:60px;
+    height:60px;
+    gap:2px;
+    padding:1px 4px;
+  }
+
+  .ludo-seat-strip .ludo-seat-proxy{
+    max-width:54px!important;
+    height:54px!important;
+  }
+
+  .ludo-control{
+    flex-basis:70px;
+    min-height:70px;
+  }
+
+  .ludo-die{
+    width:36px;
+    height:36px;
+  }
+
+  .ludo-roll{
+    min-height:36px;
+  }
 }
