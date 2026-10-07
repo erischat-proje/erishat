@@ -335,3 +335,334 @@
 .ludo-dialog button{
   touch-action:manipulation;
 }
+
+/* =========================================================
+   ERISCHAT LUDO — ODA İÇİ OYUN MODU
+   Üst: tüm koltuklar yatay/kaydırılabilir
+   Orta: Ludo
+   Alt: küçültülmüş gerçek oda sohbeti
+   ========================================================= */
+
+/* Ludo açıkken oda başlığı korunur, chat küçülür */
+#erisRoomSurface.ludo-mode .eris-room-chat{
+  height:142px!important;
+  z-index:650!important;
+}
+
+#erisRoomSurface.ludo-mode .eris-room-stage{
+  visibility:visible!important;
+  pointer-events:auto!important;
+  top:76px!important;
+  bottom:142px!important;
+}
+
+/* Orijinal stage koltukları Ludo sırasında arkada gizle.
+   Ludo'nun kaydırılabilir proxy koltukları görünür kalır. */
+#erisRoomSurface.ludo-mode .eris-room-stage > .eris-seat{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
+/* Ludo artık fullscreen değil:
+   oda başlığı ile küçültülmüş chat arasındaki oyun alanı */
+#erisRoomSurface.ludo-mode > .ludo-room{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  top:76px!important;
+  bottom:142px!important;
+  width:auto!important;
+  height:auto!important;
+  z-index:600!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+
+  box-sizing:border-box!important;
+  background:rgba(8,8,14,.96)!important;
+}
+
+/* TÜM KOLTUKLAR — 1'den oda kapasitesine kadar tek sıra */
+#erisRoomSurface.ludo-mode .ludo-seat-strip{
+  order:0!important;
+
+  display:flex!important;
+  flex-flow:row nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+
+  width:100%!important;
+  height:66px!important;
+  min-height:66px!important;
+  flex:0 0 66px!important;
+
+  gap:6px!important;
+  padding:3px 8px 5px!important;
+
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+
+  box-sizing:border-box!important;
+  scrollbar-width:thin;
+}
+
+/* Proxy koltuklar gerçek oda koltuklarının görünümünü korur */
+#erisRoomSurface.ludo-mode .ludo-seat-strip .ludo-seat-proxy{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+
+  transform:none!important;
+
+  flex:0 0 56px!important;
+  width:56px!important;
+  min-width:56px!important;
+  max-width:56px!important;
+  height:56px!important;
+
+  margin:0!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+
+  scroll-snap-align:start;
+  box-sizing:border-box!important;
+}
+
+/* Koltuk avatarları küçük şeride uyumlu */
+#erisRoomSurface.ludo-mode .ludo-seat-proxy.occupied .seat-ava{
+  width:72%!important;
+  height:72%!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-seat-proxy .seat-frame{
+  display:block!important;
+}
+
+/* Ludo toolbar */
+#erisRoomSurface.ludo-mode .ludo-toolbar{
+  order:1!important;
+  flex:0 0 42px!important;
+  min-height:42px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+
+  padding:3px 8px!important;
+  box-sizing:border-box!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-toolbar strong{
+  font-size:13px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-toolbar .ludo-pool{
+  flex:1!important;
+  min-width:0!important;
+  font-size:10px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-toolbar button{
+  min-height:32px!important;
+  height:32px!important;
+  padding:0 9px!important;
+  font-size:9px!important;
+}
+
+/* Oyuncu/takım bilgileri kompakt */
+#erisRoomSurface.ludo-mode .ludo-players{
+  order:2!important;
+  flex:0 0 auto!important;
+
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:3px!important;
+
+  padding:2px 6px!important;
+  box-sizing:border-box!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-player{
+  min-width:0!important;
+  padding:3px!important;
+  text-align:center!important;
+  overflow:hidden!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-player b,
+#erisRoomSurface.ludo-mode .ludo-player small{
+  display:block!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+/* ORTA — Ludo tahtası */
+#erisRoomSurface.ludo-mode .ludo-board-space{
+  order:3!important;
+  flex:1 1 0!important;
+  min-height:0!important;
+  min-width:0!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  padding:2px 5px!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-board{
+  position:relative!important;
+
+  width:auto!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+
+  aspect-ratio:1/1!important;
+  flex:none!important;
+}
+
+/* ALT — zar alanı, chat'in hemen üstünde */
+#erisRoomSurface.ludo-mode .ludo-control{
+  order:4!important;
+  flex:0 0 66px!important;
+  min-height:66px!important;
+
+  padding:3px 8px 5px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-dice-wrap{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:5px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-die{
+  width:34px!important;
+  height:34px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-roll{
+  min-height:34px!important;
+  height:34px!important;
+}
+
+/* Chat küçüldüğünde mesaj alanını mümkün olduğunca koru */
+#erisRoomSurface.ludo-mode .eris-room-chat .eris-room-activity{
+  min-height:22px!important;
+}
+
+#erisRoomSurface.ludo-mode .eris-room-chat .eris-chat-list{
+  min-height:0!important;
+  flex:1 1 auto!important;
+}
+
+#erisRoomSurface.ludo-mode .eris-room-compose{
+  padding-top:4px!important;
+  padding-bottom:5px!important;
+}
+
+/* Lobi/ayar penceresi artık fullscreen DEĞİL.
+   Ludo oyun alanı içerisinde kompakt panel. */
+#erisRoomSurface > .ludo-modal{
+  position:absolute!important;
+  left:8px!important;
+  right:8px!important;
+  top:82px!important;
+  bottom:150px!important;
+
+  width:auto!important;
+  height:auto!important;
+
+  z-index:720!important;
+
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+
+  padding:8px!important;
+  overflow-y:auto!important;
+  box-sizing:border-box!important;
+
+  background:rgba(5,5,10,.72)!important;
+  backdrop-filter:blur(8px);
+}
+
+#erisRoomSurface > .ludo-modal > .ludo-dialog{
+  width:min(520px,100%)!important;
+  height:auto!important;
+  max-width:520px!important;
+  max-height:none!important;
+
+  margin:0 auto!important;
+  border-radius:16px!important;
+  overflow:hidden!important;
+
+  background:rgba(20,18,28,.98)!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  box-shadow:0 18px 55px rgba(0,0,0,.55)!important;
+}
+
+/* Ludo kapalıyken hiçbir oda ölçüsü override edilmez.
+   ludo-mode kaldırılınca mevcut ErisChat CSS otomatik geri gelir. */
+
+@media(max-width:520px){
+  #erisRoomSurface.ludo-mode .eris-room-chat{
+    height:132px!important;
+  }
+
+  #erisRoomSurface.ludo-mode .eris-room-stage{
+    bottom:132px!important;
+  }
+
+  #erisRoomSurface.ludo-mode > .ludo-room{
+    top:72px!important;
+    bottom:132px!important;
+  }
+
+  #erisRoomSurface.ludo-mode .ludo-seat-strip{
+    height:60px!important;
+    min-height:60px!important;
+    flex-basis:60px!important;
+    gap:5px!important;
+    padding-left:6px!important;
+    padding-right:6px!important;
+  }
+
+  #erisRoomSurface.ludo-mode .ludo-seat-strip .ludo-seat-proxy{
+    flex-basis:52px!important;
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+    height:52px!important;
+  }
+
+  #erisRoomSurface.ludo-mode .ludo-toolbar{
+    flex-basis:38px!important;
+    min-height:38px!important;
+  }
+
+  #erisRoomSurface.ludo-mode .ludo-control{
+    flex-basis:60px!important;
+    min-height:60px!important;
+  }
+
+  #erisRoomSurface > .ludo-modal{
+    top:78px!important;
+    bottom:138px!important;
+  }
+}

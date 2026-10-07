@@ -51,30 +51,53 @@ const bombPoint=i=>{const q=TRACK[i%TRACK.length];return {x:(q[1]+.5)*100/15,y:(
     const host=surface();if(!host)return null;
     let root=host.querySelector(':scope > .ludo-room');
     if(root)return root;
-    stage()?.classList.add('ludo-active');root=document.createElement('section');root.className='ludo-room ludo-enhanced';
+    surface()?.classList.add('ludo-mode');
+stage()?.classList.add('ludo-active');
+root=document.createElement('section');root.className='ludo-room ludo-enhanced';
 const strip=document.createElement('div');
 strip.className='ludo-seat-strip';
-const originals=[...document.querySelectorAll('#erisRoomSurface .eris-room-stage .eris-seat')];
-originals.forEach(real=>{
-  const clone=real.cloneNode(true);
-  clone.classList.add('ludo-seat-proxy');
-  clone.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();real.click();});
-  strip.appendChild(clone);
-});
+
+const syncSeats=()=>{
+  const originals=[...document.querySelectorAll('#erisRoomSurface .eris-room-stage > .eris-seat')];
+  strip.replaceChildren();
+  originals.forEach(real=>{
+    const clone=real.cloneNode(true);
+    clone.classList.add('ludo-seat-proxy');
+    clone.style.visibility='visible';
+    clone.style.pointerEvents='auto';
+    clone.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      real.click();
+    });
+    strip.appendChild(clone);
+  });
+};
+
+syncSeats();
 root.setAttribute('aria-label','Oda Ludo oyunu');
     root.innerHTML='<div class="ludo-toolbar"><strong>LUDO</strong><span class="ludo-pool"></span><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
-    root.prepend(strip);host.append(root);root.querySelector('[data-settings]').onclick=open;
+    root.prepend(strip);
+host.append(root);
+root.__syncLudoSeats=syncSeats;
+root.querySelector('[data-settings]').onclick=open;
     root.querySelector('[data-stop]').onclick=()=>stopDialog();
     root.querySelector('.ludo-roll').onclick=()=>send('roll');
     resize?.disconnect();const fit=()=>{const area=root.querySelector('.ludo-board-space');const d=Math.max(1,Math.min(area.clientWidth,area.clientHeight));root.querySelector('.ludo-board').style.width=d+'px';};
     if(window.ResizeObserver){resize=new ResizeObserver(fit);resize.observe(root.querySelector('.ludo-board-space'));}requestAnimationFrame(fit);
     return root;
   }
-  function clearBoard(){resize?.disconnect();resize=null;stage()?.classList.remove('ludo-active');surface()?.querySelector('.ludo-room')?.remove();}
+  function clearBoard(){
+    resize?.disconnect();resize=null;
+    stage()?.classList.remove('ludo-active');
+    surface()?.classList.remove('ludo-mode');
+    surface()?.querySelector('.ludo-room')?.remove();
+  }
   function render(snapshot=data){
     if(!snapshot||!rid)return;
     if(animating){surface()?.querySelectorAll('.ludo-token,.ludo-dice,[data-stop]').forEach(n=>n.disabled=true);return;}
     const s=snapshot.state;
+    surface()?.querySelector(':scope > .ludo-room')?.__syncLudoSeats?.();
     if(!s||s.status==='closed'){clearBoard();renderDialog();return;}
     if(s.status==='lobby'){clearBoard();renderDialog();return;}const root=mount();if(!root)return;
     root.querySelector('[data-stop]').hidden=!snapshot.can_manage;
