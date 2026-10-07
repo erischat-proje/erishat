@@ -3,6 +3,45 @@
   const peers=new Map(), known=new Set(), sounds=new Map(), pendingIce=new Map(), reconnectTimers=new Map();
   let stream=null, iceServers=[{urls:'stun:stun.l.google.com:19302'}], myId=null;
   let microphoneSeat=null;
+  const audioConstraints={echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1};
+  const analysers=new Map();
+  let audioContext=null,speakingFrame=0;
+  function speakingStyle(){
+    if(document.getElementById('eris-rtc-speaking-style'))return;
+    const x=document.createElement('style');x.id='eris-rtc-speaking-style';
+    x.textContent='.eris-seat.rtc-speaking{border-color:#fff!important;box-shadow:0 0 0 4px rgba(139,92,246,.42),0 0 0 9px rgba(255,79,163,.18),0 0 24px rgba(180,100,255,.75)!important;animation:erisRtcSpeak .72s ease-in-out infinite alternate}@keyframes erisRtcSpeak{to{transform:translate(-50%,-50%) scale(1.09);box-shadow:0 0 0 6px rgba(139,92,246,.3),0 0 0 13px rgba(255,79,163,.10),0 0 32px rgba(180,100,255,.9)}}@media(prefers-reduced-motion:reduce){.eris-seat.rtc-speaking{animation:none}}';
+    document.head.append(x);
+  }
+  function markSpeaking(id,on){
+    document.querySelectorAll('.eris-seat').forEach(x=>{
+      if(String(x.dataset.userId||'')===String(id))x.classList.toggle('rtc-speaking',!!on);
+    });
+  }
+  function watchLevel(id,media){
+    try{
+      audioContext ||= new (window.AudioContext||window.webkitAudioContext)();
+      audioContext.resume?.().catch(()=>{});
+      const source=audioContext.createMediaStreamSource(media);
+      const analyser=audioContext.createAnalyser();analyser.fftSize=512;analyser.smoothingTimeConstant=.72;
+      source.connect(analyser);analysers.set(String(id),{source,analyser,hot:0});
+      if(!speakingFrame)scanLevels();
+    }catch(e){console.warn('[ErisChat] konuşma göstergesi başlatılamadı',e)}
+  }
+  function scanLevels(){
+    speakingFrame=requestAnimationFrame(scanLevels);
+    for(const [id,x] of analysers){
+      const a=new Uint8Array(x.analyser.fftSize);x.analyser.getByteTimeDomainData(a);
+      let sum=0;for(const v of a){const n=(v-128)/128;sum+=n*n}
+      const rms=Math.sqrt(sum/a.length);
+      if(rms>.045)x.hot=5;else x.hot=Math.max(0,x.hot-1);
+      markSpeaking(id,x.hot>0);
+    }
+  }
+  function unwatchLevel(id){
+    const x=analysers.get(String(id));if(x){try{x.source.disconnect()}catch{}analysers.delete(String(id))}
+    markSpeaking(id,false);
+    if(!analysers.size&&speakingFrame){cancelAnimationFrame(speakingFrame);speakingFrame=0}
+  }
   async function checkMicrophoneSeat(){
     if(!stream)return;
     const id=window.ErisCurrentRoomId||window.currentRoomId;
@@ -41,14 +80,14 @@
   }
   function shouldInitiate(id){return Boolean(myId&&id&&myId<id)}
   async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[ErisChat] ICE aday sinyali uygulanamadı',e)}}}
-  function drop(id){const timer=reconnectTimers.get(id);if(timer)clearTimeout(timer);reconnectTimers.delete(id);pendingIce.delete(id);const pc=peers.get(id);peers.delete(id);if(pc&&pc.signalingState!=='closed')pc.close();const audio=sounds.get(id);if(audio){audio.srcObject=null;audio.remove()}sounds.delete(id)}
+  function drop(id){unwatchLevel(id);const timer=reconnectTimers.get(id);if(timer)clearTimeout(timer);reconnectTimers.delete(id);pendingIce.delete(id);const pc=peers.get(id);peers.delete(id);if(pc&&pc.signalingState!=='closed')pc.close();const audio=sounds.get(id);if(audio){audio.srcObject=null;audio.remove()}sounds.delete(id)}
   function peer(id){if(peers.has(id))return peers.get(id);const pc=new RTCPeerConnection({iceServers});peers.set(id,pc);
     pc.onicecandidate=e=>{if(e.candidate)signal('rtc_ice',id,e.candidate.toJSON())};
-    pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=outputEnabled;audio.playsInline=true;audio.muted=!outputEnabled||isBlocked(id);audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}audio.muted=!outputEnabled||isBlocked(id);audio.srcObject=e.streams[0]||new MediaStream([e.track]);if(outputEnabled&&!isBlocked(id))audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
-    pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){const t=reconnectTimers.get(id);if(t)clearTimeout(t);reconnectTimers.delete(id);return}if(['failed','disconnected','closed'].includes(pc.connectionState)&&!reconnectTimers.has(id)){const timer=setTimeout(()=>{reconnectTimers.delete(id);if(pc.connectionState==='connected'||pc.connectionState==='closed')return;drop(id);if(stream&&shouldInitiate(id))setTimeout(()=>offer(id).catch(()=>{}),350)},3000);reconnectTimers.set(id,timer)}};
+    pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.muted=!outputEnabled||isBlocked(id);audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}const media=e.streams[0]||new MediaStream([e.track]);audio.muted=!outputEnabled||isBlocked(id);audio.srcObject=media;unwatchLevel(id);watchLevel(id,media);if(outputEnabled&&!isBlocked(id))audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
+    pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){const t=reconnectTimers.get(id);if(t)clearTimeout(t);reconnectTimers.delete(id);return}if(['failed','disconnected'].includes(pc.connectionState)&&!reconnectTimers.has(id)){try{pc.restartIce?.()}catch{}const timer=setTimeout(()=>{reconnectTimers.delete(id);if(pc.connectionState==='connected'||pc.connectionState==='closed')return;drop(id);if(stream&&shouldInitiate(id))setTimeout(()=>offer(id).catch(()=>{}),350)},5000);reconnectTimers.set(id,timer)}};
     if(stream)stream.getTracks().forEach(track=>pc.addTrack(track,stream));return pc;
   }
-  async function offer(id){if(!stream||id===myId||!shouldInitiate(id)||!socket()||socket().readyState!==WebSocket.OPEN)return;const pc=peer(id);for(const track of stream.getTracks())if(!pc.getSenders().some(sender=>sender.track===track))pc.addTrack(track,stream);if(pc.signalingState!=='stable')return;const desc=await pc.createOffer();await pc.setLocalDescription(desc);signal('rtc_offer',id,pc.localDescription)}
+  async function offer(id){if(!stream||id===myId||!shouldInitiate(id)||!socket()||socket().readyState!==WebSocket.OPEN)return;const pc=peer(id);for(const track of stream.getTracks())if(!pc.getSenders().some(sender=>sender.track===track))pc.addTrack(track,stream);if(pc.signalingState!=='stable')return;const desc=await pc.createOffer({iceRestart:pc.iceConnectionState==='failed'});await pc.setLocalDescription(desc);signal('rtc_offer',id,pc.localDescription)}
   async function message(d){if(d.type==='rtc_ready'){myId=String(d.user_id);known.clear();(d.peers||[]).forEach(id=>known.add(String(id)));return}
     if(d.type==='rtc_peer_joined'){const id=String(d.user_id||'');if(id&&id!==myId){known.add(id);if(stream&&shouldInitiate(id))await offer(id)}return}
     const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
@@ -64,11 +103,11 @@
       if(cfg.muted)return window.toast?.('Bu koltuğun mikrofonu susturuldu.');
       if(!cfg.seat_number)return window.toast?.('Mikrofon için önce koltuğa otur.');
       microphoneSeat=Number(cfg.seat_number);
-      stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      stream=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false});
       await checkMicrophoneSeat();
       if(!stream)return;stream.getAudioTracks()[0]?.addEventListener('ended',stop,{once:true});show();for(const peerId of known)await offer(peerId);window.toast?.('Mikrofon açıldı')}
     catch(e){stop();window.toast?.(e.name==='NotAllowedError'?'Mikrofon izni verilmedi.':e.message||'Mikrofon açılamadı.')}
   }
-  window.ErisRoomRTC={toggle,stop,message,toggleOutput,showOutput};
+  speakingStyle();window.ErisRoomRTC={toggle,stop,message,toggleOutput,showOutput};
   window.addEventListener('erischat:room-opened',()=>{show();showOutput()});
 })();
