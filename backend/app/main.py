@@ -2066,12 +2066,39 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
 
 
 def _room_socket_can_signal(room_id, user_id, kind):
+    """
+    RTC signaling oda üyelerine açıktır.
+
+    Dinleyici kullanıcıların koltuğa oturmadan rtc_offer / rtc_answer /
+    rtc_ice gönderebilmesi gerekir. Mikrofon yayınlama yetkisi signaling
+    yetkisinden ayrıdır ve rtc-config + koltuk/mute kontrolleri tarafından
+    korunur.
+    """
+    if kind not in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
+        return False
+
     with Session(engine) as db:
         admin = db.get(AdminRole, user_id)
         if admin and admin.ghost_mode:
             return False
-        return kind == "rtc_leave" or bool(db.scalar(select(RoomSeat.id).where(
-            RoomSeat.room_id == room_id, RoomSeat.user_id == user_id, RoomSeat.muted.is_(False))))
+
+        member = db.scalar(select(RoomMember.id).where(
+            RoomMember.room_id == room_id,
+            RoomMember.user_id == user_id,
+        ))
+
+        if not member:
+            return False
+
+        banned = db.scalar(select(RoomBan.id).where(
+            RoomBan.room_id == room_id,
+            RoomBan.user_id == user_id,
+        ))
+
+        if banned:
+            return False
+
+        return True
 
 
 def _socket_user_id(token):
