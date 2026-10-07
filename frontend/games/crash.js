@@ -52,6 +52,30 @@
             ctx.fill();
         },
 
+        updateLive(container, state) {
+            if (!container || !container.isConnected) return;
+
+            const multiplier = Math.max(1, Number(state?.multiplier || 1));
+            const status = state?.status || 'open';
+            const text = container.querySelector('#crashMultiplierText');
+
+            if (text) {
+                if (status === 'open') {
+                    text.textContent = '⏳ ' + Number(state.betting_remaining || 0) + ' sn';
+                    text.style.color = '#facc15';
+                } else {
+                    text.textContent = multiplier.toFixed(2) + 'x';
+                    text.style.color = status === 'finished' ? '#ef4444' : '#22c55e';
+                }
+            }
+
+            const progress = status === 'open'
+                ? 0
+                : Math.min(1, Math.max(0, (multiplier - 1) / 10));
+
+            this.drawScene(multiplier, progress);
+        },
+
         async animate(container, data) {
             const finalMultiplier = Number(data?.multiplier || data?.payout || 1.80);
             const textEl = document.getElementById('crashMultiplierText');

@@ -94,6 +94,10 @@ class GameBetCreate(BaseModel):
 class BlackjackAction(BaseModel):
     action: str = Field(pattern="^(hit|stand|double|split)$")
 
+class CrashCashoutCreate(BaseModel):
+    bet_id: int
+
+
 
 class WalletExchange(BaseModel):
     direction: str = Field(pattern="^(lidya_to_gem|gem_to_lidya)$")
@@ -854,6 +858,11 @@ def register_platform_auth(current_user_dependency):
 
     # ===== WHEEL LIVE V3 =====
     # Herkes için ortak 60 saniyelik tur.
+    # Crash Live — ortak global tur
+    CRASH_LIVE_BET_SECONDS = 10
+    CRASH_LIVE_RESULT_SECONDS = 5
+    CRASH_LIVE_STAKES = {10,25,50,75,100,250,500,1000}
+
     WHEEL_LIVE_SECONDS = 60
     WHEEL_LOCK_SECONDS = 5
     WHEEL_LIVE_KEYS = (
@@ -871,6 +880,22 @@ def register_platform_auth(current_user_dependency):
         "gem": 5.0,
         "jackpot": 6.0,
     }
+
+    def _crash_live_multiplier():
+        """Tek ortak tur için server-side patlama çarpanı."""
+        roll = random.random()
+        if roll < 0.62:
+            return round(random.uniform(1.00, 1.49), 2)
+        if roll < 0.85:
+            return round(random.uniform(1.50, 1.99), 2)
+        if roll < 0.96:
+            return round(random.uniform(2.00, 4.99), 2)
+        if roll < 0.99:
+            return round(random.uniform(5.00, 9.99), 2)
+        return round(random.uniform(10.00, 25.00), 2)
+
+    def _crash_live_now():
+        return datetime.now(timezone.utc)
 
     def _wheel_live_now():
         return datetime.now(timezone.utc)
@@ -1016,6 +1041,243 @@ def register_platform_auth(current_user_dependency):
                 else None
             ),
         }
+
+    def _get_crash_live_round(db: Session):
+        # Serialize shared Crash round creation and transitions.
+        if db.bind.dialect.name == "postgresql":
+            from sqlalchemy import text
+            db.execute(text("SELECT pg_advisory_xact_lock(731905241)"))
+        now = _crash_live_now()
+
+        row = db.scalar(
+            select(GameRound)
+            .where(GameRound.game_type == "crash_live")
+            .order_by(GameRound.started_at.desc())
+            .with_for_update()
+        )
+
+        if row:
+            try:
+                state = json.loads(row.state_data or "{}")
+            except Exception:
+                state = {}
+
+            crash_at = float(state.get("crash_at") or 1.0)
+            flight_seconds = float(state.get("flight_seconds") or 0)
+            flight_start = row.ends_at
+            crash_time = flight_start + timedelta(seconds=flight_seconds)
+
+            if row.status == "open" and now >= flight_start:
+                row.status = "running"
+
+            if row.status == "running" and now >= crash_time:
+                row.status = "finished"
+                row.result_key = f"{crash_at:.2f}"
+                state["finished_at"] = now.isoformat()
+                row.state_data = json.dumps(
+                    state, ensure_ascii=False, separators=(",", ":")
+                )
+
+            if row.status == "finished":
+                if now < crash_time + timedelta(seconds=CRASH_LIVE_RESULT_SECONDS):
+                    return row
+                row = None
+
+        if row is None:
+            crash_at = _crash_live_multiplier()
+
+            # Yaklaşık 1.00x -> crash_at büyüme süresi.
+            # Aynı state bütün istemcilere gönderilir.
+            flight_seconds = max(0.35, 3.0 * (crash_at - 1.0) ** 0.5)
+
+            row = GameRound(
+                id=str(uuid4()),
+                user_id=None,
+                room_id=None,
+                game_type="crash_live",
+                status="open",
+                started_at=now,
+                ends_at=now + timedelta(seconds=CRASH_LIVE_BET_SECONDS),
+                result_key=None,
+                state_data=json.dumps({
+                    "crash_at": crash_at,
+                    "flight_seconds": round(flight_seconds, 3),
+                }, ensure_ascii=False, separators=(",", ":")),
+            )
+            db.add(row)
+            db.flush()
+
+        return row
+
+    @router.get("/games/crash/live")
+    def crash_live_state(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = _get_crash_live_round(db)
+        now = _crash_live_now()
+        state = json.loads(row.state_data or "{}")
+
+        crash_at = float(state.get("crash_at") or 1.0)
+        flight_seconds = max(0.001, float(state.get("flight_seconds") or 1.0))
+        betting_remaining = max(0, (row.ends_at - now).total_seconds())
+
+        multiplier = 1.0
+        if row.status in {"running", "finished"}:
+            elapsed = max(0.0, (now - row.ends_at).total_seconds())
+            progress = min(1.0, elapsed / flight_seconds)
+            multiplier = 1.0 + (crash_at - 1.0) * (progress ** 2)
+
+        if row.status == "finished":
+            multiplier = crash_at
+
+        bets = list(db.scalars(
+            select(GameBet).where(
+                GameBet.round_id == row.id,
+                GameBet.user_id == user.id,
+            )
+        ))
+
+        payload = {
+            "round_id": row.id,
+            "status": row.status,
+            "betting_remaining": int(betting_remaining + 0.999),
+            "betting_open": row.status == "open" and betting_remaining > 0,
+            "multiplier": round(multiplier, 2),
+            "crash_at": crash_at if row.status == "finished" else None,
+            "my_bets": [
+                {
+                    "id": bet.id,
+                    "amount": int(bet.amount or 0),
+                    "payout": int(bet.payout or 0),
+                    "cashed_out": int(bet.payout or 0) > 0,
+                }
+                for bet in bets
+            ],
+        }
+
+        db.commit()
+        return payload
+
+    @router.post("/games/crash/live/bet")
+    def crash_live_bet(
+        payload: GameBetCreate,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        if payload.amount not in CRASH_LIVE_STAKES:
+            raise HTTPException(status_code=422, detail="Geçersiz bahis miktarı")
+
+        row = _get_crash_live_round(db)
+        now = _crash_live_now()
+
+        if row.status != "open" or now >= row.ends_at:
+            raise HTTPException(status_code=409, detail="Bahis süresi kapandı")
+
+        locked_user = db.scalar(
+            select(User).where(User.id == user.id).with_for_update()
+        )
+        if not locked_user:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+        if payload.amount > locked_user.lidya:
+            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
+
+        locked_user.lidya -= payload.amount
+
+        bet = GameBet(
+            round_id=row.id,
+            user_id=user.id,
+            choice="cashout",
+            amount=payload.amount,
+            payout=0,
+        )
+        db.add(bet)
+        db.flush()
+
+        result = {
+            "ok": True,
+            "round_id": row.id,
+            "bet_id": bet.id,
+            "amount": payload.amount,
+            "balance": locked_user.lidya,
+        }
+        db.commit()
+        return result
+
+    @router.post("/games/crash/live/cashout")
+    def crash_live_cashout(
+        payload: CrashCashoutCreate,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = _get_crash_live_round(db)
+        now = _crash_live_now()
+
+        if row.status != "running":
+            raise HTTPException(status_code=409, detail="Şu anda çekim yapılamaz")
+
+        state = json.loads(row.state_data or "{}")
+        crash_at = float(state.get("crash_at") or 1.0)
+        flight_seconds = max(0.001, float(state.get("flight_seconds") or 1.0))
+        elapsed = max(0.0, (now - row.ends_at).total_seconds())
+
+        if elapsed >= flight_seconds:
+            raise HTTPException(status_code=409, detail="Crash! Çekim için geç kaldın")
+
+        progress = min(1.0, elapsed / flight_seconds)
+        multiplier = 1.0 + (crash_at - 1.0) * (progress ** 2)
+        multiplier = max(1.0, round(multiplier, 2))
+
+        bet = db.scalar(
+            select(GameBet)
+            .where(
+                GameBet.id == payload.bet_id,
+                GameBet.round_id == row.id,
+                GameBet.user_id == user.id,
+            )
+            .with_for_update()
+        )
+
+        if not bet:
+            raise HTTPException(status_code=404, detail="Aktif bahis bulunamadı")
+        if int(bet.payout or 0) > 0:
+            raise HTTPException(status_code=409, detail="Bu bahis zaten çekildi")
+
+        # Recheck the deadline immediately before payout.
+        now = _crash_live_now()
+        elapsed = max(0.0, (now - row.ends_at).total_seconds())
+        if elapsed >= flight_seconds:
+            raise HTTPException(status_code=409, detail="Crash! Çekim için geç kaldın")
+
+        progress = min(1.0, elapsed / flight_seconds)
+        multiplier = max(
+            1.0,
+            round(1.0 + (crash_at - 1.0) * (progress ** 2), 2),
+        )
+
+        payout = int(int(bet.amount) * multiplier)
+        bet.payout = payout
+        bet.choice = f"x{multiplier:.2f}"
+
+        locked_user = db.scalar(
+            select(User).where(User.id == user.id).with_for_update()
+        )
+        if not locked_user:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+        locked_user.lidya += payout
+        db.flush()
+
+        result = {
+            "ok": True,
+            "round_id": row.id,
+            "bet_id": bet.id,
+            "multiplier": multiplier,
+            "payout": payout,
+            "balance": locked_user.lidya,
+        }
+        db.commit()
+        return result
 
     @router.get("/games/wheel/live")
     def wheel_live_state(

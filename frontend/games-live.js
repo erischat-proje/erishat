@@ -265,6 +265,19 @@
 
             if (mod && typeof mod.render === 'function') {
                 mod.render(stage);
+                if (key === 'crash') {
+                    queueMicrotask(() => {
+                        if (game === 'crash' && modal?.isConnected) {
+                            refreshCrashLive().catch(console.warn);
+                        }
+                    });
+                }
+
+            }
+
+            if (key !== 'crash') {
+                modal.querySelector('[data-controls]').replaceChildren();
+                crashState = null;
             }
 
             const choice = modal.querySelector('[data-choice]');
@@ -409,7 +422,116 @@
             box.innerHTML='<b>BU TURDAKİ BAHİSLERİM</b><br>'+(rows.length?rows.map(([k,v])=>names[k]+' · '+Number(v).toLocaleString('tr-TR')+' Lidya').join(' • '):'Henüz bahis yapmadın.');
         };
         refreshWheelLive(); setInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
-                let wheelStake=100;
+
+        let crashState = null;
+        let crashBusy = false;
+        let crashFetching = false;
+        let crashNoticeUntil = 0;
+        let crashNotice = '';
+
+        function showCrashNotice(message) {
+            crashNotice = message;
+            crashNoticeUntil = Date.now() + 5000;
+            const el = modal?.querySelector('.eg-result');
+            if (el) el.textContent = message;
+        }
+
+
+        async function refreshCrashLive() {
+            if (game !== 'crash' || !modal?.isConnected) return;
+
+            if (crashFetching) return;
+            crashFetching = true;
+            const currentModal = modal;
+            let state;
+            try {
+                state = await api('/games/crash/live');
+            } finally {
+                crashFetching = false;
+            }
+
+            if (game !== 'crash' || modal !== currentModal ||
+                !currentModal.isConnected) return;
+
+            crashState = state;
+
+            const stage = modal.querySelector('.eg-stage');
+            const mod = window.ErisGameCrash;
+            mod?.updateLive?.(stage, state);
+
+            const play = modal.querySelector('[data-play]');
+            const result = modal.querySelector('.eg-result');
+            const controls = modal.querySelector('[data-controls]');
+
+            const activeBets = (state.my_bets || [])
+                .filter(b => !b.cashed_out);
+
+            play.textContent = '🚀 Bahis Yap';
+            play.disabled = crashBusy || !state.betting_open;
+
+            if (!crashBusy && Date.now() >= crashNoticeUntil) {
+                if (state.status === 'open') {
+                    result.textContent =
+                        '⏳ Bahis süresi: ' +
+                        state.betting_remaining + ' saniye';
+                } else if (state.status === 'running') {
+                    result.textContent =
+                        '🚀 Çarpan: ' +
+                        Number(state.multiplier).toFixed(2) + 'x';
+                } else {
+                    result.textContent =
+                        '💥 Crash: ' +
+                        Number(state.crash_at || state.multiplier).toFixed(2) + 'x';
+                }
+            }
+
+            controls.replaceChildren();
+
+            if (state.status === 'running' && activeBets.length) {
+              for (const activeBet of activeBets) {
+                const cashout = document.createElement('button');
+                cashout.textContent = '💰 Kazancı Çek';
+                cashout.disabled = crashBusy;
+
+                cashout.onclick = async () => {
+                    if (crashBusy) return;
+                    crashBusy = true;
+                    cashout.disabled = true;
+
+                    try {
+                        const res = await api(
+                            '/games/crash/live/cashout',
+                            {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    bet_id: activeBet.id
+                                })
+                            }
+                        );
+
+                        showCrashNotice('🎉 Kazanç: ' + res.payout + ' Lidya');
+
+                        refreshBalance();
+                    } catch (e) {
+                        showCrashNotice(e.message || 'Cashout başarısız');
+                    } finally {
+                        crashBusy = false;
+                        refreshCrashLive().catch(() => {});
+                    }
+                };
+
+                controls.append(cashout);
+              }
+            }
+        }
+
+        setInterval(() => {
+            if (game === 'crash' && modal?.isConnected) {
+                refreshCrashLive().catch(console.warn);
+            }
+        }, 500);
+
+        let wheelStake=100;
         let activeBlackjackRoundId = null;
 
         modal.querySelector('[data-play]').onclick = async () => {
@@ -417,6 +539,47 @@
                   stage = modal.querySelector('.eg-stage'),
                   result = modal.querySelector('[data-result]') || modal.querySelector('.eg-result'),
                   controls = modal.querySelector('[data-controls]');
+
+            // CRASH_LIVE_BET_HANDLER_V1
+            if (game === 'crash') {
+                if (crashBusy) return;
+                crashBusy = true;
+                button.disabled = true;
+
+                try {
+                    const amount = Number(
+                        modal.querySelector('[data-stake]').value
+                    );
+
+                    if (![10,25,50,75,100,250,500,1000].includes(amount)) {
+                        throw new Error('Geçersiz bahis miktarı');
+                    }
+
+                    if (!crashState?.betting_open) {
+                        throw new Error('Bahis süresi kapalı');
+                    }
+
+                    const res = await api('/games/crash/live/bet', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            choice: 'cashout',
+                            amount
+                        })
+                    });
+
+                    modal.querySelector('.eg-result').textContent =
+                        '✅ ' + amount + ' Lidya bahis yatırıldı';
+
+                    await refreshBalance();
+                } catch (e) {
+                    modal.querySelector('.eg-result').textContent =
+                        e.message || 'Bahis yapılamadı';
+                } finally {
+                    crashBusy = false;
+                    refreshCrashLive().catch(() => {});
+                }
+                return;
+            }
 
             button.disabled = true;
             controls.replaceChildren();
