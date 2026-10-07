@@ -1959,7 +1959,7 @@ def _load_room_socket(token, room_id):
         )))
         if not room or not member or banned or owner_blocked:
             raise HTTPException(403, "oda üyeliği gerekli")
-        history_payload=_room_history_page(db,internal_room_id,room_id)
+        history_payload=[]  # Yeni giren kullanıcı geçmiş oda mesajlarını göremez.
         entrance_asset=relationship_routes.rewards.selected(db,user.id,'entrance')
         entry_mode, _ = entry_selection(db, user.id)
         if entry_mode != 'relationship':
@@ -2395,10 +2395,8 @@ def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit
     banned=db.scalar(select(RoomBan.id).where(RoomBan.room_id==room.id,RoomBan.user_id==user.id)) or active_room_user_ban(db,room.id,user.id)
     owner_blocked=db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==room.owner_id,UserBlock.blocked_id==user.id))
     if not member or banned or owner_blocked:raise HTTPException(403,'Oda sohbetine erişiminiz yok.')
-    rows=_room_history_page(db,room.id,room_id,before,limit+1)
-    more=len(rows)>limit
-    if more:rows=rows[1:]
-    return {'messages':rows,'has_more':more,'next_before':rows[0]['id'] if rows else None}
+    # Oda sohbeti yalnızca canlıdır; odaya girişten önceki mesajlar gösterilmez.
+    return {'messages':[],'has_more':False,'next_before':None}
 
 
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
