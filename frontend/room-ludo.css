@@ -691,3 +691,30 @@
 #erisMusicPanel{z-index:40050!important;pointer-events:auto!important}
 #erisRoomWallpaperModal{z-index:40060!important;pointer-events:auto!important}
 #erisRoomWallpaperZoom{z-index:40061!important;pointer-events:auto!important}
+
+
+/* Shared room seat-permission control */
+.ludo-toolbar [data-seat-permission]{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:34px;
+  padding:0 12px;
+  border:1px solid rgba(226,199,137,.28);
+  border-radius:12px;
+  background:rgba(10,15,27,.72);
+  backdrop-filter:blur(10px);
+  font-weight:700;
+  white-space:nowrap;
+}
+.ludo-toolbar [data-seat-permission].active{
+  border-color:rgba(226,199,137,.8);
+  box-shadow:0 0 0 1px rgba(226,199,137,.18),0 6px 18px rgba(0,0,0,.24);
+}
+.ludo-toolbar [data-seat-permission][hidden]{
+  display:none !important;
+}
+.ludo-seat-proxy .seat-ava{
+  position:relative;
+}

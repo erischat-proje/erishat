@@ -78,10 +78,26 @@ const syncSeats=()=>{
 
 syncSeats();
 root.setAttribute('aria-label','Oda Ludo oyunu');
-    root.innerHTML='<button class="ludo-view-close" data-view-close type="button" aria-label="Ludo görünümünü kapat">×</button><div class="ludo-toolbar"><strong>LUDO</strong><span class="ludo-pool"></span><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
+    root.innerHTML='<button class="ludo-view-close" data-view-close type="button" aria-label="Ludo görünümünü kapat">×</button><div class="ludo-toolbar"><strong>LUDO</strong><span class="ludo-pool"></span><button data-seat-permission aria-label="Koltuk izni">✋ Koltuk İzni</button><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
     root.prepend(strip);
 host.append(root);
 root.__syncLudoSeats=syncSeats;
+    const seatPermissionButton=root.querySelector('[data-seat-permission]');
+    if(seatPermissionButton){
+      const canManage=!!(
+        window.__erisRoomPermissions?.is_owner ||
+        window.__erisRoomPermissions?.is_moderator ||
+        window.__erisRoomPermissions?.can_manage
+      );
+      seatPermissionButton.hidden=!canManage;
+      seatPermissionButton.classList.toggle(
+        'active',
+        !!window.__erisRoomPermissions?.seat_permission
+      );
+      seatPermissionButton.onclick=()=>{
+        window.ErisSeatPermissions?.openSettings?.();
+      };
+    }
 root.querySelector('[data-settings]').onclick=open;
     root.querySelector('[data-stop]').onclick=()=>stopDialog();
     root.querySelector('[data-view-close]').onclick=()=>{

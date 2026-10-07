@@ -718,7 +718,9 @@
           await roomApi().joinSeat(id,number);
           await refresh();
         });
-      add('✉','Davet et',()=>window.ErisSeatPermissions?.invite?.(number));
+      if(window.__erisRoomPermissions?.seat_permission && staff){
+        add('✉','Davet et',()=>window.ErisSeatPermissions?.invite?.(number));
+      }
       add(seat.classList.contains('locked')?'🔓':'🔒',
           seat.classList.contains('locked')?'Koltuğun kilidini aç':'Koltuğu kilitle',
           async()=>{if(seat.classList.contains('locked'))await roomApi().unlockSeat(id,number);

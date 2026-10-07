@@ -43,6 +43,8 @@ def _room_auth_unconfigured():
     raise HTTPException(status_code=500, detail="Room auth dependency is not configured")
 
 _room_auth_impl = _room_auth_unconfigured
+_room_disconnect_user = None
+_room_live_control = None
 
 def _room_auth_dependency(
     db: Session = Depends(get_db),
@@ -265,9 +267,11 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
 def create_room_placeholder(payload: RoomCreate, db: Session = Depends(get_db), user: User = Depends(lambda: None)):
     raise HTTPException(status_code=500, detail="room auth dependency not configured")
 
-def register_room_auth(current_user_dependency, join_announcement=None):
-    global _room_auth_impl
+def register_room_auth(current_user_dependency, join_announcement=None, disconnect_user=None, live_control=None):
+    global _room_auth_impl, _room_disconnect_user, _room_live_control
     _room_auth_impl = current_user_dependency
+    _room_disconnect_user = disconnect_user
+    _room_live_control = live_control
     router.dependencies.clear()
     for route in list(router.routes):
         if getattr(route, "path", None) == "/v1/rooms" and getattr(route, "methods", set()) == {"POST"}: router.routes.remove(route)
@@ -745,12 +749,14 @@ def register_room_auth(current_user_dependency, join_announcement=None):
     def remove_moderator(room_id: str, moderator_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == moderator_id)); db.commit(); return {"removed": True}
     @router.post("/{room_id}/bans")
-    def add_ban(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    async def add_ban(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         require_manageable_guest(db, room, user, payload.user_id)
         if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)):
             db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)); db.execute(delete(RoomChatMute).where(RoomChatMute.room_id == room.id, RoomChatMute.user_id == payload.user_id)); db.commit()
+        if _room_disconnect_user:
+            await _room_disconnect_user(str(payload.user_id), str(room.id))
         return {"banned": True}
     @router.get("/{room_id}/bans")
     def list_bans(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -809,7 +815,7 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         seat.locked = False; db.commit(); return {"locked": False}
     @router.post("/{room_id}/seats/{seat_number}/mute")
-    def mute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    async def mute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         if not seat.user_id: raise HTTPException(status_code=409, detail="Koltukta kullanıcı yok")
@@ -820,13 +826,33 @@ def register_room_auth(current_user_dependency, join_announcement=None):
                 track.position_seconds += max(0, int((datetime.now(timezone.utc) - track.started_at).total_seconds()))
             track.is_playing = False
             track.started_at = None
-        seat.muted = True; db.commit(); return {"muted": True}
+        target_user_id = str(seat.user_id)
+        seat.muted = True
+        db.commit()
+        if _room_live_control:
+            await _room_live_control(str(room.id), target_user_id, {
+                "type": "room_seat_muted",
+                "room_id": str(room.id),
+                "seat_number": seat_number,
+                "muted": True,
+            })
+        return {"muted": True}
     @router.delete("/{room_id}/seats/{seat_number}/mute")
-    def unmute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    async def unmute_seat(room_id: str, seat_number: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == seat_number))
         if not seat: raise HTTPException(status_code=404, detail="Koltuk bulunamadı")
         if seat.user_id: require_manageable_guest(db, room, user, seat.user_id)
-        seat.muted = False; db.commit(); return {"muted": False}
+        target_user_id = str(seat.user_id) if seat.user_id else None
+        seat.muted = False
+        db.commit()
+        if target_user_id and _room_live_control:
+            await _room_live_control(str(room.id), target_user_id, {
+                "type": "room_seat_muted",
+                "room_id": str(room.id),
+                "seat_number": seat_number,
+                "muted": False,
+            })
+        return {"muted": False}
     @router.post("/{room_id}/lock")
     def lock_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room=get_room_or_404(db,room_id);require_staff(db,room,user)

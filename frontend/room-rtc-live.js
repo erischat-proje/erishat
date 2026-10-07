@@ -195,7 +195,17 @@
       }
       return;
     }
-    const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
+    if(d.type==='room_seat_muted'){
+  if(d.muted){
+    await stop();
+    window.toast?.('Oda yönetimi mikrofonunuzu kapattı.');
+  }else{
+    window.toast?.('Mikrofon susturmanız kaldırıldı. Mikrofonu tekrar açabilirsiniz.');
+  }
+  window.ErisRoomUI?.refresh?.().catch?.(()=>{});
+  return;
+}
+const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
     if(d.type==='rtc_leave'){
       drop(id);
       return;

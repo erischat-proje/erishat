@@ -335,7 +335,12 @@ purchase_routes.register_auth(current_user)
 app.include_router(purchase_routes.router)
 seat_workflow.register_auth(current_user)
 app.include_router(seat_workflow.router)
-register_room_auth(current_user, lambda room_id,payload: _broadcast_room_chat(room_id,payload))
+register_room_auth(
+    current_user,
+    lambda room_id,payload: _broadcast_room_chat(room_id,payload),
+    lambda user_id,room_id: disconnect_room_ban_user(user_id,room_id),
+    lambda room_id,user_id,payload: send_room_user_control(room_id,user_id,payload),
+)
 register_platform_auth(current_user)
 relationship_routes.register_auth(current_user)
 app.include_router(relationship_routes.router)
@@ -2229,6 +2234,14 @@ async def _send_room_sockets(sockets, payload):
 @live_socket
 async def _broadcast_room_event(room_id: str, payload: dict) -> None:
     await _send_room_sockets(list(room_chat_connections.get(room_id, set())), payload)
+
+async def send_room_user_control(room_id: str, user_id: str, payload: dict) -> None:
+    sockets = [
+        ws for ws, membership in list(room_socket_users.items())
+        if membership == (room_id, user_id)
+    ]
+    await _send_room_sockets(sockets, payload)
+
 
 
 @live_socket
