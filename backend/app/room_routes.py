@@ -1034,11 +1034,67 @@ def register_room_auth(current_user_dependency, join_announcement=None):
         if len(data) > 8 * 1024 * 1024 or len(data) < 32:
             raise HTTPException(status_code=413, detail="Müzik 8 MB sınırını aşamaz")
         mime = None
-        if data.startswith(b"ID3") or (data[0] == 0xff and data[1] & 0xe0 == 0xe0): mime = "audio/mpeg"
-        elif data.startswith(b"OggS"): mime = "audio/ogg"
-        elif data.startswith(b"fLaC"): mime = "audio/flac"
-        elif data.startswith(b"RIFF") and data[8:12] == b"WAVE": mime = "audio/wav"
-        elif data[4:8] == b"ftyp" and data[8:12] in {b"M4A ", b"isom", b"mp42", b"mp41"}: mime = "audio/mp4"
+        probe = data[:65536]
+
+        if data.startswith(b"ID3"):
+            mime = "audio/mpeg"
+        else:
+            # ID3 etiketi olmayan MP3'lerde iki ardışık MPEG audio
+            # frame'i doğrula; rastgele FF baytlarını MP3 sayma.
+            bitrates = {
+                3: {
+                    1: [0,32,40,48,56,64,80,96,112,128,160,192,224,256,320],
+                    2: [0,32,48,56,64,80,96,112,128,160,192,224,256,320,384],
+                    3: [0,32,40,48,56,64,80,96,112,128,160,192,224,256,320],
+                },
+                2: {
+                    1: [0,32,48,56,64,80,96,112,128,144,160,176,192,224,256],
+                    2: [0,8,16,24,32,40,48,56,64,80,96,112,128,144,160],
+                    3: [0,8,16,24,32,40,48,56,64,80,96,112,128,144,160],
+                },
+            }
+            rates = {
+                3: [44100,48000,32000],
+                2: [22050,24000,16000],
+                0: [11025,12000,8000],
+            }
+
+            def mp3_frame_length(buf, pos):
+                if pos + 4 > len(buf) or buf[pos] != 0xff or (buf[pos+1] & 0xe0) != 0xe0:
+                    return 0
+                version_bits=(buf[pos+1] >> 3) & 3
+                layer_bits=(buf[pos+1] >> 1) & 3
+                bitrate_index=(buf[pos+2] >> 4) & 15
+                rate_index=(buf[pos+2] >> 2) & 3
+                padding=(buf[pos+2] >> 1) & 1
+                if version_bits == 1 or layer_bits == 0 or bitrate_index in (0,15) or rate_index == 3:
+                    return 0
+                version=3 if version_bits == 3 else 2
+                layer=4-layer_bits
+                bitrate=bitrates[version][layer][bitrate_index] * 1000
+                rate=rates[version_bits][rate_index]
+                if layer == 1:
+                    return ((12 * bitrate // rate) + padding) * 4
+                coefficient=144 if version_bits == 3 or layer != 3 else 72
+                return coefficient * bitrate // rate + padding
+
+            mp3_found=False
+            for pos in range(max(0, len(probe)-4)):
+                frame_len=mp3_frame_length(probe,pos)
+                if frame_len and mp3_frame_length(probe,pos+frame_len):
+                    mp3_found=True
+                    break
+            if mp3_found:
+                mime="audio/mpeg"
+            elif data.startswith(b"OggS"):
+                mime="audio/ogg"
+            elif data.startswith(b"fLaC"):
+                mime="audio/flac"
+            elif data.startswith(b"RIFF") and data[8:12] == b"WAVE":
+                mime="audio/wav"
+            elif len(data) >= 12 and data[4:8] == b"ftyp":
+                mime="audio/mp4"
+
         if not mime:
             raise HTTPException(status_code=415, detail="MP3, M4A, OGG, FLAC veya WAV müzik seçin")
         track_title = (title.strip() or file.filename or "Müzik")[:128]
