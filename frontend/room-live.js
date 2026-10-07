@@ -338,7 +338,13 @@
     const name=document.getElementById('erisLiveTitle')?.textContent||'Oda';
     if(options.banned)localStorage.removeItem('eris_last_room');
     if(id&&!options.banned)localStorage.setItem('eris_last_room',JSON.stringify({id,name,user_id:window.__erisCurrentRoomUserId||window.ErisCurrentUserId||null}));
-    document.getElementById('erisRoomSurface')?.classList.remove('show');
+    const roomSurface=document.getElementById('erisRoomSurface');
+    if(roomSurface){
+      roomSurface.classList.remove('show');
+      roomSurface.style.setProperty('display','none','important');
+      roomSurface.style.setProperty('visibility','hidden','important');
+      roomSurface.style.setProperty('opacity','0','important');
+    }
     window.__erisRoomSocket?.close?.(); window.__erisRoomSocket=null;
     if(id){
       try{await window.ErisRoom?.leaveSeat?.(id)}catch{}
