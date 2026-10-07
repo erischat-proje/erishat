@@ -1,4 +1,5 @@
 from __future__ import annotations
+import secrets
 
 import json
 import math
@@ -883,7 +884,7 @@ def register_platform_auth(current_user_dependency):
 
     def _crash_live_multiplier():
         """Tek ortak tur için server-side patlama çarpanı."""
-        roll = random.random()
+        roll = secrets.randbelow(10**9) / 10**9
         if roll < 0.62:
             return round(random.uniform(1.00, 1.49), 2)
         if roll < 0.85:
