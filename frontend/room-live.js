@@ -253,6 +253,8 @@
   }
 
   async function openRoom(roomId,name){
+    const dbg=t=>{let e=document.getElementById('erisRoomDebug');if(!e){e=document.createElement('div');e.id='erisRoomDebug';e.style.cssText='position:fixed;top:8px;left:8px;z-index:999999;background:#000;color:#0f0;padding:7px 10px;font:12px monospace;pointer-events:none';document.body.append(e)}e.textContent=t};
+    dbg('OPEN');
     if(joinedRoomId===String(roomId)&&document.getElementById('erisRoomSurface')?.classList.contains('show'))return refreshRoom();
     const id=String(roomId||'');if(!id)return;
     window.ErisRoomEntrance?.clear?.();
@@ -273,7 +275,7 @@
       try{
         let joined=false,attemptMessage='';
         for(let attempt=0;attempt<3&&!joined;attempt++){
-          try{await window.ErisRoom.join(id);joined=true;}
+          try{await window.ErisRoom.join(id);joined=true;dbg('JOIN OK');}
           catch(joinError){
             if(!/şifre|kilitli|password/i.test(String(joinError.message||''))) throw joinError;
             const pass=await window.ErisRoomPasswordModal?.(attemptMessage); if(pass===null) throw joinError;
@@ -283,7 +285,7 @@
         }
         if(!joined) throw new Error('Oda şifresi 3 kez yanlış girildi.');
       }catch(joinError){throw joinError;}
-      const room=await window.ErisRoom.get(id);
+      const room=await window.ErisRoom.get(id);dbg('ROOM OK');
       if(!room)throw new Error('Oda bilgisi alınamadı');
       await loadRoomBlocks();
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
@@ -307,7 +309,7 @@
       const occupiedSeats=(room.seats||[]).filter(seat=>seat.user_id).length;
       document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  Oda sohbeti';
       attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
-      joinedRoomId=String(liveRoomId);
+      joinedRoomId=String(liveRoomId);dbg('READY');
       setTimeout(()=>{
         try{
           window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
@@ -322,6 +324,7 @@
   }
 
   async function closeRealRoom(options={}){
+    const d=document.getElementById('erisRoomDebug');if(d)d.textContent='CLOSE';
     joinedRoomId=null;window.__erisCurrentCoupleId=null;window.ErisRoomEntrance?.clear?.();
     window.ErisScreenProtection?.set?.('room',false);
     window.ErisRoomRTC?.stop?.();
