@@ -247,3 +247,14 @@
     min-height:36px;
   }
 }
+
+/* Ludo lobi/ayar penceresi de oda foreground katmanında kalır */
+#erisRoomSurface > .ludo-modal{
+  position:absolute!important;
+  inset:0!important;
+  z-index:700!important;
+  width:100%!important;
+  height:100%!important;
+  box-sizing:border-box!important;
+  overflow:auto!important;
+}
