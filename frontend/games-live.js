@@ -949,3 +949,125 @@ __erisWheelFeedFix.textContent=`
 }
 `;
 document.head.appendChild(__erisWheelFeedFix);
+
+/* WHEEL FINAL VIEWPORT FIT V3 */
+const __erisWheelViewportV3=document.createElement('style');
+__erisWheelViewportV3.textContent=`
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
+ height:100dvh!important;
+ max-height:100dvh!important;
+ padding:12px 16px 16px!important;
+ overflow:hidden!important;
+}
+
+/* Üst başlık */
+#erisGamesModal.eg-wheel-mode .eg-head{
+ flex:0 0 48px!important;
+ min-height:48px!important;
+ margin:5px 0 0!important;
+}
+
+/* Canlı bahisler için gerçek ayrı satır.
+   Bahis yoksa alan kapanır, gelince çarkın üstünde açılır. */
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
+ display:none!important;
+ height:0!important;
+ min-height:0!important;
+ margin:0!important;
+ border:0!important;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
+ display:block!important;
+ position:relative!important;
+ flex:0 0 34px!important;
+ width:100%!important;
+ height:34px!important;
+ min-height:34px!important;
+ margin:5px 0 7px!important;
+ overflow:hidden!important;
+ border:1px solid #ffffff18!important;
+ border-radius:11px!important;
+ background:#0b0813cc!important;
+}
+
+/* Çark artık kendi kutusunun DIŞINA taşmayacak */
+#erisGamesModal.eg-wheel-mode .eg-stage{
+ flex:0 0 342px!important;
+ height:342px!important;
+ min-height:342px!important;
+ max-height:342px!important;
+ box-sizing:border-box!important;
+ margin:3px 0 10px!important;
+ padding:24px 8px 8px!important;
+ overflow:hidden!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-v2{
+ width:100%!important;
+ height:100%!important;
+ padding:0!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
+ width:min(294px,78vw)!important;
+ max-width:294px!important;
+ margin:0 auto!important;
+ flex:none!important;
+}
+
+/* 9 seçim kartı aşağıda kendi alanında */
+#erisGamesModal.eg-wheel-mode .eg-form{
+ flex:0 0 auto!important;
+ margin:0!important;
+ padding:8px!important;
+ gap:7px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-picks{
+ gap:6px!important;
+}
+
+/* 8 Lidya miktarı: tam genişlik + daha büyük */
+#erisGamesModal.eg-wheel-mode .eg-stake-presets{
+ display:grid!important;
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ width:100%!important;
+ gap:4px!important;
+ margin:7px 0 2px!important;
+ padding:0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+ width:100%!important;
+ min-width:0!important;
+ height:42px!important;
+ padding:0!important;
+ border-radius:11px!important;
+ overflow:hidden!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button:before{
+ content:"🪙"!important;
+ font-size:9px!important;
+ margin-right:1px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button:after{
+ content:attr(data-stake-value)!important;
+ font-size:9px!important;
+ letter-spacing:-.45px!important;
+}
+
+/* Sayaç da seçimlerin dibinde kalsın */
+#erisGamesModal.eg-wheel-mode [data-wheel-clock]{
+ flex:0 0 24px!important;
+ height:24px!important;
+ line-height:24px!important;
+ margin:5px 0 0!important;
+ font-size:12px!important;
+}
+`;
+document.head.appendChild(__erisWheelViewportV3);
