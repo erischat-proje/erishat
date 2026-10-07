@@ -547,14 +547,54 @@ def register_platform_auth(current_user_dependency):
         return {"following":False}
     @router.get("/users/{user_id}/followers")
     def followers(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if user_id != user.id:
+            raise HTTPException(status_code=403,detail="Takipçi listesi yalnızca kendi profilinizde görüntülenebilir")
         if active_ban(db,user_id): return []
         rows=list(db.scalars(select(UserFollow).where(UserFollow.following_id==user_id).order_by(UserFollow.created_at.desc()).limit(200)))
-        return [{"user_id":r.follower_id,"created_at":r.created_at} for r in rows]
+        result=[]
+        for r in rows:
+            target=db.get(User,r.follower_id)
+            if target and target.is_active:
+                result.append({
+                    "user_id":target.id,
+                    "nickname":target.nickname,
+                    "avatar":target.avatar,
+                    "avatar_asset":target.avatar_asset,
+                    "frame_asset":target.frame_asset,
+                    "created_at":r.created_at,
+                })
+        return result
+
     @router.get("/users/{user_id}/following")
     def following(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        if user_id != user.id:
+            raise HTTPException(status_code=403,detail="Takip listesi yalnızca kendi profilinizde görüntülenebilir")
         if active_ban(db,user_id): return []
         rows=list(db.scalars(select(UserFollow).where(UserFollow.follower_id==user_id).order_by(UserFollow.created_at.desc()).limit(200)))
-        return [{"user_id":r.following_id,"created_at":r.created_at} for r in rows]
+        result=[]
+        for r in rows:
+            target=db.get(User,r.following_id)
+            if target and target.is_active:
+                result.append({
+                    "user_id":target.id,
+                    "nickname":target.nickname,
+                    "avatar":target.avatar,
+                    "avatar_asset":target.avatar_asset,
+                    "frame_asset":target.frame_asset,
+                    "created_at":r.created_at,
+                })
+        return result
+
+    @router.delete("/users/{user_id}/follower")
+    def remove_follower(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        row=db.scalar(select(UserFollow).where(
+            UserFollow.follower_id==user_id,
+            UserFollow.following_id==user.id
+        ))
+        if row:
+            db.delete(row)
+            db.commit()
+        return {"removed":True}
     @router.post("/users/{user_id}/block")
     def block_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi engelleyemezsiniz")
