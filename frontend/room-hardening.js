@@ -100,9 +100,9 @@
     const b=top.querySelector('#erisRoomMoreTop');
     if(!b)return;
 
-    b.style.display='';b.setAttribute('aria-hidden','false');
-    // Keep the existing room button/order; only replace its action with the real permission-aware menu.
-    b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisRoomCenterMenu?.();};
+    // Gorunurlugu koru; click davranisini aktif V5 oda merkezi yonetir.
+    b.style.display='';
+    b.setAttribute('aria-hidden','false');
   }
 
   function openOwnerSettings(r){
@@ -123,20 +123,12 @@
 
   function addMusicPanel(r){
     const surface=document.getElementById('erisRoomSurface'); if(!surface)return;
-    const music=surface.querySelector('#erisRoomMusic');
-    if(music && music.dataset.bound!=='1'){
-      music.dataset.bound='1';
-      music.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisChatMusic?.open?.();};
-    }
+    // Ana oda butonlarini room-live.js ve aktif V5 arayuzu yonetir.
+    // Hardening katmani Hediye/Muzik handler'larini ezmez.
     const old=surface.querySelector('#roomMusicOpen');
     if(old && old.dataset.bound!=='1'){
       old.dataset.bound='1';
-      old.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.ErisChatMusic?.open?.();};
-    }
-    const gift=surface.querySelector('#erisRoomGift');
-    if(gift && gift.dataset.bound!=='1'){
-      gift.dataset.bound='1';
-      gift.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();window.openRoomGift?.(r?.id||rid());};
+      old.onclick=()=>window.ErisChatMusic?.open?.();
     }
   }
 
