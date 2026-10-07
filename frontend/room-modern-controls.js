@@ -48,12 +48,23 @@
   bubble.addEventListener('pointercancel', () => { start=null;hideExit(); });
   bubble.onclick=() => {
     if (moved || !roomId()) return;
-    minimized=false;bubble.hidden=true;hideExit();surface()?.classList.add('show');
+    minimized=false;bubble.hidden=true;hideExit();
+    const s=surface();
+    if(s){
+      s.classList.add('show');
+      s.style.setProperty('display','block','important');
+    }
     window.ErisScreenProtection?.set?.('room',!!window.__erisCurrentRoomLocked);
   };
   function minimize(){
     if (!roomId()) return;
-    minimized=true;surface()?.classList.remove('show');bubble.hidden=false;
+    const s=surface();
+    minimized=true;
+    if(s){
+      s.classList.remove('show');
+      s.style.setProperty('display','none','important');
+    }
+    bubble.hidden=false;
     window.ErisScreenProtection?.set?.('room',false);
   }
   function dialog(){
