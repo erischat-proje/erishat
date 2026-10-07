@@ -104,8 +104,36 @@
     pc.onicecandidate=e=>{if(e.candidate)signal('rtc_ice',id,e.candidate.toJSON())};
     pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.muted=!outputEnabled||isBlocked(id);audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}const media=e.streams[0]||new MediaStream([e.track]);audio.muted=!outputEnabled||isBlocked(id);audio.srcObject=media;unwatchLevel(id);watchLevel(id,media);if(outputEnabled&&!isBlocked(id))audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
     pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){const t=reconnectTimers.get(id);if(t)clearTimeout(t);reconnectTimers.delete(id);return}if(['failed','disconnected'].includes(pc.connectionState)&&!reconnectTimers.has(id)){try{pc.restartIce?.()}catch{}const timer=setTimeout(()=>{reconnectTimers.delete(id);if(pc.connectionState==='connected'||pc.connectionState==='closed')return;drop(id);if(shouldInitiate(id))setTimeout(()=>offer(id).catch(()=>{}),350)},5000);reconnectTimers.set(id,timer)}};
-    if(stream)stream.getTracks().forEach(track=>pc.addTrack(track,stream));else pc.addTransceiver('audio',{direction:'recvonly'});return pc;
+    const trx=pc.addTransceiver('audio',{direction:'sendrecv'});
+    if(stream){
+      const track=stream.getAudioTracks()[0];
+      if(track)trx.sender.replaceTrack(track).catch(e=>console.warn('[ErisChat] mikrofon track bağlanamadı',e));
+    }
+    return pc;
   }
+  async function attachMicrophone(id){
+    if(!stream)return;
+    const pc=peer(id);
+    const track=stream.getAudioTracks()[0];
+    if(!track)return;
+
+    let trx=pc.getTransceivers().find(t=>
+      t.receiver?.track?.kind==='audio' && !t.stopped
+    );
+
+    if(!trx){
+      trx=pc.addTransceiver('audio',{direction:'sendrecv'});
+    }
+
+    if(trx.sender.track!==track){
+      await trx.sender.replaceTrack(track);
+    }
+
+    if(!trx.stopped && trx.direction!=='sendrecv'){
+      try{trx.direction='sendrecv'}catch{}
+    }
+  }
+
   async function offer(id){
     if(id===myId||!shouldInitiate(id)||!socket()||socket().readyState!==WebSocket.OPEN)return;
 
@@ -197,7 +225,7 @@
               await sender.replaceTrack(null);
 
               if(!transceiver.stopped){
-                try{transceiver.direction='recvonly'}catch{}
+                try{transceiver.direction='sendrecv'}catch{}
               }
 
               changed=true;
@@ -209,7 +237,7 @@
 
         /*
          * Mikrofon kapanınca peer bağlantısı yaşamaya devam eder.
-         * Sadece SDP'yi recvonly durumuna güncelliyoruz.
+         * Audio hattını sendrecv tutup yalnızca yerel mikrofon track'ini kaldırıyoruz.
          */
         if(changed && shouldInitiate(id)){
           offer(id).catch(e=>
@@ -233,7 +261,15 @@
       microphoneSeat=Number(cfg.seat_number);
       stream=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false});
       await checkMicrophoneSeat();
-      if(!stream)return;stream.getAudioTracks()[0]?.addEventListener('ended',stop,{once:true});show();for(const peerId of known)await offer(peerId);window.toast?.('Mikrofon açıldı')}
+      if(!stream)return;stream.getAudioTracks()[0]?.addEventListener('ended',stop,{once:true});show();
+      for(const peerId of known){
+        try{await attachMicrophone(peerId)}
+        catch(e){console.warn('[ErisChat] mikrofon peer bağlantısı başarısız',peerId,e)}
+      }
+      for(const peerId of known){
+        if(shouldInitiate(peerId))await offer(peerId);
+      }
+      window.toast?.('Mikrofon açıldı')}
     catch(e){stop();window.toast?.(e.name==='NotAllowedError'?'Mikrofon izni verilmedi.':e.message||'Mikrofon açılamadı.')}
   }
   function leaveRoom(){
