@@ -134,19 +134,27 @@ root.querySelector('[data-settings]').onclick=open;
     closeDialog();
     host?.querySelector(':scope > .ludo-room')?.remove();
     host?.querySelectorAll(':scope > .ludo-modal').forEach(n=>n.remove());
-    roomStage?.classList.remove('ludo-active');
+
     host?.classList.remove('ludo-mode');
+    roomStage?.classList.remove('ludo-active');
+
     roomStage?.style.removeProperty('visibility');
     roomStage?.style.removeProperty('pointer-events');
+    roomStage?.style.removeProperty('opacity');
     roomStage?.querySelectorAll(':scope > .eris-seat').forEach(seat=>{
       seat.style.removeProperty('visibility');
       seat.style.removeProperty('pointer-events');
       seat.style.removeProperty('opacity');
     });
+
     document.getElementById('eris-seat-actions')?.remove();
     document.querySelector('.eris-seat-action-sheet')?.remove();
+    host?.querySelectorAll('.room-v5-panel.show,.room-v3-panel.show').forEach(n=>n.classList.remove('show'));
+    const contribution=host?.querySelector('#erisRoomContribution');
+    if(contribution) contribution.hidden=true;
+
+    Promise.resolve(window.ErisRoomUI?.refresh?.()).catch(()=>{});
     window.dispatchEvent(new CustomEvent('erischat:ludo-view-closed',{detail:{room_id:rid}}));
-    window.dispatchEvent(new CustomEvent('erischat:room-state-updated',{detail:{source:'ludo-close'}}));
   }
   function render(snapshot=data){
     if(!snapshot||!rid)return;
@@ -424,7 +432,6 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
     closeRoomOverlays();
     host.classList.add('ludo-mode');
     stage()?.classList.add('ludo-active');
-    stage()?.classList.add('ludo-active');
 
     /* Oyun zaten başladıysa doğrudan tahtayı göster. */
     if(current()?.status==='playing'||current()?.status==='finished'){
@@ -458,7 +465,9 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
   });
   window.addEventListener('erischat:room-state-updated',()=>{
     if(!rid||animating)return;
+    if(!surface()?.classList.contains('ludo-mode'))return;
     modal?.__syncLudoSeats?.();
+    surface()?.querySelector(':scope > .ludo-room')?.__syncLudoSeats?.();
     render();
   });
   window.addEventListener('erischat:room-closed',leave);

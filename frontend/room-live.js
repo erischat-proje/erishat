@@ -373,6 +373,18 @@
       window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
       document.getElementById('erisLiveTitle').textContent=room.name;
       renderRoomSeats(room.id,room.name,room.seats,room.seat_count);
+      const roomSurface=document.getElementById('erisRoomSurface');
+      const liveStage=document.getElementById('erisLiveSeats');
+      if(roomSurface && !roomSurface.classList.contains('ludo-mode')){
+        liveStage?.classList.remove('ludo-active');
+        liveStage?.style.removeProperty('visibility');
+        liveStage?.style.removeProperty('pointer-events');
+        liveStage?.querySelectorAll(':scope > .eris-seat').forEach(seat=>{
+          seat.style.removeProperty('visibility');
+          seat.style.removeProperty('pointer-events');
+          seat.style.removeProperty('opacity');
+        });
+      }
       const activity=document.getElementById('erisRoomActivity');if(activity)activity.textContent=(room.seats||[]).filter(s=>s.user_id).length+' / '+room.seat_count+' koltuk dolu · Oda sohbeti';
       window.dispatchEvent(new CustomEvent('erischat:room-state-updated',{detail:{room}}));
       return room;

@@ -710,7 +710,7 @@
       };
       toolbar.append(button);
     };
-    const refresh=()=>window.openRoom?.(id,document.getElementById('erisLiveTitle')?.textContent||'Oda');
+    const refresh=()=>window.ErisRoomUI?.refresh?.();
     if(!occupied){
       if(!seat.classList.contains('locked'))
         add('＋','Koltuğa otur',async()=>{

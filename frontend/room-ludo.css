@@ -580,9 +580,34 @@
 }
 
 
-/* === ERISCHAT LUDO FINAL INTERACTION ISOLATION === */
-#erisRoomSurface.ludo-mode > :not(.ludo-room):not(.ludo-modal):not(.eris-room-chat){pointer-events:none !important}
-#erisRoomSurface.ludo-mode .eris-room-stage > .eris-seat{visibility:hidden !important;pointer-events:none !important}
-#erisRoomSurface.ludo-mode > .ludo-room,#erisRoomSurface.ludo-mode > .ludo-modal,#erisRoomSurface.ludo-mode .ludo-room *,#erisRoomSurface.ludo-mode .ludo-modal *,#erisRoomSurface.ludo-mode .ludo-seat-proxy,#erisRoomSurface.ludo-mode .ludo-seat-proxy *,#erisRoomSurface.ludo-mode > .eris-room-chat,#erisRoomSurface.ludo-mode > .eris-room-chat *{visibility:visible !important;pointer-events:auto !important}
-#erisRoomSurface.ludo-mode > .eris-room-top,#erisRoomSurface.ludo-mode > .eris-room-quick-actions,#erisRoomSurface.ludo-mode > .eris-room-tools,#erisRoomSurface.ludo-mode > #erisRoomContributionButton{pointer-events:none !important}
-#erisRoomSurface.ludo-mode .ludo-seat-proxy{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+
+/* === ERISCHAT LUDO FINAL V3 ISOLATION === */
+#erisRoomSurface.ludo-mode > .eris-room-top,
+#erisRoomSurface.ludo-mode > .eris-room-quick-actions,
+#erisRoomSurface.ludo-mode > .eris-room-tools,
+#erisRoomSurface.ludo-mode > #erisRoomContributionButton,
+#erisRoomSurface.ludo-mode > .eris-room-stage {
+  pointer-events:none !important;
+}
+#erisRoomSurface.ludo-mode > .eris-room-stage > .eris-seat {
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+#erisRoomSurface.ludo-mode > .ludo-room,
+#erisRoomSurface.ludo-mode > .ludo-modal,
+#erisRoomSurface.ludo-mode > .eris-room-chat {
+  pointer-events:auto !important;
+}
+#erisRoomSurface.ludo-mode > .ludo-room *,
+#erisRoomSurface.ludo-mode > .ludo-modal *,
+#erisRoomSurface.ludo-mode > .eris-room-chat * {
+  pointer-events:auto;
+}
+#erisRoomSurface:not(.ludo-mode) > .eris-room-stage {
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+#erisRoomSurface:not(.ludo-mode) > .eris-room-stage > .eris-seat {
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
