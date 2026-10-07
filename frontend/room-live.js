@@ -389,7 +389,13 @@
     chatTab?.click();
     surface.querySelector('.eris-room-chat')?.scrollIntoView?.({block:'nearest'});
   };
-  window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
+  window.addEventListener('erischat:seat-permission-changed',event=>{
+  const enabled=!!event.detail?.enabled;
+  if(!window.__erisRoomPermissions)window.__erisRoomPermissions={};
+  window.__erisRoomPermissions.seat_permission=enabled;
+  if(joinedRoomId)refreshRoom();
+});
+window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
   let refreshingRoom=false;
   async function refreshRoom(){
     const id=joinedRoomId;if(!id||refreshingRoom)return;
