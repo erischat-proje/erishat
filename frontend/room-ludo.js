@@ -103,7 +103,23 @@ root.querySelector('[data-settings]').onclick=open;
     if(animating){surface()?.querySelectorAll('.ludo-token,.ludo-dice,[data-stop]').forEach(n=>n.disabled=true);return;}
     const s=snapshot.state;
     surface()?.querySelector(':scope > .ludo-room')?.__syncLudoSeats?.();
-    if(!s||s.status==='closed'){clearBoard();renderDialog();return;}
+    /* Gecici state yoklugu aktif Ludo gorunumunu kapatamaz. */
+    if(!s){
+      if(surface()?.classList.contains('ludo-mode')){
+        modal?.__syncLudoSeats?.();
+        return;
+      }
+      renderDialog();
+      return;
+    }
+
+    /* Yalnizca sunucu oyunu gercekten kapattiysa Ludo modundan cik. */
+    if(s.status==='closed'){
+      closeDialog();
+      clearBoard();
+      return;
+    }
+
     if(s.status==='lobby'){
       /* Lobi Ludo modunun kendisidir.
          clearBoard() burada ludo-mode'u kaldırmamalı. */
@@ -212,8 +228,20 @@ root.querySelector('[data-settings]').onclick=open;
     if(s&&s.round_id===round&&s.version<accepted)return;
     const first=!round||s?.round_id!==round,previous=accepted;
     data=snapshot;
-    if(!s){clearBoard();renderDialog();return;}
-    round=s.round_id;accepted=s.version;
+
+    /* Gecici bos snapshot aktif Ludo gorunumunu kapatmasin. */
+    if(!s){
+      if(surface()?.classList.contains('ludo-mode')){
+        modal?.__syncLudoSeats?.();
+        return;
+      }
+      renderDialog();
+      return;
+    }
+
+    round=s.round_id;
+    accepted=s.version;
+
     if(first){
       epoch++;
       queue=Promise.resolve();
@@ -221,14 +249,18 @@ root.querySelector('[data-settings]').onclick=open;
       pending=false;
       retry=null;
 
-      if(s?.status==='lobby' && modal){
-        resize?.disconnect();
-        resize=null;
-        surface()?.querySelector('.ludo-room')?.remove();
+      /* round_id degisimi UI modundan cikis degildir.
+         Lobby/oyun gecislerinde Ludo gorunumu korunur. */
+      if(surface()?.classList.contains('ludo-mode')){
         surface()?.classList.add('ludo-mode');
         stage()?.classList.add('ludo-active');
-      }else{
-        clearBoard();
+
+        if(s.status==='lobby'){
+          surface()?.querySelector('.ludo-room')?.remove();
+          modal?.__syncLudoSeats?.();
+        }else{
+          closeDialog();
+        }
       }
 
       render();
@@ -282,11 +314,14 @@ syncLobbySeats();
 modal.prepend(lobbySeats);
 modal.__syncLudoSeats=syncLobbySeats;
 
-modal.querySelector('[data-close]').onclick=()=>{
+const dismissLudo=()=>{
   closeDialog();
   clearBoard();
   focus?.focus?.();
-};modal.onclick=e=>{if(e.target===modal)closeDialog();};modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeDialog();}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};modal.querySelector('[data-close]').focus();}
+};
+modal.querySelector('[data-close]').onclick=dismissLudo;
+modal.onclick=e=>{if(e.target===modal)dismissLudo();};
+modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};modal.querySelector('[data-close]').focus();}
   const ruleText='<details><summary>Oyun kuralları</summary><ul><li>Yalnızca 1–4. koltuklar katılır. Tekli: 2 veya 4 oyuncu. Eşli: dört oyuncu; 1–3 ve 2–4 takım olur.</li><li>Dört piyonunuzu 6 ile çıkarın, saat yönünde ilerleyin. Her 6 ek zar verir; üçüncü ardışık 6 geçersiz olur ve sıra değişir.</li><li>Dört sarı yıldızda piyonlar güvendedir. Diğer alanlarda rakip piyonlar başlangıca döner; takım arkadaşları birbirini yakalayamaz.</li><li>Eve tam sayıyla girilir. Aynı karede piyonlar birlikte durabilir; yol kapanmaz. Yakalamak ek zar vermez.</li><li>Teklide dört piyonunu, eşlide takımın sekiz piyonunu eve ulaştıran kazanır. Havuz tek kazanana veya kazanan iki partnere eşit ödenir.</li><li>Odadan veya koltuktan ayrılınca bot devralır. Bot rakip yakalayamaz. Sıra için 30 saniye vardır; süre dolunca güvenli bir otomatik hamle yapılır.</li><li>Hazırlıkta ayrılanın katkısı iade edilir. Oda yönetimi oyunu kapatırsa bitmemiş oyunun tüm katkıları iade edilir. Hazırlık süresi 10 dakikadır.</li></ul></details>';
   function renderDialog(){
     if(!modal||!data||modal.dataset.stop)return;
