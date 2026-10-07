@@ -170,7 +170,7 @@
             #erisGamesModal .eg-wheel-picks{display:none;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin:1px 0 5px}
             #erisGamesModal .eg-wheel-picks.show{display:grid}
             #erisGamesModal .eg-wheel-pick{position:relative;min-height:70px;padding:8px 4px;border:1px solid #ffffff12;border-radius:15px;background:linear-gradient(145deg,#201827,#120e17);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 1px #ffffff09,0 5px 12px #0003;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
-            #erisGamesModal .eg-wheel-pick:active{transform:scale(.96)}
+            #erisGamesModal .eg-wheel-pick:active{transform:none}
             #erisGamesModal .eg-wheel-pick.active{border-color:#e1b661;background:linear-gradient(145deg,#3a2941,#201527);box-shadow:0 0 0 1px #e1b66140,0 7px 20px #8d58d52e,inset 0 0 22px #d9a95c12}
             #erisGamesModal .eg-wheel-icon{font-size:24px;line-height:1}
             #erisGamesModal .eg-wheel-pick b{font-size:10px;line-height:1.2}
@@ -312,7 +312,8 @@
 
                     const total=document.createElement('small');
                     total.dataset.wheelTotal=symbol.key;
-                    total.style.cssText='display:none;color:#ffd477;margin-top:4px;font-weight:900';
+                    total.style.cssText='display:block;color:#ffd477;margin-top:4px;font-weight:900';
+                total.textContent='🪙 0 Lidya';
                     button.append(icon,name,payout,total);
 
                     button.onclick = async () => {
@@ -362,9 +363,9 @@
                 feed.style.display='block';
                 const n=document.createElement('span');
                 n.textContent='🪙 '+Number(b.amount).toLocaleString('tr-TR')+' Lidya  '+(icons[b.choice]||'');
-                n.style.cssText='position:absolute;left:-180px;top:'+(Math.random()*14)+'px;font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:#ffd477';
+                n.style.cssText='position:absolute;left:-180px;top:50%;transform:translateY(-50%);font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:#ffd477';
                 feed.appendChild(n);
-                requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px))'));
+                requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px)) translateY(-50%)'));
                 setTimeout(()=>{
                     n.remove();
                     if(feed && !feed.children.length) feed.style.display='none';
@@ -375,9 +376,8 @@
             modal.querySelectorAll('.eg-wheel-pick').forEach(b=>b.disabled=!x.betting_open);
             modal.querySelectorAll('[data-wheel-total]').forEach(el=>{
                 const v=x.totals?.[el.dataset.wheelTotal];
-                el.style.display=x.totals?'block':'none';
                 const mine=Number(x.my_bets?.[el.dataset.wheelTotal]||0);
-                el.style.display=mine>0||x.totals?'block':'none';
+                el.style.display='block';
                 el.textContent='🪙 '+mine.toLocaleString('tr-TR')+' Lidya';
             });
             if(x.result && wheelShownRound!==x.round_id){
@@ -550,8 +550,8 @@ erisWheelLayout.textContent=`
 /* BAKİYE + X */
 #erisGamesModal.eg-wheel-mode .eg-wallet{
  position:absolute!important;
- top:14px!important;
- right:58px!important;
+ top:15px!important;
+ right:62px!important;
  width:auto!important;
  margin:0!important;
  padding:6px 9px!important;
