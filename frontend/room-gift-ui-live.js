@@ -123,7 +123,7 @@
     panel.innerHTML = '<div class="egp-head"><div><div class="egp-title">🎁 Odaya hediye gönder</div><div class="egp-balance" id="egpBalance">Bakiye yükleniyor…</div></div><button class="egp-close" type="button">×</button></div><div class="gift-sound-setting"><span>Hediye efektleri</span><button type="button" data-gift-sound>Ses açık</button></div><div class="egp-note">Alıcıyı seç; kategoriyi seç; hediyeyi adından seç.</div><div class="egp-row" id="egpRecipients"></div><div class="egp-cats" id="egpCategories"></div><div class="egp-qty" id="egpQuantity"></div><div class="egp-grid" id="egpGifts"></div>';
     panel.querySelector('[data-gift-sound]').textContent=window.ErisGiftStage?.soundEnabled?.()?'Ses açık':'Ses kapalı';
     panel.querySelector('[data-gift-sound]').onclick=()=>window.ErisGiftStage?.soundEnabled?.(!window.ErisGiftStage.soundEnabled());
-    panel.querySelector('.egp-close').onclick = () => {panel.classList.remove('show');state.selectedGift=null;renderGifts()};
+    panel.querySelector('.egp-close').onclick = () => {panel.classList.remove('show');panel.style.removeProperty('display');panel.style.removeProperty('z-index');panel.style.removeProperty('pointer-events');state.selectedGift=null;renderGifts()};
     const qty=panel.querySelector('#egpQuantity');
     qty.innerHTML='Adet: '+[1,3,5,9,49,99].map(n=>`<button type="button" data-qty="${n}">${n}</button>`).join('');
     qty.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>{if(state.sending)return;
