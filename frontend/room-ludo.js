@@ -100,7 +100,16 @@ root.querySelector('[data-settings]').onclick=open;
     const s=snapshot.state;
     surface()?.querySelector(':scope > .ludo-room')?.__syncLudoSeats?.();
     if(!s||s.status==='closed'){clearBoard();renderDialog();return;}
-    if(s.status==='lobby'){clearBoard();renderDialog();return;}const root=mount();if(!root)return;
+    if(s.status==='lobby'){
+      /* Lobi Ludo modunun kendisidir.
+         clearBoard() burada ludo-mode'u kaldırmamalı. */
+      surface()?.classList.add('ludo-mode');
+      stage()?.classList.add('ludo-active');
+      modal?.__syncLudoSeats?.();
+      renderDialog();
+      return;
+    }
+    const root=mount();if(!root)return;
     root.querySelector('[data-stop]').hidden=!snapshot.can_manage;
     root.querySelector('[data-stop]').disabled=busy();
     root.querySelector('.ludo-pool').textContent=money(s.pool??s.players.reduce((n,p)=>n+p.stake,0))+' Lidya • '+(s.mode==='paired'?'Eşli':'Tekli');
@@ -201,7 +210,26 @@ root.querySelector('[data-settings]').onclick=open;
     data=snapshot;
     if(!s){clearBoard();renderDialog();return;}
     round=s.round_id;accepted=s.version;
-    if(first){epoch++;queue=Promise.resolve();animating=false;pending=false;retry=null;clearBoard();render();return;}
+    if(first){
+      epoch++;
+      queue=Promise.resolve();
+      animating=false;
+      pending=false;
+      retry=null;
+
+      if(s?.status==='lobby' && modal){
+        resize?.disconnect();
+        resize=null;
+        surface()?.querySelector('.ludo-room')?.remove();
+        surface()?.classList.add('ludo-mode');
+        stage()?.classList.add('ludo-active');
+      }else{
+        clearBoard();
+      }
+
+      render();
+      return;
+    }
     if(s.version===previous){if(!animating)render();return;}
     const events=s.events.filter(e=>e.seq>previous),generation=epoch;if(events.length&&events[0].seq>previous+1){render();return;}
     queue=queue.catch(()=>{}).then(async()=>{if(epoch!==generation)return;animating=true;render(snapshot);try{for(const event of events)await animateEvent(event,generation);}finally{if(epoch===generation){animating=false;render();}}});
