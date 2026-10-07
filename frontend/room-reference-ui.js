@@ -683,7 +683,7 @@
     output.onclick=()=>window.ErisRoomRTC?.toggleOutput?.();b.after(output);window.ErisRoomRTC?.showOutput?.();
   }
 
-  function seatMenu(seat){
+  function seatMenu(seat,anchor=seat){
     document.getElementById('eris-seat-actions')?.remove();
     const id=roomId(),number=Number(seat.dataset.seatNumber);
     const target=String(seat.dataset.userId||'');
@@ -748,7 +748,7 @@
       }
     }
     wrap.querySelector('.esa-shade').onclick=()=>wrap.remove();
-    const rect=seat.getBoundingClientRect();
+    const rect=(anchor||seat).getBoundingClientRect();
     const width=Math.min(toolbar.children.length*48+16,innerWidth-20);
     const left=Math.max(10,Math.min(innerWidth-width-10,rect.left+rect.width/2-width/2));
     toolbar.style.left=left+'px';

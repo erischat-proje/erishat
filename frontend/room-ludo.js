@@ -68,8 +68,8 @@ const syncSeats=()=>{
     clone.style.pointerEvents='auto';
     clone.addEventListener('click',e=>{
       e.preventDefault();
-      e.stopPropagation();
-      if(window.ErisRoomSeatMenu) window.ErisRoomSeatMenu(real);
+      e.stopImmediatePropagation();
+      if(window.ErisRoomSeatMenu) window.ErisRoomSeatMenu(real,clone);
       else real.click();
     });
     strip.appendChild(clone);
@@ -93,19 +93,49 @@ root.querySelector('[data-settings]').onclick=open;
     if(window.ResizeObserver){resize=new ResizeObserver(fit);resize.observe(root.querySelector('.ludo-board-space'));}requestAnimationFrame(fit);
     return root;
   }
+  function closeRoomOverlays(){
+    const host=surface();
+    document.getElementById('eris-seat-actions')?.remove();
+    document.querySelector('.eris-seat-action-sheet')?.remove();
+    document.getElementById('erisUserProfileModal')?.remove();
+    window.ErisFloatingProfile?.close?.();
+    if(host){
+      host.querySelectorAll('.room-v5-panel.show,.room-v3-panel.show').forEach(n=>n.classList.remove('show'));
+      const contribution=host.querySelector('#erisRoomContribution');
+      if(contribution) contribution.hidden=true;
+    }
+  }
+
+  function isLudoTarget(target){
+    if(!(target instanceof Element))return false;
+    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat');
+  }
+
+  function guardRoomEvent(event){
+    const host=surface();
+    if(!host?.classList.contains('ludo-mode'))return;
+    if(isLudoTarget(event.target))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
+  ['pointerdown','click','contextmenu'].forEach(type=>{
+    document.addEventListener(type,event=>{
+      const host=surface();
+      if(!host?.classList.contains('ludo-mode'))return;
+      if(!(event.target instanceof Element)||!host.contains(event.target))return;
+      guardRoomEvent(event);
+    },true);
+  });
+
   function clearBoard(){
     resize?.disconnect();resize=null;
-    const host=surface();
-    const roomStage=stage();
-
+    const host=surface(),roomStage=stage();
     closeDialog();
     host?.querySelector(':scope > .ludo-room')?.remove();
     host?.querySelectorAll(':scope > .ludo-modal').forEach(n=>n.remove());
-
     roomStage?.classList.remove('ludo-active');
     host?.classList.remove('ludo-mode');
-
-    /* Ludo CSS'inden kalan geçici görünürlük durumlarını kesin temizle. */
     roomStage?.style.removeProperty('visibility');
     roomStage?.style.removeProperty('pointer-events');
     roomStage?.querySelectorAll(':scope > .eris-seat').forEach(seat=>{
@@ -113,18 +143,10 @@ root.querySelector('[data-settings]').onclick=open;
       seat.style.removeProperty('pointer-events');
       seat.style.removeProperty('opacity');
     });
-
-    /* Ludo sırasında açılmış normal oda katmanlarını kapat. */
-    host?.querySelectorAll('.room-v5-panel.show,.room-v3-panel.show').forEach(panel=>{
-      panel.classList.remove('show');
-    });
-
     document.getElementById('eris-seat-actions')?.remove();
-
-    /* Normal oda yerleşimini tekrar senkronla. */
-    window.dispatchEvent(new CustomEvent('erischat:ludo-view-closed',{
-      detail:{room_id:rid}
-    }));
+    document.querySelector('.eris-seat-action-sheet')?.remove();
+    window.dispatchEvent(new CustomEvent('erischat:ludo-view-closed',{detail:{room_id:rid}}));
+    window.dispatchEvent(new CustomEvent('erischat:room-state-updated',{detail:{source:'ludo-close'}}));
   }
   function render(snapshot=data){
     if(!snapshot||!rid)return;
@@ -341,8 +363,8 @@ const syncLobbySeats=()=>{
 
     clone.addEventListener('click',e=>{
       e.preventDefault();
-      e.stopPropagation();
-      if(window.ErisRoomSeatMenu) window.ErisRoomSeatMenu(real);
+      e.stopImmediatePropagation();
+      if(window.ErisRoomSeatMenu) window.ErisRoomSeatMenu(real,clone);
       else real.click();
     });
 
@@ -399,7 +421,9 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
     });
     document.getElementById('eris-seat-actions')?.remove();
 
+    closeRoomOverlays();
     host.classList.add('ludo-mode');
+    stage()?.classList.add('ludo-active');
     stage()?.classList.add('ludo-active');
 
     /* Oyun zaten başladıysa doğrudan tahtayı göster. */
