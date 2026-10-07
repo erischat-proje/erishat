@@ -218,7 +218,41 @@ root.querySelector('[data-settings]').onclick=open;
   function closeDialog(){modal?.remove();modal=null;dialogVersion='';}
   function dialog(){closeDialog();const focus=document.activeElement;modal=document.createElement('div');modal.className='ludo-modal';modal.innerHTML='<section class="ludo-dialog" role="dialog" aria-modal="true" aria-label="Ludo oyun ayarları"><header><h2>Oda Ludo</h2><button data-close aria-label="Pencereyi kapat">×</button></header><div data-body></div></section>';const host=surface();
 if(!host){modal=null;return;}
-host.append(modal);modal.querySelector('[data-close]').onclick=()=>{closeDialog();focus?.focus?.();};modal.onclick=e=>{if(e.target===modal)closeDialog();};modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeDialog();}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};modal.querySelector('[data-close]').focus();}
+host.append(modal);
+
+/* Lobi açıkken de bütün oda koltuklarını üstte canlı göster. */
+const lobbySeats=document.createElement('div');
+lobbySeats.className='ludo-lobby-seats';
+
+const syncLobbySeats=()=>{
+  const originals=[...document.querySelectorAll('#erisRoomSurface .eris-room-stage > .eris-seat')];
+  lobbySeats.replaceChildren();
+
+  originals.forEach(real=>{
+    const clone=real.cloneNode(true);
+    clone.classList.add('ludo-seat-proxy');
+    clone.style.visibility='visible';
+    clone.style.pointerEvents='auto';
+
+    clone.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      real.click();
+    });
+
+    lobbySeats.appendChild(clone);
+  });
+};
+
+syncLobbySeats();
+modal.prepend(lobbySeats);
+modal.__syncLudoSeats=syncLobbySeats;
+
+modal.querySelector('[data-close]').onclick=()=>{
+  closeDialog();
+  clearBoard();
+  focus?.focus?.();
+};modal.onclick=e=>{if(e.target===modal)closeDialog();};modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeDialog();}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};modal.querySelector('[data-close]').focus();}
   const ruleText='<details><summary>Oyun kuralları</summary><ul><li>Yalnızca 1–4. koltuklar katılır. Tekli: 2 veya 4 oyuncu. Eşli: dört oyuncu; 1–3 ve 2–4 takım olur.</li><li>Dört piyonunuzu 6 ile çıkarın, saat yönünde ilerleyin. Her 6 ek zar verir; üçüncü ardışık 6 geçersiz olur ve sıra değişir.</li><li>Dört sarı yıldızda piyonlar güvendedir. Diğer alanlarda rakip piyonlar başlangıca döner; takım arkadaşları birbirini yakalayamaz.</li><li>Eve tam sayıyla girilir. Aynı karede piyonlar birlikte durabilir; yol kapanmaz. Yakalamak ek zar vermez.</li><li>Teklide dört piyonunu, eşlide takımın sekiz piyonunu eve ulaştıran kazanır. Havuz tek kazanana veya kazanan iki partnere eşit ödenir.</li><li>Odadan veya koltuktan ayrılınca bot devralır. Bot rakip yakalayamaz. Sıra için 30 saniye vardır; süre dolunca güvenli bir otomatik hamle yapılır.</li><li>Hazırlıkta ayrılanın katkısı iade edilir. Oda yönetimi oyunu kapatırsa bitmemiş oyunun tüm katkıları iade edilir. Hazırlık süresi 10 dakikadır.</li></ul></details>';
   function renderDialog(){
     if(!modal||!data||modal.dataset.stop)return;
@@ -235,10 +269,42 @@ host.append(modal);modal.querySelector('[data-close]').onclick=()=>{closeDialog(
     body.querySelector('[data-create]')?.addEventListener('click',()=>send('create',{mode}));body.querySelector('[data-ready]')?.addEventListener('click',()=>send('ready',{stake:(mySeat!==1&&seat1?seat1.stake:stake)}));body.querySelector('[data-withdraw]')?.addEventListener('click',()=>send('withdraw'));body.querySelector('[data-start]')?.addEventListener('click',()=>send('start'));body.querySelector('[data-retry]')?.addEventListener('click',()=>send(null));
   }
   function stopDialog(){if(!data?.can_manage)return;dialog();modal.dataset.stop='true';modal.querySelector('h2').textContent='Oyunu kapat';const body=modal.querySelector('[data-body]');body.innerHTML='<p>Bitmemiş oyunda tüm katılım payları oyunculara iade edilir. Oyun kapatılsın mı?</p><button class="ludo-primary">Oyunu kapat</button>';body.querySelector('button').onclick=async()=>{closeDialog();await send('close');};}
-  async function open(){if(!rid)return;await poll();if(!data)return;if(!data.unlocked){window.toast?.('Ludo 4. oda seviyesinde açılır.');return;}mode=current()?.mode||'solo';stake=playerMe()?.stake||50;dialog();renderDialog();}
+  async function open(){
+    if(!rid)return;
+    await poll();
+    if(!data)return;
+    if(!data.unlocked){
+      window.toast?.('Ludo 4. oda seviyesinde açılır.');
+      return;
+    }
+
+    mode=current()?.mode||'solo';
+    stake=playerMe()?.stake||50;
+
+    const host=surface();
+    if(!host)return;
+
+    host.classList.add('ludo-mode');
+
+    /* Oyun zaten başladıysa doğrudan tahtayı göster. */
+    if(current()?.status==='playing'||current()?.status==='finished'){
+      closeDialog();
+      render();
+      return;
+    }
+
+    /* Hazırlık/lobi ekranı oda içindeki Ludo alanında açılır. */
+    dialog();
+    modal?.classList.add('ludo-inline-lobby');
+    renderDialog();
+  }
   function leave(){epoch++;rid=null;data=null;round=null;accepted=-1;queue=Promise.resolve();animating=false;pending=false;retry=null;lastError='';closeDialog();clearBoard();}
   window.addEventListener('erischat:room-opened',e=>{leave();rid=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(rid)poll();});
-  window.addEventListener('erischat:room-state-updated',()=>{if(rid&&!animating)render();});
+  window.addEventListener('erischat:room-state-updated',()=>{
+    if(!rid||animating)return;
+    modal?.__syncLudoSeats?.();
+    render();
+  });
   window.addEventListener('erischat:room-closed',leave);
   setInterval(()=>{poll();updateClock();},1000);
   window.ErisLudo={open};

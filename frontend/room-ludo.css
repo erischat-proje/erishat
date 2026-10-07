@@ -248,94 +248,6 @@
   }
 }
 
-/* Ludo lobi/ayar penceresi de oda foreground katmanında kalır */
-#erisRoomSurface > .ludo-modal{
-  position:absolute!important;
-  inset:0!important;
-  z-index:700!important;
-  width:100%!important;
-  height:100%!important;
-  box-sizing:border-box!important;
-  overflow:auto!important;
-}
-
-/* Ludo lobi — oda arayüzünü tamamen örten foreground */
-#erisRoomSurface > .ludo-modal{
-  position:absolute!important;
-  inset:0!important;
-  z-index:700!important;
-  width:100%!important;
-  height:100%!important;
-  display:flex!important;
-  align-items:stretch!important;
-  justify-content:stretch!important;
-  box-sizing:border-box!important;
-  overflow:hidden!important;
-  background:#090b13!important;
-  color:#fff!important;
-}
-
-#erisRoomSurface > .ludo-modal > .ludo-dialog{
-  position:relative!important;
-  width:100%!important;
-  height:100%!important;
-  max-width:none!important;
-  max-height:none!important;
-  margin:0!important;
-  padding:0!important;
-  box-sizing:border-box!important;
-  overflow-y:auto!important;
-  overscroll-behavior:contain;
-  background:linear-gradient(180deg,rgba(11,14,25,.98),rgba(6,8,15,.99))!important;
-  color:#fff!important;
-}
-
-.ludo-dialog > header{
-  position:sticky;
-  top:0;
-  z-index:5;
-  min-height:58px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:8px 12px;
-  box-sizing:border-box;
-  background:rgba(8,10,18,.96);
-  border-bottom:1px solid rgba(255,255,255,.12);
-}
-
-.ludo-dialog > header h2{
-  flex:1;
-  margin:0!important;
-  font-size:22px;
-  line-height:1.2;
-}
-
-.ludo-dialog > header [data-close]{
-  order:-1;
-  width:42px;
-  height:42px;
-  flex:none;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  font-size:28px;
-  line-height:1;
-}
-
-.ludo-dialog [data-body]{
-  width:100%;
-  max-width:720px;
-  margin:0 auto;
-  padding:16px 14px 28px;
-  box-sizing:border-box;
-}
-
-.ludo-dialog button{
-  touch-action:manipulation;
-}
-
 /* =========================================================
    ERISCHAT LUDO — ODA İÇİ OYUN MODU
    Üst: tüm koltuklar yatay/kaydırılabilir
@@ -664,5 +576,78 @@
   #erisRoomSurface > .ludo-modal{
     top:78px!important;
     bottom:138px!important;
+  }
+}
+
+/* Ludo lobisi — tüm oda koltukları 1→N tek yatay sıra */
+#erisRoomSurface.ludo-mode .ludo-lobby-seats{
+  position:absolute;
+  left:8px;
+  right:8px;
+  top:4px;
+  z-index:3;
+
+  height:62px;
+  display:flex;
+  flex-flow:row nowrap;
+  align-items:center;
+  justify-content:flex-start;
+  gap:6px;
+
+  padding:3px 5px;
+  box-sizing:border-box;
+
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;
+  scrollbar-width:thin;
+}
+
+#erisRoomSurface.ludo-mode .ludo-lobby-seats + .ludo-dialog{
+  margin-top:66px!important;
+}
+
+#erisRoomSurface.ludo-mode .ludo-lobby-seats .ludo-seat-proxy{
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+
+  flex:0 0 54px!important;
+  width:54px!important;
+  min-width:54px!important;
+  max-width:54px!important;
+  height:54px!important;
+
+  margin:0!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+
+  scroll-snap-align:start;
+}
+
+#erisRoomSurface.ludo-mode .ludo-lobby-seats .ludo-seat-proxy.occupied .seat-ava{
+  width:72%!important;
+  height:72%!important;
+}
+
+@media(max-width:520px){
+  #erisRoomSurface.ludo-mode .ludo-lobby-seats{
+    height:58px;
+    gap:5px;
+  }
+
+  #erisRoomSurface.ludo-mode .ludo-lobby-seats + .ludo-dialog{
+    margin-top:62px!important;
+  }
+
+  #erisRoomSurface.ludo-mode .ludo-lobby-seats .ludo-seat-proxy{
+    flex-basis:50px!important;
+    width:50px!important;
+    min-width:50px!important;
+    max-width:50px!important;
+    height:50px!important;
   }
 }
