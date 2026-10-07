@@ -113,29 +113,37 @@
     body.innerHTML='<div class="v5-card"><b>'+ (owner?'👑 Oda sahibi':'🛡️ Moderatör') +'</b><div class="v5-note">Yetkin olan ayarlar burada görünür.</div></div>'+
       (owner?'<div class="v5-card"><b>Oda adı</b><input id="erisDirectRoomName" class="v5-btn" style="width:100%;margin-top:7px;text-align:left" maxlength="16" value="'+String(r.name||'').replace(/"/g,'&quot;')+'"><button class="v5-btn primary" id="erisDirectRename" style="width:100%;margin-top:7px">Kaydet</button></div>':'')+
       (staff?'<div class="v5-card"><div class="v5-grid"><button class="v5-btn" id="erisDirectLock">'+(r.locked?'🔓 Kilidi aç':'🔒 Odayı kilitle')+'</button><button class="v5-btn" id="erisDirectChat">'+(r.chat_enabled===false?'💬 Sohbeti aç':'💬 Sohbeti kapat')+'</button></div>'+
-      (owner?((r.password_set||r.locked)?'<input id="erisDirectCurrentPass" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="Mevcut 4 haneli şifre">':'')+'<input id="erisDirectPass" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="Yeni 4 haneli şifre"><button class="v5-btn" id="erisDirectPassSet" style="width:100%;margin-top:7px">🔐 '+((r.password_set||r.locked)?'Şifreyi değiştir':'Şifreyi kaydet')+'</button>':'')+'</div>':'');
+      (owner?'<input id="erisDirectPass" class="v5-btn" inputmode="numeric" maxlength="4" placeholder="4 haneli şifre"><button class="v5-btn" id="erisDirectPassSet" style="width:100%;margin-top:7px">🔐 '+((r.password_set||r.locked)?'Şifreyi değiştir':'Şifreyi kaydet')+'</button>':'')+'</div>':'');
     p.classList.add('show');
     body.querySelector('#erisDirectRename')?.addEventListener('click',async()=>{try{const name=body.querySelector('#erisDirectRoomName').value.trim();await req('/rooms/'+encodeURIComponent(r.id)+'/name',{method:'PATCH',body:JSON.stringify({name})});document.getElementById('erisLiveTitle').textContent=name;window.toast?.('Oda adı güncellendi ✓');}catch(e){window.toast?.(e.message)}});
     body.querySelector('#erisDirectLock')?.addEventListener('click',async()=>{try{if(r.locked)await req('/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'DELETE'});else await req('/rooms/'+encodeURIComponent(r.id)+'/lock',{method:'POST'});window.toast?.('Oda kilidi güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}});
     body.querySelector('#erisDirectChat')?.addEventListener('click',async()=>{try{await req('/rooms/'+encodeURIComponent(r.id)+'/chat',{method:'PATCH',body:JSON.stringify({enabled:r.chat_enabled===false})});window.toast?.('Sohbet ayarı güncellendi ✓');const nr=await room();openOwnerSettings(nr);}catch(e){window.toast?.(e.message)}});
+    const directPass=body.querySelector('#erisDirectPass');
+    if(directPass && (r.password_set||r.locked)){
+      req('/rooms/'+encodeURIComponent(r.id)+'/password/current')
+        .then(data=>{
+          const current=String(data?.password||'');
+          if(/^\d{4}$/.test(current))directPass.value=current;
+        })
+        .catch(()=>{});
+    }
+
     body.querySelector('#erisDirectPassSet')?.addEventListener('click',async()=>{
       try{
-        const pass=body.querySelector('#erisDirectPass')?.value.trim()||'';
-        const current=body.querySelector('#erisDirectCurrentPass')?.value.trim()||'';
-        if(!/^\d{4}$/.test(pass))throw new Error('Yeni şifre 4 rakam olmalı.');
-        if((r.password_set||r.locked)&&!/^\d{4}$/.test(current))throw new Error('Mevcut şifre 4 rakam olmalı.');
-        if(current&&current===pass)throw new Error('Yeni şifre mevcut şifreden farklı olmalı.');
+        const pass=directPass?.value.trim()||'';
+        if(!/^\d{4}$/.test(pass))throw new Error('Oda şifresi 4 rakam olmalı.');
+
         await req('/rooms/'+encodeURIComponent(r.id)+'/password',{
           method:'PUT',
-          body:JSON.stringify({
-            password:pass,
-            current_password:current||null
-          })
+          body:JSON.stringify({password:pass})
         });
+
         window.toast?.((r.password_set||r.locked)?'Oda şifresi değiştirildi ✓':'Oda şifresi kaydedildi ✓');
         const nr=await room();
         openOwnerSettings(nr);
-      }catch(e){window.toast?.(e.message)}
+      }catch(e){
+        window.toast?.(e.message||'Şifre kaydedilemedi.');
+      }
     });
   }
 

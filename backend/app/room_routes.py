@@ -570,16 +570,27 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
     @router.patch("/{room_id}/chat")
     def set_chat(room_id: str, payload: RoomChatUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user); room.chat_enabled = payload.enabled; db.commit(); return {"chat_enabled": room.chat_enabled}
+    @router.get("/{room_id}/password/current")
+    def get_current_room_password(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        room = get_room_or_404(db, room_id)
+        require_staff(db, room, user)
+        row = db.get(RoomPassword, room.id)
+        if not row:
+            return {"password": None}
+
+        # Oda PIN'i tam olarak 4 rakamdır (0000-9999).
+        # Veritabanında yalnız SHA-256 özeti tutulmaya devam eder.
+        for number in range(10000):
+            candidate = f"{number:04d}"
+            if hashlib.sha256(candidate.encode()).hexdigest() == row.password_hash:
+                return {"password": candidate}
+
+        raise HTTPException(status_code=409, detail="Kayıtlı oda şifresi okunamadı")
+
     @router.put("/{room_id}/password")
     def set_room_password(room_id: str, payload: RoomPasswordUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         row = db.get(RoomPassword, room.id)
-        if row:
-            if not payload.current_password:
-                raise HTTPException(status_code=400, detail="Mevcut oda şifresini girin")
-            current_hash = hashlib.sha256(payload.current_password.encode()).hexdigest()
-            if current_hash != row.password_hash:
-                raise HTTPException(status_code=400, detail="Mevcut oda şifresi yanlış")
         hashed = hashlib.sha256(payload.password.encode()).hexdigest()
         if row:
             row.password_hash = hashed

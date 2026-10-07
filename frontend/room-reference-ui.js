@@ -148,15 +148,16 @@
       levelBody.querySelector('[data-level-chat]').onclick=async()=>{try{await roomApi().setChat(r.id,r.chat_enabled===false);await openLevels()}catch(e){window.toast?.(e.message||'Chat değiştirilemedi')}};
       levelBody.querySelector('[data-level-lock]').onclick=async()=>{try{if(r.locked)await roomApi().clearPassword(r.id);else{const password=await window.ErisRoomPasswordModal?.('Yeni şifre');if(password===null||!/^\d{4}$/.test(password||''))return;await roomApi().setPassword(r.id,password)}await window.ErisRoomUI?.refresh?.();await openLevels()}catch(e){window.toast?.(e.message||'Oda kilidi değiştirilemedi')}};
       levelBody.querySelector('[data-level-password]').onclick=async()=>{
-        const currentPassword=await window.ErisRoomPasswordModal?.('Mevcut Şifre');
-        if(currentPassword===null)return;
-        if(!/^\d{4}$/.test(currentPassword))return window.toast?.('Mevcut şifre 4 rakam olmalı.');
-        const password=await window.ErisRoomPasswordModal?.('Yeni Şifre');
-        if(password===null)return;
-        if(!/^\d{4}$/.test(password))return window.toast?.('Yeni şifre 4 rakam olmalı.');
-        if(password===currentPassword)return window.toast?.('Yeni şifre mevcut şifreden farklı olmalı.');
         try{
-          await roomApi().setPassword(r.id,password,currentPassword);
+          const result=await roomApi().getCurrentPassword(r.id);
+          const current=String(result?.password||'');
+          if(!/^\d{4}$/.test(current))return window.toast?.('Mevcut oda şifresi okunamadı.');
+
+          const password=await window.ErisRoomPasswordModal?.('Şifreyi Değiştir',current);
+          if(password===null)return;
+          if(!/^\d{4}$/.test(password))return window.toast?.('Oda şifresi 4 rakam olmalı.');
+
+          await roomApi().setPassword(r.id,password);
           window.toast?.('Oda şifresi değiştirildi ✓');
           await window.ErisRoomUI?.refresh?.();
           await openLevels();
@@ -883,7 +884,7 @@
     },true);
   }
 
-  function passwordModal(title='Odaya giriş şifresi'){
+  function passwordModal(title='Odaya giriş şifresi',initialValue=''){
     return new Promise(resolve=>{
       document.getElementById('eris-room-password-modal')?.remove();
       const wrap=document.createElement('div');wrap.id='eris-room-password-modal';
@@ -893,11 +894,14 @@
     const activeRoom=document.getElementById('erisRoomSurface');
     (activeRoom?.classList.contains('show')?activeRoom:document.body).appendChild(wrap);
       const cells=[...wrap.querySelectorAll('.erp-cell')],err=wrap.querySelector('.erp-error');let done=false;
+      const initial=/^\d{4}$/.test(String(initialValue||''))?String(initialValue):'';
+      if(initial)cells.forEach((cell,index)=>{cell.value=initial[index]||''});
       const finish=v=>{if(done)return;done=true;wrap.remove();resolve(v)};
       wrap.querySelector('.erp-x').onclick=()=>finish(null);wrap.querySelector('.erp-backdrop').onclick=()=>finish(null);
       cells.forEach((c,i)=>{c.oninput=()=>{c.value=c.value.replace(/\D/g,'').slice(0,1);if(c.value&&cells[i+1])cells[i+1].focus();};c.onkeydown=e=>{if(e.key==='Backspace'&&!c.value&&cells[i-1])cells[i-1].focus();if(e.key==='Enter')wrap.querySelector('.erp-ok').click()}});
       wrap.querySelector('.erp-ok').onclick=()=>{const v=cells.map(x=>x.value).join('');if(!/^\d{4}$/.test(v)){err.textContent='4 haneli şifreyi tamamla.';return}finish(v)};
       cells[0].focus();
+      if(initial)cells[0].select();
     });
   }
   window.ErisRoomCenterMenu=menu;
