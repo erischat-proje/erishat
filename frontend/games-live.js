@@ -509,9 +509,6 @@
 const erisWheelLayout=document.createElement('style');
 erisWheelLayout.textContent=`
 #erisGamesModal.eg-single-game.eg-wheel-mode{
- --wheel-vw:100vw;
- --wheel-vh:100dvh;
- --wheel-scale:min(1, calc(var(--wheel-vw) / 360), calc(var(--wheel-vh) / 800));
  padding:0!important;
  overflow:hidden!important;
 }
@@ -520,10 +517,7 @@ erisWheelLayout.textContent=`
  height:100dvh!important;
  max-width:none!important;
  max-height:100dvh!important;
- padding:
-  max(calc(10px * var(--wheel-scale)), env(safe-area-inset-top))
-  calc(14px * var(--wheel-scale))
-  max(calc(14px * var(--wheel-scale)), env(safe-area-inset-bottom))!important;
+ padding:10px 14px 14px!important;
  border-radius:0!important;
  overflow:hidden!important;
  display:flex!important;
@@ -534,15 +528,15 @@ erisWheelLayout.textContent=`
 /* BAŞLIK */
 #erisGamesModal.eg-wheel-mode .eg-head{
  position:relative!important;
- flex:0 0 calc(48px * var(--wheel-scale))!important;
- min-height:calc(48px * var(--wheel-scale))!important;
+ flex:0 0 48px!important;
+ min-height:48px!important;
  margin:0!important;
  display:flex!important;
  align-items:center!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-head h2{
  margin:0!important;
- font-size:calc(18px * var(--wheel-scale))!important;
+ font-size:18px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-intro,
 #erisGamesModal.eg-wheel-mode .eg-keys,
@@ -556,13 +550,13 @@ erisWheelLayout.textContent=`
 /* BAKİYE + X */
 #erisGamesModal.eg-wheel-mode .eg-wallet{
  position:absolute!important;
- top:calc(22px * var(--wheel-scale))!important;
- right:calc(66px * var(--wheel-scale))!important;
+ top:22px!important;
+ right:66px!important;
  width:auto!important;
  margin:0!important;
- padding:calc(6px * var(--wheel-scale)) calc(9px * var(--wheel-scale))!important;
- border-radius:calc(10px * var(--wheel-scale))!important;
- font-size:calc(10px * var(--wheel-scale))!important;
+ padding:6px 9px!important;
+ border-radius:10px!important;
+ font-size:10px!important;
  z-index:20!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-wallet [data-scope]{
@@ -570,10 +564,10 @@ erisWheelLayout.textContent=`
 }
 #erisGamesModal.eg-wheel-mode .eg-head [data-close]{
  position:absolute!important;
- top:calc(9px * var(--wheel-scale))!important;
- right:calc(10px * var(--wheel-scale))!important;
- width:calc(40px * var(--wheel-scale))!important;
- height:calc(36px * var(--wheel-scale))!important;
+ top:9px!important;
+ right:10px!important;
+ width:40px!important;
+ height:36px!important;
  z-index:21!important;
 }
 
@@ -587,20 +581,20 @@ erisWheelLayout.textContent=`
 }
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
  display:block!important;
- flex:0 0 calc(32px * var(--wheel-scale))!important;
- height:calc(32px * var(--wheel-scale))!important;
- min-height:calc(32px * var(--wheel-scale))!important;
- margin:calc(3px * var(--wheel-scale)) 0 calc(6px * var(--wheel-scale))!important;
+ flex:0 0 32px!important;
+ height:32px!important;
+ min-height:32px!important;
+ margin:3px 0 6px!important;
  border:1px solid #ffffff18!important;
  border-radius:10px!important;
  background:#0b0813!important;
 }
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
  display:block!important;
- flex:0 0 calc(32px * var(--wheel-scale))!important;
- height:calc(32px * var(--wheel-scale))!important;
- min-height:calc(32px * var(--wheel-scale))!important;
- margin:calc(3px * var(--wheel-scale)) 0 calc(6px * var(--wheel-scale))!important;
+ flex:0 0 32px!important;
+ height:32px!important;
+ min-height:32px!important;
+ margin:3px 0 6px!important;
  border:1px solid #ffffff18!important;
  border-radius:10px!important;
  background:#0b0813!important;
@@ -609,13 +603,13 @@ erisWheelLayout.textContent=`
 /* ÇARK — KUTUNUN İÇİNDE */
 #erisGamesModal.eg-wheel-mode .eg-stage{
  position:relative!important;
- flex:0 0 calc(318px * var(--wheel-scale))!important;
+ flex:0 0 318px!important;
  width:100%!important;
- height:calc(318px * var(--wheel-scale))!important;
- min-height:calc(318px * var(--wheel-scale))!important;
- max-height:calc(318px * var(--wheel-scale))!important;
- margin:calc(4px * var(--wheel-scale)) 0 calc(8px * var(--wheel-scale))!important;
- padding:calc(18px * var(--wheel-scale)) calc(8px * var(--wheel-scale)) calc(8px * var(--wheel-scale))!important;
+ height:318px!important;
+ min-height:318px!important;
+ max-height:318px!important;
+ margin:4px 0 8px!important;
+ padding:18px 8px 8px!important;
  box-sizing:border-box!important;
  overflow:hidden!important;
  display:flex!important;
@@ -631,8 +625,8 @@ erisWheelLayout.textContent=`
  justify-content:center!important;
 }
 #erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
- width:min(calc(276px * var(--wheel-scale)),76vw)!important;
- max-width:calc(276px * var(--wheel-scale))!important;
+ width:min(276px,76vw)!important;
+ max-width:276px!important;
  margin:0 auto!important;
  flex:none!important;
 }
@@ -645,10 +639,10 @@ erisWheelLayout.textContent=`
  flex:0 0 auto!important;
  width:100%!important;
  margin:0!important;
- padding:calc(8px * var(--wheel-scale))!important;
+ padding:8px!important;
  box-sizing:border-box!important;
- border-radius:calc(15px * var(--wheel-scale))!important;
- gap:calc(6px * var(--wheel-scale))!important;
+ border-radius:15px!important;
+ gap:6px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-form>label{
  display:none!important;
@@ -657,14 +651,14 @@ erisWheelLayout.textContent=`
  display:grid!important;
  grid-template-columns:repeat(3,minmax(0,1fr))!important;
  width:100%!important;
- gap:calc(5px * var(--wheel-scale))!important;
+ gap:5px!important;
  margin:0!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-wheel-pick{
- min-height:calc(58px * var(--wheel-scale))!important;
- padding:calc(4px * var(--wheel-scale)) calc(2px * var(--wheel-scale))!important;
- border-radius:calc(11px * var(--wheel-scale))!important;
- gap:calc(1px * var(--wheel-scale))!important;
+ min-height:58px!important;
+ padding:4px 2px!important;
+ border-radius:11px!important;
+ gap:1px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-wheel-pick.active:after{
  display:none!important;
@@ -676,17 +670,17 @@ erisWheelLayout.textContent=`
  grid-template-columns:repeat(8,minmax(0,1fr))!important;
  grid-column:1/-1!important;
  width:100%!important;
- gap:calc(4px * var(--wheel-scale))!important;
- margin:calc(7px * var(--wheel-scale)) 0 0!important;
+ gap:4px!important;
+ margin:7px 0 0!important;
  padding:0!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button{
  min-width:0!important;
  width:100%!important;
- height:calc(40px * var(--wheel-scale))!important;
+ height:40px!important;
  margin:0!important;
  padding:0!important;
- border-radius:calc(10px * var(--wheel-scale))!important;
+ border-radius:10px!important;
  font-size:0!important;
  white-space:nowrap!important;
  overflow:hidden!important;
@@ -696,13 +690,13 @@ erisWheelLayout.textContent=`
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button:before{
  content:"🪙"!important;
- font-size:calc(8px * var(--wheel-scale))!important;
- margin-right:calc(1px * var(--wheel-scale))!important;
+ font-size:8px!important;
+ margin-right:1px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button:after{
  content:attr(data-stake-value)!important;
- font-size:calc(9px * var(--wheel-scale))!important;
- letter-spacing:calc(-.5px * var(--wheel-scale))!important;
+ font-size:9px!important;
+ letter-spacing:-.5px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button.wheel-stake-active{
  border-color:#ffd477!important;
@@ -711,11 +705,11 @@ erisWheelLayout.textContent=`
 
 /* SAYAÇ */
 #erisGamesModal.eg-wheel-mode [data-wheel-clock]{
- flex:0 0 calc(24px * var(--wheel-scale))!important;
- height:calc(24px * var(--wheel-scale))!important;
- line-height:calc(24px * var(--wheel-scale))!important;
- margin:calc(5px * var(--wheel-scale)) 0 0!important;
- font-size:calc(12px * var(--wheel-scale))!important;
+ flex:0 0 24px!important;
+ height:24px!important;
+ line-height:24px!important;
+ margin:5px 0 0!important;
+ font-size:12px!important;
 }
 
 /* BOŞ SONUÇ ALANI YER YEMESİN */
