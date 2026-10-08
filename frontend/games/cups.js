@@ -189,6 +189,10 @@
         if (!valid()) return;
 
         status.textContent = '🔄 Kupaları takip et!';
+        cups.forEach(c => {
+          const number = c.querySelector('.eris-cup-number');
+          if (number) number.style.visibility = 'hidden';
+        });
         for (const [a, b] of plan.swaps) {
           if (!valid()) return;
           const current = [...table.children];
@@ -220,6 +224,13 @@
         if (!valid()) return;
         this.busy = false;
         status.textContent = '👆 Bir kupa seç!';
+        [...table.children].forEach((cup, index) => {
+          const number = cup.querySelector('.eris-cup-number');
+          if (number) {
+            number.textContent = String(index + 1);
+            number.style.visibility = '';
+          }
+        });
         [...table.children].forEach((cup, index) => {
           cup.disabled = false;
           cup.classList.add('pickable');
