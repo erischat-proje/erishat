@@ -224,6 +224,14 @@
                 <div data-controls style="display:flex; gap:8px; justify-content:center; margin-top:6px;"></div>
             </div>
         `;
+
+        // ERIS_FINAL_TWO_UI_STYLES
+        if (!document.getElementById('erisFinalTwoUiStyles')) {
+            const finalStyle = document.createElement('style');
+            finalStyle.id = 'erisFinalTwoUiStyles';
+            finalStyle.textContent = '\n/* ERIS_FINAL_TWO_UI_FIXES_20261008 */\n#erisGamesModal .eg-head {\n  display:flex!important;\n  align-items:center!important;\n  gap:6px!important;\n}\n#erisGamesModal .eg-head h2 {\n  flex:1 1 auto!important;\n  min-width:0!important;\n}\n#erisGamesModal .eg-head>.eg-wallet {\n  display:flex!important;\n  flex:0 1 auto!important;\n  min-width:0!important;\n  max-width:57%!important;\n  margin:0!important;\n  padding:4px 7px!important;\n  border:1px solid #d5ac5a44!important;\n  border-radius:12px!important;\n  background:#20182c!important;\n  align-items:center!important;\n  justify-content:center!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-balance] {\n  display:block!important;\n  font-size:clamp(9px,2.5vw,12px)!important;\n  white-space:nowrap!important;\n  overflow:hidden!important;\n  text-overflow:ellipsis!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-scope] {\n  display:none!important;\n}\n#erisGamesModal .eg-head>[data-close] {\n  flex-shrink:0!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form>label:first-child {\n  display:none!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks {\n  display:grid!important;\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n  gap:5px!important;\n  width:100%!important;\n  margin:0!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button {\n  box-sizing:border-box!important;\n  display:flex!important;\n  align-items:center!important;\n  justify-content:center!important;\n  min-width:0!important;\n  min-height:57px!important;\n  padding:5px 2px!important;\n  border-radius:10px!important;\n  font-size:0!important;\n  line-height:1!important;\n  white-space:normal!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button::before {\n  font-size:24px!important;\n  line-height:1!important;\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="ruby"]::before {\n  content:"💎";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="gold"]::before {\n  content:"👑";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="crystal"]::before {\n  content:"🔮";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="mystery"]::before {\n  content:"🎁";\n}\n#erisGamesModal.eg-vault-mode .eg-stake-presets {\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form {\n  gap:5px!important;\n}\n';
+            document.head.appendChild(finalStyle);
+        }
         document.body.append(modal);
         const ownedModal = modal;
         const gameIntervals = new Set();
@@ -594,6 +602,14 @@ const close = () => {
         modal.classList.toggle('eg-cups-mode', key === 'cups');
         // ERIS_VAULT_MODE_V1
         modal.classList.toggle('eg-vault-mode', key === 'vault');
+        // ERIS_ALL_GAMES_HEADER_BALANCE_V1
+        const header = modal.querySelector('.eg-head');
+        const wallet = modal.querySelector('.eg-wallet');
+        const closeButton = header?.querySelector('[data-close]');
+        if (header && wallet && closeButton) {
+            header.insertBefore(wallet, closeButton);
+        }
+
         modal.classList.toggle('eg-horse-mode', key === 'horse_race');
 
 
