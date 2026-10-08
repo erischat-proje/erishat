@@ -29,43 +29,43 @@ jobs:
         run: chmod +x android-native/gradlew
 
       - name: Restore signing key
-      env:
-        ERISCHAT_KEYSTORE_BASE64: ${{ secrets.ERISCHAT_KEYSTORE_BASE64 }}
-        ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
-      run: |
-        python3 - <<'SIGNING'
-        import base64, os, re, subprocess
-        from pathlib import Path
-        key = Path(os.environ["RUNNER_TEMP"]) / "erischat-signing.keystore"
-        key.write_bytes(base64.b64decode(os.environ["ERISCHAT_KEYSTORE_BASE64"]))
-        key.chmod(0o600)
-        result = subprocess.run([
-            "keytool", "-J-Duser.language=en", "-J-Duser.country=US",
-            "-list", "-v", "-keystore", str(key),
-            "-storepass:env", "ERISCHAT_KEYSTORE_PASSWORD"
-        ], capture_output=True, text=True)
-        if result.returncode:
-            raise SystemExit("İmza anahtarı açılamadı; keystore ve parola Secrets ayarını kontrol et.")
-        entries = re.split(r"Alias name: ", result.stdout)[1:]
-        private = [e for e in entries if "Entry type: PrivateKeyEntry" in e]
-        if len(private) != 1:
-            raise SystemExit("Anahtarda tam bir PrivateKeyEntry bekleniyor; alias seçimi gerekiyor.")
-        alias = private[0].splitlines()[0].strip()
-        sha = re.search(r"SHA1:\s*([0-9A-F:]+)", private[0])
-        if not sha:
-            raise SystemExit("SHA-1 bulunamadı.")
-        with open(os.environ["GITHUB_ENV"], "a") as f:
-            f.write(f"ERISCHAT_SIGNING_FILE={key}\nERISCHAT_SIGNING_ALIAS={alias}\n")
-        print("Android package: com.erischat.app")
-        print("Signing SHA-1: " + sha.group(1))
-        SIGNING
+        env:
+          ERISCHAT_KEYSTORE_BASE64: ${{ secrets.ERISCHAT_KEYSTORE_BASE64 }}
+          ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
+        run: |
+          python3 - <<'SIGNING'
+          import base64, os, re, subprocess
+          from pathlib import Path
+          key = Path(os.environ["RUNNER_TEMP"]) / "erischat-signing.keystore"
+          key.write_bytes(base64.b64decode(os.environ["ERISCHAT_KEYSTORE_BASE64"]))
+          key.chmod(0o600)
+          result = subprocess.run([
+              "keytool", "-J-Duser.language=en", "-J-Duser.country=US",
+              "-list", "-v", "-keystore", str(key),
+              "-storepass:env", "ERISCHAT_KEYSTORE_PASSWORD"
+          ], capture_output=True, text=True)
+          if result.returncode:
+              raise SystemExit("İmza anahtarı açılamadı; keystore ve parola Secrets ayarını kontrol et.")
+          entries = re.split(r"Alias name: ", result.stdout)[1:]
+          private = [e for e in entries if "Entry type: PrivateKeyEntry" in e]
+          if len(private) != 1:
+              raise SystemExit("Anahtarda tam bir PrivateKeyEntry bekleniyor; alias seçimi gerekiyor.")
+          alias = private[0].splitlines()[0].strip()
+          sha = re.search(r"SHA1:\s*([0-9A-F:]+)", private[0])
+          if not sha:
+              raise SystemExit("SHA-1 bulunamadı.")
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              f.write(f"ERISCHAT_SIGNING_FILE={key}\nERISCHAT_SIGNING_ALIAS={alias}\n")
+          print("Android package: com.erischat.app")
+          print("Signing SHA-1: " + sha.group(1))
+          SIGNING
 
-    - name: Build APK
+      - name: Build APK
         working-directory: android-native
         env:
-        ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
-        ERISCHAT_KEY_PASSWORD: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
-      run: ./gradlew clean assembleDebug
+          ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
+          ERISCHAT_KEY_PASSWORD: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
+        run: ./gradlew clean assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
