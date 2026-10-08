@@ -472,7 +472,9 @@
         }
 
         // ERIS_BJ_RESTORE_RACE_FIX_V1
+        // ERIS_BJ_RESTORE_FAILURE_LOCK_V1
         let blackjackRestoreBusy = false;
+        let blackjackRestoreFailed = false;
         let activeBlackjackRoundId = null;
         const loadGameModule = key => {
             /* ERIS_BJ_SWITCH_GUARD_V2 */ if ((activeBlackjackRoundId || blackjackRestoreBusy) && game === 'blackjack' && key !== 'blackjack') {
@@ -980,6 +982,7 @@
             if (game !== 'blackjack' || blackjackRestoreBusy ||
                 activeBlackjackRoundId) return;
             blackjackRestoreBusy = true;
+            blackjackRestoreFailed = false;
             const currentModal = modal;
             const playButton = currentModal.querySelector('[data-play]');
             if (playButton) playButton.disabled = true;
@@ -1001,6 +1004,7 @@
                     'Devam eden Blackjack elin geri yüklendi. Kart Çek veya Dur.';
             } catch (e) {
                 console.warn('[ErisChat] Blackjack geri yükleme:', e);
+                blackjackRestoreFailed = true;
                 if (game === 'blackjack' && currentModal.isConnected) {
                     currentModal.querySelector('.eg-result').textContent =
                         'Blackjack bağlantısı kontrol edilemedi. Lütfen tekrar aç.';
@@ -1008,7 +1012,7 @@
             } finally {
                 blackjackRestoreBusy = false;
                 if (playButton && currentModal.isConnected &&
-                    !activeBlackjackRoundId) {
+                    !activeBlackjackRoundId && !blackjackRestoreFailed) {
                     playButton.disabled = false;
                 }
             }
@@ -1018,7 +1022,8 @@
         queueMicrotask(() => restoreBlackjackRound());
         modal.querySelector('[data-play]').onclick = async () => {
             if (game === 'blackjack' &&
-                (activeBlackjackRoundId || blackjackRestoreBusy)) {
+                (activeBlackjackRoundId || blackjackRestoreBusy ||
+                 blackjackRestoreFailed)) {
                 modal.querySelector('.eg-result').textContent =
                     'Blackjack elin kontrol ediliyor veya devam ediyor.';
                 return;
