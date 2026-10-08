@@ -982,51 +982,42 @@ const close = () => {
             }
 
 
-            // ERIS_VAULT_PREMIUM_SELECTOR_V1
+            // ERIS_TREASURE_VAULT_SELECTOR_V2
         modal.querySelector('[data-vault-picks]')?.remove();
         if (key === 'vault') {
             const prizes = [
-                ['rare', '💠', 'NADİR', '2×'],
-                ['epic', '💜', 'DESTANSI', '4×'],
-                ['legendary', '👑', 'EFSANEVİ', '10×'],
-                ['mythic', '🌟', 'MİTİK', '20×']
+                ['ruby','💎','YAKUT KASASI'],
+                ['gold','👑','ALTIN KASASI'],
+                ['crystal','🔮','KRİSTAL KASASI'],
+                ['mystery','🎁','GİZEMLİ KASA']
             ];
             const picks = document.createElement('div');
             picks.dataset.vaultPicks = '';
             picks.className = 'ev-prize-picks';
-            picks.style.cssText =
-                'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));' +
-                'gap:8px;margin-bottom:10px';
-
-            prizes.forEach(([id, icon, name, mult]) => {
+            prizes.forEach(([id, icon, name]) => {
                 const b = document.createElement('button');
                 b.type = 'button';
                 b.dataset.vaultPick = id;
-                b.style.cssText =
-                    'min-width:0;padding:11px 5px;border-radius:13px;' +
-                    'border:1px solid #a78b55;background:#201d2c;' +
-                    'color:#ffe3a3;font-weight:900;font-size:12px';
-                b.innerHTML =
-                    '<span style="font-size:21px">' + icon + '</span>' +
-                    '<div>' + name + '</div><small>' + mult + ' ÖDEME</small>';
+                b.textContent = icon + ' ' + name;
                 b.onclick = () => {
                     choice.value = id;
                     picks.querySelectorAll('button').forEach(el => {
                         const active = el === b;
-                        el.style.borderColor =
-                            active ? '#facc15' : '#a78b55';
-                        el.style.background =
-                            active ? '#4b3725' : '#201d2c';
-                        el.setAttribute(
-                            'aria-pressed', String(active)
-                        );
+                        el.style.borderColor = active ? '#ffe098' : '#8b704a';
+                        el.style.background = active ? '#5a3c27' : '#211d2e';
+                        el.setAttribute('aria-pressed', String(active));
                     });
+                    gameModules.vault()?.setPhase?.(
+                        modal.querySelector('.eg-stage'),
+                        vaultState?.phase || 'betting',
+                        vaultState?.result,
+                        id
+                    );
                 };
                 picks.appendChild(b);
             });
-
             modal.querySelector('.eg-form').prepend(picks);
-            picks.querySelector('[data-vault-pick="rare"]')?.click();
+            picks.querySelector('[data-vault-pick="ruby"]')?.click();
         }
 
         // ERIS_HORSE_PREMIUM_SELECTOR_V1
@@ -1564,7 +1555,7 @@ const close = () => {
                     const result = modal.querySelector('.eg-result');
                     if (result) {
                         result.textContent =
-                            '🔒 Yeni kasa turu başladı. Ödülünü seç!';
+                            '🔐 Yeni hazine turu başladı. Kasanı seç!';
                     }
                 }
 
@@ -1574,16 +1565,17 @@ const close = () => {
                     x.result ? 'result' : 'opening'
                 );
                 gameModules.vault()?.setPhase?.(
-                    stage, phase, x.result
+                    stage, phase, x.result,
+                    modal.querySelector('[data-choice]')?.value
                 );
                 const result = modal.querySelector('.eg-result');
                 const button = modal.querySelector('[data-play]');
                 const names = {
                     common: 'Boş Kasa',
-                    rare: 'Nadir',
-                    epic: 'Destansı',
-                    legendary: 'Efsanevi',
-                    mythic: 'Mitik'
+                    rare: 'Nadir', epic: 'Destansı',
+                    legendary: 'Efsanevi', mythic: 'Mitik',
+                    ruby: 'Yakut Kasası', gold: 'Altın Kasası',
+                    crystal: 'Kristal Kasası', mystery: 'Gizemli Kasa'
                 };
 
                 let clock = modal.querySelector('[data-vault-clock]');
@@ -1608,9 +1600,9 @@ const close = () => {
                     : '🔓 SONUÇ: ' + phaseSeconds + ' SANİYE';
 
                 if (button) {
-                    button.disabled = !x.betting_open || vaultBusy;
+                    button.disabled = !x.betting_open || vaultBusy || x.version !== 2;
                     button.textContent = x.betting_open
-                        ? '💰 KASAYA BAHİS YAP'
+                        ? '🔑 KASAYI SEÇ · BAHİS YAP'
                         : '🔒 BAHİSLER KAPANDI';
                 }
 
@@ -2780,19 +2772,19 @@ const close = () => {
                     modal.querySelector('[data-stake]').value
                 );
                 const choice = modal.querySelector('[data-choice]').value;
-                const allowed = ['rare', 'epic', 'legendary', 'mythic'];
+                const allowed = ['ruby', 'gold', 'crystal', 'mystery'];
                 const result = modal.querySelector('.eg-result');
 
                 if (!allowed.includes(choice)) {
-                    result.textContent = 'Bir kasa ödülü seç.';
+                    result.textContent = 'Açılacak kasayı seç.';
                     return;
                 }
                 if (![10,25,50,75,100,250,500,1000].includes(amount)) {
                     result.textContent = 'Hazır bahis miktarlarından birini seç.';
                     return;
                 }
-                if (!vaultState?.betting_open) {
-                    result.textContent = 'Bahisler kapalı. Yeni turu bekle.';
+                if (!vaultState?.betting_open || vaultState?.version !== 2) {
+                    result.textContent = 'Yeni hazine turunun başlamasını bekle.';
                     return;
                 }
 

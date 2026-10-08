@@ -9,12 +9,15 @@ from .models import User
 from .platform_models import GameRound, GameBet
 
 GAME = "vault_live"
-PRIZES = ("rare", "epic", "legendary", "mythic")
+PRIZES = ("ruby", "gold", "crystal", "mystery")
+TREASURE_V2 = 2
+LEGACY_PRIZES = ("rare", "epic", "legendary", "mythic")
 BET_SECONDS = 30
 OPEN_SECONDS = 7
 RESULT_SECONDS = 5
 STAKES = {10, 25, 50, 75, 100, 250, 500, 1000}
-MULTIPLIERS = {"common": 0, "rare": 2, "epic": 4, "legendary": 10, "mythic": 20}
+MULTIPLIERS = {"ruby": 3, "gold": 3, "crystal": 3, "mystery": 3}
+LEGACY_MULTIPLIERS = {"common": 0, "rare": 2, "epic": 4, "legendary": 10, "mythic": 20}
 
 def now():
     return datetime.now(timezone.utc)
@@ -27,17 +30,27 @@ def finish(row, db):
     if row.status != "open" or row.ends_at > now():
         return row
 
-    roll = secrets.randbelow(1000)
-    if roll < 700:
-        winner = "common"
-    elif roll < 900:
-        winner = "rare"
-    elif roll < 980:
-        winner = "epic"
-    elif roll < 998:
-        winner = "legendary"
+    # Legacy open rounds must settle under the original odds and payouts.
+    try:
+        version = json.loads(row.state_data or "{}").get("version", 1)
+    except (TypeError, ValueError, AttributeError):
+        version = 1
+    if version == TREASURE_V2:
+        winner = PRIZES[secrets.randbelow(len(PRIZES))]
+        multipliers = MULTIPLIERS
     else:
-        winner = "mythic"
+        roll = secrets.randbelow(1000)
+        if roll < 700:
+            winner = "common"
+        elif roll < 900:
+            winner = "rare"
+        elif roll < 980:
+            winner = "epic"
+        elif roll < 998:
+            winner = "legendary"
+        else:
+            winner = "mythic"
+        multipliers = LEGACY_MULTIPLIERS
     row.result_key = winner
     row.status = "finished"
 
@@ -48,7 +61,7 @@ def finish(row, db):
 
     for bet in bets:
         if bet.choice == winner:
-            amount = int(bet.amount) * MULTIPLIERS[winner]
+            amount = int(bet.amount) * multipliers[winner]
             bet.payout = amount
             payouts[bet.user_id] = (
                 payouts.get(bet.user_id, 0) + amount
@@ -64,6 +77,7 @@ def finish(row, db):
             user.lidya += amount
 
     row.state_data = json.dumps({
+        "version": version,
         "winner": winner,
         "bet_count": len(bets),
         "total_payout": sum(payouts.values())
@@ -101,7 +115,7 @@ def get_round(db):
             started_at=current,
             ends_at=current + timedelta(seconds=BET_SECONDS),
             result_key=None,
-            state_data="{}"
+            state_data=json.dumps({"version": TREASURE_V2})
         )
         db.add(row)
         db.flush()
