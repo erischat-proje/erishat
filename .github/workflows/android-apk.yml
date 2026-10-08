@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - google-native-android
+      - auth-unified-v1
+    paths:
+      - 'android-native/**'
+      - '.github/workflows/android-apk.yml'
 
 jobs:
   build:
@@ -31,6 +35,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ErisChat-Google-Fix
+          name: ErisChat-Accounts-Microphone-APK
           path: android-native/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
