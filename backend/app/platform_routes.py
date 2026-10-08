@@ -1571,6 +1571,135 @@ def register_platform_auth(current_user_dependency):
             "balance": balance,
         }
 
+
+    # ERIS_VAULT_LIVE_API_V1
+    from . import vault_live
+
+    @router.get("/games/vault/live")
+    def vault_live_state(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = vault_live.get_round(db)
+        bets = list(db.scalars(
+            select(GameBet).where(GameBet.round_id == row.id)
+        ))
+        remaining = max(0, int(
+            (row.ends_at - vault_live.now()).total_seconds()
+        ))
+        my_bets = {
+            key: sum(
+                int(b.amount) for b in bets
+                if b.user_id == user.id and b.choice == key
+            )
+            for key in vault_live.PRIZES
+        }
+        # ERIS_VAULT_PHASE_V1
+        elapsed = max(0, (
+            vault_live.now() - row.ends_at
+        ).total_seconds())
+        if row.status == "open":
+            phase = "betting"
+            phase_remaining = remaining
+        elif elapsed < vault_live.OPEN_SECONDS:
+            phase = "opening"
+            phase_remaining = max(
+                0, int(vault_live.OPEN_SECONDS - elapsed + 0.999)
+            )
+        else:
+            phase = "result"
+            phase_remaining = max(
+                0, int(
+                    vault_live.OPEN_SECONDS
+                    + vault_live.RESULT_SECONDS
+                    - elapsed + 0.999
+                )
+            )
+
+        response = {
+            "round_id": row.id,
+            "status": row.status,
+            "phase": phase,
+            "phase_remaining": phase_remaining,
+            "remaining_seconds": remaining,
+            "betting_open": row.status == "open" and remaining > 0,
+            "result": row.result_key if phase == "result" else None,
+            "prizes": list(vault_live.PRIZES),
+            "my_bets": my_bets,
+            "multipliers": {
+                key: vault_live.MULTIPLIERS[key]
+                for key in vault_live.PRIZES
+            },
+        }
+        db.commit()
+        return response
+
+    @router.post("/games/vault/live/bet")
+    def vault_live_bet(
+        payload: GameBetCreate,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        choice = payload.choice.strip().lower()
+        if choice not in vault_live.PRIZES:
+            raise HTTPException(
+                status_code=400,
+                detail="Geçersiz kasa ödülü seçimi",
+            )
+        if (
+            type(payload.amount) is not int
+            or payload.amount not in vault_live.STAKES
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="Geçersiz bahis miktarı",
+            )
+
+        row = vault_live.get_round(db)
+        if (
+            row.status != "open"
+            or row.ends_at <= vault_live.now()
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Bahisler kapandı. Yeni turu bekle.",
+            )
+
+        locked_user = db.scalar(
+            select(User)
+            .where(User.id == user.id)
+            .with_for_update()
+        )
+        if not locked_user:
+            raise HTTPException(
+                status_code=404,
+                detail="Kullanıcı bulunamadı",
+            )
+        if int(locked_user.lidya or 0) < payload.amount:
+            raise HTTPException(
+                status_code=400,
+                detail="Yeterli Lidya yok",
+            )
+
+        locked_user.lidya -= payload.amount
+        db.add(GameBet(
+            round_id=row.id,
+            user_id=user.id,
+            choice=choice,
+            amount=payload.amount,
+            payout=0,
+        ))
+        db.flush()
+        balance = locked_user.lidya
+        db.commit()
+        return {
+            "ok": True,
+            "round_id": row.id,
+            "choice": choice,
+            "amount": payload.amount,
+            "balance": balance,
+        }
+
     @router.get("/games/wheel/live")
     def wheel_live_state(
         db: Session = Depends(get_db),

@@ -1,51 +1,225 @@
 (() => {
     'use strict';
 
-    const VAULT_OPTIONS = [
-        ['1', '1 Numaralı Kilit'],
-        ['2', '2 Numaralı Kilit'],
-        ['3', '3 Numaralı Kilit']
+    const OPTIONS = [
+        ['rare', '💠 Nadir · 2×'],
+        ['epic', '💜 Destansı · 4×'],
+        ['legendary', '👑 Efsanevi · 10×'],
+        ['mythic', '🌟 Mitik · 20×']
     ];
 
+    const STYLE_ID = 'erisVaultLiveStyle';
+
+    function installStyle() {
+        if (document.getElementById(STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = `
+            .ev-scene {
+                position:relative;
+                width:100%;
+                min-height:220px;
+                padding:12px;
+                box-sizing:border-box;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                overflow:hidden;
+                border-radius:18px;
+                border:1px solid #a9894d;
+                background:
+                    radial-gradient(ellipse at 50% 100%,#9a6b3044,transparent 65%),
+                    linear-gradient(155deg,#202532,#090d15);
+            }
+            .ev-title {
+                color:#f8d993;
+                font-size:11px;
+                font-weight:900;
+                letter-spacing:2px;
+                margin-bottom:10px;
+            }
+            .ev-safe {
+                width:170px;
+                height:125px;
+                position:relative;
+                perspective:600px;
+                filter:drop-shadow(0 15px 13px #0009);
+            }
+            .ev-body {
+                position:absolute;
+                inset:0;
+                border:4px solid #d5ae61;
+                border-radius:15px;
+                background:linear-gradient(145deg,#485463,#131c29 60%,#080c13);
+                box-shadow:inset 0 0 20px #000b;
+            }
+            .ev-inside {
+                position:absolute;
+                inset:13px;
+                display:grid;
+                place-items:center;
+                color:#fbd67b;
+                font-size:38px;
+                background:radial-gradient(circle,#53401e,#080b12 70%);
+                border-radius:8px;
+            }
+            .ev-door {
+                position:absolute;
+                inset:4px;
+                display:grid;
+                place-items:center;
+                transform-origin:left center;
+                transform-style:preserve-3d;
+                border:3px solid #bfc8d0;
+                border-radius:11px;
+                background:linear-gradient(135deg,#687786,#293543 45%,#141b25 80%,#55616e);
+                box-shadow:inset 0 0 18px #0009,4px 4px 12px #0008;
+                transition:transform 2.5s cubic-bezier(.2,.65,.25,1);
+                backface-visibility:hidden;
+                z-index:2;
+            }
+            .ev-dial {
+                width:68px;
+                height:68px;
+                display:grid;
+                place-items:center;
+                border:7px double #e4c27d;
+                border-radius:50%;
+                color:#ffe6a6;
+                font-size:26px;
+                background:radial-gradient(circle,#576370,#161e29);
+                box-shadow:0 0 0 5px #151b23,inset 0 0 10px #000a;
+            }
+            .ev-scene.ev-opening .ev-dial {
+                animation:ev-spin 1.3s linear infinite;
+            }
+            .ev-scene.ev-open .ev-door {
+                transform:rotateY(-112deg);
+            }
+            .ev-status {
+                margin-top:12px;
+                color:#e8d5a5;
+                font-size:12px;
+                font-weight:800;
+                text-align:center;
+            }
+            /* ERIS_VAULT_MOBILE_V1 */
+            #erisGamesModal.eg-vault-mode .eg-stage {
+                min-height:0!important;
+                padding:0!important;
+            }
+            #erisGamesModal.eg-vault-mode .ev-scene {
+                min-height:175px;
+                padding:9px;
+            }
+            #erisGamesModal.eg-vault-mode .ev-safe {
+                transform:scale(.84);
+                margin:-9px 0;
+            }
+            #erisGamesModal.eg-vault-mode .ev-title {
+                margin-bottom:4px;
+            }
+            #erisGamesModal.eg-vault-mode .ev-status {
+                margin-top:5px;
+            }
+            #erisGamesModal.eg-vault-mode .eg-form {
+                gap:7px!important;
+                padding:9px!important;
+            }
+            #erisGamesModal.eg-vault-mode .ev-prize-picks {
+                gap:6px!important;
+                margin-bottom:5px!important;
+            }
+            #erisGamesModal.eg-vault-mode .ev-prize-picks button {
+                padding:7px 4px!important;
+            }
+            #erisGamesModal.eg-vault-mode .eg-stake-presets {
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:5px!important;
+            }
+            #erisGamesModal.eg-vault-mode [data-stake-value] {
+                min-width:0;
+                padding:9px 2px!important;
+                font-size:12px!important;
+            }
+            #erisGamesModal.eg-vault-mode [data-play] {
+                width:100%;
+                min-height:45px;
+                border-radius:12px;
+                font-weight:900;
+            }
+            @media(max-height:740px) {
+                #erisGamesModal.eg-vault-mode .ev-scene {
+                    min-height:150px;
+                }
+                #erisGamesModal.eg-vault-mode .ev-safe {
+                    transform:scale(.72);
+                    margin:-17px 0;
+                }
+            }
+            @keyframes ev-spin {
+                to { transform:rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     const VaultGame = {
-        options: VAULT_OPTIONS,
+        options: OPTIONS,
 
         render(container) {
+            installStyle();
             container.innerHTML = `
-                <div style="width:100%;min-height:230px;background:radial-gradient(ellipse at 50% 105%,#b7791f25,transparent 55%),linear-gradient(145deg,#18140f,#08090b);border-radius:18px;border:1px solid #d6a75055;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden">
-                    <div style="font-size:10px;color:#f4d58a;font-weight:900;letter-spacing:2px;margin-bottom:15px">SECURITY VAULT · 03 LOCKS</div>
-                    <div id="vaultBox" style="position:relative;width:150px;height:112px;background:linear-gradient(135deg,#59616a,#242a31 35%,#11151a 72%,#343a40);border:3px solid #bd914e;border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 18px #000b,0 16px 30px #0009;transform-style:preserve-3d">
-                        <div style="position:absolute;inset:7px;border:1px solid #ffffff25;border-radius:7px;pointer-events:none"></div>
-                        <div style="position:absolute;left:8px;top:8px;width:7px;height:7px;border-radius:50%;background:#e6c274;box-shadow:126px 0 #e6c274,0 86px #e6c274,126px 86px #e6c274"></div>
-                        <div style="position:absolute;left:0;right:0;top:19px;height:2px;background:#ffffff12"></div>
-                        <div id="vaultDial" style="width:64px;height:64px;border-radius:50%;border:6px solid #d4ad64;background:radial-gradient(circle,#424b51,#1a1e22 65%);display:grid;place-items:center;color:#f5d78c;font-size:22px;font-weight:900;box-shadow:0 0 0 4px #101317,inset 0 0 14px #000b;transition:transform 1.2s cubic-bezier(.2,.7,.2,1);">🔒</div>
+                <div class="ev-scene" data-vault-scene>
+                    <div class="ev-title">ERISCHAT · CANLI KASA</div>
+                    <div class="ev-safe">
+                        <div class="ev-body"></div>
+                        <div class="ev-inside" data-vault-inside>💰</div>
+                        <div class="ev-door">
+                            <div class="ev-dial">🔒</div>
+                        </div>
                     </div>
-                    <div id="vaultStatusText" style="font-size:11px;color:#d9c79c;margin-top:15px;font-weight:700;text-align:center;letter-spacing:.3px">Kilidi seç ve kasayı aç.</div>
+                    <div class="ev-status" data-vault-status>
+                        Ödül kategorini seç ve bahis yap.
+                    </div>
                 </div>
             `;
         },
 
+        setPhase(container, phase, result) {
+            const scene = container?.querySelector('[data-vault-scene]');
+            const status = container?.querySelector('[data-vault-status]');
+            const inside = container?.querySelector('[data-vault-inside]');
+            if (!scene) return;
+
+            scene.classList.toggle('ev-opening', phase === 'opening');
+            scene.classList.toggle('ev-open', phase === 'result');
+
+            const symbols = {
+                common:'📭',
+                rare:'💠',
+                epic:'💜',
+                legendary:'👑',
+                mythic:'🌟'
+            };
+
+            if (inside) inside.textContent =
+                phase === 'result' ? (symbols[result] || '💰') : '💰';
+
+            if (status) {
+                status.textContent =
+                    phase === 'opening'
+                        ? '⚙️ Şifre çözülüyor... Kasa açılıyor!'
+                        : phase === 'result'
+                        ? '🔓 Kasa açıldı! Sonuç açıklandı.'
+                        : '🔒 Kasa kilitli · Bahisler açık';
+            }
+        },
+
         async animate(container, data) {
-            const vaultBox = document.getElementById('vaultBox');
-            const vaultDial = document.getElementById('vaultDial');
-            const statusText = document.getElementById('vaultStatusText');
-            const isWin = data?.result === 'win';
-
-            if (statusText) statusText.textContent = '⚙️ Şifre test ediliyor...';
-            if (vaultDial) vaultDial.style.transform = 'rotate(1080deg)';
-
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    if (vaultBox && vaultDial) {
-                        vaultBox.style.borderColor = isWin ? '#22c55e' : '#ef4444';
-                        vaultDial.textContent = isWin ? '💰' : '❌';
-                    }
-                    if (statusText) {
-                        statusText.textContent = isWin ? '🎉 Kasa açıldı!' : '❌ Kasa kilitli kaldı!';
-                    }
-                    setTimeout(resolve, 2000);
-                }, 3000);
-            });
+            this.setPhase(container, 'result', data?.winner || data?.result);
         }
     };
 
