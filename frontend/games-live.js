@@ -614,6 +614,13 @@
 
             if (mod && typeof mod.render === 'function') {
                 mod.render(stage);
+                if (key === 'cups') {
+                    queueMicrotask(() => {
+                        if (game === 'cups' && modal?.isConnected) {
+                            restoreCupsRound().catch(console.warn);
+                        }
+                    });
+                }
                 if (key === 'crash') {
                     queueMicrotask(() => {
                         if (game === 'crash' && modal?.isConnected) {
@@ -1425,9 +1432,278 @@
             }
         };
 
+
+        // ERIS_CUPS_REAL_FLOW_V2
+        let cupsBusy = false;
+        let cupsRoundId = null;
+
+
+        async function chooseCupsRound(choice, stage) {
+            if (cupsBusy || !cupsRoundId) return;
+            cupsBusy = true;
+
+            const roundId = cupsRoundId;
+            const status = modal.querySelector('.eg-result');
+            const button = modal.querySelector('[data-play]');
+
+            async function showResult(res) {
+                cupsRoundId = null;
+
+                if (game === 'cups' && stage.isConnected) {
+                    await window.ErisGameCups.reveal(stage, {
+                        winning_cup: res.winning_cup || res.result,
+                        choice: res.choice || 'cup_' + choice
+                    });
+
+                    status.textContent =
+                        (Number(res.payout) > 0
+                            ? '🎉 KAZANDIN!'
+                            : 'Bu tur kazanamadın.') +
+                        ' • Bahis: ' + res.stake +
+                        ' • Ödül: ' + res.payout + ' Lidya';
+
+                    button.disabled = false;
+                }
+
+                await refreshBalance();
+            }
+
+            try {
+                const res = await api(
+                    '/games/cups/round/' +
+                    encodeURIComponent(roundId) + '/choose',
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            choice: 'cup_' + choice
+                        })
+                    }
+                );
+
+                await showResult(res);
+            } catch (error) {
+                try {
+                    const state = await api(
+                        '/games/cups/round/' +
+                        encodeURIComponent(roundId) + '/status'
+                    );
+
+                    if (state.status === 'finished') {
+                        await showResult(state);
+                        return;
+                    }
+
+                    if (state.status === 'open') {
+                        if (game === 'cups') {
+                            status.textContent =
+                                'Bağlantı kesildi. Aynı turdan devam edebilirsin.';
+                        }
+                        throw new Error('Tur hâlâ açık. Kupayı tekrar seç.');
+                    }
+
+                    throw error;
+                } catch (recoveryError) {
+                    if (game === 'cups') {
+                        status.textContent =
+                            recoveryError.message ||
+                            'Sonuç kontrol edilemedi. Oyunu yeniden aç.';
+                    }
+                    throw recoveryError;
+                }
+            } finally {
+                cupsBusy = false;
+            }
+        }
+
+        async function restoreCupsRound() {
+            if (game !== 'cups' || cupsBusy) return;
+            cupsRoundId = 'pending-recovery';
+            const stage = modal.querySelector('.eg-stage');
+            const button = modal.querySelector('[data-play]');
+            const status = modal.querySelector('.eg-result');
+            if (!stage || !button) return;
+
+            cupsBusy = true;
+            button.disabled = true;
+
+            try {
+                const state = await api('/games/cups/round/active');
+
+                if (game !== 'cups' || !stage.isConnected) return;
+
+                if (!state.active) {
+                    cupsRoundId = null;
+                    button.disabled = false;
+                    return;
+                }
+
+                cupsRoundId = state.round_id;
+                status.textContent =
+                    'Açık Dört Kupa turun geri yüklendi.';
+
+                window.ErisGameCups.render(stage);
+
+                await window.ErisGameCups.shuffle(
+                    stage,
+                    choice => chooseCupsRound(choice, stage)
+                );
+            } catch (e) {
+                if (game === 'cups') {
+                    status.textContent =
+                        'Tur durumu doğrulanamadı. Oyunu yeniden aç.';
+                    cupsRoundId = 'pending-recovery';
+                }
+            } finally {
+                cupsBusy = false;
+                if (game === 'cups' && stage.isConnected) {
+                    button.disabled = !!cupsRoundId;
+                    updateCupsRecoveryButton();
+                }
+            }
+        }
+
+        async function startCupsRound() {
+            if (cupsBusy || cupsRoundId) return;
+            cupsBusy = true;
+
+            const stage = modal.querySelector('.eg-stage');
+            const button = modal.querySelector('[data-play]');
+            const status = modal.querySelector('.eg-result');
+            button.disabled = true;
+
+            try {
+                const stake = Number(
+                    modal.querySelector('[data-stake]').value
+                );
+
+                if (!Number.isSafeInteger(stake) ||
+                    stake < 0 || stake > 10000) {
+                    throw new Error(
+                        'Bahis 0 ile 10.000 Lidya arasında olmalı.'
+                    );
+                }
+
+                const activeRoom = document.getElementById(
+                    'erisRoomSurface'
+                )?.classList.contains('show');
+
+                const room = scope === 'room' && activeRoom
+                    ? (roomId || window.ErisCurrentRoomId ||
+                       window.currentRoomId || null)
+                    : null;
+
+                if (scope === 'room' && !room) {
+                    throw new Error('Oda bağlantısı bulunamadı.');
+                }
+
+                const res = await api('/games/cups/round/start', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        stake,
+                        room_id: room
+                    })
+                });
+
+                cupsRoundId = res.round_id;
+                status.textContent =
+                    'Bahis alındı. Kupalar karıştırılıyor...';
+
+                window.ErisGameCups.render(stage);
+                refreshBalance().catch(console.warn);
+
+                await window.ErisGameCups.shuffle(
+                    stage,
+                    choice => chooseCupsRound(choice, stage)
+                );
+            } catch (e) {
+                status.textContent =
+                    e.message || 'Tur başlatılamadı.';
+
+                // Sunucu bahsi kabul etmiş ancak cevap kaybolmuş olabilir.
+                // Yeni bahis açmadan önce açık turu sorgula.
+                try {
+                    const active = await api('/games/cups/round/active');
+                    if (active.active) {
+                        cupsRoundId = active.round_id;
+                        if (game === 'cups' && stage.isConnected) {
+                            status.textContent =
+                                'Bahsin kurtarıldı. Kupalar karıştırılıyor...';
+                            window.ErisGameCups.render(stage);
+                            await window.ErisGameCups.shuffle(
+                                stage,
+                                choice => chooseCupsRound(choice, stage)
+                            );
+                        }
+                    } else {
+                        cupsRoundId = null;
+                    }
+                } catch (recoveryError) {
+                    status.textContent =
+                        'Bahis durumu doğrulanamadı. Oyunu yeniden aç.';
+                    // Belirsiz durumda ikinci bahis açılmasını engelle.
+                    cupsRoundId = cupsRoundId || 'pending-recovery';
+                }
+
+                button.disabled = !!cupsRoundId;
+            } finally {
+                cupsBusy = false;
+                updateCupsRecoveryButton();
+            }
+        }
+
+
+        // ERIS_CUPS_RECOVERY_BUTTON_V2
+        function updateCupsRecoveryButton() {
+            if (!modal || game !== 'cups') return;
+
+            const play = modal.querySelector('[data-play]');
+            const result = modal.querySelector('.eg-result');
+            if (!play || !result) return;
+
+            let retry = modal.querySelector('[data-cups-retry]');
+
+            if (cupsRoundId !== 'pending-recovery') {
+                retry?.remove();
+                return;
+            }
+
+            play.disabled = true;
+
+            if (!retry) {
+                retry = document.createElement('button');
+                retry.type = 'button';
+                retry.dataset.cupsRetry = '1';
+                retry.textContent = '🔄 Turu Kontrol Et';
+                retry.style.cssText =
+                    'display:block;margin:12px auto;padding:10px 18px;' +
+                    'border-radius:12px;background:#6d45bf;color:white;' +
+                    'border:1px solid #a78bfa;font-weight:700;cursor:pointer';
+                result.insertAdjacentElement('afterend', retry);
+            }
+
+            retry.onclick = async () => {
+                if (cupsBusy) return;
+                retry.disabled = true;
+                try {
+                    await restoreCupsRound();
+                } finally {
+                    retry.disabled = false;
+                    updateCupsRecoveryButton();
+                }
+            };
+        }
+
         // ERIS_BJ_FINAL_GUARDS_V1
         queueMicrotask(() => restoreBlackjackRound());
         modal.querySelector('[data-play]').onclick = async () => {
+            if (game === 'cups') {
+                if (cupsRoundId === 'pending-recovery') {
+                    await restoreCupsRound();
+                } else {
+                    await startCupsRound();
+                }
+                return;
+            }
             if (game === 'slot' &&
                 modal.dataset.slotRequest === '1') return;
             if (game === 'slot') {
