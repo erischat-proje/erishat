@@ -497,6 +497,66 @@
         modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
         // SLOT_INDIVIDUAL_UI_V1
         modal.classList.toggle('eg-slot-mode', key === 'slot');
+        queueMicrotask(() => {
+            if (modal?.isConnected) {
+                const selected = modal.querySelector('[data-stake]')?.value;
+                modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                    b.classList.toggle('slot-selected',
+                        key === 'slot' && b.dataset.stakeValue === selected);
+                });
+            }
+        });
+
+
+        if (!document.getElementById('erisSlotBetStyle')) {
+            const el = document.createElement('style');
+            el.id = 'erisSlotBetStyle';
+            el.textContent = `
+              #erisGamesModal.eg-slot-mode .eg-form{
+                display:grid!important;grid-template-columns:1fr!important;
+                gap:12px!important;padding:16px!important;
+                border:2px solid #bb854b;border-radius:18px;
+                background:linear-gradient(145deg,#351c40,#180e28)!important;
+              }
+              #erisGamesModal.eg-slot-mode .eg-form>label:first-child{
+                display:none!important;
+              }
+              #erisGamesModal.eg-slot-mode .eg-form>label{
+                color:#ffe3a1;font-weight:900;
+              }
+              #erisGamesModal.eg-slot-mode [data-stake]{
+                width:100%;box-sizing:border-box;margin-top:8px;
+                min-height:48px;font-size:20px;font-weight:900;
+                border:2px solid #d5a64e;border-radius:12px;
+                background:#1c142b;color:#fff;padding:8px 12px;
+              }
+              #erisGamesModal.eg-slot-mode .eg-stake-presets{
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:7px!important;
+              }
+              #erisGamesModal.eg-slot-mode [data-stake-value]{
+                min-width:0;padding:12px 2px;border-radius:12px;
+                border:1px solid #ad865f;background:#3a2646;
+                color:#ffe2a6;font-weight:900;
+              }
+
+              #erisGamesModal.eg-slot-mode .slot-selected{
+                background:linear-gradient(135deg,#ffdf83,#c17b27)!important;
+                color:#281324!important;
+                border-color:#ffeaa1!important;
+                box-shadow:0 0 15px #ffc64b88!important;
+              }
+              #erisGamesModal.eg-slot-mode [data-play]{
+                width:100%;min-height:60px;border-radius:15px;
+                background:linear-gradient(135deg,#ffdb6e,#d77d20)!important;
+                color:#2b1327;font-size:21px;font-weight:1000;
+                box-shadow:0 7px 20px #edaa4255;
+              }
+            `;
+            document.head.appendChild(el);
+        }
+
         const slotChoiceLabel = modal.querySelector('[data-choice]')?.closest('label');
         if (slotChoiceLabel && key === 'slot') {
             slotChoiceLabel.style.display = 'none';
@@ -509,7 +569,7 @@
         }
 
         // ERIS_BJ_INDIVIDUAL_UI_FIX_V1
-        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', key === 'blackjack' ? 'none' : '');
+        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', (key === 'blackjack' || key === 'slot') ? 'none' : '');
 
         // Crash elemanlari diger oyunlara tasinmasin.
         if (key !== 'crash') {
@@ -657,8 +717,20 @@
         }
         loadGameModule(game);
 
+
+        const refreshSlotBet = () => {
+            const selected = modal.querySelector('[data-stake]')?.value;
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle(
+                    'slot-selected',
+                    game === 'slot' && b.dataset.stakeValue === selected
+                );
+            });
+        };
+        modal.querySelector('[data-stake]')?.addEventListener('input', refreshSlotBet);
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
+            refreshSlotBet();
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
                 b.classList.toggle('crash-selected',
                     game === 'crash' && b === preset);
@@ -1455,7 +1527,7 @@
                         winning_cup: String(res.result).replace('cup_', ''),
                         winner: String(res.result).replace('horse_', ''),
                         winning_index: ['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].indexOf(res.result),
-                        multiplier: res.data?.multiplier
+                        ...(game === 'crash' ? {multiplier: res.data?.multiplier} : {})
                     });
                 }
                 modal.querySelector('.eg-result').textContent = game === 'blackjack' && res.result === 'pending'
