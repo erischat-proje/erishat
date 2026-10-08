@@ -165,68 +165,72 @@
       });
 
       try {
-        // ERIS_CUPS_PREMIUM_SHUFFLE_V2
-        // Her turda dört kupa iki eşzamanlı çift halinde hareket eder.
-        const patterns = [
-          [[0,3],[1,2]],
-          [[0,2],[1,3]],
-          [[0,1],[2,3]]
-        ];
-
-        const randomIndex = max => {
-          if (globalThis.crypto?.getRandomValues) {
-            const value = new Uint32Array(1);
-            crypto.getRandomValues(value);
-            return value[0] % max;
-          }
-          return Math.floor(Math.random() * max);
-        };
-
-        for (let step = 0; step < 9; step++) {
-          if (!table.isConnected ||
-              container.querySelector('.eris-cups-table') !== table) return;
-
-          const current = [...table.children];
-          const next = [...current];
-          const pattern = patterns[randomIndex(patterns.length)];
-          const moves = [];
-
-          for (const [a,b] of pattern) {
-            const x = current[a];
-            const y = current[b];
-            const rx = x.getBoundingClientRect();
-            const ry = y.getBoundingClientRect();
-            const dx = ry.left - rx.left;
-
-            moves.push([x, dx, -22], [y, -dx, 22]);
-            next[a] = y;
-            next[b] = x;
-          }
-
-          for (const [cup, dx, arc] of moves) {
-            cup.style.zIndex = arc < 0 ? '4' : '2';
-            cup.style.transition =
-              'transform 340ms cubic-bezier(.35,0,.25,1)';
-            cup.style.transform =
-              `translate3d(${dx}px,${arc}px,0)`;
-          }
-
-          await wait(365);
-
-          for (const [cup] of moves) {
-            cup.style.transition = 'none';
-            cup.style.transform = '';
-            cup.style.zIndex = '';
-          }
-
-          table.replaceChildren(...next);
-          await wait(35);
+        // V3: Coin göster, kapat, yalnızca yatay takas yap.
+        const plan = this.roundPlan;
+        if (!plan || !Number.isInteger(plan.initial_cup) ||
+            plan.initial_cup < 1 || plan.initial_cup > 4 ||
+            !Array.isArray(plan.swaps) || plan.swaps.length !== 9 ||
+            !plan.swaps.every(pair => Array.isArray(pair) &&
+              pair.length === 2 && pair[0] !== pair[1] &&
+              pair.every(n => Number.isInteger(n) && n >= 0 && n < 4))) {
+          throw new Error('Kupa karıştırma planı geçersiz.');
         }
 
-        if (!table.isConnected ||
-            container.querySelector('.eris-cups-table') !== table) return;
+        const valid = () => table.isConnected &&
+          container.querySelector('.eris-cups-table') === table;
+
+        const coinCup = cups[plan.initial_cup - 1];
+        status.textContent = '🪙 Coinin yerini dikkatle izle!';
+        coinCup.classList.add('revealed');
+        await wait(1500);
+        if (!valid()) return;
+        coinCup.classList.remove('revealed');
+        await wait(550);
+        if (!valid()) return;
+
+        status.textContent = '🔄 Kupaları takip et!';
+        cups.forEach(c => {
+          const number = c.querySelector('.eris-cup-number');
+          if (number) number.style.visibility = 'hidden';
+        });
+        for (const [a, b] of plan.swaps) {
+          if (!valid()) return;
+          const current = [...table.children];
+          const first = current[a];
+          const second = current[b];
+          const dx = second.getBoundingClientRect().left -
+                     first.getBoundingClientRect().left;
+
+          first.style.transition = 'transform 520ms ease-in-out';
+          second.style.transition = 'transform 520ms ease-in-out';
+          first.style.transform = `translateX(${dx}px)`;
+          second.style.transform = `translateX(${-dx}px)`;
+
+          await wait(560);
+          if (!valid()) return;
+
+          const next = [...current];
+          next[a] = second;
+          next[b] = first;
+          first.style.transition = 'none';
+          second.style.transition = 'none';
+          table.replaceChildren(...next);
+          first.style.transform = '';
+          second.style.transform = '';
+          void table.offsetWidth;
+          await wait(50);
+        }
+
+        if (!valid()) return;
         this.busy = false;
         status.textContent = '👆 Bir kupa seç!';
+        [...table.children].forEach((cup, index) => {
+          const number = cup.querySelector('.eris-cup-number');
+          if (number) {
+            number.textContent = String(index + 1);
+            number.style.visibility = '';
+          }
+        });
         [...table.children].forEach((cup, index) => {
           cup.disabled = false;
           cup.classList.add('pickable');

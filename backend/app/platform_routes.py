@@ -1595,11 +1595,27 @@ def register_platform_auth(current_user_dependency):
         if stake > locked_user.lidya:
             raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
-        result = _weighted_result("cups")
+        # V3: Coin, yatay kupa değişimlerini gerçekten takip eder.
+        initial_cup = secrets.randbelow(4)
+        swaps = []
+        coin_position = initial_cup
+        for _ in range(9):
+            a = secrets.randbelow(4)
+            b = secrets.randbelow(3)
+            if b >= a:
+                b += 1
+            swaps.append([a, b])
+            if coin_position == a:
+                coin_position = b
+            elif coin_position == b:
+                coin_position = a
+        result = f"cup_{coin_position + 1}"
         round_id = str(uuid4())
         now = datetime.now(timezone.utc)
         state = {
             "winning_cup": result,
+            "initial_cup": initial_cup + 1,
+            "swaps": swaps,
             "stake": stake,
             "room_id": room_id,
             "created_at": now.isoformat(),
@@ -1627,6 +1643,8 @@ def register_platform_auth(current_user_dependency):
             "stake": stake,
             "balance": locked_user.lidya,
             "status": "open",
+            "initial_cup": initial_cup + 1,
+            "swaps": swaps,
         }
 
     @router.get("/games/cups/round/active")
@@ -1648,6 +1666,8 @@ def register_platform_auth(current_user_dependency):
             "active": True,
             "round_id": row.id,
             "stake": state.get("stake", 0),
+            "initial_cup": state.get("initial_cup"),
+            "swaps": state.get("swaps"),
         }
 
 

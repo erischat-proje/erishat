@@ -1705,6 +1705,10 @@
                     'Açık Dört Kupa turun geri yüklendi.';
 
                 window.ErisGameCups.render(stage);
+                    window.ErisGameCups.roundPlan = {
+                        initial_cup: Number(state.initial_cup),
+                        swaps: state.swaps
+                    };
 
                 await window.ErisGameCups.shuffle(
                     stage,
@@ -1772,6 +1776,10 @@
                     'Bahis alındı. Kupalar karıştırılıyor...';
 
                 window.ErisGameCups.render(stage);
+                    window.ErisGameCups.roundPlan = {
+                        initial_cup: Number(res.initial_cup),
+                        swaps: res.swaps
+                    };
                 refreshBalance().catch(console.warn);
 
                 await window.ErisGameCups.shuffle(
@@ -1792,6 +1800,10 @@
                             status.textContent =
                                 'Bahsin kurtarıldı. Kupalar karıştırılıyor...';
                             window.ErisGameCups.render(stage);
+                    window.ErisGameCups.roundPlan = {
+                        initial_cup: Number(active.initial_cup),
+                        swaps: active.swaps
+                    };
                             await window.ErisGameCups.shuffle(
                                 stage,
                                 choice => chooseCupsRound(choice, stage)
