@@ -227,6 +227,8 @@
         const st = document.createElement('style');
         st.id = 'erisCrashProStyle';
         st.textContent = '\n/* ERIS_CRASH_PRO_UI_V1 */\n#erisGamesModal.eg-crash-mode .eg-form>label:first-child{display:none}\n#erisGamesModal.eg-crash-mode .eg-form{display:grid;grid-template-columns:1fr;gap:12px}\n#erisGamesModal.eg-crash-mode .eg-form>label{font-size:12px;font-weight:800;color:#d8c8f4}\n#erisGamesModal.eg-crash-mode [data-stake]{width:100%;box-sizing:border-box}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0;padding:12px 3px;border-radius:12px}\n#erisGamesModal.eg-crash-mode [data-play]{width:100%;min-height:56px;font-size:17px;border-radius:15px}\n#erisGamesModal.eg-crash-mode [data-controls] button{width:100%;min-height:55px;font-size:17px;border-radius:15px;background:linear-gradient(110deg,#119b71,#25ce91)}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:260px}\n';
+        st.textContent += '\n#erisGamesModal.eg-crash-mode .eg-panel{padding:12px;overflow-y:auto}\n#erisGamesModal.eg-crash-mode .eg-head{margin-bottom:5px}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:0}\n#erisGamesModal.eg-crash-mode .crash-flight{height:190px!important}\n#erisGamesModal.eg-crash-mode .eg-form{gap:7px;padding:10px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{gap:6px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{padding:9px 2px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button.crash-selected{border-color:#34e9b5;box-shadow:0 0 0 2px #34e9b544;background:#164b43}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:46px}\n#erisGamesModal.eg-crash-mode .eg-result{min-height:0;margin-top:6px;padding:9px}\n#erisGamesModal.eg-crash-mode .eg-crash-bets{font-size:12px;color:#c7f9e8;padding:9px 11px;border:1px solid #2c8b7055;border-radius:11px;margin-top:6px}\n#erisGamesModal.eg-crash-mode [data-controls] button{min-height:48px;font-size:15px}\n#erisGamesModal.eg-crash-mode [data-crash-history]{padding:7px 0!important}\n';
+        st.textContent += '\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:9px;border:1px solid #ffffff1c;border-radius:12px;background:#ffffff07;margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-title{font-size:10px;font-weight:900;letter-spacing:.7px;color:#b4c8d6;margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid>div{min-width:0;text-align:center;padding:7px 2px;border-radius:8px;background:#101d30}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid small{display:block;font-size:9px;color:#9fb0c2}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid strong{display:block;font-size:12px;color:#56f0b5;margin-top:4px}\n';
         document.head.appendChild(st);
     }
     const close = () => modal?.remove();
@@ -259,6 +261,17 @@
         const loadGameModule = key => {
             game = key;
         modal.classList.toggle('eg-crash-mode', key === 'crash');
+        const crashStakeInput = modal.querySelector('[data-stake]');
+        const crashStakeLabel = crashStakeInput?.closest('label');
+        if (crashStakeLabel) crashStakeLabel.style.display = key === 'crash' ? 'none' : '';
+        if (key === 'crash' && crashStakeInput) {
+            crashStakeInput.value = crashStakeInput.value || '100';
+        }
+        modal.querySelectorAll('[data-stake-value]').forEach(b => {
+            b.classList.toggle('crash-selected',
+                key === 'crash' && b.dataset.stakeValue === crashStakeInput?.value);
+        });
+
             modal.querySelector('[data-name]').textContent = labels[key];
             tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.game === key));
 
@@ -365,6 +378,10 @@
 
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle('crash-selected',
+                    game === 'crash' && b === preset);
+            });
             if(game==='wheel'){
                 wheelStake=Number(preset.dataset.stakeValue);
                 modal.querySelectorAll('[data-stake-value]').forEach(b=>b.classList.toggle('wheel-stake-active',b===preset));
@@ -501,6 +518,46 @@
             }
 
 
+
+            /* ERIS_CRASH_STATS_V1 */
+            let statsPanel = modal.querySelector('[data-crash-stats]');
+            if (!statsPanel) {
+                statsPanel = document.createElement('div');
+                statsPanel.dataset.crashStats = '';
+                statsPanel.className = 'eg-crash-stats';
+                history.insertAdjacentElement('afterend', statsPanel);
+            }
+            const stats = state.crash_stats || {};
+            const sample = Number(stats.sample_size || 0);
+            const percentage = value =>
+                sample ? (100 * Number(value || 0) / sample).toFixed(1) + '%' : '—';
+            const numberText = value =>
+                value == null ? '—' : Number(value).toFixed(2) + 'x';
+
+            statsPanel.replaceChildren();
+            const statsTitle = document.createElement('div');
+            statsTitle.className = 'eg-crash-stats-title';
+            statsTitle.textContent = '📊 SON ' + sample + ' TUR İSTATİSTİĞİ';
+            statsPanel.appendChild(statsTitle);
+
+            const statsGrid = document.createElement('div');
+            statsGrid.className = 'eg-crash-stats-grid';
+            for (const [label, value] of [
+                ['2x ve üzeri', percentage(stats.above_2x)],
+                ['5x ve üzeri', percentage(stats.above_5x)],
+                ['Ortalama', numberText(stats.average)],
+                ['En yüksek', numberText(stats.highest)]
+            ]) {
+                const item = document.createElement('div');
+                const name = document.createElement('small');
+                const val = document.createElement('strong');
+                name.textContent = label;
+                val.textContent = value;
+                item.append(name, val);
+                statsGrid.appendChild(item);
+            }
+            statsPanel.appendChild(statsGrid);
+
             const play = modal.querySelector('[data-play]');
             const result = modal.querySelector('.eg-result');
             const controls = modal.querySelector('[data-controls]');
@@ -529,42 +586,52 @@
 
             controls.replaceChildren();
 
-            if (state.status === 'running' && activeBets.length) {
-              for (const activeBet of activeBets) {
-                const cashout = document.createElement('button');
-                cashout.textContent = '💰 Kazancı Çek';
-                cashout.disabled = crashBusy;
+            let betSummary = modal.querySelector('[data-crash-bets]');
+            if (!betSummary) {
+                betSummary = document.createElement('div');
+                betSummary.dataset.crashBets = '';
+                betSummary.className = 'eg-crash-bets';
+                result.insertAdjacentElement('afterend', betSummary);
+            }
 
+            const totalStake = activeBets.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+            const estimate = Math.floor(totalStake * Number(state.multiplier || 1));
+            betSummary.textContent = activeBets.length
+                ? '🎯 Aktif bahis: ' + activeBets.length +
+                  '  •  Yatırılan: ' + totalStake.toLocaleString('tr-TR') +
+                  ' Lidya' + (state.status === 'running'
+                    ? '  •  Tahmini kazanç: ' + estimate.toLocaleString('tr-TR') + ' Lidya'
+                    : '')
+                : 'Bu turda aktif bahsin bulunmuyor.';
+
+            if (state.status === 'running' && activeBets.length) {
+                const cashout = document.createElement('button');
+                cashout.type = 'button';
+                cashout.textContent = '💰 Toplam ' + estimate.toLocaleString('tr-TR') + ' Lidya Çek';
+                cashout.disabled = crashBusy;
                 cashout.onclick = async () => {
                     if (crashBusy) return;
                     crashBusy = true;
                     cashout.disabled = true;
-
                     try {
-                        const res = await api(
-                            '/games/crash/live/cashout',
-                            {
-                                method: 'POST',
-                                body: JSON.stringify({
-                                    bet_id: activeBet.id
-                                })
-                            }
+                        const res = await api('/games/crash/live/cashout-all', {
+                            method: 'POST'
+                        });
+                        showCrashNotice(
+                            '🎉 ' + res.bet_count + ' bahis çekildi: ' +
+                            Number(res.payout).toLocaleString('tr-TR') + ' Lidya'
                         );
-
-                        showCrashNotice('🎉 Kazanç: ' + res.payout + ' Lidya');
-
                         refreshBalance();
                     } catch (e) {
-                        showCrashNotice(e.message || 'Cashout başarısız');
+                        showCrashNotice(e.message || 'Kazanç çekilemedi');
                     } finally {
                         crashBusy = false;
-                        refreshCrashLive().catch(() => {});
+                        refreshCrashLive().catch(console.warn);
                     }
                 };
-
                 controls.append(cashout);
-              }
             }
+            /* ERIS_CRASH_COMPACT_V2 */
         }
 
         setInterval(() => {
