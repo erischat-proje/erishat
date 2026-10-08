@@ -2,24 +2,38 @@
   const API = () => (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
   const TOKEN_KEY = 'erischat_access_token';
   const getToken = () => localStorage.getItem(TOKEN_KEY) || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
-  const setToken = token => { if (token) localStorage.setItem(TOKEN_KEY, token); };
+  const setToken = token => { if (token) {localStorage.removeItem('erischat.accessToken.v1');localStorage.removeItem('token');localStorage.setItem(TOKEN_KEY, token);} };
   const clearToken = () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem('erischat.accessToken.v1'); localStorage.removeItem('token'); };
 
-  // Remember identity labels only. A logged-out session token is never retained.
+  // Saved sessions support account switching; explicit logout removes the current session.
   let authGeneration=0;
   const ACCOUNTS_KEY = 'erischat.rememberedAccounts.v1';
+  const SESSIONS_KEY = 'erischat.savedSessions.v1';
+  const MAX_ACCOUNTS = 5;
+  function savedSessions() {
+    try { const value=JSON.parse(localStorage.getItem(SESSIONS_KEY)||'{}');return value && typeof value==='object' && !Array.isArray(value) ? value : {}; } catch (_) { return {}; }
+  }
+  function saveSession(id,token) {
+    const sessions=savedSessions();
+    if(token)sessions[String(id)]=token;else delete sessions[String(id)];
+    const ids=new Set(rememberedAccounts().map(row=>row.id));
+    Object.keys(sessions).forEach(key=>{if(!ids.has(key))delete sessions[key]});
+    try {localStorage.setItem(SESSIONS_KEY,JSON.stringify(sessions));} catch (_) {window.toast?.('Hesap oturumu kaydedilemedi.');}
+  }
   const normalizeAccount = row => ({
     id:String(row?.id || '').slice(0,128),
     nickname:String(row?.nickname || 'Kullanıcı').slice(0,64),
     public_id:String(row?.public_id || '').slice(0,32),
     email:String(row?.email || '').trim().toLowerCase().slice(0,320),
     provider:row?.provider === 'google' ? 'google' : 'email',
+    avatar:typeof row?.avatar==='string' ? row.avatar.slice(0,2048) : '👤',
+    avatar_asset:typeof row?.avatar_asset==='string' ? row.avatar_asset.slice(0,2048) : '',
     lastUsed:Number(row?.lastUsed) || 0
   });
   function rememberedAccounts() {
     try {
       const rows=JSON.parse(localStorage.getItem(ACCOUNTS_KEY)||'[]');
-      return Array.isArray(rows) ? rows.map(normalizeAccount).filter(row=>row.id).slice(0,20) : [];
+      return Array.isArray(rows) ? rows.map(normalizeAccount).filter(row=>row.id).slice(0,MAX_ACCOUNTS) : [];
     } catch (_) { return []; }
   }
   function writeAccounts(rows) {
@@ -29,15 +43,74 @@
   function rememberAccount(user, hint={}) {
     if(!user?.id)return;
     const rows=rememberedAccounts(), previous=rows.find(row=>row.id===String(user.id))||{};
+    if(!previous.id && rows.length>=MAX_ACCOUNTS){window.toast?.('En fazla 5 hesap kaydedilebilir. Önce listeden bir hesap kaldır.');return;}
     const row=normalizeAccount({...previous,...user,
       email:hint.email || previous.email || '',
       provider:hint.provider || previous.provider || 'email',lastUsed:Date.now()});
-    writeAccounts([row,...rows.filter(item=>item.id!==row.id)].slice(0,20));
+    writeAccounts([row,...rows.filter(item=>item.id!==row.id)].slice(0,MAX_ACCOUNTS));
+    if(String(window.ErisAuth?.user?.id)===row.id && getToken())saveSession(row.id,getToken());
   }
   function forgetAccount(id) {
     writeAccounts(rememberedAccounts().filter(row=>row.id!==String(id)));
+    saveSession(id,null);
     renderRememberedAccounts(document.getElementById('erisGoogleGate'));
   }
+  let switchPending=false;
+  async function switchAccount(id) {
+    if(switchPending || logoutPending)throw new Error('Hesap işlemi devam ediyor.');
+    if(String(window.ErisAuth.user?.id)===String(id))return true;
+    const token=savedSessions()[String(id)];
+    if(!token)return false;
+    switchPending=true;
+    try {
+      const response=await fetch(`${API()}/me`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(15000)});
+      if(response.status===401){saveSession(id,null);return false;}
+      const user=await response.json();
+      if(!response.ok)throw new Error(typeof user.detail==='string'?user.detail:'Hesap doğrulanamadı.');
+      if(String(user.id)!==String(id)){saveSession(id,null);throw new Error('Kayıtlı hesap oturumu eşleşmiyor.');}
+      rememberAccount(window.ErisAuth.user);
+      authGeneration++;
+      const jobs=[];
+      try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
+      try{jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{}));}catch(_){}
+      await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,1500))]);
+      try{window.ErisRoomRTC?.leaveRoom?.();}catch(_){}
+      clearTimeout(retryTimer);retryTimer=null;
+      if(socket){socket.onclose=null;socket.close();socket=null;}
+      if(window.__erisRoomSocket){window.__erisRoomSocket.close(1000);window.__erisRoomSocket=null;}
+      window.ErisChatDMVaultToken=null;
+      sessionStorage.clear();localStorage.removeItem('eris_last_room');
+      clearToken();setToken(token);
+      window.ErisAuth.user=user;rememberAccount(user);
+      location.reload();return true;
+    } finally {switchPending=false;}
+  }
+  function openAccountLogin(host,account) {
+    const gate=addGate();host.append(gate);
+    gate.style.cssText='position:relative;inset:auto;display:block;padding:0;background:none;backdrop-filter:none';
+    const card=gate.querySelector('.erisGoogleCard');
+    card.style.cssText='width:100%;max-height:none;padding:14px 0;border:0;background:none;box-shadow:none';
+    gate.querySelector('[data-remembered-accounts]').hidden=true;
+    gate.querySelector('h1').textContent='Hesabı doğrula';
+    gate.querySelector('#authEmailInput').value=account.email||'';
+    if(account.provider==='google')googleRegister();
+    else gate.querySelector('#authEmailInput').focus();
+  }
+  function cancelAccountLogin(){authGeneration++;closeGate();}
+  async function prepareAccountLoginTransition() {
+    if(!document.getElementById('erisGoogleGate')?.closest('#erisAccountPicker'))return;
+    rememberAccount(window.ErisAuth.user);
+    const jobs=[];
+    try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
+    try{jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{}));}catch(_){}
+    await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,1500))]);
+    try{window.ErisRoomRTC?.leaveRoom?.();}catch(_){}
+    clearTimeout(retryTimer);retryTimer=null;
+    if(socket){socket.onclose=null;try{socket.close();}catch(_){}socket=null;}
+    if(window.__erisRoomSocket){try{window.__erisRoomSocket.close(1000);}catch(_){}window.__erisRoomSocket=null;}
+    window.ErisChatDMVaultToken=null;sessionStorage.clear();localStorage.removeItem('eris_last_room');
+  }
+
   function credentialEmail(credential) {
     try {
       const part=String(credential).split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
@@ -228,7 +301,7 @@
   return gate;
 }
 
-function closeGate() { document.getElementById('erisGoogleGate')?.remove(); document.getElementById('erisGoogleGateStyle')?.remove(); }
+function closeGate() { initializedGoogleClientId=''; document.getElementById('erisGoogleGate')?.remove(); document.getElementById('erisGoogleGateStyle')?.remove(); }
 
   function loadGsi() {
     return new Promise((resolve, reject) => {
@@ -283,6 +356,8 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
               body: JSON.stringify({credential})
             });
 
+            if(generation!==authGeneration)return;
+            await prepareAccountLoginTransition();
             if(generation!==authGeneration)return;
             setToken(session.access_token);
             window.ErisAuth.user = session.user;
@@ -351,7 +426,9 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
             try {
               const session = await request('/auth/google', {method:'POST',body:JSON.stringify({credential:response.credential})});
               if(generation!==authGeneration)return;
-              setToken(session.access_token);
+              await prepareAccountLoginTransition();
+            if(generation!==authGeneration)return;
+            setToken(session.access_token);
               window.ErisAuth.user = session.user;
               rememberAccount(session.user,{provider:'google',email:credentialEmail(response.credential)});
               emit('erischat:auth', {state:'ready',user:session.user,real:true});
@@ -419,7 +496,9 @@ async function emailOtpLogin(email, code = null, purpose = 'login') {
   });
 
   if(generation!==authGeneration)throw new Error('Giriş işlemi iptal edildi.');
-  setToken(session.access_token);
+  await prepareAccountLoginTransition();
+            if(generation!==authGeneration)return;
+            setToken(session.access_token);
   window.ErisAuth.user = session.user;
   rememberAccount(session.user,{provider:'email',email});
   emit('erischat:auth', {state:'ready', user:session.user, real:true});
@@ -473,6 +552,7 @@ async function registerAnonymous() {
     logoutPending=true;
     authGeneration++;
     const token=getToken();rememberAccount(window.ErisAuth.user);
+    if(window.ErisAuth.user?.id)saveSession(window.ErisAuth.user.id,null);
     // Teardown begins while the old token is still available to room/call APIs.
     const gate=addGate();
     gate.querySelector('#erisGoogleStatus').textContent='Çıkış yapılıyor…';
@@ -500,9 +580,10 @@ async function registerAnonymous() {
     location.reload();
   }
 
-  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
+  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, switchAccount, openAccountLogin, cancelAccountLogin, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
   function continueAfterAuth(user) {
+    if(document.getElementById('erisGoogleGate')?.closest('#erisAccountPicker')){location.reload();return;}
     const generation=authGeneration;
     window.ErisAuth = window.ErisAuth || {};
     window.ErisAuth.user = user;
