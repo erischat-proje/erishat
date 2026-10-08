@@ -1587,12 +1587,18 @@ def register_platform_auth(current_user_dependency):
         remaining = max(0, int(
             (row.ends_at - vault_live.now()).total_seconds()
         ))
+        try:
+            vault_version = json.loads(row.state_data or "{}").get("version", 1)
+        except (ValueError, TypeError, AttributeError):
+            vault_version = 1
+        vault_prizes = vault_live.PRIZES if vault_version == 2 else vault_live.LEGACY_PRIZES
+        vault_multipliers = vault_live.MULTIPLIERS if vault_version == 2 else vault_live.LEGACY_MULTIPLIERS
         my_bets = {
             key: sum(
                 int(b.amount) for b in bets
                 if b.user_id == user.id and b.choice == key
             )
-            for key in vault_live.PRIZES
+            for key in vault_prizes
         }
         # ERIS_VAULT_PHASE_V1
         elapsed = max(0, (
@@ -1624,11 +1630,12 @@ def register_platform_auth(current_user_dependency):
             "remaining_seconds": remaining,
             "betting_open": row.status == "open" and remaining > 0,
             "result": row.result_key if phase == "result" else None,
-            "prizes": list(vault_live.PRIZES),
+            "version": vault_version,
+            "prizes": list(vault_prizes),
             "my_bets": my_bets,
             "multipliers": {
-                key: vault_live.MULTIPLIERS[key]
-                for key in vault_live.PRIZES
+                key: vault_multipliers[key]
+                for key in vault_prizes
             },
         }
         db.commit()
@@ -1641,7 +1648,7 @@ def register_platform_auth(current_user_dependency):
         user: User = Depends(current_user_dependency),
     ):
         choice = payload.choice.strip().lower()
-        if choice not in vault_live.PRIZES:
+        if choice not in vault_live.PRIZES and choice not in vault_live.LEGACY_PRIZES:
             raise HTTPException(
                 status_code=400,
                 detail="Geçersiz kasa ödülü seçimi",
@@ -1664,6 +1671,14 @@ def register_platform_auth(current_user_dependency):
                 status_code=409,
                 detail="Bahisler kapandı. Yeni turu bekle.",
             )
+
+        try:
+            vault_version = json.loads(row.state_data or "{}").get("version", 1)
+        except (ValueError, TypeError, AttributeError):
+            vault_version = 1
+        allowed = vault_live.PRIZES if vault_version == 2 else vault_live.LEGACY_PRIZES
+        if choice not in allowed:
+            raise HTTPException(status_code=409, detail="Kasa turu değişti. Tekrar seçim yap.")
 
         locked_user = db.scalar(
             select(User)
