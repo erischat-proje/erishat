@@ -23,7 +23,7 @@
           border:1px solid #32745c">
           <div style="text-align:center;font-weight:900;
             color:#facc15;margin-bottom:10px">
-            🏆 ERISCHAT PRO HİPODROM
+            🏇 CANLI HİPODROM
           </div>
           <div class="horse-track" style="display:grid;gap:5px">
             ${HORSES.map(h => `
@@ -57,8 +57,8 @@
       const runners = [...container.querySelectorAll('.horse-runner')];
       const status = container.querySelector('#raceStatusText');
       const winner = String(data?.winner || data?.winning_horse ||
-                            data?.animation?.finish_order?.[0] || '1');
-      const duration = 5200;
+                            data?.animation?.finish_order?.[0] || '1').replace(/^horse_/, '');
+      const duration = 7000;
       const start = performance.now();
       const seed = runners.map((_,i) => ({
         phase: i * 1.7,

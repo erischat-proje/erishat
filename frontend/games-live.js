@@ -831,7 +831,14 @@ const close = () => modal?.remove();
                 key === 'crash' && b.dataset.stakeValue === crashStakeInput?.value);
         });
 
+            if (key !== 'horse_race') {
+                modal.querySelector('[data-horse-clock]')?.remove();
+                modal.querySelector('[data-horse-bets]')?.remove();
+            }
             modal.querySelector('[data-name]').textContent = labels[key];
+            modal.querySelector('[data-name]').style.display =
+                key === 'horse_race' ? 'none' : '';
+
             tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.game === key));
 
             const mod = gameModules[key]();
@@ -1037,6 +1044,131 @@ const close = () => modal?.remove();
         };
         refreshWheelLive(); setInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
 
+
+
+        // ERIS_HORSE_LIVE_FRONTEND_V1
+        let horseRound = null;
+        let horseAnimating = false;
+        let horseBusy = false;
+        let horseFetching = false;
+        let horseLastRound = null;
+
+        const refreshHorseLive = async () => {
+            if (game !== 'horse_race' || !modal?.isConnected ||
+                horseFetching || horseAnimating) return;
+            horseFetching = true;
+            try {
+                const x = await api('/games/horse_race/live');
+                if (game !== 'horse_race' || !modal?.isConnected) return;
+                const stage = modal.querySelector('.eg-stage');
+                const result = modal.querySelector('.eg-result');
+                const button = modal.querySelector('[data-play]');
+                const names = {
+                    horse_1:'⚡ Şimşek', horse_2:'🔥 Alev',
+                    horse_3:'🌪️ Fırtına', horse_4:'👑 Asil',
+                    horse_5:'🌟 Yıldız', horse_6:'💎 Safir',
+                    horse_7:'🍀 Şans'
+                };
+
+                if (horseRound !== x.round_id) {
+                    horseRound = x.round_id;
+                    horseLastRound = null;
+                    gameModules.horse_race()?.render?.(stage);
+                    if (result) result.textContent =
+                        '🏇 Yeni tur başladı! Atını seç.';
+                }
+
+                let clock = modal.querySelector('[data-horse-clock]');
+                if (!clock) {
+                    clock = document.createElement('div');
+                    clock.dataset.horseClock = '';
+                    clock.style.cssText =
+                        'text-align:center;padding:10px;margin:7px 0;' +
+                        'border-radius:12px;background:#123b30;' +
+                        'color:#facc15;font-weight:900;font-size:16px';
+                    stage.before(clock);
+                }
+
+                const seconds = Number(x.remaining_seconds || 0);
+                clock.textContent = x.betting_open
+                    ? '⏳ BAHİS SÜRESİ: ' + seconds + ' SANİYE'
+                    : x.status === 'finished'
+                        ? '🏁 YARIŞ SONUCU'
+                        : '🔒 BAHİSLER KAPANDI';
+
+                if (button) {
+                    button.disabled = !x.betting_open || horseBusy;
+                    button.textContent = x.betting_open
+                        ? '🐎 BAHİS YAP'
+                        : '🔒 BAHİSLER KAPANDI';
+                }
+
+                const mine = Object.entries(x.my_bets || {})
+                    .filter(([,v]) => Number(v) > 0)
+                    .map(([k,v]) => (names[k] || k) +
+                        ': ' + Number(v).toLocaleString('tr-TR') +
+                        ' Lidya');
+                let info = modal.querySelector('[data-horse-bets]');
+                if (!info) {
+                    info = document.createElement('div');
+                    info.dataset.horseBets = '';
+                    info.style.cssText =
+                        'font-size:12px;color:#c7f9e8;' +
+                        'padding:8px;text-align:center';
+                    stage.after(info);
+                }
+                info.textContent = mine.length
+                    ? 'Bahislerim: ' + mine.join(' • ')
+                    : 'Henüz bahis yapmadın.';
+
+                if (x.result && horseLastRound !== x.round_id) {
+                    horseLastRound = x.round_id;
+                    horseAnimating = true;
+                    try {
+                        if (game !== 'horse_race' ||
+                            !modal?.isConnected ||
+                            stage !== modal.querySelector('.eg-stage'))
+                            return;
+                        await gameModules.horse_race()?.animate?.(
+                            stage, {winner:x.result}
+                        );
+                        if (game === 'horse_race' &&
+                            horseRound === x.round_id) {
+                            const stake = Number(
+                                x.my_bets?.[x.result] || 0
+                            );
+                            const payout = Math.floor(
+                                stake * Number(
+                                    x.multipliers?.[x.result] || 0
+                                )
+                            );
+                            result.textContent =
+                                '🏆 ' + (names[x.result] || x.result) +
+                                ' kazandı! ' +
+                                (stake > 0
+                                    ? '🎉 +' + payout +
+                                      ' Lidya ödül!'
+                                    : 'Yeni turu bekle.');
+                            refreshBalance().catch(() => {});
+                        }
+                    } finally {
+                        horseAnimating = false;
+                    }
+                }
+            } catch (e) {
+                const result = modal.querySelector('.eg-result');
+                if (result && game === 'horse_race')
+                    result.textContent =
+                        e.message || 'Canlı yarış bağlantı hatası';
+            } finally {
+                horseFetching = false;
+            }
+        };
+
+        setInterval(() => {
+            if (game === 'horse_race' && modal?.isConnected)
+                refreshHorseLive().catch(() => {});
+        }, 1000);
 
         let crashBusy = false;
         let crashFetching = false;
@@ -2002,6 +2134,41 @@ const close = () => modal?.remove();
                 } finally {
                     crashBusy = false;
                     refreshCrashLive().catch(() => {});
+                }
+                return;
+            }
+
+            if (game === 'horse_race') {
+                if (horseBusy) return;
+                const amount = Number(
+                    modal.querySelector('[data-stake]').value
+                );
+                const choice = 'horse_' +
+                    modal.querySelector('[data-choice]').value;
+                if (![10,25,50,75,100,250,500,1000]
+                    .includes(amount)) {
+                    modal.querySelector('.eg-result').textContent =
+                        'Hazır bahislerden bir miktar seç.';
+                    return;
+                }
+                horseBusy = true;
+                button.disabled = true;
+                try {
+                    await api('/games/horse_race/live/bet', {
+                        method:'POST',
+                        body:JSON.stringify({choice,amount})
+                    });
+                    modal.querySelector('.eg-result').textContent =
+                        '✅ ' + amount + ' Lidya bahis yatırıldı.';
+                    await refreshBalance();
+                    await refreshHorseLive();
+                } catch (e) {
+                    modal.querySelector('.eg-result').textContent =
+                        e.message || 'Bahis yapılamadı.';
+                } finally {
+                    horseBusy = false;
+                    if (game === 'horse_race')
+                        refreshHorseLive().catch(() => {});
                 }
                 return;
             }

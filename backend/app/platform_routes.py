@@ -1464,6 +1464,113 @@ def register_platform_auth(current_user_dependency):
         db.commit()
         return result
 
+
+    # ERIS_HORSE_LIVE_API_V1
+    from . import horse_race_live as horse_live
+
+    @router.get("/games/horse_race/live")
+    def horse_live_state(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = horse_live.get_round(db)
+        bets = list(db.scalars(
+            select(GameBet).where(GameBet.round_id == row.id)
+        ))
+        remaining = max(0, int(
+            (row.ends_at - horse_live.now()).total_seconds()
+        ))
+        my_bets = {
+            key: sum(
+                int(b.amount) for b in bets
+                if b.user_id == user.id and b.choice == key
+            )
+            for key in horse_live.HORSES
+        }
+        response = {
+            "round_id": row.id,
+            "status": row.status,
+            "remaining_seconds": remaining,
+            "betting_open": (
+                row.status == "open" and remaining > 0
+            ),
+            "result": row.result_key,
+            "horses": list(horse_live.HORSES),
+            "my_bets": my_bets,
+            "multipliers": {
+                key: horse_live.MULTIPLIER
+                for key in horse_live.HORSES
+            },
+        }
+        db.commit()
+        return response
+
+    @router.post("/games/horse_race/live/bet")
+    def horse_live_bet(
+        payload: GameBetCreate,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        choice = payload.choice.strip().lower()
+        if choice not in horse_live.HORSES:
+            raise HTTPException(
+                status_code=400,
+                detail="Geçersiz at seçimi",
+            )
+        if (
+            type(payload.amount) is not int
+            or payload.amount not in horse_live.STAKES
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="Geçersiz bahis miktarı",
+            )
+
+        row = horse_live.get_round(db)
+        if (
+            row.status != "open"
+            or row.ends_at <= horse_live.now()
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Bahisler kapandı. Yeni turu bekle.",
+            )
+
+        locked_user = db.scalar(
+            select(User)
+            .where(User.id == user.id)
+            .with_for_update()
+        )
+        if not locked_user:
+            raise HTTPException(
+                status_code=404,
+                detail="Kullanıcı bulunamadı",
+            )
+        if int(locked_user.lidya or 0) < payload.amount:
+            raise HTTPException(
+                status_code=400,
+                detail="Yeterli Lidya yok",
+            )
+
+        locked_user.lidya -= payload.amount
+        db.add(GameBet(
+            round_id=row.id,
+            user_id=user.id,
+            choice=choice,
+            amount=payload.amount,
+            payout=0,
+        ))
+        db.flush()
+        balance = locked_user.lidya
+        db.commit()
+        return {
+            "ok": True,
+            "round_id": row.id,
+            "choice": choice,
+            "amount": payload.amount,
+            "balance": balance,
+        }
+
     @router.get("/games/wheel/live")
     def wheel_live_state(
         db: Session = Depends(get_db),
