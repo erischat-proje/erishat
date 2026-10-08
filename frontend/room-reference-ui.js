@@ -294,7 +294,7 @@
     if(!rows.length){const empty=document.createElement('div');empty.className='room-v3-card';empty.textContent='Odada kullanıcı yok.';body.append(empty);return}
     for(const member of rows){
       const card=document.createElement('div');card.className='room-v3-card';
-      const name=document.createElement('b');name.textContent=member.nickname||'Kullanıcı';
+      const name=document.createElement('b');name.textContent=member.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(name,member);
       const meta=document.createElement('small');
       meta.textContent=(member.role==='owner'?'👑 Oda sahibi':member.role==='moderator'?'🛡️ Moderatör':'Kullanıcı')
         +(member.seat_number?' · '+member.seat_number+'. koltuk':' · koltukta değil');
@@ -355,9 +355,9 @@
     window.ErisChatMusic?.open?.();
   }
 
-  function managementRow(body,label,subtitle,buttonLabel,action){
+  function managementRow(body,label,subtitle,buttonLabel,action,identity){
     const card=document.createElement('div');card.className='room-v3-card';
-    const title=document.createElement('b');title.textContent=label;
+    const title=document.createElement('b');title.textContent=label;if(identity)window.ErisRoleBadges?.bind(title,identity);
     const detail=document.createElement('small');detail.textContent=subtitle;
     card.append(title,detail);
     if(buttonLabel){
@@ -376,7 +376,7 @@
   async function staff(body,r){
     const rows=await roomApi().moderators(r.id);
     body.replaceChildren();
-    rows.forEach(row=>managementRow(body,row.nickname,row.role==='owner'?'👑 Oda sahibi':'🛡️ Moderatör'));
+    rows.forEach(row=>managementRow(body,row.nickname,row.role==='owner'?'👑 Oda sahibi':'🛡️ Moderatör',null,null,row));
   }
   async function guests(body,r){
     const rows=(await roomApi().members(r.id)).filter(row=>row.role==='user');
@@ -384,7 +384,7 @@
     if(!rows.length){body.textContent='Odada yönetilecek misafir yok.';return}
     for(const row of rows){
       const card=document.createElement('div');card.className='room-v3-card';
-      const title=document.createElement('b');title.textContent=row.nickname;
+      const title=document.createElement('b');title.textContent=row.nickname;window.ErisRoleBadges?.bind(title,row);
       const meta=document.createElement('small');
       meta.textContent=row.seat_number?row.seat_number+'. koltuk':'Koltukta değil';
       const actions=document.createElement('div');actions.className='room-v3-grid';actions.style.marginTop='10px';
@@ -420,14 +420,14 @@
     if(!rows.length){body.textContent='Odadan atılmış kullanıcı yok.';return}
     rows.forEach(row=>managementRow(body,row.display_name||row.user_id,'Odadan atıldı','× Listeden çıkar',async()=>{
       await roomApi().unban(r.id,row.user_id);await openMenu('bans');
-    }));
+    },row));
   }
   async function mutes(body,r){
     const rows=await roomApi().chatMutes(r.id);body.replaceChildren();
     if(!rows.length){body.textContent='Chatte susturulan kullanıcı yok.';return}
     rows.forEach(row=>managementRow(body,row.nickname||row.user_id,'Chatte susturuldu','× Susturmayı kaldır',async()=>{
       await roomApi().unmuteChat(r.id,row.user_id);await openMenu('mutes');
-    }));
+    },row));
   }
   async function moderators(body,r){
     const rows=(await roomApi().moderators(r.id)).filter(row=>row.role==='moderator');
@@ -435,7 +435,7 @@
     if(!rows.length){body.textContent='Henüz moderatör yok.';return}
     rows.forEach(row=>managementRow(body,row.nickname,'🛡️ Moderatör','× Yetkiyi kaldır',async()=>{
       await roomApi().removeModerator(r.id,row.user_id);await openMenu('moderators');
-    }));
+    },row));
   }
   async function promote(body,r){
     const rows=(await roomApi().members(r.id)).filter(row=>row.role==='user');
@@ -443,7 +443,7 @@
     if(!rows.length){body.textContent='Moderatör yapılabilecek kullanıcı yok.';return}
     rows.forEach(row=>managementRow(body,row.nickname,'Oda kullanıcısı','＋ Moderatör yap',async()=>{
       await roomApi().addModerator(r.id,row.user_id);await openMenu('promote');
-    }));
+    },row));
   }
 
   async function settings(body,r){

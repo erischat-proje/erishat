@@ -228,7 +228,7 @@
         frame.style.backgroundImage='url("'+String(frameUrl).replace(/"/g,'%22')+'")';
         frame.classList.add('has-frame');
       }
-      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'';
+      b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'';if(occupied)window.ErisRoleBadges?.bind(b.querySelector('b'),seat.user_id);
       b.title=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):b.getAttribute('aria-label');
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
       /* Koltuk davranışının tek kaynağı room-reference-ui.js / seatMenu(). */
@@ -257,7 +257,7 @@
       else if(!d.system)portrait.textContent=d.avatar||'◈';
       const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
       if(frame&&!d.system){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
-      const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';
+      const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';if(!d.system)window.ErisRoleBadges?.bind(author,d);
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
       const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;if(fanLevel)badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
       if(d.user_id){portrait.style.cursor='pointer';author.style.cursor='pointer';portrait.onclick=author.onclick=()=>window.ErisFloatingProfile?.open(d.user_id)}

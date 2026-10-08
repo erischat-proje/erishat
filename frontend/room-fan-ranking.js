@@ -29,7 +29,7 @@
         if(asset){const img=document.createElement('img');img.src=asset;img.alt='';avatar.append(img)}else avatar.textContent=row.avatar||'◈';
         const frame=row.frame_asset&&window.ErisChatCosmetics?.assetUrl?.(row.frame_asset);
         if(frame){const img=document.createElement('img');img.src=frame;img.alt='';img.className='personal-fan-frame';avatar.append(img)}
-        const name=document.createElement('span');name.className='personal-fan-name';name.textContent=row.nickname||'Kullanıcı';
+        const name=document.createElement('span');name.className='personal-fan-name';name.textContent=row.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(name,row);
         const badge=document.createElement('img');badge.className='personal-fan-level';badge.src='./fan-levels/LEVEL'+Math.max(1,Math.min(40,Number(row.fan_level)||1))+'.png';badge.alt='Hayran seviyesi '+row.fan_level;
         const amount=document.createElement('span');amount.className='personal-fan-amount';amount.textContent=Number(row.total_lidya||0).toLocaleString('tr-TR')+' Lidya';
         if(row.user_id){avatar.style.cursor='pointer';name.style.cursor='pointer';avatar.onclick=name.onclick=()=>window.ErisFloatingProfile?.open(row.user_id)}

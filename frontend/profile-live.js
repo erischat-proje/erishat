@@ -139,6 +139,7 @@
             </div>
             <button type="button" class="eris-follow-remove" aria-label="Kaldır">×</button>`;
 
+          window.ErisRoleBadges?.bind(row.querySelector('.eris-follow-info b'),user);
           row.querySelector('.eris-follow-remove').onclick=async()=>{
             const nickname=user.nickname||'Kullanıcı';
             const ok=await confirmFollowAction(
@@ -216,7 +217,7 @@
       }
       const nickname = document.createElement('span');
       nickname.textContent = user.nickname || 'Anonim';
-      name.append(nickname);
+      name.append(nickname);window.ErisRoleBadges?.bind(name,user);
     }
     const face = $('.profile .face');
     if (face) {

@@ -41,7 +41,7 @@
     element.addEventListener('pointerup',e=>{if(element.hasPointerCapture(e.pointerId))element.releasePointerCapture(e.pointerId);if(moved){e.preventDefault();e.stopPropagation()}},true);
   }
   function render(){if(!call)return;if(!ui)build();ui.classList.toggle('mini',mini);ui.classList.toggle('video',call.kind==='video');
-    ui.querySelector('.call-name').textContent=call.peer_name;portrait(ui);
+    ui.querySelector('.call-name').textContent=call.peer_name;window.ErisRoleBadges?.bind(ui.querySelector('.call-name'),call.peer_id);portrait(ui);
     const active=call.status==='active',ring=call.status==='ringing';ui.querySelector('.call-status').textContent=ring?(call.incoming?'Gelen '+(call.kind==='video'?'görüntülü':'sesli')+' arama':'Aranıyor…'):active?'Görüşme sürüyor':call.status;
     ui.querySelector('.call-incoming').hidden=!(ring&&call.incoming);ui.querySelector('.call-actions').hidden=ring&&call.incoming;
     const incomingCamera=ui.querySelector('[data-incoming-camera]');incomingCamera.hidden=call.kind!=='video';incomingCamera.textContent=cameraOn?'Kameramı kapat':'Kameramı aç';
@@ -54,7 +54,7 @@
     ui.querySelector('.call-self').hidden=!local?.getVideoTracks().length||!cameraOn;
     ui.querySelector('.call-actions').style.visibility=video&&!controlsVisible?'hidden':'';
     ui.querySelector('.call-status').style.visibility=video&&!controlsVisible?'hidden':'';
-    if(video){ui.querySelector('.call-name').textContent=call.peer_name;ui.querySelector('.call-name').style.position='absolute';ui.querySelector('.call-name').style.top='16px';ui.querySelector('.call-name').style.left='16px';ui.querySelector('.call-name').style.zIndex='2';ui.querySelector('.call-peer').hidden=false;ui.querySelector('.call-portrait').hidden=true;ui.querySelector('.call-peer').style.margin='0';ui.querySelector('.call-peer').style.alignSelf='flex-start'}else{ui.querySelector('.call-portrait').hidden=false;ui.querySelector('.call-name').style.position='';ui.querySelector('.call-peer').style.margin='8vh 0 20px'}
+    if(video){ui.querySelector('.call-name').textContent=call.peer_name;window.ErisRoleBadges?.bind(ui.querySelector('.call-name'),call.peer_id);ui.querySelector('.call-name').style.position='absolute';ui.querySelector('.call-name').style.top='16px';ui.querySelector('.call-name').style.left='16px';ui.querySelector('.call-name').style.zIndex='2';ui.querySelector('.call-peer').hidden=false;ui.querySelector('.call-portrait').hidden=true;ui.querySelector('.call-peer').style.margin='0';ui.querySelector('.call-peer').style.alignSelf='flex-start'}else{ui.querySelector('.call-portrait').hidden=false;ui.querySelector('.call-name').style.position='';ui.querySelector('.call-peer').style.margin='8vh 0 20px'}
     ui.querySelector('.call-time').textContent=active&&call.accepted_at?humanTime(Math.max(0,Math.floor((Date.now()-Date.parse(call.accepted_at))/1000))):'';
   }
   async function media(){if(local)return;local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:call.kind==='video'&&cameraOn?{facingMode:face}:false});local.getAudioTracks().forEach(t=>t.enabled=micOn);ui.querySelector('.call-self').srcObject=local;render()}

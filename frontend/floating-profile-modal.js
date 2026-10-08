@@ -71,7 +71,7 @@
     try{
       const u=options.preview||await api('/users/'+encodeURIComponent(identifier));
       if(!shade.isConnected)return;
-      shade.querySelector('.eris-mini-name').textContent=u.nickname||'Kullanıcı';
+      shade.querySelector('.eris-mini-name').textContent=u.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(shade.querySelector('.eris-mini-name'),u);
       const idButton=shade.querySelector('.eris-mini-id'), publicId=String(u.public_id||'');
       idButton.textContent=/^\d{10,12}$/.test(publicId)?'ID: '+publicId+' ⧉':'ID gizli';
       idButton.disabled=!/^\d{10,12}$/.test(publicId);
