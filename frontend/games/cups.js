@@ -214,11 +214,10 @@
           next[b] = first;
           first.style.transition = 'none';
           second.style.transition = 'none';
-          table.replaceChildren(...next);
           first.style.transform = '';
           second.style.transform = '';
-          void table.offsetWidth;
-          await wait(50);
+          table.replaceChildren(...next);
+          await wait(70);
         }
 
         if (!valid()) return;
@@ -256,6 +255,12 @@
               });
           };
         });
+      } catch (err) {
+        console.error('[ErisChat Cups] Animasyon hatası:', err);
+        if (table.isConnected) {
+          status.textContent = '⚠️ Karıştırma tamamlanamadı: ' +
+            (err?.message || 'Bilinmeyen hata');
+        }
       } finally {
         this.busy = false;
       }
