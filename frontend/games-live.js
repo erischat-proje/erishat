@@ -491,11 +491,13 @@
             }
         modal.classList.toggle('eg-crash-mode', key === 'crash');
         modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
+        // ERIS_BJ_INDIVIDUAL_UI_FIX_V1
+        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', key === 'blackjack' ? 'none' : '');
 
         // Crash elemanlari diger oyunlara tasinmasin.
         if (key !== 'crash') {
             modal.querySelectorAll(
-                '[data-crash-history], [data-crash-stats], [data-crash-bets]'
+                '[data-crash-history], [data-crash-stats], [data-crash-bets], .eg-crash-bets'
             ).forEach(el => el.remove());
         }
 
@@ -1126,7 +1128,7 @@
                 if (mod && typeof mod.animate === 'function') {
                     await mod.animate(stage, {
                         ...res.data,
-                        result: res.payout > 0 ? 'win' : 'lose',
+                        result: game === 'blackjack' ? res.result : (res.payout > 0 ? 'win' : 'lose'),
                         result_key: res.result,
                         winning_cup: String(res.result).replace('cup_', ''),
                         winner: String(res.result).replace('horse_', ''),
@@ -1147,7 +1149,7 @@
                         ' • Ödül: ' + (res.payout || 0) + ' Lidya';
                 }
                 if (game === 'blackjack' && res.result === 'pending') {
-                    bindBlackjackRound(res.data.round_id);
+                    bindBlackjackRound(res.data?.round_id || res.round_id);
                 }
                 refreshBalance();
             } catch (e) {
