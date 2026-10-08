@@ -17,10 +17,10 @@
           <div class="eris-slot-top">★ ERIS SLOT ★</div>
           <div class="eris-slot-lights">● ● ● ● ● ● ● ●</div>
           <div class="eris-slot-cabinet">
-          <div class="eris-slot-lever" aria-hidden="true">
+          <button type="button" class="eris-slot-lever" aria-label="Slot kolunu çek" title="Çevirmek için aşağı çek">
             <div class="eris-slot-knob"></div>
             <div class="eris-slot-arm"></div>
-          </div>
+          </button>
           <div class="eris-slot-reels">
             <div class="eris-slot-reel">🍒</div>
             <div class="eris-slot-reel">7️⃣</div>
@@ -64,6 +64,25 @@
           .eris-slot-lever{
             position:absolute;right:-38px;top:10px;
             width:32px;height:105px;transform-origin:bottom center;
+          }
+
+          .eris-slot-lever{
+            padding:0;border:0;background:transparent;
+            cursor:grab;touch-action:none;
+            -webkit-tap-highlight-color:transparent;
+            z-index:5;
+          }
+          .eris-slot-lever:active{cursor:grabbing}
+          .eris-slot-lever:focus-visible{
+            outline:3px solid #ffe28c;
+            outline-offset:5px;
+          }
+          .eris-slot-lever.pulling{
+            transform:rotate(32deg);
+            transition:transform .18s ease-out;
+          }
+          .eris-slot-lever:disabled{
+            cursor:wait;opacity:.8;
           }
           .eris-slot-arm{
             position:absolute;bottom:0;left:13px;
@@ -116,6 +135,63 @@
             .eris-slot-top{font-size:19px}
           }
         </style>`;
+
+      const lever = container.querySelector('.eris-slot-lever');
+      const modal = container.closest('#erisGamesModal');
+      if (!lever || !modal) return;
+
+      let startY = null;
+      let pointerId = null;
+      let pulled = false;
+      let triggered = false;
+
+      const reset = () => {
+        lever.classList.remove('pulling');
+        startY = null;
+        pointerId = null;
+      };
+
+      const spin = () => {
+        if (triggered || !container.isConnected ||
+            !modal.classList.contains('eg-slot-mode')) return;
+        const play = modal.querySelector('[data-play]');
+        if (!play || play.disabled) return;
+        triggered = true;
+        lever.disabled = true;
+        lever.classList.add('pulling');
+        play.click();
+      };
+
+      lever.addEventListener('pointerdown', event => {
+        if (lever.disabled) return;
+        startY = event.clientY;
+        pointerId = event.pointerId;
+        pulled = false;
+        lever.setPointerCapture?.(event.pointerId);
+      });
+
+      lever.addEventListener('pointermove', event => {
+        if (startY === null || pointerId !== event.pointerId) return;
+        const distance = event.clientY - startY;
+        lever.classList.toggle('pulling', distance > 12);
+        if (distance >= 45 && !pulled) {
+          pulled = true;
+          spin();
+        }
+      });
+
+      lever.addEventListener('pointerup', event => {
+        if (pointerId !== event.pointerId) return;
+        const shouldSpin = !pulled && startY !== null;
+        reset();
+        if (shouldSpin) spin();
+      });
+
+      lever.addEventListener('pointercancel', reset);
+
+      lever.addEventListener('click', event => {
+        if (event.detail === 0) spin();
+      });
     },
 
     async animate(container, data) {
