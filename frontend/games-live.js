@@ -193,6 +193,8 @@
 
     function open(scope = 'main', roomId = null, selected = null) {
         injectStyles();
+        // ERIS_GAME_ISOLATION_V1
+        if (modal?._erisCleanup) modal._erisCleanup();
         modal?.remove();
         modal = document.createElement('div');
         modal.id = 'erisGamesModal';
@@ -223,6 +225,26 @@
             </div>
         `;
         document.body.append(modal);
+        const ownedModal = modal;
+        const gameIntervals = new Set();
+        const gameInterval = (fn, delay) => {
+            const id = setInterval(() => {
+                if (modal !== ownedModal || !ownedModal.isConnected) {
+                    clearInterval(id);
+                    gameIntervals.delete(id);
+                    return;
+                }
+                fn();
+            }, delay);
+            gameIntervals.add(id);
+            return id;
+        };
+        ownedModal._erisCleanup = () => {
+            for (const id of gameIntervals) clearInterval(id);
+            gameIntervals.clear();
+            window.ErisGameHorseRace?.cancel?.();
+        };
+
         if (!document.getElementById('erisCrashProStyle')) {
         const st = document.createElement('style');
         st.id = 'erisCrashProStyle';
@@ -292,7 +314,11 @@ if (selected === 'cups') {
   modal.classList.add('eg-cups-mode');
 }
 
-const close = () => modal?.remove();
+const close = () => {
+            ownedModal._erisCleanup?.();
+            ownedModal.remove();
+            if (modal === ownedModal) modal = null;
+        };
         modal.querySelector('[data-close]').onclick = close;
         modal.onclick = e => { if (e.target === modal) close(); };
         modal.onkeydown = e => { if (e.key === 'Escape') close(); };
@@ -311,6 +337,7 @@ const close = () => modal?.remove();
         const keys = Object.keys(gameModules);
         const tabs = modal.querySelector('.eg-keys');
         let game = keys.includes(selected) ? selected : keys[0];
+        let gameEpoch = 0;
 
         const refreshBalance = () => api('/me').then(me => {
             modal.querySelector('[data-balance]').textContent = '💰 Bakiye: ' + Number(me.lidya || 0).toLocaleString('tr-TR') + ' Lidya';
@@ -554,6 +581,7 @@ const close = () => modal?.remove();
                 horseRound = null;
                 horseLastRound = null;
             }
+            gameEpoch++;
             game = key;
             queueMicrotask(() => updateBlackjackStakeUI());
             modal.querySelector('[data-bj-history]')?.remove();
@@ -1180,7 +1208,7 @@ const close = () => modal?.remove();
             box.style.display='none';
             box.innerHTML='<b>BU TURDAKİ BAHİSLERİM</b><br>'+(rows.length?rows.map(([k,v])=>names[k]+' · '+Number(v).toLocaleString('tr-TR')+' Lidya').join(' • '):'Henüz bahis yapmadın.');
         };
-        refreshWheelLive(); setInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
+        refreshWheelLive(); gameInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
 
 
 
@@ -1632,7 +1660,7 @@ const close = () => modal?.remove();
             }
         };
 
-        setInterval(() => {
+        gameInterval(() => {
             if (game === 'vault' && modal?.isConnected) {
                 refreshVaultLive().catch(() => {});
             }
@@ -1649,8 +1677,13 @@ const close = () => modal?.remove();
                 horseFetching || horseAnimating) return;
             horseFetching = true;
             try {
+                const requestModal = modal;
+                const requestEpoch = gameEpoch;
                 const x = await api('/games/horse_race/live');
-                if (game !== 'horse_race' || !modal?.isConnected) return;
+                if (game !== 'horse_race' ||
+                    modal !== requestModal ||
+                    gameEpoch !== requestEpoch ||
+                    !requestModal?.isConnected) return;
                 const stage = modal.querySelector('.eg-stage');
                 const result = modal.querySelector('.eg-result');
                 const button = modal.querySelector('[data-play]');
@@ -1765,7 +1798,7 @@ const close = () => modal?.remove();
             }
         };
 
-        setInterval(() => {
+        gameInterval(() => {
             if (game === 'horse_race' && modal?.isConnected)
                 refreshHorseLive().catch(() => {});
         }, 1000);
@@ -1789,6 +1822,7 @@ const close = () => modal?.remove();
             if (crashFetching) return;
             crashFetching = true;
             const currentModal = modal;
+            const requestEpoch = gameEpoch;
             let state;
             try {
                 state = await api('/games/crash/live');
@@ -1797,6 +1831,7 @@ const close = () => modal?.remove();
             }
 
             if (game !== 'crash' || modal !== currentModal ||
+                gameEpoch !== requestEpoch ||
                 !currentModal.isConnected) return;
 
             crashState = state;
@@ -1956,7 +1991,7 @@ const close = () => modal?.remove();
             /* ERIS_CRASH_COMPACT_V2 */
         }
 
-        setInterval(() => {
+        gameInterval(() => {
             if (game === 'crash' && modal?.isConnected) {
                 refreshCrashLive().catch(console.warn);
             }
