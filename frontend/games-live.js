@@ -730,6 +730,8 @@
             modal.querySelector('.eg-result').textContent = 'Oyun başlatılıyor…';
 
             try {
+                const startedGame = game;
+                const startedStage = stage;
                 const stake = Number(modal.querySelector('[data-stake]').value);
                 if (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000) throw new Error('Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
                 gameModules[game]()?.render?.(stage);
@@ -756,6 +758,10 @@
                     })
                 });
 
+                if (startedGame === 'blackjack' &&
+                    (game !== startedGame || !modal.isConnected ||
+                     modal.querySelector('.eg-stage') !== startedStage ||
+                     !startedStage.querySelector('.eris-bj-table'))) return;
                 const mod = gameModules[game]();
                 if (mod && typeof mod.animate === 'function') {
                     await mod.animate(stage, {
@@ -772,6 +778,13 @@
                     ? 'İlk el dağıtıldı. Kartlarını ve krupiyenin açık kartını inceleyip hamleni seç.'
                     : 'Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
 
+                if (game === 'blackjack' && res.result !== 'pending') {
+                    activeBlackjackRoundId = null;
+                    const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE'};
+                    modal.querySelector('.eg-result').textContent =
+                        (names[res.result] || 'EL TAMAMLANDI') +
+                        ' • Ödül: ' + (res.payout || 0) + ' Lidya';
+                }
                 if (game === 'blackjack' && res.result === 'pending') {
                     activeBlackjackRoundId = res.data.round_id;
                     for (const [action, label] of [['hit', 'Kart Çek'], ['stand', 'Dur']]) {
@@ -784,10 +797,15 @@
                                     method: 'POST',
                                     body: JSON.stringify({ action })
                                 });
+                                if (game !== 'blackjack' || !modal.isConnected ||
+                                    !stage.querySelector('.eris-bj-table')) return;
                                 if (mod && typeof mod.animate === 'function') {
                                     await mod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.hands?.[0]?.cards?.slice(-1)[0] });
                                 }
-                                modal.querySelector('.eg-result').textContent = '🎉 Sonuç: ' + next.result + ' • Ödül: ' + (next.payout || 0) + ' Lidya';
+                                const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE',pending:'Hamleni seç: Kart Çek veya Dur'};
+                                                            modal.querySelector('.eg-result').textContent =
+                                                                (names[next.result] || 'EL TAMAMLANDI') +
+                                                                (next.status === 'finished' ? ' • Ödül: ' + (next.payout || 0) + ' Lidya' : '');
                                 if (next.status === 'finished') { controls.replaceChildren(); activeBlackjackRoundId = null; button.disabled = false; }
                                 else controls.querySelectorAll('button').forEach(x => x.disabled = false);
                                 refreshBalance();
@@ -803,7 +821,7 @@
             } catch (e) {
                 modal.querySelector('.eg-result').textContent = e.message || 'Oyun başlatılamadı.';
             } finally {
-                button.disabled = !!activeBlackjackRoundId;
+                button.disabled = game === 'blackjack' && !!activeBlackjackRoundId;
             }
         };
     }
@@ -1099,5 +1117,5 @@ erisWheelResponsive.textContent=`
 `;
 document.head.appendChild(erisWheelResponsive);
 const erisWheelHeaderFix=document.createElement('style');
-erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:space-between!important;\n    gap:6px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
+erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
 document.head.appendChild(erisWheelHeaderFix);
