@@ -1006,8 +1006,19 @@
                 console.warn('[ErisChat] Blackjack geri yükleme:', e);
                 blackjackRestoreFailed = true;
                 if (game === 'blackjack' && currentModal.isConnected) {
-                    currentModal.querySelector('.eg-result').textContent =
-                        'Blackjack bağlantısı kontrol edilemedi. Lütfen tekrar aç.';
+                    // ERIS_BJ_RETRY_BUTTON_V1
+                    const resultBox = currentModal.querySelector('.eg-result');
+                    if (resultBox) {
+                        resultBox.textContent = 'Blackjack bağlantısı kontrol edilemedi. ';
+                        const retry = document.createElement('button');
+                        retry.type = 'button';
+                        retry.textContent = '🔄 Yeniden Dene';
+                        retry.onclick = () => {
+                            retry.disabled = true;
+                            restoreBlackjackRound();
+                        };
+                        resultBox.append(retry);
+                    }
                 }
             } finally {
                 blackjackRestoreBusy = false;
