@@ -201,12 +201,12 @@
           const dx = second.getBoundingClientRect().left -
                      first.getBoundingClientRect().left;
 
-          first.style.transition = 'transform 220ms ease-in-out';
-          second.style.transition = 'transform 220ms ease-in-out';
+          first.style.transition = 'transform 140ms ease-in-out';
+          second.style.transition = 'transform 140ms ease-in-out';
           first.style.transform = `translateX(${dx}px)`;
           second.style.transform = `translateX(${-dx}px)`;
 
-          await wait(245);
+          await wait(145);
           if (!valid()) return;
 
           const next = [...current];
@@ -217,7 +217,7 @@
           first.style.transform = '';
           second.style.transform = '';
           table.replaceChildren(...next);
-          await wait(70);
+          await wait(10);
         }
 
         if (!valid()) return;
