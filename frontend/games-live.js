@@ -815,6 +815,16 @@
 /* WHEEL SINGLE MOBILE LAYOUT — ONLY SOURCE OF OVERRIDES */
 const erisWheelLayout=document.createElement('style');
 erisWheelLayout.textContent=`
+/* WHEEL CRASH STATS ISOLATION */
+#erisGamesModal.eg-wheel-mode [data-crash-history],
+#erisGamesModal.eg-wheel-mode [data-crash-stats],
+#erisGamesModal.eg-wheel-mode [data-crash-bets],
+#erisGamesModal.eg-wheel-mode .eg-crash-stats,
+#erisGamesModal.eg-wheel-mode .eg-crash-stats-title,
+#erisGamesModal.eg-wheel-mode .eg-crash-stats-grid {
+    display:none!important;
+}
+
 #erisGamesModal.eg-single-game.eg-wheel-mode{
  padding:0!important;
  overflow:hidden!important;
