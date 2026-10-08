@@ -18,36 +18,50 @@
     render(container) {
       this.token++;
       container.innerHTML = `
-        <div style="background:linear-gradient(145deg,#102c24,#07130f);
-          padding:12px;border-radius:16px;color:white;
-          border:1px solid #32745c">
-          <div style="text-align:center;font-weight:900;
-            color:#facc15;margin-bottom:10px">
-            🏇 CANLI HİPODROM
+        <div class="horse-arena" style="
+          width:100%;box-sizing:border-box;overflow:hidden;
+          background:linear-gradient(160deg,#251c30,#11131e);
+          padding:12px 8px;border-radius:18px;
+          border:1px solid #c59b5b55;
+          box-shadow:inset 0 1px #ffffff12,0 12px 30px #0005">
+          <div style="display:flex;justify-content:space-between;
+            align-items:center;gap:8px;padding:4px 5px 12px">
+            <strong style="color:#f5d493;font-size:15px">
+              🏇 CANLI HİPODROM
+            </strong>
+            <span style="font-size:10px;color:#b9a9c8;
+              font-weight:800">7 AT · TEK KAZANAN</span>
           </div>
           <div class="horse-track" style="display:grid;gap:5px">
-            ${HORSES.map(h => `
-              <div style="position:relative;height:43px;
-                overflow:hidden;border-radius:7px;
+            ${HORSES.map((h,i) => `
+              <div class="horse-lane" style="
+                position:relative;height:49px;overflow:hidden;
+                border-radius:10px;border:1px solid #ffffff16;
                 background:repeating-linear-gradient(
-                90deg,#224835 0px,#224835 24px,
-                #1b3b2c 24px,#1b3b2c 48px);
-                border-bottom:2px dashed #6b987b">
-                <span style="position:absolute;left:4px;top:3px;
-                  font-size:10px;color:${h[2]};z-index:2;
-                  text-shadow:0 1px 3px #000">${h[1]}</span>
+                  90deg,#31273c 0px,#31273c 34px,
+                  #292235 34px,#292235 68px);
+                box-shadow:inset 0 2px 9px #0005">
+                <span style="position:absolute;left:5px;top:4px;
+                  z-index:3;display:flex;align-items:center;gap:5px;
+                  font-size:10px;font-weight:900;color:${h[2]};
+                  text-shadow:0 2px 4px #000">
+                  <span style="background:#120e1ecc;border:1px solid #ffffff22;
+                    padding:2px 5px;border-radius:5px">${i+1}</span>
+                  ${h[1]}
+                </span>
                 <div style="position:absolute;right:13%;top:0;
-                  height:100%;border-left:3px dashed white;
-                  opacity:.8"></div>
+                  height:100%;border-left:3px dashed #f8d58e;
+                  opacity:.9;box-shadow:0 0 8px #f8d58e44"></div>
                 <div class="horse-runner" data-horse="${h[0]}"
                   style="position:absolute;left:0;bottom:2px;
-                  font-size:25px;will-change:transform;
-                  filter:drop-shadow(0 2px 3px #000)">🏇</div>
+                  font-size:29px;will-change:transform;
+                  filter:drop-shadow(0 3px 3px #000)">🏇</div>
               </div>`).join('')}
           </div>
-          <div id="raceStatusText" style="text-align:center;
-            padding:10px;font-weight:700;color:#a7f3d0">
-            🏇 Atını seç ve yarışı başlat!
+          <div id="raceStatusText" style="
+            text-align:center;padding:12px 5px 3px;
+            font-size:12px;font-weight:800;color:#f2d9a5">
+            ⏳ Canlı yarış için bahisler alınıyor
           </div>
         </div>`;
     },

@@ -910,6 +910,50 @@ const close = () => modal?.remove();
                 if(play) play.style.display='';
             }
 
+
+            // ERIS_HORSE_PREMIUM_SELECTOR_V1
+            modal.classList.toggle('eg-horse-mode', key === 'horse_race');
+            queueMicrotask(() => {
+                if (game === 'horse_race' && modal?.isConnected)
+                    syncHorseStake();
+            });
+            modal.querySelector('[data-horse-picks]')?.remove();
+            if (key === 'horse_race') {
+                const horses = [
+                    ['1','⚡','Şimşek'], ['2','🔥','Alev'],
+                    ['3','🌪️','Fırtına'], ['4','👑','Asil'],
+                    ['5','🌟','Yıldız'], ['6','💎','Safir'],
+                    ['7','🍀','Şans']
+                ];
+                const picks = document.createElement('div');
+                picks.className = 'eg-horse-picks';
+                picks.dataset.horsePicks = '';
+                picks.setAttribute('aria-label', 'Yarış atını seç');
+                horses.forEach(([id, icon, name]) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'eg-horse-pick';
+                    b.dataset.horsePick = id;
+                    b.innerHTML =
+                        '<span class="hp-icon">' + icon + '</span>' +
+                        '<b>' + name + '</b>' +
+                        '<small>6× ÖDEME</small>' +
+                        '<span class="hp-total" data-horse-total="horse_' +
+                        id + '">🪙 0</span>';
+                    b.onclick = () => {
+                        choice.value = id;
+                        picks.querySelectorAll('button').forEach(el => {
+                            const active = el === b;
+                            el.classList.toggle('active', active);
+                            el.setAttribute('aria-pressed', String(active));
+                        });
+                    };
+                    picks.appendChild(b);
+                });
+                modal.querySelector('.eg-form').prepend(picks);
+                picks.querySelector('[data-horse-pick="4"]')?.click();
+            }
+
             if (key === 'wheel') {
                 const symbols = mod?.symbols || [];
                 symbols.forEach((symbol, index) => {
@@ -975,6 +1019,10 @@ const close = () => modal?.remove();
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
             refreshSlotBet();
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle('horse-selected',
+                    game === 'horse_race' && b === preset);
+            });
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
                 b.classList.toggle('crash-selected',
                     game === 'crash' && b === preset);
@@ -1046,6 +1094,156 @@ const close = () => modal?.remove();
 
 
 
+
+
+        // ERIS_HORSE_MOBILE_FINISH_V1
+        if (!document.getElementById('erisHorseMobileFinishStyle')) {
+            const style = document.createElement('style');
+            style.id = 'erisHorseMobileFinishStyle';
+            style.textContent = `
+              #erisGamesModal.eg-horse-mode .eg-panel{
+                padding:9px!important;
+                width:min(100%,580px)!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-head{
+                gap:6px!important;margin-bottom:4px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-head h2{
+                font-size:18px!important;white-space:nowrap
+              }
+              #erisGamesModal.eg-horse-mode .eg-wallet{
+                margin:5px 0!important;padding:7px 9px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-stage{
+                padding:5px!important;margin:5px 0!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-form{
+                gap:7px!important;padding:8px!important;
+                margin-top:5px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-picks{
+                gap:5px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                min-height:78px!important;padding:6px 2px!important;
+                gap:2px!important
+              }
+              #erisGamesModal.eg-horse-mode .hp-icon{
+                font-size:22px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-stake-presets{
+                gap:5px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value]{
+                padding:9px 2px!important;font-size:11px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-play]{
+                min-height:47px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-result{
+                min-height:0!important;margin-top:6px!important;
+                padding:8px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-clock]{
+                margin:5px 0!important;padding:8px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-bets]{
+                padding:5px!important
+              }
+            `;
+            document.head.appendChild(style);
+        }
+
+
+        // ERIS_HORSE_SELECTION_SYNC_V1
+        const syncHorseStake = () => {
+            const amount = modal.querySelector('[data-stake]')?.value;
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle('horse-selected',
+                    game === 'horse_race' &&
+                    b.dataset.stakeValue === amount);
+            });
+        };
+        modal.querySelector('[data-stake]')?.addEventListener(
+            'input', syncHorseStake
+        );
+
+        // ERIS_HORSE_PREMIUM_STYLE_V1
+        if (!document.getElementById('erisHorsePremiumStyle')) {
+            const style = document.createElement('style');
+            style.id = 'erisHorsePremiumStyle';
+            style.textContent = `
+              #erisGamesModal.eg-horse-mode .eg-panel{
+                padding:12px!important;max-width:580px;
+                overflow-y:auto;box-sizing:border-box
+              }
+              #erisGamesModal.eg-horse-mode .eg-stage{
+                margin:8px 0!important;padding:10px!important;
+                min-height:0!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-form{
+                display:grid!important;grid-template-columns:1fr!important;
+                gap:10px!important;padding:12px!important;
+                border:1px solid #bd945544!important;
+                background:linear-gradient(145deg,#241a32,#120e1e)!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-form>label{
+                display:none!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-picks{
+                display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+                gap:7px;width:100%
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                position:relative;min-width:0;min-height:92px;
+                display:flex;flex-direction:column;align-items:center;
+                justify-content:center;gap:3px;
+                padding:9px 3px;border-radius:14px;
+                border:1px solid #9e7b4b55;
+                background:linear-gradient(150deg,#30233b,#191423);
+                color:#fff;box-shadow:inset 0 1px #ffffff14
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick.active{
+                border-color:#ffdc84;
+                background:linear-gradient(145deg,#58402e,#30213b);
+                box-shadow:0 0 0 1px #ffdc8455,0 0 18px #d5a34d33
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick.active:after{
+                content:'✓';position:absolute;right:6px;top:5px;
+                color:#ffdc84;font-weight:900
+              }
+              #erisGamesModal.eg-horse-mode .hp-icon{font-size:26px}
+              #erisGamesModal.eg-horse-mode .eg-horse-pick b{font-size:12px}
+              #erisGamesModal.eg-horse-mode .eg-horse-pick small{
+                font-size:10px;font-weight:900;color:#ffcf76
+              }
+              #erisGamesModal.eg-horse-mode .hp-total{
+                font-size:10px;color:#d6c7e6;font-weight:800
+              }
+              #erisGamesModal.eg-horse-mode .eg-stake-presets{
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:6px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value]{
+                min-width:0;padding:11px 2px;border-radius:11px;
+                border:1px solid #a8875d88;
+                background:#30233e;color:#ffe4ab;font-weight:900
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value].horse-selected{
+                border-color:#ffe29b!important;
+                background:#695039!important;color:white!important
+              }
+              #erisGamesModal.eg-horse-mode [data-play]{
+                width:100%;min-height:52px;margin:0!important;
+                border-radius:14px;font-size:17px;
+                background:linear-gradient(110deg,#eac477,#b8863b)!important;
+                color:#24162c!important
+              }
+            `;
+            document.head.appendChild(style);
+        }
+
         // ERIS_HORSE_LIVE_FRONTEND_V1
         let horseRound = null;
         let horseAnimating = false;
@@ -1070,7 +1268,8 @@ const close = () => modal?.remove();
                     horse_7:'🍀 Şans'
                 };
 
-                if (horseRound !== x.round_id) {
+                if (horseRound !== x.round_id ||
+                    !stage.querySelector('.horse-runner')) {
                     horseRound = x.round_id;
                     horseLastRound = null;
                     gameModules.horse_race()?.render?.(stage);
@@ -1102,6 +1301,14 @@ const close = () => modal?.remove();
                         ? '🐎 BAHİS YAP'
                         : '🔒 BAHİSLER KAPANDI';
                 }
+
+                modal.querySelectorAll('[data-horse-total]').forEach(el => {
+                    const amount = Number(x.my_bets?.[el.dataset.horseTotal] || 0);
+                    el.textContent = '🪙 ' + amount.toLocaleString('tr-TR');
+                });
+                modal.querySelectorAll('[data-horse-pick]').forEach(el => {
+                    el.disabled = !x.betting_open;
+                });
 
                 const mine = Object.entries(x.my_bets || {})
                     .filter(([,v]) => Number(v) > 0)
