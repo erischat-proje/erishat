@@ -7,7 +7,7 @@
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
-            
+
             const now = ctx.currentTime;
             if (type === "win") {
                 osc.type = "triangle";
@@ -36,7 +36,7 @@
             }
         } catch(e) {}
     }
-    
+
 (() => {
     'use strict';
 
@@ -232,7 +232,85 @@
         st.textContent += '\n/* ERIS_CRASH_COMPACT_V2 */\n\n#erisGamesModal.eg-crash-mode .eg-panel{padding:8px!important}\n#erisGamesModal.eg-crash-mode .eg-head{display:flex;align-items:center;gap:7px;margin:0 0 6px!important}\n#erisGamesModal.eg-crash-mode .eg-head h2{font-size:15px!important;white-space:nowrap}\n#erisGamesModal.eg-crash-mode .eg-head [data-close]{flex:0 0 36px;width:36px;height:36px}\n#erisGamesModal.eg-crash-mode .eg-wallet{order:0;display:flex!important;flex:1;min-width:0;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important;justify-content:flex-end}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-balance]{font-size:clamp(10px,2.7vw,13px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-scope]{display:none!important}\n#erisGamesModal.eg-crash-mode [data-name]{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form>label{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form{padding:6px!important;gap:5px!important}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;width:100%;min-width:0}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0!important;width:100%!important;padding:9px 0!important;font-size:clamp(7px,1.9vw,10px)!important;border-radius:8px!important;white-space:nowrap;letter-spacing:-.5px}\n#erisGamesModal.eg-crash-mode .eg-stage{margin-top:4px!important}\n#erisGamesModal.eg-crash-mode .crash-flight{height:170px!important}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:42px!important}\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:6px!important;margin-bottom:4px!important}\n#erisGamesModal.eg-crash-mode .eg-result{margin-top:4px!important}\n';
         document.head.appendChild(st);
     }
-    const close = () => modal?.remove();
+
+// DORT KUPA: Blackjack tipi kompakt bahis paneli
+if (!document.getElementById('erisCupsBJStakeStyle')) {
+  const style = document.createElement('style');
+  style.id = 'erisCupsBJStakeStyle';
+  style.textContent = `
+    #erisGamesModal .eg-cups-stake-bar{display:none}
+    #erisGamesModal.eg-cups-mode .eg-form>label{display:none!important}
+    #erisGamesModal.eg-cups-mode .eg-form{
+      display:grid!important;grid-template-columns:1fr!important;
+      padding:7px!important;gap:5px!important
+    }
+    #erisGamesModal.eg-cups-mode .eg-cups-stake-bar{
+      display:grid;grid-template-columns:48px 1fr 48px;
+      align-items:center;gap:7px
+    }
+    #erisGamesModal.eg-cups-mode .eg-cups-stake-bar button{
+      min-height:43px;border-radius:10px;border:1px solid #d8ba77;
+      background:#352445;color:#ffe7a9;font-size:26px;font-weight:900
+    }
+    #erisGamesModal.eg-cups-mode .eg-cups-stake-display{
+      text-align:center;color:#ffe7a9
+    }
+    #erisGamesModal.eg-cups-mode .eg-cups-stake-display small{
+      display:block;font-size:9px;letter-spacing:1px
+    }
+    #erisGamesModal.eg-cups-mode .eg-cups-stake-display strong{
+      display:block;font-size:20px;font-weight:900
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets{
+      display:grid!important;
+      grid-template-columns:repeat(8,minmax(0,1fr))!important;
+      gap:3px!important
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets button{
+      padding:8px 0!important;font-size:9px!important;min-width:0!important
+    }
+    #erisGamesModal.eg-cups-mode [data-play]{min-height:44px!important}
+  `;
+  document.head.appendChild(style);
+}
+if (true) {
+  const form = modal.querySelector('.eg-form');
+  const presets = modal.querySelector('.eg-stake-presets');
+  const stake = modal.querySelector('[data-stake]');
+  const bar = document.createElement('div');
+  bar.className = 'eg-cups-stake-bar';
+  bar.innerHTML = `
+    <button type="button" data-cups-minus>−</button>
+    <div class="eg-cups-stake-display">
+      <small>SEÇİLEN BAHİS</small>
+      <strong data-cups-amount></strong>
+    </div>
+    <button type="button" data-cups-plus>+</button>`;
+  form.insertBefore(bar, presets);
+  const refresh = () => {
+    const value = Math.max(0, Math.min(10000,
+      Math.trunc(Number(stake.value) || 0)));
+    bar.querySelector('[data-cups-amount]').textContent =
+      value.toLocaleString('tr-TR') + ' Lidya';
+  };
+  for (const [selector, delta] of [
+    ['[data-cups-minus]', -10], ['[data-cups-plus]', 10]
+  ]) {
+    bar.querySelector(selector).onclick = () => {
+      if (modal.querySelector('[data-play]')?.disabled) return;
+      stake.value = String(Math.max(0, Math.min(10000,
+        (Number(stake.value) || 0) + delta)));
+      stake.dispatchEvent(new Event('input', {bubbles:true}));
+      refresh();
+    };
+  }
+  stake.addEventListener('input', refresh);
+  stake.addEventListener('change', refresh);
+  presets.addEventListener('click', () => queueMicrotask(refresh));
+  refresh();
+}
+
+const close = () => modal?.remove();
         modal.querySelector('[data-close]').onclick = close;
         modal.onclick = e => { if (e.target === modal) close(); };
         modal.onkeydown = e => { if (e.key === 'Escape') close(); };
@@ -495,6 +573,7 @@
             }
         modal.classList.toggle('eg-crash-mode', key === 'crash');
         modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
+        modal.classList.toggle('eg-cups-mode', key === 'cups');
 
 
         // ERIS_CUPS_BET_CONTROLS_V2
