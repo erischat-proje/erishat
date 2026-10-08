@@ -1168,6 +1168,181 @@ const close = () => modal?.remove();
             'input', syncHorseStake
         );
 
+
+        // ERIS_HORSE_ONE_SCREEN_V1
+        if (!document.getElementById('erisHorseOneScreenStyle')) {
+            const st = document.createElement('style');
+            st.id = 'erisHorseOneScreenStyle';
+            st.textContent = `
+              #erisGamesModal.eg-horse-mode{
+                padding:0!important;
+                overflow:hidden!important;
+                place-items:center!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-panel{
+                width:100%!important;
+                max-width:580px!important;
+                height:100dvh!important;
+                max-height:100dvh!important;
+                box-sizing:border-box!important;
+                padding:5px 9px!important;
+                border-radius:0!important;
+                overflow:hidden!important;
+                display:flex!important;
+                flex-direction:column!important;
+                gap:3px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-head{
+                flex:0 0 auto!important;
+                margin:0!important;
+                min-height:32px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-head h2{
+                font-size:16px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-close]{
+                width:32px!important;
+                height:32px!important;
+                border-radius:9px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-intro,
+              #erisGamesModal.eg-horse-mode .eg-keys,
+              #erisGamesModal.eg-horse-mode [data-name],
+              #erisGamesModal.eg-horse-mode [data-controls]{
+                display:none!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-wallet{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:5px 8px!important;
+                font-size:12px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-clock]{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:5px!important;
+                font-size:12px!important;
+                border-radius:9px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-stage{
+                flex:1 1 auto!important;
+                min-height:0!important;
+                margin:0!important;
+                padding:3px!important;
+                overflow:hidden!important;
+                display:flex!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-arena{
+                flex:1!important;
+                min-height:0!important;
+                height:100%!important;
+                padding:5px!important;
+                display:flex!important;
+                flex-direction:column!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-arena>div:first-child{
+                flex:0 0 auto!important;
+                padding:2px 4px 5px!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-track{
+                flex:1 1 auto!important;
+                min-height:0!important;
+                display:grid!important;
+                grid-template-rows:repeat(7,minmax(0,1fr))!important;
+                gap:3px!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-lane{
+                height:auto!important;
+                min-height:0!important;
+                border-radius:7px!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-runner{
+                font-size:clamp(17px,3vh,25px)!important;
+              }
+              #erisGamesModal.eg-horse-mode #raceStatusText{
+                flex:0 0 auto!important;
+                padding:5px 2px 2px!important;
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-bets]{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:2px!important;
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-form{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:5px!important;
+                gap:4px!important;
+                border-radius:12px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-picks{
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:3px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                min-height:0!important;
+                padding:4px 1px!important;
+                gap:1px!important;
+                border-radius:8px!important;
+              }
+              #erisGamesModal.eg-horse-mode .hp-icon{
+                font-size:17px!important;
+                line-height:1!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick b{
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick small,
+              #erisGamesModal.eg-horse-mode .hp-total{
+                font-size:8px!important;
+                line-height:1.1!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-stake-presets{
+                grid-template-columns:repeat(8,minmax(0,1fr))!important;
+                gap:2px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value]{
+                min-width:0!important;
+                padding:7px 0!important;
+                font-size:clamp(7px,1.8vw,10px)!important;
+                border-radius:7px!important;
+                letter-spacing:-.5px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-play]{
+                min-height:34px!important;
+                padding:5px!important;
+                font-size:13px!important;
+                border-radius:9px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-result{
+                flex:0 0 auto!important;
+                min-height:0!important;
+                margin:0!important;
+                padding:4px!important;
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-wheel-feed],
+              #erisGamesModal.eg-horse-mode [data-wheel-clock],
+              #erisGamesModal.eg-horse-mode [data-wheel-mine]{
+                display:none!important;
+              }
+              @media(max-height:700px){
+                #erisGamesModal.eg-horse-mode .horse-arena>div:first-child{
+                  display:none!important;
+                }
+                #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                  padding:2px 1px!important;
+                }
+                #erisGamesModal.eg-horse-mode .hp-icon{
+                  font-size:15px!important;
+                }
+              }
+            `;
+            document.head.appendChild(st);
+        }
+
         // ERIS_HORSE_PREMIUM_STYLE_V1
         if (!document.getElementById('erisHorsePremiumStyle')) {
             const style = document.createElement('style');
