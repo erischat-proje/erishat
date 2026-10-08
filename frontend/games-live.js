@@ -223,7 +223,13 @@
             </div>
         `;
         document.body.append(modal);
-        const close = () => modal?.remove();
+        if (!document.getElementById('erisCrashProStyle')) {
+        const st = document.createElement('style');
+        st.id = 'erisCrashProStyle';
+        st.textContent = '\n/* ERIS_CRASH_PRO_UI_V1 */\n#erisGamesModal.eg-crash-mode .eg-form>label:first-child{display:none}\n#erisGamesModal.eg-crash-mode .eg-form{display:grid;grid-template-columns:1fr;gap:12px}\n#erisGamesModal.eg-crash-mode .eg-form>label{font-size:12px;font-weight:800;color:#d8c8f4}\n#erisGamesModal.eg-crash-mode [data-stake]{width:100%;box-sizing:border-box}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0;padding:12px 3px;border-radius:12px}\n#erisGamesModal.eg-crash-mode [data-play]{width:100%;min-height:56px;font-size:17px;border-radius:15px}\n#erisGamesModal.eg-crash-mode [data-controls] button{width:100%;min-height:55px;font-size:17px;border-radius:15px;background:linear-gradient(110deg,#119b71,#25ce91)}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:260px}\n';
+        document.head.appendChild(st);
+    }
+    const close = () => modal?.remove();
         modal.querySelector('[data-close]').onclick = close;
         modal.onclick = e => { if (e.target === modal) close(); };
         modal.onkeydown = e => { if (e.key === 'Escape') close(); };
@@ -252,6 +258,7 @@
 
         const loadGameModule = key => {
             game = key;
+        modal.classList.toggle('eg-crash-mode', key === 'crash');
             modal.querySelector('[data-name]').textContent = labels[key];
             tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.game === key));
 
@@ -458,6 +465,41 @@
             const stage = modal.querySelector('.eg-stage');
             const mod = window.ErisGameCrash;
             mod?.updateLive?.(stage, state);
+            /* ERIS_CRASH_HISTORY_V1 */
+            let history = modal.querySelector('[data-crash-history]');
+            if (!history) {
+                history = document.createElement('div');
+                history.dataset.crashHistory = '';
+                history.style.cssText = 'display:flex;gap:7px;overflow-x:auto;padding:12px 2px;scrollbar-width:none';
+                stage.insertAdjacentElement('afterend', history);
+            }
+
+            const rounds = Array.isArray(state.recent_rounds)
+                ? state.recent_rounds.slice(0, 12) : [];
+
+            history.replaceChildren();
+
+            for (const round of rounds) {
+                const value = Number(round.multiplier);
+                if (!Number.isFinite(value) || value < 1) continue;
+
+                const chip = document.createElement('span');
+                chip.textContent = value.toFixed(2) + 'x';
+                chip.style.cssText =
+                    'flex:0 0 auto;padding:8px 11px;border-radius:11px;font-size:12px;font-weight:900;' +
+                    'border:1px solid #ffffff20;background:#ffffff0b;color:' +
+                    (value >= 10 ? '#facc15' : value >= 2 ? '#45f6ad' : '#fb7185');
+
+                history.appendChild(chip);
+            }
+
+            if (!history.childElementCount) {
+                const empty = document.createElement('span');
+                empty.textContent = 'Henüz tamamlanmış tur bulunmuyor';
+                empty.style.cssText = 'color:#94a3b8;font-size:11px;padding:7px';
+                history.appendChild(empty);
+            }
+
 
             const play = modal.querySelector('[data-play]');
             const result = modal.querySelector('.eg-result');
