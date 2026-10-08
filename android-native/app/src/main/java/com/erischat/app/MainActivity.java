@@ -24,8 +24,8 @@ import com.google.android.gms.common.api.ApiException;
 
 public class MainActivity extends Activity {
 
-    private static final String ERISCHAT_URL =
-            "https://erischat-web-v2-production.up.railway.app/";
+    private static final String ERISCHAT_HOST = "erischat-production-850f.up.railway.app";
+    private static final String ERISCHAT_URL = "https://" + ERISCHAT_HOST + "/";
 
     /*
      * ID token audience.
@@ -126,7 +126,7 @@ public class MainActivity extends Activity {
         return uri != null && "https".equals(uri.getScheme())
                 && (uri.getPort() == -1 || uri.getPort() == 443)
                 && uri.getUserInfo() == null
-                && "erischat-web-v2-production.up.railway.app".equals(uri.getHost());
+                && ERISCHAT_HOST.equals(uri.getHost());
     }
 
     private boolean trustedPage() {
