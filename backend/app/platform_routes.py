@@ -1599,7 +1599,7 @@ def register_platform_auth(current_user_dependency):
         initial_cup = secrets.randbelow(4)
         swaps = []
         coin_position = initial_cup
-        for _ in range(20):
+        for _ in range(35):
             a = secrets.randbelow(4)
             b = secrets.randbelow(3)
             if b >= a:
