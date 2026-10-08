@@ -721,8 +721,7 @@ def register_platform_auth(current_user_dependency):
         if game_type == "vault":
             return stake * {"common":0,"rare":2,"epic":4,"legendary":10,"mythic":20}.get(result,0)
         if game_type == "crash":
-            # Fixed auto cash-out at 2x; the multiplier is generated server-side.
-            return stake * 2 if float(data.get("multiplier",0)) >= 2 else 0
+            return 0  # Legacy auto-cashout disabled; use live manual cashout.
         if game_type == "roulette":
             number = int(result)
             color = data.get("winning_color")
@@ -883,17 +882,14 @@ def register_platform_auth(current_user_dependency):
     }
 
     def _crash_live_multiplier():
-        """Tek ortak tur için server-side patlama çarpanı."""
-        roll = secrets.randbelow(10**9) / 10**9
-        if roll < 0.62:
-            return round(random.uniform(1.00, 1.49), 2)
-        if roll < 0.85:
-            return round(random.uniform(1.50, 1.99), 2)
-        if roll < 0.96:
-            return round(random.uniform(2.00, 4.99), 2)
-        if roll < 0.99:
-            return round(random.uniform(5.00, 9.99), 2)
-        return round(random.uniform(10.00, 25.00), 2)
+        """Kriptografik rastgele Crash sonucu; teorik RTP yaklaşık %97."""
+        roll = secrets.randbelow(10**12) / 10**12
+        if roll < 0.03:
+            return 1.0
+
+        # P(crash >= x) ~= 0.97 / x, x >= 1.
+        value = 0.97 / (1.0 - roll)
+        return max(1.0, min(1000.0, int(value * 100) / 100))
 
     def _crash_live_now():
         return datetime.now(timezone.utc)
@@ -1147,20 +1143,39 @@ def register_platform_auth(current_user_dependency):
                 GameRound.result_key.is_not(None),
             )
             .order_by(GameRound.started_at.desc())
-            .limit(12)
+            .limit(100)
         ).all()
 
-        recent_rounds = [
-            {
-                "id": previous.id,
-                "multiplier": float(previous.result_key),
-            }
-            for previous in finished_rounds
-        ]
+        values = []
+        recent_rounds = []
+        for previous in finished_rounds:
+            try:
+                value = float(previous.result_key)
+                if not (1.0 <= value <= 1000000.0):
+                    continue
+            except (ValueError, TypeError):
+                continue
+            values.append(value)
+            if len(recent_rounds) < 12:
+                recent_rounds.append({
+                    "id": previous.id,
+                    "multiplier": value,
+                })
+
+        count = len(values)
+        crash_stats = {
+            "sample_size": count,
+            "above_2x": sum(x >= 2 for x in values),
+            "above_5x": sum(x >= 5 for x in values),
+            "below_2x": sum(x < 2 for x in values),
+            "average": round(sum(values) / count, 2) if count else None,
+            "highest": round(max(values), 2) if count else None,
+        }
 
         payload = {
             "round_id": row.id,
             "recent_rounds": recent_rounds,
+            "crash_stats": crash_stats,
             "status": row.status,
             "betting_remaining": int(betting_remaining + 0.999),
             "betting_open": row.status == "open" and betting_remaining > 0,
@@ -1300,6 +1315,71 @@ def register_platform_auth(current_user_dependency):
         db.commit()
         return result
 
+    # ERIS_CRASH_CASHOUT_ALL_V1
+    @router.post("/games/crash/live/cashout-all")
+    def crash_live_cashout_all(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = _get_crash_live_round(db)
+        if row.status != "running":
+            raise HTTPException(status_code=409, detail="Çekim süresi kapalı")
+
+        state = json.loads(row.state_data or "{}")
+        crash_at = float(state.get("crash_at") or 1.0)
+        flight_seconds = max(0.001, float(state.get("flight_seconds") or 1.0))
+
+        bets = list(db.scalars(
+            select(GameBet)
+            .where(
+                GameBet.round_id == row.id,
+                GameBet.user_id == user.id,
+                GameBet.payout == 0,
+            )
+            .order_by(GameBet.id)
+            .with_for_update()
+        ))
+
+        if not bets:
+            raise HTTPException(status_code=409, detail="Çekilecek aktif bahis bulunamadı")
+
+        locked_user = db.scalar(
+            select(User).where(User.id == user.id).with_for_update()
+        )
+        if not locked_user:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+        elapsed = max(0.0, (_crash_live_now() - row.ends_at).total_seconds())
+        if elapsed >= flight_seconds:
+            raise HTTPException(status_code=409, detail="Crash! Çekim için geç kaldın")
+
+        progress = min(1.0, elapsed / flight_seconds)
+        multiplier = max(
+            1.0,
+            round(1.0 + (crash_at - 1.0) * progress ** 2, 2),
+        )
+
+        total_payout = 0
+        for bet in bets:
+            payout = int(int(bet.amount) * multiplier)
+            bet.payout = payout
+            bet.choice = f"x{multiplier:.2f}"
+            total_payout += payout
+
+        locked_user.lidya += total_payout
+        db.flush()
+
+        result = {
+            "ok": True,
+            "round_id": row.id,
+            "bet_count": len(bets),
+            "multiplier": multiplier,
+            "payout": total_payout,
+            "balance": locked_user.lidya,
+        }
+        db.commit()
+        return result
+
     @router.get("/games/wheel/live")
     def wheel_live_state(
         db: Session = Depends(get_db),
@@ -1388,6 +1468,8 @@ def register_platform_auth(current_user_dependency):
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
         if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
+        if game_type == "crash":
+            raise HTTPException(status_code=410, detail="Eski Crash kapatıldı. Canlı Crash sistemini kullanın.")
         payload = payload or {}
         room_id = str(payload.get("room_id") or "").strip() or None
         if room_id:
