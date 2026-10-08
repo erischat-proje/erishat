@@ -1,6 +1,13 @@
 package com.erischat.app;
 
 import android.app.Activity;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.graphics.Bitmap;
 import android.content.Intent;
 import android.os.Bundle;
 import android.webkit.CookieManager;
@@ -18,7 +25,7 @@ import com.google.android.gms.common.api.ApiException;
 public class MainActivity extends Activity {
 
     private static final String ERISCHAT_URL =
-            "https://erischat-production-850f.up.railway.app/";
+            "https://erischat-web-v2-production.up.railway.app/";
 
     /*
      * ID token audience.
@@ -28,6 +35,11 @@ public class MainActivity extends Activity {
             "599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com";
 
     private static final int GOOGLE_SIGN_IN = 9001;
+    private static final int MICROPHONE_PERMISSION = 9002;
+    private PermissionRequest pendingMicrophone;
+    private boolean microphoneDialogOpen;
+    private int pageGeneration;
+    private int permissionPageGeneration;
 
     private WebView webView;
     private GoogleSignInClient googleClient;
@@ -67,7 +79,30 @@ public class MainActivity extends Activity {
                 "ErisChatAndroid"
         );
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override public void onPermissionRequest(PermissionRequest request) {
+                runOnUiThread(() -> handleMicrophoneRequest(request));
+            }
+            @Override public void onPermissionRequestCanceled(PermissionRequest request) {
+                runOnUiThread(() -> {
+                    if (pendingMicrophone == request) pendingMicrophone = null;
+                });
+            }
+        });
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
+                pageGeneration++;
+                denyPendingMicrophone();
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (trustedOrigin(uri)) return false;
+                if (request.isForMainFrame() && ("https".equals(uri.getScheme()) || "http".equals(uri.getScheme()))) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (RuntimeException ignored) {}
+                }
+                return true;
+            }
+        });
 
         webView.loadUrl(ERISCHAT_URL);
     }
@@ -76,9 +111,75 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void googleSignIn() {
             runOnUiThread(() -> {
-                Intent intent = googleClient.getSignInIntent();
-                startActivityForResult(intent, GOOGLE_SIGN_IN);
+                if (!trustedPage()) return;
+                // Clear Google's cached choice so another account can be selected.
+                googleClient.signOut().addOnCompleteListener(task -> {
+                    if (isFinishing() || isDestroyed() || !trustedPage()) return;
+                    Intent intent = googleClient.getSignInIntent();
+                    startActivityForResult(intent, GOOGLE_SIGN_IN);
+                });
             });
+        }
+    }
+
+    private static boolean trustedOrigin(Uri uri) {
+        return uri != null && "https".equals(uri.getScheme())
+                && (uri.getPort() == -1 || uri.getPort() == 443)
+                && uri.getUserInfo() == null
+                && "erischat-web-v2-production.up.railway.app".equals(uri.getHost());
+    }
+
+    private boolean trustedPage() {
+        return webView != null && webView.getUrl() != null
+                && trustedOrigin(Uri.parse(webView.getUrl()));
+    }
+
+    private void denyPendingMicrophone() {
+        PermissionRequest request = pendingMicrophone;
+        pendingMicrophone = null;
+        if (request != null) request.deny();
+    }
+
+    private void handleMicrophoneRequest(PermissionRequest request) {
+        if (isFinishing() || isDestroyed() || !trustedPage()
+                || !trustedOrigin(request.getOrigin())) {
+            request.deny(); return;
+        }
+        boolean audio = false;
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) audio = true;
+        }
+        if (!audio || pendingMicrophone != null || microphoneDialogOpen) {
+            request.deny(); return;
+        }
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+            return;
+        }
+        pendingMicrophone = request;
+        permissionPageGeneration = pageGeneration;
+        microphoneDialogOpen = true;
+        try {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MICROPHONE_PERMISSION);
+        } catch (RuntimeException error) {
+            microphoneDialogOpen = false;
+            denyPendingMicrophone();
+        }
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != MICROPHONE_PERMISSION) return;
+        microphoneDialogOpen = false;
+        PermissionRequest request = pendingMicrophone;
+        pendingMicrophone = null;
+        if (request == null) return;
+        boolean allowed = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        if (allowed && permissionPageGeneration == pageGeneration && trustedPage()
+                && trustedOrigin(request.getOrigin()) && !isFinishing() && !isDestroyed()) {
+            request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+        } else {
+            request.deny();
         }
     }
 
@@ -90,7 +191,11 @@ public class MainActivity extends Activity {
     ) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode != GOOGLE_SIGN_IN) return;
+        if (requestCode != GOOGLE_SIGN_IN || !trustedPage()) return;
+        if (resultCode != RESULT_OK || data == null) {
+            sendGoogleError("Google giriş işlemi iptal edildi.");
+            return;
+        }
 
         try {
             GoogleSignInAccount account =
@@ -138,6 +243,16 @@ public class MainActivity extends Activity {
                      .replace("\n", "\\n")
                      .replace("\r", "\\r") +
                 "\"";
+    }
+
+    @Override protected void onDestroy() {
+        denyPendingMicrophone();
+        if (webView != null) {
+            webView.removeJavascriptInterface("ErisChatAndroid");
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 
     @Override

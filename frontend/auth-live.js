@@ -5,6 +5,75 @@
   const setToken = token => { if (token) localStorage.setItem(TOKEN_KEY, token); };
   const clearToken = () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem('erischat.accessToken.v1'); localStorage.removeItem('token'); };
 
+  // Remember identity labels only. A logged-out session token is never retained.
+  let authGeneration=0;
+  const ACCOUNTS_KEY = 'erischat.rememberedAccounts.v1';
+  const normalizeAccount = row => ({
+    id:String(row?.id || '').slice(0,128),
+    nickname:String(row?.nickname || 'Kullanıcı').slice(0,64),
+    public_id:String(row?.public_id || '').slice(0,32),
+    email:String(row?.email || '').trim().toLowerCase().slice(0,320),
+    provider:row?.provider === 'google' ? 'google' : 'email',
+    lastUsed:Number(row?.lastUsed) || 0
+  });
+  function rememberedAccounts() {
+    try {
+      const rows=JSON.parse(localStorage.getItem(ACCOUNTS_KEY)||'[]');
+      return Array.isArray(rows) ? rows.map(normalizeAccount).filter(row=>row.id).slice(0,20) : [];
+    } catch (_) { return []; }
+  }
+  function writeAccounts(rows) {
+    try { localStorage.setItem(ACCOUNTS_KEY,JSON.stringify(rows)); }
+    catch (_) { window.toast?.('Hesap listesi bu cihazda kaydedilemedi.'); }
+  }
+  function rememberAccount(user, hint={}) {
+    if(!user?.id)return;
+    const rows=rememberedAccounts(), previous=rows.find(row=>row.id===String(user.id))||{};
+    const row=normalizeAccount({...previous,...user,
+      email:hint.email || previous.email || '',
+      provider:hint.provider || previous.provider || 'email',lastUsed:Date.now()});
+    writeAccounts([row,...rows.filter(item=>item.id!==row.id)].slice(0,20));
+  }
+  function forgetAccount(id) {
+    writeAccounts(rememberedAccounts().filter(row=>row.id!==String(id)));
+    renderRememberedAccounts(document.getElementById('erisGoogleGate'));
+  }
+  function credentialEmail(credential) {
+    try {
+      const part=String(credential).split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+      return JSON.parse(atob(part.padEnd(Math.ceil(part.length/4)*4,'='))).email || '';
+    } catch (_) { return ''; }
+  }
+  function renderRememberedAccounts(gate) {
+    if(!gate)return;
+    const host=gate.querySelector('[data-remembered-accounts]');
+    if(!host)return;
+    host.replaceChildren();
+    const rows=rememberedAccounts();host.hidden=!rows.length;
+    if(!rows.length)return;
+    const title=document.createElement('h2');title.textContent='Bu cihazdaki hesaplar';host.append(title);
+    rows.forEach(account=>{
+      const row=document.createElement('div');row.className='eris-account-row';
+      const select=document.createElement('button');select.type='button';select.className='eris-account-select';
+      const name=document.createElement('b');name.textContent=account.nickname;
+      const detail=document.createElement('small');detail.textContent=account.email || ('ID: '+(account.public_id||account.id));
+      select.append(name,detail);
+      select.onclick=()=>{
+        gate.querySelector('#authLoginMode').click();
+        gate.querySelector('#authEmailInput').value=account.email;
+        gate.querySelector('#erisGoogleStatus').textContent=account.nickname+' hesabına giriş yapmak için doğrulama yap.';
+        if(account.provider==='google')googleRegister();
+        else gate.querySelector('#authEmailInput').focus();
+      };
+      const remove=document.createElement('button');remove.type='button';remove.className='eris-account-remove';
+      remove.textContent='×';remove.setAttribute('aria-label',account.nickname+' hesabını bu cihazdaki listeden kaldır');
+      remove.onclick=()=>forgetAccount(account.id);row.append(select,remove);host.append(row);
+    });
+    const another=document.createElement('button');another.type='button';another.className='authBtn';another.textContent='Başka hesap ile giriş yap';
+    another.onclick=()=>{gate.querySelector('#authLoginMode').click();gate.querySelector('#authEmailInput').value='';gate.querySelector('#authOtpInput').value='';gate.querySelector('#authEmailInput').focus()};
+    host.append(another);
+  }
+
   async function request(path, options = {}) {
     const headers = new Headers(options.headers || {});
     if (options.body !== undefined && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
@@ -33,10 +102,18 @@
   style.id = 'erisGoogleGateStyle';
   style.textContent = `
     #erisGoogleGate{position:fixed;inset:0;z-index:100000;background:rgba(4,3,8,.97);display:grid;place-items:center;padding:20px;box-sizing:border-box;backdrop-filter:blur(12px)}
-    .erisGoogleCard{width:min(430px,100%);box-sizing:border-box;background:linear-gradient(155deg,#15111d,#0d0b12);border:1px solid #ffffff1c;border-radius:24px;padding:24px;box-shadow:0 25px 90px #000b;text-align:left;color:#fff}
+    .erisGoogleCard{max-height:90dvh;overflow:auto;width:min(430px,100%);box-sizing:border-box;background:linear-gradient(155deg,#15111d,#0d0b12);border:1px solid #ffffff1c;border-radius:24px;padding:24px;box-shadow:0 25px 90px #000b;text-align:left;color:#fff}
     .erisGoogleCard h1{margin:0 0 7px;font-size:26px;letter-spacing:-.5px}
     .erisGoogleCard p{color:#aaa1b1;font-size:13px;line-height:1.55;margin:0 0 20px}
     .authMethods{display:grid;gap:12px}
+    [data-remembered-accounts]{margin:0 0 18px}
+    [data-remembered-accounts][hidden]{display:none}
+    [data-remembered-accounts] h2{font-size:15px;margin:0 0 9px}
+    .eris-account-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+    .eris-account-select{flex:1;min-width:0;text-align:left;border:1px solid #ffffff20;border-radius:13px;background:#21192e;color:#fff;padding:12px;cursor:pointer}
+    .eris-account-select b,.eris-account-select small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .eris-account-select small{margin-top:5px;color:#b5aabd;font-size:11px}
+    .eris-account-remove{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:12px;background:#ffffff0a;color:#c7bbd4;font-size:24px;cursor:pointer}
     .authBtn{width:100%;min-height:48px;border:1px solid #ffffff20;border-radius:13px;color:#fff;background:#17131f;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s,border-color .15s}
     .authBtn:hover{background:#211b2b;border-color:#ffffff35}.authBtn:disabled{opacity:.58;cursor:wait}
     .authGoogle{background:#fff;color:#111;border-color:#fff}.authGoogle:hover{background:#f0edf3;color:#111}
@@ -65,6 +142,7 @@
       <h1>Hoş geldin</h1>
       <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
 
+      <section data-remembered-accounts hidden aria-label="Hatırlanan hesaplar"></section>
       <div class="authMethods">
         <div id="erisGoogleButton"></div>
         <button type="button" id="authGoogleBtn" class="authBtn authGoogle" hidden>Google ile devam et</button>
@@ -145,6 +223,8 @@
   gate.querySelector('#authEmailInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();gate.querySelector('#authEmailBtn').click()}});
   gate.querySelector('#authOtpInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();gate.querySelector('#authOtpBtn').click()}});
 
+  renderRememberedAccounts(gate);
+  if(rememberedAccounts().length)gate.querySelector('#authGoogleBtn').hidden=false;
   return gate;
 }
 
@@ -181,7 +261,14 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
         box.replaceChildren();
         googleBtn.hidden = true;
 
+        const generation=authGeneration;
+        const cleanupNative=()=>{
+          window.removeEventListener('erischat:native-google-token',tokenHandler);
+          window.removeEventListener('erischat:native-google-error',errorHandler);
+        };
         const tokenHandler = async event => {
+          cleanupNative();
+          if(generation!==authGeneration)return;
           const credential = event?.detail?.credential;
           if (!credential) {
             status.textContent = 'Google doğrulama bilgisi alınamadı.';
@@ -196,8 +283,10 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
               body: JSON.stringify({credential})
             });
 
+            if(generation!==authGeneration)return;
             setToken(session.access_token);
             window.ErisAuth.user = session.user;
+            rememberAccount(session.user,{provider:'google',email:credentialEmail(credential)});
             emit('erischat:auth', {
               state:'ready',
               user:session.user,
@@ -215,6 +304,8 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
         };
 
         const errorHandler = event => {
+          cleanupNative();
+          if(generation!==authGeneration)return;
           status.textContent =
             event?.detail?.message || 'Google giriş penceresi açılamadı.';
           googleBtn.hidden = false;
@@ -255,11 +346,14 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
           client_id: cfg.client_id,
           callback: async response => {
             if(!response?.credential){status.textContent='Google doğrulama yanıtı alınamadı.';return;}
+            const generation=authGeneration;
             status.textContent = 'Google hesabı doğrulanıyor…';
             try {
               const session = await request('/auth/google', {method:'POST',body:JSON.stringify({credential:response.credential})});
+              if(generation!==authGeneration)return;
               setToken(session.access_token);
               window.ErisAuth.user = session.user;
+              rememberAccount(session.user,{provider:'google',email:credentialEmail(response.credential)});
               emit('erischat:auth', {state:'ready',user:session.user,real:true});
               continueAfterAuth(session.user);
               setTimeout(closeGate,250);
@@ -299,6 +393,7 @@ function closeGate() { document.getElementById('erisGoogleGate')?.remove(); docu
 
 
 async function emailOtpLogin(email, code = null, purpose = 'login') {
+  const generation=authGeneration;
   email = String(email || '').trim().toLowerCase();
   if (!email) throw new Error('Email adresini gir.');
 
@@ -323,8 +418,10 @@ async function emailOtpLogin(email, code = null, purpose = 'login') {
     })
   });
 
+  if(generation!==authGeneration)throw new Error('Giriş işlemi iptal edildi.');
   setToken(session.access_token);
   window.ErisAuth.user = session.user;
+  rememberAccount(session.user,{provider:'email',email});
   emit('erischat:auth', {state:'ready', user:session.user, real:true});
   continueAfterAuth(session.user);
   connectGeneralWs();
@@ -336,16 +433,21 @@ async function registerAnonymous() {
     const session = await request('/users', { method:'POST', body:JSON.stringify({ nickname:`Anonim_${suffix}`, gender:'male', avatar:'👤' }) });
     setToken(session.access_token);
     window.ErisAuth.user = session.user;
+    rememberAccount(session.user);
     return session.user;
   }
 
   async function ensureSession() {
+    const generation=authGeneration;
     if (getToken()) {
       try {
         const user = await request('/me');
+        if(generation!==authGeneration)return null;
         window.ErisAuth.user = user;
+        rememberAccount(user);
         return user;
       } catch (error) {
+        if(generation!==authGeneration)return null;
         if (error?.status !== 401) throw error;
         clearToken();
       }
@@ -365,22 +467,49 @@ async function registerAnonymous() {
     socket.onerror = () => emit('erischat:ws',{state:'error'});
   }
 
+  let logoutPending=false;
   async function logout() {
-    const token=getToken();
-    try { if(token) await request('/logout',{method:'POST'}); } catch (_) {}
-    clearToken(); if(socket){try{socket.close()}catch(_){}} socket=null;
+    if(logoutPending)return;
+    logoutPending=true;
+    authGeneration++;
+    const token=getToken();rememberAccount(window.ErisAuth.user);
+    // Teardown begins while the old token is still available to room/call APIs.
+    const gate=addGate();
+    gate.querySelector('#erisGoogleStatus').textContent='Çıkış yapılıyor…';
+    gate.querySelectorAll('button,input').forEach(el=>el.disabled=true);
+    const jobs=[];
+    try { jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{})); } catch (_) {}
+    try { jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{})); } catch (_) {}
+    try { window.ErisRoomRTC?.leaveRoom?.(); } catch (_) {}
+    await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,1500))]);
+    clearToken();window.ErisAuth.user=null;
+    clearTimeout(retryTimer);retryTimer=null;
+    if(socket){socket.onclose=null;try{socket.close()}catch(_){}}socket=null;
+    if(window.__erisRoomSocket){try{window.__erisRoomSocket.close(1000)}catch(_){}window.__erisRoomSocket=null;}
+    window.ErisChatDMVaultToken=null;
+    sessionStorage.clear();
+    localStorage.removeItem('eris_last_room');
     emit('erischat:auth',{state:'logged_out'});
+    if(token){
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),4000);
+      jobs.push(request('/logout',{method:'POST',headers:{Authorization:'Bearer '+token},signal:controller.signal})
+        .catch(()=>{}).finally(()=>clearTimeout(timer)));
+    }
+    await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,4500))]);
     location.reload();
   }
 
-  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
+  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
   function continueAfterAuth(user) {
+    const generation=authGeneration;
     window.ErisAuth = window.ErisAuth || {};
     window.ErisAuth.user = user;
     let attempts = 0;
 
     const run = () => {
+      if(generation!==authGeneration || logoutPending)return;
       attempts++;
       const current = window.ErisAuth?.user || user;
       if (!current) return;
@@ -413,7 +542,7 @@ async function registerAnonymous() {
       } else {
         addGate();
         emit('erischat:auth',{state:'login_required'});
-        googleRegister().catch(error=>{
+        if(!rememberedAccounts().length)googleRegister().catch(error=>{
           const status=document.getElementById('erisGoogleStatus');
           if(status)status.textContent=error.message||'Google girişi hazırlanamadı.';
         });

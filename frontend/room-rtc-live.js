@@ -437,7 +437,7 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
-    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false}
+    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → ErisChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false}
   }
   function leaveRoom(){
     clearTimeout(configRetryTimer);configRetryTimer=null;
