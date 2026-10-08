@@ -132,9 +132,12 @@
         border-radius:14px!important;
         background:linear-gradient(140deg,#31243d,#171222)!important;
       }
-      #erisGamesModal.eg-vault-mode .ev-prize-picks,
-      #erisGamesModal.eg-vault-mode .eg-form>label:first-child{
+      #erisGamesModal.eg-vault-mode .eg-form>[data-choice-label]{
         display:none!important;
+      }
+      #erisGamesModal.eg-vault-mode .eg-form>.ev-prize-picks{
+        display:grid!important;
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
       }
       #erisGamesModal.eg-vault-mode .eg-form>label{
         width:100%!important;
