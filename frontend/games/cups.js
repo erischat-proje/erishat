@@ -169,7 +169,7 @@
         const plan = this.roundPlan;
         if (!plan || !Number.isInteger(plan.initial_cup) ||
             plan.initial_cup < 1 || plan.initial_cup > 4 ||
-            !Array.isArray(plan.swaps) || plan.swaps.length !== 20 ||
+            !Array.isArray(plan.swaps) || plan.swaps.length !== 35 ||
             !plan.swaps.every(pair => Array.isArray(pair) &&
               pair.length === 2 && pair[0] !== pair[1] &&
               pair.every(n => Number.isInteger(n) && n >= 0 && n < 4))) {
@@ -201,12 +201,12 @@
           const dx = second.getBoundingClientRect().left -
                      first.getBoundingClientRect().left;
 
-          first.style.transition = 'transform 250ms ease-in-out';
-          second.style.transition = 'transform 250ms ease-in-out';
+          first.style.transition = 'transform 220ms ease-in-out';
+          second.style.transition = 'transform 220ms ease-in-out';
           first.style.transform = `translateX(${dx}px)`;
           second.style.transform = `translateX(${-dx}px)`;
 
-          await wait(280);
+          await wait(245);
           if (!valid()) return;
 
           const next = [...current];
