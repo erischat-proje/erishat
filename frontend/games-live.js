@@ -1111,12 +1111,99 @@
         });
         queueMicrotask(bjLayout);
 
+
+        // ERIS_BJ_FINAL_FLOW_V2
+        let bjStep = 10;
+        let bjResetTimer = null;
+        const bjPlay = modal.querySelector('[data-play]');
+        if (bjPlay) bjPlay.textContent = 'ELE BAŞLA';
+
+        const bjFlowStyle = document.createElement('style');
+        bjFlowStyle.id = 'erisBjFinalFlowV2';
+        bjFlowStyle.textContent = `
+          #erisGamesModal.eg-blackjack-mode.bj-hand-active .eg-form {
+            display:none!important;
+          }
+          #erisGamesModal.eg-blackjack-mode:not(.bj-hand-active)
+          [data-controls] {
+            display:none!important;
+          }
+          #erisGamesModal.eg-blackjack-mode.bj-hand-active
+          [data-controls] {
+            display:grid!important;
+            grid-template-columns:1fr 1fr!important;
+          }
+          #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar button:disabled {
+            opacity:.4;
+          }
+          #erisGamesModal.eg-blackjack-mode .eg-stake-presets .bj-selected {
+            background:#876223!important;
+            border-color:#ffe09b!important;
+            color:#fff!important;
+            box-shadow:inset 0 0 0 1px #ffe09b!important;
+          }
+        `;
+        document.head.appendChild(bjFlowStyle);
+
+        const bjSetActive = active => {
+            if (!modal?.isConnected) return;
+            modal.classList.toggle('bj-hand-active',
+                game === 'blackjack' && active);
+            const play = modal.querySelector('[data-play]');
+            if (play && game === 'blackjack') {
+                play.textContent = 'ELE BAŞLA';
+                play.disabled = active || blackjackRestoreBusy ||
+                    blackjackRestoreFailed;
+            }
+        };
+
+        const bjResetTable = () => {
+            if (game !== 'blackjack' || !modal?.isConnected ||
+                activeBlackjackRoundId) return;
+            gameModules.blackjack()?.render?.(
+                modal.querySelector('.eg-stage'));
+            modal.querySelector('[data-controls]')?.replaceChildren();
+            bjSetActive(false);
+            updateBlackjackStakeUI();
+        };
+
+        modal.querySelectorAll('[data-stake-value]').forEach(b => {
+            b.addEventListener('click', () => {
+                if (game !== 'blackjack' || activeBlackjackRoundId) return;
+                bjStep = Number(b.dataset.stakeValue) || 10;
+                queueMicrotask(bjRefreshAmount);
+            });
+        });
+
+        for (const [selector, direction] of [
+            ['[data-bj-minus]', -1],
+            ['[data-bj-plus]', 1]
+        ]) {
+            const button = bjStakeBar.querySelector(selector);
+            if (!button) continue;
+            button.onclick = () => {
+                if (game !== 'blackjack' || activeBlackjackRoundId ||
+                    blackjackRestoreBusy || blackjackRestoreFailed) return;
+                const current = Number(bjStakeInput.value) || 0;
+                const amount = Math.max(0, Math.min(10000,
+                    current + direction * bjStep));
+                bjStakeInput.value = String(amount);
+                bjStakeInput.dispatchEvent(
+                    new Event('input', {bubbles:true}));
+                bjRefreshAmount();
+            };
+        }
+
         // ERIS_BJ_STAKE_LOCK_V1
         const updateBlackjackStakeUI = () => {
             const active = game === 'blackjack';
             const locked = active && !!activeBlackjackRoundId;
             const input = modal.querySelector('[data-stake]');
             if (input) input.disabled = locked;
+            if (typeof bjSetActive === 'function') {
+                bjSetActive(locked);
+            }
+            bjRefreshAmount();
 
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
                 b.disabled = locked;
@@ -1145,7 +1232,9 @@
 
         // ERIS_BJ_RESTORE_V1
         const bindBlackjackRound = roundId => {
+            if (bjResetTimer) clearTimeout(bjResetTimer);
             activeBlackjackRoundId = roundId;
+            bjSetActive(true);
             updateBlackjackStakeUI();
             const controls = modal.querySelector('[data-controls]');
             const stage = modal.querySelector('.eg-stage');
@@ -1172,7 +1261,19 @@
                                                             modal.querySelector('.eg-result').textContent =
                                                                 (names[next.result] || 'EL TAMAMLANDI') +
                                                                 (next.status === 'finished' ? ' • Ödül: ' + (next.payout || 0) + ' Lidya' : '');
-                                if (next.status === 'finished') { refreshBlackjackHistory(); controls.replaceChildren(); activeBlackjackRoundId = null; updateBlackjackStakeUI(); playButton.disabled = false; }
+                                if (next.status === 'finished') {
+                                    refreshBlackjackHistory();
+                                    controls.replaceChildren();
+                                    activeBlackjackRoundId = null;
+                                    updateBlackjackStakeUI();
+                                    // Sonucu kısa süre göster, ardından kapalı masaya dön.
+                                    bjResetTimer = setTimeout(() => {
+                                        if (game === 'blackjack' &&
+                                            !activeBlackjackRoundId) {
+                                            bjResetTable();
+                                        }
+                                    }, 1800);
+                                }
                                 else controls.querySelectorAll('button').forEach(x => x.disabled = false);
                                 refreshBalance();
                             } catch (e) {
@@ -1344,7 +1445,14 @@
                     ? 'İlk el dağıtıldı. Kartlarını ve krupiyenin açık kartını inceleyip hamleni seç.'
                     : 'Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
 
-                if (game === 'blackjack' && res.result !== 'pending') { refreshBlackjackHistory();
+                if (game === 'blackjack' && res.result !== 'pending') {
+                    bjSetActive(true);
+                    if (bjResetTimer) clearTimeout(bjResetTimer);
+                    bjResetTimer = setTimeout(() => {
+                        if (game === 'blackjack' &&
+                            !activeBlackjackRoundId) bjResetTable();
+                    }, 1800);
+                    refreshBlackjackHistory();
                     activeBlackjackRoundId = null;
                     updateBlackjackStakeUI();
                     const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE'};
