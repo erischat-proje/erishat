@@ -556,6 +556,9 @@ const close = () => modal?.remove();
         modal.classList.toggle('eg-crash-mode', key === 'crash');
         modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
         modal.classList.toggle('eg-cups-mode', key === 'cups');
+        // ERIS_VAULT_MODE_V1
+        modal.classList.toggle('eg-vault-mode', key === 'vault');
+        modal.classList.toggle('eg-horse-mode', key === 'horse_race');
 
 
         // ERIS_CUPS_BET_CONTROLS_V2
@@ -831,6 +834,14 @@ const close = () => modal?.remove();
                 key === 'crash' && b.dataset.stakeValue === crashStakeInput?.value);
         });
 
+            // ERIS_VAULT_CLEANUP_V1
+            if (key !== 'vault') {
+                modal.querySelector('[data-vault-clock]')?.remove();
+                modal.querySelector('[data-vault-bets]')?.remove();
+                modal.querySelector('[data-vault-picks]')?.remove();
+                vaultState = null;
+            }
+
             if (key !== 'horse_race') {
                 modal.querySelector('[data-horse-clock]')?.remove();
                 modal.querySelector('[data-horse-bets]')?.remove();
@@ -858,6 +869,19 @@ const close = () => modal?.remove();
                         }
                     });
                 }
+                // ERIS_VAULT_INITIAL_REFRESH_V1
+                if (key === 'vault') {
+                    vaultState = null;
+                    vaultLastResult = null;
+                    modal.querySelector('[data-vault-clock]')?.remove();
+                    modal.querySelector('[data-vault-bets]')?.remove();
+                    queueMicrotask(() => {
+                        if (game === 'vault' && modal?.isConnected) {
+                            refreshVaultLive().catch(console.warn);
+                        }
+                    });
+                }
+
                 if (key === 'crash') {
                     queueMicrotask(() => {
                         if (game === 'crash' && modal?.isConnected) {
@@ -911,7 +935,54 @@ const close = () => modal?.remove();
             }
 
 
-            // ERIS_HORSE_PREMIUM_SELECTOR_V1
+            // ERIS_VAULT_PREMIUM_SELECTOR_V1
+        modal.querySelector('[data-vault-picks]')?.remove();
+        if (key === 'vault') {
+            const prizes = [
+                ['rare', '💠', 'NADİR', '2×'],
+                ['epic', '💜', 'DESTANSI', '4×'],
+                ['legendary', '👑', 'EFSANEVİ', '10×'],
+                ['mythic', '🌟', 'MİTİK', '20×']
+            ];
+            const picks = document.createElement('div');
+            picks.dataset.vaultPicks = '';
+            picks.className = 'ev-prize-picks';
+            picks.style.cssText =
+                'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));' +
+                'gap:8px;margin-bottom:10px';
+
+            prizes.forEach(([id, icon, name, mult]) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.dataset.vaultPick = id;
+                b.style.cssText =
+                    'min-width:0;padding:11px 5px;border-radius:13px;' +
+                    'border:1px solid #a78b55;background:#201d2c;' +
+                    'color:#ffe3a3;font-weight:900;font-size:12px';
+                b.innerHTML =
+                    '<span style="font-size:21px">' + icon + '</span>' +
+                    '<div>' + name + '</div><small>' + mult + ' ÖDEME</small>';
+                b.onclick = () => {
+                    choice.value = id;
+                    picks.querySelectorAll('button').forEach(el => {
+                        const active = el === b;
+                        el.style.borderColor =
+                            active ? '#facc15' : '#a78b55';
+                        el.style.background =
+                            active ? '#4b3725' : '#201d2c';
+                        el.setAttribute(
+                            'aria-pressed', String(active)
+                        );
+                    });
+                };
+                picks.appendChild(b);
+            });
+
+            modal.querySelector('.eg-form').prepend(picks);
+            picks.querySelector('[data-vault-pick="rare"]')?.click();
+        }
+
+        // ERIS_HORSE_PREMIUM_SELECTOR_V1
             modal.classList.toggle('eg-horse-mode', key === 'horse_race');
             queueMicrotask(() => {
                 if (game === 'horse_race' && modal?.isConnected)
@@ -1420,6 +1491,136 @@ const close = () => modal?.remove();
         }
 
         // ERIS_HORSE_LIVE_FRONTEND_V1
+        // ERIS_VAULT_LIVE_STATE_V1
+        let vaultBusy = false;
+        let vaultState = null;
+        let vaultFetching = false;
+        let vaultLastResult = null;
+
+        const refreshVaultLive = async () => {
+            if (game !== 'vault' || !modal?.isConnected ||
+                vaultFetching) return;
+
+            vaultFetching = true;
+            try {
+                const x = await api('/games/vault/live');
+                if (game !== 'vault' || !modal?.isConnected) return;
+
+                // ERIS_VAULT_ROUND_RESET_V1
+                const previousRound = vaultState?.round_id;
+                const isNewRound = previousRound &&
+                    previousRound !== x.round_id;
+
+                vaultState = x;
+                const stage = modal.querySelector('.eg-stage');
+
+                if (isNewRound) {
+                    vaultLastResult = null;
+                    const result = modal.querySelector('.eg-result');
+                    if (result) {
+                        result.textContent =
+                            '🔒 Yeni kasa turu başladı. Ödülünü seç!';
+                    }
+                }
+
+                // ERIS_VAULT_PHASE_FRONTEND_V1
+                const phase = x.phase || (
+                    x.betting_open ? 'betting' :
+                    x.result ? 'result' : 'opening'
+                );
+                gameModules.vault()?.setPhase?.(
+                    stage, phase, x.result
+                );
+                const result = modal.querySelector('.eg-result');
+                const button = modal.querySelector('[data-play]');
+                const names = {
+                    common: 'Boş Kasa',
+                    rare: 'Nadir',
+                    epic: 'Destansı',
+                    legendary: 'Efsanevi',
+                    mythic: 'Mitik'
+                };
+
+                let clock = modal.querySelector('[data-vault-clock]');
+                if (!clock) {
+                    clock = document.createElement('div');
+                    clock.dataset.vaultClock = '';
+                    clock.style.cssText =
+                        'text-align:center;padding:10px;margin:7px 0;' +
+                        'border-radius:12px;background:#25202e;' +
+                        'color:#ffd978;font-weight:900;font-size:16px';
+                    stage.before(clock);
+                }
+
+                const seconds = Number(x.remaining_seconds || 0);
+                const phaseSeconds = Number(
+                    x.phase_remaining ?? seconds
+                );
+                clock.textContent = phase === 'betting'
+                    ? '⏳ BAHİS: ' + phaseSeconds + ' SANİYE'
+                    : phase === 'opening'
+                    ? '⚙️ KASA AÇILIYOR: ' + phaseSeconds + ' SANİYE'
+                    : '🔓 SONUÇ: ' + phaseSeconds + ' SANİYE';
+
+                if (button) {
+                    button.disabled = !x.betting_open || vaultBusy;
+                    button.textContent = x.betting_open
+                        ? '💰 KASAYA BAHİS YAP'
+                        : '🔒 BAHİSLER KAPANDI';
+                }
+
+                const mine = Object.entries(x.my_bets || {})
+                    .filter(([, amount]) => Number(amount) > 0)
+                    .map(([key, amount]) =>
+                        (names[key] || key) + ': ' +
+                        Number(amount).toLocaleString('tr-TR') + ' Lidya'
+                    );
+
+                let info = modal.querySelector('[data-vault-bets]');
+                if (!info) {
+                    info = document.createElement('div');
+                    info.dataset.vaultBets = '';
+                    info.style.cssText =
+                        'font-size:12px;color:#f5dca6;' +
+                        'padding:8px;text-align:center';
+                    stage.after(info);
+                }
+                info.textContent = mine.length
+                    ? 'Bahislerim: ' + mine.join(' • ')
+                    : 'Henüz bahis yapmadın.';
+
+                if (x.result && vaultLastResult !== x.round_id) {
+                    vaultLastResult = x.round_id;
+                    const won = Number(x.my_bets?.[x.result] || 0);
+                    const payout = won *
+                        Number(x.multipliers?.[x.result] || 0);
+                    if (result) {
+                        result.textContent =
+                            '🔓 KASA SONUCU: ' +
+                            (names[x.result] || x.result) +
+                            (payout > 0
+                                ? ' · 🎉 +' + payout + ' Lidya!'
+                                : ' · Yeni turu bekle.');
+                    }
+                    refreshBalance().catch(() => {});
+                }
+            } catch (e) {
+                if (game === 'vault') {
+                    const result = modal.querySelector('.eg-result');
+                    if (result) result.textContent =
+                        e.message || 'Kasa bağlantı hatası';
+                }
+            } finally {
+                vaultFetching = false;
+            }
+        };
+
+        setInterval(() => {
+            if (game === 'vault' && modal?.isConnected) {
+                refreshVaultLive().catch(() => {});
+            }
+        }, 1000);
+
         let horseRound = null;
         let horseAnimating = false;
         let horseBusy = false;
@@ -2516,6 +2717,53 @@ const close = () => modal?.remove();
                 } finally {
                     crashBusy = false;
                     refreshCrashLive().catch(() => {});
+                }
+                return;
+            }
+
+            // ERIS_VAULT_LIVE_BET_V1
+            if (game === 'vault') {
+                if (vaultBusy) return;
+                const amount = Number(
+                    modal.querySelector('[data-stake]').value
+                );
+                const choice = modal.querySelector('[data-choice]').value;
+                const allowed = ['rare', 'epic', 'legendary', 'mythic'];
+                const result = modal.querySelector('.eg-result');
+
+                if (!allowed.includes(choice)) {
+                    result.textContent = 'Bir kasa ödülü seç.';
+                    return;
+                }
+                if (![10,25,50,75,100,250,500,1000].includes(amount)) {
+                    result.textContent = 'Hazır bahis miktarlarından birini seç.';
+                    return;
+                }
+                if (!vaultState?.betting_open) {
+                    result.textContent = 'Bahisler kapalı. Yeni turu bekle.';
+                    return;
+                }
+
+                vaultBusy = true;
+                button.disabled = true;
+                try {
+                    await api('/games/vault/live/bet', {
+                        method: 'POST',
+                        body: JSON.stringify({choice, amount})
+                    });
+                    if (game === 'vault' && modal?.isConnected) {
+                        result.textContent =
+                            '✅ ' + amount + ' Lidya bahis yatırıldı.';
+                    }
+                    await refreshBalance();
+                } catch (e) {
+                    if (game === 'vault' && modal?.isConnected) {
+                        result.textContent =
+                            e.message || 'Kasa bahsi yapılamadı.';
+                    }
+                } finally {
+                    vaultBusy = false;
+                    refreshVaultLive().catch(() => {});
                 }
                 return;
             }
