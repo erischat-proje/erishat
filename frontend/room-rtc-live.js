@@ -3,6 +3,25 @@
   const peers=new Map(), known=new Set(), sounds=new Map(), pendingIce=new Map(), reconnectTimers=new Map();
   let stream=null, iceServers=[{urls:'stun:stun.l.google.com:19302'}], myId=null;
   let microphoneSeat=null;
+  let roomGeneration=0, configRoom=null, configPromise=null, seatCheckBusy=false, micBusy=false;
+  let messageQueue=Promise.resolve(), configRetryTimer=null;
+  const offerJobs=new Map();
+  const currentRoom=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
+  async function loadConfig(){
+    const room=currentRoom(), generation=roomGeneration;
+    if(!room)throw new Error('Oda açık değil.');
+    if(configRoom===room && configPromise)return configPromise;
+    configRoom=room;
+    const job=window.ErisPlatform.api('/rooms/'+encodeURIComponent(room)+'/rtc-config').then(cfg=>{
+      if(generation!==roomGeneration||currentRoom()!==room)throw new Error('Oda değişti.');
+      if(!Array.isArray(cfg.ice_servers)||!cfg.ice_servers.length)throw new Error('Ses bağlantı ayarları alınamadı.');
+      iceServers=cfg.ice_servers;
+      for(const pc of peers.values())pc.setConfiguration({iceServers});
+      return cfg;
+    });
+    configPromise=job;
+    try{return await job}catch(error){if(configPromise===job){configPromise=null;configRoom=null}throw error}
+  }
   const audioConstraints={echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1};
   const analysers=new Map();
   let audioContext=null,speakingFrame=0;
@@ -43,18 +62,22 @@
     if(!analysers.size&&speakingFrame){cancelAnimationFrame(speakingFrame);speakingFrame=0}
   }
   async function checkMicrophoneSeat(){
-    if(!stream)return;
-    const id=window.ErisCurrentRoomId||window.currentRoomId;
-    if(!id)return;
+    if(!stream||seatCheckBusy)return;
+    const checkedStream=stream, room=currentRoom(), generation=roomGeneration;
+    if(!room)return;
+    seatCheckBusy=true;
     try{
-      const cfg=await window.ErisPlatform.api('/rooms/'+encodeURIComponent(id)+'/rtc-config');
-      if(stream&&(cfg.muted||!cfg.seat_number||Number(cfg.seat_number)!==Number(microphoneSeat))){
-        stop();
+      const cfg=await window.ErisPlatform.api('/rooms/'+encodeURIComponent(room)+'/rtc-config');
+      if(generation!==roomGeneration||stream!==checkedStream||currentRoom()!==room)return;
+      if(cfg.muted||!cfg.seat_number||Number(cfg.seat_number)!==Number(microphoneSeat)){
+        await stop();
         window.toast?.(cfg.muted?'Koltuk mikrofonun yetkili tarafından susturuldu.':'Koltuktan ayrıldığın için mikrofon kapandı.');
       }
     }catch(e){
-      if(stream){stop();window.toast?.('Oda bağlantısı kesildi; mikrofon kapatıldı.')}
-    }
+      if(generation===roomGeneration&&stream===checkedStream&&[401,403,404].includes(e.status)){
+        await stop();window.toast?.('Oda erişimi sona erdi; mikrofon kapatıldı.');
+      }
+    }finally{seatCheckBusy=false}
   }
   window.setInterval(checkMicrophoneSeat,2500);
 
@@ -103,7 +126,19 @@
   function peer(id){if(peers.has(id))return peers.get(id);const pc=new RTCPeerConnection({iceServers});peers.set(id,pc);
     pc.onicecandidate=e=>{if(e.candidate)signal('rtc_ice',id,e.candidate.toJSON())};
     pc.ontrack=e=>{let audio=sounds.get(id);if(!audio){audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.muted=!outputEnabled||isBlocked(id);audio.volume=1;audio.dataset.rtcUser=id;audio.style.display='none';document.body.append(audio);sounds.set(id,audio)}const media=e.streams[0]||new MediaStream([e.track]);audio.muted=!outputEnabled||isBlocked(id);audio.srcObject=media;unwatchLevel(id);watchLevel(id,media);if(outputEnabled&&!isBlocked(id))audio.play().catch(()=>{window.toast?.('Oda sesi başlatılamadı. Ses düğmesine dokunarak yeniden dene.')})};
-    pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){const t=reconnectTimers.get(id);if(t)clearTimeout(t);reconnectTimers.delete(id);return}if(['failed','disconnected'].includes(pc.connectionState)&&!reconnectTimers.has(id)){try{pc.restartIce?.()}catch{}const timer=setTimeout(()=>{reconnectTimers.delete(id);if(pc.connectionState==='connected'||pc.connectionState==='closed')return;drop(id);if(shouldInitiate(id))setTimeout(()=>offer(id).catch(()=>{}),350)},5000);reconnectTimers.set(id,timer)}};
+    pc.onnegotiationneeded=()=>{if(shouldInitiate(id))offer(id).catch(()=>{})};
+    pc.onconnectionstatechange=()=>{
+      if(peers.get(id)!==pc)return;
+      if(pc.connectionState==='connected'){
+        clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);return;
+      }
+      if(['failed','disconnected'].includes(pc.connectionState)){
+        try{pc.restartIce?.()}catch{}
+        if(shouldInitiate(id))offer(id).catch(()=>{});
+        scheduleRecovery(id,pc,10000);
+      }
+    };
+    scheduleRecovery(id,pc,20000);
     const trx=pc.addTransceiver('audio',{direction:'sendrecv'});
     if(stream){
       const track=stream.getAudioTracks()[0];
@@ -134,9 +169,34 @@
     }
   }
 
-  async function offer(id){
+  function scheduleRecovery(id,pc,delay){
+    if(reconnectTimers.has(id))return;
+    const generation=roomGeneration;
+    reconnectTimers.set(id,setTimeout(async()=>{
+      reconnectTimers.delete(id);
+      if(generation!==roomGeneration||peers.get(id)!==pc||!known.has(id)||pc.connectionState==='connected')return;
+      if(shouldInitiate(id)&&pc.signalingState==='have-local-offer'){
+        try{await pc.setLocalDescription({type:'rollback'})}catch{}
+      }
+      if(generation!==roomGeneration||peers.get(id)!==pc)return;
+      // Both ends renegotiate the existing session. Keep SDP/ICE identity intact.
+      try{pc.restartIce?.()}catch{}
+      if(shouldInitiate(id))offer(id).catch(()=>{});
+      scheduleRecovery(id,pc,20000);
+    },delay));
+  }
+  function offer(id){
+    if(offerJobs.has(id))return offerJobs.get(id);
+    const job=makeOffer(id).finally(()=>{if(offerJobs.get(id)===job)offerJobs.delete(id)});
+    offerJobs.set(id,job);return job;
+  }
+  async function makeOffer(id){
     if(id===myId||!shouldInitiate(id)||!socket()||socket().readyState!==WebSocket.OPEN)return;
 
+    const generation=roomGeneration, signalingSocket=socket();
+    await loadConfig();
+    if(generation!==roomGeneration||socket()!==signalingSocket)return;
+    if(!known.has(id)||socket()?.readyState!==WebSocket.OPEN)return;
     const pc=peer(id);
 
     if(stream){
@@ -164,11 +224,20 @@
       iceRestart:pc.iceConnectionState==='failed'
     });
 
+    if(generation!==roomGeneration||peers.get(id)!==pc||socket()!==signalingSocket)return;
     await pc.setLocalDescription(desc);
+    if(generation!==roomGeneration||peers.get(id)!==pc||socket()!==signalingSocket)return;
     signal('rtc_offer',id,pc.localDescription);
   }
 
-  async function message(d){if(d.type==='rtc_ready'){
+  function message(d){
+    const generation=roomGeneration;
+    messageQueue=messageQueue.then(()=>{
+      if(generation===roomGeneration)return handleMessage(d);
+    }).catch(e=>console.warn('[ErisChat] ses sinyali işlenemedi',e));
+    return messageQueue;
+  }
+  async function handleMessage(d){if(d.type==='rtc_ready'){
       myId=String(d.user_id);
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
 
@@ -179,6 +248,17 @@
       known.clear();
       for(const id of fresh)known.add(id);
 
+      // A new signaling session cannot reuse an unanswered offer from the old socket.
+      for(const id of [...peers.keys()])drop(id);
+      try{await loadConfig()}catch(e){
+        const generation=roomGeneration;clearTimeout(configRetryTimer);
+        configRetryTimer=setTimeout(()=>{
+          configRetryTimer=null;
+          if(generation===roomGeneration&&socket()?.readyState===WebSocket.OPEN)message(d);
+        },3000);
+        throw e;
+      }
+      clearTimeout(configRetryTimer);configRetryTimer=null;
       resumeRoomAudio().catch(()=>{});
       for(const id of known){
         if(shouldInitiate(id))offer(id).catch(()=>{});
@@ -210,10 +290,10 @@ const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
       drop(id);
       return;
     }
-    try{if(d.type==='rtc_offer'){const pc=peer(id);await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc);const desc=await pc.createAnswer();await pc.setLocalDescription(desc);signal('rtc_answer',id,pc.localDescription)}
+    try{await loadConfig();if(d.type==='rtc_offer'){const pc=peer(id);await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc);const desc=await pc.createAnswer();await pc.setLocalDescription(desc);signal('rtc_answer',id,pc.localDescription)}
       else if(d.type==='rtc_answer'){const pc=peers.get(id);if(pc?.signalingState==='have-local-offer'){await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc)}}
       else if(d.type==='rtc_ice'){const pc=peer(id);if(pc.remoteDescription)await pc.addIceCandidate(new RTCIceCandidate(d.payload));else{const queue=pendingIce.get(id)||[];if(queue.length<64)queue.push(d.payload);pendingIce.set(id,queue)}}
-    }catch(e){console.warn('[ErisChat] RTC bağlantısı kurulamadı',e);drop(id)}
+    }catch(e){console.warn('[ErisChat] RTC bağlantısı kurulamadı',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,10000)}
   }
   async function stop(){
     microphoneSeat=null;
@@ -264,14 +344,17 @@ const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
     show();
   }
 
-  async function toggle(){if(stream){stop();return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
+  async function toggle(){if(micBusy)return;if(stream){stop();return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
+    micBusy=true;const generation=roomGeneration;const room=currentRoom();
     try{const id=window.ErisCurrentRoomId||window.currentRoomId;const cfg=await window.ErisPlatform.api('/rooms/'+encodeURIComponent(id)+'/rtc-config');if(Array.isArray(cfg.ice_servers))iceServers=cfg.ice_servers;
       if(cfg.muted)return window.toast?.('Bu koltuğun mikrofonu susturuldu.');
       if(!cfg.seat_number)return window.toast?.('Mikrofon için önce koltuğa otur.');
       microphoneSeat=Number(cfg.seat_number);
-      stream=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false});
+      const captured=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false});
+      if(generation!==roomGeneration||currentRoom()!==room){captured.getTracks().forEach(t=>t.stop());return}
+      stream=captured;
       await checkMicrophoneSeat();
-      if(!stream)return;stream.getAudioTracks()[0]?.addEventListener('ended',stop,{once:true});show();
+      if(!stream)return;const activeStream=stream;stream.getAudioTracks()[0]?.addEventListener('ended',()=>{if(stream===activeStream)stop()},{once:true});show();
       for(const peerId of known){
         try{await attachMicrophone(peerId)}
         catch(e){console.warn('[ErisChat] mikrofon peer bağlantısı başarısız',peerId,e)}
@@ -280,9 +363,11 @@ const id=String(d.from_user_id||'');if(!id||id===myId)return;known.add(id);
         if(shouldInitiate(peerId))await offer(peerId);
       }
       window.toast?.('Mikrofon açıldı')}
-    catch(e){stop();window.toast?.(e.name==='NotAllowedError'?'Mikrofon izni verilmedi.':e.message||'Mikrofon açılamadı.')}
+    catch(e){stop();window.toast?.(e.name==='NotAllowedError'?'Mikrofon izni verilmedi.':e.message||'Mikrofon açılamadı.')}finally{micBusy=false}
   }
   function leaveRoom(){
+    clearTimeout(configRetryTimer);configRetryTimer=null;
+    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();messageQueue=Promise.resolve();
     microphoneSeat=null;
 
     if(stream){
