@@ -112,7 +112,7 @@
         const avatar=document.createElement('span');avatar.className='rc-avatar';
         const asset=row.avatar_asset && window.ErisChatCosmetics?.assetUrl?.(row.avatar_asset);
         if(asset){const img=document.createElement('img');img.src=asset;img.alt='';avatar.appendChild(img)}else avatar.textContent=row.avatar||'◈';
-        const name=document.createElement('span');name.className='rc-name';name.textContent=row.nickname||'Kullanıcı';
+        const name=document.createElement('span');name.className='rc-name';name.textContent=row.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(name,row);
         const amount=document.createElement('span');amount.className='rc-amount';amount.textContent=Number(row.total_lidya||0).toLocaleString('tr-TR')+' Lidya';
         if(row.user_id){avatar.style.cursor='pointer';name.style.cursor='pointer';avatar.onclick=name.onclick=()=>window.ErisFloatingProfile?.open(row.user_id)}
         item.append(rank,avatar,name,amount);list.appendChild(item);

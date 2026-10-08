@@ -54,6 +54,7 @@ from . import support_workflow, ban_workflow, purchase_routes, seat_workflow, di
 from .room_ban_rules import active_room_user_ban, require_room_access
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
+from . import role_badges
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, OTPRequest, OTPVerify, SessionOut, UserCreate, UserOut, UserUpdate
@@ -350,7 +351,8 @@ register_suggestion_auth(current_user)
 ban_workflow.register_auth(current_user, lambda user_id: disconnect_ban_user(user_id), lambda user_id, room_id: disconnect_room_ban_user(user_id,room_id))
 app.include_router(ban_workflow.router)
 app.include_router(suggestion_router)
-register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_ban_user(user_id))
+register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_ban_user(user_id), lambda user_id, role: broadcast_role_badge(user_id, role))
+app.include_router(role_badges.register_auth(current_user))
 support_workflow.register_auth(current_user, lambda user_id: disconnect_support_agent(user_id))
 app.include_router(support_workflow.router)
 register_dm_folder_auth(current_user)
@@ -1897,6 +1899,15 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+@live_socket
+async def broadcast_role_badge(user_id: str, role: str | None) -> None:
+    # Only display metadata; never grants capabilities in the browser.
+    payload = {"type": "role_badge_changed", "user_id": user_id, "admin_role": role}
+    await asyncio.gather(*(manager.send_user(viewer_id, payload)
+                           for viewer_id in list(manager.connections)), return_exceptions=True)
+
 
 
 async def _send_dm_event(db: Session, user_id: str, event: dict) -> None:

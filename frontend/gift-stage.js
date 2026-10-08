@@ -171,7 +171,10 @@
     const audioBuffer=await limited(audioPromise,900);if(epoch!==generation||!active)return;
     if(!asset){global.toast?.((item.preview?'Önizleme yüklenemedi: ':'Hediye: ')+p.name+' ×'+item.quantity);active=null;return next();}
     mount();root.querySelector('.gift-cinema-caption b').textContent=p.name+' ×'+item.quantity;
-    root.querySelector('.gift-cinema-caption span').textContent=item.preview?'Ücretsiz önizleme':(item.sender_nickname||item.sender_name||'Bir kullanıcı')+' → '+(item.recipient_nickname||item.recipient_name||'Alıcı');
+    const caption=root.querySelector('.gift-cinema-caption span');
+    if(item.preview)caption.textContent='Ücretsiz önizleme';
+    else{const sender=document.createElement('span'),recipient=document.createElement('span');sender.textContent=item.sender_nickname||item.sender_name||'Bir kullanıcı';recipient.textContent=item.recipient_nickname||item.recipient_name||'Alıcı';caption.replaceChildren(sender,document.createTextNode(' → '),recipient);if(sender.textContent!=='Birden çok gönderici')window.ErisRoleBadges?.bind(sender,item.sender_id);if(recipient.textContent!=='Birden çok alıcı')window.ErisRoleBadges?.bind(recipient,item.recipient_id);}
+
     const startSound=()=>{if(epoch!==generation||!active||!audioBuffer||!enabled||audioContext?.state!=='running')return;try{const source=audioContext.createBufferSource(),gain=audioContext.createGain();source.buffer=audioBuffer;gain.gain.value=1;source.connect(gain);gain.connect(master);source.onended=()=>{source.disconnect();gain.disconnect();};source.start(audioContext.currentTime);active.source=source;active.sourceGain=gain;}catch(_){}};
     const canvas=root.querySelector('canvas'),c=canvas.getContext('2d',{alpha:true});if(!c){startSound();const fallback=doc.createElement('img');fallback.src=new URL(p.image,base).href;fallback.alt=p.name;fallback.style.cssText='position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(70vw,450px);max-height:60vh;object-fit:contain';root.append(fallback);setTimeout(()=>{if(epoch===generation)finish();},Math.round(p.duration*1000));return;}
     const reduced=global.matchMedia?.('(prefers-reduced-motion: reduce)').matches,lasting=reduced?1.1:p.duration;

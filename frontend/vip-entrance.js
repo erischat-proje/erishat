@@ -58,7 +58,7 @@
     content.append(portrait);
     const identity=document.createElement('div');identity.className='eris-vip-entry-identity';
     const tag=document.createElement('small');tag.textContent=(theme.level?'VIP '+theme.level+' · ':'')+theme.name;
-    const name=document.createElement('strong');name.textContent=String(d.nickname||'Kullanıcı').slice(0,120);
+    const name=document.createElement('strong');name.textContent=String(d.nickname||'Kullanıcı').slice(0,120);window.ErisRoleBadges?.bind(name,d.preview?window.ErisAuth?.user:d.user_id);
     const note=document.createElement('span');note.textContent=d.preview?'Oda girişi önizlemesi':'Odaya katıldı';identity.append(tag,name,note);content.append(identity);
     if(d.preview){const close=document.createElement('button');close.type='button';close.className='eris-vip-entry-dismiss';close.textContent='Önizlemeyi kapat ×';close.onclick=finish;stage.append(close);el.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();finish()}})}
     const holder={el,resolve,timer:null,loadTimer:null,raf:null,started:false};active=holder;

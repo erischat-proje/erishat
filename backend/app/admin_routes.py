@@ -197,7 +197,7 @@ def update_room_ghost(db: Session, user_id: str, enabled: bool) -> None:
             seat.user_id=None;seat.muted=False
 
 
-def register_admin_auth(current_user_dependency, ghost_transition=None, support_disconnect=None):
+def register_admin_auth(current_user_dependency, ghost_transition=None, support_disconnect=None, role_changed=None):
     @router.get("/me")
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
@@ -534,6 +534,8 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         audit(db,user,"role_grant",{"role":payload.role,"public_id":target.public_id},target_user_id=target.id);db.commit()
         if payload.role != "DA" and ghost_transition:
             await ghost_transition(target.id, False)
+        if role_changed:
+            await role_changed(target.id, row.role)
         return {"user_id":target.id,"public_id":target.public_id,"role":row.role}
 
     @router.delete("/roles/{user_id}")
@@ -547,6 +549,8 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         db.delete(row);audit(db,user,"role_revoke",target_user_id=user_id);db.commit()
         if ghost_transition:
             await ghost_transition(user_id, False)
+        if role_changed:
+            await role_changed(user_id, None)
         return {"removed":True}
 
     return router

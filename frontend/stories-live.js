@@ -45,7 +45,7 @@
     const avatar=item.avatar_asset||item.avatar||window.ErisChatCosmetics?.state?.user?.avatar_asset||'👤';
     const isAsset=typeof avatar==='string'&&(/^(https?:|\/|data:|\.\.?\/)/.test(avatar)||(/[/.]/.test(avatar)&&/\.(?:png|jpe?g|webp|gif|svg)(?:[?#].*)?$/i.test(avatar)));
     if(isAsset){const img=document.createElement('img');img.alt='';img.src=window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar;face.append(img)}else face.textContent=avatar;
-    const name=document.createElement('span');name.className='eris-story-name';name.textContent=item.isAdd?'Hikâyen':item.nickname||'Kullanıcı';button.append(face,name);
+    const name=document.createElement('span');name.className='eris-story-name';name.textContent=item.isAdd?'Hikâyen':item.nickname||'Kullanıcı';if(!item.isAdd)window.ErisRoleBadges?.bind(name,item);button.append(face,name);
     button.setAttribute('aria-label',item.isAdd?'Hikâye ekle':`${item.nickname||'Kullanıcı'} hikâyesini görüntüle`);
     button.onclick=()=>item.isAdd?(item.ownStory?openStory(item.ownStory):compose(root)):openStory(item);
     if(!item.isAdd)return button;
@@ -72,7 +72,7 @@
     const media=document.createElement(isVideo?'video':'img');media.alt='Story';
     if(isVideo){media.controls=true;media.autoplay=true;media.playsInline=true}
     media.src=objectUrl;viewer.insertBefore(media,viewer.querySelector('footer'));
-    viewer.querySelector('header b').textContent=item.nickname||'Kullanıcı';viewer.querySelector('footer').textContent=item.caption||'';document.body.append(viewer);
+    viewer.querySelector('header b').textContent=item.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(viewer.querySelector('header b'),item);viewer.querySelector('footer').textContent=item.caption||'';document.body.append(viewer);
     const mine=!!item.is_mine||String(window.ErisAuth?.user?.id||'')===String(item.user_id);
     if(!mine){
       const actions=document.createElement('div');actions.className='eris-story-reactions';

@@ -230,7 +230,7 @@
       const content=document.createElement('div');content.className='ec-comment-content';
       const name=document.createElement('button');
       name.type='button';name.className='ec-social-profile-link ec-comment-name';
-      name.dataset.userId=String(row.user_id);name.textContent=row.nickname||'Kullanıcı';
+      name.dataset.userId=String(row.user_id);name.textContent=row.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(name,row);
       const body=document.createElement('p');body.textContent=row.body||'';
       const controls=document.createElement('div');controls.className='ec-comment-controls';
       const likeComment=document.createElement('button');
@@ -341,7 +341,7 @@
       avatarImg.alt='';
       avatarImg.onerror=()=>{avatarImg.remove();avatarEl.textContent='👤'};
       avatarEl.append(avatarImg);
-      card.querySelector('.ec-social-author b').textContent=post.nickname||'ErisChat kullanıcısı';card.querySelector('.ec-social-date').textContent=formatDate(post.created_at)+(post.updated_at&&post.created_at!==post.updated_at?' · düzenlendi':'');card.querySelector('.ec-social-caption').textContent=post.caption||'';card.querySelector('small[data-visibility]').textContent=owner?(post.is_hidden?'Profilden gizli · yalnızca sen görebilirsin':(post.audience==='followers'?'Takipçilerim':'Herkese açık')):'';
+      card.querySelector('.ec-social-author b').textContent=post.nickname||'ErisChat kullanıcısı';window.ErisRoleBadges?.bind(card.querySelector('.ec-social-author b'),post);card.querySelector('.ec-social-date').textContent=formatDate(post.created_at)+(post.updated_at&&post.created_at!==post.updated_at?' · düzenlendi':'');card.querySelector('.ec-social-caption').textContent=post.caption||'';card.querySelector('small[data-visibility]').textContent=owner?(post.is_hidden?'Profilden gizli · yalnızca sen görebilirsin':(post.audience==='followers'?'Takipçilerim':'Herkese açık')):'';
       if(post.media_url){try{const url=await imageUrl(post.media_url);if(post.media_kind==='video'||String(post.mime_type||'').startsWith('video/')){const video=document.createElement('video');video.className='ec-social-video';video.controls=true;video.playsInline=true;video.preload='metadata';video.src=url;card.querySelector('[data-photo]').append(video)}else{const img=document.createElement('img');img.className='ec-social-photo';img.alt='Gönderi fotoğrafı';img.src=url;card.querySelector('[data-photo]').append(img)}}catch(_){}}
       if(post.is_pinned){const marker=document.createElement('span');marker.className='ec-post-pin';marker.textContent='📌';marker.title='Sabit gönderi';card.append(marker)}
       if(owner){const menu=card.querySelector('.ec-social-menu'),options=menu.querySelector('[data-post-options]'),toggle=menu.querySelector('[data-options-toggle]');toggle.onclick=()=>{const opening=options.hidden;container.querySelectorAll('[data-post-options]:not([hidden])').forEach(other=>{if(other===options)return;other.hidden=true;other.closest('.ec-social-post')?.classList.remove('ec-post-options-open');const button=other.parentElement.querySelector('[data-options-toggle]');button.textContent='⋯';button.setAttribute('aria-expanded','false');button.setAttribute('aria-label','Gönderi işlemlerini aç')});options.hidden=!opening;card.classList.toggle('ec-post-options-open',opening);toggle.textContent=opening?'×':'⋯';toggle.setAttribute('aria-expanded',String(opening));toggle.setAttribute('aria-label',opening?'Gönderi işlemlerini kapat':'Gönderi işlemlerini aç')};

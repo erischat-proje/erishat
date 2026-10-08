@@ -56,7 +56,7 @@
         const avatar=document.createElement(valid?'img':'span');avatar.className='eris-picker-avatar';
         if(valid){avatar.src=source;avatar.alt='';avatar.onerror=()=>{const fallback=document.createElement('span');fallback.className='eris-picker-avatar';fallback.textContent='👤';avatar.replaceWith(fallback);};}else avatar.textContent=account.avatar||'👤';
         const copy=document.createElement('span');copy.className='eris-picker-copy';
-        const name=document.createElement('b');name.textContent=account.nickname;
+        const name=document.createElement('b');name.textContent=account.nickname;window.ErisRoleBadges?.bind(name,account);
         const detail=document.createElement('small');detail.textContent=(active?'Aktif hesap · ':'')+'ID: '+(account.public_id||account.id);
         copy.append(name,detail);select.append(avatar,copy);
         select.onclick=async()=>{

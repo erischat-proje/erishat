@@ -13,12 +13,14 @@
   let reconnectAttempt = 0;
 
   function roomBox(){ return document.getElementById('realRoomChat'); }
-  function appendRow(text, kind){
+  function appendRow(text, kind, gift){
     const box = roomBox();
     if(!box) return;
     const row = document.createElement('div');
     row.style.cssText='padding:7px 9px;margin:5px 0;border-radius:10px;background:#ffffff08;color:'+(kind==='gift'?'#f3d27d':'#c9c0d1')+';font-size:10px;';
     row.textContent=text;
+    if(gift){const sender=document.createElement('span'),recipient=document.createElement('span');sender.textContent=gift.sender_name;recipient.textContent=gift.recipient_name;row.replaceChildren(document.createTextNode('📢 '),sender,document.createTextNode(' kişisi '),recipient,document.createTextNode(' kişisine '+gift.gift_name+' verdi • 💎 '+gift.total_price.toLocaleString('tr-TR')));window.ErisRoleBadges?.bind(sender,gift.sender_id);window.ErisRoleBadges?.bind(recipient,gift.recipient_id);}
+
     box.appendChild(row);
     box.scrollTop=box.scrollHeight;
   }
@@ -66,7 +68,7 @@
   }
   function renderGiftAnnouncement(data){
     const detail=giftDetail(data);
-    appendRow('📢 '+detail.sender_name+' kişisi '+detail.recipient_name+' kişisine '+detail.gift_name+' verdi • 💎 '+detail.total_price.toLocaleString('tr-TR'),'gift');
+    appendRow('📢 '+detail.sender_name+' kişisi '+detail.recipient_name+' kişisine '+detail.gift_name+' verdi • 💎 '+detail.total_price.toLocaleString('tr-TR'),'gift',detail);
     window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...detail,global:true}}));
   }
 
