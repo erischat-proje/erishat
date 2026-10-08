@@ -369,6 +369,11 @@ platform_router.routes[:] = [route for route in platform_router.routes if not an
     (getattr(route, "path", ""), method) in _authoritative_dm_routes
     for method in (getattr(route, "methods", None) or set()))]
 app.include_router(platform_router)
+# Crash ve Wheel Live endpointlerini uygulamaya kaydet.
+for _route in platform_router.routes:
+    if _route.path.startswith(("/v1/games/crash/live", "/v1/games/wheel/live")):
+        if not any(getattr(r, 'path', None) == _route.path and getattr(r, 'methods', None) == _route.methods for r in app.routes):
+            app.router.routes.append(_route)
 app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
