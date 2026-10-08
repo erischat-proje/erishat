@@ -20,7 +20,7 @@
     join: (roomId,password='') => api(`/rooms/${id(roomId)}/join`, body(password ? {password} : {})),
     leave: roomId => api(`/rooms/${id(roomId)}/leave`, body({})),
     joinSeat: (roomId, seatNumber) => api(`/rooms/${id(roomId)}/seats/${Number(seatNumber)}/join`, body({})),
-    leaveSeat: roomId => api(`/rooms/${id(roomId)}/seats/leave`, { method: 'DELETE' }),
+    leaveSeat: roomId => {if(String(roomId)===String(window.ErisCurrentRoomId||window.currentRoomId))window.ErisRoomRTC?.stop?.();return api(`/rooms/${id(roomId)}/seats/leave`, { method: 'DELETE' });},
     setChat: (roomId, enabled) => api(`/rooms/${id(roomId)}/chat`, { method: 'PATCH', body: JSON.stringify({ enabled: !!enabled }) }),
     rename: (roomId, name) => api(`/rooms/${id(roomId)}/name`, { method: 'PATCH', body: JSON.stringify({ name: String(name || '').trim() }) }),
     setCapacity: (roomId, seatCount) => api(`/rooms/${id(roomId)}/seats`, { method: 'PATCH', body: JSON.stringify({ seat_count: Number(seatCount) }) }),

@@ -2075,6 +2075,18 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
     return {"payload": payload}
 
 
+def _valid_room_rtc_payload(kind: str, payload) -> bool:
+    if kind in {"rtc_offer", "rtc_answer"}:
+        return bool(isinstance(payload, dict) and payload.get("type") == kind[4:]
+                    and isinstance(payload.get("sdp"), str) and 0 < len(payload["sdp"]) <= 65536)
+    if kind == "rtc_ice":
+        return bool(isinstance(payload, dict) and isinstance(payload.get("candidate"), str)
+                    and len(payload["candidate"]) <= 4096)
+    if kind == "rtc_reconnect":
+        return bool(isinstance(payload, dict) and isinstance(payload.get("reset", False), bool))
+    return kind == "rtc_leave" and (payload is None or isinstance(payload, dict))
+
+
 def _room_socket_can_signal(room_id, user_id, kind):
     """
     RTC signaling oda üyelerine açıktır.
@@ -2084,7 +2096,7 @@ def _room_socket_can_signal(room_id, user_id, kind):
     yetkisinden ayrıdır ve rtc-config + koltuk/mute kontrolleri tarafından
     korunur.
     """
-    if kind not in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
+    if kind not in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave", "rtc_reconnect"}:
         return False
 
     with Session(engine) as db:
@@ -2155,6 +2167,23 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 room_chat_connections: dict[str, set[WebSocket]] = {}
 room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 room_socket_users: dict[WebSocket, tuple[str, str]] = {}
+room_seat_cleanup_tasks: dict[tuple[str, str], asyncio.Task] = {}
+
+
+def _clear_disconnected_room_seat(room_id: str, user_id: str) -> None:
+    with Session(engine) as db:
+        db.execute(update(RoomSeat).where(RoomSeat.room_id == room_id, RoomSeat.user_id == user_id).values(user_id=None, muted=False))
+        db.commit()
+
+
+async def _cleanup_disconnected_room_seat(room_id: str, user_id: str) -> None:
+    await asyncio.sleep(35)
+    if any(value == (room_id, user_id) for value in room_socket_users.values()):
+        return
+    try:
+        await run_in_threadpool(_clear_disconnected_room_seat, room_id, user_id)
+    except Exception:
+        logging.exception("Disconnected room seat cleanup failed")
 
 
 @live_socket
@@ -2275,6 +2304,10 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
     await websocket.accept(subprotocol="erischat")
     try:
         already_connected=any(room_uid==(internal_room_id,str(user.id)) for room_uid in room_socket_users.values())
+        cleanup=room_seat_cleanup_tasks.pop((internal_room_id,str(user.id)),None)
+        if cleanup:
+            cleanup.cancel()
+        stale_sockets=[ws for ws, uid in room_rtc_users.get(internal_room_id, {}).items() if str(uid)==str(user.id)]
         room_socket_users[websocket] = (internal_room_id, str(user.id))
         room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
         if not member.ghost and not already_connected:
@@ -2284,6 +2317,14 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
         if not member.ghost:
             room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
+        # One RTC endpoint per user. Old tabs must not negotiate conflicting answers.
+        for stale in stale_sockets:
+            room_rtc_users.get(internal_room_id, {}).pop(stale, None)
+            try:
+                await _bounded_send(stale, {"type":"room_session_replaced"})
+                await stale.close(code=1000, reason="Oda başka sekmede açıldı")
+            except Exception:
+                pass
         await websocket.send_json({"type":"room_history","messages":history_payload})
         await websocket.send_json({"type":"rtc_ready","user_id":str(user.id),"room_id":internal_room_id,"peers":existing_peers})
         for peer_ws in (list(room_rtc_users.get(internal_room_id, {})) if not member.ghost else []):
@@ -2311,23 +2352,27 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             if not isinstance(data, dict):
                 continue
             if data.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
+                await websocket.send_json({"type": "pong", "peers": list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})})
                 continue
             if member.ghost:
                 await websocket.send_json({"type": "room_chat_error", "code": "ghost_mode", "message": "Bu işlem için önce Ghost Mode’u kapatın."})
                 continue
-            if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave"}:
+            if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave", "rtc_reconnect"}:
+                if websocket not in room_rtc_users.get(internal_room_id, {}):
+                    continue
                 target = str(data.get("to_user_id") or "").strip()
                 sender_user_id = str(user.id)
                 if not target or target == sender_user_id:
                     continue
                 if not await run_in_threadpool(_room_socket_can_signal, internal_room_id, user.id, data["type"]):
                     continue
+                if not _valid_room_rtc_payload(data["type"], data.get("payload")):
+                    continue
                 payload = {"type": data["type"], "from_user_id": sender_user_id, "to_user_id": target, "payload": data.get("payload")}
                 for peer_ws, peer_user in list(room_rtc_users.get(internal_room_id, {}).items()):
                     if str(peer_user) == target:
                         try:
-                            await peer_ws.send_json(payload)
+                            await _bounded_send(peer_ws, payload)
                         except Exception:
                             room_chat_connections.get(internal_room_id, set()).discard(peer_ws)
                             room_rtc_users.get(internal_room_id, {}).pop(peer_ws, None)
@@ -2373,27 +2418,21 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         connections = room_chat_connections.get(internal_room_id, set())
         connections.discard(websocket)
 
-        # Kullanıcının bu odadaki son canlı socket'i kapandıysa koltuğu
-        # otomatik boşalt. Böylece uygulama/sekme zorla kapatılsa bile
-        # avatar ve çerçeve koltukta hayalet olarak kalmaz.
+        # Preserve the seat briefly during a mobile network handover. Explicit
+        # leave/ban paths still remove it immediately; a closed app expires here.
         has_other_room_socket = any(
             socket_room == internal_room_id and socket_user == str(user.id)
             for socket_room, socket_user in room_socket_users.values()
         )
         if not has_other_room_socket:
-            try:
-                with Session(engine) as cleanup_db:
-                    cleanup_db.execute(
-                        update(RoomSeat)
-                        .where(
-                            RoomSeat.room_id == internal_room_id,
-                            RoomSeat.user_id == user.id,
-                        )
-                        .values(user_id=None, muted=False)
-                    )
-                    cleanup_db.commit()
-            except Exception as cleanup_error:
-                print("[ErisChat] disconnect seat cleanup failed:", cleanup_error)
+            key=(internal_room_id,str(user.id))
+            if key not in room_seat_cleanup_tasks:
+                task=asyncio.create_task(_cleanup_disconnected_room_seat(*key))
+                room_seat_cleanup_tasks[key]=task
+                def done(completed, cleanup_key=key):
+                    if room_seat_cleanup_tasks.get(cleanup_key) is completed:
+                        room_seat_cleanup_tasks.pop(cleanup_key,None)
+                task.add_done_callback(done)
 
         peers = room_rtc_users.get(internal_room_id, {})
         if visible and visible not in peers.values():
