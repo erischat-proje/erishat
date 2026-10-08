@@ -192,8 +192,8 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode != GOOGLE_SIGN_IN || !trustedPage()) return;
-        if (resultCode != RESULT_OK || data == null) {
-            sendGoogleError("Google giriş işlemi iptal edildi.");
+        if (data == null) {
+            sendGoogleError("Google giriş sonucu alınamadı (resultCode: " + resultCode + ").");
             return;
         }
 
