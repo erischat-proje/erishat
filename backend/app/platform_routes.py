@@ -810,6 +810,74 @@ def register_platform_auth(current_user_dependency):
             aces -= 1
         return total
 
+
+    # ERIS_BJ_ACTIVE_ROUND_V1
+    @router.get("/games/blackjack/active")
+    def blackjack_active_round(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = db.scalar(
+            select(GameRound)
+            .where(
+                GameRound.user_id == user.id,
+                GameRound.game_type == "blackjack",
+                GameRound.status == "open",
+            )
+            .order_by(GameRound.started_at.desc(), GameRound.id.desc())
+            .limit(1)
+        )
+        if row is None:
+            return {"active": False, "round_id": None}
+
+        try:
+            state = json.loads(row.state_data or "{}")
+        except (TypeError, json.JSONDecodeError):
+            state = {}
+
+        return {
+            "active": True,
+            "round_id": row.id,
+            "state": display_state(state),
+            "available_actions": [
+                action for action in available_actions(state)
+                if action in {"hit", "stand"}
+            ],
+        }
+
+
+    @router.get("/games/blackjack/history")
+    def blackjack_history(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        rows = list(db.scalars(
+            select(GameRound)
+            .where(
+                GameRound.game_type == "blackjack",
+                GameRound.user_id == user.id,
+                GameRound.status == "finished",
+            )
+            .order_by(GameRound.started_at.desc(), GameRound.id.desc())
+            .limit(53)
+        ))
+        results = [
+            {
+                "round_id": row.id,
+                "result": row.result_key,
+                "started_at": row.started_at,
+            }
+            for row in rows
+        ]
+        return {
+            "game": "blackjack",
+            "sample_size": len(results),
+            "wins": sum(r["result"] in ("win", "blackjack") for r in results),
+            "losses": sum(r["result"] == "loss" for r in results),
+            "pushes": sum(r["result"] == "push" for r in results),
+            "rounds": results,
+        }
+
     @router.get("/games/rounds/{round_id}")
     def game_round_state(round_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = _load_game_round_for_user(round_id, db, user)
@@ -830,7 +898,14 @@ def register_platform_auth(current_user_dependency):
         db: Session = Depends(get_db),
         user: User = Depends(current_user_dependency),
     ):
-        row = _load_game_round_for_user(round_id, db, user)
+        # ERIS_BJ_ROW_LOCK_V1
+        row = db.scalar(
+            select(GameRound)
+            .where(GameRound.id == round_id, GameRound.user_id == user.id)
+            .with_for_update()
+        )
+        if row is None:
+            raise HTTPException(status_code=404, detail="Oyun turu bulunamadı")
         if row.game_type != "blackjack":
             raise HTTPException(status_code=400, detail="Bu round blackjack değil")
         if row.status != "open":
@@ -1495,7 +1570,25 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
         if stake and game_type in {"roulette", "cups", "horse_race", "wheel"} and not choice:
             raise HTTPException(status_code=422, detail="Bahis için sonuç seçimi gerekli")
+        # ERIS_BJ_SINGLE_ACTIVE_V1
+        # Kullanıcı satırını kilitledikten sonra açık eli kontrol et.
+        # Böylece eşzamanlı iki yeni bahis aynı anda başlayamaz.
         locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if game_type == "blackjack":
+            existing = db.scalar(
+                select(GameRound.id)
+                .where(
+                    GameRound.user_id == user.id,
+                    GameRound.game_type == "blackjack",
+                    GameRound.status == "open",
+                )
+                .limit(1)
+            )
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Önce açık Blackjack elini tamamla.",
+                )
         if stake > locked_user.lidya:
             raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
         locked_user.lidya -= stake

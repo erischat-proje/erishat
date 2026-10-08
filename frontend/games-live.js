@@ -261,9 +261,236 @@
 
         let crashState = null;
 
+
+        // ERIS_BLACKJACK_HISTORY_V1
+        const refreshBlackjackHistory = async () => {
+            if (game !== 'blackjack' || !modal?.isConnected) return;
+            let panel = modal.querySelector('[data-bj-history]');
+            if (!panel) {
+                panel = document.createElement('section');
+                panel.dataset.bjHistory = '';
+                panel.className = 'eg-bj-history';
+                const form = modal.querySelector('.eg-form');
+                form?.insertAdjacentElement('beforebegin', panel);
+            }
+            if (!panel) return;
+            panel.textContent = 'Son 53 tur yükleniyor…';
+            try {
+                const data = await api('/games/blackjack/history');
+                if (game !== 'blackjack' || !panel.isConnected) return;
+                const rounds = Array.isArray(data.rounds) ? data.rounds : [];
+                const labels = {
+                    blackjack: 'BJ', win: 'K', loss: 'M', push: 'B'
+                };
+                const header = document.createElement('div');
+                header.className = 'eg-bj-history-head';
+                header.textContent = '🃏 SON 53 TUR · ' + rounds.length + ' EL';
+
+                const summary = document.createElement('div');
+                summary.className = 'eg-bj-history-summary';
+                const wins = Number(data.wins || 0);
+                const losses = Number(data.losses || 0);
+                const pushes = Number(data.pushes || 0);
+                const rate = rounds.length
+                    ? Math.round(wins / rounds.length * 100)
+                    : 0;
+                summary.textContent =
+                    '🏆 ' + wins + ' Kazanç  ·  ❌ ' + losses +
+                    ' Kayıp  ·  🤝 ' + pushes +
+                    ' Berabere  ·  %' + rate + ' Kazanma';
+
+                const strip = document.createElement('div');
+                strip.className = 'eg-bj-history-strip';
+                for (const round of rounds) {
+                    const cell = document.createElement('span');
+                    const result = String(round.result || '');
+                    cell.className = 'eg-bj-history-cell bj-' + (
+                        ['win','blackjack','loss','push'].includes(result)
+                            ? result : 'unknown'
+                    );
+                    cell.textContent = labels[result] || '?';
+                    cell.title = result + ' · ' + String(round.started_at || '');
+                    strip.append(cell);
+                }
+                if (!rounds.length) {
+                    strip.textContent = 'Henüz tamamlanmış Blackjack turun yok.';
+                }
+                panel.replaceChildren(header, summary, strip);
+            } catch (error) {
+                if (game === 'blackjack' && panel.isConnected) {
+                    panel.textContent = 'Tur geçmişi şu anda yüklenemiyor.';
+                }
+            }
+        };
+
+        if (!document.getElementById('erisBlackjackHistoryStyle')) {
+            const style = document.createElement('style');
+            style.id = 'erisBlackjackHistoryStyle';
+            style.textContent = `
+                #erisGamesModal .eg-bj-history {
+                    padding:12px;
+                    margin:9px 0;
+                    border:1px solid #b995504f;
+                    border-radius:15px;
+                    background:linear-gradient(145deg,#181e25,#10141c);
+                    box-shadow:inset 0 1px 0 #ffffff10;
+                    color:#e9dfc9;
+                }
+                #erisGamesModal .eg-bj-history-head {
+                    font-size:12px;
+                    font-weight:900;
+                    letter-spacing:.8px;
+                    color:#f5cb79;
+                    margin-bottom:9px;
+                }
+                #erisGamesModal .eg-bj-history-summary {
+                    font-size:11px;
+                    line-height:1.6;
+                    margin-bottom:10px;
+                    color:#d3dce7;
+                }
+                #erisGamesModal .eg-bj-history-strip {
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:5px;
+                    max-height:112px;
+                    overflow:auto;
+                }
+                #erisGamesModal .eg-bj-history-cell {
+                    width:27px;
+                    height:27px;
+                    display:grid;
+                    place-items:center;
+                    border-radius:7px;
+                    font-size:11px;
+                    font-weight:900;
+                    background:#394150;
+                    color:white;
+                }
+                #erisGamesModal .bj-win,
+                #erisGamesModal .bj-blackjack {
+                    background:#176e51;
+                    color:#c7ffe6;
+                }
+                #erisGamesModal .bj-blackjack {
+                    outline:1px solid #f0c46a;
+                }
+                #erisGamesModal .bj-loss {
+                    background:#842f42;
+                    color:#ffe0e5;
+                }
+                #erisGamesModal .bj-push {
+                    background:#69552b;
+                    color:#ffe7a9;
+                }
+            `;
+            document.head.append(style);
+        }
+
+
+        // ERIS_BLACKJACK_PREMIUM_V1
+        if (!document.getElementById('erisBlackjackPremiumStyle')) {
+            const st = document.createElement('style');
+            st.id = 'erisBlackjackPremiumStyle';
+            st.textContent = `
+                #erisGamesModal.eg-blackjack-mode .eg-panel{
+                    background:linear-gradient(155deg,#15241e,#0c1217);
+                    border:1px solid #d4ae6955;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-form{
+                    display:grid;
+                    grid-template-columns:1fr;
+                    gap:9px;
+                    padding:12px;
+                    border-radius:15px;
+                    border:1px solid #c6a35c55;
+                    background:linear-gradient(140deg,#17372b,#10221e);
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-form>label:first-child{
+                    display:none;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-form>label{
+                    color:#f6d990;
+                    font-weight:800;
+                    font-size:12px;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-stake]{
+                    display:block;
+                    width:100%;
+                    box-sizing:border-box;
+                    margin-top:6px;
+                    min-height:44px;
+                    background:#091913;
+                    color:#ffe6a1;
+                    border:1px solid #d5b56d;
+                    border-radius:10px;
+                    font-size:18px;
+                    font-weight:900;
+                    text-align:center;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-stake-presets{
+                    display:grid;
+                    grid-template-columns:repeat(4,minmax(0,1fr));
+                    gap:6px;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-stake-presets button{
+                    min-width:0;
+                    padding:10px 2px;
+                    border-radius:10px;
+                    border:1px solid #bda66c66;
+                    background:linear-gradient(140deg,#28483b,#142b24);
+                    color:#f9e5b3;
+                    font-weight:900;
+                    font-size:11px;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-play]{
+                    width:100%;
+                    min-height:50px;
+                    border-radius:12px;
+                    background:linear-gradient(100deg,#bd9140,#f5d78c,#bb8b38);
+                    color:#1c241a;
+                    font-size:16px;
+                    font-weight:900;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-controls]{
+                    display:grid!important;
+                    grid-template-columns:repeat(2,minmax(0,1fr));
+                    gap:8px!important;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-controls] button{
+                    min-height:47px;
+                    border-radius:11px;
+                    background:linear-gradient(120deg,#177253,#32ad7c);
+                    color:white;
+                    font-weight:900;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-controls] button:last-child{
+                    background:linear-gradient(120deg,#793d39,#ad604c);
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        // ERIS_BJ_RESTORE_RACE_FIX_V1
+        // ERIS_BJ_RESTORE_FAILURE_LOCK_V1
+        let blackjackRestoreBusy = false;
+        let blackjackRestoreFailed = false;
+        let activeBlackjackRoundId = null;
         const loadGameModule = key => {
+            /* ERIS_BJ_SWITCH_GUARD_V2 */ if ((activeBlackjackRoundId || blackjackRestoreBusy) && game === 'blackjack' && key !== 'blackjack') {
+                modal.querySelector('.eg-result').textContent =
+                    'Önce aktif Blackjack elini tamamla.';
+                return;
+            }
             game = key;
+            queueMicrotask(() => updateBlackjackStakeUI());
+            modal.querySelector('[data-bj-history]')?.remove();
+            if (key === 'blackjack') {
+                queueMicrotask(() => refreshBlackjackHistory());
+                queueMicrotask(() => restoreBlackjackRound());
+            }
         modal.classList.toggle('eg-crash-mode', key === 'crash');
+        modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
 
         // Crash elemanlari diger oyunlara tasinmasin.
         if (key !== 'crash') {
@@ -676,9 +903,142 @@
         }, 500);
 
         let wheelStake=100;
-        let activeBlackjackRoundId = null;
 
+
+        // ERIS_BJ_STAKE_LOCK_V1
+        const updateBlackjackStakeUI = () => {
+            const active = game === 'blackjack';
+            const locked = active && !!activeBlackjackRoundId;
+            const input = modal.querySelector('[data-stake]');
+            if (input) input.disabled = locked;
+
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.disabled = locked;
+                b.classList.toggle(
+                    'bj-selected',
+                    active && b.dataset.stakeValue === input?.value
+                );
+            });
+        };
+
+        modal.querySelector('[data-stake]')?.addEventListener(
+            'input', updateBlackjackStakeUI
+        );
+        modal.querySelector('[data-stake]')?.addEventListener(
+            'change', updateBlackjackStakeUI
+        );
+        updateBlackjackStakeUI();
+        modal.querySelectorAll('[data-stake-value]').forEach(b => {
+            b.addEventListener('click', () => {
+                queueMicrotask(updateBlackjackStakeUI);
+            });
+        });
+
+
+
+
+        // ERIS_BJ_RESTORE_V1
+        const bindBlackjackRound = roundId => {
+            activeBlackjackRoundId = roundId;
+            updateBlackjackStakeUI();
+            const controls = modal.querySelector('[data-controls]');
+            const stage = modal.querySelector('.eg-stage');
+            const playButton = modal.querySelector('[data-play]');
+            const bjMod = gameModules.blackjack();
+            controls.replaceChildren();
+            playButton.disabled = true;
+                    for (const [action, label] of [['hit', 'Kart Çek'], ['stand', 'Dur']]) {
+                        const b = document.createElement('button');
+                        b.textContent = label;
+                        b.onclick = async () => {
+                            controls.querySelectorAll('button').forEach(x => x.disabled = true);
+                            try {
+                                const next = await api('/games/blackjack/' + encodeURIComponent(roundId) + '/action', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ action })
+                                });
+                                if (game !== 'blackjack' || !modal.isConnected ||
+                                    !stage.querySelector('.eris-bj-table')) return;
+                                if (bjMod && typeof bjMod.animate === 'function') {
+                                    await bjMod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.hands?.[0]?.cards?.slice(-1)[0] });
+                                }
+                                const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE',pending:'Hamleni seç: Kart Çek veya Dur'};
+                                                            modal.querySelector('.eg-result').textContent =
+                                                                (names[next.result] || 'EL TAMAMLANDI') +
+                                                                (next.status === 'finished' ? ' • Ödül: ' + (next.payout || 0) + ' Lidya' : '');
+                                if (next.status === 'finished') { refreshBlackjackHistory(); controls.replaceChildren(); activeBlackjackRoundId = null; updateBlackjackStakeUI(); playButton.disabled = false; }
+                                else controls.querySelectorAll('button').forEach(x => x.disabled = false);
+                                refreshBalance();
+                            } catch (e) {
+                                modal.querySelector('.eg-result').textContent = e.message;
+                                controls.querySelectorAll('button').forEach(x => x.disabled = false);
+                            }
+                        };
+                        controls.append(b);
+                    }
+        };
+
+        const restoreBlackjackRound = async () => {
+            if (game !== 'blackjack' || blackjackRestoreBusy ||
+                activeBlackjackRoundId) return;
+            blackjackRestoreBusy = true;
+            blackjackRestoreFailed = false;
+            const currentModal = modal;
+            const playButton = currentModal.querySelector('[data-play]');
+            if (playButton) playButton.disabled = true;
+            try {
+                const data = await api('/games/blackjack/active');
+                if (!data.active || !data.round_id ||
+                    modal !== currentModal || !currentModal.isConnected ||
+                    game !== 'blackjack') return;
+                const stage = currentModal.querySelector('.eg-stage');
+                const bjMod = gameModules.blackjack();
+                bjMod?.render?.(stage);
+                await bjMod?.animate?.(stage, {
+                    state: data.state,
+                    result: 'pending'
+                });
+                if (modal !== currentModal || game !== 'blackjack') return;
+                bindBlackjackRound(data.round_id);
+                currentModal.querySelector('.eg-result').textContent =
+                    'Devam eden Blackjack elin geri yüklendi. Kart Çek veya Dur.';
+            } catch (e) {
+                console.warn('[ErisChat] Blackjack geri yükleme:', e);
+                blackjackRestoreFailed = true;
+                if (game === 'blackjack' && currentModal.isConnected) {
+                    // ERIS_BJ_RETRY_BUTTON_V1
+                    const resultBox = currentModal.querySelector('.eg-result');
+                    if (resultBox) {
+                        resultBox.textContent = 'Blackjack bağlantısı kontrol edilemedi. ';
+                        const retry = document.createElement('button');
+                        retry.type = 'button';
+                        retry.textContent = '🔄 Yeniden Dene';
+                        retry.onclick = () => {
+                            retry.disabled = true;
+                            restoreBlackjackRound();
+                        };
+                        resultBox.append(retry);
+                    }
+                }
+            } finally {
+                blackjackRestoreBusy = false;
+                if (playButton && currentModal.isConnected &&
+                    !activeBlackjackRoundId && !blackjackRestoreFailed) {
+                    playButton.disabled = false;
+                }
+            }
+        };
+
+        // ERIS_BJ_FINAL_GUARDS_V1
+        queueMicrotask(() => restoreBlackjackRound());
         modal.querySelector('[data-play]').onclick = async () => {
+            if (game === 'blackjack' &&
+                (activeBlackjackRoundId || blackjackRestoreBusy ||
+                 blackjackRestoreFailed)) {
+                modal.querySelector('.eg-result').textContent =
+                    'Blackjack elin kontrol ediliyor veya devam ediyor.';
+                return;
+            }
             const button = modal.querySelector('[data-play]'),
                   stage = modal.querySelector('.eg-stage'),
                   result = modal.querySelector('[data-result]') || modal.querySelector('.eg-result'),
@@ -778,44 +1138,16 @@
                     ? 'İlk el dağıtıldı. Kartlarını ve krupiyenin açık kartını inceleyip hamleni seç.'
                     : 'Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
 
-                if (game === 'blackjack' && res.result !== 'pending') {
+                if (game === 'blackjack' && res.result !== 'pending') { refreshBlackjackHistory();
                     activeBlackjackRoundId = null;
+                    updateBlackjackStakeUI();
                     const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE'};
                     modal.querySelector('.eg-result').textContent =
                         (names[res.result] || 'EL TAMAMLANDI') +
                         ' • Ödül: ' + (res.payout || 0) + ' Lidya';
                 }
                 if (game === 'blackjack' && res.result === 'pending') {
-                    activeBlackjackRoundId = res.data.round_id;
-                    for (const [action, label] of [['hit', 'Kart Çek'], ['stand', 'Dur']]) {
-                        const b = document.createElement('button');
-                        b.textContent = label;
-                        b.onclick = async () => {
-                            controls.querySelectorAll('button').forEach(x => x.disabled = true);
-                            try {
-                                const next = await api('/games/blackjack/' + encodeURIComponent(activeBlackjackRoundId) + '/action', {
-                                    method: 'POST',
-                                    body: JSON.stringify({ action })
-                                });
-                                if (game !== 'blackjack' || !modal.isConnected ||
-                                    !stage.querySelector('.eris-bj-table')) return;
-                                if (mod && typeof mod.animate === 'function') {
-                                    await mod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.hands?.[0]?.cards?.slice(-1)[0] });
-                                }
-                                const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE',pending:'Hamleni seç: Kart Çek veya Dur'};
-                                                            modal.querySelector('.eg-result').textContent =
-                                                                (names[next.result] || 'EL TAMAMLANDI') +
-                                                                (next.status === 'finished' ? ' • Ödül: ' + (next.payout || 0) + ' Lidya' : '');
-                                if (next.status === 'finished') { controls.replaceChildren(); activeBlackjackRoundId = null; button.disabled = false; }
-                                else controls.querySelectorAll('button').forEach(x => x.disabled = false);
-                                refreshBalance();
-                            } catch (e) {
-                                modal.querySelector('.eg-result').textContent = e.message;
-                                controls.querySelectorAll('button').forEach(x => x.disabled = false);
-                            }
-                        };
-                        controls.append(b);
-                    }
+                    bindBlackjackRound(res.data.round_id);
                 }
                 refreshBalance();
             } catch (e) {
