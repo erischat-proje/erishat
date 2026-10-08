@@ -546,6 +546,12 @@ const close = () => modal?.remove();
                 scope = 'main';
                 roomId = null;
             }
+            // ERIS_HORSE_SWITCH_CANCEL_V1
+            if (game === 'horse_race' && key !== 'horse_race') {
+                gameModules.horse_race()?.cancel?.();
+                horseRound = null;
+                horseLastRound = null;
+            }
             game = key;
             queueMicrotask(() => updateBlackjackStakeUI());
             modal.querySelector('[data-bj-history]')?.remove();

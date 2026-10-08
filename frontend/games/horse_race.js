@@ -15,6 +15,12 @@
     options: HORSES.map(h => [h[0],h[1]]),
     token: 0,
 
+    cancel() {
+
+        this.token++;
+
+    },
+
     render(container) {
       this.token++;
       container.innerHTML = `

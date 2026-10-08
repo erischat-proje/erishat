@@ -3,7 +3,7 @@
     
     function patchGameSections() {
         // Tüm oyun kartlarını veya tetikleyicilerini bulup doğrudan ErisChatGames.open bağlayalım
-        const cards = document.querySelectorAll('.eg-launcher-card, [data-game], .games-section-grid .game-card, .game-item');
+        const cards = document.querySelectorAll('.eg-launcher-card, .games-section-grid .game-card, .game-item');
         cards.forEach(card => {
             if (!card.dataset.hasDirectListener) {
                 card.dataset.hasDirectListener = "true";
