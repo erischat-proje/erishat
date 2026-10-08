@@ -6,6 +6,21 @@ android {
     namespace 'com.erischat.app'
     compileSdk 35
 
+    signingConfigs {
+        erischat {
+            storeFile file(System.getenv('ERISCHAT_SIGNING_FILE'))
+            storePassword System.getenv('ERISCHAT_KEYSTORE_PASSWORD')
+            keyAlias System.getenv('ERISCHAT_SIGNING_ALIAS')
+            keyPassword System.getenv('ERISCHAT_KEY_PASSWORD')
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.erischat
+        }
+    }
+
     defaultConfig {
         applicationId 'com.erischat.app'
         minSdk 26
