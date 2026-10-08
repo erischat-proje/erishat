@@ -69,7 +69,7 @@
 
   async function gamesDemo(scope='main', roomId=null) {
     const games = [
-      ['roulette','🎰 Rulet','Oda oyunu • demo arayüzü'],
+      ['slot','🎰 Slot','Bireysel oyun • 3 makaralı Slot'],
       ['cups','🥤 4 Kupa','Oda oyunu • demo arayüzü'],
       ['horse_race','🐎 At Yarışı','Oda oyunu • demo arayüzü'],
       ['blackjack','🃏 Blackjack','Kişisel oyun • demo arayüzü'],

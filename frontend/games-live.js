@@ -44,14 +44,14 @@
         wheel: () => window.ErisGameWheel,
         crash: () => window.ErisGameCrash,
         blackjack: () => window.ErisGameBlackjack,
-        roulette: () => window.ErisGameRoulette,
+        slot: () => window.ErisGameSlot,
         cups: () => window.ErisGameCups,
         horse_race: () => window.ErisGameHorseRace,
         vault: () => window.ErisGameVault
     };
 
     const labels = {
-        roulette: '🎰 Rulet',
+        slot: '🎰 Slot',
         cups: '🥤 Dört Kupa',
         horse_race: '🐎 At Yarışı',
         blackjack: '🃏 Blackjack',
@@ -482,6 +482,10 @@
                     'Önce aktif Blackjack elini tamamla.';
                 return;
             }
+            if (key === 'slot') {
+                scope = 'main';
+                roomId = null;
+            }
             game = key;
             queueMicrotask(() => updateBlackjackStakeUI());
             modal.querySelector('[data-bj-history]')?.remove();
@@ -491,6 +495,19 @@
             }
         modal.classList.toggle('eg-crash-mode', key === 'crash');
         modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
+        // SLOT_INDIVIDUAL_UI_V1
+        modal.classList.toggle('eg-slot-mode', key === 'slot');
+        const slotChoiceLabel = modal.querySelector('[data-choice]')?.closest('label');
+        if (slotChoiceLabel && key === 'slot') {
+            slotChoiceLabel.style.display = 'none';
+        }
+        const slotPlayButton = modal.querySelector('[data-play]');
+        if (slotPlayButton && key === 'slot') {
+            slotPlayButton.textContent = '🎰 ÇEVİR';
+        } else if (slotPlayButton && key !== 'blackjack') {
+            slotPlayButton.textContent = 'Oyna';
+        }
+
         // ERIS_BJ_INDIVIDUAL_UI_FIX_V1
         modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', key === 'blackjack' ? 'none' : '');
 
@@ -1413,7 +1430,7 @@
                 const choiceValue = modal.querySelector('[data-choice]').value;
                 const choice = game === 'cups' ? 'cup_' + choiceValue
                     : game === 'horse_race' ? 'horse_' + choiceValue
-                    : game === 'roulette' ? choiceValue
+                    : game === 'slot' ? null
                     : game === 'wheel' ? choiceValue
                     : choiceValue;
                 const res = await api('/games/' + game + '/play', {
