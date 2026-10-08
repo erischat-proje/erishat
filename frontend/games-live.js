@@ -259,6 +259,8 @@
         });
         refreshBalance();
 
+        let crashState = null;
+
         const loadGameModule = key => {
             game = key;
         modal.classList.toggle('eg-crash-mode', key === 'crash');
@@ -480,7 +482,7 @@
         };
         refreshWheelLive(); setInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
 
-        let crashState = null;
+
         let crashBusy = false;
         let crashFetching = false;
         let crashNoticeUntil = 0;
