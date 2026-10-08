@@ -262,9 +262,22 @@
         const loadGameModule = key => {
             game = key;
         modal.classList.toggle('eg-crash-mode', key === 'crash');
+
+        // Crash elemanlari diger oyunlara tasinmasin.
+        if (key !== 'crash') {
+            modal.querySelectorAll(
+                '[data-crash-history], [data-crash-stats], [data-crash-bets]'
+            ).forEach(el => el.remove());
+        }
+
         const crashHead = modal.querySelector('.eg-head');
         const crashWallet = modal.querySelector('.eg-wallet');
         const crashClose = modal.querySelector('[data-close]');
+
+        if (key !== 'crash' && key !== 'wheel' &&
+            crashWallet?.parentElement === crashHead) {
+            crashHead.insertAdjacentElement('afterend', crashWallet);
+        }
         if (key === 'crash' && crashHead && crashWallet && crashClose) {
             crashHead.insertBefore(crashWallet, crashClose);
         }
