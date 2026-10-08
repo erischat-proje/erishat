@@ -108,7 +108,15 @@ def action(state, action):
         if hand_total(player) >= 21:
             hand["done"]=True
     else:
-        hand["done"]=True
+        hand["done"]=False
+
+    # ERIS_BJ_STAND_FIX_V1
+    if action == "stand":
+        hand["done"] = True
+
+    if not hand["done"]:
+        state.update({"deck":deck,"hands":hands,"active_hand":active,"player_hand":player,"player_total":hand_total(player)})
+        return "pending", state
 
     if len(hands) > 1 and not hand["done"]:
         state.update({"deck":deck,"hands":hands,"active_hand":active,"player_hand":player,"player_total":hand_total(player)})
@@ -126,7 +134,7 @@ def action(state, action):
     results=[]
     for h in hands:
         total=hand_total(h["cards"])
-        result="loss" if total>21 or (dealer_total<=21 and total<dealer_total) else ("push" if total==dealer_total else "win")
+        result="loss" if total>21 else ("win" if dealer_total>21 or total>dealer_total else ("push" if total==dealer_total else "loss"))
         h["result"]=result
         results.append(result)
     overall=results[0] if len(results)==1 else "split_complete"
