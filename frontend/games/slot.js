@@ -15,12 +15,18 @@
       container.innerHTML = `
         <div class="eris-slot-machine">
           <div class="eris-slot-top">★ ERIS SLOT ★</div>
+          <div class="eris-slot-lights">● ● ● ● ● ● ● ●</div>
+          <div class="eris-slot-cabinet">
+          <div class="eris-slot-lever" aria-hidden="true">
+            <div class="eris-slot-knob"></div>
+            <div class="eris-slot-arm"></div>
+          </div>
           <div class="eris-slot-reels">
             <div class="eris-slot-reel">🍒</div>
             <div class="eris-slot-reel">7️⃣</div>
             <div class="eris-slot-reel">💎</div>
           </div>
-          <div class="eris-slot-line">◆ ◆ ◆</div>
+          <div class="eris-slot-line">◆ ◆ ◆</div></div>
           <div class="eris-slot-status">3 AYNI SEMBOLÜ YAKALA!</div>
           <div class="eris-slot-paytable">
             🍒 ×5 · 🍋 ×7 · 🔔 ×10 · ⭐ ×15<br>
@@ -34,6 +40,54 @@
             background:linear-gradient(155deg,#382052,#170e29 55%,#3b1742);
             box-shadow:0 15px 35px #0009,inset 0 0 25px #f8c65c24;
             text-align:center;color:#fff;
+          }
+
+          .eris-slot-machine{
+            position:relative;overflow:visible!important;
+            border:8px ridge #dca954!important;
+            background:linear-gradient(145deg,#922d44,#350e35 50%,#6f1938)!important;
+          }
+          .eris-slot-lights{
+            color:#ffe18a;letter-spacing:7px;font-size:18px;
+            text-shadow:0 0 12px #ffcc36;
+            animation:erisLights .6s infinite alternate;
+          }
+          @keyframes erisLights{
+            to{color:#ff6889;text-shadow:0 0 15px #ff3860}
+          }
+          .eris-slot-cabinet{
+            position:relative;margin:14px 12px 8px;
+            padding:14px 9px 4px;border:7px ridge #d4a04a;
+            border-radius:17px;
+            background:linear-gradient(#452143,#180e27);
+          }
+          .eris-slot-lever{
+            position:absolute;right:-38px;top:10px;
+            width:32px;height:105px;transform-origin:bottom center;
+          }
+          .eris-slot-arm{
+            position:absolute;bottom:0;left:13px;
+            width:8px;height:82px;border-radius:8px;
+            background:linear-gradient(90deg,#666,#fff,#777);
+            transform:rotate(12deg);transform-origin:bottom;
+          }
+          .eris-slot-knob{
+            position:absolute;z-index:2;top:0;left:3px;
+            width:29px;height:29px;border-radius:50%;
+            background:radial-gradient(circle at 30% 25%,#ffb0a4,#e22437 50%,#790719);
+            box-shadow:0 2px 12px #ff415b88;
+          }
+          .eris-slot-machine:has(.eris-slot-reel.spinning) .eris-slot-lever{
+            animation:erisPull .55s ease-in-out;
+          }
+          @keyframes erisPull{50%{transform:rotate(32deg)}}
+          .eris-slot-reel{
+            border:4px solid #c9a25c!important;
+            box-shadow:inset 0 10px 15px #0004,0 0 10px #ffca6a33!important;
+          }
+          @media(max-width:380px){
+            .eris-slot-cabinet{margin-right:17px}
+            .eris-slot-lever{right:-31px;transform:scale(.8)}
           }
           .eris-slot-top{
             color:#ffe18b;font-weight:1000;font-size:23px;
