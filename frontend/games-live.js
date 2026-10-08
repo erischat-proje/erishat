@@ -7,7 +7,7 @@
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
-            
+
             const now = ctx.currentTime;
             if (type === "win") {
                 osc.type = "triangle";
@@ -36,7 +36,7 @@
             }
         } catch(e) {}
     }
-    
+
 (() => {
     'use strict';
 
@@ -232,7 +232,66 @@
         st.textContent += '\n/* ERIS_CRASH_COMPACT_V2 */\n\n#erisGamesModal.eg-crash-mode .eg-panel{padding:8px!important}\n#erisGamesModal.eg-crash-mode .eg-head{display:flex;align-items:center;gap:7px;margin:0 0 6px!important}\n#erisGamesModal.eg-crash-mode .eg-head h2{font-size:15px!important;white-space:nowrap}\n#erisGamesModal.eg-crash-mode .eg-head [data-close]{flex:0 0 36px;width:36px;height:36px}\n#erisGamesModal.eg-crash-mode .eg-wallet{order:0;display:flex!important;flex:1;min-width:0;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important;justify-content:flex-end}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-balance]{font-size:clamp(10px,2.7vw,13px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-scope]{display:none!important}\n#erisGamesModal.eg-crash-mode [data-name]{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form>label{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form{padding:6px!important;gap:5px!important}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;width:100%;min-width:0}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0!important;width:100%!important;padding:9px 0!important;font-size:clamp(7px,1.9vw,10px)!important;border-radius:8px!important;white-space:nowrap;letter-spacing:-.5px}\n#erisGamesModal.eg-crash-mode .eg-stage{margin-top:4px!important}\n#erisGamesModal.eg-crash-mode .crash-flight{height:170px!important}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:42px!important}\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:6px!important;margin-bottom:4px!important}\n#erisGamesModal.eg-crash-mode .eg-result{margin-top:4px!important}\n';
         document.head.appendChild(st);
     }
-    const close = () => modal?.remove();
+
+// DORT KUPA V4: kompakt bahis ve ust bakiye
+if (!document.getElementById('erisCupsV4Style')) {
+  const css = document.createElement('style');
+  css.id = 'erisCupsV4Style';
+  css.textContent = `
+    #erisGamesModal.eg-cups-mode [data-name]{display:none!important;}
+    #erisGamesModal.eg-cups-mode .eg-head {
+      display:flex!important; align-items:center!important; gap:8px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-head h2 {
+      flex:1; min-width:0; font-size:18px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-head .eg-wallet {
+      margin:0!important; padding:4px!important; border:0!important;
+      background:none!important; min-width:0; flex:0 1 auto;
+    }
+    #erisGamesModal.eg-cups-mode .eg-wallet [data-balance] {
+      font-size:clamp(10px,2.5vw,13px)!important; white-space:nowrap;
+    }
+    #erisGamesModal.eg-cups-mode .eg-wallet [data-scope] {
+      display:none!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-form {
+      padding:8px!important; gap:5px!important;
+      display:grid!important; grid-template-columns:1fr!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-form>label {
+      font-size:11px!important; margin:0!important;
+    }
+    #erisGamesModal.eg-cups-mode [data-stake] {
+      min-height:36px!important; padding:5px 9px!important;
+      font-size:19px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets {
+      display:grid!important; grid-template-columns:repeat(4,minmax(0,1fr))!important;
+      gap:4px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets button {
+      padding:5px 2px!important; min-height:32px!important;
+      font-size:11px!important;
+    }
+    #erisGamesModal.eg-cups-mode [data-play] {
+      min-height:40px!important; margin:0!important;
+      grid-column:1/-1!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-result {
+      min-height:0!important; margin-top:5px!important; padding:7px!important;
+    }
+  `;
+  document.head.appendChild(css);
+}
+const cupsWallet = modal.querySelector('.eg-wallet');
+const cupsHead = modal.querySelector('.eg-head');
+if (selected === 'cups' && cupsWallet && cupsHead) cupsHead.insertBefore(cupsWallet, cupsHead.querySelector('[data-close]'));
+
+if (selected === 'cups') {
+  modal.classList.add('eg-cups-mode');
+}
+const close = () => modal?.remove();
         modal.querySelector('[data-close]').onclick = close;
         modal.onclick = e => { if (e.target === modal) close(); };
         modal.onkeydown = e => { if (e.key === 'Escape') close(); };
