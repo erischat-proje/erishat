@@ -907,6 +907,210 @@
         let wheelStake=100;
 
 
+
+        // ERIS_BJ_FINAL_COMPACT_V1
+        const bjStakeInput = modal.querySelector('[data-stake]');
+        const bjStakePresets = modal.querySelector('.eg-stake-presets');
+        const bjForm = modal.querySelector('.eg-form');
+
+        const bjStakeBar = document.createElement('div');
+        bjStakeBar.className = 'eg-bj-stake-bar';
+        bjStakeBar.innerHTML = `
+            <button type="button" data-bj-minus aria-label="Bahsi azalt">−</button>
+            <div class="eg-bj-stake-display">
+                <small>SEÇİLEN BAHİS</small>
+                <strong data-bj-amount>100 Lidya</strong>
+            </div>
+            <button type="button" data-bj-plus aria-label="Bahsi artır">+</button>
+        `;
+        bjStakePresets?.parentElement?.insertBefore(bjStakeBar, bjStakePresets);
+
+        const bjRefreshAmount = () => {
+            const amount = Math.max(0, Math.min(10000,
+                Math.trunc(Number(bjStakeInput?.value) || 0)));
+            const display = modal.querySelector('[data-bj-amount]');
+            if (display) display.textContent =
+                amount.toLocaleString('tr-TR') + ' Lidya';
+            bjStakeBar.querySelectorAll('button').forEach(b => {
+                b.disabled = game === 'blackjack' &&
+                    (!!activeBlackjackRoundId || blackjackRestoreBusy);
+            });
+        };
+
+        for (const [selector, delta] of [
+            ['[data-bj-minus]', -10],
+            ['[data-bj-plus]', 10]
+        ]) {
+            bjStakeBar.querySelector(selector).onclick = () => {
+                if (game !== 'blackjack' ||
+                    activeBlackjackRoundId || blackjackRestoreBusy) return;
+                const current = Number(bjStakeInput.value) || 0;
+                bjStakeInput.value = String(Math.max(0,
+                    Math.min(10000, current + delta)));
+                bjStakeInput.dispatchEvent(new Event('input', {bubbles:true}));
+                bjRefreshAmount();
+            };
+        }
+
+        bjStakeInput?.addEventListener('input', bjRefreshAmount);
+        bjStakeInput?.addEventListener('change', bjRefreshAmount);
+        bjStakePresets?.addEventListener('click', () =>
+            queueMicrotask(bjRefreshAmount));
+
+        const bjLayout = () => {
+            const enabled = game === 'blackjack';
+            const head = modal.querySelector('.eg-head');
+            const wallet = modal.querySelector('.eg-wallet');
+            const close = modal.querySelector('[data-close]');
+            if (enabled && head && wallet && close) {
+                head.insertBefore(wallet, close);
+            }
+            bjRefreshAmount();
+        };
+
+        const bjStyle = document.createElement('style');
+        bjStyle.id = 'erisBjFinalCompactStyle';
+        bjStyle.textContent = `
+            #erisGamesModal.eg-blackjack-mode {
+                overflow:hidden!important;
+                padding:0!important;
+                place-items:center!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-panel {
+                display:flex!important;
+                flex-direction:column!important;
+                width:100%!important;
+                max-width:520px!important;
+                height:100dvh!important;
+                max-height:100dvh!important;
+                box-sizing:border-box!important;
+                overflow:hidden!important;
+                padding:8px 10px!important;
+                border-radius:0!important;
+                gap:3px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-head {
+                display:flex!important;
+                align-items:center!important;
+                gap:7px!important;
+                flex-shrink:0;
+                margin:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-head h2 {
+                font-size:13px!important;
+                min-width:0;
+                flex:1;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-wallet {
+                display:flex!important;
+                align-items:center!important;
+                flex:0 1 auto!important;
+                min-width:0;
+                margin:0!important;
+                padding:3px!important;
+                background:transparent!important;
+                border:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-balance] {
+                font-size:11px!important;
+                white-space:nowrap;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-scope],
+            #erisGamesModal.eg-blackjack-mode .eg-intro,
+            #erisGamesModal.eg-blackjack-mode [data-name] {
+                display:none!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-stage {
+                flex:1 1 auto!important;
+                min-height:0!important;
+                overflow:hidden!important;
+                margin:2px 0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-form {
+                flex-shrink:0;
+                gap:5px!important;
+                padding:7px!important;
+                margin:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-form>label {
+                display:none!important;
+            }
+            #erisGamesModal .eg-bj-stake-bar {
+                display:none;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar {
+                display:grid!important;
+                grid-template-columns:48px 1fr 48px;
+                align-items:center;
+                gap:7px;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar button {
+                min-height:43px;
+                border-radius:10px;
+                border:1px solid #d8ba77;
+                background:#284b3b;
+                color:#ffe7a9;
+                font-size:26px;
+                font-weight:900;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display {
+                text-align:center;
+                color:#ffe7a9;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display small {
+                display:block;
+                font-size:9px;
+                letter-spacing:1px;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display strong {
+                display:block;
+                font-size:20px;
+                font-weight:900;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-stake-presets {
+                grid-template-columns:repeat(8,minmax(0,1fr))!important;
+                gap:3px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-stake-presets button {
+                padding:8px 0!important;
+                font-size:9px!important;
+                min-width:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-play] {
+                min-height:44px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-result {
+                flex-shrink:0;
+                min-height:0!important;
+                margin:2px 0!important;
+                padding:6px!important;
+                font-size:11px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-controls] {
+                flex-shrink:0;
+                margin:2px 0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-bj-history] {
+                flex-shrink:0;
+                max-height:65px;
+                overflow:hidden;
+            }
+        `;
+        document.head.appendChild(bjStyle);
+
+        const bjLayoutObserver = new MutationObserver(() => {
+            if (!modal.isConnected) {
+                bjLayoutObserver.disconnect();
+                return;
+            }
+            bjLayout();
+        });
+        bjLayoutObserver.observe(modal, {
+            attributes:true,
+            attributeFilter:['class']
+        });
+        queueMicrotask(bjLayout);
+
         // ERIS_BJ_STAKE_LOCK_V1
         const updateBlackjackStakeUI = () => {
             const active = game === 'blackjack';
