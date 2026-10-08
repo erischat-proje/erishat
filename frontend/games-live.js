@@ -320,6 +320,8 @@ const close = () => modal?.remove();
         refreshBalance();
 
         let crashState = null;
+        let vaultState = null;
+        let vaultLastResult = null;
 
 
         // ERIS_BLACKJACK_HISTORY_V1
@@ -1510,9 +1512,7 @@ const close = () => modal?.remove();
         // ERIS_HORSE_LIVE_FRONTEND_V1
         // ERIS_VAULT_LIVE_STATE_V1
         let vaultBusy = false;
-        let vaultState = null;
         let vaultFetching = false;
-        let vaultLastResult = null;
 
         const refreshVaultLive = async () => {
             if (game !== 'vault' || !modal?.isConnected ||
