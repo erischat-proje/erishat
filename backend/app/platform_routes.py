@@ -1542,10 +1542,228 @@ def register_platform_auth(current_user_dependency):
             ),
         }
 
+
+    # ERIS_CUPS_REAL_ROUND_V1
+    # Sonuç sunucuda saklanır; seçim yapılana kadar açıklanmaz.
+
+    @router.post("/games/cups/round/start")
+    def cups_round_start(
+        payload: dict | None = None,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        payload = payload or {}
+        stake = payload.get("stake")
+        if type(stake) is not int or not 0 <= stake <= 10000:
+            raise HTTPException(status_code=422, detail="Geçersiz bahis")
+
+        room_id = str(payload.get("room_id") or "").strip() or None
+        if room_id:
+            room = db.get(Room, room_id)
+            if not room:
+                raise HTTPException(status_code=404, detail="Oda bulunamadı")
+            member = db.scalar(
+                select(RoomMember.id).where(
+                    RoomMember.room_id == room_id,
+                    RoomMember.user_id == user.id,
+                )
+            )
+            if not member:
+                raise HTTPException(status_code=403, detail="Odaya katılmalısın")
+
+        locked_user = db.scalar(
+            select(User).where(User.id == user.id).with_for_update()
+        )
+        existing = db.scalar(
+            select(GameRound).where(
+                GameRound.user_id == user.id,
+                GameRound.game_type == "cups",
+                GameRound.status == "open",
+            ).limit(1)
+        )
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="Önce açık Dört Kupa turunu tamamla",
+            )
+        if stake > locked_user.lidya:
+            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
+
+        result = _weighted_result("cups")
+        round_id = str(uuid4())
+        now = datetime.now(timezone.utc)
+        state = {
+            "winning_cup": result,
+            "stake": stake,
+            "room_id": room_id,
+            "created_at": now.isoformat(),
+        }
+
+        locked_user.lidya -= stake
+        db.add(GameRound(
+            id=round_id,
+            user_id=user.id,
+            room_id=room_id,
+            game_type="cups",
+            status="open",
+            started_at=now,
+            ends_at=now,
+            result_key=None,
+            state_data=json.dumps(
+                state, ensure_ascii=False, separators=(",", ":")
+            ),
+        ))
+        db.flush()
+        db.commit()
+
+        return {
+            "round_id": round_id,
+            "stake": stake,
+            "balance": locked_user.lidya,
+            "status": "open",
+        }
+
+    @router.get("/games/cups/round/active")
+    def cups_round_active(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = db.scalar(
+            select(GameRound).where(
+                GameRound.user_id == user.id,
+                GameRound.game_type == "cups",
+                GameRound.status == "open",
+            ).limit(1)
+        )
+        if not row:
+            return {"active": False}
+        state = json.loads(row.state_data or "{}")
+        return {
+            "active": True,
+            "round_id": row.id,
+            "stake": state.get("stake", 0),
+        }
+
+
+    # ERIS_CUPS_ROUND_STATUS_V1
+    @router.get("/games/cups/round/{round_id}/status")
+    def cups_round_status(
+        round_id: str,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        row = db.scalar(
+            select(GameRound).where(
+                GameRound.id == round_id,
+                GameRound.user_id == user.id,
+                GameRound.game_type == "cups",
+            )
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail="Tur bulunamadı")
+
+        state = json.loads(row.state_data or "{}")
+        if row.status == "open":
+            return {
+                "status": "open",
+                "round_id": round_id,
+                "stake": state.get("stake", 0),
+            }
+
+        return {
+            "status": "finished",
+            "round_id": round_id,
+            "stake": state.get("stake", 0),
+            "choice": state.get("choice"),
+            "winning_cup": state.get("winning_cup"),
+            "payout": state.get("payout", 0),
+        }
+
+    @router.post("/games/cups/round/{round_id}/choose")
+    def cups_round_choose(
+        round_id: str,
+        payload: dict | None = None,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        payload = payload or {}
+        choice = str(payload.get("choice") or "")
+        if choice not in CUPS:
+            raise HTTPException(status_code=422, detail="Geçersiz kupa")
+
+        locked_user = db.scalar(
+            select(User).where(User.id == user.id).with_for_update()
+        )
+        row = db.scalar(
+            select(GameRound).where(
+                GameRound.id == round_id,
+                GameRound.user_id == user.id,
+                GameRound.game_type == "cups",
+            ).with_for_update()
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail="Tur bulunamadı")
+        if row.status != "open":
+            raise HTTPException(status_code=409, detail="Tur tamamlandı")
+
+        if row.room_id:
+            member = db.scalar(
+                select(RoomMember.id).where(
+                    RoomMember.room_id == row.room_id,
+                    RoomMember.user_id == user.id,
+                )
+            )
+            if not member:
+                raise HTTPException(status_code=403, detail="Oda erişimi yok")
+
+        state = json.loads(row.state_data or "{}")
+        result = state["winning_cup"]
+        stake = int(state["stake"])
+        payout = game_payout("cups", choice, result, stake, state)
+
+        row.status = "finished"
+        row.result_key = result
+        row.ends_at = datetime.now(timezone.utc)
+        state.update({
+            "choice": choice,
+            "result": result,
+            "payout": payout,
+        })
+        row.state_data = json.dumps(
+            state, ensure_ascii=False, separators=(",", ":")
+        )
+
+        if stake:
+            db.add(GameBet(
+                round_id=round_id,
+                user_id=user.id,
+                choice=choice,
+                amount=stake,
+                payout=payout,
+            ))
+        locked_user.lidya += payout
+
+        response = _save_game_play(
+            db, user, "cups", choice, result, state
+        )
+        response.update({
+            "round_id": round_id,
+            "stake": stake,
+            "payout": payout,
+            "balance": locked_user.lidya,
+            "winning_cup": result,
+        })
+        return response
+
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
         if game_type not in GAME_TYPES: raise HTTPException(status_code=404, detail="Oyun bulunamadı")
+        if game_type == "cups":
+            raise HTTPException(
+                status_code=410,
+                detail="Dört Kupa için yeni tur başlatma ve kupa seçme API'sini kullanın."
+            )
         if game_type == "crash":
             raise HTTPException(status_code=410, detail="Eski Crash kapatıldı. Canlı Crash sistemini kullanın.")
         payload = payload or {}
