@@ -166,7 +166,16 @@ column-gap:9px
 @media(max-width:390px){#home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))}#home .homeMenuItem{min-height:104px;gap:9px;padding:11px}#home .homeMenuIcon{width:25px;height:25px}#home .homeMenuItem strong{font-size:12px}#home .homeMenuItem small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#home .homeMenuItem{transition:none}}
 </style><link rel="stylesheet" href="./typography-v1.css?v=profile-vip-seats-20261004"><link rel="stylesheet" href="./home-part1.css?v=dev-20261003"><link rel="stylesheet" href="./visual-layout.css?v=room-system-20261003"><link rel="stylesheet" href="./dev-update.css?v=house-layout-20261004">
-<link rel="stylesheet" href="./screen-layout-fix.css?v=chat-seats-20261004"><link rel="stylesheet" href="./profile-polish.css?v=premium720-20261004"><link rel="stylesheet" href="./vip-designs.css?v=vip-art-20261004"><link rel="stylesheet" href="./vip-entrance.css?v=vip-art-20261004"><link rel="stylesheet" href="./vip-entry-fit.css?v=entry-full-20261004"></head><body>
+<link rel="stylesheet" href="./screen-layout-fix.css?v=chat-seats-20261004"><link rel="stylesheet" href="./profile-polish.css?v=premium720-20261004"><link rel="stylesheet" href="./vip-designs.css?v=vip-art-20261004"><link rel="stylesheet" href="./vip-entrance.css?v=vip-art-20261004"><link rel="stylesheet" href="./vip-entry-fit.css?v=entry-full-20261004">
+<style id="eris-own-profile-name-align">
+#profile .profile.card .name h2{
+  display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+  align-items:flex-start!important;justify-content:flex-start!important;
+  text-align:left!important;width:100%;gap:5px!important;
+}
+#profile .profile.card .name h2>.eris-role-icon{align-self:flex-start!important;margin:0!important}
+</style>
+</head><body>
 <main class="app"><header class="top"><div class="brand">Eris<i>Chat</i></div><div class="actions"><div class="balance" id="demoBalance">0 Lidya</div><button class="icon" onclick="showView('search')">⌕</button></div></header><section class="content">
 <section id="home" class="view show">
 <div class="section">
