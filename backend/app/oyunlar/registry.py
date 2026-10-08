@@ -1,7 +1,7 @@
-from . import blackjack, cups, crash, horse_race, roulette, vault, wheel
+from . import blackjack, cups, crash, horse_race, slot, vault, wheel
 
 GAME_ENGINES = {
-    "roulette": roulette,
+    "slot": slot,
     "cups": cups,
     "horse_race": horse_race,
     "blackjack": blackjack,
@@ -10,8 +10,8 @@ GAME_ENGINES = {
     "wheel": wheel,
 }
 
-ROOM_GAMES = frozenset({"roulette", "cups", "horse_race", "wheel"})
-PRIVATE_GAMES = frozenset({"blackjack", "crash", "vault"})
+ROOM_GAMES = frozenset({"cups", "horse_race", "wheel"})
+PRIVATE_GAMES = frozenset({"blackjack", "crash", "vault", "slot"})
 
 
 def get_engine(game_type: str):

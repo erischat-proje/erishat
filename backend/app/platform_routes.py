@@ -694,13 +694,13 @@ def register_platform_auth(current_user_dependency):
         record("system", "room_announcement_deleted", user_id=user.id, room_id=room_id, announcement_id=announcement_id)
         return {"deleted": True, "id": announcement_id}
 
-    GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
-    ROOM_GAME_TYPES = set(GAME_TYPES)
-    PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
+    GAME_TYPES = {"slot", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
+    ROOM_GAME_TYPES = GAME_TYPES - {"blackjack", "crash", "vault", "slot"}
+    PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault", "slot"}
     GAME_PROFILES = {
-        "roulette": {
-            "results": [(str(n), 1) for n in range(37)],
-            "description": "Avrupa ruleti: tek sıfır, 37 cep, sayı veya kırmızı/siyah bahisleri.",
+        "slot": {
+            "results": [(name, 1) for name in ("cherry", "lemon", "bell", "star", "diamond", "seven", "crown")],
+            "description": "Üç makaralı Slot: üç aynı sembol ödül kazandırır.",
         },
         "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
         "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
@@ -722,14 +722,17 @@ def register_platform_auth(current_user_dependency):
             return stake * {"common":0,"rare":2,"epic":4,"legendary":10,"mythic":20}.get(result,0)
         if game_type == "crash":
             return 0  # Legacy auto-cashout disabled; use live manual cashout.
-        if game_type == "roulette":
-            number = int(result)
-            color = data.get("winning_color")
-            if choice == str(number): return stake * 36
-            if choice in {"red", "black"} and choice == color: return stake * 2
-            if choice == "even" and number != 0 and number % 2 == 0: return stake * 2
-            if choice == "odd" and number % 2 == 1: return stake * 2
-            return 0
+        if game_type == "slot":
+            multipliers = {
+                "cherry": 5,
+                "lemon": 7,
+                "bell": 10,
+                "star": 15,
+                "diamond": 25,
+                "seven": 50,
+                "crown": 100,
+            }
+            return stake * multipliers.get(result, 0)
         if game_type == "wheel":
             if choice != result:
                 return 0
@@ -1547,6 +1550,11 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=410, detail="Eski Crash kapatıldı. Canlı Crash sistemini kullanın.")
         payload = payload or {}
         room_id = str(payload.get("room_id") or "").strip() or None
+        if game_type == "slot" and room_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Slot yalnızca bireysel oynanabilir."
+            )
         if room_id:
             room = db.get(Room, room_id)
             if not room:
@@ -1562,13 +1570,11 @@ def register_platform_auth(current_user_dependency):
         stake = raw_stake
         if game_type == "cups" and choice not in CUPS:
             raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
-        if game_type == "roulette" and choice and choice not in ({x[0] for x in GAME_PROFILES["roulette"]["results"]} | {"red", "black", "even", "odd"}):
-            raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
         if game_type == "horse_race" and choice and choice not in {f"horse_{i}" for i in range(1, 8)}:
             raise HTTPException(status_code=400, detail="Geçersiz at seçimi")
         if game_type == "wheel" and choice and choice not in {x[0] for x in GAME_PROFILES["wheel"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz çark seçimi")
-        if stake and game_type in {"roulette", "cups", "horse_race", "wheel"} and not choice:
+        if stake and game_type in {"cups", "horse_race", "wheel"} and not choice:
             raise HTTPException(status_code=422, detail="Bahis için sonuç seçimi gerekli")
         # ERIS_BJ_SINGLE_ACTIVE_V1
         # Kullanıcı satırını kilitledikten sonra açık eli kontrol et.
