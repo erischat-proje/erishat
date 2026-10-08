@@ -1139,8 +1139,28 @@ def register_platform_auth(current_user_dependency):
             )
         ))
 
+        finished_rounds = db.scalars(
+            select(GameRound)
+            .where(
+                GameRound.game_type == "crash_live",
+                GameRound.status == "finished",
+                GameRound.result_key.is_not(None),
+            )
+            .order_by(GameRound.started_at.desc())
+            .limit(12)
+        ).all()
+
+        recent_rounds = [
+            {
+                "id": previous.id,
+                "multiplier": float(previous.result_key),
+            }
+            for previous in finished_rounds
+        ]
+
         payload = {
             "round_id": row.id,
+            "recent_rounds": recent_rounds,
             "status": row.status,
             "betting_remaining": int(betting_remaining + 0.999),
             "betting_open": row.status == "open" and betting_remaining > 0,

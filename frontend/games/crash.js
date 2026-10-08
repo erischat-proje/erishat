@@ -13,67 +13,109 @@
 
         render(container) {
             container.innerHTML = `
-                <div style="position:relative; width:100%; height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle, #1a1226 0%, #080510 100%); border-radius:14px; overflow:hidden; border:1px solid rgba(239,68,68,0.3);">
-                    <canvas id="proCrashCanvas" width="280" height="150" style="width:100%; height:100%;"></canvas>
-                    <div id="crashMultiplierText" style="position:absolute; font-size:30px; font-weight:900; color:#ef4444; text-shadow:0 0 20px rgba(239,68,68,0.6);">1.00x</div>
-                </div>
-                <div style="font-size:11px; color:#fca5a5; margin-top:8px; text-align:center; font-weight:600;">🚀 Profesyonel Crash</div>
-            `;
-            this.drawScene(1.00, 0);
+              <div class="crash-flight" style="position:relative;height:265px;overflow:hidden;border-radius:20px;background:radial-gradient(ellipse at 65% 15%,#243653,#101528 48%,#080b17);border:1px solid #52658b55;box-shadow:inset 0 0 50px #080d20,0 12px 35px #0005">
+                <canvas id="proCrashCanvas" width="600" height="400" style="width:100%;height:100%;display:block"></canvas>
+                <div style="position:absolute;top:15px;left:16px;font-size:10px;letter-spacing:2px;color:#92b5d9;font-weight:900">ERIS CRASH · LIVE</div>
+                <div id="crashMultiplierText" style="position:absolute;top:43px;left:0;width:100%;text-align:center;font-size:clamp(36px,9vw,58px);font-weight:950;color:#45f6ad;text-shadow:0 0 28px #22c55e88;pointer-events:none">1.00x</div>
+                <div style="position:absolute;bottom:12px;left:16px;color:#8193b5;font-size:10px;letter-spacing:1px">🚀 CANLI UÇUŞ GRAFİĞİ</div>
+              </div>`;
+            this.drawScene(1, 0);
         },
 
         drawScene(multiplier, progress) {
             const canvas = document.getElementById('proCrashCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!ctx) return;
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
 
-            ctx.strokeStyle = 'rgba(239, 68, 68, 0.05)';
+            ctx.strokeStyle = 'rgba(132,173,231,.09)';
             ctx.lineWidth = 1;
-            for (let i = 0; i < canvas.width; i += 30) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            for (let x = 0; x < w; x += 50) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
             }
-            for (let j = 0; j < canvas.height; j += 30) {
-                ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+            for (let y = 0; y < h; y += 50) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
             }
+
+            const p = Math.max(0, Math.min(1, progress));
+            const sx = 35, sy = h - 45;
+            const ex = sx + p * (w - 100);
+            const ey = sy - Math.pow(p, 1.6) * (h - 155);
+
+            const gradient = ctx.createLinearGradient(0, h, w, 0);
+            gradient.addColorStop(0, '#2563eb');
+            gradient.addColorStop(.5, '#20c9f3');
+            gradient.addColorStop(1, '#54ffad');
 
             ctx.beginPath();
-            ctx.moveTo(20, canvas.height - 20);
-            ctx.bezierCurveTo(canvas.width * 0.7, canvas.height - 20, canvas.width * 0.85, canvas.height - (progress * 50), canvas.width - 30, canvas.height - 20 - (progress * 130));
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 3;
+            ctx.moveTo(sx, sy);
+            for (let i = 1; i <= 80; i++) {
+                const t = p * i / 80;
+                ctx.lineTo(sx + t * (w - 100), sy - Math.pow(t, 1.6) * (h - 155));
+            }
+            ctx.strokeStyle = '#28eeb966';
+            ctx.lineWidth = 15;
+            ctx.shadowBlur = 22;
+            ctx.shadowColor = '#34e9bd';
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 5;
             ctx.stroke();
 
-            const rx = canvas.width - 30;
-            const ry = canvas.height - 20 - (progress * 130);
-            ctx.beginPath();
-            ctx.arc(rx, Math.max(20, ry), 5, 0, 2 * Math.PI);
-            ctx.fillStyle = '#facc15';
-            ctx.fill();
+            ctx.save();
+            ctx.translate(ex, ey);
+            ctx.rotate(-Math.atan2(1.6 * Math.pow(Math.max(p,.01),.6) * (h - 155), w - 100));
+            ctx.font = '46px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#64ffe0';
+            ctx.shadowBlur = 20;
+            ctx.fillText('🚀', 0, 0);
+            ctx.restore();
         },
 
         updateLive(container, state) {
-            if (!container || !container.isConnected) return;
-
-            const multiplier = Math.max(1, Number(state?.multiplier || 1));
+            if (!container?.isConnected) return;
             const status = state?.status || 'open';
+            const multiplier = Math.max(1, Number(state?.multiplier || 1));
             const text = container.querySelector('#crashMultiplierText');
+            if (!text) return;
 
-            if (text) {
+            if (this._frame) cancelAnimationFrame(this._frame);
+            const previous = this._shownMultiplier ?? multiplier;
+            const start = performance.now();
+            const duration = status === 'running' ? 400 : 0;
+
+            const paint = now => {
+                if (!container.isConnected) return;
+                const t = duration ? Math.min(1, (now - start) / duration) : 1;
+                const shown = previous + (multiplier - previous) * t;
+                this._shownMultiplier = shown;
+
                 if (status === 'open') {
                     text.textContent = '⏳ ' + Number(state.betting_remaining || 0) + ' sn';
                     text.style.color = '#facc15';
+                } else if (status === 'finished') {
+                    text.textContent = '💥 ' + multiplier.toFixed(2) + 'x';
+                    text.style.color = '#fb7185';
                 } else {
-                    text.textContent = multiplier.toFixed(2) + 'x';
-                    text.style.color = status === 'finished' ? '#ef4444' : '#22c55e';
+                    text.textContent = shown.toFixed(2) + 'x';
+                    text.style.color = '#45f6ad';
                 }
-            }
 
-            const progress = status === 'open'
-                ? 0
-                : Math.min(1, Math.max(0, (multiplier - 1) / 10));
+                const progress = status === 'open' ? 0 :
+                    Math.min(1, Math.max(0, Math.log2(Math.max(1, shown)) / 5));
+                this.drawScene(shown, progress);
 
-            this.drawScene(multiplier, progress);
+                if (t < 1) this._frame = requestAnimationFrame(paint);
+            };
+
+            if (status === 'open') this._shownMultiplier = 1;
+            if (status === 'finished') this._shownMultiplier = multiplier;
+            this._frame = requestAnimationFrame(paint);
         },
 
         async animate(container, data) {
