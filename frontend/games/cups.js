@@ -169,7 +169,7 @@
         const plan = this.roundPlan;
         if (!plan || !Number.isInteger(plan.initial_cup) ||
             plan.initial_cup < 1 || plan.initial_cup > 4 ||
-            !Array.isArray(plan.swaps) || plan.swaps.length !== 35 ||
+            !Array.isArray(plan.swaps) || ![20, 35].includes(plan.swaps.length) ||
             !plan.swaps.every(pair => Array.isArray(pair) &&
               pair.length === 2 && pair[0] !== pair[1] &&
               pair.every(n => Number.isInteger(n) && n >= 0 && n < 4))) {
