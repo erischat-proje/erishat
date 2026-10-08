@@ -547,6 +547,37 @@
         modal.dataset.slotBusy = '1';
         lever.disabled = true;
         lever.classList.add('pulling');
+        const cabinet = container.querySelector('.eris-slot-cabinet');
+        if (cabinet) {
+          const ghost = lever.cloneNode(true);
+          ghost.disabled = true;
+          ghost.classList.remove('pulling');
+          ghost.classList.add('eris-slot-ghost');
+          ghost.removeAttribute('id');
+          cabinet.appendChild(ghost);
+          const rect = ghost.getBoundingClientRect();
+          document.body.appendChild(ghost);
+          ghost.style.cssText =
+            'position:fixed!important;left:' + rect.left +
+            'px!important;top:' + rect.top +
+            'px!important;width:' + rect.width +
+            'px!important;height:' + rect.height +
+            'px!important;z-index:999999!important;' +
+            'border:0!important;background:transparent!important;' +
+            'transform-origin:50% 85%!important;' +
+            'pointer-events:none!important;';
+          ghost.animate([
+            {transform:'translateY(0) scaleY(1)',offset:0},
+            {transform:'translateY(43px) scaleY(.78)',offset:.38},
+            {transform:'translateY(43px) scaleY(.78)',offset:.65},
+            {transform:'translateY(0) scaleY(1)',offset:1}
+          ],{
+            duration:650,
+            easing:'ease-in-out'
+          });
+          ghost.style.pointerEvents = 'none';
+          setTimeout(() => ghost.remove(), 680);
+        }
         play.click();
       };
 
