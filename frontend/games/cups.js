@@ -60,7 +60,43 @@
     }
     .eris-cup.pickable { cursor:pointer; }
     .eris-cup.pickable:focus-visible { outline:2px solid #ffdc77; }
-    .eris-cup.revealed .eris-cup-body {
+
+ .eris-cup {
+   will-change:transform;
+ }
+ .eris-cup.revealed .eris-cup-body {
+   animation:erisCupReveal .65s cubic-bezier(.2,.8,.2,1) forwards;
+ }
+ .eris-cup.revealed .eris-cup-coin {
+   opacity:1;
+   animation:erisCupGold 1s ease-in-out infinite alternate;
+ }
+ .eris-cup.selected {
+   filter:drop-shadow(0 0 9px #ffe08499);
+ }
+ .eris-cups-board.cups-win {
+   border-color:#ffe18d;
+   box-shadow:0 0 24px #ffd86a44;
+ }
+ .eris-cups-board.cups-lose {
+   border-color:#a06b9c;
+ }
+ @keyframes erisCupReveal {
+   0% {transform:translateY(0) rotate(0)}
+   65% {transform:translateY(-48px) rotate(-9deg)}
+   100% {transform:translateY(-39px) rotate(-7deg)}
+ }
+ @keyframes erisCupGold {
+   from {filter:drop-shadow(0 0 3px #ffd66a)}
+   to {filter:drop-shadow(0 0 15px #fff1a0)}
+ }
+ @media(prefers-reduced-motion:reduce) {
+   .eris-cup.revealed .eris-cup-body,
+   .eris-cup.revealed .eris-cup-coin {
+     animation:none!important;
+   }
+ }
+ .eris-cup.revealed .eris-cup-body {
       transform:translateY(-35px) rotate(-7deg);
     }
     .eris-cup.revealed .eris-cup-coin { opacity:1; }
@@ -129,33 +165,61 @@
       });
 
       try {
-        for (let i = 0; i < 10; i++) {
+        // ERIS_CUPS_PREMIUM_SHUFFLE_V2
+        // Her turda dört kupa iki eşzamanlı çift halinde hareket eder.
+        const patterns = [
+          [[0,3],[1,2]],
+          [[0,2],[1,3]],
+          [[0,1],[2,3]]
+        ];
+
+        const randomIndex = max => {
+          if (globalThis.crypto?.getRandomValues) {
+            const value = new Uint32Array(1);
+            crypto.getRandomValues(value);
+            return value[0] % max;
+          }
+          return Math.floor(Math.random() * max);
+        };
+
+        for (let step = 0; step < 9; step++) {
           if (!table.isConnected ||
               container.querySelector('.eris-cups-table') !== table) return;
-          const a = i % 4;
-          const b = (i * 3 + 1) % 4;
-          const j = a === b ? (b + 1) % 4 : b;
-          const first = [...table.children];
-          const x = first[a], y = first[j];
-          const rx = x.getBoundingClientRect();
-          const ry = y.getBoundingClientRect();
-          const dx = ry.left - rx.left;
-          const dy = ry.top - rx.top;
 
-          x.style.transition = 'transform 260ms ease-in-out';
-          y.style.transition = 'transform 260ms ease-in-out';
-          x.style.transform = `translate(${dx}px,${dy - 13}px)`;
-          y.style.transform = `translate(${-dx}px,${-dy + 13}px)`;
-          await wait(280);
-          x.style.transition = 'none';
-          y.style.transition = 'none';
-          x.style.transform = '';
-          y.style.transform = '';
           const current = [...table.children];
-          const positions = current.map(el => el);
-          positions[a] = y;
-          positions[j] = x;
-          table.replaceChildren(...positions);
+          const next = [...current];
+          const pattern = patterns[randomIndex(patterns.length)];
+          const moves = [];
+
+          for (const [a,b] of pattern) {
+            const x = current[a];
+            const y = current[b];
+            const rx = x.getBoundingClientRect();
+            const ry = y.getBoundingClientRect();
+            const dx = ry.left - rx.left;
+
+            moves.push([x, dx, -22], [y, -dx, 22]);
+            next[a] = y;
+            next[b] = x;
+          }
+
+          for (const [cup, dx, arc] of moves) {
+            cup.style.zIndex = arc < 0 ? '4' : '2';
+            cup.style.transition =
+              'transform 340ms cubic-bezier(.35,0,.25,1)';
+            cup.style.transform =
+              `translate3d(${dx}px,${arc}px,0)`;
+          }
+
+          await wait(365);
+
+          for (const [cup] of moves) {
+            cup.style.transition = 'none';
+            cup.style.transform = '';
+            cup.style.zIndex = '';
+          }
+
+          table.replaceChildren(...next);
           await wait(35);
         }
 
@@ -197,6 +261,9 @@
       const status = container.querySelector('.eris-cups-status');
       const winning = String(data.winning_cup || '').replace('cup_','');
       const selected = String(data.choice || '').replace('cup_','');
+      const board = container.querySelector('.eris-cups-board');
+      board?.classList.remove('cups-win', 'cups-lose');
+      board?.classList.add(selected === winning ? 'cups-win' : 'cups-lose');
       const cups = [...container.querySelectorAll('.eris-cup')];
       cups.forEach(c => {
         c.disabled = true;

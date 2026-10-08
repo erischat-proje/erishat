@@ -495,6 +495,169 @@
             }
         modal.classList.toggle('eg-crash-mode', key === 'crash');
         modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
+
+
+        // ERIS_CUPS_BET_CONTROLS_V2
+        if (key === 'cups') {
+            const form = modal.querySelector('.eg-form');
+            const stake = form?.querySelector('[data-stake]');
+            const presets = form?.querySelector('.eg-stake-presets');
+            if (form && stake && presets) {
+                let controls = form.querySelector('[data-cups-bet-controls]');
+                if (!controls) {
+                    controls = document.createElement('div');
+                    controls.dataset.cupsBetControls = '1';
+                    controls.className = 'eg-cups-bet-controls';
+                    controls.innerHTML = `
+                        <button type="button" data-cups-minus aria-label="Bahsi azalt">−</button>
+                        <div class="eg-cups-bet-summary">
+                            <small>OLASI KAZANÇ · 3,6×</small>
+                            <strong data-cups-potential>360 Lidya</strong>
+                        </div>
+                        <button type="button" data-cups-plus aria-label="Bahsi artır">+</button>
+                    `;
+                    presets.insertAdjacentElement('beforebegin', controls);
+                }
+                const refresh = () => {
+                    const value = Math.max(0, Math.min(10000, Math.trunc(Number(stake.value) || 0)));
+                    const potential = controls.querySelector('[data-cups-potential]');
+                    if (potential) potential.textContent =
+                        Math.round(value * 3.6).toLocaleString('tr-TR') + ' Lidya';
+                    presets.querySelectorAll('[data-stake-value]').forEach(b => {
+                        b.classList.toggle('cups-selected', Number(b.dataset.stakeValue) === value);
+                    });
+                };
+                controls.querySelector('[data-cups-minus]').onclick = () => {
+                    stake.value = String(Math.max(0, (Number(stake.value) || 0) - 25));
+                    stake.dispatchEvent(new Event('input', {bubbles:true}));
+                    refresh();
+                };
+                controls.querySelector('[data-cups-plus]').onclick = () => {
+                    stake.value = String(Math.min(10000, (Number(stake.value) || 0) + 25));
+                    stake.dispatchEvent(new Event('input', {bubbles:true}));
+                    refresh();
+                };
+                stake.addEventListener('input', refresh);
+                presets.addEventListener('click', () => queueMicrotask(refresh));
+                refresh();
+            }
+        } else {
+            modal.querySelector('[data-cups-bet-controls]')?.remove();
+        }
+
+        // ERIS_CUPS_PREMIUM_BET_V2
+        modal.classList.toggle('eg-cups-mode', key === 'cups');
+        if (!document.getElementById('erisCupsPremiumBetStyle')) {
+            const css = document.createElement('style');
+            css.id = 'erisCupsPremiumBetStyle';
+            css.textContent = `
+
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-controls {
+                display:grid;
+                grid-template-columns:48px minmax(0,1fr) 48px;
+                align-items:center;
+                gap:9px;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-controls>button {
+                min-height:48px;
+                border:1px solid #b58a55;
+                border-radius:13px;
+                background:#352343;
+                color:#ffe3a0;
+                font-size:26px;
+                font-weight:900;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-summary {
+                text-align:center;
+                padding:6px 2px;
+                border-radius:12px;
+                background:#1b142b;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-summary small {
+                display:block;
+                color:#bea9ce;
+                font-size:10px;
+                font-weight:800;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-summary strong {
+                display:block;
+                margin-top:3px;
+                color:#ffdb83;
+                font-size:17px;
+              }
+              #erisGamesModal.eg-cups-mode .eg-form {
+                display:grid!important;
+                grid-template-columns:1fr!important;
+                gap:12px!important;
+                padding:16px!important;
+                border:1px solid #a87a43!important;
+                border-radius:20px!important;
+                background:linear-gradient(150deg,#30203e,#130e20)!important;
+                box-shadow:inset 0 1px #ffffff14,0 12px 30px #0005;
+              }
+              #erisGamesModal.eg-cups-mode .eg-form>label:first-child {
+                display:none!important;
+              }
+              #erisGamesModal.eg-cups-mode .eg-form>label {
+                display:block!important;
+                font-size:12px;
+                font-weight:900;
+                color:#e9d4ad;
+              }
+              #erisGamesModal.eg-cups-mode [data-stake] {
+                display:block;
+                width:100%;
+                box-sizing:border-box;
+                margin-top:9px;
+                padding:12px;
+                min-height:54px;
+                border:1px solid #b58a55;
+                border-radius:14px;
+                background:#160f24;
+                color:#ffdf91;
+                font-size:23px;
+                font-weight:900;
+                text-align:center;
+              }
+              #erisGamesModal.eg-cups-mode .eg-stake-presets {
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:8px!important;
+              }
+              #erisGamesModal.eg-cups-mode [data-stake-value] {
+                min-width:0;
+                padding:12px 2px;
+                border:1px solid #6f538a;
+                border-radius:12px;
+                background:linear-gradient(150deg,#38244d,#241832);
+                color:#f8dfac;
+                font-weight:900;
+                font-size:12px;
+              }
+              #erisGamesModal.eg-cups-mode [data-stake-value].cups-selected {
+                border-color:#ffdc80!important;
+                background:linear-gradient(135deg,#f9d67e,#b57b31)!important;
+                color:#24162e!important;
+                box-shadow:0 0 14px #e8b85a55;
+              }
+              #erisGamesModal.eg-cups-mode [data-play] {
+                width:100%;
+                min-height:58px;
+                border:1px solid #f1cb86;
+                border-radius:15px;
+                background:linear-gradient(110deg,#e5b85b,#ffdf91,#b87d35)!important;
+                color:#25142f!important;
+                font-size:19px;
+                font-weight:1000;
+                box-shadow:0 8px 20px #0006;
+              }
+            `;
+            document.head.appendChild(css);
+        }
+        if (key === 'cups') {
+            modal.querySelector('[data-play]').textContent = '🏆 KUPALARI KARIŞTIR';
+        }
+
         // SLOT_INDIVIDUAL_UI_V1
         modal.classList.toggle('eg-slot-mode', key === 'slot');
         queueMicrotask(() => {
@@ -564,12 +727,12 @@
         const slotPlayButton = modal.querySelector('[data-play]');
         if (slotPlayButton && key === 'slot') {
             slotPlayButton.textContent = '🎰 ÇEVİR';
-        } else if (slotPlayButton && key !== 'blackjack') {
+        } else if (slotPlayButton && key !== 'blackjack' && key !== 'cups') {
             slotPlayButton.textContent = 'Oyna';
         }
 
         // ERIS_BJ_INDIVIDUAL_UI_FIX_V1
-        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', (key === 'blackjack' || key === 'slot') ? 'none' : '');
+        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', (key === 'blackjack' || key === 'slot' || key === 'cups') ? 'none' : '');
 
         // Crash elemanlari diger oyunlara tasinmasin.
         if (key !== 'crash') {
