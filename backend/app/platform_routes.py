@@ -888,6 +888,12 @@ def register_platform_auth(current_user_dependency):
             state = json.loads(row.state_data or "{}")
         except (TypeError, json.JSONDecodeError):
             state = {}
+        # Açık Dört Kupa turunun gizli sonucu ortak API'den sızmamalı.
+        if row.game_type == "cups" and row.status == "open":
+            state = {
+                key: value for key, value in state.items()
+                if key not in {"winning_cup", "result"}
+            }
         return {
             "round_id": row.id, "game": row.game_type, "room_id": row.room_id,
             "status": row.status, "started_at": row.started_at, "ends_at": row.ends_at,
