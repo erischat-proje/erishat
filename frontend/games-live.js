@@ -1428,6 +1428,13 @@
         // ERIS_BJ_FINAL_GUARDS_V1
         queueMicrotask(() => restoreBlackjackRound());
         modal.querySelector('[data-play]').onclick = async () => {
+            if (game === 'slot' &&
+                modal.dataset.slotRequest === '1') return;
+            if (game === 'slot') {
+                modal.dataset.slotBusy = '1';
+                modal.dataset.slotRequest = '1';
+            }
+
             if (game === 'blackjack' &&
                 (activeBlackjackRoundId || blackjackRestoreBusy ||
                  blackjackRestoreFailed)) {
@@ -1556,6 +1563,15 @@
             } catch (e) {
                 modal.querySelector('.eg-result').textContent = e.message || 'Oyun başlatılamadı.';
             } finally {
+                if (modal.dataset.slotRequest === '1') {
+                    delete modal.dataset.slotRequest;
+                    delete modal.dataset.slotBusy;
+                    const slotLever = modal.querySelector('.eris-slot-lever');
+                    if (slotLever) {
+                        slotLever.disabled = false;
+                        slotLever.classList.remove('pulling');
+                    }
+                }
                 button.disabled = game === 'blackjack' && !!activeBlackjackRoundId;
             }
         };
