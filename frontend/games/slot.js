@@ -243,6 +243,222 @@
             .eris-slot-reel{height:78px;font-size:39px}
             .eris-slot-top{font-size:19px}
           }
+
+/* ERIS SLOT PRO V3 — yalnızca Slot */
+#erisGamesModal.eg-slot-mode{
+ padding:0!important;overflow:hidden!important;
+}
+#erisGamesModal.eg-slot-mode .eg-panel{
+ width:100%!important;max-width:520px!important;
+ height:100dvh!important;max-height:100dvh!important;
+ overflow:hidden!important;box-sizing:border-box!important;
+ display:flex!important;flex-direction:column!important;
+ padding:8px 12px 10px!important;gap:5px!important;
+ border-radius:0!important;
+}
+#erisGamesModal.eg-slot-mode .eg-head{
+ flex:0 0 42px!important;min-height:42px!important;
+ margin:0!important;padding:0!important;
+}
+#erisGamesModal.eg-slot-mode .eg-head h2{
+ font-size:17px!important;margin:0!important;
+}
+#erisGamesModal.eg-slot-mode .eg-wallet{
+ flex:0 0 auto!important;margin:0!important;
+ padding:7px 10px!important;font-size:12px!important;
+}
+#erisGamesModal.eg-slot-mode .eg-intro,
+#erisGamesModal.eg-slot-mode [data-name],
+#erisGamesModal.eg-slot-mode .eg-keys,
+#erisGamesModal.eg-slot-mode [data-scope],
+#erisGamesModal.eg-slot-mode [data-choice],
+#erisGamesModal.eg-slot-mode [data-play],
+#erisGamesModal.eg-slot-mode [data-controls]{
+ display:none!important;
+}
+#erisGamesModal.eg-slot-mode .eg-stage{
+ flex:1 1 auto!important;min-height:0!important;
+ width:100%!important;margin:0!important;
+ padding:2px 5px!important;box-sizing:border-box!important;
+ overflow:hidden!important;display:flex!important;
+ justify-content:center!important;align-items:stretch!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-machine{
+ position:relative!important;box-sizing:border-box!important;
+ display:flex!important;flex-direction:column!important;
+ justify-content:space-around!important;
+ width:min(100%,350px)!important;max-width:350px!important;
+ height:100%!important;min-height:0!important;
+ margin:0 auto!important;padding:8px 15px 10px!important;
+ border:5px solid #aab2ba!important;
+ border-left:12px solid #65717e!important;
+ border-right:12px solid #596472!important;
+ border-bottom:11px solid #4b5360!important;
+ border-radius:24px 24px 15px 15px!important;
+ background:
+ linear-gradient(90deg,#161e2b 0%,#394354 9%,#101621 23%,
+ #131b29 76%,#465365 92%,#141b25 100%)!important;
+ box-shadow:
+ inset 0 0 0 3px #d2a75a,
+ inset 0 0 28px #000,
+ 0 8px 16px #0009!important;
+ overflow:visible!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-top{
+ flex:0 0 auto!important;margin:0!important;
+ font-size:clamp(13px,3.5vw,20px)!important;
+ line-height:1.12!important;
+ color:#ffe6a2!important;
+ text-shadow:0 2px 3px #000,0 0 12px #ffb732!important;
+ letter-spacing:2px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-crown{
+ font-size:18px!important;margin-bottom:2px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-top small{
+ margin-top:3px!important;font-size:8px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-lights{
+ flex:0 0 auto!important;margin:2px 0!important;
+ font-size:11px!important;letter-spacing:5px!important;
+ color:#ffcf61!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-cabinet{
+ position:relative!important;flex:1 1 auto!important;
+ min-height:85px!important;max-height:175px!important;
+ margin:2px 11px 4px 0!important;
+ padding:9px 8px!important;
+ display:flex!important;flex-direction:column!important;
+ justify-content:center!important;
+ border:5px solid #c9a15e!important;
+ border-radius:14px!important;
+ background:linear-gradient(160deg,#07090e,#222d3b,#090c13)!important;
+ box-shadow:inset 0 0 0 3px #05070b,
+ inset 0 0 22px #000!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-reels{
+ width:100%!important;display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:4px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-reel{
+ box-sizing:border-box!important;
+ width:100%!important;
+ height:clamp(55px,12dvh,98px)!important;
+ border:3px solid #b3bac0!important;
+ border-radius:7px!important;
+ font-size:clamp(29px,8vw,47px)!important;
+ background:linear-gradient(180deg,
+ #757e87 0%,#e7e9e6 20%,#fff 47%,
+ #e7e9e6 78%,#747d86 100%)!important;
+ box-shadow:inset 0 12px 13px #0003,
+ inset 0 -12px 13px #0003!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-line{
+ margin:3px 0 0!important;padding:0!important;
+ font-size:12px!important;line-height:16px!important;
+ letter-spacing:18px!important;
+ color:#f3b34e!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-status{
+ flex:0 0 auto!important;min-height:17px!important;
+ margin:2px 0!important;font-size:12px!important;
+ color:#f8d58a!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-paytable{
+ flex:0 0 auto!important;
+ margin:1px 0!important;padding:3px 5px!important;
+ font-size:10px!important;line-height:1.45!important;
+ border-radius:8px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-lever{
+ position:absolute!important;
+ right:-34px!important;top:12%!important;
+ width:37px!important;height:90px!important;
+ border:0!important;padding:0!important;
+ background:transparent!important;
+ transform:none!important;
+ transform-origin:50% 85%!important;
+ touch-action:none!important;z-index:20!important;
+ transition:transform .18s ease-out!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-lever.pulling{
+ transform:translateY(39px) scaleY(.78)!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-arm{
+ left:15px!important;top:13px!important;bottom:auto!important;
+ height:68px!important;width:9px!important;
+ border:1px solid #aeb9c3!important;
+ border-radius:7px!important;
+ background:linear-gradient(90deg,#343b45,#e9f2f7 48%,#59636c)!important;
+ transform:none!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-knob{
+ left:4px!important;top:0!important;
+ width:31px!important;height:31px!important;
+ border:2px solid #7e1721!important;
+ background:radial-gradient(circle at 30% 25%,
+ #ffb7a5,#e52237 40%,#8c071b 75%,#420710)!important;
+ box-shadow:inset -4px -5px 7px #0007,
+ 0 3px 8px #0008!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-machine:has(.spinning)
+ .eris-slot-lever{animation:none!important}
+#erisGamesModal.eg-slot-mode .eg-form{
+ flex:0 0 auto!important;width:100%!important;
+ margin:0!important;padding:6px!important;
+ display:flex!important;flex-direction:column!important;
+ gap:5px!important;border-radius:12px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-betbar{
+ width:100%!important;box-sizing:border-box!important;
+ margin:0!important;padding:6px!important;
+ border-radius:11px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-bettitle{
+ font-size:10px!important;margin:0 0 4px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-betcontrols{
+ grid-template-columns:43px 1fr 43px!important;gap:6px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-betcontrols button{
+ min-height:40px!important;font-size:25px!important;
+ border-radius:9px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-amount strong{
+ font-size:18px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-amount small{
+ font-size:9px!important;
+}
+#erisGamesModal.eg-slot-mode .eris-slot-step{
+ margin-top:3px!important;font-size:9px!important;
+}
+#erisGamesModal.eg-slot-mode .eg-stake-presets{
+ display:grid!important;
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ gap:3px!important;width:100%!important;margin:0!important;
+}
+#erisGamesModal.eg-slot-mode [data-stake-value]{
+ min-width:0!important;height:32px!important;
+ padding:0!important;border-radius:6px!important;
+ font-size:9px!important;
+}
+#erisGamesModal.eg-slot-mode .eg-result{
+ flex:0 0 auto!important;max-height:32px!important;
+ overflow:hidden!important;margin:0!important;
+ padding:3px!important;font-size:10px!important;
+}
+@media(max-height:650px){
+ #erisGamesModal.eg-slot-mode .eris-slot-top small,
+ #erisGamesModal.eg-slot-mode .eris-slot-paytable{
+ display:none!important;
+ }
+ #erisGamesModal.eg-slot-mode .eg-head{
+ flex-basis:35px!important;min-height:35px!important;
+ }
+}
+
         </style>`;
 
 
@@ -323,11 +539,12 @@
       };
 
       const spin = () => {
-        if (triggered || !container.isConnected ||
+        if (triggered || modal.dataset.slotBusy === '1' || !container.isConnected ||
             !modal.classList.contains('eg-slot-mode')) return;
         const play = modal.querySelector('[data-play]');
         if (!play || play.disabled) return;
         triggered = true;
+        modal.dataset.slotBusy = '1';
         lever.disabled = true;
         lever.classList.add('pulling');
         play.click();
@@ -353,7 +570,7 @@
 
       lever.addEventListener('pointerup', event => {
         if (pointerId !== event.pointerId) return;
-        const shouldSpin = !pulled && startY !== null;
+        const shouldSpin = false;
         reset();
         if (shouldSpin) spin();
       });
