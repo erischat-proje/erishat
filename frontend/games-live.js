@@ -214,7 +214,7 @@
                 <h3 data-name style="margin:8px 0 2px 0; font-size:14px; color:#a77aff;"></h3>
                 <div class="eg-stage" aria-live="polite">Oyun yükleniyor...</div>
                 <div class="eg-form">
-                    <label>Seçim <select data-choice></select></label>
+                    <label data-choice-label>Seçim <select data-choice></select></label>
                     <div class="eg-wheel-picks" data-wheel-picks aria-label="Şans Çarkı sembol seçimi"></div>
                     <label>Bahis · 0–10.000 Lidya <input data-stake type="number" inputmode="numeric" min="0" max="10000" step="1" value="100" aria-label="Lidya bahsi"></label>
                     <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">🪙10</button><button type="button" data-stake-value="25">🪙25</button><button type="button" data-stake-value="50">🪙50</button><button type="button" data-stake-value="75">🪙75</button><button type="button" data-stake-value="100">🪙100</button><button type="button" data-stake-value="250">🪙250</button><button type="button" data-stake-value="500">🪙500</button><button type="button" data-stake-value="1000">🪙1000</button></div>
@@ -229,8 +229,59 @@
         if (!document.getElementById('erisFinalTwoUiStyles')) {
             const finalStyle = document.createElement('style');
             finalStyle.id = 'erisFinalTwoUiStyles';
-            finalStyle.textContent = '\n/* ERIS_FINAL_TWO_UI_FIXES_20261008 */\n#erisGamesModal .eg-head {\n  display:flex!important;\n  align-items:center!important;\n  gap:6px!important;\n}\n#erisGamesModal .eg-head h2 {\n  flex:1 1 auto!important;\n  min-width:0!important;\n}\n#erisGamesModal .eg-head>.eg-wallet {\n  display:flex!important;\n  flex:0 1 auto!important;\n  min-width:0!important;\n  max-width:57%!important;\n  margin:0!important;\n  padding:4px 7px!important;\n  border:1px solid #d5ac5a44!important;\n  border-radius:12px!important;\n  background:#20182c!important;\n  align-items:center!important;\n  justify-content:center!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-balance] {\n  display:block!important;\n  font-size:clamp(9px,2.5vw,12px)!important;\n  white-space:nowrap!important;\n  overflow:hidden!important;\n  text-overflow:ellipsis!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-scope] {\n  display:none!important;\n}\n#erisGamesModal .eg-head>[data-close] {\n  flex-shrink:0!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form>label:first-child {\n  display:none!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks {\n  display:grid!important;\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n  gap:5px!important;\n  width:100%!important;\n  margin:0!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button {\n  box-sizing:border-box!important;\n  display:flex!important;\n  align-items:center!important;\n  justify-content:center!important;\n  min-width:0!important;\n  min-height:57px!important;\n  padding:5px 2px!important;\n  border-radius:10px!important;\n  font-size:0!important;\n  line-height:1!important;\n  white-space:normal!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button::before {\n  font-size:24px!important;\n  line-height:1!important;\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="ruby"]::before {\n  content:"💎";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="gold"]::before {\n  content:"👑";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="crystal"]::before {\n  content:"🔮";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="mystery"]::before {\n  content:"🎁";\n}\n#erisGamesModal.eg-vault-mode .eg-stake-presets {\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form {\n  gap:5px!important;\n}\n';
+            finalStyle.textContent = '\n/* ERIS_FINAL_TWO_UI_FIXES_20261008 */\n#erisGamesModal .eg-head {\n  display:flex!important;\n  align-items:center!important;\n  gap:6px!important;\n}\n#erisGamesModal .eg-head h2 {\n  flex:1 1 auto!important;\n  min-width:0!important;\n}\n#erisGamesModal .eg-head>.eg-wallet {\n  display:flex!important;\n  flex:0 1 auto!important;\n  min-width:0!important;\n  max-width:57%!important;\n  margin:0!important;\n  padding:4px 7px!important;\n  border:1px solid #d5ac5a44!important;\n  border-radius:12px!important;\n  background:#20182c!important;\n  align-items:center!important;\n  justify-content:center!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-balance] {\n  display:block!important;\n  font-size:clamp(9px,2.5vw,12px)!important;\n  white-space:nowrap!important;\n  overflow:hidden!important;\n  text-overflow:ellipsis!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-scope] {\n  display:none!important;\n}\n#erisGamesModal .eg-head>[data-close] {\n  flex-shrink:0!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form>[data-choice-label] {\n  display:none!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks {\n  display:grid!important;\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n  gap:5px!important;\n  width:100%!important;\n  margin:0!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button {\n  box-sizing:border-box!important;\n  display:flex!important;\n  align-items:center!important;\n  justify-content:center!important;\n  min-width:0!important;\n  min-height:57px!important;\n  padding:5px 2px!important;\n  border-radius:10px!important;\n  font-size:0!important;\n  line-height:1!important;\n  white-space:normal!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button::before {\n  font-size:24px!important;\n  line-height:1!important;\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="ruby"]::before {\n  content:"💎";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="gold"]::before {\n  content:"👑";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="crystal"]::before {\n  content:"🔮";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="mystery"]::before {\n  content:"🎁";\n}\n#erisGamesModal.eg-vault-mode .eg-stake-presets {\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form {\n  gap:5px!important;\n}\n';
             document.head.appendChild(finalStyle);
+        }
+
+        if (!document.getElementById('erisGamesHeaderLayout')) {
+            const headerStyle = document.createElement('style');
+            headerStyle.id = 'erisGamesHeaderLayout';
+            headerStyle.textContent = `
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head {
+                    display:grid!important;
+                    grid-template-columns:minmax(0,1fr) auto 36px!important;
+                    align-items:center!important;
+                    gap:6px!important;
+                    width:100%!important;
+                    box-sizing:border-box!important;
+                    flex:0 0 auto!important;
+                    margin:0!important;
+                    padding:0!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > h2 {
+                    grid-column:1!important;grid-row:1!important;
+                    min-width:0!important;margin:0!important;
+                    font-size:13px!important;line-height:1.3!important;
+                    white-space:nowrap!important;overflow:hidden!important;
+                    text-overflow:ellipsis!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > .eg-wallet {
+                    grid-column:2!important;grid-row:1!important;
+                    position:static!important;transform:none!important;
+                    display:flex!important;align-items:center!important;
+                    justify-content:flex-end!important;
+                    width:auto!important;min-width:0!important;
+                    max-width:52vw!important;margin:0!important;padding:3px!important;
+                    border:0!important;background:transparent!important;
+                    box-shadow:none!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > .eg-wallet [data-balance] {
+                    display:block!important;font-size:11px!important;
+                    white-space:nowrap!important;overflow:hidden!important;
+                    text-overflow:ellipsis!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > .eg-wallet [data-scope] {
+                    display:none!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > [data-close] {
+                    grid-column:3!important;grid-row:1!important;
+                    position:static!important;transform:none!important;
+                    width:36px!important;height:36px!important;min-width:36px!important;
+                    margin:0!important;padding:0!important;
+                    justify-self:end!important;align-self:center!important;
+                }
+            `;
+            document.head.appendChild(headerStyle);
         }
         document.body.append(modal);
         const ownedModal = modal;
@@ -854,25 +905,13 @@ const close = () => {
         }
 
         // ERIS_BJ_INDIVIDUAL_UI_FIX_V1
-        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', (key === 'blackjack' || key === 'slot' || key === 'cups') ? 'none' : '');
+        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', (key === 'blackjack' || key === 'slot' || key === 'cups' || key === 'vault') ? 'none' : '', 'important');
 
         // Crash elemanlari diger oyunlara tasinmasin.
         if (key !== 'crash') {
             modal.querySelectorAll(
                 '[data-crash-history], [data-crash-stats], [data-crash-bets], .eg-crash-bets'
             ).forEach(el => el.remove());
-        }
-
-        const crashHead = modal.querySelector('.eg-head');
-        const crashWallet = modal.querySelector('.eg-wallet');
-        const crashClose = modal.querySelector('[data-close]');
-
-        if (key !== 'crash' && key !== 'wheel' &&
-            crashWallet?.parentElement === crashHead) {
-            crashHead.insertAdjacentElement('afterend', crashWallet);
-        }
-        if (key === 'crash' && crashHead && crashWallet && crashClose) {
-            crashHead.insertBefore(crashWallet, crashClose);
         }
 
         const crashStakeInput = modal.querySelector('[data-stake]');
@@ -967,19 +1006,6 @@ const close = () => {
             wheelPicks.replaceChildren();
             wheelPicks.classList.remove('show');
             modal.classList.toggle('eg-wheel-mode', key === 'wheel');
-        // Wheel: bakiyeyi baslik satirina tasi; diger oyunlarda geri koy.
-        const wheelHead = modal.querySelector('.eg-head');
-        const wheelWallet = modal.querySelector('.eg-wallet');
-        const wheelClose = modal.querySelector('[data-close]');
-        if (wheelHead && wheelWallet && wheelClose) {
-            if (key === 'wheel') {
-                wheelHead.insertBefore(wheelWallet, wheelClose);
-            } else if (wheelWallet.parentElement === wheelHead) {
-                wheelHead.insertAdjacentElement('afterend', wheelWallet);
-            }
-        }
-
-
             const opts = mod?.options || [['auto', 'Seçim yap']];
             for (const [val, lbl] of opts) {
                 choice.add(new Option(lbl, val));
@@ -1010,11 +1036,15 @@ const close = () => {
             const picks = document.createElement('div');
             picks.dataset.vaultPicks = '';
             picks.className = 'ev-prize-picks';
+            picks.setAttribute('role', 'group');
+            picks.setAttribute('aria-label', 'Kasa seçimi');
             prizes.forEach(([id, icon, name]) => {
                 const b = document.createElement('button');
                 b.type = 'button';
                 b.dataset.vaultPick = id;
                 b.textContent = icon + ' ' + name;
+                b.setAttribute('aria-label', name);
+                b.title = name;
                 b.onclick = () => {
                     choice.value = id;
                     picks.querySelectorAll('button').forEach(el => {
