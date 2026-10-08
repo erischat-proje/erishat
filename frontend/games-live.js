@@ -866,8 +866,19 @@ const close = () => modal?.remove();
                 if(head?.parentNode) head.insertAdjacentElement('afterend',wheelFeed);
             }
 
-            if (mod && typeof mod.render === 'function') {
+            if (!mod || typeof mod.render !== 'function') {
+                console.error('[ErisChat Games] Modul yuklenmedi:', key);
+                stage.textContent = 'Oyun modulu yuklenemedi: ' + key;
+                return;
+            }
+            try {
                 mod.render(stage);
+            } catch (error) {
+                console.error('[ErisChat Games] Render hatasi:', key, error);
+                stage.textContent = 'Oyun arayuzu acilamadi: ' + key;
+                return;
+            }
+            if (mod && typeof mod.render === 'function') {
                 if (key === 'cups') {
                     queueMicrotask(() => {
                         if (game === 'cups' && modal?.isConnected) {
