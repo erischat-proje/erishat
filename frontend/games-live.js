@@ -229,6 +229,7 @@
         st.textContent = '\n/* ERIS_CRASH_PRO_UI_V1 */\n#erisGamesModal.eg-crash-mode .eg-form>label:first-child{display:none}\n#erisGamesModal.eg-crash-mode .eg-form{display:grid;grid-template-columns:1fr;gap:12px}\n#erisGamesModal.eg-crash-mode .eg-form>label{font-size:12px;font-weight:800;color:#d8c8f4}\n#erisGamesModal.eg-crash-mode [data-stake]{width:100%;box-sizing:border-box}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0;padding:12px 3px;border-radius:12px}\n#erisGamesModal.eg-crash-mode [data-play]{width:100%;min-height:56px;font-size:17px;border-radius:15px}\n#erisGamesModal.eg-crash-mode [data-controls] button{width:100%;min-height:55px;font-size:17px;border-radius:15px;background:linear-gradient(110deg,#119b71,#25ce91)}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:260px}\n';
         st.textContent += '\n#erisGamesModal.eg-crash-mode .eg-panel{padding:12px;overflow-y:auto}\n#erisGamesModal.eg-crash-mode .eg-head{margin-bottom:5px}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:0}\n#erisGamesModal.eg-crash-mode .crash-flight{height:190px!important}\n#erisGamesModal.eg-crash-mode .eg-form{gap:7px;padding:10px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{gap:6px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{padding:9px 2px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button.crash-selected{border-color:#34e9b5;box-shadow:0 0 0 2px #34e9b544;background:#164b43}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:46px}\n#erisGamesModal.eg-crash-mode .eg-result{min-height:0;margin-top:6px;padding:9px}\n#erisGamesModal.eg-crash-mode .eg-crash-bets{font-size:12px;color:#c7f9e8;padding:9px 11px;border:1px solid #2c8b7055;border-radius:11px;margin-top:6px}\n#erisGamesModal.eg-crash-mode [data-controls] button{min-height:48px;font-size:15px}\n#erisGamesModal.eg-crash-mode [data-crash-history]{padding:7px 0!important}\n';
         st.textContent += '\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:9px;border:1px solid #ffffff1c;border-radius:12px;background:#ffffff07;margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-title{font-size:10px;font-weight:900;letter-spacing:.7px;color:#b4c8d6;margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid>div{min-width:0;text-align:center;padding:7px 2px;border-radius:8px;background:#101d30}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid small{display:block;font-size:9px;color:#9fb0c2}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid strong{display:block;font-size:12px;color:#56f0b5;margin-top:4px}\n';
+        st.textContent += '\n/* ERIS_CRASH_COMPACT_V2 */\n\n#erisGamesModal.eg-crash-mode .eg-panel{padding:8px!important}\n#erisGamesModal.eg-crash-mode .eg-head{display:flex;align-items:center;gap:7px;margin:0 0 6px!important}\n#erisGamesModal.eg-crash-mode .eg-head h2{font-size:15px!important;white-space:nowrap}\n#erisGamesModal.eg-crash-mode .eg-head [data-close]{flex:0 0 36px;width:36px;height:36px}\n#erisGamesModal.eg-crash-mode .eg-wallet{order:0;display:flex!important;flex:1;min-width:0;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important;justify-content:flex-end}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-balance]{font-size:clamp(10px,2.7vw,13px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-scope]{display:none!important}\n#erisGamesModal.eg-crash-mode [data-name]{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form>label{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form{padding:6px!important;gap:5px!important}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;width:100%;min-width:0}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0!important;width:100%!important;padding:9px 0!important;font-size:clamp(7px,1.9vw,10px)!important;border-radius:8px!important;white-space:nowrap;letter-spacing:-.5px}\n#erisGamesModal.eg-crash-mode .eg-stage{margin-top:4px!important}\n#erisGamesModal.eg-crash-mode .crash-flight{height:170px!important}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:42px!important}\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:6px!important;margin-bottom:4px!important}\n#erisGamesModal.eg-crash-mode .eg-result{margin-top:4px!important}\n';
         document.head.appendChild(st);
     }
     const close = () => modal?.remove();
@@ -261,6 +262,13 @@
         const loadGameModule = key => {
             game = key;
         modal.classList.toggle('eg-crash-mode', key === 'crash');
+        const crashHead = modal.querySelector('.eg-head');
+        const crashWallet = modal.querySelector('.eg-wallet');
+        const crashClose = modal.querySelector('[data-close]');
+        if (key === 'crash' && crashHead && crashWallet && crashClose) {
+            crashHead.insertBefore(crashWallet, crashClose);
+        }
+
         const crashStakeInput = modal.querySelector('[data-stake]');
         const crashStakeLabel = crashStakeInput?.closest('label');
         if (crashStakeLabel) crashStakeLabel.style.display = key === 'crash' ? 'none' : '';
@@ -307,6 +315,18 @@
             wheelPicks.replaceChildren();
             wheelPicks.classList.remove('show');
             modal.classList.toggle('eg-wheel-mode', key === 'wheel');
+        // Wheel: bakiyeyi baslik satirina tasi; diger oyunlarda geri koy.
+        const wheelHead = modal.querySelector('.eg-head');
+        const wheelWallet = modal.querySelector('.eg-wallet');
+        const wheelClose = modal.querySelector('[data-close]');
+        if (wheelHead && wheelWallet && wheelClose) {
+            if (key === 'wheel') {
+                wheelHead.insertBefore(wheelWallet, wheelClose);
+            } else if (wheelWallet.parentElement === wheelHead) {
+                wheelHead.insertAdjacentElement('afterend', wheelWallet);
+            }
+        }
+
 
             const opts = mod?.options || [['auto', 'Seçim yap']];
             for (const [val, lbl] of opts) {
@@ -1053,3 +1073,6 @@ erisWheelResponsive.textContent=`
 }
 `;
 document.head.appendChild(erisWheelResponsive);
+const erisWheelHeaderFix=document.createElement('style');
+erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:space-between!important;\n    gap:6px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
+document.head.appendChild(erisWheelHeaderFix);
