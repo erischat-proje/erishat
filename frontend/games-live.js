@@ -233,6 +233,65 @@
         document.head.appendChild(st);
     }
 
+// DORT KUPA V4: kompakt bahis ve ust bakiye
+if (!document.getElementById('erisCupsV4Style')) {
+  const css = document.createElement('style');
+  css.id = 'erisCupsV4Style';
+  css.textContent = `
+    #erisGamesModal.eg-cups-mode [data-name]{display:none!important;}
+    #erisGamesModal.eg-cups-mode .eg-head {
+      display:flex!important; align-items:center!important; gap:8px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-head h2 {
+      flex:1; min-width:0; font-size:18px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-head .eg-wallet {
+      margin:0!important; padding:4px!important; border:0!important;
+      background:none!important; min-width:0; flex:0 1 auto;
+    }
+    #erisGamesModal.eg-cups-mode .eg-wallet [data-balance] {
+      font-size:clamp(10px,2.5vw,13px)!important; white-space:nowrap;
+    }
+    #erisGamesModal.eg-cups-mode .eg-wallet [data-scope] {
+      display:none!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-form {
+      padding:8px!important; gap:5px!important;
+      display:grid!important; grid-template-columns:1fr!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-form>label {
+      font-size:11px!important; margin:0!important;
+    }
+    #erisGamesModal.eg-cups-mode [data-stake] {
+      min-height:36px!important; padding:5px 9px!important;
+      font-size:19px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets {
+      display:grid!important; grid-template-columns:repeat(4,minmax(0,1fr))!important;
+      gap:4px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets button {
+      padding:5px 2px!important; min-height:32px!important;
+      font-size:11px!important;
+    }
+    #erisGamesModal.eg-cups-mode [data-play] {
+      min-height:40px!important; margin:0!important;
+      grid-column:1/-1!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-result {
+      min-height:0!important; margin-top:5px!important; padding:7px!important;
+    }
+  `;
+  document.head.appendChild(css);
+}
+const cupsWallet = modal.querySelector('.eg-wallet');
+const cupsHead = modal.querySelector('.eg-head');
+if (selected === 'cups' && cupsWallet && cupsHead) cupsHead.insertBefore(cupsWallet, cupsHead.querySelector('[data-close]'));
+
+if (selected === 'cups') {
+  modal.classList.add('eg-cups-mode');
+}
+
 // DORT KUPA: Blackjack tipi kompakt bahis paneli
 if (!document.getElementById('erisCupsBJStakeStyle')) {
   const style = document.createElement('style');
