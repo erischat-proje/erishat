@@ -213,6 +213,7 @@
           table.replaceChildren(...next);
           first.style.transform = '';
           second.style.transform = '';
+          void table.offsetWidth;
           await wait(50);
         }
 
