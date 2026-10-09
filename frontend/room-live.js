@@ -176,11 +176,11 @@
   window.ErisRoomPasswordModal=roomPasswordModal;
   function seatCountForRoom(room,list){
     const explicit=Number(room?.seat_count);
-    if([12,16,20].includes(explicit))return explicit;
+    if([16,20,24].includes(explicit))return explicit;
     const fromList=Array.isArray(list)?list.length:0;
-    if([12,16,20].includes(fromList))return fromList;
+    if([16,20,24].includes(fromList))return fromList;
     const level=Number(room?.level||1);
-    return level>=7?20:(level>=5?16:12);
+    return level>=7?24:(level>=5?20:16);
   }
   function applyRoomWallpaper(){
     const wall=document.querySelector('#erisRoomSurface .eris-room-wall');if(!wall)return;
@@ -195,7 +195,7 @@
   });
   function renderRoomSeats(roomId,name,list,forcedCount){
     const box=document.getElementById('erisLiveSeats');if(!box)return;
-    const count=Math.min(20,Math.max(12,Number(forcedCount)||seatCountForRoom(null,list)));
+    const count=Math.min(24,Math.max(16,Number(forcedCount)||seatCountForRoom(null,list)));
     const byNumber=new Map((Array.isArray(list)?list:[]).map(seat=>[Number(seat.seat_number),seat]));
     const seats=Array.from({length:count},(_,i)=>byNumber.get(i+1)||{seat_number:i+1,user_id:null,locked:false});
     const ludoBoard=box.querySelector('.ludo-room');
