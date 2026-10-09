@@ -269,10 +269,11 @@ def public_state(s, uid):
         return None
     out = {k: copy.deepcopy(s.get(k)) for k in ('round_id','host','mode','victory','status','version',
            'expires','hand_no','scores','dealer','turn','phase','direction','active_color','deadline',
-           'winners','hand_winners','hand_points','events','uno_vulnerable')}
+           'winners','hand_winners','hand_points','events','uno_vulnerable',
+           'stake','pool','settled','refunded','payouts')}
     out['players'] = []
     for p in s['players']:
-        q = {k: p.get(k) for k in ('seat','user_id','name','team','uno','bot','disconnected_at')}
+        q = {k: p.get(k) for k in ('seat','user_id','name','team','uno','bot','disconnected_at','stake')}
         q['card_count'] = len(p.get('hand', []))
         if p['user_id'] == uid:
             q['hand'] = list(p.get('hand', []))

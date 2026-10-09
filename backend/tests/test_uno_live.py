@@ -18,6 +18,7 @@ class User(Base):
     __tablename__='users'
     id:Mapped[str]=mapped_column(String,primary_key=True)
     nickname:Mapped[str]=mapped_column(String)
+    lidya:Mapped[int]=mapped_column(Integer,default=1000)
 class Room(Base):
     __tablename__='rooms'
     id:Mapped[str]=mapped_column(String,primary_key=True)
@@ -59,8 +60,8 @@ class UnoAPI(unittest.TestCase):
         Base.metadata.drop_all(engine);Base.metadata.create_all(engine)
         self.db=SessionLocal();self.db.add(Room(id='r1'));self.db.add(Room(id='r2'))
         for n in range(1,5):
-            self.db.add(User(id=f'u{n}',nickname=f'P{n}'));self.db.add(RoomSeat(room_id='r1',seat_number=n,user_id=f'u{n}'))
-        self.db.add(User(id='watcher',nickname='Watcher'));self.db.add(User(id='outsider',nickname='Outsider'));self.db.commit();self.seq=0
+            self.db.add(User(id=f'u{n}',nickname=f'P{n}',lidya=1000));self.db.add(RoomSeat(room_id='r1',seat_number=n,user_id=f'u{n}'))
+        self.db.add(User(id='watcher',nickname='Watcher',lidya=1000));self.db.add(User(id='outsider',nickname='Outsider',lidya=1000));self.db.commit();self.seq=0
     def tearDown(self):self.db.close()
     def act(self,action,uid='u1',**extra):
         self.seq+=1;row=self.db.get(live.RoomUno,'r1');s=json.loads(row.state_json) if row else {}
@@ -115,5 +116,99 @@ class UnoAPI(unittest.TestCase):
         self.db.rollback();v=self.act('close');self.assertEqual(v['state']['status'],'closed')
     def test_no_private_state_in_receipt(self):
         self.setup_game();receipt=self.db.query(live.UnoReceipt).first();self.assertFalse(hasattr(receipt,'response_json'))
+
+class UnoMoney(unittest.TestCase):
+    setUp = UnoAPI.setUp
+    tearDown = UnoAPI.tearDown
+    act = UnoAPI.act
+    setup_game = UnoAPI.setup_game
+    def balance(self, uid):
+        self.db.expire_all()
+        return self.db.get(User, uid).lidya
+    def state(self):
+        return json.loads(self.db.get(live.RoomUno, 'r1').state_json)
+    def win(self, seat=1):
+        # End a real hand through the engine, then settle in the API transaction.
+        row=self.db.get(live.RoomUno,'r1');s=json.loads(row.state_json)
+        c=next(c['id'] for c in u.CARDS if c['color']=='red' and c['value']=='1')
+        for p in s['players']:
+            p['hand']=[c] if p['seat']==seat else [next(x['id'] for x in u.CARDS if x['color']=='blue' and x['value']==str(p['seat']))]
+        s.update(turn=seat,phase='play',discard=[9],active_color='red',deadline=9999999999,uno_vulnerable=None)
+        live.save(row,s);self.db.commit()
+        return self.act('play','u'+str(seat),card=c)
+    def test_ready_charges_once_and_withdraw_refunds(self):
+        self.act('create',stake=100);self.act('ready',stake=100)
+        self.assertEqual(self.balance('u1'),900)
+        self.act('ready',stake=100);self.assertEqual(self.balance('u1'),900)
+        self.act('withdraw');self.assertEqual(self.balance('u1'),1000);self.assertEqual(self.state()['pool'],0)
+    def test_insufficient_funds_no_partial_charge(self):
+        self.act('create',stake=300);self.db.get(User,'u1').lidya=100;self.db.commit()
+        with self.assertRaises(HTTPException):self.act('ready',stake=300)
+        self.db.rollback();self.assertEqual(self.balance('u1'),100);self.assertEqual(self.state()['players'],[])
+    def test_stale_bet_and_invalid_denomination_rejected(self):
+        self.act('create',stake=100)
+        with self.assertRaises(HTTPException):self.act('ready',stake=50)
+        self.db.rollback();self.assertEqual(self.balance('u1'),1000)
+        with self.assertRaises(HTTPException):self.act('configure',stake=75)
+        self.db.rollback();self.assertEqual(self.state()['stake'],100)
+    def test_settings_lock_once_anyone_ready(self):
+        self.act('create');self.act('configure',stake=200,mode='paired');self.act('ready',stake=200)
+        with self.assertRaises(HTTPException):self.act('configure',stake=300)
+        self.db.rollback();self.assertEqual(self.state()['stake'],200);self.assertEqual(self.balance('u1'),800)
+    def test_cancel_refunds_every_player_once(self):
+        self.setup_game(3);self.act('close')
+        self.assertTrue(self.state()['refunded'])
+        self.act('close')
+        for uid in ('u1','u2','u3'):self.assertEqual(self.balance(uid),1000)
+    def test_solo_payout_and_close_do_not_double_pay(self):
+        self.setup_game(3);self.win()
+        self.assertEqual(self.balance('u1'),1100);self.assertEqual(self.balance('u2'),950);self.assertEqual(self.balance('u3'),950)
+        self.assertEqual(self.state()['payouts'],{'1':150})
+        self.act('close');self.assertEqual(self.balance('u1'),1100)
+    def test_paired_equal_split(self):
+        self.setup_game(4,'paired');self.win()
+        self.assertEqual(self.balance('u1'),1050);self.assertEqual(self.balance('u3'),1050)
+        self.assertEqual(self.balance('u2'),950);self.assertEqual(self.balance('u4'),950)
+        self.assertEqual(self.state()['payouts'],{'1':100,'3':100})
+    def test_between_hands_holds_escrow_then_refunds_cancel(self):
+        self.act('create',victory='points');self.act('ready');self.act('ready','u2');self.act('start');self.win()
+        self.assertEqual(self.state()['status'],'hand_finished');self.assertEqual(self.balance('u1'),950)
+        self.act('next_hand');self.assertEqual(self.balance('u1'),950)
+        self.act('close');self.assertEqual(self.balance('u1'),1000);self.assertEqual(self.balance('u2'),1000)
+    def test_lobby_absence_and_expiry_refunds(self):
+        self.act('create');self.act('ready');self.act('ready','u2')
+        seat=self.db.query(RoomSeat).filter_by(user_id='u2').one();seat.user_id='';self.db.commit()
+        live.tick_room('r1',1);self.db.expire_all();self.assertEqual(self.balance('u2'),1000);self.assertEqual(self.state()['pool'],50)
+        live.tick_room('r1',9999999999);self.db.expire_all();self.assertEqual(self.balance('u1'),1000)
+    def test_new_bet_repeated_request_does_not_charge_twice(self):
+        self.act('create');s=self.state()
+        p=live.Action(action='ready',stake=50,round_id=s['round_id'],version=s['version'],request_key='ready-repeat-money-key')
+        live.mutate('r1',p,self.db,self.db.get(User,'u1'));live.mutate('r1',p,self.db,self.db.get(User,'u1'))
+        self.assertEqual(self.balance('u1'),950)
+    def test_close_shared_house_refund(self):
+        self.setup_game(2);old=rooms.couple_gifts
+        rooms.couple_gifts=types.SimpleNamespace(room_house=lambda *a:types.SimpleNamespace(active=False))
+        try:live.tick_room('r1',1)
+        finally:rooms.couple_gifts=old
+        self.db.expire_all();self.assertEqual(self.balance('u1'),1000);self.assertEqual(self.balance('u2'),1000)
+    def test_worker_finishes_and_pays_once(self):
+        self.setup_game(2)
+        row=self.db.get(live.RoomUno,'r1');s=json.loads(row.state_json)
+        c=next(c['id'] for c in u.CARDS if c['color']=='red' and c['value']=='1')
+        s['players'][0].update(hand=[c],bot=True,disconnected_at=0)
+        s.update(turn=1,phase='play',discard=[9],active_color='red',deadline=120)
+        live.save(row,s);seat=self.db.query(RoomSeat).filter_by(user_id='u1').one();seat.user_id='';self.db.commit()
+        live.tick_room('r1',103);self.db.expire_all()
+        self.assertEqual(self.state()['status'],'finished');self.assertEqual(self.balance('u1'),1050)
+        live.tick_room('r1',104);self.assertEqual(self.balance('u1'),1050)
+    def test_points_match_pays_only_at_500(self):
+        self.act('create',victory='points');self.act('ready');self.act('ready','u2');self.act('start')
+        row=self.db.get(live.RoomUno,'r1');s=json.loads(row.state_json);s['scores']['1']=499;live.save(row,s);self.db.commit()
+        self.win();self.assertEqual(self.state()['status'],'finished');self.assertEqual(self.balance('u1'),1050)
+    def test_single_spectator_snapshot_has_shared_table_no_hands(self):
+        self.setup_game(3)
+        v=live.snapshot('r1',self.db,self.db.get(User,'watcher'))
+        self.assertEqual(v['state']['stake'],50);self.assertEqual(v['state']['pool'],150)
+        self.assertTrue(all('hand' not in p for p in v['state']['players']))
 
 if __name__=='__main__':unittest.main()
