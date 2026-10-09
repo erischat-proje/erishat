@@ -62,3 +62,7 @@
   height:auto!important;min-height:0!important;max-height:none!important;
   overflow:hidden!important;
 }
+
+.ludo-magnet{position:absolute;transform:translate(-50%,-50%);width:6%;height:6%;z-index:4;text-align:center;font-size:clamp(10px,3vw,24px);pointer-events:none;filter:drop-shadow(0 0 3px #66dcff)}
+.ludo-magnet.activated{animation:ludo-burst .25s ease-out}
+.ludo-picks{display:none!important}
