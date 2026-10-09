@@ -207,7 +207,10 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     root.querySelector('.ludo-players').innerHTML=[1,2,3,4].map(seat=>{const p=s.players.find(p=>p.seat===seat)||snapshot.seats.find(p=>p.seat===seat);return '<div class="ludo-player '+(s.status==='playing'&&s.turn===seat?'active':'')+'" style="--pawn:'+COLORS[seat]+'"><b>'+seat+'. '+esc(p?.name||'Boş koltuk')+'</b><small>'+(p?.bot?'BOT • ':s.mode==='paired'?'Takım '+(seat===1||seat===3?'1':'2')+' • ':'')+(p?.stake?money(p.stake)+' Lidya':'İzleyici')+'</small></div>';}).join('');
     const board=root.querySelector('.ludo-board');
 
+    const bombIds=new Set((s.bombs||[]).filter(b=>Number.isInteger(b.square)).map(b=>String(b.id)));
+    board.querySelectorAll('[data-bomb]').forEach(n=>{if(!bombIds.has(n.dataset.bomb))n.remove()});
     for(const bomb of (s.bombs||[])){
+      if(!Number.isInteger(bomb.square))continue;
       let b=board.querySelector('[data-bomb="'+bomb.id+'"]');
       if(!b){
         b=document.createElement('div');
@@ -220,6 +223,15 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
       b.style.left=bp.x+'%';
       b.style.top=bp.y+'%';
       b.classList.toggle('used',!!bomb.used);
+    }
+
+    const magnetIds=new Set((s.magnets||[]).filter(m=>Number.isInteger(m.square)).map(m=>String(m.id)));
+    board.querySelectorAll('[data-magnet]').forEach(n=>{if(!magnetIds.has(n.dataset.magnet))n.remove()});
+    for(const magnet of s.magnets||[]){
+      if(!Number.isInteger(magnet.square))continue;
+      let node=board.querySelector('[data-magnet="'+magnet.id+'"]');
+      if(!node){node=document.createElement('div');node.className='ludo-magnet';node.dataset.magnet=magnet.id;node.textContent='🧲';board.append(node)}
+      const pt=bombPoint(magnet.square);node.style.left=pt.x+'%';node.style.top=pt.y+'%';
     }
 
     for(const p of s.players)for(let i=0;i<4;i++){
@@ -251,12 +263,7 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     let message=s.status==='lobby'?'Hazırlık: katılım payını seçip hazır olun.':s.status==='finished'?'Oyun tamamlandı.':pending.length?(p?.user_id===snapshot.my_id?'Parçanızı seçin.':(p?.name||'Oyuncu')+' oynuyor.'):(p?.name||'Oyuncu')+(p?.bot?' • Bot oynuyor.':' zar atıyor.');
     if(s.roll_ready)message=(p?.user_id===snapshot.my_id?'6+6! Yeniden zar at; sonra tüm zarları dağıt.':(p?.name||'Oyuncu')+' 6+6 attı; yeniden zar atıyor.');
     else if(pending.length)message+=' • '+pending.length+' zar kaldı';
-    const status=root.querySelector('.ludo-status');status.innerHTML='<span>'+esc(lastError||message)+'</span><small>'+(s.status==='playing'?'<span class="ludo-clock"></span> • ':'' )+(s.status==='lobby'?'<button data-lobby>Oyun ayarları</button>':s.events.at(-1)?.kind==='pass'?esc(s.events.at(-1).reason):'Sarı yıldızlar güvenli alan')+'</small>'+(retry?'<button data-retry>İşlemi tekrar dene</button>':'')+(!busy()&&snapshot.legal.length?'<span class="ludo-picks">'+snapshot.legal.filter(i=>(snapshot.moves||[]).some(m=>m.token===i&&m.die===selectedDie)).map(i=>'<button data-pick="'+i+'" aria-label="'+(i+1)+'. piyonu hareket ettir">'+(i+1)+'</button>').join('')+'</span>':'');
-    status.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
-  const token=Number(b.dataset.pick);
-  const selected=selectedDie;const m=(data.moves||[]).find(x=>x.token===token&&(!selected||x.die===selected));
-  if(m)send('move',{token,die:m.die});
-});
+    const status=root.querySelector('.ludo-status');status.innerHTML='<span>'+esc(lastError||message)+'</span><small>'+(s.status==='playing'?'<span class="ludo-clock"></span> • ':'' )+(s.status==='lobby'?'<button data-lobby>Oyun ayarları</button>':s.events.at(-1)?.kind==='pass'?esc(s.events.at(-1).reason):'Sarı yıldızlar güvenli alan')+'</small>'+(retry?'<button data-retry>İşlemi tekrar dene</button>':'');
     status.querySelector('[data-lobby]')?.addEventListener('click',open);status.querySelector('[data-retry]')?.addEventListener('click',()=>send(null));updateClock();
     if(s.status==='finished'&&!board.querySelector('.ludo-result')){const result=document.createElement('div');result.className='ludo-result';result.innerHTML='<strong>Zafer!</strong><p>'+s.players.filter(p=>s.winners.includes(p.seat)).map(p=>esc(p.name)).join(' & ')+'</p><p>Kişi başına '+money(s.payout)+' Lidya</p>';board.append(result);}
     renderDialog();
@@ -278,6 +285,10 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
       node.classList.remove('moving');
       for(const hit of e.captured||[]){const victim=root.querySelector('[data-pawn="'+hit.seat+'-'+hit.token+'"]');if(!victim)continue;const end=point(hit.seat,hit.token,-1);if(victim.animate&&!reduced()){const a=victim.animate([{left:victim.style.left,top:victim.style.top,transform:'scale(1)'},{left:end.left,top:end.top,transform:'translateY(-10px) scale(.6)',opacity:.4},{...end,transform:'scale(1)',opacity:1}],{duration:550,easing:'cubic-bezier(.2,.8,.3,1)'});await a.finished.catch(()=>{});}Object.assign(victim.style,end);}
       if(e.after===56)sparkle(root.querySelector('.ludo-board'));
+    }else if(e.kind==='magnet'){
+      await animateEvent({...e,kind:'move',captured:[]},generation);
+      const magnet=root.querySelector('[data-magnet="'+e.magnet+'"]');
+      if(magnet){magnet.classList.add('activated');await wait(250);magnet.remove();}
     }else if(e.kind==='bomb'){
       const bomb=root.querySelector('[data-bomb="'+e.bomb+'"]');
       if(bomb){
@@ -293,8 +304,9 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
         }
         bomb.classList.add('explode');
         await wait(450);
-        bomb.classList.remove('explode');
+        bomb.remove();
       }
+      for(const hit of e.hits||[]){const victim=root.querySelector('[data-pawn="'+hit.seat+'-'+hit.token+'"]');if(victim)Object.assign(victim.style,point(hit.seat,hit.token,-1));}
     }else if(e.kind==='win')sparkle(root.querySelector('.ludo-board'));
   }
   function receive(snapshot){
@@ -401,7 +413,7 @@ const dismissLudo=()=>{
 modal.querySelector('[data-close]').hidden=current()?.status==='lobby';modal.querySelector('[data-close]').onclick=dismissLudo;
 modal.onclick=e=>{if(e.target===modal)dismissLudo();};
 modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};modal.querySelector('[data-close]').focus();}
-  const ruleText='<details><summary>Oyun kuralları</summary><ul><li>İlk dört koltuk oyuncudur; diğer üyeler izler. Tekli 2 veya 4 kişi, eşli dört kişi: 1+3 ve 2+4.</li><li>Her atışta iki zar kullanılır. 6+6 gelirse zarlar birikir ve yeniden zar atılır. Farklı bir çift gelince biriken 4 veya 6 zar istenen piyonlara ayrı ayrı uygulanır; aynı piyon birden fazla zarla oynanabilir. Tek bir 6 tekrar zar hakkı vermez.</li><li>Üçüncü ardışık 6+6 geldiğinde biriken bütün zarlar iptal olur; piyonlar hareket etmeden sıra geçer. Piyonlar 6 ile yuvadan çıkar; zarın tamamı tek piyona uygulanır. Dört bomba indiği kareden sonraki yedi kareyi etkiler; güvenli karelere zarar vermez.</li><li>Dört yıldız ve dört renkli başlangıç karesi güvenlidir. Diğer yol karelerinde rakibi yakalamak onu yuvaya döndürür. Takım arkadaşları birbirini yakalamaz. Birlikte duran piyonlar yolu kapatmaz; yakalamak ek zar vermez.</li><li>Eve tam sayı ile girilir. Kullanılamayan zar atlanır. Teklide dört, eşlide takımın sekiz piyonunu bitirmek gerekir. İlk sırayı 1. koltuk alır.</li><li>Katılım isteğe bağlıdır; oda modunun açılması Lidya harcamaz. 1. koltuk ortak payı seçer. Oyun kapatılırsa bitmemiş oyunun katkıları iade edilir.</li><li>Koltuğundan ayrılanı bot devralır. Bot yakalama yapmaz; süre 30 saniyedir. Hazırlık on dakika sonra kapanır. Kurallar, zar ve ödemeler sunucuda uygulanır.</li></ul></details>';
+  const ruleText='<details><summary>Oyun kuralları</summary><ul><li>İlk dört koltuk oyuncudur; diğer üyeler izler. Tekli 2 veya 4 kişi, eşli dört kişi: 1+3 ve 2+4.</li><li>Her atışta iki zar kullanılır. 6+6 gelirse zarlar birikir ve yeniden zar atılır. Farklı bir çift gelince biriken 4 veya 6 zar istenen piyonlara ayrı ayrı uygulanır; aynı piyon birden fazla zarla oynanabilir. Tek bir 6 tekrar zar hakkı vermez.</li><li>Üçüncü ardışık 6+6 geldiğinde biriken bütün zarlar iptal olur; piyonlar hareket etmeden sıra geçer. Piyonlar 6 ile yuvadan çıkar; zarın tamamı tek piyona uygulanır. Dört bomba sonraki yedi kareyi etkiler; çıkışlar ve yıldızlar korunur. Kullanılan bomba kaybolur ve rastgele başka karede doğar. İki mıknatıs 8 kare ilerletir; aradaki ilk rakibin hemen arkasında durur. Evde son kareye kadar götürür, bitiş için tam zar gerekir. Kullanılan mıknatıs başka karede doğar. Özel karelerin arasında en az iki boş kare bulunur; dolu veya korumalı karede doğmazlar.</li><li>Dört yıldız ve dört renkli başlangıç karesi güvenlidir. Diğer yol karelerinde rakibi yakalamak onu yuvaya döndürür. Takım arkadaşları birbirini yakalamaz. Birlikte duran piyonlar yolu kapatmaz; yakalamak ek zar vermez.</li><li>Eve tam sayı ile girilir. Kullanılamayan zar atlanır. Teklide dört, eşlide takımın sekiz piyonunu bitirmek gerekir. İlk sırayı 1. koltuk alır.</li><li>Katılım isteğe bağlıdır; oda modunun açılması Lidya harcamaz. 1. koltuk ortak payı seçer. Oyun kapatılırsa bitmemiş oyunun katkıları iade edilir.</li><li>Koltuğundan ayrılanı bot devralır. Bot yakalama yapmaz; süre 30 saniyedir. Hazırlık on dakika sonra kapanır. Kurallar, zar ve ödemeler sunucuda uygulanır.</li></ul></details>';
 
   function renderDialog(){
     if(!modal||!data||modal.dataset.stop)return;

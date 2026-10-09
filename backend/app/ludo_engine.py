@@ -150,6 +150,7 @@ def begin(s, now=None):
         ],
     )
 
+    ensure_specials(s)
     event(s, "start")
 
 
@@ -183,9 +184,7 @@ def next_turn(s, now=None):
         deadline=(now or time.time()) + TURN_SECONDS,
     )
 
-    # Her yeni turda 4 bomba yeniden kullanılabilir.
-    for bomb in s.get("bombs", []):
-        bomb["used"] = False
+    respawn_missing(s)
 
 
 def roll(s, bot=False, now=None):
@@ -193,6 +192,7 @@ def roll(s, bot=False, now=None):
         raise ValueError("Oyun devam etmiyor.")
     if s.get("pending_dice") and not s.get("roll_ready"):
         raise ValueError("Önce biriken zarların hamlelerini oynayın.")
+    ensure_specials(s)
     dice = [secrets.randbelow(6) + 1, secrets.randbelow(6) + 1]
     double_six = dice == [6, 6]
     s["double_sixes"] = s.get("double_sixes", 0) + 1 if double_six else 0
@@ -216,61 +216,83 @@ def roll(s, bot=False, now=None):
     s["deadline"] = (now if now is not None else time.time()) + TURN_SECONDS
 
 
+def track_distance(a, b):
+    return min((a-b) % 52, (b-a) % 52)
+
+
+def respawn(s, item, excluded=()):
+    occupied = {square(p["seat"], pos) for p in s["players"]
+                for pos in p["tokens"] if 0 <= pos <= 50}
+    others = [q["square"] for group in ("bombs", "magnets") for q in s.get(group, [])
+              if q is not item and isinstance(q.get("square"), int)]
+    choices = [sq for sq in range(52) if sq not in SAFE and sq not in occupied
+               and sq not in excluded and all(track_distance(sq, other) > 2 for other in others)]
+    item.update(square=secrets.choice(choices) if choices else None, used=False)
+    return item["square"]
+
+
+def respawn_missing(s):
+    for group in ("bombs", "magnets"):
+        for item in s.get(group, []):
+            if item.get("square") is None:
+                respawn(s, item)
+
+
+def ensure_specials(s):
+    if s.get("special_version") == 1:
+        return
+    s["bombs"] = [dict(id=i, square=None, used=False) for i in range(4)]
+    s["magnets"] = [dict(id=i, square=None, used=False) for i in range(2)]
+    s["special_version"] = 1
+    respawn_missing(s)
+    event(s, "specials")
+
+
 def trigger_bomb(s, seat, destination):
-    if destination is None or destination < 0 or destination > 50:
+    if destination is None or not 0 <= destination <= 50:
         return []
+    landing = square(seat, destination)
+    bomb = next((b for b in s.get("bombs", []) if b.get("square") == landing), None)
+    if not bomb:
+        return []
+    path = [(landing + step) % 52 for step in range(1, 8)]
+    hits = []
+    for p in s["players"]:
+        for token, pos in enumerate(p["tokens"]):
+            if 0 <= pos <= 50 and square(p["seat"], pos) in path and square(p["seat"], pos) not in SAFE:
+                hits.append(dict(seat=p["seat"], token=token, pos=pos))
+                p["tokens"][token] = -1
+    new_square = respawn(s, bomb, excluded=(landing, path[-1]))
+    event(s, "bomb", bomb=bomb["id"], trigger_seat=seat, start=landing,
+          path=path, end=path[-1], hits=hits, respawn_square=new_square)
+    return hits
 
-    landing_square = square(seat, destination)
-    triggered = []
 
-    for bomb in s.get("bombs", []):
-        if bomb.get("used"):
-            continue
+def trigger_magnet(s, seat, token):
+    p = player(s, seat)
+    before = p["tokens"][token]
+    if not 0 <= before <= 50:
+        return
+    landing = square(seat, before)
+    magnet = next((m for m in s.get("magnets", []) if m.get("square") == landing), None)
+    if not magnet:
+        return
+    after = before
+    # A boost never jumps over an opponent or captures one. Stop immediately behind it.
+    # Finish still needs a normal exact die: a boost can reach the last home cell (55).
+    for step in range(1, min(8, 55-before) + 1):
+        candidate = before + step
+        if candidate <= 50 and any(
+            not allied(s, seat, q["seat"]) and 0 <= pos <= 50
+            and square(q["seat"], pos) == square(seat, candidate)
+            for q in s["players"] for pos in q["tokens"]):
+            break
+        after = candidate
+    p["tokens"][token] = after
+    new_square = respawn(s, magnet, excluded=(landing, square(seat, after)))
+    event(s, "magnet", magnet=magnet["id"], seat=seat, token=token, before=before,
+          after=after, respawn_square=new_square)
 
-        if bomb.get("square") != landing_square:
-            continue
-
-        bomb["used"] = True
-
-        path = [
-            (landing_square + step) % 52
-            for step in range(1, 8)
-        ]
-
-        hits = []
-
-        for p in s["players"]:
-            for token, pos in enumerate(p["tokens"]):
-                if (
-                    0 <= pos <= 50
-                    and square(p["seat"], pos) in path
-                    and square(p["seat"], pos) not in SAFE
-                ):
-                    hits.append(
-                        dict(
-                            seat=p["seat"],
-                            token=token,
-                            pos=pos,
-                        )
-                    )
-                    p["tokens"][token] = -1
-
-        bomb["square"] = path[-1]
-
-        event(
-            s,
-            "bomb",
-            bomb=bomb["id"],
-            trigger_seat=seat,
-            start=landing_square,
-            path=path,
-            end=bomb["square"],
-            hits=hits,
-        )
-
-        triggered.extend(hits)
-
-    return triggered
 
 
 def move(s, token, die=None, bot=False, now=None):
@@ -315,8 +337,6 @@ def move(s, token, die=None, bot=False, now=None):
 
     s["pending_dice"].remove(selected)
 
-    bomb_hits = trigger_bomb(s, seat, after)
-
     event(
         s,
         "move",
@@ -326,8 +346,11 @@ def move(s, token, die=None, bot=False, now=None):
         before=before,
         after=after,
         captured=taken,
-        bomb_hits=bomb_hits,
+        bomb_hits=[],
     )
+
+    trigger_bomb(s, seat, after)
+    trigger_magnet(s, seat, token)
 
     winners = (
         [
@@ -351,13 +374,6 @@ def move(s, token, die=None, bot=False, now=None):
             die=None,
             deadline=0,
         )
-
-        # Bombs return to their original positions for the next game.
-        for i, bomb in enumerate(s.get("bombs", [])):
-            bomb.update(
-                square=BOMB_STARTS[i],
-                used=False,
-            )
 
         event(s, "win", winners=winners)
         return
