@@ -3,7 +3,9 @@
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const colors=['#b83238','#236dbc','#202c38','#e2a026'], names=['Kırmızı','Mavi','Siyah','Sarı'];
  const host=()=>document.getElementById('erisRoomSurface');
- let rid='',epoch=0,data=null,hidden='',visible=false,pending=false,polling=false,error='',order=[],selected=[],groups=[],editor=null,lastRound='',lastHand=0,offset=0,stake=50,mode='solo',progressive=false,handCount=3,retry=null,menu=false,penalties=true,processing=null,showScores=false;
+ let rid='',epoch=0,data=null,hidden='',visible=false,pending=false,polling=false,error='',order=[],selected=[],groups=[],editor=null,lastRound='',lastHand=0,offset=0,stake=50,mode='solo',progressive=false,handCount=3,retry=null,menu=false,penalties=true,processing=null,showScores=false,rulesOpen=false;
+ const dismissedResults=new Set();
+ const resultKey=s=>rid+'/'+s?.round_id;
  const state=()=>data?.state, me=()=>state()?.players.find(p=>p.user_id===data.my_id);
  const mine=()=>state()?.status==='playing'&&me()?.seat===state().turn&&data?.seats.some(q=>q.user_id===data.my_id&&q.seat===me()?.seat);
  const api=opts=>window.ErisPlatform.api('/rooms/'+encodeURIComponent(rid)+'/okey101',opts);
@@ -12,12 +14,13 @@
  function tile(t,f=face(t),attrs='') {return '<button type="button" class="o101-tile '+(wild(t)?'wild ':'')+(selected.includes(t)?'chosen':'')+'" style="--tile-color:'+colors[f[0]]+'" '+attrs+' aria-label="'+names[f[0]]+' '+f[1]+(wild(t)?' okey':'')+'"><b>'+f[1]+'</b><i>'+(wild(t)?'★':t>=104?'◇':'●')+'</i></button>';}
  function clear(){host()?.querySelector('.o101-root')?.remove();host()?.classList.remove('okey101-mode');visible=false;editor=null;processing=null;}
  function hide(){hidden=state()?.round_id||'empty';clear();}
- function receive(v){const previous=state();if(previous&&v.state?.round_id===previous.round_id&&v.state.version<previous.version)return;const same=previous&&v.state?.round_id===previous.round_id&&v.state?.version===previous.version;data=v;offset=v.server_time-Date.now()/1000;const s=v.state;
+ function viewSignature(v){if(!v)return '';const s=v.state?{...v.state}:null;if(s){delete s.version;delete s.events;delete s.deadline;delete s.bot_due;delete s.server_time;}return JSON.stringify({...v,state:s,server_time:undefined});}
+ function receive(v){const previous=state();if(previous&&v.state?.round_id===previous.round_id&&v.state.version<previous.version)return;const same=previous&&viewSignature(v)===viewSignature(data);data=v;offset=v.server_time-Date.now()/1000;const s=v.state;
    if(window.ErisUnoActive&&(!s||!['lobby','playing','hand_finished'].includes(s.status))){hidden=s?.round_id||'empty';clear();window.ErisOkey101Active=false;return;}
    if(s?.status==='finished'&&(window.ErisUnoActive||host()?.classList.contains('ludo-mode'))){hidden=s.round_id;clear();window.ErisOkey101Active=false;return;}
    window.ErisOkey101Active=!!s&&['lobby','playing','hand_finished','finished'].includes(s.status);
    if(!s||s.status==='closed'){if(visible&&hidden!=='empty')render();else clear();return;}
-   if(s.round_id!==lastRound||s.hand_number!==lastHand){order=[];selected=[];groups=[];editor=null;processing=null;showScores=false;menu=false;lastRound=s.round_id;lastHand=s.hand_number;}
+   if(s.round_id!==lastRound||s.hand_number!==lastHand){order=[];selected=[];groups=[];editor=null;processing=null;showScores=false;rulesOpen=false;menu=s.status==='finished'&&dismissedResults.has(resultKey(s));lastRound=s.round_id;lastHand=s.hand_number;}
    if(hidden===s.round_id)return;
    if(hidden&&hidden!==s.round_id)hidden='';
    if(!same||!visible||!host()?.querySelector('.o101-root'))render();
@@ -36,28 +39,66 @@
  const btn=(label,action,disabled=false)=>'<button type="button" data-action="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
  const reasons={wrong_open:'Hatalı açılış',discard_working:'İşlek taş atma',discard_okey:'Bitmeden okey atma',okey_retrieved:'Okeyinizin başka oyuncu tarafından alınması',wrong_take:'Soldan alınan taşı kullanmadan geri bırakma'};
  const rules='<details class="o101-rules"><summary>Oyun kuralları</summary><p>106 taş • Dört oyuncu • Başlayan 22, diğerleri 21 taş. Gösterge +1 aynı renk okeydir; sahte okey yalnızca o sayıyı temsil eder.</p><p>Aynı renkte ardışık en az 3 taş veya aynı sayıda farklı renkli 3–4 taş perdir. 12–13–1 geçersizdir. İlk açılış en az 101 puan ya da 5 aynı renk/sayı çifti. Katlamalı oyunda önceki açılışı geçmelisiniz. Çift açan oyuncu tur başına en fazla iki taş işler. Dört oyuncu çift açarsa aynı el yeniden dağıtılır.</p><p>Açmadan taş işlenmez. Çift açan yeni seri açamaz. Soldan alınan taş açılmalı veya işlenmelidir. Masadaki okey temsil ettiği taşla değiştirilir; grupta dört renk tamamlanmalıdır. Son taş atılarak bitilir.</p><p>Normal bitiş −101; açmayan 202, açan eldeki toplam, çift açan iki katı. Eldeki her gerçek okey +101; bu ek ceza bitiş çarpanıyla katlanmaz. Okeyle bitişte −202 ve rakiplerin cezası iki kat. Elden bitiş aynı turda açıp bitmektir. Kimse açmadan doğrudan bitiş rakibe 404; okeyle 808. Taş biterse aynı elde kalan cezaları yazılır. Eşlide bitenin ortağı elde kalanlardan ceza almaz; daha önceki oyun içi cezalar korunur.</p><p>Cezalı masada hatalı açılış, bitmeden gerçek okey atma, işlek taş atma ve okeyinizin başka oyuncu tarafından alınması otomatik +101 puandır. Ceza puanları Lidya kesintisi değildir. Oyun içi cezalar ayrıca tutulur; bitiş çarpanlarıyla büyümez. Cezasız masada bu cezalar yoktur. Soldan alınan taşı kullanmadan geri bırakmak cezalı masada +101’dir. Taş değeri ×10/×20 ve gösterge çifti varyantları kullanılmaz.</p><p>Maç sonunda en düşük toplam kazanır. Eşlide 1+3 ve 2+4 takım. Eşit puanda havuz paylaşılır; bölünmeyen Lidya koltuk sırasıyla dağıtılır. Ayrılanın yerine bot oynar; süre 45 saniye. X yalnızca görünümü kapatır. Oda yönetimi iptal ederse paylar iade edilir.</p></details>';
- function syncSeats(){
-   const strip=host()?.querySelector('.o101-seat-strip');if(!strip)return;
-   strip.replaceChildren();
-   host().querySelectorAll('.eris-room-stage > .eris-seat').forEach(real=>{
-     const clone=real.cloneNode(true);
-     clone.classList.remove('eris-seat');clone.classList.add('o101-seat-proxy');
-     clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
-     clone.style.visibility='visible';clone.style.pointerEvents='auto';
-     clone.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();
-       if(window.ErisRoomSeatMenu)window.ErisRoomSeatMenu(real,clone);else real.click();
-     });
-     strip.append(clone);
-   });
- }
+  function syncSeats(){
+    const strip=host()?.querySelector('.o101-seat-strip');if(!strip)return;
+    const originals=[...host().querySelectorAll('.eris-room-stage > .eris-seat')];
+    const scroll=strip.scrollLeft;
+    const existing=new Map([...strip.children].map(n=>[n.dataset.seatNumber,n]));
+    const keep=new Set();
+    originals.forEach((real,index)=>{
+      const number=String(real.dataset.seatNumber||index+1);
+      let clone=existing.get(number);
+      if(!clone){
+        clone=real.cloneNode(true);
+        clone.classList.remove('eris-seat');clone.classList.add('o101-seat-proxy');
+        clone.dataset.seatNumber=number;
+        clone.addEventListener('click',e=>{
+          e.preventDefault();e.stopImmediatePropagation();
+          const live=[...host().querySelectorAll('.eris-room-stage > .eris-seat')].find(n=>String(n.dataset.seatNumber)===number);
+          if(!live)return;
+          if(window.ErisRoomSeatMenu)window.ErisRoomSeatMenu(live,clone);else live.click();
+        });
+      }
+      if(clone.__sourceHTML!==real.outerHTML){
+        clone.innerHTML=real.innerHTML;
+        clone.className=real.className.replace(/\beris-seat\b/g,'').trim()+' o101-seat-proxy';
+        for(const [key,value] of Object.entries(real.dataset))clone.dataset[key]=value;
+        clone.dataset.seatNumber=number;
+        clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+        clone.style.visibility='visible';clone.style.pointerEvents='auto';
+        clone.__sourceHTML=real.outerHTML;
+      }
+      keep.add(clone);
+      // Appending an existing button unnecessarily also moves the scroll.
+      if(strip.children[index]!==clone)strip.insertBefore(clone,strip.children[index]||null);
+    });
+    [...strip.children].forEach(n=>{if(!keep.has(n))n.remove();});
+    strip.scrollLeft=scroll;
+    strip.style.setProperty('--room-seat-rows',String(Math.max(1,Math.ceil(originals.length/8))));
+  }
  function render(){if(!data||!rid||hidden===state()?.round_id)return;const h=host();if(!h)return;
-   let root=h.querySelector('.o101-root');if(!root){root=document.createElement('section');root.className='o101-root';h.append(root);}h.classList.add('okey101-mode');visible=true;
+   let root=h.querySelector('.o101-root');if(!root){root=document.createElement('section');root.className='o101-root';root.innerHTML='<div class="o101-seat-strip" aria-label="Oda koltukları"></div><header class="o101-head"></header><div class="o101-content"></div><div class="o101-error" role="alert"></div>';h.append(root);}h.classList.add('okey101-mode');visible=true;
    const s=state(),p=me(),lobby=!s||['closed','lobby'].includes(s.status)||menu;
-   root.innerHTML='<div class="o101-seat-strip" aria-label="Oda koltukları"></div><header class="o101-head"><strong>101 OKEY</strong><span>'+esc(s?(s.mode==='paired'?'Eşli':'Tekli')+' • '+(s.progressive?'Katlamalı':'Katlamasız')+' • '+(s.pool||s.players.reduce((n,p)=>n+p.stake,0))+' Lidya':'Dört kişilik oda oyunu')+'</span>'+btn('?', 'rules')+btn('×','hide')+'</header><div class="o101-content"></div><div class="o101-error" role="alert">'+esc(error)+(retry?btn('İşlemi tekrar dene','retry'):'')+'</div>';
+   root.querySelector('.o101-head').innerHTML='<strong>101 OKEY</strong><span>'+esc(s?(s.mode==='paired'?'Eşli':'Tekli')+' • '+(s.progressive?'Katlamalı':'Katlamasız')+' • '+(s.pool||s.players.reduce((n,p)=>n+p.stake,0))+' Lidya':'Dört kişilik oda oyunu')+'</span>'+btn('?', 'rules')+btn('×','hide')+'';
+   root.querySelector('.o101-error').innerHTML=esc(error)+(retry?btn('İşlemi tekrar dene','retry'):'');
    syncSeats();
    const content=root.querySelector('.o101-content');
+   const scrollTop=content.scrollTop;
+   const editorValues=[...content.querySelectorAll('.o101-editor select')].map(n=>({color:n.dataset.color,number:n.dataset.number,value:n.value}));
+   const detailsOpen=!!content.querySelector('.o101-rules')?.open;
+   const focused=document.activeElement;
+   const editingConfig=lobby&&focused?.matches?.('select[data-config]')&&content.contains(focused);
+   if(editingConfig&&!pending){
+     root.addEventListener('focusout',()=>setTimeout(()=>{if(!root.contains(document.activeElement))render();else if(!document.activeElement?.matches?.('select[data-config]'))render();},0),{once:true});
+     syncSeats();clock();return;
+   }
    if(lobby){renderLobby(content);}
    else {renderGame(content);}
+   content.scrollTop=scrollTop;
+   const detail=content.querySelector('.o101-rules');if(detail)detail.open=detailsOpen;
+   if(editor)for(const v of editorValues){const select=content.querySelector(v.color!==undefined?'[data-color="'+v.color+'"]':'[data-number="'+v.number+'"]');if(select)select.value=v.value;}
+   root.querySelector('.o101-rule-overlay')?.remove();
+   if(rulesOpen){const overlay=document.createElement('section');overlay.className='o101-rule-overlay';overlay.innerHTML=btn('×','close-rules')+rules;root.append(overlay);}
    root.onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
      if(b.dataset.tile!==undefined){const t=+b.dataset.tile;selected=selected.includes(t)?selected.filter(x=>x!==t):[...selected,t];render();return;}
      if(b.dataset.option!==undefined){const o=(data.lay_options||[])[+b.dataset.option];if(o)send('lay',{tile:o.tile,meld_id:o.meld_id,end:o.end,face:o.face});return;}
@@ -125,10 +166,10 @@
  function openLay(g,end){const t=selected[0];if(wild(t)){editor={tiles:[t],lay:g.id,end};render();}else send('lay',{tile:t,meld_id:g.id,end});}
  function action(a,b){const s=state();if(!a)return;
    if(a==='hide')return hide();
-   if(a==='rules'){let d=host().querySelector('.o101-rules');if(!d){const el=document.createElement('div');el.className='o101-rule-overlay';el.innerHTML=btn('Kapat','close-rules')+rules;host().querySelector('.o101-content').append(el);d=el.querySelector('details');}d.open=true;return;}
-   if(a==='close-rules')return b.closest('.o101-rule-overlay')?.remove();
+   if(a==='rules'){rulesOpen=true;render();return;}
+   if(a==='close-rules'){rulesOpen=false;render();return;}
    if(a==='retry'&&retry){const q=retry;return send(q.action,q,q.request_key);}
-   if(a==='menu'){menu=true;render();return;}
+   if(a==='menu'){menu=true;dismissedResults.add(resultKey(state()));rulesOpen=false;editor=null;processing=null;showScores=false;render();return;}
    if(a==='create')return send(menu?'restart':'create',{mode,progressive,hand_count:handCount,penalties});
    if(a==='restart')return send('restart');
    if(a==='stake'){stake=+b.dataset.stake;render();return;}
@@ -156,7 +197,7 @@
  }
  function clock(){const s=state();host()?.querySelectorAll('[data-clock]').forEach(n=>n.textContent=s?.status==='playing'?Math.max(0,Math.ceil(s.deadline-(Date.now()/1000+offset)))+' sn':'');}
  async function open(){if(window.ErisUnoActive){window.toast?.('Önce UNO oyununu kapatın.');return;}rid=String(window.ErisCurrentRoomId||window.currentRoomId||rid);hidden='';visible=true;await poll();if(!state()||state().status==='closed'){menu=false;render();}}
- function leave(){epoch++;pending=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;clear();}
+ function leave(){epoch++;pending=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;rulesOpen=false;clear();}
  window.addEventListener('erischat:room-opened',e=>{const id=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(!id)return;if(id!==rid){leave();rid=id;}poll();});
  window.addEventListener('erischat:room-closed',leave);
  window.addEventListener('erischat:ludo-active',()=>{if(state()?.status==='finished'){hide();window.ErisOkey101Active=false;}});

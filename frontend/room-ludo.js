@@ -12,6 +12,8 @@ const bombPoint=i=>{const q=TRACK[i%TRACK.length];return {x:(q[1]+.5)*100/15,y:(
   const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   let rid=null,epoch=0,data=null,accepted=-1,round=null,queue=Promise.resolve(),animating=false,pending=false,polling=false;
   let modal=null,mode='solo',selectedDie=null,stake=50,retry=null,lastError='',resize=null,offset=0,dialogVersion='',hiddenRound=null,menuRound=null;
+  const dismissedResults=new Set();
+  const resultKey=s=>String(rid)+'/'+s?.round_id;
   const surface=()=>document.getElementById('erisRoomSurface');
   const stage=()=>surface()?.querySelector('.eris-room-stage');
   const request=(options)=>window.ErisPlatform.api('/rooms/'+encodeURIComponent(rid)+'/ludo',options);
@@ -175,9 +177,10 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     window.dispatchEvent(new CustomEvent('erischat:ludo-view-closed',{detail:{room_id:rid}}));
   }
   function hideView(){
-    hiddenRound=current()?.round_id||null;menuRound=null;clearBoard();
+    hiddenRound=current()?.round_id||null;if(current()?.status!=='finished')menuRound=null;clearBoard();
   }
   function mainMenu(){
+    dismissedResults.add(resultKey(current()));
     menuRound=current()?.round_id||null;hiddenRound=null;mode=current()?.mode||'solo';stake=current()?.players.find(p=>p.seat===1)?.stake||50;closeDialog();render();
   }
   function render(snapshot=data){
@@ -323,7 +326,7 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     const first=!round||s?.round_id!==round,previous=accepted;
     data=snapshot;
     if(s?.round_id===hiddenRound){round=s.round_id;accepted=s.version;return;}
-    if(first){hiddenRound=null;menuRound=null;stake=s?.default_stake||50;}
+    if(first){hiddenRound=null;menuRound=s?.status==='finished'&&dismissedResults.has(resultKey(s))?s.round_id:null;stake=s?.default_stake||50;}
     if(s&&['lobby','playing','finished'].includes(s.status)){surface()?.classList.add('ludo-mode');stage()?.classList.add('ludo-active');}
 
     /* Gecici bos snapshot aktif Ludo gorunumunu kapatmasin. */
@@ -444,7 +447,8 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
   async function open(){
     if(!rid)return;
     if(window.ErisUnoActive){window.toast?.('Önce UNO oyununu kapatın.');return;}
-    hiddenRound=null;menuRound=null;
+    hiddenRound=null;
+    if(current()?.status==='finished'&&dismissedResults.has(resultKey(current())))menuRound=current().round_id;
     await poll();
     if(!data)return;
     if(!data.unlocked){
