@@ -7,3 +7,4 @@ python-multipart==0.0.20
 requests==2.32.4
 google-auth==2.40.3
 Pillow>=10,<13
+av>=14,<17

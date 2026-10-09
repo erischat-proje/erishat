@@ -19,6 +19,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from PIL import Image, ImageFilter
+from .social_media import validate_social_video
 
 from .auth import (
     create_anonymous_user,
@@ -1202,6 +1203,8 @@ async def _read_social_upload(file: UploadFile, video_limit: int):
         valid = data.startswith(b"\x1a\x45\xdf\xa3")
     if not valid:
         raise HTTPException(status_code=415, detail="Medya dosyası okunamadı")
+    if mime.startswith("video/"):
+        await run_in_threadpool(validate_social_video, data)
     return mime, data
 
 

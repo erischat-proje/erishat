@@ -1,6 +1,12 @@
 package com.erischat.app;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.provider.MediaStore;
+import android.webkit.ValueCallback;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.IOException;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -41,6 +47,11 @@ public class MainActivity extends Activity {
     private int pageGeneration;
     private int permissionPageGeneration;
 
+    private static final int MEDIA_PICK = 9003;
+    private ValueCallback<Uri[]> mediaCallback;
+    private Uri captureUri;
+    private File captureFile;
+    private int mediaPageGeneration;
     private WebView webView;
     private GoogleSignInClient googleClient;
 
@@ -80,6 +91,46 @@ public class MainActivity extends Activity {
         );
 
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
+                    FileChooserParams params) {
+                cancelMedia();
+                if (!trustedPage()) { callback.onReceiveValue(null); return true; }
+                mediaCallback = callback;
+                mediaPageGeneration = pageGeneration;
+                try {
+                    String[] types = params.getAcceptTypes();
+                    String type = types.length == 1 ? types[0] : "";
+                    Intent intent;
+                    if (params.isCaptureEnabled() && type.startsWith("image/")) {
+                        intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        File dir = new File(getCacheDir(), "captures");
+                        if (!dir.exists() && !dir.mkdirs()) throw new IOException("Capture directory");
+                        captureFile = File.createTempFile("photo-", ".jpg", dir);
+                        captureUri = FileProvider.getUriForFile(MainActivity.this,
+                                getPackageName() + ".media", captureFile);
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, captureUri);
+                        intent.setClipData(ClipData.newRawUri("photo", captureUri));
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    } else if (params.isCaptureEnabled() && type.startsWith("video/")) {
+                        intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+                        intent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30);
+                        intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+                    } else {
+                        intent = new Intent(Intent.ACTION_GET_CONTENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("*/*");
+                        intent.putExtra(Intent.EXTRA_MIME_TYPES, types.length > 0 && !types[0].isEmpty()
+                                ? types : new String[]{"image/*", "video/*"});
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    }
+                    startActivityForResult(intent, MEDIA_PICK);
+                } catch (RuntimeException | IOException error) {
+                    cancelMedia();
+                    android.widget.Toast.makeText(MainActivity.this,
+                            "Kamera veya galeri açılamadı.", android.widget.Toast.LENGTH_LONG).show();
+                }
+                return true;
+            }
             @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> handleMicrophoneRequest(request));
             }
@@ -92,6 +143,7 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
                 pageGeneration++;
+                cancelMedia();
                 denyPendingMicrophone();
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -132,6 +184,14 @@ public class MainActivity extends Activity {
     private boolean trustedPage() {
         return webView != null && webView.getUrl() != null
                 && trustedOrigin(Uri.parse(webView.getUrl()));
+    }
+
+    private void cancelMedia() {
+        ValueCallback<Uri[]> callback = mediaCallback;
+        mediaCallback = null;
+        if (callback != null) callback.onReceiveValue(null);
+        captureUri = null;
+        if (captureFile != null) { captureFile.delete(); captureFile = null; }
     }
 
     private void denyPendingMicrophone() {
@@ -191,6 +251,21 @@ public class MainActivity extends Activity {
     ) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == MEDIA_PICK) {
+            ValueCallback<Uri[]> callback = mediaCallback;
+            mediaCallback = null;
+            if (callback == null) return;
+            Uri[] result = null;
+            if (resultCode == RESULT_OK && trustedPage() && mediaPageGeneration == pageGeneration) {
+                if (captureUri != null && captureFile != null && captureFile.length() > 0)
+                    result = new Uri[]{captureUri};
+                else result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            }
+            callback.onReceiveValue(result);
+            if (result == null && captureFile != null) { captureFile.delete(); captureFile = null; }
+            captureUri = null;
+            return;
+        }
         if (requestCode != GOOGLE_SIGN_IN || !trustedPage()) return;
         if (data == null) {
             sendGoogleError("Google giriş sonucu alınamadı (resultCode: " + resultCode + ").");
@@ -246,6 +321,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        cancelMedia();
         denyPendingMicrophone();
         if (webView != null) {
             webView.removeJavascriptInterface("ErisChatAndroid");
