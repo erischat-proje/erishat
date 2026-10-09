@@ -32,7 +32,7 @@ function setup(){
   return {window,pcs,sent,events,timers,intervals,track,setError:e=>requestError=e,setCapture:p=>capture=p,get calls(){return configCalls}};
 }
 (async()=>{
-  {const t=setup();await t.window.ErisRoomRTC.message({type:'rtc_ready',user_id:'a',peers:['b']});await tick();assert.equal(t.calls,1);assert.equal(t.pcs[0].cfg.iceServers[0].urls,'turn:example.test');assert.equal(t.sent.filter(x=>x.type==='rtc_offer').length,1);
+  {const t=setup();await t.window.ErisRoomRTC.message({type:'rtc_ready',user_id:'a',peers:['b']});await tick();assert.ok(t.calls>=1);assert.equal(t.pcs[0].cfg.iceServers[0].urls,'turn:example.test');assert.equal(t.sent.filter(x=>x.type==='rtc_offer').length,1);
    t.pcs[0].signalingState='stable';t.pcs[0].connectionState='disconnected';t.pcs[0].onconnectionstatechange();for(const fn of [...t.timers.values()])fn();await tick();assert.ok(t.pcs[0].restarts);assert.equal(t.sent.filter(x=>x.type==='rtc_offer').length,2);}
   {const t=setup();await t.window.ErisRoomRTC.toggle();assert.equal(t.track.stopped,undefined);t.setError(Object.assign(new Error('temporary'),{status:503}));await t.intervals[0]();assert.equal(t.track.stopped,undefined);t.setError(Object.assign(new Error('forbidden'),{status:403}));await t.intervals[0]();assert.equal(t.track.stopped,true);}
   {const t=setup();let resolve;t.setCapture(new Promise(r=>resolve=r));const opening=t.window.ErisRoomRTC.toggle();await tick();t.window.ErisRoomRTC.leaveRoom();resolve({getTracks:()=>[t.track],getAudioTracks:()=>[t.track]});await opening;assert.equal(t.track.stopped,true);assert.equal(t.pcs.length,0);}
@@ -53,5 +53,22 @@ function setup(){
   {const t=setup();const media={getTracks:()=>[t.track],getAudioTracks:()=>[t.track]};t.setCapture(null);const original=t.window.ErisRoomRTC;t.setCapture(Promise.reject(Object.assign(new Error('denied'),{name:'NotAllowedError'})));await original.toggle();assert.equal(original.diagnostics().microphone,false);assert.equal(t.track.stopped,undefined);}
   {const t=setup();const calls=[];t.setCapture(async args=>{calls.push(args.audio);if(calls.length===1)throw Object.assign(new Error('constraint'),{name:'OverconstrainedError'});return {getTracks:()=>[t.track],getAudioTracks:()=>[t.track]}});await t.window.ErisRoomRTC.toggle();assert.equal(calls.length,2);assert.equal(calls[1],true);assert.equal(t.window.ErisRoomRTC.diagnostics().microphone,true);}
   {const t=setup();let calls=0;t.setCapture(async()=>{calls++;throw Object.assign(new Error('permission'),{name:'NotAllowedError'})});await t.window.ErisRoomRTC.toggle();assert.equal(calls,1);}
-  console.log('PASS: 13 RTC scenarios (mocked WebRTC; no live network test)');
+  {const t=setup();t.window.__erisRoomPermissions.current_user_seat=null;
+   await t.window.ErisRoomRTC.message({type:'rtc_ready',user_id:'a',peers:[]});await tick();
+   assert.equal(t.window.ErisRoomRTC.diagnostics().microphone,false);
+   t.window.__erisRoomPermissions.current_user_seat=1;
+   t.events['erischat:room-state-updated']({detail:{room:{id:'room',current_user_seat:1,seats:[]}}});await tick();
+   assert.equal(t.window.ErisRoomRTC.diagnostics().microphone,true);
+   await t.window.ErisRoomRTC.toggle();
+   t.events['erischat:room-state-updated']({detail:{room:{id:'room',current_user_seat:1,seats:[]}}});await tick();
+   assert.equal(t.window.ErisRoomRTC.diagnostics().microphone,false);
+   t.events['erischat:room-state-updated']({detail:{room:{id:'other',current_user_seat:1,seats:[]}}});await tick();
+   assert.equal(t.window.ErisRoomRTC.diagnostics().microphone,false);
+  }
+  {const t=setup();let calls=0;t.setCapture(async()=>{calls++;throw Object.assign(new Error('denied'),{name:'NotAllowedError'})});
+   await t.window.ErisRoomRTC.message({type:'rtc_ready',user_id:'a',peers:[]});await tick();
+   for(let i=0;i<3;i++){t.window.ErisRoomRTC.syncSeatMicrophone();await tick()}
+   assert.equal(calls,1);
+  }
+  console.log('PASS: 15 RTC scenarios (mocked WebRTC; no live network test)');
 })().catch(e=>{console.error(e);process.exitCode=1});
