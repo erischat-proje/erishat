@@ -37,7 +37,7 @@ class Okey101Receipt(Base):
     response_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 class Action(BaseModel):
-    action: Literal['create','ready','withdraw','start','draw','open','lay','replace','discard','close','configure','restart']
+    action: Literal['create','ready','withdraw','start','draw','open','return_discard','preview_lay','auto_lay','lay','replace','discard','close','configure','restart']
     round_id: str = Field(default='', max_length=36)
     version: int = Field(default=0, ge=0)
     request_key: str = Field(min_length=16, max_length=64)
@@ -49,8 +49,12 @@ class Action(BaseModel):
     end: Literal['left','right'] = 'right'
     face: list[int] | None = Field(default=None, min_length=2, max_length=2)
     index: int = Field(default=0, ge=0, le=12)
+    penalties: bool = True
+    tiles: list[int] | None = Field(default=None, max_length=22)
+    plan: list[dict] | None = Field(default=None, max_length=21)
     progressive: bool = False
     hand_count: Literal[1,3,5,7] = 3
+    finish_tile: int | None = Field(default=None, ge=0, le=105)
     stake: int = 50
 
 def dumps(value):
@@ -116,14 +120,19 @@ def view(db, room, row, user):
     safe=rules.public(state,user.id) if state else None
     suggestions=[]
     pair_suggestions=[]
+    lay_options=[]
+    can_return_discard=False
     if state and state['status']=='playing':
         p=next((p for p in state['players'] if p['user_id']==user.id),None)
         if p:
             suggestions=rules.candidate_groups(state,p['hand'])
             pair_suggestions=rules.candidate_groups(state,p['hand'],True)
+            if state['turn']==p['seat'] and state['phase']=='discard':
+                lay_options=rules.legal_lays(state,p['seat'])
+                can_return_discard=state.get('taken') in p['hand']
     return dict(state=safe,seats=cards,my_id=user.id,balance=user.lidya,
                 can_manage=can_manage(db,room,user),unlocked=room.level>=4,
-                suggestions=suggestions,pair_suggestions=pair_suggestions,server_time=time.time())
+                suggestions=suggestions,pair_suggestions=pair_suggestions,lay_options=lay_options,can_return_discard=can_return_discard,server_time=time.time())
 
 def resolve(db,rid,user,lock=False):
     # Existing room lookup refreshes authoritative level before locking.
@@ -190,7 +199,8 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
             new_mode=payload.mode
             new_stake=50
         s=dict(round_id=str(uuid4()),status='lobby',mode=new_mode,default_stake=new_stake,host=user.id,
-               version=0,players=[],events=[],settled=False,expires=time.time()+600,
+               rules_version=2,version=0,players=[],events=[],settled=False,expires=time.time()+600,
+               penalties=(s.get('penalties',False) if payload.action=='restart' else payload.penalties),
                progressive=(s['progressive'] if payload.action=='restart' else payload.progressive),
                hand_count=(s['hand_count'] if payload.action=='restart' else payload.hand_count))
         rules.event(s,'lobby')
@@ -208,7 +218,7 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
                 raise HTTPException(403,'Ayarları oyun kurucusu veya oda yönetimi değiştirebilir.')
             if s['players']:
                 raise HTTPException(409,'Ayarları değiştirmeden önce hazır oyuncular katılımlarını geri almalı.')
-            s.update(mode=payload.mode,progressive=payload.progressive,hand_count=payload.hand_count)
+            s.update(mode=payload.mode,progressive=payload.progressive,hand_count=payload.hand_count,penalties=payload.penalties)
             rules.event(s,'configure')
         elif payload.action=='close':
             if not staff:
@@ -311,7 +321,16 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
             p['bot']=False
             try:
                 if payload.action=='draw':rules.draw(s,p['seat'],payload.source)
-                elif payload.action=='open':rules.open_melds(s,p['seat'],payload.groups)
+                elif payload.action=='return_discard':rules.return_discard(s,p['seat'])
+                elif payload.action=='open':rules.declare_open(s,p['seat'],payload.groups,payload.finish_tile)
+                elif payload.action=='preview_lay':
+                    rules.check_turn(s,p['seat'])
+                    response=view(db,room,row,user)
+                    response['processing_plan']=rules.auto_plan(s,p['seat'],payload.tiles)
+                    db.add(Okey101Receipt(id=receipt_id,fingerprint=fingerprint,response_json=dumps(response)))
+                    db.commit()
+                    return response
+                elif payload.action=='auto_lay':rules.auto_lay(s,p['seat'],payload.tiles,payload.plan)
                 elif payload.action=='lay':rules.lay(s,p['seat'],payload.tile,payload.meld_id,payload.end,payload.face)
                 elif payload.action=='replace':rules.replace(s,p['seat'],payload.tile,payload.meld_id,payload.index)
                 elif payload.action=='discard':rules.discard(s,p['seat'],payload.tile)
@@ -383,6 +402,7 @@ def tick_room(rid, now):
             if (p['bot'] and now>=s.get('bot_due',0)) or now>=s['deadline']:
                 # A discarded tile not used before timeout must be returned; never keep a free tile.
                 if s.get('taken') in p['hand']:
+                    rules.penalty(s,p['seat'],'wrong_take',101,tile=s['taken'])
                     p['hand'].remove(s['taken'])
                     s['discards'][str((p['seat']-2)%4+1)].append(s['taken'])
                     s.update(taken=None,phase='draw')
