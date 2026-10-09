@@ -1,4 +1,4 @@
-"""Persistent room-only Ludo, transactional escrow, restart-safe bot scheduler."""
+"""Persistent room-only 101 Okey, transactional escrow, restart-safe bot scheduler."""
 from __future__ import annotations
 
 import asyncio
@@ -17,34 +17,41 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from .db import Base, SessionLocal, get_db
 from .models import User
 from .room_models import Room, RoomSeat, RoomMember
-from . import ludo_engine as rules, room_routes as rooms
+from . import okey101_engine as rules, room_routes as rooms
 
-router = APIRouter(prefix='/v1/rooms', tags=['room-ludo'])
-log = logging.getLogger('erischat.ludo')
+router = APIRouter(prefix='/v1/rooms', tags=['room-okey101'])
+log = logging.getLogger('erischat.okey101')
 
-class RoomLudo(Base):
-    __tablename__ = 'room_ludo'
+class RoomOkey101(Base):
+    __tablename__ = 'room_okey101'
     room_id: Mapped[str] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), primary_key=True)
     round_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
     status: Mapped[str] = mapped_column(String(16), index=True, nullable=False)
     state_json: Mapped[str] = mapped_column(Text, nullable=False)
 
-class LudoReceipt(Base):
-    __tablename__ = 'room_ludo_receipts'
+class Okey101Receipt(Base):
+    __tablename__ = 'room_okey101_receipts'
     # Includes round and actor: a retry can never mutate a different match.
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     response_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 class Action(BaseModel):
-    action: Literal['create','ready','withdraw','start','roll','move','close','configure','restart']
+    action: Literal['create','ready','withdraw','start','draw','open','lay','replace','discard','close','configure','restart']
     round_id: str = Field(default='', max_length=36)
     version: int = Field(default=0, ge=0)
     request_key: str = Field(min_length=16, max_length=64)
     mode: Literal['solo','paired'] = 'solo'
-    die: int | None = Field(default=None, ge=1, le=6)
+    source: Literal['stock','discard'] = 'stock'
+    tile: int = Field(default=0, ge=0, le=105)
+    groups: list[dict] = Field(default_factory=list, max_length=14)
+    meld_id: str = Field(default='', max_length=12)
+    end: Literal['left','right'] = 'right'
+    face: list[int] | None = Field(default=None, min_length=2, max_length=2)
+    index: int = Field(default=0, ge=0, le=12)
+    progressive: bool = False
+    hand_count: Literal[1,3,5,7] = 3
     stake: int = 50
-    token: int = Field(default=0, ge=0, le=3)
 
 def dumps(value):
     return json.dumps(value, separators=(',',':'), ensure_ascii=False)
@@ -90,10 +97,13 @@ def settle(db, s):
     users=users_for_money(db,s)
     winners=[p for p in s['players'] if p['seat'] in s['winners']]
     pool=sum(p['stake'] for p in s['players'])
-    assert winners and pool % len(winners)==0
-    for p in winners:
-        users[p['user_id']].lidya += pool//len(winners)
-    s.update(settled=True,payout=pool//len(winners),pool=pool)
+    assert winners
+    payouts={}
+    for i,p in enumerate(sorted(winners,key=lambda p:p['seat'])):
+        amount=pool//len(winners)+(i<pool%len(winners))
+        users[p['user_id']].lidya += amount
+        payouts[str(p['seat'])]=amount
+    s.update(settled=True,payouts=payouts,pool=pool)
 
 def view(db, room, row, user):
     state=json.loads(row.state_json) if row else None
@@ -103,32 +113,30 @@ def view(db, room, row, user):
         u=db.get(User,uid)
         if u and rooms.is_member(db,room.id,uid) and not rooms.ghost_active(db,uid):
             cards.append(dict(seat=seat,user_id=uid,name=u.nickname,avatar=u.avatar))
-    legal=[]
-    moves=[]
-    if state and state['status']=='playing' and not state.get('roll_ready'):
-        p=rules.player(state,state['turn'])
-        if p['user_id']==user.id and present(db,room.id,p,seats) and not p.get('bot'):
-            for d in state.get('pending_dice',[]):
-                die=d['value']
-                for token in rules.legal(state,state['turn'],die):
-                    moves.append({'die':die,'token':token})
-            legal=sorted(set(m['token'] for m in moves))
-    return dict(state=state,seats=cards,my_id=user.id,balance=user.lidya,
+    safe=rules.public(state,user.id) if state else None
+    suggestions=[]
+    pair_suggestions=[]
+    if state and state['status']=='playing':
+        p=next((p for p in state['players'] if p['user_id']==user.id),None)
+        if p:
+            suggestions=rules.candidate_groups(state,p['hand'])
+            pair_suggestions=rules.candidate_groups(state,p['hand'],True)
+    return dict(state=safe,seats=cards,my_id=user.id,balance=user.lidya,
                 can_manage=can_manage(db,room,user),unlocked=room.level>=4,
-                legal=legal,moves=moves,server_time=time.time())
+                suggestions=suggestions,pair_suggestions=pair_suggestions,server_time=time.time())
 
 def resolve(db,rid,user,lock=False):
     # Existing room lookup refreshes authoritative level before locking.
     room=rooms.get_room_or_404(db,rid)
     if not rooms.is_member(db,room.id,user.id):
-        raise HTTPException(403,'Ludo yalnızca odanın üyelerine açıktır.')
+        raise HTTPException(403,'101 Okey yalnızca odanın üyelerine açıktır.')
     if lock:
-        preliminary=db.get(RoomLudo,room.id)
+        preliminary=db.get(RoomOkey101,room.id)
         previous=json.loads(preliminary.state_json) if preliminary else {'players':[]}
         ids=sorted({user.id,*[p['user_id'] for p in previous['players']]})
         # Currency rows precede the room mutex, matching the other gift/payment flows.
         list(db.scalars(select(User).where(User.id.in_(ids)).order_by(User.id).with_for_update().execution_options(populate_existing=True)))
-        db.info['ludo_locked_users']=set(ids)
+        db.info['okey101_locked_users']=set(ids)
         room=db.scalar(select(Room).where(Room.id==room.id).with_for_update().execution_options(populate_existing=True))
         if preliminary:db.expire(preliminary)
         # Membership may have changed while waiting for the room lock.
@@ -136,40 +144,40 @@ def resolve(db,rid,user,lock=False):
             raise HTTPException(403,'Önce odaya katılın.')
     return room
 
-@router.get('/{room_id}/ludo')
+@router.get('/{room_id}/okey101')
 def snapshot(room_id:str, db:Session=Depends(get_db), user:User=Depends(rooms.current_user_dependency)):
     room=resolve(db,room_id,user)
-    return view(db,room,db.get(RoomLudo,room.id),user)
+    return view(db,room,db.get(RoomOkey101,room.id),user)
 
-@router.post('/{room_id}/ludo')
+@router.post('/{room_id}/okey101')
 def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=Depends(rooms.current_user_dependency)):
     room=resolve(db,room_id,user,lock=True)
-    rooms.reject_ghost(db,user,'Ludo oynamak')
+    rooms.reject_ghost(db,user,'101 Okey oynamak')
     receipt_id=hashlib.sha256(f'{room.id}:{user.id}:{payload.request_key}'.encode()).hexdigest()
     fingerprint=hashlib.sha256(dumps(payload.model_dump()).encode()).hexdigest()
-    receipt=db.get(LudoReceipt,receipt_id)
+    receipt=db.get(Okey101Receipt,receipt_id)
     if receipt:
         if receipt.fingerprint!=fingerprint:
             raise HTTPException(409,'İstek anahtarı başka işlemde kullanılmış.')
         return json.loads(receipt.response_json)
-    row=db.get(RoomLudo,room.id)
+    row=db.get(RoomOkey101,room.id)
     s=json.loads(row.state_json) if row else None
-    if s and not {p['user_id'] for p in s['players']}.issubset(db.info['ludo_locked_users']):
+    if s and not {p['user_id'] for p in s['players']}.issubset(db.info['okey101_locked_users']):
         raise HTTPException(409,'Katılımcılar güncellendi; tekrar deneyin.')
     seats=occupants(db,room.id)
     seat=next((n for n,uid in seats.items() if uid==user.id),None)
     staff=can_manage(db,room,user)
     if payload.action in ('create','restart'):
         if room.level<4:
-            raise HTTPException(403,'Ludo 4. oda seviyesinde açılır.')
+            raise HTTPException(403,'101 Okey 4. oda seviyesinde açılır.')
         if not staff and seat is None:
             raise HTTPException(403,'İlk dört koltuktan birine oturun.')
-        if s and s['status'] in ('lobby','playing'):
+        if s and s['status'] in ('lobby','playing','hand_finished'):
             raise HTTPException(409,'Bu odada zaten açık bir oyun var.')
-        from .okey101_live import RoomOkey101
-        other=db.get(RoomOkey101,room.id)
+        from .ludo_live import RoomLudo
+        other=db.get(RoomLudo,room.id)
         if other and other.status in ('lobby','playing','hand_finished'):
-            raise HTTPException(409,'Önce odadaki 101 Okey oyununu kapatın.')
+            raise HTTPException(409,'Önce odadaki Ludo oyununu kapatın.')
         if payload.action=='restart':
             if not s or s['status']!='finished' or payload.round_id!=s['round_id'] or payload.version!=s['version']:
                 raise HTTPException(409,'Tekrar için tamamlanmış güncel oyun gerekli.')
@@ -182,10 +190,12 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
             new_mode=payload.mode
             new_stake=50
         s=dict(round_id=str(uuid4()),status='lobby',mode=new_mode,default_stake=new_stake,host=user.id,
-               version=0,players=[],events=[],settled=False,expires=time.time()+600)
+               version=0,players=[],events=[],settled=False,expires=time.time()+600,
+               progressive=(s['progressive'] if payload.action=='restart' else payload.progressive),
+               hand_count=(s['hand_count'] if payload.action=='restart' else payload.hand_count))
         rules.event(s,'lobby')
         if not row:
-            row=RoomLudo(room_id=room.id,round_id=s['round_id'],status='lobby',state_json=dumps(s))
+            row=RoomOkey101(room_id=room.id,round_id=s['round_id'],status='lobby',state_json=dumps(s))
             db.add(row)
         else:
             row.round_id=s['round_id']
@@ -198,7 +208,7 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
                 raise HTTPException(403,'Ayarları oyun kurucusu veya oda yönetimi değiştirebilir.')
             if s['players']:
                 raise HTTPException(409,'Ayarları değiştirmeden önce hazır oyuncular katılımlarını geri almalı.')
-            s.update(mode=payload.mode)
+            s.update(mode=payload.mode,progressive=payload.progressive,hand_count=payload.hand_count)
             rules.event(s,'configure')
         elif payload.action=='close':
             if not staff:
@@ -264,7 +274,7 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
                         name=user.nickname,
                         avatar=user.avatar,
                         stake=new,
-                        tokens=[-1]*4,
+                        hand=[],score=0,opened=None,
                         bot=False
                     ))
                     rules.event(s,'ready',seat=seat)
@@ -291,7 +301,7 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
 
             try:
                 rules.begin(s)
-            except ValueError as e:
+            except (ValueError,KeyError,TypeError,IndexError) as e:
                 raise HTTPException(400,str(e)) from e
             s['pool']=sum(q['stake'] for q in s['players'])
             s['bot_due']=time.time()+2
@@ -300,31 +310,35 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
                 raise HTTPException(403,'Sıra size ait değil veya koltuğunuzda değilsiniz.')
             p['bot']=False
             try:
-                if payload.action=='roll':rules.roll(s)
-                elif payload.action=='move':rules.move(s,payload.token,die=payload.die)
-            except ValueError as e:
+                if payload.action=='draw':rules.draw(s,p['seat'],payload.source)
+                elif payload.action=='open':rules.open_melds(s,p['seat'],payload.groups)
+                elif payload.action=='lay':rules.lay(s,p['seat'],payload.tile,payload.meld_id,payload.end,payload.face)
+                elif payload.action=='replace':rules.replace(s,p['seat'],payload.tile,payload.meld_id,payload.index)
+                elif payload.action=='discard':rules.discard(s,p['seat'],payload.tile)
+                rules.invariant(s)
+            except (ValueError,KeyError,TypeError,IndexError) as e:
                 raise HTTPException(400,str(e)) from e
             s['bot_due']=time.time()+2
             settle(db,s)
     save(row,s)
     db.flush()
     response=view(db,room,row,user)
-    db.add(LudoReceipt(id=receipt_id,fingerprint=fingerprint,response_json=dumps(response)))
+    db.add(Okey101Receipt(id=receipt_id,fingerprint=fingerprint,response_json=dumps(response)))
     db.commit()
     return response
 
 def tick_room(rid, now):
     with SessionLocal() as db:
-        preliminary=db.get(RoomLudo,rid)
-        if not preliminary or preliminary.status not in ('lobby','playing'):return
+        preliminary=db.get(RoomOkey101,rid)
+        if not preliminary or preliminary.status not in ('lobby','playing','hand_finished'):return
         previous=json.loads(preliminary.state_json)
         ids=sorted({p['user_id'] for p in previous['players']})
         list(db.scalars(select(User).where(User.id.in_(ids)).order_by(User.id).with_for_update().execution_options(populate_existing=True)))
         # Lock order is users, then room, in API actions and background workers.
         room=db.scalar(select(Room).where(Room.id==rid).with_for_update())
         db.expire(preliminary)
-        row=db.get(RoomLudo,rid)
-        if not room or not row or row.status not in ('lobby','playing'):return
+        row=db.get(RoomOkey101,rid)
+        if not room or not row or row.status not in ('lobby','playing','hand_finished'):return
         s=json.loads(row.state_json)
         if not {p['user_id'] for p in s['players']}.issubset(ids):return
         old=dumps(s)
@@ -355,6 +369,10 @@ def tick_room(rid, now):
                         users[p['user_id']].lidya += p['stake']
                         s['players'].remove(p)
                     rules.event(s,'ready')
+        elif s['status']=='hand_finished':
+            if now>=s['next_hand_at']:
+                rules.advance(s)
+                s['bot_due']=now+2
         else:
             for p in s['players']:
                 bot=not present(db,rid,p,seats)
@@ -363,7 +381,13 @@ def tick_room(rid, now):
                     rules.event(s,'presence',seat=p['seat'],bot=bot)
             p=rules.player(s,s['turn'])
             if (p['bot'] and now>=s.get('bot_due',0)) or now>=s['deadline']:
+                # A discarded tile not used before timeout must be returned; never keep a free tile.
+                if s.get('taken') in p['hand']:
+                    p['hand'].remove(s['taken'])
+                    s['discards'][str((p['seat']-2)%4+1)].append(s['taken'])
+                    s.update(taken=None,phase='draw')
                 rules.bot_step(s,now)
+                rules.invariant(s)
                 s['bot_due']=now+2
                 settle(db,s)
         if old!=dumps(s):
@@ -372,10 +396,10 @@ def tick_room(rid, now):
 
 def tick():
     with SessionLocal() as db:
-        ids=list(db.scalars(select(RoomLudo.room_id).where(RoomLudo.status.in_(('lobby','playing')))))
+        ids=list(db.scalars(select(RoomOkey101.room_id).where(RoomOkey101.status.in_(('lobby','playing','hand_finished')))))
     for rid in ids:
         try:tick_room(rid,time.time())
-        except Exception:log.exception('Room Ludo tick failed: %s',rid)
+        except Exception:log.exception('Room 101 Okey tick failed: %s',rid)
 
 async def routing_loop():
     while True:

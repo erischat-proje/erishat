@@ -642,6 +642,7 @@
       ['ODA',[
         ['info','⌂','Oda bilgileri'],
         ['ludo','🎮','Ludo'+(Number(r.level||1)<4?' 🔒':'')],
+        ['okey101','▦','101 Okey'+(Number(r.level||1)<4?' 🔒':'')],
         ['report','⚑','Şikâyet'],
         ['users','♙','Kullanıcılar'],
         ['music','♫','Müzik'],
@@ -685,6 +686,7 @@
       if(['staff','guests','bans','mutes','settings'].includes(tab)&&!staff)return;
       if(['moderators','promote','theme'].includes(tab)&&!owner)return;
       closePanels();
+      if(tab==='okey101'){if(Number(r.level||1)<4){window.toast?.('101 Okey 4. oda seviyesinde açılır.');return;}window.ErisOkey101?.open?.();}
       if(tab==='ludo'){if(Number(r.level||1)<4){window.toast?.('Ludo 4. oda seviyesinde açılır.');return;}window.ErisLudo?.open?.();}
       else if(tab==='adminroomban'&&canRoomBan)window.ErisBan?.openRoom?.(r.public_id||r.id);
       else if(tab==='theme')theme();
