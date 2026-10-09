@@ -13,7 +13,7 @@ TRACK = [
 ]
 
 STARTS = {1: 0, 2: 13, 3: 26, 4: 39}
-SAFE = {8, 21, 34, 47}
+SAFE = {0, 8, 13, 21, 26, 34, 39, 47}
 BOMB_STARTS = [4, 17, 30, 43]
 STAKES = (50, 100, 150, 200, 250, 300)
 TURN_SECONDS = 30
@@ -99,7 +99,9 @@ def legal_for_die(s, seat, die, harmless=False):
 
 
 def legal(s, seat, die=None, harmless=False):
-    dice = list(s.get("pending_dice") or [])
+    if s.get("roll_ready"):
+        return []
+    dice = [d["value"] if isinstance(d, dict) else d for d in (s.get("pending_dice") or [])]
 
     if die is not None:
         dice = [die]
@@ -138,6 +140,7 @@ def begin(s, now=None):
         pending_dice=[],
         die=None,
         double_sixes=0,
+        roll_ready=False,
         turn_has_six=False,
         deadline=(now or time.time()) + TURN_SECONDS,
         winners=[],
@@ -175,6 +178,7 @@ def next_turn(s, now=None):
         pending_dice=[],
         die=None,
         double_sixes=0,
+        roll_ready=False,
         turn_has_six=False,
         deadline=(now or time.time()) + TURN_SECONDS,
     )
@@ -187,66 +191,29 @@ def next_turn(s, now=None):
 def roll(s, bot=False, now=None):
     if s["status"] != "playing":
         raise ValueError("Oyun devam etmiyor.")
-
-    if s.get("pending_dice"):
-        raise ValueError("Önce mevcut zarların hamlelerini oynayın.")
-
-    dice = [
-        secrets.randbelow(6) + 1,
-        secrets.randbelow(6) + 1,
+    if s.get("pending_dice") and not s.get("roll_ready"):
+        raise ValueError("Önce biriken zarların hamlelerini oynayın.")
+    dice = [secrets.randbelow(6) + 1, secrets.randbelow(6) + 1]
+    double_six = dice == [6, 6]
+    s["double_sixes"] = s.get("double_sixes", 0) + 1 if double_six else 0
+    s["dice"] = list(s.get("dice") or []) + dice
+    first_index = len(s["dice"]) - 2
+    s["pending_dice"] = list(s.get("pending_dice") or []) + [
+        {"index": first_index + i, "value": value} for i, value in enumerate(dice)
     ]
-
-    double_six = dice[0] == 6 and dice[1] == 6
-
-    if double_six:
-        s["double_sixes"] = s.get("double_sixes", 0) + 1
-    else:
-        s["double_sixes"] = 0
-
-    s["dice"] = dice[:]
-    s["pending_dice"] = [
-        {"index": 0, "value": dice[0]},
-        {"index": 1, "value": dice[1]},
-    ]
-    s["turn_has_six"] = 6 in dice
-
-    event(
-        s,
-        "roll",
-        seat=s["turn"],
-        dice=dice,
-        double_six=double_six,
-        double_sixes=s["double_sixes"],
-    )
-
-    # Third consecutive 6+6: entire roll is cancelled and turn passes.
+    s["roll_ready"] = double_six
+    s["turn_has_six"] = False
+    event(s, "roll", seat=s["turn"], dice=dice, double_six=double_six,
+          double_sixes=s["double_sixes"], accumulated=s["dice"][:])
     if double_six and s["double_sixes"] >= 3:
-        s["pending_dice"] = []
-        s["dice"] = []
-        s["turn_has_six"] = False
-
-        event(
-            s,
-            "pass",
-            seat=s["turn"],
-            reason="Üçüncü 6+6 geçersiz; sıra değişti.",
-        )
-
+        event(s, "pass", seat=s["turn"], reason="Üçüncü ardışık 6+6: biriken zarlar iptal edildi; sıra değişti.")
         next_turn(s, now)
         return
-
-    if not legal(s, s["turn"], harmless=bot):
-        # No pawn can use either die.
-        s["pending_dice"] = []
-        s["dice"] = []
-
-        if double_six or 6 in dice:
-            s["deadline"] = (now or time.time()) + TURN_SECONDS
-        else:
+    if not double_six:
+        if not legal(s, s["turn"], harmless=bot):
             next_turn(s, now)
-        return
-
-    s["deadline"] = (now or time.time()) + TURN_SECONDS
+            return
+    s["deadline"] = (now if now is not None else time.time()) + TURN_SECONDS
 
 
 def trigger_bomb(s, seat, destination):
@@ -277,6 +244,7 @@ def trigger_bomb(s, seat, destination):
                 if (
                     0 <= pos <= 50
                     and square(p["seat"], pos) in path
+                    and square(p["seat"], pos) not in SAFE
                 ):
                     hits.append(
                         dict(
@@ -306,6 +274,12 @@ def trigger_bomb(s, seat, destination):
 
 
 def move(s, token, die=None, bot=False, now=None):
+    if s.get("status") != "playing":
+        raise ValueError("Oyun devam etmiyor.")
+    if s.get("roll_ready"):
+        raise ValueError("6+6 geldi; piyon seçmeden önce yeniden zar atın.")
+    if isinstance(token, bool) or not isinstance(token, int) or not 0 <= token < 4:
+        raise ValueError("Geçersiz piyon.")
     seat = s["turn"]
     p = player(s, seat)
 
@@ -388,27 +362,18 @@ def move(s, token, die=None, bot=False, now=None):
         event(s, "win", winners=winners)
         return
 
-    if s["pending_dice"]:
+    # Retain temporarily unplayable dice: a later six may release a pawn for them.
+    if s["pending_dice"] and legal(s, seat, harmless=bot):
         s["die"] = s["pending_dice"][0]["value"]
         s["deadline"] = (now or time.time()) + TURN_SECONDS
         return
 
-    # All dice from this roll have been used.
-    # Any six grants the normal extra-roll behaviour.
-    if s.get("turn_has_six"):
-        s.update(
-            dice=[],
-            pending_dice=[],
-            die=None,
-            deadline=(now or time.time()) + TURN_SECONDS,
-        )
-        return
-
+    # Every accumulated die was consumed or became unusable.
     next_turn(s, now)
 
 
 def bot_step(s, now=None):
-    if not s.get("pending_dice"):
+    if not s.get("pending_dice") or s.get("roll_ready"):
         roll(s, bot=True, now=now)
         return
 
@@ -445,12 +410,5 @@ def bot_step(s, now=None):
         )
         return
 
-    # Nothing can be played.
-    s["pending_dice"] = []
-
-    if s.get("turn_has_six"):
-        s["dice"] = []
-        s["die"] = None
-        s["deadline"] = (now or time.time()) + TURN_SECONDS
-    else:
-        next_turn(s, now)
+    # No accumulated die can be played by the bot.
+    next_turn(s, now)
