@@ -48,38 +48,89 @@
   function speakingStyle(){
     if(document.getElementById('eris-rtc-speaking-style'))return;
     const x=document.createElement('style');x.id='eris-rtc-speaking-style';
-    x.textContent='.eris-seat.rtc-speaking{border-color:#fff!important;box-shadow:0 0 0 4px rgba(139,92,246,.42),0 0 0 9px rgba(255,79,163,.18),0 0 24px rgba(180,100,255,.75)!important;animation:erisRtcSpeak .72s ease-in-out infinite alternate}@keyframes erisRtcSpeak{to{transform:translate(-50%,-50%) scale(1.09);box-shadow:0 0 0 6px rgba(139,92,246,.3),0 0 0 13px rgba(255,79,163,.10),0 0 32px rgba(180,100,255,.9)}}@media(prefers-reduced-motion:reduce){.eris-seat.rtc-speaking{animation:none}}';
+    x.textContent=`
+      #erisRoomSurface .eris-seat.rtc-speaking{animation:none!important}
+      #erisRoomSurface .eris-seat .eris-voice-ring{
+        position:absolute;inset:-16%;border:2px solid #c6afff;
+        border-radius:50%;pointer-events:none;z-index:4;
+        opacity:var(--eris-voice-opacity,0);
+        transform:scale(var(--eris-voice-scale,1));
+        transition:opacity .12s linear,transform .07s linear;
+        box-shadow:0 0 10px #a57cff44;
+      }
+      #erisRoomSurface .eris-voice-ring::after{
+        content:'';position:absolute;inset:7%;
+        border:2px solid #d6c6ff99;border-radius:50%;
+      }
+      @media(prefers-reduced-motion:reduce){
+        #erisRoomSurface .eris-seat .eris-voice-ring{
+          transform:none;transition:opacity .12s linear
+        }
+      }
+    `;
     document.head.append(x);
   }
-  function markSpeaking(id,on){
-    document.querySelectorAll('.eris-seat').forEach(x=>{
-      if(String(x.dataset.userId||'')===String(id))x.classList.toggle('rtc-speaking',!!on);
+  function markSpeaking(id,on,level=0){
+    document.querySelectorAll('#erisRoomSurface .eris-seat').forEach(seat=>{
+      if(String(seat.dataset.userId||'')!==String(id))return;
+      seat.classList.remove('rtc-speaking');
+      let ring=seat.querySelector('.eris-voice-ring');
+      if(!ring&&on){
+        ring=document.createElement('span');
+        ring.className='eris-voice-ring';
+        ring.setAttribute('aria-hidden','true');
+        (seat.querySelector('.seat-pod')||seat).append(ring);
+      }
+      if(!ring)return;
+      ring.style.setProperty('--eris-voice-opacity',on?String(.4+level*.5):'0');
+      ring.style.setProperty('--eris-voice-scale',String(1+level*.16));
     });
   }
   function watchLevel(id,media){
     try{
+      unwatchLevel(id);
       audioContext ||= new (window.AudioContext||window.webkitAudioContext)();
       audioContext.resume?.().catch(()=>{});
       const source=audioContext.createMediaStreamSource(media);
-      const analyser=audioContext.createAnalyser();analyser.fftSize=512;analyser.smoothingTimeConstant=.72;
-      source.connect(analyser);analysers.set(String(id),{source,analyser,hot:0});
+      const analyser=audioContext.createAnalyser();
+      analyser.fftSize=512;
+      source.connect(analyser);
+      analysers.set(String(id),{
+        source,analyser,media,
+        data:new Uint8Array(analyser.fftSize),
+        level:0,lastVoice:0
+      });
       if(!speakingFrame)scanLevels();
     }catch(e){console.warn('[ErisChat] konuşma göstergesi başlatılamadı',e)}
   }
   function scanLevels(){
     speakingFrame=requestAnimationFrame(scanLevels);
+    const now=performance.now();
     for(const [id,x] of analysers){
-      const a=new Uint8Array(x.analyser.fftSize);x.analyser.getByteTimeDomainData(a);
-      let sum=0;for(const v of a){const n=(v-128)/128;sum+=n*n}
-      const rms=Math.sqrt(sum/a.length);
-      if(rms>.045)x.hot=5;else x.hot=Math.max(0,x.hot-1);
-      markSpeaking(id,x.hot>0);
+      x.analyser.getByteTimeDomainData(x.data);
+      let sum=0;
+      for(const v of x.data){const n=(v-128)/128;sum+=n*n}
+      const audible=audioContext.state==='running'&&
+        x.media.getAudioTracks().some(t=>t.enabled&&!t.muted&&t.readyState==='live');
+      const rms=audible?Math.sqrt(sum/x.data.length):0;
+      const threshold=(x.lastVoice&&now-x.lastVoice<160) ? .012 : .018;
+      if(rms>threshold)x.lastVoice=now;
+      const on=audible&&x.lastVoice>0&&now-x.lastVoice<160;
+      const target=on?Math.min(1,Math.max(0,(rms-.012)/.16)):0;
+      x.level+=(target-x.level)*(target>x.level ? .6 : .22);
+      markSpeaking(id,on,x.level);
     }
   }
   function unwatchLevel(id){
-    const x=analysers.get(String(id));if(x){try{x.source.disconnect()}catch{}analysers.delete(String(id))}
+    const x=analysers.get(String(id));
+    if(x){
+      try{x.source.disconnect();x.analyser.disconnect()}catch{}
+      analysers.delete(String(id));
+    }
     markSpeaking(id,false);
-    if(!analysers.size&&speakingFrame){cancelAnimationFrame(speakingFrame);speakingFrame=0}
+    if(!analysers.size&&speakingFrame){
+      cancelAnimationFrame(speakingFrame);speakingFrame=0;
+    }
   }
   async function checkMicrophoneSeat(){
     if(!stream||seatCheckBusy)return;
