@@ -175,12 +175,12 @@
   }
   window.ErisRoomPasswordModal=roomPasswordModal;
   function seatCountForRoom(room,list){
+    const explicit=Number(room?.seat_count);
+    if([12,16,20].includes(explicit))return explicit;
     const fromList=Array.isArray(list)?list.length:0;
-    if(fromList>=24)return 24;
-    if(fromList>=20)return 20;
-    if(fromList>=16)return 16;
+    if([12,16,20].includes(fromList))return fromList;
     const level=Number(room?.level||1);
-    return level>=7?24:(level>=5?20:16);
+    return level>=7?20:(level>=5?16:12);
   }
   function applyRoomWallpaper(){
     const wall=document.querySelector('#erisRoomSurface .eris-room-wall');if(!wall)return;
@@ -195,7 +195,7 @@
   });
   function renderRoomSeats(roomId,name,list,forcedCount){
     const box=document.getElementById('erisLiveSeats');if(!box)return;
-    const count=Math.min(24,Math.max(16,Number(forcedCount)||seatCountForRoom(null,list)));
+    const count=Math.min(20,Math.max(12,Number(forcedCount)||seatCountForRoom(null,list)));
     const byNumber=new Map((Array.isArray(list)?list:[]).map(seat=>[Number(seat.seat_number),seat]));
     const seats=Array.from({length:count},(_,i)=>byNumber.get(i+1)||{seat_number:i+1,user_id:null,locked:false});
     const ludoBoard=box.querySelector('.ludo-room');
@@ -368,7 +368,7 @@
       window.__erisCurrentCoupleId=room.couple_id||null;window.__erisActiveRoomWallpaper=room.wallpaper_asset_path||null;
       window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
       const wallpaperButton=document.getElementById('erisRoomWallpaper');if(wallpaperButton){wallpaperButton.style.display=room.is_owner?'grid':'none';wallpaperButton.onclick=()=>window.ErisChatRoomWallpaper?.open?.(liveRoomId,room)}
-      const seatCount=Math.min(24,Math.max(16,Number(room.seat_count)||seatCountForRoom(room,room.seats)));applyRoomWallpaper();
+      const seatCount=seatCountForRoom(room,room.seats);applyRoomWallpaper();
       if(room.current_user_id) { window.ErisCurrentUserId=String(room.current_user_id); window.__erisCurrentRoomUserId=String(room.current_user_id); } window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat,seat_permission:!!room.seat_permission};
       const publicRoomId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi';
       document.getElementById('erisLiveMeta').textContent='ID: '+publicRoomId;

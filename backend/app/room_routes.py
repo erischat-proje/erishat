@@ -55,7 +55,7 @@ def _room_auth_dependency(
 current_user_dependency = _room_auth_dependency
 
 
-LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 16, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 16, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 16, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 16, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 20, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 20, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 24, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 24, "required_spend": 1_560_000}}
+LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 12, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 12, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 12, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 12, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 16, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 16, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 20, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 20, "required_spend": 1_560_000}}
 GIFT_RECIPIENT_PERCENT = 70
 GIFT_ITEMS = json.loads(Path(__file__).with_name("gift_catalog.json").read_text(encoding="utf-8"))
 GIFT_META = {gift["name"]: gift for gift in GIFT_ITEMS}
@@ -210,18 +210,36 @@ def is_member(db: Session, room_id: str, user_id: str) -> bool:
     return True
 
 def ensure_seats(db: Session, room: Room) -> None:
+    # Lock before converting so concurrent room reads cannot move users twice.
+    room = seat_workflow.lock_room(db, room)
     allowed = LEVELS[room.level]["seats"]
     current = int(room.seat_count or 0)
-    # Preserve the owner's selected layout when the room gains a level.
-    target = current if current in (16, 20, 24) and current <= allowed else allowed
-    if target != current:
-        room.seat_count = target
-    existing = set(db.scalars(select(RoomSeat.seat_number).where(RoomSeat.room_id == room.id)))
-    if target == current and all(number in existing for number in range(1, target + 1)):
+    migrating = int(room.seat_layout_version or 0) < 1
+    selected = {16: 12, 20: 16, 24: 20}.get(current, current) if migrating else current
+    target = selected if selected in (12, 16, 20) and selected <= allowed else allowed
+    rows = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id).order_by(RoomSeat.seat_number)))
+    by_number = {row.seat_number: row for row in rows}
+    if not migrating and target == current and all(n in by_number for n in range(1, target + 1)) and not any(n > target for n in by_number):
         return
     for number in range(1, target + 1):
-        if number not in existing: db.add(RoomSeat(room_id=room.id, seat_number=number))
+        if number not in by_number:
+            row = RoomSeat(room_id=room.id, seat_number=number, locked=False, muted=False)
+            db.add(row)
+            by_number[number] = row
+    # Keep participants in the room; relocate overflow speakers when a seat is free.
+    free = [by_number[n] for n in range(1, target + 1) if not by_number[n].user_id and not by_number[n].locked]
+    for row in rows:
+        if row.seat_number <= target:
+            continue
+        if row.user_id and free:
+            destination = free.pop(0)
+            destination.user_id, destination.muted = row.user_id, row.muted
+        row.user_id = None
+        db.delete(row)
+    room.seat_count = target
+    room.seat_layout_version = 1
     db.commit()
+
 
 def room_is_locked(room):
     expiry=room.lock_expires_at
@@ -545,7 +563,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         require_staff(db, room, user)
         target = int(payload.seat_count)
         allowed = LEVELS[room.level]["seats"]
-        if target not in (16, 20, 24) or target > allowed:
+        if target not in (12, 16, 20) or target > allowed:
             raise HTTPException(status_code=422, detail=f"Seviye {room.level} için en fazla {allowed} koltuk kullanılır")
         occupied = db.scalar(
             select(func.count(RoomSeat.id)).where(
