@@ -9,8 +9,6 @@
   const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : console.warn('[ErisChat room]', message);
   let socket = null;
   let currentRoomId = null;
-  let reconnectTimer = null;
-  let reconnectAttempt = 0;
 
   function roomBox(){ return document.getElementById('realRoomChat'); }
   function appendRow(text, kind, gift){
@@ -72,66 +70,61 @@
     window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...detail,global:true}}));
   }
 
-  function scheduleReconnect(roomId){
-    if(!roomId || reconnectTimer) return;
-    const delay=Math.min(15000,1000*Math.pow(2,reconnectAttempt++));
-    reconnectTimer=setTimeout(()=>{
-      reconnectTimer=null;
-      if(currentRoomId===String(roomId) && token()) connectRoomGiftSocket(roomId);
-    },delay);
-  }
-
+  // Chat, RTC and gifts share one room WebSocket.
+  let detachGiftSocket = () => {};
   function connectRoomGiftSocket(roomId){
     if(!roomId) return null;
-    if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
-    if(socket){
-      const oldSocket=socket;
-      socket=null;
-      try{oldSocket.close();}catch(_){}
-    }
-    currentRoomId=String(roomId);
-    const t=token();
-    if(!t) return null;
-    const url=wsBase()+'/ws/rooms/'+encodeURIComponent(currentRoomId);
-    const activeRoom=currentRoomId;
-    const ws=new WebSocket(url,['erischat','token.'+t]);
+    const id=String(roomId);
+    const ws=window.__erisRoomSocket;
+    if(currentRoomId===id && socket===ws && ws) return ws;
+    detachGiftSocket();
+    socket=null;
+    currentRoomId=id;
+    if(!ws || ws.__erisRoomId!==id) return null;
     socket=ws;
-    ws.onopen=()=>{
-      if(socket!==ws || currentRoomId!==activeRoom) return;
-      reconnectAttempt=0;
+    const active=()=>socket===ws && currentRoomId===id && window.__erisRoomSocket===ws;
+    const status=state=>window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:id,state}}));
+    const onOpen=()=>{
+      if(!active()) return;
       refreshGiftMeta();
-      try{ws.send(JSON.stringify({type:'ping'}));}catch(_){}
-      window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'open'}}));
+      status('open');
     };
-    ws.onmessage=ev=>{
-      if(socket!==ws || currentRoomId!==activeRoom) return;
+    const onMessage=ev=>{
+      if(!active()) return;
       try{
         const data=JSON.parse(ev.data);
-        if(data && data.type==='room_history') renderHistory(data);
-        else if(data && data.type==='room_chat') renderChatMessage(data);
-        else if(data && data.type==='room_gift') renderGiftEvent(data);
-        else if(data && data.type==='gift_announcement') renderGiftAnnouncement(data);
+        if(data.type==='room_history') renderHistory(data);
+        else if(data.type==='room_chat') renderChatMessage(data);
+        else if(data.type==='room_gift') renderGiftEvent(data);
+        else if(data.type==='gift_announcement') renderGiftAnnouncement(data);
       }catch(_){}
     };
-    ws.onerror=()=>{
-      if(socket!==ws || currentRoomId!==activeRoom) return;
-      window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'error'}}));
-    };
-    ws.onclose=()=>{
-      if(socket!==ws || currentRoomId!==activeRoom) return;
+    const onError=()=>{if(active()) status('error');};
+    const onClose=()=>{
+      if(!active()) return;
+      status('closed');
+      detachGiftSocket();
       socket=null;
-      window.dispatchEvent(new CustomEvent('erischat:room-ws',{detail:{roomId:activeRoom,state:'closed'}}));
-      if(token()) scheduleReconnect(activeRoom);
     };
+    ws.addEventListener('open',onOpen);
+    ws.addEventListener('message',onMessage);
+    ws.addEventListener('error',onError);
+    ws.addEventListener('close',onClose);
+    detachGiftSocket=()=>{
+      ws.removeEventListener('open',onOpen);
+      ws.removeEventListener('message',onMessage);
+      ws.removeEventListener('error',onError);
+      ws.removeEventListener('close',onClose);
+      detachGiftSocket=()=>{};
+    };
+    if(ws.readyState===WebSocket.OPEN) onOpen();
     return ws;
   }
-
   window.connectRoomGiftSocket=connectRoomGiftSocket;
   window.disconnectRoomGiftSocket=function(){
+    detachGiftSocket();
+    socket=null;
     currentRoomId=null;
-    reconnectAttempt=0;
-    if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
-    if(socket){const ws=socket;socket=null;try{ws.close();}catch(_){} }
   };
   window.sendRoomChatMessage=function(text){
     const value=String(text||'').trim();
