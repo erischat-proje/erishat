@@ -76,7 +76,7 @@
         ring=document.createElement('span');
         ring.className='eris-voice-ring';
         ring.setAttribute('aria-hidden','true');
-        (seat.querySelector('.seat-pod')||seat).append(ring);
+        seat.append(ring);
       }
       if(!ring)return;
       ring.style.setProperty('--eris-voice-opacity',on?String(.4+level*.5):'0');
