@@ -465,7 +465,7 @@
 
 /* Keep chat below the final seat and its name. */
 #erisRoomSurface.room-layout-v6:not(.ludo-mode){
-  --eris-fixed-chat-height:clamp(160px,calc(var(--app-height,100dvh) * .27),240px);
+  --eris-fixed-chat-height:clamp(190px,calc(var(--app-height,100dvh) * .33),290px);
 }
 #erisRoomSurface.room-layout-v6:not(.ludo-mode) > .eris-room-chat:has(#erisLiveChat){
   top:auto!important;bottom:0!important;
