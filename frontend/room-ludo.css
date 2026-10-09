@@ -66,3 +66,12 @@
 .ludo-magnet{position:absolute;transform:translate(-50%,-50%);width:6%;height:6%;z-index:4;text-align:center;font-size:clamp(10px,3vw,24px);pointer-events:none;filter:drop-shadow(0 0 3px #66dcff)}
 .ludo-magnet.activated{animation:ludo-burst .25s ease-out}
 .ludo-picks{display:none!important}
+
+/* Always visible exit; lobby and board return to the regular room locally. */
+#erisRoomSurface.ludo-mode .ludo-view-close{position:absolute!important;right:7px!important;top:7px!important;width:34px;height:34px;z-index:40;background:#101a2eef!important;font-size:24px;line-height:24px;padding:0!important}
+.ludo-seat-strip{padding-right:48px}
+#erisRoomSurface.ludo-mode .ludo-dialog [data-close]{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 36px;min-height:36px;font-size:25px;position:relative;z-index:5}
+.ludo-result-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.ludo-result-actions button{min-height:40px;background:#d0af6333}
+
+.ludo-bank{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;min-height:0}.ludo-bank:empty{display:none}.ludo-bank small{font-size:10px;color:#d7cbaa}.ludo-bank button{min-height:26px;padding:2px 8px}.ludo-bank button.selected{border-color:#ffe09d;background:#cbae6533}.ludo-dice-wrap>.ludo-die:disabled{opacity:1}
