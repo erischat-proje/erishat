@@ -462,3 +462,26 @@
   height:13px!important;flex-basis:26px!important;
   margin-right:2px!important;
 }
+
+/* Keep chat below the final seat and its name. */
+#erisRoomSurface.room-layout-v6:not(.ludo-mode){
+  --eris-fixed-chat-height:clamp(160px,calc(var(--app-height,100dvh) * .27),240px);
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) > .eris-room-chat:has(#erisLiveChat){
+  top:auto!important;bottom:0!important;
+  height:var(--eris-fixed-chat-height)!important;
+  max-height:var(--eris-fixed-chat-height)!important;
+  min-height:0!important;
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) > #erisLiveSeats{
+  top:112px!important;
+  bottom:calc(var(--eris-fixed-chat-height) + 8px)!important;
+  height:calc(var(--app-height,100dvh) - 120px - var(--eris-fixed-chat-height))!important;
+  max-height:calc(var(--app-height,100dvh) - 120px - var(--eris-fixed-chat-height))!important;
+  overflow-y:auto!important;
+}
+#erisRoomSurface.room-layout-v6 #erisRoomGift > span,
+#erisRoomSurface.room-layout-v6 #erisRoomMusic > span,
+#erisRoomSurface.room-layout-v6 #erisRoomWallpaper > span{
+  display:none!important;
+}
