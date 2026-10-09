@@ -1,4 +1,4 @@
-"""Classic 108-card room UNO. Pure rules; hidden state never leaves the server."""
+"""Room UNO: classic cards plus one optional Wild Swap Hands. Pure rules; hidden state never leaves the server."""
 from __future__ import annotations
 import copy
 import secrets
@@ -20,12 +20,13 @@ def deck():
     for value in ('wild', 'draw4'):
         for _ in range(4):
             cards.append(dict(id=len(cards), color=None, value=value))
+    cards.append(dict(id=len(cards), color=None, value='swap'))
     return cards
 
 CARDS = deck()
 
 def card(cid):
-    if type(cid) is not int or not 0 <= cid < 108:
+    if type(cid) is not int or not 0 <= cid < len(CARDS):
         raise RuleError('Geçersiz kart.')
     return CARDS[cid]
 
@@ -64,8 +65,9 @@ def draw_cards(s, seat, count):
         drawn.append(cid)
     if len(p['hand']) != 1:
         p['uno'] = False
-        if s.get('uno_vulnerable') == seat:
-            s['uno_vulnerable'] = None
+        vulnerable = [n for n in s.get('uno_vulnerable_seats', [s.get('uno_vulnerable')]) if n is not None and n != seat]
+        s['uno_vulnerable_seats'] = vulnerable
+        s['uno_vulnerable'] = vulnerable[0] if vulnerable else None
     return drawn
 
 def start_hand(s, now):
@@ -76,7 +78,7 @@ def start_hand(s, now):
     s['players'].sort(key=lambda p: p['seat'])
     s['direction'] = 1
     s['dealer'] = next_seat(s, s['dealer']) if s['dealer'] is not None else s['players'][-1]['seat']
-    s.update(stock=list(range(108)), discard=[], uno_vulnerable=None, pending_draw4=None,
+    s.update(stock=list(range(len(CARDS))), discard=[], uno_vulnerable=None, uno_vulnerable_seats=[], pending_draw4=None,
              drawn=None, status='playing', hand_no=s['hand_no']+1, winners=[], hand_winners=[])
     secrets.SystemRandom().shuffle(s['stock'])
     for p in s['players']:
@@ -100,7 +102,7 @@ def start_hand(s, now):
         s['direction'] = -1
         # In two-player UNO Reverse skips the initial player.
         advance(s, s['dealer'], now)
-    elif value == 'wild':
+    elif value in ('wild', 'swap'):
         s['phase'] = 'opening_color'
     event(s, 'deal', hand_no=s['hand_no'])
 
@@ -116,7 +118,7 @@ def legal(s, seat):
 
 def points(hand):
     return sum(int(card(c)['value']) if card(c)['value'].isdigit()
-               else 50 if card(c)['color'] is None else 20 for c in hand)
+               else 40 if card(c)['value'] == 'swap' else 50 if card(c)['color'] is None else 20 for c in hand)
 
 def finish(s, seat):
     winner = player(s, seat)
@@ -127,7 +129,7 @@ def finish(s, seat):
     match_over = s['victory'] == 'quick' or s['scores'][key] >= 500
     s.update(status='finished' if match_over else 'hand_finished', hand_winners=winners,
              winners=winners if match_over else [], hand_points=score, deadline=None,
-             phase='result', pending_draw4=None, uno_vulnerable=None)
+             phase='result', pending_draw4=None, uno_vulnerable=None, uno_vulnerable_seats=[])
     event(s, 'win', seats=winners, points=score, match_over=match_over)
 
 def require_turn(s, seat):
@@ -137,8 +139,9 @@ def require_turn(s, seat):
 def begin_action(s):
     # Catch window closes when the next player plays or draws, not on a poll.
     s['uno_vulnerable'] = None
+    s['uno_vulnerable_seats'] = []
 
-def play(s, seat, cid, color, call_uno, now):
+def play(s, seat, cid, color, call_uno, now, swap_target=None):
     require_turn(s, seat)
     if cid not in legal(s, seat):
         raise RuleError('Bu kart şu anda oynanamaz.')
@@ -146,12 +149,21 @@ def play(s, seat, cid, color, call_uno, now):
     if c['color'] is None and color not in COLORS:
         raise RuleError('Joker için renk seçin.')
     p = player(s, seat)
+    other = None
+    if c['value'] == 'swap' and len(p['hand']) > 1:
+        if type(swap_target) is not int:
+            raise RuleError('El değişimi için oyuncu seçin veya elinizi koruyun.')
+        other = next((q for q in s['players'] if q['seat'] == swap_target), None)
+        if not other or (s['mode'] == 'paired' and other['seat'] != seat and other['team'] == p['team']):
+            raise RuleError('Geçerli bir rakip seçin.')
+    previous_color = s['active_color']
     illegal4 = c['value'] == 'draw4' and any(card(x)['color'] == s['active_color'] for x in p['hand'] if x != cid)
     begin_action(s)
     p['hand'].remove(cid)
     p['uno'] = bool(call_uno and len(p['hand']) == 1)
     if len(p['hand']) == 1 and not p['uno']:
         s['uno_vulnerable'] = seat
+        s['uno_vulnerable_seats'] = [seat]
     s['discard'].append(cid)
     s['active_color'] = color if c['color'] is None else c['color']
     target = next_seat(s, seat)
@@ -159,8 +171,16 @@ def play(s, seat, cid, color, call_uno, now):
     if c['value'] == 'draw4':
         advance(s, target, now)
         s.update(phase='challenge', pending_draw4=dict(actor=seat, target=target, illegal=illegal4,
-                 evidence=list(p['hand']), finishing=not p['hand']))
+                 evidence=list(p['hand']), previous_color=previous_color, finishing=not p['hand']))
         return
+    if c['value'] == 'swap' and p['hand'] and other is not None and other['seat'] != seat:
+        p['hand'], other['hand'] = other['hand'], p['hand']
+        p['uno'] = bool(call_uno and len(p['hand']) == 1)
+        other['uno'] = False
+        vulnerable = [q['seat'] for q in (p, other) if len(q['hand']) == 1 and not q['uno']]
+        s['uno_vulnerable_seats'] = vulnerable
+        s['uno_vulnerable'] = vulnerable[0] if vulnerable else None
+        event(s, 'swap', seat=seat, target=other['seat'])
     if c['value'] == 'reverse':
         s['direction'] *= -1
         target = seat if len(s['players']) == 2 else next_seat(s, seat)
@@ -217,7 +237,7 @@ def answer_draw4(s, seat, challenge, now):
     if challenge:
         # Only this challenger can inspect evidence; never put it in public events.
         s['challenge_reveal'] = dict(viewer=player(s, seat)['user_id'], cards=pending['evidence'],
-                                     actor=pending['actor'], guilty=guilty)
+                                     actor=pending['actor'], color=pending.get('previous_color'), guilty=guilty)
     event(s, 'challenge' if challenge else 'accept4', seat=seat, guilty=guilty, punished=punished, count=count)
     if pending['finishing'] and not guilty:
         finish(s, pending['actor'])
@@ -231,16 +251,20 @@ def call(s, seat):
     if p['uno']:
         raise RuleError('Zaten UNO dediniz.')
     p['uno'] = True
-    if s.get('uno_vulnerable') == seat:
-        s['uno_vulnerable'] = None
+    vulnerable = [n for n in s.get('uno_vulnerable_seats', [s.get('uno_vulnerable')]) if n is not None and n != seat]
+    s['uno_vulnerable_seats'] = vulnerable
+    s['uno_vulnerable'] = vulnerable[0] if vulnerable else None
     event(s, 'uno', seat=seat)
 
 def catch(s, seat):
-    target = s.get('uno_vulnerable')
+    vulnerable = [n for n in s.get('uno_vulnerable_seats', [s.get('uno_vulnerable')]) if n is not None and n != seat and len(player(s, n)['hand']) == 1 and not player(s, n)['uno']]
+    target = vulnerable[0] if vulnerable else None
     if s['status'] != 'playing' or target is None or target == seat:
         raise RuleError('Yakalanabilecek oyuncu yok.')
-    begin_action(s)
+    remaining = [n for n in s.get('uno_vulnerable_seats', []) if n != target]
     draw_cards(s, target, 2)
+    s['uno_vulnerable_seats'] = remaining
+    s['uno_vulnerable'] = remaining[0] if remaining else None
     event(s, 'catch', seat=seat, target=target, count=2)
 
 def timeout(s, now, bot=False):
@@ -257,7 +281,12 @@ def timeout(s, now, bot=False):
         if card(cid)['value'] == 'draw4' and counts.get(s['active_color'], 0):
             draw(s, seat, now, auto_pass=True) if s['phase'] == 'play' else pass_turn(s, seat, now)
         else:
-            play(s, seat, cid, max(counts, key=counts.get), True, now)
+            swap_target = None
+            if card(cid)['value'] == 'swap':
+                opponents = [q for q in s['players'] if q['seat'] != seat
+                             and (s['mode'] != 'paired' or q['team'] != player(s, seat)['team'])]
+                swap_target = min(opponents, key=lambda q: len(q['hand']))['seat']
+            play(s, seat, cid, max(counts, key=counts.get), True, now, swap_target=swap_target)
     elif s['phase'] == 'drawn':
         pass_turn(s, seat, now)
     else:
@@ -269,7 +298,7 @@ def public_state(s, uid):
         return None
     out = {k: copy.deepcopy(s.get(k)) for k in ('round_id','host','mode','victory','status','version',
            'expires','hand_no','scores','dealer','turn','phase','direction','active_color','deadline',
-           'winners','hand_winners','hand_points','events','uno_vulnerable',
+           'winners','hand_winners','hand_points','events','uno_vulnerable','uno_vulnerable_seats',
            'stake','pool','settled','refunded','payouts')}
     out['players'] = []
     for p in s['players']:
@@ -283,6 +312,9 @@ def public_state(s, uid):
     me = next((p for p in s['players'] if p['user_id'] == uid), None)
     out['legal'] = legal(s, me['seat']) if me and s['status'] == 'playing' else []
     out['drawn'] = s.get('drawn') if me and me['seat'] == s.get('turn') else None
+    pending = s.get('pending_draw4')
+    if pending and s.get('phase') == 'challenge':
+        out['draw4_question'] = {k: pending.get(k) for k in ('actor', 'target', 'previous_color')}
     reveal = s.get('challenge_reveal')
     if reveal and reveal['viewer'] == uid:
         out['challenge_reveal'] = copy.deepcopy(reveal)
