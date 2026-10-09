@@ -3,8 +3,8 @@
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const colors=['#b83238','#236dbc','#202c38','#e2a026'], names=['Kırmızı','Mavi','Siyah','Sarı'];
  const host=()=>document.getElementById('erisRoomSurface');
- let rid='',epoch=0,data=null,hidden='',visible=false,pending=false,polling=false,error='',order=[],selected=[],groups=[],editor=null,lastRound='',lastHand=0,offset=0,stake=50,mode='solo',progressive=false,handCount=3,retry=null,menu=false,penalties=true,processing=null,showScores=false,rulesOpen=false;
- const dismissedResults=new Set();
+ let rid='',epoch=0,data=null,hidden='',visible=false,pending=false,polling=null,error='',order=[],selected=[],groups=[],editor=null,lastRound='',lastHand=0,offset=0,stake=50,mode='solo',progressive=false,handCount=3,retry=null,menu=false,penalties=true,processing=null,showScores=false,rulesOpen=false;
+ const dismissedResults=new Set(),retiredRounds=new Set();
  const resultKey=s=>rid+'/'+s?.round_id;
  const state=()=>data?.state, me=()=>state()?.players.find(p=>p.user_id===data.my_id);
  const mine=()=>state()?.status==='playing'&&me()?.seat===state().turn&&data?.seats.some(q=>q.user_id===data.my_id&&q.seat===me()?.seat);
@@ -12,25 +12,26 @@
  const face=t=>t>=104?state().joker:[Math.floor(t/26),t%13+1];
  const wild=t=>t<104&&face(t).every((v,i)=>v===state().joker[i]);
  function tile(t,f=face(t),attrs='') {return '<button type="button" class="o101-tile '+(wild(t)?'wild ':'')+(selected.includes(t)?'chosen':'')+'" style="--tile-color:'+colors[f[0]]+'" '+attrs+' aria-label="'+names[f[0]]+' '+f[1]+(wild(t)?' okey':'')+'"><b>'+f[1]+'</b><i>'+(wild(t)?'★':t>=104?'◇':'●')+'</i></button>';}
- function clear(){host()?.querySelector('.o101-root')?.remove();host()?.classList.remove('okey101-mode');visible=false;editor=null;processing=null;}
+ function clear(){host()?.querySelectorAll('.o101-root').forEach(n=>n.remove());host()?.classList.remove('okey101-mode');visible=false;editor=null;processing=null;}
  function hide(){hidden=state()?.round_id||'empty';clear();}
  function viewSignature(v){if(!v)return '';const s=v.state?{...v.state}:null;if(s){delete s.version;delete s.events;delete s.deadline;delete s.bot_due;delete s.server_time;}return JSON.stringify({...v,state:s,server_time:undefined});}
- function receive(v){const previous=state();if(previous&&v.state?.round_id===previous.round_id&&v.state.version<previous.version)return;const same=previous&&viewSignature(v)===viewSignature(data);data=v;offset=v.server_time-Date.now()/1000;const s=v.state;
-   if(window.ErisUnoActive&&(!s||!['lobby','playing','hand_finished'].includes(s.status))){hidden=s?.round_id||'empty';clear();window.ErisOkey101Active=false;return;}
+ function receive(v){if(v.state&&retiredRounds.has(v.state.round_id))return;const previous=state();if(previous&&v.state&&previous.round_id!==v.state.round_id)retiredRounds.add(previous.round_id);if(previous&&v.state?.round_id===previous.round_id&&v.state.version<previous.version)return;const same=previous&&viewSignature(v)===viewSignature(data);data=v;offset=v.server_time-Date.now()/1000;const s=v.state;
+   if((window.ErisUnoActive||host()?.classList.contains('ludo-mode'))&&(!s||!['lobby','playing','hand_finished'].includes(s.status))){hidden=s?.round_id||'empty';clear();window.ErisOkey101Active=false;return;}
    if(s?.status==='finished'&&(window.ErisUnoActive||host()?.classList.contains('ludo-mode'))){hidden=s.round_id;clear();window.ErisOkey101Active=false;return;}
-   window.ErisOkey101Active=!!s&&['lobby','playing','hand_finished','finished'].includes(s.status);
+   window.ErisOkey101Active=!!s&&['lobby','playing','hand_finished'].includes(s.status);
+   if(s&&['lobby','playing','hand_finished'].includes(s.status))window.dispatchEvent(new CustomEvent('erischat:okey101-active'));
    if(!s||s.status==='closed'){if(visible&&hidden!=='empty')render();else clear();return;}
    if(s.round_id!==lastRound||s.hand_number!==lastHand){order=[];selected=[];groups=[];editor=null;processing=null;showScores=false;rulesOpen=false;menu=s.status==='finished'&&dismissedResults.has(resultKey(s));lastRound=s.round_id;lastHand=s.hand_number;}
    if(hidden===s.round_id)return;
    if(hidden&&hidden!==s.round_id)hidden='';
    if(!same||!visible||!host()?.querySelector('.o101-root'))render();
  }
- async function poll(){if(!rid||polling||!window.ErisPlatform?.api)return;polling=true;const id=rid,gen=epoch;
-   try{const v=await api();if(id===rid&&gen===epoch)receive(v);}catch(e){if(visible){error=e.message||'Bağlantı kurulamadı.';render();}}finally{polling=false;}
+ async function poll(){if(!rid||polling||!window.ErisPlatform?.api)return;const token={};polling=token;const id=rid,gen=epoch;
+   try{const v=await api();if(id===rid&&gen===epoch)receive(v);}catch(e){if(id===rid&&gen===epoch&&visible){error=e.message||'Bağlantı kurulamadı.';render();}}finally{if(polling===token)polling=null;}
  }
  async function send(action,extra={},key=null){if(pending||!rid)return;pending=true;error='';const id=rid,gen=epoch;
    const body={action,round_id:state()?.round_id||'',version:state()?.version||0,request_key:key||crypto.randomUUID(),...extra};
-   try{const v=await api({method:'POST',body:JSON.stringify(body)});if(id!==rid||gen!==epoch)return;retry=null;if(action==='preview_lay'){processing={plan:v.processing_plan,version:v.state.version,tiles:extra.tiles??null};}else{groups=[];selected=[];editor=null;processing=null;}receive(v);
+   try{const v=await api({method:'POST',body:JSON.stringify(body)});if(id!==rid||gen!==epoch)return;retry=null;if(action==='preview_lay'&&state()?.round_id===v.state?.round_id&&state()?.version>v.state?.version)return;if(action==='preview_lay'){processing={plan:v.processing_plan,version:v.state.version,tiles:extra.tiles??null};}else{groups=[];selected=[];editor=null;processing=null;}receive(v);
      const penalty=v.state?.events?.filter(e=>e.kind==='penalty'&&e.seat===me()?.seat).at(-1);
      if(action==='open'&&penalty?.reason==='wrong_open'&&penalty.seq>body.version)error='Hatalı açılış: '+(penalty.message||'Perleri kontrol edin.')+' • 101 ceza puanı';}
    catch(e){if(id!==rid||gen!==epoch)return;error=e.message||'İşlem tamamlanamadı.';if(!e.status||e.status>=500)retry=body;await poll();}
@@ -86,6 +87,7 @@
    const scrollTop=content.scrollTop;
    const editorValues=[...content.querySelectorAll('.o101-editor select')].map(n=>({color:n.dataset.color,number:n.dataset.number,value:n.value}));
    const detailsOpen=!!content.querySelector('.o101-rules')?.open;
+   const editorKind=content.querySelector('[data-kind]')?.value;
    const focused=document.activeElement;
    const editingConfig=lobby&&focused?.matches?.('select[data-config]')&&content.contains(focused);
    if(editingConfig&&!pending){
@@ -96,9 +98,10 @@
    else {renderGame(content);}
    content.scrollTop=scrollTop;
    const detail=content.querySelector('.o101-rules');if(detail)detail.open=detailsOpen;
+   if(editorKind&&content.querySelector('[data-kind]'))content.querySelector('[data-kind]').value=editorKind;
    if(editor)for(const v of editorValues){const select=content.querySelector(v.color!==undefined?'[data-color="'+v.color+'"]':'[data-number="'+v.number+'"]');if(select)select.value=v.value;}
    root.querySelector('.o101-rule-overlay')?.remove();
-   if(rulesOpen){const overlay=document.createElement('section');overlay.className='o101-rule-overlay';overlay.innerHTML=btn('×','close-rules')+rules;root.append(overlay);}
+   if(rulesOpen){const overlay=document.createElement('section');overlay.className='o101-rule-overlay';overlay.innerHTML=btn('×','close-rules')+rules;overlay.querySelector("details").open=true;root.append(overlay);}
    root.onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
      if(b.dataset.tile!==undefined){const t=+b.dataset.tile;selected=selected.includes(t)?selected.filter(x=>x!==t):[...selected,t];render();return;}
      if(b.dataset.option!==undefined){const o=(data.lay_options||[])[+b.dataset.option];if(o)send('lay',{tile:o.tile,meld_id:o.meld_id,end:o.end,face:o.face});return;}
@@ -142,6 +145,9 @@
  }
  function renderGame(out){const s=state(),p=me(),hand=p?.hand||[];
    order=order.filter(t=>hand.includes(t));hand.forEach(t=>{if(!order.includes(t))order.push(t);});selected=selected.filter(t=>hand.includes(t));
+   groups=groups.filter(g=>g.tiles.every(t=>hand.includes(t)));
+   if(editor&&(!mine()||s.phase!=='discard'||!editor.tiles.every(t=>hand.includes(t))))editor=null;
+   if(processing&&(!mine()||s.phase!=='discard'))processing=null;
    const draft=new Set(groups.flatMap(g=>g.tiles)),remaining=hand.filter(t=>!draft.has(t));
    const total=groups.reduce((n,g)=>n+(g.kind==='pair'?0:g.faces.reduce((a,f)=>a+f[1],0)),0),pairCount=groups.filter(g=>g.kind==='pair').length;
    out.className='o101-content o101-game';
@@ -166,7 +172,7 @@
  function openLay(g,end){const t=selected[0];if(wild(t)){editor={tiles:[t],lay:g.id,end};render();}else send('lay',{tile:t,meld_id:g.id,end});}
  function action(a,b){const s=state();if(!a)return;
    if(a==='hide')return hide();
-   if(a==='rules'){rulesOpen=true;render();return;}
+   if(a==='rules'){editor=null;processing=null;showScores=false;rulesOpen=true;render();return;}
    if(a==='close-rules'){rulesOpen=false;render();return;}
    if(a==='retry'&&retry){const q=retry;return send(q.action,q,q.request_key);}
    if(a==='menu'){menu=true;dismissedResults.add(resultKey(state()));rulesOpen=false;editor=null;processing=null;showScores=false;render();return;}
@@ -180,14 +186,14 @@
    if(a==='return-discard'){if(window.confirm('Soldan aldığın taş hâlâ elindeyse geri bırakılır ve kapalıdan çekilir.'+(state().penalties?' Kullanılmadan geri bırakılan taş için 101 ceza yazılır.':'')))send('return_discard');return;}
    if(a==='discard')return send('discard',{tile:selected[0]});
    if(a==='sort'||a==='sort-pairs'){order.sort((x,y)=>a==='sort'?face(x)[0]-face(y)[0]||face(x)[1]-face(y)[1]:face(x)[1]-face(y)[1]||face(x)[0]-face(y)[0]);render();return;}
-   if(a==='scores'){showScores=!showScores;render();return;}
-   if(a==='process'){processing={};render();return;}
+   if(a==='scores'){editor=null;processing=null;rulesOpen=false;showScores=!showScores;render();return;}
+   if(a==='process'){editor=null;showScores=false;rulesOpen=false;processing={};render();return;}
    if(a==='manual-processing'){processing=null;notice('Istakadan tek taş seç; masada vurgulanan işleme yerine dokun.');return;}
    if(a==='cancel-processing'){processing=null;render();return;}
    if(a==='preview-auto'||a==='preview-selected')return send('preview_lay',{tiles:a==='preview-selected'?[...selected]:null});
    if(a==='confirm-auto')return send('auto_lay',{tiles:processing.tiles,plan:processing.plan});
    if(a==='open-finish'){const used=new Set(groups.flatMap(g=>g.tiles));const rest=me().hand.filter(t=>!used.has(t));if(rest.length===1)send('open',{groups,finish_tile:rest[0]});return;}
-   if(a==='editor'){editor={tiles:[...selected]};render();return;}
+   if(a==='editor'){processing=null;showScores=false;rulesOpen=false;editor={tiles:[...selected]};render();return;}
    if(a==='cancel-editor'){editor=null;render();return;}
    if(a==='confirm-editor'){const root=host().querySelector('.o101-editor');const faces=editor.tiles.map(t=>[+root.querySelector('[data-color="'+t+'"]').value,+root.querySelector('[data-number="'+t+'"]').value]);if(editor.lay)return send('lay',{tile:editor.tiles[0],meld_id:editor.lay,end:editor.end,face:faces[0]});const g={kind:root.querySelector('[data-kind]').value,tiles:editor.tiles,faces};if(!validGroup(g))return notice('Bu taşlar seçtiğin türde geçerli per oluşturmuyor. Seri taşlarını küçükten büyüğe seç.');groups.push(g);editor=null;selected=[];render();return;}
    if(a==='remove-group'){groups.splice(+b.dataset.group,1);render();return;}
@@ -196,8 +202,8 @@
    if(a==='open'){const pairs=groups.every(g=>g.kind==='pair'),value=pairs?groups.length:groups.reduce((n,g)=>n+g.faces.reduce((a,f)=>a+f[1],0),0),limit=pairs?s.pair_threshold:s.threshold;if(!me().opened&&value<limit)return notice('Açılış yetersiz: '+value+' / '+limit+'. Tek seferde bitiyorsan Aç ve bitir seçeneğini kullan.');return send('open',{groups});}
  }
  function clock(){const s=state();host()?.querySelectorAll('[data-clock]').forEach(n=>n.textContent=s?.status==='playing'?Math.max(0,Math.ceil(s.deadline-(Date.now()/1000+offset)))+' sn':'');}
- async function open(){if(window.ErisUnoActive){window.toast?.('Önce UNO oyununu kapatın.');return;}rid=String(window.ErisCurrentRoomId||window.currentRoomId||rid);hidden='';visible=true;await poll();if(!state()||state().status==='closed'){menu=false;render();}}
- function leave(){epoch++;pending=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;rulesOpen=false;clear();}
+ async function open(){if(window.ErisUnoActive||host()?.classList.contains('ludo-mode')){window.toast?.('Önce açık oda oyununu kapatın.');return;}rid=String(window.ErisCurrentRoomId||window.currentRoomId||rid);hidden='';visible=true;await poll();if(!state()||state().status==='closed'){menu=false;render();}}
+ function leave(){retiredRounds.clear();epoch++;pending=false;polling=null;error='';menu=false;showScores=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;rulesOpen=false;clear();}
  window.addEventListener('erischat:room-opened',e=>{const id=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(!id)return;if(id!==rid){leave();rid=id;}poll();});
  window.addEventListener('erischat:room-closed',leave);
  window.addEventListener('erischat:ludo-active',()=>{if(state()?.status==='finished'){hide();window.ErisOkey101Active=false;}});

@@ -6,6 +6,7 @@
   let roomGeneration=0, configRoom=null, configPromise=null, seatCheckBusy=false, micBusy=false;
   let messageQueue=Promise.resolve(), configRetryTimer=null;
   const peerQueues=new Map(), signalCounts=new Map(), recoveryAttempts=new Map();
+  let autoSeat=null, autoRoom=null, manualMicOff=false, autoAttempted=false;
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
   const diagnostics={configErrors:0,signalErrors:0,audioBlocked:0,recoveries:0};
   async function rtcConfigRequest(room){
@@ -130,7 +131,7 @@
     }
   }
   async function checkMicrophoneSeat(){
-    if(!stream||seatCheckBusy)return;
+    if(!stream){syncSeatMicrophone();return}if(seatCheckBusy)return;
     const checkedStream=stream, room=currentRoom(), generation=roomGeneration;
     if(!room)return;
     seatCheckBusy=true;
@@ -178,6 +179,7 @@
     }
   }
   function unlockRoomAudio(){
+    try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();audioContext.resume?.().catch(()=>{})}catch{}
     resumeRoomAudio().catch(()=>{});
   }
 
@@ -343,7 +345,7 @@
     });
   }
   async function handleMessage(d){if(d.type==='rtc_ready'){
-      myId=String(d.user_id);configPromise=null;configRoom=null;offerJobs.clear();
+      myId=String(d.user_id);autoAttempted=false;configPromise=null;configRoom=null;offerJobs.clear();
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
 
       for(const id of [...peers.keys()]){
@@ -365,6 +367,7 @@
       }
       clearTimeout(configRetryTimer);configRetryTimer=null;
       resumeRoomAudio().catch(()=>{});
+      syncSeatMicrophone();
       for(const id of known){
         peer(id);if(shouldInitiate(id))offer(id).catch(()=>{});
       }
@@ -461,7 +464,8 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     })));
   }
 
-  async function toggle(){if(stream){await stop();return}if(micBusy){micRequest++;window.toast?.('Mikrofon açma işlemi iptal edildi.');return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
+  async function toggle(){manualMicOff=!!stream||micBusy;autoAttempted=false;return startMicrophone()}
+  async function startMicrophone(){if(stream){await stop();return}if(micBusy){micRequest++;window.toast?.('Mikrofon açma işlemi iptal edildi.');return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
     micBusy=true;const request=++micRequest,generation=roomGeneration;const room=currentRoom();
     try{const cfg=await rtcConfigRequest(room);
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
@@ -485,9 +489,10 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
-    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → ErisChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false}
+    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → ErisChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false;if(currentRoom()===room&&(generation!==roomGeneration||(request!==micRequest&&!manualMicOff&&!autoAttempted)))syncSeatMicrophone()}
   }
   function leaveRoom(){
+    autoSeat=null;autoRoom=null;manualMicOff=false;autoAttempted=false;
     clearTimeout(configRetryTimer);configRetryTimer=null;
     roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
     microphoneSeat=null;
@@ -530,18 +535,32 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
   window.addEventListener('online',recoverNetwork);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')recoverNetwork()});
   navigator.mediaDevices?.addEventListener?.('devicechange',()=>{resumeRoomAudio();checkMicrophoneSeat()});
+  function syncSeatMicrophone(room){
+    const id=currentRoom();if(!id)return;
+    if(room&&String(room.id)!==id)return;
+    const seat=Number(room?.current_user_seat??window.__erisRoomPermissions?.current_user_seat)||null;
+    const own=(room?.seats||[]).find(s=>String(s.user_id)===String(myId||window.ErisCurrentUserId));
+    if(autoRoom!==id||autoSeat!==seat){
+      autoRoom=id;autoSeat=seat;manualMicOff=false;autoAttempted=false;
+      if(stream&&Number(microphoneSeat)!==seat)stop();
+    }
+    if(!seat||own?.muted){if(stream||micBusy)stop();return;}
+    if(stream||micBusy||manualMicOff||autoAttempted||!myId||socket()?.readyState!==WebSocket.OPEN)return;
+    autoAttempted=true;
+    startMicrophone().catch(()=>{});
+  }
   window.addEventListener('erischat:room-state-updated',event=>{
-    const room=event.detail?.room;if(!stream||!room||String(room.id)!==currentRoom())return;
-    if(!room.current_user_seat||Number(room.current_user_seat)!==Number(microphoneSeat)){stop();return}
-    const seat=(room.seats||[]).find(s=>String(s.user_id)===String(myId));if(seat?.muted)stop();
+    syncSeatMicrophone(event.detail?.room);
+    resumeRoomAudio().catch(()=>{});
   });
-  speakingStyle();window.ErisRoomRTC={toggle,stop,message,toggleOutput,showOutput,leaveRoom,
+  speakingStyle();window.ErisRoomRTC={toggle,stop,message,toggleOutput,showOutput,leaveRoom,syncSeatMicrophone,unlockAudio:unlockRoomAudio,
     diagnostics:()=>({...diagnostics,peers:[...peers].map(([id,pc])=>({id,connection:pc.connectionState,ice:pc.iceConnectionState,signaling:pc.signalingState})),microphone:!!stream,output:outputEnabled})};
-  window.addEventListener('erischat:room-opened',()=>{
+  window.addEventListener('erischat:room-opened',event=>{
     outputEnabled=true;
     localStorage.setItem('eris_room_audio_output','true');
     show();
     showOutput();
+    syncSeatMicrophone(event.detail?.room);
     resumeRoomAudio().catch(()=>{});
   });
 

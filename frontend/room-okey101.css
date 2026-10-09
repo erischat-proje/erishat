@@ -38,3 +38,17 @@ html.eris-adaptive #erisRoomSurface.room-layout-v6.okey101-mode>.eris-room-chat:
 @media(prefers-reduced-motion:reduce){.o101-root *{animation:none!important;transition:none!important}}
 
 .o101-revealed-hands article{padding:8px 0;border-top:1px solid #fff2}.o101-revealed-hands article>div{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}.o101-plan span{overflow-wrap:anywhere}.o101-manual-options{display:grid;gap:4px;margin-top:10px}.o101-manual-options button{text-align:left;font-size:11px}
+
+
+/* Keep dialogs outside the scrolling table and reserve chat on every layout. */
+#erisRoomSurface.okey101-mode{isolation:isolate}
+#erisRoomSurface.okey101-mode>.eris-room-chat:has(#erisLiveChat){position:absolute!important;inset:auto 0 0!important;height:var(--eris-adaptive-ludo-chat,150px)!important;max-height:var(--eris-adaptive-ludo-chat,150px)!important;min-height:0!important;overflow:hidden!important;z-index:32000!important}
+.o101-root .o101-game{position:static;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+.o101-root .o101-game>.o101-players,.o101-root .o101-info,.o101-root .o101-deck{flex-shrink:0}
+.o101-root .o101-table{flex:1 0 135px;min-width:0}
+.o101-root .o101-deck{flex-wrap:wrap}
+.o101-root .o101-discards{flex-wrap:wrap;gap:5px}
+.o101-root .o101-editor,.o101-root .o101-processing,.o101-root .o101-score-panel,.o101-root .o101-rule-overlay{inset:5px;z-index:10;background:#112438;overscroll-behavior:contain;max-width:calc(100% - 10px)}
+.o101-root .o101-rule-overlay .o101-rules{display:block}
+.o101-root .o101-rule-overlay .o101-rules:not([open])>p{display:none}
+.o101-root .o101-rack-area{margin-block:0}
