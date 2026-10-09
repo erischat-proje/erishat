@@ -423,3 +423,32 @@
 #erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-compose{
   flex:0 0 auto!important;min-height:52px!important;
 }
+
+/* Fixed bottom chat, independent of seat count. */
+#erisRoomSurface.room-layout-v6{
+  --eris-fixed-chat-height:clamp(180px,calc(var(--app-height,100dvh) * .34),300px);
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) #erisLiveSeats{
+  top:128px!important;
+  bottom:calc(var(--eris-fixed-chat-height) + 8px)!important;
+  height:auto!important;
+  align-content:start!important;
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) .eris-room-chat{
+  top:auto!important;bottom:0!important;
+  height:var(--eris-fixed-chat-height)!important;
+  min-height:0!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat > b.seat-name{
+  top:calc(100% - 8px)!important;
+  bottom:auto!important;margin:0!important;
+  height:16px!important;min-height:16px!important;
+  line-height:16px!important;font-size:9px!important;
+  width:min(80px,calc((100vw - 40px)/4))!important;
+  max-width:min(80px,calc((100vw - 40px)/4))!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats .seat-name .eris-role-icon{
+  width:26px!important;min-width:26px!important;max-width:26px!important;
+  height:13px!important;flex-basis:26px!important;
+  margin-right:2px!important;
+}
