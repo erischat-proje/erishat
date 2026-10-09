@@ -6,3 +6,29 @@ html.eris-adaptive #erisRoomSurface.room-layout-v6.okey101-mode>.eris-room-chat{
 @media(min-width:600px){.o101-rack-area{max-width:740px;width:100%;margin:auto}.o101-rack .o101-tile{height:55px}.o101-tile b{font-size:22px}.o101-table{margin-inline:20px}.o101-players{max-width:900px;width:100%;margin:auto}.o101-actions button{font-size:12px}}
 @media(max-width:360px){.o101-head strong{font-size:15px}.o101-rack{gap:2px}.o101-tile b{font-size:16px}.o101-actions button{font-size:8px}.o101-deck{gap:5px}.o101-discards small{display:none}}
 @media(max-height:550px){.o101-game{overflow:auto}.o101-table{flex:0 0 160px}.o101-settings{grid-template-columns:repeat(2,minmax(0,1fr))}.o101-root .o101-players{flex-shrink:0}}
+
+/* 101 seat strip and room chat share the same game boundary. */
+html.eris-adaptive #erisRoomSurface.room-layout-v6.okey101-mode>.eris-room-chat:has(#erisLiveChat){
+ position:absolute!important;inset:auto 0 0!important;width:auto!important;
+ height:var(--eris-adaptive-ludo-chat,150px)!important;max-height:var(--eris-adaptive-ludo-chat,150px)!important;
+ min-height:0!important;transform:none!important;display:grid!important;
+ grid-template-rows:auto minmax(0,1fr) auto!important;overflow:hidden!important;
+ z-index:32000!important;visibility:visible!important;pointer-events:auto!important;
+}
+#erisRoomSurface.room-layout-v6.okey101-mode>.eris-room-chat #erisLiveChat{
+ position:relative!important;inset:auto!important;height:auto!important;max-height:none!important;
+ min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+}
+#erisRoomSurface.room-layout-v6.okey101-mode>.eris-room-chat>.eris-room-compose{
+ position:relative!important;inset:auto!important;width:100%!important;margin:0!important;
+}
+.o101-seat-strip{display:flex;align-items:center;flex:0 0 68px;gap:8px;padding:6px 12px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid #f1d39b20;background:#080f1b70;touch-action:pan-x}
+#erisRoomSurface.okey101-mode .o101-seat-proxy{position:relative!important;inset:auto!important;transform:none!important;translate:none!important;flex:0 0 44px!important;width:44px!important;height:44px!important;margin:0 0 8px!important;border:1px solid #fff4;border-radius:50%;padding:0!important;display:grid;place-items:center;visibility:visible!important;pointer-events:auto!important}
+.o101-seat-proxy .seat-pod{position:relative!important;inset:auto!important;width:100%!important;height:100%!important;display:grid;place-items:center}
+.o101-seat-proxy .seat-ava{width:78%!important;height:78%!important;border-radius:50%;overflow:hidden}
+.o101-seat-proxy .seat-frame{position:absolute;inset:-8%;background-size:contain;background-position:center;background-repeat:no-repeat;pointer-events:none}
+#erisRoomSurface.okey101-mode .o101-seat-proxy>b{position:absolute!important;top:calc(100% + 3px)!important;left:-4px!important;width:52px!important;max-width:52px!important;margin:0!important;display:block!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:9px!important;line-height:12px!important}
+.o101-seat-proxy>small,.o101-seat-proxy .seat-mic{display:none!important}
+
+#erisRoomSurface.okey101-mode .o101-seat-strip{flex-basis:68px;min-height:68px}
+@media(max-height:720px){#erisRoomSurface.okey101-mode .o101-seat-strip{flex-basis:58px;min-height:58px}}

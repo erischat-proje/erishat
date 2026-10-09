@@ -32,10 +32,25 @@
  }
  const btn=(label,action,disabled=false)=>'<button type="button" data-action="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
  const rules='<details class="o101-rules"><summary>Oyun kuralları</summary><p>106 taş • Dört oyuncu • Başlayan 22, diğerleri 21 taş. Gösterge +1 aynı renk okeydir; sahte okey yalnızca o sayıyı temsil eder.</p><p>Aynı renkte ardışık en az 3 taş veya aynı sayıda farklı renkli 3–4 taş perdir. 12–13–1 geçersizdir. İlk açılış en az 101 puan ya da 5 aynı renk/sayı çifti. Katlamalı oyunda önceki açılışı geçmelisiniz.</p><p>Açmadan taş işlenmez. Çift açan yeni seri açamaz. Soldan alınan taş açılmalı veya işlenmelidir. Masadaki okey temsil ettiği taşla değiştirilir; grupta dört renk tamamlanmalıdır. Son taş atılarak bitilir.</p><p>Normal bitiş −101; açmayan 202, açan eldeki toplam, çift açan iki katı. Elde okey +101. Okeyle bitişte −202 ve rakiplerin cezası iki kat. Kimse açmadan doğrudan bitiş 404; okeyle 808. Taş biterse aynı elde kalan cezaları yazılır. Eşlide bitenin ortağı 0 alır.</p><p>Maç sonunda en düşük toplam kazanır. Eşlide 1+3 ve 2+4 takım. Eşit puanda havuz paylaşılır; bölünmeyen Lidya koltuk sırasıyla dağıtılır. Ayrılanın yerine bot oynar; süre 45 saniye. X yalnızca görünümü kapatır. Oda yönetimi iptal ederse paylar iade edilir.</p></details>';
+ function syncSeats(){
+   const strip=host()?.querySelector('.o101-seat-strip');if(!strip)return;
+   strip.replaceChildren();
+   host().querySelectorAll('.eris-room-stage > .eris-seat').forEach(real=>{
+     const clone=real.cloneNode(true);
+     clone.classList.remove('eris-seat');clone.classList.add('o101-seat-proxy');
+     clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+     clone.style.visibility='visible';clone.style.pointerEvents='auto';
+     clone.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();
+       if(window.ErisRoomSeatMenu)window.ErisRoomSeatMenu(real,clone);else real.click();
+     });
+     strip.append(clone);
+   });
+ }
  function render(){if(!data||!rid||hidden===state()?.round_id)return;const h=host();if(!h)return;
    let root=h.querySelector('.o101-root');if(!root){root=document.createElement('section');root.className='o101-root';h.append(root);}h.classList.add('okey101-mode');visible=true;
    const s=state(),p=me(),lobby=!s||['closed','lobby'].includes(s.status)||menu;
-   root.innerHTML='<header class="o101-head"><strong>101 OKEY</strong><span>'+esc(s?(s.mode==='paired'?'Eşli':'Tekli')+' • '+(s.progressive?'Katlamalı':'Katlamasız')+' • '+(s.pool||s.players.reduce((n,p)=>n+p.stake,0))+' Lidya':'Dört kişilik oda oyunu')+'</span>'+btn('?', 'rules')+btn('×','hide')+'</header><div class="o101-content"></div><div class="o101-error" role="alert">'+esc(error)+(retry?btn('İşlemi tekrar dene','retry'):'')+'</div>';
+   root.innerHTML='<div class="o101-seat-strip" aria-label="Oda koltukları"></div><header class="o101-head"><strong>101 OKEY</strong><span>'+esc(s?(s.mode==='paired'?'Eşli':'Tekli')+' • '+(s.progressive?'Katlamalı':'Katlamasız')+' • '+(s.pool||s.players.reduce((n,p)=>n+p.stake,0))+' Lidya':'Dört kişilik oda oyunu')+'</span>'+btn('?', 'rules')+btn('×','hide')+'</header><div class="o101-content"></div><div class="o101-error" role="alert">'+esc(error)+(retry?btn('İşlemi tekrar dene','retry'):'')+'</div>';
+   syncSeats();
    const content=root.querySelector('.o101-content');
    if(lobby){renderLobby(content);}
    else {renderGame(content);}
@@ -96,6 +111,7 @@
  window.addEventListener('erischat:room-opened',e=>{const id=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(!id)return;if(id!==rid){leave();rid=id;}poll();});
  window.addEventListener('erischat:room-closed',leave);
  window.addEventListener('erischat:ludo-active',()=>{if(state()?.status==='finished'){hide();window.ErisOkey101Active=false;}});
+ window.addEventListener('erischat:room-state-updated',syncSeats);
  setInterval(()=>{poll();clock();},1000);
  window.ErisOkey101={open};
 })();
