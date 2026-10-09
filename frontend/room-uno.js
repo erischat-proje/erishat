@@ -2,7 +2,7 @@
   'use strict';
   const colors={red:'#ee5269',yellow:'#efbd48',green:'#32b88c',blue:'#498df0'};
   const names={red:'Kırmızı',yellow:'Sarı',green:'Yeşil',blue:'Mavi'};
-  const values={skip:'⊘',reverse:'⇄',draw2:'+2',wild:'✦',draw4:'+4'};
+  const values={skip:'⊘',reverse:'⇄',draw2:'+2',wild:'✦',draw4:'+4',swap:'⇆'};
   const cards=[];
   for(const color of Object.keys(colors)){
     cards.push({id:cards.length,color,value:'0'});
@@ -10,6 +10,9 @@
       for(let i=0;i<2;i++)cards.push({id:cards.length,color,value});
   }
   for(const value of ['wild','draw4'])for(let i=0;i<4;i++)cards.push({id:cards.length,color:null,value});
+  cards.push({id:cards.length,color:null,value:'swap'});
+  let swapTarget=null,drag=null,suppressClickUntil=0,throwing=false;
+  const reducedMotion=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let rid='',epoch=0,data=null,visible=false,pending=false,flight=null,retry=null,error='',offset=0;
   let mode='solo',victory='quick',stake=50,selected=null,armed=false,hiddenRound='',lastRound='',confirmClose=false,rulesOpen=false,handPage=0,revealOpen=false;
@@ -23,11 +26,11 @@
   function cardHTML(cid,interactive=false,disabled=false){
     const c=cards[cid];if(!c)return '';
     const text=values[c.value]||c.value;
-    const label=(names[c.color]||'Joker')+' '+({skip:'Pas',reverse:'Yön değiştir',draw2:'İki kart çektir',wild:'Renk değiştir',draw4:'Dört kart çektir'}[c.value]||c.value);
+    const label=(names[c.color]||'Joker')+' '+({skip:'Pas',reverse:'Yön değiştir',draw2:'İki kart çektir',wild:'Renk değiştir',draw4:'Dört kart çektir',swap:'El değiştir'}[c.value]||c.value);
     const tag=interactive?'button':'div';
-    return '<'+tag+(interactive?' type="button" data-uno-card="'+cid+'" '+(disabled?'disabled':''):'')+' class="uno-card '+(!c.color?'uno-wild':'')+'" style="--uno-color:'+(colors[c.color]||'#313c58')+'" aria-label="'+label+'"><small>'+text+'</small><b>'+text+'</b><small>'+text+'</small></'+tag+'>';
+    return '<'+tag+(interactive?' type="button" data-uno-card="'+cid+'" '+(disabled?'disabled':''):'')+' class="uno-card '+(c.value==='swap'?'uno-swap ':'')+(!c.color?'uno-wild':'')+'" style="--uno-color:'+(colors[c.color]||'#313c58')+'" aria-label="'+label+'"><small>'+text+'</small><b>'+text+'</b><small>'+text+'</small></'+tag+'>';
   }
-  function clear(){host()?.querySelector('.uno-root')?.remove();host()?.classList.remove('uno-mode');}
+  function clear(){cancelDrag();host()?.querySelector('.uno-root')?.remove();host()?.classList.remove('uno-mode');}
   function hide(){if(window.ErisUnoActive)return;visible=false;hiddenRound=state()?.round_id||'';selected=null;confirmClose=false;clear();}
   function notice(message){error=message;render();}
   function receive(result){
@@ -36,7 +39,7 @@
     const same=!!s&&!!old&&s.round_id===old.round_id&&s.version===old.version&&result.balance===data?.balance&&JSON.stringify(result.seats)===JSON.stringify(data?.seats);
     data=result;offset=result.server_time-Date.now()/1000;
     window.ErisUnoActive=!!s&&['lobby','playing','hand_finished'].includes(s.status);
-    if(s?.round_id!==lastRound){const root=host()?.querySelector('.uno-root');if(root)delete root.dataset.menu;lastRound=s?.round_id||'';hiddenRound='';selected=null;armed=false;confirmClose=false;rulesOpen=false;handPage=0;}
+    if(s?.round_id!==lastRound){const root=host()?.querySelector('.uno-root');if(root)delete root.dataset.menu;lastRound=s?.round_id||'';hiddenRound='';selected=null;swapTarget=null;armed=false;confirmClose=false;rulesOpen=false;handPage=0;}
     if(s?.status==='closed'){visible=false;clear();return;}
     if(s?.status==='finished'&&(window.ErisOkey101Active||host()?.classList.contains('ludo-mode'))){hide();return;}
     if(s&&['lobby','playing','hand_finished'].includes(s.status)){
@@ -44,7 +47,8 @@
       window.dispatchEvent(new CustomEvent('erischat:uno-active'));
     }
     if(s){mode=s.mode;victory=s.victory;stake=s.stake??0;}
-    if(selected!==null&&(!myTurn()||!s?.legal?.includes(selected))){selected=null;}
+    if(selected!==null&&(!myTurn()||!s?.legal?.includes(selected))){selected=null;swapTarget=null;}
+    if(drag&&(s?.round_id!==drag.round||s?.version!==drag.version||!myTurn()))cancelDrag();
     if(same&&visible&&host()?.querySelector('.uno-root')){clock();return;}
     render();
   }
@@ -62,11 +66,11 @@
     const s=state(),payload=action?{action,round_id:s?.round_id||'',version:s?.version||0,request_key:key(),...extra}:retry;
     if(!payload)return;
     const id=rid,gen=epoch;pending=true;error='';render();
-    try{const r=await api(id,{method:'POST',body:JSON.stringify(payload)});if(id===rid&&gen===epoch){retry=null;selected=null;armed=false;confirmClose=false;receive(r);}}
+    try{const r=await api(id,{method:'POST',body:JSON.stringify(payload)});if(id===rid&&gen===epoch){retry=null;selected=null;swapTarget=null;armed=false;confirmClose=false;receive(r);}}
     catch(e){if(id===rid&&gen===epoch){error=e.message||'İşlem tamamlanamadı.';retry=e.status?null:payload;await poll();}}
     finally{if(id===rid&&gen===epoch){pending=false;render();}}
   }
-  const rulesHTML='<details class="uno-rules"><summary>Nasıl oynanır?</summary><p>108 kart; herkese 7 kart. Renk, sayı veya sembol eşleştir. Uygun kart yoksa bir kart çek; uygunsa yalnızca çektiğini oynayabilir ya da pas geçebilirsin.</p><p>Pas sonraki oyuncuyu atlar. Yön değiştir sırayı tersine çevirir; iki kişide pas gibi çalışır. +2 ve +4 kart çektirir ve sırayı atlar. Cezalar biriktirilmez.</p><p>+4 mevcut renkten kartın yokken kurala uygundur. Blöf yapılabilir: itiraz haklıysa atan 4; haksızsa itiraz eden 6 kart çeker. Kontrol için el yalnızca itiraz edene gösterilir.</p><p>Tek karta düşerken UNO! de. Unutursan sonraki oyuncu kart atmadan veya çekmeden yakalayan sana 2 kart çektirir. UNO düğmesini kartını atmadan da hazırlayabilirsin.</p><p>Teklide ilk bitiren, eşlide ortağıyla birlikte kazanır. Eşler 1+3 ve 2+4. Hızlı oyun tek eldir; puanlı maçta 500 puana ulaşılır. Sayılar kendi değeri, renkli özel kartlar 20, jokerler 50 puandır.</p><p>Hamle 20 saniye; süre dolarsa bir kart çekilip sıra geçer. Kopan oyuncu 60 saniye içinde koltuğuna dönebilir; ardından bot devralır. Bahis hazır olduğunda bakiyenden ayrılır. Hazırdan çıkış ve bitmemiş oyun iptalinde iade edilir. Tekli kazanan havuzu alır; eşlide iki kazanan eşit paylaşır. Puanlı maçın havuzu maç bitince ödenir.</p></details>';
+  const rulesHTML='<details class="uno-rules"><summary>Nasıl oynanır?</summary><p>109 kart: klasik deste + 1 el değiştirme jokeri; herkese 7 kart. Renk, sayı veya sembol eşleştir. Uygun kart yoksa bir kart çek; uygunsa yalnızca çektiğini oynayabilir ya da pas geçebilirsin.</p><p>Pas sonraki oyuncuyu atlar. Yön değiştir sırayı tersine çevirir; iki kişide pas gibi çalışır. +2 ve +4 kart çektirir ve sırayı atlar. Cezalar biriktirilmez.</p><p>El değiştirme jokerinde bir rakip ve devam rengi seçilir; iki el tamamen yer değiştirir. İstersen elini koruyup yalnızca rengi değiştirebilirsin. Son kartınsa el değişmeden kazanırsın. Değişim sonrası tek karta düşen oyuncular UNO demelidir.</p><p>+4 mevcut renkten kartın yokken kurala uygundur. Blöf yapılabilir: itiraz haklıysa atan 4; haksızsa itiraz eden 6 kart çeker. Kontrol için el yalnızca itiraz edene gösterilir.</p><p>Tek karta düşerken UNO! de. Unutursan sonraki oyuncu kart atmadan veya çekmeden yakalayan sana 2 kart çektirir. UNO düğmesini kartını atmadan da hazırlayabilirsin.</p><p>Teklide ilk bitiren, eşlide ortağıyla birlikte kazanır. Eşler 1+3 ve 2+4. Hızlı oyun tek eldir; puanlı maçta 500 puana ulaşılır. Sayılar kendi değeri, renkli özel kartlar 20, el değiştirme 40, diğer jokerler 50 puandır.</p><p>Hamle 20 saniye; süre dolarsa bir kart çekilip sıra geçer. Kopan oyuncu 60 saniye içinde koltuğuna dönebilir; ardından bot devralır. Bahis hazır olduğunda bakiyenden ayrılır. Hazırdan çıkış ve bitmemiş oyun iptalinde iade edilir. Tekli kazanan havuzu alır; eşlide iki kazanan eşit paylaşır. Puanlı maçın havuzu maç bitince ödenir.</p></details>';
   function seating(){
     const s=state();
     return '<div class="uno-players">'+[1,2,3,4].map(n=>{
@@ -87,18 +91,26 @@
     const count=s.players.length,canStart=count>=2&&count<=4&&(s.mode!=='paired'||count===4);
     return '<div class="uno-lobby"><h2>'+count+' / 4 oyuncu hazır</h2>'+options(s)+'<p class="uno-lobby-note">'+(s.players.length?'Ayar değiştirmek için herkes hazırdan çıkmalı.':'Bahsi kurucu belirler; tüm oyuncular aynı tutarla katılır.')+'</p><div class="uno-lobby-actions">'+button(p?'Hazırdan çık · iade':'Hazırım · '+money(stake)+' Lidya',p?'withdraw':'ready',pending||!eligible||(!p&&data.balance<stake),'uno-primary')+(controls()?button('Oyunu başlat','start',pending||!canStart,'uno-primary'):'')+'</div><p>'+(s.mode==='paired'&&count<4?'Eşli oyun için dört oyuncu gerekli.':!eligible?'Oynamak için 1–4. koltuktan birine otur.':!controls()?'Kurucunun başlatması bekleniyor.':'')+'</p></div>';
   }
-  function palette(){return '<div class="uno-color-picker" role="group" aria-label="Renk seç"><strong>Devam edecek rengi seç</strong><div>'+Object.entries(colors).map(([c,h])=>'<button type="button" data-uno-color="'+c+'" style="--uno-swatch:'+h+'">'+names[c]+'</button>').join('')+'</div>'+ (selected!==null?button('Vazgeç','cancel-card'):'')+'</div>';}
+  function palette(){
+    const swap=selected!==null&&cards[selected]?.value==='swap'&&me()?.card_count>1;
+    const rivals=state()?.players.filter(p=>p.seat!==me()?.seat&&(state().mode!=='paired'||p.team!==me()?.team))||[];
+    const targets=swap?'<div class="uno-swap-targets"><strong>Kiminle el değiştireceksin?</strong><div>'+rivals.map(p=>'<button type="button" data-uno-target="'+p.seat+'" class="'+(swapTarget===p.seat?'chosen':'')+'">'+esc(p.name)+'<small>'+p.card_count+' kart</small></button>').join('')+'<button type="button" data-uno-target="'+me().seat+'" class="'+(swapTarget===me().seat?'chosen':'')+'">Elimi koru</button></div></div>':'';
+    return '<div class="uno-color-picker" role="group" aria-label="Joker seçimi">'+targets+'<strong>Devam edecek rengi seç</strong><div class="uno-color-options">'+Object.entries(colors).map(([c,h])=>'<button type="button" data-uno-color="'+c+'" '+(swap&&swapTarget===null?'disabled':'')+' style="--uno-swatch:'+h+'">'+names[c]+'</button>').join('')+'</div>'+(selected!==null?button('Vazgeç','cancel-card'):'')+'</div>';
+  }
   function table(){
     const s=state(),p=me(),mine=myTurn(),turn=s.players.find(p=>p.seat===s.turn);
     let action='';
-    if(mine&&s.phase==='challenge')action='<div class="uno-challenge"><strong>Sana +4 oynandı</strong><p>Kabul edersen 4 kart; haksız itiraz edersen 6 kart çekersin.</p>'+button('4 kart çek','accept4',pending)+button('İtiraz et','challenge',pending)+'</div>';
+    if(mine&&s.phase==='challenge'){
+      const q=s.draw4_question,actor=s.players.find(p=>p.seat===q?.actor),colorName=names[q?.previous_color];
+      action='<div class="uno-challenge"><span class="uno-eyebrow">+4 · BLÖF KONTROLÜ</span><strong>'+esc(actor?.name||'Oyuncu')+' elinde '+(colorName?'<span style="color:'+(colors[q.previous_color]||'#fff')+'">'+colorName.toLocaleUpperCase('tr-TR')+'</span>':'önceki renkten')+' kart var mıydı?</strong><p>Haklıysan o 4 kart çeker ve sıra sende kalır. Haksızsan sen 6 kart çekersin.</p><div>'+button('Kabul · 4 kart çek','accept4',pending)+button('İtiraz et','challenge',pending,'uno-primary')+'</div></div>';
+    }
     else if(mine&&(s.phase==='opening_color'||selected!==null))action=palette();
     else if(mine)action=button(s.phase==='drawn'?'Pas geç':'Bir kart çek',s.phase==='drawn'?'pass':'draw',pending,'uno-primary');
     else action='<p class="uno-wait">'+esc(turn?.name||'Oyuncu')+' oynuyor…</p>';
-    const caught=s.uno_vulnerable!==null&&s.uno_vulnerable!==undefined&&s.uno_vulnerable!==p?.seat;
+    const caught=(s.uno_vulnerable_seats||[s.uno_vulnerable]).some(n=>n!==null&&n!==undefined&&n!==p?.seat);
     const reveal=s.challenge_reveal;
     const hand=p?.hand||[];const pages=Math.max(1,Math.ceil(hand.length/7));handPage=Math.min(handPage,pages-1);
-    return '<div class="uno-table"><div class="uno-turn-line"><span>'+(mine?'SIRA SENDE':esc(turn?.name))+'</span><b data-uno-clock></b><span>'+ (s.direction===1?'↻':'↺')+'</span></div><div class="uno-piles"><div class="uno-stock"><div class="uno-card uno-back"><b>ERIS</b><small>'+s.stock_count+' kart</small></div><span>Çekme destesi</span></div><div class="uno-discard">'+cardHTML(s.top_card)+'<span style="--uno-swatch:'+(colors[s.active_color]||'#ddd')+'">'+(names[s.active_color]||'Renk seçiliyor')+'</span></div></div><div class="uno-actions">'+action+'</div></div><div class="uno-hand-area"><div class="uno-hand-label"><strong>'+(p?'Kartların · '+p.card_count:'İzleyici')+'</strong><div>'+(p?button(armed?'UNO hazır ✓':p.uno?'UNO dedin ✓':'UNO!','uno',pending||p.uno||!(p.card_count===1||mine&&p.card_count===2),'uno-call'):'')+(p&&caught?button('UNO demedi!','catch',pending):'')+'</div></div><div class="uno-hand">'+(p?hand.slice(handPage*7,handPage*7+7).map(cid=>cardHTML(cid,true,pending||!!retry||!mine||!s.legal.includes(cid))).join(''):'<p>Kartlar gizli. Oyuncuların hamlelerini izleyebilirsin.</p>')+'</div>'+ (p&&pages>1?'<div class="uno-hand-pages">'+button('‹','hand-prev',handPage===0)+'<span>'+ (handPage+1)+' / '+pages+'</span>'+button('›','hand-next',handPage===pages-1)+'</div>':'')+'</div>'+ (reveal?button('Son +4 kontrolü','reveal',false,'uno-reveal-button'):'');
+    return '<div class="uno-table"><div class="uno-turn-line"><span>'+(mine?'SIRA SENDE':esc(turn?.name))+'</span><b data-uno-clock></b><span>'+ (s.direction===1?'↻':'↺')+'</span></div><div class="uno-piles"><div class="uno-stock"><div class="uno-card uno-back"><b>ERIS</b><small>'+s.stock_count+' kart</small></div><span>Çekme destesi</span></div><div class="uno-discard" data-uno-drop aria-label="Kart bırakma alanı">'+cardHTML(s.top_card)+'<span style="--uno-swatch:'+(colors[s.active_color]||'#ddd')+'">'+(names[s.active_color]||'Renk seçiliyor')+'</span></div></div><div class="uno-actions">'+action+'</div></div><div class="uno-hand-area"><div class="uno-hand-label"><strong>'+(p?'Kartların · '+p.card_count:'İzleyici')+'</strong><div>'+(p?button(armed?'UNO hazır ✓':p.uno?'UNO dedin ✓':'UNO!','uno',pending||p.uno||!(p.card_count===1||mine&&p.card_count===2),'uno-call'):'')+(p&&caught?button('UNO demedi!','catch',pending):'')+'</div></div><p class="uno-drag-hint">'+(mine&&['play','drawn'].includes(s.phase)?'Kartı ortaya sürükle veya dokunarak oyna':'')+'</p><div class="uno-hand">'+(p?hand.slice(handPage*7,handPage*7+7).map(cid=>cardHTML(cid,true,pending||!!retry||!mine||!s.legal.includes(cid))).join(''):'<p>Kartlar gizli. Oyuncuların hamlelerini izleyebilirsin.</p>')+'</div>'+ (p&&pages>1?'<div class="uno-hand-pages">'+button('‹','hand-prev',handPage===0)+'<span>'+ (handPage+1)+' / '+pages+'</span>'+button('›','hand-next',handPage===pages-1)+'</div>':'')+'</div>'+ (reveal?button('Son +4 kontrolü','reveal',false,'uno-reveal-button'):'');
   }
   function result(){
     const s=state(),winning=s.status==='finished'?s.winners:s.hand_winners;
@@ -143,6 +155,7 @@
     strip.style.setProperty('--room-seat-rows',String(Math.max(1,Math.ceil(originals.length/8))));
   }
   function render(){
+    cancelDrag();
     if(!visible||!data||!host())return;
     let root=host().querySelector('.uno-root');
     if(!root){root=document.createElement('section');root.className='uno-root';root.setAttribute('aria-label','Oda UNO oyunu');host().append(root);}
@@ -153,13 +166,15 @@
     const phase=s?.status==='playing'?'game':lobbyMode?'lobby':'result';
     const reveal=s?.challenge_reveal;
     root.dataset.phase=phase;
-    root.innerHTML='<header class="uno-header"><div><span class="uno-brand">UNO</span><small>ERISCHAT · '+(s?.mode==='paired'?'EŞLİ':'ODA OYUNU')+'</small></div><div>'+ (s&&controls()&&s.status!=='closed'?button('İptal','close-dialog',pending):'')+button('?','rules',false,'uno-view-close')+(active?'':button('×','hide',false,'uno-view-close'))+'</div></header><div class="uno-room-seats" aria-label="Oda koltukları"></div>'+seating()+'<div class="uno-bet-strip"><span>Bahis <b>'+money(s?.stake??stake)+'</b> L</span><span>Havuz <b>'+money(s?.pool)+'</b> L</span><span>Bakiye <b>'+money(data.balance)+'</b> L</span></div><div class="uno-content">'+(lobbyMode?lobby():['finished','hand_finished'].includes(s.status)?result():table())+'<p class="uno-error" role="status">'+esc(error)+'</p>'+(retry?button('İşlemi tekrar dene','retry',pending):'')+'</div>'+(rulesOpen?'<div class="uno-info-overlay"><header><strong>UNO kuralları</strong>'+button('×','rules')+'</header>'+rulesHTML.replace('<details','<details open')+'</div>':'')+(revealOpen&&reveal?'<div class="uno-info-overlay"><header><strong>+4 kontrolü</strong>'+button('×','reveal')+'</header><p>'+(reveal.guilty?'Blöf yakalandı':'Kart kurala uygun')+'</p><div class="uno-reveal-cards">'+reveal.cards.map(cid=>cardHTML(cid)).join('')+'</div></div>':'')+ (confirmClose?'<div class="uno-confirm" role="dialog" aria-modal="true" aria-label="Oyunu iptal et"><h3>UNO masasını kapat?</h3><p>Bitmemiş oyunun bahisleri oyunculara iade edilir.</p>'+button('Vazgeç','cancel-close')+button('Masayı kapat','close',pending)+'</div>':'');
+    root.innerHTML='<header class="uno-header"><div><span class="uno-brand">UNO</span><small>ERISCHAT · '+(s?.mode==='paired'?'EŞLİ':'ODA OYUNU')+'</small></div><div>'+ (s&&controls()&&s.status!=='closed'?button('İptal','close-dialog',pending):'')+button('?','rules',false,'uno-view-close')+(active?'':button('×','hide',false,'uno-view-close'))+'</div></header><div class="uno-room-seats" aria-label="Oda koltukları"></div>'+seating()+'<div class="uno-bet-strip"><span>Bahis <b>'+money(s?.stake??stake)+'</b> L</span><span>Havuz <b>'+money(s?.pool)+'</b> L</span><span>Bakiye <b>'+money(data.balance)+'</b> L</span></div><div class="uno-content">'+(lobbyMode?lobby():['finished','hand_finished'].includes(s.status)?result():table())+'<p class="uno-error" role="status">'+esc(error)+'</p>'+(retry?button('İşlemi tekrar dene','retry',pending):'')+'</div>'+(rulesOpen?'<div class="uno-info-overlay"><header><strong>UNO kuralları</strong>'+button('×','rules')+'</header>'+rulesHTML.replace('<details','<details open')+'</div>':'')+(revealOpen&&reveal?'<div class="uno-info-overlay"><header><strong>+4 kontrolü</strong>'+button('×','reveal')+'</header><p>'+(reveal.guilty?'Blöf yakalandı · Atan 4 kart çekti':'İtiraz başarısız · 6 kart çektin')+'</p><p>Kontrol edilen önceki renk: <strong>'+esc(names[reveal.color]||'Önceki renk')+'</strong>. Aşağıdaki el yalnızca sana gösterilir.</p><div class="uno-reveal-cards">'+reveal.cards.map(cid=>cardHTML(cid)).join('')+'</div></div>':'')+ (confirmClose?'<div class="uno-confirm" role="dialog" aria-modal="true" aria-label="Oyunu iptal et"><h3>UNO masasını kapat?</h3><p>Bitmemiş oyunun bahisleri oyunculara iade edilir.</p>'+button('Vazgeç','cancel-close')+button('Masayı kapat','close',pending)+'</div>':'');
     root.onclick=handle;
+    root.onpointerdown=pointerDown;
     root.onchange=e=>{if(pending||!controls())return;if(e.target.dataset.unoOption==='mode')mode=e.target.value;else if(e.target.dataset.unoOption==='victory')victory=e.target.value;else return;send('configure',{mode,victory,stake});};
     syncSeats();clock();
 
   }
   function handle(e){
+    if(Date.now()<suppressClickUntil)return;
     const b=e.target.closest('button');if(!b||b.disabled)return;
     const a=b.dataset.unoAction,s=state(),p=me();
     if(a==='hide')return hide();
@@ -168,10 +183,11 @@
     if(a==='hand-prev'){handPage=Math.max(0,handPage-1);return render();}
     if(a==='hand-next'){handPage++;return render();}
     if(a==='retry')return send(null);
-    if(pending||retry)return;
+    if(pending||retry||throwing)return;
     if(a==='close-dialog'){confirmClose=true;return render();}
     if(a==='cancel-close'){confirmClose=false;return render();}
-    if(a==='cancel-card'){selected=null;return render();}
+    if(a==='cancel-card'){selected=null;swapTarget=null;return render();}
+    if(b.dataset.unoTarget){swapTarget=+b.dataset.unoTarget;return render();}
     if(a==='new-menu'){mode=s.mode;victory=s.victory;stake=s.stake||50;return send('create',{mode,victory,stake});}
     if(a==='create')return send('create',{mode,victory,stake:stake||50});
     if(a==='ready')return send('ready',{stake:stake||50});
@@ -180,17 +196,83 @@
       if(p.card_count===1)return send('uno');
       armed=!armed;return render();
     }
-    if(b.dataset.unoCard!==undefined){
-      const cid=+b.dataset.unoCard;
-      if(cards[cid].color===null){selected=cid;return render();}
-      return send('play',{card:cid,call_uno:armed});
-    }
+    if(b.dataset.unoCard!==undefined)return throwCard(+b.dataset.unoCard,b);
     if(b.dataset.unoColor){
       const color=b.dataset.unoColor;
-      return selected!==null?send('play',{card:selected,color,call_uno:armed}):send('color',{color});
+      return selected!==null?send('play',{card:selected,color,call_uno:armed,target:cards[selected]?.value==='swap'?swapTarget:null}):send('color',{color});
     }
     if(a)send(a);
   }
+  function chooseCard(cid){
+    if(pending||retry||!myTurn()||!state()?.legal?.includes(cid))return;
+    if(cards[cid].color===null){selected=cid;swapTarget=null;return render();}
+    return send('play',{card:cid,call_uno:armed});
+  }
+  function ghostOf(source){
+    const rect=source.getBoundingClientRect(),ghost=source.cloneNode(true);
+    ghost.removeAttribute('disabled');ghost.removeAttribute('data-uno-card');
+    ghost.classList.add('uno-drag-ghost');ghost.setAttribute('aria-hidden','true');
+    Object.assign(ghost.style,{position:'fixed',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px',pointerEvents:'none'});
+    document.body.append(ghost);return {ghost,rect};
+  }
+  async function throwCard(cid,source,existing=null){
+    if(throwing||pending||retry||!myTurn()||!state()?.legal?.includes(cid)){existing?.remove();return;}
+    const round=state().round_id,version=state().version,gen=epoch;
+    throwing=true;const ghost=existing||ghostOf(source).ghost;
+    try{
+      const target=host()?.querySelector('[data-uno-drop] .uno-card');
+      if(target&&ghost.animate&&!reducedMotion()){
+        const from=ghost.getBoundingClientRect(),to=target.getBoundingClientRect();
+        ghost.style.transform='none';ghost.style.left=from.left+'px';ghost.style.top=from.top+'px';
+        await ghost.animate([{transform:'translate(0,0) rotate(-8deg) scale(1.08)'},{transform:'translate('+(to.left-from.left)+'px,'+(to.top-from.top)+'px) rotate(4deg) scale(1)'}],{duration:230,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'}).finished.catch(()=>{});
+      }
+    }finally{ghost.remove();throwing=false;}
+    if(gen===epoch&&round===state()?.round_id&&version===state()?.version)chooseCard(cid);
+  }
+  function cancelDrag(){
+    if(!drag)return;const d=drag;drag=null;
+    document.removeEventListener('pointermove',pointerMove);
+    document.removeEventListener('pointerup',pointerUp);
+    document.removeEventListener('pointercancel',pointerCancel);
+    d.source.classList.remove('uno-drag-source');d.ghost?.remove();
+    host()?.querySelector('[data-uno-drop]')?.classList.remove('is-drop-ready','is-drop-hover');
+    try{if(d.source.hasPointerCapture?.(d.id))d.source.releasePointerCapture(d.id);}catch{}
+  }
+  function pointerDown(e){
+    const source=e.target.closest('[data-uno-card]');
+    if(!source||source.disabled||pending||retry||throwing||!myTurn()||e.isPrimary===false||e.button!==0)return;
+    cancelDrag();drag={source,id:e.pointerId,cid:+source.dataset.unoCard,x:e.clientX,y:e.clientY,round:state().round_id,version:state().version,moving:false};
+    try{source.setPointerCapture(e.pointerId);}catch{}
+    document.addEventListener('pointermove',pointerMove,{passive:false});
+    document.addEventListener('pointerup',pointerUp);
+    document.addEventListener('pointercancel',pointerCancel);
+  }
+  function pointerMove(e){
+    const d=drag;if(!d||e.pointerId!==d.id)return;
+    const dx=e.clientX-d.x,dy=e.clientY-d.y;
+    if(!d.moving&&Math.hypot(dx,dy)<8)return;
+    e.preventDefault();
+    if(!d.moving){d.moving=true;Object.assign(d,ghostOf(d.source));d.source.classList.add('uno-drag-source');host()?.querySelector('[data-uno-drop]')?.classList.add('is-drop-ready');}
+    d.ghost.style.transform='translate('+dx+'px,'+dy+'px) rotate('+Math.max(-14,Math.min(14,dx/15))+'deg) scale(1.1)';
+    const drop=host()?.querySelector('[data-uno-drop]'),r=drop?.getBoundingClientRect();
+    d.inside=!!r&&e.clientX>=r.left-22&&e.clientX<=r.right+22&&e.clientY>=r.top-22&&e.clientY<=r.bottom+22;
+    drop?.classList.toggle('is-drop-hover',d.inside);
+  }
+  function pointerUp(e){
+    const d=drag;if(!d||e.pointerId!==d.id)return;
+    if(!d.moving){cancelDrag();return;}
+    pointerMove(e);suppressClickUntil=Date.now()+450;
+    const ghost=d.ghost;d.ghost=null;cancelDrag();
+    if(d.inside)return throwCard(d.cid,d.source,ghost);
+    if(ghost?.animate&&!reducedMotion()){
+      const end=d.source.getBoundingClientRect(),from=ghost.getBoundingClientRect();
+      ghost.style.transform='none';ghost.style.left=from.left+'px';ghost.style.top=from.top+'px';
+      ghost.animate([{transform:'translate(0,0) scale(1.1)',opacity:1},{transform:'translate('+(end.left-from.left)+'px,'+(end.top-from.top)+'px) scale(1)',opacity:.3}],{duration:180,fill:'forwards'}).finished.catch(()=>{}).finally(()=>ghost.remove());
+    }else ghost?.remove();
+  }
+  function pointerCancel(e){if(drag?.id===e.pointerId){suppressClickUntil=Date.now()+450;cancelDrag();}}
+  window.addEventListener('blur',cancelDrag);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelDrag();});
   function clock(){const s=state();host()?.querySelectorAll('[data-uno-clock]').forEach(n=>n.textContent=Math.max(0,Math.ceil((s?.deadline||0)-(Date.now()/1000+offset)))+' sn');}
   async function open(){
     const id=String(window.ErisCurrentRoomId||rid);if(!id)return;

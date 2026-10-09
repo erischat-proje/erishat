@@ -42,7 +42,8 @@ class Action(BaseModel):
     version: int = Field(default=0, ge=0)
     mode: Literal['solo','paired'] = 'solo'
     victory: Literal['quick','points'] = 'quick'
-    card: int | None = Field(default=None, ge=0, le=107)
+    card: int | None = Field(default=None, ge=0, le=108)
+    target: int | None = Field(default=None, ge=1, le=4)
     color: Literal['red','yellow','green','blue'] | None = None
     call_uno: bool = False
     stake: int = Field(default=50, ge=50, le=300)
@@ -277,7 +278,7 @@ def mutate(room_id: str, payload: Action, db: Session = Depends(get_db), user: U
                     raise HTTPException(409, 'Hamle süresi doldu; oyun yenileniyor.')
                 n = p['seat']
                 action = payload.action
-                if action == 'play': rules.play(s, n, payload.card, payload.color, payload.call_uno, now)
+                if action == 'play': rules.play(s, n, payload.card, payload.color, payload.call_uno, now, swap_target=payload.target)
                 elif action == 'draw': rules.draw(s, n, now)
                 elif action == 'pass': rules.pass_turn(s, n, now)
                 elif action == 'color': rules.choose_color(s, n, payload.color, now)
