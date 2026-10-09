@@ -1,0 +1,96 @@
+/* Scoped high-specificity rules override historical fixed viewport sizes. */
+html.eris-adaptive{--eris-panel-height:calc(var(--eris-usable-height) - 24px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html.eris-adaptive body{min-width:0;min-height:var(--app-height);overflow-x:hidden}
+html.eris-adaptive .app{min-height:var(--app-height);max-width:100%}
+html.eris-adaptive .content,html.eris-adaptive .view,html.eris-adaptive .grow,html.eris-adaptive .roomText{min-width:0}
+html.eris-adaptive .view :is(input,textarea,select){max-width:100%;min-width:0}
+html.eris-adaptive :is(.sheet,.chatSheet,.eris-mini-card,.eg-panel,.rel-dialog,.eh-sheet,.lp-panel,.eris-admin-panel,.eris-vip-dialog,.eph-dialog){min-width:0!important;max-width:100%!important;max-height:var(--eris-panel-height)!important;overscroll-behavior:contain}
+html.eris-adaptive :is(.sheet,.eris-mini-card,.eg-panel,.rel-dialog,.eh-sheet,.lp-panel,.eris-admin-panel,.eph-dialog){overflow-y:auto!important;overflow-x:hidden}
+html.eris-adaptive :is(.modal,.chat,.eris-mini-shade,.eris-vip-overlay,.rel-page,.rel-overlay,.eph-overlay,#erisGoogleGate,#erisAccountPicker,.dm-vault-modal,.dm-gift-sheet,#erisHub,#erisGamesModal,#erisUserProfileModal){top:calc(var(--app-top) + var(--eris-safe-top))!important;bottom:auto!important;height:var(--eris-usable-height)!important;left:calc(var(--eris-viewport-left) + var(--eris-safe-left))!important;right:var(--eris-safe-right)!important;min-height:0!important;box-sizing:border-box!important}
+html.eris-adaptive .modal,html.eris-adaptive .chat{justify-content:center}
+html.eris-adaptive .chatSheet{height:min(680px,var(--eris-usable-height))!important;max-height:var(--eris-usable-height)!important;min-height:0!important}
+html.eris-adaptive .chatBody,html.eris-adaptive .eris-vip-content{min-height:0!important;overflow-y:auto}
+html.eris-adaptive :is(.chatHead,.sheetHead,.eg-head){flex-shrink:0;min-width:0}
+html.eris-adaptive :is(.compose,.eg-form,.eris-mini-actions){min-width:0;max-width:100%}
+html.eris-adaptive :is(.room,.item,.setting,.heroRow,.toolbar){min-width:0}
+html.eris-adaptive :is(.roomText,.grow,.heroRow)>:is(b,small,p){overflow-wrap:anywhere}
+html.eris-adaptive .rooms,html.eris-adaptive .list,html.eris-adaptive .shopGrid{min-width:0}
+html.eris-adaptive .nav{max-width:calc(var(--app-width) - var(--eris-safe-left) - var(--eris-safe-right));padding-bottom:max(10px,var(--eris-safe-bottom))}
+html.eris-keyboard .nav{display:none!important}
+html.eris-keyboard :is(input,textarea,[contenteditable="true"]){scroll-margin-block:70px}
+html.eris-adaptive #erisGamesModal .eg-panel{width:min(980px,100%)!important;max-height:var(--eris-panel-height)!important;overflow-y:auto!important;min-height:0!important}
+html.eris-adaptive #erisGamesModal :is(.eg-stage,.eg-form,.eg-wallet,.eg-keys){min-width:0!important;max-width:100%!important}
+html.eris-adaptive #erisGamesModal .eg-head{position:sticky;top:0;z-index:20;background:#110d19}
+html.eris-adaptive #erisGamesModal :is(.eg-keys,.eg-stake-presets){overflow-x:auto;overscroll-behavior-x:contain}
+/* The room occupies the visible viewport, with one header/stage/chat boundary. */
+html.eris-adaptive #erisRoomSurface.show{top:calc(var(--app-top) + var(--eris-safe-top))!important;bottom:auto!important;height:var(--eris-usable-height)!important;left:calc(var(--eris-viewport-left) + var(--eris-safe-left))!important;right:var(--eris-safe-right)!important;width:auto!important;min-height:0!important;max-height:var(--eris-usable-height)!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6{--eris-fixed-chat-height:var(--eris-adaptive-chat)!important;--room-seat-size:var(--eris-adaptive-seat,52px)!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-top{height:var(--eris-room-header)!important;min-height:var(--eris-room-header)!important;box-sizing:border-box!important;padding:5px 10px!important;align-items:center!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-title{min-width:0!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-title b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 #erisRoomLevel{top:6px!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 #erisRoomContributionButton{top:calc(var(--eris-room-header) + 5px)!important;max-width:calc(100% - 156px)!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-quick-actions{top:calc(var(--eris-room-header) + 3px)!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6:not(.ludo-mode) #erisLiveSeats{top:calc(var(--eris-room-header) + var(--eris-room-tools-height))!important;bottom:calc(var(--eris-adaptive-chat) + 8px)!important;height:auto!important;max-height:none!important;grid-template-rows:repeat(var(--room-seat-rows),var(--room-seat-size))!important;gap:18px 12px!important;overflow-y:auto!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6:not(.ludo-mode)>.eris-room-chat{position:absolute!important;inset:auto 0 0!important;width:auto!important;transform:none!important;height:var(--eris-adaptive-chat)!important;max-height:var(--eris-adaptive-chat)!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:hidden!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-chat #erisLiveChat{position:relative!important;inset:auto!important;height:auto!important;max-height:none!important;min-height:0!important;overflow-y:auto!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-compose{position:relative!important;inset:auto!important;display:flex!important;width:100%!important;max-width:900px!important;min-width:0!important;gap:4px!important;padding:5px 8px 8px!important;margin:0 auto!important;box-sizing:border-box!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-compose input#erisLiveInput{flex:1 1 0!important;width:0!important;min-width:0!important;font-size:12px!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-compose :is(#erisRoomEmojiButton,#erisRoomMicInline,#erisRoomAudioOutput){flex:0 0 34px!important;min-width:34px!important;width:34px!important;height:40px!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend{flex:0 0 auto!important;min-width:56px!important;padding:0 8px!important;height:40px!important}
+/* Ludo distributes height as a whole; icons scale with board cells, not screen vw. */
+html.eris-adaptive #erisRoomSurface.room-layout-v6.ludo-mode{--ludo-chat:var(--eris-adaptive-ludo-chat)!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6.ludo-mode>:is(.ludo-room,.ludo-modal){inset:var(--eris-room-header) 0 var(--eris-adaptive-ludo-chat)!important;min-height:0!important}
+html.eris-adaptive #erisRoomSurface.room-layout-v6.ludo-mode>.eris-room-chat{height:var(--eris-adaptive-ludo-chat)!important;max-height:var(--eris-adaptive-ludo-chat)!important}
+html.eris-adaptive #erisRoomSurface .ludo-seat-strip,html.eris-adaptive #erisRoomSurface .ludo-lobby-seats{flex-basis:54px!important;min-height:54px!important;padding-top:4px!important;padding-bottom:4px!important}
+html.eris-adaptive #erisRoomSurface .ludo-toolbar{flex-basis:36px!important;min-height:36px!important;padding-block:2px!important}
+html.eris-adaptive #erisRoomSurface .ludo-toolbar button{min-height:30px!important;padding:3px 7px!important}
+html.eris-adaptive #erisRoomSurface .ludo-players{padding:3px 8px!important}
+html.eris-adaptive #erisRoomSurface .ludo-player{padding:4px!important}
+html.eris-adaptive #erisRoomSurface .ludo-control{min-height:0!important;padding:4px 8px 6px!important}
+html.eris-adaptive #erisRoomSurface .ludo-status{padding-top:3px!important;font-size:11px!important;line-height:14px!important}
+html.eris-adaptive #erisRoomSurface .ludo-board-space{padding:4px!important;min-height:0!important}
+html.eris-adaptive #erisRoomSurface .ludo-board{container-type:inline-size;max-width:600px!important}
+html.eris-adaptive #erisRoomSurface :is(.ludo-bomb,.ludo-magnet){display:grid;place-items:center;line-height:1;font-size:var(--ludo-item-size,18px)!important}
+html.eris-adaptive #erisRoomSurface .ludo-result{inset:auto 6%;top:50%;transform:translateY(-50%);max-height:92%;overflow-y:auto}
+html.eris-compact #erisRoomSurface .ludo-seat-strip,html.eris-compact #erisRoomSurface .ludo-lobby-seats{flex-basis:46px!important;min-height:46px!important}
+html.eris-compact #erisRoomSurface .ludo-seat-proxy{scale:.8!important;margin-bottom:2px!important}
+html.eris-compact #erisRoomSurface .ludo-control{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 8px!important}
+html.eris-compact #erisRoomSurface .ludo-dice-wrap{grid-row:1/3;flex-wrap:nowrap!important}
+html.eris-compact #erisRoomSurface .ludo-bank{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto}
+html.eris-compact #erisRoomSurface .ludo-status{font-size:10px!important;line-height:13px!important;align-self:center}
+html.eris-compact #erisRoomSurface .ludo-status>span{max-height:26px;overflow-y:auto}
+html.eris-short #erisRoomSurface.ludo-mode>.ludo-room{overflow-y:auto!important}
+html.eris-short #erisRoomSurface .ludo-board-space{flex:0 0 220px!important;min-height:220px!important}
+html.eris-short #erisRoomSurface .ludo-toolbar,html.eris-short #erisRoomSurface .ludo-players,html.eris-short #erisRoomSurface .ludo-control{flex-shrink:0!important}
+@media(max-width:390px){
+ html.eris-adaptive .content{padding-inline:10px!important}
+ html.eris-adaptive :is(.heroRow,.toolbar){flex-wrap:wrap}
+ html.eris-adaptive .tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+ html.eris-adaptive .tab{padding:8px 4px;min-width:0;overflow-wrap:anywhere}
+ html.eris-adaptive :is(.homeMenu,.shopGrid,.stats){gap:6px!important}
+ html.eris-adaptive #erisRoomSurface.room-layout-v6 .eris-room-compose :is(#erisRoomEmojiButton,#erisRoomMicInline,#erisRoomAudioOutput){flex-basis:30px!important;min-width:30px!important;width:30px!important}
+}
+@media(min-width:760px){
+ html.eris-adaptive :is(.sheet,.chatSheet){margin-inline:auto}
+ html.eris-adaptive .app>.content{width:min(1180px,100%);margin-inline:auto}
+ html.eris-adaptive #erisRoomSurface .ludo-players{max-width:760px;width:100%;margin-inline:auto}
+}
+
+html.eris-adaptive .dm-gift-sheet>section,html.eris-adaptive .dm-vault-modal>section{max-width:100%!important;max-height:var(--eris-panel-height)!important;overflow-y:auto!important;min-height:0!important;margin-inline:auto}
+html.eris-adaptive #erisUserProfileModal>div{max-height:var(--eris-usable-height)!important;min-height:100%!important;overflow-y:auto!important}
+html.eris-adaptive .eris-profile-actions{display:flex!important;flex-wrap:wrap;gap:6px!important}
+html.eris-adaptive .eris-profile-actions>button{flex:1 1 110px!important;width:auto!important;min-width:0!important;margin-top:0!important}
+html.eris-adaptive #erisRoomSurface :is(.room-v3-dialog,.room-v5-dialog){max-width:100%!important;max-height:calc(var(--eris-usable-height) - 24px)!important;min-height:0!important}
+html.eris-adaptive #erisRoomSurface .room-v3-panel{padding:12px!important}
+
+html.eris-adaptive #erisGoogleGate>.erisGoogleCard,html.eris-adaptive #erisAccountPicker>section{max-width:100%!important;min-width:0!important;max-height:var(--eris-panel-height)!important;overflow-y:auto!important}
+html.eris-adaptive #erisAccountPicker #erisGoogleGate{position:relative!important;inset:auto!important;left:auto!important;top:auto!important;height:auto!important;max-height:none!important;padding:0!important}
+html.eris-adaptive .support-window{bottom:calc(var(--eris-safe-bottom) + 12px)!important;right:calc(var(--eris-safe-right) + 12px)!important;max-width:calc(var(--app-width) - 24px)!important;max-height:var(--eris-panel-height)!important;overflow-y:auto!important}
+html.eris-adaptive #erischatGiftPanel{top:calc(var(--app-top) + var(--eris-safe-top) + 12px)!important;bottom:auto!important;max-height:var(--eris-panel-height)!important;width:min(500px,calc(var(--app-width) - 24px))!important;overflow-y:auto!important}
+html.eris-adaptive #erisRoomEmojiPanel .ee-sheet{max-height:min(480px,calc(var(--eris-usable-height) - 60px))!important}
+
+html.eris-adaptive .support-window{top:calc(var(--app-top) + var(--eris-safe-top) + 12px)!important;bottom:auto!important}
+html.eris-adaptive .app>.top{height:calc(72px + var(--eris-safe-top));padding-top:calc(14px + var(--eris-safe-top))}
+html.eris-adaptive body{padding-inline:var(--eris-safe-left) var(--eris-safe-right)}
+html.eris-keyboard #toast{top:calc(var(--app-top) + var(--eris-safe-top) + 12px);bottom:auto;max-width:calc(var(--app-width) - 24px)}
