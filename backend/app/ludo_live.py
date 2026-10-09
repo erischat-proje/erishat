@@ -37,11 +37,12 @@ class LudoReceipt(Base):
     response_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 class Action(BaseModel):
-    action: Literal['create','ready','withdraw','start','roll','move','close']
+    action: Literal['create','ready','withdraw','start','roll','move','close','configure']
     round_id: str = Field(default='', max_length=36)
     version: int = Field(default=0, ge=0)
     request_key: str = Field(min_length=16, max_length=64)
     mode: Literal['solo','paired'] = 'solo'
+    die: int | None = Field(default=None, ge=1, le=6)
     stake: int = 50
     token: int = Field(default=0, ge=0, le=3)
 
@@ -104,7 +105,7 @@ def view(db, room, row, user):
             cards.append(dict(seat=seat,user_id=uid,name=u.nickname,avatar=u.avatar))
     legal=[]
     moves=[]
-    if state and state['status']=='playing':
+    if state and state['status']=='playing' and not state.get('roll_ready'):
         p=rules.player(state,state['turn'])
         if p['user_id']==user.id and present(db,room.id,p,seats) and not p.get('bot'):
             for d in state.get('pending_dice',[]):
@@ -177,7 +178,14 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
         if not s or payload.round_id!=s['round_id'] or payload.version!=s['version']:
             raise HTTPException(409,'Oyun güncellendi; tekrar deneyin.')
         p=next((p for p in s['players'] if p['user_id']==user.id),None)
-        if payload.action=='close':
+        if payload.action=='configure':
+            if s['status']!='lobby' or (user.id!=s['host'] and not staff):
+                raise HTTPException(403,'Ayarları oyun kurucusu veya oda yönetimi değiştirebilir.')
+            if s['players']:
+                raise HTTPException(409,'Ayarları değiştirmeden önce hazır oyuncular katılımlarını geri almalı.')
+            s.update(mode=payload.mode)
+            rules.event(s,'configure')
+        elif payload.action=='close':
             if not staff:
                 raise HTTPException(403,'Oyunu sadece oda sahibi veya moderatör kapatabilir.')
             refund(db,s)

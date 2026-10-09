@@ -11,7 +11,7 @@ const bombPoint=i=>{const q=TRACK[i%TRACK.length];return {x:(q[1]+.5)*100/15,y:(
   const money=n=>Number(n||0).toLocaleString('tr-TR');
   const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   let rid=null,epoch=0,data=null,accepted=-1,round=null,queue=Promise.resolve(),animating=false,pending=false,polling=false;
-  let modal=null,mode='solo',stake=50,retry=null,lastError='',resize=null,offset=0,dialogVersion='';
+  let modal=null,mode='solo',selectedDie=null,stake=50,retry=null,lastError='',resize=null,offset=0,dialogVersion='';
   const surface=()=>document.getElementById('erisRoomSurface');
   const stage=()=>surface()?.querySelector('.eris-room-stage');
   const request=(options)=>window.ErisPlatform.api('/rooms/'+encodeURIComponent(rid)+'/ludo',options);
@@ -31,7 +31,7 @@ const bombPoint=i=>{const q=TRACK[i%TRACK.length];return {x:(q[1]+.5)*100/15,y:(
   }
   function star(x,y){return '<path d="M0 -3.6 1.1 -1.2 3.6 -1.1 1.7 .8 2.2 3.3 0 2 -2.2 3.3 -1.7 .8 -3.6 -1.1 -1.1 -1.2Z" transform="translate('+x+' '+y+')" fill="#ffd54b" stroke="#99681b" stroke-width=".35"/>';}
   function boardArt(){
-    let svg='<svg viewBox="-2 -2 154 154" xmlns="http://www.w3.org/2000/svg" aria-label="Ludo tahtası: dört sarı yıldız güvenli alandır" role="img"><defs><linearGradient id="ludo-rim" x2="1" y2="1"><stop stop-color="#f0d69b"/><stop offset=".35" stop-color="#795b32"/><stop offset=".7" stop-color="#d8ba79"/><stop offset="1" stop-color="#705639"/></linearGradient><linearGradient id="ludo-tile" x2=".8" y2="1"><stop stop-color="#f3f0e9"/><stop offset="1" stop-color="#b8bacb"/></linearGradient>';
+    let svg='<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-label="Ludo tahtası: dört sarı yıldız güvenli alandır" role="img"><defs><linearGradient id="ludo-rim" x2="1" y2="1"><stop stop-color="#f0d69b"/><stop offset=".35" stop-color="#795b32"/><stop offset=".7" stop-color="#d8ba79"/><stop offset="1" stop-color="#705639"/></linearGradient><linearGradient id="ludo-tile" x2=".8" y2="1"><stop stop-color="#f3f0e9"/><stop offset="1" stop-color="#b8bacb"/></linearGradient>';
     for(const [seat,color] of Object.entries(COLORS))svg+='<linearGradient id="ludo-color-'+seat+'" x2="1" y2="1"><stop stop-color="'+color+'"/><stop offset="1" stop-color="#121d33"/></linearGradient>';
     svg+='</defs><rect x="-1" y="-1" width="152" height="152" rx="6" fill="url(#ludo-rim)"/><rect width="150" height="150" rx="5" fill="#131828"/>';
     for(const [seat,[r,c]] of Object.entries(CORNERS)){
@@ -78,7 +78,7 @@ const syncSeats=()=>{
 
 syncSeats();
 root.setAttribute('aria-label','Oda Ludo oyunu');
-    root.innerHTML='<button class="ludo-view-close" data-view-close type="button" aria-label="Ludo görünümünü kapat">×</button><div class="ludo-toolbar"><strong>LUDO</strong><span class="ludo-pool"></span><button data-seat-permission aria-label="Koltuk izni">✋ Koltuk İzni</button><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
+    root.innerHTML='<button class="ludo-view-close" data-view-close type="button" aria-label="Ludo görünümünü kapat">×</button><div class="ludo-toolbar"><strong>LUDO</strong><button data-media-gift aria-label="Hediye">◇</button><button data-media-music aria-label="Müzik">♫</button><span class="ludo-pool"></span><button data-seat-permission aria-label="Koltuk izni">✋ Koltuk İzni</button><button data-rules aria-label="Ludo kuralları">?</button><button data-settings aria-label="Ludo ayarları">⚙</button><button data-stop>Oyunu kapat</button></div><div class="ludo-players"></div><div class="ludo-board-space"><div class="ludo-board">'+boardArt()+'</div></div><div class="ludo-control"><div class="ludo-dice-wrap"><button class="ludo-die" data-die="0" aria-label="Birinci zar"></button><button class="ludo-die" data-die="1" aria-label="İkinci zar"></button><button class="ludo-roll" aria-label="İki zar at">ZAR AT</button></div><div class="ludo-status" aria-live="polite"></div></div>';
     root.prepend(strip);
 host.append(root);
 root.__syncLudoSeats=syncSeats;
@@ -98,14 +98,14 @@ root.__syncLudoSeats=syncSeats;
         window.ErisSeatPermissions?.openSettings?.();
       };
     }
-root.querySelector('[data-settings]').onclick=open;
+root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
+    root.querySelector('[data-media-music]').onclick=()=>window.ErisChatMusic?.open?.();
+    root.querySelector('[data-settings]').onclick=()=>{dialog();renderDialog()};
+    root.querySelector('[data-rules]').onclick=()=>{dialog();modal.querySelector('h2').textContent='Ludo kuralları';modal.querySelector('[data-body]').innerHTML=ruleText;modal.querySelector('details').open=true};
     root.querySelector('[data-stop]').onclick=()=>stopDialog();
-    root.querySelector('[data-view-close]').onclick=()=>{
-      closeDialog();
-      clearBoard();
-    };
+    root.querySelector('[data-view-close]').hidden=true;
     root.querySelector('.ludo-roll').onclick=()=>send('roll');
-    resize?.disconnect();const fit=()=>{const area=root.querySelector('.ludo-board-space');const d=Math.max(1,Math.min(area.clientWidth,area.clientHeight));root.querySelector('.ludo-board').style.width=d+'px';};
+    resize?.disconnect();const fit=()=>{const area=root.querySelector('.ludo-board-space');const d=Math.max(1,Math.min(area.clientWidth-12,area.clientHeight-12));root.querySelector('.ludo-board').style.width=d+'px';};
     if(window.ResizeObserver){resize=new ResizeObserver(fit);resize.observe(root.querySelector('.ludo-board-space'));}requestAnimationFrame(fit);
     return root;
   }
@@ -124,7 +124,7 @@ root.querySelector('[data-settings]').onclick=open;
 
   function isLudoTarget(target){
     if(!(target instanceof Element))return false;
-    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat,#eris-seat-actions,.eris-seat-action-sheet,#erisRoomMinimize,#erisRoomFloatingBubble,#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erisRoomGiftInline,#erisRoomMicInline,#erisRoomAudioOutput,#erisRoomMoreTop,#erisRoomLeaveTop,#erischatGiftPanel,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom');
+    return !!target.closest('.ludo-room,.ludo-modal,.eris-room-chat,#eris-seat-actions,.eris-seat-action-sheet,#erisRoomMinimize,#erisRoomFloatingBubble,#erisRoomGift,#erisRoomMusic,#erisRoomWallpaper,#erisRoomGiftInline,#erisRoomMicInline,#erisRoomAudioOutput,#erisRoomMoreTop,#erisRoomLeaveTop,#erischatGiftPanel,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom,#erisRoomEmojiButton,#erisRoomEmojiPanel,.eris-mini-shade,#erisUserProfileModal');
   }
 
   function guardRoomEvent(event){
@@ -189,37 +189,21 @@ root.querySelector('[data-settings]').onclick=open;
       return;
     }
 
-    /* Oyun state'i kapanabilir; Ludo gorunumu kullanici kapatmadikca acik kalir.
-       Tahtayi temizle ve yeni oyun/lobi ekranina don. */
-    if(s.status==='closed'){
-      resize?.disconnect();
-      resize=null;
-      surface()?.querySelector(':scope > .ludo-room')?.remove();
-
-      if(surface()?.classList.contains('ludo-mode')){
-        stage()?.classList.add('ludo-active');
-        if(!modal){
-          dialog();
-          modal?.classList.add('ludo-inline-lobby');
-        }
-        renderDialog();
-      }
-      return;
-    }
-
+    if(s.status==='closed'){if(surface()?.classList.contains('ludo-mode'))clearBoard();return;}
     if(s.status==='lobby'){
-      /* Lobi Ludo modunun kendisidir.
-         clearBoard() burada ludo-mode'u kaldırmamalı. */
-      surface()?.classList.add('ludo-mode');
-      stage()?.classList.add('ludo-active');
-      modal?.__syncLudoSeats?.();
-      renderDialog();
-      return;
+      surface()?.classList.add('ludo-mode');stage()?.classList.add('ludo-active');
+      surface()?.querySelector(':scope > .ludo-room')?.remove();
+      if(!modal){dialog();modal?.classList.add('ludo-inline-lobby');}
+      modal?.__syncLudoSeats?.();renderDialog();return;
     }
+    if(modal?.classList.contains('ludo-inline-lobby'))closeDialog();
     const root=mount();if(!root)return;
+    const pending=s.pending_dice||[];
+    if(!pending.some(d=>d.value===selectedDie))selectedDie=pending[0]?.value??null;
     root.querySelector('[data-stop]').hidden=!snapshot.can_manage;
     root.querySelector('[data-stop]').disabled=busy();
-    root.querySelector('.ludo-pool').textContent=money(s.pool??s.players.reduce((n,p)=>n+p.stake,0))+' Lidya • '+(s.mode==='paired'?'Eşli':'Tekli');
+    root.querySelector('.ludo-roll').setAttribute('aria-label','İki zar at');
+    root.querySelector('.ludo-pool').textContent='Çift zar'+' • '+money(s.pool??s.players.reduce((n,p)=>n+p.stake,0))+' Lidya • '+(s.mode==='paired'?'Eşli':'Tekli');
     root.querySelector('.ludo-players').innerHTML=[1,2,3,4].map(seat=>{const p=s.players.find(p=>p.seat===seat)||snapshot.seats.find(p=>p.seat===seat);return '<div class="ludo-player '+(s.status==='playing'&&s.turn===seat?'active':'')+'" style="--pawn:'+COLORS[seat]+'"><b>'+seat+'. '+esc(p?.name||'Boş koltuk')+'</b><small>'+(p?.bot?'BOT • ':s.mode==='paired'?'Takım '+(seat===1||seat===3?'1':'2')+' • ':'')+(p?.stake?money(p.stake)+' Lidya':'İzleyici')+'</small></div>';}).join('');
     const board=root.querySelector('.ludo-board');
 
@@ -239,34 +223,38 @@ root.querySelector('[data-settings]').onclick=open;
     }
 
     for(const p of s.players)for(let i=0;i<4;i++){
-      let node=board.querySelector('[data-pawn="'+p.seat+'-'+i+'"]');if(!node){node=document.createElement('button');node.className='ludo-token';node.type='button';node.dataset.pawn=p.seat+'-'+i;node.innerHTML=tokenArt(p.seat,i);board.append(node);node.onclick=()=>{const selected=window.ludoSelectedDie;const m=(data.moves||[]).find(x=>x.token===i&&(!selected||x.die===selected))||(data.moves||[]).find(x=>x.token===i);if(m)send('move',{token:i,die:m.die});};}
+      let node=board.querySelector('[data-pawn="'+p.seat+'-'+i+'"]');if(!node){node=document.createElement('button');node.className='ludo-token';node.type='button';node.dataset.pawn=p.seat+'-'+i;node.innerHTML=tokenArt(p.seat,i);board.append(node);node.onclick=()=>{const selected=selectedDie;const m=(data.moves||[]).find(x=>x.token===i&&(!selected||x.die===selected));if(m)send('move',{token:i,die:m.die});};}
       Object.assign(node.style,point(p.seat,i,p.tokens[i]));
       // Spread stacks without changing their actual square.
       const stack=s.players.flatMap(q=>q.tokens.map((pos,t)=>({seat:q.seat,t,pos}))).filter(q=>q.pos>=0&&q.pos<=50&&p.tokens[i]>=0&&p.tokens[i]<=50&&(START[q.seat]+q.pos)%52===(START[p.seat]+p.tokens[i])%52);
       const rank=stack.findIndex(q=>q.seat===p.seat&&q.t===i);node.style.translate=stack.length>1?((rank%3-1)*18)+'% '+(Math.floor(rank/3)*-18)+'%':'';
-      const playable=!busy()&&s.status==='playing'&&p.user_id===snapshot.my_id&&s.turn===p.seat&&snapshot.legal.includes(i);
+      const playable=!busy()&&s.status==='playing'&&p.user_id===snapshot.my_id&&s.turn===p.seat&&(snapshot.moves||[]).some(m=>m.token===i&&m.die===selectedDie);
       node.classList.toggle('playable',playable);node.classList.toggle('finished',p.tokens[i]===56);node.disabled=!playable;node.setAttribute('aria-label',p.name+' '+(i+1)+'. piyon'+(playable?' • hareket et':''));
     }
     const valid=new Set(s.players.flatMap(p=>p.tokens.map((_,i)=>p.seat+'-'+i)));board.querySelectorAll('[data-pawn]').forEach(n=>{if(!valid.has(n.dataset.pawn))n.remove();});
     const diceValues=(s.dice||[]).length? s.dice : [...s.events].reverse().find(e=>e.kind==='roll')?.dice||[];
-    const pending=s.pending_dice||[];
+    const diceWrap=root.querySelector('.ludo-dice-wrap');
+    const count=Math.max(2,diceValues.length);
+    while(diceWrap.querySelectorAll('.ludo-die').length<count){const b=document.createElement('button');b.type='button';b.className='ludo-die';diceWrap.insertBefore(b,root.querySelector('.ludo-roll'));}
+    while(diceWrap.querySelectorAll('.ludo-die').length>count)diceWrap.querySelector('.ludo-die').remove();
     const dieButtons=[...root.querySelectorAll('.ludo-die')];
     dieButtons.forEach((btn,i)=>{
       const value=diceValues[i];
       btn.innerHTML=value?diceArt(value):'';
-      btn.disabled=!value||busy()||s.status!=='playing';
-      btn.classList.toggle('active',!!pending.find(x=>x.index===i));
-      btn.onclick=()=>{if(value&&!busy()){window.ludoSelectedDie=value;}};
+      btn.hidden=false;btn.disabled=!!s.roll_ready||!pending.some(d=>d.index===i)||busy()||s.status!=='playing'||s.players.find(p=>p.seat===s.turn)?.user_id!==snapshot.my_id;
+      btn.classList.toggle('active',!!pending.find(x=>x.index===i));btn.classList.toggle('selected',value===selectedDie&&pending.some(d=>d.index===i));btn.setAttribute('aria-label',(i+1)+'. zar: '+(value||'bekliyor'));btn.setAttribute('aria-pressed',String(value===selectedDie));
+      btn.onclick=()=>{if(value&&!busy()){selectedDie=value;render();}};
     });
     const roll=root.querySelector('.ludo-roll');
     const p=s.players.find(p=>p.seat===s.turn);
-    roll.disabled=busy()||s.status!=='playing'||pending.length>0||p?.user_id!==snapshot.my_id||p?.bot;
+    roll.disabled=busy()||s.status!=='playing'||(pending.length>0&&!s.roll_ready)||p?.user_id!==snapshot.my_id||p?.bot;
     let message=s.status==='lobby'?'Hazırlık: katılım payını seçip hazır olun.':s.status==='finished'?'Oyun tamamlandı.':pending.length?(p?.user_id===snapshot.my_id?'Parçanızı seçin.':(p?.name||'Oyuncu')+' oynuyor.'):(p?.name||'Oyuncu')+(p?.bot?' • Bot oynuyor.':' zar atıyor.');
-    if(pending.length===2&&pending[0].value===6&&pending[1].value===6) message+=' • 6+6! Tekrar zar hakkı';
-    const status=root.querySelector('.ludo-status');status.innerHTML='<span>'+esc(lastError||message)+'</span><small>'+(s.status==='playing'?'<span class="ludo-clock"></span> • ':'' )+(s.status==='lobby'?'<button data-lobby>Oyun ayarları</button>':s.events.at(-1)?.kind==='pass'?esc(s.events.at(-1).reason):'Sarı yıldızlar güvenli alan')+'</small>'+(retry?'<button data-retry>İşlemi tekrar dene</button>':'')+(!busy()&&snapshot.legal.length?'<span class="ludo-picks">'+snapshot.legal.map(i=>'<button data-pick="'+i+'" aria-label="'+(i+1)+'. piyonu hareket ettir">'+(i+1)+'</button>').join('')+'</span>':'');
+    if(s.roll_ready)message=(p?.user_id===snapshot.my_id?'6+6! Yeniden zar at; sonra tüm zarları dağıt.':(p?.name||'Oyuncu')+' 6+6 attı; yeniden zar atıyor.');
+    else if(pending.length)message+=' • '+pending.length+' zar kaldı';
+    const status=root.querySelector('.ludo-status');status.innerHTML='<span>'+esc(lastError||message)+'</span><small>'+(s.status==='playing'?'<span class="ludo-clock"></span> • ':'' )+(s.status==='lobby'?'<button data-lobby>Oyun ayarları</button>':s.events.at(-1)?.kind==='pass'?esc(s.events.at(-1).reason):'Sarı yıldızlar güvenli alan')+'</small>'+(retry?'<button data-retry>İşlemi tekrar dene</button>':'')+(!busy()&&snapshot.legal.length?'<span class="ludo-picks">'+snapshot.legal.filter(i=>(snapshot.moves||[]).some(m=>m.token===i&&m.die===selectedDie)).map(i=>'<button data-pick="'+i+'" aria-label="'+(i+1)+'. piyonu hareket ettir">'+(i+1)+'</button>').join('')+'</span>':'');
     status.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
   const token=Number(b.dataset.pick);
-  const selected=window.ludoSelectedDie;const m=(data.moves||[]).find(x=>x.token===token&&(!selected||x.die===selected))||(data.moves||[]).find(x=>x.token===token);
+  const selected=selectedDie;const m=(data.moves||[]).find(x=>x.token===token&&(!selected||x.die===selected));
   if(m)send('move',{token,die:m.die});
 });
     status.querySelector('[data-lobby]')?.addEventListener('click',open);status.querySelector('[data-retry]')?.addEventListener('click',()=>send(null));updateClock();
@@ -279,14 +267,14 @@ root.querySelector('[data-settings]').onclick=open;
     if(epoch!==generation)return;
     const root=surface()?.querySelector('.ludo-room');if(!root)return;
     if(e.kind==='roll'){
-      const dice=[...root.querySelectorAll('.ludo-die')];dice.forEach(d=>d.classList.add('rolling'));let tick=0;const interval=setInterval(()=>dice.forEach(d=>d.innerHTML=diceArt((tick++%6)+1)),70);await wait(650);clearInterval(interval);dice.forEach((d,i)=>{d.classList.remove('rolling');d.innerHTML=diceArt((e.dice||[e.die])[i]||e.die||1);});
-      if(e.die===6&&dice.animate&&!reduced())dice.animate([{boxShadow:'0 0 0 #ffe18e'},{boxShadow:'0 0 25px #ffe18e'},{boxShadow:'0 0 0 #ffe18e'}],{duration:600});
+      const dice=[...root.querySelectorAll('.ludo-die')].filter(d=>!d.hidden).slice(-2);dice.forEach(d=>d.classList.add('rolling'));let tick=0;const interval=setInterval(()=>dice.forEach(d=>d.innerHTML=diceArt((tick++%6)+1)),70);await wait(650);clearInterval(interval);dice.forEach((d,i)=>{d.classList.remove('rolling');d.innerHTML=diceArt((e.dice||[e.die])[i]||e.die||1);});
+      if(e.dice?.includes(6)&&dice[0]?.animate&&!reduced())dice[0].animate([{boxShadow:'0 0 0 #ffe18e'},{boxShadow:'0 0 25px #ffe18e'},{boxShadow:'0 0 0 #ffe18e'}],{duration:600});
     }else if(e.kind==='move'){
       const node=root.querySelector('[data-pawn="'+e.seat+'-'+e.token+'"]');if(!node)return;
       node.classList.add('moving');node.style.translate='';Object.assign(node.style,point(e.seat,e.token,e.before));
       for(const hit of e.captured||[]){const victim=root.querySelector('[data-pawn="'+hit.seat+'-'+hit.token+'"]');if(victim)Object.assign(victim.style,point(hit.seat,hit.token,hit.pos));}
       const steps=e.before<0?[0]:Array.from({length:e.after-e.before},(_,i)=>e.before+i+1);
-      for(const pos of steps){if(epoch!==generation)break;const p=point(e.seat,e.token,pos),before={left:node.style.left,top:node.style.top};if(node.animate&&!reduced()){const a=node.animate([{...before,transform:'translateY(0) scale(1)'},{left:p.left,top:p.top,transform:'translateY(-5px) scale(1.13)'},{...p,transform:'translateY(0) scale(1)'}],{duration:145,easing:'ease-out'});await a.finished.catch(()=>{});}Object.assign(node.style,p);}
+      for(const pos of steps){if(epoch!==generation)break;const p=point(e.seat,e.token,pos),before={left:node.style.left,top:node.style.top};if(node.animate&&!reduced()){const a=node.animate([{...before,transform:'translate(-50%,-50%) scale(1)'},{left:p.left,top:p.top,transform:'translate(-50%,calc(-50% - 5px)) scale(1.13)'},{...p,transform:'translate(-50%,-50%) scale(1)'}],{duration:145,easing:'ease-out'});await a.finished.catch(()=>{});}Object.assign(node.style,p);}
       node.classList.remove('moving');
       for(const hit of e.captured||[]){const victim=root.querySelector('[data-pawn="'+hit.seat+'-'+hit.token+'"]');if(!victim)continue;const end=point(hit.seat,hit.token,-1);if(victim.animate&&!reduced()){const a=victim.animate([{left:victim.style.left,top:victim.style.top,transform:'scale(1)'},{left:end.left,top:end.top,transform:'translateY(-10px) scale(.6)',opacity:.4},{...end,transform:'scale(1)',opacity:1}],{duration:550,easing:'cubic-bezier(.2,.8,.3,1)'});await a.finished.catch(()=>{});}Object.assign(victim.style,end);}
       if(e.after===56)sparkle(root.querySelector('.ludo-board'));
@@ -315,6 +303,7 @@ root.querySelector('[data-settings]').onclick=open;
     if(s&&s.round_id===round&&s.version<accepted)return;
     const first=!round||s?.round_id!==round,previous=accepted;
     data=snapshot;
+    if(s&&['lobby','playing','finished'].includes(s.status)){surface()?.classList.add('ludo-mode');stage()?.classList.add('ludo-active');}
 
     /* Gecici bos snapshot aktif Ludo gorunumunu kapatmasin. */
     if(!s){
@@ -329,12 +318,13 @@ root.querySelector('[data-settings]').onclick=open;
     round=s.round_id;
     accepted=s.version;
 
+    if(s?.status==='closed'){if(surface()?.classList.contains('ludo-mode')){epoch++;animating=false;pending=false;queue=Promise.resolve();clearBoard();}return;}
     if(first){
       epoch++;
       queue=Promise.resolve();
       animating=false;
       pending=false;
-      retry=null;
+      retry=null;selectedDie=null;
 
       /* round_id degisimi UI modundan cikis degildir.
          Lobby/oyun gecislerinde Ludo gorunumu korunur. */
@@ -404,24 +394,29 @@ modal.__syncLudoSeats=syncLobbySeats;
 
 const dismissLudo=()=>{
   closeDialog();
-  clearBoard();
+  if(!['lobby','playing','finished'].includes(current()?.status))clearBoard();
+  else if(current()?.status==='lobby')render();
   focus?.focus?.();
 };
-modal.querySelector('[data-close]').onclick=dismissLudo;
+modal.querySelector('[data-close]').hidden=current()?.status==='lobby';modal.querySelector('[data-close]').onclick=dismissLudo;
 modal.onclick=e=>{if(e.target===modal)dismissLudo();};
 modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};modal.querySelector('[data-close]').focus();}
-  const ruleText='<details><summary>Oyun kuralları</summary><ul><li>Yalnızca 1–4. koltuklar katılır. Tekli: 2 veya 4 oyuncu. Eşli: dört oyuncu; 1–3 ve 2–4 takım olur.</li><li>Dört piyonunuzu 6 ile çıkarın, saat yönünde ilerleyin. Her 6 ek zar verir; üçüncü ardışık 6 geçersiz olur ve sıra değişir.</li><li>Dört sarı yıldızda piyonlar güvendedir. Diğer alanlarda rakip piyonlar başlangıca döner; takım arkadaşları birbirini yakalayamaz.</li><li>Eve tam sayıyla girilir. Aynı karede piyonlar birlikte durabilir; yol kapanmaz. Yakalamak ek zar vermez.</li><li>Teklide dört piyonunu, eşlide takımın sekiz piyonunu eve ulaştıran kazanır. Havuz tek kazanana veya kazanan iki partnere eşit ödenir.</li><li>Odadan veya koltuktan ayrılınca bot devralır. Bot rakip yakalayamaz. Sıra için 30 saniye vardır; süre dolunca güvenli bir otomatik hamle yapılır.</li><li>Hazırlıkta ayrılanın katkısı iade edilir. Oda yönetimi oyunu kapatırsa bitmemiş oyunun tüm katkıları iade edilir. Hazırlık süresi 10 dakikadır.</li></ul></details>';
+  const ruleText='<details><summary>Oyun kuralları</summary><ul><li>İlk dört koltuk oyuncudur; diğer üyeler izler. Tekli 2 veya 4 kişi, eşli dört kişi: 1+3 ve 2+4.</li><li>Her atışta iki zar kullanılır. 6+6 gelirse zarlar birikir ve yeniden zar atılır. Farklı bir çift gelince biriken 4 veya 6 zar istenen piyonlara ayrı ayrı uygulanır; aynı piyon birden fazla zarla oynanabilir. Tek bir 6 tekrar zar hakkı vermez.</li><li>Üçüncü ardışık 6+6 geldiğinde biriken bütün zarlar iptal olur; piyonlar hareket etmeden sıra geçer. Piyonlar 6 ile yuvadan çıkar; zarın tamamı tek piyona uygulanır. Dört bomba indiği kareden sonraki yedi kareyi etkiler; güvenli karelere zarar vermez.</li><li>Dört yıldız ve dört renkli başlangıç karesi güvenlidir. Diğer yol karelerinde rakibi yakalamak onu yuvaya döndürür. Takım arkadaşları birbirini yakalamaz. Birlikte duran piyonlar yolu kapatmaz; yakalamak ek zar vermez.</li><li>Eve tam sayı ile girilir. Kullanılamayan zar atlanır. Teklide dört, eşlide takımın sekiz piyonunu bitirmek gerekir. İlk sırayı 1. koltuk alır.</li><li>Katılım isteğe bağlıdır; oda modunun açılması Lidya harcamaz. 1. koltuk ortak payı seçer. Oyun kapatılırsa bitmemiş oyunun katkıları iade edilir.</li><li>Koltuğundan ayrılanı bot devralır. Bot yakalama yapmaz; süre 30 saniyedir. Hazırlık on dakika sonra kapanır. Kurallar, zar ve ödemeler sunucuda uygulanır.</li></ul></details>';
+
   function renderDialog(){
     if(!modal||!data||modal.dataset.stop)return;
     const s=current(),lobby=s?.status==='lobby',playing=s?.status==='playing',me=playerMe(),eligible=!!seatMe(),mySeat=seatMe(),seat1=s?.players?.find(p=>p.seat===1),gameStake=seat1?.stake??stake;
     if(lobby&&mySeat!==1&&seat1)stake=seat1.stake;
     const signature=JSON.stringify([s?.round_id,s?.version,data.balance,pending,animating,mode,stake,lastError,retry]);if(signature===dialogVersion)return;dialogVersion=signature;
     const body=modal.querySelector('[data-body]');
+    const configurable=lobby&&s.players.length===0&&(s.host===data.my_id||data.can_manage);
     body.innerHTML='<p>Ludo yalnızca bu odada oynanır. İlk dört koltuk oyuncu, diğer üyeler izleyicidir.</p>'+(!lobby&&!playing?'<h3>Oyun modu</h3><div class="ludo-modes"><button data-mode="solo" class="'+(mode==='solo'?'chosen':'')+'">Tekli • 2 / 4 kişi</button><button data-mode="paired" class="'+(mode==='paired'?'chosen':'')+'">Eşli • 4 kişi</button></div>':'<div class="ludo-summary">'+(s.mode==='paired'?'Eşli • 1+3 ve 2+4 takım':'Tekli • Herkes kendi adına')+' • Havuz '+money(s.pool??s.players.reduce((n,p)=>n+p.stake,0))+' Lidya</div>')+
+      (configurable?'<div class="ludo-modes"><button data-config-mode="solo" class="'+(s.mode==='solo'?'chosen':'')+'">Tekli</button><button data-config-mode="paired" class="'+(s.mode==='paired'?'chosen':'')+'">Eşli</button></div>':'')+
       (lobby?'<h3>Katılım payınız • Bakiye '+money(data.balance)+' Lidya</h3><div class="ludo-stakes">'+STAKES.map(n=>'<button data-stake="'+n+'" class="'+((mySeat!==1&&seat1?gameStake:stake)===n?'chosen':'')+'" '+(!eligible||busy()||(mySeat!==1&&!!seat1)||n>data.balance+(me?.stake||0)?'disabled':'')+'>'+n+'</button>').join('')+'</div>':'')+
       '<div class="ludo-ready-cards">'+[1,2,3,4].map(seat=>{const p=s?.players.find(p=>p.seat===seat),q=data.seats.find(p=>p.seat===seat);return '<div class="ludo-ready-card" style="--pawn:'+COLORS[seat]+'"><b>'+seat+'. '+esc(p?.name||q?.name||'Boş koltuk')+'</b><small>'+(p?money(p.stake)+' Lidya • '+(lobby?'Hazır':p.bot?'BOT':'Oyuncu'):q?'Hazır değil':'İlk dört koltuktan biri')+'</small></div>';}).join('')+'</div>'+
       (!lobby&&!playing?'<button class="ludo-primary" data-create '+(!data.unlocked||(!eligible&&!data.can_manage)||busy()?'disabled':'')+'>Oyunu kur</button>':lobby?(eligible?'<button class="ludo-primary" data-ready '+(busy()||stake>data.balance+(me?.stake||0)?'disabled':'')+'>'+ (me?'Katılım payını güncelle':'Hazırım • '+stake+' Lidya')+'</button>'+(me?'<button data-withdraw '+(busy()?'disabled':'')+'>Vazgeç ve katkımı iade et</button>':''):'<p>Katılmak için 1–4. koltuklardan birine oturun.</p>')+((s.host===data.my_id||data.can_manage)?'<button class="ludo-primary" data-start '+(busy()||![2,4].includes(s.players.length)||(s.mode==='paired'&&s.players.length!==4)?'disabled':'')+'>Oyunu başlat</button>':'<p>Oyun kurucusunun başlatması bekleniyor.</p>'):'<p>Oyun başladı. Pencereyi kapatıp tahtadan devam edin.</p>')+
       '<p class="ludo-error" role="alert">'+esc(lastError)+'</p>'+(retry?'<button data-retry>İşlemi tekrar dene</button>':'')+ruleText;
+    body.querySelectorAll('[data-config-mode]').forEach(b=>b.onclick=()=>send('configure',{mode:b.dataset.configMode}));
     body.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;renderDialog();});body.querySelectorAll('[data-stake]').forEach(b=>b.onclick=()=>{stake=Number(b.dataset.stake);renderDialog();});
     body.querySelector('[data-create]')?.addEventListener('click',()=>send('create',{mode}));body.querySelector('[data-ready]')?.addEventListener('click',()=>send('ready',{stake:(mySeat!==1&&seat1?seat1.stake:stake)}));body.querySelector('[data-withdraw]')?.addEventListener('click',()=>send('withdraw'));body.querySelector('[data-start]')?.addEventListener('click',()=>send('start'));body.querySelector('[data-retry]')?.addEventListener('click',()=>send(null));
   }
@@ -458,10 +453,11 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
       return;
     }
 
-    /* Hazırlık/lobi ekranı oda içindeki Ludo alanında açılır. */
-    dialog();
-    modal?.classList.add('ludo-inline-lobby');
-    renderDialog();
+    if(current()?.status==='lobby'){render();return;}
+    if(!data.can_manage&&!seatMe()){clearBoard();window.toast?.('Ludo kurmak için ilk dört koltuktan birine oturun.');return;}
+    await send('create',{mode});
+    if(!current()||current()?.status==='closed')clearBoard();
+
   }
   function leave(){epoch++;rid=null;data=null;round=null;accepted=-1;queue=Promise.resolve();animating=false;pending=false;retry=null;lastError='';closeDialog();clearBoard();}
   window.addEventListener('erischat:room-opened',e=>{
