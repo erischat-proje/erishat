@@ -51,17 +51,14 @@
     x.textContent=`
       #erisRoomSurface .eris-seat.rtc-speaking{animation:none!important}
       #erisRoomSurface .eris-seat .eris-voice-ring{
-        position:absolute;inset:-16%;border:2px solid #c6afff;
+        position:absolute;inset:-3%;border:2px solid #c6afff;
         border-radius:50%;pointer-events:none;z-index:4;
         opacity:var(--eris-voice-opacity,0);
         transform:scale(var(--eris-voice-scale,1));
         transition:opacity .12s linear,transform .07s linear;
         box-shadow:0 0 10px #a57cff44;
       }
-      #erisRoomSurface .eris-voice-ring::after{
-        content:'';position:absolute;inset:7%;
-        border:2px solid #d6c6ff99;border-radius:50%;
-      }
+
       @media(prefers-reduced-motion:reduce){
         #erisRoomSurface .eris-seat .eris-voice-ring{
           transform:none;transition:opacity .12s linear
@@ -83,7 +80,7 @@
       }
       if(!ring)return;
       ring.style.setProperty('--eris-voice-opacity',on?String(.4+level*.5):'0');
-      ring.style.setProperty('--eris-voice-scale',String(1+level*.16));
+      ring.style.setProperty('--eris-voice-scale',String(1+level*.07));
     });
   }
   function watchLevel(id,media){
