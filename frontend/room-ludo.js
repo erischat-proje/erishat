@@ -105,7 +105,7 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     root.querySelector('[data-stop]').onclick=()=>stopDialog();
     root.querySelector('[data-view-close]').onclick=hideView;
     root.querySelector('.ludo-roll').onclick=()=>send('roll');
-    resize?.disconnect();const fit=()=>{const area=root.querySelector('.ludo-board-space');const d=Math.max(1,Math.min(area.clientWidth-12,area.clientHeight-12));root.querySelector('.ludo-board').style.width=d+'px';};
+    resize?.disconnect();const fit=()=>{const area=root.querySelector('.ludo-board-space');const d=Math.max(1,Math.min(600,area.clientWidth-8,area.clientHeight-8));const board=root.querySelector('.ludo-board');board.style.width=d+'px';board.style.setProperty('--ludo-item-size',Math.max(9,Math.floor(d*.052))+'px');};
     if(window.ResizeObserver){resize=new ResizeObserver(fit);resize.observe(root.querySelector('.ludo-board-space'));}requestAnimationFrame(fit);
     return root;
   }
