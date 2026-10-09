@@ -40,19 +40,19 @@
 .eris-seat-reaction .ee-surprised .ee-character,.eris-seat-reaction .ee-wow .ee-character{animation-name:ee-pop}
 .eris-seat-reaction .ee-cool .ee-character{animation-name:ee-cool}
 .eris-seat-reaction .ee-wink .ee-character{animation-name:ee-tilt}
-.eris-seat-reaction .ee-clap .ee-hand-left{animation:ee-clap-left .45s ease-in-out infinite;transform-origin:19px 70px}
-.eris-seat-reaction .ee-clap .ee-hand-right{animation:ee-clap-right .45s ease-in-out infinite;transform-origin:73px 70px}
-.eris-seat-reaction .ee-thanks .ee-hand-left{transform:translate(39px,76px) scale(.7)}
-.eris-seat-reaction .ee-thanks .ee-hand-right{transform:translate(57px,76px) scale(-.7,.7)}
-.eris-seat-reaction .ee-wave .ee-hand,.eris-seat-reaction .ee-welcome .ee-hand{animation:ee-wave .5s ease-in-out infinite;transform-origin:19px 70px}
+.eris-seat-reaction .ee-clap .ee-hand-left{animation:ee-clap-left .45s ease-in-out infinite;transform-origin:0px 0px}
+.eris-seat-reaction .ee-clap .ee-hand-right{animation:ee-clap-right .45s ease-in-out infinite;transform-origin:0px 0px}
+.eris-seat-reaction .ee-thanks .ee-hand-left{transform:translate(20px,6px) scale(.7)}
+.eris-seat-reaction .ee-thanks .ee-hand-right{transform:translate(16px,6px) scale(.7)}
+.eris-seat-reaction .ee-wave .ee-hand,.eris-seat-reaction .ee-welcome .ee-hand{animation:ee-wave .5s ease-in-out infinite;transform-origin:0px 0px}
 .eris-seat-reaction .ee-facepalm .ee-hand{animation:ee-palm 1.6s ease-in-out infinite}
-.eris-seat-reaction .ee-big-heart{animation:ee-heart .65s ease-in-out infinite;transform-origin:48px 77px}
+.eris-seat-reaction .ee-big-heart{animation:ee-heart .65s ease-in-out infinite;transform-origin:0px 0px}
 .eris-seat-reaction .ee-sign{animation:ee-sign .7s ease-in-out infinite;transform-origin:48px 84px}
 @keyframes ee-bob{50%{transform:translateY(-3px)}}
 @keyframes ee-blink{0%,43%,49%,100%{transform:scaleY(1)}46%{transform:scaleY(.12)}}
 @keyframes ee-talk{50%{transform:scaleY(.82)}}
-@keyframes ee-rise{0%{opacity:0;translate:0 8px;scale:.5}30%{opacity:1}100%{opacity:0;translate:0 -16px;scale:1.1}}
-@keyframes ee-fall{0%{opacity:0;translate:0 -4px}30%{opacity:1}100%{opacity:0;translate:0 27px}}
+@keyframes ee-rise{0%{opacity:0;transform:translateY(8px) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translateY(-16px) scale(1.1)}}
+@keyframes ee-fall{0%{opacity:0;transform:translateY(-4px)}30%{opacity:1}100%{opacity:0;transform:translateY(27px)}}
 @keyframes ee-shake{25%{transform:translateX(-3px) rotate(-4deg)}75%{transform:translateX(3px) rotate(4deg)}}
 @keyframes ee-nod{50%{transform:translateY(4px) scaleY(.94)}}
 @keyframes ee-dance{25%{transform:translate(-3px,-4px) rotate(-9deg)}75%{transform:translate(3px,-4px) rotate(9deg)}}
@@ -60,11 +60,34 @@
 @keyframes ee-tilt{50%{transform:rotate(-7deg) translateY(-2px)}}
 @keyframes ee-pop{50%{transform:scale(1.08) translateY(-3px)}}
 @keyframes ee-cool{50%{transform:translateX(2px) rotate(5deg)}}
-@keyframes ee-clap-left{0%,100%{transform:translate(19px,70px) rotate(-15deg)}50%{transform:translate(34px,67px) rotate(15deg)}}
-@keyframes ee-clap-right{0%,100%{transform:translate(73px,70px) scale(-1,1) rotate(-15deg)}50%{transform:translate(58px,67px) scale(-1,1) rotate(15deg)}}
-@keyframes ee-wave{0%,100%{transform:translate(16px,60px) rotate(-15deg)}50%{transform:translate(16px,60px) rotate(20deg)}}
-@keyframes ee-palm{0%,100%{transform:translate(19px,70px)}30%,75%{transform:translate(43px,37px) rotate(-15deg)}}
-@keyframes ee-heart{50%{transform:translate(44px,77px) scale(1.3)}}
+@keyframes ee-clap-left{0%,100%{transform:translate(0px,0px) rotate(-15deg)}50%{transform:translate(15px,-3px) rotate(15deg)}}
+@keyframes ee-clap-right{0%,100%{transform:translate(0px,0px) rotate(-15deg)}50%{transform:translate(15px,-3px) rotate(15deg)}}
+@keyframes ee-wave{0%,100%{transform:translate(-3px,-10px) rotate(-15deg)}50%{transform:translate(-3px,-10px) rotate(20deg)}}
+@keyframes ee-palm{0%,100%{transform:translate(0px,0px)}30%,75%{transform:translate(24px,-33px) rotate(-15deg)}}
+@keyframes ee-heart{50%{transform:scale(1.18)}}
 @keyframes ee-sign{50%{transform:translateY(-2px)}}
 @media(max-width:360px){#erisRoomEmojiPanel .ee-grid{grid-template-columns:repeat(4,minmax(0,1fr))}#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomEmojiButton{width:30px!important;min-width:30px!important;flex-basis:30px!important}}
 @media(prefers-reduced-motion:reduce){.eris-seat-reaction *{animation:none!important}}
+
+/* Fixed placements live on outer SVG groups; animated groups use ordinary transforms. */
+.eris-seat-reaction g{transform-box:view-box}
+.eris-seat-reaction .ee-particle{transform-box:fill-box}
+.eris-seat-reaction .ee-kiss_left .ee-character,.eris-seat-reaction .ee-kiss_right .ee-character{animation:ee-direction 1s ease-in-out infinite}
+.eris-seat-reaction .ee-toast_left .ee-character,.eris-seat-reaction .ee-toast_right .ee-character{animation:ee-direction 1s ease-in-out infinite}
+@keyframes ee-direction{50%{transform:translateX(5px) rotate(6deg)}}
+#erisRoomSurface .ee-flight{position:absolute;left:0;top:0;width:48px;height:48px;z-index:690;pointer-events:none;filter:drop-shadow(0 3px 5px #0006)}
+#erisRoomSurface .ee-flight svg{width:100%;height:100%;overflow:visible}
+.eris-seat-reaction.ee-impact .ee-art{animation:ee-impact .65s ease-out infinite;transform-origin:center}
+.eris-seat-reaction.ee-impact .ee-send_bomb{animation:ee-bomb .55s ease-in-out infinite;filter:drop-shadow(0 0 9px #ffca7388)}
+@keyframes ee-impact{0%,100%{transform:scale(.9)}50%{transform:scale(1.12) rotate(-7deg)}}
+@keyframes ee-bomb{25%{transform:rotate(-12deg) scale(1.05)}75%{transform:rotate(12deg) scale(.95)}}
+.eris-mini-actions [data-interaction][hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.eris-seat-reaction.ee-impact .ee-art{animation:none!important}}
+
+.eris-seat-reaction .ee-glass{animation:ee-toast .9s ease-in-out infinite;transform-origin:48px 84px}
+@keyframes ee-toast{50%{transform:translateY(-16px) rotate(15deg)}}
+.eris-seat-reaction .ee-kiss_left .ee-particle,.eris-seat-reaction .ee-kiss_right .ee-particle{animation-name:ee-kiss-flight}
+@keyframes ee-kiss-flight{0%{opacity:0;transform:translate(-12px,8px) scale(.4)}30%{opacity:1}100%{opacity:0;transform:translate(18px,-10px) scale(1.05)}}
+.eris-seat-reaction.ee-impact[data-reaction-id="send_bomb"]::after{content:'';position:absolute;inset:16%;border:3px solid #ffd078;border-radius:50%;animation:ee-burst .8s ease-out infinite;box-shadow:0 -10px 0 -6px #ffcd73,10px 0 0 -6px #ffcd73,0 10px 0 -6px #ffcd73,-10px 0 0 -6px #ffcd73}
+@keyframes ee-burst{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.6);opacity:0}}
+@media(prefers-reduced-motion:reduce){.eris-seat-reaction.ee-impact::after{animation:none!important;opacity:.4}}

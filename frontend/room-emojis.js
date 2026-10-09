@@ -12,8 +12,15 @@
     ['confused','Kararsız','uneven','small','question'],['party','Parti','happy','laugh','confetti'],
     ['cheer','Bravo','closed','laugh','confetti'],['sad','Üzgün','sad','sad','rain'],
     ['wow','Vay','wide','oh','spark'],['facepalm','Pes','closed','sad','palm'],
-    ['wave','Selam','happy','smile','wave'],['heart','Kalp','happy','smile','heart']
+    ['wave','Selam','happy','smile','wave'],['heart','Kalp','happy','smile','heart'],
+    ['kiss_left','Sola öpücük','closed','kiss','hearts'],['kiss_right','Sağa öpücük','closed','kiss','hearts'],
+    ['toast_left','Sola kadeh','happy','smile','glass'],['toast_right','Sağa kadeh','happy','smile','glass']
   ].map(([id,label,eyes,mouth,extra])=>({id,label,eyes,mouth,extra}));
+  const interactions=[['send_heart','Kalp'],['send_bomb','Bomba'],['send_kiss','Öpücük'],['send_rose','Gül'],['send_snow','Kartopu'],['send_toast','Kadeh']].map(([id,label])=>({id,label}));
+  const interactionIds=new Set(interactions.map(x=>x.id));
+  const flights=new Set(),seen=new Set();let targetUserId=null;
+  const seats=()=>[...document.querySelectorAll('#erisLiveSeats > .eris-seat')];
+  const findSeat=uid=>seats().find(s=>s.dataset.userId===String(uid));
   const byId=new Map(catalog.map(x=>[x.id,x]));
   const active=new Map();
   let panel=null,button=null,observer=null,observedStage=null,paintQueued=false,lastSent=0;
@@ -37,12 +44,13 @@
     return '<path class="ee-mouth" fill="none" stroke="#332247" stroke-width="3" stroke-linecap="round" d="'+(kind==='sad'?'M38 65q10-12 20 0':kind==='small'?'M43 62h10':kind==='smirk'?'M38 62q13 10 22-4':'M35 58q13 18 26 0')+'"/>';
   }
   function accessory(extra){
-    if(extra==='hands'||extra==='palm'||extra==='wave')return '<g class="ee-hand ee-hand-left" transform="translate(19 70)"><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M-8 6V-5q0-5 3-5q3 0 3 5v-9q0-5 3-5q3 0 3 5v7-9q0-5 3-5q3 0 3 5v8-5q0-5 3-4q3 1 3 5v16q-4 12-14 10Z"/></g>'+(extra==='hands'?'<g class="ee-hand ee-hand-right" transform="translate(73 70) scale(-1 1)"><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M-8 6V-5q0-5 3-5q3 0 3 5v-9q0-5 3-5q3 0 3 5v7-9q0-5 3-5q3 0 3 5v8-5q0-5 3-4q3 1 3 5v16q-4 12-14 10Z"/></g>':'');
+    if(extra==='hands'||extra==='palm'||extra==='wave')return '<g transform="translate(19 70)"><g class="ee-hand ee-hand-left"><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M-8 6V-5q0-5 3-5q3 0 3 5v-9q0-5 3-5q3 0 3 5v7-9q0-5 3-5q3 0 3 5v8-5q0-5 3-4q3 1 3 5v16q-4 12-14 10Z"/></g></g>'+(extra==='hands'?'<g transform="translate(73 70) scale(-1 1)"><g class="ee-hand ee-hand-right"><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M-8 6V-5q0-5 3-5q3 0 3 5v-9q0-5 3-5q3 0 3 5v7-9q0-5 3-5q3 0 3 5v8-5q0-5 3-4q3 1 3 5v16q-4 12-14 10Z"/></g></g>':'');
     if(extra==='yes'||extra==='no')return '<g class="ee-sign"><rect fill="'+(extra==='yes'?'#127d74':'#a83c69')+'" stroke="#ffffff" stroke-width="1.5" x="27" y="74" width="42" height="17" rx="7"/><text x="48" y="86" fill="white" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="800">'+(extra==='yes'?'EVET':'HAYIR')+'</text></g>';
-    if(extra==='heart')return '<g class="ee-big-heart" fill="#ff659a" stroke="#ffc2d7" stroke-width="1.5" transform="translate(44 77) scale(1.1)">'+heart+'</g>';
+    if(extra==='heart')return '<g transform="translate(44 77) scale(1.1)"><g class="ee-big-heart" fill="#ff659a" stroke="#ffc2d7" stroke-width="1.5">'+heart+'</g></g>';
+    if(extra==='glass')return '<g transform="translate(65 49) scale(.4)"><g class="ee-glass">'+projectile('send_toast')+'</g></g>';
     return '';
   }
-  function particles(extra){
+  function particles(extra,directional=false){
     let shape=star,color='#ffe992';
     if(extra==='hearts'){shape=heart;color='#ff82b2'}
     if(extra==='tears'||extra==='rain'){shape='<path d="M0-8Q-9 3 0 6Q9 3 0-8Z"/>';color='#64e3ff'}
@@ -50,14 +58,50 @@
     if(extra==='steam'){shape='<path fill="none" stroke="#ffdcda" stroke-width="3" d="M0 5q-8-5 0-10t0-10"/>';color='#ffdcda'}
     if(extra==='sleep'||extra==='question'){shape='<text text-anchor="middle" font-family="system-ui" font-weight="900" font-size="18">'+(extra==='sleep'?'Z':'?')+'</text>';color='#e8f7ff'}
     if(!['stars','spark','hearts','tears','rain','notes','steam','sleep','question','confetti'].includes(extra))return '';
-    return '<g class="ee-particles" fill="'+color+'">'+[0,1,2,3].map((i)=>'<g class="ee-particle ee-p'+i+'" style="--particle-delay:'+(-i*.3)+'s" transform="translate('+(i%2?81:15)+' '+(extra==='tears'||extra==='rain'?47:24+i*12)+') scale(.65)">'+shape+'</g>').join('')+'</g>';
+    return '<g class="ee-particles" fill="'+color+'">'+[0,1,2,3].map((i)=>'<g transform="translate('+(directional?80:(i%2?81:15))+' '+(extra==='tears'||extra==='rain'?47:24+i*12)+') scale(.65)"><g class="ee-particle ee-p'+i+'" style="--particle-delay:'+(-i*.3)+'s">'+shape+'</g></g>').join('')+'</g>';
   }
   function artwork(item){
-    return '<svg class="ee-art ee-'+item.id+'" width="96" height="100" viewBox="0 0 96 100" aria-hidden="true"><g class="ee-character"><path fill="#7067d9" stroke="#c8bdff" stroke-width="1.5" d="M25 97v-8q0-12 23-12t23 12v8Z"/><path fill="#e7a375" d="M40 72h16v14q-8 8-16 0Z"/><ellipse fill="#f4bb8c" stroke="#9d634f" stroke-width="1" cx="17" cy="49" rx="7" ry="10"/><ellipse fill="#f4bb8c" stroke="#9d634f" stroke-width="1" cx="79" cy="49" rx="7" ry="10"/><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M48 17C24 17 17 34 20 57C22 76 36 84 48 84S74 76 76 57C79 34 72 17 48 17Z"/><path fill="#544074" stroke="#2f2549" stroke-width="1.5" d="M18 45C10 11 31 5 48 9C71 1 86 20 78 46l-7-16C58 39 43 36 35 26l-10 8Z"/><path fill="none" stroke="#9374bb" stroke-width="3" stroke-linecap="round" d="M25 22q9-13 23-7m2 6q12-9 22 2"/><ellipse fill="#ff8c9c" opacity=".55" cx="26" cy="53" rx="8" ry="4"/><ellipse fill="#ff8c9c" opacity=".55" cx="70" cy="53" rx="8" ry="4"/>'+eyes(item.eyes)+mouth(item.mouth)+accessory(item.extra)+'</g>'+particles(item.extra)+'</svg>';
+    return '<svg class="ee-art ee-'+item.id+'" width="96" height="100" viewBox="0 0 96 100" aria-hidden="true"><g'+(item.id.endsWith('_left')?' transform="translate(96 0) scale(-1 1)"':'')+'><g class="ee-character"><ellipse fill="#ffd8ad" stroke="#d29b76" stroke-width="1.5" cx="16" cy="48" rx="7" ry="10"/><ellipse fill="#ffd8ad" stroke="#d29b76" stroke-width="1.5" cx="80" cy="48" rx="7" ry="10"/><path fill="#ffdab1" stroke="#d29b76" stroke-width="1.5" d="M48 12C25 12 16 29 19 53C21 76 35 86 48 86S75 76 77 53C80 29 71 12 48 12Z"/><path fill="none" stroke="#fff0d8" stroke-width="3" stroke-linecap="round" d="M27 29q6-9 16-10"/><ellipse fill="#ff8c9c" opacity=".55" cx="26" cy="53" rx="8" ry="4"/><ellipse fill="#ff8c9c" opacity=".55" cx="70" cy="53" rx="8" ry="4"/>'+eyes(item.eyes)+mouth(item.mouth)+accessory(item.extra)+'</g>'+particles(item.extra,item.id.startsWith('kiss_'))+'</g></svg>';
   }
+
+  function projectile(id){
+    if(id==='send_heart')return '<g transform="translate(38 44) scale(2)" fill="#ff4e91" stroke="#ffd0e2" stroke-width="1">'+heart+'</g>';
+    if(id==='send_bomb')return '<circle cx="45" cy="56" r="27" fill="#292841" stroke="#9191ac" stroke-width="2"/><ellipse cx="35" cy="44" rx="9" ry="5" fill="#77748e" transform="rotate(-35 35 44)"/><path stroke="#b88c61" stroke-width="5" fill="none" d="M58 31q-4-17 12-13"/><g fill="#ffcb5c" transform="translate(73 17) scale(1.5)">'+star+'</g>';
+    if(id==='send_snow')return '<circle cx="48" cy="51" r="28" fill="#e7f6ff" stroke="#acd3ed" stroke-width="2"/><path stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" d="M29 46q3-15 19-16"/><circle cx="58" cy="64" r="5" fill="#c5e3f2"/>';
+    if(id==='send_rose')return '<path stroke="#5cbe84" stroke-width="5" fill="none" d="M51 51q-13 23-13 38"/><path fill="#6ed393" d="M44 74q20-18 25-7q-10 13-25 7"/><path fill="#ff4a78" stroke="#ffc0d1" stroke-width="1.5" d="M48 15q-19-8-25 9q-15 8-4 23q3 16 22 15q17 5 26-9q15-6 10-21q-1-19-22-14Z"/><path fill="none" stroke="#bb2250" stroke-width="3" d="M31 30q15-12 29 0q-2 17-19 18q-10-8-2-15q10-5 15 1"/>';
+    if(id==='send_kiss')return '<path fill="#f84a83" stroke="#ffd0df" stroke-width="1.5" d="M12 49q15-29 36-12q21-17 36 12q-15 31-36 28q-21 3-36-28Z"/><path fill="#a22658" d="M17 49q31-13 62 0q-30 12-62 0Z"/><path fill="none" stroke="#ffb4cf" stroke-width="4" stroke-linecap="round" d="M26 43q8-8 17-4"/>';
+    return '<path fill="#edf4ff99" stroke="#f1e4ff" stroke-width="2" d="M27 15h42v27q0 20-21 20T27 42Z"/><path fill="#eab75e" d="M29 34h38v9q0 17-19 17T29 43Z"/><path stroke="#eee5ff" stroke-width="4" d="M48 62v22m-14 0h28"/>';
+  }
+  function projectileArt(id){return '<svg class="ee-art ee-'+id+'" width="96" height="100" viewBox="0 0 96 100" aria-hidden="true">'+projectile(id)+'</svg>'}
+  function fly(d){
+    const target=String(d.target_user_id||'');if(!target||window.ErisRoomBlocks?.has?.(target))return;
+    const from=findSeat(d.user_id),to=findSeat(target),s=surface();if(!from||!to||!s)return;
+    const bounds=s.getBoundingClientRect(),a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
+    const x1=a.left+a.width/2-bounds.left,y1=a.top+a.height/2-bounds.top;
+    const x2=b.left+b.width/2-bounds.left,y2=b.top+b.height/2-bounds.top;
+    const el=document.createElement('div');el.className='ee-flight';el.innerHTML=projectileArt(d.reaction_id);s.appendChild(el);
+    if(flights.size>=12){const oldest=flights.values().next().value;oldest.animation?.cancel();oldest.el.remove();flights.delete(oldest)}
+    const flight={el,animation:null,sender:String(d.user_id),target};flights.add(flight);const currentRoom=roomId();
+    const finish=()=>{
+      flights.delete(flight);el.remove();if(roomId()!==currentRoom||!findSeat(target)||window.ErisRoomBlocks?.has?.(target)||window.ErisRoomBlocks?.has?.(d.user_id))return;
+      const start=Date.now(),ev={id:String(d.id),reaction_id:d.reaction_id,start,until:start+2500};
+      active.set(target,ev);paint();setTimeout(()=>{if(active.get(target)===ev){active.delete(target);paint()}},2500);
+    };
+    if(!el.animate||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){finish();return}
+    const frames=Array.from({length:21},(_,i)=>{const t=i/20;return {transform:'translate('+(x1+(x2-x1)*t-24)+'px,'+(y1+(y2-y1)*t-80*t*(1-t)-24)+'px) rotate('+(t*25)+'deg)',opacity:t<.1?t*10:1}});
+    flight.animation=el.animate(frames,{duration:850,easing:'ease-in-out',fill:'forwards'});
+    flight.animation.finished.then(finish).catch(()=>{flights.delete(flight);el.remove()});
+  }
+
   function close(){if(panel)panel.hidden=true;button?.setAttribute('aria-expanded','false')}
-  function open(){
+  function open(selectedTarget=null){
     setup();if(!panel)return;
+    targetUserId=selectedTarget?String(selectedTarget):null;
+    panel.querySelector('header b').textContent=targetUserId?'Mikrofon etkileşimi':'Hareketli emojiler';
+    panel.querySelector('header small').textContent=targetUserId?'Seçilen koltuğa gönder • Ücretsiz':'Seç, avatarında canlansın';
+    panel.querySelector('.ee-sheet').setAttribute('aria-label',targetUserId?'Mikrofon etkileşimi':'Hareketli emojiler');
+    const grid=panel.querySelector('.ee-grid');grid.replaceChildren();
+    for(const item of (targetUserId?interactions:catalog)){const b=document.createElement('button');b.type='button';b.title=item.label;b.setAttribute('aria-label',item.label);b.innerHTML=(targetUserId?projectileArt(item.id):artwork(item))+'<span>'+item.label+'</span>';b.onclick=()=>send(item.id);grid.appendChild(b)}
     panel.hidden=false;button?.setAttribute('aria-expanded','true');
     panel.querySelector('[data-close]')?.focus();
   }
@@ -67,7 +111,8 @@
     if(Date.now()-lastSent<2000)return window.toast?.('Yeni emoji için biraz bekle.');
     const me=String(window.__erisCurrentRoomUserId||window.ErisCurrentUserId||'');
     if(![...document.querySelectorAll('#erisLiveSeats > .eris-seat')].some(s=>s.dataset.userId===me))return window.toast?.('Emoji göndermek için bir koltuğa otur.');
-    lastSent=Date.now();ws.send(JSON.stringify({type:'room_reaction',reaction_id:id}));close();
+    if(interactionIds.has(id)&&(!targetUserId||targetUserId===me||!findSeat(targetUserId)))return window.toast?.('Bu kullanıcı artık koltukta değil.');
+    lastSent=Date.now();ws.send(JSON.stringify({type:'room_reaction',reaction_id:id,...(interactionIds.has(id)?{target_user_id:targetUserId}:{})}));close();
   }
   function setup(){
     const s=surface(),compose=s?.querySelector('.eris-room-compose');if(!compose)return;
@@ -100,24 +145,27 @@
       const old=seat.querySelector(':scope > .eris-seat-reaction');
       if(!event){old?.remove();seat.classList.remove('eris-reaction-playing');continue}
       if(old?.dataset.eventId===event.id)continue;
-      old?.remove();const el=document.createElement('div');el.className='eris-seat-reaction';el.dataset.eventId=event.id;
-      el.style.setProperty('--ee-elapsed',(-Math.max(0,now-event.start))+'ms');el.innerHTML=artwork(byId.get(event.reaction_id));
-      el.setAttribute('role','img');el.setAttribute('aria-label',byId.get(event.reaction_id).label);
-      seat.appendChild(el);seat.classList.add('eris-reaction-playing');
+      old?.remove();const el=document.createElement('div');el.className='eris-seat-reaction';el.dataset.eventId=event.id;el.dataset.reactionId=event.reaction_id;
+      el.style.setProperty('--ee-elapsed',(-Math.max(0,now-event.start))+'ms');el.innerHTML=interactionIds.has(event.reaction_id)?projectileArt(event.reaction_id):artwork(byId.get(event.reaction_id));
+      if(interactionIds.has(event.reaction_id))el.classList.add('ee-impact');
+      el.setAttribute('role','img');el.setAttribute('aria-label',(byId.get(event.reaction_id)||interactions.find(x=>x.id===event.reaction_id)).label);
+      seat.appendChild(el);seat.classList.toggle('eris-reaction-playing',!interactionIds.has(event.reaction_id));
     }
   }
   function receive(d){
-    if(String(d.room_id)!==roomId()||!byId.has(d.reaction_id)||!d.user_id||!d.id)return;
+    if(String(d.room_id)!==roomId()||(!byId.has(d.reaction_id)&&!interactionIds.has(d.reaction_id))||!d.user_id||!d.id)return;
     if(window.ErisRoomBlocks?.has?.(d.user_id))return;
+    if(seen.has(String(d.id)))return;seen.add(String(d.id));if(seen.size>128)seen.delete(seen.values().next().value);
+    if(interactionIds.has(d.reaction_id)){fly(d);return}
     const uid=String(d.user_id);if(active.get(uid)?.id===d.id)return;
     const start=Date.now();const duration=Math.max(500,Math.min(4000,Number(d.duration_ms)||4000));
     const ev={id:String(d.id),reaction_id:d.reaction_id,start,until:start+duration};
     active.set(uid,ev);paint();setTimeout(()=>{if(active.get(uid)===ev){active.delete(uid);paint()}},duration);
   }
-  function clear(){close();active.clear();paint();observer?.disconnect();observedStage=null;lastSent=0}
-  window.ErisRoomEmojis={receive,error:d=>window.toast?.(d.message||'Emoji gönderilemedi.'),open,close};
+  function clear(){close();targetUserId=null;for(const f of flights){f.animation?.cancel();f.el.remove()}flights.clear();seen.clear();active.clear();paint();observer?.disconnect();observedStage=null;lastSent=0}
+  window.ErisRoomEmojis={receive,error:d=>window.toast?.(d.message||'Emoji gönderilemedi.'),open:()=>open(),openInteraction:uid=>{if(!findSeat(uid))return window.toast?.('Kullanıcı bir koltukta değil.');open(uid)},close};
   window.addEventListener('erischat:room-opened',()=>{clear();setup()});
   window.addEventListener('erischat:room-closed',clear);
-  window.addEventListener('erischat:room-blocks-updated',()=>{for(const uid of active.keys())if(window.ErisRoomBlocks?.has?.(uid))active.delete(uid);paint()});
+  window.addEventListener('erischat:room-blocks-updated',()=>{for(const uid of active.keys())if(window.ErisRoomBlocks?.has?.(uid))active.delete(uid);for(const f of flights)if(window.ErisRoomBlocks?.has?.(f.sender)||window.ErisRoomBlocks?.has?.(f.target)){f.animation?.cancel();f.el.remove();flights.delete(f)}paint()});
   if(surface())setup();
 })();

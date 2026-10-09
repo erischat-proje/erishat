@@ -2090,13 +2090,19 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
 
 
 
-ROOM_REACTION_IDS = frozenset(['laugh', 'cry', 'kiss', 'love', 'clap', 'angry', 'surprised', 'sleep', 'dance', 'cool', 'yes', 'no', 'thanks', 'welcome', 'shy', 'wink', 'confused', 'party', 'cheer', 'sad', 'wow', 'facepalm', 'wave', 'heart'])
+ROOM_REACTION_IDS = frozenset(['laugh', 'cry', 'kiss', 'love', 'clap', 'angry', 'surprised', 'sleep', 'dance', 'cool', 'yes', 'no', 'thanks', 'welcome', 'shy', 'wink', 'confused', 'party', 'cheer', 'sad', 'wow', 'facepalm', 'wave', 'heart', 'kiss_left', 'kiss_right', 'toast_left', 'toast_right', 'send_heart', 'send_bomb', 'send_kiss', 'send_rose', 'send_snow', 'send_toast'])
+ROOM_INTERACTION_IDS = frozenset(['send_heart', 'send_bomb', 'send_kiss', 'send_rose', 'send_snow', 'send_toast'])
 
-def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id):
+def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id, target_user_id=None):
     def error(message):
         return {"error": {"type": "room_reaction_error", "message": message}}
     if not isinstance(reaction_id, str) or reaction_id not in ROOM_REACTION_IDS:
         return error("Geçersiz emoji.")
+    targeted = reaction_id in ROOM_INTERACTION_IDS
+    if targeted and (not isinstance(target_user_id, str) or not target_user_id or len(target_user_id) > 128 or target_user_id == str(user_id)):
+        return error("Etkileşim için başka bir kullanıcının koltuğunu seçin.")
+    if not targeted and target_user_id is not None:
+        return error("Bu emoji bir koltuğa gönderilemez.")
     with Session(engine) as db:
         user = db.get(User, user_id)
         room = db.get(Room, internal_room_id)
@@ -2115,10 +2121,25 @@ def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id):
         seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user_id, RoomSeat.seat_number <= room.seat_count))
         if not seat:
             return error("Avatar emojisi göndermek için bir koltuğa oturun.")
+        target_seat = None
+        if targeted:
+            target = db.get(User, target_user_id)
+            target_member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == target_user_id).first()
+            target_admin = db.get(AdminRole, target_user_id)
+            target_seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == target_user_id, RoomSeat.seat_number <= room.seat_count))
+            if not target or not target.is_active or not target_member or target_member.ghost or (target_admin and target_admin.ghost_mode) or not target_seat:
+                return error("Seçilen kullanıcı artık koltukta değil.")
+            if db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == target_user_id).first() or active_room_user_ban(db, internal_room_id, target_user_id):
+                return error("Bu kullanıcıya etkileşim gönderilemez.")
+            if db.scalar(select(UserBlock.id).where(or_(
+                and_(UserBlock.blocker_id == user_id, UserBlock.blocked_id == target_user_id),
+                and_(UserBlock.blocker_id == target_user_id, UserBlock.blocked_id == user_id)))):
+                return error("Engellenen kullanıcıya etkileşim gönderilemez.")
         now = datetime.now(timezone.utc)
         return {"payload": {"type": "room_reaction", "id": str(uuid4()),
             "room_id": room_id, "user_id": str(user_id), "reaction_id": reaction_id,
             "seat_number": seat.seat_number, "duration_ms": 4000,
+            **({"target_user_id": str(target_user_id), "target_seat_number": target_seat.seat_number} if target_seat else {}),
             "created_at": now.isoformat(), "expires_at": (now + timedelta(seconds=4)).isoformat()}}
 
 
@@ -2411,7 +2432,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                     await _bounded_send(websocket, {"type": "room_reaction_error", "message": "Yeni emoji için biraz bekleyin."})
                     continue
                 last_reaction_at = stamp
-                result = await run_in_threadpool(_room_socket_reaction, internal_room_id, room_id, user.id, data.get("reaction_id"))
+                result = await run_in_threadpool(_room_socket_reaction, internal_room_id, room_id, user.id, data.get("reaction_id"), data.get("target_user_id"))
                 if result.get("error"):
                     await _bounded_send(websocket, result["error"])
                 else:
