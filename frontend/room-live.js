@@ -458,6 +458,8 @@ window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
       window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat,seat_permission:!!room.seat_permission};
       window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);
       document.getElementById('erisLiveTitle').textContent=room.name;
+      const levelButton=document.getElementById('erisRoomLevel');
+      if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+Number(room.seat_count)+' koltuk</small>';
       renderRoomSeats(room.id,room.name,room.seats,room.seat_count);
       const roomSurface=document.getElementById('erisRoomSurface');
       const liveStage=document.getElementById('erisLiveSeats');
