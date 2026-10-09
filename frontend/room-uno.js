@@ -107,12 +107,40 @@
   }
   function syncSeats(){
     const strip=host()?.querySelector('.uno-room-seats');if(!strip)return;
-    strip.replaceChildren();
-    host()?.querySelectorAll('.eris-room-stage > .eris-seat').forEach((real,index)=>{
-      if(index>=4)return;
-      const clone=real.cloneNode(true);clone.classList.remove('eris-seat');clone.classList.add('uno-seat-proxy');clone.style.visibility='visible';clone.style.pointerEvents='auto';
-      clone.onclick=e=>{e.preventDefault();e.stopPropagation();if(window.ErisRoomSeatMenu)window.ErisRoomSeatMenu(real,clone);else real.click();};strip.append(clone);
+    const originals=[...host().querySelectorAll('.eris-room-stage > .eris-seat')];
+    const scroll=strip.scrollLeft;
+    const existing=new Map([...strip.children].map(n=>[n.dataset.seatNumber,n]));
+    const keep=new Set();
+    originals.forEach((real,index)=>{
+      const number=String(real.dataset.seatNumber||index+1);
+      let clone=existing.get(number);
+      if(!clone){
+        clone=real.cloneNode(true);
+        clone.classList.remove('eris-seat');clone.classList.add('uno-seat-proxy');
+        clone.dataset.seatNumber=number;
+        clone.addEventListener('click',e=>{
+          e.preventDefault();e.stopImmediatePropagation();
+          const live=[...host().querySelectorAll('.eris-room-stage > .eris-seat')].find(n=>String(n.dataset.seatNumber)===number);
+          if(!live)return;
+          if(window.ErisRoomSeatMenu)window.ErisRoomSeatMenu(live,clone);else live.click();
+        });
+      }
+      if(clone.__sourceHTML!==real.outerHTML){
+        clone.innerHTML=real.innerHTML;
+        clone.className=real.className.replace(/\beris-seat\b/g,'').trim()+' uno-seat-proxy';
+        for(const [key,value] of Object.entries(real.dataset))clone.dataset[key]=value;
+        clone.dataset.seatNumber=number;
+        clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+        clone.style.visibility='visible';clone.style.pointerEvents='auto';
+        clone.__sourceHTML=real.outerHTML;
+      }
+      keep.add(clone);
+      // Appending an existing button unnecessarily also moves the scroll.
+      if(strip.children[index]!==clone)strip.insertBefore(clone,strip.children[index]||null);
     });
+    [...strip.children].forEach(n=>{if(!keep.has(n))n.remove();});
+    strip.scrollLeft=scroll;
+    strip.style.setProperty('--room-seat-rows',String(Math.max(1,Math.ceil(originals.length/8))));
   }
   function render(){
     if(!visible||!data||!host())return;
