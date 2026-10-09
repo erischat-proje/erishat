@@ -35,3 +35,30 @@
 .ludo-dialog{position:relative;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;width:100%;box-sizing:border-box;padding:0 13px 15px}.ludo-dialog>header{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;background:#111b2d;padding:9px 0;border-bottom:1px solid #f3d69822}.ludo-dialog h2{font-size:17px;margin:0;flex:1;color:#f2d18d}.ludo-dialog h3{font-size:12px;margin:14px 0 8px}.ludo-dialog p{font-size:11px;line-height:17px;color:#b7c4d6}.ludo-modes,.ludo-stakes{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.ludo-dialog .chosen{border-color:#f5dca0;background:#d6b46a2c}.ludo-ready-cards{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0}.ludo-ready-card{border:1px solid #ffffff20;border-left:3px solid var(--pawn);border-radius:10px;padding:9px;background:#060c1755;min-width:0}.ludo-ready-card b,.ludo-ready-card small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.ludo-ready-card small{font-size:9px;color:#b7c4d6;margin-top:5px}.ludo-dialog .ludo-primary{width:100%;margin:4px 0}.ludo-summary{padding:8px;border-radius:9px;background:#f5dca011;font-size:12px}.ludo-dialog details{border-top:1px solid #ffffff20;margin-top:12px;padding-top:10px;font-size:11px;line-height:18px}.ludo-dialog li{margin:6px 0}.ludo-error{color:#ff9cab!important}.ludo-result{position:absolute;inset:25% 8%;z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a122bef;border:1px solid #f3d698;border-radius:18px;text-align:center;padding:10px;box-shadow:0 8px 30px #0009}.ludo-result strong{font-size:25px;color:#f5dca0}.ludo-result p{font-size:12px;margin:5px}.ludo-spark{position:absolute;width:5px;height:9px;z-index:30;background:var(--spark);pointer-events:none}
 @media(max-height:650px){.ludo-seat-strip,.ludo-lobby-seats{flex-basis:54px}.ludo-players{padding:2px 8px}.ludo-player{padding:3px}.ludo-control{min-height:76px}.ludo-seat-proxy{scale:.85}}
 @media(prefers-reduced-motion:reduce){.ludo-room *{animation:none!important}}
+/* Ludo and chat share one bottom boundary. */
+#erisRoomSurface.room-layout-v6.ludo-mode{
+  --ludo-chat:clamp(160px,calc(var(--app-height,100dvh) * .22),200px);
+}
+#erisRoomSurface.room-layout-v6.ludo-mode > .eris-room-chat:has(#erisLiveChat){
+  position:absolute!important;inset:auto 0 0!important;
+  width:auto!important;height:var(--ludo-chat)!important;
+  min-height:0!important;max-height:var(--ludo-chat)!important;
+  transform:none!important;box-sizing:border-box!important;
+  display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;
+  overflow:hidden!important;z-index:650!important;
+}
+#erisRoomSurface.room-layout-v6.ludo-mode > .eris-room-chat #erisLiveChat{
+  position:relative!important;inset:auto!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+}
+#erisRoomSurface.room-layout-v6.ludo-mode > .eris-room-chat > .eris-room-compose{
+  position:relative!important;inset:auto!important;
+  margin:0!important;width:100%!important;box-sizing:border-box!important;
+}
+#erisRoomSurface.room-layout-v6.ludo-mode > .ludo-room,
+#erisRoomSurface.room-layout-v6.ludo-mode > .ludo-modal{
+  inset:76px 0 var(--ludo-chat)!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow:hidden!important;
+}
