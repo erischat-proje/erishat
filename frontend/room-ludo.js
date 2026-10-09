@@ -315,7 +315,7 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     }else if(e.kind==='win')sparkle(root.querySelector('.ludo-board'));
   }
   function receive(snapshot){
-    if(window.ErisOkey101Active&&!['lobby','playing'].includes(snapshot.state?.status)){if(surface()?.classList.contains('ludo-mode'))clearBoard();return;}
+    if((window.ErisOkey101Active||window.ErisUnoActive)&&!['lobby','playing'].includes(snapshot.state?.status)){if(surface()?.classList.contains('ludo-mode'))clearBoard();return;}
     if(['lobby','playing'].includes(snapshot.state?.status))window.dispatchEvent(new CustomEvent('erischat:ludo-active'));
     if(!rid)return;offset=snapshot.server_time-Date.now()/1000;
     const s=snapshot.state;
@@ -443,6 +443,7 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
   function stopDialog(){if(!data?.can_manage)return;dialog();modal.dataset.stop='true';modal.querySelector('h2').textContent='Oyunu kapat';const body=modal.querySelector('[data-body]');body.innerHTML='<p>Bitmemiş oyunda tüm katılım payları oyunculara iade edilir. Oyun kapatılsın mı?</p><button class="ludo-primary">Oyunu kapat</button>';body.querySelector('button').onclick=async()=>{closeDialog();await send('close');};}
   async function open(){
     if(!rid)return;
+    if(window.ErisUnoActive){window.toast?.('Önce UNO oyununu kapatın.');return;}
     hiddenRound=null;menuRound=null;
     await poll();
     if(!data)return;
@@ -507,5 +508,6 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
   });
   window.addEventListener('erischat:room-closed',leave);
   setInterval(()=>{poll();updateClock();},1000);
+  window.addEventListener('erischat:uno-active',()=>{if(current()?.status==='finished')hideView();});
   window.ErisLudo={open};
 })();
