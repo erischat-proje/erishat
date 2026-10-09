@@ -315,6 +315,8 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     }else if(e.kind==='win')sparkle(root.querySelector('.ludo-board'));
   }
   function receive(snapshot){
+    if(window.ErisOkey101Active&&!['lobby','playing'].includes(snapshot.state?.status)){if(surface()?.classList.contains('ludo-mode'))clearBoard();return;}
+    if(['lobby','playing'].includes(snapshot.state?.status))window.dispatchEvent(new CustomEvent('erischat:ludo-active'));
     if(!rid)return;offset=snapshot.server_time-Date.now()/1000;
     const s=snapshot.state;
     if(s&&s.round_id===round&&s.version<accepted)return;
