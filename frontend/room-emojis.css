@@ -1,0 +1,70 @@
+/* Composer order stays independent of the microphone button's insertion time. */
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomEmojiButton{
+  order:2!important;flex:0 0 35px!important;width:35px!important;min-width:35px!important;
+  height:40px!important;padding:5px!important;display:grid!important;place-items:center!important;
+  border:1px solid #c1a4ef66!important;border-radius:13px!important;background:#201b3288!important;color:#dac7ff!important;
+}
+#erisRoomSurface #erisRoomEmojiButton svg{width:24px;height:24px;display:block}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline{order:3!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput{order:4!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend{order:5!important}
+#erisRoomEmojiPanel[hidden]{display:none!important}
+#erisRoomEmojiPanel{position:absolute;inset:0;z-index:700;display:flex;align-items:flex-end}
+#erisRoomEmojiPanel .ee-shade{position:absolute;inset:0;border:0;background:#09061680;cursor:pointer}
+#erisRoomEmojiPanel .ee-sheet{position:relative;width:100%;max-height:min(480px,65%);display:flex;flex-direction:column;background:linear-gradient(160deg,#292238,#14101e);border:1px solid #bb9ce43d;border-bottom:0;border-radius:24px 24px 0 0;padding:9px 14px max(14px,env(safe-area-inset-bottom));box-shadow:0 -10px 45px #0006;overflow:hidden;color:#fff}
+#erisRoomEmojiPanel .ee-handle{width:38px;height:4px;margin:0 auto 12px;border-radius:9px;background:#c3b7cf80;flex:none}
+#erisRoomEmojiPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px 10px;flex:none}
+#erisRoomEmojiPanel header b{display:block;font-size:15px}
+#erisRoomEmojiPanel header small{display:block;font-size:11px;color:#b8a9c9;margin-top:3px}
+#erisRoomEmojiPanel [data-close]{width:34px;height:34px;border:1px solid #dac6ff33;background:#ffffff08;border-radius:11px;color:white;font-size:24px}
+#erisRoomEmojiPanel .ee-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 5px;overflow-y:auto;min-height:0;overscroll-behavior:contain;padding-bottom:5px}
+#erisRoomEmojiPanel .ee-grid button{min-width:0;padding:5px 0;border:1px solid transparent;border-radius:14px;background:transparent;color:#ddd0ed;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+#erisRoomEmojiPanel .ee-grid button:active,#erisRoomEmojiPanel .ee-grid button:focus-visible{background:#9672de25;border-color:#bca1ef88;outline:0}
+#erisRoomEmojiPanel .ee-grid span{font-size:9px;line-height:13px;white-space:nowrap}
+#erisRoomEmojiPanel .ee-art{display:block;width:min(64px,100%);height:auto;overflow:visible}
+#erisRoomSurface #erisLiveSeats > .eris-seat > .eris-seat-reaction{position:absolute;inset:-10%;z-index:9;pointer-events:none;display:grid;place-items:center;filter:drop-shadow(0 3px 4px #0005)}
+#erisRoomSurface #erisLiveSeats > .eris-seat > .eris-seat-reaction .ee-art{width:100%;height:100%;overflow:visible}
+#erisRoomSurface #erisLiveSeats > .eris-seat.eris-reaction-playing .seat-pod{visibility:hidden!important}
+/* The name and voice ring are siblings and stay visible during the reaction. */
+.eris-seat-reaction .ee-character{transform-origin:48px 60px;animation:ee-bob .8s ease-in-out infinite;animation-delay:var(--ee-elapsed,0ms)}
+.eris-seat-reaction .ee-eyes{transform-origin:48px 40px;animation:ee-blink 1.6s infinite;animation-delay:var(--ee-elapsed,0ms)}
+.eris-seat-reaction .ee-mouth{transform-origin:48px 62px;animation:ee-talk .5s ease-in-out infinite;animation-delay:var(--ee-elapsed,0ms)}
+.eris-seat-reaction .ee-particle{transform-box:fill-box;transform-origin:center;animation:ee-rise 1.3s ease-out infinite;animation-delay:var(--particle-delay,0s)}
+.eris-seat-reaction .ee-cry .ee-particle,.eris-seat-reaction .ee-sad .ee-particle,.eris-seat-reaction .ee-laugh .ee-particle{animation-name:ee-fall}
+.eris-seat-reaction .ee-angry .ee-character,.eris-seat-reaction .ee-no .ee-character,.eris-seat-reaction .ee-confused .ee-character{animation-name:ee-shake}
+.eris-seat-reaction .ee-yes .ee-character,.eris-seat-reaction .ee-thanks .ee-character{animation-name:ee-nod}
+.eris-seat-reaction .ee-dance .ee-character,.eris-seat-reaction .ee-party .ee-character,.eris-seat-reaction .ee-cheer .ee-character{animation-name:ee-dance}
+.eris-seat-reaction .ee-sleep .ee-character{animation:ee-breathe 1.6s ease-in-out infinite}
+.eris-seat-reaction .ee-sleep .ee-mouth{animation:none}
+.eris-seat-reaction .ee-shy .ee-character,.eris-seat-reaction .ee-kiss .ee-character,.eris-seat-reaction .ee-love .ee-character{animation-name:ee-tilt}
+.eris-seat-reaction .ee-surprised .ee-character,.eris-seat-reaction .ee-wow .ee-character{animation-name:ee-pop}
+.eris-seat-reaction .ee-cool .ee-character{animation-name:ee-cool}
+.eris-seat-reaction .ee-wink .ee-character{animation-name:ee-tilt}
+.eris-seat-reaction .ee-clap .ee-hand-left{animation:ee-clap-left .45s ease-in-out infinite;transform-origin:19px 70px}
+.eris-seat-reaction .ee-clap .ee-hand-right{animation:ee-clap-right .45s ease-in-out infinite;transform-origin:73px 70px}
+.eris-seat-reaction .ee-thanks .ee-hand-left{transform:translate(39px,76px) scale(.7)}
+.eris-seat-reaction .ee-thanks .ee-hand-right{transform:translate(57px,76px) scale(-.7,.7)}
+.eris-seat-reaction .ee-wave .ee-hand,.eris-seat-reaction .ee-welcome .ee-hand{animation:ee-wave .5s ease-in-out infinite;transform-origin:19px 70px}
+.eris-seat-reaction .ee-facepalm .ee-hand{animation:ee-palm 1.6s ease-in-out infinite}
+.eris-seat-reaction .ee-big-heart{animation:ee-heart .65s ease-in-out infinite;transform-origin:48px 77px}
+.eris-seat-reaction .ee-sign{animation:ee-sign .7s ease-in-out infinite;transform-origin:48px 84px}
+@keyframes ee-bob{50%{transform:translateY(-3px)}}
+@keyframes ee-blink{0%,43%,49%,100%{transform:scaleY(1)}46%{transform:scaleY(.12)}}
+@keyframes ee-talk{50%{transform:scaleY(.82)}}
+@keyframes ee-rise{0%{opacity:0;translate:0 8px;scale:.5}30%{opacity:1}100%{opacity:0;translate:0 -16px;scale:1.1}}
+@keyframes ee-fall{0%{opacity:0;translate:0 -4px}30%{opacity:1}100%{opacity:0;translate:0 27px}}
+@keyframes ee-shake{25%{transform:translateX(-3px) rotate(-4deg)}75%{transform:translateX(3px) rotate(4deg)}}
+@keyframes ee-nod{50%{transform:translateY(4px) scaleY(.94)}}
+@keyframes ee-dance{25%{transform:translate(-3px,-4px) rotate(-9deg)}75%{transform:translate(3px,-4px) rotate(9deg)}}
+@keyframes ee-breathe{50%{transform:translateY(2px) scale(1.03)}}
+@keyframes ee-tilt{50%{transform:rotate(-7deg) translateY(-2px)}}
+@keyframes ee-pop{50%{transform:scale(1.08) translateY(-3px)}}
+@keyframes ee-cool{50%{transform:translateX(2px) rotate(5deg)}}
+@keyframes ee-clap-left{0%,100%{transform:translate(19px,70px) rotate(-15deg)}50%{transform:translate(34px,67px) rotate(15deg)}}
+@keyframes ee-clap-right{0%,100%{transform:translate(73px,70px) scale(-1,1) rotate(-15deg)}50%{transform:translate(58px,67px) scale(-1,1) rotate(15deg)}}
+@keyframes ee-wave{0%,100%{transform:translate(16px,60px) rotate(-15deg)}50%{transform:translate(16px,60px) rotate(20deg)}}
+@keyframes ee-palm{0%,100%{transform:translate(19px,70px)}30%,75%{transform:translate(43px,37px) rotate(-15deg)}}
+@keyframes ee-heart{50%{transform:translate(44px,77px) scale(1.3)}}
+@keyframes ee-sign{50%{transform:translateY(-2px)}}
+@media(max-width:360px){#erisRoomEmojiPanel .ee-grid{grid-template-columns:repeat(4,minmax(0,1fr))}#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomEmojiButton{width:30px!important;min-width:30px!important;flex-basis:30px!important}}
+@media(prefers-reduced-motion:reduce){.eris-seat-reaction *{animation:none!important}}

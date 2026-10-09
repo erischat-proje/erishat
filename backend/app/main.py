@@ -2089,6 +2089,39 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
     return {"payload": payload}
 
 
+
+ROOM_REACTION_IDS = frozenset(['laugh', 'cry', 'kiss', 'love', 'clap', 'angry', 'surprised', 'sleep', 'dance', 'cool', 'yes', 'no', 'thanks', 'welcome', 'shy', 'wink', 'confused', 'party', 'cheer', 'sad', 'wow', 'facepalm', 'wave', 'heart'])
+
+def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id):
+    def error(message):
+        return {"error": {"type": "room_reaction_error", "message": message}}
+    if not isinstance(reaction_id, str) or reaction_id not in ROOM_REACTION_IDS:
+        return error("Geçersiz emoji.")
+    with Session(engine) as db:
+        user = db.get(User, user_id)
+        room = db.get(Room, internal_room_id)
+        member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user_id).first()
+        if not user or not user.is_active or not room or not member:
+            return error("Oda bağlantınız aktif değil.")
+        admin = db.get(AdminRole, user_id)
+        if member.ghost or (admin and admin.ghost_mode):
+            return error("Emoji göndermek için Ghost Mode’u kapatın.")
+        if db.query(RoomBan).filter(RoomBan.room_id == internal_room_id, RoomBan.user_id == user_id).first() or active_room_user_ban(db, internal_room_id, user_id):
+            return error("Bu odada emoji gönderemezsiniz.")
+        if active_ban(db, user_id) or active_ban(db, user_id, chat=True):
+            return error("Sohbet kısıtlaması sırasında emoji gönderemezsiniz.")
+        if not room.chat_enabled or db.scalar(select(RoomChatMute.id).where(RoomChatMute.room_id == internal_room_id, RoomChatMute.user_id == user_id)):
+            return error("Oda sohbetinde emoji gönderimi kapalı.")
+        seat = db.scalar(select(RoomSeat).where(RoomSeat.room_id == internal_room_id, RoomSeat.user_id == user_id, RoomSeat.seat_number <= room.seat_count))
+        if not seat:
+            return error("Avatar emojisi göndermek için bir koltuğa oturun.")
+        now = datetime.now(timezone.utc)
+        return {"payload": {"type": "room_reaction", "id": str(uuid4()),
+            "room_id": room_id, "user_id": str(user_id), "reaction_id": reaction_id,
+            "seat_number": seat.seat_number, "duration_ms": 4000,
+            "created_at": now.isoformat(), "expires_at": (now + timedelta(seconds=4)).isoformat()}}
+
+
 def _valid_room_rtc_payload(kind: str, payload) -> bool:
     if kind in {"rtc_offer", "rtc_answer"}:
         return bool(isinstance(payload, dict) and payload.get("type") == kind[4:]
@@ -2345,6 +2378,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             if peer_ws is not websocket:
                 try: await peer_ws.send_json({"type":"rtc_peer_joined","user_id":str(user.id)})
                 except Exception: pass
+        last_reaction_at = float("-inf")
         while True:
             data = await websocket.receive_json()
             if not await run_in_threadpool(websocket_session_active, token):
@@ -2370,6 +2404,18 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 continue
             if member.ghost:
                 await websocket.send_json({"type": "room_chat_error", "code": "ghost_mode", "message": "Bu işlem için önce Ghost Mode’u kapatın."})
+                continue
+            if data.get("type") == "room_reaction":
+                stamp = asyncio.get_running_loop().time()
+                if stamp - last_reaction_at < 2:
+                    await _bounded_send(websocket, {"type": "room_reaction_error", "message": "Yeni emoji için biraz bekleyin."})
+                    continue
+                last_reaction_at = stamp
+                result = await run_in_threadpool(_room_socket_reaction, internal_room_id, room_id, user.id, data.get("reaction_id"))
+                if result.get("error"):
+                    await _bounded_send(websocket, result["error"])
+                else:
+                    await _broadcast_room_event(internal_room_id, result["payload"])
                 continue
             if data.get("type") in {"rtc_offer", "rtc_answer", "rtc_ice", "rtc_leave", "rtc_reconnect"}:
                 if websocket not in room_rtc_users.get(internal_room_id, {}):
