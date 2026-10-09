@@ -242,7 +242,7 @@
     const token=window.ErisPlatform.getAccessToken?.(); if(!token){list.innerHTML='<div style="color:#ff9bc9;font-size:9px">Giriş yapınca canlı oda sohbeti burada çalışır.</div>';return;}
     stopRoomHeartbeat();
     const oldSocket=window.__erisRoomSocket;window.__erisRoomSocket=null;oldSocket?.close?.();
-    const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;
+    const socket=new WebSocket(window.ErisPlatform.getRealtimeUrl('/ws/rooms/'+encodeURIComponent(roomId)),['erischat','token.'+token]);window.__erisRoomSocket=socket;socket.__erisRoomId=String(roomId);window.connectRoomGiftSocket?.(roomId);
     if(list.dataset.roomId!==String(roomId)){list.replaceChildren();list.dataset.roomId=String(roomId)}
     const add=(d,prepend=false)=>{
       if(d.id!=null&&[...list.children].some(n=>n.dataset.messageId===String(d.id)))return;
