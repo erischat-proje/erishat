@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  let ludoManualView=false;
   const COLORS={1:'#20c983',2:'#eebc37',3:'#348bf0',4:'#ed526e'}, BOMBS=[4,17,30,43];
 const bombPoint=i=>{const q=TRACK[i%TRACK.length];return {x:(q[1]+.5)*100/15,y:(q[0]+.5)*100/15};};
   const START={1:0,2:13,3:26,4:39};
@@ -176,7 +177,7 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     Promise.resolve(window.ErisRoomUI?.refresh?.()).catch(()=>{});
     window.dispatchEvent(new CustomEvent('erischat:ludo-view-closed',{detail:{room_id:rid}}));
   }
-  function hideView(){
+  function hideView(){ludoManualView=false;
     hiddenRound=current()?.round_id||null;if(current()?.status!=='finished')menuRound=null;clearBoard();
   }
   function mainMenu(){
@@ -184,6 +185,7 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     menuRound=current()?.round_id||null;hiddenRound=null;mode=current()?.mode||'solo';stake=current()?.players.find(p=>p.seat===1)?.stake||50;closeDialog();render();
   }
   function render(snapshot=data){
+    if(!ludoManualView)return;
     if(!snapshot||!rid)return;
     if(animating){surface()?.querySelectorAll('.ludo-token,.ludo-dice,[data-stop]').forEach(n=>n.disabled=true);return;}
     const s=snapshot.state;
@@ -318,6 +320,15 @@ root.querySelector('[data-media-gift]').onclick=()=>window.openRoomGift?.(rid);
     }else if(e.kind==='win')sparkle(root.querySelector('.ludo-board'));
   }
   function receive(snapshot){
+    if(!rid)return;
+    if(window.ErisUnoActive||window.ErisOkey101Active){
+      if(ludoManualView)hideView();
+    }
+    if(!ludoManualView){
+      data=snapshot;
+      offset=snapshot.server_time-Date.now()/1000;
+      return;
+    }
     if((window.ErisOkey101Active||window.ErisUnoActive)&&!['lobby','playing'].includes(snapshot.state?.status)){if(surface()?.classList.contains('ludo-mode'))clearBoard();return;}
     if(['lobby','playing'].includes(snapshot.state?.status))window.dispatchEvent(new CustomEvent('erischat:ludo-active'));
     if(!rid)return;offset=snapshot.server_time-Date.now()/1000;
@@ -445,12 +456,13 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
   }
   function stopDialog(){if(!data?.can_manage)return;dialog();modal.dataset.stop='true';modal.querySelector('h2').textContent='Oyunu kapat';const body=modal.querySelector('[data-body]');body.innerHTML='<p>Bitmemiş oyunda tüm katılım payları oyunculara iade edilir. Oyun kapatılsın mı?</p><button class="ludo-primary">Oyunu kapat</button>';body.querySelector('button').onclick=async()=>{closeDialog();await send('close');};}
   async function open(){
+    const openingRoom=rid;
     if(!rid)return;
-    if(window.ErisUnoActive){window.toast?.('Önce UNO oyununu kapatın.');return;}
+    if(window.ErisUnoActive||window.ErisOkey101Active){window.toast?.('Önce UNO oyununu kapatın.');return;}
     hiddenRound=null;
     if(current()?.status==='finished'&&dismissedResults.has(resultKey(current())))menuRound=current().round_id;
     await poll();
-    if(!data)return;
+    if(rid!==openingRoom||!data)return;
     if(!data.unlocked){
       window.toast?.('Ludo 4. oda seviyesinde açılır.');
       return;
@@ -462,6 +474,7 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
     const host=surface();
     if(!host)return;
 
+    ludoManualView=true;round=null;accepted=-1;
     /* Ludo açılırken normal oda popup/panelleri arkada açık kalmasın. */
     host.querySelectorAll('.room-v5-panel.show,.room-v3-panel.show').forEach(panel=>{
       panel.classList.remove('show');
@@ -485,7 +498,7 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
     if(!current()||current()?.status==='closed')clearBoard();
 
   }
-  function leave(){hiddenRound=null;menuRound=null;epoch++;rid=null;data=null;round=null;accepted=-1;queue=Promise.resolve();animating=false;pending=false;retry=null;lastError='';closeDialog();clearBoard();}
+  function leave(){ludoManualView=false;hiddenRound=null;menuRound=null;epoch++;rid=null;data=null;round=null;accepted=-1;queue=Promise.resolve();animating=false;pending=false;retry=null;lastError='';closeDialog();clearBoard();}
   window.addEventListener('erischat:room-opened',e=>{
     const nextRid=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');
     if(!nextRid)return;
@@ -513,5 +526,7 @@ modal.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();dismissLudo();}if(e
   window.addEventListener('erischat:room-closed',leave);
   setInterval(()=>{poll();updateClock();},1000);
   window.addEventListener('erischat:uno-active',()=>{if(current()?.status==='finished')hideView();});
+  window.addEventListener('erischat:uno-active',hideView);
+  window.addEventListener('erischat:okey101-active',hideView);
   window.ErisLudo={open};
 })();
