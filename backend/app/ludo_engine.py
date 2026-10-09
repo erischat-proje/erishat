@@ -1,4 +1,4 @@
-"""Room Ludo rules. Server-owned two-dice gameplay, bombs and bot takeover."""
+"""Room Ludo rules. Server-owned single-die gameplay, bombs and bot takeover."""
 from __future__ import annotations
 import secrets
 import time
@@ -139,7 +139,7 @@ def begin(s, now=None):
         dice=[],
         pending_dice=[],
         die=None,
-        double_sixes=0,
+        consecutive_sixes=0,
         roll_ready=False,
         turn_has_six=False,
         deadline=(now or time.time()) + TURN_SECONDS,
@@ -178,7 +178,7 @@ def next_turn(s, now=None):
         dice=[],
         pending_dice=[],
         die=None,
-        double_sixes=0,
+        consecutive_sixes=0,
         roll_ready=False,
         turn_has_six=False,
         deadline=(now or time.time()) + TURN_SECONDS,
@@ -193,26 +193,23 @@ def roll(s, bot=False, now=None):
     if s.get("pending_dice") and not s.get("roll_ready"):
         raise ValueError("Önce biriken zarların hamlelerini oynayın.")
     ensure_specials(s)
-    dice = [secrets.randbelow(6) + 1, secrets.randbelow(6) + 1]
-    double_six = dice == [6, 6]
-    s["double_sixes"] = s.get("double_sixes", 0) + 1 if double_six else 0
+    dice = [secrets.randbelow(6) + 1]
+    six = dice[0] == 6
+    s["consecutive_sixes"] = s.get("consecutive_sixes", 0) + 1 if six else 0
     s["dice"] = list(s.get("dice") or []) + dice
-    first_index = len(s["dice"]) - 2
     s["pending_dice"] = list(s.get("pending_dice") or []) + [
-        {"index": first_index + i, "value": value} for i, value in enumerate(dice)
+        {"index": len(s["dice"]) - 1, "value": dice[0]}
     ]
-    s["roll_ready"] = double_six
-    s["turn_has_six"] = False
-    event(s, "roll", seat=s["turn"], dice=dice, double_six=double_six,
-          double_sixes=s["double_sixes"], accumulated=s["dice"][:])
-    if double_six and s["double_sixes"] >= 3:
-        event(s, "pass", seat=s["turn"], reason="Üçüncü ardışık 6+6: biriken zarlar iptal edildi; sıra değişti.")
+    s["roll_ready"] = six
+    event(s, "roll", seat=s["turn"], dice=dice, six=six,
+          consecutive_sixes=s["consecutive_sixes"], accumulated=s["dice"][:])
+    if six and s["consecutive_sixes"] >= 3:
+        event(s, "pass", seat=s["turn"], reason="Üçüncü ardışık 6: biriken haklar yandı; sıra değişti.")
         next_turn(s, now)
         return
-    if not double_six:
-        if not legal(s, s["turn"], harmless=bot):
-            next_turn(s, now)
-            return
+    if not six and not legal(s, s["turn"], harmless=bot):
+        next_turn(s, now)
+        return
     s["deadline"] = (now if now is not None else time.time()) + TURN_SECONDS
 
 
@@ -239,11 +236,11 @@ def respawn_missing(s):
 
 
 def ensure_specials(s):
-    if s.get("special_version") == 1:
+    if s.get("special_version") == 2:
         return
     s["bombs"] = [dict(id=i, square=None, used=False) for i in range(4)]
-    s["magnets"] = [dict(id=i, square=None, used=False) for i in range(2)]
-    s["special_version"] = 1
+    s["magnets"] = [dict(id=i, square=None, used=False) for i in range(4)]
+    s["special_version"] = 2
     respawn_missing(s)
     event(s, "specials")
 
@@ -299,7 +296,7 @@ def move(s, token, die=None, bot=False, now=None):
     if s.get("status") != "playing":
         raise ValueError("Oyun devam etmiyor.")
     if s.get("roll_ready"):
-        raise ValueError("6+6 geldi; piyon seçmeden önce yeniden zar atın.")
+        raise ValueError("6 geldi; piyon seçmeden önce yeniden zar atın.")
     if isinstance(token, bool) or not isinstance(token, int) or not 0 <= token < 4:
         raise ValueError("Geçersiz piyon.")
     seat = s["turn"]
@@ -376,6 +373,12 @@ def move(s, token, die=None, bot=False, now=None):
         )
 
         event(s, "win", winners=winners)
+        return
+
+    if after == 56 and before != 56:
+        s["roll_ready"] = True
+        s["deadline"] = (now or time.time()) + TURN_SECONDS
+        event(s, "bonus_roll", seat=seat, reason="Piyon bitişe ulaştı; ek zar hakkı.")
         return
 
     # Retain temporarily unplayable dice: a later six may release a pawn for them.

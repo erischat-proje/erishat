@@ -37,7 +37,7 @@ class LudoReceipt(Base):
     response_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 class Action(BaseModel):
-    action: Literal['create','ready','withdraw','start','roll','move','close','configure']
+    action: Literal['create','ready','withdraw','start','roll','move','close','configure','restart']
     round_id: str = Field(default='', max_length=36)
     version: int = Field(default=0, ge=0)
     request_key: str = Field(min_length=16, max_length=64)
@@ -159,14 +159,25 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
     seats=occupants(db,room.id)
     seat=next((n for n,uid in seats.items() if uid==user.id),None)
     staff=can_manage(db,room,user)
-    if payload.action=='create':
+    if payload.action in ('create','restart'):
         if room.level<4:
             raise HTTPException(403,'Ludo 4. oda seviyesinde açılır.')
         if not staff and seat is None:
             raise HTTPException(403,'İlk dört koltuktan birine oturun.')
         if s and s['status'] in ('lobby','playing'):
             raise HTTPException(409,'Bu odada zaten açık bir oyun var.')
-        s=dict(round_id=str(uuid4()),status='lobby',mode=payload.mode,host=user.id,
+        if payload.action=='restart':
+            if not s or s['status']!='finished' or payload.round_id!=s['round_id'] or payload.version!=s['version']:
+                raise HTTPException(409,'Tekrar için tamamlanmış güncel oyun gerekli.')
+            if not staff and not any(p['user_id']==user.id for p in s['players']):
+                raise HTTPException(403,'Tekrarı oyuncular veya oda yönetimi başlatabilir.')
+            settle(db,s)
+            new_mode=s['mode']
+            new_stake=next((p['stake'] for p in s['players'] if p['seat']==1),50)
+        else:
+            new_mode=payload.mode
+            new_stake=50
+        s=dict(round_id=str(uuid4()),status='lobby',mode=new_mode,default_stake=new_stake,host=user.id,
                version=0,players=[],events=[],settled=False,expires=time.time()+600)
         rules.event(s,'lobby')
         if not row:
