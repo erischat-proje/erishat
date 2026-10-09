@@ -166,6 +166,10 @@ def mutate(room_id:str, payload:Action, db:Session=Depends(get_db), user:User=De
             raise HTTPException(403,'İlk dört koltuktan birine oturun.')
         if s and s['status'] in ('lobby','playing'):
             raise HTTPException(409,'Bu odada zaten açık bir oyun var.')
+        from .uno_live import RoomUno
+        uno = db.get(RoomUno, room.id)
+        if uno and uno.status in ('lobby','playing','hand_finished'):
+            raise HTTPException(409, 'Önce odadaki UNO oyununu kapatın.')
         from .okey101_live import RoomOkey101
         other=db.get(RoomOkey101,room.id)
         if other and other.status in ('lobby','playing','hand_finished'):

@@ -13,7 +13,8 @@
  function clear(){host()?.querySelector('.o101-root')?.remove();host()?.classList.remove('okey101-mode');visible=false;editor=null;processing=null;}
  function hide(){hidden=state()?.round_id||'empty';clear();}
  function receive(v){const previous=state();if(previous&&v.state?.round_id===previous.round_id&&v.state.version<previous.version)return;const same=previous&&v.state?.round_id===previous.round_id&&v.state?.version===previous.version;data=v;offset=v.server_time-Date.now()/1000;const s=v.state;
-   if(s?.status==='finished'&&host()?.classList.contains('ludo-mode')){hidden=s.round_id;clear();window.ErisOkey101Active=false;return;}
+   if(window.ErisUnoActive&&(!s||!['lobby','playing','hand_finished'].includes(s.status))){hidden=s?.round_id||'empty';clear();window.ErisOkey101Active=false;return;}
+   if(s?.status==='finished'&&(window.ErisUnoActive||host()?.classList.contains('ludo-mode'))){hidden=s.round_id;clear();window.ErisOkey101Active=false;return;}
    window.ErisOkey101Active=!!s&&['lobby','playing','hand_finished','finished'].includes(s.status);
    if(!s||s.status==='closed'){if(visible&&hidden!=='empty')render();else clear();return;}
    if(s.round_id!==lastRound||s.hand_number!==lastHand){order=[];selected=[];groups=[];editor=null;processing=null;showScores=false;menu=false;lastRound=s.round_id;lastHand=s.hand_number;}
@@ -154,12 +155,13 @@
    if(a==='open'){const pairs=groups.every(g=>g.kind==='pair'),value=pairs?groups.length:groups.reduce((n,g)=>n+g.faces.reduce((a,f)=>a+f[1],0),0),limit=pairs?s.pair_threshold:s.threshold;if(!me().opened&&value<limit)return notice('Açılış yetersiz: '+value+' / '+limit+'. Tek seferde bitiyorsan Aç ve bitir seçeneğini kullan.');return send('open',{groups});}
  }
  function clock(){const s=state();host()?.querySelectorAll('[data-clock]').forEach(n=>n.textContent=s?.status==='playing'?Math.max(0,Math.ceil(s.deadline-(Date.now()/1000+offset)))+' sn':'');}
- async function open(){rid=String(window.ErisCurrentRoomId||window.currentRoomId||rid);hidden='';visible=true;await poll();if(!state()||state().status==='closed'){menu=false;render();}}
+ async function open(){if(window.ErisUnoActive){window.toast?.('Önce UNO oyununu kapatın.');return;}rid=String(window.ErisCurrentRoomId||window.currentRoomId||rid);hidden='';visible=true;await poll();if(!state()||state().status==='closed'){menu=false;render();}}
  function leave(){epoch++;pending=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;clear();}
  window.addEventListener('erischat:room-opened',e=>{const id=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(!id)return;if(id!==rid){leave();rid=id;}poll();});
  window.addEventListener('erischat:room-closed',leave);
  window.addEventListener('erischat:ludo-active',()=>{if(state()?.status==='finished'){hide();window.ErisOkey101Active=false;}});
  window.addEventListener('erischat:room-state-updated',syncSeats);
  setInterval(()=>{poll();clock();},1000);
+ window.addEventListener('erischat:uno-active',()=>{if(state()?.status==='finished'||!state()){hide();window.ErisOkey101Active=false;}});
  window.ErisOkey101={open};
 })();

@@ -42,7 +42,7 @@ from .platform_models import (ConversationReadState, DirectMessageGift, DirectMe
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
     SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
-from . import relationship_routes, ludo_live, okey101_live
+from . import relationship_routes, ludo_live, okey101_live, uno_live
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
@@ -277,10 +277,18 @@ async def start_support_router():
     app.state.support_routing_task = asyncio.create_task(support_workflow.routing_loop())
     app.state.ludo_routing_task = asyncio.create_task(ludo_live.routing_loop())
     app.state.okey101_routing_task = asyncio.create_task(okey101_live.routing_loop())
+    app.state.uno_routing_task = asyncio.create_task(uno_live.routing_loop())
 
 
 @app.on_event("shutdown")
 async def stop_support_router():
+    uno_task = getattr(app.state, "uno_routing_task", None)
+    if uno_task:
+        uno_task.cancel()
+        try:
+            await uno_task
+        except asyncio.CancelledError:
+            pass
     okey_task = getattr(app.state, "okey101_routing_task", None)
     if okey_task:
         okey_task.cancel()
@@ -371,6 +379,7 @@ register_call_auth(current_user)
 app.include_router(room_router)
 app.include_router(ludo_live.router)
 app.include_router(okey101_live.router)
+app.include_router(uno_live.router)
 # These legacy router handlers were mounted before the authoritative DM
 # handlers below, so FastAPI resolved requests to the stale versions first.
 # Keep only the conversation and text-message routes implemented in this file.

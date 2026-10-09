@@ -1,0 +1,3 @@
+Oda Merkezi menüsüne UNO ekler: 2–3–4 kişi bireysel, dört kişi karşılıklı eşli; ücretsiz katılım, hızlı tek el veya 500 puanlık maç. Sunucu 108 kartlık desteyi, gizli elleri, iki kişilik özel kuralları, UNO yakalamayı ve +4 blöf/itirazını yönetir. Oyun veritabanında kalır; süre ve bağlantı sonrası bot akışı yeniden başlatmada devam eder. Ludo/101 Okey ile karşılıklı oyun kilidi bulunur.
+
+Doğrulama: 33 Python testi, 120 otomatik oyun, Node ön yüz durum testleri, JS/Python sözdizimi ve diff kontrolleri. SQL testleri SQLite ve izole oda/yetki bağımlılıkları kullanır. Gerçek cihaz görünümü, üretim kimlik doğrulaması ve canlı PostgreSQL eşzamanlılık testi tamamlanmadı. API ve web birlikte dağıtılmalı; yerel web içeren APK yeniden derlenmeli.
