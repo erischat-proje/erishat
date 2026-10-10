@@ -1,0 +1,39 @@
+/* Main destinations share the header, content viewport and bottom navigation. */
+html body .app{height:var(--app-height,100dvh);min-height:0!important;max-width:1100px;display:flex;flex-direction:column;overflow:hidden;margin:auto;background:radial-gradient(ellipse at 90% 0,#58308820,transparent 45%),#09080e}
+html body{overflow:hidden}
+html body .app>.top{position:relative;top:auto;flex:0 0 auto;min-height:68px;height:auto;padding:12px 18px;border-bottom:1px solid #ffffff0b;background:#0c0a12}
+html body .app>.content{flex:1 1 0;min-height:0!important;overflow-y:auto!important;overflow-x:hidden;padding:20px 18px 28px!important;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:#6d527b transparent}
+html body .app>.content>.view.show,html body .app>.content>.view.menu-page.show{position:relative!important;inset:auto!important;z-index:auto!important;height:auto!important;min-height:0!important;max-height:none!important;padding:0!important;overflow:visible!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}
+html body #homeMenuPageClose{display:none!important}
+html body .app>.nav{position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:100%!important;flex:0 0 auto;border:0;border-top:1px solid #ffffff12;border-radius:0;padding:8px 8px max(10px,var(--eris-safe-bottom,env(safe-area-inset-bottom)));background:#0d0b13;box-shadow:0 -8px 25px #0002}
+html body .app>.nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:48px;font-size:10px;font-weight:600;color:#888093;border-radius:14px;padding:6px 2px}
+html body .app>.nav button.active{color:#eea4d7;background:linear-gradient(145deg,#ba65e220,#ff73b80a)}
+html body .app>.nav button b{display:flex;margin:0}
+html body .app>.nav svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+html body .app>.top .brand{font-size:25px;letter-spacing:-1px}
+html body .app>.top #demoBalance{font-size:12px;padding:9px 11px 9px 31px;border:1px solid #e4b85d25;background:#e4b85d09;border-radius:14px}
+html body .app>.top #demoBalance:before{left:7px}
+html body .app>.top .icon{width:40px;height:40px;border-radius:14px;font-size:22px}
+html body #home .section{margin:5px 0 14px;gap:8px;flex-wrap:wrap}
+html body #home .section h3{font-size:19px;letter-spacing:-.5px}
+html body #home .homeSectionActions{display:flex;align-items:center;gap:8px}
+html body #home .homeSectionActions .link{padding:8px 4px;font-size:11px}
+html body #home #realRooms{display:grid;grid-template-columns:1fr;max-height:none!important;height:auto!important;overflow:visible!important;margin-bottom:24px;gap:10px}
+html body #home #realRooms .ec-discovery-empty{display:grid;grid-template-columns:44px minmax(0,1fr);gap:3px 13px;align-items:center;padding:20px!important;min-height:100px;background:linear-gradient(120deg,#21182e,#121019);border:1px solid #a989d62b;border-radius:22px;text-align:left}
+html body #home #realRooms .ec-empty-art{grid-row:1/3;width:44px;height:44px;margin:0;border-radius:15px;background:#b68ae918;display:grid;place-items:center;color:#c3a1eb}
+html body #home #realRooms .ec-empty-art svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8}
+html body #home #realRooms .ec-discovery-empty b{font-size:14px;line-height:1.4;margin:0}
+html body #home #realRooms .ec-discovery-empty p{font-size:12px;line-height:1.5;color:#a89ab9;margin:0}
+html body #home .homeMenu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+html body #home .homeMenuGroup{margin:18px 0 2px!important;font-size:10px;letter-spacing:1.5px;color:#95899f;grid-column:1/-1}
+html body #home .homeMenuGroup:first-child{margin-top:0!important}
+html body #home .homeMenuItem{position:relative;min-width:0;min-height:105px!important;padding:15px!important;gap:12px!important;align-items:flex-start;justify-content:flex-start!important;flex-direction:column!important;text-align:left;border-radius:20px!important;border:1px solid #ffffff10;background:linear-gradient(140deg,#191420,#100e16);box-shadow:0 6px 18px #0001}
+html body #home .homeMenuItem:hover{border-color:#b688e960;background:#201729}
+html body #home .homeMenuIcon{width:30px;height:30px;flex:none;color:#c2a0e9;fill:none;stroke:currentColor;stroke-width:1.7}
+html body #home .homeMenuCopy strong{font-size:12px!important;line-height:1.4;font-weight:650}
+html body #home .homeMenuCopy small{display:none}
+html body #home .homeMenuItem.eris-admin-menu{flex-direction:row!important;align-items:center;grid-column:1/-1;min-height:70px!important;background:linear-gradient(110deg,#251a32,#15101d);border-color:#b186d830}
+html body #home .eris-admin-menu .ea-role{margin-left:auto}
+html body #home .homeMenuItem:focus-visible,html body .nav button:focus-visible{outline:2px solid #c9a1ef;outline-offset:2px}
+@media(min-width:700px){html body #home .homeMenu{grid-template-columns:repeat(3,minmax(0,1fr))}html body #home #realRooms{grid-template-columns:repeat(2,minmax(0,1fr))}html body #home #realRooms>.ec-discovery-empty{grid-column:1/-1}html body .app>.content{padding:26px 28px 32px!important}}
+@media(max-width:350px){html body .app>.content{padding:16px 12px 24px!important}html body .app>.top{padding:10px 12px}html body #home .homeMenuItem{padding:12px!important}html body .app>.top .brand{font-size:23px}}
