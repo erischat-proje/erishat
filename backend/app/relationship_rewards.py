@@ -1,4 +1,5 @@
 """Relationship-scoped inventory: no currency or fan history is revoked."""
+import re
 from sqlalchemy import select, delete
 from .models import User, UserCosmetic
 from .relationship_models import Couple, CoupleMember, CoupleRewardSelection, CoupleRing
@@ -11,7 +12,7 @@ REWARDS = [(1,'bubble','sohbet'),(2,'title','unvan'),(3,'frame','cerceve'),
 NAMES = {'bubble':'Sohbet balonu','title':'Ünvan','frame':'Çerçeve','wallpaper':'Duvar kağıdı','entrance':'Oda girişi','ring':'Yüzük'}
 
 
-def items(gender=None):
+def legacy_items(gender=None):
     result=[]
     for level,kind,name in REWARDS:
         if kind in ('frame', 'wallpaper'): continue  # Retired: matching collection replaces these looks.
@@ -22,6 +23,75 @@ def items(gender=None):
                 'asset_key':PREFIX+filename+'.png','asset':PREFIX+filename+'.png',
                 'logo':PREFIX+f'level-{level}.png','tier':'relationship','relationship':True,'price':0,'vip':False})
     return result
+
+
+# Two distinct personal rewards at every level, each with a matching male/female look.
+LEVEL_REWARDS = [
+    (1, 'Bakır Kıvılcım', ('bubble', 'title')),
+    (2, 'Asma Bağı', ('frame', 'entrance')),
+    (3, 'Sardis Yolu', ('bubble', 'frame')),
+    (4, 'Palmet İzleri', ('title', 'entrance')),
+    (5, 'Aslan Mührü', ('bubble', 'title')),
+    (6, 'Altın Yemin', ('frame', 'entrance')),
+    (7, 'Paktolos Işığı', ('bubble', 'frame')),
+    (8, 'Kraliyet Bağı', ('title', 'entrance')),
+    (9, 'Sardis Tacı', ('bubble', 'title')),
+    (10, 'Aslanların Ahdi', ('frame', 'entrance')),
+    (11, 'Krezus Hazinesi', ('bubble', 'frame')),
+    (12, 'Ebedi Lidya', ('title', 'entrance')),
+]
+ART_NAMES = {'bubble':'sohbet', 'title':'unvan', 'frame':'cerceve', 'entrance':'entrance'}
+
+
+def items(gender=None):
+    result = []
+    sexes = [gender] if gender in ('male', 'female') else ['male', 'female']
+    for level, theme, kinds in LEVEL_REWARDS:
+        for kind in kinds:
+            for sex in sexes:
+                key = PREFIX + f'{ART_NAMES[kind]}-{sex}-l{level}.png'
+                result.append({'level':level, 'type':kind, 'gender':sex,
+                    'name':theme + ' · ' + NAMES[kind], 'theme':theme,
+                    'description':'Lidya motifleriyle işlenmiş ' + NAMES[kind].lower() + '.',
+                    'asset_key':key, 'asset':key, 'logo':PREFIX+f'level-{level}.png',
+                    'tier':'relationship', 'relationship':True, 'price':0, 'vip':False})
+    # Existing shared couple rings remain bonus rewards with their original inventory keys.
+    result.extend(reward for reward in legacy_items(gender) if reward['type']=='ring')
+    return result
+
+
+def available_reward(gender, kind, key, level):
+    # Previously earned cosmetics remain valid; new inventory displays the current collection.
+    return next((r for r in items(gender)
+                 if r['type']==kind and r['asset_key']==key and r['level']<=level), None)
+
+
+
+def is_legacy_asset(key):
+    return bool(key and key.startswith(PREFIX) and re.fullmatch(
+        r'(?:sohbet|unvan|cerceve|wallpaper|entrance)-(?:male-|female-)?[12]\.png', key[len(PREFIX):]))
+
+
+def migrate_legacy_rewards(db, user, house):
+    earned = [r for r in items(user.gender) if r['level'] <= house.level and r['type'] != 'ring']
+    for kind in ('bubble', 'title', 'frame', 'entrance', 'wallpaper'):
+        row = db.get(CoupleRewardSelection, (user.id, kind))
+        direct = getattr(user, kind + '_asset', None)
+        if not ((row and is_legacy_asset(row.asset_key)) or is_legacy_asset(direct)):
+            continue
+        choices = [r for r in earned if r['type'] == kind]
+        key = choices[-1]['asset_key'] if choices else None
+        if row is None:
+            row = CoupleRewardSelection(user_id=user.id, kind=kind);db.add(row)
+        row.asset_key = key
+        if kind == 'frame' and is_legacy_asset(direct):user.frame_asset = key
+        if kind in ('bubble', 'title') and is_legacy_asset(direct):setattr(user, kind + '_asset', None)
+    if user.wallpaper_asset and user.wallpaper_asset.startswith('relationship_wallpaper_'):
+        user.wallpaper_asset = None
+    for cosmetic in list(db.scalars(select(UserCosmetic).where(UserCosmetic.user_id == user.id,
+                UserCosmetic.asset_key.startswith(PREFIX)))):
+        if is_legacy_asset(cosmetic.asset_key):db.delete(cosmetic)
+    db.flush()
 
 
 def house_for(db,uid):
@@ -54,6 +124,7 @@ def ensure_rewards(db,house):
                 db.add(CoupleRewardSelection(user_id=uid,kind=kind,asset_key=key))
                 if kind=='frame' and not user.frame_asset:user.frame_asset=key
             db.flush()
+        migrate_legacy_rewards(db,user,house)
     for tier,level in ((1,6),(2,12)):
         key=f'level-{tier}'
         if house.level>=level and not db.get(CoupleRing,(house.id,key)):
