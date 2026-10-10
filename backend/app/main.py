@@ -1829,16 +1829,16 @@ def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: 
 
 
 @app.get("/v1/users/{user_id}/received-gifts")
-def received_gifts(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def received_gifts(user_id: str, sender_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not db.get(User,user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     if active_ban(db,user_id): return []
     counts = {}
     for key, quantity in db.execute(select(RoomGiftEvent.gift_key, func.sum(RoomGiftEvent.quantity))
-            .where(RoomGiftEvent.recipient_id == user_id).group_by(RoomGiftEvent.gift_key)):
+            .where(RoomGiftEvent.recipient_id == user_id, *([RoomGiftEvent.sender_id == sender_id] if sender_id else [])).group_by(RoomGiftEvent.gift_key)):
         counts[key] = int(quantity or 0)
     for gift, message in db.execute(select(DirectMessageGift, Message)
             .join(Message, Message.id == DirectMessageGift.message_id)
-            .where(DirectMessageGift.recipient_id == user_id)):
+            .where(DirectMessageGift.recipient_id == user_id, *([DirectMessageGift.sender_id == sender_id] if sender_id else []))):
         match = re.search(r"×(\d+)$", message.text or "")
         counts[gift.gift_key] = counts.get(gift.gift_key,0) + (int(match.group(1)) if match else 1)
     return [{"gift_key":key,"count":count,"image_url":GIFT_META.get(key,{}).get("image_url")}
