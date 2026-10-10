@@ -299,72 +299,9 @@
   let activeCaptureKey = null;
 
   function syncDmCapturePreference(chat) {
-    if (activeCaptureKey && window.ErisScreenProtection?.set) {
-      window.ErisScreenProtection.set(activeCaptureKey, false);
-    }
-    activeCaptureKey = null;
-    if (!chat) return;
-
-    const head = chat.querySelector(".chatHead");
-    if (!head) return;
-
-    let button = head.querySelector("[data-dm-capture-toggle]");
-    if (!button) {
-      button = document.createElement("button");
-      button.type = "button";
-      button.dataset.dmCaptureToggle = "1";
-      button.className = "close";
-      button.style.marginRight = "8px";
-      head.insertBefore(button, head.querySelector(".close"));
-    }
-
-    const personId = String(window.__erisActiveDmUserId || "");
-    button.hidden = !personId;
-    if (!personId) return;
-
-    const accountId = String(
-      window.__erisCurrentUserId || window.currentUserId || "current"
-    );
-    const storageKey = `eris_dm_capture_protection:${accountId}:${personId}`;
-    const protectionKey = `dm-user:${accountId}:${personId}`;
-
-    const render = () => {
-      const enabled = localStorage.getItem(storageKey) === "1";
-      button.innerHTML = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M10 18h4"/>'+(enabled?'':'<path d="M2 22 22 2" stroke-width="2.2"/>')+'</svg>';
-      button.title = enabled
-        ? "Bu sohbet için ekran koruması açık"
-        : "Bu sohbet için ekran korumasını aç";
-      button.setAttribute("aria-label", button.title);
-      button.setAttribute("aria-pressed", String(enabled));
-      if (enabled && window.ErisScreenProtection?.set) {
-        window.ErisScreenProtection.set(protectionKey, true);
-        activeCaptureKey = protectionKey;
-      }
-    };
-
-    button.onclick = () => {
-      const enabled = localStorage.getItem(storageKey) !== "1";
-      localStorage.setItem(storageKey, enabled ? "1" : "0");
-      if (window.ErisScreenProtection?.set) {
-        window.ErisScreenProtection.set(protectionKey, enabled);
-      }
-      activeCaptureKey = enabled ? protectionKey : null;
-      render();
-      window.toast?.(enabled ? 'Mesajda ekran görüntüsü koruması açıldı.' : 'Mesajda ekran görüntüsü koruması kapatıldı.');
-    };
-
-    if (!chat.dataset.captureCloseBound) {
-      chat.dataset.captureCloseBound = "1";
-      chat.addEventListener("click", event => {
-        if (!event.target.closest(".close")) return;
-        if (activeCaptureKey && window.ErisScreenProtection?.set) {
-          window.ErisScreenProtection.set(activeCaptureKey, false);
-        }
-        activeCaptureKey = null;
-      }, true);
-    }
-
-    render();
+    if(activeCaptureKey)window.ErisScreenProtection?.set(activeCaptureKey,false);
+    activeCaptureKey=null;
+    chat?.querySelectorAll('[data-dm-capture-toggle]').forEach(button=>button.remove());
   }
 
   function installFolderStyles(){

@@ -43,3 +43,19 @@ html body #chat .compose[hidden],html body #chat .compose>[hidden]{display:none!
 html body #messages button:focus-visible,html body #chat button:focus-visible,html body #chat input:focus-visible{outline:2px solid #c499ee;outline-offset:2px}
 html body #chat button:disabled{opacity:.55}
 @media(min-width:600px){html body #chat:not(.eris-floating-dm) .compose{grid-template-columns:repeat(3,44px) minmax(0,1fr) 80px}html body #chat:not(.eris-floating-dm) .compose input{grid-column:4;grid-row:1}html body #chat:not(.eris-floating-dm) .compose>.primary{grid-column:5;grid-row:1}}
+
+
+/* DM-owned overlays stay above both full-page and room floating conversations. */
+html body .dm-gift-sheet{z-index:90000!important;justify-content:center!important;align-items:flex-end!important;padding:12px!important}
+html body .dm-gift-sheet>section{width:min(520px,100%)!important;max-height:calc(var(--eris-usable-height,100dvh) - 24px)!important;border-radius:22px!important;overflow:auto!important}
+html body .dm-photo-viewer,html body .dm-vault-modal{z-index:91000!important}
+html body .eris-camera{z-index:92000!important}
+/* Leave room for the portrait and frame which live outside the bubble. */
+html body #chat:not(.eris-floating-dm) .chatBody{padding-left:58px!important}
+html body #chat:not(.eris-floating-dm) .bubble{max-width:calc(100% - 4px)!important}
+html body #chat:not(.eris-floating-dm) .dm-message-portrait{left:-40px!important}
+
+html body #chat .dm-call-head{display:flex;gap:7px;margin-left:auto}
+html body #chat .dm-call-head button,html body #chat .chatHead>button.close{display:grid;place-items:center;width:40px!important;height:40px!important;padding:0;border:1px solid #ffffff12;border-radius:13px;background:#ffffff06;color:#ddc9ee}
+html body #chat .dm-call-head svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html body #chat [data-dm-capture-toggle]{display:none!important}

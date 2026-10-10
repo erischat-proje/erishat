@@ -1,0 +1,12 @@
+const {chromium}=require('playwright'),fs=require('fs'),assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({executablePath:process.env.ERIS_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader'],headless:true});const p=await browser.newPage({viewport:{width:393,height:760}});
+ const html=fs.readFileSync('frontend/erischat-main.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,'');await p.route('https://eris.test/**',r=>r.fulfill({contentType:'text/html',body:html}));await p.goto('https://eris.test/');
+ for(const name of ['home-part1.css','device-layout.css','dev-update.css','screen-layout-fix.css','app-shell.css','messages-polish.css'])if(fs.existsSync('frontend/'+name))await p.addStyleTag({content:fs.readFileSync('frontend/'+name,'utf8')});
+ await p.addStyleTag({content:'.dm-gift-sheet{z-index:11010!important}.eris-camera{position:fixed;inset:0;z-index:22050;background:black}'});
+ await p.evaluate(()=>{localStorage.setItem('token','test');window.toasts=[];window.toast=t=>toasts.push(t);window.ErisApiTransport={poll(){}};window.ErisPlatform={getMe:async()=>({id:1}),conversations(){},api:async()=>[],messages:async()=>[{id:1,text:'Merhaba',sender_id:2,sender_avatar:'F'}],messageGifts:async()=>[]};});
+ await p.addScriptTag({content:fs.readFileSync('frontend/dm-live.js','utf8')});await p.evaluate(()=>ErisChatDM.open(2,'Filiz','F',2));
+ for(const width of [320,393,768]){await p.setViewportSize({width,height:760});const r=await p.locator('.dm-message-portrait').evaluate(e=>e.getBoundingClientRect().toJSON());assert(r.left>=6&&r.right<=width,JSON.stringify(r));}
+ await p.click('[data-dm-photo]');assert(await p.locator('.dm-gift-sheet').isVisible());assert(await p.locator('.dm-gift-sheet [data-gallery]').evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}));await p.click('.dm-gift-sheet [data-x]');await p.click('[data-dm-gift]');assert(await p.locator('.dm-gift-sheet [data-close]').evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}));await p.click('.dm-gift-sheet [data-close]');
+ assert.equal(await p.locator('[data-dm-capture-toggle]').count(),0);console.log('PASS: portrait bounds, foreground photo/gift sheets, removed capture control');await browser.close();
+})();
