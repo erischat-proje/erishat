@@ -1,0 +1,29 @@
+html body .rel-ring-page{background:radial-gradient(ellipse at 80% 0,#392342 0,transparent 50%),#100b19}
+html body .rel-ring-page>.rel-dialog{background:transparent}
+html body .rel-ring-page>.rel-dialog>.rel-body{padding:20px max(16px,env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+html body .rel-ring-intro small{color:#d9ba80;letter-spacing:.16em;font-size:11px;font-weight:800}
+html body .rel-ring-intro h3{margin:10px 0;font-size:clamp(23px,6vw,32px);line-height:1.2;color:#fff4dc}
+html body .rel-ring-intro p{font-size:13px;line-height:1.6;color:#bcb0ca;margin:0 0 20px}
+html body .rel-ring-tabs{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 0 10px;scrollbar-width:thin;scrollbar-color:#9a7452 #ffffff08}
+html body .rel-ring-tabs>button{flex:0 0 auto;min-width:88px;min-height:44px;padding:11px 15px;border:1px solid #ffffff20;border-radius:14px;white-space:nowrap;word-break:normal;overflow-wrap:normal;font-size:13px;line-height:1.3}
+html body .rel-ring-tabs>button[aria-selected=true]{border-color:#d0ac70;background:linear-gradient(145deg,#6a463a,#40263e);color:#ffe2ac;box-shadow:0 4px 20px #a16a3420}
+html body .rel-ring-summary{font-size:12px;color:#c6b2d1;margin:12px auto 16px}
+html body .rel-ring-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+html body .rel-jewel-card{position:relative;min-width:0;display:flex;flex-direction:column;align-items:stretch;padding:12px 10px;border:1px solid #d5b77c30;border-radius:22px;background:radial-gradient(ellipse at 50% 15%,#a2703b18,transparent 70%),linear-gradient(155deg,#251b30,#17121f);overflow:hidden}
+html body .rel-jewel-card.equipped{border-color:#d9b67b;background:linear-gradient(155deg,#3a2b34,#211728)}
+html body .rel-jewel-state{align-self:flex-start;max-width:100%;box-sizing:border-box;font-size:10px;color:#e3c58e;line-height:1.4;padding:4px 8px;border:1px solid #d9ad6340;border-radius:20px;background:#130e1a90}
+html body .rel-body .rel-jewel-preview{display:block;flex:none;width:100%;aspect-ratio:1;border:0!important;border-radius:12px;background:transparent!important;padding:0!important;min-height:0}
+html body .rel-jewel-preview img{display:block;width:100%;height:100%;object-fit:contain}
+html body .rel-jewel-card h4{font-size:13px;line-height:1.4;text-align:center;color:#fff0d5;margin:2px 0 7px;overflow-wrap:normal;word-break:normal}
+html body .rel-jewel-price{min-height:24px;font-size:12px;text-align:center;color:#bcafca;margin-bottom:10px}
+html body .rel-body .rel-jewel-action{width:100%;min-height:44px;margin-top:auto;font-size:12px;border-radius:13px}
+html body .rel-jewel-hint{display:block;text-align:center;font-size:10px;line-height:1.5;color:#c6b3cf;margin-top:8px}
+html body .rel-ring-empty{grid-column:1/-1;text-align:center;padding:28px 16px;border:1px dashed #b18c6455;border-radius:22px;background:#ffffff03}
+html body .rel-ring-empty img{width:110px;height:110px;object-fit:contain;display:block;margin:0 auto 10px;opacity:.8}
+html body .rel-ring-empty b{font-size:17px;display:block;color:#edd4a6}
+html body .rel-ring-empty p{font-size:13px;color:#bfaecb;margin:8px auto;max-width:320px}
+html body .rel-jewel-large{display:block;width:min(380px,100%);height:auto;aspect-ratio:1;object-fit:contain;margin:auto}
+html body .rel-jewel-caption{font-size:13px;text-align:center;color:#e8c990}
+html body .rel-ring-page button:focus-visible{outline:2px solid #ffd88e;outline-offset:2px}
+@media(min-width:540px){html body .rel-ring-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}html body .rel-jewel-card{padding:14px}}
+@media(max-width:350px){html body .rel-ring-grid{gap:8px}html body .rel-jewel-card{padding:9px 7px;border-radius:18px}html body .rel-jewel-card h4{font-size:12px}}

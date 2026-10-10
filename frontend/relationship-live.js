@@ -3,7 +3,8 @@
   const api=(path,options)=>window.ErisPlatform.api('/relationship'+path,options);
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const amount=n=>Number(n||0).toLocaleString('tr-TR');
-  const asset=key=>key?.startsWith('level-')?'./relationship-assets/rewards/ring-'+key.split('-')[1]+'.png':'./relationship-assets/'+key+'.png';
+  const ringUrl=value=>window.ErisRingArt?.url(value)||value;
+  const asset=key=>ringUrl(key?.startsWith('level-')?'./relationship-assets/rewards/ring-'+key.split('-')[1]+'.png':'./relationship-assets/'+key+'.png');
   const modernArt=name=>'./relationship-assets/modern/'+name+'.png?v=rel-modern-20261010';
   const materialArt=m=>'<img class="rel-material-preview" src="'+modernArt('material-'+m)+'" alt="'+labels[m]+'">';
   const rewardArt=name=>'./relationship-assets/rewards/'+name+'.png';
@@ -170,13 +171,38 @@
   }
   async function getCatalog(){if(!catalogData)catalogData=await api('/catalog');return catalogData}
   function rings(house,onSelect=null){
-    const modal=dialog(onSelect?'Evlilik teklifiniz için yüzük seçiniz':'Yüzük satın al','<div class="rel-actions" data-categories></div><div class="rel-rings"></div>');
+    const modal=dialog(onSelect?'Evlilik yüzüğünü seç':'Yüzük koleksiyonu','<section class="rel-ring-intro"><small>LİDYA · ÇİFT YÜZÜKLERİ</small><h3>Birlikteliğinizin mührü.</h3><p>Antik motiflerle işlenmiş bakır, gümüş ve altın yüzükler. Görsele dokunarak yakından inceleyebilirsiniz.</p></section><div class="rel-ring-tabs" role="tablist" aria-label="Yüzük kategorileri"></div><p class="rel-ring-summary" aria-live="polite">Yüzükler yükleniyor…</p><div class="rel-ring-grid" role="tabpanel"></div>',true);
+    modal.shade.classList.add('rel-ring-page');
     getCatalog().then(data=>{
-      if(!modal.shade.isConnected)return;const categories=onSelect?['gold']:['owned','level','copper','silver','gold'];
-      const draw=metal=>{const grid=modal.body.querySelector('.rel-rings');grid.replaceChildren();if(metal==='owned'||metal==='level'){for(const r of (house.owned_rings||[]).filter(r=>metal==='level'?r.source==='level':r.source==='purchased')){const b=document.createElement('button');b.type='button';b.className='rel-ring-choice';b.innerHTML='<img src="'+esc(r.asset)+'" alt="Yüzük">'+(house.ring===r.key?'Takılı':'Tak');b.onclick=()=>action(b,modal.body,async()=>{await post('/ring/equip',{ring:r.key});modal.close();refreshMain();window.ErisProfile?.refresh?.();window.dispatchEvent(new Event('erischat:cosmetics-updated'))});grid.append(b)}if(!grid.children.length)grid.textContent='Bu kategoride henüz yüzük yok.';return;}for(const r of data.rings.filter(r=>r.category===metal)){const b=document.createElement('button');b.type='button';b.className='rel-ring-choice';b.innerHTML='<img src="'+esc(r.asset)+'" alt="'+labels[metal]+' yüzük '+r.key.split('-')[1]+'">'+coin(r.price);b.disabled=!onSelect&&house.needs_first_copper&&metal==='silver';b.onclick=()=>{if(onSelect){modal.close();onSelect({...r,price:(house.owned_rings||[]).some(x=>x.key===r.key)?0:r.price});return}confirmRing(house,r,modal)};grid.append(b)}};
-      for(const metal of categories){const b=document.createElement('button');b.type='button';b.innerHTML='<img src="'+asset((metal==='owned'||metal==='level'?'copper':metal)+'-1')+'" alt="" style="width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:6px">'+({owned:'Satın alınanlar',level:'Seviye bağlı yüzükler'}[metal]||labels[metal]);b.onclick=()=>draw(metal);modal.body.querySelector('[data-categories]').append(b)}draw(categories[0]);
-      if(!onSelect&&house.needs_first_copper){const p=document.createElement('p');p.className='rel-note';p.textContent='İlk yüzük bakır olmalıdır; sonrasında gümüş veya farklı bakır yüzük seçebilirsiniz.';modal.body.append(p)}
-    }).catch(e=>{errorBox(modal.body).textContent=e.message});
+      if(!modal.shade.isConnected)return;
+      const categories=onSelect?['gold']:['owned','level','copper','silver','gold'];
+      const owned=house.owned_rings||[],tabNames={owned:'Yüzüklerim',level:'Seviye',copper:'Bakır',silver:'Gümüş',gold:'Altın'};
+      const title=r=>r.key.startsWith('level-')?'Seviye ödülü '+r.key.split('-')[1]:(labels[r.key.split('-')[0]]||'Çift')+' yüzük '+r.key.split('-')[1];
+      const equip=(button,r)=>action(button,modal.body,async()=>{await post('/ring/equip',{ring:r.key});modal.close();refreshMain();window.ErisProfile?.refresh?.();window.dispatchEvent(new Event('erischat:cosmetics-updated'))});
+      const draw=metal=>{
+        const grid=modal.body.querySelector('.rel-ring-grid');grid.replaceChildren();
+        const rows=metal==='owned'||metal==='level'?owned.filter(r=>metal==='level'?r.source==='level':r.source==='purchased'):(data.rings||[]).filter(r=>r.category===metal);
+        modal.body.querySelector('.rel-ring-summary').textContent=tabNames[metal]+' · '+rows.length+' yüzük';
+        modal.body.querySelectorAll('[data-ring-category]').forEach(b=>{const selected=b.dataset.ringCategory===metal;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1});
+        for(const r of rows){
+          const has=owned.some(item=>item.key===r.key),active=house.ring===r.key,collection=metal==='owned'||metal==='level';
+          const locked=!collection&&!onSelect&&!has&&((house.needs_first_copper&&metal!=='copper')||(metal==='gold'&&house.level<4));
+          const card=document.createElement('article');card.className='rel-jewel-card'+(active?' equipped':'');
+          const state=active?'Takılı':has?'Koleksiyonunda':locked?'Kilitli':onSelect?'Evlilik yüzüğü':'Çift yüzüğü';
+          card.innerHTML='<span class="rel-jewel-state">'+state+'</span><button type="button" class="rel-jewel-preview" aria-label="'+esc(title(r))+' büyük görselini aç"><img src="'+esc(asset(r.key))+'" alt="'+esc(title(r))+'" loading="lazy"></button><h4>'+esc(title(r))+'</h4><div class="rel-jewel-price">'+(has?'Sahipsin':coin(r.price))+'</div><button type="button" class="rel-jewel-action rel-primary"></button>';
+          card.querySelector('.rel-jewel-preview').onclick=()=>dialog(title(r),'<img class="rel-jewel-large" src="'+esc(asset(r.key))+'" alt="'+esc(title(r))+'"><p class="rel-jewel-caption">'+esc(title(r))+' · '+(has?'Koleksiyonunda':amount(r.price)+' Lidya')+'</p>');
+          const button=card.querySelector('.rel-jewel-action');button.textContent=onSelect?'Seç':active?'Takılı':has?'Tak':locked?'Kilitli':'Satın al';button.disabled=locked||(!onSelect&&active);
+          if(locked){const hint=document.createElement('small');hint.className='rel-jewel-hint';hint.textContent=house.needs_first_copper?'Önce bir bakır yüzük seçin.':'Aile evi seviye 4 gerekli.';card.append(hint)}
+          button.onclick=()=>{if(button.disabled)return;if(onSelect){modal.close();onSelect({...r,asset:asset(r.key),price:has?0:r.price});return}if(has){equip(button,r);return}confirmRing(house,{...r,asset:asset(r.key)},modal)};
+          grid.append(card);
+        }
+        if(!rows.length){const empty=document.createElement('div');empty.className='rel-ring-empty';empty.innerHTML='<img src="'+asset(metal==='level'?'level-1':'copper-1')+'" alt=""><b>'+ (metal==='level'?'Seviye ödüllerin burada.':'Yüzük koleksiyonun burada.')+'</b><p>'+(metal==='level'?'Aile evinin 6. ve 12. seviyelerinde özel yüzükler kazanırsınız.':'Bakır, gümüş veya altın sekmesinden bir yüzük seçebilirsin.')+'</p>';grid.append(empty)}
+      };
+      const tabs=modal.body.querySelector('.rel-ring-tabs');
+      for(const metal of categories){const b=document.createElement('button');b.type='button';b.dataset.ringCategory=metal;b.setAttribute('role','tab');b.textContent=tabNames[metal];b.onclick=()=>draw(metal);b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const list=[...tabs.children],i=list.indexOf(b),next=e.key==='Home'?0:e.key==='End'?list.length-1:(i+(e.key==='ArrowRight'?1:-1)+list.length)%list.length;list[next].click();list[next].focus();list[next].scrollIntoView({block:'nearest',inline:'nearest'})};tabs.append(b)}
+      draw(categories[0]);
+      if(!onSelect&&house.needs_first_copper){const p=document.createElement('p');p.className='rel-note';p.textContent='İlk yüzük bakır olmalıdır. Altın yüzükler aile evi seviye 4 olduğunda açılır.';modal.body.append(p)}
+    }).catch(e=>{if(modal.shade.isConnected){modal.body.querySelector('.rel-ring-summary').textContent='Yüzükler yüklenemedi.';errorBox(modal.body).textContent=e.message}});
   }
   function confirmRing(house,ring,parent){
     const modal=dialog('Bu yüzüğü satın almak istiyor musunuz?','<img class="rel-ring-preview" src="'+esc(ring.asset)+'" alt="Seçilen yüzük"><p style="text-align:center">'+coin(ring.price)+' ödemelisiniz.</p><button class="rel-primary" type="button">Satın al</button>');
