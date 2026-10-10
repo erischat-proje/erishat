@@ -626,7 +626,11 @@ def register_platform_auth(current_user_dependency):
     @router.get("/me/blocks")
     def my_blocks(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         rows=list(db.scalars(select(UserBlock).where(UserBlock.blocker_id==user.id).order_by(UserBlock.created_at.desc())))
-        return [{"user_id":r.blocked_id,"created_at":r.created_at} for r in rows]
+        targets={target.id:target for target in db.scalars(select(User).where(User.id.in_([r.blocked_id for r in rows])))} if rows else {}
+        return [{"user_id":r.blocked_id,"created_at":r.created_at,
+                 "nickname":getattr(targets.get(r.blocked_id),"nickname",None) or "Kullanıcı",
+                 "avatar_asset":getattr(targets.get(r.blocked_id),"avatar_asset",None),
+                 "frame_asset":getattr(targets.get(r.blocked_id),"frame_asset",None)} for r in rows]
     @router.get("/me/notifications")
     def notifications(limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if not user.notifications_enabled: return []
