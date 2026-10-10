@@ -1,0 +1,30 @@
+/* Room-only layout; game boards retain their existing layout. */
+body.eris-room-visible .app>.nav{display:none!important}
+html body #erisRoomSurface.room-modern-audio{--modern-header:68px;--modern-chat:clamp(210px,30vh,300px);--modern-top:max(env(safe-area-inset-top,0px),8px);--modern-bottom:env(safe-area-inset-bottom,0px)}
+html body #erisRoomSurface.room-modern-audio .eris-room-top{top:0!important;height:calc(var(--modern-header) + var(--modern-top))!important;min-height:0!important;padding:var(--modern-top) 12px 8px!important;background:linear-gradient(180deg,#100d1de8,#100d1d90)!important;backdrop-filter:blur(14px)!important;gap:8px!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-title{min-width:0!important;flex:1!important;max-width:none!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-title b{font-size:17px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+html body #erisRoomSurface.room-modern-audio .eris-room-title small{font-size:10px!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-emblem{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:14px!important}
+html body #erisRoomSurface.room-modern-audio #erisRoomLevel{min-width:54px!important;width:54px!important;padding:4px!important;font-size:11px!important;position:static!important;transform:none!important}
+html body #erisRoomSurface.room-modern-audio #erisRoomContributionButton{top:calc(var(--modern-header) + var(--modern-top) + 8px)!important;left:12px!important;height:40px!important;max-width:calc(100% - 166px)!important;font-size:12px!important;border-radius:14px!important;background:#161221b8!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-quick-actions{top:calc(var(--modern-header) + var(--modern-top) + 4px)!important;right:10px!important;border-radius:14px!important;background:#161221b8!important}
+html body #erisRoomSurface.room-modern-audio:not(.ludo-mode):not(.okey-mode):not(.uno-mode) #erisLiveSeats{top:calc(var(--modern-header) + var(--modern-top) + 56px)!important;bottom:calc(var(--modern-chat) + var(--modern-bottom) + 8px)!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:repeat(var(--modern-rows,6),minmax(64px,1fr))!important;gap:12px 8px!important;align-content:stretch!important;align-items:center!important;padding:12px 14px 22px!important;min-height:0!important;overflow:auto!important}
+html body #erisRoomSurface.room-modern-audio:not(.ludo-mode):not(.okey-mode):not(.uno-mode) .eris-seat{width:clamp(44px,14vw,68px)!important;height:clamp(44px,14vw,68px)!important;border:1px solid #d5c5f44d!important;background:#16122155!important;border-radius:50%!important}
+html body #erisRoomSurface.room-modern-audio .eris-seat.occupied:has(.seat-frame.has-frame){border-color:transparent!important;background:transparent!important}
+html body #erisRoomSurface.room-modern-audio .eris-seat .seat-frame{inset:-9%!important;background-size:contain!important;background-position:center!important}
+html body #erisRoomSurface.room-modern-audio .eris-seat.occupied .seat-ava{width:76%!important;height:76%!important;background-size:cover!important;background-position:center!important}
+html body #erisRoomSurface.room-modern-audio .eris-seat b{font-size:10px!important;line-height:18px!important}
+html body #erisRoomSurface.room-modern-audio:not(.ludo-mode):not(.okey-mode):not(.uno-mode)>.eris-room-chat{height:calc(var(--modern-chat) + var(--modern-bottom))!important;max-height:none!important;bottom:0!important;padding-bottom:var(--modern-bottom)!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;background:linear-gradient(180deg,#100d1d85,#100d1de8)!important;backdrop-filter:blur(12px)!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-activity{font-size:11px!important;padding:9px 12px!important;border-bottom:1px solid #ffffff12}
+html body #erisRoomSurface.room-modern-audio .eris-room-compose{display:grid!important;grid-template-columns:repeat(4,40px) minmax(0,1fr)!important;gap:6px!important;padding:8px 12px 12px!important;min-width:0!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-compose #erisLiveInput{grid-column:1/-1!important;grid-row:1!important;width:100%!important;min-width:0!important;height:44px!important;font-size:14px!important;border-radius:15px!important;background:#151020c9!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-compose button{height:44px!important;min-width:0!important;width:auto!important;border-radius:14px!important;background:#ffffff0c!important;border:1px solid #ffffff1c!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-compose #erisLiveSend{justify-self:end!important;min-width:86px!important;background:linear-gradient(135deg,#8a4bea,#d34aa8)!important;font-size:13px!important}
+html body #erisRoomSurface.room-modern-audio .eris-room-compose button.on{border-color:#b28bff!important;background:#8a5cff35!important}
+html body #erisRoomSurface.room-modern-audio #erisRoomAudioResume{position:absolute;z-index:8;top:calc(var(--modern-header) + var(--modern-top) + 52px);left:50%;transform:translateX(-50%);padding:10px 16px;border:1px solid #bd9aff;border-radius:14px;background:#241937;color:#fff;font:inherit;font-size:12px;box-shadow:0 6px 25px #0007;max-width:calc(100% - 24px)}
+html body #erisRoomSurface.room-modern-audio #erisRoomAudioResume[hidden]{display:none!important}
+@media(max-height:580px){html body #erisRoomSurface.room-modern-audio{--modern-chat:180px;--modern-header:56px}html body #erisRoomSurface.room-modern-audio .eris-seat{width:44px!important;height:44px!important}}
+
+html body #erisRoomSurface.room-modern-audio .eris-room-compose :is(#erisRoomEmojiButton,#erisRoomMicInline,#erisRoomAudioOutput,#erisRoomGiftInline){width:40px!important;min-width:40px!important}
+html body #erisRoomSurface.room-modern-audio,html body #erisRoomSurface.room-modern-audio *{box-sizing:border-box}
