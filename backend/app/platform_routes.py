@@ -18,11 +18,12 @@ from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
     DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
-    GameRound, Notification, ProfileVisit, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, VipStatus,
+    GameRound, Notification, ProfileVisit, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, UserSocialPrivacy, VipStatus,
 )
 from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomChatMessage, RoomBan, RoomSeat
 from .admin_models import AdminRole
 from .moderation import active_ban, profile_notice, require_feature, require_chat_write
+from .social_privacy import social_flags, require_social_visible
 from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
@@ -64,6 +65,8 @@ ROULETTE = [
 CUPS = {"cup_1", "cup_2", "cup_3", "cup_4"}
 
 class PrivacyUpdate(BaseModel):
+    hide_fans: bool | None = None
+    hide_received_gifts: bool | None = None
     hide_notifications: bool | None = None
     hide_vip: bool | None = None; hide_vip_badge: bool | None = None; hide_vip_neon: bool | None = None
     hide_vip_entry: bool | None = None; hide_vip_title: bool | None = None; hide_location: bool | None = None
@@ -143,11 +146,13 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
                 "vip_level": 0, "vip_badge_hidden": True, "vip_neon_hidden": True, "relationship": None}
     v = db.get(VipStatus, target.id)
     own = target.id == viewer.id
+    flags = social_flags(db, target.id, viewer.id)
     visible = own or user_can_show_vip(db, target.id, "hide_vip")
     return {
         "followers_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id == target.id)) or 0),
         "following_count": int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.follower_id == target.id)) or 0),
-        "received_gift_lidya": received_total(db, target.id),
+        "received_gift_lidya": None if flags["gifts_hidden"] else received_total(db, target.id),
+        **flags,
         "relationship": public_brief(db, target.id),
         "title_asset": target.title_asset,
         "profile_asset": target.profile_asset,
@@ -172,17 +177,22 @@ def register_platform_auth(current_user_dependency):
         if getattr(route, "path", "") == "/v1/me/privacy": router.routes.remove(route)
     @router.get("/me/privacy")
     def get_privacy_auth(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        p=privacy_row(db,user.id); db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, "hide_notifications": not user.notifications_enabled}
+        p=privacy_row(db,user.id); db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, **{k:bool(getattr(db.get(UserSocialPrivacy,user.id),k,False)) for k in ("hide_fans","hide_received_gifts")}, "hide_notifications": not user.notifications_enabled}
     @router.patch("/me/privacy")
     def update_privacy(payload: PrivacyUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         p=privacy_row(db,user.id)
         for key,value in payload.model_dump(exclude_none=True).items():
             if key == "hide_notifications": user.notifications_enabled = not value
+            elif key in ("hide_fans", "hide_received_gifts"):
+                social=db.get(UserSocialPrivacy,user.id)
+                if social is None:
+                    social=UserSocialPrivacy(user_id=user.id);db.add(social)
+                setattr(social,key,value)
             else: setattr(p,key,value)
         if payload.hide_vip is not None:
             for key in ("hide_vip_badge", "hide_vip_neon", "hide_vip_entry", "hide_vip_title"):
                 setattr(p, key, payload.hide_vip)
-        db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, "hide_notifications": not user.notifications_enabled}
+        db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, **{k:bool(getattr(db.get(UserSocialPrivacy,user.id),k,False)) for k in ("hide_fans","hide_received_gifts")}, "hide_notifications": not user.notifications_enabled}
     @router.get("/me/wallet")
     def my_wallet(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         return {"lidya": int(user.lidya or 0), "lidya_gem": int(getattr(user, "lidya_gem", 0) or 0), "exchange_rate": {"lidya_to_gem": 1, "gem_to_lidya": 1}}
@@ -517,7 +527,8 @@ def register_platform_auth(current_user_dependency):
         blocked_by_them = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==target.id,UserBlock.blocked_id==user.id)))
         from .personal_fans import fan_count, gift_totals
         from .room_fan_levels import level_for_total
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
+        flags=social_flags(db,target.id,user.id)
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
     @router.get("/users/{user_id}/profile-stats")
     def user_profile_stats(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
@@ -628,11 +639,14 @@ def register_platform_auth(current_user_dependency):
         row.read=True; db.commit(); return {"read":True}
     @router.get("/users/{user_id}/fans")
     def fans(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_social_visible(db,user_id,user.id,"fans")
         if active_ban(db,user_id): return {"user_id":user_id,"total":0,"level":0}
         total=int(db.scalar(select(func.count(UserFollow.id)).where(UserFollow.following_id==user_id)) or 0)
         return {"user_id":user_id,"total":total,"level":fan_level(total)}
     @router.get("/users/{user_id}/profile-gifts")
     def profile_gifts(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_social_visible(db,user_id,user.id,"gifts")
+        require_social_visible(db,user_id,user.id,"fans")
         if active_ban(db,user_id): return []
         from .room_routes import GIFT_META
         rows=list(db.scalars(select(RoomGiftEvent).where(RoomGiftEvent.recipient_id==user_id).order_by(RoomGiftEvent.created_at.desc()).limit(100)))

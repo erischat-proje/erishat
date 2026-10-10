@@ -84,6 +84,7 @@
       portrait.onclick=()=>{closeProfile();document.getElementById('chat')?.classList.remove('show','eris-floating-dm');window.openUserProfile?.(u.id)};
       const level=Math.max(0,Math.min(40,Number(u.fan_level)||0));
       const fanButton=shade.querySelector('[data-fans]');
+      fanButton.hidden=!!u.fans_hidden;
       fanButton.title='Hayran seviyesi '+level+' · listeyi aç';
       fanButton.setAttribute('aria-label',fanButton.title);
       if(level){const badge=document.createElement('img');badge.src='./fan-levels/LEVEL'+level+'.png';badge.alt='Hayran seviyesi '+level;badge.style.cssText='width:34px;height:34px;object-fit:contain';fanButton.replaceChildren(badge)}
