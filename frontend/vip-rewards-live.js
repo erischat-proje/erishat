@@ -12,7 +12,7 @@
   const thresholds=[0,1000,5000,15000,30000,60000,120000,250000,500000,1000000,2000000,5000000,10000000];
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=n=>Number(n||0).toLocaleString('tr-TR');
-  const material=(kind,level)=>'./vip-assets/'+kind+'-'+level+'.png';
+  const material=(kind,level)=>'./vip-designs/lydia/'+kind+'-'+level+'.webp';
   const kinds={avatar:'Avatar',frame:'Çerçeve',wallpaper:'Duvar kağıdı'};
   const style=document.createElement('style');style.textContent=`
     .eris-vip-content{display:block!important;color:#fff;min-width:0}
@@ -47,7 +47,7 @@
       const level=Math.max(0,Math.min(12,Number(v.level)||0)),spent=Number(v.total_spent||0),next=level<12?thresholds[level+1]:null,prev=thresholds[level];
       const pct=next?Math.min(100,Math.max(0,(spent-prev)/(next-prev)*100)):100;
       root.innerHTML=`<div class="eris-vip-summary"><small>VIP DURUMUN</small><h2>${level?'VIP '+level:'VIP üyesi ol'}</h2><small>${number(spent)} Lidya harcama puanı</small><div class="eris-vip-progress"><i style="width:${pct}%"></i></div><small>${next?'VIP '+(level+1)+' seviyesine '+number(Math.max(0,next-spent))+' Lidya':'En yüksek seviye'}</small></div><p class="eris-vip-note">Her seviyede avatar, çerçeve ve duvar kağıdı envantere eklenir. Bu görünüm paketleri Lidya veya elmas ödemesi içermez. Kazanılan VIP girişlerini Koleksiyon → Oda girişi bölümünden seçebilir veya normal girişe dönebilirsin. Gizli VIP ve VIP girişini gizle ayarları korunur.</p>`;
-      if(level>=10){const extra=document.createElement('div');extra.className='eris-vip-buttons';const badge=document.createElement('button');badge.type='button';badge.textContent=v.knight_badge_claimed?'✓ Şövalye rozeti alındı':'VIP 10 · Şövalye rozetini al';badge.disabled=!!v.knight_badge_claimed;badge.onclick=()=>action(badge,()=>api('/me/vip/claims/knight_badge',{method:'POST'}));extra.append(badge);root.append(extra)}
+      if(level>=10){const extra=document.createElement('div');extra.className='eris-vip-buttons';const badge=document.createElement('button');badge.type='button';badge.textContent=v.knight_badge_claimed?'✓ Saray muhafızı rozeti alındı':'VIP 10 · Saray muhafızı rozetini al';badge.disabled=!!v.knight_badge_claimed;badge.onclick=()=>action(badge,()=>api('/me/vip/claims/knight_badge',{method:'POST'}));extra.append(badge);root.append(extra)}
       const filters=document.createElement('div');filters.className='eris-vip-filters';filters.setAttribute('role','group');filters.setAttribute('aria-label','VIP seviyelerini filtrele');root.append(filters);root._vipFilter=root._vipFilter||'all';
       for(const [key,name] of [['all','Tüm seviyeler'],['unlocked','Kazanılanlar'],['locked','Kilitli']]){const button=document.createElement('button');button.type='button';button.dataset.filter=key;button.textContent=name;button.onclick=()=>{root._vipFilter=key;filterRows()};filters.append(button)}
       function filterRows(){filters.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===root._vipFilter)));root.querySelectorAll('.eris-vip-row').forEach(row=>{row.hidden=root._vipFilter!=='all'&&row.dataset.unlocked!==String(root._vipFilter==='unlocked');row.style.display=row.hidden?'none':''})}
@@ -71,13 +71,17 @@
         const claim=row.querySelector('[data-claim]');claim.onclick=()=>action(claim,()=>api('/me/vip/rewards/'+item.level+'/claim',{method:'POST'}));
         if(complete)for(const x of item.rewards||[]){const b=document.createElement('button');b.type='button';b.textContent=(kinds[x.cosmetic_type]||'Görünüm')+' uygula';b.onclick=async()=>{b.disabled=true;try{await api(x.cosmetic_type==='wallpaper'?'/me/wallpaper/apply':'/me/cosmetics/apply',{method:'POST',body:JSON.stringify({cosmetic_type:x.cosmetic_type,asset_key:x.asset_key})});window.toast?.('VIP görünümü uygulandı ✓');window.dispatchEvent(new Event('erischat:cosmetics-updated'))}catch(e){window.toast?.(e.message)}finally{b.disabled=false}};row.querySelector('.eris-vip-buttons').append(b)}
         const feedback=document.createElement('div');feedback.className='eris-vip-status';feedback.setAttribute('role','status');row.lastElementChild.append(feedback);root.append(row);
+        row.querySelectorAll('.eris-vip-asset img,.eris-vip-presentation>img,.eris-vip-entry-reward-art').forEach(image=>{const button=document.createElement('button');button.type='button';button.className='eris-vip-art-button';button.setAttribute('aria-label',image.alt+' büyük görselini aç');image.replaceWith(button);button.append(image);button.onclick=()=>previewArt(image.src,image.alt)});
       }
       filterRows();
     }catch(e){if(root.isConnected&&root._vipTicket===ticket){root.replaceChildren();const state=document.createElement('div');state.className='eris-vip-load-state';state.setAttribute('role','status');state.textContent='VIP ödülleri yüklenemedi: '+e.message;const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=()=>load(root);state.append(retry);root.append(state)}}finally{if(root._vipTicket===ticket)root.setAttribute('aria-busy','false')}
   }
   async function action(button,fn){button.disabled=true;try{await fn();window.toast?.('VIP ödülleri envantere eklendi ✓');await Promise.all([...roots].filter(r=>r.isConnected).map(r=>load(r)))}catch(e){button.disabled=false;const status=button.closest('.eris-vip-row')?.querySelector('.eris-vip-status');if(status)status.textContent=e.message||'İşlem başarısız. Tekrar dene.';window.toast?.(e.message)}}
+  function previewArt(src,label){
+    document.querySelector('.eris-vip-art-preview')?.remove();const overlay=document.createElement('section');overlay.className='eris-vip-art-preview';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',label);const figure=document.createElement('figure'),image=document.createElement('img'),caption=document.createElement('figcaption'),button=document.createElement('button');image.src=src;image.alt=label;caption.textContent=label;button.type='button';button.textContent='Önizlemeyi kapat ×';const previous=document.activeElement;const close=()=>{overlay.remove();if(previous?.isConnected)previous.focus()};button.onclick=close;overlay.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();close()}if(e.key==='Tab'){e.preventDefault();button.focus()}};figure.append(image,caption);overlay.append(figure,button);document.body.append(overlay);button.focus();
+  }
   let lastTrigger;
-  function close(){document.querySelector('.eris-vip-overlay')?.remove();document.body.classList.remove('eris-vip-open');if(lastTrigger?.isConnected)lastTrigger.focus()}
+  function close(){document.querySelector('.eris-vip-art-preview')?.remove();document.querySelector('.eris-vip-overlay')?.remove();document.body.classList.remove('eris-vip-open');if(lastTrigger?.isConnected)lastTrigger.focus()}
   function open(){
     if(document.querySelector('.eris-vip-overlay'))return;lastTrigger=document.activeElement;
     const shade=document.createElement('div');shade.className='eris-vip-overlay';shade.innerHTML='<section class="eris-vip-dialog" role="dialog" aria-modal="true" aria-labelledby="erisVIPTitle"><header><h2 id="erisVIPTitle">VIP merkezi</h2><button type="button" aria-label="VIP merkezini kapat">×</button></header><div class="eris-vip-content"></div></section>';
@@ -86,13 +90,13 @@
     document.body.append(shade);document.body.classList.add('eris-vip-open');shade.querySelector('button').focus();load(shade.querySelector('.eris-vip-content'));
   }
   const profileColors=['#b9a8ff','#91bfff','#6ed8d5','#99e0ab','#eacb88','#ffb79e','#d59cff','#98afff','#ed94cb','#ffd68d','#a5eaff','#dbabff'];
-  function profileTheme(card,level,enabled=true){
+  function profileTheme(card,level,enabled=true,gender=window.ErisAuth?.user?.gender){
     const n=Math.max(0,Math.min(12,Number(level)||0)),visible=!!n&&enabled;
     card._artTicket=null;card._artObserver?.disconnect();card._artObserver=null;
     for(const key of ['border-image-source','border-image-slice','border-image-width','border-image-repeat','border-width','border-style','border-color','background-image'])card.style.removeProperty(key);
     card.classList.remove('visual-vip-card');card.classList.toggle('eris-mini-vip',visible);card.classList.add('eris-mini-modern');card.dataset.vipLevel=String(visible?n:0);
     card.style.setProperty('--vip-accent',profileColors[Math.max(0,n-1)]);
-    const theme=window.ErisVIPDesigns?.get(n);
+    const theme=window.ErisVIPDesigns?.get(n,gender);
     if(theme&&visible){card.style.setProperty('--vip-accent',theme.color);card.style.setProperty('--vip-metal',theme.metal);card.style.setProperty('--vip-profile-art','url("'+theme.frame+'")')}
     else{card.style.removeProperty('--vip-profile-art');card.style.removeProperty('--vip-metal')}
     let hero=card.querySelector('.eris-mini-vip-hero');
@@ -116,7 +120,7 @@
   function decorate(root,u){
     const level=Math.max(0,Math.min(12,Number(u.vip_level)||0));
     root.querySelectorAll('[data-vip-card]').forEach(img=>{img.hidden=!level||!!u.vip_badge_hidden;if(!img.hidden){img.src=material('card',level);img.alt='VIP '+level}});
-    const mini=root.querySelector('.eris-mini-card');if(mini){profileTheme(mini,level,!u.vip_neon_hidden);paidProfile(mini,u.profile_asset);}
+    const mini=root.querySelector('.eris-mini-card');if(mini){profileTheme(mini,level,!u.vip_neon_hidden,u.gender);paidProfile(mini,u.profile_asset);}
 
     for(const [selector,value] of Object.entries({'[data-followers]':u.followers_count,'[data-following]':u.following_count}))if(value!=null)root.querySelectorAll(selector).forEach(el=>{el.textContent=number(value)});
     root.querySelectorAll('[data-fans]').forEach(el=>{el.hidden=!!u.fans_hidden});
