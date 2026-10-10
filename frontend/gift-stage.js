@@ -124,6 +124,7 @@
     c.restore();
   }
   function renderFrame(c,p,asset,t,w,h,quality=1,destination=null){
+    if(p.guard&&global.ErisGuardGifts)return global.ErisGuardGifts.render(c,p,asset,t,w,h,quality,destination,{sprite,glow,ring,spark,gem,coin,lightning});
     if(p.craft&&global.ErisCraftGifts)return global.ErisCraftGifts.render(c,p,asset,t,w,h,quality,destination,{sprite,glow,ring,spark,gem,coin,lightning});
     if(p.agora&&global.ErisAgoraGifts)return global.ErisAgoraGifts.render(c,p,asset,t,w,h,quality,destination,{sprite,glow,ring,spark,gem,coin,lightning});
     if(global.ErisGiftUltra)return global.ErisGiftUltra.render(c,p,asset,t,w,h,quality,destination,{sprite,glow,ring,spark,gem,coin,lightning});
@@ -155,7 +156,7 @@
   let catalogPromise,plans=new Map(),giftNames=new Map(),queue=[],active=null,epoch=0,raf=0,root=null,audioContext,master,audioReady=Promise.resolve();
   const images=new Map(),sounds=new Map(),seen=new Map(),scopeVersions={room:0,dm:0,preview:0};let enabled=true;
   try{enabled=global.localStorage.getItem('eris.gift.sound')!=='off';}catch(_){}
-  async function catalog(){catalogPromise ||= global.fetch(new URL('gift-effects/catalog.json?v=craft-20261010',base),{signal:global.AbortSignal?.timeout?.(8000)}).then(r=>{if(!r.ok)throw new Error('Hediye efektleri yüklenemedi.');return r.json();}).then(r=>{plans=new Map(r.items.map(p=>[String(p.id),p]));giftNames=new Map(r.items.map(p=>[String(p.name),String(p.id)]));return plans;}).catch(e=>{catalogPromise=null;throw e;});return catalogPromise;}
+  async function catalog(){catalogPromise ||= global.fetch(new URL('gift-effects/catalog.json?v=guards-20261010',base),{signal:global.AbortSignal?.timeout?.(8000)}).then(r=>{if(!r.ok)throw new Error('Hediye efektleri yüklenemedi.');return r.json();}).then(r=>{plans=new Map(r.items.map(p=>[String(p.id),p]));giftNames=new Map(r.items.map(p=>[String(p.name),String(p.id)]));return plans;}).catch(e=>{catalogPromise=null;throw e;});return catalogPromise;}
   function unlock(){if(!enabled)return;try{const C=global.AudioContext||global.webkitAudioContext;if(!C)return;audioContext ||= new C();if(!master){master=audioContext.createGain();master.gain.value=.28;master.connect(audioContext.destination);}if(audioContext.state==='suspended')audioReady=audioContext.resume().catch(()=>{});}catch(_){} }
   function soundEnabled(value){if(value===undefined)return enabled;enabled=!!value;try{global.localStorage.setItem('eris.gift.sound',enabled?'on':'off');}catch(_){}if(active?.sourceGain)active.sourceGain.gain.setTargetAtTime(enabled?1:0,audioContext.currentTime,.025);if(enabled)unlock();doc.querySelectorAll('[data-gift-sound]').forEach(b=>{b.textContent=enabled?'Ses açık':'Ses kapalı';b.setAttribute('aria-pressed',String(enabled));});return enabled;}
   doc.addEventListener('pointerdown',unlock,{capture:true,passive:true});doc.addEventListener('keydown',unlock,{capture:true});
