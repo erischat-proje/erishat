@@ -7,6 +7,7 @@ import android.webkit.ValueCallback;
 import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -48,6 +49,8 @@ public class MainActivity extends Activity {
     private int permissionPageGeneration;
 
     private static final int MEDIA_PICK = 9003;
+    private static final int FILE_CAMERA_PERMISSION = 9004;
+    private Intent pendingCameraIntent;
     private ValueCallback<Uri[]> mediaCallback;
     private Uri captureUri;
     private File captureFile;
@@ -123,7 +126,7 @@ public class MainActivity extends Activity {
                                 ? types : new String[]{"image/*", "video/*"});
                         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     }
-                    startActivityForResult(intent, MEDIA_PICK);
+                    launchMediaIntent(intent);
                 } catch (RuntimeException | IOException error) {
                     cancelMedia();
                     android.widget.Toast.makeText(MainActivity.this,
@@ -160,6 +163,7 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+        @JavascriptInterface public String cameraVersion() { return "3"; }
         @JavascriptInterface
         public void googleSignIn() {
             runOnUiThread(() -> {
@@ -189,6 +193,7 @@ public class MainActivity extends Activity {
     private void cancelMedia() {
         ValueCallback<Uri[]> callback = mediaCallback;
         mediaCallback = null;
+        pendingCameraIntent = null;
         if (callback != null) callback.onReceiveValue(null);
         captureUri = null;
         if (captureFile != null) { captureFile.delete(); captureFile = null; }
@@ -200,47 +205,83 @@ public class MainActivity extends Activity {
         if (request != null) request.deny();
     }
 
-    private void handleMicrophoneRequest(PermissionRequest request) {
-        if (isFinishing() || isDestroyed() || !trustedPage()
-                || !trustedOrigin(request.getOrigin())) {
-            request.deny(); return;
-        }
-        boolean audio = false;
+    private void launchMediaIntent(Intent intent) {
+        boolean camera = MediaStore.ACTION_IMAGE_CAPTURE.equals(intent.getAction())
+                || MediaStore.ACTION_VIDEO_CAPTURE.equals(intent.getAction());
+        if (camera && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            pendingCameraIntent = intent;
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, FILE_CAMERA_PERMISSION);
+        } else startActivityForResult(intent, MEDIA_PICK);
+    }
+
+    private String[] requestedMediaResources(PermissionRequest request) {
+        ArrayList<String> resources = new ArrayList<>();
         for (String resource : request.getResources()) {
-            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) audio = true;
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
+                    || PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) resources.add(resource);
+            else return new String[0];
         }
-        if (!audio || pendingMicrophone != null || microphoneDialogOpen) {
+        return resources.toArray(new String[0]);
+    }
+
+    private boolean mediaPermissionsGranted(String[] resources) {
+        for (String resource : resources) {
+            String permission = PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                    ? Manifest.permission.CAMERA : Manifest.permission.RECORD_AUDIO;
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) return false;
+        }
+        return resources.length > 0;
+    }
+
+    private void handleMicrophoneRequest(PermissionRequest request) {
+        if (isFinishing() || isDestroyed() || !trustedPage() || !trustedOrigin(request.getOrigin())) {
             request.deny(); return;
         }
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
-            return;
+        String[] resources = requestedMediaResources(request);
+        if (resources.length == 0 || pendingMicrophone != null || microphoneDialogOpen || pendingCameraIntent != null) {
+            request.deny(); return;
+        }
+        if (mediaPermissionsGranted(resources)) { request.grant(resources); return; }
+        ArrayList<String> permissions = new ArrayList<>();
+        for (String resource : resources) {
+            String permission = PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                    ? Manifest.permission.CAMERA : Manifest.permission.RECORD_AUDIO;
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED && !permissions.contains(permission))
+                permissions.add(permission);
         }
         pendingMicrophone = request;
         permissionPageGeneration = pageGeneration;
         microphoneDialogOpen = true;
-        try {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MICROPHONE_PERMISSION);
-        } catch (RuntimeException error) {
-            microphoneDialogOpen = false;
-            denyPendingMicrophone();
-        }
+        try { requestPermissions(permissions.toArray(new String[0]), MICROPHONE_PERMISSION); }
+        catch (RuntimeException error) { microphoneDialogOpen = false; denyPendingMicrophone(); }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == FILE_CAMERA_PERMISSION) {
+            Intent intent = pendingCameraIntent;
+            pendingCameraIntent = null;
+            if (intent == null) return;
+            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                    && mediaCallback != null && mediaPageGeneration == pageGeneration && trustedPage()
+                    && !isFinishing() && !isDestroyed()) {
+                try { startActivityForResult(intent, MEDIA_PICK); }
+                catch (RuntimeException error) { cancelMedia(); }
+            } else {
+                cancelMedia();
+                android.widget.Toast.makeText(this, "Kamera izni verilmedi.", android.widget.Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
         if (requestCode != MICROPHONE_PERMISSION) return;
         microphoneDialogOpen = false;
         PermissionRequest request = pendingMicrophone;
         pendingMicrophone = null;
         if (request == null) return;
-        boolean allowed = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-        if (allowed && permissionPageGeneration == pageGeneration && trustedPage()
-                && trustedOrigin(request.getOrigin()) && !isFinishing() && !isDestroyed()) {
-            request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
-        } else {
-            request.deny();
-        }
+        String[] resources = requestedMediaResources(request);
+        if (mediaPermissionsGranted(resources) && permissionPageGeneration == pageGeneration && trustedPage()
+                && trustedOrigin(request.getOrigin()) && !isFinishing() && !isDestroyed()) request.grant(resources);
+        else request.deny();
     }
 
     @Override
