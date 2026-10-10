@@ -25,6 +25,7 @@
     if (!key) return '';
     if (/^(https?:|data:|blob:|\/)/.test(key)) return key;
     let clean = String(key).replace(/^\.\//, '');
+    clean = window.ErisVIPArt?.resolve(clean) || clean;
     if (premiumAssets.has(clean)) clean = clean.replace('shop-expansion/', 'shop-premium-v2/').replace(/\.svg$/, '.webp');
     if (!/^(shop-premium-v2|Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
     const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
