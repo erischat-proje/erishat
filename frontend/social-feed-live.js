@@ -360,9 +360,26 @@
     const target=root.querySelector('[data-feed]');target.innerHTML='<div class="ec-social-empty">Gönderiler yükleniyor…</div>';
     try{await renderPosts(target,await api().socialFeed(mode,30,0),false)}catch(e){target.textContent=e.message||'Gönderiler yüklenemedi.'}finally{busy=false}
   }
+  const mineRequests=new WeakMap();
   async function loadMine(container){
-    if(!container||!api())return;container.innerHTML='<div class="ec-social-empty">Gönderilerin yükleniyor…</div>';
-    try{await renderPosts(container,await api().myPosts(100,0),'profile')}catch(e){container.textContent=e.message||'Gönderilerin yüklenemedi.'}
+    if(!container||!api())return;
+    const request=(mineRequests.get(container)||0)+1;mineRequests.set(container,request);
+    container.setAttribute('aria-busy','true');container.innerHTML='<div class="ec-social-empty" role="status">Gönderilerin yükleniyor…</div>';
+    try{
+      const rows=await api().myPosts(100,0);
+      if(mineRequests.get(container)!==request||!container.isConnected)return;
+      await renderPosts(container,rows,'profile');
+      if(container.closest('.eph-my-posts')){
+        container.querySelectorAll('[data-post-options] button').forEach(button=>{
+          const label=document.createElement('span');label.textContent=button.getAttribute('aria-label');button.append(label);
+        });
+      }
+    }catch(e){
+      if(mineRequests.get(container)!==request||!container.isConnected)return;
+      container.replaceChildren();const state=document.createElement('div');state.className='eph-posts-error';state.setAttribute('role','status');
+      const message=document.createElement('span');message.textContent=e.message||'Gönderilerin yüklenemedi.';
+      const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=()=>loadMine(container);state.append(message,retry);container.append(state);
+    }finally{if(mineRequests.get(container)===request)container.setAttribute('aria-busy','false')}
   }
   function compose(post=null,startWithPhoto=false){
     const existing=document.querySelector('.ec-compose');if(existing){existing.querySelector('[data-close]')?.focus();return;}
@@ -378,7 +395,7 @@
     modal.querySelector('[data-remove]').onclick=()=>{selection++;validating=false;save.disabled=false;selectedFile=null;window.ErisSocialMedia.clear(file);videoPreview.pause();if(localUrl){URL.revokeObjectURL(localUrl);localUrl=''}preview.removeAttribute('src');preview.hidden=true;videoPreview.removeAttribute('src');videoPreview.hidden=true;removeImage=true;modal.querySelector('[data-remove]').hidden=true;status.textContent='Medya kaldırılacak.'};
     if(post?.media_url&&String(post.mime_type||'').startsWith('video/'))status.textContent='Mevcut video korunacak. Yeni dosya seçerek değiştirebilirsin.';
     if(post?.media_url)imageUrl(post.media_url).then(url=>{if(!modal.isConnected){URL.revokeObjectURL(url);objectUrls.delete(url);return}remoteUrl=url;const isVideo=post.media_kind==='video'||String(post.mime_type||'').startsWith('video/');if(isVideo){videoPreview.src=url;videoPreview.hidden=false;preview.hidden=true}else{preview.src=url;preview.hidden=false}}).catch(()=>{});
-    save.onclick=async()=>{if(validating||saving)return;if(!caption.value.trim()&&!selectedFile&&(!post?.media_url||removeImage)){status.textContent='Bir metin yaz veya medya ekle.';return}saving=true;save.disabled=true;status.textContent='Kaydediliyor…';try{if(post)await api().updatePost(post.id,caption.value,selectedFile,removeImage,audience.value);else await api().createPost(caption.value,selectedFile,audience.value);saving=false;close();window.toast?.(post?'Gönderi güncellendi.':'Gönderi paylaşıldı.');const feed=mount();if(feed)await loadFeed(feed);const mine=document.querySelector('#erisProfileHub [data-posts-list]');if(mine)await loadMine(mine)}catch(e){saving=false;status.textContent=e.message||'Gönderi kaydedilemedi.';save.disabled=false}};
+    save.onclick=async()=>{if(validating||saving)return;if(!caption.value.trim()&&!selectedFile&&(!post?.media_url||removeImage)){status.textContent='Bir metin yaz veya medya ekle.';return}saving=true;save.disabled=true;status.textContent='Kaydediliyor…';try{if(post)await api().updatePost(post.id,caption.value,selectedFile,removeImage,audience.value);else await api().createPost(caption.value,selectedFile,audience.value);saving=false;close();window.toast?.(post?'Gönderi güncellendi.':'Gönderi paylaşıldı.');const feed=mount();if(feed)await loadFeed(feed);const mine=document.querySelector('.eph-overlay [data-posts-list]')||document.querySelector('#erisProfileHub [data-posts-list]');if(mine)await loadMine(mine)}catch(e){saving=false;status.textContent=e.message||'Gönderi kaydedilemedi.';save.disabled=false}};
     caption.oninput=()=>modal.querySelector('[data-count]').textContent=caption.value.length+' / 2000';caption.oninput();
     window.ErisSocialMedia.bindDialog(modal,close);
     if(startWithPhoto)choose(false);
