@@ -1,0 +1,7 @@
+/* One shared, repository-supplied ErisChat logo, shown without cropping. */
+.app>.top .brand.eris-brand{display:flex;align-items:center;flex:1 1 154px;min-width:0;max-width:174px;margin-right:12px;font-size:0!important;letter-spacing:normal;padding:0!important;line-height:1}
+.app>.top .brand.eris-brand .eris-brand-image{display:block;width:100%;height:auto;max-height:48px;object-fit:contain;object-position:left center;mix-blend-mode:screen}
+.app>.top .actions{flex:0 0 auto;min-width:0}
+.eris-welcome-logo.eris-shared-brand,#erisOnboarding .eris-logo.eris-shared-brand{display:block;width:min(250px,100%);height:auto;max-height:none;margin:0 auto 22px;border:0;border-radius:0;background:none;box-shadow:none;font-size:0;line-height:1}
+.eris-shared-brand .eris-brand-image{display:block;width:100%;height:auto;max-height:none;object-fit:contain;mix-blend-mode:screen}
+@media(max-width:360px){.app>.top .brand.eris-brand{margin-right:8px;max-width:142px}.app>.top .brand.eris-brand .eris-brand-image{max-height:42px}.eris-welcome-logo.eris-shared-brand,#erisOnboarding .eris-logo.eris-shared-brand{width:min(220px,100%)}}
