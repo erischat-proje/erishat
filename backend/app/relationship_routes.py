@@ -556,10 +556,10 @@ class EquipReward(BaseModel):
 
 @router.post('/rewards/equip')
 def equip_reward(payload: EquipReward,db: Session=Depends(get_db),user: User=Depends(authenticated)):
-    if payload.kind in ('frame', 'wallpaper'):
+    if payload.kind == 'wallpaper':
         raise HTTPException(410, 'Eski görünüm kaldırıldı; Koleksiyon’dan yeni tasarım seçebilirsiniz.')
     house=owned_house(db,user.id,lock=True);rewards.ensure_rewards(db,house)
-    valid=next((r for r in rewards.items(user.gender) if r['type']==payload.kind and r['asset_key']==payload.asset_key and r['level']<=house.level),None)
+    valid=rewards.available_reward(user.gender,payload.kind,payload.asset_key,house.level)
     if payload.kind=='relationship_status':
         key=next((k for k in rewards.STATUS_NAMES if rewards.status_asset(k)==payload.asset_key),None)
         valid=key in rewards.status_unlocked(db,house) and rewards.status_compatible(house,key)

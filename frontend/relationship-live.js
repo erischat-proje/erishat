@@ -123,16 +123,36 @@
     if(own)api('/me').then(s=>{if(main===current&&body.isConnected&&current.renderTicket===ticket)renderRequests(body,s.requests||[])}).catch(()=>{});
   }
   async function showRewards(house=null,collection=false,selectedLevel=0){
-    const modal=dialog(collection?'İlişki koleksiyonum':'Seviye ödülleri','<p class="rel-note">Ödüller yükleniyor…</p>');
-    try{const data=await api('/rewards');if(!modal.shade.isConnected)return;modal.body.innerHTML='<div class="rel-reward-summary"></div><div class="rel-reward-filters"></div><div class="rel-reward-grid"></div>';
-      const items=(data.items||[]).filter(r=>!collection||r.owned);let filter=selectedLevel?'level':'all';
-      const draw=()=>{const grid=modal.body.querySelector('.rel-reward-grid');grid.replaceChildren();modal.body.querySelector('.rel-reward-summary').textContent='Seviye '+(data.level||0)+' · '+items.filter(r=>r.owned).length+' kazanılan ödül';
-        for(const r of items.filter(r=>filter==='all'||filter==='owned'&&r.owned||filter==='locked'&&!r.unlocked||filter==='level'&&r.level===selectedLevel)){const row=document.createElement('article');row.className='rel-reward-card'+(!r.unlocked?' locked':'');row.innerHTML='<div class="rel-reward-top"><img src="'+modernArt('level-'+r.level)+'" alt=""><span>Seviye '+r.level+'</span><small>'+(r.equipped?'Takılı':r.owned?'Kazanıldı':r.unlocked?'Açıldı':'Kilitli')+'</small></div><button type="button" class="rel-reward-preview" aria-label="'+esc(r.name)+' büyük görselini aç"><img src="'+esc(cosmetic(r.asset))+'" alt="'+esc(r.name)+'"></button><b>'+esc(r.name)+'</b>';
-          row.querySelector('.rel-reward-preview').onclick=()=>dialog(r.name,'<img class="rel-reward-large" src="'+esc(cosmetic(r.asset))+'" alt="'+esc(r.name)+'"><p class="rel-note">Seviye '+r.level+' · '+(r.owned?'Kazanıldı':'Bu seviyeye ulaştığınızda açılır.')+'</p>');
-          if(r.owned&&r.type!=='ring'){const b=document.createElement('button');b.type='button';b.className='rel-primary';b.textContent=r.equipped?'Çıkar':'Uygula';b.onclick=()=>action(b,modal.body,async()=>{await post('/rewards/equip',{kind:r.type,asset_key:r.equipped?null:r.asset_key});modal.close();showRewards(house,collection,selectedLevel);window.ErisChatCosmetics?.load?.();window.ErisProfile?.refresh?.();window.dispatchEvent(new Event('erischat:cosmetics-updated'));refreshMain()});row.append(b)}else{const hint=document.createElement('small');hint.textContent=r.type==='ring'&&r.owned?'Yüzük seç menüsünden takabilirsiniz.':'Seviye '+r.level+' gerekli';row.append(hint)}grid.append(row)}
-        if(!grid.children.length){const p=document.createElement('p');p.className='rel-note';p.textContent=filter==='level'?'Bu seviyede ayrı bir koleksiyon ödülü bulunmuyor.':'Bu filtrede henüz ödül yok.';grid.append(p)}modal.body.querySelectorAll('.rel-reward-filters button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)))};
-      for(const [id,name] of [['all','Tümü'],['owned','Kazanılanlar'],['locked','Kilitli'],...(selectedLevel?[['level','Seviye '+selectedLevel]]:[])]){const b=document.createElement('button');b.type='button';b.dataset.filter=id;b.textContent=name;b.onclick=()=>{filter=id;draw()};modal.body.querySelector('.rel-reward-filters').append(b)}draw();
-    }catch(e){errorBox(modal.body).textContent=e.message||'Ödüller yüklenemedi.'}
+    const modal=dialog(collection?'İlişki koleksiyonum':'İlişki ödülleri','<p class="rel-note">Ödüller yükleniyor…</p>',true);
+    modal.shade.classList.add('rel-rewards-page');
+    try{
+      const data=await api('/rewards');if(!modal.shade.isConnected)return;
+      modal.body.innerHTML='<section class="rel-rewards-intro"><small>LİDYA · SEVİYE ÖDÜLLERİ</small><h3>Birlikte kazanılan izler.</h3><p>Her seviyede iki kişisel ödül. Kadın ve erkek için aynı temanın farklı tasarımları.</p><div class="rel-reward-summary"></div></section><div class="rel-reward-controls"><div class="rel-reward-filters"></div><label class="rel-reward-level">Seviye<select aria-label="Ödül seviyesi"><option value="0">Tüm seviyeler</option></select></label></div><div class="rel-reward-grid"></div>';
+      const items=(data.items||[]).filter(r=>!collection||r.owned),grid=modal.body.querySelector('.rel-reward-grid'),select=modal.body.querySelector('select');let filter='all',level=Math.max(0,Math.min(12,Number(selectedLevel)||0));
+      const own=window.ErisAuth?.user||{};
+      const genderLabel=r=>r.gender==='male'?'Erkek tasarımı':r.gender==='female'?'Kadın tasarımı':'Çift ödülü';
+      for(let n=1;n<=12;n++){const option=document.createElement('option');option.value=n;option.textContent='Seviye '+n+' · '+items.filter(r=>r.level===n).length+' ödül';select.append(option)}select.value=String(level);
+      const preview=r=>{
+        const large=dialog(r.name,'<div class="rel-reward-large-wrap"><img class="rel-reward-large" src="'+esc(cosmetic(r.asset))+'" alt="'+esc(r.name)+'"></div><p class="rel-note">Seviye '+r.level+' · '+genderLabel(r)+' · '+(r.owned?'Kazanıldı':'Bu seviyeye ulaştığınızda açılır.')+'</p>');
+        if(r.type==='frame'){const wrap=large.body.querySelector('.rel-reward-large-wrap');wrap.classList.add('rel-frame-demo');const portrait=document.createElement('span');portrait.className='rel-frame-demo-avatar';if(own.avatar_asset){const im=document.createElement('img');im.src=cosmetic(own.avatar_asset);im.alt='';portrait.append(im)}else portrait.textContent=own.avatar||'👤';wrap.prepend(portrait)}
+        if(r.type==='bubble'){const demo=document.createElement('div');demo.className='rel-chat-bubble rel-reward-bubble-demo';demo.innerHTML='<div class="rel-chat-line"><b>'+esc(own.nickname||'Sen')+'</b><br>Birlikte nice güzel anılara. Bu alan gerçek sohbet metnini gösterir.</div>';large.body.append(demo);if(window.ErisVisualLayout?.bubble)window.ErisVisualLayout.bubble(demo,r.asset_key);else demo.style.backgroundImage='url("'+cosmetic(r.asset)+'")';}
+        if(r.type==='entrance'&&window.ErisRelationshipEntrance){const button=document.createElement('button');button.type='button';button.className='rel-primary';button.textContent='Oda girişini dene';button.onclick=()=>window.ErisRelationshipEntrance.show({...own,preview:true,nickname:own.nickname||'Sen',entrance_asset:r.asset_key,ring_asset:house?.ring?asset(house.ring):null});large.body.append(button)}
+      };
+      const draw=()=>{
+        grid.replaceChildren();modal.body.querySelector('.rel-reward-summary').textContent='Seviye '+(data.level||0)+' / 12 · '+items.filter(r=>r.owned).length+' kazanılan ödül';
+        for(const r of items.filter(r=>(!level||r.level===level)&&(filter==='all'||filter==='owned'&&r.owned||filter==='locked'&&!r.unlocked))){
+          const row=document.createElement('article');row.className='rel-reward-card'+(!r.unlocked?' locked':'')+(r.equipped?' equipped':'');row.dataset.rewardType=r.type;
+          row.innerHTML='<div class="rel-reward-top"><img src="'+modernArt('level-'+r.level)+'" alt=""><span>Seviye '+r.level+'</span><small>'+(r.equipped?'Takılı':r.owned?'Kazanıldı':r.unlocked?'Açıldı':'Kilitli')+'</small></div><button type="button" class="rel-reward-preview" aria-label="'+esc(r.name)+' büyük görselini aç"><img src="'+esc(cosmetic(r.asset))+'" alt="'+esc(r.name)+'" loading="lazy"></button><b>'+esc(r.name)+'</b><small class="rel-reward-variant">'+genderLabel(r)+'</small>';
+          row.querySelector('.rel-reward-preview').onclick=()=>preview(r);
+          if(r.owned&&r.type!=='ring'){const b=document.createElement('button');b.type='button';b.className='rel-primary';b.textContent=r.equipped?'Çıkar':'Uygula';b.onclick=()=>action(b,modal.body,async()=>{await post('/rewards/equip',{kind:r.type,asset_key:r.equipped?null:r.asset_key});modal.close();showRewards(house,collection,level);window.ErisChatCosmetics?.load?.();window.ErisProfile?.refresh?.();window.dispatchEvent(new Event('erischat:cosmetics-updated'));refreshMain()});row.append(b)}
+          else{const hint=document.createElement('small');hint.className='rel-reward-hint';hint.textContent=r.type==='ring'&&r.owned?'Yüzük koleksiyonundan takabilirsiniz.':'Seviye '+r.level+' gerekli';row.append(hint)}grid.append(row);
+        }
+        if(!grid.children.length){const empty=document.createElement('div');empty.className='rel-rewards-empty';empty.textContent='Bu seçimde henüz ödül bulunmuyor.';grid.append(empty)}
+        modal.body.querySelectorAll('.rel-reward-filters button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)));
+      };
+      for(const [id,name] of [['all','Tümü'],['owned','Kazanılanlar'],['locked','Kilitli']]){const b=document.createElement('button');b.type='button';b.dataset.filter=id;b.textContent=name;b.onclick=()=>{filter=id;draw()};modal.body.querySelector('.rel-reward-filters').append(b)}
+      select.onchange=()=>{level=Number(select.value);draw()};draw();
+    }catch(e){if(modal.shade.isConnected)errorBox(modal.body).textContent=e.message||'Ödüller yüklenemedi.'}
   }
   async function coupleGifts(house){
     const modal=dialog('Çifte hediye gönder','<p>Hediyeler yükleniyor…</p>');

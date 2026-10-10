@@ -8,7 +8,7 @@
   async function describe(key){
     await manifest;const path=clean(key);if(pending.has(path))return pending.get(path);const known=metadata.get(path);
     const result=new Promise(resolve=>{const image=new Image();let done=false;const finish=value=>{if(done)return;done=true;clearTimeout(timer);if(!value)pending.delete(path);resolve(value)};const timer=setTimeout(()=>finish(known||null),6000);
-      image.onload=()=>{const width=image.naturalWidth,height=image.naturalHeight;if(known&&known.width===width&&known.height===height)return finish(known);
+      image.onload=()=>{const width=image.naturalWidth,height=image.naturalHeight;if(/relationship-assets\/rewards\/sohbet-(?:male|female)-l(?:[1-9]|1[0-2])\.png$/.test(path)){return finish({width,height,name:null,slice:[Math.round(height*.25),Math.round(width*.22),Math.round(height*.25),Math.round(width*.22)],border_cap:[18,34,18,34]});}if(known&&known.width===width&&known.height===height)return finish(known);
         const value={width,height,name:null};if(known?.slice)value.slice=known.slice.map((n,i)=>Math.round(n*(i%2?width/known.width:height/known.height)));
         if(known&&Math.abs(width/height-known.width/known.height)<.1){value.avatar=known.avatar;value.ring=known.ring;}finish(value);};image.onerror=()=>finish(null);image.src=url(key);});
     pending.set(path,result);if(pending.size>128)pending.delete(pending.keys().next().value);return result;
