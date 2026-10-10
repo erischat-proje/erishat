@@ -188,11 +188,7 @@
         return;
       }
       if(key==='notifications') {
-        const rows=await api('/me/notifications?limit=50');if(index!==requestIndex)return;
-        body.innerHTML='<h3>Bildirimler</h3><div data-notifications></div>';
-        const list=body.querySelector('[data-notifications]');
-        if(!rows.length){list.innerHTML='<div class="eph-muted">Şimdilik bildirim yok.</div>';return}
-        for(const row of rows){const line=document.createElement('div');line.className='eph-row';const text=document.createElement('div');const title=document.createElement('b');title.textContent=row.title||'Bildirim';const message=document.createElement('div');message.className='eph-muted';message.textContent=row.body||'';text.append(title,message);line.append(text);if(!row.read){const button=document.createElement('button');button.type='button';button.textContent='Okundu';button.onclick=async()=>{button.disabled=true;try{await api('/me/notifications/'+encodeURIComponent(row.id)+'/read',{method:'POST'});line.remove();if(!list.children.length)list.textContent='Tüm bildirimler okundu.'}catch(error){button.disabled=false;button.textContent=error.message||'Tekrar dene'}};line.append(button)}else{const read=document.createElement('span');read.className='eph-muted';read.textContent='Okundu';line.append(read)}list.append(line)}return;
+        await window.ErisNotifications.render(body,()=>index===requestIndex);return;
       }
       if(key==='privacy') {
         body.innerHTML='<h3>Gizlilik ayarları</h3><p class="eph-muted">Profil görünürlüğünü gizlilik ekranından yönetebilirsin.</p><button data-open type="button">Gizlilik ayarlarını aç</button>';
