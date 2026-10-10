@@ -81,7 +81,7 @@
     row.append(portrait);
     const body = document.createElement('div'); body.className='dm-message-text';
     if(message?.gift_key && message?.gift_image_url){
-      const img=document.createElement('img');img.src=message.gift_image_url;img.alt=message.gift_key;img.style.cssText='display:block;width:70px;height:70px;object-fit:contain;margin:auto';body.append(img);
+      const img=document.createElement('img');img.src=window.ErisGiftArt?.url(message.gift_key,message.gift_image_url)||message.gift_image_url;img.alt=message.gift_key;img.style.cssText='display:block;width:70px;height:70px;object-fit:contain;margin:auto';body.append(img);
       const price=document.createElement('small');price.textContent=Number(message.gift_price||0).toLocaleString('tr-TR')+' Lidya';body.append(price);
     }else body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (String(message?.text||'').startsWith('[Story yanıtı #') ? String(message.text).replace(/^\[Story yanıtı #\d+\]\s*/, '') : (message?.media_type ? '' : String(message?.text ?? message?.message ?? '')));
     const storyReply=String(message?.text||'').startsWith('[Story yanıtı #');
@@ -422,7 +422,7 @@
         const selected=categories.find(x=>x[0]===category);
         for(const g of gifts.filter(g=>category==='all'||Number(g.unit_price)>=selected[2]&&Number(g.unit_price)<=selected[3])){
           const button=document.createElement('button');button.type='button';button.title=g.name||g.gift_key;
-          const image=document.createElement('img');image.src=g.image_url;image.alt='';image.loading='lazy';image.className='dm-gift-art';
+          const image=document.createElement('img');image.src=window.ErisGiftArt?.url(g.id||g.gift_key,g.image_url)||g.image_url;image.alt='';image.loading='lazy';image.className='dm-gift-art';
           const price=document.createElement('small');price.className='dm-gift-price';price.textContent=Number(g.unit_price).toLocaleString('tr-TR')+' Lidya';
           button.append(image,price);
           button.onclick=async()=>{if(sendingGift)return;sendingGift=true;button.disabled=true;const conversation=activeConversationId,count=quantity;try{

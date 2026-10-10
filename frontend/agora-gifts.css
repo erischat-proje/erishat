@@ -10,3 +10,7 @@ html body .eris-gift-cinema{z-index:40060!important}
 
 
 #erischatGiftPanel.agora-picker .agora-art.sofra-art{background-image:url('./gift-effects/sofra/art-atlas.png');background-size:500% 400%;background-position:calc(var(--agora-col)*25%) calc(var(--agora-row)*100% / 3)}
+
+
+html body #erischatGiftPanel.agora-picker .egp-select img{background:none;object-fit:contain;width:100%;aspect-ratio:1;height:auto}
+html body .dm-gift-art{background:none!important;object-fit:contain!important}
