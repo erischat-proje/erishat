@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .config import settings
 from .models import Conversation, ConversationMember, Message, User
-from .platform_models import DirectCall, DirectCallSignal, DirectCallPayment, UserBlock, UserFollow
+from .platform_models import DirectCall, DirectCallHistoryHidden, DirectCallSignal, DirectCallPayment, UserBlock, UserFollow
 from .admin_models import AdminRole
 from .repositories import ConversationRepository
 
@@ -150,9 +150,13 @@ def active_call(db: Session = Depends(get_db), user: User = Depends(authenticate
     return summary(db, call, user.id) if call else {"id": None}
 
 
-def history_rows(db: Session, user_id: str):
-    calls = db.scalars(select(DirectCall).where(or_(DirectCall.caller_id == user_id, DirectCall.callee_id == user_id))
-                       .order_by(DirectCall.created_at.desc()).limit(100)).all()
+def history_rows(db: Session, user_id: str, include_hidden: bool = True):
+    query = select(DirectCall).where(or_(DirectCall.caller_id == user_id, DirectCall.callee_id == user_id))
+    if not include_hidden:
+        query = query.where(~select(DirectCallHistoryHidden.call_id).where(
+            DirectCallHistoryHidden.user_id == user_id,
+            DirectCallHistoryHidden.call_id == DirectCall.id).exists())
+    calls = db.scalars(query.order_by(DirectCall.created_at.desc()).limit(100)).all()
     rows = []
     for call in calls:
         item = summary(db, call, user_id)
@@ -165,7 +169,22 @@ def history_rows(db: Session, user_id: str):
 
 @router.get("/calls/history")
 def call_history(db: Session = Depends(get_db), user: User = Depends(authenticated)):
-    return history_rows(db, user.id)
+    return history_rows(db, user.id, include_hidden=False)
+
+
+@router.delete("/calls/history")
+def clear_call_history(db: Session = Depends(get_db), user: User = Depends(authenticated)):
+    # Serialize repeated clear requests from the same user; never delete a call.
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    ids = db.scalars(select(DirectCall.id).where(
+        or_(DirectCall.caller_id == user.id, DirectCall.callee_id == user.id),
+        ~select(DirectCallHistoryHidden.call_id).where(
+            DirectCallHistoryHidden.user_id == user.id,
+            DirectCallHistoryHidden.call_id == DirectCall.id).exists())).all()
+    for call_id in ids:
+        db.add(DirectCallHistoryHidden(user_id=user.id, call_id=call_id))
+    db.commit()
+    return {"hidden_count": len(ids)}
 
 
 @router.get("/admin/calls/{user_key}")

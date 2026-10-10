@@ -408,3 +408,11 @@ class SocialPostCommentLike(Base):
     __tablename__ = "social_post_comment_likes"
     comment_id: Mapped[int] = mapped_column(ForeignKey("social_post_comments.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+
+
+
+class DirectCallHistoryHidden(Base):
+    """Per-user visibility only; call records remain available to DA queries."""
+    __tablename__ = "direct_call_history_hidden"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    call_id: Mapped[str] = mapped_column(ForeignKey("direct_calls.id", ondelete="CASCADE"), primary_key=True)
