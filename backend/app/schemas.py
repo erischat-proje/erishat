@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .username_rules import validate_username
+
 
 class UserCreate(BaseModel):
     nickname: str = Field(min_length=1, max_length=32)
@@ -15,7 +17,7 @@ class UserCreate(BaseModel):
         value = value.strip()
         if not value:
             raise ValueError("nickname boş olamaz")
-        return value
+        return validate_username(value)
 
 
 class OnboardingRequest(BaseModel):
@@ -32,6 +34,11 @@ class OnboardingRequest(BaseModel):
     @classmethod
     def clean_text(cls, value: str) -> str:
         return value.strip()
+
+    @field_validator("username")
+    @classmethod
+    def validate_username_field(cls, value: str) -> str:
+        return validate_username(value)
 
     @field_validator("birth_date")
     @classmethod
@@ -69,7 +76,7 @@ class UserUpdate(BaseModel):
         value = value.strip()
         if not value:
             raise ValueError("İsim boş olamaz")
-        return value
+        return validate_username(value)
 
     @field_validator("first_name", "last_name")
     @classmethod
@@ -93,7 +100,7 @@ class NicknameChange(BaseModel):
         value = value.strip()
         if not value:
             raise ValueError("İsim boş olamaz")
-        return value
+        return validate_username(value)
 
 
 class UserOut(BaseModel):
