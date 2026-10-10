@@ -5,12 +5,12 @@
   const makeKey=()=> 'http_'+(crypto.randomUUID?.()||Array.from(crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join(''));
   let key=makeKey(),socket=null,session='',retry=null,loading=null,generation=0,stopped=false,fallback=false,lastBeat=0;
   const fingerprints=new WeakMap();
-  function message(root,text){const note=document.createElement('div');note.className='card';note.style.padding='16px';note.textContent=text;root.replaceChildren(note);}
+  function message(root,text){const note=document.createElement('div');note.className='card ec-discovery-empty';const art=document.createElement('span');art.className='ec-empty-art';art.innerHTML=window.ErisSocialMedia?.icon?.('people')||'';const title=document.createElement('b');title.textContent='Yeni sohbetlere yer aç';const copy=document.createElement('p');copy.textContent=text;note.append(art,title,copy);root.replaceChildren(note);}
   function roomCard(room){
     const button=document.createElement('button');button.type='button';button.className='room card';
-    const info=document.createElement('span');info.className='grow roomText';const title=document.createElement('b');title.textContent=(room.locked?'🔒 ':'')+room.name;
+    const art=document.createElement('span');art.className='ec-room-art';art.innerHTML=window.ErisSocialMedia?.icon?.('room')||'';button.append(art);const info=document.createElement('span');info.className='grow roomText';const title=document.createElement('b');title.textContent=(room.locked?'🔒 ':'')+room.name;
     const detail=document.createElement('small');detail.textContent=`${room.member_count} çevrim içi • Bugün ${room.daily_gift_lidya} Lidya`;
-    const id=document.createElement('small');id.textContent='ID: '+(room.public_id||'');info.append(title,detail,id);button.append(info);
+    const id=document.createElement('small');id.textContent='ID: '+(room.public_id||'');info.append(title,detail,id);button.append(info);const badge=document.createElement('span');badge.className='ec-room-live';badge.textContent='CANLI';button.append(badge);
     button.onclick=()=>{window.ErisCurrentRoomId=room.id;window.currentRoomId=room.id;window.openRoom?.(room.id,room.name);};return button;
   }
   function renderRooms(id,rows,empty){const root=document.getElementById(id);if(!root)return;const hash=JSON.stringify(rows);if(fingerprints.get(root)===hash)return;fingerprints.set(root,hash);root.replaceChildren();rows.forEach(room=>root.append(roomCard(room)));if(!rows.length)message(root,empty);}
@@ -29,7 +29,7 @@
     const root=document.getElementById('people');if(!root)return;const box=controls(root);if(!box.querySelector('select').disabled)box.querySelector('select').value=data.gender_filter||'any';
     let list=root.querySelector('[data-discovery-people]');if(!list){list=document.createElement('div');list.dataset.discoveryPeople='';list.className='list';Array.from(root.children).filter(x=>x!==box).forEach(x=>x.remove());root.append(list);}
     const hash=JSON.stringify([data.people,data.location_required]);if(fingerprints.get(list)===hash)return;fingerprints.set(list,hash);list.replaceChildren();
-    for(const user of data.people||[]){const button=document.createElement('button');button.type='button';button.className='item card';const name=document.createElement('b');name.textContent=user.nickname;window.ErisRoleBadges?.bind(name,user);const detail=document.createElement('small');detail.textContent=`Çevrim içi • ${user.distance_km} km`;const info=document.createElement('span');info.append(name,detail);button.append(info);button.onclick=()=>window.openUserProfile?.(user.user_id);list.append(button);}
+    for(const user of data.people||[]){const button=document.createElement('button');button.type='button';button.className='item card ec-person-card';const avatar=document.createElement('span');avatar.className='ec-person-avatar';avatar.textContent=String(user.nickname||'?').slice(0,1).toUpperCase();button.append(avatar);const name=document.createElement('b');name.textContent=user.nickname;window.ErisRoleBadges?.bind(name,user);const detail=document.createElement('small');detail.textContent=Number.isFinite(Number(user.distance_km))&&user.distance_km!=null?`Çevrim içi • ${Number(user.distance_km).toFixed(1)} km`:'Çevrim içi';const info=document.createElement('span');info.append(name,detail);button.append(info);button.onclick=()=>window.openUserProfile?.(user.user_id);list.append(button);}
     if(!list.children.length)message(list,data.location_required?'Yakındaki kişileri görmek için konum izni ver.':'Tercihine uygun çevrim içi kullanıcı yok.');
   }
   async function presence(active){await api('/discover/presence',{method:'POST',body:JSON.stringify({connection_id:key,active})});fallback=active;lastBeat=Date.now();}
