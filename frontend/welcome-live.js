@@ -46,8 +46,7 @@
     root.innerHTML = `
       <div class="eris-welcome-backdrop">
         <div class="eris-welcome-card">
-          <div class="eris-welcome-logo">E</div>
-          <div class="eris-welcome-brand">ErisChat</div>
+          <div class="eris-welcome-logo eris-shared-brand"><img class="eris-brand-image" src="./eris-brand-logo.jpg?v=shared-brand-20261010" alt="ErisChat" width="1600" height="544" decoding="async"></div>
 
           <div class="eris-welcome-title">Hoşgeldin ${escapeHtml(user.nickname || '')} 💜</div>
 

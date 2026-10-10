@@ -272,7 +272,7 @@
       </style>
 
       <div class="eris-onboard-card">
-        <div class="eris-logo">E</div>
+        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./eris-brand-logo.jpg?v=shared-brand-20261010" alt="ErisChat" width="1600" height="544" decoding="async"></div>
         <h1>ErisChat'e Hoş Geldin</h1>
         <div class="eris-subtitle">
           Seni daha iyi tanıyabilmemiz için profilini tamamlayalım.
