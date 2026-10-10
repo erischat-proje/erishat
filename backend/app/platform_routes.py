@@ -154,6 +154,7 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
         "received_gift_lidya": None if flags["gifts_hidden"] else received_total(db, target.id),
         **flags,
         "relationship": public_brief(db, target.id),
+        "gender": target.gender,
         "title_asset": target.title_asset,
         "profile_asset": target.profile_asset,
         "vip_level": int(v.level or 0) if v and visible else 0,

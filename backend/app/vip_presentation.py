@@ -1,10 +1,7 @@
 """Level benefits. No inventory grants or client-supplied level is trusted."""
 from .platform_models import UserPrivacy, VipStatus
 
-THEMES = (
-    "Buz Gümüş", "Aytaşı", "Zümrüt", "Kehribar", "Gül Kuvars", "Ametist",
-    "Safir", "Yakut", "Güneş Altını", "Elmas", "Gece İmparatoru", "Lidya İmparatorluğu",
-)
+THEMES = ('Sardis Kıvılcımı', 'Paktolos Gümüşü', 'Asma Bahçesi', 'Kehribar Yolu', 'Palmet Sarayı', 'Ametist Mührü', 'Safir Muhafız', 'Yakut Hanedanı', 'Altın Aslan', 'Elektron Hazinesi', 'Krezus Sarayı', 'Lidya İmparatorluğu')
 
 
 def entry_style(user) -> str:
@@ -12,7 +9,7 @@ def entry_style(user) -> str:
 
 
 def entry_asset(level: int, style: str = "female") -> str:
-    return f"vip-designs/entry-{'male-' if style == 'male' else ''}{level}.png"
+    return f"vip-designs/lydia/entry-{'male' if style == 'male' else 'female'}-{level}.webp"
 
 
 def presentation_rewards(level: int, style: str = "female") -> list[dict]:
@@ -20,7 +17,7 @@ def presentation_rewards(level: int, style: str = "female") -> list[dict]:
         return []
     return [
         {"type": "profile_window", "key": f"vip-profile-{level}",
-         "name": THEMES[level - 1], "asset_url": f"vip-designs/profile-{level}.png",
+         "name": THEMES[level - 1], "asset_url": f"vip-designs/lydia/profile-{'male' if style == 'male' else 'female'}-{level}.webp",
          "automatic": True},
         {"type": "vip_entrance", "key": f"vip-entrance-{level}",
          "name": f"{THEMES[level - 1]} oda girişi", "automatic": True,

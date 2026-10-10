@@ -1,0 +1,1038 @@
+{
+  "male": [
+    {
+      "level": 1,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-1.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-1.webp",
+          "name": "VIP 1 · Sardis Kıvılcımı · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP1.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-1.webp",
+          "name": "VIP 1 · Sardis Kıvılcımı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_01",
+          "asset_url": "vip-designs/lydia/wallpaper-male-1.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-1",
+          "name": "Sardis Kıvılcımı",
+          "asset_url": "vip-designs/lydia/profile-male-1.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-1",
+          "name": "Sardis Kıvılcımı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-1.webp"
+        }
+      ],
+      "unlocked": true,
+      "claimed": true,
+      "complete": true
+    },
+    {
+      "level": 2,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-2.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-2.webp",
+          "name": "VIP 2 · Paktolos Gümüşü · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP2.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-2.webp",
+          "name": "VIP 2 · Paktolos Gümüşü"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_02",
+          "asset_url": "vip-designs/lydia/wallpaper-male-2.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-2",
+          "name": "Paktolos Gümüşü",
+          "asset_url": "vip-designs/lydia/profile-male-2.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-2",
+          "name": "Paktolos Gümüşü oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-2.webp"
+        }
+      ],
+      "unlocked": true,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 3,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-3.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-3.webp",
+          "name": "VIP 3 · Asma Bahçesi · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP3.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-3.webp",
+          "name": "VIP 3 · Asma Bahçesi"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_03",
+          "asset_url": "vip-designs/lydia/wallpaper-male-3.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-3",
+          "name": "Asma Bahçesi",
+          "asset_url": "vip-designs/lydia/profile-male-3.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-3",
+          "name": "Asma Bahçesi oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-3.webp"
+        }
+      ],
+      "unlocked": true,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 4,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-4.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-4.webp",
+          "name": "VIP 4 · Kehribar Yolu · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP4.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-4.webp",
+          "name": "VIP 4 · Kehribar Yolu"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_04",
+          "asset_url": "vip-designs/lydia/wallpaper-male-4.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-4",
+          "name": "Kehribar Yolu",
+          "asset_url": "vip-designs/lydia/profile-male-4.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-4",
+          "name": "Kehribar Yolu oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-4.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 5,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-5.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-5.webp",
+          "name": "VIP 5 · Palmet Sarayı · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP5.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-5.webp",
+          "name": "VIP 5 · Palmet Sarayı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_05",
+          "asset_url": "vip-designs/lydia/wallpaper-male-5.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-5",
+          "name": "Palmet Sarayı",
+          "asset_url": "vip-designs/lydia/profile-male-5.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-5",
+          "name": "Palmet Sarayı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-5.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 6,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-6.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-6.webp",
+          "name": "VIP 6 · Ametist Mührü · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP6.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-6.webp",
+          "name": "VIP 6 · Ametist Mührü"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_06",
+          "asset_url": "vip-designs/lydia/wallpaper-male-6.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-6",
+          "name": "Ametist Mührü",
+          "asset_url": "vip-designs/lydia/profile-male-6.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-6",
+          "name": "Ametist Mührü oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-6.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 7,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-7.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-7.webp",
+          "name": "VIP 7 · Safir Muhafız · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP7.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-7.webp",
+          "name": "VIP 7 · Safir Muhafız"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_07",
+          "asset_url": "vip-designs/lydia/wallpaper-male-7.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-7",
+          "name": "Safir Muhafız",
+          "asset_url": "vip-designs/lydia/profile-male-7.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-7",
+          "name": "Safir Muhafız oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-7.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 8,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-8.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-8.webp",
+          "name": "VIP 8 · Yakut Hanedanı · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP8.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-8.webp",
+          "name": "VIP 8 · Yakut Hanedanı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_08",
+          "asset_url": "vip-designs/lydia/wallpaper-male-8.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-8",
+          "name": "Yakut Hanedanı",
+          "asset_url": "vip-designs/lydia/profile-male-8.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-8",
+          "name": "Yakut Hanedanı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-8.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 9,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-9.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-9.webp",
+          "name": "VIP 9 · Altın Aslan · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP9.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-9.webp",
+          "name": "VIP 9 · Altın Aslan"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_09",
+          "asset_url": "vip-designs/lydia/wallpaper-male-9.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-9",
+          "name": "Altın Aslan",
+          "asset_url": "vip-designs/lydia/profile-male-9.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-9",
+          "name": "Altın Aslan oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-9.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 10,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-10.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-10.webp",
+          "name": "VIP 10 · Elektron Hazinesi · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP10.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-10.webp",
+          "name": "VIP 10 · Elektron Hazinesi"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_10",
+          "asset_url": "vip-designs/lydia/wallpaper-male-10.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-10",
+          "name": "Elektron Hazinesi",
+          "asset_url": "vip-designs/lydia/profile-male-10.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-10",
+          "name": "Elektron Hazinesi oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-10.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 11,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-11.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-11.webp",
+          "name": "VIP 11 · Krezus Sarayı · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP11.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-11.webp",
+          "name": "VIP 11 · Krezus Sarayı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_11",
+          "asset_url": "vip-designs/lydia/wallpaper-male-11.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-11",
+          "name": "Krezus Sarayı",
+          "asset_url": "vip-designs/lydia/profile-male-11.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-11",
+          "name": "Krezus Sarayı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-11.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 12,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-male-12.svg",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/frame-male-12.webp",
+          "name": "VIP 12 · Lidya İmparatorluğu · Erkek çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/ERKEK VİP/VİP12.png",
+          "gender": "male",
+          "asset_url": "vip-designs/lydia/avatar-male-12.webp",
+          "name": "VIP 12 · Lidya İmparatorluğu"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_male_12",
+          "asset_url": "vip-designs/lydia/wallpaper-male-12.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-12",
+          "name": "Lidya İmparatorluğu",
+          "asset_url": "vip-designs/lydia/profile-male-12.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-12",
+          "name": "Lidya İmparatorluğu oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-male-12.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    }
+  ],
+  "female": [
+    {
+      "level": 1,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-1.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-1.webp",
+          "name": "VIP 1 · Sardis Kıvılcımı · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP1.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-1.webp",
+          "name": "VIP 1 · Sardis Kıvılcımı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_01",
+          "asset_url": "vip-designs/lydia/wallpaper-female-1.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-1",
+          "name": "Sardis Kıvılcımı",
+          "asset_url": "vip-designs/lydia/profile-female-1.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-1",
+          "name": "Sardis Kıvılcımı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-1.webp"
+        }
+      ],
+      "unlocked": true,
+      "claimed": true,
+      "complete": true
+    },
+    {
+      "level": 2,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-2.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-2.webp",
+          "name": "VIP 2 · Paktolos Gümüşü · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP2.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-2.webp",
+          "name": "VIP 2 · Paktolos Gümüşü"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_02",
+          "asset_url": "vip-designs/lydia/wallpaper-female-2.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-2",
+          "name": "Paktolos Gümüşü",
+          "asset_url": "vip-designs/lydia/profile-female-2.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-2",
+          "name": "Paktolos Gümüşü oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-2.webp"
+        }
+      ],
+      "unlocked": true,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 3,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-3.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-3.webp",
+          "name": "VIP 3 · Asma Bahçesi · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP3.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-3.webp",
+          "name": "VIP 3 · Asma Bahçesi"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_03",
+          "asset_url": "vip-designs/lydia/wallpaper-female-3.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-3",
+          "name": "Asma Bahçesi",
+          "asset_url": "vip-designs/lydia/profile-female-3.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-3",
+          "name": "Asma Bahçesi oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-3.webp"
+        }
+      ],
+      "unlocked": true,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 4,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-4.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-4.webp",
+          "name": "VIP 4 · Kehribar Yolu · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP4.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-4.webp",
+          "name": "VIP 4 · Kehribar Yolu"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_04",
+          "asset_url": "vip-designs/lydia/wallpaper-female-4.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-4",
+          "name": "Kehribar Yolu",
+          "asset_url": "vip-designs/lydia/profile-female-4.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-4",
+          "name": "Kehribar Yolu oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-4.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 5,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-5.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-5.webp",
+          "name": "VIP 5 · Palmet Sarayı · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP5.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-5.webp",
+          "name": "VIP 5 · Palmet Sarayı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_05",
+          "asset_url": "vip-designs/lydia/wallpaper-female-5.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-5",
+          "name": "Palmet Sarayı",
+          "asset_url": "vip-designs/lydia/profile-female-5.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-5",
+          "name": "Palmet Sarayı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-5.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 6,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-6.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-6.webp",
+          "name": "VIP 6 · Ametist Mührü · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP6.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-6.webp",
+          "name": "VIP 6 · Ametist Mührü"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_06",
+          "asset_url": "vip-designs/lydia/wallpaper-female-6.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-6",
+          "name": "Ametist Mührü",
+          "asset_url": "vip-designs/lydia/profile-female-6.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-6",
+          "name": "Ametist Mührü oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-6.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 7,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-7.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-7.webp",
+          "name": "VIP 7 · Safir Muhafız · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP7.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-7.webp",
+          "name": "VIP 7 · Safir Muhafız"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_07",
+          "asset_url": "vip-designs/lydia/wallpaper-female-7.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-7",
+          "name": "Safir Muhafız",
+          "asset_url": "vip-designs/lydia/profile-female-7.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-7",
+          "name": "Safir Muhafız oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-7.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 8,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-8.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-8.webp",
+          "name": "VIP 8 · Yakut Hanedanı · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP8.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-8.webp",
+          "name": "VIP 8 · Yakut Hanedanı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_08",
+          "asset_url": "vip-designs/lydia/wallpaper-female-8.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-8",
+          "name": "Yakut Hanedanı",
+          "asset_url": "vip-designs/lydia/profile-female-8.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-8",
+          "name": "Yakut Hanedanı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-8.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 9,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-9.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-9.webp",
+          "name": "VIP 9 · Altın Aslan · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP9.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-9.webp",
+          "name": "VIP 9 · Altın Aslan"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_09",
+          "asset_url": "vip-designs/lydia/wallpaper-female-9.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-9",
+          "name": "Altın Aslan",
+          "asset_url": "vip-designs/lydia/profile-female-9.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-9",
+          "name": "Altın Aslan oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-9.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 10,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-10.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-10.webp",
+          "name": "VIP 10 · Elektron Hazinesi · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP10.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-10.webp",
+          "name": "VIP 10 · Elektron Hazinesi"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_10",
+          "asset_url": "vip-designs/lydia/wallpaper-female-10.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-10",
+          "name": "Elektron Hazinesi",
+          "asset_url": "vip-designs/lydia/profile-female-10.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-10",
+          "name": "Elektron Hazinesi oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-10.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 11,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-11.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-11.webp",
+          "name": "VIP 11 · Krezus Sarayı · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP11.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-11.webp",
+          "name": "VIP 11 · Krezus Sarayı"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_11",
+          "asset_url": "vip-designs/lydia/wallpaper-female-11.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-11",
+          "name": "Krezus Sarayı",
+          "asset_url": "vip-designs/lydia/profile-female-11.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-11",
+          "name": "Krezus Sarayı oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-11.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    },
+    {
+      "level": 12,
+      "rewards": [
+        {
+          "cosmetic_type": "frame",
+          "asset_key": "vip-designs/avatar-frame-female-12.svg",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/frame-female-12.webp",
+          "name": "VIP 12 · Lidya İmparatorluğu · Kadın çerçevesi"
+        },
+        {
+          "cosmetic_type": "avatar",
+          "asset_key": "avatarveduvarkağıdı/BİTMİŞ AVATAR/KADIN VİP/VİP12.png",
+          "gender": "female",
+          "asset_url": "vip-designs/lydia/avatar-female-12.webp",
+          "name": "VIP 12 · Lidya İmparatorluğu"
+        },
+        {
+          "cosmetic_type": "wallpaper",
+          "asset_key": "vip_wallpaper_female_12",
+          "asset_url": "vip-designs/lydia/wallpaper-female-12.webp"
+        }
+      ],
+      "presentation_rewards": [
+        {
+          "type": "profile_window",
+          "key": "vip-profile-12",
+          "name": "Lidya İmparatorluğu",
+          "asset_url": "vip-designs/lydia/profile-female-12.webp",
+          "automatic": true
+        },
+        {
+          "type": "vip_entrance",
+          "key": "vip-entrance-12",
+          "name": "Lidya İmparatorluğu oda girişi",
+          "automatic": true,
+          "asset_url": "vip-designs/lydia/entry-female-12.webp"
+        }
+      ],
+      "unlocked": false,
+      "claimed": false,
+      "complete": false
+    }
+  ]
+}

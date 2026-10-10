@@ -8,7 +8,7 @@ def default_wallpaper(user):
 
 GENDER_VIP = [{"key": f"vip_wallpaper_{gender}_{n:02d}", "tier": "vip",
                "vip_level": n, "gender": gender, "price": 0, "name": ("Erkek" if gender == "male" else "Kadın") + f" VIP {n} duvar kağıdı",
-               "asset": f"vip-designs/wallpaper-{gender}-{n}-labelled.svg"}
+               "asset": f"vip-designs/lydia/wallpaper-{gender}-{n}.webp"}
               for gender in ("male", "female") for n in range(1, 13)]
 GENDER_STANDARD = [{"key": f"wallpaper_{gender}_standard", "tier": "normal",
                    "vip_level": 0, "gender": gender, "price": 0, "free": True, "name": ("Erkek" if gender == "male" else "Kadın") + " standart duvar kağıdı",

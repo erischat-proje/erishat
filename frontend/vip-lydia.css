@@ -1,0 +1,27 @@
+/* Complete art and readable rewards at small screen widths. */
+.eris-vip-dialog .eris-vip-row{grid-template-columns:1fr!important;padding:16px!important;border-color:#cba64b35;background:linear-gradient(145deg,#201828,#100d17)}
+.eris-vip-dialog .eris-vip-row>.eris-vip-level{width:68px!important;height:68px!important;margin:auto}
+.eris-vip-dialog .eris-vip-assets{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.eris-vip-dialog .eris-vip-asset{font-size:12px!important}
+.eris-vip-dialog .eris-vip-asset img{height:auto!important;aspect-ratio:1;object-fit:contain!important;padding:8px!important;background:#0a0812;border:1px solid #d2b45c20}
+.eris-vip-dialog .eris-vip-asset button{display:block;width:100%;padding:0;border:0;background:none;color:inherit;cursor:pointer}
+.eris-vip-dialog .eris-vip-presentation{grid-template-columns:84px minmax(0,1fr)!important;background:#b8863210!important;border-color:#d2b45c35!important}
+.eris-vip-dialog .eris-vip-presentation>img{width:84px!important;height:112px!important;padding:3px}
+.eris-vip-art-button{min-width:0;padding:0;border:0;background:none;color:inherit;cursor:pointer}
+.eris-vip-presentation>.eris-vip-art-button>img{width:84px!important;height:112px!important;object-fit:contain!important}
+.eris-vip-row>div>.eris-vip-art-button{display:block;width:100%}
+.eris-vip-dialog .eris-vip-entry-reward-art{max-width:none!important;height:auto!important;aspect-ratio:3/1!important;padding:8px;box-sizing:border-box;background:#090811}
+.eris-vip-art-preview{position:fixed;inset:0;z-index:16000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));box-sizing:border-box;background:#080610f5;color:#fff}
+.eris-vip-art-preview figure{margin:0;width:min(560px,100%);min-height:0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.eris-vip-art-preview img{width:100%;height:auto;max-height:70dvh;object-fit:contain;min-height:0}
+.eris-vip-art-preview figcaption{font-size:15px;line-height:1.5;text-align:center}
+.eris-vip-art-preview>button{min-height:44px;padding:10px 20px;border:1px solid #d5b56266;border-radius:14px;background:#c29c3020;color:#f8e6b4;font-weight:700}
+.eris-vip-entrance .eris-vip-entry-banner{aspect-ratio:3/1!important}
+.eris-vip-entrance .eris-vip-entry-content{left:18%!important;right:18%!important;top:25%!important;bottom:25%!important;grid-template-columns:clamp(30px,10vw,50px) minmax(0,1fr)!important;gap:9px!important}
+.eris-vip-entrance .eris-vip-entry-banner.has-art:before{display:none!important}
+.eris-vip-entrance .eris-vip-entry-portrait.has-frame .eris-vip-entry-face{width:56%!important}
+.eris-vip-entrance .eris-vip-entry-identity strong{font-size:clamp(11px,3vw,16px)!important}
+.eris-vip-entrance .eris-vip-entry-identity small{font-size:clamp(7px,1.8vw,9px)!important}
+.eris-vip-entrance .eris-vip-entry-identity span{font-size:clamp(8px,2vw,10px)!important}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-vip:after{background:none!important;border-style:solid;border-width:0;border-image:var(--vip-profile-art) 150 120 130 120 fill / 76px 42px 65px 42px stretch}
+@media(min-width:650px){.eris-vip-dialog .eris-vip-row{grid-template-columns:68px minmax(0,1fr)!important}.eris-vip-dialog .eris-vip-row>.eris-vip-level{align-self:start;margin:0}.eris-vip-dialog .eris-vip-asset img{max-height:140px}}
