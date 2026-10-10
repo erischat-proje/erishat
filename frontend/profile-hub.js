@@ -98,16 +98,16 @@
   async function show(key) {
     const hub=panel();if(!hub)return;
     const index=++requestIndex, overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
-    body.classList.remove('epv','en-center','epl');
+    body.classList.remove('epv','en-center','epl','eps');
     const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',tasks:'Görevler',collection:'Koleksiyon',vip:'VIP',calls:'Arama geçmişleri',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
     hub.closest('#profile')?.setAttribute('data-profile-section',key);
     hub.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===key)));
-    body.hidden=['overview','settings'].includes(key);
-    const settings=overlay.querySelector('[data-erischat-profile-controls]');if(settings)settings.hidden=key!=='settings';
+    body.hidden=key==='overview';
+    const settings=overlay.querySelector('[data-erischat-profile-controls]');if(settings)settings.hidden=true;
     const rooms=overlay.querySelector('#erisProfileRooms');if(rooms)rooms.hidden=key!=='rooms';
     if(key==='overview')return;
     overlay.hidden=false;document.body.classList.add('eph-dialog-open');overlay.querySelector('#ephDialogTitle').textContent=labels[key];overlay.querySelector('.eph-close').focus();
-    if(key==='settings')return;
+    if(key==='settings'){await window.ErisSettings.render(body,()=>index===requestIndex);return;}
     if(key==='rooms'){await window.ErisProfileLists.rooms(body,()=>index===requestIndex);return}
     body.textContent='Yükleniyor…';
     try {
