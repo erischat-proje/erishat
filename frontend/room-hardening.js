@@ -176,7 +176,7 @@
   function css(){
     if(document.getElementById('eris-room-hardening-css'))return;
     const s=document.createElement('style');s.id='eris-room-hardening-css';
-    s.textContent='#roomModal.show{display:none!important}#erisRoomSurface.show{z-index:9000!important}.room-v5-panel,.room-v3-panel{z-index:9100!important}#erisMusicPanel,#erischatGiftPanel,#erisUserProfileModal,#eris-dm-profile-modal{z-index:10050!important}';
+    s.textContent='#roomModal.show{display:none!important}#erisRoomSurface.show{z-index:9000!important}.room-v5-panel,.room-v3-panel{z-index:9100!important}#erisMusicPanel,#erisUserProfileModal,#eris-dm-profile-modal{z-index:10050!important}';
     document.head.appendChild(s);
   }
 
