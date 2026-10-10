@@ -174,7 +174,7 @@
     const audioPromise=soundFor(p);const asset=await imageFor(p);if(epoch!==generation||!active)return;
     const audioBuffer=await limited(audioPromise,900);if(epoch!==generation||!active)return;
     if(!asset){global.toast?.((item.preview?'Önizleme yüklenemedi: ':'Hediye: ')+p.name+' ×'+item.quantity);active=null;return next();}
-    mount();root.querySelector('.gift-cinema-caption b').textContent=p.name+' ×'+item.quantity;
+    mount();root.dataset.mode=item.preview?'preview':'gift';root.querySelector('.gift-cinema-caption b').textContent=p.name+' ×'+item.quantity;
     const caption=root.querySelector('.gift-cinema-caption span');
     if(item.preview)caption.textContent='Ücretsiz önizleme';
     else{const sender=document.createElement('span'),recipient=document.createElement('span');sender.textContent=item.sender_nickname||item.sender_name||'Bir kullanıcı';recipient.textContent=item.recipient_nickname||item.recipient_name||'Alıcı';caption.replaceChildren(sender,document.createTextNode(' → '),recipient);if(sender.textContent!=='Birden çok gönderici')window.ErisRoleBadges?.bind(sender,item.sender_id);if(recipient.textContent!=='Birden çok alıcı')window.ErisRoleBadges?.bind(recipient,item.recipient_id);}

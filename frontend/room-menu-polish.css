@@ -48,17 +48,17 @@ html body #erisRoomWallpaperModal>section{width:min(560px,100%)!important;max-he
 html body #erisRoomWallpaperZoom{z-index:40080!important}
 html body #erisRoomWallpaperModal .wallpaper-preview{height:min(42dvh,380px)!important;min-height:180px!important;border-radius:17px!important;background:#090610!important}
 html body #erisRoomWallpaperModal [data-days]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-html body #erischatGiftPanel{bottom:max(12px,env(safe-area-inset-bottom))!important;width:min(560px,calc(100% - 24px))!important;max-height:calc(100dvh - 36px)!important;padding:18px!important;border-radius:24px!important;background:linear-gradient(150deg,#21182f,#100d18)!important;box-sizing:border-box!important;border:1px solid #ffffff20!important;overscroll-behavior:contain}
-html body #erischatGiftPanel .egp-title{font-size:18px!important}
-html body #erischatGiftPanel :is(.egp-chip,.egp-cat,[data-qty]){min-height:38px!important;padding:8px 11px!important;border-radius:12px!important;font-size:12px!important;white-space:nowrap}
-html body #erischatGiftPanel .egp-qty{display:flex;align-items:center;gap:6px;overflow:auto;padding:9px 0;font-size:12px}
-html body #erischatGiftPanel .egp-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important}
-html body #erischatGiftPanel .egp-gift{padding:8px!important;border-radius:16px!important;background:#ffffff04!important;min-width:0!important}
-html body #erischatGiftPanel .egp-select{width:100%;padding:4px;border:0;background:transparent;color:white}
-html body #erischatGiftPanel .egp-select img{width:100%!important;height:80px!important;object-fit:contain!important}
-html body #erischatGiftPanel .egp-price{font-size:11px!important;white-space:normal!important;overflow-wrap:anywhere}
-html body #erischatGiftPanel .egp-send{min-height:40px;font-size:12px!important;border-radius:12px!important}
-html body #erischatGiftPanel .egp-close{width:42px!important;height:42px!important;display:grid;place-items:center}
+html body #erischatGiftPanel:not(.agora-picker){bottom:max(12px,env(safe-area-inset-bottom))!important;width:min(560px,calc(100% - 24px))!important;max-height:calc(100dvh - 36px)!important;padding:18px!important;border-radius:24px!important;background:linear-gradient(150deg,#21182f,#100d18)!important;box-sizing:border-box!important;border:1px solid #ffffff20!important;overscroll-behavior:contain}
+html body #erischatGiftPanel:not(.agora-picker) .egp-title{font-size:18px!important}
+html body #erischatGiftPanel:not(.agora-picker) :is(.egp-chip,.egp-cat,[data-qty]){min-height:38px!important;padding:8px 11px!important;border-radius:12px!important;font-size:12px!important;white-space:nowrap}
+html body #erischatGiftPanel:not(.agora-picker) .egp-qty{display:flex;align-items:center;gap:6px;overflow:auto;padding:9px 0;font-size:12px}
+html body #erischatGiftPanel:not(.agora-picker) .egp-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important}
+html body #erischatGiftPanel:not(.agora-picker) .egp-gift{padding:8px!important;border-radius:16px!important;background:#ffffff04!important;min-width:0!important}
+html body #erischatGiftPanel:not(.agora-picker) .egp-select{width:100%;padding:4px;border:0;background:transparent;color:white}
+html body #erischatGiftPanel:not(.agora-picker) .egp-select img{width:100%!important;height:80px!important;object-fit:contain!important}
+html body #erischatGiftPanel:not(.agora-picker) .egp-price{font-size:11px!important;white-space:normal!important;overflow-wrap:anywhere}
+html body #erischatGiftPanel:not(.agora-picker) .egp-send{min-height:40px;font-size:12px!important;border-radius:12px!important}
+html body #erischatGiftPanel:not(.agora-picker) .egp-close{width:42px!important;height:42px!important;display:grid;place-items:center}
 html body #erisRoomEmojiPanel .ee-sheet{border-radius:24px 24px 0 0!important;background:linear-gradient(150deg,#21182f,#100d18)!important}
 @media(max-width:370px){html body #erisRoomSurface.room-menu-polished .eris-room-quick-actions .erm-caption{display:none!important}html body #erisRoomSurface.room-menu-polished .eris-room-quick-actions button{width:40px!important;padding:0!important}html body #erisRoomSurface.room-menu-polished :is(.room-v3-grid,.room-center-grid){gap:8px!important}html body #erisRoomSurface.room-menu-polished .rc-row{flex-wrap:wrap!important}html body #erisRoomSurface.room-menu-polished .rc-amount{margin-left:auto!important}html body #erisMusicList>div{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){html body #erisRoomSurface.room-menu-polished button{transition:none!important}}
