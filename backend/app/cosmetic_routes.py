@@ -46,7 +46,8 @@ def vip_level_rewards(user) -> list[dict]:
         if item["type"] in {"avatar", "frame"} and item.get("gender") != entry_style(user):
             continue
         by_level.setdefault(int(item["vip_level"]), []).append({
-            "cosmetic_type": item["type"], "asset_key": item["asset_key"], "gender": item.get("gender")
+            "cosmetic_type": item["type"], "asset_key": item["asset_key"], "gender": item.get("gender"),
+            "asset_url": item.get("asset_url", item["asset_key"]), "name": item.get("name")
         })
     for item in wallpaper_catalog(entry_style(user)):
         if item["tier"] == "vip":
