@@ -3,8 +3,9 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '');
   const escapeHtml = value => esc(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  function dmIcon(name){const art={chat:'<path d="M4 4h16v12H9l-5 4Z"/><path d="M8 8h8M8 12h5"/>',camera:'<path d="M8 5 9 3h6l1 2h5v15H3V5Z"/><circle cx="12" cy="12" r="4"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',gift:'<path d="M3 8h18v13H3ZM2 5h20v3H2ZM12 5v16M12 5C4 5 6-2 12 5ZM12 5c8 0 6-7 0 0Z"/>',search:'<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/>'};return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(art[name]||art.chat)+'</svg>';}
   let activeConversationId = null;
-  let chatRevision=0;
+  let chatRevision=0,listRevision=0;
   const textSends=new Map();
   let currentUserId = null;
   let loadedForUserId = null;
@@ -207,7 +208,7 @@
   }
 
   function showListError(list) {
-    if (list) list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Konuşmalar yüklenemedi.</div>';
+    if(list){list.innerHTML='<div class="dm-list-state" role="status"><b>Konuşmalar yüklenemedi</b><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" data-retry>Tekrar dene</button></div>';list.querySelector('[data-retry]').onclick=loadConversations;}
   }
 
   async function fetchMedia(message, preview=false) {
@@ -451,9 +452,9 @@
     const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=chatName==='ErisChat';
     if(compose&&systemChat){compose.style.display='none';}
     else if(compose){compose.style.display='';}
-    if (compose && !familyChat && !systemChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.textContent='🎁'; button.title='Hediye gönder'; compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
-    if (compose && !systemChat && !compose.querySelector('[data-dm-photo]')) {const b=document.createElement('button');b.type='button';b.dataset.dmPhoto='';b.className='close';b.textContent='📷';b.title='Fotoğraf gönder';compose.insertBefore(b,compose.firstChild);b.onclick=openPhotoChooser;}
-    if (compose && !systemChat && !compose.querySelector('[data-dm-voice]')) {const b=document.createElement('button');b.type='button';b.dataset.dmVoice='';b.className='close';b.textContent='🎙';b.title='Ses kaydet';compose.insertBefore(b,compose.firstChild);b.onclick=()=>toggleVoiceRecording(b);}
+    if (compose && !familyChat && !systemChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.innerHTML=dmIcon('gift'); button.title='Hediye gönder';button.setAttribute('aria-label','Hediye gönder'); compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
+    if (compose && !systemChat && !compose.querySelector('[data-dm-photo]')) {const b=document.createElement('button');b.type='button';b.dataset.dmPhoto='';b.className='close';b.innerHTML=dmIcon('camera');b.title='Fotoğraf gönder';b.setAttribute('aria-label','Fotoğraf gönder');compose.insertBefore(b,compose.firstChild);b.onclick=openPhotoChooser;}
+    if (compose && !systemChat && !compose.querySelector('[data-dm-voice]')) {const b=document.createElement('button');b.type='button';b.dataset.dmVoice='';b.className='close';b.innerHTML=dmIcon('mic');b.title='Ses kaydet';b.setAttribute('aria-label','Ses kaydet');compose.insertBefore(b,compose.firstChild);b.onclick=()=>toggleVoiceRecording(b);}
   }
 
   let sendingGift=false;
@@ -610,34 +611,40 @@
     installFolderStyles();
     const root=document.getElementById('messages');if(!root||root.querySelector('[data-dm-search]'))return;
     const title=root.querySelector('.title');const search=document.createElement('div');search.setAttribute('data-dm-search','');search.style.cssText='margin:0 0 14px;position:relative';search.innerHTML='<input data-dm-user-search class="search-input" inputmode="text" autocomplete="off" placeholder="Kullanıcı ID ara…" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.055);border:1px solid #ffffff14;color:#fff;border-radius:18px;padding:13px 45px 13px 15px;outline:none"><button data-dm-search-btn class="primary" style="position:absolute;right:5px;top:5px;height:36px;border-radius:14px">⌕</button><div data-dm-search-result style="margin-top:7px"></div>';title?.parentNode?.insertBefore(search,title.nextSibling);
-    const controls=document.createElement('div');controls.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px';const notify=document.createElement('button');notify.type='button';notify.textContent=window.ErisNotifications?.enabled===false?'🔕 Bildirimleri aç':'🔔 Bildirimleri kapat';notify.style.cssText='width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:10px';notify.onclick=async()=>{notify.disabled=true;try{const hidden=window.ErisNotifications?.enabled!==false;const p=await window.ErisPlatform.api('/me/privacy',{method:'PATCH',body:JSON.stringify({hide_notifications:hidden})});window.ErisNotifications?.apply(p);notify.textContent=p.hide_notifications?'🔕 Bildirimleri aç':'🔔 Bildirimleri kapat';if(!hidden&&'Notification' in window&&Notification.permission==='default')await Notification.requestPermission();}catch(e){window.toast?.(e.message)}finally{notify.disabled=false}};const archive=document.createElement('button');archive.type='button';archive.textContent='✉ Arşiv';archive.style.cssText='width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:10px';archive.onclick=()=>{inboxFolder='archive';selectedConversations.clear();loadConversations()};controls.append(notify,archive);search.append(controls);
-    const input=search.querySelector('[data-dm-user-search]'),out=search.querySelector('[data-dm-search-result]');const run=async()=>{const q=input.value.trim();if(!q){out.innerHTML='';return}if(/^\d{6}$/.test(q)){input.value='';out.replaceChildren();await enterLockedFolder(q);return}out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#aaa">Aranıyor…</div>';try{const u=await api().api('/users/'+encodeURIComponent(q)),publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';out.innerHTML='<button type="button" class="item card" style="width:100%;text-align:left"><div class="ava round">👤</div><div class="grow"><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small>ID: '+escapeHtml(publicId)+' • Profili görüntüle</small></div></button>';window.ErisRoleBadges?.bind(out.querySelector('b'),u);out.querySelector('button').onclick=()=>loadUserProfile(u.id||q)}catch(e){out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#ff9dbd">Kullanıcı bulunamadı.</div>'}};search.querySelector('[data-dm-search-btn]').onclick=run;input.onkeydown=e=>{if(e.key==='Enter')run()};installFolderControls(root);
+    const controls=document.createElement('div');controls.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px';const notify=document.createElement('button');notify.type='button';notify.textContent=window.ErisNotifications?.enabled===false?'Bildirimleri aç':'Bildirimleri kapat';notify.style.cssText='width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:10px';notify.onclick=async()=>{notify.disabled=true;try{const hidden=window.ErisNotifications?.enabled!==false;const p=await window.ErisPlatform.api('/me/privacy',{method:'PATCH',body:JSON.stringify({hide_notifications:hidden})});window.ErisNotifications?.apply(p);notify.textContent=p.hide_notifications?'Bildirimleri aç':'Bildirimleri kapat';if(!hidden&&'Notification' in window&&Notification.permission==='default')await Notification.requestPermission();}catch(e){window.toast?.(e.message)}finally{notify.disabled=false}};notify.dataset.dmNotifications='';window.addEventListener('erischat:notification-settings',e=>{notify.textContent=e.detail?.enabled===false?'Bildirimleri aç':'Bildirimleri kapat'});const archive=document.createElement('button');archive.type='button';archive.textContent='Arşiv';archive.style.cssText='width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff05;color:#bdb3c7;font-size:10px';archive.onclick=()=>{inboxFolder='archive';selectedConversations.clear();loadConversations()};controls.append(notify,archive);search.append(controls);
+    const input=search.querySelector('[data-dm-user-search]'),out=search.querySelector('[data-dm-search-result]');let searchRevision=0;input.addEventListener('input',()=>{searchRevision++;out.replaceChildren()});const run=async()=>{const revision=++searchRevision,q=input.value.trim();if(!q){out.innerHTML='';return}if(/^\d{6}$/.test(q)){input.value='';out.replaceChildren();await enterLockedFolder(q);return}out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#aaa">Aranıyor…</div>';try{const u=await api().api('/users/'+encodeURIComponent(q));if(revision!==searchRevision)return;const publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';out.innerHTML='<button type="button" class="item card" style="width:100%;text-align:left"><div class="ava round">👤</div><div class="grow"><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small>ID: '+escapeHtml(publicId)+' • Profili görüntüle</small></div></button>';renderAvatar(out.querySelector('.ava'),avatarValue(u.avatar_asset||u.avatar_url||u.avatar,String(u.nickname||'A').slice(0,1).toUpperCase()),String(u.nickname||'A').slice(0,1).toUpperCase());window.ErisRoleBadges?.bind(out.querySelector('b'),u);out.querySelector('button').onclick=()=>loadUserProfile(u.id||q)}catch(e){if(revision!==searchRevision)return;out.innerHTML='<div class="card" style="padding:10px;font-size:9px;color:#ff9dbd">Kullanıcı bulunamadı.</div>'}};search.querySelector('[data-dm-search-btn]').setAttribute('aria-label','Kullanıcı ara');input.setAttribute('aria-label','Kullanıcı ID veya kilitli sohbet şifresi');search.querySelector('[data-dm-search-btn]').innerHTML=dmIcon('search');search.querySelector('[data-dm-search-btn]').onclick=run;input.onkeydown=e=>{if(e.key==='Enter')run()};installFolderControls(root);
   }
   async function loadConversations() {
     installMessageSearch();
     if (!(localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token'))) return;
     const list = document.querySelector('#messages .list');
     if (!list || !api()?.conversations) return;
+    const revision=++listRevision,folder=inboxFolder,user=currentUserId;
+    const valid=()=>revision===listRevision&&folder===inboxFolder&&(!user||String(user)===String(currentUserId));
+    list.setAttribute('aria-busy','true');
     try {
       if (!currentUserId && api().getMe) {
         try {
           const me = await api().getMe();
+          if(revision!==listRevision)return;
           currentUserId = me?.id || null;
         } catch (error) {
           console.warn('[ErisChat] current user unavailable', error);
         }
       }
       if (!currentUserId) return;
-      const payload = await api().api('/conversations?folder='+inboxFolder+'&limit=100');
+      const payload = await api().api('/conversations?folder='+folder+'&limit=100');
+      if(!valid())return;
       const items = asList(payload, ['conversations', 'items', 'data']);
-      list.innerHTML = '';
       renderFolderControls(document.getElementById('messages'));
       loadedForUserId = currentUserId;
       if (!items.length) {
-        list.innerHTML = '<div class="card" style="padding:16px;text-align:center;color:#938a9f;font-size:10px">'+(inboxFolder==='archive'?'Arşivde':inboxFolder==='locked'?'Kilitli sohbetlerde':'Henüz')+' konuşma yok.</div>';
+        list.innerHTML = '<div class="dm-list-state"><span aria-hidden="true">'+dmIcon('chat')+'</span><b>'+(folder==='archive'?'Arşivin boş':folder==='locked'?'Kilitli sohbet yok':'İlk sohbetini başlat')+'</b><p>Bir kullanıcı ID’si aratarak konuşmaya başlayabilirsin.</p></div>';
         return;
       }
       const participants = await Promise.all(items.map(c => c.type === 'welcome' ? Promise.resolve({ nickname: 'ErisChat' }) : resolveParticipant(c)));
+      if(!valid())return;
+      list.replaceChildren();
       items.forEach((c, index) => {
         const other = participants[index] || {};
         const id = c.id || c.conversation_id;
@@ -669,8 +676,8 @@
       renderFolderControls(document.getElementById('messages'));
     } catch (e) {
       console.warn('[ErisChat] conversations unavailable', e);
-      showListError(list);
-    }
+      if(valid())showListError(list);
+    }finally{if(revision===listRevision)list.setAttribute('aria-busy','false')}
   }
 
   function bindSender(chat) {
@@ -686,8 +693,9 @@
       try {
         send.disabled=true;
         const m = await sendMessage(id, text);
+        if(String(activeConversationId)!==String(id))return;
         appendMessageOnce(body, m, true);
-        if(activeConversationId===id && input.value.trim()===text)input.value = '';
+        if(input.value.trim()===text)input.value = '';
         body.scrollTop = body.scrollHeight;
       } catch (e) {
         if (/hediye ile kısıtlamış|hediyesi gerekli/i.test(String(e.message||''))) { window.toast?.(e.message); openGiftSheet(); return; }
@@ -722,10 +730,12 @@
     selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;refreshSelectionBar();
     chat.classList.remove('eris-floating-dm');
     chat.classList.add('show');
-    installChatTools(chat);
-    window.ErisCalls?.syncChat?.();
     const title = chat.querySelector('.chatHead b');
     if (title) {title.textContent = name;window.ErisRoleBadges?.bind(title,participantId);}
+    installChatTools(chat);
+    window.ErisCalls?.syncChat?.();
+    const compose=chat.querySelector('.compose');
+    if(compose){compose.hidden=name==='ErisChat';compose.style.display=name==='ErisChat'?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||name==='ErisChat');}
     renderAvatar(chat.querySelector('.chatHead .ava'), avatar, name?.slice(0, 1)?.toUpperCase());
     releaseMediaUrls(body);body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Mesajlar yükleniyor…</div>';
     try {
@@ -857,6 +867,7 @@
       connectDmSocket();
       if (currentUserId !== loadedForUserId) loadConversations();
     } else if (event?.detail?.state === 'logged_out') {
+      listRevision++;chatRevision++;activeConversationId=null;
       currentUserId = null;
       loadedForUserId = null;
       vaultToken='';window.ErisChatDMVaultToken='';inboxFolder='inbox';selectedConversations.clear();
