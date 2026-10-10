@@ -98,6 +98,7 @@
   async function show(key) {
     const hub=panel();if(!hub)return;
     const index=++requestIndex, overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
+    body.classList.remove('epv','en-center');
     const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',tasks:'Görevler',collection:'Koleksiyon',vip:'VIP',calls:'Arama geçmişleri',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
     hub.closest('#profile')?.setAttribute('data-profile-section',key);
     hub.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===key)));
@@ -191,8 +192,7 @@
         await window.ErisNotifications.render(body,()=>index===requestIndex);return;
       }
       if(key==='privacy') {
-        body.innerHTML='<h3>Gizlilik ayarları</h3><p class="eph-muted">Profil görünürlüğünü gizlilik ekranından yönetebilirsin.</p><button data-open type="button">Gizlilik ayarlarını aç</button>';
-        body.querySelector('[data-open]').onclick=()=>{window.ErisProfileHub.close();window.showView?.('anon')};return;
+        await window.ErisPrivacy.render(body,()=>index===requestIndex);return;
       }
       if(key==='blocked') {
         const rows=await api('/me/blocks');if(index!==requestIndex)return;

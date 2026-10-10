@@ -16,6 +16,13 @@ class UserPrivacy(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
+class UserSocialPrivacy(Base):
+    __tablename__ = "user_social_privacy"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    hide_fans: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    hide_received_gifts: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+
+
 class VipStatus(Base):
     __tablename__ = "vip_status"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)

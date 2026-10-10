@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  let account='', generation=0, cursor=0, baseline=false, pending=null, timer;
+  let account='', generation=0, cursor=0, baseline=false, pending=null, timer, enabled=null;
   const api=(path,options)=>window.ErisPlatform.api(path,options);
   const token=()=>window.ErisPlatform?.getAccessToken?.()||'';
   const style=document.createElement('style');
@@ -8,9 +8,9 @@
   document.head.append(style);
   const stack=document.createElement('div');stack.id='eris-notice-stack';stack.setAttribute('aria-live','polite');
   const mount=()=>{if(!stack.isConnected)document.body.append(stack)};
-  function reset(next){account=next;generation++;cursor=0;baseline=false;pending=null;stack.replaceChildren();}
+  function reset(next){account=next;enabled=null;generation++;cursor=0;baseline=false;pending=null;stack.replaceChildren();}
   function banner(row,g){
-    mount();while(stack.children.length>=3)stack.firstElementChild.remove();
+    if(enabled===false||g!==generation)return;mount();while(stack.children.length>=3)stack.firstElementChild.remove();
     const card=document.createElement('div');card.className='en-banner';
     const open=document.createElement('button');open.className='en-open';open.type='button';
     const title=document.createElement('b');title.textContent=row.title||'Yeni bildirim';
@@ -20,10 +20,12 @@
     card.append(open,close);stack.append(card);setTimeout(()=>card.remove(),9000);
   }
   async function refresh(){
-    const next=token();if(next!==account)reset(next);if(!next)return [];
+    const next=token();if(next!==account)reset(next);if(!next||enabled===false)return [];
     if(pending)return pending;
     const g=generation;
     const job=(async()=>{
+      if(enabled===null){const privacy=await api('/me/privacy');if(g!==generation||token()!==account)return [];enabled=!privacy.hide_notifications;}
+      if(!enabled)return [];
       const rows=await api('/me/notifications?limit=100');
       if(g!==generation||token()!==account)return [];
       const highest=rows.reduce((n,r)=>Math.max(n,Number(r.id)||0),cursor);
@@ -52,7 +54,8 @@
     await load();
   }
   async function tick(){clearTimeout(timer);try{if(!document.hidden)await refresh()}catch(e){}timer=setTimeout(tick,10000)}
-  window.ErisNotifications={refresh,render};
+  function apply(privacy){const next=!privacy.hide_notifications;if(enabled===next)return;enabled=next;generation++;pending=null;baseline=false;stack.replaceChildren();}
+  window.ErisNotifications={refresh,render,apply};
   window.addEventListener('erischat:auth',()=>{reset(token());tick()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tick,{once:true});else tick();

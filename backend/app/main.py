@@ -36,6 +36,7 @@ from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Mes
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
+from .social_privacy import social_flags, require_social_visible
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
@@ -1825,13 +1826,19 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
 def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not db.get(User, user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     if active_ban(db,user_id): return []
-    return fan_leaderboard(db, user_id)
+    flags=require_social_visible(db,user_id,user.id,"fans")
+    rows=fan_leaderboard(db,user_id)
+    if flags["gifts_hidden"]:
+        rows=[{k:v for k,v in row.items() if k not in {"total_lidya","fan_level"}} | {"gifts_hidden":True} for row in rows]
+    return rows
 
 
 @app.get("/v1/users/{user_id}/received-gifts")
 def received_gifts(user_id: str, sender_id: str | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not db.get(User,user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     if active_ban(db,user_id): return []
+    require_social_visible(db,user_id,user.id,"gifts")
+    if sender_id: require_social_visible(db,user_id,user.id,"fans")
     counts = {}
     for key, quantity in db.execute(select(RoomGiftEvent.gift_key, func.sum(RoomGiftEvent.quantity))
             .where(RoomGiftEvent.recipient_id == user_id, *([RoomGiftEvent.sender_id == sender_id] if sender_id else [])).group_by(RoomGiftEvent.gift_key)):
