@@ -841,14 +841,8 @@ def complete_onboarding(
 
 @app.patch("/v1/me", response_model=UserOut)
 def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
-    if payload.nickname is not None:
-        nickname = payload.nickname.strip()
-        if not nickname:
-            raise HTTPException(status_code=400, detail="İsim boş olamaz")
-        other = db.query(User).filter(User.nickname == nickname, User.id != user.id).first()
-        if other:
-            raise HTTPException(status_code=409, detail="Bu kullanıcı adı zaten kullanılıyor")
-        user.nickname = nickname
+    if payload.nickname is not None and payload.nickname.strip() != user.nickname:
+        raise HTTPException(status_code=402, detail="Kullanıcı adını Bilgilerim bölümünden 150 Lidya karşılığında değiştirebilirsin.")
     for key in ("first_name", "last_name", "bio"):
         value = getattr(payload, key)
         if value is not None:
@@ -865,19 +859,26 @@ def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = D
 @app.post("/v1/me/nickname", response_model=UserOut)
 def change_nickname(payload: NicknameChange, db: Session = Depends(get_db), user: User = Depends(current_user)) -> UserOut:
     new_name = payload.nickname.strip()
-    if not new_name:
-        raise HTTPException(status_code=400, detail="İsim boş olamaz")
-    if new_name == user.nickname:
-        return user
-    if user.lidya < 300:
-        raise HTTPException(status_code=400, detail="İsim değiştirmek için 300 Lidya gerekli")
-    user.nickname = new_name
-    user.lidya -= 300
+    if not new_name or len(new_name) > 32:
+        raise HTTPException(status_code=400, detail="Kullanıcı adı 1–32 karakter olmalı")
+    # Serialize charges for this account, and competing claims for the same name.
+    locked = db.query(User).filter(User.id == user.id).populate_existing().with_for_update().one()
+    if new_name == locked.nickname:
+        return locked
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:nickname))"), {"nickname": new_name.lower()})
+    other = db.query(User.id).filter(func.lower(User.nickname) == new_name.lower(), User.id != locked.id).first()
+    if other:
+        raise HTTPException(status_code=409, detail="Bu kullanıcı adı zaten kullanılıyor")
+    if int(locked.lidya or 0) < 150:
+        raise HTTPException(status_code=400, detail="Kullanıcı adı değiştirmek için 150 Lidya gerekli")
+    locked.nickname = new_name
+    locked.lidya -= 150
     from .vip_spending import record_spend
-    record_spend(db,user.id,300,"nickname")
+    record_spend(db, locked.id, 150, "nickname")
     db.commit()
-    db.refresh(user)
-    return user
+    db.refresh(locked)
+    return locked
 
 
 @app.patch("/v1/me/notifications", response_model=UserOut)

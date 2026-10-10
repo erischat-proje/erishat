@@ -55,6 +55,8 @@
       .eph-overlay #erisProfileRooms{display:block!important;margin:0}
       .eph-overlay #erisProfileRooms[hidden],.eph-overlay [data-erischat-profile-controls][hidden]{display:none!important}
       @media(max-width:520px){.eph-overlay{padding:12px}.eph-dialog{max-height:90dvh;border-radius:24px}.eph-dialog-head{padding:17px}.eph-dialog-content{padding:16px}}
+      .eph-info-form{max-width:640px;margin:auto}.eph-info-summary{display:flex;align-items:center;gap:14px;padding:17px;border:1px solid #b78ddd22;border-radius:20px;background:linear-gradient(125deg,#291c35,#17121f)}.eph-info-summary>div{min-width:0}.eph-info-summary b{display:block;font-size:18px;overflow-wrap:anywhere}.eph-info-summary [data-id]{display:block;font-size:11px;color:#ad9cbc;margin-top:6px}.eph-info-avatar{position:relative;display:grid;place-items:center;width:54px;height:54px;flex:none;border-radius:18px;background:#9464c82a;color:#ddbcfa;font-size:22px;overflow:hidden}.eph-info-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.eph-info-intro{font-size:13px;line-height:1.6;color:#af9dbd;margin:20px 0}.eph-info-names{display:grid;grid-template-columns:1fr 1fr;gap:12px}.eph-info-form input,.eph-info-form textarea{font-size:16px!important;min-height:48px;border-radius:15px!important;padding:13px!important;resize:vertical;max-width:100%}.eph-info-form label{font-size:12px!important}.eph-info-count{text-align:right;font-size:11px;color:#a48db5;margin-top:-5px}.eph-info-form footer{display:grid;gap:12px;margin-top:22px}.eph-info-form [data-status]{min-height:20px;font-size:12px;line-height:1.5;color:#d8b9ed;overflow-wrap:anywhere}.eph-info-form [data-save]{width:100%;min-height:48px!important;border:0!important;background:linear-gradient(125deg,#8652d1,#c44b9c)!important;font-weight:700;font-size:14px}.eph-info-form [data-save]:disabled{opacity:.45;cursor:default}.eph-info-form :is(input,textarea,button):focus-visible{outline:2px solid #d2a5ef;outline-offset:3px}@media(max-width:360px){.eph-info-names{grid-template-columns:1fr;gap:0}}
+      .eph-rename-form{margin:30px auto 0;padding-top:24px;border-top:1px solid #b790d326;max-width:640px}.eph-rename-form p{font-size:12px;line-height:1.6;color:#af9dbd}.eph-rename-price{display:flex;justify-content:space-between;gap:10px;padding:13px;margin:16px 0;border:1px solid #e4b85d28;border-radius:14px;font-size:12px;color:#ccbda8;background:#e4b85d08}.eph-rename-price b{color:#efcc88;white-space:nowrap}.eph-rename-form [data-nickname]{font-size:16px;min-height:48px}.eph-rename-consent{display:flex!important;align-items:center;gap:10px;margin:16px 0;line-height:1.6}.eph-rename-consent input{width:20px!important;height:20px;flex:0 0 20px;padding:0!important;margin:0!important;accent-color:#b785e8}.eph-rename-form [data-rename]{width:100%;min-height:48px;font-size:13px;color:#e5c9fa;border:1px solid #b58cdf55;background:#a06bce19}.eph-rename-form [data-rename]:disabled{opacity:.4}.eph-rename-form [data-rename-status]{min-height:20px;margin:10px 0;font-size:12px;line-height:1.5;color:#d8b9ed;overflow-wrap:anywhere}
     </style><div class="eph-nav"><span class="eph-section-label">Profil bölümleri</span><div id="ephTabs" class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div></div><div class="eph-body" role="tabpanel" aria-live="polite" hidden></div>`;
     view.append(hub);
     const overlay=document.createElement('div');overlay.className='eph-overlay';overlay.hidden=true;
@@ -99,18 +101,47 @@
         for(const row of calls){const card=document.createElement('div');card.className='eph-row';const info=document.createElement('div');const name=document.createElement('b');name.textContent=(row.kind==='video'?'📹 ':'☎ ')+row.peer_name;window.ErisRoleBadges?.bind(name,row.peer_id);const meta=document.createElement('div');meta.className='eph-muted';const labels={active:'Sürüyor',ringing:'Çalıyor',reject:'Meşgul',unavailable:'Müsait değil',missed:'Ulaşılamıyor',ended:'Bitti'};meta.textContent=(row.incoming?'Gelen':'Giden')+' • '+new Date(row.created_at).toLocaleString('tr-TR')+' • '+(labels[row.status]||row.status)+' • '+Math.floor(row.duration_seconds/60)+' dk '+row.duration_seconds%60+' sn';info.append(name,meta);card.append(info);list.append(card)}return;
       }
       if(key==='info') {
-        body.innerHTML='<h3>Hesap bilgileri</h3><div class="eph-muted" data-id></div><label>Ad<input data-first maxlength="64" autocomplete="given-name"></label><label>Soyad<input data-last maxlength="64" autocomplete="family-name"></label><label>Hakkımda<textarea data-bio maxlength="300" rows="3"></textarea></label><button type="button" data-save>Bilgileri kaydet</button><div class="eph-muted" data-status role="status"></div>';
+        body.innerHTML='<form class="eph-info-form"><div class="eph-info-summary"><span class="eph-info-avatar" data-avatar></span><div><b data-name></b><span data-id></span></div></div><p class="eph-info-intro" role="note">Uygulamadaki yetkili kişilerin profillerinde SA, UA, FA veya DA logosu bulunur. Bu logoları taşımayan kişiler uygulamada yetkili değildir.</p><p class="eph-info-intro">Profilindeki adını ve hakkında bilgilerini düzenle.</p><div class="eph-info-names"><label>Ad<input data-first maxlength="64" autocomplete="given-name" required></label><label>Soyad<input data-last maxlength="64" autocomplete="family-name" required></label></div><label>Hakkımda<textarea data-bio maxlength="300" rows="4" placeholder="Kendinden biraz bahset…"></textarea></label><div class="eph-info-count" data-count></div><footer><div data-status role="status" aria-live="polite"></div><button type="submit" data-save>Değişiklikleri kaydet</button></footer></form>';
+        const form=body.querySelector('form'),first=form.querySelector('[data-first]'),last=form.querySelector('[data-last]'),bio=form.querySelector('[data-bio]'),btn=form.querySelector('[data-save]'),status=form.querySelector('[data-status]');
         const publicId=/^\d{10}$/.test(String(me.public_id||''))?String(me.public_id):'';
-        body.querySelector('[data-id]').textContent='Kullanıcı ID: '+(publicId||'yüklenemedi');
-        body.querySelector('[data-first]').value=me.first_name||'';body.querySelector('[data-last]').value=me.last_name||'';body.querySelector('[data-bio]').value=me.bio||'';
-        body.querySelector('[data-save]').onclick=async()=>{
-          const btn=body.querySelector('[data-save]');btn.disabled=true;
-          try {
-            const first_name=body.querySelector('[data-first]').value.trim(),last_name=body.querySelector('[data-last]').value.trim();
-            if(!first_name||!last_name)throw new Error('Ad ve soyad gerekli.');
-            const updated=await window.ErisProfile.update({first_name,last_name,bio:body.querySelector('[data-bio]').value.trim()});
-            body.querySelector('[data-status]').textContent=updated?'Profil kaydedildi.':'Profil kaydedilemedi.';
-          }catch(error){body.querySelector('[data-status]').textContent=error.message||'Profil kaydedilemedi.'}finally{btn.disabled=false}
+        form.querySelector('[data-id]').textContent='Kullanıcı ID · '+(publicId||'yüklenemedi');
+        form.querySelector('[data-name]').textContent=me.nickname||'Profilim';
+        const avatar=form.querySelector('[data-avatar]');avatar.textContent=String(me.nickname||'P').slice(0,1).toUpperCase();
+        const url=window.ErisChatCosmetics?.assetUrl?.(me.avatar_asset)||me.avatar_url;
+        if(url){const image=document.createElement('img');image.src=url;image.alt='Profil fotoğrafı';image.onerror=()=>image.remove();avatar.append(image)}
+        first.value=me.first_name||'';last.value=me.last_name||'';bio.value=me.bio||'';
+        let saving=false;const values=()=>[first.value.trim(),last.value.trim(),bio.value.trim()];let original=JSON.stringify(values());
+        const refresh=()=>{form.querySelector('[data-count]').textContent=bio.value.length+' / 300';btn.disabled=saving||JSON.stringify(values())===original||!first.value.trim()||!last.value.trim()};
+        form.addEventListener('input',()=>{status.textContent='';refresh()});refresh();
+        form.onsubmit=async event=>{
+          event.preventDefault();if(saving||btn.disabled||!form.reportValidity())return;
+          saving=true;const submitted=values();refresh();status.textContent='Kaydediliyor…';
+          try{
+            const updated=await window.ErisProfile.update({first_name:submitted[0],last_name:submitted[1],bio:submitted[2]});
+            if(index!==requestIndex)return;
+            if(!updated)throw new Error('Profil kaydedilemedi. Tekrar dene.');
+            original=JSON.stringify(submitted);status.textContent='Değişikliklerin kaydedildi.';
+          }catch(error){if(index===requestIndex)status.textContent=error.message||'Profil kaydedilemedi.'}
+          finally{saving=false;if(index===requestIndex)refresh()}
+        };
+        const rename=document.createElement('form');rename.className='eph-rename-form';
+        rename.innerHTML='<h3>Kullanıcı adını değiştir</h3><p>Yeni kullanıcı adın profilinde ve sohbetlerde görünür. Eris, Chat ve ErisChat içeren adlar kullanılamaz.</p><div class="eph-rename-price">Değişiklik ücreti <b>150 Lidya</b></div><label>Yeni kullanıcı adı<input data-nickname maxlength="32" autocomplete="nickname" required></label><label class="eph-rename-consent"><input type="checkbox" data-consent required><span>Değişiklik için 150 Lidya ödemeyi onaylıyorum.</span></label><button type="submit" data-rename>Kullanıcı adını değiştir · 150 Lidya</button><div data-rename-status role="status" aria-live="polite"></div>';
+        body.append(rename);const nickname=rename.querySelector('[data-nickname]'),renameButton=rename.querySelector('[data-rename]'),renameStatus=rename.querySelector('[data-rename-status]');
+        let currentName=me.nickname||'',renaming=false;nickname.value=currentName;
+        const refreshRename=()=>{renameButton.disabled=renaming||!nickname.value.trim()||nickname.value.trim()===currentName||!rename.querySelector('[data-consent]').checked};
+        rename.addEventListener('input',()=>{renameStatus.textContent='';refreshRename()});refreshRename();
+        rename.onsubmit=async event=>{
+          event.preventDefault();if(renaming||renameButton.disabled||!rename.reportValidity())return;
+          renaming=true;refreshRename();renameStatus.textContent='Kullanıcı adın değiştiriliyor…';
+          try{
+            const updated=await api('/me/nickname',{method:'POST',body:JSON.stringify({nickname:nickname.value.trim()})});
+            window.dispatchEvent(new CustomEvent('erischat:profile',{detail:updated}));
+            window.ErisProfile?.refresh?.();
+            if(index!==requestIndex)return;
+            currentName=updated.nickname;nickname.value=currentName;form.querySelector('[data-name]').textContent=currentName;
+            rename.querySelector('[data-consent]').checked=false;renameStatus.textContent='Kullanıcı adın değiştirildi. Ücret: 150 Lidya.';
+          }catch(error){if(index===requestIndex)renameStatus.textContent=error.message||'Kullanıcı adı değiştirilemedi.'}
+          finally{renaming=false;if(index===requestIndex)refreshRename()}
         };return;
       }
       if(key==='posts') {
