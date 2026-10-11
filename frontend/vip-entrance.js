@@ -61,6 +61,15 @@
     const tag=document.createElement('small');tag.textContent=(theme.level?'VIP '+theme.level+' · ':'')+theme.name;
     const name=document.createElement('strong');name.textContent=String(d.nickname||'Kullanıcı').slice(0,120);window.ErisRoleBadges?.bind(name,d.preview?window.ErisAuth?.user:d.user_id);
     const note=document.createElement('span');note.textContent=d.preview?'Oda girişi önizlemesi':'Odaya katıldı';identity.append(tag,name,note);content.append(identity);
+    const layout=d.shop_entry&&window.ErisLidyaPremium?.describe(d.shop_entry);
+    if(layout?.avatar&&layout?.name_box){
+      el.dataset.premium='true';banner.style.aspectRatio=layout.width+'/'+layout.height;
+      content.style.cssText='position:absolute;inset:0;display:block';
+      const a=layout.avatar,box=layout.name_box,diameter=a.diameter*layout.height/layout.width;
+      portrait.style.cssText='position:absolute;left:'+((a.x-diameter/2)*100)+'%;top:'+((a.y-a.diameter/2)*100)+'%;width:'+(diameter*100)+'%;height:auto;max-height:none';
+      identity.style.cssText='position:absolute;left:'+(box.x*100)+'%;top:'+(box.y*100)+'%;width:'+(box.width*100)+'%;height:'+(box.height*100)+'%;display:flex;flex-direction:column;justify-content:center;gap:2px;overflow:hidden';
+      tag.hidden=true;
+    }
     if(d.preview){const close=document.createElement('button');close.type='button';close.className='eris-vip-entry-dismiss';close.textContent='Önizlemeyi kapat ×';close.onclick=finish;stage.append(close);el.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();finish()}})}
     const holder={el,resolve,timer:null,loadTimer:null,raf:null,started:false};active=holder;
     function start(){if(active!==holder||holder.started)return;holder.started=true;clearTimeout(holder.loadTimer);document.body.append(el);if(!reduced())paint(canvas,theme,theme.duration,holder);holder.timer=setTimeout(finish,reduced()?2200:theme.duration)}

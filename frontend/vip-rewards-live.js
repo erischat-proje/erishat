@@ -107,13 +107,13 @@
   function paidProfile(card,key){
     card.classList.remove('eris-mini-paid');
     for(const name of ['--paid-art','--paid-slice','--paid-edge'])card.style.removeProperty(name);
-    if(!/^shop-expansion\/profile-(?:female|male)-\d{2}\.svg$/.test(key||''))return;
+    if(!/^(?:shop-expansion|shop-lydia|shop-lydia-premium)\/profile-(?:female|male)-\d{2}\.(?:svg|png|webp)$/.test(key||''))return;
     card.classList.add('eris-mini-paid');card.querySelector('.eris-mini-vip-hero')?.setAttribute('hidden','');
     const ticket={};card._artTicket=ticket;
     window.ErisVisualLayout.describe(key).then(m=>{
       if(!m||card._artTicket!==ticket||!card.isConnected)return;
       const slices=m.slice||[m.height*.29,m.width*.18,m.height*.27,m.width*.18];
-      const fit=()=>{if(!card.isConnected){card._artObserver?.disconnect();return;}const scale=card.getBoundingClientRect().width/m.width;card.style.setProperty('--paid-art','url("'+window.ErisChatCosmetics.assetUrl(key).replace(/"/g,'%22')+'")');card.style.setProperty('--paid-slice',slices.join(' ')+' fill');card.style.setProperty('--paid-edge',slices.map(n=>Math.round(n*scale)+'px').join(' '));};
+      const fit=()=>{if(!card.isConnected){card._artObserver?.disconnect();return;}const scale=card.getBoundingClientRect().width/m.width;card.style.setProperty('--paid-art','url("'+window.ErisChatCosmetics.assetUrl(key).replace(/"/g,'%22')+'")');card.style.setProperty('--paid-slice',slices.join(' '));card.style.setProperty('--paid-edge',slices.map((n,i)=>Math.min(m.border_cap?.[i]??Infinity,Math.round(n*scale))+'px').join(' '));};
       fit();if(window.ResizeObserver){card._artObserver=new ResizeObserver(fit);card._artObserver.observe(card);}
     });
   }

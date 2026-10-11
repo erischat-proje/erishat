@@ -1,0 +1,27 @@
+{
+  "target": 800,
+  "generated": 20,
+  "remaining": 780,
+  "ids": [
+    "profile-female-01",
+    "frame-female-01",
+    "bubble-female-01",
+    "entrance-female-01",
+    "title-female-01",
+    "profile-male-01",
+    "frame-male-01",
+    "bubble-male-01",
+    "entrance-male-01",
+    "title-male-01",
+    "profile-female-02",
+    "frame-female-02",
+    "bubble-female-02",
+    "entrance-female-02",
+    "title-female-02",
+    "profile-male-02",
+    "frame-male-02",
+    "bubble-male-02",
+    "entrance-male-02",
+    "title-male-02"
+  ]
+}

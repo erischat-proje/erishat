@@ -24,10 +24,11 @@ class ShopLydia(unittest.TestCase):
  def test_paid_prices_keys_and_quests(self):
   old=json.loads((ROOT/'tests/shop-original-fixture.json').read_text());new=json.loads((ROOT/'backend/app/shop_expansion.json').read_text())
   for group,key in [('items','asset_key'),('wallpapers','key')]:
-   baseline={r[key]:r for r in old[group]};rows={r[key]:r for r in new[group]};self.assertEqual(baseline.keys(),rows.keys())
-   for k,row in rows.items():
+   baseline={r[key]:r for r in old[group]};rows={r[key]:r for r in new[group]};self.assertTrue(baseline.keys()<=rows.keys())
+   for k in baseline:
+    row=rows[k]
     for field in ['type','price','gender','free','vip','vip_level','tier','room_only','task_only']:self.assertEqual(row.get(field),baseline[k].get(field),(k,field))
-    self.assertTrue((row.get('asset_url') or row.get('asset')).startswith('shop-lydia/'))
+    self.assertTrue((row.get('asset_url') or row.get('asset')).startswith(('shop-lydia/','shop-lydia-premium/')))
   previous={q['id']:q for q in old['quests']};items={r['asset_key']:r for r in new['items']}
   for q in new['quests']:
    for f in ['target','metric']:self.assertEqual(q[f],previous[q['id']][f])

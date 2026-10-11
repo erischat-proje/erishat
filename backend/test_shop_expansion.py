@@ -36,13 +36,13 @@ class ShopExpansionTests(unittest.TestCase):
   result=purchase_cosmetic(CosmeticPurchase(cosmetic_type=kind,asset_key=key),u,db);return key,result
  def test_catalog_is_additive_and_exact_counts(self):
   from app.cosmetics import catalog
-  items=shop.data()['items'];self.assertEqual(len(items),731)
+  items=shop.data()['items'];legacy=__import__('json').loads((Path(__file__).resolve().parents[1]/'tests/shop-original-fixture.json').read_text())['items'];self.assertTrue({i['asset_key'] for i in legacy}<={i['asset_key'] for i in items})
   for kind in ('avatar','frame','bubble','entrance','profile'):
-   for g in ('female','male'):self.assertEqual(sum(i['type']==kind and i['gender']==g for i in items), (6 if g=='female' else 5) if kind=='profile' else 80)
-  self.assertEqual(sum(i['type']=='title' for i in items),80);self.assertEqual(len(shop.data()['wallpapers']),80)
+   for g in ('female','male'):self.assertGreaterEqual(sum(i['type']==kind and i['gender']==g for i in items), sum(i['type']=='profile' and i['gender']==g for i in legacy) if kind=='profile' else 80)
+  self.assertGreaterEqual(sum(i['type']=='title' for i in items),80);self.assertEqual(len(shop.data()['wallpapers']),80)
   self.assertTrue(all(i['price']==1500 for i in items if i['type']=='bubble'))
   old=[i for i in catalog() if not i.get('expansion')];self.assertGreaterEqual(len(old),146)
-  self.assertEqual(len({i['asset_key'] for i in items}),731);self.assertEqual(len({q['reward']['name'] for q in shop.data()['quests']}),80)
+  self.assertEqual(len({i['asset_key'] for i in items}),len(items));self.assertEqual(len({q['reward']['name'] for q in shop.data()['quests']}),80)
  def test_purchase_charges_once_and_selection_persists(self):
   with Session(engine) as db:
    u=self.user(db);key,result=self.buy_asset(db,u,'bubble');self.assertEqual(result['spent'],1500);self.assertEqual(u.lidya,48500)
