@@ -1252,73 +1252,73 @@
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-25.svg",
-      "name": "Palmet Sarayı · Bakır · Sohbet balonu · Kadın",
+      "name": "Krezus Taç · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-25.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-25.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-26.svg",
-      "name": "Palmet Sarayı · Gümüş · Sohbet balonu · Kadın",
+      "name": "Krezus Mühür · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-26.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-26.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-27.svg",
-      "name": "Palmet Sarayı · Altın · Sohbet balonu · Kadın",
+      "name": "Krezus Işıltı · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-27.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-27.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-28.svg",
-      "name": "Palmet Sarayı · Zümrüt · Sohbet balonu · Kadın",
+      "name": "Krezus Saray · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-28.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-28.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-29.svg",
-      "name": "Palmet Sarayı · Kehribar · Sohbet balonu · Kadın",
+      "name": "Krezus İnci · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-29.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-29.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-30.svg",
-      "name": "Palmet Sarayı · Ametist · Sohbet balonu · Kadın",
+      "name": "Krezus Zarafet · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-30.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-30.png"
     },
     {
       "type": "bubble",
@@ -2212,73 +2212,73 @@
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-25.svg",
-      "name": "Palmet Sarayı · Bakır · Oda girişi · Kadın",
+      "name": "Krezus Taç · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-25.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-25.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-26.svg",
-      "name": "Palmet Sarayı · Gümüş · Oda girişi · Kadın",
+      "name": "Krezus Mühür · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-26.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-26.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-27.svg",
-      "name": "Palmet Sarayı · Altın · Oda girişi · Kadın",
+      "name": "Krezus Işıltı · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-27.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-27.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-28.svg",
-      "name": "Palmet Sarayı · Zümrüt · Oda girişi · Kadın",
+      "name": "Krezus Saray · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-28.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-28.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-29.svg",
-      "name": "Palmet Sarayı · Kehribar · Oda girişi · Kadın",
+      "name": "Krezus İnci · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-29.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-29.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-30.svg",
-      "name": "Palmet Sarayı · Ametist · Oda girişi · Kadın",
+      "name": "Krezus Zarafet · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-30.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-30.png"
     },
     {
       "type": "entrance",
@@ -3172,73 +3172,73 @@
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-25.svg",
-      "name": "Palmet Sarayı · Bakır · Çerçeve · Kadın",
+      "name": "Krezus Taç · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-25.svg"
+      "asset_url": "shop-lydia-premium/frame-female-25.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-26.svg",
-      "name": "Palmet Sarayı · Gümüş · Çerçeve · Kadın",
+      "name": "Krezus Mühür · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-26.svg"
+      "asset_url": "shop-lydia-premium/frame-female-26.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-27.svg",
-      "name": "Palmet Sarayı · Altın · Çerçeve · Kadın",
+      "name": "Krezus Işıltı · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-27.svg"
+      "asset_url": "shop-lydia-premium/frame-female-27.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-28.svg",
-      "name": "Palmet Sarayı · Zümrüt · Çerçeve · Kadın",
+      "name": "Krezus Saray · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-28.svg"
+      "asset_url": "shop-lydia-premium/frame-female-28.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-29.svg",
-      "name": "Palmet Sarayı · Kehribar · Çerçeve · Kadın",
+      "name": "Krezus İnci · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-29.svg"
+      "asset_url": "shop-lydia-premium/frame-female-29.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-30.svg",
-      "name": "Palmet Sarayı · Ametist · Çerçeve · Kadın",
+      "name": "Krezus Zarafet · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-30.svg"
+      "asset_url": "shop-lydia-premium/frame-female-30.png"
     },
     {
       "type": "frame",
@@ -5092,73 +5092,73 @@
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-25.svg",
-      "name": "Palmet Sarayı · Bakır · Sohbet balonu · Erkek",
+      "name": "Krezus Hükümdar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-25.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-25.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-26.svg",
-      "name": "Palmet Sarayı · Gümüş · Sohbet balonu · Erkek",
+      "name": "Krezus Muhafız · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-26.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-26.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-27.svg",
-      "name": "Palmet Sarayı · Altın · Sohbet balonu · Erkek",
+      "name": "Krezus Şövalye · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-27.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-27.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-28.svg",
-      "name": "Palmet Sarayı · Zümrüt · Sohbet balonu · Erkek",
+      "name": "Krezus Saray Efendisi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-28.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-28.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-29.svg",
-      "name": "Palmet Sarayı · Kehribar · Sohbet balonu · Erkek",
+      "name": "Krezus Elçi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-29.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-29.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-30.svg",
-      "name": "Palmet Sarayı · Ametist · Sohbet balonu · Erkek",
+      "name": "Krezus Komutan · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-30.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-30.png"
     },
     {
       "type": "bubble",
@@ -6052,73 +6052,73 @@
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-25.svg",
-      "name": "Palmet Sarayı · Bakır · Oda girişi · Erkek",
+      "name": "Krezus Hükümdar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-25.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-25.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-26.svg",
-      "name": "Palmet Sarayı · Gümüş · Oda girişi · Erkek",
+      "name": "Krezus Muhafız · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-26.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-26.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-27.svg",
-      "name": "Palmet Sarayı · Altın · Oda girişi · Erkek",
+      "name": "Krezus Şövalye · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-27.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-27.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-28.svg",
-      "name": "Palmet Sarayı · Zümrüt · Oda girişi · Erkek",
+      "name": "Krezus Saray Efendisi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-28.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-28.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-29.svg",
-      "name": "Palmet Sarayı · Kehribar · Oda girişi · Erkek",
+      "name": "Krezus Elçi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-29.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-29.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-30.svg",
-      "name": "Palmet Sarayı · Ametist · Oda girişi · Erkek",
+      "name": "Krezus Komutan · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-30.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-30.png"
     },
     {
       "type": "entrance",
@@ -7012,73 +7012,73 @@
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-25.svg",
-      "name": "Palmet Sarayı · Bakır · Çerçeve · Erkek",
+      "name": "Krezus Hükümdar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-25.svg"
+      "asset_url": "shop-lydia-premium/frame-male-25.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-26.svg",
-      "name": "Palmet Sarayı · Gümüş · Çerçeve · Erkek",
+      "name": "Krezus Muhafız · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-26.svg"
+      "asset_url": "shop-lydia-premium/frame-male-26.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-27.svg",
-      "name": "Palmet Sarayı · Altın · Çerçeve · Erkek",
+      "name": "Krezus Şövalye · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-27.svg"
+      "asset_url": "shop-lydia-premium/frame-male-27.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-28.svg",
-      "name": "Palmet Sarayı · Zümrüt · Çerçeve · Erkek",
+      "name": "Krezus Saray Efendisi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-28.svg"
+      "asset_url": "shop-lydia-premium/frame-male-28.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-29.svg",
-      "name": "Palmet Sarayı · Kehribar · Çerçeve · Erkek",
+      "name": "Krezus Elçi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-29.svg"
+      "asset_url": "shop-lydia-premium/frame-male-29.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-30.svg",
-      "name": "Palmet Sarayı · Ametist · Çerçeve · Erkek",
+      "name": "Krezus Komutan · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-30.svg"
+      "asset_url": "shop-lydia-premium/frame-male-30.png"
     },
     {
       "type": "frame",
@@ -9919,6 +9919,306 @@
       "expansion": true,
       "task_only": true,
       "asset_url": "shop-lydia-premium/title-male-24.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-25.svg",
+      "name": "Krezus Taç · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-25.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-25.svg",
+      "name": "KREZUS KRALİÇESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-25.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-25.svg",
+      "name": "Krezus Hükümdar · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-25.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-25.svg",
+      "name": "KREZUS HÜKÜMDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-25.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-26.svg",
+      "name": "Krezus Mühür · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-26.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-26.svg",
+      "name": "KREZUS MÜHRÜ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-26.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-26.svg",
+      "name": "Krezus Muhafız · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-26.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-26.svg",
+      "name": "KREZUS MUHAFIZI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-26.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-27.svg",
+      "name": "Krezus Işıltı · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-27.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-27.svg",
+      "name": "KREZUS İLHAMI · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-27.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-27.svg",
+      "name": "Krezus Şövalye · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-27.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-27.svg",
+      "name": "KREZUS ŞÖVALYESİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-27.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-28.svg",
+      "name": "Krezus Saray · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-28.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-28.svg",
+      "name": "KREZUS PRENSESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-28.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-28.svg",
+      "name": "Krezus Saray Efendisi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-28.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-28.svg",
+      "name": "KREZUS SARAY EFENDİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-28.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-29.svg",
+      "name": "Krezus İnci · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-29.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-29.svg",
+      "name": "KREZUS İNCİSİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-29.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-29.svg",
+      "name": "Krezus Elçi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-29.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-29.svg",
+      "name": "KREZUS ELÇİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-29.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-30.svg",
+      "name": "Krezus Zarafet · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-30.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-30.svg",
+      "name": "KREZUS ZARAFETİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-30.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-30.svg",
+      "name": "Krezus Komutan · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-30.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-30.svg",
+      "name": "KREZUS KOMUTANI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-30.png"
     }
   ],
   "wallpapers": [
@@ -11924,6 +12224,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-25.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-25.svg",
+          "name": "KREZUS KRALİÇESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-25.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-25.svg",
+          "name": "KREZUS HÜKÜMDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-25.png"
+        }
       }
     },
     {
@@ -11942,6 +12270,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-26.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-26.svg",
+          "name": "KREZUS MÜHRÜ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-26.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-26.svg",
+          "name": "KREZUS MUHAFIZI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-26.png"
+        }
       }
     },
     {
@@ -11960,6 +12316,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-27.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-27.svg",
+          "name": "KREZUS İLHAMI · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-27.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-27.svg",
+          "name": "KREZUS ŞÖVALYESİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-27.png"
+        }
       }
     },
     {
@@ -11978,6 +12362,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-28.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-28.svg",
+          "name": "KREZUS PRENSESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-28.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-28.svg",
+          "name": "KREZUS SARAY EFENDİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-28.png"
+        }
       }
     },
     {
@@ -11996,6 +12408,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-29.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-29.svg",
+          "name": "KREZUS İNCİSİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-29.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-29.svg",
+          "name": "KREZUS ELÇİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-29.png"
+        }
       }
     },
     {
@@ -12014,6 +12454,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-30.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-30.svg",
+          "name": "KREZUS ZARAFETİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-30.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-30.svg",
+          "name": "KREZUS KOMUTANI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-30.png"
+        }
       }
     },
     {
