@@ -60,7 +60,17 @@ def backfill_content(db,uid):
             if str(row_id) not in known:db.add(TaskEvent(user_id=uid,kind=kind,event_key=str(row_id)))
 def task_rows(db,user):
     values=progress(db,user.id);keys=set(db.scalars(select(UserCosmetic.asset_key).where(UserCosmetic.user_id==user.id,UserCosmetic.cosmetic_type=='title')))
-    return [{**q,'description':LABELS[q['metric']],'progress':min(values[q['metric']],q['target']),'complete':values[q['metric']]>=q['target'],'claimed':q['reward']['asset_key'] in keys} for q in data()['quests']]
+    rows=[]
+    for q in data()['quests']:
+        reward=reward_for_user(q,user)
+        key=reward['asset_key']
+        # An already earned legacy title also grants its matching new artwork.
+        if key not in keys and q['reward']['asset_key'] in keys:
+            db.add(UserCosmetic(user_id=user.id,cosmetic_type='title',asset_key=key));keys.add(key)
+        rows.append({**q,'reward':reward,'description':LABELS[q['metric']],'progress':min(values[q['metric']],q['target']),'complete':values[q['metric']]>=q['target'],'claimed':key in keys})
+    return rows
+def reward_for_user(quest,user):
+    return quest.get('gender_rewards',{}).get(user.gender,quest['reward'])
 def room_inventory(db,user):
     from .room_models import Room,RoomWallpaper,RoomWallpaperState
     from .wallpapers import find as wall
@@ -83,9 +93,12 @@ def list_tasks(user=Depends(current_cosmetic_user),db=Depends(get_db)):
 def claim_task(task_id:str,user=Depends(current_cosmetic_user),db=Depends(get_db)):
     user=db.scalar(select(User).where(User.id==user.id).with_for_update());quest=next((q for q in data()['quests'] if q['id']==task_id),None)
     if not quest:raise HTTPException(404,'Görev bulunamadı.')
-    key=quest['reward']['asset_key']
+    reward=reward_for_user(quest,user);key=reward['asset_key']
     if owns(db,user.id,key,'title'):return {'ok':True,'already_claimed':True,'asset_key':key}
+    if key!=quest['reward']['asset_key'] and owns(db,user.id,quest['reward']['asset_key'],'title'):
+        db.add(UserCosmetic(user_id=user.id,cosmetic_type='title',asset_key=key));db.commit()
+        return {'ok':True,'already_claimed':True,'asset_key':key,'reward':reward}
     backfill_content(db,user.id);db.flush()
     if progress(db,user.id)[quest['metric']]<quest['target']:raise HTTPException(403,'Görev henüz tamamlanmadı.')
     db.add(UserCosmetic(user_id=user.id,cosmetic_type='title',asset_key=key));db.commit()
-    return {'ok':True,'already_claimed':False,'asset_key':key,'reward':quest['reward']}
+    return {'ok':True,'already_claimed':False,'asset_key':key,'reward':reward}

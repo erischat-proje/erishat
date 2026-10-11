@@ -964,25 +964,25 @@
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-01.svg",
-      "name": "Sardis Aslanı · Bakır · Sohbet balonu · Kadın",
+      "name": "Sardis Taç · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-01.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-01.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Sohbet balonu · Kadın",
+      "name": "Sardis Mühür · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-02.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-02.png"
     },
     {
       "type": "bubble",
@@ -1924,25 +1924,25 @@
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-01.svg",
-      "name": "Sardis Aslanı · Bakır · Oda girişi · Kadın",
+      "name": "Sardis Taç · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-01.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-01.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Oda girişi · Kadın",
+      "name": "Sardis Mühür · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-02.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-02.png"
     },
     {
       "type": "entrance",
@@ -2884,25 +2884,25 @@
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-01.svg",
-      "name": "Sardis Aslanı · Bakır · Çerçeve · Kadın",
+      "name": "Sardis Taç · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-01.svg"
+      "asset_url": "shop-lydia-premium/frame-female-01.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Çerçeve · Kadın",
+      "name": "Sardis Mühür · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-02.svg"
+      "asset_url": "shop-lydia-premium/frame-female-02.png"
     },
     {
       "type": "frame",
@@ -4804,25 +4804,25 @@
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-01.svg",
-      "name": "Sardis Aslanı · Bakır · Sohbet balonu · Erkek",
+      "name": "Sardis Hükümdar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-01.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-01.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Sohbet balonu · Erkek",
+      "name": "Sardis Muhafız · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-02.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-02.png"
     },
     {
       "type": "bubble",
@@ -5764,25 +5764,25 @@
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-01.svg",
-      "name": "Sardis Aslanı · Bakır · Oda girişi · Erkek",
+      "name": "Sardis Hükümdar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-01.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-01.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Oda girişi · Erkek",
+      "name": "Sardis Muhafız · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-02.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-02.png"
     },
     {
       "type": "entrance",
@@ -6724,25 +6724,25 @@
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-01.svg",
-      "name": "Sardis Aslanı · Bakır · Çerçeve · Erkek",
+      "name": "Sardis Hükümdar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-01.svg"
+      "asset_url": "shop-lydia-premium/frame-male-01.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Çerçeve · Erkek",
+      "name": "Sardis Muhafız · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-02.svg"
+      "asset_url": "shop-lydia-premium/frame-male-02.png"
     },
     {
       "type": "frame",
@@ -8724,25 +8724,25 @@
       "type": "profile",
       "gender": "female",
       "asset_key": "shop-expansion/profile-female-01.svg",
-      "name": "Sardis Aslanı · Bakır · Profil görünümü · Kadın",
+      "name": "Sardis Taç · Profil görünümü · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/profile-female-01.svg"
+      "asset_url": "shop-lydia-premium/profile-female-01.png"
     },
     {
       "type": "profile",
       "gender": "female",
       "asset_key": "shop-expansion/profile-female-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Profil görünümü · Kadın",
+      "name": "Sardis Mühür · Profil görünümü · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/profile-female-02.svg"
+      "asset_url": "shop-lydia-premium/profile-female-02.png"
     },
     {
       "type": "profile",
@@ -8796,25 +8796,25 @@
       "type": "profile",
       "gender": "male",
       "asset_key": "shop-expansion/profile-male-01.svg",
-      "name": "Sardis Aslanı · Bakır · Profil görünümü · Erkek",
+      "name": "Sardis Hükümdar · Profil görünümü · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/profile-male-01.svg"
+      "asset_url": "shop-lydia-premium/profile-male-01.png"
     },
     {
       "type": "profile",
       "gender": "male",
       "asset_key": "shop-expansion/profile-male-02.svg",
-      "name": "Sardis Aslanı · Gümüş · Profil görünümü · Erkek",
+      "name": "Sardis Muhafız · Profil görünümü · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/profile-male-02.svg"
+      "asset_url": "shop-lydia-premium/profile-male-02.png"
     },
     {
       "type": "profile",
@@ -8851,6 +8851,58 @@
       "tier": "standard",
       "expansion": true,
       "asset_url": "shop-lydia/profile-male-08.svg"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-01.svg",
+      "name": "SARDİS KRALİÇESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-01.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-01.svg",
+      "name": "SARDİS HÜKÜMDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-01.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-02.svg",
+      "name": "SARDİS MÜHRÜ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-02.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-02.svg",
+      "name": "SARDİS MUHAFIZI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-02.png"
     }
   ],
   "wallpapers": [
@@ -9752,6 +9804,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-01.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-01.svg",
+          "name": "SARDİS KRALİÇESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-01.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-01.svg",
+          "name": "SARDİS HÜKÜMDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-01.png"
+        }
       }
     },
     {
@@ -9770,6 +9850,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-02.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-02.svg",
+          "name": "SARDİS MÜHRÜ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-02.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-02.svg",
+          "name": "SARDİS MUHAFIZI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-02.png"
+        }
       }
     },
     {

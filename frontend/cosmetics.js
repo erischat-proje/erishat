@@ -29,7 +29,7 @@
     clean = window.ErisShopArt?.resolve(clean) || clean;
     clean = window.ErisVIPArt?.resolve(clean) || clean;
     if (premiumAssets.has(clean)) clean = clean.replace('shop-expansion/', 'shop-premium-v2/').replace(/\.svg$/, '.webp');
-    if (!/^(shop-lydia|shop-premium-v2|Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
+    if (!/^(shop-lydia-premium|shop-lydia|shop-premium-v2|Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
     const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
     const result = new URL(`./${encodedPath}`, document.baseURI);
     if (/^(?:shop-expansion|shop-premium-v2)\/(?:frame|bubble|entrance|profile|title)-/.test(clean)) result.searchParams.set('v', 'premium720-20261004');
