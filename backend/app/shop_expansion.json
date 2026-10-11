@@ -1564,121 +1564,121 @@
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-51.svg",
-      "name": "Safir Kapısı · Altın · Sohbet balonu · Kadın",
+      "name": "Kehribar Işıltı · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-51.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-51.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-52.svg",
-      "name": "Safir Kapısı · Zümrüt · Sohbet balonu · Kadın",
+      "name": "Kehribar Saray · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-52.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-52.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-53.svg",
-      "name": "Safir Kapısı · Kehribar · Sohbet balonu · Kadın",
+      "name": "Kehribar İnci · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-53.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-53.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-54.svg",
-      "name": "Safir Kapısı · Ametist · Sohbet balonu · Kadın",
+      "name": "Kehribar Zarafet · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-54.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-54.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-55.svg",
-      "name": "Safir Kapısı · Safir · Sohbet balonu · Kadın",
+      "name": "Kehribar Hazine · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-55.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-55.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-56.svg",
-      "name": "Safir Kapısı · Yakut · Sohbet balonu · Kadın",
+      "name": "Kehribar Güneş · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-56.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-56.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-57.svg",
-      "name": "Yakut Hanedanı · Bakır · Sohbet balonu · Kadın",
+      "name": "Elektrum Taç · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-57.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-57.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-58.svg",
-      "name": "Yakut Hanedanı · Gümüş · Sohbet balonu · Kadın",
+      "name": "Elektrum Mühür · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-58.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-58.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-59.svg",
-      "name": "Yakut Hanedanı · Altın · Sohbet balonu · Kadın",
+      "name": "Elektrum Işıltı · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-59.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-59.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-60.svg",
-      "name": "Yakut Hanedanı · Zümrüt · Sohbet balonu · Kadın",
+      "name": "Elektrum Saray · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-60.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-60.png"
     },
     {
       "type": "bubble",
@@ -2524,121 +2524,121 @@
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-51.svg",
-      "name": "Safir Kapısı · Altın · Oda girişi · Kadın",
+      "name": "Kehribar Işıltı · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-51.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-51.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-52.svg",
-      "name": "Safir Kapısı · Zümrüt · Oda girişi · Kadın",
+      "name": "Kehribar Saray · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-52.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-52.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-53.svg",
-      "name": "Safir Kapısı · Kehribar · Oda girişi · Kadın",
+      "name": "Kehribar İnci · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-53.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-53.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-54.svg",
-      "name": "Safir Kapısı · Ametist · Oda girişi · Kadın",
+      "name": "Kehribar Zarafet · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-54.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-54.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-55.svg",
-      "name": "Safir Kapısı · Safir · Oda girişi · Kadın",
+      "name": "Kehribar Hazine · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-55.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-55.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-56.svg",
-      "name": "Safir Kapısı · Yakut · Oda girişi · Kadın",
+      "name": "Kehribar Güneş · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-56.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-56.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-57.svg",
-      "name": "Yakut Hanedanı · Bakır · Oda girişi · Kadın",
+      "name": "Elektrum Taç · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-57.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-57.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-58.svg",
-      "name": "Yakut Hanedanı · Gümüş · Oda girişi · Kadın",
+      "name": "Elektrum Mühür · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-58.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-58.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-59.svg",
-      "name": "Yakut Hanedanı · Altın · Oda girişi · Kadın",
+      "name": "Elektrum Işıltı · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-59.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-59.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-60.svg",
-      "name": "Yakut Hanedanı · Zümrüt · Oda girişi · Kadın",
+      "name": "Elektrum Saray · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-60.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-60.png"
     },
     {
       "type": "entrance",
@@ -3484,121 +3484,121 @@
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-51.svg",
-      "name": "Safir Kapısı · Altın · Çerçeve · Kadın",
+      "name": "Kehribar Işıltı · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-51.svg"
+      "asset_url": "shop-lydia-premium/frame-female-51.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-52.svg",
-      "name": "Safir Kapısı · Zümrüt · Çerçeve · Kadın",
+      "name": "Kehribar Saray · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-52.svg"
+      "asset_url": "shop-lydia-premium/frame-female-52.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-53.svg",
-      "name": "Safir Kapısı · Kehribar · Çerçeve · Kadın",
+      "name": "Kehribar İnci · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-53.svg"
+      "asset_url": "shop-lydia-premium/frame-female-53.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-54.svg",
-      "name": "Safir Kapısı · Ametist · Çerçeve · Kadın",
+      "name": "Kehribar Zarafet · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-54.svg"
+      "asset_url": "shop-lydia-premium/frame-female-54.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-55.svg",
-      "name": "Safir Kapısı · Safir · Çerçeve · Kadın",
+      "name": "Kehribar Hazine · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-55.svg"
+      "asset_url": "shop-lydia-premium/frame-female-55.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-56.svg",
-      "name": "Safir Kapısı · Yakut · Çerçeve · Kadın",
+      "name": "Kehribar Güneş · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-56.svg"
+      "asset_url": "shop-lydia-premium/frame-female-56.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-57.svg",
-      "name": "Yakut Hanedanı · Bakır · Çerçeve · Kadın",
+      "name": "Elektrum Taç · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-57.svg"
+      "asset_url": "shop-lydia-premium/frame-female-57.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-58.svg",
-      "name": "Yakut Hanedanı · Gümüş · Çerçeve · Kadın",
+      "name": "Elektrum Mühür · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-58.svg"
+      "asset_url": "shop-lydia-premium/frame-female-58.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-59.svg",
-      "name": "Yakut Hanedanı · Altın · Çerçeve · Kadın",
+      "name": "Elektrum Işıltı · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-59.svg"
+      "asset_url": "shop-lydia-premium/frame-female-59.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-60.svg",
-      "name": "Yakut Hanedanı · Zümrüt · Çerçeve · Kadın",
+      "name": "Elektrum Saray · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-60.svg"
+      "asset_url": "shop-lydia-premium/frame-female-60.png"
     },
     {
       "type": "frame",
@@ -5404,121 +5404,121 @@
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-51.svg",
-      "name": "Safir Kapısı · Altın · Sohbet balonu · Erkek",
+      "name": "Kehribar Şövalye · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-51.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-51.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-52.svg",
-      "name": "Safir Kapısı · Zümrüt · Sohbet balonu · Erkek",
+      "name": "Kehribar Saray Efendisi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-52.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-52.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-53.svg",
-      "name": "Safir Kapısı · Kehribar · Sohbet balonu · Erkek",
+      "name": "Kehribar Elçi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-53.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-53.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-54.svg",
-      "name": "Safir Kapısı · Ametist · Sohbet balonu · Erkek",
+      "name": "Kehribar Komutan · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-54.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-54.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-55.svg",
-      "name": "Safir Kapısı · Safir · Sohbet balonu · Erkek",
+      "name": "Kehribar Hazinedar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-55.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-55.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-56.svg",
-      "name": "Safir Kapısı · Yakut · Sohbet balonu · Erkek",
+      "name": "Kehribar Aslan · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-56.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-56.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-57.svg",
-      "name": "Yakut Hanedanı · Bakır · Sohbet balonu · Erkek",
+      "name": "Elektrum Hükümdar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-57.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-57.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-58.svg",
-      "name": "Yakut Hanedanı · Gümüş · Sohbet balonu · Erkek",
+      "name": "Elektrum Muhafız · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-58.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-58.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-59.svg",
-      "name": "Yakut Hanedanı · Altın · Sohbet balonu · Erkek",
+      "name": "Elektrum Şövalye · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-59.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-59.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-60.svg",
-      "name": "Yakut Hanedanı · Zümrüt · Sohbet balonu · Erkek",
+      "name": "Elektrum Saray Efendisi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-60.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-60.png"
     },
     {
       "type": "bubble",
@@ -6364,121 +6364,121 @@
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-51.svg",
-      "name": "Safir Kapısı · Altın · Oda girişi · Erkek",
+      "name": "Kehribar Şövalye · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-51.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-51.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-52.svg",
-      "name": "Safir Kapısı · Zümrüt · Oda girişi · Erkek",
+      "name": "Kehribar Saray Efendisi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-52.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-52.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-53.svg",
-      "name": "Safir Kapısı · Kehribar · Oda girişi · Erkek",
+      "name": "Kehribar Elçi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-53.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-53.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-54.svg",
-      "name": "Safir Kapısı · Ametist · Oda girişi · Erkek",
+      "name": "Kehribar Komutan · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-54.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-54.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-55.svg",
-      "name": "Safir Kapısı · Safir · Oda girişi · Erkek",
+      "name": "Kehribar Hazinedar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-55.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-55.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-56.svg",
-      "name": "Safir Kapısı · Yakut · Oda girişi · Erkek",
+      "name": "Kehribar Aslan · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-56.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-56.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-57.svg",
-      "name": "Yakut Hanedanı · Bakır · Oda girişi · Erkek",
+      "name": "Elektrum Hükümdar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-57.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-57.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-58.svg",
-      "name": "Yakut Hanedanı · Gümüş · Oda girişi · Erkek",
+      "name": "Elektrum Muhafız · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-58.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-58.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-59.svg",
-      "name": "Yakut Hanedanı · Altın · Oda girişi · Erkek",
+      "name": "Elektrum Şövalye · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-59.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-59.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-60.svg",
-      "name": "Yakut Hanedanı · Zümrüt · Oda girişi · Erkek",
+      "name": "Elektrum Saray Efendisi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-60.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-60.png"
     },
     {
       "type": "entrance",
@@ -7324,121 +7324,121 @@
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-51.svg",
-      "name": "Safir Kapısı · Altın · Çerçeve · Erkek",
+      "name": "Kehribar Şövalye · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-51.svg"
+      "asset_url": "shop-lydia-premium/frame-male-51.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-52.svg",
-      "name": "Safir Kapısı · Zümrüt · Çerçeve · Erkek",
+      "name": "Kehribar Saray Efendisi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-52.svg"
+      "asset_url": "shop-lydia-premium/frame-male-52.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-53.svg",
-      "name": "Safir Kapısı · Kehribar · Çerçeve · Erkek",
+      "name": "Kehribar Elçi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-53.svg"
+      "asset_url": "shop-lydia-premium/frame-male-53.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-54.svg",
-      "name": "Safir Kapısı · Ametist · Çerçeve · Erkek",
+      "name": "Kehribar Komutan · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-54.svg"
+      "asset_url": "shop-lydia-premium/frame-male-54.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-55.svg",
-      "name": "Safir Kapısı · Safir · Çerçeve · Erkek",
+      "name": "Kehribar Hazinedar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-55.svg"
+      "asset_url": "shop-lydia-premium/frame-male-55.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-56.svg",
-      "name": "Safir Kapısı · Yakut · Çerçeve · Erkek",
+      "name": "Kehribar Aslan · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-56.svg"
+      "asset_url": "shop-lydia-premium/frame-male-56.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-57.svg",
-      "name": "Yakut Hanedanı · Bakır · Çerçeve · Erkek",
+      "name": "Elektrum Hükümdar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-57.svg"
+      "asset_url": "shop-lydia-premium/frame-male-57.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-58.svg",
-      "name": "Yakut Hanedanı · Gümüş · Çerçeve · Erkek",
+      "name": "Elektrum Muhafız · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-58.svg"
+      "asset_url": "shop-lydia-premium/frame-male-58.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-59.svg",
-      "name": "Yakut Hanedanı · Altın · Çerçeve · Erkek",
+      "name": "Elektrum Şövalye · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-59.svg"
+      "asset_url": "shop-lydia-premium/frame-male-59.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-60.svg",
-      "name": "Yakut Hanedanı · Zümrüt · Çerçeve · Erkek",
+      "name": "Elektrum Saray Efendisi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-60.svg"
+      "asset_url": "shop-lydia-premium/frame-male-60.png"
     },
     {
       "type": "frame",
@@ -11219,6 +11219,506 @@
       "expansion": true,
       "task_only": true,
       "asset_url": "shop-lydia-premium/title-male-50.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-51.svg",
+      "name": "Kehribar Işıltı · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-51.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-51.svg",
+      "name": "KEHRİBAR İLHAMI · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-51.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-51.svg",
+      "name": "Kehribar Şövalye · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-51.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-51.svg",
+      "name": "KEHRİBAR ŞÖVALYESİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-51.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-52.svg",
+      "name": "Kehribar Saray · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-52.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-52.svg",
+      "name": "KEHRİBAR PRENSESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-52.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-52.svg",
+      "name": "Kehribar Saray Efendisi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-52.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-52.svg",
+      "name": "KEHRİBAR SARAY EFENDİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-52.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-53.svg",
+      "name": "Kehribar İnci · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-53.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-53.svg",
+      "name": "KEHRİBAR İNCİSİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-53.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-53.svg",
+      "name": "Kehribar Elçi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-53.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-53.svg",
+      "name": "KEHRİBAR ELÇİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-53.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-54.svg",
+      "name": "Kehribar Zarafet · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-54.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-54.svg",
+      "name": "KEHRİBAR ZARAFETİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-54.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-54.svg",
+      "name": "Kehribar Komutan · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-54.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-54.svg",
+      "name": "KEHRİBAR KOMUTANI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-54.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-55.svg",
+      "name": "Kehribar Hazine · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-55.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-55.svg",
+      "name": "KEHRİBAR HAZİNESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-55.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-55.svg",
+      "name": "Kehribar Hazinedar · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-55.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-55.svg",
+      "name": "KEHRİBAR HAZİNEDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-55.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-56.svg",
+      "name": "Kehribar Güneş · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-56.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-56.svg",
+      "name": "KEHRİBAR GÜNEŞİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-56.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-56.svg",
+      "name": "Kehribar Aslan · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-56.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-56.svg",
+      "name": "KEHRİBAR ASLANI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-56.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-57.svg",
+      "name": "Elektrum Taç · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-57.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-57.svg",
+      "name": "ELEKTRUM KRALİÇESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-57.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-57.svg",
+      "name": "Elektrum Hükümdar · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-57.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-57.svg",
+      "name": "ELEKTRUM HÜKÜMDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-57.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-58.svg",
+      "name": "Elektrum Mühür · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-58.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-58.svg",
+      "name": "ELEKTRUM MÜHRÜ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-58.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-58.svg",
+      "name": "Elektrum Muhafız · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-58.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-58.svg",
+      "name": "ELEKTRUM MUHAFIZI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-58.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-59.svg",
+      "name": "Elektrum Işıltı · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-59.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-59.svg",
+      "name": "ELEKTRUM İLHAMI · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-59.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-59.svg",
+      "name": "Elektrum Şövalye · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-59.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-59.svg",
+      "name": "ELEKTRUM ŞÖVALYESİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-59.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-60.svg",
+      "name": "Elektrum Saray · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-60.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-60.svg",
+      "name": "ELEKTRUM PRENSESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-60.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-60.svg",
+      "name": "Elektrum Saray Efendisi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-60.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-60.svg",
+      "name": "ELEKTRUM SARAY EFENDİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-60.png"
     }
   ],
   "wallpapers": [
@@ -14420,6 +14920,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-51.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-51.svg",
+          "name": "KEHRİBAR İLHAMI · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-51.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-51.svg",
+          "name": "KEHRİBAR ŞÖVALYESİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-51.png"
+        }
       }
     },
     {
@@ -14438,6 +14966,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-52.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-52.svg",
+          "name": "KEHRİBAR PRENSESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-52.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-52.svg",
+          "name": "KEHRİBAR SARAY EFENDİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-52.png"
+        }
       }
     },
     {
@@ -14456,6 +15012,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-53.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-53.svg",
+          "name": "KEHRİBAR İNCİSİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-53.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-53.svg",
+          "name": "KEHRİBAR ELÇİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-53.png"
+        }
       }
     },
     {
@@ -14474,6 +15058,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-54.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-54.svg",
+          "name": "KEHRİBAR ZARAFETİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-54.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-54.svg",
+          "name": "KEHRİBAR KOMUTANI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-54.png"
+        }
       }
     },
     {
@@ -14492,6 +15104,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-55.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-55.svg",
+          "name": "KEHRİBAR HAZİNESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-55.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-55.svg",
+          "name": "KEHRİBAR HAZİNEDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-55.png"
+        }
       }
     },
     {
@@ -14510,6 +15150,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-56.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-56.svg",
+          "name": "KEHRİBAR GÜNEŞİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-56.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-56.svg",
+          "name": "KEHRİBAR ASLANI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-56.png"
+        }
       }
     },
     {
@@ -14528,6 +15196,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-57.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-57.svg",
+          "name": "ELEKTRUM KRALİÇESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-57.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-57.svg",
+          "name": "ELEKTRUM HÜKÜMDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-57.png"
+        }
       }
     },
     {
@@ -14546,6 +15242,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-58.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-58.svg",
+          "name": "ELEKTRUM MÜHRÜ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-58.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-58.svg",
+          "name": "ELEKTRUM MUHAFIZI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-58.png"
+        }
       }
     },
     {
@@ -14564,6 +15288,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-59.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-59.svg",
+          "name": "ELEKTRUM İLHAMI · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-59.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-59.svg",
+          "name": "ELEKTRUM ŞÖVALYESİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-59.png"
+        }
       }
     },
     {
@@ -14582,6 +15334,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-60.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-60.svg",
+          "name": "ELEKTRUM PRENSESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-60.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-60.svg",
+          "name": "ELEKTRUM SARAY EFENDİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-60.png"
+        }
       }
     },
     {
