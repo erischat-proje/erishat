@@ -1324,121 +1324,121 @@
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-31.svg",
-      "name": "Palmet Sarayı · Safir · Sohbet balonu · Kadın",
+      "name": "Krezus Hazine · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-31.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-31.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-32.svg",
-      "name": "Palmet Sarayı · Yakut · Sohbet balonu · Kadın",
+      "name": "Krezus Güneş · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-32.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-32.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-33.svg",
-      "name": "Kehribar Yolu · Bakır · Sohbet balonu · Kadın",
+      "name": "Asma Taç · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-33.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-33.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-34.svg",
-      "name": "Kehribar Yolu · Gümüş · Sohbet balonu · Kadın",
+      "name": "Asma Mühür · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-34.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-34.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-35.svg",
-      "name": "Kehribar Yolu · Altın · Sohbet balonu · Kadın",
+      "name": "Asma Işıltı · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-35.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-35.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-36.svg",
-      "name": "Kehribar Yolu · Zümrüt · Sohbet balonu · Kadın",
+      "name": "Asma Saray · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-36.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-36.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-37.svg",
-      "name": "Kehribar Yolu · Kehribar · Sohbet balonu · Kadın",
+      "name": "Asma İnci · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-37.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-37.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-38.svg",
-      "name": "Kehribar Yolu · Ametist · Sohbet balonu · Kadın",
+      "name": "Asma Zarafet · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-38.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-38.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-39.svg",
-      "name": "Kehribar Yolu · Safir · Sohbet balonu · Kadın",
+      "name": "Asma Hazine · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-39.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-39.png"
     },
     {
       "type": "bubble",
       "gender": "female",
       "asset_key": "shop-expansion/bubble-female-40.svg",
-      "name": "Kehribar Yolu · Yakut · Sohbet balonu · Kadın",
+      "name": "Asma Güneş · Sohbet balonu · Kadın",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-female-40.svg"
+      "asset_url": "shop-lydia-premium/bubble-female-40.png"
     },
     {
       "type": "bubble",
@@ -2284,121 +2284,121 @@
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-31.svg",
-      "name": "Palmet Sarayı · Safir · Oda girişi · Kadın",
+      "name": "Krezus Hazine · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-31.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-31.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-32.svg",
-      "name": "Palmet Sarayı · Yakut · Oda girişi · Kadın",
+      "name": "Krezus Güneş · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-32.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-32.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-33.svg",
-      "name": "Kehribar Yolu · Bakır · Oda girişi · Kadın",
+      "name": "Asma Taç · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-33.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-33.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-34.svg",
-      "name": "Kehribar Yolu · Gümüş · Oda girişi · Kadın",
+      "name": "Asma Mühür · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-34.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-34.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-35.svg",
-      "name": "Kehribar Yolu · Altın · Oda girişi · Kadın",
+      "name": "Asma Işıltı · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-35.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-35.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-36.svg",
-      "name": "Kehribar Yolu · Zümrüt · Oda girişi · Kadın",
+      "name": "Asma Saray · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-36.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-36.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-37.svg",
-      "name": "Kehribar Yolu · Kehribar · Oda girişi · Kadın",
+      "name": "Asma İnci · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-37.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-37.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-38.svg",
-      "name": "Kehribar Yolu · Ametist · Oda girişi · Kadın",
+      "name": "Asma Zarafet · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-38.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-38.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-39.svg",
-      "name": "Kehribar Yolu · Safir · Oda girişi · Kadın",
+      "name": "Asma Hazine · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-39.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-39.png"
     },
     {
       "type": "entrance",
       "gender": "female",
       "asset_key": "shop-expansion/entrance-female-40.svg",
-      "name": "Kehribar Yolu · Yakut · Oda girişi · Kadın",
+      "name": "Asma Güneş · Oda girişi · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-female-40.svg"
+      "asset_url": "shop-lydia-premium/entrance-female-40.png"
     },
     {
       "type": "entrance",
@@ -3244,121 +3244,121 @@
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-31.svg",
-      "name": "Palmet Sarayı · Safir · Çerçeve · Kadın",
+      "name": "Krezus Hazine · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-31.svg"
+      "asset_url": "shop-lydia-premium/frame-female-31.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-32.svg",
-      "name": "Palmet Sarayı · Yakut · Çerçeve · Kadın",
+      "name": "Krezus Güneş · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-32.svg"
+      "asset_url": "shop-lydia-premium/frame-female-32.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-33.svg",
-      "name": "Kehribar Yolu · Bakır · Çerçeve · Kadın",
+      "name": "Asma Taç · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-33.svg"
+      "asset_url": "shop-lydia-premium/frame-female-33.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-34.svg",
-      "name": "Kehribar Yolu · Gümüş · Çerçeve · Kadın",
+      "name": "Asma Mühür · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-34.svg"
+      "asset_url": "shop-lydia-premium/frame-female-34.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-35.svg",
-      "name": "Kehribar Yolu · Altın · Çerçeve · Kadın",
+      "name": "Asma Işıltı · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-35.svg"
+      "asset_url": "shop-lydia-premium/frame-female-35.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-36.svg",
-      "name": "Kehribar Yolu · Zümrüt · Çerçeve · Kadın",
+      "name": "Asma Saray · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-36.svg"
+      "asset_url": "shop-lydia-premium/frame-female-36.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-37.svg",
-      "name": "Kehribar Yolu · Kehribar · Çerçeve · Kadın",
+      "name": "Asma İnci · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-37.svg"
+      "asset_url": "shop-lydia-premium/frame-female-37.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-38.svg",
-      "name": "Kehribar Yolu · Ametist · Çerçeve · Kadın",
+      "name": "Asma Zarafet · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-38.svg"
+      "asset_url": "shop-lydia-premium/frame-female-38.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-39.svg",
-      "name": "Kehribar Yolu · Safir · Çerçeve · Kadın",
+      "name": "Asma Hazine · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-39.svg"
+      "asset_url": "shop-lydia-premium/frame-female-39.png"
     },
     {
       "type": "frame",
       "gender": "female",
       "asset_key": "shop-expansion/frame-female-40.svg",
-      "name": "Kehribar Yolu · Yakut · Çerçeve · Kadın",
+      "name": "Asma Güneş · Çerçeve · Kadın",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-female-40.svg"
+      "asset_url": "shop-lydia-premium/frame-female-40.png"
     },
     {
       "type": "frame",
@@ -5164,121 +5164,121 @@
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-31.svg",
-      "name": "Palmet Sarayı · Safir · Sohbet balonu · Erkek",
+      "name": "Krezus Hazinedar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-31.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-31.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-32.svg",
-      "name": "Palmet Sarayı · Yakut · Sohbet balonu · Erkek",
+      "name": "Krezus Aslan · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-32.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-32.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-33.svg",
-      "name": "Kehribar Yolu · Bakır · Sohbet balonu · Erkek",
+      "name": "Asma Hükümdar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-33.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-33.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-34.svg",
-      "name": "Kehribar Yolu · Gümüş · Sohbet balonu · Erkek",
+      "name": "Asma Muhafız · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-34.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-34.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-35.svg",
-      "name": "Kehribar Yolu · Altın · Sohbet balonu · Erkek",
+      "name": "Asma Şövalye · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-35.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-35.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-36.svg",
-      "name": "Kehribar Yolu · Zümrüt · Sohbet balonu · Erkek",
+      "name": "Asma Saray Efendisi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-36.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-36.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-37.svg",
-      "name": "Kehribar Yolu · Kehribar · Sohbet balonu · Erkek",
+      "name": "Asma Elçi · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-37.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-37.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-38.svg",
-      "name": "Kehribar Yolu · Ametist · Sohbet balonu · Erkek",
+      "name": "Asma Komutan · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-38.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-38.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-39.svg",
-      "name": "Kehribar Yolu · Safir · Sohbet balonu · Erkek",
+      "name": "Asma Hazinedar · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-39.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-39.png"
     },
     {
       "type": "bubble",
       "gender": "male",
       "asset_key": "shop-expansion/bubble-male-40.svg",
-      "name": "Kehribar Yolu · Yakut · Sohbet balonu · Erkek",
+      "name": "Asma Aslan · Sohbet balonu · Erkek",
       "price": 1500,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/bubble-male-40.svg"
+      "asset_url": "shop-lydia-premium/bubble-male-40.png"
     },
     {
       "type": "bubble",
@@ -6124,121 +6124,121 @@
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-31.svg",
-      "name": "Palmet Sarayı · Safir · Oda girişi · Erkek",
+      "name": "Krezus Hazinedar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-31.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-31.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-32.svg",
-      "name": "Palmet Sarayı · Yakut · Oda girişi · Erkek",
+      "name": "Krezus Aslan · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-32.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-32.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-33.svg",
-      "name": "Kehribar Yolu · Bakır · Oda girişi · Erkek",
+      "name": "Asma Hükümdar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-33.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-33.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-34.svg",
-      "name": "Kehribar Yolu · Gümüş · Oda girişi · Erkek",
+      "name": "Asma Muhafız · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-34.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-34.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-35.svg",
-      "name": "Kehribar Yolu · Altın · Oda girişi · Erkek",
+      "name": "Asma Şövalye · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-35.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-35.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-36.svg",
-      "name": "Kehribar Yolu · Zümrüt · Oda girişi · Erkek",
+      "name": "Asma Saray Efendisi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-36.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-36.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-37.svg",
-      "name": "Kehribar Yolu · Kehribar · Oda girişi · Erkek",
+      "name": "Asma Elçi · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-37.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-37.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-38.svg",
-      "name": "Kehribar Yolu · Ametist · Oda girişi · Erkek",
+      "name": "Asma Komutan · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-38.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-38.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-39.svg",
-      "name": "Kehribar Yolu · Safir · Oda girişi · Erkek",
+      "name": "Asma Hazinedar · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-39.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-39.png"
     },
     {
       "type": "entrance",
       "gender": "male",
       "asset_key": "shop-expansion/entrance-male-40.svg",
-      "name": "Kehribar Yolu · Yakut · Oda girişi · Erkek",
+      "name": "Asma Aslan · Oda girişi · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/entrance-male-40.svg"
+      "asset_url": "shop-lydia-premium/entrance-male-40.png"
     },
     {
       "type": "entrance",
@@ -7084,121 +7084,121 @@
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-31.svg",
-      "name": "Palmet Sarayı · Safir · Çerçeve · Erkek",
+      "name": "Krezus Hazinedar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-31.svg"
+      "asset_url": "shop-lydia-premium/frame-male-31.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-32.svg",
-      "name": "Palmet Sarayı · Yakut · Çerçeve · Erkek",
+      "name": "Krezus Aslan · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-32.svg"
+      "asset_url": "shop-lydia-premium/frame-male-32.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-33.svg",
-      "name": "Kehribar Yolu · Bakır · Çerçeve · Erkek",
+      "name": "Asma Hükümdar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-33.svg"
+      "asset_url": "shop-lydia-premium/frame-male-33.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-34.svg",
-      "name": "Kehribar Yolu · Gümüş · Çerçeve · Erkek",
+      "name": "Asma Muhafız · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-34.svg"
+      "asset_url": "shop-lydia-premium/frame-male-34.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-35.svg",
-      "name": "Kehribar Yolu · Altın · Çerçeve · Erkek",
+      "name": "Asma Şövalye · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-35.svg"
+      "asset_url": "shop-lydia-premium/frame-male-35.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-36.svg",
-      "name": "Kehribar Yolu · Zümrüt · Çerçeve · Erkek",
+      "name": "Asma Saray Efendisi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-36.svg"
+      "asset_url": "shop-lydia-premium/frame-male-36.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-37.svg",
-      "name": "Kehribar Yolu · Kehribar · Çerçeve · Erkek",
+      "name": "Asma Elçi · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-37.svg"
+      "asset_url": "shop-lydia-premium/frame-male-37.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-38.svg",
-      "name": "Kehribar Yolu · Ametist · Çerçeve · Erkek",
+      "name": "Asma Komutan · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-38.svg"
+      "asset_url": "shop-lydia-premium/frame-male-38.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-39.svg",
-      "name": "Kehribar Yolu · Safir · Çerçeve · Erkek",
+      "name": "Asma Hazinedar · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-39.svg"
+      "asset_url": "shop-lydia-premium/frame-male-39.png"
     },
     {
       "type": "frame",
       "gender": "male",
       "asset_key": "shop-expansion/frame-male-40.svg",
-      "name": "Kehribar Yolu · Yakut · Çerçeve · Erkek",
+      "name": "Asma Aslan · Çerçeve · Erkek",
       "price": 1000,
       "vip": false,
       "vip_level": 0,
       "tier": "standard",
       "expansion": true,
-      "asset_url": "shop-lydia/frame-male-40.svg"
+      "asset_url": "shop-lydia-premium/frame-male-40.png"
     },
     {
       "type": "frame",
@@ -10219,6 +10219,506 @@
       "expansion": true,
       "task_only": true,
       "asset_url": "shop-lydia-premium/title-male-30.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-31.svg",
+      "name": "Krezus Hazine · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-31.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-31.svg",
+      "name": "KREZUS HAZİNESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-31.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-31.svg",
+      "name": "Krezus Hazinedar · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-31.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-31.svg",
+      "name": "KREZUS HAZİNEDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-31.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-32.svg",
+      "name": "Krezus Güneş · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-32.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-32.svg",
+      "name": "KREZUS GÜNEŞİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-32.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-32.svg",
+      "name": "Krezus Aslan · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-32.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-32.svg",
+      "name": "KREZUS ASLANI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-32.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-33.svg",
+      "name": "Asma Taç · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-33.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-33.svg",
+      "name": "ASMA KRALİÇESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-33.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-33.svg",
+      "name": "Asma Hükümdar · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-33.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-33.svg",
+      "name": "ASMA HÜKÜMDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-33.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-34.svg",
+      "name": "Asma Mühür · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-34.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-34.svg",
+      "name": "ASMA MÜHRÜ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-34.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-34.svg",
+      "name": "Asma Muhafız · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-34.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-34.svg",
+      "name": "ASMA MUHAFIZI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-34.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-35.svg",
+      "name": "Asma Işıltı · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-35.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-35.svg",
+      "name": "ASMA İLHAMI · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-35.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-35.svg",
+      "name": "Asma Şövalye · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-35.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-35.svg",
+      "name": "ASMA ŞÖVALYESİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-35.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-36.svg",
+      "name": "Asma Saray · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-36.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-36.svg",
+      "name": "ASMA PRENSESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-36.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-36.svg",
+      "name": "Asma Saray Efendisi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-36.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-36.svg",
+      "name": "ASMA SARAY EFENDİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-36.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-37.svg",
+      "name": "Asma İnci · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-37.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-37.svg",
+      "name": "ASMA İNCİSİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-37.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-37.svg",
+      "name": "Asma Elçi · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-37.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-37.svg",
+      "name": "ASMA ELÇİSİ · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-37.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-38.svg",
+      "name": "Asma Zarafet · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-38.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-38.svg",
+      "name": "ASMA ZARAFETİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-38.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-38.svg",
+      "name": "Asma Komutan · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-38.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-38.svg",
+      "name": "ASMA KOMUTANI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-38.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-39.svg",
+      "name": "Asma Hazine · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-39.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-39.svg",
+      "name": "ASMA HAZİNESİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-39.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-39.svg",
+      "name": "Asma Hazinedar · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-39.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-39.svg",
+      "name": "ASMA HAZİNEDARI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-39.png"
+    },
+    {
+      "type": "profile",
+      "gender": "female",
+      "asset_key": "shop-expansion/profile-female-40.svg",
+      "name": "Asma Güneş · Profil görünümü · Kadın",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-female-40.png"
+    },
+    {
+      "type": "title",
+      "gender": "female",
+      "asset_key": "shop-expansion/title-female-40.svg",
+      "name": "ASMA GÜNEŞİ · Görev unvanı · Kadın",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-female-40.png"
+    },
+    {
+      "type": "profile",
+      "gender": "male",
+      "asset_key": "shop-expansion/profile-male-40.svg",
+      "name": "Asma Aslan · Profil görünümü · Erkek",
+      "price": 1500,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "standard",
+      "expansion": true,
+      "asset_url": "shop-lydia-premium/profile-male-40.png"
+    },
+    {
+      "type": "title",
+      "gender": "male",
+      "asset_key": "shop-expansion/title-male-40.svg",
+      "name": "ASMA ASLANI · Görev unvanı · Erkek",
+      "price": 0,
+      "vip": false,
+      "vip_level": 0,
+      "tier": "task",
+      "expansion": true,
+      "task_only": true,
+      "asset_url": "shop-lydia-premium/title-male-40.png"
     }
   ],
   "wallpapers": [
@@ -12500,6 +13000,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-31.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-31.svg",
+          "name": "KREZUS HAZİNESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-31.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-31.svg",
+          "name": "KREZUS HAZİNEDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-31.png"
+        }
       }
     },
     {
@@ -12518,6 +13046,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-32.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-32.svg",
+          "name": "KREZUS GÜNEŞİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-32.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-32.svg",
+          "name": "KREZUS ASLANI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-32.png"
+        }
       }
     },
     {
@@ -12536,6 +13092,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-33.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-33.svg",
+          "name": "ASMA KRALİÇESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-33.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-33.svg",
+          "name": "ASMA HÜKÜMDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-33.png"
+        }
       }
     },
     {
@@ -12554,6 +13138,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-34.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-34.svg",
+          "name": "ASMA MÜHRÜ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-34.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-34.svg",
+          "name": "ASMA MUHAFIZI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-34.png"
+        }
       }
     },
     {
@@ -12572,6 +13184,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-35.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-35.svg",
+          "name": "ASMA İLHAMI · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-35.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-35.svg",
+          "name": "ASMA ŞÖVALYESİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-35.png"
+        }
       }
     },
     {
@@ -12590,6 +13230,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-36.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-36.svg",
+          "name": "ASMA PRENSESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-36.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-36.svg",
+          "name": "ASMA SARAY EFENDİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-36.png"
+        }
       }
     },
     {
@@ -12608,6 +13276,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-37.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-37.svg",
+          "name": "ASMA İNCİSİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-37.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-37.svg",
+          "name": "ASMA ELÇİSİ · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-37.png"
+        }
       }
     },
     {
@@ -12626,6 +13322,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-38.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-38.svg",
+          "name": "ASMA ZARAFETİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-38.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-38.svg",
+          "name": "ASMA KOMUTANI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-38.png"
+        }
       }
     },
     {
@@ -12644,6 +13368,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-39.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-39.svg",
+          "name": "ASMA HAZİNESİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-39.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-39.svg",
+          "name": "ASMA HAZİNEDARI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-39.png"
+        }
       }
     },
     {
@@ -12662,6 +13414,34 @@
         "task_only": true,
         "expansion": true,
         "asset_url": "shop-lydia/title-40.svg"
+      },
+      "gender_rewards": {
+        "female": {
+          "type": "title",
+          "gender": "female",
+          "asset_key": "shop-expansion/title-female-40.svg",
+          "name": "ASMA GÜNEŞİ · Görev unvanı · Kadın",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-female-40.png"
+        },
+        "male": {
+          "type": "title",
+          "gender": "male",
+          "asset_key": "shop-expansion/title-male-40.svg",
+          "name": "ASMA ASLANI · Görev unvanı · Erkek",
+          "price": 0,
+          "vip": false,
+          "vip_level": 0,
+          "tier": "task",
+          "expansion": true,
+          "task_only": true,
+          "asset_url": "shop-lydia-premium/title-male-40.png"
+        }
       }
     },
     {
