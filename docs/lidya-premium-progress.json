@@ -1,7 +1,7 @@
 {
   "target": 800,
-  "generated": 20,
-  "remaining": 780,
+  "generated": 40,
+  "remaining": 760,
   "ids": [
     "profile-female-01",
     "frame-female-01",
@@ -22,6 +22,26 @@
     "frame-male-02",
     "bubble-male-02",
     "entrance-male-02",
-    "title-male-02"
+    "title-male-02",
+    "profile-female-03",
+    "frame-female-03",
+    "bubble-female-03",
+    "entrance-female-03",
+    "title-female-03",
+    "profile-male-03",
+    "frame-male-03",
+    "bubble-male-03",
+    "entrance-male-03",
+    "title-male-03",
+    "profile-female-04",
+    "frame-female-04",
+    "bubble-female-04",
+    "entrance-female-04",
+    "title-female-04",
+    "profile-male-04",
+    "frame-male-04",
+    "bubble-male-04",
+    "entrance-male-04",
+    "title-male-04"
   ]
 }
