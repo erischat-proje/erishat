@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const queue=[],seen=new Set();let active=null,epoch=0,pumping=false;
-  let shopThemes={};const shopReady=fetch(new URL('shop-expansion/entrances.json?v=premium720-20261004',document.currentScript.src),{signal:AbortSignal.timeout(8000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(x=>{shopThemes=x}).catch(()=>{});
+  let shopThemes={};const shopReady=fetch(new URL('shop-lydia/entrances.json?v=lydia-shop-20261011',document.currentScript.src),{signal:AbortSignal.timeout(8000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(x=>{shopThemes=x}).catch(()=>{});
   const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   const asset=key=>window.ErisChatCosmetics?.assetUrl?.(key)||key;
   function finish(){if(!active)return;const a=active;active=null;clearTimeout(a.timer);clearTimeout(a.loadTimer);cancelAnimationFrame(a.raf);a.el.remove();a.resolve();}
@@ -29,6 +29,7 @@
         if(mode==='eclipse'){x=cx+Math.cos(a)*radius*.9;y=cy+Math.sin(a)*radius*.9;}
         if(mode==='imperial'){x=cx+Math.sin(a)*r*1.1;y=cy+Math.cos(a*2)*r*.55-Math.sin(p*Math.PI)*25;}
         c.save();c.translate(x,y);c.rotate(a);c.fillStyle=i%3?theme.color:theme.metal;c.shadowColor=theme.color;c.shadowBlur=i%4===0?10:0;c.globalAlpha=Math.max(0,alpha)*(.3+.7*Math.abs(Math.sin(t+z.offset)));
+        if(String(mode||'').startsWith('lydia-')){c.fillStyle=theme.metal;if(mode==='lydia-seal'||mode==='lydia-coin'){c.beginPath();c.arc(0,0,z.s*2.2,0,Math.PI*2);c.fill();c.strokeStyle=theme.color;c.lineWidth=1;c.beginPath();c.arc(0,0,z.s*1.4,0,Math.PI*2);c.stroke()}else{for(let leaf=0;leaf<3;leaf++){c.save();c.rotate((leaf-1)*.6);c.beginPath();c.ellipse(0,-z.s,z.s*.75,z.s*2.3,0,0,Math.PI*2);c.fill();c.restore()}}c.restore();continue;}
         c.beginPath();
         if(['rose','iris','laurel'].includes(mode)){c.ellipse(0,0,z.s,z.s*2.4,.4,0,Math.PI*2);}
         else if(mode==='sun'||mode==='phoenix'||mode==='comet'){c.moveTo(-z.s*5,0);c.lineTo(z.s,1);c.lineTo(z.s,-1);}
@@ -42,7 +43,7 @@
     holder.raf=requestAnimationFrame(frame);
   }
   function play(d,theme){return new Promise(resolve=>{
-    const el=document.createElement('section');el.className='eris-vip-entrance';el.dataset.motion=theme.motion;el.dataset.level=String(theme.level);el.dataset.preview=String(!!d.preview);
+    const el=document.createElement('section');el.className='eris-vip-entrance';el.dataset.motion=theme.motion;el.dataset.level=String(theme.level);el.dataset.preview=String(!!d.preview);if(d.shop_entry)el.dataset.shop="true";
     el.style.setProperty('--entry-accent',theme.color);el.style.setProperty('--entry-metal',theme.metal);el.style.setProperty('--entry-duration',theme.duration+'ms');
     el.dataset.userId=String(d.user_id||'');
     el.setAttribute('aria-live','polite');el.setAttribute('aria-label',theme.level?'VIP '+theme.level+' oda girişi':'Normal oda girişi');

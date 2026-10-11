@@ -2,11 +2,11 @@
 (() => {
   'use strict';
   const metadata=new Map(),pending=new Map(),base=new URL('.',document.currentScript?.src||location.href);
-  const clean=key=>{try{return decodeURIComponent(new URL(key,document.baseURI).pathname).replace(/^\//,'').replace(/^.*?(?=(?:vip-assets|shop-expansion|relationship-assets)\/)/,'')}catch{return String(key||'').replace(/^\.\//,'')}};
+  const clean=key=>{try{return decodeURIComponent(new URL(key,document.baseURI).pathname).replace(/^\//,'').replace(/^.*?(?=(?:vip-assets|shop-expansion|shop-lydia|relationship-assets)\/)/,'')}catch{return String(key||'').replace(/^\.\//,'')}};
   const manifest=fetch(new URL('visual-layout.json?v=premium720-20261004',base),{signal:window.AbortSignal?.timeout?.(6000)}).then(r=>{if(!r.ok)throw Error();return r.json()}).then(data=>{for(const [key,value] of Object.entries(data.assets||{}))metadata.set(key,value)}).catch(()=>{});
   const url=key=>window.ErisChatCosmetics?.assetUrl?.(key)||new URL(key,base).href;
   async function describe(key){
-    await manifest;const path=clean(key);if(pending.has(path))return pending.get(path);const known=metadata.get(path);
+    const path=clean(key);const shop=window.ErisShopArt?.describe(path);if(shop)return shop;await manifest;if(pending.has(path))return pending.get(path);const known=metadata.get(path);
     const result=new Promise(resolve=>{const image=new Image();let done=false;const finish=value=>{if(done)return;done=true;clearTimeout(timer);if(!value)pending.delete(path);resolve(value)};const timer=setTimeout(()=>finish(known||null),6000);
       image.onload=()=>{const width=image.naturalWidth,height=image.naturalHeight;if(/relationship-assets\/rewards\/sohbet-(?:male|female)-l(?:[1-9]|1[0-2])\.png$/.test(path)){return finish({width,height,name:null,slice:[Math.round(height*.25),Math.round(width*.22),Math.round(height*.25),Math.round(width*.22)],border_cap:[18,34,18,34]});}if(known&&known.width===width&&known.height===height)return finish(known);
         const value={width,height,name:null};if(known?.slice)value.slice=known.slice.map((n,i)=>Math.round(n*(i%2?width/known.width:height/known.height)));

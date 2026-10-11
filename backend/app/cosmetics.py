@@ -40,7 +40,7 @@ def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, g
     paths.sort(key=natural_key)
     for index, path in enumerate(paths, start=1):
         key = path.relative_to(root).as_posix()
-        result.append({
+        item = {
             "type": kind,
             "gender": gender,
             "asset_key": key,
@@ -49,7 +49,11 @@ def _collect(result: list[dict[str, Any]], root: Path, folder: str, kind: str, g
             "tier": "vip" if vip else "standard",
             # Each VIP asset set contains 12 entries; one entry unlocks per VIP level.
             "vip_level": index if vip else None,
-        })
+        }
+        if kind == "avatar" and not vip:
+            from .shop_lydia import avatar_metadata
+            item.update(avatar_metadata(key, gender))
+        result.append(item)
 
 
 def catalog() -> list[dict[str, Any]]:
@@ -88,7 +92,7 @@ def find_asset(asset_key: str, cosmetic_type: str) -> dict[str, Any] | None:
 def frame_catalog():
     from .vip_presentation import THEMES
     return [{"type": "frame", "gender": gender, "asset_key": f"vip-designs/avatar-frame-{gender}-{n if n else 'standard'}.svg",
-             "asset_url": f"vip-designs/lydia/frame-{gender}-{n}.webp" if n else f"vip-designs/avatar-frame-{gender}-standard.svg",
+             "asset_url": f"vip-designs/lydia/frame-{gender}-{n}.webp" if n else f"shop-lydia/frame-{gender}-standard.svg",
              "price": 0, "free": n == 0, "vip": n > 0, "tier": "vip" if n else "standard",
-             "vip_level": n, "name": (f"VIP {n} · {THEMES[n-1]}" if n else "Standart") + (" · Erkek çerçevesi" if gender == "male" else " · Kadın çerçevesi")}
+             "vip_level": n, "name": (f"VIP {n} · {THEMES[n-1]}" if n else "Lidya başlangıç") + (" · Erkek çerçevesi" if gender == "male" else " · Kadın çerçevesi")}
             for gender in ("male", "female") for n in range(13)]

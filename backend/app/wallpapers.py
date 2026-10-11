@@ -1,10 +1,10 @@
-"""The illustrated wallpaper collection from avatarveduvarkağıdı."""
+"""Lidya normal mağaza ve VIP duvar koleksiyonları."""
 
-DEFAULT_ROOM_WALLPAPER = "vip-designs/wallpaper-female-standard.png"
+DEFAULT_ROOM_WALLPAPER = "shop-lydia/wallpaper-01.webp"
 
 def default_wallpaper(user):
     gender = "male" if getattr(user, "gender", None) == "male" else "female"
-    return f"vip-designs/wallpaper-{gender}-standard.png"
+    return "shop-lydia/wallpaper-" + ("02" if gender == "male" else "01") + ".webp"
 
 GENDER_VIP = [{"key": f"vip_wallpaper_{gender}_{n:02d}", "tier": "vip",
                "vip_level": n, "gender": gender, "price": 0, "name": ("Erkek" if gender == "male" else "Kadın") + f" VIP {n} duvar kağıdı",
@@ -12,7 +12,7 @@ GENDER_VIP = [{"key": f"vip_wallpaper_{gender}_{n:02d}", "tier": "vip",
               for gender in ("male", "female") for n in range(1, 13)]
 GENDER_STANDARD = [{"key": f"wallpaper_{gender}_standard", "tier": "normal",
                    "vip_level": 0, "gender": gender, "price": 0, "free": True, "name": ("Erkek" if gender == "male" else "Kadın") + " standart duvar kağıdı",
-                   "asset": f"vip-designs/wallpaper-{gender}-standard.png"}
+                   "asset": "shop-lydia/wallpaper-" + ("02" if gender == "male" else "01") + ".webp"}
                   for gender in ("male", "female")]
 
 
