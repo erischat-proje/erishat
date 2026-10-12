@@ -80,7 +80,7 @@
  function render(){if(!data||!rid||hidden===state()?.round_id)return;const h=host();if(!h)return;
    let root=h.querySelector('.o101-root');if(!root){root=document.createElement('section');root.className='o101-root';root.innerHTML='<div class="o101-seat-strip" aria-label="Oda koltukları"></div><header class="o101-head"></header><div class="o101-content"></div><div class="o101-error" role="alert"></div>';h.append(root);}h.classList.add('okey101-mode');visible=true;
    const s=state(),p=me(),lobby=!s||['closed','lobby'].includes(s.status)||menu;
-   root.querySelector('.o101-head').innerHTML='<strong>101 OKEY</strong><span>'+esc(s?(s.mode==='paired'?'Eşli':'Tekli')+' • '+(s.progressive?'Katlamalı':'Katlamasız')+' • '+(s.pool||s.players.reduce((n,p)=>n+p.stake,0))+' Lidya':'Dört kişilik oda oyunu')+'</span>'+btn('?', 'rules')+btn('×','hide')+'';
+   root.querySelector('.o101-head').innerHTML='<strong>'+window.LidyaGameArt.markup('dice','lg-room-logo')+' LİDYA 101 OKEY</strong><span>'+esc(s?(s.mode==='paired'?'Eşli':'Tekli')+' • '+(s.progressive?'Katlamalı':'Katlamasız')+' • '+(s.pool||s.players.reduce((n,p)=>n+p.stake,0))+' Lidya':'Dört kişilik oda oyunu')+'</span>'+btn('?', 'rules')+btn('×','hide')+'';
    root.querySelector('.o101-error').innerHTML=esc(error)+(retry?btn('İşlemi tekrar dene','retry'):'');
    syncSeats();
    const content=root.querySelector('.o101-content');

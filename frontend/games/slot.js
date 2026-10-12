@@ -16,8 +16,8 @@
         <div class="eris-slot-machine">
           <div class="eris-slot-top">
       <span class="eris-slot-crown">♛</span>
-      <span>ERIS CASINO</span>
-      <small>TRIPLE JACKPOT · 3 REELS</small>
+      <span>SARDİS HAZİNESİ</span>
+      <small>LİDYA · ÜÇ MAKARA</small>
     </div>
           <div class="eris-slot-lights">● ● ● ● ● ● ● ●</div>
           <div class="eris-slot-cabinet">
@@ -26,15 +26,14 @@
             <div class="eris-slot-arm"></div>
           </button>
           <div class="eris-slot-reels">
-            <div class="eris-slot-reel">🍒</div>
-            <div class="eris-slot-reel">7️⃣</div>
-            <div class="eris-slot-reel">💎</div>
+            <div class="eris-slot-reel">${window.LidyaGameArt.markup("cherry")}</div>
+            <div class="eris-slot-reel">${window.LidyaGameArt.markup("seven")}</div>
+            <div class="eris-slot-reel">${window.LidyaGameArt.markup("diamond")}</div>
           </div>
           <div class="eris-slot-line">◆ ◆ ◆</div></div>
           <div class="eris-slot-status">3 AYNI SEMBOLÜ YAKALA!</div>
           <div class="eris-slot-paytable">
-            🍒 ×5 · 🍋 ×7 · 🔔 ×10 · ⭐ ×15<br>
-            💎 ×25 · 7️⃣ ×50 · 👑 ×100
+            ${[ ["cherry",5],["lemon",7],["bell",10],["star",15],["diamond",25],["seven",50],["crown",100] ].map(([k,v])=>`<span>${window.LidyaGameArt.markup(k)} ×${v}</span>`).join("")}
           </div>
         </div>
         <style>
@@ -627,7 +626,7 @@
       const intervals = reels.map(reel => {
         reel.classList.add('spinning');
         return setInterval(() => {
-          reel.textContent = ICONS[KEYS[Math.floor(Math.random() * KEYS.length)]];
+          reel.innerHTML = window.LidyaGameArt.markup(KEYS[Math.floor(Math.random() * KEYS.length)]);
         }, 75);
       });
 
@@ -636,7 +635,7 @@
           await sleep(950);
           clearInterval(intervals[i]);
           reels[i].classList.remove('spinning');
-          reels[i].textContent = ICONS[result[i]];
+          reels[i].innerHTML = window.LidyaGameArt.markup(result[i]);
         }
       } finally {
         intervals.forEach(clearInterval);

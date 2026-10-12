@@ -2,8 +2,8 @@
     'use strict';
 
     const ALL_GAMES = [
-        { id: 'wheel', name: 'Şans Çarkı', icon: '🎡', desc: 'Çarkı çevir, büyük ödülü kap!' },
-        { id: 'crash', name: 'Crash', icon: '🚀', desc: 'Çarpanlar yükselmeden roketten atla!' },
+        { id: 'wheel', name: 'Şans Çarkı', icon: '🎡', desc: 'Sardis çarkında dokuz hazine, tek sonuç.' },
+        { id: 'crash', name: 'Crash', icon: '🚀', desc: 'Kanatlı aslan yükselirken çarpanını yakala.' },
         { id: 'blackjack', name: 'Blackjack', icon: '🃏', desc: '21 e en yakın eli topla, krupiyeyi alt et.' },
         { id: 'slot', name: 'Slot', icon: '🎰', desc: '3 aynı sembolü yakala, Lidya kazan!' },
         { id: 'cups', name: 'Dört Kupa', icon: '🥤', desc: 'Gizemli kupanın altındaki altını bul.' },
@@ -29,7 +29,7 @@
                 <div class="eg-launcher-grid">
                     ${ALL_GAMES.map(g => `
                         <button type="button" class="eg-launcher-card" data-game="${g.id}" style="--eg-tone:${TONES[g.id]};--eg-panel:#201b2b">
-                            <div class="eg-lc-icon" aria-hidden="true"><svg viewBox="0 0 64 64">${ART[g.id]}</svg></div>
+                            <div class="eg-lc-icon" aria-hidden="true">${window.LidyaGameArt.markup(g.id)}</div>
                             <div class="eg-lc-title">${g.name}</div>
                             <div class="eg-lc-desc">${g.desc}</div><span class="eg-lc-play" aria-hidden="true">Oyna <span>→</span></span>
                         </button>
