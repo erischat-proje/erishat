@@ -1119,7 +1119,8 @@ const close = () => {
 
                     const icon = document.createElement('span');
                     icon.className = 'eg-wheel-icon';
-                    icon.textContent = symbol.icon;
+                    if (typeof mod.symbolMarkup === 'function') icon.innerHTML = mod.symbolMarkup(symbol.key);
+                    else icon.textContent = symbol.icon;
 
                     const name = document.createElement('b');
                     name.textContent = symbol.name;

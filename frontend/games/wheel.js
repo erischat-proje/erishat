@@ -13,11 +13,23 @@
     {key:'jackpot', icon:'🏆', name:'Jackpot'}
   ];
 
-  const COLORS = [
-    '#8f2946','#b92f55','#8a5de8',
-    '#4b83d8','#d79b38','#8b4bc1',
-    '#dc5b32','#2b9b9e','#b88631'
-  ];
+  // Muted enamel and engraved bronze; result keys remain the server's nine symbols.
+  const PALETTES = {
+    light: ['#713d43','#80424c','#55513a','#345467','#74602d','#5b485b','#874729','#36615c','#6f5528'],
+    dark: ['#43282f','#512c36','#343728','#263e4c','#493c24','#39303f','#573522','#28433e','#4b3821']
+  };
+  const ENGRAVINGS = {
+    rose: 'M32 35c-17-1-20-17-8-22 3-8 17-8 20 0 12 5 9 21-12 22Z M25 17c-3 8 4 16 13 9 7-7-4-14-10-7 M32 35v19 M32 45c-11 1-15-7-15-7 10-2 15 2 15 7 M32 41c10-1 15-8 15-8-11-2-15 2-15 8',
+    heart: 'M32 51 12 31C-1 15 20 4 32 19 44 4 65 15 52 31Z M17 23c0-6 6-8 10-5',
+    star: 'm32 8 7 15 17 2-12 12 3 18-15-8-15 8 3-18L8 25l17-2Z M32 18v24 M18 28l28 9 M46 28l-28 9',
+    diamond: 'm32 8 22 24-22 24L10 32Z M10 32h44 M32 8 22 32l10 24 10-24Z',
+    crown: 'M12 20 22 30 32 12 42 30 52 20l-5 25H17Z M17 49h30 M24 37h16',
+    gift: 'M13 28h38v26H13Z M9 20h46v8H9Z M28 20v34h8V20 M32 20C5 22 17-1 32 20 47-1 59 22 32 20',
+    fire: 'M32 7c5 13 1 14 10 21 2-5 3-7 3-11 21 28-1 44-16 38C8 48 11 29 24 17c-2 11 3 15 3 15 8-10 0-14 5-25Z M32 34c-13 16-2 24 6 17 5-5-3-9-6-17',
+    gem: 'm20 11 24 0 13 18-25 26L7 29Z M7 29h50 M20 11l-2 18 14 26 14-26-2-18 M20 11l12 18 12-18',
+    jackpot: 'M20 10h24v20c0 21-24 21-24 0Z M20 16H9v10c0 9 6 12 14 12 M44 16h11v10c0 9-6 12-14 12 M32 45v9 M22 55h20 M32 17l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z'
+  };
+  let lastDrawnRotation = 0;
 
   let currentRotation = 0;
 
@@ -28,7 +40,7 @@
     ctx.closePath();
     ctx.fillStyle=color;
     ctx.fill();
-    ctx.strokeStyle='rgba(10,7,15,.72)';
+    ctx.strokeStyle='#b2955d';
     ctx.lineWidth=3;
     ctx.stroke();
   }
@@ -36,6 +48,10 @@
   const WheelGame = {
     options: SYMBOLS.map(x => [x.key, `${x.icon} ${x.name}`]),
     symbols: SYMBOLS,
+    symbolMarkup(key) {
+      const path=ENGRAVINGS[key];
+      return path ? `<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="${path}"/></svg>` : '';
+    },
 
     render(container) {
       container.innerHTML = `
@@ -49,10 +65,10 @@
             <div class="eris-wheel-pointer">
               <i></i>
             </div>
-            <canvas id="proWheelCanvas" width="640" height="640"></canvas>
+            <canvas id="proWheelCanvas" width="640" height="640" role="img" aria-label="Dokuz sembollü Lidya Şans Çarkı"></canvas>
             <div class="eris-wheel-hub">
-              <span>ERIS</span>
-              <b>LIVE</b>
+              <span>LİDYA</span>
+              <b>◆</b>
             </div>
           </div>
 
@@ -91,6 +107,10 @@
       const canvas=document.getElementById('proWheelCanvas');
       if(!canvas)return;
       const ctx=canvas.getContext('2d');
+      if(!ctx)return;
+      lastDrawnRotation=angleDeg;
+      const dark=document.documentElement.dataset.erisTheme==='dark';
+      const colors=PALETTES[dark?'dark':'light'];
       const center=canvas.width/2;
       const radius=center-13;
       const slice=(Math.PI*2)/SYMBOLS.length;
@@ -104,7 +124,13 @@
       SYMBOLS.forEach((symbol,i)=>{
         const start=i*slice-Math.PI/2;
         const end=start+slice;
-        drawRoundedSegment(ctx,center,radius,start,end,COLORS[i]);
+        const enamel=ctx.createRadialGradient(center,center,70,center,center,radius);
+        enamel.addColorStop(0,colors[i]);enamel.addColorStop(.8,colors[i]);enamel.addColorStop(1,dark?'#1e2118':'#493a27');
+        drawRoundedSegment(ctx,center,radius,start,end,enamel);
+        ctx.save();
+        ctx.beginPath();ctx.arc(center,center,radius-9,start+.025,end-.025);
+        ctx.strokeStyle='#b2955d';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.restore();
 
         ctx.save();
         ctx.translate(center,center);
@@ -114,16 +140,15 @@
         ctx.textAlign='center';
         ctx.textBaseline='middle';
 
-        ctx.shadowColor='rgba(0,0,0,.65)';
-        ctx.shadowBlur=8;
-        ctx.font='700 52px "Apple Color Emoji","Segoe UI Emoji",sans-serif';
-        ctx.fillStyle='#fff';
-        ctx.fillText(symbol.icon,0,-7);
-
-        ctx.shadowBlur=4;
-        ctx.font='900 18px sans-serif';
-        ctx.fillStyle='#fff';
-        ctx.fillText(symbol.name.toUpperCase(),0,37);
+        ctx.save();
+        ctx.translate(-29,-36);ctx.scale(.9,.9);
+        ctx.strokeStyle='#f5e6bc';ctx.lineWidth=2.3;
+        ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.stroke(new Path2D(ENGRAVINGS[symbol.key]));
+        ctx.restore();
+        ctx.font='700 17px Georgia,serif';
+        ctx.fillStyle='#f5e6bc';
+        ctx.fillText(symbol.name.toLocaleUpperCase('tr-TR'),0,37);
         ctx.restore();
       });
 
@@ -164,5 +189,6 @@
     }
   };
 
+  window.addEventListener('erischat:theme',()=>WheelGame.drawWheel(lastDrawnRotation));
   window.ErisGameWheel=WheelGame;
 })();
