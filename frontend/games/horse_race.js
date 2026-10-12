@@ -33,7 +33,7 @@
           <div style="display:flex;justify-content:space-between;
             align-items:center;gap:8px;padding:4px 5px 12px">
             <strong style="color:#f5d493;font-size:15px">
-              🏇 CANLI HİPODROM
+              SARDİS HİPODROMU
             </strong>
             <span style="font-size:10px;color:#b9a9c8;
               font-weight:800">7 AT · TEK KAZANAN</span>
@@ -61,7 +61,7 @@
                 <div class="horse-runner" data-horse="${h[0]}"
                   style="position:absolute;left:0;bottom:2px;
                   font-size:29px;will-change:transform;
-                  filter:drop-shadow(0 3px 3px #000)">🏇</div>
+                  filter:drop-shadow(0 3px 3px #000)">${window.LidyaGameArt.markup("horse")}</div>
               </div>`).join('')}
           </div>
           <div id="raceStatusText" style="

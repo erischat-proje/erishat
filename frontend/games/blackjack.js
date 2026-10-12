@@ -100,7 +100,7 @@ function cardElement(card, delay = 0) {
 function cardBack() {
  const el = document.createElement('div');
  el.className = 'eris-bj-card back';
- el.textContent = 'ERIS';
+ el.innerHTML = window.LidyaGameArt.markup('coin');
  return el;
 }
 function total(cards) {
@@ -123,7 +123,7 @@ window.ErisGameBlackjack = {
     <div class="eris-bj-label">♠ KRUPİYE ♠</div>
     <div id="bjDealerCards" class="eris-bj-hand"></div>
     <div id="bjDealerTotal" class="eris-bj-total"></div>
-    <div class="eris-bj-brand">BLACKJACK 21</div>
+    <div class="eris-bj-brand">SARDİS · 21</div>
     <div id="bjPlayerTotal" class="eris-bj-total"></div>
     <div id="bjPlayerCards" class="eris-bj-hand"></div>
     <div class="eris-bj-label">♥ OYUNCU ♥</div>

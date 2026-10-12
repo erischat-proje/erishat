@@ -51,13 +51,13 @@
     };
 
     const labels = {
-        slot: '🎰 Slot',
-        cups: '🥤 Dört Kupa',
-        horse_race: '🐎 At Yarışı',
-        blackjack: '🃏 Blackjack',
-        crash: '🚀 Crash',
-        vault: '🎁 Kasa',
-        wheel: '🎡 Şans Çarkı'
+        slot: 'Slot',
+        cups: 'Dört Kupa',
+        horse_race: 'At Yarışı',
+        blackjack: 'Blackjack',
+        crash: 'Crash',
+        vault: 'Kasa',
+        wheel: 'Şans Çarkı'
     };
 
     const api = (path, options = {}) => window.ErisPlatform?.api ? window.ErisPlatform.api(path, options) : Promise.reject(new Error('Platform hazır değil'));
@@ -205,10 +205,10 @@
         modal.innerHTML = `
             <div class="eg-panel">
                 <div class="eg-head">
-                    <h2 style="margin:0; font-size:17px; font-weight:700;">🎮 Oyun Merkezi (Modüler 3D)</h2>
+                    <h2 style="margin:0; font-size:17px; font-weight:700;">LİDYA OYUNLARI</h2>
                     <button data-close style="background:transparent; border:none; font-size:20px; padding:2px 6px;">×</button>
                 </div>
-                <p class="eg-intro">Sunucu kontrollü oyunlar, akıcı animasyonlar ve anlık Lidya bakiyesi.</p>
+                <p class="eg-intro">Sardis’in hazineleri · Lidya oyun salonu</p>
                 <div class="eg-wallet"><span data-balance>💰 Bakiye yükleniyor…</span><span data-scope></span></div>
                 <div class="eg-keys"></div>
                 <h3 data-name style="margin:8px 0 2px 0; font-size:14px; color:#a77aff;"></h3>
@@ -899,7 +899,7 @@ const close = () => {
         }
         const slotPlayButton = modal.querySelector('[data-play]');
         if (slotPlayButton && key === 'slot') {
-            slotPlayButton.textContent = '🎰 ÇEVİR';
+            slotPlayButton.textContent = 'ÇEVİR';
         } else if (slotPlayButton && key !== 'blackjack' && key !== 'cups') {
             slotPlayButton.textContent = 'Oyna';
         }
@@ -937,7 +937,8 @@ const close = () => {
                 modal.querySelector('[data-horse-clock]')?.remove();
                 modal.querySelector('[data-horse-bets]')?.remove();
             }
-            modal.querySelector('[data-name]').textContent = labels[key];
+            modal.querySelector('[data-name]').innerHTML = window.LidyaGameArt.markup(key, 'lg-title-icon') + '<span>' + labels[key] + '</span>';
+            const heading=modal.querySelector('.eg-head h2'); heading.innerHTML=window.LidyaGameArt.markup(key,'lg-header-icon')+'<span>'+labels[key]+'</span>';
             modal.querySelector('[data-name]').style.display =
                 key === 'horse_race' ? 'none' : '';
 
@@ -1155,7 +1156,7 @@ const close = () => {
         for (const key of keys) {
             const b = document.createElement('button');
             b.dataset.game = key;
-            b.textContent = labels[key];
+            b.innerHTML = window.LidyaGameArt.markup(key) + '<span>' + labels[key] + '</span>';
             b.onclick = () => loadGameModule(key);
             tabs.append(b);
         }

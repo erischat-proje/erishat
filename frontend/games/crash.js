@@ -22,12 +22,13 @@
         render(container) {
             container.innerHTML = `
               <div class="crash-flight" data-crash-phase="open">
-                <canvas id="proCrashCanvas" width="600" height="400" role="img" aria-label="Kanatlı Lidya sikkesi ve yükselen çarpan çizgisi"></canvas>
-                <div class="crash-flight-caption">LİDYA CRASH · <span data-crash-phase-label>BAHİS AÇIK</span></div>
+                <canvas id="proCrashCanvas" width="600" height="400" role="img" aria-label="Kanatlı altın Lidya aslanı ve yükselen çarpan çizgisi"></canvas>
+                <div class="crash-flight-caption">SARDİS CRASH · <span data-crash-phase-label>BAHİS AÇIK</span></div>
                 <div id="crashMultiplierText">1.00x</div>
-                <div class="crash-flight-note">KANATLI SİKKE · CANLI TUR</div>
+                <div class="crash-flight-note">KANATLI ASLAN · SARDİS</div>
               </div>`;
             this.drawScene(1, 0);
+            const art=window.LidyaGameArt.image("crash"); if(!art.complete)art.addEventListener("load",()=>{if(container.isConnected)this.drawScene(...lastScene);},{once:true});
         },
 
         drawScene(multiplier, progress) {
@@ -76,21 +77,12 @@
             ctx.stroke();
 
             ctx.save();
-            ctx.translate(ex, ey);
-            ctx.rotate(-Math.atan2(1.6 * Math.pow(Math.max(p,.01),.6) * (h - 155), w - 100));
-            // A winged coin replaces the emoji rocket; the trajectory is unchanged.
-            ctx.strokeStyle=material.rim;ctx.lineWidth=2.2;
-            ctx.fillStyle=material.coin;
-            ctx.stroke(new Path2D(WING));
-            ctx.beginPath();ctx.ellipse(0,0,23,23,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-            ctx.beginPath();ctx.ellipse(0,0,18,18,0,0,Math.PI*2);ctx.stroke();
-            ctx.strokeStyle=material.ink;ctx.lineWidth=1.7;ctx.stroke(new Path2D(LION));
-            for(let i=0;i<16;i++){
-                const a=i*Math.PI/8;ctx.beginPath();
-                ctx.moveTo(Math.cos(a)*20,Math.sin(a)*20);
-                ctx.lineTo(Math.cos(a)*22,Math.sin(a)*22);ctx.stroke();
-            }
+            ctx.translate(ex,ey);
+            ctx.rotate(-.12-p*.2);
+            ctx.shadowColor=material.trail;ctx.shadowBlur=12;
+            window.LidyaGameArt.draw(ctx,'crash',-58,-57,116);
             ctx.restore();
+
         },
 
         updateLive(container, state) {

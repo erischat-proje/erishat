@@ -49,8 +49,7 @@
     options: SYMBOLS.map(x => [x.key, `${x.icon} ${x.name}`]),
     symbols: SYMBOLS,
     symbolMarkup(key) {
-      const path=ENGRAVINGS[key];
-      return path ? `<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="${path}"/></svg>` : '';
+      return window.LidyaGameArt.markup(key);
     },
 
     render(container) {
@@ -58,7 +57,7 @@
         <div class="eris-wheel-v2">
           <div class="eris-wheel-caption">
             <span>ŞANS ÇARKI</span>
-            <b>CANLI TUR · 60 SANİYE</b>
+            <b>SARDİS · CANLI TUR</b>
           </div>
 
           <div class="eris-wheel-wrap">
@@ -68,7 +67,7 @@
             <canvas id="proWheelCanvas" width="640" height="640" role="img" aria-label="Dokuz sembollü Lidya Şans Çarkı"></canvas>
             <div class="eris-wheel-hub">
               <span>LİDYA</span>
-              <b>◆</b>
+              <b>${window.LidyaGameArt.markup("coin")}</b>
             </div>
           </div>
 
@@ -101,6 +100,7 @@
       }
 
       this.drawWheel(currentRotation);
+      SYMBOLS.forEach(s=>{const img=window.LidyaGameArt.image(s.key);if(!img.complete)img.addEventListener("load",()=>{if(container.isConnected)this.drawWheel(lastDrawnRotation);},{once:true});});
     },
 
     drawWheel(angleDeg) {
@@ -140,12 +140,7 @@
         ctx.textAlign='center';
         ctx.textBaseline='middle';
 
-        ctx.save();
-        ctx.translate(-29,-36);ctx.scale(.9,.9);
-        ctx.strokeStyle='#f5e6bc';ctx.lineWidth=2.3;
-        ctx.lineCap='round';ctx.lineJoin='round';
-        ctx.stroke(new Path2D(ENGRAVINGS[symbol.key]));
-        ctx.restore();
+        window.LidyaGameArt.draw(ctx,symbol.key,-42,-50,84);
         ctx.font='700 17px Georgia,serif';
         ctx.fillStyle='#f5e6bc';
         ctx.fillText(symbol.name.toLocaleUpperCase('tr-TR'),0,37);

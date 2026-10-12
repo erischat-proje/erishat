@@ -128,14 +128,14 @@
       ensureStyle();
       container.innerHTML = `
         <section class="eris-cups-board">
-          <div class="eris-cups-title">🏆 DÖRT KUPA</div>
+          <div class="eris-cups-title">SARDİS KUPALARI</div>
           <div class="eris-cups-table">
             ${[1,2,3,4].map(n => `
               <button type="button" class="eris-cup" data-cup="${n}"
                 aria-label="Kupa ${n}" disabled>
                 <span class="eris-cup-shadow"></span>
-                <span class="eris-cup-coin">🪙</span>
-                <span class="eris-cup-body">
+                <span class="eris-cup-coin">${window.LidyaGameArt.markup("coin")}</span>
+                <span class="eris-cup-body">${window.LidyaGameArt.markup("cup")}
                   <span class="eris-cup-number">${n}</span>
                 </span>
               </button>

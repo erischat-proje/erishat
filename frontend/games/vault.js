@@ -203,7 +203,7 @@
       container.innerHTML=`<section class="ev-scene" data-vault-scene>
         <div class="ev-title">✦ HAZİNE KASASI ✦</div>
         <div class="ev-sub">Dört kilitli kasa, tek büyük ödül. Kazanan kasayı seç!</div>
-        <div class="ev-vault-grid">${OPTIONS.map(([key,name])=>`<div class="ev-chest" data-vault-chest="${key}"><div class="ev-door"><div class="ev-dial">🔒</div></div><div class="ev-chest-icon">💰</div><div class="ev-chest-name">${name}</div></div>`).join('')}</div>
+        <div class="ev-vault-grid">${OPTIONS.map(([key,name])=>`<div class="ev-chest" data-vault-chest="${key}"><div class="ev-door">${window.LidyaGameArt.markup("vault")}<div class="ev-dial">🔒</div></div><div class="ev-chest-icon">💰</div><div class="ev-chest-name">${name}</div></div>`).join('')}</div>
         <div class="ev-status" data-vault-status>Bir kasa seç ve bahsini yatır.</div>
         <div class="ev-rules">🎯 Kazanma şansı %25 · Doğru kasaya 3× toplam ödeme</div>
       </section>`;
@@ -233,7 +233,7 @@
         chest.classList.toggle('ev-winner',showResult&&key===result);
         const dial=chest.querySelector('.ev-dial');
         const treasure=chest.querySelector('.ev-chest-icon');
-        if(treasure)treasure.textContent=showResult&&key===result?'💰':'';
+        if(treasure)treasure.innerHTML=showResult&&key===result?window.LidyaGameArt.markup('coin'):'';
         if(dial)dial.textContent=showResult?(key===result?'✨':'✖'):'🔒';
       });
       const status=scene.querySelector('[data-vault-status]');
