@@ -23,11 +23,11 @@
     current = value;
     root.setAttribute('data-eris-theme', value);
     root.style.colorScheme = value;
-    root.style.backgroundColor = value === 'dark' ? '#1b211c' : '#eee4ce';
+    root.style.backgroundColor = value === 'dark' ? '#0e1310' : '#eee4ce';
     let saved = true;
     if (persist) { try { localStorage.setItem(key, value); } catch { saved = false; } }
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', value === 'dark' ? '#1b211c' : '#eee4ce');
+    if (meta) meta.setAttribute('content', value === 'dark' ? '#0e1310' : '#eee4ce');
     syncControls();
     if (!saved) {
       const label = document.querySelector('#erisThemeControl [data-eris-theme-status]');
