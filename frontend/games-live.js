@@ -198,6 +198,7 @@
         modal?.remove();
         modal = document.createElement('div');
         modal.id = 'erisGamesModal';
+        modal.classList.add('eg-fullscreen');
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('aria-label', 'Oyun merkezi');
@@ -285,6 +286,15 @@
         }
         document.body.append(modal);
         const ownedModal = modal;
+        const returnFocus = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+        document.body.classList.add('eris-main-game-open');
+        document.body.style.overflow = 'hidden';
+        const viewport = window.visualViewport;
+        const fitViewport = () => ownedModal.style.setProperty('--eg-viewport-height', (viewport?.height || window.innerHeight) + 'px');
+        fitViewport();
+        viewport?.addEventListener('resize', fitViewport);
+        window.addEventListener('resize', fitViewport);
         const gameIntervals = new Set();
         const gameInterval = (fn, delay) => {
             const id = setInterval(() => {
@@ -299,6 +309,10 @@
             return id;
         };
         ownedModal._erisCleanup = () => {
+            viewport?.removeEventListener('resize', fitViewport);
+            window.removeEventListener('resize', fitViewport);
+            document.body.style.overflow = previousOverflow;
+            document.body.classList.remove('eris-main-game-open');
             for (const id of gameIntervals) clearInterval(id);
             gameIntervals.clear();
             window.ErisGameHorseRace?.cancel?.();
@@ -377,10 +391,18 @@ const close = () => {
             ownedModal._erisCleanup?.();
             ownedModal.remove();
             if (modal === ownedModal) modal = null;
+            if (returnFocus?.isConnected) returnFocus.focus();
         };
         modal.querySelector('[data-close]').onclick = close;
         modal.onclick = e => { if (e.target === modal) close(); };
-        modal.onkeydown = e => { if (e.key === 'Escape') close(); };
+        modal.onkeydown = e => {
+            if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+            if (e.key !== 'Tab') return;
+            const items = [...ownedModal.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),[tabindex="0"]')].filter(el => el.getClientRects().length && !el.closest('[hidden]'));
+            const first = items[0], last = items.at(-1);
+            if (e.shiftKey && (document.activeElement === first || !ownedModal.contains(document.activeElement))) { e.preventDefault(); last?.focus(); }
+            else if (!e.shiftKey && (document.activeElement === last || !ownedModal.contains(document.activeElement))) { e.preventDefault(); first?.focus(); }
+        };
         modal.querySelector('[data-scope]').textContent = scope === 'room' ? 'ODA OYUNLARI' : 'KİŞİSEL OYUNLAR';
         if(selected){
             modal.classList.add('eg-single-game');
@@ -1161,6 +1183,7 @@ const close = () => {
             tabs.append(b);
         }
         loadGameModule(game);
+        requestAnimationFrame(() => { if (ownedModal.isConnected) ownedModal.querySelector("[data-close]")?.focus(); });
 
 
         const refreshSlotBet = () => {
