@@ -1,0 +1,58 @@
+/* Game launcher plates share the profile theme. Game surfaces keep their own layout. */
+html body #games > .title { font-family: Georgia, serif; color: var(--lydia-text); letter-spacing: -.4px; }
+html body #games > .eyebrow { color: var(--lydia-bronze); letter-spacing: .2em; }
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) { gap: 16px; padding: 12px 0 28px; }
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card {
+  --eg-panel: var(--lydia-panel) !important;
+  --eg-tone: var(--lydia-gold) !important;
+  min-height: 236px;
+  padding: 22px;
+  border: 1px solid var(--lydia-line);
+  border-radius: 5px 17px;
+  color: var(--lydia-text);
+  background: radial-gradient(var(--theme-grain,#8f6b3310) .65px,transparent .8px) 0 0/5px 5px,
+    linear-gradient(140deg,var(--theme-plate-highlight,#fff5dc),var(--theme-plate,#f4e5c4) 50%,var(--theme-plate-shadow,#e7d3a6));
+  box-shadow: inset 0 0 0 3px var(--theme-plate,#f4e5c4), inset 0 0 0 4px var(--theme-carved-line,#b99b62), 0 6px 18px var(--theme-shadow,#342b2114);
+}
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card::before {
+  content: ""; position: absolute; inset: 10px; pointer-events: none;
+  background: linear-gradient(var(--lydia-bronze),var(--lydia-bronze)) left top/20px 1px no-repeat,
+    linear-gradient(var(--lydia-bronze),var(--lydia-bronze)) left top/1px 20px no-repeat,
+    linear-gradient(var(--lydia-bronze),var(--lydia-bronze)) right bottom/20px 1px no-repeat,
+    linear-gradient(var(--lydia-bronze),var(--lydia-bronze)) right bottom/1px 20px no-repeat;
+}
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card::after {
+  content: "◆"; position: absolute; top: 18px; right: 20px;
+  color: var(--lydia-bronze); font-size: 9px; pointer-events: none;
+}
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-icon {
+  width: 68px; height: 68px; border-radius: 50%; margin-bottom: 17px;
+  color: #765221; border: 1px solid #a9823d;
+  background: radial-gradient(circle,#eed296 0 64%,transparent 65%),repeating-conic-gradient(#b08841 0deg 10deg,#e8cc8a 10deg 20deg);
+  box-shadow: inset 0 0 0 3px #ebd298,inset 0 0 0 4px #ad843e,0 3px 6px #7c561e20;
+}
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-icon svg { width: 45px; height: 45px; stroke-width: 1.8; }
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-title { font: 700 19px/1.35 Georgia,serif; color: var(--lydia-text); }
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-desc { font-size: 12px; color: var(--lydia-muted); }
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-play {
+  border: 1px solid #795626; border-radius: 3px 10px; padding: 9px 11px;
+  background: linear-gradient(135deg,#876529,#68461c); color: #fff6dd;
+  width: 100%; box-sizing: border-box; min-height: 36px;
+}
+html[data-eris-theme="dark"] body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-icon {
+  color: #dfbd80; border-color: #826b40;
+  background: radial-gradient(circle,#332d20 0 64%,transparent 65%),repeating-conic-gradient(#433722 0deg 10deg,#6b5532 10deg 20deg);
+  box-shadow: inset 0 0 0 3px #352e20,inset 0 0 0 4px #826b40,0 3px 6px #00000045;
+}
+html[data-eris-theme="dark"] body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-play {
+  color: #f0e4cb; background: linear-gradient(135deg,#4e3c21,#342818); border-color: #826b40;
+}
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card:active { background: var(--lydia-panel-raised); border-color: var(--lydia-gold); }
+html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card:focus-visible { outline: 3px solid var(--lydia-focus); outline-offset: 3px; }
+@media(max-width:360px) {
+  html body :is(#games .eg-launcher-grid, .eg-launcher-grid) { gap: 10px; }
+  html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card { padding: 18px 15px; min-height: 230px; }
+  html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-title { font-size: 16px; }
+  html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-icon { width: 56px; height: 56px; }
+  html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-icon svg { width: 36px; height: 36px; }
+}
