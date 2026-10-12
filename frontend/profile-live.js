@@ -22,30 +22,30 @@
     style.textContent = `
       .profile .stats .stat.eris-own-follow-stat{cursor:pointer;user-select:none;transition:.16s transform,.16s background}
       .profile .stats .stat.eris-own-follow-stat:active{transform:scale(.96)}
-      .eris-follow-shade{position:fixed;inset:0;z-index:68000;background:#0009;display:flex;align-items:flex-end;justify-content:center;padding:14px}
-      .eris-follow-panel{width:min(520px,100%);max-height:78dvh;overflow:hidden;display:flex;flex-direction:column;background:#120e19;border:1px solid #ffffff18;border-radius:24px 24px 18px 18px;box-shadow:0 24px 80px #000c;color:#fff}
-      .eris-follow-head{display:flex;align-items:center;justify-content:space-between;padding:17px 18px;border-bottom:1px solid #ffffff12}
+      .eris-follow-shade{position:fixed;inset:0;z-index:68000;background:var(--ui-overlay);display:flex;align-items:flex-end;justify-content:center;padding:14px}
+      .eris-follow-panel{width:min(520px,100%);max-height:78dvh;overflow:hidden;display:flex;flex-direction:column;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:24px 24px 18px 18px;box-shadow:0 24px 80px var(--ui-shadow);color:var(--ui-ink)}
+      .eris-follow-head{display:flex;align-items:center;justify-content:space-between;padding:17px 18px;border-bottom:1px solid var(--ui-line)}
       .eris-follow-head b{font-size:18px}
-      .eris-follow-close,.eris-follow-remove{border:0;background:transparent;color:#fff;cursor:pointer}
+      .eris-follow-close,.eris-follow-remove{border:0;background:transparent;color:var(--ui-danger);cursor:pointer}
       .eris-follow-close{font-size:27px;width:38px;height:38px}
       .eris-follow-list{overflow:auto;padding:7px 14px 18px}
-      .eris-follow-row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid #ffffff0d}
+      .eris-follow-row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--ui-line)}
       .eris-follow-avatar{position:relative;width:52px;height:52px;flex:none;display:grid;place-items:center}
-      .eris-follow-avatar-main{width:43px;height:43px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:#332640;font-size:23px;overflow:hidden}
+      .eris-follow-avatar-main{width:43px;height:43px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--ui-raised);font-size:23px;overflow:hidden}
       .eris-follow-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
       .eris-follow-info{min-width:0;flex:1}
       .eris-follow-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
-      .eris-follow-info small{display:block;margin-top:4px;color:#918699;font-size:11px}
+      .eris-follow-info small{display:block;margin-top:4px;color:var(--ui-muted);font-size:11px}
       .eris-follow-remove{font-size:23px;width:38px;height:38px;border-radius:50%}
-      .eris-follow-remove:active{background:#ffffff10}
-      .eris-follow-empty{text-align:center;color:#918699;padding:34px 12px}
-      .eris-follow-confirm{position:fixed;inset:0;z-index:69000;background:#000a;display:grid;place-items:center;padding:22px}
-      .eris-follow-confirm-card{width:min(390px,100%);background:#17111f;border:1px solid #ffffff18;border-radius:20px;padding:20px;color:#fff;box-shadow:0 25px 80px #000d}
-      .eris-follow-confirm-card p{margin:0 0 18px;line-height:1.55;color:#e7dfec}
+      .eris-follow-remove:active{background:color-mix(in srgb, var(--ui-danger-bg) 6%, transparent)}
+      .eris-follow-empty{text-align:center;color:var(--ui-ink);padding:34px 12px}
+      .eris-follow-confirm{position:fixed;inset:0;z-index:69000;background:color-mix(in srgb, var(--ui-primary) 67%, transparent);display:grid;place-items:center;padding:22px}
+      .eris-follow-confirm-card{width:min(390px,100%);background:var(--ui-primary);border:1px solid var(--ui-line);border-radius:20px;padding:20px;color:var(--ui-primary-ink);box-shadow:0 25px 80px var(--ui-shadow)}
+      .eris-follow-confirm-card p{margin:0 0 18px;line-height:1.55;color:var(--ui-primary-ink)}
       .eris-follow-confirm-actions{display:flex;gap:9px}
       .eris-follow-confirm-actions button{flex:1;border:0;border-radius:12px;padding:11px;font-weight:800;cursor:pointer}
-      .eris-follow-no{background:#ffffff12;color:#fff}
-      .eris-follow-yes{background:linear-gradient(135deg,#754cff,#ff4da3);color:#fff}
+      .eris-follow-no{background:color-mix(in srgb, var(--ui-panel) 7%, transparent);color:var(--ui-ink)}
+      .eris-follow-yes{background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg));color:var(--ui-ink)}
     `;
     document.head.appendChild(style);
   }

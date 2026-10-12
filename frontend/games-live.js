@@ -72,24 +72,24 @@
                 width: min(640px, 100%);
                 max-height: 95vh;
                 overflow: auto;
-                border: 1px solid rgba(166, 140, 255, 0.35);
+                border: 1px solid var(--ui-line);
                 border-radius: 24px;
-                background: linear-gradient(145deg, #181028, #0a0712);
+                background: linear-gradient(145deg, var(--ui-panel), var(--ui-panel));
                 padding: 20px;
-                box-shadow: 0 35px 110px rgba(0,0,0,0.85);
+                box-shadow: 0 35px 110px var(--ui-shadow);
             }
             #erisGamesModal button, #erisGamesModal select {
                 cursor: pointer;
-                color: white;
-                background: #281d3f;
-                border: 1px solid rgba(138, 92, 255, 0.4);
+                color: var(--ui-ink);
+                background: var(--ui-raised);
+                border: 1px solid var(--ui-line);
                 border-radius: 12px;
                 padding: 10px 14px;
                 transition: all 0.2s ease;
             }
             #erisGamesModal button:hover {
-                background: #3b2a5b;
-                border-color: rgba(138, 92, 255, 0.8);
+                background: var(--ui-button);
+                border-color: var(--ui-line);
                 transform: translateY(-1px);
             }
             #erisGamesModal button:disabled { opacity: .55; cursor: wait; transform: none; }
@@ -100,8 +100,8 @@
                 margin: 14px 0;
             }
             #erisGamesModal .eg-keys button {
-                background: linear-gradient(145deg, #221836, #161024);
-                border: 1px solid rgba(138, 92, 255, 0.25);
+                background: linear-gradient(145deg, var(--ui-raised), var(--ui-raised));
+                border: 1px solid var(--ui-line);
                 border-radius: 14px;
                 padding: 12px 8px;
                 font-size: 12px;
@@ -111,12 +111,12 @@
             }
             #erisGamesModal .eg-keys button:hover {
                 transform: translateY(-3px);
-                box-shadow: 0 8px 20px rgba(138, 92, 255, 0.25);
+                box-shadow: 0 8px 20px var(--ui-shadow);
             }
             #erisGamesModal .eg-keys button.active {
-                background: linear-gradient(135deg, #7c4ee4, #5931b3);
-                border-color: #a77aff;
-                box-shadow: 0 0 20px rgba(124, 78, 228, 0.5);
+                background: linear-gradient(135deg, var(--ui-button), var(--ui-button));
+                border-color: var(--ui-line);
+                box-shadow: 0 0 20px var(--ui-shadow);
             }
             #erisGamesModal .eg-stage {
                 min-height: 240px;
@@ -125,18 +125,18 @@
                 align-items: center;
                 justify-content: center;
                 border-radius: 18px;
-                background: radial-gradient(circle at center, rgba(82, 41, 128, 0.35), #0b0716 75%);
-                border: 1px solid rgba(138, 92, 255, 0.25);
+                background: radial-gradient(circle at center, color-mix(in srgb, var(--ui-button) 35%, transparent), var(--ui-panel) 75%);
+                border: 1px solid var(--ui-line);
                 padding: 14px;
                 margin: 14px 0;
-                box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+                box-shadow: inset 0 0 30px var(--ui-shadow);
                 position: relative;
                 overflow: hidden;
             }
             #erisGamesModal .eg-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-            #erisGamesModal .eg-form label { font-size: 11px; color: rgba(255,255,255,0.7); }
+            #erisGamesModal .eg-form label { font-size: 11px; color: color-mix(in srgb, var(--ui-muted) 70%, transparent); }
             #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width: 170px; }
-            #erisGamesModal .eg-result { min-height: 40px; color: #f5dcff; font-size: 12px; margin-top: 8px; text-align: center; font-weight: 600; }
+            #erisGamesModal .eg-result { min-height: 40px; color: var(--ui-ink); font-size: 12px; margin-top: 8px; text-align: center; font-weight: 600; }
         `;
         document.head.append(s);
 
@@ -146,45 +146,45 @@
             #erisGamesModal { overflow:auto; backdrop-filter:blur(16px); }
             #erisGamesModal .eg-panel {
                 position:relative; width:min(660px,100%); max-height:min(94dvh,940px);
-                padding:clamp(18px,4vw,28px); border-color:#ffffff22; border-radius:28px;
-                background:radial-gradient(680px 280px at 100% 0%,#a15aff20,transparent 66%),linear-gradient(155deg,#1a1428f7,#09070ff8 72%);
-                box-shadow:0 32px 110px #000c,inset 0 1px #ffffff12;
+                padding:clamp(18px,4vw,28px); border-color:var(--ui-line); border-radius:28px;
+                background:radial-gradient(680px 280px at 100% 0%,color-mix(in srgb, var(--ui-button) 13%, transparent),transparent 66%),linear-gradient(155deg,color-mix(in srgb, var(--ui-panel) 97%, transparent),color-mix(in srgb, var(--ui-panel) 97%, transparent) 72%);
+                box-shadow:0 32px 110px var(--ui-shadow),inset 0 1px var(--ui-shadow);
             }
             #erisGamesModal .eg-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
             #erisGamesModal .eg-head h2 { font-size:clamp(21px,5vw,28px)!important; letter-spacing:-.7px; }
-            #erisGamesModal [data-close] { width:40px; height:40px; border-radius:14px!important; background:#ffffff0c!important; font-size:20px; }
-            #erisGamesModal .eg-intro { margin:8px 0 13px!important; color:#b5adbf!important; font-size:12px!important; line-height:1.55; }
-            #erisGamesModal .eg-wallet { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:12px 0; padding:11px 13px; border:1px solid #e4b85d35; border-radius:15px; background:linear-gradient(100deg,#e4b85d12,#ffffff04); color:#f0cd7d!important; }
-            #erisGamesModal .eg-wallet [data-scope] { color:#d2c5eb; font-size:10px; font-weight:800; letter-spacing:.5px; }
+            #erisGamesModal [data-close] { width:40px; height:40px; border-radius:14px!important; background:color-mix(in srgb, var(--ui-panel) 5%, transparent)!important; font-size:20px; }
+            #erisGamesModal .eg-intro { margin:8px 0 13px!important; color:var(--ui-muted)!important; font-size:12px!important; line-height:1.55; }
+            #erisGamesModal .eg-wallet { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:12px 0; padding:11px 13px; border:1px solid var(--ui-line); border-radius:15px; background:linear-gradient(100deg,color-mix(in srgb, var(--ui-button) 7%, transparent),color-mix(in srgb, var(--ui-panel) 2%, transparent)); color:var(--ui-gold)!important; }
+            #erisGamesModal .eg-wallet [data-scope] { color:var(--ui-ink); font-size:10px; font-weight:800; letter-spacing:.5px; }
             #erisGamesModal .eg-keys { grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
-            #erisGamesModal .eg-keys button { min-height:45px; border-color:#ffffff16; background:linear-gradient(140deg,#211a2d,#171220); font-weight:800; }
-            #erisGamesModal .eg-keys button.active { background:linear-gradient(130deg,#7047d8,#aa4dc2); border-color:#d6b6ff88; box-shadow:0 8px 25px #754cff35; }
+            #erisGamesModal .eg-keys button { min-height:45px; border-color:var(--ui-line); background:linear-gradient(140deg,var(--ui-raised),var(--ui-raised)); font-weight:800; }
+            #erisGamesModal .eg-keys button.active { background:linear-gradient(130deg,var(--ui-button),var(--ui-button)); border-color:var(--ui-line); box-shadow:0 8px 25px var(--ui-shadow); }
             #erisGamesModal [data-name] { margin:14px 0 8px!important; font-size:19px!important; letter-spacing:-.25px; }
-            #erisGamesModal .eg-stage { min-height:clamp(200px,34vh,310px); border-color:#ffffff18; border-radius:20px; perspective:1000px; background:radial-gradient(ellipse at 50% 40%,#8f55dc36,#271a3b 48%,#100d19 100%); box-shadow:inset 0 1px #ffffff0c,0 16px 36px #0005; }
+            #erisGamesModal .eg-stage { min-height:clamp(200px,34vh,310px); border-color:var(--ui-line); border-radius:20px; perspective:1000px; background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb, var(--ui-button) 21%, transparent),var(--ui-panel) 48%,var(--ui-panel) 100%); box-shadow:inset 0 1px var(--ui-shadow),0 16px 36px var(--ui-shadow); }
             #erisGamesModal .eg-stage canvas { max-width:100%; filter:drop-shadow(0 12px 24px #0007); }
             #erisGamesModal .eg-stage [style*="position:absolute"] { filter:drop-shadow(0 8px 12px #0008); }
-            #erisGamesModal .eg-form { padding:13px; border:1px solid #ffffff12; border-radius:17px; background:#ffffff05; }
-            #erisGamesModal .eg-form label { display:grid; gap:6px; color:#c1b8cb; font-size:10px; font-weight:750; }
-            #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width:none; min-width:110px; background:#181321; border-color:#ffffff1b; border-radius:12px; padding:10px; }
+            #erisGamesModal .eg-form { padding:13px; border:1px solid var(--ui-line); border-radius:17px; background:color-mix(in srgb, var(--ui-panel) 2%, transparent); }
+            #erisGamesModal .eg-form label { display:grid; gap:6px; color:var(--ui-muted); font-size:10px; font-weight:750; }
+            #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width:none; min-width:110px; background:var(--ui-panel); border-color:var(--ui-line); border-radius:12px; padding:10px; }
             /* Wheel V2 premium symbol selector */
             #erisGamesModal .eg-wheel-picks{display:none;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin:1px 0 5px}
             #erisGamesModal .eg-wheel-picks.show{display:grid}
-            #erisGamesModal .eg-wheel-pick{position:relative;min-height:70px;padding:8px 4px;border:1px solid #ffffff12;border-radius:15px;background:linear-gradient(145deg,#201827,#120e17);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 1px #ffffff09,0 5px 12px #0003;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
+            #erisGamesModal .eg-wheel-pick{position:relative;min-height:70px;padding:8px 4px;border:1px solid var(--ui-line);border-radius:15px;background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));color:var(--ui-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 1px var(--ui-shadow),0 5px 12px var(--ui-shadow);transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
             #erisGamesModal .eg-wheel-pick:active{transform:none}
-            #erisGamesModal .eg-wheel-pick.active{border-color:#e1b661;background:linear-gradient(145deg,#3a2941,#201527);box-shadow:0 0 0 1px #e1b66140,0 7px 20px #8d58d52e,inset 0 0 22px #d9a95c12}
+            #erisGamesModal .eg-wheel-pick.active{border-color:var(--ui-line);background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));box-shadow:0 0 0 1px var(--ui-shadow),0 7px 20px var(--ui-shadow),inset 0 0 22px var(--ui-shadow)}
             #erisGamesModal .eg-wheel-icon{font-size:24px;line-height:1}
             #erisGamesModal .eg-wheel-pick b{font-size:10px;line-height:1.2}
-            #erisGamesModal .eg-wheel-pick small{font-size:8px;color:#e5bd70;font-weight:900;letter-spacing:.25px}
-            #erisGamesModal .eg-wheel-pick.active:after{content:"✓";position:absolute;right:6px;top:6px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ffe09a,#bd843b);color:#211521;font-size:9px;font-weight:950;box-shadow:0 2px 7px #0007}
+            #erisGamesModal .eg-wheel-pick small{font-size:8px;color:var(--ui-gold);font-weight:900;letter-spacing:.25px}
+            #erisGamesModal .eg-wheel-pick.active:after{content:"✓";position:absolute;right:6px;top:6px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--ui-button),var(--ui-danger-bg));color:var(--ui-ink);font-size:9px;font-weight:950;box-shadow:0 2px 7px var(--ui-shadow)}
             #erisGamesModal.eg-wheel-mode .eg-form>label:first-child{display:none}
-            #erisGamesModal.eg-wheel-mode .eg-form{border-color:#d9a85d25;background:linear-gradient(145deg,#ffffff06,#d7a35508)}
-            #erisGamesModal.eg-wheel-mode [data-play]{background:linear-gradient(120deg,#7951e8,#b953cf 55%,#c59049);box-shadow:0 9px 27px #9c55df42}
+            #erisGamesModal.eg-wheel-mode .eg-form{border-color:var(--ui-line);background:linear-gradient(145deg,color-mix(in srgb, var(--ui-panel) 2%, transparent),color-mix(in srgb, var(--ui-button) 3%, transparent))}
+            #erisGamesModal.eg-wheel-mode [data-play]{background:linear-gradient(120deg,var(--ui-primary),var(--ui-primary) 55%,var(--ui-primary));box-shadow:0 9px 27px var(--ui-shadow)}
 
             #erisGamesModal .eg-stake-presets { display:flex; gap:5px; flex-wrap:wrap; align-items:end; }
             #erisGamesModal .eg-stake-presets button { padding:8px 10px; font-size:10px; }
-            #erisGamesModal [data-play] { min-height:43px; margin-left:auto; padding-inline:22px; border:0; background:linear-gradient(120deg,#7550e7,#e449a0); box-shadow:0 9px 25px #b34cff30; font-weight:900; }
-            #erisGamesModal .eg-result { min-height:44px; margin-top:12px; padding:11px 13px; border:1px solid #ffffff10; border-radius:14px; background:#ffffff05; color:#e9def4; }
-            #erisGamesModal [data-controls] button { min-height:42px; background:linear-gradient(125deg,#5d3caf,#9a43af); font-weight:850; }
+            #erisGamesModal [data-play] { min-height:43px; margin-left:auto; padding-inline:22px; border:0; background:linear-gradient(120deg,var(--ui-primary),var(--ui-danger-bg)); box-shadow:0 9px 25px var(--ui-shadow); font-weight:900; }
+            #erisGamesModal .eg-result { min-height:44px; margin-top:12px; padding:11px 13px; border:1px solid var(--ui-line); border-radius:14px; background:color-mix(in srgb, var(--ui-panel) 2%, transparent); color:var(--ui-ink); }
+            #erisGamesModal [data-controls] button { min-height:42px; background:linear-gradient(125deg,var(--ui-button),var(--ui-button)); font-weight:850; }
             @media(max-width:520px) { #erisGamesModal { padding:8px!important; place-items:end center!important; } #erisGamesModal .eg-panel { max-height:95dvh; border-radius:25px 25px 18px 18px; padding:18px; } #erisGamesModal .eg-form { display:grid; grid-template-columns:1fr 1fr; } #erisGamesModal .eg-form label { min-width:0; } #erisGamesModal [data-play] { grid-column:1/-1; margin:2px 0 0; } #erisGamesModal .eg-stage { min-height:190px; } }
             @media(prefers-reduced-motion:reduce) { #erisGamesModal *,#erisGamesModal *:before,#erisGamesModal *:after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
         `;
@@ -202,7 +202,7 @@
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('aria-label', 'Oyun merkezi');
-        modal.style.cssText = 'position:fixed; inset:0; z-index:10100; background:rgba(2, 1, 7, 0.88); display:grid; place-items:center; padding:10px; color:white; backdrop-filter:blur(8px);';
+        modal.style.cssText = "position:fixed; inset:0; z-index:10100; background:var(--ui-overlay); display:grid; place-items:center; padding:10px; color:var(--ui-ink); backdrop-filter:blur(8px);";
         modal.innerHTML = `
             <div class="eg-panel">
                 <div class="eg-head">
@@ -212,7 +212,7 @@
                 <p class="eg-intro">Sardis’in hazineleri · Lidya oyun salonu</p>
                 <div class="eg-wallet"><span data-balance>💰 Bakiye yükleniyor…</span><span data-scope></span></div>
                 <div class="eg-keys"></div>
-                <h3 data-name style="margin:8px 0 2px 0; font-size:14px; color:#a77aff;"></h3>
+                <h3 data-name style="margin:8px 0 2px 0; font-size:14px; color:var(--ui-gold);"></h3>
                 <div class="eg-stage" aria-live="polite">Oyun yükleniyor...</div>
                 <div class="eg-form">
                     <label data-choice-label>Seçim <select data-choice></select></label>
@@ -221,7 +221,7 @@
                     <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">🪙10</button><button type="button" data-stake-value="25">🪙25</button><button type="button" data-stake-value="50">🪙50</button><button type="button" data-stake-value="75">🪙75</button><button type="button" data-stake-value="100">🪙100</button><button type="button" data-stake-value="250">🪙250</button><button type="button" data-stake-value="500">🪙500</button><button type="button" data-stake-value="1000">🪙1000</button></div>
                     <button data-play>Oyna</button>
                 </div>
-                <div data-wheel-feed style="display:none;position:relative;height:38px;overflow:hidden;margin:5px 0"></div><div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:#ffd477;margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid #ffffff12;border-radius:12px;font-size:11px"></div>
+                <div data-wheel-feed style="display:none;position:relative;height:38px;overflow:hidden;margin:5px 0"></div><div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:var(--ui-gold);margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid var(--ui-line);border-radius:12px;font-size:11px"></div>
                 <div data-controls style="display:flex; gap:8px; justify-content:center; margin-top:6px;"></div>
             </div>
         `;
@@ -230,7 +230,7 @@
         if (!document.getElementById('erisFinalTwoUiStyles')) {
             const finalStyle = document.createElement('style');
             finalStyle.id = 'erisFinalTwoUiStyles';
-            finalStyle.textContent = '\n/* ERIS_FINAL_TWO_UI_FIXES_20261008 */\n#erisGamesModal .eg-head {\n  display:flex!important;\n  align-items:center!important;\n  gap:6px!important;\n}\n#erisGamesModal .eg-head h2 {\n  flex:1 1 auto!important;\n  min-width:0!important;\n}\n#erisGamesModal .eg-head>.eg-wallet {\n  display:flex!important;\n  flex:0 1 auto!important;\n  min-width:0!important;\n  max-width:57%!important;\n  margin:0!important;\n  padding:4px 7px!important;\n  border:1px solid #d5ac5a44!important;\n  border-radius:12px!important;\n  background:#20182c!important;\n  align-items:center!important;\n  justify-content:center!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-balance] {\n  display:block!important;\n  font-size:clamp(9px,2.5vw,12px)!important;\n  white-space:nowrap!important;\n  overflow:hidden!important;\n  text-overflow:ellipsis!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-scope] {\n  display:none!important;\n}\n#erisGamesModal .eg-head>[data-close] {\n  flex-shrink:0!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form>[data-choice-label] {\n  display:none!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks {\n  display:grid!important;\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n  gap:5px!important;\n  width:100%!important;\n  margin:0!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button {\n  box-sizing:border-box!important;\n  display:flex!important;\n  align-items:center!important;\n  justify-content:center!important;\n  min-width:0!important;\n  min-height:57px!important;\n  padding:5px 2px!important;\n  border-radius:10px!important;\n  font-size:0!important;\n  line-height:1!important;\n  white-space:normal!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button::before {\n  font-size:24px!important;\n  line-height:1!important;\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="ruby"]::before {\n  content:"💎";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="gold"]::before {\n  content:"👑";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="crystal"]::before {\n  content:"🔮";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick="mystery"]::before {\n  content:"🎁";\n}\n#erisGamesModal.eg-vault-mode .eg-stake-presets {\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form {\n  gap:5px!important;\n}\n';
+            finalStyle.textContent = "\n/* ERIS_FINAL_TWO_UI_FIXES_20261008 */\n#erisGamesModal .eg-head {\n  display:flex!important;\n  align-items:center!important;\n  gap:6px!important;\n}\n#erisGamesModal .eg-head h2 {\n  flex:1 1 auto!important;\n  min-width:0!important;\n}\n#erisGamesModal .eg-head>.eg-wallet {\n  display:flex!important;\n  flex:0 1 auto!important;\n  min-width:0!important;\n  max-width:57%!important;\n  margin:0!important;\n  padding:4px 7px!important;\n  border:1px solid var(--ui-line)!important;\n  border-radius:12px!important;\n  background:var(--ui-panel)!important;\n  align-items:center!important;\n  justify-content:center!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-balance] {\n  display:block!important;\n  font-size:clamp(9px,2.5vw,12px)!important;\n  white-space:nowrap!important;\n  overflow:hidden!important;\n  text-overflow:ellipsis!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-scope] {\n  display:none!important;\n}\n#erisGamesModal .eg-head>[data-close] {\n  flex-shrink:0!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form>[data-choice-label] {\n  display:none!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks {\n  display:grid!important;\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n  gap:5px!important;\n  width:100%!important;\n  margin:0!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button {\n  box-sizing:border-box!important;\n  display:flex!important;\n  align-items:center!important;\n  justify-content:center!important;\n  min-width:0!important;\n  min-height:57px!important;\n  padding:5px 2px!important;\n  border-radius:10px!important;\n  font-size:0!important;\n  line-height:1!important;\n  white-space:normal!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button::before {\n  font-size:24px!important;\n  line-height:1!important;\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"ruby\"]::before {\n  content:\"💎\";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"gold\"]::before {\n  content:\"👑\";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"crystal\"]::before {\n  content:\"🔮\";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"mystery\"]::before {\n  content:\"🎁\";\n}\n#erisGamesModal.eg-vault-mode .eg-stake-presets {\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form {\n  gap:5px!important;\n}\n";
             document.head.appendChild(finalStyle);
         }
 
@@ -321,9 +321,9 @@
         if (!document.getElementById('erisCrashProStyle')) {
         const st = document.createElement('style');
         st.id = 'erisCrashProStyle';
-        st.textContent = '\n/* ERIS_CRASH_PRO_UI_V1 */\n#erisGamesModal.eg-crash-mode .eg-form>label:first-child{display:none}\n#erisGamesModal.eg-crash-mode .eg-form{display:grid;grid-template-columns:1fr;gap:12px}\n#erisGamesModal.eg-crash-mode .eg-form>label{font-size:12px;font-weight:800;color:#d8c8f4}\n#erisGamesModal.eg-crash-mode [data-stake]{width:100%;box-sizing:border-box}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0;padding:12px 3px;border-radius:12px}\n#erisGamesModal.eg-crash-mode [data-play]{width:100%;min-height:56px;font-size:17px;border-radius:15px}\n#erisGamesModal.eg-crash-mode [data-controls] button{width:100%;min-height:55px;font-size:17px;border-radius:15px;background:linear-gradient(110deg,#119b71,#25ce91)}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:260px}\n';
-        st.textContent += '\n#erisGamesModal.eg-crash-mode .eg-panel{padding:12px;overflow-y:auto}\n#erisGamesModal.eg-crash-mode .eg-head{margin-bottom:5px}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:0}\n#erisGamesModal.eg-crash-mode .crash-flight{height:190px!important}\n#erisGamesModal.eg-crash-mode .eg-form{gap:7px;padding:10px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{gap:6px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{padding:9px 2px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button.crash-selected{border-color:#34e9b5;box-shadow:0 0 0 2px #34e9b544;background:#164b43}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:46px}\n#erisGamesModal.eg-crash-mode .eg-result{min-height:0;margin-top:6px;padding:9px}\n#erisGamesModal.eg-crash-mode .eg-crash-bets{font-size:12px;color:#c7f9e8;padding:9px 11px;border:1px solid #2c8b7055;border-radius:11px;margin-top:6px}\n#erisGamesModal.eg-crash-mode [data-controls] button{min-height:48px;font-size:15px}\n#erisGamesModal.eg-crash-mode [data-crash-history]{padding:7px 0!important}\n';
-        st.textContent += '\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:9px;border:1px solid #ffffff1c;border-radius:12px;background:#ffffff07;margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-title{font-size:10px;font-weight:900;letter-spacing:.7px;color:#b4c8d6;margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid>div{min-width:0;text-align:center;padding:7px 2px;border-radius:8px;background:#101d30}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid small{display:block;font-size:9px;color:#9fb0c2}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid strong{display:block;font-size:12px;color:#56f0b5;margin-top:4px}\n';
+        st.textContent = "\n/* ERIS_CRASH_PRO_UI_V1 */\n#erisGamesModal.eg-crash-mode .eg-form>label:first-child{display:none}\n#erisGamesModal.eg-crash-mode .eg-form{display:grid;grid-template-columns:1fr;gap:12px}\n#erisGamesModal.eg-crash-mode .eg-form>label{font-size:12px;font-weight:800;color:var(--ui-muted)}\n#erisGamesModal.eg-crash-mode [data-stake]{width:100%;box-sizing:border-box}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0;padding:12px 3px;border-radius:12px}\n#erisGamesModal.eg-crash-mode [data-play]{width:100%;min-height:56px;font-size:17px;border-radius:15px}\n#erisGamesModal.eg-crash-mode [data-controls] button{width:100%;min-height:55px;font-size:17px;border-radius:15px;background:linear-gradient(110deg,var(--ui-ok-bg),var(--ui-ok-bg))}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:260px}\n";
+        st.textContent += "\n#erisGamesModal.eg-crash-mode .eg-panel{padding:12px;overflow-y:auto}\n#erisGamesModal.eg-crash-mode .eg-head{margin-bottom:5px}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:0}\n#erisGamesModal.eg-crash-mode .crash-flight{height:190px!important}\n#erisGamesModal.eg-crash-mode .eg-form{gap:7px;padding:10px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{gap:6px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{padding:9px 2px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button.crash-selected{border-color:var(--ui-ok);box-shadow:0 0 0 2px var(--ui-shadow);background:var(--ui-raised)}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:46px}\n#erisGamesModal.eg-crash-mode .eg-result{min-height:0;margin-top:6px;padding:9px}\n#erisGamesModal.eg-crash-mode .eg-crash-bets{font-size:12px;color:var(--ui-ink);padding:9px 11px;border:1px solid var(--ui-ok);border-radius:11px;margin-top:6px}\n#erisGamesModal.eg-crash-mode [data-controls] button{min-height:48px;font-size:15px}\n#erisGamesModal.eg-crash-mode [data-crash-history]{padding:7px 0!important}\n";
+        st.textContent += "\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:9px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 3%, transparent);margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-title{font-size:10px;font-weight:900;letter-spacing:.7px;color:var(--ui-ink);margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid>div{min-width:0;text-align:center;padding:7px 2px;border-radius:8px;background:var(--ui-panel)}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid small{display:block;font-size:9px;color:var(--ui-muted)}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid strong{display:block;font-size:12px;color:var(--ui-ok);margin-top:4px}\n";
         st.textContent += '\n/* ERIS_CRASH_COMPACT_V2 */\n\n#erisGamesModal.eg-crash-mode .eg-panel{padding:8px!important}\n#erisGamesModal.eg-crash-mode .eg-head{display:flex;align-items:center;gap:7px;margin:0 0 6px!important}\n#erisGamesModal.eg-crash-mode .eg-head h2{font-size:15px!important;white-space:nowrap}\n#erisGamesModal.eg-crash-mode .eg-head [data-close]{flex:0 0 36px;width:36px;height:36px}\n#erisGamesModal.eg-crash-mode .eg-wallet{order:0;display:flex!important;flex:1;min-width:0;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important;justify-content:flex-end}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-balance]{font-size:clamp(10px,2.7vw,13px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-scope]{display:none!important}\n#erisGamesModal.eg-crash-mode [data-name]{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form>label{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form{padding:6px!important;gap:5px!important}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;width:100%;min-width:0}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0!important;width:100%!important;padding:9px 0!important;font-size:clamp(7px,1.9vw,10px)!important;border-radius:8px!important;white-space:nowrap;letter-spacing:-.5px}\n#erisGamesModal.eg-crash-mode .eg-stage{margin-top:4px!important}\n#erisGamesModal.eg-crash-mode .crash-flight{height:170px!important}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:42px!important}\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:6px!important;margin-bottom:4px!important}\n#erisGamesModal.eg-crash-mode .eg-result{margin-top:4px!important}\n';
         document.head.appendChild(st);
     }
@@ -500,24 +500,24 @@ const close = () => {
                 #erisGamesModal .eg-bj-history {
                     padding:12px;
                     margin:9px 0;
-                    border:1px solid #b995504f;
+                    border:1px solid var(--ui-line);
                     border-radius:15px;
-                    background:linear-gradient(145deg,#181e25,#10141c);
-                    box-shadow:inset 0 1px 0 #ffffff10;
-                    color:#e9dfc9;
+                    background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));
+                    box-shadow:inset 0 1px 0 var(--ui-shadow);
+                    color:var(--ui-ink);
                 }
                 #erisGamesModal .eg-bj-history-head {
                     font-size:12px;
                     font-weight:900;
                     letter-spacing:.8px;
-                    color:#f5cb79;
+                    color:var(--ui-gold);
                     margin-bottom:9px;
                 }
                 #erisGamesModal .eg-bj-history-summary {
                     font-size:11px;
                     line-height:1.6;
                     margin-bottom:10px;
-                    color:#d3dce7;
+                    color:var(--ui-ink);
                 }
                 #erisGamesModal .eg-bj-history-strip {
                     display:flex;
@@ -534,24 +534,24 @@ const close = () => {
                     border-radius:7px;
                     font-size:11px;
                     font-weight:900;
-                    background:#394150;
-                    color:white;
+                    background:var(--ui-panel);
+                    color:var(--ui-ink);
                 }
                 #erisGamesModal .bj-win,
                 #erisGamesModal .bj-blackjack {
-                    background:#176e51;
-                    color:#c7ffe6;
+                    background:var(--ui-ok-bg);
+                    color:var(--ui-ink);
                 }
                 #erisGamesModal .bj-blackjack {
-                    outline:1px solid #f0c46a;
+                    outline:1px solid var(--ui-line);
                 }
                 #erisGamesModal .bj-loss {
-                    background:#842f42;
-                    color:#ffe0e5;
+                    background:var(--ui-danger-bg);
+                    color:var(--ui-ink);
                 }
                 #erisGamesModal .bj-push {
-                    background:#69552b;
-                    color:#ffe7a9;
+                    background:var(--ui-panel);
+                    color:var(--ui-gold);
                 }
             `;
             document.head.append(style);
@@ -564,8 +564,8 @@ const close = () => {
             st.id = 'erisBlackjackPremiumStyle';
             st.textContent = `
                 #erisGamesModal.eg-blackjack-mode .eg-panel{
-                    background:linear-gradient(155deg,#15241e,#0c1217);
-                    border:1px solid #d4ae6955;
+                    background:linear-gradient(155deg,var(--ui-panel),var(--ui-panel));
+                    border:1px solid var(--ui-line);
                 }
                 #erisGamesModal.eg-blackjack-mode .eg-form{
                     display:grid;
@@ -573,14 +573,14 @@ const close = () => {
                     gap:9px;
                     padding:12px;
                     border-radius:15px;
-                    border:1px solid #c6a35c55;
-                    background:linear-gradient(140deg,#17372b,#10221e);
+                    border:1px solid var(--ui-line);
+                    background:linear-gradient(140deg,var(--ui-panel),var(--ui-panel));
                 }
                 #erisGamesModal.eg-blackjack-mode .eg-form>label:first-child{
                     display:none;
                 }
                 #erisGamesModal.eg-blackjack-mode .eg-form>label{
-                    color:#f6d990;
+                    color:var(--ui-gold);
                     font-weight:800;
                     font-size:12px;
                 }
@@ -590,9 +590,9 @@ const close = () => {
                     box-sizing:border-box;
                     margin-top:6px;
                     min-height:44px;
-                    background:#091913;
-                    color:#ffe6a1;
-                    border:1px solid #d5b56d;
+                    background:var(--ui-panel);
+                    color:var(--ui-gold);
+                    border:1px solid var(--ui-line);
                     border-radius:10px;
                     font-size:18px;
                     font-weight:900;
@@ -607,9 +607,9 @@ const close = () => {
                     min-width:0;
                     padding:10px 2px;
                     border-radius:10px;
-                    border:1px solid #bda66c66;
-                    background:linear-gradient(140deg,#28483b,#142b24);
-                    color:#f9e5b3;
+                    border:1px solid var(--ui-line);
+                    background:linear-gradient(140deg,var(--ui-raised),var(--ui-raised));
+                    color:var(--ui-gold);
                     font-weight:900;
                     font-size:11px;
                 }
@@ -617,8 +617,8 @@ const close = () => {
                     width:100%;
                     min-height:50px;
                     border-radius:12px;
-                    background:linear-gradient(100deg,#bd9140,#f5d78c,#bb8b38);
-                    color:#1c241a;
+                    background:linear-gradient(100deg,var(--ui-primary),var(--ui-primary),var(--ui-primary));
+                    color:var(--ui-primary-ink);
                     font-size:16px;
                     font-weight:900;
                 }
@@ -630,12 +630,12 @@ const close = () => {
                 #erisGamesModal.eg-blackjack-mode [data-controls] button{
                     min-height:47px;
                     border-radius:11px;
-                    background:linear-gradient(120deg,#177253,#32ad7c);
-                    color:white;
+                    background:linear-gradient(120deg,var(--ui-ok-bg),var(--ui-ok-bg));
+                    color:var(--ui-ink);
                     font-weight:900;
                 }
                 #erisGamesModal.eg-blackjack-mode [data-controls] button:last-child{
-                    background:linear-gradient(120deg,#793d39,#ad604c);
+                    background:linear-gradient(120deg,var(--ui-danger-bg),var(--ui-danger-bg));
                 }
             `;
             document.head.appendChild(st);
@@ -755,10 +755,10 @@ const close = () => {
               }
               #erisGamesModal.eg-cups-mode .eg-cups-bet-controls>button {
                 min-height:48px;
-                border:1px solid #b58a55;
+                border:1px solid var(--ui-line);
                 border-radius:13px;
-                background:#352343;
-                color:#ffe3a0;
+                background:var(--ui-button);
+                color:var(--ui-gold);
                 font-size:26px;
                 font-weight:900;
               }
@@ -766,18 +766,18 @@ const close = () => {
                 text-align:center;
                 padding:6px 2px;
                 border-radius:12px;
-                background:#1b142b;
+                background:var(--ui-raised);
               }
               #erisGamesModal.eg-cups-mode .eg-cups-bet-summary small {
                 display:block;
-                color:#bea9ce;
+                color:var(--ui-gold);
                 font-size:10px;
                 font-weight:800;
               }
               #erisGamesModal.eg-cups-mode .eg-cups-bet-summary strong {
                 display:block;
                 margin-top:3px;
-                color:#ffdb83;
+                color:var(--ui-gold);
                 font-size:17px;
               }
               #erisGamesModal.eg-cups-mode .eg-form {
@@ -785,10 +785,10 @@ const close = () => {
                 grid-template-columns:1fr!important;
                 gap:12px!important;
                 padding:16px!important;
-                border:1px solid #a87a43!important;
+                border:1px solid var(--ui-line)!important;
                 border-radius:20px!important;
-                background:linear-gradient(150deg,#30203e,#130e20)!important;
-                box-shadow:inset 0 1px #ffffff14,0 12px 30px #0005;
+                background:linear-gradient(150deg,var(--ui-panel),var(--ui-panel))!important;
+                box-shadow:inset 0 1px var(--ui-shadow),0 12px 30px var(--ui-shadow);
               }
               #erisGamesModal.eg-cups-mode .eg-form>label:first-child {
                 display:none!important;
@@ -797,7 +797,7 @@ const close = () => {
                 display:block!important;
                 font-size:12px;
                 font-weight:900;
-                color:#e9d4ad;
+                color:var(--ui-gold);
               }
               #erisGamesModal.eg-cups-mode [data-stake] {
                 display:block;
@@ -806,10 +806,10 @@ const close = () => {
                 margin-top:9px;
                 padding:12px;
                 min-height:54px;
-                border:1px solid #b58a55;
+                border:1px solid var(--ui-line);
                 border-radius:14px;
-                background:#160f24;
-                color:#ffdf91;
+                background:var(--ui-panel);
+                color:var(--ui-gold);
                 font-size:23px;
                 font-weight:900;
                 text-align:center;
@@ -822,29 +822,29 @@ const close = () => {
               #erisGamesModal.eg-cups-mode [data-stake-value] {
                 min-width:0;
                 padding:12px 2px;
-                border:1px solid #6f538a;
+                border:1px solid var(--ui-line);
                 border-radius:12px;
-                background:linear-gradient(150deg,#38244d,#241832);
-                color:#f8dfac;
+                background:linear-gradient(150deg,var(--ui-button),var(--ui-panel));
+                color:var(--ui-gold);
                 font-weight:900;
                 font-size:12px;
               }
               #erisGamesModal.eg-cups-mode [data-stake-value].cups-selected {
-                border-color:#ffdc80!important;
-                background:linear-gradient(135deg,#f9d67e,#b57b31)!important;
-                color:#24162e!important;
-                box-shadow:0 0 14px #e8b85a55;
+                border-color:var(--ui-line)!important;
+                background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg))!important;
+                color:var(--ui-ink)!important;
+                box-shadow:0 0 14px var(--ui-shadow);
               }
               #erisGamesModal.eg-cups-mode [data-play] {
                 width:100%;
                 min-height:58px;
-                border:1px solid #f1cb86;
+                border:1px solid var(--ui-line);
                 border-radius:15px;
-                background:linear-gradient(110deg,#e5b85b,#ffdf91,#b87d35)!important;
-                color:#25142f!important;
+                background:linear-gradient(110deg,var(--ui-primary),var(--ui-primary),var(--ui-danger-bg))!important;
+                color:var(--ui-primary-ink)!important;
                 font-size:19px;
                 font-weight:1000;
-                box-shadow:0 8px 20px #0006;
+                box-shadow:0 8px 20px var(--ui-shadow);
               }
             `;
             document.head.appendChild(css);
@@ -873,20 +873,20 @@ const close = () => {
               #erisGamesModal.eg-slot-mode .eg-form{
                 display:grid!important;grid-template-columns:1fr!important;
                 gap:12px!important;padding:16px!important;
-                border:2px solid #bb854b;border-radius:18px;
-                background:linear-gradient(145deg,#351c40,#180e28)!important;
+                border:2px solid var(--ui-line);border-radius:18px;
+                background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel))!important;
               }
               #erisGamesModal.eg-slot-mode .eg-form>label:first-child{
                 display:none!important;
               }
               #erisGamesModal.eg-slot-mode .eg-form>label{
-                color:#ffe3a1;font-weight:900;
+                color:var(--ui-gold);font-weight:900;
               }
               #erisGamesModal.eg-slot-mode [data-stake]{
                 width:100%;box-sizing:border-box;margin-top:8px;
                 min-height:48px;font-size:20px;font-weight:900;
-                border:2px solid #d5a64e;border-radius:12px;
-                background:#1c142b;color:#fff;padding:8px 12px;
+                border:2px solid var(--ui-line);border-radius:12px;
+                background:var(--ui-panel);color:var(--ui-ink);padding:8px 12px;
               }
               #erisGamesModal.eg-slot-mode .eg-stake-presets{
                 display:grid!important;
@@ -895,21 +895,21 @@ const close = () => {
               }
               #erisGamesModal.eg-slot-mode [data-stake-value]{
                 min-width:0;padding:12px 2px;border-radius:12px;
-                border:1px solid #ad865f;background:#3a2646;
-                color:#ffe2a6;font-weight:900;
+                border:1px solid var(--ui-line);background:var(--ui-button);
+                color:var(--ui-gold);font-weight:900;
               }
 
               #erisGamesModal.eg-slot-mode .slot-selected{
-                background:linear-gradient(135deg,#ffdf83,#c17b27)!important;
-                color:#281324!important;
-                border-color:#ffeaa1!important;
-                box-shadow:0 0 15px #ffc64b88!important;
+                background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg))!important;
+                color:var(--ui-ink)!important;
+                border-color:var(--ui-line)!important;
+                box-shadow:0 0 15px var(--ui-shadow)!important;
               }
               #erisGamesModal.eg-slot-mode [data-play]{
                 width:100%;min-height:60px;border-radius:15px;
-                background:linear-gradient(135deg,#ffdb6e,#d77d20)!important;
-                color:#2b1327;font-size:21px;font-weight:1000;
-                box-shadow:0 7px 20px #edaa4255;
+                background:linear-gradient(135deg,var(--ui-primary),var(--ui-danger-bg))!important;
+                color:var(--ui-primary-ink);font-size:21px;font-weight:1000;
+                box-shadow:0 7px 20px var(--ui-shadow);
               }
             `;
             document.head.appendChild(el);
@@ -1153,7 +1153,7 @@ const close = () => {
 
                     const total=document.createElement('small');
                     total.dataset.wheelTotal=symbol.key;
-                    total.style.cssText='display:block;color:#ffd477;margin-top:4px;font-weight:900';
+                    total.style.cssText="display:block;color:var(--ui-gold);margin-top:4px;font-weight:900";
                 total.textContent='🪙 0 Lidya';
                     button.append(icon,name,payout,total);
 
@@ -1225,7 +1225,7 @@ const close = () => {
                 feed.style.display='block';
                 const n=document.createElement('span');
                 n.textContent='🪙 '+Number(b.amount).toLocaleString('tr-TR')+' '+(icons[b.choice]||'');
-                n.style.cssText='position:absolute;left:-180px;top:50%;transform:translateY(-50%);font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:#ffd477';
+                n.style.cssText="position:absolute;left:-180px;top:50%;transform:translateY(-50%);font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:var(--ui-gold)";
                 feed.appendChild(n);
                 requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px)) translateY(-50%)'));
                 setTimeout(()=>{
@@ -1539,8 +1539,8 @@ const close = () => {
               #erisGamesModal.eg-horse-mode .eg-form{
                 display:grid!important;grid-template-columns:1fr!important;
                 gap:10px!important;padding:12px!important;
-                border:1px solid #bd945544!important;
-                background:linear-gradient(145deg,#241a32,#120e1e)!important
+                border:1px solid var(--ui-line)!important;
+                background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel))!important
               }
               #erisGamesModal.eg-horse-mode .eg-form>label{
                 display:none!important
@@ -1554,26 +1554,26 @@ const close = () => {
                 display:flex;flex-direction:column;align-items:center;
                 justify-content:center;gap:3px;
                 padding:9px 3px;border-radius:14px;
-                border:1px solid #9e7b4b55;
-                background:linear-gradient(150deg,#30233b,#191423);
-                color:#fff;box-shadow:inset 0 1px #ffffff14
+                border:1px solid var(--ui-line);
+                background:linear-gradient(150deg,var(--ui-panel),var(--ui-panel));
+                color:var(--ui-ink);box-shadow:inset 0 1px var(--ui-shadow)
               }
               #erisGamesModal.eg-horse-mode .eg-horse-pick.active{
-                border-color:#ffdc84;
-                background:linear-gradient(145deg,#58402e,#30213b);
-                box-shadow:0 0 0 1px #ffdc8455,0 0 18px #d5a34d33
+                border-color:var(--ui-line);
+                background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));
+                box-shadow:0 0 0 1px var(--ui-shadow),0 0 18px var(--ui-shadow)
               }
               #erisGamesModal.eg-horse-mode .eg-horse-pick.active:after{
                 content:'✓';position:absolute;right:6px;top:5px;
-                color:#ffdc84;font-weight:900
+                color:var(--ui-gold);font-weight:900
               }
               #erisGamesModal.eg-horse-mode .hp-icon{font-size:26px}
               #erisGamesModal.eg-horse-mode .eg-horse-pick b{font-size:12px}
               #erisGamesModal.eg-horse-mode .eg-horse-pick small{
-                font-size:10px;font-weight:900;color:#ffcf76
+                font-size:10px;font-weight:900;color:var(--ui-gold)
               }
               #erisGamesModal.eg-horse-mode .hp-total{
-                font-size:10px;color:#d6c7e6;font-weight:800
+                font-size:10px;color:var(--ui-ink);font-weight:800
               }
               #erisGamesModal.eg-horse-mode .eg-stake-presets{
                 display:grid!important;
@@ -1582,18 +1582,18 @@ const close = () => {
               }
               #erisGamesModal.eg-horse-mode [data-stake-value]{
                 min-width:0;padding:11px 2px;border-radius:11px;
-                border:1px solid #a8875d88;
-                background:#30233e;color:#ffe4ab;font-weight:900
+                border:1px solid var(--ui-line);
+                background:var(--ui-panel);color:var(--ui-gold);font-weight:900
               }
               #erisGamesModal.eg-horse-mode [data-stake-value].horse-selected{
-                border-color:#ffe29b!important;
-                background:#695039!important;color:white!important
+                border-color:var(--ui-line)!important;
+                background:var(--ui-panel)!important;color:var(--ui-ink)!important
               }
               #erisGamesModal.eg-horse-mode [data-play]{
                 width:100%;min-height:52px;margin:0!important;
                 border-radius:14px;font-size:17px;
-                background:linear-gradient(110deg,#eac477,#b8863b)!important;
-                color:#24162c!important
+                background:linear-gradient(110deg,var(--ui-primary),var(--ui-primary))!important;
+                color:var(--ui-primary-ink)!important
               }
             `;
             document.head.appendChild(style);
@@ -1934,7 +1934,7 @@ const close = () => {
             if (!history.childElementCount) {
                 const empty = document.createElement('span');
                 empty.textContent = 'Henüz tamamlanmış tur bulunmuyor';
-                empty.style.cssText = 'color:#94a3b8;font-size:11px;padding:7px';
+                empty.style.cssText = "color:var(--ui-ink);font-size:11px;padding:7px";
                 history.appendChild(empty);
             }
 
@@ -2204,15 +2204,15 @@ const close = () => {
             #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar button {
                 min-height:43px;
                 border-radius:10px;
-                border:1px solid #d8ba77;
-                background:#284b3b;
-                color:#ffe7a9;
+                border:1px solid var(--ui-line);
+                background:var(--ui-raised);
+                color:var(--ui-gold);
                 font-size:26px;
                 font-weight:900;
             }
             #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display {
                 text-align:center;
-                color:#ffe7a9;
+                color:var(--ui-gold);
             }
             #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display small {
                 display:block;
@@ -2294,10 +2294,10 @@ const close = () => {
             opacity:.4;
           }
           #erisGamesModal.eg-blackjack-mode .eg-stake-presets .bj-selected {
-            background:#876223!important;
-            border-color:#ffe09b!important;
-            color:#fff!important;
-            box-shadow:inset 0 0 0 1px #ffe09b!important;
+            background:var(--ui-button)!important;
+            border-color:var(--ui-line)!important;
+            color:var(--ui-ink)!important;
+            box-shadow:inset 0 0 0 1px var(--ui-shadow)!important;
           }
         `;
         document.head.appendChild(bjFlowStyle);
@@ -3102,9 +3102,9 @@ erisWheelLayout.textContent=`
  height:32px!important;
  min-height:32px!important;
  margin:3px 0 6px!important;
- border:1px solid #ffffff18!important;
+ border:1px solid var(--ui-line)!important;
  border-radius:10px!important;
- background:#0b0813!important;
+ background:var(--ui-panel)!important;
 }
 #erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
  display:block!important;
@@ -3112,9 +3112,9 @@ erisWheelLayout.textContent=`
  height:32px!important;
  min-height:32px!important;
  margin:3px 0 6px!important;
- border:1px solid #ffffff18!important;
+ border:1px solid var(--ui-line)!important;
  border-radius:10px!important;
- background:#0b0813!important;
+ background:var(--ui-panel)!important;
 }
 
 /* ÇARK — KUTUNUN İÇİNDE */
@@ -3216,8 +3216,8 @@ erisWheelLayout.textContent=`
  letter-spacing:-.5px!important;
 }
 #erisGamesModal.eg-wheel-mode .eg-stake-presets button.wheel-stake-active{
- border-color:#ffd477!important;
- box-shadow:0 0 0 1px #ffd47766!important;
+ border-color:var(--ui-line)!important;
+ box-shadow:0 0 0 1px var(--ui-shadow)!important;
 }
 
 /* SAYAÇ */

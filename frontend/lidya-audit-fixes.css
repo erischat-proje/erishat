@@ -1,0 +1,40 @@
+/* Residual controls and overlays identified in the full source audit. */
+:root { --bg:var(--ui-page);--p:var(--ui-panel);--p2:var(--ui-raised);--line:var(--ui-line);--muted:var(--ui-muted);--pink:var(--ui-gold);--violet:var(--ui-bronze);--gold:var(--ui-gold); }
+html body :is(.close,.eris-picker-close,.eris-picker-remove,.personal-fan-close,.call-flip) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body #erisAccountPicker { background:var(--ui-overlay)!important;color:var(--ui-ink)!important; }
+html body .eris-account-dialog { background:var(--ui-panel)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body #erisAccountPicker :is(.eris-picker-select,.eris-picker-avatar) { background:var(--ui-raised)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body #erisAccountPicker .eris-picker-select[aria-current=true] { border-color:var(--ui-gold)!important;box-shadow:inset 0 -2px var(--ui-gold); }
+html body #erisAccountPicker :is(small,.eris-picker-note,.eris-picker-status) { color:var(--ui-muted)!important; }
+html body :is(.eris-call,.eris-anonymous,.eris-location) { color:var(--ui-ink)!important; }
+html body .eris-call { background:var(--ui-page)!important; }
+html body .eris-call :is(.call-avatar,.call-bubble,.call-phone) { background:var(--ui-raised)!important;color:var(--ui-ink)!important; }
+html body .eris-call .call-actions button { background:var(--ui-button)!important;color:var(--ui-button-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.eris-call .end,.eris-call .reject,.eris-call-consent .decline) { background:var(--ui-danger-bg)!important;color:var(--ui-danger)!important;border-color:var(--ui-danger)!important; }
+html body :is(.eris-call .accept,.eris-call-consent .agree) { background:var(--ui-ok-bg)!important;color:var(--ui-ok)!important;border-color:var(--ui-ok)!important; }
+html body :is(.eris-call-consent,.personal-fan-overlay,#erisRoomWallpaperModal,#erisMusicPanel,#eris-room-invitation-modal,#eris-room-password-modal,#erisUserProfileModal,#seatPermissionPanel,#erisAnnouncementInbox,#erischatBanPanel) { color:var(--ui-ink)!important;background:var(--ui-overlay)!important; }
+html body :is(.eris-call-consent>section,.personal-fan-panel,#erisRoomWallpaperModal>section,#erisMusicPanel>div,#eris-room-invitation-modal>div,#eris-room-password-modal>div,#erisUserProfileModal>section,#erisUserProfileModal>div,#seatPermissionPanel>section,#erisAnnouncementInbox>div,#erischatBanPanel>section) { color:var(--ui-ink)!important;background:var(--ui-panel)!important;border-color:var(--ui-line)!important; }
+html body :is(#erisMusicPanel,#erisRoomWallpaperModal,#seatPermissionPanel,#erisAnnouncementInbox,#erischatBanPanel) :is(button,input:not([type=range]),select,textarea) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body #erisMusicPanel :is([data-pass],#erisMusicPlayer) { color:var(--ui-ink)!important;background:var(--ui-raised)!important;border-color:var(--ui-line)!important; }
+html body #erisMusicPanel input[type=range] { accent-color:var(--ui-gold)!important; }
+html body #erisMusicPanel :is([data-add],[data-toggle],[data-unlock]),html body #erisRoomWallpaperModal [data-buy] { color:var(--ui-primary-ink)!important;background:var(--ui-primary)!important; }
+html body :is(#erisMusicPanel,#erisRoomWallpaperModal,#seatPermissionPanel,#erisAnnouncementInbox,#erischatBanPanel,.personal-fan-panel) :is(small,p,[data-current],[data-owned-note]) { color:var(--ui-muted)!important; }
+html body #erisRoomWallpaperModal .wallpaper-preview { background:var(--ui-raised)!important;border-color:var(--ui-line)!important; }
+html body #erisRoomWallpaperModal .wallpaper-thumb[aria-pressed=true] { border-color:var(--ui-gold)!important; }
+html body :is(.appearance-task,.appearance-task-empty,.personal-fan-row,.personal-gift-card) { color:var(--ui-ink)!important;background:var(--ui-raised)!important;border-color:var(--ui-line)!important; }
+html body :is(.appearance-tasks,.appearance-task-filters,.personal-fan-panel) button { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body :is(.appearance-task-tag,.appearance-task-count,.personal-fan-meta,.personal-fan-details,.personal-fan-intro) { color:var(--ui-muted)!important; }
+html body .appearance-task progress { accent-color:var(--ui-gold); }
+html body .appearance-task progress::-webkit-progress-value { background:var(--ui-gold)!important; }
+html body .appearance-task progress::-webkit-progress-bar { background:var(--ui-line)!important; }
+html body .appearance-task progress::-moz-progress-bar { background:var(--ui-gold)!important; }
+html body #erisRoomEmojiPanel { color:var(--ui-ink)!important;background:var(--ui-panel)!important;border-color:var(--ui-line)!important; }
+html body #erisRoomEmojiPanel :is(button,input,select) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body #chat :is(.dm-call-head button,.dm-compose-controls button,.dm-options button,.dm-reaction-picker button) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body :is(.ec-compose-modal,.ec-post-dialog,.ec-comments-modal,.ec-social-modal,.eris-story-modal) { color:var(--ui-ink)!important; }
+html body :is(.ec-compose-modal,.ec-post-dialog,.ec-comments-modal,.ec-social-modal,.eris-story-modal) :is(button,input,select,textarea) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+/* Media stages and semantic badges keep their purpose-specific colors. */
+html body :is(.eris-story-viewer,.support-lightbox,#erisRoomWallpaperZoom) { background:#080b09!important; }
+html body :is(.eris-story-viewer,.support-lightbox,#erisRoomWallpaperZoom) button { color:var(--ui-primary-ink)!important;background:var(--ui-primary)!important;border-color:var(--ui-bronze)!important; }
+html body :is(.eris-call .call-remote,.eris-call .call-self,.eris-anonymous video,.eris-location video) { background:#080b09!important; }
+html body :is(#erisAccountPicker,.personal-fan-panel,#erisRoomEmojiPanel,#erisMusicPanel,#erisRoomWallpaperModal,.eris-call) :is(button,input,textarea,select):focus-visible { outline:2px solid var(--ui-gold)!important;outline-offset:3px; }

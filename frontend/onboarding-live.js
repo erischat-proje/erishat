@@ -51,9 +51,9 @@
           justify-content: center;
           padding: 20px;
           background:
-            radial-gradient(circle at top, rgba(120,90,255,.25), transparent 45%),
-            rgba(5,7,18,.96);
-          color: #fff;
+            radial-gradient(circle at top, color-mix(in srgb, var(--ui-button) 25%, transparent), transparent 45%),
+            color-mix(in srgb, var(--ui-panel) 96%, transparent);
+          color: var(--ui-ink);
           font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
@@ -61,11 +61,11 @@
           width: min(460px, 100%);
           max-height: calc(100vh - 40px);
           overflow-y: auto;
-          border: 1px solid rgba(255,255,255,.12);
+          border: 1px solid var(--ui-line);
           border-radius: 24px;
           padding: 28px;
-          background: rgba(18,20,35,.97);
-          box-shadow: 0 24px 80px rgba(0,0,0,.55);
+          background: color-mix(in srgb, var(--ui-raised) 97%, transparent);
+          box-shadow: 0 24px 80px var(--ui-shadow);
           box-sizing: border-box;
         }
 
@@ -78,8 +78,8 @@
           align-items: center;
           justify-content: center;
           font-size: 30px;
-          background: linear-gradient(135deg,#795cff,#a855f7);
-          box-shadow: 0 10px 30px rgba(121,92,255,.3);
+          background: linear-gradient(135deg,var(--ui-button),var(--ui-button));
+          box-shadow: 0 10px 30px var(--ui-shadow);
         }
 
         #erisOnboarding h1 {
@@ -91,7 +91,7 @@
         #erisOnboarding .eris-subtitle {
           margin: 8px 0 24px;
           text-align: center;
-          color: #aeb3c7;
+          color: var(--ui-muted);
           line-height: 1.5;
           font-size: 14px;
         }
@@ -107,7 +107,7 @@
         #erisOnboarding label {
           display: block;
           margin: 14px 0 7px;
-          color: #dfe2ef;
+          color: var(--ui-muted);
           font-size: 13px;
           font-weight: 600;
         }
@@ -117,20 +117,20 @@
         #erisOnboarding select {
           width: 100%;
           box-sizing: border-box;
-          border: 1px solid rgba(255,255,255,.12);
+          border: 1px solid var(--ui-line);
           border-radius: 13px;
           padding: 13px 14px;
           outline: none;
-          color: #fff;
-          background: rgba(255,255,255,.06);
+          color: var(--ui-ink);
+          background: color-mix(in srgb, var(--ui-panel) 6%, transparent);
           font: inherit;
         }
 
         #erisOnboarding input:focus,
         #erisOnboarding textarea:focus,
         #erisOnboarding select:focus {
-          border-color: #846cff;
-          box-shadow: 0 0 0 3px rgba(132,108,255,.12);
+          border-color: var(--ui-line);
+          box-shadow: 0 0 0 3px var(--ui-shadow);
         }
 
         #erisOnboarding textarea {
@@ -145,18 +145,18 @@
         }
 
         #erisOnboarding .eris-gender button {
-          border: 1px solid rgba(255,255,255,.12);
+          border: 1px solid var(--ui-line);
           border-radius: 13px;
           padding: 13px;
-          color: #fff;
-          background: rgba(255,255,255,.05);
+          color: var(--ui-ink);
+          background: color-mix(in srgb, var(--ui-raised) 5%, transparent);
           cursor: pointer;
           font: inherit;
         }
 
         #erisOnboarding .eris-gender button.selected {
-          border-color: #846cff;
-          background: rgba(132,108,255,.2);
+          border-color: var(--ui-line);
+          background: color-mix(in srgb, var(--ui-button) 20%, transparent);
         }
 
         #erisOnboarding .eris-actions {
@@ -176,26 +176,26 @@
         }
 
         #erisOnboarding .eris-next {
-          color: #fff;
-          background: linear-gradient(135deg,#795cff,#a855f7);
+          color: var(--ui-primary-ink);
+          background: linear-gradient(135deg,var(--ui-primary),var(--ui-primary));
         }
 
         #erisOnboarding .eris-back {
-          color: #dfe2ef;
-          background: rgba(255,255,255,.08);
+          color: var(--ui-ink);
+          background: color-mix(in srgb, var(--ui-panel) 8%, transparent);
         }
 
         #erisOnboarding .eris-error {
           min-height: 20px;
           margin-top: 12px;
-          color: #ff8e9e;
+          color: var(--ui-danger);
           font-size: 13px;
           text-align: center;
         }
 
         #erisOnboarding .eris-counter {
           margin-top: 6px;
-          color: #8f95aa;
+          color: var(--ui-ink);
           font-size: 12px;
           text-align: right;
         }
@@ -218,8 +218,8 @@
         overflow: hidden;
         box-sizing: border-box;
         border-radius: 12px;
-        border: 1px solid rgba(255,255,255,.10);
-        background: rgba(255,255,255,.045);
+        border: 1px solid var(--ui-line);
+        background: color-mix(in srgb, var(--ui-raised) 5%, transparent);
       }
 
       #erisOnboarding .eris-cosmetic-item img {
@@ -249,8 +249,8 @@
       }
 
       #erisOnboarding .eris-cosmetic-item.selected {
-        border-color: rgba(132,108,255,.9);
-        box-shadow: 0 0 0 2px rgba(132,108,255,.18);
+        border-color: var(--ui-line);
+        box-shadow: 0 0 0 2px var(--ui-shadow);
       }
 
       #erisOnboarding .eris-progress {
@@ -263,11 +263,11 @@
           height: 4px;
           flex: 1;
           border-radius: 10px;
-          background: rgba(255,255,255,.1);
+          background: color-mix(in srgb, var(--ui-panel) 10%, transparent);
         }
 
         #erisOnboarding .eris-progress span.active {
-          background: #846cff;
+          background: var(--ui-button);
         }
       </style>
 

@@ -2,7 +2,7 @@
 #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomEmojiButton{
   order:2!important;flex:0 0 35px!important;width:35px!important;min-width:35px!important;
   height:40px!important;padding:5px!important;display:grid!important;place-items:center!important;
-  border:1px solid #c1a4ef66!important;border-radius:13px!important;background:#201b3288!important;color:#dac7ff!important;
+  border:1px solid var(--ui-line)!important;border-radius:13px!important;background:color-mix(in srgb, var(--ui-raised) 53%, transparent)!important;color:var(--ui-gold)!important;
 }
 #erisRoomSurface #erisRoomEmojiButton svg{width:24px;height:24px;display:block}
 #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline{order:3!important}
@@ -10,16 +10,16 @@
 #erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend{order:5!important}
 #erisRoomEmojiPanel[hidden]{display:none!important}
 #erisRoomEmojiPanel{position:absolute;inset:0;z-index:700;display:flex;align-items:flex-end}
-#erisRoomEmojiPanel .ee-shade{position:absolute;inset:0;border:0;background:#09061680;cursor:pointer}
-#erisRoomEmojiPanel .ee-sheet{position:relative;width:100%;max-height:min(480px,65%);display:flex;flex-direction:column;background:linear-gradient(160deg,#292238,#14101e);border:1px solid #bb9ce43d;border-bottom:0;border-radius:24px 24px 0 0;padding:9px 14px max(14px,env(safe-area-inset-bottom));box-shadow:0 -10px 45px #0006;overflow:hidden;color:#fff}
-#erisRoomEmojiPanel .ee-handle{width:38px;height:4px;margin:0 auto 12px;border-radius:9px;background:#c3b7cf80;flex:none}
+#erisRoomEmojiPanel .ee-shade{position:absolute;inset:0;border:0;background:color-mix(in srgb, var(--ui-panel) 50%, transparent);cursor:pointer}
+#erisRoomEmojiPanel .ee-sheet{position:relative;width:100%;max-height:min(480px,65%);display:flex;flex-direction:column;background:linear-gradient(160deg,var(--ui-panel),var(--ui-panel));border:1px solid var(--ui-line);border-bottom:0;border-radius:24px 24px 0 0;padding:9px 14px max(14px,env(safe-area-inset-bottom));box-shadow:0 -10px 45px var(--ui-shadow);overflow:hidden;color:var(--ui-ink)}
+#erisRoomEmojiPanel .ee-handle{width:38px;height:4px;margin:0 auto 12px;border-radius:9px;background:color-mix(in srgb, var(--ui-panel) 50%, transparent);flex:none}
 #erisRoomEmojiPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px 10px;flex:none}
 #erisRoomEmojiPanel header b{display:block;font-size:15px}
-#erisRoomEmojiPanel header small{display:block;font-size:11px;color:#b8a9c9;margin-top:3px}
-#erisRoomEmojiPanel [data-close]{width:34px;height:34px;border:1px solid #dac6ff33;background:#ffffff08;border-radius:11px;color:white;font-size:24px}
+#erisRoomEmojiPanel header small{display:block;font-size:11px;color:var(--ui-gold);margin-top:3px}
+#erisRoomEmojiPanel [data-close]{width:34px;height:34px;border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 3%, transparent);border-radius:11px;color:var(--ui-ink);font-size:24px}
 #erisRoomEmojiPanel .ee-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 5px;overflow-y:auto;min-height:0;overscroll-behavior:contain;padding-bottom:5px}
-#erisRoomEmojiPanel .ee-grid button{min-width:0;padding:5px 0;border:1px solid transparent;border-radius:14px;background:transparent;color:#ddd0ed;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
-#erisRoomEmojiPanel .ee-grid button:active,#erisRoomEmojiPanel .ee-grid button:focus-visible{background:#9672de25;border-color:#bca1ef88;outline:0}
+#erisRoomEmojiPanel .ee-grid button{min-width:0;padding:5px 0;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--ui-ink);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+#erisRoomEmojiPanel .ee-grid button:active,#erisRoomEmojiPanel .ee-grid button:focus-visible{background:color-mix(in srgb, var(--ui-button) 15%, transparent);border-color:var(--ui-line);outline:0}
 #erisRoomEmojiPanel .ee-grid span{font-size:9px;line-height:13px;white-space:nowrap}
 #erisRoomEmojiPanel .ee-art{display:block;width:min(64px,100%);height:auto;overflow:visible}
 #erisRoomSurface #erisLiveSeats > .eris-seat > .eris-seat-reaction{position:absolute;inset:-10%;z-index:9;pointer-events:none;display:grid;place-items:center;filter:drop-shadow(0 3px 4px #0005)}

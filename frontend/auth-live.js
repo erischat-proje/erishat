@@ -174,35 +174,35 @@
   const style = document.createElement('style');
   style.id = 'erisGoogleGateStyle';
   style.textContent = `
-    #erisGoogleGate{position:fixed;inset:0;z-index:100000;background:rgba(4,3,8,.97);display:grid;place-items:center;padding:20px;box-sizing:border-box;backdrop-filter:blur(12px)}
-    .erisGoogleCard{max-height:90dvh;overflow:auto;width:min(430px,100%);box-sizing:border-box;background:linear-gradient(155deg,#15111d,#0d0b12);border:1px solid #ffffff1c;border-radius:24px;padding:24px;box-shadow:0 25px 90px #000b;text-align:left;color:#fff}
+    #erisGoogleGate{position:fixed;inset:0;z-index:100000;background:color-mix(in srgb, var(--ui-panel) 97%, transparent);display:grid;place-items:center;padding:20px;box-sizing:border-box;backdrop-filter:blur(12px)}
+    .erisGoogleCard{max-height:90dvh;overflow:auto;width:min(430px,100%);box-sizing:border-box;background:linear-gradient(155deg,var(--ui-raised),var(--ui-raised));border:1px solid var(--ui-line);border-radius:24px;padding:24px;box-shadow:0 25px 90px var(--ui-shadow);text-align:left;color:var(--ui-ink)}
     .erisGoogleCard h1{margin:0 0 7px;font-size:26px;letter-spacing:-.5px}
-    .erisGoogleCard p{color:#aaa1b1;font-size:13px;line-height:1.55;margin:0 0 20px}
+    .erisGoogleCard p{color:var(--ui-ink);font-size:13px;line-height:1.55;margin:0 0 20px}
     .authMethods{display:grid;gap:12px}
     [data-remembered-accounts]{margin:0 0 18px}
     [data-remembered-accounts][hidden]{display:none}
     [data-remembered-accounts] h2{font-size:15px;margin:0 0 9px}
     .eris-account-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-    .eris-account-select{flex:1;min-width:0;text-align:left;border:1px solid #ffffff20;border-radius:13px;background:#21192e;color:#fff;padding:12px;cursor:pointer}
+    .eris-account-select{flex:1;min-width:0;text-align:left;border:1px solid var(--ui-line);border-radius:13px;background:var(--ui-panel);color:var(--ui-ink);padding:12px;cursor:pointer}
     .eris-account-select b,.eris-account-select small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .eris-account-select small{margin-top:5px;color:#b5aabd;font-size:11px}
-    .eris-account-remove{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:12px;background:#ffffff0a;color:#c7bbd4;font-size:24px;cursor:pointer}
-    .authBtn{width:100%;min-height:48px;border:1px solid #ffffff20;border-radius:13px;color:#fff;background:#17131f;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s,border-color .15s}
-    .authBtn:hover{background:#211b2b;border-color:#ffffff35}.authBtn:disabled{opacity:.58;cursor:wait}
-    .authGoogle{background:#fff;color:#111;border-color:#fff}.authGoogle:hover{background:#f0edf3;color:#111}
+    .eris-account-select small{margin-top:5px;color:var(--ui-muted);font-size:11px}
+    .eris-account-remove{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:12px;background:color-mix(in srgb, var(--ui-danger-bg) 4%, transparent);color:var(--ui-danger);font-size:24px;cursor:pointer}
+    .authBtn{width:100%;min-height:48px;border:1px solid var(--ui-line);border-radius:13px;color:var(--ui-primary-ink);background:var(--ui-primary);font-weight:700;font-size:14px;cursor:pointer;transition:background .15s,border-color .15s}
+    .authBtn:hover{background:var(--ui-primary);border-color:var(--ui-line)}.authBtn:disabled{opacity:.58;cursor:wait}
+    .authGoogle{background:var(--ui-panel);color:var(--ui-ink);border-color:var(--ui-line)}.authGoogle:hover{background:var(--ui-panel);color:var(--ui-ink)}
     .authEmail{display:grid;gap:9px;margin-top:0}
-    .authEmail label{font-size:12px;color:#c4baca;font-weight:600}
-    .authEmail input{width:100%;box-sizing:border-box;background:#09070d;border:1px solid #ffffff20;color:#fff;border-radius:12px;padding:13px;margin-top:6px;outline:none;font:inherit;font-size:14px}
-    .authEmail input:focus{border-color:#9b76ff;box-shadow:0 0 0 3px #8a5cff22}
+    .authEmail label{font-size:12px;color:var(--ui-muted);font-weight:600}
+    .authEmail input{width:100%;box-sizing:border-box;background:var(--ui-panel);border:1px solid var(--ui-line);color:var(--ui-ink);border-radius:12px;padding:13px;margin-top:6px;outline:none;font:inherit;font-size:14px}
+    .authEmail input:focus{border-color:var(--ui-line);box-shadow:0 0 0 3px var(--ui-shadow)}
     .authModes{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:1px 0 3px}
-    .authMode{min-height:39px;border:1px solid #ffffff16;border-radius:11px;background:#ffffff06;color:#aaa1b1;font-size:13px;font-weight:600}
-    .authMode[aria-pressed=true]{background:#754cff25;border-color:#9b76ff;color:#fff}
-    .authDivider{display:flex;align-items:center;gap:10px;color:#827988;font-size:11px;margin:1px 0}.authDivider:before,.authDivider:after{content:"";height:1px;background:#ffffff18;flex:1}
-    .authStatus{font-size:12px;color:#ff9bc2;min-height:20px;margin-top:13px;line-height:1.45}
+    .authMode{min-height:39px;border:1px solid var(--ui-line);border-radius:11px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-ink);font-size:13px;font-weight:600}
+    .authMode[aria-pressed=true]{background:color-mix(in srgb, var(--ui-button) 15%, transparent);border-color:var(--ui-line);color:var(--ui-ink)}
+    .authDivider{display:flex;align-items:center;gap:10px;color:var(--ui-ink);font-size:11px;margin:1px 0}.authDivider:before,.authDivider:after{content:"";height:1px;background:color-mix(in srgb, var(--ui-panel) 9%, transparent);flex:1}
+    .authStatus{font-size:12px;color:var(--ui-danger);min-height:20px;margin-top:13px;line-height:1.45}
     .authOtp{display:none;gap:8px;margin-top:2px}
     .authOtp input{flex:1;min-width:0;margin:0}
-    .authOtp button{min-width:100px;border:0;border-radius:12px;padding:0 14px;background:#754cff;color:#fff;font-weight:700}
-    .realOnly{font-size:11px;color:#81798a;margin-top:16px;padding-top:13px;border-top:1px solid #ffffff12}
+    .authOtp button{min-width:100px;border:0;border-radius:12px;padding:0 14px;background:var(--ui-button);color:var(--ui-ink);font-weight:700}
+    .realOnly{font-size:11px;color:var(--ui-ink);margin-top:16px;padding-top:13px;border-top:1px solid var(--ui-line)}
     @media(max-width:520px){.erisGoogleCard{padding:21px;border-radius:21px}}
   `;
   document.head.appendChild(style);
@@ -211,7 +211,7 @@
   gate.id = 'erisGoogleGate';
   gate.innerHTML = `
     <div class="erisGoogleCard">
-      <div style="font-size:11px;letter-spacing:1.3px;color:#b39bff;font-weight:700;margin-bottom:9px">ERISCHAT • HESAP</div>
+      <div style="font-size:11px;letter-spacing:1.3px;color:var(--ui-gold);font-weight:700;margin-bottom:9px">ERISCHAT • HESAP</div>
       <h1>Hoş geldin</h1>
       <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
 

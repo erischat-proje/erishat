@@ -3,7 +3,7 @@ html body #games > .title { font-family: Georgia, serif; color: var(--lydia-text
 html body #games > .eyebrow { color: var(--lydia-bronze); letter-spacing: .2em; }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) { gap: 16px; padding: 12px 0 28px; }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card {
-  --eg-panel: var(--lydia-panel) !important;
+  --eg-panel: var(--ui-panel) !important;
   --eg-tone: var(--lydia-gold) !important;
   min-height: 236px;
   padding: 22px;
@@ -27,25 +27,25 @@ html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card::af
 }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-icon {
   width: 68px; height: 68px; border-radius: 50%; margin-bottom: 17px;
-  color: #765221; border: 1px solid #a9823d;
-  background: radial-gradient(circle,#eed296 0 64%,transparent 65%),repeating-conic-gradient(#b08841 0deg 10deg,#e8cc8a 10deg 20deg);
-  box-shadow: inset 0 0 0 3px #ebd298,inset 0 0 0 4px #ad843e,0 3px 6px #7c561e20;
+  color: var(--ui-danger); border: 1px solid var(--ui-line);
+  background: radial-gradient(circle,var(--ui-button) 0 64%,transparent 65%),repeating-conic-gradient(var(--ui-button) 0deg 10deg,var(--ui-button) 10deg 20deg);
+  box-shadow: inset 0 0 0 3px var(--ui-shadow),inset 0 0 0 4px var(--ui-shadow),0 3px 6px var(--ui-shadow);
 }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-icon svg { width: 45px; height: 45px; stroke-width: 1.8; }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-title { font: 700 19px/1.35 Georgia,serif; color: var(--lydia-text); }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-desc { font-size: 12px; color: var(--lydia-muted); }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-play {
-  border: 1px solid #795626; border-radius: 3px 10px; padding: 9px 11px;
-  background: linear-gradient(135deg,#876529,#68461c); color: #fff6dd;
+  border: 1px solid var(--ui-line); border-radius: 3px 10px; padding: 9px 11px;
+  background: linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg)); color: var(--ui-ink);
   width: 100%; box-sizing: border-box; min-height: 36px;
 }
 html[data-eris-theme="dark"] body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card .eg-lc-icon {
-  color: #dfbd80; border-color: #826b40;
-  background: radial-gradient(circle,#332d20 0 64%,transparent 65%),repeating-conic-gradient(#433722 0deg 10deg,#6b5532 10deg 20deg);
-  box-shadow: inset 0 0 0 3px #352e20,inset 0 0 0 4px #826b40,0 3px 6px #00000045;
+  color: var(--ui-gold); border-color: var(--ui-line);
+  background: radial-gradient(circle,var(--ui-raised) 0 64%,transparent 65%),repeating-conic-gradient(var(--ui-raised) 0deg 10deg,var(--ui-raised) 10deg 20deg);
+  box-shadow: inset 0 0 0 3px var(--ui-shadow),inset 0 0 0 4px var(--ui-shadow),0 3px 6px var(--ui-shadow);
 }
 html[data-eris-theme="dark"] body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-lc-play {
-  color: #f0e4cb; background: linear-gradient(135deg,#4e3c21,#342818); border-color: #826b40;
+  color: var(--ui-ink); background: linear-gradient(135deg,var(--ui-panel),var(--ui-panel)); border-color: var(--ui-line);
 }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card:active { background: var(--lydia-panel-raised); border-color: var(--lydia-gold); }
 html body :is(#games .eg-launcher-grid, .eg-launcher-grid) .eg-launcher-card:focus-visible { outline: 3px solid var(--lydia-focus); outline-offset: 3px; }

@@ -1,7 +1,7 @@
 /* Final room geometry overrides older independent header/stage/chat authorities. */
 body.eris-room-screen-active>.app,body.eris-room-screen-active>main.app{visibility:hidden!important;pointer-events:none!important}
 body.eris-room-screen-active{overflow:hidden!important}
-html.eris-adaptive body #erisRoomSurface.room-layout-v6.room-screen-fit{position:fixed!important;box-sizing:border-box!important;overflow:hidden!important;background:#090711;isolation:isolate}
+html.eris-adaptive body #erisRoomSurface.room-layout-v6.room-screen-fit{position:fixed!important;box-sizing:border-box!important;overflow:hidden!important;background:var(--ui-panel);isolation:isolate}
 html.eris-adaptive body #erisRoomSurface.room-layout-v6.room-screen-fit .eris-room-wall{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
 html.eris-adaptive body #erisRoomSurface.room-layout-v6.room-screen-fit .eris-room-top{position:absolute!important;inset:0 0 auto!important;width:100%!important;height:var(--fit-header)!important;min-height:0!important;max-height:none!important;display:grid!important;grid-template-columns:40px minmax(0,1fr) 54px 36px 36px!important;align-items:center!important;gap:6px!important;padding:calc(var(--fit-top) + 5px) 10px 5px!important;transform:none!important;box-sizing:border-box!important;overflow:hidden!important}
 html.eris-adaptive body #erisRoomSurface.room-layout-v6.room-screen-fit #erisRoomBack{display:none!important}

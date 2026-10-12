@@ -55,9 +55,9 @@
         flex:1;
         min-width:0;
         height:44px;
-        border:1px solid #ffffff12;
-        background:#ffffff07;
-        color:#fff;
+        border:1px solid var(--ui-line);
+        background:color-mix(in srgb, var(--ui-panel) 3%, transparent);
+        color:var(--ui-ink);
         border-radius:15px;
         padding:0 14px;
         outline:none;
@@ -68,9 +68,9 @@
         border:0;
         border-radius:15px;
         padding:0 15px;
-        color:#fff;
+        color:var(--ui-ink);
         font-weight:800;
-        background:linear-gradient(135deg,#754cff,#ff4fa3);
+        background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg));
       }
 
       .eris-search-result {
@@ -78,9 +78,9 @@
         align-items:center;
         gap:10px;
         width:100%;
-        border:1px solid #ffffff12;
-        background:#ffffff06;
-        color:#fff;
+        border:1px solid var(--ui-line);
+        background:color-mix(in srgb, var(--ui-panel) 2%, transparent);
+        color:var(--ui-ink);
         border-radius:16px;
         padding:10px;
         text-align:left;
@@ -94,7 +94,7 @@
 
       .eris-search-result small {
         display:block;
-        color:#938a9f;
+        color:var(--ui-muted);
         font-size:8px;
         margin-top:3px;
       }
@@ -102,9 +102,9 @@
       .eris-own-room {
         width:100%;
         margin-top:10px;
-        border:1px solid #ffffff12;
-        background:linear-gradient(135deg,#754cff18,#ff4fa310);
-        color:#fff;
+        border:1px solid var(--ui-line);
+        background:linear-gradient(135deg,color-mix(in srgb, var(--ui-button) 9%, transparent),color-mix(in srgb, var(--ui-danger-bg) 6%, transparent));
+        color:var(--ui-ink);
         border-radius:16px;
         padding:12px;
         text-align:left;
@@ -113,7 +113,7 @@
       .eris-own-room b {font-size:10px}
       .eris-own-room small {
         display:block;
-        color:#aaa0b2;
+        color:var(--ui-muted);
         font-size:8px;
         margin-top:4px;
       }
@@ -177,11 +177,11 @@
         z-index:7000;
         display:none;
         padding:10px;
-        border:1px solid #ffffff18;
+        border:1px solid var(--ui-line);
         border-radius:20px;
-        background:rgba(10,7,18,.97);
+        background:color-mix(in srgb, var(--ui-panel) 97%, transparent);
         backdrop-filter:blur(22px);
-        box-shadow:0 20px 70px #000b;
+        box-shadow:0 20px 70px var(--ui-shadow);
       }
 
       .eris-seat-action-sheet.show {display:block}
@@ -200,16 +200,16 @@
 
       .eris-seat-actions button {
         min-height:42px;
-        border:1px solid #ffffff12;
-        background:#ffffff08;
-        color:#fff;
+        border:1px solid var(--ui-line);
+        background:color-mix(in srgb, var(--ui-raised) 3%, transparent);
+        color:var(--ui-ink);
         border-radius:12px;
         font-size:9px;
       }
 
       .eris-seat-actions button.danger {
-        background:#ff4f6818;
-        border-color:#ff4f6835;
+        background:color-mix(in srgb, var(--ui-danger-bg) 9%, transparent);
+        border-color:var(--ui-danger);
       }
 
       @media(min-width:760px) {
@@ -279,7 +279,7 @@
       if (!value) return toast('Kullanıcı ID gir.');
 
       result.innerHTML =
-        '<div class="card" style="padding:12px;font-size:9px;color:#aaa0b2">Aranıyor…</div>';
+        "<div class=\"card\" style=\"padding:12px;font-size:9px;color:var(--ui-ink)\">Aranıyor…</div>";
 
       try {
         const u = await userById(value);
@@ -311,7 +311,7 @@
         };
       } catch (e) {
         result.innerHTML = `
-          <div class="card" style="padding:12px;font-size:9px;color:#aaa0b2">
+          <div class="card" style="padding:12px;font-size:9px;color:var(--ui-ink)">
             ${esc(e.message || 'Kullanıcı bulunamadı.')}
           </div>
         `;
