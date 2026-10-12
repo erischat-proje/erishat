@@ -2,36 +2,36 @@
 :root[data-eris-theme="light"] { color-scheme: light; }
 :root[data-eris-theme="dark"] {
   color-scheme: dark;
-  --lydia-bg: #1b211c;
-  --lydia-panel: #2b332a;
-  --lydia-panel-raised: #353d30;
+  --lydia-bg: #0e1310;
+  --lydia-panel: #171f19;
+  --lydia-panel-raised: #253023;
   --lydia-text: #f0e4cb;
   --lydia-muted: #c9bc9f;
   --lydia-gold: #dbb978;
   --lydia-bronze: #b09058;
   --lydia-line: #756746;
   --lydia-focus: #e6c58a;
-  --theme-page: #1b211c;
-  --theme-panel: #2b332a;
-  --theme-chrome: #22291f;
-  --theme-plate: #303729;
-  --theme-sent: #51432a;
-  --theme-page-highlight: #242d22;
-  --theme-page-shadow: #131b16;
-  --theme-panel-highlight: #333d31;
-  --theme-panel-shadow: #212a22;
-  --theme-chrome-highlight: #303729;
-  --theme-chrome-shadow: #1b221c;
-  --theme-plate-highlight: #414a36;
-  --theme-plate-shadow: #263024;
-  --theme-sent-highlight: #584829;
-  --theme-sent-shadow: #453924;
+  --theme-page: #0e1310;
+  --theme-panel: #171f19;
+  --theme-chrome: #131b16;
+  --theme-plate: #20291f;
+  --theme-sent: #3f3422;
+  --theme-page-highlight: #182119;
+  --theme-page-shadow: #090f0b;
+  --theme-panel-highlight: #222d22;
+  --theme-panel-shadow: #111912;
+  --theme-chrome-highlight: #20291f;
+  --theme-chrome-shadow: #0e1510;
+  --theme-plate-highlight: #2b3527;
+  --theme-plate-shadow: #131d16;
+  --theme-sent-highlight: #493b25;
+  --theme-sent-shadow: #302819;
   --theme-ink: #f0e4cb;
   --theme-muted-ink: #c9bc9f;
   --theme-accent-ink: #dfbd80;
   --theme-line: #756746;
   --theme-carved-line: #a38953;
-  --theme-bevel: #4b5440;
+  --theme-bevel: #39442f;
   --theme-grain: #e6cf9410;
   --theme-shadow: #00000032;
   --theme-overlay: #08120dd1;
@@ -81,11 +81,46 @@ html body #erisThemeControl .eris-theme-sample i {
   border-radius: 3px 9px;
   background: radial-gradient(circle at 50% 35%, #d7b974 0 8px, transparent 9px), linear-gradient(140deg,#fff5dc,#e7d3a6);
 }
-html body #erisThemeControl .eris-theme-sample.dark { background: #1b211c; border-color: #756746; }
-html body #erisThemeControl .eris-theme-sample.dark i { background: radial-gradient(circle at 50% 35%, #d7b974 0 8px, transparent 9px), #303729; border-color: #a38953; }
+html body #erisThemeControl .eris-theme-sample.dark { background: #0e1310; border-color: #756746; }
+html body #erisThemeControl .eris-theme-sample.dark i { background: radial-gradient(circle at 50% 35%, #705631 0 8px, transparent 9px), #20291f; border-color: #a38953; }
 html body #erisThemeControl [data-eris-theme-status] { display: block; color: var(--lydia-muted); margin-top: 14px; font-size: 12px; }
 
-html[data-eris-theme="dark"] body .app > .nav button:not(.active) b { color: #765221; }
+/* Dark metal keeps the carved forms without the light theme's pale gold fill. */
+html[data-eris-theme="dark"] body .app > .top #demoBalance,
+html[data-eris-theme="dark"] body .app > .top .icon,
+html[data-eris-theme="dark"] body .app > .nav button b,
+html[data-eris-theme="dark"] body #home #realRooms .ec-room-art,
+html[data-eris-theme="dark"] body #home #realRooms .ec-empty-art {
+  color: #dfbd80;
+  background: linear-gradient(135deg, #363024, #211f17);
+  border-color: #826b40;
+  box-shadow: inset 0 0 0 3px #29281d, inset 0 0 0 4px #695535, 0 3px 8px #00000040;
+}
+html[data-eris-theme="dark"] body #home .homeMenuIcon {
+  color: #dfbd80;
+  background: radial-gradient(circle, #332d20 0 64%, transparent 65%),
+    repeating-conic-gradient(#433722 0deg 10deg, #6b5532 10deg 20deg);
+  border-color: #826b40;
+  box-shadow: inset 0 0 0 3px #352e20, inset 0 0 0 4px #826b40, inset 0 1px 6px #171b12, 0 3px 6px #00000045;
+  filter: none;
+}
+html[data-eris-theme="dark"] body .app > .nav button.active b {
+  color: #f0e4cb;
+  background: linear-gradient(135deg, #604920, #3f2f19);
+  border-color: #a38953;
+  box-shadow: inset 0 0 0 2px #4b391f, inset 0 0 0 3px #a38953;
+}
+html[data-eris-theme="dark"] body .app > .content .primary,
+html[data-eris-theme="dark"] body .support-window .primary,
+html[data-eris-theme="dark"] body #home .homeSectionActions .link:first-child,
+html[data-eris-theme="dark"] body #chat .compose > .primary,
+html[data-eris-theme="dark"] body #chat .dm-voice-toggle,
+html[data-eris-theme="dark"] body .dm-vault-modal .accept {
+  color: #f0e4cb;
+  background: linear-gradient(135deg, #4e3c21, #342818) !important;
+  border-color: #826b40;
+  box-shadow: inset 0 1px #7a613332, 0 3px 8px #00000040;
+}
 
 /* Profile settings and their dialog use the same semantic palette. */
 html body #erisProfileHub { color: var(--lydia-text); }
