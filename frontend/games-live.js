@@ -1898,6 +1898,7 @@ const close = () => {
 
                 const chip = document.createElement('span');
                 chip.textContent = value.toFixed(2) + 'x';
+                chip.dataset.crashTier = value >= 10 ? 'gold' : value >= 2 ? 'jade' : 'copper';
                 chip.style.cssText =
                     'flex:0 0 auto;padding:8px 11px;border-radius:11px;font-size:12px;font-weight:900;' +
                     'border:1px solid #ffffff20;background:#ffffff0b;color:' +
@@ -1961,7 +1962,7 @@ const close = () => {
             const activeBets = (state.my_bets || [])
                 .filter(b => !b.cashed_out);
 
-            play.textContent = '🚀 Bahis Yap';
+            play.textContent = 'Bahis Yap';
             play.disabled = crashBusy || !state.betting_open;
 
             if (!crashBusy && Date.now() >= crashNoticeUntil) {
