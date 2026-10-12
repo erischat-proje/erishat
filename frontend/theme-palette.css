@@ -1,0 +1,103 @@
+/* New UI components can use these shared light/dark tokens. */
+:root[data-eris-theme="light"] { color-scheme: light; }
+:root[data-eris-theme="dark"] {
+  color-scheme: dark;
+  --lydia-bg: #1b211c;
+  --lydia-panel: #2b332a;
+  --lydia-panel-raised: #353d30;
+  --lydia-text: #f0e4cb;
+  --lydia-muted: #c9bc9f;
+  --lydia-gold: #dbb978;
+  --lydia-bronze: #b09058;
+  --lydia-line: #756746;
+  --lydia-focus: #e6c58a;
+  --theme-page: #1b211c;
+  --theme-panel: #2b332a;
+  --theme-chrome: #22291f;
+  --theme-plate: #303729;
+  --theme-sent: #51432a;
+  --theme-page-highlight: #242d22;
+  --theme-page-shadow: #131b16;
+  --theme-panel-highlight: #333d31;
+  --theme-panel-shadow: #212a22;
+  --theme-chrome-highlight: #303729;
+  --theme-chrome-shadow: #1b221c;
+  --theme-plate-highlight: #414a36;
+  --theme-plate-shadow: #263024;
+  --theme-sent-highlight: #584829;
+  --theme-sent-shadow: #453924;
+  --theme-ink: #f0e4cb;
+  --theme-muted-ink: #c9bc9f;
+  --theme-accent-ink: #dfbd80;
+  --theme-line: #756746;
+  --theme-carved-line: #a38953;
+  --theme-bevel: #4b5440;
+  --theme-grain: #e6cf9410;
+  --theme-shadow: #00000032;
+  --theme-overlay: #08120dd1;
+  --theme-focus: #e6c58a;
+  --theme-danger-ink: #ffb7c1;
+  --theme-danger-line: #9c5361;
+  --theme-danger-surface: #422e31;
+}
+
+html body #erisThemeControl {
+  margin: 18px 0 24px;
+  padding: 18px;
+  border: 1px solid var(--lydia-line);
+  border-radius: 5px 16px;
+  color: var(--lydia-text);
+  background: var(--lydia-panel);
+}
+html body #erisThemeControl h3 { margin: 0 0 6px; font: 700 20px/1.3 Georgia, serif; color: var(--lydia-text); }
+html body #erisThemeControl p { margin: 0 0 14px; color: var(--lydia-muted); font-size: 12px; line-height: 1.5; }
+html body #erisThemeControl .eris-theme-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+html body #erisThemeControl button {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--lydia-line);
+  border-radius: 5px 13px;
+  background: var(--lydia-panel);
+  color: var(--lydia-text);
+  font: 650 13px/1.4 system-ui,sans-serif;
+  text-align: left;
+}
+html body #erisThemeControl button[aria-pressed="true"] { outline: 2px solid var(--lydia-gold); outline-offset: 1px; }
+html body #erisThemeControl button:focus-visible { outline: 3px solid var(--lydia-focus); outline-offset: 3px; }
+html body #erisThemeControl button strong { display: block; margin: 8px 2px 2px; }
+html body #erisThemeControl .eris-theme-sample {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 15px 12px;
+  background: #f6eedb;
+  border: 1px solid #cbb587;
+  border-radius: 3px 9px;
+}
+html body #erisThemeControl .eris-theme-sample i {
+  display: block;
+  height: 43px;
+  border: 1px solid #bfa16a;
+  border-radius: 3px 9px;
+  background: radial-gradient(circle at 50% 35%, #d7b974 0 8px, transparent 9px), linear-gradient(140deg,#fff5dc,#e7d3a6);
+}
+html body #erisThemeControl .eris-theme-sample.dark { background: #1b211c; border-color: #756746; }
+html body #erisThemeControl .eris-theme-sample.dark i { background: radial-gradient(circle at 50% 35%, #d7b974 0 8px, transparent 9px), #303729; border-color: #a38953; }
+html body #erisThemeControl [data-eris-theme-status] { display: block; color: var(--lydia-muted); margin-top: 14px; font-size: 12px; }
+
+html[data-eris-theme="dark"] body .app > .nav button:not(.active) b { color: #765221; }
+
+/* Profile settings and their dialog use the same semantic palette. */
+html body #erisProfileHub { color: var(--lydia-text); }
+html body #erisProfileHub .eph-section-label { color: var(--lydia-gold); }
+html body #erisProfileHub .eph-body,
+html body .eph-dialog { color: var(--lydia-text); background: var(--lydia-panel); border-color: var(--lydia-line); }
+html body .eph-overlay .eph-body { color: var(--lydia-text); }
+html body .eph-dialog-head { border-color: var(--lydia-line); }
+html body .eph-dialog-head small,
+html body .eph-muted { color: var(--lydia-muted); }
+html body .eph-overlay .eph-close,
+html body .eph-overlay .eph-body button { color: var(--lydia-text); background: var(--lydia-panel-raised); border-color: var(--lydia-line); }
+html body .eph-overlay .eph-body input,
+html body .eph-overlay .eph-body textarea { color: var(--lydia-text); background: var(--lydia-bg); border-color: var(--lydia-line); }
+html body .eph-overlay .eph-body label { color: var(--lydia-muted); }
