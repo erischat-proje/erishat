@@ -1,0 +1,191 @@
+/* Lydia-inspired menu craft. Native UI geometry, no generated bitmap assets. */
+html body .app {
+  background-color: #eee4ce;
+  background-image: radial-gradient(#92744410 .7px, transparent .8px),
+    repeating-linear-gradient(5deg, #fff7e515 0 1px, transparent 1px 5px),
+    linear-gradient(120deg, #f6eedb, #e8dbc0 65%, #f0e6d0);
+  background-size: 5px 5px, 100% 7px, 100% 100%;
+}
+html body .app > .top {
+  background: linear-gradient(180deg, #f8f1df, #e9dcc0);
+  border-bottom: 3px double #b79b65;
+  box-shadow: 0 3px 12px #6c50251a;
+}
+html body .app > .top #demoBalance {
+  color: #60431d;
+  background: linear-gradient(135deg, #fbefd0, #d9bd7c 55%, #f5e5b8);
+  border: 1px solid #b1914b;
+  border-radius: 5px 13px;
+  box-shadow: inset 0 1px #fff7dd, inset 0 -2px #a9833b25;
+}
+html body .app > .top .icon {
+  color: #674718;
+  background: linear-gradient(135deg, #f8e9bf, #d7b974, #f4e0ad);
+  border: 1px solid #b1914b;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3px #f2dfac, inset 0 0 0 4px #b89a5b;
+}
+html body #home .section h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #4d3820;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -.4px;
+}
+html body #home .homeSectionActions .link {
+  color: #674718;
+  border: 1px solid #b99a61;
+  border-radius: 4px 10px;
+  background: linear-gradient(145deg, #fff5df, #e5d2a6);
+  box-shadow: inset 0 0 0 2px #f8edd3, 0 2px 4px #72521b10;
+}
+html body #home .homeSectionActions .link:first-child {
+  color: #fff6dd;
+  background: linear-gradient(135deg, #876529, #68461c);
+  border-color: #6e4d22;
+  box-shadow: inset 0 0 0 2px #dcb76b3a, 0 3px 6px #72521b25;
+}
+html body #home .homeMenu { gap: 14px; }
+html body #home .homeMenuGroup {
+  color: #77572c;
+  letter-spacing: 1.8px;
+  margin: 24px 0 5px !important;
+}
+html body #home .homeMenuGroup::after {
+  height: 5px;
+  background: repeating-linear-gradient(90deg, #b29259 0 5px, transparent 5px 9px);
+  border-block: 1px solid #bea773;
+  opacity: .65;
+}
+html body #home .homeMenuItem {
+  position: relative;
+  isolation: isolate;
+  min-height: 146px !important;
+  padding: 19px 17px 17px !important;
+  gap: 12px !important;
+  border: 1px solid #bfa16a;
+  border-radius: 5px 15px 5px 15px !important;
+  color: #4d3820;
+  background-image: radial-gradient(#8f6b3310 .65px, transparent .8px),
+    linear-gradient(140deg, #fff5dc, #f4e5c4 45%, #e7d3a6);
+  background-size: 4px 4px, 100% 100%;
+  box-shadow: inset 0 0 0 3px #fbf0d6, inset 0 0 0 4px #cdb57f,
+    inset 0 -7px 15px #9b702714, 0 6px 13px #76532219;
+}
+html body #home .homeMenuItem::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(#a48445,#a48445) left top/20px 1px no-repeat,
+    linear-gradient(#a48445,#a48445) left top/1px 20px no-repeat,
+    linear-gradient(#a48445,#a48445) right bottom/20px 1px no-repeat,
+    linear-gradient(#a48445,#a48445) right bottom/1px 20px no-repeat;
+  opacity: .7;
+}
+html body #home .homeMenuItem::after {
+  content: '◆';
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  color: #a98b50;
+  font-size: 9px;
+  text-shadow: 0 1px #fff6dc;
+}
+html body #home .homeMenuIcon {
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  color: #765221;
+  border: 1px solid #a9823d;
+  border-radius: 50%;
+  background: radial-gradient(circle, #eed296 0 64%, transparent 65%),
+    repeating-conic-gradient(#b08841 0deg 10deg, #e8cc8a 10deg 20deg);
+  box-shadow: inset 0 0 0 3px #ebd298, inset 0 0 0 4px #ad843e,
+    inset 0 1px 6px #fff4d9, 0 3px 5px #7c561e20;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 1px 0 #fff0c9);
+}
+html body #home .homeMenuCopy strong {
+  color: #4d3820;
+  font-size: 15px !important;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  line-height: 1.4;
+}
+html body #home .homeMenuCopy small {
+  color: #6c5532;
+  font-size: 10px !important;
+  margin-top: 4px;
+}
+html body #home .homeMenuItem:hover {
+  border-color: #9d7736;
+  background-color: #f4e1b8;
+  background-image: radial-gradient(#8f6b3310 .65px, transparent .8px),
+    linear-gradient(140deg, #fff1cd, #e9d19c);
+}
+html body #home .homeMenuItem:active { box-shadow: inset 0 0 0 3px #dfc68e, inset 0 0 0 4px #aa8749; }
+html body #home .homeMenuItem:has(use[href="#home-vip"]) {
+  background: linear-gradient(140deg, #f9edc6, #e4c77e 65%, #efd69a);
+  border-color: #a57d31;
+}
+html body #home .homeMenuItem.eris-admin-menu { background: #ebd8ac; border-color: #af8a48; }
+html body #home #realRooms .ec-discovery-empty,
+html body #home #realRooms .room {
+  background: linear-gradient(125deg, #faf3e0, #eadebf);
+  border: 1px solid #c5ad7e;
+  border-radius: 5px 18px;
+  box-shadow: inset 0 0 0 3px #f8eed7, inset 0 0 0 4px #d4bd90, 0 4px 10px #7653220e;
+}
+html body #home #realRooms .ec-empty-art,
+html body #home #realRooms .ec-room-art {
+  background: linear-gradient(135deg, #f3dfaa, #d7b773);
+  border-color: #ac8845;
+  border-radius: 50%;
+  color: #6b4b20;
+  box-shadow: inset 0 0 0 3px #ebd198, inset 0 0 0 4px #b5904a;
+}
+html body .app > .nav {
+  background-image: radial-gradient(#8f6b3310 .65px, transparent .8px),
+    linear-gradient(180deg, #eee1c3, #f8efd9);
+  background-size: 4px 4px, 100% 100%;
+  border-top: 3px double #b79b65;
+  padding-top: 9px;
+  box-shadow: 0 -5px 17px #76532212;
+}
+html body .app > .nav button {
+  gap: 6px;
+  min-height: 67px;
+  color: #78613e;
+  border-radius: 5px 12px;
+}
+html body .app > .nav button b {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ccb480;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #faf0d4, #dfc48b);
+  box-shadow: inset 0 0 0 2px #f8e9c3, inset 0 0 0 3px #c5a76b;
+}
+html body .app > .nav button svg { width: 20px; height: 20px; }
+html body .app > .nav button.active {
+  color: #5e4019;
+  background: linear-gradient(140deg, #f5e6bc, #dcc18a);
+  border-color: #b3904b;
+  box-shadow: inset 0 0 0 2px #f8e9c5, inset 0 0 0 3px #c9a969;
+}
+html body .app > .nav button.active b {
+  color: #fff4d5;
+  background: linear-gradient(135deg, #9c7938, #69451d);
+  border-color: #75511f;
+  box-shadow: inset 0 0 0 2px #d9b568, inset 0 0 0 3px #6b471b;
+}
+html body .app > .nav button.active::after { background: #75511f; }
+@media (max-width: 359px) {
+  html body #home .homeMenu { gap: 12px; }
+  html body #home .homeMenuItem { padding: 17px 14px 15px !important; min-height: 142px !important; }
+  html body #home .homeMenuCopy strong { font-size: 14px !important; }
+}
