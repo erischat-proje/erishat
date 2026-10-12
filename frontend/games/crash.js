@@ -8,16 +8,24 @@
         ['5.0', '5.0x']
     ];
 
+    const MATERIALS = {
+        light: {grid:'#94744224', trail:'#876529', glow:'#b18b4d40', coin:'#dfbd80', rim:'#785728', ink:'#573b1c'},
+        dark: {grid:'#b2955d20', trail:'#dfbd80', glow:'#b2955d30', coin:'#715631', rim:'#dfbd80', ink:'#f0e4cb'}
+    };
+    const WING = 'M-12-7C-27-31-50-26-59-40c1 22 21 34 46 33 M-16-4c-19-7-30-12-38-22 M-16 1c-17-2-29-9-36-18 M-12 8c-14 7-30 2-40-7';
+    const LION = 'M-8-7-3-12 3-10 8-5 6 0 11 3 9 7 4 7 2 12-6 10-10 5-12-2Z M-5-5l4 1 M4 3H0 M-4 3l2 4';
+    let lastScene = [1,0];
+
     const CrashGame = {
         options: CRASH_MULTIPLIERS,
 
         render(container) {
             container.innerHTML = `
-              <div class="crash-flight" style="position:relative;height:265px;overflow:hidden;border-radius:20px;background:radial-gradient(ellipse at 65% 15%,#243653,#101528 48%,#080b17);border:1px solid #52658b55;box-shadow:inset 0 0 50px #080d20,0 12px 35px #0005">
-                <canvas id="proCrashCanvas" width="600" height="400" style="width:100%;height:100%;display:block"></canvas>
-                <div style="position:absolute;top:15px;left:16px;font-size:10px;letter-spacing:2px;color:#92b5d9;font-weight:900">ERIS CRASH · LIVE</div>
-                <div id="crashMultiplierText" style="position:absolute;top:43px;left:0;width:100%;text-align:center;font-size:clamp(36px,9vw,58px);font-weight:950;color:#45f6ad;text-shadow:0 0 28px #22c55e88;pointer-events:none">1.00x</div>
-                <div style="position:absolute;bottom:12px;left:16px;color:#8193b5;font-size:10px;letter-spacing:1px">🚀 CANLI UÇUŞ GRAFİĞİ</div>
+              <div class="crash-flight" data-crash-phase="open">
+                <canvas id="proCrashCanvas" width="600" height="400" role="img" aria-label="Kanatlı Lidya sikkesi ve yükselen çarpan çizgisi"></canvas>
+                <div class="crash-flight-caption">LİDYA CRASH · <span data-crash-phase-label>BAHİS AÇIK</span></div>
+                <div id="crashMultiplierText">1.00x</div>
+                <div class="crash-flight-note">KANATLI SİKKE · CANLI TUR</div>
               </div>`;
             this.drawScene(1, 0);
         },
@@ -27,10 +35,12 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
+            lastScene=[multiplier,progress];
+            const material=MATERIALS[document.documentElement.dataset.erisTheme==='dark'?'dark':'light'];
             const w = canvas.width, h = canvas.height;
             ctx.clearRect(0, 0, w, h);
 
-            ctx.strokeStyle = 'rgba(132,173,231,.09)';
+            ctx.strokeStyle = material.grid;
             ctx.lineWidth = 1;
             for (let x = 0; x < w; x += 50) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
@@ -45,9 +55,9 @@
             const ey = sy - Math.pow(p, 1.6) * (h - 155);
 
             const gradient = ctx.createLinearGradient(0, h, w, 0);
-            gradient.addColorStop(0, '#2563eb');
-            gradient.addColorStop(.5, '#20c9f3');
-            gradient.addColorStop(1, '#54ffad');
+            gradient.addColorStop(0, material.trail);
+            gradient.addColorStop(.5, material.rim);
+            gradient.addColorStop(1, material.trail);
 
             ctx.beginPath();
             ctx.moveTo(sx, sy);
@@ -55,10 +65,10 @@
                 const t = p * i / 80;
                 ctx.lineTo(sx + t * (w - 100), sy - Math.pow(t, 1.6) * (h - 155));
             }
-            ctx.strokeStyle = '#28eeb966';
+            ctx.strokeStyle = material.glow;
             ctx.lineWidth = 15;
-            ctx.shadowBlur = 22;
-            ctx.shadowColor = '#34e9bd';
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = material.trail;
             ctx.stroke();
             ctx.shadowBlur = 0;
             ctx.strokeStyle = gradient;
@@ -68,12 +78,18 @@
             ctx.save();
             ctx.translate(ex, ey);
             ctx.rotate(-Math.atan2(1.6 * Math.pow(Math.max(p,.01),.6) * (h - 155), w - 100));
-            ctx.font = '46px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#64ffe0';
-            ctx.shadowBlur = 20;
-            ctx.fillText('🚀', 0, 0);
+            // A winged coin replaces the emoji rocket; the trajectory is unchanged.
+            ctx.strokeStyle=material.rim;ctx.lineWidth=2.2;
+            ctx.fillStyle=material.coin;
+            ctx.stroke(new Path2D(WING));
+            ctx.beginPath();ctx.ellipse(0,0,23,23,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+            ctx.beginPath();ctx.ellipse(0,0,18,18,0,0,Math.PI*2);ctx.stroke();
+            ctx.strokeStyle=material.ink;ctx.lineWidth=1.7;ctx.stroke(new Path2D(LION));
+            for(let i=0;i<16;i++){
+                const a=i*Math.PI/8;ctx.beginPath();
+                ctx.moveTo(Math.cos(a)*20,Math.sin(a)*20);
+                ctx.lineTo(Math.cos(a)*22,Math.sin(a)*22);ctx.stroke();
+            }
             ctx.restore();
         },
 
@@ -95,15 +111,19 @@
                 const shown = previous + (multiplier - previous) * t;
                 this._shownMultiplier = shown;
 
+                const flight=container.querySelector('.crash-flight');
+                if(flight)flight.dataset.crashPhase=status;
+                const label=container.querySelector('[data-crash-phase-label]');
+                if(label)label.textContent=({open:'BAHİS AÇIK',running:'YÜKSELİYOR',finished:'TUR BİTTİ'})[status]||'CANLI TUR';
                 if (status === 'open') {
-                    text.textContent = '⏳ ' + Number(state.betting_remaining || 0) + ' sn';
-                    text.style.color = '#facc15';
+                    text.textContent = '' + Number(state.betting_remaining || 0) + ' sn';
+                    text.style.color = 'var(--crash-open)';
                 } else if (status === 'finished') {
-                    text.textContent = '💥 ' + multiplier.toFixed(2) + 'x';
-                    text.style.color = '#fb7185';
+                    text.textContent = '' + multiplier.toFixed(2) + 'x';
+                    text.style.color = 'var(--crash-finished)';
                 } else {
                     text.textContent = shown.toFixed(2) + 'x';
-                    text.style.color = '#45f6ad';
+                    text.style.color = 'var(--crash-running)';
                 }
 
                 const progress = status === 'open' ? 0 :
@@ -139,7 +159,7 @@
                     } else {
                         if (textEl) {
                             textEl.textContent = finalMultiplier.toFixed(2) + 'x';
-                            textEl.style.color = data?.result === 'win' ? '#22c55e' : '#ef4444';
+                            textEl.style.color = data?.result === 'win' ? 'var(--crash-running)' : 'var(--crash-finished)';
                         }
                         resolve();
                     }
@@ -149,5 +169,6 @@
         }
     };
 
+    window.addEventListener('erischat:theme',()=>CrashGame.drawScene(...lastScene));
     window.ErisGameCrash = CrashGame;
 })();
