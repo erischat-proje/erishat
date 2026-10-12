@@ -8,8 +8,8 @@
     if (panel) return panel;
     panel = document.createElement('div');
     panel.id = 'erischatBanPanel';
-    panel.style.cssText = 'position:fixed;inset:0;z-index:180;background:#020107e8;display:none;align-items:flex-end;';
-    panel.innerHTML = '<div style="width:min(520px,100%);max-height:82vh;overflow:auto;background:#0b0911;border:1px solid #fff1;border-radius:26px 26px 0 0;padding:16px;color:#fff"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><b style="font-size:16px">🚫 Oda’dan Atılanlar</b><div id="erischatBanStatus" style="font-size:9px;color:#938a9f;margin-top:4px">Oda bazlı engelleme listesi</div></div><button id="erischatBanClose" style="border:0;background:#ffffff09;color:#fff;width:35px;height:35px;border-radius:11px">✕</button></div><div id="erischatBanList" style="display:grid;gap:8px;margin-top:14px"></div></div>';
+    panel.style.cssText = "position:fixed;inset:0;z-index:180;background:var(--ui-overlay);display:none;align-items:flex-end;";
+    panel.innerHTML = "<div style=\"width:min(520px,100%);max-height:82vh;overflow:auto;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:26px 26px 0 0;padding:16px;color:var(--ui-ink)\"><div style=\"display:flex;align-items:center;justify-content:space-between;gap:10px\"><div><b style=\"font-size:16px\">🚫 Oda’dan Atılanlar</b><div id=\"erischatBanStatus\" style=\"font-size:9px;color:var(--ui-ink);margin-top:4px\">Oda bazlı engelleme listesi</div></div><button id=\"erischatBanClose\" style=\"border:0;background:color-mix(in srgb, var(--ui-panel) 4%, transparent);color:var(--ui-ink);width:35px;height:35px;border-radius:11px\">✕</button></div><div id=\"erischatBanList\" style=\"display:grid;gap:8px;margin-top:14px\"></div></div>";
     document.body.appendChild(panel);
     panel.querySelector('#erischatBanClose').onclick = () => { panel.style.display = 'none'; };
     panel.addEventListener('click', event => { if (event.target === panel) panel.style.display = 'none'; });
@@ -25,13 +25,13 @@
     const list = panel.querySelector('#erischatBanList');
     const status = panel.querySelector('#erischatBanStatus');
     panel.style.display = 'flex';
-    list.innerHTML = '<div style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Liste yükleniyor…</div>';
+    list.innerHTML = "<div style=\"padding:16px;text-align:center;color:var(--ui-ink);font-size:10px\">Liste yükleniyor…</div>";
     try {
       const data = await window.ErisRoom.bans(roomId);
       const bans = Array.isArray(data) ? data : (data.bans || data.items || []);
       status.textContent = `${bans.length} kullanıcı bu odaya giremiyor`;
       if (!bans.length) {
-        list.innerHTML = '<div style="padding:16px;text-align:center;color:#938a9f;font-size:10px">Bu odada atılan kullanıcı yok.</div>';
+        list.innerHTML = "<div style=\"padding:16px;text-align:center;color:var(--ui-ink);font-size:10px\">Bu odada atılan kullanıcı yok.</div>";
         return;
       }
       list.innerHTML = '';
@@ -39,8 +39,8 @@
         const userId = item.user_id || item.id;
         const displayName = item.display_name || item.nickname || item.public_id || userId;
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #fff1;background:#ffffff05;border-radius:15px;';
-        row.innerHTML = `<div style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#ff4fa318">🚫</div><div style="flex:1;min-width:0"><b style="font-size:10px">${esc(displayName)}</b><small style="display:block;color:#938a9f;font-size:8px;margin-top:3px">${esc(userId)}</small></div><button data-user="${esc(userId)}" style="border:1px solid #ff4fa355;background:#ff4fa312;color:#ff78ba;border-radius:10px;padding:8px 10px;font-size:9px">Yasağı kaldır</button>`;
+        row.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 2%, transparent);border-radius:15px;";
+        row.innerHTML = `<div style="width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb, var(--ui-danger-bg) 9%, transparent)">🚫</div><div style="flex:1;min-width:0"><b style="font-size:10px">${esc(displayName)}</b><small style="display:block;color:var(--ui-ink);font-size:8px;margin-top:3px">${esc(userId)}</small></div><button data-user="${esc(userId)}" style="border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-danger-bg) 7%, transparent);color:var(--ui-danger);border-radius:10px;padding:8px 10px;font-size:9px">Yasağı kaldır</button>`;
         row.querySelector('button').onclick = async () => {
           const button = row.querySelector('button');
           button.disabled = true;
@@ -57,7 +57,7 @@
         list.appendChild(row);
       });
     } catch (error) {
-      list.innerHTML = '<div style="padding:16px;text-align:center;color:#ff8abb;font-size:10px">Atılanlar listesi alınamadı.</div>';
+      list.innerHTML = "<div style=\"padding:16px;text-align:center;color:var(--ui-danger);font-size:10px\">Atılanlar listesi alınamadı.</div>";
       status.textContent = 'Liste alınamadı';
       console.warn('[ErisChat] ban list unavailable', error);
     }

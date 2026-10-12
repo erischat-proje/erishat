@@ -2,7 +2,7 @@
   'use strict';
   const api=(path,options)=>window.ErisPlatform.api(path,options);
   const list=value=>Array.isArray(value)?value:(value?.users||value?.rooms||value?.items||value?.data||[]);
-  const note=(root,message)=>{root.replaceChildren();const div=document.createElement('div');div.className='card';div.style.cssText='padding:16px;color:#a9a0b3';div.textContent=message;root.append(div)};
+  const note=(root,message)=>{root.replaceChildren();const div=document.createElement('div');div.className='card';div.style.cssText="padding:16px;color:var(--ui-ink)";div.textContent=message;root.append(div)};
   window.openCreateRoom=()=>{
     const modal=document.getElementById('createRoomModal');
     modal?.classList.add('show');
@@ -63,8 +63,8 @@
   window.ErisRoomAnnouncements={open:async()=>{
     const id=window.ErisCurrentRoomId||window.currentRoomId;
     if(!id){window.toast?.('Önce bir odaya gir.');return}
-    const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:1200;background:#020107e8;display:grid;place-items:center;padding:15px;color:#fff';
-    overlay.innerHTML='<div style="width:min(430px,100%);max-height:80vh;overflow:auto;background:#100d16;border-radius:18px;padding:16px"><button type="button" data-close style="float:right">×</button><h2 style="font-size:18px">Oda duyuruları</h2><div data-list>Yükleniyor…</div><form data-form style="display:none;margin-top:12px"><label for="eris-announcement-text">Yeni duyuru</label><textarea id="eris-announcement-text" maxlength="500" style="display:block;width:100%;min-height:75px"></textarea><button type="submit">Yayınla</button></form></div>';
+    const overlay=document.createElement('div');overlay.style.cssText="position:fixed;inset:0;z-index:1200;background:var(--ui-overlay);display:grid;place-items:center;padding:15px;color:var(--ui-ink)";
+    overlay.innerHTML="<div style=\"width:min(430px,100%);max-height:80vh;overflow:auto;background:var(--ui-panel);border-radius:18px;padding:16px\"><button type=\"button\" data-close style=\"float:right\">×</button><h2 style=\"font-size:18px\">Oda duyuruları</h2><div data-list>Yükleniyor…</div><form data-form style=\"display:none;margin-top:12px\"><label for=\"eris-announcement-text\">Yeni duyuru</label><textarea id=\"eris-announcement-text\" maxlength=\"500\" style=\"display:block;width:100%;min-height:75px\"></textarea><button type=\"submit\">Yayınla</button></form></div>";
     document.body.append(overlay);overlay.querySelector('[data-close]').onclick=()=>overlay.remove();overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
     const root=overlay.querySelector('[data-list]');const form=overlay.querySelector('[data-form]');
     async function load(){

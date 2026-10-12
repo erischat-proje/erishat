@@ -5,12 +5,12 @@
   const api = (path, options = {}) => window.ErisPlatform?.api(path, options) ?? Promise.reject(new Error('Platform hazır değil'));
   async function loadFamilyAvatar(el,id){try{const token=window.ErisPlatform?.getAccessToken?.()||'';const url=window.ErisPlatform.messageMediaUrl('/families/'+encodeURIComponent(id)+'/avatar');const res=await fetch(url,{headers:token?{Authorization:'Bearer '+token}:{},cache:'no-store'});if(!res.ok)return;const blob=await res.blob();const old=el.dataset.objectUrl;if(old)URL.revokeObjectURL(old);const objectUrl=URL.createObjectURL(blob);el.dataset.objectUrl=objectUrl;el.style.backgroundImage='url("'+objectUrl+'")';el.textContent=''}catch{}}
   const css = `
-    /* legacy floating hub trigger removed */ #erisHubBtn{display:none!important;position:fixed;right:14px;bottom:88px;z-index:80;border:1px solid #ffffff22;background:#17121f;color:#fff;border-radius:14px;width:44px;height:44px;box-shadow:0 12px 30px #0007}
-    #erisHub{display:none;position:fixed;inset:0;z-index:200;background:#030208ee;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;backdrop-filter:blur(8px)}
-    #erisHub.show{display:flex}.eh-sheet{width:min(640px,100%);max-height:min(90dvh,860px);overflow:auto;background:#0c0a11;border:1px solid #ffffff1a;border-radius:24px;padding:20px;color:#fff;box-shadow:0 28px 90px #000a;overscroll-behavior:contain}
-    .eh-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eh-head h2{margin:0;font-size:21px;letter-spacing:-.35px}.eh-close{border:1px solid #ffffff16;background:#ffffff08;color:#fff;width:40px;height:40px;border-radius:13px;font-size:22px}
-    .eh-tabs{display:flex;gap:7px;margin:16px 0 18px;overflow-x:auto;overflow-y:hidden;padding:2px 1px 9px;scrollbar-width:none;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}.eh-tabs::-webkit-scrollbar{display:none}.eh-tab{flex:0 0 auto;min-height:40px;border:1px solid #ffffff16;background:#ffffff06;color:#aaa2b2;border-radius:12px;padding:0 15px;font-size:12px;white-space:nowrap}.eh-tab.active{color:#fff;background:#8a5cff22;border-color:#9b76ff;box-shadow:inset 0 -2px #a77aff}
-    .eh-panel{display:none}.eh-panel.active{display:block}.eh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.eh-card{border:1px solid #ffffff12;background:#12101a;border-radius:15px;padding:12px}.eh-card b{font-size:12px}.eh-card small{display:block;color:#a49baa;font-size:11px;margin-top:5px}.eh-btn{min-height:40px;border:1px solid #9b76ff;background:#754cff;color:#fff;border-radius:12px;padding:0 14px;font-size:12px;font-weight:700}.eh-btn.alt{background:#ffffff08;border:1px solid #ffffff18}.eh-btn:disabled{opacity:.55}.eh-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;border:1px solid #ffffff12;background:#12101a;border-radius:14px;margin-bottom:8px}.eh-input{width:100%;box-sizing:border-box;background:#100e15;border:1px solid #ffffff1c;color:#fff;border-radius:12px;padding:12px;margin:6px 0;font:inherit;font-size:14px;outline:none}.eh-input:focus{border-color:#9b76ff;box-shadow:0 0 0 3px #8a5cff22}.eh-preview{height:92px;border-radius:12px;background:#09070d;display:grid;place-items:center;position:relative;overflow:hidden}.eh-avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,#c48670,#50324d);background-size:cover;background-position:center}.eh-frame{position:absolute;width:84px;height:84px;background-size:contain;background-position:center;background-repeat:no-repeat}.eh-note{padding:12px 14px;border:1px solid #ffffff12;border-radius:13px;background:#ffffff05;color:#a49baa;font-size:12px;line-height:1.55;margin-bottom:10px}.eh-seats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.eh-seat{border:1px solid #ffffff12;background:#ffffff06;color:#fff;border-radius:10px;padding:8px 2px;font-size:8px}.eh-seat.occupied{border-color:#ff4fa355}.eh-ok{color:#61e6af}.eh-err{color:#ff819d}.eh-kicker{color:#918999;font-size:10px;text-transform:uppercase;letter-spacing:1.1px;margin:4px 0 8px}
+    /* legacy floating hub trigger removed */ #erisHubBtn{display:none!important;position:fixed;right:14px;bottom:88px;z-index:80;border:1px solid var(--ui-line);background:var(--ui-panel);color:var(--ui-ink);border-radius:14px;width:44px;height:44px;box-shadow:0 12px 30px var(--ui-shadow)}
+    #erisHub{display:none;position:fixed;inset:0;z-index:200;background:color-mix(in srgb, var(--ui-panel) 93%, transparent);align-items:center;justify-content:center;padding:12px;box-sizing:border-box;backdrop-filter:blur(8px)}
+    #erisHub.show{display:flex}.eh-sheet{width:min(640px,100%);max-height:min(90dvh,860px);overflow:auto;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:24px;padding:20px;color:var(--ui-ink);box-shadow:0 28px 90px var(--ui-shadow);overscroll-behavior:contain}
+    .eh-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.eh-head h2{margin:0;font-size:21px;letter-spacing:-.35px}.eh-close{border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 3%, transparent);color:var(--ui-ink);width:40px;height:40px;border-radius:13px;font-size:22px}
+    .eh-tabs{display:flex;gap:7px;margin:16px 0 18px;overflow-x:auto;overflow-y:hidden;padding:2px 1px 9px;scrollbar-width:none;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}.eh-tabs::-webkit-scrollbar{display:none}.eh-tab{flex:0 0 auto;min-height:40px;border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-raised) 2%, transparent);color:var(--ui-ink);border-radius:12px;padding:0 15px;font-size:12px;white-space:nowrap}.eh-tab.active{color:var(--ui-ink);background:color-mix(in srgb, var(--ui-button) 13%, transparent);border-color:var(--ui-line);box-shadow:inset 0 -2px var(--ui-shadow)}
+    .eh-panel{display:none}.eh-panel.active{display:block}.eh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.eh-card{border:1px solid var(--ui-line);background:var(--ui-raised);border-radius:15px;padding:12px}.eh-card b{font-size:12px}.eh-card small{display:block;color:var(--ui-muted);font-size:11px;margin-top:5px}.eh-btn{min-height:40px;border:1px solid var(--ui-line);background:var(--ui-button);color:var(--ui-ink);border-radius:12px;padding:0 14px;font-size:12px;font-weight:700}.eh-btn.alt{background:color-mix(in srgb, var(--ui-panel) 3%, transparent);border:1px solid var(--ui-line)}.eh-btn:disabled{opacity:.55}.eh-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;border:1px solid var(--ui-line);background:var(--ui-raised);border-radius:14px;margin-bottom:8px}.eh-input{width:100%;box-sizing:border-box;background:var(--ui-panel);border:1px solid var(--ui-line);color:var(--ui-ink);border-radius:12px;padding:12px;margin:6px 0;font:inherit;font-size:14px;outline:none}.eh-input:focus{border-color:var(--ui-line);box-shadow:0 0 0 3px var(--ui-shadow)}.eh-preview{height:92px;border-radius:12px;background:var(--ui-raised);display:grid;place-items:center;position:relative;overflow:hidden}.eh-avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,var(--ui-danger-bg),var(--ui-button));background-size:cover;background-position:center}.eh-frame{position:absolute;width:84px;height:84px;background-size:contain;background-position:center;background-repeat:no-repeat}.eh-note{padding:12px 14px;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-muted);font-size:12px;line-height:1.55;margin-bottom:10px}.eh-seats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.eh-seat{border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-ink);border-radius:10px;padding:8px 2px;font-size:8px}.eh-seat.occupied{border-color:var(--ui-line)}.eh-ok{color:var(--ui-ok)}.eh-err{color:var(--ui-danger)}.eh-kicker{color:var(--ui-ink);font-size:10px;text-transform:uppercase;letter-spacing:1.1px;margin:4px 0 8px}
     @media(max-width:560px){#erisHub{padding:0;align-items:flex-end}#erisHub .eh-sheet{width:100%;max-height:92dvh;border-radius:24px 24px 0 0;padding:20px 16px calc(18px + env(safe-area-inset-bottom));border-bottom:0}.eh-grid{gap:7px}}
   `;
   const add = html => document.head.insertAdjacentHTML('beforeend', `<style>${html}</style>`);
@@ -61,7 +61,7 @@
   }
   async function vip(panel){ await window.ErisChatVIP?.load?.(panel); }
   async function family(panel){
-    if(!document.getElementById('ehFamilyProStyle')){const style=document.createElement('style');style.id='ehFamilyProStyle';style.textContent='.eh-family-shell{color:#f5efff}.eh-family-hero{padding:18px;border:1px solid #ffffff16;border-radius:22px;background:radial-gradient(circle at 85% 12%,#a86c4328,transparent 34%),linear-gradient(145deg,#21172c,#120d19);position:relative;overflow:hidden}.eh-family-head{display:flex;gap:13px;align-items:center}.eh-family-crest{width:68px;height:68px;flex:none;border-radius:22px;display:grid;place-items:center;background:linear-gradient(145deg,#ffcf70,#824dff);font-size:30px;box-shadow:0 8px 24px #0005;background-size:cover;background-position:center}.eh-family-meta{font-size:10px;color:#bdb2c8;margin-top:5px}.eh-family-level{margin-left:auto;font-size:26px;font-weight:950;color:#ffd57f}.eh-family-progress{height:8px;background:#ffffff14;border-radius:99px;margin:15px 0 6px;overflow:hidden}.eh-family-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8a5cff,#ffbf63)}.eh-family-progress-label{display:flex;justify-content:space-between;color:#c6bbce;font-size:9px}.eh-family-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.eh-family-actions button{min-height:42px;border:1px solid #ffffff18;border-radius:13px;background:#ffffff08;color:white;font-size:10px;font-weight:800}.eh-family-member-strip{display:flex;gap:13px;overflow:auto;padding:5px 0 10px}.eh-family-person{min-width:72px;text-align:center;color:#fff}.eh-family-avatar{width:56px;height:56px;margin:0 auto 5px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#553d6b,#22202c);border:2px solid #a679ff;font-size:24px;background-position:center;background-size:cover;position:relative}.eh-family-vip{position:absolute;right:-6px;bottom:-4px;border-radius:99px;padding:2px 5px;background:#5c3b85;font-size:8px}.eh-family-person b{display:block;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.eh-family-role{display:inline-block;margin-top:3px;padding:3px 7px;border-radius:99px;background:#8a5cff3a;color:#dac8ff;font-size:8px}.eh-family-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid #ffffff12;color:#fff}.eh-family-row [data-family-profile]{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer}.eh-family-row [data-family-message]{flex:none;border:1px solid #ffffff1c;background:#ffffff08;color:#fff;border-radius:9px;padding:7px;font-size:9px}.eh-family-row .eh-family-avatar{width:48px;height:48px;flex:none;margin:0}.eh-family-row small{display:block;color:#a99eb3;font-size:9px;margin-top:4px}.eh-family-section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 9px;font-size:13px;font-weight:900}.eh-family-inline{display:flex;gap:7px;margin:9px 0}.eh-family-inline input,.eh-family-form input{min-width:0;flex:1;padding:10px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff08;color:white}.eh-family-empty{padding:20px;border:1px solid #ffffff14;border-radius:18px;background:#ffffff06;text-align:center;color:#bdb2c8;font-size:11px;line-height:1.5}.eh-family-menu summary{list-style:none;cursor:pointer;border:1px solid #ffffff20;border-radius:10px;padding:6px 10px}.eh-family-menu summary::-webkit-details-marker{display:none}.eh-family-menu button{display:block;width:100%;min-height:34px;text-align:left;padding:7px 9px}.eh-family-confirm{padding:12px;margin:10px 0;border:1px solid #a679ff55;border-radius:15px;background:#8a5cff12}.eh-family-confirm-actions{display:flex;gap:8px;margin-top:10px}.eh-family-confirm-actions button{flex:1}';document.head.append(style)}
+    if(!document.getElementById('ehFamilyProStyle')){const style=document.createElement('style');style.id='ehFamilyProStyle';style.textContent=".eh-family-shell{color:var(--ui-ink)}.eh-family-hero{padding:18px;border:1px solid var(--ui-line);border-radius:22px;background:radial-gradient(circle at 85% 12%,color-mix(in srgb, var(--ui-danger-bg) 16%, transparent),transparent 34%),linear-gradient(145deg,var(--ui-panel),var(--ui-panel));position:relative;overflow:hidden}.eh-family-head{display:flex;gap:13px;align-items:center}.eh-family-crest{width:68px;height:68px;flex:none;border-radius:22px;display:grid;place-items:center;background:linear-gradient(145deg,var(--ui-button),var(--ui-button));font-size:30px;box-shadow:0 8px 24px var(--ui-shadow);background-size:cover;background-position:center}.eh-family-meta{font-size:10px;color:var(--ui-muted);margin-top:5px}.eh-family-level{margin-left:auto;font-size:26px;font-weight:950;color:var(--ui-gold)}.eh-family-progress{height:8px;background:color-mix(in srgb, var(--ui-panel) 8%, transparent);border-radius:99px;margin:15px 0 6px;overflow:hidden}.eh-family-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ui-button),var(--ui-button))}.eh-family-progress-label{display:flex;justify-content:space-between;color:var(--ui-muted);font-size:9px}.eh-family-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.eh-family-actions button{min-height:42px;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-raised) 3%, transparent);color:var(--ui-ink);font-size:10px;font-weight:800}.eh-family-member-strip{display:flex;gap:13px;overflow:auto;padding:5px 0 10px}.eh-family-person{min-width:72px;text-align:center;color:var(--ui-ink)}.eh-family-avatar{width:56px;height:56px;margin:0 auto 5px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--ui-button),var(--ui-raised));border:2px solid var(--ui-line);font-size:24px;background-position:center;background-size:cover;position:relative}.eh-family-vip{position:absolute;right:-6px;bottom:-4px;border-radius:99px;padding:2px 5px;background:var(--ui-button);font-size:8px}.eh-family-person b{display:block;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.eh-family-role{display:inline-block;margin-top:3px;padding:3px 7px;border-radius:99px;background:color-mix(in srgb, var(--ui-button) 23%, transparent);color:var(--ui-gold);font-size:8px}.eh-family-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--ui-line);color:var(--ui-ink)}.eh-family-row [data-family-profile]{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:0;background:transparent;color:var(--ui-ink);text-align:left;cursor:pointer}.eh-family-row [data-family-message]{flex:none;border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-raised) 3%, transparent);color:var(--ui-ink);border-radius:9px;padding:7px;font-size:9px}.eh-family-row .eh-family-avatar{width:48px;height:48px;flex:none;margin:0}.eh-family-row small{display:block;color:var(--ui-muted);font-size:9px;margin-top:4px}.eh-family-section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 9px;font-size:13px;font-weight:900}.eh-family-inline{display:flex;gap:7px;margin:9px 0}.eh-family-inline input,.eh-family-form input{min-width:0;flex:1;padding:10px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 3%, transparent);color:var(--ui-ink)}.eh-family-empty{padding:20px;border:1px solid var(--ui-line);border-radius:18px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);text-align:center;color:var(--ui-ink);font-size:11px;line-height:1.5}.eh-family-menu summary{list-style:none;cursor:pointer;border:1px solid var(--ui-line);border-radius:10px;padding:6px 10px}.eh-family-menu summary::-webkit-details-marker{display:none}.eh-family-menu button{display:block;width:100%;min-height:34px;text-align:left;padding:7px 9px}.eh-family-confirm{padding:12px;margin:10px 0;border:1px solid var(--ui-line);border-radius:15px;background:color-mix(in srgb, var(--ui-primary) 7%, transparent)}.eh-family-confirm-actions{display:flex;gap:8px;margin-top:10px}.eh-family-confirm-actions button{flex:1}";document.head.append(style)}
     panel.innerHTML='<div class="eh-family-shell" id="ehFamilyShell"><div class="eh-family-empty">Aile bilgileri yükleniyor…</div></div>';
     const shell=panel.querySelector('#ehFamilyShell');let id=localStorage.getItem('eris_family_id')||'';let families=[];
     async function showInvitations(alreadyMember){try{const rows=await api('/families/invitations');if(!rows.length)return;const section=document.createElement('section');section.innerHTML='<div class="eh-family-section-title">Aile davetleri <span>'+rows.length+'</span></div>';rows.forEach(invite=>{const card=document.createElement('div');card.className='eh-card';const name=document.createElement('b');name.textContent=(invite.family_name||'Aile')+' · '+(invite.inviter_nickname||'Kullanıcı');const note=document.createElement('small');note.textContent=alreadyMember?'Başka bir aileye katılmak için mevcut ailenden ayrılmalısın.':'Seni aileye davet etti.';card.append(name,note);const actions=document.createElement('div');actions.className='eh-family-actions';const reject=document.createElement('button');reject.textContent='Reddet';reject.onclick=async()=>{try{await api('/families/invitations/'+encodeURIComponent(invite.id)+'/reject',{method:'POST'});window.toast?.('Aile davetini reddettiniz.');await family(panel)}catch(err){window.toast?.(err.message)}};actions.append(reject);if(!alreadyMember){const accept=document.createElement('button');accept.textContent='Kabul et';accept.onclick=async()=>{try{await api('/families/invitations/'+encodeURIComponent(invite.id)+'/accept',{method:'POST'});await family(panel)}catch(err){window.toast?.(err.message)}};actions.append(accept)}card.append(actions);section.append(card)});shell.prepend(section)}catch(_){}}
@@ -104,7 +104,7 @@
       const [f,members]=await Promise.all([api('/families/'+encodeURIComponent(id)),api('/families/'+encodeURIComponent(id)+'/members')]);
       const level=Number(f.level||1),pct=Number(f.next_level_progress||100),next=Number(f.next_level_required||0),left=next?Math.max(0,next-Number(f.balance||0)):0;
       const authorities=(members||[]).filter(m=>m.role==='owner'||m.role==='admin');const ordinaryMembers=(members||[]).filter(m=>m.role==='member');const viewerRole=f.viewer_role||members.find(m=>m.user_id===window.ErisAuth?.user?.id)?.role||'member';const isManager=viewerRole==='owner'||viewerRole==='admin';const people=authorities.map(m=>{const asset=window.ErisChatCosmetics?.assetUrl?.(m.avatar_asset)||'';const avatar=asset?'background-image:url("'+String(asset).replace(/"/g,'%22')+'")': '';const label=m.role==='owner'?'Kurucu':'Aile yetkilisi';return '<div class="eh-family-person"><div class="eh-family-avatar" style="'+avatar+'">'+(asset?'':'👤')+(Number(m.vip_level)>0?'<span class="eh-family-vip">VIP '+Number(m.vip_level)+'</span>':'')+'</div><b data-eris-role-user="'+esc(m.user_id)+'">'+esc(m.nickname)+'</b><span class="eh-family-role">'+label+'</span></div>'}).join('');
-      shell.innerHTML='<div class="eh-family-hero"><div class="eh-family-head"><div class="eh-family-crest" data-family-crest>♛</div><div style="min-width:0"><b style="font-size:18px">'+esc(f.name)+'</b><div class="eh-family-meta">AİLE ID · '+esc(f.id)+'<br>🏆 Sıralama #'+Number(f.rank||1)+'</div></div><div class="eh-family-level">'+level+'</div></div><div class="eh-family-meta">Seviye '+level+' · '+Number(f.member_count||0)+' / '+Number(f.capacity||0)+' üye</div><div class="eh-family-progress"><i style="width:'+pct+'%"></i></div><div class="eh-family-progress-label"><span>'+Number(f.balance||0).toLocaleString('tr-TR')+' aile deneyimi</span><span>'+(next?left.toLocaleString('tr-TR')+' sonraki seviyeye':'MAX SEVİYE')+'</span></div></div>'+(viewerRole==='owner'?'<button data-action="family-avatar" class="eh-btn alt" style="margin-top:10px">🖼 Aile görselini değiştir</button>':'')+'<div class="eh-family-actions"><button data-action="members">👥 Üyeler</button><button data-action="chat">💬 Aile sohbeti</button>'+(isManager?'<button data-action="invite">＋ Üye davet et</button><button data-action="applications">📨 Başvurular</button><button data-action="manage">⚙️ Aileyi yönet</button>':'')+'<button data-action="donate">💎 Aileye destek</button><button data-action="leave">🚪 Aileden ayrıl</button></div><div class="eh-family-section-title"><span>Aile yetkilileri</span><span style="color:#a99eb3;font-size:10px">'+authorities.length+' yetkili</span></div><div class="eh-family-member-strip">'+(people||'<span class="eh-note">Aile üyesi bulunamadı.</span>')+'</div><div data-family-panel></div>';
+      shell.innerHTML='<div class="eh-family-hero"><div class="eh-family-head"><div class="eh-family-crest" data-family-crest>♛</div><div style="min-width:0"><b style="font-size:18px">'+esc(f.name)+'</b><div class="eh-family-meta">AİLE ID · '+esc(f.id)+'<br>🏆 Sıralama #'+Number(f.rank||1)+'</div></div><div class="eh-family-level">'+level+'</div></div><div class="eh-family-meta">Seviye '+level+' · '+Number(f.member_count||0)+' / '+Number(f.capacity||0)+' üye</div><div class="eh-family-progress"><i style="width:'+pct+'%"></i></div><div class="eh-family-progress-label"><span>'+Number(f.balance||0).toLocaleString('tr-TR')+' aile deneyimi</span><span>'+(next?left.toLocaleString('tr-TR')+' sonraki seviyeye':'MAX SEVİYE')+'</span></div></div>'+(viewerRole==='owner'?'<button data-action="family-avatar" class="eh-btn alt" style="margin-top:10px">🖼 Aile görselini değiştir</button>':'')+'<div class="eh-family-actions"><button data-action="members">👥 Üyeler</button><button data-action="chat">💬 Aile sohbeti</button>'+(isManager?'<button data-action="invite">＋ Üye davet et</button><button data-action="applications">📨 Başvurular</button><button data-action="manage">⚙️ Aileyi yönet</button>':'')+"<button data-action=\"donate\">💎 Aileye destek</button><button data-action=\"leave\">🚪 Aileden ayrıl</button></div><div class=\"eh-family-section-title\"><span>Aile yetkilileri</span><span style=\"color:var(--ui-ink);font-size:10px\">"+authorities.length+' yetkili</span></div><div class="eh-family-member-strip">'+(people||'<span class="eh-note">Aile üyesi bulunamadı.</span>')+'</div><div data-family-panel></div>';
       if(f.avatar_url)loadFamilyAvatar(shell.querySelector('[data-family-crest]'),id);
       shell.querySelector('[data-action=family-avatar]')?.addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;const form=new FormData();form.append('file',file);try{await api('/families/'+encodeURIComponent(id)+'/avatar',{method:'PUT',body:form});window.toast?.('Aile görseli güncellendi.');await family(panel)}catch(err){window.toast?.(err.message||'Görsel yüklenemedi.')}};input.click()});
       await showInvitations(true);await showFamilyNotifications();
@@ -216,22 +216,22 @@
   s.id='erisFamilyPremiumV2';
   s.textContent=`
   .eh-family-shell{
-    --ef-line:#ffffff12;
-    --ef-soft:#ffffff08;
-    --ef-muted:#a99eb5;
-    color:#f8f4ff;
+    --ef-line:var(--ui-line);
+    --ef-soft:var(--ui-raised);
+    --ef-muted:var(--ui-muted);
+    color:var(--ui-ink);
     padding-bottom:28px
   }
 
   .eh-family-hero{
     padding:20px!important;
-    border:1px solid #ffffff18!important;
+    border:1px solid var(--ui-line)!important;
     border-radius:26px!important;
     background:
-      radial-gradient(circle at 92% 5%,#ffd27a20 0,transparent 28%),
-      radial-gradient(circle at 4% 100%,#8d5cff24 0,transparent 38%),
-      linear-gradient(145deg,#21172b 0%,#15101d 52%,#100c16 100%)!important;
-    box-shadow:0 18px 55px #00000045,inset 0 1px #ffffff0b;
+      radial-gradient(circle at 92% 5%,color-mix(in srgb, var(--ui-button) 13%, transparent) 0,transparent 28%),
+      radial-gradient(circle at 4% 100%,color-mix(in srgb, var(--ui-button) 14%, transparent) 0,transparent 38%),
+      linear-gradient(145deg,var(--ui-panel) 0%,var(--ui-panel) 52%,var(--ui-panel) 100%)!important;
+    box-shadow:0 18px 55px var(--ui-shadow),inset 0 1px var(--ui-shadow);
   }
 
   .eh-family-head{gap:15px!important}
@@ -239,8 +239,8 @@
   .eh-family-crest{
     width:76px!important;height:76px!important;
     border-radius:23px!important;
-    border:1px solid #ffffff22!important;
-    box-shadow:0 10px 30px #0008,0 0 28px #925dff20!important;
+    border:1px solid var(--ui-line)!important;
+    box-shadow:0 10px 30px var(--ui-shadow),0 0 28px var(--ui-shadow)!important;
   }
 
   .eh-family-head b{
@@ -249,7 +249,7 @@
   }
 
   .eh-family-meta{
-    color:#aaa0b4!important;
+    color:var(--ui-muted)!important;
     font-size:11px!important;
     line-height:1.55!important
   }
@@ -258,25 +258,25 @@
     min-width:48px;
     text-align:center;
     font-size:31px!important;
-    color:#ffd47d!important;
-    text-shadow:0 0 22px #ffb84d35
+    color:var(--ui-gold)!important;
+    text-shadow:0 0 22px var(--ui-shadow)
   }
 
   .eh-family-progress{
     height:9px!important;
     margin:17px 0 8px!important;
-    background:#ffffff0c!important;
-    border:1px solid #ffffff0a
+    background:color-mix(in srgb, var(--ui-panel) 5%, transparent)!important;
+    border:1px solid var(--ui-line)
   }
 
   .eh-family-progress i{
-    background:linear-gradient(90deg,#8055ff,#b86cff 48%,#ffc66d)!important;
-    box-shadow:0 0 16px #a96cff55
+    background:linear-gradient(90deg,var(--ui-button),var(--ui-button) 48%,var(--ui-button))!important;
+    box-shadow:0 0 16px var(--ui-shadow)
   }
 
   .eh-family-progress-label{
     font-size:10px!important;
-    color:#aaa0b4!important
+    color:var(--ui-muted)!important
   }
 
   [data-action="family-avatar"]{
@@ -284,9 +284,9 @@
     min-height:45px!important;
     margin:12px 0 4px!important;
     border-radius:15px!important;
-    border:1px solid #ffffff13!important;
-    background:linear-gradient(180deg,#ffffff0b,#ffffff05)!important;
-    color:#e9e1f0!important;
+    border:1px solid var(--ui-line)!important;
+    background:linear-gradient(180deg,color-mix(in srgb, var(--ui-raised) 4%, transparent),color-mix(in srgb, var(--ui-raised) 2%, transparent))!important;
+    color:var(--ui-ink)!important;
     font-size:11px!important;
     font-weight:800!important
   }
@@ -301,11 +301,11 @@
     position:relative;
     min-height:58px!important;
     padding:10px 12px!important;
-    border:1px solid #ffffff11!important;
+    border:1px solid var(--ui-line)!important;
     border-radius:17px!important;
-    background:linear-gradient(145deg,#17121d,#110d16)!important;
-    box-shadow:inset 0 1px #ffffff08,0 6px 18px #0002;
-    color:#f3edf7!important;
+    background:linear-gradient(145deg,var(--ui-raised),var(--ui-raised))!important;
+    box-shadow:inset 0 1px var(--ui-shadow),0 6px 18px var(--ui-shadow);
+    color:var(--ui-ink)!important;
     font-size:11px!important;
     font-weight:850!important;
     transition:transform .15s,border-color .15s,background .15s
@@ -313,11 +313,11 @@
 
   .eh-family-actions button:active{
     transform:scale(.975);
-    background:#201725!important
+    background:var(--ui-raised)!important
   }
 
   .eh-family-actions button[data-action="members"]{
-    border-color:#8567ff28!important
+    border-color:var(--ui-line)!important
   }
 
   .eh-family-actions button[data-action="chat"]{
@@ -327,7 +327,7 @@
   .eh-family-actions button[data-action="invite"],
   .eh-family-actions button[data-action="applications"],
   .eh-family-actions button[data-action="manage"]{
-    border-color:#c384ff22!important
+    border-color:var(--ui-line)!important
   }
 
   .eh-family-actions button[data-action="donate"]{
@@ -335,15 +335,15 @@
   }
 
   .eh-family-actions button[data-action="leave"]{
-    color:#ff9da8!important;
-    border-color:#ff667326!important;
-    background:linear-gradient(145deg,#241218,#150d12)!important
+    color:var(--ui-danger)!important;
+    border-color:var(--ui-line)!important;
+    background:linear-gradient(145deg,var(--ui-raised),var(--ui-raised))!important
   }
 
   .eh-family-section-title{
     margin:23px 2px 12px!important;
     padding-bottom:10px;
-    border-bottom:1px solid #ffffff0d;
+    border-bottom:1px solid var(--ui-line);
     font-size:15px!important;
     letter-spacing:-.2px
   }
@@ -360,27 +360,27 @@
     min-width:0!important;
     min-height:115px;
     padding:14px 8px 11px;
-    border:1px solid #ffffff10;
+    border:1px solid var(--ui-line);
     border-radius:18px;
-    background:linear-gradient(145deg,#17121e,#100c15);
-    box-shadow:inset 0 1px #ffffff07;
+    background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));
+    box-shadow:inset 0 1px var(--ui-shadow);
     text-align:center!important
   }
 
   .eh-family-avatar{
     width:62px!important;height:62px!important;
     margin:0 auto 8px!important;
-    border:2px solid #986bff!important;
-    box-shadow:0 0 0 3px #986bff12,0 8px 22px #0006;
+    border:2px solid var(--ui-line)!important;
+    box-shadow:0 0 0 3px var(--ui-shadow),0 8px 22px var(--ui-shadow);
   }
 
   .eh-family-vip{
     right:-8px!important;
     bottom:-4px!important;
     padding:3px 7px!important;
-    border:1px solid #c59cff50;
-    background:#543177!important;
-    box-shadow:0 4px 12px #0007
+    border:1px solid var(--ui-line);
+    background:var(--ui-button)!important;
+    box-shadow:0 4px 12px var(--ui-shadow)
   }
 
   .eh-family-person b{
@@ -392,9 +392,9 @@
   .eh-family-role{
     margin-top:6px!important;
     padding:4px 9px!important;
-    background:linear-gradient(135deg,#7c4dff30,#bc68ff22)!important;
-    border:1px solid #a779ff30;
-    color:#ddcaff!important;
+    background:linear-gradient(135deg,color-mix(in srgb, var(--ui-button) 19%, transparent),color-mix(in srgb, var(--ui-button) 13%, transparent))!important;
+    border:1px solid var(--ui-line);
+    color:var(--ui-gold)!important;
     font-size:8px!important;
     font-weight:850
   }
@@ -403,9 +403,9 @@
     min-height:68px;
     padding:10px!important;
     margin-bottom:7px;
-    border:1px solid #ffffff0d!important;
+    border:1px solid var(--ui-line)!important;
     border-radius:15px;
-    background:#ffffff04
+    background:color-mix(in srgb, var(--ui-raised) 2%, transparent)
   }
 
   .eh-family-row .eh-family-avatar{
@@ -415,14 +415,14 @@
 
   .eh-family-empty{
     border-radius:17px!important;
-    border-color:#ffffff10!important;
-    background:#ffffff04!important
+    border-color:var(--ui-line)!important;
+    background:color-mix(in srgb, var(--ui-panel) 2%, transparent)!important
   }
 
   .eh-family-inline input,.eh-family-form input{
     min-height:44px;
-    border-color:#ffffff13!important;
-    background:#ffffff07!important
+    border-color:var(--ui-line)!important;
+    background:color-mix(in srgb, var(--ui-panel) 3%, transparent)!important
   }
 
   @media(max-width:380px){

@@ -1,5 +1,5 @@
 /* Lidya discovery: shares the profile light/dark palette; capture behavior stays in the existing scripts. */
-html body #explore {--ec-accent:var(--lydia-gold);--ec-muted:var(--lydia-muted);--ec-line:var(--lydia-line);--ec-panel:var(--lydia-panel);background:var(--lydia-panel) !important;padding-inline:16px !important;}
+html body #explore {--ec-accent:var(--ui-gold);--ec-muted:var(--ui-muted);--ec-line:var(--ui-line);--ec-panel:var(--ui-panel);background:var(--lydia-panel) !important;padding-inline:16px !important;}
 html body #explore>.eyebrow {font-size:10px !important;letter-spacing:.2em;color:var(--lydia-gold);margin:4px 0 6px !important;}
 html body #explore>.title {font-size:32px !important;line-height:1.1 !important;letter-spacing:-1.2px;margin:0 !important;}
 html body #explore>.ec-explore-intro {font-size:12px;line-height:1.5;color:var(--ec-muted);margin:9px 0 20px;}
@@ -141,12 +141,12 @@ html body #explore .ec-comment-composer button,
 html body #explore .eris-story-plus,
 html body .ec-compose .ec-primary,
 html body .ec-compose .story-primary {
- background: linear-gradient(135deg,#876529,#68461c) !important; color: #fff6dd !important; border-color: var(--lydia-line) !important;
+ background: linear-gradient(135deg,var(--ui-primary),var(--ui-danger-bg)) !important; color: var(--ui-primary-ink) !important; border-color: var(--lydia-line) !important;
 }
 html[data-eris-theme="dark"] body #explore .ec-comment-composer button,
 html[data-eris-theme="dark"] body #explore .eris-story-plus,
 html[data-eris-theme="dark"] body .ec-compose .ec-primary,
-html[data-eris-theme="dark"] body .ec-compose .story-primary { background: linear-gradient(135deg,#4e3c21,#342818) !important; color: #f0e4cb !important; }
+html[data-eris-theme="dark"] body .ec-compose .story-primary { background: linear-gradient(135deg,var(--ui-primary),var(--ui-primary)) !important; color: var(--ui-primary-ink) !important; }
 html body #explore :is(button,input,select,summary):focus-visible,
 html body .ec-compose :is(button,input,textarea,select):focus-visible { outline: 2px solid var(--lydia-focus); outline-offset: 3px; }
 /* Report dialogs belong to discovery; media viewers retain a dark canvas. */
@@ -157,10 +157,10 @@ html body .ec-social-modal section { color: var(--lydia-text); background: var(-
 html body .eris-story-modal :is(input,textarea,button),
 html body .ec-social-modal :is(input,textarea,button) { color: var(--lydia-text) !important; background: var(--lydia-panel-raised) !important; border-color: var(--lydia-line) !important; }
 html body .eris-story-modal .story-primary,
-html body .ec-social-modal .ec-primary { color: #fff6dd !important; background: linear-gradient(135deg,#876529,#68461c) !important; }
+html body .ec-social-modal .ec-primary { color: var(--ui-primary-ink) !important; background: linear-gradient(135deg,var(--ui-primary),var(--ui-danger-bg)) !important; }
 html[data-eris-theme="dark"] body .eris-story-modal .story-primary,
-html[data-eris-theme="dark"] body .ec-social-modal .ec-primary { background: linear-gradient(135deg,#4e3c21,#342818) !important; }
-html body .eris-camera [data-status], html body .eris-camera [data-lens], html body .ec-camera-modes button { color: #c9bc9f; }
-html body .ec-camera-modes button[aria-pressed=true] { color: #f0e4cb; background: #4e3c21 !important; }
-html body .eris-camera .ec-camera-shutter { border-color: #dfbd80; }
-html body .ec-camera-shutter i { background: #f0e4cb; }
+html[data-eris-theme="dark"] body .ec-social-modal .ec-primary { background: linear-gradient(135deg,var(--ui-primary),var(--ui-primary)) !important; }
+html body .eris-camera [data-status], html body .eris-camera [data-lens], html body .ec-camera-modes button { color: var(--ui-gold); }
+html body .ec-camera-modes button[aria-pressed=true] { color: var(--ui-ink); background: var(--ui-raised) !important; }
+html body .eris-camera .ec-camera-shutter { border-color: var(--ui-line); }
+html body .ec-camera-shutter i { background: var(--ui-panel); }

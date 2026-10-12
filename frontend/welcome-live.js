@@ -88,7 +88,7 @@
         align-items: center;
         justify-content: center;
         padding: 20px;
-        background: rgba(4, 2, 10, .82);
+        background: color-mix(in srgb, var(--ui-panel) 82%, transparent);
         backdrop-filter: blur(12px);
       }
 
@@ -97,11 +97,11 @@
         box-sizing: border-box;
         padding: 28px 22px 22px;
         text-align: center;
-        color: #fff;
-        border: 1px solid rgba(255,255,255,.12);
+        color: var(--ui-ink);
+        border: 1px solid var(--ui-line);
         border-radius: 28px;
-        background: linear-gradient(180deg, #171020, #0b0911);
-        box-shadow: 0 25px 80px rgba(0,0,0,.55);
+        background: linear-gradient(180deg, var(--ui-raised), var(--ui-raised));
+        box-shadow: 0 25px 80px var(--ui-shadow);
       }
 
       .eris-welcome-logo {
@@ -112,7 +112,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 18px;
-        background: linear-gradient(135deg, #9b5cff, #e85cff);
+        background: linear-gradient(135deg, var(--ui-button), var(--ui-button));
         font-size: 30px;
         font-weight: 900;
       }
@@ -131,7 +131,7 @@
       }
 
       .eris-welcome-text {
-        color: #d8d0df;
+        color: var(--ui-ink);
         font-size: 13px;
         line-height: 1.65;
       }
@@ -142,8 +142,8 @@
         display: grid;
         gap: 9px;
         border-radius: 18px;
-        background: rgba(255,255,255,.055);
-        color: #eee7f3;
+        background: color-mix(in srgb, var(--ui-panel) 6%, transparent);
+        color: var(--ui-ink);
         font-size: 13px;
       }
 
@@ -153,8 +153,8 @@
         border: 0;
         border-radius: 16px;
         cursor: pointer;
-        color: #fff;
-        background: linear-gradient(135deg, #9b5cff, #e85cff);
+        color: var(--ui-primary-ink);
+        background: linear-gradient(135deg, var(--ui-primary), var(--ui-primary));
         font-size: 14px;
         font-weight: 900;
       }
@@ -167,7 +167,7 @@
       .eris-welcome-status {
         min-height: 18px;
         margin-top: 10px;
-        color: #bcb1c7;
+        color: var(--ui-muted);
         font-size: 11px;
       }
     `;

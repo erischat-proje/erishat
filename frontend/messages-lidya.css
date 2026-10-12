@@ -9,8 +9,8 @@ html body #messages [data-dm-user-search] {
 }
 html body #messages [data-dm-user-search]::placeholder { color: var(--theme-muted-ink, #756750); }
 html body #messages [data-dm-search-btn] {
-  color: #fff9ec !important;
-  background: #85632c !important;
+  color: var(--ui-ink) !important;
+  background: var(--ui-button) !important;
   border-color: var(--theme-line, #795626) !important;
 }
 html body #messages [data-dm-search] > div:last-child > button,
@@ -35,8 +35,8 @@ html body #messages .dm-list-selected {
   box-shadow: 0 0 0 1px var(--theme-carved-line, #ad8847) !important;
 }
 html body #messages .dm-list-selected::before {
-  color: #fff9ec;
-  background: #85632c;
+  color: var(--ui-ink);
+  background: var(--ui-button);
   border-color: var(--theme-line, #795626);
 }
 html body #messages .dm-list-tools [data-delete] { color: var(--theme-danger-ink, #9c334b) !important; border-color: var(--theme-danger-line, #dfb8bd) !important; }
@@ -91,7 +91,7 @@ html body #chat.dm-selection-mode .chatBody .bubble[data-message-id]::before {
   background: var(--theme-panel, #fffdf8);
   border-color: var(--theme-line, #c8b382);
 }
-html body #chat.dm-selection-mode .chatBody .bubble.dm-selected::before { color: #fff9ec; background: #85632c; border-color: var(--theme-line, #795626); }
+html body #chat.dm-selection-mode .chatBody .bubble.dm-selected::before { color: var(--ui-ink); background: var(--ui-button); border-color: var(--theme-line, #795626); }
 html body #chat .dm-pinned { color: var(--theme-accent-ink, #71511f); background: var(--theme-panel, #f4e6c6); border-color: var(--theme-line, #dbc28e); }
 html body #chat .compose { background: var(--theme-chrome, #fcf8ef) !important; border-top-color: var(--theme-line, #ded1ba); }
 html body #chat .compose input {
@@ -101,8 +101,8 @@ html body #chat .compose input {
 }
 html body #chat .compose input::placeholder { color: var(--theme-muted-ink, #756750); }
 html body #chat .compose > .primary {
-  color: #fff9ec;
-  background: linear-gradient(125deg, #85632c, #6e4e20) !important;
+  color: var(--ui-primary-ink);
+  background: linear-gradient(125deg, var(--ui-primary), var(--ui-danger-bg)) !important;
   border: 1px solid var(--theme-line, #795626);
   box-shadow: 0 3px 8px var(--theme-shadow, #71511e16);
 }
@@ -113,22 +113,22 @@ html body #chat .compose > .close {
   box-shadow: none;
 }
 html body #chat .compose [data-dm-voice][title="Kaydı bitir ve gönder"] {
-  color: #fff9ec !important;
+  color: var(--ui-ink) !important;
   background: var(--theme-danger-line, #a83b52) !important;
   border-color: var(--theme-danger-line, #8e3046) !important;
   box-shadow: 0 0 0 3px var(--theme-shadow, #a83b521a);
 }
 html body #chat .dm-media-loading { color: var(--theme-muted-ink, #756750); }
 html body #chat .dm-voice-player { color: var(--theme-ink, #342b21); background: var(--theme-panel, #fffdf8); border-color: var(--theme-line, #ded1ba); }
-html body #chat .dm-voice-toggle { color: #fff9ec; background: #85632c; }
+html body #chat .dm-voice-toggle { color: var(--ui-ink); background: var(--ui-button); }
 html body #chat .dm-voice-time { color: var(--theme-muted-ink, #756750); }
 html body #chat .dm-voice-player .dm-wave { background: linear-gradient(90deg, var(--theme-panel-shadow, #d1b274) var(--played,0%), transparent var(--played,0%)); }
 html body #chat .dm-wave i { background: var(--theme-grain, #a38a604d); }
 html body #chat .dm-track { background: var(--theme-panel, #ded1ba); }
-html body #chat .dm-track i { background: #987435; }
+html body #chat .dm-track i { background: var(--ui-button); }
 html body #chat .dm-temp-preview { color: var(--theme-ink, #342b21); background: linear-gradient(125deg, var(--theme-panel, #f4e6c6), var(--theme-panel-shadow, #e8cf9b)); border-color: var(--theme-line, #d8bf87); }
 html body #chat .dm-temp-preview small { color: var(--theme-muted-ink, #5f4d2e); }
-html body #chat .dm-temp-blur { background: linear-gradient(125deg, var(--theme-panel-shadow, #dcc08a), #b68b40); }
+html body #chat .dm-temp-blur { background: linear-gradient(125deg, var(--theme-panel-shadow, #dcc08a), var(--ui-button)); }
 html body #chat .dm-temp-preview .dm-temp-label,
 html body #chat .dm-temp-preview > span:last-child { padding: 5px 7px; border-radius: 8px; background: var(--theme-overlay, #fffaf0e8); }
 html body #chat .dm-temp-lock { color: var(--theme-accent-ink, #795a28); background: var(--theme-overlay, #fffaf0e8); border-color: var(--theme-line, #d8bf87); }
@@ -150,7 +150,7 @@ html body .dm-gift-sheet [data-temp-source] { outline-color: var(--theme-focus, 
 html body .dm-gift-sheet small { color: var(--theme-accent-ink, #856229); }
 html body .dm-vault-modal { color: var(--theme-ink, #342b21); background: var(--theme-overlay, #342b215c); }
 html body .dm-vault-modal input { color: var(--theme-ink, #342b21); background: var(--theme-panel, #fffaf0); border-color: var(--theme-line, #ded1ba); }
-html body .dm-vault-modal .accept { color: #fff9ec; background: #85632c; border-color: var(--theme-line, #795626); }
+html body .dm-vault-modal .accept { color: var(--ui-ink); background: var(--ui-button); border-color: var(--theme-line, #795626); }
 html body .dm-vault-modal .reject { color: var(--theme-danger-ink, #9c334b); background: var(--theme-danger-surface, #fff7f6); border-color: var(--theme-danger-line, #dfb8bd); }
 html body .dm-vault-modal .warn,
 html body .dm-vault-modal .error { color: var(--theme-danger-ink, #9c334b); }
