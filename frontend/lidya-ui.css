@@ -1,0 +1,330 @@
+/* Lydia application palette. Loaded last so live modules share the same chrome. */
+:root {
+  color-scheme: dark;
+  --lydia-bg: #100e0b;
+  --lydia-panel: #201b14;
+  --lydia-panel-raised: #2d251a;
+  --lydia-text: #f7efdf;
+  --lydia-muted: #c1b296;
+  --lydia-gold: #e6c57f;
+  --lydia-bronze: #a7803b;
+  --lydia-line: #b6975a45;
+  --lydia-focus: #ffe2a0;
+  --bg: var(--lydia-bg);
+  --p: var(--lydia-panel);
+  --p2: var(--lydia-panel-raised);
+  --line: var(--lydia-line);
+  --muted: var(--lydia-muted);
+  --pink: var(--lydia-gold);
+  --violet: var(--lydia-bronze);
+  --gold: var(--lydia-gold);
+}
+html, html body { background: #0b0907; color: var(--lydia-text); }
+html body .app {
+  background: radial-gradient(ellipse at 90% 0, #a7803b18, transparent 45%), var(--lydia-bg);
+  color: var(--lydia-text);
+}
+html body .app > .top {
+  background: linear-gradient(115deg, #241c11, #15110c 65%);
+  border-bottom-color: var(--lydia-line);
+  box-shadow: 0 5px 20px #0002;
+}
+html body .app > .content { scrollbar-color: #9b7840 transparent; }
+html body .app > .top #demoBalance {
+  border-color: #d8b56c60;
+  background: linear-gradient(135deg, #a7803b24, #70512212);
+  color: #ffe6ad;
+  box-shadow: inset 0 1px #ffe6ad0c;
+}
+html body .app > .top .icon {
+  color: var(--lydia-gold);
+  background: #a7803b14;
+  border-color: var(--lydia-line);
+}
+
+/* Navigation stays in the existing flex shell, including the safe-area inset. */
+html body .app > .nav {
+  background: linear-gradient(180deg, #211a11, #15110c);
+  border-top-color: #d8b56c55;
+  box-shadow: 0 -8px 24px #0003, inset 0 1px #ffe6ad08;
+  gap: 4px;
+}
+html body .app > .nav button {
+  min-width: 0;
+  min-height: 54px;
+  color: #c1b296;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  transition: background .16s, border-color .16s, color .16s;
+}
+html body .app > .nav button.active {
+  color: #ffe2a0;
+  border-color: #d8b56c70;
+  background: linear-gradient(145deg, #72512265, #a7803b1a);
+  box-shadow: inset 0 1px #ffe6ad15;
+}
+html body .app > .nav button.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 20px;
+  height: 2px;
+  background: #e6c57f;
+  border-radius: 0 0 4px 4px;
+}
+html body .app > .nav button:active { background: #a7803b25; }
+
+/* The homepage keeps its real room list and the original action handlers. */
+html body #home .section h3 { color: var(--lydia-text); font-size: 18px; }
+html body #home .homeSectionActions { gap: 7px; }
+html body #home .homeSectionActions .link {
+  min-height: 40px;
+  padding: 8px 10px;
+  color: #ffe2a0;
+  border: 1px solid var(--lydia-line);
+  border-radius: 12px;
+  background: #a7803b12;
+}
+html body #home .homeSectionActions .link:first-child {
+  color: #211709;
+  background: linear-gradient(135deg, #eed59a, #cba357);
+  border-color: #edcf8c;
+  font-weight: 750;
+}
+html body #home .homeMenu { gap: 11px; }
+html body #home .homeMenuGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #cdb37a;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  margin: 20px 0 1px !important;
+}
+html body #home .homeMenuGroup::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, #b6975a55, transparent);
+}
+html body #home .homeMenuItem {
+  min-height: 114px !important;
+  padding: 15px !important;
+  gap: 12px !important;
+  border-color: #b6975a45;
+  background: radial-gradient(ellipse at 0 0, #a7803b14, transparent 70%), linear-gradient(145deg, #282015, #19150f);
+  color: var(--lydia-text);
+  box-shadow: inset 0 1px #ffe6ad08, 0 5px 16px #0002;
+}
+html body #home .homeMenuItem:hover {
+  border-color: #d8b56c85;
+  background: linear-gradient(145deg, #332819, #241c13);
+}
+html body #home .homeMenuItem:active { background: #382b19; }
+html body #home .homeMenuIcon {
+  width: 42px;
+  height: 42px;
+  padding: 9px;
+  color: #e6c57f;
+  background: linear-gradient(145deg, #d8b56c20, #70512215);
+  border: 1px solid #d8b56c45;
+  border-radius: 14px;
+  stroke-width: 1.7;
+}
+html body #home .homeMenuCopy { min-width: 0; }
+html body #home .homeMenuCopy strong {
+  font-size: 13px !important;
+  font-weight: 650;
+  color: var(--lydia-text);
+  overflow-wrap: anywhere;
+}
+html body #home .homeMenuItem.eris-admin-menu {
+  background: linear-gradient(110deg, #3a2b17, #21190f);
+  border-color: #d8b56c65;
+  min-height: 78px !important;
+}
+html body #home .ea-role {
+  color: #ffe2a0;
+  background: #a7803b22;
+  border-color: #d8b56c65;
+}
+html body #home #realRooms .room {
+  background: linear-gradient(120deg, #282015, #19150f);
+  border-color: var(--lydia-line);
+  color: var(--lydia-text);
+  padding: 14px;
+  border-radius: 19px;
+}
+html body #home #realRooms .room:hover { border-color: #d8b56c85; }
+html body #home #realRooms .roomText { min-width: 0; }
+html body #home #realRooms .roomText b { overflow-wrap: anywhere; }
+html body #home #realRooms .roomText small { color: var(--lydia-muted); }
+html body #home #realRooms .ec-room-art,
+html body #home #realRooms .ec-empty-art {
+  color: #e6c57f;
+  background: #a7803b1a;
+  border: 1px solid #b6975a45;
+}
+html body #home #realRooms .ec-room-live {
+  color: #f2dba8;
+  background: #a7803b22;
+  border-color: #b6975a45;
+}
+html body #home #realRooms .ec-discovery-empty {
+  background: linear-gradient(120deg, #282015, #19150f);
+  border-color: #b6975a45;
+  color: var(--lydia-text);
+}
+html body #home #realRooms .ec-discovery-empty p { color: var(--lydia-muted); }
+html body #home #realRooms > .card {
+  background: linear-gradient(120deg, #282015, #19150f);
+  border-color: var(--lydia-line);
+  color: var(--lydia-muted) !important;
+}
+
+/* Shared controls, without recoloring gameplay or user-owned artwork. */
+html body .app > .content .link { color: var(--lydia-gold); }
+html body .app > .content .primary {
+  color: #211709;
+  background: linear-gradient(135deg, #eed59a, #cba357);
+  border: 1px solid #edcf8c;
+  min-height: 44px;
+}
+html body .app > .content .tab {
+  color: var(--lydia-muted);
+  background: #201b14;
+  border-color: var(--lydia-line);
+}
+html body .app > .content .tab.active {
+  color: #ffe2a0;
+  background: linear-gradient(135deg, #5b4425, #34261a);
+  border-color: #d8b56c;
+}
+html body .app > .content .search input,
+html body .app > .content .setting {
+  color: var(--lydia-text);
+  background: var(--lydia-panel);
+  border-color: var(--lydia-line);
+}
+html body .app > .content .switch.on { background: #a7803b; }
+html body .app > .content .switch.on::after { background: #fff0cb; }
+html body .app > .content .eyebrow { color: #cdb37a; }
+html body .toast { background: #241c13; color: var(--lydia-text); border-color: #b6975a60; }
+
+/* Main destinations and their menu chrome use the same foundation palette. */
+html body .app > .content .card,
+html body .app > .content .item {
+  background: linear-gradient(145deg, #282015, #19150f);
+  border-color: var(--lydia-line);
+  color: var(--lydia-text);
+}
+html body #explore {
+  --ec-accent: var(--lydia-gold);
+  --ec-muted: var(--lydia-muted);
+  --ec-line: var(--lydia-line);
+  --ec-panel: var(--lydia-panel);
+}
+html body #explore .ec-explore-subnav button {
+  color: var(--lydia-muted) !important;
+}
+html body #explore .ec-explore-subnav button[aria-selected=true] {
+  color: #ffe2a0 !important;
+  background: #5b4425 !important;
+}
+html body #explore .eris-story-plus {
+  color: #211709 !important;
+  background: #e6c57f !important;
+  border-color: var(--lydia-bg) !important;
+}
+html body #messages > .eyebrow,
+html body #explore > .eyebrow { color: #cdb37a; }
+html body #messages [data-dm-user-search] {
+  color: var(--lydia-text);
+  background: #201b14 !important;
+  border-color: var(--lydia-line);
+}
+html body #messages .dm-list-tools,
+html body #messages .dm-list-state {
+  background: #201b14;
+  border-color: var(--lydia-line);
+}
+html body #messages .list > .item small,
+html body #messages .dm-list-state p { color: var(--lydia-muted); }
+html body #messages .dm-list-state > span {
+  color: var(--lydia-gold);
+  background: #a7803b1a;
+}
+html body #messages .dm-list-state button {
+  color: #ffe2a0;
+  background: #a7803b22;
+  border-color: var(--lydia-line);
+}
+html body #messages .dm-unread { color: #211709; background: #e6c57f; }
+html body #games .eg-launcher-card {
+  background: radial-gradient(circle at 90% 5%, #a7803b18, transparent 65%), linear-gradient(145deg, #282015, #19150f);
+  border-color: var(--lydia-line);
+  color: var(--lydia-text);
+}
+html body #games .eg-launcher-card .eg-lc-icon {
+  color: var(--lydia-gold);
+  background: #a7803b18;
+  border-color: var(--lydia-line);
+}
+html body #games .eg-launcher-card:active { background: #382b19; border-color: #d8b56c; }
+html body #games .eg-launcher-card:focus-visible { outline-color: var(--lydia-focus); }
+html body #profile [data-profile-save] {
+  background: linear-gradient(135deg, #eed59a, #cba357) !important;
+  color: #211709 !important;
+}
+html body #profile [data-dm-lock-gift] {
+  background: var(--lydia-panel) !important;
+  border-color: var(--lydia-line) !important;
+  color: var(--lydia-text) !important;
+}
+html body #erisProfileHub .eph-dialog,
+html body #erisHub .eh-sheet,
+html body .support-window {
+  background: var(--lydia-bg);
+  color: var(--lydia-text);
+  border-color: var(--lydia-line);
+}
+html body .support-window .primary {
+  color: #211709;
+  background: linear-gradient(135deg, #eed59a, #cba357);
+  border-color: #edcf8c;
+}
+
+/* Profile submenu icons are inserted at runtime by menu-buttons-polish.js. */
+html body #erisProfileHub .eph-tabs button[data-modern-menu] {
+  background: linear-gradient(145deg, #282015, #19150f) !important;
+  border-color: #b6975a45 !important;
+  color: var(--lydia-text) !important;
+}
+html body #erisProfileHub .emp-icon {
+  color: #e6c57f;
+  background: #a7803b18;
+  border-color: #d8b56c45;
+}
+html body #erisProfileHub .eph-tabs button[data-modern-menu]::after { color: #cdb37a80; }
+html body #erisProfileHub .eph-tabs button[data-modern-menu]:active { background: #382b19 !important; }
+html body #erisProfileHub .eph-tabs button[data-modern-menu=logout] { border-color: #b6975a65 !important; }
+html body .app > .top .icon:focus-visible,
+html body .app > .top #demoBalance:focus-visible,
+html body .app > .nav button:focus-visible,
+html body #home button:focus-visible,
+html body .app > .content .primary:focus-visible,
+html body .app > .content .tab:focus-visible,
+html body .app > .content .search input:focus-visible,
+html body #erisProfileHub .eph-tabs button[data-modern-menu]:focus-visible {
+  outline: 2px solid var(--lydia-focus);
+  outline-offset: 3px;
+}
+@media (max-width: 359px) {
+  html body #home .homeMenu { gap: 9px; }
+  html body #home .homeMenuItem { padding: 12px !important; min-height: 110px !important; }
+  html body #home .homeMenuCopy strong { font-size: 12px !important; }
+  html body .app > .nav button { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body .app > .nav button { transition: none; }
+}
