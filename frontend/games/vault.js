@@ -233,7 +233,7 @@
         chest.classList.toggle('ev-winner',showResult&&key===result);
         const dial=chest.querySelector('.ev-dial');
         const treasure=chest.querySelector('.ev-chest-icon');
-        if(treasure)treasure.innerHTML=showResult&&key===result?window.LidyaGameArt.markup('coin'):'';
+        if(treasure)treasure.innerHTML=showResult&&key===result?window.LidyaGameArt.markup('vault-open'):'';
         if(dial)dial.textContent=showResult?(key===result?'✨':'✖'):'🔒';
       });
       const status=scene.querySelector('[data-vault-status]');
