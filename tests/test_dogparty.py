@@ -52,6 +52,7 @@ def fixture():
         with sessions() as s:yield s
     for name,attrs in [('db',{'get_db':get_db}),('models',{'User':User}),('platform_models',{'GameRound':GameRound,'GameBet':GameBet,'GamePlay':GamePlay}),('moderation',{'require_feature':lambda *_:None})]:
         m=types.ModuleType('dogparty_test_app.'+name);m.__dict__.update(attrs);sys.modules[m.__name__]=m
+    module('dogparty_test_app.slot_bonus_buy',ROOT/'backend/app/slot_bonus_buy.py')
     eng=module('dogparty_test_app.dogparty_engine',ROOT/'backend/app/dogparty_engine.py');routes=module('dogparty_test_app.dogparty_routes',ROOT/'backend/app/dogparty_routes.py')
     with sessions() as s:s.add_all([User(id='a',lidya=100000),User(id='b',lidya=5000)]);s.commit()
     identity={'id':'a'}
@@ -76,7 +77,7 @@ def trigger(r,e):
 
 def test_rules_and_validation(fixture):
  c,*_=fixture;rules=c.get('/v1/games/dogparty/rules').json();assert len(rules['lines'])==20 and len({tuple(x) for x in rules['lines']})==20
- for kw in [{'stake':0},{'stake':True},{'stake':20.0},{'stake':10001},{'action':'buy'},{'ante':True},{'payout':999},{'sequence':False},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':0},{'stake':True},{'stake':20.0},{'stake':10001},{'action':'invalid'},{'ante':True},{'payout':999},{'sequence':False},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
 
 def test_additive_wilds_not_product(fixture):
  e=fixture[3];b=[{'s':i%11} for i in range(15)];b[5:10]=[{'s':0},{'s':12,'m':2},{'s':12,'m':3},{'s':0},{'s':1}]
@@ -192,3 +193,32 @@ def test_evaluator_matches_independent_reference(fixture):
     prefix.append(cell)
    if len(prefix)>=3:total+=e.PAY[s][len(prefix)-3]*max(1,sum(c['m'] for c in prefix if c['s']==12))
   assert e.evaluate(board)[0]==total
+
+
+def test_bonus_buy_exact_charge_and_resume(fixture):
+ c,s,r,e,identity=fixture
+ path='/v1/games/dogparty/spin';payload={'request_id':str(uuid4()),'stake':50,'action':'buy'}
+ first=c.post(path,json=payload);assert first.status_code==200,first.text
+ a=first.json();assert a['charge']==5000 and a['payout']==0 and a['balance']==95000 and not a['state']['finished']
+ assert c.post(path,json=payload).json()['replayed']
+ with s() as db:assert db.get(User,'a').lidya==95000 and db.scalar(select(GameBet)).choice=='buy'
+ assert post(c,action='buy').status_code==409
+ assert post(c,action='buy',round_id=a['state']['round_id'],sequence=a['state']['sequence'],stake=50).status_code==409
+ resumed=post(c,round_id=a['state']['round_id'],sequence=a['state']['sequence'],stake=50).json();assert resumed['charge']==0
+ replay=c.post(path,json=payload).json();assert replay['replayed'] and replay['balance']==resumed['balance']
+ if 'collected' in a['state']:assert a['state']['remaining']==10 and a['state']['collected']==0 and a['state']['multiplier']==1
+ else:
+  assert len(a['result']['wheel'])==9 and a['state']['remaining']==sum(a['result']['wheel']) and a['state']['sticky']=={}
+  assert r.purchase('dogparty',rng=lambda:0)[0]==9 and r.purchase('dogparty',rng=lambda:.999999)[0]==27
+
+def test_buy_insufficient_balance_and_payload_injection(fixture):
+ c,s,r,e,_=fixture
+ with s() as db:u=db.get(User,'a');u.lidya=200;db.commit()
+ assert post(c,action='buy').status_code==400
+ with s() as db:assert db.get(User,'a').lidya==200 and not list(db.scalars(select(GameBet)))
+ for override in [{'price':1},{'free_spins':27},{'buy_profile':'hack'}]:assert post(c,action='buy',**override).status_code==422
+
+def test_buy_rng_failure_rollback(fixture):
+ c,s,r,e,_=fixture;r.purchase=lambda *_:(_ for _ in ()).throw(RuntimeError('purchase test'))
+ with pytest.raises(RuntimeError):post(c,action='buy')
+ with s() as db:assert db.get(User,'a').lidya==100000 and not list(db.scalars(select(GameBet)))

@@ -28,3 +28,11 @@ html body #games .eg-launcher-card .eg-lc-play{background-image:var(--pg-seconda
 html body #erisGamesModal#erisGamesModal button:not(.eris-cup){background-image:var(--pg-secondary)!important;background-size:100% 100%!important;background-position:center!important;color:var(--pg-ink)!important}
 html body #erisGamesModal#erisGamesModal [data-play],html body #erisGamesModal#erisGamesModal [data-cashout],html body #erisGamesModal#erisGamesModal [data-controls] button{background-image:var(--pg-primary)!important;color:#302311!important;min-height:42px!important;padding:10px 18px!important;border-radius:11px!important}
 html body #erisGamesModal#erisGamesModal .eg-result{background-image:var(--pg-status)!important;background-size:100% 100%!important;color:var(--pg-ink)!important}
+
+
+/* A single layout for all launcher cards, including late-installed games. */
+html body #games .eg-launcher-grid .eg-launcher-card>.pg-cover{display:block!important;width:100%!important;height:auto!important;aspect-ratio:2/1!important;object-fit:contain!important;object-position:center!important;border-radius:0!important;margin:0!important;padding:0!important;background:var(--pg-panel)!important}
+html body #games .eg-launcher-grid .eg-launcher-card .eg-lc-play{display:flex!important;align-items:center!important;justify-content:space-between!important;text-align:left!important;background-image:var(--pg-secondary)!important;background-size:100% 100%!important;min-height:34px!important}
+
+/* Preserve Dede's existing panorama crop; the card frame still matches all games. */
+html body #games .eg-launcher-grid .eg-launcher-card[data-game="dede"]>.pg-cover{object-fit:cover!important;object-position:right center!important}

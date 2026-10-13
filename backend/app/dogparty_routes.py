@@ -12,13 +12,15 @@ from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
 from .dogparty_engine import spin,CONFIG,KEYS,PAY,CAP,LINES
 
+from .slot_bonus_buy import BUY,purchase,hasan_buy_spin
+
 router=APIRouter(prefix='/v1/games/dogparty',tags=['dogparty'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
     round_id:str|None=Field(default=None,max_length=64)
     sequence:StrictInt=Field(default=0,ge=0)
     stake:StrictInt=Field(default=50,ge=1,le=10000)
-    action:str=Field(default='spin',pattern='^spin$')
+    action:str=Field(default='spin',pattern='^(spin|buy)$')
     class Config:extra='forbid'
 
 def wallet_id(uid):return str(uuid5(NAMESPACE_URL,'eris:dede:fraction:'+str(uid)))
@@ -33,7 +35,7 @@ def public_state(row,state,balance):
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Dog Party','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'max_win':6750,'bonus_spins':[9,27],'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['rtpStatus'],'wild_rule':'Kazanan çizginin 2× ve 3× Wild değerleri toplanır.','scatter_reels':[1,3,5],'wild_reels':[2,3,4]}
+        return {'name':'Dog Party','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':BUY['dogparty']['price'],'buy_spins':[9,27],'buy_profile':BUY['dogparty']['profile'],'max_win':6750,'bonus_spins':[9,27],'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['rtpStatus'],'wild_rule':'Kazanan çizginin 2× ve 3× Wild değerleri toplanır.','scatter_reels':[1,3,5],'wild_reels':[2,3,4]}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -74,15 +76,18 @@ def register_auth(current_user):
             if payload.sequence!=0:raise HTTPException(409,'Başlangıç sırası geçersiz')
             existing=db.scalar(select(GameRound.id).where(GameRound.user_id==user.id,GameRound.game_type=='dogparty',GameRound.status=='open').limit(1))
             if existing:raise HTTPException(409,'Önce açık Dog Party bonusunu tamamla')
-            stake=payload.stake;charge_cents=stake*100
+            stake=payload.stake;charge_cents=stake*(BUY['dogparty']['price']*100 if payload.action=='buy' else 100)
             charge=charge_cents/100;carry=fraction(db,user.id);available=locked.lidya*100+carry
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
-            state={'version':CONFIG['version'],'sequence':0,'remaining':0,'sticky':{},'awarded':0,'wheel':[],'stake':stake,'total_payout':0,'total_hundredths':0}
+            state={'version':CONFIG['version'],'entry':payload.action,'buy_profile':BUY['dogparty']['profile'] if payload.action=='buy' else None,'sequence':0,'remaining':0,'sticky':{},'awarded':0,'wheel':[],'stake':stake,'total_payout':0,'total_hundredths':0}
             row=GameRound(id=rid,user_id=user.id,game_type='dogparty',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
-            db.add(GameBet(round_id=rid,user_id=user.id,choice='spin',amount=charged_whole,payout=0))
-            result=spin()
-            state['remaining']=result['bonusSpins'];state['awarded']=result['bonusSpins'];state['wheel']=result['wheel']
+            db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
+            if payload.action=='buy':state['remaining'],result=purchase('dogparty')
+            else:
+                result=spin()
+                state['remaining']=result['bonusSpins']
+            state['awarded']=state['remaining'];state['wheel']=result['wheel']
         payout_cents=0 if result is None else result['payoutHundredths']*stake
         payout=payout_cents/100;previous_lidya=locked.lidya
         locked.lidya,carry=divmod(locked.lidya*100+carry+payout_cents,100)
