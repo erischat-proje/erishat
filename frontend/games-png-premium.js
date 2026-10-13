@@ -2,7 +2,8 @@
 'use strict';
 const base=new URL('./assets/lidya-games-png/',document.currentScript.src);
 const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
-const url=key=>new URL(theme()+'/scene-'+key+'.png',base).href;
+const custom={seker:new URL('../lidya-seker/menu-cover-v2.png',base).href,balikci:new URL('../lidya-balikci/menu-cover.png',base).href};
+const url=key=>custom[key]||new URL(theme()+'/scene-'+key+'.png',base).href;
 function update(){
  const title=document.querySelector('#games>.title');if(title){title.textContent='Oyunlar';title.style.setProperty('--pg-header','url("'+url('header')+'")');}
  for(const button of document.querySelectorAll('.eg-launcher-card[data-game]')){
