@@ -51,3 +51,19 @@ html body #games .dd-launcher-card:focus-visible{outline:3px solid #b99246;outli
 @media(orientation:landscape) and (max-height:500px){#erisDedeModal .dd-shell{max-width:1100px;grid-template-columns:minmax(0,1fr) 230px;grid-template-rows:34px 52px 34px minmax(0,1fr) 24px;gap:4px 10px}#erisDedeModal .dd-top{grid-column:1/-1}#erisDedeModal .dd-hero{grid-column:2;grid-row:2/4}#erisDedeModal .dd-meters{grid-column:1;grid-row:2}#erisDedeModal .dd-stage{grid-column:1;grid-row:3/5}#erisDedeModal .dd-status{grid-column:1;grid-row:5}#erisDedeModal .dd-controls{grid-column:2;grid-row:4/6;align-content:center}#erisDedeModal .dd-hero p{display:none}}
 @media(prefers-reduced-motion:reduce){#erisDedeModal .dd-actor{animation:none}#erisDedeModal .dd-banner strong{animation:none}}
 #erisDedeModal .dd-actor{height:190%;width:43%;bottom:-42px}
+
+/* v3: suspense, matching highlight, brighter burst and orb charge. */
+#erisDedeModal .dd-waiting .dd-cell img{animation:ddAwait .32s ease-in-out infinite alternate}
+#erisDedeModal .dd-ready{z-index:2;outline:2px solid #f3c658;box-shadow:0 0 12px #f0bd65a0;animation:ddMatch .23s ease-out}
+#erisDedeModal .dd-fragment{position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:2px;background:#ffe78f;box-shadow:0 0 6px #ffd15b;pointer-events:none;animation:ddFragment .48s ease-out forwards}
+#erisDedeModal .dd-impact{animation:ddImpact .35s ease-out}
+#erisDedeModal .dd-cell:has(b) img{animation:ddOrbCharge 1.4s ease-in-out infinite}
+#erisDedeModal .dd-hero[data-actor='cast']::before{content:'';position:absolute;left:15%;right:12%;top:28%;height:35%;z-index:3;background:linear-gradient(100deg,transparent,#ffdf7899,#fff5c9);clip-path:polygon(0 70%,45% 38%,38% 18%,100% 0,52% 47%,60% 60%);animation:ddBolt .55s ease-out;pointer-events:none}
+#erisDedeModal[data-phase='count'] [data-total]{color:var(--dd-ink);text-shadow:0 0 9px #daa04466;animation:ddCountGlow .65s ease-out}
+@keyframes ddAwait{to{transform:translateY(3px);filter:blur(1px);opacity:.65}}
+@keyframes ddMatch{50%{transform:scale(1.07);filter:brightness(1.3)}}
+@keyframes ddFragment{to{transform:translate(var(--dx),var(--dy)) rotate(110deg);opacity:0}}
+@keyframes ddImpact{25%{transform:translateX(2px);box-shadow:0 0 16px #f4c768}65%{transform:translateX(-2px)}100%{transform:none}}
+@keyframes ddOrbCharge{50%{filter:drop-shadow(0 0 5px #ecc05c);transform:scale(1.04)}}
+@keyframes ddBolt{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+@keyframes ddCountGlow{50%{transform:scale(1.09)}}
