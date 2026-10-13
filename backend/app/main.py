@@ -367,6 +367,8 @@ register_platform_auth(current_user)
 # ERIS_DEDE_ROUTES_V1
 from . import dede_routes
 app.include_router(dede_routes.register_auth(current_user))
+from . import seker_routes
+app.include_router(seker_routes.register_auth(current_user))
 relationship_routes.register_auth(current_user)
 app.include_router(relationship_routes.router)
 register_family_auth(current_user)
