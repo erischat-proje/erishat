@@ -369,6 +369,8 @@ from . import dede_routes
 app.include_router(dede_routes.register_auth(current_user))
 from . import seker_routes
 app.include_router(seker_routes.register_auth(current_user))
+from . import balikci_routes
+app.include_router(balikci_routes.register_auth(current_user))
 relationship_routes.register_auth(current_user)
 app.include_router(relationship_routes.router)
 register_family_auth(current_user)
