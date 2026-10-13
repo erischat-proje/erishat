@@ -1,0 +1,48 @@
+{
+  "sources": [
+    {
+      "key": "glass",
+      "source": "https://freesound.org/people/qubodup/sounds/189318/",
+      "preview": "https://cdn.freesound.org/previews/189/189318_71257-hq.mp3",
+      "bytes": 1123554,
+      "license": "CC0"
+    },
+    {
+      "key": "coin",
+      "source": "https://freesound.org/people/doudar41/sounds/573342/",
+      "preview": "https://cdn.freesound.org/previews/573/573342_2393492-hq.mp3",
+      "bytes": 12159,
+      "license": "CC0"
+    },
+    {
+      "key": "whoosh",
+      "source": "https://freesound.org/people/sfx4animation/sounds/432244/",
+      "preview": "https://cdn.freesound.org/previews/432/432244_5102575-hq.mp3",
+      "bytes": 90836,
+      "license": "CC0"
+    },
+    {
+      "key": "thunder",
+      "source": "https://freesound.org/people/AyaDrevis/sounds/652690/",
+      "preview": "https://cdn.freesound.org/previews/652/652690_14225658-hq.mp3",
+      "bytes": 501600,
+      "license": "CC0"
+    },
+    {
+      "key": "break",
+      "source": "https://freesound.org/people/reg7783/sounds/204185/",
+      "license": "CC0"
+    }
+  ],
+  "processing": "Publicly available high-quality CC0 previews. Trim, fade, peak adjustment, glass-recording pitch/delay layering. No original casino recordings used.",
+  "clips": {
+    "spin": 0.75,
+    "land": 0.35,
+    "burst": 0.75,
+    "collect": 0.6,
+    "thunder": 2.1,
+    "payout": 1.05,
+    "win": 1.2,
+    "bonus": 1.8
+  }
+}
