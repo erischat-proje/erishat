@@ -53,6 +53,7 @@ def fixture():
     for name,attrs in [('db',{'get_db':get_db}),('models',{'User':User}),('platform_models',{'GameRound':GameRound,'GameBet':GameBet,'GamePlay':GamePlay}),('moderation',{'require_feature':lambda *_:None})]:
         m=types.ModuleType('balikci_test_app.'+name);m.__dict__.update(attrs);sys.modules[m.__name__]=m
     module('balikci_test_app.balikci_engine_v1',ROOT/'backend/app/balikci_engine_v1.py')
+    module('balikci_test_app.slot_bonus_buy',ROOT/'backend/app/slot_bonus_buy.py')
     eng=module('balikci_test_app.balikci_engine',ROOT/'backend/app/balikci_engine.py');routes=module('balikci_test_app.balikci_routes',ROOT/'backend/app/balikci_routes.py')
     with sessions() as s:s.add_all([User(id='a',lidya=100000),User(id='b',lidya=5000)]);s.commit()
     identity={'id':'a'}
@@ -81,7 +82,7 @@ def test_rules_strict_validation(fixture):
     c,*_=fixture
     rules=c.get('/v1/games/balikci/rules').json()
     assert rules['name']=='Balıkçı Hasan' and len(rules['lines'])==10 and rules['max_win']==2100
-    for kw in [{'stake':0},{'stake':10001},{'stake':True},{'stake':20.0},{'ante':False},{'sequence':False},{'action':'buy'},{'payout':999},{'request_id':'not-a-uuid'}]:assert post(c,**kw).status_code==422
+    for kw in [{'stake':0},{'stake':10001},{'stake':True},{'stake':20.0},{'ante':False},{'sequence':False},{'action':'invalid'},{'payout':999},{'request_id':'not-a-uuid'}]:assert post(c,**kw).status_code==422
 
 def test_wallet_paid_replay_and_fraction(fixture):
     c,s,r,e,_=fixture
@@ -297,3 +298,37 @@ def test_money_and_bonus_fish_never_fill_hasan_meter(fixture):
     board=background();board[0]={'s':11};board[14]={'s':9,'v':2}
     x=e.spin(bonus=True,collected=3,forced_board=board,rng=random.Random(9).random)
     assert len(x['fishermen'])==1 and x['collected']==4 and x['extraSpins']==10
+
+
+def test_bonus_buy_exact_charge_and_resume(fixture):
+ c,s,r,e,identity=fixture
+ path='/v1/games/balikci/spin';payload={'request_id':str(uuid4()),'stake':50,'action':'buy'}
+ first=c.post(path,json=payload);assert first.status_code==200,first.text
+ a=first.json();assert a['charge']==5000 and a['payout']==0 and a['balance']==95000 and not a['state']['finished']
+ assert c.post(path,json=payload).json()['replayed']
+ with s() as db:assert db.get(User,'a').lidya==95000 and db.scalar(select(GameBet)).choice=='buy'
+ assert post(c,action='buy').status_code==409
+ assert post(c,action='buy',round_id=a['state']['round_id'],sequence=a['state']['sequence'],stake=50).status_code==409
+ resumed=post(c,round_id=a['state']['round_id'],sequence=a['state']['sequence'],stake=50).json();assert resumed['charge']==0
+ replay=c.post(path,json=payload).json();assert replay['replayed'] and replay['balance']==resumed['balance']
+ if 'collected' in a['state']:assert a['state']['remaining']==10 and a['state']['collected']==0 and a['state']['multiplier']==1
+ else:assert len(a['result']['wheel'])==9 and a['state']['remaining']==sum(a['result']['wheel']) and a['state']['sticky']=={}
+
+def test_buy_insufficient_balance_and_payload_injection(fixture):
+ c,s,r,e,_=fixture
+ with s() as db:u=db.get(User,'a');u.lidya=200;db.commit()
+ assert post(c,action='buy').status_code==400
+ with s() as db:assert db.get(User,'a').lidya==200 and not list(db.scalars(select(GameBet)))
+ for override in [{'price':1},{'free_spins':27},{'buy_profile':'hack'}]:assert post(c,action='buy',**override).status_code==422
+
+def test_buy_rng_failure_rollback(fixture):
+ c,s,r,e,_=fixture;r.purchase=lambda *_:(_ for _ in ()).throw(RuntimeError('purchase test'))
+ with pytest.raises(RuntimeError):post(c,action='buy')
+ with s() as db:assert db.get(User,'a').lidya==100000 and not list(db.scalars(select(GameBet)))
+
+def test_purchased_hasan_uses_separate_profile(fixture):
+ c,s,r,e,_=fixture;a=post(c,action='buy').json()['state'];calls=[];native=e.spin
+ def capture(**kw):calls.append(kw.get('config'));return native(**kw)
+ e.spin=capture
+ assert post(c,round_id=a['round_id'],sequence=a['sequence']).status_code==200
+ assert calls[-1]['wildCounts']==[6900,2750,300,48,2] and e.CONFIG['wildCounts']==[7500,2150,300,48,2]

@@ -12,13 +12,15 @@ from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
 from .balikci_engine import spin,CONFIG,KEYS,PAY,CAP,LINES,LEVELS
 
+from .slot_bonus_buy import BUY,purchase,hasan_buy_spin
+
 router=APIRouter(prefix='/v1/games/balikci',tags=['balikci'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
     round_id:str|None=Field(default=None,max_length=64)
     sequence:StrictInt=Field(default=0,ge=0)
     stake:StrictInt=Field(default=50,ge=1,le=10000)
-    action:str=Field(default='spin',pattern='^spin$')
+    action:str=Field(default='spin',pattern='^(spin|buy)$')
     class Config:extra='forbid'
 
 def wallet_id(uid):return str(uuid5(NAMESPACE_URL,'eris:dede:fraction:'+str(uid)))
@@ -38,7 +40,7 @@ def register_auth(current_user):
         if legacy:
             from .balikci_engine_v1 import CONFIG as cfg,PAY as pay
         else:cfg,pay=CONFIG,PAY
-        return {'name':'Balıkçı Hasan','version':cfg['version'],'legacy':legacy,'symbols':KEYS,'paytable':[[v/100 for v in r] for r in pay],'lines':LINES,'max_win':2100,'bonus_spins':[10,15,20],'retrigger_spins':10,'levels':LEVELS,'fish_values':cfg['fishValues'],'target_rtp':cfg.get('targetRtp',.9671),'rtp_status':cfg.get('rtpStatus','calibration-pending'),'symbolRoles':{'moneyFish':9,'bonusFish':10,'hasan':11}}
+        return {'name':'Balıkçı Hasan','version':cfg['version'],'legacy':legacy,'symbols':KEYS,'paytable':[[v/100 for v in r] for r in pay],'lines':LINES,'bonus_cost':BUY['balikci']['price'],'buy_spins':10,'buy_profile':BUY['balikci']['profile'],'max_win':2100,'bonus_spins':[10,15,20],'retrigger_spins':10,'levels':LEVELS,'fish_values':cfg['fishValues'],'target_rtp':cfg.get('targetRtp',.9671),'rtp_status':cfg.get('rtpStatus','calibration-pending'),'symbolRoles':{'moneyFish':9,'bonusFish':10,'hasan':11}}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -72,22 +74,24 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,collected=state['collected'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
+            result=(hasan_buy_spin if state.get('entry')=='buy' else spin)(bonus=True,collected=state['collected'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
             state['collected']=result['collected'];state['remaining']+=result['extraSpins']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
             if payload.sequence!=0:raise HTTPException(409,'Başlangıç sırası geçersiz')
             existing=db.scalar(select(GameRound.id).where(GameRound.user_id==user.id,GameRound.game_type=='balikci',GameRound.status=='open').limit(1))
             if existing:raise HTTPException(409,'Önce açık Balıkçı Hasan bonusunu tamamla')
-            stake=payload.stake;charge_cents=stake*100
+            stake=payload.stake;charge_cents=stake*(BUY['balikci']['price']*100 if payload.action=='buy' else 100)
             charge=charge_cents/100;carry=fraction(db,user.id);available=locked.lidya*100+carry
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
-            state={'version':CONFIG['version'],'sequence':0,'remaining':0,'collected':0,'stake':stake,'total_payout':0,'total_hundredths':0}
+            state={'version':CONFIG['version'],'entry':payload.action,'buy_profile':BUY['balikci']['profile'] if payload.action=='buy' else None,'sequence':0,'remaining':0,'collected':0,'stake':stake,'total_payout':0,'total_hundredths':0}
             row=GameRound(id=rid,user_id=user.id,game_type='balikci',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
-            db.add(GameBet(round_id=rid,user_id=user.id,choice='spin',amount=charged_whole,payout=0))
-            result=spin()
-            state['remaining']=result['bonusSpins']
+            db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
+            if payload.action=='buy':state['remaining'],result=purchase('balikci')
+            else:
+                result=spin()
+                state['remaining']=result['bonusSpins']
         payout_cents=0 if result is None else result['payoutHundredths']*stake
         payout=payout_cents/100;previous_lidya=locked.lidya
         locked.lidya,carry=divmod(locked.lidya*100+carry+payout_cents,100)

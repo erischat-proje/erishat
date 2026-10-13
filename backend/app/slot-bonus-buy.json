@@ -1,0 +1,25 @@
+{
+  "version": "bonus-buy-v1",
+  "balikci": {
+    "price": 100,
+    "spins": 10,
+    "wildCounts": [
+      6900,
+      2750,
+      300,
+      48,
+      2
+    ],
+    "profile": "hasan-buy-v1"
+  },
+  "dogparty": {
+    "price": 100,
+    "wheelWeights": [
+      0.6595482577904477,
+      0.24045174220955232,
+      0.1
+    ],
+    "profile": "dogparty-buy-v1",
+    "expectedUncappedRtp": 0.965099999977798
+  }
+}

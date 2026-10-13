@@ -1,0 +1,33 @@
+{
+  "game": "dogparty",
+  "profile": "dogparty-buy-v1",
+  "price": 100,
+  "samples": 100000,
+  "seed": 404849,
+  "rtp": 0.9612246849999807,
+  "ci95": [
+    0.9521006447355117,
+    0.9703487252644497
+  ],
+  "freeSpins": 1294635,
+  "initialSpinsDistribution": {
+    "12": 19001,
+    "13": 19221,
+    "15": 10627,
+    "10": 7812,
+    "14": 15701,
+    "16": 5924,
+    "11": 14518,
+    "17": 2855,
+    "19": 429,
+    "9": 2504,
+    "18": 1254,
+    "20": 111,
+    "21": 33,
+    "22": 8,
+    "23": 2
+  },
+  "capCount": 0,
+  "maxObservedX": 2986.85,
+  "note": "Independent purchase-mode simulation; target is not certified RTP."
+}
