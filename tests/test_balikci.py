@@ -52,6 +52,7 @@ def fixture():
         with sessions() as s:yield s
     for name,attrs in [('db',{'get_db':get_db}),('models',{'User':User}),('platform_models',{'GameRound':GameRound,'GameBet':GameBet,'GamePlay':GamePlay}),('moderation',{'require_feature':lambda *_:None})]:
         m=types.ModuleType('balikci_test_app.'+name);m.__dict__.update(attrs);sys.modules[m.__name__]=m
+    module('balikci_test_app.balikci_engine_v1',ROOT/'backend/app/balikci_engine_v1.py')
     eng=module('balikci_test_app.balikci_engine',ROOT/'backend/app/balikci_engine.py');routes=module('balikci_test_app.balikci_routes',ROOT/'backend/app/balikci_routes.py')
     with sessions() as s:s.add_all([User(id='a',lidya=100000),User(id='b',lidya=5000)]);s.commit()
     identity={'id':'a'}
@@ -216,3 +217,83 @@ def test_all_thresholds_crossed_once(fixture):
     for i in range(10):board[i]={'s':11}
     x=e.spin(bonus=True,collected=3,forced_board=board,rng=random.Random(7).random)
     assert x['thresholds']==[4,8,12] and x['extraSpins']==30 and x['collected']==12
+
+def test_fixed_reel_wrap_and_actual_animation_windows(fixture):
+    c,s,r,e,_=fixture
+    cfg={**e.CONFIG,'baseReels':[list(range(10))*3 for _ in range(5)],'scatters':[1,0,0,0,0,0]}
+    x=e.spin(config=cfg,rng=lambda:.99)
+    assert x['reelStops']==[29]*5
+    assert [c['s'] for c in x['board']]==[9]*5+[0]*5+[1]*5
+    for col in range(5):
+        assert x['reelWindows'][col][-3:]==[x['initialBoard'][row*5+col] for row in range(3)]
+        assert len(x['reelWindows'][col])==15
+
+def test_distinct_special_reels_and_symbol_contract(fixture):
+    c,s,r,e,_=fixture
+    import random
+    for seed in range(100):
+        base=e.spin(config={**e.CONFIG,'scatters':[0,0,0,1,0,0]},rng=random.Random(seed).random)
+        positions=[i for i,cell in enumerate(base['board']) if cell['s']==10]
+        assert len(positions)==3 and len({i%5 for i in positions})==3
+        bonus=e.spin(bonus=True,config={**e.CONFIG,'wildCounts':[0,0,0,0,1]},rng=random.Random(seed).random)
+        assert len(bonus['fishermen'])==4 and len({i%5 for i in bonus['fishermen']})==4
+        assert all(bonus['board'][i]['s']==11 for i in bonus['fishermen'])
+    assert c.get('/v1/games/balikci/rules').json()['symbolRoles']=={'moneyFish':9,'bonusFish':10,'hasan':11}
+
+def test_evaluate_matches_bruteforce_all_symbols(fixture):
+    c,s,r,e,_=fixture
+    import random
+    rng=random.Random(391)
+    for _ in range(1000):
+        board=[{'s':rng.randrange(12)} for _ in range(15)];expected=[]
+        for i,line in enumerate(e.LINES):
+            indices=[line[col]*5+col for col in range(5)];pays=[]
+            for symbol in range(10):
+                count=0
+                for index in indices:
+                    if board[index]['s'] in (symbol,11):count+=1
+                    else:break
+                if count>=3:pays.append(e.PAY[symbol][count-3])
+            if pays:expected.append((i+1,max(pays)))
+        got=e.evaluate(board)
+        assert [(w['line'],w['payHundredths']) for w in got[1]]==expected
+        assert got[0]==sum(p for _,p in expected)
+
+def test_legacy_bonus_dispatch_is_bit_exact(fixture):
+    c,s,r,e,_=fixture
+    import random,sys
+    le=sys.modules['balikci_test_app.balikci_engine_v1']
+    for seed in range(50):
+        a=e.spin(bonus=True,collected=4,rng=random.Random(seed).random,model_version='lidya-balikci-v1')
+        b=le.spin(bonus=True,collected=4,rng=random.Random(seed).random)
+        assert a==b
+    with pytest.raises(ValueError):e.spin(model_version='unsupported-v99')
+
+def test_active_legacy_bonus_keeps_paytable_and_wallet(fixture):
+    c,s,r,e,_=fixture
+    state=trigger(c,r,e)
+    with s() as db:
+        row=db.get(GameRound,state['round_id']);v=json.loads(row.state_data);v['version']='lidya-balikci-v1';v['remaining']=1;row.state_data=json.dumps(v);db.commit()
+    assert c.get('/v1/games/balikci/rules').json()['paytable'][0][0]==.5
+    assert c.get('/v1/games/balikci/rules').json()['legacy']
+    seen=[]
+    def play(**kw):
+        seen.append(kw.get('model_version'));return e.spin(**kw,forced_board=background())
+    r.spin=play
+    a=post(c,round_id=state['round_id'],sequence=1).json()
+    assert seen==['lidya-balikci-v1'] and a['state']['version']=='lidya-balikci-v1' and a['state']['finished']
+    assert a['charge']==0
+    assert c.get('/v1/games/balikci/rules').json()['paytable'][0][0]==.2
+    assert not c.get('/v1/games/balikci/rules').json()['legacy']
+
+def test_money_and_bonus_fish_never_fill_hasan_meter(fixture):
+    c,s,r,e,_=fixture
+    import random
+    for symbol in [9,10]:
+        board=background()
+        for i in range(4):board[i]={'s':symbol,'v':5}
+        x=e.spin(bonus=True,collected=3,forced_board=board,rng=random.Random(9).random)
+        assert x['collected']==3 and x['fishermen']==[] and x['extraSpins']==0 and x['collectionHundredths']==0
+    board=background();board[0]={'s':11};board[14]={'s':9,'v':2}
+    x=e.spin(bonus=True,collected=3,forced_board=board,rng=random.Random(9).random)
+    assert len(x['fishermen'])==1 and x['collected']==4 and x['extraSpins']==10
