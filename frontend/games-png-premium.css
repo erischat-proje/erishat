@@ -36,3 +36,7 @@ html body #games .eg-launcher-grid .eg-launcher-card .eg-lc-play{display:flex!im
 
 /* Preserve Dede's existing panorama crop; the card frame still matches all games. */
 html body #games .eg-launcher-grid .eg-launcher-card[data-game="dede"]>.pg-cover{object-fit:cover!important;object-position:right center!important}
+
+/* Full-bleed artwork uses the same 2:1 frame as the established menu. */
+html body #games .eg-launcher-grid .eg-launcher-card[data-game="prenses"]>.pg-cover,html body #games .eg-launcher-grid .eg-launcher-card[data-game="dogparty"]>.pg-cover,html body #games .eg-launcher-grid .eg-launcher-card[data-game="candy"]>.pg-cover{object-fit:cover!important;object-position:center!important}
+html body #games .pp-launcher-card:before,html body #games .dp-launcher-card:before{display:none!important}
