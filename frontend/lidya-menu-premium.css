@@ -57,3 +57,10 @@ html body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy strong{font-si
 html body #home #realRooms .lm-empty-scene{position:absolute;right:4px;top:4px;bottom:4px;width:24%;opacity:.55;pointer-events:none;z-index:0}
 html body #home #realRooms .lm-empty-scene svg{width:100%;height:100%;display:block;fill:none;stroke:none}
 html body #home #realRooms .ec-discovery-empty>*:not(.lm-empty-scene){position:relative;z-index:1}
+/* Clamp the actual dynamically mounted admin control, not only a test fixture. */
+html body #home .homeMenuItem[data-lm-key="admin"]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;justify-self:stretch!important}
+html body #home .homeMenuItem[data-lm-key="admin"]>.lm-art{box-sizing:border-box!important;min-width:0!important;max-width:100%!important;border:0!important;padding:0!important;margin:0!important}
+html body #home .homeMenuItem[data-lm-key="admin"]>.lm-art>svg{max-width:100%!important;min-width:0!important;overflow:hidden!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]{grid-column:1/-1!important;min-height:44px!important;background:none!important;border:0!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]>.lm-art{inset:0!important;width:100%!important;height:100%!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]>.homeMenuCopy{clip-path:inset(50%)!important;width:1px!important;height:1px!important;padding:0!important;overflow:hidden!important;white-space:nowrap!important;inset:0!important;display:block!important;background:none!important}
