@@ -55,7 +55,7 @@
                 containerEl.dataset.hasClickListener = "true";
                 containerEl.addEventListener("click", (e) => {
                     const card = e.target.closest(".eg-launcher-card");
-                    if (!card) return;
+                    if (!card || !ALL_GAMES.some(game => game.id === card.dataset.game)) return;
                     const gameId = card.dataset.game;
                     if (gameId && typeof window.ErisChatGames === 'object' && typeof window.ErisChatGames.open === 'function') {
                         window.ErisChatGames.open(document.getElementById('erisRoomSurface')?.classList.contains('show') ? 'room' : 'main', window.ErisCurrentRoomId || window.currentRoomId || null, gameId);

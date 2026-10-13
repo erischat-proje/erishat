@@ -371,6 +371,8 @@ from . import prenses_routes
 app.include_router(prenses_routes.register_auth(current_user))
 from . import dogparty_routes
 app.include_router(dogparty_routes.register_auth(current_user))
+from . import candy_routes
+app.include_router(candy_routes.register_auth(current_user))
 from . import seker_routes
 app.include_router(seker_routes.register_auth(current_user))
 from . import balikci_routes

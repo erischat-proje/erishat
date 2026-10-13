@@ -2,7 +2,7 @@
 'use strict';
 const base=new URL('./assets/lidya-games-png/',document.currentScript.src);
 const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
-const custom={prenses:new URL('../lidya-prenses/menu-cover.png',base).href,dogparty:new URL('../lidya-dogparty/menu-cover.png',base).href,seker:new URL('../lidya-seker/menu-cover-v2.png',base).href,balikci:new URL('../lidya-balikci/menu-cover.png',base).href};
+const custom={candy:new URL('../lidya-candy/menu-cover.png',base).href,prenses:new URL('../lidya-prenses/menu-cover-wide.png',base).href,dogparty:new URL('../lidya-dogparty/menu-cover-wide.png',base).href,seker:new URL('../lidya-seker/menu-cover-v2.png',base).href,balikci:new URL('../lidya-balikci/menu-cover.png',base).href};
 const url=key=>key==='dede'?new URL('../lidya-dede-png/'+theme()+'/scene.png',base).href:custom[key]||new URL(theme()+'/scene-'+key+'.png',base).href;
 function update(){
  const title=document.querySelector('#games>.title');if(title){title.textContent='Oyunlar';title.style.setProperty('--pg-header','url("'+url('header')+'")');}
