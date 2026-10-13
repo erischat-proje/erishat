@@ -375,6 +375,8 @@ from . import candy_routes
 app.include_router(candy_routes.register_auth(current_user))
 from . import kovboy_routes
 app.include_router(kovboy_routes.register_auth(current_user))
+from . import firavun_routes
+app.include_router(firavun_routes.register_auth(current_user))
 from . import seker_routes
 app.include_router(seker_routes.register_auth(current_user))
 from . import balikci_routes
