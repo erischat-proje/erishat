@@ -1,0 +1,18 @@
+{
+  "samples": 60000,
+  "seed": 873811,
+  "futureBonusMean": 54.541846666666665,
+  "futureBonusMeanCi95": [
+    53.57975808219077,
+    55.50393525114256
+  ],
+  "freeSpins": 1039095,
+  "cappedFeatures": 25,
+  "selectedTenCount": 367,
+  "analyticBaseRtp": 0.4828092712742772,
+  "estimatedCombinedRtp": 0.9654804807138052,
+  "combinedCi95": [
+    0.956966422444107,
+    0.9739945389835034
+  ]
+}

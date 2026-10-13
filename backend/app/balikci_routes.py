@@ -32,8 +32,13 @@ def public_state(row,state,balance):
 
 def register_auth(current_user):
     @router.get('/rules')
-    def rules():
-        return {'name':'Balıkçı Hasan','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'max_win':2100,'bonus_spins':[10,15,20],'retrigger_spins':10,'levels':LEVELS,'fish_values':CONFIG['fishValues'],'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['rtpStatus']}
+    def rules(db:Session=Depends(get_db),user:User=Depends(current_user)):
+        active=db.scalar(select(GameRound).where(GameRound.user_id==user.id,GameRound.game_type=='balikci',GameRound.status=='open').limit(1))
+        legacy=bool(active and unpack(active).get('version')=='lidya-balikci-v1')
+        if legacy:
+            from .balikci_engine_v1 import CONFIG as cfg,PAY as pay
+        else:cfg,pay=CONFIG,PAY
+        return {'name':'Balıkçı Hasan','version':cfg['version'],'legacy':legacy,'symbols':KEYS,'paytable':[[v/100 for v in r] for r in pay],'lines':LINES,'max_win':2100,'bonus_spins':[10,15,20],'retrigger_spins':10,'levels':LEVELS,'fish_values':cfg['fishValues'],'target_rtp':cfg.get('targetRtp',.9671),'rtp_status':cfg.get('rtpStatus','calibration-pending'),'symbolRoles':{'moneyFish':9,'bonusFish':10,'hasan':11}}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -67,7 +72,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,collected=state['collected'],remaining_cap=CAP-state['total_hundredths'])
+            result=spin(bonus=True,collected=state['collected'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
             state['collected']=result['collected'];state['remaining']+=result['extraSpins']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -109,5 +114,3 @@ def register_auth(current_user):
         db.commit()
         return receipt
     return router
-
-
