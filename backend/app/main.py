@@ -369,6 +369,8 @@ from . import dede_routes
 app.include_router(dede_routes.register_auth(current_user))
 from . import prenses_routes
 app.include_router(prenses_routes.register_auth(current_user))
+from . import dogparty_routes
+app.include_router(dogparty_routes.register_auth(current_user))
 from . import seker_routes
 app.include_router(seker_routes.register_auth(current_user))
 from . import balikci_routes
