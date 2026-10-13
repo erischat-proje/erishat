@@ -364,6 +364,9 @@ register_room_auth(
     lambda room_id,user_id,payload: send_room_user_control(room_id,user_id,payload),
 )
 register_platform_auth(current_user)
+# ERIS_DEDE_ROUTES_V1
+from . import dede_routes
+app.include_router(dede_routes.register_auth(current_user))
 relationship_routes.register_auth(current_user)
 app.include_router(relationship_routes.router)
 register_family_auth(current_user)
