@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const games={dede:'ErisGameDede',seker:'ErisGameSeker',balikci:'ErisGameBalikci',prenses:'ErisGamePrenses',dogparty:'ErisGameDogParty',candy:'ErisGameCandy',kovboy:'ErisGameKovboy',firavun:'ErisGameFiravun',bastet:'ErisGameBastet',altin:'ErisGameAltin'};
+const games={dede:'ErisGameDede',seker:'ErisGameSeker',balikci:'ErisGameBalikci',prenses:'ErisGamePrenses',dogparty:'ErisGameDogParty',candy:'ErisGameCandy',kovboy:'ErisGameKovboy',firavun:'ErisGameFiravun',bastet:'ErisGameBastet',altin:'ErisGameAltin',kure:'ErisGameKure'};
 // Route before both inline handlers and the legacy bubbling dispatcher.
 document.addEventListener('click',event=>{
  const card=event.target.closest?.('.eg-launcher-card[data-game],#erisGamesModal .eg-keys button[data-game]');
