@@ -14,7 +14,7 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from . import discovery_live
-from . import wheel_rules, wheel_live_v4
+from . import wheel_rules, wheel_live_v4, crash_final
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
@@ -948,7 +948,7 @@ def register_platform_auth(current_user_dependency):
     # Crash Live — ortak global tur
     CRASH_LIVE_BET_SECONDS = 10
     CRASH_LIVE_RESULT_SECONDS = 5
-    CRASH_LIVE_STAKES = {10,25,50,75,100,250,500,1000}
+    CRASH_LIVE_STAKES = crash_final.STAKES
 
     WHEEL_LIVE_SECONDS = 60
     WHEEL_LOCK_SECONDS = 5
@@ -995,6 +995,8 @@ def register_platform_auth(current_user_dependency):
         )
 
         if row:
+            if row.ends_at.tzinfo is None:
+                row.ends_at = row.ends_at.replace(tzinfo=timezone.utc)
             try:
                 state = json.loads(row.state_data or "{}")
             except Exception:
@@ -1114,6 +1116,10 @@ def register_platform_auth(current_user_dependency):
         }
 
         payload = {
+            "my_id": user.id,
+            "balance": user.lidya,
+            "my_total_bet": sum(int(b.amount or 0) for b in bets),
+            "stakes": list(crash_final.STAKES),
             "round_id": row.id,
             "recent_rounds": recent_rounds,
             "crash_stats": crash_stats,
@@ -1137,49 +1143,16 @@ def register_platform_auth(current_user_dependency):
         return payload
 
     @router.post("/games/crash/live/bet")
-    def crash_live_bet(
-        payload: GameBetCreate,
-        db: Session = Depends(get_db),
-        user: User = Depends(current_user_dependency),
-    ):
-        if payload.amount not in CRASH_LIVE_STAKES:
-            raise HTTPException(status_code=422, detail="Geçersiz bahis miktarı")
-
-        row = _get_crash_live_round(db)
-        now = _crash_live_now()
-
-        if row.status != "open" or now >= row.ends_at:
-            raise HTTPException(status_code=409, detail="Bahis süresi kapandı")
-
-        locked_user = db.scalar(
-            select(User).where(User.id == user.id).with_for_update()
-        )
-        if not locked_user:
-            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-        if payload.amount > locked_user.lidya:
-            raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-
-        locked_user.lidya -= payload.amount
-
-        bet = GameBet(
-            round_id=row.id,
-            user_id=user.id,
-            choice="cashout",
-            amount=payload.amount,
-            payout=0,
-        )
-        db.add(bet)
-        db.flush()
-
-        result = {
-            "ok": True,
-            "round_id": row.id,
-            "bet_id": bet.id,
-            "amount": payload.amount,
-            "balance": locked_user.lidya,
-        }
+    def crash_live_bet(payload: crash_final.CrashBetRequest, db: Session = Depends(get_db),
+                       user: User = Depends(current_user_dependency)):
+        result=crash_final.place_bet(db,user,payload,_get_crash_live_round,_crash_live_now)
         db.commit()
         return result
+
+    @router.get("/games/crash/leaderboard")
+    def crash_leaderboard(period: str = Query('hour',pattern='^(hour|day|week|month)$'),
+                          db: Session = Depends(get_db),user: User = Depends(current_user_dependency)):
+        return crash_final.leaderboard(db,user,period)
 
     @router.post("/games/crash/live/cashout")
     def crash_live_cashout(
@@ -1235,6 +1208,7 @@ def register_platform_auth(current_user_dependency):
         payout = int(int(bet.amount) * multiplier)
         bet.payout = payout
         bet.choice = f"x{multiplier:.2f}"
+        crash_final.record_cashout(db,bet,_crash_live_now())
 
         locked_user = db.scalar(
             select(User).where(User.id == user.id).with_for_update()
@@ -1259,10 +1233,13 @@ def register_platform_auth(current_user_dependency):
     # ERIS_CRASH_CASHOUT_ALL_V1
     @router.post("/games/crash/live/cashout-all")
     def crash_live_cashout_all(
+        payload: crash_final.CrashCashoutAllRequest | None = None,
         db: Session = Depends(get_db),
         user: User = Depends(current_user_dependency),
     ):
         row = _get_crash_live_round(db)
+        if payload and payload.round_id != row.id:
+            raise HTTPException(status_code=409, detail="Tur değişti; güncel turu kontrol et.")
         if row.status != "running":
             raise HTTPException(status_code=409, detail="Çekim süresi kapalı")
 
@@ -1305,6 +1282,7 @@ def register_platform_auth(current_user_dependency):
             payout = int(int(bet.amount) * multiplier)
             bet.payout = payout
             bet.choice = f"x{multiplier:.2f}"
+            crash_final.record_cashout(db,bet,_crash_live_now())
             total_payout += payout
 
         locked_user.lidya += total_payout

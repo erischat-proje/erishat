@@ -192,6 +192,7 @@
     }
 
     function open(scope = 'main', roomId = null, selected = null) {
+        if(selected==='crash'&&window.LidyaCrashLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaCrashLive.open();}
         if((!selected||selected==='wheel')&&window.LidyaWheelLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaWheelLive.open();}
         injectStyles();
         // ERIS_GAME_ISOLATION_V1
@@ -648,6 +649,7 @@ const close = () => {
         let blackjackRestoreFailed = false;
         let activeBlackjackRoundId = null;
         const loadGameModule = key => {
+            if(key==='crash'&&window.LidyaCrashLive){if(game==='blackjack'&&(activeBlackjackRoundId||blackjackRestoreBusy)){modal.querySelector('.eg-result').textContent='Önce aktif Blackjack elini tamamla.';return;}close();window.LidyaCrashLive.open();return;}
             if(key==='wheel'&&window.LidyaWheelLive){close();window.LidyaWheelLive.open();return;}
             /* ERIS_BJ_SWITCH_GUARD_V2 */ if ((activeBlackjackRoundId || blackjackRestoreBusy) && game === 'blackjack' && key !== 'blackjack') {
                 modal.querySelector('.eg-result').textContent =
