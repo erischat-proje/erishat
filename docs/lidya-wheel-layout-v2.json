@@ -1,0 +1,19 @@
+{
+  "passed": [
+    "320×640 light: bets, winner credit display, ranking, profile PNG, close cleanup",
+    "320×640 dark: bets, winner credit display, ranking, profile PNG, close cleanup",
+    "390×844 light: bets, winner credit display, ranking, profile PNG, close cleanup",
+    "390×844 dark: bets, winner credit display, ranking, profile PNG, close cleanup",
+    "540×900 light: bets, winner credit display, ranking, profile PNG, close cleanup",
+    "540×900 dark: bets, winner credit display, ranking, profile PNG, close cleanup",
+    "Lost response retry keeps one request UUID and one debit"
+  ],
+  "errors": [],
+  "layout_checks": [
+    "4 columns, 2 rows",
+    "no bet cards over the wheel",
+    "circular wheel at every tested size",
+    "same application theme tokens",
+    "winner card and slice highlighted"
+  ]
+}
