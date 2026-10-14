@@ -192,6 +192,7 @@
     }
 
     function open(scope = 'main', roomId = null, selected = null) {
+        if((!selected||selected==='wheel')&&window.LidyaWheelLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaWheelLive.open();}
         injectStyles();
         // ERIS_GAME_ISOLATION_V1
         if (modal?._erisCleanup) modal._erisCleanup();
@@ -647,6 +648,7 @@ const close = () => {
         let blackjackRestoreFailed = false;
         let activeBlackjackRoundId = null;
         const loadGameModule = key => {
+            if(key==='wheel'&&window.LidyaWheelLive){close();window.LidyaWheelLive.open();return;}
             /* ERIS_BJ_SWITCH_GUARD_V2 */ if ((activeBlackjackRoundId || blackjackRestoreBusy) && game === 'blackjack' && key !== 'blackjack') {
                 modal.querySelector('.eg-result').textContent =
                     'Önce aktif Blackjack elini tamamla.';
@@ -3301,3 +3303,4 @@ document.head.appendChild(erisWheelResponsive);
 const erisWheelHeaderFix=document.createElement('style');
 erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
 document.head.appendChild(erisWheelHeaderFix);
+
