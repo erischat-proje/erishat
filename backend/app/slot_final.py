@@ -34,8 +34,8 @@ class SlotReceipt(Base):
 
 def state(db,user):
     a=db.get(SlotAccount,user.id)
-    history=db.execute(select(GameRound.result_key,GameRound.state_data).where(GameRound.game_type=='slot',GameRound.user_id==user.id,GameRound.status=='finished').order_by(GameRound.ends_at.desc(),GameRound.id.desc()).limit(12)).all()
-    return dict(my_id=user.id,balance=int(db.scalar(select(User.lidya).where(User.id==user.id))),stakes=STAKES,remaining=a.remaining if a else 0,locked_stake=a.stake if a and a.remaining else None,bonus_spins=BONUS_SPINS,bonus_price_multiplier=BONUS_PRICE_MULTIPLIER,multipliers=MULTIPLIERS,history=[dict(result=r,reels=json.loads(s or '{}').get('reels',[])) for r,s in history])
+    winners=db.execute(select(GameRound.id,User.nickname,User.public_id,GameBet.payout,GameRound.ends_at).join(GameBet,GameBet.round_id==GameRound.id).join(User,User.id==GameBet.user_id).where(GameRound.game_type=='slot',GameRound.status=='finished',GameBet.payout>0,User.is_active.is_(True)).order_by(GameRound.ends_at.desc(),GameRound.id.desc()).limit(10)).all()
+    return dict(my_id=user.id,balance=int(db.scalar(select(User.lidya).where(User.id==user.id))),stakes=STAKES,remaining=a.remaining if a else 0,locked_stake=a.stake if a and a.remaining else None,bonus_spins=BONUS_SPINS,bonus_price_multiplier=BONUS_PRICE_MULTIPLIER,multipliers=MULTIPLIERS,winners=[dict(round_id=rid,nickname=name,public_id=pid,payout=int(payout),ended_at=ended) for rid,name,pid,payout,ended in winners])
 
 def transact(db,user,payload,operation='spin'):
     # Same user row lock serializes wallet spending, bonus progress and UUID retries.
@@ -44,7 +44,7 @@ def transact(db,user,payload,operation='spin'):
     if receipt:
         if (receipt.operation,receipt.amount)!=(operation,payload.amount):raise HTTPException(409,'İstek numarası başka işlemde kullanılmış.')
         out=json.loads(receipt.response);out.update(replayed=True,balance=u.lidya);return out
-    if payload.amount not in STAKES:raise HTTPException(422,'10, 100, 1K, 10K veya 100K bahis seç.')
+    if not 10 <= payload.amount <= 100000 or payload.amount % 10:raise HTTPException(422,'Bahis 10 Lidya katı ve en fazla 100.000 olmalı.')
     a=db.get(SlotAccount,user.id)
     if not a:a=SlotAccount(user_id=user.id,remaining=0,stake=payload.amount);db.add(a)
     if operation=='bonus':
@@ -75,3 +75,4 @@ def leaderboard(db,user,period='hour'):
     rows=db.execute(select(User,scores.c.winnings).join(scores,scores.c.user_id==User.id).where(User.is_active.is_(True)).order_by(scores.c.winnings.desc(),User.public_id.asc()).limit(50)).all()
     mine=db.scalar(select(scores.c.winnings).where(scores.c.user_id==user.id)) or 0
     return dict(game='slot',period=period,timezone='Europe/Istanbul',metric='paid_winnings',starts_at=start,ends_at=end,limit=50,my_winnings=int(mine),items=[dict(rank=i+1,user_id=u.id,public_id=u.public_id,nickname=u.nickname,avatar=u.avatar,avatar_asset=u.avatar_asset,frame_asset=u.frame_asset,winnings=int(n)) for i,(u,n) in enumerate(rows)])
+
