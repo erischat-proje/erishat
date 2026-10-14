@@ -192,6 +192,7 @@
     }
 
     function open(scope = 'main', roomId = null, selected = null) {
+        if(selected==='slot'&&window.LidyaSlotLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaSlotLive.open();}
         if(selected==='crash'&&window.LidyaCrashLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaCrashLive.open();}
         if((!selected||selected==='wheel')&&window.LidyaWheelLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaWheelLive.open();}
         injectStyles();
@@ -649,6 +650,7 @@ const close = () => {
         let blackjackRestoreFailed = false;
         let activeBlackjackRoundId = null;
         const loadGameModule = key => {
+            if(key==='slot'&&window.LidyaSlotLive){if(game==='blackjack'&&(activeBlackjackRoundId||blackjackRestoreBusy)){modal.querySelector('.eg-result').textContent='Önce aktif Blackjack elini tamamla.';return;}close();window.LidyaSlotLive.open();return;}
             if(key==='crash'&&window.LidyaCrashLive){if(game==='blackjack'&&(activeBlackjackRoundId||blackjackRestoreBusy)){modal.querySelector('.eg-result').textContent='Önce aktif Blackjack elini tamamla.';return;}close();window.LidyaCrashLive.open();return;}
             if(key==='wheel'&&window.LidyaWheelLive){close();window.LidyaWheelLive.open();return;}
             /* ERIS_BJ_SWITCH_GUARD_V2 */ if ((activeBlackjackRoundId || blackjackRestoreBusy) && game === 'blackjack' && key !== 'blackjack') {
@@ -2079,7 +2081,7 @@ const close = () => {
         bjStakeBar.innerHTML = `
             <button type="button" data-bj-minus aria-label="Bahsi azalt">−</button>
             <div class="eg-bj-stake-display">
-                <small>SEÇİLEN BAHİS</small>
+                <small>TOPLAM BAHİS</small>
                 <strong data-bj-amount>100 Lidya</strong>
             </div>
             <button type="button" data-bj-plus aria-label="Bahsi artır">+</button>
@@ -2087,7 +2089,7 @@ const close = () => {
         bjStakePresets?.parentElement?.insertBefore(bjStakeBar, bjStakePresets);
 
         const bjRefreshAmount = () => {
-            const amount = Math.max(0, Math.min(100000,
+            const amount = Math.max(0, Math.min(858993450,
                 Math.trunc(Number(bjStakeInput?.value) || 0)));
             const display = modal.querySelector('[data-bj-amount]');
             if (display) display.textContent =
@@ -2107,7 +2109,7 @@ const close = () => {
                     activeBlackjackRoundId || blackjackRestoreBusy) return;
                 const current = Number(bjStakeInput.value) || 0;
                 bjStakeInput.value = String(Math.max(0,
-                    Math.min(100000, current + delta)));
+                    Math.min(858993450, current + delta)));
                 bjStakeInput.dispatchEvent(new Event('input', {bubbles:true}));
                 bjRefreshAmount();
             };
@@ -2125,8 +2127,8 @@ const close = () => {
             if (bjFinalConfigured !== enabled) {
                 bjFinalConfigured = enabled;
                 const input = modal.querySelector('[data-stake]');
-                input.max = enabled ? '100000' : '10000';
-                if (enabled && !bjFinalStakes.includes(Number(input.value))) input.value = '100';
+                input.max = enabled ? '858993450' : '10000';
+                if (enabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)%10)) input.value = '100';
                 modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
                     if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
                     const value = enabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
@@ -2296,7 +2298,7 @@ const close = () => {
 
 
         // ERIS_BJ_FINAL_FLOW_V2
-        let bjStep = 10;
+        let bjStep = 100;
         let bjResetTimer = null;
         const bjPlay = modal.querySelector('[data-play]');
         if (bjPlay) bjPlay.textContent = 'ELE BAŞLA';
@@ -2368,8 +2370,7 @@ const close = () => {
                 if (game !== 'blackjack' || activeBlackjackRoundId ||
                     blackjackRestoreBusy || blackjackRestoreFailed) return;
                 const current = Number(bjStakeInput.value) || 0;
-                const index = Math.max(0, bjFinalStakes.indexOf(current));
-                const amount = bjFinalStakes[Math.max(0,Math.min(4,index+direction))];
+                const amount = Math.max(10,Math.min(858993450,current+direction*bjStep));
                 bjStakeInput.value = String(amount);
                 bjStakeInput.dispatchEvent(
                     new Event('input', {bubbles:true}));
@@ -2392,7 +2393,7 @@ const close = () => {
                 b.disabled = locked;
                 b.classList.toggle(
                     'bj-selected',
-                    active && b.dataset.stakeValue === input?.value
+                    active && b.dataset.stakeValue === String(bjStep)
                 );
             });
         };
@@ -2953,7 +2954,7 @@ const close = () => {
                 const startedGame = game;
                 const startedStage = stage;
                 const stake = Number(modal.querySelector('[data-stake]').value);
-                if (game === 'blackjack' ? ![10,100,1000,10000,100000].includes(stake) : (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000)) throw new Error(game === 'blackjack' ? '10, 100, 1K, 10K veya 100K bahis seç.' : 'Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
+                if (game === 'blackjack' ? !(Number.isSafeInteger(stake)&&stake>=10&&stake<=858993450&&stake%10===0) : (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000)) throw new Error(game === 'blackjack' ? 'Toplam bahis 10 Lidya katı olmalı.' : 'Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
                 gameModules[game]()?.render?.(stage);
                 // Oda modu yalnızca gerçekten açık olan odayı kullanır.
                 const activeRoom = document.getElementById('erisRoomSurface')?.classList.contains('show');
