@@ -1,0 +1,5 @@
+Built-in imagegen · transparent_background=true
+
+Use case: stylized-concept. Asset type: finished premium mobile app PNG menu icon, one isolated object, transparent alpha background. Create a luxurious ancient Lydia / Sardis gold leaderboard emblem for ErisChat's Lidya-themed profile menu and wheel leaderboard button: elegant polished solid gold three-step winner podium, central gold laurel wreath framing a small winged lion coin, tiny royal crown on highest podium. Restrained antique gold and champagne highlights, detailed dimensional jewelry-like craft, realistic elegant 3D illustration, front three-quarter view, clear silhouette at 48px, centered square composition, generous transparent padding, no lettering, no numerals, no background plate, no purple, no scene, no watermark. All object edges entirely within image. Single icon only.
+
+Project asset: frontend/assets/lidya-wheel/leaderboard-v1.png. Alpha channel verified 0..255. Existing symbol PNG assets are reused.

@@ -7,13 +7,12 @@
     {key:'star',    icon:'★',  name:'Yıldız'},
     {key:'diamond', icon:'◆',  name:'Elmas'},
     {key:'crown',   icon:'♛',  name:'Taç'},
-    {key:'gift',    icon:'🎁', name:'Hediye'},
     {key:'fire',    icon:'🔥', name:'Alev'},
     {key:'gem',     icon:'💠', name:'Kristal'},
     {key:'jackpot', icon:'🏆', name:'Jackpot'}
   ];
 
-  // Muted enamel and engraved bronze; result keys remain the server's nine symbols.
+  // Muted enamel and engraved bronze; result keys remain the server's eight symbols.
   const PALETTES = {
     light: ['#713d43','#80424c','#55513a','#345467','#74602d','#5b485b','#874729','#36615c','#6f5528'],
     dark: ['#43282f','#512c36','#343728','#263e4c','#493c24','#39303f','#573522','#28433e','#4b3821']
@@ -48,6 +47,15 @@
   const WheelGame = {
     options: SYMBOLS.map(x => [x.key, `${x.icon} ${x.name}`]),
     symbols: SYMBOLS,
+    configure(keys) {
+      const names={rose:'Gül',heart:'Kalp',star:'Yıldız',diamond:'Elmas',crown:'Taç',gift:'Hediye',fire:'Alev',gem:'Kristal',jackpot:'Jackpot'};
+      if(keys?.length){SYMBOLS.splice(0,SYMBOLS.length,...keys.map(key=>({key,name:names[key]||key})));this.options=SYMBOLS.map(x=>[x.key,x.name]);}
+    },
+    cancel() {
+      if(this._frame)cancelAnimationFrame(this._frame);
+      this._frame=null;
+      const done=this._resolve;this._resolve=null;if(done)done();
+    },
     symbolMarkup(key) {
       return window.LidyaGameArt.markup(key);
     },
@@ -64,7 +72,7 @@
             <div class="eris-wheel-pointer">
               <i></i>
             </div>
-            <canvas id="proWheelCanvas" width="640" height="640" role="img" aria-label="Dokuz sembollü Lidya Şans Çarkı"></canvas>
+            <canvas id="proWheelCanvas" width="640" height="640" role="img" aria-label="Sekiz sembollü Lidya Şans Çarkı"></canvas>
             <div class="eris-wheel-hub">
               <span>LİDYA</span>
               <b>${window.LidyaGameArt.markup("coin")}</b>
@@ -72,7 +80,7 @@
           </div>
 
           <div class="eris-wheel-note">
-            Gül 1.5× · Kalp 2× · Yıldız 2.5× · Elmas 3× · Taç 3.5× · Hediye 4× · Alev 4.5× · Kristal 5× · Jackpot 6×
+            Gül 5× · Kalp 5× · Yıldız 5× · Elmas 5× · Taç 15× · Alev 25× · Kristal 45× · Jackpot 60×
           </div>
         </div>
       `;
@@ -162,24 +170,29 @@
       const finalAngle=currentRotation+(360*7)+delta;
       const start=currentRotation;
       const started=performance.now();
-      const duration=4700;
+      let tick=-1;
+      this.cancel();
+      const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?0:(data?.duration_ms??4200);
 
       return new Promise(resolve=>{
+        this._resolve=resolve;
         const frame=now=>{
-          const p=Math.min((now-started)/duration,1);
+          if(!container.isConnected){this.cancel();return;}
+          const p=duration?Math.min((now-started)/duration,1):1;
           const eased=1-Math.pow(1-p,4);
           const angle=start+(finalAngle-start)*eased;
           this.drawWheel(angle);
+          const nextTick=Math.floor(angle/sliceDeg);if(duration&&nextTick!==tick){tick=nextTick;data?.onTick?.();}
 
           if(p<1){
-            requestAnimationFrame(frame);
+            this._frame=requestAnimationFrame(frame);
           }else{
             currentRotation=finalAngle%360;
             this.drawWheel(currentRotation);
-            resolve();
+            this._resolve=null;this._frame=null;resolve();
           }
         };
-        requestAnimationFrame(frame);
+        this._frame=requestAnimationFrame(frame);
       });
     }
   };
@@ -187,3 +200,4 @@
   window.addEventListener('erischat:theme',()=>WheelGame.drawWheel(lastDrawnRotation));
   window.ErisGameWheel=WheelGame;
 })();
+
