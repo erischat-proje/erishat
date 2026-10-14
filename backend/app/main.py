@@ -377,6 +377,12 @@ from . import kovboy_routes
 app.include_router(kovboy_routes.register_auth(current_user))
 from . import firavun_routes
 app.include_router(firavun_routes.register_auth(current_user))
+from . import bastet_routes
+app.include_router(bastet_routes.register_auth(current_user))
+
+from . import altin_routes
+app.include_router(altin_routes.register_auth(current_user))
+
 from . import seker_routes
 app.include_router(seker_routes.register_auth(current_user))
 from . import balikci_routes
@@ -2586,6 +2592,3 @@ def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
 if static_dir.exists():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
-
-from . import bastet_routes
-app.include_router(bastet_routes.register_auth(current_user))
