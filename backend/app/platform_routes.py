@@ -29,6 +29,7 @@ from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
 from .oyunlar.blackjack import available_actions, display_state
+from . import blackjack_final
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -818,6 +819,10 @@ def register_platform_auth(current_user_dependency):
 
 
     # ERIS_BJ_ACTIVE_ROUND_V1
+    @router.get("/games/blackjack/leaderboard")
+    def blackjack_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return blackjack_final.leaderboard(db, user, period)
+
     @router.get("/games/blackjack/active")
     def blackjack_active_round(
         db: Session = Depends(get_db),
@@ -940,7 +945,7 @@ def register_platform_auth(current_user_dependency):
                 bet.payout = game_payout("blackjack", None, result, bet.amount, state)
                 locked_user.lidya += bet.payout
         db.commit()
-        return {"round_id": row.id, "status": row.status, "result": result, "state": display_state(state), "available_actions": [a for a in available_actions(state) if a in {"hit","stand"}], "payout": bet.payout if result != "pending" and bet else 0}
+        return {"round_id": row.id, "status": row.status, "result": result, "state": display_state(state), "available_actions": [a for a in available_actions(state) if a in {"hit","stand"}], "payout": bet.payout if result != "pending" and bet else 0, "balance": db.scalar(select(User.lidya).where(User.id == user.id))}
 
 
     # ===== WHEEL LIVE V3 =====
@@ -1842,7 +1847,9 @@ def register_platform_auth(current_user_dependency):
 
         choice = str(payload.get("choice") or "").strip() or None
         raw_stake = payload.get("stake",0)
-        if game_type == 'wheel':
+        if game_type == 'blackjack':
+            blackjack_final.validate_stake(raw_stake)
+        elif game_type == 'wheel':
             if type(raw_stake) is not int or raw_stake not in wheel_rules.STAKES:
                 raise HTTPException(status_code=422, detail="Çark bahsi: 10, 100, 1.000, 10.000 veya 100.000 Lidya seç.")
         elif type(raw_stake) is not int or not 0 <= raw_stake <= 10000:

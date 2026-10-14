@@ -2087,7 +2087,7 @@ const close = () => {
         bjStakePresets?.parentElement?.insertBefore(bjStakeBar, bjStakePresets);
 
         const bjRefreshAmount = () => {
-            const amount = Math.max(0, Math.min(10000,
+            const amount = Math.max(0, Math.min(100000,
                 Math.trunc(Number(bjStakeInput?.value) || 0)));
             const display = modal.querySelector('[data-bj-amount]');
             if (display) display.textContent =
@@ -2107,7 +2107,7 @@ const close = () => {
                     activeBlackjackRoundId || blackjackRestoreBusy) return;
                 const current = Number(bjStakeInput.value) || 0;
                 bjStakeInput.value = String(Math.max(0,
-                    Math.min(10000, current + delta)));
+                    Math.min(100000, current + delta)));
                 bjStakeInput.dispatchEvent(new Event('input', {bubbles:true}));
                 bjRefreshAmount();
             };
@@ -2118,8 +2118,30 @@ const close = () => {
         bjStakePresets?.addEventListener('click', () =>
             queueMicrotask(bjRefreshAmount));
 
+        let bjFinalConfigured = null;
+        const bjFinalStakes = [10,100,1000,10000,100000];
         const bjLayout = () => {
             const enabled = game === 'blackjack';
+            if (bjFinalConfigured !== enabled) {
+                bjFinalConfigured = enabled;
+                const input = modal.querySelector('[data-stake]');
+                input.max = enabled ? '100000' : '10000';
+                if (enabled && !bjFinalStakes.includes(Number(input.value))) input.value = '100';
+                modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
+                    if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
+                    const value = enabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
+                    button.hidden = enabled && i >= 5;
+                    if (value) { button.dataset.stakeValue = String(value); button.innerHTML = window.LidyaGameArt.markup('coin') + '<span>' + (value >= 1000 ? value/1000+'K' : value) + '</span>'; }
+                });
+                let rank = modal.querySelector('[data-bj-ranking]');
+                if (enabled && !rank) {
+                    rank = document.createElement('button');rank.type='button';rank.dataset.bjRanking='';
+                    rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';
+                    rank.onclick=()=>window.LidyaGameRanking.open('blackjack');
+                    modal.querySelector('.eg-head').prepend(rank);
+                }
+                if (rank) rank.hidden = !enabled;
+            }
             const head = modal.querySelector('.eg-head');
             const wallet = modal.querySelector('.eg-wallet');
             const close = modal.querySelector('[data-close]');
@@ -2346,8 +2368,8 @@ const close = () => {
                 if (game !== 'blackjack' || activeBlackjackRoundId ||
                     blackjackRestoreBusy || blackjackRestoreFailed) return;
                 const current = Number(bjStakeInput.value) || 0;
-                const amount = Math.max(0, Math.min(10000,
-                    current + direction * bjStep));
+                const index = Math.max(0, bjFinalStakes.indexOf(current));
+                const amount = bjFinalStakes[Math.max(0,Math.min(4,index+direction))];
                 bjStakeInput.value = String(amount);
                 bjStakeInput.dispatchEvent(
                     new Event('input', {bubbles:true}));
@@ -2931,7 +2953,7 @@ const close = () => {
                 const startedGame = game;
                 const startedStage = stage;
                 const stake = Number(modal.querySelector('[data-stake]').value);
-                if (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000) throw new Error('Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
+                if (game === 'blackjack' ? ![10,100,1000,10000,100000].includes(stake) : (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000)) throw new Error(game === 'blackjack' ? '10, 100, 1K, 10K veya 100K bahis seç.' : 'Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
                 gameModules[game]()?.render?.(stage);
                 // Oda modu yalnızca gerçekten açık olan odayı kullanır.
                 const activeRoom = document.getElementById('erisRoomSurface')?.classList.contains('show');
