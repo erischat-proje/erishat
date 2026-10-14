@@ -29,7 +29,7 @@ from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
 from .oyunlar.blackjack import available_actions, display_state
-from . import blackjack_final
+from . import blackjack_final, slot_final
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -819,6 +819,26 @@ def register_platform_auth(current_user_dependency):
 
 
     # ERIS_BJ_ACTIVE_ROUND_V1
+    @router.get("/games/slot/live")
+    def slot_live(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return slot_final.state(db, user)
+
+    @router.post("/games/slot/live/spin")
+    def slot_live_spin(payload: slot_final.SlotRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        out = slot_final.transact(db, user, payload)
+        db.commit()
+        return out
+
+    @router.post("/games/slot/live/bonus")
+    def slot_live_bonus(payload: slot_final.SlotRequest, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        out = slot_final.transact(db, user, payload, 'bonus')
+        db.commit()
+        return out
+
+    @router.get("/games/slot/leaderboard")
+    def slot_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return slot_final.leaderboard(db, user, period)
+
     @router.get("/games/blackjack/leaderboard")
     def blackjack_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         return blackjack_final.leaderboard(db, user, period)
@@ -1828,6 +1848,8 @@ def register_platform_auth(current_user_dependency):
                 status_code=410,
                 detail="Dört Kupa için yeni tur başlatma ve kupa seçme API'sini kullanın."
             )
+        if game_type == "slot":
+            raise HTTPException(status_code=410, detail="Slot için canlı spin API kullanın.")
         if game_type == "crash":
             raise HTTPException(status_code=410, detail="Eski Crash kapatıldı. Canlı Crash sistemini kullanın.")
         payload = payload or {}

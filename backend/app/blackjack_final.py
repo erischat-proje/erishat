@@ -8,8 +8,8 @@ from .wheel_rules import period_bounds
 STAKES = (10, 100, 1_000, 10_000, 100_000)
 
 def validate_stake(value):
-    if type(value) is not int or value not in STAKES:
-        raise HTTPException(422, 'Blackjack bahsi: 10, 100, 1.000, 10.000 veya 100.000 Lidya seç.')
+    if type(value) is not int or not 10 <= value <= 858_993_450 or value % 10:
+        raise HTTPException(422, 'Blackjack toplam bahsi 10 Lidya katlarıyla artırılmalı.')
     return value
 
 def leaderboard(db, user, period='hour'):
