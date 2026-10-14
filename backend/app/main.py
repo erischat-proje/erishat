@@ -384,6 +384,8 @@ from . import altin_routes
 app.include_router(altin_routes.register_auth(current_user))
 from . import kure_routes
 app.include_router(kure_routes.register_auth(current_user))
+from . import aztek_ares_routes
+app.include_router(aztek_ares_routes.register_auth(current_user))
 
 from . import seker_routes
 app.include_router(seker_routes.register_auth(current_user))
