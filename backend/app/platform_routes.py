@@ -29,7 +29,7 @@ from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
 from .oyunlar.blackjack import available_actions, display_state
-from . import blackjack_final, slot_final
+from . import blackjack_final, slot_final, cups_final
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -1610,6 +1610,10 @@ def register_platform_auth(current_user_dependency):
     # ERIS_CUPS_REAL_ROUND_V1
     # Sonuç sunucuda saklanır; seçim yapılana kadar açıklanmaz.
 
+    @router.get("/games/cups/leaderboard")
+    def cups_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return cups_final.leaderboard(db, user, period)
+
     @router.post("/games/cups/round/start")
     def cups_round_start(
         payload: dict | None = None,
@@ -1617,9 +1621,7 @@ def register_platform_auth(current_user_dependency):
         user: User = Depends(current_user_dependency),
     ):
         payload = payload or {}
-        stake = payload.get("stake")
-        if type(stake) is not int or not 0 <= stake <= 10000:
-            raise HTTPException(status_code=422, detail="Geçersiz bahis")
+        stake = cups_final.validate_stake(payload.get("stake"))
 
         room_id = str(payload.get("room_id") or "").strip() or None
         if room_id:
@@ -1944,4 +1946,5 @@ def register_platform_auth(current_user_dependency):
             response["data"] = {**data, "state":display_state(data["state"]), "dealer_hand":data["dealer_hand"] if result != "pending" else data["dealer_hand"][:1], "dealer_total":data["dealer_total"] if result != "pending" else None}
         response.update({"stake":stake,"payout":payout,"balance":locked_user.lidya})
         return response
+
 

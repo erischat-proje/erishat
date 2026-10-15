@@ -646,6 +646,8 @@ const close = () => {
 
         // ERIS_BJ_RESTORE_RACE_FIX_V1
         // ERIS_BJ_RESTORE_FAILURE_LOCK_V1
+        let cupsBusy = false;
+        let cupsRoundId = null;
         let blackjackRestoreBusy = false;
         let blackjackRestoreFailed = false;
         let activeBlackjackRoundId = null;
@@ -706,44 +708,61 @@ const close = () => {
                     controls.innerHTML = `
                         <button type="button" data-cups-minus aria-label="Bahsi azalt">−</button>
                         <div class="eg-cups-bet-summary">
-                            <small>OLASI KAZANÇ · 3,6×</small>
-                            <strong data-cups-potential>360 Lidya</strong>
+                            <small>TOPLAM BAHİS</small>
+                            <strong data-cups-amount>100 Lidya</strong>
+                            <small data-cups-potential>Olası kazanç: 360 Lidya</small>
                         </div>
                         <button type="button" data-cups-plus aria-label="Bahsi artır">+</button>
                     `;
                     presets.insertAdjacentElement('beforebegin', controls);
                 }
-                let cupsStep = 25;
+                const play = form.querySelector('[data-play]');
+                controls.append(play);
+                let cupsStep = 100;
                 presets.querySelectorAll('[data-stake-value]').forEach(button => {
                     button.addEventListener('click', () => {
-                        cupsStep = Number(button.dataset.stakeValue) || 25;
+                        if (cupsBusy || cupsRoundId) return;
+                        cupsStep = Number(button.dataset.stakeValue) || 100;
                     });
                 });
                 const refresh = () => {
-                    const value = Math.max(0, Math.min(10000, Math.trunc(Number(stake.value) || 0)));
+                    const value = Math.max(10, Math.min(100000, Math.trunc(Number(stake.value) || 100)));
+                    const locked = cupsBusy || !!cupsRoundId;
+                    controls.querySelector('[data-cups-amount]').textContent = value.toLocaleString('tr-TR') + ' Lidya';
+                    controls.querySelector('[data-cups-minus]').disabled = locked || value <= 10;
+                    controls.querySelector('[data-cups-plus]').disabled = locked || value >= 100000;
+                    stake.disabled = locked;
                     const potential = controls.querySelector('[data-cups-potential]');
                     if (potential) potential.textContent =
-                        Math.round(value * 3.6).toLocaleString('tr-TR') + ' Lidya';
+                        'Olası kazanç: ' + Math.round(value * 3.6).toLocaleString('tr-TR') + ' Lidya';
                     presets.querySelectorAll('[data-stake-value]').forEach(b => {
-                        b.classList.toggle('cups-selected', Number(b.dataset.stakeValue) === value);
+                        b.disabled = locked;
+                        b.classList.toggle('cups-selected', Number(b.dataset.stakeValue) === cupsStep);
                     });
                 };
                 controls.querySelector('[data-cups-minus]').onclick = () => {
-                    stake.value = String(Math.max(0, (Number(stake.value) || 0) - cupsStep));
+                    if (cupsBusy || cupsRoundId) return;
+                    stake.value = String(Math.max(10, (Number(stake.value) || 0) - cupsStep));
                     stake.dispatchEvent(new Event('input', {bubbles:true}));
                     refresh();
                 };
                 controls.querySelector('[data-cups-plus]').onclick = () => {
-                    stake.value = String(Math.min(10000, (Number(stake.value) || 0) + cupsStep));
+                    if (cupsBusy || cupsRoundId) return;
+                    stake.value = String(Math.min(100000, (Number(stake.value) || 0) + cupsStep));
                     stake.dispatchEvent(new Event('input', {bubbles:true}));
                     refresh();
                 };
+                modal._cupsRefresh = refresh;
                 stake.addEventListener('input', refresh);
                 presets.addEventListener('click', () => queueMicrotask(refresh));
                 refresh();
             }
         } else {
-            modal.querySelector('[data-cups-bet-controls]')?.remove();
+            const controls = modal.querySelector('[data-cups-bet-controls]');
+            const play = controls?.querySelector('[data-play]');
+            if (play) modal.querySelector('.eg-form').append(play);
+            controls?.remove();
+            modal._cupsRefresh = null;
         }
 
         // ERIS_CUPS_PREMIUM_BET_V2
@@ -856,7 +875,7 @@ const close = () => {
             document.head.appendChild(css);
         }
         if (key === 'cups') {
-            modal.querySelector('[data-play]').textContent = '🏆 KUPALARI KARIŞTIR';
+            modal.querySelector('[data-play]').textContent = 'Bahis Yap';
         }
 
         // SLOT_INDIVIDUAL_UI_V1
@@ -1203,6 +1222,7 @@ const close = () => {
         };
         modal.querySelector('[data-stake]')?.addEventListener('input', refreshSlotBet);
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
+            if (game === 'cups' && (cupsBusy || cupsRoundId)) return;
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
             refreshSlotBet();
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
@@ -2124,15 +2144,20 @@ const close = () => {
         const bjFinalStakes = [10,100,1000,10000,100000];
         const bjLayout = () => {
             const enabled = game === 'blackjack';
-            if (bjFinalConfigured !== enabled) {
-                bjFinalConfigured = enabled;
+            const cupsEnabled = game === 'cups';
+            const mode = enabled ? 'blackjack' : cupsEnabled ? 'cups' : 'other';
+            if (bjFinalConfigured !== mode) {
+                bjFinalConfigured = mode;
                 const input = modal.querySelector('[data-stake]');
-                input.max = enabled ? '858993450' : '10000';
+                input.max = enabled ? '858993450' : cupsEnabled ? '100000' : '10000';
+                input.min = enabled || cupsEnabled ? '10' : '0';
+                input.step = enabled || cupsEnabled ? '10' : '1';
+                if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>100000 || Number(input.value)%10)) input.value='100';
                 if (enabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)%10)) input.value = '100';
                 modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
                     if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
-                    const value = enabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
-                    button.hidden = enabled && i >= 5;
+                    const value = enabled || cupsEnabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
+                    button.hidden = (enabled || cupsEnabled) && i >= 5;
                     if (value) { button.dataset.stakeValue = String(value); button.innerHTML = window.LidyaGameArt.markup('coin') + '<span>' + (value >= 1000 ? value/1000+'K' : value) + '</span>'; }
                 });
                 let rank = modal.querySelector('[data-bj-ranking]');
@@ -2150,6 +2175,14 @@ const close = () => {
             if (enabled && head && wallet && close) {
                 head.insertBefore(wallet, close);
             }
+            let cupsRank = modal.querySelector('[data-cups-ranking]');
+            if(cupsEnabled && !cupsRank){
+                cupsRank=document.createElement('button');cupsRank.type='button';cupsRank.dataset.cupsRanking='';
+                cupsRank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';
+                cupsRank.onclick=()=>window.LidyaGameRanking.open('cups');modal.querySelector('.eg-head').prepend(cupsRank);
+            }
+            if(cupsRank) cupsRank.hidden=!cupsEnabled;
+            if(cupsEnabled) modal._cupsRefresh?.();
             bjRefreshAmount();
         };
 
@@ -2301,7 +2334,7 @@ const close = () => {
         let bjStep = 100;
         let bjResetTimer = null;
         const bjPlay = modal.querySelector('[data-play]');
-        if (bjPlay) bjPlay.textContent = 'ELE BAŞLA';
+        if (bjPlay && game === 'blackjack') bjPlay.textContent = 'ELE BAŞLA';
 
         const bjFlowStyle = document.createElement('style');
         bjFlowStyle.id = 'erisBjFinalFlowV2';
@@ -2381,7 +2414,7 @@ const close = () => {
         // ERIS_BJ_STAKE_LOCK_V1
         const updateBlackjackStakeUI = () => {
             const active = game === 'blackjack';
-            const locked = active && !!activeBlackjackRoundId;
+            const locked = (active && !!activeBlackjackRoundId) || (game === 'cups' && (cupsBusy || !!cupsRoundId));
             const input = modal.querySelector('[data-stake]');
             if (input) input.disabled = locked;
             if (typeof bjSetActive === 'function') {
@@ -2523,13 +2556,12 @@ const close = () => {
 
 
         // ERIS_CUPS_REAL_FLOW_V2
-        let cupsBusy = false;
-        let cupsRoundId = null;
 
 
         async function chooseCupsRound(choice, stage) {
             if (cupsBusy || !cupsRoundId) return;
             cupsBusy = true;
+            modal._cupsRefresh?.();
 
             const roundId = cupsRoundId;
             const status = modal.querySelector('.eg-result');
@@ -2601,6 +2633,7 @@ const close = () => {
                 }
             } finally {
                 cupsBusy = false;
+                modal._cupsRefresh?.();
             }
         }
 
@@ -2613,6 +2646,7 @@ const close = () => {
             if (!stage || !button) return;
 
             cupsBusy = true;
+            modal._cupsRefresh?.();
             button.disabled = true;
 
             try {
@@ -2627,6 +2661,8 @@ const close = () => {
                 }
 
                 cupsRoundId = state.round_id;
+                if(Number.isSafeInteger(state.stake)) modal.querySelector('[data-stake]').value=String(state.stake);
+                modal._cupsRefresh?.();
                 status.textContent =
                     'Açık Dört Kupa turun geri yüklendi.';
 
@@ -2648,6 +2684,7 @@ const close = () => {
                 }
             } finally {
                 cupsBusy = false;
+                modal._cupsRefresh?.();
                 if (game === 'cups' && stage.isConnected) {
                     button.disabled = !!cupsRoundId;
                     updateCupsRecoveryButton();
@@ -2658,6 +2695,7 @@ const close = () => {
         async function startCupsRound() {
             if (cupsBusy || cupsRoundId) return;
             cupsBusy = true;
+            modal._cupsRefresh?.();
 
             const stage = modal.querySelector('.eg-stage');
             const button = modal.querySelector('[data-play]');
@@ -2670,9 +2708,9 @@ const close = () => {
                 );
 
                 if (!Number.isSafeInteger(stake) ||
-                    stake < 0 || stake > 10000) {
+                    stake < 10 || stake > 100000 || stake % 10) {
                     throw new Error(
-                        'Bahis 0 ile 10.000 Lidya arasında olmalı.'
+                        'Bahis 10 Lidya katı, 10–100.000 arası olmalı.'
                     );
                 }
 
@@ -2748,6 +2786,7 @@ const close = () => {
                 button.disabled = !!cupsRoundId;
             } finally {
                 cupsBusy = false;
+                modal._cupsRefresh?.();
                 updateCupsRecoveryButton();
             }
         }
@@ -3334,5 +3373,6 @@ document.head.appendChild(erisWheelResponsive);
 const erisWheelHeaderFix=document.createElement('style');
 erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
 document.head.appendChild(erisWheelHeaderFix);
+
 
 
