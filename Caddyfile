@@ -2,7 +2,7 @@
 root * /srv/frontend
 encode zstd gzip
 file_server
-@entry path / /index.html /erischat-main.html
+@entry path / /index.html /erischat-main.html /apk-content-manifest.json
 header @entry Cache-Control "no-cache, must-revalidate"
 # Missing scripts and images must return 404 instead of HTML disguised as an asset.
 @page {
