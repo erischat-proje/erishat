@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const base=new URL('../assets/lidya-kure/',document.currentScript.src);
-const scene=()=>new URL('menu-cover.png',base).href;
+const scene=()=>new URL('../lidya-ranking-v2/'+(document.documentElement.dataset.erisTheme==='dark'?'dark':'light')+'/kure.png',base).href;
 function install(){
  const launcher=document.querySelector('#games .eg-launcher-grid');
  if(launcher&&!launcher.querySelector('.kk-launcher-card')){const b=document.createElement('button');b.type='button';b.className='eg-launcher-card kk-launcher-card';b.dataset.game='kure';b.innerHTML='<img class="pg-cover" alt="" aria-hidden="true"><span class="eg-lc-title">Kaderin Küresi</span><span class="eg-lc-desc">200.704 yol · Mistik çark ve tumble</span><span class="eg-lc-play"><span>Oyna</span><span aria-hidden="true">→</span></span>';b.onclick=()=>window.ErisGameKure.open();launcher.append(b);}

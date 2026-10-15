@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const base=new URL('../assets/lidya-prenses/',document.currentScript.src);
-const scene=()=>new URL('menu-cover-wide.png',base).href;
+const scene=()=>new URL('../lidya-ranking-v2/'+(document.documentElement.dataset.erisTheme==='dark'?'dark':'light')+'/prenses.png',base).href;
 function install(){
  const launcher=document.querySelector('#games .eg-launcher-grid');
  if(launcher&&!launcher.querySelector('.pp-launcher-card')){const b=document.createElement('button');b.type='button';b.className='eg-launcher-card pp-launcher-card';b.dataset.game='prenses';b.innerHTML='<img class="pg-cover" alt="" aria-hidden="true"><span class="eg-lc-title">Prenses</span><span class="eg-lc-desc">Yıldız sihri · Kanatlı kalpler ve ücretsiz dönüşler</span><span class="eg-lc-play"><span>Oyna</span><span aria-hidden="true">→</span></span>';b.onclick=()=>window.ErisGamePrenses.open();launcher.append(b);}
