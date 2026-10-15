@@ -44,7 +44,7 @@ def place_bet(db, user, payload, get_round, clock=lambda:datetime.now(timezone.u
             raise HTTPException(409,'İstek numarası başka bahis için kullanılmış.')
         return dict(ok=True,replayed=True,round_id=receipt.round_id,bet_id=receipt.bet_id,
                     amount=receipt.amount,balance=db.scalar(select(User.lidya).where(User.id==user.id)))
-    if payload.amount not in STAKES:
+    if not 10 <= payload.amount <= 1_000_000_000 or payload.amount % 10:
         raise HTTPException(422,'Bahis: 10, 100, 1.000, 10.000 veya 100.000 Lidya seç.')
     if row.id!=payload.round_id:
         raise HTTPException(409,'Tur değişti; yeni turu kontrol edip bahis yap.')
@@ -80,3 +80,4 @@ def leaderboard(db,user,period='hour'):
         avatar_asset=u.avatar_asset,frame_asset=u.frame_asset,winnings=int(amount)) for i,(u,amount) in enumerate(rows)]
     return dict(game='crash',period=period,timezone='Europe/Istanbul',starts_at=start,ends_at=end,
         metric='paid_winnings',items=items,my_winnings=int(mine),limit=50)
+

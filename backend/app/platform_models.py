@@ -155,8 +155,8 @@ class GameBet(Base):
     round_id: Mapped[str] = mapped_column(ForeignKey("game_rounds.id", ondelete="CASCADE"), index=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     choice: Mapped[str] = mapped_column(String(32), nullable=False)
-    amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    payout: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    payout: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -423,3 +423,4 @@ class DirectCallHistoryHidden(Base):
     __tablename__ = "direct_call_history_hidden"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     call_id: Mapped[str] = mapped_column(ForeignKey("direct_calls.id", ondelete="CASCADE"), primary_key=True)
+

@@ -44,7 +44,7 @@ def transact(db,user,payload,operation='spin'):
     if receipt:
         if (receipt.operation,receipt.amount)!=(operation,payload.amount):raise HTTPException(409,'İstek numarası başka işlemde kullanılmış.')
         out=json.loads(receipt.response);out.update(replayed=True,balance=u.lidya);return out
-    if not 10 <= payload.amount <= 100000 or payload.amount % 10:raise HTTPException(422,'Bahis 10 Lidya katı ve en fazla 100.000 olmalı.')
+    if not 10 <= payload.amount <= 1000000000 or payload.amount % 10:raise HTTPException(422,'Bahis 10 Lidya katı ve güvenli işlem sınırında olmalı.')
     a=db.get(SlotAccount,user.id)
     if not a:a=SlotAccount(user_id=user.id,remaining=0,stake=payload.amount);db.add(a)
     if operation=='bonus':
@@ -75,4 +75,5 @@ def leaderboard(db,user,period='hour'):
     rows=db.execute(select(User,scores.c.winnings).join(scores,scores.c.user_id==User.id).where(User.is_active.is_(True)).order_by(scores.c.winnings.desc(),User.public_id.asc()).limit(50)).all()
     mine=db.scalar(select(scores.c.winnings).where(scores.c.user_id==user.id)) or 0
     return dict(game='slot',period=period,timezone='Europe/Istanbul',metric='paid_winnings',starts_at=start,ends_at=end,limit=50,my_winnings=int(mine),items=[dict(rank=i+1,user_id=u.id,public_id=u.public_id,nickname=u.nickname,avatar=u.avatar,avatar_asset=u.avatar_asset,frame_asset=u.frame_asset,winnings=int(n)) for i,(u,n) in enumerate(rows)])
+
 

@@ -18,7 +18,7 @@ class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
     round_id:str|None=Field(default=None,max_length=64)
     sequence:StrictInt=Field(default=0,ge=0)
-    stake:StrictInt=Field(default=50,ge=1,le=10000)
+    stake:StrictInt=Field(default=50,ge=1,le=1000000000)
     action:str=Field(default='spin',pattern='^(spin|buy)$')
     class Config:extra='forbid'
 
@@ -112,6 +112,8 @@ def register_auth(current_user):
         db.add(GamePlay(user_id=user.id,game_type='firavun',choice=payload.action,result_key=row.result_key,result_data=json.dumps(receipt,separators=(',',':'),ensure_ascii=False)))
         now=datetime.now(timezone.utc)
         db.add(GameRound(id=receipt_id,user_id=user.id,game_type='firavun_receipt',status='receipt',started_at=now,ends_at=now,result_key='receipt',state_data=json.dumps(receipt,separators=(',',':'),ensure_ascii=False)))
+        if row.status=='finished':row.ends_at=datetime.now(timezone.utc)
         db.commit()
         return receipt
     return router
+

@@ -2,7 +2,7 @@
 'use strict';
 const base=new URL('./assets/lidya-games-png/',document.currentScript.src);
 const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
-const custom={kure:new URL('../lidya-kure/menu-cover.png',base).href,altin:new URL('../lidya-altin/menu-cover.png',base).href,bastet:new URL('../lidya-bastet/menu-cover.png',base).href,firavun:new URL('../lidya-firavun/menu-cover.png',base).href,kovboy:new URL('../lidya-kovboy/menu-cover.png',base).href,candy:new URL('../lidya-candy/menu-cover.png',base).href,prenses:new URL('../lidya-prenses/menu-cover-wide.png',base).href,dogparty:new URL('../lidya-dogparty/menu-cover-wide.png',base).href,seker:new URL('../lidya-seker/menu-cover-v2.png',base).href,balikci:new URL('../lidya-balikci/menu-cover.png',base).href};
+const custom={aztek:new URL('../lidya-aztek/menu-cover.png',base).href,ares:new URL('../lidya-ares/menu-cover.png',base).href,kure:new URL('../lidya-kure/menu-cover.png',base).href,altin:new URL('../lidya-altin/menu-cover.png',base).href,bastet:new URL('../lidya-bastet/menu-cover.png',base).href,firavun:new URL('../lidya-firavun/menu-cover.png',base).href,kovboy:new URL('../lidya-kovboy/menu-cover.png',base).href,candy:new URL('../lidya-candy/menu-cover.png',base).href,prenses:new URL('../lidya-prenses/menu-cover-wide.png',base).href,dogparty:new URL('../lidya-dogparty/menu-cover-wide.png',base).href,seker:new URL('../lidya-seker/menu-cover-v2.png',base).href,balikci:new URL('../lidya-balikci/menu-cover.png',base).href};
 const url=key=>key==='dede'?new URL('../lidya-dede-png/'+theme()+'/scene.png',base).href:custom[key]||new URL(theme()+'/scene-'+key+'.png',base).href;
 function update(){
  const title=document.querySelector('#games>.title');if(title){title.textContent='Oyunlar';title.style.setProperty('--pg-header','url("'+url('header')+'")');}
@@ -16,3 +16,4 @@ function start(){update();const games=document.getElementById('games');if(games)
 window.addEventListener('erischat:theme',schedule);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+

@@ -735,11 +735,11 @@ const close = () => {
                     });
                 });
                 const refresh = () => {
-                    const value = Math.max(10, Math.min(596523230, Math.trunc(Number(stake.value) || 100)));
+                    const value = Math.max(10, Math.min(1000000000, Math.trunc(Number(stake.value) || 100)));
                     const locked = cupsBusy || !!cupsRoundId;
                     controls.querySelector('[data-cups-amount]').textContent = value.toLocaleString('tr-TR') + ' Lidya';
                     controls.querySelector('[data-cups-minus]').disabled = locked || value <= 10;
-                    controls.querySelector('[data-cups-plus]').disabled = locked || value >= 596523230;
+                    controls.querySelector('[data-cups-plus]').disabled = locked || value >= 1000000000;
                     stake.disabled = locked;
                     const potential = controls.querySelector('[data-cups-potential]');
                     if (potential) potential.textContent =
@@ -757,7 +757,7 @@ const close = () => {
                 };
                 controls.querySelector('[data-cups-plus]').onclick = () => {
                     if (cupsBusy || cupsRoundId) return;
-                    stake.value = String(Math.min(596523230, (Number(stake.value) || 0) + cupsStep));
+                    stake.value = String(Math.min(1000000000, (Number(stake.value) || 0) + cupsStep));
                     stake.dispatchEvent(new Event('input', {bubbles:true}));
                     refresh();
                 };
@@ -2123,7 +2123,7 @@ const close = () => {
         bjStakePresets?.parentElement?.insertBefore(bjStakeBar, bjStakePresets);
 
         const bjRefreshAmount = () => {
-            const amount = Math.max(0, Math.min(858993450,
+            const amount = Math.max(0, Math.min(1000000000,
                 Math.trunc(Number(bjStakeInput?.value) || 0)));
             const display = modal.querySelector('[data-bj-amount]');
             if (display) display.textContent =
@@ -2143,7 +2143,7 @@ const close = () => {
                     activeBlackjackRoundId || blackjackRestoreBusy) return;
                 const current = Number(bjStakeInput.value) || 0;
                 bjStakeInput.value = String(Math.max(0,
-                    Math.min(858993450, current + delta)));
+                    Math.min(1000000000, current + delta)));
                 bjStakeInput.dispatchEvent(new Event('input', {bubbles:true}));
                 bjRefreshAmount();
             };
@@ -2165,12 +2165,12 @@ const close = () => {
             if (bjFinalConfigured !== mode) {
                 bjFinalConfigured = mode;
                 const input = modal.querySelector('[data-stake]');
-                input.max = enabled ? '858993450' : cupsEnabled ? '596523230' : horseEnabled ? '357913940' : vaultEnabled ? '715827880' : '10000';
+                input.max = enabled ? '1000000000' : cupsEnabled ? '1000000000' : horseEnabled ? '1000000000' : vaultEnabled ? '1000000000' : '10000';
                 input.min = enabled || cupsEnabled || horseEnabled || vaultEnabled ? '10' : '0';
                 input.step = enabled || cupsEnabled || horseEnabled || vaultEnabled ? '10' : '1';
-                if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>596523230 || Number(input.value)%10)) input.value='100';
-                if(horseEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>357913940 || Number(input.value)%10)) input.value='100';
-                if(vaultEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>715827880 || Number(input.value)%10)) input.value='100';
+                if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>1000000000 || Number(input.value)%10)) input.value='100';
+                if(horseEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>1000000000 || Number(input.value)%10)) input.value='100';
+                if(vaultEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>1000000000 || Number(input.value)%10)) input.value='100';
                 if (enabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)%10)) input.value = '100';
                 modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
                     if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
@@ -2213,13 +2213,13 @@ const close = () => {
                     for(const [attr,sign] of [['minus',-1],['plus',1]])bar.querySelector('[data-horse-'+attr+']').onclick=()=>{
                         if(horseBusy)return;
                         const input=modal.querySelector('[data-stake]');
-                        input.value=String(Math.max(10,Math.min(357913940,(Number(input.value)||10)+sign*horseStep)));
+                        input.value=String(Math.max(10,Math.min(1000000000,(Number(input.value)||10)+sign*horseStep)));
                         input.dispatchEvent(new Event('input',{bubbles:true}));
                     };
                 }
                 bar.querySelector('[data-horse-amount]').textContent=Number(modal.querySelector('[data-stake]').value||100).toLocaleString('tr-TR')+' Lidya';
                 bar.querySelector('[data-horse-minus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)<=10;
-                bar.querySelector('[data-horse-plus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)>=357913940;
+                bar.querySelector('[data-horse-plus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)>=1000000000;
                 let rank=modal.querySelector('[data-horse-ranking]');
                 if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.horseRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('horse_race');modal.querySelector('.eg-head').prepend(rank);}
                 rank.hidden=false;
@@ -2232,11 +2232,11 @@ const close = () => {
                     bar.innerHTML='<button type="button" data-vault-minus aria-label="Bahsi azalt">−</button><div><small>TOPLAM BAHİS</small><strong data-vault-amount></strong></div><button type="button" data-vault-plus aria-label="Bahsi artır">+</button>';
                     modal.querySelector('.eg-form').append(bar);bar.append(modal.querySelector('[data-play]'));
                     for(const [attr,sign] of [['minus',-1],['plus',1]])bar.querySelector('[data-vault-'+attr+']').onclick=()=>{
-                        if(vaultBusy)return;const input=modal.querySelector('[data-stake]');input.value=String(Math.max(10,Math.min(715827880,(Number(input.value)||10)+sign*vaultStep)));input.dispatchEvent(new Event('input',{bubbles:true}));};
+                        if(vaultBusy)return;const input=modal.querySelector('[data-stake]');input.value=String(Math.max(10,Math.min(1000000000,(Number(input.value)||10)+sign*vaultStep)));input.dispatchEvent(new Event('input',{bubbles:true}));};
                 }
                 const amount=Number(modal.querySelector('[data-stake]').value||100);
                 bar.querySelector('[data-vault-amount]').textContent=amount.toLocaleString('tr-TR')+' Lidya';
-                bar.querySelector('[data-vault-minus]').disabled=vaultBusy||amount<=10;bar.querySelector('[data-vault-plus]').disabled=vaultBusy||amount>=715827880;
+                bar.querySelector('[data-vault-minus]').disabled=vaultBusy||amount<=10;bar.querySelector('[data-vault-plus]').disabled=vaultBusy||amount>=1000000000;
                 let rank=modal.querySelector('[data-vault-ranking]');if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.vaultRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('vault');modal.querySelector('.eg-head').prepend(rank);}rank.hidden=false;
             }else{const rank=modal.querySelector('[data-vault-ranking]');if(rank)rank.hidden=true;}
             bjRefreshAmount();
@@ -2459,7 +2459,7 @@ const close = () => {
                 if (game !== 'blackjack' || activeBlackjackRoundId ||
                     blackjackRestoreBusy || blackjackRestoreFailed) return;
                 const current = Number(bjStakeInput.value) || 0;
-                const amount = Math.max(10,Math.min(858993450,current+direction*bjStep));
+                const amount = Math.max(10,Math.min(1000000000,current+direction*bjStep));
                 bjStakeInput.value = String(amount);
                 bjStakeInput.dispatchEvent(
                     new Event('input', {bubbles:true}));
@@ -2764,7 +2764,7 @@ const close = () => {
                 );
 
                 if (!Number.isSafeInteger(stake) ||
-                    stake < 10 || stake > 596523230 || stake % 10) {
+                    stake < 10 || stake > 1000000000 || stake % 10) {
                     throw new Error(
                         'Toplam bahis 10 Lidya katı ve güvenli ödeme sınırında olmalı.'
                     );
@@ -2974,7 +2974,7 @@ const close = () => {
                     result.textContent = 'Açılacak kasayı seç.';
                     return;
                 }
-                if (!Number.isSafeInteger(amount)||amount<10||amount>715827880||amount%10) {
+                if (!Number.isSafeInteger(amount)||amount<10||amount>1000000000||amount%10) {
                     result.textContent = 'Toplam bahis 10 Lidya katı olmalı.';
                     return;
                 }
@@ -3016,7 +3016,7 @@ const close = () => {
                 );
                 const choice = 'horse_' +
                     modal.querySelector('[data-choice]').value;
-                if (!Number.isSafeInteger(amount) || amount<10 || amount>357913940 || amount%10) {
+                if (!Number.isSafeInteger(amount) || amount<10 || amount>1000000000 || amount%10) {
                     modal.querySelector('.eg-result').textContent =
                         'Toplam bahis 10 Lidya katı olmalı.';
                     return;
@@ -3057,7 +3057,7 @@ const close = () => {
                 const startedGame = game;
                 const startedStage = stage;
                 const stake = Number(modal.querySelector('[data-stake]').value);
-                if (game === 'blackjack' ? !(Number.isSafeInteger(stake)&&stake>=10&&stake<=858993450&&stake%10===0) : (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000)) throw new Error(game === 'blackjack' ? 'Toplam bahis 10 Lidya katı olmalı.' : 'Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
+                if (game === 'blackjack' ? !(Number.isSafeInteger(stake)&&stake>=10&&stake<=1000000000&&stake%10===0) : (!Number.isSafeInteger(stake) || stake < 0 || stake > 10000)) throw new Error(game === 'blackjack' ? 'Toplam bahis 10 Lidya katı olmalı.' : 'Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı.');
                 gameModules[game]()?.render?.(stage);
                 // Oda modu yalnızca gerçekten açık olan odayı kullanır.
                 const activeRoom = document.getElementById('erisRoomSurface')?.classList.contains('show');
@@ -3432,6 +3432,7 @@ document.head.appendChild(erisWheelResponsive);
 const erisWheelHeaderFix=document.createElement('style');
 erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
 document.head.appendChild(erisWheelHeaderFix);
+
 
 
 
