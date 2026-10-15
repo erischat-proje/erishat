@@ -1,0 +1,485 @@
+{
+  "generator": "built-in imagegen",
+  "items": [
+    {
+      "game": "wheel",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/wheel.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2574892,
+      "sha256": "8526a666eb72dc898204bd9e5df2d9ba4a73c196adb5a609d5f06d5de94478c6",
+      "prompt": "Original dark wheel: engraved gold and emerald wheel, right-half subject, calm left negative space, dark emerald marble, ancient Sardis, no text; 2:1."
+    },
+    {
+      "game": "wheel",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/wheel.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2455552,
+      "sha256": "fee4eb4e1fcf61f1739762a198c906d8080d0029a08f3d1a86f93195166f4415",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an antique eight-segment gold fortune wheel with emerald inlays. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "blackjack",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/blackjack.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2444219,
+      "sha256": "eeb6d05c190d79574a135a309734240c9146c8e9445f161db468f918be8e86b1",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: two premium gold-edged playing cards, visible spade and heart pips, and emerald chips. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "crash",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/crash.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2411052,
+      "sha256": "0a0a8473603055d85553761b1fe39bc1b6a5b4aa3d3225af41b7bb909a9f4173",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a majestic golden winged lion ascending dynamically through clouds. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "crash",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/crash.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2545818,
+      "sha256": "7a136bfd285c814c7d25a7a18f8a84f2157cff10b08be67fb26a4059aa6ad0f5",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a majestic golden winged lion ascending dynamically through clouds. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "slot",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/slot.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2476191,
+      "sha256": "00100374292cf6654e8b033827f75941609ecadebfd40f84202abd8dc7107cb4",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a beautiful antique gold three-reel slot machine with cherry and emerald symbols. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "blackjack",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/blackjack.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2473312,
+      "sha256": "dd69beb1159e3cb061d0d6328eb5b2b6f1f768797f953998aaf5b5b630f70d9f",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: two premium gold-edged playing cards, visible spade and heart pips, and emerald chips. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "slot",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/slot.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2453526,
+      "sha256": "c6f44563e279247f7f3522c392ebcc51a69286154eb89148a72dcc3b1dd4153e",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a beautiful antique gold three-reel slot machine with cherry and emerald symbols. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "horse_race",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/horse_race.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2582239,
+      "sha256": "7bbf59607923ff0ff9041af118ed0fc569da006ba4f3ab75225cc339b0d82178",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a proud sculpted gold racing horse in dynamic gallop, emerald saddle. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "cups",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/cups.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2195028,
+      "sha256": "353db1506c24bf696d5f7a9d8821e9cca4d482923bf3060a4474b9dc9df6e07b",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: four engraved gold cups with one emerald ball. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "horse_race",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/horse_race.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2432118,
+      "sha256": "698edb217b09d7dc72da8101ca6296fb167a378c4388407fc61dd920c7f429cf",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a proud sculpted gold racing horse in dynamic gallop, emerald saddle. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "cups",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/cups.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2359168,
+      "sha256": "5a810f3a37b30f8522f7635e1ce6dd4995a99fbe2637b8acfdb6dc957ecc6bc0",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: four engraved gold cups with one emerald ball. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "vault",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/vault.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2407284,
+      "sha256": "4782fbfed869cd7c7acbbaa2dde125515bdd1b31837b34750940be9eadbbb1b6",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an ornate open gold treasure vault with neatly stacked Lidya coins and emerald gems. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "vault",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/vault.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2575509,
+      "sha256": "6bf95abcfcd338c2d3a1101c9dbd4674d2fa07989e5533bf511649aa665f1e02",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an ornate open gold treasure vault with neatly stacked Lidya coins and emerald gems. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "dede",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/dede.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2590369,
+      "sha256": "93ceb6c2572acbc29851234e5d472071013efc866b516b4ec4fef9936b004e5b",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a regal silver-bearded ancient storm elder in gold robes holding an emerald lightning staff. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "balikci",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/balikci.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2571977,
+      "sha256": "0a3f7b79067aff9e29685e63db8ccd0feaf0faeebd7e6a42bc557561365e6182",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a friendly mature mustached fisherman in a gold-trimmed green hat holding a large shimmering fish. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "dede",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/dede.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2530409,
+      "sha256": "d49ed6d54726d9d5ca67439c718915da204a8eb0b891780e01dcfef24fd014a7",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a regal silver-bearded ancient storm elder in gold robes holding an emerald lightning staff. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "seker",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/seker.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2582187,
+      "sha256": "29634ff7a57e2bb400e809a003ec1a7174b85ac0be1d7df4652f47fc139ea8d4",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a lavish jewel-colored candy palace with gold fruit candies and emerald sweets. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "prenses",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/prenses.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2448302,
+      "sha256": "414df2607df82f865cb8194040e6640f3c2857dfd6c468aff840a0ad542e24ba",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a graceful fully clothed celestial princess wearing an emerald tiara, gold armor and flowing cream gown. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "balikci",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/balikci.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2683865,
+      "sha256": "bcbe78912fd4156de5b39d1da627c9e419dbc7053454301010e5d7f836b181e6",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a friendly mature mustached fisherman in a gold-trimmed green hat holding a large shimmering fish. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "seker",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/seker.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2707363,
+      "sha256": "09b41eb658ad6fba6e9b47dc05f0fbf0c09e69ec68797f25398949d25134c2ea",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a lavish jewel-colored candy palace with gold fruit candies and emerald sweets. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "prenses",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/prenses.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2494634,
+      "sha256": "789903683f6f3bb1589fd50cf91b6fa02668d4e39a22317e8c32b9d80c3c5095",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a graceful fully clothed celestial princess wearing an emerald tiara, gold armor and flowing cream gown. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "candy",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/candy.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2533794,
+      "sha256": "00727d2da33e3d66f1b8f956fe794d7c6d6e18357aaf3151a382e5de45684257",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a luxurious cluster of colorful jewel candy cubes with gold edges and sparkling emerald sugar. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "dogparty",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/dogparty.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2577581,
+      "sha256": "49ca44afc97504f138164bc876bb173dd0e248846179dd35973ff52b6793c67b",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: three charming happy dogs wearing little gold collars around an emerald dog house. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "dogparty",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/dogparty.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2487794,
+      "sha256": "6f6193627b794b3372dd4e781e72d5f359eace7e899a110ab9c818cc53ec1b8c",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: three charming happy dogs wearing little gold collars around an emerald dog house. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "kovboy",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/kovboy.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2543492,
+      "sha256": "2c60bc62e3540edad18c076064c4040e86cb3126fb586b59a0edd2f31e2cfa70",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a charismatic cowboy sheriff in an emerald hat, gold star badge and ornate leather coat. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "candy",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/candy.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2425491,
+      "sha256": "78b92858f40c90c206fc3556885b402c5932f6ae67365170e558ddd23064a3f2",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a luxurious cluster of colorful jewel candy cubes with gold edges and sparkling emerald sugar. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "kovboy",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/kovboy.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2545318,
+      "sha256": "63f86ed09b67cb7144afee610682bd6feae30bf8f4a44d55b3152d4ecb3d3883",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a charismatic cowboy sheriff in an emerald hat, gold star badge and ornate leather coat. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "bastet",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/bastet.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2407759,
+      "sha256": "4684a936028b01a44d9c41551d6d9eebc4b708b23ae37f7ad213c45d0e74e1ec",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a regal black Egyptian cat with an elaborate gold collar and emerald headdress. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "bastet",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/bastet.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2376638,
+      "sha256": "32d462fc5beccc003c276fed5181abd307b5ea231f76a635170592743d42b6db",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a regal black Egyptian cat with an elaborate gold collar and emerald headdress. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "altin",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/altin.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2626480,
+      "sha256": "9b8624e671d7eb5d098edc101aca61b39bed7e072a33f48ebceae074a3dd1ecc",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: four ornate gold pots brimming with coins and emerald shamrocks. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "altin",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/altin.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2414812,
+      "sha256": "0c65d6fcd2454c7076a9f605ef07b43c719ca553e8c00b95527e1313fae90a8d",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: four ornate gold pots brimming with coins and emerald shamrocks. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "kure",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/kure.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2397360,
+      "sha256": "1c0771e11a440be2ebe92da47c88b2609f34ea6bf1831f9c7e8aaa0c61dfe845",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a luminous crystal fortune orb in an intricate antique gold stand with emerald light. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "kure",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/kure.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2383208,
+      "sha256": "c1461bb1cc38f58c70c0d80857fcd72724e3e656f3408e340243545f6c0ff49b",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a luminous crystal fortune orb in an intricate antique gold stand with emerald light. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "aztek",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/aztek.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2817266,
+      "sha256": "3664482fba568b299ef88f188cfc6571daadb6bc124f3284ffea4f3c5765b5a6",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an intricate ancient Aztec golden sun mask surrounded by emerald temple stones. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "aztek",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/aztek.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2524922,
+      "sha256": "9a5cb322fb8c9cd9dc87046d51b524eb3ff30e3367d1063ee482e79e281fd958",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an intricate ancient Aztec golden sun mask surrounded by emerald temple stones. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "firavun",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/firavun.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2567069,
+      "sha256": "aa305a4d5e75ea8ff08ae79fff211e000512ca805c515a3140c9b366f9e406ff",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an ancient gold pharaoh mask beside an ornate open Egyptian book with emerald jewel. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "ares",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/ares.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2429810,
+      "sha256": "67ae139b33e7af4328b609e2c1fc1dd24ae1d095c542fda262ea7827ad61a286",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a powerful ancient war helmet with emerald crest beside a golden shield. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "ares",
+      "theme": "light",
+      "path": "frontend/assets/lidya-ranking-v2/light/ares.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2576908,
+      "sha256": "978075f46871887320bcde0b64f9acf24c8f212d4c12a2a44d149c94e6bba93d",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: a powerful ancient war helmet with emerald crest beside a golden shield. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Light theme: luminous warm ivory marble, subtle champagne ancient Sardis temple backdrop, warm cream silk, beautifully polished gold with emerald accents; left side especially pale and uncluttered. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    },
+    {
+      "game": "firavun",
+      "theme": "dark",
+      "path": "frontend/assets/lidya-ranking-v2/dark/firavun.png",
+      "size": [
+        1774,
+        887
+      ],
+      "bytes": 2292139,
+      "sha256": "81421404d5f2378b6940e704c753317dfa92645b65a964a15b77f5d0ab09f2b8",
+      "prompt": "Use case: stylized-concept. Asset type: premium mobile game ranking menu button background, wide horizontal exactly 2:1. Primary request: Lidya ancient Anatolian gold and emerald luxury aesthetic. Subject: an ancient gold pharaoh mask beside an ornate open Egyptian book with emerald jewel. Place the entire main subject comfortably contained in the RIGHT HALF; LEFT 45 percent is calm negative space for real HTML text. Dark theme: rich deep forest emerald marble, muted ancient Sardis temple backdrop, green velvet, patinated gold; left side especially dark. Style: high-end photorealistic 3D artisan craftsmanship, realistic metals, detailed antique engraving, cinematic soft illumination. Wide horizontal composition, no text, no lettering, no watermarks, no interface controls, no borders, no cut-off subject. This is one single cohesive artwork, not a collage or sprite sheet."
+    }
+  ]
+}
