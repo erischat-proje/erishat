@@ -1,0 +1,49 @@
+{
+  "version": "dede-v1",
+  "mode": "base",
+  "rounds": 1000000,
+  "seed": 15102601,
+  "configSHA256": "8d3aa8b91e066246da6cb6a12463a38396cfab0ae50b640c7507c3ee752559a7",
+  "cost_units": 1,
+  "rtp": 0.975207300000858,
+  "rtp95": [
+    0.9563832480437977,
+    0.9940313519579183
+  ],
+  "standard_deviation_in_bets": 9.6041081413573,
+  "hit_frequency": 0.275927,
+  "net_profit_frequency": 0.142077,
+  "bonus_frequency": 0.002236,
+  "bonus_rounds": 2236,
+  "bonus_spins": 35440,
+  "cap_hits": 0,
+  "payout_upper_bounds": [
+    0,
+    1,
+    2,
+    5,
+    10,
+    25,
+    50,
+    100,
+    250,
+    500,
+    1000,
+    5000
+  ],
+  "payout_histogram": [
+    724073,
+    133850,
+    58028,
+    50087,
+    19654,
+    10130,
+    2254,
+    976,
+    748,
+    157,
+    37,
+    6
+  ],
+  "method": "Full paid rounds including all bonus spins/retriggers. Seeded Mulberry32 reference RNG. Production uses server SystemRandom. CI is normal-approximation Monte Carlo sampling uncertainty, not a certified RTP."
+}

@@ -1,0 +1,41 @@
+{
+  "game": "dogparty",
+  "profile": "dogparty-buy-v1",
+  "price": 100,
+  "samples": 100000,
+  "seed": 26101511,
+  "rtp": 0.9692504099999893,
+  "ci95": [
+    0.9599869407365076,
+    0.9785138792634711
+  ],
+  "freeSpins": 1295950,
+  "initialSpinsDistribution": {
+    "15": 10632,
+    "12": 18849,
+    "18": 1206,
+    "10": 7779,
+    "13": 19081,
+    "11": 14641,
+    "9": 2464,
+    "20": 144,
+    "17": 2949,
+    "14": 15627,
+    "16": 6107,
+    "19": 476,
+    "21": 36,
+    "22": 6,
+    "23": 3
+  },
+  "capCount": 0,
+  "maxObservedX": 3274.4,
+  "note": "Independent purchase-mode simulation; target is not certified RTP.",
+  "mode": "buy",
+  "certified": false,
+  "source_sha256": {
+    "backend/app/dogparty_engine.py": "a8e28553522e3ac4fb789e744fedfcc969e881e5818b5b0df65d6af584f92603",
+    "backend/app/dogparty-math.json": "532e4ad1120b65fe16ae4ed89e4cdd0e93ca43e538cf90671f88fa20fb49fe6e",
+    "tests/bonus_buy_simulate.py": "63b8739b2f0d68fc516461864b0b03337560427bb4a88d7b1143d05feb46994a",
+    "backend/app/slot-bonus-buy.json": "613b9eb93fb179d33868fed1088041a302945711dec3526810e2a7806aaad7ab"
+  }
+}

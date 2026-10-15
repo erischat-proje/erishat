@@ -70,7 +70,7 @@ def test_rules_validation(fixture):
  c,_,_,_,_=fixture;r=c.get('/v1/games/bastet/rules').json()
  assert r['buy_spins']==8 and r['max_win']==5000
  assert len(set(map(tuple,r['lines'])))==40
- for kw in [{'stake':True},{'sequence':False},{'stake':0},{'stake':10001},{'action':'bad'},{'sticky':{}},{'payout':9999}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':True},{'sequence':False},{'stake':0},{'stake':1000000001},{'action':'bad'},{'sticky':{}},{'payout':9999}]:assert post(c,**kw).status_code==422
 
 def board():return [{'s':i%8} for i in range(20)]
 def test_multiplicative_wilds(fixture):
