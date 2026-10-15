@@ -7,7 +7,7 @@ const selector=Object.keys(configs).map(id=>'#'+id).join(',')+',.sf-overlay,main
 const records=new Map();let queued=false;
 function set(el,name,value){if(el.style.getPropertyValue(name)!==value)el.style.setProperty(name,value);}
 function handled(){try{return JSON.parse(root.ErisChatAndroid?.getViewportInsets?.()||'{}').handled===true;}catch{return false;}}
-function geometry(){const v=root.visualViewport,zoomed=(v?.scale||1)>1.05;return bounds({width:zoomed?document.documentElement.clientWidth:(v?.width||root.innerWidth),height:zoomed?root.innerHeight:(v?.height||root.innerHeight),left:zoomed?0:(v?.offsetLeft||0),top:zoomed?0:(v?.offsetTop||0),android:/ErisChatAndroid\//.test(root.navigator?.userAgent||''),handled:handled(),framed:root.parent!==root});}
+function geometry(edgeToEdge=false){const v=root.visualViewport,zoomed=(v?.scale||1)>1.05;return bounds({width:zoomed?document.documentElement.clientWidth:(v?.width||root.innerWidth),height:zoomed?root.innerHeight:(v?.height||root.innerHeight),left:zoomed?0:(v?.offsetLeft||0),top:zoomed?0:(v?.offsetTop||0),android:!edgeToEdge&&/ErisChatAndroid\//.test(root.navigator?.userAgent||''),handled:handled(),framed:root.parent!==root});}
 function attach(el){if(records.has(el))return;let cfg=configs[el.id];if(!cfg&&el.matches('.sf-overlay'))cfg=['slot'];if(!cfg&&el.matches('main.nrs-game'))cfg=[el.dataset.nrsGame||'original','.arena>.board','canvas',el.dataset.nrsGame==='ares'?6/5:1];if(!cfg)return;
  el.classList.add('gv-fit');el.dataset.gvGame=cfg[0];let shell=el.querySelector(':scope>[class$="-shell"],:scope>.sf-panel,:scope>.eg-panel,:scope>.lw-panel,:scope>.cf-panel');if(!shell&&el.matches('main.nrs-game')){shell=document.createElement('div');while(el.firstChild)shell.append(el.firstChild);el.append(shell);}if(shell)shell.classList.add('gv-shell');
  const stage=cfg[1]?el.querySelector(cfg[1]):null,board=stage?stage.querySelector(cfg[2]):null;
@@ -19,7 +19,8 @@ function attach(el){if(records.has(el))return;let cfg=configs[el.id];if(!cfg&&el
 function fit(){queued=false;const box=geometry();
  for(const [el,item]of records){if(!el.isConnected){item.resize.disconnect();item.styleObserver?.disconnect();records.delete(el);continue;}
   if(!el.getClientRects().length)continue;
-  for(const [key,value]of Object.entries(box))set(el,'--gv-'+key,value+'px');set(el,'--nrs-height',box.height+'px');
+  const gameBox=['slot','dede'].includes(item.cfg[0])?geometry(true):box;
+  for(const [key,value]of Object.entries(gameBox))set(el,'--gv-'+key,value+'px');set(el,'--nrs-height',box.height+'px');
   el.classList.toggle('gv-compact',box.height<740);el.classList.toggle('gv-short',box.height<560);el.classList.toggle('gv-narrow',box.width<600);
   if(item.stage&&item.board){let ratio=item.cfg[3];if(item.cfg[0]==='altin'){const w=parseFloat(item.board.style.width),h=parseFloat(item.board.style.height);if(w>0&&h>0)ratio=w/h;}
    const css=root.getComputedStyle(item.stage),spaceX=(parseFloat(css.paddingLeft)||0)+(parseFloat(css.paddingRight)||0),spaceY=(parseFloat(css.paddingTop)||0)+(parseFloat(css.paddingBottom)||0);
