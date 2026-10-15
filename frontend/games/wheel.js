@@ -23,20 +23,20 @@
       // Three machined concentric rims remain visible, with no cards on top of the wheel.
       const rim=ctx.createLinearGradient(0,0,canvas.width,canvas.height);rim.addColorStop(0,'#f5df9b');rim.addColorStop(.3,'#ad8139');rim.addColorStop(.55,'#efd39a');rim.addColorStop(.8,'#805b28');rim.addColorStop(1,'#d8b66c');
       ctx.beginPath();ctx.arc(c,c,c-3,0,Math.PI*2);ctx.fillStyle=rim;ctx.fill();
-      ctx.beginPath();ctx.arc(c,c,c-13,0,Math.PI*2);ctx.fillStyle=dark?'#111a14':'#f5ecd7';ctx.fill();
+      ctx.beginPath();ctx.arc(c,c,c-13,0,Math.PI*2);ctx.fillStyle=dark?'#111a14':'#fff8e5';ctx.fill();
       ctx.beginPath();ctx.arc(c,c,c-21,0,Math.PI*2);ctx.strokeStyle=dark?'#c5a46b':'#a88647';ctx.lineWidth=3;ctx.stroke();
       ctx.save();ctx.translate(c,c);ctx.rotate(angle*Math.PI/180);ctx.translate(-c,-c);
       symbols.forEach((s,i)=>{
         const start=i*slice-Math.PI/2,end=start+slice,lit=winner===s.key;
         const enamel=ctx.createRadialGradient(c,c,80,c,c,r);
-        enamel.addColorStop(0,lit?(dark?'#a87b30':'#fff2c4'):dark?(i%2?'#1b2a20':'#27382a'):(i%2?'#eadcbf':'#fff9e9'));
-        enamel.addColorStop(1,lit?(dark?'#5c4220':'#d9b572'):dark?(i%2?'#16221a':'#203024'):(i%2?'#dac69e':'#efe4ce'));
-        ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,start,end);ctx.closePath();ctx.fillStyle=enamel;ctx.fill();ctx.strokeStyle=lit?'#f5d79d':dark?'#89734b':'#c7ad7d';ctx.lineWidth=lit?6:2;ctx.stroke();
-        ctx.save();ctx.beginPath();ctx.arc(c,c,r-10,start+.022,end-.022);ctx.strokeStyle=lit?'#ffe5ae':dark?'#4d573c':'#e4d2af';ctx.lineWidth=lit?5:2;ctx.stroke();ctx.restore();
+        enamel.addColorStop(0,lit?(dark?'#a87b30':'#fff2c4'):dark?(i%2?'#1b2a20':'#27382a'):(i%2?'#ffe4a0':'#fffef7'));
+        enamel.addColorStop(1,lit?(dark?'#5c4220':'#d9b572'):dark?(i%2?'#16221a':'#203024'):(i%2?'#d8a747':'#f8edda'));
+        ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,start,end);ctx.closePath();ctx.fillStyle=enamel;ctx.fill();ctx.strokeStyle=lit?'#f5d79d':dark?'#89734b':'#b87f27';ctx.lineWidth=lit?6:2;ctx.stroke();
+        ctx.save();ctx.beginPath();ctx.arc(c,c,r-10,start+.022,end-.022);ctx.strokeStyle=lit?'#ffe5ae':dark?'#4d573c':'#f4d48a';ctx.lineWidth=lit?5:2;ctx.stroke();ctx.restore();
         ctx.save();ctx.translate(c,c);ctx.rotate(start+slice/2);ctx.translate(r*.69,0);ctx.rotate(Math.PI/2);
         if(lit){ctx.shadowColor='#f9d581';ctx.shadowBlur=24;}
         window.LidyaGameArt.draw(ctx,s.key,-53,-63,106);ctx.shadowBlur=0;
-        ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 24px Georgia,serif';ctx.fillStyle=dark?'#f0e4cb':'#564023';ctx.fillText(multipliers[s.key]+'×',0,58);ctx.restore();
+        ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 24px Georgia,serif';ctx.fillStyle=dark?'#f0e4cb':'#49270d';ctx.fillText(multipliers[s.key]+'×',0,58);ctx.restore();
       });
       ctx.restore();
       // Small gold studs finish the outer ring; they do not move over the betting controls.

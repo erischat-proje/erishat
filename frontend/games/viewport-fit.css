@@ -96,3 +96,9 @@ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-countdown{width:min(70px,60
  html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-message{grid-column:2!important;grid-row:8!important}
  html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-history{grid-column:1!important;grid-row:8!important}
 }
+
+/* Game launchers always occupy the full usable viewport, including desktop. */
+html body :is(#erisGamesModal#erisGamesModal,#erisDedeModal#erisDedeModal,#erisPrensesModal#erisPrensesModal,#erisSekerModal#erisSekerModal,#erisBalikciModal#erisBalikciModal,#erisDogPartyModal#erisDogPartyModal,#erisCandyModal#erisCandyModal,#erisKovboyModal#erisKovboyModal,#erisBastetModal#erisBastetModal,#erisAltinModal#erisAltinModal,#erisKureModal#erisKureModal,#erisFiravunModal#erisFiravunModal,#erisLidyaOriginalModal#erisLidyaOriginalModal,#lidyaWheelLive#lidyaWheelLive,#lidyaCrashFinal#lidyaCrashFinal,#lidyaSlotFinal#lidyaSlotFinal,main.nrs-game,.uno-root,.o101-root,.ludo-dialog).gv-fit.gv-fit.gv-fit .gv-shell.gv-shell{width:100%!important;max-width:none!important;height:100%!important;max-height:100%!important;min-height:0!important;margin:0!important;border-radius:0!important;}
+
+html body #lidyaWheelLive#lidyaWheelLive.gv-fit .lw-header{min-height:34px!important;height:34px!important;flex:0 0 34px!important;}
+@media(max-height:600px){html body #lidyaWheelLive#lidyaWheelLive.gv-fit .lw-symbol{min-height:46px!important;}html body #lidyaWheelLive#lidyaWheelLive.gv-fit .lw-symbol .lg-object{width:20px!important;height:20px!important;}html body #lidyaWheelLive#lidyaWheelLive.gv-fit .lw-title p{display:none!important;}}
