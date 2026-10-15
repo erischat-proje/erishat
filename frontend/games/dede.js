@@ -7,7 +7,7 @@ const format=n=>Number(n||0).toLocaleString('tr-TR',{maximumFractionDigits:2}),s
 let current=null;
 function api(path,options){if(window.ErisDedeDemo)return window.ErisDedeDemo.api(path,options);if(!window.ErisPlatform?.api)throw Error('Platform hazır değil');return window.ErisPlatform.api('/games/dede'+path,options);}
 function theme(){return document.documentElement.dataset.erisTheme==='dark'?'dark':'light';}
-function img(key){const pose={'actor-anticipation':0,'actor-release':1,'actor-cast':2,'actor-follow':3}[key];if(pose!==undefined)return BASE+'throw-v4/pose-'+pose+'.png';if(key==='actor-idle'||key==='dede')return BASE+'dede-king-v3.png';return BASE+theme()+'/'+key+'.png';}
+function img(key,skin=theme()){const pose={'actor-anticipation':0,'actor-release':1,'actor-cast':2,'actor-follow':3}[key];if(pose!==undefined)return BASE+(skin==='dark'?'dark-v5/':'throw-v4/')+'pose-'+pose+'.png';if(key==='actor-idle'||key==='dede')return BASE+(skin==='dark'?'dark-v5/idle.png':'dede-king-v3.png');return BASE+skin+'/'+key+'.png';}
 function boardHtml(board){return board.map((c,i)=>{const key=c.s===10?'orb-'+(c.m>=100?'red':c.m>=25?'purple':c.m>=10?'blue':'green'):keys[c.s];return '<div class="dd-cell" data-cell="'+i+'"><img src="'+img(key)+'" alt="'+(c.s===10?'Çarpan '+c.m+'×':names[c.s])+'">'+(c.s===10?'<b>'+c.m+'×</b>':'')+'</div>';}).join('');}
 function beep(runtime,type){if(runtime.alive&&runtime.sound&&!document.hidden)runtime.audioBank?.play(type);}
 async function open(){current?.close();const old=document.getElementById('erisGamesModal');old?._erisCleanup?.();old?.remove();
@@ -19,7 +19,7 @@ async function open(){current?.close();const old=document.getElementById('erisGa
  function pause(){clearThrow();runtime.audioBank?.stopAll();runtime.hold=true;runtime.bonusPlaying=false;runtime.auto=0;cancelNext();update();}
  function fit(){if(!runtime.alive)return;modal.style.height=(window.visualViewport?.height||innerHeight)+'px';const stage=q('.dd-stage'),w=Math.max(30,Math.min(stage.clientWidth,stage.clientHeight*6/5));q('.dd-board').style.width=w+'px';q('.dd-board').style.height=w*5/6+'px';}
  function actor(state='idle'){runtime.actorState=state;q('.dd-actor').src=img('actor-'+state);q('.dd-hero').dataset.actor=state;}
- const poseImages=['anticipation','release','cast','follow'].map(state=>{const image=new Image();image.src=img('actor-'+state);return image;});
+ const poseImages=['light','dark'].flatMap(skin=>['idle','anticipation','release','cast','follow'].map(state=>{const image=new Image();image.src=img('actor-'+state,skin);return image;}));
  const posesReady=Promise.all(poseImages.map(image=>image.decode().catch(()=>{})));
  function clearThrow(){modal.querySelectorAll('.dd-throw-projectile').forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.remove();});actor();}
  async function throwMultiplier(cell,value,reduce){
