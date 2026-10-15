@@ -162,7 +162,7 @@ def place_bet(db, user, payload):
     weights, _, stakes = round_rules(row)
     if payload.choice not in weights:
         raise HTTPException(422, 'Geçersiz çark sembolü.')
-    if payload.amount not in stakes:
+    if (payload.amount not in stakes if int(json.loads(row.state_data).get("version",1)) < 4 else not 10 <= payload.amount <= 1_000_000_000 or payload.amount % 10):
         raise HTTPException(422, 'Bahis: 10, 100, 1.000, 10.000 veya 100.000 Lidya seç.')
     if row.status != 'open' or (utc(row.ends_at)-now()).total_seconds() <= LOCK_SECONDS:
         raise HTTPException(409, 'Bahisler kapandı. Yeni turu bekle.')
@@ -212,3 +212,4 @@ def records(db, user):
                GameRound.status == 'finished', settled >= start, settled < end)) or 0
     return dict(today_winnings=int(total), items=[dict(round_id=rid, played_at=at, result=result,
         stake=int(amount), payout=int(payout)) for rid,at,result,amount,payout in rows])
+

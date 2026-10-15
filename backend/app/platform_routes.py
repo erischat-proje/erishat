@@ -29,7 +29,7 @@ from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
 from .oyunlar.blackjack import available_actions, display_state
-from . import blackjack_final, slot_final, cups_final, horse_final, vault_final
+from . import blackjack_final, slot_final, cups_final, horse_final, vault_final, nonroom_standard
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -1414,7 +1414,7 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=409, detail="Bahisler kapandı. Yeni turu bekle.")
         existing = db.scalar(select(func.coalesce(func.sum(GameBet.amount), 0)).where(
             GameBet.round_id == row.id, GameBet.user_id == user.id, GameBet.choice == choice)) or 0
-        if locked_user.lidya - payload.amount + (int(existing) + payload.amount) * horse_live.MULTIPLIER > 2_147_483_647:
+        if locked_user.lidya - payload.amount + (int(existing) + payload.amount) * horse_live.MULTIPLIER > 9_007_199_254_740_991:
             raise HTTPException(status_code=422, detail="Toplam olası ödeme cüzdan sınırını aşıyor.")
 
         locked_user.lidya -= payload.amount
@@ -1563,7 +1563,7 @@ def register_platform_auth(current_user_dependency):
         multiplier = (vault_live.MULTIPLIERS if vault_version == 2 else vault_live.LEGACY_MULTIPLIERS)[choice]
         existing = db.scalar(select(func.coalesce(func.sum(GameBet.amount), 0)).where(
             GameBet.round_id == row.id, GameBet.user_id == user.id, GameBet.choice == choice)) or 0
-        if locked_user.lidya - payload.amount + (int(existing) + payload.amount) * multiplier > 2_147_483_647:
+        if locked_user.lidya - payload.amount + (int(existing) + payload.amount) * multiplier > 9_007_199_254_740_991:
             raise HTTPException(status_code=422, detail="Toplam olası ödeme cüzdan sınırını aşıyor.")
         locked_user.lidya -= payload.amount
         db.add(GameBet(
@@ -1664,7 +1664,7 @@ def register_platform_auth(current_user_dependency):
         if stake > locked_user.lidya:
             raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
-        if locked_user.lidya - stake + (stake * 36 // 10) > 2_147_483_647:
+        if locked_user.lidya - stake + (stake * 36 // 10) > 9_007_199_254_740_991:
             raise HTTPException(status_code=422, detail="Olası ödeme cüzdan sınırını aşıyor.")
 
         # V3: Coin, yatay kupa değişimlerini gerçekten takip eder.
@@ -1853,6 +1853,12 @@ def register_platform_auth(current_user_dependency):
         })
         return response
 
+    @router.get("/games/{game}/leaderboard")
+    def custom_game_leaderboard(game: str, period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if game not in nonroom_standard.CUSTOM_GAMES:
+            raise HTTPException(404, "Oyun sıralaması bulunamadı")
+        return nonroom_standard.leaderboard(db, user, game, period)
+
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         game_type = game_type.strip().lower()
@@ -1958,6 +1964,7 @@ def register_platform_auth(current_user_dependency):
             response["data"] = {**data, "state":display_state(data["state"]), "dealer_hand":data["dealer_hand"] if result != "pending" else data["dealer_hand"][:1], "dealer_total":data["dealer_total"] if result != "pending" else None}
         response.update({"stake":stake,"payout":payout,"balance":locked_user.lidya})
         return response
+
 
 
 

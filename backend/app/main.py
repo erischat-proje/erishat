@@ -111,6 +111,11 @@ def ensure_system_data_columns() -> None:
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE user_cosmetics ALTER COLUMN cosmetic_type TYPE VARCHAR(32)"))
         conn.execute(text("ALTER TABLE users ALTER COLUMN lidya TYPE BIGINT"))
+        # Expand legacy bet/payment columns only once; preserve all ledger rows.
+        for column in ("amount", "payout"):
+            kind = conn.execute(text("SELECT data_type FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='game_bets' AND column_name=:column"), {"column": column}).scalar()
+            if kind == "integer":
+                conn.execute(text(f"ALTER TABLE game_bets ALTER COLUMN {column} TYPE BIGINT"))
         conn.execute(text("ALTER TABLE users ALTER COLUMN lidya SET DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS lidya_gem BIGINT NOT NULL DEFAULT 0"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip VARCHAR(64)"))
@@ -2596,3 +2601,4 @@ def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
 if static_dir.exists():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
+
