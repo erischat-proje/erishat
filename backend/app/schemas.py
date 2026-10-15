@@ -27,8 +27,18 @@ class OnboardingRequest(BaseModel):
     gender: Literal["female", "male"]
     username: str = Field(min_length=3, max_length=32)
     bio: str = Field(default="", max_length=300)
-    avatar_asset: str | None = Field(default=None, max_length=255)
-    frame_asset: str | None = Field(default=None, max_length=255)
+    avatar_asset: str = Field(min_length=1, max_length=255)
+    frame_asset: str = Field(min_length=1, max_length=255)
+    terms_accepted: bool = Field(strict=True)
+    terms_version: str = Field(min_length=1,max_length=40)
+    terms_digest: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+    @field_validator("terms_accepted")
+    @classmethod
+    def validate_terms_accepted(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Kullanıcı sözleşmesini kabul etmelisin")
+        return value
 
     @field_validator("first_name", "last_name", "username", "bio")
     @classmethod
@@ -48,8 +58,11 @@ class OnboardingRequest(BaseModel):
             parsed = date.fromisoformat(value)
         except ValueError as exc:
             raise ValueError("Doğum tarihi YYYY-AA-GG formatında olmalı") from exc
-        if parsed > date.today():
-            raise ValueError("Doğum tarihi gelecekte olamaz")
+        if parsed.isoformat() != value:
+            raise ValueError("Doğum tarihi YYYY-AA-GG formatında olmalı")
+        from .onboarding_policy import is_adult
+        if not is_adult(value):
+            raise ValueError("ErisChat yalnızca 18 yaşını doldurmuş kişiler içindir")
         return value
 
     @field_validator("bio")

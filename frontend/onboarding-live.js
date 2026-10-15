@@ -24,15 +24,18 @@
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.detail || data.message || `İşlem başarısız (${response.status})`);
+      const error=new Error(data.detail?.message || data.detail || data.message || `İşlem başarısız (${response.status})`);error.code=data.detail?.code;throw error;
     }
 
     return data;
   }
 
   function removeExisting() {
-    document.getElementById('erisOnboarding')?.remove();
+    const old=document.getElementById('erisOnboarding'); old?._erisCleanup?.(); old?.remove();
   }
+
+  function todayTR(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).filter(p=>p.type!=='literal').reduce((a,p)=>(a[p.type]=p.value,a),{});}
+  function isAdult(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;const [y,m,d]=value.split('-').map(Number),t=todayTR(),date=new Date(Date.UTC(y,m-1,d));if(date.getUTCFullYear()!==y||date.getUTCMonth()!==m-1||date.getUTCDate()!==d)return false;return Number(t.year)-y-((Number(t.month)<m||Number(t.month)===m&&Number(t.day)<d)?1:0)>=18;}
 
   function createUI() {
     removeExisting();
@@ -272,7 +275,7 @@
       </style>
 
       <div class="eris-onboard-card">
-        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./eris-brand-logo.jpg?v=shared-brand-20261010" alt="ErisChat" width="1600" height="544" decoding="async"></div>
+        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./assets/lidya-menu/light-logo.png" alt="ErisChat" width="1600" height="544" decoding="async"></div>
         <h1>ErisChat'e Hoş Geldin</h1>
         <div class="eris-subtitle">
           Seni daha iyi tanıyabilmemiz için profilini tamamlayalım.
@@ -299,14 +302,19 @@
             <button type="button" data-gender="female">Kadın</button>
           </div>
 
-          <div id="erisOnboardError" class="eris-error"></div>
+          <div class="eris-consent-row">
+            <button type="button" id="erisTermsCheck" role="checkbox" aria-checked="false" aria-label="Kullanıcı sözleşmesini aç ve onayla"><span aria-hidden="true">✓</span></button>
+            <div><button type="button" id="erisReadTerms">Kullanıcı sözleşmesini oku ve onayla</button><small>18 yaşını doldurmuş olmalısın. Devam etmek için sözleşmeyi sonuna kadar görüntüleyip onayla.</small></div>
+          </div>
+          <div id="erisOnboardError" class="eris-error" role="status"></div>
 
           <div class="eris-actions">
-            <button type="button" class="eris-next" id="erisStep1Next">Devam Et</button>
+            <button type="button" class="eris-next" id="erisStep1Next" disabled>Devam Et</button>
           </div>
         </div>
 
         <div id="erisStep2" class="eris-step">
+          <p class="eris-reward-note">Kayıt hediyeni seç: 1 standart avatar + 1 standart çerçeve. Seçtiklerin ücretsiz ve kalıcı olarak koleksiyonuna eklenecek.</p>
           <div class="eris-cosmetics-section">
             <label>Avatarını seç</label>
             <div id="erisAvatarGallery" class="eris-cosmetics-gallery"></div>
@@ -331,6 +339,12 @@
           </div>
         </div>
       </div>
+      <dialog id="erisTermsDialog" aria-labelledby="erisTermsTitle">
+        <header><h2 id="erisTermsTitle">Kullanıcı sözleşmesi</h2><button type="button" data-terms-close aria-label="Sözleşmeyi kapat">×</button></header>
+        <div class="eris-terms-body" tabindex="0" aria-label="Sözleşme metni"></div>
+        <p data-terms-hint role="status">Metnin sonuna ulaşınca onay düğmesi açılır.</p>
+        <footer><button type="button" data-terms-retry hidden>Yeniden yükle</button><button type="button" data-terms-accept disabled>Okudum, onaylıyorum</button></footer>
+      </dialog>
     `;
 
     document.body.appendChild(root);
@@ -338,6 +352,35 @@
     let selectedGender = '';
     let selectedAvatarAsset = '';
     let selectedFrameAsset = '';
+    let consent = null, agreement = null, alive=true, loadingCatalog=false, catalogSequence=0;
+    const termsDialog=root.querySelector('#erisTermsDialog'),termsBody=root.querySelector('.eris-terms-body');
+    const termsCheck=root.querySelector('#erisTermsCheck'),nextButton=root.querySelector('#erisStep1Next'),acceptButton=root.querySelector('[data-terms-accept]');
+    const termsHint=root.querySelector('[data-terms-hint]'),retryTerms=root.querySelector('[data-terms-retry]');
+    const updateConsent=()=>{termsCheck.setAttribute('aria-checked',String(!!consent));nextButton.disabled=!consent;root.querySelector('#erisReadTerms').textContent=consent?'Kullanıcı sözleşmesi onaylandı · Tekrar oku':'Kullanıcı sözleşmesini oku ve onayla';};
+    function checkEnd(){if(!agreement)return;const read=termsBody.scrollHeight>0&&termsBody.clientHeight>0&&termsBody.scrollTop+termsBody.clientHeight>=termsBody.scrollHeight-3;if(read){acceptButton.disabled=false;termsHint.textContent='Metnin sonuna ulaştın. Kabul ediyorsan onaylayabilirsin.';}}
+    function closeTerms(){if(termsDialog.close)termsDialog.close();else termsDialog.removeAttribute('open');termsCheck.focus();}
+    async function openTerms(){
+      agreement=null;acceptButton.disabled=true;retryTerms.hidden=true;termsBody.replaceChildren();termsBody.textContent='Sözleşme yükleniyor…';termsHint.textContent='Metnin sonuna ulaşınca onay düğmesi açılır.';
+      if(!termsDialog.open){if(termsDialog.showModal)termsDialog.showModal();else termsDialog.setAttribute('open','');}
+      try{
+        const data=await request('/legal/user-agreement');if(!alive)return;
+        if(!data.version||!/^[a-f0-9]{64}$/.test(data.sha256)||!Array.isArray(data.sections)||!data.sections.length)throw Error('Sözleşme yüklenemedi.');
+        if(consent&&(consent.version!==data.version||consent.digest!==data.sha256)){consent=null;updateConsent();}
+        agreement=data;termsBody.replaceChildren();root.querySelector('#erisTermsTitle').textContent=data.title;
+        const info=document.createElement('p');info.textContent='Sürüm '+data.version+' · '+data.effective_date;termsBody.append(info);
+        for(const section of data.sections){const title=document.createElement('h3');title.textContent=section.title;termsBody.append(title);for(const text of section.paragraphs){const p=document.createElement('p');p.textContent=text;termsBody.append(p);}}
+        termsBody.scrollTop=0;requestAnimationFrame(checkEnd);termsBody.focus();
+      }catch(error){if(!alive)return;termsBody.textContent=error.message||'Sözleşme yüklenemedi.';retryTerms.hidden=false;}
+    }
+    termsCheck.onclick=openTerms;root.querySelector('#erisReadTerms').onclick=openTerms;retryTerms.onclick=openTerms;
+    root.querySelector('[data-terms-close]').onclick=closeTerms;termsBody.addEventListener('scroll',checkEnd,{passive:true});
+    acceptButton.onclick=()=>{if(acceptButton.disabled||!agreement)return;consent={version:agreement.version,digest:agreement.sha256};updateConsent();closeTerms();};
+    function syncLogo(){const theme=document.documentElement.dataset.erisTheme||document.documentElement.dataset.theme||'light';const logo=root.querySelector('.eris-brand-image'),src='./assets/lidya-menu/'+(theme==='dark'?'dark':'light')+'-logo.png';if(logo.getAttribute('src')!==src)logo.src=src;}
+    const themeObserver=new MutationObserver(syncLogo);themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-eris-theme','data-theme','class']});syncLogo();
+    const resizeTerms=typeof ResizeObserver==='function'?new ResizeObserver(checkEnd):null;resizeTerms?.observe(termsBody);
+    root._erisCleanup=()=>{alive=false;catalogSequence++;themeObserver.disconnect();resizeTerms?.disconnect();};
+    const now=todayTR();root.querySelector('#erisBirthDate').max=(Number(now.year)-18)+'-'+now.month+'-'+now.day;
+
 
     const step1 = root.querySelector('#erisStep1');
     const step2 = root.querySelector('#erisStep2');
@@ -350,6 +393,7 @@
 
     root.querySelectorAll('[data-gender]').forEach(button => {
       button.addEventListener('click', () => {
+        if(loadingCatalog)return;
         selectedGender = button.dataset.gender;
         root.querySelectorAll('[data-gender]').forEach(x => x.classList.remove('selected'));
         button.classList.add('selected');
@@ -368,8 +412,10 @@
       avatarGallery.innerHTML = '<div class="eris-cosmetics-loading">Avatarlar yükleniyor...</div>';
       frameGallery.innerHTML = '<div class="eris-cosmetics-loading">Çerçeveler yükleniyor...</div>';
 
+      const sequence=++catalogSequence;loadingCatalog=true;
       try {
         const catalogResponse = await request('/cosmetics');
+        if(!alive||sequence!==catalogSequence)return false;
         const catalog = Array.isArray(catalogResponse)
           ? catalogResponse
           : (catalogResponse?.items || []);
@@ -377,14 +423,17 @@
         const avatars = catalog.filter(item =>
           item.type === 'avatar' &&
           item.vip === false &&
-          item.gender === selectedGender
+          (item.gender === selectedGender || item.gender == null || item.gender === 'unisex')
         );
 
         const frames = catalog.filter(item =>
           item.type === 'frame' &&
-          item.vip === false
+          item.vip === false &&
+          (item.gender === selectedGender || item.gender == null || item.gender === 'unisex')
         );
 
+        const oldAvatar=selectedAvatarAsset,oldFrame=selectedFrameAsset;
+        selectedAvatarAsset='';selectedFrameAsset='';
         avatarGallery.innerHTML = '';
         frameGallery.innerHTML = '';
 
@@ -392,7 +441,7 @@
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'eris-cosmetic-item';
-          button.innerHTML = '<img alt="Avatar" loading="lazy">';
+          button.innerHTML = '<img alt="Avatar" loading="lazy" decoding="async">';
 
           const img = button.querySelector('img');
           img.src = window.ErisChatCosmetics
@@ -408,7 +457,7 @@
 
           avatarGallery.appendChild(button);
 
-          if (index === 0) {
+          if (item.asset_key===oldAvatar || index===0&&!avatars.some(i=>i.asset_key===oldAvatar)) {
             selectedAvatarAsset = item.asset_key;
             button.classList.add('selected');
           }
@@ -418,7 +467,7 @@
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'eris-cosmetic-item eris-frame-item';
-          button.innerHTML = '<img alt="Çerçeve" loading="lazy">';
+          button.innerHTML = '<img alt="Çerçeve" loading="lazy" decoding="async">';
 
           const img = button.querySelector('img');
           img.src = window.ErisChatCosmetics
@@ -434,7 +483,7 @@
 
           frameGallery.appendChild(button);
 
-          if (index === 0) {
+          if (item.asset_key===oldFrame || index===0&&!frames.some(i=>i.asset_key===oldFrame)) {
             selectedFrameAsset = item.asset_key;
             button.classList.add('selected');
           }
@@ -447,11 +496,14 @@
         if (!frames.length) {
           frameGallery.innerHTML = '<div class="eris-cosmetics-loading">Standart çerçeve bulunamadı.</div>';
         }
+        return !!avatars.length&&!!frames.length;
       } catch (error) {
+        if(!alive||sequence!==catalogSequence)return false;
         console.error('Onboarding cosmetics yüklenemedi:', error);
         avatarGallery.innerHTML = '<div class="eris-cosmetics-loading">Avatarlar yüklenemedi.</div>';
         frameGallery.innerHTML = '<div class="eris-cosmetics-loading">Çerçeveler yüklenemedi.</div>';
-      }
+        return false;
+      }finally{loadingCatalog=false;}
     }
 
     root.querySelector('#erisStep1Next').addEventListener('click', async () => {
@@ -474,13 +526,17 @@
         return;
       }
 
+      if(!isAdult(birthDate)){error1.textContent='ErisChat yalnızca 18 yaşını doldurmuş kişiler içindir.';return;}
+      if(!consent){error1.textContent='Kullanıcı sözleşmesini okuyup onaylamalısın.';return;}
       if (!selectedGender) {
         error1.textContent = 'Lütfen cinsiyetini seç.';
         return;
       }
 
       error1.textContent = '';
-      await loadOnboardingCosmetics();
+      if(loadingCatalog)return;nextButton.disabled=true;
+      const ready=await loadOnboardingCosmetics();nextButton.disabled=!consent;
+      if(!ready){error1.textContent='Kayıt hediyeleri yüklenemedi. Tekrar deneyebilirsin.';return;}
       step1.classList.remove('active');
       step2.classList.add('active');
       progress1.classList.remove('active');
@@ -504,6 +560,7 @@
 
       error2.textContent = '';
 
+      if(!consent||!isAdult(birthDate)||!selectedAvatarAsset||!selectedFrameAsset){error2.textContent='18 yaş şartını, sözleşme onayını ve hediye seçimlerini tamamlamalısın.';return;}
       if (username.length < 3) {
         error2.textContent = 'Kullanıcı adı en az 3 karakter olmalı.';
         return;
@@ -523,8 +580,11 @@
             gender: selectedGender,
             username,
             bio: bioValue,
-                                    avatar_asset: selectedAvatarAsset || null,
-                                    frame_asset: selectedFrameAsset || null,
+            avatar_asset: selectedAvatarAsset,
+            frame_asset: selectedFrameAsset,
+            terms_accepted:true,
+            terms_version:consent.version,
+            terms_digest:consent.digest,
           }),
         });
 
@@ -540,8 +600,9 @@
           }
         }));
 
-        root.remove();
+        root._erisCleanup();root.remove();
       } catch (error) {
+        if(error.code==='terms_changed'){consent=null;updateConsent();step2.classList.remove('active');step1.classList.add('active');progress2.classList.remove('active');progress1.classList.add('active');openTerms();}
         error2.textContent = error.message || 'Profil kaydedilemedi.';
         button.disabled = false;
         button.textContent = 'Profili Tamamla';
@@ -557,7 +618,7 @@
   }
 
   window.ErisOnboarding = {
-    show,
+    show,isAdult,
   };
 
   if (window.ErisAuth?.user) setTimeout(() => show(window.ErisAuth.user), 100);
