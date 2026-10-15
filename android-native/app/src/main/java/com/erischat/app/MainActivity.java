@@ -17,6 +17,9 @@ import android.webkit.WebResourceRequest;
 import android.graphics.Bitmap;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Build;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -55,6 +58,7 @@ public class MainActivity extends Activity {
     private Uri captureUri;
     private File captureFile;
     private int mediaPageGeneration;
+    private volatile boolean viewportInsetsHandled;
     private WebView webView;
     private GoogleSignInClient googleClient;
 
@@ -71,7 +75,24 @@ public class MainActivity extends Activity {
         googleClient = GoogleSignIn.getClient(this, options);
 
         webView = new WebView(this);
-        setContentView(webView);
+        // Keep WebView layout bounds outside status/navigation bars on edge-to-edge Android.
+        FrameLayout viewport = new FrameLayout(this);
+        viewport.addView(webView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        if (Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(false);
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        }
+        viewport.setOnApplyWindowInsetsListener((view, insets) -> {
+            view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+            viewportInsetsHandled = true;
+            return insets;
+        });
+        setContentView(viewport);
+        viewport.requestApplyInsets();
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -163,6 +184,9 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+        @JavascriptInterface public String getViewportInsets() {
+            return "{\"handled\":" + viewportInsetsHandled + "}";
+        }
         @JavascriptInterface public String cameraVersion() { return "3"; }
         @JavascriptInterface
         public void googleSignIn() {
