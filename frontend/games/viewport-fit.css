@@ -61,3 +61,38 @@ html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal
 html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .gv-shell>*{flex-shrink:0!important}
 html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .gv-shell>.gv-stage{flex-shrink:1!important}
 
+/* Wheel reserves space for the controls; only its arena takes the remainder.
+   height:100% on the old arena consumed a whole screen before the bets. */
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-panel.gv-shell.gv-shell{
+  display:flex!important;flex-direction:column!important;overflow:hidden!important;
+  gap:4px!important;padding:6px 8px!important;
+}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-panel>.lw-arena{
+  flex:1 1 0!important;height:0!important;min-height:0!important;overflow:hidden!important;
+}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-title{flex:0 0 auto!important}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-title h1{font-size:23px!important;margin:0!important}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-title p{margin:0!important}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-symbol{min-height:56px!important;padding:3px 1px!important}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-symbol .lg-object{width:26px!important;height:26px!important}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-message{min-height:26px!important;font-size:10px!important;line-height:13px!important}
+html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-countdown{width:min(70px,60%);height:auto;aspect-ratio:1}
+@media(max-height:600px){
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-title small{display:none!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-wallet{padding:3px 7px!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-stakes button{min-height:36px!important;flex-direction:row!important;gap:3px!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-stakes img{width:19px!important;height:19px!important}
+}
+@media(max-height:560px) and (min-width:600px){
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-panel.gv-shell.gv-shell{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(300px,1fr)!important;grid-template-rows:34px auto minmax(0,1fr) auto auto auto auto auto!important;column-gap:12px!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-header{grid-column:1/-1!important;grid-row:1!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-title{grid-column:1!important;grid-row:2!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-panel>.lw-arena{grid-column:1!important;grid-row:3/8!important;height:100%!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-betting{grid-column:2!important;grid-row:2/4!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-wallet{grid-column:2!important;grid-row:4!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-stakes{grid-column:2!important;grid-row:5!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .nrs-live-bet{grid-column:2!important;grid-row:6!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-retry{grid-column:2!important;grid-row:7!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-message{grid-column:2!important;grid-row:8!important}
+ html body #lidyaWheelLive.nrs-game.gv-fit.gv-fit .lw-history{grid-column:1!important;grid-row:8!important}
+}
