@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const base=new URL('../assets/lidya-kovboy/',document.currentScript.src);
-const scene=()=>new URL('menu-cover.png',base).href;
+const scene=()=>new URL('../lidya-ranking-v2/'+(document.documentElement.dataset.erisTheme==='dark'?'dark':'light')+'/kovboy.png',base).href;
 function install(){
  const launcher=document.querySelector('#games .eg-launcher-grid');
  if(launcher&&!launcher.querySelector('.kw-launcher-card')){const b=document.createElement('button');b.type='button';b.className='eg-launcher-card kw-launcher-card';b.dataset.game='kovboy';b.innerHTML='<img class="pg-cover" alt="" aria-hidden="true"><span class="eg-lc-title">Kovboy</span><span class="eg-lc-desc">40 çizgi · Yapışkan rozetler ve altın yıldızlar</span><span class="eg-lc-play"><span>Oyna</span><span aria-hidden="true">→</span></span>';b.onclick=()=>window.ErisGameKovboy.open();launcher.append(b);}

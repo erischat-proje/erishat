@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const base=new URL('../assets/lidya-altin/',document.currentScript.src);
-const scene=()=>new URL('menu-cover.png',base).href;
+const scene=()=>new URL('../lidya-ranking-v2/'+(document.documentElement.dataset.erisTheme==='dark'?'dark':'light')+'/altin.png',base).href;
 function install(){
  const launcher=document.querySelector('#games .eg-launcher-grid');
  if(launcher&&!launcher.querySelector('.as-launcher-card')){const b=document.createElement('button');b.type='button';b.className='eg-launcher-card as-launcher-card';b.dataset.game='altin';b.innerHTML='<img class="pg-cover" alt="" aria-hidden="true"><span class="eg-lc-title">Altın Şöleni</span><span class="eg-lc-desc">25 çizgi · Dört hazine ve makara kopyalama</span><span class="eg-lc-play"><span>Oyna</span><span aria-hidden="true">→</span></span>';b.onclick=()=>window.ErisGameAltin.open();launcher.append(b);}
