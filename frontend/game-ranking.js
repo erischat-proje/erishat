@@ -1,34 +1,138 @@
-(() => {'use strict';
-const base=new URL('./assets/lidya-wheel/',document.currentScript.src),icon=new URL('leaderboard-v1.png',base).href;
-const labels={hour:'Bu saat',day:'Günlük',week:'Bu hafta',month:'Aylık'};
+(() => {
+'use strict';
+const source=new URL('.',document.currentScript.src);
+const assets=new URL('assets/lidya-ranking-v2/',source);
+const icon=new URL('assets/lidya-wheel/leaderboard-v1.png',source).href;
+const games=[
+ ['wheel','Şans Çarkı','Çarkın liderleri','classic'],['crash','Crash','Zirveye yükselenler','classic'],
+ ['blackjack','Blackjack','Masanın ustaları','classic'],['slot','Klasik Slot','Hazinenin sahipleri','classic'],
+ ['cups','Dört Kupa','Doğru seçimin ödülü','classic'],['horse_race','At Yarışı','Pistin şampiyonları','classic'],
+ ['vault','Kasa','Kasayı açanlar','classic'],['dede','Dede','Yıldırımın gücü','slots'],
+ ['seker','Şeker Sarayı','Tatlı zaferler','slots'],['balikci','Balıkçı Hasan','Günün büyük avı','slots'],
+ ['prenses','Prenses','Yıldızların zirvesi','slots'],['dogparty','Dog Party','Patili zaferler','slots'],
+ ['candy','Candy Ultimate','Renkli kazançlar','slots'],['kovboy','Kovboy','Kasabanın liderleri','slots'],
+ ['bastet','Bastet’in Hazinesi','Kedilerin hazinesi','slots'],['altin','Altın Şöleni','Dört hazine, tek şölen','slots'],
+ ['kure','Kaderin Küresi','Kaderin kazananları','slots'],['firavun','Firavun’un Sırrı','Antik hazinenin izinde','slots'],
+ ['aztek','Aztek Hazinesi','Tapınağın zirvesi','slots'],['ares','Ares’in Gazabı','Zaferin gücü','slots']
+];
+const periods={hour:'Bu saat',day:'Günlük',week:'Haftalık',month:'Aylık'};
+const format=value=>Number(value||0).toLocaleString('tr-TR');
+const searchKey=value=>String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
+const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
+function safeAsset(path){
+ const value=window.ErisChatCosmetics?.assetUrl?.(path)||path||'';
+ if(!value)return '';
+ try{const url=new URL(value,location.href);return ['https:','http:','blob:'].includes(url.protocol)?url.href:'';}catch{return '';}
+}
 let active=null;
-const api=path=>window.ErisPlatform.api(path);
-function asset(path){const value=window.ErisChatCosmetics?.assetUrl?.(path)||path||'';return /^(javascript|data:text)/i.test(value)?'':value;}
 function open(selectedGame='wheel'){
- let game=['wheel','crash','blackjack','slot','cups','horse_race','vault','dede','seker','balikci','prenses','dogparty','candy','kovboy','bastet','altin','kure','firavun','aztek','ares'].includes(selectedGame)?selectedGame:'wheel';active?.close();const previous=document.activeElement,dialog=document.createElement('dialog');dialog.className='lw-floating lr-dialog';dialog.setAttribute('aria-label','Oyun sıralaması');
- dialog.innerHTML='<header><img class="lr-heading-icon" alt=""><div><small>LİDYA OYUN SALONU</small><h2>Oyun sıralaması</h2></div><button data-close aria-label="Sıralamayı kapat">×</button></header><div class="lr-game lr-game-buttons" aria-label="Sıralanacak oyun"><button data-rank-game="wheel"><img alt=""><span>Şans Çarkı</span></button><button data-rank-game="crash"><img alt=""><span>Crash</span></button><button data-rank-game="blackjack"><img alt=""><span>Blackjack</span></button><button data-rank-game="slot"><img alt=""><span>Slot</span></button><button data-rank-game="cups"><img alt=""><span>Dört Kupa</span></button><button data-rank-game="horse_race"><img alt=""><span>At Yarışı</span></button><button data-rank-game="vault"><img alt=""><span>Kasa</span></button></div><nav class="lr-periods" aria-label="Sıralama dönemi"></nav><p class="lr-note">Ödenmiş toplam Lidya kazancı · Türkiye saati · İlk 50</p><div class="lr-list" role="list" aria-live="polite"></div><footer><span>Senin kazancın</span><b data-mine>—</b><img data-coin alt="Lidya coin"></footer>';
- dialog.querySelector('.lr-heading-icon').src=icon;dialog.querySelector('[data-coin]').src=window.LidyaGameArt?.image('coin').src||new URL('../lidya-games-png/light/coin.png',base).href;
- let alive=true,index=0,period='hour';
- const close=()=>{if(!alive)return;alive=false;index++;dialog.close();dialog.remove();if(previous?.isConnected)previous.focus();if(active?.dialog===dialog)active=null;};
- const load=async p=>{period=p;const request=++index;dialog.querySelectorAll('[data-rank-game]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rankGame===game)));dialog.querySelector('.lr-heading-icon').src=game==='vault'?window.LidyaGameArt.image('vault').src:game==='horse_race'?window.LidyaGameArt.image('horse_race').src:game==='cups'?window.LidyaGameArt.image('cups').src:game==='slot'?window.LidyaGameArt.image('slot').src:game==='blackjack'?window.LidyaGameArt.image('blackjack').src:game==='crash'?new URL('../lidya-crash-final/crash-lion-v1.png',base).href:icon;dialog.querySelectorAll('[data-period]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.period===p));});const list=dialog.querySelector('.lr-list');list.textContent='Sıralama yükleniyor…';try{const data=await api('/games/'+game+'/leaderboard?period='+p);if(!alive||request!==index)return;list.replaceChildren();dialog.querySelector('[data-mine]').textContent=Number(data.my_winnings||0).toLocaleString('tr-TR');if(!data.items.length){list.textContent='Bu dönemde henüz kazanan yok.';return;}for(const row of data.items.slice(0,50)){
- const entry=document.createElement('article');entry.className='lr-row';entry.setAttribute('role','listitem');entry.dataset.rank=row.rank;
- const rank=document.createElement('b');rank.className='lr-rank';rank.textContent=row.rank;
- const portrait=document.createElement('span');portrait.className='lr-portrait';const avatar=asset(row.avatar_asset),frame=asset(row.frame_asset);
- if(avatar){const image=document.createElement('img');image.className='lr-avatar';image.src=avatar;image.alt='';image.onerror=()=>{image.remove();portrait.prepend(document.createTextNode(row.avatar||'●'));};portrait.append(image);}else portrait.textContent=row.avatar||'●';
- if(frame){const image=document.createElement('img');image.className='lr-frame';image.src=frame;image.alt='';image.onerror=()=>image.remove();portrait.append(image);}
- const name=document.createElement('button');name.className='lr-name';name.textContent=row.nickname||'Kullanıcı';name.title=row.nickname||'';name.onclick=()=>{if(window.openUserProfile){close();window.openUserProfile(row.user_id);}};
- const amount=document.createElement('b');amount.className='lr-amount';amount.textContent=Number(row.winnings).toLocaleString('tr-TR');
- const coin=document.createElement('img');coin.className='lr-coin';coin.src=dialog.querySelector('[data-coin]').src;coin.alt='Lidya coin';entry.append(rank,portrait,name,amount,coin);list.append(entry);
- }}catch(e){if(alive&&request===index){list.replaceChildren();const message=document.createElement('p');message.textContent=e.message||'Sıralama yüklenemedi.';const retry=document.createElement('button');retry.textContent='Tekrar dene';retry.onclick=()=>load(period);list.append(message,retry);}}};
- dialog.querySelector('[data-rank-game="wheel"] img').src=window.LidyaGameArt.image('wheel').src;dialog.querySelector('[data-rank-game="crash"] img').src=new URL('../lidya-crash-final/crash-lion-v1.png',base).href;dialog.querySelector('[data-rank-game="blackjack"] img').src=window.LidyaGameArt.image('blackjack').src;dialog.querySelector('[data-rank-game="slot"] img').src=window.LidyaGameArt.image('slot').src;dialog.querySelector('[data-rank-game="cups"] img').src=window.LidyaGameArt.image('cups').src;dialog.querySelector('[data-rank-game="horse_race"] img').src=window.LidyaGameArt.image('horse_race').src;dialog.querySelector('[data-rank-game="vault"] img').src=window.LidyaGameArt.image('vault').src;dialog.querySelectorAll('[data-rank-game]').forEach(b=>b.onclick=()=>{game=b.dataset.rankGame;load(period);});
- const extra=document.createElement('select');extra.className='nrs-ranking-select';extra.setAttribute('aria-label','Sıralanacak oyun');for(const [id,label] of Object.entries(window.LidyaNonRoom.names)){const option=new Option(label,id);extra.add(option);}extra.value=game;extra.onchange=()=>{game=extra.value;load(period);};dialog.querySelector('.lr-game').after(extra);
- for(const [p,label] of Object.entries(labels)){const b=document.createElement('button');b.dataset.period=p;b.textContent=label;b.onclick=()=>load(p);dialog.querySelector('nav').append(b);}
- dialog.querySelector('[data-close]').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.addEventListener('keydown',e=>e.stopPropagation());dialog.onclick=e=>{if(e.target===dialog){const box=dialog.getBoundingClientRect();if(e.clientX<box.left||e.clientX>box.right||e.clientY<box.top||e.clientY>box.bottom)close();}};
- document.body.append(dialog);dialog.showModal();dialog.querySelector('[data-close]').focus();active={close,dialog};load('hour');
+ active?.close();
+ let game=games.find(row=>row[0]===selectedGame)?.[0]||'wheel';
+ let alive=true,requestIndex=0,period='hour',view='games',category='all';
+ const previous=document.activeElement,dialog=document.createElement('dialog');
+ dialog.className='lgr-dialog';dialog.setAttribute('aria-labelledby','lgr-title');
+ dialog.innerHTML=`<header class="lgr-header"><button type="button" class="lgr-back" data-back aria-label="Oyun seçimine dön" hidden>‹</button><div class="lgr-brand"><span class="lgr-monogram" aria-hidden="true">L</span><div><small>LİDYA OYUN SALONU</small><h2 id="lgr-title">Oyun sıralaması</h2></div></div><button type="button" class="lgr-close" data-close aria-label="Sıralamayı kapat">×</button></header>
+ <main class="lgr-main"><section class="lgr-menu" aria-label="Oyun seçimi"><div class="lgr-intro"><span class="lgr-eyebrow">LİDERLERİN SAHNESİ</span><h3>Oyunun zirvesini keşfet.</h3><p>Oyununu seç, Lidya kazananlarını gör.</p></div><div class="lgr-tools"><label class="lgr-search"><span aria-hidden="true">⌕</span><input type="search" data-search aria-label="Oyun ara" placeholder="Oyun ara" autocomplete="off"></label><nav class="lgr-categories" aria-label="Oyun kategorisi"><button type="button" data-category="all" aria-pressed="true">Tümü <span>20</span></button><button type="button" data-category="classic" aria-pressed="false">Klasik</button><button type="button" data-category="slots" aria-pressed="false">Slotlar</button></nav></div><div class="lgr-game-grid"></div><p class="lgr-no-games" hidden>Bu aramada oyun bulunamadı.</p><p class="lgr-menu-note">Sıralamalar ödenmiş toplam Lidya kazancına göre hazırlanır.</p></section>
+ <section class="lgr-detail" aria-label="Seçilen oyunun sıralaması" hidden><div class="lgr-selected"><img data-selected-art alt=""><div><span class="lgr-eyebrow">OYUN LİDERLERİ</span><h3 data-game-title></h3><p>Ödenmiş toplam Lidya kazancı</p></div><button type="button" data-change>Oyun değiştir</button></div><nav class="lgr-periods" aria-label="Sıralama dönemi"></nav><div class="lgr-list-heading"><span>İLK 50</span><span>Türkiye saati</span></div><div class="lgr-list" role="list" aria-live="polite" aria-busy="false"></div></section></main>
+ <footer class="lgr-footer" hidden><div><span>Senin kazancın</span><small data-my-period></small></div><strong data-mine>—</strong><img data-coin alt="Lidya"></footer>`;
+ const q=s=>dialog.querySelector(s),all=s=>[...dialog.querySelectorAll(s)];
+ const main=q('.lgr-main'),grid=q('.lgr-game-grid');
+ function close(){
+  if(!alive)return;alive=false;requestIndex++;observer.disconnect();
+  window.removeEventListener('erischat:theme',syncTheme);
+  if(dialog.open)dialog.close();dialog.remove();
+  if(active?.dialog===dialog)active=null;
+  if(previous?.isConnected)previous.focus({preventScroll:true});
+ }
+ function syncTheme(){
+  if(!alive)return;const t=theme();dialog.dataset.theme=t;
+  for(const image of all('img[data-game-art]'))image.src=new URL(t+'/'+image.dataset.gameArt+'.png',assets).href;
+  q('[data-selected-art]').src=new URL(t+'/'+game+'.png',assets).href;
+  for(const coin of all('img[data-coin]'))coin.src=new URL('assets/lidya-games-png/'+t+'/coin.png',source).href;
+ }
+ const observer=new MutationObserver(syncTheme);
+ observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-eris-theme']});
+ window.addEventListener('erischat:theme',syncTheme);
+ function filter(){
+  const term=searchKey(q('[data-search]').value.trim());let count=0;
+  for(const button of all('[data-rank-game]')){
+   const row=games.find(g=>g[0]===button.dataset.rankGame);
+   button.hidden=!(category==='all'||row[3]===category)||!searchKey(row[1]).includes(term);
+   if(!button.hidden)count++;
+  }
+  q('.lgr-no-games').hidden=count>0;
+ }
+ for(const [id,name,tag] of games){
+  const button=document.createElement('button');button.type='button';button.className='lgr-game-card';
+  button.dataset.rankGame=id;button.setAttribute('aria-label',name+' sıralamasını aç');
+  button.setAttribute('aria-pressed',String(id===game));
+  const art=document.createElement('img');art.className='lgr-card-art';art.dataset.gameArt=id;art.alt='';art.decoding='async';art.loading='lazy';art.draggable=false;
+  const copy=document.createElement('span');copy.className='lgr-card-copy';
+  const title=document.createElement('strong');title.textContent=name;
+  const subtitle=document.createElement('span');subtitle.textContent=tag;
+  const action=document.createElement('span');action.className='lgr-card-action';action.textContent='Sıralamayı gör';
+  const arrow=document.createElement('span');arrow.className='lgr-card-arrow';arrow.setAttribute('aria-hidden','true');arrow.textContent='›';
+  copy.append(title,subtitle,action);button.append(art,copy,arrow);
+  button.onclick=()=>{game=id;showDetail();};grid.append(button);
+ }
+ function showMenu(){
+  view='games';requestIndex++;q('.lgr-menu').hidden=false;q('.lgr-detail').hidden=true;
+  q('.lgr-footer').hidden=true;q('[data-back]').hidden=true;q('#lgr-title').textContent='Oyun sıralaması';
+  main.scrollTop=0;
+  const selected=q('[data-rank-game="'+game+'"]');
+  (selected&&!selected.hidden?selected:q('[data-search]')).focus({preventScroll:true});
+ }
+ function showDetail(){
+  view='detail';q('.lgr-menu').hidden=true;q('.lgr-detail').hidden=false;q('.lgr-footer').hidden=false;q('[data-back]').hidden=false;
+  const name=games.find(row=>row[0]===game)[1];q('#lgr-title').textContent=name;q('[data-game-title]').textContent=name;
+  for(const button of all('[data-rank-game]'))button.setAttribute('aria-pressed',String(button.dataset.rankGame===game));
+  syncTheme();main.scrollTop=0;q('[data-back]').focus({preventScroll:true});load(period);
+ }
+ function empty(text,retry=false){
+  const box=document.createElement('div');box.className='lgr-empty';
+  const mark=document.createElement('span');mark.className='lgr-empty-mark';mark.setAttribute('aria-hidden','true');mark.textContent=retry?'↻':'✧';
+  const message=document.createElement('p');message.textContent=text;box.append(mark,message);
+  if(retry){const button=document.createElement('button');button.type='button';button.textContent='Tekrar dene';button.onclick=()=>load(period);box.append(button);}
+  q('.lgr-list').replaceChildren(box);
+ }
+ async function load(nextPeriod){
+  period=nextPeriod;const index=++requestIndex,currentGame=game,list=q('.lgr-list');
+  for(const button of all('[data-period]'))button.setAttribute('aria-pressed',String(button.dataset.period===period));
+  q('[data-mine]').textContent='—';q('[data-my-period]').textContent=periods[period];list.setAttribute('aria-busy','true');empty('Sıralama yükleniyor…');
+  try{
+   const data=await window.ErisPlatform.api('/games/'+currentGame+'/leaderboard?period='+period);
+   if(!alive||view!=='detail'||index!==requestIndex)return;
+   if(!data||!Array.isArray(data.items))throw Error('Sıralama şu anda görüntülenemiyor.');
+   q('[data-mine]').textContent=format(data.my_winnings);list.replaceChildren();
+   if(!data.items.length){empty('Bu dönemde henüz kazanan yok.');return;}
+   for(const row of data.items.slice(0,50)){
+    const entry=document.createElement('article');entry.className='lgr-row';entry.setAttribute('role','listitem');entry.dataset.rank=row.rank;
+    const rank=document.createElement('b');rank.className='lgr-rank';rank.textContent=String(row.rank??'—');rank.setAttribute('aria-label',String(row.rank??'')+'. sıra');
+    const portrait=document.createElement('span');portrait.className='lgr-portrait';
+    const fallback=document.createElement('span');fallback.className='lgr-avatar-fallback';fallback.textContent=row.avatar||String(row.nickname||'L').trim().slice(0,1).toLocaleUpperCase('tr-TR');portrait.append(fallback);
+    const avatar=safeAsset(row.avatar_asset),frame=safeAsset(row.frame_asset);
+    if(avatar){const image=document.createElement('img');image.className='lgr-avatar';image.src=avatar;image.alt='';image.loading='lazy';image.onerror=()=>image.remove();portrait.append(image);}
+    if(frame){const image=document.createElement('img');image.className='lgr-frame';image.src=frame;image.alt='';image.loading='lazy';image.onerror=()=>image.remove();portrait.append(image);}
+    const name=document.createElement('button');name.type='button';name.className='lgr-name';name.textContent=row.nickname||'Kullanıcı';name.title=row.nickname||'Kullanıcı';
+    name.onclick=()=>{if(window.openUserProfile){close();window.openUserProfile(row.user_id);}};
+    const prize=document.createElement('span');prize.className='lgr-prize';
+    const amount=document.createElement('b');amount.textContent=format(row.winnings);
+    const coin=document.createElement('img');coin.dataset.coin='';coin.src=q('[data-coin]').src;coin.alt='Lidya';prize.append(amount,coin);
+    entry.append(rank,portrait,name,prize);list.append(entry);
+   }
+  }catch(error){if(alive&&view==='detail'&&index===requestIndex)empty(error.message||'Sıralama yüklenemedi.',true);}
+  finally{if(alive&&index===requestIndex)list.setAttribute('aria-busy','false');}
+ }
+ for(const [id,label] of Object.entries(periods)){
+  const button=document.createElement('button');button.type='button';button.dataset.period=id;button.textContent=label;button.setAttribute('aria-pressed',String(id===period));button.onclick=()=>load(id);q('.lgr-periods').append(button);
+ }
+ q('[data-search]').oninput=filter;
+ for(const button of all('[data-category]'))button.onclick=()=>{category=button.dataset.category;for(const b of all('[data-category]'))b.setAttribute('aria-pressed',String(b===button));filter();};
+ q('[data-close]').onclick=close;q('[data-back]').onclick=showMenu;q('[data-change]').onclick=showMenu;
+ dialog.addEventListener('cancel',event=>{event.preventDefault();if(view==='detail')showMenu();else close();});
+ dialog.addEventListener('keydown',event=>event.stopPropagation());
+ dialog.addEventListener('close',close);
+ document.body.append(dialog);syncTheme();dialog.showModal();active={close,dialog};q('[data-close]').focus();
 }
 window.LidyaGameRanking={open,close:()=>active?.close(),icon};
 })();
-
-
-
-
