@@ -10,12 +10,12 @@ def simulate(n,mode,seed):
    result=m.spin(rng=rng.random,trace=False);total=result['payoutHundredths'];remaining=result['bonusSpins'];hits+=bool(total);bonuses+=bool(remaining);cost=1
   sticky={};bonus_total=0
   while remaining and total<m.CAP:
-   result=m.spin(bonus=True,sticky=sticky,remaining_cap=m.CAP-total,rng=rng.random,trace=False);total+=result['payoutHundredths'];bonus_total+=result['payoutHundredths'];sticky=result['sticky'];remaining+=result['extraSpins']-1;frees+=1
+   result=m.spin(purchased=mode=='buy',bonus=True,sticky=sticky,remaining_cap=m.CAP-total,rng=rng.random,trace=False);total+=result['payoutHundredths'];bonus_total+=result['payoutHundredths'];sticky=result['sticky'];remaining+=result['extraSpins']-1;frees+=1
    if not remaining and total<m.CAP and bonus_total<1000:
     total+=min(m.CAP-total,1000-bonus_total);floors+=1
   payout=total/100;values.append(payout/cost);maximum=max(maximum,payout);caps+=total>=m.CAP
  mean=statistics.mean(values);half=1.96*statistics.stdev(values)/n**.5
- return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'paidHitFrequency':hits/n if mode=='normal' else None,'bonusFrequency':bonuses/n if mode=='normal' else None,'freeSpins':frees,'floorSupplements':floors,'caps':caps,'maxWinBetMultiple':maximum,'certified':False}
+ return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'paidHitFrequency':hits/n if mode=='normal' else None,'bonusFrequency':bonuses/n if mode=='normal' else None,'freeSpins':frees,'floorSupplements':floors,'caps':caps,'maxWinBetMultiple':maximum,'roundHitFrequency':sum(v>0 for v in values)/n,'netProfitFrequency':sum(v>1 for v in values)/n,'certified':False}
 if __name__=='__main__':
  reports=[]
  for mode,n,seed in [('normal',500000,929887),('buy',50000,1029889)]:

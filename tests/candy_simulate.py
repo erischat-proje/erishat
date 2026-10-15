@@ -12,7 +12,7 @@ def run(mode,n,seed):
    remaining-=1;frees+=1;r=m.spin(bonus=True,spots=spots,remaining_cap=500000-total,rng=rng.random,trace=False);total+=r['payoutHundredths'];spots=r['spots']
   payout=total/100;values.append(payout/cost);caps+=total>=500000;maxwin=max(maxwin,payout)
  mean=statistics.mean(values);ci=1.96*statistics.stdev(values)/n**.5
- return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-ci,mean+ci],'paidHitFrequency':hits/n if mode!='buy' else None,'bonusFrequency':bonuses/n if mode!='buy' else None,'freeSpins':frees,'caps':caps,'maxWinBetMultiple':maxwin,'certified':False}
+ return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-ci,mean+ci],'paidHitFrequency':hits/n if mode!='buy' else None,'bonusFrequency':bonuses/n if mode!='buy' else None,'freeSpins':frees,'caps':caps,'maxWinBetMultiple':maxwin,'roundHitFrequency':sum(v>0 for v in values)/n,'netProfitFrequency':sum(v>1 for v in values)/n,'certified':False}
 if __name__=='__main__':
  report={'targetRtp':.965,'profile':m.CONFIG,'reports':[]}
  for mode,n,seed in [('normal',100000,319857),('ante',100000,419859),('buy',30000,519863)]:

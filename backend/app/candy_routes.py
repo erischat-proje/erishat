@@ -10,7 +10,7 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
-from .candy_engine import spin,CONFIG,KEYS,PAY,buy_spins
+from .candy_engine import spin,CONFIG,LEGACY_CONFIG,SUPPORTED_VERSIONS,KEYS,PAY,buy_spins
 
 router=APIRouter(prefix='/v1/games/candy',tags=['candy'])
 class SpinRequest(BaseModel):
@@ -58,6 +58,7 @@ def register_auth(current_user):
         if row and (row.user_id!=user.id or row.game_type!='candy'):raise HTTPException(404,'Tur bulunamadı')
         if row:
             state=unpack(row)
+            if state['version'] not in SUPPORTED_VERSIONS:raise HTTPException(409,'Bu bonus için uyumlu oyun sürümü gerekiyor')
             if state.get('last_request')==payload.request_id:
                 receipt=dict(state['last']);receipt['balance']=locked.lidya+fraction(db,user.id)/100;receipt['replayed']=True;return receipt
             if not payload.round_id or row.status!='open':raise HTTPException(409,'Tur tamamlandı')
@@ -65,7 +66,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake'] or payload.ante!=state['ante']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,spots=state['spots'],remaining_cap=500000-state['total_hundredths'])
+            result=spin(bonus=True,spots=state['spots'],remaining_cap=500000-state['total_hundredths'],model_version=state['version'])
             state['spots']=result['spots']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')

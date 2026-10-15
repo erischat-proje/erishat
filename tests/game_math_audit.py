@@ -28,9 +28,13 @@ def audit(game, mode, samples, seed):
         result = simulator.simulate(samples,mode,seed)
     result.pop('config',None)
     sources = [ROOT/'backend/app'/f'{game}_engine.py', ROOT/'backend/app'/f'{game}-math.json', path]
+    current_config = ROOT/'backend/app'/f'{game}-math-v2.json'
+    if current_config.exists():
+        sources.append(current_config)
     if buy_profile:
         sources.append(ROOT/'backend/app/slot-bonus-buy.json')
     result.update(game=game,mode=mode,certified=False,
+                  modelVersion=json.loads((current_config if current_config.exists() else ROOT/'backend/app'/f'{game}-math.json').read_text())['version'],
                   source_sha256={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources})
     return result
 

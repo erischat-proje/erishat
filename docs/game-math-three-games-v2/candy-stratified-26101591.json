@@ -1,0 +1,78 @@
+{
+  "game": "candy",
+  "mode": "normal",
+  "method": "independent-trigger-strata",
+  "samplesPerStratum": 300000,
+  "samples": 600000,
+  "seed": 26101591,
+  "bonusTriggerProbability": 0.008136407705776724,
+  "rtp": 0.9614631367985651,
+  "ci95": [
+    0.9536516564715113,
+    0.9692746171256189
+  ],
+  "strata": [
+    {
+      "trigger": false,
+      "probability": 0.9918635922942233,
+      "report": {
+        "mode": "normal",
+        "samples": 300000,
+        "seed": 26101591,
+        "rtp": 0.17748416666666667,
+        "ci95": [
+          0.17586408983817378,
+          0.17910424349515955
+        ],
+        "paidHitFrequency": 0.29553666666666667,
+        "bonusFrequency": 0.0,
+        "freeSpins": 0,
+        "caps": 0,
+        "maxWinBetMultiple": 60.0,
+        "roundHitFrequency": 0.29553666666666667,
+        "netProfitFrequency": 0.03400333333333334,
+        "certified": false
+      }
+    },
+    {
+      "trigger": true,
+      "probability": 0.008136407705776724,
+      "report": {
+        "mode": "normal",
+        "samples": 300000,
+        "seed": 26101592,
+        "rtp": 96.5319195,
+        "ci95": [
+          95.5923872928866,
+          97.4714517071134
+        ],
+        "paidHitFrequency": 0.24097333333333334,
+        "bonusFrequency": 1.0,
+        "freeSpins": 3024024,
+        "caps": 120,
+        "maxWinBetMultiple": 5000.0,
+        "roundHitFrequency": 0.9999933333333333,
+        "netProfitFrequency": 0.9987066666666666,
+        "certified": false
+      }
+    }
+  ],
+  "certified": false,
+  "source_sha256": {
+    "backend/app/candy_engine.py": "31129de84def9e45a61af8f8aee8a9d1917b5125dbd6d6f92c4607a0c417e566",
+    "backend/app/candy-math.json": "fd86becd150c5db84794723ded803a3ded4a479c5357a2272b97c4fd379a3cd6",
+    "tests/candy_simulate.py": "126a92cdfd79508690f3d19c6dfe3eaf701eafc2522cb39ab90dded9d144dbb2",
+    "tests/game_math_conditional.py": "48fba01a7b9f2aa20b8a5032fee87bb8507abc18d60d266544d4ac23851f5e0e",
+    "backend/app/candy-math-v2.json": "d0d1ab6cb78c1442076ad1e8e284293526b4c47be1e7e321bbfea508767e0bcc"
+  },
+  "anteEstimate": {
+    "rtp": 0.9616997260724224,
+    "ci95": [
+      0.9536046762398466,
+      0.9697947759049982
+    ],
+    "costUnits": 1.25,
+    "bonusTriggerProbability": 0.010634077065359461,
+    "note": "Same conditional outcome distributions; ante only changes trigger probability and 1.25x cost."
+  }
+}

@@ -10,7 +10,7 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
-from .kovboy_engine import spin,CONFIG,KEYS,PAY,CAP,LINES
+from .kovboy_engine import spin,CONFIG,LEGACY_CONFIG,SUPPORTED_VERSIONS,KEYS,PAY,CAP,LINES
 
 
 router=APIRouter(prefix='/v1/games/kovboy',tags=['kovboy'])
@@ -62,6 +62,7 @@ def register_auth(current_user):
         is_bonus=bool(row)
         if row:
             state=unpack(row)
+            if state['version'] not in SUPPORTED_VERSIONS:raise HTTPException(409,'Bu bonus için uyumlu oyun sürümü gerekiyor')
             if state.get('last_request')==payload.request_id:
                 receipt=dict(state['last']);receipt['balance']=locked.lidya+fraction(db,user.id)/100;receipt['replayed']=True;return receipt
             if not payload.round_id or row.status!='open':raise HTTPException(409,'Tur tamamlandı')
@@ -69,7 +70,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,sticky=state['sticky'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
+            result=spin(bonus=True,sticky=state['sticky'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
             state['sticky']=result['sticky'];state['remaining']+=result['extraSpins'];state['awarded']+=result['extraSpins'];state['bonus_hundredths']+=result['payoutHundredths']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
