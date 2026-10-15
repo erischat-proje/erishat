@@ -16,7 +16,7 @@ def simulate(n,mode,seed):
    for g in r['newJackpots']:jackpots[g]+=1
   values.append(total/100/cost);caps+=total>=m.CAP
  mean=statistics.mean(values);half=1.96*statistics.stdev(values)/n**.5
- return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'naturalBonusFrequency':bonuses/n if mode=='normal' else None,'copyFrequency':copies/n if mode=='normal' else None,'respins':spins,'jackpots':jackpots,'capHits':caps,'maxWinMultiple':max(values)*cost,'certified':False}
+ return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'naturalBonusFrequency':bonuses/n if mode=='normal' else None,'copyFrequency':copies/n if mode=='normal' else None,'respins':spins,'jackpots':jackpots,'capHits':caps,'maxWinMultiple':max(values)*cost,'roundHitFrequency':sum(v>0 for v in values)/n,'netProfitFrequency':sum(v>1 for v in values)/n,'certified':False}
 if __name__=='__main__':
  reports=[]
  for mode,n,seed in [('normal',int(sys.argv[2]) if len(sys.argv)>2 else 200000,147651),('buy',int(sys.argv[3]) if len(sys.argv)>3 else 50000,712398)]:

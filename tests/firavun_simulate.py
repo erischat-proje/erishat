@@ -13,7 +13,7 @@ def simulate(n,mode,seed):
    result=m.spin(bonus=True,purchased=mode=='buy',special=special,remaining_cap=m.CAP-total,rng=rng.random,trace=False);total+=result['payoutHundredths'];remaining+=result['extraSpins']-1;frees+=1;expansions+=bool(result['expandColumns']);retriggers+=bool(result['extraSpins'])
   payout=total/100;values.append(payout/cost);maxwin=max(maxwin,payout);caps+=total>=m.CAP
  mean=statistics.mean(values);half=1.96*statistics.stdev(values)/n**.5
- return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'paidHitFrequency':hits/n if mode=='normal' else None,'bonusFrequency':bonuses/n if mode=='normal' else None,'freeSpins':frees,'expandingSpins':expansions,'retriggers':retriggers,'caps':caps,'maxWinBetMultiple':maxwin,'certified':False}
+ return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'paidHitFrequency':hits/n if mode=='normal' else None,'bonusFrequency':bonuses/n if mode=='normal' else None,'freeSpins':frees,'expandingSpins':expansions,'retriggers':retriggers,'caps':caps,'maxWinBetMultiple':maxwin,'roundHitFrequency':sum(v>0 for v in values)/n,'netProfitFrequency':sum(v>1 for v in values)/n,'certified':False}
 if __name__=='__main__':
  results=[]
  for mode,n,seed in [('normal',500000,1539863),('buy',50000,1639867)]:

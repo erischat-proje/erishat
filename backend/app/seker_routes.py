@@ -10,7 +10,7 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
-from .seker_engine import spin,CONFIG,KEYS,PAY,CAP
+from .seker_engine import spin,CONFIG,KEYS,PAY,CAP,SUPPORTED_VERSIONS
 
 router=APIRouter(prefix='/v1/games/seker',tags=['seker'])
 class SpinRequest(BaseModel):
@@ -66,9 +66,10 @@ def register_auth(current_user):
             if not payload.round_id or row.status!='open':raise HTTPException(409,'Tur tamamlandı')
             if payload.sequence!=state['sequence']:raise HTTPException(409,'Tur güncellendi; kaldığın yerden devam et')
             if payload.action!='spin' or payload.stake!=state['stake'] or payload.ante!=state['ante']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
+            if state.get('version') not in SUPPORTED_VERSIONS:raise HTTPException(409,'Desteklenmeyen oyun sürümü')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,remaining_cap=CAP-state['total_hundredths'])
+            result=spin(bonus=True,remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
             state['pool']=result['pool'];state['remaining']+=result['extraSpins']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -80,7 +81,7 @@ def register_auth(current_user):
             charge=charge_cents/100;carry=fraction(db,user.id);available=locked.lidya*100+carry
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
-            state={'version':CONFIG['version'],'sequence':0,'remaining':10 if payload.action=='buy' else 0,'pool':0,'stake':stake,'ante':payload.ante,'total_payout':0,'total_hundredths':0}
+            state={'version':CONFIG['version'],'entry':payload.action,'sequence':0,'remaining':10 if payload.action=='buy' else 0,'pool':0,'stake':stake,'ante':payload.ante,'total_payout':0,'total_hundredths':0}
             row=GameRound(id=rid,user_id=user.id,game_type='seker',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice='buy' if payload.action=='buy' else 'ante' if payload.ante else 'spin',amount=charged_whole,payout=0))
             result=None if payload.action=='buy' else spin(ante=payload.ante)
