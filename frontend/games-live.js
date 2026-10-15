@@ -670,6 +670,10 @@ const close = () => {
                 horseRound = null;
                 horseLastRound = null;
             }
+            if(game==='vault' && key!=='vault'){
+                const play=modal.querySelector('[data-vault-bet-bar] [data-play]');if(play)modal.querySelector('.eg-form').append(play);
+                modal.querySelector('[data-vault-bet-bar]')?.remove();
+            }
             if(game === 'horse_race' && key !== 'horse_race'){
                 const play=modal.querySelector('[data-horse-bet-bar] [data-play]');
                 if(play) modal.querySelector('.eg-form').append(play);
@@ -1230,9 +1234,10 @@ const close = () => {
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             if (game === 'cups' && (cupsBusy || cupsRoundId)) return;
             if(game==='horse_race'){if(horseBusy)return;horseStep=Number(preset.dataset.stakeValue)||100;}
+            if(game==='vault'){if(vaultBusy)return;vaultStep=Number(preset.dataset.stakeValue)||100;}
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
             refreshSlotBet();
-            if(game==='horse_race') bjLayout();
+            if(game==='horse_race'||game==='vault') bjLayout();
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
                 b.classList.toggle('horse-selected',
                     game === 'horse_race' && b === preset);
@@ -1379,7 +1384,7 @@ const close = () => {
                     b.dataset.stakeValue === amount);
             });
         };
-        modal.querySelector('[data-stake]')?.addEventListener('input', () => {syncHorseStake();if(game==='horse_race')bjLayout();});
+        modal.querySelector('[data-stake]')?.addEventListener('input', () => {syncHorseStake();if(game==='horse_race'||game==='vault')bjLayout();});
 
 
         // ERIS_HORSE_ONE_SCREEN_V1
@@ -1634,6 +1639,7 @@ const close = () => {
 
         // ERIS_HORSE_LIVE_FRONTEND_V1
         // ERIS_VAULT_LIVE_STATE_V1
+        let vaultStep = 100;
         let vaultBusy = false;
         let vaultFetching = false;
 
@@ -1706,8 +1712,8 @@ const close = () => {
                 if (button) {
                     button.disabled = !x.betting_open || vaultBusy || x.version !== 2;
                     button.textContent = x.betting_open
-                        ? '🔑 KASAYI SEÇ · BAHİS YAP'
-                        : '🔒 BAHİSLER KAPANDI';
+                        ? 'Bahis Yap'
+                        : 'Kapalı';
                 }
 
                 const mine = Object.entries(x.my_bets || {})
@@ -2154,20 +2160,22 @@ const close = () => {
             const enabled = game === 'blackjack';
             const cupsEnabled = game === 'cups';
             const horseEnabled = game === 'horse_race';
-            const mode = enabled ? 'blackjack' : cupsEnabled ? 'cups' : horseEnabled ? 'horse_race' : 'other';
+            const vaultEnabled = game === 'vault';
+            const mode = enabled ? 'blackjack' : cupsEnabled ? 'cups' : horseEnabled ? 'horse_race' : vaultEnabled ? 'vault' : 'other';
             if (bjFinalConfigured !== mode) {
                 bjFinalConfigured = mode;
                 const input = modal.querySelector('[data-stake]');
-                input.max = enabled ? '858993450' : cupsEnabled ? '596523230' : horseEnabled ? '357913940' : '10000';
-                input.min = enabled || cupsEnabled || horseEnabled ? '10' : '0';
-                input.step = enabled || cupsEnabled || horseEnabled ? '10' : '1';
+                input.max = enabled ? '858993450' : cupsEnabled ? '596523230' : horseEnabled ? '357913940' : vaultEnabled ? '715827880' : '10000';
+                input.min = enabled || cupsEnabled || horseEnabled || vaultEnabled ? '10' : '0';
+                input.step = enabled || cupsEnabled || horseEnabled || vaultEnabled ? '10' : '1';
                 if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>596523230 || Number(input.value)%10)) input.value='100';
                 if(horseEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>357913940 || Number(input.value)%10)) input.value='100';
+                if(vaultEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>715827880 || Number(input.value)%10)) input.value='100';
                 if (enabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)%10)) input.value = '100';
                 modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
                     if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
-                    const value = enabled || cupsEnabled || horseEnabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
-                    button.hidden = (enabled || cupsEnabled || horseEnabled) && i >= 5;
+                    const value = enabled || cupsEnabled || horseEnabled || vaultEnabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
+                    button.hidden = (enabled || cupsEnabled || horseEnabled || vaultEnabled) && i >= 5;
                     if (value) { button.dataset.stakeValue = String(value); button.innerHTML = window.LidyaGameArt.markup('coin') + '<span>' + (value >= 1000 ? value/1000+'K' : value) + '</span>'; }
                 });
                 let rank = modal.querySelector('[data-bj-ranking]');
@@ -2216,6 +2224,21 @@ const close = () => {
                 if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.horseRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('horse_race');modal.querySelector('.eg-head').prepend(rank);}
                 rank.hidden=false;
             }else{const rank=modal.querySelector('[data-horse-ranking]');if(rank)rank.hidden=true;}
+            if(vaultEnabled){
+                const wallet=modal.querySelector('.eg-wallet'),head=modal.querySelector('.eg-head');
+                if(wallet&&wallet.parentElement!==modal.querySelector('.eg-panel'))head.after(wallet);
+                let bar=modal.querySelector('[data-vault-bet-bar]');
+                if(!bar){bar=document.createElement('div');bar.dataset.vaultBetBar='';
+                    bar.innerHTML='<button type="button" data-vault-minus aria-label="Bahsi azalt">−</button><div><small>TOPLAM BAHİS</small><strong data-vault-amount></strong></div><button type="button" data-vault-plus aria-label="Bahsi artır">+</button>';
+                    modal.querySelector('.eg-form').append(bar);bar.append(modal.querySelector('[data-play]'));
+                    for(const [attr,sign] of [['minus',-1],['plus',1]])bar.querySelector('[data-vault-'+attr+']').onclick=()=>{
+                        if(vaultBusy)return;const input=modal.querySelector('[data-stake]');input.value=String(Math.max(10,Math.min(715827880,(Number(input.value)||10)+sign*vaultStep)));input.dispatchEvent(new Event('input',{bubbles:true}));};
+                }
+                const amount=Number(modal.querySelector('[data-stake]').value||100);
+                bar.querySelector('[data-vault-amount]').textContent=amount.toLocaleString('tr-TR')+' Lidya';
+                bar.querySelector('[data-vault-minus]').disabled=vaultBusy||amount<=10;bar.querySelector('[data-vault-plus]').disabled=vaultBusy||amount>=715827880;
+                let rank=modal.querySelector('[data-vault-ranking]');if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.vaultRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('vault');modal.querySelector('.eg-head').prepend(rank);}rank.hidden=false;
+            }else{const rank=modal.querySelector('[data-vault-ranking]');if(rank)rank.hidden=true;}
             bjRefreshAmount();
         };
 
@@ -2951,8 +2974,8 @@ const close = () => {
                     result.textContent = 'Açılacak kasayı seç.';
                     return;
                 }
-                if (![10,25,50,75,100,250,500,1000].includes(amount)) {
-                    result.textContent = 'Hazır bahis miktarlarından birini seç.';
+                if (!Number.isSafeInteger(amount)||amount<10||amount>715827880||amount%10) {
+                    result.textContent = 'Toplam bahis 10 Lidya katı olmalı.';
                     return;
                 }
                 if (!vaultState?.betting_open || vaultState?.version !== 2) {
@@ -2961,6 +2984,7 @@ const close = () => {
                 }
 
                 vaultBusy = true;
+                bjLayout();
                 button.disabled = true;
                 try {
                     await api('/games/vault/live/bet', {
@@ -2979,6 +3003,7 @@ const close = () => {
                     }
                 } finally {
                     vaultBusy = false;
+                    if(game==='vault')bjLayout();
                     refreshVaultLive().catch(() => {});
                 }
                 return;
@@ -3407,6 +3432,7 @@ document.head.appendChild(erisWheelResponsive);
 const erisWheelHeaderFix=document.createElement('style');
 erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
 document.head.appendChild(erisWheelHeaderFix);
+
 
 
 

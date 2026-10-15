@@ -1,0 +1,57 @@
+html body #erisGamesModal#erisGamesModal.eg-vault-mode{overflow:hidden!important;padding:0!important;place-items:center!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-panel{height:var(--eg-viewport-height,100dvh)!important;max-height:var(--eg-viewport-height,100dvh)!important;width:100%!important;max-width:660px!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;box-sizing:border-box!important;gap:4px!important;padding:max(5px,env(safe-area-inset-top)) 8px max(5px,env(safe-area-inset-bottom))!important;background:var(--lydia-panel,var(--ui-panel))!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-head{position:static!important;display:flex!important;align-items:center!important;gap:5px!important;min-height:34px!important;flex:0 0 auto!important;margin:0!important;padding:0!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-head h2{flex:1!important;min-width:0!important;font-size:16px!important;margin:0!important;display:flex!important;align-items:center!important;gap:4px!important;white-space:nowrap!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-head img{width:25px!important;height:25px!important;object-fit:contain}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-ranking]{display:flex!important;align-items:center;gap:2px;padding:4px!important;font-size:10px!important;min-height:32px!important}
+html body #erisGamesModal#erisGamesModal [data-vault-ranking][hidden]{display:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-wallet{position:static!important;flex:0 0 auto!important;display:flex!important;min-height:22px!important;padding:2px 6px!important;margin:0!important;max-width:none!important;width:auto!important;font-size:11px!important;background:var(--ui-raised)!important;color:var(--ui-ink)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode :is(.eg-intro,.eg-keys,[data-name],[data-scope],[data-controls],.eg-bj-stake-bar){display:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-clock]{flex:0 0 auto!important;min-height:18px!important;margin:0!important;padding:2px!important;font-size:11px!important;background:var(--ui-raised)!important;color:var(--ui-gold)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-stage{flex:1 1 0!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;display:flex!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bets]{flex:0 0 auto!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-height:14px!important;padding:0 3px!important;margin:0!important;font-size:9px!important;color:var(--ui-muted)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-form{flex:0 0 auto!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:0!important;padding:5px!important;background:var(--ui-raised)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-form>label{display:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-stake-presets{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;margin:0!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-stake-value]{display:flex!important;justify-content:center!important;align-items:center!important;gap:2px!important;min-width:0!important;min-height:30px!important;padding:3px!important;font-size:11px!important;background:var(--ui-panel)!important;color:var(--ui-ink)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-stake-value][hidden]{display:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-stake-value]::before,html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-stake-value]::after{content:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-stake-value] img{width:17px!important;height:17px!important;object-fit:contain}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bet-bar]{display:grid!important;grid-template-columns:32px minmax(0,1fr) 32px 86px!important;align-items:center!important;gap:4px!important;min-width:0!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bet-bar]>div{text-align:center;min-width:0}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bet-bar] small{display:block;font-size:8px;color:var(--ui-muted)}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-amount]{font-size:14px;color:var(--ui-gold);white-space:nowrap}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bet-bar]>button{min-width:0!important;min-height:36px!important;padding:4px!important;margin:0!important;width:auto!important;border-radius:10px!important;font-size:19px!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bet-bar] [data-play]{grid-column:auto!important;font-size:11px!important;background:linear-gradient(140deg,#b68c46,#765121)!important;color:#fff6de!important;box-shadow:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-result{flex:0 0 auto!important;min-height:18px!important;max-height:32px!important;padding:2px 4px!important;margin:0!important;font-size:10px!important;line-height:1.25!important;overflow:hidden!important;background:var(--ui-raised)!important;color:var(--ui-ink)!important}
+@media(max-height:480px) and (min-width:600px){
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-panel{display:grid!important;grid-template-columns:minmax(0,1fr) 280px!important;grid-template-rows:32px 24px minmax(0,1fr) 22px!important;gap:4px!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-head{grid-column:1/-1!important;grid-row:1!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-wallet{grid-column:1!important;grid-row:2!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-clock]{grid-column:2!important;grid-row:2!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-stage{grid-column:1!important;grid-row:3!important;height:100%!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-form{grid-column:2!important;grid-row:3!important;align-content:center!important;height:100%!important;box-sizing:border-box!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode [data-vault-bets]{grid-column:2!important;grid-row:4!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .eg-result{grid-column:1!important;grid-row:4!important}
+}
+
+
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-scene{height:100%!important;box-sizing:border-box!important;min-height:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;padding:10px 6px!important;background:radial-gradient(ellipse,var(--ui-raised),var(--ui-panel))!important;color:var(--ui-ink)!important;border:1px solid var(--ui-gold)!important;box-shadow:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-title{font-size:15px!important;color:var(--ui-gold)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-sub{font-size:10px!important;color:var(--ui-muted)!important;margin:0!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-vault-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;min-height:0!important;width:100%!important;align-items:stretch!important;margin:4px 0!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-chest{min-height:0!important;padding:12px 2px!important;gap:8px!important;min-width:0!important;border:1px solid var(--ui-line)!important;border-radius:12px!important;background:var(--ui-panel)!important;box-shadow:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-selected{outline:2px solid var(--ui-gold);outline-offset:-2px}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-door{width:clamp(34px,8vw,60px)!important;height:clamp(44px,10vw,75px)!important;background:transparent!important;border:0!important;box-shadow:none!important;display:grid!important;place-items:center!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-door>img{width:100%!important;height:100%!important;object-fit:contain!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-dial{display:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-chest-name{font-size:9px!important;line-height:1.2!important;color:var(--ui-gold)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-chest-icon{top:20px!important;font-size:24px!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-chest-icon>img{width:36px!important;height:36px!important;object-fit:contain}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-status{font-size:10px!important;min-height:13px!important;margin:3px 0!important;color:var(--ui-gold)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-rules{font-size:9px!important;margin:0!important;color:var(--ui-muted)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-prize-picks{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important;margin:0!important;width:100%!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-prize-picks button{min-width:0!important;min-height:40px!important;padding:3px!important;white-space:normal!important;font-size:9px!important;line-height:1.25!important;background:var(--ui-panel)!important;color:var(--ui-ink)!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-prize-picks button::before{content:none!important}
+html body #erisGamesModal#erisGamesModal.eg-vault-mode .ev-prize-picks button[aria-pressed=true]{outline:2px solid var(--ui-gold);outline-offset:-2px}
+.lr-dialog .lr-game-buttons{grid-template-columns:repeat(4,minmax(0,1fr))!important}

@@ -54,3 +54,8 @@ html body #erisGamesModal#erisGamesModal.eg-horse-mode .eg-form{grid-column:2!im
 html body #erisGamesModal#erisGamesModal.eg-horse-mode [data-horse-bets]{grid-column:2!important;grid-row:4!important}
 html body #erisGamesModal#erisGamesModal.eg-horse-mode .eg-result{grid-column:1!important;grid-row:4!important}
 }
+
+
+/* Keep PNG bounds clear of lane borders, including the 2px race bounce. */
+html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-runner{top:5px!important;bottom:5px!important;height:auto!important;width:27px!important;display:flex!important;align-items:center!important;justify-content:center!important;line-height:0!important;font-size:0!important}
+html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-runner img{display:block!important;width:100%!important;height:100%!important;max-height:24px!important;max-width:27px!important;object-fit:contain!important}
