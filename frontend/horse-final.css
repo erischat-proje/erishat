@@ -56,6 +56,9 @@ html body #erisGamesModal#erisGamesModal.eg-horse-mode .eg-result{grid-column:1!
 }
 
 
-/* Keep PNG bounds clear of lane borders, including the 2px race bounce. */
-html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-runner{top:5px!important;bottom:5px!important;height:auto!important;width:27px!important;display:flex!important;align-items:center!important;justify-content:center!important;line-height:0!important;font-size:0!important}
-html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-runner img{display:block!important;width:100%!important;height:100%!important;max-height:24px!important;max-width:27px!important;object-fit:contain!important}
+/* Let the race use the viewport fitter's full height, not a stale modal height. */
+html body #erisGamesModal#erisGamesModal.eg-horse-mode.gv-fit .eg-panel{height:100%!important;max-height:100%!important}
+/* Reserve a label column so larger horses never cover names or lane numbers. */
+html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-lane>span{left:3px!important;top:0!important;bottom:0!important;width:72px!important;gap:2px!important;line-height:1.2!important;align-items:center!important;font-size:9px!important;white-space:nowrap!important}
+html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-runner{left:78px!important;top:4px!important;bottom:auto!important;height:calc(100% - 8px)!important;width:auto!important;aspect-ratio:329 / 285;max-height:72px!important;display:flex!important;align-items:center!important;justify-content:center!important;line-height:0!important;font-size:0!important}
+html body #erisGamesModal#erisGamesModal.eg-horse-mode .horse-runner img{display:block!important;width:100%!important;height:100%!important;max-height:none!important;max-width:none!important;object-fit:contain!important;padding:0!important;margin:0!important}
