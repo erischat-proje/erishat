@@ -1,7 +1,9 @@
 """Original Candy Ultimate cluster math; positional state stays server-owned."""
 import json,secrets
 from pathlib import Path
-CONFIG=json.loads(Path(__file__).with_name('candy-math.json').read_text())
+LEGACY_CONFIG=json.loads(Path(__file__).with_name('candy-math.json').read_text())
+CONFIG=json.loads(Path(__file__).with_name('candy-math-v2.json').read_text())
+SUPPORTED_VERSIONS=frozenset((LEGACY_CONFIG['version'],CONFIG['version']))
 KEYS=['orange-bear','purple-bear','red-bear','star','bottle','bean','heart']
 # Hundredths of total bet, buckets 5,6,7,8-9,10-11,12-14,15+.
 PAY=[[20,30,40,60,100,200,2000],[25,35,50,75,150,300,2500],[30,40,60,90,200,400,3000],[40,60,80,120,300,600,4000],[50,75,100,150,400,800,6000],[75,100,150,250,500,1000,10000],[100,150,200,300,750,1500,15000]]
@@ -34,7 +36,9 @@ def evaluate(board,spots):
         wins.append({'symbol':s,'cells':cells,'count':n,'base':base/100,'multiplier':multiplier,'win':base*multiplier/100,'hundredths':base*multiplier})
     return wins
 
-def spin(*,bonus=False,spots=None,ante=False,remaining_cap=500000,rng=None,trace=True,forced_board=None,forced_scatters=None,config=CONFIG):
+def spin(*,bonus=False,spots=None,ante=False,remaining_cap=500000,rng=None,trace=True,forced_board=None,forced_scatters=None,config=CONFIG,model_version=None):
+    if model_version==LEGACY_CONFIG['version']:config=LEGACY_CONFIG
+    elif model_version not in (None,config['version']):raise ValueError('Unsupported Candy version')
     rng=rng or secrets.SystemRandom().random
     marks=list(spots) if bonus and spots is not None else [0]*49
     if len(marks)!=49 or any(v not in [0,1,2,4,8,16,32,64,128,256,512,1024] for v in marks):raise ValueError('Invalid server spots')
@@ -63,6 +67,6 @@ def spin(*,bonus=False,spots=None,ante=False,remaining_cap=500000,rng=None,trace
             for row in range(7):new[row*7+col]=fresh() if row<missing else survivors[row-missing]
         board=new;tumbles+=1
         if tumbles>1000:raise RuntimeError('Tumble limit exceeded; transaction must roll back')
-    return {'steps':steps,'spots':marks,'board':board,'payoutHundredths':payout,'payout':payout/100,'scatters':scatters,'bonusTriggered':not bonus and scatters>=3,'bonusSpins':FS[min(7,scatters)-3] if not bonus and scatters>=3 else 0,'extraSpins':0,'capped':capped,'tumbles':tumbles,'pool':0}
+    return {'steps':steps,'spots':marks,'board':board,'payoutHundredths':payout,'payout':payout/100,'scatters':scatters,'bonusTriggered':not bonus and scatters>=3,'bonusSpins':FS[min(7,scatters)-3] if not bonus and scatters>=3 else 0,'extraSpins':0,'capped':capped,'tumbles':tumbles,'pool':0,'modelVersion':config['version']}
 
 def buy_spins(rng=None):return FS[weighted(rng or secrets.SystemRandom().random,CONFIG['scatterBonusWeights'])]

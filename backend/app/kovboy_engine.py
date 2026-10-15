@@ -1,7 +1,9 @@
 """Original Kovboy: 5x4 / 40 fixed lines, additive sticky wilds and overlays."""
 import json,secrets
 from pathlib import Path
-CONFIG=json.loads(Path(__file__).with_name('kovboy-math.json').read_text())
+LEGACY_CONFIG=json.loads(Path(__file__).with_name('kovboy-math.json').read_text())
+CONFIG=json.loads(Path(__file__).with_name('kovboy-math-v2.json').read_text())
+SUPPORTED_VERSIONS=frozenset((LEGACY_CONFIG['version'],CONFIG['version']))
 KEYS=['ten','jack','queen','king','ace','holster','gold-bag','cowgirl','deputy','sheriff','wild','scatter']
 WILD=10;SCATTER=11;CAP=1000000
 LINES=CONFIG['lines'];PAY=CONFIG['paytable'];EXTRA={2:4,3:8,4:12,5:20}
@@ -28,8 +30,9 @@ def evaluate(board,paytable=PAY):
    base=paytable[symbol][count-3];wins.append({'line':number,'symbol':KEYS[symbol],'count':count,'indices':indices[:count],'baseHundredths':base,'multiplier':max(1,multiplier),'payHundredths':base*max(1,multiplier)})
  return sum(w['payHundredths'] for w in wins),wins
 
-def spin(*,bonus=False,sticky=None,remaining_cap=CAP,rng=None,config=CONFIG,forced_board=None,forced_overlays=None,trace=True,model_version=None):
- if model_version not in (None,config['version']):raise ValueError('Unsupported Kovboy version')
+def spin(*,bonus=False,sticky=None,remaining_cap=CAP,rng=None,config=CONFIG,forced_board=None,forced_overlays=None,trace=True,model_version=None,purchased=False):
+ if model_version==LEGACY_CONFIG['version']:config=LEGACY_CONFIG
+ elif model_version not in (None,config['version']):raise ValueError('Unsupported Kovboy version')
  rng=rng or secrets.SystemRandom().random
  saved={int(k):int(v) for k,v in (sticky or {}).items()} if bonus else {}
  if any(i<0 or i>=20 or i%5 not in (1,2,3) or m not in (2,3,5) for i,m in saved.items()):raise ValueError('Invalid sticky cells')
@@ -37,7 +40,7 @@ def spin(*,bonus=False,sticky=None,remaining_cap=CAP,rng=None,config=CONFIG,forc
  if forced_board is None:
   strips=config['bonusReels'] if bonus else config['baseReels'];stops=[int(rng()*len(strip)) for strip in strips]
   board=[{'s':strips[col][(stops[col]+row)%len(strips[col])]} for row in range(4) for col in range(5)]
-  rate=config['bonusWildRate'] if bonus else config['wildRate']
+  rate=(config.get('buyBonusWildRate',config['bonusWildRate']) if purchased else config['bonusWildRate']) if bonus else config['wildRate']
   for i in range(20):
    if i%5 in (1,2,3) and i not in saved and rng()<rate:board[i]={'s':WILD,'m':[2,3,5][weighted(rng,config['wildWeights'])]}
   if not bonus:

@@ -10,7 +10,7 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
-from .bastet_engine import spin,CONFIG,KEYS,PAY,CAP,LINES
+from .bastet_engine import spin,CONFIG,LEGACY_CONFIG,SUPPORTED_VERSIONS,KEYS,PAY,CAP,LINES
 
 
 router=APIRouter(prefix='/v1/games/bastet',tags=['bastet'])
@@ -62,6 +62,7 @@ def register_auth(current_user):
         is_bonus=bool(row)
         if row:
             state=unpack(row)
+            if state['version'] not in SUPPORTED_VERSIONS:raise HTTPException(409,'Bu bonus için uyumlu oyun sürümü gerekiyor')
             if state.get('last_request')==payload.request_id:
                 receipt=dict(state['last']);receipt['balance']=locked.lidya+fraction(db,user.id)/100;receipt['replayed']=True;return receipt
             if not payload.round_id or row.status!='open':raise HTTPException(409,'Tur tamamlandı')
@@ -71,7 +72,7 @@ def register_auth(current_user):
             stake=state['stake'];mode=state.get('respin_bonus',False) if state.get('respin') else True
             if not state.get('respin'):state['remaining']-=1
             charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=mode,sticky=state['sticky'],locked=state.get('locked'),respin=state.get('respin',False),remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
+            result=spin(bonus=mode,sticky=state['sticky'],locked=state.get('locked'),respin=state.get('respin',False),remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
             state['sticky']=result['sticky'];state['remaining']+=result['extraSpins'];state['awarded']+=result['extraSpins']
             if mode:state['bonus_hundredths']+=result['payoutHundredths']
         else:

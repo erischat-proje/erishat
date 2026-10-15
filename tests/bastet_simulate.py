@@ -16,11 +16,11 @@ def simulate(n,mode,seed):
    if steps>10000:raise RuntimeError('Unexpected respin chain; no forced payout or silent truncation')
    bonus=mode_bonus if respin else True
    if not respin:remaining-=1
-   r=m.spin(bonus=bonus,sticky=sticky,locked=locks,respin=respin,remaining_cap=m.CAP-total,rng=rng.random,trace=False)
+   r=m.spin(purchased=mode=='buy',bonus=bonus,sticky=sticky,locked=locks,respin=respin,remaining_cap=m.CAP-total,rng=rng.random,trace=False)
    frees+=bonus;respins+=respin;total+=r['payoutHundredths'];remaining+=r['extraSpins'];sticky=r['sticky'];locks=r['locked'];respin=r['respin'];mode_bonus=r['respinBonus']
   values.append(total/100/cost);caps+=total>=m.CAP
  mean=statistics.mean(values);half=1.96*statistics.stdev(values)/n**.5
- return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'bonusFrequency':bonuses/n if mode=='normal' else None,'freeSpins':frees,'respins':respins,'caps':caps,'maxWin':max(values)*(100 if mode=='buy' else 1),'certified':False}
+ return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'bonusFrequency':bonuses/n if mode=='normal' else None,'freeSpins':frees,'respins':respins,'caps':caps,'maxWin':max(values)*(100 if mode=='buy' else 1),'roundHitFrequency':sum(v>0 for v in values)/n,'netProfitFrequency':sum(v>1 for v in values)/n,'certified':False}
 if __name__=='__main__':
  reports=[]
  for mode,n,seed in [('normal',int(sys.argv[2]) if len(sys.argv)>2 else 50000,731994),('buy',int(sys.argv[3]) if len(sys.argv)>3 else 10000,139994)]:

@@ -1,7 +1,9 @@
 """Original Bastet 5x4 engine. Each unpaid respin is resumable, never a blocking loop."""
 import json,secrets,math
 from pathlib import Path
-CONFIG=json.loads(Path(__file__).with_name('bastet-math.json').read_text())
+LEGACY_CONFIG=json.loads(Path(__file__).with_name('bastet-math.json').read_text())
+CONFIG=json.loads(Path(__file__).with_name('bastet-math-v2.json').read_text())
+SUPPORTED_VERSIONS=frozenset((LEGACY_CONFIG['version'],CONFIG['version']))
 KEYS=['ten','jack','queen','king','ace','scarab','ankh','chalice','cat-white','cat-black','wild','scatter']
 WILD=10;SCATTER=11;CAP=500000;LINES=CONFIG['lines'];PAY=CONFIG['paytable'];AWARDS={3:8,4:12,5:16}
 
@@ -28,8 +30,9 @@ def evaluate(board,paytable=PAY):
    wins.append({'line':number,'symbol':KEYS[symbol],'count':count,'indices':indices[:count],'baseHundredths':base,'multiplier':multiplier,'payHundredths':base*multiplier})
  return sum(w['payHundredths'] for w in wins),wins
 
-def spin(*,bonus=False,sticky=None,locked=None,respin=False,remaining_cap=CAP,rng=None,config=CONFIG,forced_board=None,trace=True,model_version=None):
- if model_version not in (None,config['version']):raise ValueError('Unsupported Bastet version')
+def spin(*,bonus=False,sticky=None,locked=None,respin=False,remaining_cap=CAP,rng=None,config=CONFIG,forced_board=None,trace=True,model_version=None,purchased=False):
+ if model_version==LEGACY_CONFIG['version']:config=LEGACY_CONFIG
+ elif model_version not in (None,config['version']):raise ValueError('Unsupported Bastet version')
  rng=rng or secrets.SystemRandom().random
  saved={int(k):int(v) for k,v in (sticky or {}).items()} if bonus else {}
  if any(i not in range(20) or i%5==0 or m not in (2,3) for i,m in saved.items()):raise ValueError('Invalid sticky wild')
@@ -40,7 +43,7 @@ def spin(*,bonus=False,sticky=None,locked=None,respin=False,remaining_cap=CAP,rn
   if not respin and rng()<(config['bonusStackRate'] if bonus else config['stackRate']):
    cat=8+int(rng()*2)
    for i in [0,5,10,15]:board[i]={'s':cat}
-  rate=config['bonusWildRate'] if bonus else config['wildRate']
+  rate=(config.get('buyBonusWildRate',config['bonusWildRate']) if purchased else config['bonusWildRate']) if bonus else config['wildRate']
   for i in range(20):
    if i%5 and i not in saved and i not in locks and rng()<rate:board[i]={'s':WILD,'m':2+int(rng()*2)} if bonus else {'s':WILD,'m':1}
   if not bonus and not respin:
