@@ -29,7 +29,7 @@ from .system_logs import record
 from .system_data import LidyaGemLedger
 from .oyunlar.registry import GAME_ENGINES, is_private_game, is_room_game
 from .oyunlar.blackjack import available_actions, display_state
-from . import blackjack_final, slot_final, cups_final, horse_final
+from . import blackjack_final, slot_final, cups_final, horse_final, vault_final
 
 router = APIRouter(prefix="/v1", tags=["platform"])
 
@@ -1440,6 +1440,10 @@ def register_platform_auth(current_user_dependency):
     # ERIS_VAULT_LIVE_API_V1
     from . import vault_live
 
+    @router.get("/games/vault/leaderboard")
+    def vault_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return vault_final.leaderboard(db, user, period)
+
     @router.get("/games/vault/live")
     def vault_live_state(
         db: Session = Depends(get_db),
@@ -1508,7 +1512,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.post("/games/vault/live/bet")
     def vault_live_bet(
-        payload: GameBetCreate,
+        payload: vault_final.VaultBetRequest,
         db: Session = Depends(get_db),
         user: User = Depends(current_user_dependency),
     ):
@@ -1518,14 +1522,7 @@ def register_platform_auth(current_user_dependency):
                 status_code=400,
                 detail="Geçersiz kasa ödülü seçimi",
             )
-        if (
-            type(payload.amount) is not int
-            or payload.amount not in vault_live.STAKES
-        ):
-            raise HTTPException(
-                status_code=422,
-                detail="Geçersiz bahis miktarı",
-            )
+        vault_final.validate_stake(payload.amount)
 
         row = vault_live.get_round(db)
         if (
@@ -1561,6 +1558,13 @@ def register_platform_auth(current_user_dependency):
                 detail="Yeterli Lidya yok",
             )
 
+        if row.ends_at <= vault_live.now():
+            raise HTTPException(status_code=409, detail="Bahisler kapandı. Yeni turu bekle.")
+        multiplier = (vault_live.MULTIPLIERS if vault_version == 2 else vault_live.LEGACY_MULTIPLIERS)[choice]
+        existing = db.scalar(select(func.coalesce(func.sum(GameBet.amount), 0)).where(
+            GameBet.round_id == row.id, GameBet.user_id == user.id, GameBet.choice == choice)) or 0
+        if locked_user.lidya - payload.amount + (int(existing) + payload.amount) * multiplier > 2_147_483_647:
+            raise HTTPException(status_code=422, detail="Toplam olası ödeme cüzdan sınırını aşıyor.")
         locked_user.lidya -= payload.amount
         db.add(GameBet(
             round_id=row.id,
@@ -1954,6 +1958,7 @@ def register_platform_auth(current_user_dependency):
             response["data"] = {**data, "state":display_state(data["state"]), "dealer_hand":data["dealer_hand"] if result != "pending" else data["dealer_hand"][:1], "dealer_total":data["dealer_total"] if result != "pending" else None}
         response.update({"stake":stake,"payout":payout,"balance":locked_user.lidya})
         return response
+
 
 
 
