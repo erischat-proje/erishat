@@ -43,10 +43,10 @@ html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal
 html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .hero{flex:0 0 40px!important;min-height:0!important;height:40px!important}
 html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit.gv-short .hero{display:none!important}
 
-/* Scale the complete control surface when its intrinsic minimum exceeds the window. */
-html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .gv-shell.gv-shell{zoom:var(--gv-scale,1)!important;height:calc(100% / var(--gv-scale,1))!important;max-height:none!important;width:calc(100% / var(--gv-scale,1))!important;max-width:none!important;flex-shrink:0!important;align-self:flex-start!important}
-.gv-fit.gv-fit .gv-shell *{scrollbar-width:none}
-.gv-fit.gv-fit .gv-shell ::-webkit-scrollbar{display:none}
+/* Keep physical controls at their authored size. Short windows can scroll
+   the shell instead of recursively zooming the entire game surface. */
+html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .gv-shell.gv-shell{zoom:1!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin}
+html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit :is(input,select,textarea){font-size:16px!important}
 html body main.nrs-game.gv-fit.gv-fit .gv-shell{display:flex!important;flex-direction:column!important;gap:4px!important}
 html body main.nrs-game.gv-fit.gv-fit aside{display:flex!important;flex-direction:column!important;gap:3px!important}
 html body main.nrs-game.gv-fit.gv-fit aside .panel{padding:4px!important}
@@ -60,3 +60,4 @@ html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal
 
 html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .gv-shell>*{flex-shrink:0!important}
 html body :is(#erisDedeModal,#erisPrensesModal,#erisSekerModal,#erisBalikciModal,#erisDogPartyModal,#erisCandyModal,#erisKovboyModal,#erisBastetModal,#erisAltinModal,#erisKureModal,#erisFiravunModal,#erisLidyaOriginalModal,#lidyaWheelLive,#lidyaCrashFinal,#erisGamesModal,.sf-overlay,main.nrs-game).gv-fit.gv-fit .gv-shell>.gv-stage{flex-shrink:1!important}
+
