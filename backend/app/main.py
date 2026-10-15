@@ -59,6 +59,7 @@ from .admin_routes import register_admin_auth, router as admin_router
 from . import role_badges
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
+from .onboarding_policy import agreement, eligible, grant_cosmetic
 from .schemas import ConversationCreate, ConversationOut, MessageCreate, MessageOut, NicknameChange, OnboardingRequest, OTPRequest, OTPVerify, SessionOut, UserCreate, UserOut, UserUpdate
 from .services import MessageService
 from .performance_queries import message_context, conversation_page
@@ -126,6 +127,9 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date VARCHAR(10)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version VARCHAR(40)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_digest VARCHAR(64)"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS audience VARCHAR(16) NOT NULL DEFAULT 'public'"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT false"))
@@ -756,6 +760,7 @@ def claim_welcome_gift(
     locked_user = (
         db.query(User)
         .filter(User.id == user.id)
+        .populate_existing()
         .with_for_update()
         .one()
     )
@@ -767,40 +772,19 @@ def claim_welcome_gift(
     if not gender:
         raise HTTPException(status_code=400, detail="Geçerli bir cinsiyet seçilmemiş.")
 
-    avatar_item = next(
-        (
-            item for item in catalog()
-            if item.get("type") == "avatar"
-            and item.get("gender") == gender
-            and item.get("tier") == "standard"
-        ),
-        None,
-    )
-
-    if not avatar_item:
-        raise HTTPException(status_code=500, detail="Standart avatar bulunamadı.")
-
-    frame_key = next(item["asset_key"] for item in catalog() if item["type"] == "frame" and not item["vip"] and item["gender"] == gender)
-
+    items = catalog()
+    avatars = eligible(items, "avatar", gender)
+    frames = eligible(items, "frame", gender)
+    if not avatars or not frames:
+        raise HTTPException(status_code=500, detail="Kayıt hediyesi seçenekleri bulunamadı.")
+    avatar_item = next((i for i in avatars if i["asset_key"] == locked_user.avatar_asset), avatars[0])
+    frame_item = next((i for i in frames if i["asset_key"] == locked_user.frame_asset), frames[0])
     locked_user.lidya = int(locked_user.lidya or 0) + 500
     locked_user.avatar_asset = avatar_item["asset_key"]
-    locked_user.frame_asset = frame_key
+    locked_user.frame_asset = frame_item["asset_key"]
     locked_user.welcome_gift_claimed = True
-
-    db.add(
-        UserCosmetic(
-            user_id=locked_user.id,
-            cosmetic_type="avatar",
-            asset_key=avatar_item["asset_key"],
-        )
-    )
-    db.add(
-        UserCosmetic(
-            user_id=locked_user.id,
-            cosmetic_type="frame",
-            asset_key=frame_key,
-        )
-    )
+    grant_cosmetic(db, UserCosmetic, locked_user.id, "avatar", avatar_item["asset_key"])
+    grant_cosmetic(db, UserCosmetic, locked_user.id, "frame", frame_item["asset_key"])
 
     db.commit()
     db.refresh(locked_user)
@@ -812,14 +796,23 @@ def me(user: User = Depends(current_user)) -> User:
     return user
 
 
+@app.get("/v1/legal/user-agreement")
+def get_user_agreement():
+    return agreement()
+
+
 @app.post("/v1/onboarding", response_model=UserOut)
 def complete_onboarding(
     payload: OnboardingRequest,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ) -> User:
+    user = db.query(User).filter(User.id == user.id).populate_existing().with_for_update().one()
     if user.profile_completed:
-        raise HTTPException(status_code=400, detail="Profil zaten tamamlanmış")
+        return user
+    document = agreement()
+    if payload.terms_version != document["version"] or payload.terms_digest != document["sha256"]:
+        raise HTTPException(status_code=409, detail={"code":"terms_changed", "message":"Sözleşme güncellendi. Yeni metni okuyup onaylamalısın."})
 
     username = payload.username.strip()
     if not username:
@@ -840,22 +833,16 @@ def complete_onboarding(
     user.nickname = username
     user.bio = payload.bio.strip()
 
-    # Onboarding cosmetics: yalnızca standart ve cinsiyete uygun avatar/çerçeve.
-    if payload.avatar_asset:
-        avatar_key = payload.avatar_asset.replace("\\", "/").lstrip("./")
-        avatar_item = next((item for item in catalog() if item["type"] == "avatar" and not item["vip"] and item["gender"] == payload.gender and item["asset_key"] == avatar_key), None)
-        if avatar_item:
-            user.avatar_asset = avatar_item["asset_key"]
-        else:
-            raise HTTPException(status_code=400, detail="Geçersiz avatar seçimi")
-
-    if payload.frame_asset:
-        frame_key = payload.frame_asset.replace("\\", "/").lstrip("./")
-        frame_item = next((item for item in catalog() if item["type"] == "frame" and not item["vip"] and item["gender"] == payload.gender and item["asset_key"] == frame_key), None)
-        if frame_item:
-            user.frame_asset = frame_item["asset_key"]
-        else:
-            raise HTTPException(status_code=400, detail="Geçersiz çerçeve seçimi")
+    items = catalog()
+    for kind, selected in (("avatar",payload.avatar_asset),("frame",payload.frame_asset)):
+        item = next((i for i in eligible(items,kind,payload.gender) if i["asset_key"] == selected),None)
+        if item is None:
+            raise HTTPException(status_code=400, detail="Geçersiz kayıt hediyesi seçimi")
+        setattr(user, kind+"_asset", item["asset_key"])
+        grant_cosmetic(db, UserCosmetic, user.id, kind, item["asset_key"])
+    user.terms_version = document["version"]
+    user.terms_digest = document["sha256"]
+    user.terms_accepted_at = datetime.now(timezone.utc)
 
     user.profile_completed = True
     welcome_conversation_id = f"welcome:{user.id}"
