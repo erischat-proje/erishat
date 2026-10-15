@@ -26,11 +26,13 @@ command -v termux-setup-storage >/dev/null && [ -d "${ERISCHAT_APK_DOWNLOADS:-$H
 work="$(mktemp -d "${ERISCHAT_WORK_ROOT:-$HOME}/ErisChat-Lidya-APK-XXXXXXXX")"
 gh run download "$run" --repo "$repo" --name ErisChat-Lidya-APK --dir "$work"
 [ -s "$work/app-debug.apk" ] || { echo 'APK dosyası indirilemedi.'; exit 1; }
-file="${ERISCHAT_APK_DOWNLOADS:-$HOME/storage/downloads}/ErisChat-Lidya-1.7-$run.apk"
+file="${ERISCHAT_APK_DOWNLOADS:-$HOME/storage/downloads}/ErisChat-Lidya-1.8-$run.apk"
 cp "$work/app-debug.apk" "$file"
 echo "APK hazır: $file"
+echo "İndirme sayfası: https://github.com/$repo/actions/runs/$run"
+echo "Kurulum otomatik açılmazsa Dosyalar > İndirilenler içinden APK dosyasına dokun."
 if command -v termux-open >/dev/null; then
- termux-open --view --content-type application/vnd.android.package-archive "$file"
+ termux-open --view --content-type application/vnd.android.package-archive "$file" || echo "APK indirildi. Dosyalar > İndirilenler içinden açabilirsin."
 else
  echo 'İndirilenler klasöründeki APK dosyasını açarak mevcut uygulamanın üzerine kur.'
 fi
