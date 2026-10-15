@@ -8,7 +8,7 @@ from .wheel_rules import period_bounds
 STAKES = (10, 100, 1_000, 10_000, 100_000)
 
 def validate_stake(value):
-    if type(value) is not int or not 10 <= value <= 1_000_000_000 or value % 10:
+    if type(value) is not int or value < 10 or value % 10:
         raise HTTPException(422, 'Blackjack toplam bahsi 10 Lidya katlarıyla artırılmalı.')
     return value
 

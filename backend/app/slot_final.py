@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import HTTPException
 from pydantic import BaseModel, StrictInt
-from sqlalchemy import ForeignKey, String, Text, Integer, select, func
+from sqlalchemy import ForeignKey, String, Text, Integer, BigInteger, select, func
 from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 from .models import User
@@ -23,13 +23,13 @@ class SlotAccount(Base):
     __tablename__='classic_slot_accounts'
     user_id: Mapped[str]=mapped_column(ForeignKey('users.id'),primary_key=True)
     remaining: Mapped[int]=mapped_column(Integer,default=0,nullable=False)
-    stake: Mapped[int]=mapped_column(Integer,default=100,nullable=False)
+    stake: Mapped[int]=mapped_column(BigInteger,default=100,nullable=False)
 class SlotReceipt(Base):
     __tablename__='classic_slot_receipts'
     user_id: Mapped[str]=mapped_column(ForeignKey('users.id'),primary_key=True)
     request_id: Mapped[str]=mapped_column(String(36),primary_key=True)
     operation: Mapped[str]=mapped_column(String(16),nullable=False)
-    amount: Mapped[int]=mapped_column(Integer,nullable=False)
+    amount: Mapped[int]=mapped_column(BigInteger,nullable=False)
     response: Mapped[str]=mapped_column(Text,nullable=False)
 
 def state(db,user):
@@ -44,7 +44,7 @@ def transact(db,user,payload,operation='spin'):
     if receipt:
         if (receipt.operation,receipt.amount)!=(operation,payload.amount):raise HTTPException(409,'İstek numarası başka işlemde kullanılmış.')
         out=json.loads(receipt.response);out.update(replayed=True,balance=u.lidya);return out
-    if not 10 <= payload.amount <= 1000000000 or payload.amount % 10:raise HTTPException(422,'Bahis 10 Lidya katı ve güvenli işlem sınırında olmalı.')
+    if payload.amount < 10 or payload.amount % 10:raise HTTPException(422,'Bahis en az 10 Lidya ve 10’un katı olmalı.')
     a=db.get(SlotAccount,user.id)
     if not a:a=SlotAccount(user_id=user.id,remaining=0,stake=payload.amount);db.add(a)
     if operation=='bonus':

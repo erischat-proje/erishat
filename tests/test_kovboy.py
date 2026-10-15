@@ -70,7 +70,7 @@ def test_rules_and_validation(fixture):
  c,s,r,e,_=fixture;rules=c.get('/v1/games/kovboy/rules').json()
  assert rules['bonus_floor']==10 and rules['buy_spins']==8 and rules['max_win']==10000
  assert len(rules['lines'])==40 and len(set(tuple(line) for line in rules['lines']))==40
- for kw in [{'stake':0},{'stake':True},{'stake':1000000001},{'stake':20.0},{'sequence':False},{'action':'bad'},{'ante':True},{'sticky':{'1':5}},{'payout':99999},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':0},{'stake':True},{'stake':-1},{'stake':20.0},{'sequence':False},{'action':'bad'},{'ante':True},{'sticky':{'1':5}},{'payout':99999},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
 
 def test_sticky_and_overlay_dont_replace_wild(fixture):
  *_,eng,_=fixture

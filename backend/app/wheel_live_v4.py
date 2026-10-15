@@ -162,8 +162,8 @@ def place_bet(db, user, payload):
     weights, _, stakes = round_rules(row)
     if payload.choice not in weights:
         raise HTTPException(422, 'Geçersiz çark sembolü.')
-    if (payload.amount not in stakes if int(json.loads(row.state_data).get("version",1)) < 4 else not 10 <= payload.amount <= 1_000_000_000 or payload.amount % 10):
-        raise HTTPException(422, 'Bahis: 10, 100, 1.000, 10.000 veya 100.000 Lidya seç.')
+    if (payload.amount not in stakes if int(json.loads(row.state_data).get("version",1)) < 4 else payload.amount < 10 or payload.amount % 10):
+        raise HTTPException(422, 'Bahis en az 10 Lidya ve 10’un katı olmalı.')
     if row.status != 'open' or (utc(row.ends_at)-now()).total_seconds() <= LOCK_SECONDS:
         raise HTTPException(409, 'Bahisler kapandı. Yeni turu bekle.')
     locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())

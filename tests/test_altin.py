@@ -72,7 +72,7 @@ def test_rules_validation(fixture):
  c,_,_,_,_=fixture;r=c.get('/v1/games/altin/rules').json()
  assert len(set(map(tuple,r['lines'])))==25 and r['max_win']==5163 and r['bonus_cost']==100
  assert r['jackpots']==[20,50,200,5000]
- for kw in [{'stake':True},{'stake':0},{'stake':1000000001},{'sequence':False},{'action':'bad'},{'payout':5},{'bonus':{}}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':True},{'stake':0},{'stake':-1},{'sequence':False},{'action':'bad'},{'payout':5},{'bonus':{}}]:assert post(c,**kw).status_code==422
 
 def test_copy_and_payout(fixture):
  *_,e,_=fixture;b=baseboard()

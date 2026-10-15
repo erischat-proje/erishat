@@ -68,7 +68,7 @@ def post(c,**kw):return c.post('/v1/games/prenses/spin',json={'request_id':str(u
 def test_rules_and_validation(fixture):
     c,*_=fixture
     assert c.get('/v1/games/prenses/rules').json()['max_win']==5000
-    for kw in [{'stake':0},{'stake':1000000001},{'stake':True},{'ante':1},{'stake':20.0},{'sequence':False},{'action':'hack'},{'payout':999},{'request_id':'not-a-uuid'},{'ante':True,'action':'buy'}]:assert post(c,**kw).status_code==422
+    for kw in [{'stake':0},{'stake':-1},{'stake':True},{'ante':1},{'stake':20.0},{'sequence':False},{'action':'hack'},{'payout':999},{'request_id':'not-a-uuid'},{'ante':True,'action':'buy'}]:assert post(c,**kw).status_code==422
 
 def test_paid_spin_exactly_once(fixture):
     c,s,r,e,_=fixture

@@ -29,11 +29,11 @@ def round(db,status='open'):
  at=datetime.now(timezone.utc);r=GameRound(id=str(uuid4()),game_type='crash_live',status=status,started_at=at,ends_at=at+timedelta(seconds=60),state_data=json.dumps(dict(crash_at=3.0,flight_seconds=100)))
  db.add(r);db.commit();return r
 def req(r,amount=100):return service.CrashBetRequest(amount=amount,round_id=r.id,request_id=uuid4())
-@pytest.mark.parametrize('amount',service.STAKES)
+@pytest.mark.parametrize('amount',service.STAKES+(50,500,3000000000))
 def test_five_stakes_one_debit_after_retry(db,amount):
- u=user(db);r=round(db);p=req(r,amount);a=service.place_bet(db,u,p,lambda db:r);db.commit();b=service.place_bet(db,u,p,lambda db:r);db.commit();assert not a['replayed'] and b['replayed'];assert u.lidya==500000-amount;assert db.scalar(select(func.count(GameBet.id)))==1
-@pytest.mark.parametrize('amount',[1,25,50,500,100001,-10])
-def test_other_stakes_rejected(db,amount):
+ u=user(db,balance=max(500000,amount*2));before=u.lidya;r=round(db);p=req(r,amount);a=service.place_bet(db,u,p,lambda db:r);db.commit();b=service.place_bet(db,u,p,lambda db:r);db.commit();assert not a['replayed'] and b['replayed'];assert u.lidya==before-amount;assert db.scalar(select(func.count(GameBet.id)))==1
+@pytest.mark.parametrize('amount',[1,25,100001,-10])
+def test_invalid_stakes_rejected(db,amount):
  u=user(db);r=round(db)
  with pytest.raises(HTTPException) as e:service.place_bet(db,u,req(r,amount),lambda db:r)
  assert e.value.status_code==422 and u.lidya==500000

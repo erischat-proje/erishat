@@ -23,11 +23,11 @@ def user(db,uid='viewer',balance=5000000):
  u=User(id=uid,public_id=uid,nickname=uid,lidya=balance);db.add(u);db.commit();return u
 def req(n):return service.SlotRequest(amount=n,request_id=uuid4())
 def win(monkeypatch):monkeypatch.setattr(service.engine,'play',lambda c,p,d:('cherry',{**d,'reels':['cherry']*3}))
-@pytest.mark.parametrize('n',service.STAKES)
+@pytest.mark.parametrize('n',service.STAKES+(500,3000000000))
 def test_real_wallet_and_retry_one_debit_one_payout(db,monkeypatch,n):
- win(monkeypatch);u=user(db);p=req(n);a=service.transact(db,u,p);db.commit();b=service.transact(db,u,p);db.commit()
- assert u.lidya==5000000+n*4 and a['payout']==n*5 and b['replayed'];assert db.scalar(select(func.count(GameBet.id)))==1
-@pytest.mark.parametrize('n',[0,25,500,100001,-1])
+ win(monkeypatch);u=user(db,balance=max(5000000,n*2));before=u.lidya;p=req(n);a=service.transact(db,u,p);db.commit();b=service.transact(db,u,p);db.commit()
+ assert u.lidya==before+n*4 and a['payout']==n*5 and b['replayed'];assert db.scalar(select(func.count(GameBet.id)))==1
+@pytest.mark.parametrize('n',[0,25,100001,-1])
 def test_invalid_never_debits(db,n):
  u=user(db)
  with pytest.raises(HTTPException):service.transact(db,u,req(n))
@@ -61,3 +61,19 @@ def test_top50_only_paid_settled_current_period(db,monkeypatch):
  db.commit()
  for p in ['hour','day','week','month']:
   out=service.leaderboard(db,viewer,p);assert len(out['items'])==50;assert out['items'][0]['winnings']==500054 and out['my_winnings']==0
+
+def test_large_bonus_stake_and_receipt_use_bigint_and_resume(db,monkeypatch):
+ from sqlalchemy import BigInteger
+ from sqlalchemy.dialects import postgresql
+ from sqlalchemy.schema import CreateTable
+ assert isinstance(service.SlotAccount.__table__.c.stake.type,BigInteger)
+ assert isinstance(service.SlotReceipt.__table__.c.amount.type,BigInteger)
+ assert 'stake BIGINT' in str(CreateTable(service.SlotAccount.__table__).compile(dialect=postgresql.dialect()))
+ assert 'amount BIGINT' in str(CreateTable(service.SlotReceipt.__table__).compile(dialect=postgresql.dialect()))
+ win(monkeypatch);u=user(db,balance=1000000000000);stake=3000000000
+ purchased=service.transact(db,u,req(stake),'bonus');db.commit()
+ assert service.state(db,u)['locked_stake']==stake
+ assert u.lidya==1000000000000-stake*10
+ payload=req(stake);result=service.transact(db,u,payload);db.commit();balance=u.lidya
+ assert result['cost']==0 and result['payout']==stake*5 and result['remaining']==9
+ assert service.transact(db,u,payload)['replayed'] and u.lidya==balance

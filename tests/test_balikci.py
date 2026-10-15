@@ -82,7 +82,7 @@ def test_rules_strict_validation(fixture):
     c,*_=fixture
     rules=c.get('/v1/games/balikci/rules').json()
     assert rules['name']=='Balıkçı Hasan' and len(rules['lines'])==10 and rules['max_win']==2100
-    for kw in [{'stake':0},{'stake':1000000001},{'stake':True},{'stake':20.0},{'ante':False},{'sequence':False},{'action':'invalid'},{'payout':999},{'request_id':'not-a-uuid'}]:assert post(c,**kw).status_code==422
+    for kw in [{'stake':0},{'stake':-1},{'stake':True},{'stake':20.0},{'ante':False},{'sequence':False},{'action':'invalid'},{'payout':999},{'request_id':'not-a-uuid'}]:assert post(c,**kw).status_code==422
 
 def test_wallet_paid_replay_and_fraction(fixture):
     c,s,r,e,_=fixture
