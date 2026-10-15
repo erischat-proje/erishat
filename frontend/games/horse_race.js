@@ -102,7 +102,10 @@
           const t = Math.min(1,(now-start)/duration);
           const track = runners[0]?.parentElement;
           const width = track ? track.clientWidth : 300;
-          const finish = Math.max(0,width*.87-30);
+          // The horse's nose reaches the finish, regardless of its responsive size.
+          const runnerWidth = runners[0]?.offsetWidth || 0;
+          const startX = runners[0]?.offsetLeft || 0;
+          const finish = Math.max(0,width*.87-startX-runnerWidth);
 
           runners.forEach((r,i) => {
             const win = r.dataset.horse === winner;
