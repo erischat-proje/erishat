@@ -1,0 +1,1199 @@
+{
+  "dede": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": 0.02,
+      "reward_factor": 0.20283,
+      "ante_reward_factor": 0.20398,
+      "ante_bonus_paytable": [
+        [
+          5,
+          15,
+          41
+        ],
+        [
+          8,
+          18,
+          82
+        ],
+        [
+          10,
+          20,
+          102
+        ],
+        [
+          16,
+          31,
+          163
+        ],
+        [
+          20,
+          41,
+          204
+        ],
+        [
+          31,
+          41,
+          245
+        ],
+        [
+          41,
+          102,
+          306
+        ],
+        [
+          61,
+          204,
+          510
+        ],
+        [
+          204,
+          306,
+          1020
+        ]
+      ],
+      "bonus_paytable": [
+        [
+          5,
+          15,
+          41
+        ],
+        [
+          8,
+          18,
+          81
+        ],
+        [
+          10,
+          20,
+          101
+        ],
+        [
+          16,
+          30,
+          162
+        ],
+        [
+          20,
+          41,
+          203
+        ],
+        [
+          30,
+          41,
+          243
+        ],
+        [
+          41,
+          101,
+          304
+        ],
+        [
+          61,
+          203,
+          507
+        ],
+        [
+          203,
+          304,
+          1014
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "blue",
+      "green",
+      "yellow",
+      "purple",
+      "red",
+      "cup",
+      "ring",
+      "hourglass",
+      "crown"
+    ]
+  },
+  "prenses": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": 0.02,
+      "reward_factor": 0.20915,
+      "ante_reward_factor": 0.20807,
+      "ante_bonus_paytable": [
+        [
+          5,
+          16,
+          42
+        ],
+        [
+          8,
+          19,
+          83
+        ],
+        [
+          10,
+          21,
+          104
+        ],
+        [
+          17,
+          31,
+          166
+        ],
+        [
+          21,
+          42,
+          208
+        ],
+        [
+          31,
+          42,
+          250
+        ],
+        [
+          42,
+          104,
+          312
+        ],
+        [
+          62,
+          208,
+          520
+        ],
+        [
+          208,
+          312,
+          1040
+        ]
+      ],
+      "bonus_paytable": [
+        [
+          5,
+          16,
+          42
+        ],
+        [
+          8,
+          19,
+          84
+        ],
+        [
+          10,
+          21,
+          105
+        ],
+        [
+          17,
+          31,
+          167
+        ],
+        [
+          21,
+          42,
+          209
+        ],
+        [
+          31,
+          42,
+          251
+        ],
+        [
+          42,
+          105,
+          314
+        ],
+        [
+          63,
+          209,
+          523
+        ],
+        [
+          209,
+          314,
+          1046
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "yellow",
+      "green",
+      "blue",
+      "turquoise",
+      "pink",
+      "moon",
+      "star",
+      "sun",
+      "heart"
+    ]
+  },
+  "seker": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": 0.02,
+      "reward_factor": 0.2957,
+      "ante_reward_factor": 0.2836,
+      "ante_bonus_paytable": [
+        [
+          7,
+          21,
+          57
+        ],
+        [
+          11,
+          26,
+          113
+        ],
+        [
+          14,
+          28,
+          142
+        ],
+        [
+          23,
+          43,
+          227
+        ],
+        [
+          28,
+          57,
+          284
+        ],
+        [
+          43,
+          57,
+          340
+        ],
+        [
+          57,
+          142,
+          425
+        ],
+        [
+          85,
+          284,
+          709
+        ],
+        [
+          284,
+          709,
+          1418
+        ]
+      ],
+      "bonus_paytable": [
+        [
+          7,
+          22,
+          59
+        ],
+        [
+          12,
+          27,
+          118
+        ],
+        [
+          15,
+          30,
+          148
+        ],
+        [
+          24,
+          44,
+          237
+        ],
+        [
+          30,
+          59,
+          296
+        ],
+        [
+          44,
+          59,
+          355
+        ],
+        [
+          59,
+          148,
+          444
+        ],
+        [
+          89,
+          296,
+          739
+        ],
+        [
+          296,
+          739,
+          1478
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "banana",
+      "apple",
+      "grapes",
+      "plum",
+      "watermelon",
+      "blue",
+      "green",
+      "purple",
+      "heart"
+    ]
+  },
+  "balikci": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.011111111111111112,
+      "ante_probability": null,
+      "reward_factor": 0.7948,
+      "ante_reward_factor": 0.7948,
+      "ante_bonus_paytable": null,
+      "bonus_paytable": [
+        [
+          16,
+          79,
+          397
+        ],
+        [
+          16,
+          79,
+          397
+        ],
+        [
+          16,
+          79,
+          397
+        ],
+        [
+          16,
+          119,
+          795
+        ],
+        [
+          16,
+          119,
+          795
+        ],
+        [
+          159,
+          795,
+          3974
+        ],
+        [
+          238,
+          1590,
+          7948
+        ],
+        [
+          318,
+          2384,
+          11922
+        ],
+        [
+          397,
+          3179,
+          15896
+        ],
+        [
+          79,
+          397,
+          1590
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "ten",
+      "jack",
+      "queen",
+      "king",
+      "ace",
+      "tackle",
+      "fly",
+      "rod",
+      "float",
+      "fish",
+      "scatter",
+      "fisherman"
+    ]
+  },
+  "dogparty": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": null,
+      "reward_factor": 0.55199,
+      "ante_reward_factor": 0.55199,
+      "ante_bonus_paytable": null,
+      "bonus_paytable": [
+        [
+          6,
+          17,
+          83
+        ],
+        [
+          6,
+          17,
+          83
+        ],
+        [
+          6,
+          17,
+          83
+        ],
+        [
+          8,
+          28,
+          138
+        ],
+        [
+          8,
+          28,
+          138
+        ],
+        [
+          11,
+          55,
+          276
+        ],
+        [
+          17,
+          83,
+          414
+        ],
+        [
+          28,
+          138,
+          552
+        ],
+        [
+          41,
+          207,
+          828
+        ],
+        [
+          55,
+          276,
+          1380
+        ],
+        [
+          83,
+          414,
+          2070
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "ten",
+      "jack",
+      "queen",
+      "king",
+      "ace",
+      "bone",
+      "collar",
+      "dachshund",
+      "pug",
+      "shihtzu",
+      "rottweiler",
+      "scatter",
+      "wild"
+    ]
+  },
+  "candy": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": 0.01306974459724951,
+      "reward_factor": 0.813,
+      "ante_reward_factor": 0.812,
+      "ante_bonus_paytable": [
+        [
+          16,
+          24,
+          32,
+          49,
+          81,
+          162,
+          1624
+        ],
+        [
+          20,
+          28,
+          41,
+          61,
+          122,
+          244,
+          2030
+        ],
+        [
+          24,
+          32,
+          49,
+          73,
+          162,
+          325,
+          2436
+        ],
+        [
+          32,
+          49,
+          65,
+          97,
+          244,
+          487,
+          3248
+        ],
+        [
+          41,
+          61,
+          81,
+          122,
+          325,
+          650,
+          4872
+        ],
+        [
+          61,
+          81,
+          122,
+          203,
+          406,
+          812,
+          8120
+        ],
+        [
+          81,
+          122,
+          162,
+          244,
+          609,
+          1218,
+          12180
+        ]
+      ],
+      "bonus_paytable": [
+        [
+          16,
+          24,
+          33,
+          49,
+          81,
+          163,
+          1626
+        ],
+        [
+          20,
+          28,
+          41,
+          61,
+          122,
+          244,
+          2032
+        ],
+        [
+          24,
+          33,
+          49,
+          73,
+          163,
+          325,
+          2439
+        ],
+        [
+          33,
+          49,
+          65,
+          98,
+          244,
+          488,
+          3252
+        ],
+        [
+          41,
+          61,
+          81,
+          122,
+          325,
+          650,
+          4878
+        ],
+        [
+          61,
+          81,
+          122,
+          203,
+          406,
+          813,
+          8130
+        ],
+        [
+          81,
+          122,
+          163,
+          244,
+          610,
+          1220,
+          12195
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "orange-bear",
+      "purple-bear",
+      "red-bear",
+      "star",
+      "bottle",
+      "bean",
+      "heart"
+    ]
+  },
+  "kovboy": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": null,
+      "reward_factor": 0.49,
+      "ante_reward_factor": 0.49,
+      "ante_bonus_paytable": null,
+      "floor": 4.9,
+      "bonus_paytable": [
+        [
+          10,
+          49,
+          98
+        ],
+        [
+          10,
+          49,
+          98
+        ],
+        [
+          12,
+          61,
+          122
+        ],
+        [
+          15,
+          74,
+          147
+        ],
+        [
+          20,
+          98,
+          196
+        ],
+        [
+          24,
+          122,
+          245
+        ],
+        [
+          37,
+          184,
+          368
+        ],
+        [
+          49,
+          245,
+          490
+        ],
+        [
+          74,
+          368,
+          735
+        ],
+        [
+          98,
+          490,
+          980
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "ten",
+      "jack",
+      "queen",
+      "king",
+      "ace",
+      "holster",
+      "gold-bag",
+      "cowgirl",
+      "deputy",
+      "sheriff",
+      "wild",
+      "scatter"
+    ]
+  },
+  "bastet": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": null,
+      "reward_factor": 0.47982,
+      "ante_reward_factor": 0.47982,
+      "ante_bonus_paytable": null,
+      "bonus_paytable": [
+        [
+          6,
+          19,
+          62
+        ],
+        [
+          6,
+          19,
+          62
+        ],
+        [
+          8,
+          24,
+          78
+        ],
+        [
+          8,
+          24,
+          78
+        ],
+        [
+          9,
+          31,
+          93
+        ],
+        [
+          15,
+          54,
+          171
+        ],
+        [
+          24,
+          78,
+          233
+        ],
+        [
+          31,
+          117,
+          350
+        ],
+        [
+          62,
+          233,
+          777
+        ],
+        [
+          78,
+          311,
+          1166
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "ten",
+      "jack",
+      "queen",
+      "king",
+      "ace",
+      "scarab",
+      "ankh",
+      "chalice",
+      "cat-white",
+      "cat-black",
+      "wild",
+      "scatter"
+    ]
+  },
+  "kure": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": 0.02,
+      "reward_factor": 0.23915,
+      "ante_reward_factor": 0.25808,
+      "ante_bonus_paytable": [
+        [
+          1,
+          2,
+          3,
+          7
+        ],
+        [
+          1,
+          2,
+          3,
+          7
+        ],
+        [
+          1,
+          2,
+          4,
+          9
+        ],
+        [
+          1,
+          2,
+          4,
+          9
+        ],
+        [
+          1,
+          3,
+          5,
+          10
+        ],
+        [
+          2,
+          4,
+          10,
+          34
+        ],
+        [
+          2,
+          5,
+          14,
+          51
+        ],
+        [
+          2,
+          7,
+          17,
+          68
+        ],
+        [
+          3,
+          12,
+          34,
+          170
+        ],
+        [
+          5,
+          20,
+          68,
+          516
+        ]
+      ],
+      "bonus_paytable": [
+        [
+          1,
+          1,
+          3,
+          6
+        ],
+        [
+          1,
+          1,
+          3,
+          6
+        ],
+        [
+          1,
+          2,
+          4,
+          8
+        ],
+        [
+          1,
+          2,
+          4,
+          8
+        ],
+        [
+          1,
+          2,
+          5,
+          10
+        ],
+        [
+          1,
+          4,
+          10,
+          32
+        ],
+        [
+          1,
+          5,
+          13,
+          47
+        ],
+        [
+          2,
+          6,
+          16,
+          63
+        ],
+        [
+          3,
+          11,
+          32,
+          158
+        ],
+        [
+          5,
+          19,
+          63,
+          478
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "ten",
+      "jack",
+      "queen",
+      "king",
+      "ace",
+      "tarot",
+      "candles",
+      "potion",
+      "cat",
+      "owl",
+      "ball",
+      "seer"
+    ]
+  },
+  "firavun": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01,
+      "ante_probability": null,
+      "reward_factor": 0.6174,
+      "ante_reward_factor": 0.6174,
+      "ante_bonus_paytable": null,
+      "bonus_paytable": [
+        [
+          0,
+          31,
+          154,
+          617
+        ],
+        [
+          0,
+          31,
+          154,
+          617
+        ],
+        [
+          0,
+          31,
+          185,
+          772
+        ],
+        [
+          0,
+          31,
+          247,
+          926
+        ],
+        [
+          0,
+          31,
+          309,
+          926
+        ],
+        [
+          31,
+          154,
+          617,
+          3087
+        ],
+        [
+          46,
+          309,
+          1543,
+          6174
+        ],
+        [
+          62,
+          463,
+          3087,
+          12348
+        ],
+        [
+          123,
+          617,
+          6174,
+          30870
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "ten",
+      "jack",
+      "queen",
+      "king",
+      "ace",
+      "scarab",
+      "cat",
+      "mask",
+      "explorer",
+      "book"
+    ]
+  },
+  "aztek": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.00993,
+      "ante_probability": null,
+      "reward_factor": 0.28,
+      "ante_reward_factor": 0.28,
+      "ante_bonus_paytable": null,
+      "bonus_paytable": [
+        [
+          1,
+          3,
+          8,
+          31,
+          103,
+          515
+        ],
+        [
+          1,
+          3,
+          8,
+          31,
+          103,
+          721
+        ],
+        [
+          1,
+          3,
+          8,
+          31,
+          103,
+          1030
+        ],
+        [
+          5,
+          15,
+          41,
+          155,
+          515,
+          1546
+        ],
+        [
+          5,
+          15,
+          41,
+          155,
+          515,
+          3091
+        ],
+        [
+          8,
+          23,
+          62,
+          232,
+          773,
+          6955
+        ],
+        [
+          10,
+          31,
+          82,
+          309,
+          1030,
+          10304
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i"
+    ]
+  },
+  "ares": {
+    "natural_bonus": {
+      "profile": "natural-balanced-20261015-v1",
+      "probability": 0.01000250922076506,
+      "ante_probability": null,
+      "reward_factor": 0.405,
+      "ante_reward_factor": 0.405,
+      "ante_bonus_paytable": null,
+      "bonus_paytable": [
+        [
+          9,
+          19,
+          38
+        ],
+        [
+          11,
+          23,
+          45
+        ],
+        [
+          15,
+          30,
+          61
+        ],
+        [
+          19,
+          38,
+          76
+        ],
+        [
+          38,
+          76,
+          113
+        ],
+        [
+          57,
+          113,
+          190
+        ],
+        [
+          76,
+          151,
+          303
+        ],
+        [
+          113,
+          227,
+          454
+        ],
+        [
+          151,
+          303,
+          757
+        ]
+      ],
+      "note": "Yeni doğal bonusun ayrı ödeme profili vardır. Satın alınan ve önceden başlamış bonuslar kendi tablolarını korur. Ortalama sıklık garanti değildir.",
+      "rtp_status": "Monte Carlo tahmini; sertifikalı RTP değildir."
+    },
+    "symbols": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i"
+    ]
+  }
+}

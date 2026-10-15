@@ -10,8 +10,20 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound, GameBet, GamePlay
 from .moderation import require_feature
-from .aztek_ares_engine import spin, rules as game_rules, CAP, VERSION, SUPPORTED_VERSIONS
+from .aztek_ares_engine import spin, rules as engine_rules, CAP, VERSION, SUPPORTED_VERSIONS
 from .kure_routes import fraction, wallet_id
+
+from .natural_bonus import start as natural_start, entry_config, bonus_config, public as natural_public, rules as natural_rules
+
+def game_rules(kind,version=VERSION):
+    data=engine_rules(kind,version=version)
+    if version==VERSION:
+        cfg=entry_config(kind)
+        if kind=='aztek':data['purchase_paytable']=data['paytable']
+        if kind=='aztek':data['gold_thresholds']=[cfg['goldEntryCount'],*data['gold_thresholds'][1:]]
+        data['paytable']=[[v/100 for v in row] for row in cfg['aztekPaytable' if kind=='aztek' else 'aresPaytable']]
+    data['natural_bonus']=natural_rules(kind)
+    return data
 
 class SpinRequest(BaseModel):
     request_id: str = Field(min_length=36, max_length=36)
@@ -22,7 +34,7 @@ class SpinRequest(BaseModel):
     class Config: extra='forbid'
 
 def public(row,s):
-    return dict(round_id=row.id,sequence=s['sequence'],remaining=s['remaining'],stake=s['stake'],total_payout=s['total_cents']/100,finished=row.status=='finished',version=s['version'])
+    return dict(**natural_public(s),round_id=row.id,sequence=s['sequence'],remaining=s['remaining'],stake=s['stake'],total_payout=s['total_cents']/100,finished=row.status=='finished',version=s['version'])
 
 def register_auth(current_user):
     root=APIRouter()
@@ -33,7 +45,7 @@ def register_auth(current_user):
 def build_router(kind,current_user):
     router=APIRouter(prefix='/v1/games/'+kind,tags=[kind])
     @router.get('/rules')
-    def rules():return game_rules(kind)
+    def rules():return {**game_rules(kind),'natural_bonus':natural_rules(kind)}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -69,7 +81,7 @@ def build_router(kind,current_user):
             if payload.sequence!=s['sequence'] or payload.stake!=s['stake'] or payload.action!='spin':raise HTTPException(409,'Bonus güncellendi; kaldığın yerden devam et')
             if s['version'] not in SUPPORTED_VERSIONS:raise HTTPException(409,'Bu bonus için uyumlu oyun sürümü gerekiyor')
             s['remaining']-=1;charge_cents=0;charged_whole=0
-            result=spin(kind,bonus=True,remaining_cap=CAP-s['total_hundredths'],version=s['version'])
+            result=spin(kind,**({'config':bonus_config(kind,s)} if s.get('natural_profile') else {}),bonus=True,remaining_cap=CAP-s['total_hundredths'],version=s['version'])
         else:
             if payload.sequence!=0:raise HTTPException(409,'Başlangıç sırası geçersiz')
             existing=db.scalar(select(GameRound.id).where(GameRound.user_id==user.id,GameRound.game_type==kind,GameRound.status=='open').limit(1))
@@ -79,9 +91,10 @@ def build_router(kind,current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             before=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=before-locked.lidya
             s=dict(sequence=0,remaining=0,stake=payload.stake,total_cents=0,total_hundredths=0,credited_whole=0,version=VERSION)
+            natural_start(s,kind,payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type=kind,status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0));db.flush()
-            result=spin(kind,purchase=payload.action=='buy')
+            result=spin(kind,purchase=payload.action=='buy',**({'config':entry_config(kind)} if payload.action=='spin' else {}))
         s['remaining']+=result['awarded']
         payout_cents=result['payoutHundredths']*s['stake']
         before=locked.lidya;locked.lidya,carry=divmod(locked.lidya*100+carry+payout_cents,100)

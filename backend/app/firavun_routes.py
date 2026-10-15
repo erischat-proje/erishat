@@ -13,6 +13,8 @@ from .moderation import require_feature
 from .firavun_engine import spin,CONFIG,KEYS,PAY,CAP,LINES,choose_special
 
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/firavun',tags=['firavun'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -29,12 +31,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'special':state['special'],'selected_symbol':KEYS[state['special']] if state['special'] is not None else None,'awarded':state.get('awarded',0),'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'special':state['special'],'selected_symbol':KEYS[state['special']] if state['special'] is not None else None,'awarded':state.get('awarded',0),'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Firavun’un Sırrı','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in row] for row in PAY],'lines':LINES,'bonus_cost':100,'buy_spins':10,'max_win':5000,'bonus_spins':10,'retrigger_spins':10,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'expansion_rule':'Düşük sembolde3, yüksek sembolde2 farklı makara; tüm10 çizgiye ek ödeme.'}
+        return {'natural_bonus':natural_rules('firavun'),'name':'Firavun’un Sırrı','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in row] for row in PAY],'lines':LINES,'bonus_cost':100,'buy_spins':10,'max_win':5000,'bonus_spins':10,'retrigger_spins':10,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'expansion_rule':'Düşük sembolde3, yüksek sembolde2 farklı makara; tüm10 çizgiye ek ödeme.'}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -69,7 +71,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,purchased=state.get('entry')=='buy',special=state['special'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
+            result=spin(config=bonus_config('firavun',state),bonus=True,purchased=state.get('entry')=='buy',special=state['special'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
             state['remaining']+=result['extraSpins'];state['awarded']+=result['extraSpins']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -81,11 +83,12 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'entry':payload.action,'sequence':0,'remaining':0,'special':None,'awarded':0,'stake':stake,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'firavun',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='firavun',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
             if payload.action=='buy':state['remaining']=10;state['special']=choose_special();result=None
             else:
-                result=spin()
+                result=spin(config=entry_config('firavun'))
                 state['remaining']=result['bonusSpins']
                 if state['remaining']:state['special']=choose_special()
             state['awarded']=state['remaining']

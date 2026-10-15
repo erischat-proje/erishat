@@ -67,7 +67,7 @@ def spin(*,bonus=False,multiplier=1,ante=False,purchased=False,remaining_cap=CAP
    k=j+int(rng()*(6-j));columns[j],columns[k]=columns[k],columns[j];col=columns[j];board[col][int(rng()*heights[col])]={'s':SCATTER}
  scatters=sum(c['s']==SCATTER for col in board for c in col)
  if scatters>6:raise ValueError('At most six Scatters')
- scatter_pay=SCATTER_PAY.get(scatters,0)*(multiplier if bonus else 1)
+ scatter_pay=round(SCATTER_PAY.get(scatters,0)*config.get('naturalRewardFactor',1))*(multiplier if bonus else 1)
  total=scatter_pay;steps=[];tumbles=0;initial=copy.deepcopy(board);initial_top=copy.deepcopy(top);applied=multiplier if bonus else 1
  while total<remaining_cap:
   amount,wins,removed=evaluate(board,top,config['paytable'],applied)

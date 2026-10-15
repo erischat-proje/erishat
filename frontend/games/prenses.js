@@ -5,7 +5,9 @@ const keys=['yellow','green','blue','turquoise','pink','moon','star','sun','hear
 function requestId(){if(crypto.randomUUID)return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(v=>v.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);}
 const format=n=>Number(n||0).toLocaleString('tr-TR',{maximumFractionDigits:2}),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let current=null;
-function api(path,options){if(window.ErisPrensesDemo)return window.ErisPrensesDemo.api(path,options);if(!window.ErisPlatform?.api)throw Error('Platform hazır değil');return window.ErisPlatform.api('/games/prenses'+path,options);}
+function rawApi(path,options){if(window.ErisPrensesDemo)return window.ErisPrensesDemo.api(path,options);if(!window.ErisPlatform?.api)throw Error('Platform hazır değil');return window.ErisPlatform.api('/games/prenses'+path,options);}
+function api(...args){return Promise.resolve(rawApi(...args)).then(data=>{window.LidyaNaturalBonus?.receive('prenses',data);return data;});}
+
 function theme(){return document.documentElement.dataset.erisTheme==='dark'?'dark':'light';}
 function img(key){return window.PrensesAssets?.[key]||BASE+key+'.png';}
 function beep(runtime,type){if(runtime.alive&&runtime.sound&&!document.hidden)runtime.audioBank?.play(type);}
@@ -88,4 +90,3 @@ async function open(){current?.close();for(const name of Object.keys(window))if(
  }
  window.ErisGamePrenses={open,close:()=>current?.close()};
 })();
-

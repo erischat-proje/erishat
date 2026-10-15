@@ -58,6 +58,7 @@ def spin(*,bonus=False,purchased=False,special=None,remaining_cap=CAP,rng=None,c
   board=[dict(c) for c in forced_board]
   if any(c['s'] not in range(10) for c in board):raise ValueError('Invalid symbol')
  line_pay,line_wins=evaluate(board,config['paytable']);books=sum(c['s']==BOOK for c in board);scatter_pay=([200,2000,20000][min(5,books)-3] if books>=3 else 0)
+ scatter_pay=round(scatter_pay*config.get('naturalRewardFactor',1))
  expansion,columns,expanded=expand(board,special,config['paytable']) if bonus else (0,[],[dict(c) for c in board])
  uncapped=line_pay+scatter_pay+expansion;windows=[]
  if trace and stops:

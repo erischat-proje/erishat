@@ -13,6 +13,8 @@ from .moderation import require_feature
 from .kure_engine import spin,CONFIG,KEYS,PAY,CAP,wheel,FS,MULT
 
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/kure',tags=['kure'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -30,12 +32,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'multiplier':state['multiplier'],'ante':state['ante'],'awarded':state.get('awarded',0),'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'multiplier':state['multiplier'],'ante':state['ante'],'awarded':state.get('awarded',0),'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Lidya Kaderin Küresi','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'max_win':5000,'max_ways':200704,'bonus_cost':100,'ante_cost':1.25,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'spin_sectors':FS,'multiplier_sectors':MULT,'scatter_pay':{'3':5,'4':10,'5':20,'6':100},'wild_reels':[2,3,4,5,6],'wild_rule':'Wild kullanan kombinasyon bir kez 2×; birden fazla Wild yeniden katlamaz.'}
+        return {'natural_bonus':natural_rules('kure'),'name':'Lidya Kaderin Küresi','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'max_win':5000,'max_ways':200704,'bonus_cost':100,'ante_cost':1.25,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'spin_sectors':FS,'multiplier_sectors':MULT,'scatter_pay':{'3':5,'4':10,'5':20,'6':100},'wild_reels':[2,3,4,5,6],'wild_rule':'Wild kullanan kombinasyon bir kez 2×; birden fazla Wild yeniden katlamaz.'}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -70,7 +72,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake'] or payload.ante!=state['ante']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,purchased=state.get('entry')=='buy',multiplier=state['multiplier'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version']);result['wheel']=None
+            result=spin(config=bonus_config('kure',state),bonus=True,purchased=state.get('entry')=='buy',multiplier=state['multiplier'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version']);result['wheel']=None
             if result['triggered']:
                 selection=wheel();result['wheel']=selection;state['remaining']+=selection['spins'];state['awarded']+=selection['spins'];state['multiplier']+=selection['multiplier']
         else:
@@ -83,12 +85,13 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'entry':payload.action,'sequence':0,'remaining':0,'multiplier':1,'ante':payload.ante,'awarded':0,'stake':stake,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'kure',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='kure',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
             if payload.action=='buy':
                 selection=wheel(purchased=True);result={'purchase':True,'wheel':selection,'payoutHundredths':0,'capped':False,'modelVersion':CONFIG['version']}
             else:
-                result=spin(ante=payload.ante);result['wheel']=wheel() if result['triggered'] else None
+                result=spin(ante=payload.ante,config=entry_config('kure'));result['wheel']=wheel() if result['triggered'] else None
             if result['wheel']:
                 state['remaining']=result['wheel']['spins'];state['multiplier']=result['wheel']['multiplier']
             state['awarded']=state['remaining']

@@ -12,6 +12,8 @@ from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
 from .candy_engine import spin,CONFIG,LEGACY_CONFIG,SUPPORTED_VERSIONS,KEYS,PAY,buy_spins
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/candy',tags=['candy'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -29,12 +31,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'spots':state['spots'],'stake':state['stake'],'ante':state['ante'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'spots':state['spots'],'stake':state['stake'],'ante':state['ante'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Candy Ultimate','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'max_win':5000,'max_spot':1024,'bonus_cost':100,'bonus_spins':[10,12,15,20,30],'ante_cost':1.25,'target_rtp':.965,'calibration':CONFIG['calibration'],'cluster_rule':'5+ yatay/dikey komşu; çapraz komşuluk ödemez.'}
+        return {'natural_bonus':natural_rules('candy'),'name':'Candy Ultimate','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'max_win':5000,'max_spot':1024,'bonus_cost':100,'bonus_spins':[10,12,15,20,30],'ante_cost':1.25,'target_rtp':.965,'calibration':CONFIG['calibration'],'cluster_rule':'5+ yatay/dikey komşu; çapraz komşuluk ödemez.'}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -66,7 +68,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake'] or payload.ante!=state['ante']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,spots=state['spots'],remaining_cap=500000-state['total_hundredths'],model_version=state['version'])
+            result=spin(config=bonus_config('candy',state),bonus=True,spots=state['spots'],remaining_cap=500000-state['total_hundredths'],model_version=state['version'])
             state['spots']=result['spots']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -79,9 +81,10 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'sequence':0,'remaining':buy_spins() if payload.action=='buy' else 0,'spots':[0]*49,'stake':stake,'ante':payload.ante,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'candy',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='candy',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice='buy' if payload.action=='buy' else 'ante' if payload.ante else 'spin',amount=charged_whole,payout=0))
-            result=None if payload.action=='buy' else spin(ante=payload.ante)
+            result=None if payload.action=='buy' else spin(ante=payload.ante,config=entry_config('candy'))
             if result and result['bonusTriggered']:state['remaining']=result['bonusSpins'];state['spots']=[0]*49
         payout_cents=0 if result is None else result['payoutHundredths']*stake
         payout=payout_cents/100;previous_lidya=locked.lidya

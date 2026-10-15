@@ -13,6 +13,8 @@ from .moderation import require_feature
 from .bastet_engine import spin,CONFIG,LEGACY_CONFIG,SUPPORTED_VERSIONS,KEYS,PAY,CAP,LINES
 
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/bastet',tags=['bastet'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -29,12 +31,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'sticky':state['sticky'],'awarded':state.get('awarded',0),'bonus_payout':state.get('bonus_hundredths',0)*state['stake']/100,'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version'],'respin':state.get('respin',False),'locked':state.get('locked',{}),'respin_bonus':state.get('respin_bonus',False)}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'sticky':state['sticky'],'awarded':state.get('awarded',0),'bonus_payout':state.get('bonus_hundredths',0)*state['stake']/100,'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version'],'respin':state.get('respin',False),'locked':state.get('locked',{}),'respin_bonus':state.get('respin_bonus',False)}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Bastet’in Hazinesi','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':100,'buy_spins':8,'max_win':5000,'bonus_spins':8,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'wild_values':[2,3],'scatter_awards':{'3':8,'4':12,'5':16},'wild_reels':[2,3,4,5]}
+        return {'natural_bonus':natural_rules('bastet'),'name':'Bastet’in Hazinesi','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':100,'buy_spins':8,'max_win':5000,'bonus_spins':8,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'wild_values':[2,3],'scatter_awards':{'3':8,'4':12,'5':16},'wild_reels':[2,3,4,5]}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -72,7 +74,7 @@ def register_auth(current_user):
             stake=state['stake'];mode=state.get('respin_bonus',False) if state.get('respin') else True
             if not state.get('respin'):state['remaining']-=1
             charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=mode,sticky=state['sticky'],locked=state.get('locked'),respin=state.get('respin',False),remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
+            result=spin(config=bonus_config('bastet',state) if mode or not state.get('natural_profile') else entry_config('bastet'),bonus=mode,sticky=state['sticky'],locked=state.get('locked'),respin=state.get('respin',False),remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
             state['sticky']=result['sticky'];state['remaining']+=result['extraSpins'];state['awarded']+=result['extraSpins']
             if mode:state['bonus_hundredths']+=result['payoutHundredths']
         else:
@@ -85,11 +87,12 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'entry':payload.action,'sequence':0,'remaining':0,'sticky':{},'awarded':0,'bonus_hundredths':0,'respin':False,'respin_bonus':False,'locked':{},'stake':stake,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'bastet',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='bastet',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
             if payload.action=='buy':state['remaining']=8;result=None
             else:
-                result=spin()
+                result=spin(config=entry_config('bastet'))
                 state['remaining']=result['bonusSpins']
             state['awarded']=state['remaining']
         payout_cents=0 if result is None else result['payoutHundredths']*stake

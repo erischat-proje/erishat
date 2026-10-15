@@ -13,6 +13,8 @@ from .moderation import require_feature
 from .kovboy_engine import spin,CONFIG,LEGACY_CONFIG,SUPPORTED_VERSIONS,KEYS,PAY,CAP,LINES
 
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/kovboy',tags=['kovboy'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -29,12 +31,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'sticky':state['sticky'],'awarded':state.get('awarded',0),'bonus_payout':state.get('bonus_hundredths',0)*state['stake']/100,'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'sticky':state['sticky'],'awarded':state.get('awarded',0),'bonus_payout':state.get('bonus_hundredths',0)*state['stake']/100,'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Kovboy','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':100,'buy_spins':8,'max_win':10000,'bonus_spins':8,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'bonus_floor':10,'wild_values':[2,3,5],'overlay_awards':{'2':4,'3':8,'4':12,'5':20},'scatter_reels':[1,3,5],'wild_reels':[2,3,4]}
+        return {'natural_bonus':natural_rules('kovboy'),'name':'Kovboy','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':100,'buy_spins':8,'max_win':10000,'bonus_spins':8,'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['calibration'],'bonus_floor':10,'wild_values':[2,3,5],'overlay_awards':{'2':4,'3':8,'4':12,'5':20},'scatter_reels':[1,3,5],'wild_reels':[2,3,4]}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -70,7 +72,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,sticky=state['sticky'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
+            result=spin(config=bonus_config('kovboy',state),bonus=True,sticky=state['sticky'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'],purchased=state.get('entry')=='buy')
             state['sticky']=result['sticky'];state['remaining']+=result['extraSpins'];state['awarded']+=result['extraSpins'];state['bonus_hundredths']+=result['payoutHundredths']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -82,16 +84,17 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'entry':payload.action,'sequence':0,'remaining':0,'sticky':{},'awarded':0,'bonus_hundredths':0,'stake':stake,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'kovboy',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='kovboy',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
             if payload.action=='buy':state['remaining']=8;result=None
             else:
-                result=spin()
+                result=spin(config=entry_config('kovboy'))
                 state['remaining']=result['bonusSpins']
             state['awarded']=state['remaining']
         # Floor applies to bonus winnings only, excludes the triggering paid spin.
         if is_bonus and state['remaining']==0 and state['total_hundredths']+result['payoutHundredths']<CAP:
-            supplement=min(CAP-state['total_hundredths']-result['payoutHundredths'],max(0,1000-state['bonus_hundredths']))
+            supplement=min(CAP-state['total_hundredths']-result['payoutHundredths'],max(0,bonus_floor('kovboy',state,1000)-state['bonus_hundredths']))
             result['guaranteeHundredths']=supplement
             result['payoutHundredths']+=supplement;state['bonus_hundredths']+=supplement
         payout_cents=0 if result is None else result['payoutHundredths']*stake

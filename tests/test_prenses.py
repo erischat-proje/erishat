@@ -46,7 +46,7 @@ class GamePlay(Base):
 
 @pytest.fixture
 def fixture():
-    package=types.ModuleType('prenses_test_app');package.__path__=[];sys.modules['prenses_test_app']=package
+    package=types.ModuleType('prenses_test_app');package.__path__=[str(ROOT/'backend/app')];sys.modules['prenses_test_app']=package
     e=create_engine('sqlite://',connect_args={'check_same_thread':False},poolclass=StaticPool);Base.metadata.create_all(e);sessions=sessionmaker(bind=e,autoflush=False)
     def get_db():
         with sessions() as s:yield s

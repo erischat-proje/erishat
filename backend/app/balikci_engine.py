@@ -40,7 +40,8 @@ def spin(*,bonus=False,collected=0,remaining_cap=CAP,rng=None,config=CONFIG,forc
     if model_version not in (None,CONFIG['version']):raise ValueError('Unsupported stored bonus model version')
     rng=rng or secrets.SystemRandom().random
     def money(high=False):
-        return config['fishValues'][weighted(rng,config['fishWeights'])] if not high else [10,15,20,25,50,2000][weighted(rng,config['dynamiteWeights'])]
+        value=config['fishValues'][weighted(rng,config['fishWeights'])] if not high else [10,15,20,25,50,2000][weighted(rng,config['dynamiteWeights'])]
+        return round(value*config.get('naturalRewardFactor',1),2)
     def cell(s):return {'s':s,'v':money()} if s==9 else {'s':s}
     reels=config['bonusReels'] if bonus else config['baseReels'];stops=[int(rng()*len(reel)) for reel in reels]
     board=[None]*15
@@ -59,7 +60,7 @@ def spin(*,bonus=False,collected=0,remaining_cap=CAP,rng=None,config=CONFIG,forc
         for _ in range(n):
             index=positions.pop(int(rng()*len(positions)));board[index]={'s':9,'v':money(True)};dynamite.append(index)
     fish=[{'index':i,'value':c['v']} for i,c in enumerate(board) if c['s']==9];opening_level=min(3,collected//4);multiplier=LEVELS[opening_level] if bonus else 1
-    fish_sum=sum(c['value'] for c in fish);collection=fish_sum*len(wilds)*multiplier*100 if bonus else 0;new_collected=min(12,collected+len(wilds)) if bonus else 0
+    fish_sum=sum(c['value'] for c in fish);collection=round(fish_sum*len(wilds)*multiplier*100) if bonus else 0;new_collected=min(12,collected+len(wilds)) if bonus else 0
     thresholds=[t for t in (4,8,12) if collected<t<=new_collected];uncapped=line_pay+collection;payout=min(remaining_cap,uncapped)
     windows=[]
     if trace:

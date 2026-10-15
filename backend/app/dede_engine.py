@@ -13,14 +13,14 @@ def weighted(rng,weights):
         if p<0:return i
     return len(weights)-1
 
-def evaluate(board):
+def evaluate(board,paytable=PAY):
     counts=[0]*9
     for c in board:
         if c['s']<9:counts[c['s']]+=1
     wins=[];amount=0
     for s,n in enumerate(counts):
         if n>=8:
-            pay=PAY[s][2 if n>=12 else 1 if n>=10 else 0]
+            pay=paytable[s][2 if n>=12 else 1 if n>=10 else 0]
             amount+=pay;wins.append({'symbol':KEYS[s],'count':n,'pay':pay/100})
     return amount,wins
 
@@ -37,7 +37,7 @@ def spin(*,bonus=False,pool=0,ante=False,remaining_cap=500000,rng=None,config=CO
     positions=list(range(30))
     for i in range(scatters):
         j=i+int(rng()*(30-i));positions[i],positions[j]=positions[j],positions[i];board[positions[i]]={'s':9}
-    raw=0;steps=[];tumbles=0;amount,wins=evaluate(board)
+    raw=0;steps=[];tumbles=0;amount,wins=evaluate(board,config.get('paytable',PAY))
     scatter_pay=([300,500,10000][min(6,scatters)-4] if not bonus and scatters>=4 else 0)
     while amount>0:
         raw+=amount;hit={KEYS.index(w['symbol']) for w in wins};removed=[i for i,c in enumerate(board) if c['s'] in hit]
@@ -48,7 +48,7 @@ def spin(*,bonus=False,pool=0,ante=False,remaining_cap=500000,rng=None,config=CO
         for col in range(6):
             survivors=[board[row*6+col] for row in range(5) if board[row*6+col]['s'] not in hit];n=5-len(survivors)
             for row in range(5):new[row*6+col]=fresh() if row<n else survivors[row-n]
-        board=new;tumbles+=1;amount,wins=evaluate(board)
+        board=new;tumbles+=1;amount,wins=evaluate(board,config.get('paytable',PAY))
         if tumbles>1000:raise RuntimeError('Tumble safety limit')
     multipliers=[c['m'] for c in board if c['s']==10];total=sum(multipliers)
     new_pool=pool+total if bonus and raw>0 else pool
