@@ -60,6 +60,7 @@ public class MainActivity extends Activity {
     private int mediaPageGeneration;
     private volatile boolean viewportInsetsHandled;
     private WebView webView;
+    private BundledContent bundledContent;
     private GoogleSignInClient googleClient;
 
     @Override
@@ -74,6 +75,7 @@ public class MainActivity extends Activity {
 
         googleClient = GoogleSignIn.getClient(this, options);
 
+        bundledContent = new BundledContent(this, ERISCHAT_HOST);
         webView = new WebView(this);
         // Keep WebView layout bounds outside status/navigation bars on edge-to-edge Android.
         FrameLayout viewport = new FrameLayout(this);
@@ -165,7 +167,12 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebViewClient(new WebViewClient() {
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view, WebResourceRequest request) {
+                return bundledContent.intercept(request);
+            }
             @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
+                bundledContent.refresh();
                 pageGeneration++;
                 cancelMedia();
                 denyPendingMicrophone();
@@ -386,6 +393,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if (bundledContent != null) bundledContent.close();
         cancelMedia();
         denyPendingMicrophone();
         if (webView != null) {

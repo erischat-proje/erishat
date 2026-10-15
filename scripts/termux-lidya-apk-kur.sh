@@ -26,7 +26,7 @@ command -v termux-setup-storage >/dev/null && [ -d "${ERISCHAT_APK_DOWNLOADS:-$H
 work="$(mktemp -d "${ERISCHAT_WORK_ROOT:-$HOME}/ErisChat-Lidya-APK-XXXXXXXX")"
 gh run download "$run" --repo "$repo" --name ErisChat-Lidya-APK --dir "$work"
 [ -s "$work/app-debug.apk" ] || { echo 'APK dosyası indirilemedi.'; exit 1; }
-file="${ERISCHAT_APK_DOWNLOADS:-$HOME/storage/downloads}/ErisChat-Lidya-1.8-$run.apk"
+file="${ERISCHAT_APK_DOWNLOADS:-$HOME/storage/downloads}/ErisChat-Lidya-1.9-$run.apk"
 cp "$work/app-debug.apk" "$file"
 echo "APK hazır: $file"
 echo "İndirme sayfası: https://github.com/$repo/actions/runs/$run"

@@ -8,6 +8,11 @@ on:
       - auth-unified-v1
     paths:
       - 'android-native/**'
+      - 'frontend/**'
+      - 'Gereken_icerikler/**'
+      - 'hediyesistemi/**'
+      - 'avatarveduvarkağıdı/**'
+      - 'scripts/build-apk-content.py'
       - '.github/workflows/android-apk.yml'
 
 jobs:
@@ -60,12 +65,17 @@ jobs:
           print("Signing SHA-1: " + sha.group(1))
           SIGNING
 
+      - name: Build install-time content
+        run: |
+          python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+          python3 scripts/build-apk-content.py --output android-native/app/build/generated/install-content/static-pack
+
       - name: Build APK
         working-directory: android-native
         env:
           ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
           ERISCHAT_KEY_PASSWORD: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
-        run: ./gradlew clean assembleDebug
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -73,3 +83,4 @@ jobs:
           name: ErisChat-Lidya-APK
           path: android-native/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          compression-level: 0
