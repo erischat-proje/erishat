@@ -8,8 +8,8 @@ from .wheel_rules import period_bounds
 STAKES = (10, 100, 1_000, 10_000, 100_000)
 
 def validate_stake(value):
-    if type(value) is not int or not 10 <= value <= 100_000 or value % 10:
-        raise HTTPException(422, 'Dört Kupa bahsi 10 Lidya katı, 10–100.000 arası olmalı.')
+    if type(value) is not int or not 10 <= value <= 596_523_230 or value % 10:
+        raise HTTPException(422, 'Dört Kupa toplam bahsi 10 Lidya katı ve güvenli ödeme sınırında olmalı.')
     return value
 
 def leaderboard(db, user, period='hour'):
@@ -29,4 +29,5 @@ def leaderboard(db, user, period='hour'):
         for i, (u, n) in enumerate(rows)]
     return dict(game='cups', period=period, timezone='Europe/Istanbul', starts_at=start,
                 ends_at=end, metric='paid_winnings', items=items, my_winnings=int(mine), limit=50)
+
 

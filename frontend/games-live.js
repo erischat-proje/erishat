@@ -670,6 +670,11 @@ const close = () => {
                 horseRound = null;
                 horseLastRound = null;
             }
+            if(game === 'horse_race' && key !== 'horse_race'){
+                const play=modal.querySelector('[data-horse-bet-bar] [data-play]');
+                if(play) modal.querySelector('.eg-form').append(play);
+                modal.querySelector('[data-horse-bet-bar]')?.remove();
+            }
             gameEpoch++;
             game = key;
             queueMicrotask(() => updateBlackjackStakeUI());
@@ -726,11 +731,11 @@ const close = () => {
                     });
                 });
                 const refresh = () => {
-                    const value = Math.max(10, Math.min(100000, Math.trunc(Number(stake.value) || 100)));
+                    const value = Math.max(10, Math.min(596523230, Math.trunc(Number(stake.value) || 100)));
                     const locked = cupsBusy || !!cupsRoundId;
                     controls.querySelector('[data-cups-amount]').textContent = value.toLocaleString('tr-TR') + ' Lidya';
                     controls.querySelector('[data-cups-minus]').disabled = locked || value <= 10;
-                    controls.querySelector('[data-cups-plus]').disabled = locked || value >= 100000;
+                    controls.querySelector('[data-cups-plus]').disabled = locked || value >= 596523230;
                     stake.disabled = locked;
                     const potential = controls.querySelector('[data-cups-potential]');
                     if (potential) potential.textContent =
@@ -748,7 +753,7 @@ const close = () => {
                 };
                 controls.querySelector('[data-cups-plus]').onclick = () => {
                     if (cupsBusy || cupsRoundId) return;
-                    stake.value = String(Math.min(100000, (Number(stake.value) || 0) + cupsStep));
+                    stake.value = String(Math.min(596523230, (Number(stake.value) || 0) + cupsStep));
                     stake.dispatchEvent(new Event('input', {bubbles:true}));
                     refresh();
                 };
@@ -1012,6 +1017,7 @@ const close = () => {
                 return;
             }
             if (mod && typeof mod.render === 'function') {
+                if(key==='horse_race') queueMicrotask(()=>{if(game==='horse_race'&&modal?.isConnected)refreshHorseLive().catch(console.warn);});
                 if (key === 'cups') {
                     queueMicrotask(() => {
                         if (game === 'cups' && modal?.isConnected) {
@@ -1223,8 +1229,10 @@ const close = () => {
         modal.querySelector('[data-stake]')?.addEventListener('input', refreshSlotBet);
         modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
             if (game === 'cups' && (cupsBusy || cupsRoundId)) return;
+            if(game==='horse_race'){if(horseBusy)return;horseStep=Number(preset.dataset.stakeValue)||100;}
             modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
             refreshSlotBet();
+            if(game==='horse_race') bjLayout();
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
                 b.classList.toggle('horse-selected',
                     game === 'horse_race' && b === preset);
@@ -1364,15 +1372,14 @@ const close = () => {
         // ERIS_HORSE_SELECTION_SYNC_V1
         const syncHorseStake = () => {
             const amount = modal.querySelector('[data-stake]')?.value;
+            const display=modal.querySelector('[data-horse-amount]');if(display)display.textContent=Number(amount||100).toLocaleString('tr-TR')+' Lidya';
             modal.querySelectorAll('[data-stake-value]').forEach(b => {
                 b.classList.toggle('horse-selected',
                     game === 'horse_race' &&
                     b.dataset.stakeValue === amount);
             });
         };
-        modal.querySelector('[data-stake]')?.addEventListener(
-            'input', syncHorseStake
-        );
+        modal.querySelector('[data-stake]')?.addEventListener('input', () => {syncHorseStake();if(game==='horse_race')bjLayout();});
 
 
         // ERIS_HORSE_ONE_SCREEN_V1
@@ -1755,6 +1762,7 @@ const close = () => {
             }
         }, 1000);
 
+        let horseStep = 100;
         let horseRound = null;
         let horseAnimating = false;
         let horseBusy = false;
@@ -1813,8 +1821,8 @@ const close = () => {
                 if (button) {
                     button.disabled = !x.betting_open || horseBusy;
                     button.textContent = x.betting_open
-                        ? '🐎 BAHİS YAP'
-                        : '🔒 BAHİSLER KAPANDI';
+                        ? 'Bahis Yap'
+                        : 'Kapalı';
                 }
 
                 modal.querySelectorAll('[data-horse-total]').forEach(el => {
@@ -2145,19 +2153,21 @@ const close = () => {
         const bjLayout = () => {
             const enabled = game === 'blackjack';
             const cupsEnabled = game === 'cups';
-            const mode = enabled ? 'blackjack' : cupsEnabled ? 'cups' : 'other';
+            const horseEnabled = game === 'horse_race';
+            const mode = enabled ? 'blackjack' : cupsEnabled ? 'cups' : horseEnabled ? 'horse_race' : 'other';
             if (bjFinalConfigured !== mode) {
                 bjFinalConfigured = mode;
                 const input = modal.querySelector('[data-stake]');
-                input.max = enabled ? '858993450' : cupsEnabled ? '100000' : '10000';
-                input.min = enabled || cupsEnabled ? '10' : '0';
-                input.step = enabled || cupsEnabled ? '10' : '1';
-                if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>100000 || Number(input.value)%10)) input.value='100';
+                input.max = enabled ? '858993450' : cupsEnabled ? '596523230' : horseEnabled ? '357913940' : '10000';
+                input.min = enabled || cupsEnabled || horseEnabled ? '10' : '0';
+                input.step = enabled || cupsEnabled || horseEnabled ? '10' : '1';
+                if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>596523230 || Number(input.value)%10)) input.value='100';
+                if(horseEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>357913940 || Number(input.value)%10)) input.value='100';
                 if (enabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)%10)) input.value = '100';
                 modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
                     if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
-                    const value = enabled || cupsEnabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
-                    button.hidden = (enabled || cupsEnabled) && i >= 5;
+                    const value = enabled || cupsEnabled || horseEnabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
+                    button.hidden = (enabled || cupsEnabled || horseEnabled) && i >= 5;
                     if (value) { button.dataset.stakeValue = String(value); button.innerHTML = window.LidyaGameArt.markup('coin') + '<span>' + (value >= 1000 ? value/1000+'K' : value) + '</span>'; }
                 });
                 let rank = modal.querySelector('[data-bj-ranking]');
@@ -2183,6 +2193,29 @@ const close = () => {
             }
             if(cupsRank) cupsRank.hidden=!cupsEnabled;
             if(cupsEnabled) modal._cupsRefresh?.();
+            if(horseEnabled){
+                const wallet=modal.querySelector('.eg-wallet'),head=modal.querySelector('.eg-head');
+                if(wallet && wallet.parentElement!==modal.querySelector('.eg-panel')) head.after(wallet);
+                let bar=modal.querySelector('[data-horse-bet-bar]');
+                if(!bar){
+                    bar=document.createElement('div');bar.dataset.horseBetBar='';
+                    bar.innerHTML='<button type="button" data-horse-minus aria-label="Bahsi azalt">−</button><div><small>TOPLAM BAHİS</small><strong data-horse-amount></strong></div><button type="button" data-horse-plus aria-label="Bahsi artır">+</button>';
+                    modal.querySelector('.eg-form').append(bar);
+                    bar.append(modal.querySelector('[data-play]'));
+                    for(const [attr,sign] of [['minus',-1],['plus',1]])bar.querySelector('[data-horse-'+attr+']').onclick=()=>{
+                        if(horseBusy)return;
+                        const input=modal.querySelector('[data-stake]');
+                        input.value=String(Math.max(10,Math.min(357913940,(Number(input.value)||10)+sign*horseStep)));
+                        input.dispatchEvent(new Event('input',{bubbles:true}));
+                    };
+                }
+                bar.querySelector('[data-horse-amount]').textContent=Number(modal.querySelector('[data-stake]').value||100).toLocaleString('tr-TR')+' Lidya';
+                bar.querySelector('[data-horse-minus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)<=10;
+                bar.querySelector('[data-horse-plus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)>=357913940;
+                let rank=modal.querySelector('[data-horse-ranking]');
+                if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.horseRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('horse_race');modal.querySelector('.eg-head').prepend(rank);}
+                rank.hidden=false;
+            }else{const rank=modal.querySelector('[data-horse-ranking]');if(rank)rank.hidden=true;}
             bjRefreshAmount();
         };
 
@@ -2708,9 +2741,9 @@ const close = () => {
                 );
 
                 if (!Number.isSafeInteger(stake) ||
-                    stake < 10 || stake > 100000 || stake % 10) {
+                    stake < 10 || stake > 596523230 || stake % 10) {
                     throw new Error(
-                        'Bahis 10 Lidya katı, 10–100.000 arası olmalı.'
+                        'Toplam bahis 10 Lidya katı ve güvenli ödeme sınırında olmalı.'
                     );
                 }
 
@@ -2958,13 +2991,13 @@ const close = () => {
                 );
                 const choice = 'horse_' +
                     modal.querySelector('[data-choice]').value;
-                if (![10,25,50,75,100,250,500,1000]
-                    .includes(amount)) {
+                if (!Number.isSafeInteger(amount) || amount<10 || amount>357913940 || amount%10) {
                     modal.querySelector('.eg-result').textContent =
-                        'Hazır bahislerden bir miktar seç.';
+                        'Toplam bahis 10 Lidya katı olmalı.';
                     return;
                 }
                 horseBusy = true;
+                bjLayout();
                 button.disabled = true;
                 try {
                     await api('/games/horse_race/live/bet', {
@@ -2980,6 +3013,7 @@ const close = () => {
                         e.message || 'Bahis yapılamadı.';
                 } finally {
                     horseBusy = false;
+                    if(game==='horse_race')bjLayout();
                     if (game === 'horse_race')
                         refreshHorseLive().catch(() => {});
                 }
@@ -3373,6 +3407,7 @@ document.head.appendChild(erisWheelResponsive);
 const erisWheelHeaderFix=document.createElement('style');
 erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
 document.head.appendChild(erisWheelHeaderFix);
+
 
 
 
