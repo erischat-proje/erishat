@@ -15,11 +15,11 @@ def model(version):
     raise ValueError('Unsupported persisted game model')
 
 
-def spin(kind, bonus=False, purchase=False, remaining_cap=CAP, version=VERSION):
+def spin(kind, bonus=False, purchase=False, remaining_cap=CAP, version=VERSION,config=None):
     if kind not in ('aztek', 'ares'):
         raise ValueError('Unknown game')
     return model(version).spin(kind, bonus=bonus, purchase=purchase,
-                               remaining_cap=remaining_cap, version=version)
+                               remaining_cap=remaining_cap, version=version,**({'config':config} if config is not None else {}))
 
 
 def rules(kind, version=VERSION):

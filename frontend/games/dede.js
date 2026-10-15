@@ -5,7 +5,9 @@ const keys=['blue','green','yellow','purple','red','cup','ring','hourglass','cro
 function requestId(){if(crypto.randomUUID)return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(v=>v.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);}
 const format=n=>Number(n||0).toLocaleString('tr-TR',{maximumFractionDigits:2}),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let current=null;
-function api(path,options){if(window.ErisDedeDemo)return window.ErisDedeDemo.api(path,options);if(!window.ErisPlatform?.api)throw Error('Platform hazır değil');return window.ErisPlatform.api('/games/dede'+path,options);}
+function rawApi(path,options){if(window.ErisDedeDemo)return window.ErisDedeDemo.api(path,options);if(!window.ErisPlatform?.api)throw Error('Platform hazır değil');return window.ErisPlatform.api('/games/dede'+path,options);}
+function api(...args){return Promise.resolve(rawApi(...args)).then(data=>{window.LidyaNaturalBonus?.receive('dede',data);return data;});}
+
 function theme(){return document.documentElement.dataset.erisTheme==='dark'?'dark':'light';}
 function img(key,skin=theme()){const pose={'actor-anticipation':0,'actor-release':1,'actor-cast':2,'actor-follow':3}[key];if(pose!==undefined)return BASE+(skin==='dark'?'dark-v5/':'throw-v4/')+'pose-'+pose+'.png';if(key==='actor-idle'||key==='dede')return BASE+(skin==='dark'?'dark-v5/idle.png':'dede-king-v3.png');return BASE+skin+'/'+key+'.png';}
 function boardHtml(board){return board.map((c,i)=>{const key=c.s===10?'orb-'+(c.m>=100?'red':c.m>=25?'purple':c.m>=10?'blue':'green'):keys[c.s];return '<div class="dd-cell" data-cell="'+i+'"><img src="'+img(key)+'" alt="'+(c.s===10?'Çarpan '+c.m+'×':names[c.s])+'">'+(c.s===10?'<b>'+c.m+'×</b>':'')+'</div>';}).join('');}
@@ -85,4 +87,3 @@ async function open(){current?.close();const old=document.getElementById('erisGa
  }
  window.ErisGameDede={open,close:()=>current?.close()};
 })();
-

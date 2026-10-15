@@ -28,11 +28,11 @@ def clusters(board):
         if len(group)>=5:result.append((symbol,group))
     return result
 
-def evaluate(board,spots):
+def evaluate(board,spots,paytable=PAY):
     wins=[]
     for s,cells in clusters(board):
         n=len(cells);bucket=0 if n==5 else 1 if n==6 else 2 if n==7 else 3 if n<10 else 4 if n<12 else 5 if n<15 else 6
-        base=PAY[s][bucket];multiplier=sum(spots[i] for i in cells if spots[i]>=2) or 1
+        base=paytable[s][bucket];multiplier=sum(spots[i] for i in cells if spots[i]>=2) or 1
         wins.append({'symbol':s,'cells':cells,'count':n,'base':base/100,'multiplier':multiplier,'win':base*multiplier/100,'hundredths':base*multiplier})
     return wins
 
@@ -54,7 +54,7 @@ def spin(*,bonus=False,spots=None,ante=False,remaining_cap=500000,rng=None,trace
             j=i+int(rng()*(49-i));indices[i],indices[j]=indices[j],indices[i];board[indices[i]]=7
     scatters=sum(s==7 for s in board);steps=[];payout=0;tumbles=0;capped=False
     while True:
-        wins=evaluate(board,marks);before=list(marks);removed=sorted({i for w in wins for i in w['cells']});win=sum(w['hundredths'] for w in wins)
+        wins=evaluate(board,marks,config.get('paytable',PAY));before=list(marks);removed=sorted({i for w in wins for i in w['cells']});win=sum(w['hundredths'] for w in wins)
         if trace:steps.append({'board':list(board),'spots':before,'wins':wins,'removed':removed,'win':min(win,max(0,remaining_cap-payout))/100})
         if not removed:break
         payout+=win

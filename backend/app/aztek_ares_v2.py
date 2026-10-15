@@ -65,8 +65,9 @@ class Turn:
     def symbol(self,scatter=True):
         if self.az:return self.pick(7)
         r=self.pick(10000)
-        if scatter and r<100:return 9
-        if r<300:return 10+self.pick(4)
+        threshold=self.config.get('aresScatterThreshold',100) if not self.bonus else 100
+        if scatter and r<threshold:return 9
+        if r<threshold+200:return 10+self.pick(4)
         weights=self.config['aresBonusWeights' if self.bonus else 'aresWeights']
         p=self.rng()*sum(weights)
         for i,w in enumerate(weights):
@@ -108,7 +109,7 @@ class Turn:
             if not gs:break
             ids=[];payments=[]
             for t,cells in gs:
-                table=self.config['aztekPaytable'] if self.az else self.config['aresBonusPaytable' if self.bonus else 'aresPaytable']
+                table=self.config.get('goldPaytable',self.config['aztekPaytable']) if self.az and self.stage>=0 else self.config['aztekPaytable'] if self.az else self.config['aresBonusPaytable' if self.bonus else 'aresPaytable']
                 sizes=[5,8,10,15,20,25] if self.az else [8,10,12]
                 bucket=sum(len(cells)>=n for n in sizes)-1
                 value=table[t][bucket]*(self.mult if self.az else 1)
@@ -176,13 +177,13 @@ def spin(kind,bonus=False,purchase=False,remaining_cap=CAP,version=VERSION,*,rng
             turn.cascades()
             while turn.pending and not turn.capped():
                 f=min(turn.pending);turn.pending.remove(f);turn.feature(f);turn.cascades()
-            if turn.count>=114 and not turn.capped():turn.gold()
+            if turn.count>=config.get('goldEntryCount',114) and not turn.capped():turn.gold()
     elif purchase:
         awarded=15;turn.event('purchase',awarded=15)
     else:
         turn.scatters=turn.board.count(9);turn.event('initial')
         if turn.scatters>=4:
-            turn.add(300 if turn.scatters==4 else 500 if turn.scatters==5 else 10000)
+            turn.add(round((300 if turn.scatters==4 else 500 if turn.scatters==5 else 10000)*config.get('naturalBaseFactor',1)))
             awarded=15;turn.event('scatter',scatters=turn.scatters,awarded=awarded)
         turn.cascades()
         while not turn.capped() and turn.bombs():turn.cascades()

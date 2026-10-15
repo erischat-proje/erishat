@@ -15,11 +15,11 @@ def weighted(rng,weights):
         if p<0:return i
     return len(weights)-1
 
-def evaluate(board):
+def evaluate(board,paytable=PAY):
     counts=[0]*9
     for cell in board:
         if cell['s']<9:counts[cell['s']]+=1
-    wins=[{'symbol':KEYS[s],'count':n,'payHundredths':PAY[s][2 if n>=12 else 1 if n>=10 else 0]} for s,n in enumerate(counts) if n>=8]
+    wins=[{'symbol':KEYS[s],'count':n,'payHundredths':paytable[s][2 if n>=12 else 1 if n>=10 else 0]} for s,n in enumerate(counts) if n>=8]
     return sum(w['payHundredths'] for w in wins),wins
 
 def spin(*,bonus=False,ante=False,remaining_cap=CAP,rng=None,config=CONFIG,trace=True,forced_board=None,model_version=None,purchased=False):
@@ -47,7 +47,7 @@ def spin(*,bonus=False,ante=False,remaining_cap=CAP,rng=None,config=CONFIG,trace
     scatter_pay=([300,500,10000][min(6,scatters)-4] if not bonus and scatters>=4 else 0)
     raw=0;steps=[];tumbles=0
     while True:
-        amount,wins=evaluate(board)
+        amount,wins=evaluate(board,config.get('paytable',PAY))
         hit={KEYS.index(w['symbol']) for w in wins}
         removed=[i for i,c in enumerate(board) if c['s'] in hit]
         current=sum(c.get('m',0) for c in board if c['s']==10)

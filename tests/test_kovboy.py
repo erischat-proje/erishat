@@ -46,7 +46,7 @@ class GamePlay(Base):
 
 @pytest.fixture
 def fixture():
-    package=types.ModuleType('kovboy_test_app');package.__path__=[];sys.modules['kovboy_test_app']=package
+    package=types.ModuleType('kovboy_test_app');package.__path__=[str(ROOT/'backend/app')];sys.modules['kovboy_test_app']=package
     e=create_engine('sqlite://',connect_args={'check_same_thread':False},poolclass=StaticPool);Base.metadata.create_all(e);sessions=sessionmaker(bind=e,autoflush=False)
     def get_db():
         with sessions() as s:yield s
@@ -124,7 +124,8 @@ def test_buy_charge_resume_late_replay(fixture):
 def fake_result(**kw):
  return {'board':[{'s':i%10} for i in range(20)],'payoutHundredths':0,'lineWins':[],'sticky':{},'newSticky':[],'overlays':[],'extraSpins':0,'scatters':0,'bonusSpins':0,'capped':False,'guaranteeHundredths':0,'reelWindows':[]}
 
-def test_bonus_floor_once_and_excludes_trigger_win(fixture):
+@pytest.mark.parametrize('legacy',[True,False])
+def test_bonus_floor_once_and_excludes_trigger_win(fixture,legacy):
  c,s,r,e,_=fixture;counter=0
  def controlled(**kw):
   nonlocal counter
@@ -135,12 +136,17 @@ def test_bonus_floor_once_and_excludes_trigger_win(fixture):
   return result
  r.spin=controlled
  result=post(c).json();state=result['state'];assert result['payout']==100
+ if legacy:
+  with s() as db:
+   row=db.get(GameRound,state['round_id']);saved=json.loads(row.state_data);saved.pop('natural_profile',None);row.state_data=json.dumps(saved);db.commit()
+ floor=1000 if legacy else r.bonus_floor('kovboy',{'natural_profile':state['natural_profile']},1000)
+ expected_bonus=floor*20/100
  for _ in range(8):
   payload={'request_id':str(uuid4()),'stake':20,'round_id':state['round_id'],'sequence':state['sequence']};result=c.post('/v1/games/kovboy/spin',json=payload).json();state=result['state']
- assert state['finished'] and state['bonus_payout']==200 and state['total_payout']==300
- assert result['result']['guaranteeHundredths']==750 and result['payout']==150
+ assert state['finished'] and state['bonus_payout']==expected_bonus and state['total_payout']==100+expected_bonus
+ assert result['result']['guaranteeHundredths']==floor-250 and result['payout']==(floor-250)*20/100
  replay=c.post('/v1/games/kovboy/spin',json=payload).json();assert replay['replayed'] and replay['balance']==result['balance']
- with s() as db:assert db.get(User,'a').lidya==100280 and db.scalar(select(GameBet)).payout==300
+ with s() as db:assert db.get(User,'a').lidya==100080+int(expected_bonus) and db.scalar(select(GameBet)).payout==100+int(expected_bonus)
 
 def test_buy_floor_and_retrigger(fixture):
  c,s,r,e,_=fixture;r.spin=fake_result

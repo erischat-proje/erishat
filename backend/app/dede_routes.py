@@ -12,6 +12,8 @@ from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
 from .dede_engine import spin,CONFIG,KEYS,PAY
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/dede',tags=['dede'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -29,12 +31,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'pool':state['pool'],'stake':state['stake'],'ante':state['ante'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'pool':state['pool'],'stake':state['stake'],'ante':state['ante'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Dede','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'max_win':5000,'bonus_spins':15,'retrigger_spins':5,'bonus_cost':100,'ante_cost':1.25,'target_rtp':.965,'measured_report':'docs/dede-statistics.json','pool_rule':'Her kazanan bonus dönüşünde biriken havuz uygulanır.'}
+        return {'natural_bonus':natural_rules('dede'),'name':'Dede','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'max_win':5000,'bonus_spins':15,'retrigger_spins':5,'bonus_cost':100,'ante_cost':1.25,'target_rtp':.965,'measured_report':'docs/dede-statistics.json','pool_rule':'Her kazanan bonus dönüşünde biriken havuz uygulanır.'}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -61,7 +63,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake'] or payload.ante!=state['ante']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,pool=state['pool'],remaining_cap=500000-state['total_hundredths'])
+            result=spin(config=bonus_config('dede',state),bonus=True,pool=state['pool'],remaining_cap=500000-state['total_hundredths'])
             state['pool']=result['pool'];state['remaining']+=result['extraSpins']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -74,9 +76,10 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'sequence':0,'remaining':15 if payload.action=='buy' else 0,'pool':0,'stake':stake,'ante':payload.ante,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'dede',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='dede',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice='buy' if payload.action=='buy' else 'ante' if payload.ante else 'spin',amount=charged_whole,payout=0))
-            result=None if payload.action=='buy' else spin(ante=payload.ante)
+            result=None if payload.action=='buy' else spin(ante=payload.ante,config=entry_config('dede'))
             if result and result['bonusTriggered']:state['remaining']=15
         payout_cents=0 if result is None else result['payoutHundredths']*stake
         payout=payout_cents/100;previous_lidya=locked.lidya

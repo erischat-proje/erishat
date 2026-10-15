@@ -3,7 +3,9 @@ const ASSETS=new URL('../assets/lidya-seker/',document.currentScript.src).href;
 const NAMES=['Muz','Elma','Üzüm','Erik','Karpuz','Mavi şeker','Yeşil şeker','Mor şeker','Kalp şeker'];
 const fmt=n=>Number(n||0).toLocaleString('tr-TR',{maximumFractionDigits:2});
 const ease={drop:t=>t*t,out:t=>1-(1-t)**3};
-const api=(path,opts)=>{if(window.ErisSekerTest)return window.ErisSekerTest.api(path,opts);if(!window.ErisPlatform?.api)throw Error('Oturum hazır değil');return window.ErisPlatform.api('/games/seker'+path,opts);};
+const rawApi=(path,opts)=>{if(window.ErisSekerTest)return window.ErisSekerTest.api(path,opts);if(!window.ErisPlatform?.api)throw Error('Oturum hazır değil');return window.ErisPlatform.api('/games/seker'+path,opts);};
+function api(...args){return Promise.resolve(rawApi(...args)).then(data=>{window.LidyaNaturalBonus?.receive('seker',data);return data;});}
+
 function uuid(){if(crypto.randomUUID)return crypto.randomUUID();let b=crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;}
 const safeStore={get:k=>{try{return sessionStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{sessionStorage.setItem(k,v);}catch{}},del:k=>{try{sessionStorage.removeItem(k);}catch{}}};
 class Sound{
@@ -54,4 +56,3 @@ catch(e){status(e.message||'Oyun yüklenemedi. Kapatıp yeniden aç.');}
 }
 window.ErisGameSeker={open,close:()=>current?.close()};
 })();
-

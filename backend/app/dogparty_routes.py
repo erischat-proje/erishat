@@ -14,6 +14,8 @@ from .dogparty_engine import spin,CONFIG,KEYS,PAY,CAP,LINES
 
 from .slot_bonus_buy import BUY,purchase,hasan_buy_spin
 
+from .natural_bonus import start as natural_start, entry_config, bonus_config, bonus_floor, public as natural_public, rules as natural_rules
+
 router=APIRouter(prefix='/v1/games/dogparty',tags=['dogparty'])
 class SpinRequest(BaseModel):
     request_id:str=Field(min_length=36,max_length=36)
@@ -30,12 +32,12 @@ def fraction(db,uid):
 
 def unpack(row):return json.loads(row.state_data)
 def public_state(row,state,balance):
-    return {'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'sticky':state['sticky'],'awarded':state.get('awarded',0),'wheel':state.get('wheel',[]),'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
+    return {**natural_public(state),'round_id':row.id,'sequence':state['sequence'],'remaining':state['remaining'],'sticky':state['sticky'],'awarded':state.get('awarded',0),'wheel':state.get('wheel',[]),'stake':state['stake'],'total_payout':state['total_payout'],'finished':row.status=='finished','balance':balance,'version':state['version']}
 
 def register_auth(current_user):
     @router.get('/rules')
     def rules():
-        return {'name':'Dog Party','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':BUY['dogparty']['price'],'buy_spins':[9,27],'buy_profile':BUY['dogparty']['profile'],'max_win':6750,'bonus_spins':[9,27],'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['rtpStatus'],'wild_rule':'Kazanan çizginin 2× ve 3× Wild değerleri toplanır.','scatter_reels':[1,3,5],'wild_reels':[2,3,4]}
+        return {'natural_bonus':natural_rules('dogparty'),'name':'Dog Party','version':CONFIG['version'],'symbols':KEYS,'paytable':[[v/100 for v in r] for r in PAY],'lines':LINES,'bonus_cost':BUY['dogparty']['price'],'buy_spins':[9,27],'buy_profile':BUY['dogparty']['profile'],'max_win':6750,'bonus_spins':[9,27],'target_rtp':CONFIG['targetRtp'],'rtp_status':CONFIG['rtpStatus'],'wild_rule':'Kazanan çizginin 2× ve 3× Wild değerleri toplanır.','scatter_reels':[1,3,5],'wild_reels':[2,3,4]}
 
     @router.get('/active')
     def active(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -69,7 +71,7 @@ def register_auth(current_user):
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];state['remaining']-=1;charge=0;charge_cents=0;carry=fraction(db,user.id)
-            result=spin(bonus=True,sticky=state['sticky'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
+            result=spin(config=bonus_config('dogparty',state),bonus=True,sticky=state['sticky'],remaining_cap=CAP-state['total_hundredths'],model_version=state['version'])
             state['sticky']=result['sticky']
         else:
             if payload.round_id:raise HTTPException(404,'Tur bulunamadı')
@@ -81,11 +83,12 @@ def register_auth(current_user):
             if available<charge_cents:raise HTTPException(400,'Yeterli Lidya yok')
             previous_lidya=locked.lidya;locked.lidya,carry=divmod(available-charge_cents,100);charged_whole=previous_lidya-locked.lidya;now=datetime.now(timezone.utc)
             state={'version':CONFIG['version'],'entry':payload.action,'buy_profile':BUY['dogparty']['profile'] if payload.action=='buy' else None,'sequence':0,'remaining':0,'sticky':{},'awarded':0,'wheel':[],'stake':stake,'total_payout':0,'total_hundredths':0}
+            natural_start(state,'dogparty',payload.action)
             row=GameRound(id=rid,user_id=user.id,game_type='dogparty',status='open',started_at=now,ends_at=now,state_data='{}');db.add(row);db.flush()
             db.add(GameBet(round_id=rid,user_id=user.id,choice=payload.action,amount=charged_whole,payout=0))
             if payload.action=='buy':state['remaining'],result=purchase('dogparty')
             else:
-                result=spin()
+                result=spin(config=entry_config('dogparty'))
                 state['remaining']=result['bonusSpins']
             state['awarded']=state['remaining'];state['wheel']=result['wheel']
         payout_cents=0 if result is None else result['payoutHundredths']*stake
