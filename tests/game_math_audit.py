@@ -6,15 +6,21 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GAMES = ['seker','balikci','prenses','dogparty','altin','kure','candy','bastet','firavun','kovboy']
+GAMES = ['dede','seker','balikci','prenses','dogparty','altin','kure','candy','bastet','firavun','kovboy']
 
 
 def audit(game, mode, samples, seed):
     buy_profile = mode == 'buy' and game in ('balikci','dogparty')
-    path = ROOT/'tests'/('bonus_buy_simulate.py' if buy_profile else game+'_simulate.py')
+    path = ROOT/'tests'/('bonus_buy_simulate.py' if buy_profile else 'prenses_simulate.py' if game=='dede' else game+'_simulate.py')
     spec = importlib.util.spec_from_file_location('audit_'+game, path)
     simulator = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(simulator)
+    if game=='dede':
+        # Same full-round state contract (pool, 15 spins, retriggers, 5000x cap),
+        # but run the actual Python Dede engine and its own multiplier table.
+        dede_spec=importlib.util.spec_from_file_location('audit_dede_engine',ROOT/'backend/app/dede_engine.py')
+        simulator.e=importlib.util.module_from_spec(dede_spec)
+        dede_spec.loader.exec_module(simulator.e)
     if buy_profile:
         result = simulator.run(game,samples,seed)
     elif game == 'candy':
@@ -23,11 +29,11 @@ def audit(game, mode, samples, seed):
         if mode != 'normal':raise ValueError('Game has no ante mode')
         result = simulator.simulate(samples,seed)
     else:
-        if mode == 'ante' and game not in ('seker','prenses','kure'):
+        if mode == 'ante' and game not in ('dede','seker','prenses','kure'):
             raise ValueError('Game has no ante mode')
         result = simulator.simulate(samples,mode,seed)
     result.pop('config',None)
-    sources = [ROOT/'backend/app'/f'{game}_engine.py', ROOT/'backend/app'/f'{game}-math.json', path]
+    sources = [ROOT/'backend/app'/f'{game}_engine.py', ROOT/'backend/app'/f'{game}-math.json', path,Path(__file__)]
     current_config = ROOT/'backend/app'/f'{game}-math-v2.json'
     if current_config.exists():
         sources.append(current_config)

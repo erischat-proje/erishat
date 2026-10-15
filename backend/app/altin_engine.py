@@ -3,7 +3,14 @@ All amounts are hundredths of the locked stake; no production client RNG.
 """
 import json,secrets,copy
 from pathlib import Path
-CONFIG=json.loads(Path(__file__).with_name('altin-math.json').read_text())
+LEGACY_CONFIG=json.loads(Path(__file__).with_name('altin-math.json').read_text())
+CONFIG=json.loads(Path(__file__).with_name('altin-math-v2.json').read_text())
+SUPPORTED_VERSIONS=(LEGACY_CONFIG['version'],CONFIG['version'])
+
+def model_config(version,config):
+ if version is None or version==config['version']:return config
+ if version==LEGACY_CONFIG['version']:return LEGACY_CONFIG
+ raise ValueError('Unsupported Altın Şöleni version')
 KEYS=['nine','ten','jack','queen','king','ace','harp','mushroom','horseshoe','unicorn','leprechaun','tree','pot']
 WILD=11;MONEY=12;CAP=516300;LINES=CONFIG['lines'];PAY=CONFIG['paytable'];JACKPOTS=[2000,5000,20000,500000]
 
@@ -30,7 +37,8 @@ def evaluate(board,paytable=PAY):
    wins.append({'line':number,'symbol':KEYS[symbol],'count':count,'indices':ids[:count],'payHundredths':value,'multiplier':1})
  return sum(w['payHundredths'] for w in wins),wins
 
-def start_bonus(pots=None,*,rng=None,config=CONFIG,purchased=False):
+def start_bonus(pots=None,*,rng=None,config=CONFIG,purchased=False,model_version=None):
+ config=model_config(model_version,config)
  rng=rng or secrets.SystemRandom().random
  values=list(pots) if pots is not None else [pot(rng,config,purchased)['value'] for _ in range(config['buyPots'])]
  if len(values)<6 or len(values)>15 or any(not isinstance(v,int) or v<0 for v in values):raise ValueError('6..15 initial pots required')
@@ -44,7 +52,7 @@ def start_bonus(pots=None,*,rng=None,config=CONFIG,purchased=False):
  return {'boards':boards,'remaining':8,'awarded':8,'jackpots':[False]*4,'previewHundredths':sum(values),'placements':placed,'purchased':bool(purchased),'version':config['version']}
 
 def spin(*,rng=None,config=CONFIG,forced_board=None,forced_copy=None,remaining_cap=CAP,trace=True,model_version=None):
- if model_version not in (None,config['version']):raise ValueError('Unsupported Altın Şöleni version')
+ config=model_config(model_version,config)
  rng=rng or secrets.SystemRandom().random
  if forced_board is None:
   board=[{'s':weighted(rng,config['weights'])} for _ in range(15)]
@@ -78,6 +86,7 @@ def spin(*,rng=None,config=CONFIG,forced_board=None,forced_copy=None,remaining_c
  return {'board':board,'beforeCopy':before,'copyColumns':columns,'lineWins':wins,'moneyCount':len(money),'bonus':start_bonus(money,rng=rng,config=config) if len(money)>=6 and payout<remaining_cap else None,'payoutHundredths':min(max(0,remaining_cap),payout),'capped':payout>=remaining_cap,'modelVersion':config['version'],'reelWindows':windows}
 
 def respin(state,*,rng=None,config=CONFIG,remaining_cap=CAP,forced_events=None):
+ config=model_config(state.get('version'),config)
  if state.get('version')!=config['version']:raise ValueError('Unsupported bonus version')
  if state['remaining']<=0:raise ValueError('Bonus finished')
  rng=rng or secrets.SystemRandom().random;out=copy.deepcopy(state);boards=out['boards'];jackpots=out['jackpots']

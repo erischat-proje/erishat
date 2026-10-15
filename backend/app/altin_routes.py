@@ -10,7 +10,7 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound,GameBet,GamePlay
 from .moderation import require_feature
-from .altin_engine import spin,CONFIG,KEYS,PAY,CAP,LINES,start_bonus,respin,JACKPOTS
+from .altin_engine import spin,CONFIG,KEYS,PAY,CAP,LINES,start_bonus,respin,JACKPOTS,SUPPORTED_VERSIONS
 
 
 router=APIRouter(prefix='/v1/games/altin',tags=['altin'])
@@ -68,6 +68,8 @@ def register_auth(current_user):
             if not payload.round_id or row.status!='open':raise HTTPException(409,'Tur tamamlandı')
             if payload.sequence!=state['sequence']:raise HTTPException(409,'Tur güncellendi; kaldığın yerden devam et')
             if payload.action!='spin' or payload.stake!=state['stake']:raise HTTPException(409,'Bonus sırasında bahis değiştirilemez')
+            if state.get('version') not in SUPPORTED_VERSIONS:raise HTTPException(409,'Desteklenmeyen oyun sürümü')
+            if not state.get('bonus') or state['bonus'].get('version')!=state['version']:raise HTTPException(409,'Bonus sürümü uyuşmuyor')
             if state['remaining']<=0:raise HTTPException(409,'Ücretsiz dönüş kalmadı')
             stake=state['stake'];charge=0;charge_cents=0;carry=fraction(db,user.id)
             result=respin(state['bonus'],remaining_cap=CAP-state['total_hundredths'])

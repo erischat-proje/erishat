@@ -1,7 +1,9 @@
 """Original Lidya pay-anywhere cascade engine. Amounts are integer hundredths of stake."""
 import json,secrets
 from pathlib import Path
-CONFIG=json.loads(Path(__file__).with_name('seker-math.json').read_text())
+LEGACY_CONFIG=json.loads(Path(__file__).with_name('seker-math.json').read_text())
+CONFIG=json.loads(Path(__file__).with_name('seker-math-v2.json').read_text())
+SUPPORTED_VERSIONS=(LEGACY_CONFIG['version'],CONFIG['version'])
 KEYS=['banana','apple','grapes','plum','watermelon','blue','green','purple','heart']
 PAY=[[25,75,200],[40,90,400],[50,100,500],[80,150,800],[100,200,1000],[150,200,1200],[200,500,1500],[300,1000,2500],[1000,2500,5000]]
 CAP=2110000
@@ -20,7 +22,9 @@ def evaluate(board):
     wins=[{'symbol':KEYS[s],'count':n,'payHundredths':PAY[s][2 if n>=12 else 1 if n>=10 else 0]} for s,n in enumerate(counts) if n>=8]
     return sum(w['payHundredths'] for w in wins),wins
 
-def spin(*,bonus=False,ante=False,remaining_cap=CAP,rng=None,config=CONFIG,trace=True,forced_board=None):
+def spin(*,bonus=False,ante=False,remaining_cap=CAP,rng=None,config=CONFIG,trace=True,forced_board=None,model_version=None,purchased=False):
+    if model_version==LEGACY_CONFIG['version']:config=LEGACY_CONFIG
+    elif model_version not in (None,config['version']):raise ValueError('Unsupported Şeker Sarayı version')
     rng=rng or secrets.SystemRandom().random
     # A weighted symbol family is selected per spin. Conditional symbol draws are independent.
     # This published family mixture creates high volatility without user-specific probabilities.
@@ -28,7 +32,7 @@ def spin(*,bonus=False,ante=False,remaining_cap=CAP,rng=None,config=CONFIG,trace
     weights=list(config['weights']);weights[family]*=config['familyBoost']
     rate=config['bombRate'] if bonus else 0
     def fresh():
-        if bonus and rng()<rate:return {'s':10,'m':config['bombValues'][weighted(rng,config['bombWeights'])]}
+        if bonus and rng()<rate:return {'s':10,'m':config['bombValues'][weighted(rng,config.get('buyBombWeights',config['bombWeights']) if purchased else config['bombWeights'])]}
         return {'s':weighted(rng,weights)}
     board=[fresh() for _ in range(30)] if forced_board is None else [dict(c) for c in forced_board]
     # Scatter count distribution has doubled trigger mass under Ante; it is not a claim
@@ -61,4 +65,4 @@ def spin(*,bonus=False,ante=False,remaining_cap=CAP,rng=None,config=CONFIG,trace
     multipliers=[c['m'] for c in board if c['s']==10] if bonus else []
     applied=max(1,sum(multipliers)) if raw else 1
     uncapped=raw*applied+scatter_pay;payout=min(remaining_cap,uncapped)
-    return {'steps':steps,'payoutHundredths':payout,'rawHundredths':raw,'scatterHundredths':scatter_pay,'scatters':scatters,'multipliers':multipliers,'applied':applied,'pool':0,'bonusTriggered':not bonus and scatters>=4,'extraSpins':5 if bonus and scatters>=3 else 0,'capped':uncapped>=remaining_cap,'tumbles':tumbles}
+    return {'modelVersion':config['version'],'steps':steps,'payoutHundredths':payout,'rawHundredths':raw,'scatterHundredths':scatter_pay,'scatters':scatters,'multipliers':multipliers,'applied':applied,'pool':0,'bonusTriggered':not bonus and scatters>=4,'extraSpins':5 if bonus and scatters>=3 else 0,'capped':uncapped>=remaining_cap,'tumbles':tumbles}

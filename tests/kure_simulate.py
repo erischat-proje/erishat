@@ -18,7 +18,7 @@ def simulate(n,mode,seed):
     w=m.wheel(rng=rng.random);remaining+=w['spins'];mult+=w['multiplier'];retriggers+=1
   values.append(total/100/cost);caps+=total>=m.CAP
  mean=statistics.mean(values);half=1.96*statistics.stdev(values)/n**.5
- return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'naturalBonusFrequency':bonuses/n if mode!='buy' else None,'freeSpins':fs,'retriggers':retriggers,'caps':caps,'maxWinBetMultiple':max(values)*cost,'certified':False}
+ return {'mode':mode,'samples':n,'seed':seed,'rtp':mean,'ci95':[mean-half,mean+half],'naturalBonusFrequency':bonuses/n if mode!='buy' else None,'freeSpins':fs,'retriggers':retriggers,'caps':caps,'maxWinBetMultiple':max(values)*cost,'roundHitFrequency':sum(v>0 for v in values)/n,'netProfitFrequency':sum(v>1 for v in values)/n,'certified':False}
 if __name__=='__main__':
  reports=[]
  for mode,n,seed in [('normal',int(sys.argv[2]) if len(sys.argv)>2 else 200000,745121),('ante',int(sys.argv[2]) if len(sys.argv)>2 else 200000,158742),('buy',int(sys.argv[3]) if len(sys.argv)>3 else 30000,849375)]:

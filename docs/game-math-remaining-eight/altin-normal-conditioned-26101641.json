@@ -1,0 +1,81 @@
+{
+  "game": "altin",
+  "mode": "normal",
+  "modelVersion": 1,
+  "method": "initial-choice-stratification",
+  "samples": 200000,
+  "samplesPerStratum": 100000,
+  "seed": 26101641,
+  "triggerChoiceProbability": 0.0095,
+  "rtp": 0.9660629943500001,
+  "ci95": [
+    0.9595056471814996,
+    0.9726203415185006
+  ],
+  "strata": [
+    {
+      "condition": false,
+      "weight": 0.9905,
+      "report": {
+        "mode": "normal",
+        "samples": 100000,
+        "seed": 26101641,
+        "rtp": 0.0312615,
+        "ci95": [
+          0.029894095266736094,
+          0.0326289047332639
+        ],
+        "naturalBonusFrequency": 0.0,
+        "copyFrequency": 0.01132,
+        "respins": 0,
+        "jackpots": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "capHits": 0,
+        "maxWinMultiple": 25.0,
+        "roundHitFrequency": 0.20256,
+        "netProfitFrequency": 0.00172,
+        "certified": false
+      }
+    },
+    {
+      "condition": true,
+      "weight": 0.0095,
+      "report": {
+        "mode": "normal",
+        "samples": 100000,
+        "seed": 26101642,
+        "rtp": 98.4314188,
+        "ci95": [
+          97.75605605923595,
+          99.10678154076406
+        ],
+        "naturalBonusFrequency": 0.99739,
+        "copyFrequency": 0.00278,
+        "respins": 877572,
+        "jackpots": [
+          24,
+          32,
+          22,
+          12
+        ],
+        "capHits": 9,
+        "maxWinMultiple": 5163.0,
+        "roundHitFrequency": 0.99764,
+        "netProfitFrequency": 0.99764,
+        "certified": false
+      }
+    }
+  ],
+  "certified": false,
+  "note": "Conditioned first trigger choice/scatter family, weighted back to live probabilities. Full rounds and cap included; not certified RTP.",
+  "source_sha256": {
+    "backend/app/altin_engine.py": "8fd47925e294e4364b51e6583b9c19c6783f748c6fff187be9bd866b8776f547",
+    "backend/app/altin-math.json": "899e556872c795f2af8291cddffdb48377d22728a7d58bff0fdad65a0c7a7945",
+    "tests/altin_simulate.py": "a6a5aba45b07ba7a0d87568aa5995c79add7ec96c78383d50423b6cfcc7f591e",
+    "tests/remaining_games_conditional.py": "83a17f6b2591ff59f01152b2d62fc4b82c8f807d64ce8300ad55addf76b983b9"
+  }
+}
