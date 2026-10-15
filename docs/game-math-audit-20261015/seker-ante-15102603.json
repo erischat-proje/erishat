@@ -1,0 +1,24 @@
+{
+  "mode": "ante",
+  "samples": 500000,
+  "seed": 15102603,
+  "rtp": 0.9577877600006365,
+  "ci95": [
+    0.9268830627860405,
+    0.9886924572152325
+  ],
+  "paid_spin_hit": 0.306674,
+  "bonus_frequency": 0.005976,
+  "free_spins_simulated": 31610,
+  "max_observed_x": 1186.0,
+  "target_rtp": 0.9648,
+  "note": "Monte Carlo estimate, not certified RTP. Cap and retriggers are included.",
+  "game": "seker",
+  "source_commit": "6360f7c3b7d7fc3b54210fb0162ead384d1425a3",
+  "source_sha256": {
+    "backend/app/seker_engine.py": "1fde86ed659c2dc191bc5022d22716369e54000b927a6a3f81fee9fcf3f51390",
+    "backend/app/seker-math.json": "344b59175a52447ee13f5dc6037a6111caf45e84592130beff2a5dcc3195e8a5",
+    "tests/seker_simulate.py": "360b9dbd1af53bf3601a168711e7af790c298ceff613a87a46be0d50426cd8d3"
+  },
+  "certified": false
+}

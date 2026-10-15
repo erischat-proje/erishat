@@ -10,7 +10,7 @@ from .db import get_db
 from .models import User
 from .platform_models import GameRound, GameBet, GamePlay
 from .moderation import require_feature
-from .aztek_ares_engine import spin, rules as game_rules, CAP, VERSION
+from .aztek_ares_engine import spin, rules as game_rules, CAP, VERSION, SUPPORTED_VERSIONS
 from .kure_routes import fraction, wallet_id
 
 class SpinRequest(BaseModel):
@@ -42,7 +42,8 @@ def build_router(kind,current_user):
         row=db.scalar(select(GameRound).where(GameRound.user_id==user.id,GameRound.game_type==kind,GameRound.status=='open').order_by(GameRound.started_at.desc()).limit(1))
         balance=locked.lidya+fraction(db,user.id)/100
         state=json.loads(row.state_data) if row else None
-        return dict(state=public(row,state) if row else None,balance=balance,last=state.get('last') if state else None)
+        return dict(state=public(row,state) if row else None,balance=balance,last=state.get('last') if state else None,
+                    rules=game_rules(kind,version=state['version'] if state else VERSION))
 
     @router.post('/spin')
     def play(payload:SpinRequest,db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -66,7 +67,7 @@ def build_router(kind,current_user):
             s=json.loads(row.state_data)
             if row.status!='open' or s['remaining']<=0:raise HTTPException(409,'Tur tamamlandı')
             if payload.sequence!=s['sequence'] or payload.stake!=s['stake'] or payload.action!='spin':raise HTTPException(409,'Bonus güncellendi; kaldığın yerden devam et')
-            if s['version']!=VERSION:raise HTTPException(409,'Bu bonus için uyumlu oyun sürümü gerekiyor')
+            if s['version'] not in SUPPORTED_VERSIONS:raise HTTPException(409,'Bu bonus için uyumlu oyun sürümü gerekiyor')
             s['remaining']-=1;charge_cents=0;charged_whole=0
             result=spin(kind,bonus=True,remaining_cap=CAP-s['total_hundredths'],version=s['version'])
         else:
@@ -93,7 +94,8 @@ def build_router(kind,current_user):
         if not wallet:
             wallet=GameRound(id=wallet_id(user.id),user_id=user.id,game_type='dede_wallet',status='ledger',started_at=now,ends_at=now,result_key='fraction',state_data='{}');db.add(wallet)
         wallet.state_data=json.dumps({'remainder':carry},separators=(',',':'))
-        receipt=dict(state=public(row,s),result=result,payout=payout_cents/100,charge=charge_cents/100,balance=locked.lidya+carry/100,request_id=payload.request_id)
+        receipt=dict(state=public(row,s),result=result,payout=payout_cents/100,charge=charge_cents/100,balance=locked.lidya+carry/100,request_id=payload.request_id,
+                     next_rules=game_rules(kind,version=s['version'] if s['remaining'] else VERSION))
         s['last']=receipt;row.state_data=json.dumps(s,separators=(',',':'),ensure_ascii=False)
         serialized=json.dumps(receipt,separators=(',',':'),ensure_ascii=False)
         db.add(GamePlay(user_id=user.id,game_type=kind,choice=payload.action,result_key=row.result_key,result_data=serialized))

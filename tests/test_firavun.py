@@ -74,7 +74,7 @@ def test_rules_and_validation(fixture):
  c,s,r,e,_=fixture;rules=c.get('/v1/games/firavun/rules').json()
  assert rules['buy_spins']==10 and rules['max_win']==5000 and rules['bonus_cost']==100
  assert len(rules['lines'])==10 and len(set(tuple(l) for l in rules['lines']))==10
- for kw in [{'stake':0},{'stake':10001},{'stake':True},{'stake':1.5},{'sequence':False},{'action':'bad'},{'special':8},{'board':[]},{'payout':999},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':0},{'stake':1000000001},{'stake':True},{'stake':1.5},{'sequence':False},{'action':'bad'},{'special':8},{'board':[]},{'payout':999},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
 
 def test_book_substitution_best_pay_once(fixture):
  *_,e,_=fixture

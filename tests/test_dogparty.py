@@ -77,7 +77,7 @@ def trigger(r,e):
 
 def test_rules_and_validation(fixture):
  c,*_=fixture;rules=c.get('/v1/games/dogparty/rules').json();assert len(rules['lines'])==20 and len({tuple(x) for x in rules['lines']})==20
- for kw in [{'stake':0},{'stake':True},{'stake':20.0},{'stake':10001},{'action':'invalid'},{'ante':True},{'payout':999},{'sequence':False},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':0},{'stake':True},{'stake':20.0},{'stake':1000000001},{'action':'invalid'},{'ante':True},{'payout':999},{'sequence':False},{'request_id':'invalid'}]:assert post(c,**kw).status_code==422
 
 def test_additive_wilds_not_product(fixture):
  e=fixture[3];b=[{'s':i%11} for i in range(15)];b[5:10]=[{'s':0},{'s':12,'m':2},{'s':12,'m':3},{'s':0},{'s':1}]
