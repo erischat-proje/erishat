@@ -22,9 +22,9 @@ def db():
  e.dispose()
 def user(db,uid='viewer',balance=500000):
  u=User(id=uid,public_id=uid,nickname=uid,lidya=balance);db.add(u);db.commit();return u
-@pytest.mark.parametrize('stake',service.STAKES+(200000,300000))
+@pytest.mark.parametrize('stake',service.STAKES+(200000,300000,858993460,2000000000,1000000000000))
 def test_five_stakes(stake):assert service.validate_stake(stake)==stake
-@pytest.mark.parametrize('stake',[0,-1,25,99999,100001,858993460,True,100.0,'100'])
+@pytest.mark.parametrize('stake',[0,-1,25,99999,100001,True,100.0,'100'])
 def test_invalid_stakes(stake):
  with pytest.raises(HTTPException):service.validate_stake(stake)
 def test_paid_rankings_top50_exclude_refunds_open_and_old(db,monkeypatch):
@@ -70,12 +70,12 @@ def production_play():
  exec(compile(ast.fix_missing_locations(ast.Module(body=[nodes['game_payout'],n],type_ignores=[])),'production','exec'),ns)
  return ns['play_game']
 
-@pytest.mark.parametrize('stake',service.STAKES+(200000,300000))
+@pytest.mark.parametrize('stake',service.STAKES+(200000,300000,858993460,2000000000,1000000000000))
 def test_actual_start_debits_stake_and_pays_natural(db,monkeypatch,stake):
- u=user(db);monkeypatch.setattr(engine.random,'shuffle',lambda deck:None)
+ u=user(db,balance=max(500000,stake*2));before=u.lidya;monkeypatch.setattr(engine.random,'shuffle',lambda deck:None)
  out=production_play()('blackjack',{'stake':stake},db,u)
  assert out['result']=='blackjack' and out['payout']==stake*5//2
- assert u.lidya==500000-stake+stake*5//2
+ assert u.lidya==before-stake+stake*5//2
  assert db.scalar(select(GameBet.amount))==stake
  assert 'deck' not in out['data']['state']
 

@@ -96,7 +96,7 @@ class RoomSeatUpdate(BaseModel):
 class RoomChatCreate(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
 class GameBetCreate(BaseModel):
-    choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1, le=1_000_000)
+    choice: str = Field(min_length=1, max_length=32); amount: int = Field(ge=1)
 class BlackjackAction(BaseModel):
     action: str = Field(pattern="^(hit|stand|double|split)$")
 
@@ -1892,10 +1892,10 @@ def register_platform_auth(current_user_dependency):
         if game_type == 'blackjack':
             blackjack_final.validate_stake(raw_stake)
         elif game_type == 'wheel':
-            if type(raw_stake) is not int or raw_stake not in wheel_rules.STAKES:
-                raise HTTPException(status_code=422, detail="Çark bahsi: 10, 100, 1.000, 10.000 veya 100.000 Lidya seç.")
-        elif type(raw_stake) is not int or not 0 <= raw_stake <= 10000:
-            raise HTTPException(status_code=422, detail="Bahis 0 ile 10.000 Lidya arasında tam sayı olmalı")
+            if type(raw_stake) is not int or raw_stake < 10 or raw_stake % 10:
+                raise HTTPException(status_code=422, detail="Çark bahsi en az 10 Lidya ve 10’un katı olmalı.")
+        elif type(raw_stake) is not int or raw_stake < 0:
+            raise HTTPException(status_code=422, detail="Bahis negatif olmayan tam sayı olmalı")
         stake = raw_stake
         if game_type == "cups" and choice not in CUPS:
             raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")

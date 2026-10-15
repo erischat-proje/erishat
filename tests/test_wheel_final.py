@@ -59,17 +59,17 @@ def test_exact_payouts(symbol,mult):
     assert rules.payout(symbol,symbol,100000) == 100000*mult
     assert rules.payout('wrong',symbol,100000) == 0
 
-@pytest.mark.parametrize('amount', rules.STAKES)
+@pytest.mark.parametrize('amount', rules.STAKES+(50,500,3000000000))
 def test_all_five_bets_replay_once(db, amount):
-    u=user(db);row=service.get_round(db);db.commit();payload=request(row,amount)
+    u=user(db,balance=max(500000,amount*2));before=u.lidya;row=service.get_round(db);db.commit();payload=request(row,amount)
     result=service.place_bet(db,u,payload);db.commit()
     again=service.place_bet(db,u,payload);db.commit()
     assert not result['replayed'] and again['replayed']
-    assert u.lidya == 500000-amount
+    assert u.lidya == before-amount
     assert db.scalar(select(func.count(GameBet.id))) == 1
 
-@pytest.mark.parametrize('amount',[1,25,500,100001,-10])
-def test_only_five_stakes(db, amount):
+@pytest.mark.parametrize('amount',[1,25,100001,-10])
+def test_invalid_stakes(db, amount):
     u=user(db);row=service.get_round(db);db.commit()
     with pytest.raises(HTTPException) as err:service.place_bet(db,u,request(row,amount))
     assert err.value.status_code == 422

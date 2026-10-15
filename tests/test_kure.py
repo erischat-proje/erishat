@@ -74,7 +74,7 @@ def test_rules_validation(fixture):
  c,_,_,_,_=fixture;r=c.get('/v1/games/kure/rules').json()
  assert r['max_ways']==200704 and r['max_win']==5000 and r['ante_cost']==1.25 and r['bonus_cost']==100
  assert r['spin_sectors']==[5,8,10,12,15,20,12] and r['multiplier_sectors']==[2,3,5,8,10,15,20,25]
- for kw in [{'stake':True},{'stake':0},{'stake':1000000001},{'sequence':False},{'ante':1},{'action':'bad'},{'heights':[7]*6},{'multiplier':25}]:assert post(c,**kw).status_code==422
+ for kw in [{'stake':True},{'stake':0},{'stake':-1},{'sequence':False},{'ante':1},{'action':'bad'},{'heights':[7]*6},{'multiplier':25}]:assert post(c,**kw).status_code==422
 
 def test_maximum_ways_and_cap(fixture):
  *_,e,_=fixture;b=[[{'s':9} for _ in range(7)] for _ in range(6)];t=[{'s':9}]*4
