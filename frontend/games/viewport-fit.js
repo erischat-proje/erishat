@@ -19,7 +19,7 @@ function attach(el){if(records.has(el))return;let cfg=configs[el.id];if(!cfg&&el
 function fit(){queued=false;const box=geometry();
  for(const [el,item]of records){if(!el.isConnected){item.resize.disconnect();item.styleObserver?.disconnect();records.delete(el);continue;}
   if(!el.getClientRects().length)continue;
-  const gameBox=['slot','dede','seker','balikci','prenses'].includes(item.cfg[0])?geometry(true):box;
+  const gameBox=['slot','dede','seker','balikci','prenses','dogparty'].includes(item.cfg[0])?geometry(true):box;
   for(const [key,value]of Object.entries(gameBox))set(el,'--gv-'+key,value+'px');set(el,'--nrs-height',box.height+'px');
   el.classList.toggle('gv-compact',box.height<740);el.classList.toggle('gv-short',box.height<560);el.classList.toggle('gv-narrow',box.width<600);
   if(item.stage&&item.board){let ratio=item.cfg[3];if(item.cfg[0]==='altin'){const w=parseFloat(item.board.style.width),h=parseFloat(item.board.style.height);if(w>0&&h>0)ratio=w/h;}
