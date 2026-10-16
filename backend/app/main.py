@@ -164,10 +164,10 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id VARCHAR(64)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'ErisChat Odası'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1"))
-        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 16"))
-        conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_count SET DEFAULT 16"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 12"))
+        conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_count SET DEFAULT 12"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_layout_version INTEGER NOT NULL DEFAULT 0"))
-        conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_layout_version SET DEFAULT 2"))
+        conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_layout_version SET DEFAULT 3"))
         conn.execute(text("ALTER TABLE room_members ADD COLUMN IF NOT EXISTS ghost BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS theme VARCHAR(32) NOT NULL DEFAULT 'normal'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS chat_enabled BOOLEAN NOT NULL DEFAULT true"))
@@ -2614,6 +2614,7 @@ def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
 if static_dir.exists():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
+
 
 
 
