@@ -105,7 +105,7 @@ def image_bytes(value):
             out=BytesIO();img.save(out,'JPEG',quality=90,optimize=True);result=out.getvalue()
             if len(result)>3_000_000:raise ValueError('Fotoğraf 3 MB sınırını aşıyor.')
             return result,hashlib.sha256(raw).hexdigest()
-    except (ValueError,TypeError,Image.DecompressionBombError) as exc:raise HTTPException(422,'Geçerli JPEG, PNG veya WebP fotoğraf gerekli (en fazla 3 MB).') from exc
+    except (ValueError,TypeError,OSError,SyntaxError,Image.DecompressionBombError) as exc:raise HTTPException(422,'Geçerli JPEG, PNG veya WebP fotoğraf gerekli (en fazla 3 MB).') from exc
 
 class Create(BaseModel):
     package_id:int=Field(ge=1,le=16,strict=True)
@@ -177,7 +177,10 @@ def register_auth(current_user):
         for r in rows:
             read=r.customer_read if r.user_id==user.id else r.agent_read
             unread[r.id]=int(db.scalar(select(func.count()).select_from(PaymentMessage).where(PaymentMessage.request_id==r.id,PaymentMessage.sender_id!=user.id,PaymentMessage.id>read)) or 0)
-        return {'is_da':da,'own':[summary(r,user.id) for r in own],'assigned':[summary(r,user.id) for r in mine],'unread':unread,'pending_count':int(db.scalar(select(func.count()).select_from(PaymentRequest).where(PaymentRequest.status=='pending')) or 0) if da else 0}
+        pending_query=select(PaymentRequest).where(PaymentRequest.status=='pending',PaymentRequest.user_id!=user.id)
+        pending=list(db.scalars(pending_query.order_by(PaymentRequest.created_at.desc(),PaymentRequest.id.desc()).limit(50))) if da else []
+        return {'is_da':da,'own':[summary(r,user.id) for r in own],'assigned':[summary(r,user.id) for r in mine],'unread':unread,'pending_count':int(db.scalar(select(func.count()).select_from(PaymentRequest).where(PaymentRequest.status=='pending',PaymentRequest.user_id!=user.id)) or 0) if da else 0,'pending_alerts':[{'id':r.id,'created_at':r.created_at} for r in pending]}
+
 
     @router.post('/requests')
     def create(payload:Create,db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -402,3 +405,4 @@ def photo_response(db,row,message_id):
     msg=db.get(PaymentMessage,message_id)
     if not msg or msg.request_id!=row.id or not msg.photo:raise HTTPException(404,'Fotoğraf bulunamadı.')
     return Response(msg.photo,media_type='image/jpeg',headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Disposition':'inline; filename="dekont.jpg"'})
+

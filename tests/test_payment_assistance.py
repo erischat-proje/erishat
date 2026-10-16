@@ -211,3 +211,24 @@ def test_simultaneous_ready_opens_chat_once(env):
     assert results==[200,200]
     result=call('u',f'/requests/{id}');assert result['status']=='chat' and result['customer_ack'] and result['agent_ack']
     with Session(engine) as db:assert db.scalar(select(func.count()).select_from(PaymentEvent).where(PaymentEvent.request_id==id,PaymentEvent.action=='chat_opened'))==1
+
+def test_truncated_receipt_is_validation_error_and_conversation_survives(env):
+    _,_,call=env;id=connected(call)
+    image=Image.effect_noise((256,256),80).convert('RGB');stream=BytesIO();image.save(stream,'JPEG');raw=stream.getvalue()[:-20]
+    # PIL.verify accepts this header, but full pixel decoding raises OSError.
+    Image.open(BytesIO(raw)).verify()
+    with pytest.raises(OSError):Image.open(BytesIO(raw)).load()
+    encoded='data:image/jpeg;base64,'+base64.b64encode(raw).decode()
+    call('u',f'/requests/{id}/messages',{'message':'Dekont','photo':encoded,'request_key':str(uuid4())},expect=422)
+    assert call('u',f'/requests/{id}/messages')['items']==[]
+    msg=send_photo(call,id)
+    assert call('da',f'/requests/{id}/photos/{msg}').headers['content-type']=='image/jpeg'
+
+def test_pending_alerts_are_da_only_exclude_self_and_disappear_on_claim(env):
+    _,_,call=env;first=new(call);own=new(call,'da')
+    state=call('da','/state');assert [r['id'] for r in state['pending_alerts']]==[first['id']];assert state['pending_count']==1
+    for who in ['u','fa','ua','sa']:
+        state=call(who,'/state');assert state['pending_alerts']==[];assert state['pending_count']==0
+    call('da2',f'/requests/{first["id"]}/accept',{})
+    assert call('da','/state')['pending_alerts']==[]
+    assert [r['id'] for r in call('da2','/state')['pending_alerts']]==[own['id']]
