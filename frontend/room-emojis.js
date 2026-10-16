@@ -1,21 +1,54 @@
 (() => {
   'use strict';
-  const catalog = [
-    ['laugh','Kahkaha','closed','laugh','tears'],['cry','Ağlama','sad','sad','tears'],
-    ['kiss','Öpücük','closed','kiss','hearts'],['love','Aşık','hearts','smile','hearts'],
-    ['clap','Alkış','happy','smile','hands'],['angry','Sinirli','angry','shout','steam'],
-    ['surprised','Şaşkın','wide','oh','stars'],['sleep','Uykulu','closed','small','sleep'],
-    ['dance','Dans','happy','laugh','notes'],['cool','Havalı','glasses','smirk','stars'],
-    ['yes','Evet','happy','smile','yes'],['no','Hayır','angry','small','no'],
-    ['thanks','Teşekkür','happy','smile','hands'],['welcome','Hoş geldin','happy','laugh','wave'],
-    ['shy','Utangaç','closed','small','hearts'],['wink','Göz kırp','wink','smirk','stars'],
-    ['confused','Kararsız','uneven','small','question'],['party','Parti','happy','laugh','confetti'],
-    ['cheer','Bravo','closed','laugh','confetti'],['sad','Üzgün','sad','sad','rain'],
-    ['wow','Vay','wide','oh','spark'],['facepalm','Pes','closed','sad','palm'],
-    ['wave','Selam','happy','smile','wave'],['heart','Kalp','happy','smile','heart'],
-    ['kiss_left','Sola öpücük','closed','kiss','hearts'],['kiss_right','Sağa öpücük','closed','kiss','hearts'],
-    ['toast_left','Sola kadeh','happy','smile','glass'],['toast_right','Sağa kadeh','happy','smile','glass']
-  ].map(([id,label,eyes,mouth,extra])=>({id,label,eyes,mouth,extra}));
+  const catalog = [{"id": "laugh", "label": "Kahkaha", "level": 0, "asset": "./assets/room-emojis-lidya-v1/laugh.png"}, {"id": "cry", "label": "Ağlama", "level": 0, "asset": "./assets/room-emojis-lidya-v1/cry.png"}, {"id": "kiss", "label": "Öpücük", "level": 0, "asset": "./assets/room-emojis-lidya-v1/kiss.png"}, {"id": "love", "label": "Sevgi", "level": 0, "asset": "./assets/room-emojis-lidya-v1/love.png"}, {"id": "clap", "label": "Alkış", "level": 0, "asset": "./assets/room-emojis-lidya-v1/clap.png"}, {"id": "angry", "label": "Sinirli", "level": 0, "asset": "./assets/room-emojis-lidya-v1/angry.png"}, {"id": "surprised", "label": "Şaşkın", "level": 0, "asset": "./assets/room-emojis-lidya-v1/surprised.png"}, {"id": "sleep", "label": "Uykulu", "level": 0, "asset": "./assets/room-emojis-lidya-v1/sleep.png"}, {"id": "dance", "label": "Dans", "level": 0, "asset": "./assets/room-emojis-lidya-v1/dance.png"}, {"id": "cool", "label": "Havalı", "level": 0, "asset": "./assets/room-emojis-lidya-v1/cool.png"}, {"id": "yes", "label": "Evet", "level": 0, "asset": "./assets/room-emojis-lidya-v1/yes.png"}, {"id": "no", "label": "Hayır", "level": 0, "asset": "./assets/room-emojis-lidya-v1/no.png"}, {"id": "thanks", "label": "Teşekkür", "level": 0, "asset": "./assets/room-emojis-lidya-v1/thanks.png"}, {"id": "welcome", "label": "Hoş geldin", "level": 0, "asset": "./assets/room-emojis-lidya-v1/welcome.png"}, {"id": "shy", "label": "Utangaç", "level": 0, "asset": "./assets/room-emojis-lidya-v1/shy.png"}, {"id": "wink", "label": "Göz kırp", "level": 0, "asset": "./assets/room-emojis-lidya-v1/wink.png"}, {"id": "confused", "label": "Kararsız", "level": 0, "asset": "./assets/room-emojis-lidya-v1/confused.png"}, {"id": "party", "label": "Parti", "level": 0, "asset": "./assets/room-emojis-lidya-v1/party.png"}, {"id": "cheer", "label": "Bravo", "level": 0, "asset": "./assets/room-emojis-lidya-v1/cheer.png"}, {"id": "sad", "label": "Üzgün", "level": 0, "asset": "./assets/room-emojis-lidya-v1/sad.png"}, {"id": "wow", "label": "Vay", "level": 0, "asset": "./assets/room-emojis-lidya-v1/wow.png"}, {"id": "facepalm", "label": "Pes", "level": 0, "asset": "./assets/room-emojis-lidya-v1/facepalm.png"}, {"id": "wave", "label": "Selam", "level": 0, "asset": "./assets/room-emojis-lidya-v1/wave.png"}, {"id": "heart", "label": "Kalp", "level": 0, "asset": "./assets/room-emojis-lidya-v1/heart.png"}, {"id": "kiss_left", "label": "Sola öpücük", "level": 0, "asset": "./assets/room-emojis-lidya-v1/kiss_left.png"}, {"id": "kiss_right", "label": "Sağa öpücük", "level": 0, "asset": "./assets/room-emojis-lidya-v1/kiss_right.png"}, {"id": "toast_left", "label": "Sola kadeh", "level": 0, "asset": "./assets/room-emojis-lidya-v1/toast_left.png"}, {"id": "toast_right", "label": "Sağa kadeh", "level": 0, "asset": "./assets/room-emojis-lidya-v1/toast_right.png"}, {"id": "vip_1", "label": "Altın Işıltı", "level": 1, "asset": "./assets/room-emojis-lidya-v1/vip_1.png"}, {"id": "vip_2", "label": "Zümrüt Bakış", "level": 2, "asset": "./assets/room-emojis-lidya-v1/vip_2.png"}, {"id": "vip_3", "label": "Sardes Zaferi", "level": 3, "asset": "./assets/room-emojis-lidya-v1/vip_3.png"}, {"id": "vip_4", "label": "Kraliyet Mührü", "level": 4, "asset": "./assets/room-emojis-lidya-v1/vip_4.png"}, {"id": "vip_5", "label": "Kristal Aura", "level": 5, "asset": "./assets/room-emojis-lidya-v1/vip_5.png"}, {"id": "vip_6", "label": "Kanatlı İhtişam", "level": 6, "asset": "./assets/room-emojis-lidya-v1/vip_6.png"}, {"id": "vip_7", "label": "Saray Alevi", "level": 7, "asset": "./assets/room-emojis-lidya-v1/vip_7.png"}, {"id": "vip_8", "label": "Yıldız Muhafızı", "level": 8, "asset": "./assets/room-emojis-lidya-v1/vip_8.png"}, {"id": "vip_9", "label": "Ejder Mührü", "level": 9, "asset": "./assets/room-emojis-lidya-v1/vip_9.png"}, {"id": "vip_10", "label": "Anka Yükselişi", "level": 10, "asset": "./assets/room-emojis-lidya-v1/vip_10.png"}, {"id": "vip_11", "label": "Kozmik Taç", "level": 11, "asset": "./assets/room-emojis-lidya-v1/vip_11.png"}, {"id": "vip_12", "label": "Lidya Efsanesi", "level": 12, "asset": "./assets/room-emojis-lidya-v1/vip_12.png"}];
+  const artRoot=new URL('./assets/room-emojis-lidya-v1/',document.currentScript?.src||location.href).href;
+  const apiBase=(window.ERIS_API||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
+  const authToken=()=>localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';
+  let vipLevel=0,vipState='idle',vipAccount='',vipRequest=0,tab='standard',levelFilter=0;
+  const unlocked=new Set();
+  const opener=()=>button;
+  async function refreshVip(){
+    const account=authToken(),request=++vipRequest;
+    vipAccount=account;vipLevel=0;unlocked.clear();vipState='loading';renderGrid();
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
+    try{
+      if(!account)throw new Error('Oturum gerekli');
+      const response=await fetch(apiBase+'/me/room-emojis',{headers:{Accept:'application/json',Authorization:'Bearer '+account},signal:controller.signal,cache:'no-store'});
+      if(!response.ok)throw new Error('VIP seviyesi alınamadı');
+      const data=await response.json();
+      if(request!==vipRequest)return;
+      if(account!==authToken()){vipState='error';return;}
+      if(!Number.isInteger(data.level)||data.level<0||data.level>12||!Array.isArray(data.unlocked_ids))throw new Error('Geçersiz VIP yanıtı');
+      vipLevel=data.level;
+      for(const id of data.unlocked_ids){const item=byId.get(id);if(item?.level>0&&item.level<=vipLevel)unlocked.add(id)}
+      vipState='ready';
+    }catch(_){if(request!==vipRequest)return;vipLevel=0;unlocked.clear();vipState='error'}
+    finally{clearTimeout(timer);if(request===vipRequest)renderGrid()}
+  }
+  function canSend(item){return !item.level||(vipState==='ready'&&vipAccount===authToken()&&unlocked.has(item.id))}
+  function renderGrid(){
+    if(!panel)return;
+    const target=!!targetUserId,vip=tab==='vip'&&!target;
+    panel.querySelector('.ee-tabs').hidden=target;
+    panel.querySelector('.ee-levels').hidden=!vip;
+    const status=panel.querySelector('.ee-status');
+    status.textContent=target?'Seçilen koltuğa gönder · Ücretsiz':vipState==='loading'?'VIP koleksiyonun kontrol ediliyor…':vipState==='error'?'VIP bilgisi alınamadı. Normal emojiler kullanılabilir.':`VIP ${vipLevel} · ${unlocked.size}/12 özel emoji açık`;
+    panel.querySelector('[data-retry]').hidden=target||vipState!=='error';
+    panel.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));
+    panel.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.level)===levelFilter)));
+    const grid=panel.querySelector('.ee-grid');grid.replaceChildren();
+    const items=target?interactions:catalog.filter(item=>vip?item.level>0&&(!levelFilter||item.level===levelFilter):!item.level);
+    for(const item of items){
+      const b=document.createElement('button');b.type='button';b.dataset.emojiId=item.id;
+      const locked=!target&&!canSend(item),name=item.label;
+      b.className='ee-choice'+(item.level?' ee-premium':'')+(locked?' ee-locked':'');
+      b.setAttribute('aria-disabled',String(locked));
+      b.setAttribute('aria-label',name+(item.level?` · VIP ${item.level}`:'')+(locked?' · Kilitli':''));
+      b.title=b.getAttribute('aria-label');
+      b.innerHTML=(target?projectileArt(item.id):artwork(item))+`<span class="ee-label">${name}</span>`+(item.level?`<small class="ee-tier">${locked?'Kilitli · ':''}VIP ${item.level}</small>`:'');
+      b.onclick=()=>send(item.id);grid.appendChild(b);
+    }
+  }
   const interactions=[['send_heart','Kalp'],['send_bomb','Bomba'],['send_kiss','Öpücük'],['send_rose','Gül'],['send_snow','Kartopu'],['send_toast','Kadeh']].map(([id,label])=>({id,label}));
   const interactionIds=new Set(interactions.map(x=>x.id));
   const flights=new Set(),seen=new Set();let targetUserId=null;
@@ -28,48 +61,15 @@
   const surface=()=>document.getElementById('erisRoomSurface');
   const heart='<path d="M0 4C-12-6-10-16-3-16C0-16 3-13 3-11C7-19 16-15 16-9C16-3 7 2 3 7Z"/>';
   const star='<path d="m0-8 2 5 6 1-5 4 1 6-4-3-5 3 1-6-4-4 6-1Z"/>';
-  function eyes(kind){
-    if(kind==='hearts')return '<g fill="#ff5489"><g transform="translate(32 40) scale(.6)">'+heart+'</g><g transform="translate(59 40) scale(.6)">'+heart+'</g></g>';
-    if(kind==='glasses')return '<path fill="#17243e" stroke="#9eeeff" stroke-width="2" d="M21 34h23v15H23Zm31 0h23l-2 15H52Z"/><path stroke="#17243e" stroke-width="4" d="M44 38h8M18 35h5M73 35h6"/>';
-    if(kind==='closed'||kind==='happy')return '<path class="ee-eyes" fill="none" stroke="#222342" stroke-width="3.5" stroke-linecap="round" d="M25 41q7-9 14 0M57 41q7-9 14 0"/>';
-    if(kind==='angry')return '<path stroke="#222342" stroke-width="4" stroke-linecap="round" d="m24 33 15 6m18 0 15-6"/><ellipse fill="#222342" cx="33" cy="44" rx="3" ry="5"/><ellipse fill="#222342" cx="63" cy="44" rx="3" ry="5"/>';
-    if(kind==='wink')return '<ellipse fill="#222342" cx="32" cy="40" rx="5" ry="7"/><path stroke="#222342" stroke-width="3.5" stroke-linecap="round" d="m57 39 12 3-12 3"/>';
-    const sad=kind==='sad',wide=kind==='wide';
-    return '<g class="ee-eyes"><ellipse fill="white" cx="32" cy="40" rx="'+(wide?9:7)+'" ry="'+(wide?11:9)+'"/><ellipse fill="white" cx="64" cy="'+(kind==='uneven'?36:40)+'" rx="7" ry="9"/><ellipse fill="#222342" cx="33" cy="42" rx="4" ry="6"/><ellipse fill="#222342" cx="63" cy="42" rx="4" ry="6"/><circle fill="white" cx="34" cy="40" r="1.5"/><circle fill="white" cx="64" cy="40" r="1.5"/></g>'+(sad?'<path stroke="#554477" stroke-width="2.5" fill="none" stroke-linecap="round" d="m25 28 13 3m20 0 13-3"/>':'');
-  }
-  function mouth(kind){
-    if(kind==='laugh'||kind==='shout')return '<g class="ee-mouth"><path fill="#332247" d="M34 54Q48 61 62 54Q62 76 48 76Q34 76 34 54Z"/><path fill="white" d="M36 55q12 6 24 0l-2 7H38Z"/><ellipse fill="#ff7d9c" cx="48" cy="71" rx="8" ry="4"/></g>';
-    if(kind==='oh')return '<ellipse class="ee-mouth" fill="#332247" cx="48" cy="64" rx="8" ry="11"/><ellipse fill="#ff7d9c" cx="48" cy="70" rx="5" ry="3"/>';
-    if(kind==='kiss')return '<path class="ee-mouth" fill="none" stroke="#82335b" stroke-width="3" stroke-linecap="round" d="m44 57 8 4-8 4 8 4"/>';
-    return '<path class="ee-mouth" fill="none" stroke="#332247" stroke-width="3" stroke-linecap="round" d="'+(kind==='sad'?'M38 65q10-12 20 0':kind==='small'?'M43 62h10':kind==='smirk'?'M38 62q13 10 22-4':'M35 58q13 18 26 0')+'"/>';
-  }
-  function accessory(extra){
-    if(extra==='hands'||extra==='palm'||extra==='wave')return '<g transform="translate(19 70)"><g class="ee-hand ee-hand-left"><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M-8 6V-5q0-5 3-5q3 0 3 5v-9q0-5 3-5q3 0 3 5v7-9q0-5 3-5q3 0 3 5v8-5q0-5 3-4q3 1 3 5v16q-4 12-14 10Z"/></g></g>'+(extra==='hands'?'<g transform="translate(73 70) scale(-1 1)"><g class="ee-hand ee-hand-right"><path fill="#ffcc9e" stroke="#c58c72" stroke-width="1.5" d="M-8 6V-5q0-5 3-5q3 0 3 5v-9q0-5 3-5q3 0 3 5v7-9q0-5 3-5q3 0 3 5v8-5q0-5 3-4q3 1 3 5v16q-4 12-14 10Z"/></g></g>':'');
-    if(extra==='yes'||extra==='no')return '<g class="ee-sign"><rect fill="'+(extra==='yes'?'#127d74':'#a83c69')+'" stroke="#ffffff" stroke-width="1.5" x="27" y="74" width="42" height="17" rx="7"/><text x="48" y="86" fill="white" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="800">'+(extra==='yes'?'EVET':'HAYIR')+'</text></g>';
-    if(extra==='heart')return '<g transform="translate(44 77) scale(1.1)"><g class="ee-big-heart" fill="#ff659a" stroke="#ffc2d7" stroke-width="1.5">'+heart+'</g></g>';
-    if(extra==='glass')return '<g transform="translate(65 49) scale(.4)"><g class="ee-glass">'+projectile('send_toast')+'</g></g>';
-    return '';
-  }
-  function particles(extra,directional=false){
-    let shape=star,color='#ffe992';
-    if(extra==='hearts'){shape=heart;color='#ff82b2'}
-    if(extra==='tears'||extra==='rain'){shape='<path d="M0-8Q-9 3 0 6Q9 3 0-8Z"/>';color='#64e3ff'}
-    if(extra==='notes'){shape='<path d="M-2-9v15h3V-5l7-2v9h3v-14ZM-2 3c-8-3-10 8-3 8s7-8 3-8Zm10-5c-8-3-10 8-3 8s7-8 3-8Z"/>';color='#89f0e1'}
-    if(extra==='steam'){shape='<path fill="none" stroke="#ffdcda" stroke-width="3" d="M0 5q-8-5 0-10t0-10"/>';color='#ffdcda'}
-    if(extra==='sleep'||extra==='question'){shape='<text text-anchor="middle" font-family="system-ui" font-weight="900" font-size="18">'+(extra==='sleep'?'Z':'?')+'</text>';color='#e8f7ff'}
-    if(!['stars','spark','hearts','tears','rain','notes','steam','sleep','question','confetti'].includes(extra))return '';
-    return '<g class="ee-particles" fill="'+color+'">'+[0,1,2,3].map((i)=>'<g transform="translate('+(directional?80:(i%2?81:15))+' '+(extra==='tears'||extra==='rain'?47:24+i*12)+') scale(.65)"><g class="ee-particle ee-p'+i+'" style="--particle-delay:'+(-i*.3)+'s">'+shape+'</g></g>').join('')+'</g>';
-  }
   function artwork(item){
-    return '<svg class="ee-art ee-'+item.id+'" width="96" height="100" viewBox="0 0 96 100" aria-hidden="true"><g'+(item.id.endsWith('_left')?' transform="translate(96 0) scale(-1 1)"':'')+'><g class="ee-character"><ellipse fill="#ffd8ad" stroke="#d29b76" stroke-width="1.5" cx="16" cy="48" rx="7" ry="10"/><ellipse fill="#ffd8ad" stroke="#d29b76" stroke-width="1.5" cx="80" cy="48" rx="7" ry="10"/><path fill="#ffdab1" stroke="#d29b76" stroke-width="1.5" d="M48 12C25 12 16 29 19 53C21 76 35 86 48 86S75 76 77 53C80 29 71 12 48 12Z"/><path fill="none" stroke="#fff0d8" stroke-width="3" stroke-linecap="round" d="M27 29q6-9 16-10"/><ellipse fill="#ff8c9c" opacity=".55" cx="26" cy="53" rx="8" ry="4"/><ellipse fill="#ff8c9c" opacity=".55" cx="70" cy="53" rx="8" ry="4"/>'+eyes(item.eyes)+mouth(item.mouth)+accessory(item.extra)+'</g>'+particles(item.extra,item.id.startsWith('kiss_'))+'</g></svg>';
+    return `<span class="ee-art ee-sticker ee-${item.id}${item.level?' ee-vip-art ee-rank-'+item.level:''}" aria-hidden="true"><img src="${artRoot+item.id+'.png'}" alt="" width="256" height="256" decoding="async" draggable="false"></span>`;
   }
-
   function projectile(id){
-    if(id==='send_heart')return '<g transform="translate(38 44) scale(2)" fill="#ff4e91" stroke="#ffd0e2" stroke-width="1">'+heart+'</g>';
-    if(id==='send_bomb')return '<circle cx="45" cy="56" r="27" fill="#292841" stroke="#9191ac" stroke-width="2"/><ellipse cx="35" cy="44" rx="9" ry="5" fill="#77748e" transform="rotate(-35 35 44)"/><path stroke="#b88c61" stroke-width="5" fill="none" d="M58 31q-4-17 12-13"/><g fill="#ffcb5c" transform="translate(73 17) scale(1.5)">'+star+'</g>';
+    if(id==='send_heart')return '<g transform="translate(38 44) scale(2)" fill="#10a17c" stroke="#f4dfa2" stroke-width="1">'+heart+'</g>';
+    if(id==='send_bomb')return '<circle cx="45" cy="56" r="27" fill="#123b30" stroke="#c7a35f" stroke-width="2"/><ellipse cx="35" cy="44" rx="9" ry="5" fill="#77748e" transform="rotate(-35 35 44)"/><path stroke="#b88c61" stroke-width="5" fill="none" d="M58 31q-4-17 12-13"/><g fill="#ffcb5c" transform="translate(73 17) scale(1.5)">'+star+'</g>';
     if(id==='send_snow')return '<circle cx="48" cy="51" r="28" fill="#e7f6ff" stroke="#acd3ed" stroke-width="2"/><path stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" d="M29 46q3-15 19-16"/><circle cx="58" cy="64" r="5" fill="#c5e3f2"/>';
-    if(id==='send_rose')return '<path stroke="#5cbe84" stroke-width="5" fill="none" d="M51 51q-13 23-13 38"/><path fill="#6ed393" d="M44 74q20-18 25-7q-10 13-25 7"/><path fill="#ff4a78" stroke="#ffc0d1" stroke-width="1.5" d="M48 15q-19-8-25 9q-15 8-4 23q3 16 22 15q17 5 26-9q15-6 10-21q-1-19-22-14Z"/><path fill="none" stroke="#bb2250" stroke-width="3" d="M31 30q15-12 29 0q-2 17-19 18q-10-8-2-15q10-5 15 1"/>';
-    if(id==='send_kiss')return '<path fill="#f84a83" stroke="#ffd0df" stroke-width="1.5" d="M12 49q15-29 36-12q21-17 36 12q-15 31-36 28q-21 3-36-28Z"/><path fill="#a22658" d="M17 49q31-13 62 0q-30 12-62 0Z"/><path fill="none" stroke="#ffb4cf" stroke-width="4" stroke-linecap="round" d="M26 43q8-8 17-4"/>';
+    if(id==='send_rose')return '<path stroke="#5cbe84" stroke-width="5" fill="none" d="M51 51q-13 23-13 38"/><path fill="#6ed393" d="M44 74q20-18 25-7q-10 13-25 7"/><path fill="#159b72" stroke="#f4dfa2" stroke-width="1.5" d="M48 15q-19-8-25 9q-15 8-4 23q3 16 22 15q17 5 26-9q15-6 10-21q-1-19-22-14Z"/><path fill="none" stroke="#075442" stroke-width="3" d="M31 30q15-12 29 0q-2 17-19 18q-10-8-2-15q10-5 15 1"/>';
+    if(id==='send_kiss')return '<path fill="#169c73" stroke="#f4dfa2" stroke-width="1.5" d="M12 49q15-29 36-12q21-17 36 12q-15 31-36 28q-21 3-36-28Z"/><path fill="#064a39" d="M17 49q31-13 62 0q-30 12-62 0Z"/><path fill="none" stroke="#c7efca" stroke-width="4" stroke-linecap="round" d="M26 43q8-8 17-4"/>';
     return '<path fill="#edf4ff99" stroke="#f1e4ff" stroke-width="2" d="M27 15h42v27q0 20-21 20T27 42Z"/><path fill="#eab75e" d="M29 34h38v9q0 17-19 17T29 43Z"/><path stroke="#eee5ff" stroke-width="4" d="M48 62v22m-14 0h28"/>';
   }
   function projectileArt(id){return '<svg class="ee-art ee-'+id+'" width="96" height="100" viewBox="0 0 96 100" aria-hidden="true">'+projectile(id)+'</svg>'}
@@ -93,19 +93,21 @@
     flight.animation.finished.then(finish).catch(()=>{flights.delete(flight);el.remove()});
   }
 
-  function close(){if(panel)panel.hidden=true;button?.setAttribute('aria-expanded','false')}
+  function close(){const inside=panel?.contains(document.activeElement);if(panel)panel.hidden=true;button?.setAttribute('aria-expanded','false');if(inside)opener()?.focus()}
   function open(selectedTarget=null){
     setup();if(!panel)return;
     targetUserId=selectedTarget?String(selectedTarget):null;
-    panel.querySelector('header b').textContent=targetUserId?'Mikrofon etkileşimi':'Hareketli emojiler';
-    panel.querySelector('header small').textContent=targetUserId?'Seçilen koltuğa gönder • Ücretsiz':'Seç, avatarında canlansın';
-    panel.querySelector('.ee-sheet').setAttribute('aria-label',targetUserId?'Mikrofon etkileşimi':'Hareketli emojiler');
-    const grid=panel.querySelector('.ee-grid');grid.replaceChildren();
-    for(const item of (targetUserId?interactions:catalog)){const b=document.createElement('button');b.type='button';b.title=item.label;b.setAttribute('aria-label',item.label);b.innerHTML=(targetUserId?projectileArt(item.id):artwork(item))+'<span>'+item.label+'</span>';b.onclick=()=>send(item.id);grid.appendChild(b)}
+    panel.querySelector('header b').textContent=targetUserId?'Mikrofon etkileşimi':'Lidya emojileri';
+    panel.querySelector('header small').textContent=targetUserId?'Seçilen koltuğa gönder · Ücretsiz':'Altın ifadeler · Seviye atlayan ihtişam';
+    panel.querySelector('.ee-sheet').setAttribute('aria-label',targetUserId?'Mikrofon etkileşimi':'Lidya emojileri');
+    tab=targetUserId?'standard':tab;renderGrid();
+    if(!targetUserId)refreshVip();
     panel.hidden=false;button?.setAttribute('aria-expanded','true');
     panel.querySelector('[data-close]')?.focus();
   }
   function send(id){
+    const item=byId.get(id);
+    if(item&&!canSend(item))return window.toast?.(vipState==='ready'?`Bu emoji VIP ${item.level} seviyesinde açılır.`:'Önce VIP seviyeni tekrar kontrol et.');
     const ws=window.__erisRoomSocket;
     if(!ws||ws.readyState!==1||String(ws.__erisRoomId)!==roomId())return window.toast?.('Oda bağlantısı henüz hazır değil.');
     if(Date.now()-lastSent<2000)return window.toast?.('Yeni emoji için biraz bekle.');
@@ -126,11 +128,13 @@
     }
     if(!s.querySelector('#erisRoomEmojiPanel')){
       panel=document.createElement('div');panel.id='erisRoomEmojiPanel';panel.hidden=true;
-      panel.innerHTML='<button class="ee-shade" type="button" aria-label="Emoji panelini kapat"></button><section class="ee-sheet" role="dialog" aria-modal="true" aria-label="Hareketli emojiler"><div class="ee-handle"></div><header><div><b>Hareketli emojiler</b><small>Seç, avatarında canlansın</small></div><button type="button" data-close aria-label="Kapat">×</button></header><div class="ee-grid"></div></section>';
+      panel.innerHTML='<button class="ee-shade" type="button" aria-label="Emoji panelini kapat"></button><section class="ee-sheet" role="dialog" aria-modal="true" aria-label="Lidya emojileri"><div class="ee-handle"></div><header><div><b>Lidya emojileri</b><small>Altın ifadeler · Seviye atlayan ihtişam</small></div><button type="button" data-close aria-label="Kapat">×</button></header><nav class="ee-tabs" aria-label="Emoji koleksiyonu"><button type="button" data-tab="standard" aria-pressed="true">Lidya</button><button type="button" data-tab="vip" aria-pressed="false">VIP koleksiyonu</button></nav><div class="ee-levels" aria-label="VIP seviye filtresi" hidden></div><div class="ee-status-row"><small class="ee-status" role="status" aria-live="polite"></small><button type="button" data-retry hidden>Tekrar dene</button></div><div class="ee-grid"></div></section>';
+      panel.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderGrid()});
+      panel.querySelector('.ee-levels').innerHTML=[0,...Array.from({length:12},(_,i)=>i+1)].map(n=>`<button type="button" data-level="${n}" aria-pressed="${n===0}">${n?'VIP '+n:'Tümü'}</button>`).join('');
+      panel.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>{levelFilter=Number(b.dataset.level);renderGrid()});
+      panel.querySelector('[data-retry]').onclick=()=>refreshVip();
       panel.querySelector('.ee-shade').onclick=close;panel.querySelector('[data-close]').onclick=()=>{close();button?.focus()};
-      const grid=panel.querySelector('.ee-grid');
-      for(const item of catalog){const b=document.createElement('button');b.type='button';b.title=item.label;b.setAttribute('aria-label',item.label);b.innerHTML=artwork(item)+'<span>'+item.label+'</span>';b.onclick=()=>send(item.id);grid.appendChild(b)}
-      panel.addEventListener('keydown',e=>{if(e.key==='Escape'){close();button?.focus()}else if(e.key==='Tab'){const focusables=[...panel.querySelectorAll('.ee-sheet button')];const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+      panel.addEventListener('keydown',e=>{if(e.key==='Escape'){close();button?.focus()}else if(e.key==='Tab'){const focusables=[...panel.querySelectorAll('.ee-sheet button')].filter(b=>!b.disabled&&b.getClientRects().length);const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
       s.appendChild(panel);
     }else panel=s.querySelector('#erisRoomEmojiPanel');
     const stage=document.getElementById('erisLiveSeats');
@@ -162,10 +166,12 @@
     const ev={id:String(d.id),reaction_id:d.reaction_id,start,until:start+duration};
     active.set(uid,ev);paint();setTimeout(()=>{if(active.get(uid)===ev){active.delete(uid);paint()}},duration);
   }
-  function clear(){close();targetUserId=null;for(const f of flights){f.animation?.cancel();f.el.remove()}flights.clear();seen.clear();active.clear();paint();observer?.disconnect();observedStage=null;lastSent=0}
-  window.ErisRoomEmojis={receive,error:d=>window.toast?.(d.message||'Emoji gönderilemedi.'),open:()=>open(),openInteraction:uid=>{if(!findSeat(uid))return window.toast?.('Kullanıcı bir koltukta değil.');open(uid)},close};
+  function clear(){close();vipRequest++;vipLevel=0;vipState='idle';unlocked.clear();targetUserId=null;for(const f of flights){f.animation?.cancel();f.el.remove()}flights.clear();seen.clear();active.clear();paint();observer?.disconnect();observedStage=null;lastSent=0}
+  window.ErisRoomEmojis={receive,error:d=>{window.toast?.(d.message||'Emoji gönderilemedi.');if(!panel?.hidden&&!targetUserId)refreshVip()},open:()=>open(),openInteraction:uid=>{if(!findSeat(uid))return window.toast?.('Kullanıcı bir koltukta değil.');open(uid)},close};
   window.addEventListener('erischat:room-opened',()=>{clear();setup()});
   window.addEventListener('erischat:room-closed',clear);
   window.addEventListener('erischat:room-blocks-updated',()=>{for(const uid of active.keys())if(window.ErisRoomBlocks?.has?.(uid))active.delete(uid);for(const f of flights)if(window.ErisRoomBlocks?.has?.(f.sender)||window.ErisRoomBlocks?.has?.(f.target)){f.animation?.cancel();f.el.remove();flights.delete(f)}paint()});
+  window.addEventListener('erischat:vip-updated',()=>{if(panel&&!panel.hidden&&!targetUserId)refreshVip()});
   if(surface())setup();
 })();
+
