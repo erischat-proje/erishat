@@ -199,7 +199,12 @@ def manual_change(db,user,target,payload,operation):
         return operation_view(existing)
     exempt,sha=exemption(user.public_id) if not payload.evidence else (False,'')
     if not payload.evidence and not exempt: raise HTTPException(422,'FA ve DA için fotoğraf kanıtı zorunludur. Muafiyet listesi doğrulanamadığında da kanıt gerekir.')
-    target=lock_user(db,target.id); before=int(target.lidya or 0)
+    target=lock_user(db,target.id)
+    if operation=='EKLEME':
+        from .payment_assistance_models import PaymentRequest
+        if db.scalar(select(PaymentRequest.id).where(PaymentRequest.user_id==target.id,PaymentRequest.status.in_(['pending','connecting','chat','rejecting','finishing'])).limit(1)):
+            raise HTTPException(409,'Bu kullanıcının aktif ödeme isteği var. DA ödeme isteğindeki talebe bağlı Lidya yüklemesini kullanın.')
+    before=int(target.lidya or 0)
     after=before+payload.amount if operation=='EKLEME' else before-payload.amount
     if after<0: raise HTTPException(422,'Yetersiz Lidya bakiyesi. Çıkarma yapılmadı.')
     if after>LIMIT: raise HTTPException(422,'Bakiye üst sınırı aşılıyor.')
@@ -244,7 +249,7 @@ def register_auth(current_user):
     @router.get('/v1/purchases/catalog')
     def catalog(db:Session=Depends(get_db),user:User=Depends(current_user)):
         special=db.scalar(select(User).join(AdminRole,AdminRole.user_id==User.id).where(User.public_id==MAIL_DA_ID,AdminRole.role=='DA',User.is_active.is_(True)))
-        return {'packages':PACKAGES,'bank':bank_settings(db),'mail_order_available':bool(special),'mail_order_notice':CARD_NOTICE}
+        return {'packages':PACKAGES,'mode':'da_assistance','bank':{'enabled':False,'iban':'','account_name':'','bank_name':''},'mail_order_available':False,'mail_order_notice':'Ödeme için DA destekli yükleme isteği oluşturun.'}
 
     @router.get('/v1/admin/purchases/settings')
     def settings_get(db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -280,6 +285,7 @@ def register_auth(current_user):
 
     @router.post('/v1/purchases/orders')
     def create(payload:CreateOrder,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        raise HTTPException(409,'Tek aktif ödeme sistemi DA destekli yükleme isteğidir. Lidya paketleri penceresini yeniden açın.')
         existing=db.scalar(select(LidyaOrder).where(LidyaOrder.user_id==user.id,LidyaOrder.request_key==payload.request_key))
         if existing:
             if (existing.package_id,existing.method)!=(payload.package_id,payload.method): raise HTTPException(409,'İstek anahtarı başka paket için kullanılmış.')
@@ -322,6 +328,7 @@ def register_auth(current_user):
 
     @router.post('/v1/purchases/orders/{identifier}/report')
     def report(identifier:str,payload:Document,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        raise HTTPException(409,'Tek aktif ödeme sistemi DA destekli yükleme isteğidir. Lidya paketleri penceresini yeniden açın.')
         row=get_order(db,identifier,True)
         if row.user_id!=user.id: raise HTTPException(403,'Bu ödeme size ait değil.')
         if row.method!='iban' or row.status!='awaiting': raise HTTPException(409,'Bu ödeme bildirimi zaten gönderildi veya kapandı.')
@@ -332,6 +339,7 @@ def register_auth(current_user):
 
     @router.post('/v1/purchases/orders/{identifier}/document')
     def mail_document(identifier:str,payload:Document,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        raise HTTPException(409,'Tek aktif ödeme sistemi DA destekli yükleme isteğidir. Lidya paketleri penceresini yeniden açın.')
         row=get_order(db,identifier,True)
         if row.user_id!=user.id: raise HTTPException(403,'Bu ödeme size ait değil.')
         if row.method!='mail_order' or row.status!='active': raise HTTPException(409,'Önce yetkili DA görüşmeyi kabul etmeli.')
@@ -347,6 +355,7 @@ def register_auth(current_user):
 
     @router.post('/v1/admin/purchases/orders/{identifier}/accept')
     def accept(identifier:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        raise HTTPException(409,'Tek aktif ödeme sistemi DA destekli yükleme isteğidir. Lidya paketleri penceresini yeniden açın.')
         require_mail_da(db,user);row=get_order(db,identifier,True)
         if row.method!='mail_order' or row.status!='pending': raise HTTPException(409,'Görüşme kabul edilemiyor.')
         row.status='active';row.accepted_by=user.id
@@ -356,6 +365,7 @@ def register_auth(current_user):
     @router.post('/v1/purchases/orders/{identifier}/messages')
     @router.post('/v1/admin/purchases/orders/{identifier}/messages')
     def message(identifier:str,payload:ChatMessage,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        raise HTTPException(409,'Tek aktif ödeme sistemi DA destekli yükleme isteğidir. Lidya paketleri penceresini yeniden açın.')
         row=get_order(db,identifier,True);access(db,user,row)
         if row.method!='mail_order' or row.status!='active': raise HTTPException(409,'Bu görüşme aktif değil.')
         if user.id!=row.user_id: require_mail_da(db,user)
@@ -365,6 +375,7 @@ def register_auth(current_user):
 
     @router.post('/v1/admin/purchases/orders/{identifier}/decision')
     def decision(identifier:str,payload:Decision,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        raise HTTPException(409,'Tek aktif ödeme sistemi DA destekli yükleme isteğidir. Lidya paketleri penceresini yeniden açın.')
         admin_role=require_admin(db,user); row=get_order(db,identifier,True)
         if row.method=='mail_order': require_mail_da(db,user)
         if row.status=='approved' and payload.approve: return view(db,row) # no repeated credit
@@ -393,3 +404,4 @@ def register_auth(current_user):
         audit(db,user,'lidya_purchase_'+row.status,details,row.user_id)
         notify(db,row.user_id,'Lidya ödeme sonucu',(f'{row.total} Lidya hesabınıza yüklendi.' if payload.approve else 'Ödeme reddedildi: '+row.decision_note)+' • '+row.reference)
         commit(db);return view(db,row)
+
