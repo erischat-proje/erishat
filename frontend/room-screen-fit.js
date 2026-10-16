@@ -6,7 +6,7 @@
     frame=0;
     const s=document.getElementById('erisRoomSurface');
     if(!s){document.body.classList.remove('eris-room-screen-active');return}
-    if(surface!==s){surface=s;s.classList.add('room-screen-fit');watch?.disconnect();watch=new MutationObserver(schedule);watch.observe(s,{attributes:true,attributeFilter:['class','style'],childList:true});}
+    if(surface!==s){surface=s;s.classList.add('room-screen-fit');watch?.disconnect();watch=new MutationObserver(schedule);watch.observe(s,{attributes:true,attributeFilter:['class','style'],childList:true,subtree:true});}
     const visible=s.classList.contains('show')&&getComputedStyle(s).display!=='none';
     if(document.body.classList.contains('eris-room-screen-active')!==visible)document.body.classList.toggle('eris-room-screen-active',visible);
     if(!visible)return;
@@ -20,11 +20,19 @@
     write(s,'left',Math.round(m?.left||v?.offsetLeft||0)+'px');
     write(s,'right','auto');write(s,'bottom','auto');write(s,'width',width+'px');write(s,'height',height+'px');write(s,'max-height',height+'px');write(s,'min-height','0px');write(s,'transform','none');
     const header=64+topInset,tools=48;
-    const chat=Math.round(Math.min(m?.keyboard?170:260,Math.max(m?.keyboard?150:190,height*.30)))+bottomInset;
-    write(s,'--fit-top',topInset+'px');write(s,'--fit-bottom',bottomInset+'px');write(s,'--fit-header',header+'px');write(s,'--fit-chat',chat+'px');write(s,'--eris-room-header',header+'px');
-    const seats=s.querySelector('#erisLiveSeats'),rows=Math.ceil((seats?.querySelectorAll('.eris-seat').length||24)/4);
-    const area=height-header-tools-chat-14;
-    write(s,'--fit-seat',Math.floor(Math.max(36,Math.min(64,(width-72)/4,(area-(rows-1)*14-32)/rows-16)))+'px');write(s,'--fit-rows',String(rows));
+    const seats=s.querySelector('#erisLiveSeats'),rows=Math.ceil((Number(seats?.dataset.seatCount)||12)/4);
+    // Compact, fixed row spacing gives the saved height back to live chat.
+    // On small/keyboard viewports the seat stage scrolls without covering chat.
+    const landscape=height<500&&width>=600;
+    const chatMin=(landscape?104:Math.min(224,Math.max(166,height*.34)))+bottomInset;
+    const available=height-header-tools-chatMin-14;
+    const seat=Math.floor(Math.max(44,Math.min(72,(width-64)/4,(available-30-(rows-1)*8)/rows-22)));
+    const idealStage=rows*(seat+22)+(rows-1)*8+30;
+    const stage=Math.max(40,Math.min(idealStage,available));
+    const chat=Math.max(100,height-header-tools-stage-14);
+    write(s,'--fit-top',topInset+'px');write(s,'--fit-bottom',bottomInset+'px');write(s,'--fit-header',header+'px');write(s,'--fit-chat',Math.round(chat)+'px');write(s,'--eris-room-header',header+'px');
+    write(s,'--fit-seat',seat+'px');write(s,'--room-seat-size',seat+'px');write(s,'--fit-rows',String(rows));
+
   }
   function schedule(){if(!frame)frame=requestAnimationFrame(update)}
   ['resize','orientationchange','pageshow','focusin','focusout','erischat:viewport-changed','erischat:room-opened','erischat:room-closed','erischat:room-state-updated'].forEach(e=>window.addEventListener(e,schedule));
@@ -32,3 +40,4 @@
   new MutationObserver(()=>{if(document.getElementById('erisRoomSurface')!==surface)schedule()}).observe(document.body,{childList:true});
   schedule();
 })();
+

@@ -55,7 +55,7 @@ def _room_auth_dependency(
 current_user_dependency = _room_auth_dependency
 
 
-LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 16, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 16, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 16, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 16, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 20, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 20, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 24, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 24, "required_spend": 1_560_000}}
+LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 12, "required_spend": 0}, 2: {"capacity": 45, "moderators": 3, "seats": 12, "required_spend": 220_000}, 3: {"capacity": 55, "moderators": 4, "seats": 12, "required_spend": 410_000}, 4: {"capacity": 65, "moderators": 5, "seats": 12, "required_spend": 630_000}, 5: {"capacity": 75, "moderators": 6, "seats": 16, "required_spend": 840_000}, 6: {"capacity": 85, "moderators": 8, "seats": 16, "required_spend": 1_000_000}, 7: {"capacity": 95, "moderators": 10, "seats": 16, "required_spend": 1_240_000}, 8: {"capacity": 105, "moderators": 12, "seats": 16, "required_spend": 1_560_000}}
 GIFT_RECIPIENT_PERCENT = 70
 GIFT_ITEMS = json.loads(Path(__file__).with_name("gift_catalog.json").read_text(encoding="utf-8"))
 GIFT_META = {gift["name"]: gift for gift in GIFT_ITEMS}
@@ -215,9 +215,10 @@ def ensure_seats(db: Session, room: Room) -> None:
     allowed = LEVELS[room.level]["seats"]
     current = int(room.seat_count or 0)
     layout_version = int(room.seat_layout_version or 0)
-    migrating = layout_version < 2
-    selected = {12: 16, 16: 20, 20: 24}.get(current, current) if layout_version == 1 else current
-    target = selected if selected in (16, 20, 24) and selected <= allowed else allowed
+    migrating = layout_version < 3
+    # Old oversized layouts become the highest permitted layout once. Explicit
+    # 12-seat selections remain 12 after an upgrade; 16 unlocks at level five.
+    target = current if current in (12, 16) and current <= allowed else allowed
     rows = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id).order_by(RoomSeat.seat_number)))
     by_number = {row.seat_number: row for row in rows}
     if not migrating and target == current and all(n in by_number for n in range(1, target + 1)) and not any(n > target for n in by_number):
@@ -227,18 +228,20 @@ def ensure_seats(db: Session, room: Room) -> None:
             row = RoomSeat(room_id=room.id, seat_number=number, locked=False, muted=False)
             db.add(row)
             by_number[number] = row
-    # Keep participants in the room; relocate overflow speakers when a seat is free.
+    # Clear the unique (room,user) slot before relocating overflow participants.
+    # Membership is retained: anyone without a free seat stays as a listener.
     free = [by_number[n] for n in range(1, target + 1) if not by_number[n].user_id and not by_number[n].locked]
-    for row in rows:
-        if row.seat_number <= target:
-            continue
-        if row.user_id and free:
-            destination = free.pop(0)
-            destination.user_id, destination.muted = row.user_id, row.muted
+    overflow = [row for row in rows if row.seat_number > target]
+    occupants = [(row.user_id, row.muted) for row in overflow if row.user_id]
+    for row in overflow:
         row.user_id = None
+    db.flush()
+    for destination, (user_id, muted) in zip(free, occupants):
+        destination.user_id, destination.muted = user_id, muted
+    for row in overflow:
         db.delete(row)
     room.seat_count = target
-    room.seat_layout_version = 2
+    room.seat_layout_version = 3
     db.commit()
 
 
@@ -564,7 +567,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         require_staff(db, room, user)
         target = int(payload.seat_count)
         allowed = LEVELS[room.level]["seats"]
-        if target not in (16, 20, 24) or target > allowed:
+        if target not in (12, 16) or target > allowed:
             raise HTTPException(status_code=422, detail=f"Seviye {room.level} için en fazla {allowed} koltuk kullanılır")
         occupied = db.scalar(
             select(func.count(RoomSeat.id)).where(
@@ -583,6 +586,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             if not db.scalar(select(RoomSeat.id).where(RoomSeat.room_id == room.id, RoomSeat.seat_number == number)):
                 db.add(RoomSeat(room_id=room.id, seat_number=number))
         room.seat_count = target
+        room.seat_layout_version = 3
         db.commit()
         return {"seat_count": target}
 
@@ -1259,3 +1263,4 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         rows = list(db.execute(select(RoomMusic, RoomMusic.audio_bytes.is_not(None)).where(RoomMusic.room_id == room.id).order_by(RoomMusic.slot)))
         seated = set(db.scalars(select(RoomSeat.user_id).where(RoomSeat.room_id == room.id, RoomSeat.muted.is_(False), RoomSeat.user_id.is_not(None))))
         return [{"id":m.id,"user_id":m.user_id,"slot":m.slot,"title":m.title,"audio_url":f"/rooms/{room.id}/music/{m.id}/audio" if has_audio else None,"needs_reupload":not bool(has_audio),"paid_until":m.paid_until,"is_playing":m.is_playing and bool(has_audio) and m.user_id in seated,"position_seconds":m.position_seconds,"started_at":m.started_at} for m, has_audio in rows]
+
