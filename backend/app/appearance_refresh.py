@@ -42,7 +42,10 @@ def refresh_user(db, user, level=None):
         level = int(status.level or 0) if status else 0
     level = max(0, min(12, level))
     changed = False
+    from .staff_identity import role_for
     for kind in ('frame', 'wallpaper'):
+        if kind == 'frame' and role_for(user):
+            continue
         column = kind + '_asset'
         old = getattr(user, column)
         new = replacement(old, gender, level, kind)

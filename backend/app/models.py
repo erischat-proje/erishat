@@ -2,16 +2,18 @@ from datetime import datetime
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
+from sqlalchemy.ext.hybrid import hybrid_property
+from . import staff_identity
 
 class User(Base):
     __tablename__ = "users"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     public_id: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
-    nickname: Mapped[str] = mapped_column(String(32), nullable=False)
-    avatar: Mapped[str] = mapped_column(String(16), default="🦊", nullable=False)
+    _nickname: Mapped[str] = mapped_column("nickname", String(32), nullable=False)
+    _avatar: Mapped[str] = mapped_column("avatar", String(16), default="🦊", nullable=False)
     gender: Mapped[str] = mapped_column(String(16), default="unspecified", server_default="unspecified", nullable=False)
-    avatar_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    frame_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    _avatar_asset: Mapped[str | None] = mapped_column("avatar_asset", String(255), nullable=True)
+    _frame_asset: Mapped[str | None] = mapped_column("frame_asset", String(255), nullable=True)
     bubble_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
     title_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
     profile_asset: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -37,6 +39,66 @@ class User(Base):
     welcome_gift_claimed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     cosmetics: Mapped[list["UserCosmetic"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     auth_identities: Mapped[list["AuthIdentity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    @hybrid_property
+    def nickname(self):
+        return staff_identity.effective(self, '_nickname', staff_identity.NAME)
+
+    @nickname.setter
+    def nickname(self, value):
+        staff_identity.set_value(self, '_nickname', value)
+
+    @nickname.expression
+    def nickname(cls):
+        return staff_identity.expression(cls, '_nickname', staff_identity.NAME, 'nickname')
+
+    @hybrid_property
+    def avatar(self):
+        return staff_identity.effective(self, '_avatar', '💠')
+
+    @avatar.setter
+    def avatar(self, value):
+        staff_identity.set_value(self, '_avatar', value)
+
+    @avatar.expression
+    def avatar(cls):
+        return staff_identity.expression(cls, '_avatar', '💠', 'avatar')
+
+    @hybrid_property
+    def avatar_asset(self):
+        return staff_identity.effective(self, '_avatar_asset', staff_identity.AVATAR)
+
+    @avatar_asset.setter
+    def avatar_asset(self, value):
+        staff_identity.set_value(self, '_avatar_asset', value)
+
+    @avatar_asset.expression
+    def avatar_asset(cls):
+        return staff_identity.expression(cls, '_avatar_asset', staff_identity.AVATAR, 'avatar_asset')
+
+    @hybrid_property
+    def frame_asset(self):
+        return staff_identity.effective(self, '_frame_asset', staff_identity.FRAME)
+
+    @frame_asset.setter
+    def frame_asset(self, value):
+        staff_identity.set_value(self, '_frame_asset', value)
+
+    @frame_asset.expression
+    def frame_asset(cls):
+        return staff_identity.expression(cls, '_frame_asset', staff_identity.FRAME, 'frame_asset')
+
+    @property
+    def admin_role(self):
+        return staff_identity.role_for(self)
+
+    @property
+    def management_locked(self):
+        return bool(self.admin_role)
+
+    @property
+    def management_badges(self):
+        return list(staff_identity.ROLES) if self.management_locked else []
 
 class UserCosmetic(Base):
     __tablename__ = "user_cosmetics"
@@ -126,3 +188,6 @@ class AuthIdentity(Base):
             name="uq_auth_identity_provider_identifier",
         ),
     )
+
+# Preserve confirmed identity on detached websocket/background user objects.
+staff_identity.install_load_hints(User)

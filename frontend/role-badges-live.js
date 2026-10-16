@@ -1,91 +1,43 @@
-(() => {
-  'use strict';
-  const ROLES=new Set(['DA','SA','UA','FA']);
-  const cache=new Map(),queued=new Set();
-  let scheduled=false,timer=null,busy=false,epoch=0;
-  const idOf=user=>String(typeof user==='object'?user?.user_id||user?.id||'':user||'');
-  const normalize=value=>ROLES.has(value)?value:null;
-  const atlas=new URL('./role-icons/staff-badges.png?v=staff-20261009',document.baseURI).href;
-  const positions={SA:'0% 0%',UA:'100% 0%',FA:'0% 100%',DA:'100% 100%'};
-  const style=document.createElement('style');style.id='eris-role-icons-style';
-  style.textContent=`
-    .eris-role-icon{display:inline-block!important;position:static!important;width:3.4em!important;height:1.7em!important;min-width:3.4em!important;max-width:3.4em!important;flex:0 0 3.4em!important;margin:0 .3em 0 0!important;padding:0!important;vertical-align:middle!important;border:0!important;border-radius:0!important;background-color:transparent!important;background-image:url("${atlas}")!important;background-size:200% 200%!important;background-repeat:no-repeat!important;box-shadow:none!important;pointer-events:none!important}
-    .eris-role-icon[data-role=SA]{background-position:0% 0%!important;background-size:200% 196.24%!important}.eris-role-icon[data-role=UA]{background-position:100% 0%!important;background-size:200% 196.24%!important}.eris-role-icon[data-role=FA]{background-position:0% 100%!important;background-size:200% 203.91%!important}.eris-role-icon[data-role=DA]{background-position:100% 100%!important;background-size:200% 203.91%!important}
-    .seat-name .eris-role-icon{width:32px!important;height:16px!important;min-width:32px!important;max-width:32px!important;flex-basis:32px!important;margin-right:3px!important}
-    .profile .name h2 .eris-role-icon{width:84px!important;height:42px!important;min-width:84px!important;max-width:84px!important;flex-basis:84px!important}
-    .eris-mini-name .eris-role-icon{width:64px!important;height:32px!important;min-width:64px!important;max-width:64px!important;flex-basis:64px!important}
-    [data-eris-role-user]>.eris-admin-name-badge{display:none!important}
-  `;
-  document.head.append(style);
-  function paint(node,role) {
-    if(!node)return;
-    const icons=[...node.children].filter(child=>child.classList.contains('eris-role-icon'));
-    [...node.children].filter(child=>child.classList.contains('eris-admin-name-badge')).forEach(child=>child.remove());
-    if(!role){icons.forEach(child=>child.remove());return;}
-    let icon=icons.find(child=>child.dataset.role===role);
-    icons.forEach(child=>{if(child!==icon)child.remove();});
-    if(!icon){icon=document.createElement('span');icon.className='eris-role-icon';icon.dataset.role=role;icon.setAttribute('role','img');icon.setAttribute('aria-label',role+' yetkilisi');icon.title=role+' yetkilisi';}
-    if(node.firstChild!==icon)node.prepend(icon);
-  }
-  function update(id,role) {
-    const previous=cache.get(id);cache.set(id,{role:normalize(role),expires:Date.now()+15000,revision:(previous?.revision||0)+1});
-    document.querySelectorAll('[data-eris-role-user]').forEach(node=>{if(node.dataset.erisRoleUser===id)paint(node,normalize(role));});
-    if(String(window.ErisAuth?.user?.id)===id)window.ErisAuth.user.admin_role=normalize(role);
-  }
-  function register(user) {
-    const id=idOf(user);
-    if(id && !cache.has(id) && Object.prototype.hasOwnProperty.call(user||{},'admin_role'))cache.set(id,{role:normalize(user.admin_role),expires:0,revision:0});
-  }
-  function request(id) {
-    if(!id || !window.ErisPlatform?.api || !window.ErisAuth?.getToken?.())return;
-    queued.add(id);if(!timer&&!busy)timer=setTimeout(flush,60);
-  }
-  async function flush() {
-    timer=null;if(busy || !queued.size)return;
-    busy=true;const keys=[...queued].slice(0,100);keys.forEach(id=>queued.delete(id));
-    const currentEpoch=epoch,revisions=new Map(keys.map(id=>[id,cache.get(id)?.revision||0]));
-    try{
-      const result=await window.ErisPlatform.api('/role-badges?ids='+encodeURIComponent(keys.join(',')),{timeout:12000});
-      if(currentEpoch!==epoch)return;
-      keys.forEach(id=>{if((cache.get(id)?.revision||0)===revisions.get(id) && Object.prototype.hasOwnProperty.call(result.badges||{},id))update(id,result.badges[id]);});
-    }catch(_){
-      // Leave the last confirmed badge intact during a transport failure.
-      keys.forEach(id=>{const row=cache.get(id);if(row)row.expires=Date.now()+15000;else cache.set(id,{role:null,expires:Date.now()+15000,revision:0});});
-    }finally{busy=false;if(queued.size&&!timer)timer=setTimeout(flush,60);}
-  }
-  function refresh(node) {
-    const id=node.dataset.erisRoleUser;if(!id){paint(node,null);return;}
-    const known=cache.get(id);if(known)paint(node,known.role);
-    if(!known || known.expires<=Date.now())request(id);
-  }
-  function bind(node,user) {
-    if(!node)return;
-    const id=idOf(user);
-    if(node.dataset.erisRoleUser!==id){paint(node,null);node.dataset.erisRoleUser=id;}
-    register(typeof user==='object'?user:{});
-    const known=cache.get(id);if(known)paint(node,known.role);
-    if(node.isConnected)refresh(node);
-  }
-  function scan() {
-    scheduled=false;
-    const me=window.ErisAuth?.user;
-    if(me?.id){bind(document.querySelector('.profile .name h2'),me);document.querySelectorAll('[data-erischat-nickname]').forEach(node=>bind(node,me));}
-    document.querySelectorAll('[data-eris-role-user]').forEach(refresh);
-  }
-  function schedule(){if(!scheduled){scheduled=true;requestAnimationFrame(scan);}}
-  function revalidate(){document.querySelectorAll('[data-eris-role-user]').forEach(node=>request(node.dataset.erisRoleUser));}
-  new MutationObserver(records=>{
-    if(records.some(record=>record.type==='characterData'||record.type==='attributes'||[...record.addedNodes,...record.removedNodes].some(node=>!node.classList?.contains('eris-role-icon'))))schedule();
-  }).observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-eris-role-user']});
-  window.ErisRoleBadges={bind,register,refresh:revalidate};
-  window.addEventListener('erischat:event',event=>{const data=event.detail;if(data?.type==='role_badge_changed'&&data.user_id)update(String(data.user_id),data.admin_role);});
-  window.addEventListener('erischat:ws',event=>{if(event.detail?.state==='open')revalidate();});
-  window.addEventListener('erischat:auth',event=>{
-    if(event.detail?.state==='logged_out'){epoch++;cache.clear();queued.clear();document.querySelectorAll('[data-eris-role-user]').forEach(node=>paint(node,null));}
-    if(event.detail?.user){register(event.detail.user);schedule();revalidate();}
-  });
-  window.addEventListener('erischat:profile',event=>{register(event.detail);schedule();});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){schedule();revalidate();}});
-  setInterval(()=>{if(document.visibilityState==='visible'&&window.ErisAuth?.user)revalidate();},15000);
-  schedule();
+(()=>{'use strict';
+const ROLES=['SA','UA','FA','DA'],NAME='ErisChatYönetim',base=new URL('./role-icons/management-v1/',document.currentScript.src),cache=new Map(),queued=new Set(),bound=new WeakMap(),managed=new WeakSet();let scheduled=false,timer=null,busy=false,epoch=0;
+const idOf=u=>String(typeof u==='object'?u?.user_id||u?.id||'':u||''),normalize=r=>ROLES.includes(r)?r:null,skin=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
+function asset(key){if(!key||!String(key).includes('/role-icons/management-v1/'))return key;const file=String(key).split('/').at(-1).split('?')[0];return new URL(skin()+'/'+file,base).href;}
+function isStaff(user){return !!user&&(user.management_locked===true||!!normalize(user.admin_role));}
+function identity(role,data){return role?{...data,nickname:NAME,avatar:'💠',avatar_asset:'/role-icons/management-v1/light/avatar.png',frame_asset:'/role-icons/management-v1/light/frame.png',admin_role:role,management_locked:true,management_badges:ROLES}:data;}
+const style=document.createElement('style');style.id='eris-role-icons-style';style.textContent=`
+.eris-role-icon.eris-role-icon{display:inline-grid!important;grid-template-columns:repeat(2,1fr)!important;gap:0!important;position:static!important;width:3.6em!important;height:2.3em!important;min-width:3.6em!important;max-width:3.6em!important;flex:0 0 3.6em!important;margin:0 .3em 0 0!important;padding:0!important;vertical-align:middle!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;pointer-events:none!important}
+.eris-role-icon img{width:100%!important;height:100%!important;min-height:0!important;object-fit:contain!important;display:block!important}
+.seat-name .eris-role-icon{width:42px!important;min-width:42px!important;max-width:42px!important;height:26px!important;flex-basis:42px!important}
+.profile .name h2 .eris-role-icon{width:72px!important;min-width:72px!important;max-width:72px!important;height:44px!important;flex-basis:72px!important}
+.eris-management-name{overflow-wrap:anywhere;min-width:0}
+[data-eris-role-user]>.eris-admin-name-badge{display:none!important}
+#profile .profile.card.eris-management-profile{grid-template-columns:116px minmax(0,1fr)!important;gap:0 12px!important}
+#profile .profile.eris-management-profile .stage{width:116px!important;height:116px!important;min-width:116px!important;max-height:116px!important;overflow:visible!important}
+#profile .profile.eris-management-profile .stage .face{width:74px!important;height:74px!important;border:0!important;border-radius:50%!important;background-size:contain!important;background-color:var(--ui-panel,#fffaf0)!important}
+#profile .profile.eris-management-profile .stage .frameImg{width:116px!important;height:116px!important;max-width:116px!important;max-height:116px!important;object-fit:contain!important;display:block!important}
+#profile .profile.eris-management-profile .crown,#profile .profile.eris-management-profile [data-vip-card]{display:none!important}
+`;document.head.append(style);
+function themeAssets(){for(const im of document.querySelectorAll('img[src*="/role-icons/management-v1/"]')){const next=asset(im.getAttribute('src'));if(im.src!==next)im.src=next;}for(const node of document.querySelectorAll('[style*="/role-icons/management-v1/"]')){const old=node.style.backgroundImage,next=old.replace(/url\(["']?([^"')]+)["']?\)/g,(_,url)=>'url("'+asset(url)+'")');if(old!==next)node.style.backgroundImage=next;}}
+function paint(node,row){if(!node)return;const role=normalize(row?.role),data=row?.identity;let current=node.querySelector(':scope>.eris-role-icon');
+ if(!role){current?.remove();if(bound.has(node)||(managed.has(node)&&data?.nickname)){const name=data?.nickname||bound.get(node);node.replaceChildren(document.createTextNode(name||'Kullanıcı'));node.removeAttribute('title');bound.delete(node);}return;}
+ managed.add(node);if(!bound.has(node))bound.set(node,node.textContent.trim());
+ const caption=node.querySelector(':scope>.eris-management-name');if(!current||!caption||caption.textContent!==NAME||node.childNodes.length!==2){const badge=document.createElement('span');badge.className='eris-role-icon';badge.setAttribute('role','img');badge.setAttribute('aria-label','ErisChat Yönetim · SA UA FA DA');for(const rank of ROLES){const im=document.createElement('img');im.alt=rank;im.src=new URL(skin()+'/badge-'+rank.toLowerCase()+'.png',base).href;badge.append(im)}const text=document.createElement('span');text.className='eris-management-name';text.textContent=NAME;node.replaceChildren(badge,text);}node.title=NAME;
+}
+function update(id,role,data){const previous=cache.get(id),rank=normalize(role),known=identity(rank,data||previous?.identity);cache.set(id,{role:rank,identity:known,expires:Date.now()+15000,revision:(previous?.revision||0)+1});document.querySelectorAll('[data-eris-role-user]').forEach(n=>{if(n.dataset.erisRoleUser===id)paint(n,cache.get(id));});
+ if(String(window.ErisAuth?.user?.id)===id){if(known)Object.assign(window.ErisAuth.user,known);window.ErisAuth.user.admin_role=rank;window.ErisAuth.user.management_locked=!!rank;window.ErisChatCosmetics?.applyAppearance?.();}schedule();}
+function register(user){const id=idOf(user);if(id&&!cache.has(id)&&Object.prototype.hasOwnProperty.call(user||{},'admin_role'))cache.set(id,{role:normalize(user.admin_role),identity:identity(normalize(user.admin_role),user),expires:0,revision:0});}
+function request(id){if(!id||!window.ErisPlatform?.api||!window.ErisAuth?.getToken?.())return;queued.add(id);if(!timer&&!busy)timer=setTimeout(flush,60);}
+async function flush(){timer=null;if(busy||!queued.size)return;busy=true;const keys=[...queued].slice(0,100);keys.forEach(id=>queued.delete(id));const e=epoch,revisions=new Map(keys.map(id=>[id,cache.get(id)?.revision||0]));try{const result=await window.ErisPlatform.api('/role-badges?ids='+encodeURIComponent(keys.join(',')),{timeout:12000});if(e!==epoch)return;for(const id of keys)if((cache.get(id)?.revision||0)===revisions.get(id)&&Object.prototype.hasOwnProperty.call(result.badges||{},id))update(id,result.badges[id],result.identities?.[id]);}catch{for(const id of keys){const row=cache.get(id);if(row)row.expires=Date.now()+15000;else cache.set(id,{role:null,expires:Date.now()+15000,revision:0});}}finally{busy=false;if(queued.size&&!timer)timer=setTimeout(flush,60);}}
+function refresh(node){const id=node.dataset.erisRoleUser;if(!id){paint(node,null);return;}const row=cache.get(id);if(row)paint(node,row);if(!row||row.expires<=Date.now())request(id);}
+function bind(node,user){if(!node)return;const id=idOf(user);if(node.dataset.erisRoleUser!==id){paint(node,null);node.dataset.erisRoleUser=id;}register(typeof user==='object'?user:{});if(cache.has(id))paint(node,cache.get(id));if(node.isConnected)refresh(node);}
+function scan(){scheduled=false;const me=window.ErisAuth?.user;if(me?.id){bind(document.querySelector('.profile .name h2'),me);document.querySelectorAll('[data-erischat-nickname]').forEach(n=>bind(n,me));const profile=document.querySelector('.profile');profile?.classList.toggle('eris-management-profile',isStaff(me));if(isStaff(me)){const face=profile?.querySelector('.face'),frame=profile?.querySelector('.frameImg');if(face){const url='url("'+asset('/role-icons/management-v1/light/avatar.png')+'")';if(face.style.backgroundImage!==url)face.style.backgroundImage=url;}if(frame){const url=asset('/role-icons/management-v1/light/frame.png');if(frame.src!==url)frame.src=url;}}}document.querySelectorAll('[data-eris-role-user]').forEach(refresh);themeAssets();}
+function schedule(){if(!scheduled){scheduled=true;requestAnimationFrame(scan)}}
+function revalidate(){document.querySelectorAll('[data-eris-role-user]').forEach(n=>request(n.dataset.erisRoleUser))}
+new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-eris-role-user','src','style']});
+new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-eris-theme']});
+window.ErisStaffIdentity={isStaff,asset,NAME};window.ErisRoleBadges={bind,register,refresh:revalidate};
+addEventListener('erischat:event',e=>{const d=e.detail;if(d?.type==='role_badge_changed'&&d.user_id){update(String(d.user_id),d.admin_role,d.identity);if(!d.identity)request(String(d.user_id));window.ErisProfile?.refresh?.();window.ErisChatCosmetics?.load?.();}});
+addEventListener('erischat:ws',e=>{if(e.detail?.state==='open')revalidate()});
+addEventListener('erischat:auth',e=>{if(e.detail?.state==='logged_out'){epoch++;cache.clear();queued.clear();document.querySelectorAll('[data-eris-role-user]').forEach(n=>paint(n,null));}if(e.detail?.user){register(e.detail.user);schedule();revalidate()}});
+addEventListener('erischat:profile',e=>{register(e.detail);schedule()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){schedule();revalidate()}});setInterval(()=>{if(document.visibilityState==='visible'&&window.ErisAuth?.user)revalidate()},15000);schedule();
 })();

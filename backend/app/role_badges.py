@@ -19,5 +19,10 @@ def register_auth(current_user):
             raise HTTPException(400, "En fazla 100 kullanıcı sorgulanabilir.")
         rows = db.execute(select(AdminRole.user_id, AdminRole.role).where(AdminRole.user_id.in_(keys))).all()
         roles = {user_id: role for user_id, role in rows if role in VALID_ROLES}
-        return {"badges": {key: roles.get(key) for key in keys}}
+        people = db.execute(select(User.id, User.nickname, User.avatar, User.avatar_asset, User.frame_asset).where(User.id.in_(keys))).all()
+        identities = {row.id: {'nickname':row.nickname, 'avatar':row.avatar,
+            'avatar_asset':row.avatar_asset, 'frame_asset':row.frame_asset,
+            'admin_role':roles.get(row.id), 'management_locked':row.id in roles,
+            'management_badges':['SA','UA','FA','DA'] if row.id in roles else []} for row in people}
+        return {"badges": {key: roles.get(key) for key in keys}, "identities":identities}
     return router

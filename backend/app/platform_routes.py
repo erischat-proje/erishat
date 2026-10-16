@@ -141,6 +141,14 @@ def distance_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float
 def user_can_show_vip(db: Session, user_id: str, field: str) -> bool:
     privacy = db.get(UserPrivacy, user_id); return True if not privacy else not bool(privacy.hide_vip or getattr(privacy, field, False))
 def profile_stats(db: Session, target: User, viewer: User) -> dict:
+    from .staff_identity import role_for
+    if role_for(target):
+        return {'followers_count':0, 'following_count':0, 'received_gift_lidya':None,
+                'fans_hidden':True, 'gifts_hidden':True, 'relationship':None,
+                'gender':'unspecified', 'title_asset':None, 'profile_asset':None,
+                'vip_level':0, 'vip_badge_hidden':True, 'vip_neon_hidden':True,
+                'bio':'Resmî ErisChat Yönetim Hesabı', 'management_locked':True,
+                'management_badges':['SA','UA','FA','DA']}
     from .personal_fans import received_total
     from .relationship_routes import public_brief
     if active_ban(db, target.id):

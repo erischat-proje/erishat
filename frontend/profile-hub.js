@@ -146,6 +146,7 @@
           }catch(error){if(index===requestIndex)status.textContent=error.message||'Profil kaydedilemedi.'}
           finally{saving=false;if(index===requestIndex)refresh()}
         };
+        if(me.management_locked){for(const el of form.querySelectorAll('input,textarea,button'))el.disabled=true;status.textContent='Yönetim kimliği sabittir: ErisChatYönetim, ErisChat logosu ve yönetim çerçevesi kullanılır.';return;}
         const rename=document.createElement('form');rename.className='eph-rename-form';
         rename.innerHTML='<h3>Kullanıcı adını değiştir</h3><p>Yeni kullanıcı adın profilinde ve sohbetlerde görünür. Eris, Chat ve ErisChat içeren adlar kullanılamaz.</p><div class="eph-rename-price">Değişiklik ücreti <b>150 Lidya</b></div><label>Yeni kullanıcı adı<input data-nickname maxlength="32" autocomplete="nickname" required></label><label class="eph-rename-consent"><input type="checkbox" data-consent required><span>Değişiklik için 150 Lidya ödemeyi onaylıyorum.</span></label><button type="submit" data-rename>Kullanıcı adını değiştir · 150 Lidya</button><div data-rename-status role="status" aria-live="polite"></div>';
         body.append(rename);const nickname=rename.querySelector('[data-nickname]'),renameButton=rename.querySelector('[data-rename]'),renameStatus=rename.querySelector('[data-rename-status]');
