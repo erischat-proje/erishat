@@ -314,3 +314,18 @@ def test_role_list_includes_actual_profile_id_and_keeps_internal_api_id(env):
     row=next(r for r in rows if r['user_id']=='da');assert row['public_id']=='1000000003';assert row['role']=='DA';assert row['nickname']
     assert all(r['public_id'].isdigit() and len(r['public_id'])==10 for r in rows)
     for who in ['u','fa','ua','sa']:assert client.get('/v1/admin/roles',headers={'X-Test-User':who}).status_code==403
+
+def test_only_customer_uploads_receipt_and_credit_uses_it_automatically(env):
+    engine,_,call=env;id=connected(call)
+    assert call('da',f'/requests/{id}/credit-evidence')['photo_message_id'] is None
+    call('da',f'/requests/{id}/messages',{'message':'agent','photo':photo('blue'),'request_key':str(uuid4())},expect=403)
+    call('da',f'/requests/{id}/credit',{'transaction_reference':'AUTO-NO-PHOTO','verified':True},expect=422)
+    mid=send_photo(call,id)
+    assert call('da',f'/requests/{id}/credit-evidence')['photo_message_id']==mid
+    call('u',f'/requests/{id}/credit-evidence',expect=403)
+    call('da2',f'/requests/{id}/credit-evidence',expect=403)
+    result=call('da',f'/requests/{id}/credit',{'transaction_reference':'AUTO-PHOTO-123','verified':True});assert result['credited']
+    with Session(engine) as db:
+        operation=db.get(LidyaOperation,result['credit_operation_id']);stored=db.get(PaymentMessage,mid)
+        assert base64.b64decode(operation.evidence.split(',')[1])==stored.photo
+        assert db.get(User,'u').lidya==95
