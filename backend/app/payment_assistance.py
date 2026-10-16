@@ -17,7 +17,7 @@ from .models import User
 from .admin_models import AdminRole, AdminAuditLog
 from .purchase_models import LidyaOperation, LidyaOrder
 from . import purchase_routes as purchases
-from .payment_assistance_models import PaymentRequest, PaymentMessage, PaymentEvent, PaymentPresence
+from .payment_assistance_models import PaymentRequest, PaymentMessage, PaymentEvent, PaymentPresence, PaymentReview, PaymentReviewClosure
 
 router=APIRouter(prefix='/v1/payment-assistance',tags=['payment-assistance'])
 LIVE=('pending','connecting','chat','rejecting','finishing')
@@ -88,6 +88,24 @@ def recoverable(db,row):
 
 def summary(row,user_id=None):
     return {'id':row.id,'public_id':row.public_id,'nickname':row.nickname,'package_id':row.package_id,'price_try':row.price_try,'base':row.base,'bonus':row.bonus,'total':row.total,'status':row.status,'assigned_to':row.assigned_to,'agent_public_id':row.agent_public_id,'customer_ack':row.customer_ack,'agent_ack':row.agent_ack,'created_at':row.created_at,'accepted_at':row.accepted_at,'updated_at':row.updated_at,'closed_at':row.closed_at,'reason':row.reason,'credited':bool(row.credit_operation_id),'credit_operation_id':row.credit_operation_id,'own':row.user_id==user_id}
+
+def active_da_ids(db):
+    return set(db.scalars(select(AdminRole.user_id).join(User,User.id==AdminRole.user_id).where(AdminRole.role=='DA',User.is_active.is_(True))))
+
+def review_states(db,rows,user):
+    ids=[r.id for r in rows]
+    if not ids:return {}
+    required=active_da_ids(db)
+    reviews={rid:set() for rid in ids}
+    for rid,uid in db.execute(select(PaymentReview.request_id,PaymentReview.user_id).where(PaymentReview.request_id.in_(ids))):reviews[rid].add(uid)
+    closures={r.request_id:r for r in db.scalars(select(PaymentReviewClosure).where(PaymentReviewClosure.request_id.in_(ids)))}
+    numbers=dict(db.execute(select(PaymentEvent.request_id,func.min(PaymentEvent.id)).where(PaymentEvent.request_id.in_(ids),PaymentEvent.action=='requested').group_by(PaymentEvent.request_id)).all())
+    result={}
+    for r in rows:
+        closure=closures.get(r.id)
+        roster=set(json.loads(closure.required_da_ids)) if closure else required
+        result[r.id]={'transaction_number':numbers.get(r.id) or r.id,'reviewed':user.id in reviews[r.id],'reviewed_count':len(reviews[r.id]&roster),'required_count':len(roster),'review_archived':bool(closure),'can_review':r.status in TERMINAL and not closure}
+    return result
 
 def idle(db,user,row):
     other=db.scalar(select(PaymentRequest.id).where(PaymentRequest.assigned_to==user.id,PaymentRequest.status.in_(ASSIGNED),PaymentRequest.id!=row.id).limit(1))
@@ -383,11 +401,41 @@ def register_auth(current_user):
         row.status='rejected';row.reason=payload.reason;row.closed_at=now();event(db,row,user,'rejected',reason=payload.reason)
         note(db,row.user_id,'Ödeme isteğiniz reddedildi',payload.reason);commit(db);return summary(row,user.id)
 
+    @router.get('/admin/records')
+    def records_index(page:int=Query(1,ge=1,le=1_000_000),archive:bool=False,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user)
+        q=select(PaymentRequest)
+        if not archive:q=q.where(~select(PaymentReviewClosure.request_id).where(PaymentReviewClosure.request_id==PaymentRequest.id).exists())
+        total=int(db.scalar(select(func.count()).select_from(q.subquery())) or 0)
+        pages=max(1,(total+19)//20);page=min(page,pages)
+        rows=list(db.scalars(q.order_by(PaymentRequest.created_at.desc(),PaymentRequest.id.desc()).offset((page-1)*20).limit(20)))
+        states=review_states(db,rows,user)
+        return {'items':[{**summary(r,user.id),**states[r.id]} for r in rows],'total':total,'page':page,'page_size':20,'pages':pages,'archive':archive}
+
+    @router.post('/admin/records/{identifier}/review')
+    def review_record(identifier:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);row=get(db,identifier,True)
+        if row.status not in TERMINAL:raise HTTPException(409,'İnceleme onayı yalnızca tamamlanmış, reddedilmiş veya iptal edilmiş işlemlerde verilir.')
+        closure=db.get(PaymentReviewClosure,row.id)
+        if closure:return {**summary(row,user.id),**review_states(db,[row],user)[row.id]}
+        if not db.scalar(select(PaymentEvent.id).where(PaymentEvent.request_id==row.id,PaymentEvent.actor_id==user.id,PaymentEvent.action=='record_viewed').limit(1)):
+            raise HTTPException(409,'Önce ödeme kaydını ve konuşmayı açıp inceleyin.')
+        if not db.get(PaymentReview,(row.id,user.id)):
+            db.add(PaymentReview(request_id=row.id,user_id=user.id));flush(db)
+            event(db,row,user,'review_confirmed')
+        required=active_da_ids(db)
+        reviewed=set(db.scalars(select(PaymentReview.user_id).where(PaymentReview.request_id==row.id)))
+        if required and required<=reviewed:
+            db.add(PaymentReviewClosure(request_id=row.id,required_da_ids=json.dumps(sorted(required))))
+            event(db,row,user,'review_archived',reviewers=sorted(required))
+        commit(db)
+        return {**summary(row,user.id),**review_states(db,[row],user)[row.id]}
+
     @router.get('/admin/records/{identifier}')
     def record(identifier:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
         require_da(db,user);row=get(db,identifier);event(db,row,user,'record_viewed');commit(db)
         operation=db.get(LidyaOperation,row.credit_operation_id) if row.credit_operation_id else None
-        return {**summary(row,user.id),'transaction_reference':row.transaction_reference,'operation':purchases.operation_view(operation) if operation else None}
+        return {**summary(row,user.id),**review_states(db,[row],user)[row.id],'transaction_reference':row.transaction_reference,'operation':purchases.operation_view(operation) if operation else None}
 
     @router.get('/admin/records/{identifier}/messages')
     def archive_messages(identifier:str,after:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -417,5 +465,6 @@ def photo_response(db,row,message_id):
     except (OSError,ValueError,SyntaxError,Image.DecompressionBombError) as exc:
         raise HTTPException(422,'Kaydedilmiş fotoğraf okunamıyor. Asıl dekontu yeniden gönderin.') from exc
     return Response(msg.photo,media_type='image/jpeg',headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Disposition':'inline; filename="dekont.jpg"'})
+
 
 
