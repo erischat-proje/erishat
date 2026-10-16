@@ -67,3 +67,17 @@ _live="status IN ('pending','connecting','chat','rejecting','finishing')"
 _assigned="assigned_to IS NOT NULL AND status IN ('connecting','chat','rejecting','finishing')"
 Index('uq_payment_assistance_live_customer',PaymentRequest.user_id,unique=True,postgresql_where=text(_live),sqlite_where=text(_live))
 Index('uq_payment_assistance_busy_da',PaymentRequest.assigned_to,unique=True,postgresql_where=text(_assigned),sqlite_where=text(_assigned))
+
+
+
+class PaymentReview(Base):
+    __tablename__='payment_assistance_reviews'
+    request_id: Mapped[str]=mapped_column(ForeignKey('payment_assistance_requests.id'),primary_key=True)
+    user_id: Mapped[str]=mapped_column(ForeignKey('users.id'),primary_key=True)
+    reviewed_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())
+
+class PaymentReviewClosure(Base):
+    __tablename__='payment_assistance_review_closures'
+    request_id: Mapped[str]=mapped_column(ForeignKey('payment_assistance_requests.id'),primary_key=True)
+    required_da_ids: Mapped[str]=mapped_column(Text)
+    archived_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())

@@ -114,7 +114,7 @@ async function action(a,me,p){try{
 async function showActionForm(actionKey,me,p){
  const body=p.querySelector('#eaBody'),titles={calls:'Arama sorgu',lookup:'Kullanıcı ID sorgu',lidya:'Lidya işlemleri',vip:'VIP seviyesi',ban:'Kullanıcı Ban',roomban:'Oda Ban',chatban:'CHAT/DM BAN',roles:'Yönetici rolleri',gaps:'Uygulama geri bildirimi'};
  body.replaceChildren();const title=document.createElement('h3');title.textContent=titles[actionKey];body.append(title);
- if(actionKey==='roles'){try{const rows=await req('/v1/admin/roles');const list=document.createElement('div');list.className='eris-admin-grid';for(const r of rows){const card=document.createElement('div');card.className='eris-admin-card';card.textContent=r.user_id+' • '+r.role+(r.ghost_mode?' • Ghost':'');list.append(card)}body.append(list)}catch(e){const err=document.createElement('div');err.className='eris-admin-card';err.textContent=e.message;body.append(err)}}
+ if(actionKey==='roles'){try{const rows=await req('/v1/admin/roles');const list=document.createElement('div');list.className='eris-admin-grid';for(const r of rows){const card=document.createElement('div');card.className='eris-admin-card';card.textContent=(r.public_id?'ID: '+r.public_id:'Profil ID bulunamadı')+' • '+r.role+(r.ghost_mode?' • Ghost':'')+(r.nickname?' • '+r.nickname:'');card.dataset.profileId=String(r.public_id||'');list.append(card)}body.append(list)}catch(e){const err=document.createElement('div');err.className='eris-admin-card';err.textContent=e.message;body.append(err)}}
  const form=document.createElement('form');form.className='ea-form';form.style.cssText='display:grid;gap:10px;margin-top:12px';
  const fields={
    lookup:[['id','Kullanıcı ID veya 10 haneli profil ID','text']],
@@ -185,6 +185,7 @@ async function boot(){window.ErisAdmin.clear();try{const me=await req('/v1/admin
 if(document.readyState==='complete')setTimeout(boot,350);else window.addEventListener('load',()=>setTimeout(boot,350),{once:true});
 window.addEventListener('erischat:auth',()=>setTimeout(boot,150));
 })();
+
 
 
 

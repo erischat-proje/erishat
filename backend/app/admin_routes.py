@@ -516,9 +516,10 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     @router.get("/roles")
     def roles(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA")
-        rows=db.scalars(select(AdminRole).order_by(AdminRole.created_at)).all()
+        rows=db.execute(select(AdminRole,User).join(User,User.id==AdminRole.user_id).order_by(AdminRole.created_at,AdminRole.user_id)).all()
         record("role", "admin_roles_list_view", admin_id=user.id, admin_nickname=user.nickname, count=len(rows))
-        return [{"user_id":r.user_id,"role":r.role,"ghost_mode":r.ghost_mode,"created_at":r.created_at} for r in rows]
+        return [{"user_id":r.user_id,"public_id":account.public_id,"nickname":account.nickname,"role":r.role,"ghost_mode":r.ghost_mode,"created_at":r.created_at} for r,account in rows]
+
 
     @router.put("/roles")
     @database_task
@@ -554,3 +555,4 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         return {"removed":True}
 
     return router
+

@@ -24,7 +24,7 @@ from app.admin_models import AdminRole,AdminAuditLog,FaActionLog
 from app.room_models import Room
 from app.platform_models import Notification
 from app.purchase_models import PaymentSettings,LidyaOrder,LidyaOperation,LidyaPurchaseMessage
-from app.payment_assistance_models import PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence
+from app.payment_assistance_models import PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence,PaymentReview,PaymentReviewClosure
 from app import payment_assistance as pa,purchase_routes as legacy,system_data
 @compiles(BigInteger,'sqlite')
 def sqlite_bigint(type_,compiler,**kw):return 'INTEGER'
@@ -36,7 +36,14 @@ def auth(x_test_user:str|None=Header(None),authorization:str|None=Header(None),d
     if not user or not user.is_active:raise HTTPException(401,'Geçersiz oturum')
     return user
 app=FastAPI();pa.register_auth(auth);legacy.register_auth(auth);app.include_router(pa.router);app.include_router(legacy.router)
-tables=[m.__table__ for m in [User,Room,AdminRole,AdminAuditLog,FaActionLog,Notification,PaymentSettings,LidyaOrder,LidyaOperation,LidyaPurchaseMessage,PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence,system_data.LidyaLedger]]
+# Exercise the production role-list handler with the real User/AdminRole join.
+import ast
+roles_node=next(n for n in ast.walk(ast.parse((ROOT/'backend/app/admin_routes.py').read_text())) if isinstance(n,ast.FunctionDef) and n.name=='roles')
+roles_node.decorator_list=[]
+roles_ns=dict(Session=Session,Depends=Depends,get_db=get_db,User=User,AdminRole=AdminRole,current_user_dependency=auth,select=select,record=lambda *a,**kw:None,require_role=lambda db,user,role:pa.require_da(db,user))
+exec(compile(ast.Module(body=[roles_node],type_ignores=[]),'production-role-list','exec'),roles_ns)
+app.add_api_route('/v1/admin/roles',roles_ns['roles'],methods=['GET'])
+tables=[m.__table__ for m in [User,Room,AdminRole,AdminAuditLog,FaActionLog,Notification,PaymentSettings,LidyaOrder,LidyaOperation,LidyaPurchaseMessage,PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence,PaymentReview,PaymentReviewClosure,system_data.LidyaLedger]]
 @pytest.fixture
 def env(tmp_path):
     url=os.environ.get('PAYMENT_TEST_DATABASE') or 'sqlite:///'+str(tmp_path/'payments.db')
@@ -249,3 +256,61 @@ def test_old_saved_white_receipt_shows_reupload_error(env):
     out=BytesIO();Image.new('RGB',(100,200),'white').save(out,'JPEG')
     with Session(engine) as db:db.get(PaymentMessage,mid).photo=out.getvalue();db.commit()
     for who in ['u','da']:assert 'boş/beyaz' in call(who,f'/requests/{id}/photos/{mid}',expect=422)['detail']
+
+def test_all_da_reviews_required_before_hiding_but_archive_retains_everything(env):
+    engine,_,call=env;id=connected(call);photo_id=send_photo(call,id)
+    call('da',f'/requests/{id}/begin-rejection',{});call('da',f'/requests/{id}/reject',{'reason':'Banka hareketi doğrulanamadı.'})
+    call('da',f'/admin/records/{id}/review',{},expect=409) # Must open first.
+    for who in ['u','fa','ua','sa']:
+        call(who,'/admin/records',expect=403);call(who,f'/admin/records/{id}/review',{},expect=403)
+    initial=call('da','/admin/records');assert initial['total']==1;number=initial['items'][0]['transaction_number'];assert number
+    call('da',f'/admin/records/{id}');state=call('da',f'/admin/records/{id}/review',{})
+    assert state['reviewed'] and state['reviewed_count']==1 and state['required_count']==2 and not state['review_archived']
+    assert call('da','/admin/records')['total']==1
+    call('da',f'/admin/records/{id}/review',{})
+    with Session(engine) as db:assert db.scalar(select(func.count()).select_from(PaymentReview))==1
+    call('da2',f'/admin/records/{id}');state=call('da2',f'/admin/records/{id}/review',{})
+    assert state['review_archived'];assert call('da','/admin/records')['total']==0
+    archive=call('da','/admin/records?archive=true');assert archive['total']==1;assert archive['items'][0]['transaction_number']==number
+    assert call('da2',f'/admin/records/{id}/photos/{photo_id}').status_code==200
+    assert call('da2',f'/admin/records/{id}/messages')['items'][0]['has_photo']
+    with Session(engine) as db:
+        assert db.scalar(select(func.count()).select_from(PaymentEvent).where(PaymentEvent.action=='review_confirmed'))==2
+        assert db.scalar(select(func.count()).select_from(PaymentReviewClosure))==1
+        assert db.scalar(select(func.count()).select_from(AdminAuditLog).where(AdminAuditLog.action=='payment_review_archived'))==1
+        # Archived records do not reappear if another DA is appointed later.
+        db.add(AdminRole(user_id='w',role='DA',ghost_mode=False));db.commit()
+    assert call('w','/admin/records')['total']==0
+    assert call('w','/admin/records?archive=true')['total']==1
+
+def test_review_index_twenty_per_page_stable_numbers_and_no_missing_records(env):
+    engine,_,call=env
+    with Session(engine) as db:
+        for n in range(43):
+            row=PaymentRequest(id=str(uuid4()),user_id='u',public_id='1000000000',nickname='u',request_key=str(uuid4()),package_id=1,price_try=7,base=300,bonus=99,total=399,status='cancelled',reason='',customer_ack=False,agent_ack=False,customer_read=0,agent_read=0,created_at=datetime(2026,1,1,tzinfo=timezone.utc)+timedelta(seconds=n))
+            db.add(row);db.flush();db.add(PaymentEvent(request_id=row.id,actor_id='u',actor_public_id='1000000000',action='requested',details='{}'))
+        db.commit()
+    pages=[call('da','/admin/records?page='+str(n)) for n in [1,2,3]]
+    assert [len(p['items']) for p in pages]==[20,20,3]
+    assert all(p['pages']==3 and p['total']==43 and p['page_size']==20 for p in pages)
+    ids=[r['id'] for p in pages for r in p['items']];numbers=[r['transaction_number'] for p in pages for r in p['items']]
+    assert len(set(ids))==43 and len(set(numbers))==43
+    assert call('da','/admin/records?page=999')['page']==3
+    call('da','/admin/records?page=0',expect=422)
+
+def test_live_record_cannot_be_reviewed_and_inactive_roles_not_required(env):
+    engine,_,call=env;r=new(call);id=r['id'];call('da',f'/admin/records/{id}')
+    call('da',f'/admin/records/{id}/review',{},expect=409)
+    call('u',f'/requests/{id}/cancel',{})
+    with Session(engine) as db:db.get(User,'da2').is_active=False;db.commit()
+    call('da',f'/admin/records/{id}');state=call('da',f'/admin/records/{id}/review',{})
+    assert state['review_archived'] and state['required_count']==1
+
+
+def test_role_list_includes_actual_profile_id_and_keeps_internal_api_id(env):
+    _,client,_=env
+    response=client.get('/v1/admin/roles',headers={'X-Test-User':'da'});assert response.status_code==200
+    rows=response.json();assert len(rows)==5
+    row=next(r for r in rows if r['user_id']=='da');assert row['public_id']=='1000000003';assert row['role']=='DA';assert row['nickname']
+    assert all(r['public_id'].isdigit() and len(r['public_id'])==10 for r in rows)
+    for who in ['u','fa','ua','sa']:assert client.get('/v1/admin/roles',headers={'X-Test-User':who}).status_code==403

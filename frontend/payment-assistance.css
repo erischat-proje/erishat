@@ -35,3 +35,11 @@ html body .pa-overlay img.pa-receipt-image[hidden],html body .pa-overlay .pa-sel
 html body .pa-overlay .pa-selected-photo{border:1px solid var(--ui-line);border-radius:12px;padding:10px;margin:10px 0;background:var(--ui-raised)}
 html body .pa-overlay img.pa-selected-image{max-height:240px!important;object-fit:contain!important}
 .pa-selected-photo b,.pa-selected-photo small{display:block;font-size:11px;margin:6px 0;color:var(--ui-ink)}
+
+
+html body .pa-overlay.pa-records-window{padding:0!important;align-items:stretch!important}
+html body .pa-overlay.pa-records-window .pa-dialog{width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;border-radius:0!important;border:0!important}
+html body .pa-records-window .pa-body{padding:16px max(12px,calc((100% - 900px)/2))!important}
+.pa-record-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.pa-record-summary{flex:1;min-width:180px;font-size:12px;color:var(--ui-muted)}
+.pa-record-buttons{display:flex;flex-direction:column;gap:8px}.pa-overlay .pa-record-button{display:block!important;width:100%!important;text-align:left!important;padding:14px!important;border-radius:13px!important;min-height:66px!important;overflow-wrap:anywhere}
+.pa-record-button b{display:block;font-size:14px}.pa-record-button small{display:block;font-size:11px;color:var(--ui-muted);line-height:1.5;margin-top:4px}.pa-record-pages{display:flex;align-items:center;justify-content:center;gap:12px;padding:18px 0}.pa-record-pages span{font-size:12px;white-space:nowrap}.pa-record-review{border-top:1px solid var(--ui-line);padding-top:14px;margin-top:18px}.pa-record-review p{font-size:12px;line-height:1.6}.pa-record-review button{width:100%}.pa-overlay button:disabled{opacity:.6;cursor:default}

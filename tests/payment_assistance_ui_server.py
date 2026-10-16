@@ -22,6 +22,16 @@ def admin_me(user=Depends(t.auth),db=Depends(t.get_db)):
 @app.get('/v1/admin/ban-requests')
 @app.get('/v1/admin/ban-appeals')
 def empty(user=Depends(t.auth)):return []
+@app.post('/fixture/seed-records')
+def seed_records():
+ from uuid import uuid4
+ from datetime import datetime,timezone,timedelta
+ with t.Session(engine) as db:
+  for n in range(43):
+   row=t.PaymentRequest(id=str(uuid4()),user_id='w',public_id='1000000002',nickname='w',request_key=str(uuid4()),package_id=1,price_try=7,base=300,bonus=99,total=399,status='cancelled',reason='',customer_ack=False,agent_ack=False,customer_read=0,agent_read=0,created_at=datetime(2026,1,1,tzinfo=timezone.utc)+timedelta(seconds=n))
+   db.add(row);db.flush();db.add(t.PaymentEvent(request_id=row.id,actor_id='w',actor_public_id='1000000002',action='requested',details='{}'))
+  db.commit()
+ return {'ok':True}
 app.mount('/',StaticFiles(directory=str(root)),name='fixture-files')
 if __name__=='__main__':
  import uvicorn
