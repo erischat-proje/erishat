@@ -1,0 +1,61 @@
+ERISCHAT — SON DURUM
+Tarih: 2026-09-16
+
+KALDIĞIMIZ NOKTA
+- Kullanıcı yarın devam edecek.
+- Kullanıcı v53'ü kontrol ettiğinde yine eski menünün kaldığını söyledi.
+- Sorun kullanıcı/Termux kaynaklı kabul edilmemeli; v53 mimarisi yanlış.
+
+TEKNİK TEŞHİS
+- v52/v53 yaklaşımı erischat-v35.html'yi iframe içine alıp sonradan iframe DOM'una müdahale ediyor.
+- v52 dosyası hâlâ `iframe src="./erischat-v35.html?..."` kullanıyor.
+- v35'in kendi eski `.nav` menüsü iframe içinde gerçek uygulama olarak kalıyor. Üst wrapper'da eklenen/oynanan katman, eski uygulamanın temel mimarisini gerçekten değiştirmiyor.
+- Aynı origin iframe DOM erişimi teknik olarak mümkün olsa da bu proje için doğru mimari değil; iframe ekstra bir sayfa instance'ı ve ayrı DOM/CSS/JS yönetimi getiriyor.
+- Yarın yapılacak çözüm: yeni bir iframe wrapper eklemek yerine ErisChat'in gerçek ana HTML'ini tek sayfada sürdürmek veya v35'i doğrudan kopyalayıp kontrollü şekilde düzenlemek.
+
+MEVCUT SÜRÜMLER
+- v35: mevcut stabil ana uygulama UI tabanı.
+- v50: iframe ile v35'i doğrudan gösteren stabil preview.
+- v51/v52: premium profil/avatar/VIP frame denemeleri; kullanıcı istediği sonucu vermedi.
+- v53: son deneme; kullanıcı eski menünün hâlâ göründüğünü bildirdi. Final kabul edilmeyecek.
+
+KULLANICI TASARIM BEKLENTİSİ
+- Ana ErisChat tema/görüntüsü korunacak.
+- Alt navigasyonda eski menü ile yeni menü üst üste binmeyecek.
+- Ekstra ayrı profil butonu istemiyor; mevcut Profil menüsü kullanılacak.
+- Avatarlar geometrik/emoji/çocukça görünmeyecek; doğal/gerçek portre görünümü tercih ediliyor.
+- VIP çerçeveler gerçek dekoratif SVG/PNG katmanı gibi görünmeli; neon spam ve basit CSS border yaklaşımı final değil.
+- İstenen premium öğeler: Altın Taç, Gül Kraliyet, Ejderha Efsanesi, Krom Hanedan, Ay Kanadı vb.
+- 10.000.000 Lidyum ve anonim profil mantığı korunacak.
+
+VIP REFERANS GÖRSELLERİ — 2026-09-16
+- Kullanıcının gönderdiği iki örnek, hedef kalite standardını netleştirdi: VIP avatar ve VIP çerçeve AYRI varlıklar olarak hazırlanmalı.
+- Avatar: tam, yüksek çözünürlüklü karakter/portre görseli; kendi dairesel sunum alanı içinde güçlü ışık, detaylı zırh/karakter, premium oyun estetiği. Avatar çerçeveden ayrı dosya olacak.
+- Çerçeve: merkez kısmı TRANSPARAN, yalnızca dış dekoratif halka/kanatlar/taç/taşlar/ışıltılar ve alt seviye etiketi gibi dekoratif öğeler bulunacak. Avatar sonradan bu şeffaf merkezden görünecek.
+- Çerçeve avatarı ezmeyecek veya arka planı kapatmayacak; katman olarak avatarın üstünde çalışacak.
+- Her VIP seviye için ayrı avatar + ayrı frame asset mantığı kullanılacak. Örnekler: VIP 1 Void Walker ve VIP 12 Void Monarch.
+- VIP 1 ile VIP 12 arasında aynı temel silüeti kopyalamak yerine seviye arttıkça detay, taş, ışık, kanat/taç, metal işleme ve görsel ihtişam artacak.
+- Görsel dil: koyu void/galaksi arka planı, mor-mavi enerji, gümüş/altın metal, kristal taşlar, kontrollü ışık parlamaları. Neon renk karmaşası ve basit CSS border FINAL DEĞİL.
+- Küçük profil ikonunda bile ana silüet ve çerçeve okunabilir kalmalı; bu yüzden aşırı ince detaylardan kaçınılacak.
+- Web entegrasyonunda frame asset'i SVG/PNG olarak gerçek şeffaf katman şeklinde kullanılacak. SVG, ölçeklenebilir dekoratif çizimler için uygundur; şeffaflık ve ayrı katman yapısı korunmalı.
+- Kullanıcı henüz standart (normal/VIP olmayan) avatar + çerçeve referanslarını göndermedi. Standart referanslar geldiğinde aynı analiz yapılacak ve VIP + standart asset spesifikasyonu birlikte kesinleştirilecek.
+
+TERMUX PREVIEW
+cd ~/ErisChat
+git pull
+python -m http.server 8080 --bind 127.0.0.1
+Chrome: http://127.0.0.1:8080/?v=53
+
+YARIN İLK YAPILACAKLAR
+1. v53'ü final kabul etme.
+2. v35'i doğrudan temel al ve tek sayfa mimarisine geç.
+3. Eski `.nav` sistemini gerçekten değiştir; iframe/overlay ile gizlemeye çalışma.
+4. Premium profil ekranını doğrudan uygulamanın kendi DOM'una entegre et.
+5. VIP frame SVG/PNG'lerini gerçek avatar katmanı olarak entegre et.
+6. Kullanıcının standart avatar + frame referanslarını aldıktan sonra standart asset kurallarını da yaz.
+7. VIP 1–12 asset sistemini ayrı avatar/frame çiftleri şeklinde planla.
+8. Termux'ta temiz cache ile test et.
+9. Sonra GitHub'a tek, temiz bir sürüm gönder ve kaldığımız noktayı tekrar bu dosyaya yaz.
+
+NOT
+- Kullanıcı şu an uyumaya gidiyor; yarın "devam" dediğinde bu dosyadan ve mevcut repo durumundan devam edilmeli.

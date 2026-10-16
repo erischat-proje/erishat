@@ -1,0 +1,44 @@
+ERISCHAT — GECE CHECKPOINT
+Tarih: 2026-09-17
+
+ANA REPO
+- GitHub: semihvarolymk-png/erischat
+- Ana branch: main
+- Main güvenli checkpoint: aef369bf05d1a6b6af36ce40cd2f9bb41678d339
+- Az önceki yanlışlıkla frontend'i kısaltan 9f38e9... commit'i main'den geri alındı; frontend tekrar tam hâline döndürüldü.
+
+RAILWAY
+- Project: 185cf207-2fbb-4a23-a484-afc79d07252d
+- Backend service: erischat / bbc16ea0-367d-4ba6-aa53-f3393845b5b0
+- Doğrulanmış backend domain: https://erischat-production.up.railway.app
+- Railway'e bu oturumda yeni deploy YAPILMADI.
+
+ROOM/GIFT DURUMU
+- Server kontrollü hediye kataloğu ve sabit fiyatlar mevcut.
+- Client artık unit_price/recipient_percent gönderemiyor.
+- Alıcı payı server tarafında %70.
+- Tek gönderim quantity 1–99.
+- 30 Lidya ve üzeri toplam gönderim için animation true.
+- Başarılı hediye sonrası room_gift WebSocket broadcast mevcut.
+- /ws/rooms/{room_id}?token=... endpoint'i mevcut.
+- frontend/gift-live.js canlı room_gift dinleme ve oda join sonrası socket açma içeriyor.
+
+GITHUB PAGES
+- gh-pages branch eski commit'teydi; a0f2595181458b967f7e79c6e5aacfc2b04fee83 commit'ine force-update edildi.
+- gh-pages/index.html canlı frontend'e yönlendiriyor.
+- gh-pages/frontend/gift-live.js mevcut.
+- Ana Pages workflow: .github/workflows/pages.yml mevcut.
+- load-cosmetics-frontend.yml sorun çıkaran otomatik workflow kaldırıldı.
+- Pages için main push'ta workflow run oluşuyor fakat son run 35164844898 job oluşmadan failure oldu. Bu yüzden Pages'in gerçekten deploy olduğu henüz doğrulanmış değil.
+
+ŞU ANDA TAM OLARAK KALDIĞIMIZ NOKTA
+1. GitHub Actions/Pages tarafındaki job'suz failure nedenini çözmek.
+2. Pages canlı yayınını doğrulamak.
+3. Frontend API/WS adreslerini güvenli biçimde bağlamak; erischat-production.up.railway.app artık doğrulanmış domain.
+4. Frontend'i asla kısmi içerikle update_file ile ezme; büyük HTML dosyasında yalnızca tam dosya içeriğiyle güvenli değişiklik yap.
+5. Railway deploy için kullanıcı açıkça deploy demeden deploy yapma.
+6. Gerçek iki kullanıcı smoke testini henüz yapmadık.
+
+SONRAKİ OTURUM BAŞLANGICI
+- Kullanıcı 'devam' dediğinde bu checkpoint'i oku ve önce Pages/Actions sorunundan devam et.
+- Kullanıcıdan projeyi tekrar anlatmasını isteme.

@@ -1,0 +1,12 @@
+[
+  "backend/app/uno_engine.py",
+  "backend/app/uno_live.py",
+  "backend/tests/test_uno_live.py",
+  "frontend/erischat-main.html",
+  "frontend/room-uno.css",
+  "frontend/room-uno.js",
+  "frontend/tests/room-uno.test.cjs",
+  "docs/uno-bahis-v2.md",
+  "docs/uno-bahis-v2-dosyalar.json",
+  "docs/uno-bahis-v2-pr.md"
+]

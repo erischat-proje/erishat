@@ -1,0 +1,28 @@
+{
+  "roundHitFrequency": 0.2749965,
+  "netProfitFrequency": 0.129516,
+  "mode": "ante",
+  "samples": 2000000,
+  "seed": 26101621,
+  "rtp": 0.961813979998866,
+  "ci95": [
+    0.9483595209311351,
+    0.9752684390665969
+  ],
+  "paid_spin_hit": 0.2749965,
+  "bonus_frequency": 0.0044265,
+  "free_spins": 140035,
+  "max_observed_x": 5000.0,
+  "cap_count": 1,
+  "target_rtp": 0.965,
+  "note": "Monte Carlo estimate; not certified RTP. Includes full bonuses, retriggers, global pool and cap.",
+  "game": "dede",
+  "certified": false,
+  "modelVersion": "dede-v1",
+  "source_sha256": {
+    "backend/app/dede_engine.py": "b7f20eba5c192a7b835794df8025d20c18b52cab5df3459f71d50be744b2ec5b",
+    "backend/app/dede-math.json": "53b29a8f3ab01dbbb24081d02309ccfd438eab8b0f5afac6a31ef6a6336a43e0",
+    "tests/prenses_simulate.py": "7be0c8d6f1abee6dc9ec95469e93f8405d94db4c501889c306e5288275ada2f1",
+    "tests/game_math_audit.py": "8a639e1c1df4a866287c2319dc0131b968c5d9992ded98aecce19d10dc5b3b38"
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "targetRtp": 0.9656,
+  "calibration": "simulation-estimate-not-certified",
+  "paytable": [
+    [
+      3,
+      6,
+      13,
+      26
+    ],
+    [
+      3,
+      6,
+      13,
+      26
+    ],
+    [
+      4,
+      8,
+      16,
+      33
+    ],
+    [
+      4,
+      8,
+      16,
+      33
+    ],
+    [
+      4,
+      10,
+      20,
+      40
+    ],
+    [
+      6,
+      16,
+      40,
+      132
+    ],
+    [
+      6,
+      20,
+      53,
+      198
+    ],
+    [
+      8,
+      26,
+      66,
+      264
+    ],
+    [
+      13,
+      46,
+      132,
+      660
+    ],
+    [
+      20,
+      79,
+      264,
+      2000
+    ]
+  ],
+  "weights": [
+    25,
+    24,
+    23,
+    21,
+    20,
+    11,
+    9,
+    7,
+    5,
+    3
+  ],
+  "bonusWeights": [
+    25,
+    24,
+    23,
+    21,
+    20,
+    11,
+    9,
+    7,
+    5,
+    3
+  ],
+  "heightWeights": [
+    25,
+    25,
+    20,
+    15,
+    10,
+    5
+  ],
+  "bonusHeightWeights": [
+    10,
+    15,
+    20,
+    25,
+    20,
+    10
+  ],
+  "wildRate": 0.006,
+  "bonusWildRate": 0.01,
+  "retrigger": 0.015,
+  "scatterTriggerCounts": [
+    980,
+    18,
+    1,
+    1
+  ],
+  "scatterCounts": [
+    60,
+    32,
+    8
+  ],
+  "wheelSpinWeights": [
+    40,
+    25,
+    15,
+    10,
+    6,
+    2,
+    2
+  ],
+  "wheelMultiplierWeights": [
+    50,
+    25,
+    12,
+    6,
+    3,
+    2,
+    1,
+    1
+  ],
+  "buyWheelSpinWeights": [
+    50,
+    22,
+    12,
+    7,
+    4,
+    3,
+    2
+  ],
+  "buyWheelMultiplierWeights": [
+    58,
+    24,
+    10,
+    4,
+    1,
+    1,
+    1,
+    1
+  ],
+  "buyCost": 100,
+  "maxWin": 5000,
+  "scatterRate": 0.4,
+  "baseScatterCountWeights": [
+    79574,
+    19890,
+    525,
+    9,
+    1,
+    1
+  ],
+  "anteHeightWeights": [
+    24,
+    25,
+    20,
+    15,
+    10,
+    6
+  ]
+}

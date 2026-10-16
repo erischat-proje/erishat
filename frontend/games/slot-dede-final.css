@@ -1,0 +1,51 @@
+/* These are full pages. Do not decorate their outer shells as popup cards. */
+html body :is(#lidyaSlotFinal#lidyaSlotFinal,#erisDedeModal#erisDedeModal).gv-fit.gv-fit.gv-fit {
+  display:flex!important;align-items:stretch!important;justify-content:stretch!important;
+  margin:0!important;border:0!important;border-image:none!important;border-radius:0!important;
+  padding:0!important;box-shadow:none!important;backdrop-filter:none!important;
+  background:var(--sf-bg,var(--dd-panel,#fffaf0))!important;transform:none!important;
+}
+html body :is(#lidyaSlotFinal#lidyaSlotFinal,#erisDedeModal#erisDedeModal).gv-fit.gv-fit.gv-fit .gv-shell.gv-shell {
+  flex:1 0 100%!important;width:100%!important;max-width:none!important;height:100%!important;max-height:100%!important;
+  border:0!important;border-image:none!important;box-shadow:none!important;border-radius:0!important;
+  margin:0!important;transform:none!important;padding: max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+}
+html body #lidyaSlotFinal#lidyaSlotFinal.gv-fit.gv-fit .sf-panel header {
+  display:flex!important;flex:0 0 auto!important;min-height:44px!important;height:auto!important;
+}
+html body #lidyaSlotFinal#lidyaSlotFinal .sf-scene {
+  border:0!important;box-shadow:none!important;border-radius:0!important;min-height:220px!important;
+  flex:1 0 auto!important;padding:12px 8px!important;
+}
+html body #lidyaSlotFinal#lidyaSlotFinal .sf-scene h1{margin:4px 0 12px!important}
+html body #lidyaSlotFinal#lidyaSlotFinal .sf-reels{width:min(100%,720px);margin:0 auto}
+html body #lidyaSlotFinal#lidyaSlotFinal .sf-reel{aspect-ratio:1!important}
+html body #lidyaSlotFinal#lidyaSlotFinal .sf-bet{border:0!important;border-top:1px solid var(--sf-line)!important;border-radius:0!important}
+html body #lidyaSlotFinal#lidyaSlotFinal .sf-history{max-height:66px!important}
+html body #erisDedeModal#erisDedeModal.gv-fit.gv-fit.gv-fit .dd-hero {
+  display:flex!important;flex:0 0 138px!important;height:138px!important;min-height:138px!important;
+  max-height:138px!important;padding:14px!important;border:0!important;border-radius:0!important;
+  background:radial-gradient(ellipse at 82% 70%,#e8bb5660,transparent 65%)!important;
+  box-shadow:none!important;overflow:hidden!important;
+}
+html body #erisDedeModal#erisDedeModal .dd-hero>div{width:55%!important;align-self:center}
+html body #erisDedeModal#erisDedeModal .dd-hero h1{font-size:36px!important;line-height:1.1!important}
+html body #erisDedeModal#erisDedeModal .dd-hero p{font-size:11px!important;line-height:1.4!important;white-space:normal}
+html body #erisDedeModal#erisDedeModal .dd-actor {
+  display:block!important;visibility:visible!important;opacity:1!important;right:0!important;bottom:0!important;
+  width:46%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;
+  animation:none!important;filter:drop-shadow(0 4px 8px #a56b2528);
+}
+html body #erisDedeModal#erisDedeModal .dd-hero[data-actor=cast] .dd-actor{filter:drop-shadow(0 0 10px #ffda66)}
+html body #erisDedeModal#erisDedeModal .dd-stage{background:transparent!important}
+@media(min-width:700px){html body #erisDedeModal#erisDedeModal .dd-hero>div{width:65%!important}html body #erisDedeModal#erisDedeModal .dd-actor{width:35%!important}}
+@media(max-height:650px){
+  html body #erisDedeModal#erisDedeModal.gv-fit.gv-fit.gv-fit .dd-hero{flex-basis:110px!important;height:110px!important;min-height:110px!important;max-height:110px!important}
+  html body #lidyaSlotFinal#lidyaSlotFinal .sf-scene{min-height:190px!important}
+}
+@media(prefers-reduced-motion:reduce){html body #erisDedeModal .dd-actor{animation:none!important;transition:none!important}}
+/* A thrown multiplier travels from Dede's hand to the actual result cell. */
+#erisDedeModal .dd-throw-projectile{position:absolute;z-index:75;width:48px;height:48px;pointer-events:none;filter:drop-shadow(0 0 8px #ffc34e);display:grid;place-items:center}
+#erisDedeModal .dd-throw-projectile i{position:absolute;inset:-14px 7px;background:linear-gradient(150deg,#fff9cc,#ffc538 55%,#a96a16);clip-path:polygon(54% 0,8% 58%,44% 56%,27% 100%,94% 38%,57% 41%)}
+#erisDedeModal .dd-throw-projectile b{position:relative;background:#fff2c9;color:#5b310a;border:1px solid #c9922d;border-radius:20px;padding:3px 6px;font:bold 16px Georgia;text-shadow:none}
+#erisDedeModal .dd-throw-hit{filter:brightness(1.45) drop-shadow(0 0 10px #ffc34e);outline:2px solid #eab64e;outline-offset:-2px;border-radius:10px}

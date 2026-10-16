@@ -1,0 +1,13 @@
+{
+  "base_commit": "7fc6352fa7c76b81998596a58815922ef0552c42",
+  "blackjack": "Preset selects the increment and starting total; + adds that increment, - subtracts it. 100K + + = 300K. Total accepts multiples of 10; server wallet check and signed-integer payout bound apply. Prepared chip max remains 100K.",
+  "slot": "Classic Sardis three-reel Slot only. Five exact stakes 10/100/1K/10K/100K; original server engine weights and multipliers unchanged. Shared real wallet; UUID receipts atomically protect spin/purchase retries.",
+  "bonus": "Server-priced purchase: 10 spins for 10x stake; confirmed total cost and balance; locked stake; stored remaining spins; no autoplay.",
+  "ranking": "Slot joins Wheel, Crash and Blackjack; Istanbul hour/day/week/month, top 50 actual paid payouts, server totals.",
+  "art": "Existing light/dark Lidya PNG seven/cherry/lemon/bell/diamond/crown/coin reused, no code-generated artwork.",
+  "validation": {
+    "backend": "104 tests: 27 Blackjack + 16 Slot + 20 Crash + 41 Wheel",
+    "browser": "28 scenarios: 6 Blackjack + 8 Slot + 7 Crash + 7 Wheel; 320/390/540px light/dark, additive stake, restore, bonus, lost response UUID retry, close during animation"
+  },
+  "deployment": "Frontend and backend together. Existing startup Base.metadata.create_all creates classic_slot_accounts and classic_slot_receipts. Legacy /games/slot/play returns 410. No live PostgreSQL load test or production deploy performed."
+}

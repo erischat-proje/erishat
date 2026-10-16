@@ -1,0 +1,139 @@
+{
+  "sources": [
+    {
+      "key": "cast",
+      "author": "BranndyBottle",
+      "source": "https://freesound.org/people/BranndyBottle/sounds/464697/",
+      "preview": "https://cdn.freesound.org/previews/464/464697_7358035-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 29696
+    },
+    {
+      "key": "reel",
+      "author": "Harrisando",
+      "source": "https://freesound.org/people/Harrisando/sounds/466205/",
+      "preview": "https://cdn.freesound.org/previews/466/466205_9855691-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 112608
+    },
+    {
+      "key": "splash",
+      "author": "qubodup",
+      "source": "https://freesound.org/people/qubodup/sounds/442773/",
+      "preview": "https://cdn.freesound.org/previews/442/442773_71257-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 52560
+    },
+    {
+      "key": "explosion",
+      "author": "Evan Cruder",
+      "source": "https://freesound.org/people/Evan%20Cruder/sounds/160797/",
+      "preview": "https://cdn.freesound.org/previews/160/160797_1241124-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 231943
+    },
+    {
+      "key": "coin",
+      "author": "doudar41",
+      "source": "https://freesound.org/people/doudar41/sounds/573342/",
+      "preview": "https://cdn.freesound.org/previews/573/573342_2393492-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 12159
+    },
+    {
+      "key": "glass",
+      "author": "qubodup",
+      "source": "https://freesound.org/people/qubodup/sounds/189318/",
+      "preview": "https://cdn.freesound.org/previews/189/189318_71257-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 1123554
+    }
+  ],
+  "processing": "Trim real CC0 HQ previews, mono 44.1kHz, normalize to 0.62 peak, 25ms fades. Catch/payout layer real recordings; win/bonus pitch-layer sampled glass recording, no synthesized casino source assets.",
+  "clips": [
+    {
+      "key": "spin",
+      "seconds": 0.95,
+      "bytes": 16344,
+      "sha256": "be63c4cb5371e0adbd51793397a1f6f0aec9e0bc4626aeeb63e76714247d484b",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "reel",
+      "seconds": 0.85,
+      "bytes": 14672,
+      "sha256": "aeadbaf312e718a8f7050cc0e7fe098cf6d57cc21bff8d29cd99d0d6a16a5433",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "cast",
+      "seconds": 1.08,
+      "bytes": 18434,
+      "sha256": "cc04cbf8c737f3ba3ab79f3b18e79131999e316442d6546e11b785a114b390e3",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "splash",
+      "seconds": 0.72,
+      "bytes": 12582,
+      "sha256": "64c9382aaacb090114591d7c0293565d0f51d41758cc2dd6fbcf52369655c34c",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "catch",
+      "seconds": 0.75,
+      "bytes": 13000,
+      "sha256": "88808ef1ddc91b40983e913d7c44f7596a71890465b4f6540b282253dc037073",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "land",
+      "seconds": 0.13,
+      "bytes": 2969,
+      "sha256": "e299739f2be73bcb0100c71a0a26f219beaa49fdafb3a705c69732e661cd04f6",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "line",
+      "seconds": 0.36,
+      "bytes": 6731,
+      "sha256": "1fccfd41637ce5fae558f625f51a5bb6a30b2ffc19d44caf6cb27af97549ad05",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "meter",
+      "seconds": 0.4,
+      "bytes": 7567,
+      "sha256": "b0324551ca0f72e22e04289337ffed8828b0a9ad75fef0762bc2b322459537e9",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "explosion",
+      "seconds": 1.25,
+      "bytes": 20942,
+      "sha256": "ff1d958c12b1fb4d279058c7d03344ef3d53bd60095d185516765fec1688b80d",
+      "peak_linear": 0.4051681013772902
+    },
+    {
+      "key": "payout",
+      "seconds": 0.85,
+      "bytes": 14672,
+      "sha256": "92ddd86c5217929acea6143c750e1497fcc27f2b15c5e28db1e0b35fafce2401",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "bonus",
+      "seconds": 1.8,
+      "bytes": 29719,
+      "sha256": "4ee575703eee785833b4224f0230dec8705b62efec7d97f6251ce704327892aa",
+      "peak_linear": 0.62
+    },
+    {
+      "key": "win",
+      "seconds": 1.3999773242630384,
+      "bytes": 23449,
+      "sha256": "bc1cfaab7df1c9900051f06a81314e203fba969943ff9fe0bf2410ff956566c0",
+      "peak_linear": 0.62
+    }
+  ]
+}

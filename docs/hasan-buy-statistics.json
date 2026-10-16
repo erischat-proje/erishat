@@ -1,0 +1,19 @@
+{
+  "game": "balikci",
+  "profile": "hasan-buy-v1",
+  "price": 100,
+  "samples": 100000,
+  "seed": 304847,
+  "rtp": 0.9766403599999783,
+  "ci95": [
+    0.9658503008377209,
+    0.9874304191622357
+  ],
+  "freeSpins": 2002029,
+  "initialSpinsDistribution": {
+    "10": 100000
+  },
+  "capCount": 75,
+  "maxObservedX": 2100.0,
+  "note": "Independent purchase-mode simulation; target is not certified RTP."
+}

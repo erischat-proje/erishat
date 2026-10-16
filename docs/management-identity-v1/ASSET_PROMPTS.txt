@@ -1,0 +1,7 @@
+AI raster artwork integrated into frontend/role-icons/management-v1.
+Light badge atlas: four identical winged royal plaques in a 2x2 grid, readable SA / UA / FA / DA; Lidya ivory, polished gold, emerald accents; transparent background.
+Dark variant: preserve badge geometry and letters; deep emerald enamel and antique gold, transparent background.
+Common frame: circular royal gold laurel/crown avatar frame, SA top / UA right / FA bottom / DA left; empty transparent center and transparent exterior. No rank-specific variant; all four ranks equip the same frame.
+Dark frame: preserve geometry/letters; emerald enamel and gold palette.
+Avatar: existing approved ErisChat light/dark speech-planet logo icon, extracted from original wordmark; no replacement brand mark.
+Integration: atlas quadrants extracted, transparent padding trimmed, badges downscaled; frame downscaled to 1024; square logo avatar to 640. No Python-drawn substitute artwork.

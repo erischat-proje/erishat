@@ -1,0 +1,3440 @@
+
+    // Profesyonel Web Audio API Ses Sentezleyici
+    function playCasinoSound(type) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            const now = ctx.currentTime;
+            if (type === "win") {
+                osc.type = "triangle";
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.1);
+                osc.frequency.setValueAtTime(659.25, now + 0.2);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === "lose") {
+                osc.type = "sawtooth";
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.setValueAtTime(120, now + 0.2);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === "click") {
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+        } catch(e) {}
+    }
+
+(() => {
+    'use strict';
+
+    const gameModules = {
+        wheel: () => window.ErisGameWheel,
+        crash: () => window.ErisGameCrash,
+        blackjack: () => window.ErisGameBlackjack,
+        slot: () => window.ErisGameSlot,
+        cups: () => window.ErisGameCups,
+        horse_race: () => window.ErisGameHorseRace,
+        vault: () => window.ErisGameVault
+    };
+
+    const labels = {
+        slot: 'Slot',
+        cups: 'Dört Kupa',
+        horse_race: 'At Yarışı',
+        blackjack: 'Blackjack',
+        crash: 'Crash',
+        vault: 'Kasa',
+        wheel: 'Şans Çarkı'
+    };
+
+    const api = (path, options = {}) => window.ErisPlatform?.api ? window.ErisPlatform.api(path, options) : Promise.reject(new Error('Platform hazır değil'));
+    let modal = null;
+
+    function injectStyles() {
+        if (document.getElementById('eris-games-modular-style')) return;
+        const s = document.createElement('style');
+        s.id = 'eris-games-modular-style';
+        s.textContent = `
+            #erisGamesModal .eg-panel {
+                width: min(640px, 100%);
+                max-height: 95vh;
+                overflow: auto;
+                border: 1px solid var(--ui-line);
+                border-radius: 24px;
+                background: linear-gradient(145deg, var(--ui-panel), var(--ui-panel));
+                padding: 20px;
+                box-shadow: 0 35px 110px var(--ui-shadow);
+            }
+            #erisGamesModal button, #erisGamesModal select {
+                cursor: pointer;
+                color: var(--ui-ink);
+                background: var(--ui-raised);
+                border: 1px solid var(--ui-line);
+                border-radius: 12px;
+                padding: 10px 14px;
+                transition: all 0.2s ease;
+            }
+            #erisGamesModal button:hover {
+                background: var(--ui-button);
+                border-color: var(--ui-line);
+                transform: translateY(-1px);
+            }
+            #erisGamesModal button:disabled { opacity: .55; cursor: wait; transform: none; }
+            #erisGamesModal .eg-keys {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+                gap: 8px;
+                margin: 14px 0;
+            }
+            #erisGamesModal .eg-keys button {
+                background: linear-gradient(145deg, var(--ui-raised), var(--ui-raised));
+                border: 1px solid var(--ui-line);
+                border-radius: 14px;
+                padding: 12px 8px;
+                font-size: 12px;
+                font-weight: 600;
+                text-align: center;
+                transition: all 0.25s ease;
+            }
+            #erisGamesModal .eg-keys button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px var(--ui-shadow);
+            }
+            #erisGamesModal .eg-keys button.active {
+                background: linear-gradient(135deg, var(--ui-button), var(--ui-button));
+                border-color: var(--ui-line);
+                box-shadow: 0 0 20px var(--ui-shadow);
+            }
+            #erisGamesModal .eg-stage {
+                min-height: 240px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border-radius: 18px;
+                background: radial-gradient(circle at center, color-mix(in srgb, var(--ui-button) 35%, transparent), var(--ui-panel) 75%);
+                border: 1px solid var(--ui-line);
+                padding: 14px;
+                margin: 14px 0;
+                box-shadow: inset 0 0 30px var(--ui-shadow);
+                position: relative;
+                overflow: hidden;
+            }
+            #erisGamesModal .eg-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+            #erisGamesModal .eg-form label { font-size: 11px; color: color-mix(in srgb, var(--ui-muted) 70%, transparent); }
+            #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width: 170px; }
+            #erisGamesModal .eg-result { min-height: 40px; color: var(--ui-ink); font-size: 12px; margin-top: 8px; text-align: center; font-weight: 600; }
+        `;
+        document.head.append(s);
+
+        const polish = document.createElement('style');
+        polish.id = 'eris-games-polish-style';
+        polish.textContent = `
+            #erisGamesModal { overflow:auto; backdrop-filter:blur(16px); }
+            #erisGamesModal .eg-panel {
+                position:relative; width:min(660px,100%); max-height:min(94dvh,940px);
+                padding:clamp(18px,4vw,28px); border-color:var(--ui-line); border-radius:28px;
+                background:radial-gradient(680px 280px at 100% 0%,color-mix(in srgb, var(--ui-button) 13%, transparent),transparent 66%),linear-gradient(155deg,color-mix(in srgb, var(--ui-panel) 97%, transparent),color-mix(in srgb, var(--ui-panel) 97%, transparent) 72%);
+                box-shadow:0 32px 110px var(--ui-shadow),inset 0 1px var(--ui-shadow);
+            }
+            #erisGamesModal .eg-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+            #erisGamesModal .eg-head h2 { font-size:clamp(21px,5vw,28px)!important; letter-spacing:-.7px; }
+            #erisGamesModal [data-close] { width:40px; height:40px; border-radius:14px!important; background:color-mix(in srgb, var(--ui-panel) 5%, transparent)!important; font-size:20px; }
+            #erisGamesModal .eg-intro { margin:8px 0 13px!important; color:var(--ui-muted)!important; font-size:12px!important; line-height:1.55; }
+            #erisGamesModal .eg-wallet { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:12px 0; padding:11px 13px; border:1px solid var(--ui-line); border-radius:15px; background:linear-gradient(100deg,color-mix(in srgb, var(--ui-button) 7%, transparent),color-mix(in srgb, var(--ui-panel) 2%, transparent)); color:var(--ui-gold)!important; }
+            #erisGamesModal .eg-wallet [data-scope] { color:var(--ui-ink); font-size:10px; font-weight:800; letter-spacing:.5px; }
+            #erisGamesModal .eg-keys { grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+            #erisGamesModal .eg-keys button { min-height:45px; border-color:var(--ui-line); background:linear-gradient(140deg,var(--ui-raised),var(--ui-raised)); font-weight:800; }
+            #erisGamesModal .eg-keys button.active { background:linear-gradient(130deg,var(--ui-button),var(--ui-button)); border-color:var(--ui-line); box-shadow:0 8px 25px var(--ui-shadow); }
+            #erisGamesModal [data-name] { margin:14px 0 8px!important; font-size:19px!important; letter-spacing:-.25px; }
+            #erisGamesModal .eg-stage { min-height:clamp(200px,34vh,310px); border-color:var(--ui-line); border-radius:20px; perspective:1000px; background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb, var(--ui-button) 21%, transparent),var(--ui-panel) 48%,var(--ui-panel) 100%); box-shadow:inset 0 1px var(--ui-shadow),0 16px 36px var(--ui-shadow); }
+            #erisGamesModal .eg-stage canvas { max-width:100%; filter:drop-shadow(0 12px 24px #0007); }
+            #erisGamesModal .eg-stage [style*="position:absolute"] { filter:drop-shadow(0 8px 12px #0008); }
+            #erisGamesModal .eg-form { padding:13px; border:1px solid var(--ui-line); border-radius:17px; background:color-mix(in srgb, var(--ui-panel) 2%, transparent); }
+            #erisGamesModal .eg-form label { display:grid; gap:6px; color:var(--ui-muted); font-size:10px; font-weight:750; }
+            #erisGamesModal .eg-form select, #erisGamesModal .eg-form input { max-width:none; min-width:110px; background:var(--ui-panel); border-color:var(--ui-line); border-radius:12px; padding:10px; }
+            /* Wheel V2 premium symbol selector */
+            #erisGamesModal .eg-wheel-picks{display:none;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;margin:1px 0 5px}
+            #erisGamesModal .eg-wheel-picks.show{display:grid}
+            #erisGamesModal .eg-wheel-pick{position:relative;min-height:70px;padding:8px 4px;border:1px solid var(--ui-line);border-radius:15px;background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));color:var(--ui-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 1px var(--ui-shadow),0 5px 12px var(--ui-shadow);transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
+            #erisGamesModal .eg-wheel-pick:active{transform:none}
+            #erisGamesModal .eg-wheel-pick.active{border-color:var(--ui-line);background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));box-shadow:0 0 0 1px var(--ui-shadow),0 7px 20px var(--ui-shadow),inset 0 0 22px var(--ui-shadow)}
+            #erisGamesModal .eg-wheel-icon{font-size:24px;line-height:1}
+            #erisGamesModal .eg-wheel-pick b{font-size:10px;line-height:1.2}
+            #erisGamesModal .eg-wheel-pick small{font-size:8px;color:var(--ui-gold);font-weight:900;letter-spacing:.25px}
+            #erisGamesModal .eg-wheel-pick.active:after{content:"✓";position:absolute;right:6px;top:6px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--ui-button),var(--ui-danger-bg));color:var(--ui-ink);font-size:9px;font-weight:950;box-shadow:0 2px 7px var(--ui-shadow)}
+            #erisGamesModal.eg-wheel-mode .eg-form>label:first-child{display:none}
+            #erisGamesModal.eg-wheel-mode .eg-form{border-color:var(--ui-line);background:linear-gradient(145deg,color-mix(in srgb, var(--ui-panel) 2%, transparent),color-mix(in srgb, var(--ui-button) 3%, transparent))}
+            #erisGamesModal.eg-wheel-mode [data-play]{background:linear-gradient(120deg,var(--ui-primary),var(--ui-primary) 55%,var(--ui-primary));box-shadow:0 9px 27px var(--ui-shadow)}
+
+            #erisGamesModal .eg-stake-presets { display:flex; gap:5px; flex-wrap:wrap; align-items:end; }
+            #erisGamesModal .eg-stake-presets button { padding:8px 10px; font-size:10px; }
+            #erisGamesModal [data-play] { min-height:43px; margin-left:auto; padding-inline:22px; border:0; background:linear-gradient(120deg,var(--ui-primary),var(--ui-danger-bg)); box-shadow:0 9px 25px var(--ui-shadow); font-weight:900; }
+            #erisGamesModal .eg-result { min-height:44px; margin-top:12px; padding:11px 13px; border:1px solid var(--ui-line); border-radius:14px; background:color-mix(in srgb, var(--ui-panel) 2%, transparent); color:var(--ui-ink); }
+            #erisGamesModal [data-controls] button { min-height:42px; background:linear-gradient(125deg,var(--ui-button),var(--ui-button)); font-weight:850; }
+            @media(max-width:520px) { #erisGamesModal { padding:8px!important; place-items:end center!important; } #erisGamesModal .eg-panel { max-height:95dvh; border-radius:25px 25px 18px 18px; padding:18px; } #erisGamesModal .eg-form { display:grid; grid-template-columns:1fr 1fr; } #erisGamesModal .eg-form label { min-width:0; } #erisGamesModal [data-play] { grid-column:1/-1; margin:2px 0 0; } #erisGamesModal .eg-stage { min-height:190px; } }
+            @media(prefers-reduced-motion:reduce) { #erisGamesModal *,#erisGamesModal *:before,#erisGamesModal *:after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
+        `;
+        document.head.append(polish);
+    }
+
+    function open(scope = 'main', roomId = null, selected = null) {
+        if(selected==='slot'&&window.LidyaSlotLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaSlotLive.open();}
+        if(selected==='crash'&&window.LidyaCrashLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaCrashLive.open();}
+        if((!selected||selected==='wheel')&&window.LidyaWheelLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaWheelLive.open();}
+        injectStyles();
+        // ERIS_GAME_ISOLATION_V1
+        if (modal?._erisCleanup) modal._erisCleanup();
+        modal?.remove();
+        modal = document.createElement('div');
+        modal.id = 'erisGamesModal';
+        modal.classList.add('eg-fullscreen');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', 'Oyun merkezi');
+        modal.style.cssText = "position:fixed; inset:0; z-index:10100; background:var(--ui-overlay); display:grid; place-items:center; padding:10px; color:var(--ui-ink); backdrop-filter:blur(8px);";
+        modal.innerHTML = `
+            <div class="eg-panel">
+                <div class="eg-head">
+                    <h2 style="margin:0; font-size:17px; font-weight:700;">LİDYA OYUNLARI</h2>
+                    <button data-close style="background:transparent; border:none; font-size:20px; padding:2px 6px;">×</button>
+                </div>
+                <p class="eg-intro">Sardis’in hazineleri · Lidya oyun salonu</p>
+                <div class="eg-wallet"><span data-balance>💰 Bakiye yükleniyor…</span><span data-scope></span></div>
+                <div class="eg-keys"></div>
+                <h3 data-name style="margin:8px 0 2px 0; font-size:14px; color:var(--ui-gold);"></h3>
+                <div class="eg-stage" aria-live="polite">Oyun yükleniyor...</div>
+                <div class="eg-form">
+                    <label data-choice-label>Seçim <select data-choice></select></label>
+                    <div class="eg-wheel-picks" data-wheel-picks aria-label="Şans Çarkı sembol seçimi"></div>
+                    <label>Bahis · Lidya <input data-stake type="number" inputmode="numeric" min="0" max="9007199254740991" step="1" value="100" aria-label="Lidya bahsi"></label>
+                    <div class="eg-stake-presets" aria-label="Hazır bahisler"><button type="button" data-stake-value="10">🪙10</button><button type="button" data-stake-value="25">🪙25</button><button type="button" data-stake-value="50">🪙50</button><button type="button" data-stake-value="75">🪙75</button><button type="button" data-stake-value="100">🪙100</button><button type="button" data-stake-value="250">🪙250</button><button type="button" data-stake-value="500">🪙500</button><button type="button" data-stake-value="1000">🪙1000</button></div>
+                    <button data-play>Oyna</button>
+                </div>
+                <div data-wheel-feed style="display:none;position:relative;height:38px;overflow:hidden;margin:5px 0"></div><div data-wheel-clock style="display:none;text-align:center;font-weight:900;color:var(--ui-gold);margin:8px 0">⏱ --</div><div class="eg-result" role="status"></div><div data-wheel-mine style="display:none;margin-top:8px;padding:10px;border:1px solid var(--ui-line);border-radius:12px;font-size:11px"></div>
+                <div data-controls style="display:flex; gap:8px; justify-content:center; margin-top:6px;"></div>
+            </div>
+        `;
+
+        // ERIS_FINAL_TWO_UI_STYLES
+        if (!document.getElementById('erisFinalTwoUiStyles')) {
+            const finalStyle = document.createElement('style');
+            finalStyle.id = 'erisFinalTwoUiStyles';
+            finalStyle.textContent = "\n/* ERIS_FINAL_TWO_UI_FIXES_20261008 */\n#erisGamesModal .eg-head {\n  display:flex!important;\n  align-items:center!important;\n  gap:6px!important;\n}\n#erisGamesModal .eg-head h2 {\n  flex:1 1 auto!important;\n  min-width:0!important;\n}\n#erisGamesModal .eg-head>.eg-wallet {\n  display:flex!important;\n  flex:0 1 auto!important;\n  min-width:0!important;\n  max-width:57%!important;\n  margin:0!important;\n  padding:4px 7px!important;\n  border:1px solid var(--ui-line)!important;\n  border-radius:12px!important;\n  background:var(--ui-panel)!important;\n  align-items:center!important;\n  justify-content:center!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-balance] {\n  display:block!important;\n  font-size:clamp(9px,2.5vw,12px)!important;\n  white-space:nowrap!important;\n  overflow:hidden!important;\n  text-overflow:ellipsis!important;\n}\n#erisGamesModal .eg-head>.eg-wallet [data-scope] {\n  display:none!important;\n}\n#erisGamesModal .eg-head>[data-close] {\n  flex-shrink:0!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form>[data-choice-label] {\n  display:none!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks {\n  display:grid!important;\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n  gap:5px!important;\n  width:100%!important;\n  margin:0!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button {\n  box-sizing:border-box!important;\n  display:flex!important;\n  align-items:center!important;\n  justify-content:center!important;\n  min-width:0!important;\n  min-height:57px!important;\n  padding:5px 2px!important;\n  border-radius:10px!important;\n  font-size:0!important;\n  line-height:1!important;\n  white-space:normal!important;\n}\n#erisGamesModal.eg-vault-mode .ev-prize-picks button::before {\n  font-size:24px!important;\n  line-height:1!important;\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"ruby\"]::before {\n  content:\"💎\";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"gold\"]::before {\n  content:\"👑\";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"crystal\"]::before {\n  content:\"🔮\";\n}\n#erisGamesModal.eg-vault-mode [data-vault-pick=\"mystery\"]::before {\n  content:\"🎁\";\n}\n#erisGamesModal.eg-vault-mode .eg-stake-presets {\n  grid-template-columns:repeat(4,minmax(0,1fr))!important;\n}\n#erisGamesModal.eg-vault-mode .eg-form {\n  gap:5px!important;\n}\n";
+            document.head.appendChild(finalStyle);
+        }
+
+        if (!document.getElementById('erisGamesHeaderLayout')) {
+            const headerStyle = document.createElement('style');
+            headerStyle.id = 'erisGamesHeaderLayout';
+            headerStyle.textContent = `
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head {
+                    display:grid!important;
+                    grid-template-columns:minmax(0,1fr) auto 36px!important;
+                    align-items:center!important;
+                    gap:6px!important;
+                    width:100%!important;
+                    box-sizing:border-box!important;
+                    flex:0 0 auto!important;
+                    margin:0!important;
+                    padding:0!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > h2 {
+                    grid-column:1!important;grid-row:1!important;
+                    min-width:0!important;margin:0!important;
+                    font-size:13px!important;line-height:1.3!important;
+                    white-space:nowrap!important;overflow:hidden!important;
+                    text-overflow:ellipsis!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > .eg-wallet {
+                    grid-column:2!important;grid-row:1!important;
+                    position:static!important;transform:none!important;
+                    display:flex!important;align-items:center!important;
+                    justify-content:flex-end!important;
+                    width:auto!important;min-width:0!important;
+                    max-width:52vw!important;margin:0!important;padding:3px!important;
+                    border:0!important;background:transparent!important;
+                    box-shadow:none!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > .eg-wallet [data-balance] {
+                    display:block!important;font-size:11px!important;
+                    white-space:nowrap!important;overflow:hidden!important;
+                    text-overflow:ellipsis!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > .eg-wallet [data-scope] {
+                    display:none!important;
+                }
+                #erisGamesModal:not(.eg-blackjack-mode) .eg-panel > .eg-head > [data-close] {
+                    grid-column:3!important;grid-row:1!important;
+                    position:static!important;transform:none!important;
+                    width:36px!important;height:36px!important;min-width:36px!important;
+                    margin:0!important;padding:0!important;
+                    justify-self:end!important;align-self:center!important;
+                }
+            `;
+            document.head.appendChild(headerStyle);
+        }
+        document.body.append(modal);
+        const ownedModal = modal;
+        const returnFocus = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+        document.body.classList.add('eris-main-game-open');
+        document.body.style.overflow = 'hidden';
+        const viewport = window.visualViewport;
+        const fitViewport = () => ownedModal.style.setProperty('--eg-viewport-height', (viewport?.height || window.innerHeight) + 'px');
+        fitViewport();
+        viewport?.addEventListener('resize', fitViewport);
+        window.addEventListener('resize', fitViewport);
+        const gameIntervals = new Set();
+        const gameInterval = (fn, delay) => {
+            const id = setInterval(() => {
+                if (modal !== ownedModal || !ownedModal.isConnected) {
+                    clearInterval(id);
+                    gameIntervals.delete(id);
+                    return;
+                }
+                fn();
+            }, delay);
+            gameIntervals.add(id);
+            return id;
+        };
+        ownedModal._erisCleanup = () => {
+            viewport?.removeEventListener('resize', fitViewport);
+            window.removeEventListener('resize', fitViewport);
+            document.body.style.overflow = previousOverflow;
+            document.body.classList.remove('eris-main-game-open');
+            for (const id of gameIntervals) clearInterval(id);
+            gameIntervals.clear();
+            window.ErisGameHorseRace?.cancel?.();
+        };
+
+        if (!document.getElementById('erisCrashProStyle')) {
+        const st = document.createElement('style');
+        st.id = 'erisCrashProStyle';
+        st.textContent = "\n/* ERIS_CRASH_PRO_UI_V1 */\n#erisGamesModal.eg-crash-mode .eg-form>label:first-child{display:none}\n#erisGamesModal.eg-crash-mode .eg-form{display:grid;grid-template-columns:1fr;gap:12px}\n#erisGamesModal.eg-crash-mode .eg-form>label{font-size:12px;font-weight:800;color:var(--ui-muted)}\n#erisGamesModal.eg-crash-mode [data-stake]{width:100%;box-sizing:border-box}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0;padding:12px 3px;border-radius:12px}\n#erisGamesModal.eg-crash-mode [data-play]{width:100%;min-height:56px;font-size:17px;border-radius:15px}\n#erisGamesModal.eg-crash-mode [data-controls] button{width:100%;min-height:55px;font-size:17px;border-radius:15px;background:linear-gradient(110deg,var(--ui-ok-bg),var(--ui-ok-bg))}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:260px}\n";
+        st.textContent += "\n#erisGamesModal.eg-crash-mode .eg-panel{padding:12px;overflow-y:auto}\n#erisGamesModal.eg-crash-mode .eg-head{margin-bottom:5px}\n#erisGamesModal.eg-crash-mode .eg-stage{min-height:0}\n#erisGamesModal.eg-crash-mode .crash-flight{height:190px!important}\n#erisGamesModal.eg-crash-mode .eg-form{gap:7px;padding:10px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{gap:6px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{padding:9px 2px}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button.crash-selected{border-color:var(--ui-ok);box-shadow:0 0 0 2px var(--ui-shadow);background:var(--ui-raised)}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:46px}\n#erisGamesModal.eg-crash-mode .eg-result{min-height:0;margin-top:6px;padding:9px}\n#erisGamesModal.eg-crash-mode .eg-crash-bets{font-size:12px;color:var(--ui-ink);padding:9px 11px;border:1px solid var(--ui-ok);border-radius:11px;margin-top:6px}\n#erisGamesModal.eg-crash-mode [data-controls] button{min-height:48px;font-size:15px}\n#erisGamesModal.eg-crash-mode [data-crash-history]{padding:7px 0!important}\n";
+        st.textContent += "\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:9px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 3%, transparent);margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-title{font-size:10px;font-weight:900;letter-spacing:.7px;color:var(--ui-ink);margin-bottom:7px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid>div{min-width:0;text-align:center;padding:7px 2px;border-radius:8px;background:var(--ui-panel)}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid small{display:block;font-size:9px;color:var(--ui-muted)}\n#erisGamesModal.eg-crash-mode .eg-crash-stats-grid strong{display:block;font-size:12px;color:var(--ui-ok);margin-top:4px}\n";
+        st.textContent += '\n/* ERIS_CRASH_COMPACT_V2 */\n\n#erisGamesModal.eg-crash-mode .eg-panel{padding:8px!important}\n#erisGamesModal.eg-crash-mode .eg-head{display:flex;align-items:center;gap:7px;margin:0 0 6px!important}\n#erisGamesModal.eg-crash-mode .eg-head h2{font-size:15px!important;white-space:nowrap}\n#erisGamesModal.eg-crash-mode .eg-head [data-close]{flex:0 0 36px;width:36px;height:36px}\n#erisGamesModal.eg-crash-mode .eg-wallet{order:0;display:flex!important;flex:1;min-width:0;margin:0!important;padding:5px 7px!important;border:0!important;background:transparent!important;justify-content:flex-end}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-balance]{font-size:clamp(10px,2.7vw,13px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#erisGamesModal.eg-crash-mode .eg-wallet [data-scope]{display:none!important}\n#erisGamesModal.eg-crash-mode [data-name]{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form>label{display:none!important}\n#erisGamesModal.eg-crash-mode .eg-form{padding:6px!important;gap:5px!important}\n#erisGamesModal.eg-crash-mode .eg-stake-presets{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;width:100%;min-width:0}\n#erisGamesModal.eg-crash-mode .eg-stake-presets button{min-width:0!important;width:100%!important;padding:9px 0!important;font-size:clamp(7px,1.9vw,10px)!important;border-radius:8px!important;white-space:nowrap;letter-spacing:-.5px}\n#erisGamesModal.eg-crash-mode .eg-stage{margin-top:4px!important}\n#erisGamesModal.eg-crash-mode .crash-flight{height:170px!important}\n#erisGamesModal.eg-crash-mode [data-play]{min-height:42px!important}\n#erisGamesModal.eg-crash-mode .eg-crash-stats{padding:6px!important;margin-bottom:4px!important}\n#erisGamesModal.eg-crash-mode .eg-result{margin-top:4px!important}\n';
+        document.head.appendChild(st);
+    }
+
+// DORT KUPA V4: kompakt bahis ve ust bakiye
+if (!document.getElementById('erisCupsV4Style')) {
+  const css = document.createElement('style');
+  css.id = 'erisCupsV4Style';
+  css.textContent = `
+    #erisGamesModal.eg-cups-mode [data-name]{display:none!important;}
+    #erisGamesModal.eg-cups-mode .eg-head {
+      display:flex!important; align-items:center!important; gap:8px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-head h2 {
+      flex:1; min-width:0; font-size:18px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-head .eg-wallet {
+      margin:0!important; padding:4px!important; border:0!important;
+      background:none!important; min-width:0; flex:0 1 auto;
+    }
+    #erisGamesModal.eg-cups-mode .eg-wallet [data-balance] {
+      font-size:clamp(10px,2.5vw,13px)!important; white-space:nowrap;
+    }
+    #erisGamesModal.eg-cups-mode .eg-wallet [data-scope] {
+      display:none!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-form {
+      padding:8px!important; gap:5px!important;
+      display:grid!important; grid-template-columns:1fr!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-form>label {
+      font-size:11px!important; margin:0!important;
+    }
+    #erisGamesModal.eg-cups-mode [data-stake] {
+      min-height:36px!important; padding:5px 9px!important;
+      font-size:19px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets {
+      display:grid!important; grid-template-columns:repeat(4,minmax(0,1fr))!important;
+      gap:4px!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-stake-presets button {
+      padding:5px 2px!important; min-height:32px!important;
+      font-size:11px!important;
+    }
+    #erisGamesModal.eg-cups-mode [data-play] {
+      min-height:40px!important; margin:0!important;
+      grid-column:1/-1!important;
+    }
+    #erisGamesModal.eg-cups-mode .eg-result {
+      min-height:0!important; margin-top:5px!important; padding:7px!important;
+    }
+  `;
+  document.head.appendChild(css);
+}
+const cupsWallet = modal.querySelector('.eg-wallet');
+const cupsHead = modal.querySelector('.eg-head');
+if (selected === 'cups' && cupsWallet && cupsHead) cupsHead.insertBefore(cupsWallet, cupsHead.querySelector('[data-close]'));
+
+if (selected === 'cups') {
+  modal.classList.add('eg-cups-mode');
+}
+
+const close = () => {
+            ownedModal._erisCleanup?.();
+            ownedModal.remove();
+            if (modal === ownedModal) modal = null;
+            if (returnFocus?.isConnected) returnFocus.focus();
+        };
+        modal.querySelector('[data-close]').onclick = close;
+        modal.onclick = e => { if (e.target === modal) close(); };
+        modal.onkeydown = e => {
+            if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+            if (e.key !== 'Tab') return;
+            const items = [...ownedModal.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),[tabindex="0"]')].filter(el => el.getClientRects().length && !el.closest('[hidden]'));
+            const first = items[0], last = items.at(-1);
+            if (e.shiftKey && (document.activeElement === first || !ownedModal.contains(document.activeElement))) { e.preventDefault(); last?.focus(); }
+            else if (!e.shiftKey && (document.activeElement === last || !ownedModal.contains(document.activeElement))) { e.preventDefault(); first?.focus(); }
+        };
+        modal.querySelector('[data-scope]').textContent = scope === 'room' ? 'ODA OYUNLARI' : 'KİŞİSEL OYUNLAR';
+        if(selected){
+            modal.classList.add('eg-single-game');
+            modal.style.padding='0';
+            const panel=modal.querySelector('.eg-panel');
+            if(panel){panel.style.width='100%';panel.style.maxWidth='none';panel.style.height='100dvh';panel.style.maxHeight='none';panel.style.borderRadius='0';}
+            modal.querySelector('.eg-keys').style.display='none';
+            modal.querySelector('.eg-intro').style.display='none';
+            modal.querySelector('.eg-head h2').textContent=labels[selected]||'Oyun';
+        }
+
+
+        const keys = Object.keys(gameModules);
+        const tabs = modal.querySelector('.eg-keys');
+        let game = keys.includes(selected) ? selected : keys[0];
+        let gameEpoch = 0;
+
+        const refreshBalance = () => api('/me').then(me => {
+            modal.querySelector('[data-balance]').textContent = '💰 Bakiye: ' + Number(me.lidya || 0).toLocaleString('tr-TR') + ' Lidya';
+        }).catch(() => {
+            modal.querySelector('[data-balance]').textContent = '💰 Bakiye yüklenemedi.';
+        });
+        refreshBalance();
+
+        let crashState = null;
+        let vaultState = null;
+        let vaultLastResult = null;
+
+
+        // ERIS_BLACKJACK_HISTORY_V1
+        const refreshBlackjackHistory = async () => {
+            if (game !== 'blackjack' || !modal?.isConnected) return;
+            let panel = modal.querySelector('[data-bj-history]');
+            if (!panel) {
+                panel = document.createElement('section');
+                panel.dataset.bjHistory = '';
+                panel.className = 'eg-bj-history';
+                const form = modal.querySelector('.eg-form');
+                form?.insertAdjacentElement('beforebegin', panel);
+            }
+            if (!panel) return;
+            panel.textContent = 'Son 53 tur yükleniyor…';
+            try {
+                const data = await api('/games/blackjack/history');
+                if (game !== 'blackjack' || !panel.isConnected) return;
+                const rounds = Array.isArray(data.rounds) ? data.rounds : [];
+                const labels = {
+                    blackjack: 'BJ', win: 'K', loss: 'M', push: 'B'
+                };
+                const header = document.createElement('div');
+                header.className = 'eg-bj-history-head';
+                header.textContent = '🃏 SON 53 TUR · ' + rounds.length + ' EL';
+
+                const summary = document.createElement('div');
+                summary.className = 'eg-bj-history-summary';
+                const wins = Number(data.wins || 0);
+                const losses = Number(data.losses || 0);
+                const pushes = Number(data.pushes || 0);
+                const rate = rounds.length
+                    ? Math.round(wins / rounds.length * 100)
+                    : 0;
+                summary.textContent =
+                    '🏆 ' + wins + ' Kazanç  ·  ❌ ' + losses +
+                    ' Kayıp  ·  🤝 ' + pushes +
+                    ' Berabere  ·  %' + rate + ' Kazanma';
+
+                const strip = document.createElement('div');
+                strip.className = 'eg-bj-history-strip';
+                for (const round of rounds) {
+                    const cell = document.createElement('span');
+                    const result = String(round.result || '');
+                    cell.className = 'eg-bj-history-cell bj-' + (
+                        ['win','blackjack','loss','push'].includes(result)
+                            ? result : 'unknown'
+                    );
+                    cell.textContent = labels[result] || '?';
+                    cell.title = result + ' · ' + String(round.started_at || '');
+                    strip.append(cell);
+                }
+                if (!rounds.length) {
+                    strip.textContent = 'Henüz tamamlanmış Blackjack turun yok.';
+                }
+                panel.replaceChildren(header, summary, strip);
+            } catch (error) {
+                if (game === 'blackjack' && panel.isConnected) {
+                    panel.textContent = 'Tur geçmişi şu anda yüklenemiyor.';
+                }
+            }
+        };
+
+        if (!document.getElementById('erisBlackjackHistoryStyle')) {
+            const style = document.createElement('style');
+            style.id = 'erisBlackjackHistoryStyle';
+            style.textContent = `
+                #erisGamesModal .eg-bj-history {
+                    padding:12px;
+                    margin:9px 0;
+                    border:1px solid var(--ui-line);
+                    border-radius:15px;
+                    background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));
+                    box-shadow:inset 0 1px 0 var(--ui-shadow);
+                    color:var(--ui-ink);
+                }
+                #erisGamesModal .eg-bj-history-head {
+                    font-size:12px;
+                    font-weight:900;
+                    letter-spacing:.8px;
+                    color:var(--ui-gold);
+                    margin-bottom:9px;
+                }
+                #erisGamesModal .eg-bj-history-summary {
+                    font-size:11px;
+                    line-height:1.6;
+                    margin-bottom:10px;
+                    color:var(--ui-ink);
+                }
+                #erisGamesModal .eg-bj-history-strip {
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:5px;
+                    max-height:112px;
+                    overflow:auto;
+                }
+                #erisGamesModal .eg-bj-history-cell {
+                    width:27px;
+                    height:27px;
+                    display:grid;
+                    place-items:center;
+                    border-radius:7px;
+                    font-size:11px;
+                    font-weight:900;
+                    background:var(--ui-panel);
+                    color:var(--ui-ink);
+                }
+                #erisGamesModal .bj-win,
+                #erisGamesModal .bj-blackjack {
+                    background:var(--ui-ok-bg);
+                    color:var(--ui-ink);
+                }
+                #erisGamesModal .bj-blackjack {
+                    outline:1px solid var(--ui-line);
+                }
+                #erisGamesModal .bj-loss {
+                    background:var(--ui-danger-bg);
+                    color:var(--ui-ink);
+                }
+                #erisGamesModal .bj-push {
+                    background:var(--ui-panel);
+                    color:var(--ui-gold);
+                }
+            `;
+            document.head.append(style);
+        }
+
+
+        // ERIS_BLACKJACK_PREMIUM_V1
+        if (!document.getElementById('erisBlackjackPremiumStyle')) {
+            const st = document.createElement('style');
+            st.id = 'erisBlackjackPremiumStyle';
+            st.textContent = `
+                #erisGamesModal.eg-blackjack-mode .eg-panel{
+                    background:linear-gradient(155deg,var(--ui-panel),var(--ui-panel));
+                    border:1px solid var(--ui-line);
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-form{
+                    display:grid;
+                    grid-template-columns:1fr;
+                    gap:9px;
+                    padding:12px;
+                    border-radius:15px;
+                    border:1px solid var(--ui-line);
+                    background:linear-gradient(140deg,var(--ui-panel),var(--ui-panel));
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-form>label:first-child{
+                    display:none;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-form>label{
+                    color:var(--ui-gold);
+                    font-weight:800;
+                    font-size:12px;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-stake]{
+                    display:block;
+                    width:100%;
+                    box-sizing:border-box;
+                    margin-top:6px;
+                    min-height:44px;
+                    background:var(--ui-panel);
+                    color:var(--ui-gold);
+                    border:1px solid var(--ui-line);
+                    border-radius:10px;
+                    font-size:18px;
+                    font-weight:900;
+                    text-align:center;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-stake-presets{
+                    display:grid;
+                    grid-template-columns:repeat(4,minmax(0,1fr));
+                    gap:6px;
+                }
+                #erisGamesModal.eg-blackjack-mode .eg-stake-presets button{
+                    min-width:0;
+                    padding:10px 2px;
+                    border-radius:10px;
+                    border:1px solid var(--ui-line);
+                    background:linear-gradient(140deg,var(--ui-raised),var(--ui-raised));
+                    color:var(--ui-gold);
+                    font-weight:900;
+                    font-size:11px;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-play]{
+                    width:100%;
+                    min-height:50px;
+                    border-radius:12px;
+                    background:linear-gradient(100deg,var(--ui-primary),var(--ui-primary),var(--ui-primary));
+                    color:var(--ui-primary-ink);
+                    font-size:16px;
+                    font-weight:900;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-controls]{
+                    display:grid!important;
+                    grid-template-columns:repeat(2,minmax(0,1fr));
+                    gap:8px!important;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-controls] button{
+                    min-height:47px;
+                    border-radius:11px;
+                    background:linear-gradient(120deg,var(--ui-ok-bg),var(--ui-ok-bg));
+                    color:var(--ui-ink);
+                    font-weight:900;
+                }
+                #erisGamesModal.eg-blackjack-mode [data-controls] button:last-child{
+                    background:linear-gradient(120deg,var(--ui-danger-bg),var(--ui-danger-bg));
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        // ERIS_BJ_RESTORE_RACE_FIX_V1
+        // ERIS_BJ_RESTORE_FAILURE_LOCK_V1
+        let cupsBusy = false;
+        let cupsRoundId = null;
+        let blackjackRestoreBusy = false;
+        let blackjackRestoreFailed = false;
+        let activeBlackjackRoundId = null;
+        const loadGameModule = key => {
+            if(key==='slot'&&window.LidyaSlotLive){if(game==='blackjack'&&(activeBlackjackRoundId||blackjackRestoreBusy)){modal.querySelector('.eg-result').textContent='Önce aktif Blackjack elini tamamla.';return;}close();window.LidyaSlotLive.open();return;}
+            if(key==='crash'&&window.LidyaCrashLive){if(game==='blackjack'&&(activeBlackjackRoundId||blackjackRestoreBusy)){modal.querySelector('.eg-result').textContent='Önce aktif Blackjack elini tamamla.';return;}close();window.LidyaCrashLive.open();return;}
+            if(key==='wheel'&&window.LidyaWheelLive){close();window.LidyaWheelLive.open();return;}
+            /* ERIS_BJ_SWITCH_GUARD_V2 */ if ((activeBlackjackRoundId || blackjackRestoreBusy) && game === 'blackjack' && key !== 'blackjack') {
+                modal.querySelector('.eg-result').textContent =
+                    'Önce aktif Blackjack elini tamamla.';
+                return;
+            }
+            if (key === 'slot') {
+                scope = 'main';
+                roomId = null;
+            }
+            // ERIS_HORSE_SWITCH_CANCEL_V1
+            if (game === 'horse_race' && key !== 'horse_race') {
+                gameModules.horse_race()?.cancel?.();
+                horseRound = null;
+                horseLastRound = null;
+            }
+            if(game==='vault' && key!=='vault'){
+                const play=modal.querySelector('[data-vault-bet-bar] [data-play]');if(play)modal.querySelector('.eg-form').append(play);
+                modal.querySelector('[data-vault-bet-bar]')?.remove();
+            }
+            if(game === 'horse_race' && key !== 'horse_race'){
+                const play=modal.querySelector('[data-horse-bet-bar] [data-play]');
+                if(play) modal.querySelector('.eg-form').append(play);
+                modal.querySelector('[data-horse-bet-bar]')?.remove();
+            }
+            gameEpoch++;
+            game = key;
+            queueMicrotask(() => updateBlackjackStakeUI());
+            modal.querySelector('[data-bj-history]')?.remove();
+            if (key === 'blackjack') {
+                queueMicrotask(() => refreshBlackjackHistory());
+                queueMicrotask(() => restoreBlackjackRound());
+            }
+        modal.classList.toggle('eg-crash-mode', key === 'crash');
+        modal.classList.toggle('eg-blackjack-mode', key === 'blackjack');
+        modal.classList.toggle('eg-cups-mode', key === 'cups');
+        // ERIS_VAULT_MODE_V1
+        modal.classList.toggle('eg-vault-mode', key === 'vault');
+        // ERIS_ALL_GAMES_HEADER_BALANCE_V1
+        const header = modal.querySelector('.eg-head');
+        const wallet = modal.querySelector('.eg-wallet');
+        const closeButton = header?.querySelector('[data-close]');
+        if (header && wallet && closeButton) {
+            header.insertBefore(wallet, closeButton);
+        }
+
+        modal.classList.toggle('eg-horse-mode', key === 'horse_race');
+
+
+        // ERIS_CUPS_BET_CONTROLS_V2
+        if (key === 'cups') {
+            const form = modal.querySelector('.eg-form');
+            const stake = form?.querySelector('[data-stake]');
+            const presets = form?.querySelector('.eg-stake-presets');
+            if (form && stake && presets) {
+                let controls = form.querySelector('[data-cups-bet-controls]');
+                if (!controls) {
+                    controls = document.createElement('div');
+                    controls.dataset.cupsBetControls = '1';
+                    controls.className = 'eg-cups-bet-controls';
+                    controls.innerHTML = `
+                        <button type="button" data-cups-minus aria-label="Bahsi azalt">−</button>
+                        <div class="eg-cups-bet-summary">
+                            <small>TOPLAM BAHİS</small>
+                            <strong data-cups-amount>100 Lidya</strong>
+                            <small data-cups-potential>Olası kazanç: 360 Lidya</small>
+                        </div>
+                        <button type="button" data-cups-plus aria-label="Bahsi artır">+</button>
+                    `;
+                    presets.insertAdjacentElement('beforebegin', controls);
+                }
+                const play = form.querySelector('[data-play]');
+                controls.append(play);
+                let cupsStep = 100;
+                presets.querySelectorAll('[data-stake-value]').forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (cupsBusy || cupsRoundId) return;
+                        cupsStep = Number(button.dataset.stakeValue) || 100;
+                    });
+                });
+                const refresh = () => {
+                    const value = Math.max(10, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(Number(stake.value) || 100)));
+                    const locked = cupsBusy || !!cupsRoundId;
+                    controls.querySelector('[data-cups-amount]').textContent = value.toLocaleString('tr-TR') + ' Lidya';
+                    controls.querySelector('[data-cups-minus]').disabled = locked || value <= 10;
+                    controls.querySelector('[data-cups-plus]').disabled = locked || value >= Number.MAX_SAFE_INTEGER;
+                    stake.disabled = locked;
+                    const potential = controls.querySelector('[data-cups-potential]');
+                    if (potential) potential.textContent =
+                        'Olası kazanç: ' + Math.round(value * 3.6).toLocaleString('tr-TR') + ' Lidya';
+                    presets.querySelectorAll('[data-stake-value]').forEach(b => {
+                        b.disabled = locked;
+                        b.classList.toggle('cups-selected', Number(b.dataset.stakeValue) === cupsStep);
+                    });
+                };
+                controls.querySelector('[data-cups-minus]').onclick = () => {
+                    if (cupsBusy || cupsRoundId) return;
+                    stake.value = String(Math.max(10, (Number(stake.value) || 0) - cupsStep));
+                    stake.dispatchEvent(new Event('input', {bubbles:true}));
+                    refresh();
+                };
+                controls.querySelector('[data-cups-plus]').onclick = () => {
+                    if (cupsBusy || cupsRoundId) return;
+                    stake.value = String(Math.min(Number.MAX_SAFE_INTEGER, (Number(stake.value) || 0) + cupsStep));
+                    stake.dispatchEvent(new Event('input', {bubbles:true}));
+                    refresh();
+                };
+                modal._cupsRefresh = refresh;
+                stake.addEventListener('input', refresh);
+                presets.addEventListener('click', () => queueMicrotask(refresh));
+                refresh();
+            }
+        } else {
+            const controls = modal.querySelector('[data-cups-bet-controls]');
+            const play = controls?.querySelector('[data-play]');
+            if (play) modal.querySelector('.eg-form').append(play);
+            controls?.remove();
+            modal._cupsRefresh = null;
+        }
+
+        // ERIS_CUPS_PREMIUM_BET_V2
+        modal.classList.toggle('eg-cups-mode', key === 'cups');
+        if (!document.getElementById('erisCupsPremiumBetStyle')) {
+            const css = document.createElement('style');
+            css.id = 'erisCupsPremiumBetStyle';
+            css.textContent = `
+
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-controls {
+                display:grid;
+                grid-template-columns:48px minmax(0,1fr) 48px;
+                align-items:center;
+                gap:9px;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-controls>button {
+                min-height:48px;
+                border:1px solid var(--ui-line);
+                border-radius:13px;
+                background:var(--ui-button);
+                color:var(--ui-gold);
+                font-size:26px;
+                font-weight:900;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-summary {
+                text-align:center;
+                padding:6px 2px;
+                border-radius:12px;
+                background:var(--ui-raised);
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-summary small {
+                display:block;
+                color:var(--ui-gold);
+                font-size:10px;
+                font-weight:800;
+              }
+              #erisGamesModal.eg-cups-mode .eg-cups-bet-summary strong {
+                display:block;
+                margin-top:3px;
+                color:var(--ui-gold);
+                font-size:17px;
+              }
+              #erisGamesModal.eg-cups-mode .eg-form {
+                display:grid!important;
+                grid-template-columns:1fr!important;
+                gap:12px!important;
+                padding:16px!important;
+                border:1px solid var(--ui-line)!important;
+                border-radius:20px!important;
+                background:linear-gradient(150deg,var(--ui-panel),var(--ui-panel))!important;
+                box-shadow:inset 0 1px var(--ui-shadow),0 12px 30px var(--ui-shadow);
+              }
+              #erisGamesModal.eg-cups-mode .eg-form>label:first-child {
+                display:none!important;
+              }
+              #erisGamesModal.eg-cups-mode .eg-form>label {
+                display:block!important;
+                font-size:12px;
+                font-weight:900;
+                color:var(--ui-gold);
+              }
+              #erisGamesModal.eg-cups-mode [data-stake] {
+                display:block;
+                width:100%;
+                box-sizing:border-box;
+                margin-top:9px;
+                padding:12px;
+                min-height:54px;
+                border:1px solid var(--ui-line);
+                border-radius:14px;
+                background:var(--ui-panel);
+                color:var(--ui-gold);
+                font-size:23px;
+                font-weight:900;
+                text-align:center;
+              }
+              #erisGamesModal.eg-cups-mode .eg-stake-presets {
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:8px!important;
+              }
+              #erisGamesModal.eg-cups-mode [data-stake-value] {
+                min-width:0;
+                padding:12px 2px;
+                border:1px solid var(--ui-line);
+                border-radius:12px;
+                background:linear-gradient(150deg,var(--ui-button),var(--ui-panel));
+                color:var(--ui-gold);
+                font-weight:900;
+                font-size:12px;
+              }
+              #erisGamesModal.eg-cups-mode [data-stake-value].cups-selected {
+                border-color:var(--ui-line)!important;
+                background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg))!important;
+                color:var(--ui-ink)!important;
+                box-shadow:0 0 14px var(--ui-shadow);
+              }
+              #erisGamesModal.eg-cups-mode [data-play] {
+                width:100%;
+                min-height:58px;
+                border:1px solid var(--ui-line);
+                border-radius:15px;
+                background:linear-gradient(110deg,var(--ui-primary),var(--ui-primary),var(--ui-danger-bg))!important;
+                color:var(--ui-primary-ink)!important;
+                font-size:19px;
+                font-weight:1000;
+                box-shadow:0 8px 20px var(--ui-shadow);
+              }
+            `;
+            document.head.appendChild(css);
+        }
+        if (key === 'cups') {
+            modal.querySelector('[data-play]').textContent = 'Bahis Yap';
+        }
+
+        // SLOT_INDIVIDUAL_UI_V1
+        modal.classList.toggle('eg-slot-mode', key === 'slot');
+        queueMicrotask(() => {
+            if (modal?.isConnected) {
+                const selected = modal.querySelector('[data-stake]')?.value;
+                modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                    b.classList.toggle('slot-selected',
+                        key === 'slot' && b.dataset.stakeValue === selected);
+                });
+            }
+        });
+
+
+        if (!document.getElementById('erisSlotBetStyle')) {
+            const el = document.createElement('style');
+            el.id = 'erisSlotBetStyle';
+            el.textContent = `
+              #erisGamesModal.eg-slot-mode .eg-form{
+                display:grid!important;grid-template-columns:1fr!important;
+                gap:12px!important;padding:16px!important;
+                border:2px solid var(--ui-line);border-radius:18px;
+                background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel))!important;
+              }
+              #erisGamesModal.eg-slot-mode .eg-form>label:first-child{
+                display:none!important;
+              }
+              #erisGamesModal.eg-slot-mode .eg-form>label{
+                color:var(--ui-gold);font-weight:900;
+              }
+              #erisGamesModal.eg-slot-mode [data-stake]{
+                width:100%;box-sizing:border-box;margin-top:8px;
+                min-height:48px;font-size:20px;font-weight:900;
+                border:2px solid var(--ui-line);border-radius:12px;
+                background:var(--ui-panel);color:var(--ui-ink);padding:8px 12px;
+              }
+              #erisGamesModal.eg-slot-mode .eg-stake-presets{
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:7px!important;
+              }
+              #erisGamesModal.eg-slot-mode [data-stake-value]{
+                min-width:0;padding:12px 2px;border-radius:12px;
+                border:1px solid var(--ui-line);background:var(--ui-button);
+                color:var(--ui-gold);font-weight:900;
+              }
+
+              #erisGamesModal.eg-slot-mode .slot-selected{
+                background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg))!important;
+                color:var(--ui-ink)!important;
+                border-color:var(--ui-line)!important;
+                box-shadow:0 0 15px var(--ui-shadow)!important;
+              }
+              #erisGamesModal.eg-slot-mode [data-play]{
+                width:100%;min-height:60px;border-radius:15px;
+                background:linear-gradient(135deg,var(--ui-primary),var(--ui-danger-bg))!important;
+                color:var(--ui-primary-ink);font-size:21px;font-weight:1000;
+                box-shadow:0 7px 20px var(--ui-shadow);
+              }
+            `;
+            document.head.appendChild(el);
+        }
+
+        const slotChoiceLabel = modal.querySelector('[data-choice]')?.closest('label');
+        if (slotChoiceLabel && key === 'slot') {
+            slotChoiceLabel.style.display = 'none';
+        }
+        const slotPlayButton = modal.querySelector('[data-play]');
+        if (slotPlayButton && key === 'slot') {
+            slotPlayButton.textContent = 'ÇEVİR';
+        } else if (slotPlayButton && key !== 'blackjack' && key !== 'cups') {
+            slotPlayButton.textContent = 'Oyna';
+        }
+
+        // ERIS_BJ_INDIVIDUAL_UI_FIX_V1
+        modal.querySelector('[data-choice]')?.closest('label')?.style.setProperty('display', (key === 'blackjack' || key === 'slot' || key === 'cups' || key === 'vault') ? 'none' : '', 'important');
+
+        // Crash elemanlari diger oyunlara tasinmasin.
+        if (key !== 'crash') {
+            modal.querySelectorAll(
+                '[data-crash-history], [data-crash-stats], [data-crash-bets], .eg-crash-bets'
+            ).forEach(el => el.remove());
+        }
+
+        const crashStakeInput = modal.querySelector('[data-stake]');
+        const crashStakeLabel = crashStakeInput?.closest('label');
+        if (crashStakeLabel) crashStakeLabel.style.display = key === 'crash' ? 'none' : '';
+        if (key === 'crash' && crashStakeInput) {
+            crashStakeInput.value = crashStakeInput.value || '100';
+        }
+        modal.querySelectorAll('[data-stake-value]').forEach(b => {
+            b.classList.toggle('crash-selected',
+                key === 'crash' && b.dataset.stakeValue === crashStakeInput?.value);
+        });
+
+            // ERIS_VAULT_CLEANUP_V1
+            if (key !== 'vault') {
+                modal.querySelector('[data-vault-clock]')?.remove();
+                modal.querySelector('[data-vault-bets]')?.remove();
+                modal.querySelector('[data-vault-picks]')?.remove();
+                vaultState = null;
+            }
+
+            if (key !== 'horse_race') {
+                modal.querySelector('[data-horse-clock]')?.remove();
+                modal.querySelector('[data-horse-bets]')?.remove();
+            }
+            modal.querySelector('[data-name]').innerHTML = window.LidyaGameArt.markup(key, 'lg-title-icon') + '<span>' + labels[key] + '</span>';
+            const heading=modal.querySelector('.eg-head h2'); heading.innerHTML=window.LidyaGameArt.markup(key,'lg-header-icon')+'<span>'+labels[key]+'</span>';
+            modal.querySelector('[data-name]').style.display =
+                key === 'horse_race' ? 'none' : '';
+
+            tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.game === key));
+
+            const mod = gameModules[key]();
+            const stage = modal.querySelector('.eg-stage');
+            const wheelFeed=modal.querySelector('[data-wheel-feed]');
+            if(key==='wheel' && wheelFeed){
+                const head=modal.querySelector('.eg-head');
+                if(head?.parentNode) head.insertAdjacentElement('afterend',wheelFeed);
+            }
+
+            if (!mod || typeof mod.render !== 'function') {
+                console.error('[ErisChat Games] Modul yuklenmedi:', key);
+                stage.textContent = 'Oyun modulu yuklenemedi: ' + key;
+                return;
+            }
+            try {
+                mod.render(stage);
+            } catch (error) {
+                console.error('[ErisChat Games] Render hatasi:', key, error);
+                stage.textContent = 'Oyun arayuzu acilamadi: ' + key;
+                return;
+            }
+            if (mod && typeof mod.render === 'function') {
+                if(key==='horse_race') queueMicrotask(()=>{if(game==='horse_race'&&modal?.isConnected)refreshHorseLive().catch(console.warn);});
+                if (key === 'cups') {
+                    queueMicrotask(() => {
+                        if (game === 'cups' && modal?.isConnected) {
+                            restoreCupsRound().catch(console.warn);
+                        }
+                    });
+                }
+                // ERIS_VAULT_INITIAL_REFRESH_V1
+                if (key === 'vault') {
+                    vaultState = null;
+                    vaultLastResult = null;
+                    modal.querySelector('[data-vault-clock]')?.remove();
+                    modal.querySelector('[data-vault-bets]')?.remove();
+                    queueMicrotask(() => {
+                        if (game === 'vault' && modal?.isConnected) {
+                            refreshVaultLive().catch(console.warn);
+                        }
+                    });
+                }
+
+                if (key === 'crash') {
+                    queueMicrotask(() => {
+                        if (game === 'crash' && modal?.isConnected) {
+                            refreshCrashLive().catch(console.warn);
+                        }
+                    });
+                }
+
+            }
+
+            if (key !== 'crash') {
+                modal.querySelector('[data-controls]').replaceChildren();
+                crashState = null;
+            }
+
+            const choice = modal.querySelector('[data-choice]');
+            const wheelPicks = modal.querySelector('[data-wheel-picks]');
+
+            choice.replaceChildren();
+            wheelPicks.replaceChildren();
+            wheelPicks.classList.remove('show');
+            modal.classList.toggle('eg-wheel-mode', key === 'wheel');
+            const opts = mod?.options || [['auto', 'Seçim yap']];
+            for (const [val, lbl] of opts) {
+                choice.add(new Option(lbl, val));
+            }
+
+            if(key==='wheel'){
+                const input=modal.querySelector('[data-stake]')?.closest('label');
+                const play=modal.querySelector('[data-play]');
+                if(input) input.style.display='none';
+                if(play) play.style.display='none';
+            }else{
+                const input=modal.querySelector('[data-stake]')?.closest('label');
+                const play=modal.querySelector('[data-play]');
+                if(input) input.style.display='';
+                if(play) play.style.display='';
+            }
+
+
+            // ERIS_TREASURE_VAULT_SELECTOR_V2
+        modal.querySelector('[data-vault-picks]')?.remove();
+        if (key === 'vault') {
+            const prizes = [
+                ['ruby','💎','YAKUT KASASI'],
+                ['gold','👑','ALTIN KASASI'],
+                ['crystal','🔮','KRİSTAL KASASI'],
+                ['mystery','🎁','GİZEMLİ KASA']
+            ];
+            const picks = document.createElement('div');
+            picks.dataset.vaultPicks = '';
+            picks.className = 'ev-prize-picks';
+            picks.setAttribute('role', 'group');
+            picks.setAttribute('aria-label', 'Kasa seçimi');
+            prizes.forEach(([id, icon, name]) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.dataset.vaultPick = id;
+                b.textContent = icon + ' ' + name;
+                b.setAttribute('aria-label', name);
+                b.title = name;
+                b.onclick = () => {
+                    choice.value = id;
+                    picks.querySelectorAll('button').forEach(el => {
+                        const active = el === b;
+                        el.style.borderColor = active ? '#ffe098' : '#8b704a';
+                        el.style.background = active ? '#5a3c27' : '#211d2e';
+                        el.setAttribute('aria-pressed', String(active));
+                    });
+                    gameModules.vault()?.setPhase?.(
+                        modal.querySelector('.eg-stage'),
+                        vaultState?.phase || 'betting',
+                        vaultState?.result,
+                        id
+                    );
+                };
+                picks.appendChild(b);
+            });
+            modal.querySelector('.eg-form').prepend(picks);
+            picks.querySelector('[data-vault-pick="ruby"]')?.click();
+        }
+
+        // ERIS_HORSE_PREMIUM_SELECTOR_V1
+            modal.classList.toggle('eg-horse-mode', key === 'horse_race');
+            queueMicrotask(() => {
+                if (game === 'horse_race' && modal?.isConnected)
+                    syncHorseStake();
+            });
+            modal.querySelector('[data-horse-picks]')?.remove();
+            if (key === 'horse_race') {
+                const horses = [
+                    ['1','⚡','Şimşek'], ['2','🔥','Alev'],
+                    ['3','🌪️','Fırtına'], ['4','👑','Asil'],
+                    ['5','🌟','Yıldız'], ['6','💎','Safir'],
+                    ['7','🍀','Şans']
+                ];
+                const picks = document.createElement('div');
+                picks.className = 'eg-horse-picks';
+                picks.dataset.horsePicks = '';
+                picks.setAttribute('aria-label', 'Yarış atını seç');
+                horses.forEach(([id, icon, name]) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'eg-horse-pick';
+                    b.dataset.horsePick = id;
+                    b.innerHTML =
+                        '<span class="hp-icon">' + icon + '</span>' +
+                        '<b>' + name + '</b>' +
+                        '<small>6× ÖDEME</small>' +
+                        '<span class="hp-total" data-horse-total="horse_' +
+                        id + '">🪙 0</span>';
+                    b.onclick = () => {
+                        choice.value = id;
+                        picks.querySelectorAll('button').forEach(el => {
+                            const active = el === b;
+                            el.classList.toggle('active', active);
+                            el.setAttribute('aria-pressed', String(active));
+                        });
+                    };
+                    picks.appendChild(b);
+                });
+                modal.querySelector('.eg-form').prepend(picks);
+                picks.querySelector('[data-horse-pick="4"]')?.click();
+            }
+
+            if (key === 'wheel') {
+                const symbols = mod?.symbols || [];
+                symbols.forEach((symbol, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'eg-wheel-pick';
+                    button.dataset.value = symbol.key;
+
+                    const icon = document.createElement('span');
+                    icon.className = 'eg-wheel-icon';
+                    if (typeof mod.symbolMarkup === 'function') icon.innerHTML = mod.symbolMarkup(symbol.key);
+                    else icon.textContent = symbol.icon;
+
+                    const name = document.createElement('b');
+                    name.textContent = symbol.name;
+
+                    const payout = document.createElement('small');
+                    payout.textContent = ({rose:'1.5×',heart:'2×',star:'2.5×',diamond:'3×',crown:'3.5×',gift:'4×',fire:'4.5×',gem:'5×',jackpot:'6×'})[symbol.key]+' ÖDEME';
+
+                    const total=document.createElement('small');
+                    total.dataset.wheelTotal=symbol.key;
+                    total.style.cssText="display:block;color:var(--ui-gold);margin-top:4px;font-weight:900";
+                total.textContent='🪙 0 Lidya';
+                    button.append(icon,name,payout,total);
+
+                    button.onclick = async () => {
+                        const amount=wheelStake;
+                        if(![10,25,50,75,100,250,500,1000].includes(amount)) return;
+                        try{
+                            await api('/games/wheel/live/bet',{method:'POST',body:JSON.stringify({choice:symbol.key,amount})});
+                            refreshBalance();
+                            refreshWheelLive().catch(()=>{});
+                        }catch(e){ modal.querySelector('.eg-result').textContent=e.message; }
+                    };
+
+                    wheelPicks.appendChild(button);
+                });
+
+                if (symbols[0]) choice.value = symbols[0].key;
+                wheelPicks.classList.add('show');
+            }
+        };
+
+        for (const key of keys) {
+            const b = document.createElement('button');
+            b.dataset.game = key;
+            b.innerHTML = window.LidyaGameArt.markup(key) + '<span>' + labels[key] + '</span>';
+            b.onclick = () => loadGameModule(key);
+            tabs.append(b);
+        }
+        loadGameModule(game);
+        requestAnimationFrame(() => { if (ownedModal.isConnected) ownedModal.querySelector("[data-close]")?.focus(); });
+
+
+        const refreshSlotBet = () => {
+            const selected = modal.querySelector('[data-stake]')?.value;
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle(
+                    'slot-selected',
+                    game === 'slot' && b.dataset.stakeValue === selected
+                );
+            });
+        };
+        modal.querySelector('[data-stake]')?.addEventListener('input', refreshSlotBet);
+        modal.querySelectorAll('[data-stake-value]').forEach(preset => preset.onclick = () => {
+            if (game === 'cups' && (cupsBusy || cupsRoundId)) return;
+            if(game==='horse_race'){if(horseBusy)return;horseStep=Number(preset.dataset.stakeValue)||100;}
+            if(game==='vault'){if(vaultBusy)return;vaultStep=Number(preset.dataset.stakeValue)||100;}
+            modal.querySelector('[data-stake]').value = preset.dataset.stakeValue;
+            refreshSlotBet();
+            if(game==='horse_race'||game==='vault') bjLayout();
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle('horse-selected',
+                    game === 'horse_race' && b === preset);
+            });
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle('crash-selected',
+                    game === 'crash' && b === preset);
+            });
+            if(game==='wheel'){
+                wheelStake=Number(preset.dataset.stakeValue);
+                modal.querySelectorAll('[data-stake-value]').forEach(b=>b.classList.toggle('wheel-stake-active',b===preset));
+            }
+        });
+        let wheelShownRound=null,wheelAnimating=false,wheelSeenBets=new Set();
+        const refreshWheelLive = async () => {
+            if(game !== 'wheel' || wheelAnimating) return;
+            const x=await api('/games/wheel/live');
+            const feed=modal.querySelector('[data-wheel-feed]');
+            const icons={rose:'🌹',heart:'♥',star:'★',diamond:'◆',crown:'♛',gift:'🎁',fire:'🔥',gem:'💠',jackpot:'🏆'};
+            (x.recent_bets||[]).forEach(b=>{
+                if(wheelSeenBets.has(b.id)) return;
+                wheelSeenBets.add(b.id);
+                if(!feed) return;
+                feed.style.display='block';
+                const n=document.createElement('span');
+                n.textContent='🪙 '+Number(b.amount).toLocaleString('tr-TR')+' '+(icons[b.choice]||'');
+                n.style.cssText="position:absolute;left:-180px;top:50%;transform:translateY(-50%);font-weight:900;font-size:11px;white-space:nowrap;transition:transform 3.2s linear;color:var(--ui-gold)";
+                feed.appendChild(n);
+                requestAnimationFrame(()=>requestAnimationFrame(()=>n.style.transform='translateX(calc(100vw + 220px)) translateY(-50%)'));
+                setTimeout(()=>{
+                    n.remove();
+                    if(feed && !feed.children.length) feed.style.display='none';
+                },3400);
+            });
+            const clock=modal.querySelector('[data-wheel-clock]');
+            if(clock){clock.style.display='block';clock.textContent=(x.betting_open?'⏱ ':'🔒 ')+x.remaining_seconds+' sn';}
+            modal.querySelectorAll('.eg-wheel-pick').forEach(b=>b.disabled=!x.betting_open);
+            modal.querySelectorAll('[data-wheel-total]').forEach(el=>{
+                const v=x.totals?.[el.dataset.wheelTotal];
+                const mine=Number(x.my_bets?.[el.dataset.wheelTotal]||0);
+                el.style.display='block';
+                el.textContent='🪙 '+mine.toLocaleString('tr-TR')+' Lidya';
+            });
+            if(x.result && wheelShownRound!==x.round_id){
+                wheelShownRound=x.round_id;
+                wheelAnimating=true;
+                const i=['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].indexOf(x.result);
+                await gameModules.wheel()?.animate?.(modal.querySelector('.eg-stage'),{result_key:x.result,winning_index:i});
+                const resultNames={rose:'Gül',heart:'Kalp',star:'Yıldız',diamond:'Elmas',crown:'Taç',gift:'Hediye',fire:'Alev',gem:'Kristal',jackpot:'Jackpot'};
+                const resultIcons={rose:'🌹',heart:'♥',star:'★',diamond:'◆',crown:'♛',gift:'🎁',fire:'🔥',gem:'💠',jackpot:'🏆'};
+                const mult={rose:1.5,heart:2,star:2.5,diamond:3,crown:3.5,gift:4,fire:4.5,gem:5,jackpot:6};
+                const winningBet=Number(x.my_bets?.[x.result]||0);
+                const payout=Math.floor(winningBet*(mult[x.result]||0));
+                let pop=modal.querySelector('.eg-wheel-result-pop');
+                if(!pop){
+                    pop=document.createElement('div');
+                    pop.className='eg-wheel-result-pop';
+                    modal.appendChild(pop);
+                }
+                pop.innerHTML='<div class="wr-icon">'+(resultIcons[x.result]||'🎡')+'</div><div class="wr-name">'+(resultNames[x.result]||'Sonuç')+'</div><div class="wr-state">'+(winningBet>0?'KAZANDIN':'KAYBETTİN')+'</div><div class="wr-pay">'+(winningBet>0?'+ '+payout.toLocaleString('tr-TR')+' Lidya':'Bu tur kazanç yok')+'</div>';
+                requestAnimationFrame(()=>pop.classList.add('show'));
+                setTimeout(()=>pop.classList.remove('show'),3000);
+                wheelAnimating=false;
+            }
+            const box=modal.querySelector('[data-wheel-mine]');
+            if(!box) return;
+            const names={rose:'🌹 Gül',heart:'♥ Kalp',star:'★ Yıldız',diamond:'◆ Elmas',crown:'♛ Taç',gift:'🎁 Hediye',fire:'🔥 Alev',gem:'💠 Kristal',jackpot:'🏆 Jackpot'};
+            const rows=Object.entries(x.my_bets||{}).filter(([,v])=>Number(v)>0);
+            box.style.display='none';
+            box.innerHTML='<b>BU TURDAKİ BAHİSLERİM</b><br>'+(rows.length?rows.map(([k,v])=>names[k]+' · '+Number(v).toLocaleString('tr-TR')+' Lidya').join(' • '):'Henüz bahis yapmadın.');
+        };
+        refreshWheelLive(); gameInterval(()=>{if(game==="wheel" && modal?.isConnected) refreshWheelLive().catch(()=>{});},1000);
+
+
+
+
+
+        // ERIS_HORSE_MOBILE_FINISH_V1
+        if (!document.getElementById('erisHorseMobileFinishStyle')) {
+            const style = document.createElement('style');
+            style.id = 'erisHorseMobileFinishStyle';
+            style.textContent = `
+              #erisGamesModal.eg-horse-mode .eg-panel{
+                padding:9px!important;
+                width:min(100%,580px)!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-head{
+                gap:6px!important;margin-bottom:4px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-head h2{
+                font-size:18px!important;white-space:nowrap
+              }
+              #erisGamesModal.eg-horse-mode .eg-wallet{
+                margin:5px 0!important;padding:7px 9px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-stage{
+                padding:5px!important;margin:5px 0!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-form{
+                gap:7px!important;padding:8px!important;
+                margin-top:5px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-picks{
+                gap:5px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                min-height:78px!important;padding:6px 2px!important;
+                gap:2px!important
+              }
+              #erisGamesModal.eg-horse-mode .hp-icon{
+                font-size:22px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-stake-presets{
+                gap:5px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value]{
+                padding:9px 2px!important;font-size:11px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-play]{
+                min-height:47px!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-result{
+                min-height:0!important;margin-top:6px!important;
+                padding:8px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-clock]{
+                margin:5px 0!important;padding:8px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-bets]{
+                padding:5px!important
+              }
+            `;
+            document.head.appendChild(style);
+        }
+
+
+        // ERIS_HORSE_SELECTION_SYNC_V1
+        const syncHorseStake = () => {
+            const amount = modal.querySelector('[data-stake]')?.value;
+            const display=modal.querySelector('[data-horse-amount]');if(display)display.textContent=Number(amount||100).toLocaleString('tr-TR')+' Lidya';
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.classList.toggle('horse-selected',
+                    game === 'horse_race' &&
+                    b.dataset.stakeValue === amount);
+            });
+        };
+        modal.querySelector('[data-stake]')?.addEventListener('input', () => {syncHorseStake();if(game==='horse_race'||game==='vault')bjLayout();});
+
+
+        // ERIS_HORSE_ONE_SCREEN_V1
+        if (!document.getElementById('erisHorseOneScreenStyle')) {
+            const st = document.createElement('style');
+            st.id = 'erisHorseOneScreenStyle';
+            st.textContent = `
+              #erisGamesModal.eg-horse-mode{
+                padding:0!important;
+                overflow:hidden!important;
+                place-items:center!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-panel{
+                width:100%!important;
+                max-width:580px!important;
+                height:100dvh!important;
+                max-height:100dvh!important;
+                box-sizing:border-box!important;
+                padding:5px 9px!important;
+                border-radius:0!important;
+                overflow:hidden!important;
+                display:flex!important;
+                flex-direction:column!important;
+                gap:3px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-head{
+                flex:0 0 auto!important;
+                margin:0!important;
+                min-height:32px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-head h2{
+                font-size:16px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-close]{
+                width:32px!important;
+                height:32px!important;
+                border-radius:9px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-intro,
+              #erisGamesModal.eg-horse-mode .eg-keys,
+              #erisGamesModal.eg-horse-mode [data-name],
+              #erisGamesModal.eg-horse-mode [data-controls]{
+                display:none!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-wallet{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:5px 8px!important;
+                font-size:12px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-clock]{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:5px!important;
+                font-size:12px!important;
+                border-radius:9px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-stage{
+                flex:1 1 auto!important;
+                min-height:0!important;
+                margin:0!important;
+                padding:3px!important;
+                overflow:hidden!important;
+                display:flex!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-arena{
+                flex:1!important;
+                min-height:0!important;
+                height:100%!important;
+                padding:5px!important;
+                display:flex!important;
+                flex-direction:column!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-arena>div:first-child{
+                flex:0 0 auto!important;
+                padding:2px 4px 5px!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-track{
+                flex:1 1 auto!important;
+                min-height:0!important;
+                display:grid!important;
+                grid-template-rows:repeat(7,minmax(0,1fr))!important;
+                gap:3px!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-lane{
+                height:auto!important;
+                min-height:0!important;
+                border-radius:7px!important;
+              }
+              #erisGamesModal.eg-horse-mode .horse-runner{
+                font-size:clamp(17px,3vh,25px)!important;
+              }
+              #erisGamesModal.eg-horse-mode #raceStatusText{
+                flex:0 0 auto!important;
+                padding:5px 2px 2px!important;
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-horse-bets]{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:2px!important;
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-form{
+                flex:0 0 auto!important;
+                margin:0!important;
+                padding:5px!important;
+                gap:4px!important;
+                border-radius:12px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-picks{
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:3px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                min-height:0!important;
+                padding:4px 1px!important;
+                gap:1px!important;
+                border-radius:8px!important;
+              }
+              #erisGamesModal.eg-horse-mode .hp-icon{
+                font-size:17px!important;
+                line-height:1!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick b{
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick small,
+              #erisGamesModal.eg-horse-mode .hp-total{
+                font-size:8px!important;
+                line-height:1.1!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-stake-presets{
+                grid-template-columns:repeat(8,minmax(0,1fr))!important;
+                gap:2px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value]{
+                min-width:0!important;
+                padding:7px 0!important;
+                font-size:clamp(7px,1.8vw,10px)!important;
+                border-radius:7px!important;
+                letter-spacing:-.5px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-play]{
+                min-height:34px!important;
+                padding:5px!important;
+                font-size:13px!important;
+                border-radius:9px!important;
+              }
+              #erisGamesModal.eg-horse-mode .eg-result{
+                flex:0 0 auto!important;
+                min-height:0!important;
+                margin:0!important;
+                padding:4px!important;
+                font-size:10px!important;
+              }
+              #erisGamesModal.eg-horse-mode [data-wheel-feed],
+              #erisGamesModal.eg-horse-mode [data-wheel-clock],
+              #erisGamesModal.eg-horse-mode [data-wheel-mine]{
+                display:none!important;
+              }
+              @media(max-height:700px){
+                #erisGamesModal.eg-horse-mode .horse-arena>div:first-child{
+                  display:none!important;
+                }
+                #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                  padding:2px 1px!important;
+                }
+                #erisGamesModal.eg-horse-mode .hp-icon{
+                  font-size:15px!important;
+                }
+              }
+            `;
+            document.head.appendChild(st);
+        }
+
+        // ERIS_HORSE_PREMIUM_STYLE_V1
+        if (!document.getElementById('erisHorsePremiumStyle')) {
+            const style = document.createElement('style');
+            style.id = 'erisHorsePremiumStyle';
+            style.textContent = `
+              #erisGamesModal.eg-horse-mode .eg-panel{
+                padding:12px!important;max-width:580px;
+                overflow-y:auto;box-sizing:border-box
+              }
+              #erisGamesModal.eg-horse-mode .eg-stage{
+                margin:8px 0!important;padding:10px!important;
+                min-height:0!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-form{
+                display:grid!important;grid-template-columns:1fr!important;
+                gap:10px!important;padding:12px!important;
+                border:1px solid var(--ui-line)!important;
+                background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel))!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-form>label{
+                display:none!important
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-picks{
+                display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+                gap:7px;width:100%
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick{
+                position:relative;min-width:0;min-height:92px;
+                display:flex;flex-direction:column;align-items:center;
+                justify-content:center;gap:3px;
+                padding:9px 3px;border-radius:14px;
+                border:1px solid var(--ui-line);
+                background:linear-gradient(150deg,var(--ui-panel),var(--ui-panel));
+                color:var(--ui-ink);box-shadow:inset 0 1px var(--ui-shadow)
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick.active{
+                border-color:var(--ui-line);
+                background:linear-gradient(145deg,var(--ui-panel),var(--ui-panel));
+                box-shadow:0 0 0 1px var(--ui-shadow),0 0 18px var(--ui-shadow)
+              }
+              #erisGamesModal.eg-horse-mode .eg-horse-pick.active:after{
+                content:'✓';position:absolute;right:6px;top:5px;
+                color:var(--ui-gold);font-weight:900
+              }
+              #erisGamesModal.eg-horse-mode .hp-icon{font-size:26px}
+              #erisGamesModal.eg-horse-mode .eg-horse-pick b{font-size:12px}
+              #erisGamesModal.eg-horse-mode .eg-horse-pick small{
+                font-size:10px;font-weight:900;color:var(--ui-gold)
+              }
+              #erisGamesModal.eg-horse-mode .hp-total{
+                font-size:10px;color:var(--ui-ink);font-weight:800
+              }
+              #erisGamesModal.eg-horse-mode .eg-stake-presets{
+                display:grid!important;
+                grid-template-columns:repeat(4,minmax(0,1fr))!important;
+                gap:6px!important
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value]{
+                min-width:0;padding:11px 2px;border-radius:11px;
+                border:1px solid var(--ui-line);
+                background:var(--ui-panel);color:var(--ui-gold);font-weight:900
+              }
+              #erisGamesModal.eg-horse-mode [data-stake-value].horse-selected{
+                border-color:var(--ui-line)!important;
+                background:var(--ui-panel)!important;color:var(--ui-ink)!important
+              }
+              #erisGamesModal.eg-horse-mode [data-play]{
+                width:100%;min-height:52px;margin:0!important;
+                border-radius:14px;font-size:17px;
+                background:linear-gradient(110deg,var(--ui-primary),var(--ui-primary))!important;
+                color:var(--ui-primary-ink)!important
+              }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // ERIS_HORSE_LIVE_FRONTEND_V1
+        // ERIS_VAULT_LIVE_STATE_V1
+        let vaultStep = 100;
+        let vaultBusy = false;
+        let vaultFetching = false;
+
+        const refreshVaultLive = async () => {
+            if (game !== 'vault' || !modal?.isConnected ||
+                vaultFetching) return;
+
+            vaultFetching = true;
+            try {
+                const x = await api('/games/vault/live');
+                if (game !== 'vault' || !modal?.isConnected) return;
+
+                // ERIS_VAULT_ROUND_RESET_V1
+                const previousRound = vaultState?.round_id;
+                const isNewRound = previousRound &&
+                    previousRound !== x.round_id;
+
+                vaultState = x;
+                const stage = modal.querySelector('.eg-stage');
+
+                if (isNewRound) {
+                    vaultLastResult = null;
+                    const result = modal.querySelector('.eg-result');
+                    if (result) {
+                        result.textContent =
+                            '🔐 Yeni hazine turu başladı. Kasanı seç!';
+                    }
+                }
+
+                // ERIS_VAULT_PHASE_FRONTEND_V1
+                const phase = x.phase || (
+                    x.betting_open ? 'betting' :
+                    x.result ? 'result' : 'opening'
+                );
+                gameModules.vault()?.setPhase?.(
+                    stage, phase, x.result,
+                    modal.querySelector('[data-choice]')?.value
+                );
+                const result = modal.querySelector('.eg-result');
+                const button = modal.querySelector('[data-play]');
+                const names = {
+                    common: 'Boş Kasa',
+                    rare: 'Nadir', epic: 'Destansı',
+                    legendary: 'Efsanevi', mythic: 'Mitik',
+                    ruby: 'Yakut Kasası', gold: 'Altın Kasası',
+                    crystal: 'Kristal Kasası', mystery: 'Gizemli Kasa'
+                };
+
+                let clock = modal.querySelector('[data-vault-clock]');
+                if (!clock) {
+                    clock = document.createElement('div');
+                    clock.dataset.vaultClock = '';
+                    clock.style.cssText =
+                        'text-align:center;padding:10px;margin:7px 0;' +
+                        'border-radius:12px;background:#25202e;' +
+                        'color:#ffd978;font-weight:900;font-size:16px';
+                    stage.before(clock);
+                }
+
+                const seconds = Number(x.remaining_seconds || 0);
+                const phaseSeconds = Number(
+                    x.phase_remaining ?? seconds
+                );
+                clock.textContent = phase === 'betting'
+                    ? '⏳ BAHİS: ' + phaseSeconds + ' SANİYE'
+                    : phase === 'opening'
+                    ? '⚙️ KASA AÇILIYOR: ' + phaseSeconds + ' SANİYE'
+                    : '🔓 SONUÇ: ' + phaseSeconds + ' SANİYE';
+
+                if (button) {
+                    button.disabled = !x.betting_open || vaultBusy || x.version !== 2;
+                    button.textContent = x.betting_open
+                        ? 'Bahis Yap'
+                        : 'Kapalı';
+                }
+
+                const mine = Object.entries(x.my_bets || {})
+                    .filter(([, amount]) => Number(amount) > 0)
+                    .map(([key, amount]) =>
+                        (names[key] || key) + ': ' +
+                        Number(amount).toLocaleString('tr-TR') + ' Lidya'
+                    );
+
+                let info = modal.querySelector('[data-vault-bets]');
+                if (!info) {
+                    info = document.createElement('div');
+                    info.dataset.vaultBets = '';
+                    info.style.cssText =
+                        'font-size:12px;color:#f5dca6;' +
+                        'padding:8px;text-align:center';
+                    stage.after(info);
+                }
+                info.textContent = mine.length
+                    ? 'Bahislerim: ' + mine.join(' • ')
+                    : 'Henüz bahis yapmadın.';
+
+                if (x.result && vaultLastResult !== x.round_id) {
+                    vaultLastResult = x.round_id;
+                    const won = Number(x.my_bets?.[x.result] || 0);
+                    const payout = won *
+                        Number(x.multipliers?.[x.result] || 0);
+                    if (result) {
+                        result.textContent =
+                            '🔓 KASA SONUCU: ' +
+                            (names[x.result] || x.result) +
+                            (payout > 0
+                                ? ' · 🎉 +' + payout + ' Lidya!'
+                                : ' · Yeni turu bekle.');
+                    }
+                    refreshBalance().catch(() => {});
+                }
+            } catch (e) {
+                if (game === 'vault') {
+                    const result = modal.querySelector('.eg-result');
+                    if (result) result.textContent =
+                        e.message || 'Kasa bağlantı hatası';
+                }
+            } finally {
+                vaultFetching = false;
+            }
+        };
+
+        gameInterval(() => {
+            if (game === 'vault' && modal?.isConnected) {
+                refreshVaultLive().catch(() => {});
+            }
+        }, 1000);
+
+        let horseStep = 100;
+        let horseRound = null;
+        let horseAnimating = false;
+        let horseBusy = false;
+        let horseFetching = false;
+        let horseLastRound = null;
+
+        const refreshHorseLive = async () => {
+            if (game !== 'horse_race' || !modal?.isConnected ||
+                horseFetching || horseAnimating) return;
+            horseFetching = true;
+            try {
+                const requestModal = modal;
+                const requestEpoch = gameEpoch;
+                const x = await api('/games/horse_race/live');
+                if (game !== 'horse_race' ||
+                    modal !== requestModal ||
+                    gameEpoch !== requestEpoch ||
+                    !requestModal?.isConnected) return;
+                const stage = modal.querySelector('.eg-stage');
+                const result = modal.querySelector('.eg-result');
+                const button = modal.querySelector('[data-play]');
+                const names = {
+                    horse_1:'⚡ Şimşek', horse_2:'🔥 Alev',
+                    horse_3:'🌪️ Fırtına', horse_4:'👑 Asil',
+                    horse_5:'🌟 Yıldız', horse_6:'💎 Safir',
+                    horse_7:'🍀 Şans'
+                };
+
+                if (horseRound !== x.round_id ||
+                    !stage.querySelector('.horse-runner')) {
+                    horseRound = x.round_id;
+                    horseLastRound = null;
+                    gameModules.horse_race()?.render?.(stage);
+                    if (result) result.textContent =
+                        '🏇 Yeni tur başladı! Atını seç.';
+                }
+
+                let clock = modal.querySelector('[data-horse-clock]');
+                if (!clock) {
+                    clock = document.createElement('div');
+                    clock.dataset.horseClock = '';
+                    clock.style.cssText =
+                        'text-align:center;padding:10px;margin:7px 0;' +
+                        'border-radius:12px;background:#123b30;' +
+                        'color:#facc15;font-weight:900;font-size:16px';
+                    stage.before(clock);
+                }
+
+                const seconds = Number(x.remaining_seconds || 0);
+                clock.textContent = x.betting_open
+                    ? '⏳ BAHİS SÜRESİ: ' + seconds + ' SANİYE'
+                    : x.status === 'finished'
+                        ? '🏁 YARIŞ SONUCU'
+                        : '🔒 BAHİSLER KAPANDI';
+
+                if (button) {
+                    button.disabled = !x.betting_open || horseBusy;
+                    button.textContent = x.betting_open
+                        ? 'Bahis Yap'
+                        : 'Kapalı';
+                }
+
+                modal.querySelectorAll('[data-horse-total]').forEach(el => {
+                    const amount = Number(x.my_bets?.[el.dataset.horseTotal] || 0);
+                    el.textContent = '🪙 ' + amount.toLocaleString('tr-TR');
+                });
+                modal.querySelectorAll('[data-horse-pick]').forEach(el => {
+                    el.disabled = !x.betting_open;
+                });
+
+                const mine = Object.entries(x.my_bets || {})
+                    .filter(([,v]) => Number(v) > 0)
+                    .map(([k,v]) => (names[k] || k) +
+                        ': ' + Number(v).toLocaleString('tr-TR') +
+                        ' Lidya');
+                let info = modal.querySelector('[data-horse-bets]');
+                if (!info) {
+                    info = document.createElement('div');
+                    info.dataset.horseBets = '';
+                    info.style.cssText =
+                        'font-size:12px;color:#c7f9e8;' +
+                        'padding:8px;text-align:center';
+                    stage.after(info);
+                }
+                info.textContent = mine.length
+                    ? 'Bahislerim: ' + mine.join(' • ')
+                    : 'Henüz bahis yapmadın.';
+
+                if (x.result && horseLastRound !== x.round_id) {
+                    horseLastRound = x.round_id;
+                    horseAnimating = true;
+                    try {
+                        if (game !== 'horse_race' ||
+                            !modal?.isConnected ||
+                            stage !== modal.querySelector('.eg-stage'))
+                            return;
+                        await gameModules.horse_race()?.animate?.(
+                            stage, {winner:x.result}
+                        );
+                        if (game === 'horse_race' &&
+                            horseRound === x.round_id) {
+                            const stake = Number(
+                                x.my_bets?.[x.result] || 0
+                            );
+                            const payout = Math.floor(
+                                stake * Number(
+                                    x.multipliers?.[x.result] || 0
+                                )
+                            );
+                            result.textContent =
+                                '🏆 ' + (names[x.result] || x.result) +
+                                ' kazandı! ' +
+                                (stake > 0
+                                    ? '🎉 +' + payout +
+                                      ' Lidya ödül!'
+                                    : 'Yeni turu bekle.');
+                            refreshBalance().catch(() => {});
+                        }
+                    } finally {
+                        horseAnimating = false;
+                    }
+                }
+            } catch (e) {
+                const result = modal.querySelector('.eg-result');
+                if (result && game === 'horse_race')
+                    result.textContent =
+                        e.message || 'Canlı yarış bağlantı hatası';
+            } finally {
+                horseFetching = false;
+            }
+        };
+
+        gameInterval(() => {
+            if (game === 'horse_race' && modal?.isConnected)
+                refreshHorseLive().catch(() => {});
+        }, 1000);
+
+        let crashBusy = false;
+        let crashFetching = false;
+        let crashNoticeUntil = 0;
+        let crashNotice = '';
+
+        function showCrashNotice(message) {
+            crashNotice = message;
+            crashNoticeUntil = Date.now() + 5000;
+            const el = modal?.querySelector('.eg-result');
+            if (el) el.textContent = message;
+        }
+
+
+        async function refreshCrashLive() {
+            if (game !== 'crash' || !modal?.isConnected) return;
+
+            if (crashFetching) return;
+            crashFetching = true;
+            const currentModal = modal;
+            const requestEpoch = gameEpoch;
+            let state;
+            try {
+                state = await api('/games/crash/live');
+            } finally {
+                crashFetching = false;
+            }
+
+            if (game !== 'crash' || modal !== currentModal ||
+                gameEpoch !== requestEpoch ||
+                !currentModal.isConnected) return;
+
+            crashState = state;
+
+            const stage = modal.querySelector('.eg-stage');
+            const mod = window.ErisGameCrash;
+            mod?.updateLive?.(stage, state);
+            /* ERIS_CRASH_HISTORY_V1 */
+            let history = modal.querySelector('[data-crash-history]');
+            if (!history) {
+                history = document.createElement('div');
+                history.dataset.crashHistory = '';
+                history.style.cssText = 'display:flex;gap:7px;overflow-x:auto;padding:12px 2px;scrollbar-width:none';
+                stage.insertAdjacentElement('afterend', history);
+            }
+
+            const rounds = Array.isArray(state.recent_rounds)
+                ? state.recent_rounds.slice(0, 12) : [];
+
+            history.replaceChildren();
+
+            for (const round of rounds) {
+                const value = Number(round.multiplier);
+                if (!Number.isFinite(value) || value < 1) continue;
+
+                const chip = document.createElement('span');
+                chip.textContent = value.toFixed(2) + 'x';
+                chip.dataset.crashTier = value >= 10 ? 'gold' : value >= 2 ? 'jade' : 'copper';
+                chip.style.cssText =
+                    'flex:0 0 auto;padding:8px 11px;border-radius:11px;font-size:12px;font-weight:900;' +
+                    'border:1px solid #ffffff20;background:#ffffff0b;color:' +
+                    (value >= 10 ? '#facc15' : value >= 2 ? '#45f6ad' : '#fb7185');
+
+                history.appendChild(chip);
+            }
+
+            if (!history.childElementCount) {
+                const empty = document.createElement('span');
+                empty.textContent = 'Henüz tamamlanmış tur bulunmuyor';
+                empty.style.cssText = "color:var(--ui-ink);font-size:11px;padding:7px";
+                history.appendChild(empty);
+            }
+
+
+
+            /* ERIS_CRASH_STATS_V1 */
+            let statsPanel = modal.querySelector('[data-crash-stats]');
+            if (!statsPanel) {
+                statsPanel = document.createElement('div');
+                statsPanel.dataset.crashStats = '';
+                statsPanel.className = 'eg-crash-stats';
+                history.insertAdjacentElement('afterend', statsPanel);
+            }
+            const stats = state.crash_stats || {};
+            const sample = Number(stats.sample_size || 0);
+            const percentage = value =>
+                sample ? (100 * Number(value || 0) / sample).toFixed(1) + '%' : '—';
+            const numberText = value =>
+                value == null ? '—' : Number(value).toFixed(2) + 'x';
+
+            statsPanel.replaceChildren();
+            const statsTitle = document.createElement('div');
+            statsTitle.className = 'eg-crash-stats-title';
+            statsTitle.textContent = '📊 SON ' + sample + ' TUR İSTATİSTİĞİ';
+            statsPanel.appendChild(statsTitle);
+
+            const statsGrid = document.createElement('div');
+            statsGrid.className = 'eg-crash-stats-grid';
+            for (const [label, value] of [
+                ['2x ve üzeri', percentage(stats.above_2x)],
+                ['5x ve üzeri', percentage(stats.above_5x)],
+                ['Ortalama', numberText(stats.average)],
+                ['En yüksek', numberText(stats.highest)]
+            ]) {
+                const item = document.createElement('div');
+                const name = document.createElement('small');
+                const val = document.createElement('strong');
+                name.textContent = label;
+                val.textContent = value;
+                item.append(name, val);
+                statsGrid.appendChild(item);
+            }
+            statsPanel.appendChild(statsGrid);
+
+            const play = modal.querySelector('[data-play]');
+            const result = modal.querySelector('.eg-result');
+            const controls = modal.querySelector('[data-controls]');
+
+            const activeBets = (state.my_bets || [])
+                .filter(b => !b.cashed_out);
+
+            play.textContent = 'Bahis Yap';
+            play.disabled = crashBusy || !state.betting_open;
+
+            if (!crashBusy && Date.now() >= crashNoticeUntil) {
+                if (state.status === 'open') {
+                    result.textContent =
+                        '⏳ Bahis süresi: ' +
+                        state.betting_remaining + ' saniye';
+                } else if (state.status === 'running') {
+                    result.textContent =
+                        '🚀 Çarpan: ' +
+                        Number(state.multiplier).toFixed(2) + 'x';
+                } else {
+                    result.textContent =
+                        '💥 Crash: ' +
+                        Number(state.crash_at || state.multiplier).toFixed(2) + 'x';
+                }
+            }
+
+            controls.replaceChildren();
+
+            let betSummary = modal.querySelector('[data-crash-bets]');
+            if (!betSummary) {
+                betSummary = document.createElement('div');
+                betSummary.dataset.crashBets = '';
+                betSummary.className = 'eg-crash-bets';
+                result.insertAdjacentElement('afterend', betSummary);
+            }
+
+            const totalStake = activeBets.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+            const estimate = Math.floor(totalStake * Number(state.multiplier || 1));
+            betSummary.textContent = activeBets.length
+                ? '🎯 Aktif bahis: ' + activeBets.length +
+                  '  •  Yatırılan: ' + totalStake.toLocaleString('tr-TR') +
+                  ' Lidya' + (state.status === 'running'
+                    ? '  •  Tahmini kazanç: ' + estimate.toLocaleString('tr-TR') + ' Lidya'
+                    : '')
+                : 'Bu turda aktif bahsin bulunmuyor.';
+
+            if (state.status === 'running' && activeBets.length) {
+                const cashout = document.createElement('button');
+                cashout.type = 'button';
+                cashout.textContent = '💰 Toplam ' + estimate.toLocaleString('tr-TR') + ' Lidya Çek';
+                cashout.disabled = crashBusy;
+                cashout.onclick = async () => {
+                    if (crashBusy) return;
+                    crashBusy = true;
+                    cashout.disabled = true;
+                    try {
+                        const res = await api('/games/crash/live/cashout-all', {
+                            method: 'POST'
+                        });
+                        showCrashNotice(
+                            '🎉 ' + res.bet_count + ' bahis çekildi: ' +
+                            Number(res.payout).toLocaleString('tr-TR') + ' Lidya'
+                        );
+                        refreshBalance();
+                    } catch (e) {
+                        showCrashNotice(e.message || 'Kazanç çekilemedi');
+                    } finally {
+                        crashBusy = false;
+                        refreshCrashLive().catch(console.warn);
+                    }
+                };
+                controls.append(cashout);
+            }
+            /* ERIS_CRASH_COMPACT_V2 */
+        }
+
+        gameInterval(() => {
+            if (game === 'crash' && modal?.isConnected) {
+                refreshCrashLive().catch(console.warn);
+            }
+        }, 500);
+
+        let wheelStake=100;
+
+
+
+        // ERIS_BJ_FINAL_COMPACT_V1
+        const bjStakeInput = modal.querySelector('[data-stake]');
+        const bjStakePresets = modal.querySelector('.eg-stake-presets');
+        const bjForm = modal.querySelector('.eg-form');
+
+        const bjStakeBar = document.createElement('div');
+        bjStakeBar.className = 'eg-bj-stake-bar';
+        bjStakeBar.innerHTML = `
+            <button type="button" data-bj-minus aria-label="Bahsi azalt">−</button>
+            <div class="eg-bj-stake-display">
+                <small>TOPLAM BAHİS</small>
+                <strong data-bj-amount>100 Lidya</strong>
+            </div>
+            <button type="button" data-bj-plus aria-label="Bahsi artır">+</button>
+        `;
+        bjStakePresets?.parentElement?.insertBefore(bjStakeBar, bjStakePresets);
+
+        const bjRefreshAmount = () => {
+            const amount = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER,
+                Math.trunc(Number(bjStakeInput?.value) || 0)));
+            const display = modal.querySelector('[data-bj-amount]');
+            if (display) display.textContent =
+                amount.toLocaleString('tr-TR') + ' Lidya';
+            bjStakeBar.querySelectorAll('button').forEach(b => {
+                b.disabled = game === 'blackjack' &&
+                    (!!activeBlackjackRoundId || blackjackRestoreBusy);
+            });
+        };
+
+        for (const [selector, delta] of [
+            ['[data-bj-minus]', -10],
+            ['[data-bj-plus]', 10]
+        ]) {
+            bjStakeBar.querySelector(selector).onclick = () => {
+                if (game !== 'blackjack' ||
+                    activeBlackjackRoundId || blackjackRestoreBusy) return;
+                const current = Number(bjStakeInput.value) || 0;
+                bjStakeInput.value = String(Math.max(0,
+                    Math.min(Number.MAX_SAFE_INTEGER, current + delta)));
+                bjStakeInput.dispatchEvent(new Event('input', {bubbles:true}));
+                bjRefreshAmount();
+            };
+        }
+
+        bjStakeInput?.addEventListener('input', bjRefreshAmount);
+        bjStakeInput?.addEventListener('change', bjRefreshAmount);
+        bjStakePresets?.addEventListener('click', () =>
+            queueMicrotask(bjRefreshAmount));
+
+        let bjFinalConfigured = null;
+        const bjFinalStakes = [10,100,1000,10000,100000];
+        const bjLayout = () => {
+            const enabled = game === 'blackjack';
+            const cupsEnabled = game === 'cups';
+            const horseEnabled = game === 'horse_race';
+            const vaultEnabled = game === 'vault';
+            const mode = enabled ? 'blackjack' : cupsEnabled ? 'cups' : horseEnabled ? 'horse_race' : vaultEnabled ? 'vault' : 'other';
+            if (bjFinalConfigured !== mode) {
+                bjFinalConfigured = mode;
+                const input = modal.querySelector('[data-stake]');
+                input.max = enabled ? String(Number.MAX_SAFE_INTEGER) : cupsEnabled ? String(Number.MAX_SAFE_INTEGER) : horseEnabled ? String(Number.MAX_SAFE_INTEGER) : vaultEnabled ? String(Number.MAX_SAFE_INTEGER) : String(Number.MAX_SAFE_INTEGER);
+                input.min = enabled || cupsEnabled || horseEnabled || vaultEnabled ? '10' : '0';
+                input.step = enabled || cupsEnabled || horseEnabled || vaultEnabled ? '10' : '1';
+                if(cupsEnabled && (Number(input.value)<10 || Number(input.value)>Number.MAX_SAFE_INTEGER || Number(input.value)%10)) input.value='100';
+                if(horseEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>Number.MAX_SAFE_INTEGER || Number(input.value)%10)) input.value='100';
+                if(vaultEnabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)>Number.MAX_SAFE_INTEGER || Number(input.value)%10)) input.value='100';
+                if (enabled && (!Number.isSafeInteger(Number(input.value)) || Number(input.value)<10 || Number(input.value)%10)) input.value = '100';
+                modal.querySelectorAll('[data-stake-value]').forEach((button,i) => {
+                    if (!button.dataset.bjOriginal) button.dataset.bjOriginal = button.dataset.stakeValue;
+                    const value = enabled || cupsEnabled || horseEnabled || vaultEnabled ? bjFinalStakes[i] : Number(button.dataset.bjOriginal);
+                    button.hidden = (enabled || cupsEnabled || horseEnabled || vaultEnabled) && i >= 5;
+                    if (value) { button.dataset.stakeValue = String(value); button.innerHTML = window.LidyaGameArt.markup('coin') + '<span>' + (value >= 1000 ? value/1000+'K' : value) + '</span>'; }
+                });
+                let rank = modal.querySelector('[data-bj-ranking]');
+                if (enabled && !rank) {
+                    rank = document.createElement('button');rank.type='button';rank.dataset.bjRanking='';
+                    rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';
+                    rank.onclick=()=>window.LidyaGameRanking.open('blackjack');
+                    modal.querySelector('.eg-head').prepend(rank);
+                }
+                if (rank) rank.hidden = !enabled;
+            }
+            const head = modal.querySelector('.eg-head');
+            const wallet = modal.querySelector('.eg-wallet');
+            const close = modal.querySelector('[data-close]');
+            if (enabled && head && wallet && close) {
+                head.insertBefore(wallet, close);
+            }
+            let cupsRank = modal.querySelector('[data-cups-ranking]');
+            if(cupsEnabled && !cupsRank){
+                cupsRank=document.createElement('button');cupsRank.type='button';cupsRank.dataset.cupsRanking='';
+                cupsRank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';
+                cupsRank.onclick=()=>window.LidyaGameRanking.open('cups');modal.querySelector('.eg-head').prepend(cupsRank);
+            }
+            if(cupsRank) cupsRank.hidden=!cupsEnabled;
+            if(cupsEnabled) modal._cupsRefresh?.();
+            if(horseEnabled){
+                const wallet=modal.querySelector('.eg-wallet'),head=modal.querySelector('.eg-head');
+                if(wallet && wallet.parentElement!==modal.querySelector('.eg-panel')) head.after(wallet);
+                let bar=modal.querySelector('[data-horse-bet-bar]');
+                if(!bar){
+                    bar=document.createElement('div');bar.dataset.horseBetBar='';
+                    bar.innerHTML='<button type="button" data-horse-minus aria-label="Bahsi azalt">−</button><div><small>TOPLAM BAHİS</small><strong data-horse-amount></strong></div><button type="button" data-horse-plus aria-label="Bahsi artır">+</button>';
+                    modal.querySelector('.eg-form').append(bar);
+                    bar.append(modal.querySelector('[data-play]'));
+                    for(const [attr,sign] of [['minus',-1],['plus',1]])bar.querySelector('[data-horse-'+attr+']').onclick=()=>{
+                        if(horseBusy)return;
+                        const input=modal.querySelector('[data-stake]');
+                        input.value=String(Math.max(10,Math.min(Number.MAX_SAFE_INTEGER,(Number(input.value)||10)+sign*horseStep)));
+                        input.dispatchEvent(new Event('input',{bubbles:true}));
+                    };
+                }
+                bar.querySelector('[data-horse-amount]').textContent=Number(modal.querySelector('[data-stake]').value||100).toLocaleString('tr-TR')+' Lidya';
+                bar.querySelector('[data-horse-minus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)<=10;
+                bar.querySelector('[data-horse-plus]').disabled=horseBusy||Number(modal.querySelector('[data-stake]').value)>=Number.MAX_SAFE_INTEGER;
+                let rank=modal.querySelector('[data-horse-ranking]');
+                if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.horseRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('horse_race');modal.querySelector('.eg-head').prepend(rank);}
+                rank.hidden=false;
+            }else{const rank=modal.querySelector('[data-horse-ranking]');if(rank)rank.hidden=true;}
+            if(vaultEnabled){
+                const wallet=modal.querySelector('.eg-wallet'),head=modal.querySelector('.eg-head');
+                if(wallet&&wallet.parentElement!==modal.querySelector('.eg-panel'))head.after(wallet);
+                let bar=modal.querySelector('[data-vault-bet-bar]');
+                if(!bar){bar=document.createElement('div');bar.dataset.vaultBetBar='';
+                    bar.innerHTML='<button type="button" data-vault-minus aria-label="Bahsi azalt">−</button><div><small>TOPLAM BAHİS</small><strong data-vault-amount></strong></div><button type="button" data-vault-plus aria-label="Bahsi artır">+</button>';
+                    modal.querySelector('.eg-form').append(bar);bar.append(modal.querySelector('[data-play]'));
+                    for(const [attr,sign] of [['minus',-1],['plus',1]])bar.querySelector('[data-vault-'+attr+']').onclick=()=>{
+                        if(vaultBusy)return;const input=modal.querySelector('[data-stake]');input.value=String(Math.max(10,Math.min(Number.MAX_SAFE_INTEGER,(Number(input.value)||10)+sign*vaultStep)));input.dispatchEvent(new Event('input',{bubbles:true}));};
+                }
+                const amount=Number(modal.querySelector('[data-stake]').value||100);
+                bar.querySelector('[data-vault-amount]').textContent=amount.toLocaleString('tr-TR')+' Lidya';
+                bar.querySelector('[data-vault-minus]').disabled=vaultBusy||amount<=10;bar.querySelector('[data-vault-plus]').disabled=vaultBusy||amount>=Number.MAX_SAFE_INTEGER;
+                let rank=modal.querySelector('[data-vault-ranking]');if(!rank){rank=document.createElement('button');rank.type='button';rank.dataset.vaultRanking='';rank.innerHTML=window.LidyaGameArt.markup('crown')+'<span>Sıralama</span>';rank.onclick=()=>window.LidyaGameRanking.open('vault');modal.querySelector('.eg-head').prepend(rank);}rank.hidden=false;
+            }else{const rank=modal.querySelector('[data-vault-ranking]');if(rank)rank.hidden=true;}
+            bjRefreshAmount();
+        };
+
+        const bjStyle = document.createElement('style');
+        bjStyle.id = 'erisBjFinalCompactStyle';
+        bjStyle.textContent = `
+            #erisGamesModal.eg-blackjack-mode {
+                overflow:hidden!important;
+                padding:0!important;
+                place-items:center!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-panel {
+                display:flex!important;
+                flex-direction:column!important;
+                width:100%!important;
+                max-width:520px!important;
+                height:100dvh!important;
+                max-height:100dvh!important;
+                box-sizing:border-box!important;
+                overflow:hidden!important;
+                padding:8px 10px!important;
+                border-radius:0!important;
+                gap:3px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-head {
+                display:flex!important;
+                align-items:center!important;
+                gap:7px!important;
+                flex-shrink:0;
+                margin:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-head h2 {
+                font-size:13px!important;
+                min-width:0;
+                flex:1;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-wallet {
+                display:flex!important;
+                align-items:center!important;
+                flex:0 1 auto!important;
+                min-width:0;
+                margin:0!important;
+                padding:3px!important;
+                background:transparent!important;
+                border:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-balance] {
+                font-size:11px!important;
+                white-space:nowrap;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-scope],
+            #erisGamesModal.eg-blackjack-mode .eg-intro,
+            #erisGamesModal.eg-blackjack-mode [data-name] {
+                display:none!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-stage {
+                flex:1 1 auto!important;
+                min-height:0!important;
+                overflow:hidden!important;
+                margin:2px 0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-form {
+                flex-shrink:0;
+                gap:5px!important;
+                padding:7px!important;
+                margin:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-form>label {
+                display:none!important;
+            }
+            #erisGamesModal .eg-bj-stake-bar {
+                display:none;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar {
+                display:grid!important;
+                grid-template-columns:48px 1fr 48px;
+                align-items:center;
+                gap:7px;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar button {
+                min-height:43px;
+                border-radius:10px;
+                border:1px solid var(--ui-line);
+                background:var(--ui-raised);
+                color:var(--ui-gold);
+                font-size:26px;
+                font-weight:900;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display {
+                text-align:center;
+                color:var(--ui-gold);
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display small {
+                display:block;
+                font-size:9px;
+                letter-spacing:1px;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-bj-stake-display strong {
+                display:block;
+                font-size:20px;
+                font-weight:900;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-stake-presets {
+                grid-template-columns:repeat(8,minmax(0,1fr))!important;
+                gap:3px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-stake-presets button {
+                padding:8px 0!important;
+                font-size:9px!important;
+                min-width:0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-play] {
+                min-height:44px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode .eg-result {
+                flex-shrink:0;
+                min-height:0!important;
+                margin:2px 0!important;
+                padding:6px!important;
+                font-size:11px!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-controls] {
+                flex-shrink:0;
+                margin:2px 0!important;
+            }
+            #erisGamesModal.eg-blackjack-mode [data-bj-history] {
+                flex-shrink:0;
+                max-height:65px;
+                overflow:hidden;
+            }
+        `;
+        document.head.appendChild(bjStyle);
+
+        const bjLayoutObserver = new MutationObserver(() => {
+            if (!modal.isConnected) {
+                bjLayoutObserver.disconnect();
+                return;
+            }
+            bjLayout();
+        });
+        bjLayoutObserver.observe(modal, {
+            attributes:true,
+            attributeFilter:['class']
+        });
+        queueMicrotask(bjLayout);
+
+
+        // ERIS_BJ_FINAL_FLOW_V2
+        let bjStep = 100;
+        let bjResetTimer = null;
+        const bjPlay = modal.querySelector('[data-play]');
+        if (bjPlay && game === 'blackjack') bjPlay.textContent = 'ELE BAŞLA';
+
+        const bjFlowStyle = document.createElement('style');
+        bjFlowStyle.id = 'erisBjFinalFlowV2';
+        bjFlowStyle.textContent = `
+          #erisGamesModal.eg-blackjack-mode.bj-hand-active .eg-form {
+            display:none!important;
+          }
+          #erisGamesModal.eg-blackjack-mode:not(.bj-hand-active)
+          [data-controls] {
+            display:none!important;
+          }
+          #erisGamesModal.eg-blackjack-mode.bj-hand-active
+          [data-controls] {
+            display:grid!important;
+            grid-template-columns:1fr 1fr!important;
+          }
+          #erisGamesModal.eg-blackjack-mode .eg-bj-stake-bar button:disabled {
+            opacity:.4;
+          }
+          #erisGamesModal.eg-blackjack-mode .eg-stake-presets .bj-selected {
+            background:var(--ui-button)!important;
+            border-color:var(--ui-line)!important;
+            color:var(--ui-ink)!important;
+            box-shadow:inset 0 0 0 1px var(--ui-shadow)!important;
+          }
+        `;
+        document.head.appendChild(bjFlowStyle);
+
+        const bjSetActive = active => {
+            if (!modal?.isConnected) return;
+            modal.classList.toggle('bj-hand-active',
+                game === 'blackjack' && active);
+            const play = modal.querySelector('[data-play]');
+            if (play && game === 'blackjack') {
+                play.textContent = 'ELE BAŞLA';
+                play.disabled = active || blackjackRestoreBusy ||
+                    blackjackRestoreFailed;
+            }
+        };
+
+        const bjResetTable = () => {
+            if (game !== 'blackjack' || !modal?.isConnected ||
+                activeBlackjackRoundId) return;
+            gameModules.blackjack()?.render?.(
+                modal.querySelector('.eg-stage'));
+            modal.querySelector('[data-controls]')?.replaceChildren();
+            bjSetActive(false);
+            updateBlackjackStakeUI();
+        };
+
+        modal.querySelectorAll('[data-stake-value]').forEach(b => {
+            b.addEventListener('click', () => {
+                if (game !== 'blackjack' || activeBlackjackRoundId) return;
+                bjStep = Number(b.dataset.stakeValue) || 10;
+                queueMicrotask(bjRefreshAmount);
+            });
+        });
+
+        for (const [selector, direction] of [
+            ['[data-bj-minus]', -1],
+            ['[data-bj-plus]', 1]
+        ]) {
+            const button = bjStakeBar.querySelector(selector);
+            if (!button) continue;
+            button.onclick = () => {
+                if (game !== 'blackjack' || activeBlackjackRoundId ||
+                    blackjackRestoreBusy || blackjackRestoreFailed) return;
+                const current = Number(bjStakeInput.value) || 0;
+                const amount = Math.max(10,Math.min(Number.MAX_SAFE_INTEGER,current+direction*bjStep));
+                bjStakeInput.value = String(amount);
+                bjStakeInput.dispatchEvent(
+                    new Event('input', {bubbles:true}));
+                bjRefreshAmount();
+            };
+        }
+
+        // ERIS_BJ_STAKE_LOCK_V1
+        const updateBlackjackStakeUI = () => {
+            const active = game === 'blackjack';
+            const locked = (active && !!activeBlackjackRoundId) || (game === 'cups' && (cupsBusy || !!cupsRoundId));
+            const input = modal.querySelector('[data-stake]');
+            if (input) input.disabled = locked;
+            if (typeof bjSetActive === 'function') {
+                bjSetActive(locked);
+            }
+            bjRefreshAmount();
+
+            modal.querySelectorAll('[data-stake-value]').forEach(b => {
+                b.disabled = locked;
+                b.classList.toggle(
+                    'bj-selected',
+                    active && b.dataset.stakeValue === String(bjStep)
+                );
+            });
+        };
+
+        modal.querySelector('[data-stake]')?.addEventListener(
+            'input', updateBlackjackStakeUI
+        );
+        modal.querySelector('[data-stake]')?.addEventListener(
+            'change', updateBlackjackStakeUI
+        );
+        updateBlackjackStakeUI();
+        modal.querySelectorAll('[data-stake-value]').forEach(b => {
+            b.addEventListener('click', () => {
+                queueMicrotask(updateBlackjackStakeUI);
+            });
+        });
+
+
+
+
+        // ERIS_BJ_RESTORE_V1
+        const bindBlackjackRound = roundId => {
+            if (bjResetTimer) clearTimeout(bjResetTimer);
+            activeBlackjackRoundId = roundId;
+            bjSetActive(true);
+            updateBlackjackStakeUI();
+            const controls = modal.querySelector('[data-controls]');
+            const stage = modal.querySelector('.eg-stage');
+            const playButton = modal.querySelector('[data-play]');
+            const bjMod = gameModules.blackjack();
+            controls.replaceChildren();
+            playButton.disabled = true;
+                    for (const [action, label] of [['hit', 'Kart Çek'], ['stand', 'Dur']]) {
+                        const b = document.createElement('button');
+                        b.textContent = label;
+                        b.onclick = async () => {
+                            controls.querySelectorAll('button').forEach(x => x.disabled = true);
+                            try {
+                                const next = await api('/games/blackjack/' + encodeURIComponent(roundId) + '/action', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ action })
+                                });
+                                if (game !== 'blackjack' || !modal.isConnected ||
+                                    !stage.querySelector('.eris-bj-table')) return;
+                                if (bjMod && typeof bjMod.animate === 'function') {
+                                    await bjMod.animate(stage, { ...next.state, state: next.state, result: next.result, newCard: next.state?.hands?.[0]?.cards?.slice(-1)[0] });
+                                }
+                                const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE',pending:'Hamleni seç: Kart Çek veya Dur'};
+                                                            modal.querySelector('.eg-result').textContent =
+                                                                (names[next.result] || 'EL TAMAMLANDI') +
+                                                                (next.status === 'finished' ? ' • Ödül: ' + (next.payout || 0) + ' Lidya' : '');
+                                if (next.status === 'finished') {
+                                    refreshBlackjackHistory();
+                                    controls.replaceChildren();
+                                    activeBlackjackRoundId = null;
+                                    updateBlackjackStakeUI();
+                                    // Sonucu kısa süre göster, ardından kapalı masaya dön.
+                                    bjResetTimer = setTimeout(() => {
+                                        if (game === 'blackjack' &&
+                                            !activeBlackjackRoundId &&
+                                            !modal.querySelector('[data-play]').disabled) {
+                                            bjResetTable();
+                                        }
+                                    }, 1800);
+                                }
+                                else controls.querySelectorAll('button').forEach(x => x.disabled = false);
+                                refreshBalance();
+                            } catch (e) {
+                                modal.querySelector('.eg-result').textContent = e.message;
+                                controls.querySelectorAll('button').forEach(x => x.disabled = false);
+                            }
+                        };
+                        controls.append(b);
+                    }
+        };
+
+        const restoreBlackjackRound = async () => {
+            if (game !== 'blackjack' || blackjackRestoreBusy ||
+                activeBlackjackRoundId) return;
+            blackjackRestoreBusy = true;
+            blackjackRestoreFailed = false;
+            const currentModal = modal;
+            const playButton = currentModal.querySelector('[data-play]');
+            if (playButton) playButton.disabled = true;
+            try {
+                const data = await api('/games/blackjack/active');
+                if (!data.active || !data.round_id ||
+                    modal !== currentModal || !currentModal.isConnected ||
+                    game !== 'blackjack') return;
+                const stage = currentModal.querySelector('.eg-stage');
+                const bjMod = gameModules.blackjack();
+                bjMod?.render?.(stage);
+                await bjMod?.animate?.(stage, {
+                    state: data.state,
+                    result: 'pending'
+                });
+                if (modal !== currentModal || game !== 'blackjack') return;
+                bindBlackjackRound(data.round_id);
+                currentModal.querySelector('.eg-result').textContent =
+                    'Devam eden Blackjack elin geri yüklendi. Kart Çek veya Dur.';
+            } catch (e) {
+                console.warn('[ErisChat] Blackjack geri yükleme:', e);
+                blackjackRestoreFailed = true;
+                if (game === 'blackjack' && currentModal.isConnected) {
+                    // ERIS_BJ_RETRY_BUTTON_V1
+                    const resultBox = currentModal.querySelector('.eg-result');
+                    if (resultBox) {
+                        resultBox.textContent = 'Blackjack bağlantısı kontrol edilemedi. ';
+                        const retry = document.createElement('button');
+                        retry.type = 'button';
+                        retry.textContent = '🔄 Yeniden Dene';
+                        retry.onclick = () => {
+                            retry.disabled = true;
+                            restoreBlackjackRound();
+                        };
+                        resultBox.append(retry);
+                    }
+                }
+            } finally {
+                blackjackRestoreBusy = false;
+                if (playButton && currentModal.isConnected &&
+                    !activeBlackjackRoundId && !blackjackRestoreFailed) {
+                    playButton.disabled = false;
+                }
+            }
+        };
+
+
+        // ERIS_CUPS_REAL_FLOW_V2
+
+
+        async function chooseCupsRound(choice, stage) {
+            if (cupsBusy || !cupsRoundId) return;
+            cupsBusy = true;
+            modal._cupsRefresh?.();
+
+            const roundId = cupsRoundId;
+            const status = modal.querySelector('.eg-result');
+            const button = modal.querySelector('[data-play]');
+
+            async function showResult(res) {
+                cupsRoundId = null;
+
+                if (game === 'cups' && stage.isConnected) {
+                    await window.ErisGameCups.reveal(stage, {
+                        winning_cup: res.winning_cup || res.result,
+                        choice: res.choice || 'cup_' + choice
+                    });
+
+                    status.textContent =
+                        (Number(res.payout) > 0
+                            ? '🎉 KAZANDIN!'
+                            : 'Bu tur kazanamadın.') +
+                        ' • Bahis: ' + res.stake +
+                        ' • Ödül: ' + res.payout + ' Lidya';
+
+                    button.disabled = false;
+                }
+
+                await refreshBalance();
+            }
+
+            try {
+                const res = await api(
+                    '/games/cups/round/' +
+                    encodeURIComponent(roundId) + '/choose',
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            choice: 'cup_' + choice
+                        })
+                    }
+                );
+
+                await showResult(res);
+            } catch (error) {
+                try {
+                    const state = await api(
+                        '/games/cups/round/' +
+                        encodeURIComponent(roundId) + '/status'
+                    );
+
+                    if (state.status === 'finished') {
+                        await showResult(state);
+                        return;
+                    }
+
+                    if (state.status === 'open') {
+                        if (game === 'cups') {
+                            status.textContent =
+                                'Bağlantı kesildi. Aynı turdan devam edebilirsin.';
+                        }
+                        throw new Error('Tur hâlâ açık. Kupayı tekrar seç.');
+                    }
+
+                    throw error;
+                } catch (recoveryError) {
+                    if (game === 'cups') {
+                        status.textContent =
+                            recoveryError.message ||
+                            'Sonuç kontrol edilemedi. Oyunu yeniden aç.';
+                    }
+                    throw recoveryError;
+                }
+            } finally {
+                cupsBusy = false;
+                modal._cupsRefresh?.();
+            }
+        }
+
+        async function restoreCupsRound() {
+            if (game !== 'cups' || cupsBusy) return;
+            cupsRoundId = 'pending-recovery';
+            const stage = modal.querySelector('.eg-stage');
+            const button = modal.querySelector('[data-play]');
+            const status = modal.querySelector('.eg-result');
+            if (!stage || !button) return;
+
+            cupsBusy = true;
+            modal._cupsRefresh?.();
+            button.disabled = true;
+
+            try {
+                const state = await api('/games/cups/round/active');
+
+                if (game !== 'cups' || !stage.isConnected) return;
+
+                if (!state.active) {
+                    cupsRoundId = null;
+                    button.disabled = false;
+                    return;
+                }
+
+                cupsRoundId = state.round_id;
+                if(Number.isSafeInteger(state.stake)) modal.querySelector('[data-stake]').value=String(state.stake);
+                modal._cupsRefresh?.();
+                status.textContent =
+                    'Açık Dört Kupa turun geri yüklendi.';
+
+                window.ErisGameCups.render(stage);
+                    window.ErisGameCups.roundPlan = {
+                        initial_cup: Number(state.initial_cup),
+                        swaps: state.swaps
+                    };
+
+                await window.ErisGameCups.shuffle(
+                    stage,
+                    choice => chooseCupsRound(choice, stage)
+                );
+            } catch (e) {
+                if (game === 'cups') {
+                    status.textContent =
+                        'Tur durumu doğrulanamadı. Oyunu yeniden aç.';
+                    cupsRoundId = 'pending-recovery';
+                }
+            } finally {
+                cupsBusy = false;
+                modal._cupsRefresh?.();
+                if (game === 'cups' && stage.isConnected) {
+                    button.disabled = !!cupsRoundId;
+                    updateCupsRecoveryButton();
+                }
+            }
+        }
+
+        async function startCupsRound() {
+            if (cupsBusy || cupsRoundId) return;
+            cupsBusy = true;
+            modal._cupsRefresh?.();
+
+            const stage = modal.querySelector('.eg-stage');
+            const button = modal.querySelector('[data-play]');
+            const status = modal.querySelector('.eg-result');
+            button.disabled = true;
+
+            try {
+                const stake = Number(
+                    modal.querySelector('[data-stake]').value
+                );
+
+                if (!Number.isSafeInteger(stake) ||
+                    stake < 10 || stake > Number.MAX_SAFE_INTEGER || stake % 10) {
+                    throw new Error(
+                        'Toplam bahis 10 Lidya katı ve güvenli ödeme sınırında olmalı.'
+                    );
+                }
+
+                const activeRoom = document.getElementById(
+                    'erisRoomSurface'
+                )?.classList.contains('show');
+
+                const room = scope === 'room' && activeRoom
+                    ? (roomId || window.ErisCurrentRoomId ||
+                       window.currentRoomId || null)
+                    : null;
+
+                if (scope === 'room' && !room) {
+                    throw new Error('Oda bağlantısı bulunamadı.');
+                }
+
+                const res = await api('/games/cups/round/start', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        stake,
+                        room_id: room
+                    })
+                });
+
+                cupsRoundId = res.round_id;
+                status.textContent =
+                    'Bahis alındı. Kupalar karıştırılıyor...';
+
+                window.ErisGameCups.render(stage);
+                    window.ErisGameCups.roundPlan = {
+                        initial_cup: Number(res.initial_cup),
+                        swaps: res.swaps
+                    };
+                refreshBalance().catch(console.warn);
+
+                await window.ErisGameCups.shuffle(
+                    stage,
+                    choice => chooseCupsRound(choice, stage)
+                );
+            } catch (e) {
+                status.textContent =
+                    e.message || 'Tur başlatılamadı.';
+
+                // Sunucu bahsi kabul etmiş ancak cevap kaybolmuş olabilir.
+                // Yeni bahis açmadan önce açık turu sorgula.
+                try {
+                    const active = await api('/games/cups/round/active');
+                    if (active.active) {
+                        cupsRoundId = active.round_id;
+                        if (game === 'cups' && stage.isConnected) {
+                            status.textContent =
+                                'Bahsin kurtarıldı. Kupalar karıştırılıyor...';
+                            window.ErisGameCups.render(stage);
+                    window.ErisGameCups.roundPlan = {
+                        initial_cup: Number(active.initial_cup),
+                        swaps: active.swaps
+                    };
+                            await window.ErisGameCups.shuffle(
+                                stage,
+                                choice => chooseCupsRound(choice, stage)
+                            );
+                        }
+                    } else {
+                        cupsRoundId = null;
+                    }
+                } catch (recoveryError) {
+                    status.textContent =
+                        'Bahis durumu doğrulanamadı. Oyunu yeniden aç.';
+                    // Belirsiz durumda ikinci bahis açılmasını engelle.
+                    cupsRoundId = cupsRoundId || 'pending-recovery';
+                }
+
+                button.disabled = !!cupsRoundId;
+            } finally {
+                cupsBusy = false;
+                modal._cupsRefresh?.();
+                updateCupsRecoveryButton();
+            }
+        }
+
+
+        // ERIS_CUPS_RECOVERY_BUTTON_V2
+        function updateCupsRecoveryButton() {
+            if (!modal || game !== 'cups') return;
+
+            const play = modal.querySelector('[data-play]');
+            const result = modal.querySelector('.eg-result');
+            if (!play || !result) return;
+
+            let retry = modal.querySelector('[data-cups-retry]');
+
+            if (cupsRoundId !== 'pending-recovery') {
+                retry?.remove();
+                return;
+            }
+
+            play.disabled = true;
+
+            if (!retry) {
+                retry = document.createElement('button');
+                retry.type = 'button';
+                retry.dataset.cupsRetry = '1';
+                retry.textContent = '🔄 Turu Kontrol Et';
+                retry.style.cssText =
+                    'display:block;margin:12px auto;padding:10px 18px;' +
+                    'border-radius:12px;background:#6d45bf;color:white;' +
+                    'border:1px solid #a78bfa;font-weight:700;cursor:pointer';
+                result.insertAdjacentElement('afterend', retry);
+            }
+
+            retry.onclick = async () => {
+                if (cupsBusy) return;
+                retry.disabled = true;
+                try {
+                    await restoreCupsRound();
+                } finally {
+                    retry.disabled = false;
+                    updateCupsRecoveryButton();
+                }
+            };
+        }
+
+        // ERIS_BJ_FINAL_GUARDS_V1
+        queueMicrotask(() => restoreBlackjackRound());
+        modal.querySelector('[data-play]').onclick = async () => {
+            if (game === 'cups') {
+                if (cupsRoundId === 'pending-recovery') {
+                    await restoreCupsRound();
+                } else {
+                    await startCupsRound();
+                }
+                return;
+            }
+            if (game === 'slot' &&
+                modal.dataset.slotRequest === '1') return;
+            if (game === 'slot') {
+                modal.dataset.slotBusy = '1';
+                modal.dataset.slotRequest = '1';
+            }
+
+            if (game === 'blackjack' &&
+                (activeBlackjackRoundId || blackjackRestoreBusy ||
+                 blackjackRestoreFailed)) {
+                modal.querySelector('.eg-result').textContent =
+                    'Blackjack elin kontrol ediliyor veya devam ediyor.';
+                return;
+            }
+            const button = modal.querySelector('[data-play]'),
+                  stage = modal.querySelector('.eg-stage'),
+                  result = modal.querySelector('[data-result]') || modal.querySelector('.eg-result'),
+                  controls = modal.querySelector('[data-controls]');
+
+            // CRASH_LIVE_BET_HANDLER_V1
+            if (game === 'crash') {
+                if (crashBusy) return;
+                crashBusy = true;
+                button.disabled = true;
+
+                try {
+                    const amount = Number(
+                        modal.querySelector('[data-stake]').value
+                    );
+
+                    if (![10,25,50,75,100,250,500,1000].includes(amount)) {
+                        throw new Error('Geçersiz bahis miktarı');
+                    }
+
+                    if (!crashState?.betting_open) {
+                        throw new Error('Bahis süresi kapalı');
+                    }
+
+                    const res = await api('/games/crash/live/bet', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            choice: 'cashout',
+                            amount
+                        })
+                    });
+
+                    modal.querySelector('.eg-result').textContent =
+                        '✅ ' + amount + ' Lidya bahis yatırıldı';
+
+                    await refreshBalance();
+                } catch (e) {
+                    modal.querySelector('.eg-result').textContent =
+                        e.message || 'Bahis yapılamadı';
+                } finally {
+                    crashBusy = false;
+                    refreshCrashLive().catch(() => {});
+                }
+                return;
+            }
+
+            // ERIS_VAULT_LIVE_BET_V1
+            if (game === 'vault') {
+                if (vaultBusy) return;
+                const amount = Number(
+                    modal.querySelector('[data-stake]').value
+                );
+                const choice = modal.querySelector('[data-choice]').value;
+                const allowed = ['ruby', 'gold', 'crystal', 'mystery'];
+                const result = modal.querySelector('.eg-result');
+
+                if (!allowed.includes(choice)) {
+                    result.textContent = 'Açılacak kasayı seç.';
+                    return;
+                }
+                if (!Number.isSafeInteger(amount)||amount<10||amount>Number.MAX_SAFE_INTEGER||amount%10) {
+                    result.textContent = 'Toplam bahis 10 Lidya katı olmalı.';
+                    return;
+                }
+                if (!vaultState?.betting_open || vaultState?.version !== 2) {
+                    result.textContent = 'Yeni hazine turunun başlamasını bekle.';
+                    return;
+                }
+
+                vaultBusy = true;
+                bjLayout();
+                button.disabled = true;
+                try {
+                    await api('/games/vault/live/bet', {
+                        method: 'POST',
+                        body: JSON.stringify({choice, amount})
+                    });
+                    if (game === 'vault' && modal?.isConnected) {
+                        result.textContent =
+                            '✅ ' + amount + ' Lidya bahis yatırıldı.';
+                    }
+                    await refreshBalance();
+                } catch (e) {
+                    if (game === 'vault' && modal?.isConnected) {
+                        result.textContent =
+                            e.message || 'Kasa bahsi yapılamadı.';
+                    }
+                } finally {
+                    vaultBusy = false;
+                    if(game==='vault')bjLayout();
+                    refreshVaultLive().catch(() => {});
+                }
+                return;
+            }
+
+            if (game === 'horse_race') {
+                if (horseBusy) return;
+                const amount = Number(
+                    modal.querySelector('[data-stake]').value
+                );
+                const choice = 'horse_' +
+                    modal.querySelector('[data-choice]').value;
+                if (!Number.isSafeInteger(amount) || amount<10 || amount>Number.MAX_SAFE_INTEGER || amount%10) {
+                    modal.querySelector('.eg-result').textContent =
+                        'Toplam bahis 10 Lidya katı olmalı.';
+                    return;
+                }
+                horseBusy = true;
+                bjLayout();
+                button.disabled = true;
+                try {
+                    await api('/games/horse_race/live/bet', {
+                        method:'POST',
+                        body:JSON.stringify({choice,amount})
+                    });
+                    modal.querySelector('.eg-result').textContent =
+                        '✅ ' + amount + ' Lidya bahis yatırıldı.';
+                    await refreshBalance();
+                    await refreshHorseLive();
+                } catch (e) {
+                    modal.querySelector('.eg-result').textContent =
+                        e.message || 'Bahis yapılamadı.';
+                } finally {
+                    horseBusy = false;
+                    if(game==='horse_race')bjLayout();
+                    if (game === 'horse_race')
+                        refreshHorseLive().catch(() => {});
+                }
+                return;
+            }
+
+            if (game === 'blackjack') {
+                clearTimeout(bjResetTimer);
+                bjResetTimer = null;
+            }
+            button.disabled = true;
+            controls.replaceChildren();
+            modal.querySelector('.eg-result').textContent = 'Oyun başlatılıyor…';
+
+            try {
+                const startedGame = game;
+                const startedStage = stage;
+                const stake = Number(modal.querySelector('[data-stake]').value);
+                if (game === 'blackjack' ? !(Number.isSafeInteger(stake)&&stake>=10&&stake<=Number.MAX_SAFE_INTEGER&&stake%10===0) : (!Number.isSafeInteger(stake) || stake < 0)) throw new Error(game === 'blackjack' ? 'Toplam bahis 10 Lidya katı olmalı.' : 'Bahis negatif olmayan tam sayı olmalı.');
+                gameModules[game]()?.render?.(stage);
+                // Oda modu yalnızca gerçekten açık olan odayı kullanır.
+                const activeRoom = document.getElementById('erisRoomSurface')?.classList.contains('show');
+                const targetRoomId = scope === 'room' && activeRoom
+                    ? (roomId || window.ErisCurrentRoomId || window.currentRoomId || null)
+                    : null;
+                if (scope === 'room' && !targetRoomId) {
+                    throw new Error('Oda bağlantısı bulunamadı. Odayı yeniden açıp tekrar dene.');
+                }
+                const choiceValue = modal.querySelector('[data-choice]').value;
+                const choice = game === 'cups' ? 'cup_' + choiceValue
+                    : game === 'horse_race' ? 'horse_' + choiceValue
+                    : game === 'slot' ? null
+                    : game === 'wheel' ? choiceValue
+                    : choiceValue;
+                const res = await api('/games/' + game + '/play', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        room_id: targetRoomId || null,
+                        choice,
+                        stake
+                    })
+                });
+
+                if (startedGame === 'blackjack' &&
+                    (game !== startedGame || !modal.isConnected ||
+                     modal.querySelector('.eg-stage') !== startedStage ||
+                     !startedStage.querySelector('.eris-bj-table'))) return;
+                const mod = gameModules[game]();
+                if (mod && typeof mod.animate === 'function') {
+                    await mod.animate(stage, {
+                        ...res.data,
+                        result: game === 'blackjack' ? res.result : (res.payout > 0 ? 'win' : 'lose'),
+                        result_key: res.result,
+                        winning_cup: String(res.result).replace('cup_', ''),
+                        winner: String(res.result).replace('horse_', ''),
+                        winning_index: ['rose','heart','star','diamond','crown','gift','fire','gem','jackpot'].indexOf(res.result),
+                        ...(game === 'crash' ? {multiplier: res.data?.multiplier} : {})
+                    });
+                }
+                modal.querySelector('.eg-result').textContent = game === 'blackjack' && res.result === 'pending'
+                    ? 'İlk el dağıtıldı. Kartlarını ve krupiyenin açık kartını inceleyip hamleni seç.'
+                    : 'Sonuç: ' + res.result + ' • Yatırılan: ' + res.stake + ' • Ödül: ' + res.payout + ' Lidya';
+
+                if (game === 'blackjack' && res.result !== 'pending') {
+                    bjSetActive(true);
+                    if (bjResetTimer) clearTimeout(bjResetTimer);
+                    bjResetTimer = setTimeout(() => {
+                        if (game === 'blackjack' &&
+                            !activeBlackjackRoundId &&
+                            !modal.querySelector('[data-play]').disabled) bjResetTable();
+                    }, 1800);
+                    refreshBlackjackHistory();
+                    activeBlackjackRoundId = null;
+                    updateBlackjackStakeUI();
+                    const names = {blackjack:'🎉 BLACKJACK!',win:'🎉 KAZANDIN!',loss:'KRUPİYE KAZANDI',push:'🤝 BERABERE'};
+                    modal.querySelector('.eg-result').textContent =
+                        (names[res.result] || 'EL TAMAMLANDI') +
+                        ' • Ödül: ' + (res.payout || 0) + ' Lidya';
+                }
+                if (game === 'blackjack' && res.result === 'pending') {
+                    bindBlackjackRound(res.data?.round_id || res.round_id);
+                }
+                refreshBalance();
+            } catch (e) {
+                modal.querySelector('.eg-result').textContent = e.message || 'Oyun başlatılamadı.';
+            } finally {
+                if (modal.dataset.slotRequest === '1') {
+                    delete modal.dataset.slotRequest;
+                    delete modal.dataset.slotBusy;
+                    const slotLever = modal.querySelector('.eris-slot-lever');
+                    if (slotLever) {
+                        slotLever.disabled = false;
+                        slotLever.classList.remove('pulling');
+                    }
+                }
+                button.disabled = game === 'blackjack' && !!activeBlackjackRoundId;
+            }
+        };
+    }
+
+    window.ErisChatGames = { open };
+})();
+
+
+/* WHEEL SINGLE MOBILE LAYOUT — ONLY SOURCE OF OVERRIDES */
+const erisWheelLayout=document.createElement('style');
+erisWheelLayout.textContent=`
+/* WHEEL CRASH STATS ISOLATION */
+#erisGamesModal.eg-wheel-mode [data-crash-history],
+#erisGamesModal.eg-wheel-mode [data-crash-stats],
+#erisGamesModal.eg-wheel-mode [data-crash-bets],
+#erisGamesModal.eg-wheel-mode .eg-crash-stats,
+#erisGamesModal.eg-wheel-mode .eg-crash-stats-title,
+#erisGamesModal.eg-wheel-mode .eg-crash-stats-grid {
+    display:none!important;
+}
+
+#erisGamesModal.eg-single-game.eg-wheel-mode{
+ padding:0!important;
+ overflow:hidden!important;
+}
+#erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
+ width:100%!important;
+ height:100dvh!important;
+ max-width:none!important;
+ max-height:100dvh!important;
+ padding:10px 14px 14px!important;
+ border-radius:0!important;
+ overflow:hidden!important;
+ display:flex!important;
+ flex-direction:column!important;
+ box-sizing:border-box!important;
+}
+
+/* BAŞLIK */
+#erisGamesModal.eg-wheel-mode .eg-head{
+ position:relative!important;
+ flex:0 0 48px!important;
+ min-height:48px!important;
+ margin:0!important;
+ display:flex!important;
+ align-items:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-head h2{
+ margin:0!important;
+ font-size:18px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-intro,
+#erisGamesModal.eg-wheel-mode .eg-keys,
+#erisGamesModal.eg-wheel-mode [data-name],
+#erisGamesModal.eg-wheel-mode [data-wheel-mine],
+#erisGamesModal.eg-wheel-mode .eris-wheel-caption,
+#erisGamesModal.eg-wheel-mode .eris-wheel-note{
+ display:none!important;
+}
+
+/* BAKİYE + X */
+#erisGamesModal.eg-wheel-mode .eg-wallet{
+ position:absolute!important;
+ top:22px!important;
+ right:66px!important;
+ width:auto!important;
+ margin:0!important;
+ padding:6px 9px!important;
+ border-radius:10px!important;
+ font-size:10px!important;
+ z-index:20!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wallet [data-scope]{
+ display:none!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-head [data-close]{
+ position:absolute!important;
+ top:9px!important;
+ right:10px!important;
+ width:40px!important;
+ height:36px!important;
+ z-index:21!important;
+}
+
+/* CANLI BAHİSLER — BAŞLIK ALTINDA, HİÇBİR ŞEYİN ÜSTÜNE BİNMEZ */
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]{
+ position:relative!important;
+ order:initial!important;
+ width:100%!important;
+ box-sizing:border-box!important;
+ overflow:hidden!important;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:empty{
+ display:block!important;
+ flex:0 0 32px!important;
+ height:32px!important;
+ min-height:32px!important;
+ margin:3px 0 6px!important;
+ border:1px solid var(--ui-line)!important;
+ border-radius:10px!important;
+ background:var(--ui-panel)!important;
+}
+#erisGamesModal.eg-wheel-mode [data-wheel-feed]:not(:empty){
+ display:block!important;
+ flex:0 0 32px!important;
+ height:32px!important;
+ min-height:32px!important;
+ margin:3px 0 6px!important;
+ border:1px solid var(--ui-line)!important;
+ border-radius:10px!important;
+ background:var(--ui-panel)!important;
+}
+
+/* ÇARK — KUTUNUN İÇİNDE */
+#erisGamesModal.eg-wheel-mode .eg-stage{
+ position:relative!important;
+ flex:0 0 318px!important;
+ width:100%!important;
+ height:318px!important;
+ min-height:318px!important;
+ max-height:318px!important;
+ margin:4px 0 8px!important;
+ padding:18px 8px 8px!important;
+ box-sizing:border-box!important;
+ overflow:hidden!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-v2{
+ width:100%!important;
+ padding:0!important;
+ margin:0!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
+ width:min(276px,76vw)!important;
+ max-width:276px!important;
+ margin:0 auto!important;
+ flex:none!important;
+}
+#erisGamesModal.eg-wheel-mode .eris-wheel-wrap:before{
+ inset:-5px!important;
+}
+
+/* 9 NESNE + BAHİS MİKTARLARI */
+#erisGamesModal.eg-wheel-mode .eg-form{
+ flex:0 0 auto!important;
+ width:100%!important;
+ margin:0!important;
+ padding:8px!important;
+ box-sizing:border-box!important;
+ border-radius:15px!important;
+ gap:6px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-form>label{
+ display:none!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-picks{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ width:100%!important;
+ gap:5px!important;
+ margin:0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-pick{
+ min-height:58px!important;
+ padding:4px 2px!important;
+ border-radius:11px!important;
+ gap:1px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-wheel-pick.active:after{
+ display:none!important;
+}
+
+/* 8 BÜYÜK BUTON — TAM GENİŞLİK */
+#erisGamesModal.eg-wheel-mode .eg-stake-presets{
+ display:grid!important;
+ grid-template-columns:repeat(8,minmax(0,1fr))!important;
+ grid-column:1/-1!important;
+ width:100%!important;
+ gap:4px!important;
+ margin:7px 0 0!important;
+ padding:0!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+ min-width:0!important;
+ width:100%!important;
+ height:40px!important;
+ margin:0!important;
+ padding:0!important;
+ border-radius:10px!important;
+ font-size:0!important;
+ white-space:nowrap!important;
+ overflow:hidden!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button:before{
+ content:"🪙"!important;
+ font-size:8px!important;
+ margin-right:1px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button:after{
+ content:attr(data-stake-value)!important;
+ font-size:9px!important;
+ letter-spacing:-.5px!important;
+}
+#erisGamesModal.eg-wheel-mode .eg-stake-presets button.wheel-stake-active{
+ border-color:var(--ui-line)!important;
+ box-shadow:0 0 0 1px var(--ui-shadow)!important;
+}
+
+/* SAYAÇ */
+#erisGamesModal.eg-wheel-mode [data-wheel-clock]{
+ flex:0 0 24px!important;
+ height:24px!important;
+ line-height:24px!important;
+ margin:5px 0 0!important;
+ font-size:12px!important;
+}
+
+/* BOŞ SONUÇ ALANI YER YEMESİN */
+#erisGamesModal.eg-wheel-mode .eg-result:empty{
+ display:none!important;
+ margin:0!important;
+ padding:0!important;
+ height:0!important;
+ min-height:0!important;
+ border:0!important;
+}
+`;
+document.head.appendChild(erisWheelLayout);
+
+/* WHEEL SAFE RESPONSIVE — short mobile viewports only */
+const erisWheelResponsive=document.createElement('style');
+erisWheelResponsive.textContent=`
+@media (max-height:740px){
+ #erisGamesModal.eg-wheel-mode .eg-stage{
+  flex-basis:278px!important;
+  height:278px!important;
+  min-height:278px!important;
+  max-height:278px!important;
+  padding-top:17px!important;
+ }
+ #erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
+  width:min(242px,72vw)!important;
+  max-width:242px!important;
+ }
+ #erisGamesModal.eg-wheel-mode .eg-wheel-pick{
+  min-height:51px!important;
+  padding:3px 2px!important;
+ }
+ #erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+  height:36px!important;
+ }
+ #erisGamesModal.eg-wheel-mode [data-wheel-clock]{
+  height:21px!important;
+  line-height:21px!important;
+  margin-top:3px!important;
+ }
+}
+
+@media (max-height:660px){
+ #erisGamesModal.eg-wheel-mode .eg-stage{
+  flex-basis:244px!important;
+  height:244px!important;
+  min-height:244px!important;
+  max-height:244px!important;
+  margin-bottom:5px!important;
+ }
+ #erisGamesModal.eg-wheel-mode .eris-wheel-wrap{
+  width:min(210px,68vw)!important;
+  max-width:210px!important;
+ }
+ #erisGamesModal.eg-wheel-mode .eg-wheel-pick{
+  min-height:46px!important;
+ }
+ #erisGamesModal.eg-wheel-mode .eg-stake-presets button{
+  height:32px!important;
+ }
+}
+
+@supports (height:100dvh){
+ #erisGamesModal.eg-single-game.eg-wheel-mode .eg-panel{
+  height:100dvh!important;
+  max-height:100dvh!important;
+ }
+}
+`;
+document.head.appendChild(erisWheelResponsive);
+const erisWheelHeaderFix=document.createElement('style');
+erisWheelHeaderFix.textContent='\n/* WHEEL HEADER FIX - only wheel */\n#erisGamesModal.eg-wheel-mode .eg-head{\n    position:relative!important;\n    display:flex!important;\n    align-items:center!important;\n    justify-content:flex-start!important;\n    gap:4px!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head h2{\n    flex:0 1 auto!important;\n    min-width:0!important;\n    white-space:nowrap!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet{\n    position:static!important;\n    flex:0 1 auto!important;\n    min-width:0!important;\n    max-width:55%!important;\n    padding:6px 8px!important;\n    white-space:nowrap!important;\n    overflow:hidden!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head .eg-wallet [data-balance]{\n    display:block!important;\n    overflow:hidden!important;\n    text-overflow:ellipsis!important;\n    font-size:clamp(9px,2.5vw,12px)!important;\n}\n#erisGamesModal.eg-wheel-mode .eg-head [data-close]{\n    margin-left:0!important;\n    position:static!important;\n    flex:0 0 40px!important;\n    margin:0!important;\n}\n';
+document.head.appendChild(erisWheelHeaderFix);
+
+
+
+
+
+

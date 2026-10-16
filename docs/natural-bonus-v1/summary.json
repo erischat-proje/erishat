@@ -1,0 +1,378 @@
+{
+  "profile": "natural-balanced-20261015-v1",
+  "certified": false,
+  "notes": [
+    "Seeded offline estimates, complete bonuses/retriggers/caps. Not certified RTP.",
+    "Final coefficients were iteratively calibrated; confidence intervals are descriptive, not independent certification.",
+    "Non-trigger strata were reused when only the natural-bonus payment coefficient changed.",
+    "The shared profile JSON hash can differ between reports because other game coefficients were adjusted separately; final per-game parameters are retained here.",
+    "Old and purchased profiles were not changed. Altin unchanged: natural trigger .0095."
+  ],
+  "total_sampled_rounds": 7040000,
+  "results": [
+    {
+      "game": "balikci",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.011111111111111112,
+      "rtp_estimate": 0.9609252583333334,
+      "ci95": [
+        0.9520169571900121,
+        0.9698335594766547
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-balikci-normal-False.json",
+        "final-balikci-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.011111111111111112,
+        "reward_factor": 0.7948
+      }
+    },
+    {
+      "game": "bastet",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9558028706666667,
+      "ci95": [
+        0.9357973342285145,
+        0.9758084071048189
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-bastet-normal-False.json",
+        "final-bastet-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.47982
+      }
+    },
+    {
+      "game": "candy",
+      "mode": "ante",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01306974459724951,
+      "rtp_estimate": 0.9622840275524558,
+      "ci95": [
+        0.9519809035113482,
+        0.9725871515935633
+      ],
+      "samples": 400000,
+      "reports": [
+        "final-candy-ante-False.json",
+        "final-candy-ante-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.813,
+        "ante_probability": 0.01306974459724951,
+        "ante_reward_factor": 0.812
+      }
+    },
+    {
+      "game": "candy",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9641491115,
+      "ci95": [
+        0.9542001554690038,
+        0.9740980675309963
+      ],
+      "samples": 400000,
+      "reports": [
+        "final-candy-normal-False.json",
+        "final-candy-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.813,
+        "ante_probability": 0.01306974459724951,
+        "ante_reward_factor": 0.812
+      }
+    },
+    {
+      "game": "dede",
+      "mode": "ante",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.02,
+      "rtp_estimate": 0.9571323013333333,
+      "ci95": [
+        0.9440272052955149,
+        0.9702373973711517
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-dede-ante-False.json",
+        "final-dede-ante-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.20283,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.20398
+      }
+    },
+    {
+      "game": "dede",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9587964491666667,
+      "ci95": [
+        0.938862748287765,
+        0.9787301500455685
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-dede-normal-False.json",
+        "final-dede-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.20283,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.20398
+      }
+    },
+    {
+      "game": "dogparty",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9661681308333333,
+      "ci95": [
+        0.9589260609852683,
+        0.9734102006813983
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-dogparty-normal-False.json",
+        "final-dogparty-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.55199
+      }
+    },
+    {
+      "game": "firavun",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9562746550000001,
+      "ci95": [
+        0.9467184182935694,
+        0.9658308917064308
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-firavun-normal-False.json",
+        "final-firavun-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.6174
+      }
+    },
+    {
+      "game": "kovboy",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.969969745,
+      "ci95": [
+        0.9608392421035381,
+        0.9791002478964619
+      ],
+      "samples": 400000,
+      "reports": [
+        "final-kovboy-normal-False.json",
+        "final-kovboy-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.49
+      }
+    },
+    {
+      "game": "kure",
+      "mode": "ante",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.02,
+      "rtp_estimate": 0.9652161637333333,
+      "ci95": [
+        0.9571843720427531,
+        0.9732479554239135
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-kure-ante-False.json",
+        "final-kure-ante-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.23915,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.25808
+      }
+    },
+    {
+      "game": "kure",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9588195431666666,
+      "ci95": [
+        0.9484478489722972,
+        0.9691912373610361
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-kure-normal-False.json",
+        "final-kure-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.23915,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.25808
+      }
+    },
+    {
+      "game": "prenses",
+      "mode": "ante",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.02,
+      "rtp_estimate": 0.9594435426666668,
+      "ci95": [
+        0.9463983754888223,
+        0.9724887098445112
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-prenses-ante-False.json",
+        "final-prenses-ante-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.20915,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.20807
+      }
+    },
+    {
+      "game": "prenses",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9590234933333333,
+      "ci95": [
+        0.9391533907470065,
+        0.97889359591966
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-prenses-normal-False.json",
+        "final-prenses-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.20915,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.20807
+      }
+    },
+    {
+      "game": "seker",
+      "mode": "ante",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.02,
+      "rtp_estimate": 0.9541922599999999,
+      "ci95": [
+        0.945861451741216,
+        0.9625230682587838
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-seker-ante-False.json",
+        "final-seker-ante-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.2957,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.2836
+      }
+    },
+    {
+      "game": "seker",
+      "mode": "normal",
+      "method": "complete-round initial-trigger stratification",
+      "probability": 0.01,
+      "rtp_estimate": 0.9732886525,
+      "ci95": [
+        0.963036869710377,
+        0.9835404352896229
+      ],
+      "samples": 320000,
+      "reports": [
+        "final-seker-normal-False.json",
+        "final-seker-normal-True.json"
+      ],
+      "parameters": {
+        "probability": 0.01,
+        "reward_factor": 0.2957,
+        "ante_probability": 0.02,
+        "ante_reward_factor": 0.2836
+      }
+    },
+    {
+      "game": "aztek",
+      "mode": "normal",
+      "method": "unconditioned complete rounds",
+      "probability": 0.00993,
+      "observed_bonus_frequency": 0.009971,
+      "rtp_estimate": 0.96870295,
+      "ci95": [
+        0.9446574557233103,
+        0.9927484442766896
+      ],
+      "samples": 1000000,
+      "reports": [
+        "final-aztek.json"
+      ],
+      "parameters": {
+        "probability": 0.00993,
+        "reward_factor": 0.28,
+        "entry_count": 49,
+        "base_factor": 0.7
+      }
+    },
+    {
+      "game": "ares",
+      "mode": "normal",
+      "method": "unconditioned complete rounds",
+      "probability": 0.01000250922076506,
+      "observed_bonus_frequency": 0.010033,
+      "rtp_estimate": 0.96546121,
+      "ci95": [
+        0.9470125125013017,
+        0.9839099074986982
+      ],
+      "samples": 1000000,
+      "reports": [
+        "final-ares.json"
+      ],
+      "parameters": {
+        "probability": 0.01000250922076506,
+        "reward_factor": 0.405,
+        "scatter_threshold": 285,
+        "base_factor": 0.5
+      }
+    }
+  ]
+}

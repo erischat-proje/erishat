@@ -1,0 +1,97 @@
+{
+  "game": "balikci",
+  "mode": "normal",
+  "modelVersion": "lidya-balikci-v3",
+  "method": "initial-choice-stratification",
+  "samples": 200000,
+  "samplesPerStratum": 100000,
+  "seed": 26101641,
+  "triggerChoiceProbability": 0.008849557522123894,
+  "rtp": 0.9751704690266131,
+  "ci95": [
+    0.9636532778720424,
+    0.9866876601811838
+  ],
+  "strata": [
+    {
+      "condition": false,
+      "weight": 0.9911504424778761,
+      "report": {
+        "roundHitFrequency": 0.34399,
+        "netProfitFrequency": 0.08806,
+        "version": "lidya-balikci-v3",
+        "samples": 100000,
+        "seed": 26101641,
+        "targetRtp": 0.9671,
+        "rtp": 0.489165999999923,
+        "ci95": [
+          0.47970198429998906,
+          0.49863001569985693
+        ],
+        "baseRtp": 0.48916600000000005,
+        "bonusLineRawRtp": 0.0,
+        "bonusFishRawRtp": 0.0,
+        "bonusDynamiteRawRtp": 0.0,
+        "bonusRtp": 0.0,
+        "paidHit": 0.34399,
+        "bonusFrequency": 0.0,
+        "bonusFrequencyTarget": 0.008849557522123894,
+        "bonusTriggers": 0,
+        "freeSpins": 0,
+        "stagesReached": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "cappedRounds": 0,
+        "maxObservedX": 50.0,
+        "note": "Monte Carlo estimate; target RTP is not certified. Entire triggered bonus chains and cap are included."
+      }
+    },
+    {
+      "condition": true,
+      "weight": 0.008849557522123894,
+      "report": {
+        "roundHitFrequency": 0.98791,
+        "netProfitFrequency": 0.93917,
+        "version": "lidya-balikci-v3",
+        "samples": 100000,
+        "seed": 26101642,
+        "targetRtp": 0.9671,
+        "rtp": 55.4076710000159,
+        "ci95": [
+          54.652543889125205,
+          56.1627981109066
+        ],
+        "baseRtp": 0.198035,
+        "bonusLineRawRtp": 3.380104,
+        "bonusFishRawRtp": 41.20469,
+        "bonusDynamiteRawRtp": 12.57405,
+        "bonusRtp": 55.209636,
+        "paidHit": 0.21195,
+        "bonusFrequency": 1.0,
+        "bonusFrequencyTarget": 0.008849557522123894,
+        "bonusTriggers": 100000,
+        "freeSpins": 1735138,
+        "stagesReached": [
+          0,
+          16842,
+          7559,
+          12008
+        ],
+        "cappedRounds": 38,
+        "maxObservedX": 2100.0,
+        "note": "Monte Carlo estimate; target RTP is not certified. Entire triggered bonus chains and cap are included."
+      }
+    }
+  ],
+  "certified": false,
+  "note": "Conditioned first trigger choice/scatter family, weighted back to live probabilities. Full rounds and cap included; not certified RTP.",
+  "source_sha256": {
+    "backend/app/balikci_engine.py": "bfa062475d6abc880c31bbb7b443247ba45d328a06be22ad17387dbf243de67d",
+    "backend/app/balikci-math.json": "4c199d7cda4d79fedd5a0facea27507e9f43d47c064ab3fc0c67d207b8f0614b",
+    "tests/balikci_simulate.py": "35ab9775101540f9fb6897b4722dd5542592ace2db07daa5421bb5eded4e057e",
+    "tests/remaining_games_conditional.py": "83a17f6b2591ff59f01152b2d62fc4b82c8f807d64ce8300ad55addf76b983b9"
+  }
+}
