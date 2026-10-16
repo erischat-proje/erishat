@@ -94,11 +94,19 @@ def idle(db,user,row):
     if other:raise HTTPException(409,'Önce üstlendiğiniz ödeme görüşmesini tamamlayın veya kuyruğa bırakın.')
     if user.id==row.user_id:raise HTTPException(409,'Kendi ödeme isteğinizi üstlenemezsiniz.')
 
+def require_visible_photo(image):
+    # Reject a truly blank white image, not a mostly white receipt with text.
+    # Sample for speed but use the full extrema before rejecting tiny markings.
+    gray=image.convert('L')
+    low,high=gray.getextrema()
+    if low>=245 and high-low<=8:
+        raise HTTPException(422,'Fotoğrafın içeriği boş/beyaz görünüyor. Galeride açıp kontrol edin ve asıl dekontu yeniden seçin. Ekran görüntüsü yerine bankadan indirdiğiniz dekont fotoğrafını kullanabilirsiniz.')
+
 def image_bytes(value):
     try:
         raw,mime=purchases.decode_document(value)
         with Image.open(BytesIO(raw)) as src:
-            frame=ImageOps.exif_transpose(src);frame.thumbnail((2048,2048))
+            frame=ImageOps.exif_transpose(src);require_visible_photo(frame);frame.thumbnail((2048,2048))
             if frame.mode in ('RGBA','LA'):
                 rgba=frame.convert('RGBA');img=Image.new('RGB',rgba.size,'white');img.paste(rgba,mask=rgba.getchannel('A'))
             else:img=frame.convert('RGB')
@@ -404,5 +412,10 @@ def message_page(db,row,after):
 def photo_response(db,row,message_id):
     msg=db.get(PaymentMessage,message_id)
     if not msg or msg.request_id!=row.id or not msg.photo:raise HTTPException(404,'Fotoğraf bulunamadı.')
+    try:
+        with Image.open(BytesIO(msg.photo)) as image:require_visible_photo(image)
+    except (OSError,ValueError,SyntaxError,Image.DecompressionBombError) as exc:
+        raise HTTPException(422,'Kaydedilmiş fotoğraf okunamıyor. Asıl dekontu yeniden gönderin.') from exc
     return Response(msg.photo,media_type='image/jpeg',headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Disposition':'inline; filename="dekont.jpg"'})
+
 

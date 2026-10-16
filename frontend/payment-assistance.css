@@ -27,3 +27,11 @@ html body .pa-payment-alert div{flex:1;min-width:0}.pa-payment-alert b{display:b
 html body .pa-payment-alert button{position:static!important;min-width:36px!important;min-height:40px!important;height:auto!important;padding:8px!important;margin:0!important;border:1px solid #b99a58!important;border-radius:10px!important;background:#254b36!important;color:#fff7de!important;font:600 12px/1.25 system-ui!important;cursor:pointer!important;flex:none!important}
 html body .pa-payment-alert button:focus-visible{outline:2px solid white!important;outline-offset:3px!important}
 .pa-photo-status{display:block;color:var(--ui-muted);font-size:12px;line-height:1.5;margin:6px 0}
+
+
+html body .pa-overlay .pa-photo-stage{display:flex;justify-content:center;align-items:flex-start;overflow:auto;background:#353a35;padding:8px;border-radius:12px;min-height:60px}
+html body .pa-overlay img.pa-receipt-image,html body .pa-overlay img.pa-selected-image{position:static!important;display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;min-height:0!important;object-fit:contain!important;object-position:center top!important;filter:none!important;opacity:1!important;visibility:visible!important;mix-blend-mode:normal!important;transform:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;background:transparent!important;border-radius:0!important}
+html body .pa-overlay img.pa-receipt-image[hidden],html body .pa-overlay .pa-selected-photo[hidden]{display:none!important}
+html body .pa-overlay .pa-selected-photo{border:1px solid var(--ui-line);border-radius:12px;padding:10px;margin:10px 0;background:var(--ui-raised)}
+html body .pa-overlay img.pa-selected-image{max-height:240px!important;object-fit:contain!important}
+.pa-selected-photo b,.pa-selected-photo small{display:block;font-size:11px;margin:6px 0;color:var(--ui-ink)}
