@@ -862,6 +862,9 @@ def complete_onboarding(
 
 @app.patch("/v1/me", response_model=UserOut)
 def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)) -> User:
+    from .staff_identity import require_editable
+    if any(getattr(payload, key, None) is not None for key in ('nickname','avatar','first_name','last_name','bio')):
+        require_editable(user)
     if payload.nickname is not None and payload.nickname.strip() != user.nickname:
         raise HTTPException(status_code=402, detail="Kullanıcı adını Bilgilerim bölümünden 150 Lidya karşılığında değiştirebilirsin.")
     for key in ("first_name", "last_name", "bio"):
@@ -879,6 +882,8 @@ def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = D
 
 @app.post("/v1/me/nickname", response_model=UserOut)
 def change_nickname(payload: NicknameChange, db: Session = Depends(get_db), user: User = Depends(current_user)) -> UserOut:
+    from .staff_identity import require_editable
+    require_editable(user)
     new_name = payload.nickname.strip()
     if not new_name or len(new_name) > 32:
         raise HTTPException(status_code=400, detail="Kullanıcı adı 1–32 karakter olmalı")
@@ -1956,7 +1961,13 @@ manager = ConnectionManager()
 @live_socket
 async def broadcast_role_badge(user_id: str, role: str | None) -> None:
     # Only display metadata; never grants capabilities in the browser.
-    payload = {"type": "role_badge_changed", "user_id": user_id, "admin_role": role}
+    def identity_snapshot():
+        from .staff_identity import public_identity
+        with Session(engine) as db:
+            target = db.get(User, user_id)
+            return public_identity(target) if target else None
+    identity = await asyncio.to_thread(identity_snapshot)
+    payload = {"type": "role_badge_changed", "user_id": user_id, "admin_role": role, "identity":identity}
     await asyncio.gather(*(manager.send_user(viewer_id, payload)
                            for viewer_id in list(manager.connections)), return_exceptions=True)
 

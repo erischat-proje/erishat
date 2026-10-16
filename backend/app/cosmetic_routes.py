@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from .db import get_db
+from . import staff_identity
 from .cosmetics import catalog, find_asset, PRICE, VIP_PRICE
 from .schemas import CosmeticApply, CosmeticPurchase
 from .session import get_user_from_token
@@ -164,8 +165,10 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
                            'name':'Yüzük', 'source':'relationship', 'level':0, 'equip_key':ring.ring, 'equipped':house.ring == ring.ring})
     from .shop_expansion import room_inventory
     result.extend(room_inventory(db,user))
+    if staff_identity.role_for(user):
+        result = [item for item in result if item['type'] not in ('avatar','frame')] + staff_identity.inventory()
     db.commit()
-    return {'items':result, 'categories':list(labels), 'vip_level':vip_level(db, user.id)}
+    return {'items':result, 'categories':list(labels), 'vip_level':vip_level(db, user.id), 'management_locked':bool(staff_identity.role_for(user))}
 
 
 @router.get("/me/vip/rewards")
@@ -232,6 +235,8 @@ def equip_vip_entrance(payload: dict, user=Depends(current_cosmetic_user), db: S
 def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
+    if kind in ('avatar','frame'):
+        staff_identity.require_editable(user)
     try:asset=find_asset(key,kind)
     except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
     if not asset:
@@ -272,6 +277,8 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
 def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
     key = payload.asset_key
+    if kind in ('avatar','frame'):
+        staff_identity.require_editable(user)
     try:asset=find_asset(key,kind)
     except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
     if not asset:

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .username_rules import validate_username
 
@@ -117,6 +117,9 @@ class NicknameChange(BaseModel):
 
 
 class UserOut(BaseModel):
+    admin_role: str | None = None
+    management_locked: bool = False
+    management_badges: list[str] = Field(default_factory=list)
     bubble_asset: str | None = None
     title_asset: str | None = None
     profile_asset: str | None = None
@@ -140,6 +143,18 @@ class UserOut(BaseModel):
     profile_completed: bool = False
     welcome_gift_claimed: bool = False
     created_at: datetime
+
+    @model_validator(mode='after')
+    def management_profile(self):
+        if self.management_locked:
+            self.first_name = 'ErisChat'
+            self.last_name = 'Yönetim'
+            self.bio = 'Resmî ErisChat Yönetim Hesabı'
+            self.birth_date = None
+            self.gender = 'unspecified'
+            self.title_asset = None
+            self.profile_asset = None
+        return self
 
 
 class CosmeticOut(BaseModel):
