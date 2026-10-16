@@ -6,7 +6,7 @@ html.eris-adaptive .content,html.eris-adaptive .view,html.eris-adaptive .grow,ht
 html.eris-adaptive .view :is(input,textarea,select){max-width:100%;min-width:0}
 html.eris-adaptive :is(.sheet,.chatSheet,.eris-mini-card,.eg-panel,.rel-dialog,.eh-sheet,.lp-panel,.eris-admin-panel,.eris-vip-dialog,.eph-dialog){min-width:0!important;max-width:100%!important;max-height:var(--eris-panel-height)!important;overscroll-behavior:contain}
 html.eris-adaptive :is(.sheet,.eris-mini-card,.eg-panel,.rel-dialog,.eh-sheet,.lp-panel,.eris-admin-panel,.eph-dialog){overflow-y:auto!important;overflow-x:hidden}
-html.eris-adaptive :is(.modal,.chat,.eris-mini-shade,.eris-vip-overlay,.rel-page,.rel-overlay,.eph-overlay,#erisGoogleGate,#erisAccountPicker,.dm-vault-modal,.dm-gift-sheet,#erisHub,#erisGamesModal,#erisUserProfileModal){top:calc(var(--app-top) + var(--eris-safe-top))!important;bottom:auto!important;height:var(--eris-usable-height)!important;left:calc(var(--eris-viewport-left) + var(--eris-safe-left))!important;right:var(--eris-safe-right)!important;min-height:0!important;box-sizing:border-box!important}
+html.eris-adaptive :is(.modal,.chat,.eris-mini-shade,.eris-vip-overlay,.rel-page,.rel-overlay,.eph-overlay,#erisGoogleGate,#erisAccountPicker,.dm-vault-modal,.dm-gift-sheet,#erisHub,#erisGamesModal,#erisUserProfileModal,.eris-admin-overlay,.eb-overlay,.esi-overlay,.lp-overlay,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom){top:calc(var(--app-top) + var(--eris-safe-top))!important;bottom:auto!important;height:var(--eris-usable-height)!important;left:calc(var(--eris-viewport-left) + var(--eris-safe-left))!important;right:var(--eris-safe-right)!important;min-height:0!important;box-sizing:border-box!important}
 html.eris-adaptive .modal,html.eris-adaptive .chat{justify-content:center}
 html.eris-adaptive .chatSheet{height:min(680px,var(--eris-usable-height))!important;max-height:var(--eris-usable-height)!important;min-height:0!important}
 html.eris-adaptive .chatBody,html.eris-adaptive .eris-vip-content{min-height:0!important;overflow-y:auto}
@@ -87,10 +87,23 @@ html.eris-adaptive #erisRoomSurface .room-v3-panel{padding:12px!important}
 html.eris-adaptive #erisGoogleGate>.erisGoogleCard,html.eris-adaptive #erisAccountPicker>section{max-width:100%!important;min-width:0!important;max-height:var(--eris-panel-height)!important;overflow-y:auto!important}
 html.eris-adaptive #erisAccountPicker #erisGoogleGate{position:relative!important;inset:auto!important;left:auto!important;top:auto!important;height:auto!important;max-height:none!important;padding:0!important}
 html.eris-adaptive .support-window{bottom:calc(var(--eris-safe-bottom) + 12px)!important;right:calc(var(--eris-safe-right) + 12px)!important;max-width:calc(var(--app-width) - 24px)!important;max-height:var(--eris-panel-height)!important;overflow-y:auto!important}
-html.eris-adaptive #erischatGiftPanel{top:calc(var(--app-top) + var(--eris-safe-top) + 12px)!important;bottom:auto!important;max-height:var(--eris-panel-height)!important;width:min(500px,calc(var(--app-width) - 24px))!important;overflow-y:auto!important}
+html.eris-adaptive #erischatGiftPanel.agora-picker{transform:translateX(-50%)!important;left:calc(var(--eris-viewport-left) + var(--eris-safe-left) + (var(--app-width) - var(--eris-safe-left) - var(--eris-safe-right)) / 2)!important;right:auto!important;height:min(850px,var(--eris-panel-height))!important;min-height:0!important;overflow:hidden!important;top:calc(var(--app-top) + var(--eris-safe-top) + 12px)!important;bottom:auto!important;max-height:var(--eris-panel-height)!important;width:min(560px,calc(var(--app-width) - var(--eris-safe-left) - var(--eris-safe-right) - 24px))!important;overflow-y:hidden!important}
 html.eris-adaptive #erisRoomEmojiPanel .ee-sheet{max-height:min(480px,calc(var(--eris-usable-height) - 60px))!important}
 
 html.eris-adaptive .support-window{top:calc(var(--app-top) + var(--eris-safe-top) + 12px)!important;bottom:auto!important}
 html.eris-adaptive .app>.top{height:calc(72px + var(--eris-safe-top));padding-top:calc(14px + var(--eris-safe-top))}
 html.eris-adaptive body{padding-inline:var(--eris-safe-left) var(--eris-safe-right)}
 html.eris-keyboard #toast{top:calc(var(--app-top) + var(--eris-safe-top) + 12px);bottom:auto;max-width:calc(var(--app-width) - 24px)}
+
+/* Full overlay roots use visible-viewport coordinates, never a second centering transform. */
+html.eris-adaptive :is(.modal,.chat,.eris-mini-shade,.eris-vip-overlay,.rel-page,.rel-overlay,.eph-overlay,#erisGoogleGate,#erisAccountPicker,.dm-vault-modal,.dm-gift-sheet,#erisHub,#erisGamesModal,#erisUserProfileModal,.eris-admin-overlay,.eb-overlay,.esi-overlay,.lp-overlay,#erisMusicPanel,#erisRoomWallpaperModal,#erisRoomWallpaperZoom){transform:none!important;width:calc(var(--app-width) - var(--eris-safe-left) - var(--eris-safe-right))!important;max-width:none!important;right:auto!important}
+/* Google gate embedded inside the account sheet remains in normal flow. */
+html.eris-adaptive #erisAccountPicker #erisGoogleGate{width:100%!important;height:auto!important;left:auto!important;top:auto!important}
+/* Only the middle gift list scrolls; header and payment controls stay reachable. */
+html.eris-adaptive body #erischatGiftPanel.agora-picker .agora-picker-body{min-height:0!important;overflow:auto!important;overscroll-behavior:contain}
+html.eris-adaptive #erisGiftPickerShade{top:var(--app-top)!important;left:var(--eris-viewport-left)!important;right:auto!important;bottom:auto!important;width:var(--app-width)!important;height:var(--app-height)!important;min-height:0!important;transform:none!important}
+
+/* Portal sheets follow the overlay's visible height, including an open keyboard. */
+html.eris-adaptive body :is(.eris-admin-overlay,.eph-overlay,.lp-overlay,.esi-overlay,.eb-overlay,#erisHub)>:is(.eris-admin-panel,.eph-dialog,.lp-panel,.esi-panel,.eb-panel,.eh-sheet){min-height:0!important;max-height:100%!important;max-width:100%!important;box-sizing:border-box!important}
+html.eris-adaptive body :is(.eris-admin-overlay,#erisHub)>:is(.eris-admin-panel,.eh-sheet){height:100%!important}
+html.eris-adaptive body :is(#erisMusicPanel>div,#erisRoomWallpaperModal>section){max-height:calc(var(--eris-usable-height) - 24px)!important;min-height:0!important;overflow-y:auto!important;box-sizing:border-box!important}
