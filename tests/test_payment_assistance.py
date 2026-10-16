@@ -232,3 +232,20 @@ def test_pending_alerts_are_da_only_exclude_self_and_disappear_on_claim(env):
     call('da2',f'/requests/{first["id"]}/accept',{})
     assert call('da','/state')['pending_alerts']==[]
     assert [r['id'] for r in call('da2','/state')['pending_alerts']]==[own['id']]
+
+def test_white_receipt_rejected_but_text_on_white_page_is_preserved(env):
+    _,_,call=env;id=connected(call)
+    call('u',f'/requests/{id}/messages',{'message':'boş','photo':photo('white'),'request_key':str(uuid4())},expect=422)
+    from PIL import ImageDraw
+    img=Image.new('RGB',(400,600),'white');ImageDraw.Draw(img).text((25,40),'DEKONT 123456 399 LIDYA',fill='black');out=BytesIO();img.save(out,'PNG')
+    data='data:image/png;base64,'+base64.b64encode(out.getvalue()).decode()
+    msg=call('u',f'/requests/{id}/messages',{'message':'dekont','photo':data,'request_key':str(uuid4())})['id']
+    for who in ['u','da']:
+        response=call(who,f'/requests/{id}/photos/{msg}')
+        with Image.open(BytesIO(response.content)) as stored:assert stored.convert('L').getextrema()[0]<100
+
+def test_old_saved_white_receipt_shows_reupload_error(env):
+    engine,_,call=env;id=connected(call);mid=send_photo(call,id)
+    out=BytesIO();Image.new('RGB',(100,200),'white').save(out,'JPEG')
+    with Session(engine) as db:db.get(PaymentMessage,mid).photo=out.getvalue();db.commit()
+    for who in ['u','da']:assert 'boş/beyaz' in call(who,f'/requests/{id}/photos/{mid}',expect=422)['detail']
