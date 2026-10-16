@@ -1,5 +1,0 @@
-Method: built-in imagegen; transparent PNG; reference: existing light/dark Lidya Dog Party menu covers.
-Light: realistic golden retriever with ornate gold/emerald collar, 2x2 four separate poses: sitting idle, play-bow anticipation, standing with left forepaw raised toward wild, seated upright both paws raised celebrating. Same identity, no background/text/frame. Follow-up: retain exact four poses, remove all exterior haze with alpha zero.
-Dark: preserve exact identity/poses/registration; dark emerald velvet collar, antique gold engraved trim, emerald pendant, cooler shadows and restrained gold rim light. Natural golden fur, true alpha outside dog.
-Symbols: 2x2 sheet; cream-marble/gold/emerald-roof doghouse Wild, dark emerald-marble/gold matching Wild, cream/gold raised emerald paw Scatter medallion, emerald/gold matching Scatter. Transparent background, no text/numbers/frame/scenery.
-Processing: lossless quadrant crops, uniform resize and transparent centering of generated PNG pixels; no recolor or synthetic art.

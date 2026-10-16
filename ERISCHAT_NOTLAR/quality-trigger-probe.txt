@@ -1,1 +1,0 @@
-CI trigger checkpoint: registered Apply Gift UI workflow now carries a quality runner probe.

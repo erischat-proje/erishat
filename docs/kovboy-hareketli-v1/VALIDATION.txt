@@ -1,6 +1,0 @@
-2026-10-16 Kovboy presentation verification
-PASS20 viewport/theme/state cases:light/dark ×normal/resumed bonus ×320x568,393x820,412x915,844x390,1440x900. Full viewport root/shell,no horizontal overflow,5:4 canvas,single visible actor,8 actor PNG+4 themed symbol PNG decode. Typical portrait fits;short/landscape internally scrolls.
-PASS real canvas renderer with synthetic isolated API:anticipation/action/celebrate/idle;gold shot targets actual base Wild and new Sticky Wild cells;live theme swap during action uses same pose dark asset;two overlay stars give+4spins (4remaining ->consume1 +4 =7);sticky count1/12 and payout150Lidya displayed.
-PASS rules locks/Escape;server purchase cost tested120x,double confirmation one UUID/request/debit6000 at stake50,eight purchased spins;cancel no request;active bonus/insufficient balance lock. Connection retry sends identical UUID/payload. Close/background remove flights and stop autoplay.
-No browser errors/missing Kovboy assets. Internal screenshots reviewed,not distributed. Backend/math/config/natural-bonus wrapper and wallet/pending UUID protocols unchanged. No new RTP measurement or certification.
-PASS installer/apply twice/byte-exact output/conflict abort before writes;filtered local Git worktree/index/commit/push keeps unrelated8MiB blob unhydrated;20changed paths,no deletions;ZIP integrity.

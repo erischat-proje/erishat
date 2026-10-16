@@ -98,7 +98,7 @@ class User(Base):
 
     @property
     def management_badges(self):
-        return list(staff_identity.ROLES) if self.management_locked else []
+        return [self.admin_role] if self.management_locked else []
 
 class UserCosmetic(Base):
     __tablename__ = "user_cosmetics"
@@ -191,3 +191,4 @@ class AuthIdentity(Base):
 
 # Preserve confirmed identity on detached websocket/background user objects.
 staff_identity.install_load_hints(User)
+
