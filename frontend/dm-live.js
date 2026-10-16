@@ -553,6 +553,7 @@
   }
   async function loadConversations() {
     installMessageSearch();
+    window.ErisPaymentAssistance?.renderInbox?.();
     if (!(localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token'))) return;
     const list = document.querySelector('#messages .list');
     if (!list || !api()?.conversations) return;
@@ -819,3 +820,4 @@
   else loadConversations();
   window.ErisApiTransport.poll(loadConversations,20000);
 })();
+
