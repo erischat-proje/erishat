@@ -112,6 +112,9 @@ def idle(db,user,row):
     if other:raise HTTPException(409,'Önce üstlendiğiniz ödeme görüşmesini tamamlayın veya kuyruğa bırakın.')
     if user.id==row.user_id:raise HTTPException(409,'Kendi ödeme isteğinizi üstlenemezsiniz.')
 
+def latest_customer_receipt(db,row):
+    return db.scalar(select(PaymentMessage).where(PaymentMessage.request_id==row.id,PaymentMessage.sender_id==row.user_id,PaymentMessage.sender_side=='customer',PaymentMessage.photo_sha.is_not(None)).order_by(PaymentMessage.id.desc()).limit(1))
+
 def require_visible_photo(image):
     # Reject a truly blank white image, not a mostly white receipt with text.
     # Sample for speed but use the full extrema before rejecting tiny markings.
@@ -159,7 +162,7 @@ class Reason(BaseModel):
         return v
 
 class Credit(BaseModel):
-    photo_message_id:int=Field(gt=0)
+    photo_message_id:int|None=Field(default=None,gt=0)
     transaction_reference:str=Field(min_length=6,max_length=100)
     verified:bool=False
     @field_validator('transaction_reference')
@@ -323,6 +326,7 @@ def register_auth(current_user):
         last=db.scalar(select(PaymentMessage).where(PaymentMessage.request_id==row.id,PaymentMessage.sender_id==user.id).order_by(PaymentMessage.id.desc()).limit(1))
         if last and aware(last.created_at)>now()-timedelta(seconds=1):raise HTTPException(429,'Yeni mesaj için bir saniye bekleyin.')
         if (db.scalar(select(func.count()).select_from(PaymentMessage).where(PaymentMessage.request_id==row.id)) or 0)>=1000:raise HTTPException(409,'Görüşme 1000 mesaj sınırına ulaştı.')
+        if payload.photo and who!='customer':raise HTTPException(403,'Dekont fotoğrafını yalnızca müşteri gönderebilir.')
         raw=None;sha=None
         if payload.photo:
             if (db.scalar(select(func.count()).select_from(PaymentMessage).where(PaymentMessage.request_id==row.id,PaymentMessage.photo_sha.is_not(None))) or 0)>=30:raise HTTPException(409,'Görüşmede en fazla 30 fotoğraf saklanabilir.')
@@ -344,6 +348,15 @@ def register_auth(current_user):
         if row.status not in ('chat','finishing'):raise HTTPException(403,'Görüşme fotoğrafları kapatıldı.')
         return photo_response(db,row,message_id)
 
+    @router.get('/requests/{identifier}/credit-evidence')
+    def credit_evidence(identifier:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        row=assigned(db,user,identifier)
+        if row.status not in ('chat','finishing'):raise HTTPException(409,'Görüşme açık değil.')
+        msg=latest_customer_receipt(db,row)
+        if row.credit_operation_id:
+            msg=db.scalar(select(PaymentMessage).where(PaymentMessage.request_id==row.id,PaymentMessage.sender_id==row.user_id,PaymentMessage.photo_sha==row.receipt_sha).order_by(PaymentMessage.id.desc()).limit(1))
+        return {'photo_message_id':msg.id if msg else None,'created_at':msg.created_at if msg else None,'credited':bool(row.credit_operation_id)}
+
     @router.post('/requests/{identifier}/credit')
     def credit(identifier:str,payload:Credit,db:Session=Depends(get_db),user:User=Depends(current_user)):
         row=assigned(db,user,identifier)
@@ -352,8 +365,9 @@ def register_auth(current_user):
             return summary(row,user.id)
         if row.status!='chat':raise HTTPException(409,'Önce çift taraflı görüşme başlamalı.')
         if not payload.verified:raise HTTPException(422,'Ödeme tutarını ve banka/sağlayıcı referansını kontrol ettiğinizi onaylayın.')
-        msg=db.get(PaymentMessage,payload.photo_message_id)
-        if not msg or msg.request_id!=row.id or not msg.photo:raise HTTPException(422,'Bu görüşmeden bir dekont fotoğrafı seçin.')
+        msg=db.get(PaymentMessage,payload.photo_message_id) if payload.photo_message_id else latest_customer_receipt(db,row)
+        if not msg or msg.request_id!=row.id or msg.sender_id!=row.user_id or msg.sender_side!='customer' or not msg.photo:raise HTTPException(422,'Müşterinin bu görüşmeye gönderdiği dekont bekleniyor.')
+        with Image.open(BytesIO(msg.photo)) as image:require_visible_photo(image)
         reference=payload.transaction_reference
         if db.scalar(select(PaymentRequest.id).where(PaymentRequest.transaction_reference==reference)) or db.scalar(select(LidyaOrder.id).where(LidyaOrder.transaction_reference==reference)):
             raise HTTPException(409,'Bu ödeme referansı başka bir yüklemede kullanılmış.')
@@ -465,6 +479,7 @@ def photo_response(db,row,message_id):
     except (OSError,ValueError,SyntaxError,Image.DecompressionBombError) as exc:
         raise HTTPException(422,'Kaydedilmiş fotoğraf okunamıyor. Asıl dekontu yeniden gönderin.') from exc
     return Response(msg.photo,media_type='image/jpeg',headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Disposition':'inline; filename="dekont.jpg"'})
+
 
 
 
