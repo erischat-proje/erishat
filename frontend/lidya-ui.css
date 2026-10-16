@@ -1,0 +1,314 @@
+/* Lydia Champagne: ivory surfaces, antique gold details, readable ink. */
+:root {
+  color-scheme: light;
+  --lydia-bg: #f5f0e6;
+  --lydia-panel: #fffdf8;
+  --lydia-panel-raised: #f6ecda;
+  --lydia-text: #342b21;
+  --lydia-muted: #756750;
+  --lydia-gold: #856229;
+  --lydia-bronze: #987435;
+  --lydia-line: #ded1ba;
+  --lydia-focus: #866128;
+  --bg: var(--lydia-bg);
+  --p: var(--lydia-panel);
+  --p2: var(--lydia-panel-raised);
+  --line: var(--lydia-line);
+  --muted: var(--lydia-muted);
+  --pink: var(--lydia-gold);
+  --violet: var(--lydia-bronze);
+  --gold: var(--lydia-gold);
+}
+html, html body { background: var(--theme-panel, #eee7d9); color: var(--lydia-text); }
+html body .app {
+  background: radial-gradient(ellipse at 100% 0, var(--theme-grain, #e8d6ac45), transparent 45%), var(--lydia-bg);
+  color: var(--lydia-text);
+}
+html body .app > .top {
+  background: var(--theme-chrome, #fcf8ef);
+  border-bottom-color: var(--theme-line, #dfd3bd);
+  box-shadow: 0 3px 15px var(--theme-shadow, #684c1707);
+  padding-block: 12px;
+}
+html body .app > .content { scrollbar-color: var(--theme-carved-line, #b49a69) transparent; }
+html body .app > .top #demoBalance {
+  color: #60471f;
+  background: #f4ead4;
+  border-color: #dfc998;
+  border-radius: 13px;
+  box-shadow: inset 0 1px #fffaf0;
+}
+html body .app > .top .icon {
+  color: #795a28;
+  background: #fffdf8;
+  border-color: #dfd3bd;
+  border-radius: 13px;
+}
+/* Keep the existing artwork visible until the new logo is produced.
+   Its screen-blended image needs a dark plate; the page itself stays ivory. */
+html body .app > .top .brand.eris-brand {
+  padding: 6px 9px !important;
+  background: #211b2b;
+  border: 1px solid var(--theme-line, #d8c7a3);
+  border-radius: 12px;
+  max-width: 166px;
+}
+html body .app > .top .brand.eris-brand .eris-brand-image { max-height: 34px; }
+html body .app > .nav {
+  background: var(--theme-chrome, #fffdf8);
+  border-top-color: var(--theme-line, #ded1ba);
+  box-shadow: 0 -6px 24px var(--theme-shadow, #73551e0a);
+  gap: 4px;
+  padding-top: 8px;
+}
+html body .app > .nav button {
+  min-width: 0;
+  min-height: 54px;
+  color: var(--theme-muted-ink, #756750);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  transition: background .16s, color .16s;
+}
+html body .app > .nav button.active {
+  color: var(--theme-accent-ink, #71511f);
+  background: var(--theme-chrome, #f3e8d0);
+  border-color: var(--theme-line, #e4d1a6);
+  box-shadow: inset 0 1px var(--theme-bevel, #fffaf0);
+}
+html body .app > .nav button.active::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #987435;
+}
+html body .app > .nav button:active { background: var(--theme-chrome, #eadcbf); }
+html body #home .section { margin-bottom: 13px; }
+html body #home .section h3 {
+  color: var(--theme-ink, #342b21);
+  font-size: 18px;
+  letter-spacing: -.45px;
+  font-weight: 750;
+}
+html body #home .homeSectionActions { gap: 7px; }
+html body #home .homeSectionActions .link {
+  min-height: 40px;
+  padding: 8px 10px;
+  color: var(--theme-accent-ink, #765726);
+  border: 1px solid var(--theme-line, #ddcfb3);
+  border-radius: 12px;
+  background: var(--theme-panel, #fffaf0);
+  font-weight: 650;
+}
+html body #home .homeSectionActions .link:first-child {
+  color: #fff9ec;
+  background: linear-gradient(125deg, #85632c, #6e4e20);
+  border-color: var(--theme-line, #795626);
+  box-shadow: 0 3px 8px var(--theme-shadow, #71511e16);
+}
+html body #home .homeMenu { gap: 12px; }
+html body #home .homeMenuGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 2px !important;
+  color: var(--theme-muted-ink, #857047);
+  font-size: 10px;
+  letter-spacing: 1.35px;
+  font-weight: 750;
+}
+html body #home .homeMenuGroup::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--theme-panel-shadow, #d8c7a3), transparent);
+}
+html body #home .homeMenuItem {
+  min-height: 127px !important;
+  padding: 16px !important;
+  gap: 11px !important;
+  border: 1px solid var(--theme-line, #e1d7c5);
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, var(--theme-plate-highlight, #ffffff), var(--theme-plate-highlight, #fdf9f1));
+  color: var(--theme-ink, #342b21);
+  box-shadow: 0 4px 12px var(--theme-shadow, #654a1710), inset 0 1px var(--theme-bevel, #fff);
+}
+html body #home .homeMenuItem::after {
+  content: "›";
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--theme-ink, #b6a17a);
+  font-size: 20px;
+  line-height: 1;
+}
+html body #home .homeMenuItem:hover {
+  border-color: var(--theme-line, #c5aa75);
+  background: var(--theme-plate, #fffaf0);
+}
+html body #home .homeMenuItem:active { background: var(--theme-plate, #f4e8ce); }
+html body #home .homeMenuIcon {
+  width: 37px;
+  height: 37px;
+  padding: 8px;
+  color: #916c2f;
+  background: #f5ecd9;
+  border: 1px solid #ead8b2;
+  border-radius: 12px;
+  stroke-width: 1.65;
+}
+html body #home .homeMenuCopy { min-width: 0; }
+html body #home .homeMenuCopy strong {
+  color: var(--theme-ink, #342b21);
+  font-size: 13px !important;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+html body #home .homeMenuCopy small {
+  display: block !important;
+  color: var(--theme-muted-ink, #80715a);
+  font-size: 10px !important;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+html body #home .homeMenuItem:has(use[href="#home-vip"]) {
+  background: linear-gradient(145deg, var(--theme-plate-highlight, #fcf5e5), var(--theme-plate, #f4e7c8));
+  border-color: var(--theme-line, #ddc28b);
+}
+html body #home .homeMenuItem.eris-admin-menu {
+  background: var(--theme-plate, #f5ead1);
+  border-color: var(--theme-line, #dbc28e);
+  min-height: 78px !important;
+}
+html body #home .homeMenuItem.eris-admin-menu::after { display: none; }
+html body #home .ea-role { color: var(--theme-muted-ink, #735323); background: var(--theme-panel, #e7d5ad); border-color: var(--theme-line, #cbb17a); }
+html body #home #realRooms .room {
+  color: var(--theme-ink, #342b21);
+  background: var(--theme-plate, #fffdf8);
+  border-color: var(--theme-line, #ded1ba);
+  padding: 14px;
+  border-radius: 18px;
+  box-shadow: 0 3px 12px var(--theme-shadow, #654a1709);
+}
+html body #home #realRooms .roomText { min-width: 0; }
+html body #home #realRooms .roomText b { overflow-wrap: anywhere; }
+html body #home #realRooms .roomText small { color: var(--theme-muted-ink, #756750); }
+html body #home #realRooms .ec-room-art,
+html body #home #realRooms .ec-empty-art {
+  color: #856229;
+  background: #f3e7cc;
+  border: 1px solid #e0c994;
+}
+html body #home #realRooms .ec-room-live {
+  color: var(--theme-muted-ink, #755322);
+  background: var(--theme-panel, #f5ead1);
+  border-color: var(--theme-line, #d8bf87);
+}
+html body #home #realRooms .ec-discovery-empty {
+  background: linear-gradient(125deg, var(--theme-plate-highlight, #fffdf7), var(--theme-plate, #f5ead2));
+  border-color: var(--theme-line, #ded0b2);
+  color: var(--theme-ink, #342b21);
+  box-shadow: 0 4px 15px var(--theme-shadow, #654a170a);
+}
+html body #home #realRooms .ec-discovery-empty p { color: var(--theme-muted-ink, #756750); }
+html body #home #realRooms > .card { color: var(--theme-muted-ink, #756750) !important; }
+html body .app > .content .card,
+html body .app > .content .item {
+  color: var(--theme-ink, #342b21);
+  background: var(--theme-panel, #fffdf8);
+  border-color: var(--theme-line, #ded1ba);
+}
+html body .app > .content .title { color: var(--theme-ink, #342b21); }
+html body .app > .content .eyebrow { color: var(--theme-accent-ink, #856229); }
+html body .app > .content .link { color: var(--theme-accent-ink, #856229); }
+html body .app > .content .primary,
+html body .support-window .primary {
+  color: #fff9ec;
+  background: linear-gradient(125deg, #85632c, #6e4e20);
+  border: 1px solid var(--theme-line, #795626);
+  min-height: 44px;
+}
+html body .app > .content .tab {
+  color: var(--theme-muted-ink, #756750);
+  background: var(--theme-panel, #fffdf8);
+  border-color: var(--theme-line, #ded1ba);
+}
+html body .app > .content .tab.active { color: var(--theme-accent-ink, #71511f); background: var(--theme-panel, #f3e8d0); border-color: var(--theme-line, #cbb17a); }
+html body .app > .content .search input,
+html body .app > .content .setting {
+  color: var(--theme-ink, #342b21);
+  background: var(--theme-panel, #fffdf8);
+  border-color: var(--theme-line, #ded1ba);
+}
+html body .app > .content .search input::placeholder { color: var(--theme-muted-ink, #756750); }
+html body .app > .content .switch { background: var(--theme-panel, #d9ceba); }
+html body .app > .content .switch.on { background: #987435; }
+html body .app > .content .switch.on::after { background: var(--theme-panel, #fffaf0); }
+html body .toast { background: var(--theme-panel, #fffaf0); color: var(--theme-ink, #342b21); border-color: var(--theme-line, #d5bc86); box-shadow: 0 8px 25px var(--theme-shadow, #654a1720); }
+html body #explore {
+  --ec-accent: #856229;
+  --ec-muted: #756750;
+  --ec-line: #ded1ba;
+  --ec-panel: #fffdf8;
+}
+html body #explore .ec-explore-subnav button { color: var(--theme-muted-ink, #756750) !important; }
+html body #explore .ec-explore-subnav button[aria-selected=true] { color: var(--theme-accent-ink, #71511f) !important; background: var(--theme-panel, #f3e8d0) !important; }
+html body #explore .eris-story-plus { color: #fff9ec !important; background: #987435 !important; border-color: var(--theme-line, #f5f0e6) !important; }
+html body #messages > .eyebrow,
+html body #explore > .eyebrow { color: var(--theme-accent-ink, #856229) !important; }
+html body #messages [data-dm-user-search] { color: var(--theme-ink, #342b21); background: var(--theme-panel, #fffdf8) !important; border-color: var(--theme-line, #ded1ba); }
+html body #messages .dm-list-tools,
+html body #messages .dm-list-state { background: var(--theme-panel, #fffdf8); border-color: var(--theme-line, #ded1ba); color: var(--theme-ink, #342b21); }
+html body #messages .list > .item small,
+html body #messages .dm-list-state p { color: var(--theme-muted-ink, #756750); }
+html body #messages .dm-list-state > span { color: var(--theme-accent-ink, #856229); background: var(--theme-panel, #f3e7cc); }
+html body #messages .dm-list-state button { color: var(--theme-accent-ink, #71511f); background: var(--theme-panel, #f3e8d0); border-color: var(--theme-line, #d8bf87); }
+html body #messages .dm-unread { color: #fff9ec; background: #987435; }
+html body #games .eg-launcher-card {
+  color: var(--theme-ink, #342b21);
+  background: linear-gradient(145deg, var(--theme-panel-highlight, #fffdf8), var(--theme-panel-highlight, #f7edda));
+  border-color: var(--theme-line, #ded1ba);
+  box-shadow: 0 4px 12px var(--theme-shadow, #654a1710);
+}
+html body #games .eg-launcher-card .eg-lc-icon { color: var(--theme-accent-ink, #856229); background: var(--theme-panel, #f3e7cc); border-color: var(--theme-line, #e0c994); }
+html body #games .eg-launcher-card .eg-lc-title { color: var(--theme-ink, #342b21); }
+html body #games .eg-launcher-card .eg-lc-desc { color: var(--theme-muted-ink, #756750); }
+html body #games .eg-launcher-card .eg-lc-play { color: var(--theme-accent-ink, #856229); }
+html body #games .eg-launcher-card:active { background: var(--theme-panel, #f4e8ce); border-color: var(--theme-line, #c5aa75); }
+html body #profile [data-profile-save] { color: #fff9ec !important; background: #85632c !important; }
+html body #profile [data-dm-lock-gift] { color: var(--theme-ink, #342b21) !important; background: var(--theme-panel, #fffdf8) !important; border-color: var(--theme-line, #ded1ba) !important; }
+html body #erisProfileHub .eph-dialog,
+html body #erisHub .eh-sheet,
+html body .support-window { color: var(--theme-ink, #342b21); background: var(--theme-panel, #f5f0e6); border-color: var(--theme-line, #ded1ba); }
+html body #erisProfileHub .eph-tabs button[data-modern-menu] {
+  color: var(--theme-ink, #342b21) !important;
+  background: linear-gradient(145deg, var(--theme-panel-highlight, #fffdf8), var(--theme-panel-highlight, #f9f2e5)) !important;
+  border-color: var(--theme-line, #ded1ba) !important;
+  box-shadow: 0 4px 12px var(--theme-shadow, #654a1710);
+}
+html body #erisProfileHub .emp-icon { color: var(--theme-accent-ink, #856229); background: var(--theme-panel, #f3e7cc); border-color: var(--theme-line, #e0c994); }
+html body #erisProfileHub .eph-tabs button[data-modern-menu]::after { color: var(--theme-ink, #b6a17a); }
+html body #erisProfileHub .eph-tabs button[data-modern-menu]:active { background: var(--theme-panel, #f4e8ce) !important; }
+html body #erisProfileHub .eph-tabs button[data-modern-menu=logout] { border-color: var(--theme-line, #ded1ba) !important; }
+html body .app > .top .icon:focus-visible,
+html body .app > .top #demoBalance:focus-visible,
+html body .app > .nav button:focus-visible,
+html body #home button:focus-visible,
+html body .app > .content .primary:focus-visible,
+html body .app > .content .tab:focus-visible,
+html body .app > .content .search input:focus-visible,
+html body #games .eg-launcher-card:focus-visible,
+html body #erisProfileHub .eph-tabs button[data-modern-menu]:focus-visible {
+  outline: 2px solid #866128;
+  outline-offset: 3px;
+}
+@media (max-width: 359px) {
+  html body #home .homeMenu { gap: 10px; }
+  html body #home .homeMenuItem { padding: 13px !important; min-height: 123px !important; }
+  html body #home .homeMenuCopy strong { font-size: 12px !important; }
+  html body .app > .nav button { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { html body .app > .nav button { transition: none; } }

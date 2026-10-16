@@ -1,0 +1,37 @@
+.eris-vip-entrance{position:fixed;inset:0;z-index:11400;pointer-events:none;display:grid;place-items:center;overflow:hidden;contain:layout paint;animation:vipScene var(--entry-duration) ease both}
+.eris-vip-entrance canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.9}
+.eris-vip-entry-banner{position:relative;display:flex;align-items:center;gap:12px;width:min(440px,90vw);box-sizing:border-box;padding:26px 22px;border:1px solid var(--entry-metal);border-radius:24px;background:radial-gradient(ellipse at top,color-mix(in srgb,var(--entry-accent) 25%,#10121f),#090c19);box-shadow:0 0 40px color-mix(in srgb,var(--entry-accent) 20%,transparent),inset 0 0 20px #ffffff07;color:white;animation:vipGlide var(--entry-duration) cubic-bezier(.2,.7,.2,1) both}
+.eris-vip-entry-banner:before,.eris-vip-entry-banner:after{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--entry-metal) 30%,transparent);border-radius:18px;pointer-events:none}
+.eris-vip-entry-banner:after{inset:-10px 22%;border-width:1px 0;border-radius:50%;opacity:.65}
+.eris-vip-entry-crest{position:absolute;left:50%;top:-64px;transform:translateX(-50%);width:110px;height:85px;object-fit:contain;filter:drop-shadow(0 2px 16px #000a)}
+.eris-vip-entry-ornament{position:absolute;left:0;right:0;top:calc(18px - clamp(86px,30vw,130px));height:clamp(86px,30vw,130px);overflow:hidden;pointer-events:none;filter:drop-shadow(0 2px 10px #0008)}
+.eris-vip-entry-ornament[hidden]{display:none}.eris-vip-entry-ornament img{display:block;width:100%;height:auto}
+.eris-vip-entry-portrait{display:grid;place-items:center;width:58px;height:58px;flex:none;border:2px solid var(--entry-metal);border-radius:50%;overflow:hidden;box-shadow:0 0 18px color-mix(in srgb,var(--entry-accent) 30%,transparent);background:#19202e;font-size:28px}
+.eris-vip-entry-portrait img{width:100%;height:100%;object-fit:cover}
+.eris-vip-entry-identity{display:grid;gap:5px;min-width:0}.eris-vip-entry-identity small{color:var(--entry-metal);font-size:10px;letter-spacing:.06em;line-height:1.5}.eris-vip-entry-identity strong{font-size:clamp(13px,4vw,20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eris-vip-entry-identity span{font-size:11px;color:#ced2e3}
+.eris-vip-entry-dismiss{position:absolute;top:calc(50% + 92px);left:50%;transform:translateX(-50%);pointer-events:auto;min-height:44px;max-width:90%;padding:10px 18px;border:1px solid var(--entry-metal);border-radius:99px;background:#111522f0;color:white;font:inherit;font-size:12px;cursor:pointer}
+.eris-vip-entry-dismiss:focus-visible{outline:2px solid white;outline-offset:4px}
+[data-motion=moon] .eris-vip-entry-banner{border-radius:70px 24px 70px 24px;animation-name:vipOrbit}
+[data-motion=laurel] .eris-vip-entry-banner{animation-name:vipBloom}
+[data-motion=phoenix] .eris-vip-entry-banner{animation-name:vipRise}
+[data-motion=rose] .eris-vip-entry-banner{border-radius:38px;animation-name:vipBloom}
+[data-motion=iris] .eris-vip-entry-banner{animation-name:vipPrism}
+[data-motion=comet] .eris-vip-entry-banner{border-radius:12px 36px;animation-name:vipComet}
+[data-motion=flame] .eris-vip-entry-banner{animation-name:vipFlame}
+[data-motion=sun] .eris-vip-entry-banner{animation-name:vipRadiant}
+[data-motion=prism] .eris-vip-entry-banner{border-radius:12px;animation-name:vipPrism}
+[data-motion=eclipse] .eris-vip-entry-banner{animation-name:vipEclipse;background:radial-gradient(ellipse at top,#164839,#050c13)}
+[data-motion=imperial] .eris-vip-entry-banner{border:2px solid var(--entry-metal);border-radius:32px 32px 18px 18px;animation-name:vipImperial}
+@keyframes vipScene{0%,100%{opacity:0}16%,82%{opacity:1}}
+@keyframes vipGlide{0%{transform:translateX(-90vw) scale(.9)}18%,80%{transform:translateX(0) scale(1)}100%{transform:translateX(15vw) scale(.97)}}
+@keyframes vipOrbit{0%{transform:translate(-65vw,-35px) rotate(-6deg)}22%,80%{transform:none}100%{transform:translate(20vw,20px)}}
+@keyframes vipBloom{0%{transform:scale(.5);filter:blur(8px)}22%,80%{transform:scale(1);filter:none}100%{transform:scale(1.08)}}
+@keyframes vipRise{0%{transform:translateY(45vh) scale(.7)}22%,80%{transform:none}100%{transform:translateY(-40px)}}
+@keyframes vipPrism{0%{transform:perspective(700px) rotateY(45deg) scale(.8)}22%,80%{transform:perspective(700px) rotateY(0deg) scale(1)}100%{transform:scale(.94)}}
+@keyframes vipComet{0%{transform:translate(-90vw,-30vh) rotate(-8deg)}20%,80%{transform:none}100%{transform:translate(20vw,8vh)}}
+@keyframes vipFlame{0%{transform:translateY(120px);filter:brightness(2)}22%,80%{transform:none;filter:brightness(1)}100%{transform:translateY(-30px)}}
+@keyframes vipRadiant{0%{transform:scale(.7);filter:brightness(2)}22%,80%{transform:scale(1);filter:brightness(1)}100%{transform:scale(1.05)}}
+@keyframes vipEclipse{0%{transform:scale(.85);filter:brightness(.2)}25%,80%{transform:scale(1);filter:brightness(1)}100%{transform:scale(.92);filter:brightness(.5)}}
+@keyframes vipImperial{0%{transform:translateY(-80px) scale(.8)}25%,80%{transform:translateY(0) scale(1)}100%{transform:translateY(20px) scale(1.02)}}
+@media(prefers-reduced-motion:reduce){.eris-vip-entrance{animation:vipScene 2.2s linear both}.eris-vip-entrance .eris-vip-entry-banner{animation:none!important}.eris-vip-entrance canvas{display:none}}
+@media(max-height:400px){.eris-vip-entry-crest{height:55px;top:-45px}.eris-vip-entry-banner{padding:16px 20px}.eris-vip-entry-dismiss{top:calc(50% + 75px)}}

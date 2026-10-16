@@ -1,0 +1,25 @@
+{
+  "mode": "normal",
+  "samples": 500000,
+  "seed": 15102801,
+  "rtp": 0.9532385000001676,
+  "ci95": [
+    0.9263696028212148,
+    0.9801073971791204
+  ],
+  "paid_spin_hit": 0.274236,
+  "bonus_frequency": 0.00223,
+  "free_spins": 17600,
+  "max_observed_x": 3723.2,
+  "cap_count": 0,
+  "target_rtp": 0.965,
+  "note": "Monte Carlo estimate; not certified RTP. Includes full bonuses, retriggers, global pool and cap.",
+  "game": "prenses",
+  "source_commit": "6360f7c3b7d7fc3b54210fb0162ead384d1425a3",
+  "source_sha256": {
+    "backend/app/prenses_engine.py": "05e0bf6b55bba1b650aff6aa3cf39a882e84d9b3d02d900ab5ddbabf6e4edd97",
+    "backend/app/prenses-math.json": "f18a86d778ee97075340d4dc0158ebafa6d39d38cee72089cfc79c60e64cdeca",
+    "tests/prenses_simulate.py": "0f465872e4ca4b62b2e16942ac3972867e3f24a6b889b6fb2a06da147a8f8901"
+  },
+  "certified": false
+}

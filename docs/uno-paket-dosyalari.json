@@ -1,0 +1,19 @@
+[
+  "backend/app/ludo_live.py",
+  "backend/app/main.py",
+  "backend/app/okey101_live.py",
+  "frontend/erischat-main.html",
+  "frontend/room-ludo.js",
+  "frontend/room-okey101.js",
+  "frontend/room-reference-ui.js",
+  "backend/app/uno_engine.py",
+  "backend/app/uno_live.py",
+  "frontend/room-uno.js",
+  "frontend/room-uno.css",
+  "backend/tests/test_uno_engine.py",
+  "backend/tests/test_uno_live.py",
+  "frontend/tests/room-uno.test.cjs",
+  "docs/oda-uno-v1.md",
+  "docs/uno-paket-dosyalari.json",
+  "docs/uno-pr-aciklama.md"
+]

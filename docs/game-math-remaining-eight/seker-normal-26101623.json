@@ -1,0 +1,27 @@
+{
+  "roundHitFrequency": 0.330533,
+  "netProfitFrequency": 0.126607,
+  "mode": "normal",
+  "samples": 2000000,
+  "seed": 26101623,
+  "rtp": 0.9550811749990105,
+  "ci95": [
+    0.9405495435099004,
+    0.9696128064881205
+  ],
+  "paid_spin_hit": 0.330533,
+  "bonus_frequency": 0.002977,
+  "free_spins_simulated": 62840,
+  "max_observed_x": 2817.0,
+  "target_rtp": 0.9648,
+  "note": "Monte Carlo estimate, not certified RTP. Cap and retriggers are included.",
+  "game": "seker",
+  "certified": false,
+  "modelVersion": "lidya-seker-v1",
+  "source_sha256": {
+    "backend/app/seker_engine.py": "1fde86ed659c2dc191bc5022d22716369e54000b927a6a3f81fee9fcf3f51390",
+    "backend/app/seker-math.json": "344b59175a52447ee13f5dc6037a6111caf45e84592130beff2a5dcc3195e8a5",
+    "tests/seker_simulate.py": "44c7fd0ca45183d288abb4b5fb86b68afafae1faf150670e3fffdd21b10bf533",
+    "tests/game_math_audit.py": "8a639e1c1df4a866287c2319dc0131b968c5d9992ded98aecce19d10dc5b3b38"
+  }
+}

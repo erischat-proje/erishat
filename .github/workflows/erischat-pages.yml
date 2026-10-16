@@ -1,0 +1,63 @@
+name: ErisChat Pages deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: erischat-pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          cp -R frontend/. _site/
+          cp -R Gereken_icerikler _site/Gereken_icerikler
+          cp _site/erischat-main.html _site/index.html
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('_site/index.html')
+          text = p.read_text(encoding='utf-8')
+          marker = '</body>'
+          if marker not in text:
+              raise SystemExit('index.html body marker missing')
+          scripts = [
+              'platform.js', 'room-live.js',
+              'room-actions.js', 'room-ban-live.js', 'gift-live.js',
+              'room-gift-ui-live.js', 'dm-live.js', 'auth-live.js',
+              'profile-live.js', 'cosmetics.js', 'profile-ui-live.js',
+              'session-ui-live.js', 'dm-create-live.js',
+              'shop-live.js', 'wallpaper-live.js',
+          ]
+          for name in scripts:
+              tag = f'<script src="./{name}"></script>'
+              if tag not in text:
+                  text = text.replace(marker, tag + marker, 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+          touch _site/.nojekyll
+          test -s _site/index.html
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

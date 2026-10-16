@@ -1,0 +1,65 @@
+{
+  "game": "kovboy",
+  "mode": "normal",
+  "method": "independent-trigger-strata",
+  "samplesPerStratum": 200000,
+  "samples": 400000,
+  "seed": 26101551,
+  "bonusTriggerProbability": 0.0049504950495049506,
+  "rtp": 0.9763071980198019,
+  "ci95": [
+    0.9666698032086471,
+    0.9859445928309567
+  ],
+  "strata": [
+    {
+      "trigger": false,
+      "probability": 0.995049504950495,
+      "report": {
+        "mode": "normal",
+        "samples": 200000,
+        "seed": 26101551,
+        "rtp": 0.4929495,
+        "ci95": [
+          0.4855915464310406,
+          0.5003074535689593
+        ],
+        "paidHitFrequency": 0.369255,
+        "bonusFrequency": 0.0,
+        "freeSpins": 0,
+        "floorSupplements": 0,
+        "caps": 0,
+        "maxWinBetMultiple": 198.0,
+        "certified": false
+      }
+    },
+    {
+      "trigger": true,
+      "probability": 0.0049504950495049506,
+      "report": {
+        "mode": "normal",
+        "samples": 200000,
+        "seed": 26101552,
+        "rtp": 98.1312045,
+        "ci95": [
+          96.86528151274271,
+          99.39712748725728
+        ],
+        "paidHitFrequency": 0.2555,
+        "bonusFrequency": 1.0,
+        "freeSpins": 1915898,
+        "floorSupplements": 61844,
+        "caps": 8,
+        "maxWinBetMultiple": 10000.0,
+        "certified": false
+      }
+    }
+  ],
+  "certified": false,
+  "source_sha256": {
+    "backend/app/kovboy_engine.py": "81a3ff2dfbe65dc8aea3996da190d1ed1e83139bbe20514a8750d60b45e781fb",
+    "backend/app/kovboy-math.json": "1e5088606381051110ea6e75ffb0039e8c6cc1081aa85b9c21587be8bcc9ebc7",
+    "tests/kovboy_simulate.py": "c61d783ac0ee14d45cecae5b2c813414ee1953b00712e03a93a5c9e4c6c5ef5b",
+    "tests/game_math_conditional.py": "cb5abbed8fa83ebf2d35e1b0e875b3bf0be789bb8637c59a4f23ad377693d9fb"
+  }
+}

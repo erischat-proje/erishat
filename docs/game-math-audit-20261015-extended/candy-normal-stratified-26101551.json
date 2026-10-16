@@ -1,0 +1,63 @@
+{
+  "game": "candy",
+  "mode": "normal",
+  "method": "independent-trigger-strata",
+  "samplesPerStratum": 200000,
+  "samples": 400000,
+  "seed": 26101551,
+  "bonusTriggerProbability": 0.008136407705776724,
+  "rtp": 0.9841467176771663,
+  "ci95": [
+    0.9743480568308039,
+    0.9939453785235287
+  ],
+  "strata": [
+    {
+      "trigger": false,
+      "probability": 0.9918635922942233,
+      "report": {
+        "mode": "normal",
+        "samples": 200000,
+        "seed": 26101551,
+        "rtp": 0.17777825,
+        "ci95": [
+          0.17581052120859839,
+          0.1797459787914016
+        ],
+        "paidHitFrequency": 0.295435,
+        "bonusFrequency": 0.0,
+        "freeSpins": 0,
+        "caps": 0,
+        "maxWinBetMultiple": 30.7,
+        "certified": false
+      }
+    },
+    {
+      "trigger": true,
+      "probability": 0.008136407705776724,
+      "report": {
+        "mode": "normal",
+        "samples": 200000,
+        "seed": 26101552,
+        "rtp": 99.2839805,
+        "ci95": [
+          98.10381348623393,
+          100.46414751376606
+        ],
+        "paidHitFrequency": 0.24226,
+        "bonusFrequency": 1.0,
+        "freeSpins": 2016129,
+        "caps": 71,
+        "maxWinBetMultiple": 5000.0,
+        "certified": false
+      }
+    }
+  ],
+  "certified": false,
+  "source_sha256": {
+    "backend/app/candy_engine.py": "c734349fd22fd3f21ff09478bd13728c5d75e8af730eb598c5e9951ac768f877",
+    "backend/app/candy-math.json": "fd86becd150c5db84794723ded803a3ded4a479c5357a2272b97c4fd379a3cd6",
+    "tests/candy_simulate.py": "ccaf777eec39ec6e91d7c5ab58b6328f3c4550a4ff5794ab30ec4f7e4402900f",
+    "tests/game_math_conditional.py": "cb5abbed8fa83ebf2d35e1b0e875b3bf0be789bb8637c59a4f23ad377693d9fb"
+  }
+}

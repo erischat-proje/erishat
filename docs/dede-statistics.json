@@ -1,0 +1,160 @@
+{
+  "target_rtp": 0.965,
+  "total_validation_rounds": 18000000,
+  "reports": [
+    {
+      "version": "dede-v1",
+      "mode": "base",
+      "rounds": 8000000,
+      "seed": 314159,
+      "configSHA256": "8d3aa8b91e066246da6cb6a12463a38396cfab0ae50b640c7507c3ee752559a7",
+      "cost_units": 1,
+      "rtp": 0.962855231252498,
+      "rtp95": [
+        0.956649045099085,
+        0.9690614174059109
+      ],
+      "standard_deviation_in_bets": 8.95599247833547,
+      "hit_frequency": 0.275566875,
+      "net_profit_frequency": 0.1416665,
+      "bonus_frequency": 0.00223925,
+      "bonus_rounds": 17914,
+      "bonus_spins": 282565,
+      "cap_hits": 1,
+      "payout_upper_bounds": [
+        0,
+        1,
+        2,
+        5,
+        10,
+        25,
+        50,
+        100,
+        250,
+        500,
+        1000,
+        5000
+      ],
+      "payout_histogram": [
+        5795465,
+        1071203,
+        462973,
+        399639,
+        156177,
+        80463,
+        18275,
+        8437,
+        5880,
+        1232,
+        208,
+        48
+      ],
+      "method": "Full paid rounds including all bonus spins/retriggers. Seeded Mulberry32 reference RNG. Production uses server SystemRandom. CI is normal-approximation Monte Carlo sampling uncertainty, not a certified RTP."
+    },
+    {
+      "version": "dede-v1",
+      "mode": "ante",
+      "rounds": 8000000,
+      "seed": 271828,
+      "configSHA256": "8d3aa8b91e066246da6cb6a12463a38396cfab0ae50b640c7507c3ee752559a7",
+      "cost_units": 1.25,
+      "rtp": 0.9641906350046522,
+      "rtp95": [
+        0.9577209964933104,
+        0.9706602735159939
+      ],
+      "standard_deviation_in_bets": 9.336174006521267,
+      "hit_frequency": 0.275746875,
+      "net_profit_frequency": 0.12991625,
+      "bonus_frequency": 0.004432875,
+      "bonus_rounds": 35463,
+      "bonus_spins": 559340,
+      "cap_hits": 0,
+      "payout_upper_bounds": [
+        0,
+        1,
+        2,
+        5,
+        10,
+        25,
+        50,
+        100,
+        250,
+        500,
+        1000,
+        5000
+      ],
+      "payout_histogram": [
+        5794025,
+        1041310,
+        461082,
+        405687,
+        162412,
+        86154,
+        22323,
+        13355,
+        10878,
+        2329,
+        357,
+        88
+      ],
+      "method": "Full paid rounds including all bonus spins/retriggers. Seeded Mulberry32 reference RNG. Production uses server SystemRandom. CI is normal-approximation Monte Carlo sampling uncertainty, not a certified RTP."
+    },
+    {
+      "version": "dede-v1",
+      "mode": "buy",
+      "rounds": 2000000,
+      "seed": 161803,
+      "configSHA256": "8d3aa8b91e066246da6cb6a12463a38396cfab0ae50b640c7507c3ee752559a7",
+      "cost_units": 100,
+      "rtp": 0.9659044977501794,
+      "rtp95": [
+        0.9642508020544089,
+        0.9675581934459498
+      ],
+      "standard_deviation_in_bets": 1.1932035107125298,
+      "hit_frequency": 0.9945375,
+      "net_profit_frequency": 0.3323415,
+      "bonus_frequency": 1,
+      "bonus_rounds": 2000000,
+      "bonus_spins": 31583275,
+      "cap_hits": 17,
+      "payout_upper_bounds": [
+        0,
+        1,
+        2,
+        5,
+        10,
+        25,
+        50,
+        100,
+        250,
+        500,
+        1000,
+        5000
+      ],
+      "payout_histogram": [
+        10925,
+        11546,
+        15140,
+        45224,
+        82913,
+        258450,
+        386938,
+        524181,
+        528307,
+        116682,
+        16390,
+        3304
+      ],
+      "method": "Full paid rounds including all bonus spins/retriggers. Seeded Mulberry32 reference RNG. Production uses server SystemRandom. CI is normal-approximation Monte Carlo sampling uncertainty, not a certified RTP."
+    }
+  ],
+  "notes": [
+    "Validation seeds were not used for calibration.",
+    "Hit rate is payout > 0, not payout > charge.",
+    "Base bonus probability is configured exactly 1/448; ante is 1/224.",
+    "Bonus carry-pool applies even when no new orb appears, following the requested Dede rule.",
+    "Original proprietary reel strips/weights are not known; this is an original Dede model."
+  ]
+}

@@ -1,0 +1,36 @@
+/* Live controls inside original transparent artwork; never a flattened profile. */
+.eris-mini-profile-shade .eris-mini-card.eris-mini-modern.eris-mini-vip{
+  --vip-surface:#10131f;position:relative!important;isolation:isolate;width:min(440px,100%)!important;
+  padding:112px 11% 64px!important;min-height:600px;max-height:none!important;overflow:visible!important;
+  border:0!important;border-radius:30px!important;background:none!important;box-shadow:none!important;
+}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-vip:before{content:"";display:block!important;position:absolute;inset:7% 5% 4%;z-index:-2;border-radius:25px;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--vip-accent) 18%,#10101c),transparent 60%),linear-gradient(160deg,#141624,#090b15);box-shadow:0 20px 60px #000b}
+.eris-mini-profile-shade .eris-mini-card.eris-mini-vip:after{content:"";position:absolute;inset:0;z-index:-1;background:var(--vip-profile-art) center/100% 100% no-repeat;pointer-events:none}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-topbar{margin:0 0 10px!important;min-height:34px;gap:5px}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-topbar:before{content:"LIDYA";margin-right:auto;color:var(--vip-metal);letter-spacing:.2em;font-size:9px;font-weight:800}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-vip-hero{display:block!important;background:none!important;border:0!important;padding:0!important;margin:0 0 18px!important;text-align:center;min-height:0}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-vip-hero>img{display:none!important}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-vip-hero>div{display:grid;gap:4px}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-vip-hero small{display:none}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-vip-hero strong{color:var(--vip-metal);font-size:27px!important;letter-spacing:.07em;line-height:1.15;text-shadow:0 2px 12px color-mix(in srgb,var(--vip-accent) 35%,transparent)}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-vip-hero span{font-size:10px;letter-spacing:.06em;color:var(--vip-accent)}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-head{gap:14px;padding:3px 2px 12px}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-name{font-size:16px!important;line-height:1.35}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-relationship{flex-wrap:nowrap!important;gap:4px!important;margin:8px 0 16px!important}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-relationship>:is(.rel-public.rel-public,.rel-title,[data-vip-card]){width:calc((100% - 8px)/3)!important;max-width:calc((100% - 8px)/3)!important;height:26px!important;min-height:26px!important;flex:0 1 auto!important}
+.eris-mini-profile-shade .eris-mini-vip .rel-status-art{display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
+.eris-mini-profile-shade .eris-mini-vip .rel-public .rel-avatar{width:16px!important;height:16px!important;right:10%!important;top:18%!important;font-size:9px!important}
+.eris-mini-profile-shade .eris-mini-vip .rel-public .rel-public-ring{width:14px!important;height:14px!important;left:17%!important;top:21%!important}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-stats{margin:0 0 12px!important}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-stats>div{min-height:66px;border-color:color-mix(in srgb,var(--vip-accent) 23%,transparent);background:#ffffff03!important}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-actions>button{min-height:46px!important;border-color:color-mix(in srgb,var(--vip-accent) 28%,transparent)}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-actions>[data-follow]{background:color-mix(in srgb,var(--vip-accent) 22%,#161726)}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-icon{background:#ffffff05;border-color:color-mix(in srgb,var(--vip-accent) 25%,transparent)}
+.eris-mini-profile-shade .eris-mini-vip .eris-mini-preview-note{margin:10px 0 0;font-size:9px}
+.eris-vip-content .eris-vip-presentation.eris-vip-art-reward{padding:10px;gap:12px;border:1px solid color-mix(in srgb,var(--vip-accent) 25%,transparent);border-radius:14px;background:color-mix(in srgb,var(--vip-accent) 6%,#10111d)}
+.eris-vip-content .eris-vip-art-reward img{width:64px;height:96px;object-fit:contain}
+.eris-vip-content .eris-vip-art-reward strong{display:block;margin-bottom:6px;font-size:13px;color:var(--vip-accent)}
+.eris-vip-content .eris-vip-art-reward span{display:block;line-height:1.6}
+.eris-vip-content [data-preview-entry]{border-color:color-mix(in srgb,var(--vip-accent) 45%,transparent);background:#ffffff08}
+@media(max-width:360px){.eris-mini-profile-shade .eris-mini-card.eris-mini-vip{padding:108px 11% 60px!important;min-height:580px}.eris-mini-profile-shade .eris-mini-vip .eris-mini-name{font-size:13px!important}.eris-mini-profile-shade .eris-mini-vip .eris-mini-portrait{width:48px!important;height:48px!important}.eris-mini-profile-shade .eris-mini-vip .eris-mini-frame{width:60px!important;height:60px!important}.eris-mini-profile-shade .eris-mini-vip .eris-mini-actions>button{font-size:10px!important}}
+@media(max-height:640px){.eris-mini-profile-shade.eris-mini-shade{align-items:start!important}}
