@@ -1,1 +1,0 @@
-(function(root){'use strict';if(typeof module!=='undefined')module.exports=require('./slot-stakes.js');else{if(!root.SlotStakes)throw Error('Ortak bahis modülü yüklenmedi');root.SekerStakes=root.SlotStakes;}})(typeof window!=='undefined'?window:globalThis);

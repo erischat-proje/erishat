@@ -78,10 +78,11 @@ def public_identity(user):
     return {'nickname':user.nickname, 'avatar':user.avatar,
             'avatar_asset':user.avatar_asset, 'frame_asset':user.frame_asset,
             'admin_role':role, 'management_locked':bool(role),
-            'management_badges':list(ROLES) if role else []}
+            'management_badges':[role] if role else []}
 
 
 @event.listens_for(Session, 'after_flush_postexec')
 def clear_flushed_roles(db, flush_context):
     # A flushed grant/revocation is no longer present in db.new/db.deleted.
     db.info.pop(CACHE, None)
+

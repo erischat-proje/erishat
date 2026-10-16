@@ -1,9 +1,0 @@
-Dog Party presentation verification — 2026-10-16
-
-PASS browser: real production canvas renderer with isolated synthetic API responses; 20 combinations (2 themes × normal/resumed bonus × 320x568,393x820,412x915,844x390,1440x900). Full root/shell bounds, no horizontal overflow, board 5:3, visible single actor, 8 PNG poses and 4 themed symbols decode. Typical portrait screens fit; short/landscape use inner scroll.
-PASS: anticipation → action and gold flight to actual new Sticky Wild position → celebrate → idle. Theme swap during action preserves pose and selects dark PNG. Displayed payout and shared-wallet event use server response. Rules lock spin and close via Escape.
-PASS purchase: cancel sends no request; double confirmation sends one UUID request and one 5000 debit at stake50; server-returned wheel gives18 spins; active bonus locks buy; insufficient balance disables buy. Close and background cancel/remove flights and stop auto.
-No browser page errors/missing Dog Party assets. Internal screenshots inspected in both themes, not distributed.
-Backend/math/config not changed. Existing natural-bonus API receive wrapper, pending UUID request shape and wallet update protocol retained. No RTP measurement or certification claim.
-
-PASS installer: all checksums, apply twice, byte-exact expected files, incompatible source aborts before writes. Local filtered Git worktree/index/commit/push leaves unrelated8MiB blob unhydrated and stages no deletions. 20 changed repository files. ZIP integrity passes.

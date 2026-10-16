@@ -35,11 +35,11 @@ with Session(engine) as db:
   assert person.nickname=='Before-'+role
   db.add(AdminRole(user_id=uid,role=role));db.flush()
   assert person.management_locked and person.nickname==identity.NAME
-  assert person.management_badges==list(identity.ROLES)
+  assert person.management_badges==[role]
   assert identity.public_identity(person)['admin_role']==role
   assert len(identity.inventory())==2 and all(x['locked'] and x['equipped'] for x in identity.inventory())
   db.get(AdminRole,uid).role='DA';db.flush()
-  assert person.nickname==identity.NAME
+  assert person.nickname==identity.NAME and person.management_badges==['DA']
  db.commit()
  U=aliased(User)
  rows=db.execute(select(U.id,U.nickname).where(U.id.like('staff-%'))).all()
@@ -104,3 +104,4 @@ with Session(api_engine) as db:
   try:fn(payload=payload,user=user,db=ForbiddenDB());raise AssertionError('Write allowed '+name)
   except __import__('fastapi').HTTPException as e:assert e.status_code==403
 print('PASS actual endpoint bodies reject edits/purchases before database writes or charges (isolated dependencies)')
+

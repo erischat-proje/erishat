@@ -1,2 +1,0 @@
-# ErisChat sistem kaydı: oda_idleri.txt
-# JSONL kayıtları aşağıya eklenir.

@@ -1,7 +1,0 @@
-Backend/API tests: 365 passed, 1 existing optional Dede generated-fixture test skipped.
-Original/default/bought seeded engine outputs: 900 traces unchanged.
-Hasan browser: 20 viewport/theme/normal/resumed layouts; eight PNGs; cast/reel/celebrate; live theme switching; purchase cancellation, single debit, ten spins, active and insufficient-balance locks.
-Natural profile rules browser: 24 layouts, both themes, 320px width; no horizontal page overflow or duplicate tables.
-Installer: authoritative 90dd359 base, repeat/idempotence, every payload byte, conflict rejects before writes.
-Partial Git test: explicit source checkout, install, commit, LOCAL bare-repo push; unrelated 8MiB blob remained promised/missing; no deletions.
-No production wallet operations, user-repository push, merge or deployment were performed.
