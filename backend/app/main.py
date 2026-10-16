@@ -30,6 +30,7 @@ from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
 from . import vip_spending
+from . import room_emoji_access
 from .vip_presentation import visible_entry_level, entry_selection, entry_style
 from .db import Base, engine, get_db
 from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Message, User, UserCosmetic
@@ -2152,6 +2153,12 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
 
 ROOM_REACTION_IDS = frozenset(['laugh', 'cry', 'kiss', 'love', 'clap', 'angry', 'surprised', 'sleep', 'dance', 'cool', 'yes', 'no', 'thanks', 'welcome', 'shy', 'wink', 'confused', 'party', 'cheer', 'sad', 'wow', 'facepalm', 'wave', 'heart', 'kiss_left', 'kiss_right', 'toast_left', 'toast_right', 'send_heart', 'send_bomb', 'send_kiss', 'send_rose', 'send_snow', 'send_toast'])
 ROOM_INTERACTION_IDS = frozenset(['send_heart', 'send_bomb', 'send_kiss', 'send_rose', 'send_snow', 'send_toast'])
+ROOM_REACTION_IDS = ROOM_REACTION_IDS | frozenset(room_emoji_access.VIP_EMOJI_LEVELS)
+
+
+@app.get("/v1/me/room-emojis")
+def my_room_emojis(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return room_emoji_access.entitlement(db.get(VipStatus, user.id))
 
 def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id, target_user_id=None):
     def error(message):
@@ -2169,6 +2176,10 @@ def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id, targe
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user_id).first()
         if not user or not user.is_active or not room or not member:
             return error("Oda bağlantınız aktif değil.")
+        if reaction_id in room_emoji_access.VIP_EMOJI_LEVELS:
+            level = room_emoji_access.earned_level(db.get(VipStatus, user_id))
+            if not room_emoji_access.can_use(reaction_id, level):
+                return error(f"Bu emoji VIP {room_emoji_access.VIP_EMOJI_LEVELS[reaction_id]} seviyesinde açılır.")
         admin = db.get(AdminRole, user_id)
         if member.ghost or (admin and admin.ghost_mode):
             return error("Emoji göndermek için Ghost Mode’u kapatın.")
@@ -2600,4 +2611,5 @@ def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
 if static_dir.exists():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
+
 

@@ -1,0 +1,363 @@
+[
+  {
+    "id": "laugh",
+    "label": "Kahkaha",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/laugh.png",
+    "prompt": "Use case: stylized-concept. Premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. Gender-neutral nonhuman round polished antique-gold orb, jubilant laughing with tightly closed crescent eyes and open laughing mouth, two faceted turquoise tears of laughter. No skin, hair, ears, beard, eyelashes, makeup, gendered clothing or human body. Fine gold engraving, small emerald forehead jewel, ivory highlights, dark green enamel. Luxurious friendly silhouette readable at 64px. Centered square, transparent background, no text, tile or watermark.",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "cry",
+    "label": "Ağlama",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/cry.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: sobbing gold orb with watery sad eyes, downturned mouth and two flowing turquoise tears",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "kiss",
+    "label": "Öpücük",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/kiss.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: gold orb with closed eyes blowing a small floating ruby heart kiss, no human lips or lipstick",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "love",
+    "label": "Sevgi",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/love.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: delighted gold orb with two ruby heart-shaped eyes and small emerald hearts orbiting",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "clap",
+    "label": "Alkış",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/clap.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: joyful gold orb applauding with two small sculptural golden mitten hands together, musical sparks",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "angry",
+    "label": "Sinirli",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/angry.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: furious gold orb with deeply furrowed expressive brows and a puff of golden steam, playful not scary",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "surprised",
+    "label": "Şaşkın",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/surprised.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: astonished gold orb with wide emerald eyes and round open mouth, two gold stars",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "sleep",
+    "label": "Uykulu",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/sleep.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: sleepy gold orb with closed eyes resting against a tiny ivory crescent moon, emerald nightcap-free, no clothing",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "dance",
+    "label": "Dans",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/dance.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: ecstatic gold orb tilted dancing with sweeping curved emerald musical notes and tiny gold ribbon, dynamic pose",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "cool",
+    "label": "Havalı",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/cool.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: confident gold orb wearing sleek emerald lens sunglasses, asymmetric grin and subtle golden sparkle",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "yes",
+    "label": "Evet",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/yes.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: happy gold orb presenting a large faceted emerald checkmark seal",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "no",
+    "label": "Hayır",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/no.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: determined gold orb with raised brow presenting a ruby X within an ornate thin gold seal",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "thanks",
+    "label": "Teşekkür",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/thanks.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: warm grateful gold orb with closed grateful eyes and two gold mitten hands together below face, emerald sparkle",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "welcome",
+    "label": "Hoş geldin",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/welcome.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: beaming gold orb opening two gold mitten hands in welcoming gesture, gold laurel sprigs behind",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "shy",
+    "label": "Utangaç",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/shy.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: bashful gold orb looking slightly downward with a tiny smile, two floating emerald hearts, no skin blush",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "wink",
+    "label": "Göz kırp",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/wink.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: cheeky gold orb winking one emerald eye, crooked smile with one crisp gold star",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "confused",
+    "label": "Kararsız",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/confused.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: confused gold orb with mismatched raised eyebrows and a puzzled small mouth, question-mark shaped emerald filigree",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "party",
+    "label": "Parti",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/party.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: celebrating gold orb surrounded by emerald and gold confetti, jubilant smile, no clothing",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "cheer",
+    "label": "Bravo",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/cheer.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: triumphant gold orb with open cheering mouth, two gold mitten hands raised and tiny laurel wreath below",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "sad",
+    "label": "Üzgün",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/sad.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: quietly melancholy gold orb with soft downward eyes and a single translucent emerald teardrop, subtle gentle expression",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "wow",
+    "label": "Vay",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/wow.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: amazed gold orb with two sparkling star-shaped emerald eyes and a little open mouth, glittering gold spark",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "facepalm",
+    "label": "Pes",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/facepalm.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: exasperated gold orb with one golden mitten hand over upper face and tilted weary expression",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "wave",
+    "label": "Selam",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/wave.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: friendly smiling gold orb waving one small gold mitten hand to side with elegant curved motion strokes",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "heart",
+    "label": "Kalp",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/heart.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: sweet joyful gold orb hugging a faceted luminous emerald heart encased in ornate gold metal",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "kiss_left",
+    "label": "Sola öpücük",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/kiss_left.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: gold orb in three-quarter view facing LEFT, puckering a simple nonhuman mouth and blowing ruby hearts LEFT",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "kiss_right",
+    "label": "Sağa öpücük",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/kiss_right.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: gold orb in three-quarter view facing RIGHT, puckering a simple nonhuman mouth and blowing ruby hearts RIGHT",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "toast_left",
+    "label": "Sola kadeh",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/toast_left.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: happy gold orb raising an ornate little ivory-and-gold chalice toward LEFT, sparkling emerald liquid",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "toast_right",
+    "label": "Sağa kadeh",
+    "minimum_vip": 0,
+    "asset": "./assets/room-emojis-lidya-v1/toast_right.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: happy gold orb raising an ornate little ivory-and-gold chalice toward RIGHT, sparkling emerald liquid",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_1",
+    "label": "Altın Işıltı",
+    "minimum_vip": 1,
+    "asset": "./assets/room-emojis-lidya-v1/vip_1.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 1: confident smiling gold orb with a slim engraved gold laurel band and one tiny emerald jewel; understated exclusive sparkle",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_2",
+    "label": "Zümrüt Bakış",
+    "minimum_vip": 2,
+    "asset": "./assets/room-emojis-lidya-v1/vip_2.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 2: cool smiling gold orb with exquisite emerald lens goggles and two emerald gems embedded in slim golden temple ornaments",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_3",
+    "label": "Sardes Zaferi",
+    "minimum_vip": 3,
+    "asset": "./assets/room-emojis-lidya-v1/vip_3.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 3: jubilant gold orb embraced by a detailed polished gold laurel wreath, three emerald stones and sparkling triumphant eyes",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_4",
+    "label": "Kraliyet Mührü",
+    "minimum_vip": 4,
+    "asset": "./assets/room-emojis-lidya-v1/vip_4.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 4: majestic smiling gold orb with an elaborate ancient Lydian signet halo, faceted ruby and emerald inlays, miniature angular ornamental crown",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_5",
+    "label": "Kristal Aura",
+    "minimum_vip": 5,
+    "asset": "./assets/room-emojis-lidya-v1/vip_5.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 5: self-assured gold orb levitating within a horseshoe of luminous emerald crystal shards and fine ornate gold filigree",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_6",
+    "label": "Kanatlı İhtişam",
+    "minimum_vip": 6,
+    "asset": "./assets/room-emojis-lidya-v1/vip_6.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 6: jubilant gold orb with a pair of sculpted golden eagle wings spreading behind, emerald jewelled diadem, no gender cues",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_7",
+    "label": "Saray Alevi",
+    "minimum_vip": 7,
+    "asset": "./assets/room-emojis-lidya-v1/vip_7.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 7: fierce cool gold orb with glowing emerald eyes, regal sweeping gold flame ornaments and ruby jewel sparks, no hair",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_8",
+    "label": "Yıldız Muhafızı",
+    "minimum_vip": 8,
+    "asset": "./assets/room-emojis-lidya-v1/vip_8.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 8: smiling obsidian-enamel and gold orb with emerald star eyes, ornate golden celestial compass halo and multiple faceted gems",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_9",
+    "label": "Ejder Mührü",
+    "minimum_vip": 9,
+    "asset": "./assets/room-emojis-lidya-v1/vip_9.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 9: powerful confident gold orb embraced by two abstract coiled emerald dragon-shaped filigree ornaments, brilliant gold crescent crown",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_10",
+    "label": "Anka Yükselişi",
+    "minimum_vip": 10,
+    "asset": "./assets/room-emojis-lidya-v1/vip_10.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 10: ecstatic gold orb rising inside an elaborate luminous phoenix silhouette with magnificent gilded feather wings, emerald core and ruby sparks",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_11",
+    "label": "Kozmik Taç",
+    "minimum_vip": 11,
+    "asset": "./assets/room-emojis-lidya-v1/vip_11.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 11: supreme calm gold orb with emerald smile, towering faceted crystal crown, two thin gilded orbital rings and floating star diamonds",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha"
+  },
+  {
+    "id": "vip_12",
+    "label": "Lidya Efsanesi",
+    "minimum_vip": 12,
+    "asset": "./assets/room-emojis-lidya-v1/vip_12.png",
+    "prompt": "Use case: stylized-concept. ONE premium 3D chat reaction sticker for ErisChat ancient Lydia gold-and-emerald aesthetic. A gender-neutral nonhuman round polished antique-gold emotive orb. No human skin, hair, ears, beard, eyelashes, makeup, gendered clothing, human body. Fine gold engraving, emerald enamel details, ivory highlights. Rich tactile metal, sculptural mobile game quality, luxurious friendly expressive silhouette readable at 64 pixels, not a flat coin. Centered full isolated sticker filling 80% of square with safe margins. Truly transparent background, no tile, no text, no letters, no watermark. Studio soft light and crisp contour. Subject: VIP LEVEL 12 MAXIMUM: extraordinary imperial gold orb with confident emerald eyes, spectacular massive sculptural gold crown, paired phoenix wings, exquisite emerald crystals and fine celestial halo; greatest splendour of entire series but bold readable central face, no human traits",
+    "method": "built-in imagegen",
+    "output": "256x256 RGBA PNG; resized with preserved alpha",
+    "revision_prompt": "Edit VIP12: remove all eyelashes, eyeliner, makeup, feminine face shaping and side pendants resembling earrings. Replace eyes with simple round faceted emerald gemstones set in circular gold bezels. Tiny engraved smile, no human lips. Preserve imperial crown, phoenix wings, gold engravings, emeralds, halo, composition and transparent alpha. Completely gender-neutral nonhuman emoji."
+  }
+]
