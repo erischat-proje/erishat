@@ -1,0 +1,17 @@
+# This is specific to the web Dockerfile; backend builds retain their own context.
+**
+!Dockerfile
+!Dockerfile.dockerignore
+!Caddyfile
+!scripts
+!scripts/build-apk-content.py
+!scripts/prepare-web-layers.py
+!scripts/web-layer-plan.json
+!frontend
+!frontend/**
+!hediyesistemi
+!hediyesistemi/**
+!Gereken_icerikler
+!Gereken_icerikler/**
+!avatarveduvarkağıdı
+!avatarveduvarkağıdı/**
