@@ -1,0 +1,89 @@
+/* Kovboy follows the Lidya full-window cream and emerald theme. */
+html body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit{
+ --kw-panel:#fffaf0;--kw-ink:#452716;--kw-muted:#79613f;--kw-line:#c99b48;--kw-raised:#fffdf7;--kw-gold:#986a25;
+ position:fixed!important;display:flex!important;align-items:stretch!important;justify-content:stretch!important;
+ padding:0!important;margin:0!important;border:0!important;border-image:none!important;border-radius:0!important;
+ background:var(--kw-panel)!important;color:var(--kw-ink)!important;box-shadow:none!important;backdrop-filter:none!important;
+}
+html[data-eris-theme=dark] body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit{
+ --kw-panel:#071d17;--kw-ink:#fff0ce;--kw-muted:#c6b892;--kw-line:#a88a4c;--kw-raised:#102b22;--kw-gold:#e0ba6c;
+}
+html body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit .gv-shell.gv-shell{
+ flex:1 0 100%!important;width:100%!important;max-width:none!important;height:100%!important;max-height:100%!important;
+ min-height:0!important;margin:0!important;border:0!important;border-image:none!important;border-radius:0!important;box-shadow:none!important;
+ padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+ overflow-x:hidden!important;overflow-y:auto!important;gap:6px!important;background:var(--kw-panel)!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-top{
+ display:grid!important;grid-template-columns:34px minmax(0,1fr) 86px 34px!important;grid-template-rows:30px 20px!important;
+ flex:0 0 54px!important;height:54px!important;min-height:54px!important;gap:2px 5px!important;
+ padding:0!important;border-bottom:1px solid var(--kw-line)!important;background:var(--kw-raised)!important;color:var(--kw-ink)!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-top [data-back]{grid-column:1;grid-row:1/3;height:40px!important;align-self:center}
+html body #erisKovboyModal#erisKovboyModal .kw-top strong{grid-column:2;grid-row:1;font-size:10px!important;letter-spacing:1px!important;align-self:center}
+html body #erisKovboyModal#erisKovboyModal .kw-top [data-balance]{grid-column:2/5;grid-row:2;text-align:right;white-space:normal;font-size:12px!important;line-height:18px!important;margin:0!important;color:var(--kw-gold)!important}
+html body #erisKovboyModal#erisKovboyModal .kw-top [data-close]{grid-column:4;grid-row:1;align-self:center}
+html body #erisKovboyModal#erisKovboyModal .kw-top .nrs-rank{grid-column:3;grid-row:1;font-size:10px!important;width:100%!important}
+html body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit .kw-hero{
+ position:relative!important;isolation:isolate;display:flex!important;align-items:center!important;
+ flex:0 0 148px!important;height:148px!important;min-height:148px!important;max-height:148px!important;
+ padding:10px 12px!important;margin:0!important;overflow:hidden!important;border:0!important;border-radius:0!important;
+ background:radial-gradient(ellipse at 82% 65%,#d5b45a38,transparent 66%)!important;box-shadow:none!important;color:var(--kw-ink)!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-hero>div{width:54%!important;align-self:flex-start;margin-top:14px;position:relative;z-index:2}
+html body #erisKovboyModal#erisKovboyModal .kw-hero h1{font:700 clamp(28px,7vw,38px)/1.08 Georgia,serif!important;color:var(--kw-gold)!important;margin:4px 0 6px!important;text-shadow:none!important}
+html body #erisKovboyModal#erisKovboyModal .kw-hero :is(small,p){color:var(--kw-ink)!important;text-shadow:none!important;font-size:9px!important;line-height:1.3!important;margin:0!important}
+html body #erisKovboyModal#erisKovboyModal .kw-hero small{font-size:8px!important;letter-spacing:.7px!important}
+html body #erisKovboyModal#erisKovboyModal .kw-hero .kw-actor-message{position:absolute;bottom:10px;left:12px;width:51%;z-index:2;font-size:10px!important;line-height:1.3!important}
+html body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit .kw-hero .kw-actor{
+ position:absolute!important;display:block!important;visibility:visible!important;right:-4%!important;bottom:0!important;
+ width:58%!important;height:100%!important;max-height:none!important;object-fit:contain!important;object-position:center bottom!important;
+ z-index:1;filter:drop-shadow(0 3px 6px #90662b25)!important;animation:none!important;transform:none!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-hero:before,html body #erisKovboyModal#erisKovboyModal .kw-hero:after{display:none!important}
+html body #erisKovboyModal#erisKovboyModal .kw-meters{flex:0 0 auto!important;gap:6px!important;margin:0!important;padding:0!important}
+html body #erisKovboyModal#erisKovboyModal .kw-meters span{background:var(--kw-raised)!important;color:var(--kw-ink)!important;border:1px solid var(--kw-line)!important;padding:5px!important;font-size:9px!important}
+html body #erisKovboyModal#erisKovboyModal .kw-meters b{font-size:17px!important;color:var(--kw-gold)!important;margin-top:2px!important}
+html body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit .kw-stage{
+ flex:1 0 210px!important;min-height:210px!important;height:auto!important;width:100%!important;max-height:none!important;
+ border:0!important;background:transparent!important;padding:0!important;border-radius:0!important;box-shadow:none!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-stage canvas{display:block!important;padding:0!important;border:1px solid var(--kw-line)!important;border-radius:12px!important;background:var(--kw-raised)!important;box-shadow:0 3px 12px #79602218!important}
+html body #erisKovboyModal#erisKovboyModal .kw-status{color:var(--kw-ink)!important;background:var(--kw-raised)!important;min-height:20px!important;line-height:18px!important;margin:0!important;padding:2px 4px!important;font-size:10px!important;box-shadow:none!important}
+html body #erisKovboyModal#erisKovboyModal .kw-controls{
+ flex:0 0 auto!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:5px!important;
+ padding:8px 4px!important;background:var(--kw-raised)!important;color:var(--kw-ink)!important;border:0!important;border-top:1px solid var(--kw-line)!important;box-shadow:none!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-controls .kw-bet{grid-row:1;grid-column:1;min-height:38px!important}
+html body #erisKovboyModal#erisKovboyModal .kw-controls>.kw-primary{grid-row:1;grid-column:2;min-height:38px!important}
+html body #erisKovboyModal#erisKovboyModal .kw-controls>.nrs-presets{grid-row:2;grid-column:1/-1;min-height:32px!important;margin:0!important}
+html body #erisKovboyModal#erisKovboyModal .kw-controls>.kw-options{grid-row:3;grid-column:1/-1;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:0!important}
+html body #erisKovboyModal#erisKovboyModal .kw-options button{min-height:43px!important;font-size:9px!important;padding:4px!important;line-height:1.25!important;overflow-wrap:anywhere}
+html body #erisKovboyModal#erisKovboyModal .kw-options small{font-size:8px!important;margin-top:2px!important}
+html body #erisKovboyModal#erisKovboyModal .kw-controls>.kw-auto{grid-row:4;grid-column:1/-1;gap:6px!important;margin:0!important}
+html body #erisKovboyModal#erisKovboyModal .kw-controls>[data-cost]{grid-row:5;grid-column:1/-1;color:var(--kw-muted)!important;margin:0!important}
+html body #erisKovboyModal#erisKovboyModal :is(button,select){background:var(--kw-raised)!important;color:var(--kw-ink)!important;border-color:var(--kw-line)!important;text-shadow:none!important}
+html body #erisKovboyModal#erisKovboyModal :is([data-spin],[data-buy-confirm],[data-buy],[data-ante][aria-pressed=true]){background:linear-gradient(135deg,#f7df9a,#c99a44)!important;color:#442b12!important;border-color:var(--kw-line)!important}
+html body #erisKovboyModal#erisKovboyModal .kw-rules{
+ position:absolute!important;inset:0!important;z-index:80!important;margin:0!important;padding:14px!important;overflow:auto!important;
+ background:var(--kw-panel)!important;color:var(--kw-ink)!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+html body #erisKovboyModal#erisKovboyModal .kw-rules :is(h2,h3,strong){color:var(--kw-gold)!important}
+html body #erisKovboyModal#erisKovboyModal .kw-rules p{color:var(--kw-ink)!important}
+html body #erisKovboyModal#erisKovboyModal .kw-banner{background:color-mix(in srgb,var(--kw-panel) 95%,transparent)!important;color:var(--kw-ink)!important}
+html body #erisKovboyModal#erisKovboyModal .kw-banner strong{color:var(--kw-gold)!important}
+html body #erisKovboyModal#erisKovboyModal [hidden]{display:none!important}
+@media(max-height:650px){html body #erisKovboyModal#erisKovboyModal.gv-fit.gv-fit.gv-fit .kw-hero{height:126px!important;min-height:126px!important;max-height:126px!important;flex-basis:126px!important}html body #erisKovboyModal#erisKovboyModal .kw-hero>div{margin-top:8px}html body #erisKovboyModal#erisKovboyModal .kw-hero .kw-actor-message{bottom:6px}}
+
+html body #erisKovboyModal#erisKovboyModal .kw-options .bb-buy{background:linear-gradient(115deg,#f6e0a0,#d7a83d)!important;color:#452716!important}
+html body #erisKovboyModal#erisKovboyModal .bb-overlay{position:absolute!important;inset:0!important;z-index:50!important;display:flex;align-items:center;justify-content:center;padding:16px;background:#081b16ba;backdrop-filter:blur(5px)}
+html body #erisKovboyModal#erisKovboyModal .bb-panel{width:min(430px,100%);max-height:100%;overflow:auto;border:1px solid var(--kw-line);border-radius:16px;padding:20px;background:var(--kw-panel);color:var(--kw-ink);font-size:13px;line-height:1.6}
+html body #erisKovboyModal#erisKovboyModal .bb-panel h2{font:700 28px Georgia;color:var(--kw-gold);margin:0 0 8px}
+html body #erisKovboyModal#erisKovboyModal .bb-panel footer{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+html body #erisKovboyModal#erisKovboyModal .bb-panel button{min-height:44px}
+html body #erisKovboyModal#erisKovboyModal .bb-panel [data-buy-confirm]{background:linear-gradient(115deg,#f6e0a0,#d7a83d)!important;color:#452716!important}
+html body #erisKovboyModal#erisKovboyModal .kw-hero .kw-actor-message{position:absolute!important;bottom:8px;left:12px!important;top:auto!important;width:48%!important}
+html body #erisKovboyModal#erisKovboyModal .kw-hero .kw-actor{right:0%!important;width:62%!important;object-fit:contain!important}
+html body #erisKovboyModal#erisKovboyModal .kw-shot-flight{position:fixed;inset:0 auto auto 0;font:700 25px Georgia;color:#f1c64f;text-shadow:0 0 10px #bd8d34;pointer-events:none;z-index:40}
+html body #erisKovboyModal#erisKovboyModal [hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){#erisKovboyModal .kw-shot-flight{display:none!important}}
