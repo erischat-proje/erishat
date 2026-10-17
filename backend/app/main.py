@@ -1103,6 +1103,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "gift_id": GIFT_META.get(gift.gift_key, {}).get("id") if gift else None,
         "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,
         "gift_price": gift.unit_price if gift else None,
+        "gift_quantity": int((__import__("re").search(r"[×x](\d+)", message.text or "") or [None, "1"])[1]) if gift else None,
         "gift_received": gift.recipient_amount if gift else None,
         "media_type": media.media_type if media else None,
         "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
@@ -1933,7 +1934,7 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     record_spend(db,user.id,total_price,"dm_gift",str(message.id))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
-        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"gift_received":receiver_amount,"quantity":quantity,
+        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"gift_received":receiver_amount,"gift_quantity":quantity,"quantity":quantity,
         "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in repo.members(conversation_id): await _send_dm_event(db, member_id, event)
     return _message_out(db, message, user.id)
