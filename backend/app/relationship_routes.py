@@ -23,7 +23,9 @@ _current_user = None
 ISTANBUL = ZoneInfo('Europe/Istanbul')
 MATERIALS = ('brick', 'wood', 'paint')
 # Material costs follow the selected ring metal; old stock is preserved.
-HOUSE_NEEDS = {i:dict(zip(MATERIALS,(1,1,0) if i<=4 else (2,2,1) if i<=8 else (3,3,2))) for i in range(1,13)}
+HOUSE_AMOUNTS = (5, 10, 20, 35, 55, 85, 130, 190, 270, 370, 480, 572)
+HOUSE_NEEDS = {level: {material: amount for material in MATERIALS} for level, amount in enumerate(HOUSE_AMOUNTS, 1)}
+RING_CREDITS = {'copper': 2, 'silver': 3, 'gold': 4}
 PRICES = {'copper':1200, 'silver':2100, 'gold':2800}
 
 
@@ -189,33 +191,66 @@ def request_info(db, row, uid):
 
 
 def upgrade_needs(house):
-    metal = 'gold' if house.ring and house.ring.startswith('level-') else (house.ring or 'copper').split('-')[0]
-    return dict(zip(MATERIALS, {'copper':(1,1,0), 'silver':(2,2,1), 'gold':(3,3,2)}.get(metal,(1,1,0))))
+    # Fixed level requirements; equipping a different ring never changes the price.
+    return HOUSE_NEEDS[min(12, max(1, house.level))].copy()
+
+
+def apply_ring_credits(db, house, progress, needs):
+    """Spend each purchased ring's bonus once, across any levels and materials.
+
+    The existing operations table is a durable ledger, so this does not require
+    a production schema migration. Ring selection/equipping gives no new credit.
+    """
+    owned = list(db.scalars(select(CoupleRing).where(
+        CoupleRing.couple_id == house.id, CoupleRing.source == 'purchased')))
+    spent = {op.request_key for op in db.scalars(select(CoupleOperation).where(
+        CoupleOperation.couple_id == house.id, CoupleOperation.kind == 'ring_credit'))}
+    for ring in sorted(owned, key=lambda row: row.ring):
+        metal = ring.ring.split('-', 1)[0]
+        for unit in range(RING_CREDITS.get(metal, 0)):
+            request_key = f'credit:{ring.ring}:{unit}'
+            if request_key in spent:
+                continue
+            # Allocate to the first missing material; unspent units roll over.
+            material = next((m for m in MATERIALS if getattr(progress, m) < needs[m]), None)
+            if material is None:
+                return
+            setattr(progress, material, getattr(progress, material) + 1)
+            db.add(CoupleOperation(id=str(uuid4()), user_id=house.male_id,
+                couple_id=house.id, request_key=request_key, kind='ring_credit',
+                item=material, quantity=1, amount=0))
+            spent.add(request_key)
 
 
 def advance(db, house):
     old = house.level
-    progress = db.get(CoupleUpgradeProgress,house.id)
+    progress = db.get(CoupleUpgradeProgress, house.id)
     if progress is None:
-        progress=CoupleUpgradeProgress(couple_id=house.id,level=house.level,brick=0,wood=0,paint=0)
+        progress = CoupleUpgradeProgress(couple_id=house.id, level=house.level,
+                                         brick=0, wood=0, paint=0)
         db.add(progress)
     while house.ring and house.level < 12:
         if progress.level != house.level:
-            progress.level=house.level
-            for m in MATERIALS:setattr(progress,m,0)
-        needs=upgrade_needs(house)
+            progress.level = house.level
+            for m in MATERIALS:
+                setattr(progress, m, 0)
+        needs = upgrade_needs(house)
         for m in MATERIALS:
-            take=min(getattr(house,m),max(0,needs[m]-getattr(progress,m)))
-            setattr(house,m,getattr(house,m)-take)
-            setattr(progress,m,getattr(progress,m)+take)
-        if any(getattr(progress,m)<needs[m] for m in MATERIALS):break
-        house.level+=1
-        progress.level=house.level
-        for m in MATERIALS:setattr(progress,m,0)
-    rewards.ensure_rewards(db,house)
+            take = min(getattr(house, m), max(0, needs[m] - getattr(progress, m)))
+            setattr(house, m, getattr(house, m) - take)
+            setattr(progress, m, getattr(progress, m) + take)
+        apply_ring_credits(db, house, progress, needs)
+        if any(getattr(progress, m) < needs[m] for m in MATERIALS):
+            break
+        house.level += 1
+        progress.level = house.level
+        for m in MATERIALS:
+            setattr(progress, m, 0)
+    rewards.ensure_rewards(db, house)
     if house.level != old:
-        for uid in (house.male_id,house.female_id):
-            notify(db,uid,'upgrade',{'title':'Aile eviniz seviye '+str(house.level)+' oldu!','message':'Ortak malzemelerinizle eviniz gelişti.'})
+        for uid in (house.male_id, house.female_id):
+            notify(db, uid, 'upgrade', {'title': 'Aile eviniz seviye ' + str(house.level) + ' oldu!',
+                'message': 'Ortak malzemelerinizle eviniz gelişti.'})
 
 
 def charge(db, uid, amount, ref):
