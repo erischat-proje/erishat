@@ -476,9 +476,14 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     def vip_update(user_id:str,payload:VipUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_role(db,user,"DA");target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
+        from .vip_membership import sync, now, DURATION
+        member=sync(db,target.id,force_lock=True)
         vip=db.get(VipStatus,target.id)
-        if not vip: vip=VipStatus(user_id=target.id,level=payload.level,total_spent=0);db.add(vip)
         before=vip.level;vip.level=payload.level
+        member.earned_level=max(member.earned_level,payload.level)
+        member.cycle_started_at=now() if payload.level else None
+        member.cycle_ends_at=member.cycle_started_at+DURATION if payload.level else None
+        member.cycle_purchased=0
         audit(db,user,"vip_update",{"before":before,"after":payload.level},target_user_id=target.id);db.commit()
         return {"level":vip.level,"total_spent":vip.total_spent}
 

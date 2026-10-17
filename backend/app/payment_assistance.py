@@ -398,6 +398,8 @@ def register_auth(current_user):
         db.add(LidyaOperation(id=operation_id,request_key='assisted-'+row.id,admin_id=user.id,admin_role='DA',admin_name=user.nickname,user_id=row.user_id,public_id=row.public_id,amount=row.total,before=before,after=before+row.total,operation='EKLEME',evidence=evidence,exemption_sha=''))
         flush(db)
         row.credit_operation_id=operation_id;target.lidya=before+row.total
+        from .vip_membership import record_purchase
+        record_purchase(db,target.id,int(row.total),"assisted",row.id)
         event(db,row,user,'credited',operation_id=operation_id,before=str(before),after=str(target.lidya),total=row.total,transaction_reference=reference,photo_message_id=msg.id)
         note(db,row.user_id,'Lidya yüklendi',f'Bonus dahil {row.total} Lidya hesabınıza yüklendi.');commit(db);return summary(row,user.id)
 

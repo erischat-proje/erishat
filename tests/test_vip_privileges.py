@@ -22,6 +22,8 @@ from app import (
     ban_workflow_models,
     vip_spending,
     relationship_models,
+    purchase_models,
+    payment_assistance_models,
 )
 
 
@@ -73,7 +75,9 @@ class Benefits(unittest.TestCase):
         r = self.request("").json()
         self.assertEqual(len(r["levels"]), 12)
         self.assertEqual({x["level"] for x in r["items"]}, set(range(1, 13)))
-        self.assertEqual(r["daily_points"], 150)
+        self.assertNotIn("points", r)
+        self.assertNotIn("daily_points", r)
+        self.assertEqual(len(r["level_rewards"]), 12)
         self.db.get(v.VipStatus, "u").level = 1
         self.db.commit()
         self.assertEqual(self.select("royal_scene", "enabled").status_code, 403)
@@ -83,15 +87,11 @@ class Benefits(unittest.TestCase):
         self.assertEqual(self.select("name_gold", "gold").status_code, 200)
         self.assertEqual(self.select("name_gold", None).status_code, 200)
 
-    def test_daily_idempotence_and_level_upgrade_not_double_reward(self):
+    def test_daily_points_are_retired_and_cannot_be_claimed(self):
         for _ in range(2):
-            self.assertEqual(self.request("/claim/daily", "POST", {}).status_code, 200)
-        self.assertEqual(v.state(self.db, "u").points, 150)
+            self.assertEqual(self.request("/claim/daily", "POST", {}).status_code, 410)
+        self.assertNotIn("points", self.request("").json())
         self.assertEqual(self.user.lidya, 12345)
-        self.db.get(v.VipStatus, "u").level = 1
-        self.db.commit()
-        self.request("/claim/daily", "POST", {})
-        self.assertEqual(v.state(self.db, "u").points, 150)
 
     def test_periods_istanbul_monday_and_month_boundary(self):
         self.assertEqual(
@@ -129,15 +129,11 @@ class Benefits(unittest.TestCase):
         self.assertNotIn("trial_scene", v.active(self.db, "u"))
         self.assertEqual(self.select("trial_scene", "trial-palace").status_code, 403)
 
-    def test_points_shop_spend_once_and_reject_insufficient(self):
-        self.assertEqual(self.request("/shop/cover-sardis", "POST").status_code, 400)
-        self.db.rollback()
-        self.request("/claim/daily", "POST", {})
-        self.request("/shop/cover-sardis", "POST")
-        self.request("/shop/cover-sardis", "POST")
-        self.assertEqual(v.state(self.db, "u").points, 50)
-        self.assertEqual(self.select("point_cover", "cover-sardis").status_code, 200)
-        self.assertEqual(self.select("point_cover", "cover-paktolos").status_code, 403)
+    def test_points_shop_is_retired_and_direct_rewards_are_free(self):
+        self.assertEqual(self.request("/shop/cover-sardis", "POST").status_code, 410)
+        self.assertEqual(self.select("level_cover", "vip-level-03").status_code, 200)
+        self.assertEqual(self.user.lidya, 12345)
+        self.assertEqual(self.select("point_cover", "cover-sardis").status_code, 410)
 
     def test_coupon_one_transaction_and_no_effect_when_disabled(self):
         self.assertEqual(v.coupon_price(self.db, "u", 1000), 1000)
@@ -332,6 +328,72 @@ class Benefits(unittest.TestCase):
         )
         self.assertEqual(self.select("trial_scene", "trial-palace").status_code, 200)
         self.assertIn("trial_scene", self.request("").json()["active"])
+
+    def test_every_level_has_two_gender_previews_and_verified_active_variant(self):
+        for gender in ("male", "female"):
+            self.user.gender = gender
+            self.db.commit()
+            data = self.request("").json()
+            self.assertEqual(
+                {r["level"] for r in data["level_rewards"]}, set(range(1, 13))
+            )
+            for reward in data["level_rewards"]:
+                self.assertEqual(set(reward["variants"]), {"male", "female"})
+                self.assertIn("/" + gender + "/", reward["asset"])
+                r = self.select(reward["slot"], reward["id"])
+                self.assertEqual(r.status_code, 200, r.text)
+                self.assertEqual(r.json()["active"][reward["slot"]]["gender"], gender)
+
+    def test_direct_reward_slot_and_downgrade_are_server_checked(self):
+        self.assertEqual(self.select("level_cover", "vip-level-09").status_code, 422)
+        self.db.rollback()
+        self.select("level_scene", "vip-level-12")
+        self.db.get(v.VipStatus, "u").level = 11
+        self.db.commit()
+        self.assertNotIn("level_scene", v.active(self.db, "u"))
+        self.assertEqual(self.select("level_scene", "vip-level-12").status_code, 403)
+        self.db.rollback()
+        self.assertEqual(self.select("level_cover", "vip-level-03").status_code, 200)
+
+    def test_direct_room_and_relationship_garden_use_the_owner_gender_art(self):
+        from app.relationship_models import Couple, CoupleMember, CoupleRoom
+
+        room = Room(id="shared", public_id="000000000003", owner_id="u", name="Hanedan")
+        self.db.add(room)
+        self.db.commit()
+        self.select("level_room_decor", "vip-level-07")
+        self.assertIn(
+            "/male/room.png", v.room_style(self.db, room)["level_room_decor"]["asset"]
+        )
+        self.db.add(Couple(id="house", male_id="u", female_id="f", active=True))
+        self.db.flush()
+        self.db.add_all(
+            [
+                CoupleMember(user_id="u", couple_id="house"),
+                CoupleMember(user_id="f", couple_id="house"),
+                CoupleRoom(couple_id="house", room_id="shared"),
+            ]
+        )
+        self.db.commit()
+        self.select("level_home_decor", "vip-level-08")
+        self.select("home_decor", "couple")
+        self.assertIn(
+            "/male/home.png", v.room_style(self.db, room)["level_room_decor"]["asset"]
+        )
+
+    def test_direct_entry_and_gift_art_obey_privacy(self):
+        self.select("level_entry_frame", "vip-level-04")
+        self.select("level_gift_seal", "vip-level-05")
+        self.assertIn(
+            "/male/entry.png", v.entry_style(self.db, "u")["level_entry_frame"]["asset"]
+        )
+        self.assertIn(
+            "/male/gift.png", v.gift_style(self.db, "u")["level_gift_seal"]["asset"]
+        )
+        self.db.add(v.UserPrivacy(user_id="u", hide_vip=True))
+        self.db.commit()
+        self.assertEqual(v.entry_style(self.db, "u"), {})
+        self.assertEqual(v.gift_style(self.db, "u"), {})
 
 
 if __name__ == "__main__":

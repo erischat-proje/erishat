@@ -76,7 +76,7 @@
     function start(){if(active!==holder||holder.started)return;holder.started=true;clearTimeout(holder.loadTimer);document.body.append(el);if(!reduced())paint(canvas,theme,theme.duration,holder);holder.timer=setTimeout(finish,reduced()?2200:theme.duration)}
     artwork.onload=()=>{if(active!==holder)return;banner.classList.add('has-art');start()};
     artwork.onerror=()=>{if(active!==holder)return;artwork.hidden=true;start()};
-    holder.loadTimer=setTimeout(start,1200);artwork.src=theme.entryFrame;
+    holder.loadTimer=setTimeout(start,1200);artwork.src=d.vip_benefits?.level_entry_frame?window.ErisVIPPrivileges.assetUrl(d.vip_benefits.level_entry_frame.asset):theme.entryFrame;
   });}
   async function next(){
     if(pumping||active||!queue.length)return;const ticket=epoch,d=queue.shift();

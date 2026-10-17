@@ -22,7 +22,8 @@ from app.db import Base,get_db
 from app.models import User
 from app.admin_models import AdminRole,AdminAuditLog,FaActionLog
 from app.room_models import Room
-from app.platform_models import Notification
+from app.platform_models import Notification,VipStatus
+from app.vip_membership_models import VipMembership,VipPurchaseReceipt,VipCycleAudit
 from app.purchase_models import PaymentSettings,LidyaOrder,LidyaOperation,LidyaPurchaseMessage
 from app.payment_assistance_models import PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence,PaymentReview,PaymentReviewClosure
 from app import payment_assistance as pa,purchase_routes as legacy,system_data
@@ -43,7 +44,7 @@ roles_node.decorator_list=[]
 roles_ns=dict(Session=Session,Depends=Depends,get_db=get_db,User=User,AdminRole=AdminRole,current_user_dependency=auth,select=select,record=lambda *a,**kw:None,require_role=lambda db,user,role:pa.require_da(db,user))
 exec(compile(ast.Module(body=[roles_node],type_ignores=[]),'production-role-list','exec'),roles_ns)
 app.add_api_route('/v1/admin/roles',roles_ns['roles'],methods=['GET'])
-tables=[m.__table__ for m in [User,Room,AdminRole,AdminAuditLog,FaActionLog,Notification,PaymentSettings,LidyaOrder,LidyaOperation,LidyaPurchaseMessage,PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence,PaymentReview,PaymentReviewClosure,system_data.LidyaLedger]]
+tables=[m.__table__ for m in [User,Room,AdminRole,AdminAuditLog,FaActionLog,Notification,PaymentSettings,LidyaOrder,LidyaOperation,LidyaPurchaseMessage,PaymentRequest,PaymentMessage,PaymentEvent,PaymentPresence,PaymentReview,PaymentReviewClosure,system_data.LidyaLedger,VipStatus,VipMembership,VipPurchaseReceipt,VipCycleAudit]]
 @pytest.fixture
 def env(tmp_path):
     url=os.environ.get('PAYMENT_TEST_DATABASE') or 'sqlite:///'+str(tmp_path/'payments.db')
@@ -177,6 +178,8 @@ def test_concurrent_credit_busy_agent_and_active_recovery_guard(env,monkeypatch)
     assert all(code in [200,409] for code in results),results
     with Session(engine) as db:
         assert db.get(User,'u').lidya==95
+        assert db.get(VipMembership,'u').total_purchased==95
+        assert db.scalar(select(func.count()).select_from(VipPurchaseReceipt).where(VipPurchaseReceipt.user_id=='u'))==1
         assert db.scalar(select(func.count()).select_from(LidyaOperation))==1
         ledgers=list(db.scalars(select(system_data.LidyaLedger).where(system_data.LidyaLedger.operation=='payment_assistance_credit')))
         assert len(ledgers)==1 and ledgers[0].delta==95 and ledgers[0].reference_id==id
@@ -329,6 +332,8 @@ def test_only_customer_uploads_receipt_and_credit_uses_it_automatically(env):
         operation=db.get(LidyaOperation,result['credit_operation_id']);stored=db.get(PaymentMessage,mid)
         assert base64.b64decode(operation.evidence.split(',')[1])==stored.photo
         assert db.get(User,'u').lidya==95
+        assert db.get(VipMembership,'u').total_purchased==95
+        assert db.scalar(select(func.count()).select_from(VipPurchaseReceipt).where(VipPurchaseReceipt.user_id=='u'))==1
 
 def test_customer_history_has_twenty_per_page_and_cannot_access_other_accounts(env):
     engine,_,call=env

@@ -1,0 +1,198 @@
+{
+  "method": "built-in imagegen",
+  "original_design_count": 24,
+  "assets": [
+    {
+      "gender": "male",
+      "key": "sardis",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya men's VIP collection. Landscape profile cover, a Lydian marble terrace at dawn overlooking Sardis. Warm ivory and champagne gold with subtle emerald accents. Quiet central space for readable app UI. Wide landscape 1536x1024. architectural angular Greek key gold borders, sculpted ancient lion guardians, strong geometric symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": false,
+      "level": 3,
+      "asset": "frontend/assets/vip-level-rewards-v2/male/sardis.png"
+    },
+    {
+      "gender": "male",
+      "key": "paktolos",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya men's VIP collection. Landscape profile cover, gold bearing Paktolos river flowing between marble palace gardens, golden bridge and columns. Antique gold with restrained amethyst jewel accents at outer corners. Quiet center, wide landscape 1536x1024. architectural angular Greek key gold borders, sculpted ancient lion guardians, strong geometric symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": false,
+      "level": 6,
+      "asset": "frontend/assets/vip-level-rewards-v2/male/paktolos.png"
+    },
+    {
+      "gender": "male",
+      "key": "seal",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya men's VIP collection. One isolated royal gift seal: ornate circular Lydian gold medallion with crowned lion relief, tiny ruby and pearl accents, distinct premium geometry, transparent background, square, object fully visible. architectural angular Greek key gold borders, sculpted ancient lion guardians, strong geometric symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": true,
+      "level": 9,
+      "asset": "frontend/assets/vip-level-rewards-v2/male/seal.png"
+    },
+    {
+      "gender": "male",
+      "key": "palace",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya men's VIP collection. Majestic royal throne room panorama for highest VIP12 profile scene: exquisite marble columns and engraved gold, small grand throne far center, cinematic warm light. Outer edges carry luxurious gold filigree. Central 60 percent softly quiet for interface overlay. Wide landscape 1536x1024. architectural angular Greek key gold borders, sculpted ancient lion guardians, strong geometric symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": false,
+      "level": 12,
+      "asset": "frontend/assets/vip-level-rewards-v2/male/palace.png"
+    },
+    {
+      "gender": "female",
+      "key": "sardis",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya women's VIP collection. Landscape profile cover, a Lydian marble terrace at dawn overlooking Sardis. Warm ivory and champagne gold with subtle emerald accents. Quiet central space for readable app UI. Wide landscape 1536x1024. elegant chased gold botanical scrollwork, pearl chains, grapevine reliefs, refined graceful symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": false,
+      "level": 3,
+      "asset": "frontend/assets/vip-level-rewards-v2/female/sardis.png"
+    },
+    {
+      "gender": "female",
+      "key": "paktolos",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya women's VIP collection. Landscape profile cover, gold bearing Paktolos river flowing between marble palace gardens, golden bridge and columns. Antique gold with restrained amethyst jewel accents at outer corners. Quiet center, wide landscape 1536x1024. elegant chased gold botanical scrollwork, pearl chains, grapevine reliefs, refined graceful symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": false,
+      "level": 6,
+      "asset": "frontend/assets/vip-level-rewards-v2/female/paktolos.png"
+    },
+    {
+      "gender": "female",
+      "key": "seal",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya women's VIP collection. One isolated royal gift seal: ornate circular Lydian gold medallion with crowned lion relief, tiny ruby and pearl accents, distinct premium geometry, transparent background, square, object fully visible. elegant chased gold botanical scrollwork, pearl chains, grapevine reliefs, refined graceful symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": true,
+      "level": 9,
+      "asset": "frontend/assets/vip-level-rewards-v2/female/seal.png"
+    },
+    {
+      "gender": "female",
+      "key": "palace",
+      "prompt": "Use case: stylized-concept. Production PNG asset for ErisChat Lidya women's VIP collection. Majestic royal throne room panorama for highest VIP12 profile scene: exquisite marble columns and engraved gold, small grand throne far center, cinematic warm light. Outer edges carry luxurious gold filigree. Central 60 percent softly quiet for interface overlay. Wide landscape 1536x1024. elegant chased gold botanical scrollwork, pearl chains, grapevine reliefs, refined graceful symmetry. Highly crafted premium 3D rendered antique gold and ivory marble materials, realistic detail matching ornate Lydian avatar/profile frames. No people, no words, no letters, no numbers, no watermark. Fully finished professional app artwork.",
+      "transparent": false,
+      "level": 12,
+      "asset": "frontend/assets/vip-level-rewards-v2/female/palace.png"
+    },
+    {
+      "level": 1,
+      "key": "crest",
+      "gender": "male",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 1 men's collection. One isolated ornate gold lion crest medallion, laurel leaves, subtle amber gems, premium elegant metalwork. Transparent background, square, no text. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/crest.png"
+    },
+    {
+      "level": 1,
+      "key": "crest",
+      "gender": "female",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 1 women's collection. One isolated ornate gold lion crest medallion, laurel leaves, subtle amber gems, premium elegant metalwork. Transparent background, square, no text. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/crest.png"
+    },
+    {
+      "level": 2,
+      "key": "status",
+      "gender": "male",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 2 men's collection. Horizontal luxury ornamental status nameplate frame, completely TRANSPARENT empty center, fine antique gold border with small ivory pearls and amber jewels, restrained Lydian lion side ornaments. Transparent background inside and outside. Wide 3:1 composition, no text. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/status.png"
+    },
+    {
+      "level": 2,
+      "key": "status",
+      "gender": "female",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 2 women's collection. Horizontal luxury ornamental status nameplate frame, completely TRANSPARENT empty center, fine antique gold border with small ivory pearls and amber jewels, restrained Lydian lion side ornaments. Transparent background inside and outside. Wide 3:1 composition, no text. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/status.png"
+    },
+    {
+      "level": 4,
+      "key": "entry",
+      "gender": "male",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 4 men's collection. Horizontal royal room entrance banner FRAME with completely TRANSPARENT empty central rectangle for app nickname and portrait. Engraved antique gold, small sapphire details, corner laurel ornaments. Transparent inside and outside. Wide 3:1 composition, no text. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/entry.png"
+    },
+    {
+      "level": 4,
+      "key": "entry",
+      "gender": "female",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 4 women's collection. Horizontal royal room entrance banner FRAME with completely TRANSPARENT empty central rectangle for app nickname and portrait. Engraved antique gold, small sapphire details, corner laurel ornaments. Transparent inside and outside. Wide 3:1 composition, no text. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/entry.png"
+    },
+    {
+      "level": 5,
+      "key": "gift",
+      "gender": "male",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 5 men's collection. Single isolated Lydian gift seal pendant, gold lion motif with emerald gemstones and a laurel surround, finely crafted premium 3D jewelry. Transparent background, square, fully visible, no text. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/gift.png"
+    },
+    {
+      "level": 5,
+      "key": "gift",
+      "gender": "female",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 5 women's collection. Single isolated Lydian gift seal pendant, gold lion motif with emerald gemstones and a laurel surround, finely crafted premium 3D jewelry. Transparent background, square, fully visible, no text. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/gift.png"
+    },
+    {
+      "level": 7,
+      "key": "room",
+      "gender": "male",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 7 men's collection. Exquisite Lydian room decoration background, ivory marble courtyard with a fountain, ornate antique gold pillars, sapphire details only at borders, restrained royal style, quiet readable center. Landscape 1536x1024. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/room.png"
+    },
+    {
+      "level": 7,
+      "key": "room",
+      "gender": "female",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 7 women's collection. Exquisite Lydian room decoration background, ivory marble courtyard with a fountain, ornate antique gold pillars, sapphire details only at borders, restrained royal style, quiet readable center. Landscape 1536x1024. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/room.png"
+    },
+    {
+      "level": 8,
+      "key": "home",
+      "gender": "male",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 8 men's collection. Elegant Lydian palace home garden, ivory marble pavilion for two, warm golden evening lights, antique gold botanical ornamentation, small ruby accents, subtle romantic luxury, no people. Landscape 1536x1024. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/home.png"
+    },
+    {
+      "level": 8,
+      "key": "home",
+      "gender": "female",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 8 women's collection. Elegant Lydian palace home garden, ivory marble pavilion for two, warm golden evening lights, antique gold botanical ornamentation, small ruby accents, subtle romantic luxury, no people. Landscape 1536x1024. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/home.png"
+    },
+    {
+      "level": 10,
+      "key": "throne",
+      "gender": "male",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 10 men's collection. Lydian emperor throne room, majestic engraved gold throne with lion armrests, ivory marble, warm champagne light and black onyx accents, ceremonial elegant architecture, quiet space for profile UI. Landscape 1536x1024. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/throne.png"
+    },
+    {
+      "level": 10,
+      "key": "throne",
+      "gender": "female",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 10 women's collection. Lydian emperor throne room, majestic engraved gold throne with lion armrests, ivory marble, warm champagne light and black onyx accents, ceremonial elegant architecture, quiet space for profile UI. Landscape 1536x1024. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/throne.png"
+    },
+    {
+      "level": 11,
+      "key": "imperial",
+      "gender": "male",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 11 men's collection. Portrait luxury Lydian profile window FRAME with COMPLETELY TRANSPARENT EMPTY center and exterior, intricate antique gold and pearl relief, lion crest centered top, graceful royal crown, finely detailed corners. Frame border only occupying outer 12 percent with large clear empty middle. Portrait 1024x1536, no text. Strong angular geometric Greek-key gold architecture, majestic sculpted lion guardians, confident symmetrical masculine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/male/imperial.png"
+    },
+    {
+      "level": 11,
+      "key": "imperial",
+      "gender": "female",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Original production PNG reward for ErisChat Lidya VIP 11 women's collection. Portrait luxury Lydian profile window FRAME with COMPLETELY TRANSPARENT EMPTY center and exterior, intricate antique gold and pearl relief, lion crest centered top, graceful royal crown, finely detailed corners. Frame border only occupying outer 12 percent with large clear empty middle. Portrait 1024x1536, no text. Elegant curving gold grapevine relief, delicate pearl chains and fine botanical flourishes, graceful symmetrical feminine collection. Match an existing premium ancient Lydian gold and marble profile-frame system. Realistic high-end 3D craftsmanship, full subject, clean silhouette. No letters, no numbers, no words, no watermark.",
+      "asset": "frontend/assets/vip-level-rewards-v2/female/imperial.png"
+    }
+  ]
+}
