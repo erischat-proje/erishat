@@ -1,0 +1,38 @@
+ilişki sisteminde istenen malzemeler ilk sıra da güncelleyeceğimiz şey
+seviye 1 de bakır yüzük aldıktan sonra seviye 2 olması için 
+===============================================
+           ERISCHAT İLİŞKİ SİSTEMİ
+===============================================
+SEVİYE       TUĞLA       TAHTA       BOYA        
+-----------------------------------------------
+Seviye 1     5           5           5          
+Seviye 2     10          10          10         
+Seviye 3     20          20          20         
+Seviye 4     35          35          35         
+Seviye 5     55          55          55        
+Seviye 6     85          85          85          
+Seviye 7     130         130         130         
+Seviye 8     190         190         190        
+Seviye 9     270         270         270       
+Seviye 10    370         370         370        
+Seviye 11    480         480         480         
+Seviye 12    572         572         572         
+-----------------------------------------------
+TOPLAM       2.222       2.222       2.222      
+==============================================
+
+ek olarak ilişki sisteminde şu şekilde bir sistem olacak
+1 adet bakır yüzük alırsa kullanıcı 2 adet eksik malzeme yerine sayılacak herhangi 2 ayrı malzeme den de 1 1 düşebiir veya 1 malzemeden 2 düşebilir
+1 adet gümüş yüzük alırsa kullanıcı 3 adet eksik malzeme yerine sayılacak herhangi 3 ayrı malzeme den de 1 1 düşebiir veya 1 malzemeden 3 düşebilir veya 1 malzemeden 2 diğerinden 1 düşebilir
+1 adet altın yüzük alırsa kullanıcı 4 adet eksik malzeme yerine sayılacak herhangi 3 ayrı malzeme den de 1 1 düşebiir veya 1 malzemeden 4 düşebilir veya 1 malzemeden 3 diğerinden 1 düşebilir veya bir malzemeden 2 diğerinden 2 felan
+bana ayrı ayrı anlattırma işte düşücek eğer o seviyede 1 eksik varsa ve yüzük aldıysa diğer seviye ye geçti ise ordan yine düşücek
+
+ek olarak ilişki sisteminde çerçeveler tam oturmuyor çerçevelerin ilişki sistemi dahil her yerde tam oturduğundan emin ol
+
+bunun dışında bizim sevgili vs gibi ünvanlarımızı ilişki evi menüsüne lidya temasına uygun tekrar tasarlayıp 
+ilişki düzey ödülleri olarak ekliyorsun hepsini ve onun dışında o sistemi tam kontrol ediyorsun sistem şu şekilde işlicek
+bakır yüzüklerde bakır ünvan iki taraf içinde otomatik olarak verilcek 
+gümüş yüzükte gümüş ünvan otomatik olarak verilcek 
+evli olduklarında evli ünvanı otomatik olarak verilcek o sistemi tam olarak araştırabilirsin
+insanların sözlenmesi vs konusunda sen bilgi verceksin artık sözlenebilirsiniz vs bildirim gelcek işte anlattırma bana ek olarak oraya bir ? kısmı ekle tüm ilişki sistemini anlat
+ve o olayları daha mantıklı hale getir :)
