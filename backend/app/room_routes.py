@@ -1006,9 +1006,10 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total).values(lidya=User.lidya - total))
         if charged.rowcount != 1:
             db.rollback(); raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        recipient_amount = per_person * GIFT_RECIPIENT_PERCENT // 100
+        from .gift_payout import gift_payout
+        payouts = {recipient_id: gift_payout(per_person) for recipient_id in sorted(recipient_ids)}
         for recipient_id in sorted(recipient_ids):
-            db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + recipient_amount))
+            db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + payouts[recipient_id]))
         from .vip_spending import record_spend
         record_spend(db,user.id,total,"room_gift")
         events=[]
@@ -1016,10 +1017,10 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             event = RoomGiftEvent(room_id=room.id, sender_id=user.id, recipient_id=recipient_id,
                 gift_key=payload.gift_key, unit_price=unit_price, quantity=payload.quantity,
                 total_price=per_person, recipient_percent=GIFT_RECIPIENT_PERCENT,
-                recipient_amount=recipient_amount)
+                recipient_amount=payouts[recipient_id])
             db.add(event); events.append(event)
             db.add(Notification(user_id=recipient_id, kind="gift", title="Yeni hediye",
-                body=f"{user.nickname} size {payload.gift_key} gönderdi."))
+                body=f"{user.nickname} size {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi; {payouts[recipient_id]} 🪙 kazandınız."))
         db.commit(); refresh_level(db, room)
         from .main import _broadcast_room_chat, _broadcast_global_gift_announcement
         presentation = gift_presentation(unit_price)
@@ -1038,10 +1039,10 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
                 await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
         label = recipients.get(next(iter(recipient_ids)), "Kullanıcı") if len(recipient_ids)==1 else f"{len(recipient_ids)} kişiye"
         await _broadcast_room_chat(room.id, {"type":"room_chat","room_id":room.id,"user_id":user.id,
-            "nickname":user.nickname,"text":f"{user.nickname}, {label} {payload.gift_key} hediyesi verdi.",
+            "nickname":user.nickname,"text":(f"{user.nickname} odadaki herkese {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi." if payload.target == "room" else f"{user.nickname} mikrofondaki herkese {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi." if payload.target == "mic" else f"{label} isimli kullanıcıya {user.nickname} {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi; {payouts[next(iter(recipient_ids))]} 🪙 kazandı."),
             "system":True,"created_at":datetime.now(timezone.utc).isoformat()})
         return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,
-            "total_price":total,"recipient_count":len(recipient_ids),"recipient_amount":recipient_amount,
+            "total_price":total,"recipient_count":len(recipient_ids),"recipient_amount":payouts[next(iter(recipient_ids))] if len(recipient_ids)==1 else None,
             **presentation}
     @router.get("/{room_id}/gift-catalog")
     def gift_catalog(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
