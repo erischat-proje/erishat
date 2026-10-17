@@ -1103,6 +1103,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "gift_id": GIFT_META.get(gift.gift_key, {}).get("id") if gift else None,
         "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,
         "gift_price": gift.unit_price if gift else None,
+        "gift_received": gift.recipient_amount if gift else None,
         "media_type": media.media_type if media else None,
         "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
         "temporary": bool(media and media.temporary), "view_seconds": media.view_seconds if media else None,
@@ -1915,7 +1916,8 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     if restriction and restriction.enabled and not unlock and gift_key != restriction.gift_key:
         raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {restriction.gift_key} hediyesi gerekli")
     total_price = price * quantity
-    receiver_amount = total_price * 70 // 100
+    from .gift_payout import gift_payout
+    receiver_amount = gift_payout(total_price)
     relationship_routes.lock_users(db, [user.id, recipient_id])
     charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total_price).values(lidya=User.lidya - total_price))
     if charged.rowcount != 1: db.rollback(); raise HTTPException(status_code=400, detail="Yetersiz Lidya")
@@ -1926,12 +1928,12 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
         db.add(DirectMessageUnlock(owner_id=recipient_id, sender_id=user.id, gift_key=gift_key))
     locked_gift_folder = _folder(db, recipient_id, conversation_id)
     db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye",
-        body="Kilitli sohbette yeni hediye" if locked_gift_folder and locked_gift_folder.locked else user.nickname + " sana " + gift_key + " gönderdi."))
+        body="Kilitli sohbette yeni hediye" if locked_gift_folder and locked_gift_folder.locked else f"{user.nickname} size {gift_key} ({total_price} 🪙 ×{quantity}) gönderdi; {receiver_amount} 🪙 kazandınız."))
     from .vip_spending import record_spend
     record_spend(db,user.id,total_price,"dm_gift",str(message.id))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
-        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"quantity":quantity,
+        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"gift_received":receiver_amount,"quantity":quantity,
         "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in repo.members(conversation_id): await _send_dm_event(db, member_id, event)
     return _message_out(db, message, user.id)
