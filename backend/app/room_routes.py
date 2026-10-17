@@ -252,6 +252,7 @@ def room_is_locked(room):
 
 
 def room_view(db: Session, room: Room, user: User | None = None) -> dict:
+    from .vip_privileges import room_style
     ensure_seats(db, room)
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
     members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0
@@ -283,7 +284,7 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper_applied = bool(wallpaper_state.applied) if wallpaper_state else wallpaper_active
     wallpaper_item = wallpaper_choice if wallpaper_active else None
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
-    return {"couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
+    return {"vip_benefits": room_style(db,room), "couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]), "seat_permission":seat_workflow.enabled(db,room.id),
         "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": room_is_locked(room), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else default_wallpaper(db.get(User, room.owner_id)), "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active and not vip_unlocked else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
@@ -1023,9 +1024,11 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         from .main import _broadcast_room_chat, _broadcast_global_gift_announcement
         presentation = gift_presentation(unit_price)
         recipients = {r.id:r.nickname for r in db.scalars(select(User).where(User.id.in_(recipient_ids)))}
+        from .vip_privileges import gift_style
         for event in events:
             room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,
                 "sender_id":user.id,"recipient_id":event.recipient_id,
+                "vip_benefits": gift_style(db,user.id),
                 "sender_nickname":user.nickname,"recipient_nickname":recipients.get(event.recipient_id,"Kullanıcı"),
                 "gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,
                 "recipient_amount":event.recipient_amount,"created_at":event.created_at.isoformat() if event.created_at else None,

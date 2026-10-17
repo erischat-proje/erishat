@@ -424,3 +424,6 @@ class DirectCallHistoryHidden(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     call_id: Mapped[str] = mapped_column(ForeignKey("direct_calls.id", ondelete="CASCADE"), primary_key=True)
 
+
+# Register additive benefit tables for both API startup and isolated platform workflows.
+from .vip_benefit_models import VipBenefitState, VipBenefitReceipt, VipBenefitLease

@@ -258,6 +258,7 @@
       const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
       if(frame&&!d.system){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
       const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';if(!d.system)window.ErisRoleBadges?.bind(author,d);
+      if(d.vip_benefits?.name_gold)author.classList.add('vp-gold-name');if(d.vip_benefits?.crown_name)author.classList.add('vp-crown-name');
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
       const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;if(fanLevel)badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
       if(d.user_id){portrait.style.cursor='pointer';author.style.cursor='pointer';portrait.onclick=author.onclick=()=>window.ErisFloatingProfile?.open(d.user_id)}

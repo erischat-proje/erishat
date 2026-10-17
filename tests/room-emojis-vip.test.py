@@ -53,7 +53,13 @@ class AccessTests(unittest.TestCase):
                 self.assertEqual('payload' in result,level>=required,(level,required,result))
                 if level>=required:self.assertEqual(result['payload']['reaction_id'],f'vip_{required}')
             self.assertIn('payload',ctx['_room_socket_reaction']('r','R','u','laugh'))
-            self.assertEqual(access.entitlement(NS(level=level))['unlocked_ids'],[f'vip_{n}' for n in range(1,level+1)])
+            ctx['vip_privileges']=NS(active=lambda *args:{'stickers':'enabled'})
+            for n in range(1,13):
+                result=ctx['_room_socket_reaction']('r','R','u',f'lidya_sticker_{n}')
+                self.assertEqual('payload' in result,level>=(1 if n<=6 else 2))
+            ctx['vip_privileges']=NS(active=lambda *args:{})
+            self.assertIn('error',ctx['_room_socket_reaction']('r','R','u','lidya_sticker_1'))
+            self.assertEqual(access.entitlement(NS(level=level))['unlocked_ids'],[f'vip_{n}' for n in range(1,level+1)]+[f'lidya_sticker_{n}' for n in range(1,13) if level >= (1 if n<=6 else 2)])
     def test_restrictions_remain(self):
         for key in ['ghost','banned','muted']:
             db=DB(12);setattr(db,key,True);ctx['Session']=lambda *a:db
@@ -67,6 +73,6 @@ class AccessTests(unittest.TestCase):
         self.assertEqual(access.entitlement(None),{'level':0,'unlocked_ids':[]})
         js=(ROOT/'frontend/room-emojis.js').read_text();catalog=json.loads(js.split('const catalog = ',1)[1].split(';',1)[0])
         self.assertEqual({x['id']:x['level'] for x in catalog if x['level']},access.VIP_EMOJI_LEVELS)
-        self.assertEqual(len(catalog),40)
+        self.assertEqual(len(catalog),52)
         for item in catalog:self.assertTrue((ROOT/'frontend'/item['asset'].removeprefix('./')).is_file(),item['id'])
 if __name__=='__main__':unittest.main()

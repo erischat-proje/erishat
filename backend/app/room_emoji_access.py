@@ -3,6 +3,9 @@
 VIP_EMOJI_LEVELS = {f"vip_{level}": level for level in range(1, 13)}
 
 
+VIP_EMOJI_LEVELS.update({f'lidya_sticker_{n}':1 if n<=6 else 2 for n in range(1,13)})
+
+
 def earned_level(row):
     return max(0, min(12, int(getattr(row, "level", 0) or 0)))
 

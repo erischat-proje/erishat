@@ -262,9 +262,13 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     ).first()
     if exists:
         raise HTTPException(status_code=409, detail="Bu görünüm zaten satın alınmış")
+    from .vip_privileges import coupon_price
+    original_price=price
+    price=coupon_price(db,user.id,price)
     if int(locked_user.lidya or 0) < price:
         raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
 
+    coupon_price(db,user.id,original_price,consume=True)
     locked_user.lidya-=price
     db.add(UserCosmetic(user_id=user.id,cosmetic_type=kind,asset_key=key))
     from .vip_spending import record_spend

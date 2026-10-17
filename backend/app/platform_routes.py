@@ -142,6 +142,7 @@ def user_can_show_vip(db: Session, user_id: str, field: str) -> bool:
     privacy = db.get(UserPrivacy, user_id); return True if not privacy else not bool(privacy.hide_vip or getattr(privacy, field, False))
 def profile_stats(db: Session, target: User, viewer: User) -> dict:
     from .staff_identity import role_for
+    from .vip_privileges import profile as vip_profile
     if role_for(target):
         return {'followers_count':0, 'following_count':0, 'received_gift_lidya':None,
                 'fans_hidden':True, 'gifts_hidden':True, 'relationship':None,
@@ -167,6 +168,7 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
         "gender": target.gender,
         "title_asset": target.title_asset,
         "profile_asset": target.profile_asset,
+        "vip_benefits": vip_profile(db,target),
         "vip_level": int(v.level or 0) if v and visible else 0,
         "vip_badge_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_badge"),
         "vip_neon_hidden": not own and not user_can_show_vip(db, target.id, "hide_vip_neon"),
