@@ -1,0 +1,12 @@
+mesaşlar kısmında bildirimleri kapat butonu gerçekten mesaj bilirimlerini kapatsın ek olarak
+kapat yapınca aç düzelmiyor o düzelsin ve gerçekten tekrar açsın
+ek olarak odalarda mesajlarda hediye gönderildiği zaman karşı tarafa nerde olursa olsun ekranına bildirim düşücek
+ama hediye sisteminde ilk olarak şunu yapıyoruz birine mesajdan veya oda dan hediye atılınca sistem atılan lidya miktarının otomatik olarak 4/1 ini kesicek herhangi bir yerden atıldığında
+geri kalan kısmı %100 olarak baz alıcak ve karşı tarafa o %100 üzerinden herhangi bir miktar atıcak bazen hediye kesintisi üstü olarak da yollayabilir ama olay şu maksimum hediye lidya miktarının iki katına ulaşıcak bu rakam
+ve 10 lidya altı hediyelerde karşı tarafa lidya gönderilmicek ve hediye bildirimlerinde şu şekilde olucak oda da ise bu atılan hediye aşşada chatte şu yazıcak 
+(hediyeyi alan kullanıcı adı) isimli kullanıcı ya (hediye gönderen kullanıcı adı) (hediye adı lidya miktarı sağında lidya coin işareti x adet sayısı) gönderdi (hediyeyi alan kullanıcı adı) (kazandığı lidya coin miktarı ve sağında lidya coin işareti)
+odadaki herkese atıldı ise hediye (kullanıcı adı) odadaki herkese (hediye adı lidya miktarı sağında lidya coin işareti x adedi) gönderdi
+mikrofondaki herkese atıldı ise (kullanıcı adı) mikrofondaki herkese (hediye adı lidya miktarı sağında lidya coin işareti x adedi) gönderdi
+eğer mesaj kutusundan atıldı ise hediye ve lidya miktarından sonra hediye atılan kişi ye üstten bildirim düşücek (kullanıcı adı) size (hediye adı lidya miktarı sağında lidya coin işareti x adedi) gönderdi (kişiye hesap sonrası giden lidya miktarı ve sağında lidya coin işareti) kazandınız yazıcak
+dm kısmına gelicek olursak dm de de iki tarafta şu gözükecek hediye gönderen kişide sizden (hediye adı x adedi) (lidya miktarı sağında lidya coin işareti) karşılığında (sistem hesabı sonrası giden lidya miktarı sağında lidya coin işareti) kazandı
+hediye alan kişide (hediye adı x adedi lidya coin normal değeri sağında lidya coin işareti) karşılığında (sistem hesaplaması sonrası kazanılan lidya miktarı sağında lidya coin işareti) kazandınız
