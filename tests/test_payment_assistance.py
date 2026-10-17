@@ -329,3 +329,30 @@ def test_only_customer_uploads_receipt_and_credit_uses_it_automatically(env):
         operation=db.get(LidyaOperation,result['credit_operation_id']);stored=db.get(PaymentMessage,mid)
         assert base64.b64decode(operation.evidence.split(',')[1])==stored.photo
         assert db.get(User,'u').lidya==95
+
+def test_customer_history_has_twenty_per_page_and_cannot_access_other_accounts(env):
+    engine,_,call=env
+    with Session(engine) as db:
+        for who,count in [('u',43),('v',3)]:
+            for n in range(count):
+                row=PaymentRequest(id=str(uuid4()),user_id=who,public_id='1000000000' if who=='u' else '1000000001',nickname=who,request_key=str(uuid4()),package_id=1,price_try=7,base=320,bonus=79,total=399,status='cancelled',reason='',customer_ack=False,agent_ack=False,customer_read=0,agent_read=0,created_at=datetime(2026,1,1,tzinfo=timezone.utc)+timedelta(seconds=n))
+                db.add(row);db.flush();db.add(PaymentEvent(request_id=row.id,actor_id=who,actor_public_id=row.public_id,action='requested',details='{}'))
+        db.commit()
+    pages=[call('u','/history?page='+str(p)) for p in [1,2,3]]
+    assert [len(p['items']) for p in pages]==[20,20,3]
+    assert all(p['page_size']==20 and p['total']==43 and p['pages']==3 for p in pages)
+    ids=[r['id'] for p in pages for r in p['items']];assert len(set(ids))==43
+    id=ids[0];assert call('u','/history/'+id)['public_id']=='1000000000'
+    for who in ['v','da','fa','ua','sa']:call(who,'/history/'+id,expect=403)
+    assert call('v','/history')['total']==3
+    assert call('w','/history')['total']==0
+    assert call('u','/history?page=999')['page']==3
+    call(None,'/history',expect=401)
+    call('u','/history?page=0',expect=422)
+
+def test_history_remains_after_all_da_reviews(env):
+    _,_,call=env;row=new(call);id=row['id'];call('u',f'/requests/{id}/cancel',{})
+    for who in ['da','da2']:call(who,f'/admin/records/{id}');call(who,f'/admin/records/{id}/review',{})
+    assert call('da','/admin/records')['total']==0
+    assert call('u','/history')['items'][0]['id']==id
+    assert call('u','/history/'+id)['status']=='cancelled'

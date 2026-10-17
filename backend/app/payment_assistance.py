@@ -241,6 +241,21 @@ def register_auth(current_user):
         rows=list(db.scalars(q.order_by(PaymentRequest.created_at.desc(),PaymentRequest.id.desc()).limit(51)))
         return {'items':[summary(r,user.id) for r in rows[:50]],'next':rows[49].id if len(rows)>50 else None}
 
+    @router.get('/history')
+    def customer_history(page:int=Query(1,ge=1,le=1_000_000),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        q=select(PaymentRequest).where(PaymentRequest.user_id==user.id)
+        total=int(db.scalar(select(func.count()).select_from(q.subquery())) or 0);pages=max(1,(total+19)//20);page=min(page,pages)
+        rows=list(db.scalars(q.order_by(PaymentRequest.created_at.desc(),PaymentRequest.id.desc()).offset((page-1)*20).limit(20)))
+        numbers=dict(db.execute(select(PaymentEvent.request_id,func.min(PaymentEvent.id)).where(PaymentEvent.request_id.in_([r.id for r in rows]),PaymentEvent.action=='requested').group_by(PaymentEvent.request_id)).all()) if rows else {}
+        return {'items':[{**summary(r,user.id),'transaction_number':numbers.get(r.id) or r.id} for r in rows],'page':page,'pages':pages,'page_size':20,'total':total}
+
+    @router.get('/history/{identifier}')
+    def customer_history_detail(identifier:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        row=get(db,identifier)
+        if row.user_id!=user.id:raise HTTPException(403,'Bu ödeme kaydı size ait değil.')
+        number=db.scalar(select(func.min(PaymentEvent.id)).where(PaymentEvent.request_id==row.id,PaymentEvent.action=='requested'))
+        return {**summary(row,user.id),'transaction_number':number or row.id}
+
     @router.get('/admin/requests')
     def queue(before:str|None=None,records:bool=False,db:Session=Depends(get_db),user:User=Depends(current_user)):
         require_da(db,user);q=select(PaymentRequest)
@@ -479,6 +494,7 @@ def photo_response(db,row,message_id):
     except (OSError,ValueError,SyntaxError,Image.DecompressionBombError) as exc:
         raise HTTPException(422,'Kaydedilmiş fotoğraf okunamıyor. Asıl dekontu yeniden gönderin.') from exc
     return Response(msg.photo,media_type='image/jpeg',headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Disposition':'inline; filename="dekont.jpg"'})
+
 
 
 
