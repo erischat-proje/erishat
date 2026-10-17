@@ -1028,7 +1028,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         from .vip_privileges import gift_style
         for event in events:
             room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,
-                "sender_id":user.id,"recipient_id":event.recipient_id,
+                "sender_id":user.id,"recipient_id":event.recipient_id,"target":payload.target,
                 "vip_benefits": gift_style(db,user.id),
                 "sender_nickname":user.nickname,"recipient_nickname":recipients.get(event.recipient_id,"Kullanıcı"),
                 "gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,
@@ -1037,10 +1037,6 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             await _broadcast_room_chat(room.id, room_payload)
             if presentation["global_announcement"]:
                 await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
-        label = recipients.get(next(iter(recipient_ids)), "Kullanıcı") if len(recipient_ids)==1 else f"{len(recipient_ids)} kişiye"
-        await _broadcast_room_chat(room.id, {"type":"room_chat","room_id":room.id,"user_id":user.id,
-            "nickname":user.nickname,"text":(f"{user.nickname} odadaki herkese {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi." if payload.target == "room" else f"{user.nickname} mikrofondaki herkese {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi." if payload.target == "mic" else f"{label} isimli kullanıcıya {user.nickname} {payload.gift_key} ({per_person} 🪙 ×{payload.quantity}) gönderdi; {payouts[next(iter(recipient_ids))]} 🪙 kazandı."),
-            "system":True,"created_at":datetime.now(timezone.utc).isoformat()})
         return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,
             "total_price":total,"recipient_count":len(recipient_ids),"recipient_amount":payouts[next(iter(recipient_ids))] if len(recipient_ids)==1 else None,
             **presentation}
