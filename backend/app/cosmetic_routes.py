@@ -28,10 +28,13 @@ def current_cosmetic_user(
     user = get_user_from_token(db, token)
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
+    from .vip_membership import sync
+    sync(db,user.id)
+    db.commit()
     return user
 
 
-VIP_SPEND_THRESHOLDS = {1: 1_000, 2: 5_000, 3: 15_000, 4: 30_000, 5: 60_000, 6: 120_000, 7: 250_000, 8: 500_000, 9: 1_000_000, 10: 2_000_000, 11: 5_000_000, 12: 10_000_000}
+from .vip_membership import THRESHOLDS as VIP_SPEND_THRESHOLDS
 
 def vip_level(db: Session, user_id: str) -> int:
     row = db.get(VipStatus, user_id)

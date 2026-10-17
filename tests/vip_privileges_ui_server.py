@@ -16,7 +16,23 @@ app.include_router(cosmetic_routes.router)
 
 @app.get("/v1/me/vip")
 def status():
-    return {"level": 12, "total_spent": 10000000, "entry_style": "male"}
+    from app.vip_membership import status_view
+
+    result = status_view(case.db, case.user.id)
+    case.db.commit()
+    return {**result, "entry_style": case.user.gender}
+
+
+@app.post("/test/profile")
+def change_profile(payload: dict):
+    from app.platform_models import VipStatus
+
+    if "gender" in payload:
+        case.user.gender = payload["gender"]
+    if "level" in payload:
+        case.db.get(VipStatus, case.user.id).level = payload["level"]
+    case.db.commit()
+    return {"ok": True}
 
 
 @app.get("/")

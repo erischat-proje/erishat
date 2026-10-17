@@ -13,7 +13,6 @@ from .cosmetic_routes import current_cosmetic_user
 
 from .vip_benefit_models import VipBenefitState, VipBenefitReceipt, VipBenefitLease
 
-POINTS = (0, 10, 15, 20, 25, 30, 40, 50, 60, 75, 90, 110, 150)
 COUPON = (0, 0, 0, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15)
 ASSETS = "assets/vip-privileges-v1/"
 NAMES = (
@@ -39,14 +38,6 @@ SPECS = [
         "profile",
         "Altın isim rengi profilinde ve oda sohbetinde görünür.",
         ("gold", "champagne"),
-    ),
-    (
-        "daily",
-        1,
-        "Günlük VIP puanı",
-        "rewards",
-        "Her gün bir kez al. Puanlar yalnızca VIP puan mağazasında kullanılır.",
-        (),
     ),
     (
         "stickers",
@@ -375,12 +366,6 @@ TRIALS = {
     "trial-paktolos": "Paktolos Mermeri",
     "trial-palace": "Kraliyet Sarayı",
 }
-SHOP = {
-    "cover-sardis": ("Sardis özel kapağı", 100),
-    "cover-paktolos": ("Paktolos özel kapağı", 150),
-    "seal-royal": ("Kraliyet hediye mührü", 200),
-    "trial-palace": ("7 günlük saray sahnesi", 250),
-}
 
 
 def now():
@@ -405,6 +390,9 @@ def period(kind, at=None):
 
 
 def level(db, uid):
+    from .vip_membership import sync
+
+    sync(db, uid)
     row = db.get(VipStatus, uid)
     return max(0, min(12, int(row.level or 0))) if row else 0
 
@@ -488,9 +476,11 @@ def active(db, uid):
     if data.get("trial_scene") in valid:
         result["trial_scene"] = data["trial_scene"]
         result["trial_expires_at"] = valid[data["trial_scene"]]
-    for k in ("point_cover", "point_seal"):
-        if data.get(k) in SHOP and db.get(VipBenefitReceipt, (uid, "shop:" + data[k])):
-            result[k] = data[k]
+    from .vip_level_rewards import resolve
+
+    user = db.get(User, uid)
+    if user:
+        result.update(resolve(user, lvl, data))
     return result
 
 
@@ -561,8 +551,11 @@ def room_style(db, room):
     house = db.get(Couple, link.couple_id) if link else None
     if house and house.active:
         for uid in (house.male_id, house.female_id):
-            if active(db, uid).get("home_decor") == "couple":
+            partner_style = active(db, uid)
+            if partner_style.get("home_decor") == "couple":
                 data["room_decor"] = "palace"
+                if partner_style.get("level_home_decor"):
+                    data["level_room_decor"] = partner_style["level_home_decor"]
                 break
     return {
         k: v
@@ -576,6 +569,7 @@ def room_style(db, room):
             "palace_room",
             "royal_room",
             "board_text",
+            "level_room_decor",
         )
     }
 
@@ -597,6 +591,7 @@ def entry_style(db, uid):
             "duo_entry",
             "entry_card",
             "cinematic",
+            "level_entry_frame",
         )
     }
 
@@ -621,7 +616,7 @@ def gift_style(db, uid):
     return {
         k: v
         for k, v in active(db, uid).items()
-        if k in ("gift_seal", "gift_motion", "gift_scene", "point_seal")
+        if k in ("gift_seal", "gift_motion", "gift_scene", "level_gift_seal")
     }
 
 
@@ -685,10 +680,14 @@ def benefits(user=Depends(current_cosmetic_user), db=Depends(get_db)):
             select(VipBenefitReceipt).where(VipBenefitReceipt.user_id == user.id)
         )
     }
-    return {
+    from .vip_level_rewards import catalog as level_catalog
+    from .vip_membership import status_view
+
+    result = {
         "level": lvl,
-        "points": int(row.points or 0) if row else 0,
-        "daily_points": POINTS[lvl],
+        "reward_basis": "vip_level",
+        "level_rewards": level_catalog(user, lvl, data),
+        "membership": status_view(db, user.id),
         "coupon_percent": COUPON[lvl],
         "timezone": "Europe/Istanbul",
         "period": period("monthly"),
@@ -701,7 +700,7 @@ def benefits(user=Depends(current_cosmetic_user), db=Depends(get_db)):
         "active": active(db, user.id),
         "period_claimed": {
             k: receipt_key(k) in receipts
-            for k in ("daily", "weekly_trial", "weekly_box", "monthly_trial", "coupon")
+            for k in ("weekly_trial", "weekly_box", "monthly_trial", "coupon")
         },
         "trials": [
             {
@@ -714,16 +713,11 @@ def benefits(user=Depends(current_cosmetic_user), db=Depends(get_db)):
                 select(VipBenefitLease).where(VipBenefitLease.user_id == user.id)
             )
         ],
-        "shop": [
-            {"id": k, "name": v[0], "cost": v[1], "owned": "shop:" + k in receipts}
-            for k, v in SHOP.items()
-        ],
         "trial_options": [{"id": k, "name": v} for k, v in TRIALS.items()],
         "levels": [
             {
                 "level": n,
                 "name": NAMES[n - 1],
-                "daily_points": POINTS[n],
                 "coupon_percent": COUPON[n],
             }
             for n in range(1, 13)
@@ -741,6 +735,8 @@ def benefits(user=Depends(current_cosmetic_user), db=Depends(get_db)):
             for s in SPECS
         ],
     }
+    db.commit()
+    return result
 
 
 @router.put("/me/vip/benefits/selection")
@@ -766,16 +762,20 @@ def select_benefit(
         if value and (not lease or utc(lease.expires_at) <= now()):
             raise HTTPException(403, "Bu deneme hakkı yok veya süresi doldu.")
     elif key in ("point_cover", "point_seal"):
-        allowed = (
-            ("cover-sardis", "cover-paktolos")
-            if key == "point_cover"
-            else ("seal-royal",)
+        raise HTTPException(
+            410, "VIP puanı sistemi kaldırıldı. Yeni seviye ödüllerinden seçim yap."
         )
-        if value and (
-            value not in allowed
-            or not db.get(VipBenefitReceipt, (user.id, "shop:" + value))
-        ):
-            raise HTTPException(403, "Önce bu ürünü puan mağazasından al.")
+    elif key.startswith("level_"):
+        from .vip_level_rewards import BY_ID, SLOTS
+
+        if key not in SLOTS:
+            raise HTTPException(422, "Geçersiz ödül alanı.")
+        if value:
+            item = BY_ID.get(value)
+            if not item or key != "level_" + item[3]:
+                raise HTTPException(422, "Geçersiz seviye ödülü.")
+            if level(db, user.id) < item[0]:
+                raise HTTPException(403, f"VIP {item[0]} gerekli.")
     else:
         require(db, user.id, key)
         if not SPEC[key][5]:
@@ -807,29 +807,29 @@ def claim(
     user=Depends(current_cosmetic_user),
     db=Depends(get_db),
 ):
+    if kind == "daily":
+        raise HTTPException(
+            410, "VIP puanı sistemi kaldırıldı; ödüller seviyende otomatik açılır."
+        )
     row = locked(db, user)
     require(db, user.id, kind)
-    if kind not in ("daily", "weekly_trial", "weekly_box", "monthly_trial"):
+    if kind not in ("weekly_trial", "weekly_box", "monthly_trial"):
         raise HTTPException(404, "Ödül bulunamadı.")
     key = receipt_key(kind)
     existing = db.get(VipBenefitReceipt, (user.id, key))
     if existing:
-        return {"ok": True, "already_claimed": True, "points": row.points}
+        return {"ok": True, "already_claimed": True}
     lvl = level(db, user.id)
-    amount = POINTS[lvl] if kind == "daily" else 0
-    if kind != "daily":
-        if payload.item not in TRIALS:
-            raise HTTPException(422, "Geçersiz deneme seçimi.")
-        days = (
-            1
-            if kind == "weekly_trial"
-            else 3 if kind == "weekly_box" else trial_days(lvl)
-        )
-        grant_lease(db, user.id, payload.item, days)
-    row.points += amount
+    amount = 0
+    if payload.item not in TRIALS:
+        raise HTTPException(422, "Geçersiz deneme seçimi.")
+    days = (
+        1 if kind == "weekly_trial" else 3 if kind == "weekly_box" else trial_days(lvl)
+    )
+    grant_lease(db, user.id, payload.item, days)
     db.add(VipBenefitReceipt(user_id=user.id, key=key, amount=amount, created_at=now()))
     db.commit()
-    return {"ok": True, "already_claimed": False, "points": row.points}
+    return {"ok": True, "already_claimed": False}
 
 
 def grant_lease(db, uid, item, days):
@@ -844,26 +844,10 @@ def grant_lease(db, uid, item, days):
 
 @router.post("/me/vip/benefits/shop/{item}")
 def buy_points(item: str, user=Depends(current_cosmetic_user), db=Depends(get_db)):
-    row = locked(db, user)
-    if level(db, user.id) < 1:
-        raise HTTPException(403, "VIP 1 gerekli.")
-    if item not in SHOP:
-        raise HTTPException(404, "Ürün bulunamadı.")
-    if db.get(VipBenefitReceipt, (user.id, "shop:" + item)):
-        return {"ok": True, "already_owned": True}
-    cost = SHOP[item][1]
-    if row.points < cost:
-        raise HTTPException(400, "Yeterli VIP puanın yok.")
-    row.points -= cost
-    if item.startswith("trial-"):
-        grant_lease(db, user.id, item, 7)
-    db.add(
-        VipBenefitReceipt(
-            user_id=user.id, key="shop:" + item, amount=-cost, created_at=now()
-        )
+    raise HTTPException(
+        410,
+        "VIP puanı mağazası kaldırıldı. Ödüller ilgili VIP seviyesinde otomatik açılır.",
     )
-    db.commit()
-    return {"ok": True, "points": row.points}
 
 
 @router.get("/me/vip/benefits/friend/{public_id}")
@@ -1153,3 +1137,12 @@ def coupon_status(user=Depends(current_cosmetic_user), db=Depends(get_db)):
         ),
         "period": period("monthly"),
     }
+
+
+@router.get("/me/vip/membership")
+def membership_status(user=Depends(current_cosmetic_user), db=Depends(get_db)):
+    from .vip_membership import status_view
+
+    result = status_view(db, user.id)
+    db.commit()
+    return result

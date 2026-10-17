@@ -1,3 +1,5 @@
+> Güncel sistem: [VIP satın alma V2](vip-purchase-v2.md). Aşağıdaki V1 kaydı tarihçedir; VIP puanı özellikleri kaldırılmıştır.
+
 # VIP 1–12 Lidya ek ödülleri
 
 Giriş: Profil → VIP. Üst sağdaki **?** düğmesi kullanım rehberini açar. Yeni alan, mevcut avatar/çerçeve/duvar kâğıdı ve giriş ödüllerini koruyarak eklenir.

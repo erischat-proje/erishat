@@ -29,7 +29,7 @@ from .auth import (
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
-from . import vip_spending, vip_privileges
+from . import vip_spending, vip_privileges, vip_membership
 from . import room_emoji_access
 from .vip_presentation import visible_entry_level, entry_selection, entry_style
 from .db import Base, engine, get_db
@@ -289,6 +289,7 @@ async def startup() -> None:
 @app.on_event("startup")
 async def start_support_router():
     bind_live_loop()
+    app.state.vip_renewal_task = asyncio.create_task(vip_membership.renewal_loop(engine))
     app.state.support_routing_task = asyncio.create_task(support_workflow.routing_loop())
     app.state.ludo_routing_task = asyncio.create_task(ludo_live.routing_loop())
     app.state.okey101_routing_task = asyncio.create_task(okey101_live.routing_loop())
@@ -297,6 +298,11 @@ async def start_support_router():
 
 @app.on_event("shutdown")
 async def stop_support_router():
+    vip_task=getattr(app.state,"vip_renewal_task",None)
+    if vip_task:
+        vip_task.cancel()
+        try:await vip_task
+        except asyncio.CancelledError:pass
     uno_task = getattr(app.state, "uno_routing_task", None)
     if uno_task:
         uno_task.cancel()
@@ -359,6 +365,8 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
     if account_ban:
         from .moderation import ban_until
         raise HTTPException(status_code=403,detail=ban_until(account_ban))
+    vip_membership.sync(db,user.id)
+    db.commit()
     return user
 
 

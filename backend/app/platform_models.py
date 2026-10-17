@@ -427,3 +427,5 @@ class DirectCallHistoryHidden(Base):
 
 # Register additive benefit tables for both API startup and isolated platform workflows.
 from .vip_benefit_models import VipBenefitState, VipBenefitReceipt, VipBenefitLease
+
+from .vip_membership_models import VipMembership, VipPurchaseReceipt, VipCycleAudit

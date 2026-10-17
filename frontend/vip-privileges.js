@@ -10,6 +10,9 @@
     localStorage.getItem("erischat.accessToken.v1") ||
     localStorage.getItem("token") ||
     "";
+  const appRoot = new URL("./", document.currentScript?.src || document.baseURI)
+    .href;
+  const rewardAsset = (path) => new URL(path, appRoot).href;
   const asset = new URL(
     "./assets/vip-privileges-v1/",
     document.currentScript?.src || document.baseURI,
@@ -433,6 +436,166 @@
       ),
     );
   }
+  function membershipPanel(parent, m) {
+    if (!m) return;
+    const section = el("section", "vp-membership");
+    section.setAttribute("aria-label", "VIP seviye sistemi");
+    section.append(
+      el("small", "", "SATIN ALIMLA YÜKSEL · 30 GÜNDE KORU"),
+      el(
+        "h3",
+        "",
+        m.level ? "VIP " + m.level + " koruma dönemin" : "VIP seviyeni başlat",
+      ),
+    );
+    section.append(
+      el(
+        "p",
+        "",
+        Number(m.total_purchased).toLocaleString("tr-TR") +
+          " Lidya doğrulanmış toplam satın alma",
+      ),
+    );
+    if (m.level) {
+      section.append(
+        el(
+          "p",
+          "vp-retention-warning",
+          `30 gün içinde ${m.retention_target.toLocaleString("tr-TR")} Lidya satın almazsan VIP seviyen 1 kademe düşecektir.`,
+        ),
+      );
+      const progress = el("progress");
+      progress.max = m.retention_target;
+      progress.value = Math.min(m.retention_target, m.cycle_purchased);
+      progress.setAttribute("aria-label", "30 günlük yükleme ilerlemesi");
+      section.append(progress);
+      section.append(
+        el(
+          "p",
+          "",
+          `Bu dönem: ${m.cycle_purchased.toLocaleString("tr-TR")} / ${m.retention_target.toLocaleString("tr-TR")} Lidya · Eksik: ${m.retention_remaining.toLocaleString("tr-TR")}`,
+        ),
+      );
+      const timer = el("strong", "vp-countdown");
+      section.append(
+        timer,
+        el(
+          "p",
+          "vp-note",
+          "Bitiş: " + new Date(m.cycle_ends_at).toLocaleString("tr-TR"),
+        ),
+      );
+      const deadline = Date.now() + m.seconds_remaining * 1000;
+      const tick = () => {
+        const seconds = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+        const days = Math.floor(seconds / 86400),
+          hours = Math.floor((seconds % 86400) / 3600),
+          minutes = Math.floor((seconds % 3600) / 60);
+        timer.textContent = `${days} gün ${hours} saat ${minutes} dakika kaldı`;
+      };
+      const interval = setInterval(() => {
+        if (!section.isConnected) {
+          clearInterval(interval);
+          return;
+        }
+        tick();
+      }, 1000);
+      tick();
+      if (m.retention_met)
+        section.append(
+          el(
+            "p",
+            "vp-success",
+            "✓ Bu dönemin koruma hedefi tamamlandı. Dönem bitiş tarihin değişmez.",
+          ),
+        );
+    } else
+      section.append(
+        el(
+          "p",
+          "",
+          m.recovery_target
+            ? `VIP ${m.recovery_level} seviyesine yeniden çıkmak için ${m.recovery_remaining.toLocaleString("tr-TR")} Lidya daha satın al.`
+            : "VIP 1 için toplam 4.000 Lidya satın alma gerekir.",
+        ),
+      );
+    button(section, "? VIP seviye sistemi", help);
+    parent.append(section);
+  }
+  function previewReward(item, gender) {
+    const title = `VIP ${item.level} · ${item.name} · ${gender === "male" ? "Erkek" : "Kadın"}`;
+    const m = modal(title);
+    const stage = el("figure", "vp-art-stage");
+    stage.dataset.slot = item.slot;
+    const img = el("img");
+    img.src = rewardAsset(item.variants[gender]);
+    img.alt = title;
+    stage.append(img, el("figcaption", "", title));
+    m.body.append(stage, el("p", "", item.help));
+    if (gender !== item.gender)
+      m.body.append(
+        el(
+          "p",
+          "vp-note",
+          "Bu tasarım diğer koleksiyonun önizlemesidir. Etkinleştirmede hesabının cinsiyetine uygun görsel uygulanır.",
+        ),
+      );
+  }
+  function levelRewardGallery(parent, d) {
+    const section = el("details", "vp-details vp-level-collection");
+    section.open = true;
+    section.append(el("summary", "", "VIP 1–12 · Yeni kadın / erkek ödülleri"));
+    section.append(
+      el(
+        "p",
+        "",
+        "Her seviyede yeni ödül. Seviyene ulaştığında otomatik açılır; VIP puanı veya ek ücret gerekmez.",
+      ),
+    );
+    const grid = el("div", "vp-grid");
+    for (const item of d.level_rewards || []) {
+      const card = el("article", "vp-reward vp-level-reward");
+      card.dataset.reward = item.id;
+      card.dataset.locked = String(!item.unlocked);
+      card.append(
+        el(
+          "small",
+          "",
+          `VIP ${item.level} · ${item.unlocked ? "Kazanıldı" : "Kilitli"}`,
+        ),
+        el("h3", "", item.name),
+      );
+      const variants = el("div", "vp-gender-variants");
+      for (const gender of ["female", "male"]) {
+        const b = button(
+          variants,
+          gender === "female" ? "Kadın önizleme" : "Erkek önizleme",
+          () => previewReward(item, gender),
+        );
+        b.dataset.gender = gender;
+        const img = el("img");
+        img.src = rewardAsset(
+          item.thumbnails?.[gender] || item.variants[gender],
+        );
+        img.alt = `VIP ${item.level} ${gender === "female" ? "kadın" : "erkek"} ${item.name}`;
+        img.loading = "lazy";
+        b.prepend(img);
+      }
+      card.append(variants, el("p", "vp-note", item.help));
+      button(
+        card,
+        item.equipped
+          ? "Seçili ✓"
+          : `${item.gender === "female" ? "Kadın" : "Erkek"} tasarımını kullan`,
+        () => set(item.slot, item.id),
+        !item.unlocked || item.equipped,
+      );
+      if (item.equipped) button(card, "Kapat", () => set(item.slot, null));
+      grid.append(card);
+    }
+    section.append(grid);
+    parent.append(section);
+  }
   async function mount(root) {
     if (!root?.isConnected) return;
     mounts.add(root);
@@ -452,9 +615,11 @@
       latest = d;
       area.replaceChildren();
       const hero = el("section", "vp-hero");
-      hero.innerHTML = `<div><small>LİDYA · AYRICALIKLAR</small><h2>VIP ${d.level} <span>Ödül sarayın</span></h2><p>${d.points.toLocaleString("tr-TR")} VIP puanı · Günlük ${d.daily_points} puan</p></div>`;
+      hero.innerHTML = `<div><small>LİDYA · AYRICALIKLAR</small><h2>VIP ${d.level} <span>Ödül sarayın</span></h2><p>Her seviyede yeni ödül · Puan veya ek ücret yok</p></div>`;
       button(hero, "? Nasıl kullanılır", help);
       area.append(hero);
+      membershipPanel(area, d.membership);
+      levelRewardGallery(area, d);
       const details = el("details", "vp-details");
       details.open = previous ?? true;
       details.append(el("summary", "", "Ek ödüller ve etkinleştirme"));
@@ -492,7 +657,7 @@
         const cumulative = el(
           "p",
           "vp-cumulative",
-          `VIP ${lvl.value}: önceki seviyelerin tüm ödülleri dahildir. Günlük ${d.levels[+lvl.value - 1].daily_points} puan · Aylık %${d.levels[+lvl.value - 1].coupon_percent} kupon.`,
+          `VIP ${lvl.value}: önceki seviyelerin tüm ödülleri dahildir. Yeni ödüller seviyende otomatik açılır · Aylık %${d.levels[+lvl.value - 1].coupon_percent} kupon.`,
         );
         list.append(cumulative);
         for (const item of d.items.filter(
@@ -568,19 +733,15 @@
             button(card, "Metni kaydet", () => set(key, input.value.trim()));
           }
           if (
-            ["daily", "weekly_trial", "weekly_box", "monthly_trial"].includes(
-              item.id,
-            )
+            ["weekly_trial", "weekly_box", "monthly_trial"].includes(item.id)
           ) {
-            const select = item.id === "daily" ? null : trialSelect(card, d);
+            const select = trialSelect(card, d);
             if (select) button(card, "Önizle", () => preview(select.value));
             button(
               card,
               d.period_claimed[item.id]
                 ? "Bu dönem alındı ✓"
-                : item.id === "daily"
-                  ? `${d.daily_points} puanı al`
-                  : "Ödülünü seç ve al",
+                : "Ödülünü seç ve al",
               async () => {
                 await api("/me/vip/benefits/claim/" + item.id, "POST", {
                   item: select?.value || "trial-palace",
@@ -613,9 +774,7 @@
       cat.onchange = draw;
       draw();
       const inventory = el("details", "vp-details");
-      inventory.append(
-        el("summary", "", "Deneme kartlarım ve VIP puan mağazası"),
-      );
+      inventory.append(el("summary", "", "Deneme kartlarım"));
       details.append(inventory);
       for (const trial of d.trials) {
         const row = el("article", "vp-reward");
@@ -648,36 +807,6 @@
             "Henüz deneme kartın yok. Kazanılan kartlar ve arkadaşlarının gönderdikleri burada görünür.",
           ),
         );
-      for (const item of d.shop) {
-        const row = el("article", "vp-reward");
-        row.append(
-          el("h3", "", item.name),
-          el("p", "", item.cost + " VIP puanı"),
-        );
-        button(
-          row,
-          item.owned ? "Alındı ✓" : "Puanla al",
-          async () => {
-            await api("/me/vip/benefits/shop/" + item.id, "POST");
-            await refresh();
-          },
-          item.owned || d.points < item.cost || d.level < 1,
-        );
-        if (item.owned && !item.id.startsWith("trial-")) {
-          const key = item.id.startsWith("cover-")
-            ? "point_cover"
-            : "point_seal";
-          button(
-            row,
-            d.active[key] === item.id ? "Seçili ✓" : "Kullan",
-            () => set(key, item.id),
-            d.active[key] === item.id,
-          );
-          if (d.active[key] === item.id)
-            button(row, "Kapat", () => set(key, null));
-        }
-        inventory.append(row);
-      }
     } catch (e) {
       if (area._ticket === ticket) {
         area.replaceChildren(el("p", "", e.message));
@@ -691,6 +820,30 @@
     const m = modal("VIP kullanım rehberi");
     const sections = [
       [
+        "VIP seviye sistemi",
+        "VIP seviyesi harcamaya değil, doğrulanmış Lidya satın alımlarının toplamına göre yükselir. Paketle yüklenen bonus dahil toplam Lidya sayılır. Hediye, oyun kazancı, transfer, yönetici tarafından karşılıksız ekleme ve harcama sayılmaz. VIP 12 eşiği 10.000.000 Lidya’dır.",
+      ],
+      [
+        "30 günlük koruma süresi",
+        "Her VIP seviyesine ulaştığın anda 30 günlük süre başlar. Koruma hedefi o seviyenin toplam gereksiniminin %5’idir. Bu süre içinde hedef kadar Lidya satın almazsan VIP seviyen 1 kademe düşer. 500 Lidya bakım ücreti veya otomatik bakiye kesintisi yoktur. Kalan süre, tarih, yüklenen ve eksik miktar merkezde görünür.",
+      ],
+      [
+        "Seviye yükselince süre sıfırlanır",
+        "Örnek: VIP 5’te 13 günün kalmışken VIP 6’ya yükselirsen süre yeniden tam 30 gün olur. Yeni hedef VIP 6 için 17.500 Lidya’dır. Yükselten satın alımın tamamı yeni dönemin hedefine sayılır; önceki işlemler yeniden sayılmaz. Aynı seviyedeki satın alımlar sayacı sıfırlamaz.",
+      ],
+      [
+        "Dönem sonu ve seviye düşüşü",
+        "Hedefi erken tamamlarsan dönem bitişi değişmez. Dönem sonunda seviyen korunur ve sıfır yükleme ilerlemesiyle yeni 30 gün başlar. Hedef tamamlanmazsa bir kademe düşersin ve düşük seviyenin yeni 30 günü başlar. Her başarısız dönemde tekrar bir kademe düşülür; VIP 1’in altı VIP 0’dır. Uygulamaya girmesen de dönemler ilerler.",
+      ],
+      [
+        "Düşüşten sonra tekrar yükselme",
+        "Geçmiş doğrulanmış satın alım toplamın silinmez; fakat eski toplam tek başına seviyeyi geri getirmez. Yeni bir satın alımla, daha önce kazandığın seviyenin %5’lik koruma hedefini mevcut dönemde tamamlarsan o seviyeye geri çıkabilirsin. Yeni bir toplam satın alma eşiğini aşmak da normal yükseliş sağlar. Her gerçek yükselişte 30 gün yeniden başlar.",
+      ],
+      [
+        "Mevcut hesaplar ve ödüller",
+        "Geçişte mevcut VIP seviyen korunur ve yeni sistemde ilk giriş/işleme alındığında tam 30 günlük koruma dönemi açılır. Yalnızca kayıtlı doğrulanmış ödemeler toplam satın alımına eklenir. Seviye düşüşünde üst seviye ek ödülleri kapanır; normal mağaza ürünlerin korunur. Süreli deneme kartların kendi bitiş tarihine tabidir.",
+      ],
+      [
         "VIP merkezine nasıl girerim?",
         "Profil → VIP bölümünü aç. Üstteki “Ek ödüller ve etkinleştirme” alanından seviye ve kategori seç. Her seviyenin önceki seviyeleri de kapsayan ödülleri listelenir. Kilitli ödüllerde gereken seviye yazar.",
       ],
@@ -703,12 +856,12 @@
         "Ek ödüllerde uygun tasarımın düğmesine bas. Seçili görünüm ✓ ile işaretlenir. “Kapat” yalnızca o ayrıcalığı devre dışı bırakır. Profil kapağı, arma, isim, ışık ve sahneler profilinde; oda dekorları sahibi olduğun odalarda görünür.",
       ],
       [
-        "Günlük puan ve puan mağazası",
-        "Ödüller kategorisinden günlük puanını al. “Deneme kartlarım ve VIP puan mağazası” alanından puanla ürün alıp ayrıca “Kullan” seç. Puanlar Lidya veya elmasa çevrilmez, devredilemez ve oyunlarda kullanılamaz.",
+        "Seviye ödülleri ve kadın/erkek tasarımları",
+        "VIP 1–12 seviyelerinin her birinde yeni ek ödül vardır. VIP puanı kazanma ve puanla alışveriş kaldırıldı. İlgili seviyeye ulaştığında ödül otomatik açılır. Kadın ve erkek görsellerini ayrı ayrı büyütüp inceleyebilirsin; etkinleştirme hesabının cinsiyetine uygun tasarımı kullanır. Kullan düğmesiyle aç, Kapat ile kaldır. Eski puan kayıtları hak veya ödeme koşulu olarak kullanılmaz.",
       ],
       [
-        "Günlük, haftalık ve aylık yenileme",
-        "Tüm dönemler Türkiye saatine göre hesaplanır. Günlük hak gece 00.00’da; haftalık hak pazartesi 00.00’da; aylık hak ayın ilk günü yenilenir. Kullanılmayan dönem hakları birikmez. VIP seviyen yükselse de aynı dönem hakkı tekrar verilmez.",
+        "Deneme kartlarının haftalık ve aylık yenilenmesi",
+        "Tüm dönemler Türkiye saatine göre hesaplanır. Haftalık hak pazartesi 00.00’da; aylık hak ayın ilk günü yenilenir. Kullanılmayan dönem hakları birikmez. VIP seviyen yükselse de aynı dönem hakkı tekrar verilmez.",
       ],
       [
         "Deneme kartları ve seçim sandığı",
@@ -748,6 +901,24 @@
       d.append(el("summary", "", title), el("p", "", text));
       m.body.append(d);
     }
+    if (latest?.membership) {
+      const table = el("table", "vp-threshold-table");
+      table.innerHTML =
+        "<thead><tr><th>VIP</th><th>Toplam satın alma</th><th>30 günlük hedef</th></tr></thead>";
+      const body = el("tbody");
+      for (const row of latest.membership.thresholds) {
+        const tr = el("tr");
+        for (const value of [
+          row.level,
+          row.total.toLocaleString("tr-TR"),
+          row.retention.toLocaleString("tr-TR"),
+        ])
+          tr.append(el("td", "", String(value)));
+        body.append(tr);
+      }
+      table.append(body);
+      m.body.prepend(table);
+    }
     if (latest)
       for (const level of latest.levels) {
         const d = el("details", "vp-details");
@@ -761,6 +932,7 @@
     mount,
     help,
     profile: decorateProfile,
+    assetUrl: rewardAsset,
     entry: decorateEntry,
   };
   function decorateProfile(root, data = {}, relationship) {
@@ -800,7 +972,7 @@
       ? "royal"
       : d.throne
         ? "throne"
-        : d.scenes || d.trial_scene || d.point_cover || d.cover || "";
+        : d.scenes || d.trial_scene || d.cover || "";
     card.dataset.vpScene = scene;
     const sceneFile = scene.includes("sardis")
       ? "sardis"
@@ -815,6 +987,13 @@
         `url("${asset + sceneFile + ".png"}")`,
       );
     else card.style.removeProperty("--vp-scene-image");
+    if (d.level_scene) {
+      card.dataset.vpScene = "direct";
+      card.style.setProperty(
+        "--vp-scene-image",
+        `url("${rewardAsset(d.level_scene.asset)}")`,
+      );
+    }
     const names = card.querySelectorAll(
       ".name h2,.eris-mini-name,.eris-mini-title h2,.eris-mini-top h2",
     );
@@ -822,7 +1001,7 @@
       n.classList.toggle("vp-gold-name", !!d.name_gold || !!d.crown_name);
       n.classList.toggle("vp-crown-name", !!d.crown_name);
     });
-    if (d.cover || d.cover_pack || scene) {
+    if (d.level_cover || d.cover || d.cover_pack || scene) {
       const cover = el("div", "vp-profile-cover");
       const path = scene.includes("sardis")
         ? "sardis"
@@ -833,29 +1012,44 @@
             : d.cover === "paktolos" || d.cover_pack === "paktolos_gold"
               ? "paktolos"
               : "palace";
-      cover.style.backgroundImage = `url("${asset + path + ".png"}")`;
+      cover.style.backgroundImage = `url("${d.level_cover ? rewardAsset(d.level_cover.asset) : asset + path + ".png"}")`;
       cover.dataset.variant = d.cover_pack || "";
       cover.setAttribute("aria-label", "Lidya profil kapağı");
       card.prepend(cover);
     }
+    card.querySelector(":scope>.vp-level-frame")?.remove();
+    if (d.level_profile_frame) {
+      const frame = el("img", "vp-level-frame");
+      frame.alt = "İmparatorluk profil işlemesi";
+      frame.src = rewardAsset(d.level_profile_frame.asset);
+      card.prepend(frame);
+    }
     const extra = el("section", "vp-profile-extras");
-    if (d.crest || d.royal_scene) {
+    if (d.level_crest || d.crest || d.royal_scene) {
       const img = el("img", "vp-crest");
-      img.src = asset + "lion.png";
+      img.src = d.level_crest
+        ? rewardAsset(d.level_crest.asset)
+        : asset + "lion.png";
       img.alt = "Lidya altın aslan arması";
       extra.append(img);
     }
-    if (d.status && d.status_text) {
-      const status = el("p", "vp-status", d.status_text);
+    if ((d.status && d.status_text) || d.level_status_frame) {
+      const status = el("p", "vp-status", d.status_text || "Lidya Üyesi");
+      if (d.level_status_frame) {
+        status.classList.add("vp-direct-status");
+        status.style.backgroundImage = `url("${rewardAsset(d.level_status_frame.asset)}")`;
+      }
       status.dataset.style = d.status;
       extra.append(status);
     }
-    if (d.home_decor) {
+    if (d.home_decor || d.level_home_decor) {
       const house = el("div", "vp-home-decor");
       house.textContent =
         d.home_decor === "couple" && relationship
           ? "Hanedan Bağı · İlişki vitrini"
           : "Lidya · Kişisel saray";
+      if (d.level_home_decor)
+        house.style.backgroundImage = `linear-gradient(#24170788,#24170788),url("${rewardAsset(d.level_home_decor.asset)}")`;
       extra.append(house);
     }
     if (d.showcase?.length) {
@@ -974,6 +1168,13 @@
       : d.palace_room
         ? "palace"
         : d.room_decor || "";
+    node.dataset.vpDirectRoom = String(!!d.level_room_decor);
+    if (d.level_room_decor)
+      node.style.setProperty(
+        "--vp-direct-room",
+        `url("${rewardAsset(d.level_room_decor.asset)}")`,
+      );
+    else node.style.removeProperty("--vp-direct-room");
     node.dataset.vpSeats = d.royal_room ? "gold" : d.seat_skin || "";
     node.dataset.vpCrest = d.royal_room ? "lion" : d.room_crest || "";
     node.querySelector(".vp-room-board")?.remove();
@@ -1018,11 +1219,13 @@
     if (seenGifts.size > 100) seenGifts.delete(seenGifts.values().next().value);
     document.querySelector(".vp-gift-seal")?.remove();
     const box = el("aside", "vp-gift-seal");
-    box.dataset.seal = d.gift_seal || d.point_seal || "";
+    box.dataset.seal = d.gift_seal || "";
     box.dataset.motion = d.gift_motion || "";
     box.dataset.scene = d.gift_scene ? "palace" : "";
     const img = el("img");
-    img.src = asset + "lion.png";
+    img.src = d.level_gift_seal
+      ? rewardAsset(d.level_gift_seal.asset)
+      : asset + "lion.png";
     img.alt = "Lidya hediye mührü";
     box.append(
       img,

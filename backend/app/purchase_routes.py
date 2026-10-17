@@ -393,6 +393,8 @@ def register_auth(current_user):
             if before+row.total>LIMIT: raise HTTPException(422,'Bakiye üst sınırı aşılıyor.')
             db.info.update(lidya_operation='purchase_credit',lidya_actor_id=user.id,lidya_reference_id=row.id,lidya_details=f'package={row.package_id}; total={row.total}')
             target.lidya=before+row.total;row.transaction_reference=reference;row.approved_document_sha=proof_sha;row.status='approved'
+            from .vip_membership import record_purchase
+            record_purchase(db,target.id,int(row.total),"order",row.id)
             # A purchased credit uses the same reviewable FA/DA balance audit format.
             db.add(LidyaOperation(id=str(uuid4()),request_key='purchase-'+row.id,admin_id=user.id,admin_role=admin_role,admin_name=user.nickname,
                 user_id=target.id,public_id=target.public_id,amount=row.total,before=before,after=target.lidya,operation='EKLEME',evidence=row.evidence,exemption_sha=''))
