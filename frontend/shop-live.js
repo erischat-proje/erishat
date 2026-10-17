@@ -52,7 +52,7 @@
     const grid = root.querySelector('.liveShopGrid');
     if (!token()) { grid.textContent='Mağazayı görmek için giriş yap.'; return; }
     try {
-      const [catalog, owned, vip, me] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip'), api('/me')]);
+      const [catalog, owned, vip, me, coupon] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me/vip'), api('/me'),api('/me/vip/benefits/coupon')]);
       let items = list(catalog);
       const ownedSet = new Set(list(owned).map(item => `${item.cosmetic_type || item.type}:${item.asset_key || item.key}`));
       const currentVip = Number(vip?.level || 0);
@@ -82,8 +82,9 @@
             action.textContent = '✓ Uygula';
             action.onclick = async () => { try { await api('/me/cosmetics/apply', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); window.ErisChatCosmetics?.load(); window.toast?.('Görünüm uygulandı ✓'); } catch (error) { window.toast?.(error.message || 'Görünüm uygulanamadı.'); } };
           } else {
-            const price = Number(item.price || 1000);
-            action.textContent = `Satın al • ${price.toLocaleString('tr-TR')}`;
+            const originalPrice=Number(item.price||1000);
+            const price=Math.max(1,originalPrice-Math.floor(originalPrice*Number(coupon.percent||0)/100));
+            action.textContent = `Satın al • ${price.toLocaleString('tr-TR')}${coupon.percent?' · VIP kuponlu':''}`;
             action.onclick = async () => { action.disabled=true; try { await api('/me/cosmetics/purchase', {method:'POST', body:JSON.stringify({cosmetic_type:type, asset_key:key})}); await render(); window.toast?.('Kozmetik satın alındı ✓'); } catch (error) { window.toast?.(error.message || 'Satın alma başarısız.'); action.disabled=false; } };
           }
           card.appendChild(action);

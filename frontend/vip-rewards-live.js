@@ -73,7 +73,7 @@
         const feedback=document.createElement('div');feedback.className='eris-vip-status';feedback.setAttribute('role','status');row.lastElementChild.append(feedback);root.append(row);
         row.querySelectorAll('.eris-vip-asset img,.eris-vip-presentation>img,.eris-vip-entry-reward-art').forEach(image=>{const button=document.createElement('button');button.type='button';button.className='eris-vip-art-button';button.setAttribute('aria-label',image.alt+' büyük görselini aç');image.replaceWith(button);button.append(image);button.onclick=()=>previewArt(image.src,image.alt)});
       }
-      filterRows();
+      filterRows();window.ErisVIPPrivileges?.mount(root);
     }catch(e){if(root.isConnected&&root._vipTicket===ticket){root.replaceChildren();const state=document.createElement('div');state.className='eris-vip-load-state';state.setAttribute('role','status');state.textContent='VIP ödülleri yüklenemedi: '+e.message;const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=()=>load(root);state.append(retry);root.append(state)}}finally{if(root._vipTicket===ticket)root.setAttribute('aria-busy','false')}
   }
   async function action(button,fn){button.disabled=true;try{await fn();window.toast?.('VIP ödülleri envantere eklendi ✓');await Promise.all([...roots].filter(r=>r.isConnected).map(r=>load(r)))}catch(e){button.disabled=false;const status=button.closest('.eris-vip-row')?.querySelector('.eris-vip-status');if(status)status.textContent=e.message||'İşlem başarısız. Tekrar dene.';window.toast?.(e.message)}}
@@ -85,7 +85,8 @@
   function open(){
     if(document.querySelector('.eris-vip-overlay'))return;lastTrigger=document.activeElement;
     const shade=document.createElement('div');shade.className='eris-vip-overlay';shade.innerHTML='<section class="eris-vip-dialog" role="dialog" aria-modal="true" aria-labelledby="erisVIPTitle"><header><h2 id="erisVIPTitle">VIP merkezi</h2><button type="button" aria-label="VIP merkezini kapat">×</button></header><div class="eris-vip-content"></div></section>';
-    shade.querySelector('button').onclick=close;shade.onclick=e=>{if(e.target===shade)close()};
+    const help=document.createElement('button');help.type='button';help.textContent='?';help.setAttribute('aria-label','VIP kullanım rehberi');help.onclick=()=>window.ErisVIPPrivileges?.help();shade.querySelector('header').insertBefore(help,shade.querySelector('header button'));
+    shade.querySelector('header button:last-child').onclick=close;shade.onclick=e=>{if(e.target===shade)close()};
     shade.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();close()}if(e.key==='Tab'){const buttons=[...shade.querySelectorAll('button:not(:disabled)')],first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
     document.body.append(shade);document.body.classList.add('eris-vip-open');shade.querySelector('button').focus();load(shade.querySelector('.eris-vip-content'));
   }
@@ -126,6 +127,7 @@
     root.querySelectorAll('[data-fans]').forEach(el=>{el.hidden=!!u.fans_hidden});
     root.querySelectorAll('[data-received-gifts]').forEach(el=>{if(u.gifts_hidden){el.textContent='Gizli';return}el.innerHTML='<span>'+number(u.received_gift_lidya)+'</span><img src="./lidya-coin.png" alt="Lidya">'});
     window.ErisRelationship?.decorate?.(root,u.relationship);
+    window.ErisVIPPrivileges?.profile(root,u.vip_benefits||{},u.relationship);
     root.querySelector('.task-profile-title')?.remove();
     if(u.title_asset&&u.title_asset.startsWith('shop-expansion/title-')){root.querySelector('.rel-title')?.remove();const badge=document.createElement('img');badge.className='rel-title task-profile-title';badge.src=window.ErisChatCosmetics.assetUrl(u.title_asset);badge.alt='Görev ünvanı';badge.style.cssText='width:100px;height:30px;object-fit:contain';const area=root.querySelector('.eris-profile-badges,.eris-mini-relationship');if(area)area.append(badge);}
   }

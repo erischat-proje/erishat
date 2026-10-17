@@ -29,7 +29,7 @@ from .auth import (
 from .cosmetic_routes import router as cosmetic_router
 from .config import settings
 from .cosmetics import catalog
-from . import vip_spending
+from . import vip_spending, vip_privileges
 from . import room_emoji_access
 from .vip_presentation import visible_entry_level, entry_selection, entry_style
 from .db import Base, engine, get_db
@@ -103,6 +103,7 @@ def migrate_legacy_avatars(db: Session) -> None:
 app = FastAPI(title="ErisChat API", version="1.0.3-optimization-20261003")
 install_diagnostics(app)
 app.include_router(cosmetic_router)
+app.include_router(vip_privileges.router)
 from . import shop_expansion
 app.include_router(shop_expansion.router)
 
@@ -2056,6 +2057,10 @@ def _load_room_socket(token, room_id):
         entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'frame_asset':user.frame_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
         entrance_payload['vip_entry_level'] = visible_entry_level(db, user.id)
         entrance_payload['vip_entry_style'] = entry_style(user)
+        entrance_payload['vip_benefits'] = vip_privileges.entry_style(db,user.id)
+        if entrance_house and entrance_house.active:
+            partner_id=entrance_house.female_id if user.id==entrance_house.male_id else entrance_house.male_id
+            entrance_payload['partner_present']=bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id==internal_room_id,RoomMember.user_id==partner_id,RoomMember.ghost.is_(False))))
         entrance_payload['normal_entry'] = entry_mode == 'normal'
         entrance_payload['shop_entry'] = shop_expansion.selected_entry(db, user)
         # Membership identity stays stable during a socket reconnect, but changes on rejoin.
@@ -2149,7 +2154,7 @@ def _room_socket_chat(internal_room_id, room_id, user, text_value):
         db.commit()
         db.refresh(msg)
         fan_total = gift_totals(db, {user.id})[user.id]
-        payload = {"type":"room_chat","bubble_asset":user.bubble_asset or relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
+        payload = {"type":"room_chat","vip_benefits":vip_privileges.name_style(db,user.id),"bubble_asset":user.bubble_asset or relationship_routes.rewards.selected(db,user.id,"bubble"),"fan_level":level_for_total(fan_total),"id":msg.id,"room_id":room_id,"user_id":user.id,"nickname":user.nickname,"avatar":user.avatar,"avatar_asset":user.avatar_asset,"frame_asset":user.frame_asset,"text":msg.text,"created_at":msg.created_at.isoformat() if msg.created_at else None}
     return {"payload": payload}
 
 
@@ -2179,6 +2184,8 @@ def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id, targe
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user_id).first()
         if not user or not user.is_active or not room or not member:
             return error("Oda bağlantınız aktif değil.")
+        if reaction_id.startswith('lidya_sticker_') and vip_privileges.active(db,user_id).get('stickers')!='enabled':
+            return error('Lidya çıkartmalarını VIP → Ek ödüller → Sohbet bölümünden etkinleştir.')
         if reaction_id in room_emoji_access.VIP_EMOJI_LEVELS:
             level = room_emoji_access.earned_level(db.get(VipStatus, user_id))
             if not room_emoji_access.can_use(reaction_id, level):

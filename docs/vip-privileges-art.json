@@ -1,0 +1,86 @@
+{
+  "method": "built-in imagegen",
+  "technical_preparation": "PNG assets resized for app delivery; artwork was generated, not drawn in code.",
+  "assets": [
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-1.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: joyful smiling Lydian lion face with a tiny antique gold crown. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-2.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion giving a warm friendly wink. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-3.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion cheering triumphantly with a small golden laurel wreath. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-4.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion sending a tiny golden heart. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-5.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion applauding with its two front paws. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-6.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion greeting with one raised front paw. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-7.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion lifting a golden goblet in celebration. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-8.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion holding an ivory rose. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-9.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion with heart shaped golden eyes. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-10.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: Lydian lion laughing happily with closed eyes. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-11.png",
+      "prompt": "A single elegant antique gold laurel wreath encircling a small ivory heart, a luxury 3D decorative chat sticker. Perfectly centered, front view, detailed gold leaves, soft warm studio highlights, transparent background, square image. No character, no text, no watermark.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sticker-12.png",
+      "prompt": "Use case: stylized-concept. Single production chat sticker for ErisChat Lidya VIP: majestic Lydian lion with a large ornate royal gold crown and laurel. One single centered expressive character sticker, polished cute premium 3D gold sculpture, antique gold and warm ivory palette, beautifully crafted lion character, friendly face, readable at 64px, transparent background. Entire subject visible with generous transparent margin, square composition, no words, no letters, no watermark, no UI or sheet. Consistent premium Lydian royal style.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/lion.png",
+      "design_brief": "Sculpted antique gold crowned Lydian lion medallion with champagne jewels and laurel, transparent background, no text.",
+      "transparent": true
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/palace.png",
+      "design_brief": "Ancient Lydian royal palace with ivory marble columns, antique gold reliefs and a distant throne, quiet central space, no text.",
+      "transparent": false
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/sardis.png",
+      "design_brief": "Ancient Lydian palace terrace at golden dawn overlooking Sardis with ivory marble, gold lion motifs and laurel, no text.",
+      "transparent": false
+    },
+    {
+      "file": "frontend/assets/vip-privileges-v1/paktolos.png",
+      "design_brief": "Peaceful gold bearing river in ancient Lydian marble gardens, small gold bridge, champagne reflections and colonnades, no text.",
+      "transparent": false
+    }
+  ]
+}

@@ -88,6 +88,10 @@ def dispatch(db, at=None):
     for ticket in db.scalars(select(SupportTicket).outerjoin(SupportFlow, SupportFlow.ticket_id == SupportTicket.id).where(SupportFlow.ticket_id.is_(None), SupportTicket.status.in_(["pending", "open", "accepted"])).order_by(SupportTicket.id).limit(200)):
         flow_for(db, ticket)
     flows = list(db.scalars(select(SupportFlow).where(SupportFlow.phase == "pending").order_by(SupportFlow.ticket_id).with_for_update(skip_locked=True)))
+    from .vip_privileges import level as vip_level
+    # Stable ordering: VIP 12 first; preserve FIFO within each priority group.
+    tickets={f.ticket_id:db.get(SupportTicket,f.ticket_id) for f in flows}
+    flows.sort(key=lambda f: 0 if tickets[f.ticket_id] and vip_level(db,tickets[f.ticket_id].user_id)>=12 else 1)
     busy = set(db.scalars(select(SupportAssignment.admin_id).join(SupportFlow, SupportFlow.ticket_id == SupportAssignment.ticket_id).where(SupportFlow.phase.in_(["awaiting_ready", "active"]))))
     reserved = {f.offered_to for f in flows if f.offered_to and utc(f.offer_until) and utc(f.offer_until) > at}
     agents = list(db.execute(select(SupportAgent, AdminRole).join(AdminRole, AdminRole.user_id == SupportAgent.user_id).join(User, User.id == SupportAgent.user_id).where(User.is_active.is_(True), SupportAgent.seen_at > at - timedelta(seconds=15)).order_by(SupportAgent.user_id)))
