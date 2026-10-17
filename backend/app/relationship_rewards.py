@@ -167,9 +167,11 @@ def status_asset(key):
 def status_unlocked(db, house):
     rings = {r.ring for r in db.scalars(select(CoupleRing).where(CoupleRing.couple_id == house.id))}
     keys = {'dating'}
-    if house.level >= 2 or any(r.startswith('copper-') for r in rings): keys.add('copper-promise')
-    if house.level >= 2 or any(r.startswith('silver-') for r in rings): keys.add('silver-promise')
-    if house.level >= 4: keys.update(('copper-engaged', 'silver-engaged'))
+    if any(r.startswith('copper-') for r in rings): keys.add('copper-promise')
+    if any(r.startswith('silver-') for r in rings): keys.add('silver-promise')
+    if house.level >= 4:
+        if 'copper-promise' in keys: keys.add('copper-engaged')
+        if 'silver-promise' in keys: keys.add('silver-engaged')
     if house.married: keys.add('married')
     return keys
 
