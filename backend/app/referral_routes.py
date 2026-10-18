@@ -46,16 +46,16 @@ def install_routes(current_user):
     def create_code(payload: NewCode, db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
         code = ''.join(__import__('secrets').choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(14))
-        obj = ReferralCode(code=code, kind=payload.kind, max_uses=1, created_by=user.id)
+        obj = ReferralCode(code=code, kind=payload.kind, max_uses=payload.max_uses, created_by=user.id)
         db.add(obj)
-        db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code, details=f'{payload.kind}:1'))
+        db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code, details=f'{payload.kind}:{payload.max_uses}'))
         db.commit()
-        return {'code': code, 'kind': payload.kind, 'max_uses': 1, 'reward': 2500 if payload.kind == 'USER' else 12500}
+        return {'code': code, 'kind': payload.kind, 'max_uses': payload.max_uses, 'reward': 2500 if payload.kind == 'USER' else 12500}
 
     @router.get('/admin/referrals')
     def list_codes(db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
-        rows = db.scalars(select(ReferralCode).order_by(ReferralCode.created_at.desc()).limit(200)).all()
+        rows = db.scalars(select(ReferralCode).where(ReferralCode.active.is_(True), ReferralCode.uses < ReferralCode.max_uses).order_by(ReferralCode.created_at.desc()).limit(200)).all()
         return [{'id': r.id, 'code': r.code, 'kind': r.kind, 'uses': r.uses, 'max_uses': r.max_uses, 'active': r.active and r.uses < r.max_uses} for r in rows]
 
     @router.delete('/admin/referrals/{code_id}')
