@@ -52,3 +52,36 @@ html.eris-adaptive #erisRoomSurface.room-layout-v6.okey101-mode>.eris-room-chat:
 .o101-root .o101-rule-overlay .o101-rules{display:block}
 .o101-root .o101-rule-overlay .o101-rules:not([open])>p{display:none}
 .o101-root .o101-rack-area{margin-block:0}
+
+
+/* LIDYA 101 / spatial table: visual-only, never changes the server game rules. */
+#erisRoomSurface.okey101-mode .o101-root[data-phase="playing"] .o101-seat-strip{display:none!important}
+#erisRoomSurface.okey101-mode .o101-root[data-phase="playing"] .o101-game{overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}
+#erisRoomSurface.okey101-mode .o101-premium-table{position:relative;display:block;flex:1 0 280px;min-height:280px;overflow:auto;isolation:isolate;padding:12px 12px 16px;border:3px solid #bd9a55;border-radius:26px;background:radial-gradient(ellipse at 50% 40%,#28685d 0%,#17453e 58%,#0e292c 100%);box-shadow:inset 0 0 0 4px #422c19,inset 0 0 35px #071916,0 5px 20px #0004}
+.o101-premium-table .o101-table-players{display:block;position:absolute;inset:0;pointer-events:none;z-index:2;padding:0;margin:0}
+.o101-premium-table .o101-table-players article{position:absolute;width:min(30%,135px);min-height:32px;padding:3px 5px;text-align:center;border-radius:12px;background:#172f33ee;border:1px solid #bca26b99;box-shadow:0 3px 8px #0004;pointer-events:none}
+.o101-premium-table .o101-table-players article[data-position="top"]{top:5px;left:50%;transform:translateX(-50%)}
+.o101-premium-table .o101-table-players article[data-position="left"]{top:36%;left:5px;transform:translateY(-50%)}
+.o101-premium-table .o101-table-players article[data-position="right"]{top:36%;right:5px;transform:translateY(-50%)}
+.o101-premium-table .o101-table-players article[data-position="bottom"]{bottom:4px;left:50%;transform:translateX(-50%)}
+.o101-premium-table .o101-table-players article.turn{border-color:#ffe09c;box-shadow:0 0 0 2px #e3bd6c77,0 0 14px #e3bd6c88}
+.o101-premium-table .o101-deck{position:relative;z-index:3;display:flex;justify-content:center;gap:7px;flex-wrap:wrap;max-width:78%;margin:42px auto 5px;padding:5px;border-radius:10px;background:#081f22a8}
+.o101-premium-table .o101-spatial-discards{position:relative;z-index:3;display:grid!important;grid-template-areas:'. top .' 'left center right' '. bottom .';grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:44px 56px 44px;align-items:center;justify-items:center;gap:3px;max-width:340px;margin:0 auto 10px;padding:0!important;background:none!important;border:0!important}
+.o101-premium-table .o101-spatial-discards>div{display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:0;padding:2px 4px!important;border-radius:8px;background:#062621b8}
+.o101-premium-table .o101-spatial-discards>div[data-position="top"]{grid-area:top}
+.o101-premium-table .o101-spatial-discards>div[data-position="left"]{grid-area:left}
+.o101-premium-table .o101-spatial-discards>div[data-position="right"]{grid-area:right}
+.o101-premium-table .o101-spatial-discards>div[data-position="bottom"]{grid-area:bottom}
+.o101-premium-table .o101-spatial-discards small{font-size:8px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o101-premium-table .o101-spatial-discards .o101-tile{min-height:28px!important;height:28px!important;min-width:23px!important;width:23px!important;padding:1px!important}
+.o101-premium-table .o101-spatial-discards .o101-tile b{font-size:14px}
+.o101-premium-table .o101-table-melds{position:relative;z-index:3;display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:4px 0 25px}
+.o101-premium-table .o101-table-melds .o101-meld-section{min-width:0;max-height:145px;overflow:auto;border:1px solid #c3a26677;border-radius:10px;background:#0c2928b8;padding:4px}
+.o101-premium-table .o101-table-melds h3{margin:0 0 4px;font-size:11px;color:#f4d999}
+#erisRoomSurface.okey101-mode .o101-rack-area{position:relative;z-index:4;background:linear-gradient(145deg,#70451f,#b9894c 35%,#67421f 85%);border:2px solid #e4c17d;border-radius:12px;margin:3px 7px 5px;padding:6px;box-shadow:inset 0 0 0 3px #442a17,0 3px 12px #0004}
+#erisRoomSurface.okey101-mode .o101-rack{background:repeating-linear-gradient(90deg,#2d2119,#2d2119 2px,#4c3420 3px,#4c3420 42px);border-radius:7px;padding:5px}
+#erisRoomSurface.okey101-mode .o101-rack .o101-tile{box-shadow:inset 0 0 0 1px #fff9,0 2px 4px #0005}
+#erisRoomSurface.okey101-mode .o101-root[data-phase="playing"]{background:linear-gradient(135deg,#2d251e,#141d23)}
+html[data-theme="light"] #erisRoomSurface.okey101-mode .o101-root[data-phase="playing"],body.light-theme #erisRoomSurface.okey101-mode .o101-root[data-phase="playing"]{background:linear-gradient(135deg,#f3e7cc,#d6c5a2);color:#fff5d9}
+@media(max-width:430px){.o101-premium-table .o101-deck{max-width:96%;margin-top:45px}.o101-premium-table .o101-table-players article{width:32%;font-size:9px}.o101-premium-table .o101-table-players article small{font-size:8px}.o101-premium-table .o101-table-melds{grid-template-columns:1fr}.o101-premium-table .o101-table-melds .o101-meld-section{max-height:90px}}
+@media(max-height:640px){#erisRoomSurface.okey101-mode .o101-premium-table{min-height:235px;flex-basis:235px}.o101-premium-table .o101-spatial-discards{grid-template-rows:35px 45px 35px}.o101-premium-table .o101-deck{margin-top:36px}}
