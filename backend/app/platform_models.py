@@ -265,6 +265,16 @@ class MessageHidden(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+
+
+class ConversationMute(Base):
+    __tablename__ = "conversation_mutes"
+    __table_args__ = (UniqueConstraint("conversation_id", "user_id", name="uq_conversation_mute_user"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    is_muted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+
 class ConversationFolder(Base):
     __tablename__ = "conversation_folders"
     __table_args__ = (UniqueConstraint("user_id", "conversation_id", name="uq_conversation_folder_user"),)
