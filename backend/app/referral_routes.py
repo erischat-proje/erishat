@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
-from secrets import token_hex
+from secrets import choice
+from string import ascii_uppercase, digits
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -44,12 +45,12 @@ def install_routes(current_user):
     @router.post('/admin/referrals')
     def create_code(payload: NewCode, db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
-        code = 'ERIS-' + payload.kind + '-' + token_hex(6).upper()
-        obj = ReferralCode(code=code, kind=payload.kind, max_uses=payload.max_uses, created_by=user.id)
+        code = ''.join(__import__('secrets').choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(14))
+        obj = ReferralCode(code=code, kind=payload.kind, max_uses=1, created_by=user.id)
         db.add(obj)
-        db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code, details=f'{payload.kind}:{payload.max_uses}'))
+        db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code, details=f'{payload.kind}:1'))
         db.commit()
-        return {'code': code, 'kind': payload.kind, 'max_uses': payload.max_uses, 'reward': 2500 if payload.kind == 'USER' else 12500}
+        return {'code': code, 'kind': payload.kind, 'max_uses': 1, 'reward': 2500 if payload.kind == 'USER' else 12500}
 
     @router.get('/admin/referrals')
     def list_codes(db: Session = Depends(get_db), user: User = Depends(current_user)):
