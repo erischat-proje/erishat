@@ -43,7 +43,7 @@ from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_aut
 from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
-    SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow)
+    SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow, PrivateProfileSetting, PrivateMessageRequest)
 from .platform_routes import register_platform_auth, router as platform_router
 from . import referral_models
 from .referral_routes import install_routes as install_referral_routes, router as referral_router
@@ -1014,7 +1014,10 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
             changed = True
     if changed:
         db.commit()
-    return conversation_page(db, user.id, folder, limit, offset)
+    rows = conversation_page(db, user.id, folder, limit, offset)
+    pending_ids = set(db.scalars(select(PrivateMessageRequest.conversation_id).where(
+        PrivateMessageRequest.recipient_id == user.id, PrivateMessageRequest.status == 'pending')))
+    return [row for row in rows if row['id'] not in pending_ids]
 
 
 @app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
@@ -1041,6 +1044,40 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
         "created_at": conversation.created_at, "members": member_details,
         "name": (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)}
+
+
+def _dm_request_gate(db: Session, sender_id: str, conversation_id: str, *, first_text: bool = False) -> bool:
+    """Return True when the first text must become a request; reject later sends.
+
+    Lock the sender row to serialize concurrent first sends (including media/gifts).
+    """
+    db.scalar(select(User.id).where(User.id == sender_id).with_for_update())
+    recipient_ids = list(db.scalars(select(ConversationMember.user_id).where(
+        ConversationMember.conversation_id == conversation_id,
+        ConversationMember.user_id != sender_id)))
+    if len(recipient_ids) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
+        return False
+    recipient_id = recipient_ids[0]
+    setting = db.get(PrivateProfileSetting, recipient_id)
+    if not setting or not setting.is_private:
+        return False
+    request = db.scalar(select(PrivateMessageRequest).where(
+        PrivateMessageRequest.sender_id == sender_id,
+        PrivateMessageRequest.recipient_id == recipient_id))
+    if request and request.status == 'accepted':
+        return False
+    if request and request.status == 'rejected':
+        raise HTTPException(403, 'Mesaj isteğiniz reddedildi.')
+    if request:
+        raise HTTPException(403, 'Karşı tarafın mesaj isteğinizi kabul etmesini bekleyiniz.')
+    if not first_text:
+        raise HTTPException(403, 'Gizli profile önce bir metin mesaj isteği göndermelisiniz.')
+    db.add(PrivateMessageRequest(sender_id=sender_id, recipient_id=recipient_id,
+        conversation_id=conversation_id, status='pending'))
+    db.add(Notification(user_id=recipient_id, kind='message_request', title='Mesaj İsteği',
+        body='Yeni bir mesaj isteğiniz var.'))
+    db.flush()
+    return True
 
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
@@ -1071,6 +1108,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
             if restriction and restriction.enabled and not unlocked:
                 gift_price = GIFT_CATALOG.get(restriction.gift_key, 0)
                 raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {restriction.gift_key} ({gift_price} Lidya) göndermelisin.")
+    first_private_request = _dm_request_gate(db, user.id, conversation_id, first_text=True)
     try:
         message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
     except ValueError as exc:
@@ -1088,7 +1126,8 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         if member_id != user.id:
             db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
                 body="Kilitli sohbette yeni mesaj" if (_folder(db, member_id, conversation_id) and _folder(db, member_id, conversation_id).locked) else payload.text[:180]))
-        await _send_dm_event(db, member_id, event)
+        if not first_private_request:
+            await _send_dm_event(db, member_id, event)
     db.commit()
     return _message_out(db, message, user.id)
 
@@ -1165,6 +1204,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
                 raise HTTPException(status_code=403, detail="Bu kullanıcı tarafından engellendiniz.")
             if db.scalar(select(UserBlock.id).where(UserBlock.blocker_id == user.id, UserBlock.blocked_id == target_id)):
                 raise HTTPException(status_code=403, detail="Bu kullanıcıyı engellediniz.")
+    _dm_request_gate(db, user.id, conversation_id)
     if not conversation or conversation.type == "welcome": raise HTTPException(status_code=400, detail="Bu konuşmaya medya gönderilemez")
     if media_type not in {"image", "voice"}: raise HTTPException(status_code=400, detail="Geçersiz medya türü")
     if media_type == "image":
@@ -1941,6 +1981,7 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     if len(recipients) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         raise HTTPException(status_code=400, detail="Bu hediye DM konuşmalarında kullanılabilir")
     recipient_id = recipients[0]; require_feature(db, user.id, [recipient_id])
+    _dm_request_gate(db, user.id, conversation_id)
     gift_key = str(payload.get("gift_key") or ""); price = GIFT_CATALOG.get(gift_key)
     quantity = payload.get("quantity", 1)
     if type(quantity) is not int or quantity not in (1, 3, 5, 9, 49, 99):
