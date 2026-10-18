@@ -59,7 +59,7 @@
       const renderItems = filter => {
         grid.innerHTML = '';
         const gender=me.gender;
-        const filtered = items.filter(item => (typeOf(item) === filter.replace('vip-', '') && vipOf(item) === filter.startsWith('vip-')) && (!item.gender || item.gender === gender));
+        const filtered = items.filter(item => (typeOf(item) === filter.replace('vip-', '') && vipOf(item) === filter.startsWith('vip-')) && (!item.gender || item.gender === gender) && !ownedSet.has(`${typeOf(item)}:${keyOf(item)}`));
         if (!filtered.length) { grid.innerHTML = '<div class="liveShopNote">Bu kategoride kayıtlı kozmetik yok.</div>'; return; }
         filtered.forEach((item, index) => {
           const type = typeOf(item);

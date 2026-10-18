@@ -564,7 +564,20 @@
     installFolderStyles();
     const root=document.getElementById('messages');if(!root||root.querySelector('[data-dm-search]'))return;
     const title=root.querySelector('.title');const search=document.createElement('div');search.setAttribute('data-dm-search','');search.style.cssText='margin:0 0 14px;position:relative';search.innerHTML="<input data-dm-user-search class=\"search-input\" inputmode=\"text\" autocomplete=\"off\" placeholder=\"Kullanıcı ID ara…\" style=\"width:100%;box-sizing:border-box;background:color-mix(in srgb, var(--ui-panel) 6%, transparent);border:1px solid var(--ui-line);color:var(--ui-ink);border-radius:18px;padding:13px 45px 13px 15px;outline:none\"><button data-dm-search-btn class=\"primary\" style=\"position:absolute;right:5px;top:5px;height:36px;border-radius:14px\">⌕</button><div data-dm-search-result style=\"margin-top:7px\"></div>";title?.parentNode?.insertBefore(search,title.nextSibling);
-    const controls=document.createElement('div');controls.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px';const notify=document.createElement('button');notify.type='button';notify.textContent=window.ErisNotifications?.enabled===false?'Bildirimleri aç':'Bildirimleri kapat';notify.style.cssText="width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-ink);font-size:10px";notify.onclick=async()=>{notify.disabled=true;try{const hidden=window.ErisNotifications?.enabled!==false;const p=await window.ErisPlatform.api('/me/privacy',{method:'PATCH',body:JSON.stringify({hide_notifications:hidden})});await window.ErisAuth.updateMe({notifications_enabled:!hidden});window.ErisNotifications?.apply(p);window.dispatchEvent(new CustomEvent('erischat:notification-settings',{detail:{enabled:!hidden}}));notify.textContent=hidden?'Bildirimleri aç':'Bildirimleri kapat';if(!hidden&&'Notification' in window&&Notification.permission==='default')await Notification.requestPermission();}catch(e){window.toast?.(e.message)}finally{notify.disabled=false}};notify.dataset.dmNotifications='';window.addEventListener('erischat:notification-settings',e=>{notify.textContent=e.detail?.enabled===false?'Bildirimleri aç':'Bildirimleri kapat'});const archive=document.createElement('button');archive.type='button';archive.textContent='Arşiv';archive.style.cssText="width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-ink);font-size:10px";archive.onclick=()=>{inboxFolder='archive';selectedConversations.clear();loadConversations()};controls.append(notify,archive);search.append(controls);
+    const controls=document.createElement('div');controls.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px';const notify=document.createElement('button');notify.type='button';notify.textContent='Sohbet bildirimlerini yönet';notify.style.cssText="width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-ink);font-size:10px";notify.onclick=async()=>{
+      const id=activeConversationId;
+      if(!id){window.toast?.('Önce bir sohbet seçin.');return}
+      notify.disabled=true;
+      try{
+        const path='/conversations/'+encodeURIComponent(id)+'/notifications';
+        const current=await window.ErisPlatform.api(path);
+        const updated=await window.ErisPlatform.api(path,{method:'PUT',body:JSON.stringify({is_muted:!current.is_muted})});
+        notify.textContent=updated.is_muted?'Bildirimleri aç':'Bildirimleri kapat';
+        window.toast?.(updated.is_muted?'Bu sohbetin bildirimleri kapatıldı.':'Bu sohbetin bildirimleri açıldı.');
+      }catch(e){window.toast?.(e.message||'Bildirim ayarı kaydedilemedi.')}
+      finally{notify.disabled=false}
+    };
+    notify.dataset.dmNotifications='';const archive=document.createElement('button');archive.type='button';archive.textContent='Arşiv';archive.style.cssText="width:100%;min-width:0;min-height:40px;padding:8px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);color:var(--ui-ink);font-size:10px";archive.onclick=()=>{inboxFolder='archive';selectedConversations.clear();loadConversations()};controls.append(notify,archive);search.append(controls);
     const input=search.querySelector('[data-dm-user-search]'),out=search.querySelector('[data-dm-search-result]');let searchRevision=0;input.addEventListener('input',()=>{searchRevision++;out.replaceChildren()});const run=async()=>{const revision=++searchRevision,q=input.value.trim();if(!q){out.innerHTML='';return}if(/^\d{6}$/.test(q)){input.value='';out.replaceChildren();await enterLockedFolder(q);return}out.innerHTML="<div class=\"card\" style=\"padding:10px;font-size:9px;color:var(--ui-ink)\">Aranıyor…</div>";try{const u=await api().api('/users/'+encodeURIComponent(q));if(revision!==searchRevision)return;const publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';out.innerHTML='<button type="button" class="item card" style="width:100%;text-align:left"><div class="ava round">👤</div><div class="grow"><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small>ID: '+escapeHtml(publicId)+' • Profili görüntüle</small></div></button>';renderAvatar(out.querySelector('.ava'),avatarValue(u.avatar_asset||u.avatar_url||u.avatar,String(u.nickname||'A').slice(0,1).toUpperCase()),String(u.nickname||'A').slice(0,1).toUpperCase());window.ErisRoleBadges?.bind(out.querySelector('b'),u);out.querySelector('button').onclick=()=>loadUserProfile(u.id||q)}catch(e){if(revision!==searchRevision)return;out.innerHTML="<div class=\"card\" style=\"padding:10px;font-size:9px;color:var(--ui-danger)\">Kullanıcı bulunamadı.</div>"}};search.querySelector('[data-dm-search-btn]').setAttribute('aria-label','Kullanıcı ara');input.setAttribute('aria-label','Kullanıcı ID veya kilitli sohbet şifresi');search.querySelector('[data-dm-search-btn]').innerHTML=dmIcon('search');search.querySelector('[data-dm-search-btn]').onclick=run;input.onkeydown=e=>{if(e.key==='Enter')run()};installFolderControls(root);
   }
   async function loadConversations() {
@@ -730,7 +743,7 @@
     textSends.set(String(id),task);
     try{return await task}finally{textSends.delete(String(id))}
   }
-  function handleRealtimeMessage(event) {
+  async function handleRealtimeMessage(event) {
     const data = event?.detail;
     if (data?.type === 'dm_read' && data.conversation_id) {
       if (String(activeConversationId||'') !== String(data.conversation_id)) return;
@@ -762,7 +775,14 @@
       body.scrollTop = body.scrollHeight;
       if (!mine) api().messages(id).catch(()=>{});
     } else if (String(data.sender_id || '') !== String(currentUserId || '') && window.ErisNotifications?.enabled!==false && 'Notification' in window && Notification.permission === 'granted') {
-      try { new Notification(data.sender_nickname || 'Yeni mesaj', {body:data.text||'Yeni mesaj aldınız.',tag:'dm-'+data.conversation_id}); } catch (_) {}
+      try {
+        const [privacy,mute]=await Promise.all([
+          window.ErisPlatform.api('/me/privacy'),
+          window.ErisPlatform.api('/conversations/'+encodeURIComponent(data.conversation_id)+'/notifications')
+        ]);
+        if(!privacy.hide_notifications && !mute.is_muted)
+          new Notification(data.sender_nickname || 'Yeni mesaj', {body:data.text||'Yeni mesaj aldınız.',tag:'dm-'+data.conversation_id});
+      } catch (_) {}
     }
     loadConversations();
   }

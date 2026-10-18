@@ -40,7 +40,7 @@ from .personal_fans import gift_totals, fan_leaderboard
 from .social_privacy import social_flags, require_social_visible
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
-from .platform_models import (ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
+from .platform_models import (ConversationMute, ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
     SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow, PrivateProfileSetting, PrivateMessageRequest)
@@ -71,6 +71,7 @@ from .performance import install_diagnostics, ensure_query_indexes
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
+from .account_deletion_routes import router as account_deletion_router, bind_auth as bind_account_delete_auth
 
 logger = logging.getLogger("erischat.api")
 
@@ -404,6 +405,8 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
 
 
 location_calls.register_auth(current_user)
+bind_account_delete_auth(current_user)
+app.include_router(account_deletion_router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -1047,6 +1050,41 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
         "name": (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)}
 
 
+def _message_notifications_allowed(db: Session, recipient_id: str, conversation_id: str) -> bool:
+    recipient = db.get(User, recipient_id)
+    if not recipient or not recipient.is_active or not recipient.notifications_enabled:
+        return False
+    mute = db.scalar(select(ConversationMute.is_muted).where(
+        ConversationMute.user_id == recipient_id,
+        ConversationMute.conversation_id == conversation_id))
+    return not bool(mute)
+
+
+class ConversationMuteUpdate(BaseModel):
+    is_muted: bool
+
+
+@app.get("/v1/conversations/{conversation_id}/notifications")
+def conversation_notifications(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id)):
+        raise HTTPException(403, "Bu konuşmaya erişiminiz yok")
+    return {"is_muted": bool(db.scalar(select(ConversationMute.is_muted).where(ConversationMute.user_id == user.id, ConversationMute.conversation_id == conversation_id)))}
+
+
+@app.put("/v1/conversations/{conversation_id}/notifications")
+def set_conversation_notifications(conversation_id: str, payload: ConversationMuteUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id)):
+        raise HTTPException(403, "Bu konuşmaya erişiminiz yok")
+    row = db.scalar(select(ConversationMute).where(ConversationMute.user_id == user.id, ConversationMute.conversation_id == conversation_id).with_for_update())
+    if row is None:
+        row = ConversationMute(user_id=user.id, conversation_id=conversation_id, is_muted=payload.is_muted)
+        db.add(row)
+    else:
+        row.is_muted = payload.is_muted
+    db.commit()
+    return {"is_muted": row.is_muted}
+
+
 def _dm_request_gate(db: Session, sender_id: str, conversation_id: str, *, first_text: bool = False) -> bool:
     """Return True when the first text must become a request; reject later sends.
 
@@ -1128,7 +1166,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         "created_at": message.created_at.isoformat() if message.created_at else None,
     }
     for member_id in repo.members(conversation_id):
-        if member_id != user.id:
+        if member_id != user.id and _message_notifications_allowed(db, member_id, conversation_id):
             db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
                 body="Kilitli sohbette yeni mesaj" if (_folder(db, member_id, conversation_id) and _folder(db, member_id, conversation_id).locked) else payload.text[:180]))
         if not first_private_request:
@@ -1236,7 +1274,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     db.add(MessageMedia(message_id=message.id, media_type=media_type, mime_type=mime_type,
         data=data, temporary=temporary, view_seconds=view_seconds if temporary else None))
     for member_id in ConversationRepository(db).members(conversation_id):
-        if member_id != user.id: db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
+        if member_id != user.id and _message_notifications_allowed(db, member_id, conversation_id): db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
             body="Sana süreli fotoğraf gönderdi." if temporary else ("Sana bir fotoğraf gönderdi." if media_type == "image" else "Sana sesli mesaj gönderdi.")))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id,

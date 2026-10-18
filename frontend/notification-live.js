@@ -10,7 +10,7 @@
   const mount=()=>{if(!stack.isConnected)document.body.append(stack)};
   function reset(next){account=next;enabled=null;generation++;cursor=0;baseline=false;pending=null;stack.replaceChildren();}
   function banner(row,g){
-    if((enabled===false && !["gift","dm_gift"].includes(row.kind))||g!==generation)return;mount();while(stack.children.length>=3)stack.firstElementChild.remove();
+    if(enabled===false||g!==generation)return;mount();while(stack.children.length>=3)stack.firstElementChild.remove();
     const card=document.createElement('div');card.className='en-banner';
     const open=document.createElement('button');open.className='en-open';open.type='button';
     const title=document.createElement('b');title.textContent=row.title||'Yeni bildirim';
@@ -29,7 +29,7 @@
       const rows=await api('/me/notifications?limit=100');
       if(g!==generation||token()!==account)return [];
       const highest=rows.reduce((n,r)=>Math.max(n,Number(r.id)||0),cursor);
-      if(baseline)rows.filter(r=>!r.read&&Number(r.id)>cursor&&(enabled!==false||["gift","dm_gift"].includes(r.kind))).slice(0,3).reverse().forEach(r=>banner(r,g));
+      if(baseline)rows.filter(r=>!r.read&&Number(r.id)>cursor&&(enabled!==false)).slice(0,3).reverse().forEach(r=>banner(r,g));
       cursor=highest;baseline=true;
       window.dispatchEvent(new CustomEvent('erischat:notifications',{detail:rows}));return rows;
     })();pending=job;
