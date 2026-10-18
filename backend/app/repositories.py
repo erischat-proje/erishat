@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -87,7 +88,8 @@ class MessageRepository:
     def list(self, conversation_id: str, limit: int = 100, offset: int = 0) -> list[Message]:
         stmt = (
             select(Message)
-            .where(Message.conversation_id == conversation_id)
+            .where(Message.conversation_id == conversation_id,
+                   (Message.expires_at.is_(None)) | (Message.expires_at > datetime.now(timezone.utc)))
             .order_by(Message.created_at.desc(), Message.id.desc())
             .offset(offset)
             .limit(limit)

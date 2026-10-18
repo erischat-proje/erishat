@@ -62,7 +62,7 @@
         const rows=await api('/me/follow-requests');
         // Profilin kendi takip isteği düğmesi varsa ikinci bir düğme üretme.
         const existing=[...profile.querySelectorAll('button,[role=button]')].find(el=>el.id!=='eris-follow-request-button'&&/takip istekleri/i.test(el.textContent||''));
-        if(existing){requests?.remove();requests=null;existing.textContent='Takip İstekleri ('+rows.length+')';existing.addEventListener('click',()=>list('follow'),{once:true});}
+        if(existing){requests?.remove();requests=null;existing.textContent='Takip İstekleri ('+rows.length+')';existing.onclick=()=>list('follow');}
         else {if(!requests){requests=btn('',()=>list('follow'));requests.id='eris-follow-request-button';toolbar.append(requests);}requests.textContent='Takip İstekleri ('+rows.length+')';}
       }
       else {requests?.remove();profile.querySelectorAll('button,[role=button]').forEach(el=>{if(/takip istekleri/i.test(el.textContent||''))el.style.display='none';});}

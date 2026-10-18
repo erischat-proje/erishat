@@ -1111,6 +1111,10 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
     first_private_request = _dm_request_gate(db, user.id, conversation_id, first_text=True)
     try:
         message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
+        conversation = db.get(Conversation, conversation_id)
+        if conversation and conversation.type == 'dm' and conversation.is_ephemeral:
+            message.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+            db.commit()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     event = {
@@ -1224,6 +1228,8 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
         raise HTTPException(status_code=415, detail="Ses dosyası okunamadı")
     temporary = media_type == "image" and view_seconds > 0
     message = Message(conversation_id=conversation_id, sender_id=user.id, text="[Fotoğraf]" if media_type == "image" else "[Sesli mesaj]")
+    if conversation.type == 'dm' and conversation.is_ephemeral:
+        message.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
     db.add(message); db.flush()
     mime_type = (file.content_type or "application/octet-stream").split(";", 1)[0].strip().lower()
     db.add(MessageMedia(message_id=message.id, media_type=media_type, mime_type=mime_type,
@@ -1998,7 +2004,11 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total_price).values(lidya=User.lidya - total_price))
     if charged.rowcount != 1: db.rollback(); raise HTTPException(status_code=400, detail="Yetersiz Lidya")
     db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + receiver_amount))
-    message = Message(conversation_id=conversation_id, sender_id=user.id, text="🎁 " + gift_key + (" ×" + str(quantity) if quantity > 1 else "")); db.add(message); db.flush()
+    message = Message(conversation_id=conversation_id, sender_id=user.id, text="🎁 " + gift_key + (" ×" + str(quantity) if quantity > 1 else ""))
+    conversation = db.get(Conversation, conversation_id)
+    if conversation and conversation.type == 'dm' and conversation.is_ephemeral:
+        message.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+    db.add(message); db.flush()
     db.add(DirectMessageGift(message_id=message.id, sender_id=user.id, recipient_id=recipient_id, gift_key=gift_key, unit_price=total_price, recipient_amount=receiver_amount))
     if restriction and restriction.enabled and not unlock:
         db.add(DirectMessageUnlock(owner_id=recipient_id, sender_id=user.id, gift_key=gift_key))
