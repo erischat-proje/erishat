@@ -18,7 +18,7 @@ from . import wheel_rules, wheel_live_v4, crash_final
 from .db import get_db
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import (
-    DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
+    PrivateProfileSetting, PrivateFollowRequest, PrivateMessageRequest, DiscoveryPreference, Family, FamilyDonation, FamilyMember, FanProfile, GameBet, GamePlay,
     GameRound, Notification, ProfileVisit, Report, RoomAnnouncement, UserBlock, UserFollow, UserLocation, UserPrivacy, UserSocialPrivacy, VipStatus,
 )
 from .room_models import Room, RoomGiftEvent, RoomMember, RoomModerator, RoomChatMessage, RoomBan, RoomSeat
@@ -206,6 +206,80 @@ def register_platform_auth(current_user_dependency):
             for key in ("hide_vip_badge", "hide_vip_neon", "hide_vip_entry", "hide_vip_title"):
                 setattr(p, key, payload.hide_vip)
         db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, **{k:bool(getattr(db.get(UserSocialPrivacy,user.id),k,False)) for k in ("hide_fans","hide_received_gifts")}, "hide_notifications": not user.notifications_enabled}
+    # Private profiles: default public; existing follows remain approved.
+    def _private(db, uid):
+        setting = db.get(PrivateProfileSetting, uid)
+        return bool(setting and setting.is_private)
+
+    def _follows(db, sender, recipient):
+        return bool(db.scalar(select(UserFollow.id).where(UserFollow.follower_id == sender, UserFollow.following_id == recipient)))
+
+    def _follow_request(db, sender, recipient):
+        return db.scalar(select(PrivateFollowRequest).where(PrivateFollowRequest.sender_id == sender, PrivateFollowRequest.recipient_id == recipient))
+
+    def _message_request(db, sender, recipient):
+        return db.scalar(select(PrivateMessageRequest).where(PrivateMessageRequest.sender_id == sender, PrivateMessageRequest.recipient_id == recipient))
+
+    def _notify(db, recipient, kind, body):
+        db.add(Notification(user_id=recipient, kind=kind, title="ErisChat", body=body))
+
+    @router.get("/me/profile-privacy")
+    def private_status(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        return {"is_private": _private(db, user.id)}
+
+    @router.patch("/me/profile-privacy")
+    def set_private(payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        if type(payload.get("is_private")) is not bool: raise HTTPException(422, "is_private boolean olmalı")
+        row = db.get(PrivateProfileSetting, user.id)
+        if row is None: row = PrivateProfileSetting(user_id=user.id); db.add(row)
+        row.is_private = payload["is_private"]
+        db.commit()
+        return {"is_private": row.is_private}
+
+    @router.get("/me/follow-requests")
+    def incoming_follow_requests(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        rows = db.scalars(select(PrivateFollowRequest).where(PrivateFollowRequest.recipient_id == user.id).order_by(PrivateFollowRequest.created_at.desc()).limit(200))
+        return [{"id": r.id, "user_id": r.sender_id, "nickname": db.get(User, r.sender_id).nickname if db.get(User, r.sender_id) else "Kullanıcı"} for r in rows]
+
+    @router.post("/me/follow-requests/{request_id}/accept")
+    def accept_follow_request(request_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(PrivateFollowRequest, request_id)
+        if not row or row.recipient_id != user.id: raise HTTPException(404, "İstek bulunamadı")
+        if not _follows(db, row.sender_id, user.id): db.add(UserFollow(follower_id=row.sender_id, following_id=user.id))
+        sender = db.get(User, row.sender_id)
+        if sender: _notify(db, sender.id, "follow_request_accepted", user.nickname + " takip isteğinizi kabul etti.")
+        db.delete(row); db.commit()
+        return {"accepted": True}
+
+    @router.post("/me/follow-requests/{request_id}/reject")
+    def reject_follow_request(request_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(PrivateFollowRequest, request_id)
+        if not row or row.recipient_id != user.id: raise HTTPException(404, "İstek bulunamadı")
+        sender = db.get(User, row.sender_id)
+        if sender: _notify(db, sender.id, "follow_request_rejected", user.nickname + " takip isteğinizi reddetti.")
+        db.delete(row); db.commit()
+        return {"rejected": True}
+
+    @router.get("/me/message-requests")
+    def incoming_message_requests(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        rows = db.scalars(select(PrivateMessageRequest).where(PrivateMessageRequest.recipient_id == user.id, PrivateMessageRequest.status == "pending").order_by(PrivateMessageRequest.created_at.desc()).limit(200))
+        return [{"id": r.id, "sender_id": r.sender_id, "nickname": db.get(User, r.sender_id).nickname if db.get(User, r.sender_id) else "Kullanıcı", "conversation_id": r.conversation_id} for r in rows]
+
+    @router.post("/me/message-requests/{request_id}/accept")
+    def accept_message_request(request_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(PrivateMessageRequest, request_id)
+        if not row or row.recipient_id != user.id or row.status != "pending": raise HTTPException(404, "İstek bulunamadı")
+        row.status = "accepted"; _notify(db, row.sender_id, "message_request_accepted", user.nickname + " mesaj isteğinizi kabul etti.")
+        db.commit(); return {"accepted": True, "conversation_id": row.conversation_id}
+
+    @router.post("/me/message-requests/{request_id}/reject")
+    def reject_message_request(request_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        row = db.get(PrivateMessageRequest, request_id)
+        if not row or row.recipient_id != user.id or row.status != "pending": raise HTTPException(404, "İstek bulunamadı")
+        # A rejected request must not leave the original message readable.
+        db.execute(delete(Message).where(Message.conversation_id == row.conversation_id, Message.sender_id == row.sender_id))
+        row.status = "rejected"; db.commit(); return {"rejected": True}
+
     @router.get("/me/wallet")
     def my_wallet(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         return {"lidya": int(user.lidya or 0), "lidya_gem": int(getattr(user, "lidya_gem", 0) or 0), "exchange_rate": {"lidya_to_gem": 1, "gem_to_lidya": 1}}
@@ -519,6 +593,14 @@ def register_platform_auth(current_user_dependency):
         if not member: raise HTTPException(status_code=403,detail="Bu konuşmaya erişiminiz yok")
         text=str(payload.get("text") or "").strip()
         if not text: raise HTTPException(status_code=400,detail="Mesaj boş olamaz")
+        recipients = list(db.scalars(select(ConversationMember.user_id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id != user.id)))
+        if len(recipients) == 1 and _private(db, recipients[0]) and not _follows(db, user.id, recipients[0]):
+            existing = _message_request(db, user.id, recipients[0])
+            if existing and existing.status == "pending": raise HTTPException(403, "Karşı tarafa mesaj isteğiniz gönderildi, kabul etmesini bekleyiniz.")
+            if existing and existing.status == "rejected": raise HTTPException(403, "Mesaj isteğiniz reddedildi.")
+            if existing is None:
+                db.add(PrivateMessageRequest(sender_id=user.id, recipient_id=recipients[0], conversation_id=conversation_id, status="pending"))
+                _notify(db, recipients[0], "message_request", user.nickname + " size mesaj isteği gönderdi.")
         message=Message(conversation_id=conversation_id,sender_id=user.id,text=text); db.add(message); db.commit(); db.refresh(message); return message
     @router.get("/users/{user_id}")
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
@@ -543,7 +625,7 @@ def register_platform_auth(current_user_dependency):
         from .personal_fans import fan_count, gift_totals
         from .room_fan_levels import level_for_total
         flags=social_flags(db,target.id,user.id)
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_private":_private(db,target.id),"follow_requested":bool(_follow_request(db,user.id,target.id)),"can_view_private":target.id==user.id or is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
     @router.get("/users/{user_id}/profile-stats")
     def user_profile_stats(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
@@ -568,14 +650,23 @@ def register_platform_auth(current_user_dependency):
         require_feature(db,user.id,[user_id])
         if db.scalar(select(UserFollow.id).where(UserFollow.follower_id==user.id,UserFollow.following_id==user_id)):
             return {"following":True,"created":False}
+        if _private(db, user_id):
+            if _follow_request(db, user.id, user_id): return {"following": False, "requested": True, "created": False}
+            db.add(PrivateFollowRequest(sender_id=user.id, recipient_id=user_id))
+            _notify(db, user_id, "follow_request", user.nickname + " size takip isteği gönderdi.")
+            db.commit()
+            return {"following": False, "requested": True, "created": True}
         row=UserFollow(follower_id=user.id,following_id=user_id); db.add(row)
         db.add(Notification(user_id=user_id,kind="follow",title="Yeni takipçi",body=user.nickname+" sizi takip etti.")); db.commit()
         return {"following":True,"created":True}
     @router.delete("/users/{user_id}/follow")
     def unfollow_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         row=db.scalar(select(UserFollow).where(UserFollow.follower_id==user.id,UserFollow.following_id==user_id))
-        if row: db.delete(row); db.commit()
-        return {"following":False}
+        request = _follow_request(db, user.id, user_id)
+        if row: db.delete(row)
+        if request: db.delete(request)
+        if row or request: db.commit()
+        return {"following":False,"requested":False}
     @router.get("/users/{user_id}/followers")
     def followers(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         if user_id != user.id:

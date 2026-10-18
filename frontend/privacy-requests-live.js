@@ -1,0 +1,61 @@
+(() => {
+  'use strict';
+  const api = (path, options) => window.ErisPlatform.api(path, options);
+  const style = document.createElement('style');
+  style.textContent = `
+    .eris-privacy-action{border:1px solid #cba96a;border-radius:12px;padding:10px 14px;margin:7px;background:linear-gradient(125deg,#382b20,#a17b3d);color:#fff6dd;font-weight:700;cursor:pointer}
+    .eris-privacy-modal{position:fixed;inset:0;z-index:91000;background:#000b;display:grid;place-items:center;padding:18px}
+    .eris-privacy-panel{width:min(440px,100%);max-height:80dvh;overflow:auto;border:2px solid #c5a267;border-radius:22px;padding:18px;background:var(--ui-panel,#201c24);color:var(--ui-ink,#fff);box-shadow:0 20px 90px #0009}
+    .eris-privacy-panel header{display:flex;align-items:center;justify-content:space-between;gap:8px}.eris-privacy-panel header b{font-size:18px}
+    .eris-privacy-row{display:flex;align-items:center;gap:9px;padding:12px 0;border-bottom:1px solid #ab8b5b55}.eris-privacy-row span{flex:1;min-width:0;overflow-wrap:anywhere}
+    .eris-privacy-action:focus-visible{outline:3px solid #e7c17c}
+  `;
+  document.head.append(style);
+  const btn = (label, handler) => { const b=document.createElement('button');b.type='button';b.className='eris-privacy-action';b.textContent=label;b.onclick=handler;return b; };
+  function modal(title) {
+    const shade=document.createElement('div');shade.className='eris-privacy-modal';shade.setAttribute('role','presentation');
+    const panel=document.createElement('section');panel.className='eris-privacy-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',title);
+    const header=document.createElement('header'), heading=document.createElement('b');heading.textContent=title;
+    const close=btn('×',()=>shade.remove());close.setAttribute('aria-label','Kapat');header.append(heading,close);panel.append(header);shade.append(panel);
+    shade.addEventListener('click',e=>{if(e.target===shade)shade.remove();});document.body.append(shade);return panel;
+  }
+  const error = e => window.toast?.(e?.message||'İşlem tamamlanamadı. Tekrar deneyin.');
+  async function privacy() {
+    try {
+      const state=await api('/me/profile-privacy');
+      const panel=modal('Profil Gizliliği');
+      const p=document.createElement('p');p.textContent=state.is_private?'Profilinizi gizlilikten çıkarmak istiyor musunuz?':'Profilinizi gizlemek istiyor musunuz?';panel.append(p);
+      panel.append(btn('Kabul Et',async()=>{try{await api('/me/profile-privacy',{method:'PATCH',body:JSON.stringify({is_private:!state.is_private})});panel.parentElement.remove();window.toast?.('Profil gizliliği güncellendi.');refresh();}catch(e){error(e);}}),btn('Reddet',()=>panel.parentElement.remove()));
+    }catch(e){error(e);}
+  }
+  async function list(type) {
+    const isFollow=type==='follow', title=isFollow?'Takip İstekleri':'Mesaj İstekleri';
+    try {
+      const rows=await api(isFollow?'/me/follow-requests':'/me/message-requests');
+      const panel=modal(title);
+      if(!rows.length){const p=document.createElement('p');p.textContent='Bekleyen istek yok.';panel.append(p);return;}
+      rows.forEach(r=>{
+        const line=document.createElement('div');line.className='eris-privacy-row';
+        const who=document.createElement('span');who.textContent=r.nickname||'Kullanıcı';line.append(who);
+        const base=isFollow?'/me/follow-requests/':'/me/message-requests/';
+        const decide=(action)=>async()=>{try{const response=await api(base+r.id+'/'+action,{method:'POST'});line.remove();if(!isFollow&&action==='accept'&&response.conversation_id)window.toast?.('Mesaj isteği kabul edildi.');}catch(e){error(e);}};
+        line.append(btn('✔',decide('accept')),btn('✖',decide('reject')));panel.append(line);
+      });
+    }catch(e){error(e);}
+  }
+  async function refresh() {
+    const profile=document.getElementById('profile');if(!profile)return;
+    let toolbar=profile.querySelector('.toolbar')||profile;
+    if(!document.getElementById('eris-profile-private-button')){const b=btn('🔒 Profil Gizliliği',privacy);b.id='eris-profile-private-button';toolbar.append(b);}
+    let requests=document.getElementById('eris-follow-request-button');
+    try{const state=await api('/me/profile-privacy');
+      if(state.is_private){const rows=await api('/me/follow-requests');if(!requests){requests=btn('',()=>list('follow'));requests.id='eris-follow-request-button';toolbar.append(requests);}requests.textContent='Takip İstekleri ('+rows.length+')';}
+      else requests?.remove();
+    }catch(e){/* Authentication may not yet be ready. */}
+    const messages=document.getElementById('messages');
+    if(messages&&!document.getElementById('eris-message-request-button')){const b=btn('✉ Mesaj İstekleri',()=>list('message'));b.id='eris-message-request-button';messages.querySelector('h1')?.after(b);}
+  }
+  window.addEventListener('erischat:auth',()=>refresh());
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+})();
