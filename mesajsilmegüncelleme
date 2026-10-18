@@ -1,0 +1,61 @@
+================================================================================
+ÜRÜN GEREKSİNİM BELGESİ (PRD) - MESAJ SİLME VE ÇİFT AŞAMALI ONAY SİSTEMİ
+================================================================================
+
+[SİSTEM GENEL BAKIŞI]
+Bu belge; Mesajlaşma modülündeki mesaj silme mantığının (Message Deletion Logic) 
+ve kullanıcı silme onay akışının (UI/UX Confirmation Workflow) yenilenmesine 
+yönelik teknik ve işlevsel gereksinimleri tanımlar.
+
+--------------------------------------------------------------------------------
+1. MESAJ SİLME MANTIĞI VE DOKU DÜZELTMESİ (DATA MODEL & UI DELETION)
+--------------------------------------------------------------------------------
+1.1. Veri Yapısı ve Görünüm Düzeltmesi:
+     - Mevcut Durum: Mesaj silindiğinde mesaj metni/içeriği boşaltılıyor ancak 
+       mesaj baloncuğu/bileşeni ekranda kalmaya devam ediyordu.
+     - Yeni Durum: Mesaj silme işlemi gerçekleştiğinde mesajın içeriği ile birlikte 
+       mesaj objesinin kendisi (DOM bileşeni, veri tabanı kaydı/görünümü) tamamen 
+       ortadan kaldırılacaktır.
+
+--------------------------------------------------------------------------------
+2. İLK SİLME ONAY MODALI (MODAL 1 - KAPSAM SEÇİMİ)
+--------------------------------------------------------------------------------
+2.1. Tetiklenme:
+     - Kullanıcı bir mesajı veya sohbeti silmek için "Sil" butonuna bastığında açılır.
+
+2.2. Arayüz ve Metin Değişikliği:
+     - Başlık / Metin: "Mesajları ne şekilde silmek istiyorsunuz?"
+     - Sol Buton: [Kendim İçin]
+     - Sağ Buton: [İki Taraf İçin]
+     - İptal / Kapat Butonu: Modalın sağ üstünde [X] veya modal dışında iptal seçeneği.
+
+--------------------------------------------------------------------------------
+3. İKİNCİ SİLME ONAY MODALI (MODAL 2 - NİHAİ ONAY)
+--------------------------------------------------------------------------------
+Kullanıcı Modal 1 üzerindeki seçimini yaptıktan sonra işlem anında gerçekleşmez; 
+ikinci bir güvenlik/onay modalı tetiklenir.
+
+3.1. "Kendim İçin" Seçeneği Tıklandığında:
+     - Ekrana 2. Yüzen Pencere (Modal) gelir.
+     - Metin: "Bu mesajı kendiniz için silmek istediğinize emin misiniz?"
+     - Butonlar: [Kabul Et] (Sol), [Reddet] (Sağ)
+     - [Kabul Et] Tıklanınca:
+       * Mesaj sadece silme işlemini yapan kullanıcının ekranından ve veri tabanı 
+         görünümünden tamamen kaldırılır.
+     - [Reddet] Tıklanınca:
+       * İşlem iptal edilir, mesajlar menüsüne / sohbet ekranına geri dönülür, 
+         hiçbir silme işlemi gerçekleşmez.
+
+3.2. "İki Taraf İçin" Seçeneği Tıklandığında:
+     - Ekrana 2. Yüzen Pencere (Modal) gelir.
+     - Metin: "Bu mesajı iki taraf için de silmek istediğinize emin misiniz?"
+     - Butonlar: [Kabul Et] (Sol), [Reddet] (Sağ)
+     - [Kabul Et] Tıklanınca:
+       * Mesaj her iki kullanıcının da (gönderen ve alıcı) sohbet ekranından ve 
+         sistemden tamamen silinir.
+       * Socket / Real-time event tetiklenerek karşı tarafın ekranındaki mesaj 
+         bileşeni de anında kaldırılır.
+     - [Reddet] Tıklanınca:
+       * İşlem iptal edilir, mesajlar menüsüne / sohbet ekranına geri dönülür, 
+         hiçbir silme işlemi gerçekleşmez.
+================================================================================
