@@ -579,9 +579,14 @@ def register_platform_auth(current_user_dependency):
         conversation=db.get(Conversation,conversation_id)
         if not conversation or conversation.type != "dm" or len(conversation.members)!=2: raise HTTPException(400,"Yalnızca birebir sohbetlerde kullanılabilir")
         if type(payload.get("is_ephemeral")) is not bool: raise HTTPException(422,"Geçerli bir durum gönderin")
-        conversation.is_ephemeral=payload["is_ephemeral"]
-        db.commit()
-        return {"is_ephemeral":conversation.is_ephemeral,"ttl_seconds":86400}
+        # Süreli mod bir kez açıldıktan sonra hiçbir katılımcı kapatamaz.
+        # İstemci düğmesinin gizlenmesi tek başına güvenlik sağlamaz.
+        if conversation.is_ephemeral and not payload["is_ephemeral"]:
+            raise HTTPException(status_code=409, detail="Süreli sohbet etkinleştirildikten sonra kapatılamaz")
+        if not conversation.is_ephemeral and payload["is_ephemeral"]:
+            conversation.is_ephemeral=True
+            db.commit()
+        return {"is_ephemeral":bool(conversation.is_ephemeral),"ttl_seconds":86400}
 
     @router.get("/conversations/{conversation_id}")
     def conversation(conversation_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
