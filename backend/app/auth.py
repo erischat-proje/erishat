@@ -168,10 +168,49 @@ def create_or_login_google_user(
     email = str(claims.get("email") or "").strip().lower()
     if not google_sub or not email:
         raise ValueError("Google hesabından gerekli kimlik bilgileri alınamadı")
-    if claims.get("email_verified") is False:
+    if claims.get("email_verified") is not True:
         raise ValueError("Google e-posta adresi doğrulanmamış")
 
+    # A Google subject is the primary identity. A verified email may link only
+    # to an account that previously proved ownership of the same email via OTP.
     user = db.query(User).filter(User.google_sub == google_sub).first()
+    if user is None:
+        google_identity = (
+            db.query(AuthIdentity)
+            .filter(AuthIdentity.provider == "google", AuthIdentity.provider_subject == google_sub)
+            .first()
+        )
+        if google_identity is not None:
+            user = db.get(User, google_identity.user_id)
+            if user is None or not user.is_active:
+                raise ValueError("Google kimliği bağlı hesap kullanılamıyor")
+            if user.google_sub and user.google_sub != google_sub:
+                raise ValueError("Google kimliği çakışması")
+            user.google_sub = google_sub
+        else:
+            verified_email_identity = (
+                db.query(AuthIdentity)
+                .filter(
+                    AuthIdentity.provider == "email",
+                    AuthIdentity.identifier == email,
+                    AuthIdentity.verified_at.isnot(None),
+                )
+                .first()
+            )
+            if verified_email_identity is not None:
+                candidate = db.get(User, verified_email_identity.user_id)
+                if candidate is None or not candidate.is_active:
+                    raise ValueError("E-posta hesabı kullanılamıyor")
+                if candidate.google_sub and candidate.google_sub != google_sub:
+                    raise ValueError("Hesap başka bir Google kimliğine bağlı")
+                user = candidate
+                user.google_sub = google_sub
+                user.google_email = email
+                db.add(AuthIdentity(
+                    id=uuid4().hex, user_id=user.id, provider="google",
+                    provider_subject=google_sub, identifier=email,
+                    verified_at=datetime.now(timezone.utc),
+                ))
     if user is None:
         nickname = str(claims.get("name") or email.split("@", 1)[0]).strip()[:32] or "Eris Kullanıcısı"
         user = User(
