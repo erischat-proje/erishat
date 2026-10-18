@@ -54,6 +54,13 @@ def account_email(db,user):
             return identity.identifier.strip().lower()
     return None
 
+
+def deletion_otp_purpose(user_id: str) -> str:
+    """Per-account OTP purpose; fits auth_otps.purpose VARCHAR(32)."""
+    from hashlib import sha256
+    return 'del:' + sha256(user_id.encode('utf-8')).hexdigest()[:28]
+
+
 def delete_user(db: Session, user: User):
     """Remove user-owned relational rows in one transaction, fail closed on unsafe schemas.
 
@@ -133,7 +140,7 @@ def install():
     def request(db:Session=Depends(get_db),user:User=Depends(_current_user)):
         email=account_email(db,user)
         if not email:raise HTTPException(409,'Önce hesabınıza doğrulanmış e-posta ekleyin.')
-        try: otp,code=create_otp(db,'email',email,'delete-account:'+user.id)
+        try: otp,code=create_otp(db,'email',email,deletion_otp_purpose(user.id))
         except ValueError as e:raise HTTPException(429,str(e)) from e
         try:send_email_otp(email,code,'delete-account')
         except Exception as e:
@@ -143,7 +150,7 @@ def install():
     def confirm(payload:Confirm,db:Session=Depends(get_db),user:User=Depends(_current_user)):
         email=account_email(db,user)
         if not email:raise HTTPException(409,'Doğrulanmış e-posta bulunamadı.')
-        otp=db.scalar(select(AuthOTP).where(AuthOTP.provider=='email',AuthOTP.identifier==email,AuthOTP.purpose=='delete-account:'+user.id,AuthOTP.consumed_at.is_(None)).order_by(AuthOTP.created_at.desc()))
+        otp=db.scalar(select(AuthOTP).where(AuthOTP.provider=='email',AuthOTP.identifier==email,AuthOTP.purpose==deletion_otp_purpose(user.id),AuthOTP.consumed_at.is_(None)).order_by(AuthOTP.created_at.desc()))
         if otp is None or not verify_otp(db,otp,payload.code):raise HTTPException(400,'Kod geçersiz veya süresi dolmuş.')
         delete_user(db,user)
         return {'deleted':True}
