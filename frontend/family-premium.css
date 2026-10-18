@@ -1,45 +1,45 @@
 
 /* ErisChat family premium, isolated to the family screen */
-#eh-family .eh-family-shell{--family-accent:#9a733c;--family-surface:#fffaf0;--family-stroke:#d7c39e;--family-shadow:rgba(92,65,30,.13);color:var(--ui-ink);padding:2px 0 30px;min-width:0}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-shell{--family-accent:#ebc987;--family-surface:#282426;--family-stroke:#745d3d;--family-shadow:rgba(0,0,0,.35)}
-#eh-family .eh-family-hero{background:linear-gradient(140deg,var(--ui-raised),var(--ui-panel))!important;border:1px solid var(--family-stroke)!important;border-radius:24px!important;padding:20px!important;box-shadow:0 12px 34px var(--family-shadow)!important}
-#eh-family .eh-family-head{display:flex;gap:14px;align-items:center;min-width:0}
-#eh-family .eh-family-head>div:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
-#eh-family .eh-family-head b{display:block;line-height:1.2;overflow-wrap:anywhere}
-#eh-family .eh-family-crest{width:74px;height:74px;border-radius:20px;border:2px solid var(--family-stroke);box-shadow:0 5px 16px var(--family-shadow);flex:none}
-#eh-family .eh-family-level{font-size:34px;font-weight:900;line-height:1;color:var(--family-accent);flex:none}
-#eh-family .eh-family-meta{font-size:11px!important;line-height:1.65;overflow-wrap:anywhere}
-#eh-family .eh-family-progress{height:11px;border:1px solid var(--family-stroke);margin-top:17px}
-#eh-family .eh-family-progress i{background:linear-gradient(90deg,#936327,#e8c788)!important}
-#eh-family .eh-family-progress-label{font-size:10px!important;display:flex;gap:12px;line-height:1.4}
-#eh-family .eh-family-progress-label span:last-child{text-align:right}
-#eh-family .eh-family-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px!important;margin:16px 0!important}
-#eh-family .eh-family-actions button{min-width:0;min-height:76px!important;border:0!important;border-radius:19px!important;background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;background-color:transparent!important;color:var(--ui-ink)!important;font-size:13px!important;font-weight:800!important;padding:12px 10px!important;text-shadow:0 1px 1px var(--family-shadow);box-shadow:0 5px 12px var(--family-shadow);transition:transform .14s}
-#eh-family .eh-family-actions button:active{transform:scale(.97)}
-#eh-family .eh-family-actions button[data-action="members"]{background-image:url("./assets/family-premium/png/family-members-light.png")!important}
-#eh-family .eh-family-actions button[data-action="chat"]{background-image:url("./assets/family-premium/png/family-chat-light.png")!important}
-#eh-family .eh-family-actions button[data-action="invite"]{background-image:url("./assets/family-premium/png/family-invite-light.png")!important}
-#eh-family .eh-family-actions button[data-action="applications"]{background-image:url("./assets/family-premium/png/family-applications-light.png")!important}
-#eh-family .eh-family-actions button[data-action="manage"]{background-image:url("./assets/family-premium/png/family-manage-light.png")!important}
-#eh-family .eh-family-actions button[data-action="donate"]{background-image:url("./assets/family-premium/png/family-donate-light.png")!important}
-#eh-family .eh-family-actions button[data-action="leave"]{background-image:url("./assets/family-premium/png/family-leave-light.png")!important}
-#eh-family .eh-btn.alt[data-action="family-avatar"]{width:100%;min-height:59px;border:0!important;border-radius:18px;background:url("./assets/family-premium/png/family-avatar-light.png") center/100% 100% no-repeat!important;color:var(--ui-ink)!important;font-weight:800}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="members"]{background-image:url("./assets/family-premium/png/family-members-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="chat"]{background-image:url("./assets/family-premium/png/family-chat-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="invite"]{background-image:url("./assets/family-premium/png/family-invite-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="applications"]{background-image:url("./assets/family-premium/png/family-applications-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="manage"]{background-image:url("./assets/family-premium/png/family-manage-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="donate"]{background-image:url("./assets/family-premium/png/family-donate-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-family-actions button[data-action="leave"]{background-image:url("./assets/family-premium/png/family-leave-dark.png")!important}
-:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) #eh-family .eh-btn.alt[data-action="family-avatar"]{background-image:url("./assets/family-premium/png/family-avatar-dark.png")!important}
-#eh-family .eh-family-section-title{font-size:16px!important;margin-top:22px!important;padding-bottom:10px;border-bottom:1px solid var(--family-stroke)}
-#eh-family .eh-family-member-strip{display:flex;gap:12px;padding:14px 0 18px;scroll-snap-type:x proximity}
-#eh-family .eh-family-person{min-width:105px;padding:15px 10px;background:var(--ui-raised);border:1px solid var(--family-stroke);border-radius:19px;scroll-snap-align:start;box-shadow:0 5px 14px var(--family-shadow)}
-#eh-family .eh-family-person b{max-width:100%;font-size:11px;overflow-wrap:anywhere;white-space:normal}
-#eh-family .eh-family-avatar{border:2px solid var(--family-stroke);width:62px;height:62px}
-#eh-family .eh-family-role{font-size:9px}
-#eh-family .eh-family-row{min-width:0}
-#eh-family .eh-family-row [data-family-profile]{min-width:0}
-#eh-family .eh-family-row [data-family-profile] div{overflow-wrap:anywhere}
-#eh-family .eh-family-confirm{border-color:var(--family-stroke)}
-@media(max-width:370px){#eh-family .eh-family-hero{padding:14px!important}#eh-family .eh-family-crest{width:58px;height:58px}#eh-family .eh-family-level{font-size:27px}#eh-family .eh-family-actions{gap:7px!important}#eh-family .eh-family-actions button{font-size:11px!important;min-height:65px!important}}
+.eh-family-shell{--family-accent:#9a733c;--family-surface:#fffaf0;--family-stroke:#d7c39e;--family-shadow:rgba(92,65,30,.13);color:var(--ui-ink);padding:2px 0 30px;min-width:0}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell{--family-accent:#ebc987;--family-surface:#282426;--family-stroke:#745d3d;--family-shadow:rgba(0,0,0,.35)}
+.eh-family-shell .eh-family-hero{background:linear-gradient(140deg,var(--ui-raised),var(--ui-panel))!important;border:1px solid var(--family-stroke)!important;border-radius:24px!important;padding:20px!important;box-shadow:0 12px 34px var(--family-shadow)!important}
+.eh-family-shell .eh-family-head{display:flex;gap:14px;align-items:center;min-width:0}
+.eh-family-shell .eh-family-head>div:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+.eh-family-shell .eh-family-head b{display:block;line-height:1.2;overflow-wrap:anywhere}
+.eh-family-shell .eh-family-crest{width:74px;height:74px;border-radius:20px;border:2px solid var(--family-stroke);box-shadow:0 5px 16px var(--family-shadow);flex:none}
+.eh-family-shell .eh-family-level{font-size:34px;font-weight:900;line-height:1;color:var(--family-accent);flex:none}
+.eh-family-shell .eh-family-meta{font-size:11px!important;line-height:1.65;overflow-wrap:anywhere}
+.eh-family-shell .eh-family-progress{height:11px;border:1px solid var(--family-stroke);margin-top:17px}
+.eh-family-shell .eh-family-progress i{background:linear-gradient(90deg,#936327,#e8c788)!important}
+.eh-family-shell .eh-family-progress-label{font-size:10px!important;display:flex;gap:12px;line-height:1.4}
+.eh-family-shell .eh-family-progress-label span:last-child{text-align:right}
+.eh-family-shell .eh-family-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px!important;margin:16px 0!important}
+.eh-family-shell .eh-family-actions button{min-width:0;min-height:76px!important;border:0!important;border-radius:19px!important;background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;background-color:transparent!important;color:var(--ui-ink)!important;font-size:13px!important;font-weight:800!important;padding:12px 10px!important;text-shadow:0 1px 1px var(--family-shadow);box-shadow:0 5px 12px var(--family-shadow);transition:transform .14s}
+.eh-family-shell .eh-family-actions button:active{transform:scale(.97)}
+.eh-family-shell .eh-family-actions button[data-action="members"]{background-image:url("./assets/family-premium/png/family-members-light.png")!important}
+.eh-family-shell .eh-family-actions button[data-action="chat"]{background-image:url("./assets/family-premium/png/family-chat-light.png")!important}
+.eh-family-shell .eh-family-actions button[data-action="invite"]{background-image:url("./assets/family-premium/png/family-invite-light.png")!important}
+.eh-family-shell .eh-family-actions button[data-action="applications"]{background-image:url("./assets/family-premium/png/family-applications-light.png")!important}
+.eh-family-shell .eh-family-actions button[data-action="manage"]{background-image:url("./assets/family-premium/png/family-manage-light.png")!important}
+.eh-family-shell .eh-family-actions button[data-action="donate"]{background-image:url("./assets/family-premium/png/family-donate-light.png")!important}
+.eh-family-shell .eh-family-actions button[data-action="leave"]{background-image:url("./assets/family-premium/png/family-leave-light.png")!important}
+.eh-family-shell .eh-btn.alt[data-action="family-avatar"]{width:100%;min-height:59px;border:0!important;border-radius:18px;background:url("./assets/family-premium/png/family-avatar-light.png") center/100% 100% no-repeat!important;color:var(--ui-ink)!important;font-weight:800}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="members"]{background-image:url("./assets/family-premium/png/family-members-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="chat"]{background-image:url("./assets/family-premium/png/family-chat-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="invite"]{background-image:url("./assets/family-premium/png/family-invite-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="applications"]{background-image:url("./assets/family-premium/png/family-applications-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="manage"]{background-image:url("./assets/family-premium/png/family-manage-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="donate"]{background-image:url("./assets/family-premium/png/family-donate-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="leave"]{background-image:url("./assets/family-premium/png/family-leave-dark.png")!important}
+:is([data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-btn.alt[data-action="family-avatar"]{background-image:url("./assets/family-premium/png/family-avatar-dark.png")!important}
+.eh-family-shell .eh-family-section-title{font-size:16px!important;margin-top:22px!important;padding-bottom:10px;border-bottom:1px solid var(--family-stroke)}
+.eh-family-shell .eh-family-member-strip{display:flex;gap:12px;padding:14px 0 18px;scroll-snap-type:x proximity}
+.eh-family-shell .eh-family-person{min-width:105px;padding:15px 10px;background:var(--ui-raised);border:1px solid var(--family-stroke);border-radius:19px;scroll-snap-align:start;box-shadow:0 5px 14px var(--family-shadow)}
+.eh-family-shell .eh-family-person b{max-width:100%;font-size:11px;overflow-wrap:anywhere;white-space:normal}
+.eh-family-shell .eh-family-avatar{border:2px solid var(--family-stroke);width:62px;height:62px}
+.eh-family-shell .eh-family-role{font-size:9px}
+.eh-family-shell .eh-family-row{min-width:0}
+.eh-family-shell .eh-family-row [data-family-profile]{min-width:0}
+.eh-family-shell .eh-family-row [data-family-profile] div{overflow-wrap:anywhere}
+.eh-family-shell .eh-family-confirm{border-color:var(--family-stroke)}
+@media(max-width:370px){.eh-family-shell .eh-family-hero{padding:14px!important}.eh-family-shell .eh-family-crest{width:58px;height:58px}.eh-family-shell .eh-family-level{font-size:27px}.eh-family-shell .eh-family-actions{gap:7px!important}.eh-family-shell .eh-family-actions button{font-size:11px!important;min-height:65px!important}}
