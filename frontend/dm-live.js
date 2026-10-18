@@ -702,6 +702,7 @@
       }
     }
     bindSender(chat);
+    window.ErisPrivateDM?.open?.(id, chat);
   }
 
   async function sendMessage(id, text) {
@@ -709,6 +710,7 @@
     if(textSends.has(String(id)))return textSends.get(String(id));
     const task=(async()=>{const message=await api().sendMessage(id,text.trim());
       if(String(activeConversationId)===String(id))appendMessageOnce(document.querySelector('#chat .chatBody'),message,true);
+      window.ErisPrivateDM?.sent?.(id);
       return message;})();
     textSends.set(String(id),task);
     try{return await task}finally{textSends.delete(String(id))}
