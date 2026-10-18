@@ -1,0 +1,63 @@
+================================================================================
+ÜRÜN GEREKSİNİM BELGESİ (PRD) - SÜRELİ MESAJ (24 SAAT) SİSTEMİ
+================================================================================
+
+[SİSTEM GENEL BAKIŞI]
+Bu belge; Mesajlaşma modülüne eklenecek olan, birebir sohbetlerde mesaj bazlı 
+24 saatlik yaşam döngüsü (TTL - Time To Live) sağlayan "Süreli Mesaj" 
+özelliğinin teknik ve işlevsel gereksinimlerini tanımlar.
+
+--------------------------------------------------------------------------------
+1. SOHBET BAŞLIĞI (HEADER) ARAYÜZ ENTEGRASYONU
+--------------------------------------------------------------------------------
+1.1. Buton Konumlandırması:
+     - Sohbet ekranının üst barında (Header), "Görüntülü Arama" butonunun 
+       hemen yanına "Süreli Mesaj" ikonu/butonu eklenecektir.
+
+1.2. Görsel Durum Göstergesi (Active Indicator):
+     - Süreli mesaj özelliği AKTİF edildiğinde:
+       * Üst bardaki karşı tarafın kullanıcı adının yanına "Süreli Mesaj İkonu" 
+         yerleştirilir.
+       * Özellik PASİF edildiğinde bu ikon kalkar.
+
+--------------------------------------------------------------------------------
+2. SÜRELİ MESAJ AKTİFLEŞTİRME VE İPTAL AKIŞI (MODAL / UYARI PENCERESİ)
+--------------------------------------------------------------------------------
+2.1. Aktifleştirme Akışı (Özellik Pasifken Butona Basıldığında):
+     - Ekrana yüzen onay penceresi (Modal) gelir.
+     - Metin: "{kullanıcı_adı} isimli kullanıcı ile 24 saat süreli sohbetleri aktif etmek istiyor musunuz?"
+     - Butonlar: [Kabul Et] (Sol), [Reddet] (Sağ)
+     - [Kabul Et] Tıklanınca:
+       * Sohbet durumu `is_ephemeral = true` olarak güncellenir.
+       * İlgili sohbet için süreli mesaj rejimi başlar.
+     - [Reddet] Tıklanınca:
+       * Modal kapanır, mevcut yapı değişmez.
+
+2.2. İptal Etme Akışı (Özellik Aktifken Butona Basıldığında):
+     - Ekrana yüzen onay penceresi (Modal) gelir.
+     - Metin: "{kullanıcı_adı} isimli kullanıcı ile süreli mesajları iptal etmek istiyor musunuz?"
+     - Butonlar: [Kabul Et] (Sol), [Reddet] (Sağ)
+     - [Kabul Et] Tıklanınca:
+       * Sohbet durumu `is_ephemeral = false` olarak güncellenir.
+       * Sohbet normal mesajlaşma sistemine geri döner.
+     - [Reddet] Tıklanınca:
+       * Modal kapanır, süreli mesaj modu aktif kalmaya devam eder.
+
+--------------------------------------------------------------------------------
+3. MESAJ YAŞAM DÖNGÜSÜ VE OTOMATİK SİLME MANTIĞI (TTL)
+--------------------------------------------------------------------------------
+3.1. Mesaj Bazlı Silinme Kuralları:
+     - Süreli mesaj modu aktifken atılan HER BİR MESAJ, atıldığı andan itibaren 
+       tam 24 saat (86.400 saniye) sonra sistemden otomatik olarak silinir.
+     - Silme işlemi sohbet geçmişinin tamamını kapsamaz; SADECE süresi (24 saat) 
+       dolan tekil mesaj silinir.
+     - Süreli mesaj modu kapatıldığında, mod aktifken atılmış ve süresi henüz 
+       dolmamış olan mesajlar kendi 24 saatlik sürelerini tamamlayınca silinmeye 
+       devam eder; kapatıldıktan sonra atılan mesajlar kalıcı olur.
+
+3.2. Arka Plan (Backend / Worker) İşleyişi:
+     - Mesaj veri tabanına kaydedilirken `created_at` ve `expires_at` (created_at + 24 Hours) 
+       zaman damgaları (timestamp) işlenir.
+     - Zamanı gelen mesajlar arka plan servisi (cron job / TTL index / event queue) 
+       tarafından veri tabanından ve istemci (client) soketlerinden anlık olarak temizlenir.
+================================================================================
