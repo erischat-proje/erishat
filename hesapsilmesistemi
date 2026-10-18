@@ -1,0 +1,88 @@
+================================================================================
+ÜRÜN GEREKSİNİM BELGESİ (PRD) - HESAP SİLME, YÖNETİM MERKEZİ VE OAUTH DÜZELTMESİ
+================================================================================
+
+[SİSTEM GENEL BAKIŞI]
+Bu belge; Yönetim Merkezi (Admin Panel) güncellemeleri, ID Sorgu ve Hesap Silme 
+sistemleri, Google OAuth giriş mantığı düzeltmesi ve Kullanıcı Profil İçi 
+2FA (E-posta) Doğrulamalı Hesap Silme Akışına ait teknik gereksinimleri kapsar.
+
+--------------------------------------------------------------------------------
+1. YÖNETİM MERKEZİ (ADMIN PANEL) - GELİŞTİRİCİ YÖNETİMİ & ICON TASARIMLARI
+--------------------------------------------------------------------------------
+1.1. Menü Hiyerarşisi ve Taşınan Modüller:
+     - "ID Sorgu Sistemi" ve yeni eklenecek "Hesap Silme" modülleri "Geliştirici Yönetimi" 
+       alt menüsü altına taşınacaktır.
+     - Menü içi navigasyon için 2 adet özel PNG ikon/buton tasarımı eklenecektir:
+       * `ic_developer_id_query.png` (ID Sorgu Butonu İkonu)
+       * `ic_developer_delete_account.png` (Hesap Sil Butonu İkonu)
+
+1.2. Yönetici (Admin) Tarafı Hesap Silme Akışı:
+     - "Geliştirici Yönetimi > Hesap Sil" sekmesine tıklandığında:
+       * Bir "Kullanıcı ID Giriniz" (Input Box) ve "Sorgula" butonu yer alacak.
+       * ID yazılıp sorgulandığında kullanıcının tüm profil ve hesap detayları ekrana gelecek.
+       * Detay kartının altında kırmızı renkli [Hesabı Sil] butonu bulunacak.
+
+1.3. Yönetici Silme Onay Modalı:
+     - [Hesabı Sil] butonuna basıldığında yüzen pencere (Modal) açılacak.
+     - Pencere Özellikleri:
+       * Metin: "Bu hesabı gerçekten silmek istiyor musunuz?"
+       * Sağ üst köşe: Kapatma ikonu [X]
+       * Sol Buton: [Kabul Et]
+       * Sağ Buton: [Reddet]
+     - [Kabul Et] Tıklanınca:
+       * Kullanıcı verisi, ilişkili tüm tablolar, medya dosyaları ve kimlik doğrulama 
+         kayıtları veri tabanından Kalıcı Olarak (Hard Delete) silinir.
+       * Kullanıcının e-posta adresi/Google kimliği tamamen boşa çıkarılır.
+     - [Reddet] / [X] Tıklanınca:
+       * Modal kapanır, hiçbir veri silinmez.
+
+--------------------------------------------------------------------------------
+2. GOOGLE OAUTH KAYIT/GİRİŞ SİSTEMİ MİMARİ DÜZELTMESİ (CRITICAL BUG FIX)
+--------------------------------------------------------------------------------
+2.1. Mevcut Hata tanımı:
+     - Google ile giriş yapıldığında e-posta adresi sistemde zaten kayıtlı olmasına 
+       rağmen yeni e-posta isteyip tekrar form açmakta ve var olan hesaba erişimi engellemektedir.
+
+2.2. Yeni OAuth Bağlantı Mantığı:
+     - Kullanıcı "Google ile Giriş Yap" butonuna bastığında:
+       1. Google OAuth token'ından dönen `email` adresi veri tabanında sorgulanır.
+       2. EĞER E-POSTA SİSTEMDE MEVCUT İSE:
+          - Yeni kayıt oluşturulmaz, doğrudan var olan kullanıcı oturumu (Session/JWT) 
+            açılır ve mevcut hesaba yönlendirilir.
+       3. EĞER E-POSTA SİSTEMDE MEVCUT DEĞİLSE:
+          - Google'dan gelen `email`, `name`, `profile_picture` verileriyle otomatik 
+            olarak yeni kayıt oluşturulur ve doğrudan hesaba giriş yaptırılır.
+       4. Manuel e-posta girme adımı Google OAuth akışından tamamen KALDIRILACAKTIR.
+
+--------------------------------------------------------------------------------
+3. KULLANICI PROFİL İÇİ HESAP SİLME VEYA E-POSTA KOD DOĞRULAMA AKIŞI (CLIENT)
+--------------------------------------------------------------------------------
+3.1. Profil Menüsü Entegrasyonu:
+     - Profil Ayarları menüsüne "Hesabımı Sil" seçeneği eklenir.
+
+3.2. Aşama 1: İlk Uyarı Modalı:
+     - "Hesabımı Sil" butonuna basıldığında yüzen pencere açılır.
+     - Metin: "Bu hesabı gerçekten silmek istiyor musunuz?"
+     - Butonlar: [Kabul Et] (Sol), [Reddet] (Sağ)
+     - [Reddet] Tıklanınca: İşlem iptal edilir, pencere kapanır.
+
+3.3. Aşama 2: E-Posta OTP Kod Gönderimi (erischat@erischat.com):
+     - Kullanıcı ilk modalda [Kabul Et] butonuna basarsa:
+       * Sistem tarafından 6 haneli rastgele bir doğrulama kodu (OTP) üretilir.
+       * Gönderen adresi `erischat@erischat.com` olan bir e-posta, kullanıcının 
+         kayıtlı mail adresine anlık olarak iletilir.
+
+3.4. Aşama 3: 6 Haneli Kod Onay Modalı:
+     - Ekrana yeni bir doğrulama penceresi gelir.
+     - Metin: "Mailinize gelen 6 haneli doğrulama kodunu giriniz."
+     - Input: 6 haneli nümerik giriş alanı (OTP Input Field).
+     - Action: Kodu Onayla / İptal
+     - EĞER girilen 6 haneli kod DOĞRU ise:
+       * Hesap veri tabanından tamamen silinir.
+       * Kullanıcı oturumu sonlandırılır ve Giriş/Kayıt ekranına yönlendirilir.
+       * Silinen e-posta adresi ve Google OAuth bağı tamamen temizlendiği için kullanıcı 
+         aynı e-posta veya Google hesabı ile SIFIRDAN TEKRAR KAYDOLABİLİR.
+     - EĞER kod YANLIŞ girilir veya işlem İPTAL edilirse:
+       * Hesap silme işlemi GERÇEKLEŞMEZ ve mevcut durum korunur.
+================================================================================
