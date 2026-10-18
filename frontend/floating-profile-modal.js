@@ -113,7 +113,14 @@
       const follow=shade.querySelector('[data-follow]'), gift=shade.querySelector('[data-gift]'), message=shade.querySelector('[data-message]'), block=shade.querySelector('[data-block]');
       let following=!!u.is_following;
       let blocked=!!u.you_blocked;
-      follow.textContent=u.is_self?'Kendi profilin':following?'Takibi bırak':'Takip et';
+      let requested=!!u.follow_requested;
+      const updateFollow=()=>{follow.textContent=u.is_self?'Kendi profilin':following?'Takibi bırak':requested?'İstek gönderildi':u.is_private?'Takip İsteği Gönder':'Takip et'};
+      updateFollow();
+      if(u.is_private&&!u.is_self&&!u.can_view_private){
+        const notice=document.createElement('p');notice.className='eris-mini-private-notice';notice.textContent='🔒 Bu profil gizli';
+        notice.style.cssText='margin:12px 0;padding:15px;border:1px solid var(--ui-gold,#cba96a);border-radius:13px;text-align:center;font-weight:800';
+        shade.querySelector('.eris-mini-stats')?.after(notice);
+      }
       const interaction=shade.querySelector('[data-interaction]');
       interaction.hidden=!!u.is_self||!window.ErisCurrentRoomId||![...document.querySelectorAll('#erisLiveSeats > .eris-seat')].some(s=>s.dataset.userId===String(u.id));
       interaction.onclick=()=>{closeProfile();window.ErisRoomEmojis?.openInteraction?.(u.id)};
@@ -124,7 +131,13 @@
         blocked=!blocked;syncBlock();
         window.dispatchEvent(new CustomEvent('erischat:user-block-changed',{detail:{userId:u.id,blocked}}));
       }catch(e){error.textContent=e.message||'Engel işlemi başarısız.'}finally{block.disabled=!!u.is_self}};
-      follow.onclick=async()=>{follow.disabled=true;error.textContent='';try{await api('/users/'+encodeURIComponent(u.id)+'/follow',{method:following?'DELETE':'POST'});following=!following;follow.textContent=following?'Takibi bırak':'Takip et';const followers=shade.querySelector('[data-followers]');followers.textContent=count(Number(String(followers.textContent).replace(/\D/g,''))+(following?1:-1));window.ErisProfile?.refresh?.()}catch(e){error.textContent=e.message||'Takip işlemi başarısız.'}finally{follow.disabled=false}};
+      follow.onclick=async()=>{follow.disabled=true;error.textContent='';try{
+        const wasFollowing=following;
+        const result=await api('/users/'+encodeURIComponent(u.id)+'/follow',{method:following||requested?'DELETE':'POST'});
+        following=!!result.following;requested=!!result.requested;updateFollow();
+        if(wasFollowing!==following){const followers=shade.querySelector('[data-followers]');followers.textContent=count(Number(String(followers.textContent).replace(/\D/g,''))+(following?1:-1))}
+        window.ErisProfile?.refresh?.();
+      }catch(e){error.textContent=e.message||'Takip işlemi başarısız.'}finally{follow.disabled=false}};
       const conversation=async withGift=>{error.textContent='';try{if(!window.ErisChatDM?.openFloating)throw new Error('Mesajlaşma hazır değil.');await window.ErisChatDM.openFloating(u.id,u.nickname||'Kullanıcı',withGift);closeProfile()}catch(e){error.textContent=e.message||'Konuşma açılamadı.'}};
       message.onclick=()=>conversation(false);gift.onclick=()=>conversation(true);
     }catch(e){if(shade.isConnected)error.textContent=e.message||'Profil yüklenemedi.'}
