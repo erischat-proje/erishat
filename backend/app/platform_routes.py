@@ -605,6 +605,20 @@ def register_platform_auth(current_user_dependency):
         if not conversation:
             conversation=Conversation(id=conversation_id); db.add(conversation); db.flush(); db.add_all([ConversationMember(conversation_id=conversation_id,user_id=user.id),ConversationMember(conversation_id=conversation_id,user_id=target.id)]); db.commit()
         return {"id":conversation.id,"members":[{"user_id":m.user_id} for m in conversation.members]}
+    @router.get("/conversations/{conversation_id}/message-request-status")
+    def conversation_message_request_status(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        member = db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id))
+        if not member: raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+        other_ids = list(db.scalars(select(ConversationMember.user_id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id != user.id)))
+        if len(other_ids) != 1: return {"state": "normal"}
+        other_id = other_ids[0]
+        if not _private(db, other_id) or _follows(db, user.id, other_id): return {"state": "normal"}
+        request = _message_request(db, user.id, other_id)
+        if request and request.status == "accepted": return {"state": "normal"}
+        if request and request.status == "pending": return {"state": "pending"}
+        if request and request.status == "rejected": return {"state": "rejected"}
+        return {"state": "first"}
+
     @router.get("/messages/{conversation_id}")
     def messages(conversation_id:str,limit:int=Query(100,ge=1,le=200),offset:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
