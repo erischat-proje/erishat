@@ -429,3 +429,30 @@ class DirectCallHistoryHidden(Base):
 from .vip_benefit_models import VipBenefitState, VipBenefitReceipt, VipBenefitLease
 
 from .vip_membership_models import VipMembership, VipPurchaseReceipt, VipCycleAudit
+
+
+# Profile privacy and approval workflows. Separate tables preserve legacy follows.
+class PrivateProfileSetting(Base):
+    __tablename__ = "private_profile_settings"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    is_private: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+
+
+class PrivateFollowRequest(Base):
+    __tablename__ = "private_follow_requests"
+    __table_args__ = (UniqueConstraint("sender_id", "recipient_id", name="uq_private_follow_request"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    sender_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    recipient_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class PrivateMessageRequest(Base):
+    __tablename__ = "private_message_requests"
+    __table_args__ = (UniqueConstraint("sender_id", "recipient_id", name="uq_private_message_request"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    sender_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    recipient_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="pending", server_default="pending", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
