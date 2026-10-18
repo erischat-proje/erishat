@@ -5,3 +5,14 @@
 /* Keep the family action in the native responsive grid on both themes. */
 .eh-family-actions .er-ref-family-shortcut{margin:0;max-width:none;min-width:0;width:auto;white-space:normal;line-height:1.35}
 html[data-eris-theme="dark"] .eh-family-actions .er-ref-family-shortcut{background:linear-gradient(135deg,#72582d,#332819);color:#fff0c6;border-color:#b38b48}
+
+/* Pair history and referral at the same menu size on mobile. */
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button,
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open]{grid-column:auto!important;aspect-ratio:auto!important;min-height:88px!important;max-height:none!important;padding:11px 10px!important;justify-content:flex-start!important;text-align:left!important;font-size:12px!important;overflow:hidden!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button .pp-history-art{object-fit:cover!important;object-position:left center!important;opacity:.22!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open]{background-image:var(--pp-surface)!important;background-size:100% 100%!important;color:var(--pp-ink)!important;gap:9px!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open] .er-ref-icon{width:43px!important;height:43px!important;object-fit:contain!important;flex:0 0 43px!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button span{font-size:12px!important;text-shadow:none!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open] span{font:700 12px/1.4 Georgia,serif!important}
+.er-ref-admin-button{background:linear-gradient(130deg,#184239,#806333)!important;color:#fff1ca!important}
+@media(max-width:340px){html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open] .er-ref-icon{width:35px!important;height:35px!important;flex-basis:35px!important}}

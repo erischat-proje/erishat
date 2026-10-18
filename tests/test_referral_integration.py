@@ -87,11 +87,13 @@ def status(err,code):return isinstance(err.value,HTTPException) and err.value.st
 def test_code_once_per_user_and_exact_credit(db):
     make=endpoint('POST','/admin/referrals'); redeem=endpoint('POST','/referrals/redeem')
     code=make(route_env['NewCode'](kind='USER',max_uses=2),db,db.get(User,'da'))['code']
+    assert len(code)==14 and code.isalnum()
     assert redeem(route_env['Redeem'](code=code),db,db.get(User,'a'))['amount']==2500
     assert db.get(User,'a').lidya==2500
     with pytest.raises(HTTPException) as e:redeem(route_env['Redeem'](code=code),db,db.get(User,'a'))
     assert status(e,409) and db.get(User,'a').lidya==2500
-    redeem(route_env['Redeem'](code=code),db,db.get(User,'b'))
+    with pytest.raises(HTTPException) as e:redeem(route_env['Redeem'](code=code),db,db.get(User,'b'))
+    assert status(e,409) and db.get(User,'b').lidya==0
     assert db.scalar(select(ReferralCode).where(ReferralCode.code==code)).active is False
     with pytest.raises(HTTPException) as e:redeem(route_env['Redeem'](code=code),db,db.get(User,'c'))
     assert status(e,409) and db.get(User,'c').lidya==0
