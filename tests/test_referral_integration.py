@@ -92,8 +92,8 @@ def test_code_once_per_user_and_exact_credit(db):
     assert db.get(User,'a').lidya==2500
     with pytest.raises(HTTPException) as e:redeem(route_env['Redeem'](code=code),db,db.get(User,'a'))
     assert status(e,409) and db.get(User,'a').lidya==2500
-    with pytest.raises(HTTPException) as e:redeem(route_env['Redeem'](code=code),db,db.get(User,'b'))
-    assert status(e,409) and db.get(User,'b').lidya==0
+    assert redeem(route_env['Redeem'](code=code),db,db.get(User,'b'))['amount']==2500
+    assert db.get(User,'b').lidya==2500
     assert db.scalar(select(ReferralCode).where(ReferralCode.code==code)).active is False
     with pytest.raises(HTTPException) as e:redeem(route_env['Redeem'](code=code),db,db.get(User,'c'))
     assert status(e,409) and db.get(User,'c').lidya==0

@@ -16,3 +16,13 @@ html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-bu
 html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open] span{font:700 12px/1.4 Georgia,serif!important}
 .er-ref-admin-button{background:linear-gradient(130deg,#184239,#806333)!important;color:#fff1ca!important}
 @media(max-width:340px){html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[data-referral-open] .er-ref-icon{width:35px!important;height:35px!important;flex-basis:35px!important}}
+
+/* Referans ve Lidya gecmisi: iki esit profil karti */
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button,
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.er-ref-menu{grid-column:auto!important;aspect-ratio:auto!important;min-height:88px!important;max-height:none!important;padding:12px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;font-size:12px!important;min-width:0!important;text-align:left!important;background-image:var(--pp-surface)!important;background-size:100% 100%!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button .pp-history-art{position:relative!important;inset:auto!important;width:43px!important;height:43px!important;flex:0 0 43px!important;object-fit:contain!important;z-index:auto!important;opacity:1!important;filter:none!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.er-ref-menu .er-ref-coin{display:none!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.er-ref-menu .er-ref-icon{width:43px!important;height:43px!important;flex:0 0 43px!important;object-fit:contain!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.er-ref-menu span,
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button span{font:700 12px/1.4 Georgia,serif!important;white-space:normal!important;min-width:0!important;text-shadow:none!important}
+@media(max-width:340px){html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.er-ref-menu .er-ref-icon,html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button .pp-history-art{width:35px!important;height:35px!important;flex-basis:35px!important}}
