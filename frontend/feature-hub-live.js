@@ -65,7 +65,7 @@
     const link=document.createElement('link');
     link.id='erisFamilyPremiumCss';link.rel='stylesheet';
     const script=document.querySelector('script[src*=\"feature-hub-live.js\"]');
-    link.href=new URL('family-premium.css',script?.src||location.href).href;
+    link.href=new URL('family-premium.css?v=fix2',script?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
