@@ -160,6 +160,19 @@
     return [];
   }
 
+  function dmDeleteScope(){
+    return new Promise(resolve=>{
+      const modal=document.createElement('div');modal.className='dm-vault-modal';
+      modal.innerHTML='<section role="alertdialog" aria-modal="true"><header><h3>Mesajları ne şekilde silmek istiyorsunuz?</h3><button type="button" data-close aria-label="Kapat">×</button></header><footer><button type="button" class="accept" data-me>Kendim İçin</button><button type="button" class="reject" data-everyone>İki Taraf İçin</button></footer></section>';
+      document.body.append(modal);
+      const done=value=>{modal.remove();resolve(value)};
+      modal.querySelector('[data-me]').onclick=()=>done('me');
+      modal.querySelector('[data-everyone]').onclick=()=>done('everyone');
+      modal.querySelector('[data-close]').onclick=()=>done(null);
+      modal.onclick=e=>{if(e.target===modal)done(null)};
+    });
+  }
+
   function dmConfirm(question){
     return new Promise(resolve=>{
       const modal=document.createElement('div');modal.className='dm-vault-modal';
@@ -347,9 +360,11 @@
     selectionBar.querySelector('[data-all-selected]').onclick = () => { const rows=[...body.querySelectorAll('.bubble[data-message-id]')];allMessagesSelected=!allMessagesSelected;selectedMessages.clear();rows.forEach(row=>{row.classList.toggle('dm-selected',allMessagesSelected);if(allMessagesSelected)selectedMessages.add(row)});refreshSelectionBar() };
     selectionBar.querySelector('[data-delete-selected]').onclick = async () => {
       if(!selectedMessages.size&&!allMessagesSelected)return;
-      const approved=await dmConfirm(allMessagesSelected?'Bu konuşmadaki tüm mesajları silmek istediğine emin misin?':selectedMessages.size===1?'Bu mesajı silmek istediğine emin misin?':'Seçtiğin '+selectedMessages.size+' mesajı silmek istediğine emin misin?');
+      const scope=await dmDeleteScope();
+      if(!scope)return;
+      const approved=await dmConfirm(scope==='everyone'?'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?':'Bu mesajı kendiniz için silmek istediğinize emin misiniz?');
       if(!approved)return;
-      try { await api().deleteMessages(activeConversationId, [...selectedMessages].map(row => Number(row.dataset.messageId)),allMessagesSelected); if(allMessagesSelected){releaseMediaUrls(body);body.replaceChildren()}else [...selectedMessages].forEach(row => row.remove()); selectedMessages.clear();allMessagesSelected=false;refreshSelectionBar(); }
+      try { await api().api('/messages/'+encodeURIComponent(activeConversationId)+'/delete',{method:'POST',body:JSON.stringify({message_ids:[...selectedMessages].map(row=>Number(row.dataset.messageId)),all:allMessagesSelected,scope})}); if(allMessagesSelected){releaseMediaUrls(body);body.replaceChildren()}else [...selectedMessages].forEach(row => row.remove()); selectedMessages.clear();allMessagesSelected=false;refreshSelectionBar(); }
       catch (e) { window.toast?.(e.message || 'Mesajlar silinemedi.'); }
     };
     selectionBar.querySelector('[data-pin-selected]').onclick = async () => {
@@ -535,7 +550,7 @@
     nav.querySelector('[data-change]').onclick=changeVault;
     tools.querySelector('[data-move]').onclick=()=>moveSelected('archive');tools.querySelector('[data-lock]').onclick=()=>moveSelected('locked');tools.querySelector('[data-cancel]').onclick=()=>{selectedConversations.clear();loadConversations()};
     tools.querySelector('[data-select-all]').onclick=()=>{const rows=[...root.querySelectorAll('.list .item[data-conversation-id]')];const all=rows.length>0&&rows.every(row=>selectedConversations.has(row.dataset.conversationId));rows.forEach(row=>{if(all)selectedConversations.delete(row.dataset.conversationId);else selectedConversations.add(row.dataset.conversationId);row.classList.toggle('dm-list-selected',!all)});renderFolderControls(root)};
-    tools.querySelector('[data-delete]').onclick=async()=>{const ids=[...selectedConversations];if(!ids.length||!await dmConfirm(ids.length===1?'Bu sohbetin tüm mesajlarını silmek istediğine emin misin?':ids.length+' sohbetin tüm mesajlarını silmek istediğine emin misin?'))return;try{for(const id of ids)await api().deleteMessages(id,[],true);selectedConversations.clear();await loadConversations();window.toast?.('Mesajlar silindi.')}catch(e){window.toast?.(e.message||'Mesajlar silinemedi.')}};
+    tools.querySelector('[data-delete]').onclick=async()=>{const ids=[...selectedConversations];if(!ids.length)return;const scope=await dmDeleteScope();if(!scope)return;if(!await dmConfirm(scope==='everyone'?'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?':'Bu mesajı kendiniz için silmek istediğinize emin misiniz?'))return;try{for(const id of ids)await api().api('/messages/'+encodeURIComponent(id)+'/delete',{method:'POST',body:JSON.stringify({all:true,scope})});selectedConversations.clear();await loadConversations();window.toast?.('Mesajlar silindi.')}catch(e){window.toast?.(e.message||'Mesajlar silinemedi.')}};
   }
   function renderFolderControls(root){
     const nav=root.querySelector('.dm-inbox-nav'),tools=root.querySelector('.dm-list-tools');if(!nav||!tools)return;
@@ -721,6 +736,13 @@
       if (String(activeConversationId||'') !== String(data.conversation_id)) return;
       document.querySelectorAll('#chat .bubble.me[data-message-id]').forEach(row=>{if(Number(row.dataset.messageId)<=Number(data.read_up_to||0)){row.dataset.read='1';const mark=row.querySelector('.dm-checks');if(mark){mark.textContent='✓✓';mark.setAttribute('aria-label','Okundu')}}});
       return;
+    }
+    if(data?.type==='dm_messages_deleted' && data.conversation_id){
+      if(String(activeConversationId||'')===String(data.conversation_id)){
+        const body=document.querySelector('#chat .chatBody');
+        for(const id of data.message_ids||[])body?.querySelectorAll('.bubble[data-message-id="'+String(id)+'"]').forEach(row=>row.remove());
+      }
+      loadConversations();return;
     }
     if (!data || data.type !== 'dm_message' || !data.conversation_id) return;
     const id = String(data.conversation_id);

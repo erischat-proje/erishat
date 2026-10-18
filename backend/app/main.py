@@ -1870,10 +1870,13 @@ async def reply_to_story(story_id: int, text: str = Form(...), snapshot: UploadF
 
 
 @app.post("/v1/messages/{conversation_id}/delete")
-def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
+async def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
+    scope = payload.get("scope", "me")
+    if scope not in ("me", "everyone"):
+        raise HTTPException(status_code=422, detail="Geçersiz silme kapsamı")
     all_messages = payload.get("all") is True
     ids = list(dict.fromkeys(int(value) for value in (payload.get("message_ids") or []) if str(value).isdigit()))
     if not all_messages and (not ids or len(ids) > 100):
@@ -1881,8 +1884,19 @@ def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: str | No
     if all_messages:
         ids = list(db.scalars(select(Message.id).where(Message.conversation_id == conversation_id)))
     if not ids:
-        return {"deleted": 0, "scope": "me"}
+        return {"deleted": 0, "scope": scope}
     rows = list(db.scalars(select(Message).where(Message.id.in_(ids), Message.conversation_id == conversation_id)))
+    if scope == "everyone":
+        if any(row.sender_id != user.id for row in rows):
+            raise HTTPException(status_code=403, detail="İki taraf için yalnızca kendi mesajlarınızı silebilirsiniz")
+        deleted_ids = [row.id for row in rows]
+        for row in rows:
+            db.delete(row)
+        db.commit()
+        for member_id in ConversationRepository(db).members(conversation_id):
+            await manager.send_user(member_id, {"type": "dm_messages_deleted",
+                "conversation_id": conversation_id, "message_ids": deleted_ids})
+        return {"deleted": len(deleted_ids), "scope": "everyone"}
     for row in rows:
         if not db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == row.id, MessageHidden.user_id == user.id)):
             db.add(MessageHidden(message_id=row.id, user_id=user.id))
