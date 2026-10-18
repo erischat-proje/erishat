@@ -31,6 +31,7 @@ işlevsel gereksinimlerini tanımlar.
 --------------------------------------------------------------------------------
 2.1. İçerik Kısıtlaması (Gizli Profili Gören Takip Etmeyen Kullanıcı):
      - Kullanıcının paylaştığı gönderiler gizlenecek.
+     - Story atarsa keşfette gözükmeyecek sadece takipçilerinde gözükecek
      - Ekranın ortasında şu bileşen gösterilecek:
        * Üstte: Kilit İkonu (🔒)
        * Altında Metin: "Bu profil gizli, içerikleri görmek için takip isteği yollayınız."
