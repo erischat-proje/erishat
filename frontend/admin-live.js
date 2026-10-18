@@ -110,6 +110,33 @@ html[data-eris-theme=dark] body .eris-admin-overlay #eaBody .ea-png-copy small{c
 html body .eris-admin-overlay #eaBody .ea-png-button:is([data-a="lookup"],[data-a="deleteaccount"],[data-a="chatban"],[data-a="chatbanlogs"],[data-a="lidya"]){aspect-ratio:3/1!important;min-height:0!important;border-radius:12px!important;}
 html body .eris-admin-overlay #eaBody .ea-png-button:is([data-a="lookup"],[data-a="deleteaccount"],[data-a="chatban"],[data-a="chatbanlogs"],[data-a="lidya"]) .ea-png-copy{left:6%!important;top:11%!important;bottom:11%!important;width:49%!important;max-width:49%!important;}
 html body .eris-admin-overlay #eaBody .ea-png-button:is([data-a="lookup"],[data-a="deleteaccount"],[data-a="chatban"],[data-a="chatbanlogs"],[data-a="lidya"]) .ea-png-copy b{font:700 clamp(11px,1.6vw,18px)/1.15 Georgia,serif!important;}
+
+/* ERISCHAT_LIDYA_ACTION_CONTRAST_V2 */
+/* ERISCHAT_LIDYA_ACTION_CONTRAST_V2: only non-PNG action controls */
+html[data-eris-theme="light"] .eris-admin-overlay {--ea-action-bg:#c9a36a;--ea-action-fg:#24190e;--ea-action-border:#936d39}
+html[data-eris-theme="dark"] .eris-admin-overlay {--ea-action-bg:#302b24;--ea-action-fg:#fff1d7;--ea-action-border:#9e8356}
+html[data-eris-theme="light"] .ea-float {--ea-action-bg:#c9a36a;--ea-action-fg:#24190e;--ea-action-border:#936d39}
+html[data-eris-theme="dark"] .ea-float {--ea-action-bg:#302b24;--ea-action-fg:#fff1d7;--ea-action-border:#9e8356}
+html body .eris-admin-overlay .eris-admin-panel #eaBody button:not(.ea-png-button),
+html body .eris-admin-overlay .eris-admin-panel #eaBody .ea-back,
+html body .ea-float button:not(.ea-png-button):not([data-close]) {
+ background:var(--ea-action-bg)!important;
+ background-image:none!important;
+ color:var(--ea-action-fg)!important;
+ border:1px solid var(--ea-action-border)!important;
+ text-shadow:none!important;
+ box-shadow:0 2px 9px rgba(0,0,0,.12)!important;
+ font-weight:700!important;
+}
+html body .eris-admin-overlay .eris-admin-panel #eaBody button:not(.ea-png-button) :is(span,b,strong,small),
+html body .ea-float button:not(.ea-png-button) :is(span,b,strong,small) {color:inherit!important;text-shadow:none!important}
+html body .eris-admin-overlay .eris-admin-panel #eaBody button:not(.ea-png-button):disabled {opacity:.72!important;cursor:not-allowed!important}
+html body .eris-admin-overlay .eris-admin-panel #eaBody button:not(.ea-png-button):focus-visible,
+html body .eris-admin-overlay .eris-admin-panel #eaBody :is(input,select,textarea):focus-visible {outline:3px solid var(--ea-focus)!important;outline-offset:2px!important}
+html body .eris-admin-overlay .eris-admin-panel #eaBody :is(input,textarea,select) {background:var(--ea-panel)!important;color:var(--ea-ink)!important}
+html body .eris-admin-overlay .eris-admin-panel #eaBody :is(input,textarea)::placeholder {color:var(--ea-muted)!important;opacity:1!important}
+/* PNG buttons retain all original imagery, colors and positioning. */
+
 `;document.head.appendChild(s)}
 function adminMenu(me){const role=me.role,fa=role==='FA',da=role==='DA',ua=role==='UA';let html='<div class="ea-profile"><div class="ea-shield">🛡️</div><div><b>'+escapeHtml(me.nickname||'Yönetici')+'</b><small>Ghost Mode '+(me.ghost_mode?'açık':'kapalı')+'</small></div><span class="ea-role">'+escapeHtml(role)+'</span></div><div class="ea-section">Günlük operasyon</div><div class="eris-admin-grid">'+(da?'<button data-a="ghost">👻　Ghost Mode</button>':'')+'<button data-a="tickets">🎫　Destek talepleri</button>';if(fa||da)html+='<button data-a="announcement">📢　Duyuru gönder</button>';if(da)html+='<button data-a="gaps">🧩　Uygulama Geri Bildirimi Paneli</button><button data-a="payments">Yükleme İsteği</button>';if(ua||da)html+='<button data-a="ban">🚫　Kullanıcı Ban</button><button data-a="roomban">🏠　Oda Ban</button><button data-a="chatban">💬　CHAT/DM BAN</button>';html+='</div>';if(fa||da){html+='<div class="ea-section">Ban ve itiraz yönetimi</div><div class="eris-admin-grid"><button data-a="banrequests">🚫　Ban talepleri</button><button data-a="roombanrequests">🏠　Oda ban talepleri</button><button data-a="chatbanrequests">💬　Sohbet ban talepleri</button><button data-a="banappeals">📝　İtiraz talepleri</button><button data-a="topup">💰　Lidya yükleme</button></div>'}if(da)html+='<div class="ea-section">Geliştirici yönetimi</div><div class="eris-admin-grid"><button data-a="lookup">🔎　ID Sorgu</button><button data-a="deleteaccount">🗑　Hesap Silme</button><button data-a="roles">👑　Yönetici Rolleri</button><button data-a="faactions">📋　FA işlemleri</button><button data-a="daactions">📋　DA işlemleri</button><button data-a="uaactions">📋　UA işlemleri</button><button data-a="saactions">📋　SA işlemleri</button><button data-a="banlogs">📋　Ban işlem logları</button><button data-a="roombanlogs">📋　Oda ban işlem logları</button><button data-a="chatbanlogs">📋　Sohbet ban işlem logları</button><button data-a="lidya">💰　Lidya İşlemleri · Yönetim</button><button data-a="referrals">✦　Referans Kod Oluştur</button></div>';return html}
 
