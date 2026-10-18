@@ -73,6 +73,7 @@
     row.className = 'bubble' + (mine ? ' me' : '');
     if (message?.media_type === 'image' || message?.media_type === 'voice') row.classList.add('dm-media-bubble');
     if (message?.id != null) row.dataset.messageId = String(message.id);
+    if (message?.expires_at) row.dataset.ttlExpires = message.expires_at;
     row.dataset.read = message?.is_read ? '1' : '0';
     const portrait=document.createElement('span');portrait.className='dm-message-portrait';
     const asset=window.ErisChatCosmetics?.assetUrl;

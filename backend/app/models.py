@@ -115,6 +115,7 @@ class Conversation(Base):
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     type: Mapped[str] = mapped_column(String(12), default="dm", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    is_ephemeral: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     members: Mapped[list["ConversationMember"]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
 
 class ConversationMember(Base):
@@ -133,6 +134,7 @@ class Message(Base):
     sender_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
 class AuthOTP(Base):
     __tablename__ = "auth_otps"
