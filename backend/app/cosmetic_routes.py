@@ -13,6 +13,10 @@ from .platform_models import VipStatus, VipRewardClaim
 from .wallpapers import catalog as wallpaper_catalog, find as find_wallpaper
 from .vip_presentation import presentation_rewards, entry_style, entry_selection, entrance_inventory
 
+from .cosmetic_leases import CosmeticLease, MONTHS, PRICES, add_months, active as lease_active, get as get_lease, permanent as permanent_cosmetic
+from datetime import datetime, timezone
+from pydantic import BaseModel, Field
+
 router = APIRouter(prefix="/v1", tags=["cosmetics"])
 
 
@@ -69,7 +73,7 @@ def list_cosmetics(kind: str | None = None, gender: str | None = None):
         items = [item for item in items if item["type"] == kind]
     if gender:
         items = [item for item in items if item["gender"] in (None, gender)]
-    return {"items": items, "price": PRICE, "vip_price": VIP_PRICE}
+    return {"items": items, "price": PRICE, "vip_price": VIP_PRICE, "rental_prices": {k:dict(zip(MONTHS,v)) for k,v in PRICES.items()}}
 
 
 @router.get("/me/cosmetics")
@@ -80,7 +84,12 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
     ).mappings().all()
     active = {(i['type'], i['asset_key']) for i in catalog()}
     walls = {i['key'] for i in wallpaper_catalog()}
-    return {"items": [dict(row) for row in rows if (row['cosmetic_type'] not in ('frame', 'wallpaper') or (row['cosmetic_type'], row['asset_key']) in active or row['asset_key'] in walls)], "vip_level": vip_level(db, user.id)}
+    permanent_items=[dict(row) for row in rows if (row['cosmetic_type'] not in ('frame', 'wallpaper') or (row['cosmetic_type'], row['asset_key']) in active or row['asset_key'] in walls)]
+    rentals=[]
+    for lease in db.scalars(select(CosmeticLease).where(CosmeticLease.user_id==user.id)):
+        if lease_active(lease):rentals.append({'cosmetic_type':lease.cosmetic_type,'asset_key':lease.asset_key,'expires_at':lease.expires_at.isoformat(),'rental':True})
+    keys={(i['cosmetic_type'],i['asset_key']) for i in permanent_items}
+    return {'items':permanent_items+[i for i in rentals if (i['cosmetic_type'],i['asset_key']) not in keys], 'vip_level':vip_level(db,user.id)}
 
 
 @router.get("/me/appearance-inventory")
@@ -99,6 +108,9 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     else:
         db.scalar(select(User).where(User.id == user.id).with_for_update())
     owned = {(r.cosmetic_type, r.asset_key) for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id == user.id))}
+    leases={(r.cosmetic_type,r.asset_key):r for r in db.scalars(select(CosmeticLease).where(CosmeticLease.user_id==user.id))}
+    # Rental assets participate in collection but are never made permanently owned.
+    owned |= {pair for pair,lease in leases.items() if lease_active(lease)}
     claimed = {r.level for r in db.scalars(select(VipRewardClaim).where(VipRewardClaim.user_id == user.id))}
     # Presentation entrances and the new wallpapers are level entitlements,
     # independent of historical avatar/frame reward claim records.
@@ -158,10 +170,12 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
                 equipped = equipped and entry_mode == 'relationship'
         else:
             equipped = getattr(user, kind + '_asset', None) == key
+        lease=leases.get((kind,key))
+        rented=bool(lease and not permanent_cosmetic(db,user.id,kind,key))
         result.append({'type':kind, 'asset_key':key, 'asset':wall.get('asset', key),
                        'name':reward.get('name', wall.get('name', item.get('name', labels[kind]))), 'source':'relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'task' if item.get('task_only') else 'shop' if item.get('expansion') else 'standard',
                        'level':reward.get('level', item.get('vip_level', wall.get('vip_level', 0))) or 0,
-                'equipped':equipped, 'equip_key':key})
+                'equipped':equipped, 'equip_key':key, 'expires_at':lease.expires_at.isoformat() if rented else None, 'expired':False, 'source':'rental' if rented else ('relationship' if relation else 'vip' if item.get('vip') or wall.get('tier') == 'vip' else 'task' if item.get('task_only') else 'shop' if item.get('expansion') else 'standard')})
     if house:
         for ring in db.scalars(select(CoupleRing).where(CoupleRing.couple_id == house.id)):
             result.append({'type':'ring', 'asset_key':ring_asset(ring.ring), 'asset':ring_asset(ring.ring),
@@ -234,6 +248,37 @@ def equip_vip_entrance(payload: dict, user=Depends(current_cosmetic_user), db: S
     return {"ok": True, "entry_effect": status.entry_effect}
 
 
+class CosmeticRent(BaseModel):
+    cosmetic_type:str
+    asset_key:str=Field(min_length=1,max_length=255)
+    months:int
+
+@router.post('/me/cosmetics/rent')
+def rent_cosmetic(payload:CosmeticRent,user=Depends(current_cosmetic_user),db:Session=Depends(get_db)):
+    kind,key,months=payload.cosmetic_type,payload.asset_key,payload.months
+    if kind not in PRICES or months not in MONTHS:raise HTTPException(422,'Geçersiz kiralama seçeneği.')
+    if kind in ('avatar','frame'):staff_identity.require_editable(user)
+    try:asset=find_asset(key,kind)
+    except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
+    if not asset:raise HTTPException(404,'Görünüm bulunamadı.')
+    if asset.get('gender') not in (None,entry_style(user)):raise HTTPException(403,'Bu görünüm profilinize uygun değil.')
+    if asset.get('vip') or asset.get('free') or asset.get('task_only') or asset.get('relationship'):
+        raise HTTPException(403,'Bu ürün kiralama için uygun değil.')
+    locked=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
+    if permanent_cosmetic(db,user.id,kind,key):raise HTTPException(409,'Bu ürüne süresiz erişiminiz zaten var.')
+    price=PRICES[kind][MONTHS.index(months)]
+    if int(locked.lidya or 0)<price:raise HTTPException(400,'Yeterli Lidya yok.')
+    now=datetime.now(timezone.utc)
+    lease=get_lease(db,user.id,kind,key)
+    until=add_months(max(now,lease.expires_at.replace(tzinfo=timezone.utc) if lease and lease.expires_at.tzinfo is None else lease.expires_at if lease else now),months)
+    if lease:lease.expires_at=until
+    else:db.add(CosmeticLease(user_id=user.id,cosmetic_type=kind,asset_key=key,expires_at=until))
+    locked.lidya-=price
+    from .vip_spending import record_spend
+    record_spend(db,user.id,price,'cosmetic',key)
+    db.commit()
+    return {'ok':True,'spent':price,'expires_at':until.isoformat(),'months':months,'asset_key':key,'cosmetic_type':kind}
+
 @router.post("/me/cosmetics/purchase")
 def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     kind = payload.cosmetic_type
@@ -251,6 +296,7 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
         raise HTTPException(status_code=403, detail=f"Bu VIP görünüm mağazadan satın alınamaz; VIP {asset.get('vip_level', 1)} seviyesinde açılır")
     if asset.get('free'):
         return {'ok': True, 'spent': 0, 'asset_key': key, 'cosmetic_type': kind, 'vip': False}
+    if kind in PRICES:raise HTTPException(409,'Bu ürün yalnızca süreli kiralanabilir.')
     price = int(asset.get("price", PRICE))
 
     # Lock the balance row before checking ownership/balance so concurrent purchases
@@ -303,8 +349,8 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
             text("SELECT 1 FROM user_cosmetics WHERE user_id=:uid AND cosmetic_type=:kind AND asset_key=:key"),
             {"uid": user.id, "kind": kind, "key": key},
         ).first()
-        if not owned:
-            raise HTTPException(status_code=403, detail="Önce bu görünümü satın almalısınız")
+        if not owned and not lease_active(get_lease(db,user.id,kind,key)):
+            raise HTTPException(status_code=403, detail="Önce bu görünümü kiralamalısınız")
 
     if asset.get('relationship'):
         from .relationship_rewards import house_for, items
