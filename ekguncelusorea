@@ -1,0 +1,73 @@
+================================================================================
+ÜRÜN GEREKSİNİM BELGESİ (PRD) - VERİ TEMİZLİĞİ, LİDYA MAĞAZASI VE BİLDİRİM/GİZLİLİK FİX
+================================================================================
+
+[SİSTEM GENEL BAKIŞI]
+Bu belge; Hesap Silme sonrası tam veri temizliği (Hard Cascade Delete & Anonymization), 
+Lidya Mağazası dinamik envanter/kiralama mantığı, Mesaj Bildirim Toggle hatası 
+ve Gizlilik Menüsü butonlarının tam işlevsellik denetimi gereksinimlerini kapsar.
+
+--------------------------------------------------------------------------------
+1. HESAP SİLME SONRASI TAM VERİ TEMİZLİĞİ (CASCADE DELETE & NO TRACE)
+--------------------------------------------------------------------------------
+1.1. Genel İlke (Sıfır İz / Absolute Data Cleanup):
+     - Yönetim panelinden veya kullanıcının kendisi tarafından hesap silindiğinde, 
+       sistemdeki TÜM MODÜLLERDEN o kullanıcıya ait tüm izler silinecektir.
+
+1.2. Modül Bazlı Temizlik Kuralları:
+     - Profil & Kimlik: Veri tabanındaki kullanıcı kaydı, e-posta, OAuth bağlantıları, 
+       profil resimleri ve medya deposu tamamen silinir.
+     - Mesajlar & Sohbetler: Atmış olduğu tüm mesajlar, medya gönderimleri, mesaj 
+       istekleri ve sohbet odaları iki taraflı olarak tamamen kaldırılır.
+     - Gönderiler & İçerikler: Paylaştığı tüm gönderiler, yorumlar, beğeniler ve 
+       kaydedilenler silinir.
+     - Takip & İstekler: Takip ettiği/takipçisi olduğu tüm ilişkiler ve bekleyen 
+       takip istekleri veritabanından temizlenir.
+     - Liderlik & Sıralama Tabloları (Leaderboards): Puan, Lidya, skor veya sıralama 
+       listelerinden (en çok takip edilenler, aktifler vb.) kullanıcının satırı ve 
+       skoru tamamen kaldırılır; sıralama yeniden hesaplanır.
+     - Bildirimler: Başka kullanıcılara gitmiş olan veya kendisine gelen tüm bildirim 
+       kayıtları silinir.
+
+--------------------------------------------------------------------------------
+2. LİDYA MAĞAZASI DİNAMİK ENVANTER VE KİRALAMA MANTIĞI
+--------------------------------------------------------------------------------
+2.1. Mevcut Ürünlerin Gizlenmesi (Dynamic Inventory Filter):
+     - Kullanıcı Lidya Mağazasına girdiğinde:
+       * Sistem kullanıcının aktif envanterini (`user_inventory`) otomatik kontrol eder.
+       * Kullanıcının zaten SAHİP OLDUĞU (kullanım süresi sınırsız/kalıcı) ürünler 
+         mağaza listesinde GÖRÜNMEYECEKTİR.
+
+2.2. Kiralanan Ürünlerin Süre Takibi ve Re-listing Mantığı:
+     - Süreli / Kiralanan Ürünler (Rental Items):
+       * Ürün kiralandığı sürece kullanıcı mağazasında gizli kalır.
+       * Kira süresi bittiğinde (`rental_expires_at <= NOW()`), sistem ürünü kullanıcının 
+         envanterinden pasife alır.
+       * Süresi dolan ürün, kullanıcının Lidya Mağazası ekranında OTOMATİK OLARAK 
+         yeniden satın alınabilir/kiralanabilir şekilde GÖRÜNMEYE BAŞLAR.
+
+--------------------------------------------------------------------------------
+3. MESAJ BİLDİRİM TOGGLE VE ANLIK MUTE DÜZELTMESİ (NOTIFICATION FIX)
+--------------------------------------------------------------------------------
+3.1. Buton Durum (State) Düzeltmesi:
+     - Mesajlaşma ekranındaki "Bildirimleri Aç" butonuna basıldığında:
+       * Arayüz durumu (UI State) güncellenecek ve buton metni/simgesi "Bildirimleri Kapat" 
+         olarak değişecektir.
+       * Tekrar basıldığında sorunsuz bir şekilde "Bildirimleri Aç" durumuna geri dönecektir.
+
+3.2. Gerçek Zamanlı Bildirim Engelleme (Backend Enforcement):
+     - Bir sohbet/mesaj için bildirimler kapatıldığında (`is_muted = true`):
+       * Arka plan servisi (Push Notification Worker / Socket Push), o sohbetten 
+         gelen yeni mesajlarda kullanıcıya HİÇBİR ŞEKİLDE anlık bildirim (Push / Banner / Sound) 
+         GÖNDERMEYECEKTİR.
+
+--------------------------------------------------------------------------------
+4. GİZLİLİK MENÜSÜ ARAYÜZ VE BUTON İŞLEVSİLLİK DENETİMİ (PRIVACY AUDIT)
+--------------------------------------------------------------------------------
+4.1. Tam Buton Fonksiyonelliği Denetimi:
+     - Gizlilik menüsünde yer alan TÜM buton ve anahtarların (Toggle switches):
+       * Tıklandığında doğru API/Database durumunu güncellediğinden (`true`/`false`),
+       * Sayfa yenilendiğinde en son seçilen durumu koruduğundan (Persistence),
+       * Pasif/Aktif durumlarının ilgili kısıtlamaları (Profil gizliliği, son görülme, 
+         okundu bilgisi vb.) sistem genelinde eksiksiz uyguladığından emin olunacaktır.
+================================================================================
