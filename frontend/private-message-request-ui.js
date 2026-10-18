@@ -17,9 +17,9 @@
     const root=document.getElementById('profile');if(!root)return;
     const toolbar=root.querySelector('.toolbar');if(!toolbar)return;
     const matches=[...toolbar.querySelectorAll('button,[role=button]')].filter(b=>/takip\s*istekleri/i.test((b.textContent||'').replace(/\s+/g,' ')));
-    const primary=matches.find(b=>b.id==='eris-follow-request-button')||matches[0];
-    for(const b of matches){if(b!==primary){b.hidden=true;b.style.setProperty('display','none','important');b.setAttribute('aria-hidden','true');}}
-    if(primary){primary.dataset.erisFollowPrimary='1';primary.style.removeProperty('display');}
+    const primary=matches[0];
+    for(const b of matches){if(b!==primary){b.remove();}}
+    if(primary){primary.dataset.erisFollowPrimary='1';primary.hidden=false;primary.style.removeProperty('display');}
   }
   const profileObserver=new MutationObserver(()=>{syncProfile()});
   function show(chat){
