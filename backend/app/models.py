@@ -116,6 +116,7 @@ class Conversation(Base):
     type: Mapped[str] = mapped_column(String(12), default="dm", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_ephemeral: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    ephemeral_enabled_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     members: Mapped[list["ConversationMember"]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
 
 class ConversationMember(Base):

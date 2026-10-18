@@ -271,6 +271,7 @@ def _initialize_database() -> None:
     ensure_system_data_columns()
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_ephemeral BOOLEAN NOT NULL DEFAULT false"))
+        conn.execute(text("ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ephemeral_enabled_by VARCHAR(128)"))
         conn.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_messages_expires_at ON messages (expires_at)"))
     with Session(engine) as db:

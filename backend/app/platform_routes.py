@@ -570,7 +570,7 @@ def register_platform_auth(current_user_dependency):
         if not member: raise HTTPException(403,"Bu konuşmaya erişiminiz yok")
         conversation=db.get(Conversation,conversation_id)
         if not conversation or conversation.type != "dm": raise HTTPException(400,"Yalnızca birebir sohbetlerde kullanılabilir")
-        return {"is_ephemeral":bool(conversation.is_ephemeral),"ttl_seconds":86400}
+        return {"is_ephemeral":bool(conversation.is_ephemeral),"ttl_seconds":86400,"can_manage":not conversation.is_ephemeral or conversation.ephemeral_enabled_by==user.id,"enabled_by_me":conversation.ephemeral_enabled_by==user.id}
 
     @router.patch("/conversations/{conversation_id}/ephemeral")
     def set_ephemeral(conversation_id:str,payload:dict,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
@@ -579,14 +579,18 @@ def register_platform_auth(current_user_dependency):
         conversation=db.get(Conversation,conversation_id)
         if not conversation or conversation.type != "dm" or len(conversation.members)!=2: raise HTTPException(400,"Yalnızca birebir sohbetlerde kullanılabilir")
         if type(payload.get("is_ephemeral")) is not bool: raise HTTPException(422,"Geçerli bir durum gönderin")
-        # Süreli mod bir kez açıldıktan sonra hiçbir katılımcı kapatamaz.
-        # İstemci düğmesinin gizlenmesi tek başına güvenlik sağlamaz.
+        # Yalnızca süreli modu açan kişi kapatabilir; diğer üye kapatamaz.
         if conversation.is_ephemeral and not payload["is_ephemeral"]:
-            raise HTTPException(status_code=409, detail="Süreli sohbet etkinleştirildikten sonra kapatılamaz")
-        if not conversation.is_ephemeral and payload["is_ephemeral"]:
-            conversation.is_ephemeral=True
+            if conversation.ephemeral_enabled_by != user.id:
+                raise HTTPException(status_code=403, detail="Süreli sohbeti yalnızca açan kişi kapatabilir")
+            conversation.is_ephemeral=False
+            conversation.ephemeral_enabled_by=None
             db.commit()
-        return {"is_ephemeral":bool(conversation.is_ephemeral),"ttl_seconds":86400}
+        elif not conversation.is_ephemeral and payload["is_ephemeral"]:
+            conversation.is_ephemeral=True
+            conversation.ephemeral_enabled_by=user.id
+            db.commit()
+        return {"is_ephemeral":bool(conversation.is_ephemeral),"ttl_seconds":86400,"can_manage":not conversation.is_ephemeral or conversation.ephemeral_enabled_by==user.id,"enabled_by_me":conversation.ephemeral_enabled_by==user.id}
 
     @router.get("/conversations/{conversation_id}")
     def conversation(conversation_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
