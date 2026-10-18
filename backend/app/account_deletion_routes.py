@@ -30,9 +30,28 @@ def authenticated():
 class Confirm(BaseModel):
     code: str=Field(pattern=r'^\d{6}$')
 
+# ERISCHAT_GOOGLE_EMAIL_ACCOUNT_DELETE_V1
 def account_email(db,user):
-    rows=list(db.scalars(select(AuthIdentity).where(AuthIdentity.user_id==user.id,AuthIdentity.provider=='email',AuthIdentity.verified_at.is_not(None))))
-    if rows:return rows[0].identifier
+    """Return an email proven by this account, including verified Google login.
+
+    Do not trust User.google_email alone: require a verified Google identity
+    whose immutable Google subject belongs to the authenticated user.
+    """
+    identities = list(db.scalars(select(AuthIdentity).where(
+        AuthIdentity.user_id == user.id,
+        AuthIdentity.verified_at.is_not(None),
+    )))
+    for identity in identities:
+        if identity.provider == 'email' and identity.identifier:
+            return identity.identifier.strip().lower()
+    for identity in identities:
+        if (identity.provider == 'google'
+                and user.google_sub
+                and identity.provider_subject == user.google_sub
+                and identity.identifier
+                and user.google_email
+                and identity.identifier.strip().lower() == user.google_email.strip().lower()):
+            return identity.identifier.strip().lower()
     return None
 
 def delete_user(db: Session, user: User):
