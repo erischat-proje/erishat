@@ -45,6 +45,8 @@ from .platform_models import (ConversationReadState, DirectMessageGift, DirectMe
     MessageMedia, PinnedMessage, Report, RoomAnnouncement, UserLocation, UserPrivacy, VipStatus, Notification,
     SocialPost, SocialPostLike, SocialPostComment, SocialPostCommentLike, SocialStory, SocialStoryView, SocialStoryLike, UserBlock, UserFollow)
 from .platform_routes import register_platform_auth, router as platform_router
+from . import referral_models
+from .referral_routes import install_routes as install_referral_routes, router as referral_router
 from . import relationship_routes, ludo_live, okey101_live, uno_live
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
@@ -449,6 +451,8 @@ for _route in platform_router.routes:
     if _route.path.startswith(("/v1/games/crash/live", "/v1/games/wheel/live")):
         if not any(getattr(r, 'path', None) == _route.path and getattr(r, 'methods', None) == _route.methods for r in app.routes):
             app.router.routes.append(_route)
+install_referral_routes(current_user)
+app.include_router(referral_router)
 app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
