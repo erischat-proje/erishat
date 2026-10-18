@@ -20,3 +20,44 @@
 .ef2 .eh-family-person{min-width:100px!important;padding:13px 10px!important;border-radius:17px!important}
 .ef2 .eh-family-person b{max-width:100%!important;white-space:normal!important}
 .ef2 .ef2-avatar-btn{min-height:48px!important}
+
+/* V3 family experience: asset-backed controls, independent of legacy #eh-family selector. */
+.eh-family-shell.ef2 .eh-family-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.eh-family-shell.ef2 .eh-family-actions button.ef2-action{position:relative;min-height:86px!important;border-radius:18px!important;background-color:#261e16!important;background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;color:#f9e7c1!important;text-shadow:0 1px 3px #17100a!important;border:1px solid #b89964!important;padding:12px 9px!important;font-size:13px!important;font-weight:800!important;white-space:normal!important}
+.eh-family-shell.ef2 .eh-family-actions button.ef2-action:focus-visible,.eh-family-shell.ef2 .ef2-tabs button:focus-visible{outline:3px solid #d8ae68;outline-offset:3px}
+.eh-family-shell.ef2 .ef2-avatar-btn{width:100%;min-height:74px!important;background-size:100% 100%!important;background-position:center!important;border-radius:18px!important;color:#f8e9c8!important;text-shadow:0 1px 3px #21150c!important}
+.eh-family-shell.ef2 .ef2-goal{padding:10px 0;border-bottom:1px solid var(--ui-line);display:grid;gap:7px}.eh-family-shell.ef2 .ef2-goal span{font-weight:800;font-size:13px}.eh-family-shell.ef2 .ef2-meter{height:10px;background:color-mix(in srgb,var(--ui-ink) 10%,transparent);border-radius:99px;overflow:hidden}.eh-family-shell.ef2 .ef2-meter i{display:block;height:100%;background:linear-gradient(90deg,#987039,#e8c78d);border-radius:99px}.eh-family-shell.ef2 .ef2-goal small{color:var(--ui-muted)}
+.eh-family-shell.ef2 [data-ef2-page][hidden]{display:none!important}
+.eh-family-shell.ef2 .ef2-tabs{position:sticky;top:0;z-index:2;background:var(--ui-panel);border-radius:12px;padding:8px 4px 12px}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-members{background-image:url("./assets/family-premium/png/family-members-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-members{background-image:url("./assets/family-premium/png/family-members-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-chat{background-image:url("./assets/family-premium/png/family-chat-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-chat{background-image:url("./assets/family-premium/png/family-chat-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-invite{background-image:url("./assets/family-premium/png/family-invite-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-invite{background-image:url("./assets/family-premium/png/family-invite-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-applications{background-image:url("./assets/family-premium/png/family-applications-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-applications{background-image:url("./assets/family-premium/png/family-applications-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-manage{background-image:url("./assets/family-premium/png/family-manage-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-manage{background-image:url("./assets/family-premium/png/family-manage-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-donate{background-image:url("./assets/family-premium/png/family-donate-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-donate{background-image:url("./assets/family-premium/png/family-donate-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-leave{background-image:url("./assets/family-premium/png/family-leave-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-leave{background-image:url("./assets/family-premium/png/family-leave-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .ef2-avatar-btn{background-image:url("./assets/family-premium/png/family-avatar-light.png")!important}
+
+.eh-family-shell.ef2 .ef2-avatar-btn{background-image:url("./assets/family-premium/png/family-avatar-dark.png")!important}
