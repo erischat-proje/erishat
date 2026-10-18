@@ -263,7 +263,7 @@ def register_platform_auth(current_user_dependency):
     @router.get("/me/message-requests")
     def incoming_message_requests(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         rows = db.scalars(select(PrivateMessageRequest).where(PrivateMessageRequest.recipient_id == user.id, PrivateMessageRequest.status == "pending").order_by(PrivateMessageRequest.created_at.desc()).limit(200))
-        return [{"id": r.id, "sender_id": r.sender_id, "nickname": db.get(User, r.sender_id).nickname if db.get(User, r.sender_id) else "Kullanıcı", "conversation_id": r.conversation_id} for r in rows]
+        return [{"id": r.id, "sender_id": r.sender_id, "nickname": db.get(User, r.sender_id).nickname if db.get(User, r.sender_id) else "Kullanıcı", "conversation_id": r.conversation_id, "preview": (db.scalar(select(Message.text).where(Message.conversation_id == r.conversation_id, Message.sender_id == r.sender_id).order_by(Message.id.asc()).limit(1)) or "")} for r in rows]
 
     @router.post("/me/message-requests/{request_id}/accept")
     def accept_message_request(request_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -612,7 +612,7 @@ def register_platform_auth(current_user_dependency):
         other_ids = list(db.scalars(select(ConversationMember.user_id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id != user.id)))
         if len(other_ids) != 1: return {"state": "normal"}
         other_id = other_ids[0]
-        if not _private(db, other_id) or _follows(db, user.id, other_id): return {"state": "normal"}
+        if not _private(db, other_id): return {"state": "normal"}
         request = _message_request(db, user.id, other_id)
         if request and request.status == "accepted": return {"state": "normal"}
         if request and request.status == "pending": return {"state": "pending"}
@@ -634,9 +634,11 @@ def register_platform_auth(current_user_dependency):
         text=str(payload.get("text") or "").strip()
         if not text: raise HTTPException(status_code=400,detail="Mesaj boş olamaz")
         recipients = list(db.scalars(select(ConversationMember.user_id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id != user.id)))
-        if len(recipients) == 1 and _private(db, recipients[0]) and not _follows(db, user.id, recipients[0]):
+        if len(recipients) == 1 and _private(db, recipients[0]):
+            # Serialize parallel sends so only one initial request can be sent.
+            db.scalar(select(User.id).where(User.id == user.id).with_for_update())
             existing = _message_request(db, user.id, recipients[0])
-            if existing and existing.status == "pending": raise HTTPException(403, "Karşı tarafa mesaj isteğiniz gönderildi, kabul etmesini bekleyiniz.")
+            if existing and existing.status == "pending": raise HTTPException(403, "Karşı tarafın mesaj isteğinizi kabul etmesini bekleyiniz.")
             if existing and existing.status == "rejected": raise HTTPException(403, "Mesaj isteğiniz reddedildi.")
             if existing is None:
                 db.add(PrivateMessageRequest(sender_id=user.id, recipient_id=recipients[0], conversation_id=conversation_id, status="pending"))
