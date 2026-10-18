@@ -106,12 +106,15 @@ def install_routes(current_user):
             raise HTTPException(409, '30 günlük bekleme süresi henüz dolmadı')
         member_ids = list(dict.fromkeys(db.scalars(select(FamilyMember.user_id).where(FamilyMember.family_id == family_id)).all()))
         if not member_ids: raise HTTPException(409, 'Aile üyesi bulunamadı')
+        if user.id not in member_ids: raise HTTPException(409, 'Aile sahibi üye listesinde bulunamadı')
+        # Fail the whole transaction rather than silently paying only some members.
+        member_users = list(db.scalars(select(User).where(User.id.in_(member_ids)).order_by(User.id).with_for_update()))
+        if len(member_users) != len(member_ids): raise HTTPException(409, 'Aile üye kayıtları tutarsız')
         claim = FamilyReferralClaim(family_id=family_id, owner_id=user.id, member_count=len(member_ids))
         db.add(claim); db.flush()
         owner_name = user.nickname
-        for uid in sorted(member_ids):
-            target = db.scalar(select(User).where(User.id == uid).with_for_update())
-            if not target: continue
+        for target in member_users:
+            uid = target.id
             target.lidya = int(target.lidya or 0) + 1000
             db.add(FamilyReferralReceipt(claim_id=claim.id, user_id=uid, amount=1000))
             db.add(Notification(user_id=uid, kind='family_referral_reward', title='Aile Lidya ikramiyesi', body=f'Aile sahibiniz {owner_name} tarafından 1000 Lidya ikramiye dağıtıldı. 1000 Lidya hesabınıza tanımlanmıştır.'))
