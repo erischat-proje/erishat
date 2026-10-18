@@ -29,10 +29,10 @@
     body.querySelector('.eris-private-dm-notice')?.remove();
     if(send)send.disabled=(state==='pending'||state==='rejected');
     if(input)input.disabled=(state==='pending'||state==='rejected');
-    if(state==='normal')return;
+    if(state==='normal'||state==='first')return;
     const panel=document.createElement('section');panel.className='eris-private-dm-notice';panel.dataset.state=state;panel.setAttribute('role','status');
-    const heading=document.createElement('strong');heading.textContent=state==='first'?'🔒 Bu profil gizli':state==='pending'?'⏳ Mesaj isteği gönderildi':'Mesaj isteği reddedildi';
-    const msg=document.createElement('span');msg.textContent=state==='first'?'İlk mesajınız mesaj isteği sayılacaktır. İkinci mesajı gönderebilmeniz için mesaj isteğinizin kabul edilmesi gerekiyor.':state==='pending'?'Karşı tarafın mesaj isteğinizi kabul etmesini bekleyiniz.':'Bu kullanıcı mesaj isteğinizi reddetti.';
+    const heading=document.createElement('strong');heading.textContent=state==='pending'?'🔒 Bu profil gizli':'Mesaj isteği reddedildi';
+    const msg=document.createElement('span');msg.textContent=state==='pending'?'İlk mesajınız mesaj isteği sayılmıştır. Karşı tarafın mesaj isteğinizi kabul etmesini bekleyiniz. Kabul edilene kadar ikinci mesaj gönderemezsiniz.':'Bu kullanıcı mesaj isteğinizi reddetti.';
     panel.append(heading,msg);body.prepend(panel);
   }
   async function refresh(id){
@@ -43,6 +43,6 @@
     catch(err){if(seq===serial)console.warn('[ErisChat] message request status unavailable',err)}
   }
   window.ErisPrivateDM={open:refresh,sent:id=>{if(String(id)===active){state='pending';show(document.getElementById('chat'));refresh(id)}}};
-  function start(){const profile=document.getElementById('profile');if(profile){profileObserver.observe(profile,{subtree:true,childList:true,characterData:true});syncProfile()}window.addEventListener('erischat:auth',()=>{active='';state='normal';serial++});}
+  function start(){setInterval(()=>{if(active&&state==='pending'&&document.getElementById('chat')?.classList.contains('show')){const id=active;api('/conversations/'+encodeURIComponent(id)+'/message-request-status').then(r=>{if(active===id&&r?.state&&r.state!==state){state=r.state;show(document.getElementById('chat'));if(state==='normal')window.toast?.('Mesaj isteğiniz kabul edildi.')}}).catch(()=>{})}},8000);const profile=document.getElementById('profile');if(profile){profileObserver.observe(profile,{subtree:true,childList:true,characterData:true});syncProfile()}window.addEventListener('erischat:auth',()=>{active='';state='normal';serial++});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

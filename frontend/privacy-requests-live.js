@@ -8,6 +8,7 @@
     .eris-privacy-panel{width:min(440px,100%);max-height:80dvh;overflow:auto;border:2px solid #c5a267;border-radius:22px;padding:18px;background:var(--ui-panel,#201c24);color:var(--ui-ink,#fff);box-shadow:0 20px 90px #0009}
     .eris-privacy-panel header{display:flex;align-items:center;justify-content:space-between;gap:8px}.eris-privacy-panel header b{font-size:18px}
     .eris-privacy-row{display:flex;align-items:center;gap:9px;padding:12px 0;border-bottom:1px solid #ab8b5b55}.eris-privacy-row span{flex:1;min-width:0;overflow-wrap:anywhere}
+    .eris-request-avatar{position:relative;flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--ui-raised,#302b21);border:1px solid #cba96a;font-size:25px}.eris-request-avatar>img:not(.eris-request-frame){width:100%;height:100%;border-radius:50%;object-fit:cover}.eris-request-avatar .eris-request-frame{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);object-fit:contain;pointer-events:none}.eris-privacy-row .eris-privacy-action{margin:0;padding:8px 11px;min-width:40px;flex:none}.eris-privacy-row span{font-weight:700}
     .eris-privacy-action:focus-visible{outline:3px solid #e7c17c}
   `;
   document.head.append(style);
@@ -36,10 +37,17 @@
       if(!rows.length){const p=document.createElement('p');p.textContent='Bekleyen istek yok.';panel.append(p);return;}
       rows.forEach(r=>{
         const line=document.createElement('div');line.className='eris-privacy-row';
-        const who=document.createElement('span');who.textContent=r.nickname||'Kullanıcı';line.append(who);
+        const who=document.createElement('span');who.textContent=r.nickname||'Kullanıcı';
+        if(!isFollow){
+          const portrait=document.createElement('div');portrait.className='eris-request-avatar';portrait.textContent='👤';
+          const avatar=document.createElement('img');avatar.alt='';
+          api('/users/'+encodeURIComponent(r.sender_id)).then(u=>{const url=u.avatar_asset?(window.ErisChatCosmetics?.assetUrl?.(u.avatar_asset)||u.avatar_asset):'';if(url){avatar.src=url;portrait.replaceChildren(avatar)}else if(u.avatar)portrait.textContent=u.avatar;const frameUrl=u.frame_asset?(window.ErisChatCosmetics?.assetUrl?.(u.frame_asset)||u.frame_asset):'';if(frameUrl){const frame=document.createElement('img');frame.alt='';frame.className='eris-request-frame';frame.src=frameUrl;portrait.append(frame)}}).catch(()=>{});
+          line.append(portrait);
+        }
+        line.append(who);
         const base=isFollow?'/me/follow-requests/':'/me/message-requests/';
         const decide=(action)=>async()=>{try{const response=await api(base+r.id+'/'+action,{method:'POST'});line.remove();if(!isFollow&&action==='accept'&&response.conversation_id)window.toast?.('Mesaj isteği kabul edildi.');}catch(e){error(e);}};
-        line.append(btn('✔',decide('accept')),btn('✖',decide('reject')));panel.append(line);
+        const accept=btn('✓',decide('accept'));accept.title='Kabul Et';accept.setAttribute('aria-label','Kabul Et');const reject=btn('✕',decide('reject'));reject.title='Reddet';reject.setAttribute('aria-label','Reddet');line.append(accept,reject);panel.append(line);
       });
     }catch(e){error(e);}
   }
