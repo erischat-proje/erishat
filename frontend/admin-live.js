@@ -4,6 +4,13 @@
 
 const artBase=new URL('./assets/lidya-room-png/',document.currentScript.src).href;
 const adminArtBase=new URL('./assets/admin-lidya-v2/',document.currentScript.src).href;
+// ERISCHAT_ORIGINAL_LIDYA_ART_MAPPING_V1
+// Use existing, verified light/dark Lidya card art. The live button title
+// stays as HTML text, so the image cannot cause doubled lettering.
+function adminArtworkKey(key){
+ const original={lookup:'roles',deleteaccount:'faactions',chatban:'roomban',chatbanlogs:'banlogs',lidya:'referrals'};
+ return original[key]||key;
+}
 const menuArtBase=new URL('./assets/lidya-menu/',document.currentScript.src).href;
 const apiBase=(window.ERISCHAT_API_BASE||window.ERIS_API||localStorage.getItem('erischat.apiBase')||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'').replace(/\/v1$/,'');
 const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
@@ -98,6 +105,11 @@ html[data-eris-theme=dark] body .eris-admin-overlay #eaBody .ea-png-copy b{
 }
 html[data-eris-theme=dark] body .eris-admin-overlay #eaBody .ea-png-copy small{color:#e2d3b4!important}
 @media(max-width:420px){html body .eris-admin-overlay #eaBody .ea-png-copy small{display:none!important}}
+
+/* ERISCHAT_ORIGINAL_LIDYA_CARD_GEOMETRY_V1 */
+html body .eris-admin-overlay #eaBody .ea-png-button:is([data-a="lookup"],[data-a="deleteaccount"],[data-a="chatban"],[data-a="chatbanlogs"],[data-a="lidya"]){aspect-ratio:3/1!important;min-height:0!important;border-radius:12px!important;}
+html body .eris-admin-overlay #eaBody .ea-png-button:is([data-a="lookup"],[data-a="deleteaccount"],[data-a="chatban"],[data-a="chatbanlogs"],[data-a="lidya"]) .ea-png-copy{left:6%!important;top:11%!important;bottom:11%!important;width:49%!important;max-width:49%!important;}
+html body .eris-admin-overlay #eaBody .ea-png-button:is([data-a="lookup"],[data-a="deleteaccount"],[data-a="chatban"],[data-a="chatbanlogs"],[data-a="lidya"]) .ea-png-copy b{font:700 clamp(11px,1.6vw,18px)/1.15 Georgia,serif!important;}
 `;document.head.appendChild(s)}
 function adminMenu(me){const role=me.role,fa=role==='FA',da=role==='DA',ua=role==='UA';let html='<div class="ea-profile"><div class="ea-shield">🛡️</div><div><b>'+escapeHtml(me.nickname||'Yönetici')+'</b><small>Ghost Mode '+(me.ghost_mode?'açık':'kapalı')+'</small></div><span class="ea-role">'+escapeHtml(role)+'</span></div><div class="ea-section">Günlük operasyon</div><div class="eris-admin-grid">'+(da?'<button data-a="ghost">👻　Ghost Mode</button>':'')+'<button data-a="tickets">🎫　Destek talepleri</button>';if(fa||da)html+='<button data-a="announcement">📢　Duyuru gönder</button>';if(da)html+='<button data-a="gaps">🧩　Uygulama Geri Bildirimi Paneli</button><button data-a="payments">Yükleme İsteği</button>';if(ua||da)html+='<button data-a="ban">🚫　Kullanıcı Ban</button><button data-a="roomban">🏠　Oda Ban</button><button data-a="chatban">💬　CHAT/DM BAN</button>';html+='</div>';if(fa||da){html+='<div class="ea-section">Ban ve itiraz yönetimi</div><div class="eris-admin-grid"><button data-a="banrequests">🚫　Ban talepleri</button><button data-a="roombanrequests">🏠　Oda ban talepleri</button><button data-a="chatbanrequests">💬　Sohbet ban talepleri</button><button data-a="banappeals">📝　İtiraz talepleri</button><button data-a="topup">💰　Lidya yükleme</button></div>'}if(da)html+='<div class="ea-section">Geliştirici yönetimi</div><div class="eris-admin-grid"><button data-a="lookup">🔎　ID Sorgu</button><button data-a="deleteaccount">🗑　Hesap Silme</button><button data-a="roles">👑　Yönetici Rolleri</button><button data-a="faactions">📋　FA işlemleri</button><button data-a="daactions">📋　DA işlemleri</button><button data-a="uaactions">📋　UA işlemleri</button><button data-a="saactions">📋　SA işlemleri</button><button data-a="banlogs">📋　Ban işlem logları</button><button data-a="roombanlogs">📋　Oda ban işlem logları</button><button data-a="chatbanlogs">📋　Sohbet ban işlem logları</button><button data-a="lidya">💰　Lidya İşlemleri · Yönetim</button><button data-a="referrals">✦　Referans Kod Oluştur</button></div>';return html}
 
@@ -108,12 +120,12 @@ function decorateAdminTools(root){
   button.type='button';button.classList.add('ea-png-button');button.setAttribute('aria-label',label);
   const picture=document.createElement('picture');picture.className='ea-png-art';picture.setAttribute('aria-hidden','true');
   const image=document.createElement('img');image.alt='';image.width=960;image.height=320;image.decoding='async';image.draggable=false;image.dataset.eaArtKey=key==='payments'?'topup':key;
-  const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';image.src=adminArtBase+theme+'/'+image.dataset.eaArtKey+'.png';picture.append(image);
+  const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';image.src=adminArtBase+theme+'/'+adminArtworkKey(image.dataset.eaArtKey)+'.png';picture.append(image);
   const copy=document.createElement('span');copy.className='ea-png-copy';const title=document.createElement('b');title.textContent=({gaps:'Geri Bildirim',lidya:'Lidya Yönetimi'})[key]||label;
   const hint=document.createElement('small');hint.textContent=hints[key]||'İşlem geçmişi';copy.append(title,hint);button.replaceChildren(picture,copy);
  }
 }
-function syncAdminArt(){const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';for(const image of document.querySelectorAll('img[data-ea-art-key]')){const src=adminArtBase+theme+'/'+image.dataset.eaArtKey+'.png';if(image.src!==src)image.src=src}}
+function syncAdminArt(){const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';for(const image of document.querySelectorAll('img[data-ea-art-key]')){const src=adminArtBase+theme+'/'+adminArtworkKey(image.dataset.eaArtKey)+'.png';if(image.src!==src)image.src=src}}
 new MutationObserver(syncAdminArt).observe(document.documentElement,{attributes:true,attributeFilter:['data-eris-theme']});
 window.addEventListener('erischat:theme',syncAdminArt);
 function openPanel(me){addStyles();document.querySelector('.eris-admin-overlay')?.remove();const opener=document.activeElement,previousOverflow=document.body.style.overflow;const p=document.createElement('div');const remove=p.remove.bind(p);p.remove=()=>{remove();document.body.style.overflow=previousOverflow;if(opener?.isConnected)opener.focus({preventScroll:true})};document.body.style.overflow='hidden';p.className='eris-admin-overlay';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Yönetim merkezi');p.innerHTML='<section class="eris-admin-panel"><header class="ea-head"><div class="ea-heading"><div class="ea-brand" role="img" aria-label="ErisChat"></div><div class="ea-kicker">LİDYA • YÖNETİM</div><h2 class="ea-title">Yönetim Merkezi</h2><div class="ea-sub">Yetki seviyene göre güvenli yönetim araçları.</div></div><button class="ea-close" data-close aria-label="Kapat">×</button></header><div id="eaBody"></div></section>';document.body.appendChild(p);const closeButton=p.querySelector('[data-close]');for(const [property,value] of [['background','var(--ea-panel)'],['color','var(--ea-ink)']])closeButton.style.setProperty(property,value,'important');p.querySelector('[data-close]').onclick=()=>p.remove();p.onclick=e=>{if(e.target===p)p.remove()};p.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();p.remove();return}if(e.key==='Tab'){const focusable=[...p.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),summary,[tabindex="0"]')].filter(n=>n.getClientRects().length);const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};p.querySelector('[data-close]').focus({preventScroll:true});const b=p.querySelector('#eaBody');b.innerHTML=adminMenu(me);decorateAdminTools(b);b.querySelectorAll('[data-a]').forEach(x=>x.onclick=()=>action(x.dataset.a,me,p))};
