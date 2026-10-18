@@ -70,3 +70,35 @@ Arayüzde yan yana iki ana mod açma butonu yer alacaktır: `[USER]` ve `[TANIDI
    * **Mesaj Metni:**  
      `"{REFERANS_KODU} referans kodunu kullandığınız için {KAZANILAN_MİKTAR} lidya kazandınız, hesabınıza eklenmiştir."`
    * **Bakiye Güncellemesi:** İlgili ödül miktarı (User için 2.500 Lidya, Tanıdık için 12.500 Lidya) veritabanında kullanıcının hesabına anlık olarak aktarılır.
+
+---
+
+## 5. AİLE SİSTEMİ - AİLE REFERANS KODU TALEP MODÜLÜ
+
+### 5.1. UI ve Yetkilendirme Kriterleri
+* Aile yönetimi/detay ekranına **"Referans Kod Talep Et"** butonu eklenecektir.
+* **Görsel Standart:** Aydınlık ve Koyu Tema uyumlu PNG ikonu ile tasarlanacaktır.
+* **Erişim Kısıtlaması:** Bu buton **sadece Aile Sahibi (Family Owner / Leader)** rolüne sahip kullanıcının ekranında görüntülenecektir.
+
+### 5.2. Talep Onay Modalı Akışı
+Aile Sahibi "Referans Kod Talep Et" butonuna bastığında sağ üstünde `[X]` kapatma butonu olan bir Onay Modalı açılır.
+
+* **Modal İçerik Metni:**  
+  `"Eğer bu sistemi kullanırsanız ailenizdeki mevcut {MEVCUT_AİLE_KİŞİ_SAYISI} tüm üyelere 1000 lidya talep etmiş sayılacaksınız. 30 gün boyunca daha talepte bulunamayacaksınız. Yeni gelen kullanıcılar bu özellikten yararlanamaz."`
+* **Zaman Damgası (Cooldown Bilgisi):**  
+  Modalın sol altında dinamik olarak bir sonraki talep tarihi gösterilecektir:  
+  `"Bir sonraki kullanım tarihi: {TALEPTEN_30_GÜN_SONRASININ_TARİHİ}"`
+* **Aksiyon Butonları:**  
+  * `[Kabul Et]` (Sol Alt)
+  * `[Reddet]` (Sağ Alt)
+
+### 5.3. Bakiye Tanımlama ve Cooldown İş Mantığı
+1. **İşlem Onayı:** Aile Sahibi `[Kabul Et]` butonuna bastığında, işlem anındaki mevcut aile üyelerinin tamamının hesaplarına sistem tarafından otomatik olarak **1.000 Lidya** tanımlanır.
+2. **Kısıtlama (Cooldown):** İlgili aile için 30 günlük bekleme süresi (cooldown) başlatılır.
+3. **Yeni Üye Muafiyeti:** Talep gerçekleştikten sonra aileye katılan yeni kullanıcılar bu geçmiş ödül dağıtımından faydalanamaz.
+
+### 5.4. Aile Üyelerine Anlık Bildirim (Real-time Toast Notification)
+* Talep onaylandığı anda, o ailedeki tüm kayıtlı üyeler platformun neresinde olurlarsa olsunlar ekranlarında **3 saniye sonra otomatik kaybolan (auto-dismiss toast)** canlı bir bildirim penceresi belirir.
+* **Bildirim İkonografisi:** Bildirim metni içerisinde yer alan Lidya miktarlarının sağ tarafında özel Lidya Coin ikonu gösterilecektir.
+* **Bildirim Mesaj Metni:**  
+  `"Aile sahibiniz {AİLE_SAHİBİ_KULLANICI_ADI} tarafından aile üyelerine 1000 [LIDYA_COIN_ICON] ikramiye dağıtıldı. 1000 [LIDYA_COIN_ICON] hesabınıza tanımlanmıştır."`
