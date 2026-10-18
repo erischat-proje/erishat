@@ -1,0 +1,72 @@
+# YAZILIM & UI/UX GELİŞTİRME GEREKSİNİMLERİ DOKÜMANI
+
+## 1. TASARIM VE GÖRSEL MİMARİ (UI/UX)
+
+### 1.1. Profil Menüsü Buton Güncellemeleri
+* **Lidya Geçmişi Butonu:**
+  * Profil menüsündeki "Lidya Geçmişi" butonu, sistemdeki diğer ikincil buton standartlarına uygun olarak küçük boyutta (small variant) yeniden tasarlanacaktır.
+* **Referans Kodu Butonu (Yeni):**
+  * Lidya Geçmişi butonunun sağındaki ok/yönlendirme ikonunun yanına yeni bir "Referans Kodu" butonu eklenecektir.
+* **Tema ve Asset Standardı:**
+  * Tüm yeni ve güncellenen buton ikonları hem Aydınlık Tema (Light Mode) hem de Koyu Tema (Dark Mode) ile tam uyumlu olacak şekilde hazırlanacaktır.
+  * İkon ve buton görselleri PNG formatında, şeffaf arka planlı ve her iki tema seçeneğine özel ayrı renk/kontrast varyasyonlarında export edilecektir.
+
+---
+
+## 2. YÖNETİM PANELİ (ADMIN PANEL) - DA (DIRECT ACCESS / ADMIN) MODÜLÜ
+
+### 2.1. Erişim Yetkilendirmesi & Konumlandırma
+* Yönetim merkezinde **"Geliştirici Yönetimi"** sekmesi altına yeni bir **"Referans Kodu Yönetimi"** modülü eklenecektir.
+* Bu modül ve içerisindeki tüm aksiyonlar sadece **DA (System Admin / Developer)** rolüne sahip yetkili kullanıcılar tarafından görüntülenebilir ve erişilebilir olacaktır.
+
+### 2.2. Referans Kodu Oluşturma Modalı (User & Tanıdık Tipi)
+Arayüzde yan yana iki ana mod açma butonu yer alacaktır: `[USER]` ve `[TANIDIK]`.
+
+#### A. User Referans Kodu Oluşturma
+* `[USER]` butonuna basıldığında bir Yüzen Pencere (Modal) açılır.
+* **Modal Bileşenleri:**
+  * **Üst Bar:** Sağ üstte Kapat `[X]` ikonu ve Bilgi `[?]` ikonu.
+  * **Bilgi Modal (`[?]` İkonu):** Tıklandığında User Referans Kodu sisteminin çalışma prensibini anlatan bir iç bilgilendirme penceresi açılır; `[X]` ile kapatılabilir.
+  * **Form Alanı:** Kullanıcı Sayısı (Maksimum Kullanım Limiti) girmek için `[Input]` alanı.
+  * **Aksiyon:** `[Kod Oluştur]` butonu.
+* **Ödül Miktarı:** Bu tip kod aktif edildiğinde kullanıcı hesabına **2.500 Lidya** tanımlanır.
+
+#### B. Tanıdık Referans Kodu Oluşturma
+* `[TANIDIK]` butonuna basıldığında aynı modal mimarisi açılır.
+* **Form Alanı:** Kullanıcı Sayısı (Maksimum Kullanım Limiti) için `[Input]` alanı ve `[Kod Oluştur]` butonu.
+* **Ödül Miktarı:** Bu tip kod aktif edildiğinde kullanıcı hesabına **12.500 Lidya** tanımlanır.
+
+### 2.3. Aktif Referans Kodları Listesi & İptal Mekanizması
+* Yönetim ekranında oluşturulmuş ve henüz süresi/limiti dolmamış tüm **Aktif Referans Kodları** bir liste halinde sunulacaktır.
+* **Görsel Sunum:** Her aktif kod, içerisinde kod metni ve durum bilgilerini barındıran birer "Balon / Chip / Badge" bileşeni şeklinde listelenir.
+* **Silme / İptal Akışı:**
+  1. Her balon bileşeninin sağ tarafında bir `[X]` (Sil/İptal Et) ikonu bulunur.
+  2. `[X]` ikonuna tıklandığında ekrana bir Onay Modalı (Confirmation Modal) gelir.
+  3. Modal içerisinde iptal işleminin geri alınamayacağını belirten bir uyarı metni ve altında iki aksiyon butonu yer alır: `[Kabul Et]` (Sol) ve `[Reddet]` (Sağ).
+  4. **Sonuç:** `[Kabul Et]` seçilirse ilgili referans kodu derhal pasife çekilir (iptal edilir). Bu kodu daha önce kullanmış olan kullanıcıların bakiyelerindeki Lidya miktarları **korunur**, kazanılan ödüller bakiyelerinden düşülmez.
+
+---
+
+## 3. İŞ MANTIĞI VE VERİTABANI KURALLARI (BUSINESS LOGIC & VALIDATION)
+
+1. **Limit ve Kullanım Sayısı Kontrolü:**
+   * Kod oluşturulurken belirlenen "Kişi Sayısı" (Max Usage Limit) değerine ulaşıldığında kod otomatik olarak pasif konuma geçer.
+   * Limit dolduktan sonra kod kullanılmaya çalışılırsa kullanıcı profilinde şu hata uyarısı gösterilir:  
+     `"Bu kod için maksimum limite ulaşılmıştır."`
+
+2. **Hesap (Account ID) Bazlı Tekil Kullanım Kısıtlaması:**
+   * Bir kullanıcı hesabı (`Account ID`), oluşturulan **spesifik bir referans kodunu yalnızca 1 kez** kullanabilir.
+   * Aynı kullanıcı daha önce kullanmadığı **farklı bir referans kodunu** sistemde tekrar kullanabilir.
+
+---
+
+## 4. KULLANICI PROFİLİ - REFERANS KODU AKTİFLEŞTİRME AKIŞI
+
+1. **Arayüz:** Kullanıcı Profil ekranındaki `[Referans Kodu]` butonuna tıklar.
+2. **Input & Aksiyon:** Açılan alanda üstteki boşluğa referans kodunu yazar ve altındaki `[Aktifleştir]` butonuna basar.
+3. **Başarılı Kullanım Senaryosu (Success Flow):**
+   * Kod geçerli, limiti dolmamış ve kullanıcı tarafından daha önce kullanılmamış ise işlem onaylanır.
+   * Ekranda sağ üstünde `[X]` kapatma ikonu olan bir Yüzen Pencere (Modal) açılır.
+   * **Mesaj Metni:**  
+     `"{REFERANS_KODU} referans kodunu kullandığınız için {KAZANILAN_MİKTAR} lidya kazandınız, hesabınıza eklenmiştir."`
+   * **Bakiye Güncellemesi:** İlgili ödül miktarı (User için 2.500 Lidya, Tanıdık için 12.500 Lidya) veritabanında kullanıcının hesabına anlık olarak aktarılır.
