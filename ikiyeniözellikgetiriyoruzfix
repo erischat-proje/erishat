@@ -1,0 +1,113 @@
+================================================================================
+ÜRÜN GEREKSİNİM BELGESİ (PRD) - GİZLİ PROFİL VE İSTEK SİSTEMİ
+================================================================================
+
+[SİSTEM GENEL BAKIŞI]
+Bu belge; Profil, Mesajlaşma, Keşfet/Erişim ve Bildirim modüllerinde uygulanacak 
+olan "Gizli Profil", "Takip İsteği" ve "Mesaj İsteği" sisteminin teknik ve 
+işlevsel gereksinimlerini tanımlar.
+
+--------------------------------------------------------------------------------
+1. PROFİL GİZLİLİK BUTONU (ARAYÜZ VE DURUM YÖNETİMİ)
+--------------------------------------------------------------------------------
+1.1. Menü Entegrasyonu:
+     - Profil menüsü içerisine "Profil Gizliliği" butonu eklenecek.
+
+1.2. Onay Penceresi (Yüzen Pencere / Modal) Mantığı:
+     - Profil gizliliği butonuna basıldığında ekrana yüzen bir pencere gelecek.
+     - Durum A (Profil Açık ise / is_private == false):
+       * Metin: "Profilinizi gizlemek istiyor musunuz?"
+       * Butonlar: [Kabul Et], [Reddet]
+       * Kabul Et: `is_private = true` yapılır. Gizli moda geçilir.
+       * Reddet: Pencere kapanır, mevcut durum değişmez.
+     - Durum B (Profil Gizli ise / is_private == true):
+       * Metin: "Profilinizi gizlilikten çıkarmak istiyor musunuz?"
+       * Butonlar: [Kabul Et], [Reddet]
+       * Kabul Et: `is_private = false` yapılır. Gizli mod kaldırılır.
+       * Reddet: Pencere kapanır, mevcut durum değişmez.
+
+--------------------------------------------------------------------------------
+2. GİZLİ PROFİL GÖRÜNÜMÜ VE TAKİP İSTEĞİ AKIŞI
+--------------------------------------------------------------------------------
+2.1. İçerik Kısıtlaması (Gizli Profili Gören Takip Etmeyen Kullanıcı):
+     - Kullanıcının paylaştığı gönderiler gizlenecek.
+     - Ekranın ortasında şu bileşen gösterilecek:
+       * Üstte: Kilit İkonu (🔒)
+       * Altında Metin: "Bu profil gizli, içerikleri görmek için takip isteği yollayınız."
+
+2.2. Takip Butonu Dinamik Durumları:
+     - Gizli profil için varsayılan buton metni: "Takip İsteği Gönder".
+     - Tıklanınca (İstek Atıldığında):
+       * Buton metni "Takip İsteği Gönderildi" olarak güncellenir.
+       * Arka plana istek kaydı oluşturulur.
+     - Tekrar Tıklanınca (İstek İptal Edildiğinde):
+       * Buton metni tekrar "Takip İsteği Gönder" haline döner.
+       * Gönderilen takip isteği silinir/iptal edilir. Profil sahibinde gözükmez.
+
+--------------------------------------------------------------------------------
+3. TAKİP İSTEKLERİ YÖNETİMİ (ALICI TARAF)
+--------------------------------------------------------------------------------
+3.1. Profil Sekmesi Entegrasyonu:
+     - EĞER `is_private == true` ise, profil bölümlerinin üstünde yeni bir alan belirir:
+       * Metin: "Takip İstekleri ({toplam_sayi})"
+     - BU ALAN SADECE PROFİL GİZLİLİĞİ AKTİFKEN GÖRÜNÜR.
+
+3.2. Takip İstekleri Yüzen Penceresi (Modal):
+     - "Takip İstekleri" alanına tıklanınca açılır.
+     - Her istek satırında:
+       * Sol: Kullanıcı Avatar Çerçevesi + Kullanıcı Adı
+       * Sağ: Yeşil Tik [✔] (Kabul Et) ve Kırmızı X [✖] (Reddet) butonları.
+     - [✔] Tıklanınca: İstek kabul edilir, takipçilere eklenir, liste güncellenir.
+     - [✖] Tıklanınca: İstek reddedilir, listeden kaldırılır.
+
+--------------------------------------------------------------------------------
+4. MESAJ İSTEĞİ AKIŞI (GİZLİ PROFİLLER İÇİN)
+--------------------------------------------------------------------------------
+4.1. Mesajlaşma Kısıtlaması:
+     - EĞER Hedef Profil `is_private == true` VE Gönderen Takipçi DEĞİLSE:
+       * Mesaj ekranının ortasında şu uyarı yer alır:
+         "Bu profil gizli, tek bir mesajınız karşı tarafa mesaj isteği olarak gönderilecektir."
+
+4.2. Tek Mesaj Sınırı ve Uyarı Penceresi:
+     - İlk mesaj yazılıp gönderildikten sonra ortadaki uyarı yazısı kaybolur.
+     - İstek onaylanmadan 2. mesaj gönderilmeye çalışılırsa:
+       * Mesaj gönderimi engellenir.
+       * Ekrana yüzen pencere uyarısı gelir:
+         "Karşı tarafa mesaj isteğiniz gönderildi, mesaj isteğinizi kabul etmesini bekleyiniz."
+       * Sağ üst köşesinde [X] kapatma ikonu yer alır.
+
+4.3. Mesaj İstekleri Kutusu ve Onay Ekranı (Alıcı Taraf):
+     - Mesajlar bölümüne "Mesaj İstekleri" sekmesi eklenir.
+     - Mesaj isteğine tıklandığında üst tarafta:
+       * [İsteği Kabul Et] ve [Reddet] butonları yer alır.
+     - Kabul edilirse: Mesaj normal mesaj kutusuna geçer ve sohbet açılır.
+     - Reddedilirse: Mesaj isteği silinir.
+
+--------------------------------------------------------------------------------
+5. CANLI BİLDİRİM SİSTEMİ (ANLIK / GLOBAL)
+--------------------------------------------------------------------------------
+Kullanıcı uygulamanın neresinde olursa olsun bildirimler anlık olarak ekrana düşer.
+
+5.1. Takip İsteği Bildirimleri:
+     - Takip İsteği Geldiğinde (Alıcıya):
+       "{kullanıcı_adı} isimli kullanıcı size takip isteği gönderdi."
+     - Takip İsteği Kabul Edildiğinde (Gönderene):
+       "{kullanıcı_adı} isimli kullanıcı takip isteğinizi kabul etti."
+     - Takip İsteği Reddedildiğinde (Gönderene):
+       "{kullanıcı_adı} isimli kullanıcı takip isteğinizi reddetti."
+
+5.2. Mesaj İsteği Bildirimleri:
+     - Mesaj İsteği Geldiğinde (Alıcıya):
+       "{kullanıcı_adı} isimli kullanıcı size mesaj isteği gönderdi."
+     - Mesaj İsteği Kabul Edildiğinde (Gönderene):
+       "{kullanıcı_adı} isimli kullanıcı mesaj isteğinizi kabul etti, mesajlaşmaya başlayabilirsiniz."
+
+--------------------------------------------------------------------------------
+6. İÇERİK GİZLİLİĞİ VE KEŞFET (EXPLORE) KISITLAMASI
+--------------------------------------------------------------------------------
+6.1. Gönderi Görünürlük Kuralları:
+     - EĞER Kullanıcının profili gizli ise (`is_private == true`):
+       * Paylaşılan gönderiler, videolar veya diğer içerikler Keşfet (Explore) algoritmasına/akışına DÜŞMEZ.
+       * Arama sonuçlarında veya genel algoritma önerilerinde bu içerikler indekslenmez.
+       * Gönderiler yalnızca onaylanmış takipçilerin ana sayfa akışında görünür.
+================================================================================
