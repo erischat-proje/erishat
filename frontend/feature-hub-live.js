@@ -71,7 +71,7 @@
   if(!document.getElementById('erisFamilyV2Css')){
     const link=document.createElement('link');link.id='erisFamilyV2Css';link.rel='stylesheet';
     const source=document.querySelector('script[src*="feature-hub-live.js"]');
-    link.href=new URL('family-v2.css?v=20261018-1',source?.src||location.href).href;
+    link.href=new URL('family-v2.css?v=20261018-final3',source?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
@@ -137,14 +137,15 @@
           window.__erisFamilyV2Ready = new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             const source=document.querySelector('script[src*="feature-hub-live.js"]');
-            script.src=new URL('family-v2.js?v=20261018-1',source?.src||location.href).href;
+            script.src=new URL('family-v2.js?v=20261018-final3',source?.src||location.href).href;
             script.onload=resolve;script.onerror=()=>reject(new Error('Aile V2 dosyası yüklenemedi'));
             document.head.appendChild(script);
           });
         }
         await window.__erisFamilyV2Ready;
-        await window.ErisFamilyV2?.enhance(shell,f,members,viewerRole);
-      } catch(error) { console.warn('Family V2 fallback:',error); }
+        await window.ErisFamilyV2?.enhance(shell,f,members,viewerRole,api);
+      } catch(error) { console.error('Family V3 load failed:',error); const alert=document.createElement('div');alert.className='eh-note';alert.setAttribute('role','alert');alert.textContent='Yeni Aile Merkezi yüklenemedi. Sayfayı yenileyin. Sorun sürerse destek ekibine bildirin.';shell.prepend(alert); }
+      shell.querySelectorAll('[data-family-discover]').forEach(el=>el.closest('section')?.remove());
       // FAMILY_PREMIUM_DISCOVERY_GUARD: aile üyelerine keşfet gösterilmez.
     }catch(e){shell.innerHTML='<div class="eh-family-empty">Aile bilgileri alınamadı: '+esc(e.message)+'</div>'}
   }

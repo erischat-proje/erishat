@@ -102,6 +102,39 @@ def register_family_auth(current_user_dependency):
     def auth():
         return Depends(current_user_dependency)
 
+    # ERIS_FAMILY_INSIGHTS_V3: real donation ledger, membership-protected and read-only.
+    @router.get("/families/{family_id}/insights")
+    def family_insights(family_id: str, db: Session = Depends(get_db), user: User = auth()):
+        get_family(db, family_id)
+        membership(db, family_id, user.id)
+        now = datetime.now(timezone.utc)
+        day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = day_start - timedelta(days=day_start.weekday())
+        all_time_total = int(db.scalar(select(func.coalesce(func.sum(FamilyDonation.amount), 0)).where(FamilyDonation.family_id == family_id)) or 0)
+        today_total = int(db.scalar(select(func.coalesce(func.sum(FamilyDonation.amount), 0)).where(FamilyDonation.family_id == family_id, FamilyDonation.created_at >= day_start)) or 0)
+        week_total = int(db.scalar(select(func.coalesce(func.sum(FamilyDonation.amount), 0)).where(FamilyDonation.family_id == family_id, FamilyDonation.created_at >= week_start)) or 0)
+        donation_count = int(db.scalar(select(func.count(FamilyDonation.id)).where(FamilyDonation.family_id == family_id)) or 0)
+        totals = db.execute(select(FamilyDonation.user_id, func.sum(FamilyDonation.amount).label("total"))
+            .where(FamilyDonation.family_id == family_id)
+            .group_by(FamilyDonation.user_id)
+            .order_by(func.sum(FamilyDonation.amount).desc())
+            .limit(10)).all()
+        top_contributors = []
+        for contributor_id, total in totals:
+            contributor = db.get(User, contributor_id)
+            top_contributors.append({"user_id": contributor_id, "nickname": contributor.nickname if contributor else "Eski üye", "total": int(total)})
+        donations = list(db.scalars(select(FamilyDonation)
+            .where(FamilyDonation.family_id == family_id)
+            .order_by(FamilyDonation.created_at.desc(), FamilyDonation.id.desc()).limit(20)))
+        recent = []
+        for donation in donations:
+            contributor = db.get(User, donation.user_id)
+            recent.append({"nickname": contributor.nickname if contributor else "Eski üye", "amount": donation.amount,
+                           "created_at": donation.created_at.isoformat() if donation.created_at else None})
+        return {"family_id": family_id, "all_time_total": all_time_total, "today_total": today_total,
+                "week_total": week_total, "donation_count": donation_count,
+                "top_contributors": top_contributors, "recent": recent}
+
     @router.get("/families")
     def list_families(db: Session = Depends(get_db), user: User = auth()):
         rows = list(db.scalars(select(Family).join(FamilyMember, FamilyMember.family_id == Family.id).where(FamilyMember.user_id == user.id).order_by(Family.created_at.desc())))
