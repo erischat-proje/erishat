@@ -35,7 +35,7 @@
     }
     draw();
   }
-  function draw(){const h=document.querySelector('#chat .chatHead');const b=h?.querySelector('.eris-ttl-toggle');if(b){b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));}let indicator=h?.querySelector('.eris-ttl-indicator');if(active&&!indicator){indicator=document.createElement('span');indicator.className='eris-ttl-indicator';indicator.textContent='◷';indicator.title='Süreli mesaj aktif';h?.querySelector('b')?.after(indicator)}if(!active)indicator?.remove()}
+  function draw(){const h=document.querySelector('#chat .chatHead');const b=h?.querySelector('.eris-ttl-toggle');if(b){b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));b.hidden=!!active;b.style.display=active?'none':'';}let indicator=h?.querySelector('.eris-ttl-indicator');if(active&&!indicator){indicator=document.createElement('span');indicator.className='eris-ttl-indicator';indicator.textContent='◷';indicator.title='Süreli mesaj aktif';h?.querySelector('b')?.after(indicator)}if(!active)indicator?.remove()}
   function purgeExpired(){const body=document.querySelector('#chat.show .chatBody');if(!body)return;body.querySelectorAll('.bubble[data-ttl-expires]').forEach(el=>{if(Date.parse(el.dataset.ttlExpires)<=Date.now())el.remove()})}
   const observer=new MutationObserver(()=>{ui();purgeExpired()});
   function start(){const chat=document.getElementById('chat');if(chat)observer.observe(chat,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});ui();setInterval(()=>{ui();purgeExpired()},10000)}

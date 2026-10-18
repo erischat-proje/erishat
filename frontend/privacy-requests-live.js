@@ -49,11 +49,22 @@
     if(!document.getElementById('eris-profile-private-button')){const b=btn('🔒 Profil Gizliliği',privacy);b.id='eris-profile-private-button';toolbar.append(b);}
     let requests=document.getElementById('eris-follow-request-button');
     try{const state=await api('/me/profile-privacy');
-      if(state.is_private){const rows=await api('/me/follow-requests');if(!requests){requests=btn('',()=>list('follow'));requests.id='eris-follow-request-button';toolbar.append(requests);}requests.textContent='Takip İstekleri ('+rows.length+')';}
-      else requests?.remove();
+      if(state.is_private){
+        const rows=await api('/me/follow-requests');
+        // Profilin kendi takip isteği düğmesi varsa ikinci bir düğme üretme.
+        const existing=[...profile.querySelectorAll('button,[role=button]')].find(el=>el.id!=='eris-follow-request-button'&&/takip istekleri/i.test(el.textContent||''));
+        if(existing){requests?.remove();requests=null;existing.textContent='Takip İstekleri ('+rows.length+')';existing.addEventListener('click',()=>list('follow'),{once:true});}
+        else {if(!requests){requests=btn('',()=>list('follow'));requests.id='eris-follow-request-button';toolbar.append(requests);}requests.textContent='Takip İstekleri ('+rows.length+')';}
+      }
+      else {requests?.remove();profile.querySelectorAll('button,[role=button]').forEach(el=>{if(/takip istekleri/i.test(el.textContent||''))el.style.display='none';});}
     }catch(e){/* Authentication may not yet be ready. */}
     const messages=document.getElementById('messages');
-    if(messages&&!document.getElementById('eris-message-request-button')){const b=btn('✉ Mesaj İstekleri',()=>list('message'));b.id='eris-message-request-button';messages.querySelector('h1')?.after(b);}
+    if(messages){
+      let b=document.getElementById('eris-message-request-button');
+      if(!b){b=btn('✉ Mesaj İstekleri',()=>list('message'));b.id='eris-message-request-button';(messages.querySelector('h1')||messages).after(b);}
+      try {const state=await api('/me/profile-privacy');b.hidden=!state.is_private;b.style.display=state.is_private?'':'none';}
+      catch(_){b.hidden=true;b.style.display='none';}
+    }
   }
   window.addEventListener('erischat:auth',()=>refresh());
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
