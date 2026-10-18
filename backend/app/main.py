@@ -269,6 +269,10 @@ def _initialize_database() -> None:
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
     ensure_system_data_columns()
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_ephemeral BOOLEAN NOT NULL DEFAULT false"))
+        conn.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_messages_expires_at ON messages (expires_at)"))
     with Session(engine) as db:
         migrate_legacy_frames(db)
         migrate_legacy_avatars(db)
@@ -282,6 +286,32 @@ def _initialize_database() -> None:
     ensure_query_indexes()
     logger.info("ErisChat API startup complete")
 
+
+async def _ephemeral_cleanup_loop():
+    from .models import Message
+    from sqlalchemy import delete
+    while True:
+        try:
+            with Session(engine) as db:
+                db.execute(delete(Message).where(Message.expires_at.is_not(None), Message.expires_at <= datetime.now(timezone.utc)))
+                db.commit()
+        except Exception:
+            logger.exception("Süreli mesaj temizleme hatası")
+        await asyncio.sleep(30)
+
+@app.on_event("startup")
+async def start_ephemeral_cleanup():
+    app.state.ephemeral_cleanup_task = asyncio.create_task(_ephemeral_cleanup_loop())
+
+@app.on_event("shutdown")
+async def stop_ephemeral_cleanup():
+    task = getattr(app.state, "ephemeral_cleanup_task", None)
+    if task:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 @app.on_event("startup")
 async def startup() -> None:

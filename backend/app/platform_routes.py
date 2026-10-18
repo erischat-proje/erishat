@@ -564,6 +564,25 @@ def register_platform_auth(current_user_dependency):
     def conversations(limit:int=Query(50,ge=1,le=100),offset:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         ids=list(db.scalars(select(ConversationMember.conversation_id).where(ConversationMember.user_id==user.id).order_by(ConversationMember.conversation_id).offset(offset).limit(limit)))
         return [] if not ids else [db.get(Conversation,conversation_id) for conversation_id in ids]
+    @router.get("/conversations/{conversation_id}/ephemeral")
+    def get_ephemeral(conversation_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
+        if not member: raise HTTPException(403,"Bu konuşmaya erişiminiz yok")
+        conversation=db.get(Conversation,conversation_id)
+        if not conversation or conversation.type != "dm": raise HTTPException(400,"Yalnızca birebir sohbetlerde kullanılabilir")
+        return {"is_ephemeral":bool(conversation.is_ephemeral),"ttl_seconds":86400}
+
+    @router.patch("/conversations/{conversation_id}/ephemeral")
+    def set_ephemeral(conversation_id:str,payload:dict,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
+        if not member: raise HTTPException(403,"Bu konuşmaya erişiminiz yok")
+        conversation=db.get(Conversation,conversation_id)
+        if not conversation or conversation.type != "dm" or len(conversation.members)!=2: raise HTTPException(400,"Yalnızca birebir sohbetlerde kullanılabilir")
+        if type(payload.get("is_ephemeral")) is not bool: raise HTTPException(422,"Geçerli bir durum gönderin")
+        conversation.is_ephemeral=payload["is_ephemeral"]
+        db.commit()
+        return {"is_ephemeral":conversation.is_ephemeral,"ttl_seconds":86400}
+
     @router.get("/conversations/{conversation_id}")
     def conversation(conversation_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         conversation=db.get(Conversation,conversation_id)
@@ -585,7 +604,9 @@ def register_platform_auth(current_user_dependency):
     def messages(conversation_id:str,limit:int=Query(100,ge=1,le=200),offset:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
         if not member: raise HTTPException(status_code=403,detail="Bu konuşmaya erişiminiz yok")
-        return list(db.scalars(select(Message).where(Message.conversation_id==conversation_id).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
+        db.execute(delete(Message).where(Message.conversation_id==conversation_id,Message.expires_at.is_not(None),Message.expires_at<=datetime.now(timezone.utc)))
+        db.commit()
+        return list(db.scalars(select(Message).where(Message.conversation_id==conversation_id,((Message.expires_at.is_(None))|(Message.expires_at>datetime.now(timezone.utc)))).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
     @router.post("/messages/{conversation_id}")
     def send_message(conversation_id:str,payload:dict,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_chat_write(db,user.id)
@@ -601,7 +622,9 @@ def register_platform_auth(current_user_dependency):
             if existing is None:
                 db.add(PrivateMessageRequest(sender_id=user.id, recipient_id=recipients[0], conversation_id=conversation_id, status="pending"))
                 _notify(db, recipients[0], "message_request", user.nickname + " size mesaj isteği gönderdi.")
-        message=Message(conversation_id=conversation_id,sender_id=user.id,text=text); db.add(message); db.commit(); db.refresh(message); return message
+        conversation=db.get(Conversation,conversation_id)
+        expires_at=datetime.now(timezone.utc)+timedelta(hours=24) if conversation and conversation.type=="dm" and conversation.is_ephemeral else None
+        message=Message(conversation_id=conversation_id,sender_id=user.id,text=text,expires_at=expires_at); db.add(message); db.commit(); db.refresh(message); return message
     @router.get("/users/{user_id}")
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
