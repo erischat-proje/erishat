@@ -11,29 +11,34 @@ async function family(familyId){try{let f=null,status=null;if(familyId){status=a
 function add(){const tabs=document.querySelector('#profile #erisProfileHub .eph-tabs');if(tabs&&!tabs.querySelector('[data-referral-open]')){const b=document.createElement('button');b.type='button';b.dataset.referralOpen='1';b.className='er-ref-menu';b.innerHTML='<span class="er-ref-coin">✦</span><span>Referans Kodu</span>';b.onclick=openRedeem;const history=tabs.querySelector('[data-payment-history]');if(history)history.after(b);else tabs.append(b)}}
 let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;add()})});function start(){add();observer.observe(document.body,{childList:true,subtree:true})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();window.ErisReferral={openRedeem,openAdmin:admin,openFamily:family};
 
-// Poll persisted family rewards. The API remains the source of truth.
-let referralToastLastId=0;
-let referralToastInitialized=false;
+// Poll persisted family rewards. Unread notifications survive a closed app.
 let referralToastBusy=false;
+let referralToastToken='';
+const referralToastSeen=new Set();
 async function pollFamilyRewards(){
- if(referralToastBusy || document.visibilityState==='hidden' || !token())return;
+ const access=token();
+ if(referralToastBusy || document.visibilityState==='hidden' || !access)return;
+ if(access!==referralToastToken){referralToastSeen.clear();referralToastToken=access;}
  referralToastBusy=true;
  try{
-  const rows=await request('/me/notifications?limit=30');
-  const notices=(Array.isArray(rows)?rows:[]).filter(x=>x.kind==='family_referral_reward');
-  const latest=Math.max(0,...notices.map(x=>Number(x.id)||0));
-  if(referralToastInitialized){
-   for(const n of notices.filter(x=>(Number(x.id)||0)>referralToastLastId).sort((a,b)=>a.id-b.id)){
-    const toast=document.createElement('div');toast.className='er-ref-toast';
-    const coin=document.createElement('span');coin.className='er-ref-toast-coin';coin.textContent='✦';
-    const label=document.createElement('span');label.textContent=n.body||'Ailenize 1.000 Lidya ikramiyesi tanımlandı.';
-    toast.append(coin,label);document.body.append(toast);setTimeout(()=>toast.remove(),3000);
-   }
+  const rows=await request('/me/notifications?limit=50');
+  if(access!==token())return;
+  const notices=(Array.isArray(rows)?rows:[]).filter(x=>x.kind==='family_referral_reward' && !x.read);
+  for(const n of notices.sort((a,b)=>(Number(a.id)||0)-(Number(b.id)||0))){
+   const id=String(n.id);
+   if(referralToastSeen.has(id))continue;
+   referralToastSeen.add(id);
+   const toast=document.createElement('div');toast.className='er-ref-toast';
+   const coin=document.createElement('span');coin.className='er-ref-toast-coin';coin.textContent='✦';
+   const label=document.createElement('span');label.textContent=n.body||'Ailenize 1.000 Lidya ikramiyesi tanımlandı.';
+   toast.append(coin,label);document.body.append(toast);setTimeout(()=>toast.remove(),3000);
+   // Only acknowledge after showing the reward, so offline users can see it later.
+   request('/me/notifications/'+encodeURIComponent(id)+'/read','POST').catch(()=>{});
   }
-  referralToastLastId=Math.max(referralToastLastId,latest);referralToastInitialized=true;
- }catch(e){/* Offline or disabled notifications: retry on next poll. */}
+ }catch(e){/* Retry after connectivity is restored. */}
  finally{referralToastBusy=false}
 }
 setInterval(pollFamilyRewards,5000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pollFamilyRewards()});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',pollFamilyRewards,{once:true});else pollFamilyRewards();
 })();
