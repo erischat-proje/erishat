@@ -40,8 +40,8 @@ def send_email_otp(
     purpose: str,
 ) -> None:
     subject = (
-        "ErisChat giriş doğrulama kodun"
-        if purpose == "login"
+        "ErisChat hesap silme doğrulama kodun" if purpose == "delete-account"
+        else "ErisChat giriş doğrulama kodun" if purpose == "login"
         else "ErisChat kayıt doğrulama kodun"
     )
 

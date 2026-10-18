@@ -20,29 +20,44 @@
     const shortcuts=card('Profil ve görünürlük','Kullanıcı adı değişikliği Bilgilerim bölümünde 150 Lidya ile yapılır. Diğer profil tercihlerini ilgili bölümden yönetebilirsin.');const links=el('div','eps-actions');for(const [key,name] of [['info','Bilgilerim'],['privacy','Gizlilik'],['rooms','Odalarım']])links.append(button(name,()=>{if(active())window.ErisProfileHub?.show(key)}));links.append(button('Profilime bakanlar',()=>visitors(root,active)));shortcuts.append(links);
     const deletion=card('Hesabımı Sil','Geri alınamaz. Doğrulanmış e-postana gelen kodla onaylanır.');
     const deletionActions=el('div','eps-actions');
+    // ERISCHAT_ACCOUNT_OTP_FIX_V1
     const deleteButton=button('Hesabımı Sil',()=>{
       if(!active())return;
-      const yes=button('Evet, kod gönder',async()=>{
-        yes.disabled=true;
+      status.textContent='';
+      deletionActions.replaceChildren();
+      const info=el('p','','Hesap silme için doğrulanmış e-posta adresine 6 haneli kod gönderilir.');
+      const code=el('input');code.type='text';code.inputMode='numeric';code.maxLength=6;
+      code.autocomplete='one-time-code';code.placeholder='6 haneli doğrulama kodu';
+      code.setAttribute('aria-label','Hesap silme doğrulama kodu');
+      code.style.cssText='min-height:48px;width:100%;max-width:100%;padding:12px;border-radius:12px;border:1px solid var(--ui-line);background:var(--ui-panel);color:var(--ui-ink)';
+      const feedback=el('p','eps-status','Kod göndermek için butona bas.');feedback.setAttribute('role','status');
+      const send=button('E-postama kod gönder',async()=>{
+        if(!active())return;
+        send.disabled=true;feedback.textContent='Kod gönderiliyor…';status.textContent='';
         try{
-          await api('/me/account-deletion/request',{method:'POST'});
+          const result=await api('/me/account-deletion/request',{method:'POST'});
           if(!active())return;
-          deletionActions.replaceChildren(el('p','','E-postana gelen 6 haneli kodu gir.'));
-          const code=el('input');code.type='text';code.inputMode='numeric';code.maxLength=6;
-          code.autocomplete='one-time-code';code.placeholder='6 haneli kod';code.setAttribute('aria-label','Silme doğrulama kodu');
-          code.style.cssText='min-height:44px;max-width:100%;padding:10px;border-radius:12px;border:1px solid var(--ui-line);background:var(--ui-panel);color:var(--ui-ink)';
-          const confirm=button('Hesabı kalıcı sil',async()=>{
-            if(!/^[0-9]{6}$/.test(code.value)){status.textContent='6 haneli kod gerekli.';return}
-            confirm.disabled=true;
-            try{
-              await api('/me/account-deletion/confirm',{method:'POST',body:JSON.stringify({code:code.value})});
-              await window.ErisAuth.logout();window.location.reload();
-            }catch(e){status.textContent=e.message||'Hesap silinemedi.';confirm.disabled=false}
-          });confirm.classList.add('eps-danger');
-          deletionActions.append(code,confirm,button('İptal',()=>deletionActions.replaceChildren(deleteButton)));
-        }catch(e){status.textContent=e.message||'Kod gönderilemedi.';deletionActions.replaceChildren(deleteButton)}
+          if(result?.accepted!==true)throw Error('E-posta servisi gönderimi doğrulamadı.');
+          feedback.textContent='Kod gönderme isteği kabul edildi. Gelen kutunu ve spam klasörünü kontrol et.';
+          confirm.disabled=false;code.focus();
+        }catch(e){
+          if(!active())return;
+          feedback.textContent='Kod gönderilemedi: '+(e?.message||'Bilinmeyen hata')+'. E-posta doğrulamanı ve gönderim servisini kontrol et.';
+          confirm.disabled=true;
+        }finally{if(active())send.disabled=false}
       });
-      deletionActions.replaceChildren(el('p','','Hesap silme işlemini başlatmak istiyor musun?'),yes,button('Vazgeç',()=>deletionActions.replaceChildren(deleteButton)));
+      const confirm=button('Kodu doğrula ve hesabımı kalıcı sil',async()=>{
+        if(!active())return;
+        if(!/^[0-9]{6}$/.test(code.value.trim())){feedback.textContent='6 haneli kod gir.';return}
+        if(!window.confirm('Hesabın kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam edilsin mi?'))return;
+        confirm.disabled=true;feedback.textContent='Kod doğrulanıyor…';
+        try{
+          const result=await api('/me/account-deletion/confirm',{method:'POST',body:JSON.stringify({code:code.value.trim()})});
+          if(result?.deleted!==true)throw Error('Sunucu silme işlemini doğrulamadı.');
+          await window.ErisAuth.logout();window.location.reload();
+        }catch(e){if(active()){feedback.textContent=e?.message||'Kod doğrulanamadı veya silme işlemi başarısız.';confirm.disabled=false}}
+      });confirm.disabled=true;confirm.classList.add('eps-danger');
+      deletionActions.append(info,code,feedback,send,confirm,button('İptal',()=>{if(active()){status.textContent='';deletionActions.replaceChildren(deleteButton)}}));
     });deleteButton.classList.add('eps-danger');deletionActions.append(deleteButton);deletion.append(deletionActions);
     const session=card('Oturum','Bu cihazdaki hesabından çıkış yap.');const sessionActions=el('div','eps-actions');const logout=button('Oturumu kapat',()=>{if(!active())return;sessionActions.replaceChildren();const cancel=button('Vazgeç',()=>sessionActions.replaceChildren(logout));const yes=button('Evet, çıkış yap',async()=>{if(!active()||busy)return;yes.disabled=cancel.disabled=true;try{await window.ErisAuth.logout();if(active())status.textContent='Oturum kapatıldı.'}catch(e){if(active()){status.textContent=e.message||'Çıkış yapılamadı.';yes.disabled=cancel.disabled=false}}});yes.classList.add('eps-danger');sessionActions.append(yes,cancel)});logout.classList.add('eps-danger');deletion,sessionActions.append(logout);session.append(sessionActions);const reload=button('Ayarları yenile',load);root.append(status,reload);
     function sync(){if(!active())return;toggle.disabled=busy||!privacy;toggle.textContent=privacy?(privacy.hide_notifications?'Bildirimleri Aç':'Bildirimleri Kapat'):'Yükleniyor…';toggle.setAttribute('aria-checked',String(!!privacy&&!privacy.hide_notifications));noticeState.textContent=privacy?(privacy.hide_notifications?'Bildirimler kapalı.':'Bildirimler açık.'):'Ayar yüklenemedi.';choice.disabled=busy||!restriction;lockToggle.disabled=lockSave.disabled=busy||!restriction;reload.disabled=busy;lockToggle.textContent=restriction?.enabled?'Kısıtlamayı kapat':'Kısıtlamayı aç';lockState.textContent=restriction?(restriction.enabled?'Açık · İlk mesaj için hediye gerekli.':'Kapalı · İlk mesaj için hediye gerekli değil.'):'Mesaj ayarı yüklenemedi.';if(restriction&&!busy)choice.value=restriction.gift_key}

@@ -109,6 +109,7 @@ def install():
     # Routes use the exact authenticated dependency injected by the main app.
     router.routes.clear()
     from fastapi import Depends
+    # ERISCHAT_ACCOUNT_OTP_REQUEST_DIAGNOSTICS_V1
     @router.post('/v1/me/account-deletion/request')
     def request(db:Session=Depends(get_db),user:User=Depends(_current_user)):
         email=account_email(db,user)
@@ -117,7 +118,7 @@ def install():
         except ValueError as e:raise HTTPException(429,str(e)) from e
         try:send_email_otp(email,code,'delete-account')
         except Exception as e:
-            db.delete(otp);db.commit();raise HTTPException(503,'Doğrulama e-postası gönderilemedi.') from e
+            db.delete(otp);db.commit();raise HTTPException(503,'Doğrulama e-postası gönderilemedi. E-posta servisinin Gmail/SMTP ayarlarını kontrol edin.') from e
         return {'accepted':True}
     @router.post('/v1/me/account-deletion/confirm')
     def confirm(payload:Confirm,db:Session=Depends(get_db),user:User=Depends(_current_user)):
