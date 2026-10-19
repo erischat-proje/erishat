@@ -908,7 +908,7 @@ def complete_onboarding(
         db.add(welcome_conversation)
         db.add(ConversationMember(conversation_id=welcome_conversation_id, user_id=user.id))
         db.flush()
-        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Selam {user.nickname} LidyaChat'e hoşgeldin seni aramızda gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile keyifli vakitler."))
+        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Merhaba {user.nickname}! LidyaChat ailesine hoş geldin! 💚✨ Yeni arkadaşlıklar, keyifli sohbetler ve sürpriz hediyeler seni bekliyor. Profilini tamamla, odaları keşfet ve topluluğumuza katıl. Güzel anılar biriktirmen dileğiyle! — LidyaChat Ekibi"))
 
 
     db.commit()
