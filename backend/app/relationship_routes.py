@@ -14,6 +14,7 @@ from .models import User, UserCosmetic, Conversation, ConversationMember, Messag
 from .platform_models import DirectMessageGift, UserBlock, Notification
 from .room_models import RoomGiftEvent
 from .admin_models import AdminRole
+from .staff_visibility import is_staff
 from .moderation import active_ban, require_feature
 from .relationship_models import Couple, CoupleMember, LoveRequest, CoupleOperation, CoupleEvent, CoupleRewardSelection, CoupleRing, CoupleRoom, CoupleGift, CoupleUpgradeProgress
 from . import relationship_rewards as rewards
@@ -155,6 +156,7 @@ def public_brief(db, uid):
     house = my_couple(db, uid)
     if not house or not house.active or not available(db, house.male_id) or not available(db, house.female_id):
         return None
+    if is_staff(db,house.male_id) or is_staff(db,house.female_id): return None
     partner_id = house.female_id if uid == house.male_id else house.male_id
     status=rewards.status_for(db,house,uid)
     return {'id':house.id, 'status':status, 'status_asset':rewards.status_asset(status), 'ring':house.ring, 'ring_asset':ring_asset(house.ring) if house.ring else None, 'level':house.level,
@@ -470,6 +472,8 @@ def operation_existing(db, uid, house, payload, kind, item, quantity):
 def public_house(house_id: str, db: Session = Depends(get_db), user: User = Depends(authenticated)):
     house = db.get(Couple,house_id)
     if not house or not house.active:
+        raise HTTPException(404,'Aile evi bulunamadı.')
+    if user.id not in (house.male_id,house.female_id) and (is_staff(db,house.male_id) or is_staff(db,house.female_id)):
         raise HTTPException(404,'Aile evi bulunamadı.')
     for uid in (house.male_id,house.female_id):
         if not available(db,uid) or blocked(db,user.id,uid):

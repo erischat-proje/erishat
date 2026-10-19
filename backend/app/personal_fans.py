@@ -3,6 +3,7 @@ from sqlalchemy import func, select, union_all
 from .room_models import RoomGiftEvent
 from .platform_models import DirectMessageGift
 from .models import User
+from .staff_visibility import staff_ids_query, is_staff
 from .room_fan_levels import level_for_total
 
 
@@ -29,6 +30,7 @@ def fan_leaderboard(db, recipient_id):
     total=func.sum(gifts.c.amount).label('total')
     rows=db.execute(select(User.id,User.nickname,User.avatar,User.avatar_asset,User.frame_asset,total)
         .join(gifts,gifts.c.sender_id==User.id)
+        .where(~User.id.in_(staff_ids_query()))
         .group_by(User.id,User.nickname,User.avatar,User.avatar_asset,User.frame_asset)
         .order_by(total.desc(),User.id).limit(50)).all()
     return [{'rank':rank,'user_id':uid,'nickname':name,'avatar':avatar,
@@ -38,11 +40,12 @@ def fan_leaderboard(db, recipient_id):
 
 
 def fan_count(db, recipient_id):
+    if is_staff(db, recipient_id): return 0
     senders=union_all(
         select(RoomGiftEvent.sender_id.label("sender_id")).where(RoomGiftEvent.recipient_id==recipient_id),
         select(DirectMessageGift.sender_id.label("sender_id")).where(DirectMessageGift.recipient_id==recipient_id),
     ).subquery()
-    return int(db.scalar(select(func.count(func.distinct(senders.c.sender_id)))) or 0)
+    return int(db.scalar(select(func.count(func.distinct(senders.c.sender_id))).where(~senders.c.sender_id.in_(staff_ids_query()))) or 0)
 
 
 def received_total(db, recipient_id):

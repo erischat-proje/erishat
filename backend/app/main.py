@@ -37,6 +37,9 @@ from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Mes
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
+from .group_models import MessageGroup
+from . import group_routes
+from .staff_visibility import is_staff
 from .social_privacy import social_flags, require_social_visible
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
@@ -407,6 +410,8 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
 location_calls.register_auth(current_user)
 bind_account_delete_auth(current_user)
 app.include_router(account_deletion_router)
+group_routes.register_auth(current_user)
+app.include_router(group_routes.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -1132,7 +1137,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     require_feature(db, user.id, [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
-    if not is_family_conversation:
+    if not is_family_conversation and not db.get(MessageGroup, conversation_id):
         recipient_ids = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
         if len(recipient_ids) == 1:
             target_id = recipient_ids[0]
@@ -1147,7 +1152,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
             if restriction and restriction.enabled and not unlocked:
                 gift_price = GIFT_CATALOG.get(restriction.gift_key, 0)
                 raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {restriction.gift_key} ({gift_price} Lidya) göndermelisin.")
-    first_private_request = _dm_request_gate(db, user.id, conversation_id, first_text=True)
+    first_private_request = False if db.get(MessageGroup, conversation_id) else _dm_request_gate(db, user.id, conversation_id, first_text=True)
     try:
         message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
         conversation = db.get(Conversation, conversation_id)
@@ -1998,6 +2003,7 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
 @app.get("/v1/users/{user_id}/fan-leaderboard")
 def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not db.get(User, user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if is_staff(db,user_id): raise HTTPException(status_code=403, detail="Yetkililerin hayran listesi gizlidir.")
     if active_ban(db,user_id): return []
     flags=require_social_visible(db,user_id,user.id,"fans")
     rows=fan_leaderboard(db,user_id)
