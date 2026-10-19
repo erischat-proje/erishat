@@ -45,6 +45,9 @@ def send_gmail_message(
     message["From"] = settings.gmail_from_email
     message["To"] = recipient
     message["Subject"] = subject
+    message["Reply-To"] = settings.gmail_from_email
+    message["Auto-Submitted"] = "auto-generated"
+    message["X-Auto-Response-Suppress"] = "All"
     message.set_content(body)
 
     raw = base64.urlsafe_b64encode(
