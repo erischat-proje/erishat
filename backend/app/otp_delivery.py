@@ -18,6 +18,9 @@ def _send_smtp_message(recipient: str, subject: str, body: str) -> None:
     message["From"] = settings.smtp_from_email
     message["To"] = recipient
     message["Subject"] = subject
+    message["Reply-To"] = settings.smtp_from_email
+    message["Auto-Submitted"] = "auto-generated"
+    message["X-Auto-Response-Suppress"] = "All"
     message.set_content(body)
     context = ssl.create_default_context()
 
