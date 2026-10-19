@@ -14,6 +14,8 @@ from sqlalchemy import or_, and_
 
 router = APIRouter(prefix='/v1/message-groups', tags=['message-groups'])
 _auth = None
+# LIDYACHAT_GROUP_CREATE_20MB_V1
+GROUP_IMAGE_MAX_BYTES = 20_000_000
 
 def register_auth(fn):
     global _auth
@@ -43,8 +45,8 @@ async def create_group(name: str = Form(...), description: str = Form(''), reque
         return {**info(existing),'already_processed':True,'balance':int(payer.lidya)}
     photo=None;mime=None
     if image and image.filename:
-        data=await image.read(2_000_001)
-        if len(data)>2_000_000:raise HTTPException(413,'Fotoğraf en fazla 2 MB olabilir.')
+        data=await image.read(GROUP_IMAGE_MAX_BYTES + 1)
+        if len(data)>GROUP_IMAGE_MAX_BYTES:raise HTTPException(413,'Fotoğraf en fazla 20 MB olabilir.')
         try:
             with Image.open(BytesIO(data)) as im:
                 im.verify()
@@ -56,15 +58,21 @@ async def create_group(name: str = Form(...), description: str = Form(''), reque
             raise HTTPException(415,'Geçerli bir fotoğraf seçin.')
     if int(payer.lidya or 0)<1000:raise HTTPException(402,'Grup kurmak için 1.000 Lidya gerekli.')
     cid='grp_'+uuid4().hex
-    db.add(Conversation(id=cid,type='group'))
-    db.add(ConversationMember(conversation_id=cid,user_id=user.id))
-    db.add(GroupRole(conversation_id=cid,user_id=user.id,role="owner"))
-    db.add(MessageGroup(conversation_id=cid,owner_id=user.id,request_key=request_key,
-                        name=name,description=description,image=photo,image_mime=mime))
-    payer.lidya-=1000
     db.info.update(lidya_operation='message_group_create',lidya_actor_id=user.id,lidya_reference_id=cid)
     try:
+        # Insert parent rows before dependent roles; all writes and the charge stay atomic.
+        db.add(Conversation(id=cid,type='group'))
+        db.flush()
+        db.add(MessageGroup(conversation_id=cid,owner_id=user.id,request_key=request_key,
+                            name=name,description=description,image=photo,image_mime=mime))
+        db.flush()
+        db.add(ConversationMember(conversation_id=cid,user_id=user.id))
+        db.add(GroupRole(conversation_id=cid,user_id=user.id,role="owner"))
+        payer.lidya-=1000
         db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         for k in ('lidya_operation','lidya_actor_id','lidya_reference_id'):db.info.pop(k,None)
     return {**info(db.get(MessageGroup,cid)),'already_processed':False,'balance':int(payer.lidya)}
