@@ -275,7 +275,7 @@
       </style>
 
       <div class="eris-onboard-card">
-        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./assets/lidya-menu/light-logo.png" alt="ErisChat" width="1600" height="544" decoding="async"></div>
+        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./assets/lidya-menu/light-logo.png" alt="LidyaChat" width="1800" height="405" decoding="async"></div>
         <h1>ErisChat'e Hoş Geldin</h1>
         <div class="eris-subtitle">
           Seni daha iyi tanıyabilmemiz için profilini tamamlayalım.
