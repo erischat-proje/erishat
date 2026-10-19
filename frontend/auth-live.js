@@ -211,7 +211,7 @@
   gate.id = 'erisGoogleGate';
   gate.innerHTML = `
     <div class="erisGoogleCard">
-      <div style="font-size:11px;letter-spacing:1.3px;color:var(--ui-gold);font-weight:700;margin-bottom:9px">ERISCHAT • HESAP</div>
+      <div style="font-size:11px;letter-spacing:1.3px;color:var(--ui-gold);font-weight:700;margin-bottom:9px">LİDYACHAT • HESAP</div>
       <h1>Hoş geldin</h1>
       <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
 
