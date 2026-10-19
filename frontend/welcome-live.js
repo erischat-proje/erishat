@@ -51,7 +51,7 @@
           <div class="eris-welcome-title">Hoşgeldin ${escapeHtml(user.nickname || '')} 💜</div>
 
           <div class="eris-welcome-text">
-            Selam ${escapeHtml(user.nickname || '')} ErisChat'e hoşgeldin seni aramızda
+            Selam ${escapeHtml(user.nickname || '')} LidyaChat'e hoşgeldin seni aramızda
             gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin
             sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile
             keyifli vakitler.

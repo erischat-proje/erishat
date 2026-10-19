@@ -518,7 +518,7 @@ def ready() -> dict[str, str]:
 @app.get("/v1/announcements")
 def list_announcements(limit: int = Query(default=20, ge=1, le=50), db: Session = Depends(get_db), user: User = Depends(current_user)):
     rows = db.scalars(select(SystemAnnouncement).where(SystemAnnouncement.active.is_(True)).order_by(SystemAnnouncement.created_at.desc()).limit(limit)).all()
-    return [{"id": row.id, "title": "ErisChat Yönetim", "message": row.message, "created_at": row.created_at} for row in rows]
+    return [{"id": row.id, "title": "LidyaChat Yönetim", "message": row.message, "created_at": row.created_at} for row in rows]
 
 
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
@@ -695,7 +695,7 @@ def verify_otp_code(
             if existing_identity is not None:
                 if existing_identity.user_id != link_user.id:
                     raise ValueError(
-                        "Bu email başka bir ErisChat hesabına bağlı."
+                        "Bu email başka bir LidyaChat hesabına bağlı."
                     )
 
                 existing_identity.verified_at = datetime.now(timezone.utc)
@@ -908,7 +908,7 @@ def complete_onboarding(
         db.add(welcome_conversation)
         db.add(ConversationMember(conversation_id=welcome_conversation_id, user_id=user.id))
         db.flush()
-        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Selam {user.nickname} ErisChat'e hoşgeldin seni aramızda gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile keyifli vakitler."))
+        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Selam {user.nickname} LidyaChat'e hoşgeldin seni aramızda gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile keyifli vakitler."))
 
 
     db.commit()
@@ -1052,7 +1052,7 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             "frame_asset": member_user.frame_asset if member_user else None})
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
         "created_at": conversation.created_at, "members": member_details,
-        "name": (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)}
+        "name": (family_name + " aile sohbeti") if family_name else ("LidyaChat" if conversation.type == "welcome" else None)}
 
 
 def _message_notifications_allowed(db: Session, recipient_id: str, conversation_id: str) -> bool:
@@ -2617,7 +2617,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         if not member.ghost and not already_connected:
             if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry'] or entrance_payload.get('shop_entry'):
                 await _broadcast_room_chat(internal_room_id,entrance_payload)
-            await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
+            await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'LidyaChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
         existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
         if not member.ghost:
             room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
