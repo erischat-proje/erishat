@@ -1,0 +1,61 @@
+/* Inbox and full-screen conversation geometry; room floating chat keeps its layout. */
+html body #messages>.eyebrow{color:var(--ui-gold);font-size:10px;letter-spacing:2px}
+html body #messages>.title{font-size:28px;line-height:1.2;letter-spacing:-.8px;margin:7px 0 20px}
+html body #messages [data-dm-search]{margin-bottom:18px!important}
+html body #messages [data-dm-user-search]{height:50px;padding:0 52px 0 16px!important;border-radius:17px!important;background:var(--ui-panel)!important;font-size:14px}
+html body #messages [data-dm-search-btn]{width:40px;height:40px!important;display:grid;place-items:center;padding:0;border-radius:13px!important}
+html body #messages svg,html body #chat .compose svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html body #messages [data-dm-search]>div:last-child>button{min-height:44px!important;font-size:12px!important;border-radius:14px!important}
+html body #messages>.list{gap:9px}
+html body #messages .list>.item{position:relative;min-height:82px;padding:14px;gap:13px;border:1px solid var(--ui-line);border-radius:20px;background:linear-gradient(125deg,var(--ui-raised),var(--ui-raised))}
+html body #messages .list>.item>.ava{width:48px;height:48px;flex:0 0 48px;border:1px solid var(--ui-line);font-size:18px}
+html body #messages .list>.item>.grow{min-width:0;overflow:hidden}
+html body #messages .list>.item b{display:flex;align-items:center;gap:5px;font-size:14px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body #messages .list>.item small{font-size:12px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:5px;color:var(--ui-gold)}
+html body #messages .dm-unread{min-width:23px;height:23px;flex:0 0 auto;font-size:10px;background:var(--ui-button)}
+html body #messages .dm-list-tools{flex-wrap:wrap;gap:6px;padding:10px;margin:10px 0;border:1px solid var(--ui-line);border-radius:16px;background:var(--ui-panel)}
+html body #messages .dm-list-tools button,html body #messages .dm-inbox-nav button{min-height:44px;font-size:12px}
+html body #messages .dm-list-state{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:34px 20px;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:22px}
+html body #messages .dm-list-state>span{width:55px;height:55px;display:grid;place-items:center;border-radius:18px;background:color-mix(in srgb, var(--ui-button) 8%, transparent);color:var(--ui-gold)}
+html body #messages .dm-list-state svg{width:28px;height:28px}
+html body #messages .dm-list-state b{font-size:16px}
+html body #messages .dm-list-state p{font-size:12px;line-height:1.6;color:var(--ui-ink);margin:0;max-width:260px}
+html body #messages .dm-list-state button{min-height:44px;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-button) 10%, transparent);color:var(--ui-gold);padding:0 16px}
+html body #chat:not(.eris-floating-dm){justify-content:center;align-items:stretch;background:var(--ui-panel)}
+html body #chat:not(.eris-floating-dm)>.chatSheet{height:100%!important;max-height:100%!important;width:min(100%,900px)!important;border-radius:0!important;background:var(--ui-panel);display:flex;flex-direction:column;overflow:hidden!important}
+html body #chat:not(.eris-floating-dm) .chatHead{flex:0 0 auto;flex-wrap:wrap;gap:9px;padding:10px 14px;background:var(--ui-panel);border-bottom:1px solid var(--ui-line)}
+html body #chat:not(.eris-floating-dm) .chatHead>.ava{width:42px;height:42px;flex:0 0 42px;font-size:16px}
+html body #chat:not(.eris-floating-dm) .chatHead>.grow{min-width:0;flex:1 1 0;overflow:hidden}
+html body #chat:not(.eris-floating-dm) .chatHead b{font-size:14px;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+html body #chat:not(.eris-floating-dm) .chatHead small{font-size:10px}
+html body #chat:not(.eris-floating-dm) .chatHead>button{flex:0 0 auto;min-width:40px;width:40px;min-height:40px;height:40px;padding:0;border-radius:12px}
+html body #chat:not(.eris-floating-dm) .dm-select-tools{flex:0 0 100%;flex-wrap:wrap;min-width:0;border:0;padding:6px 0 0;background:transparent}
+html body #chat:not(.eris-floating-dm) .dm-select-tools button{min-width:40px;min-height:40px;font-size:12px}
+html body #chat:not(.eris-floating-dm) .chatBody{flex:1 1 0;min-height:0!important;display:flex!important;flex-direction:column;align-items:flex-start;gap:12px!important;padding:18px 14px 24px!important;overflow-y:auto!important;overscroll-behavior:contain}
+html body #chat:not(.eris-floating-dm) .bubble{flex:0 0 auto;width:fit-content;min-height:0;max-width:88%!important;font-size:14px;line-height:1.5;padding:11px 13px;border-radius:17px;background:var(--ui-panel)}
+html body #chat:not(.eris-floating-dm) .bubble.me{align-self:flex-end;background:linear-gradient(130deg,var(--ui-button),var(--ui-button))}
+html body #chat:not(.eris-floating-dm) .dm-message-text{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+html body #chat:not(.eris-floating-dm) .compose{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr)) 72px;gap:7px;padding:9px 12px max(10px,var(--eris-safe-bottom,env(safe-area-inset-bottom)));flex:0 0 auto;background:var(--ui-panel);border-top:1px solid var(--ui-line)}
+html body #chat:not(.eris-floating-dm) .compose input{grid-column:1/4;grid-row:2;min-width:0;width:100%;height:46px;padding:0 13px;border-radius:15px;border:1px solid var(--ui-line);background:var(--ui-panel);color:var(--ui-ink);font-size:14px}
+html body #chat:not(.eris-floating-dm) .compose>.primary{grid-column:4;grid-row:2;min-width:66px;height:46px;padding:0 11px;border-radius:15px;font-size:12px;background:linear-gradient(135deg,var(--ui-primary),var(--ui-danger-bg))}
+html body #chat:not(.eris-floating-dm) .compose>.close{grid-row:1;min-width:44px;width:44px!important;height:40px!important;min-height:40px;border-radius:13px!important;display:grid;place-items:center;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);box-shadow:none}
+html body #chat .compose[hidden],html body #chat .compose>[hidden]{display:none!important}
+html body #messages button:focus-visible,html body #chat button:focus-visible,html body #chat input:focus-visible{outline:2px solid var(--ui-line);outline-offset:2px}
+html body #chat button:disabled{opacity:.55}
+@media(min-width:600px){html body #chat:not(.eris-floating-dm) .compose{grid-template-columns:repeat(3,44px) minmax(0,1fr) 80px}html body #chat:not(.eris-floating-dm) .compose input{grid-column:4;grid-row:1}html body #chat:not(.eris-floating-dm) .compose>.primary{grid-column:5;grid-row:1}}
+
+
+/* DM-owned overlays stay above both full-page and room floating conversations. */
+html body .dm-gift-sheet{z-index:90000!important;justify-content:center!important;align-items:flex-end!important;padding:12px!important}
+html body .dm-gift-sheet>section{width:min(520px,100%)!important;max-height:calc(var(--eris-usable-height,100dvh) - 24px)!important;border-radius:22px!important;overflow:auto!important}
+html body .dm-photo-viewer,html body .dm-vault-modal{z-index:91000!important}
+html body .eris-camera{z-index:92000!important}
+/* Leave room for the portrait and frame which live outside the bubble. */
+html body #chat:not(.eris-floating-dm) .chatBody{padding-left:58px!important}
+html body #chat:not(.eris-floating-dm) .bubble{max-width:calc(100% - 4px)!important}
+html body #chat:not(.eris-floating-dm) .dm-message-portrait{left:-40px!important}
+
+html body #chat .dm-call-head{display:flex;gap:7px;margin-left:auto}
+html body #chat .dm-call-head button,html body #chat .chatHead>button.close{display:grid;place-items:center;width:40px!important;height:40px!important;padding:0;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-raised) 2%, transparent);color:var(--ui-gold)}
+html body #chat .dm-call-head svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html body #chat [data-dm-capture-toggle]{display:none!important}

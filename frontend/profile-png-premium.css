@@ -1,0 +1,47 @@
+/* Profile artwork decorates actual controls without replacing identities or actions. */
+html{--pp-panel:#fffaf0;--pp-ink:#49301d;--pp-muted:#78654d;--pp-line:#bfa06a;--pp-surface:url('./assets/lidya-games-png/light/button-secondary.png');--pp-header:url('./assets/lidya-profile-png/light/header.png')}
+html[data-eris-theme="dark"]{--pp-panel:#0b2721;--pp-ink:#fff0d0;--pp-muted:#c8b996;--pp-line:#ac8d4e;--pp-surface:url('./assets/lidya-games-png/dark/button-secondary.png');--pp-header:url('./assets/lidya-profile-png/dark/header.png')}
+html body #profile>.toolbar h2{font:700 29px Georgia,serif!important;color:var(--pp-ink)!important}
+html body #profile .profile.card{background-image:linear-gradient(90deg,var(--pp-panel),color-mix(in srgb,var(--pp-panel) 75%,transparent)),var(--pp-header)!important;background-size:cover!important;background-position:center!important;border:1px solid var(--pp-line)!important;border-radius:18px!important;color:var(--pp-ink)!important;box-shadow:inset 0 0 0 3px #b8984420,0 6px 17px #46311b14!important}
+html body #profile .profile.card .name h2{font-family:Georgia,serif;color:var(--pp-ink)!important}
+html body #profile .profile.card .stat{border-color:var(--pp-line)!important;background:color-mix(in srgb,var(--pp-panel) 80%,transparent)!important}
+html body #profile .profile.card .stat b{color:var(--pp-ink)!important}
+html body #profile .profile.card .stat span{color:var(--pp-muted)!important}
+html body #profile #erisProfileHub .eph-section-label{color:var(--pp-muted)!important;font-size:11px!important;letter-spacing:1.6px!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;max-width:100%!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button{position:relative!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;min-width:0!important;min-height:88px!important;height:auto!important;padding:13px 11px!important;box-sizing:border-box!important;border:1px solid var(--pp-line)!important;border-radius:13px!important;background-color:var(--pp-panel)!important;background-image:var(--pp-surface)!important;background-size:100% 100%!important;box-shadow:0 4px 12px #46311b0d!important;color:var(--pp-ink)!important;font:700 13px/1.4 Georgia,serif!important;text-align:left!important;overflow:hidden!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button::after{display:none!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs .pp-icon{display:block!important;flex:0 0 43px!important;width:43px!important;height:43px!important;object-fit:contain!important;padding:0!important;filter:drop-shadow(0 2px 3px #38211425)}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button>span:not(.emp-icon){min-width:0!important;overflow-wrap:anywhere!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs .emp-icon,html body #profile #erisProfileHub#erisProfileHub .eph-tabs .eph-icon{display:none!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button[aria-selected="true"]{outline:2px solid var(--pp-line)!important;outline-offset:-2px!important}
+html body #profile #erisThemeControl{border:1px solid var(--pp-line)!important;border-radius:15px!important;background:var(--pp-panel)!important;color:var(--pp-ink)!important}
+html body .eph-overlay .eph-dialog{border-color:var(--pp-line)!important;background:var(--pp-panel)!important;color:var(--pp-ink)!important}
+html body .eph-overlay .eph-dialog-head{background-image:var(--pp-header)!important;background-size:cover!important;border-color:var(--pp-line)!important}
+html body .eph-overlay .eph-dialog-head h2,html body .eph-overlay .eph-body h3{color:var(--pp-ink)!important;font-family:Georgia,serif}
+html body .eph-overlay .eph-close,html body .eph-overlay .eph-body button:not([data-author-name]):not(.ec-social-avatar){background-image:var(--pp-surface)!important;background-size:100% 100%!important;color:var(--pp-ink)!important;border-color:var(--pp-line)!important}
+html body .eph-overlay .eph-body input,html body .eph-overlay .eph-body textarea{background:var(--pp-panel)!important;color:var(--pp-ink)!important;border-color:var(--pp-line)!important}
+html body #profile button:focus-visible,html body .eph-overlay button:focus-visible{outline:2px solid var(--pp-line)!important;outline-offset:3px!important}
+@media(max-width:340px){html body #profile #erisProfileHub#erisProfileHub .eph-tabs{gap:8px!important}html body #profile #erisProfileHub#erisProfileHub .eph-tabs button{gap:7px!important;padding:11px 8px!important;font-size:12px!important;min-height:85px!important}html body #profile #erisProfileHub#erisProfileHub .eph-tabs .pp-icon{flex-basis:35px!important;width:35px!important;height:35px!important}}
+@media(min-width:800px){html body #profile #erisProfileHub#erisProfileHub .eph-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+/* The track label and the complete horse occupy separate vertical areas. */
+html body #erisGamesModal#erisGamesModal .horse-lane{height:72px!important;min-height:72px!important;box-sizing:border-box!important;overflow:hidden!important}
+html body #erisGamesModal#erisGamesModal .horse-lane>span{top:4px!important;left:6px!important;line-height:18px!important;font-size:11px!important}
+html body #erisGamesModal#erisGamesModal .horse-runner{position:absolute!important;left:4px!important;bottom:5px!important;top:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;width:54px!important;height:38px!important;line-height:0!important;font-size:0!important;overflow:visible!important}
+html body #erisGamesModal#erisGamesModal .horse-runner .lg-object{display:block!important;width:54px!important;height:38px!important;max-width:54px!important;object-fit:contain!important;vertical-align:initial!important;padding:0!important;margin:0!important}
+html{--pp-followers:url('./assets/lidya-profile-png/light/followers.png');--pp-following:url('./assets/lidya-profile-png/light/following.png');--pp-gifts:url('./assets/lidya-profile-png/light/gifts.png')}
+html[data-eris-theme="dark"]{--pp-followers:url('./assets/lidya-profile-png/dark/followers.png');--pp-following:url('./assets/lidya-profile-png/dark/following.png');--pp-gifts:url('./assets/lidya-profile-png/dark/gifts.png')}
+html body #profile .profile.card .stat::before{content:'';display:block;width:25px;height:25px;margin:0 auto 5px;background-image:var(--pp-followers);background-size:contain;background-position:center;background-repeat:no-repeat}
+html body #profile .profile.card .stat:nth-child(2)::before{background-image:var(--pp-following)}
+html body #profile .profile.card .stat:nth-child(3)::before{background-image:var(--pp-gifts)}
+html body #profile #erisThemeControl [data-eris-theme-choice]{background-image:var(--pp-surface)!important;background-size:100% 100%!important;color:var(--pp-ink)!important;border-color:var(--pp-line)!important}
+html body #profile #erisProfileHub#erisProfileHub button[data-png-profile="logout"]{color:var(--theme-danger-ink,#b35f59)!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button>span:not(.emp-icon){flex:1!important;min-width:0!important;max-width:none!important;font:700 12px/1.4 Georgia,serif!important;letter-spacing:0!important;overflow-wrap:normal!important;word-break:normal!important;hyphens:none!important}
+
+
+/* Two original bitmap banners; accessible text stays live above the quiet half. */
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button{grid-column:1/-1!important;aspect-ratio:3/1!important;min-height:96px!important;max-height:170px!important;padding:10px 18px 10px 56%!important;background-image:none!important;isolation:isolate;justify-content:center!important;font-size:clamp(16px,4vw,23px)!important;color:#49301d!important;text-align:center!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button .pp-history-art{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:fill!important;z-index:-1!important;filter:none!important;opacity:1!important;pointer-events:none!important}
+html body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button span{position:relative!important;white-space:normal!important;font-family:Georgia,serif!important;line-height:1.3!important;text-shadow:0 1px 2px #fff7!important}
+html[data-eris-theme="dark"] body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button{color:#fff1d0!important}
+html[data-eris-theme="dark"] body #profile #erisProfileHub#erisProfileHub .eph-tabs button.pp-history-button span{text-shadow:0 1px 3px #000!important}

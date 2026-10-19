@@ -1,0 +1,10 @@
+[
+  "frontend/room-uno.js",
+  "frontend/room-uno.css",
+  "frontend/room-okey101.js",
+  "frontend/room-ludo.js",
+  "frontend/erischat-main.html",
+  "frontend/tests/room-seat-menu.test.cjs",
+  "docs/oda-oyun-fix-dosyalar.json",
+  "docs/oda-oyun-fix-pr.md"
+]

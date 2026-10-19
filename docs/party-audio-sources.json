@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "key": "magic",
+      "author": "tgerginov",
+      "source": "https://freesound.org/people/tgerginov/sounds/671175/",
+      "preview": "https://cdn.freesound.org/previews/671/671175_4898018-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 78864
+    },
+    {
+      "key": "chimes",
+      "author": "steffcaffrey",
+      "source": "https://freesound.org/people/steffcaffrey/sounds/435075/",
+      "preview": "https://cdn.freesound.org/previews/435/435075_1844073-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 507330
+    },
+    {
+      "key": "burst",
+      "author": "DAN2008",
+      "source": "https://freesound.org/people/DAN2008/sounds/214455/",
+      "preview": "https://cdn.freesound.org/previews/214/214455_2992529-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 39191
+    },
+    {
+      "key": "bark",
+      "author": "michael_grinnell",
+      "source": "https://freesound.org/people/michael_grinnell/sounds/464400/",
+      "preview": "https://cdn.freesound.org/previews/464/464400_7372230-hq.mp3",
+      "license": "CC0 1.0",
+      "bytes": 15029
+    }
+  ],
+  "processing": "CC0 previews decoded to stereo PCM WAV 32kHz; trim, mix, short reflections and peak limiting. Original bell and noise layers; no provider sound assets."
+}

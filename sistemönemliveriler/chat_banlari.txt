@@ -1,0 +1,2 @@
+# ErisChat sistem kaydı: chat_banlari.txt
+# JSONL kayıtları aşağıya eklenir.

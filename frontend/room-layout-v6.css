@@ -1,0 +1,487 @@
+/* Live room: framed seats remain above the user's selected wallpaper. */
+#erisRoomSurface.room-layout-v6 .eris-room-wall:before {
+  background: linear-gradient(180deg,color-mix(in srgb, var(--ui-panel) 12%, transparent),transparent 22%,transparent 76%,color-mix(in srgb, var(--ui-panel) 25%, transparent)) !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-top {
+  height:68px !important; min-height:68px !important; overflow:visible !important;
+  background:color-mix(in srgb, var(--ui-panel) 38%, transparent) !important; backdrop-filter:blur(10px) !important;
+  border-bottom:1px solid var(--ui-line) !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-title {max-width:none !important;flex:1 1 auto !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
+  position:absolute;top:73px;right:10px;z-index:6;display:flex;gap:3px;
+  padding:4px;border:1px solid var(--ui-line);border-radius:16px;
+  background:color-mix(in srgb, var(--ui-panel) 34%, transparent);backdrop-filter:blur(9px);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {
+  display:flex;align-items:center;justify-content:center;gap:5px;width:auto;min-height:34px;
+  padding:0 9px;border:0;border-right:1px solid var(--ui-line);border-radius:8px;
+  background:transparent;color:var(--ui-ink);font-size:16px;font-weight:600;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button:last-child {border-right:0;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomGift,
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomMusic {display:flex !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomWallpaper:not([style*="display:none"]):not([style*="display: none"]) {display:flex !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display: none"],
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display:none"] {display:none !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions span {font-size:10px;white-space:nowrap;}
+#erisRoomSurface.room-layout-v6 .eris-room-stage {
+  top:122px !important;bottom:205px !important;min-height:0 !important;display:grid !important;
+  grid-template-columns:repeat(var(--seat-columns),minmax(0,1fr));
+  grid-template-rows:repeat(4,max-content);column-gap:var(--seat-column-gap);row-gap:var(--seat-row-gap);
+  align-content:center;align-items:start;box-sizing:border-box;padding:10px 15px 22px;
+  overflow-x:hidden;overflow-y:auto;scrollbar-width:none;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-stage::-webkit-scrollbar {display:none;}
+#erisRoomSurface.room-layout-v6 [data-seat-count="16"] {
+  --seat-columns:4;--seat-size:min(74px,calc((100vw - 130px)/4));
+  --seat-column-gap:10px;--seat-row-gap:25px;
+}
+#erisRoomSurface.room-layout-v6 [data-seat-count="20"] {
+  --seat-columns:5;--seat-size:min(68px,calc((100vw - 141px)/5));
+  --seat-column-gap:8px;--seat-row-gap:29px;
+}
+#erisRoomSurface.room-layout-v6 [data-seat-count="24"] {
+  --seat-columns:6;--seat-size:min(62px,calc((100vw - 156px)/6));
+  --seat-column-gap:7px;--seat-row-gap:31px;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat {
+  position:relative !important;left:auto !important;top:auto !important;
+  transform:none !important;width:var(--seat-size) !important;height:var(--seat-size) !important;
+  min-width:0 !important;min-height:0 !important;margin:0 auto !important;
+  padding:0 !important;border:1px solid var(--ui-line) !important;
+  background:color-mix(in srgb, var(--ui-panel) 25%, transparent) !important;box-shadow:0 2px 12px var(--ui-shadow) !important;
+  backdrop-filter:blur(5px) !important;overflow:visible !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat:focus-visible {outline:2px solid var(--ui-line);outline-offset:4px;}
+#erisRoomSurface.room-layout-v6 .eris-seat.occupied:has(.seat-frame.has-frame) {
+  background:transparent !important;border-color:transparent !important;
+  box-shadow:none !important;backdrop-filter:none !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat .seat-pod {width:100%;height:100%;}
+#erisRoomSurface.room-layout-v6 .eris-seat.occupied .seat-ava {
+  width:76% !important;height:76% !important;border-radius:50% !important;
+  background-size:cover;background-position:center;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat .seat-frame {
+  inset:-9% !important;background-size:contain !important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat:before {
+  content:attr(data-seat-number);position:absolute;z-index:4;left:-7px;top:-7px;
+  display:grid;place-items:center;width:20px;height:20px;border-radius:50%;
+  border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 87%, transparent);color:var(--ui-ink);font-size:10px;font-weight:800;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat b {
+  position:absolute !important;z-index:4;top:calc(100% + 5px);left:-13%;
+  display:block;width:126%;height:auto;overflow:hidden;clip-path:none !important;
+  white-space:nowrap;text-overflow:ellipsis;border-radius:10px;
+  background:color-mix(in srgb, var(--ui-panel) 46%, transparent);border:1px solid var(--ui-line);
+  color:var(--ui-ink);font-size:9px;font-weight:700;line-height:17px;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat.empty b {background:transparent;border:0;opacity:.7;}
+#erisRoomSurface.room-layout-v6 .eris-seat .seat-mic,
+#erisRoomSurface.room-layout-v6 .eris-seat small {display:none !important;}
+#erisRoomSurface.room-layout-v6 .eris-room-chat {
+  height:198px !important;background:color-mix(in srgb, var(--ui-panel) 34%, transparent) !important;
+  backdrop-filter:blur(7px) !important;border-top:1px solid var(--ui-line);
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-msg {
+  background:color-mix(in srgb, var(--ui-panel) 42%, transparent);border-color:var(--ui-line);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose input,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput,
+#erisRoomSurface.room-layout-v6 .eris-room-compose .room-v3-gift {
+  background:color-mix(in srgb, var(--ui-panel) 37%, transparent) !important;backdrop-filter:blur(6px);
+}
+@media(max-width:370px) {
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions {right:5px;}
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {padding:0 5px;}
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions span {font-size:9px;}
+  #erisRoomSurface.room-layout-v6 .eris-room-stage {padding-left:10px;padding-right:10px;}
+}
+
+/* One consistent glass layout for the live 16/20/24 seat room. */
+#erisRoomSurface.room-layout-v6 .eris-room-top {
+  height:72px!important;min-height:72px!important;padding:8px 12px!important;gap:8px!important;
+  background:linear-gradient(110deg,color-mix(in srgb, var(--ui-panel) 88%, transparent),color-mix(in srgb, var(--ui-button) 60%, transparent))!important;
+  border-bottom:1px solid var(--ui-line)!important;box-shadow:0 10px 35px var(--ui-shadow);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-emblem {
+  display:grid;place-items:center;flex:none;width:46px;height:46px;border-radius:50%;
+  border:2px solid var(--ui-line);background:linear-gradient(140deg,var(--ui-button),var(--ui-panel));
+  box-shadow:0 0 0 3px var(--ui-shadow);color:var(--ui-ink);font-size:30px;line-height:1;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-title {
+  flex:1 1 0!important;max-width:none!important;min-width:0!important;padding:0!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-title b {font-size:15px!important;line-height:19px!important}
+#erisRoomSurface.room-layout-v6 .eris-room-title small {font-size:10px!important;line-height:13px!important;color:var(--ui-muted)!important}
+#erisRoomSurface.room-layout-v6 #erisRoomFollow {font-size:10px!important;margin-top:3px!important;color:var(--ui-gold)!important}
+#erisRoomSurface.room-layout-v6 #erisRoomLevel {
+  flex:0 0 auto!important;min-width:64px!important;width:auto!important;height:43px!important;
+  padding:3px 7px!important;border:1px solid var(--ui-line)!important;border-radius:12px!important;
+  background:color-mix(in srgb, var(--ui-panel) 66%, transparent)!important;
+}
+#erisRoomSurface.room-layout-v6 #erisRoomLevel b {font-size:10px!important}
+#erisRoomSurface.room-layout-v6 #erisRoomLevel small {font-size:8px!important}
+#erisRoomSurface.room-layout-v6 #erisRoomMoreTop,
+#erisRoomSurface.room-layout-v6 #erisRoomLeaveTop {
+  flex:0 0 38px!important;width:38px!important;min-width:38px!important;height:43px!important;
+  border-radius:12px!important;border:1px solid var(--ui-line)!important;background:color-mix(in srgb, var(--ui-panel) 72%, transparent)!important;
+  color:var(--ui-ink)!important;box-shadow:none!important;
+}
+#erisRoomSurface.room-layout-v6 #erisRoomMoreTop {font-size:24px!important}
+#erisRoomSurface.room-layout-v6 #erisRoomLeaveTop {font-size:27px!important}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
+  top:82px;left:12px;right:12px;justify-content:space-around;gap:2px;padding:5px;
+  border-radius:16px;background:color-mix(in srgb, var(--ui-panel) 68%, transparent);border:1px solid var(--ui-line);
+  box-shadow:0 8px 28px var(--ui-shadow);backdrop-filter:blur(18px);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {flex:1;min-width:0;min-height:37px;font-size:20px}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions span {font-size:11px}
+#erisRoomSurface.room-layout-v6 .eris-room-stage {
+  top:143px!important;bottom:220px!important;align-content:center;justify-content:center;
+  column-gap:var(--seat-column-gap);row-gap:var(--seat-row-gap);
+  padding:15px 12px 28px;
+}
+#erisRoomSurface.room-layout-v6 [data-seat-count="16"] {--seat-size:min(76px,calc((100vw - 94px)/4));--seat-column-gap:12px;--seat-row-gap:33px}
+#erisRoomSurface.room-layout-v6 [data-seat-count="20"] {--seat-size:min(67px,calc((100vw - 83px)/5));--seat-column-gap:9px;--seat-row-gap:36px}
+#erisRoomSurface.room-layout-v6 [data-seat-count="24"] {--seat-size:min(59px,calc((100vw - 70px)/6));--seat-column-gap:7px;--seat-row-gap:40px}
+#erisRoomSurface.room-layout-v6 .eris-seat.empty {
+  border:1.5px solid var(--ui-line)!important;background:color-mix(in srgb, var(--ui-panel) 32%, transparent)!important;
+  box-shadow:inset 0 0 18px var(--ui-shadow),0 5px 18px var(--ui-shadow)!important;
+  backdrop-filter:blur(3px)!important;color:var(--ui-ink)!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat.empty .seat-ava {
+  width:100%!important;height:100%!important;background:transparent!important;
+  color:var(--ui-ink)!important;font-size:clamp(20px,5vw,29px)!important;font-weight:300;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat:before {
+  left:50%;top:-16px;transform:translateX(-50%);width:21px;height:21px;
+  background:var(--ui-button);border:1px solid var(--ui-line);box-shadow:0 2px 8px var(--ui-shadow);
+}
+#erisRoomSurface.room-layout-v6 .eris-seat b {
+  top:calc(100% + 5px);left:-20%;width:140%;height:18px;
+  background:color-mix(in srgb, var(--ui-panel) 65%, transparent);border:1px solid var(--ui-line);
+  color:var(--ui-ink);font-size:10px;line-height:17px;
+}
+#erisRoomSurface.room-layout-v6 .eris-seat.empty b {background:color-mix(in srgb, var(--ui-panel) 65%, transparent);border:1px solid var(--ui-line);opacity:1}
+#erisRoomSurface.room-layout-v6 .eris-seat.occupied .seat-ava {width:76%!important;height:76%!important}
+#erisRoomSurface.room-layout-v6 .eris-seat.occupied .seat-frame {inset:-9%!important;background-size:contain!important}
+#erisRoomSurface.room-layout-v6 .eris-room-chat {
+  height:220px!important;background:linear-gradient(180deg,color-mix(in srgb, var(--ui-panel) 85%, transparent),color-mix(in srgb, var(--ui-panel) 92%, transparent))!important;
+  border-top:1px solid var(--ui-line)!important;box-shadow:0 -12px 35px var(--ui-shadow);
+  backdrop-filter:blur(20px)!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-activity {
+  height:32px;min-height:32px;display:flex;align-items:center;gap:8px;padding:0 15px;
+  color:var(--ui-ink);font-size:11px;font-weight:600;border-bottom:1px solid var(--ui-line);
+}
+#erisRoomSurface.room-layout-v6 .activity-dot {width:7px;height:7px;border-radius:50%;background:var(--ui-button);box-shadow:0 0 9px var(--ui-shadow)}
+#erisRoomSurface.room-layout-v6 .eris-chat-list {padding:8px 12px!important;gap:5px!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-msg {max-width:80%;padding:6px 10px;border-radius:11px;background:color-mix(in srgb, var(--ui-panel) 72%, transparent);font-size:11px}
+#erisRoomSurface.room-layout-v6 .eris-room-compose {
+  min-height:54px;display:flex!important;align-items:center!important;gap:6px!important;
+  padding:5px 9px calc(7px + env(safe-area-inset-bottom))!important;
+  box-sizing:border-box;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose input {
+  flex:1 1 0!important;min-width:0!important;width:0!important;height:40px!important;
+  border:1px solid var(--ui-line)!important;border-radius:13px!important;
+  background:color-mix(in srgb, var(--ui-panel) 72%, transparent)!important;font-size:12px!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomGiftInline,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {
+  flex:0 0 36px!important;min-width:36px!important;width:36px!important;height:40px!important;
+  border:1px solid var(--ui-line)!important;border-radius:12px!important;font-size:18px!important;
+  background:color-mix(in srgb, var(--ui-button) 73%, transparent)!important;padding:0!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {
+  flex:0 0 auto!important;min-width:54px!important;height:40px!important;
+  padding:0 8px!important;font-size:11px!important;border-radius:12px!important;
+}
+@media(max-width:380px){
+  #erisRoomSurface.room-layout-v6 .eris-room-emblem {width:36px;height:36px;font-size:23px}
+  #erisRoomSurface.room-layout-v6 #erisRoomLevel {min-width:56px!important;padding:2px 4px!important}
+  #erisRoomSurface.room-layout-v6 #erisRoomMoreTop,
+  #erisRoomSurface.room-layout-v6 #erisRoomLeaveTop {flex-basis:32px!important;width:32px!important;min-width:32px!important}
+  #erisRoomSurface.room-layout-v6 .eris-room-quick-actions span {font-size:10px}
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomGiftInline,
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {flex-basis:32px!important;min-width:32px!important;width:32px!important}
+}
+@media(max-height:690px){
+  #erisRoomSurface.room-layout-v6 .eris-room-stage {align-content:start;overflow-y:auto}
+  #erisRoomSurface.room-layout-v6 [data-seat-count="24"] {--seat-row-gap:28px}
+}
+
+/* Contribution opens from the upper left; room actions sit in the free space on the right. */
+#erisRoomSurface.room-layout-v6 #erisRoomContributionButton {
+  position:absolute;z-index:8;top:85px;left:12px;min-height:35px;padding:0 13px;
+  border:1px solid var(--ui-line);border-radius:14px;color:var(--ui-ink);font-size:12px;font-weight:750;
+  background:color-mix(in srgb, var(--ui-raised) 79%, transparent);backdrop-filter:blur(14px);box-shadow:0 8px 24px var(--ui-shadow);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions {
+  top:auto;left:auto;right:12px;bottom:70px;z-index:80!important;display:flex;flex-direction:column;
+  width:116px;gap:6px;padding:5px;border-radius:18px;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button {
+  flex:none;display:flex!important;align-items:center;justify-content:flex-start;gap:6px;
+  width:114px;height:44px;min-height:44px;padding:0 8px;
+  border:1px solid var(--ui-line)!important;border-radius:13px;font-size:19px;
+  background:color-mix(in srgb, var(--ui-raised) 53%, transparent);color:var(--ui-ink);
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display: none"],
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button[style*="display:none"] {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button span {
+  display:inline!important;min-width:0;white-space:nowrap;font-size:10.5px;font-weight:700;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button svg {width:20px;height:20px;min-width:20px;display:block}
+#erisRoomSurface.room-layout-v6 .eris-room-stage {top:128px!important;bottom:220px!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-list {padding-right:133px!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose {justify-content:flex-start!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomGiftInline {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose input#erisLiveInput {
+  order:1!important;display:block!important;flex:1 1 auto!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:44px!important;padding:0 13px!important;font-size:14px!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {order:2!important;flex-basis:35px!important;min-width:35px!important;width:35px!important}
+#erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {order:3!important;min-width:57px!important;height:44px!important}
+#erisRoomMinimize {cursor:pointer}
+#erisRoomFloatingBubble[hidden],#erisRoomBubbleExit[hidden],#erisRoomContribution[hidden] {display:none!important}
+#erisRoomBubbleExit{position:fixed;z-index:851;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);width:86px;height:86px;display:grid;place-items:center;border:2px solid var(--ui-line);border-radius:50%;background:color-mix(in srgb, var(--ui-panel) 87%, transparent);box-shadow:0 0 0 8px var(--ui-shadow);color:var(--ui-ink);pointer-events:none;transition:background .15s,scale .15s}
+#erisRoomBubbleExit span{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:color-mix(in srgb, var(--ui-panel) 11%, transparent);font-size:32px;line-height:1}
+#erisRoomBubbleExit.near{background:color-mix(in srgb, var(--ui-danger-bg) 87%, transparent);scale:1.12}
+#erisLiveChat .eris-chat-msg[hidden]{display:none!important}
+#erisRoomFloatingBubble {
+  position:fixed;z-index:850;right:15px;bottom:110px;width:73px;height:73px;
+  touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2px solid var(--ui-line);border-radius:50%;color:var(--ui-ink);
+  background:linear-gradient(145deg,var(--ui-button),var(--ui-panel));box-shadow:0 8px 28px var(--ui-shadow),0 0 0 4px var(--ui-shadow);
+  user-select:none;-webkit-user-select:none;
+}
+#erisRoomFloatingBubble span {font-size:27px;line-height:1}
+#erisRoomFloatingBubble small {font-size:9px;font-weight:700;white-space:nowrap}
+#erisRoomContribution {position:absolute;inset:0;z-index:500}
+#erisRoomContribution .rc-shade {position:absolute;inset:0;background:color-mix(in srgb, var(--ui-panel) 74%, transparent);backdrop-filter:blur(9px)}
+#erisRoomContribution .rc-panel {
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(480px,calc(100% - 28px));height:min(680px,85dvh);display:flex;flex-direction:column;
+  padding:18px;box-sizing:border-box;border:1px solid var(--ui-line);border-radius:25px;
+  background:linear-gradient(155deg,color-mix(in srgb, var(--ui-panel) 96%, transparent),color-mix(in srgb, var(--ui-panel) 97%, transparent));box-shadow:0 30px 90px var(--ui-shadow);
+}
+#erisRoomContribution header {display:flex;justify-content:space-between;align-items:start}
+#erisRoomContribution header small {font-size:10px;letter-spacing:2px;color:var(--ui-gold)}
+#erisRoomContribution h2 {margin:5px 0 13px;font-size:24px}
+#erisRoomContribution .rc-close {width:37px;height:37px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 6%, transparent);color:var(--ui-ink);font-size:25px}
+#erisRoomContribution .rc-periods {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:13px}
+#erisRoomContribution .rc-periods button {min-width:0;padding:9px 2px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-raised) 4%, transparent);color:var(--ui-ink);font-size:11px}
+#erisRoomContribution .rc-periods button.active {background:var(--ui-button);border-color:var(--ui-line);color:var(--ui-ink)}
+#erisRoomContribution .rc-list {overflow:auto;min-height:0;flex:1;color:var(--ui-gold);font-size:13px}
+#erisRoomContribution .rc-row {display:flex;align-items:center;gap:6px;margin-bottom:8px}
+#erisRoomContribution .rc-rank {flex:0 0 22px;text-align:center;color:var(--ui-gold);font-weight:800}
+#erisRoomContribution .rc-avatar {flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;overflow:hidden;border:1px solid var(--ui-line);border-radius:50%;background:var(--ui-button);color:var(--ui-ink)}
+#erisRoomContribution .rc-avatar img {width:100%;height:100%;object-fit:cover;border-radius:50%}
+#erisRoomContribution .rc-name,#erisRoomContribution .rc-amount {min-width:0;padding:9px 10px;border:1px solid var(--ui-line);border-radius:25px;background:color-mix(in srgb, var(--ui-panel) 5%, transparent);color:var(--ui-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#erisRoomContribution .rc-name {flex:1}
+#erisRoomContribution .rc-amount {flex:none;max-width:42%;font-size:11px;color:var(--ui-gold)}
+@media(max-width:380px){
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomMicInline,
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisRoomAudioOutput {flex-basis:30px!important;min-width:30px!important;width:30px!important}
+  #erisRoomSurface.room-layout-v6 .eris-room-compose #erisLiveSend {min-width:52px!important}
+}
+
+/* Three individual symbols in the chat's right gutter, with no surrounding frame. */
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions {
+  position:absolute!important;top:38px!important;bottom:auto!important;right:8px!important;left:auto!important;
+  z-index:80!important;width:44px!important;display:flex!important;flex-direction:column!important;
+  align-items:center;gap:7px!important;padding:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button {
+  flex:0 0 38px!important;display:grid!important;place-items:center!important;
+  width:42px!important;height:38px!important;min-height:38px!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+  color:var(--ui-ink)!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button[style*="display: none"],
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button[style*="display:none"] {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button span {display:none!important}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-quick-actions button svg {width:26px;height:26px;min-width:26px}
+#erisRoomSurface.room-layout-v6 .eris-chat-list {padding-right:58px!important;padding-left:17px!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-msg {overflow:visible;min-width:0}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity {display:flex;align-items:center;gap:8px;min-height:30px}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity b {font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#erisRoomSurface.room-layout-v6 .eris-chat-portrait {
+  position:relative;flex:0 0 29px;display:grid!important;place-items:center;
+  width:29px;height:29px;margin:0!important;border-radius:50%;
+  background:var(--ui-button);color:var(--ui-ink);font-size:17px;line-height:1;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-avatar {width:100%;height:100%;object-fit:cover;border-radius:50%}
+#erisRoomSurface.room-layout-v6 .eris-chat-frame {
+  position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:42px;height:42px;object-fit:contain;pointer-events:none;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-text {margin-left:37px!important;margin-top:0!important;overflow-wrap:anywhere}
+
+/* Chat portraits belong beside the complete message, not above its first line. */
+#erisRoomSurface.room-layout-v6 .eris-chat-msg,
+#erisRoomSurface.room-layout-v6 .eris-chat-msg.me {
+  position:relative;box-sizing:border-box;min-height:45px;max-width:90%;
+  padding:7px 5px 7px 47px!important;margin:0 3px;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;backdrop-filter:none!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity {
+  min-height:0;display:block;line-height:15px;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity b {
+  display:block;color:var(--ui-gold);font-size:11px;line-height:15px;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-portrait {
+  position:absolute;left:5px;top:50%;transform:translateY(-50%);
+  width:31px;height:31px;margin:0!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-chat-frame {width:45px;height:45px}
+#erisRoomSurface.room-layout-v6 .eris-chat-text {
+  display:block;margin:2px 0 0!important;color:var(--ui-ink);font-size:12px;line-height:17px;
+}
+/* Personal fan badge beside the chat author. */
+#erisRoomSurface.room-layout-v6 .eris-chat-msg.me {align-self:flex-start!important;text-align:left!important}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity {display:flex;align-items:center;gap:5px}
+#erisRoomSurface.room-layout-v6 .eris-chat-identity b {display:inline-block}
+#erisRoomSurface.room-layout-v6 .eris-fan-badge {display:block;width:28px;height:28px;object-fit:contain;cursor:pointer}
+#erisRoomSurface.room-layout-v6 .eris-fan-badge[hidden] {display:none}
+.eris-lidya-coin {width:1.05em;height:1.05em;vertical-align:-.15em;object-fit:contain;margin-left:3px}
+
+/* 16 / 20 / 24 seats: four columns and a shared stage. */
+#erisRoomSurface.room-layout-v6:has(#erisLiveSeats[data-seat-count="24"]){--room-seat-rows:6}
+#erisRoomSurface.room-layout-v6:has(#erisLiveSeats[data-seat-count="16"]){--room-seat-rows:4}
+#erisRoomSurface.room-layout-v6:has(#erisLiveSeats[data-seat-count="20"]){--room-seat-rows:5}
+#erisRoomSurface.room-layout-v6{
+  --room-seat-rows:6;
+  --room-seat-size:min(52px,calc((100vw - 104px)/4));
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat{
+  width:var(--room-seat-size)!important;height:var(--room-seat-size)!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat > b.seat-name{
+  position:absolute!important;top:calc(100% + 3px)!important;
+  left:50%!important;transform:translateX(-50%)!important;
+  display:block!important;width:calc(100% + 12px)!important;max-width:calc(100% + 12px)!important;
+  height:20px!important;min-height:20px!important;clip-path:none!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  line-height:20px!important;font-size:10px!important;font-weight:600!important;
+  text-align:center!important;color:var(--ui-ink)!important;padding:0 3px!important;
+  background:transparent!important;border:0!important;border-radius:0!important;
+  text-shadow:0 1px 4px var(--ui-shadow)!important;opacity:1!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat > small,
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat:before{display:none!important}
+
+/* Keep seat artwork and the speaking ring within the compact seat. */
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat{
+  max-width:var(--room-seat-size)!important;
+  max-height:var(--room-seat-size)!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat .seat-pod{
+  position:relative!important;width:100%!important;height:100%!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat > .eris-voice-ring{
+  display:block!important;position:absolute!important;
+  inset:-3%!important;width:auto!important;height:auto!important;
+  border:2px solid #c6afff!important;border-radius:50%!important;
+  pointer-events:none!important;z-index:8!important;
+  opacity:var(--eris-voice-opacity,0)!important;
+  transform:scale(var(--eris-voice-scale,1));
+}
+#erisRoomSurface.room-layout-v6 .eris-voice-ring::after{
+  content:none!important;display:none!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-chat-list{
+  min-height:0!important;flex:1 1 0!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-chat .eris-room-compose{
+  flex:0 0 auto!important;min-height:52px!important;
+}
+
+/* Equal row distribution; names and artwork stay above the chat boundary. */
+#erisRoomSurface.room-layout-v6{
+  --eris-fixed-chat-height:clamp(180px,calc(var(--app-height,100dvh) * .31),280px);
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) #erisLiveSeats{
+  --seat-columns:4;--seat-size:var(--room-seat-size);
+  top:112px!important;bottom:calc(var(--eris-fixed-chat-height) + 8px)!important;
+  left:0!important;right:0!important;width:100%!important;height:auto!important;
+  min-height:0!important;transform:none!important;box-sizing:border-box!important;
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:repeat(var(--room-seat-rows),var(--room-seat-size))!important;
+  align-content:space-between!important;align-items:start!important;justify-items:center!important;
+  gap:14px 16px!important;padding:14px 16px 22px!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) .eris-room-chat{
+  top:auto!important;bottom:0!important;height:var(--eris-fixed-chat-height)!important;
+  min-height:0!important;
+}
+#erisRoomSurface.room-layout-v6 #erisRoomContributionButton{
+  top:74px!important;left:10px!important;bottom:auto!important;
+  width:auto!important;max-width:145px!important;height:36px!important;min-height:36px!important;
+  padding:0 10px!important;font-size:11px!important;border-radius:12px!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions{
+  position:absolute!important;top:72px!important;right:10px!important;left:auto!important;
+  bottom:auto!important;width:auto!important;height:40px!important;
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  gap:5px!important;padding:0!important;border:0!important;background:transparent!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomGift,
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomMusic,
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions #erisRoomWallpaper{
+  width:40px!important;height:40px!important;min-height:40px!important;
+  flex:0 0 40px!important;padding:0!important;justify-content:center!important;
+  border-radius:12px!important;
+}
+#erisRoomSurface.room-layout-v6 .eris-room-quick-actions button span{
+  display:none!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats > .eris-seat > b.seat-name{
+  top:calc(100% - 8px)!important;
+  bottom:auto!important;margin:0!important;
+  height:16px!important;min-height:16px!important;
+  line-height:16px!important;font-size:9px!important;
+  width:min(80px,calc((100vw - 40px)/4))!important;
+  max-width:min(80px,calc((100vw - 40px)/4))!important;
+}
+#erisRoomSurface.room-layout-v6 #erisLiveSeats .seat-name .eris-role-icon{
+  width:26px!important;min-width:26px!important;max-width:26px!important;
+  height:13px!important;flex-basis:26px!important;
+  margin-right:2px!important;
+}
+
+/* Keep chat below the final seat and its name. */
+#erisRoomSurface.room-layout-v6:not(.ludo-mode){
+  --eris-fixed-chat-height:clamp(190px,calc(var(--app-height,100dvh) * .33),290px);
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) > .eris-room-chat:has(#erisLiveChat){
+  top:auto!important;bottom:0!important;
+  height:var(--eris-fixed-chat-height)!important;
+  max-height:var(--eris-fixed-chat-height)!important;
+  min-height:0!important;
+}
+#erisRoomSurface.room-layout-v6:not(.ludo-mode) > #erisLiveSeats{
+  top:112px!important;
+  bottom:calc(var(--eris-fixed-chat-height) + 8px)!important;
+  height:calc(var(--app-height,100dvh) - 120px - var(--eris-fixed-chat-height))!important;
+  max-height:calc(var(--app-height,100dvh) - 120px - var(--eris-fixed-chat-height))!important;
+  overflow-y:auto!important;
+}
+#erisRoomSurface.room-layout-v6 #erisRoomGift > span,
+#erisRoomSurface.room-layout-v6 #erisRoomMusic > span,
+#erisRoomSurface.room-layout-v6 #erisRoomWallpaper > span{
+  display:none!important;
+}

@@ -1,0 +1,6 @@
+2026-10-16 Candy presentation verification
+PASS20 viewport/theme/state combinations: light/dark × normal/resumed bonus ×320x568,393x820,412x915,844x390,1440x900. Full viewport root/shell, no horizontal overflow, square7x7 canvas, correct themed menu PNG,8 symbol PNG decoded. Typical portrait fits; short/landscape scroll internally.
+PASS real production renderer with synthetic isolated API: drop/pop/spot phases, live theme switch while bursting, two cascades totaling275Lidya,4x spots retained in active bonus, free-spin count and wallet event.
+PASS rules locks and Escape; purchase cost comes from rules (tested120x), cancel sends no request, double confirm sends one UUID request/debit6000 at stake50,15 awarded spins displayed; active bonus/yetersiz bakiye locks. Retry after network error sends identical UUID/payload. Close/background cleanup stops autoplay.
+No browser errors or missing Candy artwork. Internal QA screenshots inspected and not distributed. Backend/math/config and natural bonus receiver unchanged. No new RTP measurement or certification.
+PASS installer checksums/apply twice/byte-exact files/incompatible-source abort-before-write; filtered local Git worktree/index/commit/push leaves unrelated8MiB blob unhydrated;16changed files,no deletions;ZIP integrity.

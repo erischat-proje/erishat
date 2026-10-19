@@ -1,0 +1,70 @@
+/* Exact approved card artwork, natural proportions, no stretched image snippets. */
+html{--lm-bg:#faf7f0;--lm-ink:#49301d;--lm-muted:#735c43;--lm-line:#c9a56c;--lm-surface:#fffaf0}
+html[data-eris-theme="dark"]{--lm-bg:#061a16;--lm-ink:#fff2d7;--lm-muted:#d1c2a4;--lm-line:#b49352;--lm-surface:#0b2822}
+html body .app{background:var(--lm-bg)!important}
+html body .app>.top{background:var(--lm-bg)!important;border-bottom:1px solid var(--lm-line)!important;gap:12px;padding:12px 16px!important;min-height:72px;height:auto!important}
+html body .app>.top .brand.eris-brand{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;min-width:0!important;flex:1;max-width:210px!important;mix-blend-mode:normal!important}
+html body .app>.top .brand.eris-brand .eris-brand-image{width:100%!important;height:auto!important;max-height:54px!important;object-fit:contain!important;mix-blend-mode:normal!important;filter:none!important;opacity:1!important;border-radius:0!important}
+html body .app>.top .actions{flex-shrink:0;align-items:center;gap:8px}
+html body .app>.top #demoBalance{position:relative!important;display:flex!important;align-items:center!important;gap:6px!important;color:var(--lm-ink)!important;background:var(--lm-surface)!important;border:1px solid var(--lm-line)!important;border-radius:16px!important;font-size:12px!important;padding:8px 10px 8px 40px!important;min-height:42px;white-space:nowrap!important;box-shadow:inset 0 1px 3px #b88a3820!important;overflow:visible!important;max-width:none!important;min-width:0!important}
+html body .app>.top #demoBalance::before{content:''!important;display:block!important;position:absolute!important;left:7px!important;top:50%!important;transform:translateY(-50%)!important;width:27px!important;height:27px!important;border-radius:50%!important;background-image:url('./assets/lidya-menu/light-menu.png')!important;background-size:1651.613% 2477.419%!important;background-position:64.865% 1.357%!important;opacity:1!important}
+html[data-eris-theme="dark"] body .app>.top #demoBalance::before{background-image:url('./assets/lidya-menu/dark-menu.png')!important;background-size:1467.857% 3678.846%!important;background-position:64.36% 2.257%!important}
+html body .app>.top .icon{background:var(--lm-surface)!important;color:var(--lm-ink)!important;border:1px solid var(--lm-line)!important;box-shadow:inset 0 0 0 3px #bf93451c!important;min-width:40px;min-height:40px}
+html body #home .section h3{color:var(--lm-ink)!important;font-family:Georgia,serif;font-size:25px!important}
+html body #home .homeSectionActions .link{background:var(--lm-surface)!important;color:var(--lm-ink)!important;border:1px solid var(--lm-line)!important;border-radius:12px!important;padding:9px!important;min-height:44px;font-size:11px!important}
+html body #home .homeSectionActions .link:first-child{background:linear-gradient(135deg,#c29a56,#866029)!important;color:#fff9e8!important}
+html body #home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:start!important}
+html body #home .homeMenuGroup{grid-column:1/-1;color:var(--lm-muted)!important;font-size:11px!important;letter-spacing:1.4px!important;margin:18px 0 3px!important}
+html body #home .homeMenuGroup::after{background:var(--lm-line)!important;height:1px!important;border:0!important}
+html body #home .homeMenuItem{position:relative!important;isolation:isolate!important;display:block!important;aspect-ratio:var(--lm-ratio)!important;height:auto!important;min-height:0!important;padding:0!important;gap:0!important;overflow:hidden!important;border:0!important;border-radius:10px!important;background:none!important;box-shadow:0 3px 9px #70502212!important;color:var(--lm-ink)!important;transform:none!important}
+html body #home .homeMenuItem::before,html body #home .homeMenuItem::after{display:none!important}
+html body #home .homeMenuItem>.homeMenuIcon{display:none!important}
+html body #home .homeMenuItem>.homeMenuCopy{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;padding:0!important;margin:0!important}
+html body #home .homeMenuItem>.lm-art{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;pointer-events:none!important;background:none!important;border-radius:inherit!important}
+html body .lm-art svg{display:block!important;width:100%!important;height:100%!important;fill:none!important;stroke:none!important;padding:0!important;margin:0!important;filter:none!important}
+html body #home .homeMenuItem[data-lm-key="admin"],html body #home .homeMenuItem[data-lm-key="support"]{grid-column:1/-1!important}
+html body #home .homeMenuItem[data-lm-key="admin"]>*:not(.lm-art){visibility:hidden!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy{clip-path:none!important;white-space:normal!important;width:auto!important;height:auto!important;overflow:visible!important;inset:0 0 0 47%!important;padding:10px 8px!important;background:var(--lm-bg)!important;display:flex!important;flex-direction:column!important;justify-content:center!important;border-radius:0 10px 10px 0!important}
+html[data-eris-theme="dark"] body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy{inset:0 48% 0 0!important;border-radius:10px 0 0 10px!important;background:#09231e!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy strong{font:700 11px/1.25 Georgia,serif!important;color:var(--lm-ink)!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy small{display:none!important}
+html body #home #realRooms .ec-discovery-empty{background:var(--lm-surface)!important;border:1px solid var(--lm-line)!important;border-radius:16px!important;color:var(--lm-ink)!important;position:relative;overflow:hidden}
+html body #home #realRooms .ec-discovery-empty::before{display:none!important}
+html body .app>.nav{background:var(--lm-bg)!important;border-top:1px solid var(--lm-line)!important;gap:4px;box-shadow:none!important;align-items:center!important;padding:6px 6px calc(6px + env(safe-area-inset-bottom))!important}
+html body .app>.nav button{position:relative!important;height:68px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:10px!important;background:none!important;box-shadow:none!important;overflow:hidden!important;color:transparent!important;font-size:0!important}
+html body .app>.nav button>b{display:none!important}
+html body .app>.nav button>.lm-art{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;background:none!important}
+html body .app>.nav button.active{outline:1px solid var(--lm-line)!important;outline-offset:1px!important}
+html body .app>.nav button::after{display:none!important}
+html body .app button:focus-visible,html body #demoBalance:focus-visible{outline:2px solid var(--lm-line)!important;outline-offset:3px!important}
+@media(min-width:760px){html body #home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:960px;margin:auto}html body .app>.top .brand.eris-brand{max-width:240px!important}}
+@media(max-width:360px){html body .app>.top{padding:10px!important;gap:8px}html body .app>.top #demoBalance{font-size:10px!important;padding:7px 7px 7px 34px!important}html body .app>.top #demoBalance::before{left:5px!important;width:24px!important;height:24px!important}html body .app>.top .actions{gap:4px}html body #home .homeMenu{gap:8px!important}html body #home .section h3{font-size:21px!important}html body #home .homeSectionActions{gap:4px}html body #home .homeSectionActions .link{padding:8px 6px!important;font-size:10px!important}}
+/* Keep the mobile section heading and action buttons from colliding. */
+html body #home .section{gap:8px!important;flex-wrap:wrap!important}
+html body #home .section h3{font-size:23px!important;flex-shrink:0!important}
+html body #home .homeSectionActions{gap:6px!important;flex-shrink:0!important}
+html body #home .homeSectionActions .link{font-size:10px!important;padding:8px!important}
+html:not([data-eris-theme="dark"]) body #home .homeMenuItem[data-lm-key="support"]{grid-column:auto!important}
+html[data-eris-theme="dark"] body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy{right:62%!important;padding:8px 6px!important}
+@media(max-width:340px){html body #home .section h3{font-size:21px!important}html body #home .homeSectionActions .link{padding:7px!important}}
+/* Anonymous actions use a clean illustration viewport and their actual live labels. */
+html body #home .homeMenuItem[data-lm-key^="anon-"]{background:var(--lm-surface)!important;border:1px solid var(--lm-line)!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]>.lm-art{width:48%!important;right:auto!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy{left:48%!important;right:0!important;padding:8px 6px!important}
+html[data-eris-theme="dark"] body #home .homeMenuItem[data-lm-key^="anon-"]>.lm-art{left:44%!important;right:0!important;width:56%!important}
+html[data-eris-theme="dark"] body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy{left:0!important;right:56%!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"] .homeMenuCopy strong{font-size:10px!important;overflow-wrap:normal!important;word-break:normal!important;hyphens:none!important}
+html body #home #realRooms .lm-empty-scene{position:absolute;right:4px;top:4px;bottom:4px;width:24%;opacity:.55;pointer-events:none;z-index:0}
+html body #home #realRooms .lm-empty-scene svg{width:100%;height:100%;display:block;fill:none;stroke:none}
+html body #home #realRooms .ec-discovery-empty>*:not(.lm-empty-scene){position:relative;z-index:1}
+/* Clamp the actual dynamically mounted admin control, not only a test fixture. */
+html body #home .homeMenuItem[data-lm-key="admin"]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;justify-self:stretch!important}
+html body #home .homeMenuItem[data-lm-key="admin"]>.lm-art{box-sizing:border-box!important;min-width:0!important;max-width:100%!important;border:0!important;padding:0!important;margin:0!important}
+html body #home .homeMenuItem[data-lm-key="admin"]>.lm-art>svg{max-width:100%!important;min-width:0!important;overflow:hidden!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]{grid-column:1/-1!important;min-height:44px!important;background:none!important;border:0!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]>.lm-art{inset:0!important;width:100%!important;height:100%!important}
+html body #home .homeMenuItem[data-lm-key^="anon-"]>.homeMenuCopy{clip-path:inset(50%)!important;width:1px!important;height:1px!important;padding:0!important;overflow:hidden!important;white-space:nowrap!important;inset:0!important;display:block!important;background:none!important}
+/* Both anonymous controls always occupy their own adjacent grid cells. */
+html[data-eris-theme] body #home .homeMenuItem[data-lm-key^="anon-"]{grid-column:auto!important;display:block!important;position:relative!important;min-width:0!important;max-width:100%!important;width:100%!important;min-height:44px!important;height:auto!important;padding:0!important;margin:0!important;aspect-ratio:3/1!important;overflow:hidden!important}
+html[data-eris-theme] body #home .homeMenuItem[data-lm-key^="anon-"]>.lm-art{position:absolute!important;display:block!important;inset:0!important;left:0!important;right:0!important;top:0!important;bottom:0!important;width:100%!important;height:100%!important;min-width:0!important;max-width:100%!important;transform:none!important;padding:0!important;margin:0!important;border:0!important;background:none!important}
+html[data-eris-theme] body #home .homeMenuItem[data-lm-key^="anon-"]>.homeMenuCopy{position:absolute!important;clip-path:inset(50%)!important;width:1px!important;height:1px!important;inset:0!important;padding:0!important;margin:0!important;overflow:hidden!important}

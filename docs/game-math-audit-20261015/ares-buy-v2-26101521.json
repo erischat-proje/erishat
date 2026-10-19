@@ -1,0 +1,28 @@
+{
+  "game": "ares",
+  "mode": "buy",
+  "version": "lidya-aztek-ares-v2",
+  "samples": 100000,
+  "seed": 26101521,
+  "costUnits": 100,
+  "rtp": 0.9493849020000086,
+  "ci95": [
+    0.9380164860084315,
+    0.9607533179915857
+  ],
+  "roundHitFrequency": 0.9123,
+  "netProfitFrequency": 0.25769,
+  "paidSpinHitFrequency": null,
+  "bonusFrequency": 1.0,
+  "freeSpins": 1505430,
+  "cappedRounds": 0,
+  "maxObservedX": 3521.82,
+  "certified": false,
+  "targetRtp": 0.965,
+  "source_sha256": {
+    "backend/app/aztek_ares_v2.py": "af131634b500a800dabd0af83cdc71741949e604a9685cf7ec59f337e31fa965",
+    "tests/aztek_ares_simulate.py": "a4dfef233e25a88c322c4c10c510369a2e453b03108a05e88395d167ed9c7f13",
+    "backend/app/aztek-ares-math-v2.json": "ffe0aaf576ade162f77d6bff6592bfd7756eebc3fd98ff5a77c97d5fe5cba757"
+  },
+  "note": "Whole paid rounds, including retriggers and shared round cap. Normal-approximation 95% Monte Carlo interval; not certified RTP."
+}

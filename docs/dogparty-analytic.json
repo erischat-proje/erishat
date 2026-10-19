@@ -1,0 +1,7 @@
+{
+  "baseExpected": 0.1660661073237191,
+  "futureBonusUncapped": 139.83093120607768,
+  "bonusWildRate": 0.040958758566193874,
+  "uncappedRtp": 0.9650999999298773,
+  "note": "Exact expectation of one line summed over 20; independent stops and individual sticky masks, additive wilds, weighted 9-cell wheel. Round cap excluded and verified by Monte Carlo."
+}

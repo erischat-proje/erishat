@@ -1,0 +1,26 @@
+{
+  "mode": "buy",
+  "samples": 200000,
+  "seed": 26101581,
+  "rtp": 0.964317339,
+  "ci95": [
+    0.9483612259022164,
+    0.9802734520977837
+  ],
+  "bonusFrequency": null,
+  "freeSpins": 1745039,
+  "respins": 106351,
+  "caps": 337,
+  "maxWin": 5000.0,
+  "roundHitFrequency": 0.99596,
+  "netProfitFrequency": 0.15004,
+  "certified": false,
+  "game": "bastet",
+  "modelVersion": 2,
+  "source_sha256": {
+    "backend/app/bastet_engine.py": "cac6237bd9cf83db435440e4b9194ef1086a09e67dc579c58f72e0e625b1870c",
+    "backend/app/bastet-math.json": "7956843b6525508d4d0ef545062942f1c053dda2caf52338708eb13fe745da98",
+    "tests/bastet_simulate.py": "13aed771e7657bc9e429f8e9064290af1a3befe8f85d7e1f4ff086bf24e8c6bb",
+    "backend/app/bastet-math-v2.json": "6bb45744b116031fb43c5091e5d10194a6dffd4047566b90bae4e3332c6b3dcd"
+  }
+}

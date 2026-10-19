@@ -1,0 +1,2002 @@
+[
+  {
+    "id": 1,
+    "gift_key": "1",
+    "name": "Zeytin Dalı",
+    "price": 1,
+    "tier": 1,
+    "image_url": "/hediyesistemi/1.png",
+    "animation": "Dal soldan süzülerek gelir; yapraklar tek tek açılır, meyveler farklı yönlere hafifçe sallanır ve son anda parlak bir damla belirir.",
+    "sound": "Yumuşak yaprak hışırtısı + üç küçük meyve tıkırtısı + ince parıltı."
+  },
+  {
+    "id": 2,
+    "gift_key": "2",
+    "name": "Kil Çanak",
+    "price": 2,
+    "tier": 1,
+    "image_url": "/hediyesistemi/2.png",
+    "animation": "Kase tabandan yükselirken seramik tozu halkası oluşur; bir tur kendi ekseninde dönüp hafifçe yere oturur.",
+    "sound": "Seramik sürtünmesi + tok “tık” + kısa toz pufu."
+  },
+  {
+    "id": 3,
+    "gift_key": "3",
+    "name": "Ekmek Lavaş",
+    "price": 3,
+    "tier": 1,
+    "image_url": "/hediyesistemi/3.png",
+    "animation": "Ekmek fırından çıkıyormuş gibi alttan yukarı sıçrar; yüzeyindeki kabarcıklar sırayla parlar ve sıcaklık dalgası yayılır.",
+    "sound": "Fırın “fuuş” + çıtır kabuk sesi + sıcak hava pufu."
+  },
+  {
+    "id": 4,
+    "gift_key": "4",
+    "name": "Kuru İncir",
+    "price": 4,
+    "tier": 1,
+    "image_url": "/hediyesistemi/4.png",
+    "animation": "İncirler yukarıdan tek tek düşüp kümeyi oluşturur; son incir dönerek yerine kilitlenir.",
+    "sound": "Yumuşak düşüşler + kuru meyve tok sesleri + final klik."
+  },
+  {
+    "id": 5,
+    "gift_key": "5",
+    "name": "Topaç",
+    "price": 5,
+    "tier": 1,
+    "image_url": "/hediyesistemi/5.png",
+    "animation": "Topaç yere temas eder, hızla dönmeye başlar; kırmızı-altın ışık izi spiral çizerek kapanır.",
+    "sound": "Hızlanan vınlama + metalik çınlama + kısa spin whoosh."
+  },
+  {
+    "id": 6,
+    "gift_key": "6",
+    "name": "Taş Bebek",
+    "price": 6,
+    "tier": 1,
+    "image_url": "/hediyesistemi/6.png",
+    "animation": "Heykel parçacıklardan oluşarak ayaklardan yukarı doğru şekillenir; tamamlanınca minik baş selamı verir.",
+    "sound": "Ahşap oyma tıkırtıları + parça birleşme klikleri + yumuşak gong."
+  },
+  {
+    "id": 7,
+    "gift_key": "7",
+    "name": "Ahşap Kaşık",
+    "price": 7,
+    "tier": 1,
+    "image_url": "/hediyesistemi/7.png",
+    "animation": "Kaşık havada bir kez takla atar; ardından görünmez bir kaseyi karıştırıyormuş gibi dairesel iz bırakır.",
+    "sound": "Tahta “tak-tak” + hafif karıştırma + kısa whoosh."
+  },
+  {
+    "id": 8,
+    "gift_key": "8",
+    "name": "Kenevir İp",
+    "price": 8,
+    "tier": 1,
+    "image_url": "/hediyesistemi/8.png",
+    "animation": "Hasır şeritleri dışarıdan içeri örülerek yuvayı tamamlar; son şerit düğüm atar.",
+    "sound": "Hasır sürtünmesi + örgü çekiş sesi + minik düğüm klik."
+  },
+  {
+    "id": 9,
+    "gift_key": "9",
+    "name": "Hasır Sepet",
+    "price": 9,
+    "tier": 1,
+    "image_url": "/hediyesistemi/9.png",
+    "animation": "Sepet sallanarak yukarı çıkar; sapı iki kez esner, sepetten altın renkli yaprak parçaları dökülür.",
+    "sound": "Hasır hışırtısı + sap gıcırtısı + yaprak fısıltısı."
+  },
+  {
+    "id": 10,
+    "gift_key": "10",
+    "name": "Meşe Palamudu",
+    "price": 10,
+    "tier": 1,
+    "image_url": "/hediyesistemi/10.png",
+    "animation": "Palamut yukarıdan seker, iki kez sekip son noktada kendi çevresinde dönerek durur.",
+    "sound": "İki kuru sekme + kabuk tıkırtısı + küçük “pop”."
+  },
+  {
+    "id": 11,
+    "gift_key": "11",
+    "name": "Deniz Kabuğu",
+    "price": 11,
+    "tier": 1,
+    "image_url": "/hediyesistemi/11.png",
+    "animation": "Kabuk yavaşça açılır; içinden su damlası büyür, düşmeden önce ışık halkasına dönüşür.",
+    "sound": "Deniz uğultusu + su damlası + kristal parıltı."
+  },
+  {
+    "id": 12,
+    "gift_key": "12",
+    "name": "Tohum Kesesi",
+    "price": 12,
+    "tier": 1,
+    "image_url": "/hediyesistemi/12.png",
+    "animation": "Çuvalın ağzı çözülür; birkaç tanecik dışarı fırlar ve havada dönüp tekrar çuvala ışık olarak geri girer.",
+    "sound": "Keten sürtünmesi + tanecik tıkırtıları + kumaş çekme sesi."
+  },
+  {
+    "id": 13,
+    "gift_key": "13",
+    "name": "Bakır Çivi",
+    "price": 14,
+    "tier": 1,
+    "image_url": "/hediyesistemi/13.png",
+    "animation": "Çiviler havada mıknatısla çekiliyormuş gibi hizalanır; spiralden düz demete dönüşür.",
+    "sound": "Metalik çekim “zing” + üç çınlama + klik."
+  },
+  {
+    "id": 14,
+    "gift_key": "14",
+    "name": "Nazar Boncuğu",
+    "price": 15,
+    "tier": 1,
+    "image_url": "/hediyesistemi/14.png",
+    "animation": "Boncuk kendi ekseninde döner; mavi halkalar dışarı doğru üç kez yayılır ve göz bebeği kısa süre parlar.",
+    "sound": "Cam çınlaması + üç mistik pulse + ince shimmer."
+  },
+  {
+    "id": 15,
+    "gift_key": "15",
+    "name": "Yün Yumak",
+    "price": 16,
+    "tier": 1,
+    "image_url": "/hediyesistemi/15.png",
+    "animation": "Tek iplik hızla açılarak bir kalp/spiral çizer, sonra geri sarılıp yumak haline gelir.",
+    "sound": "İplik çekilmesi + hafif sürtünme + geri sarma vızıltısı."
+  },
+  {
+    "id": 16,
+    "gift_key": "16",
+    "name": "Çakmak Taşı",
+    "price": 18,
+    "tier": 1,
+    "image_url": "/hediyesistemi/16.png",
+    "animation": "Taşlar iki kez çarpışır; üçüncü çarpışmada kıvılcım çıkarıp etrafında kısa ateş çemberi oluşturur.",
+    "sound": "Taş çakmaları + kıvılcım çatırdaması + “whoom” pufu."
+  },
+  {
+    "id": 17,
+    "gift_key": "17",
+    "name": "Kurutulmuş Balık",
+    "price": 20,
+    "tier": 1,
+    "image_url": "/hediyesistemi/17.png",
+    "animation": "Balıklar su altında yüzüyormuş gibi sağa kıvrılır; arkalarında su çizgileri belirir ve birlikte kaybolurlar.",
+    "sound": "Su geçişi + baloncuklar + yumuşak su sıçraması."
+  },
+  {
+    "id": 18,
+    "gift_key": "18",
+    "name": "Kil Düdük",
+    "price": 21,
+    "tier": 1,
+    "image_url": "/hediyesistemi/18.png",
+    "animation": "Çalgı havada yükselir, deliklerinden sırayla ışık notaları çıkar ve yukarı doğru müzik çizgisi oluşturur.",
+    "sound": "Kısa ney/kaval nefesi + üç nota + yankı."
+  },
+  {
+    "id": 19,
+    "gift_key": "19",
+    "name": "Kırmızı Kurdele",
+    "price": 22,
+    "tier": 1,
+    "image_url": "/hediyesistemi/19.png",
+    "animation": "İki kurdele ucu zıt yönlerden uçarak ortada düğümlenir; fiyonk bir kez yaylanır.",
+    "sound": "İpek “fiuu” + düğüm snap + minik zil."
+  },
+  {
+    "id": 20,
+    "gift_key": "20",
+    "name": "Eski Parşömen",
+    "price": 23,
+    "tier": 1,
+    "image_url": "/hediyesistemi/20.png",
+    "animation": "Rulo iki uçtan aynı anda açılır; ortada eski harita ışığı görünür, sonra ters yönde kapanır.",
+    "sound": "Parşömen açılma hışırtısı + mühür benzeri tok ses + geri sarma."
+  },
+  {
+    "id": 21,
+    "gift_key": "21",
+    "name": "Küçük Çakıl",
+    "price": 25,
+    "tier": 1,
+    "image_url": "/hediyesistemi/21.png",
+    "animation": "Taşlar tek tek domino gibi yuvarlanarak merkezde kusursuz bir halka oluşturur.",
+    "sound": "6–8 küçük taş takırtısı + son tok taş sesi."
+  },
+  {
+    "id": 22,
+    "gift_key": "22",
+    "name": "Keçi Sütü",
+    "price": 26,
+    "tier": 1,
+    "image_url": "/hediyesistemi/22.png",
+    "animation": "Sürahi yana eğilir; görünmez bir akışın dalgası oluşur ve sürahi köpük halkasıyla dik konuma döner.",
+    "sound": "Sıvı dökülme sesi + seramik tık + köpük pufu."
+  },
+  {
+    "id": 23,
+    "gift_key": "23",
+    "name": "Zencefil Kökü",
+    "price": 27,
+    "tier": 1,
+    "image_url": "/hediyesistemi/23.png",
+    "animation": "Kök parçaları yerçekimine karşı yükselip dallanarak tek bir büyük kök şekline birleşir.",
+    "sound": "Organik çatırdama + toprak pufu + düşük birleşme uğultusu."
+  },
+  {
+    "id": 24,
+    "gift_key": "24",
+    "name": "Toprak Bardak",
+    "price": 28,
+    "tier": 1,
+    "image_url": "/hediyesistemi/24.png",
+    "animation": "Kase spiral bir yörüngeden içeri girer, üstünde dönen toprak parçacıkları mini fırtına oluşturur.",
+    "sound": "Toprak rüzgârı + seramik dönme sesi + yumuşak thump."
+  },
+  {
+    "id": 25,
+    "gift_key": "25",
+    "name": "Sokak Çiçeği",
+    "price": 29,
+    "tier": 1,
+    "image_url": "/hediyesistemi/25.png",
+    "animation": "Saplar aşağıdan yukarı uzar; çiçekler sırayla açar, son çiçek açınca polen/parıltı bulutu yayılır.",
+    "sound": "Bahçe hışırtısı + çiçek açılma foley'i + hafif çan."
+  },
+  {
+    "id": 26,
+    "gift_key": "26",
+    "name": "Keçi Peyniri",
+    "price": 33,
+    "tier": 2,
+    "image_url": "/hediyesistemi/26.png",
+    "animation": "Peynir dilimleri farklı yüksekliklerden düşüp sandviç gibi üst üste dizilir; son dilim hafifçe seker.",
+    "sound": "Yumuşak peynir pufları + tahta tabla tıkırtısı + komik pop."
+  },
+  {
+    "id": 27,
+    "gift_key": "27",
+    "name": "Üzüm Salkımı",
+    "price": 36,
+    "tier": 2,
+    "image_url": "/hediyesistemi/27.png",
+    "animation": "Üzümler yukarıdan yağmur gibi gelir; sap üzerinde birleşirken yaprak açılır ve salkım hafifçe sallanır.",
+    "sound": "Minik meyve vuruşları + yaprak hışırtısı + tatlı shimmer."
+  },
+  {
+    "id": 28,
+    "gift_key": "28",
+    "name": "Kil Kase Şarap",
+    "price": 40,
+    "tier": 2,
+    "image_url": "/hediyesistemi/28.png",
+    "animation": "Kase etrafında mor sıvı spiral döner; sıvı bir anda içeri çekilip yüzeyde parlak halka bırakır.",
+    "sound": "Sıvı girdap + düşük “woom” + kristal damla."
+  },
+  {
+    "id": 29,
+    "gift_key": "29",
+    "name": "Bal ve Ekmek",
+    "price": 44,
+    "tier": 2,
+    "image_url": "/hediyesistemi/29-Photoroom.png",
+    "animation": "Bal damlası yukarı doğru çekilir, petek etrafında altın spiral oluşturur ve ekmek diliminin üstünde yayılır.",
+    "sound": "Yapışkan bal damlası + arı kanadı uğultusu + sıcak ekmek çıtırtısı."
+  },
+  {
+    "id": 30,
+    "gift_key": "30",
+    "name": "Zeytinyağı Şişesi",
+    "price": 48,
+    "tier": 2,
+    "image_url": "/hediyesistemi/30.png",
+    "animation": "Şişe kendi etrafında ağır çekim döner; zeytin yaprakları çevresinde yörünge çizip tekrar yerine oturur.",
+    "sound": "Cam rezonansı + sıvı şıpırtısı + yaprak hışırtısı."
+  },
+  {
+    "id": 31,
+    "gift_key": "31",
+    "name": "Nar Suyu",
+    "price": 52,
+    "tier": 2,
+    "image_url": "/hediyesistemi/31.png",
+    "animation": "Kırmızı sıvı dalgası sürahinin etrafında halka oluşturur; nar taneleri yukarı fırlayıp yağmur gibi geri iner.",
+    "sound": "Sıvı swish + nar tanesi tıkırtıları + su damlası."
+  },
+  {
+    "id": 32,
+    "gift_key": "32",
+    "name": "Kavrulmuş Nohut",
+    "price": 56,
+    "tier": 2,
+    "image_url": "/hediyesistemi/32.png",
+    "animation": "Meyveler tek tek zıplayarak kaseye girer; son meyve dönerken küçük altın halo oluşturur.",
+    "sound": "Meyve sekmeleri + kase rezonansı + kısa sparkle."
+  },
+  {
+    "id": 33,
+    "gift_key": "33",
+    "name": "İncir Reçeli",
+    "price": 60,
+    "tier": 2,
+    "image_url": "/hediyesistemi/33.png",
+    "animation": "Kavanoz kapağı bir tur döner; reçel içinden kırmızı ışık yükselir ve kapağın altında kalp biçimli bir parıltı bırakır.",
+    "sound": "Kapak çevirme + kavanoz klik + reçel pufu."
+  },
+  {
+    "id": 34,
+    "gift_key": "34",
+    "name": "Tuzlu Balık",
+    "price": 64,
+    "tier": 2,
+    "image_url": "/hediyesistemi/34.png",
+    "animation": "İki balık birbirini takip ederek 8 şekli çizer; sonunda ters yönlerden gelip yan yana dururlar.",
+    "sound": "İki ayrı su whoosh'u + baloncuk + yumuşak su tonu."
+  },
+  {
+    "id": 35,
+    "gift_key": "35",
+    "name": "Közde Mısır",
+    "price": 68,
+    "tier": 2,
+    "image_url": "/hediyesistemi/35.png",
+    "animation": "Koçan hızlıca kendi ekseninde döner; taneler sırayla sarı ışıkla yanıp söner.",
+    "sound": "Kuru tane tıkırtısı + hızlı spin + parlak pop."
+  },
+  {
+    "id": 36,
+    "gift_key": "36",
+    "name": "Ekşi Elma",
+    "price": 72,
+    "tier": 2,
+    "image_url": "/hediyesistemi/36.png",
+    "animation": "Elma yukarı doğru atılır, bir ısırık şeklinde ışık izi oluşur; elma ısırılmamış halde geri döner.",
+    "sound": "Meyve sıçrama + çıtır “crunch” + komik boing."
+  },
+  {
+    "id": 37,
+    "gift_key": "37",
+    "name": "Ceviz İçi",
+    "price": 76,
+    "tier": 2,
+    "image_url": "/hediyesistemi/37.png",
+    "animation": "Cevizler üçgen formda havada döner, sonra birbirine değmeden manyetik bir kümeye kilitlenir.",
+    "sound": "Kabuk tıkırtıları + düşük manyetik hum + tok klik."
+  },
+  {
+    "id": 38,
+    "gift_key": "38",
+    "name": "Kekik Çayı",
+    "price": 80,
+    "tier": 2,
+    "image_url": "/hediyesistemi/38-Photoroom.png",
+    "animation": "Buhar yükselip minik çiçek şekilleri çizer; bardak bir kez döner ve buhar kalp gibi kapanır.",
+    "sound": "Sıcak çay buharı + fincan tınısı + yumuşak nefes."
+  },
+  {
+    "id": 39,
+    "gift_key": "39",
+    "name": "Mantar Sote",
+    "price": 83,
+    "tier": 2,
+    "image_url": "/hediyesistemi/39.png",
+    "animation": "Kaju parçaları birer birer zıplayarak kase kenarında halka oluşturur, sonra merkezde yağmur gibi düşer.",
+    "sound": "Kuru yemiş tıkırtıları + kase “tok” + hafif yağmur."
+  },
+  {
+    "id": 40,
+    "gift_key": "40",
+    "name": "Kuru Üzüm",
+    "price": 87,
+    "tier": 2,
+    "image_url": "/hediyesistemi/40.png",
+    "animation": "Renkli kuru meyveler farklı hızlarda dönerek renkli bir spiral oluşturur ve kaseye geri akar.",
+    "sound": "Çoklu küçük düşüşler + hızlı swish + yumuşak pop."
+  },
+  {
+    "id": 41,
+    "gift_key": "41",
+    "name": "Pide Ekmeği",
+    "price": 91,
+    "tier": 2,
+    "image_url": "/hediyesistemi/41.png",
+    "animation": "Pide havada yatay süzülür; üstündeki baharatlar tek tek parlayarak yıldız haritasına dönüşür.",
+    "sound": "Fırın rüzgârı + çıtır kabuk + baharat serpme sesi."
+  },
+  {
+    "id": 42,
+    "gift_key": "42",
+    "name": "Koyun Yoğurdu",
+    "price": 94,
+    "tier": 2,
+    "image_url": "/hediyesistemi/42.png",
+    "animation": "Yoğurt yüzeyinde tek bir dalga oluşur, merkezden kenara üç halka yayılır ve son halkada parlak nokta belirir.",
+    "sound": "Kremamsı swirl + üç yumuşak pulse + su damlası."
+  },
+  {
+    "id": 43,
+    "gift_key": "43",
+    "name": "Baharat Karışımı",
+    "price": 96,
+    "tier": 2,
+    "image_url": "/hediyesistemi/43.png",
+    "animation": "Her baharat bölmesi sırayla yükselip havada kendi renginde küçük toz bulutu oluşturur.",
+    "sound": "İnce toz pufları + kuru taneler + beş kısa shaker sesi."
+  },
+  {
+    "id": 44,
+    "gift_key": "44",
+    "name": "Susamlı Gevrek",
+    "price": 98,
+    "tier": 2,
+    "image_url": "/hediyesistemi/44.png",
+    "animation": "Simit dikey eksende yuvarlanarak yaklaşır; susamlar bir an havalanır ve tekrar yüzeye mıknatıs gibi oturur.",
+    "sound": "Tahta yüzeyde yuvarlanma + susam şıkırtısı + snap."
+  },
+  {
+    "id": 45,
+    "gift_key": "45",
+    "name": "Antik Çörek",
+    "price": 99,
+    "tier": 2,
+    "image_url": "/hediyesistemi/45.png",
+    "animation": "Spiral çizgisi canlıymış gibi merkezden dışa doğru genişler, çörek bir tur dönerek tekrar sabitlenir.",
+    "sound": "Hamur gerilmesi + dönen whoosh + sıcak fırın pufu."
+  },
+  {
+    "id": 46,
+    "gift_key": "46",
+    "name": "Deri Sandalet",
+    "price": 121,
+    "tier": 3,
+    "image_url": "/hediyesistemi/46.png",
+    "animation": "İki sandaletten biri öne, diğeri arkaya kayar; tabanları yere basınca deri bağlar kendiliğinden bağlanır.",
+    "sound": "Deri sürtünmesi + iki tok taban sesi + bağ çekme."
+  },
+  {
+    "id": 47,
+    "gift_key": "47",
+    "name": "Keten Kumaş",
+    "price": 142,
+    "tier": 3,
+    "image_url": "/hediyesistemi/47.png",
+    "animation": "Kumaş açılır, havada yavaşça dalgalanır ve kendi kendine düzgün şekilde üç kat halinde katlanır.",
+    "sound": "Kumaş fısıltısı + yumuşak flap + katlama sürtünmesi."
+  },
+  {
+    "id": 48,
+    "gift_key": "48",
+    "name": "Tunç Broş",
+    "price": 163,
+    "tier": 3,
+    "image_url": "/hediyesistemi/48.png",
+    "animation": "Taşlı parça kendi etrafında dönerken değerli taşlar sırayla parlar; finalde tek güçlü flaş.",
+    "sound": "Metal zincir tıkırtısı + taş çınlamaları + parlak chime."
+  },
+  {
+    "id": 49,
+    "gift_key": "49",
+    "name": "Bakır Ayna",
+    "price": 184,
+    "tier": 3,
+    "image_url": "/hediyesistemi/49.png",
+    "animation": "Ayna öne-arkaya eğilir; yansıma yerine altın ışık demeti gösterip hızla kapanır.",
+    "sound": "Cam shimmer + metal çerçeve tınısı + ışık sweep."
+  },
+  {
+    "id": 50,
+    "gift_key": "50",
+    "name": "Göz Alıcı Kemer",
+    "price": 205,
+    "tier": 3,
+    "image_url": "/hediyesistemi/50.png",
+    "animation": "Bileklik halka şeklinde açılıp döner; içinden ince altın ip çıkarak bilekliğin etrafını bir kez sarar.",
+    "sound": "Metal klikleri + altın zincir sesi + ince shimmer."
+  },
+  {
+    "id": 51,
+    "gift_key": "51",
+    "name": "Demir Çekiç",
+    "price": 226,
+    "tier": 3,
+    "image_url": "/hediyesistemi/51.png",
+    "animation": "Çekiç yukarı fırlar, havada bir tur takla atar ve görünmez bir zemine indiğinde kısa titreşim halkası üretir.",
+    "sound": "Ağır whoosh + metalik iniş + düşük bass thump."
+  },
+  {
+    "id": 52,
+    "gift_key": "52",
+    "name": "Seramik Testi",
+    "price": 247,
+    "tier": 3,
+    "image_url": "/hediyesistemi/52.png",
+    "animation": "Testi içinden yükselen toprak parçacıklarıyla doluyormuş gibi görünür; üstünde spiral yapıp tekrar içine çöker.",
+    "sound": "Toprak dökülmesi + seramik rezonansı + derin puf."
+  },
+  {
+    "id": 53,
+    "gift_key": "53",
+    "name": "Ahşap Sandık",
+    "price": 268,
+    "tier": 3,
+    "image_url": "/hediyesistemi/53.png",
+    "animation": "Sandık kilidi kendi kendine açılır; kapak çok kısa açılıp içinden ışık fışkırır ve tekrar kapanır.",
+    "sound": "Metal kilit klik + menteşe gıcırtısı + hazine shimmer."
+  },
+  {
+    "id": 54,
+    "gift_key": "54",
+    "name": "Yün Cübbe",
+    "price": 289,
+    "tier": 3,
+    "image_url": "/hediyesistemi/54.png",
+    "animation": "Pelerin görünmez bir rüzgârla genişler, havada tam bir dalga yapıp omuz formuna oturur.",
+    "sound": "Kumaş “foosh” + derin rüzgâr + altın toka klik."
+  },
+  {
+    "id": 55,
+    "gift_key": "55",
+    "name": "İşlemeli Örtü",
+    "price": 310,
+    "tier": 3,
+    "image_url": "/hediyesistemi/55.png",
+    "animation": "Örtü zeminden hızla serilir, püsküller dalga gibi ilerler ve son kenar keskin biçimde durur.",
+    "sound": "Kumaş açılma + püskül şıkırtısı + final slap."
+  },
+  {
+    "id": 56,
+    "gift_key": "56",
+    "name": "Kemik Tarak",
+    "price": 331,
+    "tier": 3,
+    "image_url": "/hediyesistemi/56.png",
+    "animation": "Tarak havada sağa-sola salınır; her dişten minik altın ışık çizgisi çıkar ve paralel tarama efekti oluşur.",
+    "sound": "Ahşap tıkırtısı + ince sweep + küçük zil."
+  },
+  {
+    "id": 57,
+    "gift_key": "57",
+    "name": "Maden Kepçe",
+    "price": 352,
+    "tier": 3,
+    "image_url": "/hediyesistemi/57.png",
+    "animation": "Kepçe bir çember çizerek döner; içindeki görünmez sıvı yukarı fırlayıp bakır damlacıklara dönüşür.",
+    "sound": "Bakır çınlaması + sıvı swirl + damla sesleri."
+  },
+  {
+    "id": 58,
+    "gift_key": "58",
+    "name": "Deri Eldiven",
+    "price": 373,
+    "tier": 3,
+    "image_url": "/hediyesistemi/58.png",
+    "animation": "Eldiven parmaklarını sırayla kapatıp açar; ardından havada kısa bir yumruk hareketi yapıp açılır.",
+    "sound": "Deri esneme + parmak çıtırtıları + yumuşak hava vuruşu."
+  },
+  {
+    "id": 59,
+    "gift_key": "59",
+    "name": "Şamdan",
+    "price": 394,
+    "tier": 3,
+    "image_url": "/hediyesistemi/59.png",
+    "animation": "Fitil kendi kendine tutuşur; alev bir anda üç farklı renkte titreşip tek sıcak aleve döner.",
+    "sound": "Kibrit çakma + alev fısıltısı + sıcak chime."
+  },
+  {
+    "id": 60,
+    "gift_key": "60",
+    "name": "Gümüş İğne",
+    "price": 415,
+    "tier": 3,
+    "image_url": "/hediyesistemi/60.png",
+    "animation": "Asa çapraz yönde hızla süzülür; uçtaki taş üç pulse atar ve ince bir ışın çizer.",
+    "sound": "Büyüsel charge + üç enerji pulse + yüksek frekans shimmer."
+  },
+  {
+    "id": 61,
+    "gift_key": "61",
+    "name": "Tunç Bıçak",
+    "price": 436,
+    "tier": 3,
+    "image_url": "/hediyesistemi/61.png",
+    "animation": "Kılıç kınından yarım çıkar, keskin bir ışık çizgisi bırakır ve tekrar kınına kilitlenir.",
+    "sound": "Metal çekilme + keskin whoosh + kın klik."
+  },
+  {
+    "id": 62,
+    "gift_key": "62",
+    "name": "Kemer Tokası",
+    "price": 457,
+    "tier": 3,
+    "image_url": "/hediyesistemi/62.png",
+    "animation": "Kemer açılır, dairesel biçimde dönerek tokayı öne getirir; delikler boyunca altın ışık noktaları ilerler.",
+    "sound": "Deri çekme + toka klikleri + kısa sparkle."
+  },
+  {
+    "id": 63,
+    "gift_key": "63",
+    "name": "Terazi",
+    "price": 478,
+    "tier": 3,
+    "image_url": "/hediyesistemi/63.png",
+    "animation": "İki kefeden biri aşağı inerken diğeri yükselir; sonra hızla tersine dönüp kusursuz dengeye oturur.",
+    "sound": "Zincir metal tıkırtısı + iki küçük ding + denge chime."
+  },
+  {
+    "id": 64,
+    "gift_key": "64",
+    "name": "Fener",
+    "price": 489,
+    "tier": 3,
+    "image_url": "/hediyesistemi/64.png",
+    "animation": "Fener içindeki alev büyür; camdan dışarı altın ışık kareleri süzülüp fenerin çevresinde döner.",
+    "sound": "Cam tınısı + alev çıtırtısı + sıcak ışık hum."
+  },
+  {
+    "id": 65,
+    "gift_key": "65",
+    "name": "Mühür Yüzüğü",
+    "price": 499,
+    "tier": 3,
+    "image_url": "/hediyesistemi/65-Photoroom.png",
+    "animation": "Yüzük havada yatay dönerken kırmızı taş kamera yönüne doğru yaklaşır ve son anda ışık patlaması yapar.",
+    "sound": "İnce metal spin + taş rezonansı + kristal flash."
+  },
+  {
+    "id": 66,
+    "gift_key": "66",
+    "name": "Tunç Mızrak",
+    "price": 526,
+    "tier": 4,
+    "image_url": "/hediyesistemi/66.png",
+    "animation": "Mızrak aşağıdan yukarı yükselip dikeyde bir tam tur döner; ucunda kısa enerji kıvılcımı belirir.",
+    "sound": "Uzun hava whoosh'u + metalik spin + kıvılcım."
+  },
+  {
+    "id": 67,
+    "gift_key": "67",
+    "name": "Meşale",
+    "price": 552,
+    "tier": 4,
+    "image_url": "/hediyesistemi/67-Photoroom.png",
+    "animation": "Alev önce söner gibi küçülür, sonra aniden büyüyüp meşalenin çevresinde ateş çemberi çizer.",
+    "sound": "Alev çekilmesi + büyük “whoom” + çıtırtı."
+  },
+  {
+    "id": 68,
+    "gift_key": "68",
+    "name": "Deri Kalkan",
+    "price": 578,
+    "tier": 4,
+    "image_url": "/hediyesistemi/68.png",
+    "animation": "Kalkan önden dönerek gelir; yüzeyinde darbe dalgası gibi dairesel desen yayılır ve merkezde mühür parlar.",
+    "sound": "Büyük metalik clang + enerji bariyeri hum + tok pulse."
+  },
+  {
+    "id": 69,
+    "gift_key": "69",
+    "name": "Antik Yay",
+    "price": 605,
+    "tier": 4,
+    "image_url": "/hediyesistemi/69.png",
+    "animation": "Yay kirişi kendi kendine gerilir; ok görünmeden bir ışık oku oluşur ve hedefe doğru fırlar.",
+    "sound": "Kiriş gerilmesi + keskin yay bırakma + uzak whoosh."
+  },
+  {
+    "id": 70,
+    "gift_key": "70",
+    "name": "Ok Kutusu",
+    "price": 631,
+    "tier": 4,
+    "image_url": "/hediyesistemi/70-Photoroom.png",
+    "animation": "Oklar havaya yükselip helisel biçimde döner, sonra kusursuz şekilde sadakta yerleşir.",
+    "sound": "Tüy hışırtısı + okların hafif çarpışması + deri klik."
+  },
+  {
+    "id": 71,
+    "gift_key": "71",
+    "name": "Zırh Gömleği",
+    "price": 657,
+    "tier": 4,
+    "image_url": "/hediyesistemi/71.png",
+    "animation": "Parçalar görünmez bir asker üzerinde birleşiyormuş gibi göğüslüğe kilitlenir; yüzeyde metal ışığı geçer.",
+    "sound": "Art arda metal kilitlenmeleri + ağır zırh thump."
+  },
+  {
+    "id": 72,
+    "gift_key": "72",
+    "name": "Demir Miğfer",
+    "price": 684,
+    "tier": 4,
+    "image_url": "/hediyesistemi/72.png",
+    "animation": "Miğfer döne döne aşağı iner; kırmızı sorguç rüzgârla ters yöne savrulup tekrar oturur.",
+    "sound": "Metal spin + kumaş/tüy whoosh + tok oturma sesi."
+  },
+  {
+    "id": 73,
+    "gift_key": "73",
+    "name": "Savaş Baltası",
+    "price": 710,
+    "tier": 4,
+    "image_url": "/hediyesistemi/73.png",
+    "animation": "Balta yere değmeden havada üç geniş yay çizer; her yayda kısa turuncu ışık izi bırakır.",
+    "sound": "Üç ağır whoosh + metal rezonansı + final bass hit."
+  },
+  {
+    "id": 74,
+    "gift_key": "74",
+    "name": "Hançer",
+    "price": 736,
+    "tier": 4,
+    "image_url": "/hediyesistemi/74.png",
+    "animation": "Hançer nokta etrafında döner, kılıç izi gibi ince gümüş halka bırakır ve sapı kameraya dönük sabitlenir.",
+    "sound": "Keskin hava kesme + metal çınlaması + kısa snap."
+  },
+  {
+    "id": 75,
+    "gift_key": "75",
+    "name": "Binici Kamçısı",
+    "price": 763,
+    "tier": 4,
+    "image_url": "/hediyesistemi/75.png",
+    "animation": "Kırbaç spiral açılarak havada S şekli çizer; son ucunda küçük kıvılcım belirir ve geri sarılır.",
+    "sound": "Deri şaklaması + uzun whip crack + geri sarma."
+  },
+  {
+    "id": 76,
+    "gift_key": "76",
+    "name": "Nöbet Çanı",
+    "price": 789,
+    "tier": 4,
+    "image_url": "/hediyesistemi/76.png",
+    "animation": "Çan görünmez bir rüzgârla sallanır; her salınımda farklı boyutta ışık halkası yayılır.",
+    "sound": "Üç farklı çan tınısı + uzun metalik yankı."
+  },
+  {
+    "id": 77,
+    "gift_key": "77",
+    "name": "Gözcü Dürbünü",
+    "price": 815,
+    "tier": 4,
+    "image_url": "/hediyesistemi/77.png",
+    "animation": "Teleskop lensi ileri doğru uzar; içinden yıldız parçacıkları çıkarak etrafında küçük bir galaksi oluşturur.",
+    "sound": "Mekanik lens uzaması + kozmik hum + yıldız chime."
+  },
+  {
+    "id": 78,
+    "gift_key": "78",
+    "name": "Bronz Sopa",
+    "price": 842,
+    "tier": 4,
+    "image_url": "/hediyesistemi/78.png",
+    "animation": "Sopa zemine dokunmadan üç kez havada işaret çizer; çizilen semboller kısa süre parlayıp söner.",
+    "sound": "Ahşap hava whoosh'u + üç sihir sembolü pulse'u."
+  },
+  {
+    "id": 79,
+    "gift_key": "79",
+    "name": "Ateş Çanağı",
+    "price": 868,
+    "tier": 4,
+    "image_url": "/hediyesistemi/79.png",
+    "animation": "Alev merkezden yükselip dışarı doğru taç şeklinde açılır; ardından ters yönde içeri çekilir.",
+    "sound": "Derin ateş roar + kıvılcım yağmuru + geri çekilme whoosh."
+  },
+  {
+    "id": 80,
+    "gift_key": "80",
+    "name": "Sancak",
+    "price": 894,
+    "tier": 4,
+    "image_url": "/hediyesistemi/80-Photoroom.png",
+    "animation": "Sancak direği dikleşir; kumaş güçlü bir rüzgârla açılır ve armanın üzerinden altın ışık geçer.",
+    "sound": "Direk metal/ahşap klik + büyük kumaş flap + asil fanfar tek notası."
+  },
+  {
+    "id": 81,
+    "gift_key": "81",
+    "name": "Bıçak Kını",
+    "price": 921,
+    "tier": 4,
+    "image_url": "/hediyesistemi/81.png",
+    "animation": "Kın dönerken kapağı açılır, içinden kılıç görünmeden ışık şeridi çıkar ve tekrar kapanır.",
+    "sound": "Deri kın sürtünmesi + metal çekilme + kapanma klik."
+  },
+  {
+    "id": 82,
+    "gift_key": "82",
+    "name": "Zırh Eldiveni",
+    "price": 947,
+    "tier": 4,
+    "image_url": "/hediyesistemi/82.png",
+    "animation": "Eldiven havada parmaklarını tek tek hareket ettirir; bilek kısmı 360 derece dönerek pozunu tamamlar.",
+    "sound": "Beş metal parmak klik'i + eklem mekanik sesi."
+  },
+  {
+    "id": 83,
+    "gift_key": "83",
+    "name": "Çelik Çizme",
+    "price": 973,
+    "tier": 4,
+    "image_url": "/hediyesistemi/83.png",
+    "animation": "Çizmeler iki ayrı yönden yürüyormuş gibi üç adım atar, sonra aynı anda durup hafif toz kaldırır.",
+    "sound": "Üçer ağır metal adımı + toz thump."
+  },
+  {
+    "id": 84,
+    "gift_key": "84",
+    "name": "Taktik Haritası",
+    "price": 986,
+    "tier": 4,
+    "image_url": "/hediyesistemi/84.png",
+    "animation": "Harita rulo halinde açılır; üzerinde parlayan rota kendiliğinden çizilip X işaretine ulaşır.",
+    "sound": "Parşömen açılma + kalem sürtünmesi + keşif chime."
+  },
+  {
+    "id": 85,
+    "gift_key": "85",
+    "name": "Savaş Borusu",
+    "price": 999,
+    "tier": 4,
+    "image_url": "/hediyesistemi/85.png",
+    "animation": "Boru yukarı kalkar; kumaş mini dalgalarla açılır, borunun ağzından renkli ışık notaları çıkar.",
+    "sound": "Tek güçlü boru/fanfare notası + kumaş flap + üç nota."
+  },
+  {
+    "id": 86,
+    "gift_key": "86",
+    "name": "İpek Şal",
+    "price": 1000,
+    "tier": 5,
+    "image_url": "/hediyesistemi/86.png",
+    "animation": "Şal görünmez bir dansçı etrafında dönüyormuş gibi havada kıvrılır; sonunda yumuşakça iki kat olur.",
+    "sound": "İpek swirl + hafif rüzgâr + kumaş kapanışı."
+  },
+  {
+    "id": 87,
+    "gift_key": "87",
+    "name": "Parfüm Şişesi",
+    "price": 1374,
+    "tier": 5,
+    "image_url": "/hediyesistemi/87.png",
+    "animation": "Şişenin kapağı açılır; mor sis yükselip çiçek formuna dönüşür ve tekrar şişeye çekilir.",
+    "sound": "Cam klik + mist spray + büyülü çiçek chime."
+  },
+  {
+    "id": 88,
+    "gift_key": "88",
+    "name": "Gümüş Kase",
+    "price": 1749,
+    "tier": 5,
+    "image_url": "/hediyesistemi/88.png",
+    "animation": "Kase içinden gümüş su dalgası yükselip üstünde tam bir halka döndürür.",
+    "sound": "Metalik rezonans + su döngüsü + kristal ton."
+  },
+  {
+    "id": 89,
+    "gift_key": "89",
+    "name": "Bronz Heykelcik",
+    "price": 2124,
+    "tier": 5,
+    "image_url": "/hediyesistemi/89.png",
+    "animation": "Heykel etrafında ince bir ışık çizgisi tabandan başa doğru tırmanır; mızrak ucu son noktada parlar.",
+    "sound": "Taş yükseliş hum'u + metal uç çınlaması."
+  },
+  {
+    "id": 90,
+    "gift_key": "90",
+    "name": "Altın Kaplama Vazo",
+    "price": 2499,
+    "tier": 5,
+    "image_url": "/hediyesistemi/90-Photoroom.png",
+    "animation": "Vazo aşağıdan yukarı doğru altın desenlerle “boyanır”; tamamlanınca kısa bir dönüş yapar.",
+    "sound": "Fırça/altın çizgi sesi + seramik tını + shimmer."
+  },
+  {
+    "id": 91,
+    "gift_key": "91",
+    "name": "Mücevher Kutusu",
+    "price": 2874,
+    "tier": 5,
+    "image_url": "/hediyesistemi/91.png",
+    "animation": "Sandık açılır; içinden ışık değil renkli mücevher parçacıkları fıskiye gibi çıkarıp kapağın üzerinde taç oluşturur.",
+    "sound": "Kilit açılması + mücevher tıkırtıları + hazine sparkle."
+  },
+  {
+    "id": 92,
+    "gift_key": "92",
+    "name": "Kadife Kumaş",
+    "price": 3249,
+    "tier": 5,
+    "image_url": "/hediyesistemi/92.png",
+    "animation": "Rulo hızla açılır, kadife dalga şeklinde havalanır ve ters yönde yeniden rulo olur.",
+    "sound": "Kadife kumaş sürtünmesi + büyük soft whoosh."
+  },
+  {
+    "id": 93,
+    "gift_key": "93",
+    "name": "Kıymetli Baharat",
+    "price": 3624,
+    "tier": 5,
+    "image_url": "/hediyesistemi/93.png",
+    "animation": "Her renkli baharat bölmesi kendi etrafında dönerek küçük bir renk girdabı oluşturur; girdaplar merkeze birleşir.",
+    "sound": "Baharat shaker sesleri + dönen kum/girdap + final pop."
+  },
+  {
+    "id": 94,
+    "gift_key": "94",
+    "name": "Fildişi Tarak",
+    "price": 3999,
+    "tier": 5,
+    "image_url": "/hediyesistemi/94.png",
+    "animation": "Tarak havada 180 derece döner, dişlerinden tarama çizgileri çıkıp altın bir yay oluşturur.",
+    "sound": "Ahşap foley + çizgi sweep + ince bell."
+  },
+  {
+    "id": 95,
+    "gift_key": "95",
+    "name": "Renkli Cam Sürahi",
+    "price": 4374,
+    "tier": 5,
+    "image_url": "/hediyesistemi/95.png",
+    "animation": "Vazo içinden su dalgası yükselir; turkuaz ışık vazonun desenlerini sırayla takip eder.",
+    "sound": "Su yükselişi + seramik rezonansı + su kristali."
+  },
+  {
+    "id": 96,
+    "gift_key": "96",
+    "name": "İncir Ağacı Oyması",
+    "price": 4749,
+    "tier": 5,
+    "image_url": "/hediyesistemi/96.png",
+    "animation": "Kutu dört köşesinden açılır gibi parlayıp tekrar kapanır; kapağındaki ağaç deseni kısa süre büyür.",
+    "sound": "Ahşap kilitler + düşük büyü hum'u + kapak thump."
+  },
+  {
+    "id": 97,
+    "gift_key": "97",
+    "name": "Sedef Sandık",
+    "price": 5124,
+    "tier": 5,
+    "image_url": "/hediyesistemi/97.png",
+    "animation": "Mozaik taşları birer birer yerine oturur; son taşta tüm yüzeyde ışık dalgası akar.",
+    "sound": "Cam/taş klikleri + mozaik rezonansı + final chime."
+  },
+  {
+    "id": 98,
+    "gift_key": "98",
+    "name": "Şam Kumaşı",
+    "price": 5499,
+    "tier": 5,
+    "image_url": "/hediyesistemi/98.png",
+    "animation": "Kumaş havada origami gibi birkaç geometrik kat oluşturur, sonra ipeksi biçimde açılır.",
+    "sound": "Kumaş katlama + hafif mekanik origami sesi + shimmer."
+  },
+  {
+    "id": 99,
+    "gift_key": "99",
+    "name": "Bronz Şamdan",
+    "price": 5874,
+    "tier": 5,
+    "image_url": "/hediyesistemi/99.png",
+    "animation": "Üç fitil sırayla yanar; alevler birleşerek tepede tek büyük ışık damlası oluşturur.",
+    "sound": "Üç ayrı kibrit/fitil sesi + birleşen alev roar."
+  },
+  {
+    "id": 100,
+    "gift_key": "100",
+    "name": "Lapis Lazuli Taş",
+    "price": 6249,
+    "tier": 5,
+    "image_url": "/hediyesistemi/100.png",
+    "animation": "Taş yavaşça dönerek yüzeyindeki altın damarları parlatır; çevresinde kısa yıldız tozu halkası oluşur.",
+    "sound": "Taş sürtünmesi + düşük kristal hum + yıldız pırıltısı."
+  },
+  {
+    "id": 101,
+    "gift_key": "101",
+    "name": "Kehribar Kolye",
+    "price": 6624,
+    "tier": 5,
+    "image_url": "/hediyesistemi/101-Photoroom.png",
+    "animation": "Gemi sağdan sola küçük dalgalar üzerinde ilerler; yelken şişer, gemi dönüş yapıp pruvadan ışık bırakır.",
+    "sound": "Deniz dalgası + yelken flap + ahşap gemi gıcırtısı."
+  },
+  {
+    "id": 102,
+    "gift_key": "102",
+    "name": "Gümüş Tepsi",
+    "price": 6999,
+    "tier": 5,
+    "image_url": "/hediyesistemi/102.png",
+    "animation": "Sütunlar aşağıdan yukarı aydınlanır; girişte altın ışık kapısı açılıp tekrar kapanır.",
+    "sound": "Taş sürtünmesi + düşük tapınak drone'u + ağır kapı hum'u."
+  },
+  {
+    "id": 103,
+    "gift_key": "103",
+    "name": "Kristal Karaf",
+    "price": 7374,
+    "tier": 5,
+    "image_url": "/hediyesistemi/103.png",
+    "animation": "Villa minyatür bir maket gibi yerden yükselir; pencereler sırayla yanar, bahçe lambaları en son açılır.",
+    "sound": "Toprak yükselişi + ev ışık klikleri + gece chime."
+  },
+  {
+    "id": 104,
+    "gift_key": "104",
+    "name": "Parşömen Rulosu",
+    "price": 7749,
+    "tier": 5,
+    "image_url": "/hediyesistemi/104.png",
+    "animation": "Havuz yüzeyinde tek damla düşer; üç eş merkezli dalga yayılır, şelale ve bitkiler aynı ritimde parlar.",
+    "sound": "Su damlası + havuz dalgası + kuş/ambient bahçe tonu."
+  },
+  {
+    "id": 105,
+    "gift_key": "105",
+    "name": "Antik Vazo",
+    "price": 8124,
+    "tier": 5,
+    "image_url": "/hediyesistemi/105.png",
+    "animation": "Taht aşağıdan yükselir, kırmızı kumaş gerilir; tacın üstünde altın halo açılır.",
+    "sound": "Ağır yükseliş + kadife gerilmesi + kraliyet gong'u."
+  },
+  {
+    "id": 106,
+    "gift_key": "106",
+    "name": "Mermer Kase",
+    "price": 8499,
+    "tier": 5,
+    "image_url": "/hediyesistemi/106.png",
+    "animation": "Su sütunları saat yönünde sırayla yükselir; merkezde su küresi oluşup yağmur gibi geri iner.",
+    "sound": "Çok katmanlı su fıskiyesi + damla yağmuru + kristal chime."
+  },
+  {
+    "id": 107,
+    "gift_key": "107",
+    "name": "Yaldızlı Kupa",
+    "price": 8874,
+    "tier": 5,
+    "image_url": "/hediyesistemi/107.png",
+    "animation": "Sütun çevresinde taş tozu spiral halinde yükselir; başlık kısmı parlayıp tüm sütuna ışık indirir.",
+    "sound": "Taş uğultusu + toz pufu + mermer rezonansı."
+  },
+  {
+    "id": 108,
+    "gift_key": "108",
+    "name": "Mücevherli Kemer",
+    "price": 9249,
+    "tier": 5,
+    "image_url": "/hediyesistemi/108.png",
+    "animation": "Heykelin çevresinde altın kontur çizilir; elindeki/yanındaki alanlardan küçük ışık parçaları yükselir.",
+    "sound": "Taş parıltısı + yumuşak koro nefesi + ince gong."
+  },
+  {
+    "id": 109,
+    "gift_key": "109",
+    "name": "Bakır Heykel",
+    "price": 9624,
+    "tier": 5,
+    "image_url": "/hediyesistemi/109.png",
+    "animation": "Karo kendi ekseninde dönerken desenin merkezinden renkli ışınlar çıkar; 90 derece ters dönerek yerine oturur.",
+    "sound": "Seramik klik + mozaik cam tınıları + snap."
+  },
+  {
+    "id": 110,
+    "gift_key": "110",
+    "name": "Özel Dokuma Halı",
+    "price": 9999,
+    "tier": 5,
+    "image_url": "/hediyesistemi/110.png",
+    "animation": "Kapı iki kanat gibi açılır; arkasından orman ışığı görünür, sonra kapı hızla kapanır.",
+    "sound": "Ağır ahşap kapı + menteşe gıcırtısı + orman rüzgârı."
+  },
+  {
+    "id": 111,
+    "gift_key": "111",
+    "name": "Altın Gerdanlık",
+    "price": 10000,
+    "tier": 6,
+    "image_url": "/hediyesistemi/111-Photoroom.png",
+    "animation": "Atlar öne doğru bir adım atar, tekerlekler dönmeye başlar ve araba altın ışık iziyle kısa bir tur atar.",
+    "sound": "At nalı ritmi + tekerlek gıcırtısı + hızlı geçiş whoosh."
+  },
+  {
+    "id": 112,
+    "gift_key": "112",
+    "name": "Yakut Küpe",
+    "price": 10526,
+    "tier": 6,
+    "image_url": "/hediyesistemi/112-Photoroom.png",
+    "animation": "Yelken katlı halden bir anda açılır; gemi pruvaya doğru yükselip dalga üzerinden “sıçrar”.",
+    "sound": "Büyük yelken flap + dalga kırılması + ahşap gövde creak."
+  },
+  {
+    "id": 113,
+    "gift_key": "113",
+    "name": "Kraliyet Çelengi",
+    "price": 11052,
+    "tier": 6,
+    "image_url": "/hediyesistemi/113.png",
+    "animation": "Cephe boyunca ışık yukarı doğru taranır; kapı açılır gibi parlayıp tüm evde kısa altın parıltı dolaşır.",
+    "sound": "Zarif yükseliş + kapı klik + evrensel chime."
+  },
+  {
+    "id": 114,
+    "gift_key": "114",
+    "name": "Safir Yüzük",
+    "price": 11578,
+    "tier": 6,
+    "image_url": "/hediyesistemi/114.png",
+    "animation": "Havuzdaki su tersine doğru akıyormuş gibi merkeze çekilir; sonra dışarıya çiçek biçimli dalga olarak yayılır.",
+    "sound": "Ters su çekimi + splash bloom + kuş cıvıltısı."
+  },
+  {
+    "id": 115,
+    "gift_key": "115",
+    "name": "Zümrüt Broş",
+    "price": 12105,
+    "tier": 6,
+    "image_url": "/hediyesistemi/115-Photoroom.png",
+    "animation": "Tahtta kırmızı kadife bir dalga tabandan yukarı çıkar; tepedeki süs parlayıp ışık tacı oluşturur.",
+    "sound": "Kadife flap + metalik taç tınısı + kraliyet hit."
+  },
+  {
+    "id": 116,
+    "gift_key": "116",
+    "name": "Elmas Tacı",
+    "price": 12631,
+    "tier": 6,
+    "image_url": "/hediyesistemi/116.png",
+    "animation": "Yan heykellerden başlayan su akışları merkeze birleşir; merkez sütunu yükselip gökyüzü yönünde ince ışık bırakır.",
+    "sound": "Çok katmanlı çeşme + su birleşimi + geniş stereo shimmer."
+  },
+  {
+    "id": 117,
+    "gift_key": "117",
+    "name": "Altın Bilezik",
+    "price": 13157,
+    "tier": 6,
+    "image_url": "/hediyesistemi/117.png",
+    "animation": "Desen kabartmaları sırayla ışıkla “oyuluyormuş” gibi belirir; taban ve başlık aynı anda parlar.",
+    "sound": "Taş oyma tıkırtıları + düşük resonance + final bell."
+  },
+  {
+    "id": 118,
+    "gift_key": "118",
+    "name": "İnci Gerdanlık",
+    "price": 13684,
+    "tier": 6,
+    "image_url": "/hediyesistemi/118-Photoroom.png",
+    "animation": "Heykelin mızrağı yukarı doğru ışık çizer; kalkan çevresinde koruyucu daire oluşup kapanır.",
+    "sound": "Metal yükselişi + kalkan hum'u + kısa savaş gong'u."
+  },
+  {
+    "id": 119,
+    "gift_key": "119",
+    "name": "Kraliyet Mührü",
+    "price": 14210,
+    "tier": 6,
+    "image_url": "/hediyesistemi/119.png",
+    "animation": "Merkezden dışarı doğru renkli parçalar tek tek yerleşir; tamamlandığında madalyon 45 derece dönerek sabitlenir.",
+    "sound": "Cam mozaik klikleri + renkli chime dizisi."
+  },
+  {
+    "id": 120,
+    "gift_key": "120",
+    "name": "Gümüş Kılıç",
+    "price": 14736,
+    "tier": 6,
+    "image_url": "/hediyesistemi/120-Photoroom.png",
+    "animation": "Takın içinden altın ışık geçidi açılır; ışık yukarı çıkıp taş süslemeleri sırayla aydınlatır.",
+    "sound": "Büyük taş açılma hum'u + geçit whoosh + zafer gong'u."
+  },
+  {
+    "id": 121,
+    "gift_key": "121",
+    "name": "Altın Kase",
+    "price": 15263,
+    "tier": 6,
+    "image_url": "/hediyesistemi/121.png",
+    "animation": "Ahır kapısı iki yana açılır; içerideki sıcak ışık genişler ve saman parçaları hafifçe havalanır.",
+    "sound": "Ahşap kapı + saman hışırtısı + uzak at nefesi."
+  },
+  {
+    "id": 122,
+    "gift_key": "122",
+    "name": "Değerli Taş",
+    "price": 15789,
+    "tier": 6,
+    "image_url": "/hediyesistemi/122.png",
+    "animation": "Kamera gibi kule çevresinde ışık spiral döner; kubbede bir ışık yanıp gökyüzüne ince ışın yollar.",
+    "sound": "Rüzgâr yükselişi + taş resonance + uzak çan."
+  },
+  {
+    "id": 123,
+    "gift_key": "123",
+    "name": "Kraliyet Arması",
+    "price": 16315,
+    "tier": 6,
+    "image_url": "/hediyesistemi/123.png",
+    "animation": "Takın üç bölümü sırayla altın ışıkla aktive olur; merkezdeki ışık halkası öne doğru genişler.",
+    "sound": "Üç mimari pulse + büyük halo shimmer."
+  },
+  {
+    "id": 124,
+    "gift_key": "124",
+    "name": "Gümüş Taht",
+    "price": 16842,
+    "tier": 6,
+    "image_url": "/hediyesistemi/124.png",
+    "animation": "Havuz yüzeyi ayna gibi parlar; su kenarından başlayarak altın ışık dikdörtgeni tüm havuzu dolaşır.",
+    "sound": "Su yüzeyi shimmer + düşük saray ambience + final splash."
+  },
+  {
+    "id": 125,
+    "gift_key": "125",
+    "name": "Altın Şamdan",
+    "price": 17368,
+    "tier": 6,
+    "image_url": "/hediyesistemi/125.png",
+    "animation": "Çadır kapakları açılır, kırmızı-altın kumaş yükselir; tepedeki bayrak hızlıca döner.",
+    "sound": "Kumaş açılma + kalabalık uzaktan “oooh” hissi + küçük fanfare."
+  },
+  {
+    "id": 126,
+    "gift_key": "126",
+    "name": "Safir Gerdanlık",
+    "price": 17894,
+    "tier": 6,
+    "image_url": "/hediyesistemi/126.png",
+    "animation": "Yat su üzerinde sağa doğru kayar, pruva dalgayı yarar; ardından kısa bir yay çizerek ışık köpüğü bırakır.",
+    "sound": "Motorun hafif hum'u + su yarma + köpük splash."
+  },
+  {
+    "id": 127,
+    "gift_key": "127",
+    "name": "Kraliyet Kaftanı",
+    "price": 18421,
+    "tier": 6,
+    "image_url": "/hediyesistemi/127.png",
+    "animation": "Kapı süslerindeki küçük heykeller sırayla canlanır gibi ışıldar; kapı merkezden açılır ve kapanır.",
+    "sound": "Taş heykel pulse'ları + ağır kapı + chime."
+  },
+  {
+    "id": 128,
+    "gift_key": "128",
+    "name": "Elmas Broş",
+    "price": 18947,
+    "tier": 6,
+    "image_url": "/hediyesistemi/128.png",
+    "animation": "Basamaklarda ışık aşağıdan yukarı “yürür”; iki yan korkuluk aynı anda parlayıp girişe yön gösterir.",
+    "sound": "Basamak başına hafif pulse + saray gong'u."
+  },
+  {
+    "id": 129,
+    "gift_key": "129",
+    "name": "Altın Kemer",
+    "price": 19473,
+    "tier": 6,
+    "image_url": "/hediyesistemi/129.png",
+    "animation": "Kitaplar raflardan birkaç santim çıkar; sayfalar aynı anda açılır ve havada kitap harfleri spirale dönüşür.",
+    "sound": "Sayfa çevirme yağmuru + kitaplık ahşap tıkırtısı + büyülü harf chime."
+  },
+  {
+    "id": 130,
+    "gift_key": "130",
+    "name": "Mücevherli Taç",
+    "price": 19999,
+    "tier": 6,
+    "image_url": "/hediyesistemi/130.png",
+    "animation": "Mumlar sırayla yanar, masa örtüsü dalga halinde açılır; tabaklar tek tek yerine kayar.",
+    "sound": "Mum fitili + porselen tıkırtıları + kumaş swish."
+  },
+  {
+    "id": 131,
+    "gift_key": "131",
+    "name": "Savaş Arabası",
+    "price": 20000,
+    "tier": 7,
+    "image_url": "/hediyesistemi/131-Photoroom.png",
+    "animation": "Örtü merkezden dışarı kabarır; altın işlemeler ışıkla takip edilir ve kumaş yavaşça yere serilir.",
+    "sound": "Kalın kumaş dalgası + altın işlemeli shimmer."
+  },
+  {
+    "id": 132,
+    "gift_key": "132",
+    "name": "Akdeniz Gemisi",
+    "price": 21249,
+    "tier": 7,
+    "image_url": "/hediyesistemi/132.png",
+    "animation": "Şişe havada üç kısa tur döner; mor ışık içinden geçerek mücevher desenlerini yakar.",
+    "sound": "Cam rezonansı + büyüsel swirl + üç crystal ping."
+  },
+  {
+    "id": 133,
+    "gift_key": "133",
+    "name": "Mermer Köşk",
+    "price": 22499,
+    "tier": 7,
+    "image_url": "/hediyesistemi/133.png",
+    "animation": "Kâsenin kenarında gümüş ışık tam tur atar; iç yüzeyde kısa su yansıması belirir.",
+    "sound": "Gümüş çınlama + su ripple + tek yüksek chime."
+  },
+  {
+    "id": 134,
+    "gift_key": "134",
+    "name": "Saray Bahçesi",
+    "price": 23749,
+    "tier": 7,
+    "image_url": "/hediyesistemi/134.png",
+    "animation": "Heykelin etrafında çiçek yapraklarından oluşan spiral yükselir; spiral tepeye ulaşıp altın toza dönüşür.",
+    "sound": "Yaprak swirl + taş ambience + hafif fairy shimmer."
+  },
+  {
+    "id": 135,
+    "gift_key": "135",
+    "name": "Altın Taht",
+    "price": 24999,
+    "tier": 7,
+    "image_url": "/hediyesistemi/135.png",
+    "animation": "Amphora aşağıdan yukarı altın damarlarla dolar; iki kulp arasında ışık köprüsü oluşur.",
+    "sound": "Seramik rezonansı + altın enerji hum'u + bridge chime."
+  },
+  {
+    "id": 136,
+    "gift_key": "136",
+    "name": "Büyük Çeşme",
+    "price": 26249,
+    "tier": 7,
+    "image_url": "/hediyesistemi/136.png",
+    "animation": "Sandık kilidi üç parçalı şekilde açılır; kapak aralığından çıkan ışık, dış yüzeydeki taşları sırayla yakar.",
+    "sound": "Üçlü kilit klik + hazine açılışı + mücevher parıltısı."
+  },
+  {
+    "id": 137,
+    "gift_key": "137",
+    "name": "Mermer Sütun",
+    "price": 27499,
+    "tier": 7,
+    "image_url": "/hediyesistemi/137.png",
+    "animation": "Kumaş rüzgârla havalanıp kısa süre heykel benzeri bir forma girer, sonra yumuşakça tekrar kıvrılır.",
+    "sound": "Kadife dalga + derin whoosh + kumaş düşüşü."
+  },
+  {
+    "id": 138,
+    "gift_key": "138",
+    "name": "Antik Heykel",
+    "price": 28749,
+    "tier": 7,
+    "image_url": "/hediyesistemi/138.png",
+    "animation": "Renkli baharatlar kase çevresinde farklı yörüngelerde döner; sonunda tek renkli spiral halinde merkeze iner.",
+    "sound": "Kuru baharat yağmuru + kase rezonansı + spiral whoosh."
+  },
+  {
+    "id": 139,
+    "gift_key": "139",
+    "name": "Mozaik Zemin",
+    "price": 29999,
+    "tier": 7,
+    "image_url": "/hediyesistemi/139.png",
+    "animation": "Tarak havada bir çizgi boyunca kayar; geçtiği yerde çiçek desenli ışık izi bırakır.",
+    "sound": "İnce tarama + çiçek sparkle + ahşap klik."
+  },
+  {
+    "id": 140,
+    "gift_key": "140",
+    "name": "Bronz Kapı",
+    "price": 31249,
+    "tier": 7,
+    "image_url": "/hediyesistemi/140-Photoroom.png",
+    "animation": "Vazonun desenleri sırayla su gibi akarak renk değiştirir; sonunda tüm desen tek parlak dalga halinde donar.",
+    "sound": "Sıvı cam efekti + seramik tını + turkuaz shimmer."
+  },
+  {
+    "id": 141,
+    "gift_key": "141",
+    "name": "Özel At Ahırı",
+    "price": 32499,
+    "tier": 7,
+    "image_url": "/hediyesistemi/141.png",
+    "animation": "Ağacın köklerinden dallara doğru altın ışık yükselir; yapraklar birer birer belirir.",
+    "sound": "Kök/toprak rumble + ahşap büyü hum'u + yaprak açılmaları."
+  },
+  {
+    "id": 142,
+    "gift_key": "142",
+    "name": "Gözlemevi Kulesi",
+    "price": 33749,
+    "tier": 7,
+    "image_url": "/hediyesistemi/142.png",
+    "animation": "Her mozaik parçası farklı yönden gelerek kilitli bir geometrik deseni tamamlar.",
+    "sound": "8–10 cam/taş klik + kilitlenme gong'u."
+  },
+  {
+    "id": 143,
+    "gift_key": "143",
+    "name": "Zafer Takı",
+    "price": 34999,
+    "tier": 7,
+    "image_url": "/hediyesistemi/143.png",
+    "animation": "Kumaş uzun bir dalga gibi sola akar, ortada düğüm yapıp sağa doğru çözülür.",
+    "sound": "İpek sweep + düğüm çekme + çözülme whoosh."
+  },
+  {
+    "id": 144,
+    "gift_key": "144",
+    "name": "Mermer Havuz",
+    "price": 36249,
+    "tier": 7,
+    "image_url": "/hediyesistemi/144.png",
+    "animation": "Alevler sırayla büyür; ortadaki alev yukarı uzayıp diğer ikisini altın ışıkla birleştirir.",
+    "sound": "Üç fitil + birleşen ateş + sıcak gong."
+  },
+  {
+    "id": 145,
+    "gift_key": "145",
+    "name": "Hükümdar Çadırı",
+    "price": 37499,
+    "tier": 7,
+    "image_url": "/hediyesistemi/145.png",
+    "animation": "Asa çapraz döner; uçtaki taş bir lazer çizgisi gibi ince ışık gönderip çizgiyi kapatır.",
+    "sound": "İnce enerji “zing” + lazer sweep + crystal ping."
+  },
+  {
+    "id": 146,
+    "gift_key": "146",
+    "name": "Lüks Yat",
+    "price": 38749,
+    "tier": 7,
+    "image_url": "/hediyesistemi/146.png",
+    "animation": "İki hançer birbirinin etrafında ayna hareketiyle döner; son anda çapraz biçimde kilitlenir.",
+    "sound": "İki metal whoosh + çift clang + snap."
+  },
+  {
+    "id": 147,
+    "gift_key": "147",
+    "name": "Heybetli Sütun",
+    "price": 39999,
+    "tier": 7,
+    "image_url": "/hediyesistemi/147.png",
+    "animation": "Kemer düzleşip havada yatay süzülür; toka öne fırlayıp geri çekilerek kemeri tekrar halka yapar.",
+    "sound": "Deri gerilmesi + toka klik + kısa recoil whoosh."
+  },
+  {
+    "id": 148,
+    "gift_key": "148",
+    "name": "İhtişamlı Kemer",
+    "price": 41249,
+    "tier": 7,
+    "image_url": "/hediyesistemi/148.png",
+    "animation": "Kefeler farklı yüksekliklerde küçük daireler çizer; sonunda merkezdeki gösterge ışıkla tam dengeyi işaretler.",
+    "sound": "Zincir şıkırtısı + iki döngü tınısı + denge ding."
+  },
+  {
+    "id": 149,
+    "gift_key": "149",
+    "name": "Büyük Saray Salonu",
+    "price": 42499,
+    "tier": 7,
+    "image_url": "/hediyesistemi/149.png",
+    "animation": "Fener 90 derece döner; iç alevin gölgesi büyüyüp dışarı taşar, sonra tekrar içine çekilir.",
+    "sound": "Cam tıkırtısı + alev flutter + gölge whoosh."
+  },
+  {
+    "id": 150,
+    "gift_key": "150",
+    "name": "Kraliyet Çiftliği",
+    "price": 43749,
+    "tier": 7,
+    "image_url": "/hediyesistemi/150.png",
+    "animation": "Yüzük kameraya yaklaşırken yakut ışığı büyür; son anda geri çekilip altın halka üzerinde sabitlenir.",
+    "sound": "Metal yükselişi + yakut pulse + mücevher flash."
+  },
+  {
+    "id": 151,
+    "gift_key": "151",
+    "name": "Antik Amfi",
+    "price": 44999,
+    "tier": 7,
+    "image_url": "/hediyesistemi/151.png",
+    "animation": "Kolezyum dairesel olarak ışıkla taranır; kemerler sırayla aydınlanır ve arenanın merkezinde ışık zemini oluşur.",
+    "sound": "Uzak arena uğultusu + taş pulse'ları + büyük gong."
+  },
+  {
+    "id": 152,
+    "gift_key": "152",
+    "name": "Mermer Merdiven",
+    "price": 46249,
+    "tier": 7,
+    "image_url": "/hediyesistemi/152.png",
+    "animation": "Basamaklar alttan üste sırayla ışıklanır; kamera hissi veren ileri hareketle tepeye ulaşılır ve son basamak parlar.",
+    "sound": "10 kademeli pulse + ayak yankısı + final chime."
+  },
+  {
+    "id": 153,
+    "gift_key": "153",
+    "name": "Özel Kütüphane",
+    "price": 47499,
+    "tier": 7,
+    "image_url": "/hediyesistemi/153.png",
+    "animation": "Cephedeki sütunlar aydınlanır; kapı açılır ve içerden uçuşan altın harfler dışarı çıkıp çatı üzerinde döner.",
+    "sound": "Kütüphane ambience + kapı + sayfa/hafif büyü efekti."
+  },
+  {
+    "id": 154,
+    "gift_key": "154",
+    "name": "Şölen Sofrası",
+    "price": 48749,
+    "tier": 7,
+    "image_url": "/hediyesistemi/154.png",
+    "animation": "Sandalyeler geri çekilir; tabak, kadeh ve çatal-bıçak farklı yönlerden kayarak kusursuz düzene girer.",
+    "sound": "Porselen + kristal kadeh + çatal-bıçak klik ritmi."
+  },
+  {
+    "id": 155,
+    "gift_key": "155",
+    "name": "Anıtsal Heykel",
+    "price": 49999,
+    "tier": 7,
+    "image_url": "/hediyesistemi/155.png",
+    "animation": "Heykel çevresinde yukarı çıkan mermer tozu sütunu oluşur; toz dağıldığında heykel altın konturla vurgulanır.",
+    "sound": "Taş tozu yükselişi + derin koro hum'u + tek gong."
+  },
+  {
+    "id": 156,
+    "gift_key": "156",
+    "name": "Zeus Yıldırımı",
+    "price": 50000,
+    "tier": 8,
+    "image_url": "/hediyesistemi/156-Photoroom.png",
+    "animation": "Şimşek çizgisi önce küçük titreşir, sonra zikzak boyunca uzayıp üç kola ayrılır ve enerji kıvılcımı olarak kapanır.",
+    "sound": "Elektrik crackle + yükselen charge + üç kısa zap."
+  },
+  {
+    "id": 157,
+    "gift_key": "157",
+    "name": "Pegasus Kanadı",
+    "price": 52105,
+    "tier": 8,
+    "image_url": "/hediyesistemi/157.png",
+    "animation": "Kanatlar üç güçlü vuruş yapar; at hafifçe yükselir, havada kısa yay çizip tekrar yere yaklaşır.",
+    "sound": "Büyük kanat flapları + rüzgâr + parlak fantastik chime."
+  },
+  {
+    "id": 158,
+    "gift_key": "158",
+    "name": "Altın Post",
+    "price": 54210,
+    "tier": 8,
+    "image_url": "/hediyesistemi/158.png",
+    "animation": "Koç başını öne eğip boynuzlarında altın kıvılcım toplar; bir adım atıp toz halkası çıkarır.",
+    "sound": "Ağır hayvan nefesi + boynuz enerji crackle + toprak thump."
+  },
+  {
+    "id": 159,
+    "gift_key": "159",
+    "name": "Apollon Liri",
+    "price": 56315,
+    "tier": 8,
+    "image_url": "/hediyesistemi/159-Photoroom.png",
+    "animation": "Teller görünmez bir el tarafından sırayla çalınır; notalar havada altın yapraklara dönüşür.",
+    "sound": "Üç-beş harp/lir notası + yaprak shimmer."
+  },
+  {
+    "id": 160,
+    "gift_key": "160",
+    "name": "Athena Kalkanı",
+    "price": 58421,
+    "tier": 8,
+    "image_url": "/hediyesistemi/160.png",
+    "animation": "Madalyon yavaşça dönerek yüzünü öne çevirir; saç yılanları ayrı ayrı hareket edip sonra taşlaşır gibi donar.",
+    "sound": "Taşlaşma hissi veren low rumble + metal madalyon tınısı + ince hiss."
+  },
+  {
+    "id": 161,
+    "gift_key": "161",
+    "name": "Poseidon Üçlüsü",
+    "price": 60526,
+    "tier": 8,
+    "image_url": "/hediyesistemi/161.png",
+    "animation": "Mızrak su dalgasının içinden yükselir; üç uçtan ayrı su jetleri çıkıp tek bir büyük dalgaya birleşir.",
+    "sound": "Deniz kabarması + üç su jet + güçlü splash."
+  },
+  {
+    "id": 162,
+    "gift_key": "162",
+    "name": "Ares Kılıcı",
+    "price": 62631,
+    "tier": 8,
+    "image_url": "/hediyesistemi/162.png",
+    "animation": "Kılıç aşağıdan yükselir; alevler bıçağın iki yanında ters yönlerde akar ve sonunda tek ateş kuyruğu oluşturur.",
+    "sound": "Metal unsheathe + ateş roar + keskin flame whoosh."
+  },
+  {
+    "id": 163,
+    "gift_key": "163",
+    "name": "Hermes Sandaleti",
+    "price": 64736,
+    "tier": 8,
+    "image_url": "/hediyesistemi/163-Photoroom.png",
+    "animation": "Sandaletlerden biri havalanıp küçük daire çizer, diğeri ters yönden gelip yanına oturur; kanatlar titrer.",
+    "sound": "Hafif kanat flap + deri klik + hava whoosh."
+  },
+  {
+    "id": 164,
+    "gift_key": "164",
+    "name": "Hades Miğferi",
+    "price": 66842,
+    "tier": 8,
+    "image_url": "/hediyesistemi/164.png",
+    "animation": "Miğfer 360 derece döner; kırmızı sorguç bir rüzgâr dalgasıyla yukarı kalkıp tekrar iner.",
+    "sound": "Metal dönme + tüy/at kılı flutter + tok metal oturuş."
+  },
+  {
+    "id": 165,
+    "gift_key": "165",
+    "name": "Afrodit Aynası",
+    "price": 68947,
+    "tier": 8,
+    "image_url": "/hediyesistemi/165.png",
+    "animation": "Ayna öne döndüğünde yansıma yerine çiçekler açar; çiçekler kapanırken ayna eski görünümüne döner.",
+    "sound": "Cam shimmer + çiçek açılma + yumuşak harp notası."
+  },
+  {
+    "id": 166,
+    "gift_key": "166",
+    "name": "Dionysos Asası",
+    "price": 71052,
+    "tier": 8,
+    "image_url": "/hediyesistemi/166.png",
+    "animation": "Sarmaşık canlı bir asma gibi kıvrılarak yukarı tırmanır; üzüm salkımları sırayla belirir.",
+    "sound": "Dal bükülmesi + yaprak hışırtısı + meyve tıkırtıları."
+  },
+  {
+    "id": 167,
+    "gift_key": "167",
+    "name": "Artemis Oku",
+    "price": 73157,
+    "tier": 8,
+    "image_url": "/hediyesistemi/167.png",
+    "animation": "Yay gerilirken altın bir ok ışığı oluşur; ok fırladığında havada kuş şeklinde kısa iz bırakır.",
+    "sound": "Kiriş gerilmesi + ok fırlatma + kuş kanadı shimmer."
+  },
+  {
+    "id": 168,
+    "gift_key": "168",
+    "name": "Demeter Başak",
+    "price": 75263,
+    "tier": 8,
+    "image_url": "/hediyesistemi/168-Photoroom.png",
+    "animation": "Saplar alttan yukarı doğru altınlaşır; başaklar rüzgârla dalgalanıp tekrar dikleşir.",
+    "sound": "Tarla rüzgârı + kuru başak hışırtısı + sıcak rural chime."
+  },
+  {
+    "id": 169,
+    "gift_key": "169",
+    "name": "Chronos Saati",
+    "price": 77368,
+    "tier": 8,
+    "image_url": "/hediyesistemi/169-Photoroom.png",
+    "animation": "Kum tersine akmaya başlar; camın içinde kum parçaları yıldızlara dönüşür ve tekrar aşağı süzülür.",
+    "sound": "Kum akışı + cam rezonansı + ters zaman whoosh."
+  },
+  {
+    "id": 170,
+    "gift_key": "170",
+    "name": "Prometheus Ateşi",
+    "price": 79473,
+    "tier": 8,
+    "image_url": "/hediyesistemi/170-Photoroom.png",
+    "animation": "Alev kâseden yükselip dönen bir ateş çiçeği oluşturur; yaprakları kapanarak tek alev olur.",
+    "sound": "Ateş swirl + çıtırtı + düşük fire bloom."
+  },
+  {
+    "id": 171,
+    "gift_key": "171",
+    "name": "Medusa Gözü",
+    "price": 81578,
+    "tier": 8,
+    "image_url": "/hediyesistemi/171-Photoroom.png",
+    "animation": "Başlar sırayla farklı yönlere yükselir; merkezde birleşip dairesel bir koruyucu form oluştururlar.",
+    "sound": "Birden çok hafif hiss + pullanma sürtünmesi + düşük enerji hum'u."
+  },
+  {
+    "id": 172,
+    "gift_key": "172",
+    "name": "Hydra Dişi",
+    "price": 83684,
+    "tier": 8,
+    "image_url": "/hediyesistemi/172-Photoroom.png",
+    "animation": "Başlar dalga gibi sırayla ortaya çıkar; gövdeleri spiral oluştururken son anda tek merkez etrafında donar.",
+    "sound": "Hızlı yaratık hareketleri + kanat/deri whoosh + fantastik bass hit."
+  },
+  {
+    "id": 173,
+    "gift_key": "173",
+    "name": "Minotaur Boynuzu",
+    "price": 85789,
+    "tier": 8,
+    "image_url": "/hediyesistemi/173.png",
+    "animation": "Boğa başı gölgeli biçimde yaklaşır; boynuzların çevresinde altın enerji toplanır ve tek pulse ile söner.",
+    "sound": "Derin boğa nefesi + boynuz enerji hum'u + ağır thump."
+  },
+  {
+    "id": 174,
+    "gift_key": "174",
+    "name": "Sphinx Kanadı",
+    "price": 87894,
+    "tier": 8,
+    "image_url": "/hediyesistemi/174-Photoroom.png",
+    "animation": "Kanatlar iki kez açılır; sfenks hafifçe yükselir ve altın tüy parçacıklarıyla yere geri süzülür.",
+    "sound": "Büyük kanat flap + kum rüzgârı + Mısır esintili gong."
+  },
+  {
+    "id": 175,
+    "gift_key": "175",
+    "name": "Titan Çekici",
+    "price": 89999,
+    "tier": 8,
+    "image_url": "/hediyesistemi/175-Photoroom.png",
+    "animation": "Çekiç havada döner; baş kısmına elektrik yüklenir ve üç kısa şimşek dışarı atılır.",
+    "sound": "Metal spin + elektrik charge + üç güçlü zap + bass hit."
+  },
+  {
+    "id": 176,
+    "gift_key": "176",
+    "name": "Paktolos Altını",
+    "price": 90000,
+    "tier": 9,
+    "image_url": "/hediyesistemi/176.png",
+    "animation": "Külçeler farklı yüksekliklerden düşüp üst üste yığılır; son külçe kayarak mükemmel kuleyi tamamlar.",
+    "sound": "Ağır metal düşüşleri + altın clang + son tok impact."
+  },
+  {
+    "id": 177,
+    "gift_key": "177",
+    "name": "Krezus Mührü",
+    "price": 90416,
+    "tier": 9,
+    "image_url": "/hediyesistemi/177.png",
+    "animation": "Madalyon dönerken aslan kabartması kabartmadan dışarı çıkıyormuş gibi ışıkla belirir; ardından madalyon tekrar düzleşir.",
+    "sound": "Metal spin + aslan kükremesi çok hafif + bronz gong."
+  },
+  {
+    "id": 178,
+    "gift_key": "178",
+    "name": "Lidya Tahtı",
+    "price": 90833,
+    "tier": 9,
+    "image_url": "/hediyesistemi/178-Photoroom.png",
+    "animation": "Taht zeminden yükselirken iki aslan kolu ayrı ayrı parlayıp taç kısmında birleşen bir halo oluşturur.",
+    "sound": "Ağır saray yükselişi + metal aslan tınısı + kraliyet gong'u."
+  },
+  {
+    "id": 179,
+    "gift_key": "179",
+    "name": "İlk Altın Sikke",
+    "price": 91250,
+    "tier": 9,
+    "image_url": "/hediyesistemi/179.png",
+    "animation": "Paralar havada dönerek spiral bir kule oluşturur; kule açılıp dairesel para yağmuruna dönüşür.",
+    "sound": "Çoklu coin jingle + dönen metal swirl + para yağmuru."
+  },
+  {
+    "id": 180,
+    "gift_key": "180",
+    "name": "Sardis Tacı",
+    "price": 91666,
+    "tier": 9,
+    "image_url": "/hediyesistemi/180.png",
+    "animation": "Taç alttan yükselir; değerli taşlar sırayla yanar ve tepede büyük bir yıldız parlaması oluşur.",
+    "sound": "Mücevher ping dizisi + altın shimmer + kraliyet fanfare."
+  },
+  {
+    "id": 181,
+    "gift_key": "181",
+    "name": "Kraliyet Hazinesi",
+    "price": 92083,
+    "tier": 9,
+    "image_url": "/hediyesistemi/181.png",
+    "animation": "Sandık kapağı aralanır; mücevherler fıskiye gibi yükselip havada kısa taç şekli oluşturur ve sandığa geri düşer.",
+    "sound": "Kilit açılması + mücevher yağmuru + hazine gong'u."
+  },
+  {
+    "id": 182,
+    "gift_key": "182",
+    "name": "Ebedi Meşale",
+    "price": 92500,
+    "tier": 9,
+    "image_url": "/hediyesistemi/182.png",
+    "animation": "Alev merkezden dışarı doğru üç halka halinde büyür; son halkada kıvılcımlar yukarı fırlar.",
+    "sound": "Fire roar + üç ateş pulse'u + kıvılcım crackle."
+  },
+  {
+    "id": 183,
+    "gift_key": "183",
+    "name": "Altın Nehir Heykeli",
+    "price": 92916,
+    "tier": 9,
+    "image_url": "/hediyesistemi/183-Photoroom.png",
+    "animation": "Heykelin etrafındaki su akışı saat yönünün tersine döner; merkezdeki su yukarı yükselip ışık damlalarına ayrılır.",
+    "sound": "Ters su girdabı + çeşme ambience + damla chime."
+  },
+  {
+    "id": 184,
+    "gift_key": "184",
+    "name": "Krezus’un Zırhı",
+    "price": 93333,
+    "tier": 9,
+    "image_url": "/hediyesistemi/184.png",
+    "animation": "Zırhın aslan kabartması parlayıp göğüs plakasının yüzeyinde enerji halkası yayar; kenarlar sırayla kilitlenir.",
+    "sound": "Metal kilitlenme + aslan growl'u düşük seviyede + enerji thump."
+  },
+  {
+    "id": 185,
+    "gift_key": "185",
+    "name": "Sonsuzluk Çanağı",
+    "price": 93750,
+    "tier": 9,
+    "image_url": "/hediyesistemi/185.png",
+    "animation": "Kâse kendi çevresinde dönerken taşlar sırayla yanar; kâsenin içinden renkli ışık sütunu yükselir.",
+    "sound": "Mücevher pingleri + metal/altın resonance + ışık hum'u."
+  },
+  {
+    "id": 186,
+    "gift_key": "186",
+    "name": "Antik İmparatorluk Tacı",
+    "price": 94166,
+    "tier": 9,
+    "image_url": "/hediyesistemi/186-Photoroom.png",
+    "animation": "Taç yatay dönerek yaklaşır; her taş farklı anda parlar, finalde taç yukarı kalkıp bir halo altında durur.",
+    "sound": "Taş tınıları + altın spin + kraliyet hit."
+  },
+  {
+    "id": 187,
+    "gift_key": "187",
+    "name": "Kraliyet Asası",
+    "price": 94583,
+    "tier": 9,
+    "image_url": "/hediyesistemi/187.png",
+    "animation": "Asa zemine dikleşir; ucundaki taş üçgen ışık sembolü oluşturup havada kilitlenir.",
+    "sound": "Sihir charge + crystal ping üçlüsü + sembol lock."
+  },
+  {
+    "id": 188,
+    "gift_key": "188",
+    "name": "Mitolojik Güneş Kursu",
+    "price": 95000,
+    "tier": 9,
+    "image_url": "/hediyesistemi/188.png",
+    "animation": "Güneş yüzü yavaşça dönüp merkeze bakar; ışınları sırayla uzar ve bir anda geri kısalır.",
+    "sound": "Güneş hum'u + sıcak shimmer + geniş light sweep."
+  },
+  {
+    "id": 189,
+    "gift_key": "189",
+    "name": "Krezus'un Kasesi",
+    "price": 95416,
+    "tier": 9,
+    "image_url": "/hediyesistemi/189.png",
+    "animation": "Kadeh yana eğilir; içinden sıvı yerine renkli ışık yükselip üstte bir spiral oluşturur.",
+    "sound": "Kristal kadeh tınısı + sıvı swirl + sparkle."
+  },
+  {
+    "id": 190,
+    "gift_key": "190",
+    "name": "Lidya Saray Anahtarı",
+    "price": 95833,
+    "tier": 9,
+    "image_url": "/hediyesistemi/190.png",
+    "animation": "Anahtar havada kilit deliği arar gibi döner; görünmez kilide girip çevrilince altın halka açılır.",
+    "sound": "Metal anahtar tıkırtısı + kilit açma klik + sihirli portal whoosh."
+  },
+  {
+    "id": 191,
+    "gift_key": "191",
+    "name": "Altın Kartal Heykeli",
+    "price": 96250,
+    "tier": 9,
+    "image_url": "/hediyesistemi/191.png",
+    "animation": "Kartal kanatlarını açıp bir kez güçlüce çırpar; kısa bir yükselişten sonra pençeleriyle ışık halkasını kavrar.",
+    "sound": "Kartal kanadı + rüzgâr yükselişi + güçlü chime."
+  },
+  {
+    "id": 192,
+    "gift_key": "192",
+    "name": "Büyük Sardis Simgesi",
+    "price": 96666,
+    "tier": 9,
+    "image_url": "/hediyesistemi/192.png",
+    "animation": "Madalyonun içindeki mimari kabartma ışıkla üç boyutlu yükselir, sonra tekrar madalyon yüzeyine çöker.",
+    "sound": "Taş mimari hum + metal madalyon + derin echo."
+  },
+  {
+    "id": 193,
+    "gift_key": "193",
+    "name": "Ebedi Kalkan",
+    "price": 97083,
+    "tier": 9,
+    "image_url": "/hediyesistemi/193.png",
+    "animation": "Kalkan öne gelir; kartal kabartması kanat açıyormuş gibi ışıkla canlanır ve mavi arka plan dalgalanır.",
+    "sound": "Kalkan clang + kanat flap + asil brass hit."
+  },
+  {
+    "id": 194,
+    "gift_key": "194",
+    "name": "Kraliyet Yüzüğü",
+    "price": 97500,
+    "tier": 9,
+    "image_url": "/hediyesistemi/194.png",
+    "animation": "Yakut taşının içinden kırmızı ışık çekirdeği büyür; yüzük iki tur dönüp taşın çevresinde kırmızı halo bırakır.",
+    "sound": "Ruby pulse + metal spin + kristal bloom."
+  },
+  {
+    "id": 195,
+    "gift_key": "195",
+    "name": "Sardis'in Zirvesi",
+    "price": 97916,
+    "tier": 9,
+    "image_url": "/hediyesistemi/195.png",
+    "animation": "Saray bulutların arasından yükselir; zirveye güneş ışığı vurur, ardından altın sis dağın çevresini sarar.",
+    "sound": "Dağ rüzgârı + büyük yükseliş drone'u + uzak gong."
+  },
+  {
+    "id": 196,
+    "gift_key": "196",
+    "name": "Paktolos İncisi",
+    "price": 98333,
+    "tier": 9,
+    "image_url": "/hediyesistemi/196.png",
+    "animation": "Kabuk iki yana açılır; inci yükselir, havada küçük bir su damlası halkası oluşturup tekrar kabuğa iner.",
+    "sound": "Deniz ambience + kabuk açılma + inci crystal ping."
+  },
+  {
+    "id": 197,
+    "gift_key": "197",
+    "name": "Krezus'un Kılıcı",
+    "price": 98750,
+    "tier": 9,
+    "image_url": "/hediyesistemi/197.png",
+    "animation": "Kılıç yerden yükselip dikleşir; mavi mücevher parlar, bıçak boyunca ışık yukarı doğru koşar.",
+    "sound": "Metal çekilme + mücevher ping + asil sword hum."
+  },
+  {
+    "id": 198,
+    "gift_key": "198",
+    "name": "Lidya Ebedi Tahtı",
+    "price": 99166,
+    "tier": 9,
+    "image_url": "/hediyesistemi/198.png",
+    "animation": "Taht iki yandan altın parçalarla oluşur; aslan başları sırayla parlar, kırmızı perde açılır ve taç halo verir.",
+    "sound": "Taş/metal birleşimi + perde açılma + güçlü kraliyet gong'u."
+  },
+  {
+    "id": 199,
+    "gift_key": "199",
+    "name": "Altın Başak",
+    "price": 99583,
+    "tier": 9,
+    "image_url": "/hediyesistemi/199.png",
+    "animation": "Başak rüzgârda bir yay çizerek eğilir; taneler altın parçacıklara dönüşüp tekrar başağa yerleşir.",
+    "sound": "Tarla rüzgârı + kuru tane tıkırtısı + altın shimmer."
+  },
+  {
+    "id": 200,
+    "gift_key": "200",
+    "name": "Sardis'in Kalbi",
+    "price": 100000,
+    "tier": 9,
+    "image_url": "/hediyesistemi/200.png",
+    "animation": "Kalp taşı bir kez ritmik şekilde parlar; etrafında kırmızı ışık çizgisi kalp konturu çizer ve son pulse ile görüntü sabitlenir.",
+    "sound": "Tek derin kalp atışı + kristal pulse + romantik kısa chime."
+  }
+]

@@ -1,0 +1,63 @@
+{
+  "targetRtp": 0.9656,
+  "version": 1,
+  "status": "simulation-estimate-not-certified",
+  "reports": [
+    {
+      "mode": "normal",
+      "samples": 300000,
+      "seed": 745121,
+      "rtp": 0.9655666333333334,
+      "ci95": [
+        0.9225479136842388,
+        1.0085853529824278
+      ],
+      "naturalBonusFrequency": 0.00216,
+      "freeSpins": 6017,
+      "retriggers": 86,
+      "caps": 0,
+      "maxWinBetMultiple": 2947.94,
+      "certified": false
+    },
+    {
+      "mode": "ante",
+      "samples": 300000,
+      "seed": 158742,
+      "rtp": 0.9629136266666667,
+      "ci95": [
+        0.919517661276839,
+        1.0063095920564944
+      ],
+      "naturalBonusFrequency": 0.004496666666666667,
+      "freeSpins": 12706,
+      "retriggers": 187,
+      "caps": 0,
+      "maxWinBetMultiple": 2304.8,
+      "certified": false
+    },
+    {
+      "mode": "buy",
+      "samples": 30000,
+      "seed": 849375,
+      "rtp": 0.9620699166666666,
+      "ci95": [
+        0.9384942240527027,
+        0.9856456092806306
+      ],
+      "naturalBonusFrequency": null,
+      "freeSpins": 264973,
+      "retriggers": 3956,
+      "caps": 1,
+      "maxWinBetMultiple": 5000.0,
+      "certified": false
+    }
+  ],
+  "anteHeightWeights": [
+    24,
+    25,
+    20,
+    15,
+    10,
+    6
+  ]
+}

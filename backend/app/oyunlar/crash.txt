@@ -1,0 +1,6 @@
+ERISCHAT OYUN MOTORU — CRASH
+Kaynak kod: crash.py
+Ana bağlantı: registry.py → platform_routes.py
+Kapsam: free-play çarpan sınıfları ve crash animasyon metası.
+Para/Lidya/Gem bahis bağlantısı yoktur.
+- 2026-09-19: Motor hardening — boş profil doğrulaması, seçim bilgisi, normalize sonuç alanları ve daha ayrıntılı animasyon metadata eklendi.

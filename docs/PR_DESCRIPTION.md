@@ -1,0 +1,9 @@
+Lidya Yükleme penceresinin altındaki Ödeme isteklerim bölümü kaldırıldı; paket penceresi artık yalnızca paket seçimi/ödeme isteği akışını gösterir. Açık eski ödeme kaydı geçiş uyarısı ve iptal mekanizması korunur.
+
+Profildeki mevcut menüye Lidya geçmişi düğmesi eklendi. İki özgün imagegen PNG:açık tema fildişi/altın,koyu tema zümrüt/altın;Lidya aslan sikkeleri,kayıt defteri ve zaman madalyonu. Gerçek yazı erişilebilir HTML olarak resmin sakin sağ alanına yerleştirilir. Tema değiştiğinde PNG değişir;profil dinamik yeniden kurulursa tek düğme yeniden bağlanır.
+
+Geçmiş tam ekran açılır,20 kayıt/sayfa;sol tarafta Sonraki sayfa ve sağda Önceki sayfa,ortada sayfa numarası vardır. Kayıt düğmeleri işlem numarası,tarih,paket TL,Lidya miktarı ve durumu gösterir. Detayda bonus/ret nedeni/yükleme sonucu bulunur. Devam eden talebe veya görüşmeye dönüş mümkündür. Kapatılmış konuşmalar yeniden kullanıcıya açılmaz;önceki DA arşiv erişimi kuralları korunur.
+
+/history ve /history/{id} yalnızca oturumdaki kullanıcının yeni DA ödeme sistemindeki kayıtlarını döndürür;başka kullanıcının kaydı DA hesabıyla bile bu müşteri uç noktasından okunamaz. Tüm DA'lar inceleyip kayıt DA ana listesinden kalksa da müşteri geçmişinde kalır. Oyun/harcama ledger'ı bu ekrana dahil değildir;taşınan içerik mevcut ödeme istekleridir. Şema değişikliği yok.
+
+Doğrulama:20 FastAPI/SQLAlchemy testi geçti.43 kişisel kayıt20/20/3,boş hesap,başka hesaba erişim403,kimlik doğrulama401 ve DA incelemesi sonrası kişisel geçmişin korunması dahil. Chromium tam müşteri+iki DA akışında profil düğmesi ve iki PNG yüklenmesi,iki tema×üç ekran tam ekran geçmiş,20/20/3 gezinti,sol Sonraki,hesap değişimi ve önceki ödeme/dekont/bildirim/DA inceleme regresyonları geçti. Üretim PostgreSQL veya gerçek Android cihazda doğrudan test yapılmadı.

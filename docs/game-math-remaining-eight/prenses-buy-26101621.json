@@ -1,0 +1,28 @@
+{
+  "roundHitFrequency": 0.994235,
+  "netProfitFrequency": 0.330315,
+  "mode": "buy",
+  "samples": 200000,
+  "seed": 26101621,
+  "rtp": 0.9600657175000128,
+  "ci95": [
+    0.9548135287387699,
+    0.9653179062612557
+  ],
+  "paid_spin_hit": null,
+  "bonus_frequency": null,
+  "free_spins": 3158860,
+  "max_observed_x": 5000.0,
+  "cap_count": 2,
+  "target_rtp": 0.965,
+  "note": "Monte Carlo estimate; not certified RTP. Includes full bonuses, retriggers, global pool and cap.",
+  "game": "prenses",
+  "certified": false,
+  "modelVersion": "prenses-v1",
+  "source_sha256": {
+    "backend/app/prenses_engine.py": "05e0bf6b55bba1b650aff6aa3cf39a882e84d9b3d02d900ab5ddbabf6e4edd97",
+    "backend/app/prenses-math.json": "f18a86d778ee97075340d4dc0158ebafa6d39d38cee72089cfc79c60e64cdeca",
+    "tests/prenses_simulate.py": "7be0c8d6f1abee6dc9ec95469e93f8405d94db4c501889c306e5288275ada2f1",
+    "tests/game_math_audit.py": "8a639e1c1df4a866287c2319dc0131b968c5d9992ded98aecce19d10dc5b3b38"
+  }
+}

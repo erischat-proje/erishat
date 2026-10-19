@@ -1,0 +1,25 @@
+{
+  "mode": "buy",
+  "samples": 50000,
+  "seed": 15103402,
+  "rtp": 0.9499391,
+  "ci95": [
+    0.9300995948829024,
+    0.9697786051170977
+  ],
+  "paidHitFrequency": null,
+  "bonusFrequency": null,
+  "freeSpins": 534678,
+  "expandingSpins": 183755,
+  "retriggers": 3480,
+  "caps": 22,
+  "maxWinBetMultiple": 5000.0,
+  "certified": false,
+  "game": "firavun",
+  "source_commit": "6360f7c3b7d7fc3b54210fb0162ead384d1425a3",
+  "source_sha256": {
+    "backend/app/firavun_engine.py": "7e4728d544e0f89da415128e41dcd45b02b6f2496db3bef34d398cdaeb654a9e",
+    "backend/app/firavun-math.json": "9376e1ec9d5158f5bebad9670c205b6c051f8861d04be17d1ac3ac7ed182db63",
+    "tests/firavun_simulate.py": "b4f8767c44ff6fd77352d17bfc8ee3297d0721eaa17c291b1194d20ffd67eaa7"
+  }
+}

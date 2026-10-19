@@ -1,0 +1,13 @@
+/* ERISCHAT_LIDYA_GLOBAL_CONTRAST_V2 */
+html[data-eris-theme="light"] {--lidya-action-bg:#c9a36a;--lidya-action-fg:#24190e;--lidya-action-border:#936d39}
+html[data-eris-theme="dark"] {--lidya-action-bg:#302b24;--lidya-action-fg:#fff1d7;--lidya-action-border:#9e8356}
+/* Plain action buttons in non-game forms/dialogs. PNG-backed controls excluded. */
+html[data-eris-theme] :is(dialog,[role="dialog"],.settings-panel,.settings-page)
+ button:is([type="submit"],[type="reset"],.confirm,.cancel,.save,.ea-action,.ea-back):not(.ea-png-button):not([style*="background-image"]):not([class*="png"]):not([class*="game"]) {
+ background:var(--lidya-action-bg)!important;
+ color:var(--lidya-action-fg)!important;
+ border-color:var(--lidya-action-border)!important;
+ text-shadow:none!important;
+}
+html[data-eris-theme] :is(dialog,[role="dialog"],.settings-panel,.settings-page)
+ button:is([type="submit"],[type="reset"],.confirm,.cancel,.save,.ea-action,.ea-back):not(.ea-png-button):not([style*="background-image"]):not([class*="png"]):not([class*="game"]) :is(span,b,strong,small){color:inherit!important;text-shadow:none!important}

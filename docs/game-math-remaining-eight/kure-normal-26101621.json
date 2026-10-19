@@ -1,0 +1,26 @@
+{
+  "mode": "normal",
+  "samples": 2000000,
+  "seed": 26101621,
+  "rtp": 0.962889205,
+  "ci95": [
+    0.9471270230626758,
+    0.9786513869373241
+  ],
+  "naturalBonusFrequency": 0.0021305,
+  "freeSpins": 39813,
+  "retriggers": 606,
+  "caps": 0,
+  "maxWinBetMultiple": 3874.26,
+  "roundHitFrequency": 0.5400555,
+  "netProfitFrequency": 0.165225,
+  "certified": false,
+  "game": "kure",
+  "modelVersion": 1,
+  "source_sha256": {
+    "backend/app/kure_engine.py": "ccb59b6967197fd9655000837b59d75382e12e9268491df2faf595c85f51ddf9",
+    "backend/app/kure-math.json": "a012c193689e27d81e86e6d349413afaeb685fe228bd5666ea32fae0bbacba69",
+    "tests/kure_simulate.py": "4ec3c5b42c0b3223b16b80b683fffb8dccbed182ffa110b22d7e2cdd37985a5c",
+    "tests/game_math_audit.py": "8a639e1c1df4a866287c2319dc0131b968c5d9992ded98aecce19d10dc5b3b38"
+  }
+}

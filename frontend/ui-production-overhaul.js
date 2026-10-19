@@ -1,0 +1,498 @@
+(() => {
+  'use strict';
+
+  const API = () => (
+    window.ERIS_API ||
+    window.ERISCHAT_API ||
+    'https://erischat-api-production.up.railway.app/v1'
+  ).replace(/\/$/, '');
+
+  const token = () =>
+    localStorage.getItem('erischat_access_token') ||
+    localStorage.getItem('erischat.accessToken.v1') ||
+    localStorage.getItem('token') || '';
+
+  const headers = () => token()
+    ? {Authorization: 'Bearer ' + token(), Accept: 'application/json'}
+    : {Accept: 'application/json'};
+
+  const api = async (path, options = {}) => {
+    const h = {...headers(), ...(options.headers || {})};
+    if (options.body && !h['Content-Type']) h['Content-Type'] = 'application/json';
+    const r = await fetch(API() + path, {...options, headers: h});
+    const b = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(b.detail || `HTTP ${r.status}`);
+    return b;
+  };
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, s =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])
+  );
+
+  function style() {
+    if (document.getElementById('eris-production-ui-css')) return;
+
+    const s = document.createElement('style');
+    s.id = 'eris-production-ui-css';
+    s.textContent = `
+      /* Production UI cleanup */
+      #demoAudit,
+      #demoAudit + *,
+      [data-demo-only],
+      .demo-only,
+      .demo-control,
+      #demoControlCenter {
+        display:none!important;
+      }
+
+      .eris-ui-search {
+        display:flex;
+        gap:8px;
+        margin:0 0 14px;
+      }
+
+      .eris-ui-search input {
+        flex:1;
+        min-width:0;
+        height:44px;
+        border:1px solid var(--ui-line);
+        background:color-mix(in srgb, var(--ui-panel) 3%, transparent);
+        color:var(--ui-ink);
+        border-radius:15px;
+        padding:0 14px;
+        outline:none;
+      }
+
+      .eris-ui-search button {
+        height:44px;
+        border:0;
+        border-radius:15px;
+        padding:0 15px;
+        color:var(--ui-ink);
+        font-weight:800;
+        background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg));
+      }
+
+      .eris-search-result {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        width:100%;
+        border:1px solid var(--ui-line);
+        background:color-mix(in srgb, var(--ui-panel) 2%, transparent);
+        color:var(--ui-ink);
+        border-radius:16px;
+        padding:10px;
+        text-align:left;
+        margin-bottom:8px;
+      }
+
+      .eris-search-result .grow {
+        flex:1;
+        min-width:0;
+      }
+
+      .eris-search-result small {
+        display:block;
+        color:var(--ui-muted);
+        font-size:8px;
+        margin-top:3px;
+      }
+
+      .eris-own-room {
+        width:100%;
+        margin-top:10px;
+        border:1px solid var(--ui-line);
+        background:linear-gradient(135deg,color-mix(in srgb, var(--ui-button) 9%, transparent),color-mix(in srgb, var(--ui-danger-bg) 6%, transparent));
+        color:var(--ui-ink);
+        border-radius:16px;
+        padding:12px;
+        text-align:left;
+      }
+
+      .eris-own-room b {font-size:10px}
+      .eris-own-room small {
+        display:block;
+        color:var(--ui-muted);
+        font-size:8px;
+        margin-top:4px;
+      }
+
+      /* Requested room header: no left back button. */
+      #erisRoomSurface .eris-room-top .room-action.back {
+        display:none!important;
+      }
+
+      #erisRoomSurface .eris-room-top {
+        gap:6px!important;
+        padding-left:10px!important;
+      }
+
+      /* Oda medya kontrollerinin gorunurlugunu canonical room controls yonetir. */
+
+      #erisRoomSurface #erisRoomMoreTop {
+        order:4!important;
+      }
+
+      #erisRoomSurface #erisRoomLeaveTop {
+        order:5!important;
+      }
+
+      #erisRoomSurface .eris-room-title {
+        order:1!important;
+      }
+
+      #erisRoomSurface #erisRoomLevel {
+        order:3!important;
+      }
+
+      #erisRoomSurface .eris-room-compose {
+        display:flex!important;
+      }
+
+      #erisRoomSurface .eris-room-compose input {
+        order:1!important;
+      }
+
+      #erisRoomSurface #erisRoomGiftInline {
+        order:2!important;
+      }
+
+      #erisRoomSurface #erisRoomMicInline {
+        order:3!important;
+      }
+
+      #erisRoomSurface #erisLiveSend {
+        order:4!important;
+      }
+
+      #erisRoomSurface .room-v5-panel,
+      #erisRoomSurface .room-v3-panel {
+        z-index:500!important;
+      }
+
+      .eris-seat-action-sheet {
+        position:fixed;
+        inset:auto 10px 18px;
+        z-index:7000;
+        display:none;
+        padding:10px;
+        border:1px solid var(--ui-line);
+        border-radius:20px;
+        background:color-mix(in srgb, var(--ui-panel) 97%, transparent);
+        backdrop-filter:blur(22px);
+        box-shadow:0 20px 70px var(--ui-shadow);
+      }
+
+      .eris-seat-action-sheet.show {display:block}
+
+      .eris-seat-action-sheet b {
+        display:block;
+        font-size:11px;
+        margin:3px 4px 9px;
+      }
+
+      .eris-seat-actions {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:7px;
+      }
+
+      .eris-seat-actions button {
+        min-height:42px;
+        border:1px solid var(--ui-line);
+        background:color-mix(in srgb, var(--ui-raised) 3%, transparent);
+        color:var(--ui-ink);
+        border-radius:12px;
+        font-size:9px;
+      }
+
+      .eris-seat-actions button.danger {
+        background:color-mix(in srgb, var(--ui-danger-bg) 9%, transparent);
+        border-color:var(--ui-danger);
+      }
+
+      @media(min-width:760px) {
+        .eris-ui-search {max-width:760px}
+        .eris-seat-action-sheet {
+          left:50%;
+          right:auto;
+          width:420px;
+          transform:translateX(-50%);
+        }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function toast(message) {
+    if (typeof window.toast === 'function') window.toast(message);
+    else console.warn('[ErisChat]', message);
+  }
+
+  function hideDemoSurface() {
+    document.querySelectorAll('#demoAudit,.demo-only,.demo-control,[data-demo-only],#demoControlCenter')
+      .forEach(x => x.remove());
+
+    document.querySelectorAll('.section').forEach(section => {
+      const text = section.textContent || '';
+      if (/demo kontrol merkezi/i.test(text)) section.remove();
+    });
+  }
+
+  async function userById(value) {
+    const id = String(value || '').trim();
+    if (!id) throw new Error('Kullanıcı ID gir.');
+    if (!token()) throw new Error('Önce giriş yapmalısın.');
+
+    const u = await api('/users/' + encodeURIComponent(id));
+    if (!u || !u.id) throw new Error('Kullanıcı bulunamadı.');
+    return u;
+  }
+
+  function installMessageSearch() {
+    const view = document.getElementById('messages');
+    if (!view || view.dataset.productionSearch === '1' || view.querySelector('[data-dm-search]')) return;
+
+    view.dataset.productionSearch = '1';
+
+    const title = view.querySelector('.title');
+    const box = document.createElement('div');
+    box.className = 'eris-ui-search';
+    box.innerHTML = `
+      <input id="erisMessageUserSearch"
+             autocomplete="off"
+             inputmode="text"
+             placeholder="Kullanıcı ID ile ara…">
+      <button id="erisMessageUserSearchBtn" type="button">Ara</button>
+    `;
+
+    title?.after(box);
+
+    const result = document.createElement('div');
+    result.id = 'erisMessageSearchResult';
+    view.insertBefore(result, view.querySelector('.list'));
+
+    const run = async () => {
+      const input = box.querySelector('input');
+      const value = input?.value?.trim();
+      if (!value) return toast('Kullanıcı ID gir.');
+
+      result.innerHTML =
+        "<div class=\"card\" style=\"padding:12px;font-size:9px;color:var(--ui-ink)\">Aranıyor…</div>";
+
+      try {
+        const u = await userById(value);
+        const name = u.nickname || u.username || 'Anonim kullanıcı';
+        const publicId = u.public_id || u.id;
+
+        result.innerHTML = `
+          <button class="eris-search-result" type="button">
+            <div class="ava round">${esc((name[0] || '?').toUpperCase())}</div>
+            <div class="grow">
+              <b>${esc(name)}</b>
+              <small>ID: ${esc(publicId)} • Mesaj gönder</small>
+            </div>
+            <span>›</span>
+          </button>
+        `;
+
+        result.querySelector('button').onclick = async () => {
+          try {
+            const c = await window.ErisChatDM?.create?.(
+              u.id,
+              name
+            );
+            if (!c) throw new Error('Konuşma oluşturulamadı.');
+            result.innerHTML = '';
+          } catch (e) {
+            toast(e.message || 'Konuşma açılamadı.');
+          }
+        };
+      } catch (e) {
+        result.innerHTML = `
+          <div class="card" style="padding:12px;font-size:9px;color:var(--ui-ink)">
+            ${esc(e.message || 'Kullanıcı bulunamadı.')}
+          </div>
+        `;
+      }
+    };
+
+    box.querySelector('button').onclick = run;
+    box.querySelector('input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') run();
+    });
+  }
+
+  async function installOwnRoom() {
+    const profile = document.getElementById('profile');
+    if (!profile || profile.dataset.ownRoom === '1') return;
+
+    profile.dataset.ownRoom = '1';
+
+    const card = profile.querySelector('.profile');
+    if (!card) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'eris-own-room';
+    wrap.innerHTML = `
+      <b>🏠 Odam</b>
+      <small id="erisOwnRoomText">Odan kontrol ediliyor…</small>
+    `;
+    card.after(wrap);
+
+    try {
+      if (!window.ErisRoom?.list) throw new Error('Oda servisi hazır değil.');
+      const data = await window.ErisRoom.list();
+      const rooms = Array.isArray(data)
+        ? data
+        : (data.rooms || data.items || data.data || []);
+
+      const me =
+        localStorage.getItem('eris_user_id') ||
+        window.ErisCurrentUserId ||
+        '';
+
+      const mine = rooms.find(r =>
+        r.is_owner === true ||
+        String(r.owner_id || '') === String(me)
+      );
+
+      if (!mine) {
+        wrap.querySelector('small').textContent =
+          'Henüz kendi odan yok.';
+        return;
+      }
+
+      const id = mine.id || mine.public_id;
+      const name = mine.name || 'Odam';
+
+      wrap.querySelector('small').textContent =
+        `${name} • ${mine.seat_count || mine.capacity || 8} koltuk`;
+
+      wrap.onclick = () => {
+        window.openRoom?.(id, name);
+      };
+    } catch (_) {
+      wrap.querySelector('small').textContent =
+        'Oda bilgisi giriş yaptıktan sonra yüklenir.';
+    }
+  }
+
+  function roomPermission() {
+    const p = window.__erisRoomPermissions || {};
+    return !!(p.is_owner || p.is_moderator || p.can_manage);
+  }
+
+  function hardenRoomHeader() {
+    const surface = document.getElementById('erisRoomSurface');
+    if (!surface) return;
+
+    surface.querySelector('.room-action.back')?.setAttribute('aria-hidden', 'true');
+    surface.querySelector('.room-action.back')?.style.setProperty(
+      'display','none','important'
+    );
+
+    const staff = roomPermission();
+
+    [
+      '[data-management-tab]',
+      '[data-room-management]',
+      '[data-room-settings]',
+      '[data-room-admin]',
+      '#roomSettingsBtn',
+      '#roomThemeBtn',
+      '#roomLockBtn',
+      '#roomMuteBtn',
+      '#roomKickBtn',
+      '#roomSeatLockBtn',
+      '#roomModerationBtn',
+      '#roomMusicManage'
+    ].forEach(sel => {
+      surface.querySelectorAll(sel).forEach(el => {
+        if (staff) {
+          el.style.removeProperty('display');
+          el.removeAttribute('aria-hidden');
+        } else {
+          el.style.setProperty('display','none','important');
+          el.setAttribute('aria-hidden','true');
+        }
+      });
+    });
+  }
+
+  function installSeatLongPress() {
+    /* Tek koltuk motoru: room-reference-ui.js -> ErisRoomSeatMenu. */
+    document.querySelector('.eris-seat-action-sheet')?.remove();
+  }
+
+  function normalizeRoom() {
+    const surface = document.getElementById('erisRoomSurface');
+    if (!surface) return;
+
+    hardenRoomHeader();
+
+    const compose = surface.querySelector('.eris-room-compose');
+    if (compose) {
+      const send = compose.querySelector('#erisLiveSend');
+      const gift = compose.querySelector('#erisRoomGiftInline');
+
+      if (gift && send && gift.parentElement !== compose) {
+        compose.insertBefore(gift, send);
+      }
+    }
+  }
+
+  function boot() {
+    style();
+    hideDemoSurface();
+    installMessageSearch();
+    installOwnRoom();
+    normalizeRoom();
+  }
+
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('[data-tab]');
+    if (tab && tab.dataset.tab === 'messages') {
+      setTimeout(() => {
+        installMessageSearch();
+        installOwnRoom();
+      }, 50);
+    }
+  });
+
+  window.addEventListener('erischat:auth', e => {
+    if (e.detail?.state === 'ready') {
+      setTimeout(() => {
+        installMessageSearch();
+        installOwnRoom();
+      }, 100);
+    }
+  });
+
+  window.addEventListener('erischat:room-opened', () =>
+    setTimeout(normalizeRoom, 60)
+  );
+
+  let roomFrame=0;
+  const observer = new MutationObserver(() => {
+    if(roomFrame||!document.getElementById('erisRoomSurface'))return;
+    roomFrame=requestAnimationFrame(()=>{roomFrame=0;observer.disconnect();normalizeRoom();observer.observe(document.body,{childList:true,subtree:true});});
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      boot();
+      observer.observe(document.body, {childList:true, subtree:true});
+    }, {once:true});
+  } else {
+    boot();
+    observer.observe(document.body, {childList:true, subtree:true});
+  }
+
+  window.ErisProductionUI = {
+    boot,
+    normalizeRoom,
+    searchUser: userById
+  };
+})();
