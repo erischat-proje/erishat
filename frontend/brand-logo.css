@@ -12,3 +12,10 @@
 html[data-eris-theme="dark"] .app>.top .brand.eris-brand .lidya-brand-light{display:none}
 html[data-eris-theme="dark"] .app>.top .brand.eris-brand .lidya-brand-dark{display:block}
 .eris-shared-brand .eris-brand-image{mix-blend-mode:normal}
+
+/* LidyaChat light/dark horizontal logo consistency */
+.lidya-brand-light,.lidya-auth-light{display:block}
+.lidya-brand-dark,.lidya-auth-dark{display:none}
+html[data-eris-theme="dark"] .lidya-brand-light,html[data-eris-theme="dark"] .lidya-auth-light{display:none!important}
+html[data-eris-theme="dark"] .lidya-brand-dark,html[data-eris-theme="dark"] .lidya-auth-dark{display:block!important}
+.app>.top .brand.eris-brand .eris-brand-image,.eris-shared-brand .eris-brand-image{object-fit:contain!important;mix-blend-mode:normal!important}

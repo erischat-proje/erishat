@@ -636,7 +636,7 @@ async function registerAnonymous() {
         });
       }
     } catch (error) {
-      console.warn('[ErisChat] auth unavailable', error);
+      console.warn('[LidyaChat] auth unavailable', error);
       addGate().querySelector('#erisGoogleStatus').textContent = error.message || 'Giriş sistemi kullanılamıyor.';
       emit('erischat:auth',{state:'error',error:error.message});
     }

@@ -299,10 +299,10 @@ column-gap:9px
 <script>const viewScroll=new Map();function showView(id,btn){const target=document.getElementById(id);if(!target?.classList.contains('view'))return;const content=document.querySelector('.app>.content'),previous=content?.querySelector(':scope>.view.show');if(previous)viewScroll.set(previous.id,content.scrollTop);document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id)?.classList.add('show');if(id==='profile')window.ErisProfileHub?.reset?.();if(id==='vip')window.ErisChatVIP?.load?.();if(id==='explore'){window.ErisChatStories?.load?.();window.ErisSocialFeed?.load?.()}document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));const nav=btn?.closest('.nav')?btn:[...document.querySelectorAll('.nav button')].find(x=>x.getAttribute('onclick')?.includes("showView('"+id+"'"));nav?.classList.add('active');if(content)content.scrollTop=viewScroll.get(id)||0;document.querySelectorAll('.nav button').forEach(x=>x.setAttribute('aria-current',x===nav?'page':'false'));window.dispatchEvent(new CustomEvent('erischat:view-changed',{detail:{id}}))}function tab(id,btn){['rooms','people','followingRooms'].forEach(x=>{const panel=document.getElementById(x);if(panel)panel.style.display=x===id?'grid':'none'});document.querySelectorAll('#explore .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}function openChat(name){window.toast?.('Kullanıcıyı arama ekranından seç.');showView('search')}
 function closeChat(){document.getElementById('chat')?.classList.remove('show','eris-floating-dm')}
 async function sendChat(){
- const input=document.getElementById('chatInput'),message=input?.value.trim(),id=window.ErisChatDM?.activeId?.();
+ const input=document.getElementById('chatInput'),message=input?.value.trim(),id=window.LidyaChatDM?.activeId?.();
  if(!message)return;
  if(!id){toast('Önce bir konuşma aç.');return}
- try{await window.ErisChatDM.send(id,message);input.value=''}
+ try{await window.LidyaChatDM.send(id,message);input.value=''}
  catch(error){toast(error.message||'Mesaj gönderilemedi.')}
 }
 </script>
@@ -325,7 +325,7 @@ async function sendChat(){
      fetch(api()+'/discover/nearby?limit=50',{headers}).then(r=>r.ok?r.json():[])
    ]);
    const roomList=Array.isArray(rooms)?rooms:(rooms?.rooms||rooms?.items||rooms?.data||[]); const peopleList=Array.isArray(people)?people:(people?.users||people?.items||people?.data||[]); const roomRows=roomList.filter(x=>String(x.name||'').toLowerCase().includes(q)).map(x=>({type:'Oda',title:x.name,sub:(x.member_count||0)+' kişi • seviye '+(x.level||1),run:()=>window.openRoom?.(x.room_id||x.id,x.name)}));
-   const userRows=peopleList.filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.ErisChatDM?.create?.(x.user_id,x.nickname)}));
+   const userRows=peopleList.filter(x=>String(x.nickname||'').toLowerCase().includes(q)).map(x=>({type:'Kullanıcı',title:x.nickname,sub:x.city||'Yakında',run:()=>window.LidyaChatDM?.create?.(x.user_id,x.nickname)}));
    const matches=[...roomRows,...userRows]; out.innerHTML='';
    if(!matches.length){out.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--ui-ink)">Eşleşme bulunamadı.</div>';return}
    matches.forEach(m=>{const b=document.createElement('button');b.className='item card';b.innerHTML='<div class="ava">◈</div><div class="grow"><b></b><small></small></div>';b.querySelector('b').textContent=m.title;b.querySelector('small').textContent=m.type+' • '+m.sub;b.onclick=m.run;out.appendChild(b)})
