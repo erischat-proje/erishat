@@ -1,1 +1,0 @@
-"""ErisChat application package."""

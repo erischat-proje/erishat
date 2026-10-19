@@ -1,7 +1,0 @@
-2026-10-16 Bastet presentation verification
-PASS30 layouts:light/dark ×normal/bonus/respin ×320x568,393x820,412x915,844x390,1440x900. Full viewport bounds,no horizontal overflow,5:4 canvas,single visible actor,8 PNG poses+4 themed symbols decoded. Portrait fits;short/landscape scroll internally.
-PASS real renderer with isolated synthetic API:base/bonus Wild target charm,anticipation/action/celebrate/idle,live theme change during action,150Lidya payout,bonus remaining4 consumes1 and gains2 =>5,sticky1/20.
-PASS zero-free-spin resumed respin showsRESPİN/5locked cells/free cost,continues without charge and completes with200Lidya payout. Locked cat objects and numeric Wild multipliers draw their authoritative symbols. Correct Egyptian names replace copied Western labels.
-PASS rules lock/Escape;server purchase price120x,one UUID/request/debit6000at stake50on double confirmation,eight spins;cancel0requests;active bonus/respin/insufficient balance locks;network retry identical UUID/payload. Close/background cancels charm nodes and stops auto. Reduced motion skips moving charm and lock/celebration particles.
-No browser errors/missing Bastet assets. Internal screenshots reviewed,not distributed. Backend/math/model/natural-bonus wrapper/wallet/pending payload unchanged. No RTP measurement or certification.
-PASS installer/apply twice/byte-exact output/conflict abort before writes;filtered local Git worktree/index/commit/push keeps unrelated8MiB blob unhydrated;20changed paths,no deletions;ZIP integrity.
