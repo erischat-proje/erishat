@@ -35,6 +35,14 @@ def conversation_page(db, user_id, folder, limit, offset):
     locked = func.coalesce(ConversationFolder.locked, False)
     archived = func.coalesce(ConversationFolder.archived, False)
     query = query.where(locked.is_(True) if folder == 'locked' else and_(locked.is_(False), archived.is_(folder == 'archive')))
+    # Do not show empty DM rows after local or mutual deletion.
+    visible = select(Message.id).where(
+        Message.conversation_id == Conversation.id,
+        ~select(MessageHidden.id).where(MessageHidden.message_id == Message.id,
+                                        MessageHidden.user_id == user_id).exists()
+    ).exists()
+    family = select(Family.id).where(Family.chat_conversation_id == Conversation.id).exists()
+    query = query.where((Conversation.type == 'welcome') | family | visible)
     rows = list(db.scalars(query.order_by(latest.desc().nullslast(), Conversation.created_at.desc(), Conversation.id).offset(offset).limit(limit)).unique())
     if not rows:
         return []
