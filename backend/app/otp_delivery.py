@@ -43,13 +43,13 @@ def send_email_otp(
     purpose: str,
 ) -> None:
     subject = (
-        "ErisChat hesap silme doğrulama kodun" if purpose == "delete-account"
-        else "ErisChat giriş doğrulama kodun" if purpose == "login"
-        else "ErisChat kayıt doğrulama kodun"
+        "LidyaChat hesap silme doğrulama kodun" if purpose == "delete-account"
+        else "LidyaChat giriş doğrulama kodun" if purpose == "login"
+        else "LidyaChat kayıt doğrulama kodun"
     )
 
     body = (
-        f"ErisChat doğrulama kodun: {code}\n\n"
+        f"LidyaChat doğrulama kodun: {code}\n\n"
         "Bu kod 5 dakika geçerlidir. "
         "Kodu kimseyle paylaşma."
     )
