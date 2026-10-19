@@ -5,3 +5,10 @@
 .eris-welcome-logo.eris-shared-brand,#erisOnboarding .eris-logo.eris-shared-brand{display:block;width:min(250px,100%);height:auto;max-height:none;margin:0 auto 22px;border:0;border-radius:0;background:none;box-shadow:none;font-size:0;line-height:1}
 .eris-shared-brand .eris-brand-image{display:block;width:100%;height:auto;max-height:none;object-fit:contain;mix-blend-mode:screen}
 @media(max-width:360px){.app>.top .brand.eris-brand{margin-right:8px;max-width:142px}.app>.top .brand.eris-brand .eris-brand-image{max-height:42px}.eris-welcome-logo.eris-shared-brand,#erisOnboarding .eris-logo.eris-shared-brand{width:min(220px,100%)}}
+
+/* LIDYACHAT_HORIZONTAL_V2: theme-aware, never crop or screen-blend logos. */
+.app>.top .brand.eris-brand .eris-brand-image{mix-blend-mode:normal;object-fit:contain;max-height:48px}
+.app>.top .brand.eris-brand .lidya-brand-dark{display:none}
+html[data-eris-theme="dark"] .app>.top .brand.eris-brand .lidya-brand-light{display:none}
+html[data-eris-theme="dark"] .app>.top .brand.eris-brand .lidya-brand-dark{display:block}
+.eris-shared-brand .eris-brand-image{mix-blend-mode:normal}
