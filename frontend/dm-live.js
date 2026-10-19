@@ -4,6 +4,11 @@
   const esc = value => String(value ?? '');
   const escapeHtml = value => esc(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   function dmIcon(name){const art={chat:'<path d="M4 4h16v12H9l-5 4Z"/><path d="M8 8h8M8 12h5"/>',camera:'<path d="M8 5 9 3h6l1 2h5v15H3V5Z"/><circle cx="12" cy="12" r="4"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',gift:'<path d="M3 8h18v13H3ZM2 5h20v3H2ZM12 5v16M12 5C4 5 6-2 12 5ZM12 5c8 0 6-7 0 0Z"/>',search:'<circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/>'};return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(art[name]||art.chat)+'</svg>';}
+  // LIDYACHAT_WELCOME_IDENTITY_V3: identify system chats by conversation, never display name.
+  const systemConversationIds = new Set();
+  const SYSTEM_AVATAR = './assets/lidyachat-system-avatar.png?v=welcome-v3';
+  const isSystemConversation = (id = activeConversationId) =>
+    String(id || '').startsWith('welcome:') || systemConversationIds.has(String(id));
   let activeConversationId = null;
   let chatRevision=0,listRevision=0;
   const textSends=new Map();
@@ -69,6 +74,11 @@
   }
 
   function renderMessage(message, mine) {
+    if (isSystemConversation()) {
+      mine = false;
+      message = {...message, sender_avatar_asset:SYSTEM_AVATAR, sender_avatar:null,
+        sender_frame_asset:null, bubble_asset:null};
+    }
     const row = document.createElement('div');
     row.className = 'bubble' + (mine ? ' me' : '');
     if (message?.media_type === 'image' || message?.media_type === 'voice') row.classList.add('dm-media-bubble');
@@ -400,9 +410,13 @@
       if (suppressNextClick && row === lastLongPressRow) { suppressNextClick = false; event.preventDefault();event.stopImmediatePropagation(); return; }
       if (messageSelectionMode && row) { event.preventDefault();event.stopImmediatePropagation();setSelected(row); }
     },true);
+    syncChatCompose(chat);
+  }
+
+  function syncChatCompose(chat) {
     const compose = chat.querySelector('.compose');
     const chatName=String(chat.querySelector('.chatHead b')?.textContent||'');
-    const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=chatName==='ErisChat';
+    const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=isSystemConversation();
     if(compose&&systemChat){compose.style.display='none';}
     else if(compose){compose.style.display='';}
     if (compose && !familyChat && !systemChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.innerHTML=dmIcon('gift'); button.title='Hediye gönder';button.setAttribute('aria-label','Hediye gönder'); compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
@@ -738,8 +752,9 @@
         const family = c.type === 'family' || / aile sohbeti$/i.test(String(c.name || ''));
         const group = c.type === 'group';
         const welcome = c.type === 'welcome';
+        if (welcome) systemConversationIds.add(String(id));
         const name = group ? (c.name || 'Mesaj grubu') : family ? (c.name || 'Aile sohbeti') : (welcome ? 'LidyaChat' : (other.nickname || other.name || c.name || 'Kullanıcı'));
-        const avatar = welcome ? './assets/lidyachat-system-avatar.png' : avatarValue(other.avatar_asset || other.avatar_url || other.avatar, name.slice(0, 1).toUpperCase());
+        const avatar = welcome ? SYSTEM_AVATAR : avatarValue(other.avatar_asset || other.avatar_url || other.avatar, name.slice(0, 1).toUpperCase());
         const b = document.createElement('button');
         b.className = 'item';b.dataset.conversationId=String(id);
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small></small></div><span class="dm-unread" hidden></span>';
@@ -821,12 +836,19 @@
     const title = chat.querySelector('.chatHead b');
     if (title) {title.textContent = name;window.ErisRoleBadges?.bind(title,participantId);}
     installChatTools(chat);
+    syncChatCompose(chat);
+    chat.classList.toggle('dm-system-conversation', isSystemConversation());
+    const subtitle = chat.querySelector('.chatHead small');
+    if (subtitle) {
+      if (!subtitle.dataset.normalDmLabel) subtitle.dataset.normalDmLabel = subtitle.textContent;
+      subtitle.textContent = isSystemConversation() ? 'Resmî sistem mesajları' : subtitle.dataset.normalDmLabel;
+    }
     window.ErisCalls?.syncChat?.();
     const compose=chat.querySelector('.compose');
-    if(compose){compose.hidden=name==='ErisChat';compose.style.display=name==='ErisChat'?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||name==='ErisChat');}
+    if(compose){compose.hidden=isSystemConversation();compose.style.display=isSystemConversation()?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||isSystemConversation());}
     renderAvatar(chat.querySelector('.chatHead .ava'), avatar, name?.slice(0, 1)?.toUpperCase());
     document.getElementById('eris-required-gift')?.remove();
-    if(participantId && name!=='ErisChat' && !/ aile sohbeti$/i.test(name))
+    if(participantId && !isSystemConversation() && !/ aile sohbeti$/i.test(name))
       requiredGift(id,participantId).catch(e=>console.warn('Gift restriction',e));
 
     releaseMediaUrls(body);body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Mesajlar yükleniyor…</div>';
@@ -838,7 +860,7 @@
       if (!messages.length) body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Henüz mesaj yok.</div>';
       messages.forEach(m => {
         const senderId = m.sender_id ?? m.user_id;
-        const mine = name==='ErisChat' ? false : (typeof m.is_mine === 'boolean' ? m.is_mine : String(senderId) === String(currentUserId));
+        const mine = isSystemConversation() ? false : (typeof m.is_mine === 'boolean' ? m.is_mine : String(senderId) === String(currentUserId));
         body.appendChild(renderMessage(m, mine));
       });
       refreshSelectionBar();
@@ -859,6 +881,7 @@
   }
 
   async function sendMessage(id, text) {
+    if (isSystemConversation(id)) throw new Error('Bu sistem sohbetine yanıt gönderilemez.');
     if (!id || !text?.trim() || !api()?.sendMessage) throw new Error('Geçerli konuşma gerekli.');
     if(textSends.has(String(id)))return textSends.get(String(id));
     const task=(async()=>{const message=await api().sendMessage(id,text.trim());
@@ -978,6 +1001,7 @@
       listRevision++;chatRevision++;activeConversationId=null;
       currentUserId = null;
       loadedForUserId = null;
+      systemConversationIds.clear();
       vaultToken='';window.ErisChatDMVaultToken='';inboxFolder='inbox';selectedConversations.clear();
       clearTimeout(dmReconnectTimer);
       dmReconnectTimer = null;
