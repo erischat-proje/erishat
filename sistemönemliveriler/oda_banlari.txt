@@ -1,2 +1,0 @@
-# ErisChat sistem kaydı: oda_banlari.txt
-# JSONL kayıtları aşağıya eklenir.

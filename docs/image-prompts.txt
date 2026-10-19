@@ -1,5 +1,0 @@
-Mode:built-in imagegen. Two separate generated images,no programmatically drawn substitute.
-Shared prompt:Production bitmap artwork for ErisChat profile menu button,horizontal3:1 full-bleed luxury Lydian antique treasury aesthetic.Left half:exquisitely detailed antique Lydian lion coins beside an open historic transaction ledger and an elegant circular history clock medallion,gold laurel engraving.Right half:calm spacious stone area for accessible app text.Thin ornate gold perimeter border with rounded corners.Museum-quality realistic3D still-life illustration.No text,letters,numbers,watermarks,modern currency symbols or people.
-Light palette:ivory marble,champagne gold,warm cream daylight.
-Dark palette:deep emerald black marble,antique gold,rich green velvet.
-Delivered assets:frontend/assets/profile-history/light/lidya-history.png and frontend/assets/profile-history/dark/lidya-history.png.

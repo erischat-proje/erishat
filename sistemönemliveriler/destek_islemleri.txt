@@ -1,2 +1,0 @@
-# ErisChat sistem kaydı: destek_islemleri.txt
-# JSONL kayıtları aşağıya eklenir.

@@ -1,2 +1,0 @@
-# ErisChat sistem kaydı: vip_islemleri.txt
-# JSONL kayıtları aşağıya eklenir.

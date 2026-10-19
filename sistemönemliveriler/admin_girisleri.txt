@@ -1,2 +1,0 @@
-# ErisChat sistem kaydı: admin_girisleri.txt
-# JSONL kayıtları aşağıya eklenir.
