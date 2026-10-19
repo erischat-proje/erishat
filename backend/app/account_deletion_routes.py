@@ -128,6 +128,11 @@ def delete_user(db: Session, user: User):
         db.commit()
     except Exception as exc:
         db.rollback()
+        import logging
+        logging.getLogger('uvicorn.error').exception(
+            'ACCOUNT_DELETE_DIAGNOSTIC failure_type=%s failure=%s',
+            type(exc).__name__, str(exc)[:1200],
+        )
         raise HTTPException(409, 'Hesap güvenli biçimde tamamen silinemedi; hiçbir değişiklik kaydedilmedi.') from exc
 
 
