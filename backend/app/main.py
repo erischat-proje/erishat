@@ -1925,7 +1925,7 @@ async def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: st
         return {"deleted": 0, "scope": scope}
     rows = list(db.scalars(select(Message).where(Message.id.in_(ids), Message.conversation_id == conversation_id)))
     if scope == "everyone":
-        if any(row.sender_id != user.id for row in rows):
+        if not all_messages and any(row.sender_id != user.id for row in rows):
             raise HTTPException(status_code=403, detail="İki taraf için yalnızca kendi mesajlarınızı silebilirsiniz")
         deleted_ids = [row.id for row in rows]
         for row in rows:
