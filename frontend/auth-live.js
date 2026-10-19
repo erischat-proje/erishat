@@ -176,6 +176,12 @@
   style.textContent = `
     #erisGoogleGate{position:fixed;inset:0;z-index:100000;background:color-mix(in srgb, var(--ui-panel) 97%, transparent);display:grid;place-items:center;padding:20px;box-sizing:border-box;backdrop-filter:blur(12px)}
     .erisGoogleCard{max-height:90dvh;overflow:auto;width:min(430px,100%);box-sizing:border-box;background:linear-gradient(155deg,var(--ui-raised),var(--ui-raised));border:1px solid var(--ui-line);border-radius:24px;padding:24px;box-shadow:0 25px 90px var(--ui-shadow);text-align:left;color:var(--ui-ink)}
+    .lidyaAuthIdentity{display:flex;justify-content:center;align-items:center;margin:0 auto 12px;width:124px;height:124px;max-width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.13))}
+    .lidyaAuthIdentity img{width:116px;height:116px;object-fit:contain}
+    .erisGoogleCard{border-color:var(--ui-line);box-shadow:0 24px 75px var(--ui-shadow),inset 0 1px 0 rgba(211,170,94,.14)}
+    .erisGoogleCard .authBtn,.erisGoogleCard .authMode{transition:transform .14s ease,filter .14s ease}
+    .erisGoogleCard .authBtn:active,.erisGoogleCard .authMode:active{transform:scale(.985)}
+    .erisGoogleCard .authBtn:focus-visible,.erisGoogleCard .authMode:focus-visible,.erisGoogleCard input:focus-visible{outline:2px solid var(--ui-gold);outline-offset:2px}
     .erisGoogleCard h1{margin:0 0 7px;font-size:26px;letter-spacing:-.5px}
     .erisGoogleCard p{color:var(--ui-ink);font-size:13px;line-height:1.55;margin:0 0 20px}
     .authMethods{display:grid;gap:12px}
@@ -211,6 +217,7 @@
   gate.id = 'erisGoogleGate';
   gate.innerHTML = `
     <div class="erisGoogleCard">
+      <div class="lidyaAuthIdentity"><img src="./assets/lidyachat-brand/lidya-auth-logo.png" alt="LidyaChat" width="116" height="116" decoding="async"></div>
       <div style="font-size:11px;letter-spacing:1.3px;color:var(--ui-gold);font-weight:700;margin-bottom:9px">LİDYACHAT • HESAP</div>
       <h1>Hoş geldin</h1>
       <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
@@ -228,7 +235,7 @@
           </div>
           <label for="authEmailInput">E-posta adresi</label>
           <input id="authEmailInput" type="email" autocomplete="email" required placeholder="ornek@eposta.com">
-          <button type="button" id="authEmailBtn" class="authBtn">Email kodu gönder</button>
+          <button type="button" id="authEmailBtn" class="authBtn">E-posta kodu gönder</button>
           <div class="authOtp" id="authOtpBox">
             <input id="authOtpInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 haneli kod" aria-label="E-posta doğrulama kodu">
             <button type="button" id="authOtpBtn">Doğrula</button>
@@ -250,7 +257,7 @@
     emailPurpose = purpose;
     gate.querySelector('#authLoginMode').setAttribute('aria-pressed',String(purpose==='login'));
     gate.querySelector('#authRegisterMode').setAttribute('aria-pressed',String(purpose==='register'));
-    if(emailCodeRequested){emailCodeRequested=false;gate.querySelector('#authOtpBox').style.display='none';gate.querySelector('#authOtpInput').value='';gate.querySelector('#authEmailBtn').disabled=false;gate.querySelector('#authEmailBtn').textContent='Email kodu gönder';}
+    if(emailCodeRequested){emailCodeRequested=false;gate.querySelector('#authOtpBox').style.display='none';gate.querySelector('#authOtpInput').value='';gate.querySelector('#authEmailBtn').disabled=false;gate.querySelector('#authEmailBtn').textContent='E-posta kodu gönder';}
     status.textContent = purpose==='login' ? 'Mevcut hesabınla giriş yap.' : 'Yeni hesap için e-posta doğrulaması gönder.';
   };
   gate.querySelector('#authLoginMode').onclick=()=>setEmailPurpose('login');
