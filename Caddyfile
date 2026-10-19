@@ -1,4 +1,8 @@
 :80
+# Legacy web addresses redirect to the official LidyaChat website.
+@legacyWeb host www.erischat.com erischat-production-850f.up.railway.app erischat-production-83c4.up.railway.app
+redir @legacyWeb https://www.lidyachat.com{uri} 301
+
 root * /srv/frontend
 encode zstd gzip
 file_server
