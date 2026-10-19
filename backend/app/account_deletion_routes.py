@@ -102,6 +102,16 @@ def delete_user(db: Session, user: User):
             for child, fk in incoming.get(table.name, []):
                 if child.name == 'users':
                     raise RuntimeError('Silme işlemi başka kullanıcı hesabını etkileyebilir')
+                if child.name == table.name:
+                    # A reply-to-comment FK is a self-reference. The database
+                    # can safely delete descendants when the FK itself has
+                    # ON DELETE CASCADE; do not recurse forever in Python.
+                    if (fk.ondelete or '').upper() != 'CASCADE':
+                        raise RuntimeError(
+                            'Self-referential FK requires reviewed delete rule: '
+                            + table.name + '.' + ','.join(e.parent.name for e in fk.elements)
+                        )
+                    continue
                 clauses = []
                 for element in fk.elements:
                     local = element.parent
