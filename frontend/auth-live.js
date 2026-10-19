@@ -176,8 +176,8 @@
   style.textContent = `
     #erisGoogleGate{position:fixed;inset:0;z-index:100000;background:color-mix(in srgb, var(--ui-panel) 97%, transparent);display:grid;place-items:center;padding:20px;box-sizing:border-box;backdrop-filter:blur(12px)}
     .erisGoogleCard{max-height:90dvh;overflow:auto;width:min(430px,100%);box-sizing:border-box;background:linear-gradient(155deg,var(--ui-raised),var(--ui-raised));border:1px solid var(--ui-line);border-radius:24px;padding:24px;box-shadow:0 25px 90px var(--ui-shadow);text-align:left;color:var(--ui-ink)}
-    .lidyaAuthIdentity{display:flex;justify-content:center;align-items:center;margin:0 auto 12px;width:124px;height:124px;max-width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.13))}
-    .lidyaAuthIdentity img{width:116px;height:116px;object-fit:contain}
+    .lidyaAuthIdentity{display:flex;justify-content:center;align-items:center;margin:0 auto 12px;width:min(340px,100%);height:auto;min-height:76px;max-width:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.13))}
+    .lidyaAuthIdentity img{display:block;width:100%;height:auto;object-fit:contain}.lidyaAuthIdentity .lidya-auth-dark{display:none}html[data-eris-theme="dark"] .lidyaAuthIdentity .lidya-auth-light{display:none}html[data-eris-theme="dark"] .lidyaAuthIdentity .lidya-auth-dark{display:block}
     .erisGoogleCard{border-color:var(--ui-line);box-shadow:0 24px 75px var(--ui-shadow),inset 0 1px 0 rgba(211,170,94,.14)}
     .erisGoogleCard .authBtn,.erisGoogleCard .authMode{transition:transform .14s ease,filter .14s ease}
     .erisGoogleCard .authBtn:active,.erisGoogleCard .authMode:active{transform:scale(.985)}
@@ -217,7 +217,7 @@
   gate.id = 'erisGoogleGate';
   gate.innerHTML = `
     <div class="erisGoogleCard">
-      <div class="lidyaAuthIdentity"><img src="./assets/lidyachat-brand/lidya-auth-logo.png" alt="LidyaChat" width="116" height="116" decoding="async"></div>
+      <div class="lidyaAuthIdentity"><img class="lidya-auth-light" src="./assets/lidya-menu/light-logo.png?v=lidya-horizontal-v2" alt="LidyaChat" width="1800" height="386" decoding="async"><img class="lidya-auth-dark" src="./assets/lidya-menu/dark-logo.png?v=lidya-horizontal-v2" alt="" aria-hidden="true" width="1800" height="405" decoding="async"></div>
       <div style="font-size:11px;letter-spacing:1.3px;color:var(--ui-gold);font-weight:700;margin-bottom:9px">LİDYACHAT • HESAP</div>
       <h1>Hoş geldin</h1>
       <p>Hesabına giriş yap veya yeni hesabını oluştur.</p>
