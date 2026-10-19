@@ -728,7 +728,7 @@
         list.innerHTML = '<div class="dm-list-state"><span aria-hidden="true">'+dmIcon('chat')+'</span><b>'+(folder==='archive'?'Arşivin boş':folder==='locked'?'Kilitli sohbet yok':'İlk sohbetini başlat')+'</b><p>Bir kullanıcı ID’si aratarak konuşmaya başlayabilirsin.</p></div>';
         return;
       }
-      const participants = await Promise.all(items.map(c => c.type === 'welcome' ? Promise.resolve({ nickname: 'ErisChat' }) : resolveParticipant(c)));
+      const participants = await Promise.all(items.map(c => c.type === 'welcome' ? Promise.resolve({ nickname: 'LidyaChat' }) : resolveParticipant(c)));
       if(!valid())return;
       list.replaceChildren();
       items.forEach((c, index) => {
@@ -738,8 +738,8 @@
         const family = c.type === 'family' || / aile sohbeti$/i.test(String(c.name || ''));
         const group = c.type === 'group';
         const welcome = c.type === 'welcome';
-        const name = group ? (c.name || 'Mesaj grubu') : family ? (c.name || 'Aile sohbeti') : (welcome ? 'ErisChat' : (other.nickname || other.name || c.name || 'Kullanıcı'));
-        const avatar = avatarValue(other.avatar_asset || other.avatar_url || other.avatar, name.slice(0, 1).toUpperCase());
+        const name = group ? (c.name || 'Mesaj grubu') : family ? (c.name || 'Aile sohbeti') : (welcome ? 'LidyaChat' : (other.nickname || other.name || c.name || 'Kullanıcı'));
+        const avatar = welcome ? './assets/lidyachat-system-avatar.png' : avatarValue(other.avatar_asset || other.avatar_url || other.avatar, name.slice(0, 1).toUpperCase());
         const b = document.createElement('button');
         b.className = 'item';b.dataset.conversationId=String(id);
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small></small></div><span class="dm-unread" hidden></span>';
