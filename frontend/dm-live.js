@@ -622,7 +622,7 @@
           const data=new FormData(card);data.set('request_key',requestKey);
           if(file.files[0]&&file.files[0].size>2_000_000)throw new Error('Grup fotoğrafı en fazla 2 MB olabilir.');
           const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token');
-          const base=window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://erischat-api-production.up.railway.app';
+          const base=window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://api.lidyachat.com';
           const endpoint=base.replace(/\/$/,'')+'/v1/message-groups';
           const res=await fetch(endpoint,{method:'POST',headers:token?{Authorization:'Bearer '+token}:{},credentials:'include',body:data});
           const payload=await res.json().catch(()=>({}));if(!res.ok)throw new Error(payload.detail||('Grup kurulamadı (HTTP '+res.status+').'));
@@ -666,7 +666,7 @@
         const row=document.createElement('div');row.className='lidya-invite-row';
         const photo=document.createElement('div');photo.className='lidya-invite-photo';photo.style.cssText='display:grid;place-items:center;font-size:24px';photo.textContent='👥';
         if(invite.has_image){
-          try{const base=window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://erischat-api-production.up.railway.app';const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token');const res=await fetch(base.replace(/\/$/,'')+'/v1'+invite.image_url,{headers:token?{Authorization:'Bearer '+token}:{},credentials:'include'});if(res.ok){const url=URL.createObjectURL(await res.blob());const img=document.createElement('img');img.className='lidya-invite-photo';img.src=url;img.onload=()=>URL.revokeObjectURL(url);photo.replaceWith(img);row.append(img)}else row.append(photo)}catch(e){row.append(photo)}
+          try{const base=window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://api.lidyachat.com';const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token');const res=await fetch(base.replace(/\/$/,'')+'/v1'+invite.image_url,{headers:token?{Authorization:'Bearer '+token}:{},credentials:'include'});if(res.ok){const url=URL.createObjectURL(await res.blob());const img=document.createElement('img');img.className='lidya-invite-photo';img.src=url;img.onload=()=>URL.revokeObjectURL(url);photo.replaceWith(img);row.append(img)}else row.append(photo)}catch(e){row.append(photo)}
         }else row.append(photo);
         const name=document.createElement('span');name.className='lidya-invite-name';name.textContent=invite.name;row.append(name);
         for(const [action,symbol,klass,label] of [['accept','✓','lidya-invite-accept','Daveti kabul et'],['reject','×','lidya-invite-reject','Daveti reddet']]){
@@ -937,7 +937,7 @@
     const token = dmToken();
     if (!token) return;
     try { dmSocket?.close(); } catch (_) {}
-    const apiBase = String(window.ERISCHAT_API_BASE || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
+    const apiBase = String(window.ERISCHAT_API_BASE || 'https://api.lidyachat.com/v1').replace(/\/$/, '');
     const wsBase = apiBase.replace(/\/v1\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
     const ws = new WebSocket(wsBase + '/ws', ['erischat', 'token.' + token]);
     dmSocket = ws;
