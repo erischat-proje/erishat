@@ -10,6 +10,10 @@ from .config import settings
 from .models import AuthOTP
 
 
+def _utc(value: datetime) -> datetime:
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
 def _hash_code(code: str) -> str:
     return hashlib.sha256(code.encode("utf-8")).hexdigest()
 
@@ -39,7 +43,7 @@ def create_otp(
     )
 
     if latest is not None:
-        cooldown_until = latest.created_at + timedelta(
+        cooldown_until = _utc(latest.created_at) + timedelta(
             seconds=settings.otp_resend_cooldown_seconds
         )
         if now < cooldown_until:
@@ -74,7 +78,7 @@ def verify_otp(
     if otp.consumed_at is not None:
         return False
 
-    if now >= otp.expires_at:
+    if now >= _utc(otp.expires_at):
         return False
 
     if otp.attempts >= settings.otp_max_attempts:
