@@ -244,7 +244,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     @router.post("/announcements", status_code=201)
     def create_announcement(payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_fa_or_da(db,user)
-        announcement = SystemAnnouncement(admin_id=user.id, title="ErisChat Yönetim", message=payload.message.strip())
+        announcement = SystemAnnouncement(admin_id=user.id, title="LidyaChat Yönetim", message=payload.message.strip())
         db.add(announcement)
         db.flush()
         audit(db, user, "admin_announcement", {"announcement_id": announcement.id, "message_length": len(announcement.message)}, target_id=str(announcement.id))

@@ -80,7 +80,7 @@ with Session(api_engine) as db:
  user=db.get(User,'s');db.add(AdminRole(user_id='s',role='UA'));db.commit()
  output=UserOut.model_validate(user).model_dump()
  assert output['nickname']==identity.NAME and output['management_locked']
- assert output['first_name']=='ErisChat' and output['last_name']=='Yönetim'
+ assert output['first_name']=='LidyaChat' and output['last_name']=='Yönetim'
  assert output['gender']=='unspecified' and output['birth_date'] is None
  assert user._nickname=='PrivateName'
 print('PASS real UserOut response schema and preserved stored identity')

@@ -12,10 +12,10 @@
       if(String(latest.id)===dismissed)return;
       document.getElementById('erisAnnouncementCard')?.remove();
       const home=document.getElementById('home');if(!home)return;
-      const card=document.createElement('article');card.id='erisAnnouncementCard';card.setAttribute('aria-label','ErisChat Yönetim duyurusu');
+      const card=document.createElement('article');card.id='erisAnnouncementCard';card.setAttribute('aria-label','LidyaChat Yönetim duyurusu');
       card.style.cssText="margin:0 0 16px;padding:14px 15px;border-radius:18px;border:1px solid var(--ui-line);background:linear-gradient(135deg,var(--ui-panel),var(--ui-panel));box-shadow:0 12px 30px var(--ui-shadow)";
       const top=document.createElement('div');top.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px';
-      const name=document.createElement('b');name.textContent='📢 ErisChat Yönetim';name.style.cssText="font-size:12px;color:var(--ui-gold)";
+      const name=document.createElement('b');name.textContent='📢 LidyaChat Yönetim';name.style.cssText="font-size:12px;color:var(--ui-gold)";
       const close=document.createElement('button');close.type='button';close.textContent='Gördüm';close.setAttribute('aria-label','Duyuruyu kapat');close.style.cssText="border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 4%, transparent);color:var(--ui-ink);border-radius:9px;padding:6px 9px;font-size:10px";
       const dismiss=()=>{localStorage.setItem('eris.announcement.dismissed',String(latest.id));document.getElementById('erisAnnouncementCard')?.remove();document.getElementById('erisAnnouncementInbox')?.remove()};
       close.onclick=dismiss;

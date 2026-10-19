@@ -129,7 +129,7 @@ class SystemAnnouncement(Base):
     __tablename__ = "system_announcements"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     admin_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
-    title: Mapped[str] = mapped_column(String(100), default="ErisChat Yönetim", server_default="ErisChat Yönetim", nullable=False)
+    title: Mapped[str] = mapped_column(String(100), default="LidyaChat Yönetim", server_default="LidyaChat Yönetim", nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

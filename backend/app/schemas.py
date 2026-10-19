@@ -147,9 +147,9 @@ class UserOut(BaseModel):
     @model_validator(mode='after')
     def management_profile(self):
         if self.management_locked:
-            self.first_name = 'ErisChat'
+            self.first_name = 'LidyaChat'
             self.last_name = 'Yönetim'
-            self.bio = 'Resmî ErisChat Yönetim Hesabı'
+            self.bio = 'Resmî LidyaChat Yönetim Hesabı'
             self.birth_date = None
             self.gender = 'unspecified'
             self.title_asset = None
