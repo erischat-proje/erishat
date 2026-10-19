@@ -588,17 +588,48 @@
   function installGroupCreation(root){
     if(root.querySelector('[data-group-create]'))return;
     const title=root.querySelector('.title');if(!title)return;
-    const btn=document.createElement('button');btn.type='button';btn.dataset.groupCreate='';btn.textContent='Grup kur +';btn.style.cssText='float:right;border:1px solid #b78b46;background:linear-gradient(130deg,#9b6b2b,#e9c67c);color:#241605;border-radius:12px;padding:9px 12px;font-weight:700';
-    title.appendChild(btn);if(!title.querySelector('[data-group-invites]')){const invites=document.createElement('button');invites.type='button';invites.dataset.groupInvites='';invites.textContent='Davetler';invites.onclick=checkGroupInvites;title.appendChild(invites)}
+    if(!document.getElementById('lidya-group-styles')){
+      const style=document.createElement('style');style.id='lidya-group-styles';style.textContent=`
+      .lidya-group-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;clear:both;margin:12px 0}
+      .lidya-group-actions button{width:100%;min-width:0;min-height:46px;padding:10px 6px;border-radius:15px;border:1px solid #b78b46;background:linear-gradient(135deg,#ac7a36,#e9c67c);color:#241605;font-size:clamp(13px,3.5vw,17px);font-weight:750;box-shadow:0 2px 6px #0002}
+      .lidya-group-actions button:active{transform:scale(.98)}
+      .lidya-group-modal{position:fixed;inset:0;z-index:100050;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px}
+      .lidya-group-card{position:relative;width:min(440px,100%);max-height:90dvh;overflow:auto;box-sizing:border-box;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);border:2px solid #c69c59;border-radius:22px;padding:22px;box-shadow:0 20px 70px #0007}
+      .lidya-group-card input:not([type=file]),.lidya-group-card textarea{display:block;width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border-radius:10px;border:1px solid #bba782;background:var(--ui-panel,#fff);color:var(--ui-ink,#241605);font:inherit}
+      .lidya-group-card label{display:block;margin:12px 0 4px}.lidya-group-card input[type=file]{max-width:100%;font-size:12px}
+      .lidya-group-card .group-submit{width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(130deg,#ae7b36,#f0cf87);color:#281900;font-weight:800}
+      .lidya-invite-row{display:grid;grid-template-columns:54px minmax(0,1fr) 42px 42px;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #c69c5966}
+      .lidya-invite-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:1px solid #c69c59}.lidya-invite-name{overflow-wrap:anywhere;font-weight:700}
+      .lidya-invite-row button{width:40px;height:40px;border:0;border-radius:12px;color:white;font-size:23px;font-weight:800}
+      .lidya-invite-accept{background:#168342}.lidya-invite-reject{background:#bb3030}
+      `;document.head.appendChild(style);
+    }
+    const actions=document.createElement('div');actions.className='lidya-group-actions';
+    const btn=document.createElement('button');btn.type='button';btn.dataset.groupCreate='';btn.textContent='✦ Grup Kur';
+    const invites=document.createElement('button');invites.type='button';invites.dataset.groupInvites='';invites.textContent='✉ Davetler';invites.onclick=checkGroupInvites;
+    actions.append(btn,invites);title.appendChild(actions);
     btn.onclick=()=>{
-      const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:100050;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px';
-      const card=document.createElement('form');card.style.cssText='position:relative;width:min(420px,100%);max-height:90vh;overflow:auto;background:var(--ui-panel,#211b18);color:var(--ui-ink,#f9edda);border:2px solid #c69c59;border-radius:22px;padding:22px;box-shadow:0 20px 70px #0007';
-      card.innerHTML='<button type="button" data-close style="position:absolute;right:12px;top:9px;border:0;background:transparent;color:inherit;font-size:24px">×</button><h3 style="margin:0 0 16px">Lidya Mesaj Grubu</h3><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><img data-preview alt="Grup fotoğrafı" style="width:68px;height:68px;object-fit:cover;border-radius:50%;border:2px solid #c69c59" hidden><span data-empty style="width:68px;height:68px;border:2px solid #c69c59;border-radius:50%;display:grid;place-items:center">👥</span><label>Grup fotoğrafı seç<input type="file" name="image" accept="image/*" style="display:block;max-width:210px"></label></div><label>Grup adı<input name="name" required minlength="2" maxlength="64" style="display:block;width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border-radius:10px"></label><label>Grup açıklaması<textarea name="description" maxlength="500" rows="3" style="display:block;width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border-radius:10px"></textarea></label><button type="submit" style="width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(130deg,#ae7b36,#f0cf87);color:#281900;font-weight:800">Grubu oluştur · 1.000 🪙 Lidya</button><small>Grup oluşturulduktan sonra üyeleri kullanıcı ID ile ekleyebilirsiniz.</small>';
+      const overlay=document.createElement('div');overlay.className='lidya-group-modal';
+      const card=document.createElement('form');card.className='lidya-group-card';
+      card.innerHTML='<button type="button" data-close style="position:absolute;right:12px;top:9px;border:0;background:transparent;color:inherit;font-size:24px">×</button><h3 style="margin:0 0 16px">Lidya Mesaj Grubu</h3><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><img data-preview alt="Grup fotoğrafı" style="width:68px;height:68px;object-fit:cover;border-radius:50%;border:2px solid #c69c59" hidden><span data-empty style="width:68px;height:68px;border:2px solid #c69c59;border-radius:50%;display:grid;place-items:center">👥</span><label style="flex:1;min-width:0">Grup fotoğrafı seç<input type="file" name="image" accept="image/*"></label></div><label>Grup adı<input name="name" required minlength="2" maxlength="64"></label><label>Grup açıklaması<textarea name="description" maxlength="500" rows="3"></textarea></label><button type="submit" class="group-submit">Grubu oluştur · 1.000 🪙 Lidya</button><small>Grup oluşturulduktan sonra üyeleri kullanıcı ID ile ekleyebilirsiniz.</small>';
       overlay.appendChild(card);document.body.appendChild(overlay);
-      const close=()=>{overlay.remove()};card.querySelector('[data-close]').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+      const close=()=>{if(card.querySelector('[name=image]')._preview)URL.revokeObjectURL(card.querySelector('[name=image]')._preview);overlay.remove()};
+      card.querySelector('[data-close]').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
       const file=card.querySelector('[name=image]');file.onchange=()=>{const img=card.querySelector('[data-preview]');if(file._preview)URL.revokeObjectURL(file._preview);if(file.files[0]){file._preview=URL.createObjectURL(file.files[0]);img.src=file._preview;img.hidden=false;card.querySelector('[data-empty]').hidden=true}};
       const requestKey=(window.crypto?.randomUUID?.()||'group_'+Date.now()+'_'+Math.random().toString(36).slice(2));
-      card.onsubmit=async e=>{e.preventDefault();const submit=card.querySelector('[type=submit]');submit.disabled=true;try{const data=new FormData(card);data.set('request_key',requestKey);const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token');const endpoint=(window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://erischat-api-production.up.railway.app').replace(/\/$/,'')+'/v1/message-groups';const res=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+token},body:data});const payload=await res.json();if(!res.ok)throw new Error(payload.detail||'Grup kurulamadı');close();await loadConversations();window.toast?.('Grup kuruldu. Üye eklemek için grup sohbetini açın.')}catch(err){window.toast?.(err.message||'Grup kurulamadı')}finally{submit.disabled=false}};
+      card.onsubmit=async e=>{e.preventDefault();const submit=card.querySelector('[type=submit]');submit.disabled=true;
+        try{
+          const data=new FormData(card);data.set('request_key',requestKey);
+          if(file.files[0]&&file.files[0].size>2_000_000)throw new Error('Grup fotoğrafı en fazla 2 MB olabilir.');
+          const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token');
+          const base=window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://erischat-api-production.up.railway.app';
+          const endpoint=base.replace(/\/$/,'')+'/v1/message-groups';
+          const res=await fetch(endpoint,{method:'POST',headers:token?{Authorization:'Bearer '+token}:{},credentials:'include',body:data});
+          const payload=await res.json().catch(()=>({}));if(!res.ok)throw new Error(payload.detail||('Grup kurulamadı (HTTP '+res.status+').'));
+          close();await loadConversations();window.toast?.('Grup kuruldu. Üye eklemek için grup sohbetini açın.');
+        }catch(err){window.toast?.(err instanceof TypeError?'Sunucuya bağlanılamadı. API adresi, CORS ve Railway durumunu kontrol edin.':err.message||'Grup kurulamadı');}
+        finally{submit.disabled=false}
+      };
     };
   }
   async function openGroupManagement(id){
@@ -622,10 +653,30 @@
     }catch(e){window.toast?.(e.message||'Grup yönetimi açılamadı.')}
   }
   async function checkGroupInvites(){
-    try{const rows=await api().api('/message-groups/invitations/mine');for(const invite of rows||[]){
-      const ok=window.confirm(invite.name+' grubuna davet edildiniz. Kabul ediyor musunuz?');
-      await api().api('/message-groups/'+encodeURIComponent(invite.conversation_id)+'/invitations/respond',{method:'POST',body:JSON.stringify({action:ok?'accept':'reject'})});
-    }if(rows?.length)await loadConversations();}catch(e){window.toast?.(e.message||'Davetler yüklenemedi.')}
+    const overlay=document.createElement('div');overlay.className='lidya-group-modal';
+    const card=document.createElement('section');card.className='lidya-group-card';
+    card.innerHTML='<button type="button" data-close style="position:absolute;right:12px;top:9px;border:0;background:transparent;color:inherit;font-size:24px">×</button><h3>Grup Davetleri</h3><div data-invite-list>Yükleniyor…</div>';
+    overlay.append(card);document.body.append(overlay);
+    const close=()=>overlay.remove();card.querySelector('[data-close]').onclick=close;overlay.onclick=e=>{if(e.target===overlay)close()};
+    const list=card.querySelector('[data-invite-list]');
+    try{
+      const rows=await api().api('/message-groups/invitations/mine');list.replaceChildren();
+      if(!rows?.length){list.textContent='Bekleyen grup davetiniz yok.';return}
+      for(const invite of rows){
+        const row=document.createElement('div');row.className='lidya-invite-row';
+        const photo=document.createElement('div');photo.className='lidya-invite-photo';photo.style.cssText='display:grid;place-items:center;font-size:24px';photo.textContent='👥';
+        if(invite.has_image){
+          try{const base=window.ErisPlatform?.apiBase||window.ERISCHAT_API_BASE||window.ERIS_API_BASE||'https://erischat-api-production.up.railway.app';const token=localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token');const res=await fetch(base.replace(/\/$/,'')+'/v1'+invite.image_url,{headers:token?{Authorization:'Bearer '+token}:{},credentials:'include'});if(res.ok){const url=URL.createObjectURL(await res.blob());const img=document.createElement('img');img.className='lidya-invite-photo';img.src=url;img.onload=()=>URL.revokeObjectURL(url);photo.replaceWith(img);row.append(img)}else row.append(photo)}catch(e){row.append(photo)}
+        }else row.append(photo);
+        const name=document.createElement('span');name.className='lidya-invite-name';name.textContent=invite.name;row.append(name);
+        for(const [action,symbol,klass,label] of [['accept','✓','lidya-invite-accept','Daveti kabul et'],['reject','×','lidya-invite-reject','Daveti reddet']]){
+          const button=document.createElement('button');button.type='button';button.className=klass;button.textContent=symbol;button.setAttribute('aria-label',label);
+          button.onclick=async()=>{const buttons=row.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);try{await api().api('/message-groups/'+encodeURIComponent(invite.conversation_id)+'/invitations/respond',{method:'POST',body:JSON.stringify({action})});row.remove();window.toast?.(action==='accept'?'Gruba katıldınız.':'Grup daveti reddedildi.');if(action==='accept'){close();await loadConversations();if(typeof openConversation==='function')await openConversation(invite.conversation_id)}if(!list.children.length)list.textContent='Bekleyen grup davetiniz yok.'}catch(e){window.toast?.(e.message||'Davet yanıtı gönderilemedi.');buttons.forEach(b=>b.disabled=false)}};
+          row.append(button);
+        }
+        list.append(row);
+      }
+    }catch(e){list.textContent=e.message||'Davetler yüklenemedi.'}
   }
   function installMessageSearch(){
     installFolderStyles();
