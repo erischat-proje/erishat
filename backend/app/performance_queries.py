@@ -1,6 +1,7 @@
 """Bounded page queries; binary media are loaded only by media endpoints."""
 from sqlalchemy import select, func, and_
 from .models import Conversation, ConversationMember, Message, User
+from .group_models import MessageGroup
 from .platform_models import (ConversationFolder, ConversationReadState, Family, MessageHidden,
     PinnedMessage, DirectMessageGift, MessageMedia)
 
@@ -42,7 +43,7 @@ def conversation_page(db, user_id, folder, limit, offset):
                                         MessageHidden.user_id == user_id).exists()
     ).exists()
     family = select(Family.id).where(Family.chat_conversation_id == Conversation.id).exists()
-    query = query.where((Conversation.type == 'welcome') | family | visible)
+    query = query.where((Conversation.type == 'welcome') | (Conversation.type == 'group') | family | visible)
     rows = list(db.scalars(query.order_by(latest.desc().nullslast(), Conversation.created_at.desc(), Conversation.id).offset(offset).limit(limit)).unique())
     if not rows:
         return []
@@ -55,6 +56,7 @@ def conversation_page(db, user_id, folder, limit, offset):
         members[cid].append({'user_id':uid, 'nickname':u.nickname if u else None, 'avatar':u.avatar if u else None,
             'avatar_asset':u.avatar_asset if u else None, 'frame_asset':u.frame_asset if u else None})
     families = dict(db.execute(select(Family.chat_conversation_id, Family.name).where(Family.chat_conversation_id.in_(ids))).all())
+    groups = {g.conversation_id:g for g in db.scalars(select(MessageGroup).where(MessageGroup.conversation_id.in_(ids)))}
     hidden = select(MessageHidden.id).where(MessageHidden.message_id == Message.id, MessageHidden.user_id == user_id).exists()
     last_ids = select(func.max(Message.id)).where(Message.conversation_id.in_(ids), ~hidden).group_by(Message.conversation_id)
     last = {m.conversation_id:m for m in db.scalars(select(Message).where(Message.id.in_(last_ids)))}
@@ -63,6 +65,6 @@ def conversation_page(db, user_id, folder, limit, offset):
         Message.conversation_id.in_(ids), Message.sender_id != user_id,
         Message.id > func.coalesce(ConversationReadState.last_read_message_id, 0), ~hidden).group_by(Message.conversation_id)).all())
     return [{'id':c.id, 'type':'family' if families.get(c.id) else c.type, 'created_at':c.created_at,
-        'members':members[c.id], 'name':families[c.id]+' aile sohbeti' if families.get(c.id) else 'ErisChat' if c.type == 'welcome' else None,
+        'members':members[c.id], 'name':families[c.id]+' aile sohbeti' if families.get(c.id) else groups[c.id].name if c.id in groups else 'ErisChat' if c.type == 'welcome' else None,
         'unread_count':int(unread.get(c.id,0)), 'last_message':last[c.id].text if c.id in last else None,
         'last_message_at':last[c.id].created_at if c.id in last else None} for c in rows]
