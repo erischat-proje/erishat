@@ -72,7 +72,7 @@ async def create_group(name: str = Form(...), description: str = Form(''), reque
 @router.get('/invitations/mine')
 def my_invitations(db: Session=Depends(get_db),user: User=Depends(authenticated)):
     rows=list(db.scalars(select(GroupInvitation).where(GroupInvitation.invitee_id==user.id,GroupInvitation.status=='pending')))
-    return [{'conversation_id':r.conversation_id,'name':g.name,'invited_by':r.invited_by} for r in rows if (g:=db.get(MessageGroup,r.conversation_id))]
+    return [{'conversation_id':r.conversation_id,'name':g.name,'invited_by':r.invited_by,'has_image':bool(g.image),'image_url':'/message-groups/'+r.conversation_id+'/image' if g.image else None} for r in rows if (g:=db.get(MessageGroup,r.conversation_id))]
 
 @router.get('/{conversation_id}')
 def get_group(conversation_id: str,db: Session=Depends(get_db),user: User=Depends(authenticated)):
@@ -86,8 +86,8 @@ def get_group(conversation_id: str,db: Session=Depends(get_db),user: User=Depend
 def group_image(conversation_id: str,db: Session=Depends(get_db),user: User=Depends(authenticated)):
     group=db.get(MessageGroup,conversation_id)
     if not group or not group.image:raise HTTPException(404,'Grup fotoğrafı yok.')
-    if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id)):
-        raise HTTPException(403,'Bu gruba erişiminiz yok.')
+    if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id)) and not db.scalar(select(GroupInvitation.invitee_id).where(GroupInvitation.conversation_id==conversation_id,GroupInvitation.invitee_id==user.id,GroupInvitation.status=='pending')):
+        raise HTTPException(403,'Bu grup fotoğrafına erişiminiz yok.')
     return Response(content=group.image,media_type=group.image_mime or 'image/jpeg',headers={'Cache-Control':'private, max-age=300'})
 
 
@@ -149,6 +149,13 @@ def respond(conversation_id: str,payload: dict,db: Session=Depends(get_db),user:
             db.add(ConversationMember(conversation_id=conversation_id,user_id=user.id))
         db.add(GroupRole(conversation_id=conversation_id,user_id=user.id,role='member'))
     row.status='accepted' if action=='accept' else 'rejected'
+    group=db.get(MessageGroup,conversation_id)
+    recipients={row.invited_by,group.owner_id}
+    recipients.update(db.scalars(select(GroupRole.user_id).where(GroupRole.conversation_id==conversation_id,GroupRole.role=='moderator')))
+    recipients.discard(user.id)
+    outcome='kabul etti' if action=='accept' else 'reddetti'
+    for recipient in recipients:
+        db.add(Notification(user_id=recipient,kind='message_group_reply',title='Grup daveti yanıtı',body=f'{user.nickname} grup davetinizi {outcome}.'))
     db.commit()
     return {'status':row.status}
 
