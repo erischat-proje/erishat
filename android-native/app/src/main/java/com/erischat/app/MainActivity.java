@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
      * Backend /v1/auth/google bu Web OAuth Client ID'yi doğruluyor.
      */
     private static final String SERVER_CLIENT_ID =
-            "599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com";
+            "764753830690-jskeljid0thn9jsuldbfmrtnm73krpuo.apps.googleusercontent.com";
 
     private static final int GOOGLE_SIGN_IN = 9001;
     private static final int MICROPHONE_PERMISSION = 9002;
