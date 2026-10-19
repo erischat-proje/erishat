@@ -1,0 +1,22 @@
+{
+  "mode": "buy",
+  "samples": 200000,
+  "seed": 26101543,
+  "rtp": 0.9929539575,
+  "ci95": [
+    0.9810909097568628,
+    1.0048170052431373
+  ],
+  "paidHitFrequency": null,
+  "bonusFrequency": null,
+  "freeSpins": 2016358,
+  "caps": 83,
+  "maxWinBetMultiple": 5000.0,
+  "certified": false,
+  "game": "candy",
+  "source_sha256": {
+    "backend/app/candy_engine.py": "c734349fd22fd3f21ff09478bd13728c5d75e8af730eb598c5e9951ac768f877",
+    "backend/app/candy-math.json": "fd86becd150c5db84794723ded803a3ded4a479c5357a2272b97c4fd379a3cd6",
+    "tests/candy_simulate.py": "ccaf777eec39ec6e91d7c5ab58b6328f3c4550a4ff5794ab30ec4f7e4402900f"
+  }
+}

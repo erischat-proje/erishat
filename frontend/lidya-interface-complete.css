@@ -1,0 +1,134 @@
+/* ErisChat · complete semantic interface palette. PNG artwork is left intact. */
+:root {
+ --ui-page:#f3eee3;--ui-panel:#fffaf0;--ui-raised:#eee3ce;--ui-ink:#352d23;--ui-muted:#6f604c;--ui-line:#d0bc95;--ui-gold:#88602c;--ui-bronze:#926c36;--ui-button:#eadcc0;--ui-button-ink:#49351d;--ui-primary:#795727;--ui-primary-end:#60401f;--ui-primary-ink:#fff1d3;--ui-shadow:#48301a18;--ui-overlay:#1e201b99;--ui-danger:#a02e3c;--ui-danger-bg:#f9e4e1;--ui-ok:#216c4f;--ui-ok-bg:#e3f0e5;
+ --theme-page:var(--ui-page);--theme-panel:var(--ui-panel);--theme-chrome:#f8f2e5;--theme-plate:var(--ui-raised);--theme-ink:var(--ui-ink);--theme-muted-ink:var(--ui-muted);--theme-accent-ink:var(--ui-gold);--theme-line:var(--ui-line);--theme-carved-line:#ba9e65;--theme-panel-highlight:#fffaf0;--theme-panel-shadow:#eadbc1;--theme-plate-highlight:#fff7e6;--theme-plate-shadow:#e7d5b4;--theme-chrome-highlight:#fff8e9;--theme-page-highlight:#faf4e7;--theme-shadow:var(--ui-shadow);--theme-focus:var(--ui-gold);--theme-overlay:var(--ui-overlay);--theme-danger-ink:var(--ui-danger);--theme-danger-surface:var(--ui-danger-bg);
+ --lydia-bg:var(--ui-page);--lydia-panel:var(--ui-panel);--lydia-panel-raised:var(--ui-raised);--lydia-text:var(--ui-ink);--lydia-muted:var(--ui-muted);--lydia-gold:var(--ui-gold);--lydia-bronze:var(--ui-bronze);--lydia-line:var(--ui-line);--lydia-focus:var(--ui-gold);
+ --lg-bg:var(--ui-page);--lg-panel:var(--ui-panel);--lg-raised:var(--ui-raised);--lg-ink:var(--ui-ink);--lg-muted:var(--ui-muted);--lg-gold:var(--ui-gold);--lg-line:var(--ui-line);--lg-shadow:var(--ui-shadow);
+}
+:root[data-eris-theme="dark"] {
+ --ui-page:#0d1512;--ui-panel:#17221c;--ui-raised:#263127;--ui-ink:#f0e5ce;--ui-muted:#c1b59e;--ui-line:#635c43;--ui-gold:#d6b576;--ui-bronze:#ae8c55;--ui-button:#332c20;--ui-button-ink:#e1c48d;--ui-primary:#493722;--ui-primary-end:#302418;--ui-primary-ink:#f1ddae;--ui-shadow:#0005;--ui-overlay:#050d09d9;--ui-danger:#ffafb1;--ui-danger-bg:#3e2528;--ui-ok:#a5d9b5;--ui-ok-bg:#233d2c;
+ --theme-chrome:#121c16;--theme-panel-highlight:#233026;--theme-panel-shadow:#101a14;--theme-plate-highlight:#2b3428;--theme-plate-shadow:#192219;--theme-chrome-highlight:#1d281f;--theme-page-highlight:#17221b;--theme-carved-line:#897147;--theme-bevel:#38422e;
+ --ec-accent:var(--ui-gold);--ec-muted:var(--ui-muted);--ec-line:var(--ui-line);--ec-panel:var(--ui-panel);
+}
+html body { color:var(--ui-ink);background-color:var(--ui-page); }
+html body .app { background-image:radial-gradient(ellipse at 85% 0,var(--ui-raised),transparent 50%)!important;background-color:var(--ui-page)!important; }
+html body .app>.top { border-bottom:1px solid var(--ui-line)!important; }
+html body .app>.nav { padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+html body .app>.content { padding-bottom:24px; }
+html body :is(.view>.title,.view>.toolbar h2,.shop-hero h1) { color:var(--ui-ink)!important;font-family:Georgia,serif;font-weight:700;letter-spacing:-.04em; }
+html body :is(.view>.eyebrow,.shop-kicker) { color:var(--ui-gold)!important; }
+html body #profile .profile.card { background-color:var(--ui-panel)!important;border-color:var(--ui-line)!important;color:var(--ui-ink)!important;box-shadow:0 8px 24px var(--ui-shadow); }
+html body #profile .profile.card .glow { opacity:.1;background:var(--ui-gold); }
+html body #profile :is(.stats,.stat) { color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body #profile .stat span { color:var(--ui-muted)!important; }
+html body #home .homeMenuItem { border-radius:16px!important;min-height:124px!important;background-image:linear-gradient(135deg,var(--ui-panel),var(--ui-raised))!important;box-shadow:0 4px 14px var(--ui-shadow)!important; }
+html body #home .homeMenuItem::before { opacity:.3; }
+html body #home .homeMenuGroup::after { height:1px;border:0;background:linear-gradient(90deg,var(--ui-line),transparent); }
+html body #home .homeMenuItem:hover { border-color:var(--ui-gold); }
+html body :is(.app>.content .primary,#home .homeSectionActions .link:first-child,.compose>.primary) { color:var(--ui-primary-ink)!important;background:linear-gradient(135deg,var(--ui-primary),var(--ui-primary-end))!important;border-color:var(--ui-bronze)!important; }
+html body #home .homeMenuCopy strong { color:var(--ui-ink)!important; }
+html body #home .homeMenuCopy small { color:var(--ui-muted)!important; }
+html body #profile [data-erischat-profile-controls] { background:var(--ui-panel)!important;border-color:var(--ui-line)!important;border-radius:16px; }
+html body #profile [data-erischat-profile-controls] button { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important;min-height:44px; }
+html body #profile [data-profile-save] { color:var(--ui-primary-ink)!important;background:var(--ui-primary)!important; }
+html body #profile [data-erischat-profile-controls] :is(label,small) { color:var(--ui-muted)!important; }
+html body #erisProfileHub .eph-tabs { gap:10px!important; }
+html body #erisProfileHub .eph-tabs button[data-modern-menu] { min-height:90px!important;border-radius:15px!important;background:var(--ui-panel)!important;color:var(--ui-ink)!important;box-shadow:0 4px 12px var(--ui-shadow)!important;border-color:var(--ui-line)!important; }
+html body #erisProfileHub .eph-tabs button[data-modern-menu]::before { border-color:var(--ui-line)!important;opacity:.3; }
+html body #erisProfileHub .emp-icon { background:var(--ui-button)!important;color:var(--ui-gold)!important;border-color:var(--ui-line)!important;box-shadow:none!important; }
+html body .lydia-profile-overlay { background:var(--ui-overlay)!important; }
+html body .lydia-profile-overlay> :is(div,section) { background:var(--ui-panel)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important;border-radius:20px!important; }
+html body .lydia-profile-overlay :is([data-room],.lydia-profile-list-row) { background:var(--ui-raised)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body .lydia-profile-overlay :is(small,[data-myrooms]>div) { color:var(--ui-muted)!important; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) { color:var(--ui-ink)!important;--accent:var(--ui-gold);--muted:var(--ui-muted);--border:var(--ui-line); }
+html body :is(.eph-dialog,.eph-body,.eh-sheet,.support-window,.eris-vip-dialog,.rel-dialog,.lp-panel,.esi-panel,.eb-panel,.eris-admin-card,.eris-mini-card:not(.eris-mini-vip),.anon-dialog,.loc-dialog,.shop-buy-confirm>section,.shop800-preview>section,.sheet,.eris-onboard-card,.egp-panel) { color:var(--ui-ink)!important;background:var(--ui-panel)!important;border-color:var(--ui-line)!important;box-shadow:0 18px 60px var(--ui-shadow)!important; }
+html body :is(.eph-overlay,#erisHub,.eris-vip-overlay,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-anonymous,.eris-location,.shop-buy-confirm,.shop800-preview,#erisGiftPickerShade) { background:var(--ui-overlay)!important; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) :is(h1,h2,h3,h4,header,b,strong,label) { color:var(--ui-ink); }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) :is(p,small,.muted,[class$="-muted"],[class$="-note"],[class$="-intro"],[class$="-caption"],[class$="-kicker"]) { color:var(--ui-muted)!important;line-height:1.6; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),textarea,select) { box-sizing:border-box;color:var(--ui-ink)!important;background:var(--ui-page)!important;border:1px solid var(--ui-line)!important;border-radius:12px;min-height:44px;max-width:100%;font-size:16px;accent-color:var(--ui-gold); }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) :is(input,textarea)::placeholder { color:var(--ui-muted)!important;opacity:1; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) :is(input[type=checkbox],input[type=radio],input[type=range]) { accent-color:var(--ui-gold); }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) button:not(.rel-art-button):not(.rel-avatar):not(.liveShopPreview):not(.appearance-preview):not(.eris-mini-portrait):not(.eris-vip-art-button):not(.eris-mini-fan) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important;box-shadow:none!important; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) button:is(.primary,[data-save],[data-apply],[data-profile-save],.rel-primary,.liveShopAction,.eh-btn.primary,.eris-mini-submit,.eris-mini-actions button,.shop-buy-confirm [data-buy]) { color:var(--ui-primary-ink)!important;background:linear-gradient(135deg,var(--ui-primary),var(--ui-primary-end))!important;border-color:var(--ui-bronze)!important;min-height:44px; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) button:is([aria-selected=true],[aria-pressed=true],.selected,.chosen,.active) { color:var(--ui-ink)!important;background:var(--ui-raised)!important;border-color:var(--ui-gold)!important;box-shadow:inset 0 -2px var(--ui-gold)!important; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) :is(button,input,textarea,select,a):focus-visible { outline:2px solid var(--ui-gold)!important;outline-offset:3px; }
+html body :is(#erisProfileHub,.eph-overlay,#erisHub,.support-window,.eris-vip-overlay,#vip,.rel-overlay,.lp-overlay,.esi-overlay,.eb-overlay,.eris-admin-overlay,.eris-mini-shade:not(:has(.eris-mini-vip)),.lydia-profile-overlay,.appearance-collection,.eris-anonymous,.eris-location,#anon,#shop,.shop-buy-confirm,.shop800-preview,#createRoomModal,#realRoomModal,#erisOnboarding,#erisGoogleGate,#eris-notice-stack,.agora-picker,#erisGiftPickerShade) button:disabled { opacity:.45;cursor:default; }
+html body :is(.eph-info-summary,.eph-rename-price,.eph-call-card,.eph-posts-list .ec-social-post,.appearance-item,.appearance-empty,.appearance-preview,.eh-card,.eh-row,.eh-family-row,.eh-family-confirm,.support-message,.support-status,.support-ticket-list button,.eris-vip-summary,.eris-vip-row,.eris-vip-load-state,.eris-vip-art-preview,.rel-row,.rel-material-card,.rel-reward-card,.rel-jewel-card,.rel-level-tile,.rel-gift-card,.lp-package,.lp-card,.lp-notice,.lp-status,.esi-message,.esi-person,.eb-card,.ea-sub,.ea-ban-person,.eris-mini-stats div,.epv-row,.epv-intro,.liveShopCard,.shop-hero,.shop-balance,.shop-empty,.en-card,.en-banner,.anon-choice,.loc-choice) { color:var(--ui-ink)!important;background:var(--ui-raised)!important;border-color:var(--ui-line)!important;box-shadow:none!important; }
+html body :is(.support-message.own,.lp-msg.own,.esi-message.own) { background:var(--ui-button)!important;border-inline-start:3px solid var(--ui-gold); }
+html body :is(.appearance-heading small,.eph-section-label,.rel-dialog header small,.lp-package strong,.shop-balance strong,.eris-vip-summary strong) { color:var(--ui-gold)!important; }
+html body :is(.eris-vip-progress,.rel-bar) { background:var(--ui-line)!important; }
+html body :is(.eris-vip-progress,.rel-bar)>i { background:linear-gradient(90deg,var(--ui-bronze),var(--ui-gold))!important; }
+html body :is(.eris-vip-asset img,.rel-reward-card img,.liveShopPreview) { background-color:transparent!important; }
+html body :is(.eph-icon,.emp-icon,.ea-icon,.epv-icon) { color:var(--ui-gold)!important; }
+html body :is(.rel-error,.esi-error,.eb-error,.eris-mini-error,.lp-error,.support-window [data-error]) { color:var(--ui-danger)!important; }
+html body :is(.eris-mini-block,.eb-danger,.eph-tabs [data-modern-menu=logout]) { color:var(--ui-danger)!important;background:var(--ui-danger-bg)!important;border-color:var(--ui-danger)!important; }
+html body #anon :is(.epv-copy b,.epv-switch) { color:var(--ui-ink)!important; }
+html body #anon .epv-switch { background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body #anon .epv-switch[aria-checked=true] { background:var(--ui-primary)!important; }
+html body :is(.eph-dialog-head,.lp-head,.eris-vip-dialog>header,.rel-dialog>header,.esi-panel>header,.eb-panel>header) { border-bottom-color:var(--ui-line)!important;background:var(--ui-panel)!important; }
+
+html body .support-window { border-radius:20px;padding:18px; }
+html body #shop .shop-nav { gap:8px;scrollbar-color:var(--ui-gold) transparent; }
+html body #shop .liveShopGrid { gap:12px; }
+html body #shop .liveShopCard { border-radius:16px; }
+html body #shop .shop-tools input { min-width:0; }
+html body :is(.rel-overlay,.eph-overlay,.lp-overlay,.eris-vip-overlay) :is(.rel-body,.eph-dialog-content,.lp-body,.eris-vip-body) { overscroll-behavior:contain;scrollbar-color:var(--ui-gold) transparent; }
+html body .eris-mini-card:not(.eris-mini-vip) :is(.eris-mini-name,.eris-mini-stats b) { color:var(--ui-ink)!important; }
+html body .eris-mini-card:not(.eris-mini-vip) .eris-mini-stats small { color:var(--ui-muted)!important; }
+html body .eris-mini-card:not(.eris-mini-vip) .eris-mini-icon { color:var(--ui-button-ink)!important;background:var(--ui-button)!important; }
+html body #erisOnboarding :is(input,textarea,select) { background:var(--ui-page)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+/* Main games occupy the entire visual viewport. Room Ludo/UNO/Okey roots are untouched. */
+html body #erisGamesModal#erisGamesModal.eg-fullscreen {
+ position:fixed!important;inset:0!important;width:100%!important;height:var(--eg-viewport-height,100dvh)!important;max-height:var(--eg-viewport-height,100dvh)!important;padding:0!important;display:block!important;background:var(--ui-page)!important;backdrop-filter:none!important;overflow:hidden!important;
+}
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-panel {
+ box-sizing:border-box!important;width:100%!important;max-width:none!important;height:100%!important;max-height:100%!important;min-height:0!important;padding:0 clamp(12px,3vw,28px) max(18px,env(safe-area-inset-bottom))!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--ui-page)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-color:var(--ui-gold) transparent;
+}
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-panel>* { width:100%;max-width:960px;box-sizing:border-box;margin-inline:auto!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head { position:sticky!important;top:0!important;z-index:40!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto 40px!important;gap:8px!important;min-height:64px!important;padding:max(10px,env(safe-area-inset-top)) 0 10px!important;background:var(--ui-page)!important;border-bottom:1px solid var(--ui-line)!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head h2 { margin:0!important;white-space:normal!important;overflow:visible!important;line-height:1.25!important;font-size:16px!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head>[data-close] { grid-column:3!important;grid-row:1!important;width:40px!important;height:40px!important;min-width:40px!important;position:static!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head>.eg-wallet { grid-column:2!important;grid-row:1!important;max-width:100%!important;position:static!important;background:var(--ui-raised)!important;border-color:var(--ui-line)!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head>.eg-wallet [data-balance] { font-size:11px!important;color:var(--ui-ink)!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-stage { margin-block:12px!important;min-height:280px!important;height:auto!important;max-height:none!important;flex:none!important;overflow:visible!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen :is(button,input,select) { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen :is([data-play],[data-controls] button) { color:var(--ui-primary-ink)!important;background:linear-gradient(135deg,var(--ui-primary),var(--ui-primary-end))!important;border-color:var(--ui-bronze)!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-stake-presets button:is(.wheel-stake-active,.crash-selected,.slot-selected) { color:var(--ui-ink)!important;background:var(--ui-raised)!important;border-color:var(--ui-gold)!important;box-shadow:inset 0 -2px var(--ui-gold)!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-keys { margin-block:12px!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen [data-name] { margin-block:14px!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eris-wheel-wrap { width:min(340px,73vw)!important;max-width:340px!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-wheel-pick { min-height:82px!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen .crash-flight { height:clamp(260px,36dvh,420px)!important;min-height:260px!important; }
+@media(min-width:900px){html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-panel{padding-inline:32px!important}html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-stage{min-height:360px!important}html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-wheel-picks{grid-template-columns:repeat(9,minmax(0,1fr))!important}}
+@media(max-width:359px){html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head{grid-template-columns:minmax(0,1fr) auto 36px!important;gap:4px!important}html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head h2{font-size:12px!important}html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-head>.eg-wallet [data-balance]{font-size:9px!important}html body #erisProfileHub .eph-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body #shop .liveShopGrid{gap:8px}html body .lp-actions{grid-template-columns:1fr}}
+@media(max-height:580px){html body #erisGamesModal#erisGamesModal.eg-fullscreen .eg-stage{min-height:240px!important}html body #erisGamesModal#erisGamesModal.eg-fullscreen .crash-flight{height:240px!important;min-height:240px!important}}
+@media(prefers-reduced-motion:reduce){html body :is(.eph-tabs,.shop-nav,.homeMenu) button{transition:none!important}}
+/* Profile identity surfaces inherit the selected palette, including legacy gradients. */
+html body #profile .profile.card:not([style*="border-image-source"]):not([style*="background-image: url"]) { background:linear-gradient(140deg,var(--ui-panel),var(--ui-raised))!important; }
+html body #profile .profile.card :is(.name h2,.name b,.stat b) { color:var(--ui-ink)!important; }
+html body #profile .profile.card .stat { background:var(--ui-panel)!important; }
+html body #erisProfileHub .eph-tabs button { background:var(--ui-panel)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important;box-shadow:0 3px 12px var(--ui-shadow)!important; }
+html body .app>.content { background:transparent!important;padding-bottom:110px; }
+html body .app>.content>.view { background-image:none!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen [data-wheel-feed]:empty { display:none!important; }
+html body #erisGamesModal#erisGamesModal.eg-fullscreen.eg-single-game [data-name] { display:none!important; }
+html body .eris-follow-shade,html body .eris-follow-confirm { background:var(--ui-overlay)!important; }
+html body :is(.eris-follow-panel,.eris-follow-confirm-card) { background:var(--ui-panel)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.eris-follow-panel,.eris-follow-confirm-card) :is(button,small,p) { color:var(--ui-muted)!important; }
+html body .eris-follow-confirm-card .eris-follow-yes { background:var(--ui-primary)!important;color:var(--ui-primary-ink)!important; }
+html body #erisHub :is(.eh-family-hero,.eh-family-header,.eh-family-meta,.eh-family-search,.eh-family-empty,.eh-family-members,.eh-family-block,.eh-family-sheet) { background:var(--ui-panel)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.eps-card,.eps-row,.eps-visitor,.epl-card,.epl-empty,.epl-summary,.en-empty,.eh-family-person,.eh-family-menu,.eh-family-head,.eris-vip-presentation,.eris-vip-entry-reward) { background:var(--ui-raised)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.eps-intro,.eps-status,.epl-meta,.epl-intro,.epl-status,.en-center,.eh-family-meta,.eh-family-progress-label) { color:var(--ui-muted)!important; }
+html body :is(.eps-button,.epl-button,.en-tools button,.eh-family-menu button) { background:var(--ui-button)!important;color:var(--ui-button-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.eps-danger,.eh-family-role) { color:var(--ui-danger)!important;background:var(--ui-danger-bg)!important;border-color:var(--ui-danger)!important; }
+html body .eh-family-progress { background:var(--ui-line)!important; }
+html body .eh-family-progress i { background:var(--ui-gold)!important; }
+/* Room menus share materials without changing seat/board geometry or wallpapers. */
+html body :is(.room-v3-dialog,.room-v5-dialog,.room-v3-panel,.room-v5-panel,.rc-panel,.ee-sheet,.agora-picker,.erisGoogleCard,.eris-onboard-card) { background:var(--ui-panel)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.room-v3-dialog,.room-v5-dialog,.rc-panel,.ee-sheet,.agora-picker,.erisGoogleCard,.eris-onboard-card) :is(button,input,select,textarea) { background:var(--ui-button)!important;color:var(--ui-button-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.room-v3-card,.v5-card,.room-center-item,.egp-gift,.egp-chip,.rc-row) { background:var(--ui-raised)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important; }
+html body :is(.room-v3-note,.v5-note,.rc-name,.rc-amount,.erm-caption,.egp-title,.egp-price,.eris-subtitle,.authStatus) { color:var(--ui-muted)!important; }
+html body :is(.room-v3-btn,.room-v3-save,.v5-btn,.egp-send,.authBtn,.eris-next) { background:var(--ui-primary)!important;color:var(--ui-primary-ink)!important;border-color:var(--ui-bronze)!important; }
+html body :is(.room-v3-head,.room-center-heading,.rc-panel header,.agora-picker header) { border-color:var(--ui-line)!important;color:var(--ui-ink)!important; }
+html body .rc-shade { background:var(--ui-overlay)!important; }
+html body #profile [data-profile-public-id] { color:var(--ui-button-ink)!important;background:var(--ui-button)!important;border-color:var(--ui-line)!important; }

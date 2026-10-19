@@ -1,0 +1,19 @@
+ErisChat CI canlı E2E kontrol notu
+Tarih: 2026-09-17
+
+Durum:
+- Static backend quality, room security, smoke harness compile ve cosmetic inventory kontrolleri gerçek runner üzerinde başarılı.
+- Cosmetic inventory: 139 aktif asset; mevcut klasörlerdeki tüm geçerli assetler aktif kabul ediliyor.
+- Gerçek runner'da REST room/gift akışı başarılı.
+- Eski live room smoke koşusu 35226559440 içinde WebSocket handshake aşamasında HTTP 500 verdi. O koşu 7b1416d30afb8cb8add9cd77301b8574644ab9d6 commitini checkout etti ve websocket-client proxy bypass düzeltmesini henüz içermiyordu.
+- room_live_smoke.py artık websocket-client için http_proxy_host/http_proxy_port kapatıyor ve localhost proxy bypass seçeneklerini açıkça veriyor; düzeltme 8f065859587a47a575f92be87b509819b376557e commitinde mevcut.
+- 35226559440 logu, hatanın gerçekten websocket-client handshake sırasında oluştuğunu ve testin local 127.0.0.1:8000 hedeflediğini doğruluyor.
+- Daha sonra oluşturulan bazı push workflow run kayıtları jobs=[] ile sonuçlandı; bunlar gerçek E2E sonucu olarak kabul edilmiyor.
+- Şu an amaç: mevcut main'deki websocket proxy düzeltmesini gerçek Pages/live-E2E runner üzerinde yeniden koşturmak ve room WebSocket -> ban -> DM -> cosmetic zincirinin gerçek sonuçlarını almak.
+
+Sonraki kontrol:
+- Bu not güncellemesi mevcut main'i değiştiren zararsız bir push olarak mevcut Pages/live-E2E tetikleyicisini gözlemlemek için yapıldı.
+- Yeni run oluştuğunda önce job listesi, ardından live-e2e job adımları ve gerçek sonuçlar kontrol edilecek.
+- Room WebSocket geçmeden ban/DM/cosmetic sonuçları PASS kabul edilmeyecek.
+- Gerçek workflow/job sonucu görülmeden live-e2e veya Pages için PASS/TAMAM denmeyecek.
+- Railway deploy yapılmayacak; kullanıcı açıkça deploy demedikçe sadece kod/CI düzeyinde ilerlenir.

@@ -1,0 +1,123 @@
+name: ErisChat Pages diagnostics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  pages: read
+
+env:
+  TARGET_BRANCH: main
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inspect repository Pages state
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const targetBranch = process.env.TARGET_BRANCH;
+            const out = { workflow_ref: context.ref, target_branch: targetBranch };
+            try {
+              const r = await github.rest.repos.get({ owner, repo });
+              out.repo = {
+                default_branch: r.data.default_branch,
+                pages_enabled_feature: Boolean(r.data.has_pages),
+                visibility: r.data.visibility,
+              };
+            } catch (e) {
+              out.repo_error = String(e);
+            }
+            try {
+              const r = await github.rest.repos.getPages({ owner, repo });
+              out.pages = {
+                status: r.data.status,
+                build_type: r.data.build_type,
+                cname: r.data.cname || null,
+                html_url: r.data.html_url || null,
+              };
+            } catch (e) {
+              out.pages_error = { status: e.status, message: e.message };
+            }
+            try {
+              const r = await github.rest.repos.getEnvironment({ owner, repo, environment_name: 'github-pages' });
+              const policy = r.data.deployment_branch_policy || null;
+              out.environment = {
+                name: r.data.name,
+                protection_rules: (r.data.protection_rules || []).map(x => ({ type: x.type, id: x.id, wait_timer: x.wait_timer || null })),
+                deployment_branch_policy: policy,
+                policy_allows_protected_branches: policy ? policy.protected_branches : null,
+                policy_allows_custom_branch_policies: policy ? policy.custom_branch_policies : null,
+              };
+            } catch (e) {
+              out.environment_error = { status: e.status, message: e.message };
+            }
+            try {
+              const r = await github.request('GET /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies', {
+                owner,
+                repo,
+                environment_name: 'github-pages',
+                per_page: 100,
+              });
+              out.custom_branch_policies = r.data;
+              const policies = r.data.branch_policies || [];
+              out.target_branch_allowed = policies.some(x => x.type === 'branch' && x.name === targetBranch);
+              out.policy_remediation = out.target_branch_allowed
+                ? `Environment branch policy explicitly allows ${targetBranch}.`
+                : `Environment branch policy does not allow ${targetBranch}. Current allowed branch entries: ${policies.map(x => x.name).join(', ') || '(none)'}. Add ${targetBranch} to the github-pages environment custom deployment branch policy or otherwise change that environment policy in GitHub settings before expecting deploy-pages to run.`;
+            } catch (e) {
+              out.custom_branch_policies_error = { status: e.status, message: e.message };
+            }
+            core.info(JSON.stringify(out, null, 2));
+            core.info('Pages diagnostic is informational only; repository/environment policy is reported for operators.');
+
+      - name: Validate active Pages workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .github/workflows/erischat-pages.yml
+          grep -q 'uses: actions/configure-pages@v5' .github/workflows/erischat-pages.yml
+          grep -q 'uses: actions/upload-pages-artifact@v4' .github/workflows/erischat-pages.yml
+          grep -q 'uses: actions/deploy-pages@v4' .github/workflows/erischat-pages.yml
+          grep -q 'pages: write' .github/workflows/erischat-pages.yml
+          grep -q 'id-token: write' .github/workflows/erischat-pages.yml
+          if grep -q '^    environment:' .github/workflows/erischat-pages.yml; then
+            echo 'Pages workflow uses an environment gate; repository policy must allow main.'
+          else
+            echo 'Pages workflow has no job-level environment gate; deploy-pages can use repository Pages configuration.'
+          fi
+          echo 'Active Pages workflow shape OK'
+
+      - name: Verify duplicate legacy Pages workflow is absent
+        shell: bash
+        run: |
+          if test -e .github/workflows/pages.yml; then
+            echo 'Legacy duplicate Pages workflow must remain absent.'
+            exit 1
+          fi
+          echo 'No duplicate legacy Pages workflow'
+
+      - name: Validate frontend artifact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s frontend/erischat-main.html
+          for script in \
+            platform.js demo-cleanup.js room-live.js gift-live.js room-actions.js \
+            room-ban-live.js room-gift-ui-live.js dm-live.js auth-live.js profile-live.js \
+            cosmetics.js profile-ui-live.js session-ui-live.js dm-create-live.js; do
+            test -s "frontend/$script"
+          done
+          echo 'Frontend artifact source checks OK'

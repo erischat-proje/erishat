@@ -1,0 +1,29 @@
+/* Registration: readable brand artwork and a separate, scroll-gated agreement. */
+html body #erisOnboarding{padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));box-sizing:border-box}
+html body #erisOnboarding .eris-onboard-card{width:min(520px,100%);max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)));padding:22px;overflow-y:auto;scrollbar-width:thin}
+html body #erisOnboarding .eris-logo.eris-shared-brand{width:min(280px,100%);height:auto!important;max-height:none!important;margin:0 auto 16px!important;padding:0!important;overflow:visible!important;flex-shrink:0;background:none!important}
+html body #erisOnboarding .eris-logo.eris-shared-brand .eris-brand-image{display:block;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;mix-blend-mode:normal!important;filter:drop-shadow(0 1px 1px #49330f55);opacity:1!important}
+html body #erisOnboarding h1{font-size:clamp(25px,6.2vw,32px);line-height:1.2}
+html body #erisOnboarding .eris-subtitle{font-size:15px;line-height:1.5;margin:10px 0 20px}
+html body #erisOnboarding .eris-consent-row{display:flex;align-items:flex-start;gap:10px;margin-top:20px}
+html body #erisOnboarding #erisTermsCheck{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:0;border:1px solid var(--ui-gold);border-radius:7px}
+html body #erisOnboarding #erisTermsCheck span{visibility:hidden}
+html body #erisOnboarding #erisTermsCheck[aria-checked=true] span{visibility:visible}
+html body #erisOnboarding #erisReadTerms{min-height:28px;padding:0!important;background:transparent!important;color:var(--ui-ink)!important;box-shadow:none!important;border:0!important;text-align:left;text-decoration:underline;font-size:14px;line-height:1.45}
+html body #erisOnboarding .eris-consent-row small{display:block;font-size:12px;line-height:1.5;margin-top:5px}
+html body #erisOnboarding .eris-reward-note{padding:12px;border:1px solid var(--ui-line);border-radius:12px;font-size:14px;line-height:1.5}
+html body #erisOnboarding #erisTermsDialog{box-sizing:border-box;width:min(680px,calc(100vw - 24px));height:min(760px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);padding:16px;margin:auto;border:1px solid var(--ui-gold);border-radius:20px;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#342b21);box-shadow:0 24px 90px #0008;overflow:hidden}
+html body #erisOnboarding #erisTermsDialog[open]{display:flex;flex-direction:column;gap:10px}
+html body #erisOnboarding #erisTermsDialog::backdrop{background:#001b16b3;backdrop-filter:blur(4px)}
+html body #erisOnboarding #erisTermsDialog header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}
+html body #erisOnboarding #erisTermsDialog h2{font-size:20px;margin:0;line-height:1.3}
+html body #erisOnboarding #erisTermsDialog h3{font-size:16px;margin:20px 0 8px;line-height:1.5}
+html body #erisOnboarding #erisTermsDialog header button{width:36px;min-height:36px;padding:0;font-size:25px}
+html body #erisOnboarding #erisTermsDialog .eris-terms-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;border-top:1px solid var(--ui-line);border-bottom:1px solid var(--ui-line);padding:0 8px;font-size:14px;line-height:1.7;scrollbar-width:thin}
+html body #erisOnboarding #erisTermsDialog .eris-terms-body p{font-size:14px;line-height:1.7;margin:10px 0}
+html body #erisOnboarding #erisTermsDialog [data-terms-hint]{font-size:12px;line-height:1.4;margin:0;flex:none}
+html body #erisOnboarding #erisTermsDialog footer{display:flex;gap:8px;flex:none}
+html body #erisOnboarding #erisTermsDialog footer button{flex:1;min-height:46px;padding:10px;font-size:14px}
+@media(max-width:360px){html body #erisOnboarding .eris-onboard-card{padding:16px}html body #erisOnboarding #erisTermsDialog{padding:12px}}
+
+html body #erisOnboarding #erisTermsDialog [hidden]{display:none!important}

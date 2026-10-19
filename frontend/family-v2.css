@@ -1,0 +1,63 @@
+/* ErisChat Lidya family V2 */
+.eh-family-shell.ef2{--ef2-gold:#b48a4d;--ef2-border:color-mix(in srgb,var(--ui-ink) 17%,transparent);--ef2-bg:var(--ui-raised);--ef2-text:var(--ui-ink);color:var(--ef2-text);padding-bottom:36px}
+.ef2 *{box-sizing:border-box}.ef2 .ef2-intro{padding:12px 3px 20px}.ef2 .ef2-kicker{color:var(--ef2-gold);font-size:10px;letter-spacing:2px;font-weight:900}.ef2 .ef2-intro h2{font-size:25px;margin:7px 0}.ef2 .ef2-intro p,.ef2 .ef2-panel p{color:var(--ui-muted);line-height:1.6;font-size:12px;margin:5px 0}
+.ef2 .eh-family-hero{border-radius:24px;background:linear-gradient(145deg,color-mix(in srgb,var(--ui-panel) 85%,#d6a85c),var(--ui-panel));border:1px solid var(--ef2-border);box-shadow:0 15px 35px var(--ui-shadow);padding:20px}
+.ef2 .eh-family-crest{border:2px solid var(--ef2-gold);border-radius:18px}.ef2 .eh-family-level{color:var(--ef2-gold);font-size:32px}.ef2 .eh-family-progress i{background:linear-gradient(90deg,#9c6a2f,#e7c47f)}
+.ef2 .ef2-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0 19px}.ef2 .ef2-stats>div{border:1px solid var(--ef2-border);border-radius:18px;padding:14px;background:var(--ef2-bg);min-width:0}.ef2 .ef2-stats small{display:block;font-size:9px;letter-spacing:.5px;color:var(--ui-muted);margin-bottom:7px}.ef2 .ef2-stats strong{font-size:20px;overflow-wrap:anywhere}
+.ef2 .ef2-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 0 14px;scrollbar-width:none}.ef2 .ef2-tabs button{flex:none;border:1px solid var(--ef2-border);border-radius:100px;padding:11px 14px;background:var(--ef2-bg);color:var(--ui-ink);font-weight:800;font-size:12px}.ef2 .ef2-tabs button.active{background:linear-gradient(120deg,#a77535,#e2c184);color:#24180d;border-color:#b99054}.ef2 [hidden]{display:none!important}.ef2 .ef2-sections{min-height:210px}.ef2 .ef2-panel{padding:19px;border-radius:19px;border:1px solid var(--ef2-border);background:var(--ef2-bg);margin:6px 0 15px}.ef2 .ef2-panel h3,.ef2 h3{font-size:16px;margin:0 0 9px}.ef2 .ef2-primary{background:linear-gradient(130deg,#986a33,#e1c287);color:#25190b;border:0;border-radius:13px;padding:12px 16px;font-weight:800;margin-top:12px}
+.ef2 .eh-family-member-strip{padding:12px 0 22px}.ef2 .eh-family-person{min-width:100px;padding:13px 10px;border:1px solid var(--ef2-border);border-radius:17px;background:var(--ef2-bg)}.ef2 .eh-family-person b{max-width:100%;font-size:11px;white-space:normal;overflow-wrap:anywhere}
+.ef2 .ef2-level{display:flex;align-items:center;gap:13px;padding:12px 14px;margin:8px 0;border:1px solid var(--ef2-border);background:var(--ef2-bg);border-radius:16px}.ef2 .ef2-level.current{border-color:var(--ef2-gold);box-shadow:0 0 0 1px var(--ef2-gold)}.ef2 .ef2-medal{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,#9b6d35,#e8c986);color:#211609;font-weight:900}.ef2 .ef2-level b,.ef2 .ef2-level small{display:block}.ef2 .ef2-level small{font-size:10px;color:var(--ui-muted);margin-top:4px}.ef2 .ef2-capacity{margin-left:auto;font-size:11px;white-space:nowrap;font-weight:700}
+.ef2 .ef2-rank{display:flex;align-items:center;gap:12px;padding:14px 11px;border-bottom:1px solid var(--ef2-border)}.ef2 .ef2-rank strong{color:var(--ef2-gold);min-width:32px}.ef2 .ef2-rank span{flex:1;min-width:0;overflow-wrap:anywhere}.ef2 .ef2-rank small{font-size:10px;color:var(--ui-muted);text-align:right}
+.ef2 .eh-family-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ef2 .eh-family-actions button.ef2-action{min-height:70px;border:1px solid #ba9052;border-radius:16px;background:linear-gradient(135deg,#e5c68b,#a87b3e);color:#261b0d;font-size:12px;font-weight:900;box-shadow:0 5px 13px var(--ui-shadow);padding:9px;background-size:100% 100%}.ef2 .eh-family-actions .ef2-leave{background:linear-gradient(135deg,#ded4c1,#b2a189)!important}.ef2 .ef2-avatar-btn{margin-top:15px;width:100%;border-radius:13px;min-height:48px}
+@media(max-width:380px){.ef2 .ef2-stats strong{font-size:17px}.ef2 .ef2-tabs button{padding:10px 12px}.ef2 .eh-family-actions button.ef2-action{font-size:11px}}
+
+.ef2 .ef2-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ef2 .ef2-shortcuts button{min-height:65px;border:1px solid #b18a51;border-radius:16px;background:linear-gradient(140deg,#e8d09e,#b68a4b);color:#271b0e;font-weight:850;padding:10px}
+/* Override legacy inline family rules deliberately. */
+.ef2 .eh-family-hero{border-radius:24px!important;border:1px solid var(--ef2-border)!important;padding:20px!important}
+.ef2 .eh-family-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+.ef2 .eh-family-actions button.ef2-action{min-height:70px!important;border:1px solid #ba9052!important;border-radius:16px!important;background:linear-gradient(135deg,#e5c68b,#a87b3e)!important;color:#261b0d!important;font-size:12px!important}
+.ef2 .eh-family-member-strip{display:flex!important;gap:12px!important}
+.ef2 .eh-family-person{min-width:100px!important;padding:13px 10px!important;border-radius:17px!important}
+.ef2 .eh-family-person b{max-width:100%!important;white-space:normal!important}
+.ef2 .ef2-avatar-btn{min-height:48px!important}
+
+/* V3 family experience: asset-backed controls, independent of legacy #eh-family selector. */
+.eh-family-shell.ef2 .eh-family-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.eh-family-shell.ef2 .eh-family-actions button.ef2-action{position:relative;min-height:86px!important;border-radius:18px!important;background-color:#261e16!important;background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important;color:#f9e7c1!important;text-shadow:0 1px 3px #17100a!important;border:1px solid #b89964!important;padding:12px 9px!important;font-size:13px!important;font-weight:800!important;white-space:normal!important}
+.eh-family-shell.ef2 .eh-family-actions button.ef2-action:focus-visible,.eh-family-shell.ef2 .ef2-tabs button:focus-visible{outline:3px solid #d8ae68;outline-offset:3px}
+.eh-family-shell.ef2 .ef2-avatar-btn{width:100%;min-height:74px!important;background-size:100% 100%!important;background-position:center!important;border-radius:18px!important;color:#f8e9c8!important;text-shadow:0 1px 3px #21150c!important}
+.eh-family-shell.ef2 .ef2-goal{padding:10px 0;border-bottom:1px solid var(--ui-line);display:grid;gap:7px}.eh-family-shell.ef2 .ef2-goal span{font-weight:800;font-size:13px}.eh-family-shell.ef2 .ef2-meter{height:10px;background:color-mix(in srgb,var(--ui-ink) 10%,transparent);border-radius:99px;overflow:hidden}.eh-family-shell.ef2 .ef2-meter i{display:block;height:100%;background:linear-gradient(90deg,#987039,#e8c78d);border-radius:99px}.eh-family-shell.ef2 .ef2-goal small{color:var(--ui-muted)}
+.eh-family-shell.ef2 [data-ef2-page][hidden]{display:none!important}
+.eh-family-shell.ef2 .ef2-tabs{position:sticky;top:0;z-index:2;background:var(--ui-panel);border-radius:12px;padding:8px 4px 12px}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-members{background-image:url("./assets/family-premium/png/family-members-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-members{background-image:url("./assets/family-premium/png/family-members-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-chat{background-image:url("./assets/family-premium/png/family-chat-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-chat{background-image:url("./assets/family-premium/png/family-chat-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-invite{background-image:url("./assets/family-premium/png/family-invite-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-invite{background-image:url("./assets/family-premium/png/family-invite-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-applications{background-image:url("./assets/family-premium/png/family-applications-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-applications{background-image:url("./assets/family-premium/png/family-applications-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-manage{background-image:url("./assets/family-premium/png/family-manage-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-manage{background-image:url("./assets/family-premium/png/family-manage-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-donate{background-image:url("./assets/family-premium/png/family-donate-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-donate{background-image:url("./assets/family-premium/png/family-donate-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .eh-family-actions button.ef2-leave{background-image:url("./assets/family-premium/png/family-leave-light.png")!important}
+
+.eh-family-shell.ef2 .eh-family-actions button.ef2-leave{background-image:url("./assets/family-premium/png/family-leave-dark.png")!important}
+
+:is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .ef2-avatar-btn{background-image:url("./assets/family-premium/png/family-avatar-light.png")!important}
+
+.eh-family-shell.ef2 .ef2-avatar-btn{background-image:url("./assets/family-premium/png/family-avatar-dark.png")!important}

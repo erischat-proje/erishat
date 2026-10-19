@@ -1,0 +1,49 @@
+/* The live room keeps white readable text in both app themes. Other pages keep
+   their own theme. Dark translucent surfaces protect white text on any wallpaper. */
+html body #erisRoomSurface.room-layout-v6.room-screen-fit{
+ --ui-ink:#fff;--ui-muted:#fff;--ui-gold:#fff;
+ --ui-panel:#0b211a;--ui-raised:#17382c;--ui-button:#294f3d;
+ color:#fff!important;text-shadow:0 1px 3px #000,0 0 5px #0009;
+}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(b,small,span,p,label,input,textarea,select,button,a,h1,h2,h3,h4,.eris-chat-text){color:#fff!important;-webkit-text-fill-color:#fff!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(input,textarea)::placeholder{color:#fff!important;opacity:.85!important;-webkit-text-fill-color:#fff!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(.eris-room-top,.eris-room-compose){background:#071b14b8!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(.room-v3-dialog,.room-v5-dialog){background:#0b211af5!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(.room-v3-btn,.room-v3-input,.room-v3-tab,.v5-item){background-color:#17382c!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit:not(.ludo-mode):not(.okey-mode):not(.uno-mode)>#erisLiveSeats{
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-template-rows:repeat(var(--fit-rows),calc(var(--fit-seat) + 22px))!important;
+ align-content:start!important;align-items:start!important;gap:8px 8px!important;
+ padding:10px 12px 20px!important;scroll-padding:10px;
+}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit:not(.ludo-mode) #erisLiveSeats>.eris-seat{
+ width:var(--fit-seat)!important;height:var(--fit-seat)!important;
+ max-width:var(--fit-seat)!important;max-height:var(--fit-seat)!important;
+}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveSeats>.eris-seat>b.seat-name{
+ top:calc(100% + 3px)!important;line-height:18px!important;height:18px!important;
+ min-height:18px!important;font-size:10px!important;
+ width:calc((var(--app-width,100vw) - 48px)/4)!important;
+ max-width:calc((var(--app-width,100vw) - 48px)/4)!important;
+ text-shadow:0 1px 3px #000,0 0 5px #000!important;
+}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveSeats .seat-pod{width:100%!important;height:100%!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveSeats .eris-seat.occupied .seat-ava{width:84%!important;height:84%!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat{
+ display:flex!important;flex-direction:column!important;justify-content:flex-start!important;
+ gap:3px!important;padding:5px 9px!important;scroll-padding-bottom:8px;
+ background:linear-gradient(90deg,#07140ecf,#07140e99)!important;
+}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-chat-msg{
+ flex:0 0 auto!important;min-height:38px!important;height:auto!important;
+ margin:0!important;padding:3px 4px 3px 43px!important;
+ line-height:16px!important;max-width:100%!important;background:transparent!important;
+}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-chat-msg[hidden]{display:none!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-chat-identity{min-height:16px!important;line-height:16px!important;gap:4px!important;margin:0!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-chat-identity b{font-size:11px!important;line-height:16px!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-chat-text{display:block!important;margin:0!important;font-size:12px!important;line-height:17px!important;overflow-wrap:anywhere!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .rel-chat-bubble{margin:0!important;min-height:0!important;padding-top:2px!important;padding-bottom:2px!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .rel-chat-line{min-height:0!important;margin:0!important;line-height:17px!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-fan-badge{height:18px!important;width:22px!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisRoomActivity{color:#fff!important;background:#071b14bb!important;font-size:11px!important;line-height:22px!important;padding:2px 10px!important;text-shadow:0 1px 3px #000!important}

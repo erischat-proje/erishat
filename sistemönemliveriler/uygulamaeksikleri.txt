@@ -1,0 +1,2 @@
+# ErisChat sistem kaydı: uygulamaeksikleri.txt
+# JSONL kayıtları aşağıya eklenir.

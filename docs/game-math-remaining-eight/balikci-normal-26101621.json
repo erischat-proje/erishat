@@ -1,0 +1,42 @@
+{
+  "roundHitFrequency": 0.3488245,
+  "netProfitFrequency": 0.095326,
+  "version": "lidya-balikci-v3",
+  "samples": 2000000,
+  "seed": 26101621,
+  "targetRtp": 0.9671,
+  "rtp": 0.9700423499931021,
+  "ci95": [
+    0.9528277931159114,
+    0.9872569068702929
+  ],
+  "baseRtp": 0.48312330000000003,
+  "bonusLineRawRtp": 0.03052715,
+  "bonusFishRawRtp": 0.34585299999999997,
+  "bonusDynamiteRawRtp": 0.1217475,
+  "bonusRtp": 0.48691904999999996,
+  "paidHit": 0.3419135,
+  "bonusFrequency": 0.0088805,
+  "bonusFrequencyTarget": 0.008849557522123894,
+  "bonusTriggers": 17761,
+  "freeSpins": 308295,
+  "stagesReached": [
+    0,
+    3050,
+    1355,
+    2114
+  ],
+  "cappedRounds": 5,
+  "maxObservedX": 2100.0,
+  "note": "Monte Carlo estimate; target RTP is not certified. Entire triggered bonus chains and cap are included.",
+  "game": "balikci",
+  "mode": "normal",
+  "certified": false,
+  "modelVersion": "lidya-balikci-v3",
+  "source_sha256": {
+    "backend/app/balikci_engine.py": "bfa062475d6abc880c31bbb7b443247ba45d328a06be22ad17387dbf243de67d",
+    "backend/app/balikci-math.json": "4c199d7cda4d79fedd5a0facea27507e9f43d47c064ab3fc0c67d207b8f0614b",
+    "tests/balikci_simulate.py": "35ab9775101540f9fb6897b4722dd5542592ace2db07daa5421bb5eded4e057e",
+    "tests/game_math_audit.py": "8a639e1c1df4a866287c2319dc0131b968c5d9992ded98aecce19d10dc5b3b38"
+  }
+}

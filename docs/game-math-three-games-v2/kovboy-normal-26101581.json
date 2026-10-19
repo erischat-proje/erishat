@@ -1,0 +1,27 @@
+{
+  "mode": "normal",
+  "samples": 1000000,
+  "seed": 26101581,
+  "rtp": 0.9910649500000001,
+  "ci95": [
+    0.9477197126046641,
+    1.034410187395336
+  ],
+  "paidHitFrequency": 0.369151,
+  "bonusFrequency": 0.004889,
+  "freeSpins": 46992,
+  "floorSupplements": 1511,
+  "caps": 0,
+  "maxWinBetMultiple": 6561.1,
+  "roundHitFrequency": 0.372807,
+  "netProfitFrequency": 0.120227,
+  "certified": false,
+  "game": "kovboy",
+  "modelVersion": "kovboy-v2",
+  "source_sha256": {
+    "backend/app/kovboy_engine.py": "f8912733fce9d6d2d56e398c6ef26bdead124c5fc526019b8b86a84f716e8fb4",
+    "backend/app/kovboy-math.json": "1e5088606381051110ea6e75ffb0039e8c6cc1081aa85b9c21587be8bcc9ebc7",
+    "tests/kovboy_simulate.py": "8fee035f31d73af3a7f553e88dd129d21396c0b58a35715a890d46343a382385",
+    "backend/app/kovboy-math-v2.json": "a2bb6b2d9da3e22b22bf87af7116fa84022bee65148286bcc7324d4a9d3b887f"
+  }
+}

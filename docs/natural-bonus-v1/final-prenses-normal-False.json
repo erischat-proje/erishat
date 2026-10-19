@@ -1,0 +1,39 @@
+{
+  "game": "prenses",
+  "mode": "normal",
+  "condition": false,
+  "samples": 200000,
+  "seed": 26101617,
+  "profile": "natural-balanced-20261015-v1",
+  "probability": 0.01,
+  "rtp": 0.73407925,
+  "ci95": [
+    0.7140612515302961,
+    0.7540972484697038
+  ],
+  "base_rtp": 0.73407925,
+  "trigger_paid_mean": null,
+  "bonus_frequency": 0.0,
+  "free_spins": 0,
+  "caps": 0,
+  "max_observed": 1131.75,
+  "certified": false,
+  "source_sha256": {
+    "backend/app/dogparty_engine.py": "a8e28553522e3ac4fb789e744fedfcc969e881e5818b5b0df65d6af584f92603",
+    "backend/app/dede_engine.py": "7216e0836e18a19150d23441c45b952043bbbd78c45fa9e5a7beb77d6563c431",
+    "backend/app/kure_engine.py": "6cb77a7a33cf3735670e1d97e8ec58d252ef9a92ece7cec13114b3b9c39a82e6",
+    "backend/app/firavun_engine.py": "25e798cc377cb9d3c540a12c32ebeee949e4931be4c7e635cb7bfd1f992e4623",
+    "backend/app/aztek_ares_engine.py": "9c9994103143afb279dd24c5dcc17f98a6741ba86ef5af73e2a23faae9e61500",
+    "backend/app/candy_engine.py": "65df6ea9696d763398bacb34963c0ed94c42da258a7582f9c8b2599c6b08a0cb",
+    "backend/app/altin_engine.py": "33527b421c2aed5ba3c7a90a0909ce4a73f41962126f8469fab28f4def7cbfa9",
+    "backend/app/seker_engine.py": "22ec4569fecc411083c676cfb90c3f6f1a7ff101033627034ba781123b4ac1c3",
+    "backend/app/balikci_engine.py": "074a5d4ffc465dfa3a336c04003d9b7ff766f64ef60b59ce592a25a7e5b967df",
+    "backend/app/kovboy_engine.py": "f8912733fce9d6d2d56e398c6ef26bdead124c5fc526019b8b86a84f716e8fb4",
+    "backend/app/bastet_engine.py": "cac6237bd9cf83db435440e4b9194ef1086a09e67dc579c58f72e0e625b1870c",
+    "backend/app/prenses_engine.py": "bf54b718cd6b10aef62a1c37f6b9a2f1d3784413ab3842426426d08fa6537bd1",
+    "backend/app/natural_bonus.py": "c1698496c5b23e7e87ff667449f18129524fc15673c48e5deb8613e3d02d9f64",
+    "backend/app/natural-bonus-v1.json": "0409f5e9333fe169ceaa93f64b099a891b1a292e4d313db69cfcb51957608cc3",
+    "backend/app/aztek_ares_v2.py": "4f5b9e355a81f648860b3d8da2c4affccdf7acbf5549a3837b792ad984639785",
+    "tests/natural_bonus_audit.py": "c8e7f6546894d1d0d20128ffbf67793a650f3a7ce045d7b7c84db7f8b4a67c27"
+  }
+}

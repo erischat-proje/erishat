@@ -1,0 +1,152 @@
+ERISCHAT — SON DURUM
+Tarih: 2026-09-20
+
+ANA BRANCH
+- main HEAD: 833b4dc0a42a09df4ff9477d250f85668f97353b
+- Son değişiklik: GitHub Pages deploy concurrency kontrolü eklendi.
+
+QUALITY
+- Quality #1403 / run 35471571319: SUCCESS.
+- Job 105973348709: SUCCESS.
+- 35 ana kalite/test adımı SUCCESS.
+- Hata durumunda çalışan API log adımı doğal olarak SKIPPED.
+- Frontend/browser smoke, customer demo surface integrity, cosmetics, room, family, VIP lifecycle, admin, anonymous session, live family/room/ban/DM/cosmetic/wallpaper ve real two-browser WebRTC smoke zincirleri bu run'da geçti.
+- VIP 0→1→2→3 spend/current_level_spent/unlock/apply yaşam döngüsü doğrulandı.
+- Real two-browser WebRTC signaling/peer smoke geçti.
+
+GITHUB PAGES
+- Pages run #1356 / run 35471571235: SUCCESS.
+- Pages deploy, önceki concurrency problemi sonrasında başarıyla tamamlandı.
+- Workflow'a erischat-pages concurrency grubu ve cancel-in-progress=true eklendi.
+- Canlı URL: https://semihvarolymk-png.github.io/erischat/
+- Bu çalışma ortamındaki web erişim katmanı canlı URL içeriğini açamadığı için gerçek HTTP/görsel PASS ilan edilmiyor. Normal tarayıcıdan açılarak son görsel/etkileşim kontrolü yapılmalı.
+
+KALAN GERÇEK DOĞRULAMALAR
+- [ ] GitHub Pages canlı URL'nin normal tarayıcıdan görsel/etkileşim kontrolü.
+- [ ] 139 kozmetiğin manuel görsel/alpha standardı incelemesi.
+- [ ] Üretim STUN/TURN ve mobil ses transportunun gerçek cihaz/tarayıcılarla doğrulanması.
+
+DEMO KAPSAMI
+- Ana ekran, Odalar/Oda Aç, gerçek oda modalı, DM/Mesaj, Keşfet, Mağaza, VIP 1–12, Profil, Gizlilik, Aile, Oyunlar, Şikayet, Bildirim/Engelleme/Admin ve Tüm Sistemler yüzeyleri mevcut.
+- Mağaza 139 kozmetik ve 500.000.000 sanal demo Lidya ile test edilebilir; bu kredi gerçek ödeme/bakiye değildir.
+- VIP 1–12 demo önizlemesi gerçek backend VIP seviyesini değiştirmeden test edilebilir.
+- Blocking alert/popup akışları toast'a temizlendi; floating sistem/hediye/müzik tetikleyicileri kaldırıldı.
+- Masaüstü responsive düzen düzeltildi.
+
+NOT
+- Railway deploy yapılmayacak; kullanıcı açıkça istemedikçe GitHub Pages/demo akışı kullanılacak.
+
+
+## 2026-09-20 — müşteri demo doluluk/fonksiyon düzeltmeleri
+- Kullanıcı geri bildirimi doğrulandı: önceki yüzeylerde sistemler vardı ancak ana ekranda görünür/test edilebilir değildi; oda açma CTA'sı da createRoomModal bulunmadığı için çalışmıyordu.
+- main.html: gerçek oda yok/backend erişilemiyor durumunda 6 adet açıkça DEMO olarak işaretlenen örnek oda; oda oluşturma modalı; demo oda içinde 12 koltuk, mesajlaşma, hediye/müzik/oyun/duyuru girişleri; oyun merkezi (zar, taş-kağıt-makas, mini quiz, şans kutusu) eklendi.
+- room-live.js: backend oda listesi başarısızsa demo oda listesi; demo oda ID'lerinde 12 koltuklu yerel oda yüzeyi ve koltuk alma fallback'i eklendi.
+- shop-live.js: backend katalog erişilemezse 40 normal avatar + 40 normal çerçeve + 12 VIP avatar + 12 VIP çerçeve + 35 hediye olmak üzere 139 demo katalog öğesi gösterilecek; satın alma yalnızca demo cüzdanından yapılacak ve demo olduğu belirtiliyor.
+- Son HEAD: 20d65cc76dcaeeb75794490416992fbe0a16edd5.
+- Quality #1410 ve Pages #1363 bu HEAD için çalışmaya başladı; final sonuç henüz bekleniyor.
+- Pages canlı görsel doğrulaması bu oturumda hâlâ bağımsız olarak doğrulanmış değil.
+
+## 2026-09-20 — güncel devam noktası
+- Güncel main HEAD: 94729b0360c671d0d452c9392a0ccf31c5c99df9.
+- 7 oyunluk müşteri demo kataloğu ana yüzeye taşındı: Rulet, 4 Kupa, At Yarışı, Blackjack, Crash, Kasa Açma, Şans Çarkı.
+- Oyunlar demo/katalog yüzeyidir; bahis, gerçek para veya kumar işlemi eklenmedi.
+- Floating müşteri demo kontrolleri kaldırıldı; sistemler merkezi Feature Hub üzerinden erişilebilir.
+- Sonraki odak: ana müşteri demo yüzeylerini tek tek açıp boş/ölü CTA bırakmamak ve Pages canlı kontrolünü ayrıca doğrulamak.
+
+- 2026-09-20 devam: ana üst menüdeki sistem ikonunun gereksiz profil sekmesine yönlenmesi kaldırıldı; ikon artık doğrudan Tüm Sistemler / Feature Hub'ı açıyor. Commit: 306baaaa5ea012e55155345f868302c7a6f9d81a.
+
+- 2026-09-20 devam: Ana HTML'deki eski 4 mini-oyun launcher'ı kaldırıldı; tüm Oyun Merkezi çağrıları artık merkezi 7 oyunluk demo kataloğuna yönleniyor. Böylece eski Zar/Taş-Kağıt-Makas/Quiz/Hafıza yüzeyi tekrar görünmeyecek. Commit: 76b0101a90d34b112fcaab099241cccf21369c62.
+
+
+## 2026-09-20 — doğrulama ve devam kaydı
+- Güncel GitHub commit sırası kontrol edildi; müşteri demo tarafındaki son değişiklik safety/onboarding/room-settings etkileşimleri dahil olmak üzere 2026-09-19 son commitlerine kadar mevcut.
+- Ana HTML merkezi 7 oyun launcher'ını kullanıyor ve `demo-complete-live.js` ana yüzeyde açıkça yükleniyor.
+- 7 oyun kataloğu korunuyor: Rulet, 4 Kupa, At Yarışı, Blackjack, Crash, Kasa Açma, Şans Çarkı. Bunlar demo/katalog yüzeyidir; bahis, gerçek para veya kumar işlemi eklenmiyor.
+- Safety, onboarding ve room-settings demo yüzeyleri etkileşimli hale getirildi; demo-session durumları gerçek backend kalıcılığı olarak sunulmuyor.
+- Son kontrol edilen `a4a2528...` commit'i için GitHub workflow sorgusu şu anda workflow sonucu döndürmedi; bu nedenle yeni CI PASS ilan edilmedi.
+- Bir sonraki teknik odak: müşteri demo yüzeylerindeki kalan boş/ölü CTA'ları tek tek kapatmak, ardından Pages canlı görsel/etkileşim kontrolünü yapmak.
+
+- 2026-09-20 devam: Tüm Sistemler > Araçlar paneline merkezi 7 oyunluk Oyun Merkezi de eklendi. Böylece oyun kataloğu yalnızca ana navigasyondan değil, merkezi sistem hub'ından da açılabiliyor. Commit: 6728cdcac02e428bc718b4a3990ef7c0a037fb7e.
+
+
+[2026-09-20 DEVAM]
+- `06714ef1c0ed95c42e5581fbd6768b58de71a675`: müşteri demosuna etkileşimli oda hediye vitrini eklendi; alıcı + hediye seçimi ve demo gönderim akışı mevcut, gerçek ödeme iddiası yok.
+- `e5a50553d90ade089d9f804d68b6dea69968a179`: demo oda içindeki Hediye butonu artık boş toast yerine merkezi interaktif hediye demo yüzeyini açıyor.
+- Sonraki odak: ana müşteri demosundaki kalan yalnızca-bilgi/boş CTA'ları aynı şekilde gerçek veya açıkça demo test yüzeylerine bağlamak.
+
+- `cab01e13e75a28875236416204b89a8353b8b913`: ana oda demo yüzeyindeki Müzik ve Duyuru butonları boş toast yerine gerçek merkezi demo panellerine bağlandı; müzik backend kuyruğunu, duyuru backend yönetimini kullanıyor.
+
+- `6f04edf7744c17676b971b70902a53bc59a34e68`: profil demo aksiyonları artık yalnızca toast göstermek yerine avatar/çerçeve uygulama, favori ve takip durumlarını etkileşimli değiştiriyor; hediye vitrini merkezi demo paneline bağlı.
+
+- `9f73623437a4150f8cae97c310668a10f48108c4`: ana ekran/sistemler profil girişleri artık profil verisini yeniliyor; Keşfet etkinliklerindeki Müzik Köşesi CTA'sı boşa giden `openRoom` yerine merkezi müzik demo paneline bağlandı.
+
+- `a953ec045102d00b6fb96098bb6257f4acbbab9c`: gerçek oda modalındaki tanımsız kapat/hediye/müzik aksiyonları düzeltildi; kapatma doğrudan modalı kapatıyor, hediye ve müzik merkezi demo panellerine bağlandı; oda mesajı demo oturumunda mesaj balonu oluşturuyor.
+
+- `483c7a502bd5bf0e8eed425d3531cd73f07b8111`: gerçek oda modalında hediye tekrar gerçek `openRoomGift`, müzik gerçek `ErisChatMusic.open` ve kapatma gerçek `closeRealRoom` akışına bağlandı; demo merkezi yalnızca demo oda yüzeylerinde kullanılıyor.
+
+- `86fac42bc38e1212476ab1314a710fa4079f662e`: Tüm Sistemler → Güvenlik/Şikayet formuna gönderim öncesi doğrulama eklendi; kategori + neden ve en az bir hedef alanı zorunlu, başarılı gönderimde ilgili alanlar temizleniyor.
+
+- `6357e3070abd9893a55c59c82512ccefc3c769e3`: Keşfet sistemi artık Yakındakiler / Rastgele sohbet / Rastgele oda sonuçlarını yalnızca toast olarak değil, merkezi panel içinde görünür kartlarla gösteriyor; farklı API response şekilleri normalize ediliyor.
+
+- `cbc84216fee5307043d4a7eaf7369a3e88e9241a`: Profil VIP ilerleme çubuğundaki eski düşük eşikler kaldırıldı; VIP 1–12 ilerlemesi proje için tanımlanan toplam harcama eşikleriyle hizalandı: 1K / 5K / 15K / 30K / 60K / 120K / 250K / 500K / 1M / 2M / 5M / 10M.
+
+- `433a5b713e6f58ce98d712c7d3106e7b6e01c02c`: Tüm Sistemler > Gizlilik paneli güçlendirildi; backend boş ayar döndürürse açık durum gösteriliyor, değişiklik sırasında kontrol kilitleniyor ve başarılı/başarısız kayıt sonucu panel içinde görünür hale getirildi.
+
+- `6cc71e93ed36c4cde880f980e946c766fe94af77`: VIP müşteri demo tablosuna gerçek VIP 1–12 toplam harcama eşikleri eklendi: 1K → 5K → 15K → 30K → 60K → 120K → 250K → 500K → 1M → 2M → 5M → 10M Lidya.
+
+- `31624a02b60c57120aa8cb205f51f7de5fac5ef1`: Tüm Sistemler > Profil yüzeyi güçlendirildi; Hayran/Profil hediyesi endpoint'lerinden biri çalışmazsa artık tüm profil paneli boş/hata durumuna düşmüyor, ilgili sayaç bağımsız olarak `Kullanılamıyor` gösteriyor.
+
+- `61ac3c19b670c74407b4a8dc9aca904ed623125a`: Mağaza demo yüzeyi güçlendirildi; `/cosmetics` başarısız olursa yüklenmiş `ErisChatCosmetics.state.catalog` önbelleği kullanılıyor, o da boşsa boş ekran yerine açık katalog durumu gösteriliyor. Ayrıca Çerçeve filtresindeki operatör önceliği hatası düzeltildi.
+
+- `8ae35d57e3f10db7f98a51c399d8e3b6259f3e5a`: Onboarding demo artık sadece ilerleme ekranı değil; takma ad, cinsiyet, avatar seçimi, ilgi alanları ve profil görünürlüğü adımlarında gerçek demo oturum state'i tutuluyor ve Geri/İleri/Tamamla akışı çalışıyor.
+
+- `e7dd7181d6452f2f7fd222a308369419f9d3855e`: Güvenlik/Moderasyon demo yüzeyi state tabanlı hale getirildi; bildirim okundu, engelle/engel kaldır, VIP görünürlüğü ve örnek rapor inceleme durumları aynı panelde anlık güncelleniyor.
+
+- `b8398698ec008a10c3b8283d90d3511451ba26a6`: Aile demo backend durumları ayrıştırıldı; aile servisi erişilemezken 'aile yok' gösterilmiyor, tekrar dene aksiyonu geliyor. Aile sohbetinde API hatası artık 'henüz mesaj yok' gibi yanlış görünmüyor.
+
+- `da57963db90e2d5b8974ba099af41ab890c52306`: Keşfet yüzeyindeki Yakındakiler/Rastgele Sohbet/Rastgele Oda API hataları artık yalnızca toast'a bırakılmıyor; sonuç panelinde açık servis durumu gösteriliyor.
+
+- `5f8a27287e9aa7703a90087c5c5c07ca1741c3d5`: Oda sohbeti demo yüzeyinde bağlantı/oda bulunamama durumları görünür hale getirildi; Yenile aksiyonu ve gönderim sırasında bağlantı hazır değil uyarısı eklendi. Gerçek WebSocket oda sohbeti kullanılmaya devam ediyor.
+
+- `1044175b55fee3e93648c7c08773fa415b2fd342`: Oda müzik merkezi backend/oda bulunamadı durumlarını açıkça gösteriyor; gerçek kuyruk ve playback yapısı korunarak belirsiz boş yüzey azaltıldı.
+
+- `77e2e36777af33aed831f5346627b724e9e20ec3`: Duyuru yönetimi yüzeyinde oda/servis durumu görünür hale getirildi; duyuru yükleme hatası artık 'henüz duyuru yok' gibi gösterilmiyor ve işlemler oda yokken güvenli biçimde engelleniyor.
+
+- `77d49a4f7de3bdcb6d7b505ff248018feaadcfd6`: Oda koltukları/gerçek ses demo yükleme fonksiyonu async olarak düzeltildi; koltuk ve RTC servis hataları artık sessizce yutulmuyor, durum paneline aktarılıyor.
+
+- `cb3fb39ee3a98ecdd2d8d141aee3bb76df3105f4`: Aile üye listesi artık backend hatasını gerçek 'liste boş' durumundan ayırıyor; yenileme de hata durumunu görünür tutuyor.
+
+- `6a2fac8992675b04adf827acdcaf394360b51865`: Keşif sonuç kartlarına mevcut kimlik alanları varsa doğrudan `Sohbet` veya `Odayı aç` aksiyonu eklendi; sonuçlar artık yalnızca görüntülenmekle kalmıyor.
+
+- `62d50e24be8a14464413234cb5a3d4ad0d04314d`: Şikayet gönderme paneline kalıcı durum geri bildirimi eklendi; doğrulama ve backend hataları artık yalnızca toast yerine panel içinde gösteriliyor, gönderim sırasında buton kilitleniyor.
+
+- `5823a1fbef80cf8a0961e0ff946d47bacc27dcc7`: Profil VIP ilerleme çubuğundaki hesap düzeltildi; `current_level_spent` varsa mevcut VIP aralığı içinde ilerleme olarak kullanılıyor, yoksa toplam harcamadan eşik tabanı çıkarılıyor. VIP 1–12 eşikleri demo ile hizalı.
+
+- `d07aa78daa0abf94c5661d758bbecacd48c78896`: Demo profil paneli artık `/me` ve `/me/wallet` servislerini ayrı ayrı izliyor; profil veya cüzdan backend'i başarısızsa boş/sahte veri gibi görünmek yerine panel içinde gerçek hata durumu gösteriliyor.
+
+- `db036581bd0cc7e1f66d35e6e0800d0c79b79deb`: Profil demo servis-hata paneli eklenirken oluşan template literal bozulması düzeltildi; profil demo HTML'i tekrar tek ve geçerli template olarak çalışıyor.
+
+- `8fdb570f4e896d222c5c228ac1b85831a8323e95`: Feature Hub içindeki kozmetik demo vitrini artık doğrudan canlı mağaza yüzüne geçiş sunuyor; satın alma/sahiplik/uygulama için ayrı bir ölü demo akışı yerine mevcut `shop-live.js` kullanılıyor.
+
+- `48a8b478054e6d6bf9fa7d2158d678290d7a819b`: Feature Hub VIP merkezi gerçek `/me/vip` verisiyle toplam harcama, sonraki VIP eşiği ve seviye içi ilerleme çubuğunu göstermeye başladı; eşikler VIP 1–12 sistemiyle hizalandı.
+
+- `f05e8605ea62e83f4c2239fbb5dcd56a44056445`: Aile demo fonksiyonunda `await` kullanılmasına rağmen fonksiyonun `async` olmaması düzeltildi; aile/üye/sohbet yükleme akışı artık JavaScript sözdizimi hatasına takılmadan başlatılabilir.
+
+- `4e5e9c8b921e57590bd5c67e00f93fb742543fdc`: `demo-extras-live.js` içindeki backend `await` kullanan üst seviye demo yükleyicileri (`seatsDemo`, `roomChatDemo`, `musicDemo`, `announcementDemo`, `familyDemo`, `storeDemo`, `profileDemo`) `async` olarak işaretlendi; böylece demo sistemleri açılırken sözdizimi kaynaklı çalışma hatası riski giderildi.
+- `a3fec8895721da3e4f2719438201fc3dff0765b6`: Feature Hub listeleri daha dayanıklı hale getirildi; odalar, kozmetik ve sahip olunan kozmetik endpoint'lerinin dizi/`items`/`rooms`/`data` gibi farklı cevap şekilleri destekleniyor. Aile paneli de localStorage boş olsa bile `/families` üzerinden mevcut ilk aileyi keşfedip `eris_family_id` ile oturumu sürdürüyor.
+- `7d7f9b0551c3696956c8c657583de72947cb81de`: Ana arama yüzeyi güçlendirildi; `/discover/rooms` ve `/discover/nearby` yanıtları array dışında `rooms/users/items/data` sarmalayıcılarıyla döndüğünde de sonuçlar işleniyor.
+- `3865c8da519a9a0625921c326b43fcfed3fc8f22`: Keşfet > İnsanlar içindeki demo profillerin Sohbet CTA'sı düzeltildi; artık sahte kullanıcı ID'siyle gerçek API konuşması başlatmaya çalışmak yerine açıkça demo sohbet state'i kullanıyor. Gerçek backend konuşmaları Mesajlar listesinden açılmaya devam ediyor.
+- `2524e638eaaeab2f5bf9d2547a0abf197f62e482`: Oda listesi yükleyicisi `/rooms` cevabında `data` sarmalayıcısını da destekleyecek şekilde güçlendirildi; backend cevap şekli değiştiğinde oda listesinin gereksiz yere demo fallback'e düşmesi azaltıldı.
+- `75fd672a11e46a59eb25e46d1d18cd9d278e0e07`: Feature Hub oda detayında `seats` alanı yoksa artık JavaScript hatası vermiyor; VIP paneli de `/me/vip` cevabının `data` sarmalamasını destekliyor.
+- `1b9a62f8e77c16e3fffee3603662a70f0f6c3472`: Keşif paneli sonuçları `data` ve `rooms` sarmalayıcılarını da destekliyor; Yakındakiler/Rastgele Sohbet/Rastgele Oda backend cevap şekillerine karşı daha dayanıklı.
+
+## 2026-09-20 — oda yetki / profil / mesaj erişimi düzeltmesi
+- Oda yönetimi artık UI'da yalnızca gerçek oda sahibi veya atanmış aktif moderatöre açılıyor. Demo oda kimliği tek başına yönetim yetkisi vermiyor.
+- Gerçek oda API görünümünde moderatör listesi ve koltuk mute bilgisi yetkisiz kullanıcıya gönderilmiyor; yönetim yetkileri ayrı `management` alanıyla açıkça kapsamlandırıldı.
+- Oda adı değiştirme, oda kilidi/şifresi, moderatör yönetimi, koltuk kilitleme ve sessize alma backend'de mevcut oda sahibi/moderatör kontrolleriyle korunuyor; oda sahibi dışındaki işlemler için `require_staff`, sahip işlemleri için `require_owner` kullanılıyor.
+- Profildeki `Odalarım` akışı korunarak kullanıcının kendi odaları ve moderatör olduğu odalar `/v1/rooms/me/rooms` üzerinden listeleniyor; oda oluşturma DB'de kalıcı olarak tutuluyor.
+- Mesajlar yüzeyine saydam arama alanı eklendi: kullanıcı ID/public ID ile aktif kullanıcı bulunabiliyor, profil açılabiliyor ve doğrudan DM oluşturulabiliyor.
+- `/v1/users/{user_id}` endpoint'i artık authenticated kullanıcı için hem dahili kullanıcı ID'sini hem public kullanıcı ID'sini çözebiliyor.
+- Kilitli oda şifre ekranında 4 ayrı saydam kutu, rakamların gizlenmesi, otomatik sonraki kutuya geçiş, yanlış şifre geri bildirimi ve yeniden deneme akışı uygulanıyor.
+- Son commit: 10914404cacd48f837800ad9ae6c5a4e5b60bbf0.
+- Bu commit için Quality / Pages workflow'ları tetiklendi; kontrol anında workflow'lar queued durumundaydı.
