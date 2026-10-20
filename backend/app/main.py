@@ -142,6 +142,7 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email VARCHAR(320)"))
+        conn.execute(text("ALTER TABLE families ADD COLUMN IF NOT EXISTS closed BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date VARCHAR(10)"))
@@ -1052,7 +1053,16 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
-    family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation_id))
+    family = db.scalar(select(Family).where(Family.chat_conversation_id == conversation_id))
+    family_name = family.name if family and not family.closed else None
+    avatar_url = f'/families/{family.id}/avatar' if family_name and db.get(FamilyVisual, family.id) else None
+    if conversation.type == 'group':
+        from .group_models import MessageGroup
+        group = db.get(MessageGroup, conversation_id)
+        if group and group.image:
+            avatar_url = f'/message-groups/{conversation_id}/image'
+    else:
+        group = None
     member_details = []
     for member in conversation.members:
         member_user = db.get(User, member.user_id)
@@ -1062,8 +1072,8 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             "avatar_asset": member_user.avatar_asset if member_user else None,
             "frame_asset": member_user.frame_asset if member_user else None})
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
-        "created_at": conversation.created_at, "members": member_details,
-        "name": (family_name + " aile sohbeti") if family_name else ("LidyaChat" if conversation.type == "welcome" else None)}
+        "created_at": conversation.created_at, "members": member_details, "avatar_url": avatar_url,
+        "name": (family_name + " aile sohbeti") if family_name else (group.name if group else "LidyaChat" if conversation.type == "welcome" else None)}
 
 
 def _message_notifications_allowed(db: Session, recipient_id: str, conversation_id: str) -> bool:

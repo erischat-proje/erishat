@@ -48,7 +48,7 @@
     manage.append(output);
     for(const button of actions.querySelectorAll('button[data-action]')){
       const name=button.dataset.action;
-      const text={members:'Üyeler',chat:'Aile sohbeti',invite:'Üye davet et',applications:'Başvurular',manage:'Aileyi yönet',donate:'Aileye katkı',leave:'Aileden ayrıl'}[name];
+      const text={members:'Üyeler',chat:'Aile sohbeti',invite:'Üye davet et',applications:'Başvurular',manage:'Aileyi yönet',donate:'Aileye katkı',leave:'Aileden ayrıl',close:'Aileyi kapat'}[name];
       if(text)button.textContent=text;
       button.classList.add('ef2-action','ef2-'+name);
       if(name==='members')button.style.display='none';

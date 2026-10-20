@@ -80,6 +80,7 @@ class Family(Base):
     level: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
     balance: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     chat_conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"), unique=True, nullable=False)
+    closed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
