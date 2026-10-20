@@ -202,9 +202,10 @@
     return value.url || value.src || value.avatar_url || value.asset_url || value.path || fallback;
   }
 
-  function renderAvatar(el, value, fallback) {
+  function renderAvatar(el, value, fallback, frameKey = '') {
     if (!el) return;
     const avatar = avatarValue(value, fallback);
+    el.classList.remove('visual-portrait','visual-portrait-static');
     if(el.dataset.objectUrl){URL.revokeObjectURL(el.dataset.objectUrl);delete el.dataset.objectUrl;}
     el.dataset.avatarRequest = String(Number(el.dataset.avatarRequest || 0) + 1);
     el.textContent = '';
@@ -219,6 +220,7 @@
     } else {
       el.textContent = avatar || fallback || '👤';
     }
+    if(frameKey){const frame=document.createElement('img');frame.className='dm-avatar-frame';frame.src=window.ErisChatCosmetics?.assetUrl?.(frameKey)||frameKey;frame.alt='';frame.style.cssText='position:absolute;inset:-8%;width:116%;height:116%;object-fit:contain;pointer-events:none';el.style.position='relative';el.append(frame);window.ErisVisualLayout?.portraits(el);}
   }
 
   function renderConversationAvatar(el, info, fallback) {
@@ -811,7 +813,7 @@
         b.className = 'item';b.dataset.conversationId=String(id);
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small></small></div><span class="dm-unread" hidden></span>';
         if(group||family)renderConversationAvatar(b.querySelector('.ava'),c,group?'👥':'👪');
-        else renderAvatar(b.querySelector('.ava'),avatar,name.slice(0,1).toUpperCase());
+        else renderAvatar(b.querySelector('.ava'),avatar,name.slice(0,1).toUpperCase(),welcome?'':other.frame_asset);
         b.querySelector('b').textContent = name;if(!family&&!welcome&&!group)window.ErisRoleBadges?.bind(b.querySelector('b'),other);
         b.querySelector('small').textContent = c.last_message || (group ? 'Grup sohbeti' : family ? 'Aile sohbeti' : 'Mesajlaşma');
         const badge = b.querySelector('.dm-unread');
@@ -909,7 +911,7 @@
     if(compose){compose.hidden=isSystemConversation();compose.style.display=isSystemConversation()?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||isSystemConversation());}
     const headAvatar=chat.querySelector('.chatHead .ava');
     if(info?.type==='family'||isGroup)renderConversationAvatar(headAvatar,info,isGroup?'👥':'👪');
-    else renderAvatar(headAvatar,isSystemConversation()?SYSTEM_AVATAR:avatar,name?.slice(0,1)?.toUpperCase());
+    else renderAvatar(headAvatar,isSystemConversation()?SYSTEM_AVATAR:avatar,name?.slice(0,1)?.toUpperCase(),isSystemConversation()?'':asList(info?.members,['members']).find(m=>String(m.user_id)!==String(currentUserId))?.frame_asset);
     if(!info && !participantId && !isSystemConversation() && api().conversation){
       api().conversation(id).then(details=>{
         conversationInfo.set(String(id),details);
