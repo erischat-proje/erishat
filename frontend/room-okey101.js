@@ -5,7 +5,9 @@
  const host=()=>document.getElementById('erisRoomSurface');
  let rid='',epoch=0,data=null,hidden='',visible=false,pending=false,polling=null,error='',order=[],selected=[],groups=[],editor=null,lastRound='',lastHand=0,offset=0,stake=50,mode='solo',progressive=false,handCount=3,retry=null,menu=false,penalties=true,processing=null,showScores=false,rulesOpen=false;
  const dismissedResults=new Set(),retiredRounds=new Set();
- let connectionError='',tableView='table';
+ let connectionError='',tableView='table',drag=null,suppressClickUntil=0;
+ let slots=[];
+ function cancelDrag(){if(!drag)return;drag.ghost?.remove();drag.source?.classList.remove('o101-drag-source');host()?.querySelectorAll('.o101-drop-hover').forEach(n=>n.classList.remove('o101-drop-hover'));drag=null;}
  const resultKey=s=>rid+'/'+s?.round_id;
  const state=()=>data?.state, me=()=>state()?.players.find(p=>p.user_id===data.my_id);
  const mine=()=>state()?.status==='playing'&&me()?.seat===state().turn&&data?.seats.some(q=>q.user_id===data.my_id&&q.seat===me()?.seat);
@@ -17,7 +19,7 @@
    return '<button type="button" class="o101-tile '+(isWild?'wild ':'')+(isFake?'fake ':'')+(selected.includes(t)&&selectable?'chosen':'')+'" data-suit="'+f[0]+'" style="--tile-color:'+colors[f[0]]+'" '+attrs+(selectable?' aria-pressed="'+selected.includes(t)+'"':attrs?'':' tabindex="-1"')+' aria-label="'+names[f[0]]+' '+f[1]+(isWild?' gerçek okey':isFake?' sahte okey':'')+'"><b>'+f[1]+'</b><i aria-hidden="true">'+(isWild?'★':isFake?'◇':['●','◆','♠','✦'][f[0]])+'</i></button>';
  }
 
- function clear(){host()?.querySelectorAll('.o101-root').forEach(n=>n.remove());host()?.classList.remove('okey101-mode');visible=false;editor=null;processing=null;}
+ function clear(){cancelDrag();slots=[];host()?.querySelectorAll('.o101-root').forEach(n=>n.remove());host()?.classList.remove('okey101-mode');visible=false;editor=null;processing=null;}
  function hide(){hidden=state()?.round_id||'empty';clear();}
  function viewSignature(v){if(!v)return '';const s=v.state?{...v.state}:null;if(s){delete s.version;delete s.events;delete s.deadline;delete s.bot_due;delete s.server_time;}return JSON.stringify({...v,state:s,server_time:undefined});}
  function receive(v){if(v.state&&retiredRounds.has(v.state.round_id))return;const previous=state();if(previous&&v.state&&previous.round_id!==v.state.round_id)retiredRounds.add(previous.round_id);if(previous&&v.state?.round_id===previous.round_id&&v.state.version<previous.version)return;const same=previous&&viewSignature(v)===viewSignature(data);data=v;offset=v.server_time-Date.now()/1000;const s=v.state;
@@ -26,7 +28,7 @@
    window.ErisOkey101Active=!!s&&['lobby','playing','hand_finished'].includes(s.status);
    if(s&&['lobby','playing','hand_finished'].includes(s.status))window.dispatchEvent(new CustomEvent('erischat:okey101-active'));
    if(!s||s.status==='closed'){if(visible&&hidden!=='empty')render();else clear();return;}
-   if(s.round_id!==lastRound||s.hand_number!==lastHand){order=[];selected=[];groups=[];editor=null;processing=null;showScores=false;rulesOpen=false;menu=s.status==='finished'&&dismissedResults.has(resultKey(s));lastRound=s.round_id;lastHand=s.hand_number;tableView='table';mode=s.mode;progressive=s.progressive;handCount=s.hand_count;penalties=!!s.penalties;}
+   if(s.round_id!==lastRound||s.hand_number!==lastHand){order=[];selected=[];groups=[];editor=null;processing=null;showScores=false;rulesOpen=false;menu=s.status==='finished'&&dismissedResults.has(resultKey(s));lastRound=s.round_id;lastHand=s.hand_number;slots=[];tableView='table';mode=s.mode;progressive=s.progressive;handCount=s.hand_count;penalties=!!s.penalties;}
    if(hidden===s.round_id)return;
    if(hidden&&hidden!==s.round_id)hidden='';
    if(!same||!visible||!host()?.querySelector('.o101-root'))render();
@@ -82,7 +84,7 @@
     strip.scrollLeft=scroll;
     strip.style.setProperty('--room-seat-rows',String(Math.max(1,Math.ceil(originals.length/8))));
   }
- function render(){if(!data||!rid||hidden===state()?.round_id)return;const h=host();if(!h)return;
+ function render(){cancelDrag();if(!data||!rid||hidden===state()?.round_id)return;const h=host();if(!h)return;
    let root=h.querySelector('.o101-root');if(!root){root=document.createElement('section');root.className='o101-root';root.innerHTML='<div class="o101-seat-strip" aria-label="Oda koltukları"></div><header class="o101-head"></header><div class="o101-content"></div><div class="o101-error" role="alert"></div>';h.append(root);}h.classList.add('okey101-mode');visible=true;
    const s=state(),p=me(),lobby=!s||['closed','lobby'].includes(s.status)||menu;
    root.dataset.phase=lobby?'lobby':'playing';root.setAttribute('aria-label','Lidya 101 Okey');root.setAttribute('aria-busy',String(pending));
@@ -92,7 +94,7 @@
    syncSeats();
    const content=root.querySelector('.o101-content');
    const scrollTop=content.scrollTop;
-   const scrollSelector='.o101-table,.o101-rack-area,.o101-meld-row,.o101-editor,.o101-processing,.o101-score-panel';
+   const scrollSelector='.o101-table,.o101-table-melds,.o101-rack-area,.o101-meld-row,.o101-editor,.o101-processing,.o101-score-panel';
    const scrollKey=n=>n.matches('.o101-meld-row')?'meld:'+n.closest('[data-meld]').dataset.meld:[...n.classList].find(c=>scrollSelector.includes('.'+c));
    const scrolls=new Map([...content.querySelectorAll(scrollSelector)].map(n=>[scrollKey(n),{top:n.scrollTop,left:n.scrollLeft}]));
    const toolsOpen=!!content.querySelector('.o101-tools')?.open;
@@ -118,14 +120,64 @@
    if(editor)for(const v of editorValues){const select=content.querySelector(v.color!==undefined?'[data-color="'+v.color+'"]':'[data-number="'+v.number+'"]');if(select)select.value=v.value;}
    root.querySelector('.o101-rule-overlay')?.remove();
    if(rulesOpen){const overlay=document.createElement('section');overlay.className='o101-rule-overlay';overlay.innerHTML=btn('×','close-rules')+rules;overlay.querySelector("details").open=true;root.append(overlay);}
-   root.onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
+   root.onclick=e=>{if(Date.now()<suppressClickUntil){e.preventDefault();return;}const b=e.target.closest('button');if(!b||b.disabled)return;
      if(b.dataset.tile!==undefined){const t=+b.dataset.tile;selected=selected.includes(t)?selected.filter(x=>x!==t):[...selected,t];render();return;}
      if(b.dataset.option!==undefined){const o=(data.lay_options||[])[+b.dataset.option];if(o)send('lay',{tile:o.tile,meld_id:o.meld_id,end:o.end,face:o.face});return;}
      if(b.dataset.lay){if(selected.length!==1)return notice('İşlemek için bir taş seçin.');const g=s.melds.find(x=>x.id===b.dataset.lay);openLay(g,b.dataset.end);return;}
      if(b.dataset.replace){if(selected.length!==1)return notice('Okey yerine koyacağınız tek taşı seçin.');send('replace',{tile:selected[0],meld_id:b.dataset.replace,index:+b.dataset.index});return;}
      action(b.dataset.action,b);
    };
-   root.querySelectorAll('[data-tile]').forEach(b=>{b.draggable=true;b.ondragstart=e=>e.dataTransfer.setData('text/plain',b.dataset.tile);b.ondragover=e=>e.preventDefault();b.ondrop=e=>{e.preventDefault();const t=+e.dataTransfer.getData('text/plain'),to=+b.dataset.tile;if(!order.includes(t)||!order.includes(to))return;order=order.filter(x=>x!==t);order.splice(order.indexOf(to),0,t);render();};});
+   bindGestures(root);
+ }
+
+ function bindGestures(root){
+   root.onpointerdown=e=>{
+     suppressClickUntil=0;
+     if(e.button!==0||!e.isPrimary||pending||editor||processing||rulesOpen||showScores)return;
+     const source=e.target.closest('.o101-rack [data-tile],.o101-deck [data-source],.o101-discards [data-source="discard"]');
+     if(!source||source.disabled)return;
+     const t=source.dataset.tile===undefined?null:Number(source.dataset.tile),kind=t===null?source.dataset.source:'tile';
+     if(kind!=='tile'&&(!mine()||state().phase!=='draw'||(kind==='discard'&&!source.querySelector('.o101-tile'))))return;
+     drag={pointer:e.pointerId,x:e.clientX,y:e.clientY,t,kind,source,version:state().version,round:state().round_id,active:false};
+
+   };
+   root.onpointermove=e=>{
+     const d=drag;if(!d||d.pointer!==e.pointerId)return;
+     if(!d.active&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<7)return;
+     e.preventDefault();
+     if(!d.active){root.setPointerCapture(e.pointerId);d.active=true;d.ghost=(d.source.querySelector('.o101-tile')||d.source).cloneNode(true);d.ghost.classList.add('o101-drag-ghost');d.ghost.removeAttribute('id');d.ghost.setAttribute('aria-hidden','true');root.append(d.ghost);d.source.classList.add('o101-drag-source');}
+     d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';
+     root.querySelectorAll('.o101-drop-hover').forEach(n=>n.classList.remove('o101-drop-hover'));
+     const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-slot],[data-drop],.o101-meld');
+     if(target&&root.contains(target))target.classList.add('o101-drop-hover');
+   };
+   root.onpointerup=e=>{
+     const d=drag;if(!d||d.pointer!==e.pointerId)return;
+     const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-slot],[data-drop],.o101-meld');
+     const active=d.active;cancelDrag();if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);
+     if(!active){if(e.pointerType==='touch'&&d.kind==='tile'){e.preventDefault();suppressClickUntil=Date.now()+400;selected=selected.includes(d.t)?selected.filter(t=>t!==d.t):[...selected,d.t];render();}return;}suppressClickUntil=Date.now()+400;e.preventDefault();
+     if(!target||!root.contains(target)||d.round!==state().round_id||d.version!==state().version||pending)return;
+     if(target.dataset.slot!==undefined){
+       if(d.kind!=='tile'){if(mine()&&state().phase==='draw')send('draw',{source:d.kind});return;}
+       const from=slots.indexOf(d.t),to=Number(target.dataset.slot);if(from<0)return;
+       [slots[from],slots[to]]=[slots[to],slots[from]];order=slots.filter(t=>t!==null);render();return;
+     }
+     if(d.kind!=='tile'||!me()?.hand.includes(d.t)||!mine()||state().phase!=='discard')return;
+     if(target.dataset.drop==='discard'){send('discard',{tile:d.t});return;}
+     if(target.dataset.drop==='open'){
+       selected=selected.includes(d.t)?selected:[d.t];
+       if(selected.length<2)return notice('Per açmak için birlikte kullanılacak taşları seçip masaya sürükle.');
+       editor={tiles:[...selected]};render();return;
+     }
+     if(target.dataset.meld){
+       const opts=(data.lay_options||[]).filter(o=>o.tile===d.t&&o.meld_id===target.dataset.meld);
+       selected=[d.t];
+       if(opts.length===1){const o=opts[0];send('lay',{tile:o.tile,meld_id:o.meld_id,end:o.end,face:o.face});}
+       else if(opts.length){processing={};render();}
+       else notice('Bu taş bu pere işlenemez.');
+     }
+   };
+   root.onpointercancel=()=>cancelDrag();root.onlostpointercapture=e=>{if(e.target===root)cancelDrag();};
  }
  function notice(s){error=s;render();}
  function renderLobby(out){const s=state(),p=me(),seat=data.seats.find(p=>p.user_id===data.my_id)?.seat,first=s?.players.find(p=>p.seat===1),active=s?.status==='lobby';
@@ -169,22 +221,26 @@
    out.className='o101-content o101-game';
    const mineTurn=mine()&&s.phase==='discard'&&!pending;
    const mySeat=p?.seat||1;
-   const position=n=>['bottom','left','top','right'][(n-mySeat+4)%4];
+   const position=n=>['bottom','right','top','left'][(n-mySeat+4)%4];
    const meldSection=(pair)=>'<section class="o101-meld-section"><h3>'+(pair?'Çift alanı':'Seri ve grup alanı')+'</h3><div class="o101-melds">'+s.melds.filter(g=>(g.kind==='pair')===pair).map(meldArt).join('')+'</div></section>';
    const cards='<div class="o101-players o101-table-players">'+s.players.map(q=>'<article data-position="'+position(q.seat)+'" class="'+(q.seat===s.turn?'turn':'')+'"><b>'+esc(q.name)+(q.user_id===data.my_id?' (Sen)':'')+'</b><small>'+q.hand_count+' taş • '+q.score+' puan'+(q.opened?' • '+(q.opened==='pair'?'Çift':'Seri'):'')+(q.bot?' • BOT':'')+'</small></article>').join('')+'</div>';
    const info='<div class="o101-info"><span>El '+s.hand_number+'/'+s.hand_count+' • Açılış '+s.threshold+' / '+s.pair_threshold+' çift • '+(s.penalties?'Cezalı':'Cezasız')+'</span><span data-clock></span>'+btn('Puanlar','scores')+'</div>';
-   const deck='<div class="o101-deck"><div>Gösterge '+tile(s.indicator)+'</div>'+'<div class="o101-stock-count">Kapalı deste <b>'+s.stock_count+' taş</b></div>'+'<div>Okey <span class="o101-joker-face" style="color:'+colors[s.joker[0]]+'">'+s.joker[1]+' ★</span></div></div>';
-   const discards='<div class="o101-discards o101-spatial-discards">'+[1,2,3,4].map(n=>{const t=s.discards[String(n)].at(-1);const who=s.players.find(p=>p.seat===n);return '<div data-position="'+position(n)+'"><small>'+esc(who?.name||n+'. oyuncu')+' • Son taş</small>'+(t===undefined?'<span class="o101-empty-discard">—</span>':tile(t))+'</div>';}).join('')+'</div>';
-   const table='<div data-view="'+tableView+'" class="o101-table o101-premium-table" role="region" aria-label="Oyun masası ve açılan perler" tabindex="0"><nav class="o101-table-nav" aria-label="Masa görünümü">'+btn('Masa','table-view').replace('data-action="table-view"','data-action="table-view" aria-pressed="'+(tableView==='table')+'"')+btn('Açılan perler · '+s.melds.length,'meld-view').replace('data-action="meld-view"','data-action="meld-view" aria-pressed="'+(tableView==='melds')+'"')+'</nav>'+cards+deck+discards+'<div class="o101-table-melds">'+meldSection(false)+meldSection(true)+'</div></div>';
+   const deck='<div class="o101-deck"><div>Gösterge '+tile(s.indicator)+'</div>'+'<button class="o101-stock-count o101-draw-source" data-source="stock" data-action="draw-stock" '+(!mine()||s.phase!=='draw'||pending?'disabled':'')+' aria-label="Kapalı desteden taş çek; ıstakana sürükle"><span class="o101-tile-back">101</span><b>'+s.stock_count+' taş</b></button>'+'<div>Okey <span class="o101-joker-face" style="color:'+colors[s.joker[0]]+'">'+s.joker[1]+' ★</span></div></div>';
+   const discards='<div class="o101-discards o101-spatial-discards">'+[1,2,3,4].map(n=>{const t=s.discards[String(n)].at(-1);const who=s.players.find(p=>p.seat===n);return '<div data-drop="'+(n===mySeat?'discard':'')+'" data-source="'+(n===(mySeat+2)%4+1?'discard':'')+'" data-position="'+position(n)+'"><small>'+esc(who?.name||n+'. oyuncu')+(n===mySeat?' • Buraya at':n===(mySeat+2)%4+1?' • Soldan çek':' • Son taş')+'</small>'+(t===undefined?'<span class="o101-empty-discard">—</span>':tile(t,face(t),n===(mySeat+2)%4+1?'data-action="draw-discard" '+(!mine()||s.phase!=='draw'||pending?'disabled':''):''))+'</div>';}).join('')+'</div>';
+   const table='<div data-view="'+tableView+'" class="o101-table o101-premium-table" role="region" aria-label="Oyun masası ve açılan perler" tabindex="0"><nav class="o101-table-nav" aria-label="Masa görünümü">'+btn('Masa','table-view').replace('data-action="table-view"','data-action="table-view" aria-pressed="'+(tableView==='table')+'"')+btn('Açılan perler · '+s.melds.length,'meld-view').replace('data-action="meld-view"','data-action="meld-view" aria-pressed="'+(tableView==='melds')+'"')+'</nav>'+cards+deck+discards+'<div class="o101-table-melds">'+meldSection(false)+meldSection(true)+'</div><div class="o101-open-drop" data-drop="open">Seçtiğin per taşlarını buraya sürükle</div></div>';
    const result=s.status==='finished'?'<div class="o101-result"><strong>Maç tamamlandı</strong><p>'+s.players.filter(q=>s.winners.includes(q.seat)).map(q=>esc(q.name)+' • '+s.payouts?.[String(q.seat)]+' Lidya').join('<br>')+'</p>'+btn('Ana menü','menu')+btn('Tekrar','restart',pending)+btn('Puan cetveli','scores')+'</div>':s.status==='hand_finished'?'<div class="o101-result"><strong>'+(s.redeal?'Dört oyuncu çift açtı':'El tamamlandı')+'</strong><p>'+s.players.map(q=>esc(q.name)+': '+s.round_scores[String(q.seat)]).join(' • ')+'</p><small>'+(s.redeal?'Aynı el yeniden dağıtılacak.':'Sonraki el otomatik başlayacak.')+'</small>'+btn('Puan cetveli','scores')+'</div>':'';
-   const rack=p&&s.status==='playing'?'<div class="o101-rack-title"><strong>Istakan · '+hand.length+' taş</strong><span aria-live="polite">'+(selected.length?selected.length+' taş seçili':'Seçmek için taşa dokun')+'</span></div><div class="o101-rack" role="group" aria-label="Elinizdeki taşlar">'+order.filter(t=>!draft.has(t)).map(t=>tile(t,face(t),'data-tile="'+t+'"')).join('')+'</div><div class="o101-actions o101-primary-actions">'+(s.phase==='draw'?btn('Kapalıdan çek','draw-stock',!mine()||pending):btn('Per hazırla','editor',!mineTurn||!selected.length))+(s.phase==='draw'?btn('Soldan çek','draw-discard',!mine()||pending):btn('Taş işle','process',!mineTurn||!p.opened))+btn('Taşı at','discard',!mineTurn||selected.length!==1)+'</div><details class="o101-tools"><summary>Diz ve per aç <span>Seri · Çift · Diğer işlemler</span></summary><div class="o101-actions">'+btn('Seri diz','sort')+btn('Çift diz','sort-pairs')+btn('Per ekle','editor',!mineTurn||!selected.length)+btn('Seri öner','suggest',!mineTurn)+btn('Çift öner','suggest-pairs',!mineTurn)+btn('Sola taşı','move-left',selected.length!==1)+btn('Sağa taşı','move-right',selected.length!==1)+btn('Seçimi temizle','clear-selection',!selected.length)+btn('Alınan taşı geri bırak','return-discard',!mineTurn||!data.can_return_discard)+'</div></details>' :(!p?'<p class="o101-watch">İzleyicisiniz. Oyun sürerken oyuncuların taşları gizlidir.</p>':'');
+   const rackTiles=order.filter(t=>!draft.has(t));
+   slots=slots.map(t=>rackTiles.includes(t)?t:null);
+   if(!slots.length)slots=Array(30).fill(null);
+   for(const t of rackTiles)if(!slots.includes(t)){let i=slots.indexOf(null);if(i<0)i=slots.length;slots[i]=t;}
+   const rack=p&&s.status==='playing'?'<div class="o101-rack-title"><strong>Istakan · '+hand.length+' taş</strong><span aria-live="polite">'+(selected.length?selected.length+' taş seçili':'Taşları sürükleyerek diz' )+'</span></div><div class="o101-rack" role="group" aria-label="Elinizdeki taşlar">'+slots.map((t,i)=>'<div class="o101-rack-slot" data-slot="'+i+'">'+(t===null?'':tile(t,face(t),'data-tile="'+t+'"'))+'</div>').join('')+'</div><div class="o101-quick-tools">'+btn('Seri diz','sort')+btn('Çift diz','sort-pairs')+btn('Per aç','editor',!mineTurn||!selected.length)+btn('İşle','process',!mineTurn||!p.opened)+'</div><details class="o101-tools"><summary>Diğer işlemler</summary><div class="o101-actions o101-primary-actions">'+(s.phase==='draw'?btn('Kapalıdan çek','draw-stock',!mine()||pending):btn('Per hazırla','editor',!mineTurn||!selected.length))+(s.phase==='draw'?btn('Soldan çek','draw-discard',!mine()||pending):btn('Taş işle','process',!mineTurn||!p.opened))+btn('Taşı at','discard',!mineTurn||selected.length!==1)+'</div><div class="o101-actions">'+btn('Seri diz','sort')+btn('Çift diz','sort-pairs')+btn('Per ekle','editor',!mineTurn||!selected.length)+btn('Seri öner','suggest',!mineTurn)+btn('Çift öner','suggest-pairs',!mineTurn)+btn('Sola taşı','move-left',selected.length!==1)+btn('Sağa taşı','move-right',selected.length!==1)+btn('Seçimi temizle','clear-selection',!selected.length)+btn('Alınan taşı geri bırak','return-discard',!mineTurn||!data.can_return_discard)+'</div></details>' :(!p?'<p class="o101-watch">İzleyicisiniz. Oyun sürerken oyuncuların taşları gizlidir.</p>':'');
    const draftHtml=groups.length?'<div class="o101-draft"><strong>Açılış: '+(pairCount?pairCount+' çift / '+s.pair_threshold+' çift':total+' puan / '+s.threshold+' puan')+'</strong>'+groups.map((g,i)=>'<article>'+g.tiles.map((t,j)=>tile(t,g.faces[j])).join('')+'<button data-action="remove-group" data-group="'+i+'">×</button></article>').join('')+btn('Perleri aç','open',pending)+(remaining.length===1?btn('Aç ve bitir','open-finish',pending):'')+btn('Taslağı temizle','clear-groups')+'</div>':'';
    const lastPenalty=s.penalty_log?.at(-1);const notice=lastPenalty?'<div class="o101-penalty"><b>'+esc(s.players.find(q=>q.seat===lastPenalty.seat)?.name)+'</b> • '+esc(reasons[lastPenalty.reason]||lastPenalty.reason)+' • +'+lastPenalty.points+' puan</div>':'';
    const current=s.players.find(q=>q.seat===s.turn);
    const turnHint=s.status==='playing'?'<div class="o101-turn-status '+(mine()?'is-mine':'')+'" role="status">'+(pending?'Hamle gönderiliyor…':mine()?(s.phase==='draw'?'Sıra sende · Kapalıdan veya soldan taş çek':'Sıra sende · Per aç, taş işle veya bir taş at'):esc(current?.name||'Oyuncu')+' oynuyor · Sıranı bekle')+'</div>':'';
    out.innerHTML=info+turnHint+notice+table+'<div class="o101-rack-area" aria-label="Istaka ve oyun işlemleri">'+result+rack+draftHtml+'</div>'+(showScores?renderScores():'')+(processing?renderProcessing():'');
-   if(editor)renderEditor(out);clock();
-   out.querySelectorAll('.o101-meld').forEach(el=>{el.ondragover=e=>e.preventDefault();el.ondrop=e=>{e.preventDefault();const t=+e.dataTransfer.getData('text/plain');if(!hand.includes(t)||!mineTurn)return;const opts=(data.lay_options||[]).filter(o=>o.tile===t&&o.meld_id===el.dataset.meld);selected=[t];if(opts.length===1){const o=opts[0];send('lay',{tile:o.tile,meld_id:o.meld_id,end:o.end,face:o.face});}else{processing=null;notice(opts.length?'Taşın başa veya sona işleneceği yeri seç.':'Bu taş bu pere işlenemez.');}};});
+   if(editor){renderEditor(out);const f=editor.tiles.map(face),kind=['pair','run','set'].find(kind=>validGroup({kind,tiles:editor.tiles,faces:f}));if(kind)out.querySelector('[data-kind]').value=kind;}clock();
+
  }
  function renderEditor(out){const edit=document.createElement('section');edit.className='o101-editor';edit.setAttribute('role','dialog');edit.setAttribute('aria-label','Per düzenle');
    edit.innerHTML='<strong>'+ (editor.lay?'Okeyin temsil edeceği taş':'Per düzenle • seçtiğiniz sırada')+'</strong><div>'+editor.tiles.map(t=>'<label>'+tile(t)+'<span>Temsil ettiği</span><select data-color="'+t+'" '+(!wild(t)?'disabled':'')+'>'+names.map((n,c)=>'<option value="'+c+'" '+(face(t)[0]===c?'selected':'')+'>'+n+'</option>').join('')+'</select><select data-number="'+t+'" '+(!wild(t)?'disabled':'')+'>'+Array.from({length:13},(_,i)=>'<option '+(face(t)[1]===i+1?'selected':'')+'>'+(i+1)+'</option>').join('')+'</select></label>').join('')+'</div>'+(editor.lay?'':'<select data-kind><option value="run">Seri</option><option value="set">Grup</option><option value="pair">Çift</option></select>')+btn('Onayla','confirm-editor')+btn('Vazgeç','cancel-editor');out.append(edit);
@@ -206,9 +262,9 @@
    if(a==='draw-stock'||a==='draw-discard')return send('draw',{source:a==='draw-stock'?'stock':'discard'});
    if(a==='return-discard'){if(window.confirm('Soldan aldığın taş hâlâ elindeyse geri bırakılır ve kapalıdan çekilir.'+(state().penalties?' Kullanılmadan geri bırakılan taş için 101 ceza yazılır.':'')))send('return_discard');return;}
    if(a==='clear-selection'){selected=[];render();return;}
-   if(a==='move-left'||a==='move-right'){if(selected.length!==1)return;const t=selected[0],i=order.indexOf(t),j=i+(a==='move-left'?-1:1);if(i>=0&&j>=0&&j<order.length){[order[i],order[j]]=[order[j],order[i]];render();}return;}
+   if(a==='move-left'||a==='move-right'){if(selected.length!==1)return;const t=selected[0],i=order.indexOf(t),j=i+(a==='move-left'?-1:1);if(i>=0&&j>=0&&j<order.length){const a=slots.indexOf(order[i]),b=slots.indexOf(order[j]);[slots[a],slots[b]]=[slots[b],slots[a]];[order[i],order[j]]=[order[j],order[i]];render();}return;}
    if(a==='discard')return send('discard',{tile:selected[0]});
-   if(a==='sort'||a==='sort-pairs'){order.sort((x,y)=>a==='sort'?face(x)[0]-face(y)[0]||face(x)[1]-face(y)[1]:face(x)[1]-face(y)[1]||face(x)[0]-face(y)[0]);render();return;}
+   if(a==='sort'||a==='sort-pairs'){slots=[];order.sort((x,y)=>a==='sort'?face(x)[0]-face(y)[0]||face(x)[1]-face(y)[1]:face(x)[1]-face(y)[1]||face(x)[0]-face(y)[0]);render();return;}
    if(a==='scores'){editor=null;processing=null;rulesOpen=false;showScores=!showScores;render();return;}
    if(a==='process'){editor=null;showScores=false;rulesOpen=false;processing={};render();return;}
    if(a==='manual-processing'){processing=null;tableView='melds';notice('Istakadan tek taş seç; masada vurgulanan işleme yerine dokun.');return;}
@@ -226,7 +282,7 @@
  }
  function clock(){const s=state();host()?.querySelectorAll('[data-clock]').forEach(n=>n.textContent=s?.status==='playing'?Math.max(0,Math.ceil(s.deadline-(Date.now()/1000+offset)))+' sn':'');}
  async function open(){if(window.ErisUnoActive||host()?.classList.contains('ludo-mode')){window.toast?.('Önce açık oda oyununu kapatın.');return;}rid=String(window.ErisCurrentRoomId||window.currentRoomId||rid);hidden='';visible=true;await poll();if(!state()||state().status==='closed'){menu=false;render();}}
- function leave(){retiredRounds.clear();epoch++;pending=false;polling=null;error='';connectionError='';menu=false;showScores=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;rulesOpen=false;clear();}
+ function leave(){cancelDrag();slots=[];retiredRounds.clear();epoch++;pending=false;polling=null;error='';connectionError='';menu=false;showScores=false;rid='';data=null;hidden='';order=[];groups=[];selected=[];retry=null;lastRound='';lastHand=0;window.ErisOkey101Active=false;rulesOpen=false;clear();}
  window.addEventListener('erischat:room-opened',e=>{const id=String(e.detail?.room?.id||window.ErisCurrentRoomId||'');if(!id)return;if(id!==rid){leave();rid=id;}poll();});
  window.addEventListener('erischat:room-closed',leave);
  window.addEventListener('erischat:ludo-active',()=>{if(state()?.status==='finished'){hide();window.ErisOkey101Active=false;}});

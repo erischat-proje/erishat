@@ -112,3 +112,52 @@ html body #erisRoomSurface#erisRoomSurface.okey101-mode .o101-root .o101-rack-ti
 html body #erisRoomSurface#erisRoomSurface.okey101-mode .o101-root .o101-table-nav button{color:#fff0ca!important;background:#102c23!important}
 html body #erisRoomSurface#erisRoomSurface.okey101-mode .o101-root .o101-table-nav button[aria-pressed="true"]{background:#e7c77d!important;color:#263c20!important}
 @media(min-width:800px) and (max-height:550px){.o101-rack{grid-template-columns:repeat(22,minmax(0,1fr));gap:2px}.o101-rack .o101-tile b{font-size:17px}.o101-rack .o101-tile i{font-size:8px}}
+
+/* Physical touch table and two rack rails. */
+.o101-root .o101-rack{grid-template-columns:repeat(15,minmax(0,1fr));grid-template-rows:repeat(2,auto);gap:3px;padding:7px 3px;background:repeating-linear-gradient(0deg,#b67d35 0,#7c4e20 3px,#70451e 48%,#d5a150 50%);overflow:visible}
+.o101-rack-slot{min-width:0;min-height:40px;border-radius:3px;background:#38241230;touch-action:none}
+.o101-root .o101-rack-slot .o101-tile{width:100%!important;height:44px!important;min-height:44px!important;touch-action:none!important}
+.o101-root .o101-rack-slot .o101-tile b{font-size:clamp(16px,4.4vw,25px)}
+.o101-root [data-source],.o101-root .o101-rack [data-tile]{touch-action:none!important;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.o101-quick-tools{display:flex;justify-content:center;gap:5px;margin-top:5px}.o101-quick-tools button{flex:1;min-height:29px!important;padding:3px!important;font-size:10px!important}
+.o101-root .o101-stock-count{border:0;background:transparent!important;display:flex;flex-direction:column;min-width:44px;padding:0;color:#f5d694}
+.o101-tile-back{display:grid;place-items:center;width:27px;height:36px;border:2px solid #e6c37c;border-radius:4px;background:repeating-linear-gradient(45deg,#705025 0 3px,#906a32 3px 6px);box-shadow:3px 2px #e3d4b1,5px 4px #8b7149;color:#fff0bc;font-weight:850}
+#erisRoomSurface.okey101-mode .o101-premium-table{min-height:170px;padding:5px;display:grid;grid-template-columns:66px minmax(0,1fr) 66px;grid-template-rows:auto minmax(70px,1fr) auto;gap:4px;overflow:hidden}
+.o101-table-nav{display:none}.o101-table-players{display:contents}.o101-table-players article{z-index:1;padding:3px;align-self:center;border-radius:6px}
+.o101-table-players article[data-position="top"]{grid-column:2;grid-row:1;justify-self:center;width:100px}
+.o101-table-players article[data-position="left"]{grid-column:1;grid-row:2}.o101-table-players article[data-position="right"]{grid-column:3;grid-row:2}
+.o101-table-players article[data-position="bottom"]{grid-column:2;grid-row:3;justify-self:center;width:110px}
+.o101-table-players small{font-size:8px}
+.o101-deck{grid-column:1;grid-row:1;display:flex;gap:4px;margin:0;padding:3px;background:transparent;border:0;flex-wrap:wrap;font-size:8px}
+.o101-deck>div:first-child{display:none}.o101-deck .o101-joker-face{min-height:25px;font-size:13px}.o101-stock-count b{font-size:9px}
+.o101-discards{display:contents}.o101-discards>div{z-index:2;width:61px;padding:2px;background:#062a2166}
+.o101-discards>div[data-position="top"]{grid-column:3;grid-row:1;justify-self:end}.o101-discards>div[data-position="left"]{grid-column:1;grid-row:3}
+.o101-discards>div[data-position="right"]{grid-column:3;grid-row:3;justify-self:end}
+.o101-discards>div[data-position="bottom"]{grid-column:3;grid-row:2;align-self:end;justify-self:end;border:1px dashed #e9c984}
+.o101-discards small{font-size:8px}.o101-discards .o101-tile{width:23px!important;height:31px!important;min-height:31px!important}.o101-discards .o101-tile b{font-size:17px}
+.o101-root .o101-premium-table .o101-table-melds{display:grid!important;grid-column:2;grid-row:2;min-height:0;overflow:auto;grid-template-columns:minmax(0,1fr) 48px;gap:3px}
+.o101-meld-section{border-radius:2px;padding:2px;background:repeating-linear-gradient(0deg,transparent 0 29px,#99c89920 29px 30px),repeating-linear-gradient(90deg,transparent 0 21px,#99c89920 21px 22px)}
+.o101-meld-section h3{font-size:8px}.o101-melds:empty:after{font-size:8px;padding:0}.o101-meld{padding:1px}.o101-meld>small{font-size:8px}
+.o101-open-drop{grid-column:1/3;grid-row:3;z-index:2;align-self:end;font-size:8px;color:#e6d7a6;padding:3px;min-height:24px;max-width:64px;border:1px dashed #d9bf6b66;border-radius:5px}
+.o101-root .o101-drop-hover{outline:2px solid #69edce!important;outline-offset:-2px;background-color:#65e8b555!important}.o101-drag-source{opacity:.35}
+.o101-root .o101-drag-ghost{position:fixed!important;z-index:100!important;pointer-events:none!important;transform:translate(-50%,-125%) scale(1.2)!important;width:36px!important;height:50px!important;min-height:50px!important;opacity:.95;box-shadow:0 8px 18px #0008!important}
+@media(min-width:640px){.o101-root .o101-rack-slot .o101-tile{height:48px!important;min-height:48px!important}#erisRoomSurface.okey101-mode .o101-premium-table{grid-template-columns:84px minmax(0,1fr) 84px}.o101-root .o101-rack-area{max-width:900px}}
+@media(max-height:550px) and (min-width:640px){#erisRoomSurface.okey101-mode .o101-premium-table{min-height:125px;grid-template-rows:32px minmax(40px,1fr) 32px}.o101-root .o101-rack-slot .o101-tile{height:34px!important;min-height:34px!important}.o101-rack-slot{min-height:34px}.o101-table-players small{display:none}.o101-quick-tools button{min-height:24px!important}}
+.o101-open-drop{grid-column:2;grid-row:2;align-self:end;justify-self:stretch;max-width:none;min-height:28px;text-align:center;background:#0e352bd9}
+.o101-discards>div[data-position="bottom"]{grid-row:3;align-self:center}.o101-discards>div[data-position="right"]{grid-row:2;align-self:end}
+.o101-table-players article[data-position="right"]{align-self:start}
+#erisRoomSurface.okey101-mode .o101-premium-table{grid-template-rows:48px minmax(40px,1fr) 42px}
+.o101-deck{flex-wrap:nowrap;gap:3px;align-self:start;min-width:0;padding:0}.o101-root .o101-stock-count{min-width:27px;gap:1px}.o101-tile-back{width:23px;height:29px;font-size:10px}.o101-stock-count b{font-size:8px}.o101-deck>div{flex-direction:column;gap:0!important;font-size:8px}.o101-deck .o101-joker-face{min-width:23px;padding:1px;font-size:11px}
+.o101-discards>div{height:42px;gap:0;justify-content:center}.o101-discards small{line-height:10px}.o101-discards .o101-tile{height:28px!important;min-height:28px!important}.o101-empty-discard{height:26px;min-height:26px}.o101-table-players article[data-position="bottom"]{max-height:40px}
+@media(max-height:700px) and (max-width:639px){
+ .o101-root .o101-head{padding-block:2px}.o101-root .o101-brand-mark{height:24px;width:24px;font-size:13px}.o101-root .o101-head>button{min-height:28px;height:28px}.o101-root .o101-head>strong{font-size:11px}
+ .o101-root .o101-info{min-height:20px;padding-block:0}.o101-root .o101-info button{min-height:20px}.o101-root .o101-turn-status{padding-block:1px;font-size:10px}
+ #erisRoomSurface.okey101-mode .o101-premium-table{min-height:100px;grid-template-rows:28px minmax(20px,1fr) 30px}
+ .o101-root .o101-rack-slot .o101-tile{height:34px!important;min-height:34px!important}.o101-rack-slot{min-height:34px}.o101-root .o101-quick-tools button{min-height:24px!important}.o101-tools summary{min-height:20px;padding:1px}
+ .o101-table-players small{display:none}.o101-deck .o101-tile-back{height:20px}.o101-deck>div{display:none}.o101-discards>div{height:30px}.o101-discards small{display:none}.o101-open-drop{min-height:20px;font-size:7px}
+}
+@media(min-width:640px) and (max-height:550px){
+ #erisRoomSurface.okey101-mode .o101-premium-table{min-height:82px;grid-template-rows:24px minmax(16px,1fr) 28px}
+ .o101-deck .o101-tile-back{height:19px}.o101-deck>div{display:none}.o101-stock-count b{font-size:7px}.o101-discards>div{height:28px}.o101-discards small{display:none}.o101-open-drop{min-height:18px;font-size:7px}
+}
+@media(max-width:360px){.o101-root .o101-rack{gap:1px;padding-inline:2px}}
