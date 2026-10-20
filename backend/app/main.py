@@ -430,6 +430,8 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
 
 from . import security_sessions
 app.include_router(security_sessions.register_auth(current_user))
+from . import security_center
+app.include_router(security_center.register_auth(current_user))
 
 location_calls.register_auth(current_user)
 bind_account_delete_auth(current_user)

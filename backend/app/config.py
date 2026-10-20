@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     gmail_client_secret: str = ""
     gmail_refresh_token: str = ""
     gmail_from_email: str = "erischat@erischat.com"
+    # Security-center OAuth is isolated from the existing login OTP Gmail sender.
+    security_google_client_id: str = ""
+    security_google_client_secret: str = ""
+    security_google_redirect_uri: str = "https://erischat-api-production.up.railway.app/v1/security/google/callback"
+    security_gmail_fernet_key: str = ""
+    security_owner_public_id: str = ""
     rtc_turn_url: str = ""
     rtc_turn_username: str = ""
     rtc_turn_credential: str = ""
