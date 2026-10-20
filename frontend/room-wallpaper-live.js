@@ -40,7 +40,7 @@
         preview.alt=item?(item.name||item.key)+' · tam boy önizleme':'Duvar kâğıdı önizlemesi';
         const canApply=(!!ownedKey&&select.value===ownedKey)||leased(select.value);
         toggle.hidden=!canApply;
-        toggle.textContent=isApplied&&select.value===ownedKey?'ErisChat standart duvar kâğıdına dön':'Duvar kâğıdımı uygula';
+        toggle.textContent=isApplied&&select.value===ownedKey?'LidyaChat standart duvar kâğıdına dön':'Duvar kâğıdımı uygula';
         const relationshipReward=item?.tier==='relationship';const vipReward=item?.tier==='vip'||relationshipReward||item?.free;
         modal.querySelector('header small').textContent=relationshipReward?'İlişki seviyesinde kazanılan duvar kağıdı':item?.free?'Ücretsiz cinsiyete özel standart tema':vipReward?'VIP seviyesine bağlı ücretsiz ödül':'Standart temalar süreli kullanım için satılır';
         modal.querySelector('[data-owned-note]').textContent=relationshipReward?'Aktif ilişkiniz boyunca ücretsiz kullanabilirsiniz.':item?.free?'Herkese açık ücretsiz standart görünüm.':vipReward?'VIP '+item.vip_level+' seviyesine ulaştığında ücretsiz uygulanır.':((ownedKey===select.value&&data.paid_until)||leased(select.value))?'Satın alınan tema '+new Date(data.rentals?.[select.value]||data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar tekrar uygulanabilir.':'Bu temayı 1, 7 veya 30 günlüğüne kiralayabilirsin.';
@@ -57,13 +57,13 @@
         zoom.querySelector('img').src=preview.src;zoom.querySelector('button').onclick=()=>zoom.remove();zoom.onclick=e=>{if(e.target===zoom)zoom.remove()};document.body.append(zoom);
       };
       const current=modal.querySelector('[data-current]');
-      current.textContent=ownedKey?'Seçili tema: '+(items.find(x=>x.key===ownedKey)?.name||'Oda teması')+(data.paid_until?' · '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar':''):'ErisChat standart duvar kâğıdı etkin.';
+      current.textContent=ownedKey?'Seçili tema: '+(items.find(x=>x.key===ownedKey)?.name||'Oda teması')+(data.paid_until?' · '+new Date(data.paid_until).toLocaleDateString('tr-TR')+' tarihine kadar':''):'LidyaChat standart duvar kâğıdı etkin.';
       const dayBox=modal.querySelector('[data-days]');
       [1,7,30].forEach(d=>{const b=document.createElement('button');b.type='button';b.textContent=d+' gün · '+(Number((data.items||[]).find(x=>x.key===select.value)?.price||0)*Number(priceMap[d])).toLocaleString('tr-TR')+' Lidya';b.style.cssText="padding:11px 5px;border:1px solid var(--ui-line);border-radius:10px;background:color-mix(in srgb, var(--ui-panel) 3%, transparent);color:var(--ui-ink);font-size:11px";b.onclick=()=>{days=d;dayBox.querySelectorAll('button').forEach(x=>x.style.borderColor="var(--ui-line)");b.style.borderColor="var(--ui-gold)"};if(d===1)b.style.borderColor="var(--ui-gold)";dayBox.append(b)});
       toggle.onclick=async()=>{
         toggle.disabled=true;
         try{
-          if(isApplied&&select.value===ownedKey){await window.ErisRoom.resetWallpaper(roomId);isApplied=false;window.__erisActiveRoomWallpaper=data.default_asset;room.wallpaper_asset=null;room.wallpaper_asset_path=data.default_asset;room.wallpaper_applied=false;window.toast?.('ErisChat standart duvar kâğıdı etkinleştirildi.')}
+          if(isApplied&&select.value===ownedKey){await window.ErisRoom.resetWallpaper(roomId);isApplied=false;window.__erisActiveRoomWallpaper=data.default_asset;room.wallpaper_asset=null;room.wallpaper_asset_path=data.default_asset;room.wallpaper_applied=false;window.toast?.('LidyaChat standart duvar kâğıdı etkinleştirildi.')}
           else{const result=await api('/rooms/'+encodeURIComponent(roomId)+'/wallpaper/apply',{method:'POST',body:leased(select.value)?JSON.stringify({asset_key:select.value}):undefined});isApplied=true;ownedKey=result.asset_key;data.paid_until=result.paid_until;window.__erisActiveRoomWallpaper=result.asset_path;room.wallpaper_asset=result.asset_key;room.wallpaper_asset_path=result.asset_path;room.wallpaper_applied=true;window.toast?.('Duvar kâğıdı yeniden uygulandı.')}
           draw();window.dispatchEvent(new Event('erischat:cosmetics-updated'));
         }catch(e){modal.querySelector('[data-error]').textContent=e.message||'Oda teması değiştirilemedi.'}

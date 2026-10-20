@@ -96,7 +96,7 @@
   function preview(level,style){const user=window.ErisAuth?.user||{};style=style||user.gender;const theme=Number(level)===0?window.ErisVIPDesigns?.normal:window.ErisVIPDesigns?.get(level,style);if(!theme)return;
     queue.unshift({preview:true,normal_entry:theme.level===0,vip_entry_level:theme.level,vip_entry_style:style,nickname:user.nickname||'VIP misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();
   }
-  async function previewAsset(key){await shopReady;if(!shopThemes[key])return;const user=window.ErisAuth?.user||{};queue.unshift({preview:true,shop_entry:key,nickname:user.nickname||'ErisChat misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();}
+  async function previewAsset(key){await shopReady;if(!shopThemes[key])return;const user=window.ErisAuth?.user||{};queue.unshift({preview:true,shop_entry:key,nickname:user.nickname||'LidyaChat misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();}
   window.ErisRoomEntrance={show,clear,preview,previewAsset};
   window.addEventListener('erischat:room-closed',clear);
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state!=='ready'){clear();seen.clear()}});

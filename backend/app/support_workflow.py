@@ -177,7 +177,7 @@ def view(db, ticket, user):
         for message in context.get("messages", []):
             message.pop("sender_id", None)
     return {"id": ticket.id, "number": f"#{ticket.id:04d}", "subject": ticket.subject, "category": ticket.category, "message": ticket.message, "created_at": ticket.created_at, "status": ticket.status, "phase": flow.phase, "closed_by": flow.closed_by, "rated": db.get(SupportReview, ticket.id) is not None,
-            "customer_name": owner.nickname if customer or reveal else "ERISCHAT MÜŞTERİ", "customer_id": owner.public_id if reveal else "(ID GİZLENMİŞTİR)", "snapshot": flow.snapshot if not customer else None, "server_context": context, "messages": messages}
+            "customer_name": owner.nickname if customer or reveal else "LİDYACHAT MÜŞTERİ", "customer_id": owner.public_id if reveal else "(ID GİZLENMİŞTİR)", "snapshot": flow.snapshot if not customer else None, "server_context": context, "messages": messages}
 
 
 def summary(db, ticket, user):
@@ -284,7 +284,7 @@ def close(db, user, ticket_id, not_ready=False):
         text = "Müşteriniz müsait olmadığından dolayı destek talebi sonlandırılmıştır. Keyifli çalışmalar dileriz." if not_ready else "Müşterimiz ile ilgilendiğiniz zaman ayırdığınız için teşekkür ederiz. İyi çalışmalar."
         db.add(Notification(user_id=admin.id, kind="support_closed", title="Destek görüşmesi sonlandı", body=text))
     elif role != "USER":
-        db.add(Notification(user_id=owner.id, kind="support_closed", title="Destek görüşmesi sonlandı", body=f"ErisChat ailesi olarak bizimle aranızda olduğunuzdan çok memnunuz {owner.nickname}. Herhangi bir talebiniz olduğunda tekrardan müşteri temsilcilerimiz ile iletişime geçebilirsiniz."))
+        db.add(Notification(user_id=owner.id, kind="support_closed", title="Destek görüşmesi sonlandı", body=f"LidyaChat ailesi olarak bizimle aranızda olduğunuzdan çok memnunuz {owner.nickname}. Herhangi bir talebiniz olduğunda tekrardan müşteri temsilcilerimiz ile iletişime geçebilirsiniz."))
     db.commit()
     return view(db, ticket, user)
 

@@ -21,7 +21,7 @@
     signalCounts.set(id,count+1);
     const job=(peerQueues.get(id)||Promise.resolve()).then(()=>{
       if(generation===roomGeneration&&known.has(id))return operation();
-    }).catch(e=>{diagnostics.signalErrors++;console.warn('[ErisChat] ses bağlantı işlemi',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,1500)})
+    }).catch(e=>{diagnostics.signalErrors++;console.warn('[LidyaChat] ses bağlantı işlemi',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,1500)})
       .finally(()=>{if(generation!==roomGeneration)return;signalCounts.set(id,Math.max(0,(signalCounts.get(id)||1)-1));if(peerQueues.get(id)===job){peerQueues.delete(id);signalCounts.delete(id)}});
     peerQueues.set(id,job);return job;
   }
@@ -99,7 +99,7 @@
         level:0,lastVoice:0
       });
       if(!speakingFrame)scanLevels();
-    }catch(e){console.warn('[ErisChat] konuşma göstergesi başlatılamadı',e)}
+    }catch(e){console.warn('[LidyaChat] konuşma göstergesi başlatılamadı',e)}
   }
   function scanLevels(){
     speakingFrame=requestAnimationFrame(scanLevels);
@@ -206,7 +206,7 @@
     showOutput();window.toast?.(outputEnabled?'Oda sesleri açıldı.':'Oda sesleri kapatıldı.');
   }
   function shouldInitiate(id){return Boolean(myId&&id&&myId<id)}
-  async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){if(candidate._eris_offer&&pc._erisOffer&&candidate._eris_offer!==pc._erisOffer)continue;try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[ErisChat] ICE aday sinyali uygulanamadı',e)}}}
+  async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){if(candidate._eris_offer&&pc._erisOffer&&candidate._eris_offer!==pc._erisOffer)continue;try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[LidyaChat] ICE aday sinyali uygulanamadı',e)}}}
   function drop(id){
     unwatchLevel(id);clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);pendingIce.delete(id);
     const pc=peers.get(id);peers.delete(id);
@@ -339,7 +339,7 @@
     if(d.type==='rtc_ready'){roomGeneration++;peerQueues.clear();signalCounts.clear()}
     const generation=roomGeneration;
     if(d.type==='rtc_ready'){
-      messageQueue=messageQueue.then(()=>{if(generation===roomGeneration)return handleMessage(d)}).catch(e=>console.warn('[ErisChat] ses başlangıcı',e));
+      messageQueue=messageQueue.then(()=>{if(generation===roomGeneration)return handleMessage(d)}).catch(e=>console.warn('[LidyaChat] ses başlangıcı',e));
       return messageQueue;
     }
     if(d.type==='room_seat_muted')return handleMessage(d);
@@ -446,12 +446,12 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         const pc=peers.get(id);
         if(pc?.remoteDescription){
           if(d.payload?._eris_offer&&pc._erisOffer&&d.payload._eris_offer!==pc._erisOffer)return;
-          try{await pc.addIceCandidate(new RTCIceCandidate(d.payload))}catch(e){diagnostics.signalErrors++;console.warn('[ErisChat] eski/geçersiz ICE adayı',e)}
+          try{await pc.addIceCandidate(new RTCIceCandidate(d.payload))}catch(e){diagnostics.signalErrors++;console.warn('[LidyaChat] eski/geçersiz ICE adayı',e)}
         }else{
           const queue=pendingIce.get(id)||[];if(queue.length<64)queue.push(d.payload);pendingIce.set(id,queue);
         }
       }
-    }catch(e){diagnostics.signalErrors++;console.warn('[ErisChat] RTC bağlantısı kurulamadı',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,1500)}
+    }catch(e){diagnostics.signalErrors++;console.warn('[LidyaChat] RTC bağlantısı kurulamadı',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,1500)}
   }
   async function stop(){
     micRequest++;microphoneSeat=null;
@@ -493,13 +493,13 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       for(const peerId of known){
         if(request!==micRequest||stream!==activeStream)return;
         try{await enqueuePeer(peerId,()=>attachMicrophone(peerId))}
-        catch(e){console.warn('[ErisChat] mikrofon peer bağlantısı başarısız',peerId,e)}
+        catch(e){console.warn('[LidyaChat] mikrofon peer bağlantısı başarısız',peerId,e)}
       }
       for(const peerId of known){
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
-    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → ErisChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false;show();if(currentRoom()===room&&(generation!==roomGeneration||(request!==micRequest&&!manualMicOff&&!autoAttempted)))syncSeatMicrophone()}
+    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false;show();if(currentRoom()===room&&(generation!==roomGeneration||(request!==micRequest&&!manualMicOff&&!autoAttempted)))syncSeatMicrophone()}
   }
   function leaveRoom(){
     autoSeat=null;autoRoom=null;manualMicOff=false;autoAttempted=false;blockedAudio.clear();

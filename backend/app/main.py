@@ -106,7 +106,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="ErisChat API", version="1.0.3-optimization-20261003")
+app = FastAPI(title="LidyaChat API", version="1.0.3-optimization-20261003")
 install_diagnostics(app)
 app.include_router(cosmetic_router)
 app.include_router(vip_privileges.router)
@@ -169,7 +169,7 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id VARCHAR(64)"))
-        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'ErisChat Odası'"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'LidyaChat Odası'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 12"))
         conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_count SET DEFAULT 12"))
@@ -269,7 +269,7 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 
 
 def _initialize_database() -> None:
-    logger.info("ErisChat API startup: environment=%s", settings.environment)
+    logger.info("LidyaChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
     ensure_system_data_columns()
@@ -289,7 +289,7 @@ def _initialize_database() -> None:
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
     ensure_query_indexes()
-    logger.info("ErisChat API startup complete")
+    logger.info("LidyaChat API startup complete")
 
 
 async def _ephemeral_cleanup_loop():
@@ -1134,6 +1134,8 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
+    if repo.get(conversation_id).type == "welcome":
+        raise HTTPException(status_code=400, detail="Bu sistem sohbetine yanıt gönderilemez.")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     require_feature(db, user.id, [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
@@ -1212,14 +1214,16 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
 def _message_out(db: Session, message: Message, viewer_id: str, context=None) -> dict:
     context = context if context is not None else message_context(db, [message], viewer_id)
     sender=context.get('senders',{}).get(message.sender_id)
+    # LIDYACHAT_WELCOME_IDENTITY_V3
+    is_system = str(message.conversation_id).startswith("welcome:")
     pinned = message.id in context['pinned']
     gift = context['gifts'].get(message.id)
     media = context['media'].get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
-        "sender_avatar":sender.avatar if sender else None, "sender_avatar_asset":sender.avatar_asset if sender else None,
-        "sender_frame_asset":sender.frame_asset if sender else None, "bubble_asset":context.get("bubbles",{}).get(message.sender_id),
+        "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
+        "sender_frame_asset":None if is_system else (sender.frame_asset if sender else None), "bubble_asset":None if is_system else context.get("bubbles",{}).get(message.sender_id),
         "text": message.text, "created_at": message.created_at,
-        "is_read": message.sender_id == viewer_id and bool(context["read"] >= message.id),
+        "is_read": not is_system and message.sender_id == viewer_id and bool(context["read"] >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
         "gift_id": GIFT_META.get(gift.gift_key, {}).get("id") if gift else None,
         "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,

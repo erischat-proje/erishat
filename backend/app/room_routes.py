@@ -434,7 +434,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         if not existing_member and not ghost:
             entry=RoomChatMessage(room_id=room.id,user_id=user.id,text=user.nickname+' adlı kullanıcı odaya katıldı.')
             db.add(entry);db.flush();db.add(seat_workflow.RoomSystemEntry(message_id=entry.id))
-            entry_payload={'type':'room_chat','system':True,'id':entry.id,'room_id':room.id,'user_id':user.id,'nickname':'ErisChat','text':entry.text,'created_at':datetime.now(timezone.utc).isoformat()}
+            entry_payload={'type':'room_chat','system':True,'id':entry.id,'room_id':room.id,'user_id':user.id,'nickname':'LidyaChat','text':entry.text,'created_at':datetime.now(timezone.utc).isoformat()}
         else:entry_payload=None
         db.commit()
         if entry_payload and join_announcement:await join_announcement(room.id,entry_payload)

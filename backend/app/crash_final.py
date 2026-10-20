@@ -8,6 +8,7 @@ from sqlalchemy import BigInteger, DateTime, ForeignKey, String, func, select
 from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 from .models import User
+from .staff_identity import STAFF, ROLES
 from .platform_models import GameBet, GameRound
 from .wheel_rules import period_bounds
 
@@ -74,7 +75,7 @@ def leaderboard(db,user,period='hour'):
         .where(GameRound.game_type=='crash_live',GameBet.payout>0,paid>=start,paid<end)
         .group_by(GameBet.user_id).subquery())
     rows=db.execute(select(User,scores.c.winnings).join(scores,scores.c.user_id==User.id)
-        .where(User.is_active.is_(True)).order_by(scores.c.winnings.desc(),User.public_id.asc()).limit(50)).all()
+        .where(User.is_active.is_(True), ~select(STAFF.c.user_id).where(STAFF.c.user_id == User.id, STAFF.c.role.in_(ROLES)).correlate(User).exists()).order_by(scores.c.winnings.desc(),User.public_id.asc()).limit(50)).all()
     mine=db.scalar(select(scores.c.winnings).where(scores.c.user_id==user.id)) or 0
     items=[dict(rank=i+1,user_id=u.id,public_id=u.public_id,nickname=u.nickname,avatar=u.avatar,
         avatar_asset=u.avatar_asset,frame_asset=u.frame_asset,winnings=int(amount)) for i,(u,amount) in enumerate(rows)]

@@ -56,7 +56,7 @@ def chat_ban_detail(db,ban):
     duration='Süresiz' if end is None else f'{days} gün'
     message=(f'{duration} süre boyunca chat ve mesaj işlemleriniz yasaklanmıştır. '
         +(f'{end.astimezone(ISTANBUL).strftime("%d.%m.%Y %H:%M")} tarihine kadar beklemek zorundasınız. ' if end else 'Sohbet yasağınız süresizdir. ')
-        +'ErisChat moderasyonu olarak keyifli zaman geçirmenizi diliyoruz.')
+        +'LidyaChat moderasyonu olarak keyifli zaman geçirmenizi diliyoruz.')
     return {'code':'chat_dm_banned','message':message,'duration_days':days,'duration_label':duration,'expires_at':end.isoformat() if end else None}
 
 

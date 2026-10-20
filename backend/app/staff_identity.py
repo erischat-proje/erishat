@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session, object_session
 from fastapi import HTTPException
 
 ROLES = ('SA', 'UA', 'FA', 'DA')
-NAME = 'ErisChatYönetim'
-AVATAR = '/role-icons/management-v1/light/avatar.png'
+NAME = 'LidyaChat Yönetim'
+AVATAR = '/assets/lidyachat-management-avatar-v2.png'
 FRAME = '/role-icons/management-v1/light/frame.png'
 STAFF = table('admin_roles', column('user_id'), column('role'))
 CACHE = 'eris_staff_identity_roles'
@@ -54,7 +54,7 @@ def inventory():
     return [{'type':kind, 'asset_key':key, 'asset':key, 'name':name,
              'source':'management', 'level':0, 'equip_key':key, 'equipped':True,
              'locked':True, 'compatible':True}
-            for kind,key,name in [('avatar',AVATAR,'ErisChat Yönetim Logosu'),('frame',FRAME,'SA · UA · FA · DA Yönetim Çerçevesi')]]
+            for kind,key,name in [('avatar',AVATAR,'LidyaChat Yönetim Logosu'),('frame',FRAME,'SA · UA · FA · DA Yönetim Çerçevesi')]]
 
 
 def install_load_hints(user_class):

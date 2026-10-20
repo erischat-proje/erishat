@@ -131,10 +131,10 @@
       lastState = state;
 
       if (reason === 'auth' || reason === 'retry') {
-        console.log('[ErisChat] Google flow complete:', state);
+        console.log('[LidyaChat] Google flow complete:', state);
       }
     } catch (error) {
-      console.warn('[ErisChat] Google flow check failed:', error);
+      console.warn('[LidyaChat] Google flow check failed:', error);
 
       if (reason === 'auth' || reason === 'retry') {
         scheduleRetry();

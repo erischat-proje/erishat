@@ -40,7 +40,7 @@
     const chat=document.getElementById('chat');
     if(!id)return;
     try{const result=await api('/conversations/'+encodeURIComponent(id)+'/message-request-status');if(seq!==serial||active!==String(id))return;state=result?.state||'normal';show(chat)}
-    catch(err){if(seq===serial)console.warn('[ErisChat] message request status unavailable',err)}
+    catch(err){if(seq===serial)console.warn('[LidyaChat] message request status unavailable',err)}
   }
   window.ErisPrivateDM={open:refresh,sent:id=>{if(String(id)===active){state='pending';show(document.getElementById('chat'));refresh(id)}}};
   function start(){setInterval(()=>{if(active&&state==='pending'&&document.getElementById('chat')?.classList.contains('show')){const id=active;api('/conversations/'+encodeURIComponent(id)+'/message-request-status').then(r=>{if(active===id&&r?.state&&r.state!==state){state=r.state;show(document.getElementById('chat'));if(state==='normal')window.toast?.('Mesaj isteğiniz kabul edildi.')}}).catch(()=>{})}},8000);const profile=document.getElementById('profile');if(profile){profileObserver.observe(profile,{subtree:true,childList:true,characterData:true});syncProfile()}window.addEventListener('erischat:auth',()=>{active='';state='normal';serial++});}

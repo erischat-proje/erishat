@@ -77,7 +77,7 @@
 </style><div class="eph-nav"><span class="eph-section-label">Profil bölümleri</span><div id="ephTabs" class="eph-tabs" role="tablist" aria-label="Profil bölümleri"></div></div><div class="eph-body" role="tabpanel" aria-live="polite" hidden></div>`;
     view.append(hub);
     const overlay=document.createElement('div');overlay.className='eph-overlay';overlay.hidden=true;
-    overlay.innerHTML='<section class="eph-dialog" role="dialog" aria-modal="true" aria-labelledby="ephDialogTitle"><header class="eph-dialog-head"><div><small>ERISCHAT • PROFİL</small><h2 id="ephDialogTitle">Profil</h2></div><button type="button" class="eph-close" aria-label="Kapat">×</button></header><div class="eph-dialog-content"></div></section>';
+    overlay.innerHTML='<section class="eph-dialog" role="dialog" aria-modal="true" aria-labelledby="ephDialogTitle"><header class="eph-dialog-head"><div><small>LİDYACHAT • PROFİL</small><h2 id="ephDialogTitle">Profil</h2></div><button type="button" class="eph-close" aria-label="Kapat">×</button></header><div class="eph-dialog-content"></div></section>';
     document.body.append(overlay);
     overlay.querySelector('.eph-dialog-content').append(hub.querySelector('.eph-body'));
     const settings=view.querySelector('[data-erischat-profile-controls]');if(settings)overlay.querySelector('.eph-dialog-content').append(settings);
@@ -146,9 +146,9 @@
           }catch(error){if(index===requestIndex)status.textContent=error.message||'Profil kaydedilemedi.'}
           finally{saving=false;if(index===requestIndex)refresh()}
         };
-        if(me.management_locked){for(const el of form.querySelectorAll('input,textarea,button'))el.disabled=true;status.textContent='Yönetim kimliği sabittir: ErisChatYönetim, ErisChat logosu ve yönetim çerçevesi kullanılır.';return;}
+        if(me.management_locked){for(const el of form.querySelectorAll('input,textarea,button'))el.disabled=true;status.textContent='Yönetim kimliği sabittir: LidyaChat Yönetim, LidyaChat logosu ve yönetim çerçevesi kullanılır.';return;}
         const rename=document.createElement('form');rename.className='eph-rename-form';
-        rename.innerHTML='<h3>Kullanıcı adını değiştir</h3><p>Yeni kullanıcı adın profilinde ve sohbetlerde görünür. Eris, Chat ve ErisChat içeren adlar kullanılamaz.</p><div class="eph-rename-price">Değişiklik ücreti <b>150 Lidya</b></div><label>Yeni kullanıcı adı<input data-nickname maxlength="32" autocomplete="nickname" required></label><label class="eph-rename-consent"><input type="checkbox" data-consent required><span>Değişiklik için 150 Lidya ödemeyi onaylıyorum.</span></label><button type="submit" data-rename>Kullanıcı adını değiştir · 150 Lidya</button><div data-rename-status role="status" aria-live="polite"></div>';
+        rename.innerHTML='<h3>Kullanıcı adını değiştir</h3><p>Yeni kullanıcı adın profilinde ve sohbetlerde görünür. Uygulama markasına ayrılmış adlar kullanılamaz.</p><div class="eph-rename-price">Değişiklik ücreti <b>150 Lidya</b></div><label>Yeni kullanıcı adı<input data-nickname maxlength="32" autocomplete="nickname" required></label><label class="eph-rename-consent"><input type="checkbox" data-consent required><span>Değişiklik için 150 Lidya ödemeyi onaylıyorum.</span></label><button type="submit" data-rename>Kullanıcı adını değiştir · 150 Lidya</button><div data-rename-status role="status" aria-live="polite"></div>';
         body.append(rename);const nickname=rename.querySelector('[data-nickname]'),renameButton=rename.querySelector('[data-rename]'),renameStatus=rename.querySelector('[data-rename-status]');
         let currentName=me.nickname||'',renaming=false;nickname.value=currentName;
         const refreshRename=()=>{renameButton.disabled=renaming||!nickname.value.trim()||nickname.value.trim()===currentName||!rename.querySelector('[data-consent]').checked};

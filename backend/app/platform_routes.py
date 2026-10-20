@@ -148,7 +148,7 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
                 'fans_hidden':True, 'gifts_hidden':True, 'relationship':None,
                 'gender':'unspecified', 'title_asset':None, 'profile_asset':None,
                 'vip_level':0, 'vip_badge_hidden':True, 'vip_neon_hidden':True,
-                'bio':'Resmî ErisChat Yönetim Hesabı', 'management_locked':True,
+                'bio':'Resmî LidyaChat Yönetim Hesabı', 'management_locked':True,
                 'management_badges':['SA','UA','FA','DA']}
     from .personal_fans import received_total
     from .relationship_routes import public_brief
@@ -221,7 +221,7 @@ def register_platform_auth(current_user_dependency):
         return db.scalar(select(PrivateMessageRequest).where(PrivateMessageRequest.sender_id == sender, PrivateMessageRequest.recipient_id == recipient))
 
     def _notify(db, recipient, kind, body):
-        db.add(Notification(user_id=recipient, kind=kind, title="ErisChat", body=body))
+        db.add(Notification(user_id=recipient, kind=kind, title="LidyaChat", body=body))
 
     @router.get("/me/profile-privacy")
     def private_status(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):

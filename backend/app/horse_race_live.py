@@ -1,4 +1,4 @@
-"""ErisChat ortak canlı At Yarışı motoru."""
+"""LidyaChat ortak canlı At Yarışı motoru."""
 import json
 import secrets
 from datetime import datetime, timedelta, timezone

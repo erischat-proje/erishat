@@ -65,6 +65,6 @@ def conversation_page(db, user_id, folder, limit, offset):
         Message.conversation_id.in_(ids), Message.sender_id != user_id,
         Message.id > func.coalesce(ConversationReadState.last_read_message_id, 0), ~hidden).group_by(Message.conversation_id)).all())
     return [{'id':c.id, 'type':'family' if families.get(c.id) else c.type, 'created_at':c.created_at,
-        'members':members[c.id], 'name':families[c.id]+' aile sohbeti' if families.get(c.id) else groups[c.id].name if c.id in groups else 'ErisChat' if c.type == 'welcome' else None,
+        'members':members[c.id], 'name':families[c.id]+' aile sohbeti' if families.get(c.id) else groups[c.id].name if c.id in groups else 'LidyaChat' if c.type == 'welcome' else None,
         'unread_count':int(unread.get(c.id,0)), 'last_message':last[c.id].text if c.id in last else None,
         'last_message_at':last[c.id].created_at if c.id in last else None} for c in rows]

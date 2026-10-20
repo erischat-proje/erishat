@@ -53,7 +53,7 @@
       applyAppearance();
       return state;
     } catch (error) {
-      console.warn('[ErisChat cosmetics] yüklenemedi:', error.message);
+      console.warn('[LidyaChat cosmetics] yüklenemedi:', error.message);
       return state;
     }
   }

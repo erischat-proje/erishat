@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "ErisChat API"
+    app_name: str = "LidyaChat API"
     environment: str = "production"
     database_url: str = "postgresql+psycopg://erischat:erischat@localhost:5432/erischat"
     cors_origins: str = "*"
