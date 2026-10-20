@@ -1,1 +1,1 @@
-"""ErisChat application package."""
+"""LidyaChat application package."""

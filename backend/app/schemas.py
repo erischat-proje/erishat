@@ -62,7 +62,7 @@ class OnboardingRequest(BaseModel):
             raise ValueError("Doğum tarihi YYYY-AA-GG formatında olmalı")
         from .onboarding_policy import is_adult
         if not is_adult(value):
-            raise ValueError("ErisChat yalnızca 18 yaşını doldurmuş kişiler içindir")
+            raise ValueError("LidyaChat yalnızca 18 yaşını doldurmuş kişiler içindir")
         return value
 
     @field_validator("bio")

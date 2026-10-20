@@ -526,7 +526,7 @@
         return;
       }
 
-      if(!isAdult(birthDate)){error1.textContent='ErisChat yalnızca 18 yaşını doldurmuş kişiler içindir.';return;}
+      if(!isAdult(birthDate)){error1.textContent='LidyaChat yalnızca 18 yaşını doldurmuş kişiler içindir.';return;}
       if(!consent){error1.textContent='Kullanıcı sözleşmesini okuyup onaylamalısın.';return;}
       if (!selectedGender) {
         error1.textContent = 'Lütfen cinsiyetini seç.';

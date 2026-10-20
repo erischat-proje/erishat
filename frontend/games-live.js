@@ -1009,14 +1009,14 @@ const close = () => {
             }
 
             if (!mod || typeof mod.render !== 'function') {
-                console.error('[ErisChat Games] Modul yuklenmedi:', key);
+                console.error('[LidyaChat Games] Modul yuklenmedi:', key);
                 stage.textContent = 'Oyun modulu yuklenemedi: ' + key;
                 return;
             }
             try {
                 mod.render(stage);
             } catch (error) {
-                console.error('[ErisChat Games] Render hatasi:', key, error);
+                console.error('[LidyaChat Games] Render hatasi:', key, error);
                 stage.textContent = 'Oyun arayuzu acilamadi: ' + key;
                 return;
             }
@@ -2584,7 +2584,7 @@ const close = () => {
                 currentModal.querySelector('.eg-result').textContent =
                     'Devam eden Blackjack elin geri yüklendi. Kart Çek veya Dur.';
             } catch (e) {
-                console.warn('[ErisChat] Blackjack geri yükleme:', e);
+                console.warn('[LidyaChat] Blackjack geri yükleme:', e);
                 blackjackRestoreFailed = true;
                 if (game === 'blackjack' && currentModal.isConnected) {
                     // ERIS_BJ_RETRY_BUTTON_V1

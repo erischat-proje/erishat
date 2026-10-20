@@ -226,7 +226,7 @@
     try {
       return await api().api(`/users/${encodeURIComponent(other.user_id)}`);
     } catch (error) {
-      console.warn('[ErisChat] participant profile unavailable', error);
+      console.warn('[LidyaChat] participant profile unavailable', error);
       return { id: other.user_id, nickname: 'Anonim kullanıcı' };
     }
   }
@@ -726,7 +726,7 @@
           if(revision!==listRevision)return;
           currentUserId = me?.id || null;
         } catch (error) {
-          console.warn('[ErisChat] current user unavailable', error);
+          console.warn('[LidyaChat] current user unavailable', error);
         }
       }
       if (!currentUserId) return;
@@ -775,7 +775,7 @@
       });
       renderFolderControls(document.getElementById('messages'));
     } catch (e) {
-      console.warn('[ErisChat] conversations unavailable', e);
+      console.warn('[LidyaChat] conversations unavailable', e);
       if(valid())showListError(list);
     }finally{if(revision===listRevision)list.setAttribute('aria-busy','false')}
   }
@@ -863,7 +863,7 @@
       refreshSelectionBar();
       body.scrollTop = body.scrollHeight;
     } catch (e) {
-      console.warn('[ErisChat] messages unavailable', e);
+      console.warn('[LidyaChat] messages unavailable', e);
       if(revision!==chatRevision)return;
       body.innerHTML = '<div class="muted" style="font-size:10px;text-align:center">Konuşma yüklenemedi.</div>';
       if(/kilitli sohbet/i.test(String(e.message||''))){

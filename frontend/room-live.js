@@ -16,7 +16,7 @@
         el.hidden=blockedUsers.has(el.dataset.roomSenderId);
       });
       window.dispatchEvent(new CustomEvent('erischat:room-blocks-updated'));
-    }catch(e){console.warn('[ErisChat] Engellenen kullanıcılar yüklenemedi',e)}
+    }catch(e){console.warn('[LidyaChat] Engellenen kullanıcılar yüklenemedi',e)}
   }
   window.addEventListener('erischat:user-block-changed',event=>{
     const id=String(event.detail?.userId||'');if(!id)return;
@@ -40,7 +40,7 @@
       lock.setAttribute('aria-label','Şifreli oda');
       open.querySelector('b').append(' ',lock);
     }
-    const owner=room.owner_name||room.owner||'ErisChat';
+    const owner=room.owner_name||room.owner||'LidyaChat';
     const count=Number(room.member_count??room.members_count??room.online_count??0);
     open.querySelector('.room-meta').textContent=`${count} kişi • ${owner}`;
     const publicId=/^\d{12}$/.test(String(room.public_id||''))?String(room.public_id):'Oda ID yüklenemedi';
@@ -76,7 +76,7 @@
       targets.forEach(el => { el.replaceChildren(); const shown=el.id==='rooms'?rooms.filter(room=>Number(room.member_count||0)>1):rooms; if (!shown.length) { el.innerHTML="<div class=\"card\" style=\"padding:16px;color:var(--ui-ink)\">Şu anda aktif oda yok.</div>"; return; }
         shown.forEach(room => el.append(roomCard(room,false)));
       });
-    } catch(e) { console.warn('[ErisChat] room list unavailable',e); targets.forEach(el=>{el.textContent=e.message||'Odalar yüklenemedi.'}); }
+    } catch(e) { console.warn('[LidyaChat] room list unavailable',e); targets.forEach(el=>{el.textContent=e.message||'Odalar yüklenemedi.'}); }
     await loadFollowedRooms();
   }
   window.ErisChatRoomList={load:loadRooms,loadFollowing:loadFollowedRooms};
@@ -257,7 +257,7 @@
       else if(!d.system)portrait.textContent=d.avatar||'◈';
       const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
       if(frame&&!d.system){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
-      const author=document.createElement('b');author.textContent=d.system?'ErisChat':d.nickname||d.user_id||'Kullanıcı';if(!d.system)window.ErisRoleBadges?.bind(author,d);
+      const author=document.createElement('b');author.textContent=d.system?'LidyaChat':d.nickname||d.user_id||'Kullanıcı';if(!d.system)window.ErisRoleBadges?.bind(author,d);
       if(d.vip_benefits?.name_gold)author.classList.add('vp-gold-name');if(d.vip_benefits?.crown_name)author.classList.add('vp-crown-name');
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));
       const badge=document.createElement('img');badge.className='eris-fan-badge';badge.alt='Hayran seviyesi '+fanLevel;if(fanLevel)badge.src='./fan-levels/LEVEL'+fanLevel+'.png';
@@ -361,7 +361,7 @@
         );
         room.seat_permission=!!seatPermissionState?.enabled;
       }catch(error){
-        console.warn('[ErisChat] Koltuk izni durumu alınamadı',error);
+        console.warn('[LidyaChat] Koltuk izni durumu alınamadı',error);
       }
       await loadRoomBlocks();if(request!==roomOpenRequest)return;
       document.getElementById('erisLiveTitle').textContent=room.name||name||'Oda';
@@ -390,12 +390,12 @@
         try{
           window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
         }catch(error){
-          console.error('[ErisChat] room-opened listener error:',error);
+          console.error('[LidyaChat] room-opened listener error:',error);
         }
       },0);
     }catch(e){
       if(request!==roomOpenRequest)return;
-      console.error('[ErisChat] openRoom failed:',e);ensureRoomSurface().classList.add('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
+      console.error('[LidyaChat] openRoom failed:',e);ensureRoomSurface().classList.add('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
       if(String(window.ErisCurrentRoomId)===String(id)){window.ErisCurrentRoomId=null;window.currentRoomId=null;window.__erisRoomPermissions={};window.__erisActiveRoomWallpaper=null;}
     }
   }
@@ -454,7 +454,7 @@ window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
         );
         room.seat_permission=!!seatPermissionState?.enabled;
       }catch(error){
-        console.warn('[ErisChat] Koltuk izni yenilenemedi',error);
+        console.warn('[LidyaChat] Koltuk izni yenilenemedi',error);
       }
       window.__erisRoomPermissions={is_owner:!!room.is_owner,is_moderator:!!room.is_moderator,can_manage:!!room.can_manage,current_user_seat:room.current_user_seat,seat_permission:!!room.seat_permission};
       window.__erisCurrentRoomLocked=!!room.locked;window.ErisScreenProtection?.set?.('room',!!room.locked);

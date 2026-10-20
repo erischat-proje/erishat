@@ -61,7 +61,7 @@
     let p=s.querySelector('.room-v3-panel');
     if(p) return p;
     p=document.createElement('aside');p.className='room-v3-panel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');p.setAttribute('aria-label','Oda bilgileri ve araçları');
-    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-eyebrow">ERISCHAT • ODA MERKEZİ</div><div class="room-v3-head"><button type="button" class="room-v3-back" aria-label="Oda merkezine dön">‹</button><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="staff" data-staff-tab="1">Yetkililer</button><button class="room-v3-tab" data-tab="guests" data-staff-tab="1">Misafirler</button><button class="room-v3-tab" data-tab="bans" data-staff-tab="1">Atılanlar</button><button class="room-v3-tab" data-tab="mutes" data-staff-tab="1">Chatte susturulanlar</button><button class="room-v3-tab" data-tab="moderators" data-owner-tab="1">Moderatörler</button><button class="room-v3-tab" data-tab="promote" data-owner-tab="1">Moderatör yap</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
+    p.innerHTML='<div class="room-v3-dialog"><div class="room-v3-eyebrow">LİDYACHAT • ODA MERKEZİ</div><div class="room-v3-head"><button type="button" class="room-v3-back" aria-label="Oda merkezine dön">‹</button><strong id="roomV3Title">Oda</strong><button class="room-v3-close" aria-label="Kapat">×</button></div><div class="room-v3-tabs" role="tablist"><button class="room-v3-tab active" data-tab="info">Oda</button><button class="room-v3-tab" data-tab="users">Kullanıcılar</button><button class="room-v3-tab" data-tab="gifts">Hediyeler</button><button class="room-v3-tab" data-tab="music">Müzik</button><button class="room-v3-tab" data-tab="staff" data-staff-tab="1">Yetkililer</button><button class="room-v3-tab" data-tab="guests" data-staff-tab="1">Misafirler</button><button class="room-v3-tab" data-tab="bans" data-staff-tab="1">Atılanlar</button><button class="room-v3-tab" data-tab="mutes" data-staff-tab="1">Chatte susturulanlar</button><button class="room-v3-tab" data-tab="moderators" data-owner-tab="1">Moderatörler</button><button class="room-v3-tab" data-tab="promote" data-owner-tab="1">Moderatör yap</button><button class="room-v3-tab" data-tab="settings" data-management-tab="1">Ayarlar</button></div><div class="room-v3-body" id="roomV3Body"></div></div>';
     s.appendChild(p);
     p.querySelector('.room-v3-close').onclick=()=>p.classList.remove('show');
     p.querySelector('.room-v3-back').onclick=()=>window.ErisRoomCenterMenu?.();
@@ -663,7 +663,7 @@
       ['promote','＋','Moderatör yap'],
       ['theme','◈','Oda görünümü']
     ]]);
-    p.innerHTML='<div class="room-center-eyebrow">ERISCHAT • ODA</div>'
+    p.innerHTML='<div class="room-center-eyebrow">LİDYACHAT • ODA</div>'
       +'<div class="room-center-heading"><div><h2>Oda Merkezi</h2>'
       +'<p>Oda araçları ve yetkine uygun işlemler.</p></div>'
       +'<button type="button" class="room-center-close" data-close aria-label="Menüyü kapat">×</button></div>'
@@ -700,7 +700,7 @@
   async function theme(){
     const p=panel();if(!p)return;
     const r=await getRoom(),active=r.theme==='vip'?'vip':'normal';
-    const options=[['normal','Standart','ErisChat gece arayüzünü kullan'],['vip','VIP altın','Odaya altın vurgu rengi uygula']];
+    const options=[['normal','Standart','LidyaChat gece arayüzünü kullan'],['vip','VIP altın','Odaya altın vurgu rengi uygula']];
     p.innerHTML='<div class="v5-title">Oda görünümü <button type="button" class="v5-btn" data-close>Geri</button></div><div class="v5-subtitle">Oda temasını kaydet. Değişiklik odayı yeniden açan üyelerde de görünür.</div>'+options.map(([key,title,description])=>'<div class="v5-card"><div class="v5-row"><div><b>'+title+(active===key?' • Etkin':'')+'</b><div class="v5-note" style="margin-top:5px">'+description+'</div></div><button type="button" class="v5-btn '+(active===key?'primary':'')+'" data-theme="'+key+'">'+(active===key?'Etkin':'Uygula')+'</button></div></div>').join('');
     p.closest('.room-v5-panel').classList.add('show');
     p.querySelector('[data-close]').onclick=menu;

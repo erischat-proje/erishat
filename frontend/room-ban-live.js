@@ -59,7 +59,7 @@
     } catch (error) {
       list.innerHTML = "<div style=\"padding:16px;text-align:center;color:var(--ui-danger);font-size:10px\">Atılanlar listesi alınamadı.</div>";
       status.textContent = 'Liste alınamadı';
-      console.warn('[ErisChat] ban list unavailable', error);
+      console.warn('[LidyaChat] ban list unavailable', error);
     }
   }
 

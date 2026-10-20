@@ -106,7 +106,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="ErisChat API", version="1.0.3-optimization-20261003")
+app = FastAPI(title="LidyaChat API", version="1.0.3-optimization-20261003")
 install_diagnostics(app)
 app.include_router(cosmetic_router)
 app.include_router(vip_privileges.router)
@@ -169,7 +169,7 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id VARCHAR(64)"))
-        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'ErisChat Odası'"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'LidyaChat Odası'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 12"))
         conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_count SET DEFAULT 12"))
@@ -269,7 +269,7 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 
 
 def _initialize_database() -> None:
-    logger.info("ErisChat API startup: environment=%s", settings.environment)
+    logger.info("LidyaChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
     ensure_system_data_columns()
@@ -289,7 +289,7 @@ def _initialize_database() -> None:
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
     ensure_query_indexes()
-    logger.info("ErisChat API startup complete")
+    logger.info("LidyaChat API startup complete")
 
 
 async def _ephemeral_cleanup_loop():

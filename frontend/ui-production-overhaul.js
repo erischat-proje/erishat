@@ -227,7 +227,7 @@
 
   function toast(message) {
     if (typeof window.toast === 'function') window.toast(message);
-    else console.warn('[ErisChat]', message);
+    else console.warn('[LidyaChat]', message);
   }
 
   function hideDemoSurface() {
