@@ -23,8 +23,9 @@
       const dismiss=()=>{localStorage.setItem('eris.announcement.dismissed',String(latest.id));document.getElementById('erisAnnouncementCard')?.remove();document.getElementById('erisAnnouncementInbox')?.remove()};
       close.onclick=dismiss;
       const message=document.createElement('p');message.textContent=latest.message;message.style.cssText='white-space:pre-wrap;line-height:1.55;font-size:12px;margin:10px 0 5px';
+      const publisher=document.createElement('small');publisher.dataset.announcementPublisher='';publisher.textContent='Yayınlayan yönetici ID: '+(latest.admin_public_id||'Bilinmiyor');publisher.style.cssText='display:block;overflow-wrap:anywhere;font-size:10px;margin:8px 0;color:var(--ui-ink)';
       const time=document.createElement('small');time.textContent=new Date(latest.created_at).toLocaleString('tr-TR');time.style.cssText="color:var(--ui-gold);font-size:9px";
-      top.append(name,close);card.append(top,message,time);home.prepend(card);
+      top.append(name,close);card.append(top,message,publisher,time);home.prepend(card);
       const inbox=document.querySelector('#messages > .list');if(inbox){const copy=card.cloneNode(true);copy.id='erisAnnouncementInbox';copy.querySelector('button')?.addEventListener('click',dismiss);inbox.prepend(copy)}
     }catch(_){}
   }

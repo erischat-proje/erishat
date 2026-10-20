@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from .purchase_routes import ManualAmount as AmountUpdate, manual_change
 from .db import get_db
 from .models import User
+from .announcement_identity import announcement_payloads
 from .platform_models import Report, VipStatus, UserLocation
 from .room_models import Room, RoomMember, RoomSeat, RoomPassword
 from .support_models import SupportTicket
@@ -244,11 +245,11 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     @router.get("/announcements")
     def management_announcements(before: int | None = Query(default=None, ge=1), limit: int = Query(default=20, ge=1, le=50), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_fa_or_da(db, user)
-        query = select(SystemAnnouncement)
+        query = select(SystemAnnouncement).where(SystemAnnouncement.active.is_(True))
         if before is not None:
             query = query.where(SystemAnnouncement.id < before)
         rows = db.scalars(query.order_by(SystemAnnouncement.id.desc()).limit(limit + 1)).all()
-        return {"items": [{"id": row.id, "title": "LidyaChat Yönetim", "message": row.message, "active": row.active, "created_at": row.created_at} for row in rows[:limit]], "next_before": rows[limit-1].id if len(rows) > limit else None}
+        return {"items": announcement_payloads(db, rows[:limit]), "next_before": rows[limit-1].id if len(rows) > limit else None}
 
     @router.delete("/announcements/{announcement_id}")
     def cancel_announcement(announcement_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -256,11 +257,11 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         row = db.scalar(select(SystemAnnouncement).where(SystemAnnouncement.id == announcement_id).with_for_update())
         if row is None:
             raise HTTPException(404, detail="Duyuru bulunamadı.")
-        if row.active:
-            row.active = False
-            audit(db, user, "admin_announcement_cancelled", {"announcement_id": row.id}, target_id=str(row.id))
-            db.commit()
-        return {"id": row.id, "active": False}
+        result = {"id": row.id, "active": False, "deleted": True}
+        audit(db, user, "admin_announcement_cancelled", {"announcement_id": row.id}, target_id=str(row.id))
+        db.delete(row)
+        db.commit()
+        return result
 
     @router.post("/announcements", status_code=201)
     def create_announcement(payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -271,7 +272,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         audit(db, user, "admin_announcement", {"announcement_id": announcement.id, "message_length": len(announcement.message)}, target_id=str(announcement.id))
         db.commit()
         db.refresh(announcement)
-        return {"id": announcement.id, "title": announcement.title, "message": announcement.message, "created_at": announcement.created_at}
+        return announcement_payloads(db, [announcement])[0]
 
     @router.post("/tickets/{ticket_id}/close")
     def close_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
