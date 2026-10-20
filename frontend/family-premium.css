@@ -43,3 +43,6 @@
 .eh-family-shell .eh-family-row [data-family-profile] div{overflow-wrap:anywhere}
 .eh-family-shell .eh-family-confirm{border-color:var(--family-stroke)}
 @media(max-width:370px){.eh-family-shell .eh-family-hero{padding:14px!important}.eh-family-shell .eh-family-crest{width:58px;height:58px}.eh-family-shell .eh-family-level{font-size:27px}.eh-family-shell .eh-family-actions{gap:7px!important}.eh-family-shell .eh-family-actions button{font-size:11px!important;min-height:65px!important}}
+
+.eh-family-shell .eh-family-actions button[data-action="close"]{background-image:url("./assets/family-premium/png/family-manage-light.png")!important;border:1px solid var(--ui-danger,#a34b34)!important}
+:is([data-eris-theme="dark"],[data-theme="dark"],[data-ui-theme="dark"],.theme-dark,.dark,body.dark) .eh-family-shell .eh-family-actions button[data-action="close"]{background-image:url("./assets/family-premium/png/family-manage-dark.png")!important}

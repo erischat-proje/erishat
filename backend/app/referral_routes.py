@@ -90,7 +90,7 @@ def install_routes(current_user):
     @router.get('/families/{family_id}/referral-reward')
     def family_status(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
         family = db.get(Family, family_id)
-        if not family: raise HTTPException(404, 'Aile bulunamadı')
+        if not family or family.closed: raise HTTPException(404, 'Aile bulunamadı')
         if family.owner_id != user.id: raise HTTPException(403, 'Yalnızca aile sahibi')
         last = db.scalar(select(FamilyReferralClaim).where(FamilyReferralClaim.family_id == family_id).order_by(FamilyReferralClaim.created_at.desc(), FamilyReferralClaim.id.desc()).limit(1))
         next_at = utc(last.created_at) + timedelta(days=30) if last else None
@@ -100,7 +100,7 @@ def install_routes(current_user):
     @router.post('/families/{family_id}/referral-reward')
     def family_claim(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
         family = db.scalar(select(Family).where(Family.id == family_id).with_for_update())
-        if not family: raise HTTPException(404, 'Aile bulunamadı')
+        if not family or family.closed: raise HTTPException(404, 'Aile bulunamadı')
         if family.owner_id != user.id: raise HTTPException(403, 'Yalnızca aile sahibi')
         last = db.scalar(select(FamilyReferralClaim).where(FamilyReferralClaim.family_id == family_id).order_by(FamilyReferralClaim.created_at.desc(), FamilyReferralClaim.id.desc()).limit(1))
         if last and datetime.now(timezone.utc) < utc(last.created_at) + timedelta(days=30):

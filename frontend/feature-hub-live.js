@@ -65,7 +65,7 @@
     const link=document.createElement('link');
     link.id='erisFamilyPremiumCss';link.rel='stylesheet';
     const script=document.querySelector('script[src*=\"feature-hub-live.js\"]');
-    link.href=new URL('family-premium.css?v=fix2',script?.src||location.href).href;
+    link.href=new URL('family-premium.css?v=family-close-20261020',script?.src||location.href).href;
     document.head.appendChild(link);
   }
   if(!document.getElementById('erisFamilyV2Css')){
@@ -128,6 +128,24 @@
       shell.querySelector('[data-action=donate]').onclick=()=>{out.innerHTML='<div class="eh-card"><b>Aile deneyimine katkı</b><small>Katkı doğrudan aile bakiyesine eklenir.</small><form class="eh-family-inline" id="ehDonate"><input type="number" min="1" max="10000000" required placeholder="Lidya miktarı"><button class="eh-btn">Bağış yap</button></form></div>';out.querySelector('form').onsubmit=async e=>{e.preventDefault();try{const amount=Number(out.querySelector('input').value);await api('/families/'+encodeURIComponent(id)+'/donate',{method:'POST',body:JSON.stringify({amount})});window.toast?.('Aile bakiyesine eklendi ✓');await family(panel)}catch(err){window.toast?.(err.message)}}};
       if(isManager)shell.querySelector('[data-action=invite]').onclick=()=>{out.innerHTML='<div class="eh-card"><b>Aileye davet gönder</b><small>Kullanıcı ID ile davet et.</small><form class="eh-family-inline"><input name="uid" required placeholder="Kullanıcı ID"><button class="eh-btn">Davet et</button></form></div>';out.querySelector('form').onsubmit=async e=>{e.preventDefault();try{await api('/families/'+encodeURIComponent(id)+'/members',{method:'POST',body:JSON.stringify({user_id:out.querySelector('[name=uid]').value.trim()})});out.innerHTML='<div class="eh-note">✓ Aile daveti gönderildi.</div>'}catch(err){window.toast?.(err.message)}}};
       shell.querySelector('[data-action=members]').onclick=()=>{out.innerHTML='<div class="eh-family-section-title">Üye listesi <span>'+ordinaryMembers.length+'</span></div><div>'+ordinaryMembers.map(m=>'<div class="eh-family-row"><button type="button" data-family-profile="'+esc(m.user_id)+'"><div class="eh-family-avatar" style="'+(m.avatar_asset?'background-image:url(\"'+esc(window.ErisChatCosmetics?.assetUrl?.(m.avatar_asset)||m.avatar_asset)+'\")':'')+'">'+(m.avatar_asset?'':esc(m.avatar||'👤'))+'</div><div style="flex:1;min-width:0"><b data-eris-role-user="'+esc(m.user_id)+'">'+esc(m.nickname)+'</b><small>Üye · VIP '+Number(m.vip_level||0)+' · ID '+esc(m.public_id||'')+'</small></div><span aria-hidden="true">›</span></button><button type="button" data-family-message="'+esc(m.user_id)+'" data-family-name="'+esc(m.nickname)+'">💬 Mesaj</button></div>').join('')+'</div>'+(ordinaryMembers.length?'':'<div class="eh-note">Henüz normal üye bulunmuyor.</div>')};
+      if(viewerRole==='owner'){
+        const closeButton=document.createElement('button');closeButton.type='button';closeButton.dataset.action='close';closeButton.textContent='Aileyi kapat';
+        shell.querySelector('.eh-family-actions').append(closeButton);
+        closeButton.onclick=()=>{
+          out.replaceChildren();const box=document.createElement('div');box.className='eh-family-confirm';
+          const title=document.createElement('b');title.textContent='Aileyi kalıcı olarak kapatmak istiyor musunuz?';
+          const note=document.createElement('small');note.textContent='Tüm üyeler aileden çıkarılır ve aile sohbetine erişim kapanır. Yapılan katkılar iade edilmez.';
+          const controls=document.createElement('div');controls.className='eh-family-confirm-actions';
+          const yes=document.createElement('button');yes.type='button';yes.textContent='Aileyi kapat';
+          const no=document.createElement('button');no.type='button';no.textContent='Vazgeç';no.onclick=()=>box.remove();
+          yes.onclick=async()=>{yes.disabled=true;no.disabled=true;try{
+            await api('/families/'+encodeURIComponent(id),{method:'DELETE'});localStorage.removeItem('eris_family_id');
+            document.getElementById('chat')?.classList.remove('show');window.ErisChatDM?.load?.();
+            window.toast?.('Aile kapatıldı.');await family(panel);
+          }catch(err){window.toast?.(err.message||'Aile kapatılamadı.');yes.disabled=false;no.disabled=false}};
+          controls.append(yes,no);box.append(title,note,controls);out.append(box);
+        };
+      }
       shell.querySelector('[data-action=leave]').onclick=()=>{out.innerHTML='';const box=document.createElement('div');box.className='eh-family-confirm';const title=document.createElement('b');title.textContent='Aileden ayrılmak istiyor musun?';const note=document.createElement('small');note.textContent='Ayrılırsan aile sohbetinden çıkarılacaksın. Kurucu önce aile sahipliğini devretmelidir.';const actions=document.createElement('div');actions.className='eh-family-confirm-actions';const yes=document.createElement('button');yes.textContent='Kabul et';const no=document.createElement('button');no.textContent='Reddet';no.onclick=()=>box.remove();yes.onclick=async()=>{yes.disabled=true;try{const result=await api('/families/'+encodeURIComponent(id)+'/leave',{method:'DELETE'});localStorage.removeItem('eris_family_id');window.toast?.((result.family_name||f.name)+' ailesinden ayrıldınız.');await family(panel)}catch(err){window.toast?.(err.message);yes.disabled=false}};actions.append(yes,no);box.append(title,note,actions);out.append(box)};
       shell.querySelector('[data-action=chat]').onclick=async()=>{try{const chat=await api('/families/'+encodeURIComponent(id)+'/chat');if(window.ErisChatDM?.open){window.__erisActiveDmUserId=null;window.ErisChatDM.open(chat.conversation_id,f.name+' aile sohbeti','👪',null);return}window.toast?.('Mesaj kutusu henüz hazır değil.')}catch(err){window.toast?.(err.message)}};
       if(isManager)shell.querySelector('[data-action=applications]').onclick=async()=>{try{const rows=await api('/families/'+encodeURIComponent(id)+'/applications');out.innerHTML='<div class="eh-family-section-title">Bekleyen başvurular <span>'+rows.length+'</span></div>'+(rows.map(r=>'<div class="eh-card" style="margin:7px 0"><b data-eris-role-user="'+esc(r.user_id)+'">'+esc(r.nickname||r.user_id)+'</b><small>'+esc(r.message||'Başvuru mesajı yok')+'</small><div class="eh-family-actions"><button data-accept="'+esc(r.id)+'">Kabul et</button><button data-reject="'+esc(r.id)+'">Reddet</button></div></div>').join('')||'<div class="eh-note">Bekleyen başvuru yok.</div>');out.querySelectorAll('[data-accept]').forEach(b=>b.onclick=async()=>{try{await api('/families/'+encodeURIComponent(id)+'/applications/'+encodeURIComponent(b.dataset.accept)+'/accept',{method:'POST'});await shell.querySelector('[data-action=applications]').click();await family(panel)}catch(err){window.toast?.(err.message)}});out.querySelectorAll('[data-reject]').forEach(b=>b.onclick=async()=>{try{await api('/families/'+encodeURIComponent(id)+'/applications/'+encodeURIComponent(b.dataset.reject)+'/reject',{method:'POST'});window.toast?.((b.closest('.eh-card')?.querySelector('b')?.textContent||'Kullanıcının')+' adlı kullanıcının aile katılma isteğini reddettiniz.');await shell.querySelector('[data-action=applications]').click()}catch(err){window.toast?.(err.message)}})}catch(err){window.toast?.(err.message)}};
@@ -138,7 +156,7 @@
           window.__erisFamilyV2Ready = new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             const source=document.querySelector('script[src*="feature-hub-live.js"]');
-            script.src=new URL('family-v2.js?v=20261018-final3',source?.src||location.href).href;
+            script.src=new URL('family-v2.js?v=family-close-20261020',source?.src||location.href).href;
             script.onload=resolve;script.onerror=()=>reject(new Error('Aile V2 dosyası yüklenemedi'));
             document.head.appendChild(script);
           });

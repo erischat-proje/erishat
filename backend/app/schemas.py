@@ -204,6 +204,7 @@ class ConversationOut(BaseModel):
     unread_count: int = 0
     last_message: str | None = None
     last_message_at: datetime | None = None
+    avatar_url: str | None = None
 
 
 class MessageCreate(BaseModel):
