@@ -77,7 +77,7 @@ def install_routes(current_user):
             raise HTTPException(409, 'Bu kodu daha önce kullandınız')
         if code.uses >= code.max_uses: raise HTTPException(409, 'Bu kod için maksimum limite ulaşılmıştır.')
         if not code.active: raise HTTPException(409, 'Bu kod artık aktif değil')
-        wallet = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        wallet = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         if not wallet: raise HTTPException(404, 'Kullanıcı bulunamadı')
         amount = 2500 if code.kind == 'USER' else 12500
         wallet.lidya = int(wallet.lidya or 0) + amount
@@ -109,7 +109,7 @@ def install_routes(current_user):
         if not member_ids: raise HTTPException(409, 'Aile üyesi bulunamadı')
         if user.id not in member_ids: raise HTTPException(409, 'Aile sahibi üye listesinde bulunamadı')
         # Fail the whole transaction rather than silently paying only some members.
-        member_users = list(db.scalars(select(User).where(User.id.in_(member_ids)).order_by(User.id).with_for_update()))
+        member_users = list(db.scalars(select(User).where(User.id.in_(member_ids)).order_by(User.id).with_for_update().execution_options(populate_existing=True)))
         if len(member_users) != len(member_ids): raise HTTPException(409, 'Aile üye kayıtları tutarsız')
         claim = FamilyReferralClaim(family_id=family_id, owner_id=user.id, member_count=len(member_ids))
         db.add(claim); db.flush()

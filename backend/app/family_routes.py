@@ -444,7 +444,7 @@ def register_family_auth(current_user_dependency):
     def donate_family(family_id: str, payload: FamilyDonationCreate, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
         if payload.amount < 1: raise HTTPException(status_code=400, detail="Geçerli bir bağış miktarı gerekli")
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         locked_family = db.scalar(select(Family).where(Family.id == family_id).with_for_update())
         if not locked_user or not locked_family: raise HTTPException(status_code=404, detail="Aile veya kullanıcı bulunamadı")
         if locked_user.lidya < payload.amount: raise HTTPException(status_code=400, detail="Yetersiz Lidya")

@@ -40,7 +40,7 @@ def state(db,user):
 
 def transact(db,user,payload,operation='spin'):
     # Same user row lock serializes wallet spending, bonus progress and UUID retries.
-    u=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    u=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     rid=str(payload.request_id);receipt=db.get(SlotReceipt,(user.id,rid))
     if receipt:
         if (receipt.operation,receipt.amount)!=(operation,payload.amount):raise HTTPException(409,'İstek numarası başka işlemde kullanılmış.')

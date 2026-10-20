@@ -1,0 +1,1 @@
+# Yanlış engellenmiş gerçek alan adları: her satıra bir alan adı.

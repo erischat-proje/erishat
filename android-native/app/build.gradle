@@ -6,18 +6,26 @@ android {
     namespace 'com.erischat.app'
     compileSdk 35
 
+    def signingPath = System.getenv('ERISCHAT_SIGNING_FILE')
+    def customSigning = signingPath != null && !signingPath.trim().isEmpty()
+
     signingConfigs {
+        if (customSigning) {
         erischat {
-            storeFile file(System.getenv('ERISCHAT_SIGNING_FILE'))
+            storeFile file(signingPath)
             storePassword System.getenv('ERISCHAT_KEYSTORE_PASSWORD')
             keyAlias System.getenv('ERISCHAT_SIGNING_ALIAS')
             keyPassword System.getenv('ERISCHAT_KEY_PASSWORD')
         }
     }
 
+        }
+
     buildTypes {
         debug {
-            signingConfig signingConfigs.erischat
+            if (customSigning) {
+                signingConfig signingConfigs.erischat
+            }
         }
     }
 
