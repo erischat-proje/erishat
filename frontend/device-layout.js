@@ -24,7 +24,8 @@
     const header=compact?56:68,tools=44;
     const chat=clamp(usable*.33,keyboard?100:160,290);
     const ludoChat=clamp(usable*.20,keyboard?100:128,200);
-    return {width,height,top:v?.offsetTop||0,left:v?.offsetLeft||0,safe,usable,keyboard,compact,short,orientation,header,tools,chat,ludoChat};
+    const okeyChat=clamp(usable*.28,228,270);
+    return {width,height,top:v?.offsetTop||0,left:v?.offsetLeft||0,safe,usable,keyboard,compact,short,orientation,header,tools,chat,ludoChat,okeyChat};
   }
   function update(){
     frame=0;const m=measure();
@@ -40,6 +41,7 @@
       '--eris-safe-left':m.safe.left,'--eris-safe-right':m.safe.right,'--eris-usable-height':m.usable,
       '--eris-room-header':m.header,'--eris-room-tools-height':m.tools,
       '--eris-adaptive-chat':m.chat,'--eris-adaptive-ludo-chat':m.ludoChat,
+      '--eris-adaptive-okey-chat':m.okeyChat,
       '--room-chat-height':m.chat,'--room-stage-height':Math.max(0,m.usable-m.header-m.tools-m.chat-8)
     };
     for(const [key,value] of Object.entries(vars))root.style.setProperty(key,Math.round(value)+'px');
