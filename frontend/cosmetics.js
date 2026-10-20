@@ -30,7 +30,7 @@
     clean = window.ErisShopArt?.resolve(clean) || clean;
     clean = window.ErisVIPArt?.resolve(clean) || clean;
     if (premiumAssets.has(clean)) clean = clean.replace('shop-expansion/', 'shop-premium-v2/').replace(/\.svg$/, '.webp');
-    if (!/^(shop-lydia-premium|shop-lydia|shop-premium-v2|Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
+    if (!/^(shop-lydia-premium|shop-lydia|shop-premium-v2|Gereken_icerikler|avatarveduvarkağıdı|vip-assets|vip-designs|shop-expansion|relationship-assets|anonymous-assets|fan-levels|hediyesistemi|assets)\//.test(clean)) clean = `Gereken_icerikler/${clean}`;
     const encodedPath = clean.split('/').map(encodeURIComponent).join('/');
     const result = new URL(`./${encodedPath}`, document.baseURI);
     if (/^(?:shop-expansion|shop-premium-v2)\/(?:frame|bubble|entrance|profile|title)-/.test(clean)) result.searchParams.set('v', 'premium720-20261004');
@@ -88,7 +88,7 @@
     const wallpaper = assetUrl(state.wallpapers.find(item => item.key === wallpaperKey)?.asset);
     if (wallpaper) { document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); document.body.style.backgroundImage = `linear-gradient(#05030aa8,#05030ad9), url("${wallpaper}")`; document.body.style.backgroundSize = 'cover'; document.body.style.backgroundAttachment = 'fixed'; } else { document.documentElement.style.removeProperty('--eris-wallpaper'); document.body.style.backgroundImage = ''; }
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {
-      if (!avatar) return;
+      if (!avatar) {el.style.backgroundImage='';el.textContent=typeof user.avatar==='string'?user.avatar:'👤';return;}
       el.style.backgroundImage = `url("${avatar}")`;
       el.style.backgroundSize = 'cover';
       el.style.backgroundPosition = 'center';
@@ -96,7 +96,8 @@
       el.textContent = '';
     });
     root.querySelectorAll('[data-user-frame], .profile .frameImg, .user-frame').forEach(el => {
-      if (!frame) return;
+      if (!frame) {if(el.tagName==='IMG'){el.removeAttribute('src');el.hidden=true;}else el.style.backgroundImage='';el.parentElement?.classList.remove('visual-portrait');return;}
+      el.hidden=false;
       if (el.tagName === 'IMG') el.src = frame;
       else {
         el.style.backgroundImage = `url("${frame}")`;
