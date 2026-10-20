@@ -125,8 +125,11 @@ def view(db, room, row, user):
     if state and state['status']=='playing':
         p=next((p for p in state['players'] if p['user_id']==user.id),None)
         if p:
-            suggestions=rules.candidate_groups(state,p['hand'])
-            pair_suggestions=rules.candidate_groups(state,p['hand'],True)
+            try:
+                suggestions=rules.candidate_groups(state,p['hand'])
+                pair_suggestions=rules.candidate_groups(state,p['hand'],True)
+            except (ValueError,KeyError,TypeError,IndexError):
+                log.exception('101 Okey hamle onerileri hesaplanamadi; oyun durumu korunuyor')
             if state['turn']==p['seat'] and state['phase']=='discard':
                 lay_options=rules.legal_lays(state,p['seat'])
                 can_return_discard=state.get('taken') in p['hand']
@@ -426,6 +429,15 @@ def tick():
         except Exception:log.exception('Room 101 Okey tick failed: %s',rid)
 
 async def routing_loop():
+    # LIDYA_OKEY_SCHEDULER_V5: transient database errors must not kill the worker.
+    failures = 0
     while True:
-        await asyncio.to_thread(tick)
-        await asyncio.sleep(1)
+        try:
+            await asyncio.to_thread(tick)
+            failures = 0
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            failures = min(failures + 1, 6)
+            log.exception('101 Okey zamanlayicisi gecici hatasi (deneme=%s)', failures)
+        await asyncio.sleep(min(15, max(1, 2 ** min(failures - 1, 4))) if failures else 1)

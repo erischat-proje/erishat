@@ -2738,6 +2738,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 continue
             if data.get("type") != "room_chat":
                 continue
+            # LIDYA_CHAT_ACK_V5: acknowledge persistence independently of broadcast fanout.
+            nonce = data.get("client_nonce")
+            nonce = nonce if isinstance(nonce, str) and len(nonce) <= 64 and nonce.isascii() else None
             text_value = str(data.get("text") or "").strip()
             if not text_value or len(text_value) > 500:
                 continue
@@ -2749,6 +2752,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 await websocket.send_json(result["error"])
                 continue
             payload = result["payload"]
+            # The ACK confirms database commit, not delivery to every listener.
+            if nonce:
+                await _bounded_send(websocket, {"type":"room_chat_ack","client_nonce":nonce,"message_id":payload["id"]})
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
         pass
