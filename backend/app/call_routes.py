@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import Request, APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, or_, select, delete
 from sqlalchemy.orm import Session
@@ -25,8 +25,8 @@ def register_auth(fn):
     _current_user = fn
 
 
-def authenticated(db: Session = Depends(get_db), authorization: str | None = Header(None)):
-    return _current_user(db, authorization)
+def authenticated(db: Session = Depends(get_db), authorization: str | None = Header(None), request: Request = None):
+    return _current_user(db, authorization, request)
 
 
 def now():
@@ -175,7 +175,7 @@ def call_history(db: Session = Depends(get_db), user: User = Depends(authenticat
 @router.delete("/calls/history")
 def clear_call_history(db: Session = Depends(get_db), user: User = Depends(authenticated)):
     # Serialize repeated clear requests from the same user; never delete a call.
-    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
     ids = db.scalars(select(DirectCall.id).where(
         or_(DirectCall.caller_id == user.id, DirectCall.callee_id == user.id),
         ~select(DirectCallHistoryHidden.call_id).where(

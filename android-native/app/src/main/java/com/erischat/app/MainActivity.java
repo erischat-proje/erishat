@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Build;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
@@ -62,10 +63,13 @@ public class MainActivity extends Activity {
     private WebView webView;
     private BundledContent bundledContent;
     private GoogleSignInClient googleClient;
+    private boolean screenAwakeEnabled = true;
+    private boolean activityResumed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        screenAwakeEnabled = getPreferences(MODE_PRIVATE).getBoolean("keep_screen_awake", true);
 
         GoogleSignInOptions options =
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -190,7 +194,36 @@ public class MainActivity extends Activity {
         webView.loadUrl(ERISCHAT_URL);
     }
 
+    private void applyScreenAwake() {
+        if (screenAwakeEnabled && activityResumed) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        activityResumed = true;
+        applyScreenAwake();
+    }
+
+    @Override protected void onPause() {
+        activityResumed = false;
+        applyScreenAwake();
+        super.onPause();
+    }
+
     public class AndroidBridge {
+        @JavascriptInterface public void setKeepScreenAwake(boolean enabled) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || isFinishing() || isDestroyed()) return;
+                screenAwakeEnabled = enabled;
+                getPreferences(MODE_PRIVATE).edit().putBoolean("keep_screen_awake", enabled).apply();
+                applyScreenAwake();
+            });
+        }
+
         @JavascriptInterface public String getViewportInsets() {
             return "{\"handled\":" + viewportInsetsHandled + "}";
         }

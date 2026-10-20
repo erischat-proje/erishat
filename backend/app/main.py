@@ -71,6 +71,8 @@ from .schemas import ConversationCreate, ConversationOut, MessageCreate, Message
 from .services import MessageService
 from .performance_queries import message_context, conversation_page
 from .performance import install_diagnostics, ensure_query_indexes
+from .security_guard import SecurityGuard
+from .security_limits import SecurityCounter, enforce_account, enforce_limit
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
@@ -106,7 +108,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="LidyaChat API", version="1.0.3-optimization-20261003")
+app = FastAPI(docs_url=None if settings.environment == "production" else "/docs", redoc_url=None if settings.environment == "production" else "/redoc", openapi_url=None if settings.environment == "production" else "/openapi.json", title="LidyaChat API", version="1.0.3-optimization-20261003")
 install_diagnostics(app)
 app.include_router(cosmetic_router)
 app.include_router(vip_privileges.router)
@@ -114,7 +116,14 @@ from . import shop_expansion
 app.include_router(shop_expansion.router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview", "X-Request-ID", "Retry-After", "Server-Timing"])
+# Browser origins are explicit; native clients without Origin still authenticate normally.
+security_origins = sorted(set([v for v in origins if v != "*"] + [
+    "https://lidyachat.com", "https://www.lidyachat.com", "https://erischat.com", "https://www.erischat.com",
+    "https://erischat-web-v2-production.up.railway.app", "https://erischat-production-83c4.up.railway.app",
+    "https://erischat-production-850f.up.railway.app"]))
+app.add_middleware(SecurityGuard, allowed_origins=security_origins, session_validator=lambda token: websocket_session_active(token))
+app.add_middleware(CORSMiddleware, allow_origins=security_origins, allow_credentials=False, allow_methods=["GET","HEAD","POST","PUT","PATCH","DELETE","OPTIONS"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview", "X-Request-ID", "Retry-After", "Server-Timing"])
+
 
 
 def ensure_system_data_columns() -> None:
@@ -307,9 +316,16 @@ async def _ephemeral_cleanup_loop():
 @app.on_event("startup")
 async def start_ephemeral_cleanup():
     app.state.ephemeral_cleanup_task = asyncio.create_task(_ephemeral_cleanup_loop())
+    from .email_policy import refresh_loop
+    app.state.email_policy_task = asyncio.create_task(refresh_loop())
 
 @app.on_event("shutdown")
 async def stop_ephemeral_cleanup():
+    email_task = getattr(app.state,"email_policy_task",None)
+    if email_task:
+        email_task.cancel()
+        try:await email_task
+        except asyncio.CancelledError:pass
     task = getattr(app.state, "ephemeral_cleanup_task", None)
     if task:
         task.cancel()
@@ -404,8 +420,12 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
         raise HTTPException(status_code=403,detail=ban_until(account_ban))
     vip_membership.sync(db,user.id)
     db.commit()
+    enforce_account(user.id,request)
     return user
 
+
+from . import security_sessions
+app.include_router(security_sessions.register_auth(current_user))
 
 location_calls.register_auth(current_user)
 bind_account_delete_auth(current_user)
@@ -523,11 +543,7 @@ def list_announcements(limit: int = Query(default=20, ge=1, le=50), db: Session 
 
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> SessionOut:
-    try:
-        user = create_anonymous_user(db, payload.nickname.strip(), payload.avatar, payload.gender)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return SessionOut(access_token=create_session(db, user), user=user)
+    raise HTTPException(410, detail="Doğrulamasız kayıt kapatıldı. Google veya doğrulanmış e-posta ile kayıt olun.")
 
 
 class GoogleLoginPayload(BaseModel):
@@ -566,6 +582,8 @@ def request_otp(
 ) -> dict[str, object]:
     identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
 
+    enforce_limit('otp:'+payload.provider+':'+identifier, 'otp_delivery', 6, 600)
+
     try:
         otp, code = create_otp(
             db,
@@ -586,10 +604,10 @@ def request_otp(
         except Exception as exc:
             db.delete(otp)
             db.commit()
-            logger.exception("Email OTP gönderilemedi: %s", exc)
+            logger.error("OTP delivery failed kind=%s", type(exc).__name__)
             raise HTTPException(
                 status_code=503,
-                detail=f"MAIL_ERROR: {exc}",
+                detail="Doğrulama e-postası şu anda gönderilemiyor. Biraz sonra yeniden deneyin.",
             ) from exc
 
     elif payload.provider == "phone":
@@ -601,14 +619,7 @@ def request_otp(
             detail="Telefon doğrulama servisi henüz yapılandırılmadı.",
         )
 
-    logger.info(
-        "OTP requested provider=%s purpose=%s identifier=%s expires_at=%s ip=%s",
-        payload.provider,
-        payload.purpose,
-        identifier,
-        otp.expires_at.isoformat(),
-        request.client.host if request.client else None,
-    )
+    logger.info("OTP requested provider=%s purpose=%s", payload.provider, payload.purpose)
 
     return {
         "accepted": True,
@@ -1525,7 +1536,7 @@ def delete_social_post(post_id: int, db: Session = Depends(get_db), user: User =
 @app.put("/v1/posts/{post_id}/pin")
 def pin_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
     # Serialize competing pin requests for the same profile.
-    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
     post = db.get(SocialPost, post_id)
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini sabitleyebilirsin")

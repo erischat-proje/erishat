@@ -52,7 +52,7 @@ def place_bet(db, user, payload, get_round, clock=lambda:datetime.now(timezone.u
     ends=row.ends_at.replace(tzinfo=timezone.utc) if row.ends_at.tzinfo is None else row.ends_at
     if row.status!='open' or clock()>=ends:
         raise HTTPException(409,'Bahis süresi kapandı.')
-    locked=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    locked=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     if not locked or locked.lidya<payload.amount:
         raise HTTPException(400,'Yeterli Lidya yok.')
     locked.lidya-=payload.amount

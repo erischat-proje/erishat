@@ -31,6 +31,10 @@ def install_diagnostics(app):
         log.error('database unavailable request=%s kind=%s', getattr(request.state, 'request_id', 'unknown'), type(exc).__name__)
         return JSONResponse(status_code=503, headers={'Retry-After':'5'}, content={
             'detail':{'code':'database_busy', 'message':'Sunucu şu anda veritabanına erişemiyor. Birkaç saniye sonra yeniden deneyin.'}})
+    from fastapi.exceptions import RequestValidationError
+    async def invalid_request(request, exc):
+        return JSONResponse(status_code=422, content={"detail":"İstek alanlarını kontrol edin.", "errors":[{"field":".".join(str(v) for v in error.get("loc",())[:6]),"type":error.get("type","invalid")} for error in exc.errors()[:20]]})
+    app.add_exception_handler(RequestValidationError, invalid_request)
     app.add_exception_handler(OperationalError, database_unavailable)
     app.add_exception_handler(PoolTimeout, database_unavailable)
 

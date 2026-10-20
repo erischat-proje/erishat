@@ -38,7 +38,7 @@ async def create_group(name: str = Form(...), description: str = Form(''), reque
     if not 16 <= len(request_key) <= 64 or not all(c.isalnum() or c in '_-' for c in request_key):
         raise HTTPException(422,'Geçersiz işlem anahtarı.')
     # Serialize charges by locking the payer before looking up idempotency key.
-    payer=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    payer=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     existing=db.scalar(select(MessageGroup).where(MessageGroup.request_key==request_key))
     if existing:
         if existing.owner_id!=user.id:raise HTTPException(409,'İşlem anahtarı kullanımda.')

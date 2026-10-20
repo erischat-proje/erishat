@@ -5,6 +5,16 @@ redir @legacyWeb https://www.lidyachat.com{uri} 301
 
 root * /srv/frontend
 encode zstd gzip
+@privateFiles path_regexp privateFiles (?i)(^|/)(\.env[^/]*|\.git|\.svn|\.hg|\.htaccess|\.htpasswd|[^/]+\.(env|pem|key|p12|pfx|keystore|jks|sqlite|sqlite3|db|bak|sql|log|map))($|/)
+respond @privateFiles 404
+header {
+    X-Content-Type-Options "nosniff"
+    Permissions-Policy "screen-wake-lock=(self)"
+    Referrer-Policy "no-referrer"
+    X-Frame-Options "SAMEORIGIN"
+    Content-Security-Policy "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+    -Server
+}
 file_server
 @entry path / /index.html /erischat-main.html /apk-content-manifest.json
 header @entry Cache-Control "no-cache, must-revalidate"
