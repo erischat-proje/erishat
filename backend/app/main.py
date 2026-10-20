@@ -53,6 +53,7 @@ from .referral_routes import install_routes as install_referral_routes, router a
 from . import relationship_routes, ludo_live, okey101_live, uno_live
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
+from .announcement_identity import announcement_payloads
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
 from .moderation import active_ban, require_feature, profile_notice, require_chat_write, chat_ban_detail
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
@@ -143,6 +144,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email VARCHAR(320)"))
         conn.execute(text("ALTER TABLE families ADD COLUMN IF NOT EXISTS closed BOOLEAN NOT NULL DEFAULT false"))
+        # Remove legacy cancelled announcements; administrative audit records remain intact.
+        conn.execute(text("DELETE FROM system_announcements WHERE active = false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date VARCHAR(10)"))
@@ -539,7 +542,7 @@ def ready() -> dict[str, str]:
 @app.get("/v1/announcements")
 def list_announcements(limit: int = Query(default=20, ge=1, le=50), db: Session = Depends(get_db), user: User = Depends(current_user)):
     rows = db.scalars(select(SystemAnnouncement).where(SystemAnnouncement.active.is_(True)).order_by(SystemAnnouncement.created_at.desc()).limit(limit)).all()
-    return [{"id": row.id, "title": "LidyaChat Yönetim", "message": row.message, "created_at": row.created_at} for row in rows]
+    return announcement_payloads(db, rows)
 
 
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
