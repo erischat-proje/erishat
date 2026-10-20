@@ -5,7 +5,7 @@ html body #erisRoomSurface.room-layout-v6.room-screen-fit{
  --ui-panel:#0b211a;--ui-raised:#17382c;--ui-button:#294f3d;
  color:#fff!important;text-shadow:0 1px 3px #000,0 0 5px #0009;
 }
-html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(b,small,span,p,label,input,textarea,select,button,a,h1,h2,h3,h4,.eris-chat-text){color:#fff!important;-webkit-text-fill-color:#fff!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(b,small,span,p,label,input,textarea,select,button,a,h1,h2,h3,h4,.eris-chat-text):not(.o101-root *){color:#fff!important;-webkit-text-fill-color:#fff!important}
 html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(input,textarea)::placeholder{color:#fff!important;opacity:.85!important;-webkit-text-fill-color:#fff!important}
 html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(.eris-room-top,.eris-room-compose){background:#071b14b8!important}
 html body #erisRoomSurface.room-layout-v6.room-screen-fit :is(.room-v3-dialog,.room-v5-dialog){background:#0b211af5!important}
@@ -47,3 +47,10 @@ html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .rel-cha
 html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .rel-chat-line{min-height:0!important;margin:0!important;line-height:17px!important}
 html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat .eris-fan-badge{height:18px!important;width:22px!important}
 html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisRoomActivity{color:#fff!important;background:#071b14bb!important;font-size:11px!important;line-height:22px!important;padding:2px 10px!important;text-shadow:0 1px 3px #000!important}
+
+/* History and unread controls share the activity row, never a fourth grid row. */
+html body #erisRoomSurface.room-layout-v6.room-screen-fit .eris-room-activity{min-width:0!important;gap:5px!important;padding:0 8px!important;height:30px!important;min-height:30px!important;overflow:hidden!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisRoomActivity{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px!important;padding:0!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit .eris-room-activity>button{flex:0 0 auto!important;min-height:25px!important;height:25px!important;padding:2px 6px!important;margin:0!important;font-size:10px!important;line-height:18px!important;border:1px solid #c9ae7766;border-radius:6px;background:#163c2d!important;color:#fff!important;cursor:pointer}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit .eris-room-activity>button[hidden]{display:none!important}
+html body #erisRoomSurface.room-layout-v6.room-screen-fit #erisLiveChat{overflow-anchor:none!important;overscroll-behavior:contain}
