@@ -63,13 +63,13 @@ public class MainActivity extends Activity {
     private WebView webView;
     private BundledContent bundledContent;
     private GoogleSignInClient googleClient;
-    private boolean screenAwakeEnabled = true;
+    private boolean screenAwakeEnabled = false;
     private boolean activityResumed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        screenAwakeEnabled = getPreferences(MODE_PRIVATE).getBoolean("keep_screen_awake", true);
+        screenAwakeEnabled = false;
 
         GoogleSignInOptions options =
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -219,7 +219,7 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 if (!trustedPage() || isFinishing() || isDestroyed()) return;
                 screenAwakeEnabled = enabled;
-                getPreferences(MODE_PRIVATE).edit().putBoolean("keep_screen_awake", enabled).apply();
+                // Do not persist a stale screen-on setting between process launches.
                 applyScreenAwake();
             });
         }
