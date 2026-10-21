@@ -69,10 +69,17 @@
    card.append(button('Konu başlığını kopyala',()=>copy(challenge.subject)));
    card.append(button('Gmail’i aç',()=>window.open('https://mail.google.com/mail/','_blank','noopener,noreferrer')));
    const info=el('p','E-postayı gönderdikten sonra aşağıdan doğrula. Gönderilenler ve gelen kutusunda aynı ileti bulunmalı.');card.append(info);
-   card.append(button('E-postayı doğrula',async()=>{
-     const out=await req('/challenges/verify','POST',{challenge_id:challenge.challenge_id});challenge=null;
-     if(out.archived||out.all_archived)await logs();else await render();
-   }));nav();
+   const verifyButton=button('E-postayı doğrula',async()=>{
+     if(verifyButton.disabled)return;
+     verifyButton.disabled=true;
+     try{
+       const out=await req('/challenges/verify','POST',{challenge_id:challenge.challenge_id});challenge=null;
+       if(out.archived||out.all_archived)await logs();else await render();
+     }finally{
+       verifyButton.disabled=false;
+     }
+   });
+   card.append(verifyButton);nav();
  }
  async function dmInvestigations(){reset('🛡 Kullanıcı ID ile DM incelemesi');
    line(body,'Gerekçeli bir güvenlik dosyası başlat. Yalnızca doğrulanmış güvenlik oturumu boyunca hesabın DM konuşmaları incelenebilir; her erişim kaydedilir.');
