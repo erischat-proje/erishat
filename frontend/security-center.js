@@ -67,7 +67,7 @@
    const info=el('p','E-postayı gönderdikten sonra aşağıdan doğrula. Gönderilenler ve gelen kutusunda aynı ileti bulunmalı.');card.append(info);
    card.append(button('E-postayı doğrula',async()=>{
      const out=await req('/challenges/verify','POST',{challenge_id:challenge.challenge_id});challenge=null;
-     if(out.archived)await logs();else await render();
+     if(out.archived||out.all_archived)await logs();else await render();
    }));nav();
  }
  async function dmInvestigations(){reset('🛡 Kullanıcı ID ile DM incelemesi');
@@ -147,13 +147,17 @@
    }else line(card,'Şikâyete bağlı erişilebilir mesaj kanıtı yok.');
    body.append(button('← Soruşturmalara dön',cases));
  }
- async function logs(showArchived=false){reset('🕘 Sorgulama Kayıtları');
-   const d=await req('/logs?include_archived='+(showArchived?'true':'false'));
-   body.append(button(showArchived?'Güncel kayıtlar':'Arşivlenmişleri de göster',()=>logs(!showArchived)));
-   if(!d.items.length)line(body,'Kayıt bulunamadı.');
+ async function logs(){reset('🕘 Sorgulama Kayıtları');
+   const d=await req('/logs');
+   const controls=group('Geçmiş yönetimi');
+   line(controls,'Tek doğrulama ile eski sorgulama geçmişi bu ekrandan kaldırılır. Korunan sistem denetim kayıtları silinmez.');
+   controls.append(button('Tüm sorgulama geçmişini temizle',async()=>{
+     if(!confirm('Bütün eski kayıtlar bu ekrandan kaldırılacak. Devam edilsin mi?'))return;
+     await startChallenge('archive_all');
+   }));
+   if(!d.items.length)line(body,'Sorgulama geçmişinde gösterilecek kayıt yok.');
    for(const r of d.items){const card=group('#'+r.id+' • '+r.kind);
      line(card,new Date(r.created_at).toLocaleString('tr-TR'));if(r.subject)line(card,r.subject);if(r.details)line(card,r.details);
-     card.append(button('İkinci e-posta doğrulamasıyla listeden kaldır',()=>startChallenge('archive',r.id)));
    }nav();
  }
  function clearExpiredInspection(){
