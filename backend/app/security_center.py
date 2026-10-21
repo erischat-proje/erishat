@@ -24,7 +24,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Uni
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .db import Base, get_db
-from .models import User, Message
+from .models import User, Message, Conversation, ConversationMember
 from .platform_models import Report
 from .admin_models import AdminRole
 from .session import UserSession, hash_token
@@ -104,6 +104,42 @@ class SecurityCase(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class SecurityDMInspection(Base):
+    __tablename__ = 'security_dm_inspections'
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    target_user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    session_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    category: Mapped[str] = mapped_column(String(24), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default='open')
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DMInspectionStart(BaseModel):
+    # Public profile IDs are strings; unlike reports.id, they can exceed 32-bit INTEGER.
+    public_id: str = Field(min_length=6, max_length=32, pattern=r'^[0-9]+$')
+    category: str = Field(min_length=3, max_length=24)
+    reason: str = Field(min_length=20, max_length=1500)
+
+
+DM_INSPECTION_CATEGORIES = {'threat','blackmail','scam','harassment','child_safety','other_safety'}
+
+
+def authorize_dm_inspection(db, user, authorization, inspection_id):
+    """Require the same DA login session and a still-live verified security grant."""
+    grant = access_grant(db, user, authorization)
+    f = session_fingerprint(db, user, authorization)
+    investigation = db.get(SecurityDMInspection, inspection_id)
+    if (not investigation or investigation.owner_id != user.id or
+            investigation.session_hash != f or investigation.status != 'open' or
+            aware(investigation.expires_at) <= now_utc() or
+            aware(grant.expires_at) <= now_utc()):
+        raise HTTPException(404, 'Aktif ve bu oturuma ait DM incelemesi bulunamadı')
+    return investigation
+
+
 class SecurityEvent(Base):
     __tablename__ = 'security_events'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -137,7 +173,7 @@ class ChallengeVerify(BaseModel):
 
 
 class CaseCreate(BaseModel):
-    report_id: int = Field(ge=1)
+    report_id: int = Field(ge=1, le=2147483647)
     reason: str = Field(min_length=20, max_length=1500)
 
 
@@ -404,6 +440,137 @@ def register_auth(current_user):
             grant.revoked_at=now_utc()
         event(db,user,'access_revoked');db.commit()
         return {'active':False}
+
+    @router.post('/dm-inspections')
+    def start_dm_inspection(payload: DMInspectionStart, db:Session=Depends(get_db),
+                            user:User=Depends(current_user), authorization:str|None=Header(default=None)):
+        grant = access_grant(db,user,authorization)
+        category = payload.category.strip()
+        reason = payload.reason.strip()
+        if category not in DM_INSPECTION_CATEGORIES:
+            raise HTTPException(422, 'Güvenlik olay türü geçersiz')
+        if len(reason) < 20:
+            raise HTTPException(422, 'Soruşturma gerekçesi en az 20 karakter olmalı')
+        target = db.scalar(select(User).where(User.public_id==payload.public_id))
+        if not target:
+            raise HTTPException(404, 'Bu kullanıcı ID numarası bulunamadı')
+        fingerprint = session_fingerprint(db,user,authorization)
+        # Rate-limit the creation of investigation cases; browsing is independently audited.
+        count = db.scalar(select(func.count(SecurityDMInspection.id)).where(
+            SecurityDMInspection.owner_id==user.id,
+            SecurityDMInspection.created_at>now_utc()-timedelta(minutes=30))) or 0
+        if count >= 20:
+            raise HTTPException(429, '30 dakikada en fazla 20 güvenlik incelemesi başlatılabilir')
+        expiry = min(aware(grant.expires_at), now_utc()+timedelta(minutes=30))
+        case = SecurityDMInspection(id=uuid.uuid4().hex,owner_id=user.id,
+             target_user_id=target.id,session_hash=fingerprint,category=category,
+             reason=reason,status='open',expires_at=expiry,created_at=now_utc())
+        db.add(case)
+        event(db,user,'dm_investigation_opened',case.id,
+              'target_public_id='+target.public_id+';category='+category)
+        db.commit()
+        return {'id':case.id,'target_public_id':target.public_id,
+                'target_nickname':target.nickname,'category':category,
+                'expires_at':expiry.isoformat()}
+
+    @router.get('/dm-inspections')
+    def list_dm_inspections(db:Session=Depends(get_db),user:User=Depends(current_user),
+                             authorization:str|None=Header(default=None)):
+        access_grant(db,user,authorization)
+        fingerprint=session_fingerprint(db,user,authorization)
+        rows=db.scalars(select(SecurityDMInspection).where(
+            SecurityDMInspection.owner_id==user.id,
+            SecurityDMInspection.session_hash==fingerprint,
+            SecurityDMInspection.status=='open',
+            SecurityDMInspection.expires_at>now_utc())
+            .order_by(SecurityDMInspection.created_at.desc()).limit(20)).all()
+        result=[]
+        for item in rows:
+            target=db.get(User,item.target_user_id)
+            result.append({'id':item.id,'public_id':target.public_id if target else None,
+                 'nickname':target.nickname if target else '(silinmiş hesap)',
+                 'category':item.category,'created_at':item.created_at.isoformat(),
+                 'expires_at':item.expires_at.isoformat()})
+        event(db,user,'dm_investigation_list_view',details='count='+str(len(result)))
+        db.commit()
+        return {'items':result}
+
+    @router.get('/dm-inspections/{inspection_id}/conversations')
+    def dm_investigation_conversations(inspection_id:str,offset:int=Query(0,ge=0,le=100000),
+                   limit:int=Query(25,ge=1,le=50),db:Session=Depends(get_db),
+                   user:User=Depends(current_user),authorization:str|None=Header(default=None)):
+        case=authorize_dm_inspection(db,user,authorization,inspection_id)
+        # Only one-to-one DM conversations to which the target actually belongs.
+        member_count=(select(func.count(ConversationMember.user_id))
+            .where(ConversationMember.conversation_id==Conversation.id)
+            .correlate(Conversation).scalar_subquery())
+        records=db.execute(select(Conversation.id,Conversation.created_at)
+            .join(ConversationMember,ConversationMember.conversation_id==Conversation.id)
+            .where(ConversationMember.user_id==case.target_user_id,
+                   Conversation.type=='dm',member_count==2)
+            .order_by(Conversation.created_at.desc(),Conversation.id.desc())
+            .offset(offset).limit(limit+1)).all()
+        items=[]
+        for record in records[:limit]:
+            other_id=db.scalar(select(ConversationMember.user_id).where(
+                ConversationMember.conversation_id==record.id,
+                ConversationMember.user_id!=case.target_user_id))
+            peer=db.get(User,other_id) if other_id else None
+            items.append({'conversation_id':record.id,
+                'peer_public_id':peer.public_id if peer else None,
+                'peer_nickname':peer.nickname if peer else '(hesap kapatılmış)',
+                'created_at':record.created_at.isoformat()})
+        event(db,user,'dm_conversation_list_view',case.id,
+              'target='+case.target_user_id+';offset='+str(offset)+';count='+str(len(items)))
+        db.commit()
+        has_more=len(records)>limit
+        return {'items':items,'has_more':has_more,
+                'next_offset':offset+limit if has_more else None}
+
+    @router.get('/dm-inspections/{inspection_id}/conversations/{conversation_id}/messages')
+    def dm_investigation_messages(inspection_id:str,conversation_id:str,
+                   before_id:int|None=Query(default=None,ge=1),
+                   limit:int=Query(50,ge=1,le=100),db:Session=Depends(get_db),
+                   user:User=Depends(current_user),authorization:str|None=Header(default=None)):
+        case=authorize_dm_inspection(db,user,authorization,inspection_id)
+        conv=db.get(Conversation,conversation_id)
+        if not conv or conv.type!='dm':
+            raise HTTPException(404,'Birebir DM konuşması bulunamadı')
+        actor_ids=list(db.scalars(select(ConversationMember.user_id)
+            .where(ConversationMember.conversation_id==conversation_id)).all())
+        if len(actor_ids)!=2 or len(set(actor_ids))!=2 or case.target_user_id not in actor_ids:
+            raise HTTPException(404,'Bu soruşturmaya ait bir DM konuşması değil')
+        from sqlalchemy import or_
+        query=select(Message).where(Message.conversation_id==conversation_id,
+                      Message.sender_id.in_(actor_ids),
+                      or_(Message.expires_at.is_(None),Message.expires_at>now_utc()))
+        if before_id is not None:
+            query=query.where(Message.id<before_id)
+        rows=list(db.scalars(query.order_by(Message.id.desc()).limit(limit+1)).all())
+        visible=rows[:limit]
+        identities={}
+        for actor_id in actor_ids:
+            actor=db.get(User,actor_id)
+            identities[actor_id]={'public_id':actor.public_id if actor else None,
+                                  'nickname':actor.nickname if actor else '(hesap kapatılmış)'}
+        event(db,user,'dm_messages_view',case.id,
+              'conversation='+conversation_id+';before='+str(before_id or 'latest')+
+              ';shown='+str(len(visible)))
+        db.commit()
+        return {'items':[{'id':m.id,'sender_public_id':identities[m.sender_id]['public_id'],
+                 'sender_nickname':identities[m.sender_id]['nickname'],
+                 'text':m.text,'created_at':m.created_at.isoformat()} for m in visible],
+                 'has_more':len(rows)>limit,
+                 'next_before_id':visible[-1].id if len(rows)>limit and visible else None}
+
+    @router.post('/dm-inspections/{inspection_id}/close')
+    def close_dm_inspection(inspection_id:str,db:Session=Depends(get_db),
+                           user:User=Depends(current_user),authorization:str|None=Header(default=None)):
+        case=authorize_dm_inspection(db,user,authorization,inspection_id)
+        case.status='closed'
+        event(db,user,'dm_investigation_closed',case.id)
+        db.commit()
+        return {'id':case.id,'status':'closed'}
 
     @router.post('/cases')
     def create_case(payload:CaseCreate,db:Session=Depends(get_db),user:User=Depends(current_user),authorization:str|None=Header(default=None)):

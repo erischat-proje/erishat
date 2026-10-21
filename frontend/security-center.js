@@ -47,7 +47,7 @@
      const a=group('30 dakikalık güvenlik oturumu');
      if(!status.active)a.append(button('E-posta ile erişim doğrulaması başlat',()=>startChallenge('access')));
      else{
-       a.append(button('Şikâyet soruşturması',cases));
+       a.append(button('🛡 Kullanıcı ID ile DM incelemesi',dmInvestigations));
        a.append(button('Sorgulama Kayıtları',logs));
        a.append(button('Güvenlik oturumunu kapat',async()=>{await req('/revoke','POST');await render()}));
      }
@@ -69,6 +69,62 @@
      const out=await req('/challenges/verify','POST',{challenge_id:challenge.challenge_id});challenge=null;
      if(out.archived)await logs();else await render();
    }));nav();
+ }
+ async function dmInvestigations(){reset('🛡 Kullanıcı ID ile DM incelemesi');
+   line(body,'Gerekçeli bir güvenlik dosyası başlat. Yalnızca doğrulanmış güvenlik oturumu boyunca hesabın DM konuşmaları incelenebilir; her erişim kaydedilir.');
+   const card=group('İncelenecek kullanıcı');
+   const publicId=el('input');publicId.type='text';publicId.inputMode='numeric';publicId.maxLength=32;
+   publicId.placeholder='Kullanıcı ID numarası';publicId.setAttribute('aria-label','Kullanıcı ID numarası');
+   const category=el('select');category.setAttribute('aria-label','Güvenlik olayı türü');
+   for(const [key,label] of [['','Olay türü seç'],['threat','Tehdit'],['blackmail','Şantaj'],['scam','Dolandırıcılık'],['harassment','Taciz'],['child_safety','Çocuk güvenliği'],['other_safety','Diğer ciddi güvenlik olayı']]){
+     const option=el('option',label);option.value=key;category.append(option);
+   }
+   const reason=el('textarea');reason.placeholder='Olay gerekçesi ve elindeki kanıtlar (en az 20 karakter)';reason.maxLength=1500;
+   card.append(publicId,category,reason,button('Kullanıcının DM konuşmalarını incele',async()=>{
+     if(!/^\d{6,32}$/.test(publicId.value.trim()))throw Error('Geçerli bir kullanıcı ID numarası yaz. Şikâyet numarası değil.');
+     if(!category.value)throw Error('Önce olay türünü seç.');
+     if(reason.value.trim().length<20)throw Error('Güvenlik gerekçesi en az 20 karakter olmalı.');
+     const c=await req('/dm-inspections','POST',{public_id:publicId.value.trim(),category:category.value,reason:reason.value.trim()});
+     await dmConversationList(c.id,0,c.target_public_id);
+   }));
+   const list=group('Bu oturumdaki açık güvenlik incelemeleri');
+   const cases=await req('/dm-inspections');
+   if(!cases.items.length)line(list,'Henüz açık bir inceleme yok.');
+   for(const c of cases.items){const item=el('div',undefined,'eris-admin-card');
+     line(item,(c.nickname||'Kullanıcı')+' • ID '+(c.public_id||'—'));
+     line(item,'Dosya: '+c.category+' • Oturum bitişi: '+new Date(c.expires_at).toLocaleString('tr-TR'));
+     item.append(button('DM kutusunu aç',()=>dmConversationList(c.id,0,c.public_id)));
+     item.append(button('Dosyayı kapat',async()=>{await req('/dm-inspections/'+encodeURIComponent(c.id)+'/close','POST');await dmInvestigations();}));
+     list.append(item);
+   }
+   nav();
+ }
+ async function dmConversationList(caseId,offset=0,targetPublicId=''){
+   reset('💬 DM konuşmaları • '+targetPublicId);
+   line(body,'Bu listedeki hesaplar seçilen kullanıcının birebir DM konuşma ortaklarıdır. Grup sohbetleri gösterilmez.');
+   const d=await req('/dm-inspections/'+encodeURIComponent(caseId)+'/conversations?offset='+offset+'&limit=25');
+   if(!d.items.length)line(body,'Bu sayfada DM konuşması bulunamadı.');
+   for(const c of d.items){const card=group((c.peer_nickname||'Kullanıcı')+' • ID '+(c.peer_public_id||'—'));
+     line(card,'DM oluşturulma: '+new Date(c.created_at).toLocaleString('tr-TR'));
+     card.append(button('İki tarafın mesajlarını göster',()=>dmConversationMessages(caseId,c.conversation_id,c.peer_nickname,undefined,targetPublicId)));
+   }
+   if(offset>0)body.append(button('← Önceki konuşmalar',()=>dmConversationList(caseId,Math.max(0,offset-25),targetPublicId)));
+   if(d.has_more)body.append(button('Daha fazla konuşma →',()=>dmConversationList(caseId,d.next_offset,targetPublicId)));
+   body.append(button('← İnceleme dosyaları',dmInvestigations));
+ }
+ async function dmConversationMessages(caseId,conversationId,peerName,beforeId,targetPublicId){
+   reset('✉ DM mesajları • '+(peerName||'Kullanıcı'));
+   line(body,'Her iki tarafın sistemde saklanan mesajları • en yeniden eskiye • silinmiş/süresi dolmuş içerik gösterilmez.');
+   const url='/dm-inspections/'+encodeURIComponent(caseId)+'/conversations/'+encodeURIComponent(conversationId)+'/messages?limit=50'+
+          (beforeId?'&before_id='+encodeURIComponent(beforeId):'');
+   const data=await req(url);
+   if(!data.items.length)line(body,'Bu sayfada saklanan mesaj bulunamadı.');
+   for(const m of data.items){const card=group((m.sender_nickname||'Kullanıcı')+' • '+(m.sender_public_id||'—'));
+     line(card,new Date(m.created_at).toLocaleString('tr-TR')+' • Mesaj #'+m.id);
+     const content=el('p',m.text);content.style.whiteSpace='pre-wrap';content.style.overflowWrap='anywhere';card.append(content);
+   }
+   if(data.has_more)body.append(button('Daha eski mesajları getir',()=>dmConversationMessages(caseId,conversationId,peerName,data.next_before_id,targetPublicId)));
+   body.append(button('← DM konuşmaları',()=>dmConversationList(caseId,0,targetPublicId)));
  }
  async function cases(){reset('📋 Şikâyete bağlı soruşturmalar');const create=group('Yeni soruşturma');
    line(create,'Yalnızca mevcut şikâyette bildirilen kanıtlar incelenir; tüm özel mesajlara erişim verilmez.');
@@ -100,6 +156,14 @@
      card.append(button('İkinci e-posta doğrulamasıyla listeden kaldır',()=>startChallenge('archive',r.id)));
    }nav();
  }
+ function clearExpiredInspection(){
+   if(status?.active&&status.expires_at&&Date.now()>=Date.parse(status.expires_at)&&body){
+     status.active=false;reset('Güvenlik oturumu süresi doldu');line(body,'DM içerikleri kapatıldı. Yeni güvenlik doğrulaması gerekli.');
+     nav();
+   }
+ }
+ setInterval(clearExpiredInspection,15000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)clearExpiredInspection()});
  window.ErisSecurityCenter={open:async(panel,onBack,tokenResolver)=>{
    body=panel?.querySelector('#eaBody');back=onBack;
    if(typeof tokenResolver==='function')provider=tokenResolver;
