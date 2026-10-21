@@ -18,14 +18,14 @@ from urllib.parse import urlencode
 import requests
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .db import Base, get_db
 from .models import User, Message, Conversation, ConversationMember
-from .platform_models import Report
+from .platform_models import Report, MessageMedia
 from .admin_models import AdminRole
 from .session import UserSession, hash_token
 from .config import settings
@@ -271,25 +271,58 @@ def headers_of(payload):
 
 
 def matching_mails(token, label, sender, receiver, subject, issued):
-    # A unique challenge in the subject, plus exact metadata verification.
-    q='in:'+label+' "'+subject+'"'
-    result=gmail_get(token,'/messages',{'q':q,'maxResults':10})
-    matched=set()
-    for item in result.get('messages',[])[:10]:
-        m=gmail_get(token,'/messages/'+item['id'],{'format':'metadata',
-                      'metadataHeaders':['From','To','Subject','Message-ID']})
-        h=headers_of(m)
-        if h.get('subject') != subject: continue
-        if parseaddr(h.get('from',''))[1].lower() != sender: continue
-        # Multiple To recipients supported; never accept a mismatched target.
-        from email.utils import getaddresses
-        if receiver not in [v.lower() for _,v in getaddresses([h.get('to','')])]:continue
-        mid=h.get('message-id','').strip().lower()
-        if not mid:continue
-        try:msg_date=datetime.fromtimestamp(int(m['internalDate'])/1000,timezone.utc)
-        except (KeyError,ValueError,TypeError):continue
-        if msg_date < issued-timedelta(minutes=1) or msg_date>now_utc()+timedelta(minutes=1):continue
-        matched.add(mid)
+    """Read recent mailbox metadata using Gmail labels, not fragile phrase search.
+
+    Exact From/To/Subject/Message-ID and time checks remain mandatory;
+    the same Message-ID must still be present in *both* mailboxes.
+    """
+    from email.utils import getaddresses
+    label_id = {'sent': 'SENT', 'inbox': 'INBOX'}.get(label)
+    if not label_id:
+        raise ValueError('Unknown Gmail label')
+    # Search by a broad date window to tolerate Gmail full-phrase indexing,
+    # which can drop subjects containing unique underscores/IDs.
+    issued = aware(issued)
+    from_date = (issued-timedelta(days=1)).strftime('%Y/%m/%d')
+    matched = set()
+    page = None
+    seen_pages = set()
+    for _ in range(10):
+        params = {'labelIds': [label_id], 'q': 'after:'+from_date,
+                  'maxResults': 100}
+        if page:
+            params['pageToken'] = page
+        result = gmail_get(token, '/messages', params)
+        for item in result.get('messages', []):
+            if not item.get('id'):
+                continue
+            m = gmail_get(token, '/messages/'+item['id'], {
+                'format': 'metadata',
+                'metadataHeaders': ['From', 'To', 'Subject', 'Message-ID']})
+            h = headers_of(m)
+            if h.get('subject', '').strip() != subject:
+                continue
+            if parseaddr(h.get('from', ''))[1].strip().lower() != sender.lower():
+                continue
+            if receiver.lower() not in [v.strip().lower() for _, v in getaddresses([h.get('to', '')])]:
+                continue
+            message_id = h.get('message-id', '').strip().lower()
+            if not message_id:
+                continue
+            try:
+                timestamp = datetime.fromtimestamp(int(m['internalDate'])/1000, timezone.utc)
+            except (KeyError, ValueError, TypeError, OverflowError):
+                continue
+            if timestamp < issued-timedelta(minutes=1) or timestamp > now_utc()+timedelta(minutes=1):
+                continue
+            matched.add(message_id)
+        if matched:
+            break
+        next_page = result.get('nextPageToken')
+        if not next_page or next_page in seen_pages:
+            break
+        seen_pages.add(next_page)
+        page = next_page
     return matched
 
 
@@ -422,7 +455,7 @@ def register_auth(current_user):
         if not gmail_confirm_challenge(db,ch):
             event(db,user,'verification_pending',ch.purpose)
             db.commit()
-            raise HTTPException(409,'E-posta iki posta kutusunda henüz doğrulanamadı')
+            raise HTTPException(409,'Doğrulama bekleniyor: E-posta Gönderilenler ve Gelen Kutusu arasında henüz eşleşmedi. 15 saniye bekleyip tekrar deneyin.')
         ch=db.scalar(select(SecurityChallenge).where(SecurityChallenge.id==payload.challenge_id).with_for_update())
         if not ch or ch.consumed_at or aware(ch.expires_at)<=now_utc():
             raise HTTPException(410,'Doğrulama artık geçersiz')
@@ -572,6 +605,16 @@ def register_auth(current_user):
             query=query.where(Message.id<before_id)
         rows=list(db.scalars(query.order_by(Message.id.desc()).limit(limit+1)).all())
         visible=rows[:limit]
+        # Only expose media metadata from currently retained non-temporary media.
+        media_ids=[m.id for m in visible]
+        retained={}
+        if media_ids:
+            for media in db.scalars(select(MessageMedia).where(
+                    MessageMedia.message_id.in_(media_ids),
+                    MessageMedia.temporary.is_(False),
+                    (MessageMedia.expires_at.is_(None) | (MessageMedia.expires_at>now_utc())))).all():
+                if media.media_type in {'image','voice'}:
+                    retained[media.message_id]=media.media_type
         identities={}
         for actor_id in actor_ids:
             actor=db.get(User,actor_id)
@@ -583,9 +626,45 @@ def register_auth(current_user):
         db.commit()
         return {'items':[{'id':m.id,'sender_public_id':identities[m.sender_id]['public_id'],
                  'sender_nickname':identities[m.sender_id]['nickname'],
-                 'text':m.text,'created_at':m.created_at.isoformat()} for m in visible],
+                 'text':m.text,'created_at':m.created_at.isoformat(),
+                 'media_type':retained.get(m.id),
+                 'media_url':('/dm-inspections/'+inspection_id+'/conversations/'+conversation_id+
+                    '/messages/'+str(m.id)+'/media') if m.id in retained else None} for m in visible],
                  'has_more':len(rows)>limit,
                  'next_before_id':visible[-1].id if len(rows)>limit and visible else None}
+
+    @router.get('/dm-inspections/{inspection_id}/conversations/{conversation_id}/messages/{message_id}/media')
+    def dm_investigation_media(inspection_id:str,conversation_id:str,message_id:int,
+                  db:Session=Depends(get_db),user:User=Depends(current_user),
+                  authorization:str|None=Header(default=None)):
+        case=authorize_dm_inspection(db,user,authorization,inspection_id)
+        conv=db.get(Conversation,conversation_id)
+        if not conv or conv.type!='dm':
+            raise HTTPException(404,'Birebir DM konuşması bulunamadı')
+        members=list(db.scalars(select(ConversationMember.user_id).where(
+            ConversationMember.conversation_id==conversation_id)).all())
+        if len(members)!=2 or len(set(members))!=2 or case.target_user_id not in members:
+            raise HTTPException(404,'Konuşma bu güvenlik dosyasına ait değil')
+        msg=db.get(Message,message_id)
+        if not msg or msg.conversation_id!=conversation_id or msg.sender_id not in members:
+            raise HTTPException(404,'Mesaj bulunamadı')
+        if msg.expires_at and aware(msg.expires_at)<=now_utc():
+            raise HTTPException(410,'Mesajın saklama süresi dolmuş')
+        media=db.get(MessageMedia,message_id)
+        if (not media or media.temporary or
+                (media.expires_at and aware(media.expires_at)<=now_utc()) or
+                media.data is None):
+            raise HTTPException(404,'Saklanan kalıcı medya bulunamadı')
+        valid={'image':{'image/jpeg','image/png','image/webp','image/gif'},
+               'voice':{'audio/webm','audio/mp4','audio/mpeg','audio/ogg','audio/wav','audio/x-wav'}}
+        if media.mime_type not in valid.get(media.media_type,set()):
+            raise HTTPException(415,'Medya biçimi desteklenmiyor')
+        event(db,user,'dm_media_view',case.id,
+              'conversation='+conversation_id+';message='+str(msg.id)+';type='+media.media_type)
+        db.commit()
+        return Response(content=media.data,media_type=media.mime_type,
+            headers={'Cache-Control':'private, no-store, max-age=0','Pragma':'no-cache',
+                     'X-Content-Type-Options':'nosniff'})
 
     @router.post('/dm-inspections/{inspection_id}/close')
     def close_dm_inspection(inspection_id:str,db:Session=Depends(get_db),

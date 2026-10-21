@@ -28,7 +28,11 @@
  const copy=(text)=>navigator.clipboard?.writeText(text).catch(()=>{
    prompt('Kopyalamak için metni seç:',text);
  })||prompt('Kopyalamak için metni seç:',text);
- function reset(title){body.replaceChildren();body.append(el('h3',title));const note=el('div','','ea-sub');note.setAttribute('data-security-error','');note.style.color='var(--ea-danger)';body.append(note);}
+ let mediaAbort=new AbortController();
+ const objectUrls=new Set();
+ function releaseMedia(){mediaAbort.abort();mediaAbort=new AbortController();
+   for(const url of objectUrls)URL.revokeObjectURL(url);objectUrls.clear();}
+ function reset(title){releaseMedia();body.replaceChildren();body.append(el('h3',title));const note=el('div','','ea-sub');note.setAttribute('data-security-error','');note.style.color='var(--ea-danger)';body.append(note);}
  function nav(){body.append(button('← Güvenlik Merkezi',render));}
  function connected(v){return Boolean(v?.['destek@lidyachat.com']&&v?.['erischat@erischat.com']);}
  async function render(){reset('🛡 Güvenlik Merkezi');status=await req('/status');
@@ -65,10 +69,17 @@
    card.append(button('Konu başlığını kopyala',()=>copy(challenge.subject)));
    card.append(button('Gmail’i aç',()=>window.open('https://mail.google.com/mail/','_blank','noopener,noreferrer')));
    const info=el('p','E-postayı gönderdikten sonra aşağıdan doğrula. Gönderilenler ve gelen kutusunda aynı ileti bulunmalı.');card.append(info);
-   card.append(button('E-postayı doğrula',async()=>{
-     const out=await req('/challenges/verify','POST',{challenge_id:challenge.challenge_id});challenge=null;
-     if(out.archived||out.all_archived)await logs();else await render();
-   }));nav();
+   const verifyButton=button('E-postayı doğrula',async()=>{
+     if(verifyButton.disabled)return;
+     verifyButton.disabled=true;
+     try{
+       const out=await req('/challenges/verify','POST',{challenge_id:challenge.challenge_id});challenge=null;
+       if(out.archived||out.all_archived)await logs();else await render();
+     }finally{
+       verifyButton.disabled=false;
+     }
+   });
+   card.append(verifyButton);nav();
  }
  async function dmInvestigations(){reset('🛡 Kullanıcı ID ile DM incelemesi');
    line(body,'Gerekçeli bir güvenlik dosyası başlat. Yalnızca doğrulanmış güvenlik oturumu boyunca hesabın DM konuşmaları incelenebilir; her erişim kaydedilir.');
@@ -112,6 +123,23 @@
    if(d.has_more)body.append(button('Daha fazla konuşma →',()=>dmConversationList(caseId,d.next_offset,targetPublicId)));
    body.append(button('← İnceleme dosyaları',dmInvestigations));
  }
+ async function loadInspectionMedia(mediaUrl,container,kind){
+   const signal=mediaAbort.signal;
+   const response=await fetch(rootApi+apiPath+mediaUrl,{
+     method:'GET',headers:{Authorization:'Bearer '+provider()},
+     cache:'no-store',signal});
+   if(!response.ok){const d=await response.json().catch(()=>({}));throw Error(d.detail||'Medya açılamadı');}
+   const blob=await response.blob();
+   if(signal.aborted||!container.isConnected)return;
+   if(kind==='image'&&!blob.type.startsWith('image/'))throw Error('Geçersiz fotoğraf biçimi');
+   if(kind==='voice'&&!blob.type.startsWith('audio/'))throw Error('Geçersiz ses biçimi');
+   const url=URL.createObjectURL(blob);objectUrls.add(url);
+   if(kind==='image'){const img=el('img');img.src=url;img.alt='DM fotoğrafı';
+     img.loading='lazy';img.style.cssText='max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;cursor:zoom-in';
+     img.onclick=()=>window.open(url,'_blank','noopener,noreferrer');container.append(img);
+   }else{const audio=el('audio');audio.controls=true;audio.preload='metadata';audio.src=url;
+     audio.style.cssText='width:100%;max-width:360px';container.append(audio);}
+ }
  async function dmConversationMessages(caseId,conversationId,peerName,beforeId,targetPublicId){
    reset('✉ DM mesajları • '+(peerName||'Kullanıcı'));
    line(body,'Her iki tarafın sistemde saklanan mesajları • en yeniden eskiye • silinmiş/süresi dolmuş içerik gösterilmez.');
@@ -122,6 +150,20 @@
    for(const m of data.items){const card=group((m.sender_nickname||'Kullanıcı')+' • '+(m.sender_public_id||'—'));
      line(card,new Date(m.created_at).toLocaleString('tr-TR')+' • Mesaj #'+m.id);
      const content=el('p',m.text);content.style.whiteSpace='pre-wrap';content.style.overflowWrap='anywhere';card.append(content);
+     if(m.media_url&&(m.media_type==='image'||m.media_type==='voice')){
+       const holder=el('div');holder.style.cssText='margin:8px 0;max-width:100%';card.append(holder);
+       if(m.media_type==='image'){
+         const info=el('span','Fotoğraf yükleniyor…');holder.append(info);
+         loadInspectionMedia(m.media_url,holder,'image').then(()=>info.remove())
+           .catch(err=>{if(info.isConnected)info.textContent=err.message||'Fotoğraf yüklenemedi';});
+       }else{
+         const play=button('▶ Sesli mesajı yükle ve oynat',async()=>{
+           play.disabled=true;
+           try{await loadInspectionMedia(m.media_url,holder,'voice');play.remove();}
+           catch(e){play.disabled=false;play.textContent=e.message||'Ses yüklenemedi';}
+         });holder.append(play);
+       }
+     }
    }
    if(data.has_more)body.append(button('Daha eski mesajları getir',()=>dmConversationMessages(caseId,conversationId,peerName,data.next_before_id,targetPublicId)));
    body.append(button('← DM konuşmaları',()=>dmConversationList(caseId,0,targetPublicId)));

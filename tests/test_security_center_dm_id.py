@@ -123,11 +123,13 @@ def test_message_page_displays_both_participants_and_audits_each_read():
           SimpleNamespace(id=31,sender_id='peer',text='B',created_at=now),
           SimpleNamespace(id=30,sender_id='peer',text='C',created_at=now)]
     db.scalars.side_effect=[Mock(**{'all.return_value':['target_internal','peer']}),
-                            Mock(**{'all.return_value':rows})]
+                            Mock(**{'all.return_value':rows}),
+                            Mock(**{'all.return_value':[]})]
     with patch.object(s,'authorize_dm_inspection',return_value=case()):
         result=read('case_id','dm',db=db,user=user(),authorization='Bearer token',before_id=None,limit=2)
     assert [x['sender_public_id'] for x in result['items']]==['5841228487','0000001234']
     assert [x['text'] for x in result['items']]==['A','B']
+    assert all(x['media_type'] is None and x['media_url'] is None for x in result['items'])
     assert result['has_more'] and result['next_before_id']==31
     added=[c.args[0] for c in db.add.call_args_list]
     assert any(isinstance(v,s.SecurityEvent) and v.kind=='dm_messages_view' for v in added)
@@ -142,3 +144,56 @@ def test_list_and_close_require_case_authorization():
                      lambda:close('x',db=Mock(),user=user(),authorization='Bearer token')]:
             with pytest.raises(HTTPException) as e:call()
             assert e.value.status_code==404
+
+
+# DM investigation media: only authenticated case-related retained media.
+def test_investigation_media_denies_unrelated_conversation():
+    from types import SimpleNamespace
+    from unittest.mock import Mock, patch
+    from fastapi import HTTPException
+    from app import security_center as s
+    endpoint=route('/v1/security/dm-inspections/{inspection_id}/conversations/{conversation_id}/messages/{message_id}/media','GET')
+    db=Mock()
+    db.get.return_value=SimpleNamespace(id='other',type='group')
+    with patch.object(s,'authorize_dm_inspection',return_value=case()):
+        with pytest.raises(HTTPException) as err:
+            endpoint('case_id','other',12,db=db,user=user(),authorization='Bearer token')
+    assert err.value.status_code==404
+
+
+def test_investigation_media_does_not_open_temporary_media():
+    from types import SimpleNamespace
+    from unittest.mock import Mock, patch
+    from fastapi import HTTPException
+    from app import security_center as s
+    from app.models import Conversation,Message
+    from app.platform_models import MessageMedia
+    endpoint=route('/v1/security/dm-inspections/{inspection_id}/conversations/{conversation_id}/messages/{message_id}/media','GET')
+    db=Mock()
+    message=SimpleNamespace(id=12,conversation_id='dm',sender_id='target_internal',expires_at=None)
+    temporary=SimpleNamespace(temporary=True,media_type='image',mime_type='image/jpeg',data=b'jpg',expires_at=None)
+    db.get.side_effect=lambda cls,key: {(Conversation,'dm'):SimpleNamespace(type='dm'),(Message,12):message,(MessageMedia,12):temporary}.get((cls,key))
+    db.scalars.return_value.all.return_value=['target_internal','peer']
+    with patch.object(s,'authorize_dm_inspection',return_value=case()):
+        with pytest.raises(HTTPException) as err:
+            endpoint('case_id','dm',12,db=db,user=user(),authorization='Bearer token')
+    assert err.value.status_code==404
+
+
+def test_investigation_media_is_noncacheable_and_audited():
+    from types import SimpleNamespace
+    from unittest.mock import Mock, patch
+    from app import security_center as s
+    from app.models import Conversation,Message
+    from app.platform_models import MessageMedia
+    endpoint=route('/v1/security/dm-inspections/{inspection_id}/conversations/{conversation_id}/messages/{message_id}/media','GET')
+    db=Mock()
+    message=SimpleNamespace(id=12,conversation_id='dm',sender_id='target_internal',expires_at=None)
+    media=SimpleNamespace(temporary=False,media_type='voice',mime_type='audio/ogg',data=b'OggS123',expires_at=None)
+    db.get.side_effect=lambda cls,key: {(Conversation,'dm'):SimpleNamespace(type='dm'),(Message,12):message,(MessageMedia,12):media}.get((cls,key))
+    db.scalars.return_value.all.return_value=['target_internal','peer']
+    with patch.object(s,'authorize_dm_inspection',return_value=case()):
+        out=endpoint('case_id','dm',12,db=db,user=user(),authorization='Bearer token')
+    assert out.body==b'OggS123'
+    assert out.headers['cache-control']=='private, no-store, max-age=0'
+    assert any(isinstance(x.args[0],s.SecurityEvent) and x.args[0].kind=='dm_media_view' for x in db.add.call_args_list)
