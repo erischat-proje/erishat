@@ -37,6 +37,14 @@
 .eris-vip-overlay{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;display:flex!important;justify-content:center!important;align-items:stretch!important;background:var(--ui-panel)!important;backdrop-filter:none!important}.eris-vip-dialog{width:100%!important;max-width:760px!important;height:100%!important;max-height:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:radial-gradient(ellipse at top right,color-mix(in srgb, var(--ui-button) 31%, transparent),transparent 55%),var(--ui-panel)!important}.eris-vip-dialog>header{padding:22px 20px!important;flex:none}.eris-vip-dialog>header h2{font-size:26px!important;letter-spacing:-.6px}.eris-vip-dialog>header h2:before{content:'LİDYACHAT · PROFİL';display:block;font-size:10px;color:var(--ui-gold);letter-spacing:1.7px;margin-bottom:7px}.eris-vip-dialog>header button{width:44px!important;height:44px!important;border-radius:15px!important}.eris-vip-dialog>.eris-vip-content{padding:20px!important;min-height:0;min-width:0}.eris-vip-dialog .eris-vip-summary{padding:20px;border-radius:22px;background:linear-gradient(135deg,var(--ui-raised),var(--ui-raised));border-color:var(--ui-line)}.eris-vip-dialog .eris-vip-summary h2{font-size:28px;margin:8px 0}.eris-vip-dialog .eris-vip-summary small{font-size:12px;line-height:1.6}.eris-vip-dialog .eris-vip-note{font-size:12px;line-height:1.7;color:var(--ui-gold)}.eris-vip-dialog .eris-vip-progress{margin:16px 0;height:9px}.eris-vip-filters{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 16px}.eris-vip-filters button{min-height:44px;padding:10px 14px;font-size:12px;border-radius:13px;background:color-mix(in srgb, var(--ui-raised) 2%, transparent);color:var(--ui-gold);border:1px solid var(--ui-line)}.eris-vip-filters button[aria-pressed=true]{color:var(--ui-ink);background:color-mix(in srgb, var(--ui-button) 14%, transparent);border-color:var(--ui-line)}
 .eris-vip-dialog .eris-vip-row{grid-template-columns:52px minmax(0,1fr)!important;gap:12px;padding:16px!important;margin:0 0 14px;border-radius:20px;background:var(--ui-raised);min-width:0}.eris-vip-dialog .eris-vip-row[hidden]{display:none!important}.eris-vip-dialog .eris-vip-row>div{min-width:0}.eris-vip-dialog .eris-vip-row[data-unlocked=true]{border-color:var(--ui-line)}.eris-vip-dialog .eris-vip-level{width:52px!important;height:58px!important}.eris-vip-dialog .eris-vip-assets{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}.eris-vip-dialog .eris-vip-asset{width:100%!important;min-width:0;font-size:10px;line-height:1.5}.eris-vip-dialog .eris-vip-asset img{width:100%!important;height:78px!important;object-fit:contain!important;box-sizing:border-box;padding:6px;border-radius:12px}.eris-vip-dialog .eris-vip-presentation{display:grid!important;grid-template-columns:64px minmax(0,1fr)!important;align-items:center;gap:12px!important;padding:12px!important;border-radius:14px!important;min-width:0}.eris-vip-dialog .eris-vip-presentation>img{width:64px!important;height:88px!important;object-fit:contain!important}.eris-vip-dialog .eris-vip-presentation>div{min-width:0}.eris-vip-dialog .eris-vip-presentation strong{font-size:13px!important;overflow-wrap:anywhere}.eris-vip-dialog .eris-vip-presentation span{display:block;font-size:10px!important;line-height:1.6!important;overflow-wrap:anywhere;margin-top:5px}.eris-vip-dialog .eris-vip-entry-reward{display:block;width:100%!important;height:94px!important;object-fit:contain!important;margin:12px 0}.eris-vip-dialog .eris-vip-buttons{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;margin-top:14px}.eris-vip-dialog .eris-vip-buttons button{min-width:0;width:100%;min-height:44px!important;height:auto!important;padding:10px 8px!important;white-space:normal;overflow-wrap:anywhere;font-size:11px!important;line-height:1.5;border-radius:12px;background:color-mix(in srgb, var(--ui-button) 9%, transparent);border-color:var(--ui-line)}.eris-vip-dialog .eris-vip-buttons [data-claim]:not(:disabled){background:linear-gradient(125deg,var(--ui-primary),var(--ui-danger-bg));border:0;font-weight:700}.eris-vip-dialog button:focus-visible{outline:2px solid var(--ui-line);outline-offset:3px}.eris-vip-status{font-size:11px;color:var(--ui-muted);line-height:1.6;margin-top:10px;overflow-wrap:anywhere}.eris-vip-load-state{padding:30px 16px;text-align:center;color:var(--ui-gold);line-height:1.7;font-size:13px}.eris-vip-load-state button{display:block;min-height:44px;margin:16px auto;padding:10px 18px;background:color-mix(in srgb, var(--ui-button) 13%, transparent);color:var(--ui-ink);border:1px solid var(--ui-line);border-radius:12px}@media(max-width:360px){.eris-vip-dialog>.eris-vip-content{padding:16px!important}.eris-vip-dialog .eris-vip-row{grid-template-columns:1fr!important}.eris-vip-dialog .eris-vip-level{width:44px!important;height:48px!important}.eris-vip-dialog .eris-vip-presentation{grid-template-columns:54px minmax(0,1fr)!important}.eris-vip-dialog .eris-vip-presentation>img{width:54px!important}}
 `;document.head.append(modern);
+  const unifiedStyle=document.createElement('style');unifiedStyle.textContent=`
+    .eris-vip-unified-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px}
+    .eris-vip-unified-tabs button{min-height:48px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-raised);color:var(--ui-ink);font-size:12px;font-weight:700;padding:10px;cursor:pointer}
+    .eris-vip-unified-tabs button[aria-pressed=true]{border-color:var(--ui-gold);box-shadow:inset 0 -2px var(--ui-gold)}
+    .eris-vip-cycle{padding:14px;margin:10px 0 16px;border:1px solid var(--ui-line);border-radius:15px;background:var(--ui-raised);font-size:12px;line-height:1.6}
+    .eris-vip-cycle p{margin:7px 0;color:var(--ui-ink)}.eris-vip-cycle small{color:var(--ui-muted)}
+    .eris-vip-core[hidden],.vp-hub[hidden]{display:none!important}
+    `;document.head.append(unifiedStyle);
   const roots=new Set();let pending;
   async function load(root=document.getElementById('vipLiveMount')) {
     if(!root)return;for(const r of roots)if(!r.isConnected)roots.delete(r);roots.add(root);root.classList.add('eris-vip-content');
@@ -47,6 +55,18 @@
       const level=Math.max(0,Math.min(12,Number(v.level)||0)),spent=Number(v.total_purchased||0),next=level<12?thresholds[level+1]:null,prev=thresholds[level];
       const pct=next?Math.min(100,Math.max(0,(spent-prev)/(next-prev)*100)):100;
       root.innerHTML=`<div class="eris-vip-summary"><small>VIP DURUMUN</small><h2>${level?'VIP '+level:'VIP üyesi ol'}</h2><small>${number(spent)} Lidya doğrulanmış satın alma</small><div class="eris-vip-progress"><i style="width:${pct}%"></i></div><small>${v.recovery_target?'VIP '+v.recovery_level+' seviyesine yeniden yükselmek için bu dönemde '+number(v.recovery_remaining)+' Lidya daha satın al':next?'VIP '+(level+1)+' seviyesine '+number(Math.max(0,next-spent))+' Lidya':'En yüksek seviye'}</small></div><p class="eris-vip-note">Her seviyede avatar, çerçeve ve duvar kağıdı envantere eklenir. Bu görünüm paketleri Lidya veya elmas ödemesi içermez. Kazanılan VIP girişlerini Koleksiyon → Oda girişi bölümünden seçebilir veya normal girişe dönebilirsin. Gizli VIP ve VIP girişini gizle ayarları korunur.</p>`;
+      // The server owns VIP cycle dates and retention amounts. Never infer from spend.
+      const cycle=document.createElement('section');cycle.className='eris-vip-cycle';
+      const remaining=Math.max(0,Number(v.seconds_remaining)||0);
+      const days=Math.floor(remaining/86400),hours=Math.floor((remaining%86400)/3600);
+      const target=Math.max(0,Number(v.retention_target)||0),paid=Math.max(0,Number(v.cycle_purchased)||0);
+      const outstanding=Math.max(0,Number(v.retention_remaining)||0);
+      const heading=document.createElement('b');heading.textContent=level?'30 günlük VIP koruması':'VIP üyeliği';cycle.append(heading);
+      const line=document.createElement('p');
+      line.textContent=level?('Kalan süre: '+days+' gün '+hours+' saat · Bu dönemde: '+number(paid)+' / '+number(target)+' Lidya · Eksik: '+number(outstanding)+' Lidya'):'VIP seviyesi, doğrulanmış Lidya paket yüklemeleriyle yükselir.';
+      cycle.append(line);
+      if(level){const detail=document.createElement('small');detail.textContent=v.retention_met?'Bu dönemin koruma hedefi tamamlandı.':'Dönem sonunda hedef tamamlanmazsa VIP seviyen 1 kademe düşer. Bakiye otomatik kesilmez.';cycle.append(detail)}
+      root.append(cycle);
       if(level>=10){const extra=document.createElement('div');extra.className='eris-vip-buttons';const badge=document.createElement('button');badge.type='button';badge.textContent=v.knight_badge_claimed?'✓ Saray muhafızı rozeti alındı':'VIP 10 · Saray muhafızı rozetini al';badge.disabled=!!v.knight_badge_claimed;badge.onclick=()=>action(badge,()=>api('/me/vip/claims/knight_badge',{method:'POST'}));extra.append(badge);root.append(extra)}
       const filters=document.createElement('div');filters.className='eris-vip-filters';filters.setAttribute('role','group');filters.setAttribute('aria-label','VIP seviyelerini filtrele');root.append(filters);root._vipFilter=root._vipFilter||'all';
       for(const [key,name] of [['all','Tüm seviyeler'],['unlocked','Kazanılanlar'],['locked','Kilitli']]){const button=document.createElement('button');button.type='button';button.dataset.filter=key;button.textContent=name;button.onclick=()=>{root._vipFilter=key;filterRows()};filters.append(button)}
@@ -73,7 +93,38 @@
         const feedback=document.createElement('div');feedback.className='eris-vip-status';feedback.setAttribute('role','status');row.lastElementChild.append(feedback);root.append(row);
         row.querySelectorAll('.eris-vip-asset img,.eris-vip-presentation>img,.eris-vip-entry-reward-art').forEach(image=>{const button=document.createElement('button');button.type='button';button.className='eris-vip-art-button';button.setAttribute('aria-label',image.alt+' büyük görselini aç');image.replaceWith(button);button.append(image);button.onclick=()=>previewArt(image.src,image.alt)});
       }
-      filterRows();window.ErisVIPPrivileges?.mount(root);
+      filterRows();
+      // A single VIP center: two existing reward engines share one navigation.
+      // No backend mutations, claims or active selections are changed.
+      try { await window.ErisVIPPrivileges?.mount(root); }
+      catch (err) { console.warn('[VIP] Ek ödüller yüklenemedi',err); }
+      if (!root.isConnected || root._vipTicket !== ticket) return;
+      const extraHub=root.querySelector(':scope > .vp-hub');
+      if(extraHub){
+        const core=document.createElement('section');core.className='eris-vip-core';
+        for(const child of [...root.children])if(child!==extraHub)core.append(child);
+        // The membership and gender-specific reward gallery already exist in
+        // the benefits module. Keep one membership summary, and put all 12
+        // level-specific gender rewards in the main level collection.
+        const duplicateMembership=extraHub.querySelector('.vp-membership');
+        duplicateMembership?.remove();
+        const levelGallery=extraHub.querySelector('.vp-level-collection');
+        if(levelGallery)core.append(levelGallery);
+        const nav=document.createElement('nav');nav.className='eris-vip-unified-tabs';nav.setAttribute('aria-label','VIP bölümleri');
+        const panes=[['levels','Seviyeler ve görünüm',core],['benefits','Ek ödüller ve ayrıcalıklar',extraHub]];
+        const activate=(kind)=>{
+          root.dataset.vipPane=kind;
+          for(const [key,,pane] of panes)pane.hidden=key!==kind;
+          nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pane===kind)));
+        };
+        for(const [key,label] of panes){
+          const b=document.createElement('button');b.type='button';b.dataset.pane=key;b.textContent=label;
+          b.onclick=()=>activate(key);nav.append(b);
+        }
+        root.prepend(nav);root.append(core,extraHub);
+        activate(root.dataset.vipPane==='benefits'?'benefits':'levels');
+      }
+
     }catch(e){if(root.isConnected&&root._vipTicket===ticket){root.replaceChildren();const state=document.createElement('div');state.className='eris-vip-load-state';state.setAttribute('role','status');state.textContent='VIP ödülleri yüklenemedi: '+e.message;const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=()=>load(root);state.append(retry);root.append(state)}}finally{if(root._vipTicket===ticket)root.setAttribute('aria-busy','false')}
   }
   async function action(button,fn){button.disabled=true;try{await fn();window.toast?.('VIP ödülleri envantere eklendi ✓');await Promise.all([...roots].filter(r=>r.isConnected).map(r=>load(r)))}catch(e){button.disabled=false;const status=button.closest('.eris-vip-row')?.querySelector('.eris-vip-status');if(status)status.textContent=e.message||'İşlem başarısız. Tekrar dene.';window.toast?.(e.message)}}
