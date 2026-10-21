@@ -1,4 +1,5 @@
 from __future__ import annotations
+from . import upload_rewards
 
 from .runtime_tasks import database_task, live_socket, bind_live_loop
 
@@ -449,6 +450,8 @@ purchase_routes.register_auth(current_user)
 app.include_router(purchase_routes.router)
 payment_assistance.register_auth(current_user)
 app.include_router(payment_assistance.router)
+upload_rewards_router = upload_rewards.register_auth(current_user)
+app.include_router(upload_rewards_router)
 seat_workflow.register_auth(current_user)
 app.include_router(seat_workflow.router)
 register_room_auth(
