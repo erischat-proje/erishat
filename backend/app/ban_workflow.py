@@ -203,7 +203,7 @@ def submit(db,user,target,payload,kind,room=None):
     if 'days' not in payload.model_fields_set:raise HTTPException(422,'Ban süresini seçin; süresiz için null gönderin')
     if target.id==user.id:raise HTTPException(403,'Kendi hesabınıza ban uygulayamazsınız')
     levels={'SA':1,'UA':2,'FA':3,'DA':4}
-    if rank=='UA' and levels.get(role(db,target.id),0)>=2:raise HTTPException(403,'Eşit veya üst yöneticiye ban talebi açılamaz')
+    if role(db,target.id) is not None:raise HTTPException(403,'Yönetici hesaplarına yaptırım için ayrı personel disiplin süreci gereklidir')
     row=BanApproval(requester_id=user.id,target_user_id=target.id,target_room_id=room.id if room else None,kind=kind,days=payload.days,reason=payload.reason)
     db.add(row);db.flush();db.refresh(row)
     flow=BanWorkflow(approval_id=row.id,requester_role=rank,evidence_json=json.dumps(payload.evidence),skipped_json='[]',log_text='')

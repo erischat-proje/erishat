@@ -191,7 +191,7 @@ def operation_view(row):
 
 def manual_change(db,user,target,payload,operation):
     admin_role=require_admin(db,user)
-    if operation == 'ÇIKARMA' and admin_role != 'DA': raise HTTPException(403,'Lidya çıkarma için DA yetkisi gerekli.')
+    if admin_role != 'DA': raise HTTPException(403,'Manuel Lidya duzeltmesi yalnizca DA yetkisiyle yapilabilir.')
     existing=db.scalar(select(LidyaOperation).where(LidyaOperation.request_key==payload.request_key))
     if existing:
         if (existing.admin_id,existing.user_id,existing.amount,existing.operation)!=(user.id,target.id,payload.amount,operation):

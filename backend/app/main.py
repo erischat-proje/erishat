@@ -64,6 +64,10 @@ from . import support_workflow, ban_workflow, purchase_routes, seat_workflow, di
 from .room_ban_rules import active_room_user_ban, require_room_access
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
+from . import case_routes
+from . import emergency_routes
+from . import finance_audit
+from . import fraud_review
 from . import role_badges
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
@@ -521,6 +525,10 @@ app.include_router(referral_router)
 app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
+app.include_router(case_routes.register_auth(current_user))
+app.include_router(emergency_routes.register_auth(current_user))
+app.include_router(finance_audit.register_auth(current_user))
+app.include_router(fraud_review.register_auth(current_user))
 app.include_router(dm_folder_router)
 app.include_router(call_router)
 

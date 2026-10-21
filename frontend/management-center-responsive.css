@@ -1,0 +1,9 @@
+/* Phase 8 staged responsive adjustments: complements, never replaces, original Lidya art. */
+.lm-command-overlay{width:100%;max-width:100vw;overflow-x:hidden}
+.lm-command-page{min-width:0;max-width:100vw}
+.lm-command-content,.lm-command-stats,.lm-command-card{min-width:0}
+.lm-command-card{word-break:normal;overflow-wrap:anywhere}
+.lm-command-head h2{overflow-wrap:anywhere;min-width:0}
+@media(max-width:390px){.lm-command-head{padding-left:12px;padding-right:12px}.lm-command-content{padding-left:12px;padding-right:12px}.lm-command-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:320px){.lm-command-stats{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.lm-command-overlay *{animation:none!important;transition:none!important}}
