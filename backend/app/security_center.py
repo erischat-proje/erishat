@@ -271,25 +271,58 @@ def headers_of(payload):
 
 
 def matching_mails(token, label, sender, receiver, subject, issued):
-    # A unique challenge in the subject, plus exact metadata verification.
-    q='in:'+label+' "'+subject+'"'
-    result=gmail_get(token,'/messages',{'q':q,'maxResults':10})
-    matched=set()
-    for item in result.get('messages',[])[:10]:
-        m=gmail_get(token,'/messages/'+item['id'],{'format':'metadata',
-                      'metadataHeaders':['From','To','Subject','Message-ID']})
-        h=headers_of(m)
-        if h.get('subject') != subject: continue
-        if parseaddr(h.get('from',''))[1].lower() != sender: continue
-        # Multiple To recipients supported; never accept a mismatched target.
-        from email.utils import getaddresses
-        if receiver not in [v.lower() for _,v in getaddresses([h.get('to','')])]:continue
-        mid=h.get('message-id','').strip().lower()
-        if not mid:continue
-        try:msg_date=datetime.fromtimestamp(int(m['internalDate'])/1000,timezone.utc)
-        except (KeyError,ValueError,TypeError):continue
-        if msg_date < issued-timedelta(minutes=1) or msg_date>now_utc()+timedelta(minutes=1):continue
-        matched.add(mid)
+    """Read recent mailbox metadata using Gmail labels, not fragile phrase search.
+
+    Exact From/To/Subject/Message-ID and time checks remain mandatory;
+    the same Message-ID must still be present in *both* mailboxes.
+    """
+    from email.utils import getaddresses
+    label_id = {'sent': 'SENT', 'inbox': 'INBOX'}.get(label)
+    if not label_id:
+        raise ValueError('Unknown Gmail label')
+    # Search by a broad date window to tolerate Gmail full-phrase indexing,
+    # which can drop subjects containing unique underscores/IDs.
+    issued = aware(issued)
+    from_date = (issued-timedelta(days=1)).strftime('%Y/%m/%d')
+    matched = set()
+    page = None
+    seen_pages = set()
+    for _ in range(10):
+        params = {'labelIds': [label_id], 'q': 'after:'+from_date,
+                  'maxResults': 100}
+        if page:
+            params['pageToken'] = page
+        result = gmail_get(token, '/messages', params)
+        for item in result.get('messages', []):
+            if not item.get('id'):
+                continue
+            m = gmail_get(token, '/messages/'+item['id'], {
+                'format': 'metadata',
+                'metadataHeaders': ['From', 'To', 'Subject', 'Message-ID']})
+            h = headers_of(m)
+            if h.get('subject', '').strip() != subject:
+                continue
+            if parseaddr(h.get('from', ''))[1].strip().lower() != sender.lower():
+                continue
+            if receiver.lower() not in [v.strip().lower() for _, v in getaddresses([h.get('to', '')])]:
+                continue
+            message_id = h.get('message-id', '').strip().lower()
+            if not message_id:
+                continue
+            try:
+                timestamp = datetime.fromtimestamp(int(m['internalDate'])/1000, timezone.utc)
+            except (KeyError, ValueError, TypeError, OverflowError):
+                continue
+            if timestamp < issued-timedelta(minutes=1) or timestamp > now_utc()+timedelta(minutes=1):
+                continue
+            matched.add(message_id)
+        if matched:
+            break
+        next_page = result.get('nextPageToken')
+        if not next_page or next_page in seen_pages:
+            break
+        seen_pages.add(next_page)
+        page = next_page
     return matched
 
 
@@ -422,7 +455,7 @@ def register_auth(current_user):
         if not gmail_confirm_challenge(db,ch):
             event(db,user,'verification_pending',ch.purpose)
             db.commit()
-            raise HTTPException(409,'E-posta iki posta kutusunda henüz doğrulanamadı')
+            raise HTTPException(409,'Doğrulama bekleniyor: E-posta Gönderilenler ve Gelen Kutusu arasında henüz eşleşmedi. 15 saniye bekleyip tekrar deneyin.')
         ch=db.scalar(select(SecurityChallenge).where(SecurityChallenge.id==payload.challenge_id).with_for_update())
         if not ch or ch.consumed_at or aware(ch.expires_at)<=now_utc():
             raise HTTPException(410,'Doğrulama artık geçersiz')
