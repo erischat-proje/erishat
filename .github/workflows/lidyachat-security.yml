@@ -10,6 +10,7 @@ on:
       - 'android-native/**'
       - 'Caddyfile'
       - 'tests/security_guard/**'
+      - 'tests/test_security_center_dm_id.py'
       - '.github/workflows/lidyachat-security.yml'
 permissions:
   contents: read
@@ -39,6 +40,8 @@ jobs:
           sparse-checkout: |
             /backend/
             /tests/security_guard/
+            /tests/test_security_center.py
+            /tests/test_security_center_dm_id.py
             /frontend/screen-awake.js
             /frontend/settings-live.js
             /Caddyfile
@@ -48,12 +51,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: python -m pip install -r backend/requirements.txt httpx2 pip-audit
+      - run: python -m pip install -r backend/requirements.txt httpx2 pip-audit pytest
       - run: python tests/security_guard/test_integration.py
       - run: python tests/security_guard/test_pg_wallet.py
       - run: python tests/security_guard/test_transport.py
       - run: python tests/security_guard/test_counters.py
       - run: python tests/security_guard/test_email_policy.py
+      - run: PYTHONPATH=backend python -m pytest -q tests/test_security_center.py tests/test_security_center_dm_id.py
       - run: node tests/security_guard/test_wake.cjs
       - run: python -m pip_audit -r backend/requirements.txt --progress-spinner off
       - name: Validate Caddy configuration
