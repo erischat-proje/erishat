@@ -103,6 +103,13 @@
       if(extraHub){
         const core=document.createElement('section');core.className='eris-vip-core';
         for(const child of [...root.children])if(child!==extraHub)core.append(child);
+        // The membership and gender-specific reward gallery already exist in
+        // the benefits module. Keep one membership summary, and put all 12
+        // level-specific gender rewards in the main level collection.
+        const duplicateMembership=extraHub.querySelector('.vp-membership');
+        duplicateMembership?.remove();
+        const levelGallery=extraHub.querySelector('.vp-level-collection');
+        if(levelGallery)core.append(levelGallery);
         const nav=document.createElement('nav');nav.className='eris-vip-unified-tabs';nav.setAttribute('aria-label','VIP bölümleri');
         const panes=[['levels','Seviyeler ve görünüm',core],['benefits','Ek ödüller ve ayrıcalıklar',extraHub]];
         const activate=(kind)=>{
