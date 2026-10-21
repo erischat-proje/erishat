@@ -123,11 +123,13 @@ def test_message_page_displays_both_participants_and_audits_each_read():
           SimpleNamespace(id=31,sender_id='peer',text='B',created_at=now),
           SimpleNamespace(id=30,sender_id='peer',text='C',created_at=now)]
     db.scalars.side_effect=[Mock(**{'all.return_value':['target_internal','peer']}),
-                            Mock(**{'all.return_value':rows})]
+                            Mock(**{'all.return_value':rows}),
+                            Mock(**{'all.return_value':[]})]
     with patch.object(s,'authorize_dm_inspection',return_value=case()):
         result=read('case_id','dm',db=db,user=user(),authorization='Bearer token',before_id=None,limit=2)
     assert [x['sender_public_id'] for x in result['items']]==['5841228487','0000001234']
     assert [x['text'] for x in result['items']]==['A','B']
+    assert all(x['media_type'] is None and x['media_url'] is None for x in result['items'])
     assert result['has_more'] and result['next_before_id']==31
     added=[c.args[0] for c in db.add.call_args_list]
     assert any(isinstance(v,s.SecurityEvent) and v.kind=='dm_messages_view' for v in added)
