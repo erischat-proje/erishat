@@ -18,14 +18,14 @@ from urllib.parse import urlencode
 import requests
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .db import Base, get_db
 from .models import User, Message, Conversation, ConversationMember
-from .platform_models import Report
+from .platform_models import Report, MessageMedia
 from .admin_models import AdminRole
 from .session import UserSession, hash_token
 from .config import settings
@@ -572,6 +572,16 @@ def register_auth(current_user):
             query=query.where(Message.id<before_id)
         rows=list(db.scalars(query.order_by(Message.id.desc()).limit(limit+1)).all())
         visible=rows[:limit]
+        # Only expose media metadata from currently retained non-temporary media.
+        media_ids=[m.id for m in visible]
+        retained={}
+        if media_ids:
+            for media in db.scalars(select(MessageMedia).where(
+                    MessageMedia.message_id.in_(media_ids),
+                    MessageMedia.temporary.is_(False),
+                    (MessageMedia.expires_at.is_(None) | (MessageMedia.expires_at>now_utc())))).all():
+                if media.media_type in {'image','voice'}:
+                    retained[media.message_id]=media.media_type
         identities={}
         for actor_id in actor_ids:
             actor=db.get(User,actor_id)
@@ -583,9 +593,45 @@ def register_auth(current_user):
         db.commit()
         return {'items':[{'id':m.id,'sender_public_id':identities[m.sender_id]['public_id'],
                  'sender_nickname':identities[m.sender_id]['nickname'],
-                 'text':m.text,'created_at':m.created_at.isoformat()} for m in visible],
+                 'text':m.text,'created_at':m.created_at.isoformat(),
+                 'media_type':retained.get(m.id),
+                 'media_url':('/dm-inspections/'+inspection_id+'/conversations/'+conversation_id+
+                    '/messages/'+str(m.id)+'/media') if m.id in retained else None} for m in visible],
                  'has_more':len(rows)>limit,
                  'next_before_id':visible[-1].id if len(rows)>limit and visible else None}
+
+    @router.get('/dm-inspections/{inspection_id}/conversations/{conversation_id}/messages/{message_id}/media')
+    def dm_investigation_media(inspection_id:str,conversation_id:str,message_id:int,
+                  db:Session=Depends(get_db),user:User=Depends(current_user),
+                  authorization:str|None=Header(default=None)):
+        case=authorize_dm_inspection(db,user,authorization,inspection_id)
+        conv=db.get(Conversation,conversation_id)
+        if not conv or conv.type!='dm':
+            raise HTTPException(404,'Birebir DM konuşması bulunamadı')
+        members=list(db.scalars(select(ConversationMember.user_id).where(
+            ConversationMember.conversation_id==conversation_id)).all())
+        if len(members)!=2 or len(set(members))!=2 or case.target_user_id not in members:
+            raise HTTPException(404,'Konuşma bu güvenlik dosyasına ait değil')
+        msg=db.get(Message,message_id)
+        if not msg or msg.conversation_id!=conversation_id or msg.sender_id not in members:
+            raise HTTPException(404,'Mesaj bulunamadı')
+        if msg.expires_at and aware(msg.expires_at)<=now_utc():
+            raise HTTPException(410,'Mesajın saklama süresi dolmuş')
+        media=db.get(MessageMedia,message_id)
+        if (not media or media.temporary or
+                (media.expires_at and aware(media.expires_at)<=now_utc()) or
+                media.data is None):
+            raise HTTPException(404,'Saklanan kalıcı medya bulunamadı')
+        valid={'image':{'image/jpeg','image/png','image/webp','image/gif'},
+               'voice':{'audio/webm','audio/mp4','audio/mpeg','audio/ogg','audio/wav','audio/x-wav'}}
+        if media.mime_type not in valid.get(media.media_type,set()):
+            raise HTTPException(415,'Medya biçimi desteklenmiyor')
+        event(db,user,'dm_media_view',case.id,
+              'conversation='+conversation_id+';message='+str(msg.id)+';type='+media.media_type)
+        db.commit()
+        return Response(content=media.data,media_type=media.mime_type,
+            headers={'Cache-Control':'private, no-store, max-age=0','Pragma':'no-cache',
+                     'X-Content-Type-Options':'nosniff'})
 
     @router.post('/dm-inspections/{inspection_id}/close')
     def close_dm_inspection(inspection_id:str,db:Session=Depends(get_db),
