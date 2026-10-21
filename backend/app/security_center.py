@@ -33,7 +33,7 @@ from .config import settings
 router = APIRouter(prefix='/v1/security', tags=['security center'])
 START_MAIL = 'destek@lidyachat.com'
 TARGET_MAIL = 'erischat@erischat.com'
-PURPOSES = {'access': (START_MAIL, TARGET_MAIL), 'archive': (TARGET_MAIL, START_MAIL)}
+PURPOSES = {'access': (START_MAIL, TARGET_MAIL), 'archive': (TARGET_MAIL, START_MAIL), 'archive_all': (TARGET_MAIL, START_MAIL)}
 # Mail sending is deliberately manual: the server only verifies both mailboxes.
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 REDIRECT_PATH = '/v1/security/google/callback'
@@ -157,6 +157,14 @@ class SecurityEventVisibility(Base):
     actor_id: Mapped[str] = mapped_column(String(64), nullable=False)
     event_id: Mapped[int] = mapped_column(Integer, nullable=False)
     hidden_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class SecurityLogClearance(Base):
+    # Normal uygulama görünümü için son temizleme sınırı; asıl denetim kayıtları korunur.
+    __tablename__ = 'security_log_clearances'
+    actor_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    cleared_through_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class ConnectRequest(BaseModel):
@@ -375,10 +383,13 @@ def register_auth(current_user):
     def start_challenge(payload:ChallengeRequest,db:Session=Depends(get_db),user:User=Depends(current_user),authorization:str|None=Header(default=None)):
         require_owner(db,user);fp=session_fingerprint(db,user,authorization)
         if payload.purpose not in PURPOSES:raise HTTPException(422,'İşlem türü geçersiz')
-        if payload.purpose=='archive':
+        if payload.purpose in {'archive','archive_all'}:
             access_grant(db,user,authorization)
-            ev=db.get(SecurityEvent,payload.event_id) if payload.event_id else None
-            if not ev or ev.actor_id!=user.id:raise HTTPException(404,'İşlem kaydı bulunamadı')
+            if payload.purpose=='archive':
+                ev=db.get(SecurityEvent,payload.event_id) if payload.event_id else None
+                if not ev or ev.actor_id!=user.id:raise HTTPException(404,'İşlem kaydı bulunamadı')
+            elif payload.event_id is not None:
+                raise HTTPException(422,'Toplu temizlikte kayıt ID kullanılamaz')
         elif payload.event_id is not None:raise HTTPException(422,'Bu işlem için kayıt ID kullanılamaz')
         for mailbox in PURPOSES[payload.purpose]:
             if not db.get(SecurityMailbox,mailbox):raise HTTPException(503,mailbox+' önce bağlanmalı')
@@ -422,6 +433,19 @@ def register_auth(current_user):
             event(db,user,'access_granted',details='30 minutes')
             db.commit();return {'verified':True,'active':True,'minutes':30}
         access_grant(db,user,authorization)
+        if ch.purpose=='archive_all':
+            event(db,user,'audit_history_cleared',details='Personal view reset; source audit preserved')
+            db.flush()
+            last_id=db.scalar(select(func.max(SecurityEvent.id)).where(SecurityEvent.actor_id==user.id)) or 0
+            marker=db.get(SecurityLogClearance,user.id)
+            if marker is None:
+                marker=SecurityLogClearance(actor_id=user.id,cleared_through_id=last_id,updated_at=now_utc())
+                db.add(marker)
+            else:
+                marker.cleared_through_id=max(marker.cleared_through_id,last_id)
+                marker.updated_at=now_utc()
+            db.commit()
+            return {'verified':True,'all_archived':True,'permanent_delete':False}
         ev=db.get(SecurityEvent,ch.target_event_id)
         if not ev or ev.actor_id!=user.id:raise HTTPException(404,'Kayıt artık bulunamadı')
         existing=db.scalar(select(SecurityEventVisibility).where(SecurityEventVisibility.event_id==ev.id,
@@ -621,7 +645,12 @@ def register_auth(current_user):
              db:Session=Depends(get_db),user:User=Depends(current_user),authorization:str|None=Header(default=None)):
         access_grant(db,user,authorization)
         hidden=select(SecurityEventVisibility.event_id).where(SecurityEventVisibility.actor_id==user.id)
-        q=select(SecurityEvent).where(SecurityEvent.actor_id==user.id)
+        marker=db.get(SecurityLogClearance,user.id)
+        cleared_through=marker.cleared_through_id if marker else 0
+        # Include archived cannot bypass the clearing watermark.
+        q=select(SecurityEvent).where(SecurityEvent.actor_id==user.id,
+                 SecurityEvent.id>cleared_through,
+                 SecurityEvent.kind!='audit_list_view')
         if not include_archived:q=q.where(SecurityEvent.id.not_in(hidden))
         items=db.scalars(q.order_by(SecurityEvent.id.desc()).limit(limit)).all()
         # Audit the query after gathering the current page to avoid self-refresh loops.
