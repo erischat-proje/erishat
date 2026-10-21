@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from .purchase_routes import ManualAmount as AmountUpdate, manual_change
 from .db import get_db
+from .config import settings
 from .models import User
 from .announcement_identity import announcement_payloads
 from .platform_models import Report, VipStatus, UserLocation
@@ -203,7 +204,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
         record("admin_login", "admin_menu_access", admin_id=user.id, admin_nickname=user.nickname, role=row.role)
-        return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode}
+        return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode, "security_owner": bool(row.role == "DA" and settings.security_owner_public_id and user.public_id == settings.security_owner_public_id)}
 
     @router.patch("/ghost-mode")
     @database_task
