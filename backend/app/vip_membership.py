@@ -247,6 +247,8 @@ def record_purchase(db, uid, amount, source, reference, at=None):
         member.cycle_purchased = accumulated
     else:
         member.cycle_purchased = 0
+    from .upload_rewards import notify_purchase
+    notify_purchase(db, uid, amount, at)
     db.add(VipPurchaseReceipt(user_id=uid, key=key, amount=amount, purchased_at=at))
     db.flush()
     return member
