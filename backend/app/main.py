@@ -532,6 +532,8 @@ app.include_router(emergency_routes.register_auth(current_user))
 app.include_router(finance_audit.register_auth(current_user))
 app.include_router(fraud_review.register_auth(current_user))
 app.include_router(management_workflows.register_auth(current_user))
+from . import explore_feed
+app.include_router(explore_feed.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(admin_operations.register_auth(current_user))
 app.include_router(admin_workspace.register_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id, role: broadcast_role_badge(user_id, role)))
 app.include_router(dm_folder_router)
@@ -540,7 +542,7 @@ app.include_router(call_router)
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": app.version, "management_api_version": MANAGEMENT_API_VERSION}
+    return {"status": "ok", "service": "erischat-api", "version": app.version, "management_api_version": MANAGEMENT_API_VERSION, "explore_api_version": explore_feed.VERSION}
 
 
 @app.get("/ready")
@@ -549,6 +551,7 @@ def ready() -> dict[str, str]:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
             check_management_ready(app, conn)
+            explore_feed.check_ready(app, conn)
         return {"status": "ready", "service": "erischat-api", "version": app.version}
     except (OperationalError, PoolTimeout, RuntimeError) as exc:
         logger.warning("Readiness dependency check failed: %s", type(exc).__name__)
@@ -1458,34 +1461,7 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
 def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|following|recent)$"),
     limit: int = Query(default=30, ge=1, le=100), offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
-    following = set(db.scalars(select(UserFollow.following_id).where(UserFollow.follower_id == user.id)))
-    visible_ids = following | {user.id}
-    blocked = set(db.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id == user.id)))
-    blocked |= set(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id == user.id)))
-    query = select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).join(User, User.id == SocialPost.user_id).where(
-        User.is_active.is_(True), SocialPost.is_hidden.is_(False))
-    if blocked:
-        query = query.where(~SocialPost.user_id.in_(blocked))
-    if mode == "following":
-        query = query.where(SocialPost.user_id.in_(visible_ids))
-    else:
-        query = query.where(or_(SocialPost.audience == "public",
-            and_(SocialPost.audience == "followers", SocialPost.user_id.in_(visible_ids))))
-    rows = list(db.execute(query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc())
-        .offset(offset).limit(limit)))
-    authors = {u.id:u for u in db.scalars(select(User).where(User.id.in_({p.user_id for p, _ in rows})))}
-    result = []
-    for post, has_image in rows:
-        author = authors.get(post.user_id)
-        if author:
-            result.append({"id": post.id, "user_id": author.id, "nickname": author.nickname,
-                "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": post.caption,
-                "created_at": post.created_at, "updated_at": post.updated_at, "has_image": has_image,
-                "mime_type": post.mime_type, "media_kind": "video" if (post.mime_type or "").startswith("video/") else "image",
-                "media_url": f"/posts/{post.id}/media" if has_image else None,
-                "audience": post.audience, "is_hidden": False, "is_mine": post.user_id == user.id})
-            result[-1]["is_pinned"] = bool(post.is_pinned)
-    return result
+    return explore_feed.feed_page(db,user,mode=mode,limit=limit,offset=offset)['items']
 
 
 @app.get("/v1/me/posts")
@@ -1587,17 +1563,9 @@ def unpin_social_post(post_id: int, db: Session = Depends(get_db), user: User = 
 
 @app.get("/v1/posts/{post_id}/media")
 def get_social_post_media(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
-    post = db.get(SocialPost, post_id)
-    if not post or post.image_bytes is None or not post.mime_type:
+    post = _social_access(db, post_id, user)
+    if post.image_bytes is None or not post.mime_type:
         raise HTTPException(status_code=404, detail="Gönderi medyası bulunamadı")
-    if post.user_id != user.id:
-        blocked = db.scalar(select(UserBlock.id).where(or_(
-            and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == post.user_id),
-            and_(UserBlock.blocker_id == post.user_id, UserBlock.blocked_id == user.id))))
-        follows = db.scalar(select(UserFollow.id).where(
-            UserFollow.follower_id == user.id, UserFollow.following_id == post.user_id))
-        if blocked or post.is_hidden or (post.audience == "followers" and not follows):
-            raise HTTPException(status_code=404, detail="Gönderi medyası bulunamadı")
     return Response(content=post.image_bytes, media_type=post.mime_type,
         headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
 
