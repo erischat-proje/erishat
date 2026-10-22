@@ -189,9 +189,16 @@ def operation_view(row):
         'before':str(row.before),'after':str(row.after),'operation':row.operation,'created_at':created.isoformat(),
         'evidence_url':proof if row.evidence else None,'exempt':not bool(row.evidence),'exemption_sha':row.exemption_sha,'log':'\n'.join(lines)}
 
-def manual_change(db,user,target,payload,operation):
+def manual_change(db,user,target,payload,operation,*,approval_id=None,commit_transaction=True):
     admin_role=require_admin(db,user)
     if admin_role != 'DA': raise HTTPException(403,'Manuel Lidya duzeltmesi yalnizca DA yetkisiyle yapilabilir.')
+    if approval_id is None:
+        raise HTTPException(409,'Manuel mali işlem için Yönetim → Lidya Denetimi bölümünden bağımsız inceleme ve onay talebi oluşturun.')
+    from .management_workflow_models import ManagementFinanceRequest
+    approval=db.get(ManagementFinanceRequest,approval_id)
+    if not approval or approval.status!='reviewed' or approval.approver_id!=user.id or user.id in {approval.requester_id,approval.reviewer_id,approval.target_id} or (approval.target_id,approval.amount,approval.operation)!=(target.id,payload.amount,operation):
+        raise HTTPException(403,'Geçerli bağımsız mali onay gerekli')
+
     existing=db.scalar(select(LidyaOperation).where(LidyaOperation.request_key==payload.request_key))
     if existing:
         if (existing.admin_id,existing.user_id,existing.amount,existing.operation)!=(user.id,target.id,payload.amount,operation):
@@ -214,7 +221,9 @@ def manual_change(db,user,target,payload,operation):
     record=LidyaOperation(id=identifier,request_key=payload.request_key,admin_id=user.id,admin_role=admin_role,admin_name=user.nickname,
         user_id=target.id,public_id=target.public_id,amount=payload.amount,before=before,after=after,operation=operation,evidence=payload.evidence,exemption_sha=sha)
     db.add(record);audit(db,user,'lidya_'+operation.lower(),{'operation_id':identifier,'before':before,'after':after,'amount':payload.amount,'exemption_sha':sha},target.id)
-    commit(db);return operation_view(record)
+    if commit_transaction:commit(db)
+    else:db.flush()
+    return operation_view(record)
 
 def get_order(db,identifier,lock=False):
     query=select(LidyaOrder).where(LidyaOrder.id==identifier)

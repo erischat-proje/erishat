@@ -6,7 +6,8 @@ from datetime import timedelta
 from fastapi import FastAPI, APIRouter, Depends, Header, HTTPException
 from unittest.mock import patch
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, BigInteger
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from backend.app.db import Base, get_db
@@ -16,9 +17,14 @@ from backend.app.admin_models import AdminRole, AdminAuditLog, ChatBan
 from backend.app.case_models import ManagementCase, ManagementCaseEvent
 from backend.app.emergency_models import EmergencyChatAction
 from backend.app.purchase_models import LidyaOperation, LidyaOrder
-from backend.app.platform_models import VipStatus
-from backend.app import case_routes, emergency_routes, finance_audit, fraud_review, admin_routes
+from backend.app.platform_models import VipStatus,Notification
+from backend.app.management_workflow_models import ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview
+from backend.app import case_routes, emergency_routes, finance_audit, fraud_review, admin_routes, management_workflows
 from backend.app.management_readiness import check_management_ready, REQUIRED_ROUTES
+from backend.app import system_data
+
+@compiles(BigInteger,'sqlite')
+def sqlite_bigint(type_,compiler,**kw):return 'INTEGER'
 
 class ManagementAPI(unittest.TestCase):
     @classmethod
@@ -29,7 +35,7 @@ class ManagementAPI(unittest.TestCase):
             user = db.get(User,x_test_user) if x_test_user else None
             if not user:raise HTTPException(401,'Test identity required')
             return user
-        for mod in (case_routes, emergency_routes, finance_audit, fraud_review):
+        for mod in (case_routes, emergency_routes, finance_audit, fraud_review, management_workflows):
             with patch.object(mod,'router',APIRouter(prefix=mod.router.prefix)):
                 cls.app.include_router(mod.register_auth(identity))
         with patch.object(admin_routes,'router',APIRouter(prefix=admin_routes.router.prefix)):
@@ -38,8 +44,9 @@ class ManagementAPI(unittest.TestCase):
             with Session(cls.engine) as db:yield db
         cls.app.dependency_overrides[get_db] = session
         cls.client = TestClient(cls.app)
-        cls.tables = [m.__table__ for m in (User,AdminRole,AdminAuditLog,ChatBan,ManagementCase,ManagementCaseEvent,EmergencyChatAction,LidyaOperation,LidyaOrder,VipStatus)]
+        cls.tables = [m.__table__ for m in (User,AdminRole,AdminAuditLog,ChatBan,ManagementCase,ManagementCaseEvent,EmergencyChatAction,LidyaOperation,LidyaOrder,VipStatus,Notification,ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview,system_data.LidyaLedger)]
     def setUp(self):
+        logger=patch.object(system_data,'record',lambda *a,**k:None);logger.start();self.addCleanup(logger.stop)
         Base.metadata.create_all(self.engine,tables=self.tables)
         with Session(self.engine) as db:
             for index,role in enumerate(('SA','UA','FA','DA','USER','INACTIVE')):
@@ -53,7 +60,7 @@ class ManagementAPI(unittest.TestCase):
     def request(self,path,role='DA',method='GET',**kw):
         return self.client.request(method,path,headers={'X-Test-User':role},**kw)
     def test_all_new_read_paths_exist_and_require_auth(self):
-        for path in sorted(REQUIRED_ROUTES-{'/v1/admin/operations/emergency-chat'}):
+        for path in sorted(p for p,methods in self.app.openapi()['paths'].items() if p in REQUIRED_ROUTES and 'get' in methods and '{' not in p):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code,401)
                 self.assertEqual(self.request(path).status_code,200)

@@ -29,7 +29,8 @@ def analyze(operations):
             findings.append({**base,"type":"missing_evidence_reference","level":"review"})
     for (admin_id,user_id),count in counts.items():
         if count>=10:
-            findings.append({"admin_id":admin_id,"target_user_id":user_id,"count_in_sample":count,"type":"repeated_pair_operations","level":"review"})
+            representative=next(o for o in operations if o.admin_id==admin_id and o.user_id==user_id)
+            findings.append({"operation_id":representative.id,"target_public_id":representative.public_id,"admin_id":admin_id,"target_user_id":user_id,"count_in_sample":count,"type":"repeated_pair_operations","level":"review"})
     return findings
 
 def register_auth(current_user):

@@ -198,7 +198,7 @@ def apply_ban(db,row,flow,user):
     audit(db,user,row,{'room_user':'room_ban_workflow_approved','chat':'chat_ban_workflow_approved'}.get(row.kind,'ban_workflow_approved'),log=flow.log_text)
     if row.requester_id!=user.id:add_event(db,row,row.requester_id,'approved',f'{label(row)} talebiniz {stamp(flow.decided_at)} tarihinde müşteri danışmanlarımız tarafından onaylanmış ve {label(row).lower()} işleminiz gerçekleşmiştir.')
 
-def submit(db,user,target,payload,kind,room=None):
+def submit(db,user,target,payload,kind,room=None,*,independent=False,commit_transaction=True):
     rank=require(db,user,{'UA','DA'})
     if 'days' not in payload.model_fields_set:raise HTTPException(422,'Ban süresini seçin; süresiz için null gönderin')
     if target.id==user.id:raise HTTPException(403,'Kendi hesabınıza ban uygulayamazsınız')
@@ -210,10 +210,11 @@ def submit(db,user,target,payload,kind,room=None):
     db.add(flow);db.flush()
     if kind=="room_user":db.add(RoomBanRequestBinding(approval_id=row.id));db.flush()
     if kind=="chat":db.add(ChatBanRequestBinding(approval_id=row.id));db.flush()
-    if rank=='DA':apply_ban(db,row,flow,user)
+    if rank=='DA' and not independent:apply_ban(db,row,flow,user)
     else:route_request(db,row,flow);audit(db,user,row,'ban_workflow_requested',kind=kind)
-    db.commit()
-    return {**serialize(db,row,flow),'pending':rank=='UA','banned':rank=='DA','message':f'Sevgili müşteri temsilcimiz {user.nickname}, {label(row).lower()} talebiniz alınmıştır. Üst yetkililere aktarılmıştır. İlginiz için teşekkür ederiz. İyi çalışmalar.' if rank=='UA' else label(row)+' işlemi gerçekleşti.'}
+    if commit_transaction:db.commit()
+    else:db.flush()
+    return {**serialize(db,row,flow),'pending':rank=='UA' or independent,'banned':rank=='DA' and not independent,'message':f'Sevgili müşteri temsilcimiz {user.nickname}, {label(row).lower()} talebiniz alınmıştır. Üst yetkililere aktarılmıştır. İlginiz için teşekkür ederiz. İyi çalışmalar.' if rank=='UA' or independent else label(row)+' işlemi gerçekleşti.'}
 
 def load(db,rid):
     row=db.scalar(select(BanApproval).where(BanApproval.id==rid).with_for_update());flow=db.get(BanWorkflow,rid)

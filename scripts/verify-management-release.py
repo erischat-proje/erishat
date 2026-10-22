@@ -6,8 +6,8 @@ import json
 import urllib.error
 import urllib.request
 
-VERSION='20261022-management-v4'
-PATHS=['/v1/admin/operations/overview','/v1/admin/cases','/v1/admin/finance-audit/overview','/v1/admin/finance-audit/manual-operations','/v1/admin/finance-audit/alerts','/v1/admin/fraud-review/signals','/v1/admin/role-actions/SA']
+VERSION='20261022-management-workflows-v5'
+PATHS=['/v1/admin/operations/overview','/v1/admin/cases','/v1/admin/finance-audit/overview','/v1/admin/finance-audit/manual-operations','/v1/admin/finance-audit/alerts','/v1/admin/fraud-review/signals','/v1/admin/role-actions/SA','/v1/admin/management/finance-requests','/v1/admin/management/audit','/v1/admin/management/signal-reviews','/v1/admin/finance-audit/orders','/v1/admin/finance-audit/vip']
 
 def fetch(url):
     try:
@@ -31,7 +31,7 @@ def main():
         print(str(status)+' '+path)
         if status not in (401,403):failed.append(path+' beklenen yetki yanıtını vermedi.')
     status,page,_=fetch(web+'/')
-    if status!=200 or b'management-v4-20261022' not in page:failed.append('Web yeni yönetim sürümünde değil.')
+    if status!=200 or b'management-workflows-v5-20261022' not in page:failed.append('Web yeni yönetim sürümünde değil.')
     def image(pair):
         theme,key=pair;path=f'/assets/admin-lidya-v4/{theme}/{key}.png';status,data,kind=fetch(web+path)
         return path,status==200 and data.startswith(b'\x89PNG\r\n\x1a\n') and 'image/png' in kind
