@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import select
+from sqlalchemy import select,or_
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
@@ -261,6 +261,20 @@ def undo(db,user,row,flow):
         audit(db,user,row,{'room_user':'room_ban_workflow_undone','chat':'chat_ban_workflow_undone'}.get(row.kind,'ban_workflow_undone'),log=flow.log_text)
     return flow
 
+def filter_records(query,search,days,scope):
+    if days:query=query.where(BanApproval.created_at>=now()-timedelta(days=days))
+    search=search.strip()
+    if search:
+        number=search.lstrip('#')
+        clauses=[BanApproval.reason.contains(search,autoescape=True),BanApproval.target_user_id.in_(select(User.id).where(or_(User.public_id.startswith(search,autoescape=True),User.id==search)))]
+        if scope=='room':clauses.append(BanApproval.target_room_id.in_(select(Room.id).where(or_(Room.public_id.startswith(search,autoescape=True),Room.id==search))))
+        if number.isascii() and number.isdigit() and len(number)<=12:
+            if scope=='room':clauses.append(BanApproval.id.in_(select(RoomBanRequestBinding.approval_id).where(RoomBanRequestBinding.id==int(number))))
+            elif scope=='chat':clauses.append(BanApproval.id.in_(select(ChatBanRequestBinding.approval_id).where(ChatBanRequestBinding.id==int(number))))
+            else:clauses.append(BanApproval.id==int(number))
+        query=query.where(or_(*clauses))
+    return query
+
 def register_auth(current_user_dependency, disconnect=None, room_disconnect=None, chat_notify=None):
     @router.post('/room-requests/{room_id}/{user_id}')
     @database_task
@@ -294,13 +308,16 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         return {'items':rows,'pending_id':s.pending_id if s else None,'restriction_seconds':restriction(db,user.id),'restriction_message':restriction_message(db,user.id)}
 
     @router.get('/requests')
-    def listing(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    def listing(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),q:str=Query('',max_length=100),status:str|None=Query(None,pattern='^(pending|approved|rejected)$'),days:int|None=Query(None,ge=1,le=365),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        search=q
         rank=require(db,user,{'UA','FA','DA'})
         q=select(BanApproval).join(BanWorkflow).order_by(BanApproval.id.desc()).limit(50)
         q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind=='chat' if scope=='chat' else BanApproval.kind.notin_(['room_user','chat']))
         if before:q=q.where(BanApproval.id<before)
         if rank=='UA':q=q.where(BanApproval.requester_id==user.id)
         if rank=='FA':q=q.where((BanWorkflow.assigned_id==user.id)|(BanApproval.decision_by==user.id))
+        if status:q=q.where(BanApproval.status==status)
+        q=filter_records(q,search,days,scope)
         rows=list(db.scalars(q));return {'items':[serialize(db,r,db.get(BanWorkflow,r.id)) for r in rows],'next_before':rows[-1].id if len(rows)==50 else None}
 
     @router.get('/requests/{rid}')
@@ -360,12 +377,14 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
         ev.seen_at=now();db.get(Notification,ev.notification_id).read=True;db.commit();return {'seen':True}
 
     @router.get('/logs')
-    def logs(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+    def logs(before:int|None=Query(None,ge=1),scope:str=Query('user',pattern='^(user|room|chat)$'),q:str=Query('',max_length=100),days:int|None=Query(None,ge=1,le=365),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        search=q
         rank=require(db,user,{'DA'})
         q=select(BanApproval).join(BanWorkflow).where(BanApproval.status=='approved').order_by(BanApproval.id.desc()).limit(30)
         q=q.where(BanApproval.kind=='room_user' if scope=='room' else BanApproval.kind=='chat' if scope=='chat' else BanApproval.kind.notin_(['room_user','chat']))
         if before:q=q.where(BanApproval.id<before)
         if rank=='FA':q=q.where(BanApproval.decision_by==user.id)
+        q=filter_records(q,search,days,scope)
         rows=list(db.scalars(q));return {'items':[serialize(db,r,db.get(BanWorkflow,r.id),True,False) for r in rows],'can_undo':rank=='DA','next_before':rows[-1].id if len(rows)==30 else None}
 
     @router.get('/logs/{rid}')
