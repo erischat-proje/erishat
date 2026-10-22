@@ -357,9 +357,43 @@ function renderAnnouncement(p,me){
 
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 window.ErisAdmin={open:async()=>{try{openPanel(await req('/v1/admin/me'))}catch(e){window.toast?.(e.message)}},clear:function(){document.querySelectorAll('.eris-admin-btn,.eris-admin-menu,.eris-admin-overlay').forEach(el=>el.remove())}};
-async function boot(){window.ErisAdmin.clear();try{const me=await req('/v1/admin/me');currentAdminId=me.id;currentAdminRole=me.role;const mount=document.getElementById('adminMenuMount');if(!mount)return;addStyles();const btn=document.createElement('button');btn.type='button';btn.className='homeMenuItem eris-admin-menu';btn.setAttribute('aria-label','LidyaChat Yönetim menüsünü aç');btn.innerHTML='<svg class="homeMenuIcon" aria-hidden="true"><use href="#home-security"></use></svg><div class="homeMenuCopy"><strong>LidyaChat Yönetim</strong><small>Güvenlik, destek ve hesap araçları</small></div><b class="ea-role">'+escapeHtml(me.role)+'</b>';btn.onclick=()=>openPanel(me);mount.replaceChildren(btn);checkDecisions();checkIncoming()}catch(_){} }
-if(document.readyState==='complete')setTimeout(boot,350);else window.addEventListener('load',()=>setTimeout(boot,350),{once:true});
-window.addEventListener('erischat:auth',()=>setTimeout(boot,150));
+// Safe retry: admin menu stays restricted to server-confirmed SA/UA/FA/DA identities.
+let adminBootTimer=null, adminBootSerial=0;
+async function boot(attempt=0){
+  const serial=++adminBootSerial;
+  const mount=document.getElementById('adminMenuMount');
+  if(!mount){if(attempt<8)adminBootTimer=setTimeout(()=>boot(attempt+1),550);return}
+  const bearer=token();
+  if(!bearer){window.ErisAdmin.clear();return}
+  try{
+    const response=await fetch(apiBase+'/v1/admin/me',{headers:{Authorization:'Bearer '+bearer},cache:'no-store'});
+    if(serial!==adminBootSerial)return;
+    if(response.status===401||response.status===403){window.ErisAdmin.clear();return}
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const me=await response.json();
+    if(!me||!['SA','UA','FA','DA'].includes(me.role)){window.ErisAdmin.clear();return}
+    currentAdminId=me.id;currentAdminRole=me.role;
+    addStyles();
+    const btn=document.createElement('button');btn.type='button';btn.className='homeMenuItem eris-admin-menu';
+    btn.setAttribute('aria-label','LidyaChat Yönetim menüsünü aç');
+    btn.innerHTML='<svg class="homeMenuIcon" aria-hidden="true"><use href="#home-security"></use></svg><div class="homeMenuCopy"><strong>LidyaChat Yönetim</strong><small>Güvenlik, destek ve hesap araçları</small></div><b class="ea-role">'+escapeHtml(me.role)+'</b>';
+    btn.onclick=()=>openPanel(me);mount.replaceChildren(btn);
+    checkDecisions();checkIncoming();
+  }catch(error){
+    console.warn('[LidyaChat yönetim] Yetki servisine erişilemedi:',error.message);
+    if(attempt<6)adminBootTimer=setTimeout(()=>boot(attempt+1),Math.min(900*(attempt+1),4500));
+    else if(mount&&!mount.querySelector('.eris-admin-menu')){
+      const message=document.createElement('small');message.className='eris-admin-connection-warning';
+      message.setAttribute('role','status');message.textContent='Yönetim bağlantısı kurulamadı. Oturumu ve API erişimini kontrol edin.';
+      mount.replaceChildren(message);
+    }
+  }
+}
+function scheduleAdminBoot(){if(adminBootTimer)clearTimeout(adminBootTimer);adminBootTimer=setTimeout(()=>boot(0),350)}
+if(document.readyState==='complete')scheduleAdminBoot();else window.addEventListener('load',scheduleAdminBoot,{once:true});
+window.addEventListener('erischat:auth',scheduleAdminBoot);
+window.addEventListener('online',scheduleAdminBoot);
+window.addEventListener('pageshow',scheduleAdminBoot);
 })();
 
 
