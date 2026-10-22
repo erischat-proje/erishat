@@ -553,37 +553,14 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
 
 
     @router.put("/roles")
-    @database_task
-    async def set_role(payload:RoleUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");target=resolve_admin_user(db,payload.user_id)
-        if not target: raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
-        row=db.get(AdminRole,target.id)
-        if not row: row=AdminRole(user_id=target.id,role=payload.role,granted_by=user.id);db.add(row)
-        else: row.role=payload.role;row.granted_by=user.id
-        if payload.role != "DA":
-            row.ghost_mode = False
-            update_room_ghost(db, target.id, False)
-        audit(db,user,"role_grant",{"role":payload.role,"public_id":target.public_id},target_user_id=target.id);db.commit()
-        if payload.role != "DA" and ghost_transition:
-            await ghost_transition(target.id, False)
-        if role_changed:
-            await role_changed(target.id, row.role)
-        return {"user_id":target.id,"public_id":target.public_id,"role":row.role}
+    def set_role(payload:RoleUpdate,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_role(db,user,"DA")
+        raise HTTPException(409,"Rol değişikliği Yönetici Rolleri bölümünden bağımsız ikinci yönetici onayıyla yapılmalıdır")
 
     @router.delete("/roles/{user_id}")
-    @database_task
-    async def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_role(db,user,"DA");target=resolve_admin_user(db,user_id)
-        if not target:raise HTTPException(404,"Kullanıcı bulunamadı")
-        user_id=target.id;row=db.get(AdminRole,user_id)
-        if not row: raise HTTPException(status_code=404,detail="Admin yetkisi bulunamadı")
-        update_room_ghost(db, user_id, False)
-        db.delete(row);audit(db,user,"role_revoke",target_user_id=user_id);db.commit()
-        if ghost_transition:
-            await ghost_transition(user_id, False)
-        if role_changed:
-            await role_changed(user_id, None)
-        return {"removed":True}
+    def remove_role(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require_role(db,user,"DA")
+        raise HTTPException(409,"Yetki kaldırma Yönetici Rolleri bölümünden bağımsız ikinci yönetici onayıyla yapılmalıdır")
 
     return router
 

@@ -1,8 +1,10 @@
 """Release identity and readiness checks for the six management tools."""
 from sqlalchemy import inspect
 
-MANAGEMENT_API_VERSION = '20261022-management-workflows-v5'
+MANAGEMENT_API_VERSION = '20261022-management-workspace-v6'
 REQUIRED_ROUTES = frozenset({
+    '/v1/admin/workspace', '/v1/admin/workspace/users', '/v1/admin/workspace/role-requests',
+    '/v1/admin/workspace/role-requests/{request_id}/decision',
     '/v1/admin/cases', '/v1/admin/operations/overview',
     '/v1/admin/operations/emergency-chat', '/v1/admin/finance-audit/overview',
     '/v1/admin/finance-audit/manual-operations', '/v1/admin/finance-audit/alerts',
@@ -15,7 +17,7 @@ REQUIRED_ROUTES = frozenset({
     '/v1/admin/management/audit', '/v1/admin/management/signal-reviews',
     '/v1/admin/finance-audit/orders', '/v1/admin/finance-audit/vip',
 })
-REQUIRED_TABLES = ('management_cases', 'management_case_events', 'management_emergency_chat_actions', 'management_evidence', 'management_finance_requests', 'management_signal_reviews')
+REQUIRED_TABLES = ('management_role_requests', 'management_cases', 'management_case_events', 'management_emergency_chat_actions', 'management_evidence', 'management_finance_requests', 'management_signal_reviews')
 
 def check_management_ready(app, connection):
     # FastAPI may retain included routers lazily; its schema resolves both forms.

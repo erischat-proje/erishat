@@ -3,14 +3,18 @@ import os
 os.environ.setdefault('DATABASE_URL','sqlite://')
 import unittest
 from unittest.mock import patch
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, BigInteger
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from backend.app.db import Base
-from backend.app import admin_routes
+from backend.app import admin_routes,system_data
 from backend.app.models import User
 from backend.app.admin_models import AdminRole, AdminAuditLog, SystemAnnouncement
 from backend.app.announcement_identity import announcement_payloads
+
+@compiles(BigInteger,'sqlite')
+def sqlite_bigint(type_,compiler,**kw):return 'INTEGER'
 
 admin_routes.register_admin_auth(lambda:None)
 
@@ -21,8 +25,9 @@ def endpoint(method):
 class AnnouncementManagement(unittest.TestCase):
     def setUp(self):
         logger=patch("backend.app.admin_routes.record");logger.start();self.addCleanup(logger.stop)
+        ledger_logger=patch.object(system_data,"record");ledger_logger.start();self.addCleanup(ledger_logger.stop)
         self.engine=create_engine('sqlite://')
-        names=['users','admin_roles','admin_audit_logs','fa_action_logs','system_announcements']
+        names=['users','admin_roles','admin_audit_logs','fa_action_logs','system_announcements','system_lidya_ledger']
         Base.metadata.create_all(self.engine,tables=[Base.metadata.tables[n] for n in names])
         self.db=Session(self.engine)
         self.author=User(id='author',public_id='1234567890',nickname='Yazar')

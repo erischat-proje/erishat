@@ -7,7 +7,7 @@ from sqlalchemy import select,func,or_
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
-from .admin_models import AdminRole,AdminAuditLog
+from .admin_models import AdminRole,AdminAuditLog,FaActionLog
 from .case_models import ManagementCase
 from .case_routes import TextModel,CaseNote,access,require_case,add_event,open_only
 from .management_workflow_models import ManagementFinanceRequest,ManagementSignalReview
@@ -133,15 +133,16 @@ def register_auth(current_user):
         db.commit();return finance_view(db,row,user,role)
 
     @router.get('/audit')
-    def staff_audit(limit:int=Query(30,ge=1,le=100),before:int|None=Query(None,ge=1),role:str|None=None,actor:str=Query('',max_length=64),action:str=Query('',max_length=64),days:int=Query(30,ge=1,le=365),db:Session=Depends(get_db),user:User=Depends(current_user)):
-        access(db,user,4);q=select(AdminAuditLog).where(AdminAuditLog.created_at>=at()-timedelta(days=days))
+    def staff_audit(limit:int=Query(30,ge=1,le=100),before:int|None=Query(None,ge=1),role:str|None=None,actor:str=Query('',max_length=64),action:str=Query('',max_length=64),days:int=Query(30,ge=1,le=365),source:str=Query('audit',pattern='^(audit|fa_legacy)$'),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        access(db,user,4);model=FaActionLog if source=='fa_legacy' else AdminAuditLog;q=select(model).where(model.created_at>=at()-timedelta(days=days))
+        if source=='fa_legacy' and role not in {None,'','FA'}:raise HTTPException(422,'Eski FA kayıtları yalnız FA rolüyle filtrelenebilir')
         if role:
             if role not in {'SA','UA','FA','DA'}:raise HTTPException(422,'Geçersiz rol')
-            q=q.where(or_(AdminAuditLog.details.contains('"actor_role": "'+role+'"'),AdminAuditLog.details.contains('"actor_role":"'+role+'"')))
-        if actor:q=q.where(AdminAuditLog.admin_id.in_(select(User.id).where(or_(User.public_id==actor,User.id==actor))))
-        if action:q=q.where(AdminAuditLog.action.contains(action,autoescape=True))
-        if before:q=q.where(AdminAuditLog.id<before)
-        rows=list(db.scalars(q.order_by(AdminAuditLog.id.desc()).limit(limit+1)));items=[]
+            if source=='audit':q=q.where(or_(model.details.contains('"actor_role": "'+role+'"'),model.details.contains('"actor_role":"'+role+'"')))
+        if actor:q=q.where(model.admin_id.in_(select(User.id).where(or_(User.public_id==actor,User.id==actor))))
+        if action:q=q.where(model.action.contains(action,autoescape=True))
+        if before:q=q.where(model.id<before)
+        rows=list(db.scalars(q.order_by(model.id.desc()).limit(limit+1)));items=[]
         for row in rows[:limit]:
             person=db.get(User,row.admin_id)
             try:details=json.loads(row.details or '{}')
@@ -149,7 +150,7 @@ def register_auth(current_user):
             if not isinstance(details,dict):details={'note':'Eski biçimli kayıt'}
             # Never return inline proof/credentials in an audit summary.
             details={k:v for k,v in details.items() if not any(x in k.lower() for x in ('token','secret','password','evidence','credential'))}
-            items.append({'id':row.id,'actor_id':row.admin_id,'actor_name':person.nickname if person else None,'actor_public_id':person.public_id if person else None,'role':details.get('actor_role'),'action':row.action,'target_id':row.target_user_id or row.target_room_id or row.target_id,'details':details,'created_at':stamp(row.created_at)})
+            items.append({'id':row.id,'actor_id':row.admin_id,'actor_name':person.nickname if person else None,'actor_public_id':person.public_id if person else None,'role':'FA' if source=='fa_legacy' else details.get('actor_role'),'source':source,'action':row.action,'target_id':row.target_user_id or row.target_room_id or getattr(row,'target_id',None),'details':details,'created_at':stamp(row.created_at)})
         return {'items':items,'next_before':rows[limit-1].id if len(rows)>limit else None}
 
     @router.get('/signal-reviews')

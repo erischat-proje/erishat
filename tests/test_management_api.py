@@ -12,14 +12,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from backend.app.db import Base, get_db
 from backend.app.models import User
-from backend.app.room_models import Room
-from backend.app.admin_models import AdminRole, AdminAuditLog, ChatBan
+from backend.app.room_models import Room,RoomMember,RoomSeat,RoomPassword
+from backend.app.admin_models import AdminRole, AdminAuditLog, ChatBan, UserBan, SupportAssignment, FaActionLog
 from backend.app.case_models import ManagementCase, ManagementCaseEvent
 from backend.app.emergency_models import EmergencyChatAction
 from backend.app.purchase_models import LidyaOperation, LidyaOrder
 from backend.app.platform_models import VipStatus,Notification
 from backend.app.management_workflow_models import ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview
-from backend.app import case_routes, emergency_routes, finance_audit, fraud_review, admin_routes, management_workflows
+from backend.app import case_routes, emergency_routes, finance_audit, fraud_review, admin_routes, management_workflows, admin_workspace
+from backend.app.admin_workspace_models import ManagementRoleRequest
+from backend.app.support_models import SupportTicket,SupportFlow
 from backend.app.management_readiness import check_management_ready, REQUIRED_ROUTES
 from backend.app import system_data
 
@@ -35,7 +37,7 @@ class ManagementAPI(unittest.TestCase):
             user = db.get(User,x_test_user) if x_test_user else None
             if not user:raise HTTPException(401,'Test identity required')
             return user
-        for mod in (case_routes, emergency_routes, finance_audit, fraud_review, management_workflows):
+        for mod in (case_routes, emergency_routes, finance_audit, fraud_review, management_workflows, admin_workspace):
             with patch.object(mod,'router',APIRouter(prefix=mod.router.prefix)):
                 cls.app.include_router(mod.register_auth(identity))
         with patch.object(admin_routes,'router',APIRouter(prefix=admin_routes.router.prefix)):
@@ -44,7 +46,7 @@ class ManagementAPI(unittest.TestCase):
             with Session(cls.engine) as db:yield db
         cls.app.dependency_overrides[get_db] = session
         cls.client = TestClient(cls.app)
-        cls.tables = [m.__table__ for m in (User,AdminRole,AdminAuditLog,ChatBan,ManagementCase,ManagementCaseEvent,EmergencyChatAction,LidyaOperation,LidyaOrder,VipStatus,Notification,ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview,system_data.LidyaLedger)]
+        cls.tables = [m.__table__ for m in (User,AdminRole,AdminAuditLog,FaActionLog,ChatBan,UserBan,SupportAssignment,SupportTicket,SupportFlow,ManagementRoleRequest,Room,RoomMember,RoomSeat,RoomPassword,ManagementCase,ManagementCaseEvent,EmergencyChatAction,LidyaOperation,LidyaOrder,VipStatus,Notification,ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview,system_data.LidyaLedger)]
     def setUp(self):
         logger=patch.object(system_data,'record',lambda *a,**k:None);logger.start();self.addCleanup(logger.stop)
         Base.metadata.create_all(self.engine,tables=self.tables)
