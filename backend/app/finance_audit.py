@@ -1,6 +1,6 @@
 """Read-only, DA-scoped financial oversight. This is NOT an accounting ledger."""
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from .db import get_db
@@ -8,6 +8,8 @@ from .admin_models import AdminRole, AdminAuditLog
 from .purchase_models import LidyaOperation, LidyaOrder
 from .platform_models import VipStatus
 from .models import User
+from .purchase_routes import decode_document
+from .management_events import audit
 
 router = APIRouter(prefix='/v1/admin/finance-audit', tags=['admin-finance-audit'])
 
@@ -24,20 +26,65 @@ def register_auth(current_user):
         ops=db.scalars(select(LidyaOperation).where(LidyaOperation.created_at>=since).order_by(LidyaOperation.created_at.desc()).limit(1000)).all()
         deposits=sum(x.amount for x in ops if x.operation=='EKLEME')
         withdrawals=sum(x.amount for x in ops if x.operation=='ÇIKARMA')
-        return {'period_days':7,'scanned_operations':len(ops),'truncated':len(ops)==1000,'lidya_added_sample':deposits,'lidya_removed_sample':withdrawals,'vip_accounts':db.scalar(select(func.count()).select_from(VipStatus).where(VipStatus.level>0)), 'manual_operation_count':db.scalar(select(func.count()).select_from(LidyaOperation)), 'order_count':db.scalar(select(func.count()).select_from(LidyaOrder)),'note':'Sample values are NOT platform-wide aggregates or financial reconciliation.'}
+        return {'period_days':7,'scanned_operations':len(ops),'truncated':len(ops)==1000,'lidya_added_sample':str(deposits),'lidya_removed_sample':str(withdrawals),'vip_accounts':db.scalar(select(func.count()).select_from(VipStatus).where(VipStatus.level>0)), 'manual_operation_count':db.scalar(select(func.count()).select_from(LidyaOperation)), 'order_count':db.scalar(select(func.count()).select_from(LidyaOrder)),'note':'Sample values are NOT platform-wide aggregates or financial reconciliation.'}
 
     @router.get('/manual-operations')
-    def manual_operations(limit:int=Query(50,ge=1,le=100), before:str|None=None,db:Session=Depends(get_db),user:User=Depends(current_user)):
+    def manual_operations(limit:int=Query(50,ge=1,le=100), before:str|None=None,target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
         require_da(db,user)
         q=select(LidyaOperation).order_by(LidyaOperation.created_at.desc(),LidyaOperation.id.desc())
+        if target:q=q.where(LidyaOperation.public_id==target)
         if before:
             cursor=db.get(LidyaOperation,before)
             if not cursor: raise HTTPException(404,'Cursor bulunamadı')
             q=q.where((LidyaOperation.created_at<cursor.created_at)|((LidyaOperation.created_at==cursor.created_at)&(LidyaOperation.id<cursor.id)))
         rows=db.scalars(q.limit(limit+1)).all()
         def view(x):
-            return {'id':x.id,'admin_role':x.admin_role,'admin_id':x.admin_id,'target_public_id':x.public_id,'operation':x.operation,'amount':x.amount,'before':x.before,'after':x.after,'balanced':(x.after-x.before)==(x.amount if x.operation=='EKLEME' else -x.amount),'evidence_present':bool(x.evidence),'exemption_sha_present':bool(x.exemption_sha),'created_at':x.created_at.isoformat() if x.created_at else None}
+            return {'id':x.id,'admin_role':x.admin_role,'admin_id':x.admin_id,'target_public_id':x.public_id,'operation':x.operation,'amount':str(x.amount),'before':str(x.before),'after':str(x.after),'balanced':(x.after-x.before)==(x.amount if x.operation=='EKLEME' else -x.amount),'evidence_present':bool(x.evidence),'exemption_sha_present':bool(x.exemption_sha),'created_at':x.created_at.isoformat() if x.created_at else None}
         return {'items':[view(x) for x in rows[:limit]],'next_cursor':rows[limit-1].id if len(rows)>limit else None}
+
+    @router.get('/manual-operations/{operation_id}')
+    def operation_detail(operation_id:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);row=db.get(LidyaOperation,operation_id)
+        if not row:raise HTTPException(404,'İşlem bulunamadı')
+        return {'id':row.id,'target_public_id':row.public_id,'admin_id':row.admin_id,'admin_name':row.admin_name,'operation':row.operation,
+          'amount':str(row.amount),'before':str(row.before),'after':str(row.after),'balanced':row.after-row.before==(row.amount if row.operation=='EKLEME' else -row.amount),
+          'evidence_url':f'/v1/admin/finance-audit/manual-operations/{row.id}/evidence' if row.evidence else None,'created_at':row.created_at.isoformat() if row.created_at else None}
+
+    @router.get('/manual-operations/{operation_id}/evidence')
+    def operation_evidence(operation_id:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);row=db.get(LidyaOperation,operation_id)
+        if not row or not row.evidence:raise HTTPException(404,'İşlem kanıtı bulunamadı')
+        try:data,mime=decode_document(row.evidence)
+        except ValueError:raise HTTPException(422,'Eski kanıt dosyası görüntülenemiyor')
+        audit(db,user,'management_operation_evidence_viewed',{'operation_id':row.id},row.user_id);db.commit()
+        return Response(data,media_type=mime,headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"})
+
+    @router.get('/orders')
+    def order_history(limit:int=Query(30,ge=1,le=100),before:str|None=None,target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);query=select(LidyaOrder)
+        if target:query=query.where(LidyaOrder.user_id.in_(select(User.id).where(User.public_id==target)))
+        if before:
+            cursor=db.get(LidyaOrder,before)
+            if not cursor:raise HTTPException(404,'Önceki sipariş kaydı bulunamadı')
+            query=query.where((LidyaOrder.created_at<cursor.created_at)|((LidyaOrder.created_at==cursor.created_at)&(LidyaOrder.id<cursor.id)))
+        rows=list(db.scalars(query.order_by(LidyaOrder.created_at.desc(),LidyaOrder.id.desc()).limit(limit+1)))
+        items=[]
+        for row in rows[:limit]:
+            person=db.get(User,row.user_id)
+            items.append({'id':row.id,'public_id':person.public_id if person else None,'nickname':person.nickname if person else None,'status':row.status,'total':str(row.total),'created_at':row.created_at.isoformat() if row.created_at else None,'decided_at':row.decided_at.isoformat() if row.decided_at else None})
+        return {'items':items,'next_cursor':rows[limit-1].id if len(rows)>limit else None}
+
+    @router.get('/vip')
+    def vip_history(limit:int=Query(30,ge=1,le=100),before:str|None=None,target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);query=select(VipStatus).where(VipStatus.level>0)
+        if target:query=query.where(VipStatus.user_id.in_(select(User.id).where(User.public_id==target)))
+        if before:query=query.where(VipStatus.user_id>before)
+        rows=list(db.scalars(query.order_by(VipStatus.user_id).limit(limit+1)))
+        items=[]
+        for row in rows[:limit]:
+            person=db.get(User,row.user_id)
+            items.append({'public_id':person.public_id if person else None,'nickname':person.nickname if person else None,'level':row.level,'updated_at':row.updated_at.isoformat() if row.updated_at else None})
+        return {'items':items,'next_cursor':rows[limit-1].user_id if len(rows)>limit else None}
 
     @router.get('/alerts')
     def alerts(db:Session=Depends(get_db),user:User=Depends(current_user)):

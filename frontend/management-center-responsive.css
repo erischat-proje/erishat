@@ -7,3 +7,20 @@
 @media(max-width:390px){.lm-command-head{padding-left:12px;padding-right:12px}.lm-command-content{padding-left:12px;padding-right:12px}.lm-command-stats{grid-template-columns:1fr 1fr}}
 @media(max-width:320px){.lm-command-stats{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.lm-command-overlay *{animation:none!important;transition:none!important}}
+/* Functional workbench controls, scoped to management. */
+.lm-command-content h2,.lm-command-content h3{color:var(--lm-text)}
+.lm-command-content h3{margin:0 0 8px;font-size:18px}
+.lm-view-title{font:700 24px Georgia,serif;margin:0 0 18px}
+.lm-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:9px 0 16px}
+.lm-command-head .lm-actions{flex:none;margin:0}.lm-command-head .lm-actions button{min-width:44px}
+.lm-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:14px}
+.lm-field{display:grid;gap:6px;font-size:13px;min-width:0}.lm-field:has(textarea),.lm-field:has(input[type=file]){grid-column:1/-1}
+.lm-command-content .lm-form :is(input,textarea,select){box-sizing:border-box;min-width:0;width:100%;min-height:44px;padding:11px;border:1px solid var(--lm-line);border-radius:9px;background:var(--lm-bg);color:var(--lm-text);font:inherit;font-size:16px}
+.lm-command-content textarea{min-height:105px;resize:vertical}.lm-form button{align-self:end}
+.lm-form-result{grid-column:1/-1;white-space:pre-wrap}.lm-form-section>summary{cursor:pointer;font-weight:700;min-height:35px;padding-top:6px}
+.lm-primary{font-weight:800}.lm-meta{margin:3px 0;overflow-wrap:anywhere}.lm-meta strong{font-size:inherit}.lm-command-card p{white-space:pre-wrap;line-height:1.55}
+.lm-proof{display:block;max-width:100%;max-height:420px;object-fit:contain;border:1px solid var(--lm-line);border-radius:10px;margin-top:10px}
+.lm-history .lm-command-card{border-left-width:4px}.lm-command-content pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-width:100%}
+.lm-command-content :is(input,select,textarea,button,summary):focus-visible{outline:3px solid var(--lm-line);outline-offset:3px}.lm-command-content button:disabled{opacity:.55;cursor:wait}
+html[data-eris-theme=dark] .lm-command-error{color:#ffbeb0}
+@media(max-width:580px){.lm-form{grid-template-columns:1fr}.lm-field{grid-column:1}.lm-command-head{gap:8px}.lm-command-head h1{font-size:22px}.lm-command-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -1,14 +1,21 @@
 """Release identity and readiness checks for the six management tools."""
 from sqlalchemy import inspect
 
-MANAGEMENT_API_VERSION = '20261022-management-v4'
+MANAGEMENT_API_VERSION = '20261022-management-workflows-v5'
 REQUIRED_ROUTES = frozenset({
     '/v1/admin/cases', '/v1/admin/operations/overview',
     '/v1/admin/operations/emergency-chat', '/v1/admin/finance-audit/overview',
     '/v1/admin/finance-audit/manual-operations', '/v1/admin/finance-audit/alerts',
     '/v1/admin/fraud-review/signals',
+    '/v1/admin/cases/{case_id}/assign', '/v1/admin/cases/{case_id}/evidence-upload',
+    '/v1/admin/cases/{case_id}/notes', '/v1/admin/cases/{case_id}/sanction-request',
+    '/v1/admin/operations/emergency-chat/{action_id}/revoke',
+    '/v1/admin/management/finance-requests', '/v1/admin/management/finance-requests/{request_id}/review',
+    '/v1/admin/management/finance-requests/{request_id}/decision',
+    '/v1/admin/management/audit', '/v1/admin/management/signal-reviews',
+    '/v1/admin/finance-audit/orders', '/v1/admin/finance-audit/vip',
 })
-REQUIRED_TABLES = ('management_cases', 'management_case_events', 'management_emergency_chat_actions')
+REQUIRED_TABLES = ('management_cases', 'management_case_events', 'management_emergency_chat_actions', 'management_evidence', 'management_finance_requests', 'management_signal_reviews')
 
 def check_management_ready(app, connection):
     # FastAPI may retain included routers lazily; its schema resolves both forms.
