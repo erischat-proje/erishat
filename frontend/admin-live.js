@@ -6,6 +6,8 @@
 const managementAvatarUrl=new URL('./assets/lidyachat-management-avatar-v2.png',document.currentScript.src).href;
 const artBase=new URL('./assets/lidya-room-png/',document.currentScript.src).href;
 const adminArtBase=new URL('./assets/admin-lidya-v2/',document.currentScript.src).href;
+// Capture during script execution; currentScript is null in callbacks.
+const adminV3ArtBase=new URL('./assets/admin-lidya-v3/',document.currentScript.src).href;
 // ERISCHAT_ORIGINAL_LIDYA_ART_MAPPING_V1
 // Use existing, verified light/dark Lidya card art. The live button title
 // stays as HTML text, so the image cannot cause doubled lettering.
@@ -154,12 +156,12 @@ function decorateAdminTools(root){
   button.type='button';button.classList.add('ea-png-button');button.setAttribute('aria-label',label);
   const picture=document.createElement('picture');picture.className='ea-png-art';picture.setAttribute('aria-hidden','true');
   const image=document.createElement('img');image.alt='';image.width=960;image.height=320;image.decoding='async';image.draggable=false;image.dataset.eaArtKey=key==='payments'?'topup':key;
-  const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';image.src=(image.dataset.eaArtKey.startsWith('lm-')?new URL('./assets/admin-lidya-v3/',document.currentScript.src).href:adminArtBase)+theme+'/'+(image.dataset.eaArtKey.startsWith('lm-')?image.dataset.eaArtKey.slice(3):adminArtworkKey(image.dataset.eaArtKey))+'.png';picture.append(image);
+  const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';image.src=(image.dataset.eaArtKey.startsWith('lm-')?adminV3ArtBase:adminArtBase)+theme+'/'+(image.dataset.eaArtKey.startsWith('lm-')?image.dataset.eaArtKey.slice(3):adminArtworkKey(image.dataset.eaArtKey))+'.png';picture.append(image);
   const copy=document.createElement('span');copy.className='ea-png-copy';const title=document.createElement('b');title.textContent=({gaps:'Geri Bildirim',lidya:'Lidya Yönetimi'})[key]||label;
   const hint=document.createElement('small');hint.textContent=hints[key]||'İşlem geçmişi';copy.append(title,hint);button.replaceChildren(picture,copy);
  }
 }
-function syncAdminArt(){const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';for(const image of document.querySelectorAll('img[data-ea-art-key]')){const src=(image.dataset.eaArtKey.startsWith('lm-')?new URL('./assets/admin-lidya-v3/',document.currentScript.src).href:adminArtBase)+theme+'/'+(image.dataset.eaArtKey.startsWith('lm-')?image.dataset.eaArtKey.slice(3):adminArtworkKey(image.dataset.eaArtKey))+'.png';if(image.src!==src)image.src=src}}
+function syncAdminArt(){const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';for(const image of document.querySelectorAll('img[data-ea-art-key]')){const src=(image.dataset.eaArtKey.startsWith('lm-')?adminV3ArtBase:adminArtBase)+theme+'/'+(image.dataset.eaArtKey.startsWith('lm-')?image.dataset.eaArtKey.slice(3):adminArtworkKey(image.dataset.eaArtKey))+'.png';if(image.src!==src)image.src=src}}
 new MutationObserver(syncAdminArt).observe(document.documentElement,{attributes:true,attributeFilter:['data-eris-theme']});
 window.addEventListener('erischat:theme',syncAdminArt);
 function installAdminInteriorContrastV2(){
