@@ -35,7 +35,7 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
   assert.ok(await page.locator('[data-a]').evaluateAll(bs=>bs.every(b=>typeof b.onclick==='function')),'all menu buttons have handlers');
   for(const key of keys){
    const button=page.locator('[data-a="lm-'+key+'"]');
-   const src=await button.locator('img').getAttribute('src');assert.ok(src.endsWith('/admin-lidya-v3/'+theme+'/'+key+'.png'),src);
+   const src=await button.locator('img').getAttribute('src');assert.ok(src.endsWith('/admin-lidya-v4/'+theme+'/'+key+'.png'),src);
    await button.click();await page.locator('.lm-command-overlay').waitFor();
    await page.waitForFunction(()=>!document.querySelector('.lm-command-content').textContent.includes('Gerçek veriler yükleniyor'));
    assert.equal(await page.locator('.lm-command-error').count(),0);

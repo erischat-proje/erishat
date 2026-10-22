@@ -26,7 +26,7 @@ test('menu opens after script execution, binds every handler and dispatches all 
   for(const key of ['command','cases','emergency','finance','fraud','audit']){
    const button=buttons.find(b=>b.dataset.a==='lm-'+key);assert.ok(button);
    const img=button.querySelectorAll('*').find(e=>e.tagName==='img');
-   const expected='assets/admin-lidya-v3/'+theme+'/'+key+'.png';assert.equal(new URL(img.src).pathname,'/frontend/'+expected);
+   const expected='assets/admin-lidya-v4/'+theme+'/'+key+'.png';assert.equal(new URL(img.src).pathname,'/frontend/'+expected);
    const bytes=fs.readFileSync(path.join(frontend,expected));assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.ok(bytes.length>1000);
    await button.onclick();assert.equal(f.opened.at(-1),key);
   }

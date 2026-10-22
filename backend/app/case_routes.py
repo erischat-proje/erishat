@@ -27,6 +27,7 @@ class EvidenceReference(BaseModel):
     description: str = Field(min_length=10, max_length=1000)
 
 def access(db, user, minimum):
+    if not user.is_active:raise HTTPException(403,'Hesap aktif değil')
     role=db.get(AdminRole,user.id)
     rank={'SA':1,'UA':2,'FA':3,'DA':4}.get(role.role if role else None,0)
     if rank < minimum:raise HTTPException(403,'Yönetim yetkisi gerekli')

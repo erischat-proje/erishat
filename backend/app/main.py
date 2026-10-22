@@ -68,6 +68,7 @@ from . import case_routes
 from . import emergency_routes
 from . import finance_audit
 from . import fraud_review
+from .management_readiness import MANAGEMENT_API_VERSION, check_management_ready
 from . import role_badges
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
@@ -535,7 +536,7 @@ app.include_router(call_router)
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "erischat-api", "version": app.version}
+    return {"status": "ok", "service": "erischat-api", "version": app.version, "management_api_version": MANAGEMENT_API_VERSION}
 
 
 @app.get("/ready")
@@ -543,10 +544,11 @@ def ready() -> dict[str, str]:
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+            check_management_ready(app, conn)
         return {"status": "ready", "service": "erischat-api", "version": app.version}
-    except (OperationalError, PoolTimeout) as exc:
-        logger.warning("Readiness DB check failed: %s", type(exc).__name__)
-        raise HTTPException(status_code=503, detail="database not ready") from exc
+    except (OperationalError, PoolTimeout, RuntimeError) as exc:
+        logger.warning("Readiness dependency check failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="service dependencies not ready") from exc
 
 
 @app.get("/v1/announcements")
