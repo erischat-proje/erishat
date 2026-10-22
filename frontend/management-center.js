@@ -4,7 +4,7 @@
 const base=(window.ERISCHAT_API_BASE||window.ERIS_API||localStorage.getItem('erischat.apiBase')||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'').replace(/\/v1$/,'');
 const auth=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function get(path){const r=await fetch(base+path,{headers:{Authorization:'Bearer '+auth()},cache:'no-store'});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(typeof data.detail==='string'?data.detail:'Veriler alınamadı ('+r.status+')');return data;}
+async function get(path){const r=await fetch(base+path,{headers:{Authorization:'Bearer '+auth()},cache:'no-store'});const data=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(r.status===404?'Bu yönetim bölümü sunucuda henüz kullanılamıyor. Yönetim API güncellemesinin dağıtılması gerekiyor.':typeof data.detail==='string'?data.detail:'Veriler alınamadı ('+r.status+')');error.status=r.status;throw error;}return data;}
 const number=x=>typeof x==='number'?x.toLocaleString('tr-TR'):'—';
 let previousFocus=null;
 function close(){document.querySelector('.lm-command-overlay')?.remove();document.body.classList.remove('lm-command-open');previousFocus?.focus?.({preventScroll:true});}
