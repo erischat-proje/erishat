@@ -13,7 +13,7 @@ from sqlalchemy import select,or_
 from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
-from .admin_models import AdminRole, BanApproval, UserBan, ChatBan, AdminAuditLog, FaActionLog
+from .admin_models import AdminRole, BanApproval, BanAppeal, UserBan, ChatBan, RoomAdminBan, AdminAuditLog, FaActionLog
 from .platform_models import Notification
 from .support_models import SupportAgent
 from .room_models import Room, RoomMember, RoomSeat
@@ -34,6 +34,7 @@ def role(db, uid):
     return row.role if row else None
 
 def require(db, user, roles):
+    if not user.is_active:raise HTTPException(403,'Hesap aktif değil')
     value = role(db, user.id)
     if value not in roles: raise HTTPException(403, 'Bu işlem için yönetim yetkiniz yok')
     return value
@@ -103,6 +104,23 @@ class EvidencePayload(BaseModel):
 
 class Decision(BaseModel):
     action: str = Field(pattern='^(approve|reject)$')
+    note:str|None=Field(default=None,min_length=10,max_length=2000)
+    @field_validator('note',mode='before')
+    @classmethod
+    def decision_note(cls,value):return value.strip() if isinstance(value,str) else value
+class AppealPayload(BaseModel):
+    reason:str=Field(min_length=3,max_length=200)
+    explanation:str=Field(min_length=3,max_length=400)
+    images:list[str]=Field(min_length=1,max_length=3)
+    @field_validator('reason','explanation',mode='before')
+    @classmethod
+    def strip_appeal(cls,v):return v.strip() if isinstance(v,str) else v
+    @field_validator('images')
+    @classmethod
+    def photos_only(cls,values):
+        if any(not re.match(r'^data:image/(png|jpeg|webp);base64,',v) for v in values):raise ValueError('İtiraz için en az bir fotoğraf gerekir')
+        return EvidencePayload.evidence_valid(values)
+
 class PresencePayload(BaseModel):
     active: bool = True
 
@@ -137,7 +155,7 @@ def serialize(db,row,flow,details=False,include_evidence=True):
         'requester_public_id':requester.public_id if requester else '', 'requester_role':flow.requester_role,
         'target_id':target.public_id if target else '', 'target_name':target.nickname if target else 'Kullanıcı',
         'created_at':row.created_at,'assigned_id':flow.assigned_id,'decision_by':row.decision_by,
-        'reviewer_role':flow.reviewer_role,'decided_at':flow.decided_at,'undone_at':flow.undone_at,'thanked':flow.thanked_at is not None,'workflow':True}
+        'reviewer_role':flow.reviewer_role,'decided_at':flow.decided_at,'undone_at':flow.undone_at,'thanked':flow.thanked_at is not None,'workflow':True,'appeal_used':row.appeal_used}
     if row.kind=='room_user':
         room=db.get(Room,row.target_room_id); request=binding(db,row.id)
         result.update(number=f'#{request.id:04d}',room_id=room.id,room_public_id=room.public_id,room_name=room.name)
@@ -177,6 +195,9 @@ def build_log(db,row,flow):
         'KANIT : '+', '.join(f'/v1/admin/ban-workflow/requests/{row.id}/evidence/{i}' for i in range(len(json.loads(flow.evidence_json))))])
 
 def apply_ban(db,row,flow,user):
+    target=db.scalar(select(User).where(User.id==row.target_user_id).with_for_update().execution_options(populate_existing=True))
+    if not target:raise HTTPException(404,'Hedef bulunamadı')
+    if role(db,target.id) is not None:raise HTTPException(403,'Hedef artık personel hesabı; ayrı disiplin süreci gerekli')
     until=None if row.days is None else now()+timedelta(days=row.days)
     if row.kind=='room_user':
         ban=RoomUserBan(room_id=row.target_room_id,user_id=row.target_user_id,expires_at=until,banned_by=user.id,reason=row.reason)
@@ -232,15 +253,19 @@ def can_review(db,user,row,flow):
     if user.id in {row.requester_id,row.target_user_id}:raise HTTPException(403,'Kendi talebinizi inceleyemezsiniz')
     return rank
 
-def decide(db,user,rid,action):
+def decide(db,user,rid,action,note=None):
     row,flow=load(db,rid);can_review(db,user,row,flow)
     if row.status!='pending':raise HTTPException(409,'Talep artık beklemede değil')
     s=reviewer(db,user.id)
     if s.pending_id!=rid:raise HTTPException(409,'Önce talep detayını inceleyin')
     if action=='approve':apply_ban(db,row,flow,user)
     else:
-        row.status='rejected';row.decision_by=user.id;flow.reviewer_role=role(db,user.id);flow.decided_at=now();penalize(db,user,row.kind)
+        row.status='rejected';row.decision_by=user.id;flow.reviewer_role=role(db,user.id);flow.decided_at=now()
         audit(db,user,row,{'room_user':'room_ban_workflow_rejected','chat':'chat_ban_workflow_rejected'}.get(row.kind,'ban_workflow_rejected'));add_event(db,row,row.requester_id,'rejected',label(row)+' talebiniz yönetim tarafından reddedildi.')
+    if note:
+        from .admin_operations import event as operation_event
+        operation_event(db,user,'ban',rid,'decision_'+action,note)
+        if action=='approve':flow.log_text+='\nKARAR GEREKÇESİ : '+note
     for session in db.scalars(select(BanReviewSession).where(BanReviewSession.pending_id==rid)):session.pending_id=None
     db.commit();return {**serialize(db,row,flow),'restriction_seconds':restriction(db,user.id),'restriction_message':restriction_message(db,user.id)}
 
@@ -260,6 +285,31 @@ def undo(db,user,row,flow):
         add_event(db,row,user.id,'undo_receipt',f'{approver.nickname} tarafından onaylanan oda ban talebi geri alınıp kullanıcının oda yasağı kaldırılmıştır.' if row.kind=='room_user' else f'{approver.nickname} tarafından onaylanan sohbet ban talebi geri alınıp kullanıcının sohbet yasağı kaldırılmıştır.' if row.kind=='chat' else f'{approver.nickname} tarafından onaylanan ban talebi geri alınıp kullanıcı banı kaldırılmıştır.')
         audit(db,user,row,{'room_user':'room_ban_workflow_undone','chat':'chat_ban_workflow_undone'}.get(row.kind,'ban_workflow_undone'),log=flow.log_text)
     return flow
+
+def decide_appeal(db,user,aid,action,note=None):
+    require(db,user,{'FA','DA'})
+    appeal=db.scalar(select(BanAppeal).where(BanAppeal.id==aid).with_for_update().execution_options(populate_existing=True))
+    if not appeal or appeal.status!='pending':raise HTTPException(409,'İtiraz artık beklemede değil')
+    row=db.scalar(select(BanApproval).where(BanApproval.id==appeal.approval_id).with_for_update().execution_options(populate_existing=True))
+    if not row:raise HTTPException(404,'Yaptırım talebi bulunamadı')
+    if user.id in {row.requester_id,row.target_user_id,row.decision_by}:raise HTTPException(403,'İtirazı ilk karar veren, talep sahibi veya hedef inceleyemez')
+    flow=db.get(BanWorkflow,row.id)
+    if action=='approve' and row.target_user_id and role(db,row.target_user_id) is not None:raise HTTPException(403,'Personel hesabı için ayrı disiplin süreci gerekli')
+    if action=='approve':
+        if flow:apply_ban(db,row,flow,user)
+        else:
+            from .admin_routes import expiry
+            if row.kind in {'account','device'}:db.add(UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=None if row.kind=='device' else expiry(row.days),banned_by=user.id,reason=row.reason))
+            elif row.kind=='chat':db.add(ChatBan(user_id=row.target_user_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
+            else:db.add(RoomAdminBan(room_id=row.target_room_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
+    appeal.status='approved' if action=='approve' else 'rejected'
+    if note and flow and action=='approve':flow.log_text+='\nİTİRAZ KARAR GEREKÇESİ : '+note
+    from .admin_operations import event as operation_event
+    operation_event(db,user,'appeal',appeal.id,'appeal_'+action,note or 'İtiraz mevcut karar yetkisiyle sonuçlandırıldı.')
+    audit(db,user,row,'ban_appeal_'+appeal.status,appeal_id=appeal.id,decision_note=note or '')
+    from .management_events import notify
+    notify(db,[row.requester_id],'Yaptırım itirazı sonuçlandı',f'İtiraz #{appeal.id}: '+('onaylandı.' if action=='approve' else 'reddedildi.'),user.id)
+    db.commit();return {'id':appeal.id,'status':appeal.status}
 
 def filter_records(query,search,days,scope):
     if days:query=query.where(BanApproval.created_at>=now()-timedelta(days=days))
@@ -331,7 +381,7 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
     @router.post('/requests/{rid}/decision')
     @database_task
     async def decision(rid:int,payload:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        result=decide(db,user,rid,payload.action)
+        result=decide(db,user,rid,payload.action,payload.note)
         if disconnect and (payload.action=='approve' or result['restriction_seconds']):
             row=db.get(BanApproval,rid)
             if payload.action=='approve' and row.kind=='room_user':
@@ -339,6 +389,29 @@ def register_auth(current_user_dependency, disconnect=None, room_disconnect=None
             elif payload.action=='approve' and row.kind=='chat':
                 if chat_notify:await chat_notify(row.target_user_id)
             else:await disconnect(user.id if result['restriction_seconds'] else row.target_user_id)
+        return result
+
+    @router.post('/requests/{rid}/appeal',status_code=201)
+    def create_appeal(rid:int,payload:AppealPayload,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        require(db,user,{'UA','DA'});row,flow=load(db,rid)
+        if row.requester_id!=user.id or row.status!='rejected' or row.appeal_used:raise HTTPException(409,'Bu talep için tek itiraz hakkı kullanılamıyor')
+        row.appeal_used=True;appeal=BanAppeal(approval_id=row.id,reason=payload.reason,explanation=payload.explanation,images_json=json.dumps(payload.images));db.add(appeal);db.flush()
+        audit(db,user,row,'ban_appeal_requested',appeal_id=appeal.id)
+        from .admin_operations import event as operation_event
+        operation_event(db,user,'appeal',appeal.id,'appeal_created',json.dumps({'first_reviewer_id':row.decision_by,'explanation':payload.explanation},ensure_ascii=False))
+        from .management_events import notify
+        recipients=db.scalars(select(AdminRole.user_id).where(AdminRole.role.in_(['FA','DA']),AdminRole.user_id.notin_([row.requester_id,row.decision_by or '',row.target_user_id or '']))).all()
+        notify(db,recipients,'Kanıtlı yaptırım itirazı',f'İtiraz #{appeal.id} bağımsız karar bekliyor.',user.id);db.commit();return {'id':appeal.id,'status':'pending'}
+
+    @router.post('/appeals/{aid}/decision')
+    @database_task
+    async def appeal_decision(aid:int,payload:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        result=decide_appeal(db,user,aid,payload.action,payload.note)
+        if payload.action=='approve':
+            appeal=db.get(BanAppeal,aid);row=db.get(BanApproval,appeal.approval_id)
+            if row.kind=='room_user' and room_disconnect:await room_disconnect(row.target_user_id,row.target_room_id)
+            elif row.kind=='chat' and chat_notify:await chat_notify(row.target_user_id)
+            elif row.kind in {'account','device'} and disconnect:await disconnect(row.target_user_id)
         return result
 
     @router.post('/requests/{rid}/dismiss')

@@ -16,6 +16,8 @@ async function fixture(rank='DA',options={}){
   if(workspaceFailure){status=503;data={detail:'Fixture service unavailable'};}
   else data={role,counts:{'lm-cases':2,roles:1,tickets:0},tools:[...d.querySelectorAll('[data-a]')].map(b=>({key:b.dataset.a,title:b.textContent,description:'Açıklama '+b.dataset.a,flow:'Hedef → inceleme → karar',section:b.dataset.a.startsWith('lm-')?'Olay operasyonu':'Günlük operasyon'}))};
  }
+ else if(p.startsWith('/v1/admin/operations-desk/'))data={items:[],next_before:null};
+ else if(p==='/v1/payment-assistance/admin/requests')data={items:[],next:null};
  else if(p==='/v1/admin/workspace/users')data={items:[{id:'USER',public_id:'1234567890',nickname:'Fixture Member',role:profileRole,is_active:true}],next_after:null};
  else if(p==='/v1/admin/workspace/users/USER')data={id:'USER',public_id:'1234567890',nickname:'Fixture Member',role:profileRole,is_active:true,balance:'9007199254740993',role_snapshot:'a'.repeat(64),active_account_bans:0,active_chat_bans:0,open_cases:2,can_request_role:true,can_delete:!profileRole};
  else if(p==='/v1/admin/workspace/role-requests'&&method==='GET')data={items:pending.map(r=>({...r,can_decide:r.status==='pending'&&r.requester_id!==actorId,can_cancel:r.status==='pending'&&r.requester_id===actorId})),next_before:null};
@@ -47,9 +49,9 @@ test('whole DA menu keeps every PNG handler, searchable task descriptions and sc
 test('SA UA FA menus never expose private controls or Ghost Mode profile copy',async()=>{for(const rank of ['SA','UA','FA']){const f=await fixture(rank);try{assert.ok(!/ghost mode/i.test(f.d.body.textContent));for(const key of ['roles','lookup','deleteaccount','ghost','payments','security','lm-audit'])assert.equal(f.d.querySelector('[data-a="'+key+'"]'),null);assert.ok(f.d.querySelector('[data-a=tickets]'));}finally{f.close();}}});
 test('all existing specialist buttons dispatch, and both themes retain their art paths',async()=>{const f=await fixture();try{
  for(const theme of ['light','dark']){f.d.documentElement.dataset.erisTheme=theme;await tick();for(const key of ['tickets','ban','roomban','chatban','banrequests','roombanrequests','chatbanrequests','banlogs','roombanlogs','chatbanlogs','gaps','referrals','payments']){
-  const b=f.d.querySelector('[data-a="'+key+'"]');assert.ok(b.querySelector('img').src.includes('/'+theme+'/'));await b.onclick();await tick();
- }for(const key of ['command','cases','emergency','finance','fraud','audit'])await f.d.querySelector('[data-a="lm-'+key+'"]').onclick();}
- assert.equal(f.launched.filter(x=>x[0].startsWith('Eris')).length,26);assert.equal(f.launched.filter(x=>!x[0].startsWith('Eris')).length,12);assert.deepEqual(f.toasts,[]);
+  await f.w.ErisAdmin.open();await tick();const b=f.d.querySelector('[data-a="'+key+'"]');assert.ok(b.querySelector('img').src.includes('/'+theme+'/'));await b.onclick();await tick();
+ }await f.w.ErisAdmin.open();await tick();for(const key of ['command','cases','emergency','finance','fraud','audit'])await f.d.querySelector('[data-a="lm-'+key+'"]').onclick();}
+ assert.equal(f.launched.filter(x=>x[0].startsWith('Eris')).length,18);assert.equal(f.launched.filter(x=>!x[0].startsWith('Eris')).length,12);assert.deepEqual(f.toasts,[]);
 }finally{f.close();}});
 test('missing specialist produces a visible error without hiding the menu',async()=>{const f=await fixture();try{delete f.w.ErisSupport;await f.d.querySelector('[data-a=tickets]').onclick();assert.ok(f.d.querySelector('.aw-launch-error').textContent.includes('araç yüklenemedi'));assert.equal(f.d.querySelector('.eris-admin-overlay').style.display,'');}finally{f.close();}});
 test('ID directory and verified profile avoid raw JSON and retain precise balance',async()=>{const f=await fixture();try{await f.w.ErisAdmin.openTool('lookup');await tick();await f.click('Hesabı incele');assert.ok(f.d.body.textContent.includes('9007199254740993'));assert.equal(f.d.querySelector('pre'),null);await f.click('İlgili olay dosyaları');assert.deepEqual(JSON.parse(JSON.stringify(f.launched.at(-1))),['cases',{q:'1234567890'}]);}finally{f.close();}});

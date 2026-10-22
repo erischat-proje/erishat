@@ -130,7 +130,7 @@ async function openRecord(id){
 
 function install(){if(window.ErisPurchases){window.ErisPurchases.open=openPackages;window.ErisPurchases.openAdmin=()=>openQueue(false)}}
 async function tick(){clearTimeout(timer);if(account!==token())reset();install();if(token()&&!document.hidden)await sync();timer=setTimeout(tick,5000)}
-window.ErisPaymentAssistance={open:openPackages,openHistory,choose,openQueue:()=>openQueue(false),openRecords:()=>openQueue(true),openRequest,openCredit,renderInbox,sync};
+window.ErisPaymentAssistance={open:openPackages,openHistory,choose,openRecord,openQueue:()=>openQueue(false),openRecords:()=>openQueue(true),openRequest,openCredit,renderInbox,sync};
 window.addEventListener('erischat:auth',()=>{reset();tick()});document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tick,{once:true});else tick();
 })();
 

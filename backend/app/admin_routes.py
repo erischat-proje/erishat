@@ -170,6 +170,10 @@ class AppealCreate(BaseModel):
 
 class Decision(BaseModel):
     action: str = Field(pattern="^(approve|reject)$")
+    note: str | None = Field(default=None,min_length=10,max_length=2000)
+    @field_validator("note",mode="before")
+    @classmethod
+    def trim_note(cls,v):return v.strip() if isinstance(v,str) else v
 
 
 class VipUpdate(BaseModel):
@@ -422,17 +426,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     @router.post("/ban-appeals/{appeal_id}/decision")
     def decide_appeal(appeal_id:int,body:Decision,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         require_fa_or_da(db,user)
-        appeal=db.scalar(select(BanAppeal).where(BanAppeal.id==appeal_id).with_for_update())
-        if not appeal or appeal.status!="pending":raise HTTPException(409,"İtiraz artık beklemede değil")
-        row=db.get(BanApproval,appeal.approval_id)
-        if not may_decide(row.requester_id,row.target_user_id,user.id,row.decision_by):raise HTTPException(403,"Bu itirazı bağımsız bir yetkili incelemelidir")
-        if body.action=="approve":
-            if row.kind in {"account","device"}:db.add(UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=None if row.kind=="device" else expiry(row.days),banned_by=user.id,reason=row.reason))
-            elif row.kind=="chat":db.add(ChatBan(user_id=row.target_user_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
-            else:db.add(RoomAdminBan(room_id=row.target_room_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
-        appeal.status="approved" if body.action=="approve" else "rejected"
-        audit(db,user,"ban_appeal_"+appeal.status,{"request_id":row.id,"appeal_id":appeal.id,"kind":row.kind,"days":row.days,"reason":row.reason},target_user_id=row.target_user_id,target_room_id=row.target_room_id)
-        db.commit();return {"id":appeal.id,"status":appeal.status}
+        return ban_workflow.decide_appeal(db,user,appeal_id,body.action,body.note)
 
     @router.post("/users/{user_id}/ban")
     @database_task

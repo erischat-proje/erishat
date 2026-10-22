@@ -26,6 +26,7 @@ class SuggestionCreate(BaseModel):
 
 
 def require_da(db, user):
+    if not user.is_active:raise HTTPException(403,'Hesap aktif değil')
     role = db.get(AdminRole, user.id)
     if not role or role.role != "DA":
         raise HTTPException(403, "Uygulama geri bildirimi paneli yalnızca DA yetkililerine açıktır")
@@ -58,7 +59,10 @@ def register_auth(current_user_dependency):
 
     @router.get("/mine")
     def mine(limit: int = Query(50, ge=1, le=100), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        return [summary(row) for row in db.scalars(select(UserSuggestion).where(UserSuggestion.user_id == user.id).order_by(UserSuggestion.id.desc()).limit(limit))]
+        from .admin_operations_models import FeedbackWork
+        rows=list(db.scalars(select(UserSuggestion).where(UserSuggestion.user_id == user.id).order_by(UserSuggestion.id.desc()).limit(limit)))
+        work={r.suggestion_id:r.status for r in db.scalars(select(FeedbackWork).where(FeedbackWork.suggestion_id.in_([r.id for r in rows])))}
+        return [summary(row)|{'workflow_status':work.get(row.id,'triage')} for row in rows]
 
     @router.get("/admin")
     def listing(before: int | None = Query(None, ge=1), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -97,6 +101,8 @@ def register_auth(current_user_dependency):
         if not row.read_at:
             row.read_at = datetime.now(timezone.utc); row.read_by = user.id
             event(db, row, row.user_id, "read", f"Gelişim fikriniz ({row.id:04d}) LidyaChat yönetimi tarafından okundu. Fikirlerinize önem veriyoruz.")
+        from .admin_operations import event as operation_event,acknowledged
+        if not acknowledged(db,user,row.id):operation_event(db,user,'feedback',row.id,'feedback_ack','Öneri mevcut okuma akışında incelendi ve onaylandı.')
         session.pending_id = None
         db.commit()
         return {"read": True, "id": row.id}

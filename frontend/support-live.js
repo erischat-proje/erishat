@@ -4,7 +4,7 @@
   const token=()=>window.ErisPlatform?.getAccessToken?.()||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||localStorage.getItem('token')||'';
   let identity='',role=null,roleAt=0,heartbeatAt=0,current=null,box=null,polling=false,restrictedUntil=0,restrictionBox=null,adminList=false;
   const announced=new Set();
-  const req=async(path,opt={})=>{const response=await fetch(api()+path,{...opt,headers:{'Content-Type':'application/json',Authorization:'Bearer '+token(),...(opt.headers||{})}});const result=await response.json().catch(()=>({}));if(!response.ok){if(result.detail?.code==='support_restricted')restrict(result.detail.remaining_seconds);throw new Error(typeof result.detail==='string'?result.detail:result.detail?.message||'İşlem başarısız');}return result;};
+  const req=async(path,opt={})=>{const bearer=token();const response=await fetch(api()+path,{...opt,headers:{'Content-Type':'application/json',Authorization:'Bearer '+bearer,...(opt.headers||{})}});const result=await response.json().catch(()=>({}));if(bearer!==token())throw new Error('Oturum değişti.');if(!response.ok){if(result.detail?.code==='support_restricted')restrict(result.detail.remaining_seconds);throw new Error(typeof result.detail==='string'?result.detail:result.detail?.message||'İşlem başarısız');}return result;};
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=id=>'#'+String(id).padStart(4,'0');
   function styles(){if(document.getElementById('supportLiveStyle'))return;const s=document.createElement('style');s.id='supportLiveStyle';s.textContent=`
@@ -57,6 +57,6 @@
   document.addEventListener('click',e=>{if(Date.now()>=restrictedUntil||e.target.closest('.support-window,.support-lightbox')||e.target.closest('.eris-admin-overlay,.eris-admin-menu'))return;const action=e.target.closest('button,a,[onclick]');if(!action)return;e.preventDefault();e.stopImmediatePropagation();showRestriction();},true);
   document.addEventListener('visibilitychange',()=>{if(role&&token())req('/support/live/presence',{method:'POST',body:JSON.stringify({active:!document.hidden})}).catch(()=>{});if(!document.hidden)pulse();});
   window.addEventListener('erischat:auth',()=>{if(!token()){identity='';role=null;announced.clear();restrictedUntil=0;restrictionBox?.remove();dismiss();document.querySelectorAll('.support-window,.support-lightbox').forEach(p=>p.remove());adminList=false;loadList();}else pulse();});
-  window.ErisSupport={open(){adminList=false;mount();window.showView?.('support');loadList();},openAdmin(){adminList=true;mount();window.showView?.('support');loadList();pulse();},load:loadList,restrict};
+  window.ErisSupport={openAssigned:id=>openTicket(id,true),open(){adminList=false;mount();window.showView?.('support');loadList();},openAdmin(){adminList=true;mount();window.showView?.('support');loadList();pulse();},load:loadList,restrict};
   window.addEventListener('load',()=>{mount();pulse();});window.ErisApiTransport.poll(pulse,5000);setInterval(updateRestriction,1000);
 })();

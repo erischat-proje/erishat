@@ -68,7 +68,7 @@ from . import case_routes
 from . import emergency_routes
 from . import finance_audit
 from . import fraud_review
-from . import management_workflows, admin_workspace
+from . import management_workflows, admin_workspace, admin_operations
 from .management_readiness import MANAGEMENT_API_VERSION, check_management_ready
 from . import role_badges
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
@@ -532,6 +532,7 @@ app.include_router(emergency_routes.register_auth(current_user))
 app.include_router(finance_audit.register_auth(current_user))
 app.include_router(fraud_review.register_auth(current_user))
 app.include_router(management_workflows.register_auth(current_user))
+app.include_router(admin_operations.register_auth(current_user))
 app.include_router(admin_workspace.register_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id, role: broadcast_role_badge(user_id, role)))
 app.include_router(dm_folder_router)
 app.include_router(call_router)

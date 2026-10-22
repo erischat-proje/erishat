@@ -361,3 +361,21 @@ def test_history_remains_after_all_da_reviews(env):
     assert call('da','/admin/records')['total']==0
     assert call('u','/history')['items'][0]['id']==id
     assert call('u','/history/'+id)['status']=='cancelled'
+
+
+def test_management_queue_filters_preserve_assignment_dates_and_wallet(env):
+    engine,client,call=env
+    u=new(call,'u');v=new(call,'v');w=new(call,'w')
+    with Session(engine) as db:
+        db.get(PaymentRequest,u['id']).transaction_reference='FIXTURE-REFERENCE-123'
+        row=db.get(PaymentRequest,v['id']);row.status='connecting';row.assigned_to='da2'
+        row=db.get(PaymentRequest,w['id']);row.status='cancelled';row.created_at=datetime.now(timezone.utc)-timedelta(days=45)
+        db.commit()
+    items=call('da','/admin/requests?records=true&q=1000000000')['items'];assert [r['id'] for r in items]==[u['id']]
+    assert [r['id'] for r in call('da','/admin/requests?records=true&q=FIXTURE-REFERENCE-123')['items']]==[u['id']]
+    assert [r['id'] for r in call('da2','/admin/requests?assignment=mine')['items']]==[v['id']]
+    assert {r['id'] for r in call('da','/admin/requests?records=true&days=7')['items']}=={u['id'],v['id']}
+    assert call('da','/admin/requests?status=cancelled')['items']==[]
+    assert [r['id'] for r in call('da','/admin/requests?records=true&status=cancelled')['items']]==[w['id']]
+    call('fa','/admin/requests?records=true&q=1000000000',expect=403)
+    with Session(engine) as db:assert db.get(User,'u').lidya==0 and db.get(User,'v').lidya==0
