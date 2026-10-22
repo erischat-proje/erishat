@@ -9,6 +9,27 @@ from .vip_membership_models import VipPurchaseReceipt
 from .vip_membership import sync
 from pydantic import BaseModel
 
+# Add to backend/app/upload_rewards.py after 'from pydantic import BaseModel'
+from .platform_models import Notification
+
+
+def notify_purchase(db, uid, amount, at):
+    """Record one level-up event for a unique approved paid purchase. Never touches Lidya."""
+    targets = thresholds()
+    if not targets:
+        return
+    receipts = db.scalars(select(VipPurchaseReceipt).where(VipPurchaseReceipt.user_id == uid)).all()
+    previous = compute(receipts, at, targets)['level']
+    current = compute(receipts, at, targets)['rolling_purchased'] + max(0, int(amount))
+    level = sum(current >= x for x in targets)
+    if level > previous:
+        title = NAMES[level-1]
+        db.add(Notification(
+            user_id=uid, kind='upload_reward_upgrade',
+            title=f'Artık {title} oldun!',
+            body=f'{title} seviyesine yükseldin! Ödüllerini Profil → Yükleme Ödülleri bölümünden alabilirsin.',
+        ))
+
 router = APIRouter(prefix='/v1/me/upload-rewards', tags=['upload-rewards'])
 NAMES = ('Şövalye', 'Kont', 'Dük', 'Kral')
 COUNTS = (20, 20, 21, 24)
@@ -105,4 +126,22 @@ def register_auth(current_user):
             db.delete(selection)
             db.commit()
         return {'selected_reward': None}
+    @router.get('/alerts')
+    def reward_alerts(db: Session = Depends(get_db), user = Depends(current_user)):
+        rows = db.scalars(select(Notification).where(
+            Notification.user_id == user.id,
+            Notification.kind == 'upload_reward_upgrade',
+            Notification.read == False,
+        ).order_by(Notification.id.asc()).limit(5)).all()
+        return {'events': [{'id': r.id, 'kind': r.kind, 'title': r.title, 'body': r.body} for r in rows]}
+
+    @router.post('/alerts/{event_id}/ack')
+    def ack_alert(event_id: int, db: Session = Depends(get_db), user = Depends(current_user)):
+        row = db.get(Notification, event_id)
+        if not row or row.user_id != user.id or row.kind != 'upload_reward_upgrade':
+            raise HTTPException(status_code=404, detail='Bildirim bulunamadı.')
+        row.read = True
+        db.commit()
+        return {'ok': True}
+
     return router
