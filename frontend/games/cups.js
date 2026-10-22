@@ -256,7 +256,7 @@
           };
         });
       } catch (err) {
-        console.error('[ErisChat Cups] Animasyon hatası:', err);
+        console.error('[LidyaChat Cups] Animasyon hatası:', err);
         if (table.isConnected) {
           status.textContent = '⚠️ Karıştırma tamamlanamadı: ' +
             (err?.message || 'Bilinmeyen hata');

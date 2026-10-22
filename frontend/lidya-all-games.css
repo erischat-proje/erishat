@@ -101,16 +101,14 @@ html body #erisGamesModal#erisGamesModal :is(.eg-crash-bets,.eg-crash-stats,[dat
 html body #erisGamesModal#erisGamesModal .eg-crash-stats-grid>div { background:var(--lg-raised)!important; }
 html body #erisGamesModal#erisGamesModal .eg-crash-stats-grid :is(small,strong) { color:var(--lg-ink)!important; }
 /* Room-game surfaces: preserve player colors, pips and all board coordinates. */
-html body :is(.uno-root,.o101-root,.ludo-dialog) { background:var(--lg-bg)!important;color:var(--lg-ink)!important;border-color:var(--lg-line)!important; }
-html body :is(.uno-header,.o101-head,.ludo-toolbar) { background:var(--lg-panel)!important;color:var(--lg-ink)!important;border-color:var(--lg-line)!important; }
-html body :is(.uno-header,.o101-head,.ludo-toolbar) :is(strong,small,span) { color:var(--lg-ink)!important; }
+html body :is(.uno-root,.ludo-dialog) { background:var(--lg-bg)!important;color:var(--lg-ink)!important;border-color:var(--lg-line)!important; }
+html body :is(.uno-header,.ludo-toolbar) { background:var(--lg-panel)!important;color:var(--lg-ink)!important;border-color:var(--lg-line)!important; }
+html body :is(.uno-header,.ludo-toolbar) :is(strong,small,span) { color:var(--lg-ink)!important; }
 .lg-room-logo { width:32px;height:32px; }
-html body :is(.uno-root,.o101-root,.ludo-dialog) button:not(.uno-card):not(.o101-tile) { color:var(--lg-ink)!important;background:var(--lg-panel)!important;border-color:var(--lg-line)!important; }
-html body :is(.uno-lobby,.uno-content,.uno-bet-strip,.uno-player,.o101-content,.o101-info,.o101-players article,.o101-rack-area,.ludo-ready-card) { color:var(--lg-ink)!important;background:var(--lg-panel)!important;border-color:var(--lg-line)!important; }
-html body :is(.uno-lobby,.uno-player,.o101-players article,.ludo-ready-card) :is(p,small) { color:var(--lg-muted)!important; }
-html body :is(.uno-table,.o101-table) { background:radial-gradient(ellipse,var(--lg-felt),var(--lg-raised))!important;border-color:var(--lg-gold)!important; }
-html body .o101-rack { background:linear-gradient(#bd934d,#715027)!important;border-color:#e7c581!important; }
-html body .o101-tile { background:linear-gradient(135deg,#fff9e8,#dec899)!important;border:1px solid #b08b46!important;box-shadow:inset 0 0 0 2px #fff1cb,0 3px 0 #91703b!important; }
+html body :is(.uno-root,.ludo-dialog) button:not(.uno-card) { color:var(--lg-ink)!important;background:var(--lg-panel)!important;border-color:var(--lg-line)!important; }
+html body :is(.uno-lobby,.uno-content,.uno-bet-strip,.uno-player,.ludo-ready-card) { color:var(--lg-ink)!important;background:var(--lg-panel)!important;border-color:var(--lg-line)!important; }
+html body :is(.uno-lobby,.uno-player,.ludo-ready-card) :is(p,small) { color:var(--lg-muted)!important; }
+html body :is(.uno-table) { background:radial-gradient(ellipse,var(--lg-felt),var(--lg-raised))!important;border-color:var(--lg-gold)!important; }
 html body .uno-card { border-color:#e6c071!important;box-shadow:inset 0 0 0 3px #ffe5a6,0 5px 10px #0004!important; }
 html body .uno-card::after { border-color:#ffe2a0!important; }
 html body .ludo-board { border:5px solid var(--lg-gold)!important;box-shadow:0 8px 30px var(--lg-shadow),0 0 0 1px #f7d58e!important;border-radius:12px; }

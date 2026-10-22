@@ -46,12 +46,12 @@
     root.innerHTML = `
       <div class="eris-welcome-backdrop">
         <div class="eris-welcome-card">
-          <div class="eris-welcome-logo eris-shared-brand"><img class="eris-brand-image" src="./eris-brand-logo.jpg?v=shared-brand-20261010" alt="ErisChat" width="1600" height="544" decoding="async"></div>
+          <div class="eris-welcome-logo eris-shared-brand"><img class="eris-brand-image" src="./assets/lidyachat-brand/lidya-auth-logo.png?v=welcome-v3" alt="LidyaChat" width="400" height="400" decoding="async"></div>
 
-          <div class="eris-welcome-title">Hoşgeldin ${escapeHtml(user.nickname || '')} 💜</div>
+          <div class="eris-welcome-title">Hoşgeldin ${escapeHtml(user.nickname || '')} 💚</div>
 
           <div class="eris-welcome-text">
-            Selam ${escapeHtml(user.nickname || '')} ErisChat'e hoşgeldin seni aramızda
+            Selam ${escapeHtml(user.nickname || '')} LidyaChat'e hoşgeldin seni aramızda
             gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin
             sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile
             keyifli vakitler.
@@ -74,6 +74,17 @@
 
     const style = document.createElement('style');
     style.textContent = `
+      /* LIDYACHAT_WELCOME_IDENTITY_V3 */
+      #erisWelcomeGift .eris-welcome-logo.eris-shared-brand {
+        display:block;width:min(132px,38vw);height:auto;max-height:none;
+        margin:0 auto 18px;border:0;border-radius:0;background:none;box-shadow:none;
+      }
+      #erisWelcomeGift .eris-welcome-logo .eris-brand-image {
+        display:block;width:100%;height:auto;max-height:none;object-fit:contain;mix-blend-mode:normal;
+      }
+      #erisWelcomeGift .eris-welcome-backdrop {overflow-y:auto;}
+      #erisWelcomeGift .eris-welcome-card {margin:auto;}
+
       #erisWelcomeGift {
         position: fixed;
         inset: 0;

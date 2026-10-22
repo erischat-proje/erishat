@@ -434,7 +434,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         if not existing_member and not ghost:
             entry=RoomChatMessage(room_id=room.id,user_id=user.id,text=user.nickname+' adlı kullanıcı odaya katıldı.')
             db.add(entry);db.flush();db.add(seat_workflow.RoomSystemEntry(message_id=entry.id))
-            entry_payload={'type':'room_chat','system':True,'id':entry.id,'room_id':room.id,'user_id':user.id,'nickname':'ErisChat','text':entry.text,'created_at':datetime.now(timezone.utc).isoformat()}
+            entry_payload={'type':'room_chat','system':True,'id':entry.id,'room_id':room.id,'user_id':user.id,'nickname':'LidyaChat','text':entry.text,'created_at':datetime.now(timezone.utc).isoformat()}
         else:entry_payload=None
         db.commit()
         if entry_payload and join_announcement:await join_announcement(room.id,entry_payload)
@@ -659,7 +659,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             raise HTTPException(403,'Önce ilişki duvar kağıdını koleksiyonunuzdan uygulayın.')
         vip_reward = item['tier'] in ('vip','relationship') or item.get('free',False)
         price = 0 if vip_reward else int(item["price"]) * {1: 1, 7: 5, 30: 18}[payload.days]
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         if not locked_user or int(locked_user.lidya or 0) < price:
             raise HTTPException(status_code=400, detail=f"Bu süre için {price:,} Lidya gerekli")
         now = datetime.now(timezone.utc)
@@ -1169,7 +1169,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             raise HTTPException(status_code=415, detail="MP3, M4A, OGG, FLAC veya WAV müzik seçin")
         track_title = (title.strip() or file.filename or "Müzik")[:128]
         # Aynı kullanıcının paralel isteklerinde hem slot hem Lidya bakiyesi atomik korunmalı.
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         if not locked_user:
             raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
         used_slots = set(db.scalars(select(RoomMusic.slot).where(RoomMusic.room_id == room.id, RoomMusic.user_id == locked_user.id)))

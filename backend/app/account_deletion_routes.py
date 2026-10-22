@@ -30,10 +30,36 @@ def authenticated():
 class Confirm(BaseModel):
     code: str=Field(pattern=r'^\d{6}$')
 
+# ERISCHAT_GOOGLE_EMAIL_ACCOUNT_DELETE_V1
 def account_email(db,user):
-    rows=list(db.scalars(select(AuthIdentity).where(AuthIdentity.user_id==user.id,AuthIdentity.provider=='email',AuthIdentity.verified_at.is_not(None))))
-    if rows:return rows[0].identifier
+    """Return an email proven by this account, including verified Google login.
+
+    Do not trust User.google_email alone: require a verified Google identity
+    whose immutable Google subject belongs to the authenticated user.
+    """
+    identities = list(db.scalars(select(AuthIdentity).where(
+        AuthIdentity.user_id == user.id,
+        AuthIdentity.verified_at.is_not(None),
+    )))
+    for identity in identities:
+        if identity.provider == 'email' and identity.identifier:
+            return identity.identifier.strip().lower()
+    for identity in identities:
+        if (identity.provider == 'google'
+                and user.google_sub
+                and identity.provider_subject == user.google_sub
+                and identity.identifier
+                and user.google_email
+                and identity.identifier.strip().lower() == user.google_email.strip().lower()):
+            return identity.identifier.strip().lower()
     return None
+
+
+def deletion_otp_purpose(user_id: str) -> str:
+    """Per-account OTP purpose; fits auth_otps.purpose VARCHAR(32)."""
+    from hashlib import sha256
+    return 'del:' + sha256(user_id.encode('utf-8')).hexdigest()[:28]
+
 
 def delete_user(db: Session, user: User):
     """Remove user-owned relational rows in one transaction, fail closed on unsafe schemas.
@@ -76,6 +102,16 @@ def delete_user(db: Session, user: User):
             for child, fk in incoming.get(table.name, []):
                 if child.name == 'users':
                     raise RuntimeError('Silme işlemi başka kullanıcı hesabını etkileyebilir')
+                if child.name == table.name:
+                    # A reply-to-comment FK is a self-reference. The database
+                    # can safely delete descendants when the FK itself has
+                    # ON DELETE CASCADE; do not recurse forever in Python.
+                    if (fk.ondelete or '').upper() != 'CASCADE':
+                        raise RuntimeError(
+                            'Self-referential FK requires reviewed delete rule: '
+                            + table.name + '.' + ','.join(e.parent.name for e in fk.elements)
+                        )
+                    continue
                 clauses = []
                 for element in fk.elements:
                     local = element.parent
@@ -102,6 +138,8 @@ def delete_user(db: Session, user: User):
         db.commit()
     except Exception as exc:
         db.rollback()
+        import logging
+        logging.getLogger('uvicorn.error').error('ACCOUNT_DELETE failure_type=%s', type(exc).__name__)
         raise HTTPException(409, 'Hesap güvenli biçimde tamamen silinemedi; hiçbir değişiklik kaydedilmedi.') from exc
 
 
@@ -109,21 +147,22 @@ def install():
     # Routes use the exact authenticated dependency injected by the main app.
     router.routes.clear()
     from fastapi import Depends
+    # ERISCHAT_ACCOUNT_OTP_REQUEST_DIAGNOSTICS_V1
     @router.post('/v1/me/account-deletion/request')
     def request(db:Session=Depends(get_db),user:User=Depends(_current_user)):
         email=account_email(db,user)
         if not email:raise HTTPException(409,'Önce hesabınıza doğrulanmış e-posta ekleyin.')
-        try: otp,code=create_otp(db,'email',email,'delete-account:'+user.id)
+        try: otp,code=create_otp(db,'email',email,deletion_otp_purpose(user.id))
         except ValueError as e:raise HTTPException(429,str(e)) from e
         try:send_email_otp(email,code,'delete-account')
         except Exception as e:
-            db.delete(otp);db.commit();raise HTTPException(503,'Doğrulama e-postası gönderilemedi.') from e
+            db.delete(otp);db.commit();raise HTTPException(503,'Doğrulama e-postası gönderilemedi. E-posta servisinin Gmail/SMTP ayarlarını kontrol edin.') from e
         return {'accepted':True}
     @router.post('/v1/me/account-deletion/confirm')
     def confirm(payload:Confirm,db:Session=Depends(get_db),user:User=Depends(_current_user)):
         email=account_email(db,user)
         if not email:raise HTTPException(409,'Doğrulanmış e-posta bulunamadı.')
-        otp=db.scalar(select(AuthOTP).where(AuthOTP.provider=='email',AuthOTP.identifier==email,AuthOTP.purpose=='delete-account:'+user.id,AuthOTP.consumed_at.is_(None)).order_by(AuthOTP.created_at.desc()))
+        otp=db.scalar(select(AuthOTP).where(AuthOTP.provider=='email',AuthOTP.identifier==email,AuthOTP.purpose==deletion_otp_purpose(user.id),AuthOTP.consumed_at.is_(None)).order_by(AuthOTP.created_at.desc()))
         if otp is None or not verify_otp(db,otp,payload.code):raise HTTPException(400,'Kod geçersiz veya süresi dolmuş.')
         delete_user(db,user)
         return {'deleted':True}

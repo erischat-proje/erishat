@@ -1,0 +1,79 @@
+name: LidyaChat Security Checks
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [auth-unified-v1]
+    paths:
+      - 'backend/**'
+      - 'frontend/screen-awake.js'
+      - 'frontend/settings-live.js'
+      - 'android-native/**'
+      - 'Caddyfile'
+      - 'tests/security_guard/**'
+      - 'tests/test_security_center_dm_id.py'
+      - '.github/workflows/lidyachat-security.yml'
+permissions:
+  contents: read
+jobs:
+  api-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: security_test
+          POSTGRES_PASSWORD: isolated_test_only
+          POSTGRES_DB: lidyachat_security_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U security_test -d lidyachat_security_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      SECURITY_APP_ROOT: '.'
+      SECURITY_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidyachat_security_test
+      WAKE_SCRIPT: frontend/screen-awake.js
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /backend/
+            /tests/security_guard/
+            /tests/test_security_center.py
+            /tests/test_security_center_dm_id.py
+            /frontend/screen-awake.js
+            /frontend/settings-live.js
+            /Caddyfile
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r backend/requirements.txt httpx2 pip-audit pytest
+      - run: python tests/security_guard/test_integration.py
+      - run: python tests/security_guard/test_pg_wallet.py
+      - run: python tests/security_guard/test_transport.py
+      - run: python tests/security_guard/test_counters.py
+      - run: python tests/security_guard/test_email_policy.py
+      - run: PYTHONPATH=backend python -m pytest -q tests/test_security_center.py tests/test_security_center_dm_id.py
+      - run: node tests/security_guard/test_wake.cjs
+      - run: python -m pip_audit -r backend/requirements.txt --progress-spinner off
+      - name: Validate Caddy configuration
+        run: docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+  android-java:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: android-native
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile debug Java without signing credentials
+        run: |
+          chmod +x android-native/gradlew
+          android-native/gradlew -p android-native :app:compileDebugJavaWithJavac --no-daemon

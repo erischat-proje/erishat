@@ -96,7 +96,7 @@ def register_auth(current_user_dependency):
             raise HTTPException(409, "Önce önerinin detayını açın")
         if not row.read_at:
             row.read_at = datetime.now(timezone.utc); row.read_by = user.id
-            event(db, row, row.user_id, "read", f"Gelişim fikriniz ({row.id:04d}) ErisChat yönetimi tarafından okundu. Fikirlerinize önem veriyoruz.")
+            event(db, row, row.user_id, "read", f"Gelişim fikriniz ({row.id:04d}) LidyaChat yönetimi tarafından okundu. Fikirlerinize önem veriyoruz.")
         session.pending_id = None
         db.commit()
         return {"read": True, "id": row.id}

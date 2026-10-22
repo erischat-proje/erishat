@@ -28,7 +28,7 @@
   const modal = (title, body) => {
     const el = document.createElement('div');
     el.style.cssText='position:fixed;inset:0;z-index:500;background:#020107ed;display:flex;align-items:flex-end;justify-content:center';
-    el.innerHTML=`<div style="width:min(560px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">ERISCHAT • CUSTOMER DEMO</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div>${body}</div></div>`;
+    el.innerHTML=`<div style="width:min(560px,100%);max-height:94vh;overflow:auto;background:#0a0810;color:#fff;border:1px solid #ffffff18;border-radius:26px 26px 0 0;padding:16px;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:8px;letter-spacing:1.3px;color:#938a9f">LİDYACHAT • CUSTOMER DEMO</div><h2 style="margin:4px 0 12px;font-size:20px">${esc(title)}</h2></div><button data-close style="border:0;border-radius:11px;background:#ffffff0b;color:#fff;width:36px;height:36px">×</button></div><div>${body}</div></div>`;
     document.body.append(el);el.querySelector('[data-close]').onclick=()=>el.remove();return el;
   };
   const card = (html) => `<div style="background:#12101a;border:1px solid #ffffff12;border-radius:15px;padding:11px">${html}</div>`;
@@ -48,7 +48,7 @@
 
   async function vipDemo() {
     let me={}, v={level:0};
-    try {[me,v]=await Promise.all([api('/me'),api('/me/vip')]);} catch(e) { console.warn('[ErisChat demo] VIP data',e.message); }
+    try {[me,v]=await Promise.all([api('/me'),api('/me/vip')]);} catch(e) { console.warn('[LidyaChat demo] VIP data',e.message); }
     const gender=me.gender||'unspecified', level=Number(v.level||0);
     const body=document.createElement('div');
     body.innerHTML=`<div style="padding:14px;border-radius:17px;background:linear-gradient(145deg,#15101d,#0d0a12);border:1px solid #ffffff12;margin-bottom:10px"><b style="font-size:15px">✨ VIP 1 → VIP 12</b><small style="display:block;color:#938a9f;margin-top:5px">Mevcut: VIP ${level} • Cinsiyet: ${genderName(gender)}. Her seviye kendi erkek/kadın avatarını ve VIP çerçevesini gösterir; seviyeye bağlı sistem ayrıcalıkları aşağıda görünür.</small></div><div id="vipGender" style="display:flex;gap:6px;margin-bottom:9px"></div><div id="vipTable"></div>`;

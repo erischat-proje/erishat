@@ -86,7 +86,7 @@
     let d=s.querySelector('#erisRoomContribution');
     if(d)return d;
     d=document.createElement('div');d.id='erisRoomContribution';d.hidden=true;
-    d.innerHTML='<div class="rc-shade"></div><section class="rc-panel" role="dialog" aria-modal="true" aria-label="Oda katkısı"><header><div><small>ERISCHAT · ODA</small><h2>Oda katkısı</h2></div><button class="rc-close" type="button" aria-label="Kapat">×</button></header><nav class="rc-periods" aria-label="Sıralama dönemi"></nav><div class="rc-list" aria-live="polite"></div></section>';
+    d.innerHTML='<div class="rc-shade"></div><section class="rc-panel" role="dialog" aria-modal="true" aria-label="Oda katkısı"><header><div><small>LİDYACHAT · ODA</small><h2>Oda katkısı</h2></div><button class="rc-close" type="button" aria-label="Kapat">×</button></header><nav class="rc-periods" aria-label="Sıralama dönemi"></nav><div class="rc-list" aria-live="polite"></div></section>';
     d.querySelector('h2').textContent=window.__erisCurrentCoupleId?'Çift hediyesi':'Oda katkısı';s.appendChild(d);
     d.querySelector('.rc-close').onclick=close;
     d.querySelector('.rc-shade').onclick=close;

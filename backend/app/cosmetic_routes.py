@@ -106,7 +106,7 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         house = owned_house(db, user.id, lock=True)
         relationship_rewards.ensure_rewards(db, house)
     else:
-        db.scalar(select(User).where(User.id == user.id).with_for_update())
+        db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
     owned = {(r.cosmetic_type, r.asset_key) for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id == user.id))}
     leases={(r.cosmetic_type,r.asset_key):r for r in db.scalars(select(CosmeticLease).where(CosmeticLease.user_id==user.id))}
     # Rental assets participate in collection but are never made permanently owned.
@@ -228,7 +228,7 @@ def claim_vip_level_rewards(level: int, user=Depends(current_cosmetic_user), db:
 def equip_vip_entrance(payload: dict, user=Depends(current_cosmetic_user), db: Session = Depends(get_db)):
     from sqlalchemy import select
     from .models import User
-    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
     key = payload.get("asset_key")
     current = max(0, min(12, vip_level(db, user.id)))
     from .shop_expansion import find as shop_find,owns
@@ -450,6 +450,6 @@ def apply_wallpaper(payload: dict, user=Depends(current_cosmetic_user), db: Sess
 def reset_cosmetic(payload:dict,user=Depends(current_cosmetic_user),db:Session=Depends(get_db)):
     kind=payload.get('cosmetic_type')
     if kind not in ('bubble','title','profile'):raise HTTPException(422,'Geçersiz görünüm türü.')
-    user=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    user=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     setattr(user,kind+'_asset',None);db.commit()
     return {'ok':True,'cosmetic_type':kind}

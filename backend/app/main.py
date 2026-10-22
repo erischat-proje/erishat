@@ -37,6 +37,9 @@ from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Mes
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
+from .group_models import MessageGroup
+from . import group_routes
+from .staff_visibility import is_staff
 from .social_privacy import social_flags, require_social_visible
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
 from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
@@ -50,6 +53,7 @@ from .referral_routes import install_routes as install_referral_routes, router a
 from . import relationship_routes, ludo_live, okey101_live, uno_live
 from .family_routes import register_family_auth, router as family_router
 from .support_models import SupportTicket
+from .announcement_identity import announcement_payloads
 from .admin_models import AdminRole, AdminAuditLog, SupportMessage, SupportAssignment, UserBan, ChatBan, RoomAdminBan, ApplicationGap, SystemAnnouncement
 from .moderation import active_ban, require_feature, profile_notice, require_chat_write, chat_ban_detail
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
@@ -60,6 +64,10 @@ from . import support_workflow, ban_workflow, purchase_routes, seat_workflow, di
 from .room_ban_rules import active_room_user_ban, require_room_access
 from .suggestion_routes import register_auth as register_suggestion_auth, router as suggestion_router
 from .admin_routes import register_admin_auth, router as admin_router
+from . import case_routes
+from . import emergency_routes
+from . import finance_audit
+from . import fraud_review
 from . import role_badges
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
@@ -68,6 +76,8 @@ from .schemas import ConversationCreate, ConversationOut, MessageCreate, Message
 from .services import MessageService
 from .performance_queries import message_context, conversation_page
 from .performance import install_diagnostics, ensure_query_indexes
+from .security_guard import SecurityGuard
+from .security_limits import SecurityCounter, enforce_account, enforce_limit
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
@@ -103,7 +113,7 @@ def migrate_legacy_avatars(db: Session) -> None:
         db.execute(text("DELETE FROM user_cosmetics WHERE cosmetic_type='avatar' AND asset_key=:old"), {"old": old})
     db.commit()
 
-app = FastAPI(title="ErisChat API", version="1.0.3-optimization-20261003")
+app = FastAPI(docs_url=None if settings.environment == "production" else "/docs", redoc_url=None if settings.environment == "production" else "/redoc", openapi_url=None if settings.environment == "production" else "/openapi.json", title="LidyaChat API", version="1.0.3-optimization-20261003")
 install_diagnostics(app)
 app.include_router(cosmetic_router)
 app.include_router(vip_privileges.router)
@@ -111,7 +121,14 @@ from . import shop_expansion
 app.include_router(shop_expansion.router)
 
 origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins or ["*"], allow_credentials=bool(origins and "*" not in origins), allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview", "X-Request-ID", "Retry-After", "Server-Timing"])
+# Browser origins are explicit; native clients without Origin still authenticate normally.
+security_origins = sorted(set([v for v in origins if v != "*"] + [
+    "https://lidyachat.com", "https://www.lidyachat.com", "https://erischat.com", "https://www.erischat.com",
+    "https://erischat-web-v2-production.up.railway.app", "https://erischat-production-83c4.up.railway.app",
+    "https://erischat-production-850f.up.railway.app"]))
+app.add_middleware(SecurityGuard, allowed_origins=security_origins, session_validator=lambda token: websocket_session_active(token))
+app.add_middleware(CORSMiddleware, allow_origins=security_origins, allow_credentials=False, allow_methods=["GET","HEAD","POST","PUT","PATCH","DELETE","OPTIONS"], allow_headers=["*"], expose_headers=["X-Erischat-Expires-In", "X-Erischat-Preview", "X-Request-ID", "Retry-After", "Server-Timing"])
+
 
 
 def ensure_system_data_columns() -> None:
@@ -130,6 +147,9 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS device_info VARCHAR(512)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email VARCHAR(320)"))
+        conn.execute(text("ALTER TABLE families ADD COLUMN IF NOT EXISTS closed BOOLEAN NOT NULL DEFAULT false"))
+        # Remove legacy cancelled announcements; administrative audit records remain intact.
+        conn.execute(text("DELETE FROM system_announcements WHERE active = false"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(64)"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date VARCHAR(10)"))
@@ -166,7 +186,7 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_asset VARCHAR(255)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS public_id VARCHAR(12)"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id VARCHAR(64)"))
-        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'ErisChat Odası'"))
+        conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS name VARCHAR(64) NOT NULL DEFAULT 'LidyaChat Odası'"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1"))
         conn.execute(text("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS seat_count INTEGER NOT NULL DEFAULT 12"))
         conn.execute(text("ALTER TABLE rooms ALTER COLUMN seat_count SET DEFAULT 12"))
@@ -266,7 +286,7 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 
 
 def _initialize_database() -> None:
-    logger.info("ErisChat API startup: environment=%s", settings.environment)
+    logger.info("LidyaChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
     ensure_log_files()
     ensure_system_data_columns()
@@ -286,7 +306,7 @@ def _initialize_database() -> None:
         sync_system_registries(db)
         bootstrap_initial_developer_admins(db)
     ensure_query_indexes()
-    logger.info("ErisChat API startup complete")
+    logger.info("LidyaChat API startup complete")
 
 
 async def _ephemeral_cleanup_loop():
@@ -304,9 +324,16 @@ async def _ephemeral_cleanup_loop():
 @app.on_event("startup")
 async def start_ephemeral_cleanup():
     app.state.ephemeral_cleanup_task = asyncio.create_task(_ephemeral_cleanup_loop())
+    from .email_policy import refresh_loop
+    app.state.email_policy_task = asyncio.create_task(refresh_loop())
 
 @app.on_event("shutdown")
 async def stop_ephemeral_cleanup():
+    email_task = getattr(app.state,"email_policy_task",None)
+    if email_task:
+        email_task.cancel()
+        try:await email_task
+        except asyncio.CancelledError:pass
     task = getattr(app.state, "ephemeral_cleanup_task", None)
     if task:
         task.cancel()
@@ -401,12 +428,20 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
         raise HTTPException(status_code=403,detail=ban_until(account_ban))
     vip_membership.sync(db,user.id)
     db.commit()
+    enforce_account(user.id,request)
     return user
 
+
+from . import security_sessions
+app.include_router(security_sessions.register_auth(current_user))
+from . import security_center
+app.include_router(security_center.register_auth(current_user))
 
 location_calls.register_auth(current_user)
 bind_account_delete_auth(current_user)
 app.include_router(account_deletion_router)
+group_routes.register_auth(current_user)
+app.include_router(group_routes.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -490,6 +525,10 @@ app.include_router(referral_router)
 app.include_router(family_router)
 app.include_router(support_router)
 app.include_router(admin_router)
+app.include_router(case_routes.register_auth(current_user))
+app.include_router(emergency_routes.register_auth(current_user))
+app.include_router(finance_audit.register_auth(current_user))
+app.include_router(fraud_review.register_auth(current_user))
 app.include_router(dm_folder_router)
 app.include_router(call_router)
 
@@ -513,16 +552,12 @@ def ready() -> dict[str, str]:
 @app.get("/v1/announcements")
 def list_announcements(limit: int = Query(default=20, ge=1, le=50), db: Session = Depends(get_db), user: User = Depends(current_user)):
     rows = db.scalars(select(SystemAnnouncement).where(SystemAnnouncement.active.is_(True)).order_by(SystemAnnouncement.created_at.desc()).limit(limit)).all()
-    return [{"id": row.id, "title": "ErisChat Yönetim", "message": row.message, "created_at": row.created_at} for row in rows]
+    return announcement_payloads(db, rows)
 
 
 @app.post("/v1/users", response_model=SessionOut, status_code=201)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> SessionOut:
-    try:
-        user = create_anonymous_user(db, payload.nickname.strip(), payload.avatar, payload.gender)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return SessionOut(access_token=create_session(db, user), user=user)
+    raise HTTPException(410, detail="Doğrulamasız kayıt kapatıldı. Google veya doğrulanmış e-posta ile kayıt olun.")
 
 
 class GoogleLoginPayload(BaseModel):
@@ -561,6 +596,8 @@ def request_otp(
 ) -> dict[str, object]:
     identifier = payload.identifier.strip().lower() if payload.provider == "email" else payload.identifier.strip()
 
+    enforce_limit('otp:'+payload.provider+':'+identifier, 'otp_delivery', 6, 600)
+
     try:
         otp, code = create_otp(
             db,
@@ -581,10 +618,10 @@ def request_otp(
         except Exception as exc:
             db.delete(otp)
             db.commit()
-            logger.exception("Email OTP gönderilemedi: %s", exc)
+            logger.error("OTP delivery failed kind=%s", type(exc).__name__)
             raise HTTPException(
                 status_code=503,
-                detail=f"MAIL_ERROR: {exc}",
+                detail="Doğrulama e-postası şu anda gönderilemiyor. Biraz sonra yeniden deneyin.",
             ) from exc
 
     elif payload.provider == "phone":
@@ -596,14 +633,7 @@ def request_otp(
             detail="Telefon doğrulama servisi henüz yapılandırılmadı.",
         )
 
-    logger.info(
-        "OTP requested provider=%s purpose=%s identifier=%s expires_at=%s ip=%s",
-        payload.provider,
-        payload.purpose,
-        identifier,
-        otp.expires_at.isoformat(),
-        request.client.host if request.client else None,
-    )
+    logger.info("OTP requested provider=%s purpose=%s", payload.provider, payload.purpose)
 
     return {
         "accepted": True,
@@ -690,7 +720,7 @@ def verify_otp_code(
             if existing_identity is not None:
                 if existing_identity.user_id != link_user.id:
                     raise ValueError(
-                        "Bu email başka bir ErisChat hesabına bağlı."
+                        "Bu email başka bir LidyaChat hesabına bağlı."
                     )
 
                 existing_identity.verified_at = datetime.now(timezone.utc)
@@ -903,7 +933,7 @@ def complete_onboarding(
         db.add(welcome_conversation)
         db.add(ConversationMember(conversation_id=welcome_conversation_id, user_id=user.id))
         db.flush()
-        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Selam {user.nickname} ErisChat'e hoşgeldin seni aramızda gördüğümüz için çok mutlu olduk. Umarım uygulamada keyifli vakit geçirirsin sana hoşgeldin hediyeleri veriyoruz uygulamada vakit geçirmen dileği ile keyifli vakitler."))
+        db.add(Message(conversation_id=welcome_conversation_id, sender_id=user.id, text=f"Merhaba {user.nickname}! LidyaChat ailesine hoş geldin! 💚✨ Yeni arkadaşlıklar, keyifli sohbetler ve sürpriz hediyeler seni bekliyor. Profilini tamamla, odaları keşfet ve topluluğumuza katıl. Güzel anılar biriktirmen dileğiyle! — LidyaChat Ekibi"))
 
 
     db.commit()
@@ -1036,7 +1066,16 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
-    family_name = db.scalar(select(Family.name).where(Family.chat_conversation_id == conversation_id))
+    family = db.scalar(select(Family).where(Family.chat_conversation_id == conversation_id))
+    family_name = family.name if family and not family.closed else None
+    avatar_url = f'/families/{family.id}/avatar' if family_name and db.get(FamilyVisual, family.id) else None
+    if conversation.type == 'group':
+        from .group_models import MessageGroup
+        group = db.get(MessageGroup, conversation_id)
+        if group and group.image:
+            avatar_url = f'/message-groups/{conversation_id}/image'
+    else:
+        group = None
     member_details = []
     for member in conversation.members:
         member_user = db.get(User, member.user_id)
@@ -1046,8 +1085,8 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             "avatar_asset": member_user.avatar_asset if member_user else None,
             "frame_asset": member_user.frame_asset if member_user else None})
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
-        "created_at": conversation.created_at, "members": member_details,
-        "name": (family_name + " aile sohbeti") if family_name else ("ErisChat" if conversation.type == "welcome" else None)}
+        "created_at": conversation.created_at, "members": member_details, "avatar_url": avatar_url,
+        "name": (family_name + " aile sohbeti") if family_name else (group.name if group else "LidyaChat" if conversation.type == "welcome" else None)}
 
 
 def _message_notifications_allowed(db: Session, recipient_id: str, conversation_id: str) -> bool:
@@ -1129,10 +1168,12 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         if repo.get(conversation_id).type == "welcome":
             raise HTTPException(status_code=400, detail="Bu konuşmaya yanıt verilemez")
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
+    if repo.get(conversation_id).type == "welcome":
+        raise HTTPException(status_code=400, detail="Bu sistem sohbetine yanıt gönderilemez.")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     require_feature(db, user.id, [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
-    if not is_family_conversation:
+    if not is_family_conversation and not db.get(MessageGroup, conversation_id):
         recipient_ids = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
         if len(recipient_ids) == 1:
             target_id = recipient_ids[0]
@@ -1147,7 +1188,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
             if restriction and restriction.enabled and not unlocked:
                 gift_price = GIFT_CATALOG.get(restriction.gift_key, 0)
                 raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {restriction.gift_key} ({gift_price} Lidya) göndermelisin.")
-    first_private_request = _dm_request_gate(db, user.id, conversation_id, first_text=True)
+    first_private_request = False if db.get(MessageGroup, conversation_id) else _dm_request_gate(db, user.id, conversation_id, first_text=True)
     try:
         message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
         conversation = db.get(Conversation, conversation_id)
@@ -1207,14 +1248,16 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
 def _message_out(db: Session, message: Message, viewer_id: str, context=None) -> dict:
     context = context if context is not None else message_context(db, [message], viewer_id)
     sender=context.get('senders',{}).get(message.sender_id)
+    # LIDYACHAT_WELCOME_IDENTITY_V3
+    is_system = str(message.conversation_id).startswith("welcome:")
     pinned = message.id in context['pinned']
     gift = context['gifts'].get(message.id)
     media = context['media'].get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
-        "sender_avatar":sender.avatar if sender else None, "sender_avatar_asset":sender.avatar_asset if sender else None,
-        "sender_frame_asset":sender.frame_asset if sender else None, "bubble_asset":context.get("bubbles",{}).get(message.sender_id),
+        "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
+        "sender_frame_asset":None if is_system else (sender.frame_asset if sender else None), "bubble_asset":None if is_system else context.get("bubbles",{}).get(message.sender_id),
         "text": message.text, "created_at": message.created_at,
-        "is_read": message.sender_id == viewer_id and bool(context["read"] >= message.id),
+        "is_read": not is_system and message.sender_id == viewer_id and bool(context["read"] >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
         "gift_id": GIFT_META.get(gift.gift_key, {}).get("id") if gift else None,
         "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,
@@ -1516,7 +1559,7 @@ def delete_social_post(post_id: int, db: Session = Depends(get_db), user: User =
 @app.put("/v1/posts/{post_id}/pin")
 def pin_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
     # Serialize competing pin requests for the same profile.
-    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
     post = db.get(SocialPost, post_id)
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini sabitleyebilirsin")
@@ -1925,7 +1968,7 @@ async def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: st
         return {"deleted": 0, "scope": scope}
     rows = list(db.scalars(select(Message).where(Message.id.in_(ids), Message.conversation_id == conversation_id)))
     if scope == "everyone":
-        if any(row.sender_id != user.id for row in rows):
+        if not all_messages and any(row.sender_id != user.id for row in rows):
             raise HTTPException(status_code=403, detail="İki taraf için yalnızca kendi mesajlarınızı silebilirsiniz")
         deleted_ids = [row.id for row in rows]
         for row in rows:
@@ -1998,6 +2041,7 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
 @app.get("/v1/users/{user_id}/fan-leaderboard")
 def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not db.get(User, user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if is_staff(db,user_id): raise HTTPException(status_code=403, detail="Yetkililerin hayran listesi gizlidir.")
     if active_ban(db,user_id): return []
     flags=require_social_visible(db,user_id,user.id,"fans")
     rows=fan_leaderboard(db,user_id)
@@ -2611,7 +2655,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         if not member.ghost and not already_connected:
             if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry'] or entrance_payload.get('shop_entry'):
                 await _broadcast_room_chat(internal_room_id,entrance_payload)
-            await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'ErisChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
+            await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'LidyaChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
         existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})
         if not member.ghost:
             room_rtc_users.setdefault(internal_room_id, {})[websocket] = user.id
@@ -2704,6 +2748,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 continue
             if data.get("type") != "room_chat":
                 continue
+            # LIDYA_CHAT_ACK_V5: acknowledge persistence independently of broadcast fanout.
+            nonce = data.get("client_nonce")
+            nonce = nonce if isinstance(nonce, str) and len(nonce) <= 64 and nonce.isascii() else None
             text_value = str(data.get("text") or "").strip()
             if not text_value or len(text_value) > 500:
                 continue
@@ -2715,6 +2762,9 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 await websocket.send_json(result["error"])
                 continue
             payload = result["payload"]
+            # The ACK confirms database commit, not delivery to every listener.
+            if nonce:
+                await _bounded_send(websocket, {"type":"room_chat_ack","client_nonce":nonce,"message_id":payload["id"]})
             await _broadcast_room_chat(internal_room_id, payload)
     except WebSocketDisconnect:
         pass

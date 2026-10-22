@@ -18,6 +18,9 @@ def _send_smtp_message(recipient: str, subject: str, body: str) -> None:
     message["From"] = settings.smtp_from_email
     message["To"] = recipient
     message["Subject"] = subject
+    message["Reply-To"] = settings.smtp_from_email
+    message["Auto-Submitted"] = "auto-generated"
+    message["X-Auto-Response-Suppress"] = "All"
     message.set_content(body)
     context = ssl.create_default_context()
 
@@ -40,13 +43,13 @@ def send_email_otp(
     purpose: str,
 ) -> None:
     subject = (
-        "ErisChat giriş doğrulama kodun"
-        if purpose == "login"
-        else "ErisChat kayıt doğrulama kodun"
+        "LidyaChat hesap silme doğrulama kodun" if purpose == "delete-account"
+        else "LidyaChat giriş doğrulama kodun" if purpose == "login"
+        else "LidyaChat kayıt doğrulama kodun"
     )
 
     body = (
-        f"ErisChat doğrulama kodun: {code}\n\n"
+        f"LidyaChat doğrulama kodun: {code}\n\n"
         "Bu kod 5 dakika geçerlidir. "
         "Kodu kimseyle paylaşma."
     )

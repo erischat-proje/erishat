@@ -6,7 +6,7 @@
     const api = (window.ERISCHAT_API_BASE || API).replace(/\/$/, '');
     return api.replace(/\/v1\/?$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
   };
-  const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : console.warn('[ErisChat room]', message);
+  const toastSafe = message => typeof window.toast === 'function' ? window.toast(message) : console.warn('[LidyaChat room]', message);
   let socket = null;
   let currentRoomId = null;
 

@@ -107,7 +107,7 @@ class PresencePayload(BaseModel):
     active: bool = True
 
 def add_event(db, row, recipient, kind, message):
-    note=Notification(user_id=recipient,kind='ban_'+kind,title='ErisChat Yönetim',body=message)
+    note=Notification(user_id=recipient,kind='ban_'+kind,title='LidyaChat Yönetim',body=message)
     db.add(note); db.flush(); db.add(BanEvent(approval_id=row.id,recipient_id=recipient,notification_id=note.id,kind=kind,message=message))
 
 def audit(db,user,row,action,**details):
@@ -151,7 +151,7 @@ def build_log(db,row,flow):
     requester=db.get(User,row.requester_id); approver=db.get(User,row.decision_by)
     if row.kind=='chat':
         target=db.get(User,row.target_user_id)
-        return '\n'.join(['='*50,'[ERISCHAT SOHBET BAN TALEBİ VE ONAY LOGU]','='*50,
+        return '\n'.join(['='*50,'[LİDYACHAT SOHBET BAN TALEBİ VE ONAY LOGU]','='*50,
             f'SOHBET BAN TALEBİ OLUŞTURAN : [{flow.requester_role} - {requester.nickname} - {requester.public_id}]',
             f'SOHBET BAN TALEBİNİ KABUL EDEN : [{flow.reviewer_role} - {approver.nickname} - {approver.public_id}]',
             'TALEP ZAMANI : '+stamp(row.created_at),'ONAY ZAMANI : '+stamp(flow.decided_at),
@@ -160,14 +160,14 @@ def build_log(db,row,flow):
             'KANIT : '+', '.join(f'/v1/admin/ban-workflow/requests/{row.id}/evidence/{i}' for i in range(len(json.loads(flow.evidence_json))))])
     if row.kind=='room_user':
         room=db.get(Room,row.target_room_id);target=db.get(User,row.target_user_id)
-        return '\n'.join(['='*50,'[ERISCHAT ODA BAN TALEBİ VE ONAY LOGU]','='*50,
+        return '\n'.join(['='*50,'[LİDYACHAT ODA BAN TALEBİ VE ONAY LOGU]','='*50,
             f'ODA BAN TALEBİ OLUŞTURAN : [{flow.requester_role} - {requester.nickname} - {requester.public_id}]',
             f'ODA BAN TALEBİNİ KABUL EDEN : [{flow.reviewer_role} - {approver.nickname} - {approver.public_id}]',
             'TALEP ZAMANI : '+stamp(row.created_at),'ONAY ZAMANI : '+stamp(flow.decided_at),
             'HEDEF ODA : '+room.name+' / '+room.public_id,'BAN TALEP EDİLEN KULLANICI : '+target.nickname+' / '+target.public_id,
             'SÜRE : '+('Süresiz' if row.days is None else str(row.days)+' Gün'),'İŞLEM NEDENİ : '+row.reason,
             'KANIT : '+', '.join(f'/v1/admin/ban-workflow/requests/{row.id}/evidence/{i}' for i in range(len(json.loads(flow.evidence_json))))])
-    return '\n'.join(['='*50,'[ERISCHAT BAN TALEBİ VE ONAY LOGU]' ,'='*50,
+    return '\n'.join(['='*50,'[LİDYACHAT BAN TALEBİ VE ONAY LOGU]' ,'='*50,
         f'BAN TALEBİ OLUŞTURAN : [{flow.requester_role} - {requester.nickname} - {requester.public_id}]',
         f'BAN TALEBİNİ KABUL EDEN : [{flow.reviewer_role} - {approver.nickname} - {approver.public_id}]',
         'TALEP ZAMANI : '+stamp(row.created_at),'ONAY ZAMANI : '+stamp(flow.decided_at),
@@ -203,7 +203,7 @@ def submit(db,user,target,payload,kind,room=None):
     if 'days' not in payload.model_fields_set:raise HTTPException(422,'Ban süresini seçin; süresiz için null gönderin')
     if target.id==user.id:raise HTTPException(403,'Kendi hesabınıza ban uygulayamazsınız')
     levels={'SA':1,'UA':2,'FA':3,'DA':4}
-    if rank=='UA' and levels.get(role(db,target.id),0)>=2:raise HTTPException(403,'Eşit veya üst yöneticiye ban talebi açılamaz')
+    if role(db,target.id) is not None:raise HTTPException(403,'Yönetici hesaplarına yaptırım için ayrı personel disiplin süreci gereklidir')
     row=BanApproval(requester_id=user.id,target_user_id=target.id,target_room_id=room.id if room else None,kind=kind,days=payload.days,reason=payload.reason)
     db.add(row);db.flush();db.refresh(row)
     flow=BanWorkflow(approval_id=row.id,requester_role=rank,evidence_json=json.dumps(payload.evidence),skipped_json='[]',log_text='')

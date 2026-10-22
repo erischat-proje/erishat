@@ -1,4 +1,4 @@
-"""ErisChat ortak canlı At Yarışı motoru."""
+"""LidyaChat ortak canlı At Yarışı motoru."""
 import json
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -48,7 +48,7 @@ def finish(row, db):
         user = db.scalar(
             select(User)
             .where(User.id == user_id)
-            .with_for_update()
+            .with_for_update().execution_options(populate_existing=True)
         )
         if user:
             user.lidya += amount

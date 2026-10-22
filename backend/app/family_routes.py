@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from .db import get_db
@@ -55,7 +55,7 @@ def family_level(balance: int) -> int:
 
 def get_family(db: Session, family_id: str) -> Family:
     family = db.get(Family, family_id)
-    if not family:
+    if not family or family.closed:
         raise HTTPException(status_code=404, detail="Aile bulunamadı")
     return family
 
@@ -86,7 +86,7 @@ def notify_family_managers(db: Session, family: Family, body: str, *, title: str
 def family_payload(db: Session, family: Family) -> dict:
     level = family_level(family.balance)
     count = int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id == family.id)) or 0)
-    rank = int(db.scalar(select(func.count(Family.id)).where(Family.balance > family.balance)) or 0) + 1
+    rank = int(db.scalar(select(func.count(Family.id)).where(Family.closed.is_(False), Family.balance > family.balance)) or 0) + 1
     current_required = FAMILY_LEVELS[level]["required"]
     next_required = FAMILY_LEVELS.get(level + 1, {}).get("required")
     progress = 100 if next_required is None else min(100, max(0, (family.balance - current_required) / max(1, next_required - current_required) * 100))
@@ -142,7 +142,7 @@ def register_family_auth(current_user_dependency):
 
     @router.get("/families/discover")
     def discover_families(limit: int = Query(30, ge=1, le=50), db: Session = Depends(get_db), user: User = auth()):
-        rows=list(db.scalars(select(Family).order_by(Family.balance.desc(),Family.created_at.desc()).limit(limit)))
+        rows=list(db.scalars(select(Family).where(Family.closed.is_(False)).order_by(Family.balance.desc(),Family.created_at.desc()).limit(limit)))
         result=[]
         for family in rows:
             current=membership(db,family.id,user.id) if db.scalar(select(FamilyMember.id).where(FamilyMember.family_id==family.id,FamilyMember.user_id==user.id)) else None
@@ -414,6 +414,25 @@ def register_family_auth(current_user_dependency):
         if chat_member: db.delete(chat_member)
         db.commit(); return {"family_id": family_id, "user_id": member_user_id, "removed": True}
 
+    @router.delete("/families/{family_id}")
+    def close_family(family_id: str, db: Session = Depends(get_db), user: User = auth()):
+        family = db.scalar(select(Family).where(Family.id == family_id).with_for_update())
+        if not family or family.closed:
+            raise HTTPException(404, "Aile bulunamadı")
+        if family.owner_id != user.id:
+            raise HTTPException(403, "Aileyi yalnızca kurucusu kapatabilir")
+        recipients = list(db.scalars(select(FamilyMember.user_id).where(FamilyMember.family_id == family_id)))
+        for uid in recipients:
+            db.add(Notification(user_id=uid, kind="family_closed", title="Aile kapatıldı",
+                                body=f"{family.name} ailesi kurucusu tarafından kapatıldı."))
+        # Retain donation and referral history. Removing membership immediately revokes chat access.
+        family.closed = True
+        db.execute(delete(ConversationMember).where(ConversationMember.conversation_id == family.chat_conversation_id))
+        for model in (FamilyMember, FamilyInvitation, FamilyJoinRequest):
+            db.execute(delete(model).where(model.family_id == family_id))
+        db.commit()
+        return {"family_id": family_id, "family_name": family.name, "closed": True}
+
     @router.delete("/families/{family_id}/leave")
     def leave_family(family_id: str, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id)
@@ -422,13 +441,8 @@ def register_family_auth(current_user_dependency):
             count=int(db.scalar(select(func.count(FamilyMember.id)).where(FamilyMember.family_id==family.id)) or 0)
             if count > 1:
                 raise HTTPException(status_code=400, detail="Aile sahibi ayrılmadan önce Aileyi yönet bölümünden sahipliği devretmelidir")
-            family_name=family.name
-            conversation=db.get(Conversation,family.chat_conversation_id)
-            db.delete(family)
-            if conversation:
-                db.delete(conversation)
-            db.commit()
-            return {"family_id": family_id, "user_id": user.id, "left": True, "family_name": family_name, "dissolved": True}
+            result = close_family(family_id, db, user)
+            return {**result, "user_id": user.id, "left": True, "dissolved": True}
         db.delete(member)
         chat_member = db.scalar(select(ConversationMember).where(
             ConversationMember.conversation_id == family.chat_conversation_id,
@@ -444,7 +458,7 @@ def register_family_auth(current_user_dependency):
     def donate_family(family_id: str, payload: FamilyDonationCreate, db: Session = Depends(get_db), user: User = auth()):
         family = get_family(db, family_id); membership(db, family_id, user.id)
         if payload.amount < 1: raise HTTPException(status_code=400, detail="Geçerli bir bağış miktarı gerekli")
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         locked_family = db.scalar(select(Family).where(Family.id == family_id).with_for_update())
         if not locked_user or not locked_family: raise HTTPException(status_code=404, detail="Aile veya kullanıcı bulunamadı")
         if locked_user.lidya < payload.amount: raise HTTPException(status_code=400, detail="Yetersiz Lidya")

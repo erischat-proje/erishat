@@ -61,7 +61,7 @@ async def broadcast_gift(db,row,user):
     if not link:return
     msg=db.get(RoomChatMessage,row.chat_message_id)
     text=msg.text
-    await _broadcast_room_chat(link.room_id,{'type':'room_chat','system':True,'id':msg.id,'room_id':link.room_id,'user_id':user.id,'nickname':'ErisChat','text':text,'lidya_amount':row.gross,'created_at':datetime.now(timezone.utc).isoformat()})
+    await _broadcast_room_chat(link.room_id,{'type':'room_chat','system':True,'id':msg.id,'room_id':link.room_id,'user_id':user.id,'nickname':'LidyaChat','text':text,'lidya_amount':row.gross,'created_at':datetime.now(timezone.utc).isoformat()})
 
     presentation=gift_presentation(row.gross//row.quantity)
     house=db.get(Couple,row.couple_id)

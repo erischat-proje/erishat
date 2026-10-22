@@ -17,7 +17,7 @@
     const output=shell.querySelector('[data-family-panel]');
     if(!hero||!actions||!output)return;
     const header=document.createElement('div');header.className='ef2-intro';
-    header.innerHTML='<span class="ef2-kicker">ERISCHAT · LİDYA AİLELERİ</span><h2>Aile merkezim</h2><p>Birlikte büyü, aile seviyeni yükselt ve üyelerini yönet.</p>';
+    header.innerHTML='<span class="ef2-kicker">LİDYACHAT · LİDYA AİLELERİ</span><h2>Aile merkezim</h2><p>Birlikte büyü, aile seviyeni yükselt ve üyelerini yönet.</p>';
     shell.prepend(header);
     const stats=document.createElement('div');stats.className='ef2-stats';
     stats.innerHTML='<div><small>AİLE SEVİYESİ</small><strong>'+num(f.level)+'/12</strong></div><div><small>ÜYELER</small><strong>'+num(f.member_count)+'/'+num(f.capacity)+'</strong></div><div><small>SIRALAMA</small><strong>#'+num(f.rank)+'</strong></div><div><small>AİLE DENEYİMİ</small><strong>'+num(f.balance)+'</strong></div>';
@@ -48,7 +48,7 @@
     manage.append(output);
     for(const button of actions.querySelectorAll('button[data-action]')){
       const name=button.dataset.action;
-      const text={members:'Üyeler',chat:'Aile sohbeti',invite:'Üye davet et',applications:'Başvurular',manage:'Aileyi yönet',donate:'Aileye katkı',leave:'Aileden ayrıl'}[name];
+      const text={members:'Üyeler',chat:'Aile sohbeti',invite:'Üye davet et',applications:'Başvurular',manage:'Aileyi yönet',donate:'Aileye katkı',leave:'Aileden ayrıl',close:'Aileyi kapat'}[name];
       if(text)button.textContent=text;
       button.classList.add('ef2-action','ef2-'+name);
       if(name==='members')button.style.display='none';

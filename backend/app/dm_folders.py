@@ -7,7 +7,7 @@ import hmac
 import re
 import secrets
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import Request, APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -25,8 +25,8 @@ def register_auth(dependency):
     _current_user = dependency
 
 
-def _auth_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
-    return _current_user(db, authorization)
+def _auth_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None), request: Request = None):
+    return _current_user(db, authorization, request)
 
 
 def _hash(value: str) -> str:
@@ -64,7 +64,9 @@ def _session(db: Session, user_id: str, token: str | None, scope: str = "access"
     if not token or len(token) > 128:
         return False
     row = db.get(ConversationVaultSession, hashlib.sha256(token.encode()).hexdigest())
-    return bool(row and row.user_id == user_id and row.scope == scope and row.expires_at > datetime.now(timezone.utc))
+    if not row or row.user_id != user_id or row.scope != scope:return False
+    expires = row.expires_at.replace(tzinfo=timezone.utc) if row.expires_at.tzinfo is None else row.expires_at
+    return expires > datetime.now(timezone.utc)
 
 
 def require_unlocked(db: Session, user_id: str, conversation_id: str, token: str | None):
@@ -95,17 +97,17 @@ def _reset_empty(db: Session, user_id: str):
 
 
 class VaultSetup(BaseModel):
-    pin: str
+    pin: str = Field(min_length=6, max_length=6)
     hint: str = Field(min_length=1, max_length=30)
     answer: str = Field(min_length=1, max_length=100)
 
 
 class VaultPin(BaseModel):
-    pin: str
+    pin: str = Field(min_length=6, max_length=6)
 
 
 class VaultAnswer(BaseModel):
-    answer: str
+    answer: str = Field(min_length=1, max_length=100)
 
 
 class VaultChange(VaultSetup):

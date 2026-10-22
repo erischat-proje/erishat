@@ -7,6 +7,7 @@ from google.oauth2 import id_token
 from sqlalchemy.orm import Session
 
 from .config import settings
+from .email_policy import require_email
 
 from .models import User, AuthIdentity
 from .system_data import UserIdRegistry
@@ -60,6 +61,7 @@ def create_or_login_verified_identity(
     device_info: str | None = None,
 ) -> User:
     identifier = identifier.strip().lower() if provider == "email" else identifier.strip()
+    if provider == "email":require_email(identifier)
 
     identity = (
         db.query(AuthIdentity)
@@ -170,6 +172,8 @@ def create_or_login_google_user(
         raise ValueError("Google hesabından gerekli kimlik bilgileri alınamadı")
     if claims.get("email_verified") is not True:
         raise ValueError("Google e-posta adresi doğrulanmamış")
+
+    require_email(email)
 
     # A Google subject is the primary identity. A verified email may link only
     # to an account that previously proved ownership of the same email via OTP.

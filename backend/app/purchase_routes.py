@@ -181,7 +181,7 @@ def operation_view(row):
     if not created.tzinfo: created=created.replace(tzinfo=timezone.utc)
     stamp=created.astimezone(ZoneInfo('Europe/Istanbul')).strftime('%d.%m.%Y %H:%M:%S')
     proof=f'/v1/admin/purchases/operations/{row.id}/evidence' if row.evidence else 'Muaf (ID Listesi Dahilinde)'
-    lines=['='*50,'[ERISCHAT LİDYA İŞLEMLERİ DENETİM LOGU]','='*50,
+    lines=['='*50,'[LİDYACHAT LİDYA İŞLEMLERİ DENETİM LOGU]','='*50,
         f'İŞLEMİ YAPAN ADMİN : [Rütbe: {row.admin_role}] - {row.admin_name}',f'İŞLEM TARİHİ : {stamp}',
         f'LİDYA ID : {row.public_id}',f'LİDYA MİKTARI : {row.amount}',f'İŞLEM ÖNCESİ LİDYA MİKTARI : {row.before}',
         f'İŞLEM SONRASI LİDYA MİKTARI : {row.after}',f'YAPILAN İŞLEM : {row.operation}',f'KANIT : {proof}','='*50]
@@ -191,7 +191,7 @@ def operation_view(row):
 
 def manual_change(db,user,target,payload,operation):
     admin_role=require_admin(db,user)
-    if operation == 'ÇIKARMA' and admin_role != 'DA': raise HTTPException(403,'Lidya çıkarma için DA yetkisi gerekli.')
+    if admin_role != 'DA': raise HTTPException(403,'Manuel Lidya duzeltmesi yalnizca DA yetkisiyle yapilabilir.')
     existing=db.scalar(select(LidyaOperation).where(LidyaOperation.request_key==payload.request_key))
     if existing:
         if (existing.admin_id,existing.user_id,existing.amount,existing.operation)!=(user.id,target.id,payload.amount,operation):

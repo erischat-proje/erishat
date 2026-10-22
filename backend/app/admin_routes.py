@@ -5,20 +5,23 @@ from .runtime_tasks import database_task
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from .purchase_routes import ManualAmount as AmountUpdate, manual_change
 from .db import get_db
+from .config import settings
 from .models import User
+from .announcement_identity import announcement_payloads
 from .platform_models import Report, VipStatus, UserLocation
 from .room_models import Room, RoomMember, RoomSeat, RoomPassword
 from .support_models import SupportTicket
 from .system_logs import record
 from . import support_workflow as support_live
 from . import ban_workflow
+from .admin_policy import require_permission, may_decide
 from .ban_workflow_models import BanWorkflow
 from .chat_ban_models import ChatBanRequestBinding
 from .admin_models import (
@@ -202,7 +205,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     def me(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         row = require_role(db, user, "SA")
         record("admin_login", "admin_menu_access", admin_id=user.id, admin_nickname=user.nickname, role=row.role)
-        return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode}
+        return {"id": user.id, "public_id": None, "nickname": user.nickname, "role": row.role, "ghost_mode": row.ghost_mode, "security_owner": bool(row.role == "DA" and settings.security_owner_public_id and user.public_id == settings.security_owner_public_id)}
 
     @router.patch("/ghost-mode")
     @database_task
@@ -241,16 +244,37 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
     def ticket_message(ticket_id: int, payload: TicketMessage, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         return support_live.send(db, user, ticket_id, payload.message, payload.attachments)
 
+    @router.get("/announcements")
+    def management_announcements(before: int | None = Query(default=None, ge=1), limit: int = Query(default=20, ge=1, le=50), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        require_fa_or_da(db, user)
+        query = select(SystemAnnouncement).where(SystemAnnouncement.active.is_(True))
+        if before is not None:
+            query = query.where(SystemAnnouncement.id < before)
+        rows = db.scalars(query.order_by(SystemAnnouncement.id.desc()).limit(limit + 1)).all()
+        return {"items": announcement_payloads(db, rows[:limit]), "next_before": rows[limit-1].id if len(rows) > limit else None}
+
+    @router.delete("/announcements/{announcement_id}")
+    def cancel_announcement(announcement_id: int, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        require_fa_or_da(db, user)
+        row = db.scalar(select(SystemAnnouncement).where(SystemAnnouncement.id == announcement_id).with_for_update())
+        if row is None:
+            raise HTTPException(404, detail="Duyuru bulunamadı.")
+        result = {"id": row.id, "active": False, "deleted": True}
+        audit(db, user, "admin_announcement_cancelled", {"announcement_id": row.id}, target_id=str(row.id))
+        db.delete(row)
+        db.commit()
+        return result
+
     @router.post("/announcements", status_code=201)
     def create_announcement(payload: AnnouncementCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         require_fa_or_da(db,user)
-        announcement = SystemAnnouncement(admin_id=user.id, title="ErisChat Yönetim", message=payload.message.strip())
+        announcement = SystemAnnouncement(admin_id=user.id, title="LidyaChat Yönetim", message=payload.message.strip())
         db.add(announcement)
         db.flush()
         audit(db, user, "admin_announcement", {"announcement_id": announcement.id, "message_length": len(announcement.message)}, target_id=str(announcement.id))
         db.commit()
         db.refresh(announcement)
-        return {"id": announcement.id, "title": announcement.title, "message": announcement.message, "created_at": announcement.created_at}
+        return announcement_payloads(db, [announcement])[0]
 
     @router.post("/tickets/{ticket_id}/close")
     def close_ticket(ticket_id: int, payload: TicketDecision, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -310,13 +334,13 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
 
     @router.post("/users/{user_id}/lidya/add")
     def add_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_fa_or_da(db,user); target=resolve_admin_user(db,user_id)
+        require_permission(role_row(db,user.id).role if role_row(db,user.id) else None, "finance.manual_adjust"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         return manual_change(db,user,target,payload,"EKLEME")
 
     @router.post("/users/{user_id}/lidya/remove")
     def remove_lidya(user_id: str, payload: AmountUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        require_fa_or_da(db,user); target=resolve_admin_user(db,user_id)
+        require_permission(role_row(db,user.id).role if role_row(db,user.id) else None, "finance.manual_adjust"); target=resolve_admin_user(db,user_id)
         if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         return manual_change(db,user,target,payload,"ÇIKARMA")
 
@@ -362,6 +386,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
             raise HTTPException(409,"Bu talebi yeni Ban Talepleri panelinde inceleyip sonuçlandırın")
         row=db.scalar(select(BanApproval).where(BanApproval.id==request_id).with_for_update())
         if not row or row.status!="pending":raise HTTPException(409,"Talep artık beklemede değil")
+        if not may_decide(row.requester_id,row.target_user_id,user.id):raise HTTPException(403,"Kendi ban talebinizi karara bağlayamazsınız")
         if body.action=="approve":
             if row.kind=="account" or row.kind=="device":
                 db.add(UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=None if row.kind=="device" else expiry(row.days),banned_by=user.id,reason=row.reason))
@@ -400,6 +425,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
         appeal=db.scalar(select(BanAppeal).where(BanAppeal.id==appeal_id).with_for_update())
         if not appeal or appeal.status!="pending":raise HTTPException(409,"İtiraz artık beklemede değil")
         row=db.get(BanApproval,appeal.approval_id)
+        if not may_decide(row.requester_id,row.target_user_id,user.id,row.decision_by):raise HTTPException(403,"Bu itirazı bağımsız bir yetkili incelemelidir")
         if body.action=="approve":
             if row.kind in {"account","device"}:db.add(UserBan(user_id=row.target_user_id,ban_type=row.kind,expires_at=None if row.kind=="device" else expiry(row.days),banned_by=user.id,reason=row.reason))
             elif row.kind=="chat":db.add(ChatBan(user_id=row.target_user_id,expires_at=expiry(row.days),banned_by=user.id,reason=row.reason))
@@ -466,7 +492,7 @@ def register_admin_auth(current_user_dependency, ghost_transition=None, support_
 
     @router.delete("/rooms/{room_id}/ban")
     def room_unban(room_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_ua_or_da(db,user); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
+        require_role(db,user,"DA"); room=db.get(Room,room_id) or db.scalar(select(Room).where(Room.public_id==room_id))
         if not room: raise HTTPException(status_code=404,detail="Oda bulunamadı")
         rows=db.scalars(select(RoomAdminBan).where(RoomAdminBan.room_id==room.id,RoomAdminBan.active.is_(True))).all()
         for x in rows:x.active=False

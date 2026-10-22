@@ -267,7 +267,7 @@
     if (event.detail?.state === 'ready') render(event.detail.user);
   });
 
-  const boot = () => refresh().catch(error => console.warn('[ErisChat] profile refresh unavailable', error));
+  const boot = () => refresh().catch(error => console.warn('[LidyaChat] profile refresh unavailable', error));
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
 })();

@@ -77,7 +77,7 @@ def install_routes(current_user):
             raise HTTPException(409, 'Bu kodu daha önce kullandınız')
         if code.uses >= code.max_uses: raise HTTPException(409, 'Bu kod için maksimum limite ulaşılmıştır.')
         if not code.active: raise HTTPException(409, 'Bu kod artık aktif değil')
-        wallet = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        wallet = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         if not wallet: raise HTTPException(404, 'Kullanıcı bulunamadı')
         amount = 2500 if code.kind == 'USER' else 12500
         wallet.lidya = int(wallet.lidya or 0) + amount
@@ -90,7 +90,7 @@ def install_routes(current_user):
     @router.get('/families/{family_id}/referral-reward')
     def family_status(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
         family = db.get(Family, family_id)
-        if not family: raise HTTPException(404, 'Aile bulunamadı')
+        if not family or family.closed: raise HTTPException(404, 'Aile bulunamadı')
         if family.owner_id != user.id: raise HTTPException(403, 'Yalnızca aile sahibi')
         last = db.scalar(select(FamilyReferralClaim).where(FamilyReferralClaim.family_id == family_id).order_by(FamilyReferralClaim.created_at.desc(), FamilyReferralClaim.id.desc()).limit(1))
         next_at = utc(last.created_at) + timedelta(days=30) if last else None
@@ -100,7 +100,7 @@ def install_routes(current_user):
     @router.post('/families/{family_id}/referral-reward')
     def family_claim(family_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
         family = db.scalar(select(Family).where(Family.id == family_id).with_for_update())
-        if not family: raise HTTPException(404, 'Aile bulunamadı')
+        if not family or family.closed: raise HTTPException(404, 'Aile bulunamadı')
         if family.owner_id != user.id: raise HTTPException(403, 'Yalnızca aile sahibi')
         last = db.scalar(select(FamilyReferralClaim).where(FamilyReferralClaim.family_id == family_id).order_by(FamilyReferralClaim.created_at.desc(), FamilyReferralClaim.id.desc()).limit(1))
         if last and datetime.now(timezone.utc) < utc(last.created_at) + timedelta(days=30):
@@ -109,7 +109,7 @@ def install_routes(current_user):
         if not member_ids: raise HTTPException(409, 'Aile üyesi bulunamadı')
         if user.id not in member_ids: raise HTTPException(409, 'Aile sahibi üye listesinde bulunamadı')
         # Fail the whole transaction rather than silently paying only some members.
-        member_users = list(db.scalars(select(User).where(User.id.in_(member_ids)).order_by(User.id).with_for_update()))
+        member_users = list(db.scalars(select(User).where(User.id.in_(member_ids)).order_by(User.id).with_for_update().execution_options(populate_existing=True)))
         if len(member_users) != len(member_ids): raise HTTPException(409, 'Aile üye kayıtları tutarsız')
         claim = FamilyReferralClaim(family_id=family_id, owner_id=user.id, member_count=len(member_ids))
         db.add(claim); db.flush()

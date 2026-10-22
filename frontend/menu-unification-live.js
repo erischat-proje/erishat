@@ -27,7 +27,7 @@
     // Eski başlık
     document.querySelectorAll('#erisHub .eh-head h2').forEach(el => {
       if (/tüm sistemleri/i.test(el.textContent || '')) {
-        el.textContent = 'ErisChat sistemleri';
+        el.textContent = 'LidyaChat sistemleri';
       }
     });
 

@@ -148,7 +148,7 @@ def profile_stats(db: Session, target: User, viewer: User) -> dict:
                 'fans_hidden':True, 'gifts_hidden':True, 'relationship':None,
                 'gender':'unspecified', 'title_asset':None, 'profile_asset':None,
                 'vip_level':0, 'vip_badge_hidden':True, 'vip_neon_hidden':True,
-                'bio':'Resmî ErisChat Yönetim Hesabı', 'management_locked':True,
+                'bio':'Resmî LidyaChat Yönetim Hesabı', 'management_locked':True,
                 'management_badges':['SA','UA','FA','DA']}
     from .personal_fans import received_total
     from .relationship_routes import public_brief
@@ -221,7 +221,7 @@ def register_platform_auth(current_user_dependency):
         return db.scalar(select(PrivateMessageRequest).where(PrivateMessageRequest.sender_id == sender, PrivateMessageRequest.recipient_id == recipient))
 
     def _notify(db, recipient, kind, body):
-        db.add(Notification(user_id=recipient, kind=kind, title="ErisChat", body=body))
+        db.add(Notification(user_id=recipient, kind=kind, title="LidyaChat", body=body))
 
     @router.get("/me/profile-privacy")
     def private_status(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -286,12 +286,17 @@ def register_platform_auth(current_user_dependency):
 
     @router.post("/me/wallet/exchange")
     def exchange_wallet(payload: WalletExchange, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        locked = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
+        if not locked:
+            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         existing = db.scalar(select(LidyaGemLedger).where(
             LidyaGemLedger.user_id == user.id,
             LidyaGemLedger.idempotency_key == payload.idempotency_key,
         ))
         if existing:
-            locked = db.get(User, user.id)
+            saved=json.loads(existing.details)
+            if saved.get('direction')!=payload.direction or abs(int(existing.delta))!=payload.amount:
+                raise HTTPException(409, detail="İşlem anahtarı başka bir dönüşüm için kullanılmış.")
             return {
                 "success": True, "replayed": True, "direction": json.loads(existing.details).get("direction"),
                 "amount": abs(int(existing.delta)), "rate": 1,
@@ -299,9 +304,6 @@ def register_platform_auth(current_user_dependency):
                 "reference_id": existing.reference_id,
             }
 
-        locked = db.scalar(select(User).where(User.id == user.id).with_for_update())
-        if not locked:
-            raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         amount = int(payload.amount)
         direction = payload.direction
         before_lidya = int(locked.lidya or 0)
@@ -623,33 +625,6 @@ def register_platform_auth(current_user_dependency):
         if request and request.status == "rejected": return {"state": "rejected"}
         return {"state": "first"}
 
-    @router.get("/messages/{conversation_id}")
-    def messages(conversation_id:str,limit:int=Query(100,ge=1,le=200),offset:int=Query(0,ge=0),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
-        if not member: raise HTTPException(status_code=403,detail="Bu konuşmaya erişiminiz yok")
-        db.execute(delete(Message).where(Message.conversation_id==conversation_id,Message.expires_at.is_not(None),Message.expires_at<=datetime.now(timezone.utc)))
-        db.commit()
-        return list(db.scalars(select(Message).where(Message.conversation_id==conversation_id,((Message.expires_at.is_(None))|(Message.expires_at>datetime.now(timezone.utc)))).order_by(Message.created_at.asc()).offset(offset).limit(limit)))
-    @router.post("/messages/{conversation_id}")
-    def send_message(conversation_id:str,payload:dict,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
-        require_chat_write(db,user.id)
-        member=db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id==conversation_id,ConversationMember.user_id==user.id))
-        if not member: raise HTTPException(status_code=403,detail="Bu konuşmaya erişiminiz yok")
-        text=str(payload.get("text") or "").strip()
-        if not text: raise HTTPException(status_code=400,detail="Mesaj boş olamaz")
-        recipients = list(db.scalars(select(ConversationMember.user_id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id != user.id)))
-        if len(recipients) == 1 and _private(db, recipients[0]):
-            # Serialize parallel sends so only one initial request can be sent.
-            db.scalar(select(User.id).where(User.id == user.id).with_for_update())
-            existing = _message_request(db, user.id, recipients[0])
-            if existing and existing.status == "pending": raise HTTPException(403, "Karşı tarafın mesaj isteğinizi kabul etmesini bekleyiniz.")
-            if existing and existing.status == "rejected": raise HTTPException(403, "Mesaj isteğiniz reddedildi.")
-            if existing is None:
-                db.add(PrivateMessageRequest(sender_id=user.id, recipient_id=recipients[0], conversation_id=conversation_id, status="pending"))
-                _notify(db, recipients[0], "message_request", user.nickname + " size mesaj isteği gönderdi.")
-        conversation=db.get(Conversation,conversation_id)
-        expires_at=datetime.now(timezone.utc)+timedelta(hours=24) if conversation and conversation.type=="dm" and conversation.is_ephemeral else None
-        message=Message(conversation_id=conversation_id,sender_id=user.id,text=text,expires_at=expires_at); db.add(message); db.commit(); db.refresh(message); return message
     @router.get("/users/{user_id}")
     def public_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         target=db.get(User,user_id) or db.scalar(select(User).where(User.public_id == user_id))
@@ -1112,7 +1087,7 @@ def register_platform_auth(current_user_dependency):
             row.ends_at = datetime.now(timezone.utc)
             bet = db.scalar(select(GameBet).where(GameBet.round_id == row.id,GameBet.user_id == user.id))
             if bet:
-                locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+                locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
                 bet.payout = game_payout("blackjack", None, result, bet.amount, state)
                 locked_user.lidya += bet.payout
         db.commit()
@@ -1387,7 +1362,7 @@ def register_platform_auth(current_user_dependency):
         crash_final.record_cashout(db,bet,_crash_live_now())
 
         locked_user = db.scalar(
-            select(User).where(User.id == user.id).with_for_update()
+            select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True)
         )
         if not locked_user:
             raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
@@ -1438,7 +1413,7 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=409, detail="Çekilecek aktif bahis bulunamadı")
 
         locked_user = db.scalar(
-            select(User).where(User.id == user.id).with_for_update()
+            select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True)
         )
         if not locked_user:
             raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
@@ -1547,7 +1522,7 @@ def register_platform_auth(current_user_dependency):
         locked_user = db.scalar(
             select(User)
             .where(User.id == user.id)
-            .with_for_update()
+            .with_for_update().execution_options(populate_existing=True)
         )
         if not locked_user:
             raise HTTPException(
@@ -1696,7 +1671,7 @@ def register_platform_auth(current_user_dependency):
         locked_user = db.scalar(
             select(User)
             .where(User.id == user.id)
-            .with_for_update()
+            .with_for_update().execution_options(populate_existing=True)
         )
         if not locked_user:
             raise HTTPException(
@@ -1798,7 +1773,7 @@ def register_platform_auth(current_user_dependency):
                 raise HTTPException(status_code=403, detail="Odaya katılmalısın")
 
         locked_user = db.scalar(
-            select(User).where(User.id == user.id).with_for_update()
+            select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True)
         )
         existing = db.scalar(
             select(GameRound).where(
@@ -1941,7 +1916,7 @@ def register_platform_auth(current_user_dependency):
             raise HTTPException(status_code=422, detail="Geçersiz kupa")
 
         locked_user = db.scalar(
-            select(User).where(User.id == user.id).with_for_update()
+            select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True)
         )
         row = db.scalar(
             select(GameRound).where(
@@ -2059,7 +2034,7 @@ def register_platform_auth(current_user_dependency):
         # ERIS_BJ_SINGLE_ACTIVE_V1
         # Kullanıcı satırını kilitledikten sonra açık eli kontrol et.
         # Böylece eşzamanlı iki yeni bahis aynı anda başlayamaz.
-        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         if game_type == "blackjack":
             existing = db.scalar(
                 select(GameRound.id)

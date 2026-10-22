@@ -63,12 +63,12 @@
     const note=document.createElement('span');note.textContent=d.preview?'Oda girişi önizlemesi':'Odaya katıldı';identity.append(tag,name,note);content.append(identity);
     const layout=d.shop_entry&&window.ErisLidyaPremium?.describe(d.shop_entry);
     if(layout?.avatar&&layout?.name_box){
-      el.dataset.premium='true';banner.style.aspectRatio=layout.width+'/'+layout.height;
+      el.dataset.premium='true';banner.dataset.measured='true';banner.style.aspectRatio=layout.width+'/'+layout.height;
       content.style.cssText='position:absolute;inset:0;display:block';
       const a=layout.avatar,box=layout.name_box,diameter=a.diameter*layout.height/layout.width;
       portrait.style.cssText='position:absolute;left:'+((a.x-diameter/2)*100)+'%;top:'+((a.y-a.diameter/2)*100)+'%;width:'+(diameter*100)+'%;height:auto;max-height:none';
       identity.style.cssText='position:absolute;left:'+(box.x*100)+'%;top:'+(box.y*100)+'%;width:'+(box.width*100)+'%;height:'+(box.height*100)+'%;display:flex;flex-direction:column;justify-content:center;gap:2px;overflow:hidden';
-      tag.hidden=true;
+      tag.hidden=true;note.hidden=true;name.title=name.textContent;
     }
     window.ErisVIPPrivileges?.entry(el,d);
     if(d.preview||d.vip_benefits?.cinematic){const close=document.createElement('button');close.type='button';close.className='eris-vip-entry-dismiss';close.textContent=d.preview?'Önizlemeyi kapat ×':'Geç ×';close.onclick=finish;stage.append(close);el.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();finish()}})}
@@ -96,7 +96,7 @@
   function preview(level,style){const user=window.ErisAuth?.user||{};style=style||user.gender;const theme=Number(level)===0?window.ErisVIPDesigns?.normal:window.ErisVIPDesigns?.get(level,style);if(!theme)return;
     queue.unshift({preview:true,normal_entry:theme.level===0,vip_entry_level:theme.level,vip_entry_style:style,nickname:user.nickname||'VIP misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();
   }
-  async function previewAsset(key){await shopReady;if(!shopThemes[key])return;const user=window.ErisAuth?.user||{};queue.unshift({preview:true,shop_entry:key,nickname:user.nickname||'ErisChat misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();}
+  async function previewAsset(key){await shopReady;if(!shopThemes[key])return;const user=window.ErisAuth?.user||{};queue.unshift({preview:true,shop_entry:key,nickname:user.nickname||'LidyaChat misafiri',avatar_asset:user.avatar_asset,avatar:user.avatar,frame_asset:user.frame_asset});if(queue.length>8)queue.pop();next();}
   window.ErisRoomEntrance={show,clear,preview,previewAsset};
   window.addEventListener('erischat:room-closed',clear);
   window.addEventListener('erischat:auth',e=>{if(e.detail?.state!=='ready'){clear();seen.clear()}});

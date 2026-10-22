@@ -275,8 +275,8 @@
       </style>
 
       <div class="eris-onboard-card">
-        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./assets/lidya-menu/light-logo.png" alt="ErisChat" width="1600" height="544" decoding="async"></div>
-        <h1>ErisChat'e Hoş Geldin</h1>
+        <div class="eris-logo eris-shared-brand"><img class="eris-brand-image" src="./assets/lidya-menu/light-logo.png" alt="LidyaChat" width="1800" height="405" decoding="async"></div>
+        <h1>LidyaChat'e Hoş Geldin</h1>
         <div class="eris-subtitle">
           Seni daha iyi tanıyabilmemiz için profilini tamamlayalım.
         </div>
@@ -526,7 +526,7 @@
         return;
       }
 
-      if(!isAdult(birthDate)){error1.textContent='ErisChat yalnızca 18 yaşını doldurmuş kişiler içindir.';return;}
+      if(!isAdult(birthDate)){error1.textContent='LidyaChat yalnızca 18 yaşını doldurmuş kişiler içindir.';return;}
       if(!consent){error1.textContent='Kullanıcı sözleşmesini okuyup onaylamalısın.';return;}
       if (!selectedGender) {
         error1.textContent = 'Lütfen cinsiyetini seç.';

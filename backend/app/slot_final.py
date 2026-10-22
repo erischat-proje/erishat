@@ -8,6 +8,7 @@ from sqlalchemy import ForeignKey, String, Text, Integer, BigInteger, select, fu
 from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 from .models import User
+from .staff_identity import STAFF, ROLES
 from .platform_models import GameBet, GameRound
 from .wheel_rules import period_bounds
 from .oyunlar import slot as engine
@@ -34,12 +35,12 @@ class SlotReceipt(Base):
 
 def state(db,user):
     a=db.get(SlotAccount,user.id)
-    winners=db.execute(select(GameRound.id,User.nickname,User.public_id,GameBet.payout,GameRound.ends_at).join(GameBet,GameBet.round_id==GameRound.id).join(User,User.id==GameBet.user_id).where(GameRound.game_type=='slot',GameRound.status=='finished',GameBet.payout>0,User.is_active.is_(True)).order_by(GameRound.ends_at.desc(),GameRound.id.desc()).limit(10)).all()
+    winners=db.execute(select(GameRound.id,User.nickname,User.public_id,GameBet.payout,GameRound.ends_at).join(GameBet,GameBet.round_id==GameRound.id).join(User,User.id==GameBet.user_id).where(GameRound.game_type=='slot',GameRound.status=='finished',GameBet.payout>0,User.is_active.is_(True), ~select(STAFF.c.user_id).where(STAFF.c.user_id == User.id, STAFF.c.role.in_(ROLES)).correlate(User).exists()).order_by(GameRound.ends_at.desc(),GameRound.id.desc()).limit(10)).all()
     return dict(my_id=user.id,balance=int(db.scalar(select(User.lidya).where(User.id==user.id))),stakes=STAKES,remaining=a.remaining if a else 0,locked_stake=a.stake if a and a.remaining else None,bonus_spins=BONUS_SPINS,bonus_price_multiplier=BONUS_PRICE_MULTIPLIER,multipliers=MULTIPLIERS,winners=[dict(round_id=rid,nickname=name,public_id=pid,payout=int(payout),ended_at=ended) for rid,name,pid,payout,ended in winners])
 
 def transact(db,user,payload,operation='spin'):
     # Same user row lock serializes wallet spending, bonus progress and UUID retries.
-    u=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    u=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     rid=str(payload.request_id);receipt=db.get(SlotReceipt,(user.id,rid))
     if receipt:
         if (receipt.operation,receipt.amount)!=(operation,payload.amount):raise HTTPException(409,'İstek numarası başka işlemde kullanılmış.')
@@ -72,7 +73,7 @@ def transact(db,user,payload,operation='spin'):
 def leaderboard(db,user,period='hour'):
     start,end=period_bounds(period)
     scores=(select(GameBet.user_id,func.sum(GameBet.payout).label('winnings')).join(GameRound,GameRound.id==GameBet.round_id).where(GameRound.game_type=='slot',GameRound.status=='finished',GameBet.payout>0,GameRound.ends_at>=start,GameRound.ends_at<end).group_by(GameBet.user_id).subquery())
-    rows=db.execute(select(User,scores.c.winnings).join(scores,scores.c.user_id==User.id).where(User.is_active.is_(True)).order_by(scores.c.winnings.desc(),User.public_id.asc()).limit(50)).all()
+    rows=db.execute(select(User,scores.c.winnings).join(scores,scores.c.user_id==User.id).where(User.is_active.is_(True), ~select(STAFF.c.user_id).where(STAFF.c.user_id == User.id, STAFF.c.role.in_(ROLES)).correlate(User).exists()).order_by(scores.c.winnings.desc(),User.public_id.asc()).limit(50)).all()
     mine=db.scalar(select(scores.c.winnings).where(scores.c.user_id==user.id)) or 0
     return dict(game='slot',period=period,timezone='Europe/Istanbul',metric='paid_winnings',starts_at=start,ends_at=end,limit=50,my_winnings=int(mine),items=[dict(rank=i+1,user_id=u.id,public_id=u.public_id,nickname=u.nickname,avatar=u.avatar,avatar_asset=u.avatar_asset,frame_asset=u.frame_asset,winnings=int(n)) for i,(u,n) in enumerate(rows)])
 

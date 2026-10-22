@@ -33,7 +33,7 @@ def selected_entry(db,user):
     return key if item and item['gender']==user.gender and owns(db,user.id,key,'entrance') else None
 def record_event(db,uid,kind,key):
     # A per-user lock and composite key prevent duplicate progress on reconnects.
-    db.scalar(select(User).where(User.id==uid).with_for_update())
+    db.scalar(select(User).where(User.id==uid).with_for_update().execution_options(populate_existing=True))
     if not db.get(TaskEvent,(uid,kind,str(key))):db.add(TaskEvent(user_id=uid,kind=kind,event_key=str(key)))
 def utc(value):return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
 LABELS={'days':'Görev ekranını farklı günlerde aç','room_messages':'Odalarda mesaj gönder','messages':'Özel mesaj gönder','rooms':'Farklı odalara katıl','follows':'Farklı kullanıcıları takip et','room_follows':'Farklı odaları takip et','posts':'Gönderi paylaş','stories':'Hikâye paylaş'}
@@ -91,7 +91,7 @@ def list_tasks(user=Depends(current_cosmetic_user),db=Depends(get_db)):
     return {'items':rows,'reset_timezone':'Europe/Istanbul'}
 @router.post('/me/appearance-tasks/{task_id}/claim')
 def claim_task(task_id:str,user=Depends(current_cosmetic_user),db=Depends(get_db)):
-    user=db.scalar(select(User).where(User.id==user.id).with_for_update());quest=next((q for q in data()['quests'] if q['id']==task_id),None)
+    user=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True));quest=next((q for q in data()['quests'] if q['id']==task_id),None)
     if not quest:raise HTTPException(404,'Görev bulunamadı.')
     reward=reward_for_user(quest,user);key=reward['asset_key']
     if owns(db,user.id,key,'title'):return {'ok':True,'already_claimed':True,'asset_key':key}

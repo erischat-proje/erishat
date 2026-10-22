@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Build;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
@@ -34,7 +35,7 @@ import com.google.android.gms.common.api.ApiException;
 
 public class MainActivity extends Activity {
 
-    private static final String ERISCHAT_HOST = "erischat-production-850f.up.railway.app";
+    private static final String ERISCHAT_HOST = "www.lidyachat.com";
     private static final String ERISCHAT_URL = "https://" + ERISCHAT_HOST + "/";
 
     /*
@@ -42,7 +43,7 @@ public class MainActivity extends Activity {
      * Backend /v1/auth/google bu Web OAuth Client ID'yi doğruluyor.
      */
     private static final String SERVER_CLIENT_ID =
-            "599316709150-ngekrq0sg5g70pvjqkamrbvba6qq7qdd.apps.googleusercontent.com";
+            "764753830690-jskeljid0thn9jsuldbfmrtnm73krpuo.apps.googleusercontent.com";
 
     private static final int GOOGLE_SIGN_IN = 9001;
     private static final int MICROPHONE_PERMISSION = 9002;
@@ -62,10 +63,13 @@ public class MainActivity extends Activity {
     private WebView webView;
     private BundledContent bundledContent;
     private GoogleSignInClient googleClient;
+    private boolean screenAwakeEnabled = false;
+    private boolean activityResumed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        screenAwakeEnabled = false;
 
         GoogleSignInOptions options =
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -190,7 +194,36 @@ public class MainActivity extends Activity {
         webView.loadUrl(ERISCHAT_URL);
     }
 
+    private void applyScreenAwake() {
+        if (screenAwakeEnabled && activityResumed) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        activityResumed = true;
+        applyScreenAwake();
+    }
+
+    @Override protected void onPause() {
+        activityResumed = false;
+        applyScreenAwake();
+        super.onPause();
+    }
+
     public class AndroidBridge {
+        @JavascriptInterface public void setKeepScreenAwake(boolean enabled) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || isFinishing() || isDestroyed()) return;
+                screenAwakeEnabled = enabled;
+                // Do not persist a stale screen-on setting between process launches.
+                applyScreenAwake();
+            });
+        }
+
         @JavascriptInterface public String getViewportInsets() {
             return "{\"handled\":" + viewportInsetsHandled + "}";
         }
@@ -213,7 +246,8 @@ public class MainActivity extends Activity {
         return uri != null && "https".equals(uri.getScheme())
                 && (uri.getPort() == -1 || uri.getPort() == 443)
                 && uri.getUserInfo() == null
-                && ERISCHAT_HOST.equals(uri.getHost());
+                && (ERISCHAT_HOST.equals(uri.getHost())
+                    || "lidyachat.com".equals(uri.getHost()));
     }
 
     private boolean trustedPage() {
