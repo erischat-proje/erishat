@@ -366,7 +366,7 @@ function renderAnnouncement(p,me){
 }
 
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-window.ErisAdmin={openTool:async key=>{const me=await req('/v1/admin/me');openPanel(me);const panel=document.querySelector('.eris-admin-overlay');const button=[...panel.querySelectorAll('[data-a]')].find(b=>b.dataset.a===key);if(!button)throw Error('Bu araca erişim yetkiniz yok');await action(key,me,panel);},open:async()=>{try{openPanel(await req('/v1/admin/me'))}catch(e){window.toast?.(e.message)}},clear:function(){document.querySelectorAll('.eris-admin-btn,.eris-admin-menu,.eris-admin-overlay').forEach(el=>el.remove())}};
+window.ErisAdmin={launchTool:launch=>{const p=document.querySelector('.eris-admin-overlay');if(p)openAdminTool(p,launch);},openTool:async key=>{const me=await req('/v1/admin/me');openPanel(me);const panel=document.querySelector('.eris-admin-overlay');const button=[...panel.querySelectorAll('[data-a]')].find(b=>b.dataset.a===key);if(!button)throw Error('Bu araca erişim yetkiniz yok');await action(key,me,panel);},open:async()=>{try{openPanel(await req('/v1/admin/me'))}catch(e){window.toast?.(e.message)}},clear:function(){document.querySelectorAll('.eris-admin-btn,.eris-admin-menu,.eris-admin-overlay').forEach(el=>el.remove())}};
 // Safe retry: admin menu stays restricted to server-confirmed SA/UA/FA/DA identities.
 let adminBootTimer=null, adminBootSerial=0;
 async function boot(attempt=0){

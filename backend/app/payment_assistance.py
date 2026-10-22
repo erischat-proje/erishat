@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 from PIL import Image, ImageOps
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field, field_validator, model_validator
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, update, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .db import get_db
@@ -30,6 +30,7 @@ def now():return datetime.now(timezone.utc)
 def aware(t):return t.replace(tzinfo=timezone.utc) if t and not t.tzinfo else t
 
 def require_da(db,user,lock=False):
+    if not user.is_active:raise HTTPException(403,'Hesap aktif değil')
     q=select(AdminRole).where(AdminRole.user_id==user.id)
     if lock:q=q.with_for_update().execution_options(populate_existing=True)
     row=db.scalar(q)
@@ -257,8 +258,13 @@ def register_auth(current_user):
         return {**summary(row,user.id),'transaction_number':number or row.id}
 
     @router.get('/admin/requests')
-    def queue(before:str|None=None,records:bool=False,db:Session=Depends(get_db),user:User=Depends(current_user)):
-        require_da(db,user);q=select(PaymentRequest)
+    def queue(before:str|None=None,records:bool=False,q:str=Query('',max_length=100),status:str=Query('all',pattern='^(all|pending|connecting|chat|rejecting|finishing|approved|rejected|cancelled)$'),assignment:str=Query('all',pattern='^(all|mine|unassigned)$'),days:int|None=Query(None,ge=1,le=365),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);search=q;q=select(PaymentRequest)
+        if search:q=q.where(or_(PaymentRequest.public_id==search,PaymentRequest.id==search,PaymentRequest.transaction_reference==search))
+        if status!='all':q=q.where(PaymentRequest.status==status)
+        if assignment=='mine':q=q.where(PaymentRequest.assigned_to==user.id)
+        elif assignment=='unassigned':q=q.where(PaymentRequest.assigned_to.is_(None))
+        if days:q=q.where(PaymentRequest.created_at>=now()-timedelta(days=days))
         if not records:q=q.where(PaymentRequest.status.in_(LIVE))
         if before:
             cursor=get(db,before)

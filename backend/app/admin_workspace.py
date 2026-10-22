@@ -21,9 +21,9 @@ router=APIRouter(prefix='/v1/admin/workspace',tags=['admin-workspace'])
 ALL=('SA','UA','FA','DA');REVIEW=('FA','DA');DA=('DA',)
 # This is the canonical inventory. Private tools never enter lower-role responses.
 CATALOG=[
- ('tickets','Destek talepleri','Günlük operasyon',ALL,'Size yönlendirilen müşteri talepleri; kanıt, görüşme ve sonuç kaydı.','Talebi kabul et → görüşmeyi tamamla → gerekçeli sonuçlandır.'),
- ('announcement','Duyuru gönder','Günlük operasyon',REVIEW,'Kullanıcı duyurusu yayınlama, geçmişi inceleme ve yayından kaldırma.','Metni kontrol et → yayınla → aktif duyuruları yönet.'),
- ('gaps','Uygulama Geri Bildirimi Paneli','Günlük operasyon',DA,'Bildirilen uygulama sorunlarını mevcut geri bildirim akışında inceleme.','Kaydı aç → ayrıntıları incele → mevcut panelde sonuçlandır.'),
+ ('tickets','Destek talepleri','Günlük operasyon',ALL,'Göreve özel filtreli destek masası; görüşme, iç not ve olay dosyasına aktarım.','Talebi kabul et → görüşmeyi tamamla → gerekçeli sonuçlandır.'),
+ ('announcement','Duyuru gönder','Günlük operasyon',REVIEW,'Kullanıcı duyurusu yayınlama, geçmişi inceleme ve yayından kaldırma.','Taslak kaydet → kayıtlı sürümü önizle → açık onayla yayınla.'),
+ ('gaps','Uygulama Geri Bildirimi Paneli','Günlük operasyon',DA,'Geri bildirimleri okuma onayı, sorumlu, durum ve geçmiş ile takip etme.','Öneriyi oku → sorumlu ata → plan/çalışma/sonuç durumunu kaydet.'),
  ('payments','Yükleme İsteği','Günlük operasyon',DA,'Ödeme yardımı taleplerini kanıtlarıyla inceleme ve sonuçlandırma.','Talep → kanıt kontrolü → mevcut ödeme kararı.'),
  ('ghost','Ghost Mode','Günlük operasyon',DA,'Mevcut görünmez yönetici oturumunu açma veya kapatma.','Durumu kontrol et → açıkça onayla → oturum görünürlüğünü değiştir.'),
  ('ban','Kullanıcı Ban','Yaptırım',('UA','DA'),'Hesap veya cihaz yaptırımını delil ve süre ile mevcut kuyruğa gönderme.','Hedef → kanıt → süre → yetkili karar.'),
@@ -32,7 +32,7 @@ CATALOG=[
  ('banrequests','Ban talepleri','Karar kuyrukları',REVIEW,'Size atanmış hesap/cihaz taleplerini bağımsız değerlendirme.','Kanıtı incele → bağımsız onay veya ret.'),
  ('roombanrequests','Oda ban talepleri','Karar kuyrukları',REVIEW,'Oda yaptırımı taleplerinin mevcut bağımsız karar kuyruğu.','Oda ve hedefi doğrula → delili incele → karar.'),
  ('chatbanrequests','Sohbet ban talepleri','Karar kuyrukları',REVIEW,'Sohbet yaptırımı taleplerinin mevcut karar kuyruğu.','Kapsam ve delili kontrol et → karar.'),
- ('banappeals','İtiraz talepleri','Karar kuyrukları',REVIEW,'Reddedilen yaptırım taleplerinin kanıtlı itiraz incelemesi.','İlk karar ve ek kanıt → tarafsız itiraz kararı.'),
+ ('banappeals','İtiraz talepleri','Karar kuyrukları',REVIEW,'Reddedilen taleplerin tek fotoğraf kanıtlı itirazı ve bağımsız karar masası.','İlk karar ve ek kanıt → tarafsız itiraz kararı.'),
  ('lookup','ID Sorgu','Sistem yönetimi',DA,'Kullanıcı dizininde arama, kimlik doğrulama ve korumalı hesap özeti.','Kullanıcıyı bul → profil kimliğini doğrula → ilgili araca geç.'),
  ('deleteaccount','Hesap Silme','Sistem yönetimi',DA,'Mevcut güvenli silme akışı; önce hedefi doğrulama ve kalıcı işlem onayı.','ID sorgula → hedefi doğrula → kalıcı işlem onayı. Yetkili hesap silinemez.'),
  ('roles','Yönetici Rolleri','Sistem yönetimi',DA,'Rol verme/değiştirme/kaldırma için bağımsız ikinci yönetici onayı.','Hedefi doğrula → gerekçeli talep → farklı yönetici kararı.'),
@@ -45,7 +45,7 @@ CATALOG=[
  ('chatbanlogs','Sohbet ban işlem logları','Denetim',DA,'Uygulanmış sohbet yaptırımlarının kayıtları.','Kaydı incele → mevcut yetkili geri alma akışı.'),
  ('topup','Lidya yükleme','Mali yönetim',DA,'Doğrudan bakiye değiştirmek yerine bağımsız mali düzeltme akışı.','Kanıtlı talep → inceleme → farklı son onay.'),
  ('lidya','Lidya İşlemleri · Yönetim','Mali yönetim',DA,'Mali düzeltme, manuel işlemler, siparişler ve VIP kayıtları.','Talebi veya kaydı seç → kanıt ve geçmişi incele.'),
- ('referrals','Referans Kod Oluştur','Mali yönetim',DA,'Mevcut referans kodu oluşturma, kullanım ve iptal akışı.','Tür ve kullanım sınırı → kod oluştur → kullanımını izle.'),
+ ('referrals','Referans Kod Oluştur','Mali yönetim',DA,'Kod oluşturma, kullanım/ödül geçmişi ve gerekçeli iptal masası.','Tür ve sınır → kod oluştur → gerçek kullanımları incele → gerekçeli iptal.'),
  ('security','Güvenlik Merkezi','Hesap güvenliği',DA,'Yalnız güvenlik sahibine açık mevcut korumalı güvenlik araçları.','Mevcut güvenlik merkezi doğrulaması ile devam et.'),
  ('lm-command','Güvenlik Merkezi','Olay operasyonu',ALL,'Açık dosyalar, atamalar, karar bekleyenler ve koruyucu tedbirler.','Önceliği gör → dosyayı aç → ilgili iş akışına geç.'),
  ('lm-cases','Olay Dosyaları','Olay operasyonu',ALL,'Dosya, özel kanıt, not, atama, gerekçeli karar ve olay geçmişi.','Dosya aç → delil topla → incele → bağımsız karar.'),

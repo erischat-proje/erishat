@@ -50,7 +50,7 @@ function shortcuts(parent){const actions=row(parent);btn('Destek talepleri',()=>
 async function legacy(key){close();await window.ErisAdmin?.openTool?.(key);}
 async function render(kind,options={}){
  const id=session,version=++serial;main.replaceChildren(el('p','','Veriler yükleniyor…'));
- try{if(kind==='help'){help();return;}if(kind==='command')await command();else if(kind==='cases')await cases(options);else if(kind==='emergency')await emergency(options);else if(kind==='finance')await finance(options);else if(kind==='fraud')await fraud(options);else if(kind==='audit')await auditView(options);}
+ try{if(kind==='help'){help();return;}if(kind==='command')await command();else if(kind==='cases'){if(options.caseId)await caseDetail(options.caseId);else await cases(options);}else if(kind==='emergency')await emergency(options);else if(kind==='finance')await finance(options);else if(kind==='fraud')await fraud(options);else if(kind==='audit')await auditView(options);}
  catch(e){if(alive(id)&&version===serial&&e.name!=='AbortError'){main.replaceChildren();message(e.message,true);btn('Yeniden dene',()=>render(kind,options),main);}}
 }
 async function command(){
