@@ -38,7 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools, message_attachments, dm_inbox
+from . import message_tools, message_attachments, dm_inbox, message_actions
 from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
@@ -451,6 +451,11 @@ message_tools.register(current_user, lambda db,m,uid,context=None: _message_out(
 app.include_router(message_tools.router)
 dm_inbox.register(lambda db,uid,event: _send_dm_event(db,uid,event))
 app.include_router(dm_inbox.router)
+message_actions.register(lambda db,cid,user,token: _require_message_media_access(db,cid,user,token),
+    lambda db,uid,event: _send_dm_event(db,uid,event),
+    lambda db,m,uid: _message_out(db,m,uid),
+    lambda db,uid,cid: _message_notifications_allowed(db,uid,cid))
+app.include_router(message_actions.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -1278,6 +1283,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
         "sender_frame_asset":None if is_system else (sender.frame_asset if sender else None), "bubble_asset":None if is_system else context.get("bubbles",{}).get(message.sender_id),
         **context.get("details",{}).get(message.id,{}),
+        **context.get("actions",{}).get(message.id,{}),
         "text": message.text, "created_at": message.created_at,
         "is_read": not is_system and message.sender_id == viewer_id and bool(context["read"] >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
@@ -1289,6 +1295,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "media_name":attachment.filename if attachment else None, "media_size":attachment.size_bytes if attachment else None,
         "media_type": media.media_type if media else None,
         "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
+        "protected_message":bool(message.expires_at or (media and media.temporary)),
         "temporary": bool(media and media.temporary), "view_seconds": media.view_seconds if media else None,
         "expires_at": media.expires_at if media else None}
 
