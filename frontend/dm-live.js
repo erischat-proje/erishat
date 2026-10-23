@@ -98,6 +98,7 @@
     }else body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (String(message?.text||'').startsWith('[Story yanıtı #') ? String(message.text).replace(/^\[Story yanıtı #\d+\]\s*/, '') : (message?.media_type ? '' : String(message?.text ?? message?.message ?? '')));
     const storyReply=String(message?.text||'').startsWith('[Story yanıtı #');
     if(storyReply)row.classList.add('dm-story-reply');
+    if(String(activeConversationId||'').startsWith('grp_')){const sender=document.createElement('b');sender.className='group-message-sender';sender.textContent=message.sender_nickname||'Üye';row.append(sender)}
     row.append(body);
     if (message?.media_type === 'image') {
       const media=document.createElement('div');media.className='dm-image-message';
@@ -174,7 +175,7 @@
   function dmDeleteScope(){
     return new Promise(resolve=>{
       const modal=document.createElement('div');modal.className='dm-vault-modal';modal.style.setProperty('z-index','100060','important');
-      modal.innerHTML='<section role="alertdialog" aria-modal="true"><header><h3>Mesajları ne şekilde silmek istiyorsunuz?</h3><button type="button" data-close aria-label="Kapat">×</button></header><footer><button type="button" class="accept" data-me>Kendim İçin</button><button type="button" class="reject" data-everyone>İki Taraf İçin</button></footer></section>';
+      modal.innerHTML='<section role="alertdialog" aria-modal="true"><header><h3>Mesajları ne şekilde silmek istiyorsunuz?</h3><button type="button" data-close aria-label="Kapat">×</button></header><footer><button type="button" class="accept" data-me>Kendim İçin</button><button type="button" class="reject" data-everyone>'+(String(activeConversationId||'').startsWith('grp_')?'Herkes İçin':'İki Taraf İçin')+'</button></footer></section>';
       document.body.append(modal);
       const done=value=>{modal.remove();resolve(value)};
       modal.querySelector('[data-me]').onclick=()=>done('me');
@@ -391,7 +392,7 @@
       if(!selectedMessages.size&&!allMessagesSelected)return;
       const scope=await dmDeleteScope();
       if(!scope)return;
-      const approved=await dmConfirm(scope==='everyone'?'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?':'Bu mesajı kendiniz için silmek istediğinize emin misiniz?');
+      const approved=await dmConfirm(scope==='everyone'?(String(activeConversationId||'').startsWith('grp_')?'Seçilen mesajlar herkes için silinsin mi?':'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?'):'Bu mesajı kendiniz için silmek istediğinize emin misiniz?');
       if(!approved)return;
       try { await api().api('/messages/'+encodeURIComponent(activeConversationId)+'/delete',{method:'POST',body:JSON.stringify({message_ids:[...selectedMessages].map(row=>Number(row.dataset.messageId)),all:allMessagesSelected,scope})}); if(allMessagesSelected){releaseMediaUrls(body);body.replaceChildren()}else [...selectedMessages].forEach(row => row.remove()); selectedMessages.clear();allMessagesSelected=false;refreshSelectionBar(); }
       catch (e) { window.toast?.(e.message || 'Mesajlar silinemedi.'); }
@@ -629,7 +630,7 @@
       .lidya-group-modal{position:fixed;inset:0;z-index:100050;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px}
       .lidya-group-card{position:relative;width:min(440px,100%);max-height:90dvh;overflow:auto;box-sizing:border-box;background:var(--ui-panel,var(--panel,#fffaf0));color:var(--ui-ink,var(--ink,#30271c));border:2px solid #c69c59;border-radius:22px;padding:22px;box-shadow:0 20px 70px #0007}
       .lidya-group-card input:not([type=file]),.lidya-group-card textarea{display:block;width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border-radius:10px;border:1px solid #bba782;background:var(--ui-panel,#fff);color:var(--ui-ink,#241605);font:inherit}
-      .lidya-group-card label{display:block;margin:12px 0 4px}.lidya-group-card input[type=file]{max-width:100%;font-size:12px}
+      .lidya-group-card select{width:100%;box-sizing:border-box;border:1px solid #bba782;border-radius:10px;padding:12px;background:var(--ui-panel,#fff);color:var(--ui-ink,#241605);font:inherit}.lidya-group-manager{padding:0}.lidya-group-manager .lidya-group-card{width:100%;height:100dvh;max-height:100dvh;max-width:720px;border-radius:0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));overscroll-behavior:contain}.group-manager-head{display:flex;justify-content:space-between;gap:12px}.group-manager-head h3{margin:6px 0;font-size:24px;overflow-wrap:anywhere}.group-manager-head small{font-size:10px;letter-spacing:2px;color:var(--ui-gold,#a67c38)}.group-manager-head button{align-self:start;min-width:44px;min-height:44px;background:transparent;border:1px solid #b78b4670;border-radius:50%;font-size:24px;color:inherit}.group-member-row{padding:16px 0;border-bottom:1px solid #b78b4650;overflow-wrap:anywhere}.group-member-row>small{display:block;margin-top:5px;opacity:.75}.group-member-row>button{margin-top:10px;padding:10px;border-radius:10px}.lidya-group-actions .group-danger{background:var(--ui-panel,#fffaf0);color:var(--ui-danger,#b43535);border-color:currentColor}.group-image-form{margin-top:24px;padding-top:16px;border-top:1px solid #b78b4650}.group-message-sender{display:block;font-size:11px;color:var(--ui-gold,#aa7d32);margin:0 0 5px}.lidya-group-manager [data-status]{position:sticky;bottom:0;background:var(--ui-panel,#fffaf0);padding:8px;border-radius:8px}.lidya-group-manager [data-description]{white-space:pre-wrap;overflow-wrap:anywhere}.lidya-group-card label{display:block;margin:12px 0 4px}.lidya-group-card input[type=file]{max-width:100%;font-size:12px}
       .lidya-group-card .group-submit{width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(130deg,#ae7b36,#f0cf87);color:#281900;font-weight:800}
       .lidya-invite-row{display:grid;grid-template-columns:54px minmax(0,1fr) 42px 42px;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #c69c5966}
       .lidya-invite-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:1px solid #c69c59}.lidya-invite-name{overflow-wrap:anywhere;font-weight:700}
@@ -664,60 +665,120 @@
   }
   async function openGroupManagement(id){
     if(document.querySelector('[data-group-menu]'))return;
-    const overlay=document.createElement('div');overlay.className='lidya-group-modal';overlay.dataset.groupMenu='';
-    const card=document.createElement('section');card.className='lidya-group-card';card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Grup menüsü');
-    card.innerHTML='<button type="button" data-close aria-label="Kapat" style="float:right;border:0;background:transparent;color:inherit;font-size:24px">×</button><h3 data-name>Grup menüsü</h3><p data-description></p><div data-actions class="lidya-group-actions"></div><div data-content>Yükleniyor…</div><p data-status role="status"></p>';
+    const overlay=document.createElement('div');overlay.className='lidya-group-modal lidya-group-manager';overlay.dataset.groupMenu='';
+    const card=document.createElement('section');card.className='lidya-group-card';card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Grup yönetimi');
+    card.innerHTML='<header class="group-manager-head"><div><small>GRUP YÖNETİMİ</small><h3 data-name>Yükleniyor…</h3></div><button type="button" data-close aria-label="Kapat">×</button></header><p data-description></p><div data-summary></div><nav data-actions class="lidya-group-actions" aria-label="Grup işlemleri"></nav><div data-content aria-live="polite"></div><p data-status role="status"></p>';
     const previous=document.activeElement;
     const close=()=>{overlay.remove();previous?.focus?.()};
-    card.querySelector('[data-close]').onclick=close;
-    overlay.onclick=e=>{if(e.target===overlay)close()};
-    overlay.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...card.querySelectorAll('button:not(:disabled),input,select')];const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
+    card.querySelector('[data-close]').onclick=close;overlay.onclick=e=>{if(e.target===overlay)close()};
+    overlay.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...card.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea,select')].filter(n=>n.getClientRects().length);const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
     overlay.append(card);document.body.append(overlay);card.querySelector('[data-close]').focus();
-    const content=card.querySelector('[data-content]'),status=card.querySelector('[data-status]');
-    const endpoint='/message-groups/'+encodeURIComponent(id);
-    const run=async(button,action)=>{button.disabled=true;status.textContent='';try{await action()}catch(e){status.textContent=e.message||'İşlem tamamlanamadı.'}finally{button.disabled=false}};
-    try{
-      const [group,initial]=await Promise.all([api().api(endpoint),api().api(endpoint+'/members')]);
-      if(!overlay.isConnected)return;
-      let members=initial;
-      const role=members.find(m=>String(m.user_id)===String(currentUserId))?.role||'member';
-      card.querySelector('[data-name]').textContent=group.name;
-      card.querySelector('[data-description]').textContent=group.description||'Grup bilgileri ve üye işlemleri';
-      const addAction=(label,handler)=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>handler(button);card.querySelector('[data-actions]').append(button);return button};
-      const roster=()=>{
-        content.replaceChildren();
-        for(const m of members){
-          const row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #b78b4650';
-          const label=document.createElement('b');label.textContent=m.nickname+' · '+({owner:'Kurucu',moderator:'Moderatör',member:'Üye'}[m.role]||'Üye');row.append(label);
+    const content=card.querySelector('[data-content]'),status=card.querySelector('[data-status]'),endpoint='/message-groups/'+encodeURIComponent(id);
+    let group,members,role,viewRevision=0;
+    const run=async(button,action)=>{if(button.disabled)return;button.disabled=true;status.textContent='İşleniyor…';try{await action();if(overlay.isConnected)status.textContent='İşlem tamamlandı.'}catch(e){status.textContent=e.message||'İşlem tamamlanamadı.'}finally{button.disabled=false}};
+    const request=(path,method='GET',body)=>api().api(endpoint+path,{method,headers:vaultToken?{'X-Eris-DM-Vault':vaultToken}:{},...(body===undefined?{}:{body:body instanceof FormData?body:JSON.stringify(body)})});
+    const addButton=(parent,label,handler,danger=false)=>{const button=document.createElement('button');button.type='button';button.textContent=label;if(danger)button.classList.add('group-danger');button.onclick=()=>run(button,()=>handler(button));parent.append(button);return button};
+    const refresh=async()=>{[group,members]=await Promise.all([request(''),request('/members')]);role=group.my_role;};
+    const canManage=()=>['owner','moderator'].includes(role);
+    const endChat=async()=>{close();if(String(activeConversationId)===String(id)){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show')}await loadConversations()};
+    const control=async(m,action,minutes=60)=>{await request('/members/'+encodeURIComponent(m.user_id)+'/control','POST',{action,minutes});await refresh();roster()};
+    const roster=()=>{
+      viewRevision++;content.replaceChildren();
+      const search=document.createElement('input');search.placeholder='Üyelerde ad veya ID ara';search.setAttribute('aria-label','Üye ara');content.append(search);
+      const list=document.createElement('div');content.append(list);
+      const draw=()=>{list.replaceChildren();const q=search.value.toLocaleLowerCase('tr-TR');
+        for(const m of members.filter(m=>(m.nickname+' '+m.public_id).toLocaleLowerCase('tr-TR').includes(q))){
+          const row=document.createElement('article');row.className='group-member-row';
+          const label=document.createElement('b');label.textContent=m.nickname;row.append(label);
+          const meta=document.createElement('small');meta.textContent=({owner:'Kurucu',moderator:'Yönetici',member:'Üye'}[m.role]||'Üye')+' · ID '+m.public_id+(m.muted_until&&new Date(m.muted_until)>new Date()?' · Susturuldu':'');row.append(meta);
           const controls=document.createElement('div');controls.className='lidya-group-actions';
-          const action=(text,fn)=>{const button=document.createElement('button');button.type='button';button.textContent=text;button.onclick=()=>run(button,fn);controls.append(button)};
-          if(role==='owner'&&m.role!=='owner')action(m.role==='moderator'?'Yetkiyi al':'Moderatör yap',async()=>{
-            await api().api(endpoint+'/members/'+encodeURIComponent(m.user_id)+'/role',{method:'PUT',body:JSON.stringify({role:m.role==='moderator'?'member':'moderator'})});
-            members=await api().api(endpoint+'/members');roster();status.textContent='Üye yetkisi güncellendi.';
-          });
-          if((role==='owner'||role==='moderator'&&m.role==='member')&&String(m.user_id)!==String(currentUserId)&&m.role!=='owner')action('Gruptan çıkar',async()=>{
-            if(!await dmConfirm(m.nickname+' gruptan çıkarılsın mı?'))return;
-            await api().api(endpoint+'/members/'+encodeURIComponent(m.user_id),{method:'DELETE'});
-            members=await api().api(endpoint+'/members');roster();status.textContent='Üye gruptan çıkarıldı.';
-          });
-          if(controls.children.length)row.append(controls);content.append(row);
-        }
-      };
-      addAction('Üyeler · '+members.length,roster);
-      if(['owner','moderator'].includes(role))addAction('Üye davet et',()=>{
-        content.innerHTML='<form><label>Kullanıcı ID<input name="user_id" required maxlength="64" autocomplete="off"></label><button class="group-submit" type="submit">Davet gönder</button></form>';
-        const form=content.querySelector('form');form.onsubmit=e=>{e.preventDefault();const uid=form.elements.user_id.value.trim();if(!uid)return;run(form.querySelector('button'),async()=>{
-          await api().api(endpoint+'/invitations',{method:'POST',body:JSON.stringify({user_id:uid})});status.textContent='Davet gönderildi.';form.reset();
-        })};form.elements.user_id.focus();
-      });
-      if(role!=='owner')addAction('Gruptan ayrıl',button=>run(button,async()=>{
-        if(!await dmConfirm('Bu gruptan ayrılmak istiyor musunuz?'))return;
-        await api().api(endpoint+'/members/'+encodeURIComponent(currentUserId),{method:'DELETE'});
-        close();if(String(activeConversationId)===String(id)){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show');}
-        await loadConversations();window.toast?.('Gruptan ayrıldınız.');
-      }));
+          if(!group.closed&&role==='owner'&&m.role!=='owner'){
+            addButton(controls,m.role==='moderator'?'Yöneticiliği kaldır':'Yönetici yap',async()=>{await request('/members/'+encodeURIComponent(m.user_id)+'/role','PUT',{role:m.role==='moderator'?'member':'moderator'});await refresh();roster()});
+            addButton(controls,'Sahipliği devret',async()=>{if(!await dmConfirm(m.nickname+' grubun yeni kurucusu olacak. Yönetim yetkilerinizi devretmek istiyor musunuz?'))return;await request('/transfer','POST',{user_id:m.user_id});await refresh();render()});
+          }
+          if(!group.closed&&(role==='owner'||role==='moderator'&&m.role==='member')&&String(m.user_id)!==String(currentUserId)&&m.role!=='owner'){
+            addButton(controls,'Gruptan çıkar',async()=>{if(!await dmConfirm(m.nickname+' gruptan çıkarılsın mı?'))return;await request('/members/'+encodeURIComponent(m.user_id),'DELETE');await refresh();roster()},true);
+            addButton(controls,'Yasakla',async()=>{if(await dmConfirm(m.nickname+' çıkarılacak ve yeniden katılması engellenecek. Onaylıyor musunuz?'))await control(m,'ban')},true);
+            if(m.muted_until&&new Date(m.muted_until)>new Date())addButton(controls,'Susturmayı kaldır',()=>control(m,'unmute'));
+            else {
+              const select=document.createElement('select');select.setAttribute('aria-label',m.nickname+' susturma süresi');for(const [v,t] of [[15,'15 dakika'],[60,'1 saat'],[1440,'24 saat'],[10080,'7 gün']]){const opt=document.createElement('option');opt.value=v;opt.textContent=t;select.append(opt)}controls.append(select);
+              addButton(controls,'Sustur',()=>control(m,'mute',Number(select.value)));
+            }
+          }
+          if(controls.children.length)row.append(controls);list.append(row);
+        }if(!list.children.length)list.textContent='Eşleşen üye yok.';
+      };search.oninput=draw;draw();
+    };
+    const editInfo=()=>{
+      viewRevision++;content.innerHTML='<form class="group-settings-form"><label>Grup adı<input name="name" minlength="2" maxlength="64" required></label><label>Açıklama<textarea name="description" maxlength="500" rows="4"></textarea></label><button class="group-submit">Bilgileri kaydet</button></form><form class="group-image-form"><label>Grup fotoğrafı · en fazla 20 MB<input name="image" type="file" accept="image/*" required></label><button class="group-submit">Fotoğrafı değiştir</button></form>';
+      const form=content.querySelector('form');form.elements.name.value=group.name;form.elements.description.value=group.description||'';
+      form.onsubmit=e=>{e.preventDefault();run(form.querySelector('button'),async()=>{await request('','PATCH',{name:form.elements.name.value.trim(),description:form.elements.description.value.trim()});await refresh();render();await loadConversations();if(String(activeConversationId)===String(id))$('chat').querySelector('.chatHead b').textContent=group.name})};
+      const photo=content.querySelector('.group-image-form');photo.onsubmit=e=>{e.preventDefault();run(photo.querySelector('button'),async()=>{const file=photo.elements.image.files[0];if(!file)return;if(file.size>20000000)throw new Error('Fotoğraf en fazla 20 MB olabilir.');const data=new FormData();data.append('image',file);await request('/image','PUT',data);await refresh();render();await loadConversations();if(String(activeConversationId)===String(id))renderConversationAvatar($('chat').querySelector('.chatHead .ava'),{avatar_url:group.image_url},'👥')})};
+      if(group.has_image)addButton(content,'Fotoğrafı kaldır',async()=>{if(!await dmConfirm('Grup fotoğrafı kaldırılsın mı?'))return;await request('/image','DELETE');await refresh();render();await loadConversations();if(String(activeConversationId)===String(id))renderConversationAvatar($('chat').querySelector('.chatHead .ava'),{},'👥')},true);
+    };
+    const permissions=()=>{
+      viewRevision++;content.innerHTML='<form><label>Mesaj gönderme<select name="admins_only"><option value="false">Tüm üyeler</option><option value="true">Yalnızca yöneticiler</option></select></label><label>Üye davet etme<select name="members_can_invite"><option value="false">Yalnızca yöneticiler</option><option value="true">Tüm üyeler</option></select></label><label>Yöneticiler grup bilgilerini düzenleyebilir<select name="admins_edit_info"><option value="true">Evet</option><option value="false">Yalnızca kurucu</option></select></label><label>Yavaş mod<select name="slow_seconds"><option value="0">Kapalı</option><option value="10">10 saniye</option><option value="30">30 saniye</option><option value="60">1 dakika</option><option value="300">5 dakika</option><option value="3600">1 saat</option></select></label><p>Yavaş mod yöneticileri etkilemez. Susturulan üyeler metin, fotoğraf veya ses gönderemez.</p><button class="group-submit">İzinleri kaydet</button></form>';
+      const form=content.querySelector('form');for(const k of ['admins_only','members_can_invite','admins_edit_info','slow_seconds']){if(k==='slow_seconds'&&![...form.elements[k].options].some(o=>o.value===String(group[k]))){const o=document.createElement('option');o.value=group[k];o.textContent=group[k]+' saniye';form.elements[k].append(o)}form.elements[k].value=String(group[k])}
+      form.onsubmit=e=>{e.preventDefault();run(form.querySelector('button'),async()=>{await request('','PATCH',{admins_only:form.elements.admins_only.value==='true',members_can_invite:form.elements.members_can_invite.value==='true',admins_edit_info:form.elements.admins_edit_info.value==='true',slow_seconds:Number(form.elements.slow_seconds.value)});await refresh();render();await syncGroupState(id)})};
+    };
+    const invite=()=>{
+      viewRevision++;content.innerHTML='<form><label>Kullanıcının görünen ID numarası<input name="user_id" required maxlength="64" autocomplete="off"></label><p>Davet edilen kişi onay verince gruba katılır. Grup kapasitesi 50 kişidir.</p><button class="group-submit">Davet gönder</button></form>';
+      const form=content.querySelector('form');form.onsubmit=e=>{e.preventDefault();run(form.querySelector('button'),async()=>{await request('/invitations','POST',{user_id:form.elements.user_id.value.trim()});form.reset()})};
+    };
+    const remoteList=async(kind)=>{
+      const revision=++viewRevision;content.textContent='Yükleniyor…';const rows=await request('/'+kind);if(!overlay.isConnected||revision!==viewRevision)return;content.replaceChildren();
+      for(const m of rows){const row=document.createElement('div');row.className='group-member-row';const text=document.createElement('b');text.textContent=m.nickname;row.append(text);
+        if(!group.closed)addButton(row,kind==='bans'?'Yasağı kaldır':'Daveti iptal et',async()=>{if(kind==='bans')await request('/members/'+encodeURIComponent(m.user_id)+'/control','POST',{action:'unban'});else await request('/invitations/'+encodeURIComponent(m.user_id),'DELETE');await remoteList(kind)});
+        content.append(row);
+      }if(!rows.length)content.textContent=kind==='bans'?'Yasaklı üye yok.':'Bekleyen davet yok.';
+    };
+    const log=async()=>{
+      const revision=++viewRevision;content.textContent='Yükleniyor…';
+      const labels={pin_message:'Mesaj sabitlendi',unpin_message:'Mesaj sabitlemesi kaldırıldı',settings:'Grup ayarları güncellendi',image:'Grup fotoğrafı değişti',remove_image:'Fotoğraf kaldırıldı',transfer:'Sahiplik devredildi',close:'Grup kapatıldı',invite:'Üye davet edildi',join:'Gruba katıldı',reject_invite:'Daveti reddetti',revoke_invite:'Davet iptal edildi',role_moderator:'Yönetici atandı',role_member:'Yöneticilik kaldırıldı',leave:'Gruptan ayrıldı',remove:'Üye çıkarıldı',ban:'Üye yasaklandı',unban:'Yasak kaldırıldı',mute:'Üye susturuldu',unmute:'Susturma kaldırıldı',delete_messages:'Mesajlar silindi'};
+      const load=async(before)=>{const rows=await request('/audit'+(before?'?before='+before:''));if(!overlay.isConnected||revision!==viewRevision)return;if(!before)content.replaceChildren();content.querySelector('[data-more]')?.remove();
+        for(const m of rows){const row=document.createElement('article');row.className='group-member-row';const b=document.createElement('b');b.textContent=labels[m.action]||m.action;const small=document.createElement('small');small.textContent=m.actor_name+(m.target_name?' → '+m.target_name:'')+' · '+new Date(m.created_at).toLocaleString('tr-TR');row.append(b,small);content.append(row)}
+        if(rows.length===50){const more=addButton(content,'Önceki işlemler',()=>load(rows[rows.length-1].id));more.dataset.more=''}else if(!content.children.length)content.textContent='Yeni yönetim işlemleri burada kaydedilecek.';
+      };await load();
+    };
+    const searchMessages=()=>{
+      const revision=++viewRevision;content.innerHTML='<form><label>Grup mesajlarında ara<input name="q" required minlength="2" maxlength="100" autocomplete="off"></label><button class="group-submit">Ara</button></form><div data-results></div>';
+      const form=content.querySelector('form'),results=content.querySelector('[data-results]');
+      const load=async(before)=>{const rows=await request('/search?q='+encodeURIComponent(form.elements.q.value.trim())+(before?'&before='+before:''));if(!overlay.isConnected||revision!==viewRevision)return;if(!before)results.replaceChildren();results.querySelector('[data-more]')?.remove();
+        for(const m of rows){const row=document.createElement('article');row.className='group-member-row';const title=document.createElement('small');title.textContent=m.sender_nickname+' · '+new Date(m.created_at).toLocaleString('tr-TR');const text=document.createElement('p');text.textContent=m.text;row.append(title,text);results.append(row)}
+        if(rows.length===50){const more=addButton(results,'Daha eski sonuçlar',()=>load(rows[rows.length-1].id));more.dataset.more=''}else if(!results.children.length)results.textContent='Eşleşen mesaj bulunamadı.';
+      };form.onsubmit=e=>{e.preventDefault();run(form.querySelector('button'),()=>load())};
+    };
+    const render=()=>{
+      card.querySelector('[data-name]').textContent=group.name;card.querySelector('[data-description]').textContent=group.description||'Bu grup için henüz açıklama eklenmedi.';
+      card.querySelector('[data-summary]').textContent=members.length+'/50 üye · '+({owner:'Kurucusunuz',moderator:'Yöneticisiniz',member:'Üyesiniz'}[role])+(group.closed?' · Kapatıldı · Salt okunur':group.admins_only?' · Duyuru grubu':' · Sohbet açık');
+      const actions=card.querySelector('[data-actions]');actions.replaceChildren();
+      addButton(actions,'Üyeler',roster);
+      addButton(actions,'Mesajlarda ara',searchMessages);
+      if(!group.closed&&(canManage()||group.members_can_invite))addButton(actions,'Üye davet et',invite);
+      if(!group.closed&&(role==='owner'||role==='moderator'&&group.admins_edit_info))addButton(actions,'Grup bilgileri',editInfo);
+      if(!group.closed&&role==='owner')addButton(actions,'Grup izinleri',permissions);
+      if(canManage()){addButton(actions,'Bekleyen davetler',()=>remoteList('invitations'));addButton(actions,'Yasaklı üyeler',()=>remoteList('bans'));addButton(actions,'İşlem geçmişi',log)}
+      addButton(actions,'Bildirim ayarı',async()=>{const state=await api().api('/conversations/'+encodeURIComponent(id)+'/notifications');content.replaceChildren();viewRevision++;const label=document.createElement('p');label.textContent=state.is_muted?'Grup bildirimleri sessizde.':'Grup bildirimleri açık.';content.append(label);addButton(content,state.is_muted?'Bildirimleri aç':'Bildirimleri sessize al',async()=>{await api().api('/conversations/'+encodeURIComponent(id)+'/notifications',{method:'PUT',body:JSON.stringify({is_muted:!state.is_muted})});render()})});
+      if(!group.closed&&role==='owner')addButton(actions,'Grubu kapat',async()=>{if(!await dmConfirm('Grup kalıcı olarak kapatılacak. Davetler iptal edilir, yeni mesaj gönderilemez. Mevcut üyeler geçmişi okuyabilir. Devam edilsin mi?'))return;await request('/close','POST');await refresh();render();await syncGroupState(id)},true);
+      if(role!=='owner')addButton(actions,'Gruptan ayrıl',async()=>{if(!await dmConfirm('Bu gruptan ayrılmak istiyor musunuz?'))return;await request('/members/'+encodeURIComponent(currentUserId),'DELETE');await endChat()},true);
       roster();
-    }catch(e){content.textContent=e.message||'Grup menüsü açılamadı.'}
+    };
+    try{await refresh();if(overlay.isConnected)render()}catch(e){content.textContent=e.message||'Grup yönetimi açılamadı.'}
+  }
+
+  async function syncGroupState(id){
+    if(!String(id||'').startsWith('grp_'))return;
+    const revision=chatRevision;
+    try{
+      const [g,roster]=await Promise.all([api().api('/message-groups/'+encodeURIComponent(id)),api().api('/message-groups/'+encodeURIComponent(id)+'/members')]);
+      if(revision!==chatRevision||String(activeConversationId)!==String(id))return;
+      const chat=$('chat'),me=roster.find(m=>String(m.user_id)===String(currentUserId));
+      const muted=me?.muted_until&&new Date(me.muted_until)>new Date();
+      const reason=g.closed?'Grup kapatıldı · Salt okunur':muted?'Susturuldunuz · '+new Date(me.muted_until).toLocaleString('tr-TR'):g.admins_only&&g.my_role==='member'?'Yalnızca yöneticiler mesaj gönderebilir':'';
+      const compose=chat.querySelector('.compose');if(compose){compose.hidden=!!reason;compose.style.display=reason?'none':''}
+      const subtitle=chat.querySelector('.chatHead small');if(subtitle)subtitle.textContent=reason||roster.length+' üye · Grup bilgileri için ada dokun'+(g.slow_seconds?' · Yavaş mod '+g.slow_seconds+' sn':'');
+      const title=chat.querySelector('.chatHead b');if(title)title.textContent=g.name;
+    }catch(e){if(revision!==chatRevision)return;if(/üye değilsiniz|erişiminiz yok|bulunamadı/i.test(e.message||'')){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show');document.querySelector('[data-group-menu]')?.remove();loadConversations();window.toast?.('Bu gruba erişiminiz sona erdi.')}}
   }
   async function checkGroupInvites(){
     const overlay=document.createElement('div');overlay.className='lidya-group-modal';
@@ -738,7 +799,7 @@
         const name=document.createElement('span');name.className='lidya-invite-name';name.textContent=invite.name;row.append(name);
         for(const [action,symbol,klass,label] of [['accept','✓','lidya-invite-accept','Daveti kabul et'],['reject','×','lidya-invite-reject','Daveti reddet']]){
           const button=document.createElement('button');button.type='button';button.className=klass;button.textContent=symbol;button.setAttribute('aria-label',label);
-          button.onclick=async()=>{const buttons=row.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);try{await api().api('/message-groups/'+encodeURIComponent(invite.conversation_id)+'/invitations/respond',{method:'POST',body:JSON.stringify({action})});row.remove();window.toast?.(action==='accept'?'Gruba katıldınız.':'Grup daveti reddedildi.');if(action==='accept'){close();await loadConversations();if(typeof openConversation==='function')await openConversation(invite.conversation_id)}if(!list.children.length)list.textContent='Bekleyen grup davetiniz yok.'}catch(e){window.toast?.(e.message||'Davet yanıtı gönderilemedi.');buttons.forEach(b=>b.disabled=false)}};
+          button.onclick=async()=>{const buttons=row.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);try{await api().api('/message-groups/'+encodeURIComponent(invite.conversation_id)+'/invitations/respond',{method:'POST',body:JSON.stringify({action})});row.remove();window.toast?.(action==='accept'?'Gruba katıldınız.':'Grup daveti reddedildi.');if(action==='accept'){close();await loadConversations();await openRealChat(invite.conversation_id,invite.name,'👥',null)}if(!list.children.length)list.textContent='Bekleyen grup davetiniz yok.'}catch(e){window.toast?.(e.message||'Davet yanıtı gönderilemedi.');buttons.forEach(b=>b.disabled=false)}};
           row.append(button);
         }
         list.append(row);
@@ -908,7 +969,7 @@
     }
     window.ErisCalls?.syncChat?.();
     const compose=chat.querySelector('.compose');
-    if(compose){compose.hidden=isSystemConversation();compose.style.display=isSystemConversation()?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||isSystemConversation());}
+    if(compose){compose.hidden=isSystemConversation();compose.style.display=isSystemConversation()?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||isSystemConversation()||isGroup);}
     const headAvatar=chat.querySelector('.chatHead .ava');
     if(info?.type==='family'||isGroup)renderConversationAvatar(headAvatar,info,isGroup?'👥':'👪');
     else renderAvatar(headAvatar,isSystemConversation()?SYSTEM_AVATAR:avatar,name?.slice(0,1)?.toUpperCase(),isSystemConversation()?'':asList(info?.members,['members']).find(m=>String(m.user_id)!==String(currentUserId))?.frame_asset);
@@ -949,6 +1010,7 @@
       }
     }
     bindSender(chat);
+    if(isGroup)syncGroupState(id);
     window.ErisPrivateDM?.open?.(id, chat);
   }
 
@@ -1013,9 +1075,14 @@
     const id=activeConversationId,revision=chatRevision,chat=$('chat');
     if(reconciling||!id||!chat?.classList.contains('show')||document.visibilityState==='hidden')return;
     reconciling=true;
+    if(String(id).startsWith('grp_'))await syncGroupState(id);
+    if(String(activeConversationId)!==String(id)){reconciling=false;return}
     try{const rows=asList(await api().messages(id),['messages','items','data']);
       if(revision!==chatRevision||String(activeConversationId)!==String(id))return;
       const body=chat.querySelector('.chatBody'),nearBottom=body.scrollHeight-body.scrollTop-body.clientHeight<80;
+      const authoritative=new Set(rows.map(m=>String(m.id))),oldest=rows.length?Math.min(...rows.map(m=>Number(m.id))):0;
+      for(const old of body.querySelectorAll('.bubble[data-message-id]'))if(!authoritative.has(old.dataset.messageId)&&(!rows.length||Number(old.dataset.messageId)>=oldest)){selectedMessages.delete(old);releaseMediaUrls(old);old.remove()}
+      refreshSelectionBar();
       for(const m of rows){const mine=String(m.sender_id||m.user_id)===String(currentUserId);const row=appendMessageOnce(body,m,mine);if(mine&&m.is_read){row.dataset.read='1';const marks=row.querySelector('.dm-checks');if(marks)marks.textContent='✓✓'}}
       if(nearBottom)body.scrollTop=body.scrollHeight;
     }catch{}finally{reconciling=false}
@@ -1040,7 +1107,7 @@
     ws.onmessage = event => {
       try {
         const data = JSON.parse(event.data);
-        if (data?.type === 'dm_message' || data?.type === 'dm_read') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
+        if (data?.type === 'dm_message' || data?.type === 'dm_read' || data?.type === 'dm_messages_deleted') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
       } catch (_) {}
     };
     ws.onclose = () => {

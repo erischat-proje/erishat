@@ -39,6 +39,7 @@ from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
 from . import group_routes
+from . import group_policy
 from .staff_visibility import is_staff
 from .social_privacy import social_flags, require_social_visible
 from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
@@ -1138,6 +1139,8 @@ def _dm_request_gate(db: Session, sender_id: str, conversation_id: str, *, first
 
     Lock the sender row to serialize concurrent first sends (including media/gifts).
     """
+    if db.get(MessageGroup, conversation_id):
+        return False
     db.scalar(select(User.id).where(User.id == sender_id).with_for_update())
     recipient_ids = list(db.scalars(select(ConversationMember.user_id).where(
         ConversationMember.conversation_id == conversation_id,
@@ -1179,8 +1182,9 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         raise HTTPException(status_code=403, detail="Bu konuşmaya mesaj gönderemezsiniz")
     if repo.get(conversation_id).type == "welcome":
         raise HTTPException(status_code=400, detail="Bu sistem sohbetine yanıt gönderilemez.")
+    group_policy.require_write(db, conversation_id, user.id)
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
-    require_feature(db, user.id, [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
+    require_feature(db, user.id, [] if db.get(MessageGroup, conversation_id) else [member_id for member_id in repo.members(conversation_id) if member_id != user.id])
     is_family_conversation = db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)) is not None
     if not is_family_conversation and not db.get(MessageGroup, conversation_id):
         recipient_ids = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
@@ -1263,6 +1267,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
     gift = context['gifts'].get(message.id)
     media = context['media'].get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
+        "sender_nickname":"LidyaChat" if is_system else (sender.nickname if sender else "Silinmiş kullanıcı"),
         "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
         "sender_frame_asset":None if is_system else (sender.frame_asset if sender else None), "bubble_asset":None if is_system else context.get("bubbles",{}).get(message.sender_id),
         "text": message.text, "created_at": message.created_at,
@@ -1286,9 +1291,9 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
-    require_feature(db, user.id, [uid for uid in ConversationRepository(db).members(conversation_id) if uid != user.id])
+    require_feature(db, user.id, [] if db.get(MessageGroup, conversation_id) else [uid for uid in ConversationRepository(db).members(conversation_id) if uid != user.id])
     conversation = db.get(Conversation, conversation_id)
-    if conversation and not db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
+    if conversation and not db.get(MessageGroup, conversation_id) and not db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         recipient_ids = list(db.scalars(select(ConversationMember.user_id).where(
             ConversationMember.conversation_id == conversation_id,
             ConversationMember.user_id != user.id,
@@ -1317,6 +1322,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
         if not valid: raise HTTPException(status_code=415, detail="Fotoğraf dosyası okunamadı")
     elif not (data.startswith(b"OggS") or data.startswith(b"RIFF") or data.startswith(b"ID3") or data[0:1] == b"\x1a" or (len(data) > 8 and data[4:8] == b"ftyp")):
         raise HTTPException(status_code=415, detail="Ses dosyası okunamadı")
+    group_policy.require_write(db, conversation_id, user.id)
     temporary = media_type == "image" and view_seconds > 0
     message = Message(conversation_id=conversation_id, sender_id=user.id, text="[Fotoğraf]" if media_type == "image" else "[Sesli mesaj]")
     if conversation.type == 'dm' and conversation.is_ephemeral:
@@ -1942,8 +1948,14 @@ async def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: st
         return {"deleted": 0, "scope": scope}
     rows = list(db.scalars(select(Message).where(Message.id.in_(ids), Message.conversation_id == conversation_id)))
     if scope == "everyone":
-        if not all_messages and any(row.sender_id != user.id for row in rows):
+        group_admin = False
+        if db.get(MessageGroup, conversation_id):
+            group_policy.locked_group(db, conversation_id)
+            group_admin = group_policy.role(db, conversation_id, user.id) in ("owner", "moderator")
+        if not group_admin and any(row.sender_id != user.id for row in rows):
             raise HTTPException(status_code=403, detail="İki taraf için yalnızca kendi mesajlarınızı silebilirsiniz")
+        if db.get(MessageGroup, conversation_id):
+            group_policy.audit(db, conversation_id, user.id, "delete_messages")
         deleted_ids = [row.id for row in rows]
         for row in rows:
             db.delete(row)
@@ -1962,6 +1974,7 @@ async def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: st
 @app.post("/v1/conversations/{conversation_id}/pins/{message_id}")
 def pin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    group_policy.require_pin(db, conversation_id, user.id)
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     message = db.get(Message, message_id)
     if not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
@@ -1969,6 +1982,7 @@ def pin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | No
         return {"pinned": True}
     count = int(db.scalar(select(func.count(PinnedMessage.id)).where(PinnedMessage.conversation_id == conversation_id)) or 0)
     if count >= 5: raise HTTPException(status_code=409, detail="Bir konuşmada en fazla 5 mesaj sabitlenebilir")
+    if db.get(MessageGroup, conversation_id): group_policy.audit(db, conversation_id, user.id, "pin_message")
     db.add(PinnedMessage(conversation_id=conversation_id, message_id=message_id, pinned_by=user.id)); db.commit()
     return {"pinned": True}
 
@@ -1976,9 +1990,13 @@ def pin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | No
 @app.delete("/v1/conversations/{conversation_id}/pins/{message_id}")
 def unpin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
+    group_policy.require_pin(db, conversation_id, user.id)
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     row = db.scalar(select(PinnedMessage).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id))
-    if row: db.delete(row); db.commit()
+    if row:
+        db.delete(row)
+        if db.get(MessageGroup, conversation_id): group_policy.audit(db, conversation_id, user.id, "unpin_message")
+        db.commit()
     return {"pinned": False}
 
 
@@ -2054,6 +2072,8 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     repo = ConversationRepository(db)
     if not repo.is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
+    if db.get(MessageGroup, conversation_id):
+        raise HTTPException(400, "Bu hediye yalnızca bireysel sohbetlerde kullanılabilir.")
     recipients = [member_id for member_id in repo.members(conversation_id) if member_id != user.id]
     if len(recipients) != 1 or db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         raise HTTPException(status_code=400, detail="Bu hediye DM konuşmalarında kullanılabilir")

@@ -30,3 +30,32 @@ class GroupInvitation(Base):
     invited_by: Mapped[str] = mapped_column(String(64), ForeignKey('users.id'), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default='pending')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+# Separate tables keep upgrades compatible with existing paid groups.
+from sqlalchemy import Boolean, Integer
+
+class GroupSettings(Base):
+    __tablename__ = 'message_group_settings'
+    conversation_id: Mapped[str] = mapped_column(String(128), ForeignKey('message_groups.conversation_id', ondelete='CASCADE'), primary_key=True)
+    closed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    admins_only: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    members_can_invite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    admins_edit_info: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    slow_seconds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+class GroupControl(Base):
+    __tablename__ = 'message_group_controls'
+    conversation_id: Mapped[str] = mapped_column(String(128), ForeignKey('message_groups.conversation_id', ondelete='CASCADE'), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    muted_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class GroupAudit(Base):
+    __tablename__ = 'message_group_audit'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[str] = mapped_column(String(128), ForeignKey('message_groups.conversation_id', ondelete='CASCADE'), index=True)
+    actor_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
