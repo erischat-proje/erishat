@@ -12,7 +12,7 @@
     const headers = new Headers(options.headers || {});
     if (options.body !== undefined && !(typeof FormData !== 'undefined' && options.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     if (token()) headers.set('Authorization', `Bearer ${token()}`);
-    if (window.ErisChatDMVaultToken && (/^\/(?:messages|conversations)\b/.test(path) || path.startsWith('/me/dm-vault') || /^\/families\/[^/]+\/chat/.test(path)))
+    if (window.ErisChatDMVaultToken && (/^\/(?:messages|message-tools|conversations)\b/.test(path) || path.startsWith('/me/dm-vault') || /^\/families\/[^/]+\/chat/.test(path)))
       headers.set('X-Eris-DM-Vault', window.ErisChatDMVaultToken);
     let res, data;
     try {
@@ -45,7 +45,10 @@
     conversation: id => request(`/conversations/${encodeURIComponent(id)}`),
     createConversation: participantId => request('/conversations',{method:'POST',body:JSON.stringify({participant_id:participantId})}),
     messages: (id,limit=100,offset=0) => request(`/messages/${encodeURIComponent(id)}?limit=${limit}&offset=${offset}`),
-    sendMessage: (id,text) => request(`/messages/${encodeURIComponent(id)}`,{method:'POST',body:JSON.stringify({text})}),
+    sendMessage: (id,text,replyToId=null) => request(`/messages/${encodeURIComponent(id)}`,{method:'POST',body:JSON.stringify({text,...(replyToId?{reply_to_id:replyToId}:{})})}),
+    messageHistory: (id,before=null,around=null) => request(`/message-tools/${encodeURIComponent(id)}/history?limit=50${before?'&before='+before:''}${around?'&around='+around:''}`),
+    searchMessages: (id,q,before=null) => request(`/message-tools/${encodeURIComponent(id)}/search?q=${encodeURIComponent(q)}${before?'&before='+before:''}`),
+    editMessage: (id,messageId,text,expectedText) => request(`/message-tools/${encodeURIComponent(id)}/${messageId}`,{method:'PATCH',body:JSON.stringify({text,expected_text:expectedText})}),
     messageGifts: () => request('/message-gifts'),
     sendMessageGift: (id,gift_key,quantity=1) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key,quantity})}),
     sendMessageMedia: (id,file,mediaType,viewSeconds=0) => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:30000});},
