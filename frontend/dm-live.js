@@ -27,6 +27,7 @@
   let vaultToken = '';
   let selectionBar = null;
   let voiceRecorder = null;
+  let attachmentPreview = null;
   const mediaUploadsInFlight = new Set();
 
   function messageTime(value) {
@@ -60,9 +61,9 @@
   }
   function setUploadStatus(value){const status=$('chat')?.querySelector('[data-upload-status]');if(status){status.textContent=value;status.hidden=!value}}
   function pickAttachment(kind){
-    const id=activeConversationId,revision=chatRevision,input=document.createElement('input');input.type='file';
+    const id=activeConversationId,revision=chatRevision,owner=currentUserId,input=document.createElement('input');input.type='file';
     input.accept=kind==='video'?'video/mp4,video/webm':'.pdf,.txt,.csv,.zip,.docx,.xlsx,.pptx';
-    input.onchange=()=>{const file=input.files?.[0];if(!file)return;if(revision!==chatRevision||String(activeConversationId)!==String(id)){window.toast?.('Sohbet değişti. Dosyayı yeniden seçin.');return}uploadMedia(file,kind,0)};input.click();
+    input.onchange=()=>{const file=input.files?.[0];if(!file)return;if(owner!==currentUserId||revision!==chatRevision||String(activeConversationId)!==String(id)){window.toast?.('Sohbet değişti. Dosyayı yeniden seçin.');return}openAttachmentPreview(file,kind,0,{id,revision,user:owner})};input.click();
   }
   function cancelNativeDocument(){
     if(nativeDocumentJob){try{window.ErisChatAndroid?.abortDocument?.(nativeDocumentJob.token)}catch{}nativeDocumentJob=null}
@@ -475,7 +476,7 @@
     const conversationId=expected?.id||activeConversationId,revision=expected?.revision??chatRevision,owner=expected?.user??currentUserId;
     const valid=()=>revision===chatRevision&&String(activeConversationId)===String(conversationId)&&owner===currentUserId;
     const reject=message=>{if(expected)throw new Error(message);window.toast?.(message);return false};
-    if(expected&&!valid())return reject('Sohbet değişti. Ses kaydını yeniden yapın.');
+    if(expected&&!valid())return reject('Sohbet değişti. Dosyayı yeniden seçin.');
     if(!conversationId||!api()?.sendMessageMedia||!file)return reject('Medya gönderimi şu anda kullanılamıyor.');
     const maximum=type==='video'?25*1024*1024:type==='document'?20*1024*1024:12*1024*1024;
     if(file.size>maximum)return reject('Dosya en fazla '+maximum/(1024*1024)+' MB olabilir.');
@@ -493,12 +494,26 @@
     finally{mediaUploadsInFlight.delete(lock);if(valid())setUploadStatus('')}
   }
 
+  function closeAttachmentPreview(){attachmentPreview?.close();attachmentPreview=null}
+  function openAttachmentPreview(file,type,seconds,context){
+    const chat=$('chat'),valid=()=>context.id===activeConversationId&&context.revision===chatRevision&&context.user===currentUserId&&chat?.classList.contains('show')&&!chat.querySelector('.compose')?.hidden&&chat.dataset.groupWriteBlocked!=='1'&&!isSystemConversation();
+    if(!valid()){window.toast?.('Sohbet değişti veya gönderim izni kaldırıldı.');return}
+    if(voiceRecorder?.isActive()){window.toast?.('Önce ses kaydını gönderin veya silin.');return}
+    if(!window.ErisAttachmentPreview){window.toast?.('Gönderim önizlemesi için uygulamayı yenileyin.');return}
+    let panel;
+    try{file=window.ErisAttachmentPreview.prepare(file,type,seconds);panel=messageActionPanel('Gönderim önizlemesi');
+      attachmentPreview=window.ErisAttachmentPreview.open({panel,host:chat,file,type,seconds,name:chat.querySelector('.chatHead b')?.textContent,valid,
+        send:chosen=>uploadMedia(chosen,type,seconds,context),reselect:()=>type==='image'?pickPhoto(seconds):pickAttachment(type),closed:()=>{attachmentPreview=null;chat.querySelector('[data-dm-photo]')?.focus()}});
+    }catch(e){panel?.remove();window.toast?.(e.message||'Dosya önizlemesi açılamadı.')}
+  }
+
   function pickPhoto(seconds=0,camera=false){
-    const id=activeConversationId,revision=chatRevision,input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp,image/gif';if(camera)input.setAttribute('capture','environment');
-    input.onchange=()=>{const file=input.files?.[0];if(!file)return;if(revision!==chatRevision||String(activeConversationId)!==String(id)){window.toast?.('Sohbet değişti. Dosyayı yeniden seçin.');return}uploadMedia(file,'image',seconds)};input.click();
+    const id=activeConversationId,revision=chatRevision,owner=currentUserId,input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp,image/gif';if(camera)input.setAttribute('capture','environment');
+    input.onchange=()=>{const file=input.files?.[0];if(!file)return;if(owner!==currentUserId||revision!==chatRevision||String(activeConversationId)!==String(id)){window.toast?.('Sohbet değişti. Dosyayı yeniden seçin.');return}openAttachmentPreview(file,'image',seconds,{id,revision,user:owner})};input.click();
   }
 
   function openPhotoChooser(){
+    if(voiceRecorder?.isActive()){window.toast?.('Önce ses kaydını gönderin veya silin.');return}
     const modal=document.createElement('div');modal.className='dm-gift-sheet';modal.innerHTML="<section><div style=\"display:flex;align-items:center;justify-content:space-between\"><b>Fotoğraf, video ve belge</b><button class=\"close\" data-x>×</button></div><p style=\"font-size:9px;color:var(--ui-ink);line-height:1.5\">Normal fotoğraf mesajda kalır. Süreli fotoğraf, alıcı ilk açtığında seçilen sürenin sonunda silinir.</p><div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px\"><button data-gallery>🖼 Galeriden fotoğraf</button><button data-camera>📷 Kamerayla fotoğraf</button></div><hr style=\"border-color:var(--ui-line);margin:14px 0\"><b style=\"font-size:11px\">Süreli fotoğraf</b><div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px\"><button data-temp=\"10\" aria-pressed=\"true\">10 sn</button><button data-temp=\"20\">20 sn</button><button data-temp=\"30\">30 sn</button></div><div data-temp-source style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px\"><button data-source=\"gallery\">🖼 Süreli galeriden</button><button data-source=\"camera\">📸 Süreli kamera</button></div></section>";document.body.append(modal);
     const attachments=document.createElement('div');attachments.className='dm-attachment-choices';attachments.innerHTML='<button type="button" data-video>▶ Video gönder</button><button type="button" data-document>▤ Belge gönder</button><small>Video: MP4/WEBM · 25 MB · 2 dakika<br>Belge: PDF, TXT, CSV, ZIP, DOCX, XLSX, PPTX · 20 MB</small>';
     modal.querySelector('[data-camera]').parentElement.after(attachments);
@@ -965,7 +980,7 @@
       const muted=me?.muted_until&&new Date(me.muted_until)>new Date();
       const reason=g.closed?'Grup kapatıldı · Salt okunur':muted?'Susturuldunuz · '+new Date(me.muted_until).toLocaleString('tr-TR'):g.admins_only&&g.my_role==='member'?'Yalnızca yöneticiler mesaj gönderebilir':'';
       const previouslyBlocked=chat.dataset.groupWriteBlocked;chat.dataset.groupWriteBlocked=reason?'1':'0';if(previouslyBlocked!==chat.dataset.groupWriteBlocked)chat.querySelectorAll('.bubble').forEach(row=>{if(row._message?.poll)renderMessagePoll(row,row._message)});const pollButton=chat.querySelector('[data-create-poll]');if(pollButton)pollButton.disabled=!!reason;
-      if(reason){cancelVoiceRecording();clearMessageMode();document.querySelector('[data-attachment-chooser]')?.remove()}
+      if(reason){closeAttachmentPreview();cancelVoiceRecording();clearMessageMode();document.querySelector('[data-attachment-chooser]')?.remove()}
       const compose=chat.querySelector('.compose');if(compose){compose.hidden=!!reason;compose.style.display=reason?'none':''}
       const subtitle=chat.querySelector('.chatHead small');if(subtitle)subtitle.textContent=reason||roster.length+' üye · Grup bilgileri için ada dokun'+(g.slow_seconds?' · Yavaş mod '+g.slow_seconds+' sn':'');
       const title=chat.querySelector('.chatHead b');if(title)title.textContent=g.name;
@@ -1331,7 +1346,7 @@
   const REACTION_EMOJIS=['👍','❤️','😂','😮','😢','🙏','🔥','👏'];
   const reactionJobs=new Set();
   function canForwardMessage(m){return !!m&&!m.poll&&!m.has_poll&&!m.gift_key&&!m.temporary&&!m.expires_at&&!m.protected_message}
-  function closeMessageActions(){document.querySelector('[data-message-action-panel]')?.remove()}
+  function closeMessageActions(){closeAttachmentPreview();document.querySelector('[data-message-action-panel]')?.remove()}
   function messageActionPanel(title){
     closeMessageActions();const panel=document.createElement('div');panel.className='dm-action-panel';panel.dataset.messageActionPanel='';
     panel.innerHTML='<section role="dialog" aria-modal="true"><header><h3></h3><button type="button" data-close aria-label="Kapat">×</button></header><div data-content></div><p data-status role="status" aria-live="polite"></p></section>';
@@ -1569,7 +1584,7 @@
       else{headerAvatar.removeAttribute('role');headerAvatar.removeAttribute('tabindex');headerAvatar.removeAttribute('aria-label')}
     }
     installChatTools(chat);
-    const close=chat.querySelector('.chatHead>.close');if(close&&!close.dataset.voiceCloseBound){close.dataset.voiceCloseBound='';close.addEventListener('click',cancelVoiceRecording)}
+    const close=chat.querySelector('.chatHead>.close');if(close&&!close.dataset.voiceCloseBound){close.dataset.voiceCloseBound='';close.addEventListener('click',()=>{cancelVoiceRecording();closeAttachmentPreview()})}
     setUploadStatus(mediaUploadsInFlight.has(String(id))?'Dosya gönderiliyor…':'');
     syncChatCompose(chat);
     chat.classList.toggle('dm-system-conversation', isSystemConversation());
