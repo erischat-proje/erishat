@@ -10,6 +10,7 @@ from .platform_models import VipStatus
 from .models import User
 from .purchase_routes import decode_document
 from .management_events import audit
+from .finance_metrics import snapshot
 
 router = APIRouter(prefix='/v1/admin/finance-audit', tags=['admin-finance-audit'])
 
@@ -19,14 +20,20 @@ def require_da(db, user):
         raise HTTPException(status_code=403,detail='DA finansal denetim yetkisi gerekli')
 
 def register_auth(current_user):
+    @router.get('/live-snapshot')
+    def live_snapshot(response:Response,days:int=Query(7,ge=1,le=90),target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);response.headers['Cache-Control']='private, no-store';response.headers['Vary']='Authorization'
+        return snapshot(db,days,target.strip())
+
     @router.get('/overview')
-    def overview(db: Session=Depends(get_db),user:User=Depends(current_user)):
-        require_da(db,user)
-        since=datetime.now(timezone.utc)-timedelta(days=7)
-        ops=db.scalars(select(LidyaOperation).where(LidyaOperation.created_at>=since).order_by(LidyaOperation.created_at.desc()).limit(1000)).all()
-        deposits=sum(x.amount for x in ops if x.operation=='EKLEME')
-        withdrawals=sum(x.amount for x in ops if x.operation=='ÇIKARMA')
-        return {'period_days':7,'scanned_operations':len(ops),'truncated':len(ops)==1000,'lidya_added_sample':str(deposits),'lidya_removed_sample':str(withdrawals),'vip_accounts':db.scalar(select(func.count()).select_from(VipStatus).where(VipStatus.level>0)), 'manual_operation_count':db.scalar(select(func.count()).select_from(LidyaOperation)), 'order_count':db.scalar(select(func.count()).select_from(LidyaOrder)),'note':'Sample values are NOT platform-wide aggregates or financial reconciliation.'}
+    def overview(response:Response,days:int=Query(7,ge=1,le=90),target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
+        require_da(db,user);response.headers['Cache-Control']='private, no-store';response.headers['Vary']='Authorization'
+        data=snapshot(db,days,target.strip())
+        return {'period_days':days,'generated_at':data['generated_at'],'period_start':data['period_start'],'period_end':data['period_end'],'sampled':False,'truncated':False,
+            'lidya_added':data['manual']['added'],'lidya_removed':data['manual']['removed'],'scanned_operations':data['manual']['count'],
+            'vip_accounts':data['vip_accounts'],'manual_operation_count':db.scalar(select(func.count()).select_from(LidyaOperation).where(LidyaOperation.user_id.in_(select(User.id).where(User.public_id==target.strip())) if target.strip() else True)),
+            'order_count':db.scalar(select(func.count()).select_from(LidyaOrder).where(LidyaOrder.user_id.in_(select(User.id).where(User.public_id==target.strip())) if target.strip() else True)),
+            'note':data['note']}
 
     @router.get('/manual-operations')
     def manual_operations(limit:int=Query(50,ge=1,le=100), before:str|None=None,target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):

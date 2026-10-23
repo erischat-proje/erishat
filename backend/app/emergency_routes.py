@@ -107,7 +107,7 @@ def register_auth(current_user):
         recent=list(db.scalars(query.order_by(ManagementCase.id.desc()).limit(10)))
         assigned=db.scalar(query.with_only_columns(func.count()).where(ManagementCase.assigned_id==user.id,ManagementCase.status.notin_(['resolved','dismissed']))) or 0
         active=db.scalar(select(func.count()).select_from(EmergencyChatAction).join(ChatBan,ChatBan.id==EmergencyChatAction.chat_ban_id).where(EmergencyChatAction.case_id.in_(query.with_only_columns(ManagementCase.id)),ChatBan.active.is_(True),EmergencyChatAction.expires_at>current_time())) or 0
-        return {'role':rank,'open_cases':sum(v for k,v in counts.items() if k not in {'resolved','dismissed'}),
+        return {'source':'persisted_database','generated_at':current_time().isoformat(),'role':rank,'open_cases':sum(v for k,v in counts.items() if k not in {'resolved','dismissed'}),
           'counts':counts,'assigned_to_me':assigned,'active_emergency':active,
           'recent_cases':[{'id':c.id,'category':c.category,'status':c.status,'summary':c.summary,'assigned_id':c.assigned_id} for c in recent]}
     return router
