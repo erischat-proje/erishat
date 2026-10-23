@@ -18,7 +18,9 @@ from app.models import User, Conversation, ConversationMember, Message
 from app.admin_models import AdminRole
 from app.platform_models import Notification, UserBlock, MessageHidden, PinnedMessage
 from app.group_models import MessageGroup, GroupRole, GroupInvitation, GroupSettings, GroupControl, GroupAudit
-from app import group_routes as groups, group_policy as policy
+from app import group_routes as groups, group_policy as policy, message_pins
+from app.platform_models import ConversationFolder, ConversationVaultSession, PrivateMessageRequest, Family, FamilyMember, MessageMedia
+from app.message_attachment_models import MessageAttachment
 
 app=FastAPI()
 def auth(db=Depends(get_db),authorization: str|None=Header(None),request=None):
@@ -41,7 +43,7 @@ ns=dict(Session=Session,Depends=Depends,get_db=get_db,User=User,Header=Header,
         current_user=auth,ConversationRepository=ConversationRepository,HTTPException=HTTPException,
         require_unlocked=lambda *a:None,select=select,func=func,Message=Message,
         MessageHidden=MessageHidden,PinnedMessage=PinnedMessage,MessageGroup=MessageGroup,
-        group_policy=policy,manager=Manager())
+        group_policy=policy,manager=Manager(),message_pins=message_pins)
 tree=ast.parse((ROOT/'backend/app/main.py').read_text())
 for name,method,path in [('hide_messages','POST','/v1/messages/{conversation_id}/delete'),('pin_message','POST','/v1/conversations/{conversation_id}/pins/{message_id}'),('unpin_message','DELETE','/v1/conversations/{conversation_id}/pins/{message_id}')]:
     node=next(n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef)) and n.name==name)
@@ -54,7 +56,7 @@ def env(tmp_path,monkeypatch):
     engine=create_engine('sqlite:///'+str(tmp_path/'groups.db'),connect_args={'check_same_thread':False})
     @event.listens_for(engine,'connect')
     def fk(conn,_):conn.execute('PRAGMA foreign_keys=ON')
-    classes=[User,Conversation,ConversationMember,Message,AdminRole,Notification,UserBlock,MessageHidden,PinnedMessage,MessageGroup,GroupRole,GroupInvitation,GroupSettings,GroupControl,GroupAudit]
+    classes=[ConversationFolder,ConversationVaultSession,PrivateMessageRequest,Family,FamilyMember,MessageMedia,MessageAttachment,User,Conversation,ConversationMember,Message,AdminRole,Notification,UserBlock,MessageHidden,PinnedMessage,MessageGroup,GroupRole,GroupInvitation,GroupSettings,GroupControl,GroupAudit]
     tables=[c.__table__ for c in classes]
     Base.metadata.create_all(engine,tables=tables)
     def session():
@@ -62,6 +64,8 @@ def env(tmp_path,monkeypatch):
     app.dependency_overrides[get_db]=session
     # Platform moderation has separate tests. These tests isolate group permissions.
     monkeypatch.setattr(groups,'require_feature',lambda *a:None)
+    monkeypatch.setattr(message_pins,'_write_access',lambda *a:None)
+    monkeypatch.setattr(message_pins,'_notify',Manager().send_user)
     with Session(engine) as db:
         for i,uid in enumerate(['owner','admin','member','other','outside']):
             db.add(User(id=uid,public_id=str(1000000000+i),_nickname=uid,_avatar='x',is_active=True,lidya=3000))

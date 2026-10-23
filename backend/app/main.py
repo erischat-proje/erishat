@@ -38,7 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy, message_polls
+from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy, message_polls, message_pins
 from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
@@ -461,6 +461,9 @@ message_polls.register(lambda db,cid,user,token: _require_message_media_access(d
     lambda db,uid,event: _send_dm_event(db,uid,event), lambda db,m,uid: _message_out(db,m,uid),
     lambda db,uid,cid: _message_notifications_allowed(db,uid,cid))
 app.include_router(message_polls.router)
+message_pins.register(lambda db,cid,user,token: _require_message_media_access(db,cid,user,token),
+    lambda db,uid,event: _send_dm_event(db,uid,event))
+app.include_router(message_pins.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -2006,32 +2009,15 @@ async def hide_messages(conversation_id: str, payload: dict, x_eris_dm_vault: st
 
 
 @app.post("/v1/conversations/{conversation_id}/pins/{message_id}")
-def pin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
-    if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
-    group_policy.require_pin(db, conversation_id, user.id)
-    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
-    message = db.get(Message, message_id)
-    if not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Mesaj bulunamadı")
-    if db.scalar(select(PinnedMessage.id).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id)):
-        return {"pinned": True}
-    count = int(db.scalar(select(func.count(PinnedMessage.id)).where(PinnedMessage.conversation_id == conversation_id)) or 0)
-    if count >= 5: raise HTTPException(status_code=409, detail="Bir konuşmada en fazla 5 mesaj sabitlenebilir")
-    if db.get(MessageGroup, conversation_id): group_policy.audit(db, conversation_id, user.id, "pin_message")
-    db.add(PinnedMessage(conversation_id=conversation_id, message_id=message_id, pinned_by=user.id)); db.commit()
-    return {"pinned": True}
+@database_task
+async def pin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return await message_pins.change(db, conversation_id, message_id, user, x_eris_dm_vault, True)
 
 
 @app.delete("/v1/conversations/{conversation_id}/pins/{message_id}")
-def unpin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
-    if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
-    group_policy.require_pin(db, conversation_id, user.id)
-    require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
-    row = db.scalar(select(PinnedMessage).where(PinnedMessage.conversation_id == conversation_id, PinnedMessage.message_id == message_id))
-    if row:
-        db.delete(row)
-        if db.get(MessageGroup, conversation_id): group_policy.audit(db, conversation_id, user.id, "unpin_message")
-        db.commit()
-    return {"pinned": False}
+@database_task
+async def unpin_message(conversation_id: str, message_id: int, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return await message_pins.change(db, conversation_id, message_id, user, x_eris_dm_vault, False)
 
 
 @app.get("/v1/me/message-restriction")
