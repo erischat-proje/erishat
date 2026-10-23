@@ -7,6 +7,8 @@ import android.webkit.ValueCallback;
 import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -49,7 +51,12 @@ public class MainActivity extends Activity {
     private static final int MICROPHONE_PERMISSION = 9002;
     private PermissionRequest pendingMicrophone;
     private boolean microphoneDialogOpen;
-    private int pageGeneration;
+    private volatile int pageGeneration;
+    private static final int DOCUMENT_SAVE = 9005;
+    private MessageFileDownloads documentDownloads;
+    private volatile MessageFileDownloads.Pending pendingDocument;
+    private volatile int documentGeneration;
+    private volatile boolean documentPageTrusted;
     private int permissionPageGeneration;
 
     private static final int MEDIA_PICK = 9003;
@@ -79,6 +86,7 @@ public class MainActivity extends Activity {
 
         googleClient = GoogleSignIn.getClient(this, options);
 
+        documentDownloads = new MessageFileDownloads(getCacheDir());
         bundledContent = new BundledContent(this, ERISCHAT_HOST);
         webView = new WebView(this);
         // Keep WebView layout bounds outside status/navigation bars on edge-to-edge Android.
@@ -128,8 +136,8 @@ public class MainActivity extends Activity {
                 mediaCallback = callback;
                 mediaPageGeneration = pageGeneration;
                 try {
-                    String[] types = params.getAcceptTypes();
-                    String type = types.length == 1 ? types[0] : "";
+                    String[] types = MessageFileDownloads.acceptedTypes(params.getAcceptTypes());
+                    String type = types.length > 0 ? types[0] : "";
                     Intent intent;
                     if (params.isCaptureEnabled() && type.startsWith("image/")) {
                         intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -178,6 +186,8 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
                 bundledContent.refresh();
                 pageGeneration++;
+                documentPageTrusted = trustedOrigin(Uri.parse(url));
+                documentDownloads.cancelAll(); pendingDocument = null;
                 cancelMedia();
                 denyPendingMicrophone();
             }
@@ -226,6 +236,38 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String getViewportInsets() {
             return "{\"handled\":" + viewportInsetsHandled + "}";
+        }
+        @JavascriptInterface public String beginDocument(String filename, long size) {
+            if (!documentPageTrusted || documentDownloads == null) return "";
+            String id = documentDownloads.begin(filename, size);
+            if (!id.isEmpty()) documentGeneration = pageGeneration;
+            return id;
+        }
+        @JavascriptInterface public boolean appendDocument(String id, String base64) {
+            if (!documentPageTrusted || documentGeneration != pageGeneration) return false;
+            return documentDownloads.append(id, base64);
+        }
+        @JavascriptInterface public void abortDocument(String id) {
+            documentDownloads.cancel(id);
+            runOnUiThread(() -> { if (pendingDocument != null && pendingDocument.token.equals(id)) pendingDocument = null; });
+        }
+        @JavascriptInterface public void finishDocument(String id) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || documentGeneration != pageGeneration || !activityResumed || isFinishing() || isDestroyed()) {
+                    documentDownloads.cancel(id); return;
+                }
+                MessageFileDownloads.Pending pending = documentDownloads.prepare(id);
+                if (pending == null) { sendDocumentResult(id, false); return; }
+                pendingDocument = pending;
+                try {
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType(pending.mime); intent.putExtra(Intent.EXTRA_TITLE, pending.name);
+                    startActivityForResult(intent, DOCUMENT_SAVE);
+                } catch (RuntimeException error) {
+                    pendingDocument = null; documentDownloads.cancel(id); sendDocumentResult(id, false);
+                }
+            });
         }
         @JavascriptInterface public String cameraVersion() { return "3"; }
         @JavascriptInterface
@@ -357,6 +399,34 @@ public class MainActivity extends Activity {
     ) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == DOCUMENT_SAVE) {
+            MessageFileDownloads.Pending pending = pendingDocument;
+            pendingDocument = null;
+            if (pending == null) return;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null || !trustedPage()
+                    || documentGeneration != pageGeneration || !documentDownloads.isCurrent(pending.token)) {
+                documentDownloads.cancel(pending.token); sendDocumentResult(pending.token, false); return;
+            }
+            Uri destination = data.getData();
+            new Thread(() -> {
+                boolean saved = false;
+                try (FileInputStream input = new FileInputStream(pending.file);
+                     OutputStream output = getContentResolver().openOutputStream(destination, "w")) {
+                    if (output == null) throw new IOException("No output stream");
+                    byte[] buffer = new byte[65536]; int count;
+                    while ((count = input.read(buffer)) != -1) {
+                        if (!documentDownloads.isCurrent(pending.token) || documentGeneration != pageGeneration)
+                            throw new IOException("Transfer cancelled");
+                        output.write(buffer, 0, count);
+                    }
+                    output.flush(); saved = true;
+                } catch (IOException | RuntimeException ignored) { }
+                final boolean success = saved;
+                documentDownloads.cancel(pending.token);
+                runOnUiThread(() -> sendDocumentResult(pending.token, success));
+            }, "message-document-save").start();
+            return;
+        }
         if (requestCode == MEDIA_PICK) {
             ValueCallback<Uri[]> callback = mediaCallback;
             mediaCallback = null;
@@ -399,6 +469,12 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void sendDocumentResult(String id, boolean saved) {
+        if (webView == null || isFinishing() || isDestroyed() || !trustedPage()) return;
+        webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('erischat:document-saved',{detail:{id:"
+                + quote(id) + ",saved:" + saved + "}}));", null);
+    }
+
     private void sendGoogleToken(String token) {
         String js =
                 "window.dispatchEvent(new CustomEvent(" +
@@ -427,6 +503,9 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        documentPageTrusted = false;
+        if (documentDownloads != null) documentDownloads.cancelAll();
+        pendingDocument = null;
         if (bundledContent != null) bundledContent.close();
         cancelMedia();
         denyPendingMicrophone();

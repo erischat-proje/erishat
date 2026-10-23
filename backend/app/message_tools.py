@@ -176,3 +176,19 @@ async def edit(conversation_id: str,message_id: int,payload: EditText,x_eris_dm_
     for uid in db.scalars(select(ConversationMember.user_id).where(ConversationMember.conversation_id==conversation_id)):
         await _notify(db,uid,{'type':'dm_message_updated','conversation_id':conversation_id,'message_id':message_id})
     return result
+
+
+@router.get('/{conversation_id}/shared')
+@database_task
+async def shared(conversation_id: str,kind: str=Query('all',pattern='^(all|image|video|voice|document)$'),
+                 q: str=Query('',max_length=100),before: int|None=Query(None,ge=1),limit: int=Query(30,ge=1,le=50),
+                 x_eris_dm_vault: str|None=Header(None),db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    from .message_attachment_models import MessageAttachment
+    access(db,conversation_id,user.id,x_eris_dm_vault)
+    query=visible_query(user.id,conversation_id).join(MessageMedia,MessageMedia.message_id==Message.id).outerjoin(MessageAttachment,MessageAttachment.message_id==Message.id).where(MessageMedia.temporary.is_(False),MessageMedia.data.is_not(None))
+    if kind!='all':query=query.where(MessageMedia.media_type==kind)
+    q=q.strip()
+    if q:query=query.where(or_(Message.text.icontains(q,autoescape=True),MessageAttachment.filename.icontains(q,autoescape=True)))
+    if before is not None:query=query.where(Message.id<before)
+    rows=list(db.scalars(query.order_by(Message.id.desc()).limit(limit+1)));more=len(rows)>limit;rows=rows[:limit]
+    return {'messages':serialize_rows(db,rows,user.id),'has_more':more,'next_before':rows[-1].id if rows and more else None}

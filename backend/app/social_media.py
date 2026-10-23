@@ -6,7 +6,7 @@ import av
 from fastapi import HTTPException
 
 
-def validate_social_video(data: bytes) -> None:
+def validate_social_video(data: bytes, maximum_seconds: int = 30) -> None:
     try:
         with av.open(BytesIO(data)) as container:
             if not container.streams.video:
@@ -26,12 +26,12 @@ def validate_social_video(data: bytes) -> None:
                     continue
                 start = stream.start_time or 0
                 duration = max(duration, float((packet.pts + (packet.duration or 0) - start) * packet.time_base))
-                if duration > 30:
-                    raise HTTPException(422, 'Video en fazla 30 saniye olabilir')
+                if duration > maximum_seconds:
+                    raise HTTPException(422, f'Video en fazla {maximum_seconds} saniye olabilir')
             if not math.isfinite(duration) or duration <= 0:
                 raise ValueError('Unknown duration')
-            if duration > 30:
-                raise HTTPException(422, 'Video en fazla 30 saniye olabilir')
+            if duration > maximum_seconds:
+                raise HTTPException(422, f'Video en fazla {maximum_seconds} saniye olabilir')
     except HTTPException:
         raise
     except Exception as exc:

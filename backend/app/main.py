@@ -38,7 +38,8 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools
+from . import message_tools, message_attachments
+from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
 from .staff_visibility import is_staff
@@ -1266,6 +1267,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
     pinned = message.id in context['pinned']
     gift = context['gifts'].get(message.id)
     media = context['media'].get(message.id)
+    attachment=context.get('attachments',{}).get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
         "sender_nickname":"LidyaChat" if is_system else (sender.nickname if sender else "Silinmiş kullanıcı"),
         "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
@@ -1279,21 +1281,19 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "gift_price": gift.unit_price if gift else None,
         "gift_quantity": int((__import__("re").search(r"[×x](\d+)", message.text or "") or [None, "1"])[1]) if gift else None,
         "gift_received": gift.recipient_amount if gift else None,
+        "media_name":attachment.filename if attachment else None, "media_size":attachment.size_bytes if attachment else None,
         "media_type": media.media_type if media else None,
         "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
         "temporary": bool(media and media.temporary), "view_seconds": media.view_seconds if media else None,
         "expires_at": media.expires_at if media else None}
 
 
-@app.post("/v1/messages/{conversation_id}/media", status_code=201, response_model=MessageOut)
-@database_task
-async def send_message_media(conversation_id: str, file: UploadFile = File(...), media_type: str = Form(...),
-    view_seconds: int = Form(default=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+def _require_message_media_access(db,conversation_id,user,x_eris_dm_vault):
     if not ConversationRepository(db).is_member(conversation_id, user.id):
         raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     require_feature(db, user.id, [] if db.get(MessageGroup, conversation_id) else [uid for uid in ConversationRepository(db).members(conversation_id) if uid != user.id])
-    conversation = db.get(Conversation, conversation_id)
+    conversation = db.get(Conversation, conversation_id, populate_existing=True)
     if conversation and not db.get(MessageGroup, conversation_id) and not db.scalar(select(Family.id).where(Family.chat_conversation_id == conversation_id)):
         recipient_ids = list(db.scalars(select(ConversationMember.user_id).where(
             ConversationMember.conversation_id == conversation_id,
@@ -1307,37 +1307,54 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
                 raise HTTPException(status_code=403, detail="Bu kullanıcıyı engellediniz.")
     _dm_request_gate(db, user.id, conversation_id)
     if not conversation or conversation.type == "welcome": raise HTTPException(status_code=400, detail="Bu konuşmaya medya gönderilemez")
-    if media_type not in {"image", "voice"}: raise HTTPException(status_code=400, detail="Geçersiz medya türü")
+    return conversation
+
+
+@app.post("/v1/messages/{conversation_id}/media", status_code=201, response_model=MessageOut)
+@database_task
+async def send_message_media(conversation_id: str, file: UploadFile = File(...), media_type: str = Form(...),
+    view_seconds: int = Form(default=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+    conversation=_require_message_media_access(db,conversation_id,user,x_eris_dm_vault)
+    if media_type not in {"image", "voice", "video", "document"}: raise HTTPException(status_code=400, detail="Geçersiz medya türü")
     if media_type == "image":
         if file.content_type not in {"image/jpeg", "image/png", "image/webp", "image/gif"}:
             raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
         if view_seconds not in {0, 10, 20, 30}: raise HTTPException(status_code=400, detail="Fotoğraf süresi 10, 20 veya 30 saniye olmalı")
-    else:
+    elif media_type == "voice":
         if (file.content_type or "").split(";", 1)[0].strip().lower() not in {"audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav", "audio/x-wav"}:
             raise HTTPException(status_code=415, detail="Desteklenmeyen ses biçimi")
         if view_seconds != 0: raise HTTPException(status_code=400, detail="Ses kaydı süreli olamaz")
-    data = await file.read(12 * 1024 * 1024 + 1)
-    if not data or len(data) > 12 * 1024 * 1024: raise HTTPException(status_code=413, detail="Medya en fazla 12 MB olabilir")
+    elif view_seconds != 0:raise HTTPException(400,"Video ve belgeler süreli gönderilemez.")
+    limit=message_attachments.VIDEO_LIMIT if media_type=="video" else message_attachments.DOCUMENT_LIMIT if media_type=="document" else 12*1024*1024
+    data = await file.read(limit+1)
+    if not data or len(data)>limit:raise HTTPException(413,f"Dosya en fazla {limit//(1024*1024)} MB olabilir.")
+    filename=message_attachments.safe_name(file.filename,"fotoğraf.jpg" if media_type=="image" else "ses.webm")
+    mime_type=(file.content_type or "application/octet-stream").split(";",1)[0].strip().lower()
+    if media_type=="video":filename,mime_type=message_attachments.validate_video(data,mime_type,file.filename)
+    elif media_type=="document":filename,mime_type=message_attachments.validate_document(data,file.filename)
     if media_type == "image":
         valid = data.startswith((b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n", b"GIF87a", b"GIF89a")) or (data.startswith(b"RIFF") and data[8:12] == b"WEBP")
         if not valid: raise HTTPException(status_code=415, detail="Fotoğraf dosyası okunamadı")
-    elif not (data.startswith(b"OggS") or data.startswith(b"RIFF") or data.startswith(b"ID3") or data[0:1] == b"\x1a" or (len(data) > 8 and data[4:8] == b"ftyp")):
+    elif media_type=="voice" and not (data.startswith(b"OggS") or data.startswith(b"RIFF") or data.startswith(b"ID3") or data[0:1] == b"\x1a" or (len(data) > 8 and data[4:8] == b"ftyp")):
         raise HTTPException(status_code=415, detail="Ses dosyası okunamadı")
+    db.expire_all()
+    conversation=_require_message_media_access(db,conversation_id,user,x_eris_dm_vault)
     group_policy.require_write(db, conversation_id, user.id)
     temporary = media_type == "image" and view_seconds > 0
-    message = Message(conversation_id=conversation_id, sender_id=user.id, text="[Fotoğraf]" if media_type == "image" else "[Sesli mesaj]")
+    message = Message(conversation_id=conversation_id, sender_id=user.id, text={"image":"[Fotoğraf]","voice":"[Sesli mesaj]","video":"[Video]","document":"[Belge] "+filename}[media_type])
     if conversation.type == 'dm' and conversation.is_ephemeral:
         message.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
     db.add(message); db.flush()
-    mime_type = (file.content_type or "application/octet-stream").split(";", 1)[0].strip().lower()
+    db.add(MessageAttachment(message_id=message.id,filename=filename,size_bytes=len(data)))
     db.add(MessageMedia(message_id=message.id, media_type=media_type, mime_type=mime_type,
         data=data, temporary=temporary, view_seconds=view_seconds if temporary else None))
     for member_id in ConversationRepository(db).members(conversation_id):
         if member_id != user.id and _message_notifications_allowed(db, member_id, conversation_id): db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
-            body="Sana süreli fotoğraf gönderdi." if temporary else ("Sana bir fotoğraf gönderdi." if media_type == "image" else "Sana sesli mesaj gönderdi.")))
+            body="Sana süreli fotoğraf gönderdi." if temporary else {"image":"Sana bir fotoğraf gönderdi.","voice":"Sana sesli mesaj gönderdi.","video":"Sana bir video gönderdi.","document":"Sana bir belge gönderdi."}[media_type]))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id,
         "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
+        "media_name":filename,"media_size":len(data),
         "media_type":media_type, "temporary":temporary, "view_seconds":view_seconds if temporary else None,
         "media_url":f"/messages/{conversation_id}/{message.id}/media", "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in ConversationRepository(db).members(conversation_id): await _send_dm_event(db, member_id, event)
@@ -1358,11 +1375,11 @@ def _blur_temporary_photo(data: bytes) -> bytes:
 
 def _temporary_photo_expired_for_viewer(media, message, user, now: datetime | None = None) -> bool:
     now = now or datetime.now(timezone.utc)
-    return bool(media.temporary and media.expires_at and media.expires_at <= now and user.id != message.sender_id)
+    return bool(media.temporary and media.expires_at and message_tools.utc(media.expires_at) <= now and user.id != message.sender_id)
 
 
 @app.get("/v1/messages/{conversation_id}/{message_id}/media")
-def get_message_media(conversation_id: str, message_id: int, preview: bool = Query(default=False), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
+def get_message_media(conversation_id: str, message_id: int, preview: bool = Query(default=False), thumbnail: bool = Query(default=False), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not ConversationRepository(db).is_member(conversation_id, user.id): raise HTTPException(status_code=403, detail="Bu konuşmaya erişiminiz yok")
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     if db.scalar(select(MessageHidden.id).where(MessageHidden.message_id == message_id, MessageHidden.user_id == user.id)):
@@ -1370,9 +1387,19 @@ def get_message_media(conversation_id: str, message_id: int, preview: bool = Que
     media = db.get(MessageMedia, message_id)
     message = db.get(Message, message_id)
     if not media or not message or message.conversation_id != conversation_id: raise HTTPException(status_code=404, detail="Medya bulunamadı")
+    if message.expires_at and message_tools.utc(message.expires_at)<=datetime.now(timezone.utc):raise HTTPException(410,"Bu mesajın süresi doldu.")
     if _temporary_photo_expired_for_viewer(media, message, user):
         raise HTTPException(status_code=410, detail="Süreli fotoğrafın görüntüleme süresi doldu")
     if media.data is None: raise HTTPException(status_code=410, detail="Fotoğraf artık kullanılamıyor")
+    if thumbnail:
+        if media.media_type!='image' or media.temporary:raise HTTPException(400,'Bu medya için küçük görsel kullanılamaz.')
+        try:
+            from PIL import ImageOps
+            with Image.open(BytesIO(media.data)) as source:
+                if source.width*source.height>24_000_000:raise ValueError()
+                source=ImageOps.exif_transpose(source);source.thumbnail((320,320));output=BytesIO();source.convert('RGB').save(output,'JPEG',quality=72)
+            return Response(content=output.getvalue(),media_type='image/jpeg',headers=message_attachments.content_headers(media,None))
+        except Exception:raise HTTPException(415,'Küçük görsel oluşturulamadı.')
     if preview and media.temporary:
         if media.media_type != "image": raise HTTPException(status_code=400, detail="Önizleme yalnızca fotoğraf içindir")
         try:
@@ -1390,10 +1417,9 @@ def get_message_media(conversation_id: str, message_id: int, preview: bool = Que
             media.viewed_at = now
             media.expires_at = now + timedelta(seconds=media.view_seconds or 10)
             db.commit()
-        countdown = max(0, int((media.expires_at - now).total_seconds()))
+        countdown = max(0, int((message_tools.utc(media.expires_at) - now).total_seconds()))
     return Response(content=media.data, media_type=media.mime_type,
-        headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache",
-            "X-Content-Type-Options":"nosniff", "X-Erischat-Expires-In":str(countdown)})
+        headers={**message_attachments.content_headers(media,db.get(MessageAttachment,message_id)),"X-Erischat-Expires-In":str(countdown)})
 
 
 async def _read_social_upload(file: UploadFile, video_limit: int):

@@ -16,6 +16,7 @@
   let currentUserId = null;
   let messageMode=null,historyCursor=null,historyBusy=false,historyWindow=false;
   const drafts=new Map();
+  let nativeDocumentJob=null;
   let loadedForUserId = null;
   let selectedMessages = new Set();
   let messageSelectionMode = false;
@@ -53,6 +54,85 @@
     message._expiryTimer = setTimeout(() => markPhotoExpired(message), seconds * 1000 + 100);
   }
 
+  function formatFileSize(value){
+    const n=Number(value);if(!Number.isFinite(n)||n<=0)return 'Dosya';return n<1024?n+' B':n<1024*1024?(n/1024).toFixed(0)+' KB':(n/(1024*1024)).toFixed(1)+' MB';
+  }
+  function setUploadStatus(value){const status=$('chat')?.querySelector('[data-upload-status]');if(status){status.textContent=value;status.hidden=!value}}
+  function pickAttachment(kind){
+    const id=activeConversationId,revision=chatRevision,input=document.createElement('input');input.type='file';
+    input.accept=kind==='video'?'video/mp4,video/webm':'.pdf,.txt,.csv,.zip,.docx,.xlsx,.pptx';
+    input.onchange=()=>{const file=input.files?.[0];if(!file)return;if(revision!==chatRevision||String(activeConversationId)!==String(id)){window.toast?.('Sohbet değişti. Dosyayı yeniden seçin.');return}uploadMedia(file,kind,0)};input.click();
+  }
+  function cancelNativeDocument(){
+    if(nativeDocumentJob){try{window.ErisChatAndroid?.abortDocument?.(nativeDocumentJob.token)}catch{}nativeDocumentJob=null}
+  }
+  async function saveNativeDocument(blob,name,owner,revision){
+    const bridge=window.ErisChatAndroid;
+    if(!bridge)return false;
+    if(!bridge.beginDocument||!bridge.appendDocument||!bridge.finishDocument)throw new Error('Belge kaydetmek için APK sürümünü güncelleyin.');
+    if(nativeDocumentJob)throw new Error('Önce açık dosya kaydetme işlemini tamamlayın.');
+    const token=String(bridge.beginDocument(name,blob.size)||'');if(!token)throw new Error('Dosya kaydetme başlatılamadı. Açık kaydetme penceresini kapatın.');
+    nativeDocumentJob={token,owner};
+    try{
+      for(let offset=0;offset<blob.size;offset+=65536){
+        if(owner!==currentUserId||revision!==chatRevision||nativeDocumentJob?.token!==token)throw new Error('Kaydetme iptal edildi.');
+        const encoded=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');reader.onerror=()=>reject(new Error('Dosya okunamadı.'));reader.readAsDataURL(blob.slice(offset,offset+65536))});
+        if(!bridge.appendDocument(token,encoded))throw new Error('Dosya aktarımı tamamlanamadı.');
+      }
+      if(owner!==currentUserId||revision!==chatRevision)throw new Error('Kaydetme iptal edildi.');
+      bridge.finishDocument(token);return true;
+    }catch(e){try{bridge.abortDocument?.(token)}catch{}if(nativeDocumentJob?.token===token)nativeDocumentJob=null;throw e}
+  }
+  window.addEventListener('erischat:document-saved',event=>{
+    const data=event.detail,job=nativeDocumentJob;if(!job||data?.id!==job.token)return;
+    nativeDocumentJob=null;if(job.owner===currentUserId)window.toast?.(data.saved?'Belge kaydedildi.':'Kaydetme iptal edildi veya tamamlanamadı.');
+  });
+  async function downloadAttachment(message,button){
+    if(button.disabled)return;const id=activeConversationId,owner=currentUserId,revision=chatRevision;button.disabled=true;
+    const label=button.textContent;button.textContent='İndiriliyor…';
+    try{const response=await fetchMedia(message),blob=await response.blob();if(!button.isConnected||revision!==chatRevision||String(activeConversationId)!==String(id)||owner!==currentUserId)return;
+      if(await saveNativeDocument(blob,String(message.media_name||'belge'),owner,revision))return;
+      const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=String(message.media_name||'belge').replace(/[\\/\x00-\x1f]/g,'_');link.rel='noopener';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch(e){if(button.isConnected)window.toast?.(e.message||'Dosya indirilemedi.')}finally{if(button.isConnected){button.disabled=false;button.textContent=label}}
+  }
+  async function loadAttachmentVideo(message,video,button){
+    if(button.disabled)return;const id=activeConversationId,owner=currentUserId,revision=chatRevision;button.disabled=true;button.textContent='Video yükleniyor…';
+    try{const response=await fetchMedia(message),blob=await response.blob();if(!video.isConnected||revision!==chatRevision||String(activeConversationId)!==String(id)||owner!==currentUserId)return;
+      const url=URL.createObjectURL(blob);video.dataset.objectUrl=url;video.src=url;button.textContent='Video hazır · Oynat düğmesine dokun';video.onerror=()=>{if(button.isConnected){button.textContent='Video oynatılamadı. Yeniden yükle';button.disabled=false;URL.revokeObjectURL(url);delete video.dataset.objectUrl}};
+    }catch(e){if(button.isConnected){button.textContent=e.message||'Video yüklenemedi. Tekrar dene';button.disabled=false}}
+  }
+  function closeSharedMedia(){
+    const panel=document.querySelector('[data-shared-panel]');if(panel){panel._thumbnailObserver?.disconnect();releaseMediaUrls(panel);panel.remove()}
+  }
+  function openSharedMedia(){
+    if(!activeConversationId||!api()?.sharedMessages){window.toast?.('Paylaşılanlar için uygulamayı yenileyin.');return}
+    closeSharedMedia();const id=activeConversationId,revision=chatRevision,previous=document.activeElement;
+    const overlay=document.createElement('div');overlay.className='dm-shared-panel';overlay.dataset.sharedPanel='';
+    overlay.innerHTML='<section role="dialog" aria-modal="true" aria-label="Paylaşılanlar"><header><div><small>SOHBET ARŞİVİ</small><h3>Paylaşılanlar</h3></div><button type="button" data-close aria-label="Kapat">×</button></header><p>Bu sohbette paylaşılan dosyalar. Süreli fotoğraflar burada listelenmez.</p><nav role="tablist" aria-label="Dosya türü"></nav><form><label>Dosya adı veya mesajda ara<input name="q" maxlength="100" type="search" autocomplete="off"></label><button type="submit">Ara</button></form><p data-status role="status"></p><div data-results role="tabpanel" aria-label="Paylaşılan dosyalar"></div><button type="button" data-more hidden>Daha eski paylaşımlar</button></section>';
+    const close=()=>{closeSharedMedia();previous?.focus?.()};overlay.querySelector('[data-close]').onclick=close;overlay.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...overlay.querySelectorAll('button:not(:disabled):not([hidden]),input')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};document.body.append(overlay);
+    const tabs=overlay.querySelector('nav'),form=overlay.querySelector('form'),results=overlay.querySelector('[data-results]'),status=overlay.querySelector('[data-status]'),more=overlay.querySelector('[data-more]');let kind='all',query='',cursor=null,ticket=0,busy=false;
+    const alive=()=>overlay.isConnected&&revision===chatRevision&&String(activeConversationId)===String(id);
+    const loadThumb=async(image,m)=>{if(image.dataset.requested)return;image.dataset.requested='1';try{const response=await fetchMedia(m,false,true),blob=await response.blob();if(!alive()||!image.isConnected)return;const url=URL.createObjectURL(blob);image.src=url;image.dataset.objectUrl=url}catch{if(image.isConnected)image.alt='Fotoğraf'}};
+    if('IntersectionObserver' in window){overlay._thumbnailObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const img=entry.target;overlay._thumbnailObserver.unobserve(img);loadThumb(img,img._message)}},{root:overlay,rootMargin:'150px'})}
+    const draw=m=>{
+      const card=document.createElement('article');card.className='dm-shared-item';const art=document.createElement('div');art.className='dm-shared-art';art.textContent=({image:'▧',video:'▶',voice:'♫',document:'▤'}[m.media_type]||'▤');
+      if(m.media_type==='image'){const image=document.createElement('img');image.alt='Fotoğraf';image._message=m;art.replaceChildren(image);if(overlay._thumbnailObserver)overlay._thumbnailObserver.observe(image);else loadThumb(image,m)}
+      const main=document.createElement('div');main.className='dm-shared-info';const name=document.createElement('b');name.textContent=m.media_name||({image:'Fotoğraf',video:'Video',voice:'Sesli mesaj',document:'Belge'}[m.media_type]||'Dosya');const details=document.createElement('small');details.textContent=(m.sender_nickname||'Kullanıcı')+' · '+messageTime(m.created_at)+' · '+formatFileSize(m.media_size);main.append(name,details);
+      const actions=document.createElement('div');actions.className='dm-shared-actions';const open=document.createElement('button');open.type='button';open.textContent=m.media_type==='document'?'İndir':m.media_type==='video'?'Videoyu yükle':'Aç';
+      open.onclick=()=>{if(m.media_type==='document')downloadAttachment(m,open);else if(m.media_type==='video')loadAttachmentVideo(m,card.querySelector('video'),open);else{close();if(m.media_type==='image')viewPhoto(m);else jumpToMessage(m.id)}};
+      const locate=document.createElement('button');locate.type='button';locate.textContent='Sohbette göster';locate.onclick=()=>{close();jumpToMessage(m.id)};actions.append(open,locate);main.append(actions);card.append(art,main);
+      if(m.media_type==='video'){const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='none';video.setAttribute('aria-label','Paylaşılan video');card.append(video)}
+      results.append(card);
+    };
+    const load=async(append=false)=>{if(append&&busy)return;const own=++ticket;busy=true;more.disabled=true;status.textContent='Yükleniyor…';
+      if(!append){overlay._thumbnailObserver?.disconnect();releaseMediaUrls(results);results.replaceChildren();cursor=null;more.hidden=true}
+      try{const page=await api().sharedMessages(id,kind,query,append?cursor:null);if(!alive()||own!==ticket)return;for(const m of asList(page,['messages']))draw(m);cursor=page.has_more?page.next_before:null;more.hidden=!cursor;status.textContent=results.children.length?'':'Bu bölümde paylaşım bulunamadı.'}
+      catch(e){if(alive()&&own===ticket)status.textContent=e.message||'Paylaşılanlar yüklenemedi.'}finally{if(own===ticket){busy=false;more.disabled=false}}
+    };
+    for(const [value,label] of [['all','Tümü'],['image','Fotoğraf'],['video','Video'],['voice','Ses'],['document','Belge']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.kind=value;button.setAttribute('role','tab');button.setAttribute('aria-selected',String(value===kind));button.onclick=()=>{kind=value;query=form.elements.q.value.trim();tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b===button)));load()};tabs.append(button)}
+    form.onsubmit=e=>{e.preventDefault();query=form.elements.q.value.trim();load()};form.elements.q.oninput=()=>{ticket++;busy=false;more.hidden=true;status.textContent='Aramak için Ara düğmesine dokun.'};more.onclick=()=>load(true);overlay.querySelector('[data-close]').focus();load();
+  }
+
   function formatAudioTime(value) {
     if (!Number.isFinite(value)) return '0:00';
     const n = Math.max(0, Math.floor(value));
@@ -60,6 +140,7 @@
   }
 
   function releaseMediaUrls(root){
+    root?.querySelectorAll('video').forEach(video=>{video.pause();video.removeAttribute('src');video.load()});
     root?.querySelectorAll('[data-object-url]').forEach(node=>{URL.revokeObjectURL(node.dataset.objectUrl);delete node.dataset.objectUrl});
     root?.querySelectorAll('.dm-voice-player').forEach(player=>{player._audio?.pause();if(player._objectUrl)URL.revokeObjectURL(player._objectUrl);player._audio=null;player._objectUrl=null});
   }
@@ -85,7 +166,7 @@
     const row = document.createElement('div');
     row._message={...message};row._mine=mine;
     row.className = 'bubble' + (mine ? ' me' : '');
-    if (message?.media_type === 'image' || message?.media_type === 'voice') row.classList.add('dm-media-bubble');
+    if (['image','voice','video','document'].includes(message?.media_type)) row.classList.add('dm-media-bubble');
     if (message?.id != null) row.dataset.messageId = String(message.id);
     if (message?.expires_at) row.dataset.ttlExpires = message.expires_at;
     row.dataset.read = message?.is_read ? '1' : '0';
@@ -123,6 +204,12 @@
         const open=document.createElement('button');open.type='button';open.className='dm-photo-open';open.setAttribute('aria-label','Fotoğrafı büyüt');open.append(image,status);open.onclick=()=>viewPhoto(message);media.append(open);loadRegularPhoto(message,image,status);
       }
       if(storyReply)row.prepend(media);else row.append(media);
+    } else if(message?.media_type==='video'){
+      const media=document.createElement('div');media.className='dm-video-message';
+      const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='none';video.setAttribute('aria-label','Gönderilen video');
+      const load=document.createElement('button');load.type='button';load.className='dm-attachment-action';load.textContent='▶ Videoyu yükle · '+formatFileSize(message.media_size);load.onclick=()=>loadAttachmentVideo(message,video,load);media.append(video,load);row.append(media);
+    } else if(message?.media_type==='document'){
+      const file=document.createElement('div');file.className='dm-document-message';const name=document.createElement('b');name.textContent=message.media_name||'Belge';const size=document.createElement('small');size.textContent=formatFileSize(message.media_size);const download=document.createElement('button');download.type='button';download.className='dm-attachment-action';download.textContent='Belgeyi indir';download.onclick=()=>downloadAttachment(message,download);file.append(name,size,download);row.append(file);
     } else if (message?.media_type === 'voice') {
       const player=document.createElement('div');player.className='dm-voice-player';
       player.innerHTML='<button type="button" class="dm-voice-toggle" aria-label="Sesli mesajı oynat">▶</button><div class="dm-voice-main"><div class="dm-wave" aria-hidden="true">'+Array.from({length:24},(_,i)=>`<i style="--h:${20+((i*17+9)%68)}%"></i>`).join('')+'</div><input class="dm-voice-progress" type="range" min="0" max="1000" value="0" aria-label="Sesli mesaj konumu"><div class="dm-track" aria-hidden="true"><i></i></div><small class="dm-voice-time">0:00</small></div>';
@@ -281,11 +368,12 @@
     if(list){list.innerHTML='<div class="dm-list-state" role="status"><b>Konuşmalar yüklenemedi</b><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" data-retry>Tekrar dene</button></div>';list.querySelector('[data-retry]').onclick=loadConversations;}
   }
 
-  async function fetchMedia(message, preview=false) {
+  async function fetchMedia(message, preview=false,thumbnail=false) {
     const token=api()?.getAccessToken?.()||localStorage.getItem('erischat_access_token')||localStorage.getItem('token')||'';
     let url=api()?.messageMediaUrl?.(message.media_url);
     if(!url)throw new Error('Medya adresi bulunamadı.');
     if(preview)url+=(url.includes('?')?'&':'?')+'preview=1';
+    if(thumbnail)url+=(url.includes('?')?'&':'?')+'thumbnail=1';
     const headers=token?{Authorization:'Bearer '+token}:{};
     if(vaultToken)headers['X-Eris-DM-Vault']=vaultToken;
     const response=await fetch(url,{headers,cache:'no-store'});
@@ -330,33 +418,40 @@
   }
 
   async function uploadMedia(file,type,seconds=0){
-    const conversationId=activeConversationId;
+    const conversationId=activeConversationId,revision=chatRevision;
     if(!conversationId||!api()?.sendMessageMedia||!file)return;
+    const maximum=type==='video'?25*1024*1024:type==='document'?20*1024*1024:12*1024*1024;
+    if(file.size>maximum){window.toast?.('Dosya en fazla '+maximum/(1024*1024)+' MB olabilir.');return}
     const lock=String(conversationId);
     if(mediaUploadsInFlight.has(lock))return;
-    mediaUploadsInFlight.add(lock);
+    mediaUploadsInFlight.add(lock);setUploadStatus('Dosya gönderiliyor…');
     try{
       const message=await api().sendMessageMedia(conversationId,file,type,seconds);
-      if(String(activeConversationId)===lock){
+      if(revision===chatRevision&&String(activeConversationId)===lock){
         const body=document.querySelector('#chat .chatBody');
         appendMessageOnce(body,message,true);
         if(body)body.scrollTop=body.scrollHeight;
       }
       loadConversations();
     }catch(error){window.toast?.(error.message||'Medya gönderilemedi.')}
-    finally{mediaUploadsInFlight.delete(lock)}
+    finally{mediaUploadsInFlight.delete(lock);if(String(activeConversationId)===lock)setUploadStatus('')}
   }
 
   function pickPhoto(seconds=0,camera=false){
-    const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp,image/gif';if(camera)input.setAttribute('capture','environment');
-    input.onchange=()=>{const file=input.files?.[0];if(file)uploadMedia(file,'image',seconds)};input.click();
+    const id=activeConversationId,revision=chatRevision,input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp,image/gif';if(camera)input.setAttribute('capture','environment');
+    input.onchange=()=>{const file=input.files?.[0];if(!file)return;if(revision!==chatRevision||String(activeConversationId)!==String(id)){window.toast?.('Sohbet değişti. Dosyayı yeniden seçin.');return}uploadMedia(file,'image',seconds)};input.click();
   }
 
   function openPhotoChooser(){
-    const modal=document.createElement('div');modal.className='dm-gift-sheet';modal.innerHTML="<section><div style=\"display:flex;align-items:center;justify-content:space-between\"><b>Fotoğraf gönder</b><button class=\"close\" data-x>×</button></div><p style=\"font-size:9px;color:var(--ui-ink);line-height:1.5\">Normal fotoğraf mesajda kalır. Süreli fotoğraf, alıcı ilk açtığında seçilen sürenin sonunda silinir.</p><div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px\"><button data-gallery>🖼 Galeriden fotoğraf</button><button data-camera>📷 Kamerayla fotoğraf</button></div><hr style=\"border-color:var(--ui-line);margin:14px 0\"><b style=\"font-size:11px\">Süreli fotoğraf</b><div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px\"><button data-temp=\"10\" aria-pressed=\"true\">10 sn</button><button data-temp=\"20\">20 sn</button><button data-temp=\"30\">30 sn</button></div><div data-temp-source style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px\"><button data-source=\"gallery\">🖼 Süreli galeriden</button><button data-source=\"camera\">📸 Süreli kamera</button></div></section>";document.body.append(modal);
+    const modal=document.createElement('div');modal.className='dm-gift-sheet';modal.innerHTML="<section><div style=\"display:flex;align-items:center;justify-content:space-between\"><b>Fotoğraf, video ve belge</b><button class=\"close\" data-x>×</button></div><p style=\"font-size:9px;color:var(--ui-ink);line-height:1.5\">Normal fotoğraf mesajda kalır. Süreli fotoğraf, alıcı ilk açtığında seçilen sürenin sonunda silinir.</p><div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px\"><button data-gallery>🖼 Galeriden fotoğraf</button><button data-camera>📷 Kamerayla fotoğraf</button></div><hr style=\"border-color:var(--ui-line);margin:14px 0\"><b style=\"font-size:11px\">Süreli fotoğraf</b><div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px\"><button data-temp=\"10\" aria-pressed=\"true\">10 sn</button><button data-temp=\"20\">20 sn</button><button data-temp=\"30\">30 sn</button></div><div data-temp-source style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px\"><button data-source=\"gallery\">🖼 Süreli galeriden</button><button data-source=\"camera\">📸 Süreli kamera</button></div></section>";document.body.append(modal);
+    const attachments=document.createElement('div');attachments.className='dm-attachment-choices';attachments.innerHTML='<button type="button" data-video>▶ Video gönder</button><button type="button" data-document>▤ Belge gönder</button><small>Video: MP4/WEBM · 25 MB · 2 dakika<br>Belge: PDF, TXT, CSV, ZIP, DOCX, XLSX, PPTX · 20 MB</small>';
+    modal.querySelector('[data-camera]').parentElement.after(attachments);
+    for(const kind of ['video','document'])attachments.querySelector('[data-'+kind+']').onclick=()=>{modal.remove();pickAttachment(kind)};
+    modal.dataset.attachmentChooser='';modal.querySelector('section').setAttribute('role','dialog');modal.querySelector('section').setAttribute('aria-modal','true');modal.querySelector('section').setAttribute('aria-label','Fotoğraf, video ve belge gönder');
+    modal.onkeydown=e=>{if(e.key==='Escape')modal.remove();if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};modal.querySelector('[data-x]').focus();
     let duration=10;modal.querySelector('[data-x]').onclick=()=>modal.remove();modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
     modal.querySelector('[data-gallery]').onclick=()=>{modal.remove();pickPhoto(0,false)};modal.querySelector('[data-camera]').onclick=()=>{modal.remove();pickPhoto(0,true)};
-    modal.querySelectorAll('[data-temp]').forEach(b=>b.onclick=()=>{duration=Number(b.dataset.temp);modal.querySelectorAll('[data-temp]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));modal.querySelector('[data-temp-source]').style.outline='1px solid #a679ff';window.toast?.('Süre '+duration+' saniye seçildi; galeriden veya kameradan gönder.')});
+    modal.querySelectorAll('[data-temp]').forEach(b=>b.onclick=()=>{duration=Number(b.dataset.temp);modal.querySelectorAll('[data-temp]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));modal.querySelector('[data-temp-source]').style.outline='1px solid var(--ui-gold,#b98c46)';window.toast?.('Süre '+duration+' saniye seçildi; galeriden veya kameradan gönder.')});
     modal.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{modal.remove();pickPhoto(duration,b.dataset.source==='camera')});
   }
 
@@ -469,7 +564,7 @@
     if(compose&&systemChat){compose.style.display='none';}
     else if(compose){compose.style.display='';}
     if (compose && !familyChat && !systemChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.innerHTML=dmIcon('gift'); button.title='Hediye gönder';button.setAttribute('aria-label','Hediye gönder'); compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
-    if (compose && !systemChat && !compose.querySelector('[data-dm-photo]')) {const b=document.createElement('button');b.type='button';b.dataset.dmPhoto='';b.className='close';b.innerHTML=dmIcon('camera');b.title='Fotoğraf gönder';b.setAttribute('aria-label','Fotoğraf gönder');compose.insertBefore(b,compose.firstChild);b.onclick=openPhotoChooser;}
+    if (compose && !systemChat && !compose.querySelector('[data-dm-photo]')) {const b=document.createElement('button');b.type='button';b.dataset.dmPhoto='';b.className='close';b.innerHTML=dmIcon('camera');b.title='Fotoğraf, video veya belge gönder';b.setAttribute('aria-label',b.title);compose.insertBefore(b,compose.firstChild);b.onclick=openPhotoChooser;}
     if (compose && !systemChat && !compose.querySelector('[data-dm-voice]')) {const b=document.createElement('button');b.type='button';b.dataset.dmVoice='';b.className='close';b.innerHTML=dmIcon('mic');b.title='Ses kaydet';b.setAttribute('aria-label','Ses kaydet');compose.insertBefore(b,compose.firstChild);b.onclick=()=>toggleVoiceRecording(b);}
   }
 
@@ -804,11 +899,11 @@
       const chat=$('chat'),me=roster.find(m=>String(m.user_id)===String(currentUserId));
       const muted=me?.muted_until&&new Date(me.muted_until)>new Date();
       const reason=g.closed?'Grup kapatıldı · Salt okunur':muted?'Susturuldunuz · '+new Date(me.muted_until).toLocaleString('tr-TR'):g.admins_only&&g.my_role==='member'?'Yalnızca yöneticiler mesaj gönderebilir':'';
-      if(reason)clearMessageMode();
+      if(reason){clearMessageMode();document.querySelector('[data-attachment-chooser]')?.remove()}
       const compose=chat.querySelector('.compose');if(compose){compose.hidden=!!reason;compose.style.display=reason?'none':''}
       const subtitle=chat.querySelector('.chatHead small');if(subtitle)subtitle.textContent=reason||roster.length+' üye · Grup bilgileri için ada dokun'+(g.slow_seconds?' · Yavaş mod '+g.slow_seconds+' sn':'');
       const title=chat.querySelector('.chatHead b');if(title)title.textContent=g.name;
-    }catch(e){if(revision!==chatRevision)return;if(/üye değilsiniz|erişiminiz yok|bulunamadı/i.test(e.message||'')){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show');document.querySelector('[data-group-menu]')?.remove();loadConversations();window.toast?.('Bu gruba erişiminiz sona erdi.')}}
+    }catch(e){if(revision!==chatRevision)return;if(/üye değilsiniz|erişiminiz yok|bulunamadı/i.test(e.message||'')){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show');document.querySelector('[data-group-menu]')?.remove();closeSharedMedia();loadConversations();window.toast?.('Bu gruba erişiminiz sona erdi.')}}
   }
   async function checkGroupInvites(){
     const overlay=document.createElement('div');overlay.className='lidya-group-modal';
@@ -955,7 +1050,7 @@
     messageMode={kind,conversationId:String(activeConversationId),message:{...row._message},savedDraft:input.value};
     chat.querySelectorAll('.compose [data-dm-photo],.compose [data-dm-voice],.compose [data-dm-gift]').forEach(button=>{if(!button.disabled){button.dataset.modeDisabled='';button.disabled=true}});
     const bar=chat.querySelector('[data-message-mode]');bar.hidden=false;bar.querySelector('[data-mode-label]').textContent=kind==='edit'?'Mesajı düzenle':(row._message.sender_nickname||'Mesaj')+' kişisine yanıt';
-    bar.querySelector('[data-mode-text]').textContent=row._message.media_type==='image'?'Fotoğraf':row._message.media_type==='voice'?'Sesli mesaj':String(row._message.text||'').slice(0,180);
+    bar.querySelector('[data-mode-text]').textContent=row._message.media_type==='image'?'Fotoğraf':row._message.media_type==='voice'?'Sesli mesaj':String(row._message.media_name||row._message.text||'').slice(0,180);
     if(kind==='edit'){input.value=row._message.text;chat.querySelector('.compose .primary').textContent='Kaydet'}
     selectedMessages.forEach(r=>r.classList.remove('dm-selected'));selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;refreshSelectionBar();input.focus();
   }
@@ -987,7 +1082,7 @@
   }
   function openMessageSearch(){
     if(!activeConversationId||!api()?.searchMessages){window.toast?.('Mesaj arama için uygulamayı yenileyin.');return}
-    document.querySelector('[data-dm-search-panel]')?.remove();
+    document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
     const id=activeConversationId,revision=chatRevision,previous=document.activeElement;
     const overlay=document.createElement('div');overlay.className='dm-search-panel';overlay.dataset.dmSearchPanel='';
     overlay.innerHTML='<section role="dialog" aria-modal="true" aria-label="Sohbette mesaj ara"><header><h3>Sohbette ara</h3><button type="button" data-close aria-label="Kapat">×</button></header><form><label>Aranacak kelime<input name="q" required minlength="2" maxlength="100" autocomplete="off" type="search"></label><button type="submit">Ara</button></form><p data-status role="status"></p><div data-results></div></section>';
@@ -1005,6 +1100,11 @@
   function installMessageWorkbench(chat){
     if(chat.querySelector('[data-message-workbench]'))return;
     const style=document.createElement('style');style.textContent=`
+
+      .dm-attachment-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.dm-attachment-choices small{grid-column:1/-1;font-size:10px;line-height:1.5;color:var(--ui-muted,var(--ui-ink))}
+      .dm-video-message{width:min(290px,68vw)}.dm-video-message video{display:block;width:100%;min-height:130px;max-height:320px;background:#111;border-radius:14px;object-fit:contain}.dm-attachment-action{min-height:38px;padding:9px 12px;margin-top:8px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font-size:12px;max-width:100%}.dm-attachment-action:disabled{opacity:.65}.dm-document-message{display:grid;gap:5px;max-width:min(280px,67vw);padding:13px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-raised);color:var(--ui-ink);overflow-wrap:anywhere}.dm-document-message b{font-size:13px}.dm-document-message small{font-size:11px;opacity:.75}
+      .dm-message-workbench [data-upload-status]{width:100%;font-size:11px;color:var(--ui-gold,#b98c46)}
+      .dm-shared-panel{position:fixed;inset:0;z-index:100080;overflow:auto;overscroll-behavior:contain;background:var(--ui-panel);color:var(--ui-ink)}.dm-shared-panel section{width:min(680px,100%);box-sizing:border-box;margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-shared-panel header{display:flex;justify-content:space-between;align-items:center;gap:12px}.dm-shared-panel header small{font-size:10px;letter-spacing:2px;color:var(--ui-gold,#b98c46)}.dm-shared-panel h3{margin:6px 0;font-size:25px}.dm-shared-panel p{font-size:12px;line-height:1.5}.dm-shared-panel button{min-height:38px;padding:8px 11px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit;font-size:12px}.dm-shared-panel nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:18px 0}.dm-shared-panel nav button{padding:9px 3px;font-size:11px}.dm-shared-panel [aria-selected=true]{background:var(--ui-gold,#b98c46);color:#20180e;border-color:var(--ui-gold,#b98c46);font-weight:750}.dm-shared-panel form{display:flex;gap:8px;align-items:end;margin-bottom:14px}.dm-shared-panel label{flex:1;min-width:0;font-size:11px}.dm-shared-panel input{display:block;box-sizing:border-box;width:100%;padding:11px;margin-top:6px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-shared-item{display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;padding:14px 0;border-bottom:1px solid var(--ui-line)}.dm-shared-art{width:62px;height:62px;display:grid;place-items:center;border-radius:14px;background:var(--ui-raised);color:var(--ui-gold,#b98c46);font-size:25px;overflow:hidden}.dm-shared-art img{width:100%;height:100%;object-fit:cover}.dm-shared-info{min-width:0;overflow-wrap:anywhere}.dm-shared-info>b{display:block;font-size:13px}.dm-shared-info>small{display:block;font-size:10px;margin-top:5px;opacity:.75;line-height:1.5}.dm-shared-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.dm-shared-actions button{font-size:11px}.dm-shared-item video{grid-column:1/-1;width:100%;max-height:320px;background:#111;border-radius:13px}.dm-shared-panel [hidden]{display:none!important}
       .dm-message-workbench{display:flex;gap:8px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--ui-line);background:var(--ui-panel);flex:none}
       .dm-message-workbench button{min-height:36px;border:1px solid var(--ui-line);border-radius:11px;padding:7px 10px;background:var(--ui-raised);color:var(--ui-ink);font:inherit;font-size:11px}
       .dm-message-workbench button:disabled{opacity:.6}.dm-message-workbench [hidden]{display:none!important}
@@ -1014,8 +1114,8 @@
       .dm-search-panel{position:fixed;inset:0;z-index:100070;background:var(--ui-panel);color:var(--ui-ink);overflow:auto;overscroll-behavior:contain}.dm-search-panel section{width:min(620px,100%);box-sizing:border-box;margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-search-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}.dm-search-panel form{display:flex;align-items:end;gap:10px;margin:16px 0}.dm-search-panel label{flex:1;min-width:0;font-size:12px}.dm-search-panel input{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-panel button{min-height:40px;padding:9px 12px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-result{display:block;width:100%;text-align:left;margin:10px 0;overflow-wrap:anywhere}.dm-search-result small,.dm-search-result span{display:block}.dm-search-result small{color:var(--ui-gold,#b98c46);margin-bottom:6px;font-size:11px}.dm-search-result span{white-space:pre-wrap;font-size:13px}
       @media(max-width:360px){#chat .dm-select-tools{gap:4px}#chat .dm-select-tools button{width:30px;height:32px;font-size:14px}#chat .dm-select-tools [data-selected-count]{font-size:9px!important}}
     `;document.head.append(style);
-    const toolbar=document.createElement('nav');toolbar.className='dm-message-workbench';toolbar.dataset.messageWorkbench='';toolbar.setAttribute('aria-label','Sohbet araçları');toolbar.innerHTML='<button type="button" data-older-messages>Eski mesajları yükle</button><button type="button" data-newest-messages hidden>En yeni mesajlar</button><button type="button" data-search-messages>Sohbette ara</button>';
-    chat.querySelector('.chatBody').before(toolbar);toolbar.querySelector('[data-older-messages]').onclick=loadOlderMessages;toolbar.querySelector('[data-search-messages]').onclick=openMessageSearch;
+    const toolbar=document.createElement('nav');toolbar.className='dm-message-workbench';toolbar.dataset.messageWorkbench='';toolbar.setAttribute('aria-label','Sohbet araçları');toolbar.innerHTML='<button type="button" data-older-messages>Eski mesajları yükle</button><button type="button" data-newest-messages hidden>En yeni mesajlar</button><button type="button" data-search-messages>Sohbette ara</button><button type="button" data-shared-messages>Paylaşılanlar</button><small data-upload-status role="status" hidden></small>';
+    chat.querySelector('.chatBody').before(toolbar);toolbar.querySelector('[data-older-messages]').onclick=loadOlderMessages;toolbar.querySelector('[data-search-messages]').onclick=openMessageSearch;toolbar.querySelector('[data-shared-messages]').onclick=openSharedMedia;
     toolbar.querySelector('[data-newest-messages]').onclick=()=>{if(activeConversationId)openRealChat(activeConversationId,chat.querySelector('.chatHead b')?.textContent||'Sohbet','',window.__erisActiveDmUserId)};
     const mode=document.createElement('div');mode.className='dm-compose-mode';mode.dataset.messageMode='';mode.hidden=true;mode.innerHTML='<div><b data-mode-label></b><small data-mode-text></small></div><button type="button" aria-label="Yanıtı veya düzenlemeyi iptal et">×</button>';mode.querySelector('button').onclick=()=>clearMessageMode();chat.querySelector('.compose').before(mode);
     const send=chat.querySelector('.compose .primary');if(send)send.dataset.normalLabel=send.textContent||'Gönder';
@@ -1071,7 +1171,8 @@
     if (!chat || !body || !api()?.messages) return;
     const input=chat.querySelector('#chatInput');
     if(activeConversationId){drafts.set(String(activeConversationId),messageMode?.kind==='edit'?messageMode.savedDraft:(input?.value||''))}
-    clearMessageMode(false);historyCursor=null;historyBusy=false;historyWindow=false;document.querySelector('[data-dm-search-panel]')?.remove();
+    document.querySelector('[data-attachment-chooser]')?.remove();
+    clearMessageMode(false);historyCursor=null;historyBusy=false;historyWindow=false;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
     if(input)input.value=drafts.get(String(id))||'';
     const revision=++chatRevision;
     activeConversationId = id;
@@ -1108,6 +1209,7 @@
       else{headerAvatar.removeAttribute('role');headerAvatar.removeAttribute('tabindex');headerAvatar.removeAttribute('aria-label')}
     }
     installChatTools(chat);
+    setUploadStatus(mediaUploadsInFlight.has(String(id))?'Dosya gönderiliyor…':'');
     syncChatCompose(chat);
     chat.classList.toggle('dm-system-conversation', isSystemConversation());
     const subtitle = chat.querySelector('.chatHead small');
@@ -1186,7 +1288,7 @@
       if(String(activeConversationId||'')===String(data.conversation_id)){
         const body=document.querySelector('#chat .chatBody');
         for(const id of data.message_ids||[])body?.querySelectorAll('.bubble[data-message-id="'+String(id)+'"]').forEach(row=>{selectedMessages.delete(row);releaseMediaUrls(row);row.remove()});
-        invalidateQuotedMessages(data.message_ids||[]);refreshSelectionBar();
+        invalidateQuotedMessages(data.message_ids||[]);refreshSelectionBar();closeSharedMedia();
       }
       loadConversations();return;
     }
@@ -1287,17 +1389,19 @@
 
   window.addEventListener('erischat:auth', event => {
     if (event?.detail?.state === 'ready') {
+      document.querySelector('[data-attachment-chooser]')?.remove();
       if(currentUserId&&event.detail.user?.id&&String(currentUserId)!==String(event.detail.user.id)){
-        drafts.clear();clearMessageMode(false);historyCursor=null;historyWindow=false;historyBusy=false;
+        cancelNativeDocument();drafts.clear();clearMessageMode(false);historyCursor=null;historyWindow=false;historyBusy=false;
         listRevision++;chatRevision++;activeConversationId=null;selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;
         conversationInfo.clear();vaultToken='';window.ErisChatDMVaultToken='';window.__erisActiveDmUserId=null;
-        document.querySelector('[data-dm-search-panel]')?.remove();const chat=$('chat');releaseMediaUrls(chat);chat?.querySelector('.chatBody')?.replaceChildren();chat?.classList.remove('show');
+        document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();const chat=$('chat');releaseMediaUrls(chat);chat?.querySelector('.chatBody')?.replaceChildren();chat?.classList.remove('show');
       }
       currentUserId = event.detail.user?.id || currentUserId;
       connectDmSocket();
       if (currentUserId !== loadedForUserId) loadConversations();
     } else if (event?.detail?.state === 'logged_out') {
-      drafts.clear();clearMessageMode(false);historyCursor=null;document.querySelector('[data-dm-search-panel]')?.remove();
+      document.querySelector('[data-attachment-chooser]')?.remove();
+      cancelNativeDocument();drafts.clear();clearMessageMode(false);historyCursor=null;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
       listRevision++;chatRevision++;activeConversationId=null;
       currentUserId = null;
       loadedForUserId = null;
