@@ -64,7 +64,7 @@
   function confirmDelete(kind){
     return new Promise(resolve=>{
       const modal=document.createElement('div');modal.className='ec-social-modal';
-      modal.innerHTML='<section role="alertdialog" aria-modal="true"><b>Silme onayı</b><p>Bu '+(kind==='yorum'?'yorumu':'gönderiyi')+' silmek istediğine emin misin?</p><div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" data-no>Reddet</button><button type="button" class="ec-primary" data-yes>Kabul et</button></div></section>';
+      modal.innerHTML='<section role="alertdialog" aria-modal="true"><b>Silme onayı</b><p>Bu '+(kind==='yorum'?'yorumu ve altındaki yanıtları':'gönderiyi')+' silmek istediğine emin misin?</p><div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" data-no>Reddet</button><button type="button" class="ec-primary" data-yes>Kabul et</button></div></section>';
       document.body.append(modal);const done=value=>{modal.remove();resolve(value)};
       modal.querySelector('[data-no]').onclick=()=>done(false);modal.querySelector('[data-yes]').onclick=()=>done(true);
       modal.onclick=e=>{if(e.target===modal)done(false)};
@@ -173,6 +173,7 @@
   function formatDate(value){try{return new Intl.DateTimeFormat('tr-TR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value))}catch(_){return ''}}
 
   function attachPostEngagement(card,post){
+    if(window.ErisExploreComments)return window.ErisExploreComments.attach(card,post,{report:row=>reportPost(post,card,row),confirmDelete});
     const id=encodeURIComponent(post.id);
     const actions=document.createElement('div');
     actions.className='ec-post-engagement';
