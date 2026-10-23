@@ -241,6 +241,8 @@ class MessageOut(BaseModel):
     is_pinned: bool = False
     gift_key: str | None = None
     gift_id: int | None = None
+    media_name: str | None = None
+    media_size: int | None = None
     media_type: str | None = None
     media_url: str | None = None
     temporary: bool = False
