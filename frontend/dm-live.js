@@ -27,6 +27,7 @@
   let vaultToken = '';
   let selectionBar = null;
   let voiceRecorder = null;
+  let activeVoicePlayer=null, voicePlayRevision=0;
   let attachmentPreview = null;
   const mediaUploadsInFlight = new Set();
 
@@ -144,7 +145,7 @@
   function releaseMediaUrls(root){
     root?.querySelectorAll('video').forEach(video=>{video.pause();video.removeAttribute('src');video.load()});
     root?.querySelectorAll('[data-object-url]').forEach(node=>{URL.revokeObjectURL(node.dataset.objectUrl);delete node.dataset.objectUrl});
-    root?.querySelectorAll('.dm-voice-player').forEach(player=>{player._audio?.pause();if(player._objectUrl)URL.revokeObjectURL(player._objectUrl);player._audio=null;player._objectUrl=null});
+    root?.querySelectorAll('.dm-voice-player').forEach(releaseVoicePlayer);
   }
 
   function loadRegularPhoto(message, image, status) {
@@ -215,8 +216,16 @@
       const file=document.createElement('div');file.className='dm-document-message';const name=document.createElement('b');name.textContent=message.media_name||'Belge';const size=document.createElement('small');size.textContent=formatFileSize(message.media_size);const download=document.createElement('button');download.type='button';download.className='dm-attachment-action';download.textContent='Belgeyi indir';download.onclick=()=>downloadAttachment(message,download);file.append(name,size,download);row.append(file);
     } else if (message?.media_type === 'voice') {
       const player=document.createElement('div');player.className='dm-voice-player';
-      player.innerHTML='<button type="button" class="dm-voice-toggle" aria-label="Sesli mesajı oynat">▶</button><div class="dm-voice-main"><div class="dm-wave" aria-hidden="true">'+Array.from({length:24},(_,i)=>`<i style="--h:${20+((i*17+9)%68)}%"></i>`).join('')+'</div><input class="dm-voice-progress" type="range" min="0" max="1000" value="0" aria-label="Sesli mesaj konumu"><div class="dm-track" aria-hidden="true"><i></i></div><small class="dm-voice-time">0:00</small></div>';
-      player.querySelector('.dm-voice-toggle').onclick=()=>playVoice(message,player);player.querySelector('.dm-voice-progress').oninput=()=>{const audio=player._audio;if(audio?.duration)audio.currentTime=audio.duration*Number(player.querySelector('.dm-voice-progress').value)/1000};row.append(player);
+      player.innerHTML='<button type="button" class="dm-voice-toggle" aria-label="Sesli mesajı oynat">▶</button><div class="dm-voice-main"><div class="dm-wave" aria-hidden="true">'+Array.from({length:24},(_,i)=>`<i style="--h:${20+((i*17+9)%68)}%"></i>`).join('')+'</div><input class="dm-voice-progress" type="range" min="0" max="1000" value="0" aria-label="Sesli mesaj konumu"><div class="dm-track" aria-hidden="true"><i></i></div><small class="dm-voice-time">0:00</small></div><div class="dm-voice-controls"><button type="button" class="dm-voice-speed" aria-label="Oynatma hızı: 1 kat">1×</button><div><button type="button" data-voice-seek="-10" aria-label="10 saniye geri" disabled>−10</button><button type="button" data-voice-seek="10" aria-label="10 saniye ileri" disabled>+10</button></div></div><span class="dm-voice-status" role="status" aria-live="polite"></span>';
+      player.querySelector('.dm-voice-toggle').onclick=()=>playVoice(message,player);
+      player.querySelector('.dm-voice-progress').disabled=true;
+      player.querySelector('.dm-voice-progress').oninput=()=>seekVoice(player,null);
+      player.querySelectorAll('[data-voice-seek]').forEach(button=>button.onclick=()=>seekVoice(player,Number(button.dataset.voiceSeek)));
+      player.querySelector('.dm-voice-speed').onclick=()=>{
+        const rates=[1,1.5,2];player._rate=rates[(rates.indexOf(player._rate||1)+1)%rates.length];
+        const button=player.querySelector('.dm-voice-speed');button.textContent=String(player._rate).replace('.',',')+'×';button.setAttribute('aria-label','Oynatma hızı: '+String(player._rate).replace('.',',')+' kat');
+        if(player._audio)player._audio.playbackRate=player._rate;
+      };row.append(player);
     }
     if (message?.is_pinned) { const pin=document.createElement('span'); pin.dataset.pinIcon=''; pin.textContent='📌 '; pin.style.cssText="font-size:8px;color:var(--ui-gold)"; row.prepend(pin); }
     const meta = document.createElement('small');
@@ -466,17 +475,61 @@
     if(protectedView){window.ErisScreenProtection?.set?.('temporary-photo',true);modal.addEventListener('contextmenu',block);document.addEventListener('contextmenu',block);document.addEventListener('keydown',keyBlock,true);window.addEventListener('blur',blurCheck);document.addEventListener('visibilitychange',visibilityCheck);timer=setInterval(()=>{if(update()<=0){markPhotoExpired(message);close()}},250)}
   }
 
-  async function playVoice(message, player) {
-    const button=player?.querySelector('.dm-voice-toggle'),progress=player?.querySelector('.dm-voice-progress'),time=player?.querySelector('.dm-voice-time');
-    if(!player)return;
-    if(player._audio){if(player._audio.paused){await player._audio.play().catch(()=>{});if(button)button.textContent='Ⅱ'}else{player._audio.pause();if(button)button.textContent='▶'}return}
-    if(button){button.disabled=true;button.textContent='…'}
+  function voiceButton(player,playing=false,loading=false){
+    const button=player.querySelector('.dm-voice-toggle');
+    button.disabled=loading;button.textContent=loading?'…':playing?'Ⅱ':'▶';
+    button.setAttribute('aria-label',loading?'Sesli mesaj yükleniyor':playing?'Sesli mesajı duraklat':'Sesli mesajı oynat');
+    button.setAttribute('aria-pressed',String(playing));player.setAttribute('aria-busy',String(loading));
+  }
+  function releaseVoicePlayer(player){
+    player._voiceJob=null;
+    if(activeVoicePlayer===player){activeVoicePlayer=null;voicePlayRevision++}
+    const audio=player._audio;player._audio=null;
+    if(audio){audio.onplay=audio.onpause=audio.onended=audio.ontimeupdate=audio.onloadedmetadata=audio.ondurationchange=audio.onerror=null;audio.pause();audio.removeAttribute('src');audio.load()}
+    if(player._objectUrl)URL.revokeObjectURL(player._objectUrl);player._objectUrl=null;
+    voiceButton(player);syncVoice(player);
+  }
+  function syncVoice(player){
+    const audio=player._audio,duration=audio?.duration,known=Number.isFinite(duration)&&duration>0;
+    const current=Number.isFinite(audio?.currentTime)?Math.max(0,audio.currentTime):0;
+    const progress=player.querySelector('.dm-voice-progress'),ratio=known?Math.min(1,current/duration):0;
+    progress.disabled=!known;progress.value=String(Math.round(ratio*1000));
+    progress.setAttribute('aria-valuetext',formatAudioTime(current)+(known?' / '+formatAudioTime(duration):''));
+    player.querySelector('.dm-voice-time').textContent=formatAudioTime(current)+(known?' / '+formatAudioTime(duration):'');
+    player.querySelector('.dm-wave').style.setProperty('--played',`${ratio*100}%`);player.querySelector('.dm-track i').style.width=`${ratio*100}%`;
+    player.querySelectorAll('[data-voice-seek]').forEach(button=>button.disabled=!known);
+  }
+  function seekVoice(player,delta){
+    const audio=player._audio;if(!audio||!Number.isFinite(audio.duration)||audio.duration<=0)return;
+    const desired=delta===null?audio.duration*Number(player.querySelector('.dm-voice-progress').value)/1000:audio.currentTime+delta;
+    if(Number.isFinite(desired)){audio.currentTime=Math.max(0,Math.min(audio.duration,desired));syncVoice(player)}
+  }
+  async function playVoice(message,player){
+    if(!player?.isConnected||player._voiceJob)return;
+    if(player._audio&&!player._audio.paused){voicePlayRevision++;player._audio.pause();return}
+    // Cancel pending work on the previous player so it can be selected again immediately.
+    if(activeVoicePlayer&&activeVoicePlayer!==player){
+      if(activeVoicePlayer._voiceJob)releaseVoicePlayer(activeVoicePlayer);
+      else{activeVoicePlayer._audio?.pause();voiceButton(activeVoicePlayer)}
+    }
+    const revision=++voicePlayRevision,job={};activeVoicePlayer=player;player._voiceJob=job;
+    const valid=()=>player.isConnected&&player._voiceJob===job&&revision===voicePlayRevision&&activeVoicePlayer===player;
+    const status=player.querySelector('.dm-voice-status');status.textContent='';voiceButton(player,false,true);
     try{
-      const response=await fetchMedia(message),url=URL.createObjectURL(await response.blob()),audio=new Audio(url);player._audio=audio;player._objectUrl=url;
-      const sync=()=>{if(!progress||!time)return;const ratio=audio.duration?audio.currentTime/audio.duration:0;progress.value=String(Math.round(ratio*1000));progress.style.setProperty('--played',`${ratio*100}%`);player.querySelector('.dm-wave')?.style.setProperty('--played',`${ratio*100}%`);const track=player.querySelector('.dm-track i');if(track)track.style.width=`${ratio*100}%`;time.textContent=audio.duration?`${formatAudioTime(audio.currentTime)} / ${formatAudioTime(audio.duration)}`:formatAudioTime(audio.currentTime)};
-      audio.ontimeupdate=sync;audio.onloadedmetadata=sync;audio.onplay=()=>{if(button){button.disabled=false;button.textContent='Ⅱ'}};audio.onpause=()=>{if(button){button.disabled=false;button.textContent='▶'}};audio.onended=()=>{audio.currentTime=0;sync();if(button)button.textContent='▶'};
-      if(button)button.disabled=false;await audio.play();
-    }catch(error){if(button){button.disabled=false;button.textContent='↻'}window.toast?.(error.message||'Sesli mesaj oynatılamadı.')}
+      if(!player._audio){
+        const response=await fetchMedia(message),blob=await response.blob();if(!valid())return;
+        const url=URL.createObjectURL(blob),audio=new Audio(url);player._audio=audio;player._objectUrl=url;
+        const sync=()=>syncVoice(player);
+        audio.ontimeupdate=audio.onloadedmetadata=audio.ondurationchange=sync;
+        audio.onplay=()=>{if(!player.isConnected||activeVoicePlayer!==player){audio.pause();return}voiceButton(player,true)};
+        audio.onpause=()=>voiceButton(player);
+        audio.onended=()=>{audio.currentTime=0;sync();voiceButton(player)};
+        audio.onerror=()=>{releaseVoicePlayer(player);if(player.isConnected)status.textContent='Sesli mesaj açılamadı. Yeniden deneyin.'};sync();
+      }
+      const audio=player._audio;audio.playbackRate=player._rate||1;audio.preservesPitch=true;
+      await audio.play();if(!valid()){audio.pause();return}voiceButton(player,!audio.paused);
+    }catch(error){if(valid()){voiceButton(player);status.textContent=error.message||'Sesli mesaj oynatılamadı. Yeniden deneyin.'}}
+    finally{if(player._voiceJob===job){player._voiceJob=null;if(player.isConnected)voiceButton(player,!!player._audio&&!player._audio.paused)}}
   }
 
   async function uploadMedia(file,type,seconds=0,expected=null,caption=''){
@@ -586,6 +639,7 @@
     document.head.appendChild(style);
     const mediaStyle=document.createElement('style');
     mediaStyle.textContent=`.dm-unread[hidden]{display:none!important}.bubble.dm-media-bubble,.bubble.me.dm-media-bubble{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;overflow:visible!important}.dm-image-message{margin-top:7px}.dm-photo-open{position:relative;display:block;max-width:100%;padding:0;border:0;background:transparent;color:var(--ui-ink);text-align:left}.dm-inline-photo{display:block;width:min(250px,68vw);max-height:320px;min-height:96px;object-fit:cover;border-radius:14px;background:var(--ui-panel)}.dm-media-loading{display:block;padding:8px 12px;color:var(--ui-ink);font-size:10px}.dm-temp-preview{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;overflow:hidden;width:min(250px,68vw);min-height:112px;padding:14px;border:1px solid var(--ui-line);border-radius:15px;background:linear-gradient(135deg,var(--ui-raised),var(--ui-raised) 55%,var(--ui-button));color:var(--ui-ink);text-align:left}.dm-temp-blur{position:absolute;z-index:-1;inset:-12px;background:radial-gradient(ellipse at 22% 28%,color-mix(in srgb, var(--ui-danger-bg) 66%, transparent) 0 13%,transparent 46%),radial-gradient(ellipse at 76% 74%,color-mix(in srgb, var(--ui-button) 65%, transparent) 0 18%,transparent 52%),linear-gradient(130deg,var(--ui-panel),var(--ui-danger-bg));filter:blur(15px);transform:scale(1.12)}.dm-temp-lock{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid var(--ui-line);border-radius:50%;background:color-mix(in srgb, var(--ui-panel) 43%, transparent);font-size:17px}.dm-temp-label,.dm-temp-preview>span:last-child{display:grid;gap:4px}.dm-temp-preview b{font-size:12px}.dm-temp-preview small{font-size:10px;color:var(--ui-muted)}.dm-temp-preview.expired{min-height:74px;background:var(--ui-raised);color:var(--ui-ink)}.dm-voice-player{display:flex;align-items:center;gap:10px;width:min(285px,72vw);margin-top:6px;padding:9px 11px;border:1px solid var(--ui-line);border-radius:18px;background:linear-gradient(135deg,var(--ui-panel),var(--ui-panel))}.dm-voice-toggle{flex:0 0 38px;width:38px;height:38px;border:0;border-radius:50%;background:linear-gradient(135deg,var(--ui-button),var(--ui-danger-bg));color:var(--ui-ink);font-size:15px}.dm-voice-main{position:relative;flex:1;min-width:0;padding-bottom:15px}.dm-wave{height:25px;display:flex;align-items:center;gap:2px;overflow:hidden}.dm-wave i{flex:1;min-width:2px;height:var(--h);border-radius:3px;background:color-mix(in srgb, var(--ui-panel) 55%, transparent)}.dm-voice-progress{position:absolute;inset:0 0 14px;width:100%;height:26px;margin:0;opacity:0;cursor:pointer}.dm-voice-time{position:absolute;bottom:0;left:0;color:var(--ui-ink);font-size:9px}.dm-photo-viewer{position:fixed;inset:0;z-index:20000;background:color-mix(in srgb, var(--ui-panel) 96%, transparent);display:grid;place-items:center;padding:16px}.dm-photo-viewer-head{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;color:var(--ui-ink);font-size:13px}.dm-photo-viewer-head button{border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-raised) 7%, transparent);color:var(--ui-ink);border-radius:14px;width:42px;height:42px;font-size:22px}.dm-photo-viewer img{display:block;max-width:100%;max-height:82vh;object-fit:contain;border-radius:14px}.dm-photo-viewer>small{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));color:var(--ui-muted);font-size:12px}.dm-photo-viewer.capture-hidden img{filter:blur(24px);visibility:hidden}.dm-gift-sheet button:not(.close){min-height:44px;border:1px solid var(--ui-line);border-radius:14px;background:linear-gradient(145deg,var(--ui-raised),var(--ui-raised));color:var(--ui-ink);font-size:12px;font-weight:650;box-shadow:0 5px 18px var(--ui-shadow);transition:transform .15s,border-color .15s}.dm-gift-sheet button:not(.close):active{transform:scale(.97)}.dm-gift-sheet [data-temp][aria-pressed=true]{border-color:var(--ui-line);background:linear-gradient(135deg,var(--ui-button),var(--ui-button));color:var(--ui-ink);box-shadow:0 0 0 2px var(--ui-shadow)}.dm-gift-sheet .close{border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-panel) 4%, transparent);color:var(--ui-ink);border-radius:13px;width:42px;height:42px;font-size:21px}.dm-gift-sheet p{font-size:11px!important}.compose button.close[data-dm-photo],.compose button.close[data-dm-voice],.compose button.close[data-dm-gift]{width:46px;height:46px;flex:0 0 46px;border:1px solid var(--ui-line);border-radius:15px;background:linear-gradient(145deg,var(--ui-raised),var(--ui-raised));color:var(--ui-ink);font-size:18px;box-shadow:0 5px 15px var(--ui-shadow)}.compose button.close[data-dm-photo]:active,.compose button.close[data-dm-voice]:active,.compose button.close[data-dm-gift]:active{transform:scale(.96)}.compose button.close[data-dm-voice][aria-pressed="true"]{background:linear-gradient(135deg,var(--ui-danger-bg),var(--ui-danger-bg));box-shadow:0 0 0 3px var(--ui-shadow)}`;
+    mediaStyle.textContent += `.dm-voice-player{position:relative;flex-wrap:wrap}.dm-voice-controls{display:flex;align-items:center;justify-content:flex-end;gap:6px;width:100%;border-top:1px solid var(--ui-line);padding-top:5px}.dm-voice-controls>div{display:flex;gap:5px}.dm-voice-controls button{min-width:38px;min-height:36px;padding:3px 7px;border:1px solid var(--ui-line);border-radius:10px;background:var(--ui-raised);color:var(--ui-ink);font-size:11px;touch-action:manipulation}.dm-voice-controls button:disabled{opacity:.4}.dm-voice-controls button:focus-visible,.dm-voice-toggle:focus-visible{outline:2px solid var(--ui-gold);outline-offset:2px}.dm-voice-status{width:100%;color:var(--ui-ink);font-size:10px;overflow-wrap:anywhere}.dm-voice-status:empty{display:none}`;
     mediaStyle.textContent += ".dm-temp-preview img.dm-temp-blur{inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:cover;opacity:.86;filter:blur(13px)}.dm-temp-status{position:absolute;inset:0;pointer-events:none}.dm-voice-player .dm-wave{background:linear-gradient(90deg,var(--ui-button) var(--played,0%),transparent var(--played,0%))}.dm-track{height:3px;margin-top:3px;border-radius:9px;background:color-mix(in srgb, var(--ui-panel) 14%, transparent);overflow:hidden}.dm-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--ui-button),var(--ui-danger-bg))}.dm-voice-player input:focus-visible{opacity:.25;outline:2px solid var(--ui-line)}";
     mediaStyle.textContent += '.dm-inline-photo{width:min(150px,42vw);max-height:160px;min-height:55px}.dm-temp-preview{width:min(180px,50vw);min-height:80px}.dm-voice-player{width:min(218px,60vw);padding:6px 8px;gap:7px}.dm-voice-toggle{width:31px;height:31px;flex-basis:31px}.dm-wave{height:17px}.dm-story-reply .dm-image-message{margin:0 0 5px}.dm-story-reply .dm-inline-photo{opacity:.62;width:min(142px,42vw);max-height:148px}.dm-story-reply .dm-message-text{font-size:12px;padding:4px 8px}.dm-story-reply .dm-photo-open{cursor:zoom-in}';
     document.head.appendChild(mediaStyle);
@@ -601,7 +655,7 @@
       if(!scope)return;
       const approved=await dmConfirm(scope==='everyone'?(String(activeConversationId||'').startsWith('grp_')?'Seçilen mesajlar herkes için silinsin mi?':'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?'):'Bu mesajı kendiniz için silmek istediğinize emin misiniz?');
       if(!approved)return;
-      try { await api().api('/messages/'+encodeURIComponent(activeConversationId)+'/delete',{method:'POST',body:JSON.stringify({message_ids:[...selectedMessages].map(row=>Number(row.dataset.messageId)),all:allMessagesSelected,scope})}); if(allMessagesSelected){releaseMediaUrls(body);body.replaceChildren()}else [...selectedMessages].forEach(row => row.remove()); invalidateQuotedMessages([...selectedMessages].map(row=>Number(row.dataset.messageId)));selectedMessages.clear();allMessagesSelected=false;refreshSelectionBar(); }
+      try { await api().api('/messages/'+encodeURIComponent(activeConversationId)+'/delete',{method:'POST',body:JSON.stringify({message_ids:[...selectedMessages].map(row=>Number(row.dataset.messageId)),all:allMessagesSelected,scope})}); if(allMessagesSelected){releaseMediaUrls(body);body.replaceChildren()}else [...selectedMessages].forEach(row => {releaseMediaUrls(row);row.remove()}); invalidateQuotedMessages([...selectedMessages].map(row=>Number(row.dataset.messageId)));selectedMessages.clear();allMessagesSelected=false;refreshSelectionBar(); }
       catch (e) { window.toast?.(e.message || 'Mesajlar silinemedi.'); }
     };
     selectionBar.querySelector('[data-pin-selected]').onclick = () => {if(selectedMessages.size===1)changeMessagePin([...selectedMessages][0]._message)};
@@ -819,7 +873,7 @@
     tools.querySelector('[data-notify-selected]').onclick=()=>{if(selectedConversations.size===1)openNotificationSettings([...selectedConversations][0])};
     tools.querySelector('[data-move]').onclick=()=>moveSelected('archive');tools.querySelector('[data-lock]').onclick=()=>moveSelected('locked');tools.querySelector('[data-cancel]').onclick=()=>{selectedConversations.clear();loadConversations()};
     tools.querySelector('[data-select-all]').onclick=()=>{const rows=[...root.querySelectorAll('.list .item[data-conversation-id]')];const all=rows.length>0&&rows.every(row=>selectedConversations.has(row.dataset.conversationId));rows.forEach(row=>{if(all)selectedConversations.delete(row.dataset.conversationId);else selectedConversations.add(row.dataset.conversationId);row.classList.toggle('dm-list-selected',!all)});renderFolderControls(root)};
-    tools.querySelector('[data-delete]').onclick=async()=>{const ids=[...selectedConversations];if(!ids.length)return;const scope=await dmDeleteScope();if(!scope)return;if(!await dmConfirm(scope==='everyone'?'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?':'Bu mesajı kendiniz için silmek istediğinize emin misiniz?'))return;try{for(const id of ids)await api().api('/messages/'+encodeURIComponent(id)+'/delete',{method:'POST',body:JSON.stringify({all:true,scope})});selectedConversations.clear();if(ids.includes(String(activeConversationId))){activeConversationId=null;chatRevision++;document.getElementById('chat')?.classList.remove('show');document.getElementById('eris-required-gift')?.remove()}await loadConversations();window.toast?.('Sohbetler silindi.')}catch(e){window.toast?.(e.message||'Mesajlar silinemedi.')}};
+    tools.querySelector('[data-delete]').onclick=async()=>{const ids=[...selectedConversations];if(!ids.length)return;const scope=await dmDeleteScope();if(!scope)return;if(!await dmConfirm(scope==='everyone'?'Bu mesajı iki taraf için de silmek istediğinize emin misiniz?':'Bu mesajı kendiniz için silmek istediğinize emin misiniz?'))return;try{for(const id of ids)await api().api('/messages/'+encodeURIComponent(id)+'/delete',{method:'POST',body:JSON.stringify({all:true,scope})});selectedConversations.clear();if(ids.includes(String(activeConversationId))){activeConversationId=null;chatRevision++;releaseMediaUrls($('chat'));document.getElementById('chat')?.classList.remove('show');document.getElementById('eris-required-gift')?.remove()}await loadConversations();window.toast?.('Sohbetler silindi.')}catch(e){window.toast?.(e.message||'Mesajlar silinemedi.')}};
   }
   function renderFolderControls(root){
     const nav=root.querySelector('.dm-inbox-nav'),tools=root.querySelector('.dm-list-tools');if(!nav||!tools)return;
@@ -891,7 +945,7 @@
     const addButton=(parent,label,handler,danger=false)=>{const button=document.createElement('button');button.type='button';button.textContent=label;if(danger)button.classList.add('group-danger');button.onclick=()=>run(button,()=>handler(button));parent.append(button);return button};
     const refresh=async()=>{[group,members]=await Promise.all([request(''),request('/members')]);role=group.my_role;};
     const canManage=()=>['owner','moderator'].includes(role);
-    const endChat=async()=>{close();if(String(activeConversationId)===String(id)){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show')}await loadConversations()};
+    const endChat=async()=>{close();if(String(activeConversationId)===String(id)){chatRevision++;activeConversationId=null;releaseMediaUrls($('chat'));$('chat')?.classList.remove('show')}await loadConversations()};
     const control=async(m,action,minutes=60)=>{await request('/members/'+encodeURIComponent(m.user_id)+'/control','POST',{action,minutes});await refresh();roster()};
     const roster=()=>{
       viewRevision++;content.replaceChildren();
@@ -991,7 +1045,7 @@
       const compose=chat.querySelector('.compose');if(compose){compose.hidden=!!reason;compose.style.display=reason?'none':''}
       const subtitle=chat.querySelector('.chatHead small');if(subtitle)subtitle.textContent=reason||roster.length+' üye · Grup bilgileri için ada dokun'+(g.slow_seconds?' · Yavaş mod '+g.slow_seconds+' sn':'');
       const title=chat.querySelector('.chatHead b');if(title)title.textContent=g.name;
-    }catch(e){if(revision!==chatRevision)return;if(/üye değilsiniz|erişiminiz yok|bulunamadı/i.test(e.message||'')){chatRevision++;activeConversationId=null;$('chat')?.classList.remove('show');document.querySelector('[data-group-menu]')?.remove();cancelVoiceRecording();closeSharedMedia();closeMessageActions();document.querySelector('[data-pin-banner]')?.remove();loadConversations();window.toast?.('Bu gruba erişiminiz sona erdi.')}}
+    }catch(e){if(revision!==chatRevision)return;if(/üye değilsiniz|erişiminiz yok|bulunamadı/i.test(e.message||'')){chatRevision++;activeConversationId=null;releaseMediaUrls($('chat'));$('chat')?.classList.remove('show');document.querySelector('[data-group-menu]')?.remove();cancelVoiceRecording();closeSharedMedia();closeMessageActions();document.querySelector('[data-pin-banner]')?.remove();loadConversations();window.toast?.('Bu gruba erişiminiz sona erdi.')}}
   }
   async function checkGroupInvites(){
     const overlay=document.createElement('div');overlay.className='lidya-group-modal';
@@ -1591,7 +1645,7 @@
       else{headerAvatar.removeAttribute('role');headerAvatar.removeAttribute('tabindex');headerAvatar.removeAttribute('aria-label')}
     }
     installChatTools(chat);
-    const close=chat.querySelector('.chatHead>.close');if(close&&!close.dataset.voiceCloseBound){close.dataset.voiceCloseBound='';close.addEventListener('click',()=>{cancelVoiceRecording();closeAttachmentPreview()})}
+    const close=chat.querySelector('.chatHead>.close');if(close&&!close.dataset.voiceCloseBound){close.dataset.voiceCloseBound='';close.addEventListener('click',()=>{cancelVoiceRecording();closeAttachmentPreview();releaseMediaUrls(chat)})}
     setUploadStatus(mediaUploadsInFlight.has(String(id))?'Dosya gönderiliyor…':'');
     syncChatCompose(chat);
     chat.classList.toggle('dm-system-conversation', isSystemConversation());
@@ -1797,6 +1851,7 @@
       connectDmSocket();
       if (currentUserId !== loadedForUserId) loadConversations();
     } else if (event?.detail?.state === 'logged_out') {
+      releaseMediaUrls($('chat'));
       document.querySelector('[data-attachment-chooser]')?.remove();
       resetInbox();cancelNativeDocument();drafts.clear();clearMessageMode(false);historyCursor=null;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
       listRevision++;chatRevision++;activeConversationId=null;
