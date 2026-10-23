@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  let account='', generation=0, cursor=0, baseline=false, pending=null, timer, enabled=null;
+  let account='', generation=0, cursor=0, baseline=false, pending=null, timer, enabled=null, tickRun=0;
   const api=(path,options)=>window.ErisPlatform.api(path,options);
   const token=()=>window.ErisPlatform?.getAccessToken?.()||'';
   const style=document.createElement('style');
@@ -25,7 +25,7 @@
     const g=generation;
     const job=(async()=>{
       if(enabled===null){const privacy=await api('/me/privacy');if(g!==generation||token()!==account)return [];enabled=!privacy.hide_notifications;}
-      // Gift notifications remain visible even when ordinary messages are muted.
+      // This legacy endpoint remains the foreground banner source.
       const rows=await api('/me/notifications?limit=100');
       if(g!==generation||token()!==account)return [];
       const highest=rows.reduce((n,r)=>Math.max(n,Number(r.id)||0),cursor);
@@ -36,6 +36,7 @@
     try{return await job}finally{if(pending===job)pending=null}
   }
   async function render(root,valid=()=>true){
+    if(window.ErisNotificationCenter)return window.ErisNotificationCenter.render(root,valid);
     let rows=[],filter='all',g=generation;
     root.classList.add('en-center');
     const draw=()=>{
@@ -53,10 +54,10 @@
     async function load(){root.textContent='Bildirimler yükleniyor…';try{rows=await refresh();g=generation;if(valid())draw()}catch(e){if(!valid())return;root.textContent='Bildirimler yüklenemedi. ';const b=document.createElement('button');b.type='button';b.textContent='Tekrar dene';b.onclick=load;root.append(b)}}
     await load();
   }
-  async function tick(){clearTimeout(timer);try{if(!document.hidden)await refresh()}catch(e){}timer=setTimeout(tick,10000)}
-  function apply(privacy){const next=!privacy.hide_notifications;if(enabled===next)return;enabled=next;generation++;pending=null;baseline=false;stack.replaceChildren();}
+  async function tick(){const run=++tickRun;clearTimeout(timer);try{if(!document.hidden)await refresh()}catch(e){}if(run===tickRun)timer=setTimeout(tick,10000)}
+  function apply(privacy){const next=!privacy.hide_notifications;if(enabled===next)return;enabled=next;generation++;pending=null;baseline=false;stack.replaceChildren();window.dispatchEvent(new CustomEvent('erischat:notification-preference',{detail:privacy}));}
   window.ErisNotifications={refresh,render,apply};
-  window.addEventListener('erischat:auth',()=>{reset(token());tick()});
+  for(const event of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(event,()=>{if(token()!==account)reset(token());tick()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tick,{once:true});else tick();
 })();
