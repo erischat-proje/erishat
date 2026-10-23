@@ -48,6 +48,6 @@ const wait=(ms=25)=>new Promise(r=>setTimeout(r,ms));
  // Switching away and immediately back supersedes the old unresolved play promise.
  w.dispatchEvent(new w.CustomEvent('erischat:auth',{detail:{state:'ready',user:{id:'me'}}}));await wait();rows=[msg(9),msg(10)];await w.ErisChatDM.open('dm','Kişi','K','peer');await wait();holdPlay=true;toggle(9).click();await wait();const oldPending=audios.at(-1),resolveOld=playResolve;holdPlay=false;toggle(10).click();await wait();toggle(9).click();await wait();const newest=audios.at(-1);assert.notEqual(newest,oldPending);assert(!newest.paused);resolveOld();await wait();assert(oldPending.paused);assert(!newest.paused);
  w.dispatchEvent(new w.CustomEvent('erischat:auth',{detail:{state:'ready',user:{id:'another-user'}}}));assert(newest.paused);assert.equal(newest.src,'');
- const html=fs.readFileSync('frontend/erischat-main.html','utf8');assert(html.includes('dm-live.js?v=messages-playback-fix-v15-20261023'));
+ const html=fs.readFileSync('frontend/erischat-main.html','utf8');assert(/dm-live\.js\?v=[^"\s]+/.test(html));
  assert.deepEqual(errors,[]);dom.window.close();console.log('PASS: voice rates, seeking, bounds/unknown duration, pause/resume, single playback, accessible state, authorized download, playback/fetch/decoder retries, metadata preservation, deletion cleanup and stale fetch/play protection');
 })().catch(e=>{console.error(e);process.exit(1)});

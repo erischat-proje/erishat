@@ -49,6 +49,7 @@
     messageHistory: (id,before=null,around=null) => request(`/message-tools/${encodeURIComponent(id)}/history?limit=50${before?'&before='+before:''}${around?'&around='+around:''}`),
     searchMessages: (id,q,before=null) => request(`/message-tools/${encodeURIComponent(id)}/search?q=${encodeURIComponent(q)}${before?'&before='+before:''}`),
     editMessage: (id,messageId,text,expectedText) => request(`/message-tools/${encodeURIComponent(id)}/${messageId}`,{method:'PATCH',body:JSON.stringify({text,expected_text:expectedText})}),
+    editMediaCaption: (id,messageId,caption,expectedText) => request(`/message-tools/${encodeURIComponent(id)}/${messageId}/caption`,{method:'PATCH',body:JSON.stringify({caption,expected_text:expectedText})}),
     messageGifts: () => request('/message-gifts'),
     sendMessageGift: (id,gift_key,quantity=1) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key,quantity})}),
     sendMessageMedia: (id,file,mediaType,viewSeconds=0,caption='') => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));if(caption)body.append('caption',caption);return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:mediaType==='video'||mediaType==='document'?120000:30000});},
