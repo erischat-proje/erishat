@@ -224,7 +224,7 @@
     const when = document.createElement('span'); when.textContent = messageTime(message?.created_at); meta.append(when);
     if(message.edited_at){const edited=document.createElement('span');edited.className='dm-edited';edited.textContent='düzenlendi';meta.append(edited)}
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
-    row.append(meta);
+    row.append(meta);renderReadReceipt(row,message);
     renderMessageReactions(row,message);renderMessageStar(row,message);renderMessagePoll(row,message);
     if(message.bubble_asset && message.media_type!=='voice'){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
 
@@ -232,6 +232,37 @@
     return row;
   }
 
+  function renderReadReceipt(row,message){
+    if(!row?._mine)return;const mark=row.querySelector('.dm-checks');if(!mark)return;
+    const total=Number(message.recipient_count),seen=Number(message.read_count),counted=message.recipient_count!=null&&message.read_count!=null;
+    mark.textContent=message.is_read?'✓✓':counted&&seen>0?'✓ '+seen+'/'+total:'✓';
+    mark.setAttribute('aria-label',counted&&total>0?seen+' / '+total+' kişi okudu':message.is_read?'Okundu':'Gönderildi');row.dataset.read=message.is_read?'1':'0';
+  }
+  function refreshMessageInfo(){document.querySelector('[data-message-info]')?._reload?.()}
+  function openMessageInfo(){
+    const row=selectedMessages.size===1?[...selectedMessages][0]:null,m=row?._message,cid=activeConversationId,user=currentUserId,chatVersion=chatRevision;
+    if(!m||!row._mine||isSystemConversation()||m.temporary||m.protected_message)return;
+    if(!document.getElementById('dm-info-style')){const style=document.createElement('style');style.id='dm-info-style';style.textContent='[data-message-info] [data-info-counts]{padding:14px;border:1px solid var(--ui-line);border-radius:14px;font-size:18px;font-weight:750;color:var(--ui-gold)}[data-message-info] [role=group]{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}[data-message-info] [aria-pressed=true]{border-color:var(--ui-gold);background:var(--ui-button)}[data-message-info] [data-info-people]>p{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--ui-line)}[data-message-info] [data-info-people] span{white-space:nowrap;font-size:12px}[data-message-info] [data-info-more]{width:100%;margin-top:12px}';document.head.append(style)}
+    const panel=messageActionPanel('Mesaj bilgisi');panel.dataset.messageInfo='';panel.dataset.messageId=String(m.id);panel.dataset.conversationId=String(cid);
+    const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]');
+    content.innerHTML='<div data-info-meta></div><p data-info-counts></p><p>Mesaj gönderildiğinde sohbette olup hâlâ üye olan kişiler gösterilir. Okundu bilgisi, ses kaydının dinlendiği veya dosyanın indirildiği anlamına gelmez.</p><div role="group" aria-label="Okunma filtreleri"><button type="button" data-info-view="all">Tümü</button><button type="button" data-info-view="read">Okuyanlar</button><button type="button" data-info-view="unread">Henüz okumayanlar</button></div><button type="button" data-info-refresh>Yenile</button><div data-info-people></div><button type="button" data-info-more hidden>Daha fazla kişi</button>';
+    const people=content.querySelector('[data-info-people]'),meta=content.querySelector('[data-info-meta]'),counts=content.querySelector('[data-info-counts]'),more=content.querySelector('[data-info-more]');
+    let view='all',cursor=null,revision=0,busy=false;const valid=()=>panel.isConnected&&user===currentUserId&&chatVersion===chatRevision&&String(cid)===String(activeConversationId);
+    async function load(append=false){
+      if(!valid()||append&&busy)return;busy=true;const own=++revision;if(!append){cursor=null;people.replaceChildren()}more.hidden=true;status.textContent='Mesaj bilgisi yükleniyor…';
+      panel.querySelectorAll('[data-info-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.infoView===view)));
+      try{const data=await api().api('/message-info/'+encodeURIComponent(cid)+'/'+Number(m.id)+'?view='+view+'&limit=30'+(append&&cursor?'&after='+cursor:''));
+        if(!valid()||own!==revision)return;
+        meta.replaceChildren();const text=document.createElement('p'),date=document.createElement('small');text.textContent=data.message.media_name||data.message.text||'Mesaj';date.textContent='Gönderildi: '+messageTime(data.message.created_at)+(data.message.edited_at?' · Düzenlendi: '+messageTime(data.message.edited_at):'')+(data.message.media_size?' · '+formatFileSize(data.message.media_size):'');meta.append(text,date);
+        counts.textContent=data.read_count+' / '+data.recipient_count+' kişi okudu';
+        for(const person of asList(data,['recipients'])){if([...people.children].some(x=>x.dataset.infoUser===String(person.user_id)))continue;const item=document.createElement('p');item.dataset.infoUser=String(person.user_id);const name=document.createElement('b'),state=document.createElement('span');name.textContent=person.nickname||'Kullanıcı';state.textContent=person.is_read?' · Okundu':' · Henüz okunmadı';item.append(name,state);people.append(item)}
+        const body=$('chat')?.querySelector('.chatBody'),existing=body?.querySelector('[data-message-id="'+Number(m.id)+'"]');if(existing)appendMessageOnce(body,{...existing._message,is_read:data.is_read,read_count:data.read_count,recipient_count:data.recipient_count},true);
+        cursor=data.next_after;more.hidden=!data.has_more;status.textContent=people.children.length?'':'Bu filtrede kişi yok.';
+      }catch(e){if(valid()&&own===revision){people.replaceChildren();meta.replaceChildren();counts.textContent='';status.textContent=e.message||'Mesaj bilgisi yüklenemedi.'}}
+      finally{if(own===revision)busy=false}
+    }
+    panel._reload=()=>load();panel.querySelectorAll('[data-info-view]').forEach(b=>b.onclick=()=>{view=b.dataset.infoView;load()});content.querySelector('[data-info-refresh]').onclick=()=>load();more.onclick=()=>load(true);load();
+  }
   function renderMessageReactions(row,message){
     row.querySelector('.dm-reactions')?.remove();
     if(Array.isArray(message.reactions)&&message.reactions.length){
@@ -256,7 +287,7 @@
           if(old.text!==merged.text)for(const quote of [...body.querySelectorAll('.bubble[data-message-id]')])if(Number(quote._message?.reply_to_id)===Number(id)&&!quote._message.reply?.unavailable)appendMessageOnce(body,{...quote._message,reply:{...quote._message.reply,text:String(merged.text||'').slice(0,180)}},quote._mine);
           return next;
         }
-        existing._message=merged;
+        existing._message=merged;renderReadReceipt(existing,merged);
         if(JSON.stringify(old.poll)!==JSON.stringify(merged.poll)||old.has_poll!==merged.has_poll)renderMessagePoll(existing,merged);
         if(!!old.is_starred!==!!merged.is_starred)renderMessageStar(existing,merged);
         if(JSON.stringify(old.reactions)!==JSON.stringify(merged.reactions))renderMessageReactions(existing,merged);
@@ -284,6 +315,7 @@
     const react=selectionBar.querySelector('[data-react-selected]'),forward=selectionBar.querySelector('[data-forward-selected]');
     if(react)react.disabled=!one||isSystemConversation()||!!one?._message?.temporary||!!one?._message?.protected_message;
     if(forward)forward.disabled=isSystemConversation()||allMessagesSelected||!selectedMessages.size||selectedMessages.size>10||[...selectedMessages].some(row=>!canForwardMessage(row._message));
+    const info=selectionBar.querySelector('[data-info-selected]');if(info)info.disabled=!one||!one._mine||isSystemConversation()||!!one._message?.temporary||!!one._message?.protected_message;
     const pin = selectionBar.querySelector('[data-pin-selected]');
     if (pin) {pin.textContent='📌';pin.title=[...selectedMessages].some(row => row.dataset.pinned === '1') ? 'Sabitlemeyi kaldır' : 'Sabitle';pin.setAttribute('aria-label',pin.title)}
     selectionBar.querySelector('[data-delete-selected]').disabled = !selectedMessages.size;
@@ -537,7 +569,7 @@
     document.head.appendChild(mediaStyle);
     installFolderStyles();
     selectionBar = document.createElement('div'); selectionBar.className = 'dm-select-tools'; selectionBar.dataset.dmTools = ''; selectionBar.hidden = true;
-    selectionBar.innerHTML = "<button type=\"button\" data-all-selected aria-label=\"Tümünü seç\" title=\"Tümünü seç\">□</button><button type=\"button\" data-reply-selected disabled>Yanıtla</button><button type=\"button\" data-edit-selected disabled>Düzenle</button><button type=\"button\" data-react-selected disabled>Tepki</button><button type=\"button\" data-forward-selected disabled>İlet</button><button type=\"button\" data-star-selected disabled title=\"Sadece sana görünür\">Yıldızla</button><span data-selected-count style=\"font-size:10px;color:var(--ui-ink)\"></span><button type=\"button\" data-pin-selected aria-label=\"Sabitle\" title=\"Sabitle\">📌</button><button type=\"button\" data-delete-selected aria-label=\"Seçilenleri sil\" title=\"Seçilenleri sil\">Sil</button><button type=\"button\" data-clear-selected aria-label=\"Seçimi kapat\" title=\"Seçimi kapat\">×</button>";
+    selectionBar.innerHTML = "<button type=\"button\" data-all-selected aria-label=\"Tümünü seç\" title=\"Tümünü seç\">□</button><button type=\"button\" data-reply-selected disabled>Yanıtla</button><button type=\"button\" data-edit-selected disabled>Düzenle</button><button type=\"button\" data-react-selected disabled>Tepki</button><button type=\"button\" data-forward-selected disabled>İlet</button><button type=\"button\" data-star-selected disabled title=\"Sadece sana görünür\">Yıldızla</button><button type=\"button\" data-info-selected disabled aria-label=\"Mesaj bilgisi\" title=\"Mesaj bilgisi\">ⓘ</button><span data-selected-count style=\"font-size:10px;color:var(--ui-ink)\"></span><button type=\"button\" data-pin-selected aria-label=\"Sabitle\" title=\"Sabitle\">📌</button><button type=\"button\" data-delete-selected aria-label=\"Seçilenleri sil\" title=\"Seçilenleri sil\">Sil</button><button type=\"button\" data-clear-selected aria-label=\"Seçimi kapat\" title=\"Seçimi kapat\">×</button>";
     const body = chat.querySelector('.chatBody'); chat.querySelector('.chatHead')?.append(selectionBar);
     selectionBar.querySelector('[data-clear-selected]').onclick = () => { selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear();allMessagesSelected=false; messageSelectionMode=false;refreshSelectionBar(); };
     selectionBar.querySelector('[data-all-selected]').onclick = () => { const rows=[...body.querySelectorAll('.bubble[data-message-id]')];allMessagesSelected=!allMessagesSelected;selectedMessages.clear();rows.forEach(row=>{row.classList.toggle('dm-selected',allMessagesSelected);if(allMessagesSelected)selectedMessages.add(row)});refreshSelectionBar() };
@@ -552,6 +584,7 @@
     };
     selectionBar.querySelector('[data-pin-selected]').onclick = () => {if(selectedMessages.size===1)changeMessagePin([...selectedMessages][0]._message)};
     selectionBar.querySelector('[data-star-selected]').onclick=()=>{if(selectedMessages.size===1)setMessageStar([...selectedMessages][0])};
+    selectionBar.querySelector('[data-info-selected]').onclick=openMessageInfo;
     selectionBar.querySelector('[data-react-selected]').onclick=openReactionPicker;
     selectionBar.querySelector('[data-forward-selected]').onclick=openForwardPicker;
     selectionBar.querySelector('[data-reply-selected]').onclick=()=>startMessageMode('reply');
@@ -1585,11 +1618,14 @@
     if(data?.type==='dm_message_updated'){if(String(activeConversationId||'')===String(data.conversation_id))reconcileChat();loadConversations();return}
     if (data?.type === 'dm_read' && data.conversation_id) {
       if (String(activeConversationId||'') !== String(data.conversation_id)) return;
-      document.querySelectorAll('#chat .bubble.me[data-message-id]').forEach(row=>{if(Number(row.dataset.messageId)<=Number(data.read_up_to||0)){row.dataset.read='1';const mark=row.querySelector('.dm-checks');if(mark){mark.textContent='✓✓';mark.setAttribute('aria-label','Okundu')}}});
+      refreshMessageInfo();
+      if($('chat')?.dataset.conversationType!=='dm'){reconcileChat();return}
+      document.querySelectorAll('#chat .bubble.me[data-message-id]').forEach(row=>{if(Number(row.dataset.messageId)<=Number(data.read_up_to||0)){row._message={...row._message,is_read:true,read_count:1,recipient_count:1};renderReadReceipt(row,row._message)}});
       return;
     }
     if(data?.type==='dm_pins_updated' && data.conversation_id){if(String(activeConversationId)===String(data.conversation_id))refreshPinnedMessages();return}
     if(data?.type==='dm_messages_deleted' && data.conversation_id){
+      const info=document.querySelector('[data-message-info]');if(info?.dataset.conversationId===String(data.conversation_id)&&(data.message_ids||[]).some(id=>String(id)===info.dataset.messageId))info.remove();
       if(String(activeConversationId)===String(data.conversation_id))refreshPinnedMessages();
       const deletedStars=new Set((data.message_ids||[]).map(String));document.querySelectorAll('[data-starred-panel] .dm-star-card').forEach(card=>{if(card.dataset.starConversationId===String(data.conversation_id)&&deletedStars.has(card.dataset.starMessageId))card.remove()});
       if(String(activeConversationId||'')===String(data.conversation_id)){
@@ -1637,7 +1673,7 @@
     const id=activeConversationId,revision=chatRevision,chat=$('chat');
     if(reconciling||!id||!chat?.classList.contains('show')||document.visibilityState==='hidden')return;
     reconciling=true;
-    refreshPinnedMessages();
+    refreshPinnedMessages();refreshMessageInfo();
     if(String(id).startsWith('grp_'))await syncGroupState(id);
     if(String(activeConversationId)!==String(id)){reconciling=false;return}
     try{const around=historyWindow?Math.max(...[...chat.querySelectorAll('.bubble[data-message-id]')].map(row=>Number(row.dataset.messageId))):null;
@@ -1647,7 +1683,7 @@
       const authoritative=new Set(rows.map(m=>String(m.id))),oldest=rows.length?Math.min(...rows.map(m=>Number(m.id))):0;
       for(const old of body.querySelectorAll('.bubble[data-message-id]'))if(!authoritative.has(old.dataset.messageId)&&(!rows.length||Number(old.dataset.messageId)>=oldest)){selectedMessages.delete(old);releaseMediaUrls(old);old.remove()}
       refreshSelectionBar();
-      for(const m of rows){const mine=String(m.sender_id||m.user_id)===String(currentUserId);const row=appendMessageOnce(body,m,mine);if(mine&&m.is_read){row.dataset.read='1';const marks=row.querySelector('.dm-checks');if(marks)marks.textContent='✓✓'}}
+      for(const m of rows){const mine=String(m.sender_id||m.user_id)===String(currentUserId);appendMessageOnce(body,m,mine)}
       if(nearBottom)body.scrollTop=body.scrollHeight;
     }catch{}finally{reconciling=false}
   }
