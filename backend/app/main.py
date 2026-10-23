@@ -558,8 +558,9 @@ app.include_router(emergency_routes.register_auth(current_user))
 app.include_router(finance_audit.register_auth(current_user))
 app.include_router(fraud_review.register_auth(current_user))
 app.include_router(management_workflows.register_auth(current_user))
-from . import explore_feed
+from . import explore_feed, explore_interactions
 app.include_router(explore_feed.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
+app.include_router(explore_interactions.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(admin_operations.register_auth(current_user))
 app.include_router(admin_workspace.register_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id, role: broadcast_role_badge(user_id, role)))
 app.include_router(dm_folder_router)
@@ -1625,6 +1626,7 @@ def get_social_post_media(post_id: int, db: Session = Depends(get_db), user: Use
 
 
 class SocialCommentInput(BaseModel):
+    expected_body: str | None = Field(default=None, max_length=1000)
     body: str = Field(min_length=1, max_length=1000)
     parent_id: int | None = None
 
@@ -1686,30 +1688,16 @@ def unlike_social_post(post_id: int, db: Session = Depends(get_db),
 
 
 def _social_comment_row(db: Session, item: SocialPostComment, viewer: User) -> dict:
-    author = db.get(User, item.user_id)
-    return {
-        "id": item.id, "post_id": item.post_id, "parent_id": item.parent_id,
-        "user_id": item.user_id, "nickname": author.nickname if author else "Kullanıcı",
-        "avatar": author.avatar if author else None,
-        "avatar_asset": author.avatar_asset if author else None,
-        "gender": author.gender if author else None,
-        "body": item.body, "created_at": item.created_at,
-        "is_pinned": bool(item.is_pinned),
-        "is_mine": item.user_id == viewer.id,
-        "like_count": db.scalar(select(func.count()).select_from(SocialPostCommentLike).where(
-            SocialPostCommentLike.comment_id == item.id)) or 0,
-        "liked_by_me": bool(db.get(SocialPostCommentLike, (item.id, viewer.id))),
-    }
+    return explore_interactions.comment_rows(db, [item], viewer)[0]
 
 
 @app.get("/v1/posts/{post_id}/comments")
 def list_social_comments(post_id: int, limit: int = Query(default=100, ge=1, le=200),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     _social_access(db, post_id, user)
-    items = db.scalars(select(SocialPostComment).where(
-        SocialPostComment.post_id == post_id).order_by(
-        SocialPostComment.is_pinned.desc(), SocialPostComment.created_at.asc(), SocialPostComment.id.asc()).limit(limit))
-    return [_social_comment_row(db, item, user) for item in items]
+    items = list(db.scalars(explore_interactions.comments_query(post_id, user).order_by(
+        SocialPostComment.is_pinned.desc(), SocialPostComment.created_at.asc(), SocialPostComment.id.asc()).limit(limit)))
+    return explore_interactions.comment_rows(db, items, user)
 
 
 @app.post("/v1/posts/{post_id}/comments", status_code=201)
@@ -1725,7 +1713,7 @@ def create_social_comment(post_id: int, payload: SocialCommentInput,
     if not body:
         raise HTTPException(status_code=400, detail="Yorum boş olamaz")
     if payload.parent_id is not None:
-        parent = db.get(SocialPostComment, payload.parent_id)
+        parent = explore_interactions.comment_access(db, post_id, payload.parent_id, user)
         if not parent or parent.post_id != post_id:
             raise HTTPException(status_code=404, detail="Yanıtlanacak yorum bulunamadı")
         parent_id = parent.parent_id or parent.id
@@ -1741,11 +1729,17 @@ def edit_social_comment(post_id: int, comment_id: int, payload: SocialCommentInp
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_chat_write(db,user.id)
     _social_access(db, post_id, user)
-    item = db.get(SocialPostComment, comment_id)
+    item = explore_interactions.comment_access(db, post_id, comment_id, user)
     if not item or item.post_id != post_id: raise HTTPException(status_code=404, detail="Yorum bulunamadı")
     if item.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi yorumunu düzenleyebilirsin")
     body = payload.body.strip()
     if not body: raise HTTPException(status_code=400, detail="Yorum boş olamaz")
+    if payload.expected_body is not None:
+        changed = db.execute(update(SocialPostComment).where(SocialPostComment.id == comment_id,
+            SocialPostComment.body == payload.expected_body).values(body=body)).rowcount
+        if changed != 1:
+            db.rollback()
+            raise HTTPException(409, "Yorum değişti; son halini yeniden açın.")
     item.body = body
     db.commit(); db.refresh(item)
     return _social_comment_row(db, item, user)
@@ -1758,9 +1752,11 @@ def pin_social_comment(post_id: int, comment_id: int,
     if post.user_id != user.id:
         raise HTTPException(status_code=403, detail="Yalnızca kendi gönderindeki yorumu sabitleyebilirsin")
     db.scalar(select(SocialPost).where(SocialPost.id == post_id).with_for_update())
-    item = db.get(SocialPostComment, comment_id)
+    item = explore_interactions.comment_access(db, post_id, comment_id, user)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
+    if item.parent_id is not None:
+        raise HTTPException(422, "Yalnızca ana yorum sabitlenebilir.")
     db.execute(update(SocialPostComment).where(SocialPostComment.post_id == post_id).values(is_pinned=False))
     item.is_pinned = True
     db.commit()
@@ -1773,7 +1769,7 @@ def unpin_social_comment(post_id: int, comment_id: int,
     post = _social_access(db, post_id, user)
     if post.user_id != user.id:
         raise HTTPException(status_code=403, detail="Yalnızca kendi gönderindeki sabitlemeyi kaldırabilirsin")
-    item = db.get(SocialPostComment, comment_id)
+    item = explore_interactions.comment_access(db, post_id, comment_id, user)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
     item.is_pinned = False
@@ -1785,7 +1781,7 @@ def unpin_social_comment(post_id: int, comment_id: int,
 def like_social_comment(post_id: int, comment_id: int, db: Session = Depends(get_db),
     user: User = Depends(current_user)):
     _social_access(db, post_id, user)
-    item = db.get(SocialPostComment, comment_id)
+    item = explore_interactions.comment_access(db, post_id, comment_id, user)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
     if not db.get(SocialPostCommentLike, (comment_id, user.id)):
@@ -1801,7 +1797,7 @@ def like_social_comment(post_id: int, comment_id: int, db: Session = Depends(get
 def unlike_social_comment(post_id: int, comment_id: int, db: Session = Depends(get_db),
     user: User = Depends(current_user)):
     _social_access(db, post_id, user)
-    item = db.get(SocialPostComment, comment_id)
+    item = explore_interactions.comment_access(db, post_id, comment_id, user)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
     db.execute(delete(SocialPostCommentLike).where(
@@ -1816,7 +1812,7 @@ def unlike_social_comment(post_id: int, comment_id: int, db: Session = Depends(g
 def delete_social_comment(post_id: int, comment_id: int,
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     post = _social_access(db, post_id, user)
-    item = db.get(SocialPostComment, comment_id)
+    item = explore_interactions.comment_access(db, post_id, comment_id, user)
     if not item or item.post_id != post_id:
         raise HTTPException(status_code=404, detail="Yorum bulunamadı")
     if post.user_id != user.id and item.user_id != user.id:
@@ -1834,7 +1830,7 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
     blocked = set(db.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id == user.id)))
     blocked |= set(db.scalars(select(UserBlock.blocker_id).where(UserBlock.blocked_id == user.id)))
     rows = list(db.scalars(select(SocialStory).where(SocialStory.user_id.in_(visible_ids),
-        SocialStory.expires_at > now).order_by(SocialStory.created_at.desc()).limit(limit)))
+        SocialStory.expires_at > now, SocialStory.user_id.in_(explore_interactions.allowed_authors(user))).order_by(SocialStory.created_at.desc()).limit(limit)))
     ids = [r.id for r in rows]
     authors = {r.id:r for r in db.scalars(select(User).where(User.id.in_({r.user_id for r in rows})))}
     viewed_ids = set(db.scalars(select(SocialStoryView.story_id).where(SocialStoryView.story_id.in_(ids), SocialStoryView.viewer_id == user.id)))
@@ -1874,19 +1870,15 @@ async def create_story(file: UploadFile = File(...), caption: str = Form(default
 
 @app.get("/v1/stories/{story_id}/media")
 def get_story_media(story_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
-    story = db.get(SocialStory, story_id)
-    if not story or story.expires_at <= datetime.now(timezone.utc) or story.image_bytes is None:
-        raise HTTPException(status_code=410, detail="Story süresi dolmuş veya kaldırılmış")
-    if story.user_id != user.id:
-        blocked = db.scalar(select(UserBlock.id).where(or_(
-            and_(UserBlock.blocker_id == user.id, UserBlock.blocked_id == story.user_id),
-            and_(UserBlock.blocker_id == story.user_id, UserBlock.blocked_id == user.id))))
-        follows = db.scalar(select(UserFollow.id).where(
-            UserFollow.follower_id == user.id, UserFollow.following_id == story.user_id))
-        if blocked or not follows: raise HTTPException(status_code=404, detail="Story bulunamadı")
-        if not db.scalar(select(SocialStoryView.id).where(
+    story = _visible_story(db, story_id, user)
+    if story.image_bytes is None:raise HTTPException(410, 'Hikâye kaldırılmış.')
+    if story.user_id != user.id and not db.scalar(select(SocialStoryView.id).where(
             SocialStoryView.story_id == story.id, SocialStoryView.viewer_id == user.id)):
-            db.add(SocialStoryView(story_id=story.id, viewer_id=user.id)); db.commit()
+        db.add(SocialStoryView(story_id=story.id, viewer_id=user.id))
+        try:db.commit()
+        except IntegrityError:
+            db.rollback()
+            if not db.scalar(select(SocialStoryView.id).where(SocialStoryView.story_id==story_id,SocialStoryView.viewer_id==user.id)):raise
     return Response(content=story.image_bytes, media_type=story.mime_type,
         headers={"Cache-Control":"private, no-store, max-age=0", "Pragma":"no-cache", "X-Content-Type-Options":"nosniff"})
 
@@ -1901,17 +1893,7 @@ def delete_story(story_id: int, db: Session = Depends(get_db), user: User = Depe
 
 
 def _visible_story(db: Session, story_id: int, viewer: User) -> SocialStory:
-    story = db.get(SocialStory, story_id)
-    if not story or story.expires_at <= datetime.now(timezone.utc):
-        raise HTTPException(status_code=404, detail="Story bulunamadı")
-    if story.user_id != viewer.id:
-        blocked = db.scalar(select(UserBlock.id).where(or_(
-            and_(UserBlock.blocker_id == viewer.id, UserBlock.blocked_id == story.user_id),
-            and_(UserBlock.blocker_id == story.user_id, UserBlock.blocked_id == viewer.id))))
-        follows = db.scalar(select(UserFollow.id).where(UserFollow.follower_id == viewer.id,
-            UserFollow.following_id == story.user_id))
-        if blocked or not follows: raise HTTPException(status_code=404, detail="Story bulunamadı")
-    return story
+    return explore_interactions.visible_story(db, story_id, viewer)
 
 
 @app.post("/v1/stories/{story_id}/like")

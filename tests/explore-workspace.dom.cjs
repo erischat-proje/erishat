@@ -8,6 +8,7 @@ async function setup(){
  w.HTMLMediaElement.prototype.pause=function(){};w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.toast=()=>{};
  w.ErisSocialMedia={icon:()=>'<svg></svg>',bindDialog:()=>{},cancel:()=>{}};
  w.ErisPlatform={getAccessToken:()=>session,postMediaUrl:p=>p,api:async(path,opt={})=>{calls.push({path,method:opt.method||'GET'});if(handler)return handler(path,opt);if(fail&&path.startsWith('/explore/feed'))throw Error('Bağlantı yok');if(path.startsWith('/explore/feed'))return page;if(path.startsWith('/explore/preferences'))return {hidden:[{post_id:6}],muted:[{user_id:'author',nickname:'Yazar'}],has_more:false,next_offset:20};return {active:true}}};
+ w.eval(fs.readFileSync('frontend/explore-comments.js','utf8'));
  w.eval(fs.readFileSync('frontend/social-feed-live.js','utf8'));await tick();
  return {w,d,calls,setPage:p=>page=p,setHandler:f=>handler=f,setFail:v=>fail=v,session:s=>{session=s;w.dispatchEvent(new w.Event('erischat:auth-state'))},close:()=>dom.window.close()};
 }
