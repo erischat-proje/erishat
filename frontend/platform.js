@@ -12,7 +12,7 @@
     const headers = new Headers(options.headers || {});
     if (options.body !== undefined && !(typeof FormData !== 'undefined' && options.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     if (token()) headers.set('Authorization', `Bearer ${token()}`);
-    if (window.ErisChatDMVaultToken && (/^\/(?:messages|message-tools|conversations)\b/.test(path) || path.startsWith('/me/dm-vault') || /^\/families\/[^/]+\/chat/.test(path)))
+    if (window.ErisChatDMVaultToken && (/^\/(?:messages|message-tools|message-actions|message-stars|message-polls|message-info|message-search|conversations)\b/.test(path) || path.startsWith('/me/dm-vault') || /^\/families\/[^/]+\/chat/.test(path)))
       headers.set('X-Eris-DM-Vault', window.ErisChatDMVaultToken);
     let res, data;
     try {
