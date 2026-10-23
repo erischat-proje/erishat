@@ -144,7 +144,7 @@ def test_permissions_rechecked_after_read_before_commit(env,action):
    return PDF
  with Session(env[1],expire_on_commit=False) as db:
   cid='grp' if action=='leave' else 'dm';user=db.get(User,'b')
-  with pytest.raises(HTTPException) as err:asyncio.run(ns['send_message_media'](cid,ChangedUpload(),'document',0,None,db,user))
+  with pytest.raises(HTTPException) as err:asyncio.run(ns['send_message_media'](conversation_id=cid,file=ChangedUpload(),media_type='document',view_seconds=0,caption='',x_eris_dm_vault=None,db=db,user=user))
   assert err.value.status_code==403
   db.rollback();assert not list(db.scalars(select(Message)))
 

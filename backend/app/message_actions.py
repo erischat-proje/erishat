@@ -13,7 +13,7 @@ from .platform_models import (MessageMedia, DirectMessageGift, DirectMessageRest
 from .message_attachment_models import MessageAttachment
 from .message_action_models import MessageReaction, ForwardedMessage, MessageForwardRequest
 from .group_models import MessageGroup
-from . import message_tools, group_policy
+from . import message_tools, group_policy, message_captions
 from .runtime_tasks import database_task
 
 router = APIRouter(prefix='/v1/message-actions', tags=['message-actions'])
@@ -175,6 +175,7 @@ async def forward(conversation_id: str, payload: ForwardMessages,
             'protected_message':bool(m.expires_at), 'created_at':m.created_at.isoformat() if m.created_at else None,
             'media_type':old_media.media_type if old_media else None,
             'media_url':f'/messages/{target}/{m.id}/media' if old_media else None,
+            'caption':message_captions.extract(original.text,old_media.media_type if old_media else None,old_attachment.filename if old_attachment else None),
             'media_name':old_attachment.filename if old_attachment else None,
             'media_size':old_attachment.size_bytes if old_attachment else None, 'temporary':False}
         if original.id in media:

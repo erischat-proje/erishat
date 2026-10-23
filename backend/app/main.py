@@ -40,6 +40,7 @@ from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
 from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy, message_polls, message_pins, message_info, message_search
 from .message_attachment_models import MessageAttachment
+from . import message_captions
 from . import group_routes
 from . import group_policy
 from .staff_visibility import is_staff
@@ -1293,6 +1294,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "gift_price": gift.unit_price if gift else None,
         "gift_quantity": int((__import__("re").search(r"[×x](\d+)", message.text or "") or [None, "1"])[1]) if gift else None,
         "gift_received": gift.recipient_amount if gift else None,
+        "caption":message_captions.extract(message.text, media.media_type if media and not media.temporary else None, attachment.filename if attachment else None),
         "media_name":attachment.filename if attachment else None, "media_size":attachment.size_bytes if attachment else None,
         "media_type": media.media_type if media else None,
         "media_url": f"/messages/{message.conversation_id}/{message.id}/media" if media else None,
@@ -1326,9 +1328,10 @@ def _require_message_media_access(db,conversation_id,user,x_eris_dm_vault):
 @app.post("/v1/messages/{conversation_id}/media", status_code=201, response_model=MessageOut)
 @database_task
 async def send_message_media(conversation_id: str, file: UploadFile = File(...), media_type: str = Form(...),
-    view_seconds: int = Form(default=0), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+    view_seconds: int = Form(default=0), caption: str = Form(default="", max_length=1000), x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     conversation=_require_message_media_access(db,conversation_id,user,x_eris_dm_vault)
     if media_type not in {"image", "voice", "video", "document"}: raise HTTPException(status_code=400, detail="Geçersiz medya türü")
+    caption=message_captions.clean(caption,media_type,view_seconds)
     if media_type == "image":
         if file.content_type not in {"image/jpeg", "image/png", "image/webp", "image/gif"}:
             raise HTTPException(status_code=415, detail="JPG, PNG, WEBP veya GIF fotoğrafı seçin")
@@ -1354,7 +1357,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     conversation=_require_message_media_access(db,conversation_id,user,x_eris_dm_vault)
     group_policy.require_write(db, conversation_id, user.id)
     temporary = media_type == "image" and view_seconds > 0
-    message = Message(conversation_id=conversation_id, sender_id=user.id, text={"image":"[Fotoğraf]","voice":"[Sesli mesaj]","video":"[Video]","document":"[Belge] "+filename}[media_type])
+    message = Message(conversation_id=conversation_id, sender_id=user.id, text=message_captions.text(media_type,filename,caption))
     if conversation.type == 'dm' and conversation.is_ephemeral:
         message.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
     db.add(message); db.flush()
@@ -1367,7 +1370,7 @@ async def send_message_media(conversation_id: str, file: UploadFile = File(...),
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id,
         "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
-        "media_name":filename,"media_size":len(data),
+        "caption":caption or None, "media_name":filename,"media_size":len(data),
         "media_type":media_type, "temporary":temporary, "view_seconds":view_seconds if temporary else None,
         "media_url":f"/messages/{conversation_id}/{message.id}/media", "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in ConversationRepository(db).members(conversation_id): await _send_dm_event(db, member_id, event)

@@ -15,7 +15,7 @@ from app.message_detail_models import MessageDetail
 from app.message_poll_models import MessagePoll
 from app.platform_models import (MessageHidden,MessageMedia,DirectMessageGift,UserBlock,PrivateMessageRequest,ConversationFolder,ConversationVault,ConversationVaultSession,ConversationReadState,ConversationInboxPreference,Family,DirectMessageRestriction,DirectMessageUnlock,Notification)
 from app.group_models import MessageGroup,GroupRole,GroupSettings,GroupControl,GroupAudit
-from app import message_tools as mt
+from app import message_tools as mt, message_captions
 from app.notification_policy import ConversationMuteExpiry
 from app.platform_models import ConversationMute
 from app import performance_queries
@@ -199,7 +199,7 @@ main_ns=dict(Session=Session,Message=Message,MessageCreate=MessageCreate,Message
     ConversationRepository=ConversationRepository,HTTPException=HTTPException,group_policy=group_policy,
     MessageGroup=MessageGroup,Family=Family,DirectMessageRestriction=DirectMessageRestriction,
     DirectMessageUnlock=DirectMessageUnlock,UserBlock=UserBlock,select=select,Notification=Notification,
-    message_tools=mt,message_context=production_context,GIFT_META={},GIFT_CATALOG={},
+    message_captions=message_captions,message_tools=mt,message_context=production_context,GIFT_META={},GIFT_CATALOG={},
     require_unlocked=mt.require_unlocked,require_feature=lambda *a:None,
     _dm_request_gate=lambda *a,**kw:False,_message_notifications_allowed=lambda *a:False,
     _folder=lambda *a:None,_send_dm_event=notify)
