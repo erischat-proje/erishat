@@ -12,6 +12,7 @@ from app.db import Base,get_db
 from app.models import User,Conversation,ConversationMember,Message
 from app.admin_models import AdminRole
 from app.message_detail_models import MessageDetail
+from app.message_poll_models import MessagePoll
 from app.platform_models import (MessageHidden,MessageMedia,DirectMessageGift,UserBlock,PrivateMessageRequest,ConversationFolder,ConversationVault,ConversationVaultSession,ConversationReadState,ConversationInboxPreference,Family,DirectMessageRestriction,DirectMessageUnlock,Notification)
 from app.group_models import MessageGroup,GroupRole,GroupSettings,GroupControl,GroupAudit
 from app import message_tools as mt
@@ -35,7 +36,7 @@ def env(tmp_path,monkeypatch):
  engine=create_engine('sqlite:///'+str(tmp_path/'chat.db'),connect_args={'check_same_thread':False})
  @event.listens_for(engine,'connect')
  def fk(conn,_):conn.execute('PRAGMA foreign_keys=ON')
- classes=[ConversationMute,ConversationMuteExpiry,ConversationInboxPreference,Family,DirectMessageRestriction,DirectMessageUnlock,Notification,User,Conversation,ConversationMember,Message,AdminRole,MessageDetail,MessageHidden,MessageMedia,DirectMessageGift,UserBlock,PrivateMessageRequest,ConversationFolder,ConversationVault,ConversationVaultSession,ConversationReadState,MessageGroup,GroupRole,GroupSettings,GroupControl,GroupAudit]
+ classes=[MessagePoll,ConversationMute,ConversationMuteExpiry,ConversationInboxPreference,Family,DirectMessageRestriction,DirectMessageUnlock,Notification,User,Conversation,ConversationMember,Message,AdminRole,MessageDetail,MessageHidden,MessageMedia,DirectMessageGift,UserBlock,PrivateMessageRequest,ConversationFolder,ConversationVault,ConversationVaultSession,ConversationReadState,MessageGroup,GroupRole,GroupSettings,GroupControl,GroupAudit]
  Base.metadata.create_all(engine,tables=[c.__table__ for c in classes])
  def session():
   with Session(engine,expire_on_commit=False,autoflush=False) as db:yield db

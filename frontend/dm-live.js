@@ -180,7 +180,7 @@
     if(message?.gift_key){
       if(message.gift_image_url){const img=document.createElement('img');img.src=window.ErisGiftArt?.url(message.gift_key,message.gift_image_url)||message.gift_image_url;img.alt=message.gift_key;img.style.cssText='display:block;width:70px;height:70px;object-fit:contain;margin:auto';body.append(img)}const label=document.createElement('strong');label.style.display='block';const quantity=Number(message.gift_quantity||message.quantity||String(message.text||'').match(/[×x](\d+)/)?.[1]||1);label.textContent=message.gift_key+' ×'+quantity;body.append(label);
       const price=document.createElement('small');price.textContent=(mine?'Gönderilen: ':'Hediye değeri: ')+Number(message.gift_price||0).toLocaleString('tr-TR')+' 🪙';body.append(price);if(message.gift_received!=null){const earned=document.createElement('small');earned.style.display='block';earned.textContent=mine?`Sizden gönderilen hediye karşılığında ${Number(message.gift_received).toLocaleString('tr-TR')} 🪙 kazandı`:`${Number(message.gift_received).toLocaleString('tr-TR')} 🪙 kazandınız`;body.append(earned)}
-    }else body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (String(message?.text||'').startsWith('[Story yanıtı #') ? String(message.text).replace(/^\[Story yanıtı #\d+\]\s*/, '') : (message?.media_type ? '' : String(message?.text ?? message?.message ?? '')));
+    }else body.textContent = message?.gift_key ? `🎁 ${message.gift_key}` : (String(message?.text||'').startsWith('[Story yanıtı #') ? String(message.text).replace(/^\[Story yanıtı #\d+\]\s*/, '') : (message?.media_type||message.poll||message.has_poll ? '' : String(message?.text ?? message?.message ?? '')));
     const storyReply=String(message?.text||'').startsWith('[Story yanıtı #');
     if(storyReply)row.classList.add('dm-story-reply');
     if(String(activeConversationId||'').startsWith('grp_')){const sender=document.createElement('b');sender.className='group-message-sender';sender.textContent=message.sender_nickname||'Üye';row.append(sender)}
@@ -225,7 +225,7 @@
     if(message.edited_at){const edited=document.createElement('span');edited.className='dm-edited';edited.textContent='düzenlendi';meta.append(edited)}
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
     row.append(meta);
-    renderMessageReactions(row,message);renderMessageStar(row,message);
+    renderMessageReactions(row,message);renderMessageStar(row,message);renderMessagePoll(row,message);
     if(message.bubble_asset && message.media_type!=='voice'){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
 
     if (message?.is_pinned) row.dataset.pinned = '1';
@@ -248,6 +248,7 @@
       const existing = [...body.querySelectorAll('.bubble[data-message-id]')].find(row => row.dataset.messageId === String(id));
       if (existing) {
         const old=existing._message||{},merged={...old,...message,id};
+        if(old.poll&&merged.poll&&((old.poll.is_closed&&!merged.poll.is_closed)||Number(merged.poll.revision||0)<Number(old.poll.revision||0)))merged.poll=old.poll;
         if(old.text!==merged.text||old.edited_at!==merged.edited_at||JSON.stringify(old.reply)!==JSON.stringify(merged.reply)||old.is_pinned!==merged.is_pinned||!!old.forwarded!==!!merged.forwarded){
           const next=renderMessage(merged,mine);const selected=selectedMessages.has(existing);
           if(selected){selectedMessages.delete(existing);selectedMessages.add(next);next.classList.add('dm-selected')}
@@ -256,6 +257,7 @@
           return next;
         }
         existing._message=merged;
+        if(JSON.stringify(old.poll)!==JSON.stringify(merged.poll)||old.has_poll!==merged.has_poll)renderMessagePoll(existing,merged);
         if(!!old.is_starred!==!!merged.is_starred)renderMessageStar(existing,merged);
         if(JSON.stringify(old.reactions)!==JSON.stringify(merged.reactions))renderMessageReactions(existing,merged);
         return existing;
@@ -584,6 +586,7 @@
     const compose = chat.querySelector('.compose');
     const chatName=String(chat.querySelector('.chatHead b')?.textContent||'');
     const familyChat=/ aile sohbeti$/i.test(chatName), systemChat=isSystemConversation();
+    const poll=chat.querySelector('[data-create-poll]');if(poll){poll.hidden=!['group','family'].includes(chat.dataset.conversationType);poll.disabled=chat.dataset.groupWriteBlocked==='1'}
     if(compose&&systemChat){compose.style.display='none';}
     else if(compose){compose.style.display='';}
     if (compose && !familyChat && !systemChat && !compose.querySelector('[data-dm-gift]')) { const button = document.createElement('button'); button.type='button'; button.dataset.dmGift=''; button.className='close'; button.innerHTML=dmIcon('gift'); button.title='Hediye gönder';button.setAttribute('aria-label','Hediye gönder'); compose.insertBefore(button,compose.firstChild); button.onclick=()=>openGiftSheet(); }
@@ -924,6 +927,7 @@
       const chat=$('chat'),me=roster.find(m=>String(m.user_id)===String(currentUserId));
       const muted=me?.muted_until&&new Date(me.muted_until)>new Date();
       const reason=g.closed?'Grup kapatıldı · Salt okunur':muted?'Susturuldunuz · '+new Date(me.muted_until).toLocaleString('tr-TR'):g.admins_only&&g.my_role==='member'?'Yalnızca yöneticiler mesaj gönderebilir':'';
+      const previouslyBlocked=chat.dataset.groupWriteBlocked;chat.dataset.groupWriteBlocked=reason?'1':'0';if(previouslyBlocked!==chat.dataset.groupWriteBlocked)chat.querySelectorAll('.bubble').forEach(row=>{if(row._message?.poll)renderMessagePoll(row,row._message)});const pollButton=chat.querySelector('[data-create-poll]');if(pollButton)pollButton.disabled=!!reason;
       if(reason){clearMessageMode();document.querySelector('[data-attachment-chooser]')?.remove()}
       const compose=chat.querySelector('.compose');if(compose){compose.hidden=!!reason;compose.style.display=reason?'none':''}
       const subtitle=chat.querySelector('.chatHead small');if(subtitle)subtitle.textContent=reason||roster.length+' üye · Grup bilgileri için ada dokun'+(g.slow_seconds?' · Yavaş mod '+g.slow_seconds+' sn':'');
@@ -1117,6 +1121,47 @@
       catch(e){if(valid()){status.textContent=e.message||'Bildirim ayarı kaydedilemedi.';save.disabled=false}}finally{busy=false;if(valid())select.disabled=false}
     };load();
   }
+  function ensurePollStyles(){
+    if(document.getElementById('dm-poll-styles'))return;const style=document.createElement('style');style.id='dm-poll-styles';style.textContent=`
+      .dm-poll{min-width:min(220px,58vw);margin:8px 0;overflow-wrap:anywhere}.dm-poll h4{margin:0 0 10px;font-size:14px}.dm-poll label{display:flex;align-items:start;gap:8px;padding:10px 0;border-bottom:1px solid var(--ui-line,#c8ae79);font-size:13px}.dm-poll label span{flex:1;white-space:pre-wrap}.dm-poll label small{white-space:nowrap}.dm-poll>p{font-size:11px;line-height:1.5}.dm-poll button{min-height:38px;margin:7px 5px 0 0;padding:7px 10px;border:1px solid var(--ui-line,#c8ae79);border-radius:10px;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);font:inherit;font-size:12px}
+      [data-poll-create]{position:fixed;inset:0;z-index:100090;overflow:auto;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c)}[data-poll-create] section{box-sizing:border-box;width:min(620px,100%);margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}[data-poll-create] header{display:flex;justify-content:space-between;align-items:center;gap:10px}[data-poll-create] label{display:block;margin:14px 0;font-size:13px}[data-poll-create] input:not([type=checkbox]),[data-poll-create] textarea,[data-poll-create] select{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:12px;border:1px solid var(--ui-line,#c8ae79);border-radius:11px;background:var(--ui-raised,var(--ui-panel,#fffaf0));color:inherit;font:inherit}[data-poll-create] button{min-height:44px;border:1px solid var(--ui-line,#c8ae79);border-radius:11px;padding:9px 12px;background:var(--ui-raised,var(--ui-panel,#fffaf0));color:inherit;font:inherit}[data-poll-create] p{font-size:13px;line-height:1.6}.dm-poll-option-editor{display:flex;gap:8px;align-items:end}.dm-poll-option-editor label{flex:1;min-width:0}.dm-poll-option-editor button{margin-bottom:14px}
+    `;document.head.append(style);
+  }
+  function renderMessagePoll(row,message){
+    if(!message.poll&&!message.has_poll)return;ensurePollStyles();const p=message.poll,old=row.querySelector('.dm-poll');
+    if(old?.dataset.dirty==='1'&&p&&!p.is_closed&&$('chat')?.dataset.groupWriteBlocked!=='1'&&JSON.stringify(old._options)===JSON.stringify(p.options.map(x=>x.text))){old.querySelectorAll('[data-option-count]').forEach(x=>{x.textContent=String(p.options[Number(x.dataset.optionCount)]?.count||0)});old.querySelector('[data-total]').textContent=p.voter_count+' kişi oy verdi';return}
+    old?.remove();const form=document.createElement('form');form.className='dm-poll';form.dataset.messageId=String(message.id);form.onclick=e=>e.stopPropagation();
+    if(!p){const label=document.createElement('p');label.textContent='Anket yükleniyor…';const retry=document.createElement('button');retry.type='button';retry.textContent='Yeniden yükle';retry.onclick=()=>refreshPollMessage(row);form.append(label,retry);row.append(form);return}
+    form._options=p.options.map(x=>x.text);const title=document.createElement('h4');title.textContent=p.question;form.append(title);
+    const blocked=p.is_closed||$('chat')?.dataset.groupWriteBlocked==='1';
+    for(const option of p.options){const label=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span'),count=document.createElement('small');input.type=p.multiple?'checkbox':'radio';input.name='choice';input.value=String(option.id);input.checked=p.my_choices.includes(option.id);input.disabled=blocked;input.onchange=()=>{form.dataset.dirty='1'};text.textContent=option.text;count.dataset.optionCount=String(option.id);count.textContent=String(option.count);label.append(input,text,count);form.append(label)}
+    const total=document.createElement('p');total.dataset.total='';total.textContent=p.voter_count+' kişi oy verdi';const state=document.createElement('p');state.textContent=(p.multiple?'Birden fazla seçenek işaretlenebilir.':'Tek seçenek seçilebilir.')+' '+(p.is_closed?'Anket kapalı.':p.expires_at?'Bitiş: '+new Date(p.expires_at).toLocaleString('tr-TR'):'');form.append(total,state);
+    const status=document.createElement('p');status.dataset.pollStatus='';status.setAttribute('role','status');const submit=document.createElement('button');submit.type='submit';submit.textContent='Oyu kaydet';submit.disabled=blocked;const clear=document.createElement('button');clear.type='button';clear.textContent='Oyumu kaldır';clear.disabled=blocked||!p.my_choices.length;
+    form.onsubmit=e=>{e.preventDefault();savePoll(row,form,'vote',{choices:[...form.querySelectorAll('input:checked')].map(x=>Number(x.value))})};clear.onclick=()=>savePoll(row,form,'vote',{choices:[]});form.append(submit,clear);
+    if(p.can_close){const close=document.createElement('button');close.type='button';close.textContent='Anketi kapat';close.onclick=async()=>{if(await dmConfirm('Anket kapatılacak ve yeni oy kabul edilmeyecek. Devam edilsin mi?'))savePoll(row,form,'close')};form.append(close)}
+    form.append(status);(row.querySelector('.dm-award-content')||row).append(form);
+  }
+  async function refreshPollMessage(row){
+    const cid=activeConversationId,revision=chatRevision,id=Number(row?.dataset.messageId);if(!cid||!id)return;
+    try{const poll=await api().api('/message-polls/'+encodeURIComponent(cid)+'/'+id);if(revision!==chatRevision||String(activeConversationId)!==String(cid))return;const body=$('chat')?.querySelector('.chatBody'),current=body?.querySelector('[data-message-id="'+id+'"]');if(current)appendMessageOnce(body,{...current._message,poll},current._mine)}catch(e){if(revision===chatRevision){const label=row.querySelector('.dm-poll p');if(label)label.textContent=e.message||'Anket yüklenemedi.'}}
+  }
+  async function savePoll(row,form,action,payload){
+    const cid=activeConversationId,revision=chatRevision,id=Number(row.dataset.messageId);if(form.dataset.busy==='1'||!cid||!row.isConnected||String(row._message?.conversation_id||cid)!==String(cid))return;form.dataset.busy='1';form.querySelectorAll('input,button').forEach(x=>x.disabled=true);
+    try{const poll=await api().api('/message-polls/'+encodeURIComponent(cid)+'/'+id+'/'+action,{method:action==='vote'?'PUT':'POST',...(payload?{body:JSON.stringify(payload)}:{})});if(revision!==chatRevision)return;const body=$('chat')?.querySelector('.chatBody'),current=body?.querySelector('[data-message-id="'+id+'"]');if(current){const active=current.querySelector('.dm-poll');if(active)active.dataset.dirty='';const updated=appendMessageOnce(body,{...current._message,poll},current._mine);if(updated?.querySelector('.dm-poll')===active)renderMessagePoll(updated,updated._message)}}
+    catch(e){if(revision===chatRevision&&form.isConnected){form.querySelector('[data-poll-status]').textContent=e.message||'Anket işlemi kaydedilemedi.';form.querySelectorAll('input,button').forEach(x=>x.disabled=false)}}finally{form.dataset.busy=''}
+  }
+  function openCreatePoll(){
+    const cid=activeConversationId,revision=chatRevision,user=currentUserId;if(!cid||!['group','family'].includes($('chat')?.dataset.conversationType))return;
+    ensurePollStyles();const panel=messageActionPanel('Anket oluştur');panel.dataset.pollCreate='';const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]');
+    const form=document.createElement('form');form.innerHTML='<label>Soru<textarea name="question" required maxlength="180" rows="3"></textarea></label><div data-options></div><button type="button" data-add-option>Seçenek ekle</button><label><input name="multiple" type="checkbox"> Birden fazla seçenek seçilebilsin</label><label>Oylama süresi<select name="duration"><option value="">Elle kapatana kadar</option><option value="86400">1 gün</option><option value="604800">1 hafta</option></select></label><p>Sonuçlarda oy sayıları ve yalnızca kendi seçimin görünür. Anketi oluşturan kişi veya sohbet yöneticisi kapatabilir. Soru ve seçenekler gönderildikten sonra değiştirilemez.</p><button type="submit">Anketi gönder</button>';content.append(form);
+    const options=form.querySelector('[data-options]'),add=form.querySelector('[data-add-option]');
+    const labels=()=>{const rows=[...options.children];rows.forEach((row,i)=>{row.querySelector('span').textContent='Seçenek '+(i+1);row.querySelector('input').setAttribute('aria-label','Seçenek '+(i+1));row.querySelector('button').disabled=rows.length<=2});add.disabled=rows.length>=10};
+    const append=()=>{const row=document.createElement('div');row.className='dm-poll-option-editor';row.innerHTML='<label><span></span><input required maxlength="80"></label><button type="button" aria-label="Seçeneği kaldır">×</button>';row.querySelector('button').onclick=()=>{row.remove();labels()};options.append(row);labels()};add.onclick=append;append();append();
+    const key=window.crypto?.randomUUID?.()||('poll_'+Date.now()+'_'+Math.random().toString(36).slice(2));let busy=false;
+    form.onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const payload={question:form.elements.question.value.trim(),options:[...options.querySelectorAll('input')].map(x=>x.value.trim()),multiple:form.elements.multiple.checked,request_key:key,...(form.elements.duration.value?{duration_seconds:Number(form.elements.duration.value)}:{})};form.querySelectorAll('input,button,textarea,select').forEach(x=>x.disabled=true);status.textContent='Anket gönderiliyor…';
+      try{const message=await api().api('/message-polls/'+encodeURIComponent(cid),{method:'POST',body:JSON.stringify(payload)});if(revision!==chatRevision||user!==currentUserId)return;appendMessageOnce($('chat').querySelector('.chatBody'),message,true);if(panel.isConnected)panel.remove();loadConversations();window.toast?.('Anket oluşturuldu.')}catch(error){if(panel.isConnected&&revision===chatRevision)status.textContent=error.message||'Anket gönderilemedi.'}finally{busy=false;if(panel.isConnected){form.querySelectorAll('input,button,textarea,select').forEach(x=>x.disabled=false);labels()}}
+    };
+  }
   function renderMessageStar(row,message){
     row.querySelector('.dm-message-star')?.remove();if(!message.is_starred)return;
     const badge=document.createElement('span');badge.className='dm-message-star';badge.textContent='★';badge.setAttribute('aria-label','Sana özel yıldızlı mesaj');badge.title='Sana özel yıldızlı mesaj';
@@ -1166,7 +1211,7 @@
   }
   const REACTION_EMOJIS=['👍','❤️','😂','😮','😢','🙏','🔥','👏'];
   const reactionJobs=new Set();
-  function canForwardMessage(m){return !!m&&!m.gift_key&&!m.temporary&&!m.expires_at&&!m.protected_message}
+  function canForwardMessage(m){return !!m&&!m.poll&&!m.has_poll&&!m.gift_key&&!m.temporary&&!m.expires_at&&!m.protected_message}
   function closeMessageActions(){document.querySelector('[data-message-action-panel]')?.remove()}
   function messageActionPanel(title){
     closeMessageActions();const panel=document.createElement('div');panel.className='dm-action-panel';panel.dataset.messageActionPanel='';
@@ -1222,7 +1267,7 @@
   }
   function canEditMessage(row){
     const m=row?._message;
-    return !!m&&!!api()?.editMessage&&String(m.sender_id)===String(currentUserId)&&!m.media_type&&!m.gift_key&&!isSystemConversation()&&Number.isFinite(new Date(m.created_at).getTime())&&Date.now()-new Date(m.created_at).getTime()<15*60*1000;
+    return !!m&&!m.poll&&!m.has_poll&&!!api()?.editMessage&&String(m.sender_id)===String(currentUserId)&&!m.media_type&&!m.gift_key&&!isSystemConversation()&&Number.isFinite(new Date(m.created_at).getTime())&&Date.now()-new Date(m.created_at).getTime()<15*60*1000;
   }
   function clearMessageMode(restore=true){
     const old=messageMode;messageMode=null;
@@ -1309,8 +1354,8 @@
       .dm-search-panel{position:fixed;inset:0;z-index:100070;background:var(--ui-panel);color:var(--ui-ink);overflow:auto;overscroll-behavior:contain}.dm-search-panel section{width:min(620px,100%);box-sizing:border-box;margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-search-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}.dm-search-panel form{display:flex;align-items:end;gap:10px;margin:16px 0}.dm-search-panel label{flex:1;min-width:0;font-size:12px}.dm-search-panel input{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-panel button{min-height:40px;padding:9px 12px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-result{display:block;width:100%;text-align:left;margin:10px 0;overflow-wrap:anywhere}.dm-search-result small,.dm-search-result span{display:block}.dm-search-result small{color:var(--ui-gold,#b98c46);margin-bottom:6px;font-size:11px}.dm-search-result span{white-space:pre-wrap;font-size:13px}
       @media(max-width:360px){#chat .dm-select-tools{gap:4px}#chat .dm-select-tools button{width:30px;height:32px;font-size:14px}#chat .dm-select-tools [data-selected-count]{font-size:9px!important}}
     `;document.head.append(style);
-    const toolbar=document.createElement('nav');toolbar.className='dm-message-workbench';toolbar.dataset.messageWorkbench='';toolbar.setAttribute('aria-label','Sohbet araçları');toolbar.innerHTML='<button type="button" data-older-messages>Eski mesajları yükle</button><button type="button" data-newest-messages hidden>En yeni mesajlar</button><button type="button" data-search-messages>Sohbette ara</button><button type="button" data-shared-messages>Paylaşılanlar</button><button type="button" data-starred-messages>Yıldızlılar</button><button type="button" data-chat-notifications>Bildirimler</button><small data-upload-status role="status" hidden></small>';
-    chat.querySelector('.chatBody').before(toolbar);toolbar.querySelector('[data-older-messages]').onclick=loadOlderMessages;toolbar.querySelector('[data-search-messages]').onclick=openMessageSearch;toolbar.querySelector('[data-shared-messages]').onclick=openSharedMedia;toolbar.querySelector('[data-starred-messages]').onclick=()=>openStarredMessages(activeConversationId);toolbar.querySelector('[data-chat-notifications]').onclick=()=>openNotificationSettings(activeConversationId);
+    const toolbar=document.createElement('nav');toolbar.className='dm-message-workbench';toolbar.dataset.messageWorkbench='';toolbar.setAttribute('aria-label','Sohbet araçları');toolbar.innerHTML='<button type="button" data-older-messages>Eski mesajları yükle</button><button type="button" data-newest-messages hidden>En yeni mesajlar</button><button type="button" data-search-messages>Sohbette ara</button><button type="button" data-shared-messages>Paylaşılanlar</button><button type="button" data-starred-messages>Yıldızlılar</button><button type="button" data-chat-notifications>Bildirimler</button><button type="button" data-create-poll hidden>Anket oluştur</button><small data-upload-status role="status" hidden></small>';
+    chat.querySelector('.chatBody').before(toolbar);toolbar.querySelector('[data-older-messages]').onclick=loadOlderMessages;toolbar.querySelector('[data-search-messages]').onclick=openMessageSearch;toolbar.querySelector('[data-shared-messages]').onclick=openSharedMedia;toolbar.querySelector('[data-starred-messages]').onclick=()=>openStarredMessages(activeConversationId);toolbar.querySelector('[data-chat-notifications]').onclick=()=>openNotificationSettings(activeConversationId);toolbar.querySelector('[data-create-poll]').onclick=openCreatePoll;
     toolbar.querySelector('[data-newest-messages]').onclick=()=>{if(activeConversationId)openRealChat(activeConversationId,chat.querySelector('.chatHead b')?.textContent||'Sohbet','',window.__erisActiveDmUserId)};
     const mode=document.createElement('div');mode.className='dm-compose-mode';mode.dataset.messageMode='';mode.hidden=true;mode.innerHTML='<div><b data-mode-label></b><small data-mode-text></small></div><button type="button" aria-label="Yanıtı veya düzenlemeyi iptal et">×</button>';mode.querySelector('button').onclick=()=>clearMessageMode();chat.querySelector('.compose').before(mode);
     const send=chat.querySelector('.compose .primary');if(send)send.dataset.normalLabel=send.textContent||'Gönder';
@@ -1369,7 +1414,7 @@
     document.querySelector('[data-attachment-chooser]')?.remove();
     closeMessageActions();clearMessageMode(false);historyCursor=null;historyBusy=false;historyWindow=false;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
     if(input)input.value=drafts.get(String(id))||'';
-    const revision=++chatRevision;
+    const revision=++chatRevision;chat.dataset.groupWriteBlocked='0';
     activeConversationId = id;
     const info=conversationInfo.get(String(id));
     const isGroup=info?.type==='group'||String(id).startsWith('grp_');
@@ -1473,6 +1518,7 @@
   }
   async function handleRealtimeMessage(event) {
     const data = event?.detail;
+    if(data?.type==='dm_poll_updated'){const row=$('chat')?.querySelector('.chatBody [data-message-id="'+Number(data.message_id)+'"]');if(String(activeConversationId)===String(data.conversation_id)&&row)refreshPollMessage(row);return}
     if(data?.type==='dm_reactions_updated'){
       const cid=String(data.conversation_id),revision=chatRevision,mid=Number(data.message_id),body=$('chat')?.querySelector('.chatBody');
       if(String(activeConversationId)!==cid||!body?.querySelector('[data-message-id="'+mid+'"]'))return;
@@ -1507,7 +1553,7 @@
       if (!body || body.querySelector('[data-message-id="'+String(data.message_id).replace(/"/g,'&quot;')+'"]')) return;
       if(historyWindow){updateHistoryButton();return}
       const mine = String(data.sender_id || '') === String(currentUserId || '');
-      appendMessageOnce(body, data, mine);
+      const incoming=appendMessageOnce(body, data, mine);if(data.has_poll)refreshPollMessage(incoming);
       if(data.gift_key)window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:data}));
       body.scrollTop = body.scrollHeight;
       if(data.has_reply)reconcileChat();
@@ -1564,7 +1610,7 @@
     ws.onmessage = event => {
       try {
         const data = JSON.parse(event.data);
-        if (data?.type === 'dm_message' || data?.type === 'dm_read' || data?.type === 'dm_messages_deleted' || data?.type === 'dm_message_updated' || data?.type === 'dm_reactions_updated') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
+        if (data?.type === 'dm_message' || data?.type === 'dm_read' || data?.type === 'dm_messages_deleted' || data?.type === 'dm_message_updated' || data?.type === 'dm_reactions_updated' || data?.type === 'dm_poll_updated') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
       } catch (_) {}
     };
     ws.onclose = () => {
