@@ -191,6 +191,7 @@
       quote.disabled=!!message.reply.unavailable||!message.reply_to_id;
       quote.onclick=()=>jumpToMessage(message.reply_to_id);row.append(quote);
     }
+    if(message.forwarded){const label=document.createElement('small');label.className='dm-forward-label';label.textContent='↪ İletildi';row.append(label)}
     row.append(body);
     if (message?.media_type === 'image') {
       const media=document.createElement('div');media.className='dm-image-message';
@@ -223,10 +224,20 @@
     if(message.edited_at){const edited=document.createElement('span');edited.className='dm-edited';edited.textContent='düzenlendi';meta.append(edited)}
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
     row.append(meta);
+    renderMessageReactions(row,message);
     if(message.bubble_asset && message.media_type!=='voice'){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
 
     if (message?.is_pinned) row.dataset.pinned = '1';
     return row;
+  }
+
+  function renderMessageReactions(row,message){
+    row.querySelector('.dm-reactions')?.remove();
+    if(Array.isArray(message.reactions)&&message.reactions.length){
+      const reactions=document.createElement('div');reactions.className='dm-reactions';reactions.setAttribute('aria-label','Mesaj tepkileri');
+      for(const reaction of message.reactions){if(!REACTION_EMOJIS.includes(reaction.emoji))continue;const button=document.createElement('button');button.type='button';button.textContent=reaction.emoji+' '+reaction.count;button.setAttribute('aria-pressed',String(!!reaction.mine));button.setAttribute('aria-label',reaction.emoji+' · '+reaction.count+' tepki'+(reaction.mine?' · Senin tepkin':''));button.onclick=e=>{e.stopPropagation();setMessageReaction(row,reaction.mine?null:reaction.emoji,button)};reactions.append(button)}
+      (row.querySelector('.dm-award-content')||row).append(reactions);
+    }
   }
 
   function appendMessageOnce(body, message, mine) {
@@ -236,13 +247,15 @@
       const existing = [...body.querySelectorAll('.bubble[data-message-id]')].find(row => row.dataset.messageId === String(id));
       if (existing) {
         const old=existing._message||{},merged={...old,...message,id};
-        if(old.text!==merged.text||old.edited_at!==merged.edited_at||JSON.stringify(old.reply)!==JSON.stringify(merged.reply)||old.is_pinned!==merged.is_pinned){
+        if(old.text!==merged.text||old.edited_at!==merged.edited_at||JSON.stringify(old.reply)!==JSON.stringify(merged.reply)||old.is_pinned!==merged.is_pinned||!!old.forwarded!==!!merged.forwarded){
           const next=renderMessage(merged,mine);const selected=selectedMessages.has(existing);
           if(selected){selectedMessages.delete(existing);selectedMessages.add(next);next.classList.add('dm-selected')}
           releaseMediaUrls(existing);existing.replaceWith(next);
           if(old.text!==merged.text)for(const quote of [...body.querySelectorAll('.bubble[data-message-id]')])if(Number(quote._message?.reply_to_id)===Number(id)&&!quote._message.reply?.unavailable)appendMessageOnce(body,{...quote._message,reply:{...quote._message.reply,text:String(merged.text||'').slice(0,180)}},quote._mine);
           return next;
         }
+        existing._message=merged;
+        if(JSON.stringify(old.reactions)!==JSON.stringify(merged.reactions))renderMessageReactions(existing,merged);
         return existing;
       }
     }
@@ -263,6 +276,9 @@
     const reply=selectionBar.querySelector('[data-reply-selected]'),edit=selectionBar.querySelector('[data-edit-selected]');
     if(reply)reply.disabled=!one||isSystemConversation();
     if(edit)edit.disabled=!one||!canEditMessage(one);
+    const react=selectionBar.querySelector('[data-react-selected]'),forward=selectionBar.querySelector('[data-forward-selected]');
+    if(react)react.disabled=!one||isSystemConversation()||!!one?._message?.temporary||!!one?._message?.protected_message;
+    if(forward)forward.disabled=isSystemConversation()||allMessagesSelected||!selectedMessages.size||selectedMessages.size>10||[...selectedMessages].some(row=>!canForwardMessage(row._message));
     const pin = selectionBar.querySelector('[data-pin-selected]');
     if (pin) {pin.textContent='📌';pin.title=[...selectedMessages].some(row => row.dataset.pinned === '1') ? 'Sabitlemeyi kaldır' : 'Sabitle';pin.setAttribute('aria-label',pin.title)}
     selectionBar.querySelector('[data-delete-selected]').disabled = !selectedMessages.size;
@@ -506,7 +522,7 @@
     document.head.appendChild(mediaStyle);
     installFolderStyles();
     selectionBar = document.createElement('div'); selectionBar.className = 'dm-select-tools'; selectionBar.dataset.dmTools = ''; selectionBar.hidden = true;
-    selectionBar.innerHTML = "<button type=\"button\" data-all-selected aria-label=\"Tümünü seç\" title=\"Tümünü seç\">□</button><button type=\"button\" data-reply-selected disabled>Yanıtla</button><button type=\"button\" data-edit-selected disabled>Düzenle</button><span data-selected-count style=\"font-size:10px;color:var(--ui-ink)\"></span><button type=\"button\" data-pin-selected aria-label=\"Sabitle\" title=\"Sabitle\">📌</button><button type=\"button\" data-delete-selected aria-label=\"Seçilenleri sil\" title=\"Seçilenleri sil\">Sil</button><button type=\"button\" data-clear-selected aria-label=\"Seçimi kapat\" title=\"Seçimi kapat\">×</button>";
+    selectionBar.innerHTML = "<button type=\"button\" data-all-selected aria-label=\"Tümünü seç\" title=\"Tümünü seç\">□</button><button type=\"button\" data-reply-selected disabled>Yanıtla</button><button type=\"button\" data-edit-selected disabled>Düzenle</button><button type=\"button\" data-react-selected disabled>Tepki</button><button type=\"button\" data-forward-selected disabled>İlet</button><span data-selected-count style=\"font-size:10px;color:var(--ui-ink)\"></span><button type=\"button\" data-pin-selected aria-label=\"Sabitle\" title=\"Sabitle\">📌</button><button type=\"button\" data-delete-selected aria-label=\"Seçilenleri sil\" title=\"Seçilenleri sil\">Sil</button><button type=\"button\" data-clear-selected aria-label=\"Seçimi kapat\" title=\"Seçimi kapat\">×</button>";
     const body = chat.querySelector('.chatBody'); chat.querySelector('.chatHead')?.append(selectionBar);
     selectionBar.querySelector('[data-clear-selected]').onclick = () => { selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear();allMessagesSelected=false; messageSelectionMode=false;refreshSelectionBar(); };
     selectionBar.querySelector('[data-all-selected]').onclick = () => { const rows=[...body.querySelectorAll('.bubble[data-message-id]')];allMessagesSelected=!allMessagesSelected;selectedMessages.clear();rows.forEach(row=>{row.classList.toggle('dm-selected',allMessagesSelected);if(allMessagesSelected)selectedMessages.add(row)});refreshSelectionBar() };
@@ -526,6 +542,8 @@
         selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear(); refreshSelectionBar();
       } catch (e) { window.toast?.(e.message || 'Sabitleme işlemi başarısız.'); }
     };
+    selectionBar.querySelector('[data-react-selected]').onclick=openReactionPicker;
+    selectionBar.querySelector('[data-forward-selected]').onclick=openForwardPicker;
     selectionBar.querySelector('[data-reply-selected]').onclick=()=>startMessageMode('reply');
     selectionBar.querySelector('[data-edit-selected]').onclick=()=>startMessageMode('edit');
     let holdTimer = null, suppressNextClick = false, lastLongPressRow = null,holdX=0,holdY=0;
@@ -954,7 +972,7 @@
     const input=search.querySelector('[data-dm-user-search]'),out=search.querySelector('[data-dm-search-result]');let searchRevision=0;input.addEventListener('input',()=>{searchRevision++;out.replaceChildren()});const run=async()=>{const revision=++searchRevision,q=input.value.trim();if(!q){out.innerHTML='';return}if(/^\d{6}$/.test(q)){input.value='';out.replaceChildren();await enterLockedFolder(q);return}out.innerHTML="<div class=\"card\" style=\"padding:10px;font-size:9px;color:var(--ui-ink)\">Aranıyor…</div>";try{const u=await api().api('/users/'+encodeURIComponent(q));if(revision!==searchRevision)return;const publicId=/^\d{10}$/.test(String(u.public_id||''))?String(u.public_id):'gizli';out.innerHTML='<button type="button" class="item card" style="width:100%;text-align:left"><div class="ava round">👤</div><div class="grow"><b>'+escapeHtml(u.nickname||'Anonim kullanıcı')+'</b><small>ID: '+escapeHtml(publicId)+' • Profili görüntüle</small></div></button>';renderAvatar(out.querySelector('.ava'),avatarValue(u.avatar_asset||u.avatar_url||u.avatar,String(u.nickname||'A').slice(0,1).toUpperCase()),String(u.nickname||'A').slice(0,1).toUpperCase());window.ErisRoleBadges?.bind(out.querySelector('b'),u);out.querySelector('button').onclick=()=>loadUserProfile(u.id||q)}catch(e){if(revision!==searchRevision)return;out.innerHTML="<div class=\"card\" style=\"padding:10px;font-size:9px;color:var(--ui-danger)\">Kullanıcı bulunamadı.</div>"}};search.querySelector('[data-dm-search-btn]').setAttribute('aria-label','Kullanıcı ara');input.setAttribute('aria-label','Kullanıcı ID veya kilitli sohbet şifresi');search.querySelector('[data-dm-search-btn]').innerHTML=dmIcon('search');search.querySelector('[data-dm-search-btn]').onclick=run;input.onkeydown=e=>{if(e.key==='Enter')run()};installFolderControls(root);
   }
   function resetInbox(){
-    inboxAuthRevision++;clearTimeout(inboxSearchTimer);inboxQuery='';inboxView='all';inboxFolder='inbox';inboxLimit=50;inboxScope='';selectedConversations.clear();
+    closeMessageActions();inboxAuthRevision++;clearTimeout(inboxSearchTimer);inboxQuery='';inboxView='all';inboxFolder='inbox';inboxLimit=50;inboxScope='';selectedConversations.clear();
     const input=document.querySelector('[data-inbox-query]');if(input)input.value='';
     document.querySelector('#messages .list')?.replaceChildren();
     const root=$('messages');if(root){renderFolderControls(root);root.querySelectorAll('[data-inbox-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.inboxView==='all')));const status=root.querySelector('[data-inbox-status]');if(status)status.textContent='';const userSearch=root.querySelector('[data-dm-user-search]');if(userSearch)userSearch.value='';root.querySelector('[data-dm-search-result]')?.replaceChildren()}
@@ -1080,6 +1098,62 @@
     for(const row of body.querySelectorAll('.bubble[data-message-id]'))if(removed.has(Number(row._message?.reply_to_id)))appendMessageOnce(body,{...row._message,reply_to_id:null,reply:{unavailable:true,sender_name:'',text:'Mesaj artık görüntülenemiyor.'}},row._mine);
     if(messageMode&&removed.has(Number(messageMode.message.id)))clearMessageMode();
   }
+  const REACTION_EMOJIS=['👍','❤️','😂','😮','😢','🙏','🔥','👏'];
+  const reactionJobs=new Set();
+  function canForwardMessage(m){return !!m&&!m.gift_key&&!m.temporary&&!m.expires_at&&!m.protected_message}
+  function closeMessageActions(){document.querySelector('[data-message-action-panel]')?.remove()}
+  function messageActionPanel(title){
+    closeMessageActions();const panel=document.createElement('div');panel.className='dm-action-panel';panel.dataset.messageActionPanel='';
+    panel.innerHTML='<section role="dialog" aria-modal="true"><header><h3></h3><button type="button" data-close aria-label="Kapat">×</button></header><div data-content></div><p data-status role="status" aria-live="polite"></p></section>';
+    panel.querySelector('h3').textContent=title;panel.querySelector('section').setAttribute('aria-label',title);
+    const previous=document.activeElement,close=()=>{panel.remove();previous?.focus?.()};panel.querySelector('[data-close]').onclick=close;
+    panel.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...panel.querySelectorAll('button:not(:disabled),input,select')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.body.append(panel);panel.querySelector('[data-close]').focus();return panel;
+  }
+  async function setMessageReaction(row,emoji,button){
+    const cid=activeConversationId,revision=chatRevision,user=currentUserId,m=row?._message;
+    const job=[user,cid,m?.id,revision].join('|'),panel=document.querySelector('[data-message-action-panel]');
+    if(!m||!cid||isSystemConversation()||reactionJobs.has(job))return;reactionJobs.add(job);if(button)button.disabled=true;
+    try{const data=await api().api('/message-actions/'+encodeURIComponent(cid)+'/'+m.id+'/reaction',{method:'PUT',body:JSON.stringify({emoji})});
+      if(revision!==chatRevision||user!==currentUserId)return;
+      const body=$('chat')?.querySelector('.chatBody'),current=body?.querySelector('[data-message-id="'+Number(m.id)+'"]');
+      if(current)appendMessageOnce(body,{...current._message,...data},current._mine);
+      if(panel&&panel===document.querySelector('[data-message-action-panel]')){panel.remove();selectionBar?.querySelector('[data-clear-selected]')?.click()}
+    }catch(e){if(revision===chatRevision&&user===currentUserId){const status=document.querySelector('[data-message-action-panel] [data-status]');if(status)status.textContent=e.message||'Tepki kaydedilemedi.';else window.toast?.(e.message||'Tepki kaydedilemedi.')}}finally{reactionJobs.delete(job);if(button)button.disabled=false}
+  }
+  function openReactionPicker(){
+    const row=selectedMessages.size===1?[...selectedMessages][0]:null;if(!row||isSystemConversation())return;
+    const panel=messageActionPanel('Mesaja tepki ver'),content=panel.querySelector('[data-content]');content.className='dm-emoji-picker';
+    for(const emoji of REACTION_EMOJIS){const b=document.createElement('button');b.type='button';b.textContent=emoji;b.setAttribute('aria-label',emoji+' tepkisi');b.onclick=()=>{content.querySelectorAll('button').forEach(x=>x.disabled=true);setMessageReaction(row,emoji,b).finally(()=>content.querySelectorAll('button').forEach(x=>x.disabled=false))};content.append(b)}
+    const remove=document.createElement('button');remove.type='button';remove.textContent='Tepkimi kaldır';remove.onclick=()=>setMessageReaction(row,null,remove);content.append(remove);
+  }
+  function openForwardPicker(){
+    const messages=[...selectedMessages].map(row=>row._message),source=activeConversationId,revision=chatRevision,user=currentUserId;
+    if(!source||!messages.length||messages.length>10||messages.some(m=>!canForwardMessage(m))||isSystemConversation())return;
+    const panel=messageActionPanel('Mesaj ilet'),content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]');
+    content.innerHTML='<p data-summary></p><label>Sohbet ara<input data-query type="search" maxlength="100" autocomplete="off"></label><label>Klasör<select data-folder><option value="inbox">Sohbetler</option><option value="archive">Arşiv</option></select></label><div data-targets></div><button type="button" data-more hidden>Daha fazla sohbet</button><p data-chosen></p><button type="button" data-send disabled>İlet</button>';
+    content.querySelector('[data-summary]').textContent=messages.length+' mesaj iletilecek. Kaynak sohbet ve gönderen bilgisi paylaşılmaz. Süreli mesajlar ve hediyeler iletilemez.';
+    const query=content.querySelector('[data-query]'),folder=content.querySelector('[data-folder]'),targets=content.querySelector('[data-targets]'),send=content.querySelector('[data-send]'),more=content.querySelector('[data-more]');
+    if(vaultToken){const option=document.createElement('option');option.value='locked';option.textContent='Kilitli';folder.append(option)}
+    let requestRevision=0,offset=0,timer=null,target=null,key=null,busy=false;
+    const valid=()=>panel.isConnected&&revision===chatRevision&&user===currentUserId;
+    const newKey=()=>window.crypto?.randomUUID?.()||('forward_'+Date.now()+'_'+Math.random().toString(36).slice(2));
+    const load=async(append=false)=>{
+      const own=++requestRevision;if(!append){offset=0;targets.replaceChildren();target=null;key=null;send.disabled=true;content.querySelector('[data-chosen]').textContent=''}more.hidden=true;status.textContent='Sohbetler yükleniyor…';
+      try{const page=asList(await api().api('/conversations?folder='+folder.value+'&q='+encodeURIComponent(query.value.trim())+'&limit=51&offset='+offset),['conversations','items','data']);
+        if(!valid()||own!==requestRevision)return;
+        const names=await Promise.all(page.slice(0,50).map(c=>resolveParticipant(c)));if(!valid()||own!==requestRevision)return;
+        page.slice(0,50).forEach((c,i)=>{if(String(c.id)===String(source)||c.type==='welcome')return;const b=document.createElement('button');b.type='button';b.className='dm-forward-target';b.dataset.forwardTarget=String(c.id);b.textContent=c.type==='group'||c.type==='family'?c.name||'Sohbet':names[i]?.nickname||c.name||'Kullanıcı';b.setAttribute('aria-pressed',String(target?.id===c.id));b.onclick=()=>{target=c;key=newKey();targets.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));content.querySelector('[data-chosen]').textContent='Seçilen: '+b.textContent;send.disabled=false};targets.append(b)});
+        offset+=50;more.hidden=page.length<=50;status.textContent=targets.children.length?'':'Bu klasörde uygun sohbet bulunamadı.';
+      }catch(e){if(valid()&&own===requestRevision)status.textContent=e.message||'Sohbetler yüklenemedi.'}
+    };
+    query.oninput=()=>{requestRevision++;clearTimeout(timer);target=null;send.disabled=true;targets.replaceChildren();more.hidden=true;content.querySelector('[data-chosen]').textContent='';timer=setTimeout(()=>{if(valid())load()},250)};folder.onchange=()=>{clearTimeout(timer);load()};more.onclick=()=>load(true);
+    send.onclick=async()=>{if(busy||!target||!valid())return;busy=true;const destination=target.id,requestKey=key;
+      content.querySelectorAll('button,input,select').forEach(b=>b.disabled=true);status.textContent='İletiliyor…';
+      try{await api().api('/message-actions/'+encodeURIComponent(source)+'/forward',{method:'POST',body:JSON.stringify({message_ids:messages.map(m=>m.id),target_conversation_id:destination,request_key:requestKey})});
+        if(!valid())return;panel.remove();selectionBar?.querySelector('[data-clear-selected]')?.click();loadConversations();window.toast?.('Mesajlar iletildi.');
+      }catch(e){if(valid())status.textContent=e.message||'Mesajlar iletilemedi. Tekrar deneyebilirsin.'}finally{busy=false;if(valid()){content.querySelectorAll('button,input,select').forEach(b=>b.disabled=false);send.disabled=!target}}
+    };load();
+  }
   function canEditMessage(row){
     const m=row?._message;
     return !!m&&!!api()?.editMessage&&String(m.sender_id)===String(currentUserId)&&!m.media_type&&!m.gift_key&&!isSystemConversation()&&Number.isFinite(new Date(m.created_at).getTime())&&Date.now()-new Date(m.created_at).getTime()<15*60*1000;
@@ -1162,6 +1236,9 @@
       .dm-message-workbench button:disabled{opacity:.6}.dm-message-workbench [hidden]{display:none!important}
       .dm-compose-mode{display:flex;align-items:center;gap:10px;padding:9px 12px;border-left:3px solid var(--ui-gold,#b98c46);background:var(--ui-raised);color:var(--ui-ink);flex:none}.dm-compose-mode[hidden]{display:none!important}.dm-compose-mode>div{flex:1;min-width:0}.dm-compose-mode b,.dm-compose-mode small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dm-compose-mode small{font-size:11px;margin-top:4px}.dm-compose-mode button{min-width:36px;min-height:36px;border:0;border-radius:9px;background:var(--ui-panel);color:var(--ui-ink);font-size:20px}
       #chat .dm-reply-quote{display:block;max-width:100%;width:100%;text-align:left;padding:8px 10px;border:0;border-left:3px solid var(--ui-gold,#b98c46);border-radius:8px;background:color-mix(in srgb,var(--ui-gold,#b98c46) 12%,var(--ui-panel));color:var(--ui-ink);margin-bottom:7px;overflow-wrap:anywhere}.dm-reply-quote b,.dm-reply-quote span{display:block;font-size:11px}.dm-reply-quote span{margin-top:4px;white-space:pre-wrap}.dm-reply-quote:disabled{opacity:.65}
+      #chat .dm-select-tools{flex-wrap:wrap;height:auto}#chat .dm-select-tools button[data-react-selected],#chat .dm-select-tools button[data-forward-selected]{width:auto;font-size:11px;padding:0 8px}
+      .dm-forward-label{display:block;font-size:10px;opacity:.7;margin-bottom:6px}.dm-reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.dm-reactions button{padding:5px 8px;min-height:32px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-panel);color:var(--ui-ink)}.dm-reactions button[aria-pressed=true]{border-color:var(--ui-gold,#b98c46);box-shadow:inset 0 0 0 1px var(--ui-gold,#b98c46)}
+      .dm-action-panel{position:fixed;inset:0;z-index:100090;overflow:auto;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);overscroll-behavior:contain}.dm-action-panel section{box-sizing:border-box;width:min(620px,100%);margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-action-panel header{display:flex;justify-content:space-between;align-items:center;gap:10px}.dm-action-panel button{min-height:44px;border:1px solid var(--ui-line,#c8ae79);border-radius:12px;padding:9px 12px;background:var(--ui-raised,#fffaf0);color:inherit;font:inherit}.dm-action-panel label{display:block;font-size:12px;margin:12px 0}.dm-action-panel input,.dm-action-panel select{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:12px;border:1px solid var(--ui-line);border-radius:10px;background:var(--ui-raised);color:inherit;font:inherit}.dm-action-panel p{font-size:13px;overflow-wrap:anywhere}.dm-action-panel .dm-forward-target{display:block;width:100%;text-align:left;margin:8px 0;overflow-wrap:anywhere}.dm-forward-target[aria-pressed=true]{border:2px solid var(--ui-gold,#b98c46)}.dm-emoji-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:20px}.dm-emoji-picker button{font-size:24px}.dm-emoji-picker button:last-child{grid-column:1/-1;font-size:14px}
       #chat .dm-select-tools button[data-reply-selected],#chat .dm-select-tools button[data-edit-selected]{width:auto;font-size:11px;padding:0 8px}.dm-edited{opacity:.7}.dm-message-highlight{outline:2px solid var(--ui-gold,#b98c46)!important}
       .dm-search-panel{position:fixed;inset:0;z-index:100070;background:var(--ui-panel);color:var(--ui-ink);overflow:auto;overscroll-behavior:contain}.dm-search-panel section{width:min(620px,100%);box-sizing:border-box;margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-search-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}.dm-search-panel form{display:flex;align-items:end;gap:10px;margin:16px 0}.dm-search-panel label{flex:1;min-width:0;font-size:12px}.dm-search-panel input{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-panel button{min-height:40px;padding:9px 12px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-result{display:block;width:100%;text-align:left;margin:10px 0;overflow-wrap:anywhere}.dm-search-result small,.dm-search-result span{display:block}.dm-search-result small{color:var(--ui-gold,#b98c46);margin-bottom:6px;font-size:11px}.dm-search-result span{white-space:pre-wrap;font-size:13px}
       @media(max-width:360px){#chat .dm-select-tools{gap:4px}#chat .dm-select-tools button{width:30px;height:32px;font-size:14px}#chat .dm-select-tools [data-selected-count]{font-size:9px!important}}
@@ -1224,7 +1301,7 @@
     const input=chat.querySelector('#chatInput');
     if(activeConversationId){drafts.set(String(activeConversationId),messageMode?.kind==='edit'?messageMode.savedDraft:(input?.value||''))}
     document.querySelector('[data-attachment-chooser]')?.remove();
-    clearMessageMode(false);historyCursor=null;historyBusy=false;historyWindow=false;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
+    closeMessageActions();clearMessageMode(false);historyCursor=null;historyBusy=false;historyWindow=false;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
     if(input)input.value=drafts.get(String(id))||'';
     const revision=++chatRevision;
     activeConversationId = id;
@@ -1330,6 +1407,11 @@
   }
   async function handleRealtimeMessage(event) {
     const data = event?.detail;
+    if(data?.type==='dm_reactions_updated'){
+      const cid=String(data.conversation_id),revision=chatRevision,mid=Number(data.message_id),body=$('chat')?.querySelector('.chatBody');
+      if(String(activeConversationId)!==cid||!body?.querySelector('[data-message-id="'+mid+'"]'))return;
+      try{const metadata=await api().api('/message-actions/'+encodeURIComponent(cid)+'/'+mid+'/metadata');if(revision!==chatRevision||String(activeConversationId)!==cid)return;const row=body.querySelector('[data-message-id="'+mid+'"]');if(row)appendMessageOnce(body,{...row._message,...metadata},row._mine)}catch{}return;
+    }
     if(data?.type==='dm_message_updated'){if(String(activeConversationId||'')===String(data.conversation_id))reconcileChat();loadConversations();return}
     if (data?.type === 'dm_read' && data.conversation_id) {
       if (String(activeConversationId||'') !== String(data.conversation_id)) return;
@@ -1415,7 +1497,7 @@
     ws.onmessage = event => {
       try {
         const data = JSON.parse(event.data);
-        if (data?.type === 'dm_message' || data?.type === 'dm_read' || data?.type === 'dm_messages_deleted' || data?.type === 'dm_message_updated') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
+        if (data?.type === 'dm_message' || data?.type === 'dm_read' || data?.type === 'dm_messages_deleted' || data?.type === 'dm_message_updated' || data?.type === 'dm_reactions_updated') window.dispatchEvent(new CustomEvent('erischat:event', {detail:data}));
       } catch (_) {}
     };
     ws.onclose = () => {
