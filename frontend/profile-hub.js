@@ -2,6 +2,7 @@
   'use strict';
   const api = (path, options) => window.ErisPlatform.api(path, options);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const sessionToken=()=>window.ErisPlatform?.getAccessToken?.()||'';
   const panel = () => document.getElementById('erisProfileHub');
   function mount() {
     const view = document.getElementById('profile');
@@ -81,7 +82,7 @@
     document.body.append(overlay);
     overlay.querySelector('.eph-dialog-content').append(hub.querySelector('.eph-body'));
     const settings=view.querySelector('[data-erischat-profile-controls]');if(settings)overlay.querySelector('.eph-dialog-content').append(settings);
-    let lastTrigger=null;const close=()=>{if(overlay.hidden)return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview');if(lastTrigger?.isConnected)lastTrigger.focus()};
+    let lastTrigger=null;const close=()=>{if(overlay.hidden)return;if(window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true);if(lastTrigger?.isConnected)lastTrigger.focus()};
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
@@ -95,9 +96,12 @@
     show('overview');
   }
   let requestIndex=0;
-  async function show(key) {
+  async function show(key,force=false) {
+    if(!force&&window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;
+    window.ErisProfileWorkspace?.reset();
     const hub=panel();if(!hub)return;
-    const index=++requestIndex, overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
+    const index=++requestIndex,session=sessionToken(),isCurrent=()=>index===requestIndex&&session===sessionToken(), overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
+    window.ErisSocialFeed?.release?.(body);
     body.classList.remove('epv','en-center','epl','eps');
     const labels={info:'Bilgilerim',posts:'Gönderilerim',social:'Takip ve hayranlar',tasks:'Görevler',collection:'Koleksiyon',vip:'VIP',calls:'Arama geçmişleri',gifts:'Hediyeler',notifications:'Bildirimler',privacy:'Gizlilik',blocked:'Engellenenler',rooms:'Odalarım',settings:'Ayarlar'};
     hub.closest('#profile')?.setAttribute('data-profile-section',key);
@@ -105,23 +109,25 @@
     body.hidden=key==='overview';
     const settings=overlay.querySelector('[data-erischat-profile-controls]');if(settings)settings.hidden=true;
     const rooms=overlay.querySelector('#erisProfileRooms');if(rooms)rooms.hidden=key!=='rooms';
-    if(key==='overview')return;
+    if(key==='overview'){window.ErisSocialFeed?.release?.(body);body.replaceChildren();return;}
     overlay.hidden=false;document.body.classList.add('eph-dialog-open');overlay.querySelector('#ephDialogTitle').textContent=labels[key];overlay.querySelector('.eph-close').focus();
-    if(key==='settings'){await window.ErisSettings.render(body,()=>index===requestIndex);return;}
-    if(key==='rooms'){await window.ErisProfileLists.rooms(body,()=>index===requestIndex);return}
+    if(key==='settings'){await window.ErisSettings.render(body,isCurrent);return;}
+    if(key==='rooms'){await window.ErisProfileLists.rooms(body,isCurrent);return}
     body.textContent='Yükleniyor…';
     try {
-      const me=await window.ErisAuth.getMe();if(index!==requestIndex)return;
+      const me=await window.ErisAuth.getMe();if(!isCurrent())return;
       if(key==='calls') {
         body.innerHTML='<section class="eph-call-history"><header><span>GÖRÜŞMELERİN</span><h3>Arama geçmişleri</h3><p>Sesli ve görüntülü görüşmelerini buradan takip et.</p></header><button type="button" data-clear disabled>Geçmişi temizle</button><div data-clear-confirm hidden><p>Arama geçmişini kendi listenden temizlemek istiyor musun? Bu işlem sistem kayıtlarını silmez; yetkili sorgularında kayıtlar korunur.</p><div><button type="button" data-cancel>Vazgeç</button><button type="button" data-confirm>Geçmişimi temizle</button></div></div><div data-call-status role="status" aria-live="polite"></div><div data-calls></div></section>';
         const list=body.querySelector('[data-calls]'),clear=body.querySelector('[data-clear]'),confirm=body.querySelector('[data-clear-confirm]'),status=body.querySelector('[data-call-status]');let pending=false;
         const empty=()=>{list.innerHTML='<div class="eph-calls-empty">Henüz arama geçmişin yok.</div>';clear.disabled=true};
         clear.onclick=()=>{confirm.hidden=false;body.querySelector('[data-confirm]').focus()};body.querySelector('[data-cancel]').onclick=()=>{if(pending)return;confirm.hidden=true;clear.focus()};
-        body.querySelector('[data-confirm]').onclick=async()=>{if(pending)return;pending=true;const button=body.querySelector('[data-confirm]');button.disabled=true;status.textContent='Geçmiş temizleniyor…';try{await api('/calls/history',{method:'DELETE'});if(index!==requestIndex)return;empty();confirm.hidden=true;status.textContent='Arama geçmişin kendi listenden temizlendi.'}catch(e){if(index===requestIndex)status.textContent=e.message||'Geçmiş temizlenemedi.'}finally{pending=false;button.disabled=false}};
-        async function loadCalls(){list.textContent='Aramalar yükleniyor…';try{const calls=await api('/calls/history');if(index!==requestIndex)return;list.replaceChildren();clear.disabled=!calls.length;if(!calls.length){empty();return}
+        body.querySelector('[data-confirm]').onclick=async()=>{if(pending)return;pending=true;const button=body.querySelector('[data-confirm]');button.disabled=true;status.textContent='Geçmiş temizleniyor…';try{await api('/calls/history',{method:'DELETE'});if(!isCurrent())return;empty();confirm.hidden=true;status.textContent='Arama geçmişin kendi listenden temizlendi.'}catch(e){if(isCurrent())status.textContent=e.message||'Geçmiş temizlenemedi.'}finally{pending=false;button.disabled=false}};
+        async function loadCalls(){list.textContent='Aramalar yükleniyor…';try{const calls=await api('/calls/history');if(!isCurrent())return;list.replaceChildren();clear.disabled=!calls.length;if(!calls.length){empty();return}
           for(const row of calls){const card=document.createElement('article');card.className='eph-call-card';const icon=document.createElement('span');icon.className='eph-call-icon';icon.textContent=row.kind==='video'?'▣':'☎';const info=document.createElement('div');const name=document.createElement('button');name.type='button';name.className='eph-call-name';name.textContent=row.peer_name||'Kullanıcı';name.disabled=!row.peer_id;name.onclick=()=>{window.ErisProfileHub.close();window.openUserProfile?.(row.peer_id)};const meta=document.createElement('p');const duration=Math.max(0,Number(row.duration_seconds)||0);const labels={active:'Sürüyor',ringing:'Çalıyor',reject:'Reddedildi',unavailable:'Müsait değil',missed:'Yanıtsız',ended:'Tamamlandı'};meta.textContent=(row.incoming?'Gelen':'Giden')+' · '+(row.kind==='video'?'Görüntülü':'Sesli')+' · '+(labels[row.status]||row.status);const date=document.createElement('small');date.textContent=new Date(row.created_at).toLocaleString('tr-TR')+' · '+Math.floor(duration/60)+' dk '+duration%60+' sn';info.append(name,meta,date);card.append(icon,info);list.append(card)}
-        }catch(e){if(index!==requestIndex)return;list.replaceChildren();const text=document.createElement('p');text.textContent=e.message||'Aramalar yüklenemedi.';const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=loadCalls;list.append(text,retry)}}await loadCalls();return;
+        }catch(e){if(!isCurrent())return;list.replaceChildren();const text=document.createElement('p');text.textContent=e.message||'Aramalar yüklenemedi.';const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=loadCalls;list.append(text,retry)}}await loadCalls();return;
       }
+      if(key==='info'&&window.ErisProfileWorkspace){await window.ErisProfileWorkspace.info(body,me,isCurrent);return;}
+      if(key==='posts'&&window.ErisProfileWorkspace){await window.ErisProfileWorkspace.posts(body,me,isCurrent);return;}
       if(key==='info') {
         body.innerHTML='<form class="eph-info-form"><div class="eph-info-summary"><span class="eph-info-avatar" data-avatar></span><div><b data-name></b><span data-id></span></div></div><p class="eph-info-intro" role="note">Uygulamadaki yetkili kişilerin profillerinde SA, UA, FA veya DA logosu bulunur. Bu logoları taşımayan kişiler uygulamada yetkili değildir.</p><p class="eph-info-intro">Profilindeki adını ve hakkında bilgilerini düzenle.</p><div class="eph-info-names"><label>Ad<input data-first maxlength="64" autocomplete="given-name" required></label><label>Soyad<input data-last maxlength="64" autocomplete="family-name" required></label></div><label>Hakkımda<textarea data-bio maxlength="300" rows="4" placeholder="Kendinden biraz bahset…"></textarea></label><div class="eph-info-count" data-count></div><footer><div data-status role="status" aria-live="polite"></div><button type="submit" data-save>Değişiklikleri kaydet</button></footer></form>';
         const form=body.querySelector('form'),first=form.querySelector('[data-first]'),last=form.querySelector('[data-last]'),bio=form.querySelector('[data-bio]'),btn=form.querySelector('[data-save]'),status=form.querySelector('[data-status]');
@@ -140,11 +146,11 @@
           saving=true;const submitted=values();refresh();status.textContent='Kaydediliyor…';
           try{
             const updated=await window.ErisProfile.update({first_name:submitted[0],last_name:submitted[1],bio:submitted[2]});
-            if(index!==requestIndex)return;
+            if(!isCurrent())return;
             if(!updated)throw new Error('Profil kaydedilemedi. Tekrar dene.');
             original=JSON.stringify(submitted);status.textContent='Değişikliklerin kaydedildi.';
-          }catch(error){if(index===requestIndex)status.textContent=error.message||'Profil kaydedilemedi.'}
-          finally{saving=false;if(index===requestIndex)refresh()}
+          }catch(error){if(isCurrent())status.textContent=error.message||'Profil kaydedilemedi.'}
+          finally{saving=false;if(isCurrent())refresh()}
         };
         if(me.management_locked){for(const el of form.querySelectorAll('input,textarea,button'))el.disabled=true;status.textContent='Yönetim kimliği sabittir: LidyaChat Yönetim, LidyaChat logosu ve yönetim çerçevesi kullanılır.';return;}
         const rename=document.createElement('form');rename.className='eph-rename-form';
@@ -158,13 +164,14 @@
           renaming=true;refreshRename();renameStatus.textContent='Kullanıcı adın değiştiriliyor…';
           try{
             const updated=await api('/me/nickname',{method:'POST',body:JSON.stringify({nickname:nickname.value.trim()})});
+            if(!isCurrent())return;
             window.dispatchEvent(new CustomEvent('erischat:profile',{detail:updated}));
             window.ErisProfile?.refresh?.();
-            if(index!==requestIndex)return;
+            if(!isCurrent())return;
             currentName=updated.nickname;nickname.value=currentName;form.querySelector('[data-name]').textContent=currentName;
             rename.querySelector('[data-consent]').checked=false;renameStatus.textContent='Kullanıcı adın değiştirildi. Ücret: 150 Lidya.';
-          }catch(error){if(index===requestIndex)renameStatus.textContent=error.message||'Kullanıcı adı değiştirilemedi.'}
-          finally{renaming=false;if(index===requestIndex)refreshRename()}
+          }catch(error){if(isCurrent())renameStatus.textContent=error.message||'Kullanıcı adı değiştirilemedi.'}
+          finally{renaming=false;if(isCurrent())refreshRename()}
         };return;
       }
       if(key==='posts') {
@@ -175,32 +182,36 @@
         return;
       }
       if(key==='social') {
-        const [followers,following,fans]=await Promise.all([api('/users/'+encodeURIComponent(me.id)+'/followers'),api('/users/'+encodeURIComponent(me.id)+'/following'),api('/users/'+encodeURIComponent(me.id)+'/fans')]);if(index!==requestIndex)return;
+        const [followers,following,fans]=await Promise.all([api('/users/'+encodeURIComponent(me.id)+'/followers'),api('/users/'+encodeURIComponent(me.id)+'/following'),api('/users/'+encodeURIComponent(me.id)+'/fans')]);if(!isCurrent())return;
         body.innerHTML='<h3>Takip ve hayranlar</h3><div class="eph-row"><span>Takipçi</span><b data-followers></b></div><div class="eph-row"><span>Takip edilen</span><b data-following></b></div><div class="eph-row"><span>Hayran seviyesi</span><b data-level></b></div><div class="eph-muted" data-list></div>';
         body.querySelector('[data-followers]').textContent=String(followers.length);body.querySelector('[data-following]').textContent=String(following.length);body.querySelector('[data-level]').textContent=String(fans.level||0);
         const list=body.querySelector('[data-list]');list.textContent='Takip ettiklerin: ';
         if(!following.length) list.append('Henüz kimseyi takip etmiyorsun.');
         for(const row of following){const button=document.createElement('button');button.type='button';button.textContent=row.user_id;button.onclick=()=>{window.ErisProfileHub.close();window.openUserProfile?.(row.user_id)};list.append(button)}return;
       }
-      if(key==='tasks'){await window.ErisAppearanceTasks.render(body,()=>index===requestIndex);return;}
-      if(key==='collection') {await window.ErisAppearanceInventory.render(body,()=>index===requestIndex);return;}
+      if(key==='tasks'){await window.ErisAppearanceTasks.render(body,isCurrent);return;}
+      if(key==='collection') {await window.ErisAppearanceInventory.render(body,isCurrent);return;}
       if(key==='vip') {
         window.ErisProfileHub.close();
         window.ErisChatVIP?.open?.();
         return;
       }
       if(key==='notifications') {
-        await window.ErisNotifications.render(body,()=>index===requestIndex);return;
+        await window.ErisNotifications.render(body,isCurrent);return;
       }
       if(key==='privacy') {
-        await window.ErisPrivacy.render(body,()=>index===requestIndex);return;
+        await window.ErisPrivacy.render(body,isCurrent);return;
       }
       if(key==='blocked') {
-        await window.ErisProfileLists.blocked(body,()=>index===requestIndex);return;
+        await window.ErisProfileLists.blocked(body,isCurrent);return;
       }
-    }catch(error){if(index===requestIndex)body.textContent=error.message||'Profil bilgileri yüklenemedi.'}
+    }catch(error){if(isCurrent())body.textContent=error.message||'Profil bilgileri yüklenemedi.'}
   }
-  window.ErisProfileHub={show,close:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')},reset:()=>{const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview')}};
+  window.ErisProfileHub={show,close:()=>document.querySelector('.eph-close')?.click(),reset:()=>{window.ErisProfileWorkspace?.reset();const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true)}};
+  let profileSession=sessionToken(),profileAccount=window.ErisAuth?.user?.id;
+  const accountChanged=event=>{const next=sessionToken(),uid=event.detail?.user?.id;if(next!==profileSession||uid&&profileAccount&&String(uid)!==String(profileAccount)||event.detail?.state==='logged_out'){profileSession=next;profileAccount=uid;window.ErisProfileHub.reset();}else if(uid)profileAccount=uid;};
+  for(const type of ['erischat:auth','erischat:auth-state'])window.addEventListener(type,accountChanged);
+  window.addEventListener('storage',event=>{if(['erischat_access_token','erischat.accessToken.v1','token',null].includes(event.key))accountChanged(event);});
   const start=()=>{mount();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready' && panel()?.closest('#profile')?.dataset.profileSection==='info')show('info')})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

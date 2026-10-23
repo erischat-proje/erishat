@@ -558,9 +558,10 @@ app.include_router(emergency_routes.register_auth(current_user))
 app.include_router(finance_audit.register_auth(current_user))
 app.include_router(fraud_review.register_auth(current_user))
 app.include_router(management_workflows.register_auth(current_user))
-from . import explore_feed, explore_interactions
+from . import explore_feed, explore_interactions, profile_workspace
 app.include_router(explore_feed.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(explore_interactions.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
+app.include_router(profile_workspace.register_auth(current_user))
 app.include_router(admin_operations.register_auth(current_user))
 app.include_router(admin_workspace.register_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id, role: broadcast_role_badge(user_id, role)))
 app.include_router(dm_folder_router)
@@ -1573,6 +1574,7 @@ async def update_social_post(post_id: int, caption: str | None = Form(default=No
     if file is not None: post.mime_type, post.image_bytes = await _read_social_upload(file, 80 * 1024 * 1024)
     if not post.caption and post.image_bytes is None:
         raise HTTPException(status_code=400, detail="Gönderide metin veya medya kalmalı")
+    post.updated_at = datetime.now(timezone.utc)
     db.commit(); db.refresh(post)
     return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
@@ -1598,7 +1600,8 @@ def pin_social_post(post_id: int, db: Session = Depends(get_db), user: User = De
     post = db.get(SocialPost, post_id)
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini sabitleyebilirsin")
-    db.execute(update(SocialPost).where(SocialPost.user_id == user.id).values(is_pinned=False))
+    db.execute(update(SocialPost).where(SocialPost.user_id == user.id, SocialPost.is_pinned.is_(True)).values(is_pinned=False, updated_at=datetime.now(timezone.utc)))
+    post.updated_at = datetime.now(timezone.utc)
     post.is_pinned = True
     db.commit()
     return {"id": post.id, "is_pinned": True}
@@ -1609,6 +1612,7 @@ def unpin_social_post(post_id: int, db: Session = Depends(get_db), user: User = 
     post = db.get(SocialPost, post_id)
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderinin sabitlemesini kaldırabilirsin")
+    post.updated_at = datetime.now(timezone.utc)
     post.is_pinned = False
     db.commit()
     return {"id": post.id, "is_pinned": False}
