@@ -225,6 +225,7 @@
     const when = document.createElement('span'); when.textContent = messageTime(message?.created_at); meta.append(when);
     if(message.edited_at){const edited=document.createElement('span');edited.className='dm-edited';edited.textContent='düzenlendi';meta.append(edited)}
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
+    renderMediaCaption(row,message);
     row.append(meta);renderReadReceipt(row,message);
     renderMessageReactions(row,message);renderMessageStar(row,message);renderMessagePoll(row,message);
     if(message.bubble_asset && message.media_type!=='voice'){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
@@ -233,6 +234,12 @@
     return row;
   }
 
+  function renderMediaCaption(row,message){
+    row.querySelector('.dm-media-caption')?.remove();
+    if(!message.caption||message.temporary||!['image','video','document'].includes(message.media_type))return;
+    const caption=document.createElement('p');caption.className='dm-media-caption';caption.textContent=message.caption;
+    const content=row.querySelector('.dm-award-content')||row,meta=content.querySelector('.dm-message-meta');if(meta)meta.before(caption);else content.append(caption);
+  }
   function renderReadReceipt(row,message){
     if(!row?._mine)return;const mark=row.querySelector('.dm-checks');if(!mark)return;
     const total=Number(message.recipient_count),seen=Number(message.read_count),counted=message.recipient_count!=null&&message.read_count!=null;
@@ -288,7 +295,7 @@
           if(old.text!==merged.text)for(const quote of [...body.querySelectorAll('.bubble[data-message-id]')])if(Number(quote._message?.reply_to_id)===Number(id)&&!quote._message.reply?.unavailable)appendMessageOnce(body,{...quote._message,reply:{...quote._message.reply,text:String(merged.text||'').slice(0,180)}},quote._mine);
           return next;
         }
-        existing._message=merged;renderReadReceipt(existing,merged);
+        existing._message=merged;renderReadReceipt(existing,merged);if(old.caption!==merged.caption)renderMediaCaption(existing,merged);
         if(JSON.stringify(old.poll)!==JSON.stringify(merged.poll)||old.has_poll!==merged.has_poll)renderMessagePoll(existing,merged);
         if(!!old.is_starred!==!!merged.is_starred)renderMessageStar(existing,merged);
         if(JSON.stringify(old.reactions)!==JSON.stringify(merged.reactions))renderMessageReactions(existing,merged);
@@ -472,7 +479,7 @@
     }catch(error){if(button){button.disabled=false;button.textContent='↻'}window.toast?.(error.message||'Sesli mesaj oynatılamadı.')}
   }
 
-  async function uploadMedia(file,type,seconds=0,expected=null){
+  async function uploadMedia(file,type,seconds=0,expected=null,caption=''){
     const conversationId=expected?.id||activeConversationId,revision=expected?.revision??chatRevision,owner=expected?.user??currentUserId;
     const valid=()=>revision===chatRevision&&String(activeConversationId)===String(conversationId)&&owner===currentUserId;
     const reject=message=>{if(expected)throw new Error(message);window.toast?.(message);return false};
@@ -484,7 +491,7 @@
     if(mediaUploadsInFlight.has(lock))return reject('Bu sohbette bir dosya gönderiliyor. Tamamlanınca yeniden deneyin.');
     mediaUploadsInFlight.add(lock);setUploadStatus('Dosya gönderiliyor…');
     try{
-      const message=await api().sendMessageMedia(conversationId,file,type,seconds);
+      const message=await api().sendMessageMedia(conversationId,file,type,seconds,caption);
       if(valid()){
         const body=document.querySelector('#chat .chatBody');appendMessageOnce(body,message,true);
         if(body)body.scrollTop=body.scrollHeight;
@@ -503,7 +510,7 @@
     let panel;
     try{file=window.ErisAttachmentPreview.prepare(file,type,seconds);panel=messageActionPanel('Gönderim önizlemesi');
       attachmentPreview=window.ErisAttachmentPreview.open({panel,host:chat,file,type,seconds,name:chat.querySelector('.chatHead b')?.textContent,valid,
-        send:chosen=>uploadMedia(chosen,type,seconds,context),reselect:()=>type==='image'?pickPhoto(seconds):pickAttachment(type),closed:()=>{attachmentPreview=null;chat.querySelector('[data-dm-photo]')?.focus()}});
+        send:(chosen,caption)=>uploadMedia(chosen,type,seconds,context,caption),reselect:()=>type==='image'?pickPhoto(seconds):pickAttachment(type),closed:()=>{attachmentPreview=null;chat.querySelector('[data-dm-photo]')?.focus()}});
     }catch(e){panel?.remove();window.toast?.(e.message||'Dosya önizlemesi açılamadı.')}
   }
 
@@ -1306,7 +1313,7 @@
         if(!valid()||own!==revision)return;
         for(const item of asList(data,['items'])){const m=item.message,c=item.conversation;if(!m?.id||!c?.id||results.querySelector('[data-search-message="'+Number(m.id)+'"]'))continue;
           const card=document.createElement('article');card.className='dm-star-card';card.dataset.searchMessage=String(m.id);card.dataset.searchConversation=String(c.id);
-          const title=document.createElement('b'),meta=document.createElement('small'),text=document.createElement('p'),open=document.createElement('button');title.textContent=c.name||'Sohbet';meta.textContent=(m.sender_nickname||'Kullanıcı')+' · '+messageTime(m.created_at)+(m.media_type?' · '+({image:'Fotoğraf',voice:'Sesli mesaj',video:'Video',document:'Belge'}[m.media_type]||'Medya'):'');text.textContent=m.media_name||m.text||'Mesaj';open.type='button';open.dataset.globalGoto='';open.textContent='Sohbette göster';card.append(title,meta,text,open);results.append(card);
+          const title=document.createElement('b'),meta=document.createElement('small'),text=document.createElement('p'),open=document.createElement('button');title.textContent=c.name||'Sohbet';meta.textContent=(m.sender_nickname||'Kullanıcı')+' · '+messageTime(m.created_at)+(m.media_type?' · '+({image:'Fotoğraf',voice:'Sesli mesaj',video:'Video',document:'Belge'}[m.media_type]||'Medya'):'');const excerpt=String(m.text||'').replace(/^\[(?:Fotoğraf|Video|Belge)\][^\n]*\n/,'');text.textContent=m.media_name&&excerpt&&(excerpt!==m.text||excerpt.startsWith('…'))?m.media_name+'\n'+excerpt:m.media_name||m.text||'Mesaj';open.type='button';open.dataset.globalGoto='';open.textContent='Sohbette göster';card.append(title,meta,text,open);results.append(card);
           open.onclick=async()=>{if(!valid()||navigating)return;navigating=true;open.disabled=true;const chatVersion=chatRevision,searchVersion=revision;
             try{const details=api()?.conversation?await api().conversation(c.id):c;if(!valid()||chatVersion!==chatRevision||searchVersion!==revision)return;
               const info={...conversationInfo.get(String(c.id)),...c,...details};conversationInfo.set(String(c.id),info);const peer=asList(info.members,['members']).find(x=>String(x.user_id)!==String(user));panel.remove();await openRealChat(c.id,info.name||c.name||'Sohbet',c.type==='group'?'👥':c.type==='family'?'👪':'👤',c.type==='dm'?peer?.user_id:null);
@@ -1353,7 +1360,7 @@
     if(!document.getElementById('dm-pins-style')){const style=document.createElement('style');style.id='dm-pins-style';style.textContent='[data-pin-banner][hidden]{display:none!important}[data-pin-banner]{text-align:start;cursor:pointer;color:var(--ui-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:40px}.dm-pin-card{padding:14px;margin:12px 0;border:1px solid var(--ui-line);border-radius:14px;overflow-wrap:anywhere}.dm-pin-card p{white-space:pre-wrap}.dm-pin-card small{display:block;margin-top:8px;opacity:.75}.dm-pin-card footer{display:flex;gap:8px;flex-wrap:wrap}';document.head.append(style)}
     panel.querySelector('h3').textContent=title;panel.querySelector('section').setAttribute('aria-label',title);
     const previous=document.activeElement,close=()=>{panel.remove();previous?.focus?.()};panel.querySelector('[data-close]').onclick=close;
-    panel.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...panel.querySelectorAll('button:not(:disabled),input,select')].filter(node=>!node.disabled&&!node.closest('[hidden]')),first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.body.append(panel);panel.querySelector('[data-close]').focus();return panel;
+    panel.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...panel.querySelectorAll('button:not(:disabled),input,select,textarea')].filter(node=>!node.disabled&&!node.closest('[hidden]')),first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.body.append(panel);panel.querySelector('[data-close]').focus();return panel;
   }
   async function setMessageReaction(row,emoji,button){
     const cid=activeConversationId,revision=chatRevision,user=currentUserId,m=row?._message;

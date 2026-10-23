@@ -51,7 +51,7 @@
     editMessage: (id,messageId,text,expectedText) => request(`/message-tools/${encodeURIComponent(id)}/${messageId}`,{method:'PATCH',body:JSON.stringify({text,expected_text:expectedText})}),
     messageGifts: () => request('/message-gifts'),
     sendMessageGift: (id,gift_key,quantity=1) => request(`/messages/${encodeURIComponent(id)}/gifts`,{method:'POST',body:JSON.stringify({gift_key,quantity})}),
-    sendMessageMedia: (id,file,mediaType,viewSeconds=0) => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:mediaType==='video'||mediaType==='document'?120000:30000});},
+    sendMessageMedia: (id,file,mediaType,viewSeconds=0,caption='') => {const body=new FormData();body.append('file',file);body.append('media_type',mediaType);body.append('view_seconds',String(viewSeconds));if(caption)body.append('caption',caption);return request(`/messages/${encodeURIComponent(id)}/media`,{method:'POST',body,timeout:mediaType==='video'||mediaType==='document'?120000:30000});},
     sharedMessages:(id,kind='all',q='',before=null)=>request(`/message-tools/${encodeURIComponent(id)}/shared?kind=${encodeURIComponent(kind)}&q=${encodeURIComponent(q)}${before?'&before='+before:''}`),
     messageMediaUrl: mediaUrl,
     deleteMessages: (id,message_ids,all=false) => request(`/messages/${encodeURIComponent(id)}/delete`,{method:'POST',body:JSON.stringify({message_ids,all})}),

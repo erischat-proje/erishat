@@ -22,12 +22,14 @@
   function open({panel,host,file,type,seconds=0,name,valid,send,reselect,closed=()=>{}}){
     file=prepare(file,type,seconds);let alive=true,sending=false,url=null,media=null,invalid=false;
     const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]');panel.dataset.attachmentPreview='';panel.dataset.kind=type;
-    content.innerHTML='<p data-preview-target></p><b data-preview-name></b><small data-preview-size></small><p data-preview-duration></p><div data-preview-art></div><footer><button type="button" data-preview-cancel>Vazgeç</button><button type="button" data-preview-change>Başka dosya seç</button><button type="button" data-preview-send>Gönder</button></footer>';
+    content.innerHTML='<p data-preview-target></p><b data-preview-name></b><small data-preview-size></small><p data-preview-duration></p><div data-preview-art></div><label data-preview-caption-label>Açıklama (isteğe bağlı)<textarea data-preview-caption maxlength="1000" rows="3" placeholder="Bu dosya için bir açıklama yaz…"></textarea><small data-preview-caption-count>0 / 1000</small></label><footer><button type="button" data-preview-cancel>Vazgeç</button><button type="button" data-preview-change>Başka dosya seç</button><button type="button" data-preview-send>Gönder</button></footer>';
     content.querySelector('[data-preview-target]').textContent='Gönderilecek sohbet: '+(name||'Sohbet');content.querySelector('[data-preview-name]').textContent=file.name||'Dosya';
     content.querySelector('[data-preview-size]').textContent=(file.size/(1024*1024)<1?(file.size/1024).toFixed(1)+' KB':(file.size/(1024*1024)).toFixed(1)+' MB')+' · '+({image:'Fotoğraf',video:'Video',document:'Belge'}[type]);
     content.querySelector('[data-preview-duration]').textContent=seconds?'Süreli fotoğraf · '+seconds+' saniye · Süre alıcı açtığında başlar.':type==='image'?'Normal fotoğraf':type==='video'?'Video · En fazla 2 dakika':'Belgenin içeriği bu ekranda açılmaz.';
     const sendButton=content.querySelector('[data-preview-send]');
-    const update=()=>{panel.dataset.sending=String(sending);panel.querySelectorAll('button').forEach(b=>b.disabled=sending);sendButton.disabled=sending||invalid};
+    const caption=content.querySelector('[data-preview-caption]'),captionCount=content.querySelector('[data-preview-caption-count]');
+    content.querySelector('[data-preview-caption-label]').hidden=seconds>0;caption.disabled=seconds>0;caption.oninput=()=>{captionCount.textContent=caption.value.length+' / 1000'};
+    const update=()=>{panel.dataset.sending=String(sending);panel.querySelectorAll('button').forEach(b=>b.disabled=sending);sendButton.disabled=sending||invalid;caption.disabled=sending||seconds>0};
     function close(){
       if(!alive)return;alive=false;observer.disconnect();window.removeEventListener('pagehide',close);
       if(media){media.onerror=media.onloadedmetadata=null;if(type==='video'){media.pause();media.removeAttribute('src');media.load()}else media.removeAttribute('src')}
@@ -44,8 +46,8 @@
     content.querySelector('[data-preview-cancel]').onclick=()=>{if(!sending)close()};content.querySelector('[data-preview-change]').onclick=()=>{if(!sending&&ensure()){close();reselect?.()}};
     panel.querySelector('[data-close]').onclick=()=>{if(!sending)close()};const originalKeys=panel.onkeydown;panel.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();if(!sending)close()}else if(sending&&e.key==='Tab')e.preventDefault();else originalKeys?.(e)};
     sendButton.onclick=async()=>{
-      if(sending||invalid||!ensure())return;sending=true;status.textContent='Dosya gönderiliyor…';if(type==='video')media.pause();update();status.tabIndex=-1;status.focus();
-      try{await send(file);if(alive)close()}
+      if(sending||invalid||!ensure())return;const text=seconds?'':caption.value.trim();if(text.length>1000){status.textContent='Açıklama en fazla 1000 karakter olabilir.';caption.focus();return}sending=true;status.textContent='Dosya gönderiliyor…';if(type==='video')media.pause();update();status.tabIndex=-1;status.focus();
+      try{await send(file,text);if(alive)close()}
       catch(e){if(ensure()){sending=false;status.textContent=e.message||'Gönderilemedi. Dosyan burada; yeniden deneyebilirsin.';update();sendButton.focus()}}
     };
     status.textContent='Kontrol ettikten sonra Gönder düğmesine dokun.';update();sendButton.focus();return {close};

@@ -252,6 +252,7 @@ class MessageOut(BaseModel):
     is_starred: bool = False
     gift_key: str | None = None
     gift_id: int | None = None
+    caption: str | None = None
     media_name: str | None = None
     media_size: int | None = None
     media_type: str | None = None
