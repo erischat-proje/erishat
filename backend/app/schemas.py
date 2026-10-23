@@ -201,6 +201,8 @@ class ConversationOut(BaseModel):
     created_at: datetime
     members: list[ConversationMemberOut] = Field(default_factory=list)
     name: str | None = None
+    is_muted: bool = False
+    muted_until: datetime | None = None
     unread_count: int = 0
     pinned: bool = False
     manual_unread: bool = False

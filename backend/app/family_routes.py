@@ -15,6 +15,7 @@ from .moderation import require_chat_write
 from .models import Conversation, ConversationMember, Message, User
 from .platform_models import Family, FamilyDonation, FamilyInvitation, FamilyJoinRequest, FamilyMember, FamilyVisual, MessageHidden, Notification, VipStatus
 from .dm_folders import require_unlocked, _folder
+from .notification_policy import allowed as message_notifications_allowed
 
 router = APIRouter(prefix="/v1", tags=["families"])
 
@@ -488,6 +489,7 @@ def register_family_auth(current_user_dependency):
         message = Message(conversation_id=family.chat_conversation_id, sender_id=user.id, text=payload.text.strip())
         db.add(message)
         for row in db.scalars(select(FamilyMember).where(FamilyMember.family_id == family_id, FamilyMember.user_id != user.id)):
+            if not message_notifications_allowed(db, row.user_id, family.chat_conversation_id):continue
             locked=_folder(db,row.user_id,family.chat_conversation_id)
             db.add(Notification(user_id=row.user_id, kind="dm_message", title=family.name + " aile sohbeti", body="Kilitli sohbette yeni mesaj" if locked and locked.locked else payload.text.strip()[:180]))
         db.commit(); db.refresh(message); return message

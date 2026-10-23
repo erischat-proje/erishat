@@ -38,7 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars
+from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy
 from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
@@ -1111,38 +1111,25 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
 
 
 def _message_notifications_allowed(db: Session, recipient_id: str, conversation_id: str) -> bool:
-    recipient = db.get(User, recipient_id)
-    if not recipient or not recipient.is_active or not recipient.notifications_enabled:
-        return False
-    mute = db.scalar(select(ConversationMute.is_muted).where(
-        ConversationMute.user_id == recipient_id,
-        ConversationMute.conversation_id == conversation_id))
-    return not bool(mute)
+    return notification_policy.allowed(db, recipient_id, conversation_id)
 
 
-class ConversationMuteUpdate(BaseModel):
-    is_muted: bool
+ConversationMuteUpdate = notification_policy.MuteUpdate
 
 
 @app.get("/v1/conversations/{conversation_id}/notifications")
-def conversation_notifications(conversation_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
-    if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id)):
-        raise HTTPException(403, "Bu konuşmaya erişiminiz yok")
-    return {"is_muted": bool(db.scalar(select(ConversationMute.is_muted).where(ConversationMute.user_id == user.id, ConversationMute.conversation_id == conversation_id)))}
+def conversation_notifications(conversation_id: str, x_eris_dm_vault: str | None = Header(default=None),
+                               db: Session = Depends(get_db), user: User = Depends(current_user)):
+    message_tools.access(db, conversation_id, user.id, x_eris_dm_vault)
+    return notification_policy.state(db, user.id, conversation_id)
 
 
 @app.put("/v1/conversations/{conversation_id}/notifications")
-def set_conversation_notifications(conversation_id: str, payload: ConversationMuteUpdate, db: Session = Depends(get_db), user: User = Depends(current_user)):
-    if not db.scalar(select(ConversationMember.id).where(ConversationMember.conversation_id == conversation_id, ConversationMember.user_id == user.id)):
-        raise HTTPException(403, "Bu konuşmaya erişiminiz yok")
-    row = db.scalar(select(ConversationMute).where(ConversationMute.user_id == user.id, ConversationMute.conversation_id == conversation_id).with_for_update())
-    if row is None:
-        row = ConversationMute(user_id=user.id, conversation_id=conversation_id, is_muted=payload.is_muted)
-        db.add(row)
-    else:
-        row.is_muted = payload.is_muted
-    db.commit()
-    return {"is_muted": row.is_muted}
+def set_conversation_notifications(conversation_id: str, payload: ConversationMuteUpdate,
+                                   x_eris_dm_vault: str | None = Header(default=None),
+                                   db: Session = Depends(get_db), user: User = Depends(current_user)):
+    message_tools.access(db, conversation_id, user.id, x_eris_dm_vault)
+    return notification_policy.update(db, user.id, conversation_id, payload)
 
 
 def _dm_request_gate(db: Session, sender_id: str, conversation_id: str, *, first_text: bool = False) -> bool:
@@ -1958,9 +1945,10 @@ async def reply_to_story(story_id: int, text: str = Form(...), snapshot: UploadF
     message = Message(conversation_id=conversation.id, sender_id=user.id, text=f"[Story yanıtı #{story.id}] {text}")
     db.add(message); db.flush()
     if image: db.add(MessageMedia(message_id=message.id, media_type="image", mime_type=mime, data=image))
-    locked_story_folder = _folder(db, story.user_id, conversation.id)
-    db.add(Notification(user_id=story.user_id, kind="dm_message", title=user.nickname,
-        body="Kilitli sohbette yeni mesaj" if locked_story_folder and locked_story_folder.locked else "Story'ne yorum yaptı: " + text[:100]))
+    if _message_notifications_allowed(db, story.user_id, conversation.id):
+        locked_story_folder = _folder(db, story.user_id, conversation.id)
+        db.add(Notification(user_id=story.user_id, kind="dm_message", title=user.nickname,
+            body="Kilitli sohbette yeni mesaj" if locked_story_folder and locked_story_folder.locked else "Story'ne yorum yaptı: " + text[:100]))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation.id, "message_id":message.id,
         "sender_id":user.id, "sender_nickname":user.nickname, "text":message.text,
@@ -2144,9 +2132,10 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     db.add(DirectMessageGift(message_id=message.id, sender_id=user.id, recipient_id=recipient_id, gift_key=gift_key, unit_price=total_price, recipient_amount=receiver_amount))
     if restriction and restriction.enabled and not unlock:
         db.add(DirectMessageUnlock(owner_id=recipient_id, sender_id=user.id, gift_key=gift_key))
-    locked_gift_folder = _folder(db, recipient_id, conversation_id)
-    db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye",
-        body="Kilitli sohbette yeni hediye" if locked_gift_folder and locked_gift_folder.locked else f"{user.nickname} size {gift_key} ({total_price} 🪙 ×{quantity}) gönderdi; {receiver_amount} 🪙 kazandınız."))
+    if _message_notifications_allowed(db, recipient_id, conversation_id):
+        locked_gift_folder = _folder(db, recipient_id, conversation_id)
+        db.add(Notification(user_id=recipient_id, kind="dm_gift", title="Yeni hediye",
+            body="Kilitli sohbette yeni hediye" if locked_gift_folder and locked_gift_folder.locked else f"{user.nickname} size {gift_key} ({total_price} 🪙 ×{quantity}) gönderdi; {receiver_amount} 🪙 kazandınız."))
     from .vip_spending import record_spend
     record_spend(db,user.id,total_price,"dm_gift",str(message.id))
     db.commit(); db.refresh(message)

@@ -19,7 +19,7 @@ class ChatIdentityFamilyClose(unittest.TestCase):
         self.engine = create_engine('sqlite://')
         names = ['users','user_cosmetics','auth_identities','conversations','conversation_members','messages',
                  'families','family_members','family_invitations','family_join_requests','family_donations',
-                 'family_visuals','admin_roles','notifications','message_groups','conversation_folders','conversation_read_states','message_hidden','conversation_inbox_preferences','private_message_requests']
+                 'family_visuals','admin_roles','notifications','message_groups','conversation_folders','conversation_read_states','message_hidden','conversation_inbox_preferences','private_message_requests','conversation_mutes','conversation_mute_expiries']
         Base.metadata.create_all(self.engine, tables=[Base.metadata.tables[n] for n in names])
         self.db = Session(self.engine)
         self.owner = User(id='owner', public_id='1111111111', nickname='Kurucu')
