@@ -1496,7 +1496,7 @@
   function clearMessageMode(restore=true){
     const old=messageMode;messageMode=null;
     const chat=$('chat'),input=chat?.querySelector('#chatInput');
-    if(restore&&old?.kind==='edit'&&input)input.value=old.savedDraft;
+    if(restore&&old?.kind==='edit'&&input)input.value=old.savedDraft;refreshComposer();
     const bar=chat?.querySelector('[data-message-mode]');if(bar){bar.hidden=true;bar.querySelector('[data-mode-text]').textContent=''}
     chat?.querySelectorAll('[data-mode-disabled]').forEach(button=>{button.disabled=false;delete button.dataset.modeDisabled});
     const send=chat?.querySelector('.compose .primary');if(send)send.textContent=send.dataset.normalLabel||'Gönder';
@@ -1512,7 +1512,7 @@
     chat.querySelectorAll('.compose [data-dm-photo],.compose [data-dm-voice],.compose [data-dm-gift]').forEach(button=>{if(!button.disabled){button.dataset.modeDisabled='';button.disabled=true}});
     const bar=chat.querySelector('[data-message-mode]');bar.hidden=false;bar.querySelector('[data-mode-label]').textContent=kind==='edit'?'Mesajı düzenle':(row._message.sender_nickname||'Mesaj')+' kişisine yanıt';
     bar.querySelector('[data-mode-text]').textContent=row._message.media_type==='image'?'Fotoğraf':row._message.media_type==='voice'?'Sesli mesaj':String(row._message.media_name||row._message.text||'').slice(0,180);
-    if(kind==='edit'){input.value=row._message.text;chat.querySelector('.compose .primary').textContent='Kaydet'}
+    if(kind==='edit'){input.value=row._message.text;chat.querySelector('.compose .primary').textContent='Kaydet';refreshComposer()}
     selectedMessages.forEach(r=>r.classList.remove('dm-selected'));selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;refreshSelectionBar();input.focus();
   }
   function updateHistoryButton(){
@@ -1586,16 +1586,39 @@
     updateHistoryButton();
   }
 
+  function refreshComposer(){
+    const input=$('chatInput');if(!input||input.tagName!=='TEXTAREA')return;
+    input.style.height='auto';const height=Math.max(44,Math.min(160,input.scrollHeight||44));
+    input.style.height=height+'px';input.style.overflowY=input.scrollHeight>160?'auto':'hidden';
+    const count=$('chat')?.querySelector('[data-compose-count]');if(count){count.textContent=input.value.length+' / 2000';count.dataset.overLimit=String(input.value.length>2000)}
+  }
+  function installComposer(chat){
+    let input=chat.querySelector('#chatInput');if(!input)return;
+    if(input.tagName!=='TEXTAREA'){
+      const field=document.createElement('textarea');field.id='chatInput';field.value=input.value;field.placeholder=input.placeholder||'Mesaj yaz…';field.disabled=input.disabled;input.replaceWith(field);input=field;
+    }
+    if(input.dataset.multilineComposer)return;
+    input.dataset.multilineComposer='1';input.rows=1;input.maxLength=2000;input.setAttribute('aria-label','Mesaj yaz');input.setAttribute('enterkeyhint','enter');input.setAttribute('aria-describedby','dm-compose-help');
+    const wrap=document.createElement('div');wrap.className='dm-compose-field';input.before(wrap);wrap.append(input);
+    const footer=document.createElement('small');footer.className='dm-compose-help';footer.id='dm-compose-help';
+    const hint=document.createElement('span');hint.textContent='Yeni satır: Enter · Gönder: Ctrl/⌘+Enter';const count=document.createElement('span');count.dataset.composeCount='';footer.append(hint,count);wrap.append(footer);
+    const style=document.createElement('style');style.textContent=`#chat .compose{flex-wrap:wrap;align-items:flex-end}#chat .dm-compose-field{flex:1 1 100%;min-width:0;order:-1}#chat textarea#chatInput{display:block;box-sizing:border-box;width:100%;min-width:0;min-height:44px;max-height:160px;resize:none;border:1px solid var(--ui-line);border-radius:13px;padding:11px 12px;background:var(--ui-raised);color:var(--ui-ink);font:inherit;font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}#chat textarea#chatInput:focus-visible{outline:2px solid var(--ui-gold);outline-offset:1px}#chat .dm-compose-help{display:flex;justify-content:space-between;gap:8px;margin:5px 2px 0;font-size:10px;color:var(--ui-muted,var(--ui-ink))}#chat [data-compose-count]{white-space:nowrap}#chat [data-compose-count][data-over-limit=true]{color:var(--ui-danger)}#chat .compose>.primary{min-height:44px;margin-inline-start:auto}#chat .dm-message-text{white-space:pre-wrap;overflow-wrap:anywhere}`;document.head.append(style);
+    input.addEventListener('input',()=>{refreshComposer();if(activeConversationId&&messageMode?.kind!=='edit')drafts.set(String(activeConversationId),input.value)});
+    input.addEventListener('compositionstart',()=>input.dataset.composing='1');input.addEventListener('compositionend',()=>{delete input.dataset.composing;refreshComposer()});
+    refreshComposer();
+  }
   function bindSender(chat) {
     const input = chat.querySelector('.compose #chatInput, .compose input:not([type=range])');
     const send = chat.querySelector('.compose .primary');
     if (!send || send.dataset.realBound) return;
     send.dataset.realBound = '1';
     send.onclick = async () => {
+      if(send.disabled)return;
       const id = activeConversationId,revision=chatRevision;
       const text = input?.value?.trim();
       const body = chat.querySelector('.chatBody');
       if (!id || !text || !body) return;
+      if(input.value.length>2000){window.toast?.('Mesaj en fazla 2000 karakter olabilir.');input.focus();return}
       try {
         send.disabled=true;
         const mode=messageMode&&messageMode.conversationId===String(id)?messageMode:null;
@@ -1609,10 +1632,10 @@
       } catch (e) {
         if (/hediye ile kısıtlamış|hediyesi gerekli/i.test(String(e.message||''))) { window.toast?.(e.message); openGiftSheet(); return; }
         window.toast?.(e.message || 'Mesaj gönderilemedi.');
-      }finally{send.disabled=false}
+      }finally{send.disabled=false;refreshComposer()}
     };
     input?.removeAttribute('onkeydown');
-    input.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!send.disabled)send.click()}};
+    input.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&!e.altKey&&!e.isComposing&&e.keyCode!==229&&!input.dataset.composing){e.preventDefault();if(!send.disabled)send.click()}};
   }
 
   async function createConversation(participantId, participantName = 'Kullanıcı') {
@@ -1633,11 +1656,11 @@
     const chat = $('chat');
     const body = chat?.querySelector('.chatBody');
     if (!chat || !body || !api()?.messages) return;
-    const input=chat.querySelector('#chatInput');
+    installComposer(chat);const input=chat.querySelector('#chatInput');
     if(activeConversationId){drafts.set(String(activeConversationId),messageMode?.kind==='edit'?messageMode.savedDraft:(input?.value||''))}
     document.querySelector('[data-attachment-chooser]')?.remove();
     cancelVoiceRecording();closeMessageActions();clearMessageMode(false);historyCursor=null;historyBusy=false;historyWindow=false;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
-    if(input)input.value=drafts.get(String(id))||'';
+    if(input)input.value=drafts.get(String(id))||'';refreshComposer();
     const revision=++chatRevision;chat.dataset.groupWriteBlocked='0';chat.dataset.pinManage='0';chat.querySelector('[data-pin-banner]')?.remove();const pinsButton=chat.querySelector('[data-pinned-messages]');if(pinsButton)pinsButton.textContent='Sabitlenenler';
     activeConversationId = id;
     const info=conversationInfo.get(String(id));
@@ -1870,7 +1893,7 @@
     if (event?.detail?.state === 'ready') {
       document.querySelector('[data-attachment-chooser]')?.remove();
       if(currentUserId&&event.detail.user?.id&&String(currentUserId)!==String(event.detail.user.id)){
-        resetInbox();inboxFolder='inbox';cancelNativeDocument();drafts.clear();clearMessageMode(false);historyCursor=null;historyWindow=false;historyBusy=false;
+        resetInbox();inboxFolder='inbox';cancelNativeDocument();drafts.clear();if($('chatInput'))$('chatInput').value='';refreshComposer();clearMessageMode(false);historyCursor=null;historyWindow=false;historyBusy=false;
         listRevision++;chatRevision++;activeConversationId=null;selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;
         conversationInfo.clear();vaultToken='';window.ErisChatDMVaultToken='';window.__erisActiveDmUserId=null;
         document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();const chat=$('chat');releaseMediaUrls(chat);chat?.querySelector('.chatBody')?.replaceChildren();chat?.classList.remove('show');
@@ -1881,7 +1904,7 @@
     } else if (event?.detail?.state === 'logged_out') {
       releaseMediaUrls($('chat'));
       document.querySelector('[data-attachment-chooser]')?.remove();
-      resetInbox();cancelNativeDocument();drafts.clear();clearMessageMode(false);historyCursor=null;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
+      resetInbox();cancelNativeDocument();drafts.clear();if($('chatInput'))$('chatInput').value='';refreshComposer();clearMessageMode(false);historyCursor=null;document.querySelector('[data-dm-search-panel]')?.remove();closeSharedMedia();
       listRevision++;chatRevision++;activeConversationId=null;
       currentUserId = null;
       loadedForUserId = null;
