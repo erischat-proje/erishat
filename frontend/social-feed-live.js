@@ -417,6 +417,7 @@
   }
   const mineRequests=new WeakMap();
   async function loadMine(container){
+    if(window.ErisProfileWorkspace?.hasPosts(container))return window.ErisProfileWorkspace.reloadPosts(container);
     if(!container||!api())return;
     const session=token(),request=(mineRequests.get(container)||0)+1;mineRequests.set(container,request);
     releaseMedia(container);container.setAttribute('aria-busy','true');container.innerHTML='<div class="ec-social-empty" role="status">Gönderilerin yükleniyor…</div>';
@@ -463,7 +464,11 @@
       if(token()!==session||!container.isConnected||mineRequests.get(container)!==request)return;await renderPosts(container,Array.isArray(rows)?rows:[],isOwner?'profile':false);
     }catch(error){if(token()===session&&container.isConnected&&mineRequests.get(container)===request)container.textContent=error.message||'Profil gönderileri yüklenemedi.'}
   }
-  window.ErisSocialFeed={load:()=>loadFeed(),loadMine,loadProfile,compose};
+  async function renderMineRows(container,rows,append=false){
+    await renderPosts(container,rows,'profile',append);
+    container.querySelectorAll('[data-post-options] button').forEach(button=>{if(button.querySelector('span'))return;const label=document.createElement('span');label.textContent=button.getAttribute('aria-label');button.append(label);});
+  }
+  window.ErisSocialFeed={load:()=>loadFeed(),loadMine,loadProfile,compose,renderMineRows,release:releaseMedia};
   function boot(){if(feedSession!==token()){feedRevision++;feedLoading=false;feedCursor=null;seenPosts.clear();cleanupUrls();document.querySelectorAll('.ec-social-post').forEach(card=>{releaseMedia(card);card.remove()});document.querySelectorAll('.ec-social-modal').forEach(modal=>modal.remove());feedSession=token()}const root=mount();if(root&&document.getElementById('explore')?.classList.contains('show')){if(token())loadFeed(root);else root.querySelector('[data-feed]').textContent='Keşfet için giriş yap.'}}
   document.addEventListener('DOMContentLoaded',boot);for(const event of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(event,boot);document.addEventListener('visibilitychange',()=>{if(document.hidden)document.querySelectorAll('.ec-social-video').forEach(v=>v.pause());else boot()});
   document.addEventListener('click',event=>{if(event.target.closest('nav.nav button[onclick*="explore"]'))setTimeout(boot,50)});
