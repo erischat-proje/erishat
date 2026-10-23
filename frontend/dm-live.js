@@ -220,11 +220,12 @@
     if (message?.is_pinned) { const pin=document.createElement('span'); pin.dataset.pinIcon=''; pin.textContent='📌 '; pin.style.cssText="font-size:8px;color:var(--ui-gold)"; row.prepend(pin); }
     const meta = document.createElement('small');
     meta.style.cssText = "display:flex;justify-content:flex-end;gap:5px;margin-top:4px;font-size:8px;line-height:1;color:color-mix(in srgb, var(--ui-ink) 61%, transparent);white-space:nowrap";
+    meta.className='dm-message-meta';
     const when = document.createElement('span'); when.textContent = messageTime(message?.created_at); meta.append(when);
     if(message.edited_at){const edited=document.createElement('span');edited.className='dm-edited';edited.textContent='düzenlendi';meta.append(edited)}
     if (mine) { const checks = document.createElement('span'); checks.className='dm-checks'; checks.textContent = message?.is_read ? '✓✓' : '✓'; checks.setAttribute('aria-label', message?.is_read ? 'Okundu' : 'Gönderildi'); meta.append(checks); }
     row.append(meta);
-    renderMessageReactions(row,message);
+    renderMessageReactions(row,message);renderMessageStar(row,message);
     if(message.bubble_asset && message.media_type!=='voice'){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
 
     if (message?.is_pinned) row.dataset.pinned = '1';
@@ -255,6 +256,7 @@
           return next;
         }
         existing._message=merged;
+        if(!!old.is_starred!==!!merged.is_starred)renderMessageStar(existing,merged);
         if(JSON.stringify(old.reactions)!==JSON.stringify(merged.reactions))renderMessageReactions(existing,merged);
         return existing;
       }
@@ -276,6 +278,7 @@
     const reply=selectionBar.querySelector('[data-reply-selected]'),edit=selectionBar.querySelector('[data-edit-selected]');
     if(reply)reply.disabled=!one||isSystemConversation();
     if(edit)edit.disabled=!one||!canEditMessage(one);
+    const star=selectionBar.querySelector('[data-star-selected]');if(star){star.disabled=!one||isSystemConversation()||((!!one?._message?.protected_message||!!one?._message?.temporary||!!one?._message?.expires_at)&&!one?._message?.is_starred);star.textContent=one?._message?.is_starred?'Yıldızı kaldır':'Yıldızla'}
     const react=selectionBar.querySelector('[data-react-selected]'),forward=selectionBar.querySelector('[data-forward-selected]');
     if(react)react.disabled=!one||isSystemConversation()||!!one?._message?.temporary||!!one?._message?.protected_message;
     if(forward)forward.disabled=isSystemConversation()||allMessagesSelected||!selectedMessages.size||selectedMessages.size>10||[...selectedMessages].some(row=>!canForwardMessage(row._message));
@@ -522,7 +525,7 @@
     document.head.appendChild(mediaStyle);
     installFolderStyles();
     selectionBar = document.createElement('div'); selectionBar.className = 'dm-select-tools'; selectionBar.dataset.dmTools = ''; selectionBar.hidden = true;
-    selectionBar.innerHTML = "<button type=\"button\" data-all-selected aria-label=\"Tümünü seç\" title=\"Tümünü seç\">□</button><button type=\"button\" data-reply-selected disabled>Yanıtla</button><button type=\"button\" data-edit-selected disabled>Düzenle</button><button type=\"button\" data-react-selected disabled>Tepki</button><button type=\"button\" data-forward-selected disabled>İlet</button><span data-selected-count style=\"font-size:10px;color:var(--ui-ink)\"></span><button type=\"button\" data-pin-selected aria-label=\"Sabitle\" title=\"Sabitle\">📌</button><button type=\"button\" data-delete-selected aria-label=\"Seçilenleri sil\" title=\"Seçilenleri sil\">Sil</button><button type=\"button\" data-clear-selected aria-label=\"Seçimi kapat\" title=\"Seçimi kapat\">×</button>";
+    selectionBar.innerHTML = "<button type=\"button\" data-all-selected aria-label=\"Tümünü seç\" title=\"Tümünü seç\">□</button><button type=\"button\" data-reply-selected disabled>Yanıtla</button><button type=\"button\" data-edit-selected disabled>Düzenle</button><button type=\"button\" data-react-selected disabled>Tepki</button><button type=\"button\" data-forward-selected disabled>İlet</button><button type=\"button\" data-star-selected disabled title=\"Sadece sana görünür\">Yıldızla</button><span data-selected-count style=\"font-size:10px;color:var(--ui-ink)\"></span><button type=\"button\" data-pin-selected aria-label=\"Sabitle\" title=\"Sabitle\">📌</button><button type=\"button\" data-delete-selected aria-label=\"Seçilenleri sil\" title=\"Seçilenleri sil\">Sil</button><button type=\"button\" data-clear-selected aria-label=\"Seçimi kapat\" title=\"Seçimi kapat\">×</button>";
     const body = chat.querySelector('.chatBody'); chat.querySelector('.chatHead')?.append(selectionBar);
     selectionBar.querySelector('[data-clear-selected]').onclick = () => { selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear();allMessagesSelected=false; messageSelectionMode=false;refreshSelectionBar(); };
     selectionBar.querySelector('[data-all-selected]').onclick = () => { const rows=[...body.querySelectorAll('.bubble[data-message-id]')];allMessagesSelected=!allMessagesSelected;selectedMessages.clear();rows.forEach(row=>{row.classList.toggle('dm-selected',allMessagesSelected);if(allMessagesSelected)selectedMessages.add(row)});refreshSelectionBar() };
@@ -542,6 +545,7 @@
         selectedMessages.forEach(row => row.classList.remove('dm-selected')); selectedMessages.clear(); refreshSelectionBar();
       } catch (e) { window.toast?.(e.message || 'Sabitleme işlemi başarısız.'); }
     };
+    selectionBar.querySelector('[data-star-selected]').onclick=()=>{if(selectedMessages.size===1)setMessageStar([...selectedMessages][0])};
     selectionBar.querySelector('[data-react-selected]').onclick=openReactionPicker;
     selectionBar.querySelector('[data-forward-selected]').onclick=openForwardPicker;
     selectionBar.querySelector('[data-reply-selected]').onclick=()=>startMessageMode('reply');
@@ -1008,7 +1012,7 @@
     }
   }
   async function loadConversations(more=false) {
-    installMessageSearch();installInboxControls();
+    installMessageSearch();installInboxControls();installStarControls();
     window.ErisPaymentAssistance?.renderInbox?.();
     if (!(localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token'))) return;
     const list = document.querySelector('#messages .list');
@@ -1097,6 +1101,53 @@
     const removed=new Set(ids.map(Number)),body=$('chat')?.querySelector('.chatBody');if(!body)return;
     for(const row of body.querySelectorAll('.bubble[data-message-id]'))if(removed.has(Number(row._message?.reply_to_id)))appendMessageOnce(body,{...row._message,reply_to_id:null,reply:{unavailable:true,sender_name:'',text:'Mesaj artık görüntülenemiyor.'}},row._mine);
     if(messageMode&&removed.has(Number(messageMode.message.id)))clearMessageMode();
+  }
+  function renderMessageStar(row,message){
+    row.querySelector('.dm-message-star')?.remove();if(!message.is_starred)return;
+    const badge=document.createElement('span');badge.className='dm-message-star';badge.textContent='★';badge.setAttribute('aria-label','Sana özel yıldızlı mesaj');badge.title='Sana özel yıldızlı mesaj';
+    (row.querySelector('.dm-message-meta')||row).append(badge);
+  }
+  function installStarControls(){
+    const root=$('messages');if(root&&!root.querySelector('[data-open-stars]')){const button=document.createElement('button');button.type='button';button.dataset.openStars='';button.textContent='★ Yıldızlı mesajlar';button.onclick=()=>openStarredMessages();root.querySelector('[data-inbox-controls]')?.append(button)}
+    if(document.getElementById('dm-stars-styles'))return;
+    const style=document.createElement('style');style.id='dm-stars-styles';style.textContent=`
+      .dm-message-star{color:var(--ui-gold,#b98c46);font-size:12px}#chat .dm-select-tools button[data-star-selected]{width:auto;font-size:11px;padding:0 8px}
+      [data-open-stars]{width:100%;margin-top:10px;min-height:44px;border:1px solid var(--ui-line,#c8ae79);border-radius:12px;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);font:inherit}
+      [data-starred-panel]{position:fixed;inset:0;z-index:100090;overflow:auto;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);overscroll-behavior:contain}[data-starred-panel] section{box-sizing:border-box;width:min(620px,100%);margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}[data-starred-panel] header{display:flex;justify-content:space-between;align-items:center;gap:10px}[data-starred-panel] button{min-height:44px;border:1px solid var(--ui-line,#c8ae79);border-radius:12px;padding:9px 12px;background:var(--ui-raised,var(--ui-panel,#fffaf0));color:inherit;font:inherit}[data-starred-panel] label{display:block;font-size:12px;margin:12px 0}[data-starred-panel] input,[data-starred-panel] select{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:12px;border:1px solid var(--ui-line,#c8ae79);border-radius:10px;background:var(--ui-raised,var(--ui-panel,#fffaf0));color:inherit;font:inherit}[data-starred-panel] p{font-size:13px;overflow-wrap:anywhere}.dm-star-card{margin:14px 0;padding:14px;border:1px solid var(--ui-line,#c8ae79);border-radius:16px;overflow-wrap:anywhere}.dm-star-card small{display:block;opacity:.75;margin:8px 0}.dm-star-card p{white-space:pre-wrap}.dm-star-card footer{display:flex;flex-wrap:wrap;gap:8px}[data-star-more]{width:100%;margin-top:12px}
+    `;document.head.append(style);
+  }
+  async function setMessageStar(row){
+    const cid=activeConversationId,revision=chatRevision,user=currentUserId,m=row?._message;if(!m||!cid)return;
+    const button=selectionBar?.querySelector('[data-star-selected]');if(button)button.disabled=true;
+    try{const data=await api().api('/message-stars/'+encodeURIComponent(cid)+'/'+m.id,{method:'PUT',body:JSON.stringify({starred:!m.is_starred})});
+      if(revision!==chatRevision||user!==currentUserId)return;
+      const body=$('chat')?.querySelector('.chatBody'),current=body?.querySelector('[data-message-id="'+Number(m.id)+'"]');if(current)appendMessageOnce(body,{...current._message,is_starred:!!data.is_starred},current._mine);
+      refreshSelectionBar();window.toast?.(data.is_starred?'Mesaj yıldızlandı.':'Mesajın yıldızı kaldırıldı.');
+    }catch(e){if(revision===chatRevision&&user===currentUserId){window.toast?.(e.message||'Yıldız kaydedilemedi.');refreshSelectionBar()}}
+  }
+  function openStarredMessages(conversationId=null){
+    installStarControls();const panel=messageActionPanel(conversationId?'Sohbetin yıldızlı mesajları':'Yıldızlı mesajlar');panel.dataset.starredPanel='';
+    const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]'),user=currentUserId,authRevision=inboxAuthRevision;
+    content.innerHTML='<p>Yıldızların yalnızca sana görünür. Mesaj silinir veya erişimin kalkarsa burada gösterilmez.</p><label>Mesaj, dosya veya sohbet ara<input type="search" data-star-query maxlength="100" autocomplete="off"></label><label>Tür<select data-star-kind><option value="all">Tümü</option><option value="text">Metin</option><option value="image">Fotoğraf</option><option value="voice">Ses</option><option value="video">Video</option><option value="document">Belge</option></select></label><label data-scope-label>Klasör<select data-star-scope><option value="all">Sohbetler ve Arşiv</option></select></label><button type="button" data-star-refresh>Yenile</button><div data-star-results></div><button type="button" data-star-more hidden>Daha fazla yıldızlı mesaj</button>';
+    const query=content.querySelector('[data-star-query]'),kind=content.querySelector('[data-star-kind]'),scope=content.querySelector('[data-star-scope]'),results=content.querySelector('[data-star-results]'),more=content.querySelector('[data-star-more]');
+    if(vaultToken){const locked=document.createElement('option');locked.value='locked';locked.textContent='Kilitli sohbetler';scope.append(locked);if(inboxFolder==='locked')scope.value='locked'}
+    content.querySelector('[data-scope-label]').hidden=!!conversationId;
+    let revision=0,cursor=null,timer=null,busy=false;const valid=()=>panel.isConnected&&user===currentUserId&&authRevision===inboxAuthRevision;
+    const load=async(append=false)=>{
+      if(append&&busy)return;busy=true;const own=++revision;if(!append){cursor=null;results.replaceChildren()}more.hidden=true;status.textContent='Yıldızlı mesajlar yükleniyor…';
+      try{const data=await api().api('/message-stars?q='+encodeURIComponent(query.value.trim())+'&kind='+kind.value+'&scope='+scope.value+'&limit=30'+(conversationId?'&conversation_id='+encodeURIComponent(conversationId):'')+(append&&cursor?'&before='+cursor:''));
+        if(!valid()||own!==revision)return;
+        for(const item of asList(data,['items'])){
+          const m=item.message,c=item.conversation;if(!m?.id||!c?.id||results.querySelector('[data-star-id="'+Number(item.star_id)+'"]'))continue;
+          const card=document.createElement('article');card.className='dm-star-card';card.dataset.starId=String(item.star_id);card.dataset.starMessageId=String(m.id);card.dataset.starConversationId=String(c.id);
+          const title=document.createElement('b');title.textContent=c.name||'Sohbet';const meta=document.createElement('small');meta.textContent=(m.sender_nickname||'Kullanıcı')+' · '+(Number.isNaN(new Date(m.created_at).getTime())?'':new Date(m.created_at).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}));const text=document.createElement('p');text.textContent=m.media_name||m.text||'Mesaj';const footer=document.createElement('footer'),open=document.createElement('button'),remove=document.createElement('button');open.type=remove.type='button';open.dataset.starGoto='';remove.dataset.starRemove='';open.textContent='Sohbette göster';remove.textContent='Yıldızı kaldır';footer.append(open,remove);card.append(title,meta,text,footer);results.append(card);
+          open.onclick=async()=>{if(!valid())return;open.disabled=true;const chatVersion=chatRevision;try{const details=api()?.conversation?await api().conversation(c.id):c;if(!valid()||chatVersion!==chatRevision)return;const info={...conversationInfo.get(String(c.id)),...c,...details};conversationInfo.set(String(c.id),info);const peer=asList(info.members,['members']).find(x=>String(x.user_id)!==String(user));panel.remove();await openRealChat(c.id,info.name||c.name||'Sohbet',c.type==='group'?'👥':c.type==='family'?'👪':'👤',c.type==='dm'?peer?.user_id:null);if(user===currentUserId&&authRevision===inboxAuthRevision&&String(activeConversationId)===String(c.id))await jumpToMessage(m.id)}catch(e){if(valid())status.textContent=e.message||'Sohbet açılamadı.'}finally{open.disabled=false}};
+          remove.onclick=async()=>{if(!valid())return;remove.disabled=true;try{await api().api('/message-stars/'+encodeURIComponent(c.id)+'/'+m.id,{method:'PUT',body:JSON.stringify({starred:false})});if(!valid())return;card.remove();if(String(activeConversationId)===String(c.id)){const body=$('chat')?.querySelector('.chatBody'),row=body?.querySelector('[data-message-id="'+Number(m.id)+'"]');if(row){appendMessageOnce(body,{...row._message,is_starred:false},row._mine);refreshSelectionBar()}}if(!results.children.length)status.textContent='Bu filtrede yıldızlı mesaj yok.'}catch(e){if(valid())status.textContent=e.message||'Yıldız kaldırılamadı.'}finally{remove.disabled=false}};
+        }
+        cursor=data.next_before;more.hidden=!data.has_more;status.textContent=results.children.length?'':'Bu filtrede yıldızlı mesaj yok.';
+      }catch(e){if(valid()&&own===revision)status.textContent=e.message||'Yıldızlı mesajlar yüklenemedi.'}finally{if(own===revision)busy=false}
+    };
+    query.oninput=()=>{revision++;busy=false;clearTimeout(timer);results.replaceChildren();more.hidden=true;timer=setTimeout(()=>{if(valid())load()},250)};kind.onchange=scope.onchange=()=>{clearTimeout(timer);load()};more.onclick=()=>load(true);content.querySelector('[data-star-refresh]').onclick=()=>load();load();
   }
   const REACTION_EMOJIS=['👍','❤️','😂','😮','😢','🙏','🔥','👏'];
   const reactionJobs=new Set();
@@ -1243,8 +1294,8 @@
       .dm-search-panel{position:fixed;inset:0;z-index:100070;background:var(--ui-panel);color:var(--ui-ink);overflow:auto;overscroll-behavior:contain}.dm-search-panel section{width:min(620px,100%);box-sizing:border-box;margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-search-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}.dm-search-panel form{display:flex;align-items:end;gap:10px;margin:16px 0}.dm-search-panel label{flex:1;min-width:0;font-size:12px}.dm-search-panel input{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-panel button{min-height:40px;padding:9px 12px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-result{display:block;width:100%;text-align:left;margin:10px 0;overflow-wrap:anywhere}.dm-search-result small,.dm-search-result span{display:block}.dm-search-result small{color:var(--ui-gold,#b98c46);margin-bottom:6px;font-size:11px}.dm-search-result span{white-space:pre-wrap;font-size:13px}
       @media(max-width:360px){#chat .dm-select-tools{gap:4px}#chat .dm-select-tools button{width:30px;height:32px;font-size:14px}#chat .dm-select-tools [data-selected-count]{font-size:9px!important}}
     `;document.head.append(style);
-    const toolbar=document.createElement('nav');toolbar.className='dm-message-workbench';toolbar.dataset.messageWorkbench='';toolbar.setAttribute('aria-label','Sohbet araçları');toolbar.innerHTML='<button type="button" data-older-messages>Eski mesajları yükle</button><button type="button" data-newest-messages hidden>En yeni mesajlar</button><button type="button" data-search-messages>Sohbette ara</button><button type="button" data-shared-messages>Paylaşılanlar</button><small data-upload-status role="status" hidden></small>';
-    chat.querySelector('.chatBody').before(toolbar);toolbar.querySelector('[data-older-messages]').onclick=loadOlderMessages;toolbar.querySelector('[data-search-messages]').onclick=openMessageSearch;toolbar.querySelector('[data-shared-messages]').onclick=openSharedMedia;
+    const toolbar=document.createElement('nav');toolbar.className='dm-message-workbench';toolbar.dataset.messageWorkbench='';toolbar.setAttribute('aria-label','Sohbet araçları');toolbar.innerHTML='<button type="button" data-older-messages>Eski mesajları yükle</button><button type="button" data-newest-messages hidden>En yeni mesajlar</button><button type="button" data-search-messages>Sohbette ara</button><button type="button" data-shared-messages>Paylaşılanlar</button><button type="button" data-starred-messages>Yıldızlılar</button><small data-upload-status role="status" hidden></small>';
+    chat.querySelector('.chatBody').before(toolbar);toolbar.querySelector('[data-older-messages]').onclick=loadOlderMessages;toolbar.querySelector('[data-search-messages]').onclick=openMessageSearch;toolbar.querySelector('[data-shared-messages]').onclick=openSharedMedia;toolbar.querySelector('[data-starred-messages]').onclick=()=>openStarredMessages(activeConversationId);
     toolbar.querySelector('[data-newest-messages]').onclick=()=>{if(activeConversationId)openRealChat(activeConversationId,chat.querySelector('.chatHead b')?.textContent||'Sohbet','',window.__erisActiveDmUserId)};
     const mode=document.createElement('div');mode.className='dm-compose-mode';mode.dataset.messageMode='';mode.hidden=true;mode.innerHTML='<div><b data-mode-label></b><small data-mode-text></small></div><button type="button" aria-label="Yanıtı veya düzenlemeyi iptal et">×</button>';mode.querySelector('button').onclick=()=>clearMessageMode();chat.querySelector('.compose').before(mode);
     const send=chat.querySelector('.compose .primary');if(send)send.dataset.normalLabel=send.textContent||'Gönder';
@@ -1419,6 +1470,7 @@
       return;
     }
     if(data?.type==='dm_messages_deleted' && data.conversation_id){
+      const deletedStars=new Set((data.message_ids||[]).map(String));document.querySelectorAll('[data-starred-panel] .dm-star-card').forEach(card=>{if(card.dataset.starConversationId===String(data.conversation_id)&&deletedStars.has(card.dataset.starMessageId))card.remove()});
       if(String(activeConversationId||'')===String(data.conversation_id)){
         const body=document.querySelector('#chat .chatBody');
         for(const id of data.message_ids||[])body?.querySelectorAll('.bubble[data-message-id="'+String(id)+'"]').forEach(row=>{selectedMessages.delete(row);releaseMediaUrls(row);row.remove()});

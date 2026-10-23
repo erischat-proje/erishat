@@ -38,7 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools, message_attachments, dm_inbox, message_actions
+from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars
 from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
@@ -456,6 +456,7 @@ message_actions.register(lambda db,cid,user,token: _require_message_media_access
     lambda db,m,uid: _message_out(db,m,uid),
     lambda db,uid,cid: _message_notifications_allowed(db,uid,cid))
 app.include_router(message_actions.router)
+app.include_router(message_stars.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -1286,6 +1287,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         **context.get("actions",{}).get(message.id,{}),
         "text": message.text, "created_at": message.created_at,
         "is_read": not is_system and message.sender_id == viewer_id and bool(context["read"] >= message.id),
+        "is_starred":message.id in context.get("starred",set()),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
         "gift_id": GIFT_META.get(gift.gift_key, {}).get("id") if gift else None,
         "gift_image_url": GIFT_META[gift.gift_key]["image_url"] if gift and gift.gift_key in GIFT_META else None,
