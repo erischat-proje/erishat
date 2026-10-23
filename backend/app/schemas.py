@@ -208,6 +208,7 @@ class ConversationOut(BaseModel):
 
 
 class MessageCreate(BaseModel):
+    reply_to_id: int | None = Field(default=None,gt=0)
     text: str = Field(min_length=1, max_length=2000)
 
     @field_validator("text")
@@ -226,6 +227,9 @@ class MessageOut(BaseModel):
     sender_id: str
     text: str
     created_at: datetime
+    edited_at: datetime | None = None
+    reply_to_id: int | None = None
+    reply: dict | None = None
     sender_nickname: str | None = None
     sender_avatar: str | None = None
     sender_avatar_asset: str | None = None

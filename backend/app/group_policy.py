@@ -44,7 +44,7 @@ def aware(value):
     return value.replace(tzinfo=timezone.utc) if value and value.tzinfo is None else value
 
 
-def require_write(db, cid, uid, consume=True):
+def require_write(db, cid, uid, consume=True, check_slow=True):
     if not db.get(MessageGroup, cid):
         return
     locked_group(db, cid)
@@ -59,7 +59,7 @@ def require_write(db, cid, uid, consume=True):
             raise HTTPException(403, 'Bu grupta yalnızca yöneticiler mesaj gönderebilir.')
         if control and control.muted_until and aware(control.muted_until) > now:
             raise HTTPException(403, 'Grupta mesaj gönderme yetkiniz geçici olarak kısıtlandı.')
-        if control and config.slow_seconds and control.last_sent_at:
+        if check_slow and control and config.slow_seconds and control.last_sent_at:
             if (now - aware(control.last_sent_at)).total_seconds() < config.slow_seconds:
                 raise HTTPException(429, 'Yavaş mod etkin. Yeni mesaj için bekleyin.')
     if consume:

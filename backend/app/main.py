@@ -38,6 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
+from . import message_tools
 from . import group_routes
 from . import group_policy
 from .staff_visibility import is_staff
@@ -445,6 +446,8 @@ bind_account_delete_auth(current_user)
 app.include_router(account_deletion_router)
 group_routes.register_auth(current_user)
 app.include_router(group_routes.router)
+message_tools.register(current_user, lambda db,m,uid,context=None: _message_out(db,m,uid,context), lambda db,uid,event: _send_dm_event(db,uid,event))
+app.include_router(message_tools.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -1203,11 +1206,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
                 raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {restriction.gift_key} ({gift_price} Lidya) göndermelisin.")
     first_private_request = False if db.get(MessageGroup, conversation_id) else _dm_request_gate(db, user.id, conversation_id, first_text=True)
     try:
-        message = MessageService(MessageRepository(db)).create(conversation_id, user.id, payload.text)
-        conversation = db.get(Conversation, conversation_id)
-        if conversation and conversation.type == 'dm' and conversation.is_ephemeral:
-            message.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
-            db.commit()
+        message = message_tools.create_text(db, conversation_id, user.id, payload.text, payload.reply_to_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     event = {
@@ -1217,6 +1216,7 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         "sender_id": user.id,
         "sender_nickname": user.nickname,
         "text": message.text,
+        "has_reply": payload.reply_to_id is not None,
         "created_at": message.created_at.isoformat() if message.created_at else None,
     }
     for member_id in repo.members(conversation_id):
@@ -1270,6 +1270,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
         "sender_nickname":"LidyaChat" if is_system else (sender.nickname if sender else "Silinmiş kullanıcı"),
         "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
         "sender_frame_asset":None if is_system else (sender.frame_asset if sender else None), "bubble_asset":None if is_system else context.get("bubbles",{}).get(message.sender_id),
+        **context.get("details",{}).get(message.id,{}),
         "text": message.text, "created_at": message.created_at,
         "is_read": not is_system and message.sender_id == viewer_id and bool(context["read"] >= message.id),
         "is_pinned": pinned, "gift_key": gift.gift_key if gift else None,
