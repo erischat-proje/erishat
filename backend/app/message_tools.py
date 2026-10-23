@@ -165,6 +165,8 @@ async def edit(conversation_id: str,message_id: int,payload: EditText,x_eris_dm_
     visible_message(db,conversation_id,user.id,message_id)
     message=db.scalar(select(Message).where(Message.id==message_id).with_for_update().execution_options(populate_existing=True))
     if not message:raise HTTPException(404,'Mesaj silindi.')
+    from .message_poll_models import MessagePoll
+    if db.get(MessagePoll,message_id):raise HTTPException(403,'Anket sorusu ve seçenekleri sonradan düzenlenemez.')
     if message.sender_id!=user.id:raise HTTPException(403,'Yalnızca kendi mesajınızı düzenleyebilirsiniz.')
     if db.scalar(select(MessageMedia.message_id).where(MessageMedia.message_id==message_id)) or db.scalar(select(DirectMessageGift.message_id).where(DirectMessageGift.message_id==message_id)):
         raise HTTPException(403,'Yalnızca metin mesajları düzenlenebilir.')

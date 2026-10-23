@@ -146,6 +146,9 @@ async def forward(conversation_id: str, payload: ForwardMessages,
         message_tools.visible_message(db, conversation_id, user.id, m.id)
         if m.expires_at:
             raise HTTPException(403, 'Süreli mesajlar iletilemez.')
+    from .message_poll_models import MessagePoll
+    if db.scalar(select(MessagePoll.message_id).where(MessagePoll.message_id.in_(mids))):
+        raise HTTPException(403, 'Anketler başka bir sohbete iletilemez.')
     media = {m.message_id:m for m in db.scalars(select(MessageMedia).where(MessageMedia.message_id.in_(mids)))}
     gifts = db.scalar(select(DirectMessageGift.message_id).where(DirectMessageGift.message_id.in_(mids)))
     if gifts is not None or any(m.temporary or m.media_type not in {'image','voice','video','document'} for m in media.values()):

@@ -232,6 +232,7 @@ class MessageOut(BaseModel):
     text: str
     created_at: datetime
     edited_at: datetime | None = None
+    poll: dict | None = None
     protected_message: bool = False
     forwarded: bool = False
     reactions: list[dict] = Field(default_factory=list)
