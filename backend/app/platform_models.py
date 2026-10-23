@@ -286,6 +286,16 @@ class ConversationFolder(Base):
     locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
 
 
+class ConversationInboxPreference(Base):
+    __tablename__ = "conversation_inbox_preferences"
+    __table_args__ = (UniqueConstraint("user_id", "conversation_id", name="uq_conversation_inbox_user"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True, nullable=False)
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    manual_unread: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+
+
 class ConversationVault(Base):
     __tablename__ = "conversation_vaults"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)

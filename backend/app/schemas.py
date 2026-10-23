@@ -202,6 +202,8 @@ class ConversationOut(BaseModel):
     members: list[ConversationMemberOut] = Field(default_factory=list)
     name: str | None = None
     unread_count: int = 0
+    pinned: bool = False
+    manual_unread: bool = False
     last_message: str | None = None
     last_message_at: datetime | None = None
     avatar_url: str | None = None

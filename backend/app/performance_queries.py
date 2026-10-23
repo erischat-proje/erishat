@@ -1,9 +1,9 @@
 """Bounded page queries; binary media are loaded only by media endpoints."""
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, or_
 from .models import Conversation, ConversationMember, Message, User
 from .group_models import MessageGroup
 from .platform_models import (ConversationFolder, ConversationReadState, Family, MessageHidden,
-    PinnedMessage, DirectMessageGift, MessageMedia, FamilyVisual)
+    PinnedMessage, DirectMessageGift, MessageMedia, FamilyVisual, ConversationInboxPreference, PrivateMessageRequest)
 
 
 def message_context(db, messages, viewer_id):
@@ -31,22 +31,48 @@ def message_context(db, messages, viewer_id):
         'media': {r.message_id: r for r in db.scalars(select(MessageMedia).where(MessageMedia.message_id.in_(ids)))}}
 
 
-def conversation_page(db, user_id, folder, limit, offset):
-    latest = select(func.max(Message.created_at)).where(Message.conversation_id == Conversation.id).correlate(Conversation).scalar_subquery()
+def conversation_page(db, user_id, folder, limit, offset, q='', view='all'):
+    from .dm_inbox import visible_conditions
+    conditions = visible_conditions(user_id)
+    latest = select(func.max(Message.created_at)).where(Message.conversation_id == Conversation.id, *conditions).correlate(Conversation).scalar_subquery()
     query = select(Conversation).join(ConversationMember, ConversationMember.conversation_id == Conversation.id).outerjoin(
         ConversationFolder, and_(ConversationFolder.conversation_id == Conversation.id, ConversationFolder.user_id == user_id)).where(ConversationMember.user_id == user_id)
+    query = query.outerjoin(ConversationInboxPreference, and_(
+        ConversationInboxPreference.conversation_id == Conversation.id, ConversationInboxPreference.user_id == user_id))
+    pinned = func.coalesce(ConversationInboxPreference.pinned, False)
+    manual = func.coalesce(ConversationInboxPreference.manual_unread, False)
+    pending = select(PrivateMessageRequest.id).where(PrivateMessageRequest.conversation_id == Conversation.id,
+        PrivateMessageRequest.recipient_id == user_id, PrivateMessageRequest.status == 'pending').exists()
+    query = query.where(~pending)
+    if view == 'pinned':
+        query = query.where(pinned.is_(True))
+    if view == 'unread':
+        read = select(ConversationReadState.last_read_message_id).where(
+            ConversationReadState.conversation_id == Conversation.id, ConversationReadState.user_id == user_id).correlate(Conversation).scalar_subquery()
+        unread_exists = select(Message.id).where(Message.conversation_id == Conversation.id,
+            Message.sender_id != user_id, Message.id > func.coalesce(read, 0), *conditions).exists()
+        query = query.where(or_(manual.is_(True), unread_exists))
+    if q.strip():
+        # Escape LIKE wildcards; search names/IDs, never message text or vault contents.
+        term = '%' + q.strip().replace('!', '!!').replace('%', '!%').replace('_', '!_') + '%'
+        peer = select(ConversationMember.id).join(User, User.id == ConversationMember.user_id).where(
+            ConversationMember.conversation_id == Conversation.id, ConversationMember.user_id != user_id,
+            or_(User.nickname.ilike(term, escape='!'), User.public_id.ilike(term, escape='!'))).exists()
+        group_name = select(MessageGroup.conversation_id).where(MessageGroup.conversation_id == Conversation.id,
+            MessageGroup.name.ilike(term, escape='!')).exists()
+        family_name = select(Family.id).where(Family.chat_conversation_id == Conversation.id, Family.name.ilike(term, escape='!')).exists()
+        query = query.where(or_(group_name, family_name, and_(Conversation.type == 'dm', peer),
+            and_(Conversation.type == 'welcome', func.lower('LidyaChat').like(term.lower(), escape='!'))))
     locked = func.coalesce(ConversationFolder.locked, False)
     archived = func.coalesce(ConversationFolder.archived, False)
     query = query.where(locked.is_(True) if folder == 'locked' else and_(locked.is_(False), archived.is_(folder == 'archive')))
     # Do not show empty DM rows after local or mutual deletion.
     visible = select(Message.id).where(
-        Message.conversation_id == Conversation.id,
-        ~select(MessageHidden.id).where(MessageHidden.message_id == Message.id,
-                                        MessageHidden.user_id == user_id).exists()
+        Message.conversation_id == Conversation.id, *conditions
     ).exists()
     family = select(Family.id).where(Family.chat_conversation_id == Conversation.id).exists()
     query = query.where((Conversation.type == 'welcome') | (Conversation.type == 'group') | family | visible)
-    rows = list(db.scalars(query.order_by(latest.desc().nullslast(), Conversation.created_at.desc(), Conversation.id).offset(offset).limit(limit)).unique())
+    rows = list(db.scalars(query.order_by(pinned.desc(), latest.desc().nullslast(), Conversation.created_at.desc(), Conversation.id).offset(offset).limit(limit)).unique())
     if not rows:
         return []
     ids = [r.id for r in rows]
@@ -63,15 +89,18 @@ def conversation_page(db, user_id, folder, limit, offset):
     group_images = set(db.scalars(select(MessageGroup.conversation_id).where(
         MessageGroup.conversation_id.in_(ids), MessageGroup.image.is_not(None))))
     groups = {g.conversation_id:g for g in db.scalars(select(MessageGroup).where(MessageGroup.conversation_id.in_(ids)))}
-    hidden = select(MessageHidden.id).where(MessageHidden.message_id == Message.id, MessageHidden.user_id == user_id).exists()
-    last_ids = select(func.max(Message.id)).where(Message.conversation_id.in_(ids), ~hidden).group_by(Message.conversation_id)
+    preferences = {p.conversation_id:p for p in db.scalars(select(ConversationInboxPreference).where(
+        ConversationInboxPreference.user_id == user_id, ConversationInboxPreference.conversation_id.in_(ids)))}
+    last_ids = select(func.max(Message.id)).where(Message.conversation_id.in_(ids), *conditions).group_by(Message.conversation_id)
     last = {m.conversation_id:m for m in db.scalars(select(Message).where(Message.id.in_(last_ids)))}
     unread = dict(db.execute(select(Message.conversation_id, func.count(Message.id)).outerjoin(ConversationReadState,
         and_(ConversationReadState.conversation_id == Message.conversation_id, ConversationReadState.user_id == user_id)).where(
         Message.conversation_id.in_(ids), Message.sender_id != user_id,
-        Message.id > func.coalesce(ConversationReadState.last_read_message_id, 0), ~hidden).group_by(Message.conversation_id)).all())
+        Message.id > func.coalesce(ConversationReadState.last_read_message_id, 0), *conditions).group_by(Message.conversation_id)).all())
     return [{'id':c.id, 'type':'family' if families.get(c.id) else c.type, 'created_at':c.created_at,
         'members':members[c.id], 'name':families[c.id]+' aile sohbeti' if families.get(c.id) else groups[c.id].name if c.id in groups else 'LidyaChat' if c.type == 'welcome' else None,
         'avatar_url':f'/families/{family_images[c.id]}/avatar' if c.id in family_images else f'/message-groups/{c.id}/image' if c.id in group_images else None,
+        'pinned':bool(preferences[c.id].pinned) if c.id in preferences else False,
+        'manual_unread':bool(preferences[c.id].manual_unread) if c.id in preferences else False,
         'unread_count':int(unread.get(c.id,0)), 'last_message':last[c.id].text if c.id in last else None,
         'last_message_at':last[c.id].created_at if c.id in last else None} for c in rows]
