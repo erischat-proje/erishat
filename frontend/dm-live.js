@@ -297,7 +297,8 @@
       if (existing) {
         const old=existing._message||{},merged={...old,...message,id};
         if(old.poll&&merged.poll&&((old.poll.is_closed&&!merged.poll.is_closed)||Number(merged.poll.revision||0)<Number(old.poll.revision||0)))merged.poll=old.poll;
-        if(old.text!==merged.text||old.edited_at!==merged.edited_at||JSON.stringify(old.reply)!==JSON.stringify(merged.reply)||old.is_pinned!==merged.is_pinned||!!old.forwarded!==!!merged.forwarded){
+        const captionOnlyMedia=['image','video','document'].includes(merged.media_type)&&old.media_type===merged.media_type&&!merged.temporary;
+        if((!captionOnlyMedia&&(old.text!==merged.text||old.edited_at!==merged.edited_at))||JSON.stringify(old.reply)!==JSON.stringify(merged.reply)||old.is_pinned!==merged.is_pinned||!!old.forwarded!==!!merged.forwarded){
           const next=renderMessage(merged,mine);const selected=selectedMessages.has(existing);
           if(selected){selectedMessages.delete(existing);selectedMessages.add(next);next.classList.add('dm-selected')}
           releaseMediaUrls(existing);existing.replaceWith(next);
@@ -305,6 +306,8 @@
           return next;
         }
         existing._message=merged;renderReadReceipt(existing,merged);if(old.caption!==merged.caption)renderMediaCaption(existing,merged);
+        if(old.edited_at!==merged.edited_at){existing.querySelector('.dm-edited')?.remove();if(merged.edited_at){const edited=document.createElement('span');edited.className='dm-edited';edited.textContent='düzenlendi';existing.querySelector('.dm-message-meta')?.prepend(edited)}}
+        if(old.text!==merged.text)for(const quote of [...body.querySelectorAll('.bubble[data-message-id]')])if(Number(quote._message?.reply_to_id)===Number(id)&&!quote._message.reply?.unavailable)appendMessageOnce(body,{...quote._message,reply:{...quote._message.reply,text:String(merged.text||'').slice(0,180)}},quote._mine);
         if(JSON.stringify(old.poll)!==JSON.stringify(merged.poll)||old.has_poll!==merged.has_poll)renderMessagePoll(existing,merged);
         if(!!old.is_starred!==!!merged.is_starred)renderMessageStar(existing,merged);
         if(JSON.stringify(old.reactions)!==JSON.stringify(merged.reactions))renderMessageReactions(existing,merged);
@@ -327,7 +330,7 @@
     const one=selectedMessages.size===1&&!allMessagesSelected?[...selectedMessages][0]:null;
     const reply=selectionBar.querySelector('[data-reply-selected]'),edit=selectionBar.querySelector('[data-edit-selected]');
     if(reply)reply.disabled=!one||isSystemConversation();
-    if(edit)edit.disabled=!one||!canEditMessage(one);
+    if(edit){edit.disabled=!one||!(canEditMessage(one)||canEditCaption(one));edit.textContent=canEditCaption(one)?'Açıklamayı düzenle':'Düzenle'}
     const star=selectionBar.querySelector('[data-star-selected]');if(star){star.disabled=!one||isSystemConversation()||((!!one?._message?.protected_message||!!one?._message?.temporary||!!one?._message?.expires_at)&&!one?._message?.is_starred);star.textContent=one?._message?.is_starred?'Yıldızı kaldır':'Yıldızla'}
     const react=selectionBar.querySelector('[data-react-selected]'),forward=selectionBar.querySelector('[data-forward-selected]');
     if(react)react.disabled=!one||isSystemConversation()||!!one?._message?.temporary||!!one?._message?.protected_message;
@@ -664,7 +667,7 @@
     selectionBar.querySelector('[data-react-selected]').onclick=openReactionPicker;
     selectionBar.querySelector('[data-forward-selected]').onclick=openForwardPicker;
     selectionBar.querySelector('[data-reply-selected]').onclick=()=>startMessageMode('reply');
-    selectionBar.querySelector('[data-edit-selected]').onclick=()=>startMessageMode('edit');
+    selectionBar.querySelector('[data-edit-selected]').onclick=()=>{const row=[...selectedMessages][0];if(canEditCaption(row))openCaptionEditor(row);else startMessageMode('edit')};
     let holdTimer = null, suppressNextClick = false, lastLongPressRow = null,holdX=0,holdY=0;
     const clearHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
     body?.addEventListener('pointerdown', event => {
@@ -1461,6 +1464,31 @@
       }catch(e){if(valid())status.textContent=e.message||'Mesajlar iletilemedi. Tekrar deneyebilirsin.'}finally{busy=false;if(valid()){content.querySelectorAll('button,input,select').forEach(b=>b.disabled=false);send.disabled=!target}}
     };load();
   }
+  function canEditCaption(row){
+    const m=row?._message,created=new Date(m?.created_at).getTime();
+    return !!m&&!!api()?.editMediaCaption&&String(m.sender_id)===String(currentUserId)&&!isSystemConversation()&&!m.temporary&&!m.protected_message&&!m.poll&&!m.gift_key&&['image','video','document'].includes(m.media_type)&&Number.isFinite(created)&&Date.now()-created<15*60*1000;
+  }
+  function openCaptionEditor(row){
+    if(!canEditCaption(row)||$('chat')?.dataset.groupWriteBlocked==='1')return;
+    const cid=String(activeConversationId),revision=chatRevision,user=currentUserId,message={...row._message};
+    const panel=messageActionPanel('Dosya açıklamasını düzenle');panel.dataset.captionEditor='';
+    const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]');
+    content.innerHTML='<p>Açıklamayı ilk 15 dakika içinde değiştirebilirsiniz. Alanı boş bırakırsanız açıklama kaldırılır.</p><form><label>Açıklama<textarea data-caption-input maxlength="1000" rows="4"></textarea></label><small data-caption-count></small><button type="submit" data-caption-save>Kaydet</button></form>';
+    const field=content.querySelector('textarea'),save=content.querySelector('[data-caption-save]'),counter=content.querySelector('[data-caption-count]');
+    field.value=message.caption||'';const count=()=>counter.textContent=field.value.length+' / 1000';field.oninput=count;count();let busy=false;
+    const valid=()=>panel.isConnected&&revision===chatRevision&&user===currentUserId&&cid===String(activeConversationId);
+    content.querySelector('form').onsubmit=async event=>{
+      event.preventDefault();if(busy||!valid())return;
+      if(field.value.length>1000){status.textContent='Açıklama en fazla 1000 karakter olabilir.';field.focus();return}
+      busy=true;save.disabled=field.disabled=true;status.textContent='Kaydediliyor…';
+      try{const result=await api().editMediaCaption(cid,message.id,field.value.trim(),message.text);
+        if(!valid())return;const body=$('chat')?.querySelector('.chatBody');
+        if(body?.querySelector('[data-message-id="'+String(message.id)+'"]'))appendMessageOnce(body,result,true);
+        panel.remove();selectionBar?.querySelector('[data-clear-selected]')?.click();loadConversations();
+      }catch(error){if(valid())status.textContent=error.message||'Açıklama kaydedilemedi. Yeniden deneyin.'}
+      finally{busy=false;if(valid())save.disabled=field.disabled=false}
+    };field.focus();
+  }
   function canEditMessage(row){
     const m=row?._message;
     return !!m&&!m.poll&&!m.has_poll&&!!api()?.editMessage&&String(m.sender_id)===String(currentUserId)&&!m.media_type&&!m.gift_key&&!isSystemConversation()&&Number.isFinite(new Date(m.created_at).getTime())&&Date.now()-new Date(m.created_at).getTime()<15*60*1000;
@@ -1545,7 +1573,7 @@
       #chat .dm-reply-quote{display:block;max-width:100%;width:100%;text-align:left;padding:8px 10px;border:0;border-left:3px solid var(--ui-gold,#b98c46);border-radius:8px;background:color-mix(in srgb,var(--ui-gold,#b98c46) 12%,var(--ui-panel));color:var(--ui-ink);margin-bottom:7px;overflow-wrap:anywhere}.dm-reply-quote b,.dm-reply-quote span{display:block;font-size:11px}.dm-reply-quote span{margin-top:4px;white-space:pre-wrap}.dm-reply-quote:disabled{opacity:.65}
       #chat .dm-select-tools{flex-wrap:wrap;height:auto}#chat .dm-select-tools button[data-react-selected],#chat .dm-select-tools button[data-forward-selected]{width:auto;font-size:11px;padding:0 8px}
       .dm-forward-label{display:block;font-size:10px;opacity:.7;margin-bottom:6px}.dm-reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.dm-reactions button{padding:5px 8px;min-height:32px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-panel);color:var(--ui-ink)}.dm-reactions button[aria-pressed=true]{border-color:var(--ui-gold,#b98c46);box-shadow:inset 0 0 0 1px var(--ui-gold,#b98c46)}
-      .dm-action-panel{position:fixed;inset:0;z-index:100090;overflow:auto;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);overscroll-behavior:contain}.dm-action-panel section{box-sizing:border-box;width:min(620px,100%);margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-action-panel header{display:flex;justify-content:space-between;align-items:center;gap:10px}.dm-action-panel button{min-height:44px;border:1px solid var(--ui-line,#c8ae79);border-radius:12px;padding:9px 12px;background:var(--ui-raised,#fffaf0);color:inherit;font:inherit}.dm-action-panel label{display:block;font-size:12px;margin:12px 0}.dm-action-panel input,.dm-action-panel select{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:12px;border:1px solid var(--ui-line);border-radius:10px;background:var(--ui-raised);color:inherit;font:inherit}.dm-action-panel p{font-size:13px;overflow-wrap:anywhere}.dm-action-panel .dm-forward-target{display:block;width:100%;text-align:left;margin:8px 0;overflow-wrap:anywhere}.dm-forward-target[aria-pressed=true]{border:2px solid var(--ui-gold,#b98c46)}.dm-emoji-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:20px}.dm-emoji-picker button{font-size:24px}.dm-emoji-picker button:last-child{grid-column:1/-1;font-size:14px}
+      .dm-action-panel{position:fixed;inset:0;z-index:100090;overflow:auto;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c);overscroll-behavior:contain}.dm-action-panel section{box-sizing:border-box;width:min(620px,100%);margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-action-panel header{display:flex;justify-content:space-between;align-items:center;gap:10px}.dm-action-panel button{min-height:44px;border:1px solid var(--ui-line,#c8ae79);border-radius:12px;padding:9px 12px;background:var(--ui-raised,#fffaf0);color:inherit;font:inherit}.dm-action-panel label{display:block;font-size:12px;margin:12px 0}.dm-action-panel input,.dm-action-panel select,.dm-action-panel textarea{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:12px;border:1px solid var(--ui-line);border-radius:10px;background:var(--ui-raised);color:inherit;font:inherit}.dm-action-panel p{font-size:13px;overflow-wrap:anywhere}.dm-action-panel .dm-forward-target{display:block;width:100%;text-align:left;margin:8px 0;overflow-wrap:anywhere}.dm-forward-target[aria-pressed=true]{border:2px solid var(--ui-gold,#b98c46)}.dm-emoji-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:20px}.dm-emoji-picker button{font-size:24px}.dm-emoji-picker button:last-child{grid-column:1/-1;font-size:14px}
       #chat .dm-select-tools button[data-reply-selected],#chat .dm-select-tools button[data-edit-selected]{width:auto;font-size:11px;padding:0 8px}.dm-edited{opacity:.7}.dm-message-highlight{outline:2px solid var(--ui-gold,#b98c46)!important}
       .dm-search-panel{position:fixed;inset:0;z-index:100070;background:var(--ui-panel);color:var(--ui-ink);overflow:auto;overscroll-behavior:contain}.dm-search-panel section{width:min(620px,100%);box-sizing:border-box;margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}.dm-search-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}.dm-search-panel form{display:flex;align-items:end;gap:10px;margin:16px 0}.dm-search-panel label{flex:1;min-width:0;font-size:12px}.dm-search-panel input{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-panel button{min-height:40px;padding:9px 12px;border:1px solid var(--ui-line);border-radius:11px;background:var(--ui-raised);color:var(--ui-ink);font:inherit}.dm-search-result{display:block;width:100%;text-align:left;margin:10px 0;overflow-wrap:anywhere}.dm-search-result small,.dm-search-result span{display:block}.dm-search-result small{color:var(--ui-gold,#b98c46);margin-bottom:6px;font-size:11px}.dm-search-result span{white-space:pre-wrap;font-size:13px}
       @media(max-width:360px){#chat .dm-select-tools{gap:4px}#chat .dm-select-tools button{width:30px;height:32px;font-size:14px}#chat .dm-select-tools [data-selected-count]{font-size:9px!important}}

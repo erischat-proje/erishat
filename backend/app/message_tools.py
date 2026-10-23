@@ -145,10 +145,23 @@ class EditText(BaseModel):
         if not value:raise ValueError('Mesaj boş olamaz.')
         return value
 
+class EditCaption(BaseModel):
+    caption: str=Field(max_length=1000)
+    expected_text: str=Field(min_length=1,max_length=2000)
+
 @router.patch('/{conversation_id}/{message_id}')
 @database_task
 async def edit(conversation_id: str,message_id: int,payload: EditText,x_eris_dm_vault: str|None=Header(None),
                db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    return await _edit_message(db,user,conversation_id,message_id,payload,x_eris_dm_vault)
+
+@router.patch('/{conversation_id}/{message_id}/caption')
+@database_task
+async def edit_caption(conversation_id: str,message_id: int,payload: EditCaption,x_eris_dm_vault: str|None=Header(None),
+                       db: Session=Depends(get_db),user: User=Depends(authenticated)):
+    return await _edit_message(db,user,conversation_id,message_id,payload,x_eris_dm_vault,caption_mode=True)
+
+async def _edit_message(db,user,conversation_id,message_id,payload,x_eris_dm_vault,caption_mode=False):
     conversation=access(db,conversation_id,user.id,x_eris_dm_vault)
     if conversation.type=='welcome':raise HTTPException(403,'Sistem mesajları düzenlenemez.')
     group_policy.require_write(db,conversation_id,user.id,consume=False,check_slow=False)
@@ -168,12 +181,24 @@ async def edit(conversation_id: str,message_id: int,payload: EditText,x_eris_dm_
     from .message_poll_models import MessagePoll
     if db.get(MessagePoll,message_id):raise HTTPException(403,'Anket sorusu ve seçenekleri sonradan düzenlenemez.')
     if message.sender_id!=user.id:raise HTTPException(403,'Yalnızca kendi mesajınızı düzenleyebilirsiniz.')
-    if db.scalar(select(MessageMedia.message_id).where(MessageMedia.message_id==message_id)) or db.scalar(select(DirectMessageGift.message_id).where(DirectMessageGift.message_id==message_id)):
-        raise HTTPException(403,'Yalnızca metin mesajları düzenlenebilir.')
+    media=db.get(MessageMedia,message_id)
+    gift=db.scalar(select(DirectMessageGift.message_id).where(DirectMessageGift.message_id==message_id))
+    if caption_mode:
+        from . import message_captions
+        from .message_attachment_models import MessageAttachment
+        if gift or not media or media.temporary or media.media_type not in {'image','video','document'}:
+            raise HTTPException(403,'Yalnızca normal fotoğraf, video ve belge açıklamaları düzenlenebilir.')
+        if not db.scalar(select(MessageMedia.message_id).where(MessageMedia.message_id==message_id,MessageMedia.data.is_not(None))):raise HTTPException(404,'Dosya artık görüntülenemiyor.')
+        caption=message_captions.clean(payload.caption,media.media_type)
+        attachment=db.get(MessageAttachment,message_id) if media.media_type=='document' else None
+        new_text=message_captions.text(media.media_type,attachment.filename if attachment else '',caption)
+    else:
+        if media or gift:raise HTTPException(403,'Yalnızca metin mesajları düzenlenebilir.')
+        new_text=payload.text
     if datetime.now(timezone.utc)-utc(message.created_at)>timedelta(minutes=EDIT_MINUTES):raise HTTPException(403,'Düzenleme süresi doldu. İlk 15 dakika içinde düzenleyebilirsiniz.')
     if message.text!=payload.expected_text:raise HTTPException(409,'Mesaj başka bir oturumda değişti. Sohbeti yenileyin.')
-    if message.text!=payload.text:
-        message.text=payload.text
+    if message.text!=new_text:
+        message.text=new_text
         detail=db.get(MessageDetail,message_id)
         if not detail:detail=MessageDetail(message_id=message_id,has_reply=False);db.add(detail)
         detail.edited_at=datetime.now(timezone.utc)
