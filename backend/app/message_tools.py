@@ -106,6 +106,11 @@ async def history(conversation_id: str,before: int|None=Query(None,ge=1),around:
     if before is not None:query=query.where(Message.id<before)
     rows=list(db.scalars(query.order_by(Message.id.desc()).limit(limit+1)))
     more=len(rows)>limit;rows=rows[:limit]
+    # Looking up an older search result must keep a personal unread reminder.
+    if before is None and around is None:
+        from .dm_inbox import clear_manual_unread
+        db.scalar(select(User.id).where(User.id==user.id).with_for_update())
+        if clear_manual_unread(db,user.id,conversation_id):db.commit()
     incoming=max((m.id for m in rows if m.sender_id!=user.id),default=0)
     if incoming:
         db.scalar(select(User.id).where(User.id==user.id).with_for_update())

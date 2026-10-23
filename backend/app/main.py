@@ -38,7 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools, message_attachments
+from . import message_tools, message_attachments, dm_inbox
 from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
@@ -449,6 +449,8 @@ group_routes.register_auth(current_user)
 app.include_router(group_routes.router)
 message_tools.register(current_user, lambda db,m,uid,context=None: _message_out(db,m,uid,context), lambda db,uid,event: _send_dm_event(db,uid,event))
 app.include_router(message_tools.router)
+dm_inbox.register(lambda db,uid,event: _send_dm_event(db,uid,event))
+app.include_router(dm_inbox.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
@@ -1042,7 +1044,8 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 @app.get("/v1/conversations", response_model=list[ConversationOut])
 def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int = Query(default=0, ge=0),
-                       folder: str = Query(default="inbox"), x_eris_dm_vault: str | None = Header(default=None),
+                       folder: str = Query(default="inbox"), q: str = Query(default="", max_length=100),
+                       view: str = Query(default="all", pattern="^(all|unread|pinned)$"), x_eris_dm_vault: str | None = Header(default=None),
                        db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[ConversationOut]:
     if folder not in {"inbox", "archive", "locked"}:
         raise HTTPException(400, "Geçersiz mesaj klasörü")
@@ -1062,10 +1065,8 @@ def list_conversations(limit: int = Query(default=50, ge=1, le=100), offset: int
             changed = True
     if changed:
         db.commit()
-    rows = conversation_page(db, user.id, folder, limit, offset)
-    pending_ids = set(db.scalars(select(PrivateMessageRequest.conversation_id).where(
-        PrivateMessageRequest.recipient_id == user.id, PrivateMessageRequest.status == 'pending')))
-    return [row for row in rows if row['id'] not in pending_ids]
+    rows = conversation_page(db, user.id, folder, limit, offset, q, view)
+    return rows
 
 
 @app.get("/v1/conversations/{conversation_id}", response_model=ConversationOut)
@@ -1243,6 +1244,10 @@ async def list_messages(conversation_id: str, limit: int = Query(default=100, ge
     require_unlocked(db, user.id, conversation_id, x_eris_dm_vault)
     state = db.scalar(select(ConversationReadState).where(ConversationReadState.conversation_id == conversation_id, ConversationReadState.user_id == user.id))
     messages = MessageService(MessageRepository(db)).list(conversation_id, limit=limit, offset=offset)
+    if offset == 0:
+        db.scalar(select(User.id).where(User.id == user.id).with_for_update())
+        if dm_inbox.clear_manual_unread(db, user.id, conversation_id):
+            db.commit()
     latest_incoming = max((m.id for m in messages if m.sender_id != user.id), default=0)
     if latest_incoming and (state is None or latest_incoming > state.last_read_message_id):
         if state is None:
