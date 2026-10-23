@@ -2,6 +2,7 @@
 from sqlalchemy import select, func, and_, or_
 from .models import Conversation, ConversationMember, Message, User
 from .group_models import MessageGroup
+from .notification_policy import mute_states
 from .platform_models import (ConversationFolder, ConversationReadState, Family, MessageHidden,
     PinnedMessage, DirectMessageGift, MessageMedia, FamilyVisual, ConversationInboxPreference, PrivateMessageRequest)
 
@@ -78,6 +79,7 @@ def conversation_page(db, user_id, folder, limit, offset, q='', view='all'):
     if not rows:
         return []
     ids = [r.id for r in rows]
+    mutes = mute_states(db, user_id, ids)
     member_rows = list(db.execute(select(ConversationMember.conversation_id, ConversationMember.user_id).where(ConversationMember.conversation_id.in_(ids))))
     users = {r.id:r for r in db.scalars(select(User).where(User.id.in_({r.user_id for r in member_rows})))}
     members = {cid:[] for cid in ids}
@@ -99,7 +101,7 @@ def conversation_page(db, user_id, folder, limit, offset, q='', view='all'):
         and_(ConversationReadState.conversation_id == Message.conversation_id, ConversationReadState.user_id == user_id)).where(
         Message.conversation_id.in_(ids), Message.sender_id != user_id,
         Message.id > func.coalesce(ConversationReadState.last_read_message_id, 0), *conditions).group_by(Message.conversation_id)).all())
-    return [{'id':c.id, 'type':'family' if families.get(c.id) else c.type, 'created_at':c.created_at,
+    return [{**mutes.get(c.id, {'is_muted':False, 'muted_until':None}), 'id':c.id, 'type':'family' if families.get(c.id) else c.type, 'created_at':c.created_at,
         'members':members[c.id], 'name':families[c.id]+' aile sohbeti' if families.get(c.id) else groups[c.id].name if c.id in groups else 'LidyaChat' if c.type == 'welcome' else None,
         'avatar_url':f'/families/{family_images[c.id]}/avatar' if c.id in family_images else f'/message-groups/{c.id}/image' if c.id in group_images else None,
         'pinned':bool(preferences[c.id].pinned) if c.id in preferences else False,
