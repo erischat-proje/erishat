@@ -1205,6 +1205,7 @@
     (row.querySelector('.dm-message-meta')||row).append(badge);
   }
   function installStarControls(){
+    const searchRoot=$('messages');if(searchRoot&&!searchRoot.querySelector('[data-open-global-search]')){const button=document.createElement('button');button.type='button';button.dataset.openGlobalSearch='';button.textContent='Mesajlarda ara';button.onclick=openGlobalMessageSearch;searchRoot.querySelector('[data-inbox-controls]')?.append(button)}
     const root=$('messages');if(root&&!root.querySelector('[data-open-stars]')){const button=document.createElement('button');button.type='button';button.dataset.openStars='';button.textContent='★ Yıldızlı mesajlar';button.onclick=()=>openStarredMessages();root.querySelector('[data-inbox-controls]')?.append(button)}
     if(document.getElementById('dm-stars-styles'))return;
     const style=document.createElement('style');style.id='dm-stars-styles';style.textContent=`
@@ -1273,6 +1274,36 @@
     }catch(e){if(valid()){const status=panel?.querySelector('[data-status]');if(status)status.textContent=e.message||'Sabitleme değiştirilemedi.';else window.toast?.(e.message||'Sabitleme değiştirilemedi.')}}
     finally{pinBusy=false;refreshSelectionBar();document.querySelector('[data-pinned-panel]')?.querySelectorAll('[data-pin-remove]').forEach(b=>b.disabled=false)}
   }
+  function openGlobalMessageSearch(){
+    installStarControls();const panel=messageActionPanel('Tüm mesajlarda ara');panel.dataset.globalSearch='';
+    const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]'),user=currentUserId,authRevision=inboxAuthRevision;
+    content.innerHTML='<p>Mesaj metninde ve dosya adında ara. Süreli mesajlar arama sonuçlarına dahil edilmez.</p><form data-global-form><label>Aranacak metin<input type="search" data-global-query minlength="2" maxlength="100" required autocomplete="off" placeholder="En az 2 karakter"></label><label>Mesaj türü<select data-global-kind><option value="all">Tümü</option><option value="text">Metin</option><option value="image">Fotoğraf</option><option value="voice">Sesli mesaj</option><option value="video">Video</option><option value="document">Belge</option></select></label><label>Kapsam<select data-global-scope><option value="all">Sohbetler ve Arşiv</option></select></label><button type="submit">Ara</button></form><div data-global-results></div><button type="button" data-global-more hidden>Daha fazla sonuç</button>';
+    if(!document.getElementById('dm-global-search-style')){const style=document.createElement('style');style.id='dm-global-search-style';style.textContent='[data-global-search]{position:fixed;inset:0;z-index:100090;overflow:auto;overscroll-behavior:contain;background:var(--ui-panel,#fffaf0);color:var(--ui-ink,#30271c)}[data-global-search] section{box-sizing:border-box;width:min(620px,100%);margin:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}[data-global-search] header{display:flex;justify-content:space-between;align-items:center;gap:10px}[data-global-search] button{min-height:44px;padding:9px 12px;border:1px solid var(--ui-line,#c8ae79);border-radius:12px;background:var(--ui-raised,#fffaf0);color:inherit;font:inherit}[data-global-search] label{display:block;margin:12px 0;font-size:12px}[data-global-search] input,[data-global-search] select{display:block;box-sizing:border-box;width:100%;padding:12px;margin-top:6px;border:1px solid var(--ui-line,#c8ae79);border-radius:10px;background:var(--ui-raised,#fffaf0);color:inherit;font:inherit}[data-global-search] p{font-size:13px;line-height:1.5;overflow-wrap:anywhere}[data-global-more]{width:100%;margin-top:12px}';document.head.append(style)}
+    const form=content.querySelector('form'),query=content.querySelector('[data-global-query]'),kind=content.querySelector('[data-global-kind]'),scope=content.querySelector('[data-global-scope]'),results=content.querySelector('[data-global-results]'),more=content.querySelector('[data-global-more]');
+    if(vaultToken){const option=document.createElement('option');option.value='locked';option.textContent='Kilitli sohbetler';scope.append(option);if(inboxFolder==='locked')scope.value='locked'}
+    let revision=0,cursor=null,busy=false,navigating=false;
+    const valid=()=>panel.isConnected&&user===currentUserId&&authRevision===inboxAuthRevision;
+    const clear=()=>{revision++;busy=false;cursor=null;results.replaceChildren();more.hidden=true;status.textContent='Aramak için Ara düğmesine dokun.'};
+    const load=async(append=false)=>{
+      if(!valid()||append&&busy)return;const q=query.value.trim();if(q.length<2){clear();status.textContent='En az 2 karakter yazın.';return}
+      busy=true;const own=++revision;if(!append){cursor=null;results.replaceChildren()}more.hidden=true;status.textContent='Mesajlar aranıyor…';
+      try{const data=await api().api('/message-search?q='+encodeURIComponent(q)+'&kind='+kind.value+'&scope='+scope.value+'&limit=30'+(append&&cursor?'&before='+cursor:''));
+        if(!valid()||own!==revision)return;
+        for(const item of asList(data,['items'])){const m=item.message,c=item.conversation;if(!m?.id||!c?.id||results.querySelector('[data-search-message="'+Number(m.id)+'"]'))continue;
+          const card=document.createElement('article');card.className='dm-star-card';card.dataset.searchMessage=String(m.id);card.dataset.searchConversation=String(c.id);
+          const title=document.createElement('b'),meta=document.createElement('small'),text=document.createElement('p'),open=document.createElement('button');title.textContent=c.name||'Sohbet';meta.textContent=(m.sender_nickname||'Kullanıcı')+' · '+messageTime(m.created_at)+(m.media_type?' · '+({image:'Fotoğraf',voice:'Sesli mesaj',video:'Video',document:'Belge'}[m.media_type]||'Medya'):'');text.textContent=m.media_name||m.text||'Mesaj';open.type='button';open.dataset.globalGoto='';open.textContent='Sohbette göster';card.append(title,meta,text,open);results.append(card);
+          open.onclick=async()=>{if(!valid()||navigating)return;navigating=true;open.disabled=true;const chatVersion=chatRevision,searchVersion=revision;
+            try{const details=api()?.conversation?await api().conversation(c.id):c;if(!valid()||chatVersion!==chatRevision||searchVersion!==revision)return;
+              const info={...conversationInfo.get(String(c.id)),...c,...details};conversationInfo.set(String(c.id),info);const peer=asList(info.members,['members']).find(x=>String(x.user_id)!==String(user));panel.remove();await openRealChat(c.id,info.name||c.name||'Sohbet',c.type==='group'?'👥':c.type==='family'?'👪':'👤',c.type==='dm'?peer?.user_id:null);
+              if(user===currentUserId&&authRevision===inboxAuthRevision&&String(activeConversationId)===String(c.id))await jumpToMessage(m.id);
+            }catch(e){if(valid())status.textContent=e.message||'Sohbet açılamadı.'}finally{navigating=false;open.disabled=false}
+          };
+        }
+        cursor=data.next_before;more.hidden=!data.has_more;status.textContent=results.children.length?results.children.length+' sonuç gösteriliyor.':'Bu aramada sonuç yok.';
+      }catch(e){if(valid()&&own===revision)status.textContent=e.message||'Mesajlar aranamadı. Yeniden deneyin.'}finally{if(own===revision)busy=false}
+    };
+    query.oninput=clear;kind.onchange=scope.onchange=clear;form.onsubmit=e=>{e.preventDefault();load()};more.onclick=()=>load(true);status.textContent='Aramak için en az 2 karakter yazın.';query.focus();
+  }
   function openStarredMessages(conversationId=null){
     installStarControls();const panel=messageActionPanel(conversationId?'Sohbetin yıldızlı mesajları':'Yıldızlı mesajlar');panel.dataset.starredPanel='';
     const content=panel.querySelector('[data-content]'),status=panel.querySelector('[data-status]'),user=currentUserId,authRevision=inboxAuthRevision;
@@ -1307,7 +1338,7 @@
     if(!document.getElementById('dm-pins-style')){const style=document.createElement('style');style.id='dm-pins-style';style.textContent='[data-pin-banner][hidden]{display:none!important}[data-pin-banner]{text-align:start;cursor:pointer;color:var(--ui-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:40px}.dm-pin-card{padding:14px;margin:12px 0;border:1px solid var(--ui-line);border-radius:14px;overflow-wrap:anywhere}.dm-pin-card p{white-space:pre-wrap}.dm-pin-card small{display:block;margin-top:8px;opacity:.75}.dm-pin-card footer{display:flex;gap:8px;flex-wrap:wrap}';document.head.append(style)}
     panel.querySelector('h3').textContent=title;panel.querySelector('section').setAttribute('aria-label',title);
     const previous=document.activeElement,close=()=>{panel.remove();previous?.focus?.()};panel.querySelector('[data-close]').onclick=close;
-    panel.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...panel.querySelectorAll('button:not(:disabled),input,select')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.body.append(panel);panel.querySelector('[data-close]').focus();return panel;
+    panel.onkeydown=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...panel.querySelectorAll('button:not(:disabled),input,select')].filter(node=>!node.disabled&&!node.closest('[hidden]')),first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.body.append(panel);panel.querySelector('[data-close]').focus();return panel;
   }
   async function setMessageReaction(row,emoji,button){
     const cid=activeConversationId,revision=chatRevision,user=currentUserId,m=row?._message;
@@ -1627,7 +1658,7 @@
     if(data?.type==='dm_messages_deleted' && data.conversation_id){
       const info=document.querySelector('[data-message-info]');if(info?.dataset.conversationId===String(data.conversation_id)&&(data.message_ids||[]).some(id=>String(id)===info.dataset.messageId))info.remove();
       if(String(activeConversationId)===String(data.conversation_id))refreshPinnedMessages();
-      const deletedStars=new Set((data.message_ids||[]).map(String));document.querySelectorAll('[data-starred-panel] .dm-star-card').forEach(card=>{if(card.dataset.starConversationId===String(data.conversation_id)&&deletedStars.has(card.dataset.starMessageId))card.remove()});
+      const deletedStars=new Set((data.message_ids||[]).map(String));document.querySelectorAll('[data-global-search] [data-search-message]').forEach(card=>{if(card.dataset.searchConversation===String(data.conversation_id)&&deletedStars.has(card.dataset.searchMessage))card.remove()});document.querySelectorAll('[data-starred-panel] .dm-star-card').forEach(card=>{if(card.dataset.starConversationId===String(data.conversation_id)&&deletedStars.has(card.dataset.starMessageId))card.remove()});
       if(String(activeConversationId||'')===String(data.conversation_id)){
         const body=document.querySelector('#chat .chatBody');
         for(const id of data.message_ids||[])body?.querySelectorAll('.bubble[data-message-id="'+String(id)+'"]').forEach(row=>{selectedMessages.delete(row);releaseMediaUrls(row);row.remove()});

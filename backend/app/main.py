@@ -38,7 +38,7 @@ from .repositories import ConversationRepository, MessageRepository, UserReposit
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
 from .group_models import MessageGroup
-from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy, message_polls, message_pins, message_info
+from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy, message_polls, message_pins, message_info, message_search
 from .message_attachment_models import MessageAttachment
 from . import group_routes
 from . import group_policy
@@ -465,6 +465,7 @@ message_pins.register(lambda db,cid,user,token: _require_message_media_access(db
     lambda db,uid,event: _send_dm_event(db,uid,event))
 app.include_router(message_pins.router)
 app.include_router(message_info.router)
+app.include_router(message_search.router)
 app.include_router(location_calls.router)
 anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
