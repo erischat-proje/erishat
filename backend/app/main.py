@@ -558,10 +558,11 @@ app.include_router(emergency_routes.register_auth(current_user))
 app.include_router(finance_audit.register_auth(current_user))
 app.include_router(fraud_review.register_auth(current_user))
 app.include_router(management_workflows.register_auth(current_user))
-from . import explore_feed, explore_interactions, profile_workspace
+from . import explore_feed, explore_interactions, profile_workspace, notification_center
 app.include_router(explore_feed.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(explore_interactions.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(profile_workspace.register_auth(current_user))
+app.include_router(notification_center.register_auth(current_user))
 app.include_router(admin_operations.register_auth(current_user))
 app.include_router(admin_workspace.register_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id, role: broadcast_role_badge(user_id, role)))
 app.include_router(dm_folder_router)
