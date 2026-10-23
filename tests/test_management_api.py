@@ -18,6 +18,8 @@ from backend.app.case_models import ManagementCase, ManagementCaseEvent
 from backend.app.emergency_models import EmergencyChatAction
 from backend.app.purchase_models import LidyaOperation, LidyaOrder
 from backend.app.platform_models import VipStatus,Notification
+from backend.app.vip_membership_models import VipMembership,VipPurchaseReceipt
+from backend.app.payment_assistance_models import PaymentRequest
 from backend.app.management_workflow_models import ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview
 from backend.app import case_routes, emergency_routes, finance_audit, fraud_review, admin_routes, management_workflows, admin_workspace, admin_operations
 from backend.app.admin_workspace_models import ManagementRoleRequest
@@ -50,10 +52,10 @@ class ManagementAPI(unittest.TestCase):
             with Session(cls.engine) as db:yield db
         cls.app.dependency_overrides[get_db] = session
         cls.client = TestClient(cls.app)
-        cls.tables = [m.__table__ for m in (User,OperationHistory,OperationCaseLink,FeedbackWork,AnnouncementDraft,ReferralCode,ReferralRedemption,UserSuggestion,SupportMessage,SystemAnnouncement,AdminRole,AdminAuditLog,FaActionLog,ChatBan,UserBan,SupportAssignment,SupportTicket,SupportFlow,ManagementRoleRequest,Room,RoomMember,RoomSeat,RoomPassword,ManagementCase,ManagementCaseEvent,EmergencyChatAction,LidyaOperation,LidyaOrder,VipStatus,Notification,ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview,system_data.LidyaLedger)]
+        cls.tables = [m.__table__ for m in (User,VipMembership,VipPurchaseReceipt,PaymentRequest,OperationHistory,OperationCaseLink,FeedbackWork,AnnouncementDraft,ReferralCode,ReferralRedemption,UserSuggestion,SupportMessage,SystemAnnouncement,AdminRole,AdminAuditLog,FaActionLog,ChatBan,UserBan,SupportAssignment,SupportTicket,SupportFlow,ManagementRoleRequest,Room,RoomMember,RoomSeat,RoomPassword,ManagementCase,ManagementCaseEvent,EmergencyChatAction,LidyaOperation,LidyaOrder,VipStatus,Notification,ManagementEvidence,ManagementFinanceRequest,ManagementSignalReview,system_data.LidyaLedger)]
     def setUp(self):
         logger=patch.object(system_data,'record',lambda *a,**k:None);logger.start();self.addCleanup(logger.stop)
-        Base.metadata.create_all(self.engine,tables=self.tables)
+        Base.metadata.create_all(self.engine,tables=list(dict.fromkeys(self.tables)))
         with Session(self.engine) as db:
             for index,role in enumerate(('SA','UA','FA','DA','USER','INACTIVE')):
                 db.add(User(id=role,public_id=str(1000000000+index),nickname=role,is_active=role!='INACTIVE'))
@@ -62,7 +64,7 @@ class ManagementAPI(unittest.TestCase):
                 db.add(AdminRole(user_id=role,role='DA' if role=='INACTIVE' else role))
             db.add(ManagementCase(id=1,reporter_id='UA',target_user_id='USER',category='harassment',summary='A real fixture incident',status='open'))
             db.commit()
-    def tearDown(self):Base.metadata.drop_all(self.engine,tables=list(reversed(self.tables)))
+    def tearDown(self):Base.metadata.drop_all(self.engine,tables=list(reversed(list(dict.fromkeys(self.tables)))))
     def request(self,path,role='DA',method='GET',**kw):
         return self.client.request(method,path,headers={'X-Test-User':role},**kw)
     def test_all_new_read_paths_exist_and_require_auth(self):

@@ -81,12 +81,12 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
         role=access(db,user,1);response.headers['Cache-Control']='no-store';now=datetime.now(timezone.utc)
         q=select(func.count()).select_from(ManagementCase).where(ManagementCase.status.notin_(['resolved','dismissed']))
         if role not in REVIEW:q=q.where(or_(ManagementCase.reporter_id==user.id,ManagementCase.assigned_id==user.id))
-        cases=db.scalar(q);support=db.scalar(select(func.count()).select_from(SupportTicket).outerjoin(SupportFlow).outerjoin(SupportAssignment).where(or_(and_(SupportAssignment.admin_id==user.id,SupportAssignment.decision=='accepted',SupportFlow.phase.in_(['awaiting_ready','active'])),and_(SupportFlow.offered_to==user.id,SupportFlow.phase=='pending',SupportFlow.offer_until>now))))
+        cases=db.scalar(q);support=db.scalar(select(func.count(func.distinct(SupportTicket.id))).select_from(SupportTicket).outerjoin(SupportFlow).outerjoin(SupportAssignment).where(or_(and_(SupportAssignment.admin_id==user.id,SupportAssignment.decision=='accepted',SupportFlow.phase.in_(['awaiting_ready','active'])),and_(SupportFlow.offered_to==user.id,SupportFlow.phase=='pending',SupportFlow.offer_until>now))))
         counts={'tickets':support,'lm-cases':cases,'lm-command':cases}
         if role in REVIEW:
             counts['lm-finance']=db.scalar(select(func.count()).select_from(ManagementFinanceRequest).where(or_(and_(ManagementFinanceRequest.status=='pending_review',ManagementFinanceRequest.requester_id!=user.id,ManagementFinanceRequest.target_id!=user.id),and_(ManagementFinanceRequest.status=='reviewed',role=='DA',ManagementFinanceRequest.requester_id!=user.id,ManagementFinanceRequest.reviewer_id!=user.id,ManagementFinanceRequest.target_id!=user.id))))
         if role=='DA':counts['roles']=db.scalar(select(func.count()).select_from(ManagementRoleRequest).where(ManagementRoleRequest.status=='pending',ManagementRoleRequest.requester_id!=user.id,ManagementRoleRequest.target_id!=user.id))
-        return {'role':role,'tools':catalog(user,role),'counts':counts,'generated_at':now.isoformat()}
+        return {'role':role,'tools':catalog(user,role),'counts':counts,'generated_at':now.isoformat(),'source':'persisted_database'}
 
     @router.get('/users')
     def users(q:str=Query('',max_length=100),role:str|None=None,active:str=Query('all',pattern='^(all|active|inactive)$'),after:str|None=Query(None,max_length=64),limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user)):
