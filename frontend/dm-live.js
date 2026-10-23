@@ -944,13 +944,22 @@
     if (!chat || !body || !api()?.messages) return;
     const revision=++chatRevision;
     activeConversationId = id;
-    window.__erisActiveDmUserId = participantId || null;
+    const info=conversationInfo.get(String(id));
+    const isGroup=info?.type==='group'||String(id).startsWith('grp_');
+    const kind=info?.type||(isGroup?'group':isSystemConversation(id)?'welcome':/ aile sohbeti$/i.test(String(name||''))?'family':'dm');
+    // Header identity belongs to this conversation, never to the previous DM.
+    chat.dataset.conversationId=String(id);
+    chat.dataset.conversationType=kind;
+    participantId=kind==='dm'?(participantId||null):null;
+    window.__erisActiveDmUserId = participantId;
+    chat.querySelectorAll('.chatHead .ava,.chatHead b').forEach(el=>{
+      el.removeAttribute('data-user-id');
+      if(el.title==='Profili aç')el.removeAttribute('title');
+    });
     selectedMessages.clear();allMessagesSelected=false;messageSelectionMode=false;refreshSelectionBar();
     chat.classList.remove('eris-floating-dm');
     chat.classList.add('show');
     const title = chat.querySelector('.chatHead b');
-    const info=conversationInfo.get(String(id));
-    const isGroup=info?.type==='group'||String(id).startsWith('grp_');
     if (title) {
       title.textContent = name;window.ErisRoleBadges?.bind(title,participantId);
       title.onclick=isGroup?()=>openGroupManagement(id):null;
@@ -958,6 +967,14 @@
       title.style.cursor=isGroup?'pointer':'';
       if(isGroup){title.setAttribute('role','button');title.tabIndex=0;title.setAttribute('aria-label',name+' · Grup menüsü');}
       else{title.removeAttribute('role');title.removeAttribute('tabindex');title.removeAttribute('aria-label');}
+    }
+    const headerAvatar=chat.querySelector('.chatHead .ava');
+    if(headerAvatar){
+      headerAvatar.onclick=isGroup?()=>openGroupManagement(id):null;
+      headerAvatar.onkeydown=isGroup?e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGroupManagement(id)}}:null;
+      headerAvatar.style.cursor=isGroup?'pointer':'';
+      if(isGroup){headerAvatar.setAttribute('role','button');headerAvatar.tabIndex=0;headerAvatar.setAttribute('aria-label',name+' · Grup menüsü')}
+      else{headerAvatar.removeAttribute('role');headerAvatar.removeAttribute('tabindex');headerAvatar.removeAttribute('aria-label')}
     }
     installChatTools(chat);
     syncChatCompose(chat);

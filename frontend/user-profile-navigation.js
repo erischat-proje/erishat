@@ -119,26 +119,37 @@
     }catch(e){window.toast?.(e.message||'Kullanıcı bulunamadı.');}
   }
   window.openUserProfile=openUserProfile;
-  function mark(){
-    const id=window.__erisActiveDmUserId;
+  function headerUserId(){
     const chat=document.getElementById('chat');
-    if(!id||!chat)return;
+    if(!chat)return null;
+    const cid=chat.dataset.conversationId||window.ErisChatDM?.activeId?.()||'';
+    const kind=chat.dataset.conversationType;
+    if((kind&&kind!=='dm')||String(cid).startsWith('grp_')||String(cid).startsWith('welcome:'))return null;
+    return window.__erisActiveDmUserId||null;
+  }
+  function mark(){
+    const id=headerUserId();
+    const chat=document.getElementById('chat');
+    if(!chat)return;
     chat.querySelectorAll('.chatHead .ava,.chatHead b').forEach(el=>{
-      el.dataset.userId=id;el.style.cursor='pointer';el.title='Profili aç';
+      if(id){el.dataset.userId=id;el.style.cursor='pointer';el.title='Profili aç'}
+      else{el.removeAttribute('data-user-id');if(el.title==='Profili aç')el.removeAttribute('title')}
     });
   }
   document.addEventListener('click',e=>{
     const chatHeader=e.target.closest?.('#chat .chatHead .ava,#chat .chatHead b');
-    if(chatHeader&&window.__erisActiveDmUserId){
-      e.preventDefault();e.stopImmediatePropagation();
-      if(window.ErisFloatingProfile?.open)window.ErisFloatingProfile.open(window.__erisActiveDmUserId);
-      else openUserProfile(window.__erisActiveDmUserId);
+    // Group/family/system headers must never fall through to stale data-user-id.
+    if(chatHeader){
+      const id=headerUserId();
+      if(id){
+        e.preventDefault();e.stopImmediatePropagation();
+        if(window.ErisFloatingProfile?.open)window.ErisFloatingProfile.open(id);
+        else openUserProfile(id);
+      }
       return;
     }
     const t=e.target.closest?.('[data-user-id]');
     if(t?.dataset.userId){e.preventDefault();e.stopImmediatePropagation();(document.getElementById('chat')?.classList.contains('eris-floating-dm')?window.ErisFloatingProfile?.open(t.dataset.userId):openUserProfile(t.dataset.userId));return;}
-    const header=e.target.closest?.('#chat .chatHead .ava,#chat .chatHead b');
-    if(header&&window.__erisActiveDmUserId){e.preventDefault();e.stopImmediatePropagation();(document.getElementById('chat')?.classList.contains('eris-floating-dm')?window.ErisFloatingProfile?.open(window.__erisActiveDmUserId):openUserProfile(window.__erisActiveDmUserId));}
   },true);
   async function openNamedProfile(name){
     try{
@@ -156,6 +167,7 @@
     }
   },true);
   const mo=new MutationObserver(mark);
-  const start=()=>{mark();mo.observe(document.body,{childList:true,subtree:true});};
+  const start=()=>{mark();mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-conversation-id','data-conversation-type']});};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
