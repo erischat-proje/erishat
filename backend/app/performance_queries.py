@@ -15,7 +15,7 @@ def message_context(db, messages, viewer_id):
     conversation = db.get(Conversation, cid)
     family = db.scalar(select(Family.id).where(Family.chat_conversation_id == cid))
     state = db.scalar(select(ConversationReadState).where(
-        ConversationReadState.conversation_id == cid, ConversationReadState.user_id != viewer_id)) if conversation and conversation.type != 'family' and not family else None
+        ConversationReadState.conversation_id == cid, ConversationReadState.user_id != viewer_id)) if conversation and conversation.type == 'dm' and not family else None
     from .relationship_models import CoupleRewardSelection, CoupleMember, Couple
     sender_ids={m.sender_id for m in messages}
     senders={u.id:u for u in db.scalars(select(User).where(User.id.in_(sender_ids)))}
@@ -23,12 +23,13 @@ def message_context(db, messages, viewer_id):
         CoupleMember,CoupleMember.user_id==CoupleRewardSelection.user_id).join(Couple,Couple.id==CoupleMember.couple_id).where(
         CoupleRewardSelection.user_id.in_(sender_ids),CoupleRewardSelection.kind=='bubble',Couple.active.is_(True))).all())
     bubbles.update({uid:u.bubble_asset for uid,u in senders.items() if u.bubble_asset})
+    from .message_info import summaries
     from .message_polls import annotations as poll_annotations
     from .message_stars import starred_ids
     from .message_actions import annotations
     from .message_tools import extras
     from .message_attachment_models import MessageAttachment
-    return {'polls':poll_annotations(db,messages,viewer_id),'starred':starred_ids(db,messages,viewer_id),'actions':annotations(db,messages,viewer_id),'attachments':{a.message_id:a for a in db.scalars(select(MessageAttachment).where(MessageAttachment.message_id.in_(ids)))},'details':extras(db,messages,viewer_id),'senders':senders,'bubbles':bubbles,'read': state.last_read_message_id if state else 0,
+    return {'receipts':summaries(db,messages,viewer_id),'polls':poll_annotations(db,messages,viewer_id),'starred':starred_ids(db,messages,viewer_id),'actions':annotations(db,messages,viewer_id),'attachments':{a.message_id:a for a in db.scalars(select(MessageAttachment).where(MessageAttachment.message_id.in_(ids)))},'details':extras(db,messages,viewer_id),'senders':senders,'bubbles':bubbles,'read': state.last_read_message_id if state else 0,
         'hidden': set(db.scalars(select(MessageHidden.message_id).where(MessageHidden.user_id == viewer_id, MessageHidden.message_id.in_(ids)))),
         'pinned': set(db.scalars(select(PinnedMessage.message_id).where(PinnedMessage.conversation_id == cid, PinnedMessage.message_id.in_(ids)))),
         'gifts': {r.message_id: r for r in db.scalars(select(DirectMessageGift).where(DirectMessageGift.message_id.in_(ids)))},

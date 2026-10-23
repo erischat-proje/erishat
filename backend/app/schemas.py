@@ -246,6 +246,8 @@ class MessageOut(BaseModel):
     gift_image_url: str | None = None
     gift_price: int | None = None
     is_read: bool = False
+    read_count: int | None = None
+    recipient_count: int | None = None
     is_pinned: bool = False
     is_starred: bool = False
     gift_key: str | None = None
