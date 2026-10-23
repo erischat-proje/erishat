@@ -1,0 +1,5 @@
+Chessnut 0.4.1 — https://github.com/cgearhart/Chessnut
+Source: PyPI Chessnut 0.4.1. Vendored __init__.py, board.py, game.py, moves.py.
+Only import paths were changed to package-relative imports.
+Upstream author: Cameron Gearhart. License: Unlicense (UNLICENSE.txt).
+No chess engine or third-party piece artwork is included.
