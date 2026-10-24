@@ -1,0 +1,22 @@
+const {JSDOM}=require('jsdom'),fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
+(async()=>{
+ const dom=new JSDOM('<main id="root"></main>',{runScripts:'outside-only',url:'https://example.test'}),w=dom.window,root=w.document.querySelector('main');let token='a',handler,logoutCount=0,requests=[];
+ const base=p=>p==='/me/privacy'?{hide_notifications:false}:p==='/me/security/sessions'?{items:[{id:'self',current:true,expires_at:'2026-12-01'},{id:'other',current:false,expires_at:'2026-12-01'}]}:[];
+ w.ErisPlatform={getAccessToken:()=>token,api:async(p,o)=>{requests.push([p,o]);return handler?handler(p,o):base(p)},getMessageRestriction:async()=>({enabled:false,gift_key:'rose'}),messageGifts:async()=>[{gift_key:'rose',unit_price:1}],setMessageRestriction:async()=>{}};
+ w.ErisAuth={logout:async()=>{logoutCount++}};w.ErisProfileHub={show:()=>w.ErisSettings.render(root)};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/settings-live.js'),'utf8'));
+ const buttons=()=>[...root.querySelectorAll('button')],b=t=>{const n=buttons().find(n=>n.textContent===t);assert.ok(n,t);return n},tick=()=>new Promise(r=>setTimeout(r,0));
+ await w.ErisSettings.render(root);assert.match(root.textContent,/Bildirimler açık/);
+ let resolve;handler=p=>p==='/me/profile-visitors'?new Promise(r=>resolve=r):base(p);b('Profilime bakanlar').click();b('← Ayarlar').click();await tick();resolve([{nickname:'OLD VISITOR',user_id:'u'}]);await tick();assert.ok(!root.textContent.includes('OLD VISITOR'));assert.ok(root.textContent.includes('Mesajları kısıtla'));
+ handler=p=>p==='/me/security/sessions'?Promise.reject(Error('Bağlantı yok')):base(p);b('Açık oturumları yönet').click();await tick();assert.match(root.textContent,/Yenile düğmesi/);handler=base;b('Yenile').click();await tick();assert.match(root.textContent,/Bu oturum/);
+ b('Bu oturumu kapat').click();b('Vazgeç').click();assert.equal(requests.filter(r=>r[1]?.method==='DELETE').length,0);
+ handler=(p,o)=>o?.method==='DELETE'?new Promise(r=>resolve=r):base(p);b('Bu oturumu kapat').click();b('Evet, kapat').click();b('Evet, kapat').click();assert.equal(requests.filter(r=>r[1]?.method==='DELETE').length,1);resolve({});await tick();
+ const old=b('Diğer tüm oturumları kapat');await w.ErisSettings.render(root);old.click();assert.ok(!root.textContent.includes('Evet, kapat'));
+ handler=(p,o)=>p.endsWith('/request')?{accepted:true}:base(p);b('Hesabımı Sil').click();b('E-postama kod gönder').click();await tick();root.querySelector('input').value='123456';b('Kodu doğrula ve hesabımı kalıcı sil').click();b('Kodu doğrula ve hesabımı kalıcı sil').click();assert.equal(w.document.querySelectorAll('.eps-confirm-overlay').length,1);
+ token='b';w.dispatchEvent(new w.Event('erischat:auth-ready'));await tick();assert.equal(w.document.querySelector('.eps-confirm-overlay'),null);assert.equal(root.children.length,0);assert.equal(logoutCount,0);
+ await w.ErisSettings.render(root);b('Hesabımı Sil').click();b('E-postama kod gönder').click();await tick();root.querySelector('input').value='123456';
+ handler=(p,o)=>p.endsWith('/confirm')?new Promise(r=>resolve=r):base(p);b('Kodu doğrula ve hesabımı kalıcı sil').click();w.document.querySelector('.eps-confirm-accept').click();await tick();assert.equal(requests.filter(r=>r[0].endsWith('/confirm')).length,1);
+ token='c';w.dispatchEvent(new w.Event('erischat:auth-state-changed'));resolve({deleted:true});await tick();assert.equal(logoutCount,0);assert.equal(root.children.length,0);
+ await w.ErisSettings.render(root);root.replaceChildren(w.document.createTextNode('Başka menü'));token='d';w.dispatchEvent(new w.Event('erischat:auth'));assert.equal(root.textContent,'Başka menü');
+ dom.window.close();console.log('PASS settings: subview isolation, sessions retry/confirmation/double request, deletion dialog and cross-account response safety');
+})().catch(e=>{console.error(e);process.exit(1)});
