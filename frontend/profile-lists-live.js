@@ -10,6 +10,7 @@
   function button(text,action){const b=node('button','epl-button',text);b.type='button';b.onclick=action;return b}
   function asset(key){return key&&(window.ErisChatCosmetics?.assetUrl?.(key)||key)}
   async function render(root,type,valid=()=>true){
+    if(type==='blocked'&&window.ErisPrivacyCenter)return window.ErisPrivacyCenter.blocked(root,valid);
     const account=token();let rows=[],filter='all',query='',version=0,loading=false,mutating=false;
     const active=()=>root.isConnected&&valid()&&account===token();
     for(const [r,e] of mounted)if(!r.isConnected||!e.valid())mounted.delete(r);

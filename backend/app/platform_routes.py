@@ -193,6 +193,7 @@ def register_platform_auth(current_user_dependency):
         p=privacy_row(db,user.id); db.commit(); return {**{k:getattr(p,k) for k in ("hide_vip","hide_vip_badge","hide_vip_neon","hide_vip_entry","hide_vip_title","hide_location")}, **{k:bool(getattr(db.get(UserSocialPrivacy,user.id),k,False)) for k in ("hide_fans","hide_received_gifts")}, "hide_notifications": not user.notifications_enabled}
     @router.patch("/me/privacy")
     def update_privacy(payload: PrivacyUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
         p=privacy_row(db,user.id)
         for key,value in payload.model_dump(exclude_none=True).items():
             if key == "hide_notifications": user.notifications_enabled = not value
@@ -229,6 +230,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.patch("/me/profile-privacy")
     def set_private(payload: dict, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+        db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
         if type(payload.get("is_private")) is not bool: raise HTTPException(422, "is_private boolean olmalı")
         row = db.get(PrivateProfileSetting, user.id)
         if row is None: row = PrivateProfileSetting(user_id=user.id); db.add(row)
@@ -742,13 +744,15 @@ def register_platform_auth(current_user_dependency):
         return {"removed":True}
     @router.post("/users/{user_id}/block")
     def block_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
         if user_id==user.id: raise HTTPException(status_code=400,detail="Kendinizi engelleyemezsiniz")
         if not db.get(User,user_id): raise HTTPException(status_code=404,detail="Kullanıcı bulunamadı")
         if not db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==user.id,UserBlock.blocked_id==user_id)):
-            db.add(UserBlock(blocker_id=user.id,blocked_id=user_id)); db.commit()
+            db.add(UserBlock(blocker_id=user.id,blocked_id=user_id,created_at=datetime.now(timezone.utc))); db.commit()
         return {"blocked":True}
     @router.delete("/users/{user_id}/block")
     def unblock_user(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
         row=db.scalar(select(UserBlock).where(UserBlock.blocker_id==user.id,UserBlock.blocked_id==user_id))
         if row: db.delete(row); db.commit()
         return {"blocked":False}

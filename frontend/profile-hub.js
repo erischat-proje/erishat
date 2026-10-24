@@ -82,7 +82,7 @@
     document.body.append(overlay);
     overlay.querySelector('.eph-dialog-content').append(hub.querySelector('.eph-body'));
     const settings=view.querySelector('[data-erischat-profile-controls]');if(settings)overlay.querySelector('.eph-dialog-content').append(settings);
-    let lastTrigger=null;const close=()=>{if(overlay.hidden)return;if(window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true);if(lastTrigger?.isConnected)lastTrigger.focus()};
+    let lastTrigger=null;const close=()=>{if(overlay.hidden)return;if(window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;if(window.ErisPrivacyCenter?.canLeave&&!window.ErisPrivacyCenter.canLeave())return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true);if(lastTrigger?.isConnected)lastTrigger.focus()};
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
@@ -98,7 +98,8 @@
   let requestIndex=0;
   async function show(key,force=false) {
     if(!force&&window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;
-    window.ErisProfileWorkspace?.reset();
+    if(!force&&window.ErisPrivacyCenter?.canLeave&&!window.ErisPrivacyCenter.canLeave())return;
+    window.ErisProfileWorkspace?.reset();window.ErisPrivacyCenter?.reset();
     const hub=panel();if(!hub)return;
     const index=++requestIndex,session=sessionToken(),isCurrent=()=>index===requestIndex&&session===sessionToken(), overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
     window.ErisSocialFeed?.release?.(body);

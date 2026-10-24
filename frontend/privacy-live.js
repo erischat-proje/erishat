@@ -47,6 +47,7 @@
     }catch(e){if(g===epoch&&account===token()){busy=false;sync('Ayar kaydedilemedi veya doğrulanamadı. Yenile ve tekrar dene.')}}
   }
   async function render(root,valid=()=>true){
+    if(window.ErisPrivacyCenter)return window.ErisPrivacyCenter.privacy(root,valid);
     root.classList.add('epv');root.replaceChildren();roots.set(root,valid);
     const intro=document.createElement('p');intro.className='epv-intro';intro.textContent='Profilinde nelerin görüneceğini sen seç. Açık olan seçenekler ilgili bilgiyi gizler.';root.append(intro);
     for(const [title,items] of groups){const h=document.createElement('h3');h.textContent=title;root.append(h);for(const [key,label,description] of items){const row=document.createElement('div');row.className='epv-row';const copy=document.createElement('div');copy.className='epv-copy';const name=document.createElement('b');name.textContent=label;const small=document.createElement('small');small.textContent=description;copy.append(name,small);const button=document.createElement('button');button.type='button';button.className='epv-switch';button.dataset.epvKey=key;button.setAttribute('role','switch');button.setAttribute('aria-label',label);button.setAttribute('aria-checked','false');button.disabled=true;button.onclick=()=>save(key);row.append(copy,button);root.append(row)}}
