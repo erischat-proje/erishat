@@ -1,0 +1,21 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path');const assert=require('node:assert/strict');
+(async()=>{
+ const dom=new JSDOM('<div id="profile"></div>',{runScripts:'outside-only',url:'https://example.test'}),w=dom.window;let token='a',handler,requests=[];
+ const rows=Array.from({length:45},(_,i)=>({id:String(i),peer_id:'u'+i,peer_name:i===0?'<img src=x>':'Kişi '+i,incoming:i%2===0,kind:i%3?'voice':'video',status:i%2?'ended':'missed',created_at:'2026-10-24T08:00:00Z',duration_seconds:61}));
+ w.ErisPlatform={getAccessToken:()=>token,api:async(p,o)=>{requests.push([p,o]);return handler?handler(p,o):rows}};w.ErisAuth={getMe:async()=>({id:'me'})};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/profile-hub.js'),'utf8'));w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+ const q=s=>w.document.querySelector(s),all=s=>[...w.document.querySelectorAll(s)],tick=()=>new Promise(r=>setTimeout(r,0)),cards=()=>all('.eph-call-card');
+ await w.ErisProfileHub.show('calls');assert.equal(cards().length,20);assert.equal(q('.eph-call-name').textContent,'<img src=x>');assert.equal(q('.eph-call-card img'),null);
+ const more=()=>all('button').find(b=>b.textContent==='Daha fazla göster');more().click();assert.equal(cards().length,40);more().click();assert.equal(cards().length,45);
+ const filter=(k,v)=>{q('[data-filter="'+k+'"]').value=v;q('[data-filter="'+k+'"]').dispatchEvent(new w.Event('change'))};
+ filter('kind','video');assert.equal(cards().length,15);filter('direction','incoming');assert.equal(cards().length,8);filter('status','ended');assert.equal(cards().length,0);assert.match(q('[data-calls]').textContent,/filtre/);
+ filter('kind','all');filter('direction','all');filter('status','all');q('[data-search]').value='KİŞİ 44';q('[data-search]').dispatchEvent(new w.Event('input'));assert.equal(cards().length,1);
+ let resolve;handler=()=>new Promise(r=>resolve=r);q('[data-refresh]').click();q('[data-refresh]').click();assert.equal(requests.filter(r=>!r[1]).length,2);resolve(rows);await tick();
+ q('[data-clear]').click();q('[data-cancel]').click();assert.equal(q('[data-clear-confirm]').hidden,true);assert.equal(requests.filter(r=>r[1]).length,0);
+ handler=()=>Promise.reject(Error('Çevrimdışı'));q('[data-clear]').click();q('[data-confirm]').click();await tick();assert.match(q('[data-call-status]').textContent,/Çevrimdışı/);assert.equal(q('[data-confirm]').disabled,false);
+ handler=()=>new Promise(r=>resolve=r);q('[data-confirm]').click();q('[data-confirm]').click();assert.equal(requests.filter(r=>r[1]).length,2);resolve({hidden_count:45});await tick();assert.equal(cards().length,0);assert.equal(q('[data-clear]').disabled,true);
+ handler=()=>Promise.reject(Error('Bağlantı yok'));await w.ErisProfileHub.show('calls');assert.match(q('[data-call-status]').textContent,/Yenile/);handler=()=>rows;q('[data-refresh]').click();await tick();assert.equal(cards().length,20);
+ q('[data-clear]').click();const stale=q('[data-confirm]');token='b';w.dispatchEvent(new w.Event('erischat:auth-ready'));const before=requests.length;stale.click();assert.equal(requests.length,before);assert.equal(q('.eph-overlay').hidden,true);assert.equal(cards().length,0);
+ handler=()=>new Promise(r=>resolve=r);const pending=w.ErisProfileHub.show('calls');await tick();token='c';w.dispatchEvent(new w.Event('erischat:auth-state-changed'));resolve(rows);await pending;assert.equal(cards().length,0);
+ dom.window.close();console.log('PASS call history: filters, paging, safe text, retry, confirmation, duplicate request and account isolation');
+})().catch(e=>{console.error(e);process.exit(1)});

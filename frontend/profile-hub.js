@@ -4,6 +4,51 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const sessionToken=()=>window.ErisPlatform?.getAccessToken?.()||'';
   const panel = () => document.getElementById('erisProfileHub');
+  async function renderCalls(body,isCurrent) {
+    body.innerHTML='<section class="eph-call-history"><header><h3>Arama geçmişleri</h3><p>Son 100 görünür görüşmeni kişi, yön ve türüne göre bul.</p></header><input type="search" data-search aria-label="Aranan kişi" placeholder="Kişi ara"><div data-tools></div><p data-summary></p><button type="button" data-refresh>Yenile</button><button type="button" data-clear disabled>Geçmişi temizle</button><div data-clear-confirm hidden><p>Filtrelerden bağımsız olarak tüm arama geçmişin kendi listenden temizlenecek. Karşı tarafın geçmişi değişmez.</p><button type="button" data-cancel>Vazgeç</button><button type="button" data-confirm>Geçmişimi temizle</button></div><p data-call-status role="status"></p><div data-calls></div></section>';
+    const section=body.firstElementChild,active=()=>isCurrent()&&body.contains(section);
+    const get=s=>section.querySelector(s), list=get('[data-calls]'),status=get('[data-call-status]'),clear=get('[data-clear]'),confirm=get('[data-clear-confirm]'),refresh=get('[data-refresh]');
+    let rows=[],busy=false,limit=20;const filters={direction:'all',kind:'all',status:'all'};
+    const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
+    const btn=(text,fn)=>{const n=el('button',text);n.type='button';n.onclick=fn;return n};
+    for(const [key,label,options] of [['direction','Arama yönü',[['all','Tüm yönler'],['incoming','Gelen'],['outgoing','Giden']]],['kind','Arama türü',[['all','Tüm türler'],['audio','Sesli'],['video','Görüntülü']]],['status','Arama sonucu',[['all','Tüm sonuçlar'],['missed','Yanıtsız'],['ended','Tamamlandı'],['reject','Reddedildi'],['unavailable','Müsait değil'],['active','Sürüyor'],['ringing','Çalıyor']]]]){
+      const select=el('select');select.setAttribute('aria-label',label);select.dataset.filter=key;select.style.cssText='max-width:100%;min-height:44px;margin:4px;padding:8px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel);color:var(--ui-ink)';
+      for(const [value,text] of options){const o=el('option',text);o.value=value;select.append(o)}
+      select.onchange=()=>{filters[key]=select.value;limit=20;draw()};get('[data-tools]').append(select);
+    }
+    get('[data-search]').oninput=()=>{limit=20;draw()};
+    function draw(){
+      if(!active())return;list.replaceChildren();const q=get('[data-search]').value.trim().toLocaleLowerCase('tr-TR');
+      const found=rows.filter(r=>String(r.peer_name||'Kullanıcı').toLocaleLowerCase('tr-TR').includes(q)&&(filters.direction==='all'||Boolean(r.incoming)===(filters.direction==='incoming'))&&(filters.kind==='all'||(r.kind==='video'?'video':'audio')===filters.kind)&&(filters.status==='all'||r.status===filters.status));
+      get('[data-summary]').textContent=rows.length+' kayıt · '+found.length+' eşleşme';clear.disabled=busy||!rows.length;
+      if(!found.length){const p=el('p',rows.length?'Bu filtrelerde arama bulunamadı.':'Henüz arama geçmişin yok.');p.className='eph-calls-empty';list.append(p)}
+      for(const row of found.slice(0,limit)){
+        const card=el('article');card.className='eph-call-card';const icon=el('span',row.kind==='video'?'▣':'☎');icon.className='eph-call-icon';icon.setAttribute('aria-hidden','true');const info=el('div');
+        const name=btn(row.peer_name||'Kullanıcı',()=>{if(!active()||busy)return;window.ErisProfileHub.close();window.openUserProfile?.(row.peer_id)});name.className='eph-call-name';name.disabled=!row.peer_id||busy;
+        const labels={active:'Sürüyor',ringing:'Çalıyor',reject:'Reddedildi',unavailable:'Müsait değil',missed:'Yanıtsız',ended:'Tamamlandı'};
+        const meta=el('p',(row.incoming?'Gelen':'Giden')+' · '+(row.kind==='video'?'Görüntülü':'Sesli')+' · '+(labels[row.status]||'Bilinmeyen sonuç'));
+        const duration=Number.isFinite(Number(row.duration_seconds))?Math.max(0,Math.floor(Number(row.duration_seconds))):0,date=new Date(row.created_at);
+        info.append(name,meta,el('small',(Number.isNaN(date.getTime())?'Tarih bilinmiyor':date.toLocaleString('tr-TR'))+' · '+Math.floor(duration/60)+' dk '+duration%60+' sn'));card.append(icon,info);list.append(card);
+      }
+      if(found.length>limit)list.append(btn('Daha fazla göster',()=>{limit+=20;draw()}));
+    }
+    function lock(value){busy=value;refresh.disabled=value;get('[data-confirm]').disabled=value;get('[data-cancel]').disabled=value;draw()}
+    clear.onclick=()=>{if(!active()||busy)return;confirm.hidden=false;get('[data-confirm]').focus()};
+    get('[data-cancel]').onclick=()=>{if(!active()||busy)return;confirm.hidden=true;clear.focus()};
+    get('[data-confirm]').onclick=async()=>{
+      if(!active()||busy||confirm.hidden)return;lock(true);status.textContent='Geçmiş temizleniyor…';
+      try{await api('/calls/history',{method:'DELETE'});if(!active())return;rows=[];confirm.hidden=true;status.textContent='Arama geçmişin kendi listenden temizlendi.'}
+      catch(e){if(active())status.textContent=e.message||'Geçmiş temizlenemedi. Tekrar dene.'}
+      finally{if(active())lock(false)}
+    };
+    async function load(){
+      if(!active()||busy)return;confirm.hidden=true;lock(true);status.textContent='Aramalar yükleniyor…';
+      try{const result=await api('/calls/history');if(!active())return;if(!Array.isArray(result))throw Error('Arama listesi alınamadı.');rows=result.filter(r=>r&&typeof r==='object');limit=20;status.textContent=''}
+      catch(e){if(active())status.textContent=(e.message||'Aramalar yüklenemedi.')+' Yenile düğmesiyle tekrar dene.'}
+      finally{if(active())lock(false)}
+    }
+    refresh.onclick=load;await load();
+  }
   function mount() {
     const view = document.getElementById('profile');
     if (!view || panel()) return;
@@ -117,16 +162,7 @@
     body.textContent='Yükleniyor…';
     try {
       const me=await window.ErisAuth.getMe();if(!isCurrent())return;
-      if(key==='calls') {
-        body.innerHTML='<section class="eph-call-history"><header><span>GÖRÜŞMELERİN</span><h3>Arama geçmişleri</h3><p>Sesli ve görüntülü görüşmelerini buradan takip et.</p></header><button type="button" data-clear disabled>Geçmişi temizle</button><div data-clear-confirm hidden><p>Arama geçmişini kendi listenden temizlemek istiyor musun? Bu işlem sistem kayıtlarını silmez; yetkili sorgularında kayıtlar korunur.</p><div><button type="button" data-cancel>Vazgeç</button><button type="button" data-confirm>Geçmişimi temizle</button></div></div><div data-call-status role="status" aria-live="polite"></div><div data-calls></div></section>';
-        const list=body.querySelector('[data-calls]'),clear=body.querySelector('[data-clear]'),confirm=body.querySelector('[data-clear-confirm]'),status=body.querySelector('[data-call-status]');let pending=false;
-        const empty=()=>{list.innerHTML='<div class="eph-calls-empty">Henüz arama geçmişin yok.</div>';clear.disabled=true};
-        clear.onclick=()=>{confirm.hidden=false;body.querySelector('[data-confirm]').focus()};body.querySelector('[data-cancel]').onclick=()=>{if(pending)return;confirm.hidden=true;clear.focus()};
-        body.querySelector('[data-confirm]').onclick=async()=>{if(pending)return;pending=true;const button=body.querySelector('[data-confirm]');button.disabled=true;status.textContent='Geçmiş temizleniyor…';try{await api('/calls/history',{method:'DELETE'});if(!isCurrent())return;empty();confirm.hidden=true;status.textContent='Arama geçmişin kendi listenden temizlendi.'}catch(e){if(isCurrent())status.textContent=e.message||'Geçmiş temizlenemedi.'}finally{pending=false;button.disabled=false}};
-        async function loadCalls(){list.textContent='Aramalar yükleniyor…';try{const calls=await api('/calls/history');if(!isCurrent())return;list.replaceChildren();clear.disabled=!calls.length;if(!calls.length){empty();return}
-          for(const row of calls){const card=document.createElement('article');card.className='eph-call-card';const icon=document.createElement('span');icon.className='eph-call-icon';icon.textContent=row.kind==='video'?'▣':'☎';const info=document.createElement('div');const name=document.createElement('button');name.type='button';name.className='eph-call-name';name.textContent=row.peer_name||'Kullanıcı';name.disabled=!row.peer_id;name.onclick=()=>{window.ErisProfileHub.close();window.openUserProfile?.(row.peer_id)};const meta=document.createElement('p');const duration=Math.max(0,Number(row.duration_seconds)||0);const labels={active:'Sürüyor',ringing:'Çalıyor',reject:'Reddedildi',unavailable:'Müsait değil',missed:'Yanıtsız',ended:'Tamamlandı'};meta.textContent=(row.incoming?'Gelen':'Giden')+' · '+(row.kind==='video'?'Görüntülü':'Sesli')+' · '+(labels[row.status]||row.status);const date=document.createElement('small');date.textContent=new Date(row.created_at).toLocaleString('tr-TR')+' · '+Math.floor(duration/60)+' dk '+duration%60+' sn';info.append(name,meta,date);card.append(icon,info);list.append(card)}
-        }catch(e){if(!isCurrent())return;list.replaceChildren();const text=document.createElement('p');text.textContent=e.message||'Aramalar yüklenemedi.';const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=loadCalls;list.append(text,retry)}}await loadCalls();return;
-      }
+      if(key==='calls'){await renderCalls(body,isCurrent);return;}
       if(key==='info'&&window.ErisProfileWorkspace){await window.ErisProfileWorkspace.info(body,me,isCurrent);return;}
       if(key==='posts'&&window.ErisProfileWorkspace){await window.ErisProfileWorkspace.posts(body,me,isCurrent);return;}
       if(key==='info') {
@@ -211,7 +247,7 @@
   window.ErisProfileHub={show,close:()=>document.querySelector('.eph-close')?.click(),reset:()=>{window.ErisProfileWorkspace?.reset();const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true)}};
   let profileSession=sessionToken(),profileAccount=window.ErisAuth?.user?.id;
   const accountChanged=event=>{const next=sessionToken(),uid=event.detail?.user?.id;if(next!==profileSession||uid&&profileAccount&&String(uid)!==String(profileAccount)||event.detail?.state==='logged_out'){profileSession=next;profileAccount=uid;window.ErisProfileHub.reset();}else if(uid)profileAccount=uid;};
-  for(const type of ['erischat:auth','erischat:auth-state'])window.addEventListener(type,accountChanged);
+  for(const type of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(type,accountChanged);
   window.addEventListener('storage',event=>{if(['erischat_access_token','erischat.accessToken.v1','token',null].includes(event.key))accountChanged(event);});
   const start=()=>{mount();window.addEventListener('erischat:auth',event=>{if(event.detail?.state==='ready' && panel()?.closest('#profile')?.dataset.profileSection==='info')show('info')})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
