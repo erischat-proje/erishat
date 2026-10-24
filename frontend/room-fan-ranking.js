@@ -1,7 +1,9 @@
 /* Personal supporters, ranked by received gifts across rooms and DMs. */
 (() => {
   'use strict';
-  let dismiss=null;
+  let dismiss=null,openedAccount=null;
+  const token=()=>window.ErisPlatform?.getAccessToken?.()||'';
+  for(const event of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(event,()=>{if(dismiss&&openedAccount!==token())dismiss()});
   const style=document.createElement('style');
   style.textContent=`
 .personal-fan-overlay{position:fixed;inset:0;z-index:21030;background:var(--ui-overlay);color:var(--ui-ink);display:flex;justify-content:center;box-sizing:border-box;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
@@ -18,27 +20,32 @@
   style.textContent+=`.personal-fan-avatar.has-frame{background:transparent}.personal-fan-avatar.has-frame>img:not(.personal-fan-frame){inset:15%;width:70%;height:70%}.personal-fan-frame{inset:0;width:100%;height:100%}.personal-fan-gifts-button{width:40px;min-height:44px;padding:0;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-button) 7%, transparent);font-size:20px!important}.personal-fan-gift-heading{display:flex;align-items:center;gap:10px;margin:0 0 16px;min-width:0}.personal-fan-gift-heading button{min-height:44px;padding:8px 12px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-raised) 3%, transparent);font-size:12px}.personal-fan-gift-heading b{min-width:0;overflow-wrap:anywhere;font-size:14px}@media(max-width:360px){.personal-fan-gifts-button{width:36px}}`;
   document.head.append(style);
   function open(userId){
-    const id=String(userId||'');if(!id)return;
-    dismiss?.();
+    const id=String(userId||'');if(!id)return;const account=token();
+    dismiss?.();openedAccount=account;
     const previous=document.activeElement,overlay=document.createElement('div');overlay.className='personal-fan-overlay';
     overlay.innerHTML='<section class="personal-fan-panel" role="dialog" aria-modal="true" aria-labelledby="personalFanTitle"><header><div><small>LİDYACHAT · PROFİL</small><h2 id="personalFanTitle">Hayran sıralaması</h2></div><button type="button" class="personal-fan-close" aria-label="Kapat">×</button></header><p class="personal-fan-intro">Oda ve özel mesajlarda alınan hediyelere göre tüm zamanların ilk 50 destekçisi. Tutarlar Lidya değeridir.</p><div class="personal-fan-tabs" role="group" aria-label="Hayran bölümleri"><button type="button" data-tab="ranking" aria-pressed="true">Sıralama</button><button type="button" data-tab="gifts" aria-pressed="false">Hediyeler</button></div><div class="personal-fan-list" aria-live="polite"></div></section>';
     document.body.append(overlay);
-    const list=overlay.querySelector('.personal-fan-list');let generation=0,tab='ranking',sender=null;
+    const list=overlay.querySelector('.personal-fan-list');let generation=0,tab='ranking',sender=null,cached=[],loaded=false,busy=false;const active=()=>overlay.isConnected&&account===token();
+    const tools=document.createElement('div');tools.style.cssText='display:flex;gap:8px;padding:0 20px 16px;flex-wrap:wrap';const search=document.createElement('input');search.type='search';search.placeholder='Destekçi ara';search.setAttribute('aria-label','Sıralamada veya hediyelerde ara');search.style.cssText='flex:1;min-width:0;min-height:44px;padding:10px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel);color:var(--ui-ink);font:inherit';const refresh=document.createElement('button');refresh.type='button';refresh.textContent='Yenile';refresh.style.cssText='min-height:44px;padding:10px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-raised)';refresh.onclick=()=>{if(active()&&!busy)load()};search.oninput=()=>{if(active()&&loaded&&!busy)draw(cached,tab)};tools.append(search,refresh);list.before(tools);
     const close=()=>{generation++;overlay.remove();document.removeEventListener('keydown',key);if(dismiss===close)dismiss=null;if(previous?.isConnected)previous.focus()};
-    const key=e=>{if(e.key==='Escape'){e.preventDefault();close()}if(e.key==='Tab'){const buttons=[...overlay.querySelectorAll('button:not(:disabled)')];const first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
+    const key=e=>{if(e.key==='Escape'){e.preventDefault();close()}if(e.key==='Tab'){const buttons=[...overlay.querySelectorAll('button:not(:disabled),input:not(:disabled)')];const first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}};
     dismiss=close;document.addEventListener('keydown',key);overlay.querySelector('.personal-fan-close').onclick=close;overlay.querySelector('.personal-fan-close').focus();
     function state(title,detail,retry=false){list.replaceChildren();const box=document.createElement('div');box.className='personal-fan-state';const heading=document.createElement('b');heading.textContent=title;const copy=document.createElement('span');copy.textContent=detail;box.append(heading,copy);if(retry){const button=document.createElement('button');button.type='button';button.textContent='Tekrar dene';button.onclick=load;box.append(button)}list.append(box)}
-    function profile(row){close();if(window.ErisFloatingProfile?.open)window.ErisFloatingProfile.open(row.user_id);else window.openUserProfile?.(row.user_id)}
+    function profile(row){if(!active())return;close();if(window.ErisFloatingProfile?.open)window.ErisFloatingProfile.open(row.user_id);else window.openUserProfile?.(row.user_id)}
     async function load(){
-      const current=++generation,section=tab;list.setAttribute('aria-busy','true');state('Yükleniyor…',section==='ranking'?'Destekçilerin hazırlanıyor.':'Alınan hediyeler hazırlanıyor.');
+      if(!active())return;const current=++generation,section=tab;busy=true;loaded=false;refresh.disabled=true;search.placeholder=section==='ranking'?'Destekçi ara':'Hediye ara';list.setAttribute('aria-busy','true');state('Yükleniyor…',section==='ranking'?'Destekçilerin hazırlanıyor.':'Alınan hediyeler hazırlanıyor.');
       try{
         const rows=await window.ErisPlatform.api('/users/'+encodeURIComponent(id)+(section==='ranking'?'/fan-leaderboard':'/received-gifts'+(sender?'?sender_id='+encodeURIComponent(sender.user_id):'')));
-        if(!overlay.isConnected||current!==generation)return;
+        if(!active()||current!==generation)return;
         if(!Array.isArray(rows))throw Error('Liste alınamadı.');
-        if(!rows.length){state(section==='ranking'?'İlk destekçini bekliyor':'Henüz hediye yok','Alınan hediyeler ve destekçilerin burada görünecek.');if(sender)addSenderHeading();return}
+        cached=rows;loaded=true;draw(rows,section);
+      }catch(e){if(active()&&current===generation)state('Liste yüklenemedi',e.message||'Bağlantını kontrol edip tekrar dene.',true)}finally{if(current===generation){busy=false;refresh.disabled=false;list.setAttribute('aria-busy','false')}}
+    }
+    function draw(allRows,section){if(!active())return;const query=search.value.trim().toLocaleLowerCase('tr-TR'),rows=allRows.filter(row=>String(section==='ranking'?row.nickname||'Kullanıcı':row.gift_key||'Hediye').toLocaleLowerCase('tr-TR').includes(query));
+        if(!rows.length){state(query?'Aramada sonuç yok':section==='ranking'?'İlk destekçini bekliyor':'Henüz hediye yok',query?'Farklı bir adla tekrar ara.':'Alınan hediyeler ve destekçilerin burada görünecek.');if(sender)addSenderHeading();return}
         list.replaceChildren();
         if(sender)addSenderHeading();
-        const meta=document.createElement('p');meta.className='personal-fan-meta';meta.textContent=section==='ranking'?rows.length+' destekçi · tüm zamanlar':rows.length+' farklı hediye';list.append(meta);
+        const meta=document.createElement('p');meta.className='personal-fan-meta';meta.textContent=section==='ranking'?rows.length+' eşleşme · '+allRows.length+' destekçi · tüm zamanlar':rows.length+' farklı hediye';list.append(meta);
         if(section==='gifts'){
           const grid=document.createElement('div');grid.className='personal-gift-list';
           for(const row of rows){const card=document.createElement('div');card.className='personal-gift-card';const img=document.createElement('img');img.src=row.image_url||'';img.alt=row.gift_key||'Hediye';img.loading='lazy';const count=document.createElement('b');count.textContent='× '+Number(row.count||0).toLocaleString('tr-TR');const name=document.createElement('small');name.textContent=row.gift_key||'Hediye';card.append(img,count,name);grid.append(card)}list.append(grid);return;
@@ -52,12 +59,12 @@
           const person=document.createElement('div');person.className='personal-fan-person';const name=document.createElement('button');name.type='button';name.className='personal-fan-name';const nick=document.createElement('span');nick.className='personal-fan-nickname';nick.textContent=row.nickname||'Kullanıcı';name.append(nick);window.ErisRoleBadges?.bind(nick,row);
           const details=document.createElement('div');details.className='personal-fan-details';const badge=document.createElement('img');badge.className='personal-fan-level';const level=Math.max(1,Math.min(40,Number(row.fan_level)||1));badge.src='./fan-levels/LEVEL'+level+'.png';badge.alt='Hayran seviyesi '+level;badge.onerror=()=>{const fallback=document.createElement('span');fallback.textContent='Sv. '+level;fallback.style.cssText="font-size:10px;color:var(--ui-gold)";badge.replaceWith(fallback)};const amount=document.createElement('span');amount.className='personal-fan-amount';amount.textContent=row.gifts_hidden?'Hediyeler gizli':Number(row.total_lidya||0).toLocaleString('tr-TR')+' Lidya';badge.hidden=!!row.gifts_hidden;details.append(badge,amount);person.append(name,details);
           if(row.user_id){avatar.onclick=name.onclick=()=>profile(row)}else{avatar.disabled=name.disabled=true}
-          const gifts=document.createElement('button');gifts.type='button';gifts.className='personal-fan-gifts-button';gifts.textContent='🪎';gifts.setAttribute('aria-label',(row.nickname||'Kullanıcı')+' tarafından gönderilen hediyeleri gör');gifts.disabled=!row.user_id||!!row.gifts_hidden;gifts.onclick=()=>{sender=row;tab='gifts';overlay.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed','false'));load()};item.append(rank,avatar,person,gifts);list.append(item);
+          const gifts=document.createElement('button');gifts.type='button';gifts.className='personal-fan-gifts-button';gifts.textContent='🪎';gifts.setAttribute('aria-label',(row.nickname||'Kullanıcı')+' tarafından gönderilen hediyeleri gör');gifts.disabled=!row.user_id||!!row.gifts_hidden;gifts.onclick=()=>{if(!active()||!row.user_id||row.gifts_hidden)return;search.value='';sender=row;tab='gifts';overlay.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed','false'));load()};item.append(rank,avatar,person,gifts);list.append(item);
         }
-      }catch(e){if(overlay.isConnected&&current===generation)state('Liste yüklenemedi',e.message||'Bağlantını kontrol edip tekrar dene.',true)}finally{if(current===generation)list.setAttribute('aria-busy','false')}
     }
-    function addSenderHeading(){const heading=document.createElement('div');heading.className='personal-fan-gift-heading';const back=document.createElement('button');back.type='button';back.textContent='← Sıralama';back.onclick=()=>overlay.querySelector('[data-tab=ranking]').click();const name=document.createElement('b');name.textContent=(sender.nickname||'Kullanıcı')+' · gönderdiği hediyeler';heading.append(back,name);list.prepend(heading)}
-    overlay.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>{sender=null;tab=button.dataset.tab;overlay.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));load()});load();
+    function addSenderHeading(){const heading=document.createElement('div');heading.className='personal-fan-gift-heading';const back=document.createElement('button');back.type='button';back.textContent='← Sıralama';back.onclick=()=>{if(active())overlay.querySelector('[data-tab=ranking]').click()};const name=document.createElement('b');name.textContent=(sender.nickname||'Kullanıcı')+' · gönderdiği hediyeler';heading.append(back,name);list.prepend(heading)}
+    overlay.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>{if(!active())return;search.value='';sender=null;tab=button.dataset.tab;overlay.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));load()});load();
   }
   window.ErisPersonalFanRanking=open;
 })();
+
