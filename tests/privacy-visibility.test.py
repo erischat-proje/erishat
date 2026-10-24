@@ -22,7 +22,7 @@ class Message(Base):
 class HTTPException(Exception):
     def __init__(self,status_code,detail):self.status_code=status_code;self.detail=detail
 root=pathlib.Path(__file__).resolve().parents[1]/'backend/app'
-scope=dict(Base=Base,Mapped=Mapped,mapped_column=mapped_column,String=String,Boolean=Boolean,ForeignKey=ForeignKey,DateTime=DateTime,datetime=datetime,func=func,BaseModel=BaseModel,User=User,HTTPException=HTTPException,select=select,RoomGiftEvent=RoomGiftEvent,DirectMessageGift=DirectMessageGift,Message=Message,re=re,GIFT_META={},active_ban=lambda *_:False,fan_leaderboard=lambda *_:[{'rank':1,'user_id':'sender','total_lidya':900,'fan_level':2}])
+scope=dict(Base=Base,Mapped=Mapped,mapped_column=mapped_column,String=String,Boolean=Boolean,ForeignKey=ForeignKey,DateTime=DateTime,datetime=datetime,func=func,BaseModel=BaseModel,User=User,HTTPException=HTTPException,select=select,RoomGiftEvent=RoomGiftEvent,DirectMessageGift=DirectMessageGift,Message=Message,re=re,GIFT_META={},active_ban=lambda *_:False,is_staff=lambda *_:False,fan_leaderboard=lambda *_:[{'rank':1,'user_id':'sender','total_lidya':900,'fan_level':2}])
 def extract(file,names,kind=ast.FunctionDef):
     tree=ast.parse((root/file).read_text())
     nodes=[x for x in ast.walk(tree) if isinstance(x,kind) and x.name in names]
