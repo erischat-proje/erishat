@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   if (window.LidyaChess) return;
+  const artwork=(cls='')=>`<span class="lc-art ${cls}"><img class="lc-art-light" src="./assets/chess-premium/light.png" alt=""><img class="lc-art-dark" src="./assets/chess-premium/dark.png" alt=""></span>`;
+  let detailsOpen=false;
   const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const labels = {p:'Piyon',n:'At',b:'Fil',r:'Kale',q:'Vezir',k:'Şah'};
@@ -40,12 +42,14 @@
   function notice(text) { if ($('.lc-notice')) $('.lc-notice').textContent=text; }
   function status(text) { if ($('.lc-status')) $('.lc-status').textContent=text; }
   function shell() {
-    root.innerHTML=`<div class="lc-wrap"><header class="lc-header"><span class="lc-brand" aria-hidden="true">♔</span><div><h1>Satranç Merkezi</h1><p>LİDYA · Her hamlede yeni bir ihtimal</p></div>${btn('Kapat','close','lc-close')}</header><nav class="lc-tabs" aria-label="Satranç bölümleri">${[['play','Oyna'],['tournaments','Turnuvalar'],['history','Maçlarım'],['leaderboard','Sıralama'],['rules','Nasıl oynanır?']].map(([v,t])=>`<button type="button" class="lc-btn" data-lc="tab" data-tab="${v}" aria-selected="${tab===v}">${t}</button>`).join('')}</nav><div class="lc-notice" role="status" aria-live="polite"></div><div class="lc-status" aria-live="polite"></div><main class="lc-content"></main></div>`;
+    root.classList.remove('lc-in-match');detailsOpen=false;
+    root.innerHTML=`<div class="lc-wrap"><header class="lc-header">${artwork('lc-brand')}<div><h1>Satranç Merkezi</h1><p>LİDYA · Her hamlede yeni bir ihtimal</p></div>${btn('Kapat','close','lc-close')}</header><nav class="lc-tabs" aria-label="Satranç bölümleri">${[['play','Oyna'],['tournaments','Turnuvalar'],['history','Maçlarım'],['leaderboard','Sıralama'],['rules','Nasıl oynanır?']].map(([v,t])=>`<button type="button" class="lc-btn" data-lc="tab" data-tab="${v}" aria-selected="${tab===v}">${t}</button>`).join('')}</nav><div class="lc-notice" role="status" aria-live="polite"></div><div class="lc-status" aria-live="polite"></div><main class="lc-content"></main></div>`;
   }
   function renderPlay() {
+    root.classList.remove('lc-in-match');
     if (match) return renderMatch();
     const me=hub?.me,stats=hub?.stats||{};
-    $('.lc-content').innerHTML=`<div class="lc-grid"><section class="lc-card lc-hero"><div class="lc-eyebrow">HAMLE SENİN</div><div class="lc-crest" aria-hidden="true">♜ ♞ ♔</div><h2>${esc(me?.name||'Satranç zamanı')}</h2><p class="lc-sub">Canlı rakibe karşı oyna, arkadaşını davet et veya botla hazırlan. Tüm maçlar ve turnuvalar ücretsiz.</p><div class="lc-stats"><div><strong>${me?.rating??1200}</strong><span>Satranç puanı</span></div><div><strong>${stats.wins||0} / ${stats.draws||0} / ${stats.losses||0}</strong><span>Dereceli galibiyet / beraberlik / yenilgi</span></div></div>${hub?.active?btn('Mevcut maça dön','resume','primary'):''}${hub?.tournament_id?`<p class="lc-sub">Bir turnuvaya kayıtlısın. Maç eşleşmelerin turnuva ekranında.</p>${btn('Turnuvama git','my-tournament')}`:''}</section><div class="lc-stack"><section class="lc-card"><h3>Canlı maç</h3><label class="lc-field">Süre ve hamle başına ek süre<select id="lc-preset">${preset()}</select></label><label class="lc-field lc-inline"><input id="lc-rated" type="checkbox" checked> Dereceli eşleştirme</label><div class="lc-row">${hub?.queue?btn('Aramayı durdur','cancel-queue'):btn('Rakip bul','queue','primary')}${btn('Botla antrenman','practice')}</div><p class="lc-sub">${hub?.queue?'Rakip bekleniyor. Bu ekran açıkken arama yenilenir.':'Bot: süresiz temel antrenman. Dereceli puanını etkilemez.'}</p></section><section class="lc-card"><h3>Arkadaşınla oyna</h3><label class="lc-field">Arkadaşının kullanıcı ID’si<input id="lc-friend" maxlength="32" autocomplete="off" placeholder="Profilde görünen ID"></label>${btn('Maça davet et','invite')}<p class="lc-sub">Davet 2 dakika geçerlidir. Arkadaş maçları derecesizdir.</p></section></div></div><section class="lc-card" style="margin-top:18px"><h3>Gelen davetler</h3><div class="lc-list">${(hub?.invitations||[]).map(m=>`<div class="lc-list-item"><strong>${esc(m.white.name)}</strong><p>${esc(m.preset)} · Derecesiz maç</p><button class="lc-btn primary" data-lc="open-match" data-id="${esc(m.id)}">Daveti aç</button></div>`).join('')||'<p class="lc-sub">Bekleyen davet yok.</p>'}</div></section>`;
+    $('.lc-content').innerHTML=`<div class="lc-grid"><section class="lc-card lc-hero"><div class="lc-eyebrow">HAMLE SENİN</div>${artwork('lc-crest')}<h2>${esc(me?.name||'Satranç zamanı')}</h2><p class="lc-sub">Canlı rakibe karşı oyna, arkadaşını davet et veya botla hazırlan. Tüm maçlar ve turnuvalar ücretsiz.</p><div class="lc-stats"><div><strong>${me?.rating??1200}</strong><span>Satranç puanı</span></div><div><strong>${stats.wins||0} / ${stats.draws||0} / ${stats.losses||0}</strong><span>Dereceli galibiyet / beraberlik / yenilgi</span></div></div>${hub?.active?btn('Mevcut maça dön','resume','primary'):''}${hub?.tournament_id?`<p class="lc-sub">Bir turnuvaya kayıtlısın. Maç eşleşmelerin turnuva ekranında.</p>${btn('Turnuvama git','my-tournament')}`:''}</section><div class="lc-stack"><section class="lc-card"><h3>Canlı maç</h3><label class="lc-field">Süre ve hamle başına ek süre<select id="lc-preset">${preset()}</select></label><label class="lc-field lc-inline"><input id="lc-rated" type="checkbox" checked> Dereceli eşleştirme</label><div class="lc-row">${hub?.queue?btn('Aramayı durdur','cancel-queue'):btn('Rakip bul','queue','primary')}${btn('Botla antrenman','practice')}</div><p class="lc-sub">${hub?.queue?'Rakip bekleniyor. Bu ekran açıkken arama yenilenir.':'Bot: süresiz temel antrenman. Dereceli puanını etkilemez.'}</p></section><section class="lc-card"><h3>Arkadaşınla oyna</h3><label class="lc-field">Arkadaşının kullanıcı ID’si<input id="lc-friend" maxlength="32" autocomplete="off" placeholder="Profilde görünen ID"></label>${btn('Maça davet et','invite')}<p class="lc-sub">Davet 2 dakika geçerlidir. Arkadaş maçları derecesizdir.</p></section></div></div><section class="lc-card" style="margin-top:18px"><h3>Gelen davetler</h3><div class="lc-list">${(hub?.invitations||[]).map(m=>`<div class="lc-list-item"><strong>${esc(m.white.name)}</strong><p>${esc(m.preset)} · Derecesiz maç</p><button class="lc-btn primary" data-lc="open-match" data-id="${esc(m.id)}">Daveti aç</button></div>`).join('')||'<p class="lc-sub">Bekleyen davet yok.</p>'}</div></section>`;
   }
   function clock(ms) {const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
   function tick() {
@@ -72,7 +76,17 @@
     const myTurn=active&&match.legal.length>0;
     const words=invited?'Arkadaşının daveti kabul etmesi bekleniyor.':active?(participant?(myTurn?'Hamle sırası sende.':'Rakibin düşünüyor…'):'Turnuva maçı · İzleyici'):(reason[match.reason]||'Maç kapandı');
     $('.lc-content').innerHTML=`<div class="lc-match"><section class="lc-board-panel">${playerRow(flipped?'white':'black')}<div class="lc-board" role="grid" aria-label="Satranç tahtası; kare seçerek hamle yap">${boardHTML()}</div>${playerRow(flipped?'black':'white')}<div class="lc-row">${btn('Tahtayı çevir','flip')}${btn('Lobiye dön','lobby')}${match.tournament_id?btn('Turnuvaya dön','match-tournament'):''}</div></section><aside class="lc-stack"><section class="lc-card"><div class="lc-eyebrow">${match.mode==='bot'?'ANTRENMAN':match.rated?'DERECELİ MAÇ':'DERECESİZ MAÇ'} · ${esc(match.preset)}</div><h2>${match.status==='finished'?'Maç tamamlandı':'Oyun tahtası'}</h2><p class="lc-sub" id="lc-match-state" aria-live="polite">${esc(words)}${match.check&&active?' Şah!':''}</p>${match.result!=='*'?`<div class="lc-result">${esc(match.result)}</div>`:''}${match.status==='finished'&&match.rated?`<p class="lc-sub">Puan değişimi · Beyaz: ${match.rating_delta.white>=0?'+':''}${match.rating_delta.white||0} / Siyah: ${match.rating_delta.black>=0?'+':''}${match.rating_delta.black||0}</p>`:''}<div class="lc-row">${invited&&participant?(match.black.id===hub?.me.id?btn('Kabul et','accept','primary'):'')+btn('Daveti iptal et / reddet','decline'):''}${active&&participant?btn('Terk et','resign','danger')+(match.mode!=='bot'?btn('Beraberlik öner','offer_draw'):'')+btn('Beraberlik talep et','claim_draw'):''}${pending?btn('Hamleyi yeniden dene','retry','primary'):''}</div>${active&&match.draw_by&&match.draw_by!==hub?.me.id&&participant?`<div class="lc-note" style="margin-top:12px">Rakibin beraberlik öneriyor.<div class="lc-row">${btn('Kabul','accept_draw')}${btn('Reddet','decline_draw')}</div></div>`:active&&match.draw_by?'<p class="lc-sub">Beraberlik teklifi bekliyor.</p>':''}<p class="lc-sub">${match.mode==='bot'?'Bot bir hamlelik materyal hesabı yapar; güçlü bir satranç motoru değildir.':'Süreler sunucuda işler. Ekranı kapatmak maçı durdurmaz.'}</p></section><section class="lc-card"><h3>Hamleler ve tekrar</h3><div class="lc-row">${btn('Başa','first')}${btn('Önceki','prev')}${btn('Sonraki','next')}${btn('Canlı / son','last')}</div><label class="lc-field">Konum <span id="lc-replay-label">${replay??match.moves.length} / ${match.moves.length}</span><input class="lc-replay" type="range" min="0" max="${match.moves.length}" value="${replay??match.moves.length}" id="lc-replay" aria-label="Tekrar hamlesi"></label><div class="lc-moves">${match.moves.map((m,i)=>(i%2===0?`<span>${i/2+1}.</span>`:'')+`<button type="button" data-lc="ply" data-ply="${i+1}" class="${replay===i+1?'current':''}">${esc(m.san)}</button>`).join('')||'<span>—</span>'}</div>${btn('PGN indir','pgn')}<p class="lc-sub">Tekrar izlerken hamle yapılamaz. Devam etmek için “Canlı / son” seç.</p></section></aside></div>`;
-    tick();syncBusy();
+    root.classList.add('lc-in-match');
+    const panel=$('.lc-match aside');panel.classList.add('lc-detail-panel');panel.hidden=!detailsOpen;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Hamleler ve maç işlemleri');
+    const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='lc-btn lc-detail-close';dismiss.dataset.lc='details-close';dismiss.textContent='Tahtaya dön ×';panel.prepend(dismiss);
+    const board=$('.lc-board'),slot=document.createElement('div');slot.className='lc-board-slot';board.before(slot);slot.append(board);
+    if(match.tournament_id)panel.append(Object.assign(document.createElement('div'),{innerHTML:btn('Turnuvaya dön','match-tournament')}));
+    const controls=$('.lc-board-panel > .lc-row');controls.classList.add('lc-board-tools');controls.innerHTML=btn('Çevir','flip')+btn('Hamleler / İşlemler','details')+btn('Lobi','lobby');
+    const strip=document.createElement('div');strip.className='lc-matchline';strip.setAttribute('role','status');strip.textContent=(replay!==null?'Tekrar izleniyor · Hamle yapılamaz':words)+(match.check&&active?' Şah!':'')+(match.result!=='*'?' · '+match.result:'');
+    if(replay!==null)strip.insertAdjacentHTML('beforeend',btn('Canlıya dön','last'));
+    if(active&&match.draw_by&&match.draw_by!==hub?.me.id)strip.insertAdjacentHTML('beforeend',btn('Beraberlik teklifi','details'));
+    if(pending)strip.insertAdjacentHTML('beforeend',btn('Tekrar dene','retry'));
+    $('.lc-content').prepend(strip);tick();syncBusy();
   }
   function updateBoard() {if($('.lc-board'))$('.lc-board').innerHTML=boardHTML();if($('#lc-replay'))$('#lc-replay').value=replay??match.moves.length;if($('#lc-replay-label'))$('#lc-replay-label').textContent=(replay??match.moves.length)+' / '+match.moves.length;}
   function setMatch(m) {match=m;received=performance.now();pending=pending&&m.moves.some(x=>x.uci===pending.uci)&&m.revision>pending.revision?null:pending;}
@@ -178,8 +192,9 @@
     const a=target.dataset.lc;
     if(a==='close'){close();return;}
     if(a==='promotion-cancel'){$('.lc-promotion')?.remove();selection=null;updateBoard();return;}
+    if(a==='details'||a==='details-close'){detailsOpen=a==='details';const panel=$('.lc-detail-panel');if(panel){panel.hidden=!detailsOpen;(detailsOpen?panel.querySelector('button'):$('[data-lc=details]'))?.focus();}return;}
     if(a==='flip'){flipped=!flipped;renderMatch();return;}
-    if(['first','prev','next','last','ply'].includes(a)&&match){replay=a==='last'?null:a==='first'?0:a==='prev'?Math.max(0,(replay??match.moves.length)-1):a==='next'?Math.min(match.moves.length,(replay??match.moves.length)+1):Number(target.dataset.ply);selection=null;updateBoard();return;}
+    if(['first','prev','next','last','ply'].includes(a)&&match){replay=a==='last'?null:a==='first'?0:a==='prev'?Math.max(0,(replay??match.moves.length)-1):a==='next'?Math.min(match.moves.length,(replay??match.moves.length)+1):Number(target.dataset.ply);selection=null;renderMatch();return;}
     if(a==='pgn'&&match){const blob=new Blob([match.pgn],{type:'application/x-chess-pgn;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='lidya-satranc-'+match.id+'.pgn';root.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
     if(a==='resign'||a==='t-cancel'){confirmAction(a==='resign'?'Maçı terk etmek istiyor musun?':'Turnuvayı iptal etmek istiyor musun?',()=>run(e=>handle(a,target,e)));return;}
     run(e=>handle(a,target,e));
@@ -191,10 +206,10 @@
   }
   function keydown(ev) {
     if(!root)return;
-    if(ev.key==='Escape'){if($('.lc-promotion'))$('.lc-promotion').remove();else if($('.lc-confirm'))$('.lc-confirm').remove();else close();return;}
+    if(ev.key==='Escape'){if($('.lc-promotion'))$('.lc-promotion').remove();else if($('.lc-confirm'))$('.lc-confirm').remove();else if(detailsOpen){detailsOpen=false;$('.lc-detail-panel').hidden=true;$('[data-lc=details]')?.focus();}else close();return;}
     if(ev.key==='Tab'){
-      const scope=$('.lc-promotion')||$('.lc-confirm')||root;
-      const els=[...scope.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]')];const first=els[0],last=els.at(-1);
+      const scope=$('.lc-promotion')||$('.lc-confirm')||(detailsOpen?$('.lc-detail-panel'):root);
+      const els=[...scope.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]')].filter(n=>!n.closest('[hidden]'));const first=els[0],last=els.at(-1);
       if(ev.shiftKey&&document.activeElement===first){ev.preventDefault();last?.focus();}else if(!ev.shiftKey&&document.activeElement===last){ev.preventDefault();first?.focus();}
     }
     const sq=ev.target.closest('[data-square]');
@@ -237,14 +252,14 @@
   function open() {
     if(root)return;epoch++;lastFocus=document.activeElement;tab='play';hub=null;match=null;tournament=null;pending=null;replay=null;
     root=document.createElement('section');root.id='lidyaChessCenter';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','Lidya Satranç Merkezi');
-    document.body.dataset.lcPreviousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';document.body.appendChild(root);root.addEventListener('click',click);root.addEventListener('submit',submit);root.addEventListener('input',ev=>{if(ev.target.id==='lc-replay'){replay=Number(ev.target.value);selection=null;updateBoard();}});document.addEventListener('keydown',keydown);shell();$('.lc-close').focus();
+    document.body.dataset.lcPreviousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';document.body.appendChild(root);root.addEventListener('click',click);root.addEventListener('submit',submit);root.addEventListener('input',ev=>{if(ev.target.id==='lc-replay'){replay=Number(ev.target.value);selection=null;renderMatch();}});document.addEventListener('keydown',keydown);shell();$('.lc-close').focus();
     run(async e=>{await loadHub(e);if(root&&e===epoch&&hub?.active?.status==='active'){setMatch(hub.active);flipped=match.black.id===hub.me.id;renderMatch();}});
     pollTimer=setInterval(refresh,2500);clockTimer=setInterval(tick,200);
   }
   function mount() {
     const grid=document.querySelector('#games .eg-launcher-grid');
     if(!grid||grid.querySelector('.lc-chess-launch'))return;
-    const el=document.createElement('button');el.type='button';el.className='lc-chess-launch';el.innerHTML='<span class="lc-mark" aria-hidden="true">♔ ♞</span><span><strong>Satranç</strong><small>Canlı maç · Turnuva · Antrenman</small></span>';el.addEventListener('click',ev=>{ev.stopPropagation();open();});grid.appendChild(el);
+    const el=document.createElement('button');el.type='button';el.className='lc-chess-launch';el.innerHTML=artwork('lc-mark')+'<span class="lc-launch-copy"><strong>Satranç</strong><small>Canlı maç · Turnuva · Antrenman</small></span>';el.addEventListener('click',ev=>{ev.stopPropagation();open();});grid.appendChild(el);
   }
   window.addEventListener('erischat:auth',event=>{
     if(!root)return;const detail=event.detail;
@@ -256,3 +271,4 @@
   new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 })();
+
