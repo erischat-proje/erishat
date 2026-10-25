@@ -72,6 +72,7 @@
       const u=options.preview||await api('/users/'+encodeURIComponent(identifier));
       if(!shade.isConnected)return;
       shade.querySelector('.eris-mini-name').textContent=u.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(shade.querySelector('.eris-mini-name'),u);
+      const age=document.createElement('small');age.dataset.profileAge='';age.style.cssText='display:block;color:var(--ui-ink);margin-top:5px';age.textContent=Number.isInteger(u.age)?u.age+' yaş':'';age.hidden=!Number.isInteger(u.age);shade.querySelector('.eris-mini-name').after(age);
       const idButton=shade.querySelector('.eris-mini-id'), publicId=String(u.public_id||'');
       idButton.textContent=/^\d{10,12}$/.test(publicId)?'ID: '+publicId+' ⧉':'ID gizli';
       idButton.disabled=!/^\d{10,12}$/.test(publicId);
@@ -149,3 +150,4 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.eris-mini-profile-shade')){e.stopPropagation();closeProfile()}});
   window.ErisFloatingProfile={open,close:closeProfile,report,preview};
 })();
+

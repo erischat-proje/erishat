@@ -219,6 +219,8 @@
       nickname.textContent = user.nickname || 'Anonim';
       name.append(nickname);window.ErisRoleBadges?.bind(name,user);
     }
+    const parent=name?.parentElement;
+    if(parent){let age=parent.querySelector('[data-profile-age]');if(!age){age=document.createElement('small');age.dataset.profileAge='';parent.append(age);}age.textContent=Number.isInteger(user.age)?user.age+' yaş':'';age.hidden=!Number.isInteger(user.age);}
     const face = $('.profile .face');
     if (face) {
       const hasCosmeticAvatar = Boolean(user.avatar_asset || user.avatar?.url || user.avatar?.src || user.avatar?.asset_url || user.avatar?.path || user.avatar?.asset_key);
@@ -271,3 +273,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
 })();
+

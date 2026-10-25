@@ -562,6 +562,8 @@ from . import explore_feed, explore_interactions, profile_workspace, notificatio
 app.include_router(explore_feed.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(explore_interactions.register_auth(current_user, lambda db, pid, user: _social_access(db, pid, user)))
 app.include_router(profile_workspace.register_auth(current_user))
+from . import contact_aliases
+app.include_router(contact_aliases.register_auth(current_user))
 app.include_router(notification_center.register_auth(current_user))
 app.include_router(privacy_center.register_auth(current_user))
 app.include_router(admin_operations.register_auth(current_user))
@@ -2833,6 +2835,7 @@ def room_chat_history(room_id:str,before:int|None=Query(default=None,ge=1),limit
 static_dir = Path(__file__).resolve().parents[2] / "frontend"
 if static_dir.exists():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="frontend")
+
 
 
 

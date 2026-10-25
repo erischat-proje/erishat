@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, model_validator
 from sqlalchemy import select, func, update, delete, and_, or_, Integer, String
 from .db import get_db
+from .profile_age import age_years
 from .models import User
 from .platform_models import SocialPost
 from .staff_identity import require_editable, role_for
@@ -17,7 +18,7 @@ FIELDS={'first_name':64,'last_name':64,'bio':300}
 def utc(t):return t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t
 def now():return datetime.now(timezone.utc)
 def snapshot(user):
-    return {'id':user.id,'public_id':user.public_id,'nickname':user.nickname,'management_locked':bool(role_for(user)),
+    return {'id':user.id,'public_id':user.public_id,'nickname':user.nickname,'age':None if role_for(user) else age_years(user.birth_date),'management_locked':bool(role_for(user)),
         'first_name':user.first_name or '', 'last_name':user.last_name or '', 'bio':user.bio or ''}
 
 class InfoPatch(BaseModel):
@@ -127,3 +128,4 @@ def register_auth(auth):
     def bulk(data:PostAction,db=Depends(get_db),user=Depends(auth)):
         return apply_action(db,user,data)
     return router
+
