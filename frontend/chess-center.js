@@ -2,7 +2,11 @@
   'use strict';
   if (window.LidyaChess) return;
   const artwork=(cls='')=>`<span class="lc-art ${cls}"><img class="lc-art-light" src="./assets/chess-premium/light.png" alt=""><img class="lc-art-dark" src="./assets/chess-premium/dark.png" alt=""></span>`;
-  let detailsOpen=false;
+  let detailsOpen=false,boardObserver=null;
+  function fitBoard(){const slot=$('.lc-board-slot'),board=$('.lc-board');if(!slot||!board)return;const r=slot.getBoundingClientRect(),size=Math.floor(Math.min(r.width,r.height));if(size>0){board.style.width=size+'px';board.style.height=size+'px';}}
+  function watchBoard(){boardObserver?.disconnect();fitBoard();if(window.ResizeObserver){boardObserver=new ResizeObserver(fitBoard);boardObserver.observe($('.lc-board-slot'));}}
+  window.addEventListener('resize',fitBoard);
+  window.visualViewport?.addEventListener('resize',fitBoard);
   const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const labels = {p:'Piyon',n:'At',b:'Fil',r:'Kale',q:'Vezir',k:'Şah'};
@@ -86,7 +90,7 @@
     if(replay!==null)strip.insertAdjacentHTML('beforeend',btn('Canlıya dön','last'));
     if(active&&match.draw_by&&match.draw_by!==hub?.me.id)strip.insertAdjacentHTML('beforeend',btn('Beraberlik teklifi','details'));
     if(pending)strip.insertAdjacentHTML('beforeend',btn('Tekrar dene','retry'));
-    $('.lc-content').prepend(strip);tick();syncBusy();
+    $('.lc-content').prepend(strip);watchBoard();tick();syncBusy();
   }
   function updateBoard() {if($('.lc-board'))$('.lc-board').innerHTML=boardHTML();if($('#lc-replay'))$('#lc-replay').value=replay??match.moves.length;if($('#lc-replay-label'))$('#lc-replay-label').textContent=(replay??match.moves.length)+' / '+match.moves.length;}
   function setMatch(m) {match=m;received=performance.now();pending=pending&&m.moves.some(x=>x.uci===pending.uci)&&m.revision>pending.revision?null:pending;}
@@ -245,7 +249,7 @@
     finally{refreshing=false;}
   }
   function close(cancelQueue=true) {
-    if(!root)return;epoch++;clearInterval(pollTimer);clearInterval(clockTimer);root.remove();root=null;busy=false;refreshing=false;selection=null;match=null;tournament=null;pending=null;
+    if(!root)return;boardObserver?.disconnect();boardObserver=null;epoch++;clearInterval(pollTimer);clearInterval(clockTimer);root.remove();root=null;busy=false;refreshing=false;selection=null;match=null;tournament=null;pending=null;
     document.removeEventListener('keydown',keydown);document.body.style.overflow=document.body.dataset.lcPreviousOverflow||'';delete document.body.dataset.lcPreviousOverflow;lastFocus?.focus?.();
     if(cancelQueue&&hub?.queue)api('/queue',{method:'DELETE'}).catch(()=>{});
   }
@@ -259,7 +263,7 @@
   function mount() {
     const grid=document.querySelector('#games .eg-launcher-grid');
     if(!grid||grid.querySelector('.lc-chess-launch'))return;
-    const el=document.createElement('button');el.type='button';el.className='lc-chess-launch';el.innerHTML=artwork('lc-mark')+'<span class="lc-launch-copy"><strong>Satranç</strong><small>Canlı maç · Turnuva · Antrenman</small></span>';el.addEventListener('click',ev=>{ev.stopPropagation();open();});grid.appendChild(el);
+    const el=document.createElement('button');el.type='button';el.className='lc-chess-launch eg-launcher-card lgm-card';el.dataset.game='chess';el.setAttribute('aria-label','Satranç oyununu aç');el.innerHTML='<img class="pg-cover" src="./assets/chess-premium/'+(document.documentElement.dataset.erisTheme==='dark'?'dark':'light')+'.png" alt=""><span class="lgm-copy"><span class="eg-lc-title">Satranç</span><span class="eg-lc-desc">Canlı maç · Turnuva</span><span class="eg-lc-play"><span>Oyna</span><span>→</span></span></span>';el.addEventListener('click',ev=>{ev.stopPropagation();open();});grid.appendChild(el);
   }
   window.addEventListener('erischat:auth',event=>{
     if(!root)return;const detail=event.detail;

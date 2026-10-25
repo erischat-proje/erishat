@@ -2,8 +2,8 @@
 'use strict';
 const base=new URL('./assets/lidya-games-png/',document.currentScript.src);
 const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
-const cards={"wheel":["Şans Çarkı","Çarkın liderleri"],"crash":["Crash","Zirveye yükselenler"],"blackjack":["Blackjack","Masanın ustaları"],"slot":["Klasik Slot","Hazinenin sahipleri"],"cups":["Dört Kupa","Doğru seçimin ödülü"],"horse_race":["At Yarışı","Pistin şampiyonları"],"vault":["Kasa","Kasayı açanlar"],"dede":["Dede","Yıldırımın gücü"],"seker":["Şeker Sarayı","Tatlı zaferler"],"balikci":["Balıkçı Hasan","Günün büyük avı"],"prenses":["Prenses","Yıldızların zirvesi"],"dogparty":["Dog Party","Patili zaferler"],"candy":["Candy Ultimate","Renkli kazançlar"],"kovboy":["Kovboy","Kasabanın liderleri"],"bastet":["Bastet’in Hazinesi","Kedilerin hazinesi"],"altin":["Altın Şöleni","Dört hazine, tek şölen"],"kure":["Kaderin Küresi","Kaderin kazananları"],"firavun":["Firavun’un Sırrı","Antik hazinenin izinde"],"aztek":["Aztek Hazinesi","Tapınağın zirvesi"],"ares":["Ares’in Gazabı","Zaferin gücü"]};
-const url=key=>new URL(cards[key]?'../lidya-ranking-v2/'+theme()+'/'+key+'.png':theme()+'/scene-'+key+'.png',base).href;
+const cards={"chess":["Satranç","Canlı maç · Turnuva"],"wheel":["Şans Çarkı","Çarkın liderleri"],"crash":["Crash","Zirveye yükselenler"],"blackjack":["Blackjack","Masanın ustaları"],"slot":["Klasik Slot","Hazinenin sahipleri"],"cups":["Dört Kupa","Doğru seçimin ödülü"],"horse_race":["At Yarışı","Pistin şampiyonları"],"vault":["Kasa","Kasayı açanlar"],"dede":["Dede","Yıldırımın gücü"],"seker":["Şeker Sarayı","Tatlı zaferler"],"balikci":["Balıkçı Hasan","Günün büyük avı"],"prenses":["Prenses","Yıldızların zirvesi"],"dogparty":["Dog Party","Patili zaferler"],"candy":["Candy Ultimate","Renkli kazançlar"],"kovboy":["Kovboy","Kasabanın liderleri"],"bastet":["Bastet’in Hazinesi","Kedilerin hazinesi"],"altin":["Altın Şöleni","Dört hazine, tek şölen"],"kure":["Kaderin Küresi","Kaderin kazananları"],"firavun":["Firavun’un Sırrı","Antik hazinenin izinde"],"aztek":["Aztek Hazinesi","Tapınağın zirvesi"],"ares":["Ares’in Gazabı","Zaferin gücü"]};
+const url=key=>new URL(key==='chess'?'../chess-premium/'+theme()+'.png':cards[key]?'../lidya-ranking-v2/'+theme()+'/'+key+'.png':theme()+'/scene-'+key+'.png',base).href;
 function update(){
  const title=document.querySelector('#games>.title');if(title){title.textContent='Oyunlar';title.style.setProperty('--pg-header','url("'+url('header')+'")');}
  for(const button of document.querySelectorAll('.eg-launcher-card[data-game]')){
@@ -18,4 +18,5 @@ window.addEventListener('erischat:theme',schedule);
 new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-eris-theme']});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
 

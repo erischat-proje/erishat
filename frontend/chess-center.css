@@ -27,3 +27,9 @@ html[data-eris-theme="dark"] #lidyaChessCenter{--lc-bg:var(--ui-bg,#151515);--lc
 /* Size the square against both available axes, including browser chrome. */
 .lc-in-match .lc-board-slot{width:100%;height:100%;min-width:0;min-height:0;container-type:size;display:grid;place-items:center}.lc-in-match .lc-board-slot .lc-board{width:min(100cqw,100cqh);height:min(100cqw,100cqh);grid-template-rows:repeat(8,minmax(0,1fr))}
 @media(orientation:landscape) and (max-height:560px){.lc-in-match .lc-board-panel{grid-template-columns:minmax(90px,1fr) minmax(0,2fr) minmax(90px,1fr)}.lc-in-match .lc-board-slot{grid-column:2;grid-row:1}.lc-in-match .lc-board-slot .lc-board{grid-column:auto;grid-row:auto}}
+
+/* Match the shared launcher, with the Lidya ivory/black palette. */
+html body #games#games#games .lc-chess-launch{--menu-card-ink:#362918;--menu-card-muted:#665334;--menu-card-bg:#f5ead4;--menu-card-wash:linear-gradient(90deg,#fbf5e9f2,#fbf5e9b8 40%,transparent 80%)}
+html[data-eris-theme=dark] body #games#games#games .lc-chess-launch{--menu-card-ink:#fff1d2;--menu-card-muted:#d5c29d;--menu-card-bg:#171717;--menu-card-wash:linear-gradient(90deg,#111111ed,#111111b8 40%,transparent 80%)}
+.lc-in-match .lc-board-slot .lc-board{width:100%;height:auto;max-height:100%;aspect-ratio:1}
+@supports(width:1cqw){.lc-in-match .lc-board-slot .lc-board{width:min(100cqw,100cqh);height:min(100cqw,100cqh)}}
