@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .profile_age import visible_age
 import secrets
 
 import json
@@ -650,7 +651,7 @@ def register_platform_auth(current_user_dependency):
         from .personal_fans import fan_count, gift_totals
         from .room_fan_levels import level_for_total
         flags=social_flags(db,target.id,user.id)
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_private":_private(db,target.id),"follow_requested":bool(_follow_request(db,user.id,target.id)),"can_view_private":target.id==user.id or is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
+        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"age":visible_age(target,user.id,private=_private(db,target.id),following=is_following,blocked=you_blocked or blocked_by_them,staff=bool(admin and admin.role in {"SA","UA","FA","DA"})),"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_private":_private(db,target.id),"follow_requested":bool(_follow_request(db,user.id,target.id)),"can_view_private":target.id==user.id or is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
     @router.get("/users/{user_id}/profile-stats")
     def user_profile_stats(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
@@ -2094,6 +2095,7 @@ def register_platform_auth(current_user_dependency):
             response["data"] = {**data, "state":display_state(data["state"]), "dealer_hand":data["dealer_hand"] if result != "pending" else data["dealer_hand"][:1], "dealer_total":data["dealer_total"] if result != "pending" else None}
         response.update({"stake":stake,"payout":payout,"balance":locked_user.lidya})
         return response
+
 
 
 

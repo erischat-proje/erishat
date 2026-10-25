@@ -139,6 +139,7 @@ class UserOut(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     birth_date: str | None = None
+    age: int | None = None
     bio: str | None = None
     profile_completed: bool = False
     welcome_gift_claimed: bool = False
@@ -146,6 +147,8 @@ class UserOut(BaseModel):
 
     @model_validator(mode='after')
     def management_profile(self):
+        from .profile_age import age_years
+        self.age = None if self.management_locked else age_years(self.birth_date)
         if self.management_locked:
             self.first_name = 'LidyaChat'
             self.last_name = 'Yönetim'
@@ -273,3 +276,4 @@ class OTPVerify(BaseModel):
     identifier: str = Field(min_length=3, max_length=320)
     purpose: Literal["register", "login", "link"]
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
