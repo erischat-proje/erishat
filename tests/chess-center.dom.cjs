@@ -38,7 +38,7 @@ test('menu entry mounts once and survives menu redraw; open/close restores focus
  x.q('.eg-launcher-grid').innerHTML='';await flush();assert.equal(x.d.querySelectorAll('.lc-chess-launch').length,1);x.dom.window.close();
 });
 test('safe text and board has 64 accessible squares; basic practice and flip',async()=>{
- const x=await setup();await x.open();assert(x.q('.lc-content').textContent.includes(white.name));assert(!x.q('.lc-content img'));await x.click('[data-lc=practice]');assert.equal(x.d.querySelectorAll('[data-square]').length,64);assert(x.q('[data-square=e1]').getAttribute('aria-label').includes('Beyaz Şah'));assert(x.q('[data-clock=white]').textContent==='∞');
+ const x=await setup();await x.open();assert(x.q('.lc-content').textContent.includes(white.name));assert(!x.q('.lc-content img[src=x]'));assert(!x.q('.lc-content [onerror]'));await x.click('[data-lc=practice]');assert.equal(x.d.querySelectorAll('[data-square]').length,64);assert(x.q('[data-square=e1]').getAttribute('aria-label').includes('Beyaz Şah'));assert(x.q('[data-clock=white]').textContent==='∞');
  assert.equal(x.q('[data-square]').dataset.square,'a8');await x.click('[data-lc=flip]');assert.equal(x.q('[data-square]').dataset.square,'h1');x.w.LidyaChess.close();x.dom.window.close();
 });
 test('tap-to-move uses server legal list and sends revision plus stable key',async()=>{
@@ -95,4 +95,11 @@ test('a pending move blocks repeated taps and a token change discards its late r
  const x=await setup();let token='old';x.w.ErisPlatform.getAccessToken=()=>token;x.state.hub.active=x.state.match;await x.open();let resolve;
  x.state.handler=async p=>{if(p.endsWith('/move'))return new Promise(r=>{resolve=r;});};await x.click('[data-square=e2]');x.q('[data-square=e4]').click();await flush();x.q('[data-square=e2]').click();x.q('[data-square=e4]').click();await flush();assert.equal(x.calls.filter(c=>c.p.endsWith('/move')).length,1);token='new';resolve(x.state.match);await flush();assert(!x.q('#lidyaChessCenter'));x.dom.window.close();
 });
+test('secondary panel opens, traps focus and Escape returns to board; lobby clears compact mode',async()=>{
+ const x=await setup();x.state.hub.active=x.state.match;await x.open();assert(x.q('.lc-detail-panel').hidden);assert(x.q('.lc-board-slot .lc-board'));await x.click('[data-lc=details]');assert(!x.q('.lc-detail-panel').hidden);assert.equal(x.d.activeElement.dataset.lc,'details-close');x.d.activeElement.dispatchEvent(new x.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert(x.q('.lc-detail-panel').hidden);assert.equal(x.d.activeElement.dataset.lc,'details');assert(x.q('#lidyaChessCenter'));await x.click('[data-lc=lobby]');assert(!x.q('.lc-in-match'));x.w.LidyaChess.close();x.dom.window.close();
+});
+test('theme artwork, compact replay warning and tournament return remain available',async()=>{
+ const x=await setup();x.state.match.tournament_id='t1';x.state.match.moves=[{uci:'e2e4',san:'e4',fen:START}];x.state.hub.active=x.state.match;await x.open();assert(x.q('.lc-art-light'));assert(x.q('.lc-art-dark'));await x.click('[data-lc=details]');assert(x.q('.lc-detail-panel [data-lc=match-tournament]'));await x.click('[data-lc=first]');await x.click('[data-lc=details-close]');assert(x.q('.lc-matchline').textContent.includes('Tekrar izleniyor'));await x.click('.lc-matchline [data-lc=last]');assert(!x.q('.lc-matchline').textContent.includes('Tekrar izleniyor'));x.w.LidyaChess.close();x.dom.window.close();
+});
 (async()=>{let pass=0;for(const [name,fn]of tests){try{await fn();pass++;process.stdout.write('PASS '+name+'\n');}catch(e){console.error('FAIL '+name,e);process.exitCode=1;break;}}console.log(`${pass}/${tests.length} DOM scenarios passed`);})();
+
