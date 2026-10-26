@@ -62,3 +62,9 @@ html body .eris-vip-entry-banner[data-measured="true"] .eris-vip-entry-identity{
 html body .eris-vip-entry-banner[data-measured="true"] .eris-vip-entry-identity strong{display:block;max-width:100%;font-size:clamp(9px,3vw,16px);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 html body .eris-vip-entry-banner[data-measured="true"] .eris-vip-entry-identity [hidden]{display:none!important;}
 @supports(font-size:1cqh){html body .eris-vip-entry-banner[data-measured="true"] .eris-vip-entry-identity strong{font-size:clamp(8px,65cqh,16px);}}
+
+/* Shared portrait geometry wins over screen-specific pixel offsets, including staff cards. */
+html body .visual-portrait.visual-portrait.visual-portrait{aspect-ratio:1!important;flex-shrink:0;box-sizing:border-box;}
+html body .visual-portrait.visual-portrait.visual-portrait > .visual-art-frame.visual-art-frame.visual-art-frame{inset:0!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;padding:0!important;border:0!important;box-sizing:border-box!important;transform:none!important;object-fit:contain!important;}
+html body .visual-portrait.visual-portrait.visual-portrait > .visual-art-avatar.visual-art-avatar.visual-art-avatar{inset:auto!important;left:var(--art-avatar-x,50%)!important;top:var(--art-avatar-y,50%)!important;width:var(--art-avatar-size,70%)!important;height:var(--art-avatar-size,70%)!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;background-size:cover!important;transform:translate(-50%,-50%)!important;}
+html body .visual-portrait > .visual-art-frame[hidden]{display:none!important;}
