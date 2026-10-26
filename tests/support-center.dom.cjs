@@ -12,9 +12,17 @@ x.fail(false);x.hold();panel.querySelector('form').dispatchEvent(new w.Event('su
 panel.querySelector('[data-end]').click();await wait();d.querySelector('[data-support-confirm] .primary').click();await wait();assert.equal(writes.filter(x=>x.path.endsWith('/close')).length,1);assert(panel.isConnected);assert.equal(panel.querySelector('[data-state]').textContent,'Sonlandırıldı');assert(panel.querySelector('[data-history]').textContent.includes('Yardım'));assert.equal(panel.querySelector('form'),null);
 d.querySelector('[data-search]').value='hesap';d.querySelector('[data-search]').dispatchEvent(new w.Event('input'));assert.equal(d.querySelectorAll('[data-list] button').length,1);assert(d.querySelector('[data-list]').textContent.includes('Hesap'));
 x.account('two');await wait();assert.equal(d.querySelectorAll('.support-window').length,0);assert.equal(d.querySelector('#supportResume'),null);dom.window.close();
+// Closing a visible completed transcript must never create a resume button.
+const ended=await setup();await ended.w.ErisSupport.openAssigned(2);ended.w.document.querySelector('.support-window [data-close]').click();assert.equal(ended.w.document.querySelector('#supportResume'),null);assert.equal(ended.w.document.querySelector('.support-window'),null);ended.dom.window.close();
+// The other party closes while minimized: polling clears both launcher and hidden dialog.
+for(const agent of [false,true]){
+ const z=await setup();Object.defineProperty(z.w.document,'hidden',{value:false});await z.pulse();if(agent)await z.w.ErisSupport.openAssigned(1);else{await z.w.ErisSupport.open();await wait();z.w.document.querySelector('[data-list] button').click();await wait();}
+ z.w.document.querySelector('.support-window [data-close]').click();assert(z.w.document.querySelector('#supportResume'));z.tickets[1].phase='closed';await z.pulse();await wait();assert.equal(z.w.document.querySelector('#supportResume'),null);assert.equal(z.w.document.querySelector('.support-window'),null);assert.equal(z.writes.filter(v=>v.path.endsWith('/close')).length,0);await z.pulse();assert.equal(z.w.document.querySelector('#supportResume'),null);z.dom.window.close();
+}
 const y=await setup(),wy=y.w,dy=wy.document;
 await wy.ErisSupport.open();await wait();dy.querySelector('[data-new]').click();await wait();const draftPanel=dy.querySelector('.support-window');draftPanel.querySelector('[name=subject]').value='Yeni konu';draftPanel.querySelector('[data-close]').click();assert(draftPanel.hidden);dy.querySelector('[data-new]').click();assert(!draftPanel.hidden);assert.equal(draftPanel.querySelector('[name=subject]').value,'Yeni konu');
 const original=wy.fetch;let releaseOpen;wy.fetch=async(url,opt)=>url.endsWith('/support/live/tickets/1')?new Promise(r=>releaseOpen=()=>r({ok:true,json:async()=>y.tickets[1]})):original(url,opt);
 const opening=wy.ErisSupport.openAssigned(1).catch(()=>{});await wait();y.account('new-account');releaseOpen();await opening;await wait();assert.equal(dy.querySelectorAll('.support-window').length,0);y.dom.window.close();
-console.log('PASS: X only hides, polling does not reopen, resume preserves draft, explicit close/cancel, failed send, typing during send, retained transcript, search, new request draft, late response and account cleanup');
+console.log('PASS: X only hides, polling does not reopen, resume preserves draft, explicit close/cancel, failed send, typing during send, retained transcript, search, new request draft, late response, account cleanup, completed history dismissal and remote closure while minimized (customer/agent)');
 })().catch(e=>{console.error(e);process.exit(1)});
+
