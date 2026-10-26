@@ -79,30 +79,46 @@
     el._visualTask=task;return task;
   }
   const popup=(el,key)=>surface(el,key,'profile'),bubble=(el,key)=>surface(el,key,'bubble');
-  const frameSelector='.dm-avatar-frame,.dm-message-frame,.eris-chat-frame,.eris-mini-frame,.eris-profile-frame,.frameImg,.seat-frame.has-frame,.eris-follow-frame,.eris-vip-entry-avatar-frame,.rel-entrance-frame';
-  const avatarSelector='.face,.seat-ava,.eris-follow-avatar-main,.eris-profile-avatar,.eris-vip-entry-face,img:not(.dm-message-frame):not(.eris-chat-frame):not(.eris-mini-frame):not(.eris-profile-frame):not(.frameImg):not(.eris-follow-frame):not(.eris-vip-entry-avatar-frame):not(.rel-entrance-frame)';
+  const frameSelector='.dm-avatar-frame,.dm-message-frame,.eris-chat-frame,.eris-mini-frame,.eris-profile-frame,.frameImg,.seat-frame.has-frame,.eris-follow-frame,.eris-vip-entry-avatar-frame,.rel-entrance-frame,.lgr-frame,.personal-fan-frame,[data-user-frame],.user-frame';
+  const avatarSelector='.face,.seat-ava,.eris-follow-avatar-main,.eris-profile-avatar,.eris-vip-entry-face,[data-user-avatar],.user-avatar,img';
+  const portraitsMounted=new Set();
+  function clearPortrait(el){
+    if(!el.classList.contains('visual-portrait'))return;
+    el.classList.remove('visual-portrait','visual-portrait-static');
+    for(const child of el.children)child.classList.remove('visual-art-avatar','visual-art-frame');
+    for(const key of ['x','y','size'])el.style.removeProperty('--art-avatar-'+key);
+    portraitsMounted.delete(el);
+  }
+  function frameSource(frame){return frame.hidden?'':frame.getAttribute('src')||frame.style.backgroundImage?.match(/url\(["']?(.*?)["']?\)/)?.[1]||'';}
   async function portrait(frame){
     const el=frame.parentElement;if(!el)return;
-    const source=frame.getAttribute('src')||frame.style.backgroundImage?.match(/url\(["']?(.*?)["']?\)/)?.[1];
-    if(!source)return;
+    const source=frameSource(frame);
+    if(!source){frame._portraitSource=null;clearPortrait(el);return;}
+    if(frame._portraitSource===source&&el.classList.contains('visual-portrait')&&el.querySelector(':scope > .visual-art-avatar'))return;
+    frame._portraitSource=source;
     const ticket={};frame._portraitTicket=ticket;
     const m=await describe(source);
-    if(frame._portraitTicket!==ticket||!frame.isConnected)return;
-    if(!m?.aperture){el.classList.remove('visual-portrait');return;}
-    const a=m.aperture;let avatar=[...el.children].find(child=>child!==frame&&child.matches(avatarSelector));
+    if(frame._portraitTicket!==ticket||!frame.isConnected||frame.parentElement!==el||frameSource(frame)!==source)return;
+    // Legacy artwork uses a centered opening; measured artwork keeps its own aperture.
+    const a=m?.aperture||{x:.5,y:.5,diameter:.7};
+    let avatar=[...el.children].find(child=>child!==frame&&!child.matches(frameSelector)&&child.matches(avatarSelector));
     if(!avatar){avatar=el.querySelector(':scope > .visual-art-avatar');if(!avatar){avatar=document.createElement('span');for(const child of [...el.childNodes])if(child.nodeType===3)avatar.append(child);if(el.style.backgroundImage)avatar.style.backgroundImage=el.style.backgroundImage;el.prepend(avatar);}}
-    el.classList.add('visual-portrait');el.classList.toggle('visual-portrait-static',getComputedStyle(el).position==='static');frame.classList.add('visual-art-frame');avatar.classList.add('visual-art-avatar');
-    el.style.setProperty('--art-avatar-x',a.x*100+'%');el.style.setProperty('--art-avatar-y',a.y*100+'%');el.style.setProperty('--art-avatar-size',a.diameter*100+'%');
+    if(!el.classList.contains('visual-portrait'))el.classList.toggle('visual-portrait-static',getComputedStyle(el).position==='static');
+    el.classList.add('visual-portrait');frame.classList.add('visual-art-frame');avatar.classList.add('visual-art-avatar');portraitsMounted.add(el);
+    // object-fit:contain letterboxes non-square artwork inside the square host.
+    const width=m?.width||1,height=m?.height||1,scale=Math.max(width,height),w=width/scale,h=height/scale;
+    el.style.setProperty('--art-avatar-x',((1-w)/2+a.x*w)*100+'%');
+    el.style.setProperty('--art-avatar-y',((1-h)/2+a.y*h)*100+'%');
+    el.style.setProperty('--art-avatar-size',a.diameter*Math.min(w,h)*100+'%');
   }
   function portraits(root=document){if(root.nodeType===1&&root.matches(frameSelector))portrait(root);root.querySelectorAll?.(frameSelector).forEach(portrait);}
-  // A single lifecycle observer also disposes observers when chat histories or dialogs are removed.
   let scheduled=false;const additions=new Set();
   if(window.MutationObserver)new MutationObserver(rows=>{
-    for(const row of rows){if(row.type==='attributes')additions.add(row.target);else for(const node of row.addedNodes)if(node.nodeType===1)additions.add(node);}
+    for(const row of rows){if(row.type==='attributes')additions.add(row.target);else {additions.add(row.target);for(const node of row.addedNodes)if(node.nodeType===1)additions.add(node);}}
     if(scheduled)return;scheduled=true;
-    queueMicrotask(()=>{scheduled=false;for(const el of mounted)if(!el.isConnected)reset(el);for(const el of additions)if(el.isConnected)portraits(el);additions.clear();});
-  }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
+    queueMicrotask(()=>{scheduled=false;for(const el of mounted)if(!el.isConnected)reset(el);for(const el of portraitsMounted)if(!el.isConnected||![...el.children].some(child=>child.matches(frameSelector)&&frameSource(child)))clearPortrait(el);const roots=[...additions];additions.clear();for(const el of roots)if(el.isConnected)portraits(el);});
+  }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src','style','class','hidden']});
   window.ErisDeviceLayout?.refresh?.();
   window.ErisVisualLayout={describe,popup,bubble,url,reset,portraits,status:async(el,key)=>{const m=await describe(key);if(m&&el.isConnected)el.style.aspectRatio=m.width+'/'+m.height;}};
-  document.addEventListener?.('DOMContentLoaded',()=>portraits());
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>portraits(),{once:true});else portraits();
 })();
