@@ -59,3 +59,28 @@ html body #chat .dm-call-head{display:flex;gap:7px;margin-left:auto}
 html body #chat .dm-call-head button,html body #chat .chatHead>button.close{display:grid;place-items:center;width:40px!important;height:40px!important;padding:0;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-raised) 2%, transparent);color:var(--ui-gold)}
 html body #chat .dm-call-head svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 html body #chat [data-dm-capture-toggle]{display:none!important}
+
+/* One composer layout for direct, group and family conversations. */
+html body #chat .compose,
+html body #chat:not(.eris-floating-dm) .compose {
+  display:flex!important;flex-wrap:wrap!important;align-items:flex-end!important;
+  gap:8px;padding:11px 11px max(11px,var(--eris-safe-bottom,env(safe-area-inset-bottom)));
+  flex:0 0 auto;min-width:0;background:var(--ui-panel);border-top:1px solid var(--ui-line);
+}
+html body #chat .compose > .dm-compose-field {
+  flex:1 1 100%!important;width:100%;min-width:0;order:-1;
+}
+html body #chat .compose > .close,
+html body #chat:not(.eris-floating-dm) .compose > .close {
+  flex:0 0 44px!important;width:44px!important;height:44px!important;min-height:44px;
+  padding:0;display:grid;place-items:center;border:1px solid var(--ui-line);
+  border-radius:13px!important;background:var(--ui-raised);color:var(--ui-ink);box-shadow:none;
+}
+html body #chat .compose > .primary,
+html body #chat:not(.eris-floating-dm) .compose > .primary {
+  flex:0 0 auto;min-width:72px;min-height:44px;height:44px;margin-inline-start:auto;
+  padding:0 14px;border-radius:13px;font-size:12px;
+  background:var(--ui-primary);color:var(--ui-primary-ink);
+}
+html body #chat .compose[hidden],html body #chat .compose > [hidden]{display:none!important}
+html body #chat .dm-compose-help > span:first-child{min-width:0;overflow-wrap:anywhere}
