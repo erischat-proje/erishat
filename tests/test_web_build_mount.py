@@ -3,9 +3,9 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('layers',ROOT/'scripts/prepare-web-layers.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class BuildMount(unittest.TestCase):
- def test_generated_dockerfile_and_readonly_mount(self):
+ def test_generated_dockerfile_compatible_copy(self):
   plan=m.read_plan(ROOT/'scripts/web-layer-plan.json');text=m.dockerfile(plan)
-  self.assertEqual(text,(ROOT/'Dockerfile').read_text());self.assertIn('--mount=type=bind,source=.,target=/source',text);self.assertNotIn('COPY frontend /source/frontend',text)
+  self.assertEqual(text,(ROOT/'Dockerfile').read_text());self.assertNotIn('--mount=type=bind',text);self.assertIn('COPY frontend /source/frontend',text)
  def test_code_output_and_original_media_hashes(self):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp)/'source';out=Path(tmp)/'out';(root/'frontend/art').mkdir(parents=True);(root/'frontend/art/a.png').write_bytes(b'original image');(root/'frontend/app.js').write_text('code');(root/'hediyesistemi').mkdir();(root/'hediyesistemi/a.svg').write_text('<svg/>')
