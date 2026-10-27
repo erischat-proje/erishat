@@ -49,7 +49,7 @@ def finance_view(db,row,user,role):
       'reviewer_id':row.reviewer_id,'reviewer_name':name(row.reviewer_id),'review_note':row.review_note,'reviewed_at':stamp(row.reviewed_at),
       'approver_name':name(row.approver_id),'decision_note':row.decision_note,'operation_id':row.operation_id,'created_at':stamp(row.created_at),'decided_at':stamp(row.decided_at),
       'can_review':row.status=='pending_review' and independent,
-      'can_execute':row.status=='reviewed' and role=='DA' and independent and user.id!=row.reviewer_id,
+      'can_execute':row.status in {'pending_review','reviewed'} and role=='DA',
       'can_cancel':row.requester_id==user.id and row.status in {'pending_review','reviewed'},
       'evidence_url':f'/v1/admin/management/finance-requests/{row.id}/evidence'}
 
@@ -81,7 +81,7 @@ def register_auth(current_user):
             return finance_view(db,existing,user,role)
         row=ManagementFinanceRequest(request_key=payload.request_key,requester_id=user.id,target_id=target.id,amount=payload.amount,operation=payload.operation,reason=payload.reason,evidence=payload.evidence,status='pending_review')
         db.add(row);db.flush();audit(db,user,'management_finance_requested',{'finance_request_id':row.id,'amount':row.amount,'operation':row.operation},target.id)
-        notify(db,reviewers(db),'Mali inceleme talebi',f'Mali talep #{row.id} bağımsız inceleme bekliyor.',user.id)
+        notify(db,reviewers(db),'Mali inceleme talebi',f'Mali talep #{row.id} DA onayı bekliyor.',user.id)
         db.commit();return finance_view(db,row,user,role)
 
     @router.get('/finance-requests/{request_id}')
@@ -109,9 +109,8 @@ def register_auth(current_user):
     @router.post('/finance-requests/{request_id}/decision')
     def finance_decision(request_id:int,payload:Review,db:Session=Depends(get_db),user:User=Depends(current_user)):
         role=access(db,user,4);row=finance_row(db,request_id,True)
-        if user.id in {row.requester_id,row.target_id,row.reviewer_id}:raise HTTPException(403,'Son onay talebi açan, hedef ve inceleyenden farklı bir yönetici gerektirir')
         if row.status=='executed' and payload.approve:return finance_view(db,row,user,role)
-        if row.status!='reviewed':raise HTTPException(409,'Önce bağımsız inceleme tamamlanmalı')
+        if row.status not in {'pending_review','reviewed'}:raise HTTPException(409,'Yalnız bekleyen veya incelenmiş talep sonuçlandırılabilir')
         row.approver_id=user.id;row.decision_note=payload.note
         if payload.approve:
             target=db.get(User,row.target_id)

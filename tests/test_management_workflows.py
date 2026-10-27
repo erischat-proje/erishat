@@ -111,14 +111,26 @@ class Workflows(shared.ManagementAPI):
         self.assertEqual(self.finance(amount=True).status_code,422)
         self.assertEqual(self.finance(amount=1.5).status_code,422)
         with Session(self.engine) as db:self.assertEqual(db.get(User,'USER').lidya,0)
-    def test_finance_requires_review_then_distinct_final_approver(self):
-        r=self.finance();rid=r.json()['id'];p=f'/v1/admin/management/finance-requests/{rid}'
-        payload={'approve':True,'note':'A documented decision after checking all source records'}
-        self.assertEqual(self.call('FA',p+'/review',payload).status_code,403)
-        self.assertEqual(self.call('DA',p+'/decision',payload).status_code,409)
+    def test_da_direct_approval_including_own_request(self):
+        for creator in ['FA','DA']:
+            r=self.finance(role=creator);rid=r.json()['id'];p=f'/v1/admin/management/finance-requests/{rid}'
+            payload={'approve':True,'note':'DA reviewed the evidence and approved the recorded amount'}
+            self.assertTrue(self.request(p,'DA').json()['can_execute'])
+            self.assertFalse(self.request(p,'FA').json()['can_execute'])
+            self.assertEqual(self.call('FA',p+'/decision',payload).status_code,403)
+            result=self.call('DA',p+'/decision',payload)
+            self.assertEqual(result.status_code,200,result.text)
+            self.assertEqual(result.json()['status'],'executed')
+            again=self.call('DA2',p+'/decision',payload)
+            self.assertEqual(again.status_code,200,again.text)
+            self.assertEqual(again.json()['operation_id'],result.json()['operation_id'])
+        with Session(self.engine) as db:self.assertEqual(db.get(User,'USER').lidya,100)
+    def test_da_reviewer_can_execute_existing_reviewed_request(self):
+        rid=self.finance().json()['id'];p=f'/v1/admin/management/finance-requests/{rid}'
+        payload={'approve':True,'note':'DA verified the evidence and approves this pending request'}
         self.assertEqual(self.call('DA',p+'/review',payload).status_code,200)
-        self.assertEqual(self.call('DA',p+'/decision',payload).status_code,403)
-        self.assertEqual(self.call('DA2',p+'/decision',payload).status_code,200)
+        self.assertTrue(self.request(p,'DA').json()['can_execute'])
+        self.assertEqual(self.call('DA',p+'/decision',payload).status_code,200)
     def test_finance_commit_is_idempotent_with_one_receipt_and_ledger(self):
         rid=self.reviewed_finance();p=f'/v1/admin/management/finance-requests/{rid}/decision';payload={'approve':True,'note':'Final independent approval with verified evidence'}
         r=self.call('DA',p,payload);self.assertEqual(r.status_code,200,r.text);operation_id=r.json()['operation_id']

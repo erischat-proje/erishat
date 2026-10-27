@@ -31,11 +31,7 @@ def dockerfile(plan):
         '# Media layers are independent; the small code/index layer changes per release.',
         'FROM python:3.13-alpine AS content-index',
         'COPY scripts/build-apk-content.py scripts/prepare-web-layers.py scripts/web-layer-plan.json /tool/',
-        'COPY frontend /source/frontend',
-        'COPY hediyesistemi /source/hediyesistemi',
-        'COPY Gereken_icerikler /source/Gereken_icerikler',
-        'COPY avatarveduvarkağıdı /source/avatarveduvarkağıdı',
-        'RUN python /tool/prepare-web-layers.py --root /source --output /out --plan /tool/web-layer-plan.json',
+        'RUN --mount=type=bind,source=.,target=/source python /tool/prepare-web-layers.py --root /source --output /out --plan /tool/web-layer-plan.json',
         '',
         'FROM caddy:2-alpine',
     ]
