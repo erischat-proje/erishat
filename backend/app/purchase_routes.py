@@ -196,8 +196,8 @@ def manual_change(db,user,target,payload,operation,*,approval_id=None,commit_tra
         raise HTTPException(409,'Manuel mali işlem için Yönetim → Lidya Denetimi bölümünden bağımsız inceleme ve onay talebi oluşturun.')
     from .management_workflow_models import ManagementFinanceRequest
     approval=db.get(ManagementFinanceRequest,approval_id)
-    if not approval or approval.status!='reviewed' or approval.approver_id!=user.id or user.id in {approval.requester_id,approval.reviewer_id,approval.target_id} or (approval.target_id,approval.amount,approval.operation)!=(target.id,payload.amount,operation):
-        raise HTTPException(403,'Geçerli bağımsız mali onay gerekli')
+    if not approval or approval.status not in {'pending_review','reviewed'} or approval.approver_id!=user.id or (approval.target_id,approval.amount,approval.operation)!=(target.id,payload.amount,operation):
+        raise HTTPException(403,'Geçerli DA mali onayı gerekli')
 
     existing=db.scalar(select(LidyaOperation).where(LidyaOperation.request_key==payload.request_key))
     if existing:
