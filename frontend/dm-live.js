@@ -198,9 +198,9 @@
     if (message?.media_type === 'image') {
       const media=document.createElement('div');media.className='dm-image-message';
       const expired=message.temporary&&message.expires_at&&new Date(message.expires_at).getTime()<=Date.now();
-      if(message.temporary&&!mine){
+      if(message.temporary){
         const open=document.createElement('button');open.type='button';open.className='dm-temp-preview'+(expired?' expired':'');open.innerHTML=expired?'<span class="dm-temp-lock">⌛</span><span><b>Süre doldu</b><small>Bu fotoğraf artık görüntülenemiyor</small></span>':`<span class="dm-temp-lock">◉</span><span class="dm-temp-label"><b>Süreli fotoğraf</b><small>${Number(message.view_seconds||10)} sn · Dokunup aç</small></span>`;
-        if(!expired){const preview=document.createElement('img');preview.className='dm-temp-blur';preview.alt='Bulanık süreli fotoğraf önizlemesi';open.prepend(preview);const status=document.createElement('span');status.className='dm-temp-status';open.prepend(status);loadTemporaryPreview(message,preview,status)}
+        
         open.disabled=!!expired;open.onclick=()=>viewPhoto(message);media.append(open);
       }else{
         const image=document.createElement('img');image.className='dm-inline-photo';image.alt='Gönderilen fotoğraf';image.loading='lazy';
@@ -462,7 +462,7 @@
     try{response=await fetchMedia(message);objectUrl=URL.createObjectURL(await response.blob());}
     catch(error){if(error?.message?.includes('süresi doldu')||error?.message?.includes('artık kullanılamıyor'))markPhotoExpired(message);window.toast?.(error.message||'Fotoğraf açılamadı.');return;}
     const seconds=Number(response.headers.get('X-Erischat-Expires-In')||0);
-    const protectedView=!!message.temporary&&seconds>0;
+    const protectedView=!!message.temporary;
     if(protectedView)schedulePhotoExpiry(message,seconds);
     const modal=document.createElement('div');modal.id='erisTemporaryPhotoViewer';modal.className='dm-photo-viewer';
     modal.innerHTML='<div class="dm-photo-viewer-head"><b data-photo-label></b><button type="button" data-photo-close aria-label="Kapat">×</button></div><img data-photo-image alt="Gönderilen fotoğraf"><small data-photo-timer></small>';
@@ -470,12 +470,12 @@
     let timer=null;const expiresAt=Date.now()+seconds*1000;
     const label=modal.querySelector('[data-photo-label]'),countdown=modal.querySelector('[data-photo-timer]');
     const update=()=>{const remain=Math.max(0,Math.ceil((expiresAt-Date.now())/1000));label.textContent=protectedView?'Süreli fotoğraf':'';countdown.textContent=protectedView?`Kalan süre · ${remain} sn`:'';return remain};update();
-    const close=()=>{if(timer)clearInterval(timer);window.ErisScreenProtection?.set?.('temporary-photo',false);modal.remove();URL.revokeObjectURL(objectUrl);document.removeEventListener('contextmenu',block);document.removeEventListener('keydown',keyBlock,true);window.removeEventListener('blur',blurCheck);document.removeEventListener('visibilitychange',visibilityCheck)};
+    let closed=false;const close=()=>{if(closed)return;closed=true;if(protectedView)markPhotoExpired(message);if(timer)clearInterval(timer);window.ErisScreenProtection?.set?.('temporary-photo',false);modal.remove();URL.revokeObjectURL(objectUrl);document.removeEventListener('contextmenu',block);document.removeEventListener('keydown',keyBlock,true);window.removeEventListener('blur',blurCheck);document.removeEventListener('visibilitychange',visibilityCheck);window.removeEventListener('popstate',close);window.removeEventListener('pagehide',close)};
     const block=e=>{if(protectedView)e.preventDefault()};
     const keyBlock=e=>{if(protectedView&&(e.key==='PrintScreen'||(e.ctrlKey&&['s','p','c'].includes(e.key.toLowerCase())))){e.preventDefault();e.stopImmediatePropagation()}};
-    const blurCheck=()=>{if(protectedView)modal.classList.add('capture-hidden')};
-    const visibilityCheck=()=>{if(document.hidden&&protectedView)modal.classList.add('capture-hidden');else modal.classList.remove('capture-hidden')};
-    modal.querySelector('[data-photo-close]').onclick=close;modal.addEventListener('click',e=>{if(e.target===modal&&!protectedView)close()});
+    const blurCheck=()=>{if(protectedView){modal.classList.add('capture-hidden');close()}};
+    const visibilityCheck=()=>{if(document.hidden&&protectedView){modal.classList.add('capture-hidden');close()}else modal.classList.remove('capture-hidden')};
+    modal.querySelector('[data-photo-close]').onclick=close;window.addEventListener('popstate',close);window.addEventListener('pagehide',close);modal.addEventListener('click',e=>{if(e.target===modal&&!protectedView)close()});
     if(protectedView){window.ErisScreenProtection?.set?.('temporary-photo',true);modal.addEventListener('contextmenu',block);document.addEventListener('contextmenu',block);document.addEventListener('keydown',keyBlock,true);window.addEventListener('blur',blurCheck);document.addEventListener('visibilitychange',visibilityCheck);timer=setInterval(()=>{if(update()<=0){markPhotoExpired(message);close()}},250)}
   }
 
