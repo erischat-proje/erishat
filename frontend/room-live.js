@@ -1,5 +1,24 @@
 (() => {
   let joinedRoomId=null,roomOpenRequest=0;
+  // Presence is a server count. Refresh it while a room is visible, not from seat occupancy.
+  let roomPresenceTimer=null,roomPresenceDebounce=null;
+  function stopRoomPresenceRefresh(){
+    clearInterval(roomPresenceTimer);clearTimeout(roomPresenceDebounce);
+    roomPresenceTimer=null;roomPresenceDebounce=null;
+  }
+  function queueRoomPresenceRefresh(){
+    if(!joinedRoomId||document.visibilityState==='hidden')return;
+    clearTimeout(roomPresenceDebounce);
+    roomPresenceDebounce=setTimeout(()=>{
+      roomPresenceDebounce=null;
+      if(joinedRoomId&&document.getElementById('erisRoomSurface')?.classList.contains('show'))
+        refreshRoom().catch(error=>console.warn('[LidyaChat] Oda sayacı yenilenemedi',error));
+    },450);
+  }
+  function startRoomPresenceRefresh(){
+    stopRoomPresenceRefresh();
+    roomPresenceTimer=setInterval(queueRoomPresenceRefresh,12000);
+  }
   let stopRoomHeartbeat=()=>{};
   let reconnectRoomTransport=()=>{};
   const API = (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
@@ -286,7 +305,7 @@
     stopRoomHeartbeat=()=>{clearInterval(heartbeat);clearTimeout(retryTimer);heartbeat=null;retryTimer=null;chatResize.disconnect();list.onscroll=null;};
     socket.onopen=()=>{
       if(!active())return;
-      state.dataset.connectionStatus='connected';lastReceived=Date.now();window.ErisRoomRTC?.recover?.();window.ErisRoomRTC?.syncSeatMicrophone?.();
+      state.dataset.connectionStatus='connected';lastReceived=Date.now();queueRoomPresenceRefresh();window.ErisRoomRTC?.recover?.();window.ErisRoomRTC?.syncSeatMicrophone?.();
       heartbeat=setInterval(()=>{
         if(!active()||socket.readyState!==WebSocket.OPEN)return;
         if(document.visibilityState!=='hidden'&&Date.now()-lastReceived>65000){socket.close(4000,'heartbeat timeout');return}
@@ -296,7 +315,7 @@
     socket.onclose=event=>{for(const nonce of pendingChat.keys())markPending(nonce,'Bağlantı kesildi; teslim durumu belirsiz');clearInterval(heartbeat);if(window.__erisRoomSocket!==socket)return;state.dataset.connectionStatus='disconnected';if([1000,1008,4401,4403].includes(event.code)){window.ErisRoomRTC?.stop?.();return;}const attempts=Math.min(5,(Number(state.dataset.retryAttempt)||0)+1);state.dataset.retryAttempt=String(attempts);retryTimer=setTimeout(reconnect,Math.min(30000,1000*2**attempts));};
     socket.onerror=()=>{state.dataset.connectionStatus='error';};
     let historyReady=false,loadingOlder=false;const livePending=[];list.parentElement.querySelector('[data-history-more]')?.remove();const older=document.createElement('button');older.type='button';older.dataset.historyMore='';older.hidden=true;older.textContent='Geçmiş';older.title='Önceki mesajları yükle';older.style.cssText="flex:none;align-self:center;color:var(--ui-gold);background:color-mix(in srgb, var(--ui-panel) 4%, transparent);border:1px solid var(--ui-line);border-radius:10px;padding:5px 10px;font-size:10px";activity?.append(older);older.onclick=async()=>{if(loadingOlder||window.__erisRoomSocket!==socket)return;const first=list.querySelector('[data-message-id]');if(!first)return;loadingOlder=true;older.disabled=true;const height=list.scrollHeight,top=list.scrollTop;try{const page=await window.ErisPlatform.api('/rooms/'+encodeURIComponent(roomId)+'/chat-history?before='+encodeURIComponent(first.dataset.messageId)+'&limit=100');if(window.__erisRoomSocket!==socket)return;[...(page.messages||[])].reverse().forEach(d=>add(d,true));list.scrollTop=top+list.scrollHeight-height;older.hidden=!page.has_more}catch(error){window.toast?.(error.message||'Geçmiş yüklenemedi.')}finally{loadingOlder=false;older.disabled=false}};
-    socket.onmessage=ev=>{if(window.__erisRoomSocket!==socket)return;lastReceived=Date.now();try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_chat_ack'){markPending(d.client_nonce,'Gönderildi');const pending=list.querySelectorAll('[data-pending-chat]');for(const el of pending)if(el.dataset.pendingChat===d.client_nonce){el.remove();break}return}if(d.type==='pong'){if(Array.isArray(d.peers))window.ErisRoomRTC?.message?.({type:'rtc_roster',peers:d.peers});return}if(d.type==='room_session_replaced'){stopRoomHeartbeat();window.ErisRoomRTC?.leaveRoom?.();window.__erisRoomSocket=null;socket.close(1000);state.dataset.connectionStatus='replaced';window.toast?.('Oda bağlantın başka bir sekmede açıldı.');return}if(d.type==='room_history'){if(!list.querySelector('[data-message-id]')){list.replaceChildren();following=true;}d.messages?.forEach(d=>add(d));older.hidden=!(d.messages?.length);historyReady=true;state.dataset.retryAttempt='0';livePending.splice(0).forEach(d=>add(d))}else if(d.type==='room_reaction')window.ErisRoomEmojis?.receive?.(d);else if(d.type==='room_reaction_error')window.ErisRoomEmojis?.error?.(d);else if(d.type==='room_chat'){if(historyReady)add(d);else livePending.push(d)}else if(d.type==='room_gift'){const amount=Number(d.total_price||0).toLocaleString('tr-TR'),earned=Number(d.recipient_amount||0).toLocaleString('tr-TR'),quantity=Number(d.quantity||1),sender=d.sender_nickname||'Kullanıcı',receiver=d.recipient_nickname||'Kullanıcı';const scope=d.target==='room'?'odadaki herkese':d.target==='mic'?'mikrofondaki herkese':null;const text=scope?sender+' '+scope+' '+(d.gift_key||'hediye')+' ('+amount+' 🪙 ×'+quantity+') gönderdi.':receiver+' isimli kullanıcıya '+sender+' '+(d.gift_key||'hediye')+' ('+amount+' 🪙 ×'+quantity+') gönderdi; '+earned+' 🪙 kazandı.';const line={type:'room_chat',id:'gift-'+d.id,system:true,text};if(historyReady)add(line);else livePending.push(line)}else if(d.type==='couple_room_closed'){window.toast?.(d.message);closeRealRoom().catch(()=>{});}else if(d.type==='room_entrance')window.ErisRoomEntrance?.show?.(d);else if(d.type==='room_chat_error'){if(d.code==='chat_dm_banned')window.ErisChatBanNotice?.show?.(d);else window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');}else if(d.type==='room_user_banned'){window.toast?.(d.message||'Bu odadan yasaklandınız.');closeRealRoom({banned:true}).catch(()=>{});}else if(d.type==='support_restricted'){window.ErisSupport?.restrict?.(d.remaining_seconds);closeRealRoom().catch(()=>{});}else if(d.type==='ghost_mode_changed'){window.ErisRoomRTC?.stop?.();setTimeout(()=>{if(window.ErisCurrentRoomId===roomId)openRoom(roomId,document.getElementById('erisLiveTitle')?.textContent||'Oda');},0);}else if(d.type==='room_seat_muted'||d.type.startsWith('rtc_'))window.ErisRoomRTC?.message?.(d);}catch{}};
+    socket.onmessage=ev=>{if(window.__erisRoomSocket!==socket)return;lastReceived=Date.now();try{const d=JSON.parse(ev.data||'{}');if(d.type==='room_chat_ack'){markPending(d.client_nonce,'Gönderildi');const pending=list.querySelectorAll('[data-pending-chat]');for(const el of pending)if(el.dataset.pendingChat===d.client_nonce){el.remove();break}return}if(d.type==='pong'){if(Array.isArray(d.peers))window.ErisRoomRTC?.message?.({type:'rtc_roster',peers:d.peers});return}if(d.type==='room_session_replaced'){stopRoomHeartbeat();window.ErisRoomRTC?.leaveRoom?.();window.__erisRoomSocket=null;socket.close(1000);state.dataset.connectionStatus='replaced';window.toast?.('Oda bağlantın başka bir sekmede açıldı.');return}if(d.type==='room_history'){if(!list.querySelector('[data-message-id]')){list.replaceChildren();following=true;}d.messages?.forEach(d=>add(d));older.hidden=!(d.messages?.length);historyReady=true;state.dataset.retryAttempt='0';livePending.splice(0).forEach(d=>add(d))}else if(d.type==='room_reaction')window.ErisRoomEmojis?.receive?.(d);else if(d.type==='room_reaction_error')window.ErisRoomEmojis?.error?.(d);else if(d.type==='room_chat'){if(historyReady)add(d);else livePending.push(d)}else if(d.type==='room_gift'){const amount=Number(d.total_price||0).toLocaleString('tr-TR'),earned=Number(d.recipient_amount||0).toLocaleString('tr-TR'),quantity=Number(d.quantity||1),sender=d.sender_nickname||'Kullanıcı',receiver=d.recipient_nickname||'Kullanıcı';const scope=d.target==='room'?'odadaki herkese':d.target==='mic'?'mikrofondaki herkese':null;const text=scope?sender+' '+scope+' '+(d.gift_key||'hediye')+' ('+amount+' 🪙 ×'+quantity+') gönderdi.':receiver+' isimli kullanıcıya '+sender+' '+(d.gift_key||'hediye')+' ('+amount+' 🪙 ×'+quantity+') gönderdi; '+earned+' 🪙 kazandı.';const line={type:'room_chat',id:'gift-'+d.id,system:true,text};if(historyReady)add(line);else livePending.push(line)}else if(d.type==='couple_room_closed'){window.toast?.(d.message);closeRealRoom().catch(()=>{});}else if(d.type==='room_entrance')window.ErisRoomEntrance?.show?.(d);else if(d.type==='room_chat_error'){if(d.code==='chat_dm_banned')window.ErisChatBanNotice?.show?.(d);else window.toast?.(d.message||'Oda sohbeti kullanılamıyor.');}else if(d.type==='room_user_banned'){window.toast?.(d.message||'Bu odadan yasaklandınız.');closeRealRoom({banned:true}).catch(()=>{});}else if(d.type==='support_restricted'){window.ErisSupport?.restrict?.(d.remaining_seconds);closeRealRoom().catch(()=>{});}else if(d.type==='ghost_mode_changed'){window.ErisRoomRTC?.stop?.();setTimeout(()=>{if(window.ErisCurrentRoomId===roomId)openRoom(roomId,document.getElementById('erisLiveTitle')?.textContent||'Oda');},0);}else if(d.type==='room_seat_muted'||d.type.startsWith('rtc_')){if(d.type==='rtc_peer_joined'||d.type==='rtc_peer_left')queueRoomPresenceRefresh();window.ErisRoomRTC?.message?.(d);}}catch{}};
     // LIDYA_CHAT_ACK_V5: show an immediate pending row while the server persists the message.
     const pendingChat=new Map();let chatCounter=0;
     const markPending=(nonce,label)=>{const item=pendingChat.get(nonce);if(!item)return;item.status.textContent=label;if(label!=='Gönderiliyor…')pendingChat.delete(nonce)};
@@ -407,9 +426,10 @@
       if(levelButton)levelButton.innerHTML='<b>Seviye '+Number(room.level||1)+'</b><small>'+seatCount+' koltuk</small>';
       renderRoomSeats(liveRoomId,room.name||name,room.seats,seatCount);
       const occupiedSeats=(room.seats||[]).filter(seat=>seat.user_id).length;
-      document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  '+Number(room.member_count||occupiedSeats)+' kişi odada';
+      document.getElementById('erisRoomActivity').textContent=occupiedSeats+' / '+seatCount+' koltuk dolu  ·  '+Number(room.member_count??0)+' kişi odada';
       attachRoomChat(liveRoomId);window.connectRoomGiftSocket?.(liveRoomId); const giftButton=document.getElementById('erisRoomGift'); if(giftButton) giftButton.onclick=()=>window.openRoomGift?.(liveRoomId); const moreButton=document.getElementById('erisRoomMore'); if(moreButton) moreButton.onclick=()=>{const p=window.__erisRoomPermissions||{}; window.ErisRoomCenterMenu?.();};
       joinedRoomId=String(liveRoomId);
+      startRoomPresenceRefresh();
       setTimeout(()=>{
         try{
           window.dispatchEvent(new CustomEvent('erischat:room-opened',{detail:{room}}));
@@ -425,7 +445,7 @@
   }
 
   async function closeRealRoom(options={}){
-    const closingRequest=++roomOpenRequest;stopRoomHeartbeat();reconnectRoomTransport=()=>{};
+    const closingRequest=++roomOpenRequest;stopRoomPresenceRefresh();stopRoomHeartbeat();reconnectRoomTransport=()=>{};
     window.ErisRoomRTC?.leaveRoom?.();
     joinedRoomId=null;window.__erisCurrentCoupleId=null;window.ErisRoomEntrance?.clear?.();
     window.ErisScreenProtection?.set?.('room',false);
@@ -498,13 +518,13 @@ window.addEventListener('erischat:cosmetics-updated',applyRoomWallpaper);
           seat.style.removeProperty('opacity');
         });
       }
-      const activity=document.getElementById('erisRoomActivity');if(activity)activity.textContent=(room.seats||[]).filter(s=>s.user_id).length+' / '+room.seat_count+' koltuk dolu · '+Number(room.member_count||(room.seats||[]).filter(s=>s.user_id).length)+' kişi odada';
+      const activity=document.getElementById('erisRoomActivity');if(activity)activity.textContent=(room.seats||[]).filter(s=>s.user_id).length+' / '+room.seat_count+' koltuk dolu · '+Number(room.member_count??0)+' kişi odada';
       window.dispatchEvent(new CustomEvent('erischat:room-state-updated',{detail:{room}}));
       return room;
     }finally{refreshingRoom=false}
   }
   window.addEventListener('online',()=>reconnectRoomTransport());
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reconnectRoomTransport()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){reconnectRoomTransport();queueRoomPresenceRefresh()}});
   window.ErisRoomUI={refresh:refreshRoom};
   window.openRoom=openRoom;
   window.closeRealRoom=closeRealRoom;
