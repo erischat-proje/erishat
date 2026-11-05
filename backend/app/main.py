@@ -2528,8 +2528,17 @@ room_seat_cleanup_tasks: dict[tuple[str, str], asyncio.Task] = {}
 
 
 def _clear_disconnected_room_seat(room_id: str, user_id: str) -> None:
+    # A dead socket must not keep a phantom listener in RoomMember indefinitely.
+    # This runs after the existing reconnect grace period; explicit leave remains immediate.
     with Session(engine) as db:
+        room = db.get(Room, room_id)
+        if not room:
+            return
         db.execute(update(RoomSeat).where(RoomSeat.room_id == room_id, RoomSeat.user_id == user_id).values(user_id=None, muted=False))
+        db.execute(delete(RoomMember).where(RoomMember.room_id == room_id, RoomMember.user_id == user_id))
+        remaining = db.scalar(select(func.count(RoomMember.id)).where(
+            RoomMember.room_id == room_id, RoomMember.ghost.is_(False))) or 0
+        room.is_active = remaining > 0
         db.commit()
 
 
