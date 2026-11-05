@@ -15,7 +15,7 @@ from .staff_identity import STAFF, ROLES
 from .platform_models import GameBet, GameRound
 from . import wheel_rules as rules
 
-BET_SECONDS = 60
+BET_SECONDS = 30
 LOCK_SECONDS = 5
 RESULT_SECONDS = 6
 
