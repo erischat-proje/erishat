@@ -27,10 +27,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android 36 SDK
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Install Android 36 SDK using runner command-line tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_MANAGER="${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDK_MANAGER" ]; then
+            SDK_MANAGER="$(command -v sdkmanager || true)"
+          fi
+          test -n "$SDK_MANAGER" && test -x "$SDK_MANAGER" || { echo 'Android sdkmanager not found'; exit 1; }
+          "$SDK_MANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
       - name: Install media pack tools
         run: python3 -m pip install --disable-pip-version-check Pillow==11.3.0
       - name: Pack install-time content
