@@ -480,6 +480,7 @@ app.include_router(anonymous_calls.router)
 purchase_routes.register_auth(current_user)
 from . import play_billing
 play_billing.register_auth(current_user)
+play_billing.register_checkout_auth(current_user)
 app.include_router(play_billing.router)
 app.include_router(purchase_routes.router)
 app.include_router(paytr_routes.register_auth(current_user))

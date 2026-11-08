@@ -131,3 +131,112 @@ def record_verified_receipt(db, user_id, product_id, purchase_token, verdict):
         if concurrent:
             return same_owner(concurrent)
         raise HTTPException(409, 'Satın alma kaydı çakışması') from None
+
+
+
+# Final integration: gated until commercial/policy approval and service-account readiness.
+def _checkout_ready():
+    return bool(settings.google_play_billing_enabled and settings.google_play_fulfillment_enabled
+                and settings.google_play_policy_approved and settings.google_play_service_account_json)
+
+
+def _account_hash(user_id):
+    return hashlib.sha256(('lidyachat:' + str(user_id)).encode('utf-8')).hexdigest()
+
+
+def _consume_google(product_id, token):
+    """Only after durable entitlement commit; retry is safe on a credited receipt."""
+    from urllib.parse import quote
+    raw = json.loads(settings.google_play_service_account_json)
+    credentials = service_account.Credentials.from_service_account_info(raw, scopes=[SCOPE])
+    session = AuthorizedSession(credentials)
+    url = ('https://androidpublisher.googleapis.com/androidpublisher/v3/applications/'
+           + quote(settings.google_play_package_name, safe='') + '/purchases/products/'
+           + quote(product_id, safe='') + '/tokens/' + quote(token, safe='') + ':consume')
+    response = session.post(url, timeout=12)
+    if response.status_code not in (200, 204):
+        raise RuntimeError('Google Play consumption failed')
+
+
+def verify_credited_payload(data, product_id, account_id, recorded_order_id, recorded_test_purchase):
+    """Recheck an already-credited Play token without crediting again.
+
+    Consumed purchases remain valid for repeat requests, but a refund,
+    mismatched owner, order or product must fail closed.
+    """
+    from copy import deepcopy
+    items = data.get('productLineItem') if isinstance(data, dict) else None
+    if not isinstance(items, list) or len(items) != 1 or not isinstance(items[0], dict):
+        raise ValueError('Geçersiz ürün kaydı')
+    details = items[0].get('productOfferDetails')
+    if not isinstance(details, dict):
+        raise ValueError('Satın alma seçeneği eksik')
+    state = details.get('consumptionState')
+    if state not in ('CONSUMPTION_STATE_CONSUMED', 'CONSUMPTION_STATE_YET_TO_BE_CONSUMED'):
+        raise ValueError('Geçersiz tüketim durumu')
+    checked = deepcopy(data)
+    checked['productLineItem'][0]['productOfferDetails']['consumptionState'] = 'CONSUMPTION_STATE_YET_TO_BE_CONSUMED'
+    verdict = verify_payload(checked, product_id, account_id)
+    if verdict['order_id'] != recorded_order_id or verdict['test_purchase'] != recorded_test_purchase:
+        raise ValueError('Satın alma geçmişi eşleşmiyor')
+    return state == 'CONSUMPTION_STATE_CONSUMED'
+
+
+def register_checkout_auth(current_user):
+    @router.get('/v1/google-play/checkout-status')
+    def checkout_status(user=Depends(current_user)):
+        enabled = _checkout_ready()
+        return {'enabled': enabled, 'account_hash': _account_hash(user.id) if enabled else None}
+
+    @router.post('/v1/google-play/checkout-complete')
+    def checkout_complete(payload: VerifyPurchase, user=Depends(current_user), db=Depends(get_db)):
+        from .play_fulfillment import credit_verified_purchase
+        if not _checkout_ready():
+            raise HTTPException(503, 'Google Play satın alma işlemi kapalı')
+        if payload.product_id not in PRODUCTS:
+            raise HTTPException(422, 'Bilinmeyen ürün')
+        expected = _account_hash(user.id)
+        token_hash = hashlib.sha256(payload.purchase_token.encode('utf-8')).hexdigest()
+        previous = db.scalar(select(PlayPurchaseRecord).where(PlayPurchaseRecord.token_sha256 == token_hash))
+        if previous is not None:
+            if previous.user_id != user.id or previous.product_id != payload.product_id:
+                raise HTTPException(409, 'Ödeme başka hesap veya ürüne ait')
+            if previous.purchase_status == 'credited':
+                # Never trust a repeated token from the client without a fresh Google check.
+                try:
+                    fresh = fetch_from_google(payload.purchase_token)
+                    was_consumed = verify_credited_payload(
+                        fresh, payload.product_id, expected, previous.google_order_id,
+                        bool(previous.test_purchase))
+                except ValueError as exc:
+                    raise HTTPException(422, str(exc)) from None
+                except Exception:
+                    raise HTTPException(503, 'Google Play tekrar doğrulaması kullanılamıyor') from None
+                # If consumed, do not call consume again. Otherwise retry idempotently.
+                consumption = 'completed' if was_consumed else 'retry_required'
+                if not was_consumed:
+                    try:
+                        _consume_google(payload.product_id, payload.purchase_token)
+                        consumption = 'completed'
+                    except Exception:
+                        pass
+                return {'credited': True, 'already_credited': True, 'receipt_id': previous.id,
+                        'consumption': consumption}
+        try:
+            google_data = fetch_from_google(payload.purchase_token)
+            verdict = verify_payload(google_data, payload.product_id, expected)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, 'Google Play doğrulaması yapılamadı; tekrar deneyin') from None
+        receipt = record_verified_receipt(db, user.id, payload.product_id, payload.purchase_token, verdict)
+        result = credit_verified_purchase(db, receipt_id=receipt.id,
+                                          user_id=user.id, product_id=payload.product_id)
+        try:
+            _consume_google(payload.product_id, payload.purchase_token)
+            consumption = 'completed'
+        except Exception:
+            consumption = 'retry_required'
+        return {'credited': True, 'already_credited': result.get('already_credited', False),
+                'receipt_id': receipt.id, 'amount': result.get('amount'),
+                'consumption': consumption}

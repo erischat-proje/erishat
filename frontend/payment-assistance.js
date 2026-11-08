@@ -65,7 +65,53 @@ function renderInbox(){const root=document.querySelector('#messages');if(!root)r
 for(const row of rows){const b=document.createElement('button');b.type='button';b.className='pa-inbox-item';b.dataset.paymentId=row.id;b.innerHTML='<b>'+(row.own?'Yönetim ekibi':'Müşteri ID '+esc(row.public_id))+'</b><small>'+num(row.price_try)+' TL · '+num(row.total)+' Lidya · '+esc(names[row.status])+(snapshot.unread[row.id]?' · '+snapshot.unread[row.id]+' yeni mesaj':'')+'</small>';b.onclick=()=>openRequest(row.id);mount.append(b)}if(snapshot.is_da){const b=document.createElement('button');b.type='button';b.textContent='Yükleme istekleri ('+snapshot.pending_count+')';b.onclick=()=>openQueue(false);mount.append(b)}}
 async function openRequest(id){try{const row=await api('/requests/'+id);if(row.status==='connecting'&&!(row.own?row.customer_ack:row.agent_ack)){handshake(row);return}if(row.status==='chat'||row.status==='finishing'){await openChat(row);return}if(!row.own&&row.status==='rejecting'){rejectReason(row);return}const c=modal('Ödeme isteği',true);c.requestId=row.id;c.body.innerHTML=meta(row)+(row.status==='connecting'?'<p>Diğer tarafın pencereyi kapatması bekleniyor.</p>':'');if(row.status==='pending'&&row.own){const b=document.createElement('button');b.textContent='İsteği iptal et';c.body.append(b);action(c,b,async()=>{await api('/requests/'+id+'/cancel','POST',{});if(live(c))close(c);await sync()})}}catch(e){toast(e.message)}}
 async function choose(p){const c=modal('Ödeme isteğini onayla',true);c.body.innerHTML=`<p><b>${num(p.price_try)} TL</b> tutarındaki seçtiğiniz paket için aktif ödeme işlemini yürütmek üzere sizi görevlilere aktarıyorum. Onaylıyor musunuz?</p><div class="pa-note">${num(p.total)} Lidya · ${num(p.base)} temel + ${num(p.bonus)} bonus</div><div class="pa-row"><button type="button" data-accept>Kabul et</button><button type="button" data-decline>Reddet</button></div>`;const requestKey=key();c.body.querySelector('[data-decline]').onclick=()=>close(c);action(c,c.body.querySelector('[data-accept]'),async()=>{const r=await api('/requests','POST',{package_id:p.id,request_key:requestKey});if(!live(c))return;close(c);const n=modal('Ödeme kaydınız oluşturuldu',true);n.requestId=r.id;n.body.innerHTML='<p>'+(r.available_da?'Talebiniz DA yetkililerine iletildi. Bir yetkili kabul ettiğinde bilgilendirileceksiniz.':'Şu anda sistem yoğunluğundan dolayı görevliler diğer müşteriler ile ilgilenmektedir. Size en kısa sürede dönüş yapılacaktır. Ödeme kaydınız oluşturulmuştur.')+'</p><p class="pa-note">İsteğinizi mesaj kutunuzdan takip edebilirsiniz.</p>';await sync()})}
-// Native Google Play catalog preview only: never starts a purchase or grants Lidya.
+
+// One consolidated Play checkout bridge; no billing action until server gates permit it.
+const playApi=base.replace(/\/payment-assistance$/,'')+'/google-play';
+const playInflight=new Set();
+async function playFetch(path,options={}) {
+ const t=token();if(!t)throw Error('Önce giriş yapın.');
+ const res=await fetch(playApi+path,{...options,headers:{'Authorization':'Bearer '+t,
+   'Content-Type':'application/json',...(options.headers||{})}});
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok)throw Error(typeof data.detail==='string'?data.detail:'Google Play sunucusuna bağlanılamadı.');
+ return data;
+}
+window.addEventListener('lidyachat:play-purchased',async e=>{
+ const productId=e.detail?.productId,purchaseToken=e.detail?.purchaseToken;
+ if(!/^lidya_0(?:0[1-9]|1[0-6])$/.test(productId||'')||typeof purchaseToken!=='string'||!purchaseToken)return;
+ const key=productId+'|'+purchaseToken;if(playInflight.has(key))return;
+ playInflight.add(key);
+ try{
+  const reply=await playFetch('/checkout-complete',{method:'POST',body:JSON.stringify({product_id:productId,purchase_token:purchaseToken})});
+  toast(reply.already_credited?'Ödemeniz daha önce hesabınıza yüklenmiş.':'Google Play ödemeniz doğrulandı; Lidya hesabınıza yüklendi.');
+  if(reply.consumption==='retry_required')toast('Satın alma işleniyor. Uygulamayı yeniden açarak durumu güncelleyin.');
+  window.dispatchEvent(new Event('lidyachat:balance-refresh'));
+ }catch(err){toast('Google Play teslimatı beklemede: '+(err.message||'Bağlantı hatası')+' Tekrar deneyin.');}
+ finally{playInflight.delete(key)}
+});
+window.addEventListener('lidyachat:play-payment-status',e=>{
+ if(e.detail?.state==='pending')toast('Google Play ödemesi bekliyor. Tamamlanınca Lidya yüklenir.');
+ if(e.detail?.state==='purchase_failed'||e.detail?.state==='launch_failed')toast('Google Play işlemi tamamlanamadı.');
+});
+async function attachPlayCheckout(modalInstance,productId){
+ const bridge=window.ErisChatAndroid;
+ if(typeof bridge?.startPlayPurchase!=='function')return;
+ try{
+  const config=await playFetch('/checkout-status');
+  if(!live(modalInstance)||!config.enabled)return;
+  const note=modalInstance.body.querySelector('.pa-note');
+  if(note)note.textContent='Ödeme yalnızca Google Play onay ekranından başlatılır. Lidya, sunucu doğrulaması sonrası yüklenir.';
+  const button=document.createElement('button');button.type='button';button.textContent='Google Play ile satın al';
+  const tip=document.createElement('p');tip.className='pa-note';tip.textContent='Ödeme tutarını Google Play onay ekranından kontrol edin.';
+  modalInstance.body.append(tip,button);
+  button.onclick=()=>{button.disabled=true;try{bridge.startPlayPurchase(productId,config.account_hash)}catch(e){button.disabled=false;toast('Google Play açılamadı.')}};
+  bridge.recoverPlayPurchases?.();
+ }catch(e){/* Checkout is intentionally unavailable when disabled or misconfigured. */}
+}
+
+// Checkout is added only when server confirms all explicit gates.
+
 function inspectPlayPackage(p){
  const bridge=window.ErisChatAndroid;
  const id=Number(p?.id);
@@ -88,6 +134,7 @@ function inspectPlayPackage(p){
  };
  window.addEventListener('lidyachat:play-catalog',onResult);
  timer=setTimeout(()=>{finish();if(live(c))node.textContent='Google Play yanıt vermedi. Uygulamanın Play Store üzerinden kurulup kurulmadığını kontrol edin.'},15000);
+ attachPlayCheckout(c,productId);
  try{bridge.queryPlayCatalog(productId)}catch(_){finish();if(live(c))node.textContent='Google Play ürün sorgusu başlatılamadı.'}
 }
 async function openPackages(){window.ErisPurchases?.close?.();const c=modal('Lidya Yükleme');c.kind='packages';c.body.textContent='Paketler yükleniyor…';try{const catalog=await api('/catalog');if(!live(c))return;c.body.innerHTML='<p>'+(typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?'Google Play ürün kullanılabilirliğini kontrol edin. Bu test sürümünde ödeme ve Lidya teslimatı kapalıdır.':'Bir paket seçerek DA destekli ödeme isteği oluşturun. Paket bonusu toplam Lidya miktarına dahildir.')+'</p><div data-legacy></div><div class="pa-packages lp-packages"></div>';for(const old of catalog.legacy_pending||[]){const card=document.createElement('article');card.className='pa-card';const p=document.createElement('p');p.textContent='Önceki sistemden açık ödeme kaydı: '+num(old.price_try)+' TL. Ödeme yaptıysanız DA ile görüşürken bu kaydı belirtin. Yeni bir talep açmak için eski kaydı iptal edebilirsiniz.';const b=document.createElement('button');b.type='button';b.textContent='Eski kaydı iptal et';card.append(p,b);c.body.querySelector('[data-legacy]').append(card);action(c,b,async()=>{await api('/legacy/'+old.id+'/cancel','POST',{});if(live(c))card.remove()})}for(const p of catalog.packages){const b=document.createElement('button');b.className='lp-package';b.innerHTML='<b>'+num(p.total)+' Lidya</b><small>'+num(p.base)+' temel + '+num(p.bonus)+' bonus</small><strong>'+num(p.price_try)+' TL</strong>';b.onclick=()=>typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?inspectPlayPackage(p):choose(p);c.body.querySelector('.pa-packages').append(b)}}catch(e){error(c,e.message)}}

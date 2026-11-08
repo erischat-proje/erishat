@@ -57,12 +57,17 @@ def test_credit_exactly_once_and_ledger(db):
     assert len(rows) == 1 and rows[0].delta == 95
 
 
-def test_test_purchase_rejected(db):
+def test_test_purchase_credited_once(db):
+    # Google license-test receipts must traverse the same idempotent ledger path.
     db.get(PlayPurchaseRecord, 1).test_purchase = True
     db.commit()
-    with pytest.raises(HTTPException) as err: call(db)
-    assert err.value.status_code == 409
-    assert db.get(User, "u1").lidya == 100
+    first = call(db)
+    assert first["credited"] and first["amount"] == 95
+    again = call(db)
+    assert again["already_credited"] and not again["credited"]
+    assert db.get(User, "u1").lidya == 195
+    rows = db.scalars(select(LidyaLedger).where(LidyaLedger.operation == "google_play_credit")).all()
+    assert len(rows) == 1 and rows[0].delta == 95
 
 
 def test_wrong_user_rejected(db):

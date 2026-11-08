@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     google_play_package_name: str = "com.erischat.app"
     google_play_billing_enabled: bool = False
     google_play_fulfillment_enabled: bool = False
+    google_play_policy_approved: bool = False
     google_play_service_account_json: str = ""
     play_reviewer_enabled: bool = False
     play_reviewer_username: str = ""
