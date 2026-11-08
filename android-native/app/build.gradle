@@ -24,8 +24,8 @@ android {
         applicationId 'com.erischat.app'
         minSdk 26
         targetSdk 36
-        versionCode 12
-        versionName '1.0.1'
+        versionCode 13
+        versionName '1.0.2'
     }
 
     buildTypes {
@@ -48,6 +48,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.android.billingclient:billing:9.1.0'
     implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.22")
     implementation 'androidx.core:core:1.13.1'
     implementation 'com.google.android.gms:play-services-auth:21.4.0'
