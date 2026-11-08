@@ -40,10 +40,16 @@ def verify_payload(data, product_id, expected_account_id):
     offer = items[0].get('productOfferDetails') or {}
     if offer.get('purchaseOptionId') != 'standart':
         raise ValueError('Satın alma seçeneği eşleşmiyor')
-    if offer.get('quantity', 1) != 1:
-        raise ValueError('Çoklu miktar henüz desteklenmiyor')
-    if offer.get('consumptionState') == 'CONSUMPTION_STATE_CONSUMED':
-        raise ValueError('Bu ödeme önceden tüketilmiş')
+    # Require explicit server-authoritative quantities; missing values fail closed.
+    if type(offer.get('quantity')) is not int or offer['quantity'] != 1:
+        raise ValueError('Geçersiz satın alma miktarı')
+    if type(offer.get('refundableQuantity')) is not int or offer['refundableQuantity'] != 1:
+        raise ValueError('İade edilmiş veya belirsiz satın alma')
+    if offer.get('consumptionState') != 'CONSUMPTION_STATE_YET_TO_BE_CONSUMED':
+        raise ValueError('Ödeme tüketilmiş veya tüketim durumu belirsiz')
+    order_id = data.get('orderId')
+    if not isinstance(order_id, str) or not (1 <= len(order_id) <= 128):
+        raise ValueError('Google Play sipariş kimliği eksik')
     bound = data.get('obfuscatedExternalAccountId')
     if not bound or bound != expected_account_id:
         raise ValueError('Satın alma hesabı doğrulanamadı')
