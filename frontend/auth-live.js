@@ -243,6 +243,16 @@
         </div>
       </div>
 
+      <section id="lidyaReviewLogin" hidden style="margin-top:16px;border-top:1px solid var(--ui-line);padding-top:12px">
+        <button type="button" id="lidyaReviewToggle" class="authBtn authGoogle" style="width:100%">İnceleme hesabıyla giriş</button>
+        <div id="lidyaReviewFields" hidden style="gap:9px;margin-top:10px">
+          <label for="lidyaReviewName">İnceleme kullanıcı adı</label>
+          <input id="lidyaReviewName" autocomplete="username" maxlength="80" style="padding:12px;width:100%;box-sizing:border-box" />
+          <label for="lidyaReviewPass">İnceleme parolası</label>
+          <input id="lidyaReviewPass" type="password" autocomplete="current-password" maxlength="256" style="padding:12px;width:100%;box-sizing:border-box" />
+          <button type="button" id="lidyaReviewSubmit" class="authBtn">Giriş yap</button>
+        </div>
+      </section>
       <div id="erisGoogleStatus" class="authStatus" role="status" aria-live="polite"></div>
       <div class="realOnly">Doğrulama kodu yalnızca bu e-posta adresine gönderilir.</div>
     </div>
@@ -302,6 +312,38 @@
   gate.querySelector('#authOtpInput').addEventListener('input',event=>{event.target.value=event.target.value.replace(/\D/g,'').slice(0,6)});
   gate.querySelector('#authEmailInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();gate.querySelector('#authEmailBtn').click()}});
   gate.querySelector('#authOtpInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();gate.querySelector('#authOtpBtn').click()}});
+
+  // Reviewer option appears only when backend has an enabled account.
+  fetch(`${API()}/auth/reviewer/config`).then(r=>r.ok?r.json():null).then(cfg=>{
+    if(cfg?.enabled)gate.querySelector('#lidyaReviewLogin').hidden=false;
+  }).catch(()=>{});
+  gate.querySelector('#lidyaReviewToggle').onclick=()=>{
+    const fields=gate.querySelector('#lidyaReviewFields');
+    fields.hidden=!fields.hidden;
+    fields.style.display=fields.hidden?'none':'grid';
+  };
+  gate.querySelector('#lidyaReviewSubmit').onclick=async()=>{
+    const username=gate.querySelector('#lidyaReviewName').value.trim();
+    const password=gate.querySelector('#lidyaReviewPass').value;
+    const button=gate.querySelector('#lidyaReviewSubmit');
+    if(username.length<3||password.length<20){status.textContent='İnceleme giriş bilgilerini gir.';return;}
+    button.disabled=true;
+    try{
+      const generation=authGeneration;
+      const session=await request('/auth/reviewer/login',{method:'POST',body:JSON.stringify({username,password})});
+      if(generation!==authGeneration)throw new Error('Giriş işlemi iptal edildi.');
+      await prepareAccountLoginTransition();
+      if(generation!==authGeneration)return;
+      setToken(session.access_token);
+      window.ErisAuth.user=session.user;
+      // Never save reviewer password or show it in a local account record.
+      emit('erischat:auth',{state:'ready',user:session.user,real:true});
+      closeGate();
+      continueAfterAuth(session.user);
+      connectGeneralWs();
+    }catch(e){status.textContent=e.message||'İnceleme girişi başarısız.';}
+    finally{button.disabled=false;gate.querySelector('#lidyaReviewPass').value='';}
+  };
 
   renderRememberedAccounts(gate);
   if(rememberedAccounts().length)gate.querySelector('#authGoogleBtn').hidden=false;

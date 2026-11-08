@@ -440,6 +440,9 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
     return user
 
 
+from . import reviewer_access
+app.include_router(reviewer_access.router)
+
 from . import security_sessions
 app.include_router(security_sessions.register_auth(current_user))
 from . import security_center
