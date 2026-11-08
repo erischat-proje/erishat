@@ -1,6 +1,6 @@
 """Play V3 strict receipt validation: pure offline tests, no Google or DB access."""
 import unittest
-from app.play_billing import verify_payload
+from app.play_billing import verify_payload, verify_credited_payload
 
 PRODUCT='lidya_008'
 ACCOUNT='a'*64
@@ -39,5 +39,42 @@ class PlayVerificationV3(unittest.TestCase):
     def test_missing_order(self):
         d=sample();del d['orderId']
         with self.assertRaises(ValueError):verify_payload(d,PRODUCT,ACCOUNT)
+
+
+def test_retry_consumed_valid():
+    p=sample()
+    p['productLineItem'][0]['productOfferDetails']['consumptionState']='CONSUMPTION_STATE_CONSUMED'
+    assert verify_credited_payload(p,PRODUCT,ACCOUNT,p['orderId'],False) is True
+
+
+def test_retry_pending_consumption_valid():
+    p=sample()
+    assert verify_credited_payload(p,PRODUCT,ACCOUNT,p['orderId'],False) is False
+
+
+def test_retry_refunded_rejected():
+    p=sample()
+    p['productLineItem'][0]['productOfferDetails']['consumptionState']='CONSUMPTION_STATE_CONSUMED'
+    p['productLineItem'][0]['productOfferDetails']['refundableQuantity']=0
+    with unittest.TestCase().assertRaises(ValueError):
+        verify_credited_payload(p,PRODUCT,ACCOUNT,p['orderId'],False)
+
+
+def test_retry_wrong_order_rejected():
+    p=sample()
+    with unittest.TestCase().assertRaises(ValueError):
+        verify_credited_payload(p,PRODUCT,ACCOUNT,'GPA.FAKE',False)
+
+
+def test_retry_wrong_account_rejected():
+    p=sample()
+    with unittest.TestCase().assertRaises(ValueError):
+        verify_credited_payload(p,PRODUCT,'b'*64,p['orderId'],False)
+
+
+def test_retry_test_purchase_mismatch_rejected():
+    p=sample()
+    with unittest.TestCase().assertRaises(ValueError):
+        verify_credited_payload(p,PRODUCT,ACCOUNT,p['orderId'],True)
 
 if __name__=='__main__':unittest.main()
