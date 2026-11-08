@@ -13,6 +13,10 @@ from google.auth.transport.requests import AuthorizedSession
 
 from .config import settings
 from .purchase_routes import PACKAGES
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from .play_billing_models import PlayPurchaseRecord
+from .db import get_db
 
 router = APIRouter(tags=['google-play-billing'])
 SCOPE = 'https://www.googleapis.com/auth/androidpublisher'
@@ -69,7 +73,7 @@ def fetch_from_google(token):
 
 def register_auth(current_user):
     @router.post('/v1/google-play/verify-preview')
-    def verify_preview(payload: VerifyPurchase, user=Depends(current_user)):
+    def verify_preview(payload: VerifyPurchase, user=Depends(current_user), db=Depends(get_db)):
         """Verification-only; no wallet credit, consumption, acknowledgement, or order insert."""
         if not settings.google_play_billing_enabled:
             raise HTTPException(503, 'Google Play ödeme doğrulaması henüz etkin değil')
@@ -85,5 +89,39 @@ def register_auth(current_user):
         except Exception:
             # Do not expose tokens, OAuth details, or upstream diagnostics.
             raise HTTPException(503, 'Google Play doğrulaması geçici olarak kullanılamıyor') from None
-        # NEVER imply delivery; this endpoint does not grant funds.
-        return {'verified': True, 'credited': False, 'delivery_status': 'disabled', **verdict}
+        # Record the verified transaction without granting virtual currency.
+        # Fingerprint is unique across all users; no raw purchase token is persisted.
+        # db is injected via the endpoint's dependency, never created ad hoc.
+        receipt = record_verified_receipt(db, user.id, payload.product_id, payload.purchase_token, verdict)
+        return {'verified': True, 'credited': False, 'delivery_status': 'disabled',
+                'receipt_id': receipt.id, **verdict}
+
+
+def record_verified_receipt(db, user_id, product_id, purchase_token, verdict):
+    """Immutable verified purchase identity; repeated same-account requests are idempotent.
+
+    This function has NO balance effects and must never be used as fulfillment.
+    """
+    token_hash = hashlib.sha256(purchase_token.encode('utf-8')).hexdigest()
+    def same_owner(row):
+        if row.user_id != user_id or row.product_id != product_id:
+            raise HTTPException(409, 'Satın alma belirteci başka bir hesap veya ürünle eşleşiyor')
+        return row
+    existing = db.scalar(select(PlayPurchaseRecord).where(PlayPurchaseRecord.token_sha256 == token_hash))
+    if existing:
+        return same_owner(existing)
+    row = PlayPurchaseRecord(token_sha256=token_hash, user_id=user_id, product_id=product_id,
+                             google_order_id=verdict.get('order_id'),
+                             test_purchase=bool(verdict.get('test_purchase')),
+                             purchase_status='verified_no_credit')
+    db.add(row)
+    try:
+        db.commit()
+        db.refresh(row)
+        return row
+    except IntegrityError:
+        db.rollback()
+        concurrent = db.scalar(select(PlayPurchaseRecord).where(PlayPurchaseRecord.token_sha256 == token_hash))
+        if concurrent:
+            return same_owner(concurrent)
+        raise HTTPException(409, 'Satın alma kaydı çakışması') from None
