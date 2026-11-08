@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.db import Base
 from app.models import User
+from app.admin_models import AdminRole
 from app.play_billing_models import PlayPurchaseRecord
 from app.system_data import LidyaLedger
 from app.play_fulfillment import credit_verified_purchase
@@ -21,7 +22,7 @@ from app.play_fulfillment import credit_verified_purchase
 @pytest.fixture
 def db():
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine, tables=[User.__table__, PlayPurchaseRecord.__table__, LidyaLedger.__table__])
+    Base.metadata.create_all(engine, tables=[User.__table__, AdminRole.__table__, PlayPurchaseRecord.__table__, LidyaLedger.__table__])
     with Session(engine, expire_on_commit=False) as db:
         db.add(User(id="u1", public_id="1234567890", nickname="TestUser", lidya=100))
         db.add(PlayPurchaseRecord(token_sha256="a"*64, user_id="u1", product_id="lidya_001",
