@@ -8,6 +8,8 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
+import com.android.billingclient.api.Purchase;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.Collections;
@@ -99,6 +101,45 @@ public final class PlayBillingCatalog {
                 return;
             }
             report(productId, "available", "Google Play recognizes this product. Payment is disabled in this build.");
+        });
+    }
+
+    /** Read-only device purchase reconciliation preview. Never transmit Play tokens to WebView. */
+    public void inspectOwned(String productId) {
+        if (closed) return;
+        if (productId == null || !productId.matches("lidya_0(?:0[1-9]|1[0-6])")) {
+            report("", "invalid_product", "Unsupported product identifier");
+            return;
+        }
+        if (!billing.isReady()) {
+            billing.startConnection(new BillingClientStateListener() {
+                @Override public void onBillingSetupFinished(BillingResult result) {
+                    if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) readOwned(productId);
+                    else report(productId, "owned_unavailable", "Purchase history unavailable (code " + result.getResponseCode() + ")");
+                }
+                @Override public void onBillingServiceDisconnected() {
+                    report(productId, "owned_unavailable", "Google Play disconnected");
+                }
+            });
+        } else readOwned(productId);
+    }
+
+    private void readOwned(String productId) {
+        QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP).build();
+        billing.queryPurchasesAsync(params, (result, purchases) -> {
+            if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                report(productId, "owned_unavailable", "Purchase lookup failed (code " + result.getResponseCode() + ")");
+                return;
+            }
+            int purchased = 0, pending = 0;
+            if (purchases != null) for (Purchase purchase : purchases) {
+                if (purchase.getProducts() == null || !purchase.getProducts().contains(productId)) continue;
+                if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) purchased++;
+                else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) pending++;
+            }
+            // No purchase token, order ID, or account identifier in bridge payload.
+            report(productId, "owned_checked", "completed=" + purchased + ";pending=" + pending);
         });
     }
 

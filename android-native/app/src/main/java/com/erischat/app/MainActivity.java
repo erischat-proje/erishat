@@ -244,6 +244,14 @@ public class MainActivity extends Activity {
                 playBillingCatalog.query(productId);
             });
         }
+        // Read-only Play ownership inspection; no checkout, token exposure, or wallet credit.
+        @JavascriptInterface public void inspectPlayPurchases(String productId) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
+                if (productId == null || !productId.matches("lidya_0(?:0[1-9]|1[0-6])")) return;
+                playBillingCatalog.inspectOwned(productId);
+            });
+        }
         @JavascriptInterface public String getViewportInsets() {
             return "{\"handled\":" + viewportInsetsHandled + "}";
         }

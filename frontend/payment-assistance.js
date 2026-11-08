@@ -82,6 +82,29 @@ function inspectPlayPackage(p){
    finish();
    if(!live(c))return;
    const state=e.detail.state;
+   if(state==='available'&&typeof bridge.inspectPlayPurchases==='function'&&!c.body.querySelector('[data-play-owned]')){
+     const button=document.createElement('button');button.type='button';button.dataset.playOwned='1';
+     button.textContent='Google Play satın alma durumunu kontrol et';
+     const owned=document.createElement('p');owned.setAttribute('role','status');owned.dataset.playOwnedStatus='1';
+     c.body.append(button,owned);
+     button.onclick=()=>{
+       if(!live(c)||button.disabled)return;
+       button.disabled=true;owned.textContent='Google Play satın alma durumu okunuyor…';
+       let timer=null;
+       const done=()=>{window.removeEventListener('lidyachat:play-catalog',onOwned);if(timer!==null)clearTimeout(timer);button.disabled=false};
+       const onOwned=event=>{
+         if(event?.detail?.productId!==productId||!['owned_checked','owned_unavailable'].includes(event.detail.state))return;
+         done();if(!live(c))return;
+         if(event.detail.state==='owned_unavailable'){owned.textContent='Satın alma durumu şu anda okunamıyor.';return}
+         const summary=String(event.detail.detail||'');
+         const match=/^completed=(\d+);pending=(\d+)$/.exec(summary);
+         owned.textContent=match?'Cihazda görülen tamamlanmış işlem: '+match[1]+' · Bekleyen işlem: '+match[2]+'. Bu bilgi bakiye yüklemesi değildir.':'Satın alma durumu okunamadı.';
+       };
+       window.addEventListener('lidyachat:play-catalog',onOwned);
+       timer=setTimeout(()=>{done();if(live(c))owned.textContent='Google Play satın alma sorgusu zaman aşımına uğradı.'},15000);
+       try{bridge.inspectPlayPurchases(productId)}catch(_){done();if(live(c))owned.textContent='Satın alma durumu sorgulanamadı.'}
+     };
+   }
    node.textContent=state==='available'?'Ürün Google Play tarafından bulundu. Satın alma henüz etkin değil.':
      state==='not_available'?'Ürün Google Play hesabınız veya bölgeniz için henüz kullanılabilir değil.':
      'Google Play ürün bilgisi okunamadı ('+String(state||'bilinmeyen hata')+').';
