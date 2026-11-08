@@ -1,0 +1,86 @@
+name: LidyaChat Play AAB
+
+on:
+  pull_request:
+    paths:
+      - 'android-native/**'
+      - 'scripts/build-apk-content.py'
+      - 'frontend/**'
+      - 'Gereken_icerikler/**'
+      - 'hediyesistemi/**'
+      - 'avatarveduvarkağıdı/**'
+      - '.github/workflows/lidyachat-play-aab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android 36 SDK using runner command-line tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_MANAGER="${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDK_MANAGER" ]; then
+            SDK_MANAGER="$(command -v sdkmanager || true)"
+          fi
+          test -n "$SDK_MANAGER" && test -x "$SDK_MANAGER" || { echo 'Android sdkmanager not found'; exit 1; }
+          "$SDK_MANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Install media pack tools
+        run: python3 -m pip install --disable-pip-version-check Pillow==11.3.0
+      - name: Pack install-time content
+        run: python3 scripts/build-apk-content.py --output android-native/app/build/generated/install-content/static-pack
+      - name: Restore signing key only for trusted manual release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          KEY_B64: ${{ secrets.ERISCHAT_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
+        run: |
+          test -n "$KEY_B64" && test -n "$STORE_PASS" && test -n "$KEY_PASS" || { echo 'Signing secrets are missing'; exit 1; }
+          python3 - <<'PY'
+          import os, base64, pathlib, subprocess, re
+          file=pathlib.Path(os.environ['RUNNER_TEMP'])/'lidyachat-upload.jks'
+          file.write_bytes(base64.b64decode(os.environ['KEY_B64'],validate=True))
+          file.chmod(0o600)
+          res=subprocess.run(['keytool','-list','-v','-keystore',str(file),'-storepass:env','STORE_PASS'],capture_output=True,text=True)
+          if res.returncode: raise SystemExit('Signing keystore invalid')
+          matches=re.findall(r'Alias name: ([^\r\n]+).*?Entry type: PrivateKeyEntry',res.stdout,re.S)
+          if len(matches)!=1: raise SystemExit('Exactly one PrivateKeyEntry required')
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write('ERISCHAT_SIGNING_FILE='+str(file)+'\nERISCHAT_SIGNING_ALIAS='+matches[0].strip()+'\n')
+          PY
+      - name: Build Android App Bundle
+        working-directory: android-native
+        env:
+          ERISCHAT_KEYSTORE_PASSWORD: ${{ secrets.ERISCHAT_KEYSTORE_PASSWORD }}
+          ERISCHAT_KEY_PASSWORD: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease
+      - name: Inspect bundle
+        run: |
+          test -s android-native/app/build/outputs/bundle/release/app-release.aab
+          unzip -l android-native/app/build/outputs/bundle/release/app-release.aab | grep -q 'base/manifest/AndroidManifest.xml'
+      - name: Verify signed release bundle
+        if: github.event_name == 'workflow_dispatch'
+        run: jarsigner -verify -verbose -certs android-native/app/build/outputs/bundle/release/app-release.aab >/dev/null
+      - name: Upload signed AAB (manual only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LidyaChat-Play-Release-AAB
+          path: android-native/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
