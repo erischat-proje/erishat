@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     initial_da_ids: str = ""
     initial_da_public_ids: str = ""
     google_client_id: str = ""
+    play_reviewer_enabled: bool = False
+    play_reviewer_username: str = ""
+    play_reviewer_password: str = ""
     payment_iban: str = ""
     payment_account_name: str = ""
     payment_bank_name: str = ""
