@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
     private int mediaPageGeneration;
     private volatile boolean viewportInsetsHandled;
     private WebView webView;
+    private PlayBillingCatalog playBillingCatalog;
     private BundledContent bundledContent;
     private GoogleSignInClient googleClient;
     private boolean screenAwakeEnabled = false;
@@ -89,6 +90,7 @@ public class MainActivity extends Activity {
         documentDownloads = new MessageFileDownloads(getCacheDir());
         bundledContent = new BundledContent(this, ERISCHAT_HOST);
         webView = new WebView(this);
+        playBillingCatalog = new PlayBillingCatalog(this, webView);
         // Keep WebView layout bounds outside status/navigation bars on edge-to-edge Android.
         FrameLayout viewport = new FrameLayout(this);
         viewport.addView(webView, new FrameLayout.LayoutParams(
@@ -234,6 +236,14 @@ public class MainActivity extends Activity {
             });
         }
 
+        // Catalog-only test bridge. No Google Play checkout is exposed in this build.
+        @JavascriptInterface public void queryPlayCatalog(String productId) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
+                if (productId == null || !productId.matches("lidya_0(?:0[1-9]|1[0-6])")) return;
+                playBillingCatalog.query(productId);
+            });
+        }
         @JavascriptInterface public String getViewportInsets() {
             return "{\"handled\":" + viewportInsetsHandled + "}";
         }
@@ -503,6 +513,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if (playBillingCatalog != null) playBillingCatalog.close();
         documentPageTrusted = false;
         if (documentDownloads != null) documentDownloads.cancelAll();
         pendingDocument = null;
