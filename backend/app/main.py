@@ -64,6 +64,7 @@ from .moderation import active_ban, require_feature, profile_notice, require_cha
 from .dm_folders import register_auth as register_dm_folder_auth, router as dm_folder_router, require_unlocked, _folder, _session
 from .call_routes import register_auth as register_call_auth, router as call_router
 from .support_routes import register_support_auth, router as support_router
+from . import paytr_models, paytr_routes
 from . import payment_assistance
 from . import support_workflow, ban_workflow, purchase_routes, seat_workflow, discovery_live, anonymous_calls, location_calls
 from .room_ban_rules import active_room_user_ban, require_room_access
@@ -475,6 +476,7 @@ anonymous_calls.register_auth(current_user)
 app.include_router(anonymous_calls.router)
 purchase_routes.register_auth(current_user)
 app.include_router(purchase_routes.router)
+app.include_router(paytr_routes.register_auth(current_user))
 payment_assistance.register_auth(current_user)
 app.include_router(payment_assistance.router)
 seat_workflow.register_auth(current_user)
