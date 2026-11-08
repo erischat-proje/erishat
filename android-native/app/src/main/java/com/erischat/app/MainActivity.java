@@ -244,6 +244,18 @@ public class MainActivity extends Activity {
                 playBillingCatalog.query(productId);
             });
         }
+        @JavascriptInterface public void startPlayPurchase(String productId, String accountHash) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
+                playBillingCatalog.purchase(productId, accountHash);
+            });
+        }
+        @JavascriptInterface public void recoverPlayPurchases() {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
+                playBillingCatalog.recover();
+            });
+        }
         @JavascriptInterface public String getViewportInsets() {
             return "{\"handled\":" + viewportInsetsHandled + "}";
         }
