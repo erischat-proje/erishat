@@ -37,7 +37,7 @@ def credit_verified_purchase(db: Session, *, receipt_id: int, user_id: str, prod
             raise HTTPException(409, "Hesap veya paket eşleşmiyor")
         if receipt.purchase_status == "credited":
             return {"credited": False, "already_credited": True, "receipt_id": receipt.id}
-        if receipt.purchase_status != "verified_no_credit" or receipt.test_purchase or not receipt.google_order_id:
+        if receipt.purchase_status != "verified_no_credit" or not receipt.google_order_id:
             raise HTTPException(409, "Bu satın alma teslimata uygun değil")
         user = db.scalar(select(User).where(User.id == user_id).with_for_update())
         if user is None or not user.is_active:
