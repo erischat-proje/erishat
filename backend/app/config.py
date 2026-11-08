@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     initial_da_ids: str = ""
     initial_da_public_ids: str = ""
     google_client_id: str = ""
+    google_play_package_name: str = "com.erischat.app"
+    google_play_billing_enabled: bool = False
+    google_play_service_account_json: str = ""
     play_reviewer_enabled: bool = False
     play_reviewer_username: str = ""
     play_reviewer_password: str = ""
