@@ -158,6 +158,30 @@ def _consume_google(product_id, token):
         raise RuntimeError('Google Play consumption failed')
 
 
+def verify_credited_payload(data, product_id, account_id, recorded_order_id, recorded_test_purchase):
+    """Recheck an already-credited Play token without crediting again.
+
+    Consumed purchases remain valid for repeat requests, but a refund,
+    mismatched owner, order or product must fail closed.
+    """
+    from copy import deepcopy
+    items = data.get('productLineItem') if isinstance(data, dict) else None
+    if not isinstance(items, list) or len(items) != 1 or not isinstance(items[0], dict):
+        raise ValueError('Geçersiz ürün kaydı')
+    details = items[0].get('productOfferDetails')
+    if not isinstance(details, dict):
+        raise ValueError('Satın alma seçeneği eksik')
+    state = details.get('consumptionState')
+    if state not in ('CONSUMPTION_STATE_CONSUMED', 'CONSUMPTION_STATE_YET_TO_BE_CONSUMED'):
+        raise ValueError('Geçersiz tüketim durumu')
+    checked = deepcopy(data)
+    checked['productLineItem'][0]['productOfferDetails']['consumptionState'] = 'CONSUMPTION_STATE_YET_TO_BE_CONSUMED'
+    verdict = verify_payload(checked, product_id, account_id)
+    if verdict['order_id'] != recorded_order_id or verdict['test_purchase'] != recorded_test_purchase:
+        raise ValueError('Satın alma geçmişi eşleşmiyor')
+    return state == 'CONSUMPTION_STATE_CONSUMED'
+
+
 def register_checkout_auth(current_user):
     @router.get('/v1/google-play/checkout-status')
     def checkout_status(user=Depends(current_user)):
@@ -178,12 +202,24 @@ def register_checkout_auth(current_user):
             if previous.user_id != user.id or previous.product_id != payload.product_id:
                 raise HTTPException(409, 'Ödeme başka hesap veya ürüne ait')
             if previous.purchase_status == 'credited':
-                # Durable credit happened before consumption, so a failed consume can be retried.
+                # Never trust a repeated token from the client without a fresh Google check.
                 try:
-                    _consume_google(payload.product_id, payload.purchase_token)
-                    consumption = 'completed'
+                    fresh = fetch_from_google(payload.purchase_token)
+                    was_consumed = verify_credited_payload(
+                        fresh, payload.product_id, expected, previous.google_order_id,
+                        bool(previous.test_purchase))
+                except ValueError as exc:
+                    raise HTTPException(422, str(exc)) from None
                 except Exception:
-                    consumption = 'retry_required'
+                    raise HTTPException(503, 'Google Play tekrar doğrulaması kullanılamıyor') from None
+                # If consumed, do not call consume again. Otherwise retry idempotently.
+                consumption = 'completed' if was_consumed else 'retry_required'
+                if not was_consumed:
+                    try:
+                        _consume_google(payload.product_id, payload.purchase_token)
+                        consumption = 'completed'
+                    except Exception:
+                        pass
                 return {'credited': True, 'already_credited': True, 'receipt_id': previous.id,
                         'consumption': consumption}
         try:
