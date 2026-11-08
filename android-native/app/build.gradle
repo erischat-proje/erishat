@@ -4,22 +4,29 @@ plugins {
 
 android {
     namespace 'com.erischat.app'
-    compileSdk 35
+    compileSdk 36
 
     def signingPath = System.getenv('ERISCHAT_SIGNING_FILE')
     def customSigning = signingPath != null && !signingPath.trim().isEmpty()
 
     signingConfigs {
         if (customSigning) {
-        erischat {
-            storeFile file(signingPath)
-            storePassword System.getenv('ERISCHAT_KEYSTORE_PASSWORD')
-            keyAlias System.getenv('ERISCHAT_SIGNING_ALIAS')
-            keyPassword System.getenv('ERISCHAT_KEY_PASSWORD')
+            erischat {
+                storeFile file(signingPath)
+                storePassword System.getenv('ERISCHAT_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ERISCHAT_SIGNING_ALIAS')
+                keyPassword System.getenv('ERISCHAT_KEY_PASSWORD')
+            }
         }
     }
 
-        }
+    defaultConfig {
+        applicationId 'com.erischat.app'
+        minSdk 26
+        targetSdk 36
+        versionCode 11
+        versionName '1.0.0'
+    }
 
     buildTypes {
         debug {
@@ -27,18 +34,16 @@ android {
                 signingConfig signingConfigs.erischat
             }
         }
+        release {
+            if (customSigning) {
+                signingConfig signingConfigs.erischat
+            }
+            minifyEnabled false
+        }
     }
 
     sourceSets {
         main.assets.srcDirs += ['build/generated/install-content']
-    }
-
-    defaultConfig {
-        applicationId 'com.erischat.app'
-        minSdk 26
-        targetSdk 35
-        versionCode 10
-        versionName '1.9'
     }
 }
 
