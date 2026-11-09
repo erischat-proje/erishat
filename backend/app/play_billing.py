@@ -178,8 +178,13 @@ def _checkout_ready():
 
 
 def _require_test_receipt(verdict):
-    if settings.google_play_test_mode and not verdict.get('test_purchase'):
+    # A commercial checkout must not grant paid currency for a license-test receipt.
+    # In test mode, real-money receipts are rejected to prevent accidental charges.
+    is_test_receipt = verdict.get('test_purchase') is True
+    if settings.google_play_test_mode and not is_test_receipt:
         raise HTTPException(422, 'Yalnızca Google Play lisans test satın alımları kabul edilir')
+    if not settings.google_play_test_mode and is_test_receipt:
+        raise HTTPException(422, 'Test satın alımı canlı Lidya yüklemesinde kullanılamaz')
 
 
 def _account_hash(user_id):
@@ -270,8 +275,8 @@ def register_checkout_auth(current_user):
             if previous.user_id != user.id or previous.product_id != payload.product_id:
                 raise HTTPException(409, 'Ödeme başka hesap veya ürüne ait')
             if previous.purchase_status == 'credited':
-                if settings.google_play_test_mode and not previous.test_purchase:
-                    raise HTTPException(422, 'Test modunda gerçek satın alma kaydı kullanılamaz')
+                if bool(previous.test_purchase) != bool(settings.google_play_test_mode):
+                    raise HTTPException(422, 'Satın alma kaydı mevcut ödeme moduyla eşleşmiyor')
                 # Never trust a repeated token from the client without a fresh Google check.
                 try:
                     fresh = fetch_from_google(payload.purchase_token)
