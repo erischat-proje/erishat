@@ -141,6 +141,45 @@ async function openPackages(){window.ErisPurchases?.close?.();const c=modal('Lid
 async function openQueue(records=false){if(records)return openRecordsIndex(false);window.ErisPurchases?.close?.();const c=modal(records?'Ödeme kayıtları':'Yükleme istekleri');c.kind='queue';c.body.innerHTML='<div data-list></div><button type="button" data-more hidden>'+ (records?'Daha eski kayıtlar':'Daha fazla istek')+'</button>';
  if(snapshot.is_da){
 
+  const reviewButton=document.createElement('button');reviewButton.type='button';
+  reviewButton.textContent='Google Play iade dosyaları (V2)';
+  const reviewArea=document.createElement('div');reviewArea.className='pa-note';reviewArea.setAttribute('role','status');
+  c.body.prepend(reviewArea);c.body.prepend(reviewButton);
+  reviewButton.onclick=async()=>{
+   reviewButton.disabled=true;reviewArea.textContent='İade dosyaları yükleniyor…';
+   try{
+    const synced=await playFetch('/refund-cases/sync',{method:'POST',body:'{}'});
+    const data=await playFetch('/refund-cases');
+    if(!live(c))return;
+    reviewArea.replaceChildren();
+    const summary=document.createElement('p');
+    summary.textContent='İade dosyaları: '+data.items.length+' gösteriliyor, '+synced.created+' yeni. Otomatik bakiye düşümü yok.';
+    reviewArea.append(summary);
+    if(synced.truncated){const warning=document.createElement('p');warning.textContent='Dikkat: Google sonuçları kısmi olabilir.';reviewArea.append(warning)}
+    for(const entry of data.items){
+     const card=document.createElement('div');card.className='pa-card';
+     const info=document.createElement('p');
+     info.textContent='Dosya #'+entry.case_id+' · Makbuz #'+entry.receipt_id+' · '+entry.product_id+' · '+entry.status;
+     card.append(info);
+     if(entry.status==='pending'){
+      const btn=document.createElement('button');btn.type='button';btn.textContent='İncelendi olarak işaretle';
+      btn.onclick=async()=>{
+       const note=window.prompt('DA inceleme notu (en az 8 karakter)');
+       if(note===null)return;
+       if(note.trim().length<8){toast('En az 8 karakter açıklama gerekli.');return}
+       btn.disabled=true;
+       try{await playFetch('/refund-cases/'+entry.case_id+'/review',{method:'POST',body:JSON.stringify({status:'reviewed',note:note.trim()})});
+        btn.remove();info.textContent+=' · incelendi';toast('İnceleme kaydedildi. Bakiye değişmedi.')}
+       catch(e){btn.disabled=false;toast('İnceleme kaydedilemedi: '+e.message)}
+      };
+      card.append(btn);
+     }else if(entry.review_note){const note=document.createElement('p');note.textContent='DA notu: '+entry.review_note;card.append(note)}
+     reviewArea.append(card);
+    }
+   }catch(e){if(live(c))reviewArea.textContent='İade dosyaları açılamadı: '+e.message}
+   finally{reviewButton.disabled=false}
+  };
+
   const refundButton=document.createElement('button');refundButton.type='button';
   refundButton.textContent='Google Play iade denetimi (salt okunur)';
   const refundStatus=document.createElement('div');refundStatus.setAttribute('role','status');refundStatus.className='pa-note';
