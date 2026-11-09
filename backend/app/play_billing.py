@@ -299,6 +299,103 @@ def register_checkout_auth(current_user):
                 'consumption': consumption}
 
 
+
+# Read-only DA reconciliation. No balance changes, payment token disclosure, or refunds.
+def _voided_audit_rows(items, receipts_by_hash):
+    """Match Google voided purchases to our already recorded receipts.
+
+    A mismatched Google order is not attributed to a user. Never return tokens.
+    """
+    from .purchase_routes import PACKAGES
+    amounts = {f"lidya_{p['id']:03d}": int(p['total']) for p in PACKAGES}
+    rows, seen = [], set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        token = item.get('purchaseToken')
+        if not isinstance(token, str) or not token:
+            continue
+        fingerprint = hashlib.sha256(token.encode('utf-8')).hexdigest()
+        receipt = receipts_by_hash.get(fingerprint)
+        if receipt is None or receipt.google_order_id != item.get('orderId'):
+            continue
+        if receipt.id in seen:
+            continue
+        seen.add(receipt.id)
+        rows.append({'receipt_id': receipt.id, 'user_id': receipt.user_id,
+                     'product_id': receipt.product_id,
+                     'lidya': amounts.get(receipt.product_id, 0),
+                     'purchase_status': receipt.purchase_status,
+                     'test_purchase': bool(receipt.test_purchase),
+                     'voided_reason': item.get('voidedReason'),
+                     'voided_source': item.get('voidedSource'),
+                     'voided_at_ms': item.get('voidedTimeMillis'),
+                     'action': 'manual_review_required'})
+    return rows
+
+
+def _fetch_voided_purchases():
+    """Google Play API, last 30 days; bounded pagination, fail closed on errors."""
+    from urllib.parse import quote
+    raw = settings.google_play_service_account_json
+    if not raw:
+        raise RuntimeError('Google Play hizmet hesabı eksik')
+    info = json.loads(raw)
+    if info.get('type') != 'service_account':
+        raise RuntimeError('Google Play hizmet hesabı geçersiz')
+    creds = service_account.Credentials.from_service_account_info(info, scopes=[SCOPE])
+    session = AuthorizedSession(creds)
+    url = ('https://androidpublisher.googleapis.com/androidpublisher/v3/applications/'
+           + quote(settings.google_play_package_name, safe='') + '/purchases/voidedpurchases')
+    items, token, seen_tokens = [], None, set()
+    for _ in range(10):
+        params = {'type': 0, 'pageSelection.maxResults': 1000}
+        if token:
+            params['pageSelection.token'] = token
+        resp = session.get(url, params=params, timeout=15)
+        if resp.status_code != 200:
+            raise RuntimeError('Google Play iade kayıtları sorgulanamadı')
+        data = resp.json()
+        if not isinstance(data, dict) or not isinstance(data.get('voidedPurchases', []), list):
+            raise RuntimeError('Google Play iade yanıtı geçersiz')
+        items.extend(data.get('voidedPurchases', []))
+        next_token = (data.get('tokenPagination') or {}).get('nextPageToken')
+        if not next_token:
+            return items, False
+        if not isinstance(next_token, str) or next_token in seen_tokens:
+            raise RuntimeError('Google Play iade sayfalaması geçersiz')
+        seen_tokens.add(next_token)
+        token = next_token
+    return items, True
+
+
+def register_refund_audit_auth(current_user):
+    @router.get('/v1/google-play/refund-audit')
+    def refund_audit(user=Depends(current_user), db=Depends(get_db)):
+        from .admin_models import AdminRole
+        admin = db.get(AdminRole, user.id)
+        if admin is None or admin.role != 'DA' or not getattr(user, 'is_active', False):
+            raise HTTPException(403, 'Yalnızca DA için')
+        try:
+            voided, truncated = _fetch_voided_purchases()
+            fingerprints = list({hashlib.sha256(x['purchaseToken'].encode('utf-8')).hexdigest()
+                                 for x in voided if isinstance(x, dict) and
+                                 isinstance(x.get('purchaseToken'), str) and x['purchaseToken']})
+            receipts = {}
+            for i in range(0, len(fingerprints), 500):
+                batch = db.scalars(select(PlayPurchaseRecord).where(
+                    PlayPurchaseRecord.token_sha256.in_(fingerprints[i:i+500]))).all()
+                receipts.update({row.token_sha256: row for row in batch})
+            rows = _voided_audit_rows(voided, receipts)
+        except Exception:
+            # Deliberately suppress upstream credentials, tokens and Google error bodies.
+            raise HTTPException(503, 'Google Play iade denetimi kullanılamıyor; API mali izinlerini kontrol edin') from None
+        return {'mode': 'read_only', 'window_days': 30,
+                'google_voided_count': len(voided), 'matched_count': len(rows),
+                'unmatched_count': len(voided) - len(rows),
+                'truncated': truncated, 'items': rows,
+                'message': 'Otomatik bakiye düşümü yapılmaz; her iade DA tarafından incelenir.'}
+
 def check_google_play_connection():
     """DA-only read-only connectivity check. Never expose OAuth or API error bodies."""
     raw = settings.google_play_service_account_json
