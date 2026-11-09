@@ -16,6 +16,7 @@ from .purchase_routes import PACKAGES
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from .play_billing_models import PlayPurchaseRecord
+from .play_refund_models import PlayRefundCase
 from .db import get_db
 
 router = APIRouter(tags=['google-play-billing'])
@@ -395,6 +396,107 @@ def register_refund_audit_auth(current_user):
                 'unmatched_count': len(voided) - len(rows),
                 'truncated': truncated, 'items': rows,
                 'message': 'Otomatik bakiye düşümü yapılmaz; her iade DA tarafından incelenir.'}
+
+
+
+# V2: an explicit DA action saves matches as cases. No automatic wallet mutations.
+def _refund_cases_sync(db, rows):
+    """Exactly one case per purchase receipt; repeat scans preserve DA decisions."""
+    from .play_refund_models import PlayRefundCase
+    from sqlalchemy import select
+    from sqlalchemy.exc import IntegrityError
+    created = 0
+    for row in rows:
+        existing = db.scalar(select(PlayRefundCase).where(PlayRefundCase.receipt_id == row['receipt_id']))
+        if existing:
+            # Preserve immutable identifiers and review state; never reopen a reviewed case.
+            continue
+        case = PlayRefundCase(receipt_id=row['receipt_id'],user_id=row['user_id'],
+                              product_id=row['product_id'],voided_at_ms=str(row.get('voided_at_ms') or '')[:32],
+                              voided_reason=str(row.get('voided_reason') if row.get('voided_reason') is not None else '')[:24],
+                              voided_source=str(row.get('voided_source') if row.get('voided_source') is not None else '')[:24],
+                              status='pending')
+        try:
+            with db.begin_nested():
+                db.add(case)
+                db.flush()
+            created += 1
+        except IntegrityError:
+            # Another DA may have synchronized concurrently; unique receipt constraint wins.
+            continue
+    db.commit()
+    return created
+
+
+def _refund_case_view(case):
+    return {'case_id':case.id,'receipt_id':case.receipt_id,'user_id':case.user_id,
+            'product_id':case.product_id,'voided_at_ms':case.voided_at_ms,
+            'voided_reason':case.voided_reason,'voided_source':case.voided_source,
+            'status':case.status,'review_note':case.review_note,
+            'reviewed_by':case.reviewed_by,
+            'created_at':case.created_at.isoformat() if case.created_at else None}
+
+
+class RefundCaseDecision(BaseModel):
+    status: str = Field(pattern=r'^(reviewed|closed_no_action)$')
+    note: str = Field(min_length=8,max_length=1000)
+
+
+def register_refund_case_auth(current_user):
+    from .admin_models import AdminRole, AdminAuditLog
+    from .play_refund_models import PlayRefundCase
+    from .models import User
+    from fastapi import Response
+
+    def require_da(db,user):
+        admin=db.get(AdminRole,user.id)
+        if not getattr(user,'is_active',False) or admin is None or admin.role != 'DA':
+            raise HTTPException(403,'Yalnızca DA için')
+
+    @router.post('/v1/google-play/refund-cases/sync')
+    def sync_cases(response: Response,user=Depends(current_user),db=Depends(get_db)):
+        require_da(db,user)
+        response.headers['Cache-Control']='no-store'
+        try:
+            voided,truncated=_fetch_voided_purchases()
+            hashes={hashlib.sha256(x['purchaseToken'].encode()).hexdigest() for x in voided
+                    if isinstance(x,dict) and isinstance(x.get('purchaseToken'),str) and x['purchaseToken']}
+            receipts={}
+            hashes=list(hashes)
+            for i in range(0,len(hashes),500):
+                for record in db.scalars(select(PlayPurchaseRecord).where(PlayPurchaseRecord.token_sha256.in_(hashes[i:i+500]))):
+                    receipts[record.token_sha256]=record
+            rows=_voided_audit_rows(voided,receipts)
+            added=_refund_cases_sync(db,rows)
+        except Exception:
+            db.rollback()
+            raise HTTPException(503,'İade kayıtları güvenli biçimde eşitlenemedi') from None
+        return {'created':added,'matched':len(rows),'unmatched':len(voided)-len(rows),
+                'truncated':truncated,'mode':'review_only','wallet_changed':False}
+
+    @router.get('/v1/google-play/refund-cases')
+    def list_cases(response:Response,user=Depends(current_user),db=Depends(get_db)):
+        require_da(db,user)
+        response.headers['Cache-Control']='no-store'
+        cases=db.scalars(select(PlayRefundCase).order_by(PlayRefundCase.id.desc()).limit(100)).all()
+        return {'items':[_refund_case_view(x) for x in cases], 'limit':100,
+                'wallet_changed':False}
+
+    @router.post('/v1/google-play/refund-cases/{case_id}/review')
+    def review_case(case_id:int,payload:RefundCaseDecision,response:Response,user=Depends(current_user),db=Depends(get_db)):
+        require_da(db,user)
+        response.headers['Cache-Control']='no-store'
+        case=db.scalar(select(PlayRefundCase).where(PlayRefundCase.id==case_id).with_for_update())
+        if not case: raise HTTPException(404,'İade dosyası bulunamadı')
+        if case.status!='pending': raise HTTPException(409,'Bu dosya daha önce karara bağlandı')
+        case.status=payload.status
+        case.review_note=payload.note.strip()
+        case.reviewed_by=user.id
+        db.add(AdminAuditLog(admin_id=user.id,action='google_play_refund_case_review',
+                             target_user_id=case.user_id,target_id=str(case.id),
+                             details=json.dumps({'receipt_id':case.receipt_id,'status':payload.status},ensure_ascii=False)))
+        db.commit()
+        return {'case':_refund_case_view(case),'wallet_changed':False}
 
 def check_google_play_connection():
     """DA-only read-only connectivity check. Never expose OAuth or API error bodies."""
