@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     google_play_fulfillment_enabled: bool = False
     google_play_policy_approved: bool = False
     google_play_service_account_json: str = ""
+    # License-testing-only guard. When true, all checkouts are restricted to
+    # explicitly allowlisted LidyaChat accounts and Google test receipts.
+    google_play_test_mode: bool = False
+    google_play_test_user_emails: str = ""
+    google_play_test_user_public_ids: str = ""
     play_reviewer_enabled: bool = False
     play_reviewer_username: str = ""
     play_reviewer_password: str = ""
