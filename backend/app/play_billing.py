@@ -54,7 +54,7 @@ def verify_payload(data, product_id, expected_account_id):
     if not bound or bound != expected_account_id:
         raise ValueError('Satın alma hesabı doğrulanamadı')
     return {'product_id': product_id, 'order_id': data.get('orderId'),
-            'test_purchase': bool(data.get('testPurchaseContext')),
+            'test_purchase': isinstance(data.get('testPurchaseContext'), dict),
             'acknowledged': data.get('acknowledgementState') == 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED'}
 
 
@@ -83,6 +83,8 @@ def register_auth(current_user):
         """Verification-only; no wallet credit, consumption, acknowledgement, or order insert."""
         if not settings.google_play_billing_enabled:
             raise HTTPException(503, 'Google Play ödeme doğrulaması henüz etkin değil')
+        if not _checkout_authorized(user):
+            raise HTTPException(403, 'Bu hesap Google Play testine yetkili değil')
         if payload.product_id not in PRODUCTS:
             raise HTTPException(422, 'Bilinmeyen Lidya paketi')
         # Same SHA-256 identifier must be set on native BillingFlowParams before purchase.
@@ -90,8 +92,11 @@ def register_auth(current_user):
         try:
             data = fetch_from_google(payload.purchase_token)
             verdict = verify_payload(data, payload.product_id, account_id)
+            _require_test_receipt(verdict)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
+        except HTTPException:
+            raise
         except Exception:
             # Do not expose tokens, OAuth details, or upstream diagnostics.
             raise HTTPException(503, 'Google Play doğrulaması geçici olarak kullanılamıyor') from None
@@ -135,9 +140,45 @@ def record_verified_receipt(db, user_id, product_id, purchase_token, verdict):
 
 
 # Final integration: gated until commercial/policy approval and service-account readiness.
+def _play_allowlist(value):
+    # Comma-separated allowlist; entries cannot be wildcards or empty.
+    return {item.strip().casefold() for item in str(value or '').split(',') if item.strip()}
+
+
+def _test_user_allowed(user):
+    if not getattr(user, 'is_active', False):
+        return False
+    email = (getattr(user, 'google_email', '') or '').strip().casefold()
+    public_id = (getattr(user, 'public_id', '') or '').strip().casefold()
+    # The email must come from an authenticated Google identity; otherwise
+    # authorize by the stable LidyaChat public ID explicitly configured by DA.
+    email_ok = bool(getattr(user, 'google_sub', None) and email and
+                    email in _play_allowlist(settings.google_play_test_user_emails))
+    id_ok = bool(public_id and public_id in _play_allowlist(settings.google_play_test_user_public_ids))
+    return email_ok or id_ok
+
+
+def _checkout_authorized(user):
+    return not settings.google_play_test_mode or _test_user_allowed(user)
+
+
 def _checkout_ready():
-    return bool(settings.google_play_billing_enabled and settings.google_play_fulfillment_enabled
-                and settings.google_play_policy_approved and settings.google_play_service_account_json)
+    # Commercial mode still requires policy approval. Test mode requires an
+    # explicit allowlist and independently validated Google test receipts.
+    credentials_ready = bool(settings.google_play_billing_enabled and
+                             settings.google_play_fulfillment_enabled and
+                             settings.google_play_service_account_json)
+    if not credentials_ready:
+        return False
+    if settings.google_play_test_mode:
+        return bool(_play_allowlist(settings.google_play_test_user_emails) or
+                    _play_allowlist(settings.google_play_test_user_public_ids))
+    return bool(settings.google_play_policy_approved)
+
+
+def _require_test_receipt(verdict):
+    if settings.google_play_test_mode and not verdict.get('test_purchase'):
+        raise HTTPException(422, 'Yalnızca Google Play lisans test satın alımları kabul edilir')
 
 
 def _account_hash(user_id):
@@ -193,14 +234,17 @@ def register_checkout_auth(current_user):
 
     @router.get('/v1/google-play/checkout-status')
     def checkout_status(user=Depends(current_user)):
-        enabled = _checkout_ready()
-        return {'enabled': enabled, 'account_hash': _account_hash(user.id) if enabled else None}
+        enabled = _checkout_ready() and _checkout_authorized(user)
+        return {'enabled': enabled, 'mode': 'test' if enabled and settings.google_play_test_mode else 'commercial' if enabled else 'disabled',
+                'account_hash': _account_hash(user.id) if enabled else None}
 
     @router.post('/v1/google-play/checkout-complete')
     def checkout_complete(payload: VerifyPurchase, user=Depends(current_user), db=Depends(get_db)):
         from .play_fulfillment import credit_verified_purchase
         if not _checkout_ready():
             raise HTTPException(503, 'Google Play satın alma işlemi kapalı')
+        if not _checkout_authorized(user):
+            raise HTTPException(403, 'Bu hesap Google Play testine yetkili değil')
         if payload.product_id not in PRODUCTS:
             raise HTTPException(422, 'Bilinmeyen ürün')
         expected = _account_hash(user.id)
@@ -210,6 +254,8 @@ def register_checkout_auth(current_user):
             if previous.user_id != user.id or previous.product_id != payload.product_id:
                 raise HTTPException(409, 'Ödeme başka hesap veya ürüne ait')
             if previous.purchase_status == 'credited':
+                if settings.google_play_test_mode and not previous.test_purchase:
+                    raise HTTPException(422, 'Test modunda gerçek satın alma kaydı kullanılamaz')
                 # Never trust a repeated token from the client without a fresh Google check.
                 try:
                     fresh = fetch_from_google(payload.purchase_token)
@@ -233,8 +279,11 @@ def register_checkout_auth(current_user):
         try:
             google_data = fetch_from_google(payload.purchase_token)
             verdict = verify_payload(google_data, payload.product_id, expected)
+            _require_test_receipt(verdict)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
+        except HTTPException:
+            raise
         except Exception:
             raise HTTPException(503, 'Google Play doğrulaması yapılamadı; tekrar deneyin') from None
         receipt = record_verified_receipt(db, user.id, payload.product_id, payload.purchase_token, verdict)
