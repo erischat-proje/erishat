@@ -128,7 +128,7 @@ function inspectPlayPackage(p){
    finish();
    if(!live(c))return;
    const state=e.detail.state;
-   node.textContent=state==='available'?'Ürün Google Play tarafından bulundu. Satın alma için aşağıdaki test modu butonunu kullanın.':
+   node.textContent=state==='available'?'Ürün Google Play tarafından bulundu. Satın alma açık ise aşağıdaki Google Play butonunu kullanın.':
      state==='not_available'?'Ürün Google Play hesabınız veya bölgeniz için henüz kullanılabilir değil.':
      'Google Play ürün bilgisi okunamadı ('+String(state||'bilinmeyen hata')+').';
  };
@@ -137,7 +137,21 @@ function inspectPlayPackage(p){
  attachPlayCheckout(c,productId);
  try{bridge.queryPlayCatalog(productId)}catch(_){finish();if(live(c))node.textContent='Google Play ürün sorgusu başlatılamadı.'}
 }
-async function openPackages(){window.ErisPurchases?.close?.();const c=modal('Lidya Yükleme');c.kind='packages';c.body.textContent='Paketler yükleniyor…';try{const catalog=await api('/catalog');if(!live(c))return;c.body.innerHTML='<p>'+(typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?'Google Play ürün kullanılabilirliğini kontrol edin. Bu test sürümünde ödeme ve Lidya teslimatı kapalıdır.':'Bir paket seçerek DA destekli ödeme isteği oluşturun. Paket bonusu toplam Lidya miktarına dahildir.')+'</p><div data-legacy></div><div class="pa-packages lp-packages"></div>';for(const old of catalog.legacy_pending||[]){const card=document.createElement('article');card.className='pa-card';const p=document.createElement('p');p.textContent='Önceki sistemden açık ödeme kaydı: '+num(old.price_try)+' TL. Ödeme yaptıysanız DA ile görüşürken bu kaydı belirtin. Yeni bir talep açmak için eski kaydı iptal edebilirsiniz.';const b=document.createElement('button');b.type='button';b.textContent='Eski kaydı iptal et';card.append(p,b);c.body.querySelector('[data-legacy]').append(card);action(c,b,async()=>{await api('/legacy/'+old.id+'/cancel','POST',{});if(live(c))card.remove()})}for(const p of catalog.packages){const b=document.createElement('button');b.className='lp-package';b.innerHTML='<b>'+num(p.total)+' Lidya</b><small>'+num(p.base)+' temel + '+num(p.bonus)+' bonus</small><strong>'+num(p.price_try)+' TL</strong>';b.onclick=()=>typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?inspectPlayPackage(p):choose(p);c.body.querySelector('.pa-packages').append(b)}}catch(e){error(c,e.message)}}
+async function openPackages(){window.ErisPurchases?.close?.();const c=modal('Lidya Yükleme');c.kind='packages';c.body.textContent='Paketler yükleniyor…';try{const catalog=await api('/catalog');if(!live(c))return;c.body.innerHTML='<p>'+(typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?'Google Play ürünlerini kontrol edin. Satın alma, sunucu hesabınıza yetki veriyorsa açılır. Son fiyat Google Play ekranında gösterilir.':'Bir paket seçerek DA destekli ödeme isteği oluşturun. Paket bonusu toplam Lidya miktarına dahildir.')+'</p><div data-play-history></div><div data-legacy></div><div class="pa-packages lp-packages"></div>';const historyBox=c.body.querySelector('[data-play-history]');
+if(typeof window.ErisChatAndroid?.recoverPlayPurchases==='function'){
+ const historyButton=document.createElement('button');historyButton.type='button';historyButton.textContent='Google Play satın alma geçmişim';
+ const recoverButton=document.createElement('button');recoverButton.type='button';recoverButton.textContent='Bekleyen satın alımları kontrol et';
+ const historyOutput=document.createElement('div');historyOutput.className='pa-note';historyOutput.setAttribute('role','status');
+ historyButton.onclick=async()=>{historyButton.disabled=true;historyOutput.textContent='Satın alma kayıtları okunuyor…';try{
+   const data=await playFetch('/my-purchases');if(!live(c))return;historyOutput.replaceChildren();
+   const header=document.createElement('p');header.textContent='Son '+data.items.length+' satın alma kaydı:';historyOutput.append(header);
+   for(const p of data.items){const line=document.createElement('p');line.textContent=(p.created_at||'')+' · '+p.product_id+' · '+p.lidya+' Lidya · '+p.status+(p.test_purchase?' (TEST)':'');historyOutput.append(line)}
+  }catch(e){if(live(c))historyOutput.textContent='Satın alma geçmişi alınamadı: '+e.message}
+  finally{historyButton.disabled=false}};
+ recoverButton.onclick=()=>{try{window.ErisChatAndroid.recoverPlayPurchases();historyOutput.textContent='Google Play satın alımları kontrol ediliyor. Teslimat varsa bakiye güncellenecek.'}catch(e){historyOutput.textContent='Kurtarma başlatılamadı.'}};
+ historyBox.append(historyButton,recoverButton,historyOutput);
+}else{historyBox.remove()}
+for(const old of catalog.legacy_pending||[]){const card=document.createElement('article');card.className='pa-card';const p=document.createElement('p');p.textContent='Önceki sistemden açık ödeme kaydı: '+num(old.price_try)+' TL. Ödeme yaptıysanız DA ile görüşürken bu kaydı belirtin. Yeni bir talep açmak için eski kaydı iptal edebilirsiniz.';const b=document.createElement('button');b.type='button';b.textContent='Eski kaydı iptal et';card.append(p,b);c.body.querySelector('[data-legacy]').append(card);action(c,b,async()=>{await api('/legacy/'+old.id+'/cancel','POST',{});if(live(c))card.remove()})}for(const p of catalog.packages){const b=document.createElement('button');b.className='lp-package';b.innerHTML='<b>'+num(p.total)+' Lidya</b><small>'+num(p.base)+' temel + '+num(p.bonus)+' bonus</small><strong>'+num(p.price_try)+' TL</strong>';b.onclick=()=>typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?inspectPlayPackage(p):choose(p);c.body.querySelector('.pa-packages').append(b)}}catch(e){error(c,e.message)}}
 async function openQueue(records=false){if(records)return openRecordsIndex(false);window.ErisPurchases?.close?.();const c=modal(records?'Ödeme kayıtları':'Yükleme istekleri');c.kind='queue';c.body.innerHTML='<div data-list></div><button type="button" data-more hidden>'+ (records?'Daha eski kayıtlar':'Daha fazla istek')+'</button>';
  if(snapshot.is_da){
 
@@ -161,6 +175,21 @@ async function openQueue(records=false){if(records)return openRecordsIndex(false
      const info=document.createElement('p');
      info.textContent='Dosya #'+entry.case_id+' · Makbuz #'+entry.receipt_id+' · '+entry.product_id+' · '+entry.status;
      card.append(info);
+     const financeButton=document.createElement('button');financeButton.type='button';financeButton.textContent='Finansal incele (salt okunur)';
+     const financeArea=document.createElement('div');financeArea.className='pa-note';
+     financeButton.onclick=async()=>{
+      financeButton.disabled=true;financeArea.textContent='Finansal bilgiler okunuyor…';
+      try{const r=await playFetch('/refund-cases/'+entry.case_id+'/financial-review');if(!live(c))return;
+       financeArea.replaceChildren();const header=document.createElement('p');
+       header.textContent='Kullanıcı '+r.public_id+' · Mevcut bakiye '+r.current_balance+' · Paket '+r.package_lidya+' Lidya · '+r.purchase_status;
+       financeArea.append(header);
+       const warning=document.createElement('p');warning.textContent=r.notice;financeArea.append(warning);
+       const credit=document.createElement('p');credit.textContent='Son kayıtlarda satın alma kredisi: '+(r.purchase_credit_visible_in_recent_ledger?'Görüldü':'Bulunamadı (geçmiş sınırlı olabilir)');financeArea.append(credit);
+       for(const move of r.ledger){const line=document.createElement('p');line.textContent=(move.created_at||'')+' · '+move.operation+' · '+(move.delta>=0?'+':'')+move.delta+' · Son bakiye '+move.balance_after;financeArea.append(line)}
+      }catch(e){if(live(c))financeArea.textContent='İnceleme açılamadı: '+e.message}
+      finally{financeButton.disabled=false}
+     };
+     card.append(financeButton,financeArea);
      if(entry.status==='pending'){
       const btn=document.createElement('button');btn.type='button';btn.textContent='İncelendi olarak işaretle';
       btn.onclick=async()=>{
