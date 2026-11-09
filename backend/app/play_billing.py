@@ -183,6 +183,14 @@ def verify_credited_payload(data, product_id, account_id, recorded_order_id, rec
 
 
 def register_checkout_auth(current_user):
+    @router.get('/v1/google-play/connection-check')
+    def play_connection_check(user=Depends(current_user), db=Depends(get_db)):
+        from .admin_models import AdminRole
+        admin=db.get(AdminRole,user.id)
+        if admin is None or admin.role != 'DA':
+            raise HTTPException(403,'Yalnızca DA için')
+        return check_google_play_connection()
+
     @router.get('/v1/google-play/checkout-status')
     def checkout_status(user=Depends(current_user)):
         enabled = _checkout_ready()
@@ -240,3 +248,33 @@ def register_checkout_auth(current_user):
         return {'credited': True, 'already_credited': result.get('already_credited', False),
                 'receipt_id': receipt.id, 'amount': result.get('amount'),
                 'consumption': consumption}
+
+
+def check_google_play_connection():
+    """DA-only read-only connectivity check. Never expose OAuth or API error bodies."""
+    raw = settings.google_play_service_account_json
+    if not raw:
+        return {'ok': False, 'code': 'credentials_missing'}
+    try:
+        info = json.loads(raw)
+        if info.get('type') != 'service_account':
+            return {'ok': False, 'code': 'credentials_invalid'}
+        creds = service_account.Credentials.from_service_account_info(info, scopes=[SCOPE])
+    except Exception:
+        return {'ok': False, 'code': 'credentials_invalid'}
+    from urllib.parse import quote
+    url = ('https://androidpublisher.googleapis.com/androidpublisher/v3/applications/'
+           + quote(settings.google_play_package_name, safe='') + '/oneTimeProducts')
+    try:
+        res = AuthorizedSession(creds).get(url, params={'pageSize':1}, timeout=12)
+    except Exception:
+        return {'ok':False, 'code':'connection_failed'}
+    if res.status_code in (401,403):return {'ok':False,'code':'permission_denied'}
+    if res.status_code == 404:return {'ok':False,'code':'app_not_found'}
+    if res.status_code != 200:return {'ok':False,'code':'upstream_failure'}
+    try:
+        data=res.json()
+        if not isinstance(data,dict) or not isinstance(data.get('oneTimeProducts',[]),list):
+            return {'ok':False,'code':'bad_response'}
+        return {'ok':True,'code':'connected','products_visible':bool(data.get('oneTimeProducts',[]))}
+    except Exception:return {'ok':False,'code':'bad_response'}
