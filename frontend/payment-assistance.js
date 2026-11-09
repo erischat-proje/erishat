@@ -128,7 +128,7 @@ function inspectPlayPackage(p){
    finish();
    if(!live(c))return;
    const state=e.detail.state;
-   node.textContent=state==='available'?'Ürün Google Play tarafından bulundu. Satın alma henüz etkin değil.':
+   node.textContent=state==='available'?'Ürün Google Play tarafından bulundu. Satın alma için aşağıdaki test modu butonunu kullanın.':
      state==='not_available'?'Ürün Google Play hesabınız veya bölgeniz için henüz kullanılabilir değil.':
      'Google Play ürün bilgisi okunamadı ('+String(state||'bilinmeyen hata')+').';
  };
@@ -140,6 +140,28 @@ function inspectPlayPackage(p){
 async function openPackages(){window.ErisPurchases?.close?.();const c=modal('Lidya Yükleme');c.kind='packages';c.body.textContent='Paketler yükleniyor…';try{const catalog=await api('/catalog');if(!live(c))return;c.body.innerHTML='<p>'+(typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?'Google Play ürün kullanılabilirliğini kontrol edin. Bu test sürümünde ödeme ve Lidya teslimatı kapalıdır.':'Bir paket seçerek DA destekli ödeme isteği oluşturun. Paket bonusu toplam Lidya miktarına dahildir.')+'</p><div data-legacy></div><div class="pa-packages lp-packages"></div>';for(const old of catalog.legacy_pending||[]){const card=document.createElement('article');card.className='pa-card';const p=document.createElement('p');p.textContent='Önceki sistemden açık ödeme kaydı: '+num(old.price_try)+' TL. Ödeme yaptıysanız DA ile görüşürken bu kaydı belirtin. Yeni bir talep açmak için eski kaydı iptal edebilirsiniz.';const b=document.createElement('button');b.type='button';b.textContent='Eski kaydı iptal et';card.append(p,b);c.body.querySelector('[data-legacy]').append(card);action(c,b,async()=>{await api('/legacy/'+old.id+'/cancel','POST',{});if(live(c))card.remove()})}for(const p of catalog.packages){const b=document.createElement('button');b.className='lp-package';b.innerHTML='<b>'+num(p.total)+' Lidya</b><small>'+num(p.base)+' temel + '+num(p.bonus)+' bonus</small><strong>'+num(p.price_try)+' TL</strong>';b.onclick=()=>typeof window.ErisChatAndroid?.queryPlayCatalog==='function'?inspectPlayPackage(p):choose(p);c.body.querySelector('.pa-packages').append(b)}}catch(e){error(c,e.message)}}
 async function openQueue(records=false){if(records)return openRecordsIndex(false);window.ErisPurchases?.close?.();const c=modal(records?'Ödeme kayıtları':'Yükleme istekleri');c.kind='queue';c.body.innerHTML='<div data-list></div><button type="button" data-more hidden>'+ (records?'Daha eski kayıtlar':'Daha fazla istek')+'</button>';
  if(snapshot.is_da){
+
+  const refundButton=document.createElement('button');refundButton.type='button';
+  refundButton.textContent='Google Play iade denetimi (salt okunur)';
+  const refundStatus=document.createElement('div');refundStatus.setAttribute('role','status');refundStatus.className='pa-note';
+  c.body.prepend(refundStatus);c.body.prepend(refundButton);
+  refundButton.onclick=async()=>{
+   refundButton.disabled=true;refundStatus.textContent='Son 30 günlük iade kayıtları sorgulanıyor…';
+   try{
+    const r=await playFetch('/refund-audit');
+    if(!live(c))return;
+    refundStatus.replaceChildren();
+    const intro=document.createElement('p');intro.textContent='İade denetimi: '+r.google_voided_count+' Google kaydı, '+r.matched_count+' eşleşen, '+r.unmatched_count+' eşleşmeyen. Otomatik Lidya kesintisi yapılmaz.';
+    refundStatus.append(intro);
+    if(r.truncated){const warn=document.createElement('p');warn.textContent='UYARI: Kayıt sayısı sorgu sınırına ulaştı; rapor eksik olabilir.';refundStatus.append(warn)}
+    for(const item of (r.items||[])){
+      const entry=document.createElement('p');
+      entry.textContent='Makbuz #'+item.receipt_id+' · Kullanıcı '+item.user_id+' · '+item.product_id+' · '+item.lidya+' Lidya · '+(item.test_purchase?'TEST':'GERÇEK')+' · Elle inceleme gerekli';
+      refundStatus.append(entry);
+    }
+   }catch(e){if(live(c))refundStatus.textContent='İade denetimi başarısız: '+e.message}
+   finally{refundButton.disabled=false}
+  };
   const b=document.createElement('button');b.type='button';b.textContent='Google Play API bağlantısını kontrol et';
   const status=document.createElement('p');status.setAttribute('role','status');status.className='pa-note';
   c.body.prepend(status);c.body.prepend(b);
