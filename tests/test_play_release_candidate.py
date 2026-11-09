@@ -5,6 +5,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session
 from app.db import Base
 from app.models import User
+from app.admin_models import AdminRole
 from app.play_billing_models import PlayPurchaseRecord
 from app.play_refund_models import PlayRefundCase
 from app.system_data import LidyaLedger
@@ -17,7 +18,7 @@ def sqlite_bigint(type_,compiler,**kw): return 'INTEGER'
 
 def test_read_only_financial_report():
     e=create_engine('sqlite+pysqlite:///:memory:')
-    Base.metadata.create_all(e,tables=[User.__table__,PlayPurchaseRecord.__table__,PlayRefundCase.__table__,LidyaLedger.__table__])
+    Base.metadata.create_all(e,tables=[User.__table__,AdminRole.__table__,PlayPurchaseRecord.__table__,PlayRefundCase.__table__,LidyaLedger.__table__])
     with Session(e,expire_on_commit=False) as db:
         db.add(User(id='u1',public_id='1234567890',nickname='Test',lidya=27))
         db.add(PlayPurchaseRecord(token_sha256=hashlib.sha256(b'sensitive').hexdigest(),user_id='u1',product_id='lidya_001',google_order_id='GPA.TEST',purchase_status='credited',test_purchase=True))
