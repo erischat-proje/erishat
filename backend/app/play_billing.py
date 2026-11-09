@@ -275,8 +275,8 @@ def register_checkout_auth(current_user):
             if previous.user_id != user.id or previous.product_id != payload.product_id:
                 raise HTTPException(409, 'Ödeme başka hesap veya ürüne ait')
             if previous.purchase_status == 'credited':
-                if settings.google_play_test_mode and not previous.test_purchase:
-                    raise HTTPException(422, 'Test modunda gerçek satın alma kaydı kullanılamaz')
+                if bool(previous.test_purchase) != bool(settings.google_play_test_mode):
+                    raise HTTPException(422, 'Satın alma kaydı mevcut ödeme moduyla eşleşmiyor')
                 # Never trust a repeated token from the client without a fresh Google check.
                 try:
                     fresh = fetch_from_google(payload.purchase_token)
