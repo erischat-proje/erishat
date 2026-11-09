@@ -233,6 +233,21 @@ def register_checkout_auth(current_user):
             raise HTTPException(403,'Yalnızca DA için')
         return check_google_play_connection()
 
+
+    @router.get('/v1/google-play/my-purchases')
+    def my_purchases(user=Depends(current_user), db=Depends(get_db)):
+        """Authenticated user's own last 40 purchases. Never expose purchase tokens."""
+        from fastapi import Response
+        records = db.scalars(select(PlayPurchaseRecord).where(
+            PlayPurchaseRecord.user_id == user.id
+        ).order_by(PlayPurchaseRecord.id.desc()).limit(40)).all()
+        return {'items': [
+            {'receipt_id':r.id, 'product_id':r.product_id,
+             'lidya':int(PRODUCTS[r.product_id]['total']) if r.product_id in PRODUCTS else None,
+             'status':r.purchase_status, 'test_purchase':bool(r.test_purchase),
+             'created_at':r.created_at.isoformat() if r.created_at else None}
+            for r in records], 'limit':40}
+
     @router.get('/v1/google-play/checkout-status')
     def checkout_status(user=Depends(current_user)):
         enabled = _checkout_ready() and _checkout_authorized(user)
@@ -442,6 +457,30 @@ class RefundCaseDecision(BaseModel):
     note: str = Field(min_length=8,max_length=1000)
 
 
+
+
+def _refund_financial_review(db, case):
+    """DA-only caller, read-only account context; never infer which Lidya was spent."""
+    from .models import User
+    from .system_data import LidyaLedger
+    customer=db.get(User,case.user_id)
+    receipt=db.get(PlayPurchaseRecord,case.receipt_id)
+    if customer is None or receipt is None or receipt.user_id!=case.user_id or receipt.product_id!=case.product_id:
+        raise HTTPException(409,'İade dosyası satın alma ile eşleşmiyor')
+    lines=db.scalars(select(LidyaLedger).where(LidyaLedger.user_id==case.user_id)
+       .order_by(LidyaLedger.created_at.desc(),LidyaLedger.id.desc()).limit(30)).all()
+    ref='play:'+str(receipt.id)
+    return {'case_id':case.id,'receipt_id':receipt.id,'public_id':customer.public_id,
+            'product_id':case.product_id,
+            'package_lidya':int(PRODUCTS[case.product_id]['total']) if case.product_id in PRODUCTS else None,
+            'current_balance':int(customer.lidya),'purchase_status':receipt.purchase_status,
+            'test_purchase':bool(receipt.test_purchase), 'case_status':case.status,
+            'purchase_credit_visible_in_recent_ledger':any(x.operation=='google_play_credit' and x.reference_id==ref for x in lines),
+            'ledger':[{'operation':x.operation,'delta':int(x.delta),'balance_after':int(x.balance_after),
+                       'created_at':x.created_at.isoformat() if x.created_at else None} for x in lines],
+            'history_limited':len(lines)==30,'wallet_changed':False,
+            'notice':'Mevcut bakiye, iade edilen paketten kalan Lidya tutarı değildir. Otomatik kesinti yapılmaz.'}
+
 def register_refund_case_auth(current_user):
     from .admin_models import AdminRole, AdminAuditLog
     from .play_refund_models import PlayRefundCase
@@ -481,6 +520,15 @@ def register_refund_case_auth(current_user):
         cases=db.scalars(select(PlayRefundCase).order_by(PlayRefundCase.id.desc()).limit(100)).all()
         return {'items':[_refund_case_view(x) for x in cases], 'limit':100,
                 'wallet_changed':False}
+
+    @router.get('/v1/google-play/refund-cases/{case_id}/financial-review')
+    def financial_review(case_id:int,response:Response,user=Depends(current_user),db=Depends(get_db)):
+        require_da(db,user)
+        response.headers['Cache-Control']='private, no-store'
+        response.headers['Vary']='Authorization'
+        case=db.get(PlayRefundCase,case_id)
+        if case is None:raise HTTPException(404,'İade dosyası bulunamadı')
+        return _refund_financial_review(db,case)
 
     @router.post('/v1/google-play/refund-cases/{case_id}/review')
     def review_case(case_id:int,payload:RefundCaseDecision,response:Response,user=Depends(current_user),db=Depends(get_db)):
