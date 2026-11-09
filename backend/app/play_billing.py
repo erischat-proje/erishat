@@ -178,8 +178,13 @@ def _checkout_ready():
 
 
 def _require_test_receipt(verdict):
-    if settings.google_play_test_mode and not verdict.get('test_purchase'):
+    # A commercial checkout must not grant paid currency for a license-test receipt.
+    # In test mode, real-money receipts are rejected to prevent accidental charges.
+    is_test_receipt = verdict.get('test_purchase') is True
+    if settings.google_play_test_mode and not is_test_receipt:
         raise HTTPException(422, 'Yalnızca Google Play lisans test satın alımları kabul edilir')
+    if not settings.google_play_test_mode and is_test_receipt:
+        raise HTTPException(422, 'Test satın alımı canlı Lidya yüklemesinde kullanılamaz')
 
 
 def _account_hash(user_id):
