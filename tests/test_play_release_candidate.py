@@ -32,7 +32,11 @@ def test_read_only_financial_report():
         r=_refund_financial_review(db,case)
         assert r['package_lidya']==95 and r['current_balance']==27
         assert r['purchase_credit_visible_in_recent_ledger']
-        assert r['wallet_changed'] is False and len(r['ledger'])==2
+        assert r['wallet_changed'] is False
+        assert len(r['ledger']) == 3
+        assert {x['operation'] for x in r['ledger']} == {
+            'initial_balance', 'google_play_credit', 'gift'
+        }
         assert 'token_sha256' not in r and 'google_order_id' not in r
         assert db.get(User,'u1').lidya==27
         assert db.get(PlayRefundCase,case.id).status=='pending'
