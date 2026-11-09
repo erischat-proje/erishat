@@ -101,9 +101,9 @@ async function attachPlayCheckout(modalInstance,productId){
   const config=await playFetch('/checkout-status');
   if(!live(modalInstance)||!config.enabled)return;
   const note=modalInstance.body.querySelector('.pa-note');
-  if(note)note.textContent='Ödeme yalnızca Google Play onay ekranından başlatılır. Lidya, sunucu doğrulaması sonrası yüklenir.';
+  if(note)note.textContent=config.mode==='test'?'Yalnızca Google Play lisans test ödemeleri kabul edilir. Gerçek ücret tahsil edilmemelidir. Lidya, test makbuzu doğrulandıktan sonra yüklenir.':'Ödeme yalnızca Google Play onay ekranından başlatılır. Lidya, sunucu doğrulaması sonrası yüklenir.';
   const button=document.createElement('button');button.type='button';button.textContent='Google Play ile satın al';
-  const tip=document.createElement('p');tip.className='pa-note';tip.textContent='Ödeme tutarını Google Play onay ekranından kontrol edin.';
+  const tip=document.createElement('p');tip.className='pa-note';tip.textContent=config.mode==='test'?'TEST MODU: Google Play onay ekranında test kartı / test satın alımı yazmıyorsa işlemi iptal edin.':'Ödeme tutarını Google Play onay ekranından kontrol edin.';
   modalInstance.body.append(tip,button);
   button.onclick=()=>{button.disabled=true;try{bridge.startPlayPurchase(productId,config.account_hash)}catch(e){button.disabled=false;toast('Google Play açılamadı.')}};
   bridge.recoverPlayPurchases?.();
@@ -119,7 +119,7 @@ function inspectPlayPackage(p){
  const productId='lidya_'+String(id).padStart(3,'0');
  const c=modal('Google Play ürün kontrolü',true);
  c.kind='play-catalog-preview';
- c.body.innerHTML='<div class="pa-card"><b>'+num(p.total)+' Lidya</b><p>'+num(p.base)+' temel + '+num(p.bonus)+' bonus</p><p>'+num(p.price_try)+' TL (mevcut katalog fiyatı)</p></div><p role="status" data-play-status>Google Play ürün bilgisi kontrol ediliyor…</p><p class="pa-note">Bu test sürümünde ödeme başlatılmaz, karttan tahsilat yapılmaz ve Lidya yüklenmez.</p>';
+ c.body.innerHTML='<div class="pa-card"><b>'+num(p.total)+' Lidya</b><p>'+num(p.base)+' temel + '+num(p.bonus)+' bonus</p><p>'+num(p.price_try)+' TL (mevcut katalog fiyatı)</p></div><p role="status" data-play-status>Google Play ürün bilgisi kontrol ediliyor…</p><p class="pa-note">Satın alma yalnızca sunucu hesabınıza izin verirse açılır. Testte Google Play onay ekranındaki ödeme yöntemini kontrol edin.</p>';
  const node=c.body.querySelector('[data-play-status]');
  let timer=null;
  const finish=()=>{window.removeEventListener('lidyachat:play-catalog',onResult);if(timer!==null){clearTimeout(timer);timer=null}};
