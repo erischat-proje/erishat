@@ -13,6 +13,7 @@ on:
       - 'tests/test_security_center_dm_id.py'
       - 'tests/test_play_billing_v3.py'
       - 'tests/test_play_fulfillment_v4.py'
+      - 'tests/test_google_play_license_test.py'
       - '.github/workflows/lidyachat-security.yml'
 permissions:
   contents: read
@@ -46,6 +47,7 @@ jobs:
             /tests/test_security_center_dm_id.py
             /tests/test_play_billing_v3.py
             /tests/test_play_fulfillment_v4.py
+            /tests/test_google_play_license_test.py
             /frontend/screen-awake.js
             /frontend/settings-live.js
             /Caddyfile
@@ -66,6 +68,8 @@ jobs:
         run: PYTHONPATH=backend python -m pytest -q tests/test_play_billing_v3.py
       - name: Run Google Play V4 fulfillment unit tests
         run: PYTHONPATH=backend python -m pytest -q tests/test_play_fulfillment_v4.py
+      - name: Run Google Play license test mode guard tests
+        run: PYTHONPATH=backend python -m pytest -q tests/test_google_play_license_test.py
       - run: node tests/security_guard/test_wake.cjs
       - run: python -m pip_audit -r backend/requirements.txt --progress-spinner off
       - name: Validate Caddy configuration
