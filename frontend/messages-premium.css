@@ -30,3 +30,76 @@ html body #messages .dm-list-tools button{min-height:40px!important;color:var(--
 html body #messages .dm-list-selected{outline:2px solid var(--mp-gold)!important;outline-offset:-2px!important}
 @media(min-width:760px){html body #messages{max-width:760px;margin:auto}}
 @media(max-width:340px){html body #messages>.title{padding-left:15px;padding-right:95px;font-size:26px}html body #messages .lm-inbox-emblem{width:76px}html body #messages .item .grow>b{font-size:15px!important}}
+
+
+/* LidyaChat DM avatar/frame fit v1: equal outer ring for all frame assets.
+   This is intentionally limited to the inbox and conversation header. */
+html body #messages .list > .item > .ava,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava {
+  position:relative!important;
+  display:grid!important;
+  place-items:center!important;
+  flex-shrink:0!important;
+  aspect-ratio:1/1!important;
+  box-sizing:border-box!important;
+  border-radius:50%!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+html body #messages .list > .item > .ava {
+  width:51px!important;
+  height:51px!important;
+  flex:0 0 51px!important;
+}
+/* A common round edge marks the exact bounds, including system/group avatars. */
+html body #messages .list > .item > .ava:not(.visual-portrait),
+html body #chat:not(.eris-floating-dm) .chatHead > .ava:not(.visual-portrait) {
+  overflow:hidden!important;
+}
+html body #messages .list > .item > .ava.visual-portrait,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait {
+  overflow:visible!important;
+  background-image:none!important;
+}
+html body #messages .list > .item > .ava > .dm-avatar-frame,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava > .dm-avatar-frame,
+html body #messages .list > .item > .ava.visual-portrait > .visual-art-frame,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait > .visual-art-frame {
+  position:absolute!important;
+  inset:0!important;
+  left:0!important;
+  top:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+  pointer-events:none!important;
+  z-index:2!important;
+}
+html body #messages .list > .item > .ava.visual-portrait > .visual-art-avatar,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait > .visual-art-avatar {
+  position:absolute!important;
+  left:var(--art-avatar-x,50%)!important;
+  top:var(--art-avatar-y,50%)!important;
+  width:var(--art-avatar-size,70%)!important;
+  height:var(--art-avatar-size,70%)!important;
+  aspect-ratio:1!important;
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:50%!important;
+  transform:translate(-50%,-50%)!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  z-index:1!important;
+}
