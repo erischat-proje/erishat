@@ -408,7 +408,7 @@
     } else {
       el.textContent = avatar || fallback || '👤';
     }
-    if(frameKey){const frame=document.createElement('img');frame.className='dm-avatar-frame';frame.src=window.ErisChatCosmetics?.assetUrl?.(frameKey)||frameKey;frame.alt='';frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none';el.style.position='relative';el.append(frame);window.ErisVisualLayout?.portraits(el);}
+    if(frameKey){const frame=document.createElement('img');frame.className='dm-avatar-frame';frame.src=window.ErisChatCosmetics?.assetUrl?.(frameKey)||frameKey;frame.alt='';frame.style.cssText='position:absolute;inset:-7%;width:114%;height:114%;object-fit:contain;object-position:center;pointer-events:none';el.style.position='relative';el.append(frame);window.ErisVisualLayout?.portraits(el);}
   }
 
   function renderConversationAvatar(el, info, fallback) {

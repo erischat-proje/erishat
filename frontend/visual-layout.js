@@ -100,7 +100,8 @@
     const m=await describe(source);
     if(frame._portraitTicket!==ticket||!frame.isConnected||frame.parentElement!==el||frameSource(frame)!==source)return;
     // Legacy artwork uses a centered opening; measured artwork keeps its own aperture.
-    const a=m?.aperture||{x:.5,y:.5,diameter:.7};
+    const dmHost=!!(el.closest?.('#messages')||el.closest?.('.chatHead'));
+    const a=m?.aperture||(dmHost?{x:.5,y:.5,diameter:.82}:{x:.5,y:.5,diameter:.7});
     let avatar=[...el.children].find(child=>child!==frame&&!child.matches(frameSelector)&&child.matches(avatarSelector));
     if(!avatar){avatar=el.querySelector(':scope > .visual-art-avatar');if(!avatar){avatar=document.createElement('span');for(const child of [...el.childNodes])if(child.nodeType===3)avatar.append(child);if(el.style.backgroundImage)avatar.style.backgroundImage=el.style.backgroundImage;el.prepend(avatar);}}
     if(!el.classList.contains('visual-portrait'))el.classList.toggle('visual-portrait-static',getComputedStyle(el).position==='static');

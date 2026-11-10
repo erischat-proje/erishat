@@ -103,3 +103,33 @@ html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait > .visua
   background-repeat:no-repeat!important;
   z-index:1!important;
 }
+
+/* LidyaChat DM avatar/frame fit v2: ornate frames should sit on the outer circle,
+   while portraits fill the inner opening more aggressively in inbox/header only. */
+html body #messages .list > .item > .ava.visual-portrait,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait {
+  --art-avatar-size:82% !important;
+  --art-avatar-x:50% !important;
+  --art-avatar-y:50% !important;
+}
+html body #messages .list > .item > .ava > .dm-avatar-frame,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava > .dm-avatar-frame,
+html body #messages .list > .item > .ava.visual-portrait > .visual-art-frame,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait > .visual-art-frame {
+  inset:-7% !important;
+  left:-7% !important;
+  top:-7% !important;
+  width:114% !important;
+  height:114% !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+html body #messages .list > .item > .ava.visual-portrait > .visual-art-avatar,
+html body #chat:not(.eris-floating-dm) .chatHead > .ava.visual-portrait > .visual-art-avatar {
+  width:var(--art-avatar-size,82%) !important;
+  height:var(--art-avatar-size,82%) !important;
+  left:var(--art-avatar-x,50%) !important;
+  top:var(--art-avatar-y,50%) !important;
+}
