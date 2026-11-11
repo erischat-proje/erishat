@@ -1,130 +1,82 @@
-/* LidyaChat V5: purchased/equipped sender's chat art, with a content-sized 9-slice frame.
-   Only message rows carrying bubble_asset receive this stylesheet. */
-html body #chat .chatBody > .bubble.dm-award-bubble,
+/* LidyaChat V6 repair: store art has transparent outside and elastic text well. */
 html body #chat .bubble.dm-award-bubble {
-  display: flex !important;
-  flex-direction: column !important;
-  position: relative !important;
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
-  flex: 0 0 auto !important;
-  width: fit-content !important;
-  min-width: 0 !important;
-  max-width: min(100%, calc(100vw - 66px)) !important;
-  min-height: 0 !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  box-sizing: border-box !important;
+  display:flex !important; flex-direction:column !important;
+  align-items:flex-start !important; position:relative !important;
+  flex:0 0 auto !important; width:fit-content !important;
+  max-width:calc(100% - 4px) !important; min-width:0 !important;
+  height:auto !important; margin:0 !important; padding:0 !important;
+  border:0 !important; background:transparent !important;
+  box-shadow:none !important; overflow:visible !important;
 }
-html body #chat .bubble.dm-award-bubble.me { align-self: flex-end !important; }
-
-/* Nine-slice stretches the artwork's CENTER while retaining its ornate edges.
-   The previous V4 background-size:100% 100% obscured detailed borders and
-   showed a plain black rectangle. Border occupies space ON THE SAME box. */
+html body #chat .bubble.dm-award-bubble.me {align-self:flex-end !important;}
 html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble {
-  position: relative !important;
-  display: inline-flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: center !important;
-  flex: 0 1 auto !important;
-  gap: 3px !important;
-  width: fit-content !important;
-  min-width: min(145px, 100%) !important;
-  max-width: 100% !important;
-  min-height: 54px !important;
-  height: auto !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 3px 9px 3px 12px !important;
-  border-style: solid !important;
-  border-color: transparent !important;
-  border-width: 15px 22px 15px 28px !important;
-  border-image-source: var(--lidya-dm-award-art, none) !important;
-  border-image-slice: 24% 20% 24% 20% fill !important;
-  border-image-width: 1 !important;
-  border-image-outset: 0 !important;
-  border-image-repeat: stretch !important;
-  border-radius: 0 !important;
-  background-color: #211b19 !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  color: #fff7e8 !important;
-  -webkit-text-fill-color: #fff7e8 !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  isolation: isolate !important;
+  display:inline-flex !important; flex-direction:column !important;
+  width:fit-content !important; min-width:0 !important; max-width:100% !important;
+  min-height:0 !important; height:auto !important; margin:0 !important;
+  padding:0 !important; position:relative !important;
+  border-style:solid !important; border-color:transparent !important;
+  border-width:14px 22px 14px 28px !important;
+  border-image-source:var(--lidya-dm-award-art, none) !important;
+  border-image-slice:24% 20% 24% 20% fill !important;
+  border-image-width:1 !important;
+  border-image-outset:0 !important;
+  border-image-repeat:stretch !important;
+  border-radius:0 !important;
+  background:transparent !important; background-image:none !important;
+  background-color:transparent !important; box-shadow:none !important;
+  overflow:visible !important; box-sizing:border-box !important;
 }
-html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > :is(.dm-message-text,.dm-message-meta) {
-  position: relative !important;
-  inset: auto !important;
-  z-index: 1 !important;
-  display: block !important;
-  flex: 0 1 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  height: auto !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  transform: none !important;
-  float: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  overflow: visible !important;
-  white-space: pre-wrap !important;
-  overflow-wrap: anywhere !important;
-  word-break: normal !important;
-  color: #fff7e8 !important;
-  -webkit-text-fill-color: #fff7e8 !important;
-  text-shadow: 0 1px 2px #000 !important;
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body {
+  position:relative !important; display:flex !important; flex-direction:column !important;
+  align-items:stretch !important; justify-content:center !important;
+  gap:4px !important; flex:0 1 auto !important;
+  width:fit-content !important; min-width:min(145px,100%) !important;
+  max-width:min(100%,70vw) !important; height:auto !important;
+  margin:0 !important; padding:7px 11px !important;
+  border:0 !important; border-radius:0 !important;
+  background:transparent !important; background-image:none !important;
+  box-shadow:none !important; box-sizing:border-box !important;
 }
-html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-message-text {
-  font-size: 14px !important;
-  line-height: 1.45 !important;
-  font-weight: 500 !important;
-  text-align: start !important;
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body > :is(.dm-message-text,.dm-message-meta) {
+  position:relative !important; inset:auto !important; transform:none !important;
+  float:none !important; z-index:2 !important;
+  display:block !important; flex:0 1 auto !important;
+  width:auto !important; max-width:100% !important; min-width:0 !important;
+  height:auto !important; min-height:0 !important; margin:0 !important;
+  padding:0 !important; opacity:1 !important; visibility:visible !important;
+  color:#fff7e8 !important; -webkit-text-fill-color:#fff7e8 !important;
+  text-shadow:0 1px 2px #000 !important;
+  white-space:pre-wrap !important; overflow-wrap:anywhere !important;
+  word-break:normal !important; overflow:visible !important;
 }
-html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-message-meta {
-  display: flex !important;
-  justify-content: flex-end !important;
-  gap: 5px !important;
-  font-size: 10px !important;
-  line-height: 1.3 !important;
-  white-space: nowrap !important;
-  color: #f4e6d6 !important;
-  -webkit-text-fill-color: #f4e6d6 !important;
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body > .dm-message-text {
+  font-size:14px !important; line-height:1.45 !important; text-align:start !important;
 }
-html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-message-meta * {
-  color: inherit !important;
-  -webkit-text-fill-color: inherit !important;
-  opacity: 1 !important;
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body > .dm-message-meta {
+  display:flex !important; align-items:center !important;
+  justify-content:flex-end !important; gap:5px !important;
+  font-size:10px !important; line-height:1.3 !important;
+  color:#f4e6d6 !important; -webkit-text-fill-color:#f4e6d6 !important;
+  white-space:nowrap !important;
 }
-/* No asset / invalid asset: a regular theme-based readable bubble, not a dark rectangle. */
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body > .dm-message-meta * {
+  color:inherit !important; -webkit-text-fill-color:inherit !important;
+  text-shadow:inherit !important; opacity:1 !important;
+}
 html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[data-art-ready="fallback"] {
-  border: 1px solid var(--ui-line, #ad8854) !important;
-  border-image: none !important;
-  border-radius: 16px !important;
-  background: var(--ui-raised, #f4e8d4) !important;
-  color: var(--ui-ink, #30251e) !important;
-  -webkit-text-fill-color: var(--ui-ink, #30251e) !important;
-  padding: 12px 14px !important;
+  border:1px solid var(--ui-line,#ad8854) !important;
+  border-image:none !important; border-radius:15px !important;
+  background:var(--ui-raised,#f4e8d4) !important;
 }
-html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[data-art-ready="fallback"] :is(.dm-message-text,.dm-message-meta,.dm-message-meta *) {
-  color: var(--ui-ink, #30251e) !important;
-  -webkit-text-fill-color: var(--ui-ink, #30251e) !important;
-  text-shadow: none !important;
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[data-art-ready="fallback"] > .dm-award-body {
+  padding:10px 14px !important; background:transparent !important;
 }
-@media (max-width: 380px) {
-  html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble {
-    border-width: 12px 17px 12px 23px !important;
-    padding: 3px 7px 3px 10px !important;
-  }
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[data-art-ready="fallback"] > .dm-award-body :is(.dm-message-text,.dm-message-meta,.dm-message-meta *) {
+  color:var(--ui-ink,#30251e) !important;
+  -webkit-text-fill-color:var(--ui-ink,#30251e) !important;
+  text-shadow:none !important;
+}
+@media(max-width:380px){
+  html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble {border-width:12px 17px 12px 23px !important;}
+  html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body {padding:6px 9px !important;max-width:min(100%,72vw) !important;}
 }

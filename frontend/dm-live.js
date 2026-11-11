@@ -240,26 +240,22 @@
     if(message.bubble_asset && message.media_type!=='voice'){
       const content=document.createElement('div');
       content.className='rel-chat-bubble dm-award-content';
-      // Store the URL separately from border-image: CSS V4 scales artwork across
-      // the SAME box that owns both text and timestamp.
+      const shell=document.createElement('div');
+      shell.className='dm-award-body';
       const artwork=window.ErisVisualLayout?.url?.(message.bubble_asset);
-      if(artwork && /^(https?:|\/|\.)/i.test(String(artwork))) {
+      if(artwork){
         content.style.setProperty('--lidya-dm-award-art','url('+JSON.stringify(String(artwork))+')');
-      }
-      // Original store artwork remains the source of truth (sender bubble_asset).
-      // V5 CSS uses 9-slice border art to retain ornate corners as text grows.
-      // If the asset is unavailable, show a standard bubble instead of a black block.
-      if(artwork) {
         const check=new Image();
         check.onerror=()=>{
-          if(!row.isConnected || !content.isConnected)return;
-          for(const child of [...content.childNodes])row.insertBefore(child,content);
-          content.remove();row.classList.remove('dm-award-bubble');
+          if(!row.isConnected)return;
+          for(const child of [...shell.childNodes])row.insertBefore(child,content);
+          content.remove(); row.classList.remove('dm-award-bubble');
         };
         check.src=String(artwork);
       }
       window.ErisVisualLayout?.bubble(content,message.bubble_asset);
-      for(const child of [...row.children])if(child!==portrait)content.append(child);
+      for(const child of [...row.children])if(child!==portrait)shell.append(child);
+      content.append(shell);
       row.append(content);
       row.classList.add('dm-award-bubble');
     }
