@@ -1,0 +1,82 @@
+/* LidyaChat DM premium chat bubble readability V2 — targeted to awarded artwork only. */
+html body #chat .bubble.dm-award-bubble {
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  min-width: 0 !important;
+  min-height: 58px !important;
+  height: auto !important;
+  max-width: min(100%, 88vw) !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+html body #chat .bubble.dm-award-bubble.me { align-self: flex-end !important; }
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-width: min(180px, 100%) !important;
+  min-height: 54px !important;
+  height: auto !important;
+  padding: 12px 23px !important;
+  overflow: visible !important;
+  color: #fff7e8 !important;
+  -webkit-text-fill-color: #fff7e8 !important;
+  box-sizing: border-box !important;
+  isolation: isolate;
+}
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble .dm-message-text {
+  position: relative !important;
+  z-index: 2 !important;
+  display: block !important;
+  flex: 0 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  letter-spacing: normal !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: #fff7e8 !important;
+  -webkit-text-fill-color: #fff7e8 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.9) !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble .dm-message-meta,
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble .dm-message-meta * {
+  position: relative !important;
+  z-index: 2 !important;
+  color: #fff1d9 !important;
+  -webkit-text-fill-color: #fff1d9 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+  text-shadow: 0 1px 2px #000 !important;
+}
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[data-art-ready="fallback"] {
+  color: var(--ui-ink, #32261d) !important;
+  -webkit-text-fill-color: var(--ui-ink, #32261d) !important;
+}
+html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[data-art-ready="fallback"] :is(.dm-message-text,.dm-message-meta,.dm-message-meta *) {
+  color: var(--ui-ink, #32261d) !important;
+  -webkit-text-fill-color: var(--ui-ink, #32261d) !important;
+  text-shadow: none !important;
+}
+@media(max-width: 380px) {
+  html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble {padding: 11px 17px !important;}
+}

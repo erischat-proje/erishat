@@ -74,6 +74,7 @@ class RoleProposal(TextModel):
 class RoleDecision(TextModel):
     action:str=Field(pattern='^(approve|reject|cancel)$')
     note:str=Field(min_length=20,max_length=2000)
+    direct:bool=False
 
 def register_auth(current_user,ghost_transition=None,role_changed=None):
     @router.get('')
@@ -152,7 +153,11 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
         if not row:raise HTTPException(404,'Yetki talebi bulunamadı')
         if payload.action=='cancel':
             if row.requester_id!=user.id:raise HTTPException(403,'Yalnız talep sahibi geri çekebilir')
-        elif user.id in {row.requester_id,row.target_id}:raise HTTPException(403,'Bağımsız ikinci yönetici kararı gerekli')
+        elif payload.direct:
+            if payload.action!='approve' or user.id!=row.requester_id or user.id==row.target_id:
+                raise HTTPException(403,'Doğrudan rol verme yalnızca talebi açan DA için geçerlidir')
+        elif user.id in {row.requester_id,row.target_id}:
+            raise HTTPException(403,'Bağımsız ikinci yönetici kararı gerekli')
         final={'approve':'executed','reject':'rejected','cancel':'cancelled'}[payload.action]
         if row.status==final:return role_view(row,user,db)
         if row.status!='pending':raise HTTPException(409,'Talep daha önce sonuçlandırıldı')
@@ -171,7 +176,7 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
                 if row.requested_role!='DA':role.ghost_mode=False;update_room_ghost(db,target.id,False)
             elif role:update_room_ghost(db,target.id,False);db.delete(role)
         row.status=final;row.reviewer_id=user.id;row.decision_note=payload.note;row.decided_at=datetime.now(timezone.utc)
-        audit(db,user,'role_change_'+final,{'request_id':row.id,'previous_role':row.previous_role,'requested_role':row.requested_role,'reason':row.reason,'decision_note':payload.note},row.target_id)
+        audit(db,user,'role_change_'+final,{'request_id':row.id,'previous_role':row.previous_role,'requested_role':row.requested_role,'reason':row.reason,'decision_note':payload.note,'direct_da':bool(payload.direct)},row.target_id)
         notify(db,[row.requester_id,row.target_id],'Yetki talebi sonuçlandı',f'Yetki talebi #{row.id}: {final}.',user.id);db.commit()
         sync_pending=False
         if final=='executed':
