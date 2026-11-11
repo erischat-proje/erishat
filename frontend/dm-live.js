@@ -237,7 +237,20 @@
     renderMediaCaption(row,message);
     row.append(meta);renderReadReceipt(row,message);
     renderMessageReactions(row,message);renderMessageStar(row,message);renderMessagePoll(row,message);
-    if(message.bubble_asset && message.media_type!=='voice'){const content=document.createElement('div');content.className='rel-chat-bubble dm-award-content';window.ErisVisualLayout?.bubble(content,message.bubble_asset);for(const child of [...row.children])if(child!==portrait)content.append(child);row.append(content);row.classList.add('dm-award-bubble')}
+    if(message.bubble_asset && message.media_type!=='voice'){
+      const content=document.createElement('div');
+      content.className='rel-chat-bubble dm-award-content';
+      // Store the URL separately from border-image: CSS V4 scales artwork across
+      // the SAME box that owns both text and timestamp.
+      const artwork=window.ErisVisualLayout?.url?.(message.bubble_asset);
+      if(artwork && /^(https?:|\/|\.)/i.test(String(artwork))) {
+        content.style.setProperty('--lidya-dm-award-art','url('+JSON.stringify(String(artwork))+')');
+      }
+      window.ErisVisualLayout?.bubble(content,message.bubble_asset);
+      for(const child of [...row.children])if(child!==portrait)content.append(child);
+      row.append(content);
+      row.classList.add('dm-award-bubble');
+    }
 
     if (message?.is_pinned) row.dataset.pinned = '1';
     return row;
