@@ -165,6 +165,12 @@ column-gap:9px
 @media(min-width:760px){#home .homeMenu{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){#home .homeMenu{grid-template-columns:repeat(2,minmax(0,1fr))}#home .homeMenuItem{min-height:104px;gap:9px;padding:11px}#home .homeMenuIcon{width:25px;height:25px}#home .homeMenuItem strong{font-size:12px}#home .homeMenuItem small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#home .homeMenuItem{transition:none}}
+</style><style>
+#home .lidya-home-room-heading{gap:12px;flex-wrap:wrap}
+#home .lidya-home-create-room{margin-left:auto;min-height:44px;padding:9px 16px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-raised);color:var(--ui-ink);font-size:14px;font-weight:800;white-space:nowrap;box-shadow:0 2px 10px var(--ui-shadow)}
+#home .lidya-home-create-room:focus-visible{outline:2px solid var(--ui-gold);outline-offset:3px}
+#home .lidya-home-create-room span{font-size:19px;vertical-align:-1px}
+@media(max-width:360px){#home .lidya-home-create-room{padding:8px 11px;font-size:12px}}
 </style><link rel="stylesheet" href="./typography-v1.css?v=profile-vip-seats-20261004"><link rel="stylesheet" href="./home-part1.css?v=theme-audit-20261013"><link rel="stylesheet" href="./visual-layout.css?v=portrait-fit-20261026"><link rel="stylesheet" href="./dev-update.css?v=theme-audit-20261013">
 <link rel="stylesheet" href="./screen-layout-fix.css?v=theme-audit-20261013"><link rel="stylesheet" href="./profile-polish.css?v=theme-audit-20261013"><link rel="stylesheet" href="./vip-designs.css?v=vip-art-20261004"><link rel="stylesheet" href="./vip-entrance.css?v=vip-art-20261004"><link rel="stylesheet" href="./vip-entry-fit.css?v=entry-full-20261004">
 <style id="eris-own-profile-name-align">
@@ -188,8 +194,9 @@ column-gap:9px
 </head><body>
 <main class="app"><header class="top"><div class="brand eris-brand"><img class="eris-brand-image lidya-brand-light" src="./assets/lidya-menu/light-logo.png?v=lidya-horizontal-v2" alt="LidyaChat" width="1800" height="386" decoding="async"><img class="eris-brand-image lidya-brand-dark" src="./assets/lidya-menu/dark-logo.png?v=lidya-horizontal-v2" alt="" aria-hidden="true" width="1800" height="405" decoding="async"></div><div class="actions"><div class="balance" id="demoBalance">0 Lidya</div><button class="icon" onclick="showView('search')">⌕</button></div></header><section class="content">
 <section id="home" class="view show">
-<div class="section">
+<div class="section lidya-home-room-heading">
   <h3>Ana menü</h3>
+  <button type="button" class="lidya-home-create-room" onclick="openCreateRoomModal()" aria-label="Yeni sesli oda aç"><span aria-hidden="true">＋</span> Oda Aç</button>
 </div>
 
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><defs><symbol id="home-chat" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z"/><path d="M7.5 11.5h9"/></symbol><symbol id="home-discover" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.7 8.3-2.4 5-5 2.4 2.4-5 5-2.4Z"/></symbol><symbol id="home-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.4-3.5 3.1-5.5 7-5.5s6.6 2 7 5.5"/></symbol><symbol id="home-shop" viewBox="0 0 24 24"><path d="M4 9h16l-1.5 11h-13L4 9ZM8 9V7a4 4 0 0 1 8 0v2"/></symbol><symbol id="home-vip" viewBox="0 0 24 24"><path d="m12 2 2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2ZM20 18l.6 1.4L22 20l-1.4.6L20 22l-.6-1.4L18 20l1.4-.6L20 18Z"/></symbol><symbol id="home-privacy" viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.5"/><path d="M4 20 20 4"/></symbol><symbol id="home-family" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2.5 19c.3-3.4 2.5-5 6.5-5s6.2 1.6 6.5 5H2.5ZM17 5a3 3 0 0 1 0 6M18 14c2.1.4 3.3 2 3.5 5h-4"/></symbol><symbol id="home-security" viewBox="0 0 24 24"><path d="m12 2 8 3v6c0 5.3-3 8.5-8 11-5-2.5-8-5.7-8-11V5l8-3Z"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="home-support" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 10h8M8 13h5"/></symbol><symbol id="home-posts" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 12h8M8 16h7"/></symbol><symbol id="home-collection" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol><symbol id="home-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 9V6a2 2 0 0 1 2-2h13M15 13h6M17 16h1"/></symbol><symbol id="home-gifts" viewBox="0 0 24 24"><path d="M3 10h18v11H3V10ZM2 7h20v3H2V7ZM12 7v14"/><path d="M12 7C8 7 6 6 6 4.5 6 2 10 2 12 7ZM12 7c4 0 6-1 6-2.5C18 2 14 2 12 7Z"/></symbol><symbol id="home-bell" viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2V10a4.5 4.5 0 0 0-9 0v5L6 17ZM10 20h4"/></symbol><symbol id="home-blocked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 18.4 18.4 5.6"/></symbol><symbol id="home-anon-voice" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></symbol><symbol id="home-anon-video" viewBox="0 0 24 24"><rect x="2" y="5" width="14" height="14" rx="3"/><path d="m16 10 6-4v12l-6-4"/></symbol></defs></svg>
@@ -200,7 +207,7 @@ column-gap:9px
     <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-chat"></use></svg><div class="homeMenuCopy"><strong>Mesajlar</strong><small>Gerçek konuşmalar</small></div>
   </button>
 
-  <button class="homeMenuItem" onclick="showView('explore');window.ErisChatRoomList?.load?.()">
+  <button class="homeMenuItem" onclick="openRoomsFromHome()">
     <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-discover"></use></svg><div class="homeMenuCopy"><strong>Keşfet</strong><small>Odalar ve kullanıcılar</small></div>
   </button>
 
@@ -282,6 +289,57 @@ column-gap:9px
 <div id="chat" class="chat"><div class="chatSheet"><div class="chatHead"><div class="ava round" id="chatAva">R</div><div class="grow"><b id="chatTitle">Sohbet</b><small class="muted">Özel sohbet</small></div><button class="close" aria-label="Sohbeti kapat" onclick="closeChat()">×</button></div><div class="chatBody" id="chatBody"></div><div class="compose"><textarea id="chatInput" rows="1" maxlength="2000" aria-label="Mesaj yaz" placeholder="Mesaj yaz…"></textarea><button class="primary" onclick="sendChat()">Gönder</button></div></div></div>
 <div id="realRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b id="realRoomTitle">Oda</b><small id="realRoomMeta" class="muted" style="display:block;margin-top:4px">Gerçek oda</small></div><button class="close" onclick="window.closeRealRoom?.()">×</button></div><div id="realRoomSeats" class="list"></div><div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="primary" style="height:42px;width:100%" onclick="window.openRoomGift?.()">🎁 Hediye</button><button class="primary" style="height:42px;width:100%" onclick="window.ErisChatMusic?.open?.()">🎵 Müzik</button></div><div class="card" style="margin-top:10px;padding:12px"><div id="realRoomChat" style="min-height:50px;max-height:180px;overflow:auto;font-size:10px;color:var(--ui-ink)"><div class="muted" style="font-size:9px">Canlı oda sohbeti ayrı bağlantı üzerinden açılır.</div></div><button class="primary" style="width:100%;height:40px;margin-top:8px" onclick="window.openLiveRoomChat?.()">💬 Canlı oda sohbetini aç</button></div></div></div><div id="createRoomModal" class="modal"><div class="sheet"><div class="sheetHead"><div><b>＋ Yeni oda</b><small class="muted" style="display:block;margin-top:4px">Kendi odanı oluştur</small></div><button class="close" onclick="closeCreateRoom()">×</button></div><input id="newRoomName" class="search-input" placeholder="Oda adı" style="width:100%;box-sizing:border-box;background:color-mix(in srgb, var(--ui-panel) 3%, transparent);border:1px solid var(--ui-line);color:var(--ui-ink);border-radius:13px;padding:12px;outline:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="primary" style="height:44px" onclick="createRoom()">Odayı oluştur</button><button class="close" style="width:auto;height:44px" onclick="closeCreateRoom()">İptal</button></div><div id="createRoomStatus" class="muted" style="margin-top:10px;font-size:9px"></div></div></div>
 <div id="toast" class="toast"></div>
+<script>
+/* LidyaChat: room creation and room discovery. */
+function openRoomsFromHome(){
+  showView('explore');
+  const roomsTab=document.querySelector('#explore .tab[onclick*="rooms"]');
+  if(roomsTab && typeof tab==='function')tab('rooms',roomsTab);
+  window.ErisChatRoomList?.load?.();
+}
+function openCreateRoomModal(){
+  const modal=document.getElementById('createRoomModal');
+  if(!modal)return;
+  document.getElementById('createRoomStatus').textContent='';
+  modal.classList.add('show');
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+  document.getElementById('newRoomName')?.focus();
+}
+function closeCreateRoom(){
+  const modal=document.getElementById('createRoomModal');
+  modal?.classList.remove('show');
+  modal?.removeAttribute('aria-modal');
+}
+let lidyaRoomCreating=false;
+async function createRoom(){
+  if(lidyaRoomCreating)return;
+  const input=document.getElementById('newRoomName');
+  const status=document.getElementById('createRoomStatus');
+  const submit=document.querySelector('#createRoomModal button[onclick="createRoom()"]');
+  const name=(input?.value||'').trim();
+  if(!name){if(status)status.textContent='Oda adını gir.';input?.focus();return}
+  if(!window.ErisRoom?.create){if(status)status.textContent='Oda servisi hazır değil. Tekrar deneyin.';return}
+  lidyaRoomCreating=true;
+  if(submit)submit.disabled=true;
+  if(status)status.textContent='Oda oluşturuluyor…';
+  try{
+    const created=await window.ErisRoom.create(name);
+    if(!created || created.error || created.detail){
+      throw new Error(created?.detail||created?.error||'Oda oluşturulamadı');
+    }
+    closeCreateRoom();
+    if(input)input.value='';
+    openRoomsFromHome();
+    window.toast?.('Odan oluşturuldu! Odalar listesinde görebilirsin.');
+  }catch(error){
+    if(status)status.textContent=error?.message||'Oda oluşturulamadı. Tekrar dene.';
+  }finally{
+    lidyaRoomCreating=false;
+    if(submit)submit.disabled=false;
+  }
+}
+</script>
 <script>const viewScroll=new Map();function showView(id,btn){const target=document.getElementById(id);if(!target?.classList.contains('view'))return;const content=document.querySelector('.app>.content'),previous=content?.querySelector(':scope>.view.show');if(previous)viewScroll.set(previous.id,content.scrollTop);document.querySelectorAll('.view').forEach(x=>x.classList.remove('show'));document.getElementById(id)?.classList.add('show');if(id==='profile')window.ErisProfileHub?.reset?.();if(id==='vip')window.ErisChatVIP?.load?.();if(id==='explore'){window.ErisChatStories?.load?.();window.ErisSocialFeed?.load?.()}document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));const nav=btn?.closest('.nav')?btn:[...document.querySelectorAll('.nav button')].find(x=>x.getAttribute('onclick')?.includes("showView('"+id+"'"));nav?.classList.add('active');if(content)content.scrollTop=viewScroll.get(id)||0;document.querySelectorAll('.nav button').forEach(x=>x.setAttribute('aria-current',x===nav?'page':'false'));window.dispatchEvent(new CustomEvent('erischat:view-changed',{detail:{id}}))}function tab(id,btn){['rooms','people','followingRooms'].forEach(x=>{const panel=document.getElementById(x);if(panel)panel.style.display=x===id?'grid':'none'});document.querySelectorAll('#explore .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1800)}function openChat(name){window.toast?.('Kullanıcıyı arama ekranından seç.');showView('search')}
 function closeChat(){document.getElementById('chat')?.classList.remove('show','eris-floating-dm')}
 async function sendChat(){
