@@ -246,6 +246,18 @@
       if(artwork && /^(https?:|\/|\.)/i.test(String(artwork))) {
         content.style.setProperty('--lidya-dm-award-art','url('+JSON.stringify(String(artwork))+')');
       }
+      // Original store artwork remains the source of truth (sender bubble_asset).
+      // V5 CSS uses 9-slice border art to retain ornate corners as text grows.
+      // If the asset is unavailable, show a standard bubble instead of a black block.
+      if(artwork) {
+        const check=new Image();
+        check.onerror=()=>{
+          if(!row.isConnected || !content.isConnected)return;
+          for(const child of [...content.childNodes])row.insertBefore(child,content);
+          content.remove();row.classList.remove('dm-award-bubble');
+        };
+        check.src=String(artwork);
+      }
       window.ErisVisualLayout?.bubble(content,message.bubble_asset);
       for(const child of [...row.children])if(child!==portrait)content.append(child);
       row.append(content);
