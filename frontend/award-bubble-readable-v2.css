@@ -32,7 +32,7 @@ html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble >
   gap:4px !important; flex:0 1 auto !important;
   width:fit-content !important; min-width:min(145px,100%) !important;
   max-width:min(100%,70vw) !important; height:auto !important;
-  margin:0 !important; padding:7px 11px !important;
+  margin:0 !important; padding:11px 16px 13px 18px !important; min-height:56px !important;
   border:0 !important; border-radius:0 !important;
   background:transparent !important; background-image:none !important;
   box-shadow:none !important; box-sizing:border-box !important;
@@ -50,12 +50,13 @@ html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble >
   word-break:normal !important; overflow:visible !important;
 }
 html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body > .dm-message-text {
-  font-size:14px !important; line-height:1.45 !important; text-align:start !important;
+  font-size:14px !important; line-height:1.45 !important; text-align:start !important; padding-top:1px !important;
 }
 html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body > .dm-message-meta {
   display:flex !important; align-items:center !important;
   justify-content:flex-end !important; gap:5px !important;
   font-size:10px !important; line-height:1.3 !important;
+  margin-top:3px !important; margin-bottom:2px !important;
   color:#f4e6d6 !important; -webkit-text-fill-color:#f4e6d6 !important;
   white-space:nowrap !important;
 }
@@ -78,5 +79,5 @@ html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble[d
 }
 @media(max-width:380px){
   html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble {border-width:12px 17px 12px 23px !important;}
-  html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body {padding:6px 9px !important;max-width:min(100%,72vw) !important;}
+  html body #chat .bubble.dm-award-bubble > .dm-award-content.visual-chat-bubble > .dm-award-body {padding:9px 12px 12px 14px !important;min-height:52px !important;max-width:min(100%,72vw) !important;}
 }
