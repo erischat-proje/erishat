@@ -63,7 +63,7 @@ def role_view(row,user,db):
     requester=db.get(User,row.requester_id)
     reviewer=db.get(User,row.reviewer_id) if row.reviewer_id else None
     people={'requester_public_id':requester.public_id if requester else None,'requester_name':requester.nickname if requester else None,'reviewer_public_id':reviewer.public_id if reviewer else None,'reviewer_name':reviewer.nickname if reviewer else None}
-    return people|{k:getattr(row,k) for k in ('id','requester_id','target_id','target_public_id','target_name','previous_role','requested_role','reason','status','reviewer_id','decision_note','created_at','decided_at')}|{'can_decide':row.status=='pending' and user.id not in {row.requester_id,row.target_id},'can_cancel':row.status=='pending' and user.id==row.requester_id}
+    return people|{k:getattr(row,k) for k in ('id','requester_id','target_id','target_public_id','target_name','previous_role','requested_role','reason','status','reviewer_id','decision_note','created_at','decided_at')}|{'can_decide':row.status=='pending' and user.id!=row.target_id,'can_cancel':row.status=='pending' and user.id==row.requester_id}
 class RoleProposal(TextModel):
     target_id:str=Field(min_length=1,max_length=64)
     role:str|None=Field(default=None,pattern='^(SA|UA|FA|DA)$')
@@ -152,7 +152,7 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
         if not row:raise HTTPException(404,'Yetki talebi bulunamadı')
         if payload.action=='cancel':
             if row.requester_id!=user.id:raise HTTPException(403,'Yalnız talep sahibi geri çekebilir')
-        elif user.id in {row.requester_id,row.target_id}:raise HTTPException(403,'Bağımsız ikinci yönetici kararı gerekli')
+        elif user.id==row.target_id:raise HTTPException(403,'Kendi hesabınızın rolünü onaylayamazsınız')
         final={'approve':'executed','reject':'rejected','cancel':'cancelled'}[payload.action]
         if row.status==final:return role_view(row,user,db)
         if row.status!='pending':raise HTTPException(409,'Talep daha önce sonuçlandırıldı')
