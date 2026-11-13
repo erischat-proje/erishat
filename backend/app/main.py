@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .runtime_tasks import database_task, live_socket, bind_live_loop
+from . import safety_models, social_safety
 
 from pathlib import Path
 from io import BytesIO
@@ -1557,6 +1558,7 @@ async def create_social_post(caption: str = Form(default=""), file: UploadFile |
     if len(caption) > 2000: raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
     if not caption and file is None: raise HTTPException(status_code=400, detail="Metin veya medya ekleyin")
     mime, data = await _read_social_upload(file, 80 * 1024 * 1024) if file else (None, None)
+    await run_in_threadpool(social_safety.check_upload, db, user.id, 'post', mime, data, caption)
     post = SocialPost(user_id=user.id, caption=caption, mime_type=mime, image_bytes=data, audience=audience)
     db.add(post); db.flush(); shop_expansion.record_event(db,user.id,'posts',post.id); db.commit(); db.refresh(post)
     return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
@@ -1586,7 +1588,10 @@ async def update_social_post(post_id: int, caption: str | None = Form(default=No
         post.audience = audience
     if is_hidden is not None: post.is_hidden = is_hidden
     if remove_image: post.image_bytes = None; post.mime_type = None
-    if file is not None: post.mime_type, post.image_bytes = await _read_social_upload(file, 80 * 1024 * 1024)
+    if file is not None:
+        updated_mime, updated_data = await _read_social_upload(file, 80 * 1024 * 1024)
+        await run_in_threadpool(social_safety.check_upload, db, user.id, 'post', updated_mime, updated_data, post.caption)
+        post.mime_type, post.image_bytes = updated_mime, updated_data
     if not post.caption and post.image_bytes is None:
         raise HTTPException(status_code=400, detail="Gönderide metin veya medya kalmalı")
     post.updated_at = datetime.now(timezone.utc)
@@ -1878,6 +1883,7 @@ async def create_story(file: UploadFile = File(...), caption: str = Form(default
     db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_chat_write(db,user.id)
     mime, data = await _read_social_upload(file, 50 * 1024 * 1024)
+    await run_in_threadpool(social_safety.check_upload, db, user.id, 'story', mime, data, caption)
     story = SocialStory(user_id=user.id, caption=caption.strip()[:300], mime_type=mime,
         image_bytes=data, expires_at=datetime.now(timezone.utc) + timedelta(hours=24))
     db.add(story); db.flush(); shop_expansion.record_event(db,user.id,'stories',story.id); db.commit(); db.refresh(story)
@@ -2860,3 +2866,18 @@ if static_dir.exists():
 
 
 
+
+
+# Keşfet ve Story +18 inceleme API'si. Yetki kontrolü servis içinde yapılır.
+@app.get('/v1/safety/reviews')
+def safety_reviews(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    return social_safety.admin_queue(db, user)
+
+
+@app.post('/v1/safety/reviews/{review_id}/decision')
+def safety_decide(review_id: int, payload: dict, db: Session = Depends(get_db),
+                  user: User = Depends(current_user)):
+    if type(payload.get('approve')) is not bool:
+        raise HTTPException(400, 'approve true/false gönderilmelidir.')
+    return social_safety.decide(db, user, review_id, payload['approve'],
+                                str(payload.get('note') or '')[:1000])
