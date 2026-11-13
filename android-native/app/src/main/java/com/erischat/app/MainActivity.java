@@ -180,6 +180,7 @@ public class MainActivity extends Activity {
                 });
             }
         });
+        webView.addJavascriptInterface(new LidyaSecureBridge(), "LidyaSecure");
         webView.setWebViewClient(new WebViewClient() {
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
@@ -546,6 +547,16 @@ public class MainActivity extends Activity {
             webView.goBack();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private final class LidyaSecureBridge {
+        @android.webkit.JavascriptInterface
+        public void setSecure(final boolean enabled) {
+            runOnUiThread(() -> {
+                if (enabled) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                else getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+            });
         }
     }
 }
