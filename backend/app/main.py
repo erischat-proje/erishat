@@ -77,6 +77,7 @@ from . import fraud_review
 from . import management_workflows, admin_workspace, admin_operations
 from .management_readiness import MANAGEMENT_API_VERSION, check_management_ready
 from . import role_badges
+from . import dealer_routes
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
 from .onboarding_policy import agreement, eligible, grant_cosmetic
@@ -534,6 +535,7 @@ app.include_router(ban_workflow.router)
 app.include_router(suggestion_router)
 register_admin_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id: disconnect_ban_user(user_id), lambda user_id, role: broadcast_role_badge(user_id, role))
 app.include_router(role_badges.register_auth(current_user))
+app.include_router(dealer_routes.register_auth(current_user))
 support_workflow.register_auth(current_user, lambda user_id: disconnect_support_agent(user_id))
 app.include_router(support_workflow.router)
 register_dm_folder_auth(current_user)
