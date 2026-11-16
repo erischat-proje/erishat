@@ -1,0 +1,30 @@
+/* Home menu asset fits the real ivory/gold and emerald/bronze LidyaChat themes. */
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card{
+  grid-column:1/-1!important;position:relative!important;isolation:isolate;
+  box-sizing:border-box;display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  min-height:103px!important;overflow:hidden!important;border:0!important;border-radius:14px!important;
+  padding:16px 76px 15px 22px!important;text-align:left!important;
+  background:#f6edda url('./role-icons/dealer-card-light.svg?v=3') center/100% 100% no-repeat!important;
+  color:#422b16!important;box-shadow:0 5px 14px #60431c16!important;
+}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card .homeMenuIcon{display:none!important}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card .homeMenuCopy{position:relative;z-index:1;max-width:62%;min-width:0;display:block}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card strong{font-family:Georgia,serif;font-size:clamp(17px,3.8vw,24px)!important;font-weight:800;line-height:1.12;color:inherit!important;text-shadow:0 1px #fff8}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card small{font-size:clamp(10px,2.5vw,13px)!important;line-height:1.26;color:#6b5037!important;margin-top:6px}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card .ea-role{display:none!important}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card:after{content:'›';position:absolute;z-index:2;right:16px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid #bd965d;background:#fff8e2c9;color:#805321;font:27px Georgia,serif;line-height:1}
+html[data-eris-theme='dark'] #home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card{
+ background:#0a2c22 url('./role-icons/dealer-card-dark.svg?v=3') center/100% 100% no-repeat!important;
+ color:#f9efd4!important;box-shadow:0 5px 16px #0006!important;
+}
+html[data-eris-theme='dark'] #home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card strong{text-shadow:0 1px #041c16}
+html[data-eris-theme='dark'] #home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card small{color:#d9c8a3!important}
+html[data-eris-theme='dark'] #home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card:after{background:#09261cbd;color:#ebce88;border-color:#b9914f}
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card[hidden]{display:none!important}
+/* Compact medallion with ample separation from the nickname. */
+html body .lb-dealer-badge.lb-dealer-badge{display:inline-flex!important;flex:none!important;vertical-align:middle!important;width:36px!important;min-width:36px!important;max-width:36px!important;height:27px!important;min-height:27px!important;max-height:27px!important;margin:0 5px 0 0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;align-items:center!important;justify-content:center!important}
+.lb-dealer-badge.lb-dealer-badge img{width:100%!important;height:100%!important;object-fit:contain!important}
+.profile .name h2>.lb-dealer-badge.lb-dealer-badge{width:56px!important;min-width:56px!important;max-width:56px!important;height:38px!important;min-height:38px!important;max-height:38px!important;align-self:flex-start!important;margin:0 0 3px!important}
+.seat-name .lb-dealer-badge.lb-dealer-badge{width:25px!important;min-width:25px!important;max-width:25px!important;height:20px!important;min-height:20px!important;max-height:20px!important}
+@media(max-width:390px){#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card{min-height:92px!important;padding-left:15px!important;padding-right:55px!important}}
+@media(prefers-reduced-motion:reduce){#home #lidya-dealer-menu{transition:none!important}}

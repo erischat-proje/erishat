@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 170" preserveAspectRatio="xMidYMid slice">
+<defs>
+ <linearGradient id="paper" x2="1" y2="1"><stop stop-color="#faf3e1"/><stop offset=".53" stop-color="#fffdf6"/><stop offset="1" stop-color="#e3ca96"/></linearGradient>
+ <linearGradient id="gold" x2="1" y2="1"><stop stop-color="#6a3916"/><stop offset=".32" stop-color="#efcf77"/><stop offset=".65" stop-color="#af7331"/><stop offset="1" stop-color="#fff0b4"/></linearGradient>
+ <pattern id="veins" width="210" height="170" patternUnits="userSpaceOnUse"><path d="M-40 158 Q40 90 140 70 T260 -10" stroke="#b08d57" stroke-opacity=".14" stroke-width="5" fill="none"/><path d="M-30 168 Q80 135 210 120" stroke="#7d6141" stroke-opacity=".09" stroke-width="3" fill="none"/></pattern>
+ </defs>
+ <rect width="900" height="170" rx="19" fill="url(#paper)"/><rect width="900" height="170" rx="19" fill="url(#veins)"/>
+ <path d="M610 170 Q700 5 900 -40 L900 170Z" fill="#ad7940" opacity=".11"/><path d="M695 0 Q725 70 855 170" stroke="#c9a66c" stroke-width="2" opacity=".4" fill="none"/>
+ <g transform="translate(646 12)">
+ <path d="M92 8 L102 21 L114 8 L122 24 L133 13 L129 36 L96 36Z" fill="url(#gold)" stroke="#7c4e1e" stroke-width="2"/>
+ <path d="M85 34 L149 34 L150 103 Q117 128 84 104Z" fill="#4b2715" stroke="url(#gold)" stroke-width="8"/>
+ <path d="M93 43 L141 43 L141 98 Q117 117 92 98Z" fill="#22180d" stroke="#e4bc66" stroke-width="2"/>
+ <text x="117" y="83" text-anchor="middle" fill="#f1d28a" font-size="41" font-weight="bold" font-family="Georgia,serif">LB</text>
+ <path d="M73 114 Q48 88 65 52 M161 114 Q185 88 169 52" stroke="#b58a4c" stroke-width="4" fill="none"/>
+ <path d="M73 100 l-18 -13 10 22 M65 85 l-18 -15 12 21 M162 100 l18 -13 -10 22 M169 85 l18 -15 -12 21" fill="#a87433"/>
+ </g>
+ <g opacity=".35" fill="none" stroke="#b99156" stroke-width="2"><path d="M12 40 Q32 14 73 13M12 130 Q32 154 73 157M888 40 Q868 14 827 13M888 130 Q868 154 827 157"/></g>
+ <rect x="3" y="3" width="894" height="164" rx="17" fill="none" stroke="#a7793d" stroke-width="3"/>
+ <rect x="9" y="9" width="882" height="152" rx="12" fill="none" stroke="#dec391" stroke-width="1.5"/>
+</svg>

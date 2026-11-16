@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 116 86">
+<defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#f9e6ac"/><stop offset=".48" stop-color="#b57b30"/><stop offset="1" stop-color="#fff2b8"/></linearGradient></defs>
+<path d="M36 21L39 6L49 15L58 3L67 15L77 6L80 21Z" fill="url(#g)" stroke="#71481f" stroke-width="2"/>
+<path d="M28 23L88 23L88 55Q78 69 58 79Q37 68 28 55Z" fill="#102d25" stroke="url(#g)" stroke-width="6"/>
+<path d="M35 29L81 29L81 53Q69 64 58 70Q45 64 35 53Z" fill="none" stroke="#efcf7d" stroke-width="1.4"/>
+<text x="58" y="54" text-anchor="middle" font-family="Georgia,serif" font-size="29" font-weight="bold" fill="#fce3a0">LB</text>
+<g fill="none" stroke="#c39a51" stroke-width="3" stroke-linecap="round"><path d="M24 67Q7 52 18 29M92 67Q109 52 98 29"/><path d="M20 54L9 47M18 43L8 36M96 54L107 47M98 43L108 36"/></g>
+</svg>
