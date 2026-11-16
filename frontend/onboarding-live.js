@@ -243,9 +243,38 @@
         object-fit: contain;
       }
 
-      #erisOnboarding .eris-cosmetic-item.selected {
-        border-color: rgba(132,108,255,.9);
-        box-shadow: 0 0 0 2px rgba(132,108,255,.18);
+      /* LIDYA_ONBOARDING_SELECTION_V1 */
+      #erisOnboarding .eris-cosmetic-item {
+        position: relative;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #erisOnboarding .eris-cosmetic-item.selected,
+      #erisOnboarding .eris-cosmetic-item[aria-pressed="true"] {
+        border: 3px solid #e6b84d;
+        background: rgba(230,184,77,.15);
+        box-shadow: 0 0 0 2px rgba(230,184,77,.32), inset 0 0 12px rgba(230,184,77,.12);
+      }
+      #erisOnboarding .eris-cosmetic-item.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        width: 19px;
+        height: 19px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #e6b84d;
+        color: #211706;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1;
+        pointer-events: none;
+      }
+      #erisOnboarding .eris-cosmetic-item:focus-visible {
+        outline: 2px solid #fff1bf;
+        outline-offset: 3px;
       }
 
       #erisOnboarding .eris-progress {
@@ -387,6 +416,8 @@
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'eris-cosmetic-item';
+          button.setAttribute('aria-pressed', 'false');
+          button.setAttribute('aria-label', 'Avatar seçeneği ' + (index + 1));
           button.innerHTML = '<img alt="Avatar" loading="lazy">';
 
           const img = button.querySelector('img');
@@ -396,9 +427,12 @@
 
           button.addEventListener('click', () => {
             selectedAvatarAsset = item.asset_key;
-            avatarGallery.querySelectorAll('.eris-cosmetic-item')
-              .forEach(x => x.classList.remove('selected'));
+            avatarGallery.querySelectorAll('.eris-cosmetic-item').forEach(x => {
+              x.classList.remove('selected');
+              x.setAttribute('aria-pressed', 'false');
+            });
             button.classList.add('selected');
+            button.setAttribute('aria-pressed', 'true');
           });
 
           avatarGallery.appendChild(button);
@@ -406,6 +440,7 @@
           if (index === 0) {
             selectedAvatarAsset = item.asset_key;
             button.classList.add('selected');
+            button.setAttribute('aria-pressed', 'true');
           }
         });
 
@@ -413,6 +448,8 @@
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'eris-cosmetic-item eris-frame-item';
+          button.setAttribute('aria-pressed', 'false');
+          button.setAttribute('aria-label', 'Çerçeve seçeneği ' + (index + 1));
           button.innerHTML = '<img alt="Çerçeve" loading="lazy">';
 
           const img = button.querySelector('img');
@@ -422,9 +459,12 @@
 
           button.addEventListener('click', () => {
             selectedFrameAsset = item.asset_key;
-            frameGallery.querySelectorAll('.eris-cosmetic-item')
-              .forEach(x => x.classList.remove('selected'));
+            frameGallery.querySelectorAll('.eris-cosmetic-item').forEach(x => {
+              x.classList.remove('selected');
+              x.setAttribute('aria-pressed', 'false');
+            });
             button.classList.add('selected');
+            button.setAttribute('aria-pressed', 'true');
           });
 
           frameGallery.appendChild(button);
@@ -432,6 +472,7 @@
           if (index === 0) {
             selectedFrameAsset = item.asset_key;
             button.classList.add('selected');
+            button.setAttribute('aria-pressed', 'true');
           }
         });
 
