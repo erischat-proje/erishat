@@ -6,7 +6,7 @@ explicit dealer transfer credits a recipient, while atomically debiting stock.
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, select, update
 from sqlalchemy.orm import Mapped, Session, mapped_column
@@ -99,6 +99,46 @@ def register_auth(current_user):
             raise HTTPException(400, "En fazla 100 ID sorgulanabilir")
         rows = db.scalars(select(DealerInventory.user_id).where(DealerInventory.user_id.in_(keys), DealerInventory.active.is_(True))).all()
         return {"dealers": rows}
+
+    @router.get("/admin/list")
+    def admin_dealer_list(limit: int = Query(default=50, ge=1, le=100),
+                          db: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_da(db, user)
+        rows = db.execute(select(DealerInventory, User)
+            .join(User, User.id == DealerInventory.user_id)
+            .order_by(DealerInventory.created_at.desc()).limit(limit)).all()
+        return {"items": [{"public_id": person.public_id, "nickname": person.nickname,
+            "stock": inv.stock, "active": inv.active} for inv, person in rows]}
+
+    @router.get("/admin/lookup")
+    def admin_dealer_lookup(public_id: str = Query(min_length=1, max_length=64),
+                            db: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_da(db, user)
+        person = target_by_public_id(db, public_id)
+        inv = db.get(DealerInventory, person.id)
+        if inv is None:
+            raise HTTPException(404, "Bu ID için bayi kaydı bulunamadı")
+        grants = db.scalars(select(DealerStockGrant)
+            .where(DealerStockGrant.dealer_id == person.id)
+            .order_by(DealerStockGrant.created_at.desc()).limit(20)).all()
+        transfers = db.scalars(select(DealerTransfer)
+            .where(DealerTransfer.dealer_id == person.id)
+            .order_by(DealerTransfer.created_at.desc()).limit(20)).all()
+        receiver_ids = [t.recipient_id for t in transfers]
+        receivers = {r.id: r.public_id for r in db.scalars(select(User)
+            .where(User.id.in_(receiver_ids))).all()} if receiver_ids else {}
+        granted_total = db.scalar(select(func.coalesce(func.sum(DealerStockGrant.amount), 0))
+            .where(DealerStockGrant.dealer_id == person.id))
+        sent_total = db.scalar(select(func.coalesce(func.sum(DealerTransfer.amount), 0))
+            .where(DealerTransfer.dealer_id == person.id))
+        return {"public_id": person.public_id, "nickname": person.nickname,
+            "active": inv.active, "stock": inv.stock,
+            "total_granted": int(granted_total or 0), "total_sent": int(sent_total or 0),
+            "recent_grants": [{"amount": r.amount, "created_at": r.created_at.isoformat()}
+                for r in grants],
+            "recent_transfers": [{"recipient_public_id": receivers.get(r.recipient_id, "—"),
+                "amount": r.amount, "created_at": r.created_at.isoformat()}
+                for r in transfers]}
 
     @router.post("/admin/assign")
     def assign(body: AssignBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
