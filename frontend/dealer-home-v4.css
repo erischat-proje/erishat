@@ -1,0 +1,58 @@
+/* LidyaChat LB V4: visual-only CSS; all text is live HTML and stays readable. */
+#home #lidya-dealer-menu.homeMenuItem.lidya-dealer-card.lbv4-card{
+ grid-column:1/-1!important;position:relative!important;isolation:isolate;
+ display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+ gap:14px!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ min-height:106px!important;padding:17px 21px!important;overflow:hidden!important;
+ border:1.5px solid #b9995b!important;border-radius:14px!important;
+ background:radial-gradient(ellipse at 100% 0,rgba(211,170,96,.23),transparent 55%),linear-gradient(118deg,#fffdf6 0%,#f6ecda 52%,#e9d7b2 100%)!important;
+ box-shadow:0 3px 0 #b8955a30,0 8px 21px #65431d1e!important;
+ color:#462c17!important;text-align:left!important;cursor:pointer!important;
+}
+#home #lidya-dealer-menu.lbv4-card::before{
+ content:'';position:absolute;inset:4px;border:1px solid rgba(170,119,50,.31);border-radius:10px;pointer-events:none;z-index:0;
+}
+#home #lidya-dealer-menu.lbv4-card::after{content:none!important}
+#home #lidya-dealer-menu.lbv4-card>.homeMenuIcon,#home #lidya-dealer-menu.lbv4-card>.ea-role,#home #lidya-dealer-menu.lbv4-card>.homeMenuCopy{display:none!important}
+#home #lidya-dealer-menu.lbv4-card .lbv4-mark{
+ display:grid!important;flex:0 0 75px!important;place-items:center!important;
+ width:75px!important;height:69px!important;margin:0!important;padding:0!important;
+ border:0!important;background:none!important;position:relative;z-index:1;
+}
+#home #lidya-dealer-menu.lbv4-card .lbv4-mark img{width:75px!important;height:69px!important;object-fit:contain!important;display:block!important;filter:drop-shadow(0 3px 3px #45281144)}
+#home #lidya-dealer-menu.lbv4-card .lbv4-copy{
+ display:flex!important;flex:1 1 0!important;min-width:0!important;flex-direction:column!important;
+ align-items:flex-start!important;justify-content:center!important;gap:5px!important;
+ margin:0!important;padding:0!important;position:relative;z-index:2;
+ background:transparent!important;border:0!important;opacity:1!important;visibility:visible!important;
+}
+#home #lidya-dealer-menu.lbv4-card .lbv4-copy strong{
+ display:block!important;opacity:1!important;visibility:visible!important;
+ font:700 clamp(18px,4.3vw,24px)/1.1 Georgia,'Times New Roman',serif!important;
+ color:#452b16!important;text-shadow:0 1px #fffaee!important;
+ letter-spacing:-.2px!important;white-space:normal!important;
+}
+#home #lidya-dealer-menu.lbv4-card .lbv4-copy small{
+ display:block!important;opacity:1!important;visibility:visible!important;
+ font:500 clamp(11px,2.65vw,13px)/1.35 system-ui,Arial,sans-serif!important;
+ color:#73583d!important;margin:0!important;white-space:normal!important;
+}
+#home #lidya-dealer-menu.lbv4-card .lbv4-arrow{
+ display:grid!important;place-items:center!important;flex:0 0 32px!important;min-width:32px!important;
+ height:32px!important;border-radius:50%!important;border:1px solid #b9965e!important;
+ background:linear-gradient(#fff9e9,#ead5b0)!important;box-shadow:0 2px 4px #76512d33!important;
+ color:#704417!important;font:28px/1 Georgia,serif!important;z-index:2;
+}
+html[data-eris-theme="dark"] #home #lidya-dealer-menu.lbv4-card{
+ background:radial-gradient(ellipse at 100% 0,rgba(205,165,88,.23),transparent 56%),linear-gradient(115deg,#071d17 0%,#0c2b22 55%,#214134 100%)!important;
+ border-color:#a8844c!important;box-shadow:0 3px 0 #b18b4d33,0 7px 21px #0007!important;
+ color:#f6e5ba!important;
+}
+html[data-eris-theme="dark"] #home #lidya-dealer-menu.lbv4-card::before{border-color:#b5975c55}
+html[data-eris-theme="dark"] #home #lidya-dealer-menu.lbv4-card .lbv4-copy strong{color:#ffefc9!important;text-shadow:0 1px #05160f!important}
+html[data-eris-theme="dark"] #home #lidya-dealer-menu.lbv4-card .lbv4-copy small{color:#d7c49b!important}
+html[data-eris-theme="dark"] #home #lidya-dealer-menu.lbv4-card .lbv4-arrow{background:linear-gradient(#234336,#0b231a)!important;color:#eed096!important;border-color:#a8894e!important}
+#home #lidya-dealer-menu.lbv4-card[hidden]{display:none!important}
+#home #lidya-dealer-menu.lbv4-card:focus-visible{outline:3px solid var(--ui-gold,#ba9656)!important;outline-offset:3px!important}
+@media(max-width:390px){#home #lidya-dealer-menu.lbv4-card{gap:9px!important;padding:12px 13px!important;min-height:94px!important}#home #lidya-dealer-menu.lbv4-card .lbv4-mark{flex-basis:57px!important;width:57px!important;height:57px!important}#home #lidya-dealer-menu.lbv4-card .lbv4-mark img{width:57px!important;height:57px!important}#home #lidya-dealer-menu.lbv4-card .lbv4-arrow{flex-basis:28px!important;min-width:28px!important;height:28px!important}}
+@media(prefers-reduced-motion:reduce){#home #lidya-dealer-menu.lbv4-card{transition:none!important}}
