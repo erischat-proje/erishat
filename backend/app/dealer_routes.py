@@ -115,6 +115,13 @@ def register_auth(current_user):
     @router.post("/admin/stock")
     def grant(body: StockBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
+        target = target_by_public_id(db, body.public_id)
+        # Lock the dealer's inventory before reading the idempotency key.
+        # Concurrent retries will see the committed original grant.
+        row = db.scalar(select(DealerInventory).where(
+            DealerInventory.user_id == target.id).with_for_update())
+        if row is None or not row.active:
+            raise HTTPException(409, "Aktif bayi bulunamadı")
         prior = db.scalar(select(DealerStockGrant).where(DealerStockGrant.request_key == body.request_key))
         if prior:
             target = target_by_public_id(db, body.public_id)
@@ -122,7 +129,6 @@ def register_auth(current_user):
                 raise HTTPException(409, "İşlem anahtarı başka bir işlemde kullanılmış")
             row = db.get(DealerInventory, target.id)
             return {"ok": True, "stock": row.stock, "replayed": True}
-        target = target_by_public_id(db, body.public_id)
         # Atomic increment; other stock loads and transfers never overwrite each other.
         result = db.execute(update(DealerInventory).where(
             DealerInventory.user_id == target.id, DealerInventory.active.is_(True),
@@ -142,7 +148,8 @@ def register_auth(current_user):
 
     @router.post("/transfer")
     def transfer(body: TransferBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
-        dealer = require_dealer(db, user)
+        # Serialize attempts, including duplicate retries, against this stock row.
+        dealer = require_dealer(db, user, lock=True)
         recipient = target_by_public_id(db, body.recipient_public_id)
         if recipient.id == user.id:
             raise HTTPException(400, "Bayi kendisine stok aktaramaz")
@@ -161,11 +168,14 @@ def register_auth(current_user):
         if stock is None:
             db.rollback()
             raise HTTPException(409, "Bayi stoğunuz yetersiz veya yetkiniz kaldırılmış")
-        result = db.execute(update(User).where(User.id == recipient.id, User.is_active.is_(True))
-                            .values(lidya=User.lidya + body.amount))
+        # Keep signed BIGINT wallet balances within the database column limit.
+        result = db.execute(update(User).where(
+            User.id == recipient.id, User.is_active.is_(True),
+            User.lidya <= 9_223_372_036_854_775_807 - body.amount
+        ).values(lidya=User.lidya + body.amount))
         if result.rowcount != 1:
             db.rollback()
-            raise HTTPException(409, "Alıcı hesabı artık aktif değil")
+            raise HTTPException(409, "Alıcı hesabı aktif değil veya bakiye üst sınırı aşılıyor")
         tx = DealerTransfer(id=str(uuid4()), dealer_id=user.id, recipient_id=recipient.id,
                             amount=body.amount, request_key=body.request_key)
         db.add(tx)
