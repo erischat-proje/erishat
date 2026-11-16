@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="96" viewBox="0 0 160 96" role="img" aria-label="Lidya Bayisi LB">
+<defs>
+<linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff6ce"/><stop offset=".38" stop-color="#d6ac54"/><stop offset=".7" stop-color="#8c5920"/><stop offset="1" stop-color="#f4dc92"/></linearGradient>
+<linearGradient id="d" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#483017"/><stop offset="1" stop-color="#20160e"/></linearGradient>
+<filter id="s"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#20160e" flood-opacity=".5"/></filter>
+</defs>
+<g filter="url(#s)"><path d="M18 40 L27 19 L49 28 L80 9 L111 28 L133 19 L142 40 L140 79 Q80 98 20 79 Z" fill="url(#g)" stroke="#fbe9ad" stroke-width="2.5"/><path d="M27 44 Q80 31 133 44 L130 75 Q80 87 30 75 Z" fill="url(#d)" stroke="#aa803c" stroke-width="1.5"/><path d="M40 31 L80 14 L120 31" fill="none" stroke="#fff0b9" stroke-width="2"/><circle cx="27" cy="24" r="4" fill="#fff6d6"/><circle cx="80" cy="14" r="5" fill="#fff6d6"/><circle cx="133" cy="24" r="4" fill="#fff6d6"/><text x="80" y="70" font-family="Georgia,serif" font-size="34" font-weight="bold" fill="#f4d88a" text-anchor="middle" letter-spacing="2">LB</text></g>
+</svg>
