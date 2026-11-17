@@ -237,4 +237,23 @@ def register_auth(current_user):
                             "amount": t.amount, "created_at": t.created_at.isoformat()}
                            for t in rows]}
 
+    @router.get("/admin/audit")
+    def admin_dealer_audit(public_id: str | None = Query(default=None, min_length=1, max_length=64),
+                           limit: int = Query(default=50, ge=1, le=100),
+                           db: Session = Depends(get_db), user: User = Depends(current_user)):
+        """DA-only read-only reconciliation; flags require human review."""
+        from .dealer_audit_v8 import audit_inventory
+        require_da(db, user)
+        stmt = (select(DealerInventory, User).join(User, User.id == DealerInventory.user_id)
+                .order_by(DealerInventory.created_at.desc()).limit(limit))
+        if public_id is not None:
+            stmt = stmt.where(User.public_id == public_id.strip())
+        rows = db.execute(stmt).all()
+        if public_id and not rows:
+            raise HTTPException(404, "Bayi bulunamadı")
+        items = [audit_inventory(db, inv, person, DealerStockGrant, DealerTransfer)
+                 for inv, person in rows]
+        return {"items": items, "review_count": sum(x["status"] == "REVIEW" for x in items),
+                "read_only": True, "note": "Sapma veya hacim uyarısı tek başına usulsüzlük kanıtı değildir."}
+
     return router
