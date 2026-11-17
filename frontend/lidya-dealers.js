@@ -96,6 +96,7 @@ async function openAdminLookup(){
    finally{submit.disabled=false;}
  }
  f.onsubmit=e=>{e.preventDefault();if(id.value.trim())lookup(id.value.trim())};
+ const auditButton=elt('button','lb-primary','♛ Bayi Denetim Merkezi');auditButton.type='button';auditButton.onclick=()=>{if(typeof window.LidyaDealerAuditV9?.open==='function')window.LidyaDealerAuditV9.open();else window.toast?.('Denetim merkezi yüklenemedi. Sayfayı yenileyin.')};panel.append(auditButton);
  const listButton=elt('button','','Kayıtlı bayileri listele');listButton.type='button';
  const list=elt('div','lb-admin-list');panel.append(listButton,list);
  listButton.onclick=async()=>{listButton.disabled=true;list.textContent='Liste yükleniyor…';
