@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, select, update
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, literal, select, union_all, update
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .admin_models import AdminRole
@@ -228,14 +228,60 @@ def register_auth(current_user):
                 "amount": body.amount, "transfer_id": tx.id, "replayed": False}
 
     @router.get("/history")
-    def history(db: Session = Depends(get_db), user: User = Depends(current_user)):
+    def history(page: int = Query(default=1, ge=1, le=1_000_000),
+                db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_dealer(db, user)
-        rows = db.scalars(select(DealerTransfer).where(DealerTransfer.dealer_id == user.id)
-                          .order_by(DealerTransfer.created_at.desc()).limit(30)).all()
-        people = {p.id: p.public_id for p in db.scalars(select(User).where(User.id.in_([r.recipient_id for r in rows]))).all()}
-        return {"items": [{"id": t.id, "recipient_public_id": people.get(t.recipient_id, "—"),
-                            "amount": t.amount, "created_at": t.created_at.isoformat()}
-                           for t in rows]}
+        condition = DealerTransfer.dealer_id == user.id
+        total = int(db.scalar(select(func.count()).select_from(DealerTransfer).where(condition)) or 0)
+        rows = db.scalars(select(DealerTransfer).where(condition)
+            .order_by(DealerTransfer.created_at.desc(), DealerTransfer.id.desc())
+            .offset((page - 1) * 20).limit(20)).all()
+        recipient_ids = [r.recipient_id for r in rows]
+        people = {p.id: p.public_id for p in db.scalars(select(User)
+            .where(User.id.in_(recipient_ids))).all()} if recipient_ids else {}
+        return {"items": [{"kind": "transfer", "id": t.id,
+                    "dealer_public_id": user.public_id,
+                    "actor_public_id": user.public_id,
+                    "recipient_public_id": people.get(t.recipient_id, "—"),
+                    "amount": t.amount, "created_at": t.created_at.isoformat()}
+                    for t in rows], "page": page, "page_size": 20,
+                "total": total, "total_pages": (total + 19) // 20}
+
+    @router.get("/admin/history")
+    def admin_dealer_history(public_id: str = Query(min_length=1, max_length=64),
+                             page: int = Query(default=1, ge=1, le=1_000_000),
+                             db: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_da(db, user)
+        person = target_by_public_id(db, public_id)
+        if db.get(DealerInventory, person.id) is None:
+            raise HTTPException(404, "Bu ID için bayi kaydı bulunamadı")
+        grant_filter = DealerStockGrant.dealer_id == person.id
+        transfer_filter = DealerTransfer.dealer_id == person.id
+        grant_count = int(db.scalar(select(func.count()).select_from(DealerStockGrant).where(grant_filter)) or 0)
+        transfer_count = int(db.scalar(select(func.count()).select_from(DealerTransfer).where(transfer_filter)) or 0)
+        total = grant_count + transfer_count
+        grants = select(literal("stock_grant").label("kind"), DealerStockGrant.id.label("id"),
+            DealerStockGrant.amount.label("amount"), DealerStockGrant.created_at.label("created_at"),
+            DealerStockGrant.admin_id.label("actor_id"),
+            literal(None, type_=String(64)).label("recipient_id"),
+            DealerStockGrant.request_key.label("request_key")).where(grant_filter)
+        transfers = select(literal("transfer").label("kind"), DealerTransfer.id.label("id"),
+            DealerTransfer.amount.label("amount"), DealerTransfer.created_at.label("created_at"),
+            DealerTransfer.dealer_id.label("actor_id"), DealerTransfer.recipient_id.label("recipient_id"),
+            DealerTransfer.request_key.label("request_key")).where(transfer_filter)
+        combined = union_all(grants, transfers).subquery()
+        rows = db.execute(select(combined).order_by(combined.c.created_at.desc(), combined.c.id.desc())
+            .offset((page - 1) * 20).limit(20)).mappings().all()
+        ids = list({x for row in rows for x in (row["actor_id"], row["recipient_id"]) if x})
+        people = {p.id: p.public_id for p in db.scalars(select(User)
+            .where(User.id.in_(ids))).all()} if ids else {}
+        return {"items": [{"kind": r["kind"], "id": r["id"], "amount": r["amount"],
+                "created_at": r["created_at"].isoformat(), "dealer_public_id": person.public_id,
+                "actor_public_id": people.get(r["actor_id"], "—"),
+                "recipient_public_id": people.get(r["recipient_id"], "—") if r["recipient_id"] else None,
+                "request_key": r["request_key"]} for r in rows],
+                "page": page, "page_size": 20, "total": total,
+                "total_pages": (total + 19) // 20}
 
     @router.get("/admin/audit")
     def admin_dealer_audit(public_id: str | None = Query(default=None, min_length=1, max_length=64),
