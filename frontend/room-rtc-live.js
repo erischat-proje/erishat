@@ -17,6 +17,8 @@
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
   // New captures must wait until the previous microphone is detached.
   let microphoneCleanup=Promise.resolve();
+  // Tracks waiting for cleanup, including from an old room.
+  const pendingMicTracks=new Set();
   // Identify the capture operation independently of cancellation.
   let activeMicStart=0;
   // Keep automatic seat cancellation separate from manual mute.
@@ -588,6 +590,9 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     // Even without a current stream, an earlier cleanup may be running.
     if(!oldStream)return microphoneCleanup;
     const oldTracks=oldStream.getTracks();
+    const cleanupGeneration=roomGeneration;
+    const cleanupPeers=[...peers];
+    oldTracks.forEach(track=>pendingMicTracks.add(track));
     // Mute immediately; keep inbound audio connections alive.
     oldTracks.forEach(track=>{
       try{track.enabled=false}catch{}
@@ -599,9 +604,12 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       console.warn('[LidyaChat] onceki mikrofon temizligi',e);
     }).then(async()=>{
       try{
+        // Never detach a microphone from a different room.
+        if(cleanupGeneration!==roomGeneration)return;
         await Promise.allSettled(
-          [...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
-            if(peers.get(id)!==pc)return;
+          cleanupPeers.map(([id,pc])=>enqueuePeer(id,async()=>{
+            if(cleanupGeneration!==roomGeneration||
+               peers.get(id)!==pc)return;
             for(const transceiver of pc.getTransceivers()){
               if(oldTracks.includes(transceiver.sender?.track)){
                 await transceiver.sender.replaceTrack(null);
@@ -612,6 +620,7 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       }finally{
         oldTracks.forEach(track=>{
           try{track.stop()}catch{}
+          pendingMicTracks.delete(track);
         });
       }
     });
@@ -703,6 +712,12 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     clearTimeout(configRetryTimer);configRetryTimer=null;
     roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();peerEpochs.clear();networkRecoveryAt.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
     microphoneSeat=null;
+    // Old-room sender operations must not block the next room.
+    microphoneCleanup=Promise.resolve();
+    for(const track of pendingMicTracks){
+      try{track.stop()}catch{}
+    }
+    pendingMicTracks.clear();
 
     if(stream){
       stream.getTracks().forEach(track=>{
