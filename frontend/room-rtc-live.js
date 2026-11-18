@@ -598,20 +598,33 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     for(const [id,pc] of peers){
       const entry={id,connection:pc.connectionState,ice:pc.iceConnectionState,
         signaling:pc.signalingState,inboundPackets:0,outboundPackets:0,
-        inboundBytes:0,outboundBytes:0,remoteAudioTracks:0};
+        inboundBytes:0,outboundBytes:0,remoteAudioTracks:0,
+        remoteTrackMuted:false,playback:'missing',
+        packetsStalled:false,jitterMs:null};
       try{
         const stats=await pc.getStats();
         stats.forEach(v=>{
           if(v.type==='inbound-rtp'&&(v.kind==='audio'||v.mediaType==='audio')){
             entry.inboundPackets+=Number(v.packetsReceived)||0;
             entry.inboundBytes+=Number(v.bytesReceived)||0;
+            if(Number.isFinite(v.jitter))
+              entry.jitterMs=Math.round(v.jitter*1000);
           }
           if(v.type==='outbound-rtp'&&(v.kind==='audio'||v.mediaType==='audio')){
             entry.outboundPackets+=Number(v.packetsSent)||0;
             entry.outboundBytes+=Number(v.bytesSent)||0;
           }
         });
-        entry.remoteAudioTracks=pc.getReceivers().filter(r=>r.track?.kind==='audio'&&r.track.readyState==='live').length;
+        const tracks=pc.getReceivers()
+          .map(r=>r.track)
+          .filter(t=>t?.kind==='audio'&&t.readyState==='live');
+        entry.remoteAudioTracks=tracks.length;
+        entry.remoteTrackMuted=tracks.length>0&&tracks.every(t=>t.muted);
+        const audio=sounds.get(id);
+        entry.playback=!audio?'missing':
+          audio.muted?'muted':
+          audio.paused?'paused':'playing';
+        entry.packetsStalled=!!lastPacketSnapshot.get(id)?.stalled;
       }catch(e){entry.statsError=e?.name||'unavailable'}
       items.push(entry);
     }
