@@ -26,6 +26,9 @@
     peerQueues.set(id,job);return job;
   }
   const offerJobs=new Map();
+  // Limit repeated network recovery signals per peer.
+  const networkRecoveryAt=new Map();
+  const NETWORK_RECOVERY_COOLDOWN=5000;
   const currentRoom=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
   async function loadConfig(){
     const room=currentRoom(), generation=roomGeneration;
@@ -218,6 +221,7 @@
   }
   async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){if(candidate._eris_offer&&pc._erisOffer&&candidate._eris_offer!==pc._erisOffer)continue;try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[LidyaChat] ICE aday sinyali uygulanamadı',e)}}}
   function drop(id){
+    networkRecoveryAt.delete(id);
     unwatchLevel(id);clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);pendingIce.delete(id);
     const pc=peers.get(id);peers.delete(id);
     if(pc){pc.onicecandidate=null;pc.ontrack=null;pc.onnegotiationneeded=null;pc.onconnectionstatechange=null;pc.oniceconnectionstatechange=null;try{pc.close()}catch{}}
@@ -564,7 +568,7 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
   function leaveRoom(){
     autoSeat=null;autoRoom=null;manualMicOff=false;autoAttempted=false;blockedAudio.clear();
     clearTimeout(configRetryTimer);configRetryTimer=null;
-    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
+    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();networkRecoveryAt.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
     microphoneSeat=null;
 
     if(stream){
@@ -610,7 +614,15 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(shouldInitiate(id))offer(id).catch(()=>{});
         continue;
       }
-      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&hasLiveRemoteAudio(pc))continue;
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&hasLiveRemoteAudio(pc)){
+        networkRecoveryAt.delete(id);
+        continue;
+      }
+      // A negotiation already in progress must not be interrupted.
+      if(pc.signalingState!=='stable')continue;
+      const now=Date.now();
+      if(now-(networkRecoveryAt.get(id)||0)<NETWORK_RECOVERY_COOLDOWN)continue;
+      networkRecoveryAt.set(id,now);
       if(shouldInitiate(id))offer(id,true).catch(()=>{});
       else signal('rtc_reconnect',id,{reset:false});
     }
