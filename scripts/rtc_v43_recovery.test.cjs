@@ -80,7 +80,9 @@ test('Ag kurtarma saglikli peer icin teklif olusturmaz', () => {
     shouldInitiate: () => true,
     offer: () => {offers++; return Promise.resolve()},
     signal: () => true,
-    checkMicrophoneSeat: () => {}
+    checkMicrophoneSeat: () => {},
+    networkRecoveryAt: new Map(),
+    NETWORK_RECOVERY_COOLDOWN: 5000
   };
   vm.runInNewContext(
     extract('recoverNetwork') + '\nrecoverNetwork()',
@@ -108,7 +110,9 @@ test('Eksik ses izi icin yeniden baglanti istenir', () => {
     shouldInitiate: () => true,
     offer: () => {offers++; return Promise.resolve()},
     signal: () => true,
-    checkMicrophoneSeat: () => {}
+    checkMicrophoneSeat: () => {},
+    networkRecoveryAt: new Map(),
+    NETWORK_RECOVERY_COOLDOWN: 5000
   };
   vm.runInNewContext(
     extract('recoverNetwork') + '\nrecoverNetwork()',
