@@ -223,7 +223,7 @@ column-gap:9px
     <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-vip"></use></svg><div class="homeMenuCopy"><strong>VIP merkezi</strong><small>VIP 1 → VIP 12</small></div>
   </button>
 
-  <button class="homeMenuItem" onclick="showView('anon');window.ErisPrivacy?.load?.()">
+  <button class="homeMenuItem" type="button" onclick="showView('anon');const root=document.querySelector('#anon [data-privacy-page]');if(root){if(!root.children.length){window.ErisPrivacy?.render?.(root)}else{window.ErisPrivacy?.load?.()}};">
     <svg class="homeMenuIcon" aria-hidden="true"><use href="#home-privacy"></use></svg><div class="homeMenuCopy"><strong>Gizlilik</strong><small>Görünürlük ayarları</small></div>
   </button>
 
