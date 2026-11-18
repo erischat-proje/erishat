@@ -245,6 +245,11 @@
       if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded&&hasLiveRemoteAudio(pc)){
         clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);recoveryAttempts.delete(id);resumeRoomAudio();return;
       }
+      if(pc.connectionState==='connected'&&!hasLiveRemoteAudio(pc)){
+        // Wait for the incoming track before attempting recovery.
+        scheduleRecovery(id,pc,10000);
+        return;
+      }
       if(pc.connectionState==='failed'||pc.iceConnectionState==='failed'){clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);scheduleRecovery(id,pc,1000)}
       else if(pc.connectionState==='disconnected'||pc.iceConnectionState==='disconnected'){clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);scheduleRecovery(id,pc,5000)}
     };
