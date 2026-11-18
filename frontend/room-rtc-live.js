@@ -581,16 +581,26 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     const oldStream=stream;stream=null;show();
     if(!oldStream)return;
     const oldTracks=oldStream.getTracks();
-    oldTracks.forEach(track=>{try{track.stop()}catch{}});
-    await Promise.allSettled([...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
-      if(peers.get(id)!==pc)return;
-      for(const transceiver of pc.getTransceivers()){
-        if(oldTracks.includes(transceiver.sender?.track)){
-          await transceiver.sender.replaceTrack(null);
-          if(!transceiver.stopped)transceiver.direction='sendrecv';
-        }
-      }
-    })));
+    // Mute immediately; keep inbound audio connections alive.
+    oldTracks.forEach(track=>{
+      try{track.enabled=false}catch{}
+    });
+    try{
+      await Promise.allSettled(
+        [...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
+          if(peers.get(id)!==pc)return;
+          for(const transceiver of pc.getTransceivers()){
+            if(oldTracks.includes(transceiver.sender?.track)){
+              await transceiver.sender.replaceTrack(null);
+            }
+          }
+        }))
+      );
+    }finally{
+      oldTracks.forEach(track=>{
+        try{track.stop()}catch{}
+      });
+    }
   }
 
   async function toggle(){manualMicOff=!!stream||micBusy;autoAttempted=false;return startMicrophone()}
