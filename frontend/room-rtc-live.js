@@ -17,6 +17,8 @@
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
   // New captures must wait until the previous microphone is detached.
   let microphoneCleanup=Promise.resolve();
+  // Identify the capture operation independently of cancellation.
+  let activeMicStart=0;
   const diagnostics={configErrors:0,signalErrors:0,audioBlocked:0,recoveries:0};
   async function rtcConfigRequest(room){
     const controller=new AbortController();
@@ -611,7 +613,11 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
 
   async function toggle(){manualMicOff=!!stream||micBusy;autoAttempted=false;return startMicrophone()}
   async function startMicrophone(){if(stream){await stop();return}if(micBusy){micRequest++;manualMicOff=true;window.toast?.('Mikrofon açma işlemi iptal edildi.');return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
-    micBusy=true;show();const request=++micRequest,generation=roomGeneration;const room=currentRoom();
+    micBusy=true;
+    const request=++micRequest,generation=roomGeneration;
+    const room=currentRoom();
+    activeMicStart=request;
+    show();
     try{
       await microphoneCleanup;
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
@@ -649,8 +655,10 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
     catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{
-      // An obsolete request must not clear a newer request's busy state.
-      if(request===micRequest){
+      // A cancelled capture must release its busy state when it settles.
+      // Do not clear a newer capture operation.
+      if(activeMicStart===request){
+        activeMicStart=0;
         micBusy=false;
         show();
         if(currentRoom()===room&&!manualMicOff&&!autoAttempted)
