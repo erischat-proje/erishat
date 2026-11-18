@@ -19,6 +19,8 @@
   let microphoneCleanup=Promise.resolve();
   // Identify the capture operation independently of cancellation.
   let activeMicStart=0;
+  // Keep automatic seat cancellation separate from manual mute.
+  let seatCancellationRequest=0;
   const diagnostics={configErrors:0,signalErrors:0,audioBlocked:0,recoveries:0};
   async function rtcConfigRequest(room){
     const controller=new AbortController();
@@ -848,7 +850,12 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     const seat=Number(room?.current_user_seat??window.__erisRoomPermissions?.current_user_seat)||null;
     const own=(room?.seats||[]).find(s=>String(s.user_id)===String(myId||window.ErisCurrentUserId));
     if(autoRoom!==id||autoSeat!==seat){
-      autoRoom=id;autoSeat=seat;manualMicOff=false;autoAttempted=false;
+      const roomChanged=autoRoom!==id;
+      autoRoom=id;
+      autoSeat=seat;
+      // A seat change must not undo the user's manual mute.
+      if(roomChanged)manualMicOff=false;
+      autoAttempted=false;
       if(stream&&Number(microphoneSeat)!==seat){
         // Retry auto-start only after the previous mic has detached.
         const generation=roomGeneration;
@@ -873,9 +880,10 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         stop().catch(e=>console.warn(
           '[LidyaChat] mikrofon kapatma',e
         ));
-      }else if(micBusy&&!manualMicOff){
-        // Cancel once; the pending permission result will be cleaned up.
-        manualMicOff=true;
+      }else if(micBusy&&
+               seatCancellationRequest!==activeMicStart){
+        // System cancellation is not a user mute preference.
+        seatCancellationRequest=activeMicStart;
         stop().catch(e=>console.warn(
           '[LidyaChat] mikrofon izin iptali',e
         ));
