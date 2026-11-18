@@ -15,6 +15,8 @@
   }
   let autoSeat=null, autoRoom=null, manualMicOff=false, autoAttempted=false;
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
+  // New captures must wait until the previous microphone is detached.
+  let microphoneCleanup=Promise.resolve();
   const diagnostics={configErrors:0,signalErrors:0,audioBlocked:0,recoveries:0};
   async function rtcConfigRequest(room){
     const controller=new AbortController();
@@ -585,28 +587,35 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     oldTracks.forEach(track=>{
       try{track.enabled=false}catch{}
     });
-    try{
-      await Promise.allSettled(
-        [...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
-          if(peers.get(id)!==pc)return;
-          for(const transceiver of pc.getTransceivers()){
-            if(oldTracks.includes(transceiver.sender?.track)){
-              await transceiver.sender.replaceTrack(null);
+    const cleanup=(async()=>{
+      try{
+        await Promise.allSettled(
+          [...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
+            if(peers.get(id)!==pc)return;
+            for(const transceiver of pc.getTransceivers()){
+              if(oldTracks.includes(transceiver.sender?.track)){
+                await transceiver.sender.replaceTrack(null);
+              }
             }
-          }
-        }))
-      );
-    }finally{
-      oldTracks.forEach(track=>{
-        try{track.stop()}catch{}
-      });
-    }
+          }))
+        );
+      }finally{
+        oldTracks.forEach(track=>{
+          try{track.stop()}catch{}
+        });
+      }
+    })();
+    microphoneCleanup=cleanup;
+    await cleanup;
   }
 
   async function toggle(){manualMicOff=!!stream||micBusy;autoAttempted=false;return startMicrophone()}
   async function startMicrophone(){if(stream){await stop();return}if(micBusy){micRequest++;manualMicOff=true;window.toast?.('Mikrofon açma işlemi iptal edildi.');return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
     micBusy=true;show();const request=++micRequest,generation=roomGeneration;const room=currentRoom();
-    try{const cfg=await rtcConfigRequest(room);
+    try{
+      await microphoneCleanup;
+      if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
+      const cfg=await rtcConfigRequest(room);
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
       if(Array.isArray(cfg.ice_servers)){iceServers=cfg.ice_servers;for(const pc of peers.values()){try{pc.setConfiguration({iceServers})}catch{}}}
       if(cfg.muted)return window.toast?.('Bu koltuğun mikrofonu susturuldu.');
