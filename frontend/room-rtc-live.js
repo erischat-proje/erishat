@@ -380,11 +380,35 @@
       }
       return;
     }
-    if(d.type==='rtc_peer_joined'){const id=String(d.user_id||'');if(id&&id!==myId){const isNew=!known.has(id);known.add(id);if(isNew){recoveryAttempts.delete(id);peer(id);if(shouldInitiate(id))offer(id)}}return}
+    if(d.type==='rtc_peer_joined'){
+      const id=String(d.user_id||'');
+      if(id&&id!==myId){
+        const isNew=!known.has(id);
+        known.add(id);
+        const existing=peers.get(id);
+        if(isNew||!existing||existing.signalingState==='closed'){
+          recoveryAttempts.delete(id);
+          if(existing)drop(id);
+          peer(id);
+          if(shouldInitiate(id))offer(id).catch(()=>{});
+        }
+      }
+      return;
+    }
     if(d.type==='rtc_roster'){
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
       for(const id of known)if(!fresh.has(id)){known.delete(id);drop(id);recoveryAttempts.delete(id)}
-      for(const id of fresh){known.add(id);if(!peers.has(id)){peer(id);if(shouldInitiate(id))offer(id)}}
+      for(const id of fresh){
+        known.add(id);
+        const existing=peers.get(id);
+        if(!existing||existing.signalingState==='closed'){
+          if(existing)drop(id);
+          peer(id);
+          if(shouldInitiate(id))offer(id).catch(()=>{});
+        }else if(existing.connectionState==='failed'||existing.iceConnectionState==='failed'){
+          scheduleRecovery(id,existing,1000);
+        }
+      }
       return;
     }
     if(d.type==='rtc_peer_left'){
@@ -538,9 +562,22 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
   }
 
   function recoverNetwork(){
-    if(!currentRoom())return;
+    if(!currentRoom()||socket()?.readyState!==WebSocket.OPEN)return;
     resumeRoomAudio();
-    for(const [id,pc]of peers){if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed')continue;if(shouldInitiate(id))offer(id,true);else signal('rtc_reconnect',id,{reset:false})}
+    // A missed join notification must not leave the listener without a peer.
+    // Listener-only peers still need an audio receive transceiver and an offer.
+    for(const id of known){
+      const pc=peers.get(id);
+      if(!pc||pc.signalingState==='closed'){
+        if(pc)drop(id);
+        peer(id);
+        if(shouldInitiate(id))offer(id).catch(()=>{});
+        continue;
+      }
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed')continue;
+      if(shouldInitiate(id))offer(id,true).catch(()=>{});
+      else signal('rtc_reconnect',id,{reset:false});
+    }
     checkMicrophoneSeat();
   }
   // Local-only WebRTC health diagnostics. No audio samples or account tokens are stored.
