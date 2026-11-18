@@ -586,6 +586,8 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(pc.signalingState==='have-local-offer'){
           if(shouldInitiate(id))return;
           await pc.setLocalDescription({type:'rollback'});
+          // A peer can be retired while rollback is pending.
+          if(!stillCurrent(pc))return;
         }
         pc._erisOffer=d.payload?._eris_offer||null;
         await pc.setRemoteDescription(new RTCSessionDescription(d.payload));
@@ -601,9 +603,15 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         signal('rtc_answer',id,{type:pc.localDescription.type,sdp:pc.localDescription.sdp,_eris_offer:pc._erisOffer});
       }else if(d.type==='rtc_answer'){
         const pc=peers.get(id);
-        if(pc?.signalingState==='have-local-offer'&&(!d.payload?._eris_offer||d.payload._eris_offer===pc._erisOffer)){
-          await pc.setRemoteDescription(new RTCSessionDescription(d.payload));
-          if(!stillCurrent(pc))return;
+        if(pc?.signalingState==='have-local-offer'&&
+           (!d.payload?._eris_offer||
+            d.payload._eris_offer===pc._erisOffer)){
+          // Capture the offer this answer is supposed to complete.
+          const offerId=pc._erisOffer;
+          await pc.setRemoteDescription(
+            new RTCSessionDescription(d.payload)
+          );
+          if(!stillCurrent(pc)||pc._erisOffer!==offerId)return;
           await flushIce(id,pc);
         }
       }else if(d.type==='rtc_ice'){
