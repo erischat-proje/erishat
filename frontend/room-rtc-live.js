@@ -680,7 +680,10 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         activeMicStart=0;
         micBusy=false;
         show();
-        if(currentRoom()===room&&!manualMicOff&&!autoAttempted)
+        // The permission request may belong to a room already left.
+        // Check the current room instead of requiring the old room.
+        // Respect manual mute and avoid duplicate auto-start attempts.
+        if(currentRoom()&&!manualMicOff&&!autoAttempted)
           syncSeatMicrophone();
       }
     }
