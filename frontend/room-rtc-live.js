@@ -293,7 +293,19 @@
       enqueuePeer(id,async()=>{
         if(peers.get(id)!==pc)return;
         const attempts=(recoveryAttempts.get(id)||0)+1;recoveryAttempts.set(id,attempts);diagnostics.recoveries++;
-        if(attempts%3===0||pc._erisTrackEnded){drop(id);if(shouldInitiate(id))await makeOffer(id,true);else signal('rtc_reconnect',id,{reset:true});return}
+        if(attempts%3===0||pc._erisTrackEnded){
+          drop(id);
+          // Keep recovery alive even if the reset signal is lost.
+          // Listening must not depend on owning a microphone.
+          if(!known.has(id)||socket()?.readyState!==WebSocket.OPEN)return;
+          peer(id);
+          if(shouldInitiate(id)){
+            await makeOffer(id,true);
+          }else{
+            signal('rtc_reconnect',id,{reset:true});
+          }
+          return;
+        }
         if(shouldInitiate(id)){
           if(pc.signalingState==='have-local-offer')await pc.setLocalDescription({type:'rollback'});
           try{pc.restartIce?.()}catch{}
