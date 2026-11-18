@@ -512,10 +512,15 @@
       resumeRoomAudio().catch(()=>{});
       syncSeatMicrophone();
       for(const id of known){
-        // A healthy existing connection needs no new offer.
+        // Keep healthy media; recover only missing connections.
         if(peers.has(id))continue;
         peer(id);
-        if(shouldInitiate(id))offer(id).catch(()=>{});
+        if(shouldInitiate(id)){
+          offer(id).catch(()=>{});
+        }else{
+          // Answerers need an offer from the remote peer.
+          signal('rtc_reconnect',id,{reset:false});
+        }
       }
       return;
     }
