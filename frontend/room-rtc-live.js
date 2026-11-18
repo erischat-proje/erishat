@@ -846,9 +846,32 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     const own=(room?.seats||[]).find(s=>String(s.user_id)===String(myId||window.ErisCurrentUserId));
     if(autoRoom!==id||autoSeat!==seat){
       autoRoom=id;autoSeat=seat;manualMicOff=false;autoAttempted=false;
-      if(stream&&Number(microphoneSeat)!==seat)stop();
+      if(stream&&Number(microphoneSeat)!==seat){
+        stop().catch(e=>console.warn(
+          '[LidyaChat] koltuk mikrofon temizligi',e
+        ));
+      }else if(micBusy){
+        // Seat or room changed while microphone permission is pending.
+        // Invalidate the old request without starting another capture.
+        stop().catch(e=>console.warn(
+          '[LidyaChat] bekleyen mikrofon iptali',e
+        ));
+      }
     }
-    if(!seat||own?.muted){if(stream||micBusy)stop();return;}
+    if(!seat||own?.muted){
+      if(stream){
+        stop().catch(e=>console.warn(
+          '[LidyaChat] mikrofon kapatma',e
+        ));
+      }else if(micBusy&&!manualMicOff){
+        // Cancel once; the pending permission result will be cleaned up.
+        manualMicOff=true;
+        stop().catch(e=>console.warn(
+          '[LidyaChat] mikrofon izin iptali',e
+        ));
+      }
+      return;
+    }
     if(stream||micBusy||manualMicOff||autoAttempted||!myId||socket()?.readyState!==WebSocket.OPEN)return;
     autoAttempted=true;
     startMicrophone().catch(()=>{});
