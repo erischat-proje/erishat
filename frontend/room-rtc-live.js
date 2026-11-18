@@ -585,13 +585,19 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     micRequest++;microphoneSeat=null;
     if(myId)unwatchLevel(myId);
     const oldStream=stream;stream=null;show();
-    if(!oldStream)return;
+    // Even without a current stream, an earlier cleanup may be running.
+    if(!oldStream)return microphoneCleanup;
     const oldTracks=oldStream.getTracks();
     // Mute immediately; keep inbound audio connections alive.
     oldTracks.forEach(track=>{
       try{track.enabled=false}catch{}
     });
-    const cleanup=(async()=>{
+    // Serialize all microphone shutdowns. A later shutdown must not
+    // hide an earlier outstanding sender cleanup.
+    const previousCleanup=microphoneCleanup;
+    const cleanup=previousCleanup.catch(e=>{
+      console.warn('[LidyaChat] onceki mikrofon temizligi',e);
+    }).then(async()=>{
       try{
         await Promise.allSettled(
           [...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
@@ -608,7 +614,7 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
           try{track.stop()}catch{}
         });
       }
-    })();
+    });
     microphoneCleanup=cleanup;
     await cleanup;
   }
