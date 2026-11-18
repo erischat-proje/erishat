@@ -847,9 +847,16 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     if(autoRoom!==id||autoSeat!==seat){
       autoRoom=id;autoSeat=seat;manualMicOff=false;autoAttempted=false;
       if(stream&&Number(microphoneSeat)!==seat){
+        // Retry auto-start only after the previous mic has detached.
+        const generation=roomGeneration;
         stop().catch(e=>console.warn(
           '[LidyaChat] koltuk mikrofon temizligi',e
-        ));
+        )).finally(()=>{
+          if(generation!==roomGeneration||
+             currentRoom()!==id)return;
+          // Recheck the latest seat and manual mute preference.
+          syncSeatMicrophone();
+        });
       }else if(micBusy){
         // Seat or room changed while microphone permission is pending.
         // Invalidate the old request without starting another capture.
