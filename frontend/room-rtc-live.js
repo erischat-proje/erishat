@@ -566,6 +566,8 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false;show();if(currentRoom()===room&&(generation!==roomGeneration||(request!==micRequest&&!manualMicOff&&!autoAttempted)))syncSeatMicrophone()}
   }
   function leaveRoom(){
+    clearTimeout(foregroundRecoveryTimer);
+    foregroundRecoveryTimer=null;
     autoSeat=null;autoRoom=null;manualMicOff=false;autoAttempted=false;blockedAudio.clear();
     clearTimeout(configRetryTimer);configRetryTimer=null;
     roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();networkRecoveryAt.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
@@ -690,8 +692,25 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
   }
   audioMonitorTimer=setInterval(()=>{if(currentRoom()&&peers.size)monitorAudioPackets().catch(()=>{})},15000);
   function audioPacketStatus(){return [...lastPacketSnapshot].map(([,v])=>({stalled:v.stalled,lastProgressMs:Date.now()-v.lastProgress}))}
-  window.addEventListener('online',recoverNetwork);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')recoverNetwork()});
+  // Android/WebView foreground recovery: merge repeated wake events.
+  let foregroundRecoveryTimer=null;
+  function scheduleForegroundRecovery(){
+    if(!currentRoom()||document.visibilityState==='hidden')return;
+    const generation=roomGeneration, room=currentRoom();
+    clearTimeout(foregroundRecoveryTimer);
+    foregroundRecoveryTimer=setTimeout(()=>{
+      foregroundRecoveryTimer=null;
+      if(generation!==roomGeneration||currentRoom()!==room)return;
+      resumeRoomAudio().catch(()=>{});
+      if(socket()?.readyState===WebSocket.OPEN)recoverNetwork();
+    },700);
+  }
+  window.addEventListener('online',scheduleForegroundRecovery);
+  window.addEventListener('focus',scheduleForegroundRecovery);
+  window.addEventListener('pageshow',scheduleForegroundRecovery);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')scheduleForegroundRecovery();
+  });
   navigator.mediaDevices?.addEventListener?.('devicechange',()=>{resumeRoomAudio();checkMicrophoneSeat()});
   function syncSeatMicrophone(room){
     const id=currentRoom();if(!id)return;
