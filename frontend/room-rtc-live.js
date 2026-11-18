@@ -645,9 +645,16 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       }
       stream=captured;
       await checkMicrophoneSeat();
-      if(!stream)return;const activeStream=stream;watchLevel(myId,stream);stream.getAudioTracks()[0]?.addEventListener('ended',()=>{if(stream===activeStream)stop()},{once:true});show();
+      // Do not resume a cancelled or replaced capture.
+      if(request!==micRequest||
+         generation!==roomGeneration||
+         currentRoom()!==room||
+         stream!==captured)return;
+      const activeStream=captured;watchLevel(myId,stream);stream.getAudioTracks()[0]?.addEventListener('ended',()=>{if(stream===activeStream)stop()},{once:true});show();
       for(const peerId of known){
-        if(request!==micRequest||stream!==activeStream)return;
+        if(request!==micRequest||
+           generation!==roomGeneration||
+           stream!==activeStream)return;
         try{await enqueuePeer(peerId,()=>attachMicrophone(peerId))}
         catch(e){console.warn('[LidyaChat] mikrofon peer bağlantısı başarısız',peerId,e)}
       }
@@ -658,7 +665,9 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
-    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{
+    catch(e){if(request===micRequest&&generation===roomGeneration){
+      if(stream===captured)await stop();
+      const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{
       // Release captured audio if no active room owns it.
       if(captured&&stream!==captured){
         captured.getTracks().forEach(track=>{
