@@ -620,6 +620,9 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       if(Array.isArray(cfg.ice_servers)){iceServers=cfg.ice_servers;for(const pc of peers.values()){try{pc.setConfiguration({iceServers})}catch{}}}
       if(cfg.muted)return window.toast?.('Bu koltuğun mikrofonu susturuldu.');
       if(!cfg.seat_number)return window.toast?.('Mikrofon için önce koltuğa otur.');
+      // Do not capture for a seat that has already changed.
+      if(Number(window.__erisRoomPermissions?.current_user_seat)!==
+         Number(cfg.seat_number))return;
       microphoneSeat=Number(cfg.seat_number);
       let captured;
       try{captured=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false})}
@@ -627,7 +630,12 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN){captured.getTracks().forEach(t=>t.stop());return}
       let verified;
       try{verified=await rtcConfigRequest(room)}catch(e){captured.getTracks().forEach(t=>t.stop());throw e}
-      if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN||verified.muted||Number(verified.seat_number)!==Number(cfg.seat_number)||!verified.seat_number){captured.getTracks().forEach(t=>t.stop());return}
+      if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN||verified.muted||Number(verified.seat_number)!==Number(cfg.seat_number)||!verified.seat_number||
+         Number(window.__erisRoomPermissions?.current_user_seat)!==
+         Number(verified.seat_number)){
+        captured.getTracks().forEach(t=>t.stop());
+        return;
+      }
       stream=captured;
       await checkMicrophoneSeat();
       if(!stream)return;const activeStream=stream;watchLevel(myId,stream);stream.getAudioTracks()[0]?.addEventListener('ended',()=>{if(stream===activeStream)stop()},{once:true});show();
@@ -640,7 +648,15 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
-    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false;show();if(currentRoom()===room&&(generation!==roomGeneration||(request!==micRequest&&!manualMicOff&&!autoAttempted)))syncSeatMicrophone()}
+    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{
+      // An obsolete request must not clear a newer request's busy state.
+      if(request===micRequest){
+        micBusy=false;
+        show();
+        if(currentRoom()===room&&!manualMicOff&&!autoAttempted)
+          syncSeatMicrophone();
+      }
+    }
   }
   function leaveRoom(){
     clearTimeout(foregroundRecoveryTimer);
