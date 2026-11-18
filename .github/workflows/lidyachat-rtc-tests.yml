@@ -1,0 +1,40 @@
+name: LidyaChat RTC Tests
+
+on:
+  pull_request:
+    branches:
+      - auth-unified-v1
+    paths:
+      - 'frontend/room-rtc-live.js'
+      - 'scripts/rtc*.test.cjs'
+      - '.github/workflows/lidyachat-rtc-tests.yml'
+  push:
+    branches:
+      - auth-unified-v1
+    paths:
+      - 'frontend/room-rtc-live.js'
+      - 'scripts/rtc*.test.cjs'
+      - '.github/workflows/lidyachat-rtc-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  rtc-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check RTC JavaScript
+        run: node --check frontend/room-rtc-live.js
+
+      - name: Run RTC regression tests
+        run: node --test scripts/rtc_v43_recovery.test.cjs
