@@ -467,18 +467,32 @@
     });
   }
   async function handleMessage(d){if(d.type==='rtc_ready'){
+      // Preserve healthy media when signaling reconnects in the same room.
+      const sameSession=myId===String(d.user_id)&&
+        configRoom===currentRoom();
       myId=String(d.user_id);autoAttempted=false;configPromise=null;configRoom=null;offerJobs.clear();
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
 
-      for(const id of [...peers.keys()]){
-        if(!fresh.has(id))drop(id);
+      for(const [id,pc] of [...peers]){
+        const healthy=sameSession&&fresh.has(id)&&
+          pc.connectionState==='connected'&&
+          pc.iceConnectionState!=='failed'&&
+          pc.signalingState==='stable'&&
+          !pc._erisTrackEnded&&hasLiveRemoteAudio(pc);
+        if(!healthy){
+          drop(id);
+        }else{
+          // Replace the old generation's recovery timer.
+          clearTimeout(reconnectTimers.get(id));
+          reconnectTimers.delete(id);
+          scheduleRecovery(id,pc,20000);
+        }
       }
 
       known.clear();
       for(const id of fresh)known.add(id);
-
-      // A new signaling session cannot reuse an unanswered offer from the old socket.
-      for(const id of [...peers.keys()])drop(id);
+      // Candidates from an old signaling session must not be reused.
+      pendingIce.clear();
       try{await loadConfig()}catch(e){
         const generation=roomGeneration;clearTimeout(configRetryTimer);
         configRetryTimer=setTimeout(()=>{
@@ -491,7 +505,10 @@
       resumeRoomAudio().catch(()=>{});
       syncSeatMicrophone();
       for(const id of known){
-        peer(id);if(shouldInitiate(id))offer(id).catch(()=>{});
+        // A healthy existing connection needs no new offer.
+        if(peers.has(id))continue;
+        peer(id);
+        if(shouldInitiate(id))offer(id).catch(()=>{});
       }
       return;
     }
