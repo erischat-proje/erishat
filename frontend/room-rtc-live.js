@@ -6,8 +6,26 @@
   let roomGeneration=0, configRoom=null, configPromise=null, seatCheckBusy=false, micBusy=false;
   let messageQueue=Promise.resolve(), configRetryTimer=null;
   const peerQueues=new Map(), signalCounts=new Map(), recoveryAttempts=new Map();
+  // Invalidate queued work when a participant leaves and rejoins.
+  const peerEpochs=new Map();
+  function retireMember(id){
+    peerEpochs.set(id,(peerEpochs.get(id)||0)+1);
+    recoveryAttempts.delete(id);
+    offerJobs.delete(id);
+    // A returning participant must not wait for old peer jobs.
+    peerQueues.delete(id);
+    signalCounts.delete(id);
+  }
   let autoSeat=null, autoRoom=null, manualMicOff=false, autoAttempted=false;
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
+  // New captures must wait until the previous microphone is detached.
+  let microphoneCleanup=Promise.resolve();
+  // Tracks waiting for cleanup, including from an old room.
+  const pendingMicTracks=new Set();
+  // Identify the capture operation independently of cancellation.
+  let activeMicStart=0;
+  // Keep automatic seat cancellation separate from manual mute.
+  let seatCancellationRequest=0;
   const diagnostics={configErrors:0,signalErrors:0,audioBlocked:0,recoveries:0};
   async function rtcConfigRequest(room){
     const controller=new AbortController();
@@ -16,16 +34,40 @@
     finally{clearTimeout(timer)}
   }
   function enqueuePeer(id,operation){
-    const generation=roomGeneration, count=signalCounts.get(id)||0;
+    const generation=roomGeneration, epoch=peerEpochs.get(id)||0;
+    const count=signalCounts.get(id)||0;
     if(count>=128){diagnostics.signalErrors++;return Promise.resolve()}
     signalCounts.set(id,count+1);
     const job=(peerQueues.get(id)||Promise.resolve()).then(()=>{
-      if(generation===roomGeneration&&known.has(id))return operation();
-    }).catch(e=>{diagnostics.signalErrors++;console.warn('[LidyaChat] ses bağlantı işlemi',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,1500)})
-      .finally(()=>{if(generation!==roomGeneration)return;signalCounts.set(id,Math.max(0,(signalCounts.get(id)||1)-1));if(peerQueues.get(id)===job){peerQueues.delete(id);signalCounts.delete(id)}});
+      if(generation===roomGeneration&&
+         epoch===(peerEpochs.get(id)||0)&&
+         known.has(id))return operation();
+    }).catch(e=>{
+      if(generation!==roomGeneration||
+         epoch!==(peerEpochs.get(id)||0))return;
+      diagnostics.signalErrors++;
+      console.warn('[LidyaChat] ses bağlantı işlemi',e);
+      const pc=peers.get(id);
+      if(pc)scheduleRecovery(id,pc,1500);
+    })
+      .finally(()=>{
+        // Old participant jobs cannot alter a new epoch's counters.
+        if(generation!==roomGeneration||
+           epoch!==(peerEpochs.get(id)||0))return;
+        signalCounts.set(
+          id,Math.max(0,(signalCounts.get(id)||1)-1)
+        );
+        if(peerQueues.get(id)===job){
+          peerQueues.delete(id);
+          signalCounts.delete(id);
+        }
+      });
     peerQueues.set(id,job);return job;
   }
   const offerJobs=new Map();
+  // Limit repeated network recovery signals per peer.
+  const networkRecoveryAt=new Map();
+  const NETWORK_RECOVERY_COOLDOWN=5000;
   const currentRoom=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
   async function loadConfig(){
     const room=currentRoom(), generation=roomGeneration;
@@ -206,8 +248,39 @@
     showOutput();window.toast?.(outputEnabled?'Oda sesleri açıldı.':'Oda sesleri kapatıldı.');
   }
   function shouldInitiate(id){return Boolean(myId&&id&&myId<id)}
-  async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){if(candidate._eris_offer&&pc._erisOffer&&candidate._eris_offer!==pc._erisOffer)continue;try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[LidyaChat] ICE aday sinyali uygulanamadı',e)}}}
+  // Connected transport alone does not guarantee incoming audio.
+  // A silent or muted speaker still has a valid live audio track.
+  function hasLiveRemoteAudio(pc){
+    try{
+      return pc.getReceivers().some(r=>
+        r.track?.kind==='audio' &&
+        r.track.readyState==='live'
+      );
+    }catch{return false}
+  }
+  async function flushIce(id,pc){
+    if(peers.get(id)!==pc)return;
+    const queued=pendingIce.get(id)||[];
+    pendingIce.delete(id);
+    for(const candidate of queued){
+      // Stop if this connection was replaced during an await.
+      if(peers.get(id)!==pc||
+         pc.signalingState==='closed')return;
+      if(candidate._eris_offer&&pc._erisOffer&&
+         candidate._eris_offer!==pc._erisOffer)continue;
+      try{
+        await pc.addIceCandidate(
+          new RTCIceCandidate(candidate)
+        );
+      }catch(e){
+        console.warn(
+          '[LidyaChat] ICE aday sinyali uygulanamadi',e
+        );
+      }
+    }
+  }
   function drop(id){
+    networkRecoveryAt.delete(id);
     unwatchLevel(id);clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);pendingIce.delete(id);
     const pc=peers.get(id);peers.delete(id);
     if(pc){pc.onicecandidate=null;pc.ontrack=null;pc.onnegotiationneeded=null;pc.onconnectionstatechange=null;pc.oniceconnectionstatechange=null;try{pc.close()}catch{}}
@@ -232,8 +305,13 @@
     pc.onnegotiationneeded=()=>{if(shouldInitiate(id))offer(id)};
     const connectionChanged=()=>{
       if(peers.get(id)!==pc)return;
-      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded){
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded&&hasLiveRemoteAudio(pc)){
         clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);recoveryAttempts.delete(id);resumeRoomAudio();return;
+      }
+      if(pc.connectionState==='connected'&&!hasLiveRemoteAudio(pc)){
+        // Wait for the incoming track before attempting recovery.
+        scheduleRecovery(id,pc,10000);
+        return;
       }
       if(pc.connectionState==='failed'||pc.iceConnectionState==='failed'){clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);scheduleRecovery(id,pc,1000)}
       else if(pc.connectionState==='disconnected'||pc.iceConnectionState==='disconnected'){clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);scheduleRecovery(id,pc,5000)}
@@ -274,11 +352,30 @@
     reconnectTimers.set(id,setTimeout(()=>{
       reconnectTimers.delete(id);
       if(generation!==roomGeneration||peers.get(id)!==pc||!known.has(id))return;
-      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded)return;
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded&&hasLiveRemoteAudio(pc))return;
+      // Do not consume recovery attempts while signaling is offline.
+      // Room websocket reconnect will also refresh the RTC roster.
+      if(socket()?.readyState!==WebSocket.OPEN){
+        scheduleRecovery(id,pc,5000);
+        return;
+      }
       enqueuePeer(id,async()=>{
+        if(socket()?.readyState!==WebSocket.OPEN)return;
         if(peers.get(id)!==pc)return;
         const attempts=(recoveryAttempts.get(id)||0)+1;recoveryAttempts.set(id,attempts);diagnostics.recoveries++;
-        if(attempts%3===0||pc._erisTrackEnded){drop(id);if(shouldInitiate(id))await makeOffer(id,true);else signal('rtc_reconnect',id,{reset:true});return}
+        if(attempts%3===0||pc._erisTrackEnded){
+          drop(id);
+          // Keep recovery alive even if the reset signal is lost.
+          // Listening must not depend on owning a microphone.
+          if(!known.has(id)||socket()?.readyState!==WebSocket.OPEN)return;
+          peer(id);
+          if(shouldInitiate(id)){
+            await makeOffer(id,true);
+          }else{
+            signal('rtc_reconnect',id,{reset:true});
+          }
+          return;
+        }
         if(shouldInitiate(id)){
           if(pc.signalingState==='have-local-offer')await pc.setLocalDescription({type:'rollback'});
           try{pc.restartIce?.()}catch{}
@@ -297,8 +394,11 @@
     if(id===myId||!shouldInitiate(id)||!socket()||socket().readyState!==WebSocket.OPEN)return;
 
     const generation=roomGeneration, signalingSocket=socket();
+    const epoch=peerEpochs.get(id)||0;
     await loadConfig();
-    if(generation!==roomGeneration||socket()!==signalingSocket)return;
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       socket()!==signalingSocket)return;
     if(!known.has(id)||socket()?.readyState!==WebSocket.OPEN)return;
     const pc=peer(id);
 
@@ -321,6 +421,10 @@
       }
     }
 
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       peers.get(id)!==pc||
+       socket()!==signalingSocket)return;
     if(pc.signalingState!=='stable')return;
 
     pc._erisOffer=String(roomGeneration)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);
@@ -328,15 +432,28 @@
       iceRestart:restart||pc.iceConnectionState==='failed'
     });
 
-    if(generation!==roomGeneration||peers.get(id)!==pc||socket()!==signalingSocket)return;
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       peers.get(id)!==pc||
+       socket()!==signalingSocket)return;
     await pc.setLocalDescription(desc);
-    if(generation!==roomGeneration||peers.get(id)!==pc||socket()!==signalingSocket)return;
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       peers.get(id)!==pc||
+       socket()!==signalingSocket)return;
     signal('rtc_offer',id,{type:pc.localDescription.type,sdp:pc.localDescription.sdp,_eris_offer:pc._erisOffer});
   }
 
   function message(d){
     if(!d||typeof d.type!=='string')return Promise.resolve();
-    if(d.type==='rtc_ready'){roomGeneration++;peerQueues.clear();signalCounts.clear()}
+    if(d.type==='rtc_ready'){
+      // A new signaling session must not wait for an old queue.
+      // Old queued operations are invalidated by roomGeneration.
+      roomGeneration++;
+      peerQueues.clear();
+      signalCounts.clear();
+      messageQueue=Promise.resolve();
+    }
     const generation=roomGeneration;
     if(d.type==='rtc_ready'){
       messageQueue=messageQueue.then(()=>{if(generation===roomGeneration)return handleMessage(d)}).catch(e=>console.warn('[LidyaChat] ses başlangıcı',e));
@@ -344,26 +461,45 @@
     }
     if(d.type==='room_seat_muted')return handleMessage(d);
     const id=String(d.from_user_id||d.user_id||'');
+    const epoch=peerEpochs.get(id)||0;
     return messageQueue.then(()=>{
       if(generation!==roomGeneration)return;
+      if(d.type!=='rtc_peer_joined'&&
+         d.type!=='rtc_peer_left'&&
+         d.type!=='rtc_roster'&&
+         epoch!==(peerEpochs.get(id)||0))return;
       if(d.type==='rtc_peer_joined'||d.type==='rtc_peer_left'||d.type==='rtc_roster')return handleMessage(d);
       if(!id||id===myId||!known.has(id))return;
       return enqueuePeer(id,()=>handleMessage(d));
     });
   }
   async function handleMessage(d){if(d.type==='rtc_ready'){
+      // Preserve healthy media when signaling reconnects in the same room.
+      const sameSession=myId===String(d.user_id)&&
+        configRoom===currentRoom();
       myId=String(d.user_id);autoAttempted=false;configPromise=null;configRoom=null;offerJobs.clear();
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
 
-      for(const id of [...peers.keys()]){
-        if(!fresh.has(id))drop(id);
+      for(const [id,pc] of [...peers]){
+        const healthy=sameSession&&fresh.has(id)&&
+          pc.connectionState==='connected'&&
+          pc.iceConnectionState!=='failed'&&
+          pc.signalingState==='stable'&&
+          !pc._erisTrackEnded&&hasLiveRemoteAudio(pc);
+        if(!healthy){
+          drop(id);
+        }else{
+          // Replace the old generation's recovery timer.
+          clearTimeout(reconnectTimers.get(id));
+          reconnectTimers.delete(id);
+          scheduleRecovery(id,pc,20000);
+        }
       }
 
       known.clear();
       for(const id of fresh)known.add(id);
-
-      // A new signaling session cannot reuse an unanswered offer from the old socket.
-      for(const id of [...peers.keys()])drop(id);
+      // Candidates from an old signaling session must not be reused.
+      pendingIce.clear();
       try{await loadConfig()}catch(e){
         const generation=roomGeneration;clearTimeout(configRetryTimer);
         configRetryTimer=setTimeout(()=>{
@@ -376,21 +512,66 @@
       resumeRoomAudio().catch(()=>{});
       syncSeatMicrophone();
       for(const id of known){
-        peer(id);if(shouldInitiate(id))offer(id).catch(()=>{});
+        // Keep healthy media; recover only missing connections.
+        if(peers.has(id))continue;
+        peer(id);
+        if(shouldInitiate(id)){
+          offer(id).catch(()=>{});
+        }else{
+          // Answerers need an offer from the remote peer.
+          signal('rtc_reconnect',id,{reset:false});
+        }
       }
       return;
     }
-    if(d.type==='rtc_peer_joined'){const id=String(d.user_id||'');if(id&&id!==myId){const isNew=!known.has(id);known.add(id);if(isNew){recoveryAttempts.delete(id);peer(id);if(shouldInitiate(id))offer(id)}}return}
+    if(d.type==='rtc_peer_joined'){
+      const id=String(d.user_id||'');
+      if(id&&id!==myId){
+        const isNew=!known.has(id);
+        known.add(id);
+        const existing=peers.get(id);
+        if(isNew||!existing||existing.signalingState==='closed'){
+          recoveryAttempts.delete(id);
+          if(existing)drop(id);
+          peer(id);
+          if(shouldInitiate(id))offer(id).catch(()=>{});
+        }
+      }
+      return;
+    }
     if(d.type==='rtc_roster'){
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
-      for(const id of known)if(!fresh.has(id)){known.delete(id);drop(id);recoveryAttempts.delete(id)}
-      for(const id of fresh){known.add(id);if(!peers.has(id)){peer(id);if(shouldInitiate(id))offer(id)}}
+      for(const id of known)if(!fresh.has(id)){
+        known.delete(id);
+        retireMember(id);
+        drop(id);
+      }
+      for(const id of fresh){
+        known.add(id);
+        const existing=peers.get(id);
+        if(!existing||existing.signalingState==='closed'){
+          if(existing)drop(id);
+          recoveryAttempts.delete(id);
+          peer(id);
+          if(shouldInitiate(id)){
+            offer(id).catch(()=>{});
+          }else{
+            // Request an offer when a roster reveals a missing peer.
+            signal('rtc_reconnect',id,{reset:false});
+          }
+        }else if(existing.connectionState==='failed'||existing.iceConnectionState==='failed'){
+          scheduleRecovery(id,existing,1000);
+        }else if(existing.connectionState==='connected'&&!hasLiveRemoteAudio(existing)){
+          scheduleRecovery(id,existing,10000);
+        }
+      }
       return;
     }
     if(d.type==='rtc_peer_left'){
       const id=String(d.user_id||'');
       if(id&&id!==myId){
         known.delete(id);
+        retireMember(id);
         drop(id);
         setTimeout(()=>window.ErisRoomUI?.refresh?.().catch?.(()=>{}),150);
       }
@@ -420,30 +601,54 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       await makeOffer(id,true);return;
     }
     const generation=roomGeneration, ws=socket();
+    const epoch=peerEpochs.get(id)||0;
+    const stillCurrent=pc=>
+      generation===roomGeneration&&
+      epoch===(peerEpochs.get(id)||0)&&
+      ws===socket()&&known.has(id)&&
+      (!pc||peers.get(id)===pc);
     try{
       await loadConfig();
-      if(generation!==roomGeneration||ws!==socket()||!known.has(id))return;
+      if(!stillCurrent())return;
       if(d.type==='rtc_offer'){
         const pc=peer(id);
         if(pc.signalingState==='have-local-offer'){
           if(shouldInitiate(id))return;
           await pc.setLocalDescription({type:'rollback'});
+          // A peer can be retired while rollback is pending.
+          if(!stillCurrent(pc))return;
         }
         pc._erisOffer=d.payload?._eris_offer||null;
         await pc.setRemoteDescription(new RTCSessionDescription(d.payload));
+        if(!stillCurrent(pc))return;
         await attachMicrophone(id);
+        if(!stillCurrent(pc))return;
         await flushIce(id,pc);
+        if(!stillCurrent(pc))return;
         const desc=await pc.createAnswer();
-        if(generation!==roomGeneration||peers.get(id)!==pc||ws!==socket())return;
+        if(!stillCurrent(pc))return;
         await pc.setLocalDescription(desc);
+        if(!stillCurrent(pc))return;
         signal('rtc_answer',id,{type:pc.localDescription.type,sdp:pc.localDescription.sdp,_eris_offer:pc._erisOffer});
       }else if(d.type==='rtc_answer'){
         const pc=peers.get(id);
-        if(pc?.signalingState==='have-local-offer'&&(!d.payload?._eris_offer||d.payload._eris_offer===pc._erisOffer)){
-          await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc);
+        if(pc?.signalingState==='have-local-offer'&&
+           (!d.payload?._eris_offer||
+            d.payload._eris_offer===pc._erisOffer)){
+          // Capture the offer this answer is supposed to complete.
+          const offerId=pc._erisOffer;
+          await pc.setRemoteDescription(
+            new RTCSessionDescription(d.payload)
+          );
+          if(!stillCurrent(pc)||pc._erisOffer!==offerId)return;
+          await flushIce(id,pc);
         }
       }else if(d.type==='rtc_ice'){
         const pc=peers.get(id);
+        // Reject candidates from an older known offer, even
+        // before the current remote description is installed.
+        if(d.payload?._eris_offer&&pc?._erisOffer&&
+           d.payload._eris_offer!==pc._erisOffer)return;
         if(pc?.remoteDescription){
           if(d.payload?._eris_offer&&pc._erisOffer&&d.payload._eris_offer!==pc._erisOffer)return;
           try{await pc.addIceCandidate(new RTCIceCandidate(d.payload))}catch(e){diagnostics.signalErrors++;console.warn('[LidyaChat] eski/geçersiz ICE adayı',e)}
@@ -457,55 +662,137 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     micRequest++;microphoneSeat=null;
     if(myId)unwatchLevel(myId);
     const oldStream=stream;stream=null;show();
-    if(!oldStream)return;
+    // Even without a current stream, an earlier cleanup may be running.
+    if(!oldStream)return microphoneCleanup;
     const oldTracks=oldStream.getTracks();
-    oldTracks.forEach(track=>{try{track.stop()}catch{}});
-    await Promise.allSettled([...peers].map(([id,pc])=>enqueuePeer(id,async()=>{
-      if(peers.get(id)!==pc)return;
-      for(const transceiver of pc.getTransceivers()){
-        if(oldTracks.includes(transceiver.sender?.track)){
-          await transceiver.sender.replaceTrack(null);
-          if(!transceiver.stopped)transceiver.direction='sendrecv';
-        }
+    const cleanupGeneration=roomGeneration;
+    const cleanupPeers=[...peers];
+    oldTracks.forEach(track=>pendingMicTracks.add(track));
+    // Mute immediately; keep inbound audio connections alive.
+    oldTracks.forEach(track=>{
+      try{track.enabled=false}catch{}
+    });
+    // Serialize all microphone shutdowns. A later shutdown must not
+    // hide an earlier outstanding sender cleanup.
+    const previousCleanup=microphoneCleanup;
+    const cleanup=previousCleanup.catch(e=>{
+      console.warn('[LidyaChat] onceki mikrofon temizligi',e);
+    }).then(async()=>{
+      try{
+        // Never detach a microphone from a different room.
+        if(cleanupGeneration!==roomGeneration)return;
+        await Promise.allSettled(
+          cleanupPeers.map(([id,pc])=>enqueuePeer(id,async()=>{
+            if(cleanupGeneration!==roomGeneration||
+               peers.get(id)!==pc)return;
+            for(const transceiver of pc.getTransceivers()){
+              if(oldTracks.includes(transceiver.sender?.track)){
+                await transceiver.sender.replaceTrack(null);
+              }
+            }
+          }))
+        );
+      }finally{
+        oldTracks.forEach(track=>{
+          try{track.stop()}catch{}
+          pendingMicTracks.delete(track);
+        });
       }
-    })));
+    });
+    microphoneCleanup=cleanup;
+    await cleanup;
   }
 
   async function toggle(){manualMicOff=!!stream||micBusy;autoAttempted=false;return startMicrophone()}
   async function startMicrophone(){if(stream){await stop();return}if(micBusy){micRequest++;manualMicOff=true;window.toast?.('Mikrofon açma işlemi iptal edildi.');return}if(!window.__erisRoomPermissions?.current_user_seat)return window.toast?.('Mikrofon için önce boş bir koltuğa otur.');if(!window.RTCPeerConnection||!navigator.mediaDevices?.getUserMedia)return window.toast?.('Bu tarayıcı sesli sohbeti desteklemiyor.');if(socket()?.readyState!==WebSocket.OPEN)return window.toast?.('Oda bağlantısı henüz hazır değil.');
-    micBusy=true;show();const request=++micRequest,generation=roomGeneration;const room=currentRoom();
-    try{const cfg=await rtcConfigRequest(room);
+    micBusy=true;
+    const request=++micRequest,generation=roomGeneration;
+    const room=currentRoom();
+    activeMicStart=request;
+    show();
+    // Keep ownership of the captured stream until adopted.
+    let captured=null;
+    try{
+      await microphoneCleanup;
+      if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
+      const cfg=await rtcConfigRequest(room);
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
       if(Array.isArray(cfg.ice_servers)){iceServers=cfg.ice_servers;for(const pc of peers.values()){try{pc.setConfiguration({iceServers})}catch{}}}
       if(cfg.muted)return window.toast?.('Bu koltuğun mikrofonu susturuldu.');
       if(!cfg.seat_number)return window.toast?.('Mikrofon için önce koltuğa otur.');
+      // Do not capture for a seat that has already changed.
+      if(Number(window.__erisRoomPermissions?.current_user_seat)!==
+         Number(cfg.seat_number))return;
       microphoneSeat=Number(cfg.seat_number);
-      let captured;
       try{captured=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false})}
       catch(e){if(e.name!=='OverconstrainedError')throw e;captured=await navigator.mediaDevices.getUserMedia({audio:true,video:false})}
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN){captured.getTracks().forEach(t=>t.stop());return}
       let verified;
       try{verified=await rtcConfigRequest(room)}catch(e){captured.getTracks().forEach(t=>t.stop());throw e}
-      if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN||verified.muted||Number(verified.seat_number)!==Number(cfg.seat_number)||!verified.seat_number){captured.getTracks().forEach(t=>t.stop());return}
+      if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN||verified.muted||Number(verified.seat_number)!==Number(cfg.seat_number)||!verified.seat_number||
+         Number(window.__erisRoomPermissions?.current_user_seat)!==
+         Number(verified.seat_number)){
+        captured.getTracks().forEach(t=>t.stop());
+        return;
+      }
       stream=captured;
       await checkMicrophoneSeat();
-      if(!stream)return;const activeStream=stream;watchLevel(myId,stream);stream.getAudioTracks()[0]?.addEventListener('ended',()=>{if(stream===activeStream)stop()},{once:true});show();
+      // Do not resume a cancelled or replaced capture.
+      if(request!==micRequest||
+         generation!==roomGeneration||
+         currentRoom()!==room||
+         stream!==captured)return;
+      const activeStream=captured;watchLevel(myId,stream);stream.getAudioTracks()[0]?.addEventListener('ended',()=>{if(stream===activeStream)stop()},{once:true});show();
       for(const peerId of known){
-        if(request!==micRequest||stream!==activeStream)return;
+        if(request!==micRequest||
+           generation!==roomGeneration||
+           stream!==activeStream)return;
         try{await enqueuePeer(peerId,()=>attachMicrophone(peerId))}
         catch(e){console.warn('[LidyaChat] mikrofon peer bağlantısı başarısız',peerId,e)}
       }
       for(const peerId of known){
+        if(request!==micRequest||
+           generation!==roomGeneration||
+           stream!==activeStream)break;
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
-    catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{micBusy=false;show();if(currentRoom()===room&&(generation!==roomGeneration||(request!==micRequest&&!manualMicOff&&!autoAttempted)))syncSeatMicrophone()}
+    catch(e){if(request===micRequest&&generation===roomGeneration){
+      if(stream===captured)await stop();
+      const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{
+      // Release captured audio if no active room owns it.
+      if(captured&&stream!==captured){
+        captured.getTracks().forEach(track=>{
+          try{track.stop()}catch{}
+        });
+      }
+      // A cancelled capture must release its busy state when it settles.
+      // Do not clear a newer capture operation.
+      if(activeMicStart===request){
+        activeMicStart=0;
+        micBusy=false;
+        show();
+        // The permission request may belong to a room already left.
+        // Check the current room instead of requiring the old room.
+        // Respect manual mute and avoid duplicate auto-start attempts.
+        if(currentRoom()&&!manualMicOff&&!autoAttempted)
+          syncSeatMicrophone();
+      }
+    }
   }
   function leaveRoom(){
+    clearTimeout(foregroundRecoveryTimer);
+    foregroundRecoveryTimer=null;
     autoSeat=null;autoRoom=null;manualMicOff=false;autoAttempted=false;blockedAudio.clear();
     clearTimeout(configRetryTimer);configRetryTimer=null;
-    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
+    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();peerEpochs.clear();networkRecoveryAt.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
     microphoneSeat=null;
+    // Old-room sender operations must not block the next room.
+    microphoneCleanup=Promise.resolve();
+    for(const track of pendingMicTracks){
+      try{track.stop()}catch{}
+    }
+    pendingMicTracks.clear();
 
     if(stream){
       stream.getTracks().forEach(track=>{
@@ -538,9 +825,37 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
   }
 
   function recoverNetwork(){
-    if(!currentRoom())return;
+    if(!currentRoom()||socket()?.readyState!==WebSocket.OPEN)return;
     resumeRoomAudio();
-    for(const [id,pc]of peers){if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed')continue;if(shouldInitiate(id))offer(id,true);else signal('rtc_reconnect',id,{reset:false})}
+    // A missed join notification must not leave the listener without a peer.
+    // Listener-only peers still need an audio receive transceiver and an offer.
+    for(const id of known){
+      const pc=peers.get(id);
+      if(!pc||pc.signalingState==='closed'){
+        if(pc)drop(id);
+        peer(id);
+        // Recover both offerers and answerers immediately.
+        if(shouldInitiate(id)){
+          offer(id).catch(()=>{});
+        }else{
+          // A listener that cannot initiate an offer should not
+          // wait for the periodic recovery timer.
+          signal('rtc_reconnect',id,{reset:false});
+        }
+        continue;
+      }
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&hasLiveRemoteAudio(pc)){
+        networkRecoveryAt.delete(id);
+        continue;
+      }
+      // A negotiation already in progress must not be interrupted.
+      if(pc.signalingState!=='stable')continue;
+      const now=Date.now();
+      if(now-(networkRecoveryAt.get(id)||0)<NETWORK_RECOVERY_COOLDOWN)continue;
+      networkRecoveryAt.set(id,now);
+      if(shouldInitiate(id))offer(id,true).catch(()=>{});
+      else signal('rtc_reconnect',id,{reset:false});
+    }
     checkMicrophoneSeat();
   }
   // Local-only WebRTC health diagnostics. No audio samples or account tokens are stored.
@@ -549,20 +864,33 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     for(const [id,pc] of peers){
       const entry={id,connection:pc.connectionState,ice:pc.iceConnectionState,
         signaling:pc.signalingState,inboundPackets:0,outboundPackets:0,
-        inboundBytes:0,outboundBytes:0,remoteAudioTracks:0};
+        inboundBytes:0,outboundBytes:0,remoteAudioTracks:0,
+        remoteTrackMuted:false,playback:'missing',
+        packetsStalled:false,jitterMs:null};
       try{
         const stats=await pc.getStats();
         stats.forEach(v=>{
           if(v.type==='inbound-rtp'&&(v.kind==='audio'||v.mediaType==='audio')){
             entry.inboundPackets+=Number(v.packetsReceived)||0;
             entry.inboundBytes+=Number(v.bytesReceived)||0;
+            if(Number.isFinite(v.jitter))
+              entry.jitterMs=Math.round(v.jitter*1000);
           }
           if(v.type==='outbound-rtp'&&(v.kind==='audio'||v.mediaType==='audio')){
             entry.outboundPackets+=Number(v.packetsSent)||0;
             entry.outboundBytes+=Number(v.bytesSent)||0;
           }
         });
-        entry.remoteAudioTracks=pc.getReceivers().filter(r=>r.track?.kind==='audio'&&r.track.readyState==='live').length;
+        const tracks=pc.getReceivers()
+          .map(r=>r.track)
+          .filter(t=>t?.kind==='audio'&&t.readyState==='live');
+        entry.remoteAudioTracks=tracks.length;
+        entry.remoteTrackMuted=tracks.length>0&&tracks.every(t=>t.muted);
+        const audio=sounds.get(id);
+        entry.playback=!audio?'missing':
+          audio.muted?'muted':
+          audio.paused?'paused':'playing';
+        entry.packetsStalled=!!lastPacketSnapshot.get(id)?.stalled;
       }catch(e){entry.statsError=e?.name||'unavailable'}
       items.push(entry);
     }
@@ -592,8 +920,25 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
   }
   audioMonitorTimer=setInterval(()=>{if(currentRoom()&&peers.size)monitorAudioPackets().catch(()=>{})},15000);
   function audioPacketStatus(){return [...lastPacketSnapshot].map(([,v])=>({stalled:v.stalled,lastProgressMs:Date.now()-v.lastProgress}))}
-  window.addEventListener('online',recoverNetwork);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')recoverNetwork()});
+  // Android/WebView foreground recovery: merge repeated wake events.
+  let foregroundRecoveryTimer=null;
+  function scheduleForegroundRecovery(){
+    if(!currentRoom()||document.visibilityState==='hidden')return;
+    const generation=roomGeneration, room=currentRoom();
+    clearTimeout(foregroundRecoveryTimer);
+    foregroundRecoveryTimer=setTimeout(()=>{
+      foregroundRecoveryTimer=null;
+      if(generation!==roomGeneration||currentRoom()!==room)return;
+      resumeRoomAudio().catch(()=>{});
+      if(socket()?.readyState===WebSocket.OPEN)recoverNetwork();
+    },700);
+  }
+  window.addEventListener('online',scheduleForegroundRecovery);
+  window.addEventListener('focus',scheduleForegroundRecovery);
+  window.addEventListener('pageshow',scheduleForegroundRecovery);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')scheduleForegroundRecovery();
+  });
   navigator.mediaDevices?.addEventListener?.('devicechange',()=>{resumeRoomAudio();checkMicrophoneSeat()});
   function syncSeatMicrophone(room){
     const id=currentRoom();if(!id)return;
@@ -601,10 +946,46 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     const seat=Number(room?.current_user_seat??window.__erisRoomPermissions?.current_user_seat)||null;
     const own=(room?.seats||[]).find(s=>String(s.user_id)===String(myId||window.ErisCurrentUserId));
     if(autoRoom!==id||autoSeat!==seat){
-      autoRoom=id;autoSeat=seat;manualMicOff=false;autoAttempted=false;
-      if(stream&&Number(microphoneSeat)!==seat)stop();
+      const roomChanged=autoRoom!==id;
+      autoRoom=id;
+      autoSeat=seat;
+      // A seat change must not undo the user's manual mute.
+      if(roomChanged)manualMicOff=false;
+      autoAttempted=false;
+      if(stream&&Number(microphoneSeat)!==seat){
+        // Retry auto-start only after the previous mic has detached.
+        const generation=roomGeneration;
+        stop().catch(e=>console.warn(
+          '[LidyaChat] koltuk mikrofon temizligi',e
+        )).finally(()=>{
+          if(generation!==roomGeneration||
+             currentRoom()!==id)return;
+          // Recheck the latest seat and manual mute preference.
+          syncSeatMicrophone();
+        });
+      }else if(micBusy){
+        // Seat or room changed while microphone permission is pending.
+        // Invalidate the old request without starting another capture.
+        stop().catch(e=>console.warn(
+          '[LidyaChat] bekleyen mikrofon iptali',e
+        ));
+      }
     }
-    if(!seat||own?.muted){if(stream||micBusy)stop();return;}
+    if(!seat||own?.muted){
+      if(stream){
+        stop().catch(e=>console.warn(
+          '[LidyaChat] mikrofon kapatma',e
+        ));
+      }else if(micBusy&&
+               seatCancellationRequest!==activeMicStart){
+        // System cancellation is not a user mute preference.
+        seatCancellationRequest=activeMicStart;
+        stop().catch(e=>console.warn(
+          '[LidyaChat] mikrofon izin iptali',e
+        ));
+      }
+      return;
+    }
     if(stream||micBusy||manualMicOff||autoAttempted||!myId||socket()?.readyState!==WebSocket.OPEN)return;
     autoAttempted=true;
     startMicrophone().catch(()=>{});
