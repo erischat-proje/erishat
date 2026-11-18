@@ -256,6 +256,45 @@
         box-shadow: 0 0 0 2px var(--ui-shadow);
       }
 
+      /* LIDYA_ONBOARDING_SELECTION_V2 */
+      #erisOnboarding #erisAvatarGallery .eris-cosmetic-item.selected,
+      #erisOnboarding #erisFrameGallery .eris-cosmetic-item.selected,
+      #erisOnboarding #erisAvatarGallery .eris-cosmetic-item[aria-pressed="true"],
+      #erisOnboarding #erisFrameGallery .eris-cosmetic-item[aria-pressed="true"] {
+        position: relative !important;
+        border: 3px solid #bd861e !important;
+        outline: 3px solid #f5c451 !important;
+        outline-offset: 1px !important;
+        background: #fff0c5 !important;
+        box-shadow: 0 0 0 5px rgba(137,86,12,.25), 0 5px 16px rgba(79,47,8,.2) !important;
+        overflow: visible !important;
+        z-index: 2;
+      }
+      #erisOnboarding #erisAvatarGallery .eris-cosmetic-item.selected::after,
+      #erisOnboarding #erisFrameGallery .eris-cosmetic-item.selected::after {
+        content: "✓ SEÇİLDİ" !important;
+        position: absolute !important;
+        top: -11px !important;
+        right: -9px !important;
+        width: auto !important;
+        height: auto !important;
+        min-height: 23px !important;
+        padding: 3px 7px !important;
+        border: 2px solid #fff6dd !important;
+        border-radius: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #684111 !important;
+        color: #fff !important;
+        font: 800 10px/1.2 system-ui,sans-serif !important;
+        white-space: nowrap !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: none !important;
+        z-index: 10 !important;
+      }
+
       #erisOnboarding .eris-progress {
           display: flex;
           gap: 7px;
