@@ -618,6 +618,8 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     const room=currentRoom();
     activeMicStart=request;
     show();
+    // Keep ownership of the captured stream until adopted.
+    let captured=null;
     try{
       await microphoneCleanup;
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room)return;
@@ -630,7 +632,6 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       if(Number(window.__erisRoomPermissions?.current_user_seat)!==
          Number(cfg.seat_number))return;
       microphoneSeat=Number(cfg.seat_number);
-      let captured;
       try{captured=await navigator.mediaDevices.getUserMedia({audio:audioConstraints,video:false})}
       catch(e){if(e.name!=='OverconstrainedError')throw e;captured=await navigator.mediaDevices.getUserMedia({audio:true,video:false})}
       if(request!==micRequest||generation!==roomGeneration||currentRoom()!==room||socket()?.readyState!==WebSocket.OPEN){captured.getTracks().forEach(t=>t.stop());return}
@@ -651,10 +652,19 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         catch(e){console.warn('[LidyaChat] mikrofon peer bağlantısı başarısız',peerId,e)}
       }
       for(const peerId of known){
+        if(request!==micRequest||
+           generation!==roomGeneration||
+           stream!==activeStream)break;
         if(shouldInitiate(peerId))await offer(peerId);
       }
       if(request===micRequest&&stream===activeStream)window.toast?.('Mikrofon açıldı')}
     catch(e){if(request===micRequest&&generation===roomGeneration){stop();const notices={NotAllowedError:window.ErisChatAndroid ? 'Mikrofon izni verilmedi. Android Ayarlar → Uygulamalar → LidyaChat → İzinler bölümünden mikrofonu açıp yeniden dene.' : 'Mikrofon izni verilmedi.',NotFoundError:'Mikrofon bulunamadı.',NotReadableError:'Mikrofon başka bir uygulamada kullanılıyor veya erişilemiyor.',SecurityError:'Güvenli bağlantı veya uygulama mikrofon izni gerekli.',AbortError:'Mikrofon başlatılamadı; yeniden dene.'};window.toast?.(notices[e.name]||e.message||'Mikrofon açılamadı.')}}finally{
+      // Release captured audio if no active room owns it.
+      if(captured&&stream!==captured){
+        captured.getTracks().forEach(track=>{
+          try{track.stop()}catch{}
+        });
+      }
       // A cancelled capture must release its busy state when it settles.
       // Do not clear a newer capture operation.
       if(activeMicStart===request){
