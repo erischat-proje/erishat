@@ -206,6 +206,16 @@
     showOutput();window.toast?.(outputEnabled?'Oda sesleri açıldı.':'Oda sesleri kapatıldı.');
   }
   function shouldInitiate(id){return Boolean(myId&&id&&myId<id)}
+  // Connected transport alone does not guarantee incoming audio.
+  // A silent or muted speaker still has a valid live audio track.
+  function hasLiveRemoteAudio(pc){
+    try{
+      return pc.getReceivers().some(r=>
+        r.track?.kind==='audio' &&
+        r.track.readyState==='live'
+      );
+    }catch{return false}
+  }
   async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){if(candidate._eris_offer&&pc._erisOffer&&candidate._eris_offer!==pc._erisOffer)continue;try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[LidyaChat] ICE aday sinyali uygulanamadı',e)}}}
   function drop(id){
     unwatchLevel(id);clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);pendingIce.delete(id);
@@ -232,7 +242,7 @@
     pc.onnegotiationneeded=()=>{if(shouldInitiate(id))offer(id)};
     const connectionChanged=()=>{
       if(peers.get(id)!==pc)return;
-      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded){
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded&&hasLiveRemoteAudio(pc)){
         clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);recoveryAttempts.delete(id);resumeRoomAudio();return;
       }
       if(pc.connectionState==='failed'||pc.iceConnectionState==='failed'){clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);scheduleRecovery(id,pc,1000)}
@@ -274,7 +284,7 @@
     reconnectTimers.set(id,setTimeout(()=>{
       reconnectTimers.delete(id);
       if(generation!==roomGeneration||peers.get(id)!==pc||!known.has(id))return;
-      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded)return;
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded&&hasLiveRemoteAudio(pc))return;
       enqueuePeer(id,async()=>{
         if(peers.get(id)!==pc)return;
         const attempts=(recoveryAttempts.get(id)||0)+1;recoveryAttempts.set(id,attempts);diagnostics.recoveries++;
@@ -407,6 +417,8 @@
           if(shouldInitiate(id))offer(id).catch(()=>{});
         }else if(existing.connectionState==='failed'||existing.iceConnectionState==='failed'){
           scheduleRecovery(id,existing,1000);
+        }else if(existing.connectionState==='connected'&&!hasLiveRemoteAudio(existing)){
+          scheduleRecovery(id,existing,10000);
         }
       }
       return;
@@ -574,7 +586,7 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         if(shouldInitiate(id))offer(id).catch(()=>{});
         continue;
       }
-      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed')continue;
+      if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&hasLiveRemoteAudio(pc))continue;
       if(shouldInitiate(id))offer(id,true).catch(()=>{});
       else signal('rtc_reconnect',id,{reset:false});
     }
