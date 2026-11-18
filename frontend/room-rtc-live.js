@@ -258,7 +258,27 @@
       );
     }catch{return false}
   }
-  async function flushIce(id,pc){const queued=pendingIce.get(id)||[];pendingIce.delete(id);for(const candidate of queued){if(candidate._eris_offer&&pc._erisOffer&&candidate._eris_offer!==pc._erisOffer)continue;try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){console.warn('[LidyaChat] ICE aday sinyali uygulanamadı',e)}}}
+  async function flushIce(id,pc){
+    if(peers.get(id)!==pc)return;
+    const queued=pendingIce.get(id)||[];
+    pendingIce.delete(id);
+    for(const candidate of queued){
+      // Stop if this connection was replaced during an await.
+      if(peers.get(id)!==pc||
+         pc.signalingState==='closed')return;
+      if(candidate._eris_offer&&pc._erisOffer&&
+         candidate._eris_offer!==pc._erisOffer)continue;
+      try{
+        await pc.addIceCandidate(
+          new RTCIceCandidate(candidate)
+        );
+      }catch(e){
+        console.warn(
+          '[LidyaChat] ICE aday sinyali uygulanamadi',e
+        );
+      }
+    }
+  }
   function drop(id){
     networkRecoveryAt.delete(id);
     unwatchLevel(id);clearTimeout(reconnectTimers.get(id));reconnectTimers.delete(id);pendingIce.delete(id);
@@ -588,6 +608,10 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         }
       }else if(d.type==='rtc_ice'){
         const pc=peers.get(id);
+        // Reject candidates from an older known offer, even
+        // before the current remote description is installed.
+        if(d.payload?._eris_offer&&pc?._erisOffer&&
+           d.payload._eris_offer!==pc._erisOffer)return;
         if(pc?.remoteDescription){
           if(d.payload?._eris_offer&&pc._erisOffer&&d.payload._eris_offer!==pc._erisOffer)return;
           try{await pc.addIceCandidate(new RTCIceCandidate(d.payload))}catch(e){diagnostics.signalErrors++;console.warn('[LidyaChat] eski/geçersiz ICE adayı',e)}
