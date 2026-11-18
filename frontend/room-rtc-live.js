@@ -446,7 +446,14 @@
 
   function message(d){
     if(!d||typeof d.type!=='string')return Promise.resolve();
-    if(d.type==='rtc_ready'){roomGeneration++;peerQueues.clear();signalCounts.clear()}
+    if(d.type==='rtc_ready'){
+      // A new signaling session must not wait for an old queue.
+      // Old queued operations are invalidated by roomGeneration.
+      roomGeneration++;
+      peerQueues.clear();
+      signalCounts.clear();
+      messageQueue=Promise.resolve();
+    }
     const generation=roomGeneration;
     if(d.type==='rtc_ready'){
       messageQueue=messageQueue.then(()=>{if(generation===roomGeneration)return handleMessage(d)}).catch(e=>console.warn('[LidyaChat] ses başlangıcı',e));
