@@ -12,6 +12,9 @@
     peerEpochs.set(id,(peerEpochs.get(id)||0)+1);
     recoveryAttempts.delete(id);
     offerJobs.delete(id);
+    // A returning participant must not wait for old peer jobs.
+    peerQueues.delete(id);
+    signalCounts.delete(id);
   }
   let autoSeat=null, autoRoom=null, manualMicOff=false, autoAttempted=false;
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
@@ -47,7 +50,18 @@
       const pc=peers.get(id);
       if(pc)scheduleRecovery(id,pc,1500);
     })
-      .finally(()=>{if(generation!==roomGeneration)return;signalCounts.set(id,Math.max(0,(signalCounts.get(id)||1)-1));if(peerQueues.get(id)===job){peerQueues.delete(id);signalCounts.delete(id)}});
+      .finally(()=>{
+        // Old participant jobs cannot alter a new epoch's counters.
+        if(generation!==roomGeneration||
+           epoch!==(peerEpochs.get(id)||0))return;
+        signalCounts.set(
+          id,Math.max(0,(signalCounts.get(id)||1)-1)
+        );
+        if(peerQueues.get(id)===job){
+          peerQueues.delete(id);
+          signalCounts.delete(id);
+        }
+      });
     peerQueues.set(id,job);return job;
   }
   const offerJobs=new Map();
