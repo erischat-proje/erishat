@@ -6,6 +6,13 @@
   let roomGeneration=0, configRoom=null, configPromise=null, seatCheckBusy=false, micBusy=false;
   let messageQueue=Promise.resolve(), configRetryTimer=null;
   const peerQueues=new Map(), signalCounts=new Map(), recoveryAttempts=new Map();
+  // Invalidate queued work when a participant leaves and rejoins.
+  const peerEpochs=new Map();
+  function retireMember(id){
+    peerEpochs.set(id,(peerEpochs.get(id)||0)+1);
+    recoveryAttempts.delete(id);
+    offerJobs.delete(id);
+  }
   let autoSeat=null, autoRoom=null, manualMicOff=false, autoAttempted=false;
   let micRequest=0, outputResumeBusy=false, lastAudioNotice=0, configFetchedAt=0;
   const diagnostics={configErrors:0,signalErrors:0,audioBlocked:0,recoveries:0};
@@ -16,12 +23,22 @@
     finally{clearTimeout(timer)}
   }
   function enqueuePeer(id,operation){
-    const generation=roomGeneration, count=signalCounts.get(id)||0;
+    const generation=roomGeneration, epoch=peerEpochs.get(id)||0;
+    const count=signalCounts.get(id)||0;
     if(count>=128){diagnostics.signalErrors++;return Promise.resolve()}
     signalCounts.set(id,count+1);
     const job=(peerQueues.get(id)||Promise.resolve()).then(()=>{
-      if(generation===roomGeneration&&known.has(id))return operation();
-    }).catch(e=>{diagnostics.signalErrors++;console.warn('[LidyaChat] ses bağlantı işlemi',e);const pc=peers.get(id);if(pc)scheduleRecovery(id,pc,1500)})
+      if(generation===roomGeneration&&
+         epoch===(peerEpochs.get(id)||0)&&
+         known.has(id))return operation();
+    }).catch(e=>{
+      if(generation!==roomGeneration||
+         epoch!==(peerEpochs.get(id)||0))return;
+      diagnostics.signalErrors++;
+      console.warn('[LidyaChat] ses bağlantı işlemi',e);
+      const pc=peers.get(id);
+      if(pc)scheduleRecovery(id,pc,1500);
+    })
       .finally(()=>{if(generation!==roomGeneration)return;signalCounts.set(id,Math.max(0,(signalCounts.get(id)||1)-1));if(peerQueues.get(id)===job){peerQueues.delete(id);signalCounts.delete(id)}});
     peerQueues.set(id,job);return job;
   }
@@ -382,8 +399,13 @@
     }
     if(d.type==='room_seat_muted')return handleMessage(d);
     const id=String(d.from_user_id||d.user_id||'');
+    const epoch=peerEpochs.get(id)||0;
     return messageQueue.then(()=>{
       if(generation!==roomGeneration)return;
+      if(d.type!=='rtc_peer_joined'&&
+         d.type!=='rtc_peer_left'&&
+         d.type!=='rtc_roster'&&
+         epoch!==(peerEpochs.get(id)||0))return;
       if(d.type==='rtc_peer_joined'||d.type==='rtc_peer_left'||d.type==='rtc_roster')return handleMessage(d);
       if(!id||id===myId||!known.has(id))return;
       return enqueuePeer(id,()=>handleMessage(d));
@@ -435,7 +457,11 @@
     }
     if(d.type==='rtc_roster'){
       const fresh=new Set((d.peers||[]).map(String).filter(id=>id&&id!==myId));
-      for(const id of known)if(!fresh.has(id)){known.delete(id);drop(id);recoveryAttempts.delete(id)}
+      for(const id of known)if(!fresh.has(id)){
+        known.delete(id);
+        retireMember(id);
+        drop(id);
+      }
       for(const id of fresh){
         known.add(id);
         const existing=peers.get(id);
@@ -461,8 +487,8 @@
       const id=String(d.user_id||'');
       if(id&&id!==myId){
         known.delete(id);
+        retireMember(id);
         drop(id);
-        recoveryAttempts.delete(id);
         setTimeout(()=>window.ErisRoomUI?.refresh?.().catch?.(()=>{}),150);
       }
       return;
@@ -577,7 +603,7 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
     foregroundRecoveryTimer=null;
     autoSeat=null;autoRoom=null;manualMicOff=false;autoAttempted=false;blockedAudio.clear();
     clearTimeout(configRetryTimer);configRetryTimer=null;
-    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();networkRecoveryAt.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
+    roomGeneration++;configRoom=null;configPromise=null;offerJobs.clear();peerEpochs.clear();networkRecoveryAt.clear();peerQueues.clear();signalCounts.clear();recoveryAttempts.clear();messageQueue=Promise.resolve();micRequest++;
     microphoneSeat=null;
 
     if(stream){
