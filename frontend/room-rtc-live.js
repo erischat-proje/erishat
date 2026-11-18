@@ -290,7 +290,14 @@
       reconnectTimers.delete(id);
       if(generation!==roomGeneration||peers.get(id)!==pc||!known.has(id))return;
       if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&!pc._erisTrackEnded&&hasLiveRemoteAudio(pc))return;
+      // Do not consume recovery attempts while signaling is offline.
+      // Room websocket reconnect will also refresh the RTC roster.
+      if(socket()?.readyState!==WebSocket.OPEN){
+        scheduleRecovery(id,pc,5000);
+        return;
+      }
       enqueuePeer(id,async()=>{
+        if(socket()?.readyState!==WebSocket.OPEN)return;
         if(peers.get(id)!==pc)return;
         const attempts=(recoveryAttempts.get(id)||0)+1;recoveryAttempts.set(id,attempts);diagnostics.recoveries++;
         if(attempts%3===0||pc._erisTrackEnded){
