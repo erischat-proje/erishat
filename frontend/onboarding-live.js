@@ -251,9 +251,30 @@
         object-fit: contain;
       }
 
+      #erisOnboarding .eris-cosmetic-item {
+        position: relative;
+      }
       #erisOnboarding .eris-cosmetic-item.selected {
-        border-color: var(--ui-line);
-        box-shadow: 0 0 0 2px var(--ui-shadow);
+        border: 3px solid #d4a63b !important;
+        background: rgba(212,166,59,.18) !important;
+        box-shadow: 0 0 0 2px rgba(212,166,59,.5) !important;
+      }
+      #erisOnboarding .eris-cosmetic-item.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #d4a63b;
+        color: #14100a;
+        font-size: 16px;
+        font-weight: 900;
+        z-index: 3;
+        pointer-events: none;
       }
 
       #erisOnboarding .eris-progress {
