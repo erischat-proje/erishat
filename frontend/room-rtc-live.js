@@ -352,8 +352,11 @@
     if(id===myId||!shouldInitiate(id)||!socket()||socket().readyState!==WebSocket.OPEN)return;
 
     const generation=roomGeneration, signalingSocket=socket();
+    const epoch=peerEpochs.get(id)||0;
     await loadConfig();
-    if(generation!==roomGeneration||socket()!==signalingSocket)return;
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       socket()!==signalingSocket)return;
     if(!known.has(id)||socket()?.readyState!==WebSocket.OPEN)return;
     const pc=peer(id);
 
@@ -376,6 +379,10 @@
       }
     }
 
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       peers.get(id)!==pc||
+       socket()!==signalingSocket)return;
     if(pc.signalingState!=='stable')return;
 
     pc._erisOffer=String(roomGeneration)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);
@@ -383,9 +390,15 @@
       iceRestart:restart||pc.iceConnectionState==='failed'
     });
 
-    if(generation!==roomGeneration||peers.get(id)!==pc||socket()!==signalingSocket)return;
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       peers.get(id)!==pc||
+       socket()!==signalingSocket)return;
     await pc.setLocalDescription(desc);
-    if(generation!==roomGeneration||peers.get(id)!==pc||socket()!==signalingSocket)return;
+    if(generation!==roomGeneration||
+       epoch!==(peerEpochs.get(id)||0)||
+       peers.get(id)!==pc||
+       socket()!==signalingSocket)return;
     signal('rtc_offer',id,{type:pc.localDescription.type,sdp:pc.localDescription.sdp,_eris_offer:pc._erisOffer});
   }
 
@@ -517,9 +530,15 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       await makeOffer(id,true);return;
     }
     const generation=roomGeneration, ws=socket();
+    const epoch=peerEpochs.get(id)||0;
+    const stillCurrent=pc=>
+      generation===roomGeneration&&
+      epoch===(peerEpochs.get(id)||0)&&
+      ws===socket()&&known.has(id)&&
+      (!pc||peers.get(id)===pc);
     try{
       await loadConfig();
-      if(generation!==roomGeneration||ws!==socket()||!known.has(id))return;
+      if(!stillCurrent())return;
       if(d.type==='rtc_offer'){
         const pc=peer(id);
         if(pc.signalingState==='have-local-offer'){
@@ -528,16 +547,22 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
         }
         pc._erisOffer=d.payload?._eris_offer||null;
         await pc.setRemoteDescription(new RTCSessionDescription(d.payload));
+        if(!stillCurrent(pc))return;
         await attachMicrophone(id);
+        if(!stillCurrent(pc))return;
         await flushIce(id,pc);
+        if(!stillCurrent(pc))return;
         const desc=await pc.createAnswer();
-        if(generation!==roomGeneration||peers.get(id)!==pc||ws!==socket())return;
+        if(!stillCurrent(pc))return;
         await pc.setLocalDescription(desc);
+        if(!stillCurrent(pc))return;
         signal('rtc_answer',id,{type:pc.localDescription.type,sdp:pc.localDescription.sdp,_eris_offer:pc._erisOffer});
       }else if(d.type==='rtc_answer'){
         const pc=peers.get(id);
         if(pc?.signalingState==='have-local-offer'&&(!d.payload?._eris_offer||d.payload._eris_offer===pc._erisOffer)){
-          await pc.setRemoteDescription(new RTCSessionDescription(d.payload));await flushIce(id,pc);
+          await pc.setRemoteDescription(new RTCSessionDescription(d.payload));
+          if(!stillCurrent(pc))return;
+          await flushIce(id,pc);
         }
       }else if(d.type==='rtc_ice'){
         const pc=peers.get(id);
