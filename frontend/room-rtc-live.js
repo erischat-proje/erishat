@@ -441,8 +441,14 @@
         const existing=peers.get(id);
         if(!existing||existing.signalingState==='closed'){
           if(existing)drop(id);
+          recoveryAttempts.delete(id);
           peer(id);
-          if(shouldInitiate(id))offer(id).catch(()=>{});
+          if(shouldInitiate(id)){
+            offer(id).catch(()=>{});
+          }else{
+            // Request an offer when a roster reveals a missing peer.
+            signal('rtc_reconnect',id,{reset:false});
+          }
         }else if(existing.connectionState==='failed'||existing.iceConnectionState==='failed'){
           scheduleRecovery(id,existing,1000);
         }else if(existing.connectionState==='connected'&&!hasLiveRemoteAudio(existing)){
@@ -456,6 +462,7 @@
       if(id&&id!==myId){
         known.delete(id);
         drop(id);
+        recoveryAttempts.delete(id);
         setTimeout(()=>window.ErisRoomUI?.refresh?.().catch?.(()=>{}),150);
       }
       return;
