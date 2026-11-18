@@ -613,7 +613,14 @@ const id=String(d.from_user_id||'');if(!id||id===myId||!known.has(id))return;
       if(!pc||pc.signalingState==='closed'){
         if(pc)drop(id);
         peer(id);
-        if(shouldInitiate(id))offer(id).catch(()=>{});
+        // Recover both offerers and answerers immediately.
+        if(shouldInitiate(id)){
+          offer(id).catch(()=>{});
+        }else{
+          // A listener that cannot initiate an offer should not
+          // wait for the periodic recovery timer.
+          signal('rtc_reconnect',id,{reset:false});
+        }
         continue;
       }
       if(pc.connectionState==='connected'&&pc.iceConnectionState!=='failed'&&hasLiveRemoteAudio(pc)){
