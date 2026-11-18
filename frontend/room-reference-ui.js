@@ -829,7 +829,7 @@
     const stage=s.querySelector('#erisLiveSeats');
     if(!stage||stage.dataset.seatActions==='1')return;
     stage.dataset.seatActions='1';
-    let timer=0,pressed=false,startX=0,startY=0;
+    let timer=0,pressed=false,startX=0,startY=0,joiningSeat=false;
     const clear=()=>{window.clearTimeout(timer);timer=0};
     const available=seat=>{
       if(!seat)return false;
@@ -885,7 +885,38 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       if(pressed){pressed=false;return}
-      seatMenu(seat);
+
+      // Tek dokunus: sadece bos ve kilitsiz koltuga otur.
+      if(!seat.classList.contains('occupied') &&
+         !seat.classList.contains('locked')){
+        if(joiningSeat)return;
+
+        const id=roomId();
+        const number=Number(seat.dataset.seatNumber);
+        if(!id||!Number.isInteger(number)||number<1)return;
+
+        joiningSeat=true;
+        window.ErisRoomRTC?.unlockAudio?.();
+
+        (async()=>{
+          try{
+            await roomApi().joinSeat(id,number);
+            if(roomId()===id){
+              await window.ErisRoomUI?.refresh?.();
+            }
+          }catch(error){
+            window.toast?.(
+              error.message||'Koltuga oturulamadi.'
+            );
+          }finally{
+            joiningSeat=false;
+          }
+        })();
+        return;
+      }
+
+      // Dolu ve kilitli koltuklar:
+      // Islem menusu uzun basmada acilir.
     },true);
   }
 
