@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     initial_da_public_ids: str = ""
     google_client_id: str = ""
     google_play_package_name: str = "com.erischat.app"
+    woocommerce_linking_enabled: bool = False
+    woocommerce_service_secret: str = ""
     google_play_billing_enabled: bool = False
     google_play_fulfillment_enabled: bool = False
     google_play_policy_approved: bool = False

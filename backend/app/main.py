@@ -487,6 +487,8 @@ play_billing.register_refund_case_auth(current_user)
 play_billing.register_checkout_auth(current_user)
 app.include_router(play_billing.router)
 app.include_router(purchase_routes.router)
+from . import woocommerce_account_link
+app.include_router(woocommerce_account_link.register_auth(current_user))
 app.include_router(paytr_routes.register_auth(current_user))
 payment_assistance.register_auth(current_user)
 app.include_router(payment_assistance.router)
