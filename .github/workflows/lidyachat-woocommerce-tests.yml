@@ -1,0 +1,61 @@
+name: LidyaChat WooCommerce Checks
+on:
+  pull_request:
+    branches: [auth-unified-v1]
+    paths:
+      - 'wordpress-plugins/**'
+      - 'backend/app/woocommerce_*.py'
+      - 'backend/tests/test_woocommerce_*.py'
+      - '.github/workflows/lidyachat-woocommerce-tests.yml'
+  push:
+    branches: [auth-unified-v1]
+    paths:
+      - 'wordpress-plugins/**'
+      - 'backend/app/woocommerce_*.py'
+      - 'backend/tests/test_woocommerce_*.py'
+      - '.github/workflows/lidyachat-woocommerce-tests.yml'
+permissions:
+  contents: read
+jobs:
+  wordpress-php:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find wordpress-plugins -type f -name '*.php' -print0)
+          test "${#files[@]}" -gt 0
+          for f in "${files[@]}"; do php -l "$f"; done
+      - name: Static WordPress link safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=wordpress-plugins/lidyachat-account-link/lidyachat-account-link.php
+          test -s "$f"
+          grep -q 'wp_verify_nonce' "$f"
+          grep -q 'is_user_logged_in' "$f"
+          grep -q 'sslverify.*true' "$f"
+          if grep -q 'admin_post_nopriv_lidyachat_wc_pair_order' "$f"; then
+            echo 'Guest binding is not allowed'; exit 1
+          fi
+  python-link-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install fastapi 'sqlalchemy>=2,<3' 'pydantic>=2,<3'
+      - name: Pairing regression tests
+        run: PYTHONPATH=backend python -m unittest discover -s backend/tests -p 'test_woocommerce_account_link.py' -v
+      - name: Catalog regression tests
+        run: PYTHONPATH=backend python -m unittest discover -s backend/tests -p 'test_woocommerce_coin_contract.py' -v
