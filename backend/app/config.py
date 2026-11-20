@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     google_play_package_name: str = "com.erischat.app"
     woocommerce_linking_enabled: bool = False
     woocommerce_service_secret: str = ""
+    # V5 is always disabled until a reviewed payment adapter is deployed.
+    woocommerce_web_checkout_enabled: bool = False
     google_play_billing_enabled: bool = False
     google_play_fulfillment_enabled: bool = False
     google_play_policy_approved: bool = False
