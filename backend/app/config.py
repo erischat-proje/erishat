@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,9 +24,9 @@ class Settings(BaseSettings):
     woocommerce_web_checkout_enabled: bool = False
     # V6: pending WooCommerce orders only; no payment or wallet mutation.
     woocommerce_order_creation_enabled: bool = False
-    woocommerce_rest_base_url: str = ""
-    woocommerce_rest_consumer_key: str = ""
-    woocommerce_rest_consumer_secret: str = ""
+    woocommerce_rest_base_url: str = Field(default="", validation_alias=AliasChoices("WOOCOMMERCE_REST_BASE_URL", "WOOCOMMERCE_BASE_URL"))
+    woocommerce_rest_consumer_key: str = Field(default="", validation_alias=AliasChoices("WOOCOMMERCE_REST_CONSUMER_KEY", "WOOCOMMERCE_CONSUMER_KEY"))
+    woocommerce_rest_consumer_secret: str = Field(default="", validation_alias=AliasChoices("WOOCOMMERCE_REST_CONSUMER_SECRET", "WOOCOMMERCE_CONSUMER_SECRET"))
     google_play_billing_enabled: bool = False
     google_play_fulfillment_enabled: bool = False
     google_play_policy_approved: bool = False
