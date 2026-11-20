@@ -3,7 +3,7 @@
 'use strict';
 const base=(window.ERISCHAT_API_BASE||window.ERIS_API||localStorage.getItem('erischat.apiBase')||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'').replace(/\/v1$/,'');
 const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
-const titles={command:'Güvenlik Merkezi',cases:'Olay Dosyaları',emergency:'Acil Müdahale',finance:'Lidya Denetimi',fraud:'Dolandırıcılık İnceleme',audit:'Yönetici Denetimi',help:'Yetki Rehberi'};
+const titles={command:'Güvenlik Merkezi',cases:'Olay Dosyaları',emergency:'Acil Müdahale',finance:'Lidya Denetimi',fraud:'Dolandırıcılık İnceleme',audit:'Yönetici Denetimi',woocommerce:'WooCommerce Siparişleri',help:'Yetki Rehberi'};
 const statuses={open:'Açık',investigating:'İnceleniyor',awaiting_decision:'Karar bekliyor',resolved:'Sonuçlandı',dismissed:'İşlem gerekmiyor',pending:'Karar bekliyor',approved:'Onaylandı',pending_review:'İnceleme bekliyor',reviewed:'Son onay bekliyor',executed:'Uygulandı',rejected:'Reddedildi',cancelled:'Geri çekildi',active:'Aktif',expired:'Süresi doldu',revoked:'Geri alındı',cleared:'Gösterge açıklandı',escalated:'Olay incelemesine aktarıldı'};
 const categories={spam:'Spam',harassment:'Taciz / rahatsız etme',threat:'Tehdit',fraud:'Mali inceleme',account_safety:'Hesap güvenliği',room_abuse:'Oda ihlali',other:'Diğer'};
 const signals={nonpositive_amount:'Geçersiz tutar',unknown_operation:'Bilinmeyen işlem',balance_delta_mismatch:'Bakiye farkı tutarsız',missing_evidence_reference:'Kanıt referansı eksik',repeated_pair_operations:'Tekrarlanan yönetici / hesap işlemleri'};
@@ -50,7 +50,7 @@ function shortcuts(parent){const actions=row(parent);btn('Destek talepleri',()=>
 async function legacy(key){close();await window.ErisAdmin?.openTool?.(key);}
 async function render(kind,options={}){
  const id=session,version=++serial;main.replaceChildren(el('p','','Veriler yükleniyor…'));
- try{if(kind==='help'){help();return;}if(kind==='command')await command();else if(kind==='cases'){if(options.caseId)await caseDetail(options.caseId);else await cases(options);}else if(kind==='emergency')await emergency(options);else if(kind==='finance')await finance(options);else if(kind==='fraud')await fraud(options);else if(kind==='audit')await auditView(options);}
+ try{if(kind==='help'){help();return;}if(kind==='command')await command();else if(kind==='cases'){if(options.caseId)await caseDetail(options.caseId);else await cases(options);}else if(kind==='emergency')await emergency(options);else if(kind==='finance')await finance(options);else if(kind==='fraud')await fraud(options);else if(kind==='audit')await auditView(options);else if(kind==='woocommerce')await wooOrders(options);}
  catch(e){if(alive(id)&&version===serial&&e.name!=='AbortError'){main.replaceChildren();message(e.message,true);btn('Yeniden dene',()=>render(kind,options),main);}}
 }
 async function command(){
@@ -161,6 +161,64 @@ async function auditView(options={}){
  const paint=items=>items.forEach(r=>{rows.push(r);const c=card(list,r.action,r.actor_name+' · '+(r.actor_public_id||''));info(c,'Zaman',date(r.created_at));info(c,'Rol',r.role||'Eski kayıtta yok');info(c,'Hedef',r.target_id);const details=el('details');details.append(el('summary','','Kayıt ayrıntısı'));recordFields(details,r.details);c.append(details);});paint(data.items);if(!data.items.length)message('Bu filtrelerde denetim kaydı yok.');
  btn('Görüntülenen kayıtları CSV indir',()=>{const header=['Kayıt','Zaman','Yetkili ID','Rol','İşlem','Hedef'];const lines=[header,...rows.map(r=>[r.id,r.created_at,r.actor_public_id,r.role,r.action,r.target_id])].map(r=>r.map(csvCell).join(';'));const url=URL.createObjectURL(new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}));objectURLs.push(url);const a=el('a');a.href=url;a.download='lidya-yonetim-denetimi.csv';a.click();},main);let before=data.next_before;if(before)btn('Daha fazla denetim kaydı',async()=>{if(!before)return;params.set('before',before);const d=await get('/v1/admin/management/audit?'+params);paint(d.items);before=d.next_before;},main);
 }
+/* WooCommerce V10 - DA only read-only panel. Host management-center provides request/get/btn/card helpers. */
+async function wooOrders(options={}){
+ if(!isDA())throw Error('DA yetkisi gerekli.');
+ const id=session,offset=Number.isInteger(options.offset)&&options.offset>=0?options.offset:0;
+ const state=['','reserved','uncertain','created','disabled'].includes(options.state||'')?options.state||'':'';
+ const params=new URLSearchParams({limit:'20',offset:String(offset)});
+ if(state)params.set('state',state);
+ const data=await get('/v1/admin/woocommerce/orders?'+params);
+ if(!alive(id))return;
+ reset('WooCommerce • Sipariş Denetimi');
+ message('Salt okunur kontrol. WooCommerce kaydı ödeme kanıtı değildir. Sipariş tekrarı, tahsilat ve Coin teslimatı bu panelden yapılmaz.');
+ const toolbar=row(main);
+ const select=el('select','lm-woo-filter');select.setAttribute('aria-label','Sipariş durumu');
+ for(const [value,title] of [['','Tüm durumlar'],['reserved','Rezervasyon'],['uncertain','Belirsiz'],['created','Oluşturuldu'],['disabled','Devre dışı']]){
+  const option=el('option','',title);option.value=value;select.append(option);
+ }
+ select.value=state;toolbar.append(select);
+ btn('Filtrele',()=>wooOrders({state:select.value,offset:0}),toolbar);
+ btn('Yenile',()=>wooOrders({state,offset}),toolbar);
+ const items=Array.isArray(data.items)?data.items:[];
+ const summary=el('p','lm-woo-page-label','Gösterilen kayıtlar: '+items.length+' · Başlangıç: '+(offset+1));main.append(summary);
+ const list=el('div','lm-list lm-woo-list');main.append(list);
+ if(!items.length)message('Bu sayfada sipariş kaydı bulunamadı. Önceki sayfaya dönebilirsiniz.');
+ for(const item of items){
+  const c=card(list,'Sipariş • '+String(item.order_ref||'—'));
+  const badge=el('span','lm-woo-state',({reserved:'Rezervasyon',uncertain:'Belirsiz',created:'Oluşturuldu',disabled:'Devre dışı'})[item.local_state]||'Bilinmiyor');
+  badge.dataset.state=String(item.local_state||'unknown');c.append(badge);
+  info(c,'LidyaChat kullanıcı ID',item.user_id);
+  info(c,'Paket numarası',item.package_id);
+  info(c,'WooCommerce sipariş ID',item.woocommerce_order_id||'Henüz doğrulanmadı');
+  info(c,'Kayıt tarihi',date(item.created_at));
+  info(c,'Ödeme doğrulandı mı?',item.payment_verified?'Evet':'Hayır / doğrulanmadı');
+  info(c,'Coin teslim edildi mi?',item.coin_delivery_verified?'Evet':'Hayır / doğrulanmadı');
+  if(typeof item.order_ref==='string'&&/^[0-9a-f-]{36}$/.test(item.order_ref))
+   btn('WooCommerce ile karşılaştır',()=>wooOrderAudit(item.order_ref,{state,offset}),c,'lm-primary');
+ }
+ const pager=row(main);
+ if(offset>0)btn('← Önceki 20 kayıt',()=>wooOrders({state,offset:Math.max(0,offset-20)}),pager);
+ if(items.length===20&&offset<10000)btn('Sonraki 20 kayıt →',()=>wooOrders({state,offset:offset+20}),pager);
+}
+async function wooOrderAudit(ref,options={}){
+ if(!isDA())throw Error('DA yetkisi gerekli.');
+ const id=session;
+ const data=await get('/v1/admin/woocommerce/orders/'+encodeURIComponent(ref)+'/audit');
+ if(!alive(id))return;
+ reset('WooCommerce • Sipariş Karşılaştırması');
+ const actions=row(main);
+ btn('← Sipariş listesi',()=>wooOrders(options),actions);
+ btn('Yeniden denetle',()=>wooOrderAudit(ref,options),actions);
+ const verdict=({MATCHED:'Eşleşiyor',NOT_FOUND:'Bulunamadı',INCONCLUSIVE:'Kesin değil',CONFLICT:'Uyuşmazlık'})[data.verdict]||'Bilinmiyor';
+ const c=card(main,'Denetim sonucu • '+verdict);
+ const status=el('span','lm-woo-verdict',verdict);status.dataset.verdict=String(data.verdict||'unknown');c.append(status);
+ for(const [label,value] of [['Sipariş referansı',data.order_ref],['Kullanıcı ID',data.user_id],['Coin paket numarası',data.package_id],['Yerel durum',data.local_state],['Yerel WC sipariş ID',data.local_woocommerce_order_id],['Eşleşen WC sipariş ID',data.matching_woocommerce_order_id],['Taranan sayfa',data.pages_scanned]])info(c,label,value??'—');
+ message('Güvenlik kararı: Yeni siparişi otomatik oluşturma veya tekrar gönderme yasaktır.');
+ message('Ödeme doğrulanmadı; bu ekran Coin yükleme yetkisi vermez.');
+ if(data.verdict!=='MATCHED')message('Bu sonuç manuel inceleme gerektirir. Özellikle sonuçsuz tarama, siparişin oluşmadığını kesin kanıtlamaz.',true);
+}
+
 function help(){reset('Yetki rehberi');for(const [title,text] of [['SA · Destek ve kanıt','Kendine atanan destek taleplerini yanıtlar. Olay dosyası açar, erişebildiği dosyaya açıklama ve kanıt ekler. Yaptırım kararı vermez. Yetki dışı işlemleri UA veya FA incelemesine iletir.'],['UA · İnceleme ve talep','Erişebildiği olay dosyalarını inceler ve kanıta bağlı yaptırım talebi oluşturur. Açık dosyaya bağlı en fazla 60 dakika acil sohbet kısıtlaması uygulayabilir; aynı kullanıcıya 24 saat içinde tekrarlayamaz. Kalıcı yaptırım için bağımsız karar gerekir.'],['FA · Bağımsız karar','Olayları ve yaptırım taleplerini inceler. Dosyaları yetkililere atar. Kendi açtığı, hedefi olduğu veya incelemek üzere kendisine atanmış dosyaya nihai karar veremez. İtirazı önceki kararı verenden farklı bir yetkili inceler. Mali talepte bağımsız ön inceleme yapabilir; bu inceleme tek başına bakiyeyi değiştirmez.'],['Kayıt ve süreler','İşlemler gerekçeleriyle kaydedilir. Kapalı olay dosyaları değiştirilemez. Acil kısıtlamalar belirtilen bitişte sona erer. Yetki veya süre sınırını aşan durumlar karar incelemesine gönderilir.']])card(main,title,text);}
 async function open(kind,options={}){
  if(!titles[kind])throw Error('Bilinmeyen yönetim bölümü');close();access=token();controller=new AbortController();previousFocus=document.activeElement;root=el('section','lm-command-overlay');root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label',titles[kind]);const page=el('div','lm-command-page'),head=el('header','lm-command-head'),heading=el('div');heading.append(el('div','lm-command-kicker','LİDYA • YÖNETİM'),el('h1','',titles[kind]));const controls=row(head);btn('?',()=>render('help'),controls).setAttribute('aria-label','Yetki rehberi');const dismiss=btn('×',close,controls);dismiss.setAttribute('data-close','');dismiss.setAttribute('aria-label','Kapat');head.prepend(heading);main=el('main','lm-command-content');main.setAttribute('aria-live','polite');main.append(el('p','','Yetki doğrulanıyor…'));page.append(head,main);root.append(page);document.body.append(root);document.body.classList.add('lm-command-open');dismiss.focus();root.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();close();}if(e.key==='Tab'){const items=[...root.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,a[href]')].filter(x=>x.getClientRects().length);if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1)?.focus();}else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0]?.focus();}}});const id=session;

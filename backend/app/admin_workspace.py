@@ -53,6 +53,7 @@ CATALOG=[
  ('lm-finance','Lidya Denetimi','Mali yönetim',REVIEW,'Kanıtlı mali düzeltmenin bağımsız inceleme ve uygulama zinciri.','Talep sahibi → farklı inceleyen → farklı son onaycı.'),
  ('lm-fraud','Dolandırıcılık İnceleme','Denetim',DA,'Mali göstergeleri inceleme, açıklama ve olay dosyasına sevk.','Gösterge → gerçek işlem → inceleme sonucu veya dosya.'),
  ('lm-audit','Yönetici Denetimi','Denetim',DA,'Rol/aktör/tarih/işlem filtreleriyle kayıtlar ve CSV çıktısı.','Filtrele → detay → görüntülenen kayıtları dışa aktar.'),
+ ('lm-woocommerce','WooCommerce Siparişleri','Mali yönetim',DA,'Coin siparişlerini salt okunur listeleme ve WooCommerce karşılaştırması.','Sipariş → kimlik ve fiyat kontrolü → manuel inceleme.'),
 ]
 
 def catalog(user,role):

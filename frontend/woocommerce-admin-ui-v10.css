@@ -1,0 +1,10 @@
+/* V10 DA WooCommerce read-only management panel; inherits Lidya management theme. */
+.lm-woo-list{display:grid;gap:12px;min-width:0}
+.lm-woo-list .lm-command-card{overflow-wrap:anywhere;border-color:rgba(192,151,80,.36)}
+.lm-woo-list .lm-command-card h3{font-size:14px;overflow-wrap:anywhere}
+.lm-woo-filter{min-width:170px;max-width:100%;padding:10px 12px;border:1px solid rgba(182,139,70,.5);border-radius:10px;background:var(--lm-panel,#271e19);color:var(--lm-ink,#f5e6ce)}
+.lm-woo-state,.lm-woo-verdict{display:inline-block;padding:5px 12px;margin:6px 0 12px;border-radius:30px;border:1px solid rgba(184,142,74,.48);font-weight:700;font-size:12px;letter-spacing:.03em}
+.lm-woo-state[data-state="uncertain"],.lm-woo-verdict[data-verdict="CONFLICT"]{border-color:#e39a62;color:#d98347}
+.lm-woo-verdict[data-verdict="MATCHED"]{border-color:rgba(188,156,98,.75);color:inherit}
+.lm-woo-page-label{font-size:12px;opacity:.75}
+@media(max-width:600px){.lm-woo-list .lm-command-card{padding:12px}.lm-woo-filter{width:100%}.lm-woo-list .lm-meta{overflow-wrap:anywhere}}
