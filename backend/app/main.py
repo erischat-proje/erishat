@@ -502,6 +502,8 @@ from . import woocommerce_qnbpay_routes_v18
 app.include_router(woocommerce_qnbpay_routes_v18.register_auth(current_user))
 from . import woocommerce_qnbpay_routes_v19
 app.include_router(woocommerce_qnbpay_routes_v19.register_auth(current_user))
+from . import woocommerce_qnbpay_routes_v20
+app.include_router(woocommerce_qnbpay_routes_v20.register_auth(current_user))
 from . import woocommerce_order_v6
 app.include_router(woocommerce_order_v6.register_auth(current_user))
 from . import woocommerce_admin_audit_v9
