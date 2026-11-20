@@ -496,6 +496,7 @@ app.include_router(woocommerce_qnbpay_routes_v13.register_auth(current_user))
 from . import woocommerce_qnbpay_routes_v14
 app.include_router(woocommerce_qnbpay_routes_v14.register_auth(current_user))
 from . import woocommerce_qnbpay_ledger_v16
+from . import woocommerce_qnbpay_event_journal_v21
 from . import woocommerce_qnbpay_routes_v15
 app.include_router(woocommerce_qnbpay_routes_v15.register_auth(current_user))
 from . import woocommerce_qnbpay_routes_v18
