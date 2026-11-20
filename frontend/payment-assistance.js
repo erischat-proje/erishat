@@ -64,7 +64,58 @@ previous=new Map(rows.map(r=>[r.id,r.status]));if(data.is_da&&Date.now()-lastPre
 function renderInbox(){const root=document.querySelector('#messages');if(!root)return;let mount=root.querySelector('#paymentInboxMount');if(!mount){mount=document.createElement('section');mount.id='paymentInboxMount';mount.className='pa-inbox';const list=root.querySelector('.list');if(list)list.before(mount);else root.append(mount)}const rows=[...snapshot.own,...snapshot.assigned].filter(r=>['pending','connecting','chat','finishing'].includes(r.status));const signature=JSON.stringify(rows.map(r=>[r.id,r.status,r.customer_ack,r.agent_ack,r.credited,snapshot.unread[r.id]]))+snapshot.pending_count+snapshot.is_da;if(mount.dataset.revision===signature)return;mount.dataset.revision=signature;mount.hidden=!rows.length&&!snapshot.is_da;mount.replaceChildren();if(mount.hidden)return;const title=document.createElement('h3');title.textContent='Lidya ödeme görüşmeleri';mount.append(title);
 for(const row of rows){const b=document.createElement('button');b.type='button';b.className='pa-inbox-item';b.dataset.paymentId=row.id;b.innerHTML='<b>'+(row.own?'Yönetim ekibi':'Müşteri ID '+esc(row.public_id))+'</b><small>'+num(row.price_try)+' TL · '+num(row.total)+' Lidya · '+esc(names[row.status])+(snapshot.unread[row.id]?' · '+snapshot.unread[row.id]+' yeni mesaj':'')+'</small>';b.onclick=()=>openRequest(row.id);mount.append(b)}if(snapshot.is_da){const b=document.createElement('button');b.type='button';b.textContent='Yükleme istekleri ('+snapshot.pending_count+')';b.onclick=()=>openQueue(false);mount.append(b)}}
 async function openRequest(id){try{const row=await api('/requests/'+id);if(row.status==='connecting'&&!(row.own?row.customer_ack:row.agent_ack)){handshake(row);return}if(row.status==='chat'||row.status==='finishing'){await openChat(row);return}if(!row.own&&row.status==='rejecting'){rejectReason(row);return}const c=modal('Ödeme isteği',true);c.requestId=row.id;c.body.innerHTML=meta(row)+(row.status==='connecting'?'<p>Diğer tarafın pencereyi kapatması bekleniyor.</p>':'');if(row.status==='pending'&&row.own){const b=document.createElement('button');b.textContent='İsteği iptal et';c.body.append(b);action(c,b,async()=>{await api('/requests/'+id+'/cancel','POST',{});if(live(c))close(c);await sync()})}}catch(e){toast(e.message)}}
-async function choose(p){const c=modal('Ödeme isteğini onayla',true);c.body.innerHTML=`<p><b>${num(p.price_try)} TL</b> tutarındaki seçtiğiniz paket için aktif ödeme işlemini yürütmek üzere sizi görevlilere aktarıyorum. Onaylıyor musunuz?</p><div class="pa-note">${num(p.total)} Lidya · ${num(p.base)} temel + ${num(p.bonus)} bonus</div><div class="pa-row"><button type="button" data-accept>Kabul et</button><button type="button" data-decline>Reddet</button></div>`;const requestKey=key();c.body.querySelector('[data-decline]').onclick=()=>close(c);action(c,c.body.querySelector('[data-accept]'),async()=>{const r=await api('/requests','POST',{package_id:p.id,request_key:requestKey});if(!live(c))return;close(c);const n=modal('Ödeme kaydınız oluşturuldu',true);n.requestId=r.id;n.body.innerHTML='<p>'+(r.available_da?'Talebiniz DA yetkililerine iletildi. Bir yetkili kabul ettiğinde bilgilendirileceksiniz.':'Şu anda sistem yoğunluğundan dolayı görevliler diğer müşteriler ile ilgilenmektedir. Size en kısa sürede dönüş yapılacaktır. Ödeme kaydınız oluşturulmuştur.')+'</p><p class="pa-note">İsteğinizi mesaj kutunuzdan takip edebilirsiniz.</p>';await sync()})}
+// WOOCOMMERCE_WEB_PREVIEW_V12
+// Web-only, authenticated, read-only selection preflight. Never creates WC orders,
+// DA assistance requests, payment intents, or wallet entries.
+async function choose(p){
+ const c=modal('Lidya Satın Al',true);
+ c.kind='woocommerce-web-preview';
+ c.body.textContent='Seçilen Coin paketi doğrulanıyor…';
+ // The Android Play build must never enter a third-party web checkout flow.
+ if(typeof window.ErisChatAndroid?.queryPlayCatalog==='function'){
+  c.body.textContent='Android uygulamasında satın alma yalnızca Google Play üzerinden sunulur. Ödeme şu anda kullanılamıyor.';
+  return;
+ }
+ const access=token();
+ if(!access){c.body.textContent='Paket seçebilmek için LidyaChat hesabınıza giriş yapın.';return;}
+ try{
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
+  let response;
+  try{
+   response=await fetch(base.replace(/\/payment-assistance$/,'')+'/woocommerce/web-checkout/prepare',{
+    method:'POST',cache:'no-store',signal:controller.signal,
+    headers:{Authorization:'Bearer '+access,Accept:'application/json','Content-Type':'application/json'},
+    body:JSON.stringify({package_id:p.id})
+   });
+  }finally{clearTimeout(timeout)}
+  if(!live(c)||access!==token())return;
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw Error(typeof data.detail==='string'?data.detail:'Paket bilgileri doğrulanamadı.');
+  const item=data.selection;
+  if(!item||item.package_id!==p.id||item.currency!=='TRY'||!Number.isInteger(item.price_try)||!Number.isInteger(item.amount))
+   throw Error('Sunucudan geçerli paket bilgisi alınamadı.');
+  if(data.order_created!==false||data.credited!==false||data.payment_available!==false)
+   throw Error('Satın alma henüz kullanıma açılmadı.');
+  // Build the modal from server-authoritative values, not caller-supplied prices.
+  c.body.replaceChildren();
+  const summary=document.createElement('div');summary.className='pa-card';
+  const name=document.createElement('h3');name.textContent=num(item.amount)+' Lidya';
+  const price=document.createElement('p');price.textContent=num(item.price_try)+' TL';
+  const bonus=document.createElement('p');bonus.className='pa-note';bonus.textContent=num(item.base)+' temel + '+num(item.bonus)+' bonus';
+  summary.append(name,price,bonus);c.body.append(summary);
+  const note=document.createElement('p');note.className='pa-note';
+  note.textContent='QNBpay ödeme altyapısı henüz aktif değil. Satın alma bu ekrandan açılacak; başka bir mağazaya geçmeniz gerekmeyecek. Şu anda ödeme alınmıyor ve Coin yüklenmiyor.';
+  c.body.append(note);
+  const actionButton=document.createElement('button');actionButton.type='button';actionButton.disabled=true;
+  actionButton.textContent='Ödemeye geç — Yakında';actionButton.className='pa-primary';
+  c.body.append(actionButton);
+ }catch(e){
+  if(!live(c))return;
+  c.body.replaceChildren();
+  error(c,e.name==='AbortError'?'Sunucu yanıt vermedi. Tekrar deneyin.':e.message);
+ }
+}
 
 // One consolidated Play checkout bridge; no billing action until server gates permit it.
 const playApi=base.replace(/\/payment-assistance$/,'')+'/google-play';
