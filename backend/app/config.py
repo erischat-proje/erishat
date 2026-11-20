@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     woocommerce_service_secret: str = ""
     # V5 is always disabled until a reviewed payment adapter is deployed.
     woocommerce_web_checkout_enabled: bool = False
+    # V6: pending WooCommerce orders only; no payment or wallet mutation.
+    woocommerce_order_creation_enabled: bool = False
+    woocommerce_rest_base_url: str = ""
+    woocommerce_rest_consumer_key: str = ""
+    woocommerce_rest_consumer_secret: str = ""
     google_play_billing_enabled: bool = False
     google_play_fulfillment_enabled: bool = False
     google_play_policy_approved: bool = False
