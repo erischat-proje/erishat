@@ -85,14 +85,24 @@ def redeem(db: Session, payload: PairingRedeem, service_secret: str | None) -> d
         user = db.scalar(select(User).where(User.id == link.user_id).with_for_update())
         if not user or not user.is_active:
             raise HTTPException(409, 'Kullanici aktif degil')
-        already = db.scalar(select(WooCommerceAccountLink.token_sha256)
-            .where(WooCommerceAccountLink.order_id == payload.order_id))
+        # A prior API redemption might have succeeded while WordPress failed to
+        # persist the response. A NEW valid ticket from the SAME LidyaChat user
+        # may confirm that same order; it never changes the existing ownership.
+        already = db.scalar(select(WooCommerceAccountLink)
+            .where(WooCommerceAccountLink.order_id == payload.order_id).with_for_update())
         if already:
-            raise HTTPException(409, 'Siparis daha once eslestirilmis')
+            if already.user_id != user.id:
+                raise HTTPException(409, 'Siparis farkli bir hesaba bagli')
+            # Consume the new ticket as well; never allow replay on another order.
+            link.used_at = now
+            db.commit()
+            return {'linked': True, 'order_id': payload.order_id,
+                    'user_id': user.id, 'credited': False, 'already_linked': True}
         link.used_at = now
         link.order_id = payload.order_id
         db.commit()
-        return {'linked': True, 'order_id': link.order_id, 'user_id': user.id, 'credited': False}
+        return {'linked': True, 'order_id': link.order_id,
+                'user_id': user.id, 'credited': False, 'already_linked': False}
     except IntegrityError:
         db.rollback()
         raise HTTPException(409, 'Siparis eslestirme cakismasi')

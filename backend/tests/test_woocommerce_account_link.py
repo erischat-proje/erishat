@@ -78,11 +78,31 @@ class PairingTests(unittest.TestCase):
             redeem(self.db, PairingRedeem(ticket=t, order_id=103), self.secret)
         self.assertEqual(ctx.exception.status_code, 409)
 
-    def test_order_cannot_be_reassigned(self):
-        a, b = issue(self.db, self.user)['ticket'], issue(self.db, self.user)['ticket']
-        redeem(self.db, PairingRedeem(ticket=a, order_id=104), self.secret)
+    def test_same_user_fresh_ticket_retries_same_order(self):
+        first = issue(self.db, self.user)['ticket']
+        redeem(self.db, PairingRedeem(ticket=first, order_id=104), self.secret)
+        fresh = issue(self.db, self.user)['ticket']
+        result = redeem(self.db, PairingRedeem(ticket=fresh, order_id=104), self.secret)
+        self.assertTrue(result['linked'])
+        self.assertTrue(result['already_linked'])
+        self.assertFalse(result['credited'])
+        # Fresh ticket was consumed; must not work on any other order.
         with self.assertRaises(HTTPException):
-            redeem(self.db, PairingRedeem(ticket=b, order_id=104), self.secret)
+            redeem(self.db, PairingRedeem(ticket=fresh, order_id=105), self.secret)
+
+    def test_order_cannot_be_reassigned(self):
+        first = issue(self.db, self.user)['ticket']
+        redeem(self.db, PairingRedeem(ticket=first, order_id=106), self.secret)
+        different_user = User(id='different-user', is_active=True)
+        self.db.add(different_user)
+        self.db.commit()
+        other_ticket = issue(self.db, different_user)['ticket']
+        with self.assertRaises(HTTPException) as ctx:
+            redeem(self.db, PairingRedeem(ticket=other_ticket, order_id=106), self.secret)
+        self.assertEqual(ctx.exception.status_code, 409)
+        # A rejected ticket must not silently change the order's owner.
+        row = self.db.query(WooCommerceAccountLink).filter_by(order_id=106).one()
+        self.assertEqual(row.user_id, self.user.id)
 
     def test_disabled_by_default(self):
         fake_config.settings.woocommerce_linking_enabled = False
