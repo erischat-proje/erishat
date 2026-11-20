@@ -157,7 +157,7 @@ function decorateAdminTools(root){
   const key=button.dataset.a,label=button.textContent.replace(/^[^\p{L}\p{N}]+/u,'').trim();
   button.type='button';button.classList.add('ea-png-button');button.setAttribute('aria-label',label);
   const picture=document.createElement('picture');picture.className='ea-png-art';picture.setAttribute('aria-hidden','true');
-  const image=document.createElement('img');image.alt='';image.width=960;image.height=320;image.decoding='async';image.draggable=false;image.dataset.eaArtKey=key==='payments'?'topup':key;image.onerror=()=>button.classList.add('ea-art-missing');image.onload=()=>button.classList.remove('ea-art-missing');
+  const image=document.createElement('img');image.alt='';image.width=960;image.height=320;image.decoding='async';image.draggable=false;image.dataset.eaArtKey=key==='payments'?'topup':key==='lm-woocommerce'?'lm-audit':key;image.onerror=()=>button.classList.add('ea-art-missing');image.onload=()=>button.classList.remove('ea-art-missing');
   const theme=document.documentElement.dataset.erisTheme==='dark'?'dark':'light';image.src=(image.dataset.eaArtKey.startsWith('lm-')?adminV3ArtBase:adminArtBase)+theme+'/'+(image.dataset.eaArtKey.startsWith('lm-')?image.dataset.eaArtKey.slice(3):adminArtworkKey(image.dataset.eaArtKey))+'.png';picture.append(image);
   const copy=document.createElement('span');copy.className='ea-png-copy';const title=document.createElement('b');title.textContent=({gaps:'Geri Bildirim',lidya:'Lidya Yönetimi'})[key]||label;
   const hint=document.createElement('small');hint.textContent=hints[key]||'İşlem geçmişi';copy.append(title,hint);button.replaceChildren(picture,copy);
