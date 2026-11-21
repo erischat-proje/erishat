@@ -174,6 +174,40 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
         result.update(details)
         audit(db,user,'workspace_user_viewed',{'public_id':person.public_id},person.id);db.commit();return result
 
+    # id-sorgu-v3: protected read-only social/finance/security account overview.
+    @router.get('/users/{user_id}/insights')
+    def account_insights(user_id: str, response: Response, db: Session = Depends(get_db),
+                         user: User = Depends(current_user)):
+        access(db, user, 4)
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Vary'] = 'Authorization'
+        person = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        if not person:
+            raise HTTPException(404, 'Kullanıcı bulunamadı')
+        from .id_insights_v3 import summary
+        result = summary(db, person)
+        audit(db, user, 'workspace_user_insights_viewed', {'public_id':person.public_id}, person.id)
+        db.commit()
+        return result
+
+    @router.get('/users/{user_id}/activity')
+    def account_activity(user_id: str, response: Response,
+                         category: str = Query(..., pattern='^(social|rooms|gifts|moderation)$'),
+                         page: int = Query(1, ge=1, le=100000),
+                         db: Session = Depends(get_db), user: User = Depends(current_user)):
+        access(db, user, 4)
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Vary'] = 'Authorization'
+        person = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))
+        if not person:
+            raise HTTPException(404, 'Kullanıcı bulunamadı')
+        from .id_insights_v3 import activity
+        result = activity(db, person.id, category, page)
+        audit(db, user, 'workspace_user_activity_viewed',
+              {'public_id':person.public_id, 'category':category, 'page':page}, person.id)
+        db.commit()
+        return result
+
     @router.get('/role-requests')
     def requests(status:str=Query('pending',pattern='^(all|pending|executed|rejected|cancelled)$'),before:int|None=Query(None,ge=1),limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user)):
         access(db,user,4);q=select(ManagementRoleRequest)

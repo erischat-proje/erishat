@@ -72,11 +72,112 @@ async function profile(s,id,kind='lookup'){
  button(actions,'Yetkili işlem geçmişi',()=>window.LidyaManagementCenter.open('audit',{actor:person.public_id}));
  button(actions,'İlgili olay dosyaları',()=>window.LidyaManagementCenter.open('cases',{q:person.public_id}));
  button(actions,'← Kullanıcı dizinine dön',()=>directory(s,{staff:kind==='roles'}));
+ idInsightsV3(s,person,version);
  if(person.can_request_role)button(actions,'Rol değişikliği talep et',()=>roleForm(s,person));
  if(kind==='deleteaccount')deleteForm(s,person);
  else if(kind==='roles'&&person.can_request_role)roleForm(s,person);
  else if(person.can_delete)button(actions,'Hesap silme ön kontrolü',()=>profile(s,person.id,'deleteaccount'));
 }
+// id-sorgu-v3: read-only, DA-only additional account sections and paged records.
+function insightsPairs(parent, rows){
+ const dl=el('dl','aw-facts');
+ for(const [label,value] of rows)info(dl,label,value??'Kayıtlı değil');
+ parent.append(dl);
+}
+async function idInsightsV3(s,person,version){
+ const host=el('section','aw-insights-v3');s.body.append(host);
+ const loading=note(host,'Sosyal, VIP, güvenlik ve mali özet sorgulanıyor…');
+ try{
+  const data=await request(s,'/v1/admin/workspace/users/'+encodeURIComponent(person.id)+'/insights');
+  if(!alive(s)||s.generation!==version||!host.isConnected)return;
+  loading.remove();
+  const sections=[
+   ['Sosyal hesap istatistikleri',[
+    ['Takipçiler',data.social.followers],['Takip edilen',data.social.following],
+    ['Paylaşım kaydı',data.social.posts_recorded],['Story kaydı',data.social.stories_recorded],
+    ['Yorum kaydı',data.social.comments_recorded],['Profil ziyaretçi kaydı',data.social.profile_visit_records],
+    ['Engellenen kullanıcı',data.social.blocked_users]
+   ]],
+   ['Oda ve aile bilgileri',[
+    ['Sahip olunan oda',data.rooms.owned],['Oda üyelik kaydı',data.rooms.member_records],
+    ['Takip edilen oda',data.rooms.followed_rooms],['Oda moderatörlüğü kaydı',data.rooms.moderator_records],
+    ['Aileler',data.rooms.families.map(x=>x.name+' ('+x.role+')').join(' · ')||'Kayıtlı değil'],
+    ['Son sahip olunan odalar',data.rooms.rooms.map(x=>x.name+' · '+x.public_id+(x.active?' · Aktif':' · Pasif')).join(' | ')||'Kayıtlı değil']
+   ]],
+   ['VIP ve geçmiş ödeme kayıtları',[
+    ['VIP seviyesi',data.vip.level],['Kazanılmış VIP seviyesi',data.vip.earned_level],
+    ['VIP döngüsü başlangıcı',date(data.vip.cycle_start)],['VIP döngüsü bitişi',date(data.vip.cycle_end)],
+    ['VIP döngüsü kaydedilmiş alım',data.vip.cycle_purchased],
+    ['Kayıtlı toplam VIP alımı',data.vip.total_purchased_recorded],
+    ['Sipariş kaydı',data.finance.orders_recorded],['Google Play makbuz kaydı',data.finance.play_receipts_recorded],
+    ['Temsilci yükleme talebi',data.finance.assisted_requests_recorded],
+    ['Alınan bayi transferi',data.finance.dealer_transfers_received],
+    ['Yönetici Lidya ekleme kaydı',data.finance.manual_credits_recorded],
+    ['VIP makbuz kaydı',data.finance.vip_receipts_recorded],
+    ['Referans kodu kullanımı',data.finance.referral_redemptions]
+   ]],
+   ['Oyun ve iletişim',[
+    ['Bahis kaydı',data.games.bets_recorded],['Oyun sonucu kaydı',data.games.plays_recorded],
+    ['Kayıtlı ses/görüntülü arama',data.communication.calls_recorded]
+   ]],
+   ['Güvenlik ve moderasyon geçmişi',[
+    ['Hesap yasağı kayıtları',data.security.account_ban_records],
+    ['Sohbet yasağı kayıtları',data.security.chat_ban_records],
+    ['Oda yasağı kayıtları',data.security.room_ban_records],
+    ['Alınan şikâyet kaydı',data.security.reports_received],
+    ['Gönderilen şikâyet kaydı',data.security.reports_sent],
+    ['Hedefe bağlı yönetici denetim kaydı',data.security.admin_audit_records]
+   ]]
+  ];
+  for(const [title,rows] of sections){const c=card(host,title);insightsPairs(c,rows);}
+  note(host,data.note);
+  const actions=el('div','aw-actions');host.append(actions);
+  for(const [key,title] of [
+   ['social','Sosyal etkinlik geçmişi'],['rooms','Oda etkinliği geçmişi'],
+   ['gifts','Hediye geçmişi'],['moderation','Yaptırım ve denetim geçmişi']
+  ])button(actions,title,()=>openIdActivityV3(s,person,key));
+  button(actions,'Oyun ve satın alım geçmişine git',()=>{
+   if(!window.LidyaManagementCenter?.open)throw Error('Mali denetim modülü yüklenemedi');
+   return window.LidyaManagementCenter.open('finance',{target:person.public_id});
+  });
+ }catch(e){if(host.isConnected){loading.remove();note(host,'Ayrıntılı sorgu yüklenemedi: '+e.message,true);}}
+}
+async function openIdActivityV3(s,person,category){
+ s.panel.querySelector('[data-id-activity-v3]')?.remove();
+ const overlay=el('div','');overlay.dataset.idActivityV3='';
+ overlay.style.cssText='position:fixed;inset:0;z-index:2147483100;background:#000b;display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box';
+ const modal=el('section','aw-card');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+ const labels={social:'Sosyal etkinlik',rooms:'Oda geçmişi',gifts:'Hediye geçmişi',moderation:'Yaptırım ve denetim'};
+ modal.setAttribute('aria-label',labels[category]||'Hesap geçmişi');
+ modal.style.cssText='box-sizing:border-box;width:min(580px,100%);max-height:calc(100dvh - 30px);display:flex;flex-direction:column;gap:10px;background:var(--ui-panel,#261d17);color:var(--ui-ink,#f8e3b7);border:1px solid #b99353;border-radius:16px;padding:14px';
+ const heading=el('div','aw-actions');const title=el('h3','',labels[category]+' · '+person.public_id);
+ const closeBtn=el('button','aw-button','✕ Kapat');closeBtn.type='button';closeBtn.onclick=()=>overlay.remove();heading.append(title,closeBtn);
+ const body=el('div','');body.style.cssText='overflow-y:auto;min-height:0;flex:1;overscroll-behavior:contain';
+ const footer=el('div','aw-actions');const prev=el('button','aw-button','‹ Önceki');const next=el('button','aw-button','Sonraki ›');
+ prev.type=next.type='button';const status=el('span','','Sayfa 1');footer.append(prev,status,next);modal.append(heading,body,footer);overlay.append(modal);s.panel.append(overlay);
+ overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+ closeBtn.focus({preventScroll:true});let page=1,seq=0;
+ async function load(wanted){
+  const requestId=++seq;prev.disabled=next.disabled=true;body.replaceChildren(el('p','','Kayıtlar yükleniyor…'));
+  try{
+   const params=new URLSearchParams({category,page:String(wanted)});
+   const data=await request(s,'/v1/admin/workspace/users/'+encodeURIComponent(person.id)+'/activity?'+params);
+   if(!overlay.isConnected||requestId!==seq)return;
+   page=data.page;body.replaceChildren();
+   const total=el('p','',data.total+' kayıt');body.append(total);
+   if(!data.items.length)body.append(el('p','','Kayıt bulunamadı.'));
+   for(const entry of data.items){
+    const c=card(body,entry.source+' · '+date(entry.created_at));
+    insightsPairs(c,[['Ayrıntı',entry.detail],['Tutar (varsa)',entry.amount||'—'],['Kayıt ID',entry.id]]);
+   }
+   status.textContent='Sayfa '+data.page+' / '+data.total_pages;
+   prev.disabled=!data.has_previous;next.disabled=!data.has_next;body.scrollTop=0;
+  }catch(e){if(overlay.isConnected){body.replaceChildren();note(body,e.message,true);status.textContent='Sorgu hatası';}}
+ }
+ prev.onclick=()=>load(page-1);next.onclick=()=>load(page+1);
+ await load(1);
+}
+
 function roleForm(s,p){
  s.body.querySelector('[data-role-proposal]')?.remove();const c=card(s.body,'DA · Doğrudan rol değişikliği');c.dataset.roleProposal='';note(c,'DA, hedef profil ID ve gerekçe doğrulamasından sonra rolü tek işlemle verebilir. İşlem ve karar ayrı denetim kayıtlarına yazılır. Kendi rolünüz değiştirilemez.');
  const key=crypto.randomUUID();fields(c,[{name:'role',title:'Yeni rol',options:{'':'Seçin',SA:'SA · Destek',UA:'UA · Talep',FA:'FA · Karar',DA:'DA · Sistem',REMOVE:'Yetkiyi kaldır'}},{name:'reason',title:'Gerekçe',type:'textarea',minLength:20,maxLength:2000},{name:'confirm',title:'Onay için profil ID değerini yazın: '+p.public_id,minLength:1,maxLength:64}],'Rolü doğrudan uygula',async v=>{const row=await request(s,'/v1/admin/workspace/role-requests','POST',{target_id:p.id,role:v.role==='REMOVE'?null:v.role,reason:v.reason,expected_snapshot:p.role_snapshot,confirm_public_id:v.confirm,request_key:key});let applied;try{applied=await request(s,'/v1/admin/workspace/role-requests/'+row.id+'/decision','POST',{action:'approve',note:v.reason,direct:true});}catch(error){await roleRequests(s);note(s.body,'Talep #'+row.id+' kaydedildi ancak doğrudan karar uygulanamadı: '+error.message,true);return;}await roleRequests(s,{status:'all'});note(s.body,'Rol işlemi #'+row.id+': '+statusName(applied.status)+'.');if(applied.realtime_refresh_pending)note(s.body,'İşlem kaydedildi; hedef kullanıcının oturumunu yenilemesi gerekebilir.');});
