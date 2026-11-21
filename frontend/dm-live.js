@@ -882,6 +882,106 @@
         }
       }
     `;
+
+    // dm-toolbar-overlap-fix-v3
+    // Seçim sırasında normal sohbet başlığını kaldır.
+    compactMenuStyle.textContent += `
+      #chat.dm-selection-mode .chatHead {
+        display:flex!important;
+        align-items:stretch!important;
+        padding:0!important;
+        height:64px!important;
+        min-height:64px!important;
+        max-height:64px!important;
+        overflow:visible!important;
+        box-sizing:border-box!important;
+      }
+
+      #chat.dm-selection-mode .chatHead
+      > :not(.dm-select-tools) {
+        display:none!important;
+      }
+
+      #chat.dm-selection-mode
+      .dm-select-tools:not([hidden]) {
+        position:relative!important;
+        inset:auto!important;
+        transform:none!important;
+        display:grid!important;
+        grid-template-columns:repeat(8,minmax(0,1fr))!important;
+        grid-template-rows:1fr!important;
+        align-items:center!important;
+        justify-items:center!important;
+        gap:3px!important;
+        flex:none!important;
+        width:100%!important;
+        min-width:0!important;
+        max-width:100%!important;
+        height:64px!important;
+        min-height:64px!important;
+        margin:0!important;
+        padding:5px 6px!important;
+        box-sizing:border-box!important;
+        overflow:visible!important;
+        z-index:20!important;
+      }
+
+      #chat.dm-selection-mode
+      .dm-select-tools>button {
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        justify-self:center!important;
+        width:100%!important;
+        max-width:42px!important;
+        min-width:0!important;
+        height:40px!important;
+        flex:none!important;
+        margin:0!important;
+        padding:0!important;
+        box-sizing:border-box!important;
+        font-size:19px!important;
+        line-height:1!important;
+      }
+
+      #chat.dm-selection-mode
+      .dm-select-tools>[data-selected-count] {
+        position:absolute!important;
+        width:1px!important;
+        height:1px!important;
+        padding:0!important;
+        margin:-1px!important;
+        overflow:hidden!important;
+        clip-path:inset(50%)!important;
+        white-space:nowrap!important;
+      }
+
+      #chat.dm-selection-mode
+      .dm-select-tools [data-dm-more-menu] {
+        position:absolute!important;
+        top:calc(100% + 4px)!important;
+        right:7px!important;
+        z-index:110!important;
+        grid-template-columns:minmax(0,1fr)!important;
+      }
+
+      #chat.dm-selection-mode
+      .dm-select-tools [data-dm-more-menu][hidden] {
+        display:none!important;
+      }
+
+      #chat.dm-selection-mode
+      .dm-select-tools [data-dm-more-menu] button {
+        display:block!important;
+        width:100%!important;
+        max-width:none!important;
+        min-height:42px!important;
+        height:auto!important;
+        padding:9px 12px!important;
+        text-align:left!important;
+        font-size:12px!important;
+      }
+    `;
     document.head.append(compactMenuStyle);
     compactDmSelection();
 
