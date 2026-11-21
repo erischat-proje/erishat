@@ -6,7 +6,6 @@
         { id: 'crash', name: 'Crash', icon: '🚀', desc: 'Kanatlı aslan yükselirken çarpanını yakala.' },
         { id: 'blackjack', name: 'Blackjack', icon: '🃏', desc: '21 e en yakın eli topla, krupiyeyi alt et.' },
         { id: 'slot', name: 'Slot', icon: '🎰', desc: '3 aynı sembolü yakala, Lidya kazan!' },
-        { id: 'cups', name: 'Dört Kupa', icon: '🥤', desc: 'Gizemli kupanın altındaki altını bul.' },
         { id: 'horse_race', name: 'At Yarışı', icon: '🐎', desc: 'Favori atına oyna, pistin kralı ol.' },
         { id: 'vault', name: 'Kasa', icon: '🎁', desc: 'Hazine kasalarını seç, büyük ikramiyeyi kazan.' }
     ];
