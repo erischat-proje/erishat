@@ -256,18 +256,18 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 }
 /* Existing BT gold role frame stays above the artwork via face::before (z-index:33). */
 /* Secondary identity emblem above the name, only on the user's own BT profile. */
+/* LIDYACHAT_BT_PROFILE_V6_SINGLE_TOP_SHIELD */
+/* LB gibi tek resmi BT kalkani; V5'in yuvarlak ust logosu yerine. */
 #profile .profile.card.profile.lbr-v3-support .name::before{
-  content:''!important;
-  display:block!important;
-  flex:none!important;
-  width:48px!important;
-  height:48px!important;
-  margin:0 0 2px!important;
-  border-radius:50%!important;
-  background:#053d35 url('./role-icons/bayi-temsilcisi-orijinal-v5.png?v=bt-profile-v5') center / contain no-repeat!important;
-  border:1px solid #b78836!important;
-  box-shadow:0 1px 6px rgba(85,56,13,.2)!important;
+  content:''!important;display:block!important;flex:none!important;
+  width:52px!important;height:62px!important;margin:0 0 2px!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent url('./role-icons/bt-top-shield-v6.svg?v=bt-v6') center / contain no-repeat!important;
   pointer-events:none!important;
+}
+/* badgeScan h2 icinde ikinci bir yuvarlak BT resmi ekliyordu; sadece bu profilde gizle. */
+#profile .profile.card.profile.lbr-v3-support .name h2 .lb-dealer-badge{
+  display:none!important;
 }
 #profile .profile.card.profile.lbr-v3-support .name [data-lbr-role-title]{
   color:#936315!important;
