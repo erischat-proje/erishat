@@ -1,6 +1,6 @@
 """Role-aware management catalogue, scoped workload and independent staff changes."""
 import hashlib,json,logging
-from datetime import datetime,timezone
+from datetime import datetime,timezone,timedelta
 from fastapi import APIRouter,Depends,HTTPException,Query,Response
 from pydantic import Field
 from sqlalchemy import select,func,or_,and_
@@ -90,6 +90,32 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
         if role=='DA':counts['roles']=db.scalar(select(func.count()).select_from(ManagementRoleRequest).where(ManagementRoleRequest.status=='pending',ManagementRoleRequest.requester_id!=user.id,ManagementRoleRequest.target_id!=user.id))
         return {'role':role,'tools':catalog(user,role),'counts':counts,'generated_at':now.isoformat(),'source':'persisted_database'}
 
+
+    # id-sorgu-v2: system-wide persisted counts; not presence/online metrics.
+    @router.get('/users/statistics')
+    def user_statistics(response: Response, db: Session = Depends(get_db),
+                        user: User = Depends(current_user)):
+        access(db, user, 4)
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Vary'] = 'Authorization'
+        from .platform_models import VipStatus
+        now = datetime.now(timezone.utc)
+        day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        total = int(db.scalar(select(func.count()).select_from(User)) or 0)
+        active_count = int(db.scalar(select(func.count()).select_from(User).where(User.is_active.is_(True))) or 0)
+        staff_count = int(db.scalar(select(func.count()).select_from(User).join(AdminRole, AdminRole.user_id == User.id)) or 0)
+        return {
+            'total_users': total,
+            'active_accounts': active_count,
+            'inactive_accounts': total - active_count,
+            'registered_today': int(db.scalar(select(func.count()).select_from(User).where(User.created_at >= day_start)) or 0),
+            'registered_last_30_days': int(db.scalar(select(func.count()).select_from(User).where(User.created_at >= now - timedelta(days=30))) or 0),
+            'vip_accounts': int(db.scalar(select(func.count()).select_from(VipStatus).where(VipStatus.level > 0)) or 0),
+            'staff_accounts': staff_count,
+            'generated_at': now.isoformat(),
+            'note': 'Aktif hesap, cevrimici kullanici sayisi degildir. Silinmis hesaplar sayilmaz.'
+        }
+
     @router.get('/users')
     def users(q:str=Query('',max_length=100),role:str|None=None,active:str=Query('all',pattern='^(all|active|inactive)$'),after:str|None=Query(None,max_length=64),limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user)):
         access(db,user,4);query=select(User,AdminRole).outerjoin(AdminRole,AdminRole.user_id==User.id)
@@ -98,17 +124,54 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
             if role not in ALL+('USER','STAFF'):raise HTTPException(422,'Geçersiz rol')
             query=query.where(AdminRole.user_id.is_(None) if role=='USER' else AdminRole.user_id.is_not(None) if role=='STAFF' else AdminRole.role==role)
         if active!='all':query=query.where(User.is_active.is_(active=='active'))
+        total_matching=int(db.scalar(select(func.count()).select_from(query.order_by(None).subquery())) or 0)
         if after:query=query.where(User.id>after)
         rows=list(db.execute(query.order_by(User.id).limit(limit+1)))
-        return {'items':[{'id':p.id,'public_id':p.public_id,'nickname':p.nickname,'role':r.role if r else None,'is_active':p.is_active,'created_at':p.created_at} for p,r in rows[:limit]],'next_after':rows[limit-1][0].id if len(rows)>limit else None}
+        return {'items':[{'id':p.id,'public_id':p.public_id,'nickname':p.nickname,'role':r.role if r else None,'is_active':p.is_active,'created_at':p.created_at} for p,r in rows[:limit]],'next_after':rows[limit-1][0].id if len(rows)>limit else None,'total_matching':total_matching,'page_size':limit}
 
     @router.get('/users/{user_id}')
     def profile(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user)):
         access(db,user,4);person=db.get(User,user_id) or db.scalar(select(User).where(User.public_id==user_id))
         if not person:raise HTTPException(404,'Kullanıcı bulunamadı')
         row=db.get(AdminRole,person.id);now=datetime.now(timezone.utc)
+
+        from .models import AuthIdentity
+        from .platform_models import VipStatus, FamilyMember, GameBet
+        from .room_models import Room
+        from .purchase_models import LidyaOrder
+        from .play_billing_models import PlayPurchaseRecord
+        from .dealer_routes import DealerTransfer
+        from .payment_assistance_models import PaymentRequest
+        vip=db.get(VipStatus, person.id)
+        linked_emails=list(db.scalars(select(AuthIdentity.identifier).where(
+            AuthIdentity.user_id==person.id,
+            AuthIdentity.identifier.is_not(None),
+            AuthIdentity.verified_at.is_not(None),
+        ).limit(20)))
+        emails=list(dict.fromkeys([email for email in [person.google_email,*linked_emails]
+                                   if email and '@' in email]))
+        def user_count(model,field):
+            return int(db.scalar(select(func.count()).select_from(model).where(field==person.id)) or 0)
+        details={
+            'emails': emails,
+            'gender': person.gender,
+            'bio': person.bio,
+            'profile_completed': bool(person.profile_completed),
+            'updated_at': person.updated_at,
+            'terms_accepted_at': person.terms_accepted_at,
+            'gem_balance': str(person.lidya_gem or 0),
+            'vip_level': int(vip.level) if vip else 0,
+            'owned_rooms': user_count(Room,Room.owner_id),
+            'family_memberships': user_count(FamilyMember,FamilyMember.user_id),
+            'game_bets': user_count(GameBet,GameBet.user_id),
+            'orders': user_count(LidyaOrder,LidyaOrder.user_id),
+            'google_play_receipts': user_count(PlayPurchaseRecord,PlayPurchaseRecord.user_id),
+            'dealer_transfers_received': user_count(DealerTransfer,DealerTransfer.recipient_id),
+            'assisted_payment_requests': user_count(PaymentRequest,PaymentRequest.user_id),
+        }
         active=lambda model:select(func.count()).select_from(model).where(model.user_id==person.id,model.active.is_(True),or_(model.expires_at.is_(None),model.expires_at>now))
         result={'id':person.id,'public_id':person.public_id,'nickname':person.nickname,'role':row.role if row else None,'is_active':person.is_active,'created_at':person.created_at,'balance':str(person.lidya or 0),'role_snapshot':role_snapshot(row),'active_account_bans':db.scalar(active(UserBan)),'active_chat_bans':db.scalar(active(ChatBan)),'open_cases':db.scalar(select(func.count()).select_from(ManagementCase).where(ManagementCase.target_user_id==person.id,ManagementCase.status.notin_(['resolved','dismissed']))),'can_request_role':person.id!=user.id and person.is_active,'can_delete':person.id!=user.id and row is None}
+        result.update(details)
         audit(db,user,'workspace_user_viewed',{'public_id':person.public_id},person.id);db.commit();return result
 
     @router.get('/role-requests')
