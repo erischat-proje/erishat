@@ -257,7 +257,10 @@ class CosmeticRent(BaseModel):
 def rent_cosmetic(payload:CosmeticRent,user=Depends(current_cosmetic_user),db:Session=Depends(get_db)):
     kind,key,months=payload.cosmetic_type,payload.asset_key,payload.months
     if kind not in PRICES or months not in MONTHS:raise HTTPException(422,'Geçersiz kiralama seçeneği.')
-    if kind in ('avatar','frame'):staff_identity.require_editable(user)
+    if kind in ('avatar','frame'):
+        from .dealer_routes import require_role_cosmetics_unlocked
+        require_role_cosmetics_unlocked(db, user.id)
+        staff_identity.require_editable(user)
     try:asset=find_asset(key,kind)
     except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
     if not asset:raise HTTPException(404,'Görünüm bulunamadı.')
@@ -284,6 +287,8 @@ def purchase_cosmetic(payload: CosmeticPurchase, user=Depends(current_cosmetic_u
     kind = payload.cosmetic_type
     key = payload.asset_key
     if kind in ('avatar','frame'):
+        from .dealer_routes import require_role_cosmetics_unlocked
+        require_role_cosmetics_unlocked(db, user.id)
         staff_identity.require_editable(user)
     try:asset=find_asset(key,kind)
     except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')
@@ -331,6 +336,8 @@ def apply_cosmetic(payload: CosmeticApply, user=Depends(current_cosmetic_user), 
     kind = payload.cosmetic_type
     key = payload.asset_key
     if kind in ('avatar','frame'):
+        from .dealer_routes import require_role_cosmetics_unlocked
+        require_role_cosmetics_unlocked(db, user.id)
         staff_identity.require_editable(user)
     try:asset=find_asset(key,kind)
     except ValueError:raise HTTPException(422,'Geçersiz görünüm anahtarı.')

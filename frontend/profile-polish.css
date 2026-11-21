@@ -177,3 +177,33 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
 #lidya-dealer-menu.lbv3-premium-card .lbv4-copy small{color:#fff1c7!important;font-size:12px!important}
 #lidya-dealer-menu.lbv3-premium-card .lbv4-arrow{background:linear-gradient(135deg,#fff0b8,#c18d36)!important;color:#412606!important;border:1px solid #ffdf91!important;border-radius:50%!important;box-shadow:0 2px 8px #0007!important}
 #profile .profile.card.profile.lbr-v3-dealer .name .lbr-v2-title,#profile .profile.card.profile.lbr-v3-support .name .lbr-v2-title{font-weight:900!important;color:#896018!important}
+
+
+/* LIDYACHAT_LB_BT_FRAME_LOCK_V4 */
+/* Anchor crown and wreath to portrait .face, not the horizontally shifted .stage. */
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage::after{display:none!important;content:none!important}
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage{overflow:visible!important}
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage .face{
+  position:relative!important;isolation:isolate!important;overflow:visible!important;
+}
+/* Underlying chosen cosmetic stays persisted, but is hidden while role is active. */
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage .frameImg{visibility:hidden!important}
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage .face::before{
+  content:''!important;position:absolute!important;left:50%!important;top:50%!important;
+  transform:translate(-50%,-50%)!important;inset:auto!important;
+  width:68px!important;height:74px!important;z-index:33!important;
+  background-position:center!important;background-repeat:no-repeat!important;background-size:100% 100%!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none!important;
+  filter:drop-shadow(0 1px 2px rgba(50,31,8,.35));
+}
+#profile .profile.card.profile.lbr-v3-dealer .stage .face::before{background-image:url('./role-icons/dealer-profile-frame-v3.svg?v=lb-v4')!important}
+#profile .profile.card.profile.lbr-v3-support .stage .face::before{background-image:url('./role-icons/support-profile-frame-v3.svg?v=lb-v4')!important}
+/* LB official portrait is centered strictly inside avatar circle. */
+#profile .profile.card.profile.lbr-v3-dealer .stage .face::after{
+  inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;
+  background:url('./role-icons/lidya-bayisi-premium-v3.png?v=lb-v4') center/cover no-repeat!important;
+  border-radius:50%!important;z-index:20!important;
+}
+/* Non-destructive client-side guard; server independently enforces it. */
+html.lb-v4-cosmetic-locked [data-profile-avatar-change],
+html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!important;opacity:.48!important}
