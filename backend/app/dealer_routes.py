@@ -41,11 +41,11 @@ class DealerDesignation(Base):
 
 def designation(db, user_id):
     row = db.get(DealerDesignation, user_id)
-    return row.kind if row else 'coin'
+    return row.kind if row else 'dealer'
 
 
 def dealer_badge(kind):
-    return 'BT' if kind == 'support' else 'CT'
+    return 'BT' if kind == 'support' else 'CT' if kind == 'coin' else 'LB'
 
 
 class DealerTransfer(Base):
@@ -72,7 +72,12 @@ class DealerStockGrant(Base):
 
 class AssignBody(BaseModel):
     public_id: str = Field(min_length=1, max_length=64)
-    kind: str = Field(default='coin', pattern='^(coin|support)$')
+    kind: str = Field(default='dealer', pattern='^(dealer|coin|support)$')
+
+
+class RevokeBody(BaseModel):
+    public_id: str = Field(min_length=1, max_length=64)
+    confirm_public_id: str = Field(min_length=1, max_length=64)
 
 
 class StockBody(AssignBody):
@@ -123,7 +128,7 @@ def register_auth(current_user):
         explicit = db.scalars(select(DealerDesignation).where(
             DealerDesignation.user_id.in_(rows))).all() if rows else []
         kinds = {r.user_id: r.kind for r in explicit}
-        return {"dealers": rows, "roles": {uid: kinds.get(uid, 'coin') for uid in rows}}
+        return {"dealers": rows, "roles": {uid: kinds.get(uid, 'dealer') for uid in rows}}
 
     @router.get("/admin/list")
     def admin_dealer_list(limit: int = Query(default=50, ge=1, le=100),
@@ -175,6 +180,12 @@ def register_auth(current_user):
         else:
             row.active = True
         identity = db.get(DealerDesignation, target.id)
+        if body.kind == 'dealer':
+            if identity is not None:
+                db.delete(identity)
+            db.commit()
+            return {"ok": True, "public_id": target.public_id, "badge": "LB",
+                    "kind": "dealer", "stock": row.stock if row else 0}
         if identity is None:
             db.add(DealerDesignation(user_id=target.id, kind=body.kind, assigned_by=user.id))
         else:
@@ -184,6 +195,25 @@ def register_auth(current_user):
         db.commit()
         return {"ok": True, "public_id": target.public_id, "badge": dealer_badge(body.kind),
                 "kind": body.kind, "stock": row.stock if row else 0}
+
+    @router.post("/admin/revoke")
+    def revoke(body: RevokeBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_da(db, user)
+        if body.public_id.strip() != body.confirm_public_id.strip():
+            raise HTTPException(422, "Profil ID onayı eşleşmiyor")
+        person = target_by_public_id(db, body.public_id)
+        row = db.scalar(select(DealerInventory).where(
+            DealerInventory.user_id == person.id).with_for_update())
+        if row is None or not row.active:
+            raise HTTPException(404, "Aktif bayi/temsilci yetkisi bulunamadı")
+        # Preserve financial ledger and remaining stock; revoke access atomically.
+        row.active = False
+        identity = db.get(DealerDesignation, person.id)
+        if identity is not None:
+            db.delete(identity)
+        db.commit()
+        return {"ok": True, "public_id": person.public_id, "active": False,
+                "preserved_stock": row.stock}
 
     @router.post("/admin/stock")
     def grant(body: StockBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
