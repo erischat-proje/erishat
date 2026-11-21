@@ -59,7 +59,6 @@ ROULETTE = [
     {"key": "fire", "weight": 3.0, "multiplier": 3.0}, {"key": "gem", "weight": 1.5, "multiplier": 4.0},
     {"key": "jackpot", "weight": 0.5, "multiplier": 6.0},
 ]
-CUPS = {"cup_1", "cup_2", "cup_3", "cup_4"}
 
 class PrivacyUpdate(BaseModel):
     hide_vip: bool | None = None; hide_vip_badge: bool | None = None; hide_vip_neon: bool | None = None
@@ -635,15 +634,14 @@ def register_platform_auth(current_user_dependency):
         if not row or row.room_id != room_id: raise HTTPException(status_code=404, detail="Müzik bulunamadı")
         db.delete(row); db.commit(); record("system","room_music_deleted",user_id=user.id,room_id=room_id,music_id=music_id); return {"deleted":True,"id":music_id}
 
-    GAME_TYPES = {"roulette", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
-    ROOM_GAME_TYPES = {"roulette", "cups", "horse_race", "wheel"}
+    GAME_TYPES = {"roulette", "horse_race", "blackjack", "crash", "vault", "wheel"}
+    ROOM_GAME_TYPES = {"roulette", "horse_race", "wheel"}
     PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault"}
     GAME_PROFILES = {
         "roulette": {
             "results": [("rose", 45), ("heart", 20), ("star", 12), ("diamond", 8), ("crown", 6), ("gift", 4), ("fire", 3), ("gem", 1.5), ("jackpot", 0.5)],
             "description": "Ağırlıklı RNG ile tek sonuçlu rulet demosu.",
         },
-        "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
         "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
         "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Tek elli blackjack demosu; deste ve sonuç RNG ile üretilir."},
         "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Rastgele crash çarpanı sınıfı; yatırım veya cash-out yoktur."},
@@ -770,8 +768,6 @@ def register_platform_auth(current_user_dependency):
                 raise HTTPException(status_code=403, detail="Bu oyunu oynayabilmek için odaya katılmanız gerekir")
 
         choice = str(payload.get("choice") or "").strip() or None
-        if game_type == "cups" and choice not in CUPS:
-            raise HTTPException(status_code=400, detail="Kupa seçimi cup_1..cup_4 olmalı")
         if game_type == "roulette" and choice and choice not in {x[0] for x in GAME_PROFILES["roulette"]["results"]}:
             raise HTTPException(status_code=400, detail="Geçersiz rulet seçimi")
         if game_type == "horse_race" and choice and choice not in {f"horse_{i}" for i in range(1, 8)}:

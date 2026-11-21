@@ -13,7 +13,6 @@ MİMARİ
 
 OYUNLAR
 - roulette: oda oyunu
-- cups: oda oyunu
 - horse_race: oda oyunu
 - wheel: oda oyunu
 - blackjack: özel/free-play oyun
