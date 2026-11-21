@@ -25,6 +25,111 @@ def register_auth(current_user):
         require_da(db,user);response.headers['Cache-Control']='private, no-store';response.headers['Vary']='Authorization'
         return snapshot(db,days,target.strip())
 
+
+    @router.get('/user-topups')
+    def user_topups(
+        response: Response,
+        target: str = Query(..., min_length=1, max_length=64),
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ):
+        require_da(db, user)
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Vary'] = 'Authorization'
+
+        from .system_data import LidyaLedger
+        from .payment_assistance_models import PaymentRequest
+        from .dealer_routes import DealerTransfer
+
+        person = db.scalar(
+            select(User).where(User.public_id == target.strip())
+        )
+        if not person:
+            raise HTTPException(404, 'Kullanici bulunamadi')
+
+        def stamp(value):
+            return value.isoformat() if value else None
+
+        ledger = db.scalars(
+            select(LidyaLedger)
+            .where(
+                LidyaLedger.user_id == person.id,
+                LidyaLedger.delta > 0,
+                LidyaLedger.operation != 'initial_balance',
+            )
+            .order_by(LidyaLedger.id.desc())
+            .limit(100)
+        ).all()
+
+        orders = db.scalars(
+            select(LidyaOrder)
+            .where(LidyaOrder.user_id == person.id)
+            .order_by(LidyaOrder.created_at.desc())
+            .limit(100)
+        ).all()
+
+        assisted = db.scalars(
+            select(PaymentRequest)
+            .where(PaymentRequest.user_id == person.id)
+            .order_by(PaymentRequest.created_at.desc())
+            .limit(100)
+        ).all()
+
+        dealers = db.scalars(
+            select(DealerTransfer)
+            .where(DealerTransfer.recipient_id == person.id)
+            .order_by(DealerTransfer.created_at.desc())
+            .limit(100)
+        ).all()
+
+        manual = db.scalars(
+            select(LidyaOperation)
+            .where(
+                LidyaOperation.user_id == person.id,
+                LidyaOperation.operation == 'EKLEME',
+            )
+            .order_by(LidyaOperation.created_at.desc())
+            .limit(100)
+        ).all()
+
+        return {
+            'public_id': person.public_id,
+            'nickname': person.nickname,
+            'ledger': [
+                dict(id=str(r.id), amount=str(r.delta),
+                     source=r.operation, reference=r.reference_id,
+                     created_at=stamp(r.created_at))
+                for r in ledger
+            ],
+            'orders': [
+                dict(id=r.id, amount=str(r.total),
+                     source=r.method, status=r.status,
+                     created_at=stamp(r.created_at))
+                for r in orders
+            ],
+            'assisted': [
+                dict(id=r.id, amount=str(r.total),
+                     source='payment_assistance',
+                     status=r.status,
+                     credited=bool(r.credit_operation_id),
+                     created_at=stamp(r.created_at))
+                for r in assisted
+            ],
+            'dealers': [
+                dict(id=r.id, amount=str(r.amount),
+                     source='dealer_transfer', status='credited',
+                     created_at=stamp(r.created_at))
+                for r in dealers
+            ],
+            'manual': [
+                dict(id=r.id, amount=str(r.amount),
+                     source='admin_manual', status='credited',
+                     created_at=stamp(r.created_at))
+                for r in manual
+            ],
+            'limit_per_source': 100,
+        }
+
     @router.get('/overview')
     def overview(response:Response,days:int=Query(7,ge=1,le=90),target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
         require_da(db,user);response.headers['Cache-Control']='private, no-store';response.headers['Vary']='Authorization'
