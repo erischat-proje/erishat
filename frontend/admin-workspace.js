@@ -30,20 +30,48 @@ function fields(parent,specs,send,submit){
  f.onsubmit=async e=>{e.preventDefault();if(b.disabled||!f.reportValidity())return;b.disabled=true;result.textContent='İşleniyor…';try{await submit(Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.value])),result);if(result.isConnected&&result.textContent==='İşleniyor…')result.textContent='Kaydedildi.';}catch(error){if(result.isConnected){result.textContent=error.message;result.setAttribute('role','alert');}}finally{b.disabled=false;}};return {f,inputs,result};
 }
 function stage(s,title,description){s.generation++;s.body.replaceChildren();const nav=el('nav','aw-nav');button(nav,'← Yönetim menüsü',s.back);s.body.append(nav,el('h3','aw-title',title));if(description)note(s.body,description);return s.generation;}
+
+// id-sorgu-v2: DA-scoped directory, precise counts, and detailed account view.
 function directory(s,options={}){
- const version=stage(s,options.staff?'Yönetici kadrosu':'Kullanıcı dizini','Profil ID, sistem ID veya kullanıcı adına göre arayın. Hesabı açıp hedefi doğrulayın.');
- const filters=fields(s.body,[{name:'q',title:'Kullanıcı veya profil ID',value:options.q,required:false,maxLength:100},{name:'role',title:'Rol',value:options.role||(options.staff?'STAFF':''),required:false,options:{'':'Tümü',STAFF:'Tüm yetkililer',USER:'Kullanıcı',SA:'SA',UA:'UA',FA:'FA',DA:'DA'}},{name:'active',title:'Hesap durumu',value:options.active||'all',options:{all:'Tümü',active:'Aktif',inactive:'Pasif'}}],'Ara',v=>directory(s,{...v,staff:options.staff}));
- const list=el('div','aw-grid');s.body.append(list);const loading=note(list,'Kayıtlar yükleniyor…');let after=null;
+ const version=stage(s,options.staff?'Yönetici kadrosu':'Kullanıcı ve Sistem Denetim Merkezi','Veriler canlı veritabanından alınır. Aktif hesap, çevrimiçi anlamına gelmez.');
+ if(!options.staff){
+  const metrics=el('section','aw-grid');s.body.append(metrics);
+  request(s,'/v1/admin/workspace/users/statistics').then(d=>{
+   if(!alive(s)||version!==s.generation)return;
+   metrics.replaceChildren();
+   for(const [name,key] of [['Toplam kullanıcı','total_users'],['Aktif hesap','active_accounts'],['Pasif hesap','inactive_accounts'],['Bugün kayıt olan','registered_today'],['Son 30 gün kayıt','registered_last_30_days'],['VIP kullanıcı','vip_accounts'],['Yetkili hesap','staff_accounts']]){
+    const c=card(metrics,name);c.append(el('strong','',Number(d[key]||0).toLocaleString('tr-TR')));
+   }
+   note(metrics,'Çevrimiçi kullanıcı bu istatistiklere dahil değildir; ayrı canlı bağlantı verisi gerekir.');
+  }).catch(e=>{if(alive(s)&&version===s.generation)note(metrics,'İstatistikler alınamadı: '+e.message,true);});
+ }
+ fields(s.body,[{name:'q',title:'Kullanıcı adı, profil ID veya sistem ID',value:options.q||'',required:false,maxLength:100},{name:'role',title:'Rol',value:options.role||(options.staff?'STAFF':''),required:false,options:{'':'Tümü',STAFF:'Tüm yetkililer',USER:'Standart kullanıcı',SA:'SA',UA:'UA',FA:'FA',DA:'DA'}},{name:'active',title:'Hesap durumu',value:options.active||'all',options:{all:'Tümü',active:'Aktif',inactive:'Pasif'}}],'Sorgula',v=>directory(s,{...v,staff:options.staff}));
+ const summary=el('p','aw-notice','Sonuçlar yükleniyor…');s.body.append(summary);
+ const list=el('div','aw-grid');s.body.append(list);
+ const navigation=el('div','aw-actions');s.body.append(navigation);
+ const more=button(navigation,'Sonraki 20 kullanıcı',async()=>{if(!after)return;params.set('after',after);const d=await request(s,'/v1/admin/workspace/users?'+params);if(!alive(s)||s.generation!==version)return;paint(d.items);after=d.next_after;more.hidden=!after;loaded+=d.items.length;summary.textContent='Eşleşen '+Number(d.total_matching||0).toLocaleString('tr-TR')+' kullanıcı · Gösterilen '+loaded;});
+ more.hidden=true;let after=null,loaded=0;
  const params=new URLSearchParams({limit:'20',q:options.q||'',role:options.role||(options.staff?'STAFF':''),active:options.active||'all'});
- const paint=items=>{for(const p of items){const c=card(list,p.nickname);const d=el('dl','aw-facts');info(d,'Profil ID',p.public_id);info(d,'Rol',roleName(p.role));info(d,'Hesap',p.is_active?'Aktif':'Pasif');c.append(d);button(c,'Hesabı incele',()=>profile(s,p.id,options.staff?'roles':'lookup'));}};
- const more=button(s.body,'Daha fazla kullanıcı',async()=>{if(!after)return;params.set('after',after);const d=await request(s,'/v1/admin/workspace/users?'+params);if(!alive(s)||s.generation!==version)return;paint(d.items);after=d.next_after;more.hidden=!after;});more.hidden=true;
- request(s,'/v1/admin/workspace/users?'+params).then(d=>{if(!alive(s)||s.generation!==version)return;loading.remove();paint(d.items);after=d.next_after;more.hidden=!after;if(!d.items.length)note(list,'Bu filtrelerde kullanıcı bulunamadı. ID veya filtreyi değiştirin.');}).catch(e=>{if(loading.isConnected){loading.textContent=e.message;button(list,'Yeniden dene',()=>directory(s,options));}});
- if(options.staff)button(s.body,'Rol talepleri ve kararlar',()=>roleRequests(s));return filters;
+ const paint=items=>{for(const p of items){const c=card(list,p.nickname),d=el('dl','aw-facts');info(d,'Profil ID',p.public_id);info(d,'Rol',roleName(p.role));info(d,'Hesap',p.is_active?'Aktif':'Pasif');info(d,'Kayıt tarihi',date(p.created_at));c.append(d);button(c,'Hesabı ayrıntılı incele',()=>profile(s,p.id,options.staff?'roles':'lookup'));}};
+ request(s,'/v1/admin/workspace/users?'+params).then(d=>{if(!alive(s)||s.generation!==version)return;paint(d.items);loaded=d.items.length;summary.textContent='Eşleşen '+Number(d.total_matching||0).toLocaleString('tr-TR')+' kullanıcı · Gösterilen '+loaded;after=d.next_after;more.hidden=!after;if(!d.items.length)note(list,'Bu filtrelerde kullanıcı bulunamadı.');}).catch(e=>{if(alive(s)&&version===s.generation)summary.textContent='Sorgu hatası: '+e.message;});
+ if(options.staff)button(s.body,'Rol talepleri ve kararlar',()=>roleRequests(s));
 }
 async function profile(s,id,kind='lookup'){
- const version=stage(s,'Hesap doğrulama','Hedef kimliği ve güncel durumu kontrol edin.');const person=await request(s,'/v1/admin/workspace/users/'+encodeURIComponent(id));if(!alive(s)||s.generation!==version)return;
- const c=card(s.body,person.nickname),d=el('dl','aw-facts');for(const [k,v] of [['Profil ID',person.public_id],['Sistem ID',person.id],['Rol',roleName(person.role)],['Hesap',person.is_active?'Aktif':'Pasif'],['Kayıt',date(person.created_at)],['Lidya bakiyesi',person.balance],['Aktif hesap/cihaz yaptırımı',person.active_account_bans],['Aktif sohbet yaptırımı',person.active_chat_bans],['Açık olay dosyası',person.open_cases]])info(d,k,v);c.append(d);
- const actions=el('div','aw-actions');c.append(actions);button(actions,'Profil ID kopyala',async()=>{if(!navigator.clipboard?.writeText)throw Error('Kopyalama desteklenmiyor; yukarıdaki Profil ID alanını seçin.');await navigator.clipboard.writeText(person.public_id);note(c,'Profil ID kopyalandı.');});button(actions,'Yetkili işlem geçmişi',()=>window.LidyaManagementCenter.open('audit',{actor:person.public_id}));button(actions,'İlgili olay dosyaları',()=>window.LidyaManagementCenter.open('cases',{q:person.public_id}));
+ const version=stage(s,'Kullanıcı Hesap İncelemesi','Bu görünüm salt okunur; hassas bilgiler yalnızca DA oturumu içinde sorgulanır.');
+ const person=await request(s,'/v1/admin/workspace/users/'+encodeURIComponent(id));if(!alive(s)||s.generation!==version)return;
+ const sections=[
+  ['Kimlik ve hesap',[['Kullanıcı adı',person.nickname],['Profil ID',person.public_id],['Sistem ID',person.id],['Doğrulanmış / kayıtlı e-posta',(person.emails||[]).join(', ')||'Kayıt yok'],['Rol',roleName(person.role)],['Hesap',person.is_active?'Aktif':'Pasif'],['Kayıt tarihi',date(person.created_at)],['Son profil güncellemesi',date(person.updated_at)],['Profil tamamlandı mı?',person.profile_completed?'Evet':'Hayır'],['Cinsiyet',person.gender||'Belirtilmedi'],['Biyografi',person.bio||'Yok'],['Koşulları kabul tarihi',date(person.terms_accepted_at)]]],
+  ['Bakiye, VIP ve ödeme özeti',[['Lidya bakiyesi',person.balance],['Lidya Gem',person.gem_balance],['VIP seviyesi',person.vip_level],['Yükleme sipariş kaydı',person.orders],['Google Play makbuz kaydı',person.google_play_receipts],['Bayi transferi alınan',person.dealer_transfers_received],['Ödeme temsilcisi talebi',person.assisted_payment_requests]]],
+  ['Oyun ve sosyal hesap',[['Kayıtlı oyun bahisleri',person.game_bets],['Oluşturulan odalar',person.owned_rooms],['Aile üyelik kaydı',person.family_memberships]]],
+  ['Moderasyon ve güvenlik özeti',[['Aktif hesap/cihaz yaptırımı',person.active_account_bans],['Aktif sohbet yaptırımı',person.active_chat_bans],['Açık olay dosyası',person.open_cases]]]
+ ];
+ for(const [heading,entries] of sections){const c=card(s.body,heading),d=el('dl','aw-facts');for(const [k,v] of entries)info(d,k,v??'—');c.append(d);}
+ const actions=el('div','aw-actions');s.body.append(actions);
+ button(actions,'Profil ID kopyala',async()=>{if(!navigator.clipboard?.writeText)throw Error('Tarayıcı panoya yazmayı desteklemiyor');await navigator.clipboard.writeText(person.public_id);note(actions,'Profil ID kopyalandı.');});
+ button(actions,'Lidya ve satın alım denetimi',()=>window.LidyaManagementCenter.open('finance',{target:person.public_id}));
+ button(actions,'Yetkili işlem geçmişi',()=>window.LidyaManagementCenter.open('audit',{actor:person.public_id}));
+ button(actions,'İlgili olay dosyaları',()=>window.LidyaManagementCenter.open('cases',{q:person.public_id}));
+ button(actions,'← Kullanıcı dizinine dön',()=>directory(s,{staff:kind==='roles'}));
  if(person.can_request_role)button(actions,'Rol değişikliği talep et',()=>roleForm(s,person));
  if(kind==='deleteaccount')deleteForm(s,person);
  else if(kind==='roles'&&person.can_request_role)roleForm(s,person);
