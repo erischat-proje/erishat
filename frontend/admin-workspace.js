@@ -295,7 +295,7 @@ async function open(key,me,p){
  else if(key==='gaps')await feedbackDesk(s);
  else if(key==='payments')await paymentDesk(s);
  else if(key==='banappeals')await appealDesk(s);
- else if(key==='roles'){directory(s);button(s.body,'Eski rol talepleri geçmişi',()=>roleRequests(s));}
+ else if(key==='roles'){directory(s);}
  else if(key==='ghost')await ghost(s);
  else if(key==='deleteaccount'){stage(s,'Hesap silme · Hedef doğrulama','Kalıcı işlemden önce profil kimliğini ve hesap durumunu doğrulayın.');fields(body,[{name:'id',title:'Kullanıcı ID veya profil ID',maxLength:64}],'Hesabı sorgula',v=>profile(s,v.id,'deleteaccount'));}
  else directory(s);return true;
