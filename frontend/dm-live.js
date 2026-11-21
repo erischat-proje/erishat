@@ -342,6 +342,44 @@
     return row;
   }
 
+
+  function compactDmSelection(){
+    if(!selectionBar)return;
+
+    const icons={
+      'data-all-selected':'☑',
+      'data-reply-selected':'↩',
+      'data-react-selected':'☺',
+      'data-forward-selected':'➤',
+      'data-star-selected':'☆',
+      'data-delete-selected':'⌫',
+      'data-clear-selected':'×'
+    };
+
+    for(const [attr,icon] of Object.entries(icons)){
+      const b=selectionBar.querySelector('['+attr+']');
+      if(!b)continue;
+      if(!b.dataset.compactLabel){
+        b.dataset.compactLabel=b.title||b.textContent.trim();
+      }
+      const label=attr==='data-star-selected'
+        ?(selectedMessages.size===1 &&
+          [...selectedMessages][0]?._message?.is_starred
+          ?'Yıldızı kaldır':'Yıldızla')
+        :b.dataset.compactLabel;
+      b.textContent=icon;
+      b.title=label;
+      b.setAttribute('aria-label',label);
+    }
+
+    const menu=selectionBar.querySelector('[data-dm-more-menu]');
+    const toggle=selectionBar.querySelector('[data-dm-more-toggle]');
+    if(menu&&!messageSelectionMode){
+      menu.hidden=true;
+      if(toggle)toggle.setAttribute('aria-expanded','false');
+    }
+  }
+
   function refreshSelectionBar() {
     if (!selectionBar) return;
     selectionBar.hidden = !messageSelectionMode;
@@ -362,6 +400,7 @@
     selectionBar.querySelector('[data-delete-selected]').disabled = !selectedMessages.size;
     selectionBar.querySelector('[data-pin-selected]').disabled = pinBusy || !one || $('chat')?.dataset.pinManage!=='1' || (!one?._message?.is_pinned && (!!one?._message?.temporary||!!one?._message?.expires_at||!!one?._message?.protected_message));
     selectionBar.querySelector('[data-all-selected]').setAttribute('aria-pressed',String(allMessagesSelected));selectionBar.querySelector('[data-all-selected]').textContent=allMessagesSelected?'☑':'□';
+    compactDmSelection();
   }
 
   function setSelected(row) {
@@ -716,6 +755,136 @@
       if (suppressNextClick && row === lastLongPressRow) { suppressNextClick = false; event.preventDefault();event.stopImmediatePropagation(); return; }
       if (messageSelectionMode && row) { event.preventDefault();event.stopImmediatePropagation();setSelected(row); }
     },true);
+
+    const moreButton=document.createElement('button');
+    moreButton.type='button';
+    moreButton.textContent='⋯';
+    moreButton.dataset.dmMoreToggle='';
+    moreButton.title='Diğer işlemler';
+    moreButton.setAttribute('aria-label','Diğer işlemler');
+    moreButton.setAttribute('aria-expanded','false');
+
+    const moreMenu=document.createElement('div');
+    moreMenu.dataset.dmMoreMenu='';
+    moreMenu.hidden=true;
+
+    for(const [attr,label] of [
+      ['data-edit-selected','✎ Düzenle'],
+      ['data-pin-selected','📌 Sabitle'],
+      ['data-info-selected','ⓘ Mesaj bilgisi']
+    ]){
+      const b=selectionBar.querySelector('['+attr+']');
+      if(!b)continue;
+      moreMenu.append(b);
+      b.dataset.compactLabel=label;
+    }
+
+    const closeButton=selectionBar.querySelector(
+      '[data-clear-selected]'
+    );
+    selectionBar.insertBefore(moreButton,closeButton);
+    selectionBar.append(moreMenu);
+
+    moreButton.onclick=()=>{
+      moreMenu.hidden=!moreMenu.hidden;
+      moreButton.setAttribute(
+        'aria-expanded',String(!moreMenu.hidden)
+      );
+    };
+
+    moreMenu.addEventListener('click',e=>{
+      if(e.target.closest('button')){
+        moreMenu.hidden=true;
+        moreButton.setAttribute('aria-expanded','false');
+      }
+    });
+
+    const compactMenuStyle=document.createElement('style');
+    compactMenuStyle.id='dm-longpress-compact-v2';
+    compactMenuStyle.textContent=`
+      #chat.dm-selection-mode .dm-message-workbench{
+        display:none!important;
+      }
+
+      #chat .dm-select-tools:not([hidden]){
+        display:flex!important;
+        flex-flow:row nowrap!important;
+        align-items:center!important;
+        justify-content:space-between!important;
+        gap:2px!important;
+        box-sizing:border-box!important;
+        width:100%!important;
+        height:64px!important;
+        min-height:64px!important;
+        padding:5px 4px!important;
+        overflow:visible!important;
+      }
+
+      #chat .dm-select-tools>button{
+        flex:0 1 36px!important;
+        width:36px!important;
+        min-width:28px!important;
+        height:38px!important;
+        padding:0!important;
+        font-size:19px!important;
+        line-height:1!important;
+        touch-action:manipulation;
+      }
+
+      #chat .dm-select-tools>[data-selected-count]{
+        flex:0 1 46px!important;
+        min-width:22px!important;
+        max-width:46px!important;
+        margin:0!important;
+        font-size:9px!important;
+        text-align:center;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+
+      #chat .dm-select-tools [data-dm-more-menu]{
+        position:absolute;
+        top:calc(100% + 4px);
+        right:4px;
+        z-index:100;
+        display:grid;
+        gap:5px;
+        width:min(220px,calc(100vw - 16px));
+        padding:9px;
+        background:var(--ui-raised);
+        border:1px solid var(--ui-line);
+        border-radius:14px;
+        box-shadow:0 10px 28px #0005;
+      }
+
+      #chat .dm-select-tools
+      [data-dm-more-menu][hidden]{
+        display:none!important;
+      }
+
+      #chat .dm-select-tools
+      [data-dm-more-menu] button{
+        display:block!important;
+        width:100%!important;
+        min-height:42px!important;
+        height:auto!important;
+        padding:9px 12px!important;
+        font-size:12px!important;
+        text-align:left;
+      }
+
+      @media(max-width:370px){
+        #chat .dm-select-tools>button{
+          flex-basis:31px!important;
+          min-width:26px!important;
+          height:36px!important;
+        }
+      }
+    `;
+    document.head.append(compactMenuStyle);
+    compactDmSelection();
+
     installMessageWorkbench(chat);
     syncChatCompose(chat);
   }
