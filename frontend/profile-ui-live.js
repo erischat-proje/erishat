@@ -65,7 +65,10 @@
       if (nicknameInput && user.nickname) nicknameInput.value = user.nickname;
       setNotificationState(user.notifications_enabled !== false);
       if (balance && user.lidya != null) balance.textContent = `${Number(user.lidya).toLocaleString('tr-TR')}`;
-      if (name && user.nickname) {name.textContent = user.nickname;window.ErisRoleBadges?.bind(name,user);}
+      if (name && user.nickname) {
+        profile.classList.toggle('lidya-management-name-left-v1',user.nickname==='LidyaChat Yönetim');
+        name.textContent=user.nickname;window.ErisRoleBadges?.bind(name,user);
+      }
       const publicId = /^\d{10}$/.test(String(user.public_id || '')) ? String(user.public_id) : '';
       idButton.dataset.publicId = publicId;
       idButton.textContent = publicId ? `ID: ${publicId}  ⧉` : 'Kullanıcı ID yüklenemedi';

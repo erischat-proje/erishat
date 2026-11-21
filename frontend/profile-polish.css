@@ -125,3 +125,9 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
 .eris-mini-profile-shade .eris-mini-card.eris-mini-paid::before,.eris-mini-profile-shade .eris-mini-card.eris-mini-paid::after{pointer-events:none!important}
 .eris-mini-profile-shade .eris-mini-card.eris-mini-paid .eris-mini-actions button{min-height:44px!important}
 .eris-mini-profile-shade .eris-mini-card.eris-mini-paid .eris-mini-name{overflow-wrap:anywhere!important}
+
+/* Management account ONLY: move profile title toward portrait. */
+#profile .profile.card.profile.lidya-management-name-left-v1 .name h2{
+  position:relative!important;left:-36px!important;text-align:left!important;
+}
+@media(max-width:360px){#profile .profile.card.profile.lidya-management-name-left-v1 .name h2{left:-22px!important}}

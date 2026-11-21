@@ -29,6 +29,25 @@ class DealerInventory(Base):
     __table_args__ = (CheckConstraint("stock >= 0", name="dealer_stock_nonnegative"),)
 
 
+class DealerDesignation(Base):
+    """Display identity only; money remains in DealerInventory."""
+    __tablename__ = 'dealer_designations_v1'
+    user_id: Mapped[str] = mapped_column(String(64), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False, default='coin')
+    assigned_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    __table_args__ = (CheckConstraint("kind IN ('coin', 'support')", name='dealer_designation_kind_v1'),)
+
+
+def designation(db, user_id):
+    row = db.get(DealerDesignation, user_id)
+    return row.kind if row else 'coin'
+
+
+def dealer_badge(kind):
+    return 'BT' if kind == 'support' else 'CT'
+
+
 class DealerTransfer(Base):
     __tablename__ = "dealer_transfers"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -53,6 +72,7 @@ class DealerStockGrant(Base):
 
 class AssignBody(BaseModel):
     public_id: str = Field(min_length=1, max_length=64)
+    kind: str = Field(default='coin', pattern='^(coin|support)$')
 
 
 class StockBody(AssignBody):
@@ -90,7 +110,9 @@ def register_auth(current_user):
     @router.get("/me")
     def my_dealership(db: Session = Depends(get_db), user: User = Depends(current_user)):
         row = require_dealer(db, user)
-        return {"dealer": True, "public_id": user.public_id, "stock": row.stock, "badge": "LB"}
+        kind = designation(db, user.id)
+        return {"dealer": True, "public_id": user.public_id, "stock": row.stock,
+                "badge": dealer_badge(kind), "kind": kind}
 
     @router.get("/badges")
     def badges(ids: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
@@ -98,7 +120,10 @@ def register_auth(current_user):
         if len(keys) > 100 or any(len(x) > 64 for x in keys):
             raise HTTPException(400, "En fazla 100 ID sorgulanabilir")
         rows = db.scalars(select(DealerInventory.user_id).where(DealerInventory.user_id.in_(keys), DealerInventory.active.is_(True))).all()
-        return {"dealers": rows}
+        explicit = db.scalars(select(DealerDesignation).where(
+            DealerDesignation.user_id.in_(rows))).all() if rows else []
+        kinds = {r.user_id: r.kind for r in explicit}
+        return {"dealers": rows, "roles": {uid: kinds.get(uid, 'coin') for uid in rows}}
 
     @router.get("/admin/list")
     def admin_dealer_list(limit: int = Query(default=50, ge=1, le=100),
@@ -108,7 +133,7 @@ def register_auth(current_user):
             .join(User, User.id == DealerInventory.user_id)
             .order_by(DealerInventory.created_at.desc()).limit(limit)).all()
         return {"items": [{"public_id": person.public_id, "nickname": person.nickname,
-            "stock": inv.stock, "active": inv.active} for inv, person in rows]}
+            "stock": inv.stock, "active": inv.active, "kind": designation(db, person.id)} for inv, person in rows]}
 
     @router.get("/admin/lookup")
     def admin_dealer_lookup(public_id: str = Query(min_length=1, max_length=64),
@@ -132,7 +157,7 @@ def register_auth(current_user):
         sent_total = db.scalar(select(func.coalesce(func.sum(DealerTransfer.amount), 0))
             .where(DealerTransfer.dealer_id == person.id))
         return {"public_id": person.public_id, "nickname": person.nickname,
-            "active": inv.active, "stock": inv.stock,
+            "active": inv.active, "stock": inv.stock, "kind": designation(db, person.id),
             "total_granted": int(granted_total or 0), "total_sent": int(sent_total or 0),
             "recent_grants": [{"amount": r.amount, "created_at": r.created_at.isoformat()}
                 for r in grants],
@@ -149,8 +174,16 @@ def register_auth(current_user):
             db.add(DealerInventory(user_id=target.id, appointed_by=user.id, stock=0, active=True))
         else:
             row.active = True
+        identity = db.get(DealerDesignation, target.id)
+        if identity is None:
+            db.add(DealerDesignation(user_id=target.id, kind=body.kind, assigned_by=user.id))
+        else:
+            identity.kind = body.kind
+            identity.assigned_by = user.id
+            identity.updated_at = datetime.now(timezone.utc)
         db.commit()
-        return {"ok": True, "public_id": target.public_id, "badge": "LB", "stock": row.stock if row else 0}
+        return {"ok": True, "public_id": target.public_id, "badge": dealer_badge(body.kind),
+                "kind": body.kind, "stock": row.stock if row else 0}
 
     @router.post("/admin/stock")
     def grant(body: StockBody, db: Session = Depends(get_db), user: User = Depends(current_user)):

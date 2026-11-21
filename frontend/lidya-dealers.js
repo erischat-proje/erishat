@@ -1,6 +1,10 @@
 /* LidyaChat dealer inventory. Inventory is separate from personal Lidya. */
 (()=>{'use strict';
 const badgeAsset=new URL('./role-icons/dealer-lb-v3.svg?v=20261117-v3',document.currentScript.src).href;
+const coinAsset=new URL('./role-icons/coin-temsilcisi-v1.png?v=20261121',document.currentScript.src).href;
+const supportAsset=new URL('./role-icons/bayi-temsilcisi-bt-v1.png?v=20261121',document.currentScript.src).href;
+const roleAsset=k=>k==='support'?supportAsset:coinAsset;
+const roleTitle=k=>k==='support'?'Bayi Temsilcisi':'Coin Temsilcisi';
 const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
 const base=(window.ERISCHAT_API_BASE||window.ERIS_API||localStorage.getItem('erischat.apiBase')||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'').replace(/\/v1$/,'');
 async function api(path,method='GET',payload){const bearer=token();if(!bearer)throw Error('Oturum açılmalı');const r=await fetch(base+'/v1/dealers'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:payload?JSON.stringify(payload):undefined});const j=await r.json().catch(()=>({}));if(bearer!==token())throw Error('Oturum değişti');if(!r.ok)throw Error(j.detail||'İşlem başarısız ('+r.status+')');return j;}
@@ -63,8 +67,25 @@ if(!document.getElementById('lb-confirm-style')){const st=elt('style');st.id='lb
 
 function overlay(title){document.querySelector('.lb-mask')?.remove();const mask=elt('div','lb-mask'),panel=elt('section','lb-panel');mask.setAttribute('role','dialog');mask.setAttribute('aria-modal','true');const header=elt('header');header.append(elt('h2','',title));const close=elt('button','', '×');close.type='button';close.setAttribute('aria-label','Kapat');close.onclick=()=>mask.remove();header.append(close);panel.append(header);mask.append(panel);mask.onclick=e=>{if(e.target===mask)mask.remove()};mask.onkeydown=e=>{if(e.key==='Escape')mask.remove()};document.body.append(mask);close.focus();return panel;}
 function form(panel,title,fields,buttonText,submit){const f=elt('form'),h=elt('h3','',title);f.append(h);const inputs={};for(const [key,caption,kind] of fields){const l=elt('label','',caption),input=elt('input');input.name=key;input.type=kind||'text';input.required=true;if(kind==='number'){input.min='1';input.step='1';input.max='9000000000000000';}else input.maxLength=64;input.autocomplete='off';inputs[key]=input;l.append(input);f.append(l);}const btn=elt('button','lb-primary',buttonText),status=elt('p','lb-msg');btn.type='submit';status.setAttribute('role','status');f.append(btn,status);f.onsubmit=async e=>{e.preventDefault();if(btn.disabled)return;btn.disabled=true;status.textContent='İşlem yapılıyor…';try{const values=Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.type==='number'?Number(v.value):v.value.trim()]));const data=await submit(values);status.textContent=data.message||'İşlem tamamlandı';if(data.stock!==undefined)panel.querySelector('.lb-stock')?.replaceChildren(document.createTextNode(amount(data.stock)));}catch(err){status.textContent=err.message||'İşlem başarısız';}finally{btn.disabled=false;}};panel.append(f);return f;}
-async function openAdmin(){const panel=overlay('Lidya Bayisi Ata');const help=elt('p','','Yalnızca DA yetkisi: Bayi atama ve bayi stoğu tahsisi. Stok kullanıcı cüzdanına eklenmez.');panel.append(help);form(panel,'LB bayi yetkisi ver',[['public_id','Bayi olacak kullanıcının profil ID’si']], 'Bayi olarak ata',async v=>{const r=await api('/admin/assign','POST',v);return {...r,message:'LB yetkisi tanımlandı. Bayi stoğu: '+amount(r.stock)}});form(panel,'Bayiye Lidya stoğu yükle',[['public_id','Bayi profil ID’si'],['amount','Stok miktarı (Lidya)','number']], 'Bayi stoğuna yükle',async v=>{if(!await confirmDealerTransfer({kind:'grant',publicId:v.public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/admin/stock','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Stok yüklendi. Yeni bayi stoğu: '+amount(r.stock)}});}
-async function openDealer(){const panel=overlay('LB · Bayi Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);}
+async function openAdmin(which){
+ const kind=which==='support'?'support':which==='coin'?'coin':null;
+ const panel=overlay(kind==='support'?'Bayi Temsilcisi Ata':kind==='coin'?'Coin Temsilcisi Ata':'Temsilci Atama Merkezi');
+ panel.append(elt('p','','Yalnızca DA atama ve stok tahsisi yapabilir. CT ve BT aynı güvenli bayi stok sistemini kullanır.'));
+ if(kind===null||kind==='coin')form(panel,'Coin Temsilcisi Ata', [['public_id','Profil ID']], 'Coin Temsilcisi olarak ata', async v=>{
+   const r=await api('/admin/assign','POST',{...v,kind:'coin'});
+   return {...r,message:'Coin Temsilcisi atandı · Stok: '+amount(r.stock)};
+ });
+ if(kind===null||kind==='support')form(panel,'Bayi Temsilcisi Ata (BT)', [['public_id','Profil ID']], 'Bayi Temsilcisi olarak ata', async v=>{
+   const r=await api('/admin/assign','POST',{...v,kind:'support'});
+   return {...r,message:'BT yetkisi atandı · Stok: '+amount(r.stock)};
+ });
+ form(panel,'Temsilciye Stok Yükle',[['public_id','Temsilci Profil ID'],['amount','Lidya stoğu','number']], 'Stoğa yükle',async v=>{
+   if(!await confirmDealerTransfer({kind:'grant',publicId:v.public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');
+   const r=await api('/admin/stock','POST',{...v,request_key:crypto.randomUUID()});
+   return {...r,message:'Stok yüklendi: '+amount(r.stock)};
+ });
+}
+async function openDealer(){const panel=overlay('Temsilci Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');panel.querySelector('h2').textContent=roleTitle(me.kind)+' · Stok Yönetimi';summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);}
 async function openAdminLookup(){
  const panel=overlay('Lidya Bayisi Ara');
  panel.append(elt('p','','DA yönetimi · Bayi ID sorgulama, kalan stok ve işlem geçmişi. Kişisel Lidya bakiyesi bu ekranda gösterilmez.'));
@@ -103,11 +124,47 @@ async function openAdminLookup(){
 window.LidyaDealer={openAdmin,openDealer,openAdminLookup};
 // Dealer button is mounted outside the admin mount because admin-live owns its contents.
 let lastToken='',checkSerial=0;
-async function boot(){const access=token(),mount=document.getElementById('adminMenuMount');if(!mount||!access){document.getElementById('lidya-dealer-menu')?.remove();return;}const serial=++checkSerial;try{const result=await api('/me');if(serial!==checkSerial||access!==token())return;let btn=document.getElementById('lidya-dealer-menu');if(!btn){btn=elt('button','homeMenuItem lidya-dealer-card');btn.id='lidya-dealer-menu';btn.type='button';btn.onclick=openDealer;btn.innerHTML='<span class="lbv4-mark" aria-hidden="true"><img src="'+badgeAsset+'" alt=""></span><span class="lbv4-copy"><strong>Lidya Bayi Sistemi</strong><small>Bayi stoğunu gör · Kullanıcıya Lidya gönder</small></span><span class="lbv4-arrow" aria-hidden="true">›</span>';mount.insertAdjacentElement('afterend',btn);}btn.classList.add('lidya-dealer-card','lbv4-card');if(!btn.querySelector('.lbv4-copy')){btn.innerHTML='<span class="lbv4-mark" aria-hidden="true"><img src="'+badgeAsset+'" alt=""></span><span class="lbv4-copy"><strong>Lidya Bayi Sistemi</strong><small>Bayi stoğunu gör · Kullanıcıya Lidya gönder</small></span><span class="lbv4-arrow" aria-hidden="true">›</span>';}btn.setAttribute('aria-label','Lidya Bayi Sistemi: stok ve Lidya gönderimi');btn.hidden=!result.dealer;}catch{if(serial===checkSerial)document.getElementById('lidya-dealer-menu')?.remove();}}
+async function boot(){
+ const access=token(),mount=document.getElementById('adminMenuMount');
+ if(!mount||!access){document.getElementById('lidya-dealer-menu')?.remove();return;}
+ const serial=++checkSerial;
+ try{
+  const me=await api('/me');if(serial!==checkSerial||access!==token())return;
+  let btn=document.getElementById('lidya-dealer-menu');
+  if(!btn){btn=elt('button','homeMenuItem lidya-dealer-card');btn.id='lidya-dealer-menu';btn.type='button';btn.onclick=openDealer;mount.insertAdjacentElement('afterend',btn);}
+  btn.classList.add('lbv4-card');btn.replaceChildren();
+  const badge=elt('span','lbv4-mark'),img=elt('img');img.src=roleAsset(me.kind);img.alt='';badge.append(img);
+  const copy=elt('span','lbv4-copy');copy.append(elt('strong','',roleTitle(me.kind)),elt('small','','Stok ve kullanıcıya Lidya aktarımı'));
+  btn.append(badge,copy,elt('span','lbv4-arrow','›'));
+  btn.setAttribute('aria-label',roleTitle(me.kind)+': stok ve Lidya aktarımı');btn.hidden=!me.dealer;
+ }catch{if(serial===checkSerial)document.getElementById('lidya-dealer-menu')?.remove();}
+}
 function sync(){const v=token();if(v!==lastToken){lastToken=v;boot();}}
 window.addEventListener('erischat:auth',()=>{lastToken=token();boot()});window.addEventListener('pageshow',boot);window.addEventListener('online',boot);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')boot()});setInterval(()=>{if(document.visibilityState==='visible'&&token())boot()},20000);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(sync,5000);
 // Public LB badge, independent of the SA/UA/FA/DA staff-identity rendering.
 const cache=new Map();let pending=false;
-async function badgeScan(){if(pending||!token())return;const nodes=[...document.querySelectorAll('[data-eris-role-user]')];const ids=[...new Set(nodes.map(n=>n.dataset.erisRoleUser).filter(Boolean))].slice(0,100);if(!ids.length)return;const unknown=ids.filter(id=>!cache.has(id)||cache.get(id).time<Date.now()-30000);if(unknown.length){pending=true;try{const r=await api('/badges?ids='+encodeURIComponent(unknown.join(',')));const dealers=new Set(r.dealers);for(const id of unknown)cache.set(id,{value:dealers.has(id),time:Date.now()});}catch{}finally{pending=false;}}for(const node of nodes){const id=node.dataset.erisRoleUser,on=cache.get(id)?.value,old=node.querySelector(':scope > .lb-dealer-badge');if(on&&!old){const b=elt('span','lb-dealer-badge');const img=elt('img');img.alt='LB';img.src=badgeAsset;img.onerror=()=>{b.textContent='LB'};b.append(img);b.setAttribute('title','Lidya Bayisi');node.prepend(b);}else if(!on&&old)old.remove();}}
+async function badgeScan(){
+ if(pending||!token())return;
+ const nodes=[...document.querySelectorAll('[data-eris-role-user]')];
+ const ids=[...new Set(nodes.map(n=>n.dataset.erisRoleUser).filter(Boolean))].slice(0,100);
+ if(!ids.length)return;
+ const unknown=ids.filter(id=>!cache.has(id)||cache.get(id).time<Date.now()-30000);
+ if(unknown.length){pending=true;try{
+   const r=await api('/badges?ids='+encodeURIComponent(unknown.join(',')));
+   const dealers=new Set(r.dealers||[]);
+   for(const id of unknown)cache.set(id,{kind:dealers.has(id)?(r.roles?.[id]||'coin'):null,time:Date.now()});
+ }catch{}finally{pending=false;}}
+ for(const node of nodes){
+   const kind=cache.get(node.dataset.erisRoleUser)?.kind;
+   let badge=node.querySelector(':scope > .lb-dealer-badge');
+   if(!kind){badge?.remove();continue;}
+   if(!badge){badge=elt('span','lb-dealer-badge');node.prepend(badge);}
+   const img=badge.querySelector('img')||elt('img');img.src=roleAsset(kind);
+   img.alt=kind==='support'?'BT':'CT';
+   img.onerror=()=>{badge.textContent=kind==='support'?'BT':'CT';};
+   if(!img.isConnected)badge.replaceChildren(img);
+   badge.title=roleTitle(kind);
+ }
+}
 setInterval(badgeScan,4000);window.addEventListener('erischat:auth',()=>{cache.clear();badgeScan()});
 })();
