@@ -298,6 +298,14 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 def _initialize_database() -> None:
     logger.info("LidyaChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
+    # BT_REFERENCE_SECURITY_UI_V1: database-enforced single activated root.
+    # Works on PostgreSQL and SQLite; retained for existing installations too.
+    with engine.begin() as bt_ref_conn:
+        bt_ref_conn.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_bt_referrals_v1_single_root "
+            "ON bt_referrals_v1 ((1)) "
+            "WHERE activated_at IS NOT NULL AND parent_id IS NULL"
+        ))
     ensure_log_files()
     ensure_system_data_columns()
     with engine.begin() as conn:
