@@ -73,7 +73,7 @@ async function profile(s,id,kind='lookup'){
  button(actions,'İlgili olay dosyaları',()=>window.LidyaManagementCenter.open('cases',{q:person.public_id}));
  button(actions,'← Kullanıcı dizinine dön',()=>directory(s,{staff:kind==='roles'}));
  idInsightsV3(s,person,version);
- if(person.can_request_role)button(actions,'Rol değişikliği talep et',()=>roleForm(s,person));
+ if(person.can_request_role)button(actions,'Doğrudan yetki ver / kaldır',()=>roleForm(s,person));
  if(kind==='deleteaccount')deleteForm(s,person);
  else if(kind==='roles'&&person.can_request_role)roleForm(s,person);
  else if(person.can_delete)button(actions,'Hesap silme ön kontrolü',()=>profile(s,person.id,'deleteaccount'));
@@ -179,8 +179,20 @@ async function openIdActivityV3(s,person,category){
 }
 
 function roleForm(s,p){
- s.body.querySelector('[data-role-proposal]')?.remove();const c=card(s.body,'DA · Doğrudan rol değişikliği');c.dataset.roleProposal='';note(c,'DA, hedef profil ID ve gerekçe doğrulamasından sonra rolü tek işlemle verebilir. İşlem ve karar ayrı denetim kayıtlarına yazılır. Kendi rolünüz değiştirilemez.');
- const key=crypto.randomUUID();fields(c,[{name:'role',title:'Yeni rol',options:{'':'Seçin',SA:'SA · Destek',UA:'UA · Talep',FA:'FA · Karar',DA:'DA · Sistem',REMOVE:'Yetkiyi kaldır'}},{name:'reason',title:'Gerekçe',type:'textarea',minLength:20,maxLength:2000},{name:'confirm',title:'Onay için profil ID değerini yazın: '+p.public_id,minLength:1,maxLength:64}],'Rolü doğrudan uygula',async v=>{const row=await request(s,'/v1/admin/workspace/role-requests','POST',{target_id:p.id,role:v.role==='REMOVE'?null:v.role,reason:v.reason,expected_snapshot:p.role_snapshot,confirm_public_id:v.confirm,request_key:key});let applied;try{applied=await request(s,'/v1/admin/workspace/role-requests/'+row.id+'/decision','POST',{action:'approve',note:v.reason,direct:true});}catch(error){await roleRequests(s);note(s.body,'Talep #'+row.id+' kaydedildi ancak doğrudan karar uygulanamadı: '+error.message,true);return;}await roleRequests(s,{status:'all'});note(s.body,'Rol işlemi #'+row.id+': '+statusName(applied.status)+'.');if(applied.realtime_refresh_pending)note(s.body,'İşlem kaydedildi; hedef kullanıcının oturumunu yenilemesi gerekebilir.');});
+ s.body.querySelector('[data-role-proposal]')?.remove();
+ const c=card(s.body,'DA · Doğrudan Yetki Yönetimi');c.dataset.roleProposal='';
+ note(c,'Hedef: '+p.nickname+' · '+p.public_id+' · Güncel rol: '+roleName(p.role)+' — DA tek işlemle yetki verir veya kaldırır. İkinci onay ve talep oluşturma yoktur. İşlem denetime kaydedilir.');
+ fields(c,[{name:'role',title:'Atanacak rol',options:{'':'Yetkiyi kaldır / Standart kullanıcı',SA:'SA · Destek',UA:'UA · Talep',FA:'FA · Karar',DA:'DA · Sistem'},required:false,value:p.role||''}],
+ 'Yetkiyi doğrudan uygula',async v=>{
+  const selected=v.role||null;
+  if(selected===(p.role||null))throw Error('Seçilen rol mevcut rolle aynı.');
+  const result=await request(s,'/v1/admin/workspace/users/'+encodeURIComponent(p.id)+'/direct-role','POST',{
+   role:selected,confirm_public_id:p.public_id,expected_snapshot:p.role_snapshot
+  });
+  await profile(s,p.id,'roles');
+  if(result.realtime_refresh_pending)note(s.body,'Yetki kaydedildi; kullanıcının oturumunu yenilemesi gerekebilir.');
+  else note(s.body,'Yetki doğrudan güncellendi. Yeni rol: '+(result.role||'Standart kullanıcı'));
+ });
 }
 async function roleRequests(s,options={}){
  const version=stage(s,'Yetki değişikliği talepleri','DA rol kararlarını doğrudan uygulayabilir; tüm işlemler denetlenir. Sonuçlanan talepler tekrar uygulanmaz.');
@@ -283,7 +295,7 @@ async function open(key,me,p){
  else if(key==='gaps')await feedbackDesk(s);
  else if(key==='payments')await paymentDesk(s);
  else if(key==='banappeals')await appealDesk(s);
- else if(key==='roles'){stage(s,'Yönetici Rolleri','Kadro, yetki talebi ve bağımsız karar.');const actions=el('div','aw-actions');body.append(actions);button(actions,'Kadro ve yeni talep',()=>directory(s,{staff:true}));button(actions,'Karar bekleyen talepler',()=>roleRequests(s));await roleRequests(s);}
+ else if(key==='roles'){directory(s);button(s.body,'Eski rol talepleri geçmişi',()=>roleRequests(s));}
  else if(key==='ghost')await ghost(s);
  else if(key==='deleteaccount'){stage(s,'Hesap silme · Hedef doğrulama','Kalıcı işlemden önce profil kimliğini ve hesap durumunu doğrulayın.');fields(body,[{name:'id',title:'Kullanıcı ID veya profil ID',maxLength:64}],'Hesabı sorgula',v=>profile(s,v.id,'deleteaccount'));}
  else directory(s);return true;

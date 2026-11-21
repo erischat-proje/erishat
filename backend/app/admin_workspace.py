@@ -72,6 +72,11 @@ class RoleProposal(TextModel):
     confirm_public_id:str=Field(min_length=1,max_length=64)
     reason:str=Field(min_length=20,max_length=2000)
     request_key:str=Field(min_length=16,max_length=64,pattern='^[A-Za-z0-9_-]+$')
+class DirectRolePayload(TextModel):
+    role: str | None = Field(default=None, pattern='^(SA|UA|FA|DA)$')
+    confirm_public_id: str = Field(min_length=1, max_length=64)
+    expected_snapshot: str = Field(pattern='^[a-f0-9]{64}$')
+
 class RoleDecision(TextModel):
     action:str=Field(pattern='^(approve|reject|cancel)$')
     note:str=Field(min_length=20,max_length=2000)
@@ -207,6 +212,76 @@ def register_auth(current_user,ghost_transition=None,role_changed=None):
               {'public_id':person.public_id, 'category':category, 'page':page}, person.id)
         db.commit()
         return result
+
+    # DA tek adimli yetki atama/kaldirma (ayri onay talebi yok).
+    @router.post('/users/{user_id}/direct-role')
+    @database_task
+    async def direct_role(user_id: str, payload: DirectRolePayload,
+                          response: Response, db: Session = Depends(get_db),
+                          user: User = Depends(current_user)):
+        access(db, user, 4)
+        response.headers['Cache-Control'] = 'private, no-store'
+        # Seri yetki degisikligi: DA kilitleri sabit sirada alinir.
+        da_rows = list(db.scalars(
+            select(AdminRole).join(User, User.id == AdminRole.user_id)
+            .where(AdminRole.role == 'DA', User.is_active.is_(True))
+            .order_by(AdminRole.user_id).with_for_update(of=AdminRole)
+            .execution_options(populate_existing=True)
+        ))
+        if user.id not in {r.user_id for r in da_rows}:
+            raise HTTPException(403, 'Guncel DA yetkisi gerekli')
+        target = db.scalar(select(User).where(
+            or_(User.id == user_id, User.public_id == user_id)
+        ).with_for_update().execution_options(populate_existing=True))
+        if not target:
+            raise HTTPException(404, 'Kullanici bulunamadi')
+        if target.id == user.id or not target.is_active:
+            raise HTTPException(403, 'Kendi hesabiniza veya pasif hesaba yetki islemi uygulanamaz')
+        if payload.confirm_public_id != target.public_id:
+            raise HTTPException(422, 'Profil ID dogrulamasi uyusmuyor')
+        current = db.scalar(select(AdminRole).where(
+            AdminRole.user_id == target.id
+        ).with_for_update().execution_options(populate_existing=True))
+        if role_snapshot(current) != payload.expected_snapshot:
+            raise HTTPException(409, 'Yetki baska bir islemle degisti; hesabi yeniden sorgulayin')
+        previous = current.role if current else None
+        requested = payload.role
+        if previous == requested:
+            raise HTTPException(409, 'Kullanicinin rolu zaten secilen rol')
+        if previous == 'DA' and requested != 'DA' and len(da_rows) <= 1:
+            raise HTTPException(409, 'Son aktif DA yetkilisi kaldirilamaz')
+        from .admin_routes import update_room_ghost
+        if requested:
+            if not current:
+                db.add(AdminRole(user_id=target.id, role=requested, granted_by=user.id))
+            else:
+                current.role = requested
+                current.granted_by = user.id
+            if requested != 'DA':
+                if current:
+                    current.ghost_mode = False
+                update_room_ghost(db, target.id, False)
+        elif current:
+            update_room_ghost(db, target.id, False)
+            db.delete(current)
+        audit(db, user, 'role_change_executed', {
+            'previous_role': previous, 'requested_role': requested,
+            'direct_da': True, 'flow': 'single_step',
+        }, target.id)
+        notify(db, [target.id], 'Yetki degisikligi',
+               'Yonetici rolu guncellendi.', user.id)
+        db.commit()
+        realtime_pending = False
+        try:
+            if requested != 'DA' and ghost_transition:
+                await ghost_transition(target.id, False)
+            if role_changed:
+                await role_changed(target.id, requested)
+        except Exception:
+            logging.getLogger(__name__).exception('Direkt rol degisikligi realtime yenilemesi basarisiz')
+            realtime_pending = True
+        return {'public_id': target.public_id, 'previous_role': previous,
+                'role': requested, 'realtime_refresh_pending': realtime_pending}
 
     @router.get('/role-requests')
     def requests(status:str=Query('pending',pattern='^(all|pending|executed|rejected|cancelled)$'),before:int|None=Query(None,ge=1),limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user)):
