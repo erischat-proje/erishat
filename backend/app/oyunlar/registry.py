@@ -1,8 +1,7 @@
-from . import blackjack, cups, crash, horse_race, roulette, vault, wheel
+from . import blackjack, crash, horse_race, roulette, vault, wheel
 
 GAME_ENGINES = {
     "roulette": roulette,
-    "cups": cups,
     "horse_race": horse_race,
     "blackjack": blackjack,
     "crash": crash,
@@ -10,7 +9,7 @@ GAME_ENGINES = {
     "wheel": wheel,
 }
 
-ROOM_GAMES = frozenset({"roulette", "cups", "horse_race", "wheel"})
+ROOM_GAMES = frozenset({"roulette", "horse_race", "wheel"})
 PRIVATE_GAMES = frozenset({"blackjack", "crash", "vault"})
 
 
