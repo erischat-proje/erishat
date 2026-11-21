@@ -1622,7 +1622,33 @@ def register_platform_auth(current_user_dependency):
                 )
             )
 
+        # Son 10 aciklanmis Kasa sonucu (ortak gecmis).
+        history_query = (
+            select(GameRound)
+            .where(
+                GameRound.game_type == vault_live.GAME,
+                GameRound.status == "finished",
+                GameRound.result_key.in_(vault_live.PRIZES),
+            )
+            .order_by(
+                GameRound.ends_at.desc(),
+                GameRound.id.desc()
+            )
+            .limit(10)
+        )
+        if phase != "result":
+            history_query = history_query.where(
+                GameRound.id != row.id
+            )
+        vault_history = [
+            {"round_id": item.id, "winner": item.result_key}
+            for item in reversed(
+                list(db.scalars(history_query))
+            )
+        ]
+
         response = {
+            "history": vault_history,
             "round_id": row.id,
             "status": row.status,
             "phase": phase,

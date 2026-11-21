@@ -1660,6 +1660,65 @@ const close = () => {
                 vaultState = x;
                 const stage = modal.querySelector('.eg-stage');
 
+                // Kasa: ortak son 10 sonuc seridi.
+                let vaultHistory = modal.querySelector(
+                    '[data-vault-history]'
+                );
+                if (!vaultHistory) {
+                    vaultHistory = document.createElement('div');
+                    vaultHistory.dataset.vaultHistory = '';
+                    vaultHistory.setAttribute(
+                        'aria-label', 'Son Kasa sonuclari'
+                    );
+                    vaultHistory.style.cssText =
+                        'margin:7px 0;padding:9px 10px;' +
+                        'border:1px solid #b99353;' +
+                        'border-radius:12px;' +
+                        'background:var(--ui-panel);' +
+                        'color:var(--ui-ink);';
+                    const resultBox = modal.querySelector(
+                        '.eg-result'
+                    );
+                    if (resultBox) resultBox.after(vaultHistory);
+                }
+
+                const emojis = {
+                    ruby:'💎', gold:'👑',
+                    crystal:'🔮', mystery:'🎁'
+                };
+                const past = Array.isArray(x.history)
+                    ? x.history.slice(-10)
+                    : [];
+                vaultHistory.replaceChildren();
+                const title = document.createElement('div');
+                title.textContent = 'Sonuçlar';
+                title.style.cssText =
+                    'font-size:12px;font-weight:800;' +
+                    'margin-bottom:7px;';
+                vaultHistory.append(title);
+
+                const strip = document.createElement('div');
+                strip.style.cssText =
+                    'display:flex;align-items:center;' +
+                    'gap:5px;overflow-x:auto;min-height:32px;';
+
+                for (const entry of past) {
+                    const symbol = emojis[entry.winner];
+                    if (!symbol) continue;
+                    const item = document.createElement('span');
+                    item.textContent = symbol;
+                    item.title = entry.winner;
+                    item.style.cssText =
+                        'flex:1 0 auto;text-align:center;' +
+                        'font-size:22px;line-height:32px;';
+                    strip.append(item);
+                }
+                if (!strip.children.length) {
+                    strip.textContent = 'Henüz sonuç yok';
+                    strip.style.fontSize = '12px';
+                }
+                vaultHistory.append(strip);
+
                 if (isNewRound) {
                     vaultLastResult = null;
                     const result = modal.querySelector('.eg-result');
