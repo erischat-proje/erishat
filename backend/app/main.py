@@ -1031,6 +1031,8 @@ def update_me(payload: UserUpdate, db: Session = Depends(get_db), user: User = D
         if value is not None:
             setattr(user, key, value)
     if payload.avatar is not None:
+        from .dealer_routes import require_role_cosmetics_unlocked
+        require_role_cosmetics_unlocked(db, user.id)
         user.avatar = payload.avatar
     if payload.notifications_enabled is not None:
         user.notifications_enabled = payload.notifications_enabled
