@@ -21,6 +21,156 @@ html body #profile .profile.card.eris-management-profile .stage{position:relativ
 html body #profile .profile.card.eris-management-profile .stage > .face{position:absolute!important;inset:auto!important;left:50%!important;top:53%!important;width:64%!important;height:64%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;transform:translate(-50%,-50%)!important;margin:0!important;padding:0!important;box-sizing:border-box!important;background-size:cover!important;z-index:1!important}
 html body #profile .profile.card.eris-management-profile .stage > .frameImg{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;transform:none!important;margin:0!important;padding:0!important;border:0!important;object-fit:contain!important;z-index:2!important;pointer-events:none!important}
 #profile .profile.eris-management-profile .crown,#profile .profile.eris-management-profile [data-vip-card]{display:none!important}
+
+/* LIDYA_MANAGEMENT_PROFILE_FIT_V3 */
+html body #profile .profile.card.eris-management-profile {
+  display:grid!important;
+  grid-template-columns:88px minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto!important;
+  column-gap:14px!important;
+  row-gap:8px!important;
+  align-items:center!important;
+  overflow:hidden!important;
+  padding:16px!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.stage {
+  grid-column:1!important;
+  grid-row:1!important;
+  position:relative!important;
+  display:block!important;
+  width:88px!important;
+  height:88px!important;
+  min-width:88px!important;
+  min-height:88px!important;
+  max-width:88px!important;
+  max-height:88px!important;
+  margin:0!important;
+  padding:0!important;
+  justify-self:center!important;
+  align-self:center!important;
+  overflow:visible!important;
+  transform:none!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.stage > .face {
+  position:absolute!important;
+  inset:auto!important;
+  left:50%!important;
+  top:53%!important;
+  width:64%!important;
+  height:64%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  transform:translate(-50%,-50%)!important;
+  background-position:center!important;
+  background-size:cover!important;
+  z-index:1!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.stage > .frameImg {
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  width:88px!important;
+  height:88px!important;
+  min-width:88px!important;
+  max-width:88px!important;
+  min-height:88px!important;
+  max-height:88px!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+  object-fit:contain!important;
+  z-index:2!important;
+  pointer-events:none!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.name {
+  grid-column:2!important;
+  grid-row:1!important;
+  min-width:0!important;
+  max-width:100%!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:visible!important;
+  text-align:left!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.name h2 {
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:3px!important;
+  min-width:0!important;
+  max-width:100%!important;
+  font-size:clamp(12px,3.4vw,17px)!important;
+  line-height:1.3!important;
+  overflow-wrap:anywhere!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.name h2 .eris-role-icon {
+  width:26px!important;
+  min-width:26px!important;
+  max-width:26px!important;
+  height:26px!important;
+  flex:0 0 26px!important;
+  margin:0 3px 0 0!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+.name [data-profile-public-id] {
+  display:block!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+> .eris-profile-badges {
+  grid-column:1/-1!important;
+  grid-row:2!important;
+  justify-self:center!important;
+  align-self:center!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+
+html body #profile .profile.card.eris-management-profile
+> .stats {
+  grid-column:1/-1!important;
+  grid-row:3!important;
+  min-width:0!important;
+  margin-top:4px!important;
+}
+
+@media(max-width:360px){
+  html body #profile .profile.card.eris-management-profile {
+    grid-template-columns:76px minmax(0,1fr)!important;
+    column-gap:9px!important;
+    padding:12px!important;
+  }
+  html body #profile .profile.card.eris-management-profile
+  .stage,
+  html body #profile .profile.card.eris-management-profile
+  .stage > .frameImg {
+    width:76px!important;
+    min-width:76px!important;
+    max-width:76px!important;
+    height:76px!important;
+    min-height:76px!important;
+    max-height:76px!important;
+  }
+}
 `;document.head.append(style);
 function themeAssets(){for(const im of document.querySelectorAll('img[src*="/role-icons/management-v1/"]')){const next=asset(im.getAttribute('src'));if(im.src!==next)im.src=next;}for(const node of document.querySelectorAll('[style*="/role-icons/management-v1/"]')){const old=node.style.backgroundImage,next=old.replace(/url\(["']?([^"')]+)["']?\)/g,(_,url)=>'url("'+asset(url)+'")');if(old!==next)node.style.backgroundImage=next;}}
 function paint(node,row){if(!node)return;const role=normalize(row?.role),data=row?.identity;let current=node.querySelector(':scope>.eris-role-icon');
