@@ -23,3 +23,6 @@
 #lidyaHomeRoomsV1 .lhr-card:focus-visible,#lidyaHomeRoomsV1 button:focus-visible{outline:2px solid var(--ui-gold);outline-offset:2px}
 @media(min-width:760px){#lidyaHomeRoomsV1 .lhr-arrow{display:grid;place-items:center;position:absolute;z-index:2;top:37%;width:32px;height:32px;background:var(--ui-raised);border:1px solid var(--ui-line);border-radius:50%;color:var(--ui-ink)}#lidyaHomeRoomsV1 [data-room-prev]{left:0}#lidyaHomeRoomsV1 [data-room-next]{right:0}}
 @media(prefers-reduced-motion:reduce){#lidyaHomeRoomsV1 .lhr-track{scroll-behavior:auto}}
+
+#lidyaHomeRoomsV1 .lhr-frame{position:absolute;inset:-7px;background-position:center;background-repeat:no-repeat;background-size:100% 100%;pointer-events:none;z-index:2}
+#lidyaHomeRoomsV1 .lhr-live-dot{z-index:3}

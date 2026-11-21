@@ -46,7 +46,7 @@ from . import group_routes
 from . import group_policy
 from .staff_visibility import is_staff
 from .social_privacy import social_flags, require_social_visible
-from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword
+from .room_models import Room, RoomBan, RoomChatMute, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomSeat, RoomChatMessage, RoomPassword, RoomLivePresence
 from .room_routes import GIFT_CATALOG, GIFT_META, gift_visual, register_room_auth, router as room_router
 from .platform_models import (ConversationMute, ConversationReadState, DirectMessageGift, DirectMessageRestriction, DirectMessageUnlock,
     Family, FamilyDonation, FamilyMember, FamilyVisual, FanProfile, GameBet, GameRound, DiscoveryPreference, MessageHidden,
@@ -2558,6 +2558,26 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             pass
 
 
+def _touch_room_live_presence_v2(room_id: str, user_id: str, ghost: bool = False) -> None:
+    if ghost:
+        return
+    with Session(engine) as db:
+        row = db.get(RoomLivePresence, (room_id, user_id))
+        if row is None:
+            row = RoomLivePresence(room_id=room_id, user_id=user_id, last_seen_at=datetime.now(timezone.utc))
+            db.add(row)
+        else:
+            row.last_seen_at = datetime.now(timezone.utc)
+        db.commit()
+
+
+def _drop_room_live_presence_v2(room_id: str, user_id: str) -> None:
+    with Session(engine) as db:
+        db.execute(delete(RoomLivePresence).where(
+            RoomLivePresence.room_id == room_id, RoomLivePresence.user_id == user_id))
+        db.commit()
+
+
 room_chat_connections: dict[str, set[WebSocket]] = {}
 room_rtc_users: dict[str, dict[WebSocket, str]] = {}
 room_socket_users: dict[WebSocket, tuple[str, str]] = {}
@@ -2712,6 +2732,7 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             cleanup.cancel()
         stale_sockets=[ws for ws, uid in room_rtc_users.get(internal_room_id, {}).items() if str(uid)==str(user.id)]
         room_socket_users[websocket] = (internal_room_id, str(user.id))
+        await run_in_threadpool(_touch_room_live_presence_v2, internal_room_id, str(user.id), bool(member.ghost))
         room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
         if not member.ghost and not already_connected:
             if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry'] or entrance_payload.get('shop_entry'):
@@ -2735,8 +2756,13 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
                 try: await peer_ws.send_json({"type":"rtc_peer_joined","user_id":str(user.id)})
                 except Exception: pass
         last_reaction_at = float("-inf")
+        last_presence_touch = asyncio.get_running_loop().time()
         while True:
             data = await websocket.receive_json()
+            now_presence = asyncio.get_running_loop().time()
+            if now_presence - last_presence_touch >= 10:
+                await run_in_threadpool(_touch_room_live_presence_v2, internal_room_id, str(user.id), bool(member.ghost))
+                last_presence_touch = now_presence
             if not await run_in_threadpool(websocket_session_active, token):
                 room_chat_connections.get(internal_room_id, set()).discard(websocket)
                 room_rtc_users.get(internal_room_id, {}).pop(websocket, None)
@@ -2847,6 +2873,8 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
             for socket_room, socket_user in room_socket_users.values()
         )
         if not has_other_room_socket:
+            # Keep presence during the short reconnect grace period.
+            # Without another heartbeat, it expires from room counts.
             key=(internal_room_id,str(user.id))
             if key not in room_seat_cleanup_tasks:
                 task=asyncio.create_task(_cleanup_disconnected_room_seat(*key))

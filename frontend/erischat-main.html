@@ -191,7 +191,7 @@ column-gap:9px
 <link rel="stylesheet" href="./shop-lydia.css?v=theme-audit-20261013">
 <script src="./lidya-game-art.js?v=20261013-v4"></script><!-- ERISCHAT_LIDYA_GLOBAL_CONTRAST_V2 -->
 <link rel="stylesheet" href="./lidya-global-action-contrast.css?v=20261019-2">
-<link rel="stylesheet" href="./home-rooms-strip-v1.css?v=home-rooms-v1">
+<link rel="stylesheet" href="./home-rooms-strip-v1.css?v=home-rooms-v2">
 </head><body>
 <main class="app"><header class="top"><div class="brand eris-brand"><img class="eris-brand-image lidya-brand-light" src="./assets/lidya-menu/light-logo.png?v=lidya-horizontal-v2" alt="LidyaChat" width="1800" height="386" decoding="async"><img class="eris-brand-image lidya-brand-dark" src="./assets/lidya-menu/dark-logo.png?v=lidya-horizontal-v2" alt="" aria-hidden="true" width="1800" height="405" decoding="async"></div><div class="actions"><div class="balance" id="demoBalance">0 Lidya</div><button class="icon" onclick="showView('search')">⌕</button></div></header><section class="content">
 <section id="home" class="view show">
@@ -300,6 +300,8 @@ function openRoomsFromHome(){
   showView('explore');
   const roomsTab=document.querySelector('#explore .tab[onclick*="rooms"]');
   if(roomsTab && typeof tab==='function')tab('rooms',roomsTab);
+  const content=document.querySelector('.app>.content');
+  if(content)content.scrollTop=0;
   window.ErisChatRoomList?.load?.();
 }
 function openCreateRoomModal(){
@@ -494,7 +496,7 @@ async function sendChat(){
 <link rel="stylesheet" href="./games/kure-final.css?v=20261016-1">
 <link rel="stylesheet" href="./games/firavun-final.css?v=20261016-1">
 <link rel="stylesheet" href="./room-compact-v1.css?v=okey101-room-pro-20261020"><script defer src="./privacy-requests-live.js?v=20261018-1"></script><script defer src="./private-message-request-ui.js?v=20261018-3"></script><script defer src="./screen-awake.js?v=20261020-security-1"></script><link rel="stylesheet" href="./management-center.css?v=phase10-staged"><link rel="stylesheet" href="./woocommerce-admin-ui-v10.css?v=woo-admin-v10-20261120"><link rel="stylesheet" href="./management-center-responsive.css?v=management-mobile-live-v8-20261023"><script defer src="./management-center.js?v=da-finance-20261027"></script><link rel="stylesheet" href="./chess-center.css?v=chess-premium-v2-20261025"><script defer src="./chess-center.js?v=chess-premium-v2-20261025"></script><script defer src="./dealer-center-v1.js?v=lb-center-v1-20261118"></script>
-<script defer src="./home-rooms-strip-v1.js?v=home-rooms-v1"></script>
+<script defer src="./home-rooms-strip-v1.js?v=home-rooms-v2"></script>
 </body><link rel="stylesheet" href="./referral-lidya.css?v=20261018"><script defer src="./referral-lidya.js?v=20261018"></script><link rel="stylesheet" href="./award-bubble-readable-v2.css?v=20261111-v8-framewell"></html>
 
 

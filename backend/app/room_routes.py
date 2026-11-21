@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
-from .room_models import RoomChatMessage, Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomMusicAccess, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState, RoomInvitation
+from .room_models import RoomChatMessage, Room, RoomBan, RoomChatMute, RoomFollow, RoomGiftEvent, RoomMember, RoomModerator, RoomMusic, RoomMusicAccess, RoomSeat, RoomPassword, RoomWallpaper, RoomWallpaperState, RoomInvitation, RoomLivePresence
 from . import seat_workflow
 from .platform_models import Notification, UserBlock, UserFollow, VipStatus
 from .platform_routes import vip_level_from_spend
@@ -251,11 +251,20 @@ def room_is_locked(room):
     return bool(room.locked and (not expiry or expiry>datetime.now(timezone.utc)))
 
 
+def room_live_count_v2(db: Session, room_id: str) -> int:
+    # Counts distinct live users, including listeners without a seat.
+    # The heartbeat grace is intentionally longer than the 12s client ping.
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=48)
+    return int(db.scalar(select(func.count(RoomLivePresence.user_id)).where(
+        RoomLivePresence.room_id == room_id, RoomLivePresence.last_seen_at >= cutoff
+    )) or 0)
+
+
 def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     from .vip_privileges import room_style
     ensure_seats(db, room)
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
-    members = db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0
+    members = room_live_count_v2(db, room.id)
     moderators = list(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
     seats = list(db.scalars(select(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.seat_number <= room.seat_count).order_by(RoomSeat.seat_number)))
     current_id = str(user.id) if user else ""
@@ -284,7 +293,7 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper_applied = bool(wallpaper_state.applied) if wallpaper_state else wallpaper_active
     wallpaper_item = wallpaper_choice if wallpaper_active else None
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
-    return {"vip_benefits": room_style(db,room), "couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "level": room.level,
+    return {"vip_benefits": room_style(db,room), "couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "owner_avatar_asset": getattr(db.get(User, room.owner_id), "avatar_asset", None), "owner_frame_asset": getattr(db.get(User, room.owner_id), "frame_asset", None), "owner_avatar": getattr(db.get(User, room.owner_id), "avatar", None), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]), "seat_permission":seat_workflow.enabled(db,room.id),
         "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": room_is_locked(room), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else default_wallpaper(db.get(User, room.owner_id)), "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active and not vip_unlocked else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
@@ -330,7 +339,8 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
                     continue
                 seen_owner.add(owner_id)
             visible.append(room)
-        return [room_view(db, room, user) for room in visible]
+        views = [room_view(db, room, user) for room in visible]
+        return [view for view in views if view["member_count"] > 0]
     @router.get("/me/rooms")
     def list_my_rooms(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         # Eski test/veri kayıtlarında aynı kullanıcıya ait birden fazla sahiplik kalmış olabilir.
@@ -532,7 +542,7 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
     @router.post("/{room_id}/leave")
     def leave_room(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = seat_workflow.lock_room(db,get_room_or_404(db, room_id))
-        db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(update(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).values(user_id=None,muted=False))
+        db.execute(delete(RoomLivePresence).where(RoomLivePresence.room_id == room.id, RoomLivePresence.user_id == user.id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == user.id)); db.execute(update(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == user.id).values(user_id=None,muted=False))
         remaining = int(db.scalar(select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id, RoomMember.ghost.is_(False))) or 0)
         room.is_active = remaining > 0
         db.commit(); return {"left": True, "is_active": room.is_active}
