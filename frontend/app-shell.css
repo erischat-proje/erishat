@@ -61,3 +61,15 @@ html body .app > .nav {
   bottom: auto !important;
   transform: none !important;
 }
+
+/* LIDYA_HOME_BOTTOM_V3: WebView measured viewport is the single height authority. */
+html body .app {height:var(--app-height, 100dvh)!important;min-height:0!important;max-height:var(--app-height, 100dvh)!important;}
+html body .app>.content {min-height:0!important;flex:1 1 0!important;overflow-y:auto!important;}
+html body .app>.nav {margin-top:0!important;flex:0 0 auto!important;position:relative!important;bottom:auto!important;padding-bottom:8px!important;}
+#home .lidya-home-room-heading {display:flex;align-items:center;gap:9px;flex-wrap:nowrap;}
+#home .lidya-home-room-heading>h3 {min-width:0;flex:1 1 auto;}
+#home .lidya-home-room-actions {display:flex;flex:none;align-items:center;gap:7px;margin-left:auto;}
+#home .lidya-home-room-actions .lidya-home-create-room {margin-left:0;min-height:42px;padding:8px 12px;font-size:12px;}
+#home .lidya-home-my-room {border-color:var(--ui-gold);}
+#home .lidya-home-my-room[hidden] {display:none!important;}
+@media(max-width:360px){#home .lidya-home-room-actions{gap:4px}#home .lidya-home-room-actions .lidya-home-create-room{font-size:11px;padding:7px 8px}}
