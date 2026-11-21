@@ -37,3 +37,27 @@ html body #home .eris-admin-menu .ea-role{margin-left:auto}
 html body #home .homeMenuItem:focus-visible,html body .nav button:focus-visible{outline:2px solid var(--ui-line);outline-offset:2px}
 @media(min-width:700px){html body #home .homeMenu{grid-template-columns:repeat(3,minmax(0,1fr))}html body #home #realRooms{grid-template-columns:repeat(2,minmax(0,1fr))}html body #home #realRooms>.ec-discovery-empty{grid-column:1/-1}html body .app>.content{padding:26px 28px 32px!important}}
 @media(max-width:350px){html body .app>.content{padding:16px 12px 24px!important}html body .app>.top{padding:10px 12px}html body #home .homeMenuItem{padding:12px!important}html body .app>.top .brand{font-size:23px}}
+
+/* LidyaChat Bottom Navigation V1
+   Android ekran altinda kalan boslugu giderir. */
+html body .app {
+  height: 100dvh !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+html body .app > .content {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+html body .app > .nav {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  margin-top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
