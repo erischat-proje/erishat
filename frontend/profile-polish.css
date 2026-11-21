@@ -227,3 +227,49 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 .lb-panel .lb-bt-identity strong{font-size:14px}.lb-panel .lb-bt-identity small{font-size:11px;color:var(--ui-muted,#78694f)}
 .lb-panel .lb-bt-person button{flex:none;padding:9px!important;font-size:12px!important;min-height:39px!important}
 .lb-panel .lb-bt-person button:disabled{opacity:.45;cursor:not-allowed}
+
+
+/* LIDYACHAT_BT_PROFILE_V5_ORIGINAL_LOGO */
+/* "support" = Bayi Temsilcisi; "dealer" = Lidya Bayisi. No dealer changes. */
+#profile .profile.card.profile.lbr-v3-support .stage{
+  justify-self:start!important;
+  margin-left:0!important;
+}
+/* Official user-supplied logo overlays only BT's profile portrait; stored avatar is unchanged. */
+#profile .profile.card.profile.lbr-v3-support .stage .face{
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:visible!important;
+}
+#profile .profile.card.profile.lbr-v3-support .stage .face::after{
+  content:''!important;
+  position:absolute!important;
+  inset:0!important;
+  left:0!important;
+  top:0!important;
+  width:100%!important;
+  height:100%!important;
+  background:#053d35 url('./role-icons/bayi-temsilcisi-orijinal-v5.png?v=bt-profile-v5') center / contain no-repeat!important;
+  border-radius:50%!important;
+  z-index:20!important;
+  pointer-events:none!important;
+}
+/* Existing BT gold role frame stays above the artwork via face::before (z-index:33). */
+/* Secondary identity emblem above the name, only on the user's own BT profile. */
+#profile .profile.card.profile.lbr-v3-support .name::before{
+  content:''!important;
+  display:block!important;
+  flex:none!important;
+  width:48px!important;
+  height:48px!important;
+  margin:0 0 2px!important;
+  border-radius:50%!important;
+  background:#053d35 url('./role-icons/bayi-temsilcisi-orijinal-v5.png?v=bt-profile-v5') center / contain no-repeat!important;
+  border:1px solid #b78836!important;
+  box-shadow:0 1px 6px rgba(85,56,13,.2)!important;
+  pointer-events:none!important;
+}
+#profile .profile.card.profile.lbr-v3-support .name [data-lbr-role-title]{
+  color:#936315!important;
+  font-weight:900!important;
+}
