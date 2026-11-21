@@ -120,7 +120,7 @@ function liveFinance(parent,options={}){
  const topupArea=el('div','lm-topup-area');container.append(topupArea);
  function showTopups(){
   topupArea.replaceChildren();
-  userTopupRecords(topupArea,target.value.trim());
+  lidyaHistoryMenuV2(topupArea,target.value.trim());
  }
  let query=new URLSearchParams({days:days.value,target:target.value.trim()});
  function paint(data){
@@ -138,68 +138,56 @@ function liveFinance(parent,options={}){
  showTopups();
 }
 
-async function userTopupRecords(parent, publicId) {
- const section=el('section','lm-user-topups');
- parent.append(section);
-
- if(!publicId){
-  message('Lidya yüklemelerini görmek için kullanıcı ID girin.',
-          false,section);
-  return;
- }
-
- try{
-  const data=await get(
-   '/v1/admin/finance-audit/user-topups?target='+
-   encodeURIComponent(publicId)
-  );
-  if(!section.isConnected)return;
-
-  const header=card(
-   section,
-   'Kullanıcı Lidya yükleme sorgusu',
-   (data.nickname||'')+' · '+data.public_id
-  );
-
-  message(
-   'Kaynaklar ayrı gösterilir. Aynı işlem birden fazla kayıtta '+
-   'bulunabilir; tutarlar toplanmaz. Her kaynakta en fazla '+
-   '100 kayıt listelenir.',
-   false,header
-  );
-
-  const groups=[
-   ['ledger','Cüzdana kaydedilmiş Lidya girişleri'],
-   ['orders','Kullanıcının yükleme siparişleri'],
-   ['assisted','Ödeme temsilcisi talepleri'],
-   ['dealers','Bayi üzerinden aktarılan Lidya'],
-   ['manual','Yönetici tarafından eklenen Lidya']
-  ];
-
-  for(const [key,title] of groups){
-   const entries=data[key]||[];
-   const group=card(section,title);
-   if(!entries.length){
-    info(group,'Kayıt','Bulunamadı');
-    continue;
+function lidyaHistoryMenuV2(parent, publicId){
+ const actions=row(parent);
+ btn('🎮 Oyun Geçmişi',()=>openLidyaHistoryV2('games',publicId),actions);
+ btn('🪙 Satın Alım Geçmişi',()=>openLidyaHistoryV2('purchases',publicId),actions);
+ if(!publicId)message('Geçmişleri sorgulamak için kullanıcı ID girin.',false,parent);
+}
+async function openLidyaHistoryV2(kind,publicId){
+ if(!publicId){message('Önce kullanıcı ID girip Uygula butonuna basın.',true);return;}
+ const old=root?.querySelector('[data-lidya-history-v2]');old?.remove();
+ const overlay=el('div','');overlay.dataset.lidyaHistoryV2='';
+ overlay.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#000a;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;';
+ const dialog=el('section','');dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+ dialog.setAttribute('aria-label',kind==='games'?'Oyun Geçmişi':'Satın Alım Geçmişi');
+ dialog.style.cssText='box-sizing:border-box;width:min(530px,100%);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;border:1px solid #b99353;border-radius:18px;background:var(--ui-panel,#211b19);color:var(--ui-ink,#f9dfab);box-shadow:0 15px 55px #0008;padding:12px;';
+ const top=el('div','');top.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;';
+ const title=el('h3','',kind==='games'?'🎮 Oyun Geçmişi':'🪙 Satın Alım Geçmişi');title.style.cssText='margin:0;font-size:17px;';
+ const closeButton=el('button','','✕');closeButton.type='button';closeButton.setAttribute('aria-label','Kapat');
+ closeButton.onclick=()=>overlay.remove();top.append(title,closeButton);
+ const body=el('div','');body.style.cssText='overflow-y:auto;min-height:0;flex:1;padding:8px 2px;overscroll-behavior:contain;';
+ const footer=el('div','');footer.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #b99353;padding-top:8px;';
+ const prev=el('button','','‹ Önceki');const next=el('button','','Sonraki ›');
+ prev.type=next.type='button';const progress=el('span','','Sayfa 1');progress.style.fontSize='12px';
+ footer.append(prev,progress,next);dialog.append(top,body,footer);overlay.append(dialog);root.append(overlay);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+ closeButton.focus({preventScroll:true});let page=1;let active=0;
+ const load=async wanted=>{
+  const serialReq=++active;prev.disabled=next.disabled=true;body.replaceChildren(el('p','','Kayıtlar yükleniyor…'));
+  try{
+   const query=new URLSearchParams({target:publicId,kind,page:String(wanted)});
+   const data=await get('/v1/admin/finance-audit/user-history?'+query);
+   if(!overlay.isConnected||serialReq!==active)return;
+   page=data.page;body.replaceChildren();
+   body.append(el('p','',data.nickname+' · '+data.public_id+' · '+data.total+' kayıt'));
+   if(kind==='purchases')body.append(el('p','','Oyun kazançları burada gösterilmez. Ödeme talebi ve teslim edilmiş Lidya ayrıdır.'));
+   if(!data.items.length)body.append(el('p','','Bu sayfada kayıt bulunamadı.'));
+   for(const item of data.items){
+    const c=card(body,(item.source||'İşlem')+' · '+date(item.created_at));
+    if(kind==='purchases')info(c,'Lidya',money(item.amount));
+    else if(Number(item.amount)>0)info(c,'Bahis',money(item.amount)+' Lidya');
+    info(c,'Durum',label(item.status));
+    if(item.detail)info(c,'Ayrıntı',item.detail);
+    info(c,'Kayıt',item.id);
    }
-   for(const item of entries){
-    const entry=card(group,
-      money(item.amount)+' Lidya');
-    info(entry,'Tarih',date(item.created_at));
-    info(entry,'Kaynak',item.source||key);
-    if(item.status)info(entry,'Durum',item.status);
-    if(key==='assisted'){
-     info(entry,'Lidya teslimatı',
-       item.credited?'Kayıtlı':'Henüz doğrulanmadı');
-    }
-    info(entry,'İşlem no',item.id);
-   }
-  }
- }catch(error){
-  message(error.message||'Sorgu gerçekleştirilemedi',
-          true,section);
- }
+   progress.textContent='Sayfa '+data.page+' / '+data.total_pages;
+   prev.disabled=!data.has_previous;next.disabled=!data.has_next;
+   body.scrollTop=0;
+  }catch(e){if(overlay.isConnected){body.replaceChildren();message(e.message,true,body);progress.textContent='Sorgu hatası';}}
+ };
+ prev.onclick=()=>load(page-1);next.onclick=()=>load(page+1);
+ await load(1);
 }
 
 async function financialRecords(options={}){
