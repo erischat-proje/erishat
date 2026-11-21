@@ -15,7 +15,7 @@ from .admin_models import AdminRole
 from .db import Base, get_db
 from .models import User
 # BT_REFERENCE_V1: immutable BT-only referral program.
-from .dealer_referrals import (BTReferral, ensure_bt_referral, require_bt_activation, install_referral_routes)
+from .dealer_referrals import (BTReferral, LBReferral, ensure_bt_referral, install_referral_routes)
 
 
 router = APIRouter(prefix="/v1/dealers", tags=["Lidya Bayi"])
@@ -324,8 +324,10 @@ def register_auth(current_user):
     def transfer(body: TransferBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
         # Serialize attempts, including duplicate retries, against this stock row.
         dealer = require_dealer(db, user, lock=True)
-        if designation(db, user.id) == 'support':
-            require_bt_activation(db, user.id)
+        # LB must enter a BT code before stock transfers.
+        if designation(db, user.id) == "dealer":
+            if db.get(LBReferral, user.id) is None:
+                raise HTTPException(403, "LB referans aktivasyonu gerekli")
         recipient = target_by_public_id(db, body.recipient_public_id)
         if recipient.id == user.id:
             raise HTTPException(400, "Bayi kendisine stok aktaramaz")
