@@ -72,7 +72,7 @@ class DealerStockGrant(Base):
 
 class AssignBody(BaseModel):
     public_id: str = Field(min_length=1, max_length=64)
-    kind: str = Field(default='dealer', pattern='^(dealer|coin|support)$')
+    kind: str = Field(default='dealer', pattern='^(dealer|support)$')
 
 
 class RevokeBody(BaseModel):
@@ -106,8 +106,8 @@ def require_da(db, user):
 
 def require_dealer(db, user, lock=False):
     row = db.scalar(select(DealerInventory).where(DealerInventory.user_id == user.id).with_for_update() if lock else select(DealerInventory).where(DealerInventory.user_id == user.id))
-    if not row or not row.active:
-        raise HTTPException(403, "Aktif Lidya bayisi yetkiniz yok")
+    if not row or not row.active or designation(db, user.id) == 'coin':
+        raise HTTPException(403, "Aktif LB / BT yetkiniz yok")
     return row
 
 
@@ -128,7 +128,9 @@ def register_auth(current_user):
         explicit = db.scalars(select(DealerDesignation).where(
             DealerDesignation.user_id.in_(rows))).all() if rows else []
         kinds = {r.user_id: r.kind for r in explicit}
-        return {"dealers": rows, "roles": {uid: kinds.get(uid, 'dealer') for uid in rows}}
+        # Legacy CT assignments must be explicitly reviewed by DA.
+        visible = [uid for uid in rows if kinds.get(uid, 'dealer') != 'coin']
+        return {"dealers": visible, "roles": {uid: kinds.get(uid, 'dealer') for uid in visible}}
 
     @router.get("/admin/list")
     def admin_dealer_list(limit: int = Query(default=50, ge=1, le=100),
@@ -223,8 +225,8 @@ def register_auth(current_user):
         # Concurrent retries will see the committed original grant.
         row = db.scalar(select(DealerInventory).where(
             DealerInventory.user_id == target.id).with_for_update())
-        if row is None or not row.active:
-            raise HTTPException(409, "Aktif bayi bulunamadı")
+        if row is None or not row.active or designation(db, target.id) == 'coin':
+            raise HTTPException(409, "Aktif LB / BT bulunamadı")
         prior = db.scalar(select(DealerStockGrant).where(DealerStockGrant.request_key == body.request_key))
         if prior:
             target = target_by_public_id(db, body.public_id)

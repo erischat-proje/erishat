@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="150" viewBox="0 0 140 150" role="img" aria-label="BAYİ TEMSİLCİSİ özel avatar çerçevesi">
+<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#8e5c22"/><stop offset=".22" stop-color="#ffe2ae"/><stop offset=".5" stop-color="#dab66b"/><stop offset=".78" stop-color="#9e6927"/><stop offset="1" stop-color="#ffe2ae"/></linearGradient><linearGradient id="enamel" x2="1" y2="1"><stop stop-color="#713e26"/><stop offset=".53" stop-color="#13251d"/><stop offset="1" stop-color="#713e26"/></linearGradient></defs>
+<!-- Empty transparent central aperture: user's avatar stays unchanged -->
+<circle cx="70" cy="76" r="53.5" fill="none" stroke="#713e26" stroke-width="5.5"/>
+<circle cx="70" cy="76" r="51.5" fill="none" stroke="url(#gold)" stroke-width="5"/>
+<circle cx="70" cy="76" r="45.8" fill="none" stroke="#ffe2ae" stroke-width="1.6"/>
+<circle cx="70" cy="76" r="58.5" fill="none" stroke="url(#gold)" stroke-width="1.1" stroke-dasharray="2 6"/>
+<path d="M 18.0 90 q -14 -8 -12 -18 q 13 2 12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(34 18.0 90)"/><path d="M 17.8 80 q -14 -8 -12 -18 q 13 2 12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(25 17.8 80)"/><path d="M 17.5 70 q -14 -8 -12 -18 q 13 2 12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(16 17.5 70)"/><path d="M 17.2 60 q -14 -8 -12 -18 q 13 2 12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(7 17.2 60)"/><path d="M 17.0 50 q -14 -8 -12 -18 q 13 2 12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(-2 17.0 50)"/><path d="M 16.8 40 q -14 -8 -12 -18 q 13 2 12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(-11 16.8 40)"/><path d="M 122.0 90 q 14 -8 12 -18 q -13 2 -12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(-34 122.0 90)"/><path d="M 122.2 80 q 14 -8 12 -18 q -13 2 -12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(-25 122.2 80)"/><path d="M 122.5 70 q 14 -8 12 -18 q -13 2 -12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(-16 122.5 70)"/><path d="M 122.8 60 q 14 -8 12 -18 q -13 2 -12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(-7 122.8 60)"/><path d="M 123.0 50 q 14 -8 12 -18 q -13 2 -12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(2 123.0 50)"/><path d="M 123.2 40 q 14 -8 12 -18 q -13 2 -12 18Z" fill="url(#gold)" stroke="#713e26" stroke-width=".7" transform="rotate(11 123.2 40)"/>
+<!-- Heraldic crown at top -->
+<path d="M 48 28 L 45 9 L 56 18 L 70 4 L 84 18 L 95 9 L 92 28 Z" fill="url(#gold)" stroke="#713e26" stroke-width="2"/>
+<path d="M 49 27 H 91 L 88 34 H 52 Z" fill="#713e26" stroke="#dab66b" stroke-width="2"/>
+<path d="M 70 7 L 74 16 L 70 23 L 66 16 Z" fill="#713e26" stroke="#ffe2ae"/>
+<circle cx="51" cy="18" r="2.5" fill="#ffe2ae"/><circle cx="89" cy="18" r="2.5" fill="#ffe2ae"/>
+<!-- Bottom heraldic shield -->
+<path d="M 49 119 L 91 119 L 90 137 Q 70 153 50 137 Z" fill="url(#gold)" stroke="#713e26" stroke-width="2.5"/>
+<path d="M 54 123 L 86 123 L 85 135 Q 70 146 55 135 Z" fill="url(#enamel)" stroke="#ffe2ae" stroke-width="1.3"/>
+<text x="70" y="135" text-anchor="middle" font-size="14" font-family="Georgia,serif" font-weight="bold" fill="#ffe2ae">BT</text>
+<circle cx="15" cy="76" r="3" fill="#ffe2ae" stroke="#dab66b"/><circle cx="125" cy="76" r="3" fill="#ffe2ae" stroke="#dab66b"/>
+</svg>
