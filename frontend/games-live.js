@@ -45,14 +45,12 @@
         crash: () => window.ErisGameCrash,
         blackjack: () => window.ErisGameBlackjack,
         slot: () => window.ErisGameSlot,
-        cups: () => window.ErisGameCups,
         horse_race: () => window.ErisGameHorseRace,
         vault: () => window.ErisGameVault
     };
 
     const labels = {
         slot: 'Slot',
-        cups: 'Dört Kupa',
         horse_race: 'At Yarışı',
         blackjack: 'Blackjack',
         crash: 'Crash',
@@ -192,6 +190,7 @@
     }
 
     function open(scope = 'main', roomId = null, selected = null) {
+        if (selected === 'cups') selected = 'wheel';
         if(selected==='slot'&&window.LidyaSlotLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaSlotLive.open();}
         if(selected==='crash'&&window.LidyaCrashLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaCrashLive.open();}
         if((!selected||selected==='wheel')&&window.LidyaWheelLive){modal?._erisCleanup?.();modal?.remove();modal=null;return window.LidyaWheelLive.open();}
