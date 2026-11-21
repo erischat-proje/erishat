@@ -45,7 +45,7 @@ class RepresentativeV2Tests(RepresentativeV1Tests):
         self.assertEqual(ctx.exception.status_code, 403)
 
     def test_07_non_da_cannot_revoke(self):
-        self.assign("coin")
+        self.assign("dealer")
         with self.assertRaises(HTTPException) as ctx:
             self.revoke(actor=self.target)
         self.assertEqual(ctx.exception.status_code, 403)

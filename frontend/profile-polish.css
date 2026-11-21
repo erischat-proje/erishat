@@ -137,3 +137,43 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
 #profile .profile.card.profile.lbr-v2-coin .stage:after,#profile .profile.card.profile.lbr-v2-support .stage:after{content:'';position:absolute;inset:-3px;border:2px solid #d9b15b;border-radius:50%;pointer-events:none;box-shadow:0 0 0 2px #075756,0 0 9px #c79b4599;z-index:3}
 #profile .profile.card.profile.lbr-v2-support .stage:after{border-color:#6bc6c1;box-shadow:0 0 0 2px #bd923f,0 0 11px #63dbd177}
 #profile .profile.card.profile .stage{position:relative!important}
+
+
+/* LIDYACHAT_LB_BT_PREMIUM_V3: role visuals only; no persisted cosmetic changes. */
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage{
+ position:relative!important;overflow:visible!important;isolation:isolate;
+}
+#profile .profile.card.profile:is(.lbr-v3-dealer,.lbr-v3-support) .stage::after{
+ content:''!important;position:absolute!important;z-index:30!important;
+ left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;
+ width:86px!important;height:94px!important;inset:auto!important;
+ background:transparent center/contain no-repeat!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none!important;
+ filter:drop-shadow(0 2px 3px rgba(49,29,9,.35));
+}
+#profile .profile.card.profile.lbr-v3-dealer .stage::after{background-image:url('./role-icons/dealer-profile-frame-v3.svg')!important}
+#profile .profile.card.profile.lbr-v3-support .stage::after{background-image:url('./role-icons/support-profile-frame-v3.svg')!important}
+/* LB-specific official avatar artwork, on top of the regular image without editing account data. */
+#profile .profile.card.profile.lbr-v3-dealer .stage .face{position:relative!important;overflow:visible!important}
+#profile .profile.card.profile.lbr-v3-dealer .stage .face::after{
+ content:''!important;position:absolute!important;inset:-7%!important;z-index:15!important;
+ background:url('./role-icons/lidya-bayisi-premium-v3.png') center/contain no-repeat!important;
+ border-radius:50%!important;pointer-events:none!important;
+}
+/* A branded main-menu card, matching the emerald/gold-approved mockup. */
+#lidya-dealer-menu.lbv3-premium-card{
+ position:relative!important;overflow:visible!important;
+ background:linear-gradient(130deg,#032b27,#064d43 55%,#022a26)!important;
+ border:3px solid #d9a43b!important;border-radius:28px!important;
+ box-shadow:inset 0 0 0 2px #f8dd8d,0 8px 20px #66430b55,0 2px 0 #ac7730!important;
+ color:#ffe5a3!important;min-height:92px!important;
+}
+#lidya-dealer-menu.lbv3-premium-card .lbv4-mark{
+ display:grid!important;place-items:center!important;flex:none!important;
+ width:76px!important;height:76px!important;border:0!important;background:transparent!important;
+}
+#lidya-dealer-menu.lbv3-premium-card .lbv4-mark img{width:100%!important;height:100%!important;object-fit:contain!important;filter:drop-shadow(0 1px 4px #d5b25d66)}
+#lidya-dealer-menu.lbv3-premium-card .lbv4-copy strong{color:#ffda7e!important;font-weight:900!important;font-size:clamp(19px,5vw,26px)!important;text-shadow:0 2px 2px #0008}
+#lidya-dealer-menu.lbv3-premium-card .lbv4-copy small{color:#fff1c7!important;font-size:12px!important}
+#lidya-dealer-menu.lbv3-premium-card .lbv4-arrow{background:linear-gradient(135deg,#fff0b8,#c18d36)!important;color:#412606!important;border:1px solid #ffdf91!important;border-radius:50%!important;box-shadow:0 2px 8px #0007!important}
+#profile .profile.card.profile.lbr-v3-dealer .name .lbr-v2-title,#profile .profile.card.profile.lbr-v3-support .name .lbr-v2-title{font-weight:900!important;color:#896018!important}

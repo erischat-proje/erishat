@@ -38,7 +38,7 @@ class DealerSecurityTests(unittest.TestCase):
         )
         Base.metadata.create_all(
             self.engine,
-            tables=[User.__table__, AdminRole.__table__, dealers.DealerInventory.__table__,
+            tables=[User.__table__, AdminRole.__table__, dealers.DealerInventory.__table__, dealers.DealerDesignation.__table__,
                     dealers.DealerTransfer.__table__, dealers.DealerStockGrant.__table__],
         )
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)

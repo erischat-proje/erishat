@@ -60,7 +60,7 @@ class RepresentativeV1Tests(unittest.TestCase):
         self.assertEqual(result["kind"], "support")
 
     def test_03_switch_preserves_stock(self):
-        self.assign("coin")
+        self.assign("dealer")
         self.db.get(d.DealerInventory, "target").stock = 750
         self.db.commit()
         self.assign("support")
@@ -68,7 +68,7 @@ class RepresentativeV1Tests(unittest.TestCase):
         self.assertEqual(
             self.db.get(d.DealerInventory, "target").stock, 750)
         self.assertEqual(d.designation(self.db, "target"), "support")
-        self.assign("coin")
+        self.assign("dealer")
         self.assertEqual(
             self.db.get(d.DealerInventory, "target").stock, 750)
 
