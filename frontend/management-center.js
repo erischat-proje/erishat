@@ -116,7 +116,13 @@ function liveFinance(parent,options={}){
  const id=session,version=serial,container=el('section','lm-live-finance');parent.append(container);
  if(!window.LidyaManagementLive){message('Canlı veri modülü yüklenemedi. Sayfayı yenileyin.',true,container);return}
  const filters=el('form','lm-live-filters');const days=field(filters,{name:'days',title:'Dönem · İstanbul takvimi',options:{1:'Bugün',7:'Son 7 gün',30:'Son 30 gün',90:'Son 90 gün'},value:options.days||'7'});const target=field(filters,{name:'target',title:'Kullanıcı ID · boşsa tüm hesaplar',required:false,maxLength:64,value:options.target||''});const apply=el('button','','Uygula');apply.type='submit';filters.append(apply);container.append(filters);
- const dashboard=el('div','lm-live-dashboard');dashboard.dataset.financeData='';container.append(dashboard);let query=new URLSearchParams({days:days.value,target:target.value.trim()});
+ const dashboard=el('div','lm-live-dashboard');dashboard.dataset.financeData='';container.append(dashboard);
+ const topupArea=el('div','lm-topup-area');container.append(topupArea);
+ function showTopups(){
+  topupArea.replaceChildren();
+  userTopupRecords(topupArea,target.value.trim());
+ }
+ let query=new URLSearchParams({days:days.value,target:target.value.trim()});
  function paint(data){
   if(!data.wallets||!data.ledger||!data.manual||!data.coverage||!Array.isArray(data.orders)||!Array.isArray(data.recent_ledger))throw Error('Mali veri yanıtı eksik; önceki başarılı görünüm korunuyor.');
   dashboard.replaceChildren();const stats=el('div','lm-command-stats');dashboard.append(stats);
@@ -126,11 +132,76 @@ function liveFinance(parent,options={}){
   const orders=card(dashboard,'Kayıtlı yükleme siparişleri');if(!data.orders.length)message('Bu dönemde sipariş kaydı yok.',false,orders);for(const o of data.orders)info(orders,label(o.status),money(o.count)+' sipariş · '+money(o.lidya)+' Lidya · '+money(o.recorded_try)+' TL kayıtlı tutar');
   const paid=card(dashboard,'Destekli yüklemeler ve VIP kaynakları');if(data.assisted_credited)info(paid,'Fiilen yüklenmiş destekli işlem',money(data.assisted_credited.count)+' kayıt · '+money(data.assisted_credited.lidya)+' Lidya · '+money(data.assisted_credited.recorded_try)+' TL kayıtlı tutar');if(data.vip_purchase_receipts)info(paid,'VIP satın alma makbuzu',money(data.vip_purchase_receipts.count)+' kayıt · '+money(data.vip_purchase_receipts.lidya)+' Lidya');if(data.finance_requests)info(paid,'Mali talepler','Güncel durum sayıları · tüm zamanlar');if(data.finance_requests)for(const [state,count] of Object.entries(data.finance_requests))info(paid,'Mali talep · '+label(state),money(count));
   const reconciliation=card(dashboard,'Bakiye kayıt kontrolü');info(reconciliation,'Kontrol edilen hesap',money(data.coverage.accounts_checked));info(reconciliation,'Tutarsız manuel işlem',money(data.manual.invalid_count));for(const r of data.coverage.exceptions)info(reconciliation,r.public_id,money(r.current_balance)+' mevcut / '+(r.last_recorded_balance===null?'Ledger kaydı yok':money(r.last_recorded_balance)+' son kayıt'));if(data.coverage.exceptions_truncated)message('İlk 20 kontrol bulgusu gösteriliyor; sayaçlar tüm kapsamı içerir.',false,reconciliation);
-  const frame=el('div','lm-live-table-wrap');frame.tabIndex=0;frame.setAttribute('role','region');frame.setAttribute('aria-label','Son kayıtlı Lidya hareketleri');const table=el('table','lm-live-table'),caption=el('caption','','Son 30 kayıtlı hareket · salt okunur');table.append(caption);const head=el('thead'),tr=el('tr');for(const text of ['Zaman','Profil ID','İşlem','Değişim','Son bakiye','Referans']){const th=el('th','',text);th.scope='col';tr.append(th)}head.append(tr);table.append(head);const body=el('tbody');for(const r of data.recent_ledger){const row=el('tr');for(const value of [date(r.created_at),r.public_id,r.operation,money(r.delta),money(r.balance_after),r.reference_id||'—'])row.append(el('td','',value));body.append(row)}if(!data.recent_ledger.length){const row=el('tr'),cell=el('td','','Bu dönemde kayıtlı hareket yok.');cell.colSpan=6;row.append(cell);body.append(row)}table.append(body);frame.append(table);dashboard.append(frame);
  }
  const live=window.LidyaManagementLive.attach({element:container,isAlive:()=>alive(id)&&version===serial,load:signal=>window.LidyaManagementLive.read('/v1/admin/finance-audit/live-snapshot?'+query,access,signal),paint,onDenied:()=>dashboard.replaceChildren()});
- filters.onsubmit=e=>{e.preventDefault();if(!filters.reportValidity())return;query=new URLSearchParams({days:days.value,target:target.value.trim()});live.reload()};
+ filters.onsubmit=e=>{e.preventDefault();if(!filters.reportValidity())return;query=new URLSearchParams({days:days.value,target:target.value.trim()});live.reload();showTopups()};
+ showTopups();
 }
+
+async function userTopupRecords(parent, publicId) {
+ const section=el('section','lm-user-topups');
+ parent.append(section);
+
+ if(!publicId){
+  message('Lidya yüklemelerini görmek için kullanıcı ID girin.',
+          false,section);
+  return;
+ }
+
+ try{
+  const data=await get(
+   '/v1/admin/finance-audit/user-topups?target='+
+   encodeURIComponent(publicId)
+  );
+  if(!section.isConnected)return;
+
+  const header=card(
+   section,
+   'Kullanıcı Lidya yükleme sorgusu',
+   (data.nickname||'')+' · '+data.public_id
+  );
+
+  message(
+   'Kaynaklar ayrı gösterilir. Aynı işlem birden fazla kayıtta '+
+   'bulunabilir; tutarlar toplanmaz. Her kaynakta en fazla '+
+   '100 kayıt listelenir.',
+   false,header
+  );
+
+  const groups=[
+   ['ledger','Cüzdana kaydedilmiş Lidya girişleri'],
+   ['orders','Kullanıcının yükleme siparişleri'],
+   ['assisted','Ödeme temsilcisi talepleri'],
+   ['dealers','Bayi üzerinden aktarılan Lidya'],
+   ['manual','Yönetici tarafından eklenen Lidya']
+  ];
+
+  for(const [key,title] of groups){
+   const entries=data[key]||[];
+   const group=card(section,title);
+   if(!entries.length){
+    info(group,'Kayıt','Bulunamadı');
+    continue;
+   }
+   for(const item of entries){
+    const entry=card(group,
+      money(item.amount)+' Lidya');
+    info(entry,'Tarih',date(item.created_at));
+    info(entry,'Kaynak',item.source||key);
+    if(item.status)info(entry,'Durum',item.status);
+    if(key==='assisted'){
+     info(entry,'Lidya teslimatı',
+       item.credited?'Kayıtlı':'Henüz doğrulanmadı');
+    }
+    info(entry,'İşlem no',item.id);
+   }
+  }
+ }catch(error){
+  message(error.message||'Sorgu gerçekleştirilemedi',
+          true,section);
+ }
+}
+
 async function financialRecords(options={}){
  const id=session,kind=options.kind||'manual';const params=new URLSearchParams({limit:'30'});if(options.target)params.set('target',options.target);const data=await get('/v1/admin/finance-audit/'+({manual:'manual-operations',orders:'orders',vip:'vip'}[kind])+'?'+params);if(!alive(id))return;reset('Mali kayıtlar');btn('İnceleme ve onay talepleri',()=>finance(),main);
  liveFinance(main,options);
