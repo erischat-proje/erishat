@@ -210,3 +210,10 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
 /* Non-destructive client-side guard; server independently enforces it. */
 html.lb-v4-cosmetic-locked [data-profile-avatar-change],
 html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!important;opacity:.48!important}
+
+
+/* LIDYACHAT_LB_AVATAR_ALIGNMENT_V6 */
+/* Move the LB avatar and its premium frame together. */
+#profile .profile.card.profile.lbr-v3-dealer .stage {
+  transform: translateX(-8px)!important;
+}
