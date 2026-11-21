@@ -130,6 +130,26 @@ def register_auth(current_user):
             'limit_per_source': 100,
         }
 
+    # audit-history-v2: DA-scoped unified 20-per-page records.
+    @router.get('/user-history')
+    def user_history(response: Response,
+                     target: str = Query(..., min_length=1, max_length=64),
+                     kind: str = Query(..., pattern='^(games|purchases)$'),
+                     page: int = Query(1, ge=1),
+                     db: Session = Depends(get_db),
+                     user: User = Depends(current_user)):
+        require_da(db, user)
+        response.headers['Cache-Control'] = 'private, no-store'
+        response.headers['Vary'] = 'Authorization'
+        person = db.scalar(select(User).where(User.public_id == target.strip()))
+        if not person:
+            raise HTTPException(404, 'Kullanici bulunamadi')
+        from .audit_history_v2 import history
+        result = history(db, person.id, kind, page)
+        result['public_id'] = person.public_id
+        result['nickname'] = person.nickname
+        return result
+
     @router.get('/overview')
     def overview(response:Response,days:int=Query(7,ge=1,le=90),target:str=Query('',max_length=64),db:Session=Depends(get_db),user:User=Depends(current_user)):
         require_da(db,user);response.headers['Cache-Control']='private, no-store';response.headers['Vary']='Authorization'
