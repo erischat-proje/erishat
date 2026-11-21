@@ -175,8 +175,32 @@ async function openLidyaHistoryV2(kind,publicId){
    if(!data.items.length)body.append(el('p','','Bu sayfada kayıt bulunamadı.'));
    for(const item of data.items){
     const c=card(body,(item.source||'İşlem')+' · '+date(item.created_at));
-    if(kind==='purchases')info(c,'Lidya',money(item.amount));
-    else if(Number(item.amount)>0)info(c,'Bahis',money(item.amount)+' Lidya');
+    if(kind==='purchases'){
+     info(c,'Lidya',money(item.amount));
+    }else{
+     info(c,'Basılan Coin',
+       item.stake===null?'Kayıtlı değil':
+       money(item.stake)+' Lidya');
+
+     info(c,'Toplam geri ödeme',
+       item.payout===null?'Kayıtlı değil':
+       money(item.payout)+' Lidya');
+
+     const net=item.net===null?null:BigInt(item.net);
+     info(c,'Net kâr / zarar',
+       net===null?'Sonuç bekleniyor veya veri eksik':
+       (net>0n?'+':'')+money(item.net)+' Lidya');
+
+     const outcome={
+      profit:'🟢 Kazanç',
+      loss:'🔴 Kayıp',
+      even:'⚪ Başa baş',
+      pending:'⏳ Bekliyor',
+      unknown:'Bilgi eksik'
+     };
+     info(c,'Oyun sonucu',
+       outcome[item.outcome]||'Bilgi eksik');
+    }
     info(c,'Durum',label(item.status));
     if(item.detail)info(c,'Ayrıntı',item.detail);
     info(c,'Kayıt',item.id);

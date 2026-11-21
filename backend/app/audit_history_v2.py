@@ -95,6 +95,108 @@ def history(db, uid, kind, page):
     rows = db.execute(select(combined).order_by(
         combined.c.created_at.desc(), combined.c.id.desc()
     ).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE)).all()
+
+    # Oyun V3: bahis, iade ve net kar/zarar.
+    items = [
+        dict(
+            id=r.id,
+            created_at=r.created_at.isoformat()
+            if r.created_at else None,
+            source=r.source,
+            amount=str(r.amount),
+            status=r.status,
+            detail=r.detail,
+        )
+        for r in rows
+    ]
+
+    if kind == 'games':
+        import json
+
+        bet_ids = [
+            int(item['id'][4:])
+            for item in items
+            if item['id'].startswith('bet:')
+        ]
+        play_ids = [
+            int(item['id'][5:])
+            for item in items
+            if item['id'].startswith('play:')
+        ]
+
+        bets = {
+            bet.id: bet
+            for bet in db.scalars(
+                select(GameBet).where(
+                    GameBet.id.in_(bet_ids),
+                    GameBet.user_id == uid,
+                )
+            ).all()
+        } if bet_ids else {}
+
+        plays = {
+            play.id: play
+            for play in db.scalars(
+                select(GamePlay).where(
+                    GamePlay.id.in_(play_ids),
+                    GamePlay.user_id == uid,
+                )
+            ).all()
+        } if play_ids else {}
+
+        for item in items:
+            stake = payout = None
+            finished = False
+
+            if item['id'].startswith('bet:'):
+                bet = bets.get(int(item['id'][4:]))
+                if bet:
+                    stake = int(bet.amount)
+                    payout = int(bet.payout or 0)
+                    finished = item['status'] == 'finished'
+
+            elif item['id'].startswith('play:'):
+                play = plays.get(int(item['id'][5:]))
+                if play:
+                    try:
+                        data = json.loads(play.result_data or '{}')
+                    except (TypeError, ValueError):
+                        data = {}
+                    if isinstance(data, dict):
+                        raw_stake = data.get('stake')
+                        raw_payout = data.get('payout')
+                        if (
+                            isinstance(raw_stake, int)
+                            and not isinstance(raw_stake, bool)
+                            and raw_stake >= 0
+                            and isinstance(raw_payout, int)
+                            and not isinstance(raw_payout, bool)
+                            and raw_payout >= 0
+                        ):
+                            stake = raw_stake
+                            payout = raw_payout
+                            finished = (
+                                play.result_key != 'pending'
+                            )
+
+            net = (
+                payout - stake
+                if finished and stake is not None
+                and payout is not None
+                else None
+            )
+
+            item.update({
+                'stake': str(stake) if stake is not None else None,
+                'payout': str(payout) if payout is not None else None,
+                'net': str(net) if net is not None else None,
+                'outcome': (
+                    'pending' if not finished else
+                    'profit' if net > 0 else
+                    'loss' if net < 0 else 'even'
+                ) if net is not None or not finished else 'unknown',
+            })
+
     return {
         'kind': kind,
         'page': page,
@@ -103,7 +205,5 @@ def history(db, uid, kind, page):
         'total_pages': max(1, (count + PAGE_SIZE - 1) // PAGE_SIZE),
         'has_previous': page > 1,
         'has_next': page * PAGE_SIZE < count,
-        'items': [dict(id=r.id, created_at=r.created_at.isoformat() if r.created_at else None,
-                       source=r.source, amount=str(r.amount), status=r.status,
-                       detail=r.detail) for r in rows],
+        'items': items,
     }
