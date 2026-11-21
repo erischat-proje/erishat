@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 104" role="img" aria-label="Bayi Temsilcisi BT rozeti">
+ <defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4b7"/><stop offset=".28" stop-color="#d6a047"/><stop offset=".57" stop-color="#fff3b1"/><stop offset="1" stop-color="#9b6322"/></linearGradient>
+  <linearGradient id="jade" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0a6254"/><stop offset=".55" stop-color="#07382f"/><stop offset="1" stop-color="#05221f"/></linearGradient>
+ </defs>
+ <g fill="none" stroke="#a97b2f" stroke-width="1.7" opacity=".85">
+  <path d="M19 72 Q7 66 6 52 M17 65 Q8 61 10 47 M70 72 Q81 66 82 52 M71 65 Q80 61 78 47"/>
+  <path d="M15 70 Q7 69 5 62 M17 61 Q8 57 7 52 M73 70 Q81 69 83 62 M71 61 Q80 57 81 52"/>
+ </g>
+ <path d="M44 8 53 17 66 19 65 36 72 42 70 66 Q66 83 44 95 Q22 83 18 66 L16 42 23 36 22 19 35 17Z" fill="url(#gold)" stroke="#7c4b15" stroke-width="2"/>
+ <path d="M44 15 51 23 59 24 58 39 65 45 63 64 Q60 77 44 87 Q28 77 25 64 L23 45 30 39 29 24 37 23Z" fill="url(#jade)" stroke="#ffe3a0" stroke-width="2"/>
+ <path d="M44 20 44 81" stroke="#dcae59" opacity=".18"/>
+ <path d="M31 38 H57" stroke="#eecb82" stroke-width="1.8" opacity=".7"/>
+ <text x="44" y="65" font-size="29" font-weight="800" font-family="Georgia,serif" text-anchor="middle" fill="#fff3bb" stroke="#754814" stroke-width=".6" paint-order="stroke">BT</text>
+ <path d="M32 14 37 4 44 11 51 4 56 14Z" fill="url(#gold)" stroke="#a26b20" stroke-width="1.4"/>
+ <circle cx="44" cy="10" r="2.5" fill="#048c80" stroke="#fae49e" stroke-width="1"/>
+</svg>
