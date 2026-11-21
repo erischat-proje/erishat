@@ -1,0 +1,44 @@
+/* LidyaChat V4 — DM inbox cleanup and Android viewport navigation fix.
+   Keep the scrolling content inside .app and eliminate extra navigation inset.
+   Android system gesture/navigation area itself is controlled by the native WebView. */
+@media (max-width: 759px) {
+  html, body { margin: 0 !important; height: 100% !important; overflow: hidden !important; }
+  html body .app {
+    display: flex !important;
+    flex-direction: column !important;
+    height: var(--app-height, 100dvh) !important;
+    max-height: var(--app-height, 100dvh) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  html body .app > .content {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    padding-bottom: 16px !important;
+  }
+  html body .app > .nav {
+    position: relative !important;
+    inset: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 4px 6px 4px !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+  html body .app > .nav > button {
+    margin: 0 !important;
+    padding: 5px 2px !important;
+    min-height: 56px !important;
+    height: auto !important;
+    align-self: center !important;
+  }
+}
+/* A legacy/queued render must not put old payment requests back in Messages. */
+#messages #paymentInboxMount { display: none !important; }
