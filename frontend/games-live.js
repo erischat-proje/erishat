@@ -1648,7 +1648,7 @@ const close = () => {
 
             vaultFetching = true;
             try {
-                const x = await api('/games/vault/live');
+                const x = await api('/games/vault/live?refresh=' + Date.now());
                 if (game !== 'vault' || !modal?.isConnected) return;
 
                 // ERIS_VAULT_ROUND_RESET_V1
@@ -1659,64 +1659,100 @@ const close = () => {
                 vaultState = x;
                 const stage = modal.querySelector('.eg-stage');
 
-                // Kasa: ortak son 10 sonuc seridi.
+
+                // KASA V2: Android sabit sonuc seridi.
                 let vaultHistory = modal.querySelector(
                     '[data-vault-history]'
                 );
+
                 if (!vaultHistory) {
-                    vaultHistory = document.createElement('div');
+                    vaultHistory = document.createElement('section');
                     vaultHistory.dataset.vaultHistory = '';
                     vaultHistory.setAttribute(
-                        'aria-label', 'Son Kasa sonuclari'
+                        'aria-label', 'Son 10 Kasa sonucu'
                     );
                     vaultHistory.style.cssText =
-                        'margin:7px 0;padding:9px 10px;' +
+                        'position:absolute!important;' +
+                        'left:8px;right:8px;' +
+                        'bottom:calc(8px + env(safe-area-inset-bottom, 0px));' +
+                        'z-index:50;box-sizing:border-box;' +
+                        'padding:8px 10px;' +
                         'border:1px solid #b99353;' +
                         'border-radius:12px;' +
-                        'background:var(--ui-panel);' +
-                        'color:var(--ui-ink);';
-                    const resultBox = modal.querySelector(
-                        '.eg-result'
-                    );
-                    if (resultBox) resultBox.after(vaultHistory);
+                        'background:var(--ui-panel,#211b19);' +
+                        'color:var(--ui-ink,#f9dfab);' +
+                        'box-shadow:0 -4px 18px #0003;';
+
+                    // Panel disinda, modalin altinda sabit.
+                    modal.appendChild(vaultHistory);
+
+                    const panel = modal.querySelector('.eg-panel');
+                    if (panel) {
+                        panel.style.setProperty(
+                            'padding-bottom',
+                            'calc(84px + env(safe-area-inset-bottom, 0px))',
+                            'important'
+                        );
+                    }
                 }
 
                 const emojis = {
-                    ruby:'💎', gold:'👑',
-                    crystal:'🔮', mystery:'🎁'
+                    ruby: '💎',
+                    gold: '👑',
+                    crystal: '🔮',
+                    mystery: '🎁'
                 };
+
+                // API: eski -> yeni.
+                // Ekran: yeni -> eski (soldan saga).
                 const past = Array.isArray(x.history)
-                    ? x.history.slice(-10)
+                    ? x.history.slice(-10).reverse()
                     : [];
-                vaultHistory.replaceChildren();
-                const title = document.createElement('div');
-                title.textContent = 'Sonuçlar';
-                title.style.cssText =
-                    'font-size:12px;font-weight:800;' +
-                    'margin-bottom:7px;';
-                vaultHistory.append(title);
 
-                const strip = document.createElement('div');
-                strip.style.cssText =
-                    'display:flex;align-items:center;' +
-                    'gap:5px;overflow-x:auto;min-height:32px;';
+                const signature = past.map(
+                    entry => entry.round_id + ':' + entry.winner
+                ).join('|');
 
-                for (const entry of past) {
-                    const symbol = emojis[entry.winner];
-                    if (!symbol) continue;
-                    const item = document.createElement('span');
-                    item.textContent = symbol;
-                    item.title = entry.winner;
-                    item.style.cssText =
-                        'flex:1 0 auto;text-align:center;' +
-                        'font-size:22px;line-height:32px;';
-                    strip.append(item);
+                if (vaultHistory.dataset.signature !== signature) {
+                    vaultHistory.dataset.signature = signature;
+                    vaultHistory.replaceChildren();
+
+                    const heading = document.createElement('div');
+                    heading.textContent = 'Sonuçlar';
+                    heading.style.cssText =
+                        'font-size:12px;font-weight:800;' +
+                        'margin-bottom:5px;';
+                    vaultHistory.appendChild(heading);
+
+                    const strip = document.createElement('div');
+                    strip.style.cssText =
+                        'display:flex;flex-direction:row;' +
+                        'justify-content:space-between;' +
+                        'align-items:center;gap:3px;' +
+                        'min-height:29px;overflow:hidden;';
+
+                    for (const entry of past) {
+                        const symbol = emojis[entry.winner];
+                        if (!symbol) continue;
+
+                        const item = document.createElement('span');
+                        item.textContent = symbol;
+                        item.title = entry.winner;
+                        item.style.cssText =
+                            'flex:0 1 auto;min-width:0;' +
+                            'text-align:center;font-size:clamp(16px,4.5vw,23px);' +
+                            'line-height:29px;';
+                        strip.appendChild(item);
+                    }
+
+                    if (!strip.children.length) {
+                        strip.textContent = 'Henüz sonuç yok';
+                        strip.style.fontSize = '12px';
+                    }
+
+                    vaultHistory.appendChild(strip);
                 }
-                if (!strip.children.length) {
-                    strip.textContent = 'Henüz sonuç yok';
-                    strip.style.fontSize = '12px';
-                }
-                vaultHistory.append(strip);
+
 
                 if (isNewRound) {
                     vaultLastResult = null;
