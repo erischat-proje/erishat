@@ -3,7 +3,7 @@
 No user wallet is credited on appointment or inventory allocation. Only an
 explicit dealer transfer credits a recipient, while atomically debiting stock.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -37,6 +37,13 @@ class DealerDesignation(Base):
     assigned_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     __table_args__ = (CheckConstraint("kind IN ('coin', 'support')", name='dealer_designation_kind_v1'),)
+
+
+class DealerRepresentativePresence(Base):
+    """Short-lived activity marker for *authorized* BT representatives."""
+    __tablename__ = 'dealer_representative_presence_v1'
+    user_id: Mapped[str] = mapped_column(String(64), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 def designation(db, user_id):
@@ -131,6 +138,48 @@ def register_auth(current_user):
         kind = designation(db, user.id)
         return {"dealer": True, "public_id": user.public_id, "stock": row.stock,
                 "badge": dealer_badge(kind), "kind": kind}
+
+    @router.post("/representatives/heartbeat")
+    def bt_heartbeat(db: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_dealer(db, user)
+        if designation(db, user.id) != 'support':
+            raise HTTPException(403, 'Yalnızca aktif Bayi Temsilcisi çevrimiçi sinyali verebilir')
+        now = datetime.now(timezone.utc)
+        row = db.get(DealerRepresentativePresence, user.id)
+        if row is None:
+            db.add(DealerRepresentativePresence(user_id=user.id, last_seen_at=now))
+        else:
+            row.last_seen_at = now
+        db.commit()
+        return {'ok': True}
+
+    @router.get("/representatives")
+    def list_representatives(db: Session = Depends(get_db), user: User = Depends(current_user)):
+        # Only current LB/BT accounts can discover representatives.
+        require_dealer(db, user)
+        rows = db.execute(
+            select(User, DealerRepresentativePresence.last_seen_at)
+            .join(DealerInventory, DealerInventory.user_id == User.id)
+            .join(DealerDesignation, DealerDesignation.user_id == User.id)
+            .outerjoin(DealerRepresentativePresence, DealerRepresentativePresence.user_id == User.id)
+            .where(User.is_active.is_(True), DealerInventory.active.is_(True),
+                   DealerDesignation.kind == 'support')
+            .order_by(User.public_id)
+            .limit(500)
+        ).all()
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(seconds=90)
+        result = []
+        for person, stamp in rows:
+            if stamp is not None and stamp.tzinfo is None:
+                stamp = stamp.replace(tzinfo=timezone.utc)
+            result.append({
+                'user_id': person.id, 'public_id': person.public_id,
+                'nickname': person.nickname,
+                'online': bool(stamp and stamp >= cutoff),
+            })
+        result.sort(key=lambda item: (not item['online'], str(item['nickname']).casefold()))
+        return {'items': result, 'online_count': sum(item['online'] for item in result)}
 
     @router.get("/badges")
     def badges(ids: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
