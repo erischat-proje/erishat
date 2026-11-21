@@ -131,3 +131,9 @@ html.visual-compact #erisRoomSurface.room-layout-v6.room-layout-v6 .eris-room-st
   position:relative!important;left:-36px!important;text-align:left!important;
 }
 @media(max-width:360px){#profile .profile.card.profile.lidya-management-name-left-v1 .name h2{left:-22px!important}}
+
+/* LIDYACHAT_REPRESENTATIVES_V2: profile-only role accent; purchased frame unchanged. */
+#profile .profile.card.profile .name .lbr-v2-title{display:inline-block;font-size:11px!important;font-weight:850;color:var(--ui-gold,#bb8d3c);letter-spacing:.02em;margin-top:3px}
+#profile .profile.card.profile.lbr-v2-coin .stage:after,#profile .profile.card.profile.lbr-v2-support .stage:after{content:'';position:absolute;inset:-3px;border:2px solid #d9b15b;border-radius:50%;pointer-events:none;box-shadow:0 0 0 2px #075756,0 0 9px #c79b4599;z-index:3}
+#profile .profile.card.profile.lbr-v2-support .stage:after{border-color:#6bc6c1;box-shadow:0 0 0 2px #bd923f,0 0 11px #63dbd177}
+#profile .profile.card.profile .stage{position:relative!important}

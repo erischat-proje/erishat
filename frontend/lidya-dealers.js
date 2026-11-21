@@ -3,8 +3,8 @@
 const badgeAsset=new URL('./role-icons/dealer-lb-v3.svg?v=20261117-v3',document.currentScript.src).href;
 const coinAsset=new URL('./role-icons/coin-temsilcisi-v1.png?v=20261121',document.currentScript.src).href;
 const supportAsset=new URL('./role-icons/bayi-temsilcisi-bt-v1.png?v=20261121',document.currentScript.src).href;
-const roleAsset=k=>k==='support'?supportAsset:coinAsset;
-const roleTitle=k=>k==='support'?'Bayi Temsilcisi':'Coin Temsilcisi';
+const roleAsset=k=>k==='support'?supportAsset:k==='coin'?coinAsset:badgeAsset;
+const roleTitle=k=>k==='support'?'Bayi Temsilcisi':k==='coin'?'Coin Temsilcisi':'Lidya Bayisi';
 const token=()=>localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('erischat_access_token')||'';
 const base=(window.ERISCHAT_API_BASE||window.ERIS_API||localStorage.getItem('erischat.apiBase')||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'').replace(/\/v1$/,'');
 async function api(path,method='GET',payload){const bearer=token();if(!bearer)throw Error('Oturum açılmalı');const r=await fetch(base+'/v1/dealers'+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:payload?JSON.stringify(payload):undefined});const j=await r.json().catch(()=>({}));if(bearer!==token())throw Error('Oturum değişti');if(!r.ok)throw Error(j.detail||'İşlem başarısız ('+r.status+')');return j;}
@@ -86,6 +86,17 @@ async function openAdmin(which){
  });
 }
 async function openDealer(){const panel=overlay('Temsilci Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');panel.querySelector('h2').textContent=roleTitle(me.kind)+' · Stok Yönetimi';summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);}
+async function openRevoke(){
+ const panel=overlay('Bayi / Temsilci Yetkisini Kaldır');
+ panel.append(elt('p','','Bu işlem LB, Coin ve BT erişimini kapatır. Stok ve finansal kayıtlar denetim için saklanır.'));
+ form(panel,'Yetki Kaldırma',[['public_id','Kullanıcı profil ID'],['confirm_public_id','Aynı profil ID ile onayla']],
+  'Yetkiyi kaldır',async v=>{
+   if(v.public_id!==v.confirm_public_id)throw Error('Profil ID alanları eşleşmiyor');
+   if(!window.confirm('Bu hesabın tüm bayi/temsilci yetkileri kaldırılacak. Emin misiniz?'))throw Error('İptal edildi');
+   const r=await api('/admin/revoke','POST',v);
+   cache.clear();boot();return {...r,message:'Yetkiler kaldırıldı. Stok ve işlem geçmişi saklandı.'};
+  });
+}
 async function openAdminLookup(){
  const panel=overlay('Lidya Bayisi Ara');
  panel.append(elt('p','','DA yönetimi · Bayi ID sorgulama, kalan stok ve işlem geçmişi. Kişisel Lidya bakiyesi bu ekranda gösterilmez.'));
@@ -121,23 +132,38 @@ async function openAdminLookup(){
    for(const item of d.items){const b=elt('button','lb-list-item',item.public_id+' · '+item.nickname+' · '+(item.active?'Aktif':'Pasif')+' · '+amount(item.stock));b.type='button';b.onclick=()=>{id.value=item.public_id;lookup(item.public_id)};list.append(b)}
   }catch(e){list.textContent=e.message||'Liste alınamadı'}finally{listButton.disabled=false;}};
 }
-window.LidyaDealer={openAdmin,openDealer,openAdminLookup};
+window.LidyaDealer={openAdmin,openDealer,openAdminLookup,openRevoke};
 // Dealer button is mounted outside the admin mount because admin-live owns its contents.
 let lastToken='',checkSerial=0;
+function updateMyProfile(kind){
+  const card=document.querySelector('#profile .profile.card.profile');
+  if(!card)return;
+  card.classList.remove('lbr-v2-coin','lbr-v2-support');
+  if(kind==='coin')card.classList.add('lbr-v2-coin');
+  if(kind==='support')card.classList.add('lbr-v2-support');
+  const name=card.querySelector('.name');
+  if(!name)return;
+  let label=name.querySelector('[data-lbr-role-title]');
+  if(!kind){label?.remove();return;}
+  if(!label){label=elt('small','lbr-v2-title');label.setAttribute('data-lbr-role-title','');name.append(label);}
+  label.textContent=roleTitle(kind);
+}
+
 async function boot(){
  const access=token(),mount=document.getElementById('adminMenuMount');
- if(!mount||!access){document.getElementById('lidya-dealer-menu')?.remove();return;}
+ if(!mount||!access){document.getElementById('lidya-dealer-menu')?.remove();updateMyProfile(null);return;}
  const serial=++checkSerial;
  try{
   const me=await api('/me');if(serial!==checkSerial||access!==token())return;
   let btn=document.getElementById('lidya-dealer-menu');
   if(!btn){btn=elt('button','homeMenuItem lidya-dealer-card');btn.id='lidya-dealer-menu';btn.type='button';btn.onclick=openDealer;mount.insertAdjacentElement('afterend',btn);}
   btn.classList.add('lbv4-card');btn.replaceChildren();
-  const badge=elt('span','lbv4-mark'),img=elt('img');img.src=roleAsset(me.kind);img.alt='';badge.append(img);
-  const copy=elt('span','lbv4-copy');copy.append(elt('strong','',roleTitle(me.kind)),elt('small','','Stok ve kullanıcıya Lidya aktarımı'));
+  const badge=elt('span','lbv4-mark'),img=elt('img');img.src=badgeAsset;img.alt='';badge.append(img);
+  const copy=elt('span','lbv4-copy');copy.append(elt('strong','','Lidya Bayisi'),elt('small','','Stok ve kullanıcıya Lidya aktarımı'));
   btn.append(badge,copy,elt('span','lbv4-arrow','›'));
-  btn.setAttribute('aria-label',roleTitle(me.kind)+': stok ve Lidya aktarımı');btn.hidden=!me.dealer;
- }catch{if(serial===checkSerial)document.getElementById('lidya-dealer-menu')?.remove();}
+  btn.setAttribute('aria-label','Lidya Bayisi: stok ve Lidya aktarımı');btn.hidden=!me.dealer;
+  updateMyProfile(me.kind);
+ }catch{if(serial===checkSerial){document.getElementById('lidya-dealer-menu')?.remove();updateMyProfile(null);}}
 }
 function sync(){const v=token();if(v!==lastToken){lastToken=v;boot();}}
 window.addEventListener('erischat:auth',()=>{lastToken=token();boot()});window.addEventListener('pageshow',boot);window.addEventListener('online',boot);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')boot()});setInterval(()=>{if(document.visibilityState==='visible'&&token())boot()},20000);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setInterval(sync,5000);
@@ -152,19 +178,19 @@ async function badgeScan(){
  if(unknown.length){pending=true;try{
    const r=await api('/badges?ids='+encodeURIComponent(unknown.join(',')));
    const dealers=new Set(r.dealers||[]);
-   for(const id of unknown)cache.set(id,{kind:dealers.has(id)?(r.roles?.[id]||'coin'):null,time:Date.now()});
+   for(const id of unknown)cache.set(id,{kind:dealers.has(id)?(r.roles?.[id]||'dealer'):null,time:Date.now()});
  }catch{}finally{pending=false;}}
  for(const node of nodes){
    const kind=cache.get(node.dataset.erisRoleUser)?.kind;
    let badge=node.querySelector(':scope > .lb-dealer-badge');
    if(!kind){badge?.remove();continue;}
    if(!badge){badge=elt('span','lb-dealer-badge');node.prepend(badge);}
-   const img=badge.querySelector('img')||elt('img');img.src=roleAsset(kind);
-   img.alt=kind==='support'?'BT':'CT';
-   img.onerror=()=>{badge.textContent=kind==='support'?'BT':'CT';};
+   const img=badge.querySelector('img')||elt('img');const inTop=!!node.closest('#profile .profile.card.profile .name');const asset=inTop?roleAsset(kind):badgeAsset;if(img.src!==asset)img.src=asset;
+   img.alt=kind==='support'?'BT':kind==='coin'?'Coin Temsilcisi':'LB';
+   img.onerror=()=>{badge.textContent=kind==='support'?'BT':kind==='coin'?'CT':'LB';};
    if(!img.isConnected)badge.replaceChildren(img);
    badge.title=roleTitle(kind);
  }
 }
-setInterval(badgeScan,4000);window.addEventListener('erischat:auth',()=>{cache.clear();badgeScan()});
+setInterval(badgeScan,4000);window.addEventListener('erischat:auth',()=>{cache.clear();updateMyProfile(null);badgeScan()});
 })();
