@@ -14,11 +14,15 @@
   const t = (tag, klass, value) => { const e = document.createElement(tag); if (klass) e.className=klass; if (value != null) e.textContent=String(value); return e; };
   const countOf = room => Math.max(0, Number(room.member_count ?? room.members_count ?? room.online_count ?? 0) || 0);
   const keyOf = room => String(room.id ?? room.room_id ?? room.public_id ?? '');
-  const avatarOf = room => {
-    // Do not guess user media URLs; only already supplied HTTP(S) URLs are rendered.
-    const value = room.avatar_url || room.image_url || room.cover_url || room.avatar_asset?.url || '';
-    return typeof value === 'string' && /^https?:\/\//i.test(value) ? value : '';
+  const assetUrl = value => {
+    if (!value) return '';
+    const raw = typeof value === 'string' ? value : (value.url || value.asset || value.path || value.asset_key || '');
+    if (!raw || typeof raw !== 'string') return '';
+    const converted = window.ErisChatCosmetics?.assetUrl?.(raw) || raw;
+    return /^(https?:\/\/|\/|\.\/)/i.test(converted) ? converted : '';
   };
+  const avatarOf = room => assetUrl(room.owner_avatar_asset || room.owner_avatar || room.owner_avatar_url);
+  const frameOf = room => assetUrl(room.owner_frame_asset || room.owner_frame_url);
   const open = room => {
     const id = room.id ?? room.room_id;
     if (id == null || !window.openRoom) {
@@ -46,8 +50,10 @@
       item.setAttribute('aria-label',`${name} odasına gir, ${countOf(room)} kişi`);
       const portrait=t('span','lhr-avatar');
       const url=avatarOf(room);
-      if(url){const image=t('img');image.src=url;image.alt='';image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.remove();portrait.textContent='🎙️';};portrait.append(image);}
-      else portrait.textContent='🎙️';
+      if(url){const image=t('img');image.src=url;image.alt='';image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.remove();portrait.textContent='👤';};portrait.append(image);}
+      else portrait.textContent='👤';
+      const frameUrl=frameOf(room);
+      if(frameUrl){const frame=t('span','lhr-frame');frame.style.backgroundImage=`url("${frameUrl.replace(/"/g,'%22')}")`;portrait.append(frame);}
       const live=t('span','lhr-live-dot');live.setAttribute('aria-hidden','true');portrait.append(live);
       const title=t('span','lhr-name',name);
       const info=t('span','lhr-count',`${countOf(room)} kişi`);
@@ -61,7 +67,7 @@
     status.textContent=`${items.length} canlı oda`;
   }
   async function load(force=false){
-    if(loading || (!force && Date.now()-lastLoaded<60000))return;
+    if(loading || (!force && Date.now()-lastLoaded<15000))return;
     if(document.visibilityState==='hidden')return;
     if(!token()){root.hidden=true;return;}
     loading=true;
@@ -79,6 +85,7 @@
     finally{loading=false;}
   }
   allLink?.addEventListener('click',()=>window.openRoomsFromHome?.());
+  const poll=setInterval(()=>{if(document.visibilityState==='visible' && document.getElementById('home')?.classList.contains('show'))load();},15000);
   root.querySelector('[data-room-prev]')?.addEventListener('click',()=>track.scrollBy({left:-track.clientWidth*.8,behavior:'smooth'}));
   root.querySelector('[data-room-next]')?.addEventListener('click',()=>track.scrollBy({left:track.clientWidth*.8,behavior:'smooth'}));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible' && document.getElementById('home')?.classList.contains('show'))load();});

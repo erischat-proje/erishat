@@ -34,6 +34,14 @@ class RoomInvitation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class RoomLivePresence(Base):
+    """Shared, short-lived WebSocket presence for accurate room headcounts."""
+    __tablename__ = "room_live_presence_v2"
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class RoomMember(Base):
     __tablename__ = "room_members"
     __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_room_member"),)
