@@ -111,6 +111,19 @@ def require_dealer(db, user, lock=False):
     return row
 
 
+
+
+def require_role_cosmetics_unlocked(db, user_id):
+    """Reject avatar/frame edits while a current LB or BT inventory is active.
+
+    Keep original cosmetic fields unchanged; removing the role restores them.
+    """
+    row = db.scalar(select(DealerInventory).where(
+        DealerInventory.user_id == user_id).with_for_update())
+    if row is not None and row.active and designation(db, user_id) in ('dealer', 'support'):
+        raise HTTPException(403, 'LB / BT yetkisi aktifken avatar ve çerçeve değiştirilemez')
+
+
 def register_auth(current_user):
     @router.get("/me")
     def my_dealership(db: Session = Depends(get_db), user: User = Depends(current_user)):

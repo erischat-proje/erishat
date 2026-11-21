@@ -1,6 +1,7 @@
 /* LidyaChat dealer inventory. Inventory is separate from personal Lidya. */
 (()=>{'use strict';
-const badgeAsset=new URL('./role-icons/lidya-bayisi-premium-v3.png?v=lb-bt-v3',document.currentScript.src).href;
+const badgeAsset=new URL('./role-icons/dealer-lb-v3.svg?v=lb-classic-v4',document.currentScript.src).href;
+const premiumAsset=new URL('./role-icons/lidya-bayisi-premium-v3.png?v=lb-v4',document.currentScript.src).href;
 const coinAsset=new URL('./role-icons/coin-temsilcisi-v1.png?v=20261121',document.currentScript.src).href;
 const supportAsset=new URL('./role-icons/bayi-temsilcisi-bt-v1.png?v=20261121',document.currentScript.src).href;
 const roleAsset=k=>k==='support'?supportAsset:badgeAsset;
@@ -139,6 +140,7 @@ function updateMyProfile(kind){
   const card=document.querySelector('#profile .profile.card.profile');
   if(!card)return;
   card.classList.remove('lbr-v2-coin','lbr-v2-support','lbr-v3-dealer','lbr-v3-support');
+  document.documentElement.classList.toggle('lb-v4-cosmetic-locked',kind==='dealer'||kind==='support');
   if(kind==='dealer')card.classList.add('lbr-v3-dealer');
   if(kind==='support')card.classList.add('lbr-v3-support');
   const name=card.querySelector('.name');
@@ -158,7 +160,7 @@ async function boot(){
   let btn=document.getElementById('lidya-dealer-menu');
   if(!btn){btn=elt('button','homeMenuItem lidya-dealer-card');btn.id='lidya-dealer-menu';btn.type='button';btn.onclick=openDealer;mount.insertAdjacentElement('afterend',btn);}
   btn.classList.add('lbv4-card','lbv3-premium-card');btn.replaceChildren();
-  const badge=elt('span','lbv4-mark'),img=elt('img');img.src=badgeAsset;img.alt='';badge.append(img);
+  const badge=elt('span','lbv4-mark'),img=elt('img');img.src=premiumAsset;img.alt='';badge.append(img);
   const copy=elt('span','lbv4-copy');copy.append(elt('strong','','Lidya Bayisi'),elt('small','','Stok ve kullanıcıya Lidya aktarımı'));
   btn.append(badge,copy,elt('span','lbv4-arrow','›'));
   btn.setAttribute('aria-label','Lidya Bayisi: stok ve Lidya aktarımı');btn.hidden=!me.dealer;
