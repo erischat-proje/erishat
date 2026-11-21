@@ -80,6 +80,14 @@ async function openAdmin(which){
    const r=await api('/admin/assign','POST',{...v,kind:'support'});
    return {...r,message:'BT yetkisi atandı · Stok: '+amount(r.stock)};
  });
+ /* BT_REFERENCE_SECURITY_UI_V1: DA may activate only the first BT; API validates authority. */
+ if(kind===null||kind==='support')form(panel,'İlk BT Referans Aktivasyonu (DA)',
+  [['public_id','Aktifleştirilecek BT Profil ID']], 'İlk BT sistemini aktifleştir',async v=>{
+   const approved=window.confirm('Bu işlem yalnızca ilk BT için uygulanır. Temsilci doğrudan aktif olacak. Onaylıyor musunuz?');
+   if(!approved)throw Error('İşlem iptal edildi');
+   const r=await api('/admin/reference/bootstrap','POST',{public_id:v.public_id});
+   return {...r,message:'İlk BT aktivasyonu tamamlandı. Referans kodu kalıcıdır.'};
+  });
  form(panel,'Temsilciye Stok Yükle',[['public_id','Temsilci Profil ID'],['amount','Lidya stoğu','number']], 'Stoğa yükle',async v=>{
    if(!await confirmDealerTransfer({kind:'grant',publicId:v.public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');
    const r=await api('/admin/stock','POST',{...v,request_key:crypto.randomUUID()});
@@ -128,7 +136,67 @@ async function openRepresentatives(){
  await refresh();
  const timer=setInterval(()=>{if(!panel.isConnected){clearInterval(timer);return;}if(document.visibilityState==='visible')refresh();},30000);
 }
-async function openDealer(){const panel=overlay('Temsilci Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');panel.querySelector('h2').textContent=roleTitle(me.kind)+' · Stok Yönetimi';summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);
+/* BT_REFERENCE_UI_V1 */
+async function btReferenceState(){return api('/reference/me');}
+function btReferenceModal(title){return overlay(title);}
+async function showMyBTReference(){
+ const panel=btReferenceModal('BT Referans Kodum');
+ const info=elt('p','lb-msg','Bilgiler alınıyor…');panel.append(info);
+ try{
+  const ref=await btReferenceState();info.textContent=ref.active?'Temsilci sisteminiz aktif.':'Aktivasyon bekleniyor. Kodunuz ancak aktif temsilci olduğunuzda kullanılabilir.';
+  const code=elt('div','lb-stock',ref.code);code.style.cssText='font-variant-numeric:tabular-nums;letter-spacing:.08em;overflow-wrap:anywhere';panel.append(code);
+  const copy=elt('button','lb-primary','Referans kodunu kopyala');copy.type='button';
+  copy.onclick=async()=>{try{await navigator.clipboard.writeText(ref.code);copy.textContent='Kod kopyalandı';}catch{copy.textContent='Kopyalanamadı — kodu seçerek kopyalayın';}};
+  panel.append(copy);
+  if(ref.parent_locked)panel.append(elt('p','lb-msg','Bağlandığınız referans kalıcı olarak kilitlenmiştir.'));
+ }catch(e){info.textContent=e.message||'Referans bilgisi alınamadı';}
+}
+async function showBTTeam(){
+ const panel=btReferenceModal('Lidya Temsilcilerim');
+ const info=elt('p','lb-msg','Liste yükleniyor…');panel.append(info);
+ try{
+  const data=await api('/reference/team?limit=500');const people=data.items||[];
+  info.textContent=people.length?people.length+' bağlı bayi temsilcisi':'Henüz size bağlı bayi temsilcisi yok.';
+  for(const person of people){
+   const item=elt('div','lb-list-item');item.style.cssText='padding:10px 0;border-bottom:1px solid var(--ui-line,#ad946f)';
+   const name=elt('strong','',person.nickname||'Bayi Temsilcisi');
+   const detail=elt('small','',String(person.public_id||'')+' · '+(person.activated_at?new Date(person.activated_at).toLocaleDateString('tr-TR'):'—'));
+   detail.style.cssText='display:block;margin-top:4px';item.append(name,detail);panel.append(item);
+  }
+ }catch(e){info.textContent=e.message||'Liste alınamadı';}
+}
+async function showBTActivation(onActivated){
+ const panel=btReferenceModal('BT Referans Kodu Gir');
+ const note=elt('p','lb-msg','Aktif bir BT’nin 16 haneli referans kodunu girin. Onaydan sonra bu bağlantı bir daha değiştirilemez.');panel.append(note);
+ const label=elt('label','','16 haneli referans kodu');
+ const input=elt('input');input.type='text';input.inputMode='numeric';input.autocomplete='off';input.maxLength=16;input.placeholder='0000000000000000';
+ label.append(input);panel.append(label);
+ const submit=elt('button','lb-primary','Kodu onayla ve sistemi aktifleştir');submit.type='button';panel.append(submit);
+ submit.onclick=async()=>{
+  const code=input.value.trim();if(!/^\d{16}$/.test(code)){note.textContent='Tam 16 rakam girmeniz gerekiyor.';return;}
+  if(!window.confirm('Bu referans koduyla aktivasyon KALICIDIR. Başka bir koda geçemezsiniz. Onaylıyor musunuz?'))return;
+  submit.disabled=true;
+  try{await api('/reference/activate','POST',{code});note.textContent='Referans bağlantınız kalıcı olarak kaydedildi. Sisteminiz aktif.';input.disabled=true;submit.remove();onActivated?.();}
+  catch(e){note.textContent=e.message||'Aktivasyon yapılamadı';submit.disabled=false;}
+ };
+}
+async function mountBTReferencePanel(panel,balance){
+ const row=elt('div','lb-bt-reference-controls');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+ balance.replaceWith(row);row.append(balance);
+ const enter=elt('button','lb-primary','🔑 Referans Kodu Gir');enter.type='button';row.append(enter);
+ const tools=elt('div','lb-bt-reference-tools');tools.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin:8px 0';panel.append(tools);
+ const state=elt('p','lb-msg','Referans durumu yükleniyor…');panel.append(state);
+ const codeBtn=elt('button','lb-primary','🔐 Referans Kodum');codeBtn.type='button';codeBtn.onclick=showMyBTReference;tools.append(codeBtn);
+ const teamBtn=elt('button','lb-primary','👥 Lidya Temsilcilerim');teamBtn.type='button';teamBtn.onclick=showBTTeam;tools.append(teamBtn);
+ const refresh=async()=>{
+  try{const ref=await btReferenceState();state.textContent=ref.active?'BT referans sistemi aktif.': 'BT referans sistemi pasif — aktivasyon zorunlu.';enter.hidden=!!ref.active;teamBtn.disabled=!ref.active;}
+  catch(e){state.textContent=e.message||'Referans durumu alınamadı';enter.disabled=true;teamBtn.disabled=true;}
+ };
+ enter.onclick=()=>showBTActivation(refresh);
+ await refresh();
+}
+
+async function openDealer(){const panel=overlay('Temsilci Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');panel.querySelector('h2').textContent=roleTitle(me.kind)+' · Stok Yönetimi';summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock);if(me.kind==='support')mountBTReferencePanel(panel,balance).catch(console.error)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);
  const repsButton=elt('button','lb-primary lb-bt-open','🎧 Bayi Temsilcileri');
  repsButton.type='button';repsButton.onclick=openRepresentatives;
  panel.append(repsButton);

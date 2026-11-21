@@ -14,6 +14,9 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from .admin_models import AdminRole
 from .db import Base, get_db
 from .models import User
+# BT_REFERENCE_V1: immutable BT-only referral program.
+from .dealer_referrals import (BTReferral, ensure_bt_referral, require_bt_activation, install_referral_routes)
+
 
 router = APIRouter(prefix="/v1/dealers", tags=["Lidya Bayi"])
 MAX_STOCK = 9_000_000_000_000_000
@@ -132,6 +135,7 @@ def require_role_cosmetics_unlocked(db, user_id):
 
 
 def register_auth(current_user):
+    install_referral_routes(router, current_user, require_da, require_dealer, designation, target_by_public_id)
     @router.get("/me")
     def my_dealership(db: Session = Depends(get_db), user: User = Depends(current_user)):
         row = require_dealer(db, user)
@@ -256,6 +260,9 @@ def register_auth(current_user):
             identity.kind = body.kind
             identity.assigned_by = user.id
             identity.updated_at = datetime.now(timezone.utc)
+        # Provision a permanent code when BT role is assigned. Reassignment never rotates it.
+        if body.kind == 'support':
+            ensure_bt_referral(db, target.id)
         db.commit()
         return {"ok": True, "public_id": target.public_id, "badge": dealer_badge(body.kind),
                 "kind": body.kind, "stock": row.stock if row else 0}
@@ -317,6 +324,8 @@ def register_auth(current_user):
     def transfer(body: TransferBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
         # Serialize attempts, including duplicate retries, against this stock row.
         dealer = require_dealer(db, user, lock=True)
+        if designation(db, user.id) == 'support':
+            require_bt_activation(db, user.id)
         recipient = target_by_public_id(db, body.recipient_public_id)
         if recipient.id == user.id:
             raise HTTPException(400, "Bayi kendisine stok aktaramaz")
