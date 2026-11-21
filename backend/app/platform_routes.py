@@ -846,7 +846,7 @@ def register_platform_auth(current_user_dependency):
         record("system", "room_announcement_deleted", user_id=user.id, room_id=room_id, announcement_id=announcement_id)
         return {"deleted": True, "id": announcement_id}
 
-    GAME_TYPES = {"slot", "cups", "horse_race", "blackjack", "crash", "vault", "wheel"}
+    GAME_TYPES = {"slot", "horse_race", "blackjack", "crash", "vault", "wheel"}
     ROOM_GAME_TYPES = GAME_TYPES - {"blackjack", "crash", "vault", "slot"}
     PRIVATE_GAME_TYPES = {"blackjack", "crash", "vault", "slot"}
     GAME_PROFILES = {
@@ -854,7 +854,6 @@ def register_platform_auth(current_user_dependency):
             "results": [(name, 1) for name in ("cherry", "lemon", "bell", "star", "diamond", "seven", "crown")],
             "description": "Üç makaralı Slot: üç aynı sembol ödül kazandırır.",
         },
-        "cups": {"results": [(f"cup_{i}", 25) for i in range(1, 5)], "description": "Dört kupadan biri rastgele seçilir."},
         "horse_race": {"results": [(f"horse_{i}", w) for i, w in enumerate((30, 25, 18, 12, 8, 5, 2), 1)], "description": "Atların kazanma ağırlıkları birbirinden farklıdır."},
         "blackjack": {"results": [("blackjack", 4), ("win", 46), ("push", 10), ("loss", 40)], "description": "Kart çek veya dur; galibiyet 2 kat, blackjack 2,5 kat, beraberlik iade."},
         "crash": {"results": [("x1_00_1_49", 62), ("x1_50_1_99", 23), ("x2_00_4_99", 11), ("x5_00_9_99", 3), ("x10_plus", 1)], "description": "Otomatik hedef 2×; çarpan 2×'e erişirse bahis 2 kat döner."},
@@ -1786,6 +1785,7 @@ def register_platform_auth(current_user_dependency):
         db: Session = Depends(get_db),
         user: User = Depends(current_user_dependency),
     ):
+        raise HTTPException(status_code=410, detail="Dört Kupa oyunu kaldırıldı")
         payload = payload or {}
         stake = cups_final.validate_stake(payload.get("stake"))
 
