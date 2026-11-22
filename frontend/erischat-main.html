@@ -358,6 +358,57 @@ async function sendChat(){
 }
 </script>
 <script>
+/* Android back dispatch: handled before WebView page-history / exit. */
+(function(){
+  'use strict';
+  var previousViews=[];
+  var lastView='home';
+  var baseShowView=window.showView;
+  if(typeof baseShowView==='function' && !baseShowView.__lidyaBackWrapped){
+    var wrapped=function(id,btn){
+      var current=document.querySelector('.app>.content > .view.show') || document.querySelector('.view.show');
+      if(current && current.id!==id){
+        if(previousViews[previousViews.length-1]!==current.id) previousViews.push(current.id);
+        if(previousViews.length>30) previousViews.shift();
+      }
+      var result=baseShowView.apply(this,arguments);
+      lastView=id;
+      return result;
+    };
+    wrapped.__lidyaBackWrapped=true;
+    window.showView=wrapped;
+  }
+  function visible(el){return !!(el && el.getClientRects().length && getComputedStyle(el).visibility!=='hidden');}
+  function closeTop(selector){
+    var nodes=[].slice.call(document.querySelectorAll(selector)).filter(visible);
+    for(var i=nodes.length-1;i>=0;i--){
+      var el=nodes[i];
+      var close=el.querySelector('button.close, button[aria-label*="kapat" i], button[onclick*="close" i], [data-close]');
+      if(close && visible(close)){close.click();return true;}
+    }
+    return false;
+  }
+  window.LidyaAndroidBack={handle:function(){
+    // A focused input's keyboard is normally dismissed by Android before this callback.
+    if(closeTop('#createRoomModal.show, #chat.show, .modal.show, .modal.active, .modal-overlay.active, [role="dialog"]')) return true;
+    // Never fabricate an exit from an active audio room: let its own close/leave control decide.
+    var activeRoom=document.querySelector('#realRoomModal.show');
+    if(activeRoom && visible(activeRoom)) return true;
+    var shown=document.querySelector('.app>.content > .view.show') || document.querySelector('.view.show');
+    if(shown && shown.id && shown.id!=='home'){
+      var previous=previousViews.pop();
+      while(previous===shown.id && previousViews.length) previous=previousViews.pop();
+      if(!previous || !document.getElementById(previous)?.classList.contains('view')) previous='home';
+      // Avoid duplicating the current page when navigating back.
+      if(typeof baseShowView==='function') baseShowView(previous);
+      lastView=previous;
+      return true;
+    }
+    return false;
+  }};
+})();
+</script>
+<script>
 (function(){
   const API=()=> (window.ERIS_API||window.ERISCHAT_API||'https://erischat-api-production.up.railway.app/v1').replace(/\/$/,'');
   const tok=()=>localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token')||'';

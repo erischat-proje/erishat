@@ -1,4 +1,22 @@
 (() => {
+  // Android native bridge: secure only while the direct-message view is visible.
+  (function installPrivateChatScreenGuard(){
+    let previous = null;
+    function tick(){
+      const bridge = window.LidyaSecure;
+      if (!bridge || typeof bridge.setSecure !== 'function') return;
+      const chat = document.getElementById('chat');
+      const visible = !!chat && !!chat.getClientRects().length &&
+                      window.getComputedStyle(chat).visibility !== 'hidden' &&
+                      window.getComputedStyle(chat).display !== 'none';
+      if (visible !== previous) {
+        try { bridge.setSecure(visible); previous = visible; } catch(e) {}
+      }
+    }
+    document.addEventListener('visibilitychange', tick);
+    window.addEventListener('pageshow', tick);
+    setInterval(tick, 750);
+  })();
   const api = () => window.ErisPlatform;
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '');

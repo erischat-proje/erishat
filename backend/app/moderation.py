@@ -14,6 +14,14 @@ def active_ban(db, user_id, chat=False):
         or_(model.expires_at.is_(None),model.expires_at>datetime.now(timezone.utc)))
     query=query.order_by(model.expires_at.desc().nulls_first(),model.id.desc()) if chat else query.order_by(model.id.desc())
     direct=db.scalar(query)
+    if not chat and not direct:
+        from .safety_models import SafetySuspension
+        safety = db.scalar(select(SafetySuspension).where(
+            SafetySuspension.user_id == user_id, SafetySuspension.active.is_(True),
+            or_(SafetySuspension.expires_at.is_(None),
+                SafetySuspension.expires_at > datetime.now(timezone.utc))
+        ).order_by(SafetySuspension.id.desc()))
+        if safety: return safety
     if direct or chat: return direct
     from .ban_workflow_models import UserBrowserDevice
     hashes=select(UserBrowserDevice.device_hash).where(UserBrowserDevice.user_id==user_id)

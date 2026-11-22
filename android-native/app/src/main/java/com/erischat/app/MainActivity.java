@@ -180,6 +180,7 @@ public class MainActivity extends Activity {
                 });
             }
         });
+        webView.addJavascriptInterface(new LidyaSecureBridge(), "LidyaSecure");
         webView.setWebViewClient(new WebViewClient() {
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
@@ -540,12 +541,47 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
+    private boolean backRequestInFlight = false;
+
+    private void confirmExit() {
+        if (isFinishing() || isDestroyed()) return;
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("LidyaChat")
+                .setMessage("Uygulamadan çıkmak istiyor musunuz?")
+                .setNegativeButton("Vazgeç", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Çıkış", (dialog, which) -> finish())
+                .show();
+    }
+
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
+        if (backRequestInFlight || isFinishing() || isDestroyed()) return;
+        if (webView == null || !trustedPage()) {
+            confirmExit();
+            return;
+        }
+        backRequestInFlight = true;
+        final WebView current = webView;
+        final int generation = pageGeneration;
+        current.evaluateJavascript(
+                "(function(){try{return window.LidyaAndroidBack && window.LidyaAndroidBack.handle() ? 'handled' : 'unhandled'}catch(e){return 'unhandled'}})()",
+                response -> {
+                    backRequestInFlight = false;
+                    if (isFinishing() || isDestroyed() || current != webView || generation != pageGeneration) return;
+                    if (response != null && response.contains("handled") && !response.contains("unhandled")) return;
+                    // WebView history is only a fallback; ordinary LidyaChat views use JS navigation.
+                    if (current.canGoBack()) current.goBack();
+                    else confirmExit();
+                });
+    }
+
+    private final class LidyaSecureBridge {
+        @android.webkit.JavascriptInterface
+        public void setSecure(final boolean enabled) {
+            runOnUiThread(() -> {
+                if (enabled) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                else getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+            });
         }
     }
 }
