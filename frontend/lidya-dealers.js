@@ -485,20 +485,19 @@ async function openAdminLookup(){
      const representativeSection=elt('section','lb-admin-representatives');
      representativeSection.style.cssText='margin-top:15px;padding:12px;border:1px solid var(--ui-line,#ad946f);border-radius:12px';
      representativeSection.append(
-      elt('h3','','Bağlı Bayi Temsilcisi')
+      elt('h3','','Kayıtlı Bayi Temsilcileri')
      );
      const repStatus=elt('p','lb-msg','Temsilci bilgileri yükleniyor…');
      representativeSection.append(repStatus);
      result.append(representativeSection);
      try{
       const reps=await api(
-       '/admin/representative-link?public_id='+
-       encodeURIComponent(d.public_id)
+       '/admin/registered-representatives'
       );
       const people=reps.items||[];
       repStatus.textContent=people.length
        ?people.length+' kayıtlı temsilci'
-       :'Bu bayiye bağlı temsilci bulunmuyor.';
+       :'Henüz kayıtlı bayi temsilcisi bulunmuyor.';
       for(const rep of people){
        const item=elt('div','lb-list-item');
        item.style.cssText='padding:10px 0;border-bottom:1px solid var(--ui-line,#ad946f)';

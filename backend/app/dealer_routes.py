@@ -659,6 +659,56 @@ def register_auth(current_user):
                 "total": total, "total_pages": (total + 19) // 20}
 
 
+    @router.get("/admin/registered-representatives")
+    def admin_registered_representatives(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user)
+    ):
+        require_da(db, user)
+
+        rows = db.execute(
+            select(User, DealerInventory, DealerRepresentativePresence.last_seen_at)
+            .join(DealerDesignation, DealerDesignation.user_id == User.id)
+            .join(DealerInventory, DealerInventory.user_id == User.id)
+            .outerjoin(
+                DealerRepresentativePresence,
+                DealerRepresentativePresence.user_id == User.id
+            )
+            .where(DealerDesignation.kind == "support")
+            .order_by(User.public_id)
+        ).all()
+
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=90)
+        items = []
+
+        for person, inventory, stamp in rows:
+            active = bool(person.is_active and inventory.active)
+
+            if stamp is not None and stamp.tzinfo is None:
+                stamp = stamp.replace(tzinfo=timezone.utc)
+
+            online = bool(active and stamp and stamp >= cutoff)
+
+            items.append({
+                "public_id": person.public_id,
+                "nickname": person.nickname,
+                "active": active,
+                "online": online
+            })
+
+        items.sort(
+            key=lambda x: (
+                not x["online"],
+                str(x["nickname"]).casefold()
+            )
+        )
+
+        return {
+            "items": items,
+            "total": len(items),
+            "online_count": sum(x["online"] for x in items)
+        }
+
     @router.get("/admin/representative-link")
     def admin_representative_link(
         public_id: str = Query(min_length=1, max_length=64),
