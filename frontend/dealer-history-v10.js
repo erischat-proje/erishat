@@ -34,10 +34,98 @@ function open({admin=false,publicId=''}={}){
  const dismiss=()=>{requestId++;mask.remove();if(previous?.isConnected)previous.focus();};
  close.onclick=dismiss;mask.onclick=e=>{if(e.target===mask)dismiss();};mask.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();dismiss();}};
  function field(dl,name,value){if(value===null||value===undefined||value==='')return;dl.append(el('dt','',name),el('dd','',value));}
+
+
+ // LIDYA_HISTORY_EVIDENCE_V45
+ async function downloadEvidence(id,button){
+  const bearer=auth();
+  if(!bearer)throw Error('Oturum açılmalı');
+
+  const oldText=button.textContent;
+  button.disabled=true;
+  button.textContent='Dekont yükleniyor…';
+
+  try{
+   const url=apiBase()+'/v1/dealers/transfers/'+
+    encodeURIComponent(id)+'/evidence';
+
+   const response=await fetch(url,{
+    cache:'no-store',
+    headers:{Authorization:'Bearer '+bearer}
+   });
+
+   if(bearer!==auth()){
+    throw Error('Oturum değişti');
+   }
+
+   if(!response.ok){
+    const error=await response.json().catch(()=>({}));
+    throw Error(
+     typeof error.detail==='string'
+      ?error.detail
+      :'Dekont bulunamadı veya erişim reddedildi'
+    );
+   }
+
+   const blob=await response.blob();
+   const formats={
+    'image/jpeg':'.jpg',
+    'image/png':'.png',
+    'image/webp':'.webp',
+    'application/pdf':'.pdf'
+   };
+
+   const extension=formats[blob.type];
+   if(!extension){
+    throw Error('Desteklenmeyen dekont türü');
+   }
+
+   const objectUrl=URL.createObjectURL(blob);
+   const link=document.createElement('a');
+   link.href=objectUrl;
+   link.download='LidyaChat-Dekont-'+id+extension;
+   document.body.append(link);
+   link.click();
+   link.remove();
+
+   setTimeout(()=>{
+    URL.revokeObjectURL(objectUrl);
+   },60000);
+
+  }finally{
+   button.disabled=false;
+   button.textContent=oldText;
+  }
+ }
+
  function render(items){list.replaceChildren();if(!items.length){list.append(el('p','','Bu sayfada işlem bulunmuyor.'));return;}
   for(const tx of items){const card=el('article','lbh10-entry'),h=el('div','lbh10-entry-title'),kind=tx.kind==='stock_grant'?'Stok yüklemesi':'Kullanıcıya aktarım';h.append(el('span','lbh10-entry-type',kind),el('span','',number(tx.amount)+' Lidya'));
    const dl=el('dl');field(dl,'Tarih / Saat',when(tx.created_at));field(dl,'İşlem numarası',tx.id);field(dl,'Bayi profil ID',tx.dealer_public_id);field(dl,'İşlemi yapan',tx.actor_public_id);field(dl,'Alıcı profil ID',tx.recipient_public_id);if(admin)field(dl,'İstek referansı',tx.request_key);
-   card.append(h,dl);list.append(card);}
+   card.append(h,dl);
+   if(tx.kind==='transfer' && tx.id){
+    const receipt=el(
+     'button','lbh10-receipt','📎 Dekont Görüntüle'
+    );
+    receipt.type='button';
+    receipt.style.cssText=
+     'width:100%;margin-top:10px;padding:12px;'+
+     'border-radius:12px;font-weight:800;cursor:pointer';
+
+    const error=el('p','lbh10-status','');
+    error.setAttribute('role','status');
+
+    receipt.onclick=async()=>{
+     error.textContent='';
+     try{
+      await downloadEvidence(tx.id,receipt);
+     }catch(e){
+      error.textContent=e.message||'Dekont açılamadı';
+     }
+    };
+
+    card.append(receipt,error);
+   }
+   list.append(card);}
  }
  async function load(p){const serial=++requestId;page=p;list.replaceChildren(el('p','','İşlemler yükleniyor…'));prev.disabled=true;next.disabled=true;status.textContent='Yükleniyor…';
   try{const token=auth();if(!token)throw Error('Oturum açılmalı');const path=admin?'/admin/history?public_id='+encodeURIComponent(publicId)+'&page='+page:'/history?page='+page;const response=await fetch(apiBase()+'/v1/dealers'+path,{cache:'no-store',headers:{Authorization:'Bearer '+token}});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(typeof data.detail==='string'?data.detail:'İşlem geçmişi alınamadı');if(serial!==requestId||!mask.isConnected)return;

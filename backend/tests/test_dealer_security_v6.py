@@ -20,6 +20,24 @@ from backend.app.admin_models import AdminRole
 from backend.app import dealer_routes as dealers
 
 
+
+# LIDYA_V39_TEST_EVIDENCE
+import base64
+from io import BytesIO
+from PIL import Image
+
+def make_test_evidence():
+    buffer = BytesIO()
+    Image.new("RGB", (8, 8), "white").save(
+        buffer, format="PNG"
+    )
+    return (
+        "data:image/png;base64," +
+        base64.b64encode(buffer.getvalue()).decode()
+    )
+
+TEST_EVIDENCE = make_test_evidence()
+
 def unique_key():
     return str(uuid4())
 
@@ -39,8 +57,8 @@ class DealerSecurityTests(unittest.TestCase):
         )
         Base.metadata.create_all(
             self.engine,
-            tables=[User.__table__, AdminRole.__table__, dealers.DealerInventory.__table__, dealers.DealerDesignation.__table__,
-                    dealers.DealerTransfer.__table__, dealers.DealerStockGrant.__table__, BTReferral.__table__, LBReferral.__table__],
+            tables=[User.__table__, AdminRole.__table__, dealers.DealerInventory.__table__, dealers.DealerDesignation.__table__, dealers.DealerRepresentativePresence.__table__,
+                    dealers.DealerTransfer.__table__, dealers.DealerTransferEvidence.__table__, dealers.DealerStockGrant.__table__, BTReferral.__table__, LBReferral.__table__],
         )
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.db = self.Session()
@@ -107,7 +125,7 @@ class DealerSecurityTests(unittest.TestCase):
     def transfer(self, amount, key=None, to=None, actor=None):
         return self.invoke("/v1/dealers/transfer", dealers.TransferBody(
             recipient_public_id=to or self.recipient.public_id,
-            amount=amount, request_key=key or unique_key()), actor or self.dealer)
+            amount=amount, request_key=key or unique_key(), evidence=TEST_EVIDENCE), actor or self.dealer)
 
     def grant(self, amount, key=None, actor=None):
         return self.invoke("/v1/dealers/admin/stock", dealers.StockBody(
@@ -135,7 +153,7 @@ class DealerSecurityTests(unittest.TestCase):
         for amount in (0, -1):
             with self.assertRaises(ValidationError):
                 dealers.TransferBody(recipient_public_id=self.recipient.public_id,
-                                     amount=amount, request_key=unique_key())
+                                     amount=amount, request_key=unique_key(), evidence=TEST_EVIDENCE)
         self.assertEqual(self.wallet(), 0)
 
     def test_04_success_debits_stock_and_credits_wallet(self):
