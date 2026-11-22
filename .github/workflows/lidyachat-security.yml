@@ -7,6 +7,8 @@ on:
       - 'backend/**'
       - 'frontend/screen-awake.js'
       - 'frontend/settings-live.js'
+      - 'frontend/lidya-android-back-v1.js'
+      - 'frontend/tests/test_android_back_v1.cjs'
       - 'android-native/**'
       - 'Caddyfile'
       - 'tests/security_guard/**'
