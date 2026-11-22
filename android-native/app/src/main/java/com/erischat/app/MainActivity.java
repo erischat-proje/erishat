@@ -34,6 +34,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends Activity {
 
@@ -244,6 +245,36 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+
+        @JavascriptInterface
+        public void requestPushToken() {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed
+                        || isFinishing() || isDestroyed()) return;
+
+                final int generation = pageGeneration;
+
+                FirebaseMessaging.getInstance().getToken()
+                    .addOnSuccessListener(token -> {
+                        if (token == null || token.isEmpty()) return;
+                        if (generation != pageGeneration
+                                || !trustedPage()
+                                || !activityResumed
+                                || isFinishing() || isDestroyed()) return;
+
+                        String quoted =
+                            org.json.JSONObject.quote(token);
+
+                        String script =
+                            "window.dispatchEvent(new CustomEvent("
+                            + "'lidyachat:fcm-token',{detail:{token:"
+                            + quoted + "}}));";
+
+                        webView.evaluateJavascript(script, null);
+                    });
+            });
+        }
+
         @JavascriptInterface public void setKeepScreenAwake(boolean enabled) {
             runOnUiThread(() -> {
                 if (!trustedPage() || isFinishing() || isDestroyed()) return;

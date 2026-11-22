@@ -80,6 +80,7 @@
       if(window.__erisRoomSocket){window.__erisRoomSocket.close(1000);window.__erisRoomSocket=null;}
       window.ErisChatDMVaultToken=null;
       sessionStorage.clear();localStorage.removeItem('eris_last_room');
+      await lidyaPushUnregister(getToken());
       clearToken();setToken(token);
       window.ErisAuth.user=user;rememberAccount(user);
       location.reload();return true;
@@ -572,6 +573,7 @@ async function registerAnonymous() {
         const user = await request('/me');
         if(generation!==authGeneration)return null;
         window.ErisAuth.user = user;
+    lidyaRequestPushToken();
         rememberAccount(user);
         return user;
       } catch (error) {
@@ -611,6 +613,7 @@ async function registerAnonymous() {
     try { jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{})); } catch (_) {}
     try { window.ErisRoomRTC?.leaveRoom?.(); } catch (_) {}
     await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,1500))]);
+    await lidyaPushUnregister(token);
     clearToken();window.ErisAuth.user=null;
     clearTimeout(retryTimer);retryTimer=null;
     if(socket){socket.onclose=null;try{socket.close()}catch(_){}}socket=null;
@@ -628,6 +631,75 @@ async function registerAnonymous() {
     await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,4500))]);
     location.reload();
   }
+
+
+  // LidyaChat Firebase V2 - Android push device lifecycle.
+  let lidyaPushToken = '';
+  let lidyaPushRegisteredFor = '';
+
+  async function lidyaPushUnregister(sessionToken) {
+    const token = lidyaPushToken;
+    if (!token || !sessionToken) return;
+    try {
+      await fetch(`${API()}/push/device`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({token}),
+        signal: AbortSignal.timeout(2500)
+      });
+    } catch (_) {
+      // Network failures must not block logout.
+    }
+    lidyaPushRegisteredFor = '';
+  }
+
+  async function lidyaPushRegister(token) {
+    const sessionToken = getToken();
+    const userId = String(window.ErisAuth?.user?.id || '');
+    if (!sessionToken || !userId || !token) return;
+    try {
+      const response = await fetch(`${API()}/push/device`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({token}),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (response.ok &&
+          getToken() === sessionToken &&
+          String(window.ErisAuth?.user?.id || '') === userId) {
+        lidyaPushRegisteredFor = userId;
+      }
+    } catch (_) {
+      // Retry at next authenticated initialization.
+    }
+  }
+
+  function lidyaRequestPushToken() {
+    if (!getToken() || !window.ErisAuth?.user?.id) return;
+    try {
+      window.ErisChatAndroid?.requestPushToken?.();
+    } catch (_) {}
+  }
+
+  window.addEventListener('lidyachat:fcm-token', event => {
+    const token = event.detail?.token;
+    if (typeof token !== 'string' ||
+        token.length < 20 || token.length > 4096) return;
+    lidyaPushToken = token;
+    lidyaPushRegister(token);
+  });
+
+  window.addEventListener('erischat:auth', event => {
+    if (event.detail?.state === 'ready') {
+      lidyaRequestPushToken();
+    }
+  });
 
   window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, switchAccount, openAccountLogin, cancelAccountLogin, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 

@@ -611,6 +611,8 @@ from . import contact_aliases
 app.include_router(contact_aliases.register_auth(current_user))
 app.include_router(notification_center.register_auth(current_user))
 app.include_router(privacy_center.register_auth(current_user))
+from . import push_device_models, push_device_routes
+app.include_router(push_device_routes.register_auth(current_user))
 app.include_router(admin_operations.register_auth(current_user))
 app.include_router(admin_workspace.register_auth(current_user, lambda user_id, enabled: transition_room_ghost(user_id, enabled), lambda user_id, role: broadcast_role_badge(user_id, role)))
 app.include_router(dm_folder_router)
