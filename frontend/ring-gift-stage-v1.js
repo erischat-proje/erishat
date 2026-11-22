@@ -53,9 +53,35 @@
 
     const caption = document.createElement('div');
     caption.className = 'lidya-ring-caption';
-    caption.textContent = event.preview
-      ? '💍 Ücretsiz yüzük önizlemesi'
-      : '💍 LidyaChat · Özel Yüzük Hediyesi';
+    if (event.preview) {
+      caption.textContent = '💍 Ücretsiz yüzük önizlemesi';
+    } else {
+      const sender = String(
+        event.sender_nickname || event.sender_name || ''
+      ).trim();
+      const recipient = event.target === 'room'
+        ? 'Odadaki herkes'
+        : event.target === 'mic'
+          ? 'Mikrofondakiler'
+          : String(
+              event.recipient_nickname ||
+              event.recipient_name || ''
+            ).trim();
+
+      caption.replaceChildren();
+
+      if (sender && recipient) {
+        const names = document.createElement('strong');
+        names.textContent = '💍 ' + sender + ' → ' + recipient;
+
+        const description = document.createElement('small');
+        description.textContent = 'Yüzük hediyesi gönderdi';
+
+        caption.append(names, description);
+      } else {
+        caption.textContent = '💍 Yüzük hediyesi';
+      }
+    }
 
     overlay.append(video, fallback, caption);
     document.body.append(overlay);
@@ -189,10 +215,21 @@
       position:absolute;
       bottom:6%;
       color:#f9dca0;
-      font-size:16px;
+      font-size:clamp(13px,3.5vw,16px);
       font-weight:800;
       text-align:center;
       text-shadow:0 2px 12px #000;
+      width:calc(100% - 32px);
+      overflow-wrap:anywhere;
+    }
+    .lidya-ring-caption strong,
+    .lidya-ring-caption small {
+      display:block;
+    }
+    .lidya-ring-caption small {
+      margin-top:5px;
+      font-size:12px;
+      font-weight:600;
     }
     .lidya-ring-fallback {
       text-align:center;

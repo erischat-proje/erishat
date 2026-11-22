@@ -2178,7 +2178,7 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     record_spend(db,user.id,total_price,"dm_gift",str(message.id))
     db.commit(); db.refresh(message)
     event = {"type":"dm_message", "conversation_id":conversation_id, "message_id":message.id, "sender_id":user.id,
-        "sender_nickname":user.nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"gift_received":receiver_amount,"gift_quantity":quantity,"quantity":quantity,
+        "sender_nickname":user.nickname, "recipient_nickname":db.get(User, recipient_id).nickname, "text":message.text, "gift_key":gift_key, "gift_id":GIFT_META[gift_key]["id"], "gift_image_url":GIFT_META[gift_key]["image_url"], "gift_price":total_price,"gift_received":receiver_amount,"gift_quantity":quantity,"quantity":quantity,
         "created_at":message.created_at.isoformat() if message.created_at else None}
     for member_id in repo.members(conversation_id): await _send_dm_event(db, member_id, event)
     return _message_out(db, message, user.id)
