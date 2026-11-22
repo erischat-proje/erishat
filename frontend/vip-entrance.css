@@ -35,3 +35,57 @@
 @keyframes vipImperial{0%{transform:translateY(-80px) scale(.8)}25%,80%{transform:translateY(0) scale(1)}100%{transform:translateY(20px) scale(1.02)}}
 @media(prefers-reduced-motion:reduce){.eris-vip-entrance{animation:vipScene 2.2s linear both}.eris-vip-entrance .eris-vip-entry-banner{animation:none!important}.eris-vip-entrance canvas{display:none}}
 @media(max-height:400px){.eris-vip-entry-crest{height:55px;top:-45px}.eris-vip-entry-banner{padding:16px 20px}.eris-vip-entry-dismiss{top:calc(50% + 75px)}}
+
+
+/* LIDYACHAT ROOM ENTRANCE ALIGNMENT V2 */
+
+/* Avatar ve satin alinan cerceve ayni merkezde */
+html body .eris-vip-entrance .eris-vip-entry-portrait {
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  isolation: isolate;
+}
+
+/* Cerceveye ait dis suslemeler kesilmesin */
+html body .eris-vip-entrance .eris-vip-entry-portrait.has-frame {
+  overflow: visible;
+}
+
+/* Cerceve bulunmayan avatarlarda yuvarlak gorunum */
+html body .eris-vip-entrance
+.eris-vip-entry-portrait:not(.has-frame) {
+  overflow: hidden;
+}
+
+/* Kullanici adinin tasma yapmasini engelle */
+html body .eris-vip-entrance .eris-vip-entry-identity {
+  min-width: 0;
+  max-width: 100%;
+}
+
+html body .eris-vip-entrance .eris-vip-entry-identity strong {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Olculmus magaza girisleri */
+html body .eris-vip-entrance
+.eris-vip-entry-banner[data-measured="true"]
+.eris-vip-entry-portrait {
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Kucuk telefonlarda giris alani */
+@media (max-width: 380px) {
+  html body .eris-vip-entrance .eris-vip-entry-banner {
+    max-width: 94vw;
+  }
+}
