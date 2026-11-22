@@ -465,13 +465,61 @@ async function openAdminLookup(){
  const f=elt('form'),label=elt('label','','Bayi profil ID'),id=elt('input');
  id.required=true;id.maxLength=64;id.placeholder='Bayi profil ID';id.autocomplete='off';
  label.append(id);const submit=elt('button','lb-primary','Bayi sorgula');submit.type='submit';
- f.append(label,submit);panel.append(f);
+ const revokeButton=elt('button','lb-primary','Yetki Al');
+ revokeButton.type='button';
+ revokeButton.disabled=true;
+ revokeButton.style.cssText='margin-left:8px;';
+ f.append(label,submit,revokeButton);panel.append(f);
+ let selectedId='';
+
+ revokeButton.onclick=async()=>{
+  if(!selectedId)return;
+
+  const target=selectedId;
+  const typed=window.prompt(
+   'Tüm bayi/temsilci yetkileri kaldırılacak.\nOnay için profil ID yazın:',
+   ''
+  );
+
+  if(typed===null)return;
+  if(typed.trim()!==target){
+   window.alert('Profil ID eşleşmiyor. İşlem iptal edildi.');
+   return;
+  }
+
+  if(!window.confirm(
+   'Bu hesabın BT/LB yetkisi ve yetkiye bağlı erişimleri kaldırılacak. '+
+   'Finansal kayıtlar ve kalan stok korunacak. Devam edilsin mi?'
+  ))return;
+
+  revokeButton.disabled=true;
+  submit.disabled=true;
+
+  try{
+   await api('/admin/revoke','POST',{
+    public_id:target,
+    confirm_public_id:target
+   });
+   selectedId='';
+   cache.clear();
+   boot();
+   status.textContent='Yetkiler başarıyla kaldırıldı.';
+   result.replaceChildren();
+  }catch(e){
+   status.textContent=e.message||'Yetki kaldırılamadı.';
+   revokeButton.disabled=false;
+  }finally{
+   submit.disabled=false;
+  }
+ };
  const result=elt('section','lb-admin-result'),status=elt('p','lb-msg');status.setAttribute('role','status');panel.append(status,result);
  async function lookup(publicId){
-   submit.disabled=true;status.textContent='Bayi aranıyor…';result.replaceChildren();
+   submit.disabled=true;selectedId='';revokeButton.disabled=true;status.textContent='Bayi aranıyor…';result.replaceChildren();
    try{
      const d=await api('/admin/lookup?public_id='+encodeURIComponent(publicId));
      status.textContent='Bayi kaydı bulundu';
+     selectedId=d.public_id;
+     revokeButton.disabled=!d.active;
      const title=elt('h3','',d.nickname+' · '+d.public_id);
      const flag=elt('p','',d.active?'LB · Aktif Bayi':'LB · Pasif Bayi');
      const label=elt('p','','Kalan bayi stoğu (kişisel Lidya değil)');

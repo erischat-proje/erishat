@@ -96,6 +96,7 @@ jobs:
           backend/tests/test_dealer_representatives_roster_v1.py
           backend/tests/test_dealer_representatives_v2.py
           backend/tests/test_admin_registered_bt_v1.py
+          backend/tests/test_admin_lookup_revoke_v1.py
           backend/tests/test_dealer_evidence_v3.py
           backend/tests/test_dealer_evidence_transfer_v4.py
           backend/tests/test_bt_referrals_v1.py
