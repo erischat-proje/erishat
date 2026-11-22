@@ -56,6 +56,7 @@ jobs:
             /tests/test_play_refund_review_v2.py
             /tests/test_play_release_candidate.py
             /tests/test_google_play_license_test.py
+            /frontend/auth-live.js
             /frontend/screen-awake.js
             /frontend/settings-live.js
             /frontend/lidya-android-back-v1.js
@@ -87,6 +88,14 @@ jobs:
           -d lidyachat_security_test
           -c 'CREATE DATABASE lidya_v7_test'
 
+      - name: Test Firebase PostgreSQL concurrent registrations
+        env:
+          V7_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidya_v7_test
+          V7_ISOLATED_CONFIRM: 'YES'
+        run: >-
+          PYTHONPATH=backend python -m pytest -q
+          backend/tests/test_push_postgres_v43.py
+
       - name: Run dealer V7 PostgreSQL concurrency and receipt tests
         env:
           V7_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidya_v7_test
@@ -109,6 +118,15 @@ jobs:
       - run: python tests/security_guard/test_counters.py
       - run: python tests/security_guard/test_email_policy.py
       - run: PYTHONPATH=backend python -m pytest -q tests/test_security_center.py tests/test_security_center_dm_id.py
+      - name: Test Firebase push device and session security
+        run: >-
+          PYTHONPATH=backend python -m pytest -q
+          backend/tests/test_push_device_v2.py
+          backend/tests/test_push_sender_v3.py
+          backend/tests/test_push_delivery_v35.py
+          backend/tests/test_push_session_v36.py
+      - name: Test Firebase account switch race protection
+        run: node --test tests/security_guard/test_push_lifecycle_v42.cjs
       - name: Run Google Play Billing V3 validation tests
         run: PYTHONPATH=backend python -m pytest -q tests/test_play_billing_v3.py
       - name: Run Google Play V4 fulfillment unit tests
@@ -138,6 +156,37 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Restore Firebase Android config
+        env:
+          FIREBASE_CONFIG: ${{ secrets.LIDYACHAT_GOOGLE_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+          test -n "$FIREBASE_CONFIG" || {
+            echo "Firebase config secret is missing"
+            exit 1
+          }
+          python3 - <<'PYCODE'
+          import os, json
+          from pathlib import Path
+
+          config = json.loads(os.environ["FIREBASE_CONFIG"])
+          packages = [
+              client.get("client_info", {})
+                    .get("android_client_info", {})
+                    .get("package_name")
+              for client in config.get("client", [])
+          ]
+
+          assert "com.erischat.app" in packages, "Wrong Firebase package"
+
+          target = Path("android-native/app/google-services.json")
+          target.write_text(
+              json.dumps(config),
+              encoding="utf-8"
+          )
+          target.chmod(0o600)
+          print("OK: Firebase config restored")
+          PYCODE
       - name: Compile debug Java without signing credentials
         run: |
           chmod +x android-native/gradlew

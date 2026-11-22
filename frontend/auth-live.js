@@ -70,6 +70,8 @@
       if(String(user.id)!==String(id)){saveSession(id,null);throw new Error('Kayıtlı hesap oturumu eşleşmiyor.');}
       rememberAccount(window.ErisAuth.user);
       authGeneration++;
+      lidyaPushTransitioning = true;
+      lidyaSetNativePushUser('');
       const jobs=[];
       try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
       try{jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{}));}catch(_){}
@@ -80,6 +82,7 @@
       if(window.__erisRoomSocket){window.__erisRoomSocket.close(1000);window.__erisRoomSocket=null;}
       window.ErisChatDMVaultToken=null;
       sessionStorage.clear();localStorage.removeItem('eris_last_room');
+      await lidyaPushUnregister(getToken());
       clearToken();setToken(token);
       window.ErisAuth.user=user;rememberAccount(user);
       location.reload();return true;
@@ -99,6 +102,8 @@
   function cancelAccountLogin(){authGeneration++;closeGate();}
   async function prepareAccountLoginTransition() {
     if(!document.getElementById('erisGoogleGate')?.closest('#erisAccountPicker'))return;
+    lidyaPushTransitioning = true;
+    lidyaSetNativePushUser('');
     rememberAccount(window.ErisAuth.user);
     const jobs=[];
     try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
@@ -572,6 +577,7 @@ async function registerAnonymous() {
         const user = await request('/me');
         if(generation!==authGeneration)return null;
         window.ErisAuth.user = user;
+    lidyaRequestPushToken();
         rememberAccount(user);
         return user;
       } catch (error) {
@@ -600,6 +606,8 @@ async function registerAnonymous() {
     if(logoutPending)return;
     logoutPending=true;
     authGeneration++;
+    lidyaPushTransitioning = true;
+    lidyaSetNativePushUser('');
     const token=getToken();rememberAccount(window.ErisAuth.user);
     if(window.ErisAuth.user?.id)saveSession(window.ErisAuth.user.id,null);
     // Teardown begins while the old token is still available to room/call APIs.
@@ -611,6 +619,7 @@ async function registerAnonymous() {
     try { jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{})); } catch (_) {}
     try { window.ErisRoomRTC?.leaveRoom?.(); } catch (_) {}
     await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,1500))]);
+    await lidyaPushUnregister(token);
     clearToken();window.ErisAuth.user=null;
     clearTimeout(retryTimer);retryTimer=null;
     if(socket){socket.onclose=null;try{socket.close()}catch(_){}}socket=null;
@@ -628,6 +637,114 @@ async function registerAnonymous() {
     await Promise.race([Promise.allSettled(jobs),new Promise(resolve=>setTimeout(resolve,4500))]);
     location.reload();
   }
+
+
+  // Native account identity prevents cross-account notifications.
+  function lidyaSetNativePushUser(userId) {
+    try {
+      window.ErisChatAndroid?.setActivePushUser?.(
+        String(userId || '')
+      );
+    } catch (_) {}
+  }
+
+  // LidyaChat Firebase V2 - Android push device lifecycle.
+  let lidyaPushToken = '';
+  let lidyaPushRegisteredFor = '';
+  let lidyaPushTransitioning = false;
+  let lidyaPushPending = Promise.resolve();
+
+  async function lidyaPushUnregister(sessionToken) {
+    const token = lidyaPushToken;
+    if (!token || !sessionToken) return;
+    // Let in-flight registrations settle before unregistering.
+    await lidyaPushPending.catch(() => {});
+    try {
+      await fetch(`${API()}/push/device`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({token}),
+        signal: AbortSignal.timeout(2500)
+      });
+    } catch (_) {
+      // Network failures must not block logout.
+    }
+    lidyaPushRegisteredFor = '';
+  }
+
+  function lidyaPushRegister(token) {
+    if (lidyaPushTransitioning || logoutPending || switchPending) {
+      return lidyaPushPending;
+    }
+
+    const sessionToken = getToken();
+    const userId = String(window.ErisAuth?.user?.id || '');
+    if (!sessionToken || !userId || !token) return lidyaPushPending;
+
+    // Serialize registrations so an older request cannot
+    // overtake a newer request initiated on this page.
+    lidyaPushPending = lidyaPushPending.catch(() => {}).then(async () => {
+      if (lidyaPushTransitioning || logoutPending || switchPending ||
+          getToken() !== sessionToken ||
+          String(window.ErisAuth?.user?.id || '') !== userId) return;
+
+      try {
+        const response = await fetch(`${API()}/push/device`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionToken}`
+          },
+          body: JSON.stringify({token}),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (response.ok &&
+            !lidyaPushTransitioning &&
+            getToken() === sessionToken &&
+            String(window.ErisAuth?.user?.id || '') === userId) {
+          lidyaPushRegisteredFor = userId;
+        }
+      } catch (_) {
+        // Retry on next authenticated initialization.
+      }
+    });
+
+    return lidyaPushPending;
+  }
+
+  function lidyaRequestPushToken() {
+    if (lidyaPushTransitioning || logoutPending || switchPending) return;
+    if (!getToken() || !window.ErisAuth?.user?.id) return;
+    try {
+      window.ErisChatAndroid?.requestPushToken?.();
+    } catch (_) {}
+  }
+
+  window.addEventListener('lidyachat:fcm-token', event => {
+    const token = event.detail?.token;
+    if (typeof token !== 'string' ||
+        token.length < 20 || token.length > 4096) return;
+    lidyaPushToken = token;
+    lidyaPushRegister(token);
+  });
+
+  window.addEventListener('erischat:auth', event => {
+    if (event.detail?.state === 'ready') {
+      lidyaPushTransitioning = false;
+      lidyaSetNativePushUser(event.detail?.user?.id || '');
+      lidyaRequestPushToken();
+    } else if (
+      event.detail?.state === 'logged_out' ||
+      event.detail?.state === 'login_required' ||
+      event.detail?.state === 'error'
+    ) {
+      lidyaSetNativePushUser('');
+    }
+  });
 
   window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, switchAccount, openAccountLogin, cancelAccountLogin, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 

@@ -34,6 +34,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends Activity {
 
@@ -49,6 +50,7 @@ public class MainActivity extends Activity {
 
     private static final int GOOGLE_SIGN_IN = 9001;
     private static final int MICROPHONE_PERMISSION = 9002;
+    private static final int NOTIFICATION_PERMISSION = 9006;
     private PermissionRequest pendingMicrophone;
     private boolean microphoneDialogOpen;
     private volatile int pageGeneration;
@@ -204,6 +206,22 @@ public class MainActivity extends Activity {
         });
 
         webView.loadUrl(ERISCHAT_URL);
+        requestLidyaNotificationPermission();
+    }
+
+
+    private void requestLidyaNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                new String[]{
+                    Manifest.permission.POST_NOTIFICATIONS
+                },
+                NOTIFICATION_PERMISSION
+            );
+        }
     }
 
     private void applyScreenAwake() {
@@ -218,6 +236,8 @@ public class MainActivity extends Activity {
         super.onResume();
         activityResumed = true;
         applyScreenAwake();
+        // Recheck FCM token after returning from background.
+        new AndroidBridge().requestPushToken();
     }
 
     @Override protected void onPause() {
@@ -227,6 +247,71 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+
+        @JavascriptInterface
+        public void setActivePushUser(String userId) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || isFinishing() || isDestroyed()) {
+                    return;
+                }
+
+                String next = userId == null ? "" : userId;
+                if (next.length() > 128
+                        || (!next.isEmpty()
+                        && !next.matches("[A-Za-z0-9_-]+"))) {
+                    return;
+                }
+
+                android.content.SharedPreferences preferences =
+                    getSharedPreferences("lidya_push", MODE_PRIVATE);
+
+                String previous = preferences.getString(
+                    "active_push_user", ""
+                );
+
+                if (!previous.equals(next)) {
+                    preferences.edit()
+                        .putString("active_push_user", next)
+                        .apply();
+
+                    // Clear notifications from the previous account.
+                    android.app.NotificationManager manager =
+                        (android.app.NotificationManager)
+                        getSystemService(NOTIFICATION_SERVICE);
+                    if (manager != null) manager.cancelAll();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void requestPushToken() {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed
+                        || isFinishing() || isDestroyed()) return;
+
+                final int generation = pageGeneration;
+
+                FirebaseMessaging.getInstance().getToken()
+                    .addOnSuccessListener(token -> {
+                        if (token == null || token.isEmpty()) return;
+                        if (generation != pageGeneration
+                                || !trustedPage()
+                                || !activityResumed
+                                || isFinishing() || isDestroyed()) return;
+
+                        String quoted =
+                            org.json.JSONObject.quote(token);
+
+                        String script =
+                            "window.dispatchEvent(new CustomEvent("
+                            + "'lidyachat:fcm-token',{detail:{token:"
+                            + quoted + "}}));";
+
+                        webView.evaluateJavascript(script, null);
+                    });
+            });
+        }
+
         @JavascriptInterface public void setKeepScreenAwake(boolean enabled) {
             runOnUiThread(() -> {
                 if (!trustedPage() || isFinishing() || isDestroyed()) return;
