@@ -116,6 +116,8 @@ jobs:
           backend/tests/test_push_sender_v3.py
           backend/tests/test_push_delivery_v35.py
           backend/tests/test_push_session_v36.py
+      - name: Test Firebase account switch race protection
+        run: node --test tests/security_guard/test_push_lifecycle_v42.cjs
       - name: Run Google Play Billing V3 validation tests
         run: PYTHONPATH=backend python -m pytest -q tests/test_play_billing_v3.py
       - name: Run Google Play V4 fulfillment unit tests

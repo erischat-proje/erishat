@@ -70,6 +70,7 @@
       if(String(user.id)!==String(id)){saveSession(id,null);throw new Error('Kayıtlı hesap oturumu eşleşmiyor.');}
       rememberAccount(window.ErisAuth.user);
       authGeneration++;
+      lidyaPushTransitioning = true;
       const jobs=[];
       try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
       try{jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{}));}catch(_){}
@@ -602,6 +603,7 @@ async function registerAnonymous() {
     if(logoutPending)return;
     logoutPending=true;
     authGeneration++;
+    lidyaPushTransitioning = true;
     const token=getToken();rememberAccount(window.ErisAuth.user);
     if(window.ErisAuth.user?.id)saveSession(window.ErisAuth.user.id,null);
     // Teardown begins while the old token is still available to room/call APIs.
@@ -636,10 +638,14 @@ async function registerAnonymous() {
   // LidyaChat Firebase V2 - Android push device lifecycle.
   let lidyaPushToken = '';
   let lidyaPushRegisteredFor = '';
+  let lidyaPushTransitioning = false;
+  let lidyaPushPending = Promise.resolve();
 
   async function lidyaPushUnregister(sessionToken) {
     const token = lidyaPushToken;
     if (!token || !sessionToken) return;
+    // Let in-flight registrations settle before unregistering.
+    await lidyaPushPending.catch(() => {});
     try {
       await fetch(`${API()}/push/device`, {
         method: 'DELETE',
@@ -656,31 +662,49 @@ async function registerAnonymous() {
     lidyaPushRegisteredFor = '';
   }
 
-  async function lidyaPushRegister(token) {
+  function lidyaPushRegister(token) {
+    if (lidyaPushTransitioning || logoutPending || switchPending) {
+      return lidyaPushPending;
+    }
+
     const sessionToken = getToken();
     const userId = String(window.ErisAuth?.user?.id || '');
-    if (!sessionToken || !userId || !token) return;
-    try {
-      const response = await fetch(`${API()}/push/device`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
-        },
-        body: JSON.stringify({token}),
-        signal: AbortSignal.timeout(10000)
-      });
-      if (response.ok &&
-          getToken() === sessionToken &&
-          String(window.ErisAuth?.user?.id || '') === userId) {
-        lidyaPushRegisteredFor = userId;
+    if (!sessionToken || !userId || !token) return lidyaPushPending;
+
+    // Serialize registrations so an older request cannot
+    // overtake a newer request initiated on this page.
+    lidyaPushPending = lidyaPushPending.catch(() => {}).then(async () => {
+      if (lidyaPushTransitioning || logoutPending || switchPending ||
+          getToken() !== sessionToken ||
+          String(window.ErisAuth?.user?.id || '') !== userId) return;
+
+      try {
+        const response = await fetch(`${API()}/push/device`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionToken}`
+          },
+          body: JSON.stringify({token}),
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (response.ok &&
+            !lidyaPushTransitioning &&
+            getToken() === sessionToken &&
+            String(window.ErisAuth?.user?.id || '') === userId) {
+          lidyaPushRegisteredFor = userId;
+        }
+      } catch (_) {
+        // Retry on next authenticated initialization.
       }
-    } catch (_) {
-      // Retry at next authenticated initialization.
-    }
+    });
+
+    return lidyaPushPending;
   }
 
   function lidyaRequestPushToken() {
+    if (lidyaPushTransitioning || logoutPending || switchPending) return;
     if (!getToken() || !window.ErisAuth?.user?.id) return;
     try {
       window.ErisChatAndroid?.requestPushToken?.();
