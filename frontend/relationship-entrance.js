@@ -25,13 +25,45 @@
   async function next(){
     if(active||!queue.length)return;const entry=queue.shift(),d=entry.data,el=document.createElement('div');el.className='rel-entrance';active=el;activeDone=entry.done;
     const key=String(d.entrance_asset);let layout;
-    if(/rewards\/entrance-(?:male|female)-l(?:[1-9]|1[0-2])\.png$/.test(key)){layout={avatar:{x:.14,y:.5,diameter:.18},ring:{x:.86,y:.5,diameter:.16},name:{x:.28,y:.4,width:.44,height:.2}};}else{try{layout=await Promise.race([Promise.resolve(window.ErisVisualLayout?.describe(key)),new Promise(resolve=>setTimeout(resolve,1000))])}catch(_){}}
+
+    const levelEffect=/-l(?:2|4|6|8|10|12)[.]png$/.test(key);
+    try {
+      layout=await Promise.race([
+        Promise.resolve(window.ErisVisualLayout?.describe(key)),
+        new Promise(resolve=>setTimeout(()=>resolve(null),1000))
+      ]);
+    }catch(_){}
+
+    if(levelEffect){
+      layout={
+        ...(layout||{}),
+        avatar:layout?.avatar||{x:.14,y:.5,diameter:.16},
+        ring:layout?.ring||{x:.86,y:.5,diameter:.15},
+        name:layout?.name||{
+          x:.30,y:.29,width:.40,height:.42
+        }
+      };
+    }
     if(active!==el)return;
     const art=document.createElement('img');art.className='rel-entrance-art';art.src=asset(key)+'?v=lydia-rewards-20261010';art.alt='Oda giriş efekti';art.onerror=()=>{if(active===el){clearTimeout(timer);el.remove();active=null;activeDone?.();activeDone=null;next()}};el.append(art);
     for(const kind of ['avatar','ring']){const slot=layout?.[kind];if(!slot)continue;const element=document.createElement(kind==='ring'?'img':'span');element.className='rel-entrance-'+kind;element.style.left=(slot.x*100)+'%';element.style.top=(slot.y*100)+'%';element.style.width=(slot.diameter*100)+'%';
       if(kind==='ring'){if(!d.ring_asset)continue;element.src=asset(d.ring_asset);element.alt='';}else if(d.avatar_asset){const image=document.createElement('img');image.src=asset(d.avatar_asset);image.alt='';element.append(image);}else element.textContent=d.avatar||'👤';if(kind==='avatar'&&d.frame_asset){const frame=document.createElement('img');frame.className='rel-entrance-frame';frame.src=asset(d.frame_asset);frame.alt='';element.append(frame)}el.append(element);}
     // A nickname is permitted only in a declared empty text rectangle.
-    if(layout?.name){const n=layout.name,name=document.createElement('span');name.className='rel-entrance-name';name.style.left=(n.x*100)+'%';name.style.top=(n.y*100)+'%';name.style.width=(n.width*100)+'%';name.style.height=(n.height*100)+'%';name.textContent=d.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(name,d.preview?window.ErisAuth?.user:d.user_id);el.append(name);}
+    const nameSlot=layout?.name||(
+      !levelEffect?{x:.24,y:1.04,width:.52,height:.18}:null
+    );
+    if(nameSlot){const n=nameSlot,name=document.createElement('span');name.className='rel-entrance-name';name.style.left=(n.x*100)+'%';name.style.top=(n.y*100)+'%';name.style.width=(n.width*100)+'%';name.style.height=(n.height*100)+'%';name.textContent=d.nickname||'Kullanıcı';
+      name.style.fontSize='clamp(10px,2.7vw,15px)';
+      name.style.textAlign='center';
+      name.style.lineHeight='1.1';
+      if(!levelEffect){
+        name.style.setProperty(
+          'background','rgba(19,14,29,.88)','important'
+        );
+        name.style.padding='2px 8px';
+        name.style.borderRadius='8px';
+      }
+      window.ErisRoleBadges?.bind(name,d.preview?window.ErisAuth?.user:d.user_id);el.append(name);}
     document.body.append(el);try{sound(key)}catch(_){}timer=setTimeout(()=>{if(active!==el)return;el.remove();active=null;timer=null;activeDone?.();activeDone=null;next()},3200);
   }
   function show(d){if(!d?.entrance_asset||!String(d.entrance_asset).startsWith('relationship-assets/rewards/entrance-'))return Promise.resolve();if(queue.length>=8)return Promise.resolve();return new Promise(done=>{queue.push({data:d,done});next()})}
