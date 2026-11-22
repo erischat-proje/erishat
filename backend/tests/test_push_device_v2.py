@@ -143,3 +143,66 @@ def test_invalid_token_rejected():
         json={"token": "123"},
     )
     assert response.status_code == 422
+
+
+def test_old_session_cannot_delete_new_session_device():
+    from datetime import datetime, timedelta, timezone
+    from app.session import UserSession, hash_token
+    from app.push_device_routes import token_hash
+
+    client, engine = make_client()
+
+    # Aynı kullanicinin ikinci aktif oturumu.
+    with Session(engine) as db:
+        db.add(UserSession(
+            token_hash=hash_token("test-session-new"),
+            user_id="user-a",
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+        ))
+        db.commit()
+
+    old_headers = {
+        "X-Test-User": "user-a",
+        "Authorization": "Bearer test-session-user-a",
+    }
+    new_headers = {
+        "X-Test-User": "user-a",
+        "Authorization": "Bearer test-session-new",
+    }
+
+    assert client.post(
+        "/v1/push/device",
+        headers=old_headers,
+        json={"token": TOKEN},
+    ).status_code == 200
+
+    assert client.post(
+        "/v1/push/device",
+        headers=new_headers,
+        json={"token": TOKEN},
+    ).status_code == 200
+
+    # Eski oturum yeni kaydi silememeli.
+    response = client.request(
+        "DELETE",
+        "/v1/push/device",
+        headers=old_headers,
+        json={"token": TOKEN},
+    )
+    assert response.status_code == 200
+
+    with Session(engine) as db:
+        device = db.get(PushDevice, token_hash(TOKEN))
+        assert device is not None
+        assert device.session_hash == hash_token("test-session-new")
+
+    # Yeni oturum kendi kaydini silebilmeli.
+    assert client.request(
+        "DELETE",
+        "/v1/push/device",
+        headers=new_headers,
+        json={"token": TOKEN},
+    ).status_code == 200
+
+    with Session(engine) as db:
+        assert db.get(PushDevice, token_hash(TOKEN)) is None

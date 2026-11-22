@@ -236,6 +236,8 @@ public class MainActivity extends Activity {
         super.onResume();
         activityResumed = true;
         applyScreenAwake();
+        // Recheck FCM token after returning from background.
+        new AndroidBridge().requestPushToken();
     }
 
     @Override protected void onPause() {

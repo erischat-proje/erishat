@@ -85,10 +85,16 @@ def register_auth(current_user):
         payload: DevicePayload,
         db: Session = Depends(get_db),
         user: User = Depends(current_user),
+        authorization: str | None = Header(default=None),
     ):
         device = db.get(PushDevice, token_hash(payload.token))
+        session_hash = active_session(db, authorization, user.id)
 
-        if device is not None and device.user_id == user.id:
+        if (
+            device is not None
+            and device.user_id == user.id
+            and device.session_hash == session_hash
+        ):
             db.delete(device)
             db.commit()
 
