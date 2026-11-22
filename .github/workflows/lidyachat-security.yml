@@ -56,6 +56,7 @@ jobs:
             /tests/test_play_refund_review_v2.py
             /tests/test_play_release_candidate.py
             /tests/test_google_play_license_test.py
+            /frontend/auth-live.js
             /frontend/screen-awake.js
             /frontend/settings-live.js
             /frontend/lidya-android-back-v1.js
