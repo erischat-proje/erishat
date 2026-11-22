@@ -478,3 +478,114 @@ html body .rel-v2-memory-item small {
   font-size: 12px;
   color: var(--ui-gold);
 }
+
+/* LIDYA RELATIONSHIP V2.8 COMPACT */
+
+html body .rel-home-dashboard {
+  gap: 12px;
+}
+
+html body .rel-home-dashboard .rel-home-hero {
+  padding: 14px;
+}
+
+html body .rel-home-dashboard .rel-home-heading {
+  margin-bottom: 10px;
+}
+
+html body .rel-home-dashboard .rel-partners {
+  gap: 9px;
+  margin-top: 10px;
+}
+
+html body .rel-home-dashboard .rel-partner {
+  padding: 8px;
+  gap: 7px;
+}
+
+html body .rel-home-dashboard .rel-partner .rel-avatar {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+}
+
+html body .rel-home-dashboard .rel-home-art {
+  margin: 10px 0 0;
+  padding: 8px;
+}
+
+html body .rel-home-dashboard .rel-home-art > img {
+  height: clamp(160px, 43vw, 245px);
+}
+
+html body .rel-home-dashboard .rel-level-badge {
+  margin: -5px 0 7px;
+}
+
+html body .rel-v28-prestige {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 15px;
+  background: color-mix(
+    in srgb,
+    var(--ui-gold) 12%,
+    var(--ui-panel)
+  );
+  color: var(--ui-gold);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+html body .rel-v28-memories,
+html body .rel-v28-growth {
+  border: 1px solid var(--ui-line);
+  border-radius: 17px;
+  background: var(--ui-panel);
+  color: var(--ui-ink);
+  overflow: hidden;
+}
+
+html body .rel-v28-memories > summary,
+html body .rel-v28-growth > summary {
+  display: list-item;
+  cursor: pointer;
+  padding: 15px 17px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+html body .rel-v28-memories > p {
+  padding: 0 17px 15px;
+  margin: 0;
+  font-size: 12px;
+}
+
+html body .rel-v28-growth > .rel-growth {
+  border: 0;
+  border-top: 1px solid var(--ui-line);
+  border-radius: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+html body .rel-home-dashboard .rel-home-controls {
+  gap: 8px;
+}
+
+html body .rel-home-dashboard .rel-level-grid {
+  gap: 7px;
+}
+
+@media (max-width: 380px) {
+  html body .rel-home-dashboard .rel-partner {
+    padding: 6px;
+  }
+
+  html body .rel-home-dashboard .rel-partner .rel-avatar {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+}
