@@ -1034,15 +1034,18 @@
     modal.querySelector('[data-close]').onclick=()=>modal.remove(); modal.addEventListener('click',e=>{if(e.target===modal)modal.remove()});
     try {
       const gifts=await api().messageGifts(),grid=modal.querySelector('.dm-gift-grid');
-      const categories=[['all','Tümü',0,Infinity],['agora','Agora & Halk Pazarı',1,29],['sofra','Antik Sofra & Bağlar',30,99],['zanaat','Zanaat & Atölye',100,499],['muhafiz','Saray Muhafızları',500,999],['tuccar','Sardis Tüccarları',1000,9999],['krallik','Krallık Hazinesi',10000,19999],['ihtisam','Antik İhtişam',20000,49999],['mitoloji','Mitoloji & Tanrılar',50000,89999],['krezus','Krezus’un Mirası',90000,Infinity]];
-      let category='all',quantity=1;
+      const categories=[['rings','💍 Yüzükler',0,0],['agora','Agora & Halk Pazarı',1,29],['sofra','Antik Sofra & Bağlar',30,99],['zanaat','Zanaat & Atölye',100,499],['muhafiz','Saray Muhafızları',500,999],['tuccar','Sardis Tüccarları',1000,9999],['krallik','Krallık Hazinesi',10000,19999],['ihtisam','Antik İhtişam',20000,49999],['mitoloji','Mitoloji & Tanrılar',50000,89999],['krezus','Krezus’un Mirası',90000,Infinity]];
+      let category='agora',quantity=1;
+      const isRingGift=g=>/^(copper|silver|gold)-(?:[1-9]|1[0-9]|20)$/.test(String(g.gift_key||''));
       const controls=document.createElement('div');controls.className='dm-gift-controls';
       const tabs=document.createElement('div');tabs.className='dm-gift-categories';
       const qty=document.createElement('div');qty.className='dm-gift-quantities';
       controls.append(tabs,qty);grid.before(controls);
       function draw(){
         tabs.replaceChildren();for(const [key,label,min,max] of categories){
-          const count=key==='all'?gifts.length:gifts.filter(g=>Number(g.unit_price)>=min&&Number(g.unit_price)<=max).length;
+          const count=gifts.filter(g=>key==='rings'
+            ?isRingGift(g)
+            :!isRingGift(g)&&Number(g.unit_price)>=min&&Number(g.unit_price)<=max).length;
           const button=document.createElement('button');button.type='button';button.textContent=label+' ('+count+')';button.className=category===key?'active':'';
           button.onclick=()=>{category=key;draw()};tabs.append(button);
         }
@@ -1052,7 +1055,9 @@
         }
         grid.replaceChildren();grid.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
         const selected=categories.find(x=>x[0]===category);
-        for(const g of gifts.filter(g=>category==='all'||Number(g.unit_price)>=selected[2]&&Number(g.unit_price)<=selected[3])){
+        for(const g of gifts.filter(g=>category==='rings'
+          ?isRingGift(g)
+          :!isRingGift(g)&&Number(g.unit_price)>=selected[2]&&Number(g.unit_price)<=selected[3])){
           const button=document.createElement('button');button.type='button';button.title=g.name||g.gift_key;
           const image=document.createElement('img');image.src=window.ErisGiftArt?.url(g.id||g.gift_key,g.image_url)||g.image_url;image.alt='';image.loading='lazy';image.className='dm-gift-art';
           const price=document.createElement('small');price.className='dm-gift-price';price.textContent=Number(g.unit_price).toLocaleString('tr-TR')+' Lidya';
@@ -1064,7 +1069,13 @@
             window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:{...message,gift_key:g.gift_key,quantity:count,sender_name:'Sen'}}));
             window.dispatchEvent(new Event('erischat:gift-updated'));
           }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}finally{sendingGift=false}};
-          const cell=document.createElement('div');cell.className='gift-preview-cell';cell.append(button);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';preview.setAttribute('aria-label',(g.name||g.gift_key)+' önizle');preview.title='Ücretsiz önizle';preview.onclick=()=>window.ErisGiftStage?.preview?.({gift_key:g.gift_key,quantity});cell.append(preview);grid.append(cell);
+          const cell=document.createElement('div');cell.className='gift-preview-cell';cell.append(button);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';preview.setAttribute('aria-label',(g.name||g.gift_key)+' önizle');preview.title='Ücretsiz önizle';preview.onclick=()=>{
+            if(/^(copper|silver|gold)-(?:[1-9]|1[0-9]|20)$/.test(String(g.gift_key))){
+              window.LidyaRingGiftStage?.preview?.({gift_key:g.gift_key});
+            }else{
+              window.ErisGiftStage?.preview?.({gift_key:g.gift_key,quantity});
+            }
+          };cell.append(preview);grid.append(cell);
         }
       }
       draw();
