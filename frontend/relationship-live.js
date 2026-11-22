@@ -110,6 +110,135 @@
     const level=Math.max(1,Math.min(12,Number(house.level)||1));
     const home=document.createElement('div');home.className='rel-home-dashboard';home.dataset.level=level;
     home.innerHTML='<section class="rel-home-hero"><div class="rel-home-heading"><div><small>BİRLİKTE BÜYÜYEN HİKÂYENİZ</small><h3>'+esc(house.married?'Evlilik evimiz':'Aile evimiz')+'</h3></div><span class="rel-day-chip">'+amount(house.days)+' gün</span></div><div class="rel-partners"></div><div class="rel-home-art"><img src="'+modernArt('house-'+level)+'" alt="Seviye '+level+' aile evi"><div class="rel-level-badge"><img src="'+modernArt('level-'+level)+'" alt=""><span>Seviye '+level+' / 12</span></div></div><div class="rel-home-controls"></div></section><section class="rel-growth"><div class="rel-section-head"><h3>'+(house.max_level?'Zirveye ulaştınız':'Bir sonraki adım')+'</h3><span>'+(house.max_level?'Seviye 12':'Seviye '+(level+1))+'</span></div><p class="rel-note">'+(house.max_level?'Ortak emeğinizle aile evinizin en yüksek seviyesine ulaştınız.':'Eksik malzemeleri tamamlayın; eviniz birlikte gelişsin.')+'</p><div class="rel-material-grid"></div><p class="rel-stock"></p></section><section class="rel-journey"><div class="rel-section-head"><h3>Seviye yolculuğunuz</h3><span>12 aşama</span></div><div class="rel-level-grid"></div></section>';
+
+    // LIDYA RELATIONSHIP CENTER V2
+    const summary = document.createElement('section');
+    summary.className = 'rel-v2-stats';
+    summary.setAttribute('aria-label', 'İlişki özeti');
+
+    const stats = [
+      ['👑', 'İlişki seviyesi', level + ' / 12'],
+      ['💞', 'Birliktelik', house.married ? 'Evli' : 'İlişki'],
+      ...(() => {
+        if (!house.started_at) return [];
+
+        const started = new Date(house.started_at);
+        const timestamp = started.getTime();
+
+        if (!Number.isFinite(timestamp)) return [];
+
+        const elapsed = Date.now() - timestamp;
+        if (elapsed < 0) return [];
+
+        const serverDays = Number(house.days);
+        const days = Number.isInteger(serverDays) && serverDays >= 1
+          ? serverDays
+          : Math.floor(elapsed / 86400000) + 1;
+
+        return [[
+          '❤️',
+          'Birlikte geçen süre',
+          days === 1 ? 'İlk günümüz' : days + ' gün'
+        ]];
+      })(),
+      ['💍', 'Yüzüğümüz', house.ring ? 'Aktif' : 'Henüz yok'],
+      ['🏰', 'Aile evimiz', level === 12 ? 'Zirvede' : 'Gelişiyor']
+    ];
+
+    for (const [symbol, label, value] of stats) {
+      const item = document.createElement('div');
+      item.className = 'rel-v2-stat';
+
+      const icon = document.createElement('span');
+      icon.className = 'rel-v2-stat-icon';
+      icon.textContent = symbol;
+
+      const detail = document.createElement('div');
+
+      const heading = document.createElement('small');
+      heading.textContent = label;
+
+      const result = document.createElement('strong');
+      result.textContent = value;
+
+      detail.append(heading, result);
+      item.append(icon, detail);
+      summary.append(item);
+    }
+
+    home.querySelector('.rel-home-controls')?.before(summary);
+
+
+    // LIDYA RELATIONSHIP V2.4
+    if (level === 12) {
+      const peak = document.createElement('section');
+      peak.className = 'rel-v2-peak';
+
+      const crown = document.createElement('div');
+      crown.className = 'rel-v2-peak-icon';
+      crown.textContent = '👑';
+
+      const title = document.createElement('h3');
+      title.textContent = 'Aşkın Zirvesi';
+
+      const description = document.createElement('p');
+      description.textContent =
+        'Birlikte 12. seviyeye ulaştınız! ' +
+        'Aile eviniz artık en yüksek seviyede.';
+
+      const badge = document.createElement('strong');
+      badge.className = 'rel-v2-peak-badge';
+      badge.textContent = 'Sonsuz Bağ · Seviye 12';
+
+      peak.append(crown, title, description, badge);
+
+      const statsSection = home.querySelector('.rel-v2-stats');
+      if (statsSection) statsSection.after(peak);
+    }
+
+
+    // LIDYA RELATIONSHIP V2.6 MEMORIES
+    if (house.started_at) {
+      const started = new Date(house.started_at);
+
+      if (Number.isFinite(started.getTime())) {
+        const memories = document.createElement('section');
+        memories.className = 'rel-v2-memories';
+
+        const title = document.createElement('h3');
+        title.textContent = '📖 Anılarımız';
+
+        const item = document.createElement('div');
+        item.className = 'rel-v2-memory-item';
+
+        const heart = document.createElement('span');
+        heart.textContent = '❤️';
+
+        const info = document.createElement('div');
+
+        const heading = document.createElement('strong');
+        heading.textContent = 'Hikâyemizin başladığı gün';
+
+        const date = document.createElement('small');
+        date.textContent = new Intl.DateTimeFormat('tr-TR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'Europe/Istanbul'
+        }).format(started);
+
+        info.append(heading, date);
+        item.append(heart, info);
+        memories.append(title, item);
+
+        const peak = home.querySelector('.rel-v2-peak');
+        const stats = home.querySelector('.rel-v2-stats');
+
+        if (peak) peak.after(memories);
+        else if (stats) stats.after(memories);
+      }
+    }
+
     for(const person of [house.male,house.female]){const card=document.createElement('div');card.className='rel-partner';card.append(avatar(person));const name=document.createElement('button');name.type='button';name.className='rel-partner-name';name.textContent=person.nickname;name.setAttribute('aria-label',person.nickname+' profilini aç');name.onclick=()=>{current.close();window.ErisFloatingProfile?.open?.(person.id)};window.ErisRoleBadges?.bind(name,person);card.append(name);home.querySelector('.rel-partners').append(card)}
     const controls=home.querySelector('.rel-home-controls');
     const button=(text,handler,disabled=false)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=handler;b.disabled=disabled;controls.append(b);return b};
