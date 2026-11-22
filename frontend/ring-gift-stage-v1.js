@@ -21,6 +21,7 @@
 
     const overlay = document.createElement('div');
     overlay.className = 'lidya-ring-cinema';
+    overlay.style.visibility = 'hidden';
     overlay.setAttribute('role', 'status');
     overlay.setAttribute('aria-label', 'Yüzük hediyesi');
 
@@ -39,7 +40,7 @@
 
     const fallback = document.createElement('div');
     fallback.className = 'lidya-ring-fallback';
-    fallback.hidden = false;
+    fallback.hidden = true;
 
     const heart = document.createElement('div');
     heart.textContent = '💗';
@@ -77,6 +78,7 @@
       if (finished) return;
       video.style.visibility = 'visible';
       fallback.hidden = true;
+      overlay.style.visibility = 'visible';
     };
 
     video.onended = () => {
@@ -85,13 +87,13 @@
     };
 
     video.onerror = () => {
-      video.hidden = true;
-      fallback.hidden = false;
+      clearTimeout(timer);
+      finish();
     };
 
     video.play().catch(() => {
-      video.hidden = true;
-      fallback.hidden = false;
+      clearTimeout(timer);
+      finish();
     });
   }
 
