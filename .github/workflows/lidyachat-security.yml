@@ -66,6 +66,10 @@ jobs:
       - run: python -m pip install -r backend/requirements.txt httpx2 pip-audit pytest
       - run: python tests/security_guard/test_integration.py
       - run: python tests/security_guard/test_pg_wallet.py
+      - name: Run LB V2 referral concurrency test
+        env:
+          LB_V2_TEST_CONFIRM: 'YES'
+        run: PYTHONPATH=. python -m pytest -q backend/tests/test_lb_referral_postgres_v2.py
       - name: Run BT referral PostgreSQL concurrency test
         env:
           V7_TEST_DATABASE_URL: ${{ env.SECURITY_TEST_DATABASE_URL }}

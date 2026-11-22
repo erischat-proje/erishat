@@ -1,3 +1,4 @@
+from backend.app.dealer_referrals import BTReferral, LBReferral
 """LidyaChat Bayi V6: isolated SQLite transaction regression tests.
 
 Run from repository root: python -m unittest discover -s backend/tests -p 'test_dealer_security_v6.py' -v
@@ -39,7 +40,7 @@ class DealerSecurityTests(unittest.TestCase):
         Base.metadata.create_all(
             self.engine,
             tables=[User.__table__, AdminRole.__table__, dealers.DealerInventory.__table__, dealers.DealerDesignation.__table__,
-                    dealers.DealerTransfer.__table__, dealers.DealerStockGrant.__table__],
+                    dealers.DealerTransfer.__table__, dealers.DealerStockGrant.__table__, BTReferral.__table__, LBReferral.__table__],
         )
         self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.db = self.Session()
@@ -50,6 +51,29 @@ class DealerSecurityTests(unittest.TestCase):
         self.db.add_all([
             dealers.DealerInventory(user_id=self.dealer.id, stock=0, active=True),
             AdminRole(user_id=self.da.id, role="DA"),
+        ])
+        self.db.commit()
+
+        # BT_V2_TEST_ACTIVATION: create a valid BT -> LB relationship.
+        from datetime import datetime, timezone
+        bt = self.user("bt_v2", "999999001")
+        self.db.add_all([
+            dealers.DealerInventory(
+                user_id=bt.id, stock=0, active=True
+            ),
+            dealers.DealerDesignation(
+                user_id=bt.id, kind="support",
+                assigned_by=self.da.id
+            ),
+            BTReferral(
+                user_id=bt.id,
+                code="1234567890123456"
+            ),
+            LBReferral(
+                user_id=self.dealer.id,
+                bt_user_id=bt.id,
+                activated_at=datetime.now(timezone.utc)
+            ),
         ])
         self.db.commit()
 

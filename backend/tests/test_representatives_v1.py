@@ -8,6 +8,7 @@ from backend.app.db import Base
 from backend.app.models import User
 from backend.app.admin_models import AdminRole
 from backend.app import dealer_routes as d
+from backend.app.dealer_referrals import LBReferral
 from backend.app.dealer_referrals import BTReferral
 
 
@@ -28,7 +29,7 @@ class RepresentativeV1Tests(unittest.TestCase):
             d.DealerDesignation.__table__,
             d.DealerTransfer.__table__,
             d.DealerStockGrant.__table__,
-            BTReferral.__table__])
+            BTReferral.__table__, LBReferral.__table__])
         self.db = sessionmaker(bind=self.engine)()
         self.admin = User(id="admin", public_id="900001",
                           _nickname="Admin", is_active=True)
