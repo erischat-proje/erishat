@@ -29,12 +29,17 @@
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
+    video.controls = false;
+    video.disablePictureInPicture = true;
+    video.setAttribute('disableRemotePlayback', '');
+    video.removeAttribute('controls');
+    video.style.visibility = 'hidden';
     video.preload = 'auto';
     video.setAttribute('webkit-playsinline', '');
 
     const fallback = document.createElement('div');
     fallback.className = 'lidya-ring-fallback';
-    fallback.hidden = true;
+    fallback.hidden = false;
 
     const heart = document.createElement('div');
     heart.textContent = '💗';
@@ -67,6 +72,12 @@
     };
 
     const timer = setTimeout(finish, 5500);
+
+    video.onplaying = () => {
+      if (finished) return;
+      video.style.visibility = 'visible';
+      fallback.hidden = true;
+    };
 
     video.onended = () => {
       clearTimeout(timer);
@@ -162,6 +173,15 @@
       width:100%;
       height:100%;
       object-fit:contain;
+      pointer-events:none;
+    }
+    .lidya-ring-cinema video::-webkit-media-controls,
+    .lidya-ring-cinema video::-webkit-media-controls-panel,
+    .lidya-ring-cinema video::-webkit-media-controls-play-button,
+    .lidya-ring-cinema video::-webkit-media-controls-start-playback-button {
+      display:none!important;
+      opacity:0!important;
+      -webkit-appearance:none!important;
     }
     .lidya-ring-caption {
       position:absolute;
