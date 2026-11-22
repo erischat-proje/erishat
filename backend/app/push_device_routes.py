@@ -58,24 +58,34 @@ def register_auth(current_user):
         session_hash = active_session(db, authorization, user.id)
         hashed = token_hash(payload.token)
 
-        device = db.get(PushDevice, hashed)
-
-        if device is None:
-            device = PushDevice(
-                token_hash=hashed,
-                user_id=user.id,
-                token=payload.token,
-                session_hash=session_hash,
-            )
-            db.add(device)
+        dialect = db.get_bind().dialect.name
+        if dialect == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert
+        elif dialect == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert
         else:
-            # Same physical token must never belong
-            # to two accounts simultaneously.
-            device.user_id = user.id
-            device.token = payload.token
-            device.session_hash = session_hash
-            device.updated_at = datetime.now(timezone.utc)
+            raise HTTPException(
+                503, "Push kaydi bu veritabaninda desteklenmiyor"
+            )
 
+        stmt = insert(PushDevice).values(
+            token_hash=hashed,
+            user_id=user.id,
+            token=payload.token,
+            session_hash=session_hash,
+            updated_at=datetime.now(timezone.utc),
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[PushDevice.token_hash],
+            set_={
+                "user_id": stmt.excluded.user_id,
+                "token": stmt.excluded.token,
+                "session_hash": stmt.excluded.session_hash,
+                "updated_at": stmt.excluded.updated_at,
+            },
+        )
+
+        db.execute(stmt)
         db.commit()
 
         return {"registered": True}
