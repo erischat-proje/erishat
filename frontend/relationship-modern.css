@@ -764,3 +764,66 @@ html body .rel-home-dashboard
     font-size: 12px !important;
   }
 }
+
+/* LIDYA FRAME FIX V3.3 */
+
+/* Avatar konumlandirma */
+html body .rel-home-dashboard
+.rel-partner .rel-avatar {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 76px !important;
+  height: 76px !important;
+  min-width: 76px !important;
+  min-height: 76px !important;
+  flex: 0 0 76px !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  transform: none !important;
+  overflow: visible !important;
+}
+
+/* Profil fotografi */
+html body .rel-home-dashboard
+.rel-partner .rel-avatar > img:first-child:not(.rel-frame) {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+/* Cerceveyi avatarin tam merkezine sabitle */
+html body .rel-home-dashboard
+.rel-partner .rel-avatar > img.rel-frame {
+  position: absolute !important;
+  inset: 0 !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 114% !important;
+  height: 114% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  object-fit: contain !important;
+  border: none !important;
+  border-radius: 0 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+@media (max-width: 380px) {
+  html body .rel-home-dashboard
+  .rel-partner .rel-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    flex-basis: 64px !important;
+  }
+}
