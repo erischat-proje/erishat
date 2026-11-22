@@ -1263,8 +1263,9 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
             unlocked = db.scalar(select(DirectMessageUnlock.id).where(DirectMessageUnlock.owner_id == recipient_id,
                 DirectMessageUnlock.sender_id == user.id))
             if restriction and restriction.enabled and not unlocked:
-                gift_price = GIFT_CATALOG.get(restriction.gift_key, 0)
-                raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {restriction.gift_key} ({gift_price} Lidya) göndermelisin.")
+                required_key = _active_restriction_gift(restriction.gift_key)
+                gift_price = GIFT_CATALOG[required_key]
+                raise HTTPException(status_code=402, detail=f"Bu kullanıcı mesajları hediye ile kısıtlamış. Devam etmek için {required_key} ({gift_price} Lidya) göndermelisin.")
     first_private_request = False if db.get(MessageGroup, conversation_id) else _dm_request_gate(db, user.id, conversation_id, first_text=True)
     try:
         message = message_tools.create_text(db, conversation_id, user.id, payload.text, payload.reply_to_id)
@@ -2067,11 +2068,36 @@ async def unpin_message(conversation_id: str, message_id: int, x_eris_dm_vault: 
     return await message_pins.change(db, conversation_id, message_id, user, x_eris_dm_vault, False)
 
 
+def _active_restriction_gift(gift_key: str) -> str:
+    """Eski DM kilit hediyelerini aktif kataloğa uyumlu hale getir."""
+    if gift_key in GIFT_CATALOG:
+        return gift_key
+
+    old_price = GIFT_META.get(gift_key, {}).get("price")
+    if old_price is None:
+        return next(iter(GIFT_CATALOG))
+
+    active_normal = [
+        gift for gift in GIFT_ITEMS
+        if gift["name"] in GIFT_CATALOG
+    ]
+    affordable = [
+        gift for gift in active_normal
+        if gift["price"] >= old_price
+    ]
+    candidates = affordable or active_normal
+    return min(
+        candidates,
+        key=lambda gift: (abs(gift["price"] - old_price), gift["id"])
+    )["name"]
+
+
 @app.get("/v1/me/message-restriction")
 def get_message_restriction(db: Session = Depends(get_db), user: User = Depends(current_user)):
     row = db.get(DirectMessageRestriction, user.id)
-    return {"enabled": bool(row and row.enabled), "gift_key": row.gift_key if row else next(iter(GIFT_CATALOG)),
-        "gift_price": GIFT_CATALOG.get(row.gift_key, 0) if row else GIFT_CATALOG[next(iter(GIFT_CATALOG))]}
+    key = _active_restriction_gift(row.gift_key) if row else next(iter(GIFT_CATALOG))
+    return {"enabled": bool(row and row.enabled), "gift_key": key,
+        "gift_price": GIFT_CATALOG[key]}
 
 
 @app.put("/v1/me/message-restriction")
@@ -2092,8 +2118,9 @@ def public_message_restriction(user_id: str, db: Session = Depends(get_db), user
     target = db.get(User, user_id)
     if not target: raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
     row = db.get(DirectMessageRestriction, target.id)
-    return {"enabled": bool(row and row.enabled), "gift_key": row.gift_key if row else None,
-        "gift_price": GIFT_CATALOG.get(row.gift_key, 0) if row else 0,
+    key = _active_restriction_gift(row.gift_key) if row else None
+    return {"enabled": bool(row and row.enabled), "gift_key": key,
+        "gift_price": GIFT_CATALOG[key] if key else 0,
         "unlocked": bool(db.scalar(select(DirectMessageUnlock.id).where(DirectMessageUnlock.owner_id == target.id, DirectMessageUnlock.sender_id == user.id)))}
 
 
@@ -2153,8 +2180,10 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
     if price is None: raise HTTPException(status_code=400, detail="Katalogda olmayan hediye")
     restriction = db.get(DirectMessageRestriction, recipient_id)
     unlock = db.scalar(select(DirectMessageUnlock).where(DirectMessageUnlock.owner_id == recipient_id, DirectMessageUnlock.sender_id == user.id))
-    if restriction and restriction.enabled and not unlock and gift_key != restriction.gift_key:
-        raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {restriction.gift_key} hediyesi gerekli")
+    if restriction and restriction.enabled and not unlock:
+        required_key = _active_restriction_gift(restriction.gift_key)
+        if gift_key != required_key:
+            raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {required_key} hediyesi gerekli")
     total_price = price * quantity
     from .gift_payout import gift_payout
     receiver_amount = gift_payout(total_price)
