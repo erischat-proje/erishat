@@ -811,8 +811,14 @@ def register_auth(current_user):
         rows = db.execute(stmt).all()
         if public_id and not rows:
             raise HTTPException(404, "Bayi bulunamadı")
-        items = [audit_inventory(db, inv, person, DealerStockGrant, DealerTransfer)
-                 for inv, person in rows]
+        items = []
+        for inv, person in rows:
+            record = audit_inventory(
+                db, inv, person,
+                DealerStockGrant, DealerTransfer
+            )
+            record["kind"] = designation(db, person.id)
+            items.append(record)
         return {"items": items, "review_count": sum(x["status"] == "REVIEW" for x in items),
                 "read_only": True, "note": "Sapma veya hacim uyarısı tek başına usulsüzlük kanıtı değildir."}
 
