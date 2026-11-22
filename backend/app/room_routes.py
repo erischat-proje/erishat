@@ -61,6 +61,39 @@ GIFT_ITEMS = json.loads(Path(__file__).with_name("gift_catalog.json").read_text(
 GIFT_META = {gift["name"]: gift for gift in GIFT_ITEMS}
 GIFT_CATALOG = {gift["name"]: gift["price"] for gift in GIFT_ITEMS}
 
+# LidyaChat yüzükleri: oda ve DM için ortak hediye kataloğu.
+# İlişki/evlilik satın alma işlemlerinden bağımsızdır.
+RING_GIFT_PRICES = {
+    "copper": 1200,
+    "silver": 2100,
+    "gold": 2800,
+}
+RING_GIFT_NAMES = {
+    "copper": "Bakır",
+    "silver": "Gümüş",
+    "gold": "Altın",
+}
+
+for _metal, _price in RING_GIFT_PRICES.items():
+    for _number in range(1, 21):
+        _ring_key = f"{_metal}-{_number}"
+        if _ring_key in GIFT_CATALOG:
+            raise RuntimeError(
+                f"Yüzük hediye anahtarı çakışıyor: {_ring_key}"
+            )
+        GIFT_CATALOG[_ring_key] = _price
+        GIFT_META[_ring_key] = {
+            "id": _ring_key,
+            "gift_key": _ring_key,
+            "name": f"{RING_GIFT_NAMES[_metal]} Yüzük {_number}",
+            "price": _price,
+            "image_url": f"/relationship-assets/{_ring_key}.png",
+            "tier": 1,
+            "sound": "",
+            "animation": "LidyaChat yüzük gönderim animasyonu",
+        }
+
+
 def gift_visual(key: str) -> dict:
     gift = GIFT_META.get(key, {})
     return {"id": gift.get("id"), "gift_id": gift.get("id"), "name": gift.get("name", key), "image_url": gift.get("image_url"),
@@ -1022,6 +1055,13 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + payouts[recipient_id]))
         from .vip_spending import record_spend
         record_spend(db,user.id,total,"room_gift")
+        # Bir gönderim, bir animasyon kimliği.
+        # Birden fazla alıcıya yayınlanan yüzükler aynı kimliği taşır.
+        ring_delivery_id = (
+            uuid4().hex
+            if payload.gift_key.partition("-")[0] in RING_GIFT_PRICES
+            else None
+        )
         events=[]
         for recipient_id in sorted(recipient_ids):
             event = RoomGiftEvent(room_id=room.id, sender_id=user.id, recipient_id=recipient_id,
@@ -1040,6 +1080,8 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,
                 "sender_id":user.id,"recipient_id":event.recipient_id,"target":payload.target,
                 "vip_benefits": gift_style(db,user.id),
+                **({"ring_delivery_id": ring_delivery_id}
+                   if ring_delivery_id else {}),
                 "sender_nickname":user.nickname,"recipient_nickname":recipients.get(event.recipient_id,"Kullanıcı"),
                 "gift_key":event.gift_key,"quantity":event.quantity,"total_price":event.total_price,
                 "recipient_amount":event.recipient_amount,"created_at":event.created_at.isoformat() if event.created_at else None,
