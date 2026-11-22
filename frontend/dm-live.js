@@ -1066,7 +1066,7 @@
             const message=await api().sendMessageGift(conversation,g.gift_key,count);
             const chatBody=document.querySelector('#chat .chatBody');if(conversation===activeConversationId&&chatBody)appendMessageOnce(chatBody,message,true);
             modal.remove();loadConversations();
-            window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:{...message,gift_key:g.gift_key,quantity:count,sender_name:'Sen'}}));
+            window.dispatchEvent(new CustomEvent('erischat:dm-gift',{detail:{...message,gift_key:g.gift_key,quantity:count,sender_name:'Sen',recipient_name:document.querySelector('#chat .chatHead b')?.textContent?.trim()||'Alıcı'}}));
             window.dispatchEvent(new Event('erischat:gift-updated'));
           }catch(e){button.disabled=false;window.toast?.(e.message||'Hediye gönderilemedi.')}finally{sendingGift=false}};
           const cell=document.createElement('div');cell.className='gift-preview-cell';cell.append(button);const preview=document.createElement('button');preview.type='button';preview.className='gift-preview-button';preview.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';preview.setAttribute('aria-label',(g.name||g.gift_key)+' önizle');preview.title='Ücretsiz önizle';preview.onclick=()=>{
