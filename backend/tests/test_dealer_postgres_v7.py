@@ -5,6 +5,9 @@ DATABASE whose name contains lidya_v7_test. Never connects to Railway or live DB
 Creates and removes an isolated PostgreSQL schema per test run.
 """
 import os
+import base64
+from io import BytesIO
+from PIL import Image
 import sys
 import uuid
 import unittest
@@ -37,6 +40,15 @@ def isolated_database_url():
     return raw
 
 
+def make_test_evidence():
+    buffer = BytesIO()
+    Image.new("RGB", (8, 8), "white").save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+TEST_EVIDENCE = make_test_evidence()
+
+
 class DealerPostgresV7(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -47,12 +59,13 @@ class DealerPostgresV7(unittest.TestCase):
         from backend.app.models import User
         from backend.app.admin_models import AdminRole
         from backend.app.dealer_routes import (
-            DealerInventory, DealerDesignation, DealerTransfer, DealerStockGrant,
+            DealerInventory, DealerDesignation, DealerTransfer, DealerTransferEvidence, DealerStockGrant,
             TransferBody, StockBody, register_auth,
         )
         cls.User, cls.AdminRole = User, AdminRole
         cls.DealerInventory, cls.DealerTransfer, cls.DealerStockGrant = DealerInventory, DealerTransfer, DealerStockGrant
         cls.TransferBody, cls.StockBody = TransferBody, StockBody
+        cls.DealerTransferEvidence = DealerTransferEvidence
         cls.schema = 'v7_' + uuid.uuid4().hex[:16]
         cls.admin_engine = create_engine(raw, pool_pre_ping=True)
         with cls.admin_engine.begin() as conn:
@@ -64,7 +77,7 @@ class DealerPostgresV7(unittest.TestCase):
                 cursor.execute('SET search_path TO ' + cls.schema + ', public')
             dbapi_connection.commit()
         cls.Session = sessionmaker(cls.engine, autoflush=False, expire_on_commit=False)
-        tables = [User.__table__, AdminRole.__table__, DealerInventory.__table__, DealerDesignation.__table__, DealerTransfer.__table__, DealerStockGrant.__table__]
+        tables = [User.__table__, AdminRole.__table__, DealerInventory.__table__, DealerDesignation.__table__, DealerTransfer.__table__, DealerTransferEvidence.__table__, DealerStockGrant.__table__]
         try:
             Base.metadata.create_all(cls.engine, tables=tables)
             router = register_auth(lambda: None)
@@ -108,6 +121,18 @@ class DealerPostgresV7(unittest.TestCase):
             grants = db.scalar(select(func.count()).select_from(self.DealerStockGrant).where(self.DealerStockGrant.dealer_id == self.dealer_id))
             return stock, lidya, transfers, grants
 
+    def evidence_count(self):
+        with self.Session() as db:
+            return db.scalar(
+                select(func.count())
+                .select_from(self.DealerTransferEvidence)
+                .join(
+                    self.DealerTransfer,
+                    self.DealerTransferEvidence.transfer_id == self.DealerTransfer.id
+                )
+                .where(self.DealerTransfer.dealer_id == self.dealer_id)
+            )
+
     def invoke(self, path, body, user_id):
         with self.Session() as db:
             user = db.get(self.User, user_id)
@@ -126,7 +151,7 @@ class DealerPostgresV7(unittest.TestCase):
             return list(pool.map(one, requests))
 
     def transfer(self, amount, key):
-        return ('/v1/dealers/transfer', self.TransferBody(recipient_public_id=self.recipient_public, amount=amount, request_key=key), self.dealer_id)
+        return ('/v1/dealers/transfer', self.TransferBody(recipient_public_id=self.recipient_public, amount=amount, request_key=key, evidence=TEST_EVIDENCE), self.dealer_id)
 
     def grant(self, amount, key):
         return ('/v1/dealers/admin/stock', self.StockBody(public_id=self.dealer_public, amount=amount, request_key=key), self.admin_id)
@@ -136,6 +161,7 @@ class DealerPostgresV7(unittest.TestCase):
         self.assertEqual(sum('transfer_id' in x for x in result), 1, result)
         self.assertEqual(sum(x.get('error') == 409 for x in result), 1, result)
         self.assertEqual(self.snapshot(), (30, 70, 1, 0))
+        self.assertEqual(self.evidence_count(), 1)
 
     def test_02_parallel_same_transfer_key_one_credit(self):
         key = uuid.uuid4().hex
@@ -143,6 +169,7 @@ class DealerPostgresV7(unittest.TestCase):
         self.assertEqual(sum('transfer_id' in x for x in result), 2, result)
         self.assertEqual(sum(x.get('replayed') is True for x in result), 1, result)
         self.assertEqual(self.snapshot(), (40, 60, 1, 0))
+        self.assertEqual(self.evidence_count(), 1)
 
     def test_03_parallel_grants_same_key_one_grant(self):
         key = uuid.uuid4().hex
@@ -165,6 +192,7 @@ class DealerPostgresV7(unittest.TestCase):
         self.assertEqual(result.get('error'), 409, result)
         stock, lidya, transfers, grants = self.snapshot()
         self.assertEqual((stock, lidya, transfers, grants), (100, 9_223_372_036_854_775_800, 0, 0))
+        self.assertEqual(self.evidence_count(), 0)
 
 
 if __name__ == '__main__':

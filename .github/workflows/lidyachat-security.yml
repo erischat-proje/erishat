@@ -75,6 +75,20 @@ jobs:
           V7_TEST_DATABASE_URL: ${{ env.SECURITY_TEST_DATABASE_URL }}
           V7_ISOLATED_CONFIRM: 'YES'
         run: PYTHONPATH=backend python -m pytest -q backend/tests/test_bt_reference_postgres_v1.py
+      - name: Prepare isolated V7 PostgreSQL database
+        env:
+          PGPASSWORD: isolated_test_only
+        run: >-
+          psql -h 127.0.0.1 -U security_test
+          -d lidyachat_security_test
+          -c 'CREATE DATABASE lidya_v7_test'
+
+      - name: Run dealer V7 PostgreSQL concurrency and receipt tests
+        env:
+          V7_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidya_v7_test
+          V7_ISOLATED_CONFIRM: 'YES'
+        run: PYTHONPATH=. python -m pytest -q backend/tests/test_dealer_postgres_v7.py
+
       - name: Run LidyaChat V4 dealer and receipt security tests
         run: >-
           PYTHONPATH=. python -m pytest -q
