@@ -58,6 +58,7 @@ class DealerPostgresV7(unittest.TestCase):
         from backend.app.db import Base
         from backend.app.models import User
         from backend.app.admin_models import AdminRole
+        from backend.app.dealer_referrals import LBReferral
         from backend.app.dealer_routes import (
             DealerInventory, DealerDesignation, DealerTransfer, DealerTransferEvidence, DealerStockGrant,
             TransferBody, StockBody, register_auth,
@@ -77,7 +78,7 @@ class DealerPostgresV7(unittest.TestCase):
                 cursor.execute('SET search_path TO ' + cls.schema + ', public')
             dbapi_connection.commit()
         cls.Session = sessionmaker(cls.engine, autoflush=False, expire_on_commit=False)
-        tables = [User.__table__, AdminRole.__table__, DealerInventory.__table__, DealerDesignation.__table__, DealerTransfer.__table__, DealerTransferEvidence.__table__, DealerStockGrant.__table__]
+        tables = [User.__table__, AdminRole.__table__, DealerInventory.__table__, DealerDesignation.__table__, DealerTransfer.__table__, DealerTransferEvidence.__table__, DealerStockGrant.__table__, LBReferral.__table__]
         try:
             Base.metadata.create_all(cls.engine, tables=tables)
             router = register_auth(lambda: None)
