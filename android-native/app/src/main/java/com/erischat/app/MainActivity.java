@@ -542,10 +542,32 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
+        if (webView == null) {
             super.onBackPressed();
+            return;
         }
+        if (!trustedPage()) {
+            if (webView.canGoBack()) webView.goBack();
+            else confirmAppExit();
+            return;
+        }
+        webView.evaluateJavascript(
+            "(function(){try{return !!(window.LidyaAndroidBack && window.LidyaAndroidBack.handle());}catch(e){return false;}})()",
+            result -> {
+                if ("true".equals(result)) return;
+                if (isFinishing() || isDestroyed()) return;
+                confirmAppExit();
+            }
+        );
+    }
+
+    private void confirmAppExit() {
+        if (isFinishing() || isDestroyed()) return;
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("LidyaChat")
+            .setMessage("Uygulamadan çıkmak istiyor musunuz?")
+            .setNegativeButton("Vazgeç", (dialog, which) -> dialog.dismiss())
+            .setPositiveButton("Çıkış", (dialog, which) -> finish())
+            .show();
     }
 }
