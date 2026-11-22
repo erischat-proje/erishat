@@ -59,7 +59,23 @@ LEVELS = {1: {"capacity": 35, "moderators": 2, "seats": 12, "required_spend": 0}
 GIFT_RECIPIENT_PERCENT = 70
 GIFT_ITEMS = json.loads(Path(__file__).with_name("gift_catalog.json").read_text(encoding="utf-8"))
 GIFT_META = {gift["name"]: gift for gift in GIFT_ITEMS}
-GIFT_CATALOG = {gift["name"]: gift["price"] for gift in GIFT_ITEMS}
+# Satış kataloğu 90 seçilmiş hediyeden oluşur.
+# GIFT_META tüm eski hediyeleri geçmiş kayıtları için korur.
+ACTIVE_GIFT_IDS = set(json.loads(
+    Path(__file__).with_name("gift_active_ids.json").read_text(
+        encoding="utf-8"
+    )
+))
+if len(ACTIVE_GIFT_IDS) != 90 or not ACTIVE_GIFT_IDS <= {
+    gift["id"] for gift in GIFT_ITEMS
+}:
+    raise RuntimeError("Aktif hediye kataloğu geçersiz")
+
+GIFT_CATALOG = {
+    gift["name"]: gift["price"]
+    for gift in GIFT_ITEMS
+    if gift["id"] in ACTIVE_GIFT_IDS
+}
 
 # LidyaChat yüzükleri: oda ve DM için ortak hediye kataloğu.
 # İlişki/evlilik satın alma işlemlerinden bağımsızdır.
