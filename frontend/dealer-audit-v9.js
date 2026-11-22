@@ -25,7 +25,7 @@ function open(){document.querySelector('.lbv9-mask')?.remove();const serial=++re
   stat('Listelenen bayi',items.length);stat('İnceleme işaretli',items.filter(x=>x.status==='REVIEW').length);stat('Stok sapması',items.filter(x=>Number(x.difference)!==0).length);
   if(!items.length){results.append(el('p','lbv9-empty','Görüntülenecek bayi kaydı bulunamadı.'));return}
   for(const x of items){const card=el('article','lbv9-dealer'),head=el('div','lbv9-dealer-head'),name=el('div','lbv9-person'),badge=el('span',x.status==='REVIEW'?'lbv9-review':'lbv9-ok',x.status==='REVIEW'?'İnceleme gerekli':'Kayıt uyumlu');
-   name.append(el('strong','',x.public_id||'—'),el('small','',x.active?'Aktif bayi':'Pasif bayi'));head.append(name,badge);card.append(head);
+   name.append(el('strong','',x.public_id||'—'),el('small','',x.kind==='support'?'Bayi Temsilcisi':x.kind==='dealer'?'Lidya Bayisi':'Diğer bayi yetkisi'));head.append(name,badge);card.append(head);
    const values=el('div','lbv9-values');addField(values,'Toplam tahsis',qty(x.granted));addField(values,'Toplam aktarım',qty(x.transferred));addField(values,'Mevcut stok',qty(x.current_stock));addField(values,'Beklenen stok',qty(x.expected_stock));addField(values,'Fark',qty(x.difference));addField(values,'Son 1 saat',String(x.hourly_transfer_count)+' işlem · '+qty(x.hourly_transfer_amount));card.append(values);
    if(Array.isArray(x.review_flags)&&x.review_flags.length){const flags=el('div','lbv9-flags');for(const f of x.review_flags)flags.append(el('span','',flagLabels[f]||'İnceleme: '+f));card.append(flags)}results.append(card)
   }

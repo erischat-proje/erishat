@@ -525,7 +525,7 @@ async function openAdminLookup(){
  listButton.onclick=async()=>{listButton.disabled=true;list.textContent='Liste yükleniyor…';
   try{const d=await api('/admin/list?limit=100');list.replaceChildren();
    if(!d.items.length)list.textContent='Henüz bayi kaydı yok';
-   for(const item of d.items){const b=elt('button','lb-list-item',item.public_id+' · '+item.nickname+' · '+(item.active?'Aktif':'Pasif')+' · '+amount(item.stock));b.type='button';b.onclick=()=>{id.value=item.public_id;lookup(item.public_id)};list.append(b)}
+   for(const item of d.items){const b=elt('button','lb-list-item',item.public_id+' · '+(item.kind==='support'?'BT':item.kind==='dealer'?'LB':'Diğer')+' · '+item.nickname+' · '+(item.active?'Aktif':'Pasif')+' · '+amount(item.stock));b.type='button';b.onclick=()=>{id.value=item.public_id;lookup(item.public_id)};list.append(b)}
   }catch(e){list.textContent=e.message||'Liste alınamadı'}finally{listButton.disabled=false;}};
 }
 window.LidyaDealer={openAdmin,openDealer,openAdminLookup,openRevoke,openRepresentatives};
