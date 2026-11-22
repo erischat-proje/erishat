@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
 
     private static final int GOOGLE_SIGN_IN = 9001;
     private static final int MICROPHONE_PERMISSION = 9002;
+    private static final int NOTIFICATION_PERMISSION = 9006;
     private PermissionRequest pendingMicrophone;
     private boolean microphoneDialogOpen;
     private volatile int pageGeneration;
@@ -204,6 +205,22 @@ public class MainActivity extends Activity {
         });
 
         webView.loadUrl(ERISCHAT_URL);
+        requestLidyaNotificationPermission();
+    }
+
+
+    private void requestLidyaNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                new String[]{
+                    Manifest.permission.POST_NOTIFICATIONS
+                },
+                NOTIFICATION_PERMISSION
+            );
+        }
     }
 
     private void applyScreenAwake() {
