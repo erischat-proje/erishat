@@ -249,6 +249,41 @@ public class MainActivity extends Activity {
     public class AndroidBridge {
 
         @JavascriptInterface
+        public void setActivePushUser(String userId) {
+            runOnUiThread(() -> {
+                if (!trustedPage() || isFinishing() || isDestroyed()) {
+                    return;
+                }
+
+                String next = userId == null ? "" : userId;
+                if (next.length() > 128
+                        || (!next.isEmpty()
+                        && !next.matches("[A-Za-z0-9_-]+"))) {
+                    return;
+                }
+
+                android.content.SharedPreferences preferences =
+                    getSharedPreferences("lidya_push", MODE_PRIVATE);
+
+                String previous = preferences.getString(
+                    "active_push_user", ""
+                );
+
+                if (!previous.equals(next)) {
+                    preferences.edit()
+                        .putString("active_push_user", next)
+                        .apply();
+
+                    // Clear notifications from the previous account.
+                    android.app.NotificationManager manager =
+                        (android.app.NotificationManager)
+                        getSystemService(NOTIFICATION_SERVICE);
+                    if (manager != null) manager.cancelAll();
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void requestPushToken() {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed

@@ -38,7 +38,18 @@ public class LidyaMessagingService extends FirebaseMessagingService {
         if (message.getNotification() != null) return;
 
         String kind = message.getData().get("kind");
-        if (kind == null || kind.isEmpty()) return;
+        if (!"dm_message".equals(kind)) return;
+
+        String recipientId = message.getData().get("recipient_id");
+        String activeUser = getSharedPreferences(
+            "lidya_push", MODE_PRIVATE
+        ).getString("active_push_user", "");
+
+        // Never display pushes belonging to another account.
+        // Also fail closed when no account is active.
+        if (recipientId == null || recipientId.isEmpty()
+                || activeUser.isEmpty()
+                || !recipientId.equals(activeUser)) return;
 
         showNotification();
     }

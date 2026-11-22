@@ -91,6 +91,7 @@ def send_dm_push(db, user_id, conversation_id):
                     "token": token,
                     "data": {
                         "kind": "dm_message",
+                        "recipient_id": str(user_id),
                         "conversation_id": str(conversation_id),
                     },
                     "android": {"priority": "high"},

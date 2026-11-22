@@ -71,6 +71,7 @@
       rememberAccount(window.ErisAuth.user);
       authGeneration++;
       lidyaPushTransitioning = true;
+      lidyaSetNativePushUser('');
       const jobs=[];
       try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
       try{jobs.push(Promise.resolve(window.ErisCalls?.closeForLogout?.()).catch(()=>{}));}catch(_){}
@@ -101,6 +102,8 @@
   function cancelAccountLogin(){authGeneration++;closeGate();}
   async function prepareAccountLoginTransition() {
     if(!document.getElementById('erisGoogleGate')?.closest('#erisAccountPicker'))return;
+    lidyaPushTransitioning = true;
+    lidyaSetNativePushUser('');
     rememberAccount(window.ErisAuth.user);
     const jobs=[];
     try{jobs.push(Promise.resolve(window.closeRealRoom?.({switching:true})).catch(()=>{}));}catch(_){}
@@ -604,6 +607,7 @@ async function registerAnonymous() {
     logoutPending=true;
     authGeneration++;
     lidyaPushTransitioning = true;
+    lidyaSetNativePushUser('');
     const token=getToken();rememberAccount(window.ErisAuth.user);
     if(window.ErisAuth.user?.id)saveSession(window.ErisAuth.user.id,null);
     // Teardown begins while the old token is still available to room/call APIs.
@@ -634,6 +638,15 @@ async function registerAnonymous() {
     location.reload();
   }
 
+
+  // Native account identity prevents cross-account notifications.
+  function lidyaSetNativePushUser(userId) {
+    try {
+      window.ErisChatAndroid?.setActivePushUser?.(
+        String(userId || '')
+      );
+    } catch (_) {}
+  }
 
   // LidyaChat Firebase V2 - Android push device lifecycle.
   let lidyaPushToken = '';
@@ -721,7 +734,15 @@ async function registerAnonymous() {
 
   window.addEventListener('erischat:auth', event => {
     if (event.detail?.state === 'ready') {
+      lidyaPushTransitioning = false;
+      lidyaSetNativePushUser(event.detail?.user?.id || '');
       lidyaRequestPushToken();
+    } else if (
+      event.detail?.state === 'logged_out' ||
+      event.detail?.state === 'login_required' ||
+      event.detail?.state === 'error'
+    ) {
+      lidyaSetNativePushUser('');
     }
   });
 

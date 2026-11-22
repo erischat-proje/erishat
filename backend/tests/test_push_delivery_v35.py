@@ -59,6 +59,7 @@ def test_fcm_http_v1_request(monkeypatch):
     message = kwargs["json"]["message"]
     assert message["token"] == "test-device-token"
     assert message["data"]["kind"] == "dm_message"
+    assert message["data"]["recipient_id"] == "user-a"
     assert message["data"]["conversation_id"] == "conversation-123"
 
     # Never expose private DM contents in the push payload.
