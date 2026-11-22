@@ -75,6 +75,16 @@ jobs:
           V7_TEST_DATABASE_URL: ${{ env.SECURITY_TEST_DATABASE_URL }}
           V7_ISOLATED_CONFIRM: 'YES'
         run: PYTHONPATH=backend python -m pytest -q backend/tests/test_bt_reference_postgres_v1.py
+      - name: Run LidyaChat V4 dealer and receipt security tests
+        run: >-
+          PYTHONPATH=. python -m pytest -q
+          backend/tests/test_dealer_security_v6.py
+          backend/tests/test_dealer_representatives_roster_v1.py
+          backend/tests/test_dealer_representatives_v2.py
+          backend/tests/test_dealer_evidence_v3.py
+          backend/tests/test_dealer_evidence_transfer_v4.py
+          backend/tests/test_bt_referrals_v1.py
+          backend/tests/test_representatives_v1.py
       - run: python tests/security_guard/test_transport.py
       - run: python tests/security_guard/test_counters.py
       - run: python tests/security_guard/test_email_policy.py
