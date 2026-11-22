@@ -5,6 +5,7 @@ DATABASE whose name contains lidya_v7_test. Never connects to Railway or live DB
 Creates and removes an isolated PostgreSQL schema per test run.
 """
 import os
+from datetime import datetime, timezone
 import base64
 from io import BytesIO
 from PIL import Image
@@ -67,6 +68,7 @@ class DealerPostgresV7(unittest.TestCase):
         cls.DealerInventory, cls.DealerTransfer, cls.DealerStockGrant = DealerInventory, DealerTransfer, DealerStockGrant
         cls.TransferBody, cls.StockBody = TransferBody, StockBody
         cls.DealerTransferEvidence = DealerTransferEvidence
+        cls.LBReferral = LBReferral
         cls.schema = 'v7_' + uuid.uuid4().hex[:16]
         cls.admin_engine = create_engine(raw, pool_pre_ping=True)
         with cls.admin_engine.begin() as conn:
@@ -112,6 +114,20 @@ class DealerPostgresV7(unittest.TestCase):
             ])
             db.flush()
             db.add(self.DealerInventory(user_id=self.dealer_id, active=True, stock=100))
+            bt_id = 'bt-' + uuid.uuid4().hex[:16]
+            db.add(self.User(
+                id=bt_id,
+                public_id=uuid.uuid4().hex[:12],
+                _nickname='BT V7',
+                _avatar='🦊',
+                lidya=0
+            ))
+            db.flush()
+            db.add(self.LBReferral(
+                user_id=self.dealer_id,
+                bt_user_id=bt_id,
+                activated_at=datetime.now(timezone.utc)
+            ))
             db.add(self.AdminRole(user_id=self.admin_id, role='DA'))
 
     def snapshot(self):
