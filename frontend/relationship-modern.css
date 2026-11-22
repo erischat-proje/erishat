@@ -589,3 +589,52 @@ html body .rel-home-dashboard .rel-level-grid {
     flex-basis: 46px;
   }
 }
+
+
+/* LIDYA MARRIAGE AUTO V3 */
+
+html body .rel-home-dashboard .rel-v3-marriage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--ui-line);
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ui-gold) 16%, var(--ui-panel)),
+    var(--ui-panel)
+  );
+  color: var(--ui-ink);
+}
+
+html body .rel-v3-marriage-info {
+  display: flex;
+  flex: 1 1 160px;
+  flex-direction: column;
+  gap: 5px;
+}
+
+html body .rel-v3-marriage-info strong {
+  font-size: 14px;
+  color: var(--ui-gold);
+}
+
+html body .rel-v3-marriage-info small {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ui-ink);
+}
+
+html body .rel-v3-marriage button {
+  min-height: 44px;
+  border: 1px solid var(--ui-gold);
+  border-radius: 13px;
+  padding: 9px 14px;
+  background: var(--ui-raised);
+  color: var(--ui-ink);
+  font-size: 12px;
+  font-weight: 800;
+}

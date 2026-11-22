@@ -151,6 +151,42 @@
     button('Çift odası',async e=>{await action(e.currentTarget,body,async()=>{const room=await post('/houses/'+encodeURIComponent(house.id)+'/room');if(typeof window.openRoom!=='function')throw new Error('Oda ekranı yüklenemedi. Sayfayı yenileyin.');current.close();await window.openRoom(room.room_id,room.name)})});
     button('Ödüller',()=>showRewards(house));button('Hediye gönder',()=>coupleGifts(house));
     const ring=button(house.ring?'Yüzüğümüz':'Yüzük seç',()=>rings(house),!own);ring.className='rel-home-ring';if(house.ring){const im=document.createElement('img');im.src=asset(house.ring);im.alt='';ring.prepend(im)}
+
+    // LIDYA MARRIAGE AUTO V3
+    if (!house.married) {
+      const marriageCard = document.createElement('section');
+      marriageCard.className = 'rel-v3-marriage';
+
+      const info = document.createElement('div');
+      info.className = 'rel-v3-marriage-info';
+
+      const title = document.createElement('strong');
+      title.textContent = level >= 4
+        ? '💍 Evliliğe Hazırsınız!'
+        : '💍 Evlilik Yolculuğu';
+
+      const description = document.createElement('small');
+      description.textContent = level >= 4
+        ? 'Evlilik teklifini gönderebilir, birlikte yeni bir başlangıç yapabilirsiniz.'
+        : 'Evlilik teklifi 4. seviyede açılır.';
+
+      info.append(title, description);
+      marriageCard.append(info);
+
+      const propose = document.createElement('button');
+      propose.type = 'button';
+      propose.textContent = level >= 4
+        ? 'Evlilik Teklif Et'
+        : 'Seviye ' + level + ' / 4';
+
+      propose.disabled = level < 4 || !own;
+      propose.onclick = () => marriage(house);
+
+      marriageCard.append(propose);
+
+      home.querySelector('.rel-home-hero').after(marriageCard);
+    }
+
     for(const m of ['brick','wood','paint']){const remaining=Math.max(0,Number(house.remaining?.[m])||0),need=Math.max(0,Number(house.requirements?.[m])||0),progress=house.max_level?100:need?Math.max(0,Math.min(100,(need-remaining)/need*100)):0;const b=document.createElement('button');b.type='button';b.className='rel-material-card';b.dataset.material=m;b.innerHTML=materialArt(m)+'<b>'+labels[m]+'</b><span>'+amount(remaining)+' eksik</span><div class="rel-bar" role="progressbar" aria-label="'+labels[m]+' ilerlemesi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(progress)+'"><i style="width:'+progress+'%"></i></div><small>'+(house.max_level?'Tamamlandı':own?'Malzeme al':'Katkıda bulun')+'</small>';b.disabled=!!house.max_level;b.onclick=()=>materials(house,m,!own);home.querySelector('.rel-material-grid').append(b)}
     home.querySelector('.rel-stock').textContent='Ortak depo · '+Object.entries(house.materials||{}).map(([m,n])=>labels[m]+' '+amount(n)).join(' · ');
     if(house.needs_first_copper){const note=document.createElement('p');note.className='rel-note';note.textContent='İlk seviye geçişi için bir bakır yüzük gerekir.';home.querySelector('.rel-growth').append(note)}
