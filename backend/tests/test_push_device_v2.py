@@ -10,6 +10,8 @@ from app.db import get_db
 from app.models import User
 from app.push_device_models import PushDevice
 from app.push_device_routes import register_auth
+from app.session import UserSession, hash_token
+from datetime import datetime, timedelta, timezone
 
 
 TOKEN = "firebase-test-token-" + "X" * 80
@@ -23,6 +25,15 @@ def make_client():
     )
     User.__table__.create(engine)
     PushDevice.__table__.create(engine)
+    UserSession.__table__.create(engine)
+    with Session(engine) as db:
+        for uid in ("user-a", "user-b"):
+            db.add(UserSession(
+                token_hash=hash_token(f"test-session-{uid}"),
+                user_id=uid,
+                expires_at=datetime.now(timezone.utc) + timedelta(days=1)
+            ))
+        db.commit()
 
     app = FastAPI()
 
@@ -53,7 +64,7 @@ def test_register_device():
     client, engine = make_client()
     response = client.post(
         "/v1/push/device",
-        headers={"X-Test-User": "user-a"},
+        headers={"X-Test-User": "user-a", "Authorization": "Bearer test-session-user-a"},
         json={"token": TOKEN},
     )
     assert response.status_code == 200
@@ -70,7 +81,7 @@ def test_account_switch():
     for user in ("user-a", "user-b"):
         response = client.post(
             "/v1/push/device",
-            headers={"X-Test-User": user},
+            headers={"X-Test-User": user, "Authorization": f"Bearer test-session-{user}"},
             json={"token": TOKEN},
         )
         assert response.status_code == 200
@@ -86,14 +97,14 @@ def test_other_user_cannot_delete_device():
 
     client.post(
         "/v1/push/device",
-        headers={"X-Test-User": "user-a"},
+        headers={"X-Test-User": "user-a", "Authorization": "Bearer test-session-user-a"},
         json={"token": TOKEN},
     )
 
     response = client.request(
         "DELETE",
         "/v1/push/device",
-        headers={"X-Test-User": "user-b"},
+        headers={"X-Test-User": "user-b", "Authorization": "Bearer test-session-user-b"},
         json={"token": TOKEN},
     )
     assert response.status_code == 200
@@ -107,14 +118,14 @@ def test_owner_can_delete_device():
 
     client.post(
         "/v1/push/device",
-        headers={"X-Test-User": "user-a"},
+        headers={"X-Test-User": "user-a", "Authorization": "Bearer test-session-user-a"},
         json={"token": TOKEN},
     )
 
     response = client.request(
         "DELETE",
         "/v1/push/device",
-        headers={"X-Test-User": "user-a"},
+        headers={"X-Test-User": "user-a", "Authorization": "Bearer test-session-user-a"},
         json={"token": TOKEN},
     )
     assert response.status_code == 200
@@ -128,7 +139,7 @@ def test_invalid_token_rejected():
 
     response = client.post(
         "/v1/push/device",
-        headers={"X-Test-User": "user-a"},
+        headers={"X-Test-User": "user-a", "Authorization": "Bearer test-session-user-a"},
         json={"token": "123"},
     )
     assert response.status_code == 422

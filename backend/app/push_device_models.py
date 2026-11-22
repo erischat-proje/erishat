@@ -18,6 +18,7 @@ class PushDevice(Base):
         nullable=False,
     )
     token: Mapped[str] = mapped_column(Text, nullable=False)
+    session_hash: Mapped[str] = mapped_column(String(128), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

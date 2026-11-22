@@ -1,13 +1,14 @@
 import hashlib
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from .db import get_db
 from .models import User
 from .push_device_models import PushDevice
+from .session import UserSession, hash_token
 
 
 router = APIRouter(prefix="/v1/push", tags=["push"])
@@ -21,13 +22,40 @@ def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+
+def active_session(db, authorization, user_id):
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(401, "Oturum gerekli")
+
+    raw = authorization.split(" ", 1)[1].strip()
+    if not raw or len(raw) > 512:
+        raise HTTPException(401, "Oturum gecersiz")
+
+    hashed = hash_token(raw)
+    session = db.get(UserSession, hashed)
+
+    if session is None or session.user_id != user_id:
+        raise HTTPException(401, "Oturum bulunamadi")
+
+    expires = session.expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+
+    if expires <= datetime.now(timezone.utc):
+        raise HTTPException(401, "Oturum suresi dolmus")
+
+    return hashed
+
+
 def register_auth(current_user):
     @router.post("/device")
     def register_device(
         payload: DevicePayload,
         db: Session = Depends(get_db),
         user: User = Depends(current_user),
+        authorization: str | None = Header(default=None),
     ):
+        session_hash = active_session(db, authorization, user.id)
         hashed = token_hash(payload.token)
 
         device = db.get(PushDevice, hashed)
@@ -37,6 +65,7 @@ def register_auth(current_user):
                 token_hash=hashed,
                 user_id=user.id,
                 token=payload.token,
+                session_hash=session_hash,
             )
             db.add(device)
         else:
@@ -44,6 +73,7 @@ def register_auth(current_user):
             # to two accounts simultaneously.
             device.user_id = user.id
             device.token = payload.token
+            device.session_hash = session_hash
             device.updated_at = datetime.now(timezone.utc)
 
         db.commit()

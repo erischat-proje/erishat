@@ -1,4 +1,5 @@
 from __future__ import annotations
+from fastapi import BackgroundTasks
 
 from .runtime_tasks import database_task, live_socket, bind_live_loop
 
@@ -88,6 +89,7 @@ from .performance_queries import message_context, conversation_page
 from .performance import install_diagnostics, ensure_query_indexes
 from .security_guard import SecurityGuard
 from .security_limits import SecurityCounter, enforce_account, enforce_limit
+from . import push_sender
 from .session import cleanup_expired_sessions, create_session, get_user_from_token, revoke_session
 from .otp import create_otp, verify_otp
 from .otp_delivery import send_email_otp
@@ -1238,7 +1240,7 @@ def _dm_request_gate(db: Session, sender_id: str, conversation_id: str, *, first
 
 @app.post("/v1/messages/{conversation_id}", response_model=MessageOut)
 @database_task
-async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
+async def create_message(conversation_id: str, payload: MessageCreate, background_tasks: BackgroundTasks, x_eris_dm_vault: str | None = Header(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)) -> MessageOut:
     repo = ConversationRepository(db)
     if not repo.get(conversation_id):
         raise HTTPException(status_code=404, detail="Konuşma bulunamadı")
@@ -1283,13 +1285,22 @@ async def create_message(conversation_id: str, payload: MessageCreate, x_eris_dm
         "has_reply": payload.reply_to_id is not None,
         "created_at": message.created_at.isoformat() if message.created_at else None,
     }
+    push_recipients = []
     for member_id in repo.members(conversation_id):
         if member_id != user.id and _message_notifications_allowed(db, member_id, conversation_id):
             db.add(Notification(user_id=member_id, kind="dm_message", title=user.nickname,
                 body="Kilitli sohbette yeni mesaj" if (_folder(db, member_id, conversation_id) and _folder(db, member_id, conversation_id).locked) else payload.text[:180]))
+            push_recipients.append(member_id)
         if not first_private_request:
             await _send_dm_event(db, member_id, event)
     db.commit()
+    if not first_private_request:
+        for recipient_id in push_recipients:
+            background_tasks.add_task(
+                push_sender.send_dm_push_background,
+                recipient_id,
+                conversation_id,
+            )
     return _message_out(db, message, user.id)
 
 
