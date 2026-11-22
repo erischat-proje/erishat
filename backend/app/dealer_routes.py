@@ -6,12 +6,13 @@ explicit dealer transfer credits a recipient, while atomically debiting stock.
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, literal, select, union_all, update
+from sqlalchemy import LargeBinary, BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, literal, select, union_all, update
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from .admin_models import AdminRole
+from .dealer_evidence_v3 import validate_evidence
 from .db import Base, get_db
 from .models import User
 # BT_REFERENCE_V1: immutable BT-only referral program.
@@ -69,6 +70,38 @@ class DealerTransfer(Base):
     __table_args__ = (UniqueConstraint("dealer_id", "request_key", name="uq_dealer_transfer_request"), CheckConstraint("amount > 0", name="dealer_transfer_positive"))
 
 
+
+class DealerTransferEvidence(Base):
+    """Immutable evidence for a completed Lidya transfer."""
+    __tablename__ = "dealer_transfer_evidence_v3"
+
+    transfer_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("dealer_transfers.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    uploaded_by: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    mime_type: Mapped[str] = mapped_column(
+        String(80), nullable=False
+    )
+    filename: Mapped[str] = mapped_column(
+        String(255), nullable=False
+    )
+    sha256: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    content: Mapped[bytes] = mapped_column(
+        LargeBinary, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+
+
 class DealerStockGrant(Base):
     __tablename__ = "dealer_stock_grants"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -99,6 +132,9 @@ class TransferBody(BaseModel):
     recipient_public_id: str = Field(min_length=1, max_length=64)
     amount: int = Field(gt=0, le=MAX_STOCK)
     request_key: str = Field(min_length=16, max_length=64)
+    evidence: str = Field(
+        min_length=1, max_length=7_100_000
+    )
 
 
 def target_by_public_id(db, public_id):
@@ -184,6 +220,67 @@ def register_auth(current_user):
             })
         result.sort(key=lambda item: (not item['online'], str(item['nickname']).casefold()))
         return {'items': result, 'online_count': sum(item['online'] for item in result)}
+
+
+    @router.get("/representatives/mine")
+    def my_representatives(
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user)
+    ):
+        require_dealer(db, user)
+
+        if designation(db, user.id) != "dealer":
+            raise HTTPException(
+                403, "Yalnızca Lidya Bayileri erişebilir"
+            )
+
+        link = db.get(LBReferral, user.id)
+
+        if link is None:
+            return {"items": [], "online_count": 0}
+
+        person = db.get(User, link.bt_user_id)
+        inventory = db.get(
+            DealerInventory, link.bt_user_id
+        )
+
+        if not person or not person.is_active:
+            return {"items": [], "online_count": 0}
+
+        if not inventory or not inventory.active:
+            return {"items": [], "online_count": 0}
+
+        if designation(db, person.id) != "support":
+            return {"items": [], "online_count": 0}
+
+        presence = db.get(
+            DealerRepresentativePresence, person.id
+        )
+
+        stamp = (
+            presence.last_seen_at if presence else None
+        )
+
+        if stamp is not None and stamp.tzinfo is None:
+            stamp = stamp.replace(
+                tzinfo=timezone.utc
+            )
+
+        online = bool(
+            stamp and stamp >= (
+                datetime.now(timezone.utc)
+                - timedelta(seconds=90)
+            )
+        )
+
+        return {
+            "items": [{
+                "public_id": person.public_id,
+                "nickname": person.nickname,
+                "online": online
+            }],
+            "online_count": int(online)
+        }
 
     @router.get("/badges")
     def badges(ids: str, db: Session = Depends(get_db), user: User = Depends(current_user)):
@@ -322,6 +419,8 @@ def register_auth(current_user):
 
     @router.post("/transfer")
     def transfer(body: TransferBody, db: Session = Depends(get_db), user: User = Depends(current_user)):
+        # V3_5_REQUIRED_EVIDENCE
+        evidence = validate_evidence(body.evidence)
         # Serialize attempts, including duplicate retries, against this stock row.
         dealer = require_dealer(db, user, lock=True)
         # LB must enter a BT code before stock transfers.
@@ -336,6 +435,11 @@ def register_auth(current_user):
         if prior:
             if prior.recipient_id != recipient.id or prior.amount != body.amount:
                 raise HTTPException(409, "İşlem anahtarı başka bir aktarımda kullanılmış")
+            saved = db.get(DealerTransferEvidence, prior.id)
+            if not saved or saved.sha256 != evidence["sha256"]:
+                raise HTTPException(
+                    409, "Islem dekontu uyusmuyor"
+                )
             db.refresh(dealer)
             return {"ok": True, "stock": dealer.stock, "transfer_id": prior.id, "replayed": True}
         # Row-level atomic decrement forbids negative inventory, including concurrent requests.
@@ -357,6 +461,20 @@ def register_auth(current_user):
         tx = DealerTransfer(id=str(uuid4()), dealer_id=user.id, recipient_id=recipient.id,
                             amount=body.amount, request_key=body.request_key)
         db.add(tx)
+        db.add(DealerTransferEvidence(
+            transfer_id=tx.id,
+            uploaded_by=user.id,
+            mime_type=evidence["mime_type"],
+            filename=(
+                "dekont-" + tx.id +
+                (".pdf" if evidence["mime_type"] == "application/pdf"
+                 else ".png" if evidence["mime_type"] == "image/png"
+                 else ".webp" if evidence["mime_type"] == "image/webp"
+                 else ".jpg")
+            ),
+            sha256=evidence["sha256"],
+            content=evidence["content"]
+        ))
         try:
             db.commit()
         except Exception:
@@ -364,6 +482,161 @@ def register_auth(current_user):
             raise
         return {"ok": True, "stock": stock, "recipient_public_id": recipient.public_id,
                 "amount": body.amount, "transfer_id": tx.id, "replayed": False}
+
+
+
+    @router.get("/transfers/{transfer_id}/evidence")
+    def view_transfer_evidence(
+        transfer_id: str,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user)
+    ):
+        tx = db.get(DealerTransfer, transfer_id)
+        if tx is None:
+            raise HTTPException(404, "Islem bulunamadi")
+
+        if tx.dealer_id != user.id:
+            linked = False
+
+            if designation(db, user.id) == "support":
+                require_dealer(db, user)
+                linked = db.scalar(
+                    select(LBReferral.user_id).where(
+                        LBReferral.user_id == tx.dealer_id,
+                        LBReferral.bt_user_id == user.id
+                    )
+                ) is not None
+
+            if not linked:
+                require_da(db, user)
+
+        evidence = db.get(DealerTransferEvidence, tx.id)
+        if evidence is None:
+            raise HTTPException(404, "Yuklenen dekont bulunamadi")
+
+        return Response(
+            content=evidence.content,
+            media_type=evidence.mime_type,
+            headers={
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+                "Content-Security-Policy": "sandbox",
+                "Content-Disposition": (
+                    'attachment; filename="' +
+                    evidence.filename + '"'
+                )
+            }
+        )
+
+    @router.get("/transfers/{transfer_id}/receipt")
+    def transfer_receipt(
+        transfer_id: str,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user)
+    ):
+        tx = db.get(DealerTransfer, transfer_id)
+
+        if tx is None:
+            raise HTTPException(404, "Dekont bulunamadı")
+
+        if tx.dealer_id != user.id:
+            linked = None
+            if designation(db, user.id) == "support":
+                require_dealer(db, user)
+                linked = db.scalar(
+                    select(LBReferral.user_id).where(
+                        LBReferral.user_id == tx.dealer_id,
+                        LBReferral.bt_user_id == user.id
+                    )
+                )
+            if not linked:
+                require_da(db, user)
+
+        sender = db.get(User, tx.dealer_id)
+        recipient = db.get(User, tx.recipient_id)
+
+        return {
+            "ok": True,
+            "receipt": {
+                "transaction_id": tx.id,
+                "kind": "lidya_transfer",
+                "sender_public_id": (
+                    sender.public_id if sender else None
+                ),
+                "recipient_public_id": (
+                    recipient.public_id if recipient else None
+                ),
+                "amount": tx.amount,
+                "created_at": tx.created_at.isoformat(),
+                "status": "completed"
+            }
+        }
+
+
+    @router.get("/representatives/team-history")
+    def representative_team_history(
+        public_id: str = Query(min_length=1, max_length=64),
+        page: int = Query(default=1, ge=1),
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user)
+    ):
+        require_dealer(db, user)
+        if designation(db, user.id) != "support":
+            raise HTTPException(403, "BT yetkisi gerekli")
+
+        lb_id = db.scalar(
+            select(User.id)
+            .join(LBReferral, LBReferral.user_id == User.id)
+            .where(
+                User.public_id == public_id,
+                LBReferral.bt_user_id == user.id
+            )
+        )
+        if not lb_id:
+            raise HTTPException(404, "Bagli bayi bulunamadi")
+
+        condition = DealerTransfer.dealer_id == lb_id
+        total = int(db.scalar(
+            select(func.count())
+            .select_from(DealerTransfer)
+            .where(condition)
+        ) or 0)
+
+        rows = db.scalars(
+            select(DealerTransfer)
+            .where(condition)
+            .order_by(
+                DealerTransfer.created_at.desc(),
+                DealerTransfer.id.desc()
+            )
+            .offset((page - 1) * 20)
+            .limit(20)
+        ).all()
+
+        ids = [t.recipient_id for t in rows]
+        people = {
+            p.id: p.public_id
+            for p in db.scalars(
+                select(User).where(User.id.in_(ids))
+            ).all()
+        } if ids else {}
+
+        return {
+            "items": [{
+                "id": t.id,
+                "dealer_public_id": public_id,
+                "recipient_public_id": people.get(
+                    t.recipient_id, "—"
+                ),
+                "amount": t.amount,
+                "created_at": t.created_at.isoformat(),
+                "receipt_available": True
+            } for t in rows],
+            "page": page,
+            "page_size": 20,
+            "total": total,
+            "total_pages": (total + 19) // 20
+        }
 
     @router.get("/history")
     def history(page: int = Query(default=1, ge=1, le=1_000_000),
@@ -384,6 +657,59 @@ def register_auth(current_user):
                     "amount": t.amount, "created_at": t.created_at.isoformat()}
                     for t in rows], "page": page, "page_size": 20,
                 "total": total, "total_pages": (total + 19) // 20}
+
+
+    @router.get("/admin/representative-link")
+    def admin_representative_link(
+        public_id: str = Query(min_length=1, max_length=64),
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user)
+    ):
+        require_da(db, user)
+
+        lb = target_by_public_id(db, public_id)
+        if not db.get(DealerInventory, lb.id):
+            raise HTTPException(404, "Bayi bulunamadi")
+
+        link = db.get(LBReferral, lb.id)
+        if not link:
+            return {"items": [], "online_count": 0}
+
+        bt = db.get(User, link.bt_user_id)
+        if not bt:
+            return {"items": [], "online_count": 0}
+
+        presence = db.get(
+            DealerRepresentativePresence, bt.id
+        )
+
+        stamp = presence.last_seen_at if presence else None
+        if stamp is not None and stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=timezone.utc)
+
+        inventory = db.get(DealerInventory, bt.id)
+        active = bool(
+            bt.is_active and inventory
+            and inventory.active
+            and designation(db, bt.id) == "support"
+        )
+
+        online = bool(
+            active and stamp
+            and stamp >= datetime.now(timezone.utc)
+            - timedelta(seconds=90)
+        )
+
+        return {
+            "items": [{
+                "public_id": bt.public_id,
+                "nickname": bt.nickname,
+                "active": active,
+                "online": online,
+                "activated_at": link.activated_at.isoformat()
+            }],
+            "online_count": int(online)
+        }
 
     @router.get("/admin/history")
     def admin_dealer_history(public_id: str = Query(min_length=1, max_length=64),

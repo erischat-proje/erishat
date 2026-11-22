@@ -1,7 +1,7 @@
 /* LidyaChat dealer inventory. Inventory is separate from personal Lidya. */
 (()=>{'use strict';
 const badgeAsset=new URL('./role-icons/dealer-lb-v3.svg?v=lb-classic-v4',document.currentScript.src).href;
-const premiumAsset=new URL('./role-icons/lidya-bayisi-premium-v3.png?v=lb-v4',document.currentScript.src).href;
+const premiumAsset=new URL('./role-icons/bayi-temsilcisi-orijinal-v5.png?v=bt-v2',document.currentScript.src).href;
 const coinAsset=new URL('./role-icons/coin-temsilcisi-v1.png?v=20261121',document.currentScript.src).href;
 const supportAsset=new URL('./role-icons/bayi-temsilcisi-bt-v1.png?v=20261121',document.currentScript.src).href;
 const roleAsset=k=>k==='support'?supportAsset:badgeAsset;
@@ -67,7 +67,100 @@ const confirmCss=`
 if(!document.getElementById('lb-confirm-style')){const st=elt('style');st.id='lb-confirm-style';st.textContent=confirmCss;document.head.append(st);}
 
 function overlay(title){document.querySelector('.lb-mask')?.remove();const mask=elt('div','lb-mask'),panel=elt('section','lb-panel');mask.setAttribute('role','dialog');mask.setAttribute('aria-modal','true');const header=elt('header');header.append(elt('h2','',title));const close=elt('button','', '×');close.type='button';close.setAttribute('aria-label','Kapat');close.onclick=()=>mask.remove();header.append(close);panel.append(header);mask.append(panel);mask.onclick=e=>{if(e.target===mask)mask.remove()};mask.onkeydown=e=>{if(e.key==='Escape')mask.remove()};document.body.append(mask);close.focus();return panel;}
-function form(panel,title,fields,buttonText,submit){const f=elt('form'),h=elt('h3','',title);f.append(h);const inputs={};for(const [key,caption,kind] of fields){const l=elt('label','',caption),input=elt('input');input.name=key;input.type=kind||'text';input.required=true;if(kind==='number'){input.min='1';input.step='1';input.max='9000000000000000';}else input.maxLength=64;input.autocomplete='off';inputs[key]=input;l.append(input);f.append(l);}const btn=elt('button','lb-primary',buttonText),status=elt('p','lb-msg');btn.type='submit';status.setAttribute('role','status');f.append(btn,status);f.onsubmit=async e=>{e.preventDefault();if(btn.disabled)return;btn.disabled=true;status.textContent='İşlem yapılıyor…';try{const values=Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.type==='number'?Number(v.value):v.value.trim()]));const data=await submit(values);status.textContent=data.message||'İşlem tamamlandı';if(data.stock!==undefined)panel.querySelector('.lb-stock')?.replaceChildren(document.createTextNode(amount(data.stock)));}catch(err){status.textContent=err.message||'İşlem başarısız';}finally{btn.disabled=false;}};panel.append(f);return f;}
+// LIDYA_EVIDENCE_FORM_V36
+function readDealerEvidence(file){
+ return new Promise((resolve,reject)=>{
+  if(!file){
+   reject(Error('Dekont seçmeniz zorunludur.'));
+   return;
+  }
+  const types=[
+   'image/jpeg','image/png',
+   'image/webp','application/pdf'
+  ];
+  if(!types.includes(file.type)){
+   reject(Error('JPG, PNG, WEBP veya PDF seçin.'));
+   return;
+  }
+  if(!file.size||file.size>5*1024*1024){
+   reject(Error('Dekont en fazla 5 MB olabilir.'));
+   return;
+  }
+  const reader=new FileReader();
+  reader.onerror=()=>reject(Error('Dekont okunamadı.'));
+  reader.onload=()=>resolve(reader.result);
+  reader.readAsDataURL(file);
+ });
+}
+
+function form(panel,title,fields,buttonText,submit){
+ const f=elt('form'),h=elt('h3','',title);
+ f.append(h);
+ const inputs={};
+ for(const [key,caption,kind] of fields){
+  const l=elt('label','',caption);
+  const input=elt('input');
+  input.name=key;
+  input.type=kind||'text';
+  input.required=true;
+  if(kind==='number'){
+   input.min='1';
+   input.step='1';
+   input.max='9000000000000000';
+  }else if(kind==='file'){
+   input.accept='.jpg,.jpeg,.png,.webp,.pdf';
+  }else{
+   input.maxLength=64;
+  }
+  input.autocomplete='off';
+  inputs[key]=input;
+  l.append(input);
+  f.append(l);
+ }
+ const btn=elt('button','lb-primary',buttonText);
+ const status=elt('p','lb-msg');
+ btn.type='submit';
+ status.setAttribute('role','status');
+ f.append(btn,status);
+ f.onsubmit=async e=>{
+  e.preventDefault();
+  if(btn.disabled)return;
+  btn.disabled=true;
+  status.textContent='İşlem hazırlanıyor…';
+  try{
+   const values={};
+   for(const [key,input] of Object.entries(inputs)){
+    if(input.type==='file'){
+     values[key]=await readDealerEvidence(
+      input.files?.[0]
+     );
+    }else if(input.type==='number'){
+     values[key]=Number(input.value);
+    }else{
+     values[key]=input.value.trim();
+    }
+   }
+   const data=await submit(values);
+   status.textContent=data.message||'İşlem tamamlandı';
+   if(data.stock!==undefined){
+    panel.querySelector('.lb-stock')?.replaceChildren(
+     document.createTextNode(amount(data.stock))
+    );
+   }
+   if(data.ok){
+    for(const input of Object.values(inputs)){
+     if(input.type==='file')input.value='';
+    }
+   }
+  }catch(err){
+   status.textContent=err.message||'İşlem başarısız';
+  }finally{
+   btn.disabled=false;
+  }
+ };
+ panel.append(f);
+ return f;
+}
 async function openAdmin(which){
  const kind=which==='support'?'support':null;
  const panel=overlay(kind==='support'?'Bayi Temsilcisi Ata':'Lidya Bayisi / BT Atama Merkezi');
@@ -143,6 +236,136 @@ async function showMyBTReference(){
   if(ref.parent_locked)panel.append(elt('p','lb-msg','Bağlandığınız referans kalıcı olarak kilitlenmiştir.'));
  }catch(e){info.textContent=e.message||'Referans bilgisi alınamadı';}
 }
+
+async function showBTTransactions(person,page=1){
+ const panel=btReferenceModal('Lidya İşlem Geçmişi');
+ const info=elt('p','lb-msg','İşlemler yükleniyor…');
+ panel.append(info);
+ try{
+  const id=encodeURIComponent(person.public_id);
+  const data=await api(
+   '/representatives/team-history?public_id='+id+'&page='+page
+  );
+  const items=data.items||[];
+  info.textContent=person.nickname+' · '+data.total+' işlem';
+  if(!items.length){
+   panel.append(elt('p','lb-msg','Henüz işlem bulunmuyor.'));
+   return;
+  }
+  for(const tx of items){
+   const card=elt('div','lb-list-item');
+   card.style.cssText='padding:12px 0;border-bottom:1px solid var(--ui-line,#ad946f)';
+   const date=new Date(tx.created_at).toLocaleString('tr-TR');
+   const title=elt('strong','',Number(tx.amount).toLocaleString('tr-TR')+' Lidya');
+   const detail=elt('small','',
+    'Alıcı ID: '+tx.recipient_public_id+' · '+date
+   );
+   detail.style.cssText='display:block;margin:6px 0';
+   const receipt=elt('button','lb-primary','Dekont Görüntüle');
+   receipt.type='button';
+   receipt.onclick=()=>showBTReceipt(tx.id);
+   card.append(title,detail,receipt);
+   panel.append(card);
+  }
+  const nav=elt('div');
+  nav.style.cssText='display:flex;gap:8px;margin-top:12px';
+  if(page>1){
+   const prev=elt('button','lb-primary','Önceki');
+   prev.onclick=()=>showBTTransactions(person,page-1);
+   nav.append(prev);
+  }
+  if(page<data.total_pages){
+   const next=elt('button','lb-primary','Sonraki');
+   next.onclick=()=>showBTTransactions(person,page+1);
+   nav.append(next);
+  }
+  panel.append(nav);
+ }catch(e){
+  info.textContent=e.message||'İşlem geçmişi alınamadı';
+ }
+}
+
+
+async function openBTUploadedEvidence(id){
+ const bearer=token();
+ if(!bearer)throw Error('Oturum açılmalı');
+ const url=base+'/v1/dealers/transfers/'+
+  encodeURIComponent(id)+'/evidence';
+ const response=await fetch(url,{
+  headers:{Authorization:'Bearer '+bearer},
+  cache:'no-store'
+ });
+ if(bearer!==token())throw Error('Oturum değişti');
+ if(!response.ok){
+  const error=await response.json().catch(()=>({}));
+  throw Error(error.detail||'Dekont açılamadı');
+ }
+ const blob=await response.blob();
+ const type=blob.type;
+ if(!['image/jpeg','image/png','image/webp',
+       'application/pdf'].includes(type)){
+  throw Error('Desteklenmeyen dosya türü');
+ }
+ const objectUrl=URL.createObjectURL(blob);
+ const link=document.createElement('a');
+ link.href=objectUrl;
+ link.download='LidyaChat-Dekont-'+id+
+  (type==='application/pdf'?'.pdf':
+   type==='image/png'?'.png':
+   type==='image/webp'?'.webp':'.jpg');
+ document.body.append(link);
+ link.click();
+ link.remove();
+ setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+}
+
+async function showBTReceipt(id){
+ const panel=btReferenceModal('Lidya Aktarım Dekontu');
+ const info=elt('p','lb-msg','Dekont yükleniyor…');
+ panel.append(info);
+ try{
+  const data=await api(
+   '/transfers/'+encodeURIComponent(id)+'/receipt'
+  );
+  const r=data.receipt;
+  info.textContent='İşlem başarıyla tamamlandı';
+  const fields=[
+   ['İşlem No',r.transaction_id],
+   ['Gönderen ID',r.sender_public_id],
+   ['Alıcı ID',r.recipient_public_id],
+   ['Lidya Miktarı',Number(r.amount).toLocaleString('tr-TR')],
+   ['Tarih',new Date(r.created_at).toLocaleString('tr-TR')],
+   ['Durum',r.status==='completed'?'Tamamlandı':r.status]
+  ];
+  const fileButton=elt(
+   'button','lb-primary','📎 Yüklenen Dekontu Aç'
+  );
+  fileButton.type='button';
+  fileButton.onclick=async()=>{
+   fileButton.disabled=true;
+   try{
+    await openBTUploadedEvidence(id);
+   }catch(err){
+    info.textContent=err.message||'Dekont açılamadı';
+   }finally{
+    fileButton.disabled=false;
+   }
+  };
+  panel.append(fileButton);
+  for(const [label,value] of fields){
+   const line=elt('div','lb-list-item');
+   line.style.cssText='padding:9px 0;border-bottom:1px solid var(--ui-line,#ad946f)';
+   line.append(
+    elt('strong','',label+': '),
+    elt('span','',String(value??'—'))
+   );
+   panel.append(line);
+  }
+ }catch(e){
+  info.textContent=e.message||'Dekont alınamadı';
+ }
+}
+
 async function showBTTeam(){
  const panel=btReferenceModal('Lidya Temsilcilerim');
  const info=elt('p','lb-msg','Liste yükleniyor…');panel.append(info);
@@ -153,7 +376,12 @@ async function showBTTeam(){
    const item=elt('div','lb-list-item');item.style.cssText='padding:10px 0;border-bottom:1px solid var(--ui-line,#ad946f)';
    const name=elt('strong','',person.nickname||'Lidya Bayisi');
    const detail=elt('small','',String(person.public_id||'')+' · '+(person.activated_at?new Date(person.activated_at).toLocaleDateString('tr-TR'):'—'));
-   detail.style.cssText='display:block;margin-top:4px';item.append(name,detail);panel.append(item);
+   detail.style.cssText='display:block;margin-top:4px';
+   const historyBtn=elt('button','lb-primary','İşlemleri Gör');
+   historyBtn.type='button';
+   historyBtn.style.cssText='margin-top:8px;width:100%';
+   historyBtn.onclick=()=>showBTTransactions(person);
+   item.append(name,detail,historyBtn);panel.append(item);
   }
  }catch(e){info.textContent=e.message||'Liste alınamadı';}
 }
@@ -215,7 +443,7 @@ async function mountBTReferencePanel(panel,balance){
  tools.append(codeBtn,teamBtn);
  balance.insertAdjacentElement('afterend',tools);
 }
-async function openDealer(){const panel=overlay('Temsilci Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');panel.querySelector('h2').textContent=roleTitle(me.kind)+' · Stok Yönetimi';summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock);if(me.kind==='support')mountBTReferencePanel(panel,balance).catch(console.error);if(me.kind==='dealer')mountLBReferencePanel(panel,balance).catch(console.error)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);
+async function openDealer(){const panel=overlay('Temsilci Sistemi'),summary=elt('p','','Stok yükleniyor…'),balance=elt('div','lb-stock','—');panel.append(summary,balance);try{const me=await api('/me');panel.querySelector('h2').textContent=roleTitle(me.kind)+' · Stok Yönetimi';summary.textContent='Yalnızca bayi stoğu · Kişisel Lidya bakiyenden bağımsız';balance.textContent=amount(me.stock);if(me.kind==='support')mountBTReferencePanel(panel,balance).catch(console.error);if(me.kind==='dealer')mountLBReferencePanel(panel,balance).catch(console.error)}catch(e){summary.textContent=e.message;return;}form(panel,'Kullanıcıya Lidya gönder',[['recipient_public_id','Alıcının profil ID’si'],['amount','Gönderilecek Lidya','number'],['evidence','Zorunlu Dekont (JPG, PNG, WEBP, PDF)','file']], 'Stoktan aktar',async v=>{if(!await confirmDealerTransfer({kind:'transfer',publicId:v.recipient_public_id,quantity:v.amount}))throw Error('İşlem iptal edildi');const r=await api('/transfer','POST',{...v,request_key:crypto.randomUUID()});return {...r,message:'Aktarıldı · İşlem '+r.transfer_id}});const historyButton=elt('button','lb-primary','📋 İşlem geçmişi');historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:false});panel.append(historyButton);
  const repsButton=elt('button','lb-primary lb-bt-open','🎧 Bayi Temsilcileri');
  repsButton.type='button';repsButton.onclick=openRepresentatives;
  panel.append(repsButton);
@@ -253,6 +481,41 @@ async function openAdminLookup(){
       const historyButton=elt('button','lb-primary','📋 Tüm işlem geçmişini görüntüle');
       historyButton.type='button';historyButton.onclick=()=>window.LidyaDealerHistoryV10?.open({admin:true,publicId:d.public_id});
       result.append(historyButton);
+
+     const representativeSection=elt('section','lb-admin-representatives');
+     representativeSection.style.cssText='margin-top:15px;padding:12px;border:1px solid var(--ui-line,#ad946f);border-radius:12px';
+     representativeSection.append(
+      elt('h3','','Bağlı Bayi Temsilcisi')
+     );
+     const repStatus=elt('p','lb-msg','Temsilci bilgileri yükleniyor…');
+     representativeSection.append(repStatus);
+     result.append(representativeSection);
+     try{
+      const reps=await api(
+       '/admin/representative-link?public_id='+
+       encodeURIComponent(d.public_id)
+      );
+      const people=reps.items||[];
+      repStatus.textContent=people.length
+       ?people.length+' kayıtlı temsilci'
+       :'Bu bayiye bağlı temsilci bulunmuyor.';
+      for(const rep of people){
+       const item=elt('div','lb-list-item');
+       item.style.cssText='padding:10px 0;border-bottom:1px solid var(--ui-line,#ad946f)';
+       const name=elt('strong','',rep.nickname||'Bayi Temsilcisi');
+       const detail=elt('small','',
+        'Profil ID: '+rep.public_id+
+        ' · '+(rep.online?'Çevrimiçi':rep.active?'Çevrimdışı':'Pasif')
+       );
+       detail.style.cssText='display:block;margin-top:5px';
+       item.append(name,detail);
+       representativeSection.append(item);
+      }
+     }catch(repError){
+      repStatus.textContent=repError.message||
+       'Temsilci bilgileri alınamadı';
+     }
+
     }catch(e){status.textContent=e.message||'Bayi bulunamadı'}
    finally{submit.disabled=false;}
  }
@@ -294,9 +557,9 @@ async function boot(){
   if(!btn){btn=elt('button','homeMenuItem lidya-dealer-card');btn.id='lidya-dealer-menu';btn.type='button';btn.onclick=openDealer;mount.insertAdjacentElement('afterend',btn);}
   btn.classList.add('lbv4-card','lbv3-premium-card');btn.replaceChildren();
   const badge=elt('span','lbv4-mark'),img=elt('img');img.src=premiumAsset;img.alt='';badge.append(img);
-  const copy=elt('span','lbv4-copy');copy.append(elt('strong','','Lidya Bayisi'),elt('small','','Stok ve kullanıcıya Lidya aktarımı'));
+  const copy=elt('span','lbv4-copy');copy.append(elt('strong','','Bayi Temsilcisi'),elt('small','','Stok ve kullanıcıya Lidya aktarımı'));
   btn.append(badge,copy,elt('span','lbv4-arrow','›'));
-  btn.setAttribute('aria-label','Lidya Bayisi: stok ve Lidya aktarımı');btn.hidden=!me.dealer;
+  btn.setAttribute('aria-label','Bayi Temsilcisi: stok ve Lidya aktarımı');btn.hidden=!me.dealer;
   updateMyProfile(me.kind);
   if(me.kind==='support'&&document.visibilityState==='visible'){
     api('/representatives/heartbeat','POST').catch(()=>{});
