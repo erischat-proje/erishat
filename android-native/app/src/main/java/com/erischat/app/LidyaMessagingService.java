@@ -17,8 +17,15 @@ public class LidyaMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(String token) {
         super.onNewToken(token);
-        // Token hesaba guvenli baglandiginda backend kaydi yapilacak.
-        // Token loglanmaz ve yetkisiz servislere gonderilmez.
+        // FCM may rotate the token while the app is backgrounded.
+        // Store it privately; authenticated registration is performed
+        // only by the trusted WebView after the user returns.
+        if (token != null && !token.isEmpty()) {
+            getSharedPreferences("lidya_push", MODE_PRIVATE)
+                .edit()
+                .putString("latest_fcm_token", token)
+                .apply();
+        }
     }
 
     @Override
