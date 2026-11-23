@@ -12,7 +12,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from threading import Lock
-from urllib.parse import parse_qsl, unquote
+from urllib.parse import parse_qsl
 
 import requests
 from cryptography.exceptions import InvalidSignature
@@ -115,7 +115,7 @@ def verified_fields(raw_query: bytes, keys=None):
         key = (keys if keys is not None else _keyset()).get(key_id)
         if key is None:
             raise ValueError("unknown key id")
-        key.verify(sig_bytes, unquote(signed).encode("utf-8"), ec.ECDSA(hashes.SHA256()))
+        key.verify(sig_bytes, signed.encode("ascii"), ec.ECDSA(hashes.SHA256()))
         return fields
     except (InvalidSignature, ValueError, KeyError, UnicodeError, TypeError) as exc:
         raise HTTPException(403, "SSV imza dogrulamasi basarisiz") from exc

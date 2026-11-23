@@ -104,3 +104,24 @@ def test_duplicate_reward_and_daily_limit(monkeypatch):
             mod.ssv_callback(callback("z" * 32, "deadbeef9999"), db)
         assert err.value.status_code == 409
         assert db.get(User, "user-one").lidya == 25
+
+
+def test_percent_encoded_signed_callback():
+    key = ec.generate_private_key(ec.SECP256R1())
+    content = (
+        "ad_unit=8782909853&custom_data=abc%2Ddef"
+        "&reward_amount=5&reward_item=Lidya"
+        "&timestamp=1&transaction_id=abcdef1234"
+    )
+    fields = verified_fields(
+        signed_query(key, content),
+        {"42": key.public_key()}
+    )
+    assert fields["custom_data"] == "abc-def"
+
+    tampered = signed_query(key, content).replace(
+        b"abc%2Ddef", b"abc-def"
+    )
+    with pytest.raises(HTTPException) as error:
+        verified_fields(tampered, {"42": key.public_key()})
+    assert error.value.status_code == 403
