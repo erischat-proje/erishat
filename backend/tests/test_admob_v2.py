@@ -191,3 +191,57 @@ def test_ssv_verify_only_no_credit(monkeypatch):
     with pytest.raises(HTTPException) as disabled:
         ads.ssv_callback(request(raw), db=None)
     assert disabled.value.status_code == 503
+
+
+
+def test_ssv_verify_only_without_custom_data(monkeypatch):
+    from starlette.requests import Request
+    from backend.app import admob_reward_routes as ads
+
+    key = ec.generate_private_key(ec.SECP256R1())
+
+    monkeypatch.setattr(ads, "enabled", lambda: False)
+    monkeypatch.setattr(
+        ads, "_keyset", lambda: {"42": key.public_key()}
+    )
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_SSV_VERIFY_ONLY", "true"
+    )
+
+    content = (
+        "ad_unit=8782909853"
+        "&reward_amount=5"
+        "&reward_item=Lidya"
+        f"&timestamp={int(time.time() * 1000)}"
+        "&transaction_id=abcdef1234"
+    )
+
+    def make_request(raw):
+        return Request({
+            "type": "http",
+            "method": "GET",
+            "path": "/v1/admob/ssv",
+            "query_string": raw,
+            "headers": [],
+        })
+
+    raw = signed_query(key, content)
+
+    result = ads.ssv_callback(make_request(raw), db=None)
+
+    assert result == {
+        "ok": True,
+        "verification_only": True
+    }
+
+    tampered = raw.replace(
+        b"reward_amount=5",
+        b"reward_amount=50"
+    )
+
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(
+            make_request(tampered), db=None
+        )
+
+    assert error.value.status_code == 403

@@ -150,7 +150,7 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
 
     try:
         tx = fields["transaction_id"]
-        nonce = fields["custom_data"]
+        nonce = fields.get("custom_data", "")
         stamp = int(fields["timestamp"])
         if not (8 <= len(tx) <= 128 and all(ch in "0123456789abcdefABCDEF" for ch in tx)):
             raise ValueError("transaction")
@@ -162,7 +162,9 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
         now = datetime.now(timezone.utc)
         if abs((now - event_at).total_seconds()) > 1200:
             raise ValueError("timestamp")
-        if not (24 <= len(nonce) <= 128):
+        if rewards_active and not (24 <= len(nonce) <= 128):
+            raise ValueError("nonce")
+        if not rewards_active and nonce and len(nonce) > 128:
             raise ValueError("nonce")
     except (KeyError, ValueError, OverflowError, OSError) as exc:
         raise HTTPException(400, "SSV alanlari gecersiz") from exc
