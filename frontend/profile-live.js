@@ -30,9 +30,10 @@
       .eris-follow-close{font-size:27px;width:38px;height:38px}
       .eris-follow-list{overflow:auto;padding:7px 14px 18px}
       .eris-follow-row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--ui-line)}
-      .eris-follow-avatar{position:relative;width:52px;height:52px;flex:none;display:grid;place-items:center}
-      .eris-follow-avatar-main{width:43px;height:43px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--ui-raised);font-size:23px;overflow:hidden}
-      .eris-follow-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+      .eris-follow-avatar{position:relative;width:70px;height:70px;flex:0 0 70px;display:block;isolation:isolate}
+      .eris-follow-avatar-main{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:52px;height:52px;max-width:none;max-height:none;margin:0;padding:0;border-radius:50%;object-fit:cover;object-position:center;display:grid;place-items:center;background:var(--ui-raised);font-size:23px;line-height:1;overflow:hidden;z-index:1}
+      .eris-follow-avatar.has-frame .eris-follow-avatar-main{width:48px;height:48px}
+      .eris-follow-frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:70px;height:70px;max-width:none;max-height:none;margin:0;padding:0;object-fit:contain;object-position:center;display:block;pointer-events:none;z-index:2}
       .eris-follow-info{min-width:0;flex:1}
       .eris-follow-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
       .eris-follow-info small{display:block;margin-top:4px;color:var(--ui-muted);font-size:11px}
@@ -72,7 +73,7 @@
   function followAvatar(user) {
     const avatarAsset = assetUrl(user.avatar_asset);
     const frameAsset = assetUrl(user.frame_asset);
-    return `<div class="eris-follow-avatar">${
+    return `<div class="eris-follow-avatar${frameAsset ? ' has-frame' : ''}">${
       avatarAsset
         ? `<img class="eris-follow-avatar-main" src="${esc(avatarAsset)}" alt="">`
         : `<div class="eris-follow-avatar-main">${esc(user.avatar || '👤')}</div>`
