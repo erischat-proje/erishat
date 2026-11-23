@@ -9,6 +9,7 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.gms.ads.rewarded.ServerSideVerificationOptions;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -34,8 +35,13 @@ final class LidyaRewardedAds {
                 "lidya-ads-init").start();
     }
 
-    void showTestAd() {
+    void showTestAd(String customData) {
         if (closed || loading || !trusted.getAsBoolean()) return;
+        if (customData == null || !customData.isEmpty()
+                && !customData.matches("[A-Za-z0-9_-]{24,128}")) {
+            event("invalid_custom_data");
+            return;
+        }
         loading = true;
         event("loading");
         RewardedAd.load(activity, TEST_REWARDED_AD_UNIT, new AdRequest.Builder().build(),
@@ -47,6 +53,13 @@ final class LidyaRewardedAds {
                     @Override public void onAdLoaded(RewardedAd ad) {
                         loading = false;
                         if (closed || !trusted.getAsBoolean()) return;
+                        // The official TEST ad unit remains in use; this metadata
+                        // is for integration testing, NOT evidence of a real reward.
+                        if (!customData.isEmpty()) {
+                            ad.setServerSideVerificationOptions(
+                                new ServerSideVerificationOptions.Builder()
+                                    .setCustomData(customData).build());
+                        }
                         ad.setFullScreenContentCallback(new FullScreenContentCallback() {
                             @Override public void onAdDismissedFullScreenContent() {
                                 event("closed");

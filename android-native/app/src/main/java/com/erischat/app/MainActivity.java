@@ -253,10 +253,16 @@ public class MainActivity extends Activity {
         /** TEST ADS ONLY. No client event ever creates Lidya credits. */
         @JavascriptInterface
         public void showLidyaRewardedAd() {
+            showLidyaRewardedAdWithClaim("");
+        }
+
+        /** Pass only a server-issued opaque claim; TEST unit still earns no Lidya. */
+        @JavascriptInterface
+        public void showLidyaRewardedAdWithClaim(String customData) {
             runOnUiThread(() -> {
                 if (lidyaRewardedAds != null && trustedPage() && activityResumed
                         && !isFinishing() && !isDestroyed()) {
-                    lidyaRewardedAds.showTestAd();
+                    lidyaRewardedAds.showTestAd(customData);
                 }
             });
         }
