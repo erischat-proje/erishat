@@ -66,6 +66,8 @@ def test_parallel_rewards_obey_daily_cap_and_idempotency(monkeypatch):
         with Session(engine) as db:
             db.add(User(id="admob-concurrent-user", public_id="9000000999",
                         nickname="AdMobConcurrent", is_active=True, lidya=0))
+            # Ensure the parent user exists before inserting FK claims.
+            db.flush()
             for i in range(6):
                 nonce = (chr(97 + i) * 32)
                 tx = f"abcdef000000{i:04x}"
