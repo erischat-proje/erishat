@@ -138,9 +138,20 @@ def register_auth(current_user):
 
 @router.get("/ssv", include_in_schema=False)
 def ssv_callback(request: Request, db: Session = Depends(get_db)):
-    if not enabled():
+    rewards_active = enabled()
+    verify_only = os.getenv(
+        "LIDYACHAT_ADMOB_SSV_VERIFY_ONLY", "false"
+    ).lower() == "true"
+
+    if not rewards_active and not verify_only:
         raise HTTPException(503, "AdMob SSV pasif")
+
     fields = verified_fields(request.scope.get("query_string", b""))
+
+    # Verification-only mode: validate Google's signature, never credit Lidya.
+    if not rewards_active:
+        return {"ok": True, "verification_only": True}
+
     try:
         tx = fields["transaction_id"]
         nonce = fields["custom_data"]
