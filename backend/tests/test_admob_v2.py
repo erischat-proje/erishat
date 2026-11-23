@@ -245,3 +245,41 @@ def test_ssv_verify_only_without_custom_data(monkeypatch):
         )
 
     assert error.value.status_code == 403
+
+
+def test_google_url_sample_verify_only_never_live(monkeypatch):
+    from starlette.requests import Request
+    from backend.app import admob_reward_routes as ads
+
+    key = ec.generate_private_key(ec.SECP256R1())
+    monkeypatch.setattr(
+        ads, "_keyset", lambda: {"42": key.public_key()}
+    )
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_SSV_VERIFY_ONLY", "true"
+    )
+    content = (
+        "ad_network=5450213213286189855"
+        "&ad_unit=1234567890"
+        "&reward_amount=5"
+        "&reward_item=Lidya"
+        f"&timestamp={int(time.time() * 1000)}"
+        "&transaction_id=123456789"
+    )
+    req = Request({
+        "type": "http",
+        "method": "GET",
+        "path": "/v1/admob/ssv",
+        "query_string": signed_query(key, content),
+        "headers": [],
+    })
+
+    monkeypatch.setattr(ads, "enabled", lambda: False)
+    assert ads.ssv_callback(req, db=None) == {
+        "ok": True, "verification_only": True
+    }
+
+    monkeypatch.setattr(ads, "enabled", lambda: True)
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(req, db=None)
+    assert error.value.status_code == 400
