@@ -55,4 +55,6 @@ dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.22")
     implementation 'androidx.core:core:1.13.1'
     implementation 'com.google.android.gms:play-services-auth:21.4.0'
+    // Test-only rewarded ads bridge; no Lidya payouts in this phase.
+    implementation 'com.google.android.gms:play-services-ads:25.5.0'
 }

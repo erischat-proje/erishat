@@ -71,6 +71,7 @@ public class MainActivity extends Activity {
     private volatile boolean viewportInsetsHandled;
     private WebView webView;
     private PlayBillingCatalog playBillingCatalog;
+    private LidyaRewardedAds lidyaRewardedAds;
     private BundledContent bundledContent;
     private GoogleSignInClient googleClient;
     private boolean screenAwakeEnabled = false;
@@ -93,6 +94,7 @@ public class MainActivity extends Activity {
         bundledContent = new BundledContent(this, ERISCHAT_HOST);
         webView = new WebView(this);
         playBillingCatalog = new PlayBillingCatalog(this, webView);
+        lidyaRewardedAds = new LidyaRewardedAds(this, webView, () -> trustedPage() && activityResumed && !isFinishing() && !isDestroyed());
         // Keep WebView layout bounds outside status/navigation bars on edge-to-edge Android.
         FrameLayout viewport = new FrameLayout(this);
         viewport.addView(webView, new FrameLayout.LayoutParams(
@@ -247,6 +249,18 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+
+        /** TEST ADS ONLY. No client event ever creates Lidya credits. */
+        @JavascriptInterface
+        public void showLidyaRewardedAd() {
+            runOnUiThread(() -> {
+                if (lidyaRewardedAds != null && trustedPage() && activityResumed
+                        && !isFinishing() && !isDestroyed()) {
+                    lidyaRewardedAds.showTestAd();
+                }
+            });
+        }
+
 
         @JavascriptInterface
         public void setActivePushUser(String userId) {
@@ -610,6 +624,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if (lidyaRewardedAds != null) lidyaRewardedAds.close();
         if (playBillingCatalog != null) playBillingCatalog.close();
         documentPageTrusted = false;
         if (documentDownloads != null) documentDownloads.cancelAll();
