@@ -154,7 +154,14 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
         stamp = int(fields["timestamp"])
         if not (8 <= len(tx) <= 128 and all(ch in "0123456789abcdefABCDEF" for ch in tx)):
             raise ValueError("transaction")
-        if fields["ad_unit"] != AD_UNIT.split("/")[-1] and fields["ad_unit"] != AD_UNIT:
+        # Google URL test uses a signed sample ad unit and transaction ID.
+        # Accept it only in verification-only mode; never award Lidya.
+        google_url_test = (
+            verify_only and not rewards_active
+            and fields["ad_unit"] == "1234567890"
+            and tx == "123456789"
+        )
+        if not google_url_test and fields["ad_unit"] not in (AD_UNIT.split("/")[-1], AD_UNIT):
             raise ValueError("ad unit")
         if fields["reward_item"] != "Lidya" or int(fields["reward_amount"]) != REWARD_AMOUNT:
             raise ValueError("reward")
