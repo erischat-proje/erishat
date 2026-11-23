@@ -38,6 +38,10 @@
         </activity>
 
 
+        <!-- AdMob application ID; not an ad unit ID. -->
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9842221080536523~4835925985"/>
+
         <service
             android:name=".LidyaMessagingService"
             android:exported="false">
