@@ -139,9 +139,10 @@ def test_ssv_verify_only_no_credit(monkeypatch):
     monkeypatch.setenv("LIDYACHAT_ADMOB_SSV_VERIFY_ONLY", "true")
 
     content = (
-        "ad_unit=8782909853&custom_data=sample"
-        "&reward_amount=5&reward_item=Lidya"
-        "&timestamp=1&transaction_id=abcdef1234"
+        "ad_unit=8782909853&custom_data=" + "a" * 32
+        + "&reward_amount=5&reward_item=Lidya"
+        + f"&timestamp={int(time.time() * 1000)}"
+        + "&transaction_id=abcdef1234"
     )
     raw = signed_query(key, content)
     def request(query):
@@ -160,6 +161,31 @@ def test_ssv_verify_only_no_credit(monkeypatch):
     with pytest.raises(HTTPException) as error:
         ads.ssv_callback(request(tampered), db=None)
     assert error.value.status_code == 403
+
+    bad_reward = signed_query(
+        key, content.replace("reward_amount=5", "reward_amount=50")
+    )
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(request(bad_reward), db=None)
+    assert error.value.status_code == 400
+
+    bad_unit = signed_query(
+        key, content.replace("ad_unit=8782909853", "ad_unit=0000000000")
+    )
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(request(bad_unit), db=None)
+    assert error.value.status_code == 400
+
+    stale_content = "&".join(
+        "timestamp=1" if part.startswith("timestamp=") else part
+        for part in content.split("&")
+    )
+    assert stale_content != content
+    assert "timestamp=1" in stale_content
+    stale = signed_query(key, stale_content)
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(request(stale), db=None)
+    assert error.value.status_code == 400
 
     monkeypatch.delenv("LIDYACHAT_ADMOB_SSV_VERIFY_ONLY")
     with pytest.raises(HTTPException) as disabled:

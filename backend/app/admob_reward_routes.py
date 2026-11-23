@@ -148,10 +148,6 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
 
     fields = verified_fields(request.scope.get("query_string", b""))
 
-    # Verification-only mode: validate Google's signature, never credit Lidya.
-    if not rewards_active:
-        return {"ok": True, "verification_only": True}
-
     try:
         tx = fields["transaction_id"]
         nonce = fields["custom_data"]
@@ -170,6 +166,10 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
             raise ValueError("nonce")
     except (KeyError, ValueError, OverflowError, OSError) as exc:
         raise HTTPException(400, "SSV alanlari gecersiz") from exc
+
+    # Valid signed fields, but verification mode never touches the database.
+    if not rewards_active:
+        return {"ok": True, "verification_only": True}
 
     # Database transaction and row lock serialize claims of the same user.
     claim = db.get(AdmobClaim, sha256(nonce.encode()).hexdigest())
