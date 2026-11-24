@@ -11,6 +11,15 @@ on:
       - 'avatarveduvarkağıdı/**'
       - '.github/workflows/lidyachat-play-aab.yml'
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Android build variant'
+        required: true
+        default: release
+        type: choice
+        options:
+          - release
+          - internal
 
 permissions:
   contents: read
@@ -99,19 +108,34 @@ jobs:
           ERISCHAT_KEY_PASSWORD: ${{ secrets.ERISCHAT_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon bundleRelease
+          if [ "${{ inputs.build_type }}" = "internal" ]; then
+            ./gradlew --no-daemon bundleInternal
+            echo "AAB_FILE=android-native/app/build/outputs/bundle/internal/app-internal.aab" >> "$GITHUB_ENV"
+          else
+            ./gradlew --no-daemon bundleRelease
+            echo "AAB_FILE=android-native/app/build/outputs/bundle/release/app-release.aab" >> "$GITHUB_ENV"
+          fi
       - name: Inspect bundle
         run: |
-          test -s android-native/app/build/outputs/bundle/release/app-release.aab
-          unzip -l android-native/app/build/outputs/bundle/release/app-release.aab | grep -q 'base/manifest/AndroidManifest.xml'
+          test -s ${{ env.AAB_FILE }}
+          unzip -l ${{ env.AAB_FILE }} | grep -q 'base/manifest/AndroidManifest.xml'
       - name: Verify signed release bundle
         if: github.event_name == 'workflow_dispatch'
-        run: jarsigner -verify -verbose -certs android-native/app/build/outputs/bundle/release/app-release.aab >/dev/null
-      - name: Upload signed AAB (manual only)
-        if: github.event_name == 'workflow_dispatch'
+        run: jarsigner -verify -verbose -certs ${{ env.AAB_FILE }} >/dev/null
+      - name: Upload signed AAB (manual release only)
+        if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'release'
         uses: actions/upload-artifact@v4
         with:
           name: LidyaChat-Play-Release-AAB
-          path: android-native/app/build/outputs/bundle/release/app-release.aab
+          path: ${{ env.AAB_FILE }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload signed internal test AAB
+        if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'internal'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LidyaChat-AdMob-Internal-Test-AAB
+          path: ${{ env.AAB_FILE }}
           if-no-files-found: error
           retention-days: 7
