@@ -112,7 +112,7 @@
       const auth = token();
       if (!auth) { setStatus('Önce LidyaChat hesabına giriş yap.'); return; }
       if (!native() || typeof native().showLidyaRewardedAdWithClaim !== 'function') {
-        setStatus('Reklam sadece desteklenen Android uygulamasında açılabilir.'); return;
+        setStatus('Web ödülleri Ad Manager doğrulaması tamamlanınca açılacak.'); return;
       }
       setBusy(true);
       setStatus('Ödül sistemi durumu kontrol ediliyor…');
@@ -145,7 +145,7 @@
     demo.addEventListener('click', () => {
       if (busy) return;
       if (!native() || typeof native().showLidyaRewardedAd !== 'function') {
-        setStatus('Test reklamı Android uygulamasında kullanılabilir.'); return;
+        window.LidyaWebRewarded?.show(setStatus); return;
       }
       setStatus('Google test reklamı açılıyor. Lidya ödülü verilmez.');
       native().showLidyaRewardedAd();
