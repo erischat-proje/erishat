@@ -150,6 +150,27 @@
       setStatus('Google test reklamı açılıyor. Lidya ödülü verilmez.');
       native().showLidyaRewardedAd();
     });
+    // Move the existing card into the Lidya loading modal.
+    // Restore it when the modal closes; never create duplicate cards.
+    const originalParent = root.parentNode;
+    const originalMarker = document.createComment('admob-original-position');
+    originalParent.insertBefore(originalMarker, root);
+
+    window.LidyaAdmobReward = {
+      attachTo(host) {
+        if (!host || !host.isConnected) return;
+        host.appendChild(root);
+        refreshStatus();
+      },
+      restore() {
+        if (originalMarker.parentNode) {
+          originalMarker.parentNode.insertBefore(
+            root, originalMarker.nextSibling
+          );
+        }
+      }
+    };
+
     refreshStatus();
     window.addEventListener('focus', refreshStatus);
     window.addEventListener('lidyachat:rewarded-ad', event => {
