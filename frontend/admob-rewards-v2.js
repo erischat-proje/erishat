@@ -203,7 +203,21 @@
     window.addEventListener('focus', refreshStatus);
     window.addEventListener('lidyachat:rewarded-ad', event => {
       const value = event && event.detail && event.detail.status;
-      if (value === 'loading') setStatus('Test reklamı yükleniyor…');
+      if (typeof value === 'string' &&
+          /^load_error_\d+$/.test(value)) {
+        const code = Number(value.slice('load_error_'.length));
+        const descriptions = {
+          0: 'Dahili reklam hatası',
+          1: 'Geçersiz reklam isteği',
+          2: 'Ağ bağlantısı hatası',
+          3: 'Şu anda uygun reklam bulunamadı'
+        };
+        setStatus(
+          `Reklam yüklenemedi (Kod ${code}). ` +
+          (descriptions[code] || 'Reklam servisi hatası')
+        );
+      }
+      else if (value === 'loading') setStatus('Test reklamı yükleniyor…');
       else if (value === 'unavailable') setStatus('Test reklamı yüklenemedi. Tekrar deneyebilirsin.');
       else if (value === 'test_completed_no_credit') setStatus('Test reklamı tamamlandı. Lidya bakiyen değiştirilmedi.');
       else if (value === 'reward_pending_ssv') {
