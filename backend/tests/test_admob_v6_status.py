@@ -1,11 +1,12 @@
 """AdMob V6 authenticated status tests."""
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 from backend.app import admob_reward_routes as ads
 
 
-def status_for(user_id):
+def status_for(user_id, daily_count=0):
     path = "/v1/admob/status"
 
     # register_auth() endpointleri dinamik olarak kaydeder.
@@ -26,7 +27,13 @@ def status_for(user_id):
         + str([r.path for r in ads.router.routes])
     )
 
-    return matches[0].endpoint(SimpleNamespace(id=user_id))
+    db = MagicMock()
+    db.execute.return_value.scalar_one.return_value = daily_count
+
+    return matches[0].endpoint(
+        SimpleNamespace(id=user_id),
+        db=db,
+    )
 
 @pytest.fixture(autouse=True)
 def safe_defaults(monkeypatch):
@@ -87,3 +94,37 @@ def test_live_mode_is_separate(monkeypatch):
     assert data["mode"] == "live"
     assert data["rewards_enabled"] is True
     assert data["preview_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "used, expected_used, remaining, remaining_lidya",
+    [
+        (0, 0, 5, 25),
+        (3, 3, 2, 10),
+        (5, 5, 0, 0),
+        (6, 5, 0, 0),
+    ],
+)
+def test_v11_daily_limit_status(
+    used, expected_used, remaining, remaining_lidya
+):
+    data = status_for("authorized-test-user", daily_count=used)
+
+    assert data["daily_limit"] == 5
+    assert data["daily_used"] == expected_used
+    assert data["daily_remaining"] == remaining
+    assert data["daily_reward_remaining"] == remaining_lidya
+    assert data["rewards_enabled"] is False
+
+
+def test_v11_live_daily_limit_status(monkeypatch):
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_REWARDS_ENABLED", "true"
+    )
+
+    data = status_for("authorized-test-user", daily_count=5)
+
+    assert data["mode"] == "live"
+    assert data["daily_used"] == 5
+    assert data["daily_remaining"] == 0
+    assert data["daily_reward_remaining"] == 0
