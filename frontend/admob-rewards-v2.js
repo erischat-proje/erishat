@@ -4,6 +4,8 @@
   const API = () => (window.ERIS_API || window.ERISCHAT_API || 'https://erischat-api-production.up.railway.app/v1').replace(/\/$/, '');
   const token = () => localStorage.getItem('erischat_access_token') || localStorage.getItem('erischat.accessToken.v1') || localStorage.getItem('token') || '';
   let busy = false;
+  let previewAllowed = false;
+  let rewardsEnabled = false;
   const toast = message => { if (typeof window.toast === 'function') window.toast(message); };
   const native = () => window.ErisChatAndroid;
 
@@ -36,7 +38,8 @@
     actions.className = 'lidya-ad-actions';
     const earn = document.createElement('button');
     earn.type = 'button';
-    earn.textContent = 'Reklam ödülünü kontrol et';
+    earn.textContent = 'Reklam durumu kontrol ediliyor';
+    earn.disabled = true;
     const demo = document.createElement('button');
     demo.type = 'button';
     demo.textContent = 'Test reklamını izle (ödül yok)';
@@ -50,9 +53,62 @@
     root.appendChild(card);
 
     function setStatus(message) { status.textContent = message; }
-    function setBusy(value) { busy = value; earn.disabled = value; demo.disabled = value; }
+    function setBusy(value) {
+      busy = value;
+      earn.disabled = value || (!previewAllowed && !rewardsEnabled);
+      demo.disabled = value;
+    }
+
+    async function refreshStatus() {
+      const auth = token();
+      previewAllowed = false;
+      rewardsEnabled = false;
+      earn.disabled = true;
+
+      if (!auth) {
+        earn.textContent = 'Giris yapman gerekiyor';
+        setStatus('Reklam durumunu gormek icin giris yap.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API()}/admob/status`, {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${auth}`
+          },
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          setStatus('Reklam durumu sorgulanamadi.');
+          return;
+        }
+
+        const data = await response.json();
+        previewAllowed = data.mode === 'preview'
+          && data.preview_allowed === true;
+        rewardsEnabled = data.mode === 'live'
+          && data.rewards_enabled === true;
+
+        if (previewAllowed) {
+          earn.textContent = 'Test onizlemesini baslat';
+          setStatus('Yetkili test hesabi. Testte Lidya verilmez.');
+        } else if (rewardsEnabled) {
+          earn.textContent = 'Reklam izle';
+          setStatus('Reklam odulu sunucuda dogrulanir.');
+        } else {
+          earn.textContent = 'Oduller henuz kapali';
+          setStatus('Reklam odulleri henuz aktif degil.');
+        }
+
+        setBusy(false);
+      } catch (_) {
+        setStatus('Sunucuya baglanilamadi.');
+      }
+    }
     earn.addEventListener('click', async () => {
-      if (busy) return;
+      if (busy || (!previewAllowed && !rewardsEnabled)) return;
       const auth = token();
       if (!auth) { setStatus('Önce LidyaChat hesabına giriş yap.'); return; }
       if (!native() || typeof native().showLidyaRewardedAdWithClaim !== 'function') {
@@ -79,7 +135,9 @@
         }
         // SAFETY: Native V2 still shows Google's official TEST unit. No SSV credit is expected.
         native().showLidyaRewardedAdWithClaim(claim);
-        setStatus('Test reklamı açılıyor. Bu sürümde bakiye artışı olmaz.');
+        setStatus(previewAllowed
+          ? 'Test reklami aciliyor. Lidya bakiyesi degismeyecek.'
+          : 'Reklam aciliyor. Odul icin sunucu dogrulamasi bekleniyor.');
       } catch (_) {
         setStatus('Sunucuya bağlanılamadı; ödül isteği oluşturulamadı.');
       } finally { setBusy(false); }
@@ -92,11 +150,15 @@
       setStatus('Google test reklamı açılıyor. Lidya ödülü verilmez.');
       native().showLidyaRewardedAd();
     });
+    refreshStatus();
+    window.addEventListener('focus', refreshStatus);
     window.addEventListener('lidyachat:rewarded-ad', event => {
       const value = event && event.detail && event.detail.status;
       if (value === 'loading') setStatus('Test reklamı yükleniyor…');
       else if (value === 'unavailable') setStatus('Test reklamı yüklenemedi. Tekrar deneyebilirsin.');
       else if (value === 'test_completed_no_credit') setStatus('Test reklamı tamamlandı. Lidya bakiyen değiştirilmedi.');
+      else if (value === 'reward_pending_ssv')
+        setStatus('Google sunucu dogrulamasi bekleniyor. Bakiye istemciden degistirilmez.');
       else if (value === 'closed') setStatus('Reklam penceresi kapatıldı.');
     });
   }
