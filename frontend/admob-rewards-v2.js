@@ -40,15 +40,12 @@
     earn.type = 'button';
     earn.textContent = 'Reklam durumu kontrol ediliyor';
     earn.disabled = true;
-    const demo = document.createElement('button');
-    demo.type = 'button';
-    demo.textContent = 'Test reklamını izle (ödül yok)';
     const status = document.createElement('p');
     status.className = 'lidya-ad-status';
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
     status.textContent = 'Gerçek ödül dağıtımı kapalı.';
-    actions.append(earn, demo);
+    actions.append(earn);
     card.append(heading, copy, actions, status);
     root.appendChild(card);
 
@@ -56,7 +53,6 @@
     function setBusy(value) {
       busy = value;
       earn.disabled = value || (!previewAllowed && !rewardsEnabled);
-      demo.disabled = value;
     }
 
     async function refreshStatus() {
@@ -92,13 +88,13 @@
           && data.rewards_enabled === true;
 
         if (previewAllowed) {
-          earn.textContent = 'Test onizlemesini baslat';
+          earn.textContent = 'Reklam İzle';
           setStatus('Yetkili test hesabi. Testte Lidya verilmez.');
         } else if (rewardsEnabled) {
-          earn.textContent = 'Reklam izle';
+          earn.textContent = 'Reklam İzle';
           setStatus('Reklam odulu sunucuda dogrulanir.');
         } else {
-          earn.textContent = 'Oduller henuz kapali';
+          earn.textContent = 'Reklamlar Hazırlanıyor';
           setStatus('Reklam odulleri henuz aktif degil.');
         }
 
@@ -112,7 +108,7 @@
       const auth = token();
       if (!auth) { setStatus('Önce LidyaChat hesabına giriş yap.'); return; }
       if (!native() || typeof native().showLidyaRewardedAdWithClaim !== 'function') {
-        setStatus('Web ödülleri Ad Manager doğrulaması tamamlanınca açılacak.'); return;
+        setStatus('Web reklamları henüz hazır değil. Ad Manager onayı ve sunucu doğrulaması bekleniyor.'); return;
       }
       setBusy(true);
       setStatus('Ödül sistemi durumu kontrol ediliyor…');
@@ -141,14 +137,6 @@
       } catch (_) {
         setStatus('Sunucuya bağlanılamadı; ödül isteği oluşturulamadı.');
       } finally { setBusy(false); }
-    });
-    demo.addEventListener('click', () => {
-      if (busy) return;
-      if (!native() || typeof native().showLidyaRewardedAd !== 'function') {
-        window.LidyaWebRewarded?.show(setStatus); return;
-      }
-      setStatus('Google test reklamı açılıyor. Lidya ödülü verilmez.');
-      native().showLidyaRewardedAd();
     });
     // Move the existing card into the Lidya loading modal.
     // Restore it when the modal closes; never create duplicate cards.
