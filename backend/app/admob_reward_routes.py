@@ -142,6 +142,28 @@ def verified_fields(raw_query: bytes, keys=None):
 
 
 def register_auth(current_user):
+    @router.get("/status")
+    def reward_status(user: User = Depends(current_user)):
+        live = enabled()
+        preview = preview_allowed(user.id)
+
+        return {
+            "mode": (
+                "live" if live else
+                "preview" if preview else
+                "disabled"
+            ),
+            "preview_allowed": preview,
+            "rewards_enabled": live,
+            "reward_amount": REWARD_AMOUNT,
+            "daily_limit": DAILY_LIMIT,
+            "message": (
+                "Reklam odulleri aktif" if live else
+                "Test onizlemesi kullanilabilir" if preview else
+                "Reklam odulleri henuz aktif degil"
+            )
+        }
+
     @router.post("/claim", response_model=ClaimOut)
     def create_claim(db: Session = Depends(get_db), user: User = Depends(current_user)):
         if not enabled() and not preview_allowed(user.id):
