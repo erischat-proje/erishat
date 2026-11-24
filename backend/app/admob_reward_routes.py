@@ -143,9 +143,27 @@ def verified_fields(raw_query: bytes, keys=None):
 
 def register_auth(current_user):
     @router.get("/status")
-    def reward_status(user: User = Depends(current_user)):
+    def reward_status(
+        user: User = Depends(current_user),
+        db: Session = Depends(get_db),
+    ):
         live = enabled()
         preview = preview_allowed(user.id)
+
+        now = datetime.now(timezone.utc)
+        day_start = now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        daily_count = db.execute(
+            select(func.count()).select_from(AdmobReward).where(
+                AdmobReward.user_id == user.id,
+                AdmobReward.rewarded_at >= day_start,
+                AdmobReward.rewarded_at < day_start + timedelta(days=1),
+            )
+        ).scalar_one()
+
+        daily_count = min(int(daily_count), DAILY_LIMIT)
+        daily_remaining = max(0, DAILY_LIMIT - daily_count)
 
         return {
             "mode": (
@@ -157,6 +175,9 @@ def register_auth(current_user):
             "rewards_enabled": live,
             "reward_amount": REWARD_AMOUNT,
             "daily_limit": DAILY_LIMIT,
+            "daily_used": daily_count,
+            "daily_remaining": daily_remaining,
+            "daily_reward_remaining": daily_remaining * REWARD_AMOUNT,
             "message": (
                 "Reklam odulleri aktif" if live else
                 "Test onizlemesi kullanilabilir" if preview else
@@ -169,6 +190,24 @@ def register_auth(current_user):
         if not enabled() and not preview_allowed(user.id):
             raise HTTPException(503, "Reklam odulleri henuz acilmadi")
         now = datetime.now(timezone.utc)
+
+        if enabled():
+            day_start = now.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            daily_count = db.execute(
+                select(func.count()).select_from(AdmobReward).where(
+                    AdmobReward.user_id == user.id,
+                    AdmobReward.rewarded_at >= day_start,
+                    AdmobReward.rewarded_at < day_start + timedelta(days=1),
+                )
+            ).scalar_one()
+
+            if daily_count >= DAILY_LIMIT:
+                raise HTTPException(
+                    409, "Gunluk 5 reklam odulu siniri doldu"
+                )
+
         nonce = secrets.token_urlsafe(32)
         db.add(AdmobClaim(nonce_digest=sha256(nonce.encode()).hexdigest(), user_id=user.id,
                            created_at=now, expires_at=now + CLAIM_TTL))

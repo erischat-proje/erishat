@@ -6,6 +6,7 @@
   let busy = false;
   let previewAllowed = false;
   let rewardsEnabled = false;
+  let dailyRemaining = 5;
   const toast = message => { if (typeof window.toast === 'function') window.toast(message); };
   const native = () => window.ErisChatAndroid;
 
@@ -45,20 +46,27 @@
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
     status.textContent = 'Gerçek ödül dağıtımı kapalı.';
+    const daily = document.createElement('p');
+    daily.className = 'lidya-ad-status';
+    daily.textContent = 'Günlük ödül hakkı kontrol ediliyor…';
     actions.append(earn);
-    card.append(heading, copy, actions, status);
+    card.append(heading, copy, daily, actions, status);
     root.appendChild(card);
 
     function setStatus(message) { status.textContent = message; }
     function setBusy(value) {
       busy = value;
-      earn.disabled = value || (!previewAllowed && !rewardsEnabled);
+      earn.disabled = value ||
+        (!previewAllowed && !rewardsEnabled) ||
+        (rewardsEnabled && dailyRemaining <= 0);
     }
 
     async function refreshStatus() {
       const auth = token();
       previewAllowed = false;
       rewardsEnabled = false;
+      dailyRemaining = 5;
+      daily.textContent = 'Günlük ödül hakkı kontrol ediliyor…';
       earn.disabled = true;
 
       if (!auth) {
@@ -87,12 +95,35 @@
         rewardsEnabled = data.mode === 'live'
           && data.rewards_enabled === true;
 
+        if (rewardsEnabled) {
+          const remaining = Number(data.daily_remaining);
+          dailyRemaining = Number.isInteger(remaining)
+            ? Math.max(0, Math.min(5, remaining))
+            : 0;
+
+          daily.textContent =
+            `Günlük ödül: ${5 - dailyRemaining}/5 kullanıldı · ` +
+            `${dailyRemaining} hak kaldı`;
+        } else if (previewAllowed) {
+          daily.textContent =
+            'Test modu · Gerçek ödül hakkı tüketilmez';
+        } else {
+          daily.textContent = 'Günlük ödüller henüz aktif değil';
+        }
+
+        copy.textContent = rewardsEnabled
+          ? 'Tamamladığın ve Google tarafından doğrulanan her reklam 5 Lidya kazandırır. Günlük en fazla 25 Lidya.'
+          : 'Günlük en fazla 5 ödül (25 Lidya). Ödül sistemi henüz aktif değil. Test reklamları Lidya kazandırmaz.';
+
         if (previewAllowed) {
           earn.textContent = 'Reklam İzle';
           setStatus('Yetkili test hesabi. Testte Lidya verilmez.');
         } else if (rewardsEnabled) {
-          earn.textContent = 'Reklam İzle';
-          setStatus('Reklam odulu sunucuda dogrulanir.');
+          earn.textContent = dailyRemaining > 0
+            ? 'Reklam İzle' : 'Günlük Limit Doldu';
+          setStatus(dailyRemaining > 0
+            ? 'Reklam ödülü sunucuda doğrulanır.'
+            : 'Bugünkü 5 reklam ödülünü tamamladın.');
         } else {
           earn.textContent = 'Reklamlar Hazırlanıyor';
           setStatus('Reklam odulleri henuz aktif degil.');
@@ -104,7 +135,8 @@
       }
     }
     earn.addEventListener('click', async () => {
-      if (busy || (!previewAllowed && !rewardsEnabled)) return;
+      if (busy || (!previewAllowed && !rewardsEnabled) ||
+          (rewardsEnabled && dailyRemaining <= 0)) return;
       const auth = token();
       if (!auth) { setStatus('Önce LidyaChat hesabına giriş yap.'); return; }
       if (!native() || typeof native().showLidyaRewardedAdWithClaim !== 'function') {
