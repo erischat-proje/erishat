@@ -58,6 +58,12 @@ final class LidyaRewardedAds {
                 new RewardedAdLoadCallback() {
                     @Override public void onAdFailedToLoad(LoadAdError error) {
                         loading = false;
+                        android.util.Log.e(
+                            "LidyaAdMob",
+                            "Rewarded load failed: code=" + error.getCode()
+                            + ", domain=" + error.getDomain()
+                            + ", message=" + error.getMessage()
+                        );
                         event("unavailable");
                     }
                     @Override public void onAdLoaded(RewardedAd ad) {
