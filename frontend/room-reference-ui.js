@@ -116,11 +116,12 @@
   async function gifts(body,r){
     const id=r?.id||roomId(),rows=Array.isArray(r?.seats)?r.seats.filter(x=>x.user_id):[];
     let data=[];try{data=await roomApi().giftCatalog?.(id)||[]}catch(e){}
-    const gs=Array.isArray(data)?data:(data?.items||data?.gifts||[]);
+    const gs=Array.isArray(data)?data:(data?.items||data?.gifts||data?.catalog||[]);
     body.innerHTML='<div class="room-v3-card"><b>🎁 Hediye gönder</b><small>200+ oda hediyesi • alıcı seç, hediyeyi seç ve gönder.</small></div><select id="roomGiftRecipient" class="room-v3-input" style="margin-bottom:7px"><option value="">Alıcı seç</option>'+rows.map(x=>'<option value="'+esc(x.user_id)+'">'+esc(x.nickname||x.user_name||x.user_id)+'</option>').join('')+'</select><input id="roomGiftSearch" class="room-v3-input" placeholder="Hediye ara..." style="margin-bottom:7px"><div id="roomV3GiftCount" class="room-v3-note"></div><div class="room-v3-grid" id="roomV3Gifts"></div>';
     const g=body.querySelector('#roomV3Gifts'),search=body.querySelector('#roomGiftSearch'),recipient=body.querySelector('#roomGiftRecipient'),count=body.querySelector('#roomV3GiftCount');
     if(!gs.length){g.innerHTML='<div class="room-v3-card"><small>Hediye kataloğu alınamadı. Gerçek odaya bağlı ve giriş yapmış olmalısın.</small></div>';return}
-    const draw=()=>{const q=search.value.trim().toLocaleLowerCase('tr-TR');const list=gs.filter(x=>!q||String(x.name||x.title||x.gift_key||x.key||'').toLocaleLowerCase('tr-TR').includes(q));count.textContent=list.length+' / '+gs.length+' hediye';g.innerHTML='';list.forEach(x=>{const key=x.gift_key||x.key||x.name||x.title,price=Number(x.unit_price??x.price??x.cost??0);const b=document.createElement('button');b.className='room-v3-card';b.innerHTML='<b>'+esc(x.emoji||x.icon||'🎁')+' '+esc(x.name||x.title||key)+'</b><small>'+price.toLocaleString('tr-TR')+' Lidya • animasyon '+(x.animation?'✓':'—')+'</small>';b.onclick=async()=>{const to=recipient.value;if(!to){window.toast?.('Önce alıcı seç.');return}try{const result=await roomApi().sendGift?.(id,to,key,1);if(!result)throw new Error('Hediye gönderilemedi');window.toast?.('🎁 '+(x.name||key)+' gönderildi ✓')}catch(e){window.toast?.(e.message||'Hediye gönderilemedi')}};g.appendChild(b)})};
+    g.style.gridTemplateColumns='repeat(3,minmax(0,1fr))';
+    const draw=()=>{const q=search.value.trim().toLocaleLowerCase('tr-TR');const list=gs.filter(x=>!q||String(x.name||x.title||x.gift_key||x.key||'').toLocaleLowerCase('tr-TR').includes(q));count.textContent=list.length+' / '+gs.length+' hediye';g.innerHTML='';list.forEach(x=>{const key=x.gift_key||x.key||x.name||x.title,price=Number(x.unit_price??x.price??x.cost??0);const b=document.createElement('button');b.className='room-v3-card';b.title=x.name||key;b.setAttribute('aria-label',(x.name||key)+' • '+price+' Lidya');b.innerHTML='<img src="'+esc(x.image_url||'')+'" alt="" loading="lazy" style="display:block;width:75px;height:75px;object-fit:contain;margin:auto;filter:drop-shadow(0 0 8px #e4b85d77)"><small>'+price.toLocaleString('tr-TR')+' Lidya</small>';b.style.textAlign='center';b.onclick=async()=>{const to=recipient.value;if(!to){window.toast?.('Önce alıcı seç.');return}try{const result=await roomApi().sendGift?.(id,to,key,1);if(!result)throw new Error('Hediye gönderilemedi');window.toast?.('Hediye gönderildi ✓');window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...result,gift_id:x.id,gift_key:key,tier:x.tier,image_url:x.image_url}}))}catch(e){window.toast?.(e.message||'Hediye gönderilemedi')}};g.appendChild(b)})};
     search.oninput=draw;draw();
   }
   async function music(body,r){
@@ -163,7 +164,7 @@
   const root=()=>document.getElementById('erisRoomSurface');
   const q=s=>document.getElementById(s);
   const rid=()=>String(window.ErisCurrentRoomId||window.currentRoomId||'');
-  const =()=>window.ErisDemoRoomConfig?.[rid()]||null;
+  const demo=()=>window.ErisDemoRoomConfig?.[rid()]||null;
 
   function css(){
     if(q('eris-room-v5-css')) return;
@@ -213,7 +214,7 @@
     const s=root(),h=s?.querySelector('.eris-room-top'); if(!h)return;
     let lv=h.querySelector('#erisRoomLevel');
     if(!lv){lv=document.createElement('button');lv.id='erisRoomLevel';lv.className='room-v5-topbtn';lv.innerHTML='<b>Seviye</b><small>Oda bilgisi</small>';lv.title='Oda seviyesi';h.appendChild(lv);}
-    lv.onclick=()=>(()&&window.__erisRoomPermissions?.can_manage)?Settings():window.ErisRoomCompleteV3?.openLevels?.();
+    lv.onclick=()=>window.ErisRoomCompleteV3?.openLevels?.();
     let more=h.querySelector('#erisRoomMoreTop');
     if(!more){more=document.createElement('button');more.id='erisRoomMoreTop';more.className='room-v5-topbtn';more.textContent='⋯';more.title='Oda menüsü';h.appendChild(more);}
     more.onclick=menu;
@@ -232,7 +233,7 @@
   }
 
   async function syncHeader(){
-    const lv=q('erisRoomLevel'),d=();
+    const lv=q('erisRoomLevel'),d=demo();
     if(!lv)return;
     if(d){
       const level=Number(d.level||10),cap=Math.min(16,Math.max(8,Number(d.seat_count)||16));
@@ -244,7 +245,7 @@
 
   async function menu(){
     const p=panel(); if(!p)return;
-    const r=()?():(await roomApi().get?.(rid()).catch(()=>({}))||{});
+    const r=demo()||((await roomApi().get?.(rid()).catch(()=>({})))||{});
     const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
     p.innerHTML='<div class="v5-title">Oda menüsü <button class="v5-btn" data-close>Kapat</button></div>'+
       '<div class="v5-grid">'+
@@ -296,9 +297,9 @@
   }
 
   function Settings(){
-    const p=panel(),d=();if(!p)return;
+    const p=panel(),d=demo();if(!p)return;
     const level=Number(d?.level||10),cap=Math.min(16,Math.max(8,Number(d?.seat_count)||16));
-    const LockedDefault=()?.locked===true;
+    const LockedDefault=demo()?.locked===true;
     const savedLock=localStorage.getItem('eris__room_locked_'+rid());
     const locked=savedLock===null?LockedDefault:savedLock==='1';
     p.innerHTML='<div class="v5-title">👑 Örnek oda yönetimi <button class="v5-btn" data-close>Kapat</button></div>'+
@@ -311,11 +312,11 @@
     p.querySelectorAll('[data-cap]').forEach(b=>b.onclick=()=>setCapacity(b.dataset.cap));
     p.querySelector('[data-lock]').onclick=()=>toggleDemoLock(p);p.querySelector('[data-test-lock]').onclick=()=>testDemoLock();p.querySelector('[data-test-wrong]').onclick=()=>testDemoPassword('0000');p.querySelector('[data-test-right]').onclick=()=>testDemoPassword(localStorage.getItem('eris__room_password_'+rid())||'3456');p.querySelector('[data-ban-history]').onclick=showBanHistory;
   }
-  function toggleDemoLock(p){const id=rid(),old=localStorage.getItem('eris__room_locked_'+id)==='1'||(localStorage.getItem('eris__room_locked_'+id)===null&&()?.locked===true);if(old){localStorage.removeItem('eris__room_locked_'+id);localStorage.removeItem('eris__room_password_'+id);window.toast?.('Demo oda kilidi açıldı ✓');Settings();return;}const pass=String(p.querySelector('#v5RoomPassword')?.value||'').trim();if(!/^\d{4}$/.test(pass)){window.toast?.('Tam 4 haneli sayı gir.');return;}localStorage.setItem('eris__room_locked_'+id,'1');localStorage.setItem('eris__room_password_'+id,pass);window.toast?.('Oda kilitlendi. Şifre kaydedildi ✓');Settings();}
-  function testDemoLock(){const id=rid(),pass=localStorage.getItem('eris__room_password_'+id)||'3456';if(localStorage.getItem('eris__room_locked_'+id)!=='1' && !(()?.locked===true && localStorage.getItem('eris__room_locked_'+id)===null)){window.toast?.('Önce odayı kilitle.');return;}const entered=prompt('Kilitli odaya giriş testi — 4 haneli şifre:','');if(entered===null)return;window.toast?.(entered===pass?'Şifre doğru ✓ Giriş kabul edildi.':'Şifre yanlış ✕ Giriş reddedildi.');}
-  function testDemoPassword(testPassword){const id=rid(),pass=localStorage.getItem('eris__room_password_'+id)||()?.password||'3456';localStorage.setItem('eris__room_locked_'+id,'1');localStorage.setItem('eris__room_password_'+id,pass);window.toast?.(String(testPassword)===String(pass)?'Doğru şifre testi ✓ Giriş kabul edilir.':'Yanlış şifre testi ✓ Giriş reddedilir.');}
+  function toggleDemoLock(p){const id=rid(),old=localStorage.getItem('eris__room_locked_'+id)==='1'||(localStorage.getItem('eris__room_locked_'+id)===null&&demo()?.locked===true);if(old){localStorage.removeItem('eris__room_locked_'+id);localStorage.removeItem('eris__room_password_'+id);window.toast?.('Demo oda kilidi açıldı ✓');Settings();return;}const pass=String(p.querySelector('#v5RoomPassword')?.value||'').trim();if(!/^\d{4}$/.test(pass)){window.toast?.('Tam 4 haneli sayı gir.');return;}localStorage.setItem('eris__room_locked_'+id,'1');localStorage.setItem('eris__room_password_'+id,pass);window.toast?.('Oda kilitlendi. Şifre kaydedildi ✓');Settings();}
+  function testDemoLock(){const id=rid(),pass=localStorage.getItem('eris__room_password_'+id)||'3456';if(localStorage.getItem('eris__room_locked_'+id)!=='1' && !(demo()?.locked===true && localStorage.getItem('eris__room_locked_'+id)===null)){window.toast?.('Önce odayı kilitle.');return;}const entered=prompt('Kilitli odaya giriş testi — 4 haneli şifre:','');if(entered===null)return;window.toast?.(entered===pass?'Şifre doğru ✓ Giriş kabul edildi.':'Şifre yanlış ✕ Giriş reddedildi.');}
+  function testDemoPassword(testPassword){const id=rid(),pass=localStorage.getItem('eris__room_password_'+id)||demo()?.password||'3456';localStorage.setItem('eris__room_locked_'+id,'1');localStorage.setItem('eris__room_password_'+id,pass);window.toast?.(String(testPassword)===String(pass)?'Doğru şifre testi ✓ Giriş kabul edilir.':'Yanlış şifre testi ✓ Giriş reddedilir.');}
   function showBanHistory(){const id=rid(),rows=JSON.parse(localStorage.getItem('eris__ban_history_'+id)||'[]'),p=panel();p.innerHTML='<div class="v5-title">🚫 Odadan atılanlar <button class="v5-btn" data-back>Geri</button></div>'+(rows.length?rows.map(x=>'<div class="v5-card"><b>🚫 '+esc(x.name)+'</b><small>'+esc(x.reason||'Oda yöneticisi tarafından atıldı')+' • '+esc(x.time||'şimdi')+'</small></div>').join(''):'<div class="v5-note">Henüz atılan yok.</div>');p.classList.add('show');p.querySelector('[data-back]').onclick=Settings;}
-  function setCapacity(value){const d=();if(!d){window.toast?.('Gerçek odada kapasite backend ayarıdır.');return;}const next=value==='auto'?(Number(d.level||10)>=7?16:Number(d.level||10)>=5?12:8):Number(value);d.seat_count=Math.min(16,Math.max(8,next));d.level=Math.max(Number(d.level||1),d.seat_count===16?7:d.seat_count===12?5:1);localStorage.setItem('eris__room_capacity_'+rid(),String(d.seat_count));window.toast?.(d.seat_count+' koltuk seçildi ✓');window.openRoom?.(rid(),q('erisLiveTitle')?.textContent||d.name||'Örnek Oda');}
+  function setCapacity(value){const d=demo();if(!d){window.toast?.('Gerçek odada kapasite backend ayarıdır.');return;}const next=value==='auto'?(Number(d.level||10)>=7?16:Number(d.level||10)>=5?12:8):Number(value);d.seat_count=Math.min(16,Math.max(8,next));d.level=Math.max(Number(d.level||1),d.seat_count===16?7:d.seat_count===12?5:1);localStorage.setItem('eris__room_capacity_'+rid(),String(d.seat_count));window.toast?.(d.seat_count+' koltuk seçildi ✓');window.openRoom?.(rid(),q('erisLiveTitle')?.textContent||d.name||'Örnek Oda');}
 
   function seatActions(){
     const box=q('erisLiveSeats');if(!box||box.dataset.v5SeatsBound==='1')return;
