@@ -45,6 +45,18 @@ def enabled():
     return os.getenv("LIDYACHAT_ADMOB_REWARDS_ENABLED", "false").lower() == "true"
 
 
+def pilot_allowed(user_id):
+    # Fail closed: enabling rewards without an allowlist pays nobody.
+    permitted = {
+        item.strip()
+        for item in os.getenv(
+            "LIDYACHAT_ADMOB_PILOT_USER_IDS", ""
+        ).split(",")
+        if item.strip()
+    }
+    return enabled() and str(user_id) in permitted
+
+
 def preview_enabled():
     """Preview claims are disabled unless explicitly authorized."""
     return (
@@ -147,7 +159,7 @@ def register_auth(current_user):
         user: User = Depends(current_user),
         db: Session = Depends(get_db),
     ):
-        live = enabled()
+        live = pilot_allowed(user.id)
         preview = preview_allowed(user.id)
 
         now = datetime.now(timezone.utc)
@@ -187,7 +199,7 @@ def register_auth(current_user):
 
     @router.post("/claim", response_model=ClaimOut)
     def create_claim(db: Session = Depends(get_db), user: User = Depends(current_user)):
-        if not enabled() and not preview_allowed(user.id):
+        if not pilot_allowed(user.id) and not preview_allowed(user.id):
             raise HTTPException(503, "Reklam odulleri henuz acilmadi")
         now = datetime.now(timezone.utc)
 
@@ -325,6 +337,8 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
     user = db.execute(select(User).where(User.id == claim.user_id).with_for_update()).scalar_one_or_none()
     if user is None or not user.is_active:
         raise HTTPException(403, "Kullanici uygun degil")
+    if not pilot_allowed(user.id):
+        raise HTTPException(403, "Gercek reklam odulu icin yetki yok")
     # Re-read claim once user lock has been obtained to observe concurrent claims.
     db.refresh(claim)
     previous = db.get(AdmobReward, tx)

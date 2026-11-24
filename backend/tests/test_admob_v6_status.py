@@ -37,6 +37,10 @@ def status_for(user_id, daily_count=0):
 
 @pytest.fixture(autouse=True)
 def safe_defaults(monkeypatch):
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_PILOT_USER_IDS",
+        "authorized-test-user"
+    )
     monkeypatch.setenv("LIDYACHAT_ADMOB_REWARDS_ENABLED", "false")
     monkeypatch.setenv("LIDYACHAT_ADMOB_SSV_VERIFY_ONLY", "true")
     monkeypatch.setenv("LIDYACHAT_ADMOB_PREVIEW_CLAIMS_ENABLED", "true")
@@ -128,3 +132,20 @@ def test_v11_live_daily_limit_status(monkeypatch):
     assert data["daily_used"] == 5
     assert data["daily_remaining"] == 0
     assert data["daily_reward_remaining"] == 0
+
+
+
+def test_v12_nonpilot_status_disabled(monkeypatch):
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_REWARDS_ENABLED", "true"
+    )
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_PILOT_USER_IDS",
+        "authorized-test-user"
+    )
+
+    data = status_for("other-user")
+
+    assert data["mode"] == "disabled"
+    assert data["rewards_enabled"] is False
+    assert data["preview_allowed"] is False
