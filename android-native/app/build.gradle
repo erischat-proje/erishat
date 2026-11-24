@@ -27,6 +27,12 @@ android {
         targetSdk 36
         versionCode 19
         versionName '1.0.8'
+        // V3: Real rewarded advertisements are OFF in every build.
+        buildConfigField 'boolean', 'LIDYA_REAL_REWARDED_ADS', 'false'
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     buildTypes {
