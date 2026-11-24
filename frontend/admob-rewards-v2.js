@@ -154,7 +154,15 @@
           setStatus('Reklam ödülleri henüz etkin değil. Test reklamı ile deneme yapabilirsin.'); return;
         }
         if (!response.ok) {
-          setStatus(response.status === 401 ? 'Oturumun sona ermiş, tekrar giriş yap.' : 'Ödül isteği şu anda oluşturulamadı.'); return;
+          if (response.status === 409) {
+            setStatus('Günlük reklam ödülü sınırına ulaştın.');
+            await refreshStatus();
+          } else {
+            setStatus(response.status === 401
+              ? 'Oturumun sona ermiş, tekrar giriş yap.'
+              : 'Ödül isteği şu anda oluşturulamadı.');
+          }
+          return;
         }
         const data = await response.json();
         const claim = data && data.custom_data;
@@ -198,8 +206,19 @@
       if (value === 'loading') setStatus('Test reklamı yükleniyor…');
       else if (value === 'unavailable') setStatus('Test reklamı yüklenemedi. Tekrar deneyebilirsin.');
       else if (value === 'test_completed_no_credit') setStatus('Test reklamı tamamlandı. Lidya bakiyen değiştirilmedi.');
-      else if (value === 'reward_pending_ssv')
+      else if (value === 'reward_pending_ssv') {
         setStatus('Google sunucu dogrulamasi bekleniyor. Bakiye istemciden degistirilmez.');
+
+        // SSV callback is asynchronous. Read only server-confirmed rewards.
+        // Never grant Lidya from the client.
+        if (rewardsEnabled) {
+          [3000, 10000, 25000].forEach(delay => {
+            setTimeout(() => {
+              if (rewardsEnabled) refreshStatus();
+            }, delay);
+          });
+        }
+      }
       else if (value === 'closed') setStatus('Reklam penceresi kapatıldı.');
     });
   }
