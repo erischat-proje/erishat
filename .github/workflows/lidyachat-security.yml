@@ -94,6 +94,12 @@ jobs:
           V7_ISOLATED_CONFIRM: 'YES'
         run: PYTHONPATH=. python -m pytest -q backend/tests/test_admob_v2_postgres.py
 
+      - name: Test AdMob V4 preview PostgreSQL concurrency
+        env:
+          V7_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidya_v7_test
+          V7_ISOLATED_CONFIRM: 'YES'
+        run: PYTHONPATH=. python -m pytest -q backend/tests/test_admob_v4_postgres.py
+
       - name: Test Firebase PostgreSQL concurrent registrations
         env:
           V7_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidya_v7_test

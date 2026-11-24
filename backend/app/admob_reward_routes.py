@@ -45,6 +45,26 @@ def enabled():
     return os.getenv("LIDYACHAT_ADMOB_REWARDS_ENABLED", "false").lower() == "true"
 
 
+def preview_enabled():
+    """Preview claims are disabled unless explicitly authorized."""
+    return (
+        not enabled()
+        and os.getenv("LIDYACHAT_ADMOB_SSV_VERIFY_ONLY", "false").lower() == "true"
+        and os.getenv("LIDYACHAT_ADMOB_PREVIEW_CLAIMS_ENABLED", "false").lower() == "true"
+    )
+
+
+def preview_allowed(user_id):
+    if not preview_enabled():
+        return False
+    permitted = {
+        item.strip()
+        for item in os.getenv("LIDYACHAT_ADMOB_PREVIEW_USER_IDS", "").split(",")
+        if item.strip()
+    }
+    return bool(permitted) and str(user_id) in permitted
+
+
 class AdmobClaim(Base):
     __tablename__ = "admob_reward_claims_v2"
     nonce_digest: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -124,7 +144,7 @@ def verified_fields(raw_query: bytes, keys=None):
 def register_auth(current_user):
     @router.post("/claim", response_model=ClaimOut)
     def create_claim(db: Session = Depends(get_db), user: User = Depends(current_user)):
-        if not enabled():
+        if not enabled() and not preview_allowed(user.id):
             raise HTTPException(503, "Reklam odulleri henuz acilmadi")
         now = datetime.now(timezone.utc)
         nonce = secrets.token_urlsafe(32)
@@ -176,9 +196,66 @@ def ssv_callback(request: Request, db: Session = Depends(get_db)):
     except (KeyError, ValueError, OverflowError, OSError) as exc:
         raise HTTPException(400, "SSV alanlari gecersiz") from exc
 
-    # Valid signed fields, but verification mode never touches the database.
+    # Google dashboard URL test has no user claim.
+    # Keep its signed verification compatible with preview mode.
     if not rewards_active:
-        return {"ok": True, "verification_only": True}
+        if not preview_enabled() or google_url_test:
+            return {"ok": True, "verification_only": True}
+
+        if not nonce or not (24 <= len(nonce) <= 128):
+            raise HTTPException(400, "Preview odul kodu gerekli")
+
+        claim = db.get(
+            AdmobClaim, sha256(nonce.encode()).hexdigest()
+        )
+        if claim is None:
+            raise HTTPException(404, "Preview odul kodu bulunamadi")
+
+        if not preview_allowed(claim.user_id):
+            raise HTTPException(403, "Preview kullanicisi yetkisiz")
+
+        user = db.execute(
+            select(User).where(User.id == claim.user_id).with_for_update()
+        ).scalar_one_or_none()
+
+        if user is None or not user.is_active:
+            raise HTTPException(403, "Kullanici uygun degil")
+
+        db.refresh(claim)
+
+        # Prevent a Google transaction from being assigned to a second claim.
+        existing = db.execute(
+            select(AdmobClaim).where(AdmobClaim.transaction_id == tx)
+        ).scalar_one_or_none()
+        if existing is not None and existing.nonce_digest != claim.nonce_digest:
+            raise HTTPException(409, "Google islemi zaten kullanilmis")
+
+        if claim.consumed_at is not None:
+            if claim.transaction_id == tx:
+                return {
+                    "ok": True,
+                    "verification_only": True,
+                    "duplicate": True
+                }
+            raise HTTPException(409, "Preview kodu kullanilmis")
+
+        if (_utc(claim.expires_at) < now
+                or event_at < _utc(claim.created_at) - timedelta(seconds=30)):
+            raise HTTPException(409, "Preview kodunun suresi dolmus")
+
+        if "user_id" in fields and fields["user_id"] != user.id:
+            raise HTTPException(403, "Kullanici uyusmuyor")
+
+        claim.consumed_at = now
+        claim.transaction_id = tx
+        db.commit()
+
+        # CRITICAL: No AdmobReward entry and no Lidya balance change.
+        return {
+            "ok": True,
+            "verification_only": True,
+            "preview_claim_consumed": True
+        }
 
     # Database transaction and row lock serialize claims of the same user.
     claim = db.get(AdmobClaim, sha256(nonce.encode()).hexdigest())
