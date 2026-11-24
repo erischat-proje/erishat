@@ -64,7 +64,7 @@ final class LidyaRewardedAds {
                             + ", domain=" + error.getDomain()
                             + ", message=" + error.getMessage()
                         );
-                        event("unavailable");
+                        event("load_error_" + error.getCode());
                     }
                     @Override public void onAdLoaded(RewardedAd ad) {
                         loading = false;
