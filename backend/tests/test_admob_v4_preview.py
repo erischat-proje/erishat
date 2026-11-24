@@ -175,3 +175,26 @@ def test_wrong_reward_and_tampered_signature(setup):
     assert error.value.status_code == 403
 
     assert_no_credit(db)
+
+
+
+def test_v12_nonpilot_ssv_no_credit(setup, monkeypatch):
+    db, key = setup
+
+    monkeypatch.setattr(ads, "enabled", lambda: True)
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_PILOT_USER_IDS", ""
+    )
+
+    nonce = "v" * 32
+    add_claim(db, nonce)
+
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(
+            signed_request(key, nonce, "abcdef123499"),
+            db,
+        )
+
+    assert error.value.status_code == 403
+    db.rollback()
+    assert_no_credit(db)

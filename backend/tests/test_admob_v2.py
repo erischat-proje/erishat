@@ -69,6 +69,9 @@ def test_duplicate_reward_and_daily_limit(monkeypatch):
             LidyaLedger.__table__,
         ],
     )
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_PILOT_USER_IDS", "user-one"
+    )
     monkeypatch.setattr(mod, "enabled", lambda: True)
     private = ec.generate_private_key(ec.SECP256R1())
     monkeypatch.setattr(mod, "_keyset", lambda: {"42": private.public_key()})

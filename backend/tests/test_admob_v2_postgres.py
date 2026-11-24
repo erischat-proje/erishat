@@ -58,6 +58,10 @@ def test_parallel_rewards_obey_daily_cap_and_idempotency(monkeypatch):
             User.__table__, AdminRole.__table__, ads.AdmobClaim.__table__,
             ads.AdmobReward.__table__, LidyaLedger.__table__,
         ])
+        monkeypatch.setenv(
+            "LIDYACHAT_ADMOB_PILOT_USER_IDS",
+            "admob-concurrent-user"
+        )
         monkeypatch.setattr(ads, "enabled", lambda: True)
         private = ec.generate_private_key(ec.SECP256R1())
         monkeypatch.setattr(ads, "_keyset", lambda: {"42": private.public_key()})
