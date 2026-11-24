@@ -37,11 +37,16 @@ android {
 
     buildTypes {
         debug {
+            // Only locally installed debug APKs can use the real ad unit.
+            // Register the phone as an AdMob test device first.
+            buildConfigField 'boolean', 'LIDYA_REAL_REWARDED_ADS', 'true'
             if (customSigning) {
                 signingConfig signingConfigs.erischat
             }
         }
         release {
+            // Google Play builds remain locked.
+            buildConfigField 'boolean', 'LIDYA_REAL_REWARDED_ADS', 'false'
             if (customSigning) {
                 signingConfig signingConfigs.erischat
             }
