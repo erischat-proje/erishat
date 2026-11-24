@@ -20,6 +20,10 @@ import java.util.function.BooleanSupplier;
 final class LidyaRewardedAds {
     private static final String TEST_REWARDED_AD_UNIT =
             "ca-app-pub-3940256099942544/5224354917"; // Google's official Android test unit.
+    // Production ad unit. Never used while the V3 build gate is false.
+    private static final String REAL_REWARDED_AD_UNIT =
+            "ca-app-pub-9842221080536523/8782909853";
+
     private final Activity activity;
     private final WebView webView;
     private final BooleanSupplier trusted;
@@ -35,16 +39,22 @@ final class LidyaRewardedAds {
                 "lidya-ads-init").start();
     }
 
-    void showTestAd(String customData) {
+    void showAd(String customData) {
         if (closed || loading || !trusted.getAsBoolean()) return;
         if (customData == null || !customData.isEmpty()
                 && !customData.matches("[A-Za-z0-9_-]{24,128}")) {
             event("invalid_custom_data");
             return;
         }
+        final boolean realAd =
+                BuildConfig.LIDYA_REAL_REWARDED_ADS
+                && !customData.isEmpty();
+
         loading = true;
         event("loading");
-        RewardedAd.load(activity, TEST_REWARDED_AD_UNIT, new AdRequest.Builder().build(),
+        RewardedAd.load(activity,
+                realAd ? REAL_REWARDED_AD_UNIT : TEST_REWARDED_AD_UNIT,
+                new AdRequest.Builder().build(),
                 new RewardedAdLoadCallback() {
                     @Override public void onAdFailedToLoad(LoadAdError error) {
                         loading = false;
@@ -71,7 +81,9 @@ final class LidyaRewardedAds {
                         ad.show(activity, reward -> {
                             // A CLIENT CALLBACK IS NOT PAYMENT PROOF.
                             // Intentionally DO NOT increase Lidya balance here.
-                            event("test_completed_no_credit");
+                            event(realAd
+                    ? "reward_pending_ssv"
+                    : "test_completed_no_credit");
                         });
                     }
                 });

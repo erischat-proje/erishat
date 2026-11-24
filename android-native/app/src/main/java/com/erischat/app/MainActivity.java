@@ -262,7 +262,7 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 if (lidyaRewardedAds != null && trustedPage() && activityResumed
                         && !isFinishing() && !isDestroyed()) {
-                    lidyaRewardedAds.showTestAd(customData);
+                    lidyaRewardedAds.showAd(customData);
                 }
             });
         }
