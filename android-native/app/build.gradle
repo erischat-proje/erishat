@@ -25,8 +25,8 @@ android {
         applicationId 'com.erischat.app'
         minSdk 26
         targetSdk 36
-        versionCode 19
-        versionName '1.0.8'
+        versionCode 20
+        versionName '1.0.9'
         // V3: Real rewarded advertisements are OFF in every build.
         buildConfigField 'boolean', 'LIDYA_REAL_REWARDED_ADS', 'false'
     }
@@ -39,6 +39,18 @@ android {
         debug {
             // Only locally installed debug APKs can use the real ad unit.
             // Register the phone as an AdMob test device first.
+            buildConfigField 'boolean', 'LIDYA_REAL_REWARDED_ADS', 'true'
+            if (customSigning) {
+                signingConfig signingConfigs.erischat
+            }
+        }
+        internal {
+            // V10: Google Play internal testing only.
+            // Real ad unit is used only with a server claim.
+            // Google test devices must be registered in AdMob.
+            initWith release
+            matchingFallbacks = ['release']
+            versionNameSuffix '-internal'
             buildConfigField 'boolean', 'LIDYA_REAL_REWARDED_ADS', 'true'
             if (customSigning) {
                 signingConfig signingConfigs.erischat
