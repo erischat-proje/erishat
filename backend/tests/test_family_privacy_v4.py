@@ -44,7 +44,8 @@ class FamilyPrivacyV4(unittest.TestCase):
             required.add(ledger)
 
             from sqlalchemy import Integer
-            ledger.c.id.type = ledger.c.id.type.with_variant(
+            from sqlalchemy import BigInteger
+            ledger.c.id.type = BigInteger().with_variant(
                 Integer(), "sqlite"
             )
 
