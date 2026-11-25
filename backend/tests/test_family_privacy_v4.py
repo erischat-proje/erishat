@@ -39,6 +39,10 @@ class FamilyPrivacyV4(unittest.TestCase):
             if isinstance(node, Table):
                 required.add(node)
 
+        ledger = Base.metadata.tables.get("system_lidya_ledger")
+        if ledger is not None:
+            required.add(ledger)
+
         pending = list(required)
         while pending:
             table = pending.pop()
