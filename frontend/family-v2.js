@@ -264,9 +264,18 @@
 
     if(staff&&strip){const title=document.createElement('h3');title.textContent='Aile yetkilileri';membersPage.append(title,strip);staff.remove()}
     const memberButton=actions.querySelector('[data-action="members"]');
-    const memberPanel=document.createElement('div');memberPanel.className='ef2-panel';memberPanel.innerHTML='<h3>Üye listesi</h3><p>Üyelerin profillerini ve mesaj seçeneklerini görüntüleyebilirsin.</p><button class="ef2-primary" type="button">Üyeleri göster</button>';
-    memberPanel.querySelector('button').onclick=()=>{memberButton?.click();activate('manage')};
+    const memberPanel=document.createElement('div');
+    memberPanel.className='ef2-panel ef2-member-list';
     membersPage.append(memberPanel);
+
+    if(memberButton){
+      const previousNodes=new Set(output.childNodes);
+      memberButton.click();
+      const memberNodes=Array.from(output.childNodes)
+        .filter(node=>!previousNodes.has(node));
+      memberPanel.append(...memberNodes);
+    }
+
     const levelTitle=document.createElement('div');levelTitle.className='ef2-panel';levelTitle.innerHTML='<h3>12 seviyelik aile yolculuğu</h3><p>Her seviyede daha fazla üye kapasitesi açılır. Deneyim eşikleri mevcut aile sistemiyle aynıdır.</p>';levels.append(levelTitle);
     rules.forEach((required,i)=>{const level=i+1;const card=document.createElement('article');card.className='ef2-level'+(level===Number(f.level)?' current':'')+(level<Number(f.level)?' achieved':'');card.innerHTML='<span class="ef2-medal">'+level+'</span><div><b>Seviye '+level+'</b><small>'+num(required)+' aile deneyimi</small></div><span class="ef2-capacity">'+(30+i*10)+' üye</span>';levels.append(card)});
     const rankTitle=document.createElement('div');rankTitle.className='ef2-panel';rankTitle.innerHTML='<h3>Aile sıralaması</h3><p>Gerçek aile deneyimi puanlarına göre sıralanır.</p>';ranking.append(rankTitle);
