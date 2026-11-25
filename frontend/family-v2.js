@@ -5,7 +5,7 @@
   const rules = [0,40000,100000,200000,350000,610000,890000,1130000,1500000,2000000,2600000,3200000];
   const num = n => Number(n||0).toLocaleString('tr-TR');
   const api = p => window.ErisPlatform?.api(p) ?? Promise.reject(new Error('API bağlantısı bulunamadı'));
-  async function enhance(shell,f,members,role,apiClient){
+  async function enhance(shell,f,members,role,apiClient,refreshFamily){
     const request=typeof apiClient==='function'?apiClient:api;
     if (!shell || !f || shell.dataset.familyV2==='ready') return;
     shell.dataset.familyV2='ready';
@@ -293,6 +293,63 @@
       button.classList.add('ef2-action','ef2-'+name);
       if(name==='members')button.style.display='none';
     }
+    // FAMILY OPERATIONS PREMIUM V4
+    actions.classList.add('ef4-operations');
+
+    const operationMeta={
+      chat:['message-circle','Aile sohbeti','Aile üyeleriyle iletişim kur'],
+      invite:['user-plus','Üye davet et','Ailene yeni üyeler kazandır'],
+      applications:['clipboard-list','Üyelik başvuruları','Gelen başvuruları değerlendir'],
+      manage:['shield','Aile yönetimi','Üyeleri ve yetkileri yönet'],
+      donate:['coins','Aileye katkı yap','Aile deneyimini yükselt'],
+      leave:['log-out','Aileden ayrıl','Aile üyeliğini sonlandır'],
+      close:['trash','Aileyi kapat','Aileyi kalıcı olarak kapat']
+    };
+
+    const operationIcons={
+      'message-circle':'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/>',
+      'user-plus':'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6m-3-3h6"/>',
+      'clipboard-list':'<rect x="5" y="4" width="14" height="18" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6m-6 4h6m-6 4h4"/>',
+      shield:'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/>',
+      coins:'<circle cx="9" cy="9" r="6"/><path d="M15 9a6 6 0 1 1-6 6"/><path d="M9 6v6m-2-3h4"/>',
+      'log-out':'<path d="M10 17l5-5-5-5m5 5H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>',
+      trash:'<path d="M3 6h18M8 6V3h8v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>'
+    };
+
+    for(const button of actions.querySelectorAll('button[data-action]')){
+      const key=button.dataset.action;
+      const meta=operationMeta[key];
+      if(!meta)continue;
+
+      const [icon,label,description]=meta;
+      const critical=key==='leave'||key==='close';
+
+      button.classList.add('ef4-operation-card');
+      button.classList.toggle('ef4-critical',critical);
+
+      const symbol=document.createElement('span');
+      symbol.className='ef4-operation-icon';
+      symbol.setAttribute('aria-hidden','true');
+      symbol.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+operationIcons[icon]+'</svg>';
+
+      const info=document.createElement('span');
+      info.className='ef4-operation-info';
+
+      const title=document.createElement('strong');
+      title.textContent=label;
+
+      const detail=document.createElement('small');
+      detail.textContent=description;
+      info.append(title,detail);
+
+      const arrow=document.createElement('span');
+      arrow.className='ef4-operation-arrow';
+      arrow.textContent='›';
+      arrow.setAttribute('aria-hidden','true');
+
+      button.replaceChildren(symbol,info,arrow);
+    }
+
     const avatar=shell.querySelector('[data-action="family-avatar"]');if(avatar){avatar.classList.add('ef2-avatar-btn');hero.append(avatar)}
     function activate(id){
       if(id!=='home'){
@@ -323,6 +380,895 @@ nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.ef2Tab===id;b.
     const legacyDonate=actions.querySelector('[data-action="donate"]');
     if(legacyDonate){
       legacyDonate.onclick=()=>openContribution();
+    }
+
+    // FAMILY OPERATIONS REFRESH V4
+    const operationsToken=familyToken();
+
+    const operationsValid=()=>shell.isConnected&&
+      familyToken()===operationsToken;
+
+    async function refreshOperations(){
+      if(!operationsValid())return;
+
+      if(typeof refreshFamily==='function'){
+        try{
+          await refreshFamily();
+        }catch(err){
+          window.toast?.(
+            'İşlem tamamlandı. Aile ekranını yeniden açın.'
+          );
+        }
+      }
+    }
+
+    // FAMILY INVITATION PREMIUM V4
+    let invitationBusy=false;
+
+    const inviteButton=actions.querySelector('[data-action="invite"]');
+
+    if(inviteButton){
+      inviteButton.onclick=()=>{
+        if(invitationBusy||
+          shell.querySelector('.ef4-invite-mask'))return;
+
+        const mask=element('div',
+          'ef3-donate-mask ef4-invite-mask');
+        const card=element('div','ef3-donate-card');
+        card.setAttribute('role','dialog');
+        card.setAttribute('aria-modal','true');
+        card.setAttribute('aria-label','Üye davet et');
+
+        const head=element('div','ef3-donate-head');
+        const close=element('button','','×');
+        close.type='button';
+        close.setAttribute('aria-label','Kapat');
+        close.onclick=()=>{
+          if(!invitationBusy)mask.remove();
+        };
+
+        head.append(element('h3','','Üye davet et'),close);
+
+        const body=element('div','ef3-donate-body');
+        const capacity=element('div','ef3-donate-wallet');
+
+        capacity.append(
+          element('small','','AİLE KAPASİTESİ'),
+          element('strong','',
+            num(f.member_count)+' / '+num(f.capacity)),
+          element('small','',
+            num(Math.max(0,Number(f.capacity)-
+              Number(f.member_count)))+' boş üyelik')
+        );
+
+        const form=element('form','ef4-invite-form');
+        const label=element('label','','Kullanıcı profil ID');
+        const input=element('input','ef3-donate-input');
+
+        input.id='ef4-invite-user-id';
+        label.htmlFor=input.id;
+        input.type='text';
+        input.required=true;
+        input.maxLength=128;
+        input.autocomplete='off';
+        input.spellcheck=false;
+        input.placeholder='Profil ID giriniz';
+
+        const note=element('p','ef4-invite-note',
+          'Davet edilen kullanıcıya bildirim gönderilir. Davet 7 gün boyunca geçerlidir.');
+
+        const status=element('p','ef4-invite-status');
+        status.setAttribute('aria-live','polite');
+
+        const controls=element('div','ef3-donate-controls');
+        const cancel=element('button','','İptal');
+        const submit=element('button','ef3-approve','Davet gönder');
+
+        cancel.type='button';
+        submit.type='submit';
+        cancel.onclick=close.onclick;
+        submit.disabled=true;
+
+        input.oninput=()=>{
+          submit.disabled=!input.value.trim()||invitationBusy;
+          status.textContent='';
+        };
+
+        form.onsubmit=async e=>{
+          e.preventDefault();
+
+          const uid=input.value.trim();
+          if(!uid||invitationBusy||!operationsValid()||!mask.isConnected)return;
+
+          invitationBusy=true;
+          input.disabled=true;
+          submit.disabled=true;
+          cancel.disabled=true;
+          close.disabled=true;
+          submit.textContent='Gönderiliyor…';
+          status.textContent='';
+
+          try{
+            await request(
+              '/families/'+encodeURIComponent(f.id)+'/members',
+              {method:'POST',body:JSON.stringify({user_id:uid})}
+            );
+
+            if(!mask.isConnected||!operationsValid())return;
+
+            body.replaceChildren();
+
+            const success=element('div','ef4-invite-success');
+            success.append(
+              element('span','','✓'),
+              element('h3','','Davet gönderildi'),
+              element('p','',
+                'Kullanıcının daveti kabul etmesi bekleniyor.')
+            );
+
+            const done=element('button',
+              'ef3-donate-button','Tamam');
+            done.type='button';
+            done.onclick=()=>mask.remove();
+
+            body.append(success,done);
+
+          }catch(err){
+            status.textContent=String(
+              err?.message||'Davet gönderilemedi.'
+            );
+            input.disabled=false;
+            submit.disabled=false;
+            submit.textContent='Davet gönder';
+            cancel.disabled=false;
+          }finally{
+            invitationBusy=false;
+            close.disabled=false;
+          }
+        };
+
+        controls.append(cancel,submit);
+        form.append(label,input,note,status,controls);
+        body.append(capacity,form);
+        card.append(head,body);
+        mask.append(card);
+        shell.append(mask);
+      };
+    }
+
+    // FAMILY APPLICATIONS PREMIUM V4
+    let applicationBusy=false;
+
+    const applicationButton=actions.querySelector(
+      '[data-action="applications"]'
+    );
+
+    if(applicationButton){
+      applicationButton.onclick=()=>{
+        if(applicationBusy||
+          shell.querySelector('.ef4-application-mask'))return;
+
+        const mask=element('div',
+          'ef3-donate-mask ef4-application-mask');
+        const card=element('div','ef3-donate-card');
+        card.setAttribute('role','dialog');
+        card.setAttribute('aria-modal','true');
+        card.setAttribute('aria-label','Üyelik başvuruları');
+
+        const head=element('div','ef3-donate-head');
+        const close=element('button','','×');
+        close.type='button';
+        close.setAttribute('aria-label','Kapat');
+        close.onclick=()=>{
+          if(!applicationBusy)mask.remove();
+        };
+
+        head.append(
+          element('h3','','Üyelik başvuruları'),close
+        );
+
+        const body=element('div','ef3-donate-body');
+        const status=element('p','ef4-invite-status');
+        status.setAttribute('aria-live','polite');
+
+        card.append(head,status,body);
+        mask.append(card);
+        shell.append(mask);
+
+        const base='/families/'+
+          encodeURIComponent(f.id)+'/applications';
+
+        async function loadApplications(){
+          body.replaceChildren(
+            element('p','','Başvurular yükleniyor…')
+          );
+
+          try{
+            const rows=await request(base);
+            if(!mask.isConnected||!operationsValid())return;
+            if(!Array.isArray(rows)){
+              throw Error('Başvuru listesi alınamadı.');
+            }
+
+            body.replaceChildren();
+
+            const summary=element('div','ef3-donate-wallet');
+            summary.append(
+              element('small','','BEKLEYEN BAŞVURULAR'),
+              element('strong','',num(rows.length))
+            );
+            body.append(summary);
+
+            if(!rows.length){
+              const empty=element('div','ef4-application-empty');
+              empty.append(
+                element('span','','✓'),
+                element('h3','','Bekleyen başvuru yok'),
+                element('p','','Yeni başvurular burada görünecek.')
+              );
+              body.append(empty);
+            }
+
+            for(const item of rows){
+              const row=element('div','ef4-application-card');
+              const person=element('div','ef4-application-person');
+              const avatar=element('span','ef4-application-avatar','👤');
+              const info=element('div','ef3-person');
+
+              const name=item.nickname||'Kullanıcı';
+              info.append(element('strong','',name));
+
+              if(item.created_at){
+                const date=new Date(item.created_at);
+                if(!Number.isNaN(date.getTime())){
+                  info.append(element('small','',
+                    date.toLocaleString('tr-TR')));
+                }
+              }
+
+              person.append(avatar,info);
+
+              const message=element('p','ef4-application-message',
+                item.message||'Başvuru mesajı yok.');
+
+              const controls=element('div','ef4-application-controls');
+              const reject=element('button','ef4-reject','✕ Reddet');
+              const accept=element('button','ef3-approve','✓ Kabul et');
+
+              reject.type=accept.type='button';
+
+              function confirmDecision(decision){
+                if(applicationBusy||!operationsValid()||!mask.isConnected||
+                  row.querySelector('.ef4-decision'))return;
+
+                const confirmation=element('div','ef4-decision');
+                const accepting=decision==='accept';
+
+                confirmation.append(
+                  element('strong','',accepting?
+                    'Başvuruyu kabul et':'Başvuruyu reddet'),
+                  element('p','',name+(accepting?
+                    ' adlı kullanıcı aileye katılacak.':
+                    ' adlı kullanıcının başvurusu reddedilecek.'))
+                );
+
+                const buttons=element('div','ef3-donate-controls');
+                const cancel=element('button','','Vazgeç');
+                const approve=element('button',
+                  accepting?'ef3-approve':'ef4-reject',
+                  'Onayla');
+
+                cancel.type=approve.type='button';
+                controls.hidden=true;
+
+                cancel.onclick=()=>{
+                  confirmation.remove();
+                  controls.hidden=false;
+                };
+
+                approve.onclick=async()=>{
+                  if(applicationBusy||!operationsValid()||!mask.isConnected)return;
+
+                  applicationBusy=true;
+                  status.textContent='';
+                  const locked=Array.from(card.querySelectorAll('button'))
+                    .filter(b=>!b.disabled);
+
+                  locked.forEach(b=>b.disabled=true);
+                  approve.textContent='İşleniyor…';
+
+                  try{
+                    await request(
+                      base+'/'+encodeURIComponent(item.id)+
+                      '/'+decision,
+                      {method:'POST'}
+                    );
+
+                    status.textContent=accepting?
+                      '✓ Başvuru kabul edildi.':
+                      '✓ Başvuru reddedildi.';
+
+                    if(accepting){
+                      await refreshOperations();
+                      return;
+                    }
+                    await loadApplications();
+
+                  }catch(err){
+                    status.textContent=String(
+                      err?.message||'İşlem tamamlanamadı.'
+                    );
+                    confirmation.remove();
+                    controls.hidden=false;
+                  }finally{
+                    applicationBusy=false;
+                    locked.forEach(b=>b.disabled=false);
+                  }
+                };
+
+                buttons.append(cancel,approve);
+                confirmation.append(buttons);
+                row.append(confirmation);
+              }
+
+              accept.onclick=()=>confirmDecision('accept');
+              reject.onclick=()=>confirmDecision('reject');
+
+              controls.append(reject,accept);
+              row.append(person,message,controls);
+              body.append(row);
+            }
+
+          }catch(err){
+            body.replaceChildren(
+              element('p','',String(
+                err?.message||'Başvurular alınamadı.'
+              ))
+            );
+          }
+
+          const refresh=element('button',
+            'ef3-donate-button','Listeyi yenile');
+          refresh.type='button';
+          refresh.onclick=async()=>{
+            if(applicationBusy||!operationsValid()||!mask.isConnected)return;
+            applicationBusy=true;
+            close.disabled=true;
+            try{
+              await loadApplications();
+            }finally{
+              applicationBusy=false;
+              close.disabled=false;
+            }
+          };
+          body.append(refresh);
+        }
+
+        loadApplications();
+      };
+    }
+
+    // FAMILY MANAGEMENT PREMIUM V4
+    let managementBusy=false;
+
+    const managementButton=actions.querySelector(
+      '[data-action="manage"]'
+    );
+
+    if(managementButton){
+      const legacyManagement=managementButton.onclick;
+
+      managementButton.onclick=()=>{
+        if(managementBusy||
+          shell.querySelector('.ef4-management-mask'))return;
+
+        if(role!=='owner'&&role!=='admin')return;
+
+        const mask=element('div',
+          'ef3-donate-mask ef4-management-mask');
+        const card=element('div','ef3-donate-card');
+        card.setAttribute('role','dialog');
+        card.setAttribute('aria-modal','true');
+        card.setAttribute('aria-label','Aile yönetimi');
+
+        const head=element('div','ef3-donate-head');
+        const close=element('button','','×');
+        close.type='button';
+        close.setAttribute('aria-label','Kapat');
+        close.onclick=()=>{
+          if(!managementBusy)mask.remove();
+        };
+
+        head.append(element('h3','','Aile yönetimi'),close);
+
+        const body=element('div','ef3-donate-body');
+        const status=element('p','ef4-invite-status');
+        status.setAttribute('aria-live','polite');
+
+        card.append(head,status,body);
+        mask.append(card);
+        shell.append(mask);
+
+        const base='/families/'+encodeURIComponent(f.id);
+        const initialToken=familyToken();
+
+        const valid=()=>mask.isConnected&&
+          shell.isConnected&&familyToken()===initialToken;
+
+        async function loadManagement(){
+          body.replaceChildren(
+            element('p','','Üyeler yükleniyor…')
+          );
+
+          try{
+            const roster=await request(base+'/members');
+
+            if(!valid())return;
+            if(!Array.isArray(roster)){
+              throw Error('Üye listesi alınamadı.');
+            }
+
+            body.replaceChildren();
+
+            const manageable=roster.filter(m=>
+              m.role!=='owner'&&
+              (role==='owner'||m.role==='member')
+            );
+
+            const summary=element('div','ef3-donate-wallet');
+
+            summary.append(
+              element('small','','YÖNETİLEBİLİR ÜYELER'),
+              element('strong','',num(manageable.length)),
+              element('small','',role==='owner'?
+                'Kurucu yönetim yetkileri':
+                'Normal üye yönetim yetkileri')
+            );
+
+            body.append(summary);
+
+            if(!manageable.length){
+              body.append(element('p','',
+                'Yönetilecek üye bulunmuyor.'));
+            }
+
+            for(const m of manageable){
+              const row=element('div',
+                'ef4-application-card ef4-management-card');
+
+              const person=element('div','ef4-application-person');
+              const avatar=element('span',
+                'ef4-application-avatar',m.avatar||'👤');
+
+              const info=element('div','ef3-person');
+              const name=m.nickname||'Kullanıcı';
+
+              info.append(
+                element('strong','',name),
+                element('small','',
+                  m.role==='admin'?'Aile yöneticisi':'Aile üyesi')
+              );
+
+              if(m.public_id){
+                info.append(element('small','',
+                  'ID: '+m.public_id));
+              }
+
+              person.append(avatar,info);
+
+              const menu=element('div','ef4-management-actions');
+              const memberPath=base+'/members/'+
+                encodeURIComponent(m.user_id);
+
+              function addAction(label,description,run,critical,transfer){
+                const button=element('button',
+                  critical?'ef4-reject':'',label);
+                button.type='button';
+
+                button.onclick=()=>{
+                  if(managementBusy||!valid()||
+                    row.querySelector('.ef4-decision'))return;
+
+                  const ask=element('div','ef4-decision');
+
+                  ask.append(
+                    element('strong','',label),
+                    element('p','',description)
+                  );
+
+                  const controls=element('div','ef3-donate-controls');
+                  const cancel=element('button','','Vazgeç');
+                  const approve=element('button',
+                    critical?'ef4-reject':'ef3-approve','Onayla');
+
+                  cancel.type=approve.type='button';
+                  menu.hidden=true;
+
+                  cancel.onclick=()=>{
+                    ask.remove();
+                    menu.hidden=false;
+                  };
+
+                  approve.onclick=async()=>{
+                    if(managementBusy||!valid())return;
+
+                    managementBusy=true;
+                    status.textContent='';
+
+                    const locked=Array.from(
+                      card.querySelectorAll('button')
+                    ).filter(b=>!b.disabled);
+
+                    locked.forEach(b=>b.disabled=true);
+                    approve.textContent='İşleniyor…';
+
+                    try{
+                      await run();
+
+                      if(!valid())return;
+
+                      if(transfer){
+                        // Eski kurucu yetkilerini hemen kapat.
+                        for(const key of [
+                          'invite','applications','manage','close'
+                        ]){
+                          const b=actions.querySelector(
+                            '[data-action="'+key+'"]'
+                          );
+                          if(b){
+                            b.disabled=true;
+                            b.hidden=true;
+                            b.style.display='none';
+                          }
+                        }
+
+                        const visual=shell.querySelector(
+                          '[data-action="family-avatar"]'
+                        );
+                        if(visual){
+                          visual.disabled=true;
+                          visual.hidden=true;
+                        }
+
+                        output.replaceChildren();
+                        body.replaceChildren(
+                          element('h3','','Kuruculuk devredildi'),
+                          element('p','',
+                            name+' yeni aile kurucusu oldu.'),
+                          element('p','',
+                            'Yeni yetkilerinizin yüklenmesi için aile ekranını kapatıp yeniden açın.')
+                        );
+
+                        window.toast?.('Kuruculuk devredildi.');
+                        await refreshOperations();
+                        return;
+                      }
+
+                      window.toast?.('İşlem tamamlandı.');
+                      await refreshOperations();
+
+                    }catch(err){
+                      if(valid()){
+                        status.textContent=String(
+                          err?.message||'İşlem tamamlanamadı.'
+                        );
+                        ask.remove();
+                        menu.hidden=false;
+                      }
+                    }finally{
+                      managementBusy=false;
+                      locked.forEach(b=>{
+                        if(b.isConnected)b.disabled=false;
+                      });
+                    }
+                  };
+
+                  controls.append(cancel,approve);
+                  ask.append(controls);
+                  row.append(ask);
+                };
+
+                menu.append(button);
+              }
+
+              if(role==='owner'){
+                const nextRole=m.role==='admin'?'member':'admin';
+
+                addAction(
+                  nextRole==='admin'?
+                    'Yönetici olarak ata':'Yönetici yetkisini kaldır',
+                  name+(nextRole==='admin'?
+                    ' aile yöneticisi olacak.':
+                    ' artık normal aile üyesi olacak.'),
+                  ()=>request(memberPath,{
+                    method:'PATCH',
+                    body:JSON.stringify({
+                      user_id:m.user_id,
+                      role:nextRole
+                    })
+                  }),
+                  false,false
+                );
+
+                addAction(
+                  'Kuruculuğu devret',
+                  'Ailenin sahipliği '+name+
+                    ' adlı kullanıcıya geçecek. Siz normal üye olacaksınız. Kurucu yetkilerinizi kaybedeceksiniz.',
+                  ()=>request(base+'/transfer-ownership',{
+                    method:'POST',
+                    body:JSON.stringify({user_id:m.user_id})
+                  }),
+                  true,true
+                );
+              }
+
+              addAction(
+                'Aileden çıkar',
+                name+' aileden ve aile sohbetinden çıkarılacak.',
+                ()=>request(memberPath,{method:'DELETE'}),
+                true,false
+              );
+
+              row.append(person,menu);
+              body.append(row);
+            }
+
+          }catch(err){
+            if(valid()){
+              body.replaceChildren(
+                element('p','',String(
+                  err?.message||'Üyeler alınamadı.'
+                ))
+              );
+            }
+          }
+        }
+
+        loadManagement();
+      };
+    }
+
+    // FAMILY CRITICAL OPERATIONS PREMIUM V4
+    let criticalBusy=false;
+
+    function openCriticalOperation(kind){
+      if(criticalBusy||
+        shell.querySelector('.ef4-critical-mask'))return;
+
+      const closing=kind==='close';
+
+      if(closing&&role!=='owner')return;
+
+      const initialToken=familyToken();
+
+      const mask=element('div',
+        'ef3-donate-mask ef4-critical-mask');
+      const card=element('div','ef3-donate-card');
+
+      card.setAttribute('role','dialog');
+      card.setAttribute('aria-modal','true');
+      card.setAttribute('aria-label',
+        closing?'Aileyi kapat':'Aileden ayrıl');
+
+      const head=element('div','ef3-donate-head');
+      const close=element('button','','×');
+
+      close.type='button';
+      close.setAttribute('aria-label','Kapat');
+      close.onclick=()=>{
+        if(!criticalBusy)mask.remove();
+      };
+
+      head.append(
+        element('h3','',
+          closing?'Aileyi kapat':'Aileden ayrıl'),
+        close
+      );
+
+      const body=element('div','ef3-donate-body');
+      const warning=element('div','ef4-critical-warning');
+
+      warning.append(
+        element('span','ef4-critical-symbol','!'),
+        element('h3','',f.name)
+      );
+
+      const status=element('p','ef4-invite-status');
+      status.setAttribute('aria-live','polite');
+
+      body.append(warning,status);
+      card.append(head,body);
+      mask.append(card);
+      shell.append(mask);
+
+      const valid=()=>mask.isConnected&&
+        shell.isConnected&&familyToken()===initialToken;
+
+      const base='/families/'+encodeURIComponent(f.id);
+
+      async function prepare(){
+        criticalBusy=true;
+        close.disabled=true;
+        status.textContent='Aile bilgileri kontrol ediliyor…';
+
+        try{
+          const fresh=await request(base);
+
+          if(!valid())return;
+
+          const owner=role==='owner';
+          const count=Number(fresh.member_count);
+
+          if(!Number.isFinite(count)||count<1){
+            throw Error('Aile üye sayısı doğrulanamadı.');
+          }
+
+          const dissolving=!closing&&owner&&count===1;
+          const blocked=!closing&&owner&&count>1;
+          const destructive=closing||dissolving;
+
+          status.textContent='';
+
+          if(blocked){
+            warning.append(
+              element('p','',
+                'Aileden ayrılmadan önce kuruculuğu başka bir üyeye devretmelisiniz.')
+            );
+
+            const done=element('button',
+              'ef3-donate-button','Anladım');
+
+            done.type='button';
+            done.onclick=()=>mask.remove();
+            body.append(done);
+            return;
+          }
+
+          warning.append(
+            element('p','',destructive?
+              'Aile kalıcı olarak kapatılacak. Tüm üyelikler ve aile sohbetine erişim sona erecek. Yapılan katkılar iade edilmez.':
+              'Aile üyeliğiniz sona erecek ve aile sohbetine erişiminiz kaldırılacak.')
+          );
+
+          const form=element('form','ef4-invite-form');
+          let input=null;
+          const familyName=String(fresh.name||f.name);
+
+          if(destructive){
+            form.append(element('label','',
+              'Onaylamak için aile adını yazın: '+familyName));
+
+            input=element('input','ef3-donate-input');
+            input.type='text';
+            input.required=true;
+            input.autocomplete='off';
+            input.placeholder='Aile adı';
+            input.setAttribute('aria-label','Aile adı');
+            form.append(input);
+          }
+
+          const controls=element('div','ef3-donate-controls');
+          const cancel=element('button','','Vazgeç');
+          const submit=element('button','ef4-danger-button',
+            destructive?'Aileyi kapat':'Aileden ayrıl');
+
+          cancel.type='button';
+          submit.type='submit';
+          cancel.onclick=close.onclick;
+          submit.disabled=destructive;
+
+          if(input){
+            input.oninput=()=>{
+              submit.disabled=criticalBusy||
+                input.value.trim()!==familyName;
+            };
+          }
+
+          form.onsubmit=async e=>{
+            e.preventDefault();
+
+            if(criticalBusy||!valid())return;
+
+            if(destructive&&
+              input.value.trim()!==familyName)return;
+
+            criticalBusy=true;
+            close.disabled=true;
+            cancel.disabled=true;
+            submit.disabled=true;
+
+            if(input)input.disabled=true;
+
+            submit.textContent='İşleniyor…';
+            status.textContent='';
+
+            try{
+              await request(
+                closing?base:base+'/leave',
+                {method:'DELETE'}
+              );
+
+              if(!valid())return;
+
+              localStorage.removeItem('eris_family_id');
+
+              document.getElementById('chat')
+                ?.classList.remove('show');
+
+              for(const b of shell.querySelectorAll('button')){
+                if(!mask.contains(b))b.disabled=true;
+              }
+
+              body.replaceChildren();
+
+              const success=element('div','ef4-invite-success');
+
+              success.append(
+                element('span','','✓'),
+                element('h3','',destructive?
+                  'Aile kapatıldı':'Aileden ayrıldınız'),
+                element('p','',
+                  'Aile ekranını kapatıp yeniden açabilirsiniz.')
+              );
+
+              body.append(success);
+
+              window.toast?.(destructive?
+                'Aile kapatıldı':'Aileden ayrıldınız');
+
+              Promise.resolve()
+                .then(()=>window.ErisChatDM?.load?.())
+                .catch(()=>{});
+
+              await refreshOperations();
+
+            }catch(err){
+              if(valid()){
+                status.textContent=String(
+                  err?.message||'İşlem doğrulanamadı. Aile durumunu kontrol edin.'
+                );
+
+                cancel.disabled=false;
+                if(input)input.disabled=false;
+
+                submit.textContent=destructive?
+                  'Aileyi kapat':'Aileden ayrıl';
+
+                submit.disabled=false;
+              }
+            }finally{
+              criticalBusy=false;
+              close.disabled=false;
+            }
+          };
+
+          controls.append(cancel,submit);
+          form.append(controls);
+          body.append(form);
+
+        }catch(err){
+          if(valid()){
+            status.textContent=String(
+              err?.message||'Aile bilgileri alınamadı.'
+            );
+          }
+        }finally{
+          criticalBusy=false;
+          close.disabled=false;
+        }
+      }
+
+      prepare();
+    }
+
+    for(const key of ['leave','close']){
+      const button=actions.querySelector(
+        '[data-action="'+key+'"]'
+      );
+
+      if(button){
+        button.onclick=()=>openCriticalOperation(key);
+      }
     }
 
     let donationBusy=false;

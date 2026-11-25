@@ -833,3 +833,329 @@
   opacity:.45;
   cursor:not-allowed;
 }
+
+/* FAMILY OPERATIONS PREMIUM V4 */
+.eh-family-shell.ef2 .ef4-operations {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:10px 0;
+  width:100%;
+}
+.eh-family-shell.ef2 .ef4-operations .ef4-operation-card {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:78px;
+  padding:12px;
+  box-sizing:border-box;
+  border:1px solid var(--ui-line);
+  border-radius:16px;
+  background:var(--ui-raised);
+  color:var(--ui-ink);
+  text-align:left;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+}
+.ef4-operation-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 44px;
+  width:44px;
+  height:44px;
+  border-radius:13px;
+  border:1px solid #b99a60;
+  background:color-mix(
+    in srgb,var(--ui-panel) 82%,#b99a60
+  );
+  color:var(--ui-ink);
+}
+.ef4-operation-icon svg {
+  width:23px;
+  height:23px;
+}
+.ef4-operation-info {
+  flex:1;
+  min-width:0;
+  display:grid;
+  gap:5px;
+}
+.ef4-operation-info strong {
+  font-size:14px;
+  font-weight:800;
+  color:var(--ui-ink);
+}
+.ef4-operation-info small {
+  font-size:11px;
+  line-height:1.4;
+  font-weight:400;
+  color:var(--ui-muted,var(--ui-ink));
+}
+.ef4-operation-arrow {
+  font-size:27px;
+  color:#b99a60;
+  flex-shrink:0;
+}
+.eh-family-shell.ef2 .ef4-operations .ef4-critical {
+  border-color:#a65b5b;
+}
+.ef4-critical .ef4-operation-icon {
+  border-color:#a65b5b;
+  background:color-mix(
+    in srgb,var(--ui-panel) 88%,#a65b5b
+  );
+}
+.ef4-operation-card:active {
+  transform:scale(.985);
+}
+.ef4-operation-card:focus-visible {
+  outline:2px solid #b99a60;
+  outline-offset:2px;
+}
+
+/* FAMILY INVITATION PREMIUM V4 */
+.ef4-invite-form {
+  display:grid;
+  gap:12px;
+}
+.ef4-invite-form label {
+  font-size:13px;
+  font-weight:800;
+  color:var(--ui-ink);
+}
+.ef4-invite-note {
+  margin:0;
+  padding:12px;
+  border:1px solid var(--ui-line);
+  border-radius:12px;
+  background:var(--ui-raised);
+  color:var(--ui-ink);
+  font-size:12px;
+  line-height:1.6;
+}
+.ef4-invite-status {
+  margin:0;
+  font-size:12px;
+  color:var(--ui-ink);
+  overflow-wrap:anywhere;
+}
+.ef4-invite-status:empty {
+  display:none;
+}
+.ef4-invite-success {
+  display:grid;
+  justify-items:center;
+  gap:10px;
+  text-align:center;
+  padding:24px 10px;
+}
+.ef4-invite-success>span {
+  display:grid;
+  place-items:center;
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  background:linear-gradient(145deg,#ecd19a,#b68a43);
+  color:#20160c;
+  font-size:32px;
+  font-weight:900;
+}
+.ef4-invite-success h3,
+.ef4-invite-success p {
+  margin:0;
+  color:var(--ui-ink);
+}
+.ef4-invite-success p {
+  font-size:13px;
+  line-height:1.5;
+}
+
+/* FAMILY APPLICATIONS PREMIUM V4 */
+.ef4-application-card {
+  display:grid;
+  gap:12px;
+  padding:14px;
+  border:1px solid var(--ui-line);
+  border-radius:16px;
+  background:var(--ui-raised);
+  min-width:0;
+}
+.ef4-application-person {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.ef4-application-avatar {
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  border:1px solid #b99a60;
+  border-radius:50%;
+  background:var(--ui-panel);
+  font-size:24px;
+}
+.ef4-application-message {
+  margin:0;
+  padding:10px;
+  border-radius:10px;
+  background:var(--ui-panel);
+  color:var(--ui-ink);
+  font-size:12px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap;
+}
+.ef4-application-controls {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.ef4-application-controls[hidden] {
+  display:none!important;
+}
+.ef4-application-controls button {
+  min-height:44px;
+  border-radius:12px;
+  border:1px solid #b99a60;
+  font-size:13px;
+  font-weight:800;
+}
+.ef4-application-controls .ef3-approve {
+  background:linear-gradient(145deg,#ecd19a,#b68a43);
+  color:#20160c!important;
+}
+.ef4-application-card .ef4-reject {
+  border:1px solid #a65b5b;
+  background:var(--ui-panel);
+  color:var(--ui-ink);
+}
+.ef4-decision {
+  display:grid;
+  gap:10px;
+  padding:12px;
+  border:1px solid #b99a60;
+  border-radius:12px;
+  background:var(--ui-panel);
+  color:var(--ui-ink);
+}
+.ef4-decision p {
+  margin:0;
+  font-size:12px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.ef4-application-empty {
+  display:grid;
+  justify-items:center;
+  text-align:center;
+  gap:10px;
+  padding:24px 10px;
+}
+.ef4-application-empty>span {
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  border:1px solid #b99a60;
+  border-radius:50%;
+  color:#b99a60;
+  font-size:28px;
+}
+.ef4-application-empty h3,
+.ef4-application-empty p {
+  margin:0;
+}
+.ef4-application-empty p {
+  font-size:12px;
+}
+
+/* FAMILY MANAGEMENT PREMIUM V4 */
+.ef4-management-actions {
+  display:grid;
+  gap:8px;
+}
+.ef4-management-actions[hidden] {
+  display:none!important;
+}
+.ef4-management-actions>button {
+  width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  border:1px solid #b99a60;
+  border-radius:12px;
+  background:var(--ui-panel);
+  color:var(--ui-ink);
+  font-size:13px;
+  font-weight:700;
+  text-align:left;
+  white-space:normal;
+}
+.ef4-management-actions>button.ef4-reject {
+  border-color:#a65b5b;
+}
+.ef4-management-card button:disabled {
+  opacity:.5;
+  cursor:not-allowed;
+}
+.ef4-management-card .ef3-person {
+  flex:1;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.ef4-management-mask .ef4-invite-status {
+  padding:0 14px;
+}
+.ef4-management-mask .ef4-invite-status:empty {
+  display:none;
+}
+
+/* FAMILY CRITICAL OPERATIONS PREMIUM V4 */
+.ef4-critical-warning {
+  display:grid;
+  justify-items:center;
+  gap:12px;
+  text-align:center;
+  padding:20px 14px;
+  border:1px solid #a65b5b;
+  border-radius:16px;
+  background:var(--ui-raised);
+  color:var(--ui-ink);
+}
+.ef4-critical-symbol {
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  border:2px solid #a65b5b;
+  border-radius:50%;
+  font-size:32px;
+  font-weight:900;
+  color:var(--ui-ink);
+}
+.ef4-critical-warning h3,
+.ef4-critical-warning p {
+  margin:0;
+  overflow-wrap:anywhere;
+}
+.ef4-critical-warning p {
+  font-size:13px;
+  line-height:1.6;
+}
+.ef4-critical-mask .ef4-danger-button {
+  background:#963e3e!important;
+  color:#fff!important;
+  border:1px solid #a65b5b;
+  border-radius:12px;
+  font-weight:800;
+  min-height:46px;
+}
+.ef4-critical-mask button:disabled {
+  opacity:.45;
+  cursor:not-allowed;
+}
+.eh-family-shell.ef2
+.ef4-operations button[hidden] {
+  display:none!important;
+}
