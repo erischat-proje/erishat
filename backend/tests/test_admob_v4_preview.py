@@ -19,9 +19,9 @@ from backend.app.models import User
 from backend.app.system_data import LidyaLedger
 
 
-def signed_request(key, nonce, tx, amount=5):
+def signed_request(key, nonce, tx, amount=5, ad_unit='8782909853'):
     payload = (
-        f"ad_unit=8782909853&custom_data={nonce}"
+        f"ad_unit={ad_unit}&custom_data={nonce}"
         f"&reward_amount={amount}&reward_item=Lidya"
         f"&timestamp={int(time.time() * 1000)}"
         f"&transaction_id={tx}&user_id=preview-user"
@@ -198,3 +198,43 @@ def test_v12_nonpilot_ssv_no_credit(setup, monkeypatch):
     assert error.value.status_code == 403
     db.rollback()
     assert_no_credit(db)
+
+
+
+@pytest.mark.parametrize("ad_unit", [
+    "5224354917",
+    "ca-app-pub-3940256099942544/5224354917",
+    "0000000000",
+])
+def test_v14_test_ads_cannot_pay_real_lidya(
+    setup, monkeypatch, ad_unit
+):
+    db, key = setup
+
+    monkeypatch.setattr(ads, "enabled", lambda: True)
+    monkeypatch.setenv(
+        "LIDYACHAT_ADMOB_PILOT_USER_IDS",
+        "preview-user"
+    )
+
+    nonce = "t" * 32
+    add_claim(db, nonce)
+
+    with pytest.raises(HTTPException) as error:
+        ads.ssv_callback(
+            signed_request(
+                key, nonce, "abcdef123488",
+                ad_unit=ad_unit
+            ),
+            db,
+        )
+
+    assert error.value.status_code == 400
+    db.rollback()
+    assert_no_credit(db)
+
+    claim = db.get(
+        ads.AdmobClaim,
+        sha256(nonce.encode()).hexdigest()
+    )
+    assert claim.consumed_at is None
