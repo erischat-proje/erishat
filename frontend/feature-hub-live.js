@@ -97,7 +97,7 @@
   if(!document.getElementById('erisFamilyV2Css')){
     const link=document.createElement('link');link.id='erisFamilyV2Css';link.rel='stylesheet';
     const source=document.querySelector('script[src*="feature-hub-live.js"]');
-    link.href=new URL('family-v2.css?v=family-contribution-v3-20261125',source?.src||location.href).href;
+    link.href=new URL('family-v2.css?v=family-operations-v4-20261125',source?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
@@ -220,13 +220,13 @@ const people=authorities.map(m=>{
           window.__erisFamilyV2Ready = new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             const source=document.querySelector('script[src*="feature-hub-live.js"]');
-            script.src=new URL('family-v2.js?v=family-contribution-v3-20261125',source?.src||location.href).href;
+            script.src=new URL('family-v2.js?v=family-operations-v4-20261125',source?.src||location.href).href;
             script.onload=resolve;script.onerror=()=>reject(new Error('Aile V2 dosyası yüklenemedi'));
             document.head.appendChild(script);
           });
         }
         await window.__erisFamilyV2Ready;
-        await window.ErisFamilyV2?.enhance(shell,f,members,viewerRole,api);
+        await window.ErisFamilyV2?.enhance(shell,f,members,viewerRole,api,()=>family(panel));
       } catch(error) { console.error('Family V3 load failed:',error); const alert=document.createElement('div');alert.className='eh-note';alert.setAttribute('role','alert');alert.textContent='Yeni Aile Merkezi yüklenemedi. Sayfayı yenileyin. Sorun sürerse destek ekibine bildirin.';shell.prepend(alert); }
       shell.querySelectorAll('[data-family-discover]').forEach(el=>el.closest('section')?.remove());
       // FAMILY_PREMIUM_DISCOVERY_GUARD: aile üyelerine keşfet gösterilmez.
