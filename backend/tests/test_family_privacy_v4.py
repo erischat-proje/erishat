@@ -43,6 +43,11 @@ class FamilyPrivacyV4(unittest.TestCase):
         if ledger is not None:
             required.add(ledger)
 
+            from sqlalchemy import Integer
+            ledger.c.id.type = ledger.c.id.type.with_variant(
+                Integer(), "sqlite"
+            )
+
         pending = list(required)
         while pending:
             table = pending.pop()
