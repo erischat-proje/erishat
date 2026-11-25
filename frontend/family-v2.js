@@ -28,9 +28,240 @@
     for(const [id,label] of tabs){const b=document.createElement('button');b.type='button';b.dataset.ef2Tab=id;b.textContent=label;nav.append(b);const page=document.createElement('section');page.dataset.ef2Page=id;page.hidden=true;sections.append(page)}
     stats.after(nav,sections);
     const page=id=>sections.querySelector('[data-ef2-page="'+id+'"]');
-    const home=page('home'),membersPage=page('members'),levels=page('levels'),ranking=page('rank'),manage=page('manage');
-    const welcome=document.createElement('div');welcome.className='ef2-panel';welcome.innerHTML='<h3>Birlikte daha güçlüyüz</h3><p>Aile deneyimi katkılarla yükselir. Seviye ilerledikçe üye kapasitesi artar.</p>';
-    home.append(welcome);const shortcuts=document.createElement('div');shortcuts.className='ef2-shortcuts';shortcuts.innerHTML='<button type="button" data-go="members">Üyeler</button><button type="button" data-go="levels">Seviye yolculuğu</button><button type="button" data-go="rank">Aile sıralaması</button><button type="button" data-go="manage">Aile işlemleri</button>';home.append(shortcuts);
+    const home=page('home'),membersPage=page('members'),levels=page('levels'),ranking=page('rank'),activity=page('activity'),manage=page('manage');
+    const feedPanel=document.createElement('div');
+    feedPanel.className='ef4-feed-panel';
+    feedPanel.innerHTML=`
+      <div class="ef4-feed-header">
+        <div>
+          <h3>Aile gönderileri</h3>
+          <small>Ailenden en yeni paylaşımlar</small>
+        </div>
+        <button type="button" data-family-refresh
+          aria-label="Akışı yenile">↻</button>
+        <button type="button" data-family-compose>
+          + Paylaş
+        </button>
+      </div>
+      <div class="ef4-feed-list" data-family-feed></div>
+      <div class="ef4-feed-footer">
+        <button type="button" data-family-more hidden>
+          Devamını yükle
+        </button>
+      </div>`;
+    home.append(feedPanel);
+
+    const feedList=feedPanel.querySelector('[data-family-feed]');
+    const more=feedPanel.querySelector('[data-family-more]');
+    const refresh=feedPanel.querySelector('[data-family-refresh]');
+    const compose=feedPanel.querySelector('[data-family-compose]');
+    let familyCursor=null;
+    let familyLoading=false;
+    const familyToken=()=>window.ErisPlatform?.getAccessToken?.()
+      ||localStorage.getItem('erischat_access_token')
+      ||localStorage.getItem('token')||'';
+
+    const familySession=familyToken();
+    const familyValid=()=>Boolean(
+      familySession &&
+      familyToken()===familySession &&
+      feedList.isConnected
+    );
+
+    const familyHeader=shell.closest('#erisHub')?.querySelector('.eh-head');
+
+    if(familyHeader){
+      const syncHeader=()=>{
+        const height=familyHeader.getBoundingClientRect().height;
+        if(height>0){
+          shell.style.setProperty('--ef4-header-height',height+'px');
+        }
+      };
+
+      syncHeader();
+
+      if('ResizeObserver' in window){
+        const headerObserver=new ResizeObserver(()=>{
+          if(!shell.isConnected){
+            headerObserver.disconnect();
+            return;
+          }
+          syncHeader();
+        });
+
+        headerObserver.observe(familyHeader);
+        feedList._familyHeaderObserver=headerObserver;
+      }
+    }
+
+    const authEvents=[
+      'erischat:auth',
+      'erischat:auth-state',
+      'erischat:auth-ready',
+      'erischat:auth-state-changed',
+      'storage'
+    ];
+
+    const disposeFamily=()=>{
+      feedList._familyPaginationObserver?.disconnect();
+      feedList._familyHeaderObserver?.disconnect();
+      window.ErisSocialFeed?.release?.(feedList);
+
+      authEvents.forEach(event=>{
+        window.removeEventListener(event,checkFamilySession);
+      });
+
+      clearInterval(familySessionTimer);
+      feedList._familyRefresh=null;
+    };
+
+    function checkFamilySession(){
+      if(familyValid())return;
+
+      disposeFamily();
+      feedList.replaceChildren();
+
+      if(shell.isConnected){
+        shell.replaceChildren();
+        shell.textContent='Aile bilgileri için yeniden giriş yap.';
+      }
+    }
+
+    const familySessionTimer=setInterval(
+      checkFamilySession,1000
+    );
+
+    authEvents.forEach(event=>{
+      window.addEventListener(event,checkFamilySession);
+    });
+
+    feedList._familyDispose=disposeFamily;
+
+    let familyLoaded=false;
+    let familyAutoLoad=true;
+
+    const familySeen=new Set();
+
+    async function loadFamilyFeed(append=false){
+      if(!familyValid()){
+        window.ErisSocialFeed?.release?.(feedList);
+        feedList.replaceChildren();
+        return;
+      }
+      if(familyLoading)return;
+      const social=window.ErisSocialFeed;
+      if(!social?.renderFamilyRows){
+        feedList.textContent='Gönderi sistemi henüz hazır değil.';
+        return;
+      }
+
+      familyLoading=true;
+      refresh.disabled=true;
+      more.disabled=true;
+      feedList.setAttribute('aria-busy','true');
+
+      if(!append){
+        familyCursor=null;
+        familyAutoLoad=true;
+        familySeen.clear();
+        social.release?.(feedList);
+        feedList.textContent='Aile gönderileri yükleniyor…';
+        more.hidden=true;
+      }
+
+      try{
+        const params=new URLSearchParams({limit:'20'});
+        if(append&&familyCursor){
+          params.set('cursor',familyCursor);
+        }
+
+        const data=await request(
+          '/families/'+encodeURIComponent(f.id)+'/feed?'+params
+        );
+
+        if(!familyValid()){
+          social.release?.(feedList);
+          feedList.replaceChildren();
+          return;
+        }
+
+        const rows=(data.items||[]).filter(post=>{
+          if(familySeen.has(post.id))return false;
+          familySeen.add(post.id);
+          return true;
+        });
+
+        await social.renderFamilyRows(feedList,rows,append);
+        if(!familyValid()){
+          social.release?.(feedList);
+          feedList.replaceChildren();
+          return;
+        }
+
+        familyCursor=data.next_cursor||null;
+        familyLoaded=true;
+        more.hidden=!data.has_more||!familyCursor;
+        more.textContent='Devamını yükle';
+
+        if(!feedList.querySelector('article')){
+          feedList.textContent='Henüz aile gönderisi bulunmuyor.';
+        }
+
+        more.onclick=()=>loadFamilyFeed(true);
+
+      }catch(error){
+        familyAutoLoad=false;
+        if(!familyValid()){
+          social.release?.(feedList);
+          feedList.replaceChildren();
+          return;
+        }
+        if(!append){
+          feedList.textContent='Aile gönderileri yüklenemedi.';
+        }
+        more.hidden=false;
+        more.textContent='Tekrar dene';
+        more.onclick=()=>loadFamilyFeed(append);
+      }finally{
+        familyLoading=false;
+        refresh.disabled=false;
+        more.disabled=false;
+        feedList.setAttribute('aria-busy','false');
+      }
+    }
+
+    if('IntersectionObserver' in window){
+      const observer=new IntersectionObserver(entries=>{
+        if(!familyValid()){
+          observer.disconnect();
+          return;
+        }
+        if(entries.some(entry=>entry.isIntersecting)
+          &&familyLoaded
+          &&familyAutoLoad
+          &&familyCursor
+          &&!familyLoading
+          &&!more.hidden
+          &&more.getClientRects().length){
+          loadFamilyFeed(true);
+        }
+      },{rootMargin:'160px'});
+
+      observer.observe(more);
+      feedList._familyPaginationObserver=observer;
+    }
+
+    feedList._familyRefresh=()=>{
+      if(familyValid())return loadFamilyFeed();
+    };
+
+    refresh.onclick=()=>loadFamilyFeed();
+    compose.onclick=()=>{
+      window.ErisSocialFeed?.compose?.(
+        null,false,()=>loadFamilyFeed(),f.id
+      );
+    };
+
     if(staff&&strip){const title=document.createElement('h3');title.textContent='Aile yetkilileri';membersPage.append(title,strip);staff.remove()}
     const memberButton=actions.querySelector('[data-action="members"]');
     const memberPanel=document.createElement('div');memberPanel.className='ef2-panel';memberPanel.innerHTML='<h3>Üye listesi</h3><p>Üyelerin profillerini ve mesaj seçeneklerini görüntüleyebilirsin.</p><button class="ef2-primary" type="button">Üyeleri göster</button>';
@@ -54,9 +285,15 @@
       if(name==='members')button.style.display='none';
     }
     const avatar=shell.querySelector('[data-action="family-avatar"]');if(avatar){avatar.classList.add('ef2-avatar-btn');hero.append(avatar)}
-    function activate(id){nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.ef2Tab===id;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))});sections.querySelectorAll('[data-ef2-page]').forEach(el=>el.hidden=el.dataset.ef2Page!==id);if(id==='rank')loadRank();if(id==='activity')loadActivity()}
+    function activate(id){
+      if(id!=='home'){
+        feedList.querySelectorAll('video')
+          .forEach(video=>video.pause());
+      }
+nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.ef2Tab===id;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active))});sections.querySelectorAll('[data-ef2-page]').forEach(el=>el.hidden=el.dataset.ef2Page!==id);if(id==='rank')loadRank();if(id==='activity')loadActivity()}
     nav.addEventListener('click',e=>{const b=e.target.closest('button[data-ef2-tab]');if(b)activate(b.dataset.ef2Tab)});
-    home.querySelector('.ef2-shortcuts').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)activate(b.dataset.go)});activate('home');
+    activate('home');
+    loadFamilyFeed();
     // Real, server-backed family contribution data. No fabricated rewards.
     const contribution=document.createElement('div');contribution.className='ef2-panel';
     contribution.innerHTML='<h3>Aile katkıları ve hedefler</h3><p>Katkılar aile deneyimini yükseltir. Günlük ve haftalık hedefler gerçek bağış kayıtlarından hesaplanır.</p>';

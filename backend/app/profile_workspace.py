@@ -53,7 +53,11 @@ class PostAction(BaseModel):
 def counts(db,uid):
     total,hidden,followers,media=db.execute(select(func.count(),func.coalesce(func.sum(SocialPost.is_hidden.cast(Integer)),0),
         func.coalesce(func.sum(and_(SocialPost.audience=='followers',SocialPost.is_hidden.is_(False)).cast(Integer)),0),
-        func.coalesce(func.sum(SocialPost.image_bytes.is_not(None).cast(Integer)),0)).where(SocialPost.user_id==uid)).one()
+        func.coalesce(func.sum(SocialPost.image_bytes.is_not(None).cast(Integer)),0)).where(
+        SocialPost.user_id==uid,
+        SocialPost.audience!="family",
+        SocialPost.family_id.is_(None)
+    )).one()
     return dict(total=int(total),hidden=int(hidden),visible=int(total-hidden),followers=int(followers),media=int(media))
 
 def cursor_pack(value):return base64.urlsafe_b64encode(json.dumps(value,separators=(',',':'),ensure_ascii=False).encode()).decode().rstrip('=')
@@ -66,6 +70,10 @@ def cursor_read(value,filters):
 
 def posts(db,user,scope='all',media='all',q='',order='newest',limit=20,cursor=None):
     q=q.strip();filters=[user.id,scope,media,q,order];query=select(SocialPost,User,SocialPost.image_bytes.is_not(None)).join(User,User.id==SocialPost.user_id).where(SocialPost.user_id==user.id)
+    query=query.where(
+        SocialPost.audience!="family",
+        SocialPost.family_id.is_(None),
+    )
     if scope=='hidden':query=query.where(SocialPost.is_hidden.is_(True))
     elif scope!='all':query=query.where(SocialPost.is_hidden.is_(False),SocialPost.audience==scope)
     if media=='text':query=query.where(SocialPost.image_bytes.is_(None))
@@ -84,7 +92,10 @@ def posts(db,user,scope='all',media='all',q='',order='newest',limit=20,cursor=No
 def apply_action(db,user,data):
     if data.action!='delete':require_chat_write(db,user.id)
     expected={x.id:utc(x.updated_at) for x in data.items}
-    records=list(db.execute(select(SocialPost,SocialPost.updated_at.cast(String).label("stored_version")).where(SocialPost.user_id==user.id,SocialPost.id.in_(expected)).order_by(SocialPost.id).with_for_update()))
+    records=list(db.execute(select(SocialPost,SocialPost.updated_at.cast(String).label("stored_version")).where(SocialPost.user_id==user.id,
+        SocialPost.audience!="family",
+        SocialPost.family_id.is_(None),
+        SocialPost.id.in_(expected)).order_by(SocialPost.id).with_for_update()))
     rows=[row for row,_ in records];stored_versions={row.id:version for row,version in records}
     if len(rows)!=len(expected):raise HTTPException(404,'Seçilen gönderilerden biri bulunamadı veya size ait değil; işlem yapılmadı.')
     if any(utc(row.updated_at)!=expected[row.id] for row in rows):raise HTTPException(409,'Seçilen bir gönderi değişti; listeyi yenileyip yeniden seçin. Hiçbir değişiklik uygulanmadı.')

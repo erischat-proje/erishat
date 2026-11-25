@@ -71,7 +71,7 @@
     storyMediaUrl:mediaUrl,
     socialFeed:(mode='for-you',limit=30,offset=0)=>request(`/posts/feed?mode=${encodeURIComponent(mode)}&limit=${Number(limit)||30}&offset=${Number(offset)||0}`),
     myPosts:(limit=100,offset=0)=>request(`/me/posts?limit=${Number(limit)||100}&offset=${Number(offset)||0}`),
-    createPost:(caption,file,audience='public')=>{const body=new FormData();body.append('caption',caption||'');body.append('audience',audience);if(file)body.append('file',file);return request('/posts',{method:'POST',body,timeout:120000});},
+    createPost:(caption,file,audience='public',familyId=null)=>{const body=new FormData();body.append('caption',caption||'');body.append('audience',audience);if(audience==='family'&&familyId)body.append('family_id',familyId);if(file)body.append('file',file);return request('/posts',{method:'POST',body,timeout:120000});},
     updatePost:(id,caption,file,removeImage=false,audience,hidden)=>{const body=new FormData();body.append('caption',caption||'');body.append('remove_image',String(!!removeImage));if(audience)body.append('audience',audience);if(hidden!==undefined)body.append('is_hidden',String(!!hidden));if(file)body.append('file',file);return request(`/posts/${encodeURIComponent(id)}`,{method:'PATCH',body,timeout:120000});},
     deletePost:id=>request(`/posts/${encodeURIComponent(id)}`,{method:'DELETE'}),
     postMediaUrl:mediaUrl

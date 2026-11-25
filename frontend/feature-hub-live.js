@@ -33,11 +33,37 @@
     window.openErisHub=()=>openTab('rooms');
     window.ErisChatHub={openTab};
     document.querySelectorAll('[data-hub-tab]').forEach(button=>button.addEventListener('click',()=>openTab(button.dataset.hubTab)));
-    document.getElementById('ehClose').onclick=()=>hub.classList.remove('show');
-    hub.addEventListener('click',e=>{if(e.target===hub) hub.classList.remove('show');});
+    const closeHub=()=>{
+      hub.querySelectorAll('#eh-family [data-family-feed]')
+        .forEach(feed=>{
+          feed._familyDispose?.();
+          feed._familyPaginationObserver?.disconnect();
+          feed._familyHeaderObserver?.disconnect();
+          window.ErisSocialFeed?.release?.(feed);
+        });
+      const familyPanel=hub.querySelector('#eh-family');
+      if(familyPanel)familyPanel.replaceChildren();
+      hub.classList.remove('show');
+    };
+    document.getElementById('ehClose').onclick=closeHub;
+    hub.addEventListener('click',e=>{if(e.target===hub) closeHub();});
     hub.querySelectorAll('.eh-tab').forEach(btn=>btn.onclick=()=>loadTab(btn.dataset.tab));
   }
   async function loadTab(tab){
+    const familyHub=document.getElementById('erisHub');
+    familyHub?.classList.toggle('ef4-fullscreen',tab==='family');
+    if(tab!=='family'){
+      document.querySelectorAll('#eh-family [data-family-feed]')
+        .forEach(feed=>{
+          feed._familyDispose?.();
+          feed._familyPaginationObserver?.disconnect();
+          feed._familyHeaderObserver?.disconnect();
+          window.ErisSocialFeed?.release?.(feed);
+        });
+      const familyPanel=document.getElementById('eh-family');
+      if(familyPanel)familyPanel.replaceChildren();
+    }
+
     const titles={rooms:'Odalar',shop:'Mağaza',vip:'VIP merkezi',family:'Aile',discover:'Keşfet',profile:'Profil',privacy:'Gizlilik',report:'Güvenlik ve şikayet',support:'Destek'};
     const title=document.getElementById('ehTitle'),kicker=document.getElementById('ehKicker');if(title)title.textContent=titles[tab]||'LidyaChat';if(kicker)kicker.textContent=tab==='report'?'GÜVENLİK':tab==='support'?'YARDIM MERKEZİ':'LİDYACHAT';
     document.querySelectorAll('.eh-tab').forEach(x=>{x.classList.toggle('active',x.dataset.tab===tab);if(x.dataset.tab===tab)x.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'smooth'})});
@@ -71,10 +97,14 @@
   if(!document.getElementById('erisFamilyV2Css')){
     const link=document.createElement('link');link.id='erisFamilyV2Css';link.rel='stylesheet';
     const source=document.querySelector('script[src*="feature-hub-live.js"]');
-    link.href=new URL('family-v2.css?v=20261018-final3',source?.src||location.href).href;
+    link.href=new URL('family-v2.css?v=family-v4-20261125',source?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
+    panel.querySelectorAll('[data-family-feed]').forEach(feed=>{
+      feed._familyDispose?.();
+    });
+
     if(!document.getElementById('ehFamilyProStyle')){const style=document.createElement('style');style.id='ehFamilyProStyle';style.textContent=".eh-family-shell{color:var(--ui-ink)}.eh-family-hero{padding:18px;border:1px solid var(--ui-line);border-radius:22px;background:radial-gradient(circle at 85% 12%,color-mix(in srgb, var(--ui-danger-bg) 16%, transparent),transparent 34%),linear-gradient(145deg,var(--ui-panel),var(--ui-panel));position:relative;overflow:hidden}.eh-family-head{display:flex;gap:13px;align-items:center}.eh-family-crest{width:68px;height:68px;flex:none;border-radius:22px;display:grid;place-items:center;background:linear-gradient(145deg,var(--ui-button),var(--ui-button));font-size:30px;box-shadow:0 8px 24px var(--ui-shadow);background-size:cover;background-position:center}.eh-family-meta{font-size:10px;color:var(--ui-muted);margin-top:5px}.eh-family-level{margin-left:auto;font-size:26px;font-weight:950;color:var(--ui-gold)}.eh-family-progress{height:8px;background:color-mix(in srgb, var(--ui-panel) 8%, transparent);border-radius:99px;margin:15px 0 6px;overflow:hidden}.eh-family-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ui-button),var(--ui-button))}.eh-family-progress-label{display:flex;justify-content:space-between;color:var(--ui-muted);font-size:9px}.eh-family-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.eh-family-actions button{min-height:42px;border:1px solid var(--ui-line);border-radius:13px;background:color-mix(in srgb, var(--ui-raised) 3%, transparent);color:var(--ui-ink);font-size:10px;font-weight:800}.eh-family-member-strip{display:flex;gap:13px;overflow:auto;padding:5px 0 10px}.eh-family-person{min-width:72px;text-align:center;color:var(--ui-ink)}.eh-family-avatar{width:56px;height:56px;margin:0 auto 5px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--ui-button),var(--ui-raised));border:2px solid var(--ui-line);font-size:24px;background-position:center;background-size:cover;position:relative}.eh-family-vip{position:absolute;right:-6px;bottom:-4px;border-radius:99px;padding:2px 5px;background:var(--ui-button);font-size:8px}.eh-family-person b{display:block;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.eh-family-role{display:inline-block;margin-top:3px;padding:3px 7px;border-radius:99px;background:color-mix(in srgb, var(--ui-button) 23%, transparent);color:var(--ui-gold);font-size:8px}.eh-family-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--ui-line);color:var(--ui-ink)}.eh-family-row [data-family-profile]{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:0;background:transparent;color:var(--ui-ink);text-align:left;cursor:pointer}.eh-family-row [data-family-message]{flex:none;border:1px solid var(--ui-line);background:color-mix(in srgb, var(--ui-raised) 3%, transparent);color:var(--ui-ink);border-radius:9px;padding:7px;font-size:9px}.eh-family-row .eh-family-avatar{width:48px;height:48px;flex:none;margin:0}.eh-family-row small{display:block;color:var(--ui-muted);font-size:9px;margin-top:4px}.eh-family-section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 9px;font-size:13px;font-weight:900}.eh-family-inline{display:flex;gap:7px;margin:9px 0}.eh-family-inline input,.eh-family-form input{min-width:0;flex:1;padding:10px;border:1px solid var(--ui-line);border-radius:12px;background:color-mix(in srgb, var(--ui-panel) 3%, transparent);color:var(--ui-ink)}.eh-family-empty{padding:20px;border:1px solid var(--ui-line);border-radius:18px;background:color-mix(in srgb, var(--ui-panel) 2%, transparent);text-align:center;color:var(--ui-ink);font-size:11px;line-height:1.5}.eh-family-menu summary{list-style:none;cursor:pointer;border:1px solid var(--ui-line);border-radius:10px;padding:6px 10px}.eh-family-menu summary::-webkit-details-marker{display:none}.eh-family-menu button{display:block;width:100%;min-height:34px;text-align:left;padding:7px 9px}.eh-family-confirm{padding:12px;margin:10px 0;border:1px solid var(--ui-line);border-radius:15px;background:color-mix(in srgb, var(--ui-primary) 7%, transparent)}.eh-family-confirm-actions{display:flex;gap:8px;margin-top:10px}.eh-family-confirm-actions button{flex:1}";document.head.append(style)}
     panel.innerHTML='<div class="eh-family-shell" id="ehFamilyShell"><div class="eh-family-empty">Aile bilgileri yükleniyor…</div></div>';
     const shell=panel.querySelector('#ehFamilyShell');let id=localStorage.getItem('eris_family_id')||'';let families=[];
@@ -156,7 +186,7 @@
           window.__erisFamilyV2Ready = new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             const source=document.querySelector('script[src*="feature-hub-live.js"]');
-            script.src=new URL('family-v2.js?v=family-close-20261020',source?.src||location.href).href;
+            script.src=new URL('family-v2.js?v=family-v4-20261125',source?.src||location.href).href;
             script.onload=resolve;script.onerror=()=>reject(new Error('Aile V2 dosyası yüklenemedi'));
             document.head.appendChild(script);
           });

@@ -171,6 +171,8 @@ def ensure_system_data_columns() -> None:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(300)"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS audience VARCHAR(16) NOT NULL DEFAULT 'public'"))
+        conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS family_id VARCHAR REFERENCES families(id) ON DELETE CASCADE"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_social_posts_family_id ON social_posts (family_id)"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT false"))
         conn.execute(text("ALTER TABLE social_post_comments ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT false"))
@@ -1559,6 +1561,10 @@ def public_profile_posts(user_id: str, limit: int = Query(default=50, ge=1, le=1
         UserFollow.follower_id == user.id, UserFollow.following_id == target.id
     )))
     query = select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).where(SocialPost.user_id == target.id)
+    query = query.where(
+        SocialPost.audience != "family",
+        SocialPost.family_id.is_(None),
+    )
     if not is_owner:
         query = query.where(SocialPost.is_hidden.is_(False))
         query = query.where(SocialPost.audience.in_(["public", "followers"]) if follows
@@ -1588,7 +1594,11 @@ def list_social_feed(mode: str = Query(default="for-you", pattern="^(for-you|fol
 @app.get("/v1/me/posts")
 def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db), user: User = Depends(current_user)):
-    rows = list(db.execute(select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).where(SocialPost.user_id == user.id)
+    rows = list(db.execute(select(SocialPost, SocialPost.image_bytes.is_not(None).label('has_image')).where(
+        SocialPost.user_id == user.id,
+        SocialPost.audience != "family",
+        SocialPost.family_id.is_(None)
+    )
         .order_by(SocialPost.is_pinned.desc(), SocialPost.created_at.desc(), SocialPost.id.desc()).offset(offset).limit(limit)))
     return [{"id": p.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": p.caption, "created_at": p.created_at,
@@ -1601,15 +1611,37 @@ def list_my_social_posts(limit: int = Query(default=100, ge=1, le=200), offset: 
 @app.post("/v1/posts", status_code=201)
 @database_task
 async def create_social_post(caption: str = Form(default=""), file: UploadFile | None = File(default=None),
-    audience: str = Form(default="public"), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    audience: str = Form(default="public"),
+    family_id: str | None = Form(default=None), db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_chat_write(db,user.id)
     caption, audience = caption.strip(), audience.strip().lower()
-    if audience not in {"public", "followers"}:
+    if audience not in {"public", "followers", "family"}:
         raise HTTPException(status_code=400, detail="Paylaşım hedef kitlesi geçersiz")
     if len(caption) > 2000: raise HTTPException(status_code=400, detail="Gönderi metni en fazla 2000 karakter olabilir")
     if not caption and file is None: raise HTTPException(status_code=400, detail="Metin veya medya ekleyin")
     mime, data = await _read_social_upload(file, 80 * 1024 * 1024) if file else (None, None)
-    post = SocialPost(user_id=user.id, caption=caption, mime_type=mime, image_bytes=data, audience=audience)
+    if audience == "family":
+        from .platform_models import Family, FamilyMember
+
+        if not family_id:
+            raise HTTPException(400, "Aile bilgisi gerekli")
+
+        allowed = db.scalar(
+            select(FamilyMember.id)
+            .join(Family, Family.id == FamilyMember.family_id)
+            .where(
+                FamilyMember.family_id == family_id,
+                FamilyMember.user_id == user.id,
+                Family.closed.is_(False)
+            )
+        )
+
+        if not allowed:
+            raise HTTPException(403, "Aile paylaşım yetkiniz yok")
+    elif family_id is not None:
+        raise HTTPException(400, "Geçersiz aile paylaşımı")
+
+    post = SocialPost(family_id=family_id, user_id=user.id, caption=caption, mime_type=mime, image_bytes=data, audience=audience)
     db.add(post); db.flush(); shop_expansion.record_event(db,user.id,'posts',post.id); db.commit(); db.refresh(post)
     return {"id": post.id, "user_id": user.id, "nickname": user.nickname, "avatar": user.avatar,
         "avatar_asset": user.avatar_asset, "caption": post.caption, "created_at": post.created_at,
@@ -1633,6 +1665,15 @@ async def update_social_post(post_id: int, caption: str | None = Form(default=No
         caption = caption.strip()
         if len(caption) > 2000: raise HTTPException(status_code=400, detail="Metin en fazla 2000 karakter olabilir")
         post.caption = caption
+    if post.audience == "family" or post.family_id is not None:
+        _social_access(db, post_id, user)
+        if audience is not None and audience != "family":
+            raise HTTPException(
+                status_code=400,
+                detail="Aile gönderisinin hedef kitlesi değiştirilemez",
+            )
+        audience = None
+
     if audience is not None:
         if audience not in {"public", "followers"}: raise HTTPException(status_code=400, detail="Hedef kitle geçersiz")
         post.audience = audience
@@ -1665,6 +1706,14 @@ def pin_social_post(post_id: int, db: Session = Depends(get_db), user: User = De
     # Serialize competing pin requests for the same profile.
     db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
     post = db.get(SocialPost, post_id)
+    if post and (
+        post.audience == "family"
+        or post.family_id is not None
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Gönderi bulunamadı"
+        )
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderini sabitleyebilirsin")
     db.execute(update(SocialPost).where(SocialPost.user_id == user.id, SocialPost.is_pinned.is_(True)).values(is_pinned=False, updated_at=datetime.now(timezone.utc)))
@@ -1677,6 +1726,14 @@ def pin_social_post(post_id: int, db: Session = Depends(get_db), user: User = De
 @app.delete("/v1/posts/{post_id}/pin")
 def unpin_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
     post = db.get(SocialPost, post_id)
+    if post and (
+        post.audience == "family"
+        or post.family_id is not None
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Gönderi bulunamadı"
+        )
     if not post: raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
     if post.user_id != user.id: raise HTTPException(status_code=403, detail="Yalnızca kendi gönderinin sabitlemesini kaldırabilirsin")
     post.updated_at = datetime.now(timezone.utc)
@@ -1707,6 +1764,29 @@ def _social_access(db: Session, post_id: int, viewer: User) -> SocialPost:
     author = db.get(User, post.user_id) if post else None
     if not post or not author or not author.is_active or active_ban(db, author.id):
         raise HTTPException(status_code=404, detail="Gönderi bulunamadı")
+    if post.audience == "family" or post.family_id is not None:
+        from .platform_models import Family, FamilyMember
+
+        allowed = (
+            post.audience == "family"
+            and post.family_id is not None
+            and db.scalar(
+                select(FamilyMember.id)
+                .join(Family, Family.id == FamilyMember.family_id)
+                .where(
+                    FamilyMember.family_id == post.family_id,
+                    FamilyMember.user_id == viewer.id,
+                    Family.closed.is_(False),
+                )
+            )
+        )
+
+        if not allowed:
+            raise HTTPException(
+                status_code=404,
+                detail="Gönderi bulunamadı",
+            )
+
     if post.user_id != viewer.id:
         blocked = db.scalar(select(UserBlock.id).where(or_(
             and_(UserBlock.blocker_id == viewer.id, UserBlock.blocked_id == post.user_id),
