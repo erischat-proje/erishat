@@ -70,6 +70,14 @@ class FamilyPrivacyV4(unittest.TestCase):
         self.outsider = self.user("outsider", "910003")
         self.other = self.user("other", "910004")
 
+        from backend.app.models import Conversation
+
+        self.db.add_all([
+            Conversation(id="chat-a", type="group"),
+            Conversation(id="chat-b", type="group"),
+        ])
+        self.db.flush()
+
         self.family = Family(
             id="family-a",
             owner_id=self.owner.id,
