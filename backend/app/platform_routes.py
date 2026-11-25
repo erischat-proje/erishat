@@ -2012,7 +2012,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games/{game}/leaderboard")
     def custom_game_leaderboard(game: str, period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        if game not in nonroom_standard.CUSTOM_GAMES:
+        if game == "cups" or game not in nonroom_standard.CUSTOM_GAMES:
             raise HTTPException(404, "Oyun sıralaması bulunamadı")
         return nonroom_standard.leaderboard(db, user, game, period)
 

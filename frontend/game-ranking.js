@@ -6,7 +6,7 @@ const icon=new URL('assets/lidya-wheel/leaderboard-v1.png',source).href;
 const games=[
  ['wheel','Şans Çarkı','Çarkın liderleri','classic'],['crash','Crash','Zirveye yükselenler','classic'],
  ['blackjack','Blackjack','Masanın ustaları','classic'],['slot','Klasik Slot','Hazinenin sahipleri','classic'],
- ['cups','Dört Kupa','Doğru seçimin ödülü','classic'],['horse_race','At Yarışı','Pistin şampiyonları','classic'],
+ ['horse_race','At Yarışı','Pistin şampiyonları','classic'],
  ['vault','Kasa','Kasayı açanlar','classic'],['dede','Dede','Yıldırımın gücü','slots'],
  ['seker','Şeker Sarayı','Tatlı zaferler','slots'],['balikci','Balıkçı Hasan','Günün büyük avı','slots'],
  ['prenses','Prenses','Yıldızların zirvesi','slots'],['dogparty','Dog Party','Patili zaferler','slots'],
