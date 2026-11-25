@@ -97,7 +97,7 @@
   if(!document.getElementById('erisFamilyV2Css')){
     const link=document.createElement('link');link.id='erisFamilyV2Css';link.rel='stylesheet';
     const source=document.querySelector('script[src*="feature-hub-live.js"]');
-    link.href=new URL('family-v2.css?v=family-avatar-v1-20261125',source?.src||location.href).href;
+    link.href=new URL('family-v2.css?v=family-members-v2-20261125',source?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
@@ -187,7 +187,7 @@ const people=authorities.map(m=>{
       shell.querySelector('[data-action=family-avatar]')?.addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;const form=new FormData();form.append('file',file);try{await api('/families/'+encodeURIComponent(id)+'/avatar',{method:'PUT',body:form});window.toast?.('Aile görseli güncellendi.');await family(panel)}catch(err){window.toast?.(err.message||'Görsel yüklenemedi.')}};input.click()});
       await showInvitations(true);await showFamilyNotifications();
       const out=shell.querySelector('[data-family-panel]');
-      out.addEventListener('click',e=>{const msg=e.target.closest('[data-family-message]');if(msg){e.preventDefault();window.ErisChatDM?.create?.(msg.dataset.familyMessage,msg.dataset.familyName);return}const row=e.target.closest('[data-family-profile]');if(row){e.preventDefault();window.openUserProfile?.(row.dataset.familyProfile)}});
+      shell.addEventListener('click',e=>{const msg=e.target.closest('[data-family-message]');if(msg){e.preventDefault();window.ErisChatDM?.create?.(msg.dataset.familyMessage,msg.dataset.familyName);return}const row=e.target.closest('[data-family-profile]');if(row){e.preventDefault();window.openUserProfile?.(row.dataset.familyProfile)}});
       shell.querySelector('[data-action=referral-reward]')?.addEventListener('click',()=>window.ErisReferral?.openFamily?.(id));
       shell.querySelector('[data-action=donate]').onclick=()=>{out.innerHTML='<div class="eh-card"><b>Aile deneyimine katkı</b><small>Katkı doğrudan aile bakiyesine eklenir.</small><form class="eh-family-inline" id="ehDonate"><input type="number" min="1" max="10000000" required placeholder="Lidya miktarı"><button class="eh-btn">Bağış yap</button></form></div>';out.querySelector('form').onsubmit=async e=>{e.preventDefault();try{const amount=Number(out.querySelector('input').value);await api('/families/'+encodeURIComponent(id)+'/donate',{method:'POST',body:JSON.stringify({amount})});window.toast?.('Aile bakiyesine eklendi ✓');await family(panel)}catch(err){window.toast?.(err.message)}}};
       if(isManager)shell.querySelector('[data-action=invite]').onclick=()=>{out.innerHTML='<div class="eh-card"><b>Aileye davet gönder</b><small>Kullanıcı ID ile davet et.</small><form class="eh-family-inline"><input name="uid" required placeholder="Kullanıcı ID"><button class="eh-btn">Davet et</button></form></div>';out.querySelector('form').onsubmit=async e=>{e.preventDefault();try{await api('/families/'+encodeURIComponent(id)+'/members',{method:'POST',body:JSON.stringify({user_id:out.querySelector('[name=uid]').value.trim()})});out.innerHTML='<div class="eh-note">✓ Aile daveti gönderildi.</div>'}catch(err){window.toast?.(err.message)}}};
@@ -220,7 +220,7 @@ const people=authorities.map(m=>{
           window.__erisFamilyV2Ready = new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             const source=document.querySelector('script[src*="feature-hub-live.js"]');
-            script.src=new URL('family-v2.js?v=family-v4-20261125',source?.src||location.href).href;
+            script.src=new URL('family-v2.js?v=family-members-v2-20261125',source?.src||location.href).href;
             script.onload=resolve;script.onerror=()=>reject(new Error('Aile V2 dosyası yüklenemedi'));
             document.head.appendChild(script);
           });

@@ -401,3 +401,166 @@
 .ef-member-avatar .eh-family-vip {
   z-index: 3;
 }
+
+/* LIDYACHAT FAMILY PREMIUM MEMBERS V2 */
+
+#erisHub.ef4-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  z-index: 10000;
+  background: var(--ui-panel) !important;
+}
+
+#erisHub.ef4-fullscreen > .eh-sheet {
+  margin: 0 !important;
+  background: var(--ui-panel) !important;
+}
+
+.eh-family-shell .ef-member-avatar {
+  width: 62px !important;
+  height: 62px !important;
+  min-width: 62px !important;
+  min-height: 62px !important;
+  max-width: 62px !important;
+  max-height: 62px !important;
+  flex: 0 0 62px !important;
+  aspect-ratio: 1;
+  padding: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.eh-family-shell .ef-member-avatar-main {
+  width: 54px !important;
+  height: 54px !important;
+  aspect-ratio: 1;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.eh-family-shell .ef-member-frame {
+  position: absolute;
+  inset: 0;
+  width: 62px !important;
+  height: 62px !important;
+  object-fit: contain !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.ef2-member-list .eh-family-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ef2-member-list [data-family-profile] {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.ef2-member-list [data-family-message] {
+  flex-shrink: 0;
+}
+
+
+/* FAMILY AUTHORITY LIST V2 */
+.ef2 .eh-family-member-strip {
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  overflow: visible;
+  padding: 8px 0;
+}
+
+.ef2 .eh-family-person {
+  display: grid;
+  grid-template-columns: 62px minmax(0,1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  text-align: left;
+  border-radius: 14px;
+  background: var(--ui-raised);
+  box-shadow: none;
+}
+
+.ef2 .eh-family-person .ef-member-avatar {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  margin: 0 !important;
+}
+
+.ef2 .eh-family-person b {
+  grid-column: 2;
+  align-self: end;
+  max-width: 100%;
+  font-size: 14px;
+  text-align: left;
+}
+
+.ef2 .eh-family-person .eh-family-role {
+  grid-column: 2;
+  justify-self: start;
+  align-self: start;
+  margin-top: 4px;
+}
+
+.ef2 .ef-member-avatar {
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.ef2 .ef-member-avatar-main {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.ef2 .ef-member-avatar.has-frame .ef-member-avatar-main {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+.ef2 .ef-member-frame {
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.ef2 .ef2-member-list {
+  padding: 10px;
+}
+
+.ef2 .ef2-member-list .eh-family-row {
+  padding: 10px 0;
+}
+
+.ef2 .ef2-member-list [data-family-profile] {
+  padding: 0 !important;
+  text-shadow: none !important;
+}
