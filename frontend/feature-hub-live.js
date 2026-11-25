@@ -97,7 +97,7 @@
   if(!document.getElementById('erisFamilyV2Css')){
     const link=document.createElement('link');link.id='erisFamilyV2Css';link.rel='stylesheet';
     const source=document.querySelector('script[src*="feature-hub-live.js"]');
-    link.href=new URL('family-v2.css?v=family-members-v2-20261125',source?.src||location.href).href;
+    link.href=new URL('family-v2.css?v=family-contribution-v3-20261125',source?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
@@ -220,7 +220,7 @@ const people=authorities.map(m=>{
           window.__erisFamilyV2Ready = new Promise((resolve,reject)=>{
             const script=document.createElement('script');
             const source=document.querySelector('script[src*="feature-hub-live.js"]');
-            script.src=new URL('family-v2.js?v=family-members-v2-20261125',source?.src||location.href).href;
+            script.src=new URL('family-v2.js?v=family-contribution-v3-20261125',source?.src||location.href).href;
             script.onload=resolve;script.onerror=()=>reject(new Error('Aile V2 dosyası yüklenemedi'));
             document.head.appendChild(script);
           });

@@ -303,51 +303,405 @@ nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.ef2Tab===id;b.
     nav.addEventListener('click',e=>{const b=e.target.closest('button[data-ef2-tab]');if(b)activate(b.dataset.ef2Tab)});
     activate('home');
     loadFamilyFeed();
-    // Real, server-backed family contribution data. No fabricated rewards.
-    const contribution=document.createElement('div');contribution.className='ef2-panel';
-    contribution.innerHTML='<h3>Aile katkıları ve hedefler</h3><p>Katkılar aile deneyimini yükseltir. Günlük ve haftalık hedefler gerçek bağış kayıtlarından hesaplanır.</p>';
-    activity.append(contribution);
-    const activityBody=document.createElement('div');activityBody.className='ef2-activity';activityBody.textContent='Katkı bilgileri yükleniyor…';activity.append(activityBody);
+    // FAMILY CONTRIBUTION PREMIUM V3
+    const activityBody=document.createElement('div');
+    activityBody.className='ef2-activity ef3-contribution';
+    activity.append(activityBody);
+
     let activityLoaded=false;
-    async function loadActivity(){
-      if(activityLoaded)return;
-      activityLoaded=true;
+    let contributionPeriod='all';
+    let contributionPage=1;
+    let contributionRequest=0;
+
+    const element=(tag,cls,value)=>{
+      const el=document.createElement(tag);
+      if(cls)el.className=cls;
+      if(value!==undefined)el.textContent=value;
+      return el;
+    };
+
+    const legacyDonate=actions.querySelector('[data-action="donate"]');
+    if(legacyDonate){
+      legacyDonate.onclick=()=>openContribution();
+    }
+
+    let donationBusy=false;
+
+    async function openContribution(){
+      if(donationBusy||shell.querySelector('.ef3-donate-mask'))return;
+
+      const mask=element('div','ef3-donate-mask');
+      const card=element('div','ef3-donate-card');
+      card.setAttribute('role','dialog');
+      card.setAttribute('aria-modal','true');
+      card.setAttribute('aria-label','Aileye katkı yap');
+
+      const heading=element('div','ef3-donate-head');
+      const close=element('button','','×');
+      close.type='button';
+      close.setAttribute('aria-label','Kapat');
+      close.onclick=()=>{
+        if(!donationBusy)mask.remove();
+      };
+
+      heading.append(element('h3','','Aileye katkı yap'),close);
+      const body=element('div','ef3-donate-body');
+      body.append(element('p','','Bakiye yükleniyor…'));
+      card.append(heading,body);
+      mask.append(card);
+      shell.append(mask);
+
       try{
-        const data=await request('/families/'+encodeURIComponent(f.id)+'/insights');
+        const me=await request('/me');
+        if(!mask.isConnected)return;
+
+        const balance=Number(me.lidya);
+        if(!Number.isSafeInteger(balance)||balance<0){
+          throw Error('Bakiye doğrulanamadı.');
+        }
+
+        body.replaceChildren();
+
+        const wallet=element('div','ef3-donate-wallet');
+        wallet.append(
+          element('small','','MEVCUT LİDYA BAKİYEN'),
+          element('strong','',num(balance)+' Lidya')
+        );
+
+        const presets=element('div','ef3-donate-presets');
+        const input=element('input','ef3-donate-input');
+        input.type='number';
+        input.min='1';
+        input.max='10000000';
+        input.step='1';
+        input.inputMode='numeric';
+        input.placeholder='Özel miktar';
+        input.value='1000';
+
+        const details=element('div','ef3-donate-details');
+        const warning=element('p','ef3-donate-warning');
+        const controls=element('div','ef3-donate-controls');
+        const cancel=element('button','','İptal');
+        const approve=element('button','ef3-approve','Katkıyı onayla');
+
+        cancel.type=approve.type='button';
+        cancel.onclick=close.onclick;
+
+        const validAmount=()=>{
+          const amount=Number(input.value);
+          return Number.isSafeInteger(amount)&&
+            amount>=1&&amount<=10000000&&amount<=balance;
+        };
+
+        function update(){
+          const amount=Number(input.value);
+          const valid=validAmount();
+
+          details.replaceChildren();
+          for(const [label,value] of [
+            ['Aktarılacak Lidya',valid?num(amount):'—'],
+            ['Aile deneyimi',valid?'+'+num(amount)+' XP':'—'],
+            ['Kalan bakiyen',valid?num(balance-amount):'—']
+          ]){
+            const row=element('div');
+            row.append(element('span','',label),
+              element('strong','',value));
+            details.append(row);
+          }
+
+          warning.textContent=valid?
+            'Yapılan katkılar iade edilmez.':
+            'Geçersiz miktar veya yetersiz bakiye.';
+
+          approve.disabled=!valid||donationBusy;
+          presets.querySelectorAll('button').forEach(b=>{
+            b.classList.toggle('active',
+              Number(b.dataset.amount)===amount);
+          });
+        }
+
+        for(const amount of [100,1000,10000,100000]){
+          const button=element('button','',num(amount));
+          button.type='button';
+          button.dataset.amount=String(amount);
+          button.onclick=()=>{
+            input.value=String(amount);
+            update();
+          };
+          presets.append(button);
+        }
+
+        input.addEventListener('input',update);
+
+        approve.onclick=async()=>{
+          if(donationBusy||!validAmount())return;
+
+          const amount=Number(input.value);
+          donationBusy=true;
+          approve.disabled=cancel.disabled=close.disabled=true;
+          input.disabled=true;
+          presets.querySelectorAll('button').forEach(b=>b.disabled=true);
+          approve.textContent='İşleniyor…';
+
+          try{
+            const result=await request(
+              '/families/'+encodeURIComponent(f.id)+'/donate',
+              {method:'POST',body:JSON.stringify({amount})}
+            );
+
+            if(result&&typeof result==='object'){
+              Object.assign(f,result);
+            }
+
+            mask.remove();
+            window.toast?.('Aile katkısı tamamlandı ✓');
+            contributionPage=1;
+            await loadActivity(true);
+
+          }catch(e){
+            warning.textContent=
+              'İşlem sonucu doğrulanamadı. Bakiyeni ve katkı geçmişini kontrol et.';
+            approve.textContent='Tekrar işlem yapmadan kontrol et';
+            approve.disabled=true;
+            cancel.disabled=close.disabled=false;
+          }finally{
+            donationBusy=false;
+          }
+        };
+
+        controls.append(cancel,approve);
+        body.append(wallet,presets,input,details,warning,controls);
+        update();
+
+      }catch(e){
+        body.replaceChildren(element('p','',
+          'Güncel bakiye alınamadı. Pencereyi kapatıp tekrar dene.'));
+      }
+    }
+
+    async function loadActivity(force=false){
+      if(activityLoaded&&!force)return;
+      activityLoaded=true;
+      const serial=++contributionRequest;
+
+      activityBody.setAttribute('aria-busy','true');
+      activityBody.replaceChildren(
+        element('p','','Katkılar yükleniyor…')
+      );
+
+      try{
+        const data=await request(
+          '/families/'+encodeURIComponent(f.id)+
+          '/insights?period='+contributionPeriod+
+          '&page='+contributionPage
+        );
+
+        if(serial!==contributionRequest||!shell.isConnected)return;
         activityBody.replaceChildren();
-        const summary=document.createElement('div');summary.className='ef2-stats';
-        for(const [label,value] of [['BUGÜN',data.today_total],['BU HAFTA',data.week_total],['TOPLAM',data.all_time_total],['KATKI SAYISI',data.donation_count]]){
-          const cell=document.createElement('div');const small=document.createElement('small');small.textContent=label;
-          const strong=document.createElement('strong');strong.textContent=num(value);cell.append(small,strong);summary.append(cell);
+
+        const hero=element('div','ef3-contribution-hero');
+        hero.append(
+          element('small','','TOPLAM AİLE KATKISI'),
+          element('strong','ef3-total',num(data.all_time_total)+' XP'),
+          element('span','','Aile deneyimine yapılan toplam katkı')
+        );
+        const progress=element('div','ef2-meter');
+        const progressBar=element('i');
+        const percent=Math.max(0,Math.min(100,
+          Number(f.next_level_progress??0)||0));
+        progressBar.style.width=percent+'%';
+        progress.append(progressBar);
+
+        hero.append(
+          element('small','','Aile seviyesi '+num(f.level)),
+          progress,
+          element('span','',f.next_level_required?
+            'Sonraki seviyeye '+num(Math.max(0,
+              Number(f.next_level_required)-Number(f.balance||0)))+' XP kaldı':
+            'Maksimum seviye')
+        );
+
+        const donateButton=element('button',
+          'ef3-donate-button','＋ Aileye katkı yap');
+        donateButton.type='button';
+        donateButton.onclick=openContribution;
+        activityBody.append(hero,donateButton);
+
+        const summary=element('div','ef2-stats ef3-stats');
+        for(const [label,value] of [
+          ['BUGÜN',num(data.today_total)],
+          ['BU HAFTA',num(data.week_total)],
+          ['BU AY',num(data.month_total)],
+          ['KATKI SAYISI',num(data.donation_count)],
+          ['BENİM KATKIM',num(data.my_total)+' XP'],
+          ['KATKI SIRAM',data.my_rank?'#'+data.my_rank:'—']
+        ]){
+          const cell=element('div');
+          cell.append(
+            element('small','',label),
+            element('strong','',value)
+          );
+          summary.append(cell);
         }
         activityBody.append(summary);
-        const goals=document.createElement('div');goals.className='ef2-panel';
-        const heading=document.createElement('h3');heading.textContent='Günlük aile hedefleri';goals.append(heading);
+
+        const goals=element('div','ef2-panel');
+        goals.append(element('h3','','Günlük aile hedefleri'));
+
         for(const target of [1000,5000,20000]){
-          const row=document.createElement('div');row.className='ef2-goal';
-          const label=document.createElement('span');label.textContent=num(Math.min(data.today_total,target))+' / '+num(target)+' XP';
-          const meter=document.createElement('div');meter.className='ef2-meter';const bar=document.createElement('i');bar.style.width=Math.min(100,100*data.today_total/target)+'%';meter.append(bar);
-          const status=document.createElement('small');status.textContent=data.today_total>=target?'Tamamlandı':'Devam ediyor';row.append(label,meter,status);goals.append(row);
+          const row=element('div','ef2-goal');
+          const meter=element('div','ef2-meter');
+          const bar=element('i');
+          bar.style.width=Math.min(
+            100,100*Number(data.today_total||0)/target
+          )+'%';
+          meter.append(bar);
+          row.append(
+            element('span','',num(Math.min(data.today_total,target))+
+              ' / '+num(target)+' XP'),
+            meter,
+            element('small','',data.today_total>=target?
+              'Tamamlandı':'Devam ediyor')
+          );
+          goals.append(row);
         }
-        const note=document.createElement('p');note.textContent='Hedefler ilerleme göstergesidir; ayrıca Lidya ödülü dağıtılmaz.';goals.append(note);activityBody.append(goals);
-        const top=document.createElement('div');top.className='ef2-panel';const topTitle=document.createElement('h3');topTitle.textContent='En çok katkı yapanlar';top.append(topTitle);
-        for(const [index,person] of (data.top_contributors||[]).entries()){
-          const row=document.createElement('div');row.className='ef2-rank';
-          const place=document.createElement('strong');place.textContent='#'+(index+1);
-          const name=document.createElement('span');name.textContent=person.nickname;
-          const amount=document.createElement('small');amount.textContent=num(person.total)+' Lidya';row.append(place,name,amount);top.append(row);
+
+        goals.append(element('p','',
+          'Hedefler ilerleme göstergesidir; ayrıca Lidya ödülü dağıtılmaz.'
+        ));
+        activityBody.append(goals);
+
+        const top=element('div','ef2-panel');
+        top.append(element('h3','','Katkı sıralaması'));
+
+        const filters=element('div','ef3-filters');
+        for(const [key,label] of [
+          ['daily','Günlük'],
+          ['weekly','Haftalık'],
+          ['monthly','Aylık'],
+          ['all','Tümü']
+        ]){
+          const button=element('button',
+            key===contributionPeriod?'active':'',label);
+          button.type='button';
+          button.setAttribute('aria-pressed',
+            String(key===contributionPeriod));
+          button.onclick=()=>{
+            contributionPeriod=key;
+            contributionPage=1;
+            loadActivity(true);
+          };
+          filters.append(button);
         }
-        if(!(data.top_contributors||[]).length){const empty=document.createElement('p');empty.textContent='Henüz katkı yapılmamış.';top.append(empty)}
+        top.append(filters);
+
+        for(const [index,person] of
+          (data.top_contributors||[]).entries()){
+
+          const row=element('div','ef3-rank');
+          const place=element('strong','ef3-place','#'+(index+1));
+          const avatar=element('div','ef-member-avatar');
+          const assetUrl=value=>{
+            if(!value)return '';
+            const raw=String(value);
+            if(!/^(https?:|\/|[a-zA-Z0-9_-])/i.test(raw))return '';
+            return window.ErisChatCosmetics?.assetUrl?.(raw)
+              ||(raw.startsWith('/')||/^https?:/i.test(raw)?
+                raw:'/'+raw);
+          };
+
+          if(person.avatar_asset){
+            const img=element('img','ef-member-avatar-main');
+            img.src=assetUrl(person.avatar_asset);
+            img.alt='';
+            avatar.append(img);
+          }else{
+            avatar.append(element('div','ef-member-avatar-main',
+              person.avatar||'👤'));
+          }
+
+          if(person.frame_asset){
+            avatar.classList.add('has-frame');
+            const frame=element('img','ef-member-frame');
+            frame.src=assetUrl(person.frame_asset);
+            frame.alt='';
+            avatar.append(frame);
+          }
+
+          const info=element('div','ef3-person');
+          info.append(element('strong','',person.nickname));
+          if(Number(person.vip_level)>0){
+            info.append(element('small','ef3-vip',
+              'VIP '+Number(person.vip_level)));
+          }
+
+          row.append(place,avatar,info,
+            element('strong','ef3-amount',num(person.total)+' XP'));
+          top.append(row);
+        }
+
+        if(!(data.top_contributors||[]).length){
+          top.append(element('p','','Henüz katkı yapılmamış.'));
+        }
         activityBody.append(top);
-        const recent=document.createElement('div');recent.className='ef2-panel';const recentTitle=document.createElement('h3');recentTitle.textContent='Son katkılar';recent.append(recentTitle);
-        for(const item of data.recent||[]){const row=document.createElement('div');row.className='ef2-rank';
-          const name=document.createElement('span');name.textContent=item.nickname;
-          const amount=document.createElement('strong');amount.textContent='+'+num(item.amount);
-          const date=document.createElement('small');date.textContent=item.created_at?new Date(item.created_at).toLocaleDateString('tr-TR'):'';
-          row.append(name,amount,date);recent.append(row)}
-        if(!(data.recent||[]).length){const empty=document.createElement('p');empty.textContent='Henüz kayıt yok.';recent.append(empty)}
+
+        const recent=element('div','ef2-panel');
+        recent.append(element('h3','','Katkı geçmişi'));
+
+        for(const item of data.recent||[]){
+          const row=element('div','ef3-history-row');
+          const info=element('div','ef3-person');
+          const date=item.created_at?
+            new Date(item.created_at).toLocaleString('tr-TR'):'';
+
+          info.append(
+            element('strong','',item.nickname),
+            element('small','',date)
+          );
+          row.append(info,element('strong','ef3-amount',
+            '+'+num(item.amount)+' XP'));
+          recent.append(row);
+        }
+
+        if(!(data.recent||[]).length){
+          recent.append(element('p','','Henüz kayıt yok.'));
+        }
+
+        const pagination=element('div','ef3-pagination');
+        const prev=element('button','','‹ Önceki');
+        const next=element('button','','Sonraki ›');
+        prev.type=next.type='button';
+        prev.disabled=contributionPage<=1;
+        next.disabled=!data.has_more;
+
+        prev.onclick=()=>{
+          contributionPage=Math.max(1,contributionPage-1);
+          loadActivity(true);
+        };
+        next.onclick=()=>{
+          contributionPage++;
+          loadActivity(true);
+        };
+
+        pagination.append(prev,element('span','',
+          contributionPage+' / '+(data.total_pages||1)),next);
+        recent.append(pagination);
         activityBody.append(recent);
-      }catch(e){activityBody.textContent='Katkı bilgileri alınamadı: '+(e?.message||'Bilinmeyen hata');activityLoaded=false}
+
+      }catch(e){
+        if(serial!==contributionRequest)return;
+        activityLoaded=false;
+        activityBody.replaceChildren(element('p','',
+          'Katkı bilgileri alınamadı.'));
+        const retry=element('button','ef3-retry','Tekrar dene');
+        retry.type='button';
+        retry.onclick=()=>loadActivity(true);
+        activityBody.append(retry);
+      }finally{
+        if(serial===contributionRequest){
+          activityBody.removeAttribute('aria-busy');
+        }
+      }
     }
     // The discover list is never mounted for members; remove any leftover DOM defensively.
     shell.querySelectorAll('[data-family-discover]').forEach(el=>el.closest('section')?.remove());
