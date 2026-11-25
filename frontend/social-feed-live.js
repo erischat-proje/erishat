@@ -328,6 +328,7 @@
   }
 
   async function renderPosts(container,rows,owner,append=false){
+    const familyMode=container.matches('[data-family-feed]');
     if(!append){releaseMedia(container);container.replaceChildren();}
     if(!rows.length&&!append){const empty=document.createElement('div');empty.className='ec-social-empty ec-discovery-empty';empty.innerHTML='<span class="ec-empty-art">'+window.ErisSocialMedia.icon('image')+'</span><b>İlk anı sen paylaş</b><p>'+(owner?'Henüz gönderin yok. İlk paylaşımını yap.':'Yeni paylaşımlar burada görünecek.')+'</p>';container.append(empty);return}
     for(const post of rows){
@@ -356,6 +357,62 @@
         const pin=menu.querySelector('[data-pin]');pin.title=post.is_pinned?'Sabitlemeyi kaldır':'Gönderiyi sabitle';pin.setAttribute('aria-label',pin.title);pin.onclick=async()=>{pin.disabled=true;try{await api().api('/posts/'+post.id+'/pin',{method:post.is_pinned?'DELETE':'PUT'});await loadMine(container)}catch(e){pin.disabled=false;window.toast?.(e.message||'Gönderi sabitlenemedi.')}};
         menu.querySelector('[data-edit]').onclick=()=>compose(post);menu.querySelector('[data-delete]').onclick=async()=>{if(!await confirmDelete('gönderi'))return;try{await api().deletePost(post.id);window.toast?.('Gönderi silindi.');await loadMine(container)}catch(e){window.toast?.(e.message||'Gönderi silinemedi.')}};
       }else if(!post.is_mine){card.querySelector('[data-report]').onclick=()=>reportPost(post,card)}
+      if(familyMode){
+        if(post.audience==='family'){
+          card.querySelector('small[data-visibility]').textContent=
+            '🔒 Yalnızca aile üyeleri';
+        }
+
+        if(post.is_mine){
+          const menu=document.createElement('span');
+          menu.className='ec-social-menu';
+
+          menu.innerHTML='<span data-post-options hidden>'
+            +'<button type="button" data-edit aria-label="Düzenle">✎</button>'
+            +'<button type="button" data-delete aria-label="Sil">−</button>'
+            +'</span><button type="button" data-options-toggle aria-label="Gönderi işlemleri" aria-expanded="false">⋯</button>';
+
+          const options=menu.querySelector('[data-post-options]');
+          const toggle=menu.querySelector('[data-options-toggle]');
+
+          toggle.onclick=()=>{
+            const opening=options.hidden;
+            options.hidden=!opening;
+            toggle.textContent=opening?'×':'⋯';
+            toggle.setAttribute('aria-expanded',String(opening));
+            card.classList.toggle('ec-post-options-open',opening);
+          };
+
+          menu.querySelector('[data-edit]').onclick=()=>{
+            compose(post,false,()=>container._familyRefresh?.());
+          };
+
+          const remove=menu.querySelector('[data-delete]');
+
+          remove.onclick=async()=>{
+            if(remove.disabled)return;
+            remove.disabled=true;
+
+            try{
+              if(!await confirmDelete('gönderi'))return;
+              if(!card.isConnected)return;
+
+              await api().deletePost(post.id);
+              releaseMedia(card);
+              card.remove();
+              window.toast?.('Gönderi silindi.');
+              await container._familyRefresh?.();
+            }catch(error){
+              window.toast?.(error.message||'Gönderi silinemedi.');
+            }finally{
+              remove.disabled=false;
+            }
+          };
+
+          card.querySelector('.ec-social-author').append(menu);
+        }
+      }
+
       attachPostEngagement(card,post);
       if(!owner&&container.matches("[data-feed]"))addFeedActions(card,post);
       container.append(card);
@@ -437,21 +494,51 @@
       const retry=document.createElement('button');retry.type='button';retry.textContent='Tekrar dene';retry.onclick=()=>loadMine(container);state.append(message,retry);container.append(state);
     }finally{if(mineRequests.get(container)===request)container.setAttribute('aria-busy','false')}
   }
-  function compose(post=null,startWithPhoto=false){
+  function compose(post=null,startWithPhoto=false,onSaved=null,familyId=null){
+    const composeSession=token();
+    if(!composeSession)return;
     const existing=document.querySelector('.ec-compose');if(existing){existing.querySelector('[data-close]')?.focus();return;}
     const modal=document.createElement('div');modal.className='ec-social-modal';
     modal.classList.add('ec-compose');
     const icon=window.ErisSocialMedia.icon;
     modal.innerHTML=`<section role="dialog" aria-modal="true" aria-label="Yeni gönderi"><header class="ec-compose-head"><div><span class="ec-compose-kicker">LİDYACHAT / PAYLAŞ</span><h2>${post?'Gönderiyi düzenle':'Bir anını paylaş'}</h2><p>Bir düşünce, bir fotoğraf ya da kısa bir video.</p></div><button type="button" data-close aria-label="Kapat">${icon('close')}</button></header><div class="ec-compose-body"><label class="ec-audience-label">Kimler görebilir?<select data-audience><option value="public">Herkes · Keşfet ve takipçiler</option><option value="followers">Yalnızca takipçilerim</option></select></label><div class="ec-caption-wrap"><textarea maxlength="2000" data-caption placeholder="Bugün aklından ne geçiyor?"></textarea><small data-count>0 / 2000</small></div><div class="ec-media-tools"><button type="button" data-gallery>${icon('image')}<span>Galeri<small>Fotoğraf veya video</small></span></button><button type="button" data-camera>${icon('camera')}<span>Kamera<small>Çek ve paylaş</small></span></button></div><button type="button" data-remove ${!post?.media_url?'hidden':''}>Medyayı kaldır</button><img data-preview alt="Seçilen medya" hidden><video data-video-preview controls playsinline hidden></video><input type="file" data-file accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" hidden><div data-status role="status">Videolar en fazla 30 saniye.</div></div><footer class="ec-compose-footer"><button type="button" data-cancel>Vazgeç</button><button type="button" class="ec-primary" data-save>${post?'Kaydet':'Paylaş'} ${icon('arrow')}</button></footer></section>`;
-    document.body.append(modal);const caption=modal.querySelector('[data-caption]'),file=modal.querySelector('[data-file]'),preview=modal.querySelector('[data-preview]'),videoPreview=modal.querySelector('[data-video-preview]'),audience=modal.querySelector('[data-audience]'),status=modal.querySelector('[data-status]'),save=modal.querySelector('[data-save]');caption.value=post?.caption||'';audience.value=post?.audience||'public';let removeImage=false,localUrl='',remoteUrl='',validating=false,selection=0,selectedFile=null,saving=false;
-    const close=()=>{if(saving)return;selection++;window.ErisSocialMedia.cancel(file);videoPreview.pause();if(localUrl)URL.revokeObjectURL(localUrl);if(remoteUrl){URL.revokeObjectURL(remoteUrl);objectUrls.delete(remoteUrl)}modal.remove()};modal.querySelector('[data-close]').onclick=close;modal.querySelector('[data-cancel]').onclick=close;modal.onclick=e=>{if(e.target===modal)close()};
+    document.body.append(modal);const caption=modal.querySelector('[data-caption]'),file=modal.querySelector('[data-file]'),preview=modal.querySelector('[data-preview]'),videoPreview=modal.querySelector('[data-video-preview]'),audience=modal.querySelector('[data-audience]'),status=modal.querySelector('[data-status]'),save=modal.querySelector('[data-save]');caption.value=post?.caption||'';if((familyId&&!post)||post?.audience==='family'){
+      const option=document.createElement('option');
+      option.value='family';
+      option.textContent='Yalnızca aile üyelerim';
+      audience.append(option);
+    }
+    audience.value=post?.audience||(familyId?'family':'public');
+    if(post?.audience==='family'){
+      audience.replaceChildren(
+        new Option('Yalnızca aile üyelerim','family',true,true)
+      );
+      audience.disabled=true;
+    }
+let removeImage=false,localUrl='',remoteUrl='',validating=false,selection=0,selectedFile=null,saving=false;
+    const close=(force=false)=>{if(saving&&force!==true)return;selection++;window.ErisSocialMedia.cancel(file);videoPreview.pause();if(localUrl)URL.revokeObjectURL(localUrl);if(remoteUrl){URL.revokeObjectURL(remoteUrl);objectUrls.delete(remoteUrl)}modal.remove()};modal._disposeCompose=()=>close(true);
+    modal.querySelector('[data-close]').onclick=close;modal.querySelector('[data-cancel]').onclick=close;modal.onclick=e=>{if(e.target===modal)close()};
     const choose=camera=>window.ErisSocialMedia.choose(file,camera,modal.querySelector('[data-camera]'));modal.querySelector('[data-gallery]').onclick=()=>choose(false);modal.querySelector('[data-camera]').onclick=()=>choose(true);
     preview.onerror=()=>{preview.hidden=true;status.textContent='Önizleme açılamadı; yeniden medya seçebilirsin.'};videoPreview.onerror=()=>{videoPreview.hidden=true;status.textContent='Video önizlemesi açılamadı.'};
     file.onchange=async()=>{const selected=window.ErisSocialMedia.selected(file);if(!selected)return;const revision=++selection;validating=true;selectedFile=null;save.disabled=true;status.textContent='Medya kontrol ediliyor…';try{await window.ErisSocialMedia.validate(selected,80);if(revision!==selection||!modal.isConnected)return;selectedFile=selected;const isVideo=selected.type.startsWith('video/');modal.querySelector('[data-remove]').hidden=false;videoPreview.pause();if(localUrl)URL.revokeObjectURL(localUrl);localUrl=URL.createObjectURL(selected);preview.hidden=isVideo;videoPreview.hidden=!isVideo;if(isVideo){videoPreview.src=localUrl;preview.removeAttribute('src')}else{preview.src=localUrl;videoPreview.removeAttribute('src')}removeImage=false;status.textContent=selected.name}catch(error){if(revision!==selection)return;window.ErisSocialMedia.clear(file);selectedFile=null;preview.hidden=true;videoPreview.hidden=true;videoPreview.pause();status.textContent=error.message}finally{if(revision===selection){validating=false;save.disabled=false}}};
     modal.querySelector('[data-remove]').onclick=()=>{selection++;validating=false;save.disabled=false;selectedFile=null;window.ErisSocialMedia.clear(file);videoPreview.pause();if(localUrl){URL.revokeObjectURL(localUrl);localUrl=''}preview.removeAttribute('src');preview.hidden=true;videoPreview.removeAttribute('src');videoPreview.hidden=true;removeImage=true;modal.querySelector('[data-remove]').hidden=true;status.textContent='Medya kaldırılacak.'};
     if(post?.media_url&&String(post.mime_type||'').startsWith('video/'))status.textContent='Mevcut video korunacak. Yeni dosya seçerek değiştirebilirsin.';
     if(post?.media_url)imageUrl(post.media_url).then(url=>{if(!modal.isConnected){URL.revokeObjectURL(url);objectUrls.delete(url);return}remoteUrl=url;const isVideo=post.media_kind==='video'||String(post.mime_type||'').startsWith('video/');if(isVideo){videoPreview.src=url;videoPreview.hidden=false;preview.hidden=true}else{preview.src=url;preview.hidden=false}}).catch(()=>{});
-    save.onclick=async()=>{if(validating||saving)return;if(!caption.value.trim()&&!selectedFile&&(!post?.media_url||removeImage)){status.textContent='Bir metin yaz veya medya ekle.';return}saving=true;save.disabled=true;status.textContent='Kaydediliyor…';try{if(post)await api().updatePost(post.id,caption.value,selectedFile,removeImage,audience.value);else await api().createPost(caption.value,selectedFile,audience.value);saving=false;close();window.toast?.(post?'Gönderi güncellendi.':'Gönderi paylaşıldı.');const feed=mount();if(feed)await loadFeed(feed);const mine=document.querySelector('.eph-overlay [data-posts-list]')||document.querySelector('#erisProfileHub [data-posts-list]');if(mine)await loadMine(mine)}catch(e){saving=false;status.textContent=e.message||'Gönderi kaydedilemedi.';save.disabled=false}};
+    save.onclick=async()=>{
+      if(token()!==composeSession){
+        close(true);
+        return;
+      }
+      if(validating||saving)return;if(!caption.value.trim()&&!selectedFile&&(!post?.media_url||removeImage)){status.textContent='Bir metin yaz veya medya ekle.';return}saving=true;save.disabled=true;status.textContent='Kaydediliyor…';try{if(post)await api().updatePost(post.id,caption.value,selectedFile,removeImage,audience.value);else await api().createPost(caption.value,selectedFile,audience.value,audience.value==='family'?familyId:null);saving=false;
+      if(token()!==composeSession||!modal.isConnected){
+        close(true);
+        return;
+      }
+      close();
+    if(typeof onSaved==='function'){
+      Promise.resolve().then(onSaved).catch(()=>{});
+    }
+    window.toast?.(post?'Gönderi güncellendi.':'Gönderi paylaşıldı.');const feed=mount();if(feed)await loadFeed(feed);const mine=document.querySelector('.eph-overlay [data-posts-list]')||document.querySelector('#erisProfileHub [data-posts-list]');if(mine)await loadMine(mine)}catch(e){saving=false;status.textContent=e.message||'Gönderi kaydedilemedi.';save.disabled=false}};
     caption.oninput=()=>modal.querySelector('[data-count]').textContent=caption.value.length+' / 2000';caption.oninput();
     window.ErisSocialMedia.bindDialog(modal,close);
     if(startWithPhoto)choose(false);
@@ -468,8 +555,14 @@
     await renderPosts(container,rows,'profile',append);
     container.querySelectorAll('[data-post-options] button').forEach(button=>{if(button.querySelector('span'))return;const label=document.createElement('span');label.textContent=button.getAttribute('aria-label');button.append(label);});
   }
-  window.ErisSocialFeed={load:()=>loadFeed(),loadMine,loadProfile,compose,renderMineRows,release:releaseMedia};
-  function boot(){if(feedSession!==token()){feedRevision++;feedLoading=false;feedCursor=null;seenPosts.clear();cleanupUrls();document.querySelectorAll('.ec-social-post').forEach(card=>{releaseMedia(card);card.remove()});document.querySelectorAll('.ec-social-modal').forEach(modal=>modal.remove());feedSession=token()}const root=mount();if(root&&document.getElementById('explore')?.classList.contains('show')){if(token())loadFeed(root);else root.querySelector('[data-feed]').textContent='Keşfet için giriş yap.'}}
+  window.ErisSocialFeed={load:()=>loadFeed(),loadMine,loadProfile,compose,renderMineRows,
+    renderFamilyRows:(container,rows,append=false)=>
+      renderPosts(container,rows,false,append),
+    release:releaseMedia};
+  function boot(){if(feedSession!==token()){feedRevision++;feedLoading=false;feedCursor=null;seenPosts.clear();cleanupUrls();document.querySelectorAll('.ec-social-post').forEach(card=>{releaseMedia(card);card.remove()});document.querySelectorAll('.ec-social-modal').forEach(modal=>{
+      if(modal._disposeCompose)modal._disposeCompose();
+      else modal.remove();
+    });feedSession=token()}const root=mount();if(root&&document.getElementById('explore')?.classList.contains('show')){if(token())loadFeed(root);else root.querySelector('[data-feed]').textContent='Keşfet için giriş yap.'}}
   document.addEventListener('DOMContentLoaded',boot);for(const event of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(event,boot);document.addEventListener('visibilitychange',()=>{if(document.hidden)document.querySelectorAll('.ec-social-video').forEach(v=>v.pause());else boot()});
   document.addEventListener('click',event=>{if(event.target.closest('nav.nav button[onclick*="explore"]'))setTimeout(boot,50)});
 })();

@@ -73,6 +73,28 @@ def initialize_ticket(db, ticket, snapshot="", room_id=None, post_id=None, comme
         )) if post else True
         follows = db.scalar(select(UserFollow.id).where(UserFollow.follower_id == ticket.user_id, UserFollow.following_id == post.user_id)) if post else False
         visible = post and (post.user_id == ticket.user_id or (not blocked and not post.is_hidden and (post.audience == "public" or post.audience == "followers" and follows)))
+        if post and (
+            post.audience == "family"
+            or post.family_id is not None
+        ):
+            from .platform_models import Family, FamilyMember
+
+            visible = bool(
+                post.audience == "family"
+                and post.family_id
+                and not blocked
+                and not post.is_hidden
+                and db.scalar(
+                    select(FamilyMember.id)
+                    .join(Family, Family.id == FamilyMember.family_id)
+                    .where(
+                        FamilyMember.family_id == post.family_id,
+                        FamilyMember.user_id == ticket.user_id,
+                        Family.closed.is_(False)
+                    )
+                )
+            )
+
         if visible:
             context["post"] = {"id": post.id, "caption": post.caption, "created_at": str(post.created_at), "media_present": post.image_bytes is not None}
             comment = db.get(SocialPostComment, comment_id) if comment_id else None

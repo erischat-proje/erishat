@@ -61,3 +61,300 @@
 :is(html[data-theme="light"],body[data-theme="light"],.theme-light,.light-theme) .eh-family-shell.ef2 .ef2-avatar-btn{background-image:url("./assets/family-premium/png/family-avatar-light.png")!important}
 
 .eh-family-shell.ef2 .ef2-avatar-btn{background-image:url("./assets/family-premium/png/family-avatar-dark.png")!important}
+
+
+/* LIDYACHAT FAMILY V4 PREMIUM */
+
+.eh-family-shell.ef2 {
+  --ef4-gold: #b99a60;
+  --ef4-surface: var(--ui-panel);
+  --ef4-card: var(--ui-raised);
+  --ef4-text: var(--ui-ink);
+  --ef4-line: var(--ui-line);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px;
+  color: var(--ef4-text);
+  background: var(--ef4-surface);
+  overflow-x: clip;
+}
+
+.eh-family-shell.ef2 .ef2-intro {
+  padding: 6px 2px 12px;
+}
+
+.eh-family-shell.ef2 .ef2-intro h2 {
+  font-family: Georgia, serif;
+  font-size: 23px;
+  margin: 4px 0;
+}
+
+.eh-family-shell.ef2 .ef2-intro p {
+  display: none;
+}
+
+.eh-family-shell.ef2 .eh-family-hero {
+  min-width: 0;
+  padding: 12px !important;
+  border-radius: 16px;
+  border: 1px solid var(--ef4-gold);
+  background: var(--ef4-card);
+  overflow-wrap: anywhere;
+}
+
+.eh-family-shell.ef2 .ef2-stats {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.eh-family-shell.ef2 .ef2-stats > div {
+  min-width: 0;
+  padding: 8px 3px;
+  border-radius: 10px;
+  text-align: center;
+  background: var(--ef4-card);
+}
+
+.eh-family-shell.ef2 .ef2-stats small {
+  font-size: 8px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.eh-family-shell.ef2 .ef2-stats strong {
+  font-size: clamp(12px,3.5vw,18px);
+  color: var(--ef4-text);
+}
+
+.eh-family-shell.ef2 .ef2-tabs {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 6px;
+  padding: 8px 0;
+  background: var(--ef4-surface);
+  overflow: visible;
+}
+
+.eh-family-shell.ef2 .ef2-tabs button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 3px;
+  font-size: 12px;
+  border-radius: 9px;
+  white-space: normal;
+  color: var(--ef4-text);
+  background: var(--ef4-card);
+  border: 1px solid var(--ef4-line);
+}
+
+.eh-family-shell.ef2 .ef2-tabs button.active {
+  color: #241a0d;
+  background: linear-gradient(145deg,#f2dba7,#b99a60);
+  border-color: var(--ef4-gold);
+  font-weight: 800;
+}
+
+.ef2 .ef2-sections,
+.ef2 .ef2-sections > section {
+  width: 100%;
+  min-width: 0;
+}
+
+.ef2 [data-ef2-page][hidden] {
+  display: none !important;
+}
+
+.ef2 .ef4-feed-panel {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0 18px;
+}
+
+.ef2 .ef4-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--ef4-line);
+  margin-bottom: 12px;
+}
+
+.ef2 .ef4-feed-header > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.ef2 .ef4-feed-header h3 {
+  font-family: Georgia,serif;
+  font-size: 19px;
+  margin: 0 0 4px;
+  color: var(--ef4-text);
+}
+
+.ef2 .ef4-feed-header small {
+  font-size: 11px;
+  color: var(--ef4-text);
+  opacity: .75;
+}
+
+.ef2 .ef4-feed-header button,
+.ef2 .ef4-feed-footer button {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  border: 1px solid var(--ef4-gold);
+  background: linear-gradient(145deg,#f3dfb0,#bd9a5d);
+  color: #241a0d;
+}
+
+.ef2 .ef4-feed-header [data-family-refresh] {
+  width: 40px;
+  padding: 4px;
+  font-size: 22px;
+  background: var(--ef4-card);
+  color: var(--ef4-text);
+}
+
+.ef2 .ef4-feed-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  color: var(--ef4-text);
+  font-size: 14px;
+}
+
+.ef2 .ef4-feed-list .ec-social-post {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--ef4-line);
+  border-radius: 15px;
+  background: var(--ef4-card);
+  color: var(--ef4-text);
+}
+
+.ef2 .ef4-feed-list .ec-social-caption {
+  color: var(--ef4-text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ef2 .ef4-feed-list .ec-social-author {
+  min-width: 0;
+}
+
+.ef2 .ef4-feed-list .ec-social-author b {
+  color: var(--ef4-text);
+}
+
+.ef2 .ef4-feed-list .ec-social-photo,
+.ef2 .ef4-feed-list .ec-social-video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.ef2 .ef4-feed-footer {
+  padding: 14px 0;
+  text-align: center;
+}
+
+.ef2 .ef4-feed-footer button[hidden] {
+  display: none !important;
+}
+
+.ef2 .ef4-feed-panel button:disabled {
+  opacity: .5;
+}
+
+@media(max-width:360px) {
+  .ef2 .ef4-feed-header {
+    gap: 5px;
+  }
+
+  .ef2 .ef4-feed-header h3 {
+    font-size: 16px;
+  }
+
+  .ef2 .ef4-feed-header button {
+    padding: 6px 8px;
+  }
+}
+
+
+/* LIDYACHAT FAMILY V4 FULLSCREEN */
+
+#erisHub.ef4-fullscreen {
+  padding: 0 !important;
+  background: var(--ui-panel);
+  backdrop-filter: none;
+}
+
+#erisHub.ef4-fullscreen > .eh-sheet {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+#erisHub.ef4-fullscreen .eh-head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 10px 14px;
+  padding-top: max(10px,env(safe-area-inset-top));
+  background: var(--ui-panel);
+  border-bottom: 1px solid var(--ui-line);
+}
+
+#erisHub.ef4-fullscreen .eh-tabs {
+  display: none !important;
+}
+
+#erisHub.ef4-fullscreen #eh-family {
+  width: 100%;
+  min-width: 0;
+  padding-bottom: max(16px,env(safe-area-inset-bottom));
+}
+
+#erisHub.ef4-fullscreen .ef2-tabs {
+  position: sticky;
+  top: var(--ef4-header-height,64px);
+  z-index: 15;
+  background: var(--ef4-surface);
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--ui-line);
+  border-radius: 0;
+}
+
+.ef2 .eh-family-progress {
+  height: 8px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--ui-line);
+}
+
+.ef2 .eh-family-progress i {
+  background: linear-gradient(90deg,#9d753a,#edcf90);
+  border-radius: 20px;
+}
+
+.ef2 .eh-family-progress-label {
+  color: var(--ui-ink);
+  font-size: 11px;
+}

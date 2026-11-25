@@ -103,6 +103,36 @@ def register_family_auth(current_user_dependency):
     def auth():
         return Depends(current_user_dependency)
 
+    # LIDYACHAT FAMILY SOCIAL FEED V4
+    @router.get("/families/{family_id}/feed")
+    def family_feed(
+        family_id: str,
+        response: Response,
+        limit: int = Query(20, ge=1, le=50),
+        cursor: str | None = Query(None, max_length=2048),
+        db: Session = Depends(get_db),
+        user: User = auth(),
+    ):
+        from .explore_feed import feed_page
+
+        get_family(db, family_id)
+        membership(db, family_id, user.id)
+
+        author_ids = select(FamilyMember.user_id).where(
+            FamilyMember.family_id == family_id
+        )
+
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Authorization"
+        return feed_page(
+            db,
+            user,
+            mode="family:" + family_id,
+            limit=limit,
+            cursor=cursor,
+            author_ids=author_ids,
+        )
+
     # ERIS_FAMILY_INSIGHTS_V3: real donation ledger, membership-protected and read-only.
     @router.get("/families/{family_id}/insights")
     def family_insights(family_id: str, db: Session = Depends(get_db), user: User = auth()):

@@ -15,7 +15,45 @@ from .explore_models import SavedPost, HiddenPost, MutedAuthor
 
 VERSION='explore-workspace-v1-20261023'
 
-def visible_query(user):
+def visible_query(user, family_id=None):
+    from .platform_models import Family, FamilyMember
+
+    audience_filter = and_(
+        SocialPost.family_id.is_(None),
+        or_(
+            SocialPost.user_id == user.id,
+            SocialPost.audience == 'public',
+            and_(
+                SocialPost.audience == 'followers',
+                SocialPost.user_id.in_(
+                    select(UserFollow.following_id).where(
+                        UserFollow.follower_id == user.id
+                    )
+                )
+            )
+        ),
+        SocialPost.audience.in_(['public','followers'])
+    )
+
+    if family_id is not None:
+        allowed_families = (
+            select(FamilyMember.family_id)
+            .join(Family, Family.id == FamilyMember.family_id)
+            .where(
+                FamilyMember.user_id == user.id,
+                Family.closed.is_(False)
+            )
+        )
+
+        audience_filter = or_(
+            audience_filter,
+            and_(
+                SocialPost.audience == 'family',
+                SocialPost.family_id == family_id,
+                SocialPost.family_id.in_(allowed_families)
+            )
+        )
+
     follows=select(UserFollow.following_id).where(UserFollow.follower_id==user.id)
     blocked=select(UserBlock.blocked_id).where(UserBlock.blocker_id==user.id)
     blockers=select(UserBlock.blocker_id).where(UserBlock.blocked_id==user.id)
@@ -28,7 +66,7 @@ def visible_query(user):
         User.is_active.is_(True),SocialPost.is_hidden.is_(False),
         ~SocialPost.user_id.in_(blocked),~SocialPost.user_id.in_(blockers),
         ~SocialPost.user_id.in_(select(UserBan.user_id).where(active)),~SocialPost.user_id.in_(device_users),
-        or_(SocialPost.user_id==user.id,SocialPost.audience=='public',and_(SocialPost.audience=='followers',SocialPost.user_id.in_(follows))))
+        audience_filter)
 
 def encode_cursor(post, anchor, priority, mode, media, q):
     payload=[post.created_at.isoformat(),post.id,anchor,int(priority),mode,media,q]
@@ -57,9 +95,15 @@ def serialize(db,rows,user):
             like_count=likes.get(p.id,0),comment_count=comments.get(p.id,0),liked_by_me=p.id in liked,saved_by_me=p.id in saved))
     return result
 
-def feed_page(db,user,mode='for-you',media='all',q='',limit=20,cursor=None,offset=0):
+def feed_page(db,user,mode='for-you',media='all',q='',limit=20,cursor=None,offset=0,*,author_ids=None):
     if not user.is_active:raise HTTPException(403,'Hesap aktif değil.')
-    q=q.strip();query=visible_query(user)
+    q=q.strip();query=visible_query(
+        user,
+        family_id=mode.split(':',1)[1]
+        if mode.startswith('family:') else None
+    )
+    if author_ids is not None:
+        query=query.where(SocialPost.user_id.in_(author_ids))
     followed=select(UserFollow.following_id).where(UserFollow.follower_id==user.id)
     priority=SocialPost.user_id.in_(followed) if mode=='for-you' else (SocialPost.id<0)
     if mode=='following':query=query.where(or_(SocialPost.user_id==user.id,SocialPost.user_id.in_(followed)))
