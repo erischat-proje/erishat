@@ -97,7 +97,7 @@
   if(!document.getElementById('erisFamilyV2Css')){
     const link=document.createElement('link');link.id='erisFamilyV2Css';link.rel='stylesheet';
     const source=document.querySelector('script[src*="feature-hub-live.js"]');
-    link.href=new URL('family-v2.css?v=family-v4-20261125',source?.src||location.href).href;
+    link.href=new URL('family-v2.css?v=family-avatar-v1-20261125',source?.src||location.href).href;
     document.head.appendChild(link);
   }
   async function family(panel){
@@ -147,7 +147,41 @@
     try{
       const [f,members]=await Promise.all([api('/families/'+encodeURIComponent(id)),api('/families/'+encodeURIComponent(id)+'/members')]);
       const level=Number(f.level||1),pct=Number(f.next_level_progress||100),next=Number(f.next_level_required||0),left=next?Math.max(0,next-Number(f.balance||0)):0;
-      const authorities=(members||[]).filter(m=>m.role==='owner'||m.role==='admin');const ordinaryMembers=(members||[]).filter(m=>m.role==='member');const viewerRole=f.viewer_role||members.find(m=>m.user_id===window.ErisAuth?.user?.id)?.role||'member';const isManager=viewerRole==='owner'||viewerRole==='admin';const people=authorities.map(m=>{const asset=window.ErisChatCosmetics?.assetUrl?.(m.avatar_asset)||'';const avatar=asset?'background-image:url("'+String(asset).replace(/"/g,'%22')+'")': '';const label=m.role==='owner'?'Kurucu':'Aile yetkilisi';return '<div class="eh-family-person"><div class="eh-family-avatar" style="'+avatar+'">'+(asset?'':'👤')+(Number(m.vip_level)>0?'<span class="eh-family-vip">VIP '+Number(m.vip_level)+'</span>':'')+'</div><b data-eris-role-user="'+esc(m.user_id)+'">'+esc(m.nickname)+'</b><span class="eh-family-role">'+label+'</span></div>'}).join('');
+      const authorities=(members||[]).filter(m=>m.role==='owner'||m.role==='admin');const ordinaryMembers=(members||[]).filter(m=>m.role==='member');const viewerRole=f.viewer_role||members.find(m=>m.user_id===window.ErisAuth?.user?.id)?.role||'member';const isManager=viewerRole==='owner'||viewerRole==='admin';
+const familyAssetUrl=value=>{
+  if(!value)return '';
+  const raw=String(value);
+  return window.ErisChatCosmetics?.assetUrl?.(raw)
+    || (/^(https?:|data:|blob:)/i.test(raw)
+      ? raw : raw.startsWith('/') ? raw : '/'+raw);
+};
+
+const familyMemberAvatar=m=>{
+  const avatar=familyAssetUrl(m.avatar_asset);
+  const frame=familyAssetUrl(m.frame_asset);
+  return `<div class="eh-family-avatar ef-member-avatar${frame?' has-frame':''}">
+    ${avatar
+      ? `<img class="ef-member-avatar-main" src="${esc(avatar)}" alt="">`
+      : `<div class="ef-member-avatar-main">${esc(m.avatar||'👤')}</div>`}
+    ${frame
+      ? `<img class="ef-member-frame" src="${esc(frame)}" alt="">`
+      : ''}
+    ${Number(m.vip_level)>0
+      ? `<span class="eh-family-vip">VIP ${Number(m.vip_level)}</span>`
+      : ''}
+  </div>`;
+};
+
+
+const people=authorities.map(m=>{
+  const label=m.role==='owner'?'Kurucu':'Aile yetkilisi';
+  return '<div class="eh-family-person">'
+    +familyMemberAvatar(m)
+    +'<b data-eris-role-user="'+esc(m.user_id)+'">'
+    +esc(m.nickname)+'</b>'
+    +'<span class="eh-family-role">'+label+'</span></div>';
+}).join('');
+
       shell.innerHTML='<div class="eh-family-hero"><div class="eh-family-head"><div class="eh-family-crest" data-family-crest>♛</div><div style="min-width:0"><b style="font-size:18px">'+esc(f.name)+'</b><div class="eh-family-meta">AİLE ID · '+esc(f.id)+'<br>🏆 Sıralama #'+Number(f.rank||1)+'</div></div><div class="eh-family-level">'+level+'</div></div><div class="eh-family-meta">Seviye '+level+' · '+Number(f.member_count||0)+' / '+Number(f.capacity||0)+' üye</div><div class="eh-family-progress"><i style="width:'+pct+'%"></i></div><div class="eh-family-progress-label"><span>'+Number(f.balance||0).toLocaleString('tr-TR')+' aile deneyimi</span><span>'+(next?left.toLocaleString('tr-TR')+' sonraki seviyeye':'MAX SEVİYE')+'</span></div></div>'+(viewerRole==='owner'?'<button data-action="family-avatar" class="eh-btn alt" style="margin-top:10px">🖼 Aile görselini değiştir</button>':'')+'<div class="eh-family-actions"><button data-action="members">👥 Üyeler</button><button data-action="chat">💬 Aile sohbeti</button>'+(isManager?'<button data-action="invite">＋ Üye davet et</button><button data-action="applications">📨 Başvurular</button><button data-action="manage">⚙️ Aileyi yönet</button>':'')+(viewerRole==='owner'?'<button data-action="referral-reward" class="er-ref-family-shortcut">✦ Referans Kod Talep Et</button>':'')+"<button data-action=\"donate\">💎 Aileye destek</button><button data-action=\"leave\">🚪 Aileden ayrıl</button></div><div class=\"eh-family-section-title\"><span>Aile yetkilileri</span><span style=\"color:var(--ui-ink);font-size:10px\">"+authorities.length+' yetkili</span></div><div class="eh-family-member-strip">'+(people||'<span class="eh-note">Aile üyesi bulunamadı.</span>')+'</div><div data-family-panel></div>';
       if(f.avatar_url)loadFamilyAvatar(shell.querySelector('[data-family-crest]'),id);
       shell.querySelector('[data-action=family-avatar]')?.addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;const form=new FormData();form.append('file',file);try{await api('/families/'+encodeURIComponent(id)+'/avatar',{method:'PUT',body:form});window.toast?.('Aile görseli güncellendi.');await family(panel)}catch(err){window.toast?.(err.message||'Görsel yüklenemedi.')}};input.click()});
@@ -157,7 +191,7 @@
       shell.querySelector('[data-action=referral-reward]')?.addEventListener('click',()=>window.ErisReferral?.openFamily?.(id));
       shell.querySelector('[data-action=donate]').onclick=()=>{out.innerHTML='<div class="eh-card"><b>Aile deneyimine katkı</b><small>Katkı doğrudan aile bakiyesine eklenir.</small><form class="eh-family-inline" id="ehDonate"><input type="number" min="1" max="10000000" required placeholder="Lidya miktarı"><button class="eh-btn">Bağış yap</button></form></div>';out.querySelector('form').onsubmit=async e=>{e.preventDefault();try{const amount=Number(out.querySelector('input').value);await api('/families/'+encodeURIComponent(id)+'/donate',{method:'POST',body:JSON.stringify({amount})});window.toast?.('Aile bakiyesine eklendi ✓');await family(panel)}catch(err){window.toast?.(err.message)}}};
       if(isManager)shell.querySelector('[data-action=invite]').onclick=()=>{out.innerHTML='<div class="eh-card"><b>Aileye davet gönder</b><small>Kullanıcı ID ile davet et.</small><form class="eh-family-inline"><input name="uid" required placeholder="Kullanıcı ID"><button class="eh-btn">Davet et</button></form></div>';out.querySelector('form').onsubmit=async e=>{e.preventDefault();try{await api('/families/'+encodeURIComponent(id)+'/members',{method:'POST',body:JSON.stringify({user_id:out.querySelector('[name=uid]').value.trim()})});out.innerHTML='<div class="eh-note">✓ Aile daveti gönderildi.</div>'}catch(err){window.toast?.(err.message)}}};
-      shell.querySelector('[data-action=members]').onclick=()=>{out.innerHTML='<div class="eh-family-section-title">Üye listesi <span>'+ordinaryMembers.length+'</span></div><div>'+ordinaryMembers.map(m=>'<div class="eh-family-row"><button type="button" data-family-profile="'+esc(m.user_id)+'"><div class="eh-family-avatar" style="'+(m.avatar_asset?'background-image:url(\"'+esc(window.ErisChatCosmetics?.assetUrl?.(m.avatar_asset)||m.avatar_asset)+'\")':'')+'">'+(m.avatar_asset?'':esc(m.avatar||'👤'))+'</div><div style="flex:1;min-width:0"><b data-eris-role-user="'+esc(m.user_id)+'">'+esc(m.nickname)+'</b><small>Üye · VIP '+Number(m.vip_level||0)+' · ID '+esc(m.public_id||'')+'</small></div><span aria-hidden="true">›</span></button><button type="button" data-family-message="'+esc(m.user_id)+'" data-family-name="'+esc(m.nickname)+'">💬 Mesaj</button></div>').join('')+'</div>'+(ordinaryMembers.length?'':'<div class="eh-note">Henüz normal üye bulunmuyor.</div>')};
+      shell.querySelector('[data-action=members]').onclick=()=>{out.innerHTML='<div class="eh-family-section-title">Üye listesi <span>'+ordinaryMembers.length+'</span></div><div>'+ordinaryMembers.map(m=>'<div class="eh-family-row"><button type="button" data-family-profile="'+esc(m.user_id)+'">'+familyMemberAvatar(m)+'<div style="flex:1;min-width:0"><b data-eris-role-user="'+esc(m.user_id)+'">'+esc(m.nickname)+'</b><small>Üye · VIP '+Number(m.vip_level||0)+' · ID '+esc(m.public_id||'')+'</small></div><span aria-hidden="true">›</span></button><button type="button" data-family-message="'+esc(m.user_id)+'" data-family-name="'+esc(m.nickname)+'">💬 Mesaj</button></div>').join('')+'</div>'+(ordinaryMembers.length?'':'<div class="eh-note">Henüz normal üye bulunmuyor.</div>')};
       if(viewerRole==='owner'){
         const closeButton=document.createElement('button');closeButton.type='button';closeButton.dataset.action='close';closeButton.textContent='Aileyi kapat';
         shell.querySelector('.eh-family-actions').append(closeButton);
