@@ -358,3 +358,46 @@
   color: var(--ui-ink);
   font-size: 11px;
 }
+
+/* LIDYACHAT FAMILY MEMBER AVATAR V1 */
+.eh-family-shell .ef-member-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+
+.ef-member-avatar-main {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  overflow: hidden;
+  font-size: 26px;
+}
+
+.ef-member-avatar.has-frame .ef-member-avatar-main {
+  width: 50px;
+  height: 50px;
+}
+
+.ef-member-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ef-member-avatar .eh-family-vip {
+  z-index: 3;
+}
