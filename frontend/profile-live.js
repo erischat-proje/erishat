@@ -283,7 +283,7 @@
       nickname.textContent = user.nickname || 'Anonim';
       name.append(nickname);window.ErisRoleBadges?.bind(name,user);
       window.LidyaNobilityAppearance?.badge(
-        name,user.nobility
+        name,role||user.management_locked===true?null:user.nobility
       );
 
     }
@@ -302,7 +302,7 @@
     const balance = $('.balance');
     if (balance && Number.isFinite(Number(user.lidya))) balance.textContent = `${Number(user.lidya).toLocaleString('tr-TR')}`;
     document.querySelectorAll('[data-erischat-nickname]').forEach(el => { el.textContent = user.nickname || 'Anonim'; });
-    if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
+    if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance(document,user);
     const profile = document.querySelector('.profile');
     if (profile && user.id) window.ErisChatVIP?.watch?.(profile, user.id);
 
@@ -310,7 +310,15 @@
 
   async function refresh() {
     if (!auth()?.getMe || !(localStorage.getItem('erischat_access_token')||localStorage.getItem('erischat.accessToken.v1')||localStorage.getItem('token'))) return null;
+    const token=auth().getToken();
+    const currentId=auth().user?.id;
     const user = await auth().getMe();
+
+    if(!token||auth().getToken()!==token||
+       (currentId&&user.id!==currentId)){
+      return null;
+    }
+
     auth().user = user;
     if(window.ErisChatCosmetics?.state)window.ErisChatCosmetics.state.user=user;
     render(user);
