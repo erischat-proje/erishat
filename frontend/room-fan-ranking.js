@@ -41,6 +41,21 @@
         cached=rows;loaded=true;draw(rows,section);
       }catch(e){if(active()&&current===generation)state('Liste yüklenemedi',e.message||'Bağlantını kontrol edip tekrar dene.',true)}finally{if(current===generation){busy=false;refresh.disabled=false;list.setAttribute('aria-busy','false')}}
     }
+    function fanKnight(row){
+      if(row?.nobility?.rank!==1)return null;
+
+      if(
+        row.management_locked===true ||
+        ['SA','UA','FA','DA'].includes(row.admin_role) ||
+        window.ErisStaffIdentity?.isStaff(row) ||
+        String(row.frame_asset||'').includes(
+          '/role-icons/management-v1/'
+        )
+      )return null;
+
+      return row.nobility;
+    }
+
     function draw(allRows,section){if(!active())return;const query=search.value.trim().toLocaleLowerCase('tr-TR'),rows=allRows.filter(row=>String(section==='ranking'?row.nickname||'Kullanıcı':row.gift_key||'Hediye').toLocaleLowerCase('tr-TR').includes(query));
         if(!rows.length){state(query?'Aramada sonuç yok':section==='ranking'?'İlk destekçini bekliyor':'Henüz hediye yok',query?'Farklı bir adla tekrar ara.':'Alınan hediyeler ve destekçilerin burada görünecek.');if(sender)addSenderHeading();return}
         list.replaceChildren();
@@ -55,8 +70,30 @@
           const avatar=document.createElement('button');avatar.type='button';avatar.className='personal-fan-avatar';avatar.setAttribute('aria-label',(row.nickname||'Kullanıcı')+' profilini aç');avatar.textContent=String(row.nickname||'K').slice(0,1).toLocaleUpperCase('tr-TR');
           const asset=row.avatar_asset&&(window.ErisChatCosmetics?.assetUrl?.(row.avatar_asset)||row.avatar_asset);
           if(asset){const img=document.createElement('img');img.src=asset;img.alt='';img.onerror=()=>img.remove();avatar.append(img)}
-          const frame=row.frame_asset&&(window.ErisChatCosmetics?.assetUrl?.(row.frame_asset)||row.frame_asset);if(frame){avatar.classList.add('has-frame');const img=document.createElement('img');img.src=frame;img.alt='';img.className='personal-fan-frame';avatar.append(img)}
+          const knight=fanKnight(row);
+          const appearance=window.LidyaNobilityAppearance;
+
+          const knightFrame=knight
+            ? appearance?.resolve(knight,'frame')
+            : null;
+
+          const frame=knightFrame || (
+            row.frame_asset &&
+            (window.ErisChatCosmetics?.assetUrl?.(
+              row.frame_asset
+            ) || row.frame_asset)
+          );
+
+          avatar.classList.toggle(
+            'lidya-fan-knight', Boolean(knightFrame)
+          );
+
+          if(frame){avatar.classList.add('has-frame');const img=document.createElement('img');img.src=frame;img.alt='';img.className='personal-fan-frame';avatar.append(img)}
           const person=document.createElement('div');person.className='personal-fan-person';const name=document.createElement('button');name.type='button';name.className='personal-fan-name';const nick=document.createElement('span');nick.className='personal-fan-nickname';nick.textContent=row.nickname||'Kullanıcı';name.append(nick);window.ErisRoleBadges?.bind(nick,row);
+          if(knight){
+            appearance?.badge(name,knight);
+          }
+
           const details=document.createElement('div');details.className='personal-fan-details';const badge=document.createElement('img');badge.className='personal-fan-level';const level=Math.max(1,Math.min(40,Number(row.fan_level)||1));badge.src='./fan-levels/LEVEL'+level+'.png';badge.alt='Hayran seviyesi '+level;badge.onerror=()=>{const fallback=document.createElement('span');fallback.textContent='Sv. '+level;fallback.style.cssText="font-size:10px;color:var(--ui-gold)";badge.replaceWith(fallback)};const amount=document.createElement('span');amount.className='personal-fan-amount';amount.textContent=row.gifts_hidden?'Hediyeler gizli':Number(row.total_lidya||0).toLocaleString('tr-TR')+' Lidya';badge.hidden=!!row.gifts_hidden;details.append(badge,amount);person.append(name,details);
           if(row.user_id){avatar.onclick=name.onclick=()=>profile(row)}else{avatar.disabled=name.disabled=true}
           const gifts=document.createElement('button');gifts.type='button';gifts.className='personal-fan-gifts-button';gifts.textContent='🪎';gifts.setAttribute('aria-label',(row.nickname||'Kullanıcı')+' tarafından gönderilen hediyeleri gör');gifts.disabled=!row.user_id||!!row.gifts_hidden;gifts.onclick=()=>{if(!active()||!row.user_id||row.gifts_hidden)return;search.value='';sender=row;tab='gifts';overlay.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed','false'));load()};item.append(rank,avatar,person,gifts);list.append(item);

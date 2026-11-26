@@ -35,6 +35,27 @@
       .eris-follow-avatar.has-frame .eris-follow-avatar-main{width:54px;height:54px}
       .eris-follow-frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:70px;height:70px;max-width:none;max-height:none;margin:0;padding:0;object-fit:contain;object-position:center;display:block;pointer-events:none;z-index:2}
       .eris-follow-info{min-width:0;flex:1}
+      .lidya-follow-knight-name{
+        display:flex;
+        align-items:center;
+        gap:5px;
+        min-width:0;
+      }
+
+      .lidya-follow-knight-name b{
+        min-width:0;
+        flex:0 1 auto;
+      }
+
+      .lidya-follow-knight-name .lidya-nobility-badge{
+        flex:0 0 24px;
+        width:24px;
+        height:24px;
+        object-fit:contain;
+        margin:0;
+        pointer-events:none;
+      }
+
       .eris-follow-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
       .eris-follow-info small{display:block;margin-top:4px;color:var(--ui-muted);font-size:11px}
       .eris-follow-remove{font-size:23px;width:38px;height:38px;border-radius:50%}
@@ -70,9 +91,33 @@
     }).format(date);
   };
 
+  function followKnightData(user){
+    if(!user||user.nobility?.rank!==1)return null;
+
+    if(
+      user.management_locked===true ||
+      ['SA','UA','FA','DA'].includes(user.admin_role) ||
+      window.ErisStaffIdentity?.isStaff(user) ||
+      String(user.frame_asset||'').includes(
+        '/role-icons/management-v1/'
+      )
+    )return null;
+
+    return user.nobility;
+  }
+
   function followAvatar(user) {
     const avatarAsset = assetUrl(user.avatar_asset);
-    const frameAsset = assetUrl(user.frame_asset);
+    const knight=followKnightData(user);
+
+    const knightFrame=knight
+      ? window.LidyaNobilityAppearance?.resolve(
+          knight,'frame'
+        )
+      : null;
+
+    const frameAsset=knightFrame ||
+      assetUrl(user.frame_asset);
     return `<div class="eris-follow-avatar${frameAsset ? ' has-frame' : ''}">${
       avatarAsset
         ? `<img class="eris-follow-avatar-main" src="${esc(avatarAsset)}" alt="">`
@@ -141,6 +186,19 @@
             <button type="button" class="eris-follow-remove" aria-label="Kaldır">×</button>`;
 
           window.ErisRoleBadges?.bind(row.querySelector('.eris-follow-info b'),user);
+          const knight=followKnightData(user);
+          const appearance=window.LidyaNobilityAppearance;
+
+          if(knight&&appearance?.resolve(knight,'badge')){
+            const name=row.querySelector('.eris-follow-info b');
+            const line=document.createElement('div');
+
+            line.className='lidya-follow-knight-name';
+            name.before(line);
+            line.append(name);
+
+            appearance.badge(line,knight);
+          }
           row.querySelector('.eris-follow-remove').onclick=async()=>{
             const nickname=user.nickname||'Kullanıcı';
             const ok=await confirmFollowAction(

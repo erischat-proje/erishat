@@ -100,6 +100,8 @@
   function isOwner(r){if(r?.is_owner===true)return true;const me=userId();return !!me&&[r?.owner_id,r?.owner?.id,r?.created_by,r?.creator_id].filter(Boolean).some(x=>String(x)===me)}
 
   async function openName(){
+    roomMenuRevision++;
+    stopOnlineUsers(true);
     const r=await getRoom(),id=roomId(),name=document.getElementById('erisLiveTitle')?.textContent||r?.name||'Oda';
     if(!isOwner(r)){window.toast?.('Oda adını yalnızca oda sahibi değiştirebilir.');return}
     const p=panel(surface());p.classList.add('show');p.querySelector('.room-v3-tabs').style.display='none';p.querySelectorAll('.room-v3-tab').forEach(x=>x.classList.remove('active'));
@@ -109,6 +111,8 @@
   const seatsForLevel=level=>Number(level)>=5?16:12;
   function levelRows(r,level){const raw=Array.isArray(r?.level_rewards)?r.level_rewards:[];if(raw.length)return raw;return Array.from({length:8},(_,i)=>{const n=i+1;return{level:n,threshold:Number((r?.level_thresholds||[])[i]||0),reward:LEVEL_REWARDS[n]||('Oda ayrıcalıkları • '+seatsForLevel(n)+' koltuk')}})}
   async function openLevels(){
+    roomMenuRevision++;
+    stopOnlineUsers(true);
     const r=await getRoom(),level=Math.max(1,Number(r?.level||1)),cap=Number(r?.seat_count||seatsForLevel(level));
     const progress=Math.max(0,Number(r?.level_progress??r?.progress??0)),next=Math.max(0,Number(r?.next_level_threshold??r?.next_level_cost??0)),pct=next?Math.min(100,Math.max(0,progress/next*100)):0;
     const rows=levelRows(r,level).map(item=>{
@@ -283,25 +287,143 @@
     };
   }
 
-  async function users(body,r){
-    const id=r.id||roomId(),staff=!!(r.is_owner||r.is_moderator);
-    let rows;
-    try{rows=await roomApi().members(id)}
-    catch(error){body.textContent=error.message||'Odadaki kullanıcılar yüklenemedi.';return}
-    let superKickStatus=null;
-    try{
-      superKickStatus=await roomApi().superKickStatus(id);
-    }catch{}
+  let onlineUsersState=null;
+  let roomMenuRevision=0;
 
-    const pendingSuperKicks=new Map();
+  function stopOnlineUsers(clear=false){
+    const state=onlineUsersState;
+    onlineUsersState=null;
+    if(!state)return;
+    clearTimeout(state.timer);
+    if(clear)state.body.replaceChildren();
+  }
+
+  function onlineUsersCurrent(state){
+    return onlineUsersState===state &&
+      state.room===roomId() &&
+      state.user===userId() &&
+      state.body.isConnected &&
+      surface()?.classList.contains('show') &&
+      state.panel?.classList.contains('show') &&
+      state.panel.querySelector('[data-tab="users"]')
+        ?.classList.contains('active');
+  }
+
+  async function users(body,r){
+    stopOnlineUsers();
+
+    const state={
+      body,
+      panel:body.closest('.room-v3-panel'),
+      room:String(r.id||roomId()),
+      user:userId(),
+      timer:null,
+      running:false,
+      busy:0,
+      signature:null,
+      pendingSuperKicks:new Map(),
+      refresh:null
+    };
+
+    onlineUsersState=state;
+
+    const schedule=()=>{
+      if(onlineUsersCurrent(state)){
+        clearTimeout(state.timer);
+        state.timer=setTimeout(refresh,15000);
+      }
+    };
+
+    async function refresh(){
+      if(!onlineUsersCurrent(state))return;
+      if(state.running)return;
+
+      clearTimeout(state.timer);
+
+      if(document.hidden||state.busy){
+        schedule();
+        return;
+      }
+
+      state.running=true;
+
+      try{
+        const rows=await roomApi().onlineMembers(state.room);
+
+        if(!onlineUsersCurrent(state)||document.hidden||state.busy)return;
+
+        if(!Array.isArray(rows)){
+          throw new Error('Gecersiz kullanici listesi');
+        }
+
+        let superKickStatus=null;
+
+        try{
+          superKickStatus=await roomApi()
+            .superKickStatus(state.room);
+        }catch{}
+
+        if(!onlineUsersCurrent(state)||document.hidden||state.busy)return;
+
+        const signature=JSON.stringify([rows,superKickStatus]);
+
+        if(signature!==state.signature){
+          const top=body.scrollTop;
+
+          renderOnlineUsers(body,r,rows,superKickStatus,state);
+
+          body.scrollTop=top;
+          state.signature=signature;
+        }
+
+      }catch(error){
+        if(onlineUsersCurrent(state)&&!document.hidden&&!state.busy){
+          state.signature=null;
+          body.textContent='Liste alınamadı. Otomatik olarak yeniden denenecek.';
+        }
+
+      }finally{
+        state.running=false;
+        schedule();
+      }
+    }
+
+    state.refresh=refresh;
+    await refresh();
+  }
+
+  document.addEventListener('visibilitychange',()=>{
+    const state=onlineUsersState;
+    if(!document.hidden&&state){
+      state.refresh();
+    }
+  });
+
+  window.addEventListener('erischat:auth',()=>{
+    roomMenuRevision++;
+    stopOnlineUsers(true);
+  });
+
+  window.addEventListener('erischat:room-opened',()=>{
+    roomMenuRevision++;
+    stopOnlineUsers(true);
+  });
+
+  function renderOnlineUsers(body,r,rows,superKickStatus,state){
+    const id=state.room;
+    const staff=!!(r.is_owner||r.is_moderator);
+    const pendingSuperKicks=state.pendingSuperKicks;
 
     body.replaceChildren();
     const note=document.createElement('p');note.className='room-v3-note';
-    note.textContent=rows.length+' oda üyesi';body.append(note);
+    note.textContent=rows.length+' çevrimiçi kullanıcı';body.append(note);
     if(!rows.length){const empty=document.createElement('div');empty.className='room-v3-card';empty.textContent='Odada kullanıcı yok.';body.append(empty);return}
     for(const member of rows){
       const card=document.createElement('div');card.className='room-v3-card';
       const name=document.createElement('b');name.textContent=member.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(name,member);
+      window.LidyaNobilityAppearance?.badge(
+        name, member.nobility
+      );
       const meta=document.createElement('small');
       meta.textContent=(member.role==='owner'?'👑 Oda sahibi':member.role==='moderator'?'🛡️ Moderatör':'Kullanıcı')
         +(member.seat_number?' · '+member.seat_number+'. koltuk':' · koltukta değil');
@@ -310,9 +432,20 @@
         const button=document.createElement('button');
         button.type='button';button.className='room-v3-btn';button.textContent=label;
         button.onclick=async()=>{
+          if(!onlineUsersCurrent(state)||button.disabled)return;
+          state.busy++;
           button.disabled=true;
-          try{await run();button.disabled=false}
-          catch(error){button.disabled=false;window.toast?.(error.message||'İşlem yapılamadı.')}
+
+          try{
+            await run();
+          }catch(error){
+            if(onlineUsersCurrent(state)){
+              window.toast?.(error.message||'İşlem yapılamadı.');
+            }
+          }finally{
+            state.busy--;
+            button.disabled=false;
+          }
         };
         buttons.append(button);
       };
@@ -347,7 +480,7 @@
 
               if(status?.allowed!==true || status.remaining<=0){
                 window.toast?.('Süper atma hakkınız bulunmuyor.');
-                await openMenu('users');
+                if(onlineUsersCurrent(state)) await openMenu('users');
                 return;
               }
 
@@ -384,7 +517,7 @@
 
               window.toast?.('Süper atma işlemi tamamlandı.');
 
-              await openMenu('users');
+              if(onlineUsersCurrent(state)) await openMenu('users');
             }
           );
 
@@ -399,7 +532,7 @@
           action('Odadan at',async()=>{
             if(!window.confirm((member.nickname||'Kullanıcı')+' odadan atılsın mı?'))return;
             await roomApi().ban(id,member.user_id);
-            await openMenu('users');
+            if(onlineUsersCurrent(state)) await openMenu('users');
           });
           action('Chatte sustur',async()=>{
             await roomApi().muteChat(id,member.user_id);
@@ -524,8 +657,16 @@
   }
 
   async function openMenu(tab){
+    const revision=++roomMenuRevision;
+    stopOnlineUsers(true);
+    const requestedRoom=roomId();
     const s=surface();if(!s)return;css();top(s);gift(s);const p=panel(s);p.classList.add('show');
     const r=await getRoom();
+
+    if(revision!==roomMenuRevision||
+       requestedRoom!==roomId()||
+       !p.classList.contains('show'))return;
+
     const canManage=!!(r.is_owner||r.is_moderator||r.can_manage);
     const settingsTab=p.querySelector('.room-v3-tab[data-tab="settings"]');
     if(settingsTab) settingsTab.style.display=canManage?'':'none';

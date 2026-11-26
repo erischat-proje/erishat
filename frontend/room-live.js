@@ -224,6 +224,28 @@
   window.addEventListener('erischat:cosmetics-updated',()=>{
     if(document.getElementById('erisRoomSurface')?.classList.contains('show')) applyRoomWallpaper();
   });
+  function renderSeatNobilityBadge(button,seat,staff){
+    if(!seat?.user_id)return;
+
+    const api=window.LidyaNobilityAppearance;
+
+    if(!api)return;
+
+    const knight=seat.nobility?.rank===1 &&
+      !staff &&
+      Boolean(api.resolve(seat.nobility,'badge'));
+
+    button.classList.toggle(
+      'lidya-knight-seat',knight
+    );
+
+    const target=button.querySelector(
+      knight ? '.seat-pod' : 'b'
+    );
+
+    api.badge(target,seat.nobility);
+  }
+
   function renderRoomSeats(roomId,name,list,forcedCount){
     const box=document.getElementById('erisLiveSeats');if(!box)return;
     const count=([12,16].includes(Number(forcedCount))?Number(forcedCount):seatCountForRoom(null,list));
@@ -285,9 +307,17 @@
       }
       b.querySelector('b').textContent=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):'';if(occupied)window.ErisRoleBadges?.bind(b.querySelector('b'),seat.user_id);
       if(occupied){
-        window.LidyaNobilityAppearance?.badge(
-          b.querySelector('b'),seat.nobility
+        const staff=Boolean(
+          window.ErisStaffIdentity?.isStaff(user) ||
+          String(frameRaw||'').includes(
+            '/role-icons/management-v1/'
+          ) ||
+          String(avatarRaw||'').includes(
+            '/role-icons/management-v1/'
+          )
         );
+
+        renderSeatNobilityBadge(b,seat,staff);
       }
 
       b.title=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):b.getAttribute('aria-label');

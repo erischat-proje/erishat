@@ -1,5 +1,6 @@
 from __future__ import annotations
 from .profile_age import visible_age
+from .nobility_ranking import knight_ranking
 import secrets
 
 import json
@@ -713,6 +714,8 @@ def register_platform_auth(current_user_dependency):
         return {"following":False,"requested":False}
     @router.get("/users/{user_id}/followers")
     def followers(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        from .nobility_follow_appearance import knight_follow_appearances
+        now = datetime.now(timezone.utc)
         if user_id != user.id:
             raise HTTPException(status_code=403,detail="Takipçi listesi yalnızca kendi profilinizde görüntülenebilir")
         if active_ban(db,user_id): return []
@@ -729,10 +732,25 @@ def register_platform_auth(current_user_dependency):
                     "frame_asset":target.frame_asset,
                     "created_at":r.created_at,
                 })
+        appearances = knight_follow_appearances(
+            db,
+            user.id,
+            [row["user_id"] for row in result],
+            now,
+        )
+
+        for row in result:
+            row["nobility"] = appearances.get(
+                row["user_id"],
+                {"rank": 0, "privileges": []},
+            )
+
         return result
 
     @router.get("/users/{user_id}/following")
     def following(user_id:str,db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
+        from .nobility_follow_appearance import knight_follow_appearances
+        now = datetime.now(timezone.utc)
         if user_id != user.id:
             raise HTTPException(status_code=403,detail="Takip listesi yalnızca kendi profilinizde görüntülenebilir")
         if active_ban(db,user_id): return []
@@ -749,6 +767,19 @@ def register_platform_auth(current_user_dependency):
                     "frame_asset":target.frame_asset,
                     "created_at":r.created_at,
                 })
+        appearances = knight_follow_appearances(
+            db,
+            user.id,
+            [row["user_id"] for row in result],
+            now,
+        )
+
+        for row in result:
+            row["nobility"] = appearances.get(
+                row["user_id"],
+                {"rank": 0, "privileges": []},
+            )
+
         return result
 
     @router.delete("/users/{user_id}/follower")
@@ -985,11 +1016,11 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games/slot/leaderboard")
     def slot_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        return slot_final.leaderboard(db, user, period)
+        return knight_ranking(db, user.id, slot_final.leaderboard(db, user, period))
 
     @router.get("/games/blackjack/leaderboard")
     def blackjack_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        return blackjack_final.leaderboard(db, user, period)
+        return knight_ranking(db, user.id, blackjack_final.leaderboard(db, user, period))
 
     @router.get("/games/blackjack/active")
     def blackjack_active_round(
@@ -1325,7 +1356,7 @@ def register_platform_auth(current_user_dependency):
     @router.get("/games/crash/leaderboard")
     def crash_leaderboard(period: str = Query('hour',pattern='^(hour|day|week|month)$'),
                           db: Session = Depends(get_db),user: User = Depends(current_user_dependency)):
-        return crash_final.leaderboard(db,user,period)
+        return knight_ranking(db, user.id, crash_final.leaderboard(db,user,period))
 
     @router.post("/games/crash/live/cashout")
     def crash_live_cashout(
@@ -1478,7 +1509,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games/horse_race/leaderboard")
     def horse_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        return horse_final.leaderboard(db, user, period)
+        return knight_ranking(db, user.id, horse_final.leaderboard(db, user, period))
 
     @router.get("/games/horse_race/live")
     def horse_live_state(
@@ -1590,7 +1621,7 @@ def register_platform_auth(current_user_dependency):
 
     @router.get("/games/vault/leaderboard")
     def vault_leaderboard(period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        return vault_final.leaderboard(db, user, period)
+        return knight_ranking(db, user.id, vault_final.leaderboard(db, user, period))
 
     @router.get("/games/vault/live")
     def vault_live_state(
@@ -1784,7 +1815,7 @@ def register_platform_auth(current_user_dependency):
         db: Session = Depends(get_db),
         user: User = Depends(current_user_dependency),
     ):
-        return wheel_live_v4.leaderboard(db, user, period)
+        return knight_ranking(db, user.id, wheel_live_v4.leaderboard(db, user, period))
 
     @router.get("/games/wheel/records")
     def wheel_records(db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
@@ -2032,7 +2063,7 @@ def register_platform_auth(current_user_dependency):
     def custom_game_leaderboard(game: str, period: str = Query("hour", pattern="^(hour|day|week|month)$"), db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         if game == "cups" or game not in nonroom_standard.CUSTOM_GAMES:
             raise HTTPException(404, "Oyun sıralaması bulunamadı")
-        return nonroom_standard.leaderboard(db, user, game, period)
+        return knight_ranking(db, user.id, nonroom_standard.leaderboard(db, user, game, period))
 
     @router.post("/games/{game_type}/play")
     def play_game(game_type: str, payload: dict | None = None, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):

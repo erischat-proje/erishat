@@ -99,10 +99,27 @@
     const card = document.createElement('div');
     card.className = 'lidya-nobility-live-banner';
 
+    const knight = data.rank === 1;
+
+    if(knight){
+      card.className += ' lidya-knight-live-banner';
+      card.className += data.kind === 'gift_banner'
+        ? ' lidya-knight-gift-banner'
+        : ' lidya-knight-activation-banner';
+    }
+
     const image = document.createElement('img');
     image.src = asset;
     image.alt = '';
     image.draggable = false;
+
+    if(knight){
+      image.onerror = ()=>{
+        image.hidden = true;
+        card.className += ' lidya-knight-banner-fallback';
+      };
+    }
+
 
     const text = document.createElement('span');
     text.textContent = message(data);

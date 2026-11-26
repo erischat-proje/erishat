@@ -28,6 +28,63 @@
     @media(max-width:380px){.eris-mini-shade{padding:10px}.eris-mini-vip{padding-top:35%}.eris-mini-name{font-size:13px}.eris-mini-vip .eris-vip-card{width:86px}}
     @media(max-height:600px){.eris-mini-shade{overflow:auto;align-items:start}.eris-mini-vip{margin:8px auto}}
   `;
+
+  css.textContent += `
+    .eris-mini-head:has(.lidya-knight-portrait){
+      gap:16px;
+      min-height:88px;
+      padding-inline:10px;
+    }
+
+    .eris-mini-portrait.lidya-knight-portrait{
+      width:68px;
+      height:68px;
+      overflow:visible;
+      flex:0 0 68px;
+      isolation:isolate;
+    }
+
+    .lidya-knight-portrait img:not(.eris-mini-frame){
+      width:100%;
+      height:100%;
+      border-radius:50%;
+      object-fit:cover;
+    }
+
+    .lidya-knight-portrait .eris-mini-frame{
+      position:absolute;
+      inset:auto;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:88px;
+      height:88px;
+      max-width:none;
+      max-height:none;
+      object-fit:contain;
+      pointer-events:none;
+      z-index:2;
+    }
+
+    @media(max-width:360px){
+      .eris-mini-head:has(.lidya-knight-portrait){
+        gap:12px;
+        min-height:78px;
+      }
+
+      .eris-mini-portrait.lidya-knight-portrait{
+        width:60px;
+        height:60px;
+        flex-basis:60px;
+      }
+
+      .lidya-knight-portrait .eris-mini-frame{
+        width:78px;
+        height:78px;
+      }
+    }
+  `;
+
   document.head.append(css);
   const api = (path, options) => window.ErisPlatform.api(path, options);
   const asset = path => path ? (window.ErisChatCosmetics?.assetUrl?.(path) || path) : '';
@@ -103,7 +160,36 @@
           )
         : null
       )||asset(u.frame_asset);
-      if(frame){const img=document.createElement('img');img.className='eris-mini-frame';img.src=frame;img.alt='';portrait.append(img)}
+      const knightFrame = Boolean(
+        frame &&
+        u.nobility?.rank === 1 &&
+        !window.ErisStaffIdentity?.isStaff(u) &&
+        frame === window.LidyaNobilityAppearance?.resolve(
+          u.nobility, 'frame'
+        )
+      );
+
+      portrait.classList.toggle(
+        'lidya-knight-portrait', knightFrame
+      );
+
+      if(frame){
+        const img=document.createElement('img');
+
+        img.className='eris-mini-frame';
+        img.src=frame;
+        img.alt='';
+        img.draggable=false;
+
+        img.onerror=()=>{
+          img.remove();
+          portrait.classList.remove(
+            'lidya-knight-portrait'
+          );
+        };
+
+        portrait.append(img);
+      }
       portrait.onclick=()=>{closeProfile();document.getElementById('chat')?.classList.remove('show','eris-floating-dm');window.openUserProfile?.(u.id)};
       const level=Math.max(0,Math.min(40,Number(u.fan_level)||0));
       const fanButton=shade.querySelector('[data-fans]');

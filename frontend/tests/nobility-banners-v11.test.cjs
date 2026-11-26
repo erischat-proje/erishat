@@ -178,3 +178,140 @@ test('nickname rendered as text',()=>{
       .includes('<script>alert(1)</script>')
   );
 });
+
+
+// KNIGHT PREMIUM BANNER V1.7.1
+
+test('Knight gift premium design',()=>{
+  const {api,cards}=setup();
+
+  assert.equal(
+    api.show(payload(1,'gift_banner')),
+    true
+  );
+
+  assert.ok(
+    cards[0].className.includes(
+      'lidya-knight-gift-banner'
+    )
+  );
+
+  assert.equal(
+    cards[0].children[0].src,
+    '1/gift_banner.png'
+  );
+});
+
+test('Knight activation premium design',()=>{
+  const {api,cards}=setup();
+
+  api.show(payload(1,'activation_banner'));
+
+  assert.ok(
+    cards[0].className.includes(
+      'lidya-knight-activation-banner'
+    )
+  );
+
+  assert.equal(
+    cards[0].children[0].src,
+    '1/activation_banner.png'
+  );
+});
+
+test('Knight renewal message',()=>{
+  const {api,cards}=setup();
+
+  api.show({
+    ...payload(1,'activation_banner'),
+    action:'renew'
+  });
+
+  assert.ok(
+    cards[0].children[1].textContent
+      .includes('yeniledi')
+  );
+});
+
+test('Knight image error fallback',()=>{
+  const {api,cards}=setup();
+
+  api.show(payload(1,'gift_banner'));
+
+  const card=cards[0];
+  card.children[0].onerror();
+
+  assert.equal(
+    card.children[0].hidden,true
+  );
+
+  assert.ok(
+    card.className.includes(
+      'lidya-knight-banner-fallback'
+    )
+  );
+
+  assert.ok(card.children[1].textContent);
+});
+
+test('Knight long nickname limited',()=>{
+  const {api,cards}=setup();
+
+  api.show({
+    ...payload(1,'gift_banner'),
+    nickname:'X'.repeat(500)
+  });
+
+  assert.equal(
+    (cards[0].children[1].textContent.match(/X/g)||[]).length,
+    80
+  );
+});
+
+test('Knight banners remain sequential',()=>{
+  const {api,cards,tick}=setup();
+
+  api.show(payload(1,'gift_banner','knight-1'));
+  api.show(payload(1,'activation_banner','knight-2'));
+
+  assert.equal(cards.length,1);
+
+  tick();
+
+  assert.equal(cards.length,1);
+
+  assert.ok(
+    cards[0].className.includes(
+      'lidya-knight-activation-banner'
+    )
+  );
+
+  tick();
+
+  assert.equal(cards.length,0);
+});
+
+test('Knight activation cannot be global',()=>{
+  const {api}=setup();
+
+  assert.equal(
+    api.show({
+      ...payload(1,'activation_banner'),
+      scope:'global'
+    }),
+    false
+  );
+});
+
+for(const rank of [2,3,4]){
+  test('Other rank design preserved: '+rank,()=>{
+    const {api,cards}=setup();
+
+    api.show(payload(rank,'gift_banner'));
+
+    assert.equal(
+      cards[0].className,
+      'lidya-nobility-live-banner'
+    );
+  });
+}

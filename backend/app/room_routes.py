@@ -831,26 +831,93 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         return rows
 
     @router.get("/{room_id}/members")
-    def list_members(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
+    def list_members(room_id: str, online_only: bool = False, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id)
         if not is_member(db, room.id, user.id):
             raise HTTPException(status_code=403, detail="Önce odaya katılmalısınız")
         moderator_ids = set(db.scalars(select(RoomModerator.user_id).where(RoomModerator.room_id == room.id)))
         seats = {seat.user_id: seat.seat_number for seat in db.scalars(
             select(RoomSeat).where(RoomSeat.room_id == room.id)) if seat.user_id}
+        from .nobility_room_priority import (
+            members_nobility, order_room_members,
+        )
+
+        now = datetime.now(timezone.utc)
         result = []
-        for member in db.scalars(select(RoomMember).where(
-            RoomMember.room_id == room.id, RoomMember.ghost.is_(False)).order_by(RoomMember.joined_at)):
+
+        query = select(RoomMember).where(
+            RoomMember.room_id == room.id,
+            RoomMember.ghost.is_(False),
+        )
+
+        if online_only:
+            cutoff = now - timedelta(seconds=48)
+
+            live_ids = select(RoomLivePresence.user_id).where(
+                RoomLivePresence.room_id == room.id,
+                RoomLivePresence.last_seen_at >= cutoff,
+            )
+
+            blocked_by_me = select(UserBlock.blocked_id).where(
+                UserBlock.blocker_id == user.id,
+            )
+
+            blocked_me = select(UserBlock.blocker_id).where(
+                UserBlock.blocked_id == user.id,
+            )
+
+            query = query.where(
+                RoomMember.user_id.in_(live_ids),
+                ~RoomMember.user_id.in_(blocked_by_me),
+                ~RoomMember.user_id.in_(blocked_me),
+            )
+
+        for member in db.scalars(query.order_by(
+            RoomMember.joined_at, RoomMember.user_id
+        )):
             person = db.get(User, member.user_id)
+
+            if online_only:
+                if not person or not person.is_active:
+                    continue
+                if ghost_active(db, member.user_id):
+                    continue
+                if not is_member(db, room.id, member.user_id):
+                    continue
+                if db.scalar(select(RoomBan.id).where(
+                    RoomBan.room_id == room.id,
+                    RoomBan.user_id == member.user_id,
+                )):
+                    continue
+
             if person:
                 result.append({
-                    "user_id": member.user_id, "nickname": person.nickname,
-                    "avatar": person.avatar, "avatar_asset": person.avatar_asset,
+                    "user_id": member.user_id,
+                    "nickname": person.nickname,
+                    "avatar": person.avatar,
+                    "avatar_asset": person.avatar_asset,
                     "role": "owner" if member.user_id == room.owner_id else (
                         "moderator" if member.user_id in moderator_ids else "user"),
                     "seat_number": seats.get(member.user_id),
+                    **{},
                 })
-        return result
+
+        if not online_only:
+            return result
+
+        appearances = members_nobility(
+            db,
+            [row["user_id"] for row in result],
+            now,
+        )
+
+        for row in result:
+            row["nobility"] = appearances.get(
+                row["user_id"],
+                {"rank": 0, "privileges": []},
+            )
+
+        return order_room_members(result)
     @router.post("/{room_id}/moderators")
     def add_moderator(room_id: str, payload: ModeratorUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_owner(db, room, user)
