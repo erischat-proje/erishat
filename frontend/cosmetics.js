@@ -38,9 +38,11 @@
   };
 
   async function load() {
-    if (!token()) return state;
+    const sessionToken = token();
+    if (!sessionToken) return state;
     try {
       const [catalog, owned, user, wallpapers] = await Promise.all([api('/cosmetics'), api('/me/cosmetics'), api('/me'), api('/wallpapers').catch(() => ({items: []}))]);
+      if(token() !== sessionToken)return state;
       state.catalog = list(catalog);
       state.wallpapers = list(wallpapers);
       state.owned = list(owned);
@@ -77,8 +79,7 @@
     return value.url || value.src || value.asset_url || value.path || value.asset_key || fallback;
   };
 
-  function applyAppearance(root = document) {
-    const user = state.user;
+  function applyAppearance(root = document, user = state.user) {
     if (!user) return;
     const avatarKey = assetValue(user.avatar_asset, '');
     const frameKey = assetValue(user.frame_asset, '');

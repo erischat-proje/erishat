@@ -67,7 +67,15 @@
       if (balance && user.lidya != null) balance.textContent = `${Number(user.lidya).toLocaleString('tr-TR')}`;
       if (name && user.nickname) {
         profile.classList.toggle('lidya-management-name-left-v1',user.nickname==='LidyaChat Yönetim');
-        name.textContent=user.nickname;window.ErisRoleBadges?.bind(name,user);
+        name.textContent=user.nickname;
+        window.ErisRoleBadges?.bind(name,user);
+
+        const staff=user.management_locked===true||
+          ['SA','UA','FA','DA'].includes(user.admin_role);
+
+        window.LidyaNobilityAppearance?.badge(
+          name,staff?null:user.nobility
+        );
       }
       const publicId = /^\d{10}$/.test(String(user.public_id || '')) ? String(user.public_id) : '';
       idButton.dataset.publicId = publicId;
@@ -99,7 +107,7 @@
         frame.src = frameUrl || '';
         frame.style.display = frameUrl ? '' : 'none';
       }
-      if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance();
+      if (window.ErisChatCosmetics?.applyAppearance) window.ErisChatCosmetics.applyAppearance(document,user);
       if (user.id) window.ErisChatVIP?.watch?.(profile, user.id);
     };
     const refresh = async () => {
@@ -144,7 +152,14 @@
     });
     window.addEventListener('erischat:auth', event => { if (event.detail?.user) render(event.detail.user); else if (event.detail?.state === 'logged_out') status.textContent = 'Oturum kapatıldı.'; else refresh(); });
     window.addEventListener('erischat:profile', event => render(event.detail));
-    window.addEventListener('erischat:cosmetics-updated', () => render(window.ErisAuth?.user));
+    window.addEventListener('erischat:cosmetics-updated', event => {
+      const user=event.detail?.user;
+      const current=window.ErisAuth?.user;
+
+      if(user?.id&&user.id===current?.id){
+        render(user);
+      }
+    });
     refresh();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();

@@ -746,7 +746,7 @@ async function registerAnonymous() {
     }
   });
 
-  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, switchAccount, openAccountLogin, cancelAccountLogin, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me'), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
+  window.ErisAuth = { ensureSession, registerAnonymous, googleRegister, emailOtpLogin, logout, switchAccount, openAccountLogin, cancelAccountLogin, rememberedAccounts, forgetAccount, getToken, connectGeneralWs, getMe:()=>request('/me',{cache:'no-store'}), updateMe:payload=>request('/me',{method:'PATCH',body:JSON.stringify(payload)}) };
 
   function continueAfterAuth(user) {
     if(document.getElementById('erisGoogleGate')?.closest('#erisAccountPicker')){location.reload();return;}

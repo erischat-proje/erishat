@@ -476,6 +476,21 @@ async function runFinancial(mode){
 
  window.toast?.(financialNotice);
 
+ if(api.sameSession(snapshot)){
+  Promise.resolve()
+   .then(()=>window.ErisProfile?.refresh?.())
+   .then(user=>{
+    if(user&&api.sameSession(snapshot)){
+     window.dispatchEvent(new CustomEvent(
+      'erischat:profile',{detail:user}
+     ));
+    }
+   })
+   .catch(error=>console.warn(
+    '[LidyaChat] Nobility profile refresh',error
+   ));
+ }
+
  loadAccount();
 }
 
