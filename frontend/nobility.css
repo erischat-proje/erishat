@@ -792,7 +792,7 @@
     left: 50%;
     transform: translateX(-50%);
     width: min(94vw, 460px);
-    z-index: 12000;
+    z-index: 93010 !important;
     pointer-events: none;
     isolation: isolate;
     animation: lidya-nobility-banner-in .3s ease-out;
