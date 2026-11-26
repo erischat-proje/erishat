@@ -12,6 +12,7 @@ on:
       - 'android-native/**'
       - 'Caddyfile'
       - 'tests/security_guard/**'
+      - 'tests/test_message_*.py'
       - 'tests/test_security_center_dm_id.py'
       - 'tests/test_play_billing_v3.py'
       - 'tests/test_play_fulfillment_v4.py'
@@ -238,3 +239,62 @@ jobs:
         run: |
           chmod +x android-native/gradlew
           android-native/gradlew -p android-native :app:compileDebugJavaWithJavac --no-daemon
+
+  messaging-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      DATABASE_URL: "sqlite+pysqlite:///:memory:"
+      PYTHONPATH: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install FFmpeg
+        run: |
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          ffmpeg -version
+
+      - name: Install production Python dependencies
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pytest httpx2
+
+      - name: Verify real media libraries
+        run: |
+          python -c "import av; print('PyAV:', av.__version__)"
+          python -c "from PIL import Image; print('Pillow:', Image.__version__)"
+
+      - name: Run all messaging security regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PASS=0
+          FAIL=0
+
+          for FILE in tests/test_message_*.py tests/test_security_center_dm_id.py
+          do
+            echo "=== $FILE ==="
+
+            if python -m pytest -q "$FILE" --tb=short; then
+              PASS=$((PASS+1))
+            else
+              FAIL=$((FAIL+1))
+            fi
+          done
+
+          echo "=== MESSAGING SECURITY REPORT ==="
+          echo "PASSED PACKAGES: $PASS"
+          echo "FAILED PACKAGES: $FAIL"
+          echo "TOTAL PACKAGES: $((PASS+FAIL))"
+
+          test "$FAIL" -eq 0
