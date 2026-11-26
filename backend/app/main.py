@@ -81,6 +81,12 @@ from . import role_badges
 from . import dealer_routes
 from . import admob_reward_routes
 from . import dealer_public_center
+from . import nobility_routes
+from . import nobility_banner_models
+from . import nobility_super_kick_models
+from . import nobility_avatar_models
+from . import nobility_avatar_routes
+from .nobility_bootstrap import initialize_nobility_config
 from .system_data import UserIdRegistry, RoomIdRegistry, LidyaLedger
 from .system_logs import ensure_log_files, record
 from .onboarding_policy import agreement, eligible, grant_cosmetic
@@ -303,6 +309,18 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 def _initialize_database() -> None:
     logger.info("LidyaChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
+
+    # NOBILITY_BOOTSTRAP_V1
+    if engine.dialect.name == "postgresql":
+        with Session(engine) as nobility_db:
+            result = initialize_nobility_config(nobility_db)
+            nobility_db.commit()
+            logger.info(
+                "Nobility configuration: created=%s invalid=%s",
+                result["created"],
+                result["invalid_ranks"],
+            )
+
     # BT_REFERENCE_SECURITY_UI_V1: database-enforced single activated root.
     # Works on PostgreSQL and SQLite; retained for existing installations too.
     with engine.begin() as bt_ref_conn:
@@ -530,7 +548,7 @@ app.include_router(seat_workflow.router)
 register_room_auth(
     current_user,
     lambda room_id,payload: _broadcast_room_chat(room_id,payload),
-    lambda user_id,room_id: disconnect_room_ban_user(user_id,room_id),
+    lambda user_id,room_id,**kwargs: disconnect_room_ban_user(user_id,room_id,**kwargs),
     lambda room_id,user_id,payload: send_room_user_control(room_id,user_id,payload),
 )
 register_platform_auth(current_user)
@@ -574,6 +592,8 @@ app.include_router(role_badges.register_auth(current_user))
 app.include_router(dealer_routes.register_auth(current_user))
 app.include_router(admob_reward_routes.register_auth(current_user))
 app.include_router(dealer_public_center.register_auth(current_user))
+app.include_router(nobility_routes.register_auth(current_user))
+app.include_router(nobility_avatar_routes.register_auth(current_user))
 support_workflow.register_auth(current_user, lambda user_id: disconnect_support_agent(user_id))
 app.include_router(support_workflow.router)
 register_dm_folder_auth(current_user)
@@ -967,8 +987,15 @@ def claim_welcome_gift(
 
 
 @app.get("/v1/me", response_model=UserOut)
-def me(user: User = Depends(current_user)) -> User:
-    return user
+def me(
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> UserOut:
+    from .nobility_appearance import public_appearance
+
+    result = UserOut.model_validate(user)
+    result.nobility = public_appearance(db, user.id)
+    return result
 
 
 @app.get("/v1/legal/user-agreement")
@@ -2280,9 +2307,11 @@ async def send_direct_gift(conversation_id: str, payload: dict, x_eris_dm_vault:
         if gift_key != required_key:
             raise HTTPException(status_code=402, detail=f"Bu kullanıcı için {required_key} hediyesi gerekli")
     total_price = price * quantity
-    from .gift_payout import gift_payout
-    receiver_amount = gift_payout(total_price)
+    from .gift_payout import recipient_gift_payout
     relationship_routes.lock_users(db, [user.id, recipient_id])
+    receiver_amount = recipient_gift_payout(
+        db, recipient_id, total_price
+    )
     charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total_price).values(lidya=User.lidya - total_price))
     if charged.rowcount != 1: db.rollback(); raise HTTPException(status_code=400, detail="Yetersiz Lidya")
     db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + receiver_amount))
@@ -2434,6 +2463,10 @@ def _load_room_socket(token, room_id):
             entrance_asset = None
         entrance_house=relationship_routes.my_couple(db,user.id)
         entrance_payload={'type':'room_entrance','user_id':user.id,'nickname':user.nickname,'avatar':user.avatar,'avatar_asset':user.avatar_asset,'frame_asset':user.frame_asset,'entrance_asset':entrance_asset,'ring_asset':relationship_routes.ring_asset(entrance_house.ring) if entrance_house and entrance_house.ring else None}
+        from .nobility_appearance import public_appearance
+        entrance_payload['nobility'] = public_appearance(
+            db, user.id
+        )
         entrance_payload['vip_entry_level'] = visible_entry_level(db, user.id)
         entrance_payload['vip_entry_style'] = entry_style(user)
         entrance_payload['vip_benefits'] = vip_privileges.entry_style(db,user.id)
@@ -2744,7 +2777,12 @@ async def _cleanup_disconnected_room_seat(room_id: str, user_id: str) -> None:
 
 
 @live_socket
-async def disconnect_room_ban_user(user_id: str, room_id: str) -> None:
+async def disconnect_room_ban_user(
+    user_id: str,
+    room_id: str,
+    *,
+    super_kick: bool = False,
+) -> None:
     for ws,(socket_room,socket_user) in list(room_socket_users.items()):
         if socket_user!=user_id or socket_room!=room_id:continue
         visible=room_rtc_users.get(room_id,{}).pop(ws,None)
@@ -2754,8 +2792,19 @@ async def disconnect_room_ban_user(user_id: str, room_id: str) -> None:
                 try:await peer.send_json({"type":"rtc_peer_left","user_id":user_id})
                 except Exception:pass
         try:
-            await ws.send_json({"type":"room_user_banned","room_id":room_id,"message":"Yönetim tarafından bu odadan yasaklandınız."})
-            await ws.close(code=1008,reason="Oda yasağı")
+            await ws.send_json({
+                "type": "room_super_kicked" if super_kick else "room_user_banned",
+                "room_id": room_id,
+                "message": (
+                    "Kral Asalet yetkisiyle odadan çıkarıldınız."
+                    if super_kick else
+                    "Yönetim tarafından bu odadan yasaklandınız."
+                ),
+            })
+            await ws.close(
+                code=1008,
+                reason="Super kick" if super_kick else "Oda yasağı",
+            )
         except Exception:pass
 
 
@@ -2841,9 +2890,103 @@ async def _broadcast_global_gift_announcement(payload: dict) -> None:
     await _send_room_sockets(sockets, {"type":"gift_announcement", **payload})
 
 
+def _nobility_blocked_users(user_id):
+    from .platform_models import UserBlock
+
+    with Session(engine) as db:
+        blocked = set(db.scalars(
+            select(UserBlock.blocked_id).where(
+                UserBlock.blocker_id == user_id
+            )
+        ))
+
+        blocked.update(db.scalars(
+            select(UserBlock.blocker_id).where(
+                UserBlock.blocked_id == user_id
+            )
+        ))
+
+        return {str(uid) for uid in blocked}
+
+
+@live_socket
+async def _broadcast_filtered_nobility_banner(payload: dict) -> None:
+    user_id = str(payload["user_id"])
+
+    try:
+        blocked = await run_in_threadpool(
+            _nobility_blocked_users, user_id
+        )
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "Nobility block filter failed"
+        )
+        return
+
+    if payload["scope"] == "room":
+        room_id = str(payload["room_id"])
+
+        if not any(
+            str(rid) == room_id and str(uid) == user_id
+            for rid, uid in room_socket_users.values()
+        ):
+            return
+
+        candidates = list(
+            room_chat_connections.get(room_id, set())
+        )
+
+    elif payload["scope"] == "global":
+        candidates = list({
+            ws
+            for connections in room_chat_connections.values()
+            for ws in connections
+        })
+
+    else:
+        return
+
+    sockets = []
+
+    for ws in candidates:
+        membership = room_socket_users.get(ws)
+
+        if not membership:
+            continue
+
+        rid, uid = membership
+
+        if str(uid) in blocked:
+            continue
+
+        if (
+            payload["scope"] == "room"
+            and str(rid) != room_id
+        ):
+            continue
+
+        sockets.append(ws)
+
+    await _send_room_sockets(sockets, payload)
+
+
+@live_socket
+async def _broadcast_global_nobility_banner(payload: dict) -> None:
+    await _broadcast_filtered_nobility_banner(payload)
+
+
 @live_socket
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
     await _broadcast_room_event(room_id, payload)
+
+
+def _prepare_nobility_room_entry(user_id, room_id):
+    from .nobility_banner_service import prepare_entry_banners
+
+    with Session(engine) as db:
+        return prepare_entry_banners(
+            db, str(user_id), str(room_id)
+        )
 
 
 @app.websocket("/ws/rooms/{room_id}")
@@ -2869,7 +3012,24 @@ async def room_websocket_endpoint(room_id: str, websocket: WebSocket) -> None:
         await run_in_threadpool(_touch_room_live_presence_v2, internal_room_id, str(user.id), bool(member.ghost))
         room_chat_connections.setdefault(internal_room_id, set()).add(websocket)
         if not member.ghost and not already_connected:
-            if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry'] or entrance_payload.get('shop_entry'):
+            from .nobility_banner_service import publish_banner
+
+            try:
+                banners = await run_in_threadpool(
+                    _prepare_nobility_room_entry,
+                    user.id,
+                    internal_room_id,
+                )
+
+                for banner in banners:
+                    await publish_banner(banner)
+
+            except Exception:
+                logging.getLogger(__name__).exception(
+                    "Nobility room entry announcement failed"
+                )
+
+            if entrance_asset or entrance_payload['vip_entry_level'] or entrance_payload['normal_entry'] or entrance_payload.get('shop_entry') or 'entrance' in entrance_payload.get('nobility', {}).get('privileges', []):
                 await _broadcast_room_chat(internal_room_id,entrance_payload)
             await _broadcast_room_chat(internal_room_id,{'type':'room_chat','system':True,'user_id':user.id,'nickname':'LidyaChat','text':user.nickname+' odaya geldi','created_at':datetime.now(timezone.utc).isoformat()})
         existing_peers = list(set(room_rtc_users.get(internal_room_id, {}).values()) - {user.id})

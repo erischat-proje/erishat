@@ -97,6 +97,8 @@
         else if(data.type==='room_chat') renderChatMessage(data);
         else if(data.type==='room_gift') renderGiftEvent(data);
         else if(data.type==='gift_announcement') renderGiftAnnouncement(data);
+        else if(data.type==='nobility_banner')
+          window.LidyaNobilityBanners?.show?.(data);
       }catch(_){}
     };
     const onError=()=>{if(active()) status('error');};

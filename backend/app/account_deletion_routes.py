@@ -71,11 +71,49 @@ def delete_user(db: Session, user: User):
     from sqlalchemy.exc import SQLAlchemyError
 
     try:
+        # ACCOUNT_DELETION_LOCK_V1
+        uid = user.id
+
+        locked_user = db.scalar(
+            select(User.id)
+            .where(User.id == uid)
+            .with_for_update()
+        )
+
+        if locked_user is None:
+            raise RuntimeError("Account no longer exists")
+
         db.flush()
-        engine = db.get_bind()
+        connection = db.connection()
         metadata = MetaData()
-        metadata.reflect(bind=engine)
-        tables = metadata.tables
+
+        if connection.dialect.name == "postgresql":
+            from sqlalchemy import text
+
+            schema = connection.scalar(
+                text("SELECT current_schema()")
+            )
+
+            if not schema:
+                raise RuntimeError("Active schema missing")
+
+            metadata.reflect(
+                bind=connection,
+                schema=schema,
+                postgresql_ignore_search_path=True,
+            )
+        else:
+            metadata.reflect(bind=connection)
+        tables = {}
+
+        for reflected in metadata.tables.values():
+            if reflected.name in tables:
+                raise RuntimeError(
+                    "Ambiguous reflected table: "
+                    + reflected.name
+                )
+
+            tables[reflected.name] = reflected
         user_table = tables.get('users')
         if user_table is None:
             raise RuntimeError('users tablosu bulunamadı')
@@ -89,7 +127,6 @@ def delete_user(db: Session, user: User):
                 parent = fk.elements[0].column.table
                 incoming.setdefault(parent.name, []).append((child, fk))
 
-        uid = user.id
         visited = set()
         def cascade(table, condition, ancestors=()):
             # All descendants are removed BEFORE their parent. A cycle is unsafe.
@@ -134,6 +171,134 @@ def delete_user(db: Session, user: User):
 
         # Everything else referencing this user (messages in other conversations,
         # reactions, follows, privacy, sessions, auth, roles, purchases, etc.).
+        # WOOCOMMERCE_ACCOUNT_DELETION_GUARD_V1
+        orders = tables.get("woocommerce_web_orders_v6")
+
+        if orders is not None:
+            required = {
+                "id",
+                "user_id",
+                "state",
+                "wc_order_id",
+            }
+
+            if not required.issubset(orders.c.keys()):
+                raise RuntimeError(
+                    "Unknown WooCommerce order schema"
+                )
+
+            owned_orders = db.execute(
+                select(
+                    orders.c.id,
+                    orders.c.state,
+                    orders.c.wc_order_id,
+                )
+                .where(orders.c.user_id == uid)
+                .order_by(orders.c.id)
+                .with_for_update()
+            ).all()
+
+            for order in owned_orders:
+                # QNBPAY_ATTEMPT_DELETION_GUARD_V28:
+                # A recorded attempt is not proof of payment,
+                # but must survive until reconciliation.
+                attempts = tables.get(
+                    "qnbpay_order_attempts_v28"
+                )
+
+                if attempts is not None:
+                    required_attempt_fields = {
+                        "order_ref",
+                        "attempt_id",
+                        "state",
+                    }
+
+                    if not required_attempt_fields.issubset(
+                        attempts.c.keys()
+                    ):
+                        raise RuntimeError(
+                            "Unknown order attempt schema"
+                        )
+
+                    recorded_attempt = db.scalar(
+                        select(attempts.c.order_ref)
+                        .where(
+                            attempts.c.order_ref == order.id
+                        )
+                        .limit(1)
+                    )
+
+                    if recorded_attempt is not None:
+                        raise RuntimeError(
+                            "Order attempt requires reconciliation"
+                        )
+
+                if (
+                    order.state != "disabled"
+                    or order.wc_order_id is not None
+                ):
+                    raise RuntimeError(
+                        "WooCommerce reconciliation required"
+                    )
+
+                for name in (
+                    "qnbpay_transaction_references_v16",
+                    "qnbpay_event_journal_v21",
+                ):
+                    evidence = tables.get(name)
+
+                    if evidence is None:
+                        raise RuntimeError(
+                            "Financial evidence schema missing"
+                        )
+
+                    if "order_ref" not in evidence.c:
+                        raise RuntimeError(
+                            "Unknown financial evidence schema"
+                        )
+
+                    found = db.scalar(
+                        select(evidence.c.order_ref)
+                        .where(
+                            evidence.c.order_ref == order.id
+                        )
+                        .limit(1)
+                    )
+
+                    if found is not None:
+                        raise RuntimeError(
+                            "Financial evidence requires review"
+                        )
+
+        # NOBILITY_ACCOUNT_DELETION_V1:
+        # Audit records do not have user foreign keys.
+        nobility_audit = tables.get("nobility_audit_logs")
+
+        if nobility_audit is not None:
+            required_columns = {"user_id", "actor_id"}
+
+            if not required_columns.issubset(
+                nobility_audit.c.keys()
+            ):
+                raise RuntimeError(
+                    "Unknown nobility audit schema"
+                )
+
+            # Remove the deleted account's own audit history.
+            db.execute(
+                delete(nobility_audit).where(
+                    nobility_audit.c.user_id == uid
+                )
+            )
+
+            # Preserve other users' records, removing only
+            # the deleted account's actor reference.
+            db.execute(
+                nobility_audit.update()
+                .where(nobility_audit.c.actor_id == uid)
+                .values(actor_id=None)
+            )
+
         cascade(user_table, user_table.c.id == uid)
         db.commit()
     except Exception as exc:

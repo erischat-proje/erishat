@@ -71,16 +71,38 @@
     try{
       const u=options.preview||await api('/users/'+encodeURIComponent(identifier));
       if(!shade.isConnected)return;
+      window.LidyaNobilityAppearance?.decorateProfile(
+        shade.querySelector('.eris-mini-card'),
+        u
+      );
+
       shade.querySelector('.eris-mini-name').textContent=u.nickname||'Kullanıcı';window.ErisRoleBadges?.bind(shade.querySelector('.eris-mini-name'),u);
+      window.LidyaNobilityAppearance?.badge(
+        shade.querySelector('.eris-mini-name'),
+        u.nobility
+      );
+
       const age=document.createElement('small');age.dataset.profileAge='';age.style.cssText='display:block;color:var(--ui-ink);margin-top:5px';age.textContent=Number.isInteger(u.age)?u.age+' yaş':'';age.hidden=!Number.isInteger(u.age);shade.querySelector('.eris-mini-name').after(age);
       const idButton=shade.querySelector('.eris-mini-id'), publicId=String(u.public_id||'');
       idButton.textContent=/^\d{10,12}$/.test(publicId)?'ID: '+publicId+' ⧉':'ID gizli';
       idButton.disabled=!/^\d{10,12}$/.test(publicId);
       idButton.onclick=async()=>{try{await navigator.clipboard.writeText(publicId);window.toast?.('Kullanıcı ID kopyalandı.')}catch{window.toast?.('ID: '+publicId)}};
-      const portrait=shade.querySelector('.eris-mini-portrait'), avatar=asset(u.avatar_asset);
+      const portrait=shade.querySelector('.eris-mini-portrait'), avatar=(
+        !window.ErisStaffIdentity?.isStaff(u)
+        ? window.LidyaNobilityAppearance?.superAvatar(
+            u.nobility
+          )
+        : null
+      )||asset(u.avatar_asset);
       portrait.textContent='';
       if(avatar){const img=document.createElement('img');img.src=avatar;img.alt='';portrait.append(img)}else portrait.textContent=u.avatar||'👤';
-      const frame=asset(u.frame_asset);
+      const frame=(
+        !window.ErisStaffIdentity?.isStaff(u)
+        ? window.LidyaNobilityAppearance?.resolve(
+            u.nobility,'frame'
+          )
+        : null
+      )||asset(u.frame_asset);
       if(frame){const img=document.createElement('img');img.className='eris-mini-frame';img.src=frame;img.alt='';portrait.append(img)}
       portrait.onclick=()=>{closeProfile();document.getElementById('chat')?.classList.remove('show','eris-floating-dm');window.openUserProfile?.(u.id)};
       const level=Math.max(0,Math.min(40,Number(u.fan_level)||0));

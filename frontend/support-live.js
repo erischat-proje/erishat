@@ -33,7 +33,49 @@
     const canvas=document.createElement('canvas');canvas.width=900;canvas.height=900;const ctx=canvas.getContext('2d');ctx.fillStyle='#191919';ctx.fillRect(0,0,900,900);ctx.fillStyle='#d8b869';ctx.font='bold 24px system-ui';ctx.fillText('LidyaChat · Uygulama anlık kaydı',30,48);ctx.font='16px system-ui';ctx.fillText(new Date().toLocaleString('tr-TR'),30,80);ctx.fillStyle='#fff8e7';ctx.font='18px system-ui';let y=120;const text=(root?.innerText||'Destek merkezi').slice(0,3000);for(const line of text.split(/\n/)){for(let i=0;i<line.length;i+=65){ctx.fillText(line.slice(i,i+65),30,y);y+=25;if(y>860)break;}if(y>860)break;}return canvas.toDataURL('image/jpeg',.75);
   }
   async function attachments(files){const list=[...files];const videos=list.filter(f=>f.type.startsWith('video/'));if(list.length>3||(videos.length&&(videos.length!==1||list.length!==1)))throw new Error('En fazla 3 fotoğraf veya 1 video ekle.');return Promise.all(list.map(file=>new Promise((resolve,reject)=>{if(!['image/jpeg','image/png','image/webp','video/mp4','video/webm'].includes(file.type))return reject(new Error('JPEG, PNG, WebP, MP4 veya WebM seç.'));if(file.size>(file.type.startsWith('video/')?8*1024*1024:1500000))return reject(new Error('Fotoğraf en fazla 1,5 MB; video en fazla 8 MB olabilir.'));const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Dosya okunamadı.'));reader.readAsDataURL(file);})));}
-  function newTicket(){if(newPanel?.isConnected){newPanel.hidden=false;return;}let captured='';try{captured=snapshot();}catch{}const room=window.ErisCurrentRoomId||null;const panel=windowBox('Yeni destek talebi',()=>{panel.hidden=true;window.toast?.('Taslağın bu oturumda korundu. Yeni talep düğmesinden devam edebilirsin.');});newPanel=panel;panel.querySelector('[data-body]').innerHTML='<form><label>Kategori<select name="category"><option value="account">Hesap</option><option value="payment">Ödeme</option><option value="room">Oda</option><option value="safety">Güvenlik / Şikâyet</option><option value="other">Diğer</option></select></label><label>Konu<input name="subject" required maxlength="120"></label><label>Sorunu anlat<textarea name="message" required minlength="3" maxlength="4000"></textarea></label><label>Kanıt: 3 fotoğraf veya 1 video<input type="file" name="evidence" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><button class="primary" type="submit">Talebi gönder</button><p data-error role="alert"></p></form>';const form=panel.querySelector('form');form.onsubmit=async e=>{e.preventDefault();const submit=form.querySelector('button');if(submit.disabled)return;const owner=token();submit.disabled=true;try{if(!form.elements.subject.value.trim()||form.elements.message.value.trim().length<3)throw new Error('Konu ve en az 3 karakterlik açıklama yaz.');const files=await attachments(form.elements.evidence.files);if(owner!==token())return;await req('/support/tickets',{method:'POST',body:JSON.stringify({category:form.elements.category.value,subject:form.elements.subject.value.trim(),message:form.elements.message.value.trim(),attachments:files,security_snapshot:captured,context_room_id:room})});panel.remove();newPanel=null;await loadList();window.toast?.('Destek talebin iletildi.');}catch(error){form.querySelector('[data-error]').textContent=error.message;}finally{submit.disabled=false;}};}
+  function newTicket(special=null){
+    const categories=Object.freeze({
+      animated_avatar:{
+        category:'nobility_animated_avatar',
+        title:'Özel Animasyonlu Avatar'
+      },
+      couple_repair:{
+        category:'nobility_couple_repair',
+        title:'Çift Günü Onarımı'
+      }
+    });
+
+    const config=typeof special==='string'
+      &&Object.hasOwn(categories,special)
+      ?categories[special]:null;
+
+    if(newPanel?.isConnected){
+      newPanel.hidden=false;
+      if(config&&newPanel.dataset.nobilityCategory!==config.category){
+        window.toast?.('Önce mevcut destek taslağını tamamlayın.');
+      }
+      return;
+    }
+let captured='';try{captured=snapshot();}catch{}const room=window.ErisCurrentRoomId||null;const panel=windowBox('Yeni destek talebi',()=>{panel.hidden=true;window.toast?.('Taslağın bu oturumda korundu. Yeni talep düğmesinden devam edebilirsin.');});newPanel=panel;panel.querySelector('[data-body]').innerHTML='<form><label>Kategori<select name="category"><option value="account">Hesap</option><option value="payment">Ödeme</option><option value="room">Oda</option><option value="safety">Güvenlik / Şikâyet</option><option value="other">Diğer</option></select></label><label>Konu<input name="subject" required maxlength="120"></label><label>Sorunu anlat<textarea name="message" required minlength="3" maxlength="4000"></textarea></label><label>Kanıt: 3 fotoğraf veya 1 video<input type="file" name="evidence" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple></label><button class="primary" type="submit">Talebi gönder</button><p data-error role="alert"></p></form>';const form=panel.querySelector('form');
+
+    if(config){
+      panel.dataset.nobilityCategory=config.category;
+
+      const category=form.elements.category;
+      const option=document.createElement('option');
+
+      option.value=config.category;
+      option.textContent=config.title;
+
+      category.replaceChildren(option);
+      category.value=config.category;
+      category.disabled=true;
+
+      form.elements.subject.value=config.title;
+      form.elements.subject.readOnly=true;
+    }
+
+    form.onsubmit=async e=>{e.preventDefault();const submit=form.querySelector('button');if(submit.disabled)return;const owner=token();submit.disabled=true;try{if(!form.elements.subject.value.trim()||form.elements.message.value.trim().length<3)throw new Error('Konu ve en az 3 karakterlik açıklama yaz.');const files=await attachments(form.elements.evidence.files);if(owner!==token())return;await req('/support/tickets',{method:'POST',body:JSON.stringify({category:form.elements.category.value,subject:form.elements.subject.value.trim(),message:form.elements.message.value.trim(),attachments:files,security_snapshot:captured,context_room_id:room})});panel.remove();newPanel=null;await loadList();window.toast?.('Destek talebin iletildi.');}catch(error){form.querySelector('[data-error]').textContent=error.message;}finally{submit.disabled=false;}};}
   async function loadList(){mount();const root=document.getElementById('supportLiveMount');if(!root)return;const list=root.querySelector('[data-list]'),r=++listRevision,agent=adminList;root.querySelector('[data-list-status]').textContent='Talepler yükleniyor…';if(!token()){listRows=[];list.textContent='Destek için giriş yap.';root.querySelector('[data-list-status]').textContent='';return;}try{const rows=await req(agent?'/support/live/inbox':'/support/tickets');if(r!==listRevision||agent!==adminList)return;listRows=rows;renderList();}catch(error){if(r!==listRevision)return;root.querySelector('[data-list-status]').textContent=error.message+' · Yenile ile tekrar deneyebilirsin.';}}
   async function openTicket(id,agent=false){const revision=++openRevision;const ticket=await req('/support/live/tickets/'+id);if(revision!==openRevision)return;if(current?.id===id&&current.agent===agent&&box){box.hidden=false;resumeButton();draw(ticket);return;}saveDraft();if(box)box.remove();current={id,agent,signature:null,phase:null};box=windowBox('Destek '+number(id),hideTicket);box.querySelector('[data-close]').setAttribute('aria-label','Görüşmeyi gizle; talep açık kalır');box.querySelector('[data-close]').title='Gizle — talebi sonlandırmaz';box.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();hideTicket();}});resumeButton();draw(ticket);}
   function draw(t){if(!box||!current||current.id!==t.id)return;const previous=current.phase;current.phase=t.phase;resumeButton();box.querySelector('[data-close]').setAttribute('aria-label',t.phase==='closed'?'Mesaj geçmişini kapat':'Görüşmeyi gizle; talep açık kalır');box.querySelector('[data-close]').title=t.phase==='closed'?'Kapat':'Gizle — talebi sonlandırmaz';const body=box.querySelector('[data-body]');let history=body.querySelector('[data-history]');if(!history){body.innerHTML='<div data-meta></div><p data-state role="status"></p><small data-connection role="status"></small><div class="support-history" data-history></div><div data-controls></div><button type="button" data-end>Talebi sonlandır</button>';body.querySelector('[data-end]').onclick=finish;history=body.querySelector('[data-history]');}body.querySelector('[data-state]').textContent=phases[t.phase]||t.status;body.querySelector('[data-connection]').textContent='';body.querySelector('[data-end]').hidden=t.phase==='closed'||(current.agent&&t.phase==='pending');const meta=body.querySelector('[data-meta]');meta.textContent=current.agent?t.customer_name+' · '+t.customer_id+' · '+t.subject:t.subject+' · Müşteri Temsilcisi';
@@ -79,7 +121,18 @@
   document.addEventListener('click',e=>{if(Date.now()>=restrictedUntil||e.target.closest('.support-window,.support-lightbox')||e.target.closest('.eris-admin-overlay,.eris-admin-menu'))return;const action=e.target.closest('button,a,[onclick]');if(!action)return;e.preventDefault();e.stopImmediatePropagation();showRestriction();},true);
   document.addEventListener('visibilitychange',()=>{if(role&&token())req('/support/live/presence',{method:'POST',body:JSON.stringify({active:!document.hidden})}).catch(()=>{});if(!document.hidden)pulse();});
   window.addEventListener('erischat:auth',()=>{identity=token();role=null;roleAt=0;heartbeatAt=0;announced.clear();restrictedUntil=0;restrictionBox?.remove();dismiss();drafts.clear();newPanel=null;listRows=[];listRevision++;document.querySelectorAll('.support-window,.support-lightbox').forEach(p=>p.remove());adminList=false;loadList();if(token())pulse();});
-  window.ErisSupport={openAssigned:id=>openTicket(id,true),open(){adminList=false;mount();window.showView?.('support');loadList();},openAdmin(){adminList=true;mount();window.showView?.('support');loadList();pulse();},load:loadList,restrict};
+  window.ErisSupport={
+    openNobilityRequest(privilege){
+      if(!['animated_avatar','couple_repair'].includes(privilege)){
+        return;
+      }
+      if(!token()){
+        window.toast?.('Önce giriş yapmalısınız.');
+        return;
+      }
+      newTicket(privilege);
+    },
+    openAssigned:id=>openTicket(id,true),open(){adminList=false;mount();window.showView?.('support');loadList();},openAdmin(){adminList=true;mount();window.showView?.('support');loadList();pulse();},load:loadList,restrict};
   window.addEventListener('load',()=>{mount();pulse();});window.ErisApiTransport?.poll?.(pulse,5000);let statusBusy=false;const checkStatus=async()=>{if(statusBusy||!token()||!current||document.hidden||navigator.onLine===false)return;statusBusy=true;try{await refreshCurrent();}finally{statusBusy=false;}};setInterval(checkStatus,5000);window.addEventListener('online',checkStatus);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkStatus();});setInterval(updateRestriction,1000);
 })();
 

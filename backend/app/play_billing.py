@@ -118,6 +118,14 @@ def record_verified_receipt(db, user_id, product_id, purchase_token, verdict):
     def same_owner(row):
         if row.user_id != user_id or row.product_id != product_id:
             raise HTTPException(409, 'Satın alma belirteci başka bir hesap veya ürünle eşleşiyor')
+        if (
+            row.google_order_id != verdict.get("order_id")
+            or row.test_purchase != verdict.get("test_purchase")
+        ):
+            raise HTTPException(
+                409,
+                "Google Play makbuz kimligi eslesmiyor",
+            )
         return row
     existing = db.scalar(select(PlayPurchaseRecord).where(PlayPurchaseRecord.token_sha256 == token_hash))
     if existing:
@@ -338,8 +346,22 @@ def _voided_audit_rows(items, receipts_by_hash):
             continue
         fingerprint = hashlib.sha256(token.encode('utf-8')).hexdigest()
         receipt = receipts_by_hash.get(fingerprint)
-        if receipt is None or receipt.google_order_id != item.get('orderId'):
+        order_id = item.get('orderId')
+
+        if (
+            receipt is None
+            or not isinstance(order_id, str)
+            or not order_id.strip()
+            or receipt.google_order_id != order_id
+        ):
             continue
+
+        # Current Lidya packages are single-quantity purchases.
+        # Do not interpret ambiguous quantity data as a full refund.
+        if 'voidedQuantity' in item:
+            quantity = item['voidedQuantity']
+            if type(quantity) is not int or quantity != 1:
+                continue
         if receipt.id in seen:
             continue
         seen.add(receipt.id)
@@ -415,37 +437,134 @@ def register_refund_audit_auth(current_user):
                 'google_voided_count': len(voided), 'matched_count': len(rows),
                 'unmatched_count': len(voided) - len(rows),
                 'truncated': truncated, 'items': rows,
-                'message': 'Otomatik bakiye düşümü yapılmaz; her iade DA tarafından incelenir.'}
+                'message': 'Bu sorgu salt okunurdur. Senkronizasyon Asalet puanlarini geri alabilir; Lidya bakiyesi degismez.'}
 
 
 
 # V2: an explicit DA action saves matches as cases. No automatic wallet mutations.
 def _refund_cases_sync(db, rows):
-    """Exactly one case per purchase receipt; repeat scans preserve DA decisions."""
+    """Synchronize verified voids and reverse nobility funding.
+
+    Preserve DA review decisions and existing wallet policy.
+    All changes commit together.
+    """
     from .play_refund_models import PlayRefundCase
+    from .nobility_play_refunds import refund_play_nobility
+    from .models import User
     from sqlalchemy import select
-    from sqlalchemy.exc import IntegrityError
+
     created = 0
-    for row in rows:
-        existing = db.scalar(select(PlayRefundCase).where(PlayRefundCase.receipt_id == row['receipt_id']))
-        if existing:
-            # Preserve immutable identifiers and review state; never reopen a reviewed case.
-            continue
-        case = PlayRefundCase(receipt_id=row['receipt_id'],user_id=row['user_id'],
-                              product_id=row['product_id'],voided_at_ms=str(row.get('voided_at_ms') or '')[:32],
-                              voided_reason=str(row.get('voided_reason') if row.get('voided_reason') is not None else '')[:24],
-                              voided_source=str(row.get('voided_source') if row.get('voided_source') is not None else '')[:24],
-                              status='pending')
-        try:
-            with db.begin_nested():
+    nobility_refunded = 0
+
+    try:
+        ordered = sorted(
+            rows,
+            key=lambda row: row["receipt_id"],
+        )
+
+        locked = {}
+
+        # Same receipt lock as purchase fulfillment.
+        for row in ordered:
+            rid = row["receipt_id"]
+
+            if rid in locked:
+                continue
+
+            receipt = db.scalar(
+                select(PlayPurchaseRecord)
+                .where(PlayPurchaseRecord.id == rid)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+
+            if receipt is None:
+                raise RuntimeError("Refund receipt missing")
+
+            locked[rid] = receipt
+
+        # Validate identities before financial changes.
+        for row in ordered:
+            receipt = locked[row["receipt_id"]]
+
+            if (
+                receipt.user_id != row["user_id"]
+                or receipt.product_id != row["product_id"]
+            ):
+                raise RuntimeError("Refund receipt mismatch")
+
+        # Deterministic user lock order.
+        for uid in sorted({
+            receipt.user_id
+            for receipt in locked.values()
+        }):
+            user = db.scalar(
+                select(User.id)
+                .where(User.id == uid)
+                .with_for_update()
+            )
+
+            if user is None:
+                raise RuntimeError("Refund user missing")
+
+        for row in ordered:
+            receipt = locked[row["receipt_id"]]
+
+            existing = db.scalar(
+                select(PlayRefundCase)
+                .where(
+                    PlayRefundCase.receipt_id == receipt.id
+                )
+                .execution_options(populate_existing=True)
+            )
+
+            if existing is None:
+                case = PlayRefundCase(
+                    receipt_id=receipt.id,
+                    user_id=receipt.user_id,
+                    product_id=receipt.product_id,
+                    voided_at_ms=str(
+                        row.get("voided_at_ms") or ""
+                    )[:32],
+                    voided_reason=str(
+                        row.get("voided_reason")
+                        if row.get("voided_reason") is not None
+                        else ""
+                    )[:24],
+                    voided_source=str(
+                        row.get("voided_source")
+                        if row.get("voided_source") is not None
+                        else ""
+                    )[:24],
+                    status="pending",
+                )
+
                 db.add(case)
                 db.flush()
-            created += 1
-        except IntegrityError:
-            # Another DA may have synchronized concurrently; unique receipt constraint wins.
-            continue
-    db.commit()
-    return created
+                created += 1
+
+            elif (
+                existing.user_id != receipt.user_id
+                or existing.product_id != receipt.product_id
+            ):
+                raise RuntimeError("Refund case mismatch")
+
+            # Existing reviewed cases must not prevent
+            # reversal of verified nobility funding.
+            if refund_play_nobility(db, receipt):
+                nobility_refunded += 1
+
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "created": created,
+        "nobility_refunded": nobility_refunded,
+    }
+
 
 
 def _refund_case_view(case):
@@ -511,12 +630,16 @@ def register_refund_case_auth(current_user):
                 for record in db.scalars(select(PlayPurchaseRecord).where(PlayPurchaseRecord.token_sha256.in_(hashes[i:i+500]))):
                     receipts[record.token_sha256]=record
             rows=_voided_audit_rows(voided,receipts)
-            added=_refund_cases_sync(db,rows)
+            result=_refund_cases_sync(db,rows)
         except Exception:
             db.rollback()
             raise HTTPException(503,'İade kayıtları güvenli biçimde eşitlenemedi') from None
-        return {'created':added,'matched':len(rows),'unmatched':len(voided)-len(rows),
-                'truncated':truncated,'mode':'review_only','wallet_changed':False}
+        return {'created':result['created'],'matched':len(rows),'unmatched':len(voided)-len(rows),
+                'truncated':truncated,
+                'mode':'review_and_nobility_refund',
+                'wallet_changed':False,
+                'nobility_refunded':result['nobility_refunded'],
+                'nobility_changed':result['nobility_refunded'] > 0}
 
     @router.get('/v1/google-play/refund-cases')
     def list_cases(response:Response,user=Depends(current_user),db=Depends(get_db)):

@@ -83,8 +83,22 @@
     const avatarKey = assetValue(user.avatar_asset, '');
     const frameKey = assetValue(user.frame_asset, '');
     const wallpaperKey = assetValue(user.wallpaper_asset, '');
-    const avatar = assetUrl(avatarKey);
-    const frame = assetUrl(frameKey);
+    const superAvatar =
+      window.ErisStaffIdentity?.isStaff(user)
+      ? null
+      : window.LidyaNobilityAppearance?.superAvatar(
+          user.nobility
+        );
+
+    const avatar = superAvatar || assetUrl(avatarKey);
+    const nobilityFrame =
+      window.ErisStaffIdentity?.isStaff(user)
+      ? null
+      : window.LidyaNobilityAppearance?.resolve(
+          user.nobility,'frame'
+        );
+
+    const frame = nobilityFrame || assetUrl(frameKey);
     const wallpaper = assetUrl(state.wallpapers.find(item => item.key === wallpaperKey)?.asset);
     if (wallpaper) { document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); document.body.style.backgroundImage = `linear-gradient(#05030aa8,#05030ad9), url("${wallpaper}")`; document.body.style.backgroundSize = 'cover'; document.body.style.backgroundAttachment = 'fixed'; } else { document.documentElement.style.removeProperty('--eris-wallpaper'); document.body.style.backgroundImage = ''; }
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {

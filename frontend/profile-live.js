@@ -200,6 +200,11 @@
   }
 
   function render(user) {
+    window.LidyaNobilityAppearance?.decorateProfile(
+      document.querySelector('#profile .profile.card'),
+      user
+    );
+
     if (!user) return;
     const name = $('.profile .name h2');
     const stats = document.querySelectorAll('.profile .stats .stat b');
@@ -219,6 +224,10 @@
       const nickname = document.createElement('span');
       nickname.textContent = user.nickname || 'Anonim';
       name.append(nickname);window.ErisRoleBadges?.bind(name,user);
+      window.LidyaNobilityAppearance?.badge(
+        name,user.nobility
+      );
+
     }
     const parent=name?.parentElement;
     if(parent){let age=parent.querySelector('[data-profile-age]');if(!age){age=document.createElement('small');age.dataset.profileAge='';parent.append(age);}age.textContent=Number.isInteger(user.age)?user.age+' yaş':'';age.hidden=!Number.isInteger(user.age);}

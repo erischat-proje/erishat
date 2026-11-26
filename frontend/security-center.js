@@ -53,11 +53,124 @@
      else{
        a.append(button('🛡 Kullanıcı ID ile DM incelemesi',dmInvestigations));
        a.append(button('Sorgulama Kayıtları',logs));
+       a.append(button(
+        '♛ Kral Animasyon Tanımlama',
+        nobilityAvatarGrant
+       ));
        a.append(button('Güvenlik oturumunu kapat',async()=>{await req('/revoke','POST');await render()}));
      }
    }
    body.append(button('← Yönetim menüsüne dön',()=>{back?.()}));
  }
+
+ async function nobilityAvatarGrant(){
+   status=await req('/status');
+
+   if(!status.active){
+     throw Error('Aktif güvenlik oturumu gerekli.');
+   }
+
+   reset('♛ Kral Animasyon Tanımlama');
+
+   const card=group('Kişiye özel animasyonlu avatar');
+
+   line(card,'Yalnızca aktif Kral üyeleri için.');
+   line(card,'15 gün geçerlidir. Süre dolmadan değiştirilemez.');
+   line(card,'GIF / WebP • 2 MB • 512 × 512 • 10 saniye');
+
+   const id=document.createElement('input');
+   id.type='text';
+   id.inputMode='numeric';
+   id.maxLength=12;
+   id.placeholder='Kullanıcı ID numarası';
+   id.setAttribute('aria-label','Kullanıcı ID');
+   id.style.cssText='width:100%;box-sizing:border-box;margin:10px 0;padding:12px;border:1px solid var(--ea-line);border-radius:10px;background:var(--ea-panel);color:inherit';
+
+   const file=document.createElement('input');
+   file.type='file';
+   file.accept='image/gif,image/webp';
+   file.setAttribute('aria-label','Animasyon dosyası');
+   file.style.cssText='display:block;width:100%;margin:12px 0';
+
+   const result=el('p','');
+   const openedBody=body;
+
+   card.append(id,file,result);
+
+   card.append(button('Animasyonu Tanımla',async()=>{
+     const publicId=id.value.trim();
+     const selected=file.files?.[0];
+
+     if(!/^[0-9]{10,12}$/.test(publicId)){
+       throw Error('Geçerli kullanıcı ID girin.');
+     }
+
+     if(!selected){
+       throw Error('Animasyon dosyası seçin.');
+     }
+
+     if(selected.size>2*1024*1024){
+       throw Error('Dosya en fazla 2 MB olabilir.');
+     }
+
+     const token=provider();
+
+     if(!token)throw Error('Giriş gerekli.');
+
+     const fresh=await req('/status');
+
+     if(!fresh.active){
+       throw Error('Güvenlik oturumu sona erdi.');
+     }
+
+     if(!confirm(publicId+' ID numaralı kullanıcıya 15 günlük animasyon tanımlansın mı?')){
+       return;
+     }
+
+     if(provider()!==token||body!==openedBody||!card.isConnected){
+       throw Error('Oturum veya ekran değişti.');
+     }
+
+     const data=new FormData();
+     data.append('file',selected);
+
+     result.textContent='Animasyon doğrulanıyor…';
+
+     const response=await fetch(
+       rootApi+'/v1/nobility/admin/animated-avatar/'+
+       encodeURIComponent(publicId),
+       {
+         method:'POST',
+         headers:{Authorization:'Bearer '+token},
+         body:data,
+         cache:'no-store'
+       }
+     );
+
+     const payload=await response.json().catch(()=>({}));
+
+     if(!response.ok||payload.ok!==true){
+       result.textContent='';
+       throw Error(
+         typeof payload.detail==='string'
+          ?payload.detail
+          :'Animasyon tanımlanamadı.'
+       );
+     }
+
+     if(provider()!==token||!card.isConnected)return;
+
+     result.textContent=
+       '✓ Animasyon tanımlandı. Bitiş: '+
+       new Date(payload.expires_at).toLocaleString('tr-TR');
+
+     file.value='';
+     id.value='';
+   }));
+
+   nav();
+ }
+
  async function startChallenge(purpose,eventId){
    const data={purpose};if(eventId)data.event_id=eventId;
    challenge=await req('/challenges','POST',data);showChallenge();

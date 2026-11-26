@@ -6,7 +6,8 @@
   const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   const asset=key=>window.ErisChatCosmetics?.assetUrl?.(key)||key;
   function finish(){if(!active)return;const a=active;active=null;clearTimeout(a.timer);clearTimeout(a.loadTimer);cancelAnimationFrame(a.raf);a.el.remove();a.resolve();}
-  function clear(){epoch++;pumping=false;queue.length=0;finish();window.ErisRelationshipEntrance?.clear?.();}
+  function clear(){epoch++;
+    window.LidyaNobilityEntrance?.close?.();pumping=false;queue.length=0;finish();window.ErisRelationshipEntrance?.clear?.();}
   function paint(canvas,theme,duration,holder){
     const c=canvas.getContext('2d');if(!c)return;
     const w=Math.min(innerWidth,900),h=Math.min(innerHeight,1100),ratio=Math.min(devicePixelRatio||1,1.5);
@@ -78,6 +79,16 @@
     artwork.onerror=()=>{if(active!==holder)return;artwork.hidden=true;start()};
     holder.loadTimer=setTimeout(start,1200);artwork.src=d.vip_benefits?.level_entry_frame?window.ErisVIPPrivileges.assetUrl(d.vip_benefits.level_entry_frame.asset):theme.entryFrame;
   });}
+  function nobilityRank(d){
+    const n=d?.nobility;
+    return !d?.preview &&
+      Number.isInteger(n?.rank) &&
+      n.rank>=1 && n.rank<=4 &&
+      Array.isArray(n.privileges) &&
+      n.privileges.includes('entrance')
+      ? n.rank : 0;
+  }
+
   async function next(){
     if(pumping||active||!queue.length)return;const ticket=epoch,d=queue.shift();
     if(document.hidden||(!d.preview&&window.ErisRoomBlocks?.has?.(d.user_id))){next();return}
@@ -85,11 +96,19 @@
     if(theme)await play(d,theme);
     if(ticket!==epoch)return;
     if(!d.preview&&d.entrance_asset)await window.ErisRelationshipEntrance?.show?.(d);
+    if(ticket!==epoch)return;
+    const rank=nobilityRank(d);
+    if(rank&&!document.hidden&&
+       !window.ErisRoomBlocks?.has?.(d.user_id)){
+      await window.LidyaNobilityEntrance?.show?.(
+        rank,d.nickname
+      );
+    }
     if(ticket===epoch){pumping=false;next()}
   }
   function show(d){
     if(!d||document.hidden||window.ErisRoomBlocks?.has?.(d.user_id))return;
-    if(!d.shop_entry&&!d.normal_entry&&!window.ErisVIPDesigns?.get(d.vip_entry_level)&&!d.entrance_asset)return;
+    if(!d.shop_entry&&!d.normal_entry&&!window.ErisVIPDesigns?.get(d.vip_entry_level)&&!d.entrance_asset&&!nobilityRank(d))return;
     if(d.event_id){if(seen.has(d.event_id))return;seen.add(d.event_id);if(seen.size>120)seen.delete(seen.values().next().value)}
     if(queue.length<8){queue.push({...d});next()}
   }
