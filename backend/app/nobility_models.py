@@ -520,3 +520,46 @@ class NobilityActionConfirmation(Base):
         default=utc_now,
         nullable=False,
     )
+
+
+class NobilityVisualPreference(Base):
+    """Persistent personal nobility appearance preference."""
+
+    __tablename__ = "nobility_visual_preferences"
+
+    __table_args__ = (
+        CheckConstraint("rank >= 1 AND rank <= 4"),
+        CheckConstraint(
+            "privilege IN ('badge', 'frame', 'entrance', "
+            "'gift_banner', 'region_background', "
+            "'room_frame', 'super_avatar')"
+        ),
+    )
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    rank: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    privilege: Mapped[str] = mapped_column(
+        String(40),
+        primary_key=True,
+    )
+
+    enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utc_now,
+        onupdate=utc_now,
+        nullable=False,
+    )

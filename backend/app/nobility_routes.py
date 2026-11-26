@@ -125,6 +125,23 @@ def register_auth(current_user):
             **membership_state(db, user.id),
         }
 
+
+    @router.post("/collection/preference")
+    def collection_preference(
+        payload: dict,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user),
+    ):
+        from .nobility_collection import set_preference
+
+        return set_preference(
+            db,
+            user,
+            payload.get("rank"),
+            payload.get("privilege"),
+            payload.get("enabled"),
+        )
+
     @router.get("/history")
     def history(
         limit: int = Query(default=20, ge=1, le=50),

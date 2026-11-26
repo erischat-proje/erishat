@@ -182,6 +182,18 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
                            'name':'Yüzük', 'source':'relationship', 'level':0, 'equip_key':ring.ring, 'equipped':house.ring == ring.ring})
     from .shop_expansion import room_inventory
     result.extend(room_inventory(db,user))
+
+    from .nobility_collection import (
+        inventory as nobility_inventory,
+    )
+    result.extend(nobility_inventory(db, user))
+
+    labels.update({
+        'nobility_badge': 'Asalet Rozeti',
+        'nobility_banner': 'Hediye Afişi',
+        'nobility_room_frame': 'Oda Kartı Çerçevesi',
+    })
+
     if staff_identity.role_for(user):
         result = [item for item in result if item['type'] not in ('avatar','frame')] + staff_identity.inventory()
     db.commit()

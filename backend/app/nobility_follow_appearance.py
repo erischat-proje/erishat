@@ -59,9 +59,16 @@ def knight_follow_appearance(db, viewer_id, target_id, at):
         if not following:
             return empty
 
+    from .nobility_collection import disabled_privileges
+
+    disabled = disabled_privileges(db, target_id, 1)
+
     return {
         "rank": 1,
-        "privileges": ["badge", "frame"],
+        "privileges": [
+            key for key in ("badge", "frame")
+            if key not in disabled
+        ],
     }
 
 
@@ -164,8 +171,20 @@ def knight_follow_appearances(
         .exists()
     )
 
+    from .nobility_collection import (
+        visual_disabled_expression,
+    )
+
     query = (
-        select(member)
+        select(
+            member,
+            visual_disabled_expression(
+                member, "badge"
+            ).label("badge_disabled"),
+            visual_disabled_expression(
+                member, "frame"
+            ).label("frame_disabled"),
+        )
         .join(config, config.rank == member.rank)
         .where(
             uid.in_(ids),
@@ -187,11 +206,17 @@ def knight_follow_appearances(
         .execution_options(populate_existing=True)
     )
 
-    for row in db.scalars(query):
+    for row, badge_off, frame_off in db.execute(query):
         if effective_rank(row, at) == 1:
             result[row.user_id] = {
                 "rank": 1,
-                "privileges": ["badge", "frame"],
+                "privileges": [
+                    key for key, disabled in (
+                        ("badge", badge_off),
+                        ("frame", frame_off),
+                    )
+                    if not disabled
+                ],
             }
 
     return result

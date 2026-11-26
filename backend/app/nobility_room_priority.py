@@ -9,9 +9,15 @@ def member_nobility(db, user_id, at):
     if type(rank) is not int or rank not in (1, 2, 3, 4):
         return {"rank": 0, "privileges": []}
 
+    from .nobility_collection import disabled_privileges
+
+    disabled = disabled_privileges(db, user_id, rank)
+
     return {
         "rank": rank,
-        "privileges": ["badge"],
+        "privileges": (
+            [] if "badge" in disabled else ["badge"]
+        ),
     }
 
 
@@ -52,10 +58,17 @@ def members_nobility(db, user_ids, at):
     if not ids or not enabled():
         return result
 
+    from .nobility_collection import (
+        visual_disabled_expression,
+    )
+
     query = (
         select(
             NobilityMembership,
             NobilityRankConfig,
+            visual_disabled_expression(
+                NobilityMembership, "badge"
+            ).label("badge_disabled"),
         )
         .join(
             NobilityRankConfig,
@@ -70,7 +83,7 @@ def members_nobility(db, user_ids, at):
         .execution_options(populate_existing=True)
     )
 
-    for member, config in db.execute(query):
+    for member, config, badge_off in db.execute(query):
         rank = effective_rank(member, at)
 
         if rank not in (1, 2, 3, 4):
@@ -87,7 +100,9 @@ def members_nobility(db, user_ids, at):
 
         result[member.user_id] = {
             "rank": rank,
-            "privileges": ["badge"],
+            "privileges": (
+                [] if badge_off else ["badge"]
+            ),
         }
 
     return result
