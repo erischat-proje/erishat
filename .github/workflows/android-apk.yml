@@ -70,6 +70,37 @@ jobs:
           python3 -m pip install --disable-pip-version-check Pillow==11.3.0
           python3 scripts/build-apk-content.py --output android-native/app/build/generated/install-content/static-pack
 
+      - name: Restore Firebase Android config
+        env:
+          FIREBASE_CONFIG: ${{ secrets.LIDYACHAT_GOOGLE_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+          test -n "$FIREBASE_CONFIG" || {
+            echo "Firebase config secret is missing"
+            exit 1
+          }
+          python3 - <<'PYCODE'
+          import os, json
+          from pathlib import Path
+
+          config = json.loads(os.environ["FIREBASE_CONFIG"])
+          packages = [
+              client.get("client_info", {})
+                    .get("android_client_info", {})
+                    .get("package_name")
+              for client in config.get("client", [])
+          ]
+
+          assert "com.erischat.app" in packages, "Wrong Firebase package"
+
+          target = Path("android-native/app/google-services.json")
+          target.write_text(
+              json.dumps(config),
+              encoding="utf-8"
+          )
+          target.chmod(0o600)
+          print("OK: Firebase config restored")
+          PYCODE
       - name: Build APK
         working-directory: android-native
         env:
