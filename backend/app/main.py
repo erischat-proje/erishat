@@ -38,6 +38,7 @@ from .models import AuthOTP, AuthIdentity, Conversation, ConversationMember, Mes
 from .repositories import ConversationRepository, MessageRepository, UserRepository
 from .room_fan_levels import level_for_total
 from .personal_fans import gift_totals, fan_leaderboard
+from .nobility_ranking import knight_ranking
 from .group_models import MessageGroup
 from . import chess_routes
 from . import message_tools, message_attachments, dm_inbox, message_actions, message_stars, notification_policy, message_polls, message_pins, message_info, message_search
@@ -2255,7 +2256,10 @@ def personal_fan_leaderboard(user_id: str, db: Session = Depends(get_db), user: 
     rows=fan_leaderboard(db,user_id)
     if flags["gifts_hidden"]:
         rows=[{k:v for k,v in row.items() if k not in {"total_lidya","fan_level"}} | {"gifts_hidden":True} for row in rows]
-    return rows
+
+    return knight_ranking(
+        db, user.id, {"items": rows}
+    )["items"]
 
 
 @app.get("/v1/users/{user_id}/received-gifts")

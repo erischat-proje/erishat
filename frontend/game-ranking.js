@@ -19,6 +19,21 @@ const periods={hour:'Bu saat',day:'Günlük',week:'Haftalık',month:'Aylık'};
 const format=value=>Number(value||0).toLocaleString('tr-TR');
 const searchKey=value=>String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
 const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
+function rankingKnight(row){
+ if(row?.nobility?.rank!==1)return null;
+
+ if(
+  row.management_locked===true ||
+  ['SA','UA','FA','DA'].includes(row.admin_role) ||
+  window.ErisStaffIdentity?.isStaff(row) ||
+  String(row.frame_asset||'').includes(
+   '/role-icons/management-v1/'
+  )
+ )return null;
+
+ return row.nobility;
+}
+
 function safeAsset(path){
  const value=window.ErisChatCosmetics?.assetUrl?.(path)||path||'';
  if(!value)return '';
@@ -119,7 +134,20 @@ function open(selectedGame='wheel'){
     const rank=document.createElement('b');rank.className='lgr-rank';rank.textContent=String(row.rank??'—');rank.setAttribute('aria-label',String(row.rank??'')+'. sıra');
     const portrait=document.createElement('span');portrait.className='lgr-portrait';
     const fallback=document.createElement('span');fallback.className='lgr-avatar-fallback';fallback.textContent=row.avatar||String(row.nickname||'L').trim().slice(0,1).toLocaleUpperCase('tr-TR');portrait.append(fallback);
-    const avatar=safeAsset(row.avatar_asset),frame=safeAsset(row.frame_asset);
+    const knight=rankingKnight(row);
+    const appearance=window.LidyaNobilityAppearance;
+    const knightFrame=knight
+      ? appearance?.resolve(knight,'frame')
+      : null;
+
+    const avatar=safeAsset(row.avatar_asset);
+    const frame=knightFrame
+      ? safeAsset(knightFrame)
+      : safeAsset(row.frame_asset);
+
+    if(knightFrame&&frame){
+      portrait.classList.add('lidya-ranking-knight');
+    }
     if(avatar){const image=document.createElement('img');image.className='lgr-avatar';image.src=avatar;image.alt='';image.loading='lazy';image.onerror=()=>image.remove();portrait.append(image);}
     if(frame){const image=document.createElement('img');image.className='lgr-frame';image.src=frame;image.alt='';image.loading='lazy';image.onerror=()=>image.remove();portrait.append(image);}
     const name=document.createElement('button');name.type='button';name.className='lgr-name';name.textContent=row.nickname||'Kullanıcı';name.title=row.nickname||'Kullanıcı';
@@ -127,7 +155,19 @@ function open(selectedGame='wheel'){
     const prize=document.createElement('span');prize.className='lgr-prize';
     const amount=document.createElement('b');amount.textContent=format(row.winnings);
     const coin=document.createElement('img');coin.dataset.coin='';coin.src=q('[data-coin]').src;coin.alt='Lidya';prize.append(amount,coin);
-    entry.append(rank,portrait,name,prize);list.append(entry);
+    if(knight&&appearance?.resolve(knight,'badge')){
+      const identity=document.createElement('div');
+      identity.className='lidya-ranking-knight-name';
+      identity.append(name);
+
+      appearance.badge(identity,knight);
+
+      entry.append(rank,portrait,identity,prize);
+    }else{
+      entry.append(rank,portrait,name,prize);
+    }
+
+    list.append(entry);
    }
  }
  for(const [id,label] of Object.entries(periods)){

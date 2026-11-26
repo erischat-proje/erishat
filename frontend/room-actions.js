@@ -28,6 +28,7 @@
     addModerator: (roomId, userId) => api(`/rooms/${id(roomId)}/moderators`, body({ user_id: userId })),
     removeModerator: (roomId, userId) => api(`/rooms/${id(roomId)}/moderators/${id(userId)}`, { method: 'DELETE' }),
     members: roomId => api(`/rooms/${id(roomId)}/members`),
+    onlineMembers: roomId => api(`/rooms/${id(roomId)}/members?online_only=true`),
     moderators: roomId => api(`/rooms/${id(roomId)}/moderators`),
     chatMutes: roomId => api(`/rooms/${id(roomId)}/chat-mutes`),
     muteChat: (roomId,userId) => api(`/rooms/${id(roomId)}/chat-mutes/${id(userId)}`,body({})),

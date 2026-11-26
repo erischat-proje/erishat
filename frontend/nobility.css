@@ -852,3 +852,265 @@
   opacity: .55;
   pointer-events: none;
 }
+
+
+/* LIDYA KNIGHT PREMIUM BANNERS V1.7.1 */
+
+.lidya-nobility-live-banner.lidya-knight-live-banner{
+  width:min(92vw,440px);
+  top:calc(env(safe-area-inset-top,0px) + 76px);
+  padding:0;
+  pointer-events:none;
+  isolation:isolate;
+  filter:drop-shadow(0 8px 14px #0005);
+}
+
+.lidya-knight-live-banner img{
+  width:100%;
+  height:auto;
+  max-height:180px;
+  object-fit:contain;
+}
+
+.lidya-knight-live-banner span{
+  box-sizing:border-box;
+  width:fit-content;
+  max-width:94%;
+  margin:4px auto 0;
+  padding:9px 16px;
+  border:1px solid #d7b46b;
+  border-radius:12px;
+  background:linear-gradient(
+    145deg,#37291b,#1d150e
+  );
+  color:#fff3d4;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.45;
+  text-align:center;
+  overflow-wrap:anywhere;
+  box-shadow:0 4px 14px #0004;
+}
+
+.lidya-knight-gift-banner img{
+  aspect-ratio:808 / 352;
+}
+
+.lidya-knight-activation-banner img{
+  aspect-ratio:2 / 1;
+}
+
+.lidya-knight-live-banner img[hidden]{
+  display:none!important;
+}
+
+.lidya-knight-banner-fallback span{
+  margin-top:0;
+  border-width:2px;
+}
+
+@media(max-width:360px){
+
+  .lidya-knight-live-banner img{
+    max-height:145px;
+  }
+
+  .lidya-knight-live-banner span{
+    font-size:12px;
+    padding:7px 10px;
+  }
+}
+
+@media(max-height:500px){
+
+  .lidya-nobility-live-banner.lidya-knight-live-banner{
+    top:calc(env(safe-area-inset-top,0px) + 42px);
+    width:min(70vw,360px);
+  }
+
+  .lidya-knight-live-banner img{
+    max-height:100px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+
+  .lidya-knight-live-banner{
+    animation:none!important;
+  }
+}
+
+
+/* LIDYA KNIGHT ENTRANCE V1.8.1 */
+
+.lidya-knight-live-entrance{
+  inset:auto!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%);
+  width:min(64vw,240px,26dvh);
+  height:auto;
+  overflow:visible;
+  background:transparent;
+  pointer-events:none;
+  z-index:11999;
+}
+
+.lidya-knight-live-entrance .ln-entrance-stage{
+  width:100%;
+  max-height:48dvh;
+  border-radius:18px;
+  overflow:hidden;
+  background:#20160e;
+  border:1px solid #d8b66a;
+  box-shadow:0 8px 24px #0006;
+}
+
+.lidya-knight-live-entrance .ln-entrance-name{
+  bottom:8%;
+  font-size:clamp(12px,3.2vw,18px);
+  white-space:normal;
+  overflow-wrap:anywhere;
+  background:#21170cdd;
+  border-radius:8px;
+  padding:5px;
+  z-index:2;
+}
+
+.lidya-knight-live-entrance .ln-entrance-close{
+  pointer-events:auto;
+  top:-12px;
+  right:-12px;
+  width:34px;
+  height:34px;
+  font-size:23px;
+  z-index:3;
+}
+
+.lidya-knight-entrance-poster{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+
+.ln-entrance-video[hidden]{
+  display:none!important;
+}
+
+@media(prefers-reduced-motion:reduce){
+  .lidya-knight-live-entrance{
+    animation:none!important;
+    transition:none!important;
+  }
+}
+
+
+/* KNIGHT ORIGINAL ENTRANCE V1.13.3 */
+
+.ln-entrance-overlay.lidya-knight-timed-entrance{
+ position:fixed!important;
+ inset:0!important;
+ width:100%!important;
+ height:100%!important;
+ transform:none!important;
+ background:#000!important;
+ overflow:hidden!important;
+ pointer-events:auto!important;
+ z-index:2147483647!important;
+}
+
+.lidya-knight-timed-entrance .ln-entrance-stage{
+ position:relative;
+ width:min(100vw,56.25dvh)!important;
+ height:auto!important;
+ aspect-ratio:9/16;
+ max-height:100dvh!important;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+ overflow:hidden;
+}
+
+.lidya-knight-timed-entrance .ln-entrance-name{
+ position:absolute;
+ left:12%!important;
+ right:auto!important;
+ top:84%!important;
+ bottom:auto!important;
+ width:76%!important;
+ transform:translateY(-50%);
+ padding:0!important;
+ margin:0!important;
+ background:transparent!important;
+ color:#ffe29a!important;
+ font-size:clamp(14px,5vw,30px);
+ font-weight:800;
+ text-align:center;
+ white-space:nowrap!important;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ z-index:5;
+}
+
+.lidya-knight-timed-entrance .ln-entrance-name[hidden]{
+ display:none!important;
+}
+
+.lidya-knight-timed-entrance .ln-entrance-close{
+ top:calc(env(safe-area-inset-top,0px) + 16px)!important;
+ right:16px!important;
+ width:42px!important;
+ height:42px!important;
+}
+
+
+/* KNIGHT NAME POSITION V1.13.4 */
+
+.lidya-knight-timed-entrance .ln-entrance-name{
+ position:absolute!important;
+
+ left:50%!important;
+ top:85.8%!important;
+
+ right:auto!important;
+ bottom:auto!important;
+
+ width:70%!important;
+ height:4.2%!important;
+
+ transform:translate(-50%,-50%)!important;
+
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+
+ padding:0!important;
+ margin:0!important;
+
+ font-size:clamp(12px,4.5vw,28px);
+ font-weight:800!important;
+ line-height:1!important;
+
+ text-align:center!important;
+ white-space:nowrap!important;
+
+ color:#ffe6a6!important;
+
+ background:transparent!important;
+ border:none!important;
+ box-shadow:none!important;
+
+ text-shadow:0 2px 4px #000!important;
+
+ overflow:hidden!important;
+ box-sizing:border-box!important;
+
+ z-index:5!important;
+}
+
+.lidya-knight-timed-entrance .ln-entrance-name[hidden]{
+ display:none!important;
+}

@@ -101,7 +101,10 @@
     if(rank&&!document.hidden&&
        !window.ErisRoomBlocks?.has?.(d.user_id)){
       await window.LidyaNobilityEntrance?.show?.(
-        rank,d.nickname
+        rank,d.nickname,{
+          live:true,
+          userId:d.user_id
+        }
       );
     }
     if(ticket===epoch){pumping=false;next()}

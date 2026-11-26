@@ -273,3 +273,244 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
   color:#936315!important;
   font-weight:900!important;
 }
+
+
+/* LIDYA KNIGHT PREMIUM PROFILE V1.5.2 */
+
+#profile .profile.card.profile:has(
+  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support){
+  --knight-frame-size:96px;
+  --knight-avatar-size:60px;
+  grid-template-columns:
+    var(--knight-frame-size)
+    minmax(0,1fr)
+    var(--profile-badge-width)!important;
+}
+
+#profile .profile.card.profile:has(
+  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support):not(
+  :has(.eris-profile-badges>:not([hidden]))
+){
+  grid-template-columns:
+    var(--knight-frame-size)
+    minmax(0,1fr)!important;
+}
+
+#profile .profile.card.profile:has(
+  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support) .stage{
+  width:var(--knight-frame-size)!important;
+  height:var(--knight-frame-size)!important;
+  min-height:var(--knight-frame-size)!important;
+  display:grid!important;
+  place-items:center!important;
+  position:relative!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+
+#profile .profile.card.profile:has(
+  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support) .stage .face{
+  width:var(--knight-avatar-size)!important;
+  height:var(--knight-avatar-size)!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+}
+
+#profile .profile.card.profile:not(
+  .lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support
+) .stage .frameImg[src*="/knight/frame.png"]:not([hidden]){
+  position:absolute!important;
+  inset:auto!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  width:var(--knight-frame-size)!important;
+  height:var(--knight-frame-size)!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:contain!important;
+  pointer-events:none!important;
+}
+
+/* Resolve mini profile cascade conflicts. */
+
+.eris-mini-profile-shade .eris-mini-head:has(
+  .lidya-knight-portrait
+){
+  gap:16px!important;
+  min-height:88px!important;
+  padding-inline:10px!important;
+}
+
+.eris-mini-profile-shade
+.eris-mini-portrait.lidya-knight-portrait{
+  width:68px!important;
+  height:68px!important;
+  flex:0 0 68px!important;
+  overflow:visible!important;
+  box-shadow:none!important;
+}
+
+.eris-mini-profile-shade
+.lidya-knight-portrait .eris-mini-frame{
+  inset:auto!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  width:88px!important;
+  height:88px!important;
+  max-width:none!important;
+  max-height:none!important;
+}
+
+@media(max-width:360px){
+
+  #profile .profile.card.profile:has(
+    .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+  ):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support){
+    --knight-frame-size:80px;
+    --knight-avatar-size:50px;
+  }
+
+  .eris-mini-profile-shade
+  .eris-mini-portrait.lidya-knight-portrait{
+    width:60px!important;
+    height:60px!important;
+    flex-basis:60px!important;
+  }
+
+  .eris-mini-profile-shade
+  .lidya-knight-portrait .eris-mini-frame{
+    width:78px!important;
+    height:78px!important;
+  }
+
+  .eris-mini-profile-shade .eris-mini-head:has(
+    .lidya-knight-portrait
+  ){
+    min-height:78px!important;
+    gap:12px!important;
+  }
+}
+
+
+/* LIDYA KNIGHT SEAT BADGE V1.5.3 */
+
+#erisRoomSurface .eris-seat.lidya-knight-seat
+.seat-pod > .lidya-nobility-badge{
+  position:absolute!important;
+  right:0!important;
+  bottom:0!important;
+  width:min(34%,20px)!important;
+  height:auto!important;
+  aspect-ratio:1;
+  object-fit:contain!important;
+  margin:0!important;
+  display:block!important;
+  pointer-events:none!important;
+  z-index:3;
+  filter:drop-shadow(0 1px 2px #0009);
+}
+
+
+/* LIDYA KNIGHT RANKING V1.6 */
+
+.lgr-dialog .lidya-ranking-knight-name{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+}
+
+.lgr-dialog .lidya-ranking-knight-name .lgr-name{
+  min-width:0;
+  flex:0 1 auto;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.lgr-dialog .lidya-ranking-knight-name
+.lidya-nobility-badge{
+  width:22px!important;
+  height:22px!important;
+  flex:0 0 22px;
+  object-fit:contain;
+  margin:0!important;
+  pointer-events:none;
+}
+
+.lgr-dialog .lidya-ranking-knight .lgr-frame{
+  pointer-events:none;
+  object-fit:contain;
+}
+
+@media(max-width:360px){
+  .lgr-dialog .lidya-ranking-knight-name
+  .lidya-nobility-badge{
+    width:18px!important;
+    height:18px!important;
+    flex-basis:18px;
+  }
+}
+
+
+/* LIDYA KNIGHT FAN RANKING V1.6.1 */
+
+.personal-fan-avatar.lidya-fan-knight{
+  isolation:isolate;
+  overflow:visible!important;
+}
+
+.personal-fan-avatar.lidya-fan-knight
+>img:not(.personal-fan-frame){
+  inset:auto!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%);
+  width:84%!important;
+  height:84%!important;
+  object-fit:cover;
+  border-radius:50%;
+}
+
+.personal-fan-avatar.lidya-fan-knight
+.personal-fan-frame{
+  inset:auto!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%);
+  width:60px!important;
+  height:60px!important;
+  max-width:none!important;
+  object-fit:contain;
+  pointer-events:none;
+  z-index:2;
+}
+
+.personal-fan-name .lidya-nobility-badge{
+  width:22px!important;
+  height:22px!important;
+  flex:0 0 22px;
+  object-fit:contain;
+  margin:0!important;
+  pointer-events:none;
+}
+
+@media(max-width:360px){
+  .personal-fan-avatar.lidya-fan-knight
+  .personal-fan-frame{
+    width:54px!important;
+    height:54px!important;
+  }
+
+  .personal-fan-name .lidya-nobility-badge{
+    width:18px!important;
+    height:18px!important;
+    flex-basis:18px;
+  }
+}
