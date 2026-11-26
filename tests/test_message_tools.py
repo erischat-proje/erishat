@@ -5,7 +5,9 @@ from datetime import datetime,timedelta,timezone
 import pytest
 from sqlalchemy import create_engine,select,event
 from sqlalchemy.orm import Session
-from fastapi import FastAPI,HTTPException,Depends,Header
+from fastapi import FastAPI,HTTPException,Depends,Header,BackgroundTasks
+from types import SimpleNamespace
+from unittest.mock import Mock
 from fastapi.testclient import TestClient
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'backend'));os.environ.setdefault('DATABASE_URL','sqlite://')
 from app.db import Base,get_db
@@ -194,7 +196,12 @@ test_current_user.__test__=False
 
 def production_context(db,messages,uid):
  return {'details':mt.extras(db,messages,uid),'senders':{},'pinned':set(),'gifts':{},'media':{},'read':0}
-main_ns=dict(Session=Session,Message=Message,MessageCreate=MessageCreate,MessageOut=MessageOut,
+main_ns=dict(
+    BackgroundTasks=BackgroundTasks,
+    push_sender=SimpleNamespace(
+        send_dm_push_background=Mock()
+    ),
+    Session=Session,Message=Message,MessageCreate=MessageCreate,MessageOut=MessageOut,
     Header=Header,Depends=Depends,get_db=get_db,User=User,current_user=test_current_user,
     ConversationRepository=ConversationRepository,HTTPException=HTTPException,group_policy=group_policy,
     MessageGroup=MessageGroup,Family=Family,DirectMessageRestriction=DirectMessageRestriction,
