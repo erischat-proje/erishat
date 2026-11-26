@@ -82,6 +82,7 @@ def state(monkeypatch):
     )
 
     db = Mock()
+    db.scalars.return_value.all.return_value = []
 
     def get(model, key, **kwargs):
         if model is NobilityMembership:

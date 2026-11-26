@@ -29,6 +29,7 @@ def test_public_visual_privileges(monkeypatch, rank, expected):
     )
 
     db = Mock()
+    db.scalars.return_value.all.return_value = []
     db.get.return_value = None
 
     monkeypatch.setattr(
@@ -77,6 +78,7 @@ def test_empty_user_has_no_appearance(monkeypatch):
 
 def test_king_personal_animation(monkeypatch):
     db = Mock()
+    db.scalars.return_value.all.return_value = []
     db.get.return_value = None
 
     now = datetime.now(timezone.utc)
@@ -113,6 +115,7 @@ def test_king_personal_animation(monkeypatch):
 
 def test_staff_animation_protection(monkeypatch):
     db = Mock()
+    db.scalars.return_value.all.return_value = []
     db.get.return_value = object()
 
     monkeypatch.setattr(
@@ -137,6 +140,7 @@ def test_lower_rank_cannot_show_animation(
     monkeypatch, rank
 ):
     db = Mock()
+    db.scalars.return_value.all.return_value = []
 
     monkeypatch.setattr(
         appearance, "active_rank",

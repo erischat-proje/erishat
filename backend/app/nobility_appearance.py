@@ -23,7 +23,14 @@ def public_appearance(db, user_id, at=None):
     if rank not in (1, 2, 3, 4):
         return {"rank": 0, "privileges": []}
 
-    allowed = privileges_for_rank(rank)
+    from .nobility_collection import disabled_privileges
+
+    disabled = disabled_privileges(db, user_id, rank)
+
+    allowed = tuple(
+        key for key in privileges_for_rank(rank)
+        if key not in disabled
+    )
 
     result = {
         "rank": rank,
@@ -33,7 +40,11 @@ def public_appearance(db, user_id, at=None):
         ],
     }
 
-    if rank == 4 and not db.get(AdminRole, user_id):
+    if (
+        rank == 4
+        and "super_avatar" in allowed
+        and not db.get(AdminRole, user_id)
+    ):
         avatar = active_avatar(db, user_id, at)
 
         if avatar is not None:

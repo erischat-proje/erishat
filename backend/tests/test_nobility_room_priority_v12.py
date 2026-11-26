@@ -13,8 +13,11 @@ def test_authorized_rank(monkeypatch, rank):
         lambda *args: rank
     )
 
+    db = Mock()
+    db.scalars.return_value.all.return_value = []
+
     result = priority.member_nobility(
-        Mock(), "user1",
+        db, "user1",
         datetime.now(timezone.utc)
     )
 
@@ -33,8 +36,11 @@ def test_invalid_rank(monkeypatch, rank):
         lambda *args: rank
     )
 
+    db = Mock()
+    db.scalars.return_value.all.return_value = []
+
     result = priority.member_nobility(
-        Mock(), "user1",
+        db, "user1",
         datetime.now(timezone.utc)
     )
 

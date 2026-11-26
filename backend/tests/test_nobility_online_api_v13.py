@@ -22,6 +22,7 @@ from backend.app.room_models import (
 )
 from backend.app.nobility_models import (
     NobilityMembership, NobilityRankConfig,
+    NobilityVisualPreference,
 )
 from backend.app.nobility_config import get_rank_rule
 
@@ -64,6 +65,7 @@ def setup(monkeypatch):
         RoomModerator, RoomBan, RoomLivePresence,
         AdminRole, UserBlock, RoomUserBan,
         NobilityMembership, NobilityRankConfig,
+        NobilityVisualPreference,
     )
 
     Base.metadata.create_all(

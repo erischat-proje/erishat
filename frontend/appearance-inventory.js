@@ -1,6 +1,9 @@
 (() => {
   'use strict';
-  const labels={avatar:'Avatar',frame:'Çerçeve',wallpaper:'Duvar kağıdı',room_wallpaper:'Oda duvar kâğıdı',bubble:'Sohbet balonu',profile:'Profil görünümü',title:'Ünvan',entrance:'Oda girişi',ring:'Yüzük',relationship_status:'İlişki düzeyi ünvanı'};
+  const labels={avatar:'Avatar',frame:'Çerçeve',wallpaper:'Duvar kağıdı',room_wallpaper:'Oda duvar kâğıdı',bubble:'Sohbet balonu',profile:'Profil görünümü',title:'Ünvan',entrance:'Oda girişi',ring:'Yüzük',relationship_status:'İlişki düzeyi ünvanı',
+    nobility_badge:'Asalet Rozeti',
+    nobility_banner:'Hediye Afişi',
+    nobility_room_frame:'Oda Kartı Çerçevesi'};
   const api=(p,o)=>window.ErisPlatform.api(p,o);
   const renders=new WeakMap(),mounted=new Map(),pending=new Set();
   const token=()=>window.ErisPlatform?.getAccessToken?.()||'';
@@ -26,15 +29,110 @@
     for(const [label,options,change] of [['Görünüm durumu',[['all','Tümü'],['equipped','Kullanılıyor'],['available','Uygulanabilir'],['expired','Süresi dolan']],v=>state=v],['Koleksiyon sırası',[['default','Mevcut sıra'],['name','Ada göre']],v=>order=v]]){const select=document.createElement('select');select.setAttribute('aria-label',label);select.style.cssText=search.style.cssText;for(const [value,text] of options){const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option)}select.onchange=()=>{change(select.value);limit=20;draw()};controls.append(select)}
     const refresh=document.createElement('button');refresh.type='button';refresh.textContent='Yenile';refresh.onclick=()=>{if(valid()&&!pending.has(account))render(root,current,category)};controls.append(refresh);const notice=document.createElement('p');notice.setAttribute('role','status');root.insertBefore(controls,tabs);root.insertBefore(notice,grid);
     const available=i=>!i.locked&&!i.equipped&&i.compatible!==false&&!i.expired;
-    async function mutate(path,payload){if(!valid()||pending.has(account))return;pending.add(account);draw();notice.textContent='Görünüm uygulanıyor…';let success=false;try{await api(path,{method:'POST',body:JSON.stringify(payload)});success=true;if(account!==token())return;await window.ErisChatCosmetics?.load?.();if(account!==token())return;window.dispatchEvent(new Event('erischat:cosmetics-updated'));window.ErisProfile?.refresh?.();}catch(e){if(valid())notice.textContent=(success?'Görünüm kaydedildi, önizleme yenilenemedi. Yenile düğmesini kullan.':e.message||'Görünüm uygulanamadı. Tekrar dene.');}finally{pending.delete(account);if(valid()){if(success)await render(root,current,category);else{const error=notice.textContent;draw();notice.textContent=error}}}}
+    async function mutate(path,payload){if(!valid()||pending.has(account))return;pending.add(account);draw();notice.textContent='Görünüm uygulanıyor…';let success=false;try{await api(path,{method:'POST',body:JSON.stringify(payload)});success=true;if(account!==token())return;await window.ErisChatCosmetics?.load?.();if(account!==token())return;window.dispatchEvent(new Event('erischat:cosmetics-updated'));await window.ErisProfile?.refresh?.();
+    if(account!==token())return;}catch(e){if(valid())notice.textContent=(success?'Görünüm kaydedildi, önizleme yenilenemedi. Yenile düğmesini kullan.':e.message||'Görünüm uygulanamadı. Tekrar dene.');}finally{pending.delete(account);if(valid()){if(success)await render(root,current,category);else{const error=notice.textContent;draw();notice.textContent=error}}}}
     function draw(){if(!valid())return;refresh.disabled=pending.has(account);grid.replaceChildren();const items=data.items.filter(i=>i.type===category&&String(i.name||labels[i.type]||'').toLocaleLowerCase('tr-TR').includes(query)&&(state==='all'||state==='equipped'&&i.equipped||state==='expired'&&i.expired||state==='available'&&available(i)));if(order==='name')items.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'tr'));notice.textContent=items.length+' eşleşme';tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===category)));
       if(category==='profile'){const card=document.createElement('article');card.className='appearance-item';const name=document.createElement('b');name.textContent='Varsayılan profil görünümü';const reset=document.createElement('button');reset.type='button';reset.textContent='Varsayılana dön';reset.disabled=pending.has(account);reset.onclick=()=>mutate('/me/cosmetics/reset',{cosmetic_type:'profile'});card.append(name,reset);grid.append(card)}
-      if(!items.length){const empty=document.createElement('p');empty.className='appearance-empty';empty.innerHTML='<b>Koleksiyonunu büyüt</b>';const copy=document.createElement('span');copy.textContent=query||state!=='all'?'Bu arama ve filtrelerde görünüm bulunamadı.':'Bu kategoride henüz görünümün yok. Mağaza, VIP ve görev ödülleri burada görünür.';empty.append(copy);grid.append(empty);return;}
-      for(const item of items.slice(0,limit)){const card=document.createElement('article');card.className='appearance-item';card.dataset.type=item.type;card.dataset.equipped=String(!!item.equipped);const visual=document.createElement('div');visual.className='appearance-preview';const image=document.createElement('img');image.src=window.ErisChatCosmetics.assetUrl(item.asset);image.alt=item.name;image.loading='lazy';image.onerror=()=>{image.hidden=true;visual.dataset.missing='true'};visual.append(image);const name=document.createElement('b');name.textContent=(item.name||labels[item.type])+(item.level?' · Seviye '+item.level:'');const source=document.createElement('small');source.className='appearance-source';source.textContent={management:'Yönetim kimliği · Sabit ve özel',relationship:'İlişki ödülü',vip:'VIP ödülü',standard:'Standart',shop:'Mağazadan alındı',task:'Görev ödülü',rental:'Süreli kiralama'}[item.source]||'';const use=document.createElement('button');use.type='button';use.dataset.apply='';use.textContent=item.locked?'🔒 Yönetim kimliği':item.equipped?'✓ Kullanılıyor':item.compatible===false?'Yüzükle uyumsuz':'Uygula';use.disabled=!available(item)||pending.has(account);
+      if(!items.length){const empty=document.createElement('p');empty.className='appearance-empty';empty.innerHTML='<b>Koleksiyonunu büyüt</b>';const copy=document.createElement('span');copy.textContent=query||state!=='all'?'Bu arama ve filtrelerde görünüm bulunamadı.':'Bu kategoride henüz görünümün yok. Mağaza, VIP, asalet ve görev ödülleri burada görünür.';empty.append(copy);grid.append(empty);return;}
+      for(const item of items.slice(0,limit)){const card=document.createElement('article');card.className='appearance-item';card.dataset.type=item.type;card.dataset.equipped=String(!!item.equipped);const visual=document.createElement('div');visual.className='appearance-preview';const image=document.createElement('img');image.src=window.ErisChatCosmetics.assetUrl(item.asset);image.alt=item.name;image.loading='lazy';image.onerror=()=>{image.hidden=true;visual.dataset.missing='true'};visual.append(image);const name=document.createElement('b');name.textContent=(item.name||labels[item.type])+(item.level?' · Seviye '+item.level:'');const source=document.createElement('small');source.className='appearance-source';source.textContent={management:'Yönetim kimliği · Sabit ve özel',relationship:'İlişki ödülü',vip:'VIP ödülü',standard:'Standart',shop:'Mağazadan alındı',task:'Görev ödülü',rental:'Süreli kiralama',nobility:'Asalet ödülü'}[item.source]||'';const use=document.createElement('button');use.type='button';use.dataset.apply='';use.textContent=item.locked?'🔒 Yönetim kimliği':item.equipped?'✓ Kullanılıyor':item.compatible===false?'Yüzükle uyumsuz':'Uygula';use.disabled=!available(item)||pending.has(account);
         if(item.expired)use.textContent='Süresi doldu';const feedback=document.createElement('div');feedback.className='appearance-inline-status';feedback.setAttribute('role','status');
         if(item.source==='rental'&&item.expires_at){source.textContent='Kiralama bitişi: '+new Date(item.expires_at).toLocaleDateString('tr-TR');}
         if(item.room_id){source.textContent=item.room_name+' · '+(item.expired?'Süresi doldu':new Date(item.expires_at).toLocaleDateString('tr-TR')+' tarihine kadar');if(item.expired)use.textContent='Süresi doldu';}
         use.onclick=()=>{if(!valid()||!available(item)||pending.has(account))return;const relation=item.source==='relationship';const path=item.room_id?'/rooms/'+encodeURIComponent(item.room_id)+'/wallpaper/apply':item.entry_selection?'/me/vip/entrance/equip':item.type==='ring'?'/relationship/ring/equip':relation?'/relationship/rewards/equip':item.type==='wallpaper'?'/me/wallpaper/apply':'/me/cosmetics/apply';const payload=item.room_id?{asset_key:item.equip_key}:item.entry_selection?{asset_key:item.equip_key}:item.type==='ring'?{ring:item.equip_key}:relation?{kind:item.type,asset_key:item.equip_key}:{cosmetic_type:item.type,asset_key:item.equip_key};return mutate(path,payload)};
+
+        if(item.source==='nobility'){
+          card.dataset.nobility='true';
+
+          const canChange =
+            !item.locked &&
+            !item.expired &&
+            !pending.has(account);
+
+          const active = item.equipped === true;
+
+          const stateLabel=document.createElement('small');
+
+          stateLabel.textContent =
+            item.expired
+              ? 'Asalet süresi doldu'
+              : item.locked
+                ? 'Asalet seviyen aktif değil'
+                : active
+                  ? '✓ Kullanılıyor'
+                  : 'Etkin değil';
+
+          if(active && canChange){
+            stateLabel.style.fontWeight='700';
+          }
+
+          if(item.expires_at){
+            const until=new Date(item.expires_at);
+
+            if(Number.isFinite(until.getTime())){
+              source.textContent=
+                'Asalet ödülü · '+
+                until.toLocaleDateString('tr-TR')+
+                ' tarihine kadar';
+            }
+          }
+
+          use.textContent =
+            item.expired
+              ? 'Süresi doldu'
+              : item.locked
+                ? 'Kilitli'
+                : active
+                  ? 'Etkinliği kaldır'
+                  : 'Kullan';
+
+          use.disabled=!canChange;
+
+          use.onclick=()=>{
+            if(
+              !valid() ||
+              !canChange ||
+              pending.has(account)
+            )return;
+
+            return mutate(
+              '/nobility/collection/preference',
+              {
+                rank:item.nobility_rank,
+                privilege:item.nobility_privilege,
+                enabled:!active
+              }
+            );
+          };
+
+          card.append(
+            visual,name,source,stateLabel
+          );
+
+          if(item.nobility_privilege==='entrance'){
+            const preview=document.createElement('button');
+
+            preview.type='button';
+            preview.textContent='Girişi izle';
+
+            preview.onclick=()=>{
+              if(!valid())return;
+
+              window.LidyaNobilityEntrance?.play(
+                item.nobility_rank,
+                window.ErisAuth?.user?.nickname ||
+                'LidyaChat'
+              );
+            };
+
+            card.append(preview);
+          }
+
+          card.append(use,feedback);
+
+          grid.append(card);
+          continue;
+        }
+
         if(item.entry_selection){card.dataset.entrance='true';name.textContent=(item.level?'VIP '+item.level+' · ':'')+item.name;const preview=document.createElement('button');preview.type='button';preview.textContent='Girişi izle';preview.onclick=()=>{if(valid())return item.source==='shop'?window.ErisRoomEntrance?.previewAsset(item.asset_key):window.ErisRoomEntrance?.preview(item.level,item.entry_style)};card.append(visual,name,source,preview,use,feedback)}else if(item.type==='bubble'||item.type==='profile'){const preview=document.createElement('button');preview.type='button';preview.textContent=item.type==='profile'?'Profili önizle':'Balonu önizle';preview.onclick=()=>{if(valid())window.ErisChatLiveShop?.preview?.({type:item.type,name:item.name,asset_key:item.asset_key||item.asset})};card.append(visual,name,source,preview,use,feedback)}else card.append(visual,name,source,use,feedback);grid.append(card);}if(items.length>limit){const more=document.createElement('button');more.type='button';more.textContent='Daha fazla görünüm';more.onclick=()=>{if(valid()){limit+=20;draw()}};grid.append(more)}}
     for(const cat of categories){const b=document.createElement('button');b.type='button';b.dataset.category=cat;b.textContent=(labels[cat]||cat)+' ('+data.items.filter(i=>i.type===cat).length+')';b.onclick=()=>{if(valid()){category=cat;limit=20;draw()}};tabs.append(b);}draw();
   }

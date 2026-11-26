@@ -58,6 +58,14 @@ def authorized_banner(db, user_id, kind, *, ghost, at=None):
         return None
 
     rank = active_rank(db, user_id, at)
+    if kind == "gift_banner":
+        from .nobility_collection import visual_enabled
+
+        if not visual_enabled(
+            db, user_id, rank, kind
+        ):
+            return None
+
     scope = banner_scope(rank, kind)
 
     if scope is None:

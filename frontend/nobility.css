@@ -1114,3 +1114,28 @@
 .lidya-knight-timed-entrance .ln-entrance-name[hidden]{
  display:none!important;
 }
+
+
+/* Nobility Collection V117 Preview */
+
+.ln-detail-art{
+  position:relative;
+  box-sizing:border-box;
+  overflow:hidden;
+  min-width:0;
+  min-height:0;
+  aspect-ratio:16/9;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
+}
+
+.ln-detail-art .ln-premium-art{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  box-sizing:border-box;
+}
