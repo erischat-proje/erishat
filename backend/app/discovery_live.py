@@ -11,6 +11,8 @@ from pydantic import BaseModel,Field
 from starlette.concurrency import run_in_threadpool
 from sqlalchemy import Boolean,DateTime,ForeignKey,String,delete,func,select
 from sqlalchemy.orm import Mapped,Session,mapped_column
+from .nobility_appearance import public_appearance
+from .nobility_policy import active_rank
 from .db import Base,get_db
 from .models import User
 from .room_models import Room,RoomMember,RoomGiftEvent
@@ -66,7 +68,10 @@ def rooms(db,user,following=False,limit=100,online=None):
         if following and room.owner_id not in followed and room.id not in followed_rooms:continue
         locked=bool(room.locked and (not room.lock_expires_at or utc(room.lock_expires_at)>now()))
         rows.append({'id':room.id,'room_id':room.id,'public_id':room.public_id,'owner_id':room.owner_id,'name':room.name,'level':room.level,
-            'member_count':counts[room.id],'locked':locked,'password_set':locked,'daily_gift_lidya':str(volumes.get(room.id,0))})
+            'member_count':counts[room.id],'locked':locked,'password_set':locked,'daily_gift_lidya':str(volumes.get(room.id,0)),
+            'owner_nobility':public_appearance(
+                db,room.owner_id
+            )})
     rows.sort(key=lambda r:(-r['member_count'],-int(r['daily_gift_lidya']),r['id']))
     return rows[:limit]
 
@@ -89,7 +94,20 @@ def people(db,user,limit=100,online=None):
         d=distance(origin,loc)
         rows.append({'user_id':target.id,'public_id':None if admin else target.public_id,'nickname':target.nickname,'avatar':target.avatar,
             'avatar_asset':target.avatar_asset,'frame_asset':target.frame_asset,'gender':target.gender,'city':loc.city,'online':True,'distance_km':round(d,1),'_distance':d})
-    rows.sort(key=lambda r:(r['_distance'],r['user_id']))
+    nobility_at=now()
+    for r in rows:
+        r['_nobility_rank']=active_rank(
+            db,r['user_id'],nobility_at
+        )
+
+    rows.sort(key=lambda r:(
+        -r['_nobility_rank'],
+        r['_distance'],
+        r['user_id']
+    ))
+
+    for r in rows:
+        r.pop('_nobility_rank',None)
     for r in rows:r.pop('_distance')
     return rows[:limit]
 

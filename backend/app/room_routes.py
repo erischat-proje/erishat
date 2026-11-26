@@ -311,6 +311,9 @@ def room_live_count_v2(db: Session, room_id: str) -> int:
 
 def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     from .vip_privileges import room_style
+    from .nobility_appearance import public_appearance
+    nobility_at = datetime.now(timezone.utc)
+
     ensure_seats(db, room)
     spend = db.scalar(select(func.coalesce(func.sum(RoomGiftEvent.total_price), 0)).where(RoomGiftEvent.room_id == room.id)) or 0
     members = room_live_count_v2(db, room.id)
@@ -325,7 +328,12 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     public_seats = []
     for s in seats:
         seat_user = db.get(User, s.user_id) if s.user_id else None
-        public_seats.append({"seat_number": s.seat_number, "user_id": s.user_id, "user_name": (getattr(seat_user, "nickname", None) or getattr(seat_user, "username", None) or str(s.user_id)) if seat_user else None, "avatar": getattr(seat_user, "avatar", None) if seat_user else None, "avatar_asset": getattr(seat_user, "avatar_asset", None) if seat_user else None, "frame_asset": getattr(seat_user, "frame_asset", None) if seat_user else None, "locked": bool(s.locked), **({"muted": bool(s.muted)} if can_manage else {})})
+        public_seats.append({
+            "nobility": public_appearance(
+                db, seat_user.id if seat_user else None,
+                nobility_at,
+            ),
+            "seat_number": s.seat_number, "user_id": s.user_id, "user_name": (getattr(seat_user, "nickname", None) or getattr(seat_user, "username", None) or str(s.user_id)) if seat_user else None, "avatar": getattr(seat_user, "avatar", None) if seat_user else None, "avatar_asset": getattr(seat_user, "avatar_asset", None) if seat_user else None, "frame_asset": getattr(seat_user, "frame_asset", None) if seat_user else None, "locked": bool(s.locked), **({"muted": bool(s.muted)} if can_manage else {})})
     wallpaper = db.get(RoomWallpaper, room.id)
     wallpaper_expiry = wallpaper.paid_until if wallpaper and wallpaper.paid_until.tzinfo else (wallpaper.paid_until.replace(tzinfo=timezone.utc) if wallpaper else None)
     if wallpaper:
@@ -342,7 +350,11 @@ def room_view(db: Session, room: Room, user: User | None = None) -> dict:
     wallpaper_applied = bool(wallpaper_state.applied) if wallpaper_state else wallpaper_active
     wallpaper_item = wallpaper_choice if wallpaper_active else None
     is_following = bool(user and db.scalar(select(RoomFollow.id).where(RoomFollow.room_id == room.id, RoomFollow.user_id == user.id)))
-    return {"vip_benefits": room_style(db,room), "couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "owner_avatar_asset": getattr(db.get(User, room.owner_id), "avatar_asset", None), "owner_frame_asset": getattr(db.get(User, room.owner_id), "frame_asset", None), "owner_avatar": getattr(db.get(User, room.owner_id), "avatar", None), "level": room.level,
+    return {
+        "owner_nobility": public_appearance(
+            db, room.owner_id, nobility_at,
+        ),
+        "vip_benefits": room_style(db,room), "couple_id":couple_house.id if couple_house and couple_house.active else None, "id": room.id, "public_id": room.public_id, "name": room.name, "owner_id": room.owner_id, "owner_name": (getattr(db.get(User, room.owner_id), "nickname", None) or getattr(db.get(User, room.owner_id), "username", None) or str(room.owner_id)), "owner_avatar_asset": getattr(db.get(User, room.owner_id), "avatar_asset", None), "owner_frame_asset": getattr(db.get(User, room.owner_id), "frame_asset", None), "owner_avatar": getattr(db.get(User, room.owner_id), "avatar", None), "level": room.level,
         "seat_count": int(room.seat_count or LEVELS[room.level]["seats"]), "seat_permission":seat_workflow.enabled(db,room.id),
         "theme": room.theme, "is_active": room.is_active, "is_following": is_following, "capacity": LEVELS[room.level]["capacity"], "chat_enabled": room.chat_enabled, "locked": room_is_locked(room), "password_set": db.get(RoomPassword, room.id) is not None, "member_count": members, "spent_lidya": int(spend), "wallpaper_asset": wallpaper.asset_key if wallpaper_active and wallpaper_applied else None, "wallpaper_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_applied and wallpaper_item else default_wallpaper(db.get(User, room.owner_id)), "wallpaper_owned_asset": wallpaper.asset_key if wallpaper_active else None, "wallpaper_owned_asset_path": wallpaper_item["asset"] if wallpaper_active and wallpaper_item else None, "wallpaper_applied": bool(wallpaper_active and wallpaper_applied), "wallpaper_expires_at": wallpaper.paid_until if wallpaper_active and not vip_unlocked else None, "moderators": moderators if can_manage else [], "seats": public_seats, "current_user_id": current_id or None, "current_user_seat": current_seat, "is_owner": is_owner, "is_moderator": is_moderator, "can_manage": can_manage, "management": {"rename": can_manage and is_owner, "lock_room": can_manage, "password": can_manage, "moderators": is_owner, "seat_controls": can_manage, "chat_settings": can_manage}}
 
@@ -856,12 +868,259 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
     async def add_ban(room_id: str, payload: BanUpdate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
         require_manageable_guest(db, room, user, payload.user_id)
+
+        from .nobility_policy import has_privilege
+
+        if (
+            user.id != room.owner_id
+            and has_privilege(
+                db,
+                payload.user_id,
+                "kick_protection",
+            )
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Bu kullanıcı Asalet atılma korumasına sahip."
+            )
+
         if not db.get(User, payload.user_id): raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
         if not db.scalar(select(RoomBan.id).where(RoomBan.room_id == room.id, RoomBan.user_id == payload.user_id)):
             db.add(RoomBan(room_id=room.id, user_id=payload.user_id, banned_by=user.id)); db.execute(delete(RoomMember).where(RoomMember.room_id == room.id, RoomMember.user_id == payload.user_id)); db.execute(delete(RoomSeat).where(RoomSeat.room_id == room.id, RoomSeat.user_id == payload.user_id)); db.execute(delete(RoomModerator).where(RoomModerator.room_id == room.id, RoomModerator.user_id == payload.user_id)); db.execute(delete(RoomChatMute).where(RoomChatMute.room_id == room.id, RoomChatMute.user_id == payload.user_id)); db.commit()
         if _room_disconnect_user:
             await _room_disconnect_user(str(payload.user_id), str(room.id))
         return {"banned": True}
+    @router.get("/{room_id}/super-kick/status")
+    def nobility_super_kick_status(
+        room_id: str,
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        from .nobility_policy import has_privilege
+        from .nobility_super_kick import (
+            DAILY_LIMIT,
+            LOCAL_TIMEZONE,
+        )
+        from .nobility_super_kick_models import (
+            NobilitySuperKickQuota,
+        )
+
+        room = get_room_or_404(db, room_id)
+
+        if not is_member(db, room.id, user.id):
+            raise HTTPException(403, "Önce odaya katılmalısınız.")
+
+        at = datetime.now(timezone.utc)
+        day = at.astimezone(LOCAL_TIMEZONE).date()
+
+        allowed = (
+            db.get_bind().dialect.name == "postgresql"
+            and not ghost_active(db, user.id)
+            and has_privilege(db, user.id, "super_kick", at)
+        )
+
+        remaining = 0
+
+        if allowed:
+            quota = db.get(
+                NobilitySuperKickQuota,
+                (user.id, day),
+                populate_existing=True,
+            )
+
+            remaining = max(
+                0,
+                DAILY_LIMIT - (quota.used if quota else 0)
+            )
+
+        return {
+            "ok": True,
+            "allowed": allowed,
+            "remaining": remaining,
+            "daily_limit": DAILY_LIMIT,
+            "day": day.isoformat(),
+        }
+
+    @router.post("/{room_id}/super-kick")
+    @database_task
+    async def nobility_super_kick(
+        room_id: str,
+        payload: dict = Body(...),
+        db: Session = Depends(get_db),
+        user: User = Depends(current_user_dependency),
+    ):
+        from uuid import UUID
+        from .nobility_policy import has_privilege
+        from .nobility_super_kick import (
+            reserve_super_kick,
+            LOCAL_TIMEZONE,
+        )
+        from .nobility_super_kick_models import (
+            NobilitySuperKickEvent,
+        )
+
+        if db.get_bind().dialect.name != "postgresql":
+            raise HTTPException(503, "İşlem kullanılamıyor.")
+
+        if set(payload) != {"user_id", "request_id"}:
+            raise HTTPException(422, "Geçersiz istek.")
+
+        target_id = payload["user_id"]
+        request_id = payload["request_id"]
+
+        if (
+            type(target_id) is not str
+            or not target_id
+            or len(target_id) > 64
+            or type(request_id) is not str
+        ):
+            raise HTTPException(422, "Geçersiz istek.")
+
+        try:
+            parsed = UUID(request_id)
+            if parsed.version != 4 or str(parsed) != request_id:
+                raise ValueError()
+        except (ValueError, TypeError):
+            raise HTTPException(422, "Geçersiz işlem kimliği.")
+
+        room = get_room_or_404(db, room_id)
+
+        try:
+            room = seat_workflow.lock_room(db, room)
+
+            actor = db.scalar(
+                select(User)
+                .where(User.id == user.id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+
+            if not actor or not actor.is_active:
+                raise HTTPException(403, "Hesap kullanılamıyor.")
+
+            previous = db.get(
+                NobilitySuperKickEvent,
+                (actor.id, request_id),
+            )
+
+            if previous:
+                if (
+                    previous.room_id != room.id
+                    or previous.target_id != target_id
+                ):
+                    raise HTTPException(409, "İşlem kimliği çakışması.")
+
+                result = {
+                    "ok": True,
+                    "duplicate": True,
+                    "remaining": previous.remaining,
+                    "day": previous.day.isoformat(),
+                }
+                db.commit()
+                return result
+
+            reject_ghost(db, actor, "Süper atma")
+
+            if not is_member(db, room.id, actor.id):
+                raise HTTPException(403, "Önce odaya katılmalısınız.")
+
+            at = datetime.now(timezone.utc)
+
+            if not has_privilege(db, actor.id, "super_kick", at):
+                raise HTTPException(403, "Kral Asaleti gerekli.")
+
+            if target_id in (actor.id, room.owner_id):
+                raise HTTPException(403, "Bu kullanıcı atılamaz.")
+
+            house = couple_gifts.room_house(db, room.id)
+
+            if house and house.active and target_id in (
+                house.male_id, house.female_id
+            ):
+                raise HTTPException(403, "Oda sahibi atılamaz.")
+
+            if db.get(AdminRole, target_id):
+                raise HTTPException(403, "Yetkili kullanıcı atılamaz.")
+
+            if db.scalar(
+                select(RoomModerator.id).where(
+                    RoomModerator.room_id == room.id,
+                    RoomModerator.user_id == target_id,
+                )
+            ):
+                raise HTTPException(403, "Moderatör atılamaz.")
+
+            member = db.scalar(
+                select(RoomMember).where(
+                    RoomMember.room_id == room.id,
+                    RoomMember.user_id == target_id,
+                    RoomMember.ghost.is_(False),
+                ).with_for_update()
+            )
+
+            if not member or not is_member(db, room.id, target_id):
+                raise HTTPException(409, "Kullanıcı odada değil.")
+
+            remaining = reserve_super_kick(db, actor.id, at)
+
+            if remaining is None:
+                raise HTTPException(409, "Günlük süper atma hakkınız doldu.")
+
+            db.execute(
+                delete(RoomLivePresence).where(
+                    RoomLivePresence.room_id == room.id,
+                    RoomLivePresence.user_id == target_id,
+                )
+            )
+
+            db.delete(member)
+
+            db.execute(
+                update(RoomSeat).where(
+                    RoomSeat.room_id == room.id,
+                    RoomSeat.user_id == target_id,
+                ).values(user_id=None, muted=False)
+            )
+
+            day = at.astimezone(LOCAL_TIMEZONE).date()
+
+            db.add(NobilitySuperKickEvent(
+                user_id=actor.id,
+                request_id=request_id,
+                room_id=room.id,
+                target_id=target_id,
+                day=day,
+                remaining=remaining,
+            ))
+
+            canonical_room_id = str(room.id)
+
+            db.commit()
+
+        except Exception:
+            db.rollback()
+            raise
+
+        try:
+            if _room_disconnect_user is None:
+                raise RuntimeError("Room disconnect unavailable")
+
+            await _room_disconnect_user(
+                target_id,
+                canonical_room_id,
+                super_kick=True,
+            )
+        except Exception:
+            import logging
+            logging.exception("Super kick socket delivery failed")
+
+        return {
+            "ok": True,
+            "duplicate": False,
+            "remaining": remaining,
+            "day": day.isoformat(),
+        }
+
     @router.get("/{room_id}/bans")
     def list_bans(room_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         room = get_room_or_404(db, room_id); require_staff(db, room, user)
@@ -1065,8 +1324,14 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         charged = db.execute(update(User).where(User.id == user.id, User.lidya >= total).values(lidya=User.lidya - total))
         if charged.rowcount != 1:
             db.rollback(); raise HTTPException(status_code=400, detail="Yeterli Lidya yok")
-        from .gift_payout import gift_payout
-        payouts = {recipient_id: gift_payout(per_person) for recipient_id in sorted(recipient_ids)}
+        from .gift_payout import recipient_gift_payout
+        payout_at = datetime.now(timezone.utc)
+        payouts = {
+            recipient_id: recipient_gift_payout(
+                db, recipient_id, per_person, at=payout_at
+            )
+            for recipient_id in sorted(recipient_ids)
+        }
         for recipient_id in sorted(recipient_ids):
             db.execute(update(User).where(User.id == recipient_id).values(lidya=User.lidya + payouts[recipient_id]))
         from .vip_spending import record_spend
@@ -1105,6 +1370,12 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             await _broadcast_room_chat(room.id, room_payload)
             if presentation["global_announcement"]:
                 await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
+        from .nobility_banner_service import announce_gift
+        if events:
+            await announce_gift(
+                db, user.id, room.id,
+                "gift:" + str(events[0].id),
+            )
         return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,
             "total_price":total,"recipient_count":len(recipient_ids),"recipient_amount":payouts[next(iter(recipient_ids))] if len(recipient_ids)==1 else None,
             **presentation}

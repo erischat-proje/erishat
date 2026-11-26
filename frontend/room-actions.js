@@ -34,6 +34,13 @@
     unmuteChat: (roomId,userId) => api(`/rooms/${id(roomId)}/chat-mutes/${id(userId)}`,{method:'DELETE'}),
     bans: roomId => api(`/rooms/${id(roomId)}/bans`),
     ban: (roomId, userId) => api(`/rooms/${id(roomId)}/bans`, body({ user_id: userId })),
+    superKickStatus: roomId =>
+      api(`/rooms/${id(roomId)}/super-kick/status`),
+    superKick: (roomId, userId, requestId) =>
+      api(`/rooms/${id(roomId)}/super-kick`, body({
+        user_id: userId,
+        request_id: requestId
+      })),
     unban: (roomId, userId) => api(`/rooms/${id(roomId)}/bans/${id(userId)}`, { method: 'DELETE' }),
     lockSeat: (roomId, seatNumber) => api(`/rooms/${id(roomId)}/seats/${Number(seatNumber)}/lock`, body({})),
     unlockSeat: (roomId, seatNumber) => api(`/rooms/${id(roomId)}/seats/${Number(seatNumber)}/lock`, { method: 'DELETE' }),

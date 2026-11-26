@@ -288,6 +288,13 @@
     let rows;
     try{rows=await roomApi().members(id)}
     catch(error){body.textContent=error.message||'Odadaki kullanıcılar yüklenemedi.';return}
+    let superKickStatus=null;
+    try{
+      superKickStatus=await roomApi().superKickStatus(id);
+    }catch{}
+
+    const pendingSuperKicks=new Map();
+
     body.replaceChildren();
     const note=document.createElement('p');note.className='room-v3-note';
     note.textContent=rows.length+' oda üyesi';body.append(note);
@@ -325,6 +332,69 @@
           );
           surface()?.querySelector('.room-v3-panel')?.classList.remove('show');
         });
+        if(
+          superKickStatus?.allowed===true &&
+          member.role==='user' &&
+          Number.isInteger(superKickStatus.remaining) &&
+          superKickStatus.remaining>0
+        ){
+          action(
+            '👑 Süper At · '+superKickStatus.remaining+'/5',
+            async()=>{
+              if(String(roomId())!==String(id))return;
+
+              const status=await roomApi().superKickStatus(id);
+
+              if(status?.allowed!==true || status.remaining<=0){
+                window.toast?.('Süper atma hakkınız bulunmuyor.');
+                await openMenu('users');
+                return;
+              }
+
+              if(!window.confirm(
+                (member.nickname||'Kullanıcı')+
+                ' süper atma yetkisiyle odadan çıkarılsın mı?'+
+                '\\nKalan hakkınız: '+status.remaining+'/5'
+              ))return;
+
+              if(String(roomId())!==String(id))return;
+
+              if(typeof crypto?.randomUUID!=='function'){
+                throw new Error('Güvenli işlem kimliği oluşturulamadı.');
+              }
+
+              const target=String(member.user_id);
+
+              let requestId=pendingSuperKicks.get(target);
+
+              if(!requestId){
+                requestId=crypto.randomUUID();
+                pendingSuperKicks.set(target,requestId);
+              }
+
+              const result=await roomApi().superKick(
+                id,target,requestId
+              );
+
+              if(result?.ok!==true){
+                throw new Error('İşlem doğrulanamadı.');
+              }
+
+              pendingSuperKicks.delete(target);
+
+              window.toast?.('Süper atma işlemi tamamlandı.');
+
+              await openMenu('users');
+            }
+          );
+
+          const premiumButton=buttons.lastElementChild;
+
+          if(premiumButton){
+            premiumButton.classList.add('lidya-super-kick-btn');
+          }
+        }
+
         if(staff&&(r.is_owner||member.role==='user')){
           action('Odadan at',async()=>{
             if(!window.confirm((member.nickname||'Kullanıcı')+' odadan atılsın mı?'))return;

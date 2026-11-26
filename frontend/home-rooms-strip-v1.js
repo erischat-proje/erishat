@@ -22,7 +22,17 @@
     return /^(https?:\/\/|\/|\.\/)/i.test(converted) ? converted : '';
   };
   const avatarOf = room => assetUrl(room.owner_avatar_asset || room.owner_avatar || room.owner_avatar_url);
-  const frameOf = room => assetUrl(room.owner_frame_asset || room.owner_frame_url);
+  const frameOf = room => (
+    !String(room.owner_frame_asset||'').includes(
+      '/role-icons/management-v1/'
+    )
+    ? window.LidyaNobilityAppearance?.resolve(
+        room.owner_nobility,'frame'
+      )
+    : null
+  ) || assetUrl(
+    room.owner_frame_asset || room.owner_frame_url
+  );
   const open = room => {
     const id = room.id ?? room.room_id;
     if (id == null || !window.openRoom) {
@@ -47,6 +57,10 @@
     items.forEach(room => {
       const name=room.name || room.title || 'Oda';
       const item=t('button','lhr-card');item.type='button';
+      window.LidyaNobilityAppearance?.decorateRoomCard(
+        item,room.owner_nobility
+      );
+
       item.setAttribute('aria-label',`${name} odasına gir, ${countOf(room)} kişi`);
       const portrait=t('span','lhr-avatar');
       const url=avatarOf(room);

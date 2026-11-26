@@ -68,6 +68,12 @@ async def broadcast_gift(db,row,user):
     event={'type':'room_gift','id':row.id,'room_id':link.room_id,'sender_id':user.id,'recipient_id':house.male_id,'sender_nickname':user.nickname,'recipient_nickname':'Çiftimiz','gift_key':row.gift_key,'quantity':row.quantity,'total_price':row.gross,'recipient_amount':row.each_amount*2,**presentation,**gift_visual(row.gift_key)}
     event['id']=row.id
     await _broadcast_room_chat(link.room_id,event)
+    from .nobility_banner_service import announce_gift
+    await announce_gift(
+        db, user.id, link.room_id,
+        "couple:" + str(row.id),
+    )
+
     if presentation['global_announcement']:
         room=db.get(Room,link.room_id)
         await _broadcast_global_gift_announcement({**event,'room_name':room.name,'room_public_id':room.public_id})

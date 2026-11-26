@@ -11,6 +11,10 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .models import User
 from .play_billing_models import PlayPurchaseRecord
+from .play_refund_models import PlayRefundCase
+from .nobility_policy import paid_points_enabled
+from .nobility_points import apply_points
+
 from .purchase_routes import PACKAGES, LIMIT
 
 PACKAGES_BY_PRODUCT = {f"lidya_{p['id']:03d}": p for p in PACKAGES}
@@ -30,16 +34,31 @@ def credit_verified_purchase(db: Session, *, receipt_id: int, user_id: str, prod
         raise HTTPException(422, "Bilinmeyen ürün")
     try:
         receipt = db.scalar(select(PlayPurchaseRecord)
-                            .where(PlayPurchaseRecord.id == receipt_id).with_for_update())
+                            .where(PlayPurchaseRecord.id == receipt_id)
+                            .with_for_update()
+                            .execution_options(populate_existing=True))
         if receipt is None:
             raise HTTPException(404, "Satın alma kaydı bulunamadı")
         if receipt.user_id != user_id or receipt.product_id != product_id:
             raise HTTPException(409, "Hesap veya paket eşleşmiyor")
+        refund_case = db.scalar(
+            select(PlayRefundCase.id).where(
+                PlayRefundCase.receipt_id == receipt.id
+            )
+        )
+        if refund_case is not None:
+            raise HTTPException(
+                409,
+                "Iade kaydi bulunan satin alim teslim edilemez",
+            )
+
         if receipt.purchase_status == "credited":
             return {"credited": False, "already_credited": True, "receipt_id": receipt.id}
         if receipt.purchase_status != "verified_no_credit" or not receipt.google_order_id:
             raise HTTPException(409, "Bu satın alma teslimata uygun değil")
-        user = db.scalar(select(User).where(User.id == user_id).with_for_update())
+        user = db.scalar(select(User).where(User.id == user_id)
+                         .with_for_update()
+                         .execution_options(populate_existing=True))
         if user is None or not user.is_active:
             raise HTTPException(404, "Aktif kullanıcı bulunamadı")
         amount = int(package["total"])
@@ -47,6 +66,28 @@ def credit_verified_purchase(db: Session, *, receipt_id: int, user_id: str, prod
             raise HTTPException(409, "Bakiye sınırı aşılıyor")
         # The receipt state and balance write are in the same database transaction.
         # The existing system_data.after_flush listener records the ledger delta.
+        nobility_points = 0
+
+        if (
+            paid_points_enabled()
+            and receipt.test_purchase is False
+            and not settings.google_play_test_mode
+        ):
+            applied = apply_points(
+                db,
+                user_id,
+                amount,
+                f"nobility:play:{receipt.token_sha256}",
+                "google_play_purchase",
+            )
+
+            if not applied:
+                raise RuntimeError(
+                    "Unexpected duplicate nobility credit"
+                )
+
+            nobility_points = amount
+
         user.lidya = int(user.lidya) + amount
         receipt.purchase_status = "credited"
         keys = ("lidya_operation", "lidya_reference_id", "lidya_details")
@@ -63,7 +104,8 @@ def credit_verified_purchase(db: Session, *, receipt_id: int, user_id: str, prod
                 else:
                     db.info[k] = saved[k]
         return {"credited": True, "already_credited": False, "receipt_id": receipt.id,
-                "amount": amount, "balance": int(user.lidya)}
+                "amount": amount, "balance": int(user.lidya),
+                "nobility_points": nobility_points}
     except Exception:
         db.rollback()
         raise

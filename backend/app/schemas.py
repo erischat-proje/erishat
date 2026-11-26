@@ -117,6 +117,8 @@ class NicknameChange(BaseModel):
 
 
 class UserOut(BaseModel):
+    nobility: dict | None = None
+
     admin_role: str | None = None
     management_locked: bool = False
     management_badges: list[str] = Field(default_factory=list)

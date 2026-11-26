@@ -9,6 +9,10 @@
   function message(root,text){const note=document.createElement('div');note.className='card ec-discovery-empty';const art=document.createElement('span');art.className='ec-empty-art';art.innerHTML=window.ErisSocialMedia?.icon?.('people')||'';const title=document.createElement('b');title.textContent='Yeni sohbetlere yer aç';const copy=document.createElement('p');copy.textContent=text;note.append(art,title,copy);root.replaceChildren(note);}
   function roomCard(room){
     const button=document.createElement('button');button.type='button';button.className='room card';
+    window.LidyaNobilityAppearance?.decorateRoomCard(
+      button,room.owner_nobility
+    );
+
     const art=document.createElement('span');art.className='ec-room-art';art.innerHTML=window.ErisSocialMedia?.icon?.('room')||'';button.append(art);const info=document.createElement('span');info.className='grow roomText';const title=document.createElement('b');title.textContent=(room.locked?'🔒 ':'')+room.name;
     const detail=document.createElement('small');detail.textContent=`${room.member_count} çevrim içi • Bugün ${room.daily_gift_lidya} Lidya`;
     const id=document.createElement('small');id.textContent='ID: '+(room.public_id||'');info.append(title,detail,id);button.append(info);const badge=document.createElement('span');badge.className='ec-room-live';badge.textContent='CANLI';button.append(badge);

@@ -650,8 +650,26 @@ def register_platform_auth(current_user_dependency):
         blocked_by_them = bool(db.scalar(select(UserBlock.id).where(UserBlock.blocker_id==target.id,UserBlock.blocked_id==user.id)))
         from .personal_fans import fan_count, gift_totals
         from .room_fan_levels import level_for_total
+        from .nobility_appearance import public_appearance
+
+        private_profile = _private(db, target.id)
+        can_show_nobility = (
+            not you_blocked
+            and not blocked_by_them
+            and (
+                target.id == user.id
+                or not private_profile
+                or is_following
+            )
+        )
+
+        nobility = public_appearance(
+            db,
+            target.id if can_show_nobility else None,
+        )
+
         flags=social_flags(db,target.id,user.id)
-        return {"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"age":visible_age(target,user.id,private=_private(db,target.id),following=is_following,blocked=you_blocked or blocked_by_them,staff=bool(admin and admin.role in {"SA","UA","FA","DA"})),"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_private":_private(db,target.id),"follow_requested":bool(_follow_request(db,user.id,target.id)),"can_view_private":target.id==user.id or is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
+        return {"nobility":nobility,"id":target.id,"public_id":visible_public_id,"nickname":target.nickname,"admin_role":(admin.role if admin and admin.role in {"SA","UA","FA","DA"} else None),"avatar":target.avatar,"gender":target.gender,"age":visible_age(target,user.id,private=_private(db,target.id),following=is_following,blocked=you_blocked or blocked_by_them,staff=bool(admin and admin.role in {"SA","UA","FA","DA"})),"bio":getattr(target,"bio",None),"avatar_asset":getattr(target,"avatar_asset",None),"frame_asset":getattr(target,"frame_asset",None),"gift_fan_count":None if flags["fans_hidden"] else fan_count(db,target.id),"fan_level":level_for_total(gift_totals(db,{target.id})[target.id]),"is_following":is_following,"is_private":_private(db,target.id),"follow_requested":bool(_follow_request(db,user.id,target.id)),"can_view_private":target.id==user.id or is_following,"is_self":target.id==user.id,"you_blocked":you_blocked,"blocked_by_them":blocked_by_them,**profile_stats(db,target,user)}
     @router.get("/users/{user_id}/profile-stats")
     def user_profile_stats(user_id: str, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
         target = db.get(User, user_id) or db.scalar(select(User).where(User.public_id == user_id))

@@ -97,7 +97,34 @@ def serialize_ticket(ticket: SupportTicket, db: Session):
 def register_support_auth(current_user_dependency):
     @router.post("/tickets", status_code=201)
     def create_ticket(payload: SupportCreate, db: Session = Depends(get_db), user: User = Depends(current_user_dependency)):
-        ticket = SupportTicket(user_id=user.id, category=payload.category.strip(), subject=payload.subject.strip(),
+        # NOBILITY_SPECIAL_SUPPORT_V11
+        category = payload.category.strip()
+
+        if category.casefold().startswith("nobility_"):
+            privileges = {
+                "nobility_animated_avatar": "animated_avatar",
+                "nobility_couple_repair": "couple_repair",
+            }
+
+            privilege = privileges.get(category)
+
+            if privilege is None:
+                raise HTTPException(
+                    400, "Gecersiz Asalet basvuru kategorisi."
+                )
+
+            from .relationship_routes import lock_users
+            from .nobility_policy import has_privilege
+
+            lock_users(db, [user.id])
+
+            if not has_privilege(db, user.id, privilege):
+                raise HTTPException(
+                    403,
+                    "Bu basvuru icin aktif Kral Asalet uyeligi gereklidir."
+                )
+
+        ticket = SupportTicket(user_id=user.id, category=category, subject=payload.subject.strip(),
                                message=payload.message.strip(), attachments_json=json.dumps(payload.attachments))
         db.add(ticket)
         db.flush()

@@ -200,20 +200,34 @@ async function openQueue(records=false){if(records)return openRecordsIndex(false
  if(snapshot.is_da){
 
   const reviewButton=document.createElement('button');reviewButton.type='button';
-  reviewButton.textContent='Google Play iade dosyaları (V2)';
+  reviewButton.textContent='Google Play iade ve Asalet senkronizasyonu';
   const reviewArea=document.createElement('div');reviewArea.className='pa-note';reviewArea.setAttribute('role','status');
   c.body.prepend(reviewArea);c.body.prepend(reviewButton);
   reviewButton.onclick=async()=>{
-   reviewButton.disabled=true;reviewArea.textContent='İade dosyaları yükleniyor…';
+   if(reviewButton.disabled)return;
+   if(!window.confirm(
+    'Google Play iadeleri senkronize edilecek. '+
+    'Doğrulanmış iadelerde Asalet puanları geri alınabilir, '+
+    'rütbe ve üyelik süresi değişebilir. '+
+    'Lidya bakiyesi değişmez. Devam edilsin mi?'
+   ))return;
+   reviewButton.disabled=true;reviewArea.textContent='İadeler ve Asalet kayıtları eşitleniyor…';
    try{
     const synced=await playFetch('/refund-cases/sync',{method:'POST',body:'{}'});
     const data=await playFetch('/refund-cases');
     if(!live(c))return;
     reviewArea.replaceChildren();
     const summary=document.createElement('p');
-    summary.textContent='İade dosyaları: '+data.items.length+' gösteriliyor, '+synced.created+' yeni. Otomatik bakiye düşümü yok.';
+    const count=synced.nobility_refunded;
+    const refundInfo=Number.isSafeInteger(count)&&count>=0
+     ? ' Asalet iadesi uygulanan satın alım: '+count+'.'
+     : ' Asalet iade sonucu sunucu tarafından bildirilmedi.';
+    summary.textContent='İade dosyaları: '+
+     data.items.length+' gösteriliyor, '+
+     synced.created+' yeni.'+refundInfo+
+     ' Lidya bakiyesi değişmedi.';
     reviewArea.append(summary);
-    if(synced.truncated){const warning=document.createElement('p');warning.textContent='Dikkat: Google sonuçları kısmi olabilir.';reviewArea.append(warning)}
+    if(synced.truncated){const warning=document.createElement('p');warning.textContent='Dikkat: Google sorgu sonuçları eksik olabilir. Tüm iadeler taranmamış olabilir.';reviewArea.append(warning)}
     for(const entry of data.items){
      const card=document.createElement('div');card.className='pa-card';
      const info=document.createElement('p');
@@ -242,7 +256,7 @@ async function openQueue(records=false){if(records)return openRecordsIndex(false
        if(note.trim().length<8){toast('En az 8 karakter açıklama gerekli.');return}
        btn.disabled=true;
        try{await playFetch('/refund-cases/'+entry.case_id+'/review',{method:'POST',body:JSON.stringify({status:'reviewed',note:note.trim()})});
-        btn.remove();info.textContent+=' · incelendi';toast('İnceleme kaydedildi. Bakiye değişmedi.')}
+        btn.remove();info.textContent+=' · incelendi';toast('İnceleme kaydedildi. Bu işlem Lidya veya Asalet bakiyesini değiştirmedi.')}
        catch(e){btn.disabled=false;toast('İnceleme kaydedilemedi: '+e.message)}
       };
       card.append(btn);
@@ -263,7 +277,7 @@ async function openQueue(records=false){if(records)return openRecordsIndex(false
     const r=await playFetch('/refund-audit');
     if(!live(c))return;
     refundStatus.replaceChildren();
-    const intro=document.createElement('p');intro.textContent='İade denetimi: '+r.google_voided_count+' Google kaydı, '+r.matched_count+' eşleşen, '+r.unmatched_count+' eşleşmeyen. Otomatik Lidya kesintisi yapılmaz.';
+    const intro=document.createElement('p');intro.textContent='İade denetimi: '+r.google_voided_count+' Google kaydı, '+r.matched_count+' eşleşen, '+r.unmatched_count+' eşleşmeyen. Bu sorgu salt okunurdur. Lidya ve Asalet puanları değiştirilmez.';
     refundStatus.append(intro);
     if(r.truncated){const warn=document.createElement('p');warn.textContent='UYARI: Kayıt sayısı sorgu sınırına ulaştı; rapor eksik olabilir.';refundStatus.append(warn)}
     for(const item of (r.items||[])){
