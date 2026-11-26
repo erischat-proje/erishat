@@ -138,7 +138,12 @@ def create(db: Session, user: User, payload: OrderRequest) -> dict:
             raise HTTPException(409, 'Istek anahtari farkli pakette kullanildi')
         return view(current)
     # Serialize this user's order reservations; protects concurrent duplicate and active orders.
-    locked_user = db.scalar(select(User).where(User.id == user.id).with_for_update())
+    locked_user = db.scalar(
+        select(User)
+        .where(User.id == user.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if not locked_user or not locked_user.is_active:
         raise HTTPException(403, 'Aktif hesap gerekli')
     current = db.scalar(select(WebOrderV6).where(WebOrderV6.user_id == user.id,

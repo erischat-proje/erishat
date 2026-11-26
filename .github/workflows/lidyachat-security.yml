@@ -87,6 +87,23 @@ jobs:
           backend/tests/test_family_postgres_v4.py
 
 
+      - name: WooCommerce V6 isolated SQLite security tests
+        env:
+          DATABASE_URL: "sqlite+pysqlite:///:memory:"
+        run: >-
+          PYTHONPATH=. python -m unittest discover
+          -s backend/tests
+          -p 'test_woocommerce_order_v6*.py' -v
+
+      - name: WooCommerce V6 isolated PostgreSQL security tests
+        env:
+          DATABASE_URL: "sqlite+pysqlite:///:memory:"
+          LIDYA_WC_LOCK_POSTGRES: "1"
+          PGPASSWORD: isolated_test_only
+        run: |
+          psql -h 127.0.0.1 -U security_test -d lidyachat_security_test -c 'CREATE DATABASE lidya_wc_lock_test'
+          PYTHONPATH=. python -m unittest discover -s backend/tests -p 'test_woocommerce_order_v6_lock.py' -v
+
       - run: python tests/security_guard/test_integration.py
       - run: python tests/security_guard/test_pg_wallet.py
       - name: Run LB V2 referral concurrency test
