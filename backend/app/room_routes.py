@@ -1423,6 +1423,25 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
         from .main import _broadcast_room_chat, _broadcast_global_gift_announcement
         presentation = gift_presentation(unit_price)
         recipients = {r.id:r.nickname for r in db.scalars(select(User).where(User.id.in_(recipient_ids)))}
+        from .nobility_banner_service import announce_gift
+        if events:
+            await announce_gift(
+                db, user.id, room.id,
+                "gift:" + str(events[0].id),
+                gift_details={
+                    "key": events[0].gift_key,
+                    "name": gift_visual(
+                        events[0].gift_key
+                    )["name"],
+                    "image_url": gift_visual(
+                        events[0].gift_key
+                    )["image_url"],
+                    "quantity": events[0].quantity,
+                    "event_ids": [
+                        str(event.id) for event in events
+                    ],
+                },
+            )
         from .vip_privileges import gift_style
         for event in events:
             room_payload = {"type":"room_gift","id":event.id,"room_id":room.id,
@@ -1437,12 +1456,6 @@ def register_room_auth(current_user_dependency, join_announcement=None, disconne
             await _broadcast_room_chat(room.id, room_payload)
             if presentation["global_announcement"]:
                 await _broadcast_global_gift_announcement({**room_payload,"room_name":room.name,"room_public_id":room.public_id})
-        from .nobility_banner_service import announce_gift
-        if events:
-            await announce_gift(
-                db, user.id, room.id,
-                "gift:" + str(events[0].id),
-            )
         return {"gift_key":payload.gift_key,"quantity":payload.quantity,"unit_price":unit_price,
             "total_price":total,"recipient_count":len(recipient_ids),"recipient_amount":payouts[next(iter(recipient_ids))] if len(recipient_ids)==1 else None,
             **presentation}

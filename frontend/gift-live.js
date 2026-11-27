@@ -60,14 +60,53 @@
     const recipient=String(data.recipient_name||data.recipient_nickname||roomPeopleCache[data.recipient_id]||data.recipient_id||'Bir kullanıcı');
     return {...meta,...data,gift_name:giftName,unit_price:unit,total_price:total,quantity,level,sender_name:sender,recipient_name:recipient};
   }
+  const replacedGiftIds = new Set();
+
+  function receiveNobilityBanner(data){
+    const api = window.LidyaNobilityBanners;
+    if(!api) return;
+
+    const replaces = api.replacesGift?.(data) === true;
+    const accepted = api.show(data);
+
+    if(!accepted || !replaces) return;
+
+    const ids = data.gift?.event_ids;
+    if(!Array.isArray(ids)) return;
+
+    for(const id of ids){
+      if(typeof id === 'string' && /^[0-9]+$/.test(id)){
+        replacedGiftIds.add(id);
+      }
+    }
+
+    while(replacedGiftIds.size > 512){
+      replacedGiftIds.delete(
+        replacedGiftIds.values().next().value
+      );
+    }
+  }
+
+  function replacedGift(data){
+    return data.id != null &&
+      replacedGiftIds.has(String(data.id));
+  }
+
+  window.addEventListener('erischat:auth',()=>{
+    replacedGiftIds.clear();
+  });
+
   function renderGiftEvent(data){
+    if(replacedGift(data)) return;
     const detail=giftDetail(data);
     window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail}));
   }
   function renderGiftAnnouncement(data){
     const detail=giftDetail(data);
     appendRow('📢 '+detail.sender_name+' kişisi '+detail.recipient_name+' kişisine '+detail.gift_name+' verdi • 💎 '+detail.total_price.toLocaleString('tr-TR'),'gift',detail);
-    window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...detail,global:true}}));
+    if(!replacedGift(data)){
+      window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail:{...detail,global:true}}));
+    }
   }
 
   // Chat, RTC and gifts share one room WebSocket.
@@ -98,7 +137,7 @@
         else if(data.type==='room_gift') renderGiftEvent(data);
         else if(data.type==='gift_announcement') renderGiftAnnouncement(data);
         else if(data.type==='nobility_banner')
-          window.LidyaNobilityBanners?.show?.(data);
+          receiveNobilityBanner(data);
       }catch(_){}
     };
     const onError=()=>{if(active()) status('error');};
