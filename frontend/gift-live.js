@@ -97,9 +97,19 @@
   });
 
   function renderGiftEvent(data){
-    if(replacedGift(data)) return;
     const detail=giftDetail(data);
-    window.dispatchEvent(new CustomEvent('erischat:room-gift',{detail}));
+    const replaced=replacedGift(data);
+
+    window.dispatchEvent(new CustomEvent(
+      'lidyachat:vip-gift-effect',
+      {detail:{...detail,nobility_replaced:replaced}}
+    ));
+
+    if(replaced)return;
+
+    window.dispatchEvent(new CustomEvent(
+      'erischat:room-gift',{detail}
+    ));
   }
   function renderGiftAnnouncement(data){
     const detail=giftDetail(data);

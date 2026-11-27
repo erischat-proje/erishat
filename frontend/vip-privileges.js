@@ -30,6 +30,7 @@
         })[c],
     );
   const labels = {
+    "golden-palace": "Altın Gece Sarayı",
     paktolos_gold: "Altın Paktolos",
     palace_night: "Gece Sarayı",
     gold: "Altın",
@@ -334,10 +335,11 @@
           `Bu ay ${data.friend_used}/${data.friend_limit} kart kullanıldı. Her kişiye ayda bir kart gönderilebilir.`,
         ),
       );
-      const label = el("label", "", "Arkadaşının 12 haneli ID’si"),
+      const label = el("label", "", "Arkadaşının 10 haneli ID’si"),
         input = el("input");
       input.inputMode = "numeric";
-      input.maxLength = 12;
+      input.maxLength = 10;
+      input.pattern = "[0-9]{10}";
       label.append(input);
       m.body.append(label);
       const select = trialSelect(m.body, data);
@@ -424,7 +426,8 @@
     sample.firstChild.src = asset + "lion.png";
     sample.firstChild.alt = "Lidya altın aslan arması";
     sample.append(
-      el("h2", "", "Lidya Sarayı"),
+      el("h2", "", key === "early-golden-palace"
+        ? "Altın Gece Sarayı" : "Lidya Sarayı"),
       el("p", "", "Profil sahnesi · Altın ve mermer"),
     );
     m.body.append(sample);
@@ -620,6 +623,17 @@
       area.append(hero);
       membershipPanel(area, d.membership);
       levelRewardGallery(area, d);
+
+      const core = root.querySelector(":scope > .eris-vip-core");
+      if (core) {
+        area.querySelector(".vp-membership")?.remove();
+
+        const gallery = area.querySelector(".vp-level-collection");
+        if (gallery) {
+          core.querySelector(".vp-level-collection")?.remove();
+          core.append(gallery);
+        }
+      }
       const details = el("details", "vp-details");
       details.open = previous ?? true;
       details.append(el("summary", "", "Ek ödüller ve etkinleştirme"));
@@ -757,6 +771,25 @@
               () => editor(item.id, d),
               !item.unlocked,
             );
+          if (item.id === "stickers" && item.unlocked) {
+            button(
+              card,
+              "VIP çıkartmalarını aç",
+              () => {
+                window.ErisChatVIP.close();
+                window.ErisRoomEmojis?.openVip();
+              },
+              d.active.stickers !== "enabled",
+            );
+          }
+          if (item.id === "early_access") {
+            button(
+              card,
+              "Altın Gece Sarayı önizle",
+              () => preview("early-golden-palace"),
+              !item.unlocked,
+            );
+          }
           if (item.id === "coupon")
             card.append(
               el(
@@ -869,7 +902,7 @@
       ],
       [
         "Arkadaşıma nasıl kart gönderirim?",
-        "VIP 8 ve üstünde Arkadaşa deneme kartı → Aç ve yönet. Arkadaşının 12 haneli ID’sini yaz, kullanıcıyı doğrula ve görünen adı kontrol et. Sahneyi seçip “Kartı gönder”e bas. Arkadaşın VIP üyesi olmasa da VIP merkezindeki Deneme kartlarım alanından kullanabilir. Aylık kart sayısı VIP 8–9: 2, VIP 10–11: 3, VIP 12: 5. Aynı kişiye ayda bir kart verilir.",
+        "VIP 8 ve üstünde Arkadaşa deneme kartı → Aç ve yönet. Arkadaşının 10 haneli ID’sini yaz, kullanıcıyı doğrula ve görünen adı kontrol et. Sahneyi seçip “Kartı gönder”e bas. Arkadaşın VIP üyesi olmasa da VIP merkezindeki Deneme kartlarım alanından kullanabilir. Aylık kart sayısı VIP 8–9: 2, VIP 10–11: 3, VIP 12: 5. Aynı kişiye ayda bir kart verilir.",
       ],
       [
         "Aylık mağaza kuponu",
@@ -972,7 +1005,9 @@
       ? "royal"
       : d.throne
         ? "throne"
-        : d.scenes || d.trial_scene || d.cover || "";
+        : d.early_access === "golden-palace"
+          ? "early-golden-palace"
+          : d.scenes || d.trial_scene || d.cover || "";
     card.dataset.vpScene = scene;
     const sceneFile = scene.includes("sardis")
       ? "sardis"
@@ -1209,7 +1244,7 @@
     decorateRoom(e.detail.room),
   );
   const seenGifts = new Set();
-  window.addEventListener("erischat:room-gift", (e) => {
+  window.addEventListener("lidyachat:vip-gift-effect", (e) => {
     const event = e.detail || {},
       d = event.vip_benefits || {};
     if (!Object.keys(d).length || event.global) return;
@@ -1219,6 +1254,8 @@
     if (seenGifts.size > 100) seenGifts.delete(seenGifts.values().next().value);
     document.querySelector(".vp-gift-seal")?.remove();
     const box = el("aside", "vp-gift-seal");
+    box.dataset.nobility = String(!!event.nobility_replaced);
+    box.setAttribute("aria-hidden", "true");
     box.dataset.seal = d.gift_seal || "";
     box.dataset.motion = d.gift_motion || "";
     box.dataset.scene = d.gift_scene ? "palace" : "";

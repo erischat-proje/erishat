@@ -260,7 +260,7 @@ SPECS = [
         8,
         "Arkadaşa deneme kartı",
         "rewards",
-        "Arkadaşının 12 haneli ID’sini doğrulayarak 3 günlük profil sahnesi gönder. Aylık limit: 2; VIP 10: 3; VIP 12: 5.",
+        "Arkadaşının 10 haneli ID’sini doğrulayarak 3 günlük profil sahnesi gönder. Aylık limit: 2; VIP 10: 3; VIP 12: 5.",
         (),
     ),
     (
@@ -274,10 +274,10 @@ SPECS = [
     (
         "early_access",
         9,
-        "Koleksiyon önizlemesi",
+        "Koleksiyona erken erişim",
         "collection",
-        "Merkezdeki yeni Lidya tasarımlarını ve erken deneme seçeneklerini incele.",
-        (),
+        "VIP 9 ve üzeri Altın Gece Sarayı profil sahnesini ücretsiz önizleyebilir ve kullanabilir.",
+        ("golden-palace",),
     ),
     (
         "throne",
@@ -484,17 +484,45 @@ def active(db, uid):
     return result
 
 
+def showcase_owned(db, user, lvl):
+    from .cosmetics import catalog
+    from .wallpapers import catalog as wallpaper_catalog
+
+    required = {
+        (i["type"], i["asset_key"]): int(i.get("vip_level") or 0)
+        for i in catalog()
+        if i.get("vip")
+    }
+    required.update({
+        ("wallpaper", i["key"]): int(i.get("vip_level") or 0)
+        for i in wallpaper_catalog()
+        if i.get("tier") == "vip"
+    })
+
+    return {
+        (r.cosmetic_type, r.asset_key)
+        for r in db.scalars(
+            select(UserCosmetic).where(
+                UserCosmetic.user_id == user.id
+            )
+        )
+        if required.get(
+            (r.cosmetic_type, r.asset_key), 0
+        ) <= lvl
+    }
+
+
 def profile(db, user):
     privacy = db.get(UserPrivacy, user.id)
-    if privacy and (privacy.hide_vip or privacy.hide_vip_neon):
+    if privacy and privacy.hide_vip:
         return {}
     data = values(db, user.id)
     lvl = level(db, user.id)
     out = active(db, user.id)
-    owned = {
-        (r.cosmetic_type, r.asset_key)
-        for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id == user.id))
-    }
+    if privacy and privacy.hide_vip_neon:
+        out.pop("name_gold", None)
+        out.pop("crown_name", None)
+    owned = showcase_owned(db, user, lvl)
     out["showcase"] = [
         x for x in data.get("showcase", []) if (x["type"], x["key"]) in owned
     ][: capacity(lvl)]
@@ -523,7 +551,11 @@ def profile(db, user):
         house = db.get(Couple, member.couple_id) if member else None
         if house and house.active:
             partner = house.female_id if house.male_id == user.id else house.male_id
-            if active(db, partner).get("shared_gallery"):
+            partner_privacy = db.get(UserPrivacy, partner)
+            if (
+                not (partner_privacy and partner_privacy.hide_vip)
+                and active(db, partner).get("shared_gallery")
+            ):
                 ids = values(db, partner).get("gallery", [])
                 extra = (
                     list(
@@ -543,6 +575,30 @@ def profile(db, user):
     return out
 
 
+def partner_present_in_room(db, room_id, partner_id):
+    from .room_models import RoomMember, RoomLivePresence
+
+    member = db.scalar(
+        select(RoomMember.id).where(
+            RoomMember.room_id == room_id,
+            RoomMember.user_id == partner_id,
+            RoomMember.ghost.is_(False),
+        )
+    )
+    if member is None:
+        return False
+
+    presence = db.get(
+        RoomLivePresence,
+        (room_id, partner_id),
+    )
+    return bool(
+        presence
+        and utc(presence.last_seen_at)
+        >= now() - timedelta(seconds=48)
+    )
+
+
 def room_style(db, room):
     data = active(db, room.owner_id)
     from .relationship_models import Couple, CoupleRoom
@@ -553,6 +609,13 @@ def room_style(db, room):
         for uid in (house.male_id, house.female_id):
             partner_style = active(db, uid)
             if partner_style.get("home_decor") == "couple":
+                for key in (
+                    "room_decor",
+                    "palace_room",
+                    "royal_room",
+                    "level_room_decor",
+                ):
+                    data.pop(key, None)
                 data["room_decor"] = "palace"
                 if partner_style.get("level_home_decor"):
                     data["level_room_decor"] = partner_style["level_home_decor"]
@@ -654,7 +717,7 @@ class TrialRequest(BaseModel):
 
 
 class FriendRequest(TrialRequest):
-    public_id: str = Field(pattern=r"^\d{12}$")
+    public_id: str = Field(pattern=r"^[0-9]{10}$")
 
 
 class ShowcaseRequest(BaseModel):
@@ -784,9 +847,16 @@ def select_benefit(
             raise HTTPException(422, "Geçersiz Lidya görünümü.")
     if value:
         for group in (
-            ("cover", "cover_pack"),
-            ("scenes", "throne", "royal_scene", "trial_scene", "point_cover"),
-            ("room_decor", "palace_room", "royal_room"),
+            ("cover", "cover_pack", "level_cover"),
+            (
+                "scenes", "throne", "royal_scene",
+                "trial_scene", "point_cover", "level_scene", "early_access",
+            ),
+            (
+                "room_decor", "palace_room",
+                "royal_room", "level_room_decor",
+            ),
+            ("gift_seal", "level_gift_seal"),
         ):
             if key in group:
                 for other in group:
@@ -860,6 +930,8 @@ def verify_friend(
 
 
 def friend_target(db, user, public_id):
+    if len(public_id) != 10 or not public_id.isascii() or not public_id.isdigit():
+        raise HTTPException(422, "Kullanıcı ID’si 10 rakam olmalıdır.")
     target = db.scalar(
         select(User).where(User.public_id == public_id, User.is_active.is_(True))
     )
@@ -935,10 +1007,7 @@ def set_showcase(
     require(db, user.id, "showcase")
     if len(payload.items) > capacity(level(db, user.id)):
         raise HTTPException(422, "Vitrin kapasiten aşıldı.")
-    owned = {
-        (r.cosmetic_type, r.asset_key)
-        for r in db.scalars(select(UserCosmetic).where(UserCosmetic.user_id == user.id))
-    }
+    owned = showcase_owned(db, user, level(db, user.id))
     result = []
     for i in payload.items:
         pair = (i.get("type"), i.get("key"))
@@ -1024,13 +1093,13 @@ def favorites(kind: str, user=Depends(current_cosmetic_user), db=Depends(get_db)
         }
     if kind != "gifts":
         raise HTTPException(404, "Liste bulunamadı.")
-    from .room_routes import GIFT_META
+    from .room_routes import GIFT_META, GIFT_CATALOG
 
     return {
         "items": [
             {"id": k, "name": GIFT_META.get(k, {}).get("name", k)}
             for k in data.get("favorite_gifts", [])
-            if k in GIFT_META
+            if k in GIFT_CATALOG
         ]
     }
 
@@ -1059,9 +1128,9 @@ def set_favorites(
             )
         ids = valid
     elif kind == "gifts":
-        from .room_routes import GIFT_META
+        from .room_routes import GIFT_CATALOG
 
-        if len(ids) > 12 or any(k not in GIFT_META for k in ids):
+        if len(ids) > 12 or any(k not in GIFT_CATALOG for k in ids):
             raise HTTPException(422, "En fazla 12 geçerli hediye seç.")
     else:
         raise HTTPException(404, "Liste bulunamadı.")

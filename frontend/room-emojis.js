@@ -33,7 +33,7 @@
     panel.querySelector('.ee-tabs').hidden=target;
     panel.querySelector('.ee-levels').hidden=!vip;
     const status=panel.querySelector('.ee-status');
-    status.textContent=target?'Seçilen koltuğa gönder · Ücretsiz':vipState==='loading'?'VIP koleksiyonun kontrol ediliyor…':vipState==='error'?'VIP bilgisi alınamadı. Normal emojiler kullanılabilir.':`VIP ${vipLevel} · ${unlocked.size}/12 özel emoji açık`;
+    status.textContent=target?'Seçilen koltuğa gönder · Ücretsiz':vipState==='loading'?'VIP koleksiyonun kontrol ediliyor…':vipState==='error'?'VIP bilgisi alınamadı. Normal emojiler kullanılabilir.':`VIP ${vipLevel} · ${unlocked.size}/24 özel emoji açık`;
     panel.querySelector('[data-retry]').hidden=target||vipState!=='error';
     panel.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===tab)));
     panel.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.level)===levelFilter)));
@@ -95,20 +95,22 @@
   }
 
   function close(){const inside=panel?.contains(document.activeElement);if(panel)panel.hidden=true;button?.setAttribute('aria-expanded','false');if(inside)opener()?.focus()}
-  function open(selectedTarget=null){
+  function open(selectedTarget=null,preferredTab=null){
     setup();if(!panel)return;
     targetUserId=selectedTarget?String(selectedTarget):null;
     panel.querySelector('header b').textContent=targetUserId?'Mikrofon etkileşimi':'Lidya emojileri';
     panel.querySelector('header small').textContent=targetUserId?'Seçilen koltuğa gönder · Ücretsiz':'Altın ifadeler · Seviye atlayan ihtişam';
     panel.querySelector('.ee-sheet').setAttribute('aria-label',targetUserId?'Mikrofon etkileşimi':'Lidya emojileri');
-    tab=targetUserId?'standard':tab;renderGrid();
+    tab=targetUserId?'standard':preferredTab||tab;
+    if(preferredTab)levelFilter=0;
+    renderGrid();
     if(!targetUserId)refreshVip();
     panel.hidden=false;button?.setAttribute('aria-expanded','true');
     panel.querySelector('[data-close]')?.focus();
   }
   function send(id){
     const item=byId.get(id);
-    if(item&&!canSend(item))return window.toast?.(vipState==='ready'?`Bu emoji VIP ${item.level} seviyesinde açılır.`:'Önce VIP seviyeni tekrar kontrol et.');
+    if(item&&!canSend(item))return window.toast?.(vipState==='ready'?(item.id.startsWith('lidya_sticker_')&&vipLevel>=item.level?'VIP merkezinden Lidya çıkartmalarını etkinleştir.':`Bu emoji VIP ${item.level} seviyesinde açılır.`):'Önce VIP seviyeni tekrar kontrol et.');
     const ws=window.__erisRoomSocket;
     if(!ws||ws.readyState!==1||String(ws.__erisRoomId)!==roomId())return window.toast?.('Oda bağlantısı henüz hazır değil.');
     if(Date.now()-lastSent<2000)return window.toast?.('Yeni emoji için biraz bekle.');
@@ -168,7 +170,13 @@
     active.set(uid,ev);paint();setTimeout(()=>{if(active.get(uid)===ev){active.delete(uid);paint()}},duration);
   }
   function clear(){close();vipRequest++;vipLevel=0;vipState='idle';unlocked.clear();targetUserId=null;for(const f of flights){f.animation?.cancel();f.el.remove()}flights.clear();seen.clear();active.clear();paint();observer?.disconnect();observedStage=null;lastSent=0}
-  window.ErisRoomEmojis={receive,error:d=>{window.toast?.(d.message||'Emoji gönderilemedi.');if(!panel?.hidden&&!targetUserId)refreshVip()},open:()=>open(),openInteraction:uid=>{if(!findSeat(uid))return window.toast?.('Kullanıcı bir koltukta değil.');open(uid)},close};
+  window.ErisRoomEmojis={receive,error:d=>{window.toast?.(d.message||'Emoji gönderilemedi.');if(!panel?.hidden&&!targetUserId)refreshVip()},open:()=>open(),openVip:()=>{
+      if(!roomId()||!surface()?.querySelector('.eris-room-compose')){
+        window.toast?.('Çıkartmaları kullanmak için bir odaya katıl.');
+        return;
+      }
+      open(null,'vip');
+    },openInteraction:uid=>{if(!findSeat(uid))return window.toast?.('Kullanıcı bir koltukta değil.');open(uid)},close};
   window.addEventListener('erischat:room-opened',()=>{clear();setup()});
   window.addEventListener('erischat:room-closed',clear);
   window.addEventListener('erischat:room-blocks-updated',()=>{for(const uid of active.keys())if(window.ErisRoomBlocks?.has?.(uid))active.delete(uid);for(const f of flights)if(window.ErisRoomBlocks?.has?.(f.sender)||window.ErisRoomBlocks?.has?.(f.target)){f.animation?.cancel();f.el.remove();flights.delete(f)}paint()});

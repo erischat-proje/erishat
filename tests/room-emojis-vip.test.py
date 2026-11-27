@@ -22,7 +22,7 @@ class Query:
     def first(self):return self.result
     def where(self,*args):return self
 class DB:
-    def __init__(self,level):self.level=level;self.ghost=False;self.banned=False;self.muted=False;self.seated=True
+    def __init__(self,level):self.level=level;self.ghost=False;self.banned=False;self.muted=False;self.seated=True;self.stickers_enabled=False
     def __enter__(self):return self
     def __exit__(self,*args):pass
     def get(self,model,key):
@@ -44,6 +44,13 @@ for n in source.body:
     if isinstance(n,ast.FunctionDef) and n.name=='_room_socket_reaction':chosen.append(n)
 ctx={**models,'room_emoji_access':access,'datetime':datetime,'timedelta':timedelta,'timezone':timezone,'uuid4':uuid4,'engine':None,'select':lambda m:Query(m),'or_':lambda *x:None,'and_':lambda *x:None,'active_ban':lambda *a,**k:None,'active_room_user_ban':lambda *a:None}
 exec(compile(ast.Module(body=chosen,type_ignores=[]),'reaction-handler','exec'),ctx)
+# The real database entitlement is covered by test_vip_privileges.
+# Here we isolate the WebSocket reaction handler.
+access.current_entitlement = lambda db, uid: access.entitlement(
+    NS(level=db.level),
+    stickers_enabled=db.stickers_enabled,
+)
+
 class AccessTests(unittest.TestCase):
     def test_each_level_and_legacy(self):
         for level in range(13):
@@ -53,13 +60,13 @@ class AccessTests(unittest.TestCase):
                 self.assertEqual('payload' in result,level>=required,(level,required,result))
                 if level>=required:self.assertEqual(result['payload']['reaction_id'],f'vip_{required}')
             self.assertIn('payload',ctx['_room_socket_reaction']('r','R','u','laugh'))
-            ctx['vip_privileges']=NS(active=lambda *args:{'stickers':'enabled'})
+            db.stickers_enabled=True
             for n in range(1,13):
                 result=ctx['_room_socket_reaction']('r','R','u',f'lidya_sticker_{n}')
                 self.assertEqual('payload' in result,level>=(1 if n<=6 else 2))
-            ctx['vip_privileges']=NS(active=lambda *args:{})
+            db.stickers_enabled=False
             self.assertIn('error',ctx['_room_socket_reaction']('r','R','u','lidya_sticker_1'))
-            self.assertEqual(access.entitlement(NS(level=level))['unlocked_ids'],[f'vip_{n}' for n in range(1,level+1)]+[f'lidya_sticker_{n}' for n in range(1,13) if level >= (1 if n<=6 else 2)])
+            self.assertEqual(access.entitlement(NS(level=level), stickers_enabled=True)['unlocked_ids'],[f'vip_{n}' for n in range(1,level+1)]+[f'lidya_sticker_{n}' for n in range(1,13) if level >= (1 if n<=6 else 2)])
     def test_restrictions_remain(self):
         for key in ['ghost','banned','muted']:
             db=DB(12);setattr(db,key,True);ctx['Session']=lambda *a:db
@@ -69,6 +76,47 @@ class AccessTests(unittest.TestCase):
         db.seated=True
         for reaction,target in [('vip_13',None),('vip_12','other'),('send_heart','u'),(None,None),([],None)]:
             self.assertIn('error',ctx['_room_socket_reaction']('r','R','u',reaction,target))
+    def test_downgrade_rechecks_socket_permission(self):
+        db = DB(12)
+        db.stickers_enabled = True
+        ctx["Session"] = lambda *args: db
+        send = ctx["_room_socket_reaction"]
+
+        self.assertIn("payload", send("r", "R", "u", "vip_12"))
+        self.assertIn("payload", send("r", "R", "u", "lidya_sticker_12"))
+
+        db.level = 1
+
+        self.assertIn("error", send("r", "R", "u", "vip_12"))
+        self.assertIn("error", send("r", "R", "u", "lidya_sticker_12"))
+        self.assertIn("payload", send("r", "R", "u", "lidya_sticker_1"))
+
+        db.level = 0
+
+        self.assertIn("error", send("r", "R", "u", "vip_1"))
+        self.assertIn("error", send("r", "R", "u", "lidya_sticker_1"))
+        self.assertIn("payload", send("r", "R", "u", "laugh"))
+
+    def test_disabled_stickers_preserve_normal_vip(self):
+        db = DB(12)
+        ctx["Session"] = lambda *args: db
+        send = ctx["_room_socket_reaction"]
+
+        for n in range(1, 13):
+            self.assertIn(
+                "payload",
+                send("r", "R", "u", f"vip_{n}")
+            )
+            self.assertIn(
+                "error",
+                send("r", "R", "u", f"lidya_sticker_{n}")
+            )
+
+        self.assertEqual(
+            len(access.entitlement(NS(level=12))["unlocked_ids"]),
+            12
+        )
+
     def test_missing_row_and_catalog_parity(self):
         self.assertEqual(access.entitlement(None),{'level':0,'unlocked_ids':[]})
         js=(ROOT/'frontend/room-emojis.js').read_text();catalog=json.loads(js.split('const catalog = ',1)[1].split(';',1)[0])
