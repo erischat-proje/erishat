@@ -1883,3 +1883,78 @@ body:has(.lidya-duke-daily_banner) #eris-notice-stack{
    + 75px + min(87.6vw,350.4px,56.94dvh)
  )!important;
 }
+
+
+/* DUKE FINAL WELCOME V1.21.23 */
+
+.lidya-nobility-live-banner.lidya-duke-room_welcome{
+ display:block;
+ position:fixed;
+ width:min(94vw,460px,75dvh);
+ aspect-ratio:900/634;
+ padding:0;
+ border:0;
+ background:transparent;
+ box-shadow:none;
+ container-type:inline-size;
+}
+
+.lidya-duke-room_welcome img{
+ display:block;
+ width:100%;
+ height:100%;
+ max-height:none;
+ object-fit:contain;
+ border-radius:12px;
+}
+
+.lidya-duke-room_welcome:not(.ln-duke-notice-fallback)
+.ln-duke-notice-panel{
+ position:absolute;
+ left:25%;
+ top:66%;
+ width:50%;
+ height:10%;
+ padding:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ overflow:hidden;
+}
+
+.lidya-duke-room_welcome:not(.ln-duke-notice-fallback)
+.ln-duke-notice-title,
+.lidya-duke-room_welcome:not(.ln-duke-notice-fallback)
+.ln-duke-notice-action{
+ display:none;
+}
+
+.lidya-duke-room_welcome:not(.ln-duke-notice-fallback)
+.ln-duke-notice-name{
+ max-width:100%;
+ padding:0;
+ margin:0;
+ border:0;
+ background:transparent;
+ color:#ffe9ad;
+ font-size:clamp(10px,5cqw,24px);
+ font-weight:900;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ text-shadow:0 2px 5px #000;
+}
+
+.lidya-nobility-live-banner.lidya-duke-room_welcome.ln-duke-notice-fallback{
+ aspect-ratio:auto;
+ background:#061330;
+ border:1px solid #e4bd65;
+ padding:8px;
+}
+
+body:has(.lidya-duke-room_welcome) #eris-notice-stack{
+ top:calc(
+   env(safe-area-inset-top,0px)
+   + 86px + min(66.22vw,324.05px,52.84dvh)
+ )!important;
+}
