@@ -6,6 +6,8 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/social-feed-live.js'
+      - 'frontend/stories-live.js'
+      - 'tests/explore-premium.browser.cjs'
       - 'frontend/user-profile-navigation.js'
       - 'frontend/device-layout.js'
       - 'frontend/erischat-main.html'
@@ -65,6 +67,8 @@ jobs:
 
             /tests/explore-workspace.dom.cjs
             /frontend/social-feed-live.js
+            /frontend/stories-live.js
+            /tests/explore-premium.browser.cjs
             /frontend/user-profile-navigation.js
             /frontend/device-layout.js
             /frontend/erischat-main.html
@@ -140,6 +144,19 @@ jobs:
         run: |
           export NODE_PATH="$RUNNER_TEMP/lidya-profile-browser/node_modules"
           timeout 180s node tests/public-profile-premium.browser.cjs
+
+      - name: Explore Premium browser verification
+        run: |
+          export NODE_PATH="$RUNNER_TEMP/lidya-profile-browser/node_modules"
+          timeout 180s node tests/explore-premium.browser.cjs
+
+      - name: Upload Explore Premium browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lidyachat-explore-premium-browser-evidence
+          path: explore-premium-browser-results/
+          if-no-files-found: ignore
 
       - name: Upload Public Profile browser evidence
         if: always()

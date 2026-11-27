@@ -533,19 +533,134 @@
     const start=async()=>{if(started)return;started=true;const pending=document.createElement('p');pending.textContent='Medya yükleniyor…';box.replaceChildren(pending);
       try{card._mediaAbort=new AbortController();const url=await imageUrl(post.media_url,card._mediaAbort.signal);if(token()!==session||!card.isConnected){URL.revokeObjectURL(url);objectUrls.delete(url);return}
         const video=post.media_kind==='video'||String(post.mime_type||'').startsWith('video/'),el=document.createElement(video?'video':'img');el.className=video?'ec-social-video':'ec-social-photo';el.dataset.objectUrl=url;
-        if(video){el.controls=true;el.playsInline=true;el.preload='metadata';el.addEventListener('play',()=>document.querySelectorAll('.ec-social-video').forEach(v=>{if(v!==el)v.pause()}))}else{el.alt='Gönderi fotoğrafı';el.loading='lazy'}el.src=url;box.replaceChildren(el);
+        if(video){
+          el.controls=true;
+          el.setAttribute('controlslist','nodownload');
+          el.addEventListener('contextmenu',event=>{
+            event.preventDefault();
+          });
+          el.playsInline=true;el.preload='metadata';el.addEventListener('play',()=>document.querySelectorAll('.ec-social-video').forEach(v=>{if(v!==el)v.pause()}))}else{el.alt='Gönderi fotoğrafı';el.loading='lazy'}el.src=url;box.replaceChildren(el);
         el.onerror=()=>{releaseMedia(box);box.textContent='Medya açılamadı.'};
       }catch(error){if(token()!==session||!card.isConnected)return;const retry=document.createElement('button');retry.type='button';retry.textContent='Medyayı tekrar yükle';retry.onclick=()=>{started=false;start()};box.replaceChildren(retry)}
     };
     if(window.IntersectionObserver){const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){observer.disconnect();start()}else if(!card.isConnected)observer.disconnect()},{rootMargin:'300px'});observer.observe(card);card._mediaObserver=observer;}else queueMicrotask(start);
   }
+
+  style.textContent += `
+/* LIDYA EXPLORE ACTIONS PREMIUM V1 */
+
+html body #explore .ec-social-post .ec-feed-actions {
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:6px!important;
+  margin-top:12px!important;
+  padding-top:10px!important;
+  border-top:1px solid var(--ui-line);
+}
+
+html body #explore .ec-social-post .ec-feed-actions>button {
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:5px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:60px!important;
+  height:auto!important;
+  padding:8px 3px!important;
+  margin:0!important;
+  border:1px solid var(--ui-line)!important;
+  border-radius:12px!important;
+  background:var(--ui-panel)!important;
+  color:var(--ui-ink)!important;
+  font-size:11px!important;
+  font-weight:650!important;
+  line-height:1.25!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  box-shadow:none!important;
+}
+
+html body #explore .ec-feed-actions>button svg {
+  display:block!important;
+  width:21px!important;
+  height:21px!important;
+  max-width:21px!important;
+  max-height:21px!important;
+  flex:none!important;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  color:var(--ui-gold)!important;
+  pointer-events:none;
+}
+
+html body #explore .ec-feed-actions>button[aria-pressed="true"] {
+  border-color:var(--ui-gold)!important;
+  background:color-mix(in srgb,var(--ui-gold) 12%,var(--ui-panel))!important;
+}
+
+html body #explore .ec-feed-actions>button[aria-pressed="true"] svg {
+  fill:currentColor;
+}
+
+html body #explore .ec-feed-actions>button:disabled {
+  opacity:.55!important;
+  cursor:wait!important;
+}
+
+html body #explore .ec-feed-actions>button:focus-visible {
+  outline:2px solid var(--ui-gold)!important;
+  outline-offset:2px;
+}
+
+html body #explore .ec-feed-actions>button:only-child {
+  grid-column:1/-1;
+  flex-direction:row!important;
+  min-height:44px!important;
+}
+
+@media(max-width:360px) {
+  html body #explore .ec-feed-actions {
+    gap:4px!important;
+  }
+  html body #explore .ec-feed-actions>button {
+    font-size:10px!important;
+  }
+}
+`;
+
   function addFeedActions(card,post){
     const session=token(),bar=document.createElement('div');bar.className='ec-feed-actions';
-    function action(text,fn){const button=document.createElement('button');button.type='button';button.textContent=text;bar.append(button);button.onclick=async()=>{if(token()!==session)return;button.disabled=true;try{await fn(button)}catch(e){if(token()===session)window.toast?.(e.message||'İşlem tamamlanamadı.')}finally{button.disabled=false}};return button}
-    let saved=!!post.saved_by_me;const save=action(saved?'Kaydedildi':'Kaydet',async button=>{await api().api('/explore/posts/'+post.id+'/saved',{method:saved?'DELETE':'PUT'});if(token()!==session)return;saved=!saved;button.textContent=saved?'Kaydedildi':'Kaydet';button.setAttribute('aria-pressed',String(saved));if(mode==='saved'&&!saved&&card.closest('[data-feed]')){releaseMedia(card);card.remove()}});save.setAttribute('aria-pressed',String(saved));save.setAttribute('aria-label','Gönderiyi kaydet');
+    function action(text,fn){const button=document.createElement('button');button.type='button';
+      const paths={
+        save:'<path d="M6 4h12v17l-6-4-6 4z"/>',
+        hide:'<path d="M3 3l18 18M10 10a3 3 0 0 0 4 4M9 5a12 12 0 0 1 3-.4c6 0 10 7.4 10 7.4a17 17 0 0 1-4 4M6 6a19 19 0 0 0-4 6s4 7.4 10 7.4a12 12 0 0 0 4-.7"/>',
+        mute:'<path d="M3 9h4l5-4v14l-5-4H3zM16 9l6 6M22 9l-6 6"/>'
+      };
+
+      const kind=text==='Daha az göster'
+        ?'hide'
+        :text==='Yazarı sessize al'?'mute':'save';
+
+      button.dataset.feedAction=kind;
+
+      button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+paths[kind]+'</svg><span></span>';
+
+      button.querySelector('span').textContent=text;
+
+      bar.append(button);
+
+      button.onclick=async()=>{
+        if(button.disabled||token()!==session)return;button.disabled=true;try{await fn(button)}catch(e){if(token()===session)window.toast?.(e.message||'İşlem tamamlanamadı.')}finally{button.disabled=false}};return button}
+    let saved=!!post.saved_by_me;const save=action(saved?'Kaydedildi':'Kaydet',async button=>{await api().api('/explore/posts/'+post.id+'/saved',{method:saved?'DELETE':'PUT'});if(token()!==session)return;saved=!saved;button.querySelector('span').textContent=saved?'Kaydedildi':'Kaydet';button.setAttribute('aria-pressed',String(saved));if(mode==='saved'&&!saved&&card.closest('[data-feed]')){releaseMedia(card);card.remove()}});save.setAttribute('aria-pressed',String(saved));save.setAttribute('aria-label','Gönderiyi kaydet');
     if(!post.is_mine){
       action('Daha az göster',async()=>{await api().api('/explore/posts/'+post.id+'/hidden',{method:'PUT'});if(token()!==session)return;releaseMedia(card);card.remove();window.toast?.('Gönderi akışından gizlendi. Akış tercihlerinden geri alabilirsin.')});
-      action('Yazarı sessize al',async()=>{await api().api('/explore/authors/'+encodeURIComponent(post.user_id)+'/muted',{method:'PUT'});if(token()!==session)return;document.querySelectorAll('[data-ec-social] [data-author-id]').forEach(el=>{if(el.dataset.authorId===post.user_id){releaseMedia(el);el.remove()}});window.toast?.('Yazar akışında sessize alındı. Takip ve mesajlar değişmedi.')});
+      action('Yazarı sessize al',async()=>{await api().api('/explore/authors/'+encodeURIComponent(post.user_id)+'/muted',{method:'PUT'});if(token()!==session)return;document.querySelectorAll('[data-ec-social] [data-author-id]').forEach(el=>{if(el.dataset.authorId===String(post.user_id)){releaseMedia(el);el.remove()}});window.toast?.('Yazar akışında sessize alındı. Takip ve mesajlar değişmedi.')});
     }
     card.append(bar);
   }
