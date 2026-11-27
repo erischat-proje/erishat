@@ -2476,7 +2476,9 @@ def _load_room_socket(token, room_id):
         entrance_payload['vip_benefits'] = vip_privileges.entry_style(db,user.id)
         if entrance_house and entrance_house.active:
             partner_id=entrance_house.female_id if user.id==entrance_house.male_id else entrance_house.male_id
-            entrance_payload['partner_present']=bool(db.scalar(select(RoomMember.id).where(RoomMember.room_id==internal_room_id,RoomMember.user_id==partner_id,RoomMember.ghost.is_(False))))
+            entrance_payload['partner_present'] = vip_privileges.partner_present_in_room(
+                db, internal_room_id, partner_id
+            )
         entrance_payload['normal_entry'] = entry_mode == 'normal'
         entrance_payload['shop_entry'] = shop_expansion.selected_entry(db, user)
         # Membership identity stays stable during a socket reconnect, but changes on rejoin.

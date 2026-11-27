@@ -334,10 +334,11 @@
           `Bu ay ${data.friend_used}/${data.friend_limit} kart kullanıldı. Her kişiye ayda bir kart gönderilebilir.`,
         ),
       );
-      const label = el("label", "", "Arkadaşının 12 haneli ID’si"),
+      const label = el("label", "", "Arkadaşının 10 haneli ID’si"),
         input = el("input");
       input.inputMode = "numeric";
-      input.maxLength = 12;
+      input.maxLength = 10;
+      input.pattern = "[0-9]{10}";
       label.append(input);
       m.body.append(label);
       const select = trialSelect(m.body, data);
@@ -869,7 +870,7 @@
       ],
       [
         "Arkadaşıma nasıl kart gönderirim?",
-        "VIP 8 ve üstünde Arkadaşa deneme kartı → Aç ve yönet. Arkadaşının 12 haneli ID’sini yaz, kullanıcıyı doğrula ve görünen adı kontrol et. Sahneyi seçip “Kartı gönder”e bas. Arkadaşın VIP üyesi olmasa da VIP merkezindeki Deneme kartlarım alanından kullanabilir. Aylık kart sayısı VIP 8–9: 2, VIP 10–11: 3, VIP 12: 5. Aynı kişiye ayda bir kart verilir.",
+        "VIP 8 ve üstünde Arkadaşa deneme kartı → Aç ve yönet. Arkadaşının 10 haneli ID’sini yaz, kullanıcıyı doğrula ve görünen adı kontrol et. Sahneyi seçip “Kartı gönder”e bas. Arkadaşın VIP üyesi olmasa da VIP merkezindeki Deneme kartlarım alanından kullanabilir. Aylık kart sayısı VIP 8–9: 2, VIP 10–11: 3, VIP 12: 5. Aynı kişiye ayda bir kart verilir.",
       ],
       [
         "Aylık mağaza kuponu",

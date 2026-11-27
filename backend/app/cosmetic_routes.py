@@ -128,8 +128,16 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         if pair not in owned:
             db.add(UserCosmetic(user_id=user.id, cosmetic_type='frame', asset_key=pair[1]))
             owned.add(pair)
+    current_vip = vip_level(db, user.id)
     for level in vip_level_rewards(user):
-        if level['level'] not in claimed or level['level'] > vip_level(db, user.id): continue
+        if level['level'] > current_vip:
+            continue
+        if level['level'] not in claimed:
+            db.add(VipRewardClaim(
+                user_id=user.id,
+                level=level['level'],
+            ))
+            claimed.add(level['level'])
         for reward in level['rewards']:
             pair = (reward['cosmetic_type'], reward['asset_key'])
             if pair not in owned:
@@ -154,6 +162,13 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
         if relation and not house: continue
         item = normal.get((kind, key), {})
         wall = wallpapers.get(key, {}) if kind == 'wallpaper' else {}
+        required_vip = int(
+            item.get('vip_level', 0)
+            or wall.get('vip_level', 0)
+            or 0
+        )
+        if required_vip > current_vip:
+            continue
         if kind == 'relationship_status':
             status=next((k for k in relationship_rewards.STATUS_NAMES if relationship_rewards.status_asset(k)==key),None)
             if not house or status not in relationship_rewards.status_unlocked(db,house):continue
@@ -281,8 +296,12 @@ def rent_cosmetic(payload:CosmeticRent,user=Depends(current_cosmetic_user),db:Se
         raise HTTPException(403,'Bu ürün kiralama için uygun değil.')
     locked=db.scalar(select(User).where(User.id==user.id).with_for_update().execution_options(populate_existing=True))
     if permanent_cosmetic(db,user.id,kind,key):raise HTTPException(409,'Bu ürüne süresiz erişiminiz zaten var.')
-    price=PRICES[kind][MONTHS.index(months)]
+    from .vip_privileges import coupon_price
+    original_price=PRICES[kind][MONTHS.index(months)]
+    price=coupon_price(db,user.id,original_price)
     if int(locked.lidya or 0)<price:raise HTTPException(400,'Yeterli Lidya yok.')
+    if coupon_price(db,user.id,original_price,consume=True)!=price:
+        raise HTTPException(409,'Kupon durumu değişti. Tekrar deneyin.')
     now=datetime.now(timezone.utc)
     lease=get_lease(db,user.id,kind,key)
     until=add_months(max(now,lease.expires_at.replace(tzinfo=timezone.utc) if lease and lease.expires_at.tzinfo is None else lease.expires_at if lease else now),months)
@@ -290,7 +309,7 @@ def rent_cosmetic(payload:CosmeticRent,user=Depends(current_cosmetic_user),db:Se
     else:db.add(CosmeticLease(user_id=user.id,cosmetic_type=kind,asset_key=key,expires_at=until))
     locked.lidya-=price
     from .vip_spending import record_spend
-    record_spend(db,user.id,price,'cosmetic',key)
+    record_spend(db,user.id,price,'cosmetic')
     db.commit()
     return {'ok':True,'spent':price,'expires_at':until.isoformat(),'months':months,'asset_key':key,'cosmetic_type':kind}
 
